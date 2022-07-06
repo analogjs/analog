@@ -103,8 +103,8 @@ export function angular(
       host = ts.createIncrementalCompilerHost(compilerOptions);
     },
     async transform(code, id) {
-      // Skip transforming rxjs
-      if (id.includes('rxjs')) {
+      // Skip transforming node_modules
+      if (id.includes('node_modules')) {
         return;
       }
 

@@ -1,9 +1,14 @@
 import { Component } from '@angular/core';
+import { NxWelcomeComponent } from './nx-welcome.component';
 
 @Component({
   selector: 'analogjs-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css'],
+  standalone: true,
+  imports: [NxWelcomeComponent],
+  template: `
+    <analogjs-nx-welcome></analogjs-nx-welcome>
+  `,
+  styles: [``],
 })
 export class AppComponent {
   title = 'analog-app';

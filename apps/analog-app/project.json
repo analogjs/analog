@@ -35,11 +35,11 @@
       }
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/apps/analog-app"],
+      "executor": "nx:run-commands",
+      "outputs": ["{options.outputPath}"],
       "options": {
-        "jestConfig": "apps/analog-app/jest.config.ts",
-        "passWithNoTests": true
+        "command": "vitest",
+        "cwd": "apps/analog-app"
       }
     }
   },
