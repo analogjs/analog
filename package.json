@@ -1,14 +1,28 @@
 {
-  "name": "analogjs",
+  "name": "analogjs-platform",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "dev": "nx serve",
     "ng": "nx",
     "postinstall": "node ./decorate-angular-cli.js && ngcc --properties es2020 browser module main",
     "start": "nx serve",
-    "build": "nx build",
+    "build": "nx run-many build --all",
     "test": "nx test"
   },
+  "keywords": [
+    "vite-plugin",
+    "angular"
+  ],
+  "author": "Brandon Roberts <robertsbt@gmail.com>",
+  "bugs": {
+    "url": "https://github.com/analogjs/analog/issues"
+  },
+  "homepage": "https://github.com/analogjs/analog#readme",  
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/analogjs/analog.git"
+  },  
   "private": true,
   "dependencies": {
     "@angular/animations": "~14.0.0",
