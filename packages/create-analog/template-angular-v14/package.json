@@ -1,0 +1,34 @@
+{
+  "name": "my-app",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "ng": "ng",
+    "start": "npm run dev",
+    "build": "vite build",
+    "watch": "vite build --watch",
+    "test": "ng test"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^14.0.0",
+    "@angular/common": "^14.0.0",
+    "@angular/compiler": "^14.0.0",
+    "@angular/core": "^14.0.0",
+    "@angular/forms": "^14.0.0",
+    "@angular/platform-browser": "^14.0.0",
+    "@angular/platform-browser-dynamic": "^14.0.0",
+    "@angular/router": "^14.0.0",
+    "rxjs": "~7.5.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.11.4"
+  },
+  "devDependencies": {
+    "@analogjs/vite-plugin-angular": "0.0.1",
+    "@angular-devkit/build-angular": "^14.0.3",
+    "@angular/cli": "~14.0.3",
+    "@angular/compiler-cli": "^14.0.0",
+    "typescript": "~4.7.2",
+    "vite": "^2.9.13"
+  }
+}

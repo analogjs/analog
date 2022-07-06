@@ -4,6 +4,7 @@
   "projects": {
     "analog-app": "apps/analog-app",
     "analog-app-e2e": "apps/analog-app-e2e",
+    "create-analog": "packages/create-analog",
     "vite-plugin-angular": "packages/vite-plugin-angular"
   }
 }

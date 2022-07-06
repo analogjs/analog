@@ -8,7 +8,8 @@
     "postinstall": "node ./decorate-angular-cli.js && ngcc --properties es2020 browser module main",
     "start": "nx serve",
     "build": "nx run-many build --all",
-    "test": "nx test"
+    "test": "nx test",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0"
   },
   "keywords": [
     "vite-plugin",
@@ -18,11 +19,11 @@
   "bugs": {
     "url": "https://github.com/analogjs/analog/issues"
   },
-  "homepage": "https://github.com/analogjs/analog#readme",  
+  "homepage": "https://github.com/analogjs/analog#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/analogjs/analog.git"
-  },  
+  },
   "private": true,
   "dependencies": {
     "@angular/animations": "~14.0.0",
@@ -56,14 +57,19 @@
     "@types/node": "16.11.7",
     "@typescript-eslint/eslint-plugin": "^5.29.0",
     "@typescript-eslint/parser": "^5.29.0",
+    "conventional-changelog": "^1.1.4",
+    "conventional-changelog-cli": "^1.3.21",
     "cypress": "^9.1.0",
     "eslint": "~8.15.0",
     "eslint-config-prettier": "8.1.0",
     "eslint-plugin-cypress": "^2.10.3",
     "jest": "27.5.1",
     "jest-preset-angular": "~11.1.2",
+    "kolorist": "^1.5.1",
+    "minimist": "^1.2.6",
     "nx": "14.4.2",
     "prettier": "^2.6.2",
+    "prompts": "^2.4.2",
     "ts-jest": "27.1.4",
     "ts-node": "~10.8.0",
     "typescript": "~4.7.2",

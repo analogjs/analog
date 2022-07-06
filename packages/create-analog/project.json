@@ -1,0 +1,27 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/vite-plugin-angular/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/create-analog",
+        "command": "cp -r packages/create-analog dist/packages/create-analog"
+      }
+    },
+    "exec": {
+      "executor": "nx:run-commands",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "cwd": "packages/create-analog",
+        "commands": [
+          { "command": "yarn" },
+          { "command": "node ./index.js" }
+        ]
+      }
+    }
+  },
+  "tags": []
+}
