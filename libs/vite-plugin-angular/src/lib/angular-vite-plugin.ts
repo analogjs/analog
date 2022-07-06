@@ -1,7 +1,6 @@
 import type { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
 import { transformAsync } from '@babel/core';
 import { promises as fs } from 'fs';
-import * as path from 'path';
 import angularApplicationPreset from '@angular-devkit/build-angular/src/babel/presets/application';
 import { requiresLinking } from '@angular-devkit/build-angular/src/babel/webpack-loader';
 import {
@@ -57,6 +56,7 @@ export function angular(
       mode = command;
       return {
         optimizeDeps: {
+          exclude: ['rxjs'],
           esbuildOptions: {
             plugins: [
               createCompilerPlugin(
@@ -103,6 +103,11 @@ export function angular(
       host = ts.createIncrementalCompilerHost(compilerOptions);
     },
     async transform(code, id) {
+      // Skip transforming rxjs
+      if (id.includes('rxjs')) {
+        return;
+      }
+
       // Create the Angular specific program that contains the Angular compiler
       const angularProgram: NgtscProgram = new compilerCli.NgtscProgram(
         rootNames,

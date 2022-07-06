@@ -7,7 +7,7 @@
       "executor": "nx:run-commands",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "../../dist/apps/analog-app",
+        "outputPath": "dist/apps/analog-app",
         "command": "vite build",
         "cwd": "apps/analog-app"
       }

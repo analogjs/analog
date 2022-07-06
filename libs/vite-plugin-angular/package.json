@@ -1,5 +1,22 @@
 {
   "name": "@analogjs/vite-plugin-angular",
+  "description": "Vite Plugin for Angular",
   "version": "0.0.1",
-  "type": "commonjs"
+  "keywords": [
+    "vite-plugin",
+    "angular"
+  ],
+  "author": "Brandon Roberts <robertsbt@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/analogjs/analog/issues"
+  },
+  "homepage": "https://github.com/analogjs/analog#readme",  
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/analogjs/analog.git"
+  },
+  "peerDependencies": {
+    "@angular-devkit/build-angular": "^14.0.0"
+  }
 }
