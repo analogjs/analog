@@ -15,7 +15,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@analogjs/vite-plugin-angular": ["libs/vite-plugin-angular/src/index.ts"]
+      "@analogjs/vite-plugin-angular": ["packages/vite-plugin-angular/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

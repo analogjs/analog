@@ -1,6 +1,9 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "npmScope": "analogjs",
+  "workspaceLayout": {
+    "libsDir": "packages"
+  },
   "affected": {
     "defaultBase": "main"
   },

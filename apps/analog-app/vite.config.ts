@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import angular from '../../libs/vite-plugin-angular/src';
+import angular from '../../packages/vite-plugin-angular/src';
 import { offsetFromRoot } from '@nrwl/devkit';
 
 // https://vitejs.dev/config/

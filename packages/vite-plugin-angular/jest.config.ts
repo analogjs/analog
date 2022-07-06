@@ -11,5 +11,5 @@ export default {
     '^.+\\.[tj]s$': 'ts-jest',
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
-  coverageDirectory: '../../coverage/libs/vite-plugin-angular',
+  coverageDirectory: '../../coverage/packages/vite-plugin-angular',
 };

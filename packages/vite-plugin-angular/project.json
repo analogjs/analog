@@ -1,30 +1,30 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/vite-plugin-angular/src",
+  "sourceRoot": "packages/vite-plugin-angular/src",
   "projectType": "library",
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/vite-plugin-angular",
-        "main": "libs/vite-plugin-angular/src/index.ts",
-        "tsConfig": "libs/vite-plugin-angular/tsconfig.lib.json",
-        "assets": ["libs/vite-plugin-angular/*.md"]
+        "outputPath": "dist/packages/vite-plugin-angular",
+        "main": "packages/vite-plugin-angular/src/index.ts",
+        "tsConfig": "packages/vite-plugin-angular/tsconfig.lib.json",
+        "assets": ["packages/vite-plugin-angular/*.md"]
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["libs/vite-plugin-angular/**/*.ts"]
+        "lintFilePatterns": ["packages/vite-plugin-angular/**/*.ts"]
       }
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/libs/vite-plugin-angular"],
+      "outputs": ["coverage/packages/vite-plugin-angular"],
       "options": {
-        "jestConfig": "libs/vite-plugin-angular/jest.config.ts",
+        "jestConfig": "packages/vite-plugin-angular/jest.config.ts",
         "passWithNoTests": true
       }
     }
