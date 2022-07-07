@@ -1,7 +1,8 @@
+import { describe, it, expect } from 'vitest';
 import { angular } from './angular-vite-plugin';
 
 describe('angularVitePlugin', () => {
   it('should work', () => {
-    expect(angular()).toEqual('angular-vite-plugin');
+    expect(angular().name).toEqual('vite-plugin-angular');
   });
 });

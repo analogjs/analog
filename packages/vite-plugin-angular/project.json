@@ -13,19 +13,12 @@
         "assets": ["packages/vite-plugin-angular/*.md"]
       }
     },
-    "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": ["packages/vite-plugin-angular/**/*.ts"]
-      }
-    },
     "test": {
-      "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/packages/vite-plugin-angular"],
+      "executor": "nx:run-commands",
+      "outputs": ["{options.outputPath}"],
       "options": {
-        "jestConfig": "packages/vite-plugin-angular/jest.config.ts",
-        "passWithNoTests": true
+        "cwd": "packages/vite-plugin-angular",
+        "command": "vitest"
       }
     }
   },
