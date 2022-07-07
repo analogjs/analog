@@ -11,15 +11,12 @@
         "command": "cp -r packages/create-analog dist/packages/create-analog"
       }
     },
-    "exec": {
+    "test": {
       "executor": "nx:run-commands",
       "outputs": ["{options.outputPath}"],
       "options": {
         "cwd": "packages/create-analog",
-        "commands": [
-          { "command": "yarn" },
-          { "command": "node ./index.js" }
-        ]
+        "command": "vitest --dir __tests__"
       }
     }
   },

@@ -1,7 +1,7 @@
-import { angularVitePlugin } from './angular-vite-plugin';
+import { angular } from './angular-vite-plugin';
 
 describe('angularVitePlugin', () => {
   it('should work', () => {
-    expect(angularVitePlugin()).toEqual('angular-vite-plugin');
+    expect(angular()).toEqual('angular-vite-plugin');
   });
 });
