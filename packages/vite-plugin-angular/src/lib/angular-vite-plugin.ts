@@ -1,17 +1,20 @@
 import type { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
 import { transformAsync } from '@babel/core';
-import { promises as fs } from 'fs';
 import angularApplicationPreset from '@angular-devkit/build-angular/src/babel/presets/application';
-import { requiresLinking } from '@angular-devkit/build-angular/src/babel/webpack-loader';
 import {
   BundleStylesheetOptions,
-  bundleStylesheetText,
 } from '@angular-devkit/build-angular/src/builders/browser-esbuild/stylesheets';
 import * as ts from 'typescript';
 import { Plugin } from 'vite';
 import { Plugin as ESBuildPlugin } from 'esbuild';
 import { createCompilerPlugin } from '@angular-devkit/build-angular/src/builders/browser-esbuild/compiler-plugin';
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
+
+interface PluginOptions {
+  tsconfig: string;
+  sourcemap: boolean;
+  advancedOptimizations: boolean;
+}
 
 interface EmitFileResult {
   content?: string;
@@ -22,7 +25,7 @@ interface EmitFileResult {
 type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 
 export function angular(
-  pluginOptions = {
+  pluginOptions: PluginOptions = {
     tsconfig: './tsconfig.app.json',
     sourcemap: false,
     advancedOptimizations: false,
@@ -51,7 +54,7 @@ export function angular(
   let mode: 'build' | 'serve';
 
   return {
-    name: 'vite-plugin-angular',
+    name: '@analogjs/vite-plugin-angular',
     config(config, { command }) {
       mode = command;
       return {
@@ -150,59 +153,12 @@ export function angular(
         () => []
       );
 
-      if (/\.[cm]?js$/.test(id) && id.includes('@angular')) {
-        const angularPackage = /[\\/]node_modules[\\/]@angular[\\/]/.test(id);
-
-        const linkerPluginCreator = (
-          await loadEsmModule<
-            typeof import('@angular/compiler-cli/linker/babel')
-          >('@angular/compiler-cli/linker/babel')
-        ).createEs2015LinkerPlugin;
-
-        const data = await fs.readFile(id, 'utf-8');
-        const result = await transformAsync(data, {
-          filename: id,
-          inputSourceMap: (pluginOptions.sourcemap
-            ? undefined
-            : false) as undefined,
-          sourceMaps: pluginOptions.sourcemap ? 'inline' : false,
-          compact: false,
-          configFile: false,
-          babelrc: false,
-          browserslistConfigFile: false,
-          plugins: [],
-          presets: [
-            [
-              angularApplicationPreset,
-              {
-                angularLinker: {
-                  shouldLink: await requiresLinking(id, data),
-                  jitMode: false,
-                  linkerPluginCreator,
-                },
-                forceAsyncTransformation:
-                  !/[\\/][_f]?esm2015[\\/]/.test(id) && data.includes('async'),
-                optimize: pluginOptions.advancedOptimizations && {
-                  looseEnums: angularPackage,
-                  pureTopLevel: angularPackage,
-                },
-              },
-            ],
-          ],
-        });
-
-        return {
-          code: result?.code ?? data,
-          map: result?.map,
-        };
-      }
-
       if (/\.[cm]?tsx?$/.test(id)) {
         const typescriptResult = await fileEmitter(id);
 
         // return fileEmitter
         const data = typescriptResult?.content ?? '';
-        // console.log(id, data);
+        
         const babelResult = await transformAsync(data, {
           filename: id,
           inputSourceMap: (pluginOptions.sourcemap
@@ -231,9 +187,7 @@ export function angular(
         };
       }
 
-      return {
-        code,
-      };
+      return undefined;
     },
   };
 }
