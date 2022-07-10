@@ -1,9 +1,7 @@
 import type { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
 import { transformAsync } from '@babel/core';
 import angularApplicationPreset from '@angular-devkit/build-angular/src/babel/presets/application';
-import {
-  BundleStylesheetOptions,
-} from '@angular-devkit/build-angular/src/builders/browser-esbuild/stylesheets';
+import { BundleStylesheetOptions } from '@angular-devkit/build-angular/src/builders/browser-esbuild/stylesheets';
 import * as ts from 'typescript';
 import { Plugin } from 'vite';
 import { Plugin as ESBuildPlugin } from 'esbuild';
@@ -45,18 +43,22 @@ export function angular(
   } = require('@ngtools/webpack/src/ivy/transformation');
   const {
     augmentProgramWithVersioning,
+    augmentHostWithCaching,
   } = require('@ngtools/webpack/src/ivy/host');
+  const { SourceFileCache } = require('@ngtools/webpack/src/ivy/cache');
   let compilerCli: typeof import('@angular/compiler-cli');
   let rootNames: string[];
   let host: ts.CompilerHost;
   let nextProgram: NgtscProgram;
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
-  let mode: 'build' | 'serve';
+  let watchMode: boolean = false;
+  let sourceFileCache = new SourceFileCache();
 
   return {
     name: '@analogjs/vite-plugin-angular',
     config(config, { command }) {
-      mode = command;
+      watchMode = command === 'serve';
+
       return {
         optimizeDeps: {
           exclude: ['rxjs'],
@@ -104,6 +106,16 @@ export function angular(
       rootNames = rn;
       compilerOptions = tsCompilerOptions;
       host = ts.createIncrementalCompilerHost(compilerOptions);
+
+      // Setup source file caching and reuse cache from previous compilation if present
+      let cache = new SourceFileCache();
+
+      // Only store cache if in watch mode
+      if (watchMode) {
+        sourceFileCache = cache;
+      }
+
+      augmentHostWithCaching(host, cache);
     },
     async transform(code, id) {
       // Skip transforming node_modules
@@ -111,54 +123,57 @@ export function angular(
         return;
       }
 
-      // Create the Angular specific program that contains the Angular compiler
-      const angularProgram: NgtscProgram = new compilerCli.NgtscProgram(
-        rootNames,
-        compilerOptions,
-        host as CompilerHost,
-        nextProgram
-      );
-      const angularCompiler = angularProgram.compiler;
-      const typeScriptProgram = angularProgram.getTsProgram();
-      augmentProgramWithVersioning(typeScriptProgram);
-
-      let builder:
-        | ts.BuilderProgram
-        | ts.EmitAndSemanticDiagnosticsBuilderProgram;
-
-      if (mode === 'serve') {
-        builder = builderProgram =
-          ts.createEmitAndSemanticDiagnosticsBuilderProgram(
-            typeScriptProgram,
-            host,
-            builderProgram
-          );
-
-        nextProgram = angularProgram;
-      } else {
-        // When not in watch mode, the startup cost of the incremental analysis can be avoided by
-        // using an abstract builder that only wraps a TypeScript program.
-        builder = ts.createAbstractBuilder(typeScriptProgram, host);
-      }
-
-      await angularCompiler.analyzeAsync();
-
-      fileEmitter = createFileEmitter(
-        builder,
-        mergeTransformers(angularCompiler.prepareEmit().transformers, {
-          before: [
-            replaceBootstrap(() => builder.getProgram().getTypeChecker()),
-          ],
-        }),
-        () => []
-      );
-
       if (/\.[cm]?tsx?$/.test(id)) {
+        // invalid cache for requested file
+        sourceFileCache.invalidate(id);
+
+        // Create the Angular specific program that contains the Angular compiler
+        const angularProgram: NgtscProgram = new compilerCli.NgtscProgram(
+          rootNames,
+          compilerOptions,
+          host as CompilerHost,
+          nextProgram
+        );
+        const angularCompiler = angularProgram.compiler;
+        const typeScriptProgram = angularProgram.getTsProgram();
+        augmentProgramWithVersioning(typeScriptProgram);
+
+        let builder:
+          | ts.BuilderProgram
+          | ts.EmitAndSemanticDiagnosticsBuilderProgram;
+
+        if (watchMode) {
+          builder = builderProgram =
+            ts.createEmitAndSemanticDiagnosticsBuilderProgram(
+              typeScriptProgram,
+              host,
+              builderProgram
+            );
+
+          nextProgram = angularProgram;
+        } else {
+          // When not in watch mode, the startup cost of the incremental analysis can be avoided by
+          // using an abstract builder that only wraps a TypeScript program.
+          builder = ts.createAbstractBuilder(typeScriptProgram, host);
+        }
+
+        await angularCompiler.analyzeAsync();
+
+        fileEmitter = createFileEmitter(
+          builder,
+          mergeTransformers(angularCompiler.prepareEmit().transformers, {
+            before: [
+              replaceBootstrap(() => builder.getProgram().getTypeChecker()),
+            ],
+          }),
+          () => []
+        );
+
         const typescriptResult = await fileEmitter(id);
 
         // return fileEmitter
         const data = typescriptResult?.content ?? '';
-        
+
         const babelResult = await transformAsync(data, {
           filename: id,
           inputSourceMap: (pluginOptions.sourcemap
