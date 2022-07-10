@@ -116,6 +116,15 @@ export function angular(
       }
 
       augmentHostWithCaching(host, cache);
+
+      await buildAndAnalyze();
+    },
+    async handleHotUpdate(ctx) {
+      if (/\.[cm]?tsx?$/.test(ctx.file)) {
+        sourceFileCache.invalidate(ctx.file);
+
+        await buildAndAnalyze();
+      }
     },
     async transform(code, id) {
       // Skip transforming node_modules
@@ -123,57 +132,12 @@ export function angular(
         return;
       }
 
+      const typescriptResult = await fileEmitter!(id);
+
+      // return fileEmitter
+      const data = typescriptResult?.content ?? '';
+
       if (/\.[cm]?tsx?$/.test(id)) {
-        // invalid cache for requested file
-        sourceFileCache.invalidate(id);
-
-        // Create the Angular specific program that contains the Angular compiler
-        const angularProgram: NgtscProgram = new compilerCli.NgtscProgram(
-          rootNames,
-          compilerOptions,
-          host as CompilerHost,
-          nextProgram
-        );
-        const angularCompiler = angularProgram.compiler;
-        const typeScriptProgram = angularProgram.getTsProgram();
-        augmentProgramWithVersioning(typeScriptProgram);
-
-        let builder:
-          | ts.BuilderProgram
-          | ts.EmitAndSemanticDiagnosticsBuilderProgram;
-
-        if (watchMode) {
-          builder = builderProgram =
-            ts.createEmitAndSemanticDiagnosticsBuilderProgram(
-              typeScriptProgram,
-              host,
-              builderProgram
-            );
-
-          nextProgram = angularProgram;
-        } else {
-          // When not in watch mode, the startup cost of the incremental analysis can be avoided by
-          // using an abstract builder that only wraps a TypeScript program.
-          builder = ts.createAbstractBuilder(typeScriptProgram, host);
-        }
-
-        await angularCompiler.analyzeAsync();
-
-        fileEmitter = createFileEmitter(
-          builder,
-          mergeTransformers(angularCompiler.prepareEmit().transformers, {
-            before: [
-              replaceBootstrap(() => builder.getProgram().getTypeChecker()),
-            ],
-          }),
-          () => []
-        );
-
-        const typescriptResult = await fileEmitter(id);
-
-        // return fileEmitter
-        const data = typescriptResult?.content ?? '';
-
         const babelResult = await transformAsync(data, {
           filename: id,
           inputSourceMap: (pluginOptions.sourcemap
@@ -205,6 +169,53 @@ export function angular(
       return undefined;
     },
   };
+
+  /**
+   * Creates a new NgtscProgram to analyze/re-analyze
+   * the source files and create a file emitter.
+   * This is shared between an initial build and a hot update.
+   */
+  async function buildAndAnalyze() {
+    // Create the Angular specific program that contains the Angular compiler
+    const angularProgram: NgtscProgram = new compilerCli.NgtscProgram(
+      rootNames,
+      compilerOptions,
+      host as CompilerHost,
+      nextProgram
+    );
+    const angularCompiler = angularProgram.compiler;
+    const typeScriptProgram = angularProgram.getTsProgram();
+    augmentProgramWithVersioning(typeScriptProgram);
+
+    let builder:
+      | ts.BuilderProgram
+      | ts.EmitAndSemanticDiagnosticsBuilderProgram;
+
+    if (watchMode) {
+      builder = builderProgram =
+        ts.createEmitAndSemanticDiagnosticsBuilderProgram(
+          typeScriptProgram,
+          host,
+          builderProgram
+        );
+
+      nextProgram = angularProgram;
+    } else {
+      // When not in watch mode, the startup cost of the incremental analysis can be avoided by
+      // using an abstract builder that only wraps a TypeScript program.
+      builder = ts.createAbstractBuilder(typeScriptProgram, host);
+    }
+
+    await angularCompiler.analyzeAsync();
+
+    fileEmitter = createFileEmitter(
+      builder,
+      mergeTransformers(angularCompiler.prepareEmit().transformers, {
+        before: [replaceBootstrap(() => builder.getProgram().getTypeChecker())],
+      }),
+      () => []
+    );
+  }
 }
 
 export function createFileEmitter(
