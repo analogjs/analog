@@ -2,13 +2,32 @@
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
 
+## Getting Started
+
+Use your package manage of choice to create a new project
+
+With yarn:
+
+```sh
+yarn create analog
+```
+
+With npm:
+
+```sh
+npm init analog
+```
+
+Follow the prompts to scaffold the project and start the development server.
+
 ## Goals
 
 - Vite-based
 - Low config
 - File-based routing
+  - Support for api/server routes
 - Hybrid SSR/SSG support
-- Integrated CLI
+- Integrated CLI (future)
 
 ## Packages
 
