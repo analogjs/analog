@@ -6,7 +6,6 @@ import { offsetFromRoot } from '@nrwl/devkit';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  console.log(mode);
   return {
     root: 'src',
     build: {
