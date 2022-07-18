@@ -1,15 +1,11 @@
 import { Component } from '@angular/core';
-import { NxWelcomeComponent } from './nx-welcome.component';
+import { CartService } from './cart.service';
 
 @Component({
   selector: 'analogjs-root',
-  standalone: true,
-  imports: [NxWelcomeComponent],
-  template: `
-    <analogjs-nx-welcome></analogjs-nx-welcome>
-  `,
-  styles: [``],
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
 })
-export class AppComponent {
-  title = 'analog-app';
+export class AppComponent { 
+  constructor(cs: CartService) {}
 }

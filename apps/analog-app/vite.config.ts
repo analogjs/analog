@@ -11,6 +11,8 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: `${offsetFromRoot('apps/analog-app/src')}/dist/apps/analog-app`,
       emptyOutDir: true,
+      minify: 'terser',
+      target: 'es2020'
     },
     resolve: {
       mainFields: ['module'],
