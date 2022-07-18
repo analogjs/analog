@@ -10,8 +10,7 @@ import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm'
 
 interface PluginOptions {
   tsconfig: string;
-  sourcemap: boolean;
-  advancedOptimizations: boolean;
+  mode: string;
 }
 
 interface EmitFileResult {
@@ -25,12 +24,7 @@ type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 export function angular(
   pluginOptions: PluginOptions = {
     tsconfig: './tsconfig.app.json',
-    sourcemap: false,
-    advancedOptimizations: false,
-  },
-  styleOptions: BundleStylesheetOptions = {
-    optimization: false,
-    sourcemap: true,
+    mode: 'development'
   }
 ): Plugin {
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -53,6 +47,7 @@ export function angular(
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode: boolean = false;
   let sourceFileCache = new SourceFileCache();
+  let isProd = pluginOptions.mode === 'production';
 
   return {
     name: '@analogjs/vite-plugin-angular',
@@ -61,18 +56,17 @@ export function angular(
 
       return {
         optimizeDeps: {
-          exclude: ['rxjs'],
           esbuildOptions: {
             plugins: [
               createCompilerPlugin(
                 {
                   tsconfig: pluginOptions.tsconfig,
-                  sourcemap: pluginOptions.sourcemap,
-                  advancedOptimizations: pluginOptions.advancedOptimizations,
+                  sourcemap: !isProd,
+                  advancedOptimizations: isProd,
                 },
                 {
-                  sourcemap: styleOptions.sourcemap,
-                  optimization: styleOptions.optimization,
+                  sourcemap: !isProd,
+                  optimization: isProd,
                 }
               ) as ESBuildPlugin as any,
             ],
@@ -91,8 +85,8 @@ export function angular(
           noEmitOnError: false,
           suppressOutputPathCheck: true,
           outDir: undefined,
-          inlineSources: pluginOptions.sourcemap,
-          inlineSourceMap: pluginOptions.sourcemap,
+          inlineSources: !isProd,
+          inlineSourceMap: !isProd,
           sourceMap: false,
           mapRoot: undefined,
           sourceRoot: undefined,
@@ -140,10 +134,10 @@ export function angular(
       if (/\.[cm]?tsx?$/.test(id)) {
         const babelResult = await transformAsync(data, {
           filename: id,
-          inputSourceMap: (pluginOptions.sourcemap
+          inputSourceMap: (!isProd
             ? undefined
             : false) as undefined,
-          sourceMaps: pluginOptions.sourcemap ? 'inline' : false,
+          sourceMaps: !isProd ? 'inline' : false,
           compact: false,
           configFile: false,
           babelrc: false,
@@ -154,7 +148,7 @@ export function angular(
               angularApplicationPreset,
               {
                 forceAsyncTransformation: data.includes('async'),
-                optimize: pluginOptions.advancedOptimizations && {},
+                optimize: isProd && {},
               },
             ],
           ],
