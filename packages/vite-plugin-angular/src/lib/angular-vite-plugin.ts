@@ -7,6 +7,7 @@ import { Plugin } from 'vite';
 import { Plugin as ESBuildPlugin } from 'esbuild';
 import { createCompilerPlugin } from '@angular-devkit/build-angular/src/builders/browser-esbuild/compiler-plugin';
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
+import { extname } from 'path';
 
 interface PluginOptions {
   tsconfig: string;
@@ -70,6 +71,10 @@ export function angular(
                 }
               ) as ESBuildPlugin as any,
             ],
+            define: {
+              'ngDevMode': watchMode ? JSON.stringify({}) : 'false',
+              'ngJitMode': 'false'
+            }
           },
         },
       };
@@ -116,9 +121,22 @@ export function angular(
     async handleHotUpdate(ctx) {
       if (/\.[cm]?tsx?$/.test(ctx.file)) {
         sourceFileCache.invalidate(ctx.file);
-
         await buildAndAnalyze();
       }
+
+      if (/\.(html|htm|css|less|sass|scss)$/.test(ctx.file)) {
+        // ctx.server.config.logger.info(`external asset detected, full reload`);
+        const ext = extname(ctx.file);
+        const fileName = ctx.file.replace(ext, '.ts');
+        const thisModule = ctx.server.moduleGraph.getModuleById(fileName);
+
+        if (thisModule) {
+          await buildAndAnalyze();
+          return [thisModule];
+        }
+      }
+
+      return ctx.modules;
     },
     async transform(code, id) {
       // Skip transforming node_modules

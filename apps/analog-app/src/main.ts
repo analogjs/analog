@@ -8,14 +8,19 @@ if (import.meta.env.PROD) {
   enableProdMode();
 }
 
-if (import.meta.hot) {
-  import('@angular-devkit/build-angular/src/webpack/plugins/hmr/hmr-accept')
-    .then(m => m.default(import.meta));
-}
-
-platformBrowserDynamic().bootstrapModule(AppModule)
-  .catch(err => console.error(err));
-
+platformBrowserDynamic()
+  .bootstrapModule(AppModule)
+  .then(() => {
+    if (import.meta.hot) {
+      // console.log(((window as any).ng));
+      import.meta.hot.accept((newMod) => {
+        import(
+          '@angular-devkit/build-angular/src/webpack/plugins/hmr/hmr-accept'
+        ).then((m) => m.default(import.meta));
+      });
+    }
+  })
+  .catch((err) => console.error(err));
 
 /*
 Copyright Google LLC. All Rights Reserved.

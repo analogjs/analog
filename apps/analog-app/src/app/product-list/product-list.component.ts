@@ -12,7 +12,7 @@ export class ProductListComponent {
   products = [...products];
 
   share() {
-    window.alert('The products has been shared!');
+    window.alert('The product has been shared!');
   }
 
   onNotify() {
