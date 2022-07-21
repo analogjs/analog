@@ -3,7 +3,7 @@ import { transformAsync } from '@babel/core';
 import angularApplicationPreset from '@angular-devkit/build-angular/src/babel/presets/application';
 import { BundleStylesheetOptions } from '@angular-devkit/build-angular/src/builders/browser-esbuild/stylesheets';
 import * as ts from 'typescript';
-import { Plugin } from 'vite';
+import { ModuleNode, Plugin } from 'vite';
 import { Plugin as ESBuildPlugin } from 'esbuild';
 import { createCompilerPlugin } from '@angular-devkit/build-angular/src/builders/browser-esbuild/compiler-plugin';
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
@@ -70,6 +70,10 @@ export function angular(
                 }
               ) as ESBuildPlugin as any,
             ],
+            define: {
+              'ngDevMode': watchMode ? JSON.stringify({}) : 'false',
+              'ngJitMode': 'false'
+            }
           },
         },
       };
@@ -116,14 +120,37 @@ export function angular(
     async handleHotUpdate(ctx) {
       if (/\.[cm]?tsx?$/.test(ctx.file)) {
         sourceFileCache.invalidate(ctx.file);
-
         await buildAndAnalyze();
       }
+
+      if (/\.(html|htm|css|less|sass|scss)$/.test(ctx.file)) {
+        let mods: ModuleNode[] = [];
+        ctx.modules.forEach(mod => {
+          mod.importers.forEach(imp => {
+            sourceFileCache.invalidate(imp.id);
+            ctx.server.moduleGraph.invalidateModule(imp);
+            mods.push(imp);
+          });
+        });
+
+        await buildAndAnalyze();
+        return mods;
+      }
+
+      return ctx.modules;
     },
     async transform(code, id) {
       // Skip transforming node_modules
       if (id.includes('node_modules')) {
         return;
+      }
+
+      // TODO: improve logic for adding watchers for
+      // external styles/templates
+      // Resolve path to template/styles
+      if (code.includes('templateUrl') || code.includes('styleUrls')) {
+        this.addWatchFile(id.replace('.ts', '.html'));
+        this.addWatchFile(id.replace('.ts', '.css'));
       }
 
       const typescriptResult = await fileEmitter!(id);
