@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 
 import { Observable } from 'rxjs';
@@ -5,6 +6,8 @@ import { CartService } from '../cart.service';
 
 @Component({
   selector: 'app-shipping',
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './shipping.component.html',
   styleUrls: ['./shipping.component.css']
 })

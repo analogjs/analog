@@ -1,19 +1,29 @@
 import './polyfills';
-import { enableProdMode } from '@angular/core';
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { enableProdMode, importProvidersFrom } from '@angular/core';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { HttpClientModule } from '@angular/common/http';
+import { RouterModule } from '@angular/router';
+
 import initHmr from '@angular-devkit/build-angular/src/webpack/plugins/hmr/hmr-accept';
-import { AppModule } from './app/app.module';
+
+import { AppComponent } from './app/app.component';
+import { routes } from './app/routes';
 
 if (import.meta.env.PROD) {
   enableProdMode();
 }
 
-platformBrowserDynamic()
-  .bootstrapModule(AppModule)
-  .catch((err) => console.error(err));
+bootstrapApplication(AppComponent, {
+  providers: [
+    importProvidersFrom(
+      HttpClientModule,
+      RouterModule.forRoot(routes)
+    ),
+  ],
+}).catch((err) => console.error(err));
 
 if (import.meta.hot) {
   import.meta.hot.accept((newMod) => {
     initHmr(import.meta);
   });
-}  
+}

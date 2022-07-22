@@ -1,25 +1,28 @@
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 
 import { CartService } from '../cart.service';
 
 @Component({
   selector: 'app-cart',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './cart.component.html',
-  styleUrls: ['./cart.component.css']
+  styleUrls: ['./cart.component.css'],
 })
 export class CartComponent {
-
   items = this.cartService.getItems();
 
   checkoutForm = this.formBuilder.group({
     name: '',
-    address: ''
+    address: '',
   });
 
   constructor(
     private cartService: CartService,
-    private formBuilder: FormBuilder,
+    private formBuilder: FormBuilder
   ) {}
 
   onSubmit(): void {
@@ -29,5 +32,3 @@ export class CartComponent {
     this.checkoutForm.reset();
   }
 }
-
-

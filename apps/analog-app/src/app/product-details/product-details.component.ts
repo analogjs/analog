@@ -1,11 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 import { Product, products } from '../products';
 import { CartService } from '../cart.service';
 
 @Component({
   selector: 'app-product-details',
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './product-details.component.html',
   styleUrls: ['./product-details.component.css']
 })
@@ -31,9 +34,4 @@ export class ProductDetailsComponent implements OnInit {
     this.cartService.addToCart(product);
     window.alert('Your product has been added to the cart!');
   }
-}
-
-if (import.meta.hot) {
-  import('@angular-devkit/build-angular/src/webpack/plugins/hmr/hmr-accept')
-    .then(m => m.default(import.meta));
 }
