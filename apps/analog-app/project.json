@@ -13,7 +13,7 @@
       }
     },
     "build-ng": {
-      "builder": "@angular-devkit/build-angular:browser-esbuild",
+      "builder": "@angular-devkit/build-angular:browser",
       "options": {
         "outputPath": "dist/apps/analog-app-ng",
         "index": "apps/analog-app/src/index.html",

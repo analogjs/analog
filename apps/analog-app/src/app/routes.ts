@@ -1,11 +1,26 @@
-import { ProductListComponent } from './product-list/product-list.component';
-import { ProductDetailsComponent } from './product-details/product-details.component';
-import { CartComponent } from './cart/cart.component';
-import { ShippingComponent } from './shipping/shipping.component';
-
 export const routes = [
-  { path: '', component: ProductListComponent },
-  { path: 'products/:productId', component: ProductDetailsComponent },
-  { path: 'cart', component: CartComponent },
-  { path: 'shipping', component: ShippingComponent },
+  {
+    path: '',
+    loadComponent: () =>
+      import('./product-list/product-list.component').then(
+        (m) => m.ProductListComponent
+      ),
+  },
+  {
+    path: 'products/:productId',
+    loadComponent: () =>
+      import('./product-details/product-details.component').then(
+        (m) => m.ProductDetailsComponent
+      ),
+  },
+  {
+    path: 'cart',
+    loadComponent: () =>
+      import('./cart/cart.component').then((m) => m.CartComponent),
+  },
+  {
+    path: 'shipping',
+    loadComponent: () =>
+      import('./shipping/shipping.component').then((m) => m.ShippingComponent),
+  },
 ];

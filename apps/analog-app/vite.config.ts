@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 
-import { defineConfig } from 'vite';
+import { defineConfig, splitVendorChunkPlugin } from 'vite';
+import { visualizer } from 'rollup-plugin-visualizer';
 import angular from '../../packages/vite-plugin-angular/src';
 import { offsetFromRoot } from '@nrwl/devkit';
 
@@ -11,12 +12,17 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: `${offsetFromRoot('apps/analog-app/src')}/dist/apps/analog-app`,
       emptyOutDir: true,
-      target: 'es2020'
+      target: 'es2020',
+    },
+    resolve: {
+      mainFields: ['es2020', 'module'],
     },
     plugins: [
       mode !== 'test'
         ? angular({ mode, tsconfig: './tsconfig.app.json' })
         : undefined,
+      visualizer(),
+      splitVendorChunkPlugin(),
     ],
     test: {
       globals: true,

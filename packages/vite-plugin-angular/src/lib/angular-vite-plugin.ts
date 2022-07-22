@@ -1,13 +1,19 @@
-import type { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
+import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
 import { transformAsync } from '@babel/core';
 import angularApplicationPreset from '@angular-devkit/build-angular/src/babel/presets/application';
+import { requiresLinking } from '@angular-devkit/build-angular/src/babel/webpack-loader';
 import { BundleStylesheetOptions } from '@angular-devkit/build-angular/src/builders/browser-esbuild/stylesheets';
 import * as ts from 'typescript';
 import { ModuleNode, Plugin } from 'vite';
 import { Plugin as ESBuildPlugin } from 'esbuild';
 import { createCompilerPlugin } from '@angular-devkit/build-angular/src/builders/browser-esbuild/compiler-plugin';
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
-import { hasStyleUrls, hasTemplateUrl, resolveStyleUrls, resolveTemplateUrl } from './component-resolvers';
+import {
+  hasStyleUrls,
+  hasTemplateUrl,
+  resolveStyleUrls,
+  resolveTemplateUrl,
+} from './component-resolvers';
 
 interface PluginOptions {
   tsconfig: string;
@@ -25,9 +31,9 @@ type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 export function angular(
   pluginOptions: PluginOptions = {
     tsconfig: './tsconfig.app.json',
-    mode: 'development'
+    mode: 'development',
   }
-): Plugin {
+): Plugin[] {
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
   let fileEmitter: FileEmitter | undefined;
   let compilerOptions = {};
@@ -50,166 +56,238 @@ export function angular(
   let sourceFileCache = new SourceFileCache();
   let isProd = pluginOptions.mode === 'production';
 
-  return {
-    name: '@analogjs/vite-plugin-angular',
-    config(config, { command }) {
-      watchMode = command === 'serve';
+  return [
+    {
+      name: '@analogjs/vite-plugin-angular',
+      async config(config, { command }) {
+        watchMode = command === 'serve';
 
-      return {
-        esbuild: false,
-        optimizeDeps: {
-          esbuildOptions: {
-            plugins: [
-              createCompilerPlugin(
-                {
-                  tsconfig: pluginOptions.tsconfig,
-                  sourcemap: !isProd,
-                  advancedOptimizations: isProd,
-                },
-                {
-                  sourcemap: !isProd,
-                  optimization: isProd,
-                }
-              ) as ESBuildPlugin as any,
-            ],
-            define: {
-              'ngDevMode': watchMode ? JSON.stringify({}) : 'false',
-              'ngJitMode': 'false'
-            }
-          },
-        },
-      };
-    },
-    async buildStart() {
-      compilerCli = await loadEsmModule<typeof import('@angular/compiler-cli')>(
-        '@angular/compiler-cli'
-      );
-
-      const { options: tsCompilerOptions, rootNames: rn } =
-        compilerCli.readConfiguration(pluginOptions.tsconfig, {
-          enableIvy: true,
-          noEmitOnError: false,
-          suppressOutputPathCheck: true,
-          outDir: undefined,
-          inlineSources: !isProd,
-          inlineSourceMap: !isProd,
-          sourceMap: false,
-          mapRoot: undefined,
-          sourceRoot: undefined,
-          declaration: false,
-          declarationMap: false,
-          allowEmptyCodegenFiles: false,
-          annotationsAs: 'decorators',
-          enableResourceInlining: false,
-        });
-
-      rootNames = rn;
-      compilerOptions = tsCompilerOptions;
-      host = ts.createIncrementalCompilerHost(compilerOptions);
-
-      // Setup source file caching and reuse cache from previous compilation if present
-      let cache = new SourceFileCache();
-
-      // Only store cache if in watch mode
-      if (watchMode) {
-        sourceFileCache = cache;
-      }
-
-      augmentHostWithCaching(host, cache);
-
-      await buildAndAnalyze();
-    },
-    async handleHotUpdate(ctx) {
-      if (/\.[cm]?tsx?$/.test(ctx.file)) {
-        sourceFileCache.invalidate(ctx.file);
-        await buildAndAnalyze();
-      }
-
-      if (/\.(html|htm|css|less|sass|scss)$/.test(ctx.file)) {
-        /**
-         * Check to see if this was a direct request
-         * for an external resource (styles, html).
-         */
-        const isDirect = ctx.modules.find(mod => ctx.file === mod.file && mod.id?.includes('?direct'));
-
-        if (isDirect) {
-          return ctx.modules;
-        }
-
-        let mods: ModuleNode[] = [];
-        ctx.modules.forEach(mod => {
-          mod.importers.forEach(imp => {
-            sourceFileCache.invalidate(imp.id);
-            ctx.server.moduleGraph.invalidateModule(imp);
-            mods.push(imp);
-          });
-        });
-
-        await buildAndAnalyze();
-        return mods;
-      }
-
-      return ctx.modules;
-    },
-    async transform(code, id) {
-      // Skip transforming node_modules
-      if (id.includes('node_modules')) {
-        return;
-      }
-      
-      if (hasTemplateUrl(code)) {
-        const templateUrl = resolveTemplateUrl(code, id);
-
-        if (templateUrl) {
-          this.addWatchFile(templateUrl);
-        }
-      }
-
-      if (hasStyleUrls(code)) {
-        const styleUrls = resolveStyleUrls(code, id);
-
-        styleUrls.forEach(styleUrl => {
-          this.addWatchFile(styleUrl);
-        });
-      }
-
-      const typescriptResult = await fileEmitter!(id);
-
-      // return fileEmitter
-      const data = typescriptResult?.content ?? '';
-
-      if (/\.[cm]?tsx?$/.test(id)) {
-        const babelResult = await transformAsync(data, {
-          filename: id,
-          inputSourceMap: (!isProd
-            ? undefined
-            : false) as undefined,
-          sourceMaps: !isProd ? 'inline' : false,
-          compact: false,
-          configFile: false,
-          babelrc: false,
-          browserslistConfigFile: false,
-          plugins: [],
-          presets: [
-            [
-              angularApplicationPreset,
-              {
-                forceAsyncTransformation: data.includes('async'),
-                optimize: isProd && {},
-              },
-            ],
-          ],
-        });
+        compilerCli = await loadEsmModule<
+          typeof import('@angular/compiler-cli')
+        >('@angular/compiler-cli');
 
         return {
-          code: babelResult?.code ?? '',
-          map: babelResult?.map,
+          optimizeDeps: {
+            esbuildOptions: {
+              plugins: [
+                createCompilerPlugin(
+                  {
+                    tsconfig: pluginOptions.tsconfig,
+                    sourcemap: !isProd,
+                    advancedOptimizations: isProd,
+                  },
+                  {
+                    sourcemap: false,
+                    optimization: isProd,
+                  }
+                ) as ESBuildPlugin as any,
+              ],
+              define: {
+                ngDevMode: watchMode ? JSON.stringify({}) : 'false',
+                ngJitMode: 'false',
+                ngI18nClosureMode: 'false',
+              },
+            },
+          },
         };
-      }
+      },
+      async buildStart() {
+        const { options: tsCompilerOptions, rootNames: rn } =
+          compilerCli.readConfiguration(pluginOptions.tsconfig, {
+            enableIvy: true,
+            noEmitOnError: false,
+            suppressOutputPathCheck: true,
+            outDir: undefined,
+            inlineSources: !isProd,
+            inlineSourceMap: !isProd,
+            sourceMap: false,
+            mapRoot: undefined,
+            sourceRoot: undefined,
+            declaration: false,
+            declarationMap: false,
+            allowEmptyCodegenFiles: false,
+            annotationsAs: 'decorators',
+            enableResourceInlining: false,
+          });
 
-      return undefined;
+        rootNames = rn;
+        compilerOptions = tsCompilerOptions;
+        host = ts.createIncrementalCompilerHost(compilerOptions);
+
+        // Setup source file caching and reuse cache from previous compilation if present
+        let cache = new SourceFileCache();
+
+        // Only store cache if in watch mode
+        if (watchMode) {
+          sourceFileCache = cache;
+        }
+
+        augmentHostWithCaching(host, cache);
+
+        await buildAndAnalyze();
+      },
+      async handleHotUpdate(ctx) {
+        if (/\.[cm]?tsx?$/.test(ctx.file)) {
+          sourceFileCache.invalidate(ctx.file);
+          await buildAndAnalyze();
+        }
+
+        if (/\.(html|htm|css|less|sass|scss)$/.test(ctx.file)) {
+          let mods: ModuleNode[] = [];
+          ctx.modules.forEach((mod) => {
+            mod.importers.forEach((imp) => {
+              sourceFileCache.invalidate(imp.id);
+              ctx.server.moduleGraph.invalidateModule(imp);
+              mods.push(imp);
+            });
+          });
+
+          await buildAndAnalyze();
+          return mods;
+        }
+
+        return ctx.modules;
+      },
+      async transform(code, id) {
+        // Skip transforming node_modules
+        if (id.includes('node_modules')) {
+          return;
+        }
+
+        if (/\.[cm]?tsx?$/.test(id)) {
+          if (hasTemplateUrl(code)) {
+            const templateUrl = resolveTemplateUrl(code, id);
+
+            if (templateUrl) {
+              this.addWatchFile(templateUrl);
+            }
+          }
+
+          if (hasStyleUrls(code)) {
+            const styleUrls = resolveStyleUrls(code, id);
+
+            styleUrls.forEach((styleUrl) => {
+              this.addWatchFile(styleUrl);
+            });
+          }
+
+          const typescriptResult = await fileEmitter!(id);
+
+          // return fileEmitter
+          const data = typescriptResult?.content ?? '';
+
+          const babelResult = await transformAsync(data, {
+            filename: id,
+            inputSourceMap: (!isProd ? undefined : false) as undefined,
+            sourceMaps: !isProd ? 'inline' : false,
+            compact: false,
+            configFile: false,
+            babelrc: false,
+            browserslistConfigFile: false,
+            plugins: [],
+            presets: [
+              [
+                angularApplicationPreset,
+                {
+                  forceAsyncTransformation: data.includes('async'),
+                  optimize: isProd && {},
+                },
+              ],
+            ],
+          });
+
+          return {
+            code: babelResult?.code ?? '',
+            map: babelResult?.map,
+          };
+        }
+
+        return undefined;
+      },
     },
-  };
+    {
+      name: '@analogjs/vite-plugin-angular-optimizer',
+      apply: 'build',
+      config() {
+        return {
+          esbuild: {
+            minify: isProd,
+            minifyIdentifiers: true,
+            minifySyntax: true,
+            // NOTE: Disabling whitespace ensures unused pure annotations are kept
+            minifyWhitespace: false,
+            pure: ['forwardRef'],
+            legalComments: 'none',
+            // sourcefile: 'name',
+            sourcemap: !isProd,
+            define: {
+              ngDevMode: 'false',
+              ngJitMode: 'false',
+              ngI18nClosureMode: 'false',
+            },
+            // This option should always be disabled for browser builds as we don't rely on `.name`
+            // and causes deadcode to be retained which makes `NG_BUILD_MANGLE` unusable to investigate tree-shaking issues.
+            // We enable `keepNames` only for server builds as Domino relies on `.name`.
+            // Once we no longer rely on Domino for SSR we should be able to remove this.
+            keepNames: false,
+            target: 'es2020',
+          },
+        };
+      },
+      async transform(code, id) {
+        if (/\.[cm]?js$/.test(id)) {
+          const angularPackage = /[\\/]node_modules[\\/]@angular[\\/]/.test(id);
+
+          const linkerPluginCreator = (
+            await loadEsmModule<
+              typeof import('@angular/compiler-cli/linker/babel')
+            >('@angular/compiler-cli/linker/babel')
+          ).createEs2015LinkerPlugin;
+
+          const useInputSourcemap = !isProd;
+
+          const result = await transformAsync(code, {
+            filename: id,
+            inputSourceMap: (useInputSourcemap
+              ? undefined
+              : false) as undefined,
+            sourceMaps: !isProd ? 'inline' : false,
+            compact: false,
+            configFile: false,
+            babelrc: false,
+            browserslistConfigFile: false,
+            plugins: [],
+            presets: [
+              [
+                angularApplicationPreset,
+                {
+                  angularLinker: {
+                    shouldLink: await requiresLinking(id, code),
+                    jitMode: false,
+                    linkerPluginCreator,
+                  },
+                  forceAsyncTransformation:
+                    !/[\\/][_f]?esm2015[\\/]/.test(id) &&
+                    code.includes('async'),
+                  optimize: isProd && {
+                    looseEnums: angularPackage,
+                    pureTopLevel: angularPackage,
+                  },
+                },
+              ],
+            ],
+          });
+
+          return {
+            code: result?.code || '',
+            map: result?.map as any,
+          };
+        }
+
+        return;
+      },
+    },
+  ];
 
   /**
    * Creates a new NgtscProgram to analyze/re-analyze

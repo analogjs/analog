@@ -66,9 +66,11 @@
     "nx": "14.4.2",
     "prettier": "^2.6.2",
     "prompts": "^2.4.2",
+    "rollup-plugin-visualizer": "^5.7.1",
     "ts-node": "~10.8.0",
     "typescript": "~4.7.2",
     "vite": "^2.9.13",
-    "vitest": "^0.17.0"
+    "vitest": "^0.17.0",
+    "webpack-bundle-analyzer": "^4.5.0"
   }
 }
