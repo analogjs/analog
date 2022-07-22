@@ -7,6 +7,7 @@ import { ModuleNode, Plugin } from 'vite';
 import { Plugin as ESBuildPlugin } from 'esbuild';
 import { createCompilerPlugin } from '@angular-devkit/build-angular/src/builders/browser-esbuild/compiler-plugin';
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
+import { hasStyleUrls, hasTemplateUrl, resolveStyleUrls, resolveTemplateUrl } from './component-resolvers';
 
 interface PluginOptions {
   tsconfig: string;
@@ -55,6 +56,7 @@ export function angular(
       watchMode = command === 'serve';
 
       return {
+        esbuild: false,
         optimizeDeps: {
           esbuildOptions: {
             plugins: [
@@ -144,13 +146,21 @@ export function angular(
       if (id.includes('node_modules')) {
         return;
       }
+      
+      if (hasTemplateUrl(code)) {
+        const templateUrl = resolveTemplateUrl(code, id);
 
-      // TODO: improve logic for adding watchers for
-      // external styles/templates
-      // Resolve path to template/styles
-      if (code.includes('templateUrl') || code.includes('styleUrls')) {
-        this.addWatchFile(id.replace('.ts', '.html'));
-        this.addWatchFile(id.replace('.ts', '.css'));
+        if (templateUrl && templateUrl.includes('product-list')) {
+          this.addWatchFile(templateUrl);
+        }
+      }
+
+      if (hasStyleUrls(code)) {
+        const styleUrls = resolveStyleUrls(code, id);
+
+        styleUrls.forEach(styleUrl => {
+          this.addWatchFile(styleUrl);
+        });
       }
 
       const typescriptResult = await fileEmitter!(id);

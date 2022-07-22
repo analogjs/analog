@@ -3,6 +3,6 @@ import { angular } from './angular-vite-plugin';
 
 describe('angularVitePlugin', () => {
   it('should work', () => {
-    expect(angular().name).toEqual('vite-plugin-angular');
+    expect(angular().name).toEqual('@analogjs/vite-plugin-angular');
   });
 });
