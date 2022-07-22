@@ -150,7 +150,7 @@ export function angular(
       if (hasTemplateUrl(code)) {
         const templateUrl = resolveTemplateUrl(code, id);
 
-        if (templateUrl && templateUrl.includes('product-list')) {
+        if (templateUrl) {
           this.addWatchFile(templateUrl);
         }
       }
