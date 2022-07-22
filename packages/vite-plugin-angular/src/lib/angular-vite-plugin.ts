@@ -133,6 +133,18 @@ export function angular(
         }
 
         if (/\.(html|htm|css|less|sass|scss)$/.test(ctx.file)) {
+          /**
+           * Check to see if this was a direct request
+           * for an external resource (styles, html).
+           */
+          const isDirect = ctx.modules.find(
+            (mod) => ctx.file === mod.file && mod.id?.includes('?direct')
+          );
+
+          if (isDirect) {
+            return ctx.modules;
+          }
+          
           let mods: ModuleNode[] = [];
           ctx.modules.forEach((mod) => {
             mod.importers.forEach((imp) => {
