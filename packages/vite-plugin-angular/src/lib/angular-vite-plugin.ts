@@ -2,7 +2,6 @@ import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
 import { transformAsync } from '@babel/core';
 import angularApplicationPreset from '@angular-devkit/build-angular/src/babel/presets/application';
 import { requiresLinking } from '@angular-devkit/build-angular/src/babel/webpack-loader';
-import { BundleStylesheetOptions } from '@angular-devkit/build-angular/src/builders/browser-esbuild/stylesheets';
 import * as ts from 'typescript';
 import { ModuleNode, Plugin } from 'vite';
 import { Plugin as ESBuildPlugin } from 'esbuild';
@@ -77,7 +76,8 @@ export function angular(
                     advancedOptimizations: isProd,
                   },
                   {
-                    sourcemap: false,
+                    workspaceRoot: `${config.root}`,
+                    sourcemap: !isProd,
                     optimization: isProd,
                   }
                 ) as ESBuildPlugin as any,
@@ -144,7 +144,7 @@ export function angular(
           if (isDirect) {
             return ctx.modules;
           }
-          
+
           let mods: ModuleNode[] = [];
           ctx.modules.forEach((mod) => {
             mod.importers.forEach((imp) => {
@@ -223,26 +223,15 @@ export function angular(
       config() {
         return {
           esbuild: {
-            minify: isProd,
-            minifyIdentifiers: true,
-            minifySyntax: true,
-            // NOTE: Disabling whitespace ensures unused pure annotations are kept
-            minifyWhitespace: false,
-            pure: ['forwardRef'],
-            legalComments: 'none',
-            // sourcefile: 'name',
-            sourcemap: !isProd,
-            define: {
-              ngDevMode: 'false',
-              ngJitMode: 'false',
-              ngI18nClosureMode: 'false',
-            },
-            // This option should always be disabled for browser builds as we don't rely on `.name`
-            // and causes deadcode to be retained which makes `NG_BUILD_MANGLE` unusable to investigate tree-shaking issues.
-            // We enable `keepNames` only for server builds as Domino relies on `.name`.
-            // Once we no longer rely on Domino for SSR we should be able to remove this.
+            legalComments: isProd ? 'none' : 'external',
             keepNames: false,
-            target: 'es2020',
+            define: isProd
+              ? {
+                  ngDevMode: 'false',
+                  ngJitMode: 'false',
+                  ngI18nClosureMode: 'false',
+                }
+              : undefined,
           },
         };
       },
