@@ -4,7 +4,7 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 
-// import initHmr from '@angular-devkit/build-angular/src/webpack/plugins/hmr/hmr-accept';
+import initHmr from '@angular-devkit/build-angular/src/webpack/plugins/hmr/hmr-accept';
 
 import { AppComponent } from './app/app.component';
 import { routes } from './app/routes';
@@ -22,8 +22,8 @@ bootstrapApplication(AppComponent, {
   ],
 }).catch((err) => console.error(err));
 
-// if (import.meta.hot) {
-//   import.meta.hot.accept((newMod) => {
-//     initHmr(import.meta);
-//   });
-// }
+if (!import.meta.env.PROD && import.meta.hot) {
+  import.meta.hot.accept((newMod) => {
+    initHmr(import.meta);
+  });
+}
