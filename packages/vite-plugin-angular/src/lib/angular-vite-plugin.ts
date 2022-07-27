@@ -17,6 +17,7 @@ import {
 interface PluginOptions {
   tsconfig: string;
   mode: string;
+  workspaceRoot: string;
 }
 
 interface EmitFileResult {
@@ -31,6 +32,7 @@ export function angular(
   pluginOptions: PluginOptions = {
     tsconfig: './tsconfig.app.json',
     mode: 'development',
+    workspaceRoot: process.cwd()
   }
 ): Plugin[] {
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -76,7 +78,7 @@ export function angular(
                     advancedOptimizations: isProd,
                   },
                   {
-                    workspaceRoot: `${config.root}`,
+                    workspaceRoot: pluginOptions.workspaceRoot,
                     sourcemap: !isProd,
                     optimization: isProd,
                   }
