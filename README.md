@@ -4,7 +4,7 @@ Analog is a meta-framework for building applications and websites with [Angular]
 
 ## Getting Started
 
-Use your package manage of choice to create a new project
+Use your package manager of choice to create a new project
 
 With yarn:
 
@@ -20,9 +20,11 @@ npm init analog
 
 Follow the prompts to scaffold the project and start the development server.
 
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/analogjs/analog/tree/main/packages/create-analog/template-angular-v14?file=vite.config.ts&preset=node)
+
 ## Goals
 
-- Vite-based
+- Vite-based 
 - Low config
 - File-based routing
   - Support for api/server routes
