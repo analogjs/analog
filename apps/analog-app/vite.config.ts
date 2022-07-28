@@ -19,11 +19,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       mode !== 'test'
-        ? angular({
-            mode,
-            tsconfig: './tsconfig.app.json',
-            workspaceRoot: process.cwd(),
-          })
+        ? angular()
         : undefined,
       visualizer(),
       splitVendorChunkPlugin(),
