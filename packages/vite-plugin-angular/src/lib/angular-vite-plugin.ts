@@ -16,7 +16,6 @@ import {
 
 interface PluginOptions {
   tsconfig: string;
-  mode: string;
   workspaceRoot: string;
 }
 
@@ -31,7 +30,6 @@ type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 export function angular(
   pluginOptions: PluginOptions = {
     tsconfig: './tsconfig.app.json',
-    mode: 'development',
     workspaceRoot: process.cwd()
   }
 ): Plugin[] {
@@ -55,7 +53,7 @@ export function angular(
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode: boolean = false;
   let sourceFileCache = new SourceFileCache();
-  let isProd = pluginOptions.mode === 'production';
+  let isProd = process.env['NODE_ENV'] === 'production';
 
   return [
     {
