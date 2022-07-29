@@ -16,6 +16,7 @@ import {
   reset,
   yellow
 } from 'kolorist'
+import { execSync } from 'node:child_process'
 
 // Avoids autoconversion to number of the project name by defining that the args
 // non associated with an option ( _ ) needs to be parsed as a string. See #4606
@@ -183,6 +184,9 @@ async function init() {
   pkg.name = packageName || getProjectName()
 
   write('package.json', JSON.stringify(pkg, null, 2))
+
+  console.log(`\nInitializing git repository:`);
+  execSync(`git init ${targetDir} && cd ${targetDir} && git add . && git commit -m "initial commit"`);
 
   const pkgInfo = pkgFromUserAgent(process.env.npm_config_user_agent)
   const pkgManager = pkgInfo ? pkgInfo.name : 'npm'
