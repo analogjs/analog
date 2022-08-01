@@ -91,38 +91,17 @@ export function angular(
           },
         };
       },
+      configureServer(server) {
+        server.watcher.on('add', setupCompilation);
+        server.watcher.on('unlink', setupCompilation);
+      },
       async buildStart() {
-        const { options: tsCompilerOptions, rootNames: rn } =
-          compilerCli.readConfiguration(pluginOptions.tsconfig, {
-            enableIvy: true,
-            noEmitOnError: false,
-            suppressOutputPathCheck: true,
-            outDir: undefined,
-            inlineSources: !isProd,
-            inlineSourceMap: !isProd,
-            sourceMap: false,
-            mapRoot: undefined,
-            sourceRoot: undefined,
-            declaration: false,
-            declarationMap: false,
-            allowEmptyCodegenFiles: false,
-            annotationsAs: 'decorators',
-            enableResourceInlining: false,
-          });
-
-        rootNames = rn;
-        compilerOptions = tsCompilerOptions;
-        host = ts.createIncrementalCompilerHost(compilerOptions);
-
-        // Setup source file caching and reuse cache from previous compilation if present
-        let cache = new SourceFileCache();
+        setupCompilation();
 
         // Only store cache if in watch mode
         if (watchMode) {
-          sourceFileCache = cache;
+          augmentHostWithCaching(host, sourceFileCache);
         }
-
-        augmentHostWithCaching(host, cache);
 
         await buildAndAnalyze();
       },
@@ -289,6 +268,30 @@ export function angular(
       },
     },
   ];
+
+  function setupCompilation() {
+    const { options: tsCompilerOptions, rootNames: rn } =
+      compilerCli.readConfiguration(pluginOptions.tsconfig, {
+        enableIvy: true,
+        noEmitOnError: false,
+        suppressOutputPathCheck: true,
+        outDir: undefined,
+        inlineSources: !isProd,
+        inlineSourceMap: !isProd,
+        sourceMap: false,
+        mapRoot: undefined,
+        sourceRoot: undefined,
+        declaration: false,
+        declarationMap: false,
+        allowEmptyCodegenFiles: false,
+        annotationsAs: 'decorators',
+        enableResourceInlining: false,
+      });
+
+    rootNames = rn;
+    compilerOptions = tsCompilerOptions;
+    host = ts.createIncrementalCompilerHost(compilerOptions);
+  }
 
   /**
    * Creates a new NgtscProgram to analyze/re-analyze
