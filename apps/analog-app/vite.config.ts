@@ -15,20 +15,17 @@ export default defineConfig(({ mode }) => {
       target: 'es2020',
     },
     resolve: {
-      mainFields: ['es2020', 'module'],
+      mainFields: ['module'],
     },
-    plugins: [
-      mode !== 'test'
-        ? angular()
-        : undefined,
-      visualizer(),
-      splitVendorChunkPlugin(),
-    ],
+    plugins: [angular(), visualizer(), splitVendorChunkPlugin()],
     test: {
       globals: true,
       environment: 'jsdom',
       setupFiles: ['test-setup.ts'],
       include: ['**/*.spec.ts'],
+      cache: {
+        dir: `${offsetFromRoot('apps/analog-app/src')}/node_modules/.vitest`
+      }
     },
     define: {
       'import.meta.vitest': mode !== 'production',

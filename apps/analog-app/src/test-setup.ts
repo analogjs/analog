@@ -1,4 +1,4 @@
-import './vitest-zone-patch';
+import '../../../packages/vite-plugin-angular/setup-vitest';
 
 import {
   BrowserDynamicTestingModule,

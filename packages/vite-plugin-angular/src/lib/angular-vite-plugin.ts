@@ -3,7 +3,7 @@ import { transformAsync } from '@babel/core';
 import angularApplicationPreset from '@angular-devkit/build-angular/src/babel/presets/application';
 import { requiresLinking } from '@angular-devkit/build-angular/src/babel/webpack-loader';
 import * as ts from 'typescript';
-import { ModuleNode, Plugin } from 'vite';
+import { ModuleNode, Plugin, ViteDevServer } from 'vite';
 import { Plugin as ESBuildPlugin } from 'esbuild';
 import { createCompilerPlugin } from '@angular-devkit/build-angular/src/builders/browser-esbuild/compiler-plugin';
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
@@ -29,8 +29,11 @@ type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 
 export function angular(
   pluginOptions: PluginOptions = {
-    tsconfig: './tsconfig.app.json',
-    workspaceRoot: process.cwd()
+    tsconfig:
+      process.env['NODE_ENV'] === 'test'
+        ? './tsconfig.spec.json'
+        : './tsconfig.app.json',
+    workspaceRoot: process.cwd(),
   }
 ): Plugin[] {
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -54,6 +57,8 @@ export function angular(
   let watchMode: boolean = false;
   let sourceFileCache = new SourceFileCache();
   let isProd = process.env['NODE_ENV'] === 'production';
+  let isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+  let viteServer: ViteDevServer;
 
   return [
     {
@@ -92,6 +97,7 @@ export function angular(
         };
       },
       configureServer(server) {
+        viteServer = server;
         server.watcher.on('add', setupCompilation);
         server.watcher.on('unlink', setupCompilation);
       },
@@ -146,20 +152,33 @@ export function angular(
         }
 
         if (/\.[cm]?tsx?$/.test(id)) {
-          if (hasTemplateUrl(code)) {
-            const templateUrl = resolveTemplateUrl(code, id);
+          const tsMod = viteServer.moduleGraph.getModuleById(id);
 
-            if (templateUrl) {
-              this.addWatchFile(templateUrl);
-            }
+          /**
+           * Re-analyze on each transform
+           * for test(Vitest)
+           */
+          if (isTest && tsMod) {
+            sourceFileCache.invalidate(id);
+            await buildAndAnalyze();
           }
 
-          if (hasStyleUrls(code)) {
-            const styleUrls = resolveStyleUrls(code, id);
+          if (watchMode) {
+            if (hasTemplateUrl(code)) {
+              const templateUrl = resolveTemplateUrl(code, id);
 
-            styleUrls.forEach((styleUrl) => {
-              this.addWatchFile(styleUrl);
-            });
+              if (templateUrl) {
+                this.addWatchFile(templateUrl);
+              }
+            }
+
+            if (hasStyleUrls(code)) {
+              const styleUrls = resolveStyleUrls(code, id);
+
+              styleUrls.forEach((styleUrl) => {
+                this.addWatchFile(styleUrl);
+              });
+            }
           }
 
           const typescriptResult = await fileEmitter!(id);

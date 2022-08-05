@@ -14,7 +14,11 @@ Run `yarn dev` for a dev server. Navigate to `http://localhost:3000/`. The appli
 
 Run `yarn build` to build the project. The build artifacts will be stored in the `dist/` directory.
 
+## Test
+
+Run `yarn test` to run unit tests with [Vitest](https://vitest.dev).
+
 ## Community
 
 - Join the [Discord](https://discord.gg/mKC2Ec48U5)
-- Visit the [GitHub Repo](https://github.com/analogjs/analog)
+- Visit and Star the [GitHub Repo](https://github.com/analogjs/analog)

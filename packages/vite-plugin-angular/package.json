@@ -3,6 +3,8 @@
   "description": "Vite Plugin for Angular",
   "version": "0.2.0-alpha.5",
   "keywords": [
+    "vite",
+    "vitest",
     "vite-plugin",
     "angular"
   ],
