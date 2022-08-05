@@ -24,7 +24,8 @@ Follow the prompts to scaffold the project and start the development server.
 
 ## Goals
 
-- Vite-based 
+- Vite-based
+  - Supports Vite/Vitest
 - Low config
 - File-based routing
   - Support for api/server routes
@@ -33,7 +34,7 @@ Follow the prompts to scaffold the project and start the development server.
 
 ## Packages
 
-- @analogjs/vite-plugin-angular: An Angular Plugin for building applications with Vite
+- @analogjs/vite-plugin-angular: An Angular Plugin for building/testing applications with Vite
 
 ## Supporting Analog
 

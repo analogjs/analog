@@ -2,9 +2,14 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "module": "commonjs",
     "types": ["node", "vitest/globals"]
   },
-  "files": ["src/test-setup.ts"],
-  "include": ["vite.config.ts", "**/*.test.ts", "**/*.spec.ts", "**/*.d.ts"]
+  "files": [
+    "src/test-setup.ts",
+    "src/polyfills.ts"
+  ],
+  "include": [
+    "src/**/*.spec.ts",
+    "**/*.d.ts"
+  ]
 }

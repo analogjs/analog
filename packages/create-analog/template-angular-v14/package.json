@@ -7,7 +7,7 @@
     "start": "npm run dev",
     "build": "vite build",
     "watch": "vite build --watch",
-    "test": "ng test",
+    "test": "vitest",
     "postinstall": "vite optimize"
   },
   "private": true,
@@ -29,7 +29,9 @@
     "@angular-devkit/build-angular": "^14.0.3",
     "@angular/cli": "~14.0.3",
     "@angular/compiler-cli": "^14.0.0",
+    "jsdom": "^20.0.0",
     "typescript": "~4.7.2",
-    "vite": "^2.9.13"
+    "vite": "^2.9.13",
+    "vitest": "^0.17.0"
   }
 }
