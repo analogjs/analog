@@ -152,15 +152,16 @@ export function angular(
         }
 
         if (/\.[cm]?tsx?$/.test(id)) {
-          const tsMod = viteServer.moduleGraph.getModuleById(id);
-
           /**
            * Re-analyze on each transform
            * for test(Vitest)
            */
-          if (isTest && tsMod) {
-            sourceFileCache.invalidate(id);
-            await buildAndAnalyze();
+          if (isTest) {
+            const tsMod = viteServer.moduleGraph.getModuleById(id);
+            if (tsMod) {
+              sourceFileCache.invalidate(id);
+              await buildAndAnalyze();
+            }
           }
 
           if (watchMode) {
