@@ -8,7 +8,7 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/create-analog",
-        "command": "cp -r packages/create-analog dist/packages/create-analog"
+        "command": "mkdir -p dist/packages/create-analog && cp -r packages/create-analog dist/packages/create-analog"
       }
     },
     "test": {
@@ -16,7 +16,7 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "cwd": "packages/create-analog",
-        "command": "vitest --dir __tests__"
+        "command": "vitest run __tests__"
       }
     }
   },

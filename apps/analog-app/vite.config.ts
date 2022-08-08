@@ -2,7 +2,7 @@
 
 import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 import { visualizer } from 'rollup-plugin-visualizer';
-import angular from '../../dist/packages/vite-plugin-angular';
+import angular from '@analogjs/vite-plugin-angular';
 import { offsetFromRoot } from '@nrwl/devkit';
 
 // https://vitejs.dev/config/

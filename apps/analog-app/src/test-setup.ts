@@ -1,4 +1,4 @@
-import '../../../packages/vite-plugin-angular/setup-vitest';
+import '@analogjs/vite-plugin-angular/setup-vitest';
 
 import {
   BrowserDynamicTestingModule,
