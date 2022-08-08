@@ -7,7 +7,7 @@
       "executor": "@nrwl/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/packages/vite-plugin-angular",
+        "outputPath": "node_modules/@analogjs/vite-plugin-angular",
         "main": "packages/vite-plugin-angular/src/index.ts",
         "tsConfig": "packages/vite-plugin-angular/tsconfig.lib.json",
         "assets": ["packages/vite-plugin-angular/*.md"]
