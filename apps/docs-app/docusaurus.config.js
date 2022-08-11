@@ -74,7 +74,7 @@ const config = {
             items: [
               {
                 label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/analog',
+                href: 'https://stackoverflow.com/questions/tagged/analogjs',
               },
             ],
           },
