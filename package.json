@@ -52,6 +52,7 @@
     "@docusaurus/module-type-aliases": "2.0.1",
     "@docusaurus/preset-classic": "2.0.1",
     "@mdx-js/react": "1.6.22",
+    "@ngtools/webpack": "~14.0.0",
     "@nrwl/cli": "14.4.2",
     "@nrwl/cypress": "14.4.2",
     "@nrwl/eslint-plugin-nx": "14.4.2",
