@@ -39,15 +39,3 @@ $ GIT_USER=<Your GitHub username> yarn deploy
 ```
 
 If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
-
-### Dependencies
-
-The following dependencies are used to build this project.
-
-- `@docusaurus/*`
-- `@mdx-js/react`
-- `cslx`
-- `prism-react-renderer`
-- `react`
-- `react-dom`
-- `typescript`
