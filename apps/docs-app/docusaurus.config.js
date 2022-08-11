@@ -56,11 +56,12 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      image: 'img/logo.png',
       navbar: {
-        title: 'My Site',
+        title: 'Analog',
         logo: {
-          alt: 'My Site Logo',
-          src: 'img/logo.svg',
+          alt: 'Analog logo',
+          src: 'img/logo.png',
         },
         items: [
           {
@@ -79,6 +80,11 @@ const config = {
       },
       footer: {
         style: 'dark',
+        logo: {
+          alt: 'Analog logo',
+          href: '/',
+          src: 'img/logo.png',
+        },
         links: [
           {
             title: 'Docs',
@@ -120,7 +126,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Analog. Licensed under MIT.`,
       },
       prism: {
         theme: lightCodeTheme,
