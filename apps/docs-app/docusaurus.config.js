@@ -115,6 +115,7 @@ const config = {
         ],
       },
       prism: {
+        defaultLanguage: 'typescript',
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
       },
