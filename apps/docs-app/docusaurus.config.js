@@ -61,11 +61,15 @@ const config = {
         },
         links: [
           {
-            title: 'Docs',
+            title: 'Documentation',
             items: [
               {
-                label: 'Intro',
-                to: '/docs/intro',
+                label: 'Introduction',
+                to: 'docs',
+              },
+              {
+                label: 'Installation',
+                to: 'docs/installation',
               },
             ],
           },
@@ -98,10 +102,10 @@ const config = {
         },
         items: [
           {
-            type: 'doc',
-            docId: 'intro',
+            activeBasePath: 'docs',
+            label: 'Docs',
             position: 'left',
-            label: 'Intro',
+            to: 'docs',
           },
           {
             href: `https://github.com/${organizationName}/${projectName}`,
