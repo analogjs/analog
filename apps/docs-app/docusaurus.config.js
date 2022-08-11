@@ -1,24 +1,20 @@
 // @ts-check
-// Note: type annotations allow type checking and IDEs autocompletion
 
 const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
+// TODO(@LayZeeDK): replace with Analog organization
+const organizationName = 'LayZeeDK';
+// TODO(@LayZeeDK): replace with Analog repository
+const projectName = 'analogjs-analog';
+const title = 'Analog';
+// TODO(@LayZeeDK): replace with custom domain
+const url = `https://${organizationName}.github.io`;
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'My Site',
-  tagline: 'Dinosaurs are cool',
-  url: 'https://your-docusaurus-test-site.com',
-  baseUrl: '/',
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
-  favicon: 'img/favicon.ico',
-
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
-
+  // TODO(@LayZeeDK): replace with `/` for custom domain
+  baseUrl: `/${projectName}/`,
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
   // to replace "en" with "zh-Hans".
@@ -26,51 +22,36 @@ const config = {
     defaultLocale: 'en',
     locales: ['en'],
   },
-
+  favicon: 'img/favicon.ico',
+  onBrokenLinks: 'throw',
+  onBrokenMarkdownLinks: 'throw',
+  organizationName,
+  plugins: [],
   presets: [
     [
       'classic',
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
-        docs: {
-          sidebarPath: require.resolve('./sidebars.js'),
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-        },
         blog: false,
+        docs: {
+          editUrl: `https://github.com/${organizationName}/${projectName}/edit/main`,
+          sidebarPath: require.resolve('./sidebars.js'),
+        },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
       }),
     ],
   ],
-
+  projectName,
+  tagline: 'The fullstack Angular meta-framework',
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      image: 'img/logo.png',
-      navbar: {
-        title: 'Analog',
-        logo: {
-          alt: 'Analog logo',
-          src: 'img/logo.png',
-        },
-        items: [
-          {
-            type: 'doc',
-            docId: 'intro',
-            position: 'left',
-            label: 'Intro',
-          },
-          {
-            href: 'https://github.com/facebook/docusaurus',
-            label: 'GitHub',
-            position: 'right',
-          },
-        ],
+      colorMode: {
+        respectPrefersColorScheme: true,
       },
+      image: 'img/logo.png',
       footer: {
         style: 'dark',
         logo: {
@@ -93,15 +74,7 @@ const config = {
             items: [
               {
                 label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-              },
-              {
-                label: 'Discord',
-                href: 'https://discordapp.com/invite/docusaurus',
-              },
-              {
-                label: 'Twitter',
-                href: 'https://twitter.com/docusaurus',
+                href: 'https://stackoverflow.com/questions/tagged/analog',
               },
             ],
           },
@@ -110,18 +83,42 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/facebook/docusaurus',
+                href: `https://github.com/${organizationName}/${projectName}`,
               },
             ],
           },
         ],
         copyright: `Copyright © ${new Date().getFullYear()} Analog. Licensed under MIT.`,
       },
+      navbar: {
+        title,
+        logo: {
+          alt: 'Analog logo',
+          src: 'img/logo.png',
+        },
+        items: [
+          {
+            type: 'doc',
+            docId: 'intro',
+            position: 'left',
+            label: 'Intro',
+          },
+          {
+            href: `https://github.com/${organizationName}/${projectName}`,
+            label: 'GitHub',
+            position: 'right',
+          },
+        ],
+      },
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
       },
     }),
+  title,
+  // GitHub Pages adds a trailing slash to Docusaurus URLs by default.
+  trailingSlash: false,
+  url,
 };
 
 module.exports = config;
