@@ -3,7 +3,8 @@ name: ci
 on:
   push:
     branches:
-      - main
+      # TODO(@LayZeeDK): Enable branch filter
+      # - main
   pull_request: {}
 
 env:
@@ -28,7 +29,8 @@ jobs:
         run: yarn test
       - name: Upload docs website
         # Runs on merge to the `main` branch
-        if: github.event_name == 'push' && github.ref_name == 'main'
+        # TODO(@LayZeeDK): Enable condition
+        # if: github.event_name == 'push' && github.ref_name == 'main'
         uses: actions/upload-artifact@v3
         with:
           if-no-files-found: error
@@ -40,7 +42,8 @@ jobs:
     name: '[Merge] Deploy docs website'
     needs: checks
     # Runs on merge to the `main` branch
-    if: github.event_name == 'push' && github.ref_name == 'main'
+    # TODO(@LayZeeDK): Enable condition
+    # if: github.event_name == 'push' && github.ref_name == 'main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
