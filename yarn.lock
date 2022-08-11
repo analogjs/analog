@@ -1943,6 +1943,16 @@
     semver "7.3.4"
     tslib "^2.3.0"
 
+"@nrwl/devkit@^14.3.6":
+  version "14.5.4"
+  resolved "https://registry.yarnpkg.com/@nrwl/devkit/-/devkit-14.5.4.tgz#f6e5d1b9cc998f231a8ea0a149793dd11bd3b9e6"
+  integrity sha512-9UFoQb6HdEkvZlOZIZgTAPR5oagc1V72OdBgtiM0ZK5cHm9sSSTv7FrVlyxy+WWYZhy/orUm5eSChO/yNM/pZg==
+  dependencies:
+    ejs "^3.1.7"
+    ignore "^5.0.4"
+    semver "7.3.4"
+    tslib "^2.3.0"
+
 "@nrwl/eslint-plugin-nx@14.4.2":
   version "14.4.2"
   resolved "https://registry.yarnpkg.com/@nrwl/eslint-plugin-nx/-/eslint-plugin-nx-14.4.2.tgz#b58307db40d3e336fd2c7e919df5a24fd9271754"
@@ -2141,6 +2151,13 @@
     tslib "^2.3.0"
     yargs "^17.4.0"
     yargs-parser "21.0.1"
+
+"@nx-plus/docusaurus@14.1.0":
+  version "14.1.0"
+  resolved "https://registry.yarnpkg.com/@nx-plus/docusaurus/-/docusaurus-14.1.0.tgz#0d919aada8cd94b986fc74e8dc604ba06491dbdc"
+  integrity sha512-EjzaOm8GCpyADKn4G19AgZk/l8F5eyNCVN1oFki7KUPaig9N9IjRCEmUQtHuomGbCQRqHtpovEPJldCLRz4glw==
+  dependencies:
+    "@nrwl/devkit" "^14.3.6"
 
 "@parcel/watcher@2.0.4":
   version "2.0.4"
