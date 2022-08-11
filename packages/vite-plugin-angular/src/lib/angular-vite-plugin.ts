@@ -17,6 +17,7 @@ import {
 interface PluginOptions {
   tsconfig: string;
   workspaceRoot: string;
+  advancedOptimizations?: boolean;
 }
 
 interface EmitFileResult {
@@ -186,10 +187,28 @@ export function angular(
 
           // return fileEmitter
           const data = typescriptResult?.content ?? '';
+          const forceAsyncTransformation =
+            /for\s+await\s*\(|async\s+function\s*\*/.test(data);
+          const useInputSourcemap = (!isProd ? undefined : false) as undefined;
+
+          if (
+            !forceAsyncTransformation &&
+            !pluginOptions.advancedOptimizations
+          ) {
+            return {
+              // Strip sourcemaps if they should not be used
+              contents: useInputSourcemap
+                ? data
+                : data.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, ''),
+              loader: 'js',
+            };
+          }
 
           const babelResult = await transformAsync(data, {
             filename: id,
-            inputSourceMap: (!isProd ? undefined : false) as undefined,
+            inputSourceMap: (useInputSourcemap
+              ? undefined
+              : false) as undefined,
             sourceMaps: !isProd ? 'inline' : false,
             compact: false,
             configFile: false,
@@ -200,7 +219,7 @@ export function angular(
               [
                 angularApplicationPreset,
                 {
-                  forceAsyncTransformation: data.includes('async'),
+                  forceAsyncTransformation,
                   optimize: isProd && {},
                 },
               ],
