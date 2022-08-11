@@ -71,6 +71,10 @@ const config = {
                 label: 'Installation',
                 to: 'docs/installation',
               },
+              {
+                label: 'Contributing',
+                to: 'docs/contributing',
+              },
             ],
           },
           {
