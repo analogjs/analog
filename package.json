@@ -26,6 +26,10 @@
     "url": "https://github.com/analogjs/analog.git"
   },
   "private": true,
+  "workspaces": [
+    "apps/**",
+    "libs/**"
+  ],
   "dependencies": {
     "@angular/animations": "~14.0.0",
     "@angular/common": "~14.0.0",
