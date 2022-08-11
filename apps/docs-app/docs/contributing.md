@@ -25,7 +25,9 @@ Before opening a pull request, run the following command from the root folder to
 yarn
 ```
 
-### Running example application
+### Running locally
+
+To serve the example application locally, run the following command from the root folder:
 
 ```shell
 yarn dev
