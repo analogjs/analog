@@ -17,7 +17,6 @@ import {
 interface PluginOptions {
   tsconfig: string;
   workspaceRoot: string;
-  advancedOptimizations?: boolean;
 }
 
 interface EmitFileResult {
@@ -191,10 +190,7 @@ export function angular(
             /for\s+await\s*\(|async\s+function\s*\*/.test(data);
           const useInputSourcemap = (!isProd ? undefined : false) as undefined;
 
-          if (
-            !forceAsyncTransformation &&
-            !pluginOptions.advancedOptimizations
-          ) {
+          if (!forceAsyncTransformation && !isProd) {
             return {
               // Strip sourcemaps if they should not be used
               contents: useInputSourcemap
@@ -263,7 +259,20 @@ export function angular(
             >('@angular/compiler-cli/linker/babel')
           ).createEs2015LinkerPlugin;
 
+          const forceAsyncTransformation =
+            !/[\\/][_f]?esm2015[\\/]/.test(id) &&
+            /for\s+await\s*\(|async\s+function\s*\*/.test(code);
           const useInputSourcemap = !isProd;
+
+          if (!forceAsyncTransformation && !isProd) {
+            return {
+              // Strip sourcemaps if they should not be used
+              contents: useInputSourcemap
+                ? code
+                : code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, ''),
+              loader: 'js',
+            };
+          }
 
           const result = await transformAsync(code, {
             filename: id,
@@ -285,9 +294,7 @@ export function angular(
                     jitMode: false,
                     linkerPluginCreator,
                   },
-                  forceAsyncTransformation:
-                    !/[\\/][_f]?esm2015[\\/]/.test(id) &&
-                    code.includes('async'),
+                  forceAsyncTransformation,
                   optimize: isProd && {
                     looseEnums: angularPackage,
                     pureTopLevel: angularPackage,
