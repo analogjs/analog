@@ -1,24 +1,92 @@
-# Developing
+# Contributing
 
-## Setup
+Analog is an MIT-licensed open source project with its ongoing development made by contributors.
+
+## Contributing to the framework
+
+### Folder structure
+
+Source code for the Analog framework exists under the `packages/` folder. To contribute features or bug fixes to the framework, locate the relevant code in one of the `packages` sub-folder. In addition to the `create-analog` sub-folder, there is a sub-folder for each of the `npm` packages in the `@analogjs/*` scope:
+
+- `packages/create-analog` → `create-analog`
+- `packages/vite-plugin-angular` → `@analogjs/vite-plugin-angular`
+
+### Setup
+
+Analog uses [Yarn Classic](https://classic.yarnpkg.com/) to manage its dependencies.
+
+Before opening a pull request, run the following command from the root folder to make sure your development dependencies are up-to-date:
 
 ```shell
 yarn
 ```
 
-## Running Example App
+### Running locally
+
+To serve the example application locally, run the following command from the root folder:
 
 ```shell
 yarn dev
 ```
 
-## Build all packages
+### Build
+
+Analog uses [Nx](https://nx.dev) for builds. To build all projects locally, run the following command from the root folder:
 
 ```shell
 yarn build
 ```
 
-## Submitting Pull Requests
+### Testing
+
+Analog uses [Jest](https://jestjs.io) for tests. To test all projects locally, run the following command from the root folder:
+
+```shell
+yarn test
+```
+
+## Contributing to the docs and analogjs.org website
+
+### Folder struture
+
+Source code for the Analog docs and the analogjs.org website exists under the `apps/docs-app` project folder. To contribute documentation or website content, locate the relevant source code in one of the sub-folders:
+
+- `blog` - Blog (unused).
+- `docs` - Documentation pages with React MDX support.
+- `src/components` - React components.
+- `src/css` - Global styles.
+- `src/pages` - React page components.
+- `static` - Images and other static assets.
+
+### Setup
+
+Analog uses [Yarn Classic](https://classic.yarnpkg.com/) to manage its dependencies.
+
+Before opening a pull request, run the following command from the root folder to make sure your development dependencies are up-to-date:
+
+```shell
+yarn
+```
+
+### Running locally
+
+Analog uses [Docusaurus](https://docusaurus.io/) to develop the docs and analogjs.org website. Run the following command from the `apps/docs-app` folder to serve the website:
+
+```shell
+yarn nx serve
+```
+
+Once the development server is up and running, you can preview the docs and website by visiting [http://localhost:3000](http://localhost:3000).
+
+### Build
+
+Analog uses [Nx](https://nx.dev) to build the docs and analogjs.org website. To build the website locally, run the following command from the `apps/docs-app` folder:
+
+```shell
+yarn nx build
+```
+
+## Submitting pull requests
 
 **Please follow these basic steps to simplify pull request reviews. If you don't you'll probably just be asked to anyway.**
 
@@ -48,13 +116,13 @@ Questions and requests for support should not be opened as issues and should be 
 
 - Start a new [Q&A Discussion](https://github.com/analogjs/analog/discussions/new?category=q-a) on GitHub.
 
-## <a name="commit"></a> Commit Message Guidelines
+## <a name="commit"></a> Commit message guidelines
 
 We have very precise rules over how our git commit messages can be formatted. This leads to **more
 readable messages** that are easy to follow when looking through the **project history**. But also,
 we use the git commit messages to **generate the changelog**.
 
-### Commit Message Format
+### Commit message format
 
 Each commit message consists of a **header**, a **body** and a **footer**. The header has a special
 format that includes a **type**, a **scope** and a **subject**:
