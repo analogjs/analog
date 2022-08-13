@@ -22,6 +22,9 @@
   justify-content: center;
 }
 
-.buttonOutline:not(:hover) {
-  color: var(--ifm-hero-text-color) !important;
+/**
+  * 1. Increase specificity to override the Infima Outline Button style.
+  */
+.buttonOutline.buttonOutline.buttonOutline.buttonOutline:not(:hover) /* [1] */ {
+  color: var(--ifm-hero-text-color);
 }
