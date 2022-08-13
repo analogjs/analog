@@ -51,13 +51,13 @@ const config = {
       colorMode: {
         respectPrefersColorScheme: true,
       },
-      image: 'img/logo.png',
+      image: 'img/logos/analog-logo.svg',
       footer: {
         style: 'dark',
         logo: {
           alt: 'Analog logo',
           href: '/',
-          src: 'img/logo.png',
+          src: 'img/logos/analog-logo.svg',
         },
         links: [
           {
@@ -102,7 +102,7 @@ const config = {
         title,
         logo: {
           alt: 'Analog logo',
-          src: 'img/logo.png',
+          src: 'img/logos/analog-logo.svg',
         },
         items: [
           {
