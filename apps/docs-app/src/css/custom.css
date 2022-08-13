@@ -30,3 +30,8 @@
   --ifm-background-color: #0d0e11;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+.footer__logo {
+  width: 100px;
+  height: 100px;
+}
