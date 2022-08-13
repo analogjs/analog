@@ -74,7 +74,7 @@ to read on GitHub as well as in various git tools.
 
 The footer should contain a [closing reference to an issue](https://help.github.com/articles/closing-issues-via-commit-messages/) if any.
 
-Samples: (even more [samples](https://github.com/analogjs/analog/commits/master))
+Samples: (even more [samples](https://github.com/analogjs/analog/commits/main))
 
 ```
 docs(changelog): update changelog to beta.5
