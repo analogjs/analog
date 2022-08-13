@@ -1,6 +1,7 @@
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
+import StackblitzButton from '@site/src/components/StackblitzButton';
 import Layout from '@theme/Layout';
 import clsx from 'clsx';
 import React from 'react';
@@ -18,6 +19,13 @@ function HomepageHeader() {
           <Link className="button button--secondary button--lg" to="/docs">
             Read the docs
           </Link>
+
+          <StackblitzButton
+            className={clsx(
+              'margin-left--md button--outline',
+              styles.buttonOutline
+            )}
+          />
         </div>
       </div>
     </header>

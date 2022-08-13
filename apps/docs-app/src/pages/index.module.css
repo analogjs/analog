@@ -21,3 +21,7 @@
   align-items: center;
   justify-content: center;
 }
+
+.buttonOutline:not(:hover) {
+  color: var(--ifm-hero-text-color) !important;
+}
