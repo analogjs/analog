@@ -3,18 +3,14 @@
 const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
-// TODO(@LayZeeDK): replace with Analog organization
-const organizationName = 'LayZeeDK';
-// TODO(@LayZeeDK): replace with Analog repository
-const projectName = 'analogjs-analog';
+const organizationName = 'analogjs';
+const projectName = 'analog';
 const title = 'Analog';
-// TODO(@LayZeeDK): replace with custom domain
-const url = `https://${organizationName}.github.io`;
+const url = `https://analogjs.org`;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  // TODO(@LayZeeDK): replace with `/` for custom domain
-  baseUrl: `/${projectName}/`,
+  baseUrl: '/',
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
   // to replace "en" with "zh-Hans".
