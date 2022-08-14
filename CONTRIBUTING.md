@@ -76,6 +76,12 @@ Analog uses [Docusaurus](https://docusaurus.io/) to develop the docs and analogj
 yarn nx serve
 ```
 
+or alternatively run this command from the root folder:
+
+```shell
+yarn nx serve docs-app
+```
+
 Once the development server is up and running, you can preview the docs and website by visiting [http://localhost:3000](http://localhost:3000).
 
 ### Build
@@ -84,6 +90,26 @@ Analog uses [Nx](https://nx.dev) to build the docs and analogjs.org website. To 
 
 ```shell
 yarn nx build
+```
+
+or alternatively run this command from the root folder:
+
+```shell
+yarn nx build docs-app
+```
+
+### Running static website locally
+
+To run the the generated static website locally, run the following command from the `apps/docs-app` folder:
+
+```shell
+yarn nx serve-static
+```
+
+or alternatively run this command from the root folder:
+
+```shell
+yarn nx serve-static docs-app
 ```
 
 ## Submitting pull requests

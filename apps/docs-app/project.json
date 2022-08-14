@@ -13,7 +13,15 @@
       "executor": "@nx-plus/docusaurus:dev-server",
       "options": {
         "port": 3000
-      }
+      },
+      "dependsOn": []
+    },
+    "serve-static": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "command": "docusaurus serve --config apps/docs-app/docusaurus.config.js --dir dist/apps/docs-app"
+      },
+      "dependsOn": ["build"]
     }
   },
   "tags": []
