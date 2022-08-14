@@ -11,6 +11,7 @@
     "packageManager": "yarn"
   },
   "implicitDependencies": {
+    "CONTRIBUTING.md": ["docs-app"],
     "package.json": {
       "dependencies": "*",
       "devDependencies": "*"
