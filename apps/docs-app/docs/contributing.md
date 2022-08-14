@@ -1,5 +1,5 @@
 ---
-sidebar_position: 100
+sidebar_position: 4
 title: Contributing
 ---
 

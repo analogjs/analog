@@ -71,6 +71,11 @@ const config = {
                 label: 'Installation',
                 to: 'docs/installation',
               },
+            ],
+          },
+          {
+            title: 'Open source',
+            items: [
               {
                 label: 'Contributors',
                 to: 'docs/contributors',
@@ -79,14 +84,9 @@ const config = {
                 label: 'Contributing',
                 to: 'docs/contributing',
               },
-            ],
-          },
-          {
-            title: 'Community',
-            items: [
               {
-                label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/analogjs',
+                label: 'Sponsoring',
+                to: 'docs/sponsoring',
               },
             ],
           },
@@ -96,6 +96,10 @@ const config = {
               {
                 label: 'GitHub',
                 href: `https://github.com/${organizationName}/${projectName}`,
+              },
+              {
+                label: 'Stack Overflow',
+                href: 'https://stackoverflow.com/questions/tagged/analogjs',
               },
             ],
           },
