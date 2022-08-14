@@ -222,7 +222,7 @@ export function angular(
       config() {
         return {
           esbuild: {
-            legalComments: isProd ? 'none' : 'external',
+            legalComments: 'none',
             keepNames: false,
             define: isProd
               ? {
