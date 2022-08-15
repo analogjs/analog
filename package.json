@@ -74,6 +74,7 @@
     "prettier": "^2.6.2",
     "prompts": "^2.4.2",
     "rollup-plugin-visualizer": "^5.7.1",
+    "start-server-and-test": "^1.14.0",
     "ts-node": "~10.8.0",
     "typescript": "~4.7.4",
     "vite": "^3.0.4",
