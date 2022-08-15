@@ -1,13 +1,10 @@
-import { getGreeting } from '../support/app.po';
+import * as app from '../support/app.po';
 
-describe('analog-app', () => {
+describe('My Store', () => {
   beforeEach(() => cy.visit('/'));
 
-  it('should display welcome message', () => {
-    // Custom command example, see `../support/commands.ts` file
-    cy.login('my-email@something.com', 'myPassword');
-
-    // Function helper example, see `../support/app.po.ts` file
-    getGreeting().contains('Welcome analog-app');
+  it(`Given the user has navigated to the home page
+    Then the app title is visible`, () => {
+    app.getTitle().contains(/my store/i);
   });
 });

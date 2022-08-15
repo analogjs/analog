@@ -24,9 +24,7 @@
           "apps/analog-app/src/favicon.ico",
           "apps/analog-app/src/assets"
         ],
-        "styles": [
-          "apps/analog-app/src/styles.css"
-        ],
+        "styles": ["apps/analog-app/src/styles.css"],
         "scripts": []
       },
       "configurations": {
@@ -61,12 +59,13 @@
         }
       },
       "defaultConfiguration": "production"
-    },    
+    },
     "serve": {
       "executor": "nx:run-commands",
       "options": {
+        "color": true,
         "cwd": "apps/analog-app",
-        "command": "vite"
+        "command": "vite --strict-port"
       }
     },
     "serve-ng": {
@@ -80,7 +79,7 @@
         }
       },
       "defaultConfiguration": "development"
-    },    
+    },
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {

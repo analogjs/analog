@@ -9,6 +9,7 @@
     "prepare": "git config core.hookspath .githooks",
     "start": "nx serve",
     "build": "nx run-many --target build --all",
+    "e2e": "nx run-many --target e2e --all",
     "test": "nx run-many --target test --all",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0"
   },
@@ -74,6 +75,7 @@
     "prettier": "^2.6.2",
     "prompts": "^2.4.2",
     "rollup-plugin-visualizer": "^5.7.1",
+    "start-server-and-test": "^1.14.0",
     "ts-node": "~10.8.0",
     "typescript": "~4.7.4",
     "vite": "^3.0.4",
