@@ -63,18 +63,9 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
+        "color": true,
         "cwd": "apps/analog-app",
         "command": "vite --strict-port"
-      }
-    },
-    "e2e": {
-      "executor": "nx:run-commands",
-      "options": {
-        "color": true,
-        "commands": ["vite --strict-port"],
-        "cwd": "apps/analog-app",
-        "parallel": true,
-        "readyWhen": "ready in"
       }
     },
     "serve-ng": {

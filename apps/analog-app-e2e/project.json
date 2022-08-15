@@ -3,26 +3,18 @@
   "sourceRoot": "apps/analog-app-e2e/src",
   "projectType": "application",
   "targets": {
+    "cypress": {
+      "executor": "@nrwl/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/analog-app-e2e/cypress.json",
+        "baseUrl": "http://localhost:3000"
+      }
+    },
     "e2e": {
       "executor": "nx:run-commands",
       "options": {
         "cwd": "",
-        "command": "start-server-and-test 'nx serve analog-app' 3000 'nx e2e-cypress analog-app-e2e'"
-      }
-    },
-    "e2e-cypress": {
-      "executor": "@nrwl/cypress:cypress",
-      "options": {
-        "cypressConfig": "apps/analog-app-e2e/cypress.json",
-        "baseUrl": "http://localhost:3000"
-      }
-    },
-    "e2e-nx": {
-      "executor": "@nrwl/cypress:cypress",
-      "options": {
-        "cypressConfig": "apps/analog-app-e2e/cypress.json",
-        "devServerTarget": "analog-app:e2e",
-        "baseUrl": "http://localhost:3000"
+        "command": "start-server-and-test 'nx serve analog-app' 3000 'nx cypress analog-app-e2e'"
       }
     },
     "lint": {
