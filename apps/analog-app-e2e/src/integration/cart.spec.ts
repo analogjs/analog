@@ -1,5 +1,4 @@
 import * as cart from '../support/cart.po';
-import * as form from '../support/form';
 import { phones } from '../support/phones';
 import * as productDetails from '../support/product-details.po';
 import * as productList from '../support/product-list.po';
@@ -48,8 +47,8 @@ describe('Cart', () => {
     const address = '62 West Wallaby Street, Wigan, Lancashire';
     buyPhoneByName(phones.xl.name);
     cart.navigateTo();
-    form.getControlByLabel(/name/i).type(name);
-    form.getControlByLabel(/address/i).type(address);
+    cart.typeName(name);
+    cart.typeAddress(address);
 
     cart.purchaseOrder();
     cy.get('@consoleWarn').should(
