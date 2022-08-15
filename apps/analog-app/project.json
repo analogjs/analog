@@ -24,9 +24,7 @@
           "apps/analog-app/src/favicon.ico",
           "apps/analog-app/src/assets"
         ],
-        "styles": [
-          "apps/analog-app/src/styles.css"
-        ],
+        "styles": ["apps/analog-app/src/styles.css"],
         "scripts": []
       },
       "configurations": {
@@ -61,7 +59,7 @@
         }
       },
       "defaultConfiguration": "production"
-    },    
+    },
     "serve": {
       "executor": "nx:run-commands",
       "options": {
@@ -80,7 +78,7 @@
         }
       },
       "defaultConfiguration": "development"
-    },    
+    },
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
