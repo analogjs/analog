@@ -1,3 +1,4 @@
+import { phones } from '../support/phones';
 import * as productDetails from '../support/product-details.po';
 import * as productList from '../support/product-list.po';
 
@@ -6,7 +7,7 @@ describe('Products', () => {
 
   it(`When the "Share" button is clicked
     Then the share dialog is opened`, () => {
-    productList.getShareButtonByName(/phone mini/i).click();
+    productList.getShareButtonByName(phones.mini.name).click();
 
     cy.on('window:alert', (alert) => {
       expect(alert).to.contain(/the product has been shared!/i);
@@ -15,7 +16,7 @@ describe('Products', () => {
 
   it(`When the "Notify Me" button is clicked
     Then the customer subscribes to product sale notifications`, () => {
-    productList.getNotifyButtonByName(/phone xl/i).click();
+    productList.getNotifyButtonByName(phones.xl.name).click();
 
     cy.on('window:alert', (alert) => {
       expect(alert).to.contain(
@@ -26,15 +27,16 @@ describe('Products', () => {
 
   it(`Given the user has navigated to a product's details
     Then the price is visible`, () => {
-    productDetails.navigateToByName(/phone standard/i);
+    const phone = phones.standard;
+    productDetails.navigateToByName(phone.name);
 
-    productDetails.getPrice().contains('$299.00').should('be.visible');
+    productDetails.getPrice().contains(phone.price).should('be.visible');
   });
 
   it(`Given the user has navigated to a product's details
     When the "Buy" button is clicked
     Then the product is added to the cart`, () => {
-    productDetails.navigateToByName(/phone mini/i);
+    productDetails.navigateToByName(phones.mini.name);
 
     productDetails.getBuyButton().click();
 
