@@ -8,6 +8,11 @@
       "options": {
         "cypressConfig": "apps/analog-app-e2e/cypress.json",
         "baseUrl": "http://localhost:3000"
+      },
+      "configurations": {
+        "watch": {
+          "watch": true
+        }
       }
     },
     "e2e": {
@@ -15,6 +20,11 @@
       "options": {
         "cwd": "",
         "command": "start-server-and-test 'nx serve analog-app' 3000 'nx cypress analog-app-e2e'"
+      },
+      "configurations": {
+        "watch": {
+          "command": "start-server-and-test 'nx serve analog-app' 3000 'nx cypress analog-app-e2e --configuration=watch'"
+        }
       }
     },
     "lint": {
