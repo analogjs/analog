@@ -3,7 +3,6 @@ const itemSelector = '.cart-item';
 const getItemByName = (name: string | RegExp) =>
   cy.contains(itemSelector, name);
 
-export const fillName = (name: string) => cy.get('input[name=name]').type(name);
 export const getItems = () => cy.get(itemSelector);
 export const getPriceByName = (name: string | RegExp) =>
   getItemByName(name)
