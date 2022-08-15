@@ -1,9 +1,9 @@
-import { getGreeting } from '../support/app.po';
+import * as app from '../support/app.po';
 
 describe('analog-app', () => {
   beforeEach(() => cy.visit('/'));
 
-  it('should display welcome message', () => {
-    getGreeting().contains('My Store');
+  it('the app title is displayed', () => {
+    app.getTitle().contains('My Store');
   });
 });
