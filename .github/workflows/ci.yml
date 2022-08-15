@@ -26,6 +26,8 @@ jobs:
         run: yarn build
       - name: Test
         run: yarn test
+      - name: End-to-end test
+        run: yarn e2e
       - name: Upload docs website
         # Runs on merge to the `main` branch
         if: github.event_name == 'push' && github.ref_name == 'main'
