@@ -26,6 +26,9 @@
     "url": "https://github.com/analogjs/analog.git"
   },
   "private": true,
+  "workspaces": [
+    "apps/docs-app"
+  ],
   "dependencies": {
     "@angular/animations": "~14.0.0",
     "@angular/common": "~14.0.0",
@@ -48,11 +51,13 @@
     "@angular/cli": "~14.0.0",
     "@angular/compiler-cli": "~14.0.0",
     "@angular/language-service": "~14.0.0",
+    "@ngtools/webpack": "~14.0.0",
     "@nrwl/cli": "14.4.2",
     "@nrwl/cypress": "14.4.2",
     "@nrwl/eslint-plugin-nx": "14.4.2",
     "@nrwl/linter": "14.4.2",
     "@nrwl/workspace": "14.4.2",
+    "@nx-plus/docusaurus": "14.1.0",
     "@types/node": "16.11.7",
     "@typescript-eslint/eslint-plugin": "^5.29.0",
     "@typescript-eslint/parser": "^5.29.0",
@@ -70,7 +75,7 @@
     "prompts": "^2.4.2",
     "rollup-plugin-visualizer": "^5.7.1",
     "ts-node": "~10.8.0",
-    "typescript": "~4.7.2",
+    "typescript": "~4.7.4",
     "vite": "^3.0.4",
     "vitest": "^0.21.0",
     "webpack-bundle-analyzer": "^4.5.0"

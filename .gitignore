@@ -41,3 +41,7 @@ Thumbs.db
 .angular
 analog-project
 stats.html
+
+# Generated Docusaurus files
+.docusaurus/
+.cache-loader/

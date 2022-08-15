@@ -1,0 +1,28 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/docs-app/src",
+  "targets": {
+    "build": {
+      "executor": "@nx-plus/docusaurus:browser",
+      "options": {
+        "outputPath": "dist/apps/docs-app"
+      }
+    },
+    "serve": {
+      "executor": "@nx-plus/docusaurus:dev-server",
+      "options": {
+        "port": 3000
+      },
+      "dependsOn": []
+    },
+    "serve-static": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "command": "docusaurus serve --config apps/docs-app/docusaurus.config.js --dir dist/apps/docs-app"
+      },
+      "dependsOn": ["build"]
+    }
+  },
+  "tags": []
+}
