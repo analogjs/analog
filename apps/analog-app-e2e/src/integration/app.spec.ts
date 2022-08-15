@@ -1,9 +1,10 @@
 import * as app from '../support/app.po';
 
-describe('analog-app', () => {
+describe('My Store', () => {
   beforeEach(() => cy.visit('/'));
 
-  it('the app title is displayed', () => {
-    app.getTitle().contains('My Store');
+  it(`Given the user has navigated to the home page
+    Then the app title is visible`, () => {
+    app.getTitle().contains(/my store/i);
   });
 });
