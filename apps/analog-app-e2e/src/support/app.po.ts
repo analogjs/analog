@@ -1,1 +1,1 @@
-export const getTitle = () => cy.get('h1');
+export const getTitle = () => cy.contains('h1', /my store/i);
