@@ -17,6 +17,14 @@
         "baseUrl": "http://localhost:3000"
       }
     },
+    "e2e-nx": {
+      "executor": "@nrwl/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/analog-app-e2e/cypress.json",
+        "devServerTarget": "analog-app:e2e",
+        "baseUrl": "http://localhost:3000"
+      }
+    },
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "outputs": ["{options.outputFile}"],
