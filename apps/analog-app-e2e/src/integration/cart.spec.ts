@@ -51,6 +51,7 @@ describe('Cart', () => {
     cart.typeAddress(address);
 
     cart.purchaseOrder();
+    cy.get('@consoleWarn').should('have.been.calledOnce');
     cy.get('@consoleWarn').should(
       'have.been.calledWithMatch',
       /your order has been submitted/i,
