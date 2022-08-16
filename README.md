@@ -1,4 +1,7 @@
 # Analog
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
 
@@ -47,3 +50,23 @@ As more contributors are added to the project, they will be added as sponsor rec
 ## Credits
 
 The name was inspired by this project https://github.com/rrdelaney/Analog. 
+
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/jasonhodges"><img src="https://avatars.githubusercontent.com/u/1988476?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Jason Hodges</b></sub></a><br /><a href="https://github.com/jasonhodges/analog/commits?author=jasonhodges" title="Documentation">📖</a></td>
+  </tr>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
