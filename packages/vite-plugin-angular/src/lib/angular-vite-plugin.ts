@@ -192,11 +192,9 @@ export function angular(
 
           if (!forceAsyncTransformation && !isProd) {
             return {
-              // Strip sourcemaps if they should not be used
-              contents: useInputSourcemap
+              code: !isProd
                 ? data
                 : data.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, ''),
-              loader: 'js',
             };
           }
 
@@ -266,11 +264,9 @@ export function angular(
 
           if (!forceAsyncTransformation && !isProd) {
             return {
-              // Strip sourcemaps if they should not be used
-              contents: useInputSourcemap
+              code: !isProd
                 ? code
                 : code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, ''),
-              loader: 'js',
             };
           }
 
