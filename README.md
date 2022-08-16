@@ -1,6 +1,6 @@
 # Analog
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
@@ -57,15 +57,17 @@ The name was inspired by this project https://github.com/rrdelaney/Analog.
 
 ## Contributors ✨
 
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+Thanks goes to these wonderful people for contributing to Analog ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
 <table>
   <tr>
-    <td align="center"><a href="https://github.com/jasonhodges"><img src="https://avatars.githubusercontent.com/u/1988476?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Jason Hodges</b></sub></a><br /><a href="https://github.com/jasonhodges/analog/commits?author=jasonhodges" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://brandonroberts.dev"><img src="https://avatars.githubusercontent.com/u/42211?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Brandon</b></sub></a><br /><a href="https://github.com/jasonhodges/analog/commits?author=brandonroberts" title="Code">💻</a> <a href="https://github.com/jasonhodges/analog/commits?author=brandonroberts" title="Documentation">📖</a> <a href="#ideas-brandonroberts" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="https://brandonroberts.dev"><img src="https://avatars.githubusercontent.com/u/42211?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Brandon</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=brandonroberts" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=brandonroberts" title="Documentation">📖</a> <a href="#ideas-brandonroberts" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="https://dev.to/layzee"><img src="https://avatars.githubusercontent.com/u/6364586?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Lars Gyrup Brink Nielsen</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=LayZeeDK" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=LayZeeDK" title="Tests">⚠️</a></td>
+    <td align="center"><a href="https://dev.to/markostanimirovic"><img src="https://avatars.githubusercontent.com/u/17877290?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Marko Stanimirović</b></sub></a><br /><a href="#tool-markostanimirovic" title="Tools">🔧</a> <a href="#infra-markostanimirovic" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+    <td align="center"><a href="https://github.com/jasonhodges"><img src="https://avatars.githubusercontent.com/u/1988476?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Jason Hodges</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=jasonhodges" title="Documentation">📖</a></td>
   </tr>
 </table>
 
