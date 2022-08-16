@@ -47,6 +47,10 @@ Analog is an MIT-licensed open source project with its ongoing development made 
 
 As more contributors are added to the project, they will be added as sponsor recipients.
 
+## Contributing
+
+Analog welcomes contributors! Please read the [contributing doc](https://github.com/analogjs/analog/blob/main/CONTRIBUTING.md) for details.
+
 ## Credits
 
 The name was inspired by this project https://github.com/rrdelaney/Analog. 
