@@ -1,0 +1,56 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "brandonroberts",
+      "name": "Brandon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42211?v=4",
+      "profile": "https://brandonroberts.dev",
+      "contributions": [
+        "code",
+        "doc",
+        "ideas"
+      ]
+    },
+    {
+      "login": "LayZeeDK",
+      "name": "Lars Gyrup Brink Nielsen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6364586?v=4",
+      "profile": "https://dev.to/layzee",
+      "contributions": [
+        "doc",
+        "test"
+      ]
+    },
+    {
+      "login": "markostanimirovic",
+      "name": "Marko Stanimirović",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17877290?v=4",
+      "profile": "https://dev.to/markostanimirovic",
+      "contributions": [
+        "tool",
+        "infra"
+      ]
+    },
+    {
+      "login": "jasonhodges",
+      "name": "Jason Hodges",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1988476?v=4",
+      "profile": "https://github.com/jasonhodges",
+      "contributions": [
+        "doc"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "analog",
+  "projectOwner": "analogjs",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
