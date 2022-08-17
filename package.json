@@ -6,7 +6,7 @@
     "dev": "nx serve",
     "ng": "nx",
     "postinstall": "node ./decorate-angular-cli.js && ngcc --properties es2020 browser module main",
-    "prepare": "git config core.hookspath .githooks && chmod +x .githooks/*",
+    "prepare": "git config core.hookspath .githooks",
     "start": "nx serve",
     "build": "nx run-many --target build --all",
     "e2e": "nx run-many --target e2e --all",
