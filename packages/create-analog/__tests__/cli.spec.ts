@@ -26,7 +26,7 @@ const createNonEmptyDir = () => {
   writeFileSync(pkgJson, '{ "foo": "bar" }');
 };
 
-// Vue 3 starter template
+// Angular 14 starter template
 let templateFiles = readdirSync(join(CLI_PATH, 'template-angular-v14'));
 templateFiles.push('.git');
 // _gitignore is renamed to .gitignore
