@@ -14,11 +14,20 @@ env:
 jobs:
   commitlint:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      # Required by wagoid/commitlint-github-action
+      pull-requests: read
     steps:
       - uses: actions/checkout@v3
         with:
+          # Required by wagoid/commitlint-github-action
           fetch-depth: 0
-      - uses: wagoid/commitlint-github-action@v5
+      - name: Lint commit messages
+        uses: wagoid/commitlint-github-action@v5
+        with:
+          helpURL: https://github.com/analogjs/analog/blob/main/CONTRIBUTING.md#-commit-message-guidelines
   checks:
     runs-on: ubuntu-latest
     steps:
