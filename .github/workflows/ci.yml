@@ -27,6 +27,7 @@ jobs:
       - name: Lint commit messages
         uses: wagoid/commitlint-github-action@v5
         with:
+          failOnWarnings: true
           helpURL: https://github.com/analogjs/analog/blob/main/CONTRIBUTING.md#-commit-message-guidelines
   checks:
     runs-on: ubuntu-latest
