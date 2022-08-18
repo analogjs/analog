@@ -30,7 +30,7 @@ const config = {
       ({
         blog: false,
         docs: {
-          editUrl: `https://github.com/${organizationName}/${projectName}/edit/main`,
+          editUrl: `https://github.com/${organizationName}/${projectName}/edit/main/apps/docs-app/docs`,
           sidebarPath: require.resolve('./sidebars.js'),
         },
         theme: {
