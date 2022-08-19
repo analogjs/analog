@@ -1,12 +1,12 @@
 name: Bug Report
-description: Report a bug in Analogjs
+description: Report a bug in Analog
 labels: [bug]
 
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for help us to grow. ❤️
+        Thanks for helping us grow. ❤️
         If do you like Analogjs enough please consider support through [sponsoring](https://github.com/sponsors/brandonroberts) 💖
         Please search GitHub for a similar [issue](https://github.com/analogjs/analog/issues) or [PR](https://github.com/analogjs/analog/issues)  before submitting a new issue.
 
@@ -21,12 +21,12 @@ body:
   - type: dropdown
     id: type_bug
     attributes:
-      label: Which scope was the bug found it
+      label: Which area/package is the issue in?
       options:
         - create-analog
         - vite-plugin-angular
         - Docs
-        - Don't known / other
+        - Don't know / Other
     validations:
       required: true
 
