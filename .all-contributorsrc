@@ -54,6 +54,15 @@
       "contributions": [
         "infra"
       ]
+    },
+    {
+      "login": "dalenguyen",
+      "name": "Dale Nguyen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14116156?v=4",
+      "profile": "http://dalenguyen.me",
+      "contributions": [
+        "design"
+      ]
     }
   ],
   "contributorsPerLine": 7,
