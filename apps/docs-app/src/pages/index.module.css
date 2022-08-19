@@ -21,7 +21,7 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--ifm-global-spacing);
 }
 
 @media screen and (max-width: 576px) { 
