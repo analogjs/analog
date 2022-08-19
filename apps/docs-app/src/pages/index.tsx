@@ -22,7 +22,7 @@ function HomepageHeader() {
 
           <StackblitzButton
             className={clsx(
-              'margin-left--md button--outline',
+              'button--outline',
               styles.buttonOutline
             )}
           />
