@@ -63,6 +63,15 @@
       "contributions": [
         "design"
       ]
+    },
+    {
+      "login": "Villanuevand",
+      "name": "Andrés Villanueva",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1209238?v=4",
+      "profile": "https://github.com/Villanuevand",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
