@@ -21,6 +21,15 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
+  gap: 1rem;
+}
+
+@media screen and (max-width: 576px) { 
+  .buttons a {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
 }
 
 /**
