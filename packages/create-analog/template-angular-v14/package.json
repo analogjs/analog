@@ -1,6 +1,10 @@
 {
   "name": "my-app",
   "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "ng": "ng",
@@ -10,7 +14,6 @@
     "test": "vitest",
     "postinstall": "vite optimize"
   },
-  "private": true,
   "dependencies": {
     "@angular/animations": "^14.0.0",
     "@angular/common": "^14.0.0",
