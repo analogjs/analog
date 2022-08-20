@@ -1,6 +1,6 @@
 # Analog
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
@@ -71,6 +71,9 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     <td align="center"><a href="http://timdeschryver.dev"><img src="https://avatars.githubusercontent.com/u/28659384?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Tim Deschryver</b></sub></a><br /><a href="#infra-timdeschryver" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
     <td align="center"><a href="http://dalenguyen.me"><img src="https://avatars.githubusercontent.com/u/14116156?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Dale Nguyen</b></sub></a><br /><a href="#design-dalenguyen" title="Design">🎨</a></td>
     <td align="center"><a href="https://github.com/Villanuevand"><img src="https://avatars.githubusercontent.com/u/1209238?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Andrés Villanueva</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Villanuevand" title="Documentation">📖</a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://umairhafeez.com"><img src="https://avatars.githubusercontent.com/u/6948878?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Umair Hafeez</b></sub></a><br /><a href="#infra-umairhm" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
   </tr>
 </table>
 
