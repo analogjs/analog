@@ -54,6 +54,8 @@
     "@angular/cli": "~14.0.0",
     "@angular/compiler-cli": "~14.0.0",
     "@angular/language-service": "~14.0.0",
+    "@commitlint/cli": "^17.0.3",
+    "@commitlint/config-conventional": "^17.0.3",
     "@ngtools/webpack": "~14.0.0",
     "@nrwl/cli": "14.4.2",
     "@nrwl/cypress": "14.4.2",
