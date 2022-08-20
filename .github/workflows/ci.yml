@@ -22,6 +22,8 @@ jobs:
           cache: yarn
       - name: Install
         run: yarn install --frozen-lockfile --non-interactive
+      - name: Install Playwright
+        run: npx playwright install --with-deps
       - name: Build
         run: yarn build
       - name: Test
