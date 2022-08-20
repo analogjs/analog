@@ -3,7 +3,7 @@
   "version": 2,
   "projects": {
     "analog-app": "apps/analog-app",
-    "analog-app-e2e": "apps/analog-app-e2e",
+    "analog-app-e2e-cypress": "apps/analog-app-e2e-cypress",
     "create-analog": "packages/create-analog",
     "docs-app": "apps/docs-app",
     "vite-plugin-angular": "packages/vite-plugin-angular"
