@@ -1,0 +1,30 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/analog-app-e2e-playwright/src",
+  "projectType": "application",
+  "targets": {
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/analog-app-e2e-playwright",
+        "commands": ["playwright test"]
+      }
+    },
+    "show-report": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/analog-app-e2e-playwright",
+        "commands": ["playwright show-report"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/analog-app-e2e-playwright/**/*.{js,ts}"]
+      }
+    }
+  },
+  "tags": [],
+  "implicitDependencies": ["analog-app"]
+}
