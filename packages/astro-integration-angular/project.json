@@ -5,12 +5,16 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/astro-integration-angular",
         "main": "packages/astro-integration-angular/src/index.ts",
         "tsConfig": "packages/astro-integration-angular/tsconfig.lib.json",
-        "assets": ["packages/astro-integration-angular/*.md"]
+        "assets": [
+          "packages/astro-integration-angular/*.md"
+        ]
       }
     },
     "publish": {
@@ -27,16 +31,22 @@
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": ["{options.outputFile}"],
+      "outputs": [
+        "{options.outputFile}"
+      ],
       "options": {
-        "lintFilePatterns": ["packages/astro-integration-angular/**/*.ts"]
+        "lintFilePatterns": [
+          "packages/astro-integration-angular/**/*.ts"
+        ]
       }
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/packages/astro-integration-angular"],
+      "outputs": [
+        "coverage/packages/astro-integration-angular"
+      ],
       "options": {
-        "jestConfig": "packages/astro-integration-angular/jest.config.ts",
+        "jestConfig": "packages/astro-integration-angular/jest.config.json",
         "passWithNoTests": true
       }
     }
