@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "An Angular integration for Astro",
   "type": "module",
+  "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
     ".": "./src/index.js",
     "./client.js": "./src/client.js",
