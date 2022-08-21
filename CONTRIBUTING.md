@@ -206,6 +206,7 @@ The following is the list of supported scopes:
 
 - **vite-angular-plugin**
 - **create-analog**
+- **astro-integration-angular**
 
 ### Subject
 
