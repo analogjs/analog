@@ -15,6 +15,22 @@
     "client.js",
     "server.js"
   ],
+  "keywords": [
+    "angular",
+    "astro",
+    "astro-integration",
+    "astro-component",
+    "renderer"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/analogjs/analog/issues"
+  },
+  "homepage": "https://github.com/analogjs/analog#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/analogjs/analog.git"
+  },
   "dependencies": {
     "@analogjs/vite-plugin-angular": "^0.2.0-alpha.0"
   },
