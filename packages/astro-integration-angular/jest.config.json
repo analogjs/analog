@@ -12,7 +12,8 @@
   "moduleFileExtensions": [
     "ts",
     "js",
-    "html"
+    "html",
+    "json"
   ],
   "coverageDirectory": "../../coverage/packages/astro-integration-angular"
 }
