@@ -423,6 +423,11 @@
     vscode-languageserver-types "^3.17.1"
     vscode-uri "^3.0.3"
 
+"@astrojs/markdown-component@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@astrojs/markdown-component/-/markdown-component-1.0.1.tgz#1bbf894a5a4383ade601dd12a499bf26bb99cc99"
+  integrity sha512-stzGgBZGVSXvs9D8SEM43RorsAzK5fjZFRQiQH65cOEOzXCUtV4oH3jKcIkmaCLt/QndUbtRoNq+zhDNOoj3Ug==
+
 "@astrojs/markdown-remark@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@astrojs/markdown-remark/-/markdown-remark-1.0.0.tgz#14adf79e02e744ee8a1342fa89aa858ccc6160d2"
@@ -15992,15 +15997,15 @@ type-detect@4.0.8, type-detect@^4.0.0, type-detect@^4.0.5:
   resolved "https://registry.yarnpkg.com/type-detect/-/type-detect-4.0.8.tgz#7646fb5f18871cfbb7749e69bd39a6388eb7450c"
   integrity sha512-0fr/mIH1dlO+x7TlcMy+bIDqKPsw/70tVyeHW787goQjhmqaZe10uwLujubK9q9Lg6Fiho1KUKDYz0Z7k7g5/g==
 
-type-fest@^0.18.0:
-  version "0.18.1"
-  resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.18.1.tgz#db4bc151a4a2cf4eebf9add5db75508db6cc841f"
-  integrity sha512-OIAYXk8+ISY+qTOwkHtKqzAuxchoMiD9Udx+FSGQDuiRR+PJKJHc2NJAXlbhkGwTt/4/nKZxELY1w3ReWOL8mw==
-
 type-fest@^0.13.1:
   version "0.13.1"
   resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.13.1.tgz#0172cb5bce80b0bd542ea348db50c7e21834d934"
   integrity sha512-34R7HTnG0XIJcBSn5XhDd7nNFPRcXYRZrBB2O2jdKqYODldSzBAqzsWoZYYvduky73toYS/ESqxPvkDf/F0XMg==
+
+type-fest@^0.18.0:
+  version "0.18.1"
+  resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.18.1.tgz#db4bc151a4a2cf4eebf9add5db75508db6cc841f"
+  integrity sha512-OIAYXk8+ISY+qTOwkHtKqzAuxchoMiD9Udx+FSGQDuiRR+PJKJHc2NJAXlbhkGwTt/4/nKZxELY1w3ReWOL8mw==
 
 type-fest@^0.20.2:
   version "0.20.2"
@@ -17205,7 +17210,7 @@ yaml@^2.1.1:
   resolved "https://registry.yarnpkg.com/yaml/-/yaml-2.1.1.tgz#1e06fb4ca46e60d9da07e4f786ea370ed3c3cfec"
   integrity sha512-o96x3OPo8GjWeSLF+wOAbrPfhFOGY0W00GNaxCDv+9hkcDJEnev1yh8S7pgHF0ik6zc8sQLuL8hjHjJULZp8bw==
 
-yargs-parser@20.x, yargs-parser@^20.2.2, yargs-parser@^20.2.9:
+yargs-parser@20.x, yargs-parser@^20.2.2, yargs-parser@^20.2.3, yargs-parser@^20.2.9:
   version "20.2.9"
   resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-20.2.9.tgz#2eb7dc3b0289718fc295f362753845c41a0c94ee"
   integrity sha512-y11nGElTIV+CT3Zv9t7VKl+Q3hTQoT9a1Qzezhhl6Rp21gJ/IVTW7Z3y9EWXhuUBC2Shnf+DX0antecpAwSP8w==
@@ -17223,12 +17228,7 @@ yargs-parser@^18.1.2:
     camelcase "^5.0.0"
     decamelize "^1.2.0"
 
-yargs-parser@^20.2.9:
-  version "20.2.9"
-  resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-20.2.9.tgz#2eb7dc3b0289718fc295f362753845c41a0c94ee"
-  integrity sha512-y11nGElTIV+CT3Zv9t7VKl+Q3hTQoT9a1Qzezhhl6Rp21gJ/IVTW7Z3y9EWXhuUBC2Shnf+DX0antecpAwSP8w==
-
-yargs-parser@^21.0.0:
+yargs-parser@^21.0.0, yargs-parser@^21.0.1:
   version "21.1.1"
   resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-21.1.1.tgz#9096bceebf990d21bb31fa9516e0ede294a77d35"
   integrity sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw==
@@ -17263,7 +17263,7 @@ yargs@^15.0.1:
     y18n "^4.0.0"
     yargs-parser "^18.1.2"
 
-yargs@^17.0.0, yargs@^16.2.0:
+yargs@^16.2.0:
   version "16.2.0"
   resolved "https://registry.yarnpkg.com/yargs/-/yargs-16.2.0.tgz#1c82bf0f6b6a66eafce7ef30e376f49a12477f66"
   integrity sha512-D1mvvtDG0L5ft/jGWkLpG1+m0eQxOfaBvTNELraWj22wSVUMWxZUvYgJYcKh6jGGIkJFhH4IZPQhR4TKpc8mBw==
@@ -17276,7 +17276,7 @@ yargs@^17.0.0, yargs@^16.2.0:
     y18n "^5.0.5"
     yargs-parser "^20.2.2"
 
-yargs@^17.2.1, yargs@^17.4.0, yargs@^17.5.1:
+yargs@^17.0.0, yargs@^17.2.1, yargs@^17.4.0, yargs@^17.5.1:
   version "17.5.1"
   resolved "https://registry.yarnpkg.com/yargs/-/yargs-17.5.1.tgz#e109900cab6fcb7fd44b1d8249166feb0b36e58e"
   integrity sha512-t6YAJcxDkNX7NFYiVtKvWUz8l+PaKTLiL63mJYWR2GnHq2gjEWISzsLp9wg3aY36dY1j+gfIEL3pIF+XlJJfbA==
