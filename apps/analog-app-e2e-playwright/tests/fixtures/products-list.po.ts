@@ -1,11 +1,7 @@
-import { Page } from '@playwright/test';
+import { Page } from 'playwright';
 
 export class ProductsListPage {
   constructor(readonly page: Page) {}
-
-  async goto() {
-    await this.page.goto('/');
-  }
 
   async navigateTo() {
     await this.page.locator(`role=heading[level=1] >> text=My Store`).click();

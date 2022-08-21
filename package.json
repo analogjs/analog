@@ -61,7 +61,7 @@
     "@nrwl/linter": "14.4.2",
     "@nrwl/workspace": "14.4.2",
     "@nx-plus/docusaurus": "14.1.0",
-    "@playwright/test": "^1.25.0",
+    "playwright": "^1.25.0",
     "@types/node": "16.11.7",
     "@typescript-eslint/eslint-plugin": "^5.29.0",
     "@typescript-eslint/parser": "^5.29.0",

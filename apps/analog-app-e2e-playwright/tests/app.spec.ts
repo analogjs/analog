@@ -1,12 +1,38 @@
-import { test, expect } from '@playwright/test';
+import { chromium, Browser, Page } from 'playwright';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  expect,
+  test,
+  describe,
+} from 'vitest';
 
-test.describe('My Store', () => {
+let browser: Browser;
+let page: Page;
+
+beforeAll(async () => {
+  browser = await chromium.launch();
+});
+afterAll(async () => {
+  await browser.close();
+});
+beforeEach(async () => {
+  page = await browser.newPage({
+    baseURL: 'http://localhost:3000',
+  });
+  await page.goto('/');
+});
+afterEach(async () => {
+  await page.close();
+});
+
+describe('My Store', () => {
   test(`Given the user has navigated to the home page
-    Then the app title is visible`, async ({ page }) => {
-    await page.goto('/');
-
+    Then the app title is visible`, async () => {
     await expect(
       page.locator('role=heading[level=1] >> text=My Store')
-    ).toHaveText(/My Store/i);
+    ).toContain(/My Store/i);
   });
 });

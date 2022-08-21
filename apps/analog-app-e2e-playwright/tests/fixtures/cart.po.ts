@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page } from 'playwright';
 
 export class CartPage {
   constructor(readonly page: Page) {}

@@ -2880,14 +2880,6 @@
   dependencies:
     esquery "^1.0.1"
 
-"@playwright/test@^1.25.0":
-  version "1.25.0"
-  resolved "https://registry.yarnpkg.com/@playwright/test/-/test-1.25.0.tgz#e0de134651e78e45e986c5f16578188dd5937331"
-  integrity sha512-j4EZhTTQI3dBeWblE21EV//swwmBtOpIrLdOIJIRv4uqsLdHgBg1z+JtTg+AeC5o2bAXIE26kDNW5A0TimG8Bg==
-  dependencies:
-    "@types/node" "*"
-    playwright-core "1.25.0"
-
 "@pmmmwh/react-refresh-webpack-plugin@^0.5.1":
   version "0.5.7"
   resolved "https://registry.yarnpkg.com/@pmmmwh/react-refresh-webpack-plugin/-/react-refresh-webpack-plugin-0.5.7.tgz#58f8217ba70069cc6a73f5d7e05e85b458c150e2"
@@ -11237,6 +11229,13 @@ playwright-core@1.25.0:
   version "1.25.0"
   resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.25.0.tgz#54dc867c6c2cc5e4233905e249206a02914d14f1"
   integrity sha512-kZ3Jwaf3wlu0GgU0nB8UMQ+mXFTqBIFz9h1svTlNduNKjnbPXFxw7mJanLVjqxHJRn62uBfmgBj93YHidk2N5Q==
+
+playwright@^1.25.0:
+  version "1.25.0"
+  resolved "https://registry.yarnpkg.com/playwright/-/playwright-1.25.0.tgz#a5e317c8c207b921e7da17507ef9ec2983367970"
+  integrity sha512-Z+pQNWI17Qx/tHhnmgMmPsptsisXpKgAnUvYv98kctlHUJaqMt2400P8kTw9vEPoC0xdxqu0JhxO7pDTmaaIKw==
+  dependencies:
+    playwright-core "1.25.0"
 
 portfinder@^1.0.28:
   version "1.0.29"
