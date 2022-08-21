@@ -1,6 +1,6 @@
 # Analog
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-9-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
@@ -74,6 +74,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
   </tr>
   <tr>
     <td align="center"><a href="https://umairhafeez.com"><img src="https://avatars.githubusercontent.com/u/6948878?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Umair Hafeez</b></sub></a><br /><a href="#infra-umairhm" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+    <td align="center"><a href="https://github.com/Yberion"><img src="https://avatars.githubusercontent.com/u/4186385?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Brandon Largeau</b></sub></a><br /><a href="#infra-Yberion" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
   </tr>
 </table>
 

@@ -81,6 +81,15 @@
       "contributions": [
         "infra"
       ]
+    },
+    {
+      "login": "Yberion",
+      "name": "Brandon Largeau",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4186385?v=4",
+      "profile": "https://github.com/Yberion",
+      "contributions": [
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
