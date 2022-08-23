@@ -6,7 +6,7 @@
   "supportFile": "./src/support/index.ts",
   "pluginsFile": false,
   "video": true,
-  "videosFolder": "../../dist/cypress/apps/analog-app-e2e/videos",
-  "screenshotsFolder": "../../dist/cypress/apps/analog-app-e2e/screenshots",
+  "videosFolder": "../../dist/cypress/apps/analog-app-e2e-cypress/videos",
+  "screenshotsFolder": "../../dist/cypress/apps/analog-app-e2e-cypress/screenshots",
   "chromeWebSecurity": false
 }
