@@ -90,6 +90,16 @@
       "contributions": [
         "infra"
       ]
+    },
+    {
+      "login": "mainawycliffe",
+      "name": "Maina Wycliffe",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12270550?v=4",
+      "profile": "https://mainawycliffe.dev/",
+      "contributions": [
+        "code",
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
