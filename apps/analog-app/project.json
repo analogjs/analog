@@ -13,7 +13,7 @@
       }
     },
     "build-ng": {
-      "builder": "@angular-devkit/build-angular:browser",
+      "executor": "@angular-devkit/build-angular:browser",
       "options": {
         "outputPath": "dist/apps/analog-app-ng",
         "index": "apps/analog-app/src/index.html",
@@ -69,7 +69,7 @@
       }
     },
     "serve-ng": {
-      "builder": "@angular-devkit/build-angular:dev-server",
+      "executor": "@angular-devkit/build-angular:dev-server",
       "configurations": {
         "production": {
           "browserTarget": "analog-app:build-ng:production"
