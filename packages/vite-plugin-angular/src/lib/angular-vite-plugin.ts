@@ -184,12 +184,32 @@ export function angular(
 
           const typescriptResult = await fileEmitter!(id);
 
+          const linkerPluginCreator = (
+            await loadEsmModule<
+              typeof import('@angular/compiler-cli/linker/babel')
+            >('@angular/compiler-cli/linker/babel')
+          ).createEs2015LinkerPlugin;
+
           // return fileEmitter
           const data = typescriptResult?.content ?? '';
+          const forceAsyncTransformation =
+            /for\s+await\s*\(|async\s+function\s*\*/.test(data);
+          const useInputSourcemap = (!isProd ? undefined : false) as undefined;
+          const shouldLink = await requiresLinking(id, code);
+
+          if (!forceAsyncTransformation && !isProd) {
+            return {
+              code: isProd
+                ? data.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
+                : data,
+            };
+          }
 
           const babelResult = await transformAsync(data, {
             filename: id,
-            inputSourceMap: (!isProd ? undefined : false) as undefined,
+            inputSourceMap: (useInputSourcemap
+              ? undefined
+              : false) as undefined,
             sourceMaps: !isProd ? 'inline' : false,
             compact: false,
             configFile: false,
@@ -200,7 +220,12 @@ export function angular(
               [
                 angularApplicationPreset,
                 {
-                  forceAsyncTransformation: data.includes('async'),
+                  angularLinker: {
+                    shouldLink,
+                    jitMode: false,
+                    linkerPluginCreator,
+                  },
+                  forceAsyncTransformation,
                   optimize: isProd && {},
                 },
               ],
@@ -231,6 +256,18 @@ export function angular(
                   ngI18nClosureMode: 'false',
                 }
               : undefined,
+            supported: {
+              // Native async/await is not supported with Zone.js. Disabling support here will cause
+              // esbuild to downlevel async/await to a Zone.js supported form.
+              'async-await': false,
+              // Zone.js also does not support async generators or async iterators. However, esbuild does
+              // not currently support downleveling either of them. Instead babel is used within the JS/TS
+              // loader to perform the downlevel transformation. They are both disabled here to allow
+              // esbuild to handle them in the future if support is ever added.
+              // NOTE: If esbuild adds support in the future, the babel support for these can be disabled.
+              'async-generator': false,
+              'for-await': false,
+            },
           },
         };
       },
@@ -244,13 +281,23 @@ export function angular(
             >('@angular/compiler-cli/linker/babel')
           ).createEs2015LinkerPlugin;
 
-          const useInputSourcemap = !isProd;
+          const forceAsyncTransformation =
+            !/[\\/][_f]?esm2015[\\/]/.test(id) &&
+            /for\s+await\s*\(|async\s+function\s*\*/.test(code);
+          const shouldLink = await requiresLinking(id, code);
+          const useInputSourcemap = (!isProd ? undefined : false) as undefined;
+
+          if (!forceAsyncTransformation && !isProd) {
+            return {
+              code: isProd
+                ? code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
+                : code,
+            };
+          }
 
           const result = await transformAsync(code, {
             filename: id,
-            inputSourceMap: (useInputSourcemap
-              ? undefined
-              : false) as undefined,
+            inputSourceMap: useInputSourcemap,
             sourceMaps: !isProd ? 'inline' : false,
             compact: false,
             configFile: false,
@@ -262,13 +309,11 @@ export function angular(
                 angularApplicationPreset,
                 {
                   angularLinker: {
-                    shouldLink: await requiresLinking(id, code),
+                    shouldLink,
                     jitMode: false,
                     linkerPluginCreator,
                   },
-                  forceAsyncTransformation:
-                    !/[\\/][_f]?esm2015[\\/]/.test(id) &&
-                    code.includes('async'),
+                  forceAsyncTransformation,
                   optimize: isProd && {
                     looseEnums: angularPackage,
                     pureTopLevel: angularPackage,
