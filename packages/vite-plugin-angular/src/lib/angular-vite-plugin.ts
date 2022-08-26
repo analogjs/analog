@@ -184,18 +184,11 @@ export function angular(
 
           const typescriptResult = await fileEmitter!(id);
 
-          const linkerPluginCreator = (
-            await loadEsmModule<
-              typeof import('@angular/compiler-cli/linker/babel')
-            >('@angular/compiler-cli/linker/babel')
-          ).createEs2015LinkerPlugin;
-
           // return fileEmitter
           const data = typescriptResult?.content ?? '';
           const forceAsyncTransformation =
             /for\s+await\s*\(|async\s+function\s*\*/.test(data);
           const useInputSourcemap = (!isProd ? undefined : false) as undefined;
-          const shouldLink = await requiresLinking(id, code);
 
           if (!forceAsyncTransformation && !isProd) {
             return {
@@ -220,11 +213,6 @@ export function angular(
               [
                 angularApplicationPreset,
                 {
-                  angularLinker: {
-                    shouldLink,
-                    jitMode: false,
-                    linkerPluginCreator,
-                  },
                   forceAsyncTransformation,
                   optimize: isProd && {},
                 },
@@ -287,7 +275,7 @@ export function angular(
           const shouldLink = await requiresLinking(id, code);
           const useInputSourcemap = (!isProd ? undefined : false) as undefined;
 
-          if (!forceAsyncTransformation && !isProd) {
+          if (!forceAsyncTransformation && !isProd && !shouldLink) {
             return {
               code: isProd
                 ? code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
