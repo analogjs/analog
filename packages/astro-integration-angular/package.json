@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/astro-integration-angular",
-  "version": "0.0.1",
+  "version": "0.1.0-beta.0",
   "description": "An Angular integration for Astro",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -26,7 +26,7 @@
   "bugs": {
     "url": "https://github.com/analogjs/analog/issues"
   },
-  "homepage": "https://github.com/analogjs/analog#readme",
+  "homepage": "https://analogjs.org",
   "repository": {
     "type": "git",
     "url": "https://github.com/analogjs/analog.git"
@@ -35,6 +35,12 @@
     "@analogjs/vite-plugin-angular": "latest"
   },
   "peerDependencies": {
-    "@angular-devkit/build-angular": "^14.0.0"
+    "@angular-devkit/build-angular": "^14.0.0",
+    "@angular/core": "^14.0.0",
+    "@angular/platform-browser": "^14.0.0",
+    "@angular/platform-server": "^14.0.0",
+    "rxjs": "^7.5.0",
+    "zone.js": "~0.11.4",
+    "tslib": "^2.0.0"
   }
 }

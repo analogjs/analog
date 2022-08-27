@@ -1,13 +1,23 @@
 import 'zone.js/dist/zone.js';
-import { bootstrapApplication } from '@angular/platform-browser';
-import { ɵComponentType } from '@angular/core';
+import { createApplication } from '@angular/platform-browser';
+import { ApplicationRef, NgZone, createComponent } from '@angular/core';
+import type { ɵComponentType } from '@angular/core';
 
-export default (_element?: HTMLElement) => {
+export default (element: HTMLElement) => {
   return (
     Component: ɵComponentType<unknown>,
     _props?: unknown,
     _childHTML?: unknown
   ) => {
-    bootstrapApplication(Component);
+    createApplication().then((appRef: ApplicationRef) => {
+      const zone = appRef.injector.get(NgZone);
+      zone.run(() => {
+        const componentRef = createComponent(Component, {
+          environmentInjector: appRef.injector,
+          hostElement: element,
+        });
+        appRef.attachView(componentRef.hostView);
+      });
+    });
   };
 };

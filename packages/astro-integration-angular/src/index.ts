@@ -12,8 +12,15 @@ function getRenderer(): AstroRenderer {
 function getViteConfiguration() {
   return {
     optimizeDeps: {
-      include: ['@analogjs/astro-integration-angular/client.js'],
-      exclude: ['@analogjs/astro-integration-angular/server.js'],
+      include: [
+        '@angular/platform-browser',
+        '@angular/core',
+        '@analogjs/astro-integration-angular/client.js',
+      ],
+      exclude: [
+        '@angular/platform-server',
+        '@analogjs/astro-integration-angular/server.js',
+      ],
     },
     /**
      *
