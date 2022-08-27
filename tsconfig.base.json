@@ -15,9 +15,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@analogjs/astro-integration-angular": [
-        "packages/astro-integration-angular/src/index.ts"
-      ],
+      "@analogjs/astro-angular": ["packages/astro-angular/src/index.ts"],
       "@analogjs/vite-plugin-angular": [
         "packages/vite-plugin-angular/src/index.ts"
       ]

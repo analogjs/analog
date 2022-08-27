@@ -1,4 +1,4 @@
-# @analogjs/astro-integration-angular
+# @analogjs/astro-angular
 
 An Angular integration for Astro
 
@@ -7,14 +7,14 @@ An Angular integration for Astro
 Install dependencies
 
 ```sh
-yarn add @analogjs/astro-integration-angular --dev
+yarn add @analogjs/astro-angular --dev
 ```
 
 Add Angular to `integrations` array and enable `experimental.integrations`
 
 ```js
 import { defineConfig } from 'astro/config';
-import angular from '@analogjs/astro-integration-angular';
+import angular from '@analogjs/astro-angular';
 
 export default defineConfig({
   integrations: [angular()],

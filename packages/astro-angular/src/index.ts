@@ -3,9 +3,9 @@ import { AstroIntegration, AstroRenderer } from 'astro';
 
 function getRenderer(): AstroRenderer {
   return {
-    name: '@analogjs/astro-integration-angular',
-    clientEntrypoint: '@analogjs/astro-integration-angular/client.js',
-    serverEntrypoint: '@analogjs/astro-integration-angular/server.js',
+    name: '@analogjs/astro-angular',
+    clientEntrypoint: '@analogjs/astro-angular/client.js',
+    serverEntrypoint: '@analogjs/astro-angular/server.js',
   };
 }
 
@@ -15,11 +15,11 @@ function getViteConfiguration() {
       include: [
         '@angular/platform-browser',
         '@angular/core',
-        '@analogjs/astro-integration-angular/client.js',
+        '@analogjs/astro-angular/client.js',
       ],
       exclude: [
         '@angular/platform-server',
-        '@analogjs/astro-integration-angular/server.js',
+        '@analogjs/astro-angular/server.js',
       ],
     },
     /**
@@ -39,7 +39,7 @@ function getViteConfiguration() {
 
 export default function (): AstroIntegration {
   return {
-    name: '@analogjs/astro-integration-angular',
+    name: '@analogjs/astro-angular',
     hooks: {
       'astro:config:setup': ({ addRenderer, updateConfig }) => {
         addRenderer(getRenderer());
