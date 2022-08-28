@@ -1,15 +1,9 @@
----
-sidebar_position: 2
----
-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Installation
+# create-analog
 
-## Installing with `create-analog`
-
-You can scaffold an Analog project with the following `create-analog` command:
+The `create-analog` package contains templates for scaffolding new Analog projects.
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
