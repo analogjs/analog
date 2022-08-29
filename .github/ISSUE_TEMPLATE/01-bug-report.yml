@@ -25,6 +25,7 @@ body:
       options:
         - create-analog
         - vite-plugin-angular
+        - astro-angular
         - Docs
         - Don't know / Other
     validations:

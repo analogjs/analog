@@ -1,6 +1,9 @@
 # Analog
+
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
 [![All Contributors](https://img.shields.io/badge/all_contributors-11-orange.svg?style=flat-square)](#contributors-)
+
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
@@ -38,6 +41,8 @@ Follow the prompts to scaffold the project and start the development server.
 ## Packages
 
 - @analogjs/vite-plugin-angular: An Angular Plugin for building/testing applications with Vite
+- @analogjs/astro-angular: An integration for using Angular components in [Astro](https://astro.build)
+- create-analog: An initializer for scaffolding an Analog project.
 
 ## Supporting Analog
 
@@ -53,7 +58,7 @@ Analog welcomes contributors! Please read the [contributing doc](https://github.
 
 ## Credits
 
-The name was inspired by this project https://github.com/rrdelaney/Analog. 
+The name was inspired by this project https://github.com/rrdelaney/Analog.
 
 ## Contributors ✨
 
