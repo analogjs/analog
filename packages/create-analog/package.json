@@ -1,12 +1,10 @@
 {
   "name": "create-analog",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "type": "module",
   "license": "MIT",
   "author": "Brandon Roberts",
-  "scripts": {
-    
-  },
+  "scripts": {},
   "bin": {
     "create-analog": "index.js"
   },
