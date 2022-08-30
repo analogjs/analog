@@ -1,4 +1,5 @@
 import viteAngular from '@analogjs/vite-plugin-angular';
+import { enableProdMode } from '@angular/core';
 import { AstroIntegration, AstroRenderer } from 'astro';
 
 function getRenderer(): AstroRenderer {
@@ -44,6 +45,9 @@ export default function (): AstroIntegration {
       'astro:config:setup': ({ addRenderer, updateConfig }) => {
         addRenderer(getRenderer());
         updateConfig({ vite: getViteConfiguration() });
+      },
+      'astro:build:start': () => {
+        enableProdMode();
       },
     },
   };
