@@ -1,7 +1,7 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-12-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-13-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
@@ -81,6 +81,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     <td align="center"><a href="https://mainawycliffe.dev/"><img src="https://avatars.githubusercontent.com/u/12270550?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Maina Wycliffe</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=mainawycliffe" title="Code">💻</a> <a href="#infra-mainawycliffe" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
     <td align="center"><a href="http://www.prestonlamb.com"><img src="https://avatars.githubusercontent.com/u/2006222?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Preston Lamb</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=pjlamb12" title="Code">💻</a></td>
     <td align="center"><a href="https://iamandrewluca.com"><img src="https://avatars.githubusercontent.com/u/1881266?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Andrew Luca</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=iamandrewluca" title="Code">💻</a></td>
+    <td align="center"><a href="https://nartc.me"><img src="https://avatars.githubusercontent.com/u/25516557?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Chau Tran</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=nartc" title="Code">💻</a> <a href="#infra-nartc" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
   </tr>
 </table>
 
