@@ -98,22 +98,24 @@ Go to [Defining A Component](#defining-a-component)
 The Astro Angular integration **only** supports rendering standalone components:
 
 ```ts
-import { CommonModule } from '@angular/common';
+import { NgIf } from '@angular/common';
 import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-hello',
   standalone: true,
-  imports: [CommonModule],
+  imports: [NgIf],
   template: `
     <p>Hello from Angular!!</p>
 
-    <p *ngIf="show">help</p>
+    <p *ngIf="show">{{ helpText }}</p>
 
     <button (click)="toggle()">Toggle</button>
   `,
 })
 export class HelloComponent {
+  @Input() helpText = 'help';
+
   show = false;
 
   toggle() {
@@ -127,9 +129,13 @@ Add the Angular component to the Astro component template. This only renders the
 ```ts
 ---
 import { HelloComponent } from '../components/hello.component.ts';
+
+const helpText = "Helping binding";
 ---
 
 <HelloComponent />
+<HelloComponent helpText="Helping" />
+<HelloComponent helpText={helpText} />
 ```
 
 To hydrate the component on the client, use one of the Astro directives:
@@ -147,5 +153,4 @@ Find more information about [Client Directives](https://docs.astro.build/en/refe
 ## Current Limitations
 
 - Only standalone Angular components in version v14.2+ are supported
-- Component Props/Inputs are not supported
 - Component Outputs are not supported
