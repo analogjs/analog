@@ -128,6 +128,15 @@
         "code",
         "infra"
       ]
+    },
+    {
+      "login": "simitch1",
+      "name": "Simone ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20285365?v=4",
+      "profile": "https://github.com/simitch1",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
