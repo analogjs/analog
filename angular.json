@@ -9,6 +9,7 @@
     "create-analog": "packages/create-analog",
     "docs-app": "apps/docs-app",
     "vite-plugin-angular": "packages/vite-plugin-angular",
-    "astro-app": "apps/astro-app"
+    "astro-app": "apps/astro-app",
+    "astro-app-e2e-playwright": "apps/astro-app-e2e-playwright"
   }
 }
