@@ -180,9 +180,13 @@ async function init() {
   write('package.json', JSON.stringify(pkg, null, 2));
 
   console.log(`\nInitializing git repository:`);
-  execSync(
-    `git init ${targetDir} && cd ${targetDir} && git add . && git commit -m "initial commit"`
-  );
+  execSync(`git init ${targetDir} && cd ${targetDir} && git add .`);
+
+  // Fail Silent
+  // Can fail when user does not have global git credentials
+  try {
+    execSync(`git commit -m "initial commit"`);
+  } catch {}
 
   console.log(`\nDone. Now run:\n`);
   if (root !== cwd) {
