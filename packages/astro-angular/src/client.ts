@@ -6,7 +6,7 @@ import { createApplication } from '@angular/platform-browser';
 export default (element: HTMLElement) => {
   return (
     Component: ComponentType<unknown>,
-    _props?: Record<string, unknown>,
+    props?: Record<string, unknown>,
     _childHTML?: unknown
   ) => {
     createApplication().then((appRef: ApplicationRef) => {
@@ -17,8 +17,8 @@ export default (element: HTMLElement) => {
           hostElement: element,
         });
 
-        if (_props) {
-          for (const [key, value] of Object.entries(_props)) {
+        if (props) {
+          for (const [key, value] of Object.entries(props)) {
             componentRef.setInput(key, value);
           }
         }

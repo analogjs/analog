@@ -71,7 +71,7 @@ const STATIC_PROPS_HOOK_PROVIDER: Provider = {
 
 async function renderToStaticMarkup(
   Component: ComponentType<unknown>,
-  _props: Record<string, unknown>,
+  props: Record<string, unknown>,
   _children: unknown
 ) {
   const mirror = reflectComponentType(Component);
@@ -84,7 +84,7 @@ async function renderToStaticMarkup(
     providers: [
       {
         provide: ANALOG_ASTRO_STATIC_PROPS,
-        useValue: { props: _props, mirror },
+        useValue: { props, mirror },
       },
       STATIC_PROPS_HOOK_PROVIDER,
     ],
