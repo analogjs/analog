@@ -118,6 +118,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "nartc",
+      "name": "Chau Tran",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25516557?v=4",
+      "profile": "https://nartc.me",
+      "contributions": [
+        "code",
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
