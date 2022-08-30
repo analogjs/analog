@@ -5,7 +5,7 @@ describe('angularVitePlugin', () => {
     expect(astroPlugin().name).toEqual('@analogjs/astro-angular');
     expect(astroPlugin().hooks).toStrictEqual({
       'astro:config:setup': expect.anything(),
-      'astro:build:start': expect.anything(),
+      'astro:build:setup': expect.anything(),
     });
   });
 });

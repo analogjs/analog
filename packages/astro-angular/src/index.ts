@@ -46,7 +46,7 @@ export default function (): AstroIntegration {
         addRenderer(getRenderer());
         updateConfig({ vite: getViteConfiguration() });
       },
-      'astro:build:start': () => {
+      'astro:build:setup': () => {
         enableProdMode();
       },
     },
