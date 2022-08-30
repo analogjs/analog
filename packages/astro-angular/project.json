@@ -7,7 +7,7 @@
       "executor": "@nrwl/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/packages/astro-angular",
+        "outputPath": "node_modules/@analogjs/astro-angular",
         "main": "packages/astro-angular/src/index.ts",
         "tsConfig": "packages/astro-angular/tsconfig.lib.json",
         "assets": ["packages/astro-angular/*.md"],
@@ -22,7 +22,7 @@
       "dependsOn": [
         {
           "projects": "self",
-          "target": "build-local"
+          "target": "build"
         }
       ]
     },
