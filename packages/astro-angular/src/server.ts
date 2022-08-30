@@ -17,7 +17,7 @@ import {
 const ANALOG_ASTRO_STATIC_PROPS = new InjectionToken<{
   props: Record<string, unknown>;
   mirror: ComponentMirror<unknown>;
-}>('Static props token w/ mirror', {
+}>('@analogjs/astro-angular: Static Props w/ Mirror Provider', {
   factory() {
     return { props: {}, mirror: {} as ComponentMirror<unknown> };
   },
