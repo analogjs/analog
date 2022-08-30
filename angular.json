@@ -8,6 +8,7 @@
     "astro-angular": "packages/astro-angular",
     "create-analog": "packages/create-analog",
     "docs-app": "apps/docs-app",
-    "vite-plugin-angular": "packages/vite-plugin-angular"
+    "vite-plugin-angular": "packages/vite-plugin-angular",
+    "astro-app": "apps/astro-app"
   }
 }

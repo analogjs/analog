@@ -22,7 +22,7 @@
       "dependsOn": [
         {
           "projects": "self",
-          "target": "build"
+          "target": "build-local"
         }
       ]
     },
