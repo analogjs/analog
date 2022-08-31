@@ -37,7 +37,6 @@
     "@angular/compiler": "^14.0.0",
     "@angular/core": "^14.0.0",
     "@angular/language-service": "^14.0.0",
-    "@angular/forms": "^14.0.0",
     "@angular/platform-browser": "^14.0.0",
     "@angular/platform-browser-dynamic": "^14.0.0",
     "@angular/platform-server": "^14.0.0",
