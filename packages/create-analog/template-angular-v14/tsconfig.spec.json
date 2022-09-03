@@ -2,7 +2,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "composite": true,
+    "composite": false,
     "outDir": "./out-tsc/spec",
     "types": ["node", "vitest/globals"]
   },
