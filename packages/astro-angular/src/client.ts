@@ -1,5 +1,8 @@
 import 'zone.js/dist/zone.js';
-import type { ɵComponentType as ComponentType } from '@angular/core';
+import {
+  reflectComponentType,
+  ɵComponentType as ComponentType,
+} from '@angular/core';
 import { ApplicationRef, NgZone, createComponent } from '@angular/core';
 import { createApplication } from '@angular/platform-browser';
 
@@ -17,9 +20,17 @@ export default (element: HTMLElement) => {
           hostElement: element,
         });
 
-        if (props) {
+        const mirror = reflectComponentType(Component);
+        if (props && mirror) {
           for (const [key, value] of Object.entries(props)) {
-            componentRef.setInput(key, value);
+            if (
+              mirror.inputs.some(
+                ({ templateName, propName }) =>
+                  templateName === key || propName === key
+              )
+            ) {
+              componentRef.setInput(key, value);
+            }
           }
         }
 
