@@ -185,7 +185,7 @@ async function init() {
   // Fail Silent
   // Can fail when user does not have global git credentials
   try {
-    execSync(`git commit -m "initial commit"`);
+    execSync(`cd ${targetDir} && git commit -m "initial commit"`);
   } catch {}
 
   console.log(`\nDone. Now run:\n`);
