@@ -10,10 +10,21 @@ import { products } from '../products';
   standalone: true,
   imports: [CommonModule, ProductAlertsComponent, RouterModule],
   templateUrl: './product-list.component.html',
-  styleUrls: ['./product-list.component.css']
+  styles: [
+    `
+      $neon: lightblue;
+
+      @mixin background($color: #fff) {
+        background: $color;
+      }
+
+      h2 {
+        @include background($neon);
+      }
+    `,
+  ],
 })
 export class ProductListComponent {
-
   products = [...products];
 
   share() {
@@ -24,5 +35,3 @@ export class ProductListComponent {
     window.alert('You will be notified when the product goes on sale');
   }
 }
-
-
