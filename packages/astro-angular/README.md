@@ -165,7 +165,7 @@ export default defineConfig({
 });
 ```
 
-Create a `.mdx` file inside the `src/pages` directory and add the Angular component import below the frontmatter.
+Create an `.mdx` file inside the `src/pages` directory and add the Angular component import below the frontmatter.
 
 ```md
 ---
