@@ -129,7 +129,7 @@ Add the Angular component to the Astro component template. This only renders the
 
 ```ts
 ---
-import { HelloComponent } from '../components/hello.component.ts';
+import { HelloComponent } from '../components/hello.component';
 
 const helpText = "Helping binding";
 ---
@@ -143,7 +143,7 @@ To hydrate the component on the client, use one of the Astro directives:
 
 ```ts
 ---
-import { HelloComponent } from '../components/hello.component.ts';
+import { HelloComponent } from '../components/hello.component';
 ---
 
 <HelloComponent client:visible />
