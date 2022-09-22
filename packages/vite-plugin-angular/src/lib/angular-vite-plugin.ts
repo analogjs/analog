@@ -36,11 +36,11 @@ export function angular(options: PluginOptions): Plugin[] {
    */
   const pluginOptions = {
     tsconfig:
-      options.tsconfig ?? process.env['NODE_ENV'] === 'test'
+      options?.tsconfig ?? process.env['NODE_ENV'] === 'test'
         ? './tsconfig.spec.json'
         : './tsconfig.app.json',
-    workspaceRoot: options.workspaceRoot ?? process.cwd(),
-    inlineStylesExtension: options.inlineStylesExtension ?? '',
+    workspaceRoot: options?.workspaceRoot ?? process.cwd(),
+    inlineStylesExtension: options?.inlineStylesExtension ?? '',
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
