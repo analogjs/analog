@@ -100,7 +100,7 @@ The Astro Angular integration **only** supports rendering standalone components:
 
 ```ts
 import { NgIf } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-hello',
