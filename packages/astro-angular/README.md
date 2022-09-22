@@ -151,7 +151,7 @@ import { HelloComponent } from '../components/hello.component';
 
 Find more information about [Client Directives](https://docs.astro.build/en/reference/directives-reference/#client-directives) in the Astro documentation.
 
-## Use Component in MDX pages
+## Using Components in MDX pages
 
 Install and configure MDX support by following the Astro integration of [@astrojs/mdx](https://docs.astro.build/en/guides/integrations-guide/mdx/). Your `astro.config.mjs` should now include the `@astrojs/mdx` integration.
 
