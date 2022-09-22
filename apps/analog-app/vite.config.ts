@@ -20,7 +20,13 @@ export default defineConfig(({ mode }) => {
     resolve: {
       mainFields: ['module'],
     },
-    plugins: [angular(), visualizer() as Plugin, splitVendorChunkPlugin()],
+    plugins: [
+      angular({
+        inlineStylesExtension: 'scss',
+      }),
+      visualizer() as Plugin,
+      splitVendorChunkPlugin(),
+    ],
     test: {
       globals: true,
       environment: 'jsdom',

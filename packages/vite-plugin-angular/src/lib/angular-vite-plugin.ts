@@ -13,10 +13,12 @@ import {
   resolveStyleUrls,
   resolveTemplateUrl,
 } from './component-resolvers';
+import { inlineStylesPlugin } from './inline-styles-plugin';
 
 interface PluginOptions {
-  tsconfig: string;
-  workspaceRoot: string;
+  tsconfig?: string;
+  workspaceRoot?: string;
+  inlineStylesExtension?: string;
 }
 
 interface EmitFileResult {
@@ -27,15 +29,20 @@ interface EmitFileResult {
 }
 type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 
-export function angular(
-  pluginOptions: PluginOptions = {
+export function angular(options: PluginOptions): Plugin[] {
+  /**
+   * Normalize plugin options so defaults
+   * are used for values not provided.
+   */
+  const pluginOptions = {
     tsconfig:
-      process.env['NODE_ENV'] === 'test'
+      options?.tsconfig ?? process.env['NODE_ENV'] === 'test'
         ? './tsconfig.spec.json'
         : './tsconfig.app.json',
-    workspaceRoot: process.cwd(),
-  }
-): Plugin[] {
+    workspaceRoot: options?.workspaceRoot ?? process.cwd(),
+    inlineStylesExtension: options?.inlineStylesExtension ?? '',
+  };
+
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
   let fileEmitter: FileEmitter | undefined;
   let compilerOptions = {};
@@ -44,6 +51,9 @@ export function angular(
     mergeTransformers,
     replaceBootstrap,
   } = require('@ngtools/webpack/src/ivy/transformation');
+  const {
+    replaceResources,
+  } = require('@ngtools/webpack/src/transformers/replace_resources');
   const {
     augmentProgramWithVersioning,
     augmentHostWithCaching,
@@ -71,6 +81,7 @@ export function angular(
         >('@angular/compiler-cli');
 
         return {
+          assetsInclude: ['**/*.html'],
           optimizeDeps: {
             esbuildOptions: {
               plugins: [
@@ -320,6 +331,7 @@ export function angular(
         return;
       },
     },
+    inlineStylesPlugin(pluginOptions.inlineStylesExtension),
   ];
 
   function setupCompilation() {
@@ -384,11 +396,22 @@ export function angular(
 
     await angularCompiler.analyzeAsync();
 
+    const getTypeChecker = () => builder.getProgram().getTypeChecker();
     fileEmitter = createFileEmitter(
       builder,
-      mergeTransformers(angularCompiler.prepareEmit().transformers, {
-        before: [replaceBootstrap(() => builder.getProgram().getTypeChecker())],
-      }),
+      mergeTransformers(
+        {
+          before: [
+            replaceBootstrap(getTypeChecker),
+            replaceResources(
+              () => true,
+              getTypeChecker,
+              pluginOptions.inlineStylesExtension
+            ),
+          ],
+        },
+        angularCompiler.prepareEmit().transformers
+      ),
       () => []
     );
   }
