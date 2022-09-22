@@ -139,7 +139,7 @@ const helpText = "Helping binding";
 <HelloComponent helpText={helpText} />
 ```
 
-To hydrate the component on the client, use one of the Astro directives:
+To hydrate the component on the client, use one of the Astro [client directives](https://docs.astro.build/en/reference/directives-reference/#client-directives):
 
 ```ts
 ---
@@ -150,6 +150,54 @@ import { HelloComponent } from '../components/hello.component';
 ```
 
 Find more information about [Client Directives](https://docs.astro.build/en/reference/directives-reference/#client-directives) in the Astro documentation.
+
+## Use Component in MDX pages
+
+Install and configure MDX support by following the Astro integration of [@astrojs/mdx](https://docs.astro.build/en/guides/integrations-guide/mdx/). Your `astro.config.mjs` should now include the `@astrojs/mdx` integration.
+
+```js
+import { defineConfig } from 'astro/config';
+import mdx from '@astrojs/mdx';
+import angular from '@analogjs/astro-angular';
+
+export default defineConfig({
+  integrations: [mdx(), angular()],
+});
+```
+
+Create a `.mdx` file inside the `src/pages` directory and add the Angular component import below the frontmatter.
+
+```md
+---
+layout: "../../layouts/BlogPost.astro"
+title: "Using Angular in MDX"
+description: "Lorem ipsum dolor sit amet"
+pubDate: "Sep 22 2022"
+---
+
+import { HelloComponent } from "../../components/hello.component.ts";
+
+<HelloComponent />
+<HelloComponent helpText="Helping" />
+```
+
+To hydrate the component on the client, use one of the Astro [client directives](https://docs.astro.build/en/reference/directives-reference/#client-directives):
+
+```md
+---
+layout: "../../layouts/BlogPost.astro"
+title: "Using Angular in MDX"
+description: "Lorem ipsum dolor sit amet"
+pubDate: "Sep 22 2022"
+---
+
+import { HelloComponent } from "../../components/hello.component.ts";
+
+<HelloComponent client:load />
+<HelloComponent client:visible helpText="Helping" />
+```
+
+> Important: In `.mdx` files the component import must end with the `.ts` suffix. Otherwise the dynamic import of the component will fail and the component won't be hydrated.
 
 ## Current Limitations
 
