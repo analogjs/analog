@@ -15,7 +15,10 @@ export function inlineStylesPlugin(inlineStylesExtension = ''): Plugin {
     name: '@analogjs/vite-plugin-angular-inline-styles',
     enforce: 'pre',
     resolveId(id) {
-      if (id.includes(`.${inlineStylesExtension}?ngResource`)) {
+      if (
+        id.includes(`.${inlineStylesExtension}?ngResource`) &&
+        /data=(.*)\!/.test(id)
+      ) {
         return '\0' + virtualModuleId + id;
       }
 
