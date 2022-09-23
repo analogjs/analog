@@ -29,7 +29,7 @@ interface EmitFileResult {
 }
 type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 
-export function angular(options: PluginOptions): Plugin[] {
+export function angular(options?: PluginOptions): Plugin[] {
   /**
    * Normalize plugin options so defaults
    * are used for values not provided.
