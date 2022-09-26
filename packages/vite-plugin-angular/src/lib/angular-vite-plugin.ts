@@ -13,7 +13,7 @@ import {
   resolveStyleUrls,
   resolveTemplateUrl,
 } from './component-resolvers';
-import { inlineStylesPlugin } from './inline-styles-plugin';
+import { componentAssetsPlugin } from './component-assets-plugin';
 
 interface PluginOptions {
   tsconfig?: string;
@@ -81,7 +81,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         >('@angular/compiler-cli');
 
         return {
-          assetsInclude: ['**/*.html'],
           optimizeDeps: {
             esbuildOptions: {
               plugins: [
@@ -245,6 +244,17 @@ export function angular(options?: PluginOptions): Plugin[] {
       apply: 'build',
       config() {
         return {
+          build: {
+            rollupOptions: {
+              external: [/ngResource/],
+              onwarn: (warning, warn) => {
+                if (warning.message.includes('ngResource')) {
+                  return;
+                }
+                warn(warning);
+              },
+            },
+          },
           esbuild: {
             legalComments: 'none',
             keepNames: false,
@@ -331,7 +341,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         return;
       },
     },
-    inlineStylesPlugin(pluginOptions.inlineStylesExtension),
+    componentAssetsPlugin(pluginOptions.inlineStylesExtension),
   ];
 
   function setupCompilation() {
