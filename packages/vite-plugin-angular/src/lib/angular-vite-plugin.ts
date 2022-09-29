@@ -244,17 +244,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       apply: 'build',
       config() {
         return {
-          build: {
-            rollupOptions: {
-              external: [/ngResource/],
-              onwarn: (warning, warn) => {
-                if (warning.message.includes('ngResource')) {
-                  return;
-                }
-                warn(warning);
-              },
-            },
-          },
           esbuild: {
             legalComments: 'none',
             keepNames: false,

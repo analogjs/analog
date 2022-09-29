@@ -16,6 +16,15 @@ export default defineConfig(({ mode }) => {
       outDir: `${offsetFromRoot('apps/analog-app/src')}/dist/apps/analog-app`,
       emptyOutDir: true,
       target: 'es2020',
+      rollupOptions: {
+        external: [/ngResource/],
+        onwarn: (warning, warn) => {
+          if (warning.message.includes('ngResource')) {
+            return;
+          }
+          warn(warning);
+        },
+      },
     },
     resolve: {
       mainFields: ['module'],
