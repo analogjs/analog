@@ -161,6 +161,18 @@ export function angular(options?: PluginOptions): Plugin[] {
           return;
         }
 
+        /**
+         * Check for .ts extenstions for inline script files being
+         * transformed (Astro).
+         *
+         * Example ID:
+         *
+         * /src/pages/index.astro?astro&type=script&index=0&lang.ts
+         */
+        if (id.includes('type=script')) {
+          return;
+        }
+
         if (/\.[cm]?tsx?$/.test(id)) {
           /**
            * Re-analyze on each transform
