@@ -1,0 +1,33 @@
+{
+  "projectType": "library",
+  "sourceRoot": "packages/router/src",
+  "prefix": "analogjs",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/angular:package",
+      "outputs": ["dist/packages/router"],
+      "options": {
+        "project": "packages/router/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/router/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/router/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": [
+          "packages/router/**/*.ts",
+          "packages/router/**/*.html"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
