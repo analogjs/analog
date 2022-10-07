@@ -5,7 +5,7 @@
   "targets": {
     "build": {
       "executor": "@nrwl/angular:package",
-      "outputs": ["dist/packages/router"],
+      "outputs": ["node_modules/@analogjs/router"],
       "options": {
         "project": "packages/router/ng-package.json"
       },
