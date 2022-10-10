@@ -9,15 +9,14 @@ type Module = {
   routeMeta?: ReturnType<typeof defineRouteMeta>;
 };
 
-const FILES = import.meta.glob<Module>(['/routes/**/*.ts']);
+const FILES = import.meta.glob<Module>(['/app/routes/**/*.ts']);
 
 const ROUTES = Object.keys(FILES).sort((a, b) => a.length - b.length);
-
 const routeConfigs = ROUTES.reduce<Route[]>((routes: Route[], key: string) => {
   const module = FILES[key];
 
   const segments = key
-    .replace(/\/routes|\.(js|ts)$/g, '')
+    .replace(/\/app\/routes|\.(js|ts)$/g, '')
     .replace(/\[\.{3}.+\]/, '**')
     .replace(/\[([^\]]+)\]/g, ':$1')
     .split('/')

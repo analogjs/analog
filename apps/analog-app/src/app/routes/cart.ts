@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
-import { CartService } from '../app/cart.service';
+import { CartService } from '../cart.service';
 
 @Component({
   selector: 'app-cart',

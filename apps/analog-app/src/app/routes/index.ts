@@ -2,9 +2,9 @@ import { defineRouteMeta } from '@analogjs/router';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { ProductAlertsComponent } from '../app/product-alerts/product-alerts.component';
+import { ProductAlertsComponent } from '../product-alerts/product-alerts.component';
 
-import { products } from '../app/products';
+import { products } from '../products';
 
 @Component({
   selector: 'app-product-list',
