@@ -9,8 +9,16 @@ import { CartService } from '../cart.service';
   selector: 'app-product-details',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './product-details.component.html',
-  styleUrls: ['./product-details.component.css'],
+  template: `
+    <h2>Product Details</h2>
+
+    <div *ngIf="product">
+      <h3>{{ product.name }}</h3>
+      <h4>{{ product.price | currency }}</h4>
+      <p>{{ product.description }}</p>
+      <button type="button" (click)="addToCart(product)">Buy</button>
+    </div>
+  `,
 })
 export default class ProductDetailsComponent implements OnInit {
   product: Product | undefined;
@@ -22,7 +30,6 @@ export default class ProductDetailsComponent implements OnInit {
 
   ngOnInit() {
     // First get the product id from the current route.
-    console.log(this.route);
     const routeParams = this.route.parent!.snapshot!.paramMap;
     const productIdFromRoute = Number(routeParams.get('productId'));
 
