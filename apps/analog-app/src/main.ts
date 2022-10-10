@@ -2,28 +2,14 @@ import './polyfills';
 import { enableProdMode, importProvidersFrom } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { HttpClientModule } from '@angular/common/http';
-import { RouterModule } from '@angular/router';
-
-import initHmr from '@angular-devkit/build-angular/src/webpack/plugins/hmr/hmr-accept';
+import { provideFileRouter, routes } from '@analogjs/router';
 
 import { AppComponent } from './app/app.component';
-import { routes } from './app/routes';
 
 if (import.meta.env.PROD) {
   enableProdMode();
 }
-
+console.log(routes);
 bootstrapApplication(AppComponent, {
-  providers: [
-    importProvidersFrom(
-      HttpClientModule,
-      RouterModule.forRoot(routes)
-    ),
-  ],
+  providers: [provideFileRouter(), importProvidersFrom(HttpClientModule)],
 }).catch((err) => console.error(err));
-
-if (!import.meta.env.PROD && import.meta.hot) {
-  import.meta.hot.accept((newMod) => {
-    initHmr(import.meta);
-  });
-}

@@ -1,9 +1,0 @@
-$neon: powderblue;
-
-@mixin background($color: #fff) {
-  background: $color;
-}
-
-h2 {
-  @include background($neon);
-}
