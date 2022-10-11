@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { NgIf } from '@angular/common';
+import { CurrencyPipe, NgIf } from '@angular/common';
 
 import { Product, products } from '../products';
 import { CartService } from '../cart.service';
@@ -8,7 +8,7 @@ import { CartService } from '../cart.service';
 @Component({
   selector: 'app-product-details',
   standalone: true,
-  imports: [NgIf],
+  imports: [NgIf, CurrencyPipe],
   template: `
     <h2>Product Details</h2>
 
