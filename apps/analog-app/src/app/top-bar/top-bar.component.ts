@@ -5,7 +5,14 @@ import { RouterLinkWithHref } from '@angular/router';
   selector: 'app-top-bar',
   standalone: true,
   imports: [RouterLinkWithHref],
-  templateUrl: './top-bar.component.html',
-  styleUrls: ['./top-bar.component.css'],
+  template: `
+    <a routerLink="/">
+      <h1>My Store</h1>
+    </a>
+
+    <a routerLink="/cart" class="button fancy-button">
+      <i class="material-icons">shopping_cart</i>Checkout
+    </a>
+  `,
 })
 export class TopBarComponent {}

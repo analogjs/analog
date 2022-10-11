@@ -6,8 +6,11 @@ import { Product } from '../products';
   selector: 'app-product-alerts',
   standalone: true,
   imports: [NgIf],
-  templateUrl: './product-alerts.component.html',
-  styleUrls: ['./product-alerts.component.css'],
+  template: `
+    <p *ngIf="product && product.price > 700">
+      <button type="button" (click)="notify.emit()">Notify Me</button>
+    </p>
+  `,
 })
 export class ProductAlertsComponent {
   @Input() product: Product | undefined;

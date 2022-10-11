@@ -7,7 +7,12 @@ import { TopBarComponent } from './top-bar/top-bar.component';
   selector: 'analogjs-root',
   standalone: true,
   imports: [TopBarComponent, RouterOutlet],
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css'],
+  template: `
+    <app-top-bar></app-top-bar>
+
+    <div class="container">
+      <router-outlet></router-outlet>
+    </div>
+  `,
 })
 export class AppComponent {}
