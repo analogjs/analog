@@ -18,7 +18,7 @@ describe('Cart', () => {
     })
   );
 
-  it(`Given the user has added a phone to the cart
+  xit(`Given the user has added a phone to the cart
     Then the price is visible in a cart item`, () => {
     const phone = phones.mini;
     buyPhoneByName(phone.name);

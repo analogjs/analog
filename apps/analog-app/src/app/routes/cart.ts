@@ -34,8 +34,7 @@ import { CartService } from '../cart.service';
 
       <button class="button" type="submit">Purchase</button>
     </form>
-  `
-
+  `,
 })
 export default class CartComponent {
   items = this.cartService.getItems();

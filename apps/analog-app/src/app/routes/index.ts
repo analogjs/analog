@@ -25,7 +25,7 @@ import { products } from '../products';
 
       <p *ngIf="product.description">Description: {{ product.description }}</p>
 
-      <button type="button" (click)="share()">Shares</button>
+      <button type="button" (click)="share()">Share</button>
 
       <app-product-alerts [product]="product" (notify)="onNotify()">
       </app-product-alerts>
