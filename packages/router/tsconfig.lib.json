@@ -7,6 +7,6 @@
     "inlineSources": true,
     "types": []
   },
-  "exclude": ["jest.config.ts", "**/*.test.ts", "**/*.spec.ts"],
+  "exclude": ["vite.config.ts", "**/*.test.ts", "**/*.spec.ts"],
   "include": ["**/*.ts"]
 }
