@@ -1,6 +1,6 @@
 import { Route } from '@angular/router';
 import { defineRouteMeta } from './define-route';
-import { _getRoutes, RouteExport } from './routes';
+import { getRoutes, RouteExport } from './routes';
 
 type Files = Record<string, () => Promise<RouteExport>>;
 type ModuleRoute = Route & {
@@ -22,7 +22,7 @@ describe('routes', () => {
         }),
     };
 
-    const routes = _getRoutes(files);
+    const routes = getRoutes(files);
     const route: ModuleRoute = routes[0];
 
     it('should have a path', () => {
@@ -77,7 +77,7 @@ describe('routes', () => {
         Promise.resolve({ default: RouteComponent }),
     };
 
-    const routes = _getRoutes(files);
+    const routes = getRoutes(files);
     const route: ModuleRoute = routes[0];
 
     it('should have a path', () => {
@@ -122,7 +122,7 @@ describe('routes', () => {
         Promise.resolve({ default: RouteComponent }),
     };
 
-    const routes = _getRoutes(files);
+    const routes = getRoutes(files);
     const route: ModuleRoute = routes[0];
 
     describe('parent route', () => {

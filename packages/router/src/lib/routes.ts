@@ -18,7 +18,7 @@ const FILES = import.meta.glob<RouteExport>(['/app/routes/**/*.ts']);
  * @param files
  * @returns Array of routes
  */
-export function _getRoutes(files: Record<string, () => Promise<RouteExport>>) {
+export function getRoutes(files: Record<string, () => Promise<RouteExport>>) {
   const ROUTES = Object.keys(files).sort((a, b) => a.length - b.length);
 
   const routeConfigs = ROUTES.reduce<Route[]>(
@@ -141,4 +141,4 @@ export function _getRoutes(files: Record<string, () => Promise<RouteExport>>) {
   return routeConfigs;
 }
 
-export const routes: Route[] = [..._getRoutes(FILES)];
+export const routes: Route[] = [...getRoutes(FILES)];
