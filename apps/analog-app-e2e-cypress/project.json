@@ -6,8 +6,9 @@
     "cypress": {
       "executor": "@nrwl/cypress:cypress",
       "options": {
-        "cypressConfig": "apps/analog-app-e2e-cypress/cypress.json",
-        "baseUrl": "http://localhost:3000"
+        "cypressConfig": "apps/analog-app-e2e-cypress/cypress.config.ts",
+        "baseUrl": "http://localhost:3000",
+        "testingType": "e2e"
       },
       "configurations": {
         "watch": {
