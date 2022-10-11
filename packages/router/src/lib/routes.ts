@@ -26,7 +26,7 @@ const routeConfigs = ROUTES.reduce<Route[]>((routes: Route[], key: string) => {
     const path = segment.replace(/index/g, '').replace('.', '/');
     const isIndex = !path;
     const isCatchall = path === '**';
-    const pathMatch = isIndex ? 'full' : undefined;
+    const pathMatch = isIndex ? 'full' : 'prefix';
     const root = index === 0;
     const leaf = index === segments.length - 1 && segments.length > 1;
     const node = !root && !leaf;
