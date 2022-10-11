@@ -12,6 +12,9 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
     },
+    optimizeDeps: {
+      include: ['@angular/common', '@angular/forms'],
+    },
     build: {
       outDir: `${offsetFromRoot('apps/analog-app/src')}/dist/apps/analog-app`,
       emptyOutDir: true,
