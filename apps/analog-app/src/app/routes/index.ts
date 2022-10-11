@@ -1,7 +1,7 @@
 import { defineRouteMeta } from '@analogjs/router';
-import { CommonModule } from '@angular/common';
+import { NgForOf, NgIf } from '@angular/common';
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { RouterLinkWithHref } from '@angular/router';
 import { ProductAlertsComponent } from '../product-alerts/product-alerts.component';
 
 import { products } from '../products';
@@ -9,7 +9,7 @@ import { products } from '../products';
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, ProductAlertsComponent, RouterModule],
+  imports: [NgForOf, NgIf, ProductAlertsComponent, RouterLinkWithHref],
   template: `
     <h2>Products</h2>
 

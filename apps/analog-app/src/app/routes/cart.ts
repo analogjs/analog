@@ -1,14 +1,14 @@
-import { CommonModule } from '@angular/common';
+import { CurrencyPipe, NgForOf } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterLinkWithHref } from '@angular/router';
 
 import { CartService } from '../cart.service';
 
 @Component({
   selector: 'app-cart',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [RouterLinkWithHref, NgForOf, CurrencyPipe, ReactiveFormsModule],
   template: `
     <h3>Cart</h3>
 
