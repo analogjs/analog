@@ -122,7 +122,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         await buildAndAnalyze();
       },
       async handleHotUpdate(ctx) {
-        if (/\.[cm]?tsx?$/.test(ctx.file)) {
+        if (/\.[cm]?ts$/.test(ctx.file)) {
           sourceFileCache.invalidate(ctx.file);
           await buildAndAnalyze();
         }
@@ -173,7 +173,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           return;
         }
 
-        if (/\.[cm]?tsx?$/.test(id)) {
+        if (/\.[cm]?ts$/.test(id)) {
           /**
            * Re-analyze on each transform
            * for test(Vitest)
