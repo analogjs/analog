@@ -122,7 +122,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         await buildAndAnalyze();
       },
       async handleHotUpdate(ctx) {
-        if (/\.[cm]?ts\??/.test(ctx.file)) {
+        if (/\.[cm]?(ts$|ts[^x])?\??$/.test(ctx.file)) {
           sourceFileCache.invalidate(ctx.file.replace(/\?(.*)/, ''));
           await buildAndAnalyze();
         }
@@ -173,7 +173,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           return;
         }
 
-        if (/\.[cm]?ts\??/.test(id)) {
+        if (/\.[cm]?(ts$|ts[^x])?\??$/.test(id)) {
           if (id.includes('.ts?')) {
             // Strip the query string off the ID
             // in case of a dynamically loaded file
