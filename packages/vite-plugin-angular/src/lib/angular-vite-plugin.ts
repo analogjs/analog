@@ -34,7 +34,7 @@ type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
  * Match .(c or m)ts, .ts extensions with an optional ? for query params
  * Ignore .tsx extensions
  */
-const TS_EXT_REGEX = /\.[cm]?ts([^x])?\??$/;
+const TS_EXT_REGEX = /\.[cm]?ts[^x]?\??/;
 
 export function angular(options?: PluginOptions): Plugin[] {
   /**
@@ -180,7 +180,9 @@ export function angular(options?: PluginOptions): Plugin[] {
           return;
         }
 
+        console.log('id', id);
         if (TS_EXT_REGEX.test(id)) {
+          console.log('in');
           if (id.includes('.ts?')) {
             // Strip the query string off the ID
             // in case of a dynamically loaded file
