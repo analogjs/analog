@@ -52,8 +52,8 @@ export const injectRouter = () => {
 /**
  * Returns the instance of the Activate Route for the component
  *
- * @returns The router
+ * @returns The activated route
  */
-export const injectRoute = () => {
+export const injectActivatedRoute = () => {
   return inject(ActivatedRoute);
 };
