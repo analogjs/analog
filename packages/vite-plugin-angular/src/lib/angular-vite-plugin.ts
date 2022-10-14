@@ -180,9 +180,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           return;
         }
 
-        console.log('id', id);
         if (TS_EXT_REGEX.test(id)) {
-          console.log('in');
           if (id.includes('.ts?')) {
             // Strip the query string off the ID
             // in case of a dynamically loaded file
