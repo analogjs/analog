@@ -1,5 +1,5 @@
 import { AsyncPipe, CurrencyPipe, NgForOf } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 
 import { Observable } from 'rxjs';
 import { CartService } from '../../cart.service';
@@ -18,9 +18,9 @@ import { CartService } from '../../cart.service';
   `,
 })
 export default class ShippingComponent implements OnInit {
-  shippingCosts!: Observable<{ type: string; price: number }[]>;
+  private cartService = inject(CartService);
 
-  constructor(private cartService: CartService) {}
+  shippingCosts!: Observable<{ type: string; price: number }[]>;
 
   ngOnInit(): void {
     this.shippingCosts = this.cartService.getShippingPrices();

@@ -6,6 +6,10 @@ import { ProductAlertsComponent } from '../product-alerts/product-alerts.compone
 
 import { products } from '../products';
 
+export const routeMeta = defineRouteMeta({
+  title: 'Product List',
+});
+
 @Component({
   selector: 'app-product-list',
   standalone: true,
@@ -56,7 +60,3 @@ export default class ProductListComponent {
     window.alert('You will be notified when the product goes on sale');
   }
 }
-
-export const routeMeta = defineRouteMeta({
-  title: 'Product List',
-});

@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, inject, OnInit } from '@angular/core';
 import { CurrencyPipe, NgIf } from '@angular/common';
+import { injectActivatedRoute } from '@analogjs/router';
 
 import { Product, products } from '../products';
 import { CartService } from '../cart.service';
@@ -21,12 +21,10 @@ import { CartService } from '../cart.service';
   `,
 })
 export default class ProductDetailsComponent implements OnInit {
-  product: Product | undefined;
+  private route = injectActivatedRoute();
+  private cartService = inject(CartService);
 
-  constructor(
-    private route: ActivatedRoute,
-    private cartService: CartService
-  ) {}
+  product: Product | undefined;
 
   ngOnInit() {
     // First get the product id from the current route.

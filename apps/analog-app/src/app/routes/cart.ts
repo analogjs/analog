@@ -1,5 +1,5 @@
 import { CurrencyPipe, NgForOf } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLinkWithHref } from '@angular/router';
 
@@ -37,17 +37,15 @@ import { CartService } from '../cart.service';
   `,
 })
 export default class CartComponent {
+  private cartService = inject(CartService);
+  private formBuilder = inject(FormBuilder);
+
   items = this.cartService.getItems();
 
   checkoutForm = this.formBuilder.group({
     name: '',
     address: '',
   });
-
-  constructor(
-    private cartService: CartService,
-    private formBuilder: FormBuilder
-  ) {}
 
   onSubmit(): void {
     // Process checkout data here
