@@ -24,5 +24,8 @@
       "dependsOn": ["build"]
     }
   },
-  "tags": []
+  "tags": [],
+  "namedInputs": {
+    "projectSpecificFiles": ["{workspaceRoot}/CONTRIBUTING.md"]
+  }
 }
