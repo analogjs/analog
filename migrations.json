@@ -1,0 +1,76 @@
+{
+  "migrations": [
+    {
+      "cli": "nx",
+      "version": "15.0.0-beta.1",
+      "description": "Replace implicitDependencies with namedInputs + target inputs",
+      "implementation": "./src/migrations/update-15-0-0/migrate-to-inputs",
+      "package": "nx",
+      "name": "15.0.0-migrate-to-inputs"
+    },
+    {
+      "cli": "nx",
+      "version": "15.0.0-beta.1",
+      "description": "Prefix outputs with {workspaceRoot}/{projectRoot} if needed",
+      "implementation": "./src/migrations/update-15-0-0/prefix-outputs",
+      "package": "nx",
+      "name": "15.0.0-prefix-outputs"
+    },
+    {
+      "cli": "nx",
+      "version": "15.0.0-beta.0",
+      "description": "Rename @nrwl/angular:webpack-server executor to @nrwl/angular:webpack-dev-server",
+      "factory": "./src/migrations/update-14-8-0/rename-webpack-server",
+      "package": "@nrwl/angular",
+      "name": "rename-webpack-server-executor"
+    },
+    {
+      "cli": "nx",
+      "version": "15.0.0-beta.0",
+      "description": "Update the usages of @nrwl/angular/testing to import jasmine-marbles symbols from jasmine-marbles itself.",
+      "factory": "./src/migrations/update-15-0-0/switch-to-jasmine-marbles",
+      "package": "@nrwl/angular",
+      "name": "switch-to-jasmine-marbles"
+    },
+    {
+      "cli": "nx",
+      "version": "15.0.0-beta.1",
+      "description": "Stop hashing karma spec files and config files for build targets and dependent tasks",
+      "factory": "./src/migrations/update-15-0-0/add-karma-inputs",
+      "package": "@nrwl/angular",
+      "name": "add-karma-inputs"
+    },
+    {
+      "cli": "nx",
+      "version": "15.0.0-beta.0",
+      "description": "Stop hashing cypress spec files and config files for build targets and dependent tasks",
+      "factory": "./src/migrations/update-15-0-0/add-cypress-inputs",
+      "package": "@nrwl/cypress",
+      "name": "add-cypress-inputs"
+    },
+    {
+      "cli": "nx",
+      "version": "15.0.0-beta.4",
+      "description": "Update to using cy.mount in the commands.ts file instead of importing mount for each component test file",
+      "factory": "./src/migrations/update-15-0-0/update-cy-mount-usage",
+      "package": "@nrwl/cypress",
+      "name": "update-cy-mount-usage"
+    },
+    {
+      "version": "15.0.0-beta.0",
+      "cli": "nx",
+      "description": "Stop hashing jest spec files and config files for build targets and dependent tasks",
+      "factory": "./src/migrations/update-15-0-0/add-jest-inputs",
+      "package": "@nrwl/jest",
+      "name": "add-jest-inputs"
+    },
+    {
+      "cli": "nx",
+      "version": "15.0.0-beta.0",
+      "description": "Stop hashing eslint config files for build targets and dependent tasks",
+      "factory": "./src/migrations/update-15-0-0/add-eslint-inputs",
+      "package": "@nrwl/linter",
+      "name": "add-eslint-inputs"
+    }
+  ]
+}
