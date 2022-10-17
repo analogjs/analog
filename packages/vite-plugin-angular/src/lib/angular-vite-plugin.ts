@@ -342,7 +342,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         return;
       },
     },
-    componentAssetsPlugin(pluginOptions.inlineStylesExtension),
+    ...componentAssetsPlugin(pluginOptions.inlineStylesExtension),
   ];
 
   function setupCompilation() {
