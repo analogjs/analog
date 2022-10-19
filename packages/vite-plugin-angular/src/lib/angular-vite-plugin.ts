@@ -29,6 +29,13 @@ interface EmitFileResult {
 }
 type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 
+/**
+ * TypeScript file extension regex
+ * Match .(c or m)ts, .ts extensions with an optional ? for query params
+ * Ignore .tsx extensions
+ */
+const TS_EXT_REGEX = /\.[cm]?ts[^x]?\??/;
+
 export function angular(options?: PluginOptions): Plugin[] {
   /**
    * Normalize plugin options so defaults
@@ -122,8 +129,8 @@ export function angular(options?: PluginOptions): Plugin[] {
         await buildAndAnalyze();
       },
       async handleHotUpdate(ctx) {
-        if (/\.[cm]?ts$/.test(ctx.file)) {
-          sourceFileCache.invalidate(ctx.file);
+        if (TS_EXT_REGEX.test(ctx.file)) {
+          sourceFileCache.invalidate(ctx.file.replace(/\?(.*)/, ''));
           await buildAndAnalyze();
         }
 
@@ -173,7 +180,13 @@ export function angular(options?: PluginOptions): Plugin[] {
           return;
         }
 
-        if (/\.[cm]?ts$/.test(id)) {
+        if (TS_EXT_REGEX.test(id)) {
+          if (id.includes('.ts?')) {
+            // Strip the query string off the ID
+            // in case of a dynamically loaded file
+            id = id.replace(/\?(.*)/, '');
+          }
+
           /**
            * Re-analyze on each transform
            * for test(Vitest)

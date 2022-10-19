@@ -1,0 +1,11 @@
+{
+  "name": "@analogjs/router",
+  "version": "0.1.0-alpha.0",
+  "peerDependencies": {
+    "@angular/core": "^14.0.0",
+    "@angular/router": "^14.0.0"
+  },
+  "dependencies": {
+    "tslib": "^2.0.0"
+  }
+}

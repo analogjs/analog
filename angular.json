@@ -6,10 +6,11 @@
     "analog-app-e2e-cypress": "apps/analog-app-e2e-cypress",
     "analog-app-e2e-playwright": "apps/analog-app-e2e-playwright",
     "astro-angular": "packages/astro-angular",
+    "astro-app": "apps/astro-app",
+    "astro-app-e2e-playwright": "apps/astro-app-e2e-playwright",
     "create-analog": "packages/create-analog",
     "docs-app": "apps/docs-app",
-    "vite-plugin-angular": "packages/vite-plugin-angular",
-    "astro-app": "apps/astro-app",
-    "astro-app-e2e-playwright": "apps/astro-app-e2e-playwright"
+    "router": "packages/router",
+    "vite-plugin-angular": "packages/vite-plugin-angular"
   }
 }
