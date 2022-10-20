@@ -119,18 +119,18 @@ The following structure below represents a nested route.
 src/
 └── app/
     └── routes/
-        │   ├── products/
-        │   ├── [productId].ts
-        │   └── index.ts
+        │   └── products/
+        │      ├──[productId].ts
+        │      └──index.ts
         └── products.ts
 ```
 
-This defines two routes:
+This defines two routes with a shared layout:
 
 - `/products`
 - `/products/:productId`
 
-The parent `products.ts` contains the parent page with a router outlet.
+The parent `src/app/routes/products.ts` file contains the parent page with a router outlet.
 
 ```ts
 import { Component } from '@angular/core';
