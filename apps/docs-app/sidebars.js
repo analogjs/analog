@@ -40,6 +40,17 @@ const sidebars = {
         },
         {
           type: 'category',
+          label: 'Router',
+          items: [
+            {
+              type: 'doc',
+              id: 'packages/router/overview',
+              label: 'Overview',
+            },
+          ],
+        },
+        {
+          type: 'category',
           label: 'Astro Integration',
           items: [
             {
