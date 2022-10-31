@@ -82,7 +82,7 @@ Dynamic routes are defined by using the filename as the route path enclosed in s
 
 The parameter for the route is extracted from the route path.
 
-The example route below in `src/app/routes/produtcs.[productId].ts` defines a `/products/:productId` route.
+The example route below in `src/app/routes/products.[productId].ts` defines a `/products/:productId` route.
 
 ```ts
 import { Component } from '@angular/core';
