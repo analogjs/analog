@@ -14,6 +14,7 @@ import {
   resolveTemplateUrl,
 } from './component-resolvers';
 import { componentAssetsPlugin } from './component-assets-plugin';
+import { routerPlugin } from './router-plugin';
 
 interface PluginOptions {
   tsconfig?: string;
@@ -356,6 +357,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
     },
     ...componentAssetsPlugin(pluginOptions.inlineStylesExtension),
+    ...routerPlugin(),
   ];
 
   function setupCompilation() {
