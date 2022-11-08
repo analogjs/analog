@@ -16,7 +16,7 @@ import {
 import { componentAssetsPlugin } from './component-assets-plugin';
 import { routerPlugin } from './router-plugin';
 
-interface PluginOptions {
+export interface PluginOptions {
   tsconfig?: string;
   workspaceRoot?: string;
   inlineStylesExtension?: string;
