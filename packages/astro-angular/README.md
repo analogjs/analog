@@ -94,6 +94,31 @@ export default defineConfig({
 
 Go to [Defining A Component](#defining-a-component)
 
+## Configuration
+
+### Configure Vite Angular Plugin
+
+Provide an option object to configure the `@analogjs/vite-plugin-angular` powering this plugin.
+
+```js
+import { defineConfig } from 'astro/config';
+import angular from '@analogjs/astro-angular';
+
+export default defineConfig({
+  integrations: [
+    angular({
+      vite: {
+        tsconfig: 'path/to/tsconfig.app.json',
+        workspaceRoot: 'rootDir',
+        inlineStylesExtension: 'scss|sass|less|styl|stylus'
+      },
+    }),
+  ],
+});
+```
+
+The Astro Angular integration
+
 ## Defining A Component
 
 The Astro Angular integration **only** supports rendering standalone components:
