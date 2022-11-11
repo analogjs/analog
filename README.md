@@ -38,7 +38,7 @@ Follow the prompts to scaffold the project and start the development server.
 
 ## Packages
 
-- @analogjs/vite-plugin-angular: An Angular Plugin for building/testing applications with Vite
+- @analogjs/vite-plugin-angular: An [Angular](https://angular.io) Plugin for building/testing applications with Vite
 - @analogjs/astro-angular: An integration for using Angular components in [Astro](https://astro.build)
 - create-analog: An initializer for scaffolding an Analog project.
 
