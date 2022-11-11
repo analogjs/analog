@@ -88,6 +88,8 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     <tr>
       <td align="center"><a href="http://kylerjohnson.dev"><img src="https://avatars.githubusercontent.com/u/75549176?v=4?s=100" width="100px;" alt="Kyler Johnson"/><br /><sub><b>Kyler Johnson</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=KylerJohnsonDev" title="Code">💻</a></td>
       <td align="center"><a href="https://marcjulian.de/?ref=github"><img src="https://avatars.githubusercontent.com/u/8985933?v=4?s=100" width="100px;" alt="Marc"/><br /><sub><b>Marc</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=marcjulian" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=marcjulian" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/himyjan"><img src="https://avatars.githubusercontent.com/u/51815522?v=4?s=100" width="100px;" alt="himyjan"/><br /><sub><b>himyjan</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=himyjan" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/TicTak21"><img src="https://avatars.githubusercontent.com/u/44474697?v=4?s=100" width="100px;" alt="Alex Kovalev"/><br /><sub><b>Alex Kovalev</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=TicTak21" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

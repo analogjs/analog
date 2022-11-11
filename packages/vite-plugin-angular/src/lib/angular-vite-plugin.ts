@@ -13,10 +13,13 @@ import {
   resolveStyleUrls,
   resolveTemplateUrl,
 } from './component-resolvers';
+import { componentAssetsPlugin } from './component-assets-plugin';
+import { routerPlugin } from './router-plugin';
 
-interface PluginOptions {
-  tsconfig: string;
-  workspaceRoot: string;
+export interface PluginOptions {
+  tsconfig?: string;
+  workspaceRoot?: string;
+  inlineStylesExtension?: string;
 }
 
 interface EmitFileResult {
@@ -27,15 +30,27 @@ interface EmitFileResult {
 }
 type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 
-export function angular(
-  pluginOptions: PluginOptions = {
+/**
+ * TypeScript file extension regex
+ * Match .(c or m)ts, .ts extensions with an optional ? for query params
+ * Ignore .tsx extensions
+ */
+const TS_EXT_REGEX = /\.[cm]?ts[^x]?\??/;
+
+export function angular(options?: PluginOptions): Plugin[] {
+  /**
+   * Normalize plugin options so defaults
+   * are used for values not provided.
+   */
+  const pluginOptions = {
     tsconfig:
-      process.env['NODE_ENV'] === 'test'
+      options?.tsconfig ?? process.env['NODE_ENV'] === 'test'
         ? './tsconfig.spec.json'
         : './tsconfig.app.json',
-    workspaceRoot: process.cwd(),
-  }
-): Plugin[] {
+    workspaceRoot: options?.workspaceRoot ?? process.cwd(),
+    inlineStylesExtension: options?.inlineStylesExtension ?? '',
+  };
+
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
   let fileEmitter: FileEmitter | undefined;
   let compilerOptions = {};
@@ -44,6 +59,9 @@ export function angular(
     mergeTransformers,
     replaceBootstrap,
   } = require('@ngtools/webpack/src/ivy/transformation');
+  const {
+    replaceResources,
+  } = require('@ngtools/webpack/src/transformers/replace_resources');
   const {
     augmentProgramWithVersioning,
     augmentHostWithCaching,
@@ -112,8 +130,8 @@ export function angular(
         await buildAndAnalyze();
       },
       async handleHotUpdate(ctx) {
-        if (/\.[cm]?tsx?$/.test(ctx.file)) {
-          sourceFileCache.invalidate(ctx.file);
+        if (TS_EXT_REGEX.test(ctx.file)) {
+          sourceFileCache.invalidate(ctx.file.replace(/\?(.*)/, ''));
           await buildAndAnalyze();
         }
 
@@ -151,7 +169,25 @@ export function angular(
           return;
         }
 
-        if (/\.[cm]?tsx?$/.test(id)) {
+        /**
+         * Check for .ts extenstions for inline script files being
+         * transformed (Astro).
+         *
+         * Example ID:
+         *
+         * /src/pages/index.astro?astro&type=script&index=0&lang.ts
+         */
+        if (id.includes('type=script')) {
+          return;
+        }
+
+        if (TS_EXT_REGEX.test(id)) {
+          if (id.includes('.ts?')) {
+            // Strip the query string off the ID
+            // in case of a dynamically loaded file
+            id = id.replace(/\?(.*)/, '');
+          }
+
           /**
            * Re-analyze on each transform
            * for test(Vitest)
@@ -320,6 +356,8 @@ export function angular(
         return;
       },
     },
+    ...componentAssetsPlugin(pluginOptions.inlineStylesExtension),
+    ...routerPlugin(),
   ];
 
   function setupCompilation() {
@@ -384,11 +422,22 @@ export function angular(
 
     await angularCompiler.analyzeAsync();
 
+    const getTypeChecker = () => builder.getProgram().getTypeChecker();
     fileEmitter = createFileEmitter(
       builder,
-      mergeTransformers(angularCompiler.prepareEmit().transformers, {
-        before: [replaceBootstrap(() => builder.getProgram().getTypeChecker())],
-      }),
+      mergeTransformers(
+        {
+          before: [
+            replaceBootstrap(getTypeChecker),
+            replaceResources(
+              () => true,
+              getTypeChecker,
+              pluginOptions.inlineStylesExtension
+            ),
+          ],
+        },
+        angularCompiler.prepareEmit().transformers
+      ),
       () => []
     );
   }

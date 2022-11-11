@@ -31,6 +31,22 @@ const sidebars = {
               id: 'packages/vite-plugin-angular/overview',
               label: 'Overview',
             },
+            {
+              type: 'doc',
+              id: 'packages/vite-plugin-angular/css-preprocessors',
+              label: 'Using CSS Pre-processors',
+            },
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Router',
+          items: [
+            {
+              type: 'doc',
+              id: 'packages/router/overview',
+              label: 'Overview',
+            },
           ],
         },
         {

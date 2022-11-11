@@ -1,13 +1,18 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { RouterOutlet } from '@angular/router';
 
 import { TopBarComponent } from './top-bar/top-bar.component';
 
 @Component({
   selector: 'analogjs-root',
   standalone: true,
-  imports: [TopBarComponent, RouterModule],
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  imports: [TopBarComponent, RouterOutlet],
+  template: `
+    <app-top-bar></app-top-bar>
+
+    <div class="container">
+      <router-outlet></router-outlet>
+    </div>
+  `,
 })
-export class AppComponent { }
+export class AppComponent {}

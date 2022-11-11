@@ -11,8 +11,7 @@
     "start": "npm run dev",
     "build": "vite build",
     "watch": "vite build --watch",
-    "test": "vitest",
-    "postinstall": "vite optimize"
+    "test": "vitest"
   },
   "dependencies": {
     "@angular/animations": "^14.0.0",
