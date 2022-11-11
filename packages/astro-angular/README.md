@@ -117,8 +117,6 @@ export default defineConfig({
 });
 ```
 
-The Astro Angular integration
-
 ## Defining A Component
 
 The Astro Angular integration **only** supports rendering standalone components:
