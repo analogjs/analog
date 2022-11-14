@@ -1,7 +1,7 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-20-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-21-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
@@ -92,6 +92,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center"><a href="https://github.com/TicTak21"><img src="https://avatars.githubusercontent.com/u/44474697?v=4?s=100" width="100px;" alt="Alex Kovalev"/><br /><sub><b>Alex Kovalev</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=TicTak21" title="Documentation">📖</a></td>
       <td align="center"><a href="http://www.linkedin.com/in/nuhmanpk"><img src="https://avatars.githubusercontent.com/u/62880706?v=4?s=100" width="100px;" alt="Nuhman Pk"/><br /><sub><b>Nuhman Pk</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=nuhmanpk" title="Documentation">📖</a></td>
       <td align="center"><a href="https://github.com/miluoshi"><img src="https://avatars.githubusercontent.com/u/1130547?v=4?s=100" width="100px;" alt="Miloš Lajtman"/><br /><sub><b>Miloš Lajtman</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=miluoshi" title="Code">💻</a></td>
+      <td align="center"><a href="https://www.youtube.com/c/CodeShotsWithProfanis"><img src="https://avatars.githubusercontent.com/u/7045092?v=4?s=100" width="100px;" alt="profanis"/><br /><sub><b>profanis</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=profanis" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

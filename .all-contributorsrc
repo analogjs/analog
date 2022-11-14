@@ -192,6 +192,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "profanis",
+      "name": "profanis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7045092?v=4",
+      "profile": "https://www.youtube.com/c/CodeShotsWithProfanis",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
