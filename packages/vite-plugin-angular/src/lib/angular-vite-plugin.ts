@@ -113,6 +113,9 @@ export function angular(options?: PluginOptions): Plugin[] {
               },
             },
           },
+          resolve: {
+            conditions: ['sass', 'style'],
+          },
         };
       },
       configureServer(server) {
