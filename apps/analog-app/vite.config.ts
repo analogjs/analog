@@ -31,8 +31,10 @@ export default defineConfig(({ mode }) => {
       visualizer() as Plugin,
       splitVendorChunkPlugin(),
       platform({
-        output: {
-          dir: `${offsetFromRoot('apps/analog-app/src/server')}/dist/server`,
+        nitro: {
+          output: {
+            dir: `${offsetFromRoot('apps/analog-app/src/server')}/dist/server`,
+          },
         },
       }),
     ],

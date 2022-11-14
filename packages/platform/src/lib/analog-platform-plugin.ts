@@ -2,14 +2,14 @@ import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm'
 import { NitroConfig } from 'nitropack';
 import { Plugin, ViteDevServer } from 'vite';
 
-export function analogPlatform(opts: NitroConfig): Plugin {
+export function analogPlatform(opts: { nitro?: NitroConfig }): Plugin {
   const nitroConfig: NitroConfig = {
     rootDir: 'src',
     srcDir: 'src/server',
     scanDirs: ['src/server'],
     output: {
       dir: '../dist/server',
-      ...opts.output,
+      ...opts.nitro?.output,
     },
   };
   return {
