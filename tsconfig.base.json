@@ -17,6 +17,7 @@
     "paths": {
       "@analogjs/astro-angular": ["packages/astro-angular/src/index.ts"],
       "@analogjs/router": ["packages/router/src/index.ts"],
+      "@analogjs/platform": ["packages/platform/src/index.ts"],
       "@analogjs/vite-plugin-angular": [
         "packages/vite-plugin-angular/src/index.ts"
       ]

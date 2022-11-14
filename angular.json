@@ -11,6 +11,7 @@
     "create-analog": "packages/create-analog",
     "docs-app": "apps/docs-app",
     "router": "packages/router",
+    "platform": "packages/platform",
     "vite-plugin-angular": "packages/vite-plugin-angular"
   }
 }

@@ -84,6 +84,7 @@
     "kolorist": "^1.6.0",
     "lint-staged": "^13.0.3",
     "minimist": "^1.2.7",
+    "nitropack": "^0.5.4",
     "nx": "14.8.4",
     "playwright": "^1.27.1",
     "prettier": "^2.7.1",
