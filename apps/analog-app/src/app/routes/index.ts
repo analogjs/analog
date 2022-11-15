@@ -1,10 +1,10 @@
 import { defineRouteMeta } from '@analogjs/router';
 import { NgForOf, NgIf } from '@angular/common';
-import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Component, inject } from '@angular/core';
 import { RouterLinkWithHref } from '@angular/router';
 import { ProductAlertsComponent } from '../product-alerts/product-alerts.component';
-
-import { products } from '../products';
+import { Product } from '../products';
 
 export const routeMeta = defineRouteMeta({
   title: 'Product List',
@@ -50,7 +50,14 @@ export const routeMeta = defineRouteMeta({
   ],
 })
 export default class ProductListComponent {
-  products = [...products];
+  products!: Product[];
+  http = inject(HttpClient);
+
+  ngOnInit() {
+    this.http.get<Product[]>('/api/v1/products').subscribe((products) => {
+      this.products = products;
+    });
+  }
 
   share() {
     window.alert('The product has been shared!');
