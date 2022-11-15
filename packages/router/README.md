@@ -40,6 +40,36 @@ bootstrapApplication(AppComponent, {
 
 This registers the Angular Router, along with the routes generated from the file structure.
 
+Next, update the `tsconfig.app.json` to include the dynamically generated routes.
+
+```json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "types": []
+  },
+  "files": ["src/main.ts", "src/polyfills.ts"],
+  "include": ["src/**/*.d.ts", "src/app/routes/**/*.ts"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts"]
+}
+```
+
+Last, add the router outlet to the root component.
+
+```ts
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [RouterOutlet],
+  template: ` <router-outlet></router-outlet> `,
+})
+export class AppComponent {}
+```
+
 ## Defining Routes
 
 Routes are defined using folders and files in the `src/app/routes` folder.
