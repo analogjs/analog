@@ -1,7 +1,6 @@
 /// <reference types="vitest" />
 
-import platform from '@analogjs/platform';
-import angular from '@analogjs/vite-plugin-angular';
+import analog from '@analogjs/platform';
 import { offsetFromRoot } from '@nrwl/devkit';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
@@ -27,12 +26,10 @@ export default defineConfig(({ mode }) => {
       mainFields: ['module'],
     },
     plugins: [
-      angular({
-        inlineStylesExtension: 'scss',
-      }),
-      visualizer() as Plugin,
-      splitVendorChunkPlugin(),
-      platform({
+      analog({
+        vite: {
+          inlineStylesExtension: 'scss',
+        },
         nitro: {
           output: {
             dir: `${offsetFromRoot(
@@ -44,6 +41,8 @@ export default defineConfig(({ mode }) => {
           )}/dist/apps/analog-app/.nitro`,
         },
       }),
+      visualizer() as Plugin,
+      splitVendorChunkPlugin(),
     ],
     test: {
       globals: true,

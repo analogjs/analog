@@ -3,17 +3,17 @@ import { NitroConfig } from 'nitropack';
 import { toNodeListener } from 'h3';
 import { Plugin, ViteDevServer } from 'vite';
 
-export function analogPlatform(opts: { nitro?: NitroConfig }): Plugin {
+export function viteNitroPlugin(opts?: NitroConfig): Plugin {
   const nitroConfig: NitroConfig = {
     rootDir: 'src',
     srcDir: 'src/server',
     scanDirs: ['src/server'],
     output: {
       dir: '../../dist/server',
-      ...opts.nitro?.output,
+      ...opts?.output,
     },
     buildDir: '../dist/.nitro',
-    ...opts.nitro,
+    ...opts,
   };
   return {
     name: 'vite-nitro-plugin',
@@ -45,7 +45,9 @@ export function analogPlatform(opts: { nitro?: NitroConfig }): Plugin {
       await prepare(nitro);
       await build(nitro);
       await nitro.close();
-      console.log(`\n\nThe '@analogjs/platform' successfully built.`);
+      console.log(
+        `\n\nThe '@analogjs/platform' server has been successfully built.`
+      );
     },
   };
 }
