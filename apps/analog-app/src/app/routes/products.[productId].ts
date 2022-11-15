@@ -2,8 +2,9 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CurrencyPipe, NgIf } from '@angular/common';
 import { injectActivatedRoute } from '@analogjs/router';
 
-import { Product, products } from '../products';
+import { Product } from '../products';
 import { CartService } from '../cart.service';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-product-details',
@@ -23,6 +24,7 @@ import { CartService } from '../cart.service';
 export default class ProductDetailsComponent implements OnInit {
   private route = injectActivatedRoute();
   private cartService = inject(CartService);
+  private http = inject(HttpClient);
 
   product: Product | undefined;
 
@@ -31,10 +33,12 @@ export default class ProductDetailsComponent implements OnInit {
     const routeParams = this.route.parent!.snapshot!.paramMap;
     const productIdFromRoute = Number(routeParams.get('productId'));
 
-    // Find the product that correspond with the id provided in route.
-    this.product = products.find(
-      (product) => product.id === productIdFromRoute
-    );
+    this.http.get<Product[]>('/api/v1/products').subscribe((products) => {
+      // Find the product that correspond with the id provided in route.
+      this.product = products.find(
+        (product) => product.id === productIdFromRoute
+      );
+    });
   }
 
   addToCart(product: Product) {

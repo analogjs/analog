@@ -17,7 +17,9 @@ export default defineConfig(({ mode }) => {
       include: ['@angular/common', '@angular/forms'],
     },
     build: {
-      outDir: `${offsetFromRoot('apps/analog-app/src')}/dist/apps/analog-app`,
+      outDir: `${offsetFromRoot(
+        'apps/analog-app/src'
+      )}/dist/apps/analog-app/client`,
       emptyOutDir: true,
       target: 'es2020',
     },
@@ -33,8 +35,13 @@ export default defineConfig(({ mode }) => {
       platform({
         nitro: {
           output: {
-            dir: `${offsetFromRoot('apps/analog-app/src/server')}/dist/server`,
+            dir: `${offsetFromRoot(
+              'apps/analog-app/src/server'
+            )}/dist/apps/analog-app/server`,
           },
+          buildDir: `${offsetFromRoot(
+            'apps/analog-app/src'
+          )}/dist/apps/analog-app/.nitro`,
         },
       }),
     ],
