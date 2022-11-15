@@ -1,11 +1,5 @@
-# analog-platform
+# Analog
 
-This library was generated with [Nx](https://nx.dev).
+The fullstack meta-framework for Angular
 
-## Building
-
-Run `nx build analog-platform` to build the library.
-
-## Running unit tests
-
-Run `nx test analog-platform` to execute the unit tests via [Jest](https://jestjs.io).
+Learn more at [analogjs.org](https://analogjs.org)

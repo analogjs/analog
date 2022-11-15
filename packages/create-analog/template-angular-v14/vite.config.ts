@@ -1,21 +1,21 @@
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
-import angular from '@analogjs/vite-plugin-angular';
+import analog from '@analogjs/platform';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   root: 'src',
   publicDir: 'assets',
   build: {
-    outDir: `../dist/my-app`,
+    outDir: `../dist/my-app/client`,
     emptyOutDir: true,
     target: 'es2020',
   },
   resolve: {
     mainFields: ['module'],
   },
-  plugins: [angular()],
+  plugins: [analog()],
   test: {
     globals: true,
     environment: 'jsdom',

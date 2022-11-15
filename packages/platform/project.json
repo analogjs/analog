@@ -10,7 +10,8 @@
         "outputPath": "node_modules/@analogjs/platform",
         "main": "packages/platform/src/index.ts",
         "tsConfig": "packages/platform/tsconfig.lib.json",
-        "assets": ["packages/platform/*.md"]
+        "assets": ["packages/platform/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       },
       "configurations": {
         "production": {
