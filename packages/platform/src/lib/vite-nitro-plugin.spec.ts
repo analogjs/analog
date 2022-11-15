@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { analogPlatform } from './analog-platform-plugin';
+import { viteNitroPlugin } from './vite-nitro-plugin';
 
 const mockViteDevServer = {
   middlewares: {
@@ -8,13 +8,13 @@ const mockViteDevServer = {
   },
 };
 
-describe('analogPlatformVitePlugin', () => {
+describe('viteNitroPlugin', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
   it('should work', () => {
-    expect(analogPlatform({}).name).toEqual('vite-nitro-plugin');
+    expect(viteNitroPlugin({}).name).toEqual('vite-nitro-plugin');
   });
 
   it(`should have the route middleware "/api" `, async () => {
@@ -22,7 +22,7 @@ describe('analogPlatformVitePlugin', () => {
     const spy = vi.spyOn(mockViteDevServer.middlewares, 'use');
 
     // Act
-    await (analogPlatform({}).configureServer as any)(mockViteDevServer);
+    await (viteNitroPlugin({}).configureServer as any)(mockViteDevServer);
 
     // Assert
     expect(spy).toHaveBeenCalledTimes(1);

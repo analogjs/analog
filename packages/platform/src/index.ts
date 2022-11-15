@@ -1,3 +1,3 @@
-import { analogPlatform } from './lib/analog-platform-plugin';
+import { platformPlugin } from './lib/platform-plugin';
 
-export default analogPlatform;
+export default platformPlugin;
