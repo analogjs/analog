@@ -3,9 +3,16 @@
   "compilerOptions": {
     "module": "commonjs",
     "outDir": "../../dist/out-tsc",
+    "inlineSourceMap": true,
+    "sourceMap": false,
     "declaration": true,
     "types": []
   },
   "include": ["**/*.ts"],
-  "exclude": ["jest.config.ts", "**/*.spec.ts", "**/*.test.ts"]
+  "exclude": [
+    "vite.config.ts",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "src/test-setup.ts"
+  ]
 }
