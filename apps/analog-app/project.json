@@ -1,4 +1,5 @@
 {
+  "name": "analog-app",
   "projectType": "application",
   "sourceRoot": "apps/analog-app/src",
   "prefix": "analogjs",

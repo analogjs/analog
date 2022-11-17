@@ -10,8 +10,8 @@
     "astro-app-e2e-playwright": "apps/astro-app-e2e-playwright",
     "create-analog": "packages/create-analog",
     "docs-app": "apps/docs-app",
-    "router": "packages/router",
     "platform": "packages/platform",
+    "router": "packages/router",
     "vite-plugin-angular": "packages/vite-plugin-angular"
   }
 }
