@@ -33,7 +33,7 @@ export function getRoutes(files: Record<string, () => Promise<RouteExport>>) {
         .filter(Boolean);
 
       segments.reduce((parent, segment, index) => {
-        const path = segment.replace(/index/g, '').replace('.', '/');
+        const path = segment.replace(/index|^\(.*?\)$/g, '').replace('.', '/');
         const isIndex = !path;
         const isCatchall = path === '**';
         const pathMatch = isIndex ? 'full' : 'prefix';
