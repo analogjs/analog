@@ -76,14 +76,32 @@ Routes are defined using folders and files in the `src/app/routes` folder.
 
 > Route components **must** be defined as the default export.
 
-There are 4 primary types of routes:
+There are 5 primary types of routes:
 
+- [Index Routes](#index-routes)
 - [Static Routes](#static-routes)
 - [Dynamic Routes](#dynamic-routes)
 - [Nested Routes](#nested-routes)
 - [Catch-all Routes](#catch-all-routes)
 
 These routes can be combined in different ways to build to URLs for navigation.
+
+### Index Routes
+
+Index routes are defined by using the filename as the route path enclosed in parenthesis.
+
+The example route below in `src/app/routes/(home).ts` defines an `/` route.
+
+```ts
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-home',
+  standalone: true,
+  template: ` <h2>Welcome</h2> `,
+})
+export default class HomePageComponent {}
+```
 
 ### Static Routes
 
@@ -151,7 +169,7 @@ src/
     └── routes/
         │   └── products/
         │      ├──[productId].ts
-        │      └──index.ts
+        │      └──(products-list).ts
         └── products.ts
 ```
 
@@ -179,7 +197,7 @@ import { RouterOutlet } from '@angular/router';
 export default class ProductsComponent {}
 ```
 
-The nested `src/app/routes/products/index.ts` file contains the `/products` list page.
+The nested `src/app/routes/products/(products-list).ts` file contains the `/products` list page.
 
 ```ts
 import { Component } from '@angular/core';
