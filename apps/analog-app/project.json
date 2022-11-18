@@ -1,16 +1,16 @@
 {
   "name": "analog-app",
   "projectType": "application",
+  "root": "apps/analog-app/src",
   "sourceRoot": "apps/analog-app/src",
   "prefix": "analogjs",
   "targets": {
     "build": {
-      "executor": "nx:run-commands",
+      "executor": "@nrwl/vite:build",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/analog-app",
-        "command": "vite build",
-        "cwd": "apps/analog-app"
+        "configFile": "apps/analog-app/vite.config.ts",
+        "outputPath": "dist/apps/analog-app/client"
       }
     },
     "build-ng": {
@@ -62,11 +62,9 @@
       "defaultConfiguration": "production"
     },
     "serve": {
-      "executor": "nx:run-commands",
+      "executor": "@nrwl/vite:dev-server",
       "options": {
-        "color": true,
-        "cwd": "apps/analog-app",
-        "command": "vite --strict-port"
+        "buildTarget": "analog-app:build"
       }
     },
     "serve-ng": {

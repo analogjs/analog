@@ -4,10 +4,13 @@ import { toNodeListener } from 'h3';
 import { Plugin, ViteDevServer } from 'vite';
 
 export function viteNitroPlugin(opts?: NitroConfig): Plugin {
+  const rootDir = opts?.rootDir || 'src';
+  const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+
   const nitroConfig: NitroConfig = {
-    rootDir: 'src',
-    srcDir: 'src/server',
-    scanDirs: ['src/server'],
+    rootDir,
+    srcDir: `${rootDir}/server`,
+    scanDirs: [`${rootDir}/server`],
     output: {
       dir: '../../dist/server',
       ...opts?.output,
@@ -17,7 +20,7 @@ export function viteNitroPlugin(opts?: NitroConfig): Plugin {
   };
   let isBuild = false;
   let isServe = false;
-  let isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+
   return {
     name: 'vite-nitro-plugin',
     config(_config, { command }) {
