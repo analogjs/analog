@@ -15,39 +15,49 @@ export function viteNitroPlugin(opts?: NitroConfig): Plugin {
     buildDir: '../dist/.nitro',
     ...opts,
   };
+  let isBuild = false;
+  let isServe = false;
+  let isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   return {
     name: 'vite-nitro-plugin',
-
+    config(_config, { command }) {
+      isServe = command === 'serve';
+      isBuild = command === 'build';
+    },
     async configureServer(viteServer: ViteDevServer) {
-      const { createNitro, createDevServer, build, prepare } =
-        await loadEsmModule<typeof import('nitropack')>('nitropack');
+      if (isServe && !isTest) {
+        const { createNitro, createDevServer, build, prepare } =
+          await loadEsmModule<typeof import('nitropack')>('nitropack');
 
-      const nitro = await createNitro({ ...nitroConfig, dev: true });
-      const server = createDevServer(nitro);
-      await prepare(nitro);
-      await build(nitro);
-      viteServer.middlewares.use('/api', toNodeListener(server.app));
-      console.log(
-        `\n\nThe '@analogjs/platform' successfully started.\nThe server endpoints are accessible under the "/api"`
-      );
+        const nitro = await createNitro({ ...nitroConfig, dev: true });
+        const server = createDevServer(nitro);
+        await prepare(nitro);
+        await build(nitro);
+        viteServer.middlewares.use('/api', toNodeListener(server.app));
+        console.log(
+          `\n\nThe '@analogjs/platform' successfully started.\nThe server endpoints are accessible under the "/api"`
+        );
+      }
     },
 
     async closeBundle() {
-      const { createNitro, build, prepare } = await loadEsmModule<
-        typeof import('nitropack')
-      >('nitropack');
+      if (isBuild) {
+        const { createNitro, build, prepare } = await loadEsmModule<
+          typeof import('nitropack')
+        >('nitropack');
 
-      const nitro = await createNitro({
-        ...nitroConfig,
-        baseURL: '/api',
-        dev: false,
-      });
-      await prepare(nitro);
-      await build(nitro);
-      await nitro.close();
-      console.log(
-        `\n\nThe '@analogjs/platform' server has been successfully built.`
-      );
+        const nitro = await createNitro({
+          ...nitroConfig,
+          baseURL: '/api',
+          dev: false,
+        });
+        await prepare(nitro);
+        await build(nitro);
+        await nitro.close();
+        console.log(
+          `\n\nThe '@analogjs/platform' server has been successfully built.`
+        );
+      }
     },
   };
 }
