@@ -48,7 +48,7 @@ export function viteNitroPlugin(opts?: NitroConfig): Plugin {
 
         const nitro = await createNitro({
           ...nitroConfig,
-          baseURL: '/api',
+          // baseURL: '/api',
           dev: false,
         });
         await prepare(nitro);
