@@ -1,11 +1,12 @@
 {
+  "name": "router",
   "projectType": "library",
   "sourceRoot": "packages/router/src",
   "prefix": "analogjs",
   "targets": {
     "build": {
       "executor": "@nrwl/angular:package",
-      "outputs": ["node_modules/@analogjs/router"],
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/router"],
       "options": {
         "project": "packages/router/ng-package.json",
         "updateBuildableProjectDepsInPackageJson": false
