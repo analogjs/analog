@@ -83,6 +83,9 @@ export function angular(options?: PluginOptions): Plugin[] {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
         watchMode = command === 'serve';
+        const target = Array.isArray(config.build?.target)
+          ? (config.build?.target as string[])
+          : [config.build?.target || 'es2020'];
 
         compilerCli = await loadEsmModule<
           typeof import('@angular/compiler-cli')
@@ -100,6 +103,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                   },
                   {
                     workspaceRoot: pluginOptions.workspaceRoot,
+                    target,
                     sourcemap: !isProd,
                     optimization: isProd,
                   }

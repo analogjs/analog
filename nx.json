@@ -10,14 +10,6 @@
   "cli": {
     "packageManager": "yarn"
   },
-  "implicitDependencies": {
-    "CONTRIBUTING.md": ["docs-app"],
-    "package.json": {
-      "dependencies": "*",
-      "devDependencies": "*"
-    },
-    ".eslintrc.json": "*"
-  },
   "tasksRunnerOptions": {
     "default": {
       "runner": "nx/tasks-runners/default",
@@ -28,10 +20,17 @@
   },
   "targetDefaults": {
     "build": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
     },
     "serve": {
       "dependsOn": ["^build"]
+    },
+    "cypress": {
+      "inputs": ["default", "^production"]
+    },
+    "lint": {
+      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"]
     }
   },
   "generators": {
@@ -49,5 +48,11 @@
       "style": "css"
     }
   },
-  "defaultProject": "analog-app"
+  "defaultProject": "analog-app",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals", "projectSpecificFiles"],
+    "sharedGlobals": [],
+    "production": ["default", "!{projectRoot}/.eslintrc.json"],
+    "projectSpecificFiles": []
+  }
 }

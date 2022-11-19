@@ -1,4 +1,5 @@
 {
+  "name": "docs-app",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "sourceRoot": "apps/docs-app/src",
@@ -24,5 +25,8 @@
       "dependsOn": ["build"]
     }
   },
-  "tags": []
+  "tags": [],
+  "namedInputs": {
+    "projectSpecificFiles": ["{workspaceRoot}/CONTRIBUTING.md"]
+  }
 }

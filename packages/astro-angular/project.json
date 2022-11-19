@@ -1,4 +1,5 @@
 {
+  "name": "astro-angular",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/astro-angular/src",
   "projectType": "library",
