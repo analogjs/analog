@@ -17,7 +17,7 @@ describe('viteNitroPlugin', () => {
     expect(viteNitroPlugin({}).name).toEqual('vite-nitro-plugin');
   });
 
-  it(`should have the route middleware "/api" `, async () => {
+  it(`should not call the route middleware in test mode `, async () => {
     // Arrange
     const spy = vi.spyOn(mockViteDevServer.middlewares, 'use');
 
@@ -25,7 +25,7 @@ describe('viteNitroPlugin', () => {
     await (viteNitroPlugin({}).configureServer as any)(mockViteDevServer);
 
     // Assert
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(spy).toHaveBeenCalledWith('/api', expect.anything());
+    expect(spy).toHaveBeenCalledTimes(0);
+    expect(spy).not.toHaveBeenCalledWith('/api', expect.anything());
   });
 });
