@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: `../dist/my-app/client`,
     emptyOutDir: true,
-    target: 'es2020',
+    target: 'es2022',
   },
   resolve: {
     mainFields: ['module'],
