@@ -20,14 +20,14 @@ const APPS = [
     color: yellow,
     variants: [
       {
-        name: 'angular-v14',
-        display: 'TypeScript',
-        color: yellow,
-      },
-      {
         name: 'angular-v15',
         display: 'TypeScript',
         color: green,
+      },
+      {
+        name: 'angular-v14',
+        display: 'TypeScript',
+        color: yellow,
       },
     ],
   },
