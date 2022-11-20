@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import minimist from 'minimist';
 import prompts from 'prompts';
-import { red, reset, yellow } from 'kolorist';
+import { red, reset, yellow, green } from 'kolorist';
 import { execSync } from 'node:child_process';
 
 // Avoids autoconversion to number of the project name by defining that the args
@@ -23,6 +23,11 @@ const APPS = [
         name: 'angular-v14',
         display: 'TypeScript',
         color: yellow,
+      },
+      {
+        name: 'angular-v15',
+        display: 'TypeScript',
+        color: green,
       },
     ],
   },
