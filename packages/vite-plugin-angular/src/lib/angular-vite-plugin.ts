@@ -13,10 +13,12 @@ import {
   resolveStyleUrls,
   resolveTemplateUrl,
 } from './component-resolvers';
+import { componentAssetsPlugin } from './component-assets-plugin';
 
-interface PluginOptions {
-  tsconfig: string;
-  workspaceRoot: string;
+export interface PluginOptions {
+  tsconfig?: string;
+  workspaceRoot?: string;
+  inlineStylesExtension?: string;
 }
 
 interface EmitFileResult {
@@ -27,15 +29,28 @@ interface EmitFileResult {
 }
 type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 
-export function angular(
-  pluginOptions: PluginOptions = {
+/**
+ * TypeScript file extension regex
+ * Match .(c or m)ts, .ts extensions with an optional ? for query params
+ * Ignore .tsx extensions
+ */
+const TS_EXT_REGEX = /\.[cm]?ts[^x]?\??/;
+
+export function angular(options?: PluginOptions): Plugin[] {
+  /**
+   * Normalize plugin options so defaults
+   * are used for values not provided.
+   */
+  const pluginOptions = {
     tsconfig:
-      process.env['NODE_ENV'] === 'test'
+      options?.tsconfig ??
+      (process.env['NODE_ENV'] === 'test'
         ? './tsconfig.spec.json'
-        : './tsconfig.app.json',
-    workspaceRoot: process.cwd(),
-  }
-): Plugin[] {
+        : './tsconfig.app.json'),
+    workspaceRoot: options?.workspaceRoot ?? process.cwd(),
+    inlineStylesExtension: options?.inlineStylesExtension ?? '',
+  };
+
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
   let fileEmitter: FileEmitter | undefined;
   let compilerOptions = {};
@@ -44,6 +59,9 @@ export function angular(
     mergeTransformers,
     replaceBootstrap,
   } = require('@ngtools/webpack/src/ivy/transformation');
+  const {
+    replaceResources,
+  } = require('@ngtools/webpack/src/transformers/replace_resources');
   const {
     augmentProgramWithVersioning,
     augmentHostWithCaching,
@@ -65,6 +83,9 @@ export function angular(
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
         watchMode = command === 'serve';
+        const target = Array.isArray(config.build?.target)
+          ? (config.build?.target as string[])
+          : [config.build?.target || 'es2020'];
 
         compilerCli = await loadEsmModule<
           typeof import('@angular/compiler-cli')
@@ -82,6 +103,7 @@ export function angular(
                   },
                   {
                     workspaceRoot: pluginOptions.workspaceRoot,
+                    target,
                     sourcemap: !isProd,
                     optimization: isProd,
                   }
@@ -93,6 +115,9 @@ export function angular(
                 ngI18nClosureMode: 'false',
               },
             },
+          },
+          resolve: {
+            conditions: ['sass', 'style'],
           },
         };
       },
@@ -112,8 +137,8 @@ export function angular(
         await buildAndAnalyze();
       },
       async handleHotUpdate(ctx) {
-        if (/\.[cm]?tsx?$/.test(ctx.file)) {
-          sourceFileCache.invalidate(ctx.file);
+        if (TS_EXT_REGEX.test(ctx.file)) {
+          sourceFileCache.invalidate(ctx.file.replace(/\?(.*)/, ''));
           await buildAndAnalyze();
         }
 
@@ -151,7 +176,25 @@ export function angular(
           return;
         }
 
-        if (/\.[cm]?tsx?$/.test(id)) {
+        /**
+         * Check for .ts extenstions for inline script files being
+         * transformed (Astro).
+         *
+         * Example ID:
+         *
+         * /src/pages/index.astro?astro&type=script&index=0&lang.ts
+         */
+        if (id.includes('type=script')) {
+          return;
+        }
+
+        if (TS_EXT_REGEX.test(id)) {
+          if (id.includes('.ts?')) {
+            // Strip the query string off the ID
+            // in case of a dynamically loaded file
+            id = id.replace(/\?(.*)/, '');
+          }
+
           /**
            * Re-analyze on each transform
            * for test(Vitest)
@@ -186,10 +229,23 @@ export function angular(
 
           // return fileEmitter
           const data = typescriptResult?.content ?? '';
+          const forceAsyncTransformation =
+            /for\s+await\s*\(|async\s+function\s*\*/.test(data);
+          const useInputSourcemap = (!isProd ? undefined : false) as undefined;
+
+          if (!forceAsyncTransformation && !isProd) {
+            return {
+              code: isProd
+                ? data.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
+                : data,
+            };
+          }
 
           const babelResult = await transformAsync(data, {
             filename: id,
-            inputSourceMap: (!isProd ? undefined : false) as undefined,
+            inputSourceMap: (useInputSourcemap
+              ? undefined
+              : false) as undefined,
             sourceMaps: !isProd ? 'inline' : false,
             compact: false,
             configFile: false,
@@ -200,7 +256,7 @@ export function angular(
               [
                 angularApplicationPreset,
                 {
-                  forceAsyncTransformation: data.includes('async'),
+                  forceAsyncTransformation,
                   optimize: isProd && {},
                 },
               ],
@@ -231,6 +287,18 @@ export function angular(
                   ngI18nClosureMode: 'false',
                 }
               : undefined,
+            supported: {
+              // Native async/await is not supported with Zone.js. Disabling support here will cause
+              // esbuild to downlevel async/await to a Zone.js supported form.
+              'async-await': false,
+              // Zone.js also does not support async generators or async iterators. However, esbuild does
+              // not currently support downleveling either of them. Instead babel is used within the JS/TS
+              // loader to perform the downlevel transformation. They are both disabled here to allow
+              // esbuild to handle them in the future if support is ever added.
+              // NOTE: If esbuild adds support in the future, the babel support for these can be disabled.
+              'async-generator': false,
+              'for-await': false,
+            },
           },
         };
       },
@@ -244,13 +312,23 @@ export function angular(
             >('@angular/compiler-cli/linker/babel')
           ).createEs2015LinkerPlugin;
 
-          const useInputSourcemap = !isProd;
+          const forceAsyncTransformation =
+            !/[\\/][_f]?esm2015[\\/]/.test(id) &&
+            /for\s+await\s*\(|async\s+function\s*\*/.test(code);
+          const shouldLink = await requiresLinking(id, code);
+          const useInputSourcemap = (!isProd ? undefined : false) as undefined;
+
+          if (!forceAsyncTransformation && !isProd && !shouldLink) {
+            return {
+              code: isProd
+                ? code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
+                : code,
+            };
+          }
 
           const result = await transformAsync(code, {
             filename: id,
-            inputSourceMap: (useInputSourcemap
-              ? undefined
-              : false) as undefined,
+            inputSourceMap: useInputSourcemap,
             sourceMaps: !isProd ? 'inline' : false,
             compact: false,
             configFile: false,
@@ -262,13 +340,11 @@ export function angular(
                 angularApplicationPreset,
                 {
                   angularLinker: {
-                    shouldLink: await requiresLinking(id, code),
+                    shouldLink,
                     jitMode: false,
                     linkerPluginCreator,
                   },
-                  forceAsyncTransformation:
-                    !/[\\/][_f]?esm2015[\\/]/.test(id) &&
-                    code.includes('async'),
+                  forceAsyncTransformation,
                   optimize: isProd && {
                     looseEnums: angularPackage,
                     pureTopLevel: angularPackage,
@@ -287,6 +363,7 @@ export function angular(
         return;
       },
     },
+    ...componentAssetsPlugin(pluginOptions.inlineStylesExtension),
   ];
 
   function setupCompilation() {
@@ -351,11 +428,22 @@ export function angular(
 
     await angularCompiler.analyzeAsync();
 
+    const getTypeChecker = () => builder.getProgram().getTypeChecker();
     fileEmitter = createFileEmitter(
       builder,
-      mergeTransformers(angularCompiler.prepareEmit().transformers, {
-        before: [replaceBootstrap(() => builder.getProgram().getTypeChecker())],
-      }),
+      mergeTransformers(
+        {
+          before: [
+            replaceBootstrap(getTypeChecker),
+            replaceResources(
+              () => true,
+              getTypeChecker,
+              pluginOptions.inlineStylesExtension
+            ),
+          ],
+        },
+        angularCompiler.prepareEmit().transformers
+      ),
       () => []
     );
   }

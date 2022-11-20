@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import minimist from 'minimist';
 import prompts from 'prompts';
-import { red, reset, yellow } from 'kolorist';
+import { red, reset, yellow, green } from 'kolorist';
 import { execSync } from 'node:child_process';
 
 // Avoids autoconversion to number of the project name by defining that the args
@@ -19,6 +19,11 @@ const APPS = [
     name: 'Analog',
     color: yellow,
     variants: [
+      {
+        name: 'angular-v15',
+        display: 'TypeScript',
+        color: green,
+      },
       {
         name: 'angular-v14',
         display: 'TypeScript',
@@ -180,9 +185,13 @@ async function init() {
   write('package.json', JSON.stringify(pkg, null, 2));
 
   console.log(`\nInitializing git repository:`);
-  execSync(
-    `git init ${targetDir} && cd ${targetDir} && git add . && git commit -m "initial commit"`
-  );
+  execSync(`git init ${targetDir} && cd ${targetDir} && git add .`);
+
+  // Fail Silent
+  // Can fail when user does not have global git credentials
+  try {
+    execSync(`cd ${targetDir} && git commit -m "initial commit"`);
+  } catch {}
 
   console.log(`\nDone. Now run:\n`);
   if (root !== cwd) {

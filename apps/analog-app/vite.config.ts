@@ -1,9 +1,9 @@
 /// <reference types="vitest" />
 
-import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
-import { visualizer } from 'rollup-plugin-visualizer';
-import angular from '@analogjs/vite-plugin-angular';
+import analog from '@analogjs/platform';
 import { offsetFromRoot } from '@nrwl/devkit';
+import { visualizer } from 'rollup-plugin-visualizer';
+import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -12,15 +12,38 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
     },
+    optimizeDeps: {
+      include: ['@angular/common', '@angular/forms'],
+    },
     build: {
-      outDir: `${offsetFromRoot('apps/analog-app/src')}/dist/apps/analog-app`,
+      outDir: `${offsetFromRoot(
+        'apps/analog-app/src'
+      )}/dist/apps/analog-app/client`,
       emptyOutDir: true,
       target: 'es2020',
     },
     resolve: {
       mainFields: ['module'],
     },
-    plugins: [angular(), visualizer() as Plugin, splitVendorChunkPlugin()],
+    plugins: [
+      analog({
+        vite: {
+          inlineStylesExtension: 'scss',
+        },
+        nitro: {
+          output: {
+            dir: `${offsetFromRoot(
+              'apps/analog-app/src/server'
+            )}/dist/apps/analog-app/server`,
+          },
+          buildDir: `${offsetFromRoot(
+            'apps/analog-app/src'
+          )}/dist/apps/analog-app/.nitro`,
+        },
+      }),
+      visualizer() as Plugin,
+      splitVendorChunkPlugin(),
+    ],
     test: {
       globals: true,
       environment: 'jsdom',

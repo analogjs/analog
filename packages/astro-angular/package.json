@@ -1,0 +1,47 @@
+{
+  "name": "@analogjs/astro-angular",
+  "version": "0.1.0-beta.4",
+  "description": "An Angular integration for Astro",
+  "type": "module",
+  "author": "Brandon Roberts <robertsbt@gmail.com>",
+  "exports": {
+    ".": "./src/index.js",
+    "./client.js": "./src/client.js",
+    "./server.js": "./src/server.js",
+    "./package.json": "./package.json"
+  },
+  "keywords": [
+    "angular",
+    "astro",
+    "astro-integration",
+    "astro-component",
+    "renderer"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/analogjs/analog/issues"
+  },
+  "homepage": "https://analogjs.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/analogjs/analog.git"
+  },
+  "dependencies": {
+    "@analogjs/vite-plugin-angular": "latest"
+  },
+  "peerDependencies": {
+    "@angular-devkit/build-angular": "^14.0.0",
+    "@angular/animations": "^14.0.0",
+    "@angular/common": "^14.0.0",
+    "@angular/compiler-cli": "^14.0.0",
+    "@angular/compiler": "^14.0.0",
+    "@angular/core": "^14.0.0",
+    "@angular/language-service": "^14.0.0",
+    "@angular/platform-browser": "^14.0.0",
+    "@angular/platform-browser-dynamic": "^14.0.0",
+    "@angular/platform-server": "^14.0.0",
+    "rxjs": "^7.5.0",
+    "zone.js": "~0.11.4",
+    "tslib": "^2.0.0"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "analog-app-e2e-playwright",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/analog-app-e2e-playwright/src",
+  "projectType": "application",
+  "targets": {
+    "vitest": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/analog-app-e2e-playwright",
+        "commands": ["vitest"]
+      }
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "",
+        "command": "start-server-and-test 'nx serve analog-app' 3000 'nx run analog-app-e2e-playwright:vitest'"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/analog-app-e2e-playwright/**/*.{js,ts}"]
+      }
+    }
+  },
+  "tags": [],
+  "implicitDependencies": ["analog-app"]
+}

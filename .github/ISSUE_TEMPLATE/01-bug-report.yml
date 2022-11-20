@@ -1,0 +1,60 @@
+name: Bug Report
+description: Report a bug in Analog
+labels: [bug]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping us grow. ❤️
+        If do you like Analog enough please consider support through [sponsoring](https://github.com/sponsors/brandonroberts) 💖
+        Please search GitHub for a similar [issue](https://github.com/analogjs/analog/issues) or [PR](https://github.com/analogjs/analog/issues)  before submitting a new issue.
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Please provide the environment you discovered this bug in.
+      description: Use the [Analog StackBlitz example](https://stackblitz.com/github/analogjs/analog/tree/main/packages/create-analog/template-angular-v14?file=vite.config.ts&preset=node) to create a reproduction.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type_bug
+    attributes:
+      label: Which area/package is the issue in?
+      options:
+        - create-analog
+        - vite-plugin-angular
+        - astro-angular
+        - router
+        - Docs
+        - Don't know / Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+    validations:
+      required: true
+
+  - type: textarea
+    id: exception-or-error
+    attributes:
+      label: Please provide the exception or error you saw
+      render: true
+
+  - type: textarea
+    id: other
+    attributes:
+      label: Other information
+
+  - type: checkboxes
+    id: assistance
+    attributes:
+      label: I would be willing to submit a PR to fix this issue
+      description: Assistance is provided if you need help submitting a pull request
+      options:
+        - label: 'Yes'
+        - label: 'No'

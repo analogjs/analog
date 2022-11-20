@@ -1,0 +1,42 @@
+{
+  "name": "analog-app-e2e-cypress",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/analog-app-e2e-cypress/src",
+  "projectType": "application",
+  "targets": {
+    "cypress": {
+      "executor": "@nrwl/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/analog-app-e2e-cypress/cypress.config.ts",
+        "baseUrl": "http://localhost:3000",
+        "testingType": "e2e"
+      },
+      "configurations": {
+        "watch": {
+          "watch": true
+        }
+      }
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "",
+        "command": "start-server-and-test 'nx serve analog-app' 3000 'nx cypress analog-app-e2e-cypress'"
+      },
+      "configurations": {
+        "watch": {
+          "command": "start-server-and-test 'nx serve analog-app' 3000 'nx cypress analog-app-e2e-cypress --configuration=watch'"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/analog-app-e2e-cypress/**/*.{js,ts}"]
+      }
+    }
+  },
+  "tags": [],
+  "implicitDependencies": ["analog-app"]
+}

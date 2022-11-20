@@ -12,6 +12,23 @@ env:
   NODE_OPTIONS: --max-old-space-size=6144
 
 jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      # Required by wagoid/commitlint-github-action
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # Required by wagoid/commitlint-github-action
+          fetch-depth: 0
+      - name: Lint commit messages
+        uses: wagoid/commitlint-github-action@v5
+        with:
+          failOnWarnings: true
+          helpURL: https://github.com/analogjs/analog/blob/main/CONTRIBUTING.md#-commit-message-guidelines
   checks:
     runs-on: ubuntu-latest
     steps:
@@ -22,6 +39,8 @@ jobs:
           cache: yarn
       - name: Install
         run: yarn install --frozen-lockfile --non-interactive
+      - name: Install Playwright
+        run: npx playwright install --with-deps
       - name: Build
         run: yarn build
       - name: Test

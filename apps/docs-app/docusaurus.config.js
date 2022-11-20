@@ -64,8 +64,8 @@ const config = {
                 to: 'docs',
               },
               {
-                label: 'Installation',
-                to: 'docs/installation',
+                label: 'Getting Started',
+                to: 'docs/getting-started',
               },
             ],
           },

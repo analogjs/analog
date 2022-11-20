@@ -61,7 +61,145 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/14116156?v=4",
       "profile": "http://dalenguyen.me",
       "contributions": [
-        "design",
+        "code",
+        "design"
+      ]
+    },
+    {
+      "login": "Villanuevand",
+      "name": "Andrés Villanueva",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1209238?v=4",
+      "profile": "https://github.com/Villanuevand",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "umairhm",
+      "name": "Umair Hafeez",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6948878?v=4",
+      "profile": "https://umairhafeez.com",
+      "contributions": [
+        "infra"
+      ]
+    },
+    {
+      "login": "Yberion",
+      "name": "Brandon Largeau",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4186385?v=4",
+      "profile": "https://github.com/Yberion",
+      "contributions": [
+        "infra"
+      ]
+    },
+    {
+      "login": "mainawycliffe",
+      "name": "Maina Wycliffe",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12270550?v=4",
+      "profile": "https://mainawycliffe.dev/",
+      "contributions": [
+        "code",
+        "infra"
+      ]
+    },
+    {
+      "login": "pjlamb12",
+      "name": "Preston Lamb",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2006222?v=4",
+      "profile": "http://www.prestonlamb.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "iamandrewluca",
+      "name": "Andrew Luca",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1881266?v=4",
+      "profile": "https://iamandrewluca.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "nartc",
+      "name": "Chau Tran",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25516557?v=4",
+      "profile": "https://nartc.me",
+      "contributions": [
+        "code",
+        "infra"
+      ]
+    },
+    {
+      "login": "simitch1",
+      "name": "Simone ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20285365?v=4",
+      "profile": "https://github.com/simitch1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "KylerJohnsonDev",
+      "name": "Kyler Johnson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/75549176?v=4",
+      "profile": "http://kylerjohnson.dev",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "marcjulian",
+      "name": "Marc",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8985933?v=4",
+      "profile": "https://marcjulian.de/?ref=github",
+      "contributions": [
+        "doc",
+        "code"
+      ]
+    },
+    {
+      "login": "himyjan",
+      "name": "himyjan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/51815522?v=4",
+      "profile": "https://github.com/himyjan",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "TicTak21",
+      "name": "Alex Kovalev",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44474697?v=4",
+      "profile": "https://github.com/TicTak21",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "nuhmanpk",
+      "name": "Nuhman Pk",
+      "avatar_url": "https://avatars.githubusercontent.com/u/62880706?v=4",
+      "profile": "http://www.linkedin.com/in/nuhmanpk",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "miluoshi",
+      "name": "Miloš Lajtman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1130547?v=4",
+      "profile": "https://github.com/miluoshi",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "profanis",
+      "name": "profanis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7045092?v=4",
+      "profile": "https://www.youtube.com/c/CodeShotsWithProfanis",
+      "contributions": [
         "code"
       ]
     }
