@@ -56,7 +56,7 @@ Create a `tsconfig.app.json` in the root of the project.
     "strictTemplates": true
   },
   "files": [],
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }
 ```
 
