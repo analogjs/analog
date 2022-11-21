@@ -202,6 +202,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "hrmcdonald",
+      "name": "Reece McDonald",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39349270?v=4",
+      "profile": "https://github.com/hrmcdonald",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
