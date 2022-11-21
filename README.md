@@ -1,7 +1,7 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-6-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-22-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
@@ -73,7 +73,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center"><a href="https://dev.to/markostanimirovic"><img src="https://avatars.githubusercontent.com/u/17877290?v=4?s=100" width="100px;" alt="Marko Stanimirović"/><br /><sub><b>Marko Stanimirović</b></sub></a><br /><a href="#tool-markostanimirovic" title="Tools">🔧</a> <a href="#infra-markostanimirovic" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center"><a href="https://github.com/jasonhodges"><img src="https://avatars.githubusercontent.com/u/1988476?v=4?s=100" width="100px;" alt="Jason Hodges"/><br /><sub><b>Jason Hodges</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=jasonhodges" title="Documentation">📖</a></td>
       <td align="center"><a href="http://timdeschryver.dev"><img src="https://avatars.githubusercontent.com/u/28659384?v=4?s=100" width="100px;" alt="Tim Deschryver"/><br /><sub><b>Tim Deschryver</b></sub></a><br /><a href="#infra-timdeschryver" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
-      <td align="center"><a href="http://dalenguyen.me"><img src="https://avatars.githubusercontent.com/u/14116156?v=4?s=100" width="100px;" alt="Dale Nguyen"/><br /><sub><b>Dale Nguyen</b></sub></a><br /><a href="#design-dalenguyen" title="Design">🎨</a> <a href="https://github.com/analogjs/analog/commits?author=dalenguyen" title="Code">💻</a></td>
+      <td align="center"><a href="http://dalenguyen.me"><img src="https://avatars.githubusercontent.com/u/14116156?v=4?s=100" width="100px;" alt="Dale Nguyen"/><br /><sub><b>Dale Nguyen</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=dalenguyen" title="Code">💻</a> <a href="#design-dalenguyen" title="Design">🎨</a></td>
       <td align="center"><a href="https://github.com/Villanuevand"><img src="https://avatars.githubusercontent.com/u/1209238?v=4?s=100" width="100px;" alt="Andrés Villanueva"/><br /><sub><b>Andrés Villanueva</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Villanuevand" title="Documentation">📖</a></td>
     </tr>
     <tr>
@@ -93,6 +93,9 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center"><a href="http://www.linkedin.com/in/nuhmanpk"><img src="https://avatars.githubusercontent.com/u/62880706?v=4?s=100" width="100px;" alt="Nuhman Pk"/><br /><sub><b>Nuhman Pk</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=nuhmanpk" title="Documentation">📖</a></td>
       <td align="center"><a href="https://github.com/miluoshi"><img src="https://avatars.githubusercontent.com/u/1130547?v=4?s=100" width="100px;" alt="Miloš Lajtman"/><br /><sub><b>Miloš Lajtman</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=miluoshi" title="Code">💻</a></td>
       <td align="center"><a href="https://www.youtube.com/c/CodeShotsWithProfanis"><img src="https://avatars.githubusercontent.com/u/7045092?v=4?s=100" width="100px;" alt="profanis"/><br /><sub><b>profanis</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=profanis" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center"><a href="https://github.com/hrmcdonald"><img src="https://avatars.githubusercontent.com/u/39349270?v=4?s=100" width="100px;" alt="Reece McDonald"/><br /><sub><b>Reece McDonald</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=hrmcdonald" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
