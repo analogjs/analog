@@ -95,11 +95,10 @@
       }
     },
     "test": {
-      "executor": "nx:run-commands",
+      "executor": "@nrwl/vite:test",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "command": "vitest",
-        "cwd": "apps/analog-app"
+        "configFile": "apps/analog-app/vite.config.ts"
       }
     }
   },

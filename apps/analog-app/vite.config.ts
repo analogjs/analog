@@ -7,10 +7,8 @@ import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
-    root: 'apps/analog-app/src',
     optimizeDeps: {
       include: ['@angular/common', '@angular/forms'],
-      force: true,
     },
     build: {
       target: ['es2020'],
@@ -22,7 +20,10 @@ export default defineConfig(({ mode }) => {
       analog({
         vite: {
           inlineStylesExtension: 'scss',
-          tsconfig: 'apps/analog-app/tsconfig.app.json',
+          tsconfig:
+            mode === 'test'
+              ? 'apps/analog-app/tsconfig.spec.json'
+              : 'apps/analog-app/tsconfig.app.json',
         },
         nitro: {
           rootDir: `apps/analog-app/src`,
@@ -38,11 +39,11 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'jsdom',
-      setupFiles: ['test-setup.ts'],
-      include: ['apps/analog-app/**/*.spec.ts'],
+      setupFiles: ['src/test-setup.ts'],
+      include: ['**/*.spec.ts'],
     },
     define: {
-      'import.meta.vitest': mode !== 'production',
+      'import.meta.vitest': mode === 'test',
     },
   };
 });
