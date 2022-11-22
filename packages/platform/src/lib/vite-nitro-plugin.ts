@@ -16,8 +16,12 @@ export function viteNitroPlugin(opts?: NitroConfig): Plugin {
       ...opts?.output,
     },
     buildDir: '../dist/.nitro',
+    typescript: {
+      generateTsConfig: false,
+    },
     ...opts,
   };
+
   let isBuild = false;
   let isServe = false;
 
