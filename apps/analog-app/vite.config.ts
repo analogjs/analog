@@ -31,6 +31,9 @@ export default defineConfig(({ mode }) => {
             dir: `../../../../dist/apps/analog-app/server`,
           },
           buildDir: `../../../dist/apps/analog-app/.nitro`,
+          typescript: {
+            generateTsConfig: false,
+          },
         },
       }),
       visualizer() as Plugin,

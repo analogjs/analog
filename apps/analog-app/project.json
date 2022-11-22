@@ -64,7 +64,8 @@
     "serve": {
       "executor": "@nrwl/vite:dev-server",
       "options": {
-        "buildTarget": "analog-app:build"
+        "buildTarget": "analog-app:build",
+        "port": 3000
       }
     },
     "serve-ng": {
