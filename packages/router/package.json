@@ -19,8 +19,8 @@
     "url": "https://github.com/analogjs/analog.git"
   },
   "peerDependencies": {
-    "@angular/core": "^14.0.0",
-    "@angular/router": "^14.0.0"
+    "@angular/core": "^14.0.0 || ^15.0.0",
+    "@angular/router": "^14.0.0 || ^15.0.0"
   },
   "dependencies": {
     "tslib": "^2.0.0"
