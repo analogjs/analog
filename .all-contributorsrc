@@ -220,6 +220,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "lukasmatta",
+      "name": "Lukáš Matta",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4323927?v=4",
+      "profile": "http://lukasmatta.com",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
