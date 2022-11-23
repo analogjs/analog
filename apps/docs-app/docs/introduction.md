@@ -8,7 +8,7 @@ slug: /
 
 Analog is a fullstack meta-framework for building applications and websites with [Angular](https://angular.io).
 
-## Featurs
+## Features
 
 - Vite-based
   - Supports Vite/Vitest/Playwright
