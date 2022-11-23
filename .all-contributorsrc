@@ -211,6 +211,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "ilteoood",
+      "name": "Matteo Pietro Dazzi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6383527?v=4",
+      "profile": "https://ilteoood.xyz/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
