@@ -1,7 +1,7 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-23-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-24-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
@@ -97,6 +97,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     <tr>
       <td align="center"><a href="https://github.com/hrmcdonald"><img src="https://avatars.githubusercontent.com/u/39349270?v=4?s=100" width="100px;" alt="Reece McDonald"/><br /><sub><b>Reece McDonald</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=hrmcdonald" title="Documentation">📖</a></td>
       <td align="center"><a href="https://ilteoood.xyz/"><img src="https://avatars.githubusercontent.com/u/6383527?v=4?s=100" width="100px;" alt="Matteo Pietro Dazzi"/><br /><sub><b>Matteo Pietro Dazzi</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ilteoood" title="Code">💻</a></td>
+      <td align="center"><a href="http://lukasmatta.com"><img src="https://avatars.githubusercontent.com/u/4323927?v=4?s=100" width="100px;" alt="Lukáš Matta"/><br /><sub><b>Lukáš Matta</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=lukasmatta" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
