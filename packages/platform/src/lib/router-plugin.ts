@@ -11,10 +11,20 @@ import type { Plugin } from 'vite';
 export function routerPlugin(): Plugin[] {
   return [
     {
+      name: 'analogjs-router-config',
+      config() {
+        return {
+          optimizeDeps: {
+            exclude: ['@analogjs/router'],
+          },
+        };
+      },
+    },
+    {
       name: 'analogjs-router-invalidate-routes',
       configureServer(server) {
         function invalidateRoutes(path: string) {
-          if (path.includes(`${server.config.root}/app/routes`)) {
+          if (path.includes(`/app/routes/`)) {
             server.moduleGraph.fileToModulesMap.forEach((mods) => {
               mods.forEach((mod) => {
                 if (mod.id?.includes('@analogjs_router.js')) {
