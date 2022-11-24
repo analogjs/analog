@@ -7,6 +7,9 @@ import analog from '@analogjs/platform';
 export default defineConfig(({ mode }) => ({
   root: 'src',
   publicDir: 'assets',
+  optimizeDeps: {
+    exclude: ['@analogjs/router'],
+  },
   build: {
     outDir: `../dist/my-app/client`,
     emptyOutDir: true,
