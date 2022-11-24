@@ -1,7 +1,9 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
 [![All Contributors](https://img.shields.io/badge/all_contributors-24-orange.svg?style=flat-square)](#contributors-)
+
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
@@ -24,23 +26,24 @@ npm init analog
 
 Follow the prompts to scaffold the project and start the development server.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/analogjs/analog/tree/main/packages/create-analog/template-angular-v14?file=vite.config.ts&preset=node)
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://analogjs.org/new)
 
-## Goals
+## Features
 
 - Vite-based
-  - Supports Vite/Vitest
+  - Supports Vite/Vitest/Playwright
 - Low config
 - File-based routing
-  - Support for api/server routes
-- Hybrid SSR/SSG support
-- Integrated CLI (future)
+- Support for API/server routes
+- Hybrid SSR/SSG support (upcoming)
 
 ## Packages
 
-- @analogjs/vite-plugin-angular: An [Angular](https://angular.io) Plugin for building/testing applications with Vite
-- @analogjs/astro-angular: An integration for using Angular components in [Astro](https://astro.build)
-- create-analog: An initializer for scaffolding an Analog project.
+- `@analogjs/vite-plugin-angular` - A [Vite](https://vitejs.dev) plugin for building, serving, and testing Angular applications.
+- `@analogjs/router` - Filesystem-based routing for Angular.
+- `@analogjs/platform` - Vite platform plugin for Analog that enables API routes.
+- `create-analog` - An initializer for scaffolding an Analog project.
+- `@analogjs/astro-angular` - An integration for using Angular components in [Astro](https://astro.build)
 
 ## Supporting Analog
 
