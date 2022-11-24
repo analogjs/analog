@@ -1,7 +1,6 @@
 {
   "name": "analog-app",
   "projectType": "application",
-  "root": "apps/analog-app/src",
   "sourceRoot": "apps/analog-app/src",
   "prefix": "analogjs",
   "targets": {
