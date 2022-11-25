@@ -13,12 +13,7 @@
       }
     },
     "test": {
-      "executor": "nx:run-commands",
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "cwd": "packages/create-analog",
-        "command": "vitest run __tests__"
-      }
+      "executor": "@nrwl/vite:test"
     }
   },
   "tags": []

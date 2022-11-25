@@ -31,12 +31,7 @@
       }
     },
     "test": {
-      "executor": "nx:run-commands",
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "command": "vitest",
-        "cwd": "packages/router"
-      }
+      "executor": "@nrwl/vite:test"
     }
   },
   "tags": []

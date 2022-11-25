@@ -15,12 +15,7 @@
       }
     },
     "test": {
-      "executor": "nx:run-commands",
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "cwd": "packages/vite-plugin-angular",
-        "command": "vitest"
-      }
+      "executor": "@nrwl/vite:test"
     }
   },
   "tags": []
