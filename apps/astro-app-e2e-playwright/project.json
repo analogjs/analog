@@ -5,17 +5,13 @@
   "projectType": "application",
   "targets": {
     "vitest": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "apps/astro-app-e2e-playwright",
-        "commands": ["vitest"]
-      }
+      "executor": "@nrwl/vite:test"
     },
     "e2e": {
       "executor": "nx:run-commands",
       "options": {
         "cwd": "",
-        "command": "start-server-and-test 'nx dev astro-app' 3000 'nx run astro-app-e2e-playwright:vitest'"
+        "command": "start-server-and-test 'nx serve astro-app' 3000 'nx run astro-app-e2e-playwright:vitest'"
       }
     },
     "lint": {
