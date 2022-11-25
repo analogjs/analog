@@ -32,12 +32,7 @@
       }
     },
     "test": {
-      "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/coverage/packages/platform"],
-      "options": {
-        "command": "vitest",
-        "cwd": "packages/platform"
-      }
+      "executor": "@nrwl/vite:test"
     }
   },
   "tags": []

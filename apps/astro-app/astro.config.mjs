@@ -1,7 +1,12 @@
 import { defineConfig } from 'astro/config';
-import analogjsAngular from "@analogjs/astro-angular";
+import angular from "@analogjs/astro-angular";
 
 // https://astro.build/config
 export default defineConfig({
-  integrations: [analogjsAngular()]
+  outDir: '../../dist/apps/astro-app',
+  integrations: [angular({
+    vite: {
+      tsconfig: 'apps/astro-app/tsconfig.app.json'
+    }
+  })]
 });

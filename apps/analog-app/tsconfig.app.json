@@ -6,7 +6,7 @@
     "target": "ES2022",
     "useDefineForClassFields": false
   },
-  "files": ["src/main.ts", "src/polyfills.ts"],
+  "files": ["src/main.ts"],
   "include": ["src/**/*.d.ts", "src/app/routes/**/*.ts"],
   "exclude": ["**/*.test.ts", "**/*.spec.ts"]
 }

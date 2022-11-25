@@ -5,12 +5,11 @@
   "prefix": "analogjs",
   "targets": {
     "build": {
-      "executor": "nx:run-commands",
+      "executor": "@nrwl/vite:build",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/analog-app",
-        "command": "vite build",
-        "cwd": "apps/analog-app"
+        "configFile": "apps/analog-app/vite.config.ts",
+        "outputPath": "dist/apps/analog-app/client"
       }
     },
     "build-ng": {
@@ -62,11 +61,10 @@
       "defaultConfiguration": "production"
     },
     "serve": {
-      "executor": "nx:run-commands",
+      "executor": "@nrwl/vite:dev-server",
       "options": {
-        "color": true,
-        "cwd": "apps/analog-app",
-        "command": "vite --strict-port"
+        "buildTarget": "analog-app:build",
+        "port": 3000
       }
     },
     "serve-ng": {
@@ -97,11 +95,10 @@
       }
     },
     "test": {
-      "executor": "nx:run-commands",
+      "executor": "@nrwl/vite:test",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "command": "vitest",
-        "cwd": "apps/analog-app"
+        "config": "vite.config.ts"
       }
     }
   },

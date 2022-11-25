@@ -9,7 +9,10 @@ export type RouteExport = {
   routeMeta?: ReturnType<typeof defineRouteMeta>;
 };
 
-const FILES = import.meta.glob<RouteExport>(['/app/routes/**/*.ts']);
+const FILES = import.meta.glob<RouteExport>([
+  '/app/routes/**/*.ts',
+  '/src/app/routes/**/*.ts',
+]);
 
 /**
  * Function used to parse list of files and return
@@ -26,7 +29,7 @@ export function getRoutes(files: Record<string, () => Promise<RouteExport>>) {
       const module = files[key];
 
       const segments = key
-        .replace(/\/app\/routes|\.(js|ts)$/g, '')
+        .replace(/^\/(.*?)\/routes|\/app\/routes|\.(js|ts)$/g, '')
         .replace(/\[\.{3}.+\]/, '**')
         .replace(/\[([^\]]+)\]/g, ':$1')
         .split('/')
