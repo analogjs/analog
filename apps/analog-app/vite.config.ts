@@ -41,9 +41,12 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
+      cache: {
+        dir: `../../node_modules/.vitest`,
+      },
     },
     define: {
-      'import.meta.vitest': mode === 'test',
+      'import.meta.vitest': mode !== 'production',
     },
   };
 });
