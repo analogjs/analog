@@ -1,4 +1,4 @@
-import './polyfills';
+import 'zone.js';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideFileRouter } from '@analogjs/router';
 
