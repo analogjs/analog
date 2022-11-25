@@ -98,7 +98,7 @@
       "executor": "@nrwl/vite:test",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "configFile": "apps/analog-app/vite.config.ts"
+        "config": "vite.config.ts"
       }
     }
   },
