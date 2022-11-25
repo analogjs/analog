@@ -22,5 +22,6 @@
       }
     }
   },
-  "tags": []
+  "tags": [],
+  "implicitDependencies": ["astro-angular"]
 }
