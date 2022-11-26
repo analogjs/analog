@@ -10,6 +10,13 @@
       "options": {
         "configFile": "apps/analog-app/vite.config.ts",
         "outputPath": "dist/apps/analog-app/client"
+      },
+      "defaultConfiguration": "production",
+      "configurations": {
+        "development": {},
+        "production": {
+          "sourcemap": false
+        }
       }
     },
     "build-ng": {
@@ -62,9 +69,20 @@
     },
     "serve": {
       "executor": "@nrwl/vite:dev-server",
+      "defaultConfiguration": "development",
       "options": {
         "buildTarget": "analog-app:build",
         "port": 3000
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "analog-app:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "analog-app:build:production",
+          "hmr": false
+        }
       }
     },
     "serve-ng": {
@@ -96,7 +114,7 @@
     },
     "test": {
       "executor": "@nrwl/vite:test",
-      "outputs": ["{options.outputPath}"],
+      "outputs": ["apps/analog-app/coverage"],
       "options": {
         "config": "vite.config.ts"
       }
