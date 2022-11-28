@@ -3,7 +3,7 @@ import { transformAsync } from '@babel/core';
 import angularApplicationPreset from '@angular-devkit/build-angular/src/babel/presets/application';
 import { requiresLinking } from '@angular-devkit/build-angular/src/babel/webpack-loader';
 import * as ts from 'typescript';
-import { ModuleNode, Plugin, ViteDevServer } from 'vite';
+import { ModuleNode, Plugin, PluginContainer, ViteDevServer } from 'vite';
 import { Plugin as ESBuildPlugin } from 'esbuild';
 import { createCompilerPlugin } from '@angular-devkit/build-angular/src/builders/browser-esbuild/compiler-plugin';
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
@@ -13,7 +13,7 @@ import {
   resolveStyleUrls,
   resolveTemplateUrl,
 } from './component-resolvers';
-import { componentAssetsPlugin } from './component-assets-plugin';
+import { augmentHostWithResources } from './host';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -48,7 +48,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         ? './tsconfig.spec.json'
         : './tsconfig.app.json'),
     workspaceRoot: options?.workspaceRoot ?? process.cwd(),
-    inlineStylesExtension: options?.inlineStylesExtension ?? '',
+    inlineStylesExtension: options?.inlineStylesExtension ?? 'css',
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -59,9 +59,6 @@ export function angular(options?: PluginOptions): Plugin[] {
     mergeTransformers,
     replaceBootstrap,
   } = require('@ngtools/webpack/src/ivy/transformation');
-  const {
-    replaceResources,
-  } = require('@ngtools/webpack/src/transformers/replace_resources');
   const {
     augmentProgramWithVersioning,
     augmentHostWithCaching,
@@ -76,7 +73,8 @@ export function angular(options?: PluginOptions): Plugin[] {
   let sourceFileCache = new SourceFileCache();
   let isProd = process.env['NODE_ENV'] === 'production';
   let isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
-  let viteServer: ViteDevServer;
+  let viteServer: ViteDevServer | undefined;
+  let cssPlugin: Plugin | undefined;
 
   return [
     {
@@ -126,7 +124,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         server.watcher.on('add', setupCompilation);
         server.watcher.on('unlink', setupCompilation);
       },
-      async buildStart() {
+      async buildStart({ plugins }) {
+        if (Array.isArray(plugins)) {
+          cssPlugin = plugins.find((plugin) => plugin.name === 'vite:css');
+        }
+
         setupCompilation();
 
         // Only store cache if in watch mode
@@ -200,7 +202,7 @@ export function angular(options?: PluginOptions): Plugin[] {
            * for test(Vitest)
            */
           if (isTest) {
-            const tsMod = viteServer.moduleGraph.getModuleById(id);
+            const tsMod = viteServer!.moduleGraph.getModuleById(id);
             if (tsMod) {
               sourceFileCache.invalidate(id);
               await buildAndAnalyze();
@@ -363,7 +365,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         return;
       },
     },
-    ...componentAssetsPlugin(pluginOptions.inlineStylesExtension),
   ];
 
   function setupCompilation() {
@@ -388,6 +389,14 @@ export function angular(options?: PluginOptions): Plugin[] {
     rootNames = rn;
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);
+
+    const styleTransform = watchMode
+      ? viteServer!.pluginContainer.transform
+      : (cssPlugin!.transform as PluginContainer['transform']);
+
+    augmentHostWithResources(host, styleTransform, {
+      inlineStylesExtension: pluginOptions.inlineStylesExtension,
+    });
   }
 
   /**
@@ -433,14 +442,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       builder,
       mergeTransformers(
         {
-          before: [
-            replaceBootstrap(getTypeChecker),
-            replaceResources(
-              () => true,
-              getTypeChecker,
-              pluginOptions.inlineStylesExtension
-            ),
-          ],
+          before: [replaceBootstrap(getTypeChecker)],
         },
         angularCompiler.prepareEmit().transformers
       ),
