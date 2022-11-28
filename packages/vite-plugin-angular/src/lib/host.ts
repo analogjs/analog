@@ -1,5 +1,5 @@
 import type { CompilerHost } from '@angular/compiler-cli';
-import { normalizePath, PluginContainer } from 'vite';
+import { normalizePath } from '@ngtools/webpack/src/ivy/paths';
 import * as ts from 'typescript';
 
 export function augmentHostWithResources(
@@ -8,7 +8,7 @@ export function augmentHostWithResources(
     code: string,
     id: string,
     options?: { ssr?: boolean }
-  ) => ReturnType<PluginContainer['transform']> | null,
+  ) => ReturnType<any> | null,
   options: {
     inlineStylesExtension?: string;
   } = {}
