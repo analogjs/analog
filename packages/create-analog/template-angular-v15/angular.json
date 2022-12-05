@@ -36,8 +36,7 @@
               "hmr": true
             },
             "production": {
-              "buildTarget": "my-app:build:production",
-              "hmr": false
+              "buildTarget": "my-app:build:production"
             }
           }
         },
