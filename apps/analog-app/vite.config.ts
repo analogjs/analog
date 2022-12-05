@@ -7,17 +7,18 @@ import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
+    publicDir: 'src/public',
     optimizeDeps: {
       include: ['@angular/common', '@angular/forms'],
     },
     build: {
       target: ['es2020'],
     },
-    resolve: {
-      mainFields: ['module'],
-    },
     plugins: [
       analog({
+        ssr: true,
+        ssrBuildDir: '../../dist/apps/analog-app/ssr',
+        entryServer: 'apps/analog-app/src/main.server.ts',
         vite: {
           inlineStylesExtension: 'scss',
           tsconfig:
@@ -26,11 +27,18 @@ export default defineConfig(({ mode }) => {
               : 'apps/analog-app/tsconfig.app.json',
         },
         nitro: {
-          rootDir: `apps/analog-app/src`,
+          rootDir: 'apps/analog-app/src',
           output: {
-            dir: `../../../../dist/apps/analog-app/server`,
+            dir: '../../../../dist/apps/analog-app/server',
           },
-          buildDir: `../../../dist/apps/analog-app/.nitro`,
+          publicAssets: [{ dir: `../../../../dist/apps/analog-app/client` }],
+          serverAssets: [
+            { baseName: 'public', dir: `./dist/apps/analog-app/client` },
+          ],
+          buildDir: '../../../dist/apps/analog-app/.nitro',
+          prerender: {
+            routes: ['/', '/cart'],
+          },
         },
       }),
       visualizer() as Plugin,

@@ -3,6 +3,7 @@ import { NgForOf, NgIf } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { RouterLinkWithHref } from '@angular/router';
+import { catchError, of } from 'rxjs';
 import { ProductAlertsComponent } from '../product-alerts/product-alerts.component';
 import { Product } from '../products';
 
@@ -54,9 +55,12 @@ export default class ProductListComponent {
   http = inject(HttpClient);
 
   ngOnInit() {
-    this.http.get<Product[]>('/api/v1/products').subscribe((products) => {
-      this.products = products;
-    });
+    this.http
+      .get<Product[]>('http://127.0.0.1:3000/api/v1/products')
+      .pipe(catchError(() => of([])))
+      .subscribe((products) => {
+        this.products = products;
+      });
   }
 
   share() {

@@ -5,6 +5,7 @@ import { injectActivatedRoute } from '@analogjs/router';
 import { Product } from '../products';
 import { CartService } from '../cart.service';
 import { HttpClient } from '@angular/common/http';
+import { catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-product-details',
@@ -33,12 +34,15 @@ export default class ProductDetailsComponent implements OnInit {
     const routeParams = this.route.parent!.snapshot!.paramMap;
     const productIdFromRoute = Number(routeParams.get('productId'));
 
-    this.http.get<Product[]>('/api/v1/products').subscribe((products) => {
-      // Find the product that correspond with the id provided in route.
-      this.product = products.find(
-        (product) => product.id === productIdFromRoute
-      );
-    });
+    this.http
+      .get<Product[]>('http://127.0.0.1:3000/api/v1/products')
+      .pipe(catchError(() => of([])))
+      .subscribe((products) => {
+        // Find the product that correspond with the id provided in route.
+        this.product = products.find(
+          (product) => product.id === productIdFromRoute
+        );
+      });
   }
 
   addToCart(product: Product) {
