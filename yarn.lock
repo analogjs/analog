@@ -3343,14 +3343,15 @@
     semver "7.3.4"
     tslib "^2.3.0"
 
-"@nrwl/devkit@^14.3.6":
-  version "14.8.3"
-  resolved "https://registry.yarnpkg.com/@nrwl/devkit/-/devkit-14.8.3.tgz#c73230d48970f34257e59c820a86920d66380d82"
-  integrity sha512-jEH+oKS4F4MJvoIe0Zw6zUODO2j2ib7f+62D4lMDKl5qopcgnKyU9rVnSCDolqCH81j326dfr8b7FfE6Z7p71A==
+"@nrwl/devkit@^15.0.0":
+  version "15.2.4"
+  resolved "https://registry.yarnpkg.com/@nrwl/devkit/-/devkit-15.2.4.tgz#ffcb69f462df19d3d282cf25bf346926ee23f141"
+  integrity sha512-5JZWB4ydnu+NKNIfj958nML8AWwhareQ+Q1hLXoOIS/7brqfALNP3y/Ef1ljrLIo1f3xc484TPclqwSH7aRdvQ==
   dependencies:
     "@phenomnomnominal/tsquery" "4.1.1"
     ejs "^3.1.7"
     ignore "^5.0.4"
+    semver "7.3.4"
     tslib "^2.3.0"
 
 "@nrwl/eslint-plugin-nx@15.2.1":
@@ -3529,12 +3530,12 @@
     yargs "^17.6.2"
     yargs-parser "21.1.1"
 
-"@nx-plus/docusaurus@14.1.0":
-  version "14.1.0"
-  resolved "https://registry.yarnpkg.com/@nx-plus/docusaurus/-/docusaurus-14.1.0.tgz#0d919aada8cd94b986fc74e8dc604ba06491dbdc"
-  integrity sha512-EjzaOm8GCpyADKn4G19AgZk/l8F5eyNCVN1oFki7KUPaig9N9IjRCEmUQtHuomGbCQRqHtpovEPJldCLRz4glw==
+"@nx-plus/docusaurus@15.0.0-rc.0":
+  version "15.0.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@nx-plus/docusaurus/-/docusaurus-15.0.0-rc.0.tgz#3233637ed3678d7be491ee3c2f9fb3c6ca407f25"
+  integrity sha512-GmoYHKljQJvJLSYhWBe+huStwJbm+RbK+lC2j2sA+ZCUdkUo+P2Yv5oQGbqWU4jXclYe8pOP/qVFJs3j3Zjw/Q==
   dependencies:
-    "@nrwl/devkit" "^14.3.6"
+    "@nrwl/devkit" "^15.0.0"
 
 "@parcel/watcher@2.0.4":
   version "2.0.4"
