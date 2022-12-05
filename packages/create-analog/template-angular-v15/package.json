@@ -6,12 +6,12 @@
     "node": ">=16.0.0"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "ng serve",
     "ng": "ng",
-    "start": "npm run dev",
-    "build": "vite build",
-    "watch": "vite build --watch",
-    "test": "vitest"
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch",
+    "test": "ng test"
   },
   "dependencies": {
     "@analogjs/router": "latest",
@@ -32,9 +32,10 @@
     "@angular-devkit/build-angular": "^15.0.0",
     "@angular/cli": "~15.0.0",
     "@angular/compiler-cli": "^15.0.0",
+    "@nrwl/vite": "^15.2.0",
     "jsdom": "^20.0.0",
     "typescript": "~4.8.4",
-    "vite": "^3.0.9",
-    "vitest": "^0.22.1"
+    "vite": "^3.2.3",
+    "vitest": "^0.25.1"
   }
 }

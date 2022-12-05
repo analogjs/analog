@@ -1,6 +1,6 @@
 # Analog App
 
-This project was generated with [Analog](https://npmjs.com/package/create-analog).
+This project was generated with [Analog](https://analogjs.org), the fullstack meta-framework for Angular.
 
 ## Setup
 
@@ -12,7 +12,7 @@ Run `yarn dev` for a dev server. Navigate to `http://localhost:5173/`. The appli
 
 ## Build
 
-Run `yarn build` to build the project. The build artifacts will be stored in the `dist/` directory.
+Run `yarn build` to build the client/server project. The client build artifacts are located in the `dist/client` directory. The server for the API build artifacts are located in the `dist/server` directory.
 
 ## Test
 

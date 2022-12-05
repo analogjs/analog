@@ -5,15 +5,9 @@ import analog from '@analogjs/platform';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  root: 'src',
-  publicDir: 'assets',
-  optimizeDeps: {
-    exclude: ['@analogjs/router'],
-  },
+  publicDir: 'src/assets',
   build: {
-    outDir: `../dist/my-app/client`,
-    emptyOutDir: true,
-    target: 'es2022',
+    target: ['es2020'],
   },
   resolve: {
     mainFields: ['module'],
@@ -22,11 +16,8 @@ export default defineConfig(({ mode }) => ({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['test.ts'],
+    setupFiles: ['src/test.ts'],
     include: ['**/*.spec.ts'],
-    cache: {
-      dir: `../node_modules/.vitest`,
-    },
   },
   define: {
     'import.meta.vitest': mode !== 'production',

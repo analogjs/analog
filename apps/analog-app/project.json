@@ -80,8 +80,7 @@
           "hmr": true
         },
         "production": {
-          "buildTarget": "analog-app:build:production",
-          "hmr": false
+          "buildTarget": "analog-app:build:production"
         }
       }
     },
