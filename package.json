@@ -9,6 +9,8 @@
     "prepare": "git config core.hookspath .githooks",
     "start": "nx serve",
     "build": "nx run-many --target build --all",
+    "build:vite-ci": "npm run build -- --exclude analog-app,docs-app",
+    "test:vite-ci": "npm run test",
     "e2e": "nx run-many --target e2e --all --parallel=1",
     "test": "nx run-many --target test --all",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
