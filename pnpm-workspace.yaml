@@ -1,0 +1,4 @@
+packages:
+  # executable/launchable applications
+  - 'apps/docs-app'
+  
