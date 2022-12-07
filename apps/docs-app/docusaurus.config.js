@@ -120,6 +120,11 @@ const config = {
             label: 'GitHub',
             position: 'right',
           },
+          {
+            href: `https://chat.analogjs.org`,
+            label: 'Discord',
+            position: 'right',
+          },
         ],
       },
       prism: {
