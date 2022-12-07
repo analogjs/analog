@@ -6,7 +6,13 @@ module.exports = {
     'scope-enum': [
       2,
       'always',
-      ['vite-angular-plugin', 'create-analog', 'astro-integration-angular'],
+      [
+        'vite-plugin-angular',
+        'create-analog',
+        'astro-angular',
+        'router',
+        'platform',
+      ],
     ],
   },
 };

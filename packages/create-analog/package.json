@@ -1,12 +1,10 @@
 {
   "name": "create-analog",
-  "version": "0.1.6",
+  "version": "0.2.2",
   "type": "module",
   "license": "MIT",
   "author": "Brandon Roberts",
-  "scripts": {
-    
-  },
+  "scripts": {},
   "bin": {
     "create-analog": "index.js"
   },
@@ -27,8 +25,8 @@
   },
   "homepage": "https://github.com/analogjs/analog/tree/main#readme",
   "dependencies": {
-    "kolorist": "^1.5.1",
-    "minimist": "^1.2.6",
+    "kolorist": "^1.6.0",
+    "minimist": "^1.2.7",
     "prompts": "^2.4.2"
   }
 }

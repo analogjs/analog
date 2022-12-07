@@ -1,0 +1,52 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "my-app": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/vite:build",
+          "options": {
+            "configFile": "vite.config.ts",
+            "outputPath": "dist/client"
+          },
+          "defaultConfiguration": "production",
+          "configurations": {
+            "development": {},
+            "production": {
+              "sourcemap": false
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/vite:dev-server",
+          "defaultConfiguration": "development",
+          "options": {
+            "buildTarget": "my-app:build",
+            "port": 5173
+          },
+          "configurations": {
+            "development": {
+              "buildTarget": "my-app:build:development",
+              "hmr": true
+            },
+            "production": {
+              "buildTarget": "my-app:build:production"
+            }
+          }
+        },
+        "test": {
+          "builder": "@nrwl/vite:test",
+          "options": {
+            "config": "vite.config.ts"
+          }
+        }
+      }
+    }
+  }
+}

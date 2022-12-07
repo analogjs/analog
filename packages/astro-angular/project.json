@@ -1,0 +1,42 @@
+{
+  "name": "astro-angular",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/astro-angular/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "node_modules/@analogjs/astro-angular",
+        "main": "packages/astro-angular/src/index.ts",
+        "tsConfig": "packages/astro-angular/tsconfig.lib.json",
+        "assets": ["packages/astro-angular/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "publish": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/scripts/publish.mjs astro-angular {args.ver} {args.tag}"
+      },
+      "dependsOn": [
+        {
+          "projects": "self",
+          "target": "build"
+        }
+      ]
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/astro-angular/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/vite:test"
+    }
+  },
+  "tags": []
+}

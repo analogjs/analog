@@ -1,4 +1,5 @@
 {
+  "name": "vite-plugin-angular",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/vite-plugin-angular/src",
   "projectType": "library",
@@ -14,12 +15,7 @@
       }
     },
     "test": {
-      "executor": "nx:run-commands",
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "cwd": "packages/vite-plugin-angular",
-        "command": "vitest"
-      }
+      "executor": "@nrwl/vite:test"
     }
   },
   "tags": []

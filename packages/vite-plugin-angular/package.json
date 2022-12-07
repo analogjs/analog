@@ -1,7 +1,7 @@
 {
   "name": "@analogjs/vite-plugin-angular",
   "description": "Vite Plugin for Angular",
-  "version": "0.2.0-alpha.6",
+  "version": "0.2.0-alpha.18",
   "keywords": [
     "vite",
     "vitest",
@@ -13,12 +13,12 @@
   "bugs": {
     "url": "https://github.com/analogjs/analog/issues"
   },
-  "homepage": "https://github.com/analogjs/analog#readme",  
+  "homepage": "https://github.com/analogjs/analog#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/analogjs/analog.git"
   },
   "peerDependencies": {
-    "@angular-devkit/build-angular": "^14.0.0"
+    "@angular-devkit/build-angular": "^14.0.0 || ^15.0.0"
   }
 }

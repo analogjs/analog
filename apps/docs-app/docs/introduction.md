@@ -8,17 +8,19 @@ slug: /
 
 Analog is a fullstack meta-framework for building applications and websites with [Angular](https://angular.io).
 
-## Goals
+## Features
 
 - Vite-based
-  - Supports Vite/Vitest
+  - Supports Vite/Vitest/Playwright
 - Low config
 - File-based routing
-  - Support for API/server routes
-- Hybrid SSR/SSG support
-- Integrated CLI (future)
+- Support for API/server routes
+- Hybrid SSR/SSG support (upcoming)
 
 ## Packages
 
-- `@analogjs/vite-plugin-angular` - A Vite plugin for building, serving, and testing Angular applications.
+- `@analogjs/vite-plugin-angular` - A [Vite](https://vitejs.dev) plugin for building, serving, and testing Angular applications.
+- `@analogjs/router` - Filesystem-based routing for Angular.
+- `@analogjs/platform` - Vite platform plugin for Analog that enables API routes.
 - `create-analog` - An initializer for scaffolding an Analog project.
+- `@analogjs/astro-angular` - An integration for using Angular components in [Astro](https://astro.build)

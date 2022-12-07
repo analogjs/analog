@@ -11,10 +11,10 @@
     "start": "npm run dev",
     "build": "vite build",
     "watch": "vite build --watch",
-    "test": "vitest",
-    "postinstall": "vite optimize"
+    "test": "vitest"
   },
   "dependencies": {
+    "@analogjs/router": "latest",
     "@angular/animations": "^14.0.0",
     "@angular/common": "^14.0.0",
     "@angular/compiler": "^14.0.0",
@@ -28,7 +28,7 @@
     "zone.js": "~0.11.8"
   },
   "devDependencies": {
-    "@analogjs/vite-plugin-angular": "latest",
+    "@analogjs/platform": "latest",
     "@angular-devkit/build-angular": "^14.0.3",
     "@angular/cli": "~14.0.3",
     "@angular/compiler-cli": "^14.0.0",

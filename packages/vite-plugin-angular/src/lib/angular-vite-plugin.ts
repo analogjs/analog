@@ -3,7 +3,7 @@ import { transformAsync } from '@babel/core';
 import angularApplicationPreset from '@angular-devkit/build-angular/src/babel/presets/application';
 import { requiresLinking } from '@angular-devkit/build-angular/src/babel/webpack-loader';
 import * as ts from 'typescript';
-import { ModuleNode, Plugin, ViteDevServer } from 'vite';
+import { ModuleNode, Plugin, PluginContainer, ViteDevServer } from 'vite';
 import { Plugin as ESBuildPlugin } from 'esbuild';
 import { createCompilerPlugin } from '@angular-devkit/build-angular/src/builders/browser-esbuild/compiler-plugin';
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
@@ -13,10 +13,12 @@ import {
   resolveStyleUrls,
   resolveTemplateUrl,
 } from './component-resolvers';
+import { augmentHostWithResources } from './host';
 
-interface PluginOptions {
-  tsconfig: string;
-  workspaceRoot: string;
+export interface PluginOptions {
+  tsconfig?: string;
+  workspaceRoot?: string;
+  inlineStylesExtension?: string;
 }
 
 interface EmitFileResult {
@@ -27,15 +29,28 @@ interface EmitFileResult {
 }
 type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 
-export function angular(
-  pluginOptions: PluginOptions = {
+/**
+ * TypeScript file extension regex
+ * Match .(c or m)ts, .ts extensions with an optional ? for query params
+ * Ignore .tsx extensions
+ */
+const TS_EXT_REGEX = /\.[cm]?ts[^x]?\??/;
+
+export function angular(options?: PluginOptions): Plugin[] {
+  /**
+   * Normalize plugin options so defaults
+   * are used for values not provided.
+   */
+  const pluginOptions = {
     tsconfig:
-      process.env['NODE_ENV'] === 'test'
+      options?.tsconfig ??
+      (process.env['NODE_ENV'] === 'test'
         ? './tsconfig.spec.json'
-        : './tsconfig.app.json',
-    workspaceRoot: process.cwd(),
-  }
-): Plugin[] {
+        : './tsconfig.app.json'),
+    workspaceRoot: options?.workspaceRoot ?? process.cwd(),
+    inlineStylesExtension: options?.inlineStylesExtension ?? 'css',
+  };
+
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
   let fileEmitter: FileEmitter | undefined;
   let compilerOptions = {};
@@ -58,13 +73,17 @@ export function angular(
   let sourceFileCache = new SourceFileCache();
   let isProd = process.env['NODE_ENV'] === 'production';
   let isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
-  let viteServer: ViteDevServer;
+  let viteServer: ViteDevServer | undefined;
+  let cssPlugin: Plugin | undefined;
 
   return [
     {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
         watchMode = command === 'serve';
+        const target = Array.isArray(config.build?.target)
+          ? (config.build?.target as string[])
+          : [config.build?.target || 'es2020'];
 
         compilerCli = await loadEsmModule<
           typeof import('@angular/compiler-cli')
@@ -82,6 +101,7 @@ export function angular(
                   },
                   {
                     workspaceRoot: pluginOptions.workspaceRoot,
+                    target,
                     sourcemap: !isProd,
                     optimization: isProd,
                   }
@@ -94,6 +114,9 @@ export function angular(
               },
             },
           },
+          resolve: {
+            conditions: ['sass', 'style'],
+          },
         };
       },
       configureServer(server) {
@@ -101,7 +124,11 @@ export function angular(
         server.watcher.on('add', setupCompilation);
         server.watcher.on('unlink', setupCompilation);
       },
-      async buildStart() {
+      async buildStart({ plugins }) {
+        if (Array.isArray(plugins)) {
+          cssPlugin = plugins.find((plugin) => plugin.name === 'vite:css');
+        }
+
         setupCompilation();
 
         // Only store cache if in watch mode
@@ -112,8 +139,8 @@ export function angular(
         await buildAndAnalyze();
       },
       async handleHotUpdate(ctx) {
-        if (/\.[cm]?tsx?$/.test(ctx.file)) {
-          sourceFileCache.invalidate(ctx.file);
+        if (TS_EXT_REGEX.test(ctx.file)) {
+          sourceFileCache.invalidate(ctx.file.replace(/\?(.*)/, ''));
           await buildAndAnalyze();
         }
 
@@ -151,13 +178,31 @@ export function angular(
           return;
         }
 
-        if (/\.[cm]?tsx?$/.test(id)) {
+        /**
+         * Check for .ts extenstions for inline script files being
+         * transformed (Astro).
+         *
+         * Example ID:
+         *
+         * /src/pages/index.astro?astro&type=script&index=0&lang.ts
+         */
+        if (id.includes('type=script')) {
+          return;
+        }
+
+        if (TS_EXT_REGEX.test(id)) {
+          if (id.includes('.ts?')) {
+            // Strip the query string off the ID
+            // in case of a dynamically loaded file
+            id = id.replace(/\?(.*)/, '');
+          }
+
           /**
            * Re-analyze on each transform
            * for test(Vitest)
            */
           if (isTest) {
-            const tsMod = viteServer.moduleGraph.getModuleById(id);
+            const tsMod = viteServer!.moduleGraph.getModuleById(id);
             if (tsMod) {
               sourceFileCache.invalidate(id);
               await buildAndAnalyze();
@@ -184,18 +229,11 @@ export function angular(
 
           const typescriptResult = await fileEmitter!(id);
 
-          const linkerPluginCreator = (
-            await loadEsmModule<
-              typeof import('@angular/compiler-cli/linker/babel')
-            >('@angular/compiler-cli/linker/babel')
-          ).createEs2015LinkerPlugin;
-
           // return fileEmitter
           const data = typescriptResult?.content ?? '';
           const forceAsyncTransformation =
             /for\s+await\s*\(|async\s+function\s*\*/.test(data);
           const useInputSourcemap = (!isProd ? undefined : false) as undefined;
-          const shouldLink = await requiresLinking(id, code);
 
           if (!forceAsyncTransformation && !isProd) {
             return {
@@ -220,11 +258,6 @@ export function angular(
               [
                 angularApplicationPreset,
                 {
-                  angularLinker: {
-                    shouldLink,
-                    jitMode: false,
-                    linkerPluginCreator,
-                  },
                   forceAsyncTransformation,
                   optimize: isProd && {},
                 },
@@ -287,7 +320,7 @@ export function angular(
           const shouldLink = await requiresLinking(id, code);
           const useInputSourcemap = (!isProd ? undefined : false) as undefined;
 
-          if (!forceAsyncTransformation && !isProd) {
+          if (!forceAsyncTransformation && !isProd && !shouldLink) {
             return {
               code: isProd
                 ? code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
@@ -356,6 +389,14 @@ export function angular(
     rootNames = rn;
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);
+
+    const styleTransform = watchMode
+      ? viteServer!.pluginContainer.transform
+      : (cssPlugin!.transform as PluginContainer['transform']);
+
+    augmentHostWithResources(host, styleTransform, {
+      inlineStylesExtension: pluginOptions.inlineStylesExtension,
+    });
   }
 
   /**
@@ -396,11 +437,15 @@ export function angular(
 
     await angularCompiler.analyzeAsync();
 
+    const getTypeChecker = () => builder.getProgram().getTypeChecker();
     fileEmitter = createFileEmitter(
       builder,
-      mergeTransformers(angularCompiler.prepareEmit().transformers, {
-        before: [replaceBootstrap(() => builder.getProgram().getTypeChecker())],
-      }),
+      mergeTransformers(
+        {
+          before: [replaceBootstrap(getTypeChecker)],
+        },
+        angularCompiler.prepareEmit().transformers
+      ),
       () => []
     );
   }

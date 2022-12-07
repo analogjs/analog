@@ -29,12 +29,12 @@ const FeatureList: FeatureItem[] = [
     ),
   },
   {
-    title: 'File-based routing and API routes (upcoming features)',
+    title: 'File-based routing and API routes',
     Svg: require('@site/static/img/logos/analog-logo.svg').default,
     description: (
       <>
-        Analog will use file-based routing for server-side rendered Angular
-        applications. Analog will also support API (server) routes.
+        Analog uses file-based routing and supports API (server)
+        routes for Angular applications.
       </>
     ),
   },

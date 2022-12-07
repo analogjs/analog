@@ -64,8 +64,8 @@ const config = {
                 to: 'docs',
               },
               {
-                label: 'Installation',
-                to: 'docs/installation',
+                label: 'Getting Started',
+                to: 'docs/getting-started',
               },
             ],
           },
@@ -118,6 +118,11 @@ const config = {
           {
             href: `https://github.com/${organizationName}/${projectName}`,
             label: 'GitHub',
+            position: 'right',
+          },
+          {
+            href: `https://chat.analogjs.org`,
+            label: 'Discord',
             position: 'right',
           },
         ],

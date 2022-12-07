@@ -1,0 +1,28 @@
+{
+  "name": "@analogjs/router",
+  "version": "0.1.0-alpha.3",
+  "description": "Filesystem-based routing for Angular",
+  "author": "Brandon Roberts <robertsbt@gmail.com>",
+  "keywords": [
+    "angular",
+    "router",
+    "filesystem-routing",
+    "meta-framework"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/analogjs/analog/issues"
+  },
+  "homepage": "https://analogjs.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/analogjs/analog.git"
+  },
+  "peerDependencies": {
+    "@angular/core": "^14.0.0 || ^15.0.0",
+    "@angular/router": "^14.0.0 || ^15.0.0"
+  },
+  "dependencies": {
+    "tslib": "^2.0.0"
+  }
+}
