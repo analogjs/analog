@@ -9,6 +9,7 @@
       "options": {
         "cypressConfig": "apps/analog-app-e2e-cypress/cypress.config.ts",
         "devServerTarget": "analog-app:serve",
+        "baseUrl": "http://localhost:3000",
         "testingType": "e2e"
       },
       "configurations": {
