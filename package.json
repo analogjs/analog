@@ -17,6 +17,7 @@
     "contributors:add": "all-contributors add",
     "contributors:generate": "all-contributors generate"
   },
+  "packageManager": "yarn@1.22.19",
   "keywords": [
     "vite-plugin",
     "angular"
