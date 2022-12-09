@@ -1,6 +1,7 @@
 {
   "files": [
-    "README.md"
+    "README.md",
+    "apps/docs-app/docs/contributors.mdx"
   ],
   "imageSize": 100,
   "commit": false,
