@@ -36,7 +36,7 @@ export function viteNitroPlugin(opts?: NitroConfig): Plugin {
         const { createNitro, createDevServer, build, prepare } =
           await loadEsmModule<typeof import('nitropack')>('nitropack');
 
-        const nitro = await createNitro({ ...nitroConfig, dev: true });
+        const nitro = await createNitro({ dev: true, ...nitroConfig });
         const server = createDevServer(nitro);
         await prepare(nitro);
         await build(nitro);
@@ -54,9 +54,9 @@ export function viteNitroPlugin(opts?: NitroConfig): Plugin {
         >('nitropack');
 
         const nitro = await createNitro({
-          ...nitroConfig,
           baseURL: '/api',
           dev: false,
+          ...nitroConfig,
         });
         await prepare(nitro);
         await build(nitro);
