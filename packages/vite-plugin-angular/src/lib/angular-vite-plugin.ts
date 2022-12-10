@@ -115,7 +115,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             },
           },
           resolve: {
-            conditions: ['sass', 'style'],
+            conditions: ['style'],
           },
         };
       },
