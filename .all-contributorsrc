@@ -231,6 +231,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "lucianomurr",
+      "name": "Luciano",
+      "avatar_url": "https://avatars.githubusercontent.com/u/281553?v=4",
+      "profile": "http://ngrome.io",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
