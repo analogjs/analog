@@ -76,3 +76,7 @@ pnpm create analog my-angular-app --template angular-v14
 
   </TabItem>
 </Tabs>
+
+### Using with Tailwind
+
+Analog is powered by Vite, please follow the [Tailwind guidelines](https://tailwindcss.com/docs/guides/vite) to use it in your project!
