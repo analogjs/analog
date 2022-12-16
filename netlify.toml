@@ -1,7 +1,7 @@
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/server/:splat"
-  status = 200
+  to = "/v1/:splat"
+  status = 301
 
 [[redirects]]
   from = "/v1/*"
