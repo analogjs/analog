@@ -8,8 +8,8 @@ import { ssrBuildPlugin } from './ssr/ssr-build-plugin';
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
   return [
-    (opts.ssr ? ssrBuildPlugin(opts) : false) as Plugin,
     viteNitroPlugin(opts, opts?.nitro),
+    (opts.ssr ? ssrBuildPlugin() : false) as Plugin,
     ...routerPlugin(),
     (opts.ssr
       ? devServerPlugin({ entryServer: opts.entryServer })

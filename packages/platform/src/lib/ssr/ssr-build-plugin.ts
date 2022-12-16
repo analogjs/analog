@@ -1,26 +1,10 @@
-import { build, mergeConfig, Plugin, UserConfig } from 'vite';
-import { Options } from '../options';
+import { Plugin } from 'vite';
 
-export function ssrBuildPlugin(options?: Options): Plugin {
-  let config: UserConfig;
-  let ssrBuildConfig: UserConfig;
-
+export function ssrBuildPlugin(): Plugin {
   return {
     apply: 'build',
     name: 'analogjs-ssr-build-plugin',
     config(_config) {
-      config = _config;
-
-      ssrBuildConfig = mergeConfig(config, {
-        build: {
-          ssr: true,
-          rollupOptions: {
-            input: options?.entryServer || './src/main.server.ts',
-          },
-          outDir: options?.ssrBuildDir || './dist/ssr',
-        },
-      });
-
       return {
         resolve: {
           alias: {
@@ -48,14 +32,6 @@ export function ssrBuildPlugin(options?: Options): Plugin {
       }
 
       return;
-    },
-    async closeBundle() {
-      if (config?.build!.ssr) {
-        return;
-      }
-
-      console.log('Building SSR build');
-      await build(ssrBuildConfig);
     },
   };
 }

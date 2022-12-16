@@ -1,8 +1,10 @@
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
 import { NitroConfig } from 'nitropack';
 import { toNodeListener } from 'h3';
-import { Plugin, ViteDevServer } from 'vite';
+import { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { Options } from './options';
+import { buildServer } from './build-server';
+import { buildSSRApp } from './ssr/build';
 
 export function viteNitroPlugin(
   options?: Options,
@@ -49,13 +51,15 @@ export function viteNitroPlugin(
   let isBuild = false;
   let isServe = false;
   let ssrBuild = false;
+  let config: UserConfig;
 
   return {
     name: 'analogjs-vite-nitro-plugin',
     config(_config, { command }) {
       isServe = command === 'serve';
       isBuild = command === 'build';
-      ssrBuild = !!_config.build?.ssr;
+      ssrBuild = _config.build?.ssr === true;
+      config = _config;
     },
     async configureServer(viteServer: ViteDevServer) {
       if (isServe && !isTest) {
@@ -77,23 +81,19 @@ export function viteNitroPlugin(
     },
 
     async closeBundle() {
-      if (isBuild && !ssrBuild) {
-        const { createNitro, build, prepare, copyPublicAssets, prerender } =
-          await loadEsmModule<typeof import('nitropack')>('nitropack');
+      if (ssrBuild) {
+        return;
+      }
 
-        const nitro = await createNitro({
-          dev: false,
-          ...nitroConfig,
-        });
-        await prepare(nitro);
-        await copyPublicAssets(nitro);
-        await prerender(nitro);
-
-        if (!options?.prerender) {
-          await build(nitro);
+      if (isBuild) {
+        if (options?.ssr) {
+          console.log('Building SSR application...');
+          await buildSSRApp(config, options);
         }
 
-        await nitro.close();
+        console.log('Building Server...');
+        await buildServer(options, nitroConfig);
+
         console.log(
           `\n\nThe '@analogjs/platform' server has been successfully built.`
         );
