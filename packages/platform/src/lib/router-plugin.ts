@@ -11,9 +11,12 @@ import type { Plugin } from 'vite';
 export function routerPlugin(): Plugin[] {
   return [
     {
-      name: 'analogjs-router-config',
+      name: 'analogjs-router-plugin',
       config() {
         return {
+          ssr: {
+            noExternal: ['@analogjs/router', '@angular/**'],
+          },
           optimizeDeps: {
             exclude: ['@analogjs/router'],
           },

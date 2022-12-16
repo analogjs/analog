@@ -2,7 +2,6 @@ import { Plugin } from 'vite';
 
 export function ssrBuildPlugin(): Plugin {
   return {
-    apply: 'build',
     name: 'analogjs-ssr-build-plugin',
     config(_config) {
       return {
@@ -10,9 +9,6 @@ export function ssrBuildPlugin(): Plugin {
           alias: {
             'zone.js/node': 'zone.js/bundles/zone-node.umd.js',
           },
-        },
-        ssr: {
-          noExternal: ['@analogjs/router', '@angular/**'],
         },
       };
     },
