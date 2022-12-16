@@ -6,7 +6,12 @@
   "targets": {
     "build": {
       "executor": "@nrwl/vite:build",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}",
+        "dist/apps/analog-app/.nitro",
+        "dist/apps/analog-app/ssr",
+        "dist/apps/analog-app/server"
+      ],
       "options": {
         "configFile": "apps/analog-app/vite.config.ts",
         "outputPath": "dist/apps/analog-app/client"
