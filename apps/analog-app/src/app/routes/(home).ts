@@ -56,7 +56,7 @@ export default class ProductListComponent {
 
   ngOnInit() {
     this.http
-      .get<Product[]>('http://127.0.0.1:3000/api/v1/products')
+      .get<Product[]>('/api/v1/products')
       .pipe(catchError(() => of([])))
       .subscribe((products) => {
         this.products = products;
