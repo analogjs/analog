@@ -1,4 +1,7 @@
-import { Plugin, ViteDevServer } from 'vite';
+// SSR dev server, middleware and error page source modified from
+// https://github.com/solidjs/solid-start/blob/main/packages/start/dev/server.js
+
+import { Connect, Plugin, ViteDevServer } from 'vite';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -42,9 +45,28 @@ export function devServerPlugin(options: ServerOptions): Plugin {
             )['default'];
             const result = await entryServer(req.originalUrl, template);
             res.end(result);
-          } catch (e: unknown) {
+          } catch (e) {
             viteServer && viteServer.ssrFixStacktrace(e as Error);
-            res.end(`Error ${e}`);
+            res.statusCode = 500;
+            res.end(`
+              <!DOCTYPE html>
+              <html lang="en">
+                <head>
+                  <meta charset="UTF-8" />
+                  <title>Error</title>
+                  <script type="module">
+                    import { ErrorOverlay } from '/@vite/client'
+                    document.body.appendChild(new ErrorOverlay(${JSON.stringify(
+                      prepareError(req, e)
+                    ).replace(/</g, '\\u003c')}))
+                  </script>
+                </head>
+                <body>
+                </body>
+              </html>
+            `);
+
+            throw e;
           }
         });
       };
@@ -69,4 +91,20 @@ function remove_html_middlewares(server: ViteDevServer['middlewares']) {
       server.stack.splice(i, 1);
     }
   }
+}
+
+/**
+ * Formats error for SSR message in error overlay
+ * @param req
+ * @param error
+ * @returns
+ */
+function prepareError(req: Connect.IncomingMessage, error: unknown) {
+  const e = error as Error;
+  return {
+    message: `An error occured while server rendering ${req.url}:\n\n\t${
+      typeof e === 'string' ? e : e.message
+    } `,
+    stack: typeof e === 'string' ? '' : e.stack,
+  };
 }
