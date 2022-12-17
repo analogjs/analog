@@ -10,19 +10,19 @@ export function viteNitroPlugin(
   options?: Options,
   nitroOptions?: NitroConfig
 ): Plugin {
-  const rootDir = nitroOptions?.rootDir || 'src';
+  const rootDir = nitroOptions?.rootDir || '.';
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
 
   let nitroConfig: NitroConfig = {
     rootDir,
     logLevel: 0,
-    srcDir: `${rootDir}/server`,
-    scanDirs: [`${rootDir}/server`],
+    srcDir: `${rootDir}/src`,
+    scanDirs: [`${rootDir}/src/server`],
     output: {
-      dir: '../../dist/server',
+      dir: '../dist/server',
       ...nitroOptions?.output,
     },
-    buildDir: '../dist/.nitro',
+    buildDir: './dist/.nitro',
     typescript: {
       generateTsConfig: false,
     },
@@ -38,8 +38,10 @@ export function viteNitroPlugin(
         external: ['rxjs', 'node-fetch-native/dist/polyfill', 'destr'],
       },
       moduleSideEffects: ['zone.js/bundles/zone-node.umd.js'],
-      renderer: '~~/../renderer',
-      handlers: [{ handler: '~~/../api-middleware', middleware: true }],
+      renderer: `${__dirname}/runtime/renderer`,
+      handlers: [
+        { handler: `${__dirname}/runtime/api-middleware`, middleware: true },
+      ],
     };
   }
 

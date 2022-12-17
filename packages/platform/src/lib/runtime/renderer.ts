@@ -1,4 +1,6 @@
 import { eventHandler } from 'h3';
+// @ts-ignore
+import { useStorage } from '#imports';
 
 export default eventHandler(async (event) => {
   // @ts-ignore

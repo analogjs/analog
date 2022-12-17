@@ -27,15 +27,15 @@ export default defineConfig(({ mode }) => {
               : 'apps/analog-app/tsconfig.app.json',
         },
         nitro: {
-          rootDir: 'apps/analog-app/src',
+          rootDir: 'apps/analog-app',
           output: {
-            dir: '../../../../dist/apps/analog-app/server',
+            dir: '../../../dist/apps/analog-app/server',
           },
-          publicAssets: [{ dir: `../../../../dist/apps/analog-app/client` }],
+          publicAssets: [{ dir: `../../../dist/apps/analog-app/client` }],
           serverAssets: [
             { baseName: 'public', dir: `./dist/apps/analog-app/client` },
           ],
-          buildDir: '../../../dist/apps/analog-app/.nitro',
+          buildDir: '../../dist/apps/analog-app/.nitro',
         },
       }),
       visualizer() as Plugin,
