@@ -31,7 +31,7 @@ export function viteNitroPlugin(
   if (options?.ssr) {
     nitroConfig = {
       ...nitroConfig,
-      publicAssets: [{ dir: `../../dist/client` }],
+      publicAssets: [{ dir: `../dist/client` }],
       serverAssets: [{ baseName: 'public', dir: `./dist/client` }],
       externals: {
         inline: ['zone.js/node'],
