@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
   return {
     publicDir: 'src/public',
     optimizeDeps: {
+      force: true,
       include: ['@angular/common', '@angular/forms'],
     },
     build: {
@@ -27,6 +28,7 @@ export default defineConfig(({ mode }) => {
               : 'apps/analog-app/tsconfig.app.json',
         },
         nitro: {
+          preset: 'node',
           rootDir: 'apps/analog-app',
           output: {
             dir: '../../../dist/apps/analog-app/server',
@@ -37,7 +39,7 @@ export default defineConfig(({ mode }) => {
           ],
           buildDir: '../../dist/apps/analog-app/.nitro',
           prerender: {
-            routes: ['/'],
+            routes: ['/', '/me'],
           },
         },
       }),

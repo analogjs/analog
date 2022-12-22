@@ -14,6 +14,22 @@ const FILES = import.meta.glob<RouteExport>([
   '/src/app/routes/**/*.ts',
 ]);
 
+const CONTENT_FILES_GLOB = import.meta.glob<RouteExport>(
+  ['/src/app/routes/**/*.md'],
+  { as: 'raw', eager: true }
+);
+
+const CONTENT_FILES: Record<string, () => Promise<RouteExport>> = Object.keys(
+  CONTENT_FILES_GLOB
+).reduce((curr, key) => {
+  curr = {
+    ...curr,
+    [key]: () => Promise.resolve(CONTENT_FILES_GLOB[key]),
+  };
+
+  return curr;
+}, {});
+
 /**
  * Function used to parse list of files and return
  * configuration of routes.
@@ -26,10 +42,18 @@ export function getRoutes(files: Record<string, () => Promise<RouteExport>>) {
 
   const routeConfigs = ROUTES.reduce<Route[]>(
     (routes: Route[], key: string) => {
-      const module = files[key];
+      const module = key.endsWith('.md')
+        ? () =>
+            import('./markdown.component').then((m) => ({
+              default: m.default,
+              routeMeta: {
+                data: { _analogContent: files[key] },
+              },
+            }))
+        : files[key];
 
       const segments = key
-        .replace(/^\/(.*?)\/routes|\/app\/routes|\.(js|ts)$/g, '')
+        .replace(/^\/(.*?)\/routes|\/app\/routes|\.(js|ts|md)$/g, '')
         .replace(/\[\.{3}.+\]/, '**')
         .replace(/\[([^\]]+)\]/g, ':$1')
         .split('/')
@@ -144,4 +168,4 @@ export function getRoutes(files: Record<string, () => Promise<RouteExport>>) {
   return routeConfigs;
 }
 
-export const routes: Route[] = [...getRoutes(FILES)];
+export const routes: Route[] = [...getRoutes({ ...FILES, ...CONTENT_FILES })];

@@ -19,7 +19,7 @@ export function routerPlugin(): Plugin[] {
           },
           optimizeDeps: {
             include: ['rxjs'],
-            exclude: ['@analogjs/router', '@angular/platform-server'],
+            exclude: ['@angular/platform-server'],
           },
         };
       },
