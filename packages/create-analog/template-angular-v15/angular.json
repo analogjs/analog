@@ -17,9 +17,12 @@
           },
           "defaultConfiguration": "production",
           "configurations": {
-            "development": {},
+            "development": {
+              "mode": "development"
+            },
             "production": {
-              "sourcemap": false
+              "sourcemap": false,
+              "mode": "production"
             }
           }
         },
