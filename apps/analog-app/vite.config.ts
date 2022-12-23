@@ -36,6 +36,9 @@ export default defineConfig(({ mode }) => {
             { baseName: 'public', dir: `./dist/apps/analog-app/client` },
           ],
           buildDir: '../../dist/apps/analog-app/.nitro',
+          prerender: {
+            routes: ['/'],
+          },
         },
       }),
       visualizer() as Plugin,
