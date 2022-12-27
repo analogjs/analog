@@ -6,3 +6,4 @@ export {
 } from './lib/define-route';
 export { provideFileRouter } from './lib/provide-file-routes';
 export { default as MarkdownComponent } from './lib/markdown.component';
+export { injectContent } from './lib/content';

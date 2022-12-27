@@ -1,26 +1,31 @@
-import { Component, inject, ViewEncapsulation } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
+import { Component, inject, Input, ViewEncapsulation } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Data } from '@angular/router';
 import { marked } from 'marked';
-import { catchError, filter, map, Observable, of, switchMap } from 'rxjs';
+import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'analog-content',
+  imports: [AsyncPipe],
   standalone: true,
   preserveWhitespaces: true,
   encapsulation: ViewEncapsulation.None,
-  template: `<div [innerHTML]="content" class="analog-content"></div>`,
+  template: `<div [innerHTML]="content$ | async" [class]="classes"></div>`,
 })
 export default class AnalogMarkdownComponent {
   private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
-  protected content: Observable<SafeHtml> = of('');
+  protected content$: Observable<SafeHtml> = of('');
+  @Input() content!: string | null;
+  @Input() classes = 'analog-content';
 
   ngOnInit() {
-    this.content = this.route.data.pipe(
+    this.content$ = this.route.data.pipe(
       map<Data, () => Promise<string>>((data) => data['_analogContent']),
-      filter((resolver) => !!resolver && typeof resolver === 'function'),
-      switchMap((res) => res()),
+      switchMap((contentResolver) =>
+        this.content ? of(this.content) : contentResolver()
+      ),
       map((contentString) =>
         this.sanitizer.bypassSecurityTrustHtml(
           this.renderContent(contentString)
