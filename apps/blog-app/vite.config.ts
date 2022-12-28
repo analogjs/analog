@@ -25,6 +25,7 @@ export default defineConfig(() => {
           rootDir: 'apps/blog-app',
           output: {
             dir: '../../../dist/apps/blog-app/server',
+            publicDir: '../../../dist/apps/blog-app/server/public',
           },
           publicAssets: [{ dir: `../../../dist/apps/blog-app/client` }],
           serverAssets: [
