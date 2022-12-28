@@ -13,7 +13,7 @@ import { catchError, map, Observable, of, switchMap } from 'rxjs';
   encapsulation: ViewEncapsulation.None,
   template: `<div [innerHTML]="content$ | async" [class]="classes"></div>`,
 })
-export class AnalogMarkdownComponent {
+export default class AnalogMarkdownComponent {
   private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
   public content$: Observable<SafeHtml> = of('');
