@@ -1,10 +1,10 @@
 import 'zone.js/node';
+import { enableProdMode } from '@angular/core';
 import { renderApplication } from '@angular/platform-server';
-import { provideFileRouter, routes } from '@analogjs/router';
+import { provideFileRouter } from '@analogjs/router';
 import { withEnabledBlockingInitialNavigation } from '@angular/router';
 
 import { AppComponent } from './app/app.component';
-import { enableProdMode } from '@angular/core';
 
 if (import.meta.env.PROD) {
   enableProdMode();

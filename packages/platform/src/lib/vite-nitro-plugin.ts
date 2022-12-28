@@ -15,7 +15,7 @@ export function viteNitroPlugin(
 
   let nitroConfig: NitroConfig = {
     rootDir,
-    logLevel: 3,
+    logLevel: nitroOptions?.logLevel || 0,
     srcDir: `${rootDir}/src`,
     scanDirs: [`${rootDir}/src/server`],
     output: {

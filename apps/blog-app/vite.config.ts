@@ -33,7 +33,7 @@ export default defineConfig(() => {
           ],
           buildDir: '../../dist/apps/blog-app/.nitro',
           prerender: {
-            routes: ['/', '/me', '/you', '/blog/2022-12-27-my-first-post'],
+            routes: ['/', '/about', '/blog/2022-12-27-my-first-post'],
           },
         },
       }),
