@@ -3,22 +3,23 @@ import { Component, inject, Input, ViewEncapsulation } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Data } from '@angular/router';
 import { marked } from 'marked';
-import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
+import { catchError, map, Observable, of, switchMap } from 'rxjs';
 
 @Component({
-  selector: 'analog-content',
+  selector: 'analog-markdown',
   imports: [AsyncPipe],
   standalone: true,
   preserveWhitespaces: true,
   encapsulation: ViewEncapsulation.None,
   template: `<div [innerHTML]="content$ | async" [class]="classes"></div>`,
 })
-export default class AnalogMarkdownComponent {
+export class AnalogMarkdownComponent {
   private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
-  protected content$: Observable<SafeHtml> = of('');
+  public content$: Observable<SafeHtml> = of('');
+
   @Input() content!: string | null;
-  @Input() classes = 'analog-content';
+  @Input() classes = 'analog-markdown';
 
   ngOnInit() {
     this.content$ = this.route.data.pipe(

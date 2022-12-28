@@ -6,7 +6,9 @@ import { Component } from '@angular/core';
   selector: 'blog-post',
   standalone: true,
   imports: [MarkdownComponent, AsyncPipe],
-  template: ` <analog-content [content]="content$ | async"></analog-content> `,
+  template: `
+    <analog-markdown [content]="content$ | async"></analog-markdown>
+  `,
 })
 export default class BlogPostComponent {
   content$ = injectContent();
