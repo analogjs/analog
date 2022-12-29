@@ -1,4 +1,4 @@
-import 'zone.js/dist/zone.js';
+import 'zone.js/node';
 import type {
   ComponentMirror,
   Provider,
