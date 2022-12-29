@@ -20,34 +20,13 @@ export function viteNitroPlugin(
     scanDirs: [`${rootDir}/src/server`],
     output: {
       dir: '../dist/server',
+      publicDir: '../dist/server/public',
       ...nitroOptions?.output,
     },
     buildDir: './dist/.nitro',
     typescript: {
       generateTsConfig: false,
     },
-  };
-
-  if (options?.ssr) {
-    nitroConfig = {
-      ...nitroConfig,
-      publicAssets: [{ dir: `../dist/client` }],
-      serverAssets: [{ baseName: 'public', dir: `./dist/client` }],
-      externals: {
-        inline: ['zone.js/node'],
-        external: ['rxjs', 'node-fetch-native/dist/polyfill', 'destr'],
-      },
-      moduleSideEffects: ['zone.js/bundles/zone-node.umd.js'],
-      renderer: `${__dirname}/runtime/renderer`,
-      handlers: [
-        { handler: `${__dirname}/runtime/api-middleware`, middleware: true },
-      ],
-    };
-  }
-
-  nitroConfig = {
-    ...nitroConfig,
-    ...nitroOptions,
   };
 
   let isBuild = false;
@@ -62,6 +41,31 @@ export function viteNitroPlugin(
       isBuild = command === 'build';
       ssrBuild = _config.build?.ssr === true;
       config = _config;
+
+      if (isBuild && ssrBuild) {
+        nitroConfig = {
+          ...nitroConfig,
+          publicAssets: [{ dir: `../dist/client` }],
+          serverAssets: [{ baseName: 'public', dir: `./dist/client` }],
+          externals: {
+            inline: ['zone.js/node'],
+            external: ['rxjs', 'node-fetch-native/dist/polyfill', 'destr'],
+          },
+          moduleSideEffects: ['zone.js/bundles/zone-node.umd.js'],
+          renderer: `${__dirname}/runtime/renderer`,
+          handlers: [
+            {
+              handler: `${__dirname}/runtime/api-middleware`,
+              middleware: true,
+            },
+          ],
+        };
+      }
+
+      nitroConfig = {
+        ...nitroConfig,
+        ...nitroOptions,
+      };
     },
     async configureServer(viteServer: ViteDevServer) {
       if (isServe && !isTest) {
