@@ -1,4 +1,4 @@
-import 'zone.js/dist/zone.js';
+import 'zone.js/bundles/zone-node.umd.js';
 import type {
   ComponentMirror,
   Provider,
