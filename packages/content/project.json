@@ -1,0 +1,36 @@
+{
+  "name": "content",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/content/src",
+  "prefix": "analogjs",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/angular:package",
+      "outputs": ["node_modules/@analogjs/content"],
+      "options": {
+        "project": "packages/content/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/content/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/content/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/content/**/*.ts",
+          "packages/content/**/*.html"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

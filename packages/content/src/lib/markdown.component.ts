@@ -1,16 +1,19 @@
+/**
+ * Credit goes to Scully for original implementation
+ * https://scully.io/docs/Reference/utilities/prism-js/
+ */
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, Input, ViewEncapsulation } from '@angular/core';
+import {
+  AfterViewChecked,
+  Component,
+  inject,
+  Input,
+  OnInit,
+  ViewEncapsulation,
+} from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Data } from '@angular/router';
-import {
-  catchError,
-  map,
-  mergeMap,
-  Observable,
-  of,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { catchError, map, mergeMap, Observable, of, switchMap } from 'rxjs';
 import { ContentRenderer } from './content-renderer';
 
 @Component({
@@ -21,7 +24,9 @@ import { ContentRenderer } from './content-renderer';
   encapsulation: ViewEncapsulation.None,
   template: `<div [innerHTML]="content$ | async" [class]="classes"></div>`,
 })
-export default class AnalogMarkdownComponent {
+export default class AnalogMarkdownComponent
+  implements OnInit, AfterViewChecked
+{
   private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
   public content$: Observable<SafeHtml> = of('');
@@ -38,7 +43,6 @@ export default class AnalogMarkdownComponent {
         this.content ? of(this.content) : contentResolver()
       ),
       mergeMap((contentString) => this.renderContent(contentString)),
-      tap(() => this.highlightContent()),
       map((content) => this.sanitizer.bypassSecurityTrustHtml(content)),
       catchError((e) => of(`There was an error ${e}`))
     );
@@ -48,7 +52,7 @@ export default class AnalogMarkdownComponent {
     return this.contentRenderer.render(content);
   }
 
-  highlightContent() {
+  ngAfterViewChecked() {
     this.contentRenderer.enhance();
   }
 }

@@ -15,11 +15,11 @@ export function routerPlugin(): Plugin[] {
       config() {
         return {
           ssr: {
-            noExternal: ['@analogjs/router', '@angular/**'],
+            noExternal: ['@analogjs/**', '@angular/**'],
           },
           optimizeDeps: {
             include: ['rxjs'],
-            exclude: ['@angular/platform-server'],
+            exclude: ['@angular/platform-server', 'prismjs'],
           },
         };
       },

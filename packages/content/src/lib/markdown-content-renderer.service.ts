@@ -1,3 +1,7 @@
+/**
+ * Credit goes to Scully for original implementation
+ * https://scully.io/docs/Reference/utilities/prism-js/
+ */
 import { inject, Injectable, PLATFORM_ID, Provider } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { marked } from 'marked';
@@ -37,6 +41,6 @@ export function withMarkdownRenderer(): Provider {
   return { provide: ContentRenderer, useClass: MarkdownContentRendererService };
 }
 
-export function provideContent(...features: typeof withMarkdownRenderer[]) {
+export function provideContent(...features: Provider[]) {
   return [...features];
 }

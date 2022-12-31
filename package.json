@@ -92,7 +92,7 @@
     "kolorist": "^1.6.0",
     "lint-staged": "^13.0.3",
     "minimist": "^1.2.7",
-    "ng-packagr": "15.0.0",
+    "ng-packagr": "~15.0.0",
     "nitropack": "^0.6.1",
     "nx": "15.4.1",
     "playwright": "^1.27.1",

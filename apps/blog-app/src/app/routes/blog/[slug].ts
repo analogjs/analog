@@ -1,4 +1,4 @@
-import { injectContent, MarkdownComponent } from '@analogjs/router';
+import { injectContent, MarkdownComponent } from '@analogjs/content';
 import { AsyncPipe } from '@angular/common';
 import { Component } from '@angular/core';
 

@@ -1,30 +1,13 @@
-import { map } from 'rxjs';
-import { inject, Type } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+/// <reference types="vite/client" />
 
-import { RouteExport } from './models';
+import { map } from 'rxjs';
+import { inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 const CONTENT_FOLDER_FILES = import.meta.glob(['/src/content/**/*.md'], {
   as: 'raw',
   eager: true,
 });
-
-const CONTENT_FILES_GLOB = import.meta.glob(['/src/app/routes/**/*.md'], {
-  as: 'raw',
-  eager: true,
-});
-
-export const CONTENT_FILES: Record<
-  string,
-  () => Promise<{ default: Type<any> }>
-> = Object.keys(CONTENT_FILES_GLOB).reduce((curr, key) => {
-  curr = {
-    ...curr,
-    [key]: () => Promise.resolve(CONTENT_FILES_GLOB[key]),
-  };
-
-  return curr;
-}, {});
 
 /**
  * Retrieves the static content using the provided param

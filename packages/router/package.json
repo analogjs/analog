@@ -20,7 +20,8 @@
   },
   "peerDependencies": {
     "@angular/core": "^14.0.0 || ^15.0.0",
-    "@angular/router": "^14.0.0 || ^15.0.0"
+    "@angular/router": "^14.0.0 || ^15.0.0",
+    "@analogjs/content": "latest"
   },
   "dependencies": {
     "tslib": "^2.0.0"
