@@ -18,6 +18,7 @@ body:
         - vite-plugin-angular
         - astro-angular
         - router
+        - platform
         - Docs
         - Don't known / other
     validations:

@@ -27,6 +27,7 @@ What kind of change does this PR introduce?
 - [ ] astro-angular
 - [ ] create-analog
 - [ ] router
+- [ ] platform
 
 ## What is the current behavior?
 
