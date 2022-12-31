@@ -2,8 +2,16 @@ import { AsyncPipe } from '@angular/common';
 import { Component, inject, Input, ViewEncapsulation } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Data } from '@angular/router';
-import { marked } from 'marked';
-import { catchError, map, Observable, of, switchMap } from 'rxjs';
+import {
+  catchError,
+  map,
+  mergeMap,
+  Observable,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
+import { ContentRenderer } from './content-renderer';
 
 @Component({
   selector: 'analog-markdown',
@@ -21,23 +29,26 @@ export default class AnalogMarkdownComponent {
   @Input() content!: string | null;
   @Input() classes = 'analog-markdown';
 
+  contentRenderer = inject(ContentRenderer);
+
   ngOnInit() {
     this.content$ = this.route.data.pipe(
       map<Data, () => Promise<string>>((data) => data['_analogContent']),
       switchMap((contentResolver) =>
         this.content ? of(this.content) : contentResolver()
       ),
-      map((contentString) =>
-        this.sanitizer.bypassSecurityTrustHtml(
-          this.renderContent(contentString)
-        )
-      ),
+      mergeMap((contentString) => this.renderContent(contentString)),
+      tap(() => this.highlightContent()),
+      map((content) => this.sanitizer.bypassSecurityTrustHtml(content)),
       catchError((e) => of(`There was an error ${e}`))
     );
   }
 
-  renderContent(content: string): string {
-    const rendered = marked.parse(content);
-    return rendered;
+  async renderContent(content: string): Promise<string> {
+    return this.contentRenderer.render(content);
+  }
+
+  highlightContent() {
+    this.contentRenderer.enhance();
   }
 }
