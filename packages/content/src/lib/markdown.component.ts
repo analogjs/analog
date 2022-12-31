@@ -1,7 +1,3 @@
-/**
- * Credit goes to Scully for original implementation
- * https://scully.io/docs/Reference/utilities/prism-js/
- */
 import { AsyncPipe } from '@angular/common';
 import {
   AfterViewChecked,

@@ -1,6 +1,6 @@
 /**
  * Credit goes to Scully for original implementation
- * https://scully.io/docs/Reference/utilities/prism-js/
+ * https://github.com/scullyio/scully/blob/main/libs/scully/src/lib/fileHanderPlugins/markdown.ts
  */
 import { inject, Injectable, PLATFORM_ID, Provider } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
@@ -20,21 +20,61 @@ import { ContentRenderer } from './content-renderer';
 
 declare var Prism: typeof import('prismjs');
 
+const renderer = new marked.Renderer();
+// wrap code block the way Prism.js expects it
+renderer.code = function (this: any, code, lang, escaped) {
+  code = this.options.highlight(code, lang);
+  if (!lang) {
+    return '<pre><code>' + code + '</code></pre>';
+  }
+  // e.g. "language-js"
+  const langClass = 'language-' + lang;
+  return (
+    '<pre class="' +
+    langClass +
+    '"><code class="' +
+    langClass +
+    '">' +
+    code +
+    '</code></pre>'
+  );
+};
+// ------------------------------
+
 @Injectable()
 export class MarkdownContentRendererService implements ContentRenderer {
   platformId = inject(PLATFORM_ID);
 
   async render(content: string) {
-    const rendered = marked.parse(content);
+    marked.setOptions({
+      renderer,
+      highlight: (code, lang) => {
+        lang = lang || 'typescript';
+        if (!Prism.languages[lang]) {
+          console.warn(`Notice:
+    ---------------------------------------------------------------------------------------
+      The requested language '${lang}' is not available with the provided setup.
+      To enable, import your main.ts as:
+        import  'prismjs/components/prism-${lang}';
+    ---------------------------------------------------------------------------------------
+          `);
+          return code;
+        }
+        return Prism.highlight(code, Prism.languages[lang], lang);
+      },
+      pedantic: false,
+      gfm: true,
+      breaks: false,
+      sanitize: false,
+      smartLists: true,
+      smartypants: false,
+      xhtml: false,
+    });
 
-    return rendered;
+    return marked(content);
   }
 
-  enhance() {
-    if (isPlatformBrowser(this.platformId)) {
-      Prism.highlightAll();
-    }
-  }
+  enhance() {}
 }
 
 export function withMarkdownRenderer(): Provider {
