@@ -96,3 +96,10 @@ pnpm run test
 
   </TabItem>
 </Tabs>
+
+## System Requirements
+
+Analog requires the following Node and Angular versions:
+
+- Node v16 or higher
+- Angular v14.2 or higher
