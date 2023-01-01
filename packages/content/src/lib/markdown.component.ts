@@ -4,7 +4,7 @@ import {
   Component,
   inject,
   Input,
-  OnInit,
+  OnChanges,
   ViewEncapsulation,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -21,7 +21,7 @@ import { ContentRenderer } from './content-renderer';
   template: `<div [innerHTML]="content$ | async" [class]="classes"></div>`,
 })
 export default class AnalogMarkdownComponent
-  implements OnInit, AfterViewChecked
+  implements OnChanges, AfterViewChecked
 {
   private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
@@ -33,6 +33,14 @@ export default class AnalogMarkdownComponent
   contentRenderer = inject(ContentRenderer);
 
   ngOnInit() {
+    this.updateContent();
+  }
+
+  ngOnChanges(): void {
+    this.updateContent();
+  }
+
+  updateContent() {
     this.content$ = this.route.data.pipe(
       map<Data, () => Promise<string>>((data) => data['_analogContent']),
       switchMap((contentResolver) =>
