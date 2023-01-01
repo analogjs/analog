@@ -4,6 +4,7 @@ import {
   Component,
   inject,
   Input,
+  OnInit,
   OnChanges,
   ViewEncapsulation,
 } from '@angular/core';
@@ -21,7 +22,7 @@ import { ContentRenderer } from './content-renderer';
   template: `<div [innerHTML]="content$ | async" [class]="classes"></div>`,
 })
 export default class AnalogMarkdownComponent
-  implements OnChanges, AfterViewChecked
+  implements OnInit, OnChanges, AfterViewChecked
 {
   private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
