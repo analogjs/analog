@@ -20,7 +20,9 @@
   },
   "peerDependencies": {
     "@angular/core": "^14.0.0 || ^15.0.0",
-    "@angular/router": "^14.0.0 || ^15.0.0",
+    "@angular/router": "^14.0.0 || ^15.0.0"
+  },
+  "optionalDependencies": {
     "@analogjs/content": "latest"
   },
   "dependencies": {
