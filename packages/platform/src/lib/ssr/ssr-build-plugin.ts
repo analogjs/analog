@@ -1,4 +1,4 @@
-import { Plugin } from 'vite';
+import { normalizePath, Plugin } from 'vite';
 
 export function ssrBuildPlugin(): Plugin {
   return {
@@ -14,7 +14,7 @@ export function ssrBuildPlugin(): Plugin {
     },
     transform(code, id) {
       // Remove usage of `with()` in sloppy.js file
-      if (id.includes('domino/lib/sloppy.js')) {
+      if (id.includes(normalizePath('domino/lib/sloppy.js'))) {
         return {
           code: code.replace(/with\(/gi, 'if('),
         };
