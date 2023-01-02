@@ -10,7 +10,9 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Data } from '@angular/router';
-import { catchError, map, mergeMap, Observable, of, switchMap } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
+
 import { ContentRenderer } from './content-renderer';
 
 @Component({

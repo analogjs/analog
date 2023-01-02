@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
 
-import { map } from 'rxjs';
 import { inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { map } from 'rxjs/operators';
 
 const CONTENT_FOLDER_FILES = import.meta.glob(['/src/content/**/*.md'], {
   as: 'raw',
