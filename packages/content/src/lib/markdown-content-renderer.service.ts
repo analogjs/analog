@@ -3,7 +3,6 @@
  * https://github.com/scullyio/scully/blob/main/libs/scully/src/lib/fileHanderPlugins/markdown.ts
  */
 import { inject, Injectable, PLATFORM_ID, Provider } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
 import { marked } from 'marked';
 
 import 'prismjs';
@@ -18,11 +17,12 @@ import 'prismjs/components/prism-typescript';
 
 import { ContentRenderer } from './content-renderer';
 
-declare var Prism: typeof import('prismjs');
+declare const Prism: typeof import('prismjs');
 
 const renderer = new marked.Renderer();
 // wrap code block the way Prism.js expects it
-renderer.code = function (this: any, code, lang, escaped) {
+renderer.code = function (this: any, code, lang) {
+  // eslint-disable-next-line
   code = this.options.highlight(code, lang);
   if (!lang) {
     return '<pre><code>' + code + '</code></pre>';
@@ -74,6 +74,7 @@ export class MarkdownContentRendererService implements ContentRenderer {
     return marked(content);
   }
 
+  // eslint-disable-next-line
   enhance() {}
 }
 

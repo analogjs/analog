@@ -6,5 +6,6 @@ export abstract class ContentRenderer {
     return content;
   }
 
+  // eslint-disable-next-line
   enhance() {}
 }
