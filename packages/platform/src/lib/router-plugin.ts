@@ -1,4 +1,4 @@
-import type { Plugin } from 'vite';
+import { normalizePath, Plugin } from 'vite';
 
 /**
  * This plugin invalidates the files for routes when new files
@@ -15,11 +15,11 @@ export function routerPlugin(): Plugin[] {
       config() {
         return {
           ssr: {
-            noExternal: ['@analogjs/router', '@angular/**'],
+            noExternal: ['@analogjs/**', '@angular/**'],
           },
           optimizeDeps: {
             include: ['rxjs'],
-            exclude: ['@analogjs/router', '@angular/platform-server'],
+            exclude: ['@angular/platform-server'],
           },
         };
       },
@@ -28,7 +28,7 @@ export function routerPlugin(): Plugin[] {
       name: 'analogjs-router-invalidate-routes',
       configureServer(server) {
         function invalidateRoutes(path: string) {
-          if (path.includes(`/app/routes/`)) {
+          if (path.includes(normalizePath(`/app/routes/`))) {
             server.moduleGraph.fileToModulesMap.forEach((mods) => {
               mods.forEach((mod) => {
                 if (mod.id?.includes('@analogjs_router.js')) {

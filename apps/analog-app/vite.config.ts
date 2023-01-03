@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => {
           rootDir: 'apps/analog-app',
           output: {
             dir: '../../../dist/apps/analog-app/server',
+            publicDir: '../../../dist/apps/analog-app/server/public',
           },
           publicAssets: [{ dir: `../../../dist/apps/analog-app/client` }],
           serverAssets: [

@@ -1,0 +1,50 @@
+{
+  "name": "blog-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/blog-app/src",
+  "prefix": "blog",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/vite:build",
+      "outputs": [
+        "{options.outputPath}",
+        "dist/apps/blog-app/.nitro",
+        "dist/apps/blog-app/ssr",
+        "dist/apps/blog-app/server"
+      ],
+      "options": {
+        "configFile": "apps/blog-app/vite.config.ts",
+        "outputPath": "dist/apps/blog-app/client"
+      },
+      "defaultConfiguration": "production",
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "sourcemap": false,
+          "mode": "production"
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/vite:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "blog-app:build",
+        "port": 3000
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "blog-app:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "blog-app:build:production"
+        }
+      }
+    }
+  },
+  "tags": []
+}
