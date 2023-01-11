@@ -240,6 +240,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "goetzrobin",
+      "name": "Robin Goetz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/35136007?v=4",
+      "profile": "https://goetzrobin.github.io",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
