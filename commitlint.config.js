@@ -12,6 +12,7 @@ module.exports = {
         'astro-angular',
         'router',
         'platform',
+        'content',
       ],
     ],
   },
