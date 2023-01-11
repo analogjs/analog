@@ -5,12 +5,14 @@ import { viteNitroPlugin } from './vite-nitro-plugin';
 import { routerPlugin } from './router-plugin';
 import { devServerPlugin } from './ssr/dev-server-plugin';
 import { ssrBuildPlugin } from './ssr/ssr-build-plugin';
+import { contentPlugin } from './content-plugin';
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
   return [
     viteNitroPlugin(opts, opts?.nitro),
     (opts.ssr ? ssrBuildPlugin() : false) as Plugin,
     ...routerPlugin(),
+    ...contentPlugin(),
     (opts.ssr
       ? devServerPlugin({ entryServer: opts.entryServer })
       : false) as Plugin,
