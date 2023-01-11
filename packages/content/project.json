@@ -30,6 +30,9 @@
           "packages/content/**/*.html"
         ]
       }
+    },
+    "test": {
+      "executor": "@nrwl/vite:test"
     }
   },
   "tags": []

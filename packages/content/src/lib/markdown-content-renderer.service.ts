@@ -4,6 +4,7 @@
  */
 import { inject, Injectable, PLATFORM_ID, Provider } from '@angular/core';
 import { marked } from 'marked';
+import fm from 'front-matter';
 
 import 'prismjs';
 import 'prismjs/plugins/toolbar/prism-toolbar';
@@ -71,7 +72,9 @@ export class MarkdownContentRendererService implements ContentRenderer {
       xhtml: false,
     });
 
-    return marked(content);
+    const { body } = fm(content);
+
+    return marked(body);
   }
 
   // eslint-disable-next-line
