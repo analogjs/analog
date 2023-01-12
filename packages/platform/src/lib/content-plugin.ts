@@ -1,4 +1,6 @@
 import { Plugin } from 'vite';
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * This excludes the build from including the
@@ -11,14 +13,28 @@ import { Plugin } from 'vite';
  * @returns
  */
 export function contentPlugin(): Plugin[] {
+  let excludeContent = true;
+
+  const pkgJsonPath = path.resolve(process.cwd(), './package.json');
+  const packageJsonExists = fs.existsSync(pkgJsonPath);
+
+  if (packageJsonExists) {
+    const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
+
+    if (pkg.dependencies['@analogjs/content']) {
+      excludeContent = false;
+    }
+  }
+
   return [
     {
-      name: 'analogjs-content-plugin',
+      name: 'analogjs-content-build-plugin',
+      apply: 'build',
       config() {
         return {
           build: {
             rollupOptions: {
-              external: ['@analogjs/content'],
+              external: [excludeContent ? '@analogjs/content' : ''],
             },
           },
         };

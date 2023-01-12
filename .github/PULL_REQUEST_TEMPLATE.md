@@ -28,6 +28,7 @@ What kind of change does this PR introduce?
 - [ ] create-analog
 - [ ] router
 - [ ] platform
+- [ ] content
 
 ## What is the current behavior?
 
