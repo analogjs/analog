@@ -28,6 +28,7 @@ body:
         - astro-angular
         - router
         - platform
+        - content
         - Docs
         - Don't know / Other
     validations:

@@ -19,6 +19,7 @@ body:
         - astro-angular
         - router
         - platform
+        - content
         - Docs
         - Don't known / other
     validations:
