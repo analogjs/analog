@@ -104,6 +104,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                     target,
                     sourcemap: !isProd,
                     optimization: isProd,
+                    inlineStyleLanguage: pluginOptions.inlineStylesExtension,
                   }
                 ) as ESBuildPlugin as any,
               ],
