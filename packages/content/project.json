@@ -9,7 +9,8 @@
       "executor": "@nrwl/angular:package",
       "outputs": ["node_modules/@analogjs/content"],
       "options": {
-        "project": "packages/content/ng-package.json"
+        "project": "packages/content/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": false
       },
       "configurations": {
         "production": {
