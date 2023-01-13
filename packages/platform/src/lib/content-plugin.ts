@@ -32,6 +32,9 @@ export function contentPlugin(): Plugin[] {
       apply: 'build',
       config() {
         return {
+          optimizeDeps: {
+            include: excludeContent ? [] : ['@analogjs/content'],
+          },
           build: {
             rollupOptions: {
               external: [excludeContent ? '@analogjs/content' : ''],
