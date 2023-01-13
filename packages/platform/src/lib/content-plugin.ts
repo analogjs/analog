@@ -36,7 +36,7 @@ export function contentPlugin(): Plugin[] {
           },
           build: {
             rollupOptions: {
-              external: [excludeContent ? '@analogjs/content' : ''],
+              external: excludeContent ? [] : ['@analogjs/content'],
             },
           },
         };
