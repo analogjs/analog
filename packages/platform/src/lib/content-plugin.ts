@@ -29,7 +29,6 @@ export function contentPlugin(): Plugin[] {
   return [
     {
       name: 'analogjs-content-build-plugin',
-      apply: 'build',
       config() {
         return {
           optimizeDeps: {
