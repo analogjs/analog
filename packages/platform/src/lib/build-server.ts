@@ -16,9 +16,14 @@ export async function buildServer(
   });
   await prepare(nitro);
   await copyPublicAssets(nitro);
+
+  if (options?.static) {
+    console.log(`Prerendering static pages...`);
+  }
+
   await prerender(nitro);
 
-  if (!options?.prerender) {
+  if (!options?.static) {
     await build(nitro);
   }
 

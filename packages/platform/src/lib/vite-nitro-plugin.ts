@@ -36,11 +36,20 @@ export function viteNitroPlugin(
 
   return {
     name: 'analogjs-vite-nitro-plugin',
-    config(_config, { command }) {
+    async config(_config, { command }) {
       isServe = command === 'serve';
       isBuild = command === 'build';
       ssrBuild = _config.build?.ssr === true;
       config = _config;
+
+      if (isBuild && options?.prerender) {
+        nitroConfig.prerender = {};
+        nitroConfig.prerender.crawlLinks = options?.prerender?.discover;
+
+        if (typeof options?.prerender?.routes === 'function') {
+          nitroConfig.prerender.routes = await options.prerender.routes();
+        }
+      }
 
       if (isBuild && ssrBuild) {
         nitroConfig = {
