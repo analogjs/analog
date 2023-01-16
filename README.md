@@ -1,7 +1,7 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-26-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-27-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
@@ -102,6 +102,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="http://lukasmatta.com"><img src="https://avatars.githubusercontent.com/u/4323927?v=4?s=100" width="100px;" alt="Lukáš Matta"/><br /><sub><b>Lukáš Matta</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=lukasmatta" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://ngrome.io"><img src="https://avatars.githubusercontent.com/u/281553?v=4?s=100" width="100px;" alt="Luciano"/><br /><sub><b>Luciano</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=lucianomurr" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://goetzrobin.github.io"><img src="https://avatars.githubusercontent.com/u/35136007?v=4?s=100" width="100px;" alt="Robin Goetz"/><br /><sub><b>Robin Goetz</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=goetzrobin" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ch1ffa"><img src="https://avatars.githubusercontent.com/u/17417010?v=4?s=100" width="100px;" alt="Vadim Evseev"/><br /><sub><b>Vadim Evseev</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ch1ffa" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
