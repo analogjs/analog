@@ -20,6 +20,9 @@ export interface PluginOptions {
   workspaceRoot?: string;
   inlineStylesExtension?: string;
   advanced?: {
+   /**
+    * Custom TypeScript transformers that are run before Angular compilation
+    */
     tsTransformers?: (
       | ts.TransformerFactory<ts.SourceFile>
       | ts.CustomTransformerFactory
