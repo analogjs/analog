@@ -26,20 +26,21 @@ You can also directly specify the project name and the template you want to use 
 
 ```bash
 # npm 6.x
-npm create analog@latest my-angular-app --template angular-v14
+npm create analog@latest my-angular-app --template angular-v15
 
 # npm 7+, extra double-dash is needed:
-npm create analog@latest my-angular-app -- --template angular-v14
+npm create analog@latest my-angular-app -- --template angular-v15
 
 # yarn
-yarn create analog my-angular-app --template angular-v14
+yarn create analog my-angular-app --template angular-v15
 
 # pnpm
-pnpm create analog my-angular-app --template angular-v14
+pnpm create analog my-angular-app --template angular-v15
 ```
 
 Currently supported template presets include:
 
+- `angular-v15`
 - `angular-v14`
 
 You can use `.` for the project name to scaffold in the current directory.
