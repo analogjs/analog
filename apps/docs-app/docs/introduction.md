@@ -23,4 +23,5 @@ Analog is a fullstack meta-framework for building applications and websites with
 - `@analogjs/router` - Filesystem-based routing for Angular.
 - `@analogjs/platform` - Vite platform plugin for Analog that enables API routes.
 - `create-analog` - An initializer for scaffolding an Analog project.
-- `@analogjs/astro-angular` - An integration for using Angular components in [Astro](https://astro.build)
+- `@analogjs/astro-angular` - An integration for using Angular components in [Astro](https://astro.build).
+- `@analogjs/content` - A plugin for using Markdown content in Analog applications.
