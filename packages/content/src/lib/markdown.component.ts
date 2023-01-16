@@ -14,11 +14,13 @@ import { Observable, of } from 'rxjs';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 
 import { ContentRenderer } from './content-renderer';
+import { AnchorNavigationDirective } from './anchor-navigation.directive';
 
 @Component({
   selector: 'analog-markdown',
-  imports: [AsyncPipe],
   standalone: true,
+  imports: [AsyncPipe],
+  hostDirectives: [AnchorNavigationDirective],
   preserveWhitespaces: true,
   encapsulation: ViewEncapsulation.None,
   template: `<div [innerHTML]="content$ | async" [class]="classes"></div>`,
