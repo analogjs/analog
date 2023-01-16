@@ -19,6 +19,15 @@ export interface PluginOptions {
   tsconfig?: string;
   workspaceRoot?: string;
   inlineStylesExtension?: string;
+  advanced?: {
+   /**
+    * Custom TypeScript transformers that are run before Angular compilation
+    */
+    tsTransformers?: (
+      | ts.TransformerFactory<ts.SourceFile>
+      | ts.CustomTransformerFactory
+    )[];
+  };
 }
 
 interface EmitFileResult {
@@ -49,6 +58,9 @@ export function angular(options?: PluginOptions): Plugin[] {
         : './tsconfig.app.json'),
     workspaceRoot: options?.workspaceRoot ?? process.cwd(),
     inlineStylesExtension: options?.inlineStylesExtension ?? 'css',
+    advanced: {
+      tsTransformers: options?.advanced?.tsTransformers ?? [],
+    },
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -69,10 +81,10 @@ export function angular(options?: PluginOptions): Plugin[] {
   let host: ts.CompilerHost;
   let nextProgram: NgtscProgram;
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
-  let watchMode: boolean = false;
-  let sourceFileCache = new SourceFileCache();
-  let isProd = process.env['NODE_ENV'] === 'production';
-  let isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+  let watchMode = false;
+  const sourceFileCache = new SourceFileCache();
+  const isProd = process.env['NODE_ENV'] === 'production';
+  const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   let viteServer: ViteDevServer | undefined;
   let cssPlugin: Plugin | undefined;
 
@@ -158,7 +170,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             return ctx.modules;
           }
 
-          let mods: ModuleNode[] = [];
+          const mods: ModuleNode[] = [];
           ctx.modules.forEach((mod) => {
             mod.importers.forEach((imp) => {
               sourceFileCache.invalidate(imp.id);
@@ -443,7 +455,10 @@ export function angular(options?: PluginOptions): Plugin[] {
       builder,
       mergeTransformers(
         {
-          before: [replaceBootstrap(getTypeChecker)],
+          before: [
+            replaceBootstrap(getTypeChecker),
+            ...pluginOptions.advanced.tsTransformers,
+          ],
         },
         angularCompiler.prepareEmit().transformers
       ),
