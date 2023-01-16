@@ -7,9 +7,6 @@ import { defineConfig } from 'vite';
 export default defineConfig(() => {
   return {
     publicDir: 'src/assets',
-    ssr: {
-      noExternal: ['@analogjs/router'],
-    },
     build: {
       target: ['es2020'],
     },
@@ -18,6 +15,12 @@ export default defineConfig(() => {
         ssr: true,
         ssrBuildDir: '../../dist/apps/blog-app/ssr',
         entryServer: 'apps/blog-app/src/main.server.ts',
+        static: true,
+        prerender: {
+          routes: async () => {
+            return ['/', '/about', '/blog/2022-12-27-my-first-post'];
+          },
+        },
         vite: {
           tsconfig: 'apps/blog-app/tsconfig.app.json',
         },
@@ -32,9 +35,6 @@ export default defineConfig(() => {
             { baseName: 'public', dir: `./dist/apps/blog-app/client` },
           ],
           buildDir: '../../dist/apps/blog-app/.nitro',
-          prerender: {
-            routes: ['/', '/about', '/blog/2022-12-27-my-first-post'],
-          },
         },
       }),
     ],
