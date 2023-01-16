@@ -42,8 +42,8 @@ pnpm create analog
 
 | Preset        | Description                     |
 | ------------- | ------------------------------- |
-| `angular-v14` | Angular version 14 application. |
 | `angular-v15` | Angular version 15 application. |
+| `angular-v14` | Angular version 14 application. |
 
 ### Example
 
