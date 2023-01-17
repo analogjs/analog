@@ -20,13 +20,10 @@ export interface PluginOptions {
   workspaceRoot?: string;
   inlineStylesExtension?: string;
   advanced?: {
-   /**
-    * Custom TypeScript transformers that are run before Angular compilation
-    */
-    tsTransformers?: (
-      | ts.TransformerFactory<ts.SourceFile>
-      | ts.CustomTransformerFactory
-    )[];
+    /**
+     * Custom TypeScript transformers that are run before Angular compilation
+     */
+    tsTransformers?: ts.CustomTransformers;
   };
 }
 
@@ -59,7 +56,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     workspaceRoot: options?.workspaceRoot ?? process.cwd(),
     inlineStylesExtension: options?.inlineStylesExtension ?? 'css',
     advanced: {
-      tsTransformers: options?.advanced?.tsTransformers ?? [],
+      tsTransformers: {
+        before: options?.advanced?.tsTransformers?.before ?? [],
+        after: options?.advanced?.tsTransformers?.after ?? [],
+        afterDeclarations:
+          options?.advanced?.tsTransformers?.afterDeclarations ?? [],
+      },
     },
   };
 
@@ -457,8 +459,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         {
           before: [
             replaceBootstrap(getTypeChecker),
-            ...pluginOptions.advanced.tsTransformers,
+            ...pluginOptions.advanced.tsTransformers.before,
           ],
+          after: pluginOptions.advanced.tsTransformers.after,
+          afterDeclarations:
+            pluginOptions.advanced.tsTransformers.afterDeclarations,
         },
         angularCompiler.prepareEmit().transformers
       ),
