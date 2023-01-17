@@ -264,19 +264,19 @@ export default class PageNotFoundComponent {}
 
 ## Route Metadata
 
-Additional metadata to add to the generated route config for each route can be done using the `defineRouteMeta` function. This is where you can define the page title, any necessary guards, resolvers, providers, and more.
+Additional metadata to add to the generated route config for each route can be done using the `RouteMeta` type. This is where you can define the page title, any necessary guards, resolvers, providers, and more.
 
 ```ts
 import { Component } from '@angular/core';
-import { defineRouteMeta } from '@analogjs/router';
+import { RouteMeta } from '@analogjs/router';
 
 import { AboutService } from './about.service';
 
-export const routeMeta = defineRouteMeta({
+export const routeMeta: RouteMeta = {
   title: 'About Analog',
   canActivate: [() => true],
   providers: [AboutService],
-});
+};
 
 @Component({
   selector: 'app-about',
