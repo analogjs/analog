@@ -1,6 +1,6 @@
 import { Route } from '@angular/router';
-import { defineRouteMeta } from './define-route';
-import { getRoutes, RouteExport } from './routes';
+import { RouteExport } from './models';
+import { getRoutes } from './routes';
 
 type Files = Record<string, () => Promise<RouteExport>>;
 type ModuleRoute = Route & {
@@ -14,11 +14,11 @@ describe('routes', () => {
   describe('a static route', () => {
     const files: Files = {
       '/app/routes/about.ts': () =>
-        Promise.resolve({
+        Promise.resolve<RouteExport>({
           default: RouteComponent,
-          routeMeta: defineRouteMeta({
+          routeMeta: {
             title: 'About',
-          }),
+          },
         }),
     };
 

@@ -12,6 +12,9 @@ type RouteOmitted =
 type RestrictedRoute = Omit<NgRoute, RouteOmitted>;
 
 /**
+ * @deprecated Use `RouteMeta` type instead.
+ * For more info see: https://github.com/analogjs/analog/issues/223
+ *
  * Defines additional route config metadata. This
  * object is merged into the route config with
  * the predefined file-based route.
