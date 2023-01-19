@@ -46,8 +46,11 @@ export function viteNitroPlugin(
         nitroConfig.prerender = {};
         nitroConfig.prerender.crawlLinks = options?.prerender?.discover;
 
-        if (typeof options?.prerender?.routes === 'function') {
-          nitroConfig.prerender.routes = await options.prerender.routes();
+        const prerenderRoutes = options?.prerender?.routes;
+        if (Array.isArray(prerenderRoutes)) {
+          nitroConfig.prerender.routes = prerenderRoutes;
+        } else if (typeof prerenderRoutes === 'function') {
+          nitroConfig.prerender.routes = await prerenderRoutes();
         }
       }
 
