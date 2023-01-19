@@ -3,11 +3,7 @@
 import { inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs/operators';
-
-const CONTENT_FOLDER_FILES = import.meta.glob(['/src/content/**/*.md'], {
-  as: 'raw',
-  eager: true,
-});
+import { injectContentFiles } from './inject-content-files';
 
 /**
  * Retrieves the static content using the provided param
@@ -17,10 +13,14 @@ const CONTENT_FOLDER_FILES = import.meta.glob(['/src/content/**/*.md'], {
  */
 export function injectContent(param = 'slug', fallback = 'No Content Found') {
   const route = inject(ActivatedRoute);
-  const content = route.paramMap.pipe(
+  const contentFiles = injectContentFiles();
+  return route.paramMap.pipe(
     map((params) => params.get(param)),
-    map((slug) => CONTENT_FOLDER_FILES[`/src/content/${slug}.md`] || fallback)
+    map((slug) => {
+      return (
+        contentFiles.find((file) => file.filename === `/src/content/${slug}.md`)
+          ?.content || fallback
+      );
+    })
   );
-
-  return content;
 }

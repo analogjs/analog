@@ -1,3 +1,8 @@
+---
+title: My Second Post
+slug: 2022-12-31-my-second-post
+---
+
 ## My Second Post
 
 - [Home](/)
