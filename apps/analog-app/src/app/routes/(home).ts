@@ -1,4 +1,4 @@
-import { defineRouteMeta } from '@analogjs/router';
+import { RouteMeta } from '@analogjs/router';
 import { NgForOf, NgIf } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
@@ -7,9 +7,9 @@ import { catchError, of } from 'rxjs';
 import { ProductAlertsComponent } from '../product-alerts/product-alerts.component';
 import { Product } from '../products';
 
-export const routeMeta = defineRouteMeta({
+export const routeMeta: RouteMeta = {
   title: 'Product List',
-});
+};
 
 @Component({
   selector: 'app-product-list',
