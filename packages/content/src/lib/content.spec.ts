@@ -2,46 +2,53 @@ import { fakeAsync, flushMicrotasks, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { expect } from 'vitest';
 import { injectContent } from './content';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
 import { ContentFile } from './content-file';
 
 describe('injectContent', () => {
-  it("should provide the fallback 'No Content Found' message when no match between slug and files and no custom fallback provided", fakeAsync(() => {
+  type TestAttributes = {
+    slug: string;
+  };
+  it("should return ContentFile object with empty filename, empty attributes, and default fallback 'No Content Found' as content when no match between slug and files and no custom fallback provided", fakeAsync(() => {
     const { injectContent } = setup({
       routeParams: { slug: 'test' },
     });
-    let content;
     injectContent().subscribe((c) => {
-      content = c;
+      expect(c.content).toMatch('No Content Found');
+      expect(c.attributes).toEqual({});
+      expect(c.filename).toEqual('');
     });
     flushMicrotasks();
-    expect(content).toMatch('No Content Found');
   }));
 
-  it("should provide the custom fallback 'Custom Fallback' message when no match between slug and files and custom fallback 'Custom Fallback' provided", fakeAsync(() => {
+  it("should return ContentFile object with empty filename, empty attributes, and the custom fallback 'Custom Fallback' as content when no match between slug and files and custom fallback 'Custom Fallback' provided", fakeAsync(() => {
     const customFallback = 'Custom Fallback';
     const routeParams = { slug: 'test' };
     const { injectContent } = setup({ routeParams, customFallback });
-    let content;
     injectContent().subscribe((c) => {
-      content = c;
+      expect(c.content).toMatch(customFallback);
+      expect(c.attributes).toEqual({});
+      expect(c.filename).toEqual('');
     });
     flushMicrotasks();
-    expect(content).toMatch(customFallback);
   }));
 
-  it('should provide the content of the file when match between slug and files', fakeAsync(() => {
+  it('should return ContentFile object with correct filename, correct attributes, and the correct content of the file when match between slug and files', fakeAsync(() => {
     const routeParams = { slug: 'test' };
     const contentFiles = [
       {
         filename: '/src/content/dont-match.md',
-        attributes: {},
+        attributes: {
+          slug: 'dont-match',
+        },
         content: 'Dont Match',
       },
       {
         filename: '/src/content/test.md',
-        attributes: {},
+        attributes: {
+          slug: 'test',
+        },
         content: 'Test Content',
       },
     ];
@@ -49,26 +56,30 @@ describe('injectContent', () => {
       routeParams,
       contentFiles,
     });
-    let content;
     injectContent().subscribe((c) => {
-      content = c;
+      expect(c.content).toMatch('Test Content');
+      expect(c.attributes).toEqual({ slug: 'test' });
+      expect(c.filename).toEqual('/src/content/test.md');
     });
     flushMicrotasks();
-    expect(content).toMatch('Test Content');
   }));
 
-  it('should provide the content of the file when match between custom param and files', fakeAsync(() => {
+  it('should return ContentFile object with correct filename, correct attributes, and the correct content of the file when match between custom param and files', fakeAsync(() => {
     const customParam = 'customSlug';
-    const routeParams = { customSlug: 'custom-test' };
-    const contentFiles = [
+    const routeParams = { customSlug: 'custom-slug-test' };
+    const contentFiles: ContentFile<TestAttributes>[] = [
       {
         filename: '/src/content/dont-match.md',
-        attributes: {},
+        attributes: {
+          slug: 'dont-match',
+        },
         content: 'Dont Match',
       },
       {
-        filename: '/src/content/custom-test.md',
-        attributes: {},
+        filename: '/src/content/custom-slug-test.md',
+        attributes: {
+          slug: 'custom-slug-test',
+        },
         content: 'Test Content',
       },
     ];
@@ -77,12 +88,12 @@ describe('injectContent', () => {
       routeParams,
       contentFiles,
     });
-    let content;
     injectContent().subscribe((c) => {
-      content = c;
+      expect(c.content).toMatch('Test Content');
+      expect(c.attributes).toEqual({ slug: 'custom-slug-test' });
+      expect(c.filename).toEqual('/src/content/custom-slug-test.md');
     });
     flushMicrotasks();
-    expect(content).toMatch('Test Content');
   }));
 
   function setup(
@@ -90,7 +101,7 @@ describe('injectContent', () => {
       customParam: string;
       customFallback: string;
       routeParams: { [key: string]: any };
-      contentFiles: ContentFile[];
+      contentFiles: ContentFile<TestAttributes>[];
     }>
   ) {
     TestBed.configureTestingModule({
@@ -109,9 +120,11 @@ describe('injectContent', () => {
       useValue: args.contentFiles ?? [],
     });
     return {
-      injectContent: () =>
+      injectContent: (): Observable<
+        ContentFile<TestAttributes | Record<string, never>>
+      > =>
         TestBed.runInInjectionContext(() =>
-          injectContent(args.customParam, args.customFallback)
+          injectContent<TestAttributes>(args.customParam, args.customFallback)
         ),
     };
   }
