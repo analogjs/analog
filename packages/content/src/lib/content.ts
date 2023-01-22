@@ -4,6 +4,8 @@ import { inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { injectContentFiles } from './inject-content-files';
+import { Observable } from 'rxjs';
+import { ContentFile } from './content-file';
 
 /**
  * Retrieves the static content using the provided param
@@ -11,15 +13,25 @@ import { injectContentFiles } from './inject-content-files';
  * @param param route parameter (default: 'slug')
  * @param fallback fallback text if content file is not found (default: 'No Content Found')
  */
-export function injectContent(param = 'slug', fallback = 'No Content Found') {
+export function injectContent<
+  Attributes extends Record<string, any> = Record<string, any>
+>(
+  param = 'slug',
+  fallback = 'No Content Found'
+): Observable<ContentFile<Attributes | Record<string, never>>> {
   const route = inject(ActivatedRoute);
-  const contentFiles = injectContentFiles();
+  const contentFiles = injectContentFiles<Attributes | Record<string, never>>();
   return route.paramMap.pipe(
     map((params) => params.get(param)),
     map((slug) => {
       return (
-        contentFiles.find((file) => file.filename === `/src/content/${slug}.md`)
-          ?.content || fallback
+        contentFiles.find(
+          (file) => file.filename === `/src/content/${slug}.md`
+        ) || {
+          attributes: {},
+          filename: '',
+          content: fallback,
+        }
       );
     })
   );
