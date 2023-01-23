@@ -1,19 +1,25 @@
 import { injectContent, MarkdownComponent } from '@analogjs/content';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { Component } from '@angular/core';
-import { BlogAttributes } from '../../../lib/blog-attributes';
+import { RouteMeta } from '@analogjs/router';
+import { PostAttributes } from '../../blog/models';
+import { postMetaResolver, postTitleResolver } from '../../blog/resolvers';
+
+export const routeMeta: RouteMeta = {
+  title: postTitleResolver,
+  meta: postMetaResolver,
+};
 
 @Component({
-  selector: 'blog-post',
   standalone: true,
   imports: [MarkdownComponent, AsyncPipe, NgIf],
   template: `
-    <ng-container *ngIf="contentFile$ | async as cf">
-      <h1>{{ cf.attributes.title }}</h1>
-      <analog-markdown [content]="cf.content"></analog-markdown>
+    <ng-container *ngIf="post$ | async as post">
+      <h1>{{ post.attributes.title }}</h1>
+      <analog-markdown [content]="post.content"></analog-markdown>
     </ng-container>
   `,
 })
 export default class BlogPostComponent {
-  public contentFile$ = injectContent<BlogAttributes>();
+  readonly post$ = injectContent<PostAttributes>();
 }

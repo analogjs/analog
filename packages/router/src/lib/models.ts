@@ -9,12 +9,11 @@ import {
 } from '@angular/router';
 
 import { defineRouteMeta } from './define-route';
+import { MetaTag } from './meta-tags';
 
 type OmittedRouteProps =
   | 'path'
-  | 'pathMatch'
   | 'matcher'
-  | 'redirectTo'
   | 'component'
   | 'loadComponent'
   | 'children'
@@ -22,16 +21,20 @@ type OmittedRouteProps =
   | 'canLoad'
   | 'outlet';
 
-interface DefaultRouteMeta extends Omit<Route, OmittedRouteProps> {
+export type RouteConfig = Omit<Route, OmittedRouteProps>;
+
+export interface DefaultRouteMeta
+  extends Omit<Route, OmittedRouteProps | keyof RedirectRouteMeta> {
   canActivate?: CanActivateFn[];
   canActivateChild?: CanActivateChildFn[];
   canDeactivate?: CanDeactivateFn<unknown>[];
   canMatch?: CanMatchFn[];
   resolve?: { [key: string | symbol]: ResolveFn<unknown> };
   title?: string | ResolveFn<string>;
+  meta?: MetaTag[] | ResolveFn<MetaTag[]>;
 }
 
-interface RedirectRouteMeta {
+export interface RedirectRouteMeta {
   redirectTo: string;
   pathMatch?: Route['pathMatch'];
 }

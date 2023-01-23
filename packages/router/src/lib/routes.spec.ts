@@ -1,6 +1,8 @@
 import { Route } from '@angular/router';
-import { RouteExport } from './models';
+import { of } from 'rxjs';
+import { RouteExport, RouteMeta } from './models';
 import { getRoutes } from './routes';
+import { ROUTE_META_TAGS_KEY } from './meta-tags';
 
 type Files = Record<string, () => Promise<RouteExport>>;
 type ModuleRoute = Route & {
@@ -313,6 +315,68 @@ describe('routes', () => {
 
       expect(innerRoute.path).toBe('');
       expect(innerRoute.component).toBe(RouteComponent);
+    });
+  });
+
+  describe('a route with meta tags', () => {
+    async function setup(routeMeta: RouteMeta) {
+      const files: Files = {
+        '/app/routes/index.ts': () =>
+          Promise.resolve({ default: RouteComponent, routeMeta }),
+      };
+      const moduleRoute = getRoutes(files)[0] as ModuleRoute;
+      const resolvedRoutes = (await moduleRoute.loadChildren?.()) as Route[];
+
+      return { resolvedRoute: resolvedRoutes[0] };
+    }
+
+    it('should add meta tags to data dictionary when they are defined as array', async () => {
+      const routeMeta: RouteMeta = {
+        data: { foo: 'bar' },
+        resolve: { x: () => of('y') },
+        meta: [
+          { charset: 'utf-8' },
+          {
+            name: 'description',
+            content: 'Books Description',
+          },
+        ],
+      };
+      const { resolvedRoute } = await setup(routeMeta);
+
+      expect(resolvedRoute.data).toEqual({
+        ...routeMeta.data,
+        [ROUTE_META_TAGS_KEY]: routeMeta.meta,
+      });
+      // routeMeta.data should not be mutated
+      expect(routeMeta.data).not.toBe(resolvedRoute.data);
+      // routeMeta.resolve should not be changed
+      expect(resolvedRoute.resolve).toBe(routeMeta.resolve);
+    });
+
+    it('should add meta tags to resolve dictionary when they are defined as resolver', async () => {
+      const routeMeta: RouteMeta = {
+        resolve: { foo: () => of('bar') },
+        data: { x: 1, y: 2 },
+        meta: () =>
+          of([
+            { charset: 'utf-8' },
+            {
+              name: 'description',
+              content: 'Books Description',
+            },
+          ]),
+      };
+      const { resolvedRoute } = await setup(routeMeta);
+
+      expect(resolvedRoute.resolve).toEqual({
+        ...routeMeta.resolve,
+        [ROUTE_META_TAGS_KEY]: routeMeta.meta,
+      });
+      // routeMeta.resolve should not be mutated
+      expect(routeMeta.resolve).not.toBe(resolvedRoute.resolve);
+      // routeMeta.data should not be changed
+      expect(resolvedRoute.data).toBe(routeMeta.data);
     });
   });
 });
