@@ -2,7 +2,8 @@
 
 import type { Route } from '@angular/router';
 
-import { RouteExport } from './models';
+import { RouteExport, RouteMeta } from './models';
+import { toRouteConfig } from './route-config';
 
 const FILES = import.meta.glob<RouteExport>([
   '/app/routes/**/*.ts',
@@ -79,7 +80,7 @@ export function getRoutes(files: Record<string, () => Promise<RouteExport>>) {
                   {
                     path: '',
                     component: m.default,
-                    ...m.routeMeta,
+                    ...toRouteConfig(m.routeMeta as RouteMeta | undefined),
                   },
                 ]),
             };
@@ -109,7 +110,7 @@ export function getRoutes(files: Record<string, () => Promise<RouteExport>>) {
                   {
                     path: '',
                     component: m.default,
-                    ...m.routeMeta,
+                    ...toRouteConfig(m.routeMeta as RouteMeta | undefined),
                   },
                 ]),
             });
@@ -131,7 +132,7 @@ export function getRoutes(files: Record<string, () => Promise<RouteExport>>) {
                 {
                   path: '',
                   component: m.default,
-                  ...m.routeMeta,
+                  ...toRouteConfig(m.routeMeta as RouteMeta | undefined),
                 },
               ]),
           });
@@ -146,7 +147,7 @@ export function getRoutes(files: Record<string, () => Promise<RouteExport>>) {
                 {
                   path: '',
                   children: parent._children,
-                  ...m.routeMeta,
+                  ...toRouteConfig(m.routeMeta as RouteMeta | undefined),
                 },
               ];
             });

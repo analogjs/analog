@@ -2,18 +2,20 @@ import { Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { injectContentFiles } from '@analogjs/content';
 import { NgFor } from '@angular/common';
+import { RouteMeta } from '@analogjs/router';
+import { PostAttributes } from '../blog/models';
 
-interface MyAttributes {
-  title: string;
-  slug: string;
-}
+export const routeMeta: RouteMeta = {
+  title: 'Analog Blog',
+  meta: [{ name: 'description', content: 'Analog Blog Posts' }],
+};
+
 @Component({
-  selector: 'blog',
   standalone: true,
   imports: [RouterOutlet, RouterLink, NgFor],
   template: `
-    <ng-container *ngFor="let attribute of fileAttributes">
-      <a [routerLink]="attribute.slug"> {{ attribute.title }}</a> |
+    <ng-container *ngFor="let post of posts">
+      <a [routerLink]="post.attributes.slug"> {{ post.attributes.title }}</a> |
     </ng-container>
     <a routerLink="/about">About</a>
 
@@ -21,7 +23,5 @@ interface MyAttributes {
   `,
 })
 export default class BlogComponent {
-  public fileAttributes = injectContentFiles<MyAttributes>().map(
-    (file) => file.attributes
-  );
+  readonly posts = injectContentFiles<PostAttributes>();
 }
