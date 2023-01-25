@@ -10,21 +10,9 @@ const FILES = import.meta.glob<RouteExport>([
   '/src/app/routes/**/*.ts',
 ]);
 
-const CONTENT_FILES_GLOB = import.meta.glob<RouteExport>(
-  ['/src/app/routes/**/*.md'],
-  { as: 'raw', eager: true }
-);
-
-const CONTENT_FILES: Record<string, () => Promise<RouteExport>> = Object.keys(
-  CONTENT_FILES_GLOB
-).reduce((curr, key) => {
-  curr = {
-    ...curr,
-    [key]: () => Promise.resolve(CONTENT_FILES_GLOB[key]),
-  };
-
-  return curr;
-}, {});
+const CONTENT_FILES = import.meta.glob<string>(['/src/app/routes/**/*.md'], {
+  as: 'raw',
+});
 
 /**
  * Function used to parse list of files and return
@@ -33,12 +21,14 @@ const CONTENT_FILES: Record<string, () => Promise<RouteExport>> = Object.keys(
  * @param files
  * @returns Array of routes
  */
-export function getRoutes(files: Record<string, () => Promise<RouteExport>>) {
+export function getRoutes(
+  files: Record<string, () => Promise<RouteExport | string>>
+) {
   const ROUTES = Object.keys(files).sort((a, b) => a.length - b.length);
 
   const routeConfigs = ROUTES.reduce<Route[]>(
     (routes: Route[], key: string) => {
-      const module = key.endsWith('.md')
+      const module: () => Promise<RouteExport> = key.endsWith('.md')
         ? () =>
             import('@analogjs/content').then((m) => ({
               default: m.MarkdownComponent,
@@ -46,7 +36,7 @@ export function getRoutes(files: Record<string, () => Promise<RouteExport>>) {
                 data: { _analogContent: files[key] },
               },
             }))
-        : files[key];
+        : (files[key] as () => Promise<RouteExport>);
 
       const segments = key
         .replace(/^\/(.*?)\/routes|\/app\/routes|\.(js|ts|md)$/g, '')
