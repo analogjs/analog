@@ -32,7 +32,7 @@ export default class AnalogMarkdownComponent
   private route = inject(ActivatedRoute);
   public content$: Observable<SafeHtml> = of('');
 
-  @Input() content!: string | null;
+  @Input() content!: string | undefined | null;
   @Input() classes = 'analog-markdown';
 
   contentRenderer = inject(ContentRenderer);

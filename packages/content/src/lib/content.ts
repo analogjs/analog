@@ -2,10 +2,12 @@
 
 import { inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs/operators';
-import { injectContentFiles } from './inject-content-files';
-import { Observable } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
+import fm from 'front-matter';
+import { Observable, of } from 'rxjs';
+
 import { ContentFile } from './content-file';
+import { getContentFiles } from './get-content-files';
 
 /**
  * Retrieves the static content using the provided param
@@ -20,19 +22,34 @@ export function injectContent<
   fallback = 'No Content Found'
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   const route = inject(ActivatedRoute);
-  const contentFiles = injectContentFiles<Attributes | Record<string, never>>();
+  const contentFiles = getContentFiles();
   return route.paramMap.pipe(
     map((params) => params.get(param)),
-    map((slug) => {
-      return (
-        contentFiles.find(
-          (file) => file.filename === `/src/content/${slug}.md`
-        ) || {
+    switchMap((slug) => {
+      const filename = `/src/content/${slug}.md`;
+      const contentFile = contentFiles[filename];
+
+      if (!contentFile) {
+        return of({
           attributes: {},
-          filename: '',
+          filename,
           content: fallback,
-        }
-      );
+        });
+      }
+
+      const loadedContent = contentFile().then((content) => {
+        const { body, attributes } = fm<Attributes | Record<string, never>>(
+          content
+        );
+
+        return {
+          filename,
+          attributes,
+          content: body,
+        };
+      });
+
+      return loadedContent;
     })
   );
 }

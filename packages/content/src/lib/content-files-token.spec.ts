@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
 
-vi.mock('./get-raw-files', () => {
+vi.mock('./get-content-files', () => {
   return {
-    getRawFiles: () => ({
+    getContentFilesList: () => ({
       '/test.md': '---\ntitle: Test\n---\n# Hello World',
     }),
   };
@@ -15,7 +15,6 @@ describe('CONTENT_FILES_TOKEN', () => {
     expect(CONTENT_FILES_TOKEN).toBeTruthy();
     expect(firstParsedFile.filename).toEqual('/test.md');
     expect(firstParsedFile.attributes['title']).toEqual('Test');
-    expect(firstParsedFile.content).toEqual('# Hello World');
   });
 
   function setup() {

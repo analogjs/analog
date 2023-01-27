@@ -1,23 +1,20 @@
 import { InjectionToken } from '@angular/core';
-import fm from 'front-matter';
+
 import { ContentFile } from './content-file';
-import { getRawFiles } from './get-raw-files';
+import { getContentFilesList } from './get-content-files';
 
 export const CONTENT_FILES_TOKEN = new InjectionToken<ContentFile[]>(
   '@analogjs/content Content Files',
   {
     providedIn: 'root',
     factory() {
-      const rawContentFiles = getRawFiles();
+      const contentFiles = getContentFilesList();
 
-      return Object.keys(rawContentFiles).map((filename) => {
-        const { body, attributes } = fm<Record<string, any>>(
-          rawContentFiles[filename]
-        );
+      return Object.keys(contentFiles).map((filename) => {
+        const attributes = contentFiles[filename];
 
         return {
           filename,
-          content: body,
           attributes,
         };
       });
