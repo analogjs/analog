@@ -37,7 +37,26 @@ export function injectContent<
         });
       }
 
-      const loadedContent = contentFile().then((content) => {
+      return new Promise<string>((resolve) => {
+        if (import.meta.env.SSR === true) {
+          const macroTask = (globalThis as any)[
+            'Zone'
+          ].current.scheduleMacroTask(
+            `AnalogResolveContent-${Math.random()}`,
+            () => {},
+            {},
+            () => {}
+          );
+          contentFile().then((content) => {
+            macroTask.invoke();
+            resolve(content);
+          });
+        } else {
+          contentFile().then((content) => {
+            resolve(content);
+          });
+        }
+      }).then((content) => {
         const { body, attributes } = fm<Attributes | Record<string, never>>(
           content
         );
@@ -48,8 +67,6 @@ export function injectContent<
           content: body,
         };
       });
-
-      return loadedContent;
     })
   );
 }

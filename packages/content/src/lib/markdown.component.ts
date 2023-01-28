@@ -48,9 +48,28 @@ export default class AnalogMarkdownComponent
   updateContent() {
     this.content$ = this.route.data.pipe(
       map<Data, () => Promise<string>>((data) => data['_analogContent']),
-      switchMap((contentResolver) =>
-        this.content ? of(this.content) : contentResolver()
-      ),
+      switchMap((contentResolver) => {
+        if (this.content) {
+          return of(this.content);
+        } else {
+          if (import.meta.env.SSR === true) {
+            const macroTask = (globalThis as any)[
+              'Zone'
+            ].current.scheduleMacroTask(
+              `AnalogResolveMarkdown-${Math.random()}`,
+              () => {},
+              {},
+              () => {}
+            );
+            return contentResolver().then((content) => {
+              macroTask.invoke();
+              return content;
+            });
+          } else {
+            return contentResolver();
+          }
+        }
+      }),
       mergeMap((contentString) => this.renderContent(contentString)),
       map((content) => this.sanitizer.bypassSecurityTrustHtml(content)),
       catchError((e) => of(`There was an error ${e}`))
