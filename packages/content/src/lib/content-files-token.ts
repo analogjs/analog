@@ -1,23 +1,14 @@
 import { InjectionToken } from '@angular/core';
 
-import { ContentFile } from './content-file';
-import { getContentFilesList } from './get-content-files';
+import { getContentFiles } from './get-content-files';
 
-export const CONTENT_FILES_TOKEN = new InjectionToken<ContentFile[]>(
-  '@analogjs/content Content Files',
-  {
-    providedIn: 'root',
-    factory() {
-      const contentFiles = getContentFilesList();
+export const CONTENT_FILES_TOKEN = new InjectionToken<
+  Record<string, () => Promise<string>>
+>('@analogjs/content Content Files', {
+  providedIn: 'root',
+  factory() {
+    const contentFiles = getContentFiles();
 
-      return Object.keys(contentFiles).map((filename) => {
-        const attributes = contentFiles[filename];
-
-        return {
-          filename,
-          attributes,
-        };
-      });
-    },
-  }
-);
+    return contentFiles;
+  },
+});

@@ -7,7 +7,7 @@ import fm from 'front-matter';
 import { Observable, of } from 'rxjs';
 
 import { ContentFile } from './content-file';
-import { getContentFiles } from './get-content-files';
+import { CONTENT_FILES_TOKEN } from './content-files-token';
 
 /**
  * Retrieves the static content using the provided param
@@ -22,7 +22,7 @@ export function injectContent<
   fallback = 'No Content Found'
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   const route = inject(ActivatedRoute);
-  const contentFiles = getContentFiles();
+  const contentFiles = inject(CONTENT_FILES_TOKEN);
   return route.paramMap.pipe(
     map((params) => params.get(param)),
     switchMap((slug) => {
