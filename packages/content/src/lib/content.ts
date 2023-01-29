@@ -2,10 +2,13 @@
 
 import { inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs/operators';
-import { injectContentFiles } from './inject-content-files';
-import { Observable } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
+import fm from 'front-matter';
+import { Observable, of } from 'rxjs';
+
 import { ContentFile } from './content-file';
+import { CONTENT_FILES_TOKEN } from './content-files-token';
+import { waitFor } from './utils/zone-wait-for';
 
 /**
  * Retrieves the static content using the provided param
@@ -20,19 +23,44 @@ export function injectContent<
   fallback = 'No Content Found'
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   const route = inject(ActivatedRoute);
-  const contentFiles = injectContentFiles<Attributes | Record<string, never>>();
+  const contentFiles = inject(CONTENT_FILES_TOKEN);
   return route.paramMap.pipe(
     map((params) => params.get(param)),
-    map((slug) => {
-      return (
-        contentFiles.find(
-          (file) => file.filename === `/src/content/${slug}.md`
-        ) || {
+    switchMap((slug) => {
+      const filename = `/src/content/${slug}.md`;
+      const contentFile = contentFiles[filename];
+
+      if (!contentFile) {
+        return of({
           attributes: {},
-          filename: '',
+          filename,
           content: fallback,
+        });
+      }
+
+      return new Promise<string>((resolve) => {
+        const contentResolver = contentFile();
+
+        if (import.meta.env.SSR === true) {
+          waitFor(contentResolver).then((content) => {
+            resolve(content);
+          });
+        } else {
+          contentResolver.then((content) => {
+            resolve(content);
+          });
         }
-      );
+      }).then((content) => {
+        const { body, attributes } = fm<Attributes | Record<string, never>>(
+          content
+        );
+
+        return {
+          filename,
+          attributes,
+          content: body,
+        };
+      });
     })
   );
 }

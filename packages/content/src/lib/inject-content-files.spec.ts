@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { expect } from 'vitest';
-import { CONTENT_FILES_TOKEN } from './content-files-token';
+import { CONTENT_FILES_LIST_TOKEN } from './content-files-list-token';
 import { ContentFile } from './content-file';
 import { injectContentFiles } from './inject-content-files';
 
@@ -30,7 +30,7 @@ describe('injectContentFiles', () => {
   function setup<Attributes extends Record<string, any>>(
     contentFiles: ContentFile[] = []
   ) {
-    TestBed.overrideProvider(CONTENT_FILES_TOKEN, {
+    TestBed.overrideProvider(CONTENT_FILES_LIST_TOKEN, {
       useValue: contentFiles,
     });
     return {

@@ -18,7 +18,12 @@ export default defineConfig(() => {
         static: true,
         prerender: {
           routes: async () => {
-            return ['/', '/about', '/blog/2022-12-27-my-first-post'];
+            return [
+              '/',
+              '/about',
+              '/blog/2022-12-27-my-first-post',
+              '/blog/2022-12-31-my-second-post',
+            ];
           },
         },
         vite: {
