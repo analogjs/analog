@@ -15,6 +15,7 @@ import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 
 import { ContentRenderer } from './content-renderer';
 import { AnchorNavigationDirective } from './anchor-navigation.directive';
+import { waitFor } from './utils/zone-wait-for';
 
 @Component({
   selector: 'analog-markdown',
@@ -53,18 +54,7 @@ export default class AnalogMarkdownComponent
           return of(this.content);
         } else {
           if (import.meta.env.SSR === true) {
-            const macroTask = (globalThis as any)[
-              'Zone'
-            ].current.scheduleMacroTask(
-              `AnalogResolveMarkdown-${Math.random()}`,
-              () => {},
-              {},
-              () => {}
-            );
-            return contentResolver().then((content) => {
-              macroTask.invoke();
-              return content;
-            });
+            return waitFor(contentResolver());
           } else {
             return contentResolver();
           }

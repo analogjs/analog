@@ -8,6 +8,7 @@ import { Observable, of } from 'rxjs';
 
 import { ContentFile } from './content-file';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
+import { waitFor } from './utils/zone-wait-for';
 
 /**
  * Retrieves the static content using the provided param
@@ -38,21 +39,14 @@ export function injectContent<
       }
 
       return new Promise<string>((resolve) => {
+        const contentResolver = contentFile();
+
         if (import.meta.env.SSR === true) {
-          const macroTask = (globalThis as any)[
-            'Zone'
-          ].current.scheduleMacroTask(
-            `AnalogResolveContent-${Math.random()}`,
-            () => {},
-            {},
-            () => {}
-          );
-          contentFile().then((content) => {
-            macroTask.invoke();
+          waitFor(contentResolver).then((content) => {
             resolve(content);
           });
         } else {
-          contentFile().then((content) => {
+          contentResolver.then((content) => {
             resolve(content);
           });
         }
