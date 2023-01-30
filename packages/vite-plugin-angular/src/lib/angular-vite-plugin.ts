@@ -25,6 +25,7 @@ export interface PluginOptions {
      */
     tsTransformers?: ts.CustomTransformers;
   };
+  supportedBrowsers?: string[];
 }
 
 interface EmitFileResult {
@@ -63,6 +64,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           options?.advanced?.tsTransformers?.afterDeclarations ?? [],
       },
     },
+    supportedBrowsers: options?.supportedBrowsers ?? ['iOS <=15'],
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -273,6 +275,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               [
                 angularApplicationPreset,
                 {
+                  supportedBrowsers: pluginOptions.supportedBrowsers,
                   forceAsyncTransformation,
                   optimize: isProd && {},
                 },
