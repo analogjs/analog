@@ -8,3 +8,4 @@ export {
   provideContent,
   withMarkdownRenderer,
 } from './lib/markdown-content-renderer.service';
+export { parseRawContentFile } from './lib/parse-raw-content-file';

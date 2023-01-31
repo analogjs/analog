@@ -11,11 +11,10 @@ import {
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Data } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
+import { catchError, map, mergeMap } from 'rxjs/operators';
 
 import { ContentRenderer } from './content-renderer';
 import { AnchorNavigationDirective } from './anchor-navigation.directive';
-import { waitFor } from './utils/zone-wait-for';
 
 @Component({
   selector: 'analog-markdown',
@@ -48,18 +47,7 @@ export default class AnalogMarkdownComponent
 
   updateContent() {
     this.content$ = this.route.data.pipe(
-      map<Data, () => Promise<string>>((data) => data['_analogContent']),
-      switchMap((contentResolver) => {
-        if (this.content) {
-          return of(this.content);
-        } else {
-          if (import.meta.env.SSR === true) {
-            return waitFor(contentResolver());
-          } else {
-            return contentResolver();
-          }
-        }
-      }),
+      map<Data, string>((data) => this.content ?? data['_analogContent']),
       mergeMap((contentString) => this.renderContent(contentString)),
       map((content) => this.sanitizer.bypassSecurityTrustHtml(content)),
       catchError((e) => of(`There was an error ${e}`))

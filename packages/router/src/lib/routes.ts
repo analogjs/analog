@@ -4,6 +4,7 @@ import type { Route } from '@angular/router';
 
 import { RouteExport, RouteMeta } from './models';
 import { toRouteConfig } from './route-config';
+import { toMarkdownModule } from './markdown-helpers';
 
 const FILES = import.meta.glob<RouteExport>([
   '/app/routes/**/*.ts',
@@ -29,13 +30,7 @@ export function getRoutes(
   const routeConfigs = ROUTES.reduce<Route[]>(
     (routes: Route[], key: string) => {
       const module: () => Promise<RouteExport> = key.endsWith('.md')
-        ? () =>
-            import('@analogjs/content').then((m) => ({
-              default: m.MarkdownComponent,
-              routeMeta: {
-                data: { _analogContent: files[key] },
-              },
-            }))
+        ? toMarkdownModule(files[key] as () => Promise<string>)
         : (files[key] as () => Promise<RouteExport>);
 
       const segments = key

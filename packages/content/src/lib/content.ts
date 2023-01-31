@@ -2,13 +2,13 @@
 
 import { inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { map, switchMap } from 'rxjs/operators';
-import fm from 'front-matter';
 import { Observable, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 
 import { ContentFile } from './content-file';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
 import { waitFor } from './utils/zone-wait-for';
+import { parseRawContentFile } from './parse-raw-content-file';
 
 /**
  * Retrieves the static content using the provided param
@@ -50,15 +50,14 @@ export function injectContent<
             resolve(content);
           });
         }
-      }).then((content) => {
-        const { body, attributes } = fm<Attributes | Record<string, never>>(
-          content
-        );
+      }).then((rawContentFile) => {
+        const { content, attributes } =
+          parseRawContentFile<Attributes>(rawContentFile);
 
         return {
           filename,
           attributes,
-          content: body,
+          content,
         };
       });
     })

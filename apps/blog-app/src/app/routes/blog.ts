@@ -17,7 +17,8 @@ export const routeMeta: RouteMeta = {
     <ng-container *ngFor="let post of posts">
       <a [routerLink]="post.attributes.slug"> {{ post.attributes.title }}</a> |
     </ng-container>
-    <a routerLink="/about">About</a>
+    <a routerLink="/about">About</a> |
+    <a routerLink="/contact">Contact</a>
 
     <router-outlet></router-outlet>
   `,
