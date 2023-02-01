@@ -19,11 +19,11 @@ const FeatureList: FeatureItem[] = [
     ),
   },
   {
-    title: 'Hybrid SSR/SSG support (upcoming features)',
+    title: 'Hybrid SSR/SSG support',
     Svg: require('@site/static/img/logos/angular-logo.svg').default,
     description: (
       <>
-        Analog will support both Server-Side Rendering (SSR) and Static Site
+        Analog supports both Server-Side Rendering (SSR) and Static Site
         Generation (SSG) of Angular applications.
       </>
     ),
