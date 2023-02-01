@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/router",
-  "version": "0.1.0-alpha.6",
+  "version": "0.1.0-alpha.7",
   "description": "Filesystem-based routing for Angular",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "keywords": [
