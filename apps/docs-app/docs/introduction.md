@@ -15,7 +15,7 @@ Analog is a fullstack meta-framework for building applications and websites with
 - Low config
 - File-based routing
 - Support for API/server routes
-- Hybrid SSR/SSG support (upcoming)
+- Hybrid SSR/SSG support
 
 ## Packages
 
