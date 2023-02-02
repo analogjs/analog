@@ -110,7 +110,7 @@ export default defineConfig({
       vite: {
         tsconfig: 'path/to/tsconfig.app.json',
         workspaceRoot: 'rootDir',
-        inlineStylesExtension: 'scss|sass|less|styl|stylus'
+        inlineStylesExtension: 'scss|sass|less'
       },
     }),
   ],

@@ -65,4 +65,4 @@ export default defineConfig(({ mode }) => {
 });
 ```
 
-Support CSS pre-processor extensions include `scss`, `sass`, `less`, `styl`, and `stylus`. More information about CSS pre-processing can be found in the [Vite Docs](https://vitejs.dev/guide/features.html#css-pre-processors).
+Support CSS pre-processor extensions include `scss`, `sass` and `less`. More information about CSS pre-processing can be found in the [Vite Docs](https://vitejs.dev/guide/features.html#css-pre-processors).
