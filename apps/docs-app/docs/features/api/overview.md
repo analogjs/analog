@@ -14,4 +14,4 @@ import { defineEventHandler } from 'h3';
 export default defineEventHandler(() => ({ message: 'Hello World' }));
 ```
 
-API routes are powered by [Nitro](https://nitro.unjs.io). See the Nitro docs for more examples around definining API routes.
+API routes are powered by [Nitro](https://nitro.unjs.io). See the Nitro docs for more examples around building API routes.

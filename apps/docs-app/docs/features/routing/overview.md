@@ -12,7 +12,6 @@ There are 5 primary types of routes:
 
 - [Index Routes](#index-routes)
 - [Static Routes](#static-routes)
-- [Markdown Routes](#markdown-routes)
 - [Dynamic Routes](#dynamic-routes)
 - [Nested Routes](#nested-routes)
 - [Catch-all Routes](#catch-all-routes)

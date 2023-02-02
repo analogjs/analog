@@ -4,11 +4,9 @@ Analog supports Static Site Generation when building for deployment.
 
 To prerender pages, enable SSR, and use the `prerender` property to configure routes to be rendered at build time. The routes to be prerendered can be provided asynchronously also.
 
-This alsos produce a server build for your application.
+This also produces a server build for your application.
 
 ```ts
-/// <reference types="vitest" />
-
 import { defineConfig } from 'vite';
 import analog from '@analogjs/platform';
 

@@ -209,6 +209,7 @@ The following is the list of supported scopes:
 - **create-analog**
 - **router**
 - **platform**
+- **content**
 
 ### Subject
 

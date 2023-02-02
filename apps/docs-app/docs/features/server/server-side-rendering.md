@@ -5,8 +5,6 @@ Analog supports server-side rendering during development and building for produc
 Enable SSR in the `vite.config.ts` using the `analog()` plugin:
 
 ```ts
-/// <reference types="vitest" />
-
 import { defineConfig } from 'vite';
 import analog from '@analogjs/platform';
 

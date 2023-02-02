@@ -5,7 +5,9 @@ import TabItem from '@theme/TabItem';
 
 ## Running Tests
 
-Analog supports [Vitest](https://vitest.dev) for running unit tests. To run unit tests:
+Analog supports [Vitest](https://vitest.dev) for running unit tests.
+
+To run unit tests, use the `test` command:
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
