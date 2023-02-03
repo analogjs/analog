@@ -6,7 +6,9 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "node_modules/@analogjs/platform",
         "main": "packages/platform/src/index.ts",
@@ -29,14 +31,25 @@
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": ["{options.outputFile}"],
+      "outputs": [
+        "{options.outputFile}"
+      ],
       "options": {
-        "lintFilePatterns": ["packages/platform/**/*.ts"]
+        "lintFilePatterns": [
+          "packages/platform/**/*.ts"
+        ]
       }
     },
     "test": {
       "dependsOn": ["^build"],
       "executor": "@nrwl/vite:test"
+    },
+    "version": {
+      "executor": "@jscutlery/semver:version",
+      "options": {
+        "preset": "conventional",
+        "tagPrefix": "platform@"
+      }
     }
   },
   "tags": []

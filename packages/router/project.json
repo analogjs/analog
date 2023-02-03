@@ -6,7 +6,9 @@
   "targets": {
     "build": {
       "executor": "@nrwl/angular:package",
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/router"],
+      "outputs": [
+        "{workspaceRoot}/node_modules/@analogjs/router"
+      ],
       "options": {
         "project": "packages/router/ng-package.json",
         "updateBuildableProjectDepsInPackageJson": false
@@ -32,6 +34,13 @@
     },
     "test": {
       "executor": "@nrwl/vite:test"
+    },
+    "version": {
+      "executor": "@jscutlery/semver:version",
+      "options": {
+        "preset": "conventional",
+        "tagPrefix": "router@"
+      }
     }
   },
   "tags": []

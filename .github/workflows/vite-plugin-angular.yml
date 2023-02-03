@@ -1,0 +1,38 @@
+name: publish vite-plugin-angular package
+
+on:
+  push:
+    tags:
+      - "vite-plugin-angular@*"
+
+env:
+  PACKAGE_NAME: "vite-plugin-angular"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .node-version
+          cache: yarn
+      - name: Install
+        run: yarn install --frozen-lockfile --non-interactive
+
+      - name: Test
+        run: yarn nx run ${{ env.PACKAGE_NAME }}:test
+
+      - name: Build
+        run: yarn nx run ${{ env.PACKAGE_NAME }}:build
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/packages/${{ env.PACKAGE_NAME }}/*.*"
+          bodyFile: "packages/${{ env.PACKAGE_NAME }}/CHANGELOG.md"
+
+      - name: npm publish
+        run: npm publish dist/packages/${{ env.PACKAGE_NAME }} --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

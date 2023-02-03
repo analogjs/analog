@@ -6,7 +6,9 @@
   "targets": {
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/create-analog",
         "command": "cpy packages/create-analog/* !packages/create-analog/node_modules/ !packages/create-analog/project.json !packages/create-analog/__tests__/ !packages/create-analog/yarn.lock dist/"
@@ -14,6 +16,13 @@
     },
     "test": {
       "executor": "@nrwl/vite:test"
+    },
+    "version": {
+      "executor": "@jscutlery/semver:version",
+      "options": {
+        "preset": "conventional",
+        "tagPrefix": "create-analog@"
+      }
     }
   },
   "tags": []
