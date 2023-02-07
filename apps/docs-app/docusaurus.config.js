@@ -49,7 +49,6 @@ const config = {
       },
       image: 'img/logos/analog-logo.svg',
       footer: {
-        style: 'dark',
         logo: {
           alt: 'Analog logo',
           href: '/',
@@ -100,10 +99,11 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Analog. Licensed under MIT.`,
+        copyright: `Copyright © 2022-${new Date().getFullYear()} Analog. Licensed under MIT.`,
       },
       navbar: {
         title,
+        hideOnScroll: true,
         logo: {
           alt: 'Analog logo',
           src: 'img/logos/analog-logo.svg',
