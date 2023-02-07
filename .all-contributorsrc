@@ -37,7 +37,8 @@
         "tool",
         "infra",
         "doc",
-        "code"
+        "code",
+        "design"
       ]
     },
     {
