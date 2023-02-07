@@ -4,9 +4,8 @@ import angularApplicationPreset from '@angular-devkit/build-angular/src/babel/pr
 import { requiresLinking } from '@angular-devkit/build-angular/src/babel/webpack-loader';
 import * as ts from 'typescript';
 import { ModuleNode, Plugin, PluginContainer, ViteDevServer } from 'vite';
-import { Plugin as ESBuildPlugin } from 'esbuild';
-import { createCompilerPlugin } from '@angular-devkit/build-angular/src/builders/browser-esbuild/compiler-plugin';
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
+import { createCompilerPlugin } from './compiler-plugin';
 import {
   hasStyleUrls,
   hasTemplateUrl,
@@ -109,20 +108,11 @@ export function angular(options?: PluginOptions): Plugin[] {
           optimizeDeps: {
             esbuildOptions: {
               plugins: [
-                createCompilerPlugin(
-                  {
-                    tsconfig: pluginOptions.tsconfig,
-                    sourcemap: !isProd,
-                    advancedOptimizations: isProd,
-                  },
-                  {
-                    workspaceRoot: pluginOptions.workspaceRoot,
-                    target,
-                    sourcemap: !isProd,
-                    optimization: isProd,
-                    inlineStyleLanguage: pluginOptions.inlineStylesExtension,
-                  }
-                ) as ESBuildPlugin as any,
+                createCompilerPlugin({
+                  tsconfig: pluginOptions.tsconfig,
+                  sourcemap: !isProd,
+                  advancedOptimizations: isProd,
+                }),
               ],
               define: {
                 ngDevMode: watchMode ? JSON.stringify({}) : 'false',
