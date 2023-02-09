@@ -62,6 +62,7 @@ Test Content`),
       expect(c.content).toMatch('Test Content');
       expect(c.attributes).toEqual({ slug: 'test' });
       expect(c.filename).toEqual('/src/content/test.md');
+      expect(c.slug).toEqual('test');
     });
     flushMicrotasks();
   }));
@@ -90,6 +91,7 @@ Test Content`),
       expect(c.content).toMatch('Test Content');
       expect(c.attributes).toEqual({ slug: 'custom-slug-test' });
       expect(c.filename).toEqual('/src/content/custom-slug-test.md');
+      expect(c.slug).toEqual('custom-slug-test');
     });
     flushMicrotasks();
   }));

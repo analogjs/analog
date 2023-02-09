@@ -34,6 +34,7 @@ export function injectContent<
         return of({
           attributes: {},
           filename,
+          slug: slug || '',
           content: fallback,
         });
       }
@@ -56,6 +57,7 @@ export function injectContent<
 
         return {
           filename,
+          slug: slug || '',
           attributes,
           content,
         };

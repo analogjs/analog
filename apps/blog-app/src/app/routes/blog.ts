@@ -15,7 +15,7 @@ export const routeMeta: RouteMeta = {
   imports: [RouterOutlet, RouterLink, NgFor],
   template: `
     <ng-container *ngFor="let post of posts">
-      <a [routerLink]="post.attributes.slug"> {{ post.attributes.title }}</a> |
+      <a [routerLink]="post.slug"> {{ post.attributes.title }}</a> |
     </ng-container>
     <a routerLink="/about">About</a> |
     <a routerLink="/contact">Contact</a>

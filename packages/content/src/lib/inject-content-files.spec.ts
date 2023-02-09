@@ -15,6 +15,7 @@ describe('injectContentFiles', () => {
     const contentFiles: ContentFile<TestAttributes>[] = [
       {
         filename: '/src/content/test.md',
+        slug: 'test',
         attributes: {
           testAttribute1: 'hello world',
           testAttribute2: 2,

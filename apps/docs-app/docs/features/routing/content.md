@@ -146,7 +146,7 @@ export interface PostAttributes {
   template: `
     <ul *ngFor="let post of posts">
       <li>
-        <a [routerLink]="['/blog', 'posts', post.attributes.slug]">
+        <a [routerLink]="['/blog', 'posts', post.slug]">
           {{ post.attributes.title }}</a
         >
       </li>
