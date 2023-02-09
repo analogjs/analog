@@ -3,6 +3,22 @@
   width: 25px;
 }
 
-.flex {
+.stackblitzLink {
   display: flex;
+  border: var(--ifm-global-border-width) solid var(--ifm-color-secondary);
+}
+
+.stackblitzLink:hover {
+  color: var(--ifm-color-gray-900);
+  background-color: var(--ifm-color-secondary);
+}
+
+:root[data-theme='dark'] .stackblitzLink:hover {
+  color: var(--ifm-color-white);
+  background-color: var(--stackblitz-lightning-color);
+  border-color: var(--stackblitz-lightning-color);
+}
+
+:root[data-theme='dark'] .stackblitzLink:hover path {
+  fill: var(--ifm-color-white);
 }

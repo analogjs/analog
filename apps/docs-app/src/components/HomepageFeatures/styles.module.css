@@ -3,6 +3,7 @@
   align-items: center;
   padding: 2rem 0;
   width: 100%;
+  border-top: var(--ifm-global-border-width) solid var(--global-border-color);
 }
 
 .featureSvg {

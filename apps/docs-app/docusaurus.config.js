@@ -1,7 +1,8 @@
 // @ts-check
 
-const lightCodeTheme = require('prism-react-renderer/themes/github');
-const darkCodeTheme = require('prism-react-renderer/themes/dracula');
+const lightCodeTheme = require('prism-react-renderer/themes/nightOwlLight');
+const darkCodeTheme = require('prism-react-renderer/themes/nightOwl');
+darkCodeTheme.plain.backgroundColor = '#0a1429';
 
 const organizationName = 'analogjs';
 const projectName = 'analog';
@@ -30,7 +31,7 @@ const config = {
       ({
         blog: false,
         docs: {
-          editUrl: `https://github.com/${organizationName}/${projectName}/edit/main/apps/docs-app/docs`,
+          editUrl: `https://github.com/${organizationName}/${projectName}/edit/main/apps/docs-app`,
           sidebarPath: require.resolve('./sidebars.js'),
         },
         theme: {
@@ -49,7 +50,6 @@ const config = {
       },
       image: 'img/logos/analog-logo.svg',
       footer: {
-        style: 'dark',
         logo: {
           alt: 'Analog logo',
           href: '/',
@@ -100,10 +100,11 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Analog. Licensed under MIT.`,
+        copyright: `Copyright © 2022-${new Date().getFullYear()} Analog. Licensed under MIT.`,
       },
       navbar: {
         title,
+        hideOnScroll: true,
         logo: {
           alt: 'Analog logo',
           src: 'img/logos/analog-logo.svg',
