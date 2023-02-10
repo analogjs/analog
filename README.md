@@ -1,10 +1,27 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
 [![All Contributors](https://img.shields.io/badge/all_contributors-28-orange.svg?style=flat-square)](#contributors-)
+
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
+
+Similar to other meta-frameworks such as Next.JS, Nuxt, SvelteKit and others, Analog provides a similar experience, building on top of Angular.
+
+## Documentation
+
+Visit the docs at [https://analogjs.org](https://analogjs.org)
+
+## Features
+
+- Supports Vite/Vitest/Playwright
+- File-based routing
+- Support for using markdown as content routes
+- Support for API/server routes
+- Hybrid SSR/SSG support
+- Supports Angular CLI or Nx workspaces
 
 ## Getting Started
 
@@ -25,24 +42,6 @@ npm init analog
 Follow the prompts to scaffold the project and start the development server.
 
 [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://analogjs.org/new)
-
-## Features
-
-- Vite-based
-  - Supports Vite/Vitest/Playwright
-- Low config
-- File-based routing
-- Support for API/server routes
-- Hybrid SSR/SSG support
-
-## Packages
-
-- `@analogjs/vite-plugin-angular` - A [Vite](https://vitejs.dev) plugin for building, serving, and testing Angular applications.
-- `@analogjs/router` - Filesystem-based routing for Angular.
-- `@analogjs/platform` - Vite platform plugin for Analog that enables API routes.
-- `create-analog` - An initializer for scaffolding an Analog project.
-- `@analogjs/astro-angular` - An integration for using Angular components in [Astro](https://astro.build).
-- `@analogjs/content` - A plugin for using Markdown content in Analog applications.
 
 ## Supporting Analog
 
