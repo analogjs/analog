@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AppComponent } from './app.component';
-import { TopBarComponent } from './top-bar/top-bar.component';
+import { TopBarComponent } from '@analogjs/top-bar';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
@@ -10,13 +10,12 @@ describe('AppComponent', () => {
         RouterTestingModule,
         AppComponent,
         TopBarComponent,
-        RouterTestingModule.withRoutes([])
+        RouterTestingModule.withRoutes([]),
       ],
-      declarations: [
-      ]
+      declarations: [],
     }).compileComponents();
   });
-  
+
   it('should create the app', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;

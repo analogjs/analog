@@ -3,6 +3,7 @@
 import analog from '@analogjs/platform';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
+import tsConfigPaths from 'vite-tsconfig-paths';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -41,6 +42,9 @@ export default defineConfig(({ mode }) => {
             routes: ['/'],
           },
         },
+      }),
+      tsConfigPaths({
+        root: '../../',
       }),
       visualizer() as Plugin,
       splitVendorChunkPlugin(),

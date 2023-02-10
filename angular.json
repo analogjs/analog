@@ -14,6 +14,7 @@
     "docs-app": "apps/docs-app",
     "platform": "packages/platform",
     "router": "packages/router",
+    "top-bar": "libs/top-bar",
     "vite-plugin-angular": "packages/vite-plugin-angular"
   },
   "defaultProject": "analog-app"
