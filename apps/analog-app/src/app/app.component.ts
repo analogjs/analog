@@ -1,14 +1,13 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-
-import { TopBarComponent } from './top-bar/top-bar.component';
+import { TopBarComponent } from '@analogjs/top-bar';
 
 @Component({
   selector: 'analogjs-root',
   standalone: true,
   imports: [TopBarComponent, RouterOutlet],
   template: `
-    <app-top-bar></app-top-bar>
+    <analogjs-top-bar />
 
     <div class="container">
       <router-outlet></router-outlet>
