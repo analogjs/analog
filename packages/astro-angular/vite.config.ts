@@ -1,7 +1,8 @@
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
-import { offsetFromRoot } from '@nrwl/devkit';
+import pkg from '@nrwl/devkit';
+const { offsetFromRoot } = pkg;
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
