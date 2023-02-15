@@ -223,3 +223,38 @@ export default class AboutPageComponent {
   private readonly service = inject(AboutService);
 }
 ```
+
+### Route Meta Tags
+
+The `RouteMeta` type has a property `meta` which can be used to define a list of meta tags for each route:
+
+```ts
+import { Component } from '@angular/core';
+import { RouteMeta } from '@analogjs/router';
+
+import { AboutService } from './about.service';
+
+export const routeMeta: RouteMeta = {
+  title: 'Refresh every 30 sec',
+  meta: [
+    {
+      httpEquiv: 'refresh',
+      content: '30',
+    },
+  ],
+};
+
+@Component({
+  selector: 'app-refresh',
+  standalone: true,
+  template: `
+    <h2>Hello Analog</h2>
+
+    Analog is a meta-framework on top of Angular.
+  `,
+})
+export default class RefreshComponent {}
+```
+
+The above example sets meta tag `<meta http-equiv="refresh" content="30">`, which forces the browser to refresh the page every 30 seconds.
+To read more about possible meta tags, please visit official [docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta).
