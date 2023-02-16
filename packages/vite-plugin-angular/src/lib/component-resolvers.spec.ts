@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   hasTemplateUrl,
   resolveStyleUrls,
-  resolveTemplateUrl,
+  resolveTemplateUrls,
 } from './component-resolvers';
 
 describe('component-resolvers styleUrls', () => {
@@ -81,10 +81,10 @@ describe('component-resolvers styleUrls', () => {
       `;
 
         const actualUrl = '/path/to/src/app.component.html';
-        const resolvedTemplateUrl = resolveTemplateUrl(code, id);
+        const resolvedTemplateUrls = resolveTemplateUrls(code, id);
 
         expect(hasTemplateUrl(code)).toBeTruthy();
-        expect(resolvedTemplateUrl).toBe(actualUrl);
+        expect(resolvedTemplateUrls[0]).toBe(actualUrl);
       });
 
       it('should handle templateUrls with double quotes', () => {
@@ -96,10 +96,32 @@ describe('component-resolvers styleUrls', () => {
       `;
 
         const actualUrl = '/path/to/src/app.component.html';
-        const resolvedTemplateUrl = resolveTemplateUrl(code, id);
+        const resolvedTemplateUrls = resolveTemplateUrls(code, id);
 
         expect(hasTemplateUrl(code)).toBeTruthy();
-        expect(resolvedTemplateUrl).toBe(actualUrl);
+        expect(resolvedTemplateUrls[0]).toBe(actualUrl);
+      });
+
+      it('should handle multiple templateUrls in a single file', () => {
+        const code = `
+        @Component({
+          templateUrl: "./app.component.html"
+        })
+        export class MyComponent {}
+
+        @Component({
+          templateUrl: "./app1.component.html"
+        })
+        export class MyComponentTwo {}        
+      `;
+
+        const actualUrl1 = '/path/to/src/app.component.html';
+        const actualUrl2 = '/path/to/src/app1.component.html';
+        const resolvedTemplateUrls = resolveTemplateUrls(code, id);
+
+        expect(hasTemplateUrl(code)).toBeTruthy();
+        expect(resolvedTemplateUrls[0]).toBe(actualUrl1);
+        expect(resolvedTemplateUrls[1]).toBe(actualUrl2);
       });
     });
   });
