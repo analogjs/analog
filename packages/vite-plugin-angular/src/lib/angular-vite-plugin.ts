@@ -10,7 +10,7 @@ import {
   hasStyleUrls,
   hasTemplateUrl,
   resolveStyleUrls,
-  resolveTemplateUrl,
+  resolveTemplateUrls,
 } from './component-resolvers';
 import { augmentHostWithResources } from './host';
 
@@ -218,11 +218,11 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           if (watchMode) {
             if (hasTemplateUrl(code)) {
-              const templateUrl = resolveTemplateUrl(code, id);
+              const templateUrls = resolveTemplateUrls(code, id);
 
-              if (templateUrl) {
+              templateUrls.forEach((templateUrl) => {
                 this.addWatchFile(templateUrl);
-              }
+              });
             }
 
             if (hasStyleUrls(code)) {
