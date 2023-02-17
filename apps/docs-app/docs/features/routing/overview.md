@@ -223,3 +223,71 @@ export default class AboutPageComponent {
   private readonly service = inject(AboutService);
 }
 ```
+
+### Route Meta Tags
+
+The `RouteMeta` type has a property `meta` which can be used to define a list of meta tags for each route:
+
+```ts
+import { Component } from '@angular/core';
+import { RouteMeta } from '@analogjs/router';
+
+import { AboutService } from './about.service';
+
+export const routeMeta: RouteMeta = {
+  title: 'Refresh every 30 sec',
+  meta: [
+    {
+      httpEquiv: 'refresh',
+      content: '30',
+    },
+  ],
+};
+
+@Component({
+  selector: 'app-refresh',
+  standalone: true,
+  template: `
+    <h2>Hello Analog</h2>
+
+    Analog is a meta-framework on top of Angular.
+  `,
+})
+export default class RefreshComponent {}
+```
+
+The above example sets meta tag `<meta http-equiv="refresh" content="30">`, which forces the browser to refresh the page every 30 seconds.
+To read more about possible standard meta tags, please visit official [docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta).
+
+### Open Graph meta tags
+
+The above property `meta` can also be used to define Open Graph meta tags for SEO and social apps optimizations:
+
+```ts
+export const routeMeta: RouteMeta = {
+  meta: [
+    {
+      name: 'description',
+      content: 'Description of the page',
+    },
+    {
+      name: 'author',
+      content: 'Analog Team',
+    },
+    {
+      property: 'og:title',
+      content: 'Title of the page',
+    },
+    {
+      property: 'og:description',
+      content: 'Some catchy description',
+    },
+    {
+      property: 'og:image',
+      content: 'https://somepage.com/someimage.png',
+    },
+  ],
+};
+```
+
+This example will allow social apps like Facebook or Twitter to display titles, descriptions, and images optimally.
