@@ -1,9 +1,7 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-
-[![All Contributors](https://img.shields.io/badge/all_contributors-28-orange.svg?style=flat-square)](#contributors-)
-
+[![All Contributors](https://img.shields.io/badge/all_contributors-29-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
@@ -103,6 +101,9 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://goetzrobin.github.io"><img src="https://avatars.githubusercontent.com/u/35136007?v=4?s=100" width="100px;" alt="Robin Goetz"/><br /><sub><b>Robin Goetz</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=goetzrobin" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ch1ffa"><img src="https://avatars.githubusercontent.com/u/17417010?v=4?s=100" width="100px;" alt="Vadim Evseev"/><br /><sub><b>Vadim Evseev</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ch1ffa" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://k9n.dev"><img src="https://avatars.githubusercontent.com/u/4279702?v=4?s=100" width="100px;" alt="Danny Koppenhagen"/><br /><sub><b>Danny Koppenhagen</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=d-koppenhagen" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=d-koppenhagen" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://tomwebwalker.pl/"><img src="https://avatars.githubusercontent.com/u/11270899?v=4?s=100" width="100px;" alt="Tomasz Flis"/><br /><sub><b>Tomasz Flis</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=TomWebwalker" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
