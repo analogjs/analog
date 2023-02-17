@@ -18,7 +18,6 @@ export function routerPlugin(): Plugin[] {
             noExternal: ['@analogjs/**', '@angular/**'],
           },
           optimizeDeps: {
-            include: ['rxjs'],
             exclude: ['@angular/platform-server', '@analogjs/router'],
           },
         };
