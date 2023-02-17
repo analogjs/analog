@@ -271,6 +271,15 @@
         "doc",
         "code"
       ]
+    },
+    {
+      "login": "TomWebwalker",
+      "name": "Tomasz Flis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11270899?v=4",
+      "profile": "https://tomwebwalker.pl/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
