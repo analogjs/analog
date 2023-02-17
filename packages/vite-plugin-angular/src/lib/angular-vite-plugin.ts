@@ -106,6 +106,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
         return {
           optimizeDeps: {
+            include: ['rxjs/operators', 'rxjs'],
             esbuildOptions: {
               plugins: [
                 createCompilerPlugin({
