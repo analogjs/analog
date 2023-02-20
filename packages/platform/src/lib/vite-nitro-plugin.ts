@@ -16,8 +16,8 @@ export function viteNitroPlugin(
   let nitroConfig: NitroConfig = {
     rootDir,
     logLevel: nitroOptions?.logLevel || 0,
-    srcDir: `${rootDir}/src`,
-    scanDirs: [`${rootDir}/src/server`],
+    srcDir: `${rootDir}/src`.replace(/\\/g, '/'),
+    scanDirs: [`${rootDir}/src/server`.replace(/\\/g, '/')],
     output: {
       dir: '../dist/server',
       publicDir: '../dist/server/public',
@@ -64,10 +64,13 @@ export function viteNitroPlugin(
             external: ['rxjs', 'node-fetch-native/dist/polyfill', 'destr'],
           },
           moduleSideEffects: ['zone.js/bundles/zone-node.umd.js'],
-          renderer: `${__dirname}/runtime/renderer`,
+          renderer: `${__dirname}/runtime/renderer`.replace(/\\/g, '/'),
           handlers: [
             {
-              handler: `${__dirname}/runtime/api-middleware`,
+              handler: `${__dirname}/runtime/api-middleware`.replace(
+                /\\/g,
+                '/'
+              ),
               middleware: true,
             },
           ],
