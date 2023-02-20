@@ -224,6 +224,19 @@ export default class AboutPageComponent {
 }
 ```
 
+### Redirect to a default route
+
+To redirect to the route `/home` from `/`, define `redirectTo` and `pathMatch` inside `src/app/routes/index.ts`:
+
+```ts
+import { RouteMeta } from '@analogjs/router';
+
+export const routeMeta: RouteMeta = {
+  redirectTo: '/home',
+  pathMatch: 'full',
+};
+```
+
 ### Route Meta Tags
 
 The `RouteMeta` type has a property `meta` which can be used to define a list of meta tags for each route:
