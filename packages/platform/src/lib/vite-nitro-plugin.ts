@@ -5,6 +5,7 @@ import { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { Options } from './options';
 import { buildServer } from './build-server';
 import { buildSSRApp } from './ssr/build';
+import { normalizePath } from 'vite';
 
 export function viteNitroPlugin(
   options?: Options,
@@ -16,8 +17,8 @@ export function viteNitroPlugin(
   let nitroConfig: NitroConfig = {
     rootDir,
     logLevel: nitroOptions?.logLevel || 0,
-    srcDir: `${rootDir}/src`,
-    scanDirs: [`${rootDir}/src/server`],
+    srcDir: normalizePath(`${rootDir}/src`),
+    scanDirs: [normalizePath(`${rootDir}/src/server`)],
     output: {
       dir: '../dist/server',
       publicDir: '../dist/server/public',
@@ -64,10 +65,10 @@ export function viteNitroPlugin(
             external: ['rxjs', 'node-fetch-native/dist/polyfill', 'destr'],
           },
           moduleSideEffects: ['zone.js/bundles/zone-node.umd.js'],
-          renderer: `${__dirname}/runtime/renderer`,
+          renderer: normalizePath(`${__dirname}/runtime/renderer`),
           handlers: [
             {
-              handler: `${__dirname}/runtime/api-middleware`,
+              handler: normalizePath(`${__dirname}/runtime/api-middleware`),
               middleware: true,
             },
           ],
