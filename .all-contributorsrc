@@ -290,6 +290,15 @@
         "doc",
         "code"
       ]
+    },
+    {
+      "login": "sand4rt",
+      "name": "Sander",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17591696?v=4",
+      "profile": "https://www.linkedin.com/in/sander-t-0a461458",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
