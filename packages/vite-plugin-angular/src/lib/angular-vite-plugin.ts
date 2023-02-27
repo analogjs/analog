@@ -210,7 +210,7 @@ export function angular(options?: PluginOptions): Plugin[] {
            * for test(Vitest)
            */
           if (isTest) {
-            const tsMod = viteServer!.moduleGraph.getModuleById(id);
+            const tsMod = viteServer?.moduleGraph.getModuleById(id);
             if (tsMod) {
               sourceFileCache.invalidate(id);
               await buildAndAnalyze();
