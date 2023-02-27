@@ -1,7 +1,7 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-30-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-31-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
@@ -105,6 +105,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://tomwebwalker.pl/"><img src="https://avatars.githubusercontent.com/u/11270899?v=4?s=100" width="100px;" alt="Tomasz Flis"/><br /><sub><b>Tomasz Flis</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=TomWebwalker" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/AdditionAddict"><img src="https://avatars.githubusercontent.com/u/48436581?v=4?s=100" width="100px;" alt="AdditionAddict"/><br /><sub><b>AdditionAddict</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=AdditionAddict" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=AdditionAddict" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/sander-t-0a461458"><img src="https://avatars.githubusercontent.com/u/17591696?v=4?s=100" width="100px;" alt="Sander"/><br /><sub><b>Sander</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=sand4rt" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
