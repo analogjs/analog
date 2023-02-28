@@ -9,11 +9,15 @@ import { toMarkdownModule } from './markdown-helpers';
 const FILES = import.meta.glob<RouteExport>([
   '/app/routes/**/*.ts',
   '/src/app/routes/**/*.ts',
+  '/src/app/pages/**/*.page.ts',
 ]);
 
-const CONTENT_FILES = import.meta.glob<string>(['/src/app/routes/**/*.md'], {
-  as: 'raw',
-});
+const CONTENT_FILES = import.meta.glob<string>(
+  ['/src/app/routes/**/*.md', '/src/app/pages/**/*.md'],
+  {
+    as: 'raw',
+  }
+);
 
 /**
  * Function used to parse list of files and return
@@ -34,7 +38,10 @@ export function getRoutes(
         : (files[key] as () => Promise<RouteExport>);
 
       const segments = key
-        .replace(/^\/(.*?)\/routes|\/app\/routes|\.(js|ts|md)$/g, '')
+        .replace(
+          /^\/(.*?)\/routes|^\/(.*?)\/pages|\/app\/routes|\.page|\.(js|ts|md)$/g,
+          ''
+        )
         .replace(/\[\.{3}.+\]/, '**')
         .replace(/\[([^\]]+)\]/g, ':$1')
         .split('/')

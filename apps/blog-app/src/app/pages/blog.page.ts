@@ -3,7 +3,7 @@ import { RouterLink, RouterOutlet } from '@angular/router';
 import { injectContentFiles } from '@analogjs/content';
 import { NgFor } from '@angular/common';
 import { RouteMeta } from '@analogjs/router';
-import { PostAttributes } from '../blog/models';
+import { PostAttributes } from './blog/models';
 
 export const routeMeta: RouteMeta = {
   title: 'Analog Blog',

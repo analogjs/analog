@@ -2,8 +2,8 @@ import { injectContent, MarkdownComponent } from '@analogjs/content';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { Component } from '@angular/core';
 import { RouteMeta } from '@analogjs/router';
-import { PostAttributes } from '../../blog/models';
-import { postMetaResolver, postTitleResolver } from '../../blog/resolvers';
+import { PostAttributes } from './models';
+import { postMetaResolver, postTitleResolver } from './resolvers';
 
 export const routeMeta: RouteMeta = {
   title: postTitleResolver,
