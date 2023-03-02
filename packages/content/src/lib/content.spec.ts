@@ -96,9 +96,40 @@ Test Content`),
     flushMicrotasks();
   }));
 
+  it('should return ContentFile object when a custom param with prefix is provided', fakeAsync(() => {
+    const customParam = { prefix: 'customPrefix', param: 'slug' };
+    const routeParams = { slug: 'custom-prefix-slug-test' };
+    const contentFiles = {
+      '/src/content/dont-match.md': () =>
+        Promise.resolve(`---
+slug: 'dont-match'
+---
+Dont Match'`),
+      '/src/content/customPrefix/custom-prefix-slug-test.md': () =>
+        Promise.resolve(`---
+slug: 'custom-prefix-slug-test'
+---
+Test Content`),
+    };
+    const { injectContent } = setup({
+      customParam,
+      routeParams,
+      contentFiles,
+    });
+    injectContent().subscribe((c) => {
+      expect(c.content).toMatch('Test Content');
+      expect(c.attributes).toEqual({ slug: 'custom-prefix-slug-test' });
+      expect(c.filename).toEqual(
+        '/src/content/customPrefix/custom-prefix-slug-test.md'
+      );
+      expect(c.slug).toEqual('custom-prefix-slug-test');
+    });
+    flushMicrotasks();
+  }));
+
   function setup(
     args: Partial<{
-      customParam: string;
+      customParam: string | { prefix: string; param: string };
       customFallback: string;
       routeParams: { [key: string]: any };
       contentFiles: Record<string, () => Promise<string>>;
