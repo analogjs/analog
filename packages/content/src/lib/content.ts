@@ -11,7 +11,7 @@ import { waitFor } from './utils/zone-wait-for';
 import { parseRawContentFile } from './parse-raw-content-file';
 
 /**
- * Retrieves the static content using the provided param
+ * Retrieves the static content using the provided param and/or prefix.
  *
  * @param param route parameter (default: 'slug')
  * @param fallback fallback text if content file is not found (default: 'No Content Found')
@@ -19,15 +19,17 @@ import { parseRawContentFile } from './parse-raw-content-file';
 export function injectContent<
   Attributes extends Record<string, any> = Record<string, any>
 >(
-  param = 'slug',
+  param: string | { param: string; subdirectory: string } = 'slug',
   fallback = 'No Content Found'
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   const route = inject(ActivatedRoute);
   const contentFiles = inject(CONTENT_FILES_TOKEN);
+  const prefix = typeof param === 'string' ? '' : `${param.subdirectory}/`;
+  const paramKey = typeof param === 'string' ? param : param.param;
   return route.paramMap.pipe(
-    map((params) => params.get(param)),
+    map((params) => params.get(paramKey)),
     switchMap((slug) => {
-      const filename = `/src/content/${slug}.md`;
+      const filename = `/src/content/${prefix}${slug}.md`;
       const contentFile = contentFiles[filename];
 
       if (!contentFile) {
