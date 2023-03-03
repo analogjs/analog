@@ -299,6 +299,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "BaronVonPerko",
+      "name": "Chris Perko",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5384791?v=4",
+      "profile": "http://perko.dev",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
