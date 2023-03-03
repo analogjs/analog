@@ -201,10 +201,15 @@ The `injectContent()` function can also be used with an object that contains the
 This can be useful if, for instance, you have blog posts, as well as a portfolio of project markdown files to be used on the site.
 
 ```ts
-src / content / posts / my - first - post.md;
-my - second - post.md;
-projects / my - first - project.md;
-my - second - project.md;
+src/
+└── app/
+    └── routes/
+        ├── posts/
+        │   ├── my-first-post.md
+        │   └── my-second-post.md
+        └── projects/
+            ├── my-first-project.md
+            └── my-second-project.md
 ```
 
 ```ts
