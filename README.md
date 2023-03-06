@@ -1,7 +1,7 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-32-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-33-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
@@ -107,6 +107,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/AdditionAddict"><img src="https://avatars.githubusercontent.com/u/48436581?v=4?s=100" width="100px;" alt="AdditionAddict"/><br /><sub><b>AdditionAddict</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=AdditionAddict" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=AdditionAddict" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/sander-t-0a461458"><img src="https://avatars.githubusercontent.com/u/17591696?v=4?s=100" width="100px;" alt="Sander"/><br /><sub><b>Sander</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=sand4rt" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://perko.dev"><img src="https://avatars.githubusercontent.com/u/5384791?v=4?s=100" width="100px;" alt="Chris Perko"/><br /><sub><b>Chris Perko</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=BaronVonPerko" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=BaronVonPerko" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://christianlydemann.com"><img src="https://avatars.githubusercontent.com/u/9210691?v=4?s=100" width="100px;" alt="Christian Lüdemann"/><br /><sub><b>Christian Lüdemann</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=lydemann" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
