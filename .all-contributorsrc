@@ -309,6 +309,15 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "lydemann",
+      "name": "Christian Lüdemann",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9210691?v=4",
+      "profile": "https://christianlydemann.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
