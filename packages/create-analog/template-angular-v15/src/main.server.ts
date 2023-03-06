@@ -5,6 +5,7 @@ import { provideFileRouter } from '@analogjs/router';
 import { withEnabledBlockingInitialNavigation } from '@angular/router';
 
 import { AppComponent } from './app/app.component';
+import { mainProviders } from './main.providers';
 
 if (import.meta.env.PROD) {
   enableProdMode();
@@ -15,7 +16,7 @@ export default async function render(url: string, document: string) {
     appId: 'analog-app',
     document,
     url,
-    providers: [provideFileRouter(withEnabledBlockingInitialNavigation())],
+    providers: [provideFileRouter(withEnabledBlockingInitialNavigation()), ...mainProviders],
   });
 
   return html;
