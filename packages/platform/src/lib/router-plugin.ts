@@ -27,7 +27,10 @@ export function routerPlugin(): Plugin[] {
       name: 'analogjs-router-invalidate-routes',
       configureServer(server) {
         function invalidateRoutes(path: string) {
-          if (path.includes(normalizePath(`/app/routes/`))) {
+          if (
+            path.includes(normalizePath(`/app/routes/`)) ||
+            path.includes(normalizePath(`/app/pages/`))
+          ) {
             server.moduleGraph.fileToModulesMap.forEach((mods) => {
               mods.forEach((mod) => {
                 if (mod.id?.includes('@analogjs_router.js')) {
