@@ -165,7 +165,7 @@ Analog provides a `MarkdownComponent` and `injectContent()` function for renderi
 The `injectContent()` function uses the `slug` route parameter by default to get the content file from the `src/content` folder.
 
 ```ts
-// /src/app/routes/blog/posts.[slug].ts
+// /src/app/routes/blog/posts.[slug].page.ts
 import { injectContent, MarkdownComponent } from '@analogjs/content';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { Component } from '@angular/core';
@@ -213,7 +213,7 @@ src/
 ```
 
 ```ts
-// /src/app/routes/project.[slug].ts
+// /src/app/routes/project.[slug].page.ts
 import { injectContent, MarkdownComponent } from '@analogjs/content';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { Component } from '@angular/core';

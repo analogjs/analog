@@ -4,7 +4,7 @@ Analog supports filesystem-based routing on top of the Angular Router.
 
 ## Defining Routes
 
-Routes are defined using folders and files in the `src/app/routes` folder.
+Routes are defined using folders and files in the `src/app/pages` folder. Only files ending with `.page.ts` are collected and used to build the set of routes.
 
 > Route components **must** be defined as the default export.
 
@@ -22,7 +22,7 @@ These routes can be combined in different ways to build to URLs for navigation.
 
 Index routes are defined by using the filename as the route path enclosed in parenthesis.
 
-The example route below in `src/app/routes/(home).ts` defines an `/` route.
+The example route below in `src/app/pages/(home).page.ts` defines an `/` route.
 
 ```ts
 import { Component } from '@angular/core';
@@ -39,7 +39,7 @@ export default class HomePageComponent {}
 
 Static routes are defined by using the filename as the route path.
 
-The example route below in `src/app/routes/about.ts` defines an `/about` route.
+The example route below in `src/app/pages/about.page.ts` defines an `/about` route.
 
 ```ts
 import { Component } from '@angular/core';
@@ -62,12 +62,12 @@ Dynamic routes are defined by using the filename as the route path enclosed in s
 
 The parameter for the route is extracted from the route path.
 
-The example route below in `src/app/routes/products.[productId].ts` defines a `/products/:productId` route.
+The example route below in `src/app/pages/products.[productId].page.ts` defines a `/products/:productId` route.
 
 ```ts
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AsyncPipe, JsonPipe } from '@angular/common';
-import { injectActivatedRoute } from '@analogjs/router';
+import { ActivatedRoute } from '@analogjs/router';
 import { map } from 'rxjs';
 
 @Component({
@@ -81,7 +81,7 @@ import { map } from 'rxjs';
   `,
 })
 export default class ProductDetailsPageComponent {
-  private readonly route = injectActivatedRoute();
+  private readonly route = inject(ActivatedRoute);
 
   readonly productId$ = this.route.paramMap.pipe(
     map((params) => params.get('productId'))
@@ -110,7 +110,7 @@ This defines two routes with a shared layout:
 - `/products`
 - `/products/:productId`
 
-The parent `src/app/routes/products.ts` file contains the parent page with a router outlet.
+The parent `src/app/pages/products.page.ts` file contains the parent page with a router outlet.
 
 ```ts
 import { Component } from '@angular/core';
@@ -129,7 +129,7 @@ import { RouterOutlet } from '@angular/router';
 export default class ProductsComponent {}
 ```
 
-The nested `src/app/routes/products/(products-list).ts` file contains the `/products` list page.
+The nested `src/app/pages/products/(products-list).page.ts` file contains the `/products` list page.
 
 ```ts
 import { Component } from '@angular/core';
@@ -144,12 +144,12 @@ import { RouterOutlet } from '@angular/router';
 export default class ProductsListComponent {}
 ```
 
-The nested `src/app/routes/products/[productId].ts` file contains the `/products/:productId` details page.
+The nested `src/app/pages/products/[productId].page.ts` file contains the `/products/:productId` details page.
 
 ```ts
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AsyncPipe, JsonPipe } from '@angular/common';
-import { injectActivatedRoute } from '@analogjs/router';
+import { ActivatedRoute } from '@analogjs/router';
 import { map } from 'rxjs';
 
 @Component({
@@ -163,7 +163,7 @@ import { map } from 'rxjs';
   `,
 })
 export default class ProductDetailsPageComponent {
-  private readonly route = injectActivatedRoute();
+  private readonly route = inject(ActivatedRoute);
 
   readonly productId$ = this.route.paramMap.pipe(
     map((params) => params.get('productId'))
@@ -175,7 +175,7 @@ export default class ProductDetailsPageComponent {
 
 Catch-all routes are defined by using the filename as the route path prefixed with 3 periods enclosed in square brackets.
 
-The example route below in `src/app/routes/[...page-not-found].ts` defines a wildcard `**` route. This route is usually for 404 pages.
+The example route below in `src/app/pages/[...page-not-found].page.ts` defines a wildcard `**` route. This route is usually for 404 pages.
 
 ```ts
 import { Component } from '@angular/core';
@@ -226,7 +226,7 @@ export default class AboutPageComponent {
 
 ### Redirect to a default route
 
-To redirect to the route `/home` from `/`, define `redirectTo` and `pathMatch` inside `src/app/routes/index.ts`:
+To redirect to the route `/home` from `/`, define `redirectTo` and `pathMatch` inside `src/app/pages/index.page.ts`:
 
 ```ts
 import { RouteMeta } from '@analogjs/router';
