@@ -1,6 +1,5 @@
- /**
-  * Put common proivders shared with client and server side here.
-  */
+/**
+ * Common providers shared with client and server-side.
+ */
 
- export const mainProviders = [];
- 
+export const mainProviders = [];
