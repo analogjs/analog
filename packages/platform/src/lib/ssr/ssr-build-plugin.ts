@@ -23,7 +23,10 @@ export function ssrBuildPlugin(): Plugin {
       // Convert usage of xhr2 default import
       if (code.includes('new xhr2.')) {
         return {
-          code: code.replace('new xhr2.', 'new xhr2.default.'),
+          code: code.replace(
+            'new xhr2.XMLHttpRequest',
+            'new xhr2.default.XMLHttpRequest'
+          ),
         };
       }
 
