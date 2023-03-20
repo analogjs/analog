@@ -30,18 +30,18 @@
     "@analogjs/vite-plugin-angular": "latest"
   },
   "peerDependencies": {
-    "@angular-devkit/build-angular": "^15.0.0",
-    "@angular/animations": "^15.0.0",
-    "@angular/common": "^15.0.0",
-    "@angular/compiler-cli": "^15.0.0",
-    "@angular/compiler": "^15.0.0",
-    "@angular/core": "^15.0.0",
-    "@angular/language-service": "^15.0.0",
-    "@angular/platform-browser": "^15.0.0",
-    "@angular/platform-browser-dynamic": "^15.0.0",
-    "@angular/platform-server": "^15.0.0",
+    "@angular-devkit/build-angular": "^15.0.0 || ^16.0.0-next.0",
+    "@angular/animations": "^15.0.0 || ^16.0.0-next.0",
+    "@angular/common": "^15.0.0 || ^16.0.0-next.0",
+    "@angular/compiler-cli": "^15.0.0 || ^16.0.0-next.0",
+    "@angular/compiler": "^15.0.0 || ^16.0.0-next.0",
+    "@angular/core": "^15.0.0 || ^16.0.0-next.0",
+    "@angular/language-service": "^15.0.0 || ^16.0.0-next.0",
+    "@angular/platform-browser": "^15.0.0 || ^16.0.0-next.0",
+    "@angular/platform-browser-dynamic": "^15.0.0 || ^16.0.0-next.0",
+    "@angular/platform-server": "^15.0.0 || ^16.0.0-next.0",
     "rxjs": "^7.5.6",
-    "zone.js": "~0.11.4",
+    "zone.js": "^0.11.0",
     "tslib": "^2.4.0"
   }
 }
