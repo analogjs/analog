@@ -30,8 +30,8 @@ export default defineConfig(({ mode }) => {
         nitro: {
           rootDir: 'apps/analog-app',
           output: {
-            dir: '../../../dist/apps/analog-app/server',
-            publicDir: '../../../dist/apps/analog-app/server/public',
+            dir: '../../../dist/apps/analog-app/analog',
+            publicDir: '../../../dist/apps/analog-app/analog/public',
           },
           publicAssets: [{ dir: `../../../dist/apps/analog-app/client` }],
           serverAssets: [

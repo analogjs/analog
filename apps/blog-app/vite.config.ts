@@ -20,6 +20,7 @@ export default defineConfig(() => {
           routes: async () => {
             return [
               '/',
+              '/blog',
               '/about',
               '/blog/2022-12-27-my-first-post',
               '/blog/2022-12-31-my-second-post',
@@ -32,8 +33,8 @@ export default defineConfig(() => {
         nitro: {
           rootDir: 'apps/blog-app',
           output: {
-            dir: '../../../dist/apps/blog-app/server',
-            publicDir: '../../../dist/apps/blog-app/server/public',
+            dir: '../../../dist/apps/blog-app/analog',
+            publicDir: '../../../dist/apps/blog-app/analog/public',
           },
           publicAssets: [{ dir: `../../../dist/apps/blog-app/client` }],
           serverAssets: [
