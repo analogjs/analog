@@ -20,8 +20,8 @@ export function viteNitroPlugin(
     srcDir: normalizePath(`${rootDir}/src`),
     scanDirs: [normalizePath(`${rootDir}/src/server`)],
     output: {
-      dir: '../dist/server',
-      publicDir: '../dist/server/public',
+      dir: '../dist/analog',
+      publicDir: '../dist/analog/public',
       ...nitroOptions?.output,
     },
     buildDir: './dist/.nitro',
