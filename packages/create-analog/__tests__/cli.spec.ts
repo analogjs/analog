@@ -26,8 +26,8 @@ const createNonEmptyDir = () => {
   writeFileSync(pkgJson, '{ "foo": "bar" }');
 };
 
-// Angular 14 starter template
-let templateFiles = readdirSync(join(CLI_PATH, 'template-angular-v14'));
+// Angular 15 starter template
+let templateFiles = readdirSync(join(CLI_PATH, 'template-angular-v15'));
 templateFiles.push('.git');
 // _gitignore is renamed to .gitignore
 templateFiles = templateFiles
@@ -78,7 +78,7 @@ test('asks to overwrite non-empty current directory', () => {
 });
 
 test('successfully scaffolds a project based on angular starter template', () => {
-  const { stdout } = run([projectName, '--template', 'angular-v14'], {
+  const { stdout } = run([projectName, '--template', 'angular-v15'], {
     cwd: __dirname,
   });
   const generatedFiles = readdirSync(genPath).sort();
@@ -89,7 +89,7 @@ test('successfully scaffolds a project based on angular starter template', () =>
 });
 
 test('works with the -t alias', () => {
-  const { stdout } = run([projectName, '-t', 'angular-v14'], {
+  const { stdout } = run([projectName, '-t', 'angular-v15'], {
     cwd: __dirname,
   });
   const generatedFiles = readdirSync(genPath).sort();
