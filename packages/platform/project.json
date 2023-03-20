@@ -35,6 +35,7 @@
       }
     },
     "test": {
+      "dependsOn": ["^build"],
       "executor": "@nrwl/vite:test"
     }
   },

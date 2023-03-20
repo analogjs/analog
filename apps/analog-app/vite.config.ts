@@ -17,7 +17,6 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       analog({
-        ssr: true,
         ssrBuildDir: '../../dist/apps/analog-app/ssr',
         entryServer: 'apps/analog-app/src/main.server.ts',
         vite: {
