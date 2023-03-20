@@ -40,8 +40,8 @@ pnpm create analog my-angular-app --template angular-v15
 
 Currently supported template presets include:
 
+- `angular-v16-prerelease`
 - `angular-v15`
-- `angular-v14`
 
 You can use `.` for the project name to scaffold in the current directory.
 
