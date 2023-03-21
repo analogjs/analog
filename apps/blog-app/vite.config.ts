@@ -12,7 +12,6 @@ export default defineConfig(() => {
     },
     plugins: [
       analog({
-        ssr: true,
         ssrBuildDir: '../../dist/apps/blog-app/ssr',
         entryServer: 'apps/blog-app/src/main.server.ts',
         static: true,

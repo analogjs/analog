@@ -8,12 +8,20 @@ import { ssrBuildPlugin } from './ssr/ssr-build-plugin';
 import { contentPlugin } from './content-plugin';
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
+  const defaultOptions: Options = {
+    ssr: true,
+  };
+  const mergedOptions = {
+    ...defaultOptions,
+    ...opts,
+  };
+
   return [
-    viteNitroPlugin(opts, opts?.nitro),
-    (opts.ssr ? ssrBuildPlugin() : false) as Plugin,
+    viteNitroPlugin(mergedOptions, mergedOptions?.nitro),
+    (mergedOptions.ssr ? ssrBuildPlugin() : false) as Plugin,
     ...routerPlugin(),
     ...contentPlugin(),
-    (opts.ssr
+    (mergedOptions.ssr
       ? devServerPlugin({ entryServer: opts.entryServer })
       : false) as Plugin,
     ...angular(opts?.vite),
