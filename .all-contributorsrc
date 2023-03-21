@@ -318,6 +318,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "yassernasc",
+      "name": "Yasser",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9917969?v=4",
+      "profile": "http://yasser.page",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
