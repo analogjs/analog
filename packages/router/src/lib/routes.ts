@@ -48,7 +48,9 @@ export function getRoutes(
         .filter(Boolean);
 
       segments.reduce((parent, segment, index) => {
-        const path = segment.replace(/index|^\(.*?\)$/g, '').replace('.', '/');
+        const path = segment
+          .replace(/index|^\(.*?\)$/g, '')
+          .replace(/\./g, '/');
         const isIndex = !path;
         const isCatchall = path === '**';
         const pathMatch = isIndex ? 'full' : 'prefix';
