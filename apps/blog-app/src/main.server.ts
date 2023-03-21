@@ -6,20 +6,25 @@ import { provideFileRouter } from '@analogjs/router';
 import { withEnabledBlockingInitialNavigation } from '@angular/router';
 
 import { AppComponent } from './app/app.component';
+import { bootstrapApplication } from '@angular/platform-browser';
 
 if (import.meta.env.PROD) {
   enableProdMode();
 }
 
 export default async function render(url: string, document: string) {
-  const html = await renderApplication(AppComponent, {
-    appId: 'blog-app',
+  const bootstrap = () =>
+    bootstrapApplication(AppComponent, {
+      providers: [
+        provideFileRouter(withEnabledBlockingInitialNavigation()),
+        provideContent(withMarkdownRenderer()),
+      ],
+    });
+
+  const html = await renderApplication(bootstrap, {
+    // appId: 'blog-app',
     document,
     url,
-    providers: [
-      provideFileRouter(withEnabledBlockingInitialNavigation()),
-      provideContent(withMarkdownRenderer()),
-    ],
   });
 
   return html;
