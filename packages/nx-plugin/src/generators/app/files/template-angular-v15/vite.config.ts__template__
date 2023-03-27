@@ -1,0 +1,64 @@
+/// <reference types="vitest" />
+
+import analog from '@analogjs/platform';
+import { visualizer } from 'rollup-plugin-visualizer';
+import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
+import tsConfigPaths from 'vite-tsconfig-paths';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => {
+  return {
+    publicDir: 'src/public',
+    optimizeDeps: {
+      include: ['@angular/common', '@angular/forms'],
+    },
+    build: {
+      target: ['es2020'],
+    },
+    plugins: [
+      analog({
+        ssrBuildDir: '../../dist/apps/<%= projectName %>/ssr',
+        entryServer: 'apps/<%= projectName %>/src/main.server.ts',
+        vite: {
+          inlineStylesExtension: 'css',
+          tsconfig:
+            mode === 'test'
+              ? 'apps/<%= projectName %>/tsconfig.spec.json'
+              : 'apps/<%= projectName %>/tsconfig.app.json',
+        },
+        nitro: {
+          rootDir: 'apps/<%= projectName %>',
+          output: {
+            dir: '../../../dist/apps/<%= projectName %>/analog',
+            publicDir: '../../../dist/apps/<%= projectName %>/analog/public',
+          },
+          publicAssets: [{ dir: `../../../dist/apps/<%= projectName %>/client` }],
+          serverAssets: [
+            { baseName: 'public', dir: `./dist/apps/<%= projectName %>/client` },
+          ],
+          buildDir: '../../dist/apps/<%= projectName %>/.nitro',
+          prerender: {
+            routes: ['/'],
+          },
+        },
+      }),
+      tsConfigPaths({
+        root: '../../',
+      }),
+      visualizer() as Plugin,
+      splitVendorChunkPlugin(),
+    ],
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: ['src/test-setup.ts'],
+      include: ['**/*.spec.ts'],
+      cache: {
+        dir: `../../node_modules/.vitest`,
+      },
+    },
+    define: {
+      'import.meta.vitest': mode !== 'production',
+    },
+  };
+});

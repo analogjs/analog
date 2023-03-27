@@ -1,0 +1,19 @@
+{
+  "dependencies": {
+    "@analogjs/content": "latest",
+    "@analogjs/router": "latest",
+    "@angular/platform-server": "^16.0.0-next.0",
+    "front-matter": "^4.0.2",
+    "marked": "^4.2.12",
+    "prismjs": "^1.29.0"
+  },
+  "devDependencies": {
+    "@analogjs/platform": "latest",
+    "@nrwl/vite": "^15.7.0",
+    "jsdom": "^20.0.0",
+    "typescript": "~5.0.2",
+    "vite": "^4.0.3",
+    "vite-tsconfig-paths": "^4.0.2",
+    "vitest": "^0.25.8"
+  }
+}
