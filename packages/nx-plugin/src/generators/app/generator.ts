@@ -1,6 +1,5 @@
 import {
   addDependenciesToPackageJson,
-  addProjectConfiguration,
   formatFiles,
   generateFiles,
   getWorkspaceLayout,
@@ -14,7 +13,7 @@ import { AnalogNxApplicationGeneratorOptions } from './schema';
 import { lt, major } from 'semver';
 import { getInstalledAngularVersion } from '../../utils/version-utils';
 import { runTasksInSerial } from '@nrwl/workspace/src/utilities/run-tasks-in-serial';
-import { createProject } from './lib/create-project';
+import { addAnalogProjectConfig } from './lib/add-analog-project-config';
 
 export interface NormalizedOptions extends AnalogNxApplicationGeneratorOptions {
   projectName: string;
@@ -87,7 +86,12 @@ export default async function (
     tree,
     '16.0.0-next.0'
   );
+
   const installedMajorAngularVersion = major(installedAngularVersion);
+
+  const normalizedOptions = normalizeOptions(tree, options);
+
+  const { projectRoot, projectName, parsedTags, name } = normalizedOptions;
 
   if (lt(installedAngularVersion, '15.0.0')) {
     throw new Error(
@@ -95,11 +99,9 @@ export default async function (
     );
   }
 
-  const normalizedOptions = normalizeOptions(tree, options);
-
   await addDependencies(tree, installedMajorAngularVersion);
 
-  createProject(tree, normalizedOptions);
+  addAnalogProjectConfig(tree, projectRoot, projectName, parsedTags, name);
 
   addFiles(tree, normalizedOptions, installedMajorAngularVersion);
 
