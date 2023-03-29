@@ -8,5 +8,12 @@
       "schema": "./src/generators/app/schema.json",
       "description": "Generates an AnalogJs application"
     }
+  },
+  "schematics": {
+    "app": {
+      "factory": "./src/generators/app/generator",
+      "schema": "./src/generators/app/schema.json",
+      "description": "Add Angular Three with proper packages and config"
+    }
   }
 }

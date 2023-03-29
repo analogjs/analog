@@ -3,5 +3,5 @@
   "version": "0.0.1-alpha.0",
   "main": "src/index.js",
   "generators": "./generators.json",
-  "executors": "./executors.json"
+  "schematics": "./generators.json"
 }

@@ -2,20 +2,6 @@
 
 Official plugin to add AnalogJs to your Nx monorepo.
 
-## Install
-
-This makes the official AnalogJs plugin available in your workspace.
-
-```sh
-npm install @analogjs/nx
-```
-
-or
-
-```sh
-yarn add @analogjs/nx
-```
-
 ## Supported Generators
 
 ### app
