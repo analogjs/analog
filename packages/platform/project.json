@@ -4,7 +4,7 @@
   "sourceRoot": "packages/platform/src",
   "projectType": "library",
   "targets": {
-    "build": {
+    "build-package": {
       "executor": "@nrwl/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
@@ -27,10 +27,13 @@
       },
       "defaultConfiguration": "production"
     },
-    "package": {
+    "build": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": ["yarn nx build platform", "yarn nx build nx-plugin"],
+        "commands": [
+          "yarn nx build-package platform",
+          "yarn nx build nx-plugin"
+        ],
         "parallel": false
       }
     },
@@ -46,5 +49,6 @@
       "executor": "@nrwl/vite:test"
     }
   },
-  "tags": []
+  "tags": [],
+  "implicitDependencies": ["vite-plugin-angular"]
 }

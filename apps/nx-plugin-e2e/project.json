@@ -7,7 +7,7 @@
     "e2e": {
       "executor": "@nrwl/nx-plugin:e2e",
       "options": {
-        "target": "platform:package",
+        "target": "platform:build",
         "jestConfig": "apps/nx-plugin-e2e/jest.config.ts",
         "coverageDirectory": "../../coverage/apps/nx-plugin-e2e"
       }
