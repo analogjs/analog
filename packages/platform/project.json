@@ -27,6 +27,13 @@
       },
       "defaultConfiguration": "production"
     },
+    "package": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["yarn nx build platform", "yarn nx build nx-plugin"],
+        "parallel": false
+      }
+    },
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "outputs": ["{options.outputFile}"],

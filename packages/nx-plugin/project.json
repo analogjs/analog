@@ -8,7 +8,7 @@
       "executor": "@nrwl/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/packages/nx-plugin",
+        "outputPath": "node_modules/@analogjs/platform/src/lib/nx-plugin",
         "main": "packages/nx-plugin/src/index.ts",
         "tsConfig": "packages/nx-plugin/tsconfig.lib.json",
         "assets": [
