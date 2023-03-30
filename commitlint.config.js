@@ -13,6 +13,7 @@ module.exports = {
         'router',
         'platform',
         'content',
+        'nx-plugin',
       ],
     ],
   },
