@@ -1,15 +1,30 @@
 {
+  "name": "analog-app",
   "projectType": "application",
   "sourceRoot": "apps/analog-app/src",
   "prefix": "analogjs",
   "targets": {
     "build": {
-      "executor": "nx:run-commands",
-      "outputs": ["{options.outputPath}"],
+      "executor": "@nrwl/vite:build",
+      "outputs": [
+        "{options.outputPath}",
+        "dist/apps/analog-app/.nitro",
+        "dist/apps/analog-app/ssr",
+        "dist/apps/analog-app/analog"
+      ],
       "options": {
-        "outputPath": "dist/apps/analog-app",
-        "command": "vite build",
-        "cwd": "apps/analog-app"
+        "configFile": "apps/analog-app/vite.config.ts",
+        "outputPath": "dist/apps/analog-app/client"
+      },
+      "defaultConfiguration": "production",
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "sourcemap": false,
+          "mode": "production"
+        }
       }
     },
     "build-ng": {
@@ -61,11 +76,20 @@
       "defaultConfiguration": "production"
     },
     "serve": {
-      "executor": "nx:run-commands",
+      "executor": "@nrwl/vite:dev-server",
+      "defaultConfiguration": "development",
       "options": {
-        "color": true,
-        "cwd": "apps/analog-app",
-        "command": "vite --strict-port"
+        "buildTarget": "analog-app:build",
+        "port": 3000
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "analog-app:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "analog-app:build:production"
+        }
       }
     },
     "serve-ng": {
@@ -96,11 +120,10 @@
       }
     },
     "test": {
-      "executor": "nx:run-commands",
-      "outputs": ["{options.outputPath}"],
+      "executor": "@nrwl/vite:test",
+      "outputs": ["apps/analog-app/coverage"],
       "options": {
-        "command": "vitest",
-        "cwd": "apps/analog-app"
+        "config": "vite.config.ts"
       }
     }
   },

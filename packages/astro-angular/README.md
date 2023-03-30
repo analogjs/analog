@@ -46,7 +46,8 @@ Create a `tsconfig.app.json` in the root of the project.
     "noEmit": false,
     "target": "es2020",
     "module": "es2020",
-    "lib": ["es2020", "dom"]
+    "lib": ["es2020", "dom"],
+    "skipLibCheck": true
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
@@ -55,7 +56,7 @@ Create a `tsconfig.app.json` in the root of the project.
     "strictTemplates": true
   },
   "files": [],
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }
 ```
 
@@ -93,13 +94,36 @@ export default defineConfig({
 
 Go to [Defining A Component](#defining-a-component)
 
+## Configuration
+
+### Configure Vite Angular Plugin
+
+Provide an option object to configure the `@analogjs/vite-plugin-angular` powering this plugin.
+
+```js
+import { defineConfig } from 'astro/config';
+import angular from '@analogjs/astro-angular';
+
+export default defineConfig({
+  integrations: [
+    angular({
+      vite: {
+        tsconfig: 'path/to/tsconfig.app.json',
+        workspaceRoot: 'rootDir',
+        inlineStylesExtension: 'scss|sass|less'
+      },
+    }),
+  ],
+});
+```
+
 ## Defining A Component
 
 The Astro Angular integration **only** supports rendering standalone components:
 
 ```ts
 import { NgIf } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-hello',
@@ -128,7 +152,7 @@ Add the Angular component to the Astro component template. This only renders the
 
 ```ts
 ---
-import { HelloComponent } from '../components/hello.component.ts';
+import { HelloComponent } from '../components/hello.component';
 
 const helpText = "Helping binding";
 ---
@@ -138,17 +162,65 @@ const helpText = "Helping binding";
 <HelloComponent helpText={helpText} />
 ```
 
-To hydrate the component on the client, use one of the Astro directives:
+To hydrate the component on the client, use one of the Astro [client directives](https://docs.astro.build/en/reference/directives-reference/#client-directives):
 
 ```ts
 ---
-import { HelloComponent } from '../components/hello.component.ts';
+import { HelloComponent } from '../components/hello.component';
 ---
 
 <HelloComponent client:visible />
 ```
 
 Find more information about [Client Directives](https://docs.astro.build/en/reference/directives-reference/#client-directives) in the Astro documentation.
+
+## Using Components in MDX pages
+
+To use components with MDX pages, you must install and configure MDX support by following the Astro integration of [@astrojs/mdx](https://docs.astro.build/en/guides/integrations-guide/mdx/). Your `astro.config.mjs` should now include the `@astrojs/mdx` integration.
+
+```js
+import { defineConfig } from 'astro/config';
+import mdx from '@astrojs/mdx';
+import angular from '@analogjs/astro-angular';
+
+export default defineConfig({
+  integrations: [mdx(), angular()],
+});
+```
+
+Create an `.mdx` file inside the `src/pages` directory and add the Angular component import below the frontmatter.
+
+```md
+---
+layout: "../../layouts/BlogPost.astro"
+title: "Using Angular in MDX"
+description: "Lorem ipsum dolor sit amet"
+pubDate: "Sep 22 2022"
+---
+
+import { HelloComponent } from "../../components/hello.component.ts";
+
+<HelloComponent />
+<HelloComponent helpText="Helping" />
+```
+
+To hydrate the component on the client, use one of the Astro [client directives](https://docs.astro.build/en/reference/directives-reference/#client-directives):
+
+```md
+---
+layout: "../../layouts/BlogPost.astro"
+title: "Using Angular in MDX"
+description: "Lorem ipsum dolor sit amet"
+pubDate: "Sep 22 2022"
+---
+
+import { HelloComponent } from "../../components/hello.component.ts";
+
+<HelloComponent client:load />
+<HelloComponent client:visible helpText="Helping" />
+```
+
+> Important: In `.mdx` files the component import must end with the `.ts` suffix. Otherwise the dynamic import of the component will fail and the component won't be hydrated.
 
 ## Current Limitations
 

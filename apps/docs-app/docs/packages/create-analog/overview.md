@@ -42,20 +42,21 @@ pnpm create analog
 
 | Preset        | Description                     |
 | ------------- | ------------------------------- |
+| `angular-v15` | Angular version 15 application. |
 | `angular-v14` | Angular version 14 application. |
 
 ### Example
 
-To scaffold an Angular version 14 application in the `my-angular-app` directory, run:
+To scaffold an Angular version 15 application in the `my-angular-app` directory, run:
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
 ```shell
 # npm >=7.0
-npm create analog@latest my-angular-app -- --template angular-v14
+npm create analog@latest my-angular-app -- --template angular-v15
 # npm 6.x
-npm create analog@latest my-angular-app --template angular-v14
+npm create analog@latest my-angular-app --template angular-v15
 ```
 
   </TabItem>
@@ -63,7 +64,7 @@ npm create analog@latest my-angular-app --template angular-v14
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn create analog my-angular-app --template angular-v14
+yarn create analog my-angular-app --template angular-v15
 ```
 
   </TabItem>
@@ -71,8 +72,12 @@ yarn create analog my-angular-app --template angular-v14
   <TabItem value="pnpm">
 
 ```shell
-pnpm create analog my-angular-app --template angular-v14
+pnpm create analog my-angular-app --template angular-v15
 ```
 
   </TabItem>
 </Tabs>
+
+### Using with Tailwind
+
+Analog is powered by Vite, please follow the [Tailwind guidelines](https://tailwindcss.com/docs/guides/vite) to use it in your project!

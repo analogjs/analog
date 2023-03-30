@@ -1,0 +1,43 @@
+{
+  "name": "platform",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/platform/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "node_modules/@analogjs/platform",
+        "main": "packages/platform/src/index.ts",
+        "tsConfig": "packages/platform/tsconfig.lib.json",
+        "assets": [
+          "packages/platform/*.md",
+          "packages/platform/src/lib/runtime/*.js"
+        ],
+        "updateBuildableProjectDepsInPackageJson": false
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/platform/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/platform/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/platform/**/*.ts"]
+      }
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "executor": "@nrwl/vite:test"
+    }
+  },
+  "tags": []
+}

@@ -1,0 +1,36 @@
+import { normalizePath, Plugin } from 'vite';
+
+export function ssrBuildPlugin(): Plugin {
+  return {
+    name: 'analogjs-ssr-build-plugin',
+    config(_config) {
+      return {
+        resolve: {
+          alias: {
+            'zone.js/node': 'zone.js/bundles/zone-node.umd.js',
+          },
+        },
+      };
+    },
+    transform(code, id) {
+      // Remove usage of `with()` in sloppy.js file
+      if (id.includes(normalizePath('domino/lib/sloppy.js'))) {
+        return {
+          code: code.replace(/with\(/gi, 'if('),
+        };
+      }
+
+      // Convert usage of xhr2 default import
+      if (code.includes('new xhr2.')) {
+        return {
+          code: code.replace(
+            'new xhr2.XMLHttpRequest',
+            'new xhr2.default.XMLHttpRequest'
+          ),
+        };
+      }
+
+      return;
+    },
+  };
+}

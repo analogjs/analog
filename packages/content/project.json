@@ -1,0 +1,42 @@
+{
+  "name": "content",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/content/src",
+  "prefix": "analogjs",
+  "implicitDependencies": ["vite-plugin-angular"],
+  "targets": {
+    "build": {
+      "executor": "@nrwl/angular:package",
+      "outputs": ["node_modules/@analogjs/content"],
+      "options": {
+        "project": "packages/content/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": false
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/content/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/content/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/content/**/*.ts",
+          "packages/content/**/*.html"
+        ]
+      }
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "executor": "@nrwl/vite:test"
+    }
+  },
+  "tags": []
+}

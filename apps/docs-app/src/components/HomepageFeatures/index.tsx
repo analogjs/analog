@@ -19,22 +19,22 @@ const FeatureList: FeatureItem[] = [
     ),
   },
   {
-    title: 'Hybrid SSR/SSG support (upcoming features)',
+    title: 'Hybrid SSR/SSG support',
     Svg: require('@site/static/img/logos/angular-logo.svg').default,
     description: (
       <>
-        Analog will support both Server-Side Rendering (SSR) and Static Site
+        Analog supports both Server-Side Rendering (SSR) and Static Site
         Generation (SSG) of Angular applications.
       </>
     ),
   },
   {
-    title: 'File-based routing and API routes (upcoming features)',
+    title: 'File-based routing and API routes',
     Svg: require('@site/static/img/logos/analog-logo.svg').default,
     description: (
       <>
-        Analog will use file-based routing for server-side rendered Angular
-        applications. Analog will also support API (server) routes.
+        Analog uses file-based routing and supports API (server)
+        routes for Angular applications.
       </>
     ),
   },

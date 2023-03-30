@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import minimist from 'minimist';
 import prompts from 'prompts';
-import { red, reset, yellow } from 'kolorist';
+import { red, reset, yellow, green } from 'kolorist';
 import { execSync } from 'node:child_process';
 
 // Avoids autoconversion to number of the project name by defining that the args
@@ -20,9 +20,14 @@ const APPS = [
     color: yellow,
     variants: [
       {
-        name: 'angular-v14',
+        name: 'angular-v16-prerelease',
         display: 'TypeScript',
-        color: yellow,
+        color: green,
+      },
+      {
+        name: 'angular-v15',
+        display: 'TypeScript',
+        color: green,
       },
     ],
   },
@@ -185,7 +190,7 @@ async function init() {
   // Fail Silent
   // Can fail when user does not have global git credentials
   try {
-    execSync(`git commit -m "initial commit"`);
+    execSync(`cd ${targetDir} && git commit -m "initial commit"`);
   } catch {}
 
   console.log(`\nDone. Now run:\n`);

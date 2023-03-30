@@ -1,10 +1,25 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-13-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-35-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
+
+Similar to other meta-frameworks such as Next.JS, Nuxt, SvelteKit and others, Analog provides a similar experience, building on top of Angular.
+
+## Documentation
+
+Visit the docs at [https://analogjs.org](https://analogjs.org)
+
+## Features
+
+- Supports Vite/Vitest/Playwright
+- File-based routing
+- Support for using markdown as content routes
+- Support for API/server routes
+- Hybrid SSR/SSG support
+- Supports Angular CLI or Nx workspaces
 
 ## Getting Started
 
@@ -24,23 +39,7 @@ npm init analog
 
 Follow the prompts to scaffold the project and start the development server.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/analogjs/analog/tree/main/packages/create-analog/template-angular-v14?file=vite.config.ts&preset=node)
-
-## Goals
-
-- Vite-based
-  - Supports Vite/Vitest
-- Low config
-- File-based routing
-  - Support for api/server routes
-- Hybrid SSR/SSG support
-- Integrated CLI (future)
-
-## Packages
-
-- @analogjs/vite-plugin-angular: An Angular Plugin for building/testing applications with Vite
-- @analogjs/astro-angular: An integration for using Angular components in [Astro](https://astro.build)
-- create-analog: An initializer for scaffolding an Analog project.
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://analogjs.org/new)
 
 ## Supporting Analog
 
@@ -83,6 +82,37 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="http://www.prestonlamb.com"><img src="https://avatars.githubusercontent.com/u/2006222?v=4?s=100" width="100px;" alt="Preston Lamb"/><br /><sub><b>Preston Lamb</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=pjlamb12" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://iamandrewluca.com"><img src="https://avatars.githubusercontent.com/u/1881266?v=4?s=100" width="100px;" alt="Andrew Luca"/><br /><sub><b>Andrew Luca</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=iamandrewluca" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://nartc.me"><img src="https://avatars.githubusercontent.com/u/25516557?v=4?s=100" width="100px;" alt="Chau Tran"/><br /><sub><b>Chau Tran</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=nartc" title="Code">💻</a> <a href="#infra-nartc" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/analogjs/analog/pulls?q=is%3Apr+reviewed-by%3Anartc" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.prestonlamb.com"><img src="https://avatars.githubusercontent.com/u/2006222?v=4?s=100" width="100px;" alt="Preston Lamb"/><br /><sub><b>Preston Lamb</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=pjlamb12" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=pjlamb12" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://iamandrewluca.com"><img src="https://avatars.githubusercontent.com/u/1881266?v=4?s=100" width="100px;" alt="Andrew Luca"/><br /><sub><b>Andrew Luca</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=iamandrewluca" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://nartc.me"><img src="https://avatars.githubusercontent.com/u/25516557?v=4?s=100" width="100px;" alt="Chau Tran"/><br /><sub><b>Chau Tran</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=nartc" title="Code">💻</a> <a href="#infra-nartc" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/simitch1"><img src="https://avatars.githubusercontent.com/u/20285365?v=4?s=100" width="100px;" alt="Simone "/><br /><sub><b>Simone </b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=simitch1" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="http://kylerjohnson.dev"><img src="https://avatars.githubusercontent.com/u/75549176?v=4?s=100" width="100px;" alt="Kyler Johnson"/><br /><sub><b>Kyler Johnson</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=KylerJohnsonDev" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://marcjulian.de/?ref=github"><img src="https://avatars.githubusercontent.com/u/8985933?v=4?s=100" width="100px;" alt="Marc"/><br /><sub><b>Marc</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=marcjulian" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=marcjulian" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/himyjan"><img src="https://avatars.githubusercontent.com/u/51815522?v=4?s=100" width="100px;" alt="himyjan"/><br /><sub><b>himyjan</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=himyjan" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/TicTak21"><img src="https://avatars.githubusercontent.com/u/44474697?v=4?s=100" width="100px;" alt="Alex Kovalev"/><br /><sub><b>Alex Kovalev</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=TicTak21" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.linkedin.com/in/nuhmanpk"><img src="https://avatars.githubusercontent.com/u/62880706?v=4?s=100" width="100px;" alt="Nuhman Pk"/><br /><sub><b>Nuhman Pk</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=nuhmanpk" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/miluoshi"><img src="https://avatars.githubusercontent.com/u/1130547?v=4?s=100" width="100px;" alt="Miloš Lajtman"/><br /><sub><b>Miloš Lajtman</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=miluoshi" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.youtube.com/c/CodeShotsWithProfanis"><img src="https://avatars.githubusercontent.com/u/7045092?v=4?s=100" width="100px;" alt="profanis"/><br /><sub><b>profanis</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=profanis" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/hrmcdonald"><img src="https://avatars.githubusercontent.com/u/39349270?v=4?s=100" width="100px;" alt="Reece McDonald"/><br /><sub><b>Reece McDonald</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=hrmcdonald" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://ilteoood.xyz/"><img src="https://avatars.githubusercontent.com/u/6383527?v=4?s=100" width="100px;" alt="Matteo Pietro Dazzi"/><br /><sub><b>Matteo Pietro Dazzi</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ilteoood" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://lukasmatta.com"><img src="https://avatars.githubusercontent.com/u/4323927?v=4?s=100" width="100px;" alt="Lukáš Matta"/><br /><sub><b>Lukáš Matta</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=lukasmatta" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://ngrome.io"><img src="https://avatars.githubusercontent.com/u/281553?v=4?s=100" width="100px;" alt="Luciano"/><br /><sub><b>Luciano</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=lucianomurr" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://goetzrobin.github.io"><img src="https://avatars.githubusercontent.com/u/35136007?v=4?s=100" width="100px;" alt="Robin Goetz"/><br /><sub><b>Robin Goetz</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=goetzrobin" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ch1ffa"><img src="https://avatars.githubusercontent.com/u/17417010?v=4?s=100" width="100px;" alt="Vadim Evseev"/><br /><sub><b>Vadim Evseev</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ch1ffa" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://k9n.dev"><img src="https://avatars.githubusercontent.com/u/4279702?v=4?s=100" width="100px;" alt="Danny Koppenhagen"/><br /><sub><b>Danny Koppenhagen</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=d-koppenhagen" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=d-koppenhagen" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://tomwebwalker.pl/"><img src="https://avatars.githubusercontent.com/u/11270899?v=4?s=100" width="100px;" alt="Tomasz Flis"/><br /><sub><b>Tomasz Flis</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=TomWebwalker" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/AdditionAddict"><img src="https://avatars.githubusercontent.com/u/48436581?v=4?s=100" width="100px;" alt="AdditionAddict"/><br /><sub><b>AdditionAddict</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=AdditionAddict" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=AdditionAddict" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/sander-t-0a461458"><img src="https://avatars.githubusercontent.com/u/17591696?v=4?s=100" width="100px;" alt="Sander"/><br /><sub><b>Sander</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=sand4rt" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://perko.dev"><img src="https://avatars.githubusercontent.com/u/5384791?v=4?s=100" width="100px;" alt="Chris Perko"/><br /><sub><b>Chris Perko</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=BaronVonPerko" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=BaronVonPerko" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://christianlydemann.com"><img src="https://avatars.githubusercontent.com/u/9210691?v=4?s=100" width="100px;" alt="Christian Lüdemann"/><br /><sub><b>Christian Lüdemann</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=lydemann" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://yasser.page"><img src="https://avatars.githubusercontent.com/u/9917969?v=4?s=100" width="100px;" alt="Yasser"/><br /><sub><b>Yasser</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=yassernasc" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/MDyrcz5"><img src="https://avatars.githubusercontent.com/u/23345904?v=4?s=100" width="100px;" alt="Michał Dyrcz"/><br /><sub><b>Michał Dyrcz</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=MDyrcz5" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

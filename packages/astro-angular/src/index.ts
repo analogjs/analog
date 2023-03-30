@@ -1,5 +1,10 @@
-import viteAngular from '@analogjs/vite-plugin-angular';
+import viteAngular, { PluginOptions } from '@analogjs/vite-plugin-angular';
+import { enableProdMode } from '@angular/core';
 import { AstroIntegration, AstroRenderer } from 'astro';
+
+interface AngularOptions {
+  vite?: PluginOptions;
+}
 
 function getRenderer(): AstroRenderer {
   return {
@@ -9,7 +14,7 @@ function getRenderer(): AstroRenderer {
   };
 }
 
-function getViteConfiguration() {
+function getViteConfiguration(vite?: PluginOptions) {
   return {
     optimizeDeps: {
       include: [
@@ -33,17 +38,20 @@ function getViteConfiguration() {
      * this workaround for now.
      *
      */
-    plugins: [(viteAngular as any).default()],
+    plugins: [(viteAngular as any).default(vite)],
   };
 }
 
-export default function (): AstroIntegration {
+export default function (options?: AngularOptions): AstroIntegration {
   return {
     name: '@analogjs/astro-angular',
     hooks: {
       'astro:config:setup': ({ addRenderer, updateConfig }) => {
         addRenderer(getRenderer());
-        updateConfig({ vite: getViteConfiguration() });
+        updateConfig({ vite: getViteConfiguration(options?.vite) });
+      },
+      'astro:build:setup': () => {
+        enableProdMode();
       },
     },
   };

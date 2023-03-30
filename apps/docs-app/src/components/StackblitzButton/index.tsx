@@ -6,16 +6,14 @@ import styles from './styles.module.css';
 const StackblitzLogo: React.ComponentType<React.ComponentProps<'svg'>> =
   require('@site/static/img/logos/stackblitz-logo.svg').default;
 
-export default function StackblitzButton(props): JSX.Element {
+export default function StackblitzButton(): JSX.Element {
   return (
     <Link
-      {...props}
       className={clsx(
-        props.className,
-        'button button--secondary button--lg',
-        styles.flex
+        'button button--outline button--lg',
+        styles.stackblitzLink
       )}
-      to="https://stackblitz.com/github/analogjs/analog/tree/main/packages/create-analog/template-angular-v14?file=vite.config.ts&amp;preset=node"
+      to="https://analogjs.org/new"
     >
       <StackblitzLogo className={styles.logoSvg} role="img" />
       Open in StackBlitz

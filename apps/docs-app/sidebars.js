@@ -20,19 +20,85 @@ const sidebars = {
     'getting-started',
     {
       type: 'category',
-      label: 'Packages',
+      label: 'Features',
       items: [
         {
           type: 'category',
-          label: 'Vite Plugin for Angular',
+          label: 'Routing',
           items: [
             {
               type: 'doc',
-              id: 'packages/vite-plugin-angular/overview',
+              id: 'features/routing/overview',
+              label: 'Overview',
+            },
+            {
+              type: 'doc',
+              id: 'features/routing/content',
+              label: 'Content Routes',
+            },
+          ],
+        },
+        {
+          type: 'category',
+          label: 'API Routes',
+          items: [
+            {
+              type: 'doc',
+              id: 'features/api/overview',
               label: 'Overview',
             },
           ],
         },
+        {
+          type: 'category',
+          label: 'Static Site Generation',
+          items: [
+            {
+              type: 'doc',
+              id: 'features/server/static-site-generation',
+              label: 'Overview',
+            },
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Server Side Rendering',
+          items: [
+            {
+              type: 'doc',
+              id: 'features/server/server-side-rendering',
+              label: 'Overview',
+            },
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Testing',
+          items: [
+            {
+              type: 'doc',
+              id: 'features/testing/overview',
+              label: 'Overview',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Build & Deploy',
+      items: [
+        {
+          type: 'doc',
+          id: 'features/deployment/overview',
+          label: 'Overview',
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Integrations',
+      items: [
         {
           type: 'category',
           label: 'Astro Integration',
@@ -40,17 +106,6 @@ const sidebars = {
             {
               type: 'doc',
               id: 'packages/astro-angular/overview',
-              label: 'Overview',
-            },
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Project Generation',
-          items: [
-            {
-              type: 'doc',
-              id: 'packages/create-analog/overview',
               label: 'Overview',
             },
           ],

@@ -1,4 +1,5 @@
 {
+  "name": "astro-angular",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/astro-angular/src",
   "projectType": "library",
@@ -15,7 +16,7 @@
       }
     },
     "publish": {
-      "executor": "@nrwl/workspace:run-commands",
+      "executor": "nx:run-commands",
       "options": {
         "command": "node tools/scripts/publish.mjs astro-angular {args.ver} {args.tag}"
       },
@@ -34,12 +35,7 @@
       }
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/packages/astro-angular"],
-      "options": {
-        "jestConfig": "packages/astro-angular/jest.config.json",
-        "passWithNoTests": true
-      }
+      "executor": "@nrwl/vite:test"
     }
   },
   "tags": []

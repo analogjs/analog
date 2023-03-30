@@ -3,8 +3,36 @@ import { describe, it, expect } from 'vitest';
 import {
   hasTemplateUrl,
   resolveStyleUrls,
-  resolveTemplateUrl,
+  resolveTemplateUrls,
 } from './component-resolvers';
+import { normalizePath } from 'vite';
+import { relative } from 'path';
+
+// array version of normalizePath
+const normalizePaths = (paths: string[]) =>
+  paths.map((path) => normalizePath(path));
+
+// OS agnostic paths array comparison
+// Two normalized paths are the same if path.relative(p1, p2) === ''
+// In Windows a normalized absolute path includes the drive i.e. C:
+const thePathsAreEqual = (actual: string[], expected: string[]) => {
+  const arr1 = normalizePaths(actual);
+  const arr2 = normalizePaths(expected);
+
+  // check arrays match in length
+  if (arr1.length !== arr2.length) {
+    return false;
+  }
+
+  // check each path of the two arrays are the same
+  for (let i = 0; i < arr1.length; i++) {
+    if (relative(arr1[i], arr2[i]) !== '') {
+      return false;
+    }
+  }
+
+  return true;
+};
 
 describe('component-resolvers styleUrls', () => {
   const id = '/path/to/src/app.component.ts';
@@ -21,7 +49,7 @@ describe('component-resolvers styleUrls', () => {
       const actualPaths = ['/path/to/src/app.component.css'];
       const resolvedPaths = resolveStyleUrls(code, id);
 
-      expect(resolvedPaths).toStrictEqual(actualPaths);
+      expect(thePathsAreEqual(resolvedPaths, actualPaths));
     });
 
     it('should handle multi-line styleUrls', () => {
@@ -42,7 +70,7 @@ describe('component-resolvers styleUrls', () => {
 
       const resolvedPaths = resolveStyleUrls(code, id);
 
-      expect(resolvedPaths).toStrictEqual(actualPaths);
+      expect(thePathsAreEqual(resolvedPaths, actualPaths));
     });
 
     it('should handle wrapped multi-line styleUrls', () => {
@@ -64,7 +92,7 @@ describe('component-resolvers styleUrls', () => {
 
       const resolvedPaths = resolveStyleUrls(code, id);
 
-      expect(resolvedPaths).toStrictEqual(actualPaths);
+      expect(thePathsAreEqual(resolvedPaths, actualPaths));
     });
   });
 
@@ -81,10 +109,10 @@ describe('component-resolvers styleUrls', () => {
       `;
 
         const actualUrl = '/path/to/src/app.component.html';
-        const resolvedTemplateUrl = resolveTemplateUrl(code, id);
+        const resolvedTemplateUrls = resolveTemplateUrls(code, id);
 
         expect(hasTemplateUrl(code)).toBeTruthy();
-        expect(resolvedTemplateUrl).toBe(actualUrl);
+        expect(thePathsAreEqual(resolvedTemplateUrls, [actualUrl]));
       });
 
       it('should handle templateUrls with double quotes', () => {
@@ -96,10 +124,33 @@ describe('component-resolvers styleUrls', () => {
       `;
 
         const actualUrl = '/path/to/src/app.component.html';
-        const resolvedTemplateUrl = resolveTemplateUrl(code, id);
+        const resolvedTemplateUrls = resolveTemplateUrls(code, id);
 
         expect(hasTemplateUrl(code)).toBeTruthy();
-        expect(resolvedTemplateUrl).toBe(actualUrl);
+        expect(thePathsAreEqual(resolvedTemplateUrls, [actualUrl]));
+      });
+
+      it('should handle multiple templateUrls in a single file', () => {
+        const code = `
+        @Component({
+          templateUrl: "./app.component.html"
+        })
+        export class MyComponent {}
+
+        @Component({
+          templateUrl: "./app1.component.html"
+        })
+        export class MyComponentTwo {}        
+      `;
+
+        const actualUrl1 = '/path/to/src/app.component.html';
+        const actualUrl2 = '/path/to/src/app1.component.html';
+        const resolvedTemplateUrls = resolveTemplateUrls(code, id);
+
+        expect(hasTemplateUrl(code)).toBeTruthy();
+        expect(
+          thePathsAreEqual(resolvedTemplateUrls, [actualUrl1, actualUrl2])
+        );
       });
     });
   });

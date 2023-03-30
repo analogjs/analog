@@ -1,4 +1,5 @@
 {
+  "name": "vite-plugin-angular",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/vite-plugin-angular/src",
   "projectType": "library",
@@ -10,16 +11,12 @@
         "outputPath": "node_modules/@analogjs/vite-plugin-angular",
         "main": "packages/vite-plugin-angular/src/index.ts",
         "tsConfig": "packages/vite-plugin-angular/tsconfig.lib.json",
-        "assets": ["packages/vite-plugin-angular/*.md"]
+        "assets": ["packages/vite-plugin-angular/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "test": {
-      "executor": "nx:run-commands",
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "cwd": "packages/vite-plugin-angular",
-        "command": "vitest"
-      }
+      "executor": "@nrwl/vite:test"
     }
   },
   "tags": []

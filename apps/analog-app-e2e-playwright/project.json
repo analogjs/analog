@@ -1,14 +1,11 @@
 {
+  "name": "analog-app-e2e-playwright",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/analog-app-e2e-playwright/src",
   "projectType": "application",
   "targets": {
     "vitest": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "apps/analog-app-e2e-playwright",
-        "commands": ["vitest"]
-      }
+      "executor": "@nrwl/vite:test"
     },
     "e2e": {
       "executor": "nx:run-commands",

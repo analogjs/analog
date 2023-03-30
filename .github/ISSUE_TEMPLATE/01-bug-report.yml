@@ -26,6 +26,9 @@ body:
         - create-analog
         - vite-plugin-angular
         - astro-angular
+        - router
+        - platform
+        - content
         - Docs
         - Don't know / Other
     validations:

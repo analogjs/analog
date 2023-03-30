@@ -2,9 +2,11 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "types": []
+    "types": [],
+    "target": "ES2022",
+    "useDefineForClassFields": false
   },
-  "files": ["src/main.ts", "src/polyfills.ts"],
-  "include": ["src/**/*.d.ts"],
+  "files": ["src/main.ts", "src/main.server.ts"],
+  "include": ["src/**/*.d.ts", "src/app/routes/**/*.ts"],
   "exclude": ["**/*.test.ts", "**/*.spec.ts"]
 }

@@ -7,6 +7,13 @@ import TabItem from '@theme/TabItem';
 
 # Getting Started
 
+## System Requirements
+
+Analog requires the following Node and Angular versions:
+
+- Node v16 or higher
+- Angular v15 or higher
+
 ## Creating a New Application
 
 Scaffold an Analog project with the following `create-analog` command:
@@ -37,15 +44,15 @@ pnpm create analog
   </TabItem>
 </Tabs>
 
-## Building the Application
+## Serving the application
 
-To build the application for deployment
+To start the development server for the application, run the `start` command.
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
 ```shell
-npm run build
+npm run start
 ```
 
   </TabItem>
@@ -53,7 +60,7 @@ npm run build
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn build
+yarn start
 ```
 
   </TabItem>
@@ -61,38 +68,12 @@ yarn build
   <TabItem value="pnpm">
 
 ```shell
-pnpm run build
+pnpm run start
 ```
 
   </TabItem>
 </Tabs>
 
-## Running Tests
+Visit [http://localhost:5173](http://localhost:5173) in your browser to view the running application.
 
-Analog supports [Vitest](https://vitest.dev) for running unit tests. To run unit tests:
-
-<Tabs groupId="package-manager">
-  <TabItem value="npm">
-
-```shell
-npm run test
-```
-
-  </TabItem>
-
-  <TabItem label="Yarn" value="yarn">
-
-```shell
-yarn test
-```
-
-  </TabItem>
-
-  <TabItem value="pnpm">
-
-```shell
-pnpm run test
-```
-
-  </TabItem>
-</Tabs>
+Next, you can [define additional routes using components](/docs/features/routing/overview) for navigation.

@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "declaration": true,
+    "declarationMap": true,
+    "inlineSources": true,
+    "types": [],
+    "target": "ES2022",
+    "useDefineForClassFields": false
+  },
+  "exclude": ["vite.config.ts", "**/*.test.ts", "**/*.spec.ts"],
+  "include": ["**/*.ts"]
+}
