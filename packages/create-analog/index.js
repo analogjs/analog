@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 // @ts-check
+import { green, red, reset, yellow } from 'kolorist';
+import minimist from 'minimist';
+import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import minimist from 'minimist';
 import prompts from 'prompts';
-import { red, reset, yellow, green } from 'kolorist';
-import { execSync } from 'node:child_process';
 
 // Avoids autoconversion to number of the project name by defining that the args
 // non associated with an option ( _ ) needs to be parsed as a string. See #4606
@@ -44,6 +44,7 @@ const renameFiles = {
 async function init() {
   let targetDir = formatTargetDir(argv._[0]);
   let template = argv.template || argv.t;
+  let skipTailwind = argv.skipTailwind || false;
 
   const defaultTargetDir = 'analog-project';
   const getProjectName = () =>
@@ -123,6 +124,11 @@ async function init() {
               };
             }),
         },
+        {
+          type: skipTailwind ? null : 'confirm',
+          name: 'tailwind',
+          message: 'Would you like to add Tailwind to your project?',
+        },
       ],
       {
         onCancel: () => {
@@ -136,7 +142,7 @@ async function init() {
   }
 
   // user choice associated with prompts
-  const { framework, overwrite, packageName, variant } = result;
+  const { framework, overwrite, packageName, variant, tailwind } = result;
 
   const root = path.join(cwd, targetDir);
 
@@ -148,6 +154,7 @@ async function init() {
 
   // determine template
   template = variant || framework || template;
+  skipTailwind = !tailwind || skipTailwind;
 
   console.log(`\nScaffolding project in ${root}...`);
 
@@ -156,6 +163,8 @@ async function init() {
     '..',
     `template-${template}`
   );
+
+  const filesDir = path.resolve(fileURLToPath(import.meta.url), '..', `files`);
 
   const write = (file, content) => {
     const targetPath = renameFiles[file]
@@ -173,6 +182,12 @@ async function init() {
     write(file);
   }
 
+  if (!skipTailwind) {
+    addTailwindConfig(write, filesDir);
+    addPostCssConfig(write, filesDir);
+    addTailwindDirectives(write, filesDir);
+  }
+
   const pkgInfo = pkgFromUserAgent(process.env.npm_config_user_agent);
   const pkgManager = pkgInfo ? pkgInfo.name : 'npm';
   const pkg = JSON.parse(
@@ -181,6 +196,8 @@ async function init() {
 
   pkg.name = packageName || getProjectName();
   pkg.scripts.start = getStartCommand(pkgManager);
+
+  if (!skipTailwind) addDevDependencies(pkg);
 
   write('package.json', JSON.stringify(pkg, null, 2));
 
@@ -300,6 +317,33 @@ function getInstallCommand(pkgManager) {
  */
 function getStartCommand(pkgManager) {
   return pkgManager === 'yarn' ? 'yarn dev' : `${pkgManager} run dev`;
+}
+
+function addTailwindDirectives(write, filesDir) {
+  write(
+    'src/styles.css',
+    fs.readFileSync(path.join(filesDir, `styles.css`), 'utf-8')
+  );
+}
+
+function addPostCssConfig(write, filesDir) {
+  write(
+    'postcss.config.js',
+    fs.readFileSync(path.join(filesDir, `postcss.config.js`), 'utf-8')
+  );
+}
+
+function addTailwindConfig(write, filesDir) {
+  write(
+    'tailwind.config.js',
+    fs.readFileSync(path.join(filesDir, `tailwind.config.js`), 'utf-8')
+  );
+}
+
+function addDevDependencies(pkg) {
+  ['tailwindcss', 'postcss', 'autoprefixer'].forEach(
+    (packageName) => (pkg.devDependencies[packageName] = 'latest')
+  );
 }
 
 init().catch((e) => {
