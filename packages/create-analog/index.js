@@ -341,8 +341,11 @@ function addTailwindConfig(write, filesDir) {
 }
 
 function addDevDependencies(pkg) {
-  ['tailwindcss', 'postcss', 'autoprefixer'].forEach(
-    (packageName) => (pkg.devDependencies[packageName] = 'latest')
+  ['tailwindcss@^3.3.1', 'postcss@^8.4.21', 'autoprefixer@^10.4.14'].forEach(
+    (packageName) => {
+      const [name, version] = packageName.split('@');
+      pkg.devDependencies[name] = version;
+    }
   );
 }
 
