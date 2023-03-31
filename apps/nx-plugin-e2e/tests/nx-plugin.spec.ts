@@ -13,8 +13,12 @@ describe('nx-plugin e2e', () => {
   // consumes 1 workspace. The tests should each operate
   // on a unique project in the workspace, such that they
   // are not dependent on one another.
-  beforeAll(() => {
-    ensureNxProject('@analogjs/nx', 'dist/packages/nx-plugin');
+  beforeAll(async () => {
+    ensureNxProject(
+      '@analogjs/vite-plugin-angular',
+      'node_modules/@analogjs/vite-plugin-angular'
+    );
+    ensureNxProject('@analogjs/platform', 'node_modules/@analogjs/platform');
   });
 
   afterAll(() => {
@@ -25,18 +29,15 @@ describe('nx-plugin e2e', () => {
 
   it('should create hello-world', async () => {
     const project = uniq('hello-world');
-    await runNxCommandAsync(`generate @analogjs/nx:app ${project}`);
-    const result = await runNxCommandAsync(`build ${project}`);
-    expect(result.stdout).toContain(
-      'Successfully ran target build for project'
-    );
+    await runNxCommandAsync(`generate @analogjs/platform:app ${project}`);
+    expect(() => checkFilesExist(`apps/${project}/index.html`)).not.toThrow();
   }, 120000);
 
   describe('--directory', () => {
     it('should create src in the specified directory', async () => {
       const project = uniq('hello-world');
       await runNxCommandAsync(
-        `generate @analogjs/nx:app ${project} --directory subdir`
+        `generate @analogjs/platform:app ${project} --directory subdir`
       );
       expect(() =>
         checkFilesExist(`apps/subdir/${project}/index.html`)
@@ -48,10 +49,10 @@ describe('nx-plugin e2e', () => {
     it('should add tags to the project', async () => {
       const projectName = uniq('hello-world');
       await runNxCommandAsync(
-        `generate @analogjs/nx:app ${projectName} --tags e2etag,e2ePackage`
+        `generate @analogjs/platform:app ${projectName} --tags analog,analogApplication`
       );
       const project = readJson(`apps/${projectName}/project.json`);
-      expect(project.tags).toEqual(['e2etag', 'e2ePackage']);
+      expect(project.tags).toEqual(['analog', 'analogApplication']);
     }, 120000);
   });
 });

@@ -3,6 +3,7 @@ import {
   formatFiles,
   generateFiles,
   getWorkspaceLayout,
+  installPackagesTask,
   names,
   offsetFromRoot as determineOffsetFromRoot,
   stripIndents,
@@ -12,7 +13,6 @@ import * as path from 'path';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
 import { lt, major } from 'semver';
 import { getInstalledAngularVersion } from '../../utils/version-utils';
-import { runTasksInSerial } from '@nrwl/workspace/src/utilities/run-tasks-in-serial';
 import { addAnalogProjectConfig } from './lib/add-analog-project-config';
 import {
   V15_ANALOG_JS_CONTENT,
@@ -113,12 +113,7 @@ async function addDependencies(tree: Tree, majorAngularVersion: number) {
     vitest: majorAngularVersion === 15 ? V15_VITEST : V16_VITEST,
   };
 
-  const installDependencies = addDependenciesToPackageJson(
-    tree,
-    dependencies,
-    devDependencies
-  );
-  await runTasksInSerial(installDependencies);
+  addDependenciesToPackageJson(tree, dependencies, devDependencies);
 }
 
 function addFiles(
@@ -128,7 +123,6 @@ function addFiles(
 ) {
   const templateOptions = {
     ...options,
-    offsetFromRoot: options.offsetFromRoot,
     template: '',
   };
   generateFiles(
@@ -169,4 +163,8 @@ export default async function (
   if (!normalizedOptions.skipFormat) {
     await formatFiles(tree);
   }
+
+  return () => {
+    installPackagesTask(tree);
+  };
 }
