@@ -24,4 +24,5 @@ export interface Options {
   entryServer?: string;
   vite?: PluginOptions;
   nitro?: NitroConfig;
+  apiPrefix?: string;
 }

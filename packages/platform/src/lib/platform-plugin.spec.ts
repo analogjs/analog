@@ -68,4 +68,16 @@ describe('platformPlugin', () => {
     expect(ssrBuildPluginSpy).not.toHaveBeenCalled();
     expect(devServerPluginSpy).not.toHaveBeenCalled();
   });
+
+  it('should pass the custom endpoint as part of the nitro runtimeConfig if options.apiPrefix is set to false', async () => {
+    const customPrefix = 'custom-endpoint';
+    const { viteNitroPluginSpy, platformPlugin } = await setup();
+    platformPlugin({ apiPrefix: customPrefix });
+
+    expect(viteNitroPluginSpy).toHaveBeenCalledWith(expect.anything(), {
+      runtimeConfig: {
+        apiPrefix: customPrefix,
+      },
+    });
+  });
 });
