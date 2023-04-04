@@ -13,6 +13,7 @@ export function viteNitroPlugin(
 ): Plugin {
   const rootDir = nitroOptions?.rootDir || '.';
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+  const apiPrefix = `/${nitroOptions?.runtimeConfig?.['apiPrefix'] ?? 'api'}`;
 
   let nitroConfig: NitroConfig = {
     rootDir,
@@ -28,6 +29,7 @@ export function viteNitroPlugin(
     typescript: {
       generateTsConfig: false,
     },
+    runtimeConfig: { ...nitroOptions?.runtimeConfig },
   };
 
   let isBuild = false;
@@ -92,9 +94,9 @@ export function viteNitroPlugin(
         const server = createDevServer(nitro);
         await prepare(nitro);
         await build(nitro);
-        viteServer.middlewares.use('/api', toNodeListener(server.app));
+        viteServer.middlewares.use(apiPrefix, toNodeListener(server.app));
         console.log(
-          `\n\nThe '@analogjs/platform' successfully started.\nThe server endpoints are accessible under the "/api"`
+          `\n\nThe '@analogjs/platform' successfully started.\nThe server endpoints are accessible under the "${apiPrefix}" path.`
         );
       }
     },
