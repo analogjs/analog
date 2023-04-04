@@ -1,7 +1,7 @@
-import { join } from 'node:path';
 import type { ExecaSyncReturnValue, SyncOptions } from 'execa';
 import { commandSync } from 'execa';
 import { mkdirpSync, readdirSync, remove, writeFileSync } from 'fs-extra';
+import { join } from 'node:path';
 import { afterEach, beforeAll, expect, test } from 'vitest';
 
 const CLI_PATH = join(__dirname, '..');
@@ -33,7 +33,12 @@ templateFiles.push('.git');
 templateFiles = templateFiles
   .map((filePath) => (filePath === '_gitignore' ? '.gitignore' : filePath))
   .sort();
-
+// starter with tailwind
+const templateFilesTailwind = [
+  ...templateFiles,
+  'tailwind.config.js',
+  'postcss.config.js',
+].sort();
 beforeAll(() => remove(genPath));
 afterEach(() => remove(genPath));
 
@@ -78,9 +83,12 @@ test('asks to overwrite non-empty current directory', () => {
 });
 
 test('successfully scaffolds a project based on angular starter template', () => {
-  const { stdout } = run([projectName, '--template', 'angular-v15'], {
-    cwd: __dirname,
-  });
+  const { stdout } = run(
+    [projectName, '--template', 'angular-v15', '--skipTailwind'],
+    {
+      cwd: __dirname,
+    }
+  );
   const generatedFiles = readdirSync(genPath).sort();
 
   // Assertions
@@ -89,7 +97,7 @@ test('successfully scaffolds a project based on angular starter template', () =>
 });
 
 test('works with the -t alias', () => {
-  const { stdout } = run([projectName, '-t', 'angular-v15'], {
+  const { stdout } = run([projectName, '-t', 'angular-v15', '--skipTailwind'], {
     cwd: __dirname,
   });
   const generatedFiles = readdirSync(genPath).sort();
