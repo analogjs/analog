@@ -5,11 +5,10 @@
   "prefix": "analogjs",
   "targets": {
     "build": {
-      "executor": "@nrwl/angular:package",
+      "executor": "@angular-devkit/build-angular:ng-packagr",
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/router"],
       "options": {
-        "project": "packages/router/ng-package.json",
-        "updateBuildableProjectDepsInPackageJson": false
+        "project": "packages/router/ng-package.json"
       },
       "configurations": {
         "production": {

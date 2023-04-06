@@ -13,20 +13,21 @@ export function ssrBuildPlugin(): Plugin {
       };
     },
     transform(code, id) {
+      if (id.includes('platform-server')) {
+        code = code.replace(/global\./g, 'globalThis.');
+
+        return {
+          code: code.replace(
+            'new xhr2.XMLHttpRequest',
+            'new (xhr2.default.XMLHttpRequest || xhr2.default)'
+          ),
+        };
+      }
+
       // Remove usage of `with()` in sloppy.js file
       if (id.includes(normalizePath('domino/lib/sloppy.js'))) {
         return {
           code: code.replace(/with\(/gi, 'if('),
-        };
-      }
-
-      // Convert usage of xhr2 default import
-      if (code.includes('new xhr2.')) {
-        return {
-          code: code.replace(
-            'new xhr2.XMLHttpRequest',
-            'new xhr2.default.XMLHttpRequest'
-          ),
         };
       }
 
