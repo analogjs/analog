@@ -7,7 +7,10 @@
     "inlineSources": true,
     "types": [],
     "target": "ES2022",
-    "useDefineForClassFields": false
+    "useDefineForClassFields": false,
+    "paths": {
+      "@analogjs/content": ["./node_modules/@analogjs/content"]
+    }
   },
   "exclude": ["vite.config.ts", "**/*.test.ts", "**/*.spec.ts"],
   "include": ["**/*.ts"]

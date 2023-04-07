@@ -20,7 +20,8 @@
     "target": "es2020",
     "module": "es2020",
     "lib": ["es2020", "dom"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "ignoreDeprecations": "5.0"
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

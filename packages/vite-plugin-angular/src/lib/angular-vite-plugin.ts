@@ -113,7 +113,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                   tsconfig: pluginOptions.tsconfig,
                   sourcemap: !isProd,
                   advancedOptimizations: isProd,
-                }),
+                }) as any,
               ],
               define: {
                 ngDevMode: watchMode ? JSON.stringify({}) : 'false',

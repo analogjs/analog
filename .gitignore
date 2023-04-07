@@ -54,3 +54,4 @@ stats.html
 
 # Nitro
 .nitro
+/migrations.json
