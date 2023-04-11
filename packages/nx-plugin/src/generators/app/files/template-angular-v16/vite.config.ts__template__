@@ -37,9 +37,9 @@ export default defineConfig(({ mode }) => {
             { baseName: 'public', dir: `./dist/apps/<%= projectName %>/client` },
           ],
           buildDir: '../../dist/apps/<%= projectName %>/.nitro',
-          prerender: {
-            routes: ['/'],
-          },
+        },
+        prerender: {
+          routes: ['/'],
         },
       }),
       tsConfigPaths({
