@@ -203,17 +203,19 @@ This can be useful if, for instance, you have blog posts, as well as a portfolio
 ```ts
 src/
 └── app/
-    └── routes/
-        ├── posts/
-        │   ├── my-first-post.md
-        │   └── my-second-post.md
-        └── projects/
-            ├── my-first-project.md
-            └── my-second-project.md
+│   └── pages/
+│       └── project.[slug].page.ts
+└── content/
+    ├── posts/
+    │   ├── my-first-post.md
+    │   └── my-second-post.md
+    └── projects/
+        ├── my-first-project.md
+        └── my-second-project.md
 ```
 
 ```ts
-// /src/app/routes/project.[slug].page.ts
+// /src/app/pages/project.[slug].page.ts
 import { injectContent, MarkdownComponent } from '@analogjs/content';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { Component } from '@angular/core';

@@ -38,3 +38,9 @@ pnpm run build
 The client build artifacts are located in the `dist/client` directory. The server for the API routes is located in the `dist/server` directory.
 
 If you have [server side rendering](/docs/features/server/server-side-rendering) enabled, the client build artifacts are located in the `dist/analog/public` directory. The server for the API/SSR build artifacts is located in the `dist/analog/server` directory.
+
+To start up the standalone server, run:
+
+```sh
+node dist/analog/server/index.mjs
+```
