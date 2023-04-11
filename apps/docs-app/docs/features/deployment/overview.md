@@ -5,7 +5,9 @@ import TabItem from '@theme/TabItem';
 
 Node.js deployment is the default Analog output preset for production builds.
 
-When running `npm run build` with the default preset, the result will be an entry point that launches a ready-to-run Node server. To try output:
+When running `npm run build` with the default preset, the result will be an entry point that launches a ready-to-run Node server.
+
+To start up the standalone server, run:
 
 ```bash
 $ node dist/analog/server/index.mjs
