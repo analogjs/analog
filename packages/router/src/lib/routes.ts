@@ -39,7 +39,7 @@ export function getRoutes(
 
       const segments = key
         .replace(
-          /^\/(.*?)\/routes|^\/(.*?)\/pages|\/app\/routes|\.page|\.(js|ts|md)$/g,
+          /^\/(.*?)\/routes|^\/(.*?)\/pages|\/app\/routes|(\.page\.(js|ts)$)|(\.(ts|md)$)/g,
           ''
         )
         .replace(/\[\.{3}.+\]/, '**')
