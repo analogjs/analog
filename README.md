@@ -49,9 +49,11 @@ Analog is an MIT-licensed open source project with its ongoing development made 
 
 ### Sponsors
 
-<img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/github-logo.svg" width="100px" height="100px" alt="GitHub Accelerator">
+<a href="https://github.blog/2023-04-12-github-accelerator-our-first-cohort-and-whats-next/" target="_blank">
+  <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/github-logo.svg" width="100px" height="100px" alt="GitHub Accelerator">
+</a>
 
-As more contributors are added to the project, they will be added as sponsor recipients.
+> As more contributors are added to the project, they will be added as sponsor recipients.
 
 [Become a Sponsor!](https://github.com/sponsors/brandonroberts).
 
