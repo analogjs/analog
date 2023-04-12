@@ -336,6 +336,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "otonielguajardo",
+      "name": "Otoniel Guajardo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23427095?v=4",
+      "profile": "https://github.com/otonielguajardo",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
