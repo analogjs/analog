@@ -1,7 +1,9 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
 [![All Contributors](https://img.shields.io/badge/all_contributors-36-orange.svg?style=flat-square)](#contributors-)
+
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
@@ -45,9 +47,13 @@ Follow the prompts to scaffold the project and start the development server.
 
 Analog is an MIT-licensed open source project with its ongoing development made by contributors:
 
-- [Sponsor me on GitHub Sponsors](https://github.com/sponsors/brandonroberts).
+### Sponsors
+
+![GitHub Accelerator](https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/github-logo.svg)
 
 As more contributors are added to the project, they will be added as sponsor recipients.
+
+[Become a Sponsor!](https://github.com/sponsors/brandonroberts).
 
 ## Contributing
 

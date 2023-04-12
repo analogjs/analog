@@ -81,7 +81,7 @@ const config = {
                 to: 'docs/contributing',
               },
               {
-                label: 'Sponsoring',
+                label: 'Sponsors',
                 to: 'docs/sponsoring',
               },
             ],
