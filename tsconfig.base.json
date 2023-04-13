@@ -27,6 +27,10 @@
       "@analogjs/vite-plugin-angular": [
         "./node_modules/@analogjs/vite-plugin-angular",
         "packages/vite-plugin-angular/src/index.ts"
+      ],
+      "@analogjs/vite-plugin-nitro": [
+        "./node_modules/@analogjs/vite-plugin-nitro",
+        "packages/vite-plugin-nitro/src/index.ts"
       ]
     }
   },

@@ -23,7 +23,8 @@ What kind of change does this PR introduce?
 
 ## Which package are you modifying?
 
-- [ ] vite-angular-plugin
+- [ ] vite-plugin-angular
+- [ ] vite-plugin-nitro
 - [ ] astro-angular
 - [ ] create-analog
 - [ ] router

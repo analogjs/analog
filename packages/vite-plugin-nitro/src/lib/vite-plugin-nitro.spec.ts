@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { viteNitroPlugin } from './vite-nitro-plugin';
+import { nitro } from './vite-plugin-nitro';
 
 const mockViteDevServer = {
   middlewares: {
@@ -14,7 +14,7 @@ describe('viteNitroPlugin', () => {
   });
 
   it('should work', () => {
-    expect(viteNitroPlugin({}).name).toEqual('analogjs-vite-nitro-plugin');
+    expect(nitro({}).name).toEqual('analogjs-vite-nitro-plugin');
   });
 
   it(`should not call the route middleware in test mode `, async () => {
@@ -22,7 +22,7 @@ describe('viteNitroPlugin', () => {
     const spy = vi.spyOn(mockViteDevServer.middlewares, 'use');
 
     // Act
-    await (viteNitroPlugin({}).configureServer as any)(mockViteDevServer);
+    await (nitro({}).configureServer as any)(mockViteDevServer);
 
     // Assert
     expect(spy).toHaveBeenCalledTimes(0);

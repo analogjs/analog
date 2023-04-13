@@ -10,6 +10,9 @@
     "paths": {
       "@analogjs/vite-plugin-angular": [
         "./node_modules/@analogjs/vite-plugin-angular"
+      ],
+      "@analogjs/vite-plugin-nitro": [
+        "./node_modules/@analogjs/vite-plugin-nitro"
       ]
     }
   },

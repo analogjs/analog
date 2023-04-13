@@ -8,6 +8,7 @@ module.exports = {
       'always',
       [
         'vite-plugin-angular',
+        'vite-plugin-nitro',
         'create-analog',
         'astro-angular',
         'router',
