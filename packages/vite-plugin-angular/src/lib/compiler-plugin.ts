@@ -18,13 +18,11 @@ import { platform } from 'node:os';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import * as ts from 'typescript';
-import { CompilerPluginOptions } from '@angular-devkit/build-angular/src/builders/browser-esbuild/compiler-plugin';
+import { CompilerPluginOptions } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/compiler-plugin';
 import { maxWorkers } from '@angular-devkit/build-angular/src/utils/environment-options';
-import {
-  AngularCompilation,
-  FileEmitter,
-} from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular-compilation';
-import { AngularHostOptions } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular-host';
+import { FileEmitter } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/angular-compilation';
+import { AotCompilation } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/aot-compilation';
+import { AngularHostOptions } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/angular-host';
 import { JavaScriptTransformer } from '@angular-devkit/build-angular/src/builders/browser-esbuild/javascript-transformer';
 
 /**
@@ -137,7 +135,7 @@ export function createCompilerPlugin(
       );
 
       const { GLOBAL_DEFS_FOR_TERSER_WITH_AOT, readConfiguration } =
-        await AngularCompilation.loadCompilerCli();
+        await AotCompilation.loadCompilerCli();
 
       // Setup defines based on the values provided by the Angular compiler-cli
       build.initialOptions.define ??= {};
@@ -207,7 +205,7 @@ export function createCompilerPlugin(
       // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
       let fileEmitter: FileEmitter | undefined;
 
-      let compilation: AngularCompilation | undefined;
+      let compilation: AotCompilation | undefined;
 
       build.onStart(async () => {
         const result: OnStartResult = {
@@ -228,7 +226,7 @@ export function createCompilerPlugin(
         };
 
         // Create new compilation if first build; otherwise, use existing for rebuilds
-        compilation ??= new AngularCompilation();
+        compilation ??= new AotCompilation();
 
         // Initialize the Angular compilation for the current build.
         // In watch mode, previous build state will be reused.
