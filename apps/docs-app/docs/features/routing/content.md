@@ -39,50 +39,18 @@ pnpm install @analogjs/content prismjs marked front-matter
 
 ### Setup
 
-In the `main.ts`, add the `provideContent()` function, along with the `withMarkdownRenderer()` feature to the `providers` array when bootstrapping the application.
+In the `src/app/app.config.ts`, add the `provideContent()` function, along with the `withMarkdownRenderer()` feature to the `providers` array when bootstrapping the application.
 
 ```ts
-import 'zone.js';
-import { bootstrapApplication } from '@angular/platform-browser';
-import { provideFileRouter } from '@analogjs/router';
+import { ApplicationConfig } from '@angular/core';
 import { provideContent, withMarkdownRenderer } from '@analogjs/content';
 
-import { AppComponent } from './app/app.component';
-
-bootstrapApplication(AppComponent, {
-  providers: [provideFileRouter(), provideContent(withMarkdownRenderer())],
-});
-```
-
-If you are using SSR, add it to the `main.server.ts` file also.
-
-```ts
-import 'zone.js/node';
-import { enableProdMode } from '@angular/core';
-import { renderApplication } from '@angular/platform-server';
-import { provideFileRouter } from '@analogjs/router';
-import { withEnabledBlockingInitialNavigation } from '@angular/router';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
-
-import { AppComponent } from './app/app.component';
-
-if (import.meta.env.PROD) {
-  enableProdMode();
-}
-
-export default async function render(url: string, document: string) {
-  const html = await renderApplication(AppComponent, {
-    appId: 'analog-app',
-    document,
-    url,
-    providers: [
-      provideFileRouter(withEnabledBlockingInitialNavigation()),
-      provideContent(withMarkdownRenderer()),
-    ],
-  });
-
-  return html;
-}
+export const appConfig: ApplicationConfig = {
+  providers: [
+    // ... other providers
+    provideContent(withMarkdownRenderer()),
+  ],
+};
 ```
 
 ## Defining Content Routes

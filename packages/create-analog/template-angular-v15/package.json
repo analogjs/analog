@@ -14,7 +14,8 @@
     "test": "ng test"
   },
   "dependencies": {
-    "@analogjs/router": "latest",
+    "@analogjs/content": "0.1.9",
+    "@analogjs/router": "0.1.0-alpha.10",
     "@angular/animations": "^15.0.0",
     "@angular/common": "^15.0.0",
     "@angular/compiler": "^15.0.0",
@@ -30,7 +31,7 @@
     "zone.js": "~0.11.8"
   },
   "devDependencies": {
-    "@analogjs/platform": "latest",
+    "@analogjs/platform": "0.1.0-beta.22",
     "@angular-devkit/build-angular": "^15.0.0",
     "@angular/cli": "~15.0.0",
     "@angular/compiler-cli": "^15.0.0",
