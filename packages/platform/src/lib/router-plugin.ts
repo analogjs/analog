@@ -33,7 +33,10 @@ export function routerPlugin(): Plugin[] {
           ) {
             server.moduleGraph.fileToModulesMap.forEach((mods) => {
               mods.forEach((mod) => {
-                if (mod.id?.includes('@analogjs_router.js')) {
+                if (
+                  mod.id?.includes('analogjs') &&
+                  mod.id?.includes('router')
+                ) {
                   server.moduleGraph.invalidateModule(mod);
 
                   mod.importers.forEach((imp) => {
