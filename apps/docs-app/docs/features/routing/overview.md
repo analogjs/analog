@@ -65,9 +65,9 @@ The parameter for the route is extracted from the route path.
 The example route below in `src/app/pages/products.[productId].page.ts` defines a `/products/:productId` route.
 
 ```ts
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { AsyncPipe, JsonPipe } from '@angular/common';
-import { ActivatedRoute } from '@analogjs/router';
+import { injectActivatedRoute } from '@analogjs/router';
 import { map } from 'rxjs';
 
 @Component({
@@ -81,7 +81,7 @@ import { map } from 'rxjs';
   `,
 })
 export default class ProductDetailsPageComponent {
-  private readonly route = inject(ActivatedRoute);
+  private readonly route = injectActivatedRoute();
 
   readonly productId$ = this.route.paramMap.pipe(
     map((params) => params.get('productId'))
@@ -147,9 +147,9 @@ export default class ProductsListComponent {}
 The nested `src/app/pages/products/[productId].page.ts` file contains the `/products/:productId` details page.
 
 ```ts
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { AsyncPipe, JsonPipe } from '@angular/common';
-import { ActivatedRoute } from '@analogjs/router';
+import { injectActivatedRoute } from '@analogjs/router';
 import { map } from 'rxjs';
 
 @Component({
@@ -163,7 +163,7 @@ import { map } from 'rxjs';
   `,
 })
 export default class ProductDetailsPageComponent {
-  private readonly route = inject(ActivatedRoute);
+  private readonly route = injectActivatedRoute();
 
   readonly productId$ = this.route.paramMap.pipe(
     map((params) => params.get('productId'))
