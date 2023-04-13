@@ -1,27 +1,17 @@
 import 'zone.js/node';
-import {
-  provideServerRendering,
-  renderApplication,
-  ɵSERVER_CONTEXT as SERVER_CONTEXT,
-} from '@angular/platform-server';
 import { enableProdMode } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
+import { renderApplication } from '@angular/platform-server';
 
+import { config } from './app/app.config.server';
 import { AppComponent } from './app/app.component';
-import { mainProviders } from './main.providers';
 
 if (import.meta.env.PROD) {
   enableProdMode();
 }
 
 export function bootstrap() {
-  return bootstrapApplication(AppComponent, {
-    providers: [
-      mainProviders,
-      provideServerRendering(),
-      { provide: SERVER_CONTEXT, useValue: 'ssr-analog' },
-    ],
-  });
+  return bootstrapApplication(AppComponent, config);
 }
 
 export default async function render(url: string, document: string) {
