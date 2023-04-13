@@ -9,3 +9,4 @@ export {
   withMarkdownRenderer,
 } from './lib/markdown-content-renderer.service';
 export { parseRawContentFile } from './lib/parse-raw-content-file';
+export { AnchorNavigationDirective } from './lib/anchor-navigation.directive';
