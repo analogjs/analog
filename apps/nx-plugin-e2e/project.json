@@ -9,7 +9,8 @@
       "options": {
         "target": "platform:build",
         "jestConfig": "apps/nx-plugin-e2e/jest.config.ts",
-        "coverageDirectory": "../../coverage/apps/nx-plugin-e2e"
+        "coverageDirectory": "../../coverage/apps/nx-plugin-e2e",
+        "passWithNoTests": true
       }
     }
   },

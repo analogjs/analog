@@ -22,7 +22,8 @@
           "tsConfig": "packages/platform/tsconfig.lib.json"
         }
       },
-      "defaultConfiguration": "production"
+      "defaultConfiguration": "production",
+      "dependsOn": ["^build"]
     },
     "build": {
       "executor": "nx:run-commands",
