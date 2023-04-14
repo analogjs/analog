@@ -18,6 +18,10 @@ describe('nx-plugin e2e', () => {
       '@analogjs/vite-plugin-angular',
       'node_modules/@analogjs/vite-plugin-angular'
     );
+    ensureNxProject(
+      '@analogjs/vite-plugin-nitro',
+      'node_modules/@analogjs/vite-plugin-nitro'
+    );
     ensureNxProject('@analogjs/platform', 'node_modules/@analogjs/platform');
   });
 
