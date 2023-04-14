@@ -1,6 +1,6 @@
-# @analogjs/nx
+# @analogjs/platform
 
-Official plugin to add AnalogJs to your Nx monorepo.
+Official plugin to add Analog to your Nx monorepo.
 
 ## Supported Generators
 
@@ -9,7 +9,7 @@ Official plugin to add AnalogJs to your Nx monorepo.
 Creates a preconfigured Analog application.
 
 ```sh
-nx g @analogjs/nx:app analog-app
+nx g @analogjs/platform:app analog-app
 ```
 
 ## Development
