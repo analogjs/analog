@@ -1,5 +1,4 @@
 import { NitroConfig } from 'nitropack';
-
 import { Options } from './options';
 import { addPostRenderingHooks } from './hooks/post-rendering-hook';
 import { loadEsmModule } from './utils/load-esm';
