@@ -6,10 +6,9 @@ import { defineConfig } from 'vite';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
-    root: 'src',
     test: {
       globals: true,
-      environment: 'jsdom',
+      environment: 'node',
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
       cache: {

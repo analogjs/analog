@@ -1,8 +1,8 @@
 {
-  "name": "@analogjs/platform",
-  "version": "0.2.0-beta.1",
+  "name": "@analogjs/vite-plugin-nitro",
+  "version": "0.2.0-beta.0",
   "type": "commonjs",
-  "description": "The fullstack meta-framework for Angular",
+  "description": "A Vite plugin for adding a nitro API server",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
     ".": "./src/index.js",
@@ -24,10 +24,6 @@
     "url": "https://github.com/analogjs/analog.git"
   },
   "dependencies": {
-    "nitropack": "^1.0.0",
-    "@analogjs/vite-plugin-angular": "^0.2.0-beta.1",
-    "@analogjs/vite-plugin-nitro": "latest"
-  },
-  "generators": "./src/lib/nx-plugin/generators.json",
-  "schematics": "./src/lib/nx-plugin/generators.json"
+    "nitropack": "^1.0.0"
+  }
 }

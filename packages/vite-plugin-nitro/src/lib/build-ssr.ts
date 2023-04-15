@@ -1,5 +1,5 @@
 import { build, mergeConfig, UserConfig } from 'vite';
-import { Options } from '../options';
+import { Options } from './options';
 
 export async function buildSSRApp(config: UserConfig, options?: Options) {
   const ssrBuildConfig = mergeConfig(config, {

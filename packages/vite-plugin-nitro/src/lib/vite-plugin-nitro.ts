@@ -2,15 +2,12 @@ import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm'
 import { NitroConfig } from 'nitropack';
 import { toNodeListener } from 'h3';
 import { Plugin, UserConfig, ViteDevServer } from 'vite';
-import { Options } from './options';
 import { buildServer } from './build-server';
-import { buildSSRApp } from './ssr/build';
+import { buildSSRApp } from './build-ssr';
 import { normalizePath } from 'vite';
+import { Options } from './options';
 
-export function viteNitroPlugin(
-  options?: Options,
-  nitroOptions?: NitroConfig
-): Plugin {
+export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
   const rootDir = nitroOptions?.rootDir || '.';
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const apiPrefix = `/${nitroOptions?.runtimeConfig?.['apiPrefix'] ?? 'api'}`;

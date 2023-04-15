@@ -11,10 +11,7 @@
         "outputPath": "node_modules/@analogjs/platform",
         "main": "packages/platform/src/index.ts",
         "tsConfig": "packages/platform/tsconfig.lib.json",
-        "assets": [
-          "packages/platform/*.md",
-          "packages/platform/src/lib/runtime/*.js"
-        ],
+        "assets": ["packages/platform/*.md"],
         "updateBuildableProjectDepsInPackageJson": false
       },
       "configurations": {
@@ -25,7 +22,8 @@
           "tsConfig": "packages/platform/tsconfig.lib.json"
         }
       },
-      "defaultConfiguration": "production"
+      "defaultConfiguration": "production",
+      "dependsOn": ["^build"]
     },
     "build": {
       "executor": "nx:run-commands",
@@ -50,5 +48,5 @@
     }
   },
   "tags": [],
-  "implicitDependencies": ["vite-plugin-angular"]
+  "implicitDependencies": ["vite-plugin-angular", "vite-plugin-nitro"]
 }
