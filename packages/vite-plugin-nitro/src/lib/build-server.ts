@@ -1,6 +1,5 @@
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
 import { NitroConfig } from 'nitropack';
-
 import { Options } from './options';
 
 export async function buildServer(

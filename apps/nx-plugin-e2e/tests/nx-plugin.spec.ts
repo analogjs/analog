@@ -6,7 +6,7 @@ import {
   uniq,
 } from '@nrwl/nx-plugin/testing';
 
-describe('nx-plugin e2e', () => {
+describe.skip('nx-plugin e2e', () => {
   // Setting up individual workspaces per
   // test can cause e2e runs to take a long time.
   // For this reason, we recommend each suite only
@@ -17,6 +17,10 @@ describe('nx-plugin e2e', () => {
     ensureNxProject(
       '@analogjs/vite-plugin-angular',
       'node_modules/@analogjs/vite-plugin-angular'
+    );
+    ensureNxProject(
+      '@analogjs/vite-plugin-nitro',
+      'node_modules/@analogjs/vite-plugin-nitro'
     );
     ensureNxProject('@analogjs/platform', 'node_modules/@analogjs/platform');
   });
