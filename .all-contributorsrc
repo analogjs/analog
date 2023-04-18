@@ -345,6 +345,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "gergobergo",
+      "name": "gergobergo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25322572?v=4",
+      "profile": "https://github.com/gergobergo",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
