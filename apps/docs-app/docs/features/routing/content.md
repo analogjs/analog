@@ -93,7 +93,7 @@ Hello World
 
 ## Using the Content Files List
 
-To get a list using the list of content files in the `src/content` folder, use the `injectContentFiles()` function from the `@analogjs/content` package in your component.
+To get a list using the list of content files in the `src/content` folder, use the `injectContentFiles<Attributes>(filterFn?: InjectContentFilesFilterFunction<Attributes>)` function from the `@analogjs/content` package in your component. To narrow the files, you can use the `filterFn` predicate function as an argument. You can use the `InjectContentFilesFilterFunction<T>` type to set up your predicate.
 
 ```ts
 import { Component } from '@angular/core';
@@ -122,7 +122,9 @@ export interface PostAttributes {
   `,
 })
 export default class BlogComponent {
-  readonly posts = injectContentFiles<PostAttributes>();
+  private readonly contentFilterFn: InjectContentFilesFilterFunction<PostAttributes> =
+    (contentFile) => !!contentFile.filename.includes('/src/content/blog/');
+  readonly posts = injectContentFiles<PostAttributes>(contentFilterFn);
 }
 ```
 
