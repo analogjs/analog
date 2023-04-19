@@ -67,7 +67,7 @@ The example route below in `src/app/pages/products.[productId].page.ts` defines 
 ```ts
 import { Component, inject } from '@angular/core';
 import { AsyncPipe, JsonPipe } from '@angular/common';
-import { ActivatedRoute } from '@analogjs/router';
+import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 @Component({
@@ -149,7 +149,7 @@ The nested `src/app/pages/products/[productId].page.ts` file contains the `/prod
 ```ts
 import { Component, inject } from '@angular/core';
 import { AsyncPipe, JsonPipe } from '@angular/common';
-import { ActivatedRoute } from '@analogjs/router';
+import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 @Component({
