@@ -122,11 +122,13 @@ function convertTypeScriptDiagnostic(
 export function createCompilerPlugin(
   pluginOptions: CompilerPluginOptions
 ): Plugin {
+  let handleJs = false;
+
   return {
     name: 'angular-compiler',
     // eslint-disable-next-line max-lines-per-function
     async setup(build: PluginBuild): Promise<void> {
-      let setupWarnings: PartialMessage[] | undefined;
+      let setupWarnings: PartialMessage[] | undefined = [];
 
       // Initialize a worker pool for JavaScript transformations
       const javascriptTransformer = new JavaScriptTransformer(
@@ -134,7 +136,7 @@ export function createCompilerPlugin(
         maxWorkers
       );
 
-      const { GLOBAL_DEFS_FOR_TERSER_WITH_AOT, readConfiguration } =
+      const { GLOBAL_DEFS_FOR_TERSER_WITH_AOT } =
         await AotCompilation.loadCompilerCli();
 
       // Setup defines based on the values provided by the Angular compiler-cli
@@ -155,53 +157,6 @@ export function createCompilerPlugin(
         build.initialOptions.define[key] = value!.toString();
       }
 
-      // The tsconfig is loaded in setup instead of in start to allow the esbuild target build option to be modified.
-      // esbuild build options can only be modified in setup prior to starting the build.
-      const {
-        options: compilerOptions,
-        rootNames,
-        errors: configurationDiagnostics,
-      } = readConfiguration(pluginOptions.tsconfig, {
-        noEmitOnError: false,
-        suppressOutputPathCheck: true,
-        outDir: undefined,
-        inlineSources: pluginOptions.sourcemap,
-        inlineSourceMap: pluginOptions.sourcemap,
-        sourceMap: false,
-        mapRoot: undefined,
-        sourceRoot: undefined,
-        declaration: false,
-        declarationMap: false,
-        allowEmptyCodegenFiles: false,
-        annotationsAs: 'decorators',
-        enableResourceInlining: false,
-      });
-
-      if (
-        compilerOptions.target === undefined ||
-        compilerOptions.target < ts.ScriptTarget.ES2022
-      ) {
-        // If 'useDefineForClassFields' is already defined in the users project leave the value as is.
-        // Otherwise fallback to false due to https://github.com/microsoft/TypeScript/issues/45995
-        // which breaks the deprecated `@Effects` NGRX decorator and potentially other existing code as well.
-        compilerOptions.target = ts.ScriptTarget.ES2022;
-        compilerOptions.useDefineForClassFields ??= false;
-
-        (setupWarnings ??= []).push({
-          text:
-            'TypeScript compiler options "target" and "useDefineForClassFields" are set to "ES2022" and ' +
-            '"false" respectively by the Angular CLI.',
-          location: { file: pluginOptions.tsconfig },
-          notes: [
-            {
-              text:
-                'To control ECMA version and features use the Browerslist configuration. ' +
-                'For more information, see https://angular.io/guide/build#configuring-browser-compatibility',
-            },
-          ],
-        });
-      }
-
       // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
       let fileEmitter: FileEmitter | undefined;
 
@@ -211,9 +166,6 @@ export function createCompilerPlugin(
         const result: OnStartResult = {
           warnings: setupWarnings,
         };
-
-        // Reset the setup warnings so that they are only shown during the first build.
-        setupWarnings = undefined;
 
         // Create Angular compiler host options
         const hostOptions: AngularHostOptions = {
@@ -230,12 +182,50 @@ export function createCompilerPlugin(
 
         // Initialize the Angular compilation for the current build.
         // In watch mode, previous build state will be reused.
-        const { affectedFiles } = await compilation.initialize(
-          rootNames,
-          compilerOptions,
+        const {
+          affectedFiles,
+          compilerOptions: { allowJs },
+        } = await compilation.initialize(
+          pluginOptions.tsconfig,
           hostOptions,
-          configurationDiagnostics
+          (compilerOptions) => {
+            if (
+              compilerOptions.target === undefined ||
+              compilerOptions.target < ts.ScriptTarget.ES2022
+            ) {
+              // If 'useDefineForClassFields' is already defined in the users project leave the value as is.
+              // Otherwise fallback to false due to https://github.com/microsoft/TypeScript/issues/45995
+              // which breaks the deprecated `@Effects` NGRX decorator and potentially other existing code as well.
+              compilerOptions.target = ts.ScriptTarget.ES2022;
+              compilerOptions.useDefineForClassFields ??= false;
+
+              (setupWarnings ??= []).push({
+                text:
+                  'TypeScript compiler options "target" and "useDefineForClassFields" are set to "ES2022" and ' +
+                  '"false" respectively by the Angular CLI.',
+                location: { file: pluginOptions.tsconfig },
+                notes: [
+                  {
+                    text:
+                      'To control ECMA version and features use the Browerslist configuration. ' +
+                      'For more information, see https://angular.io/guide/build#configuring-browser-compatibility',
+                  },
+                ],
+              });
+            }
+
+            return {
+              ...compilerOptions,
+              noEmitOnError: false,
+              inlineSources: pluginOptions.sourcemap,
+              inlineSourceMap: pluginOptions.sourcemap,
+              mapRoot: undefined,
+              sourceRoot: undefined,
+            };
+          }
         );
+
+        handleJs = allowJs;
 
         // Clear affected files from the cache (if present)
         if (pluginOptions.sourceFileCache) {
@@ -247,7 +237,7 @@ export function createCompilerPlugin(
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        for (const diagnostic of compilation!.collectDiagnostics()) {
+        for (const diagnostic of compilation.collectDiagnostics()) {
           const message = convertTypeScriptDiagnostic(diagnostic);
 
           if (diagnostic.category === ts.DiagnosticCategory.Error) {
@@ -259,12 +249,15 @@ export function createCompilerPlugin(
 
         fileEmitter = compilation.createFileEmitter();
 
+        // Reset the setup warnings so that they are only shown during the first build.
+        setupWarnings = undefined;
+
         return result;
       });
 
       build.onLoad(
         {
-          filter: compilerOptions.allowJs ? /\.[cm]?[jt]sx?$/ : /\.[cm]?tsx?$/,
+          filter: handleJs ? /\.[cm]?[jt]sx?$/ : /\.[cm]?tsx?$/,
         },
         async (args) => {
           assert.ok(fileEmitter, 'Invalid plugin execution order');
@@ -290,7 +283,7 @@ export function createCompilerPlugin(
             if (!typescriptResult?.content) {
               // No TS result indicates the file is not part of the TypeScript program.
               // If allowJs is enabled and the file is JS then defer to the next load hook.
-              if (compilerOptions.allowJs && /\.[cm]?js$/.test(request)) {
+              if (handleJs && /\.[cm]?js$/.test(request)) {
                 return undefined;
               }
 
