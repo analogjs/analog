@@ -20,10 +20,10 @@ describe('nx-plugin generator', () => {
 
     const { dependencies, devDependencies } = readJson(tree, 'package.json');
 
-    expect(dependencies['@analogjs/router']).toBe('^0.2.0-beta.2');
+    expect(dependencies['@analogjs/router']).toBe('^0.2.0-beta.3');
     expect(dependencies['@angular/platform-server']).toBe('^16.0.0-rc.0');
 
-    expect(devDependencies['@analogjs/platform']).toBe('^0.2.0-beta.2');
+    expect(devDependencies['@analogjs/platform']).toBe('^0.2.0-beta.3');
     expect(devDependencies['vite-tsconfig-paths']).toBe('^4.0.2');
 
     expect(config.root).toBe('apps/analog');
