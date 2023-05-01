@@ -8,7 +8,7 @@ import {
   offsetFromRoot as determineOffsetFromRoot,
   stripIndents,
   Tree,
-} from '@nrwl/devkit';
+} from '@nx/devkit';
 import * as path from 'path';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
 import { lt, major } from 'semver';
@@ -102,7 +102,7 @@ async function addDependencies(tree: Tree, majorAngularVersion: number) {
       majorAngularVersion === 15
         ? V15_ANALOG_JS_PLATFORM
         : V16_ANALOG_JS_PLATFORM,
-    '@nrwl/vite': majorAngularVersion === 15 ? V15_NRWL_VITE : V16_NRWL_VITE,
+    '@nx/vite': majorAngularVersion === 15 ? V15_NRWL_VITE : V16_NRWL_VITE,
     jsdom: majorAngularVersion === 15 ? V15_JSDOM : V16_JSDOM,
     typescript: majorAngularVersion === 15 ? V15_TYPESCRIPT : V16_TYPESCRIPT,
     vite: majorAngularVersion === 15 ? V15_VITE : V16_VITE,

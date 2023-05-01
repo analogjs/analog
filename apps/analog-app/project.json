@@ -1,11 +1,12 @@
 {
   "name": "analog-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "sourceRoot": "apps/analog-app/src",
   "prefix": "analogjs",
   "targets": {
     "build": {
-      "executor": "@nrwl/vite:build",
+      "executor": "@nx/vite:build",
       "outputs": [
         "{options.outputPath}",
         "dist/apps/analog-app/.nitro",
@@ -76,7 +77,7 @@
       "defaultConfiguration": "production"
     },
     "serve": {
-      "executor": "@nrwl/vite:dev-server",
+      "executor": "@nx/vite:dev-server",
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "analog-app:build",
@@ -111,7 +112,7 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "options": {
         "lintFilePatterns": [
           "apps/analog-app/**/*.ts",
@@ -120,7 +121,7 @@
       }
     },
     "test": {
-      "executor": "@nrwl/vite:test",
+      "executor": "@nx/vite:test",
       "outputs": ["apps/analog-app/coverage"],
       "options": {
         "config": "vite.config.ts"

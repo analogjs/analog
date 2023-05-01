@@ -5,7 +5,7 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nrwl/js:tsc",
+      "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "node_modules/@analogjs/vite-plugin-angular",
@@ -16,7 +16,7 @@
       }
     },
     "test": {
-      "executor": "@nrwl/vite:test"
+      "executor": "@nx/vite:test"
     }
   },
   "tags": []

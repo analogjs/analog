@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 
-import { offsetFromRoot } from '@nrwl/devkit';
+import { offsetFromRoot } from '@nx/devkit';
 import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/

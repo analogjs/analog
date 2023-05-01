@@ -5,7 +5,7 @@
   "projectType": "application",
   "targets": {
     "vitest": {
-      "executor": "@nrwl/vite:test"
+      "executor": "@nx/vite:test"
     },
     "e2e": {
       "executor": "nx:run-commands",
@@ -15,7 +15,7 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["apps/analog-app-e2e-playwright/**/*.{js,ts}"]

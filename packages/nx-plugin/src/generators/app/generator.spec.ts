@@ -1,5 +1,5 @@
-import { createTreeWithEmptyWorkspace } from '@nrwl/devkit/testing';
-import { readJson, readProjectConfiguration } from '@nrwl/devkit';
+import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing';
+import { readJson, readProjectConfiguration } from '@nx/devkit';
 
 import generator from './generator';
 import { AnalogNxApplicationGeneratorOptions } from './schema';

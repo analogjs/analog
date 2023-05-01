@@ -1,5 +1,6 @@
 {
   "name": "router",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "packages/router/src",
   "prefix": "analogjs",
@@ -21,7 +22,7 @@
       "defaultConfiguration": "production"
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "options": {
         "lintFilePatterns": [
           "packages/router/**/*.ts",
@@ -30,7 +31,7 @@
       }
     },
     "test": {
-      "executor": "@nrwl/vite:test"
+      "executor": "@nx/vite:test"
     }
   },
   "tags": []
