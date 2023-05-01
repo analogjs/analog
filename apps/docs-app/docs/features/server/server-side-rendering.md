@@ -41,3 +41,5 @@ export default defineConfig(({ mode }) => ({
   plugins: [analog({ ssr: false })],
 }));
 ```
+
+Next to the default SSR the `prerender.routes` has a default value. This is the `"/"` route. It is a necessary step to return a rendered HTML when the user visits the root of our app. If you set routes in the plugin config, keep in mind to include the `"/"` value too. You can opt out of it by passing a
