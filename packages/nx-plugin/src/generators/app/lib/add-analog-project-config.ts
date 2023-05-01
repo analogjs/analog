@@ -72,9 +72,6 @@ export function addAnalogProjectConfig(
       test: {
         executor: '@nx/vite:test',
         outputs: [`apps/${projectName}/coverage`],
-        options: {
-          config: 'vite.config.ts',
-        },
       },
     },
     tags: parsedTags,

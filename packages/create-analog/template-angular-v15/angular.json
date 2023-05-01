@@ -44,10 +44,7 @@
           }
         },
         "test": {
-          "builder": "@nx/vite:test",
-          "options": {
-            "config": "vite.config.ts"
-          }
+          "builder": "@nx/vite:test"
         }
       }
     }

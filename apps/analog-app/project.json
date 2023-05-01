@@ -122,10 +122,7 @@
     },
     "test": {
       "executor": "@nx/vite:test",
-      "outputs": ["apps/analog-app/coverage"],
-      "options": {
-        "config": "vite.config.ts"
-      }
+      "outputs": ["apps/analog-app/coverage"]
     }
   },
   "tags": []
