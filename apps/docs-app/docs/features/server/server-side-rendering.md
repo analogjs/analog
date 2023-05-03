@@ -42,9 +42,11 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-With SSR, the  `"/"` route is pre-rendered by default.
+## Prerendering routes
 
-It is a necessary step to return a rendered HTML when the user visits the root of the application. The prerendered routes can be customized, but keep in mind to include the `"/"` value too. You can opt out of it by passing an empty array of routes.
+With SSR, the  `"/"` route is prerendered by default.
+
+It is a necessary step to return a rendered HTML when the user visits the root of the application. The prerendered routes can be customized, but keep in mind to include the `"/"` route also. 
 
 ```js
 import { defineConfig } from 'vite';
@@ -60,3 +62,5 @@ export default defineConfig(({ mode }) => ({
     })
   ],
 }));
+
+You can opt out of prerendering by passing an empty array of routes.
