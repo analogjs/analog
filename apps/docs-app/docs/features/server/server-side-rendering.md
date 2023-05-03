@@ -42,4 +42,21 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-Next to the default SSR the `prerender.routes` has a default value. This is the `"/"` route. It is a necessary step to return a rendered HTML when the user visits the root of our app. If you set routes in the plugin config, keep in mind to include the `"/"` value too. You can opt out of it by passing a
+With SSR, the  `"/"` route is pre-rendered by default.
+
+It is a necessary step to return a rendered HTML when the user visits the root of the application. The prerendered routes can be customized, but keep in mind to include the `"/"` value too. You can opt out of it by passing an empty array of routes.
+
+```js
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  // ...other config
+  plugins: [
+    analog({ 
+      prerender: {
+        routes: ['/', '/about']
+      }
+    })
+  ],
+}));
