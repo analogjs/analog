@@ -42,38 +42,44 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
       ssrBuild = _config.build?.ssr === true;
       config = _config;
 
-      if (isBuild && options?.prerender) {
-        nitroConfig.prerender = {};
-        nitroConfig.prerender.crawlLinks = options?.prerender?.discover;
+      if (isBuild) {
+        if (isEmptyPrerenderRoutes(options)) {
+          nitroConfig.prerender = {};
+          nitroConfig.prerender.routes = ['/'];
+        }
 
-        const prerenderRoutes = options?.prerender?.routes;
-        if (Array.isArray(prerenderRoutes)) {
-          nitroConfig.prerender.routes = prerenderRoutes;
-        } else if (typeof prerenderRoutes === 'function') {
-          nitroConfig.prerender.routes = await prerenderRoutes();
+        if (options?.prerender) {
+          nitroConfig.prerender = nitroConfig.prerender ?? {};
+          nitroConfig.prerender.crawlLinks = options?.prerender?.discover;
+
+          const prerenderRoutes = options?.prerender?.routes;
+          if (isArrayWithElements<string>(prerenderRoutes)) {
+            nitroConfig.prerender.routes = prerenderRoutes;
+          } else if (typeof prerenderRoutes === 'function') {
+            nitroConfig.prerender.routes = await prerenderRoutes();
+          }
+        }
+
+        if (ssrBuild) {
+          nitroConfig = {
+            ...nitroConfig,
+            publicAssets: [{ dir: `../dist/client` }],
+            serverAssets: [{ baseName: 'public', dir: `./dist/client` }],
+            externals: {
+              inline: ['zone.js/node'],
+              external: ['rxjs', 'node-fetch-native/dist/polyfill', 'destr'],
+            },
+            moduleSideEffects: ['zone.js/bundles/zone-node.umd.js'],
+            renderer: normalizePath(`${__dirname}/runtime/renderer`),
+            handlers: [
+              {
+                handler: normalizePath(`${__dirname}/runtime/api-middleware`),
+                middleware: true,
+              },
+            ],
+          };
         }
       }
-
-      if (isBuild && ssrBuild) {
-        nitroConfig = {
-          ...nitroConfig,
-          publicAssets: [{ dir: `../dist/client` }],
-          serverAssets: [{ baseName: 'public', dir: `./dist/client` }],
-          externals: {
-            inline: ['zone.js/node'],
-            external: ['rxjs', 'node-fetch-native/dist/polyfill', 'destr'],
-          },
-          moduleSideEffects: ['zone.js/bundles/zone-node.umd.js'],
-          renderer: normalizePath(`${__dirname}/runtime/renderer`),
-          handlers: [
-            {
-              handler: normalizePath(`${__dirname}/runtime/api-middleware`),
-              middleware: true,
-            },
-          ],
-        };
-      }
-
       nitroConfig = {
         ...nitroConfig,
         ...nitroOptions,
@@ -118,4 +124,15 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
       }
     },
   };
+}
+
+function isEmptyPrerenderRoutes(options?: Options): boolean {
+  if (!options || isArrayWithElements(options?.prerender?.routes)) {
+    return false;
+  }
+  return !options.prerender?.routes;
+}
+
+function isArrayWithElements<T>(arr: unknown): arr is [T, ...T[]] {
+  return !!(Array.isArray(arr) && arr.length);
 }
