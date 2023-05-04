@@ -1,0 +1,68 @@
+{
+  "name": "trpc-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/trpc-app/src",
+  "targets": {
+    "build": {
+      "dependsOn": ["^build"],
+      "executor": "@nx/vite:build",
+      "outputs": [
+        "{options.outputPath}",
+        "dist/apps/trpc-app/.nitro",
+        "dist/apps/trpc-app/ssr",
+        "dist/apps/trpc-app/analog"
+      ],
+      "options": {
+        "configFile": "apps/trpc-app/vite.config.ts",
+        "outputPath": "dist/apps/trpc-app/client"
+      },
+      "defaultConfiguration": "production",
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "sourcemap": false,
+          "mode": "production"
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/vite:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "trpc-app:build",
+        "port": 4205
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "trpc-app:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "trpc-app:build:production"
+        }
+      }
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "browserTarget": "trpc-app:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/trpc-app/**/*.ts", "apps/trpc-app/**/*.html"]
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["apps/trpc-app/coverage"]
+    }
+  },
+  "tags": [],
+  "implicitDependencies": ["trpc"]
+}

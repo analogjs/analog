@@ -24,6 +24,10 @@
       ],
       "@analogjs/router": ["packages/router/src/index.ts"],
       "@analogjs/top-bar": ["libs/top-bar/src/index.ts"],
+      "@analogjs/trpc": [
+        "./node_modules/@analogjs/trpc",
+        "packages/trpc/src/index.ts"
+      ],
       "@analogjs/vite-plugin-angular": [
         "./node_modules/@analogjs/vite-plugin-angular",
         "packages/vite-plugin-angular/src/index.ts"

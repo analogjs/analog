@@ -15,6 +15,7 @@ module.exports = {
         'platform',
         'content',
         'nx-plugin',
+        'trpc',
       ],
     ],
   },

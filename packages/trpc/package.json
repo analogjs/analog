@@ -1,0 +1,32 @@
+{
+  "name": "@analogjs/trpc",
+  "version": "0.2.0-beta.3",
+  "description": "Angular/Nitro-based tRPC integration",
+  "author": "Brandon Roberts <robertsbt@gmail.com>",
+  "keywords": [
+    "angular",
+    "trpc",
+    "remote-procedure-call",
+    "meta-framework"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/analogjs/analog/issues"
+  },
+  "homepage": "https://analogjs.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/analogjs/analog.git"
+  },
+  "peerDependencies": {
+    "@angular/common": "16.0.0-rc.0",
+    "@angular/core": "16.0.0-rc.0",
+    "@trpc/client": "10.25.0",
+    "@trpc/server": "10.25.0",
+    "superjson": "^1.12.2",
+    "isomorphic-fetch": "^3.0.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  }
+}
