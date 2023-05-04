@@ -1,0 +1,33 @@
+{
+  "name": "trpc",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "/src",
+  "prefix": "analogjs",
+  "tags": [],
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@angular-devkit/build-angular:ng-packagr",
+      "outputs": ["node_modules/@analogjs/trpc"],
+      "options": {
+        "project": "packages/trpc/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/trpc/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/trpc/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/trpc/**/*.ts", "packages/trpc/**/*.html"]
+      }
+    }
+  }
+}

@@ -30,6 +30,8 @@ What kind of change does this PR introduce?
 - [ ] router
 - [ ] platform
 - [ ] content
+- [ ] nx-plugin
+- [ ] trpc
 
 ## What is the current behavior?
 
