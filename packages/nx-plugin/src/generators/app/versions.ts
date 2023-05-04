@@ -2,7 +2,7 @@ export const MINIMUM_SUPPORTED_ANGULAR_VERSION = '15.0.0';
 // V16
 // dependencies
 export const V16_ANGULAR = '16.0.0';
-export const V16_NX_DEVKIT = '16.0.3';
+export const V16_NX_DEVKIT = '^16.0.0';
 export const V16_NX_ANGULAR = '16.1.0-rc.0';
 export const V16_ANALOG_JS_CONTENT = '^0.2.0-beta.3';
 export const V16_ANALOG_JS_ROUTER = '^0.2.0-beta.3';
@@ -13,7 +13,7 @@ export const V16_PRISMJS = '^1.29.0';
 
 // devDependencies
 export const V16_ANALOG_JS_PLATFORM = '^0.2.0-beta.3';
-export const V16_NX_VITE = '16.0.3';
+export const V16_NX_VITE = '^16.0.0';
 export const V16_JSDOM = '^20.0.0';
 export const V16_TYPESCRIPT = '~5.0.2';
 export const V16_VITE = '^4.0.3';
