@@ -1,7 +1,5 @@
 import {
-  addDependenciesToPackageJson,
   formatFiles,
-  generateFiles,
   getWorkspaceLayout,
   installPackagesTask,
   names,
@@ -11,37 +9,13 @@ import {
 } from '@nx/devkit';
 import * as path from 'path';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
-import { lt, major } from 'semver';
-import { getInstalledAngularVersion } from '../../utils/version-utils';
+import { major } from 'semver';
+import { getInstalledPackageVersion } from '../../utils/version-utils';
 import { addAnalogProjectConfig } from './lib/add-analog-project-config';
-import {
-  V15_ANALOG_JS_CONTENT,
-  V15_ANALOG_JS_PLATFORM,
-  V15_ANALOG_JS_ROUTER,
-  V15_ANGULAR_PLATFORM_SERVER,
-  V15_FRONT_MATTER,
-  V15_JSDOM,
-  V15_MARKED,
-  V15_NRWL_VITE,
-  V15_PRISMJS,
-  V15_TYPESCRIPT,
-  V15_VITE,
-  V15_VITE_TSCONFIG_PATHS,
-  V15_VITEST,
-  V16_ANALOG_JS_CONTENT,
-  V16_ANALOG_JS_PLATFORM,
-  V16_ANALOG_JS_ROUTER,
-  V16_ANGULAR_PLATFORM_SERVER,
-  V16_FRONT_MATTER,
-  V16_JSDOM,
-  V16_MARKED,
-  V16_NRWL_VITE,
-  V16_PRISMJS,
-  V16_TYPESCRIPT,
-  V16_VITE,
-  V16_VITE_TSCONFIG_PATHS,
-  V16_VITEST,
-} from './files/versions';
+import { addAnalogDependencies } from './lib/add-analog-dependencies';
+import { initializeAngularWorkspace } from './lib/initialize-analog-workspace';
+import { addFiles } from './lib/add-files';
+import { addTailwindConfig } from './lib/add-tailwind-config';
 
 export interface NormalizedOptions
   extends AnalogNxApplicationGeneratorOptions,
@@ -51,24 +25,25 @@ export interface NormalizedOptions
   projectDirectory: string;
   parsedTags: string[];
   offsetFromRoot: string;
+  appsDir: string;
+  nxPackageNamespace: string;
 }
 
 function normalizeOptions(
   tree: Tree,
-  options: AnalogNxApplicationGeneratorOptions
+  options: AnalogNxApplicationGeneratorOptions,
+  nxVersion: string
 ): NormalizedOptions {
+  const appsDir = getWorkspaceLayout(tree).appsDir;
   const allNames = names(options.name);
-  const name = allNames.fileName;
-  const projectDirectory = options.directory
-    ? `${names(options.directory).fileName}/${name}`
-    : name;
+  const projectDirectory = allNames.fileName;
   const projectName = projectDirectory.replace(new RegExp('/', 'g'), '-');
-  const projectRoot = `${getWorkspaceLayout(tree).appsDir}/${projectDirectory}`;
+  const projectRoot = `${appsDir}/${projectDirectory}`;
   const parsedTags = options.tags
     ? options.tags.split(',').map((s) => s.trim())
     : [];
   const offsetFromRoot = determineOffsetFromRoot(projectRoot);
-
+  const nxPackageNamespace = major(nxVersion) >= 16 ? '@nx' : '@nrwl';
   return {
     ...options,
     ...allNames,
@@ -77,88 +52,60 @@ function normalizeOptions(
     projectDirectory,
     parsedTags,
     offsetFromRoot,
+    appsDir,
+    nxPackageNamespace,
   };
 }
 
-async function addDependencies(tree: Tree, majorAngularVersion: number) {
-  const dependencies = {
-    '@analogjs/content':
-      majorAngularVersion === 15
-        ? V15_ANALOG_JS_CONTENT
-        : V16_ANALOG_JS_CONTENT,
-    '@analogjs/router':
-      majorAngularVersion === 15 ? V15_ANALOG_JS_ROUTER : V16_ANALOG_JS_ROUTER,
-    '@angular/platform-server':
-      majorAngularVersion === 15
-        ? V15_ANGULAR_PLATFORM_SERVER
-        : V16_ANGULAR_PLATFORM_SERVER,
-    'front-matter':
-      majorAngularVersion === 15 ? V15_FRONT_MATTER : V16_FRONT_MATTER,
-    marked: majorAngularVersion === 15 ? V15_MARKED : V16_MARKED,
-    prismjs: majorAngularVersion === 15 ? V15_PRISMJS : V16_PRISMJS,
-  };
-  const devDependencies = {
-    '@analogjs/platform':
-      majorAngularVersion === 15
-        ? V15_ANALOG_JS_PLATFORM
-        : V16_ANALOG_JS_PLATFORM,
-    '@nx/vite': majorAngularVersion === 15 ? V15_NRWL_VITE : V16_NRWL_VITE,
-    jsdom: majorAngularVersion === 15 ? V15_JSDOM : V16_JSDOM,
-    typescript: majorAngularVersion === 15 ? V15_TYPESCRIPT : V16_TYPESCRIPT,
-    vite: majorAngularVersion === 15 ? V15_VITE : V16_VITE,
-    'vite-tsconfig-paths':
-      majorAngularVersion === 15
-        ? V15_VITE_TSCONFIG_PATHS
-        : V16_VITE_TSCONFIG_PATHS,
-    vitest: majorAngularVersion === 15 ? V15_VITEST : V16_VITEST,
-  };
-
-  addDependenciesToPackageJson(tree, dependencies, devDependencies);
-}
-
-function addFiles(
-  tree: Tree,
-  options: NormalizedOptions,
-  majorAngularVersion: number
-) {
-  const templateOptions = {
-    ...options,
-    template: '',
-  };
-  generateFiles(
-    tree,
-    path.join(__dirname, 'files', 'template-angular-v' + majorAngularVersion),
-    options.projectRoot,
-    templateOptions
-  );
-}
-
-export default async function (
+export async function appGenerator(
   tree: Tree,
   options: AnalogNxApplicationGeneratorOptions
 ) {
-  const installedAngularVersion = getInstalledAngularVersion(
-    tree,
-    '16.0.0-next.0'
-  );
+  const nxVersion = getInstalledPackageVersion(tree, 'nx');
 
-  const installedMajorAngularVersion = major(installedAngularVersion);
-
-  const normalizedOptions = normalizeOptions(tree, options);
-
-  const { projectRoot, projectName, parsedTags, name } = normalizedOptions;
-
-  if (lt(installedAngularVersion, '15.0.0')) {
-    throw new Error(
-      stripIndents`AnalogJs only supports an Angular version of 15 and higher`
-    );
+  if (!nxVersion) {
+    throw new Error(stripIndents`Nx must be installed to execute this plugin`);
   }
 
-  await addDependencies(tree, installedMajorAngularVersion);
+  const normalizedOptions = normalizeOptions(tree, options, nxVersion);
+  const angularVersion = await initializeAngularWorkspace(
+    tree,
+    nxVersion,
+    normalizedOptions
+  );
+  const majorNxVersion = major(nxVersion);
+  const majorAngularVersion = major(angularVersion);
 
-  addAnalogProjectConfig(tree, projectRoot, projectName, parsedTags, name);
+  await addAnalogDependencies(tree, majorAngularVersion, majorNxVersion);
 
-  addFiles(tree, normalizedOptions, installedMajorAngularVersion);
+  const {
+    projectRoot,
+    projectName,
+    parsedTags,
+    name,
+    appsDir,
+    nxPackageNamespace,
+  } = normalizedOptions;
+  addAnalogProjectConfig(
+    tree,
+    projectRoot,
+    projectName,
+    parsedTags,
+    name,
+    appsDir,
+    nxPackageNamespace
+  );
+
+  addFiles(tree, normalizedOptions, majorAngularVersion);
+
+  if (!normalizedOptions.skipTailwind) {
+    await addTailwindConfig(
+      tree,
+      normalizedOptions.projectRoot,
+      normalizedOptions.projectName,
+      majorNxVersion
+    );
+  }
 
   if (!normalizedOptions.skipFormat) {
     await formatFiles(tree);
@@ -168,3 +115,5 @@ export default async function (
     installPackagesTask(tree);
   };
 }
+
+export default appGenerator;

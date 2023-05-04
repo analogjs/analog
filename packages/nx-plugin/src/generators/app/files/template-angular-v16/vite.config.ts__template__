@@ -17,33 +17,33 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       analog({
-        ssrBuildDir: '../../dist/apps/<%= projectName %>/ssr',
-        entryServer: 'apps/<%= projectName %>/src/main.server.ts',
+        ssrBuildDir: '<%= offsetFromRoot %>dist/<%= appsDir %>/<%= projectName %>/ssr',
+        entryServer: '<%= appsDir %>/<%= projectName %>/src/main.server.ts',
         vite: {
           inlineStylesExtension: 'css',
           tsconfig:
             mode === 'test'
-              ? 'apps/<%= projectName %>/tsconfig.spec.json'
-              : 'apps/<%= projectName %>/tsconfig.app.json',
+              ? '<%= appsDir %>/<%= projectName %>/tsconfig.spec.json'
+              : '<%= appsDir %>/<%= projectName %>/tsconfig.app.json',
         },
         nitro: {
-          rootDir: 'apps/<%= projectName %>',
+          rootDir: '<%= appsDir %>/<%= projectName %>',
           output: {
-            dir: '../../../dist/apps/<%= projectName %>/analog',
-            publicDir: '../../../dist/apps/<%= projectName %>/analog/public',
+            dir: '<%= offsetFromRoot %>../dist/<%= appsDir %>/<%= projectName %>/analog',
+            publicDir: '<%= offsetFromRoot %>../dist/<%= appsDir %>/<%= projectName %>/analog/public',
           },
-          publicAssets: [{ dir: `../../../dist/apps/<%= projectName %>/client` }],
+          publicAssets: [{ dir: `<%= offsetFromRoot %>../dist/<%= appsDir %>/<%= projectName %>/client` }],
           serverAssets: [
-            { baseName: 'public', dir: `./dist/apps/<%= projectName %>/client` },
+            { baseName: 'public', dir: `./dist/<%= appsDir %>/<%= projectName %>/client` },
           ],
-          buildDir: '../../dist/apps/<%= projectName %>/.nitro',
+          buildDir: '<%= offsetFromRoot %>dist/<%= appsDir %>/<%= projectName %>/.nitro',
         },
         prerender: {
           routes: ['/'],
         },
       }),
       tsConfigPaths({
-        root: '../../',
+        root: '<%= offsetFromRoot %>',
       }),
       visualizer() as Plugin,
       splitVendorChunkPlugin(),
@@ -51,10 +51,10 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'jsdom',
-      setupFiles: ['src/test.ts'],
+      setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
       cache: {
-        dir: `../../node_modules/.vitest`,
+        dir: `<%= offsetFromRoot %>node_modules/.vitest`,
       },
     },
     define: {
