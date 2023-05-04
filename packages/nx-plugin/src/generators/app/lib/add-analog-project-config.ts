@@ -1,5 +1,5 @@
-import type { ProjectConfiguration, Tree } from '@nrwl/devkit';
-import { addProjectConfiguration } from '@nrwl/devkit';
+import type { ProjectConfiguration, Tree } from '@nx/devkit';
+import { addProjectConfiguration } from '@nx/devkit';
 
 export function addAnalogProjectConfig(
   tree: Tree,
@@ -14,7 +14,7 @@ export function addAnalogProjectConfig(
     sourceRoot: `${projectRoot}/src`,
     targets: {
       build: {
-        executor: '@nrwl/vite:build',
+        executor: '@nx/vite:build',
         outputs: [
           '{options.outputPath}',
           `dist/apps/${projectName}/.nitro`,
@@ -37,7 +37,7 @@ export function addAnalogProjectConfig(
         },
       },
       serve: {
-        executor: '@nrwl/vite:dev-server',
+        executor: '@nx/vite:dev-server',
         defaultConfiguration: 'development',
         options: {
           buildTarget: `${projectName}:build`,
@@ -60,7 +60,7 @@ export function addAnalogProjectConfig(
         },
       },
       lint: {
-        executor: '@nrwl/linter:eslint',
+        executor: '@nx/linter:eslint',
         outputs: ['{options.outputFile}'],
         options: {
           lintFilePatterns: [
@@ -70,11 +70,8 @@ export function addAnalogProjectConfig(
         },
       },
       test: {
-        executor: '@nrwl/vite:test',
+        executor: '@nx/vite:test',
         outputs: [`apps/${projectName}/coverage`],
-        options: {
-          config: 'vite.config.ts',
-        },
       },
     },
     tags: parsedTags,

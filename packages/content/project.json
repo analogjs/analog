@@ -23,7 +23,7 @@
       "defaultConfiguration": "production"
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
@@ -34,7 +34,7 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "executor": "@nrwl/vite:test"
+      "executor": "@nx/vite:test"
     }
   },
   "tags": []

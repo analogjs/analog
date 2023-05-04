@@ -13,7 +13,7 @@
       }
     },
     "test": {
-      "executor": "@nrwl/vite:test"
+      "executor": "@nx/vite:test"
     }
   },
   "tags": []

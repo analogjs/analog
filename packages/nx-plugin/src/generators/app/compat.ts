@@ -1,4 +1,4 @@
-import { convertNxGenerator } from '@nrwl/devkit';
+import { convertNxGenerator } from '@nx/devkit';
 import generator from './generator';
 
 export default convertNxGenerator(generator);

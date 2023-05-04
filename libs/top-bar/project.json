@@ -6,10 +6,10 @@
   "prefix": "analogjs",
   "targets": {
     "test": {
-      "executor": "@nrwl/vite:test"
+      "executor": "@nx/vite:test"
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["libs/top-bar/**/*.ts", "libs/top-bar/**/*.html"]

@@ -5,7 +5,7 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nrwl/js:tsc",
+      "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "node_modules/@analogjs/platform/src/lib/nx-plugin",
@@ -32,7 +32,7 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
@@ -43,7 +43,7 @@
       }
     },
     "test": {
-      "executor": "@nrwl/vite:test"
+      "executor": "@nx/vite:test"
     }
   },
   "tags": []
