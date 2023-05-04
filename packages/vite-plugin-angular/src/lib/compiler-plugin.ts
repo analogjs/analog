@@ -22,6 +22,7 @@ import { CompilerPluginOptions } from '@angular-devkit/build-angular/src/builder
 import { maxWorkers } from '@angular-devkit/build-angular/src/utils/environment-options';
 import { FileEmitter } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/angular-compilation';
 import { AotCompilation } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/aot-compilation';
+import { JitCompilation } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/jit-compilation';
 import { AngularHostOptions } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/angular-host';
 import { JavaScriptTransformer } from '@angular-devkit/build-angular/src/builders/browser-esbuild/javascript-transformer';
 
@@ -160,7 +161,7 @@ export function createCompilerPlugin(
       // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
       let fileEmitter: FileEmitter | undefined;
 
-      let compilation: AotCompilation | undefined;
+      let compilation: AotCompilation | JitCompilation | undefined;
 
       build.onStart(async () => {
         const result: OnStartResult = {
@@ -178,7 +179,9 @@ export function createCompilerPlugin(
         };
 
         // Create new compilation if first build; otherwise, use existing for rebuilds
-        compilation ??= new AotCompilation();
+        compilation ??= pluginOptions?.jit
+          ? new JitCompilation()
+          : new AotCompilation();
 
         // Initialize the Angular compilation for the current build.
         // In watch mode, previous build state will be reused.

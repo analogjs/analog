@@ -23,6 +23,9 @@
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
     },
+    "test": {
+      "dependsOn": ["^build"]
+    },
     "serve": {
       "dependsOn": ["^build"]
     },

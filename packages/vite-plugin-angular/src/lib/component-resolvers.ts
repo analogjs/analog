@@ -17,9 +17,9 @@ export function resolveStyleUrls(code: string, id: string) {
     );
     const styleUrlPaths = styleUrls?.split(',') || [];
 
-    return styleUrlPaths.map((styleUrlPath) =>
-      resolve(dirname(id), styleUrlPath)
-    );
+    return styleUrlPaths.map((styleUrlPath) => {
+      return `${styleUrlPath}|${resolve(dirname(id), styleUrlPath)}`;
+    });
   }
 
   return [];
@@ -41,7 +41,7 @@ export function resolveTemplateUrls(code: string, id: string) {
       );
       const templateUrlPath = resolve(dirname(id), resolvedTemplatePath);
 
-      templateUrlPaths.push(templateUrlPath);
+      templateUrlPaths.push(`${resolvedTemplatePath}|${templateUrlPath}`);
     });
   }
 

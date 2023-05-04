@@ -1,6 +1,8 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 import tsConfigPaths from 'vite-tsconfig-paths';
