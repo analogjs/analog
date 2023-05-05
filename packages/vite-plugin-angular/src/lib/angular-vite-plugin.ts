@@ -406,7 +406,9 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           if (!forceAsyncTransformation && !isProd && !shouldLink) {
             return {
-              code: code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, ''),
+              code: isProd
+                ? code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
+                : code,
             };
           }
 

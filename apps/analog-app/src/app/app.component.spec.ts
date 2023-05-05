@@ -2,8 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AppComponent } from './app.component';
 import { TopBarComponent } from '@analogjs/top-bar';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
@@ -15,7 +13,6 @@ describe('AppComponent', () => {
         RouterTestingModule.withRoutes([]),
       ],
       declarations: [],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
   });
 
