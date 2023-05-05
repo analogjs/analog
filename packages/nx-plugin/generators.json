@@ -7,6 +7,12 @@
       "factory": "./src/generators/app/generator",
       "schema": "./src/generators/app/schema.json",
       "description": "Generates an AnalogJs application"
+    },
+    "preset": {
+      "factory": "./src/generators/preset/generator",
+      "schema": "./src/generators/preset/schema.json",
+      "description": "Analog preset for create-nx-workspace",
+      "x-use-standalone-layout": true
     }
   },
   "schematics": {

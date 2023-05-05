@@ -1,22 +1,28 @@
 import { readJson, Tree } from '@nx/devkit';
 import { clean, coerce } from 'semver';
 
-export function getInstalledAngularVersion(
+export function getInstalledPackageVersion(
   tree: Tree,
-  defaultVersion: string
-): string {
+  packageName: string,
+  defaultVersion?: string
+): string | null {
   const pkgJson = readJson(tree, 'package.json');
-  const installedAngularVersion =
-    pkgJson.dependencies && pkgJson.dependencies['@angular/core'];
+  const installedPackageVersion =
+    (pkgJson.dependencies && pkgJson.dependencies[packageName]) ||
+    (pkgJson.devDependencies && pkgJson.devDependencies[packageName]);
+  if (!installedPackageVersion && !defaultVersion) {
+    return null;
+  }
+
   if (
-    !installedAngularVersion ||
-    installedAngularVersion === 'latest' ||
-    installedAngularVersion === 'next'
+    !installedPackageVersion ||
+    installedPackageVersion === 'latest' ||
+    installedPackageVersion === 'next'
   ) {
     return clean(defaultVersion) ?? coerce(defaultVersion).version;
   }
 
   return (
-    clean(installedAngularVersion) ?? coerce(installedAngularVersion).version
+    clean(installedPackageVersion) ?? coerce(installedPackageVersion).version
   );
 }

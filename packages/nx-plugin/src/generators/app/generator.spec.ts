@@ -3,10 +3,12 @@ import { readJson, readProjectConfiguration } from '@nx/devkit';
 
 import generator from './generator';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
+import { addDependenciesToPackageJson } from '@nrwl/devkit';
 
 describe('nx-plugin generator', () => {
   const setup = async (options: AnalogNxApplicationGeneratorOptions) => {
     const tree = createTreeWithEmptyWorkspace({ layout: 'apps-libs' });
+    addDependenciesToPackageJson(tree, { nx: '16.0.0' }, {});
     await generator(tree, options);
     const config = readProjectConfiguration(tree, options.name);
     return {

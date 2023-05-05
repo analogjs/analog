@@ -6,7 +6,9 @@ export function addAnalogProjectConfig(
   projectRoot: string,
   projectName: string,
   parsedTags: string[],
-  name: string
+  name: string,
+  appsDir: string,
+  nxPackageNamespace: string
 ) {
   const projectConfiguration: ProjectConfiguration = {
     root: projectRoot,
@@ -14,16 +16,16 @@ export function addAnalogProjectConfig(
     sourceRoot: `${projectRoot}/src`,
     targets: {
       build: {
-        executor: '@nx/vite:build',
+        executor: `${nxPackageNamespace}/vite:build`,
         outputs: [
           '{options.outputPath}',
-          `dist/apps/${projectName}/.nitro`,
-          `dist/apps/${projectName}/ssr`,
-          `dist/apps/${projectName}/analog`,
+          `dist/${appsDir}/${projectName}/.nitro`,
+          `dist/${appsDir}/${projectName}/ssr`,
+          `dist/${appsDir}/${projectName}/analog`,
         ],
         options: {
-          configFile: 'vite.config.ts',
-          outputPath: `dist/apps/${projectName}/client`,
+          configFile: `${appsDir}/${projectName}/vite.config.ts`,
+          outputPath: `dist/${appsDir}/${projectName}/client`,
         },
         defaultConfiguration: 'production',
         configurations: {
@@ -37,7 +39,7 @@ export function addAnalogProjectConfig(
         },
       },
       serve: {
-        executor: '@nx/vite:dev-server',
+        executor: `${nxPackageNamespace}/vite:dev-server`,
         defaultConfiguration: 'development',
         options: {
           buildTarget: `${projectName}:build`,
@@ -54,24 +56,24 @@ export function addAnalogProjectConfig(
         },
       },
       'extract-i18n': {
-        executor: '@angular-devkit/build-angular:extract-i18n',
+        executor: `@angular-devkit/build-angular:extract-i18n`,
         options: {
           browserTarget: `${projectName}:build`,
         },
       },
       lint: {
-        executor: '@nx/linter:eslint',
+        executor: `${nxPackageNamespace}/linter:eslint`,
         outputs: ['{options.outputFile}'],
         options: {
           lintFilePatterns: [
-            `apps/${projectName}/**/*.ts`,
-            `apps/${projectName}/**/*.html`,
+            `${appsDir}/${projectName}/**/*.ts`,
+            `${appsDir}/${projectName}/**/*.html`,
           ],
         },
       },
       test: {
-        executor: '@nx/vite:test',
-        outputs: [`apps/${projectName}/coverage`],
+        executor: `${nxPackageNamespace}/vite:test`,
+        outputs: [`${appsDir}/${projectName}/coverage`],
       },
     },
     tags: parsedTags,

@@ -1,6 +1,6 @@
 export interface AnalogNxApplicationGeneratorOptions {
   name: string;
   tags?: string;
-  directory?: string;
+  skipTailwind?: boolean;
   skipFormat?: boolean;
 }

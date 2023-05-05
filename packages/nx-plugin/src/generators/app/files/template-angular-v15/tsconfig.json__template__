@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "<%= offsetFromRoot %>tsconfig.base.json",
   "files": [],
   "include": [],
   "exclude": ["./src/server/**/*"],
