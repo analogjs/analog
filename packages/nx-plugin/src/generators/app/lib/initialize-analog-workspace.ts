@@ -4,7 +4,7 @@ import {
   ensurePackage,
   stripIndents,
   Tree,
-} from '@nrwl/devkit';
+} from '@nx/devkit';
 import {
   MINIMUM_SUPPORTED_ANGULAR_VERSION,
   V15_ANGULAR,

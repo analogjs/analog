@@ -7,7 +7,6 @@ import {
   stripIndents,
   Tree,
 } from '@nx/devkit';
-import * as path from 'path';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
 import { major } from 'semver';
 import { getInstalledPackageVersion } from '../../utils/version-utils';
