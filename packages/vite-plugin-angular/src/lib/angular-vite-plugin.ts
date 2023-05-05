@@ -116,9 +116,9 @@ export function angular(options?: PluginOptions): Plugin[] {
                 }) as any,
               ],
               define: {
-                ngDevMode: watchMode ? JSON.stringify({}) : 'false',
                 ngJitMode: 'false',
                 ngI18nClosureMode: 'false',
+                ...(watchMode ? {} : { ngDevMode: 'false' }),
               },
             },
           },
