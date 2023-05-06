@@ -1,5 +1,7 @@
 import 'zone.js/dist/zone.js';
 import {
+  EnvironmentProviders,
+  Provider,
   reflectComponentType,
   ɵComponentType as ComponentType,
 } from '@angular/core';
@@ -8,11 +10,15 @@ import { createApplication } from '@angular/platform-browser';
 
 export default (element: HTMLElement) => {
   return (
-    Component: ComponentType<unknown>,
+    Component: ComponentType<unknown> & {
+      clientProviders?: (Provider | EnvironmentProviders)[];
+    },
     props?: Record<string, unknown>,
     _childHTML?: unknown
   ) => {
-    createApplication().then((appRef: ApplicationRef) => {
+    createApplication({
+      providers: [...(Component.clientProviders || [])],
+    }).then((appRef: ApplicationRef) => {
       const zone = appRef.injector.get(NgZone);
       zone.run(() => {
         const componentRef = createComponent(Component, {

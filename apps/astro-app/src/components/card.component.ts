@@ -1,9 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  inject,
   Input,
   ViewEncapsulation,
 } from '@angular/core';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'astro-card',
@@ -90,4 +93,9 @@ export class CardComponent {
   @Input() href = '';
   @Input() title = '';
   @Input() body = '';
+
+  static renderProviders = [provideHttpClient()];
+  static clientProviders = [CardComponent.renderProviders, provideAnimations()];
+
+  private _http = inject(HttpClient);
 }
