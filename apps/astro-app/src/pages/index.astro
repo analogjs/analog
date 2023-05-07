@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Card from '../components/Card.astro';
 import { CardComponent } from '../components/card.component.ts';
 import { Instructions } from '../components/Instructions';
+import { TodosComponent } from '../components/todos.component.ts';
 
 const serverSideTitle = 'Angular (server side binding)';
 ---
@@ -45,6 +46,8 @@ const serverSideTitle = 'Angular (server side binding)';
       />
 		</ul>
 	</main>
+
+	<TodosComponent />
 </Layout>
 
 <style>

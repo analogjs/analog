@@ -110,7 +110,7 @@ export default defineConfig({
       vite: {
         tsconfig: 'path/to/tsconfig.app.json',
         workspaceRoot: 'rootDir',
-        inlineStylesExtension: 'scss|sass|less'
+        inlineStylesExtension: 'scss|sass|less',
       },
     }),
   ],
@@ -174,6 +174,52 @@ import { HelloComponent } from '../components/hello.component';
 
 Find more information about [Client Directives](https://docs.astro.build/en/reference/directives-reference/#client-directives) in the Astro documentation.
 
+## Adding Component Providers
+
+Additional providers can be added to a component for static rendering and client hydration.
+
+These are `renderProviders` and `clientProviders` respectively. These providers are defined as static arrays on the Component class, and are registered when the component is rendered, and hydrated on the client.
+
+```ts
+import { Component, OnInit, inject } from '@angular/core';
+import { NgFor } from '@angular/common';
+import { provideHttpClient, HttpClient } from '@angular/common/http';
+
+interface Todo {
+  id: number;
+  title: string;
+  completed: boolean;
+}
+
+@Component({
+  selector: 'app-todos',
+  standalone: true,
+  imports: [NgFor],
+  template: `
+    <h2>Todos</h2>
+
+    <ul>
+      <li *ngFor="let todo of todos">
+        {{ todo.title }}
+      </li>
+    </ul>
+  `,
+})
+export class TodosComponent implements OnInit {
+  static clientProviders = [provideHttpClient()];
+  static renderProviders = [];
+
+  http = inject(HttpClient);
+  todos: Todo[] = [];
+
+  ngOnInit() {
+    this.http
+      .get<Todo[]>('https://jsonplaceholder.typicode.com/todos')
+      .subscribe((todos) => (this.todos = todos));
+  }
+}
+```
+
 ## Using Components in MDX pages
 
 To use components with MDX pages, you must install and configure MDX support by following the Astro integration of [@astrojs/mdx](https://docs.astro.build/en/guides/integrations-guide/mdx/). Your `astro.config.mjs` should now include the `@astrojs/mdx` integration.
@@ -192,10 +238,10 @@ Create an `.mdx` file inside the `src/pages` directory and add the Angular compo
 
 ```md
 ---
-layout: "../../layouts/BlogPost.astro"
-title: "Using Angular in MDX"
-description: "Lorem ipsum dolor sit amet"
-pubDate: "Sep 22 2022"
+layout: '../../layouts/BlogPost.astro'
+title: 'Using Angular in MDX'
+description: 'Lorem ipsum dolor sit amet'
+pubDate: 'Sep 22 2022'
 ---
 
 import { HelloComponent } from "../../components/hello.component.ts";
@@ -208,10 +254,10 @@ To hydrate the component on the client, use one of the Astro [client directives]
 
 ```md
 ---
-layout: "../../layouts/BlogPost.astro"
-title: "Using Angular in MDX"
-description: "Lorem ipsum dolor sit amet"
-pubDate: "Sep 22 2022"
+layout: '../../layouts/BlogPost.astro'
+title: 'Using Angular in MDX'
+description: 'Lorem ipsum dolor sit amet'
+pubDate: 'Sep 22 2022'
 ---
 
 import { HelloComponent } from "../../components/hello.component.ts";

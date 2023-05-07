@@ -38,7 +38,29 @@ function getViteConfiguration(vite?: PluginOptions) {
      * this workaround for now.
      *
      */
-    plugins: [(viteAngular as any).default(vite)],
+    plugins: [
+      (viteAngular as any).default(vite),
+      {
+        name: '@analogjs/astro-angular-platform-server',
+        transform(code: string, id: string) {
+          if (id.includes('platform-server')) {
+            code = code.replace(/global\./g, 'globalThis.');
+
+            return {
+              code: code.replace(
+                'new xhr2.XMLHttpRequest',
+                'new (xhr2.default.XMLHttpRequest || xhr2.default)'
+              ),
+            };
+          }
+
+          return;
+        },
+      },
+    ],
+    ssr: {
+      noExternal: ['@angular/**', '@analogjs/**'],
+    },
   };
 }
 

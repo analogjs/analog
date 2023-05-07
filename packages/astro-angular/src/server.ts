@@ -1,6 +1,7 @@
 import 'zone.js/bundles/zone-node.umd.js';
 import type {
   ComponentMirror,
+  EnvironmentProviders,
   Provider,
   ɵComponentType as ComponentType,
 } from '@angular/core';
@@ -13,6 +14,7 @@ import {
   BEFORE_APP_SERIALIZED,
   provideServerRendering,
   renderApplication,
+  ɵSERVER_CONTEXT,
 } from '@angular/platform-server';
 import { bootstrapApplication } from '@angular/platform-browser';
 
@@ -72,7 +74,9 @@ const STATIC_PROPS_HOOK_PROVIDER: Provider = {
 };
 
 async function renderToStaticMarkup(
-  Component: ComponentType<unknown>,
+  Component: ComponentType<unknown> & {
+    renderProviders: (Provider | EnvironmentProviders)[];
+  },
   props: Record<string, unknown>,
   _children: unknown
 ) {
@@ -88,6 +92,8 @@ async function renderToStaticMarkup(
         },
         STATIC_PROPS_HOOK_PROVIDER,
         provideServerRendering(),
+        { provide: ɵSERVER_CONTEXT, useValue: 'analog' },
+        ...(Component.renderProviders || []),
       ],
     });
 
