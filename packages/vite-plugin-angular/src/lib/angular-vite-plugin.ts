@@ -236,24 +236,24 @@ export function angular(options?: PluginOptions): Plugin[] {
           let templateUrls: string[] = [];
           let styleUrls: string[] = [];
 
+          if (hasTemplateUrl(code)) {
+            templateUrls = resolveTemplateUrls(code, id);
+          }
+
+          if (hasStyleUrls(code)) {
+            styleUrls = resolveStyleUrls(code, id);
+          }
+
           if (watchMode) {
-            if (hasTemplateUrl(code)) {
-              templateUrls = resolveTemplateUrls(code, id);
+            templateUrls.forEach((templateUrlSet) => {
+              const [, templateUrl] = templateUrlSet.split('|');
+              this.addWatchFile(templateUrl);
+            });
 
-              templateUrls.forEach((templateUrlSet) => {
-                const [, templateUrl] = templateUrlSet.split('|');
-                this.addWatchFile(templateUrl);
-              });
-            }
-
-            if (hasStyleUrls(code)) {
-              styleUrls = resolveStyleUrls(code, id);
-
-              styleUrls.forEach((styleUrlSet) => {
-                const [, styleUrl] = styleUrlSet.split('|');
-                this.addWatchFile(styleUrl);
-              });
-            }
+            styleUrls.forEach((styleUrlSet) => {
+              const [, styleUrl] = styleUrlSet.split('|');
+              this.addWatchFile(styleUrl);
+            });
           }
 
           const typescriptResult = await fileEmitter!(id);
@@ -285,15 +285,19 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
           }
 
+          if (jit) {
+            return {
+              code: data.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, ''),
+            };
+          }
+
           const forceAsyncTransformation =
             /for\s+await\s*\(|async\s+function\s*\*/.test(data);
           const useInputSourcemap = (!isProd ? undefined : false) as undefined;
 
           if (!forceAsyncTransformation && !isProd) {
             return {
-              code: isProd
-                ? data.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
-                : data,
+              code: data.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, ''),
             };
           }
 
@@ -335,7 +339,6 @@ export function angular(options?: PluginOptions): Plugin[] {
     angularPlugin(),
     (jit &&
       jitPlugin({
-        styleTransform: styleTransform!,
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
       })) as Plugin,
     buildOptimizerPlugin({ isProd }),
