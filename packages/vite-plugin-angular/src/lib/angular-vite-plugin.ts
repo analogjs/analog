@@ -104,6 +104,10 @@ export function angular(options?: PluginOptions): Plugin[] {
       async config(config, { command }) {
         watchMode = command === 'serve';
 
+        if (jit) {
+          config.esbuild = false;
+        }
+
         compilerCli = await loadEsmModule<
           typeof import('@angular/compiler-cli')
         >('@angular/compiler-cli');
@@ -320,14 +324,14 @@ export function angular(options?: PluginOptions): Plugin[] {
     },
     {
       name: '@analogjs/vite-plugin-angular-jit',
-      resolveId(id) {
+      resolveId(id: string) {
         if (id.startsWith('virtual:angular')) {
           return `\0${id}`;
         }
 
         return;
       },
-      async load(id) {
+      async load(id: string) {
         if (id.includes('virtual:angular:jit:template:file;')) {
           const contents = readFileSync(id.split('file;')[1], 'utf-8');
 
