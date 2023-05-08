@@ -27,23 +27,26 @@ const btnTw =
       />
     </div>
     <form class="py-2 flex items-center" #f="ngForm" (ngSubmit)="addPost(f)">
+      <label class="sr-only" for="newNote"> Note </label>
       <input
         required
         autocomplete="off"
+        data-testid="newNoteInput"
         class="${inputTw}"
-        name="newTitle"
-        [(ngModel)]="newTitle"
+        name="newNote"
+        [(ngModel)]="newNote"
       />
-      <button class="ml-2 ${btnTw}">+</button>
+      <button data-testid="addNoteBtn" class="ml-2 ${btnTw}">+</button>
     </form>
     <div class="mt-4">
       <div
-        class="mb-4 p-4 font-normal border border-zinc-500/40 rounded-md"
-        *ngFor="let note of notes ?? []; trackBy: noteTrackBy"
+        class="note mb-4 p-4 font-normal border border-zinc-500/40 rounded-md"
+        *ngFor="let note of notes ?? []; trackBy: noteTrackBy; let i = index"
       >
         <div class="flex items-center justify-between">
           <p class="text-sm text-zinc-400">{{ note.createdAt | date }}</p>
           <button
+            [attr.data-testid]="'removeNoteAtIndexBtn' + i"
             class="!text-xs h-6 !bg-opacity-10 hover:!bg-opacity-50 !text-zinc-50 ${btnTw}"
             (click)="removePost(note.id)"
           >
@@ -54,7 +57,7 @@ const btnTw =
       </div>
 
       <div
-        class="text-center rounded-xl p-20 bg-zinc-950/40"
+        class="no-notes text-center rounded-xl p-20 bg-zinc-950/40"
         *ngIf="!loadingPosts && notes.length === 0"
       >
         <h3 class="text-xl font-medium">No notes yet!</h3>
@@ -67,7 +70,7 @@ export default class HomeComponent {
   private _trpc = injectTRPCClient();
   public loadingPosts = false;
   public notes: Note[] = [];
-  public newTitle = '';
+  public newNote = '';
 
   constructor() {
     waitFor(this._trpc.note.list.query().then((notes) => (this.notes = notes)));
@@ -83,9 +86,9 @@ export default class HomeComponent {
       return;
     }
     this._trpc.note.create
-      .mutate({ title: this.newTitle })
+      .mutate({ title: this.newNote })
       .then(() => this.fetchPosts());
-    this.newTitle = '';
+    this.newNote = '';
     form.form.reset();
   }
 

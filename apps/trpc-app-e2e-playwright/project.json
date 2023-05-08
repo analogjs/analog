@@ -1,0 +1,27 @@
+{
+  "name": "trpc-app-e2e-playwright",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/trpc-app-e2e-playwright/src",
+  "projectType": "application",
+  "targets": {
+    "vitest": {
+      "executor": "@nx/vite:test"
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "",
+        "command": "start-server-and-test 'nx serve trpc-app' 4205 'nx run trpc-app-e2e-playwright:vitest'"
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/trpc-app-e2e-playwright/**/*.{js,ts}"]
+      }
+    }
+  },
+  "tags": [],
+  "implicitDependencies": ["trpc-app"]
+}
