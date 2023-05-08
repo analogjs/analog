@@ -1,10 +1,17 @@
 import 'zone.js';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideFileRouter } from '@analogjs/router';
-
+<% if (addTRPC) { %>
+import { provideTRPCClient } from './trpc-client';
+<% } %>
 import { AppComponent } from './app/app.component';
 import { mainProviders } from './main.providers';
 
 bootstrapApplication(AppComponent, {
-  providers: [provideFileRouter(), ...mainProviders],
+  providers: [
+    provideFileRouter(),
+<% if (addTRPC) { %>
+    provideTRPCClient(),
+<% } %>
+    ...mainProviders],
 });

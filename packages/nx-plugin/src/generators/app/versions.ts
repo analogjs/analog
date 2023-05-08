@@ -19,6 +19,7 @@ export const V16_TYPESCRIPT = '~5.0.2';
 export const V16_VITE = '^4.0.3';
 export const V16_VITE_TSCONFIG_PATHS = '^4.0.2';
 export const V16_VITEST = '^0.31.0';
+export const V16_ZOD = '^3.21.4';
 
 // V15
 // dependencies
@@ -27,6 +28,7 @@ export const V15_NRWL_DEVKIT = '15.9.2';
 export const V15_NRWL_ANGULAR = '15.9.2';
 export const V15_ANALOG_JS_CONTENT = '^0.2.0-beta.6';
 export const V15_ANALOG_JS_ROUTER = '^0.2.0-beta.6';
+export const V15_ANALOG_TRPC = '^0.2.0-beta.6';
 export const V15_ANGULAR_PLATFORM_SERVER = '^15.0.0';
 export const V15_FRONT_MATTER = '^4.0.2';
 export const V15_MARKED = '^4.2.12';
@@ -39,4 +41,5 @@ export const V15_JSDOM = '^20.0.0';
 export const V15_TYPESCRIPT = '~4.8.4';
 export const V15_VITE = '^4.0.3';
 export const V15_VITE_TSCONFIG_PATHS = '^4.0.2';
-export const V15_VITEST = '^0.25.8';
+export const V15_VITEST = '^0.31.0';
+export const V15_ZOD = '^3.21.4';

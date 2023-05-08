@@ -15,6 +15,7 @@ import { addAnalogDependencies } from './lib/add-analog-dependencies';
 import { initializeAngularWorkspace } from './lib/initialize-analog-workspace';
 import { addFiles } from './lib/add-files';
 import { addTailwindConfig } from './lib/add-tailwind-config';
+import { addTRPC } from './lib/add-trpc';
 
 export interface NormalizedOptions
   extends AnalogNxApplicationGeneratorOptions,
@@ -97,13 +98,17 @@ export async function appGenerator(
 
   addFiles(tree, normalizedOptions, majorAngularVersion);
 
-  if (!normalizedOptions.skipTailwind) {
+  if (normalizedOptions.addTailwind) {
     await addTailwindConfig(
       tree,
       normalizedOptions.projectRoot,
       normalizedOptions.projectName,
       majorNxVersion
     );
+  }
+
+  if (normalizedOptions.addTRPC) {
+    await addTRPC(tree, normalizedOptions.projectRoot, majorAngularVersion);
   }
 
   if (!normalizedOptions.skipFormat) {

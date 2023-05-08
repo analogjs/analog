@@ -12,6 +12,11 @@ export default defineConfig(({ mode }) => {
     optimizeDeps: {
       include: ['@angular/common', '@angular/forms'],
     },
+<% if (addTRPC) { %>
+    ssr: {
+      noExternal: '@analogjs/trpc/**',
+    },
+<% } %>
     build: {
       target: ['es2020'],
     },
