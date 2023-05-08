@@ -1,6 +1,6 @@
-interface Note {
+type Note = {
   note: string;
-}
+};
 
 export const notes: Record<'first', Note> = {
   first: {

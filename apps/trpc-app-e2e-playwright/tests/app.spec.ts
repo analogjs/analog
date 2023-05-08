@@ -32,7 +32,7 @@ beforeEach<TRPCTestContext>(async (ctx) => {
   ctx.notesPage = new NotesPage(page);
 });
 afterEach(async () => {
-  // await page.close();
+  await page.close();
 });
 
 describe('tRPC Demo App', () => {
