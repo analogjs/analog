@@ -27,5 +27,17 @@
   },
   "dependencies": {
     "tslib": "^2.3.0"
+  },
+  "ng-update": {
+    "packageGroup": [
+      "@analogjs/astro-angular",
+      "@analogjs/platform",
+      "@analogjs/content",
+      "@analogjs/router",
+      "@analogjs/trpc",
+      "@analogjs/vite-plugin-angular",
+      "@analogjs/vite-plugin-nitro"
+    ],
+    "migrations": "./migrations/migration.json"
   }
 }
