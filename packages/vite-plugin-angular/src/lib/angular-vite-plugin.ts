@@ -371,7 +371,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       ? viteServer!.pluginContainer.transform
       : (cssPlugin!.transform as PluginContainer['transform']);
 
-    if (!jit) {
+    if (!jit && !isProd) {
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
       });
@@ -457,7 +457,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         {
           before: [
             replaceBootstrap(getTypeChecker),
-            ...(jit
+            ...(jit && !isProd
               ? [
                   compilerCli.constructorParametersDownlevelTransform(
                     builder.getProgram()
@@ -471,7 +471,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           afterDeclarations:
             pluginOptions.advanced.tsTransformers.afterDeclarations,
         },
-        jit ? {} : angularCompiler.prepareEmit().transformers
+        jit && !isProd ? {} : angularCompiler.prepareEmit().transformers
       ),
       () => []
     );
