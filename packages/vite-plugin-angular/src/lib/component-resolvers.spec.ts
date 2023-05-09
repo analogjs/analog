@@ -46,7 +46,9 @@ describe('component-resolvers styleUrls', () => {
         export class MyComponent {}
       `;
 
-      const actualPaths = ['/path/to/src/app.component.css'];
+      const actualPaths = [
+        './app.component.css|/path/to/src/app.component.css',
+      ];
       const resolvedPaths = resolveStyleUrls(code, id);
 
       expect(thePathsAreEqual(resolvedPaths, actualPaths));
@@ -64,8 +66,8 @@ describe('component-resolvers styleUrls', () => {
       `;
 
       const actualPaths = [
-        '/path/to/src/app.component.css',
-        '/path/to/styles.css',
+        './app.component.css|/path/to/src/app.component.css',
+        '../styles.css|/path/to/styles.css',
       ];
 
       const resolvedPaths = resolveStyleUrls(code, id);
@@ -85,9 +87,9 @@ describe('component-resolvers styleUrls', () => {
       `;
 
       const actualPaths = [
-        '/path/to/src/app.component.css',
-        '/path/to/src/another.css',
-        '/path/to/styles.css',
+        './app.component.css|/path/to/src/app.component.css',
+        './another.css|/path/to/src/another.css',
+        '../styles.css|/path/to/styles.css',
       ];
 
       const resolvedPaths = resolveStyleUrls(code, id);
@@ -108,7 +110,8 @@ describe('component-resolvers styleUrls', () => {
         export class MyComponent {}
       `;
 
-        const actualUrl = '/path/to/src/app.component.html';
+        const actualUrl =
+          './app.component.html|/path/to/src/app.component.html';
         const resolvedTemplateUrls = resolveTemplateUrls(code, id);
 
         expect(hasTemplateUrl(code)).toBeTruthy();
@@ -123,7 +126,8 @@ describe('component-resolvers styleUrls', () => {
         export class MyComponent {}
       `;
 
-        const actualUrl = '/path/to/src/app.component.html';
+        const actualUrl =
+          './app.component.html|/path/to/src/app.component.html';
         const resolvedTemplateUrls = resolveTemplateUrls(code, id);
 
         expect(hasTemplateUrl(code)).toBeTruthy();
@@ -143,8 +147,10 @@ describe('component-resolvers styleUrls', () => {
         export class MyComponentTwo {}        
       `;
 
-        const actualUrl1 = '/path/to/src/app.component.html';
-        const actualUrl2 = '/path/to/src/app1.component.html';
+        const actualUrl1 =
+          './app.component.html|/path/to/src/app.component.html';
+        const actualUrl2 =
+          './app1.component.html|/path/to/src/app1.component.html';
         const resolvedTemplateUrls = resolveTemplateUrls(code, id);
 
         expect(hasTemplateUrl(code)).toBeTruthy();

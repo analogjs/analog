@@ -31,6 +31,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     (platformOptions.ssr
       ? devServerPlugin({ entryServer: opts.entryServer })
       : false) as Plugin,
-    ...angular(opts?.vite),
+    ...angular({ jit: platformOptions.jit, ...(opts?.vite ?? {}) }),
   ];
 }

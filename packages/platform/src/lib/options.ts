@@ -25,4 +25,5 @@ export interface Options {
   vite?: PluginOptions;
   nitro?: NitroConfig;
   apiPrefix?: string;
+  jit?: boolean;
 }
