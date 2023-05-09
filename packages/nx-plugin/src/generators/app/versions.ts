@@ -1,7 +1,7 @@
 export const MINIMUM_SUPPORTED_ANGULAR_VERSION = '15.0.0';
 // V16
 // dependencies
-export const V16_ANGULAR = '^16.0.0';
+export const V16_ANGULAR = '16.0.0';
 export const V16_NX_DEVKIT = '^16.0.0';
 export const V16_NX_ANGULAR = '^16.0.0';
 export const V16_ANALOG_JS_CONTENT = '^0.2.0-beta.5';
