@@ -60,9 +60,6 @@ export function getRoutes(
         const insert = /^\w|\//.test(path) && !isCatchall ? 'unshift' : 'push';
 
         if (root) {
-          const dynamic = path.startsWith(':');
-          if (dynamic) return parent;
-
           const last = segments.length === 1;
           if (last) {
             const newRoute = {
