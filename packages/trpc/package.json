@@ -23,7 +23,8 @@
     "@angular/core": "^16.0.0",
     "@trpc/client": "10.25.0",
     "@trpc/server": "10.25.0",
-    "isomorphic-fetch": "^3.0.0"
+    "isomorphic-fetch": "^3.0.0",
+    "superjson": "^1.12.3"
   },
   "dependencies": {
     "tslib": "^2.3.0"
