@@ -1,3 +1,9 @@
+    <% if (addTailwind) { %>
+html, body {
+  display: block;
+  height: 100%;
+}
+    <% } else { %>
 /* You can add global styles to this file, and also import other style files */
 :root {
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
@@ -73,3 +79,4 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+    <% } %>

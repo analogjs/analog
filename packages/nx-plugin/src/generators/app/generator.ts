@@ -108,7 +108,12 @@ export async function appGenerator(
   }
 
   if (normalizedOptions.addTRPC) {
-    await addTRPC(tree, normalizedOptions.projectRoot, majorAngularVersion);
+    await addTRPC(
+      tree,
+      normalizedOptions.projectRoot,
+      majorAngularVersion,
+      normalizedOptions
+    );
   }
 
   if (!normalizedOptions.skipFormat) {

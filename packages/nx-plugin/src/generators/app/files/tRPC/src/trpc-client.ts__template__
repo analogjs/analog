@@ -3,7 +3,7 @@ import { createTrpcClient } from '@analogjs/trpc';
 import { inject } from '@angular/core';
 
 export const { provideTRPCClient, tRPCClient } = createTrpcClient<AppRouter>({
-  url: 'http://localhost:4205/api/trpc',
+  url: 'http://127.0.0.1:4205/api/trpc',
 });
 
 export function injectTRPCClient() {

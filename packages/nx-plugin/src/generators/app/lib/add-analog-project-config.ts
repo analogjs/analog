@@ -43,7 +43,7 @@ export function addAnalogProjectConfig(
         defaultConfiguration: 'development',
         options: {
           buildTarget: `${projectName}:build`,
-          port: 4200,
+          port: 4205,
         },
         configurations: {
           development: {

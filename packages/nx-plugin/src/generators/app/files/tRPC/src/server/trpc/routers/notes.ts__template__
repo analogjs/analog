@@ -15,7 +15,7 @@ export const noteRouter = router({
       notes.push({
         id: noteId++,
         note: input.title,
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
       })
     ),
   list: publicProcedure.query(() => notes),
