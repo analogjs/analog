@@ -5,9 +5,6 @@ import { RouterOutlet } from '@angular/router';
   selector: 'trpc-app-root',
   standalone: true,
   imports: [RouterOutlet],
-  host: {
-    class: 'max-w-screen-md mx-auto block h-full bg-zinc-900 text-zinc-50',
-  },
   changeDetection: ChangeDetectionStrategy.Default,
   template: ` <router-outlet></router-outlet> `,
 })
