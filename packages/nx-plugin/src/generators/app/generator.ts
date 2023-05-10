@@ -44,6 +44,9 @@ function normalizeOptions(
     : [];
   const offsetFromRoot = determineOffsetFromRoot(projectRoot);
   const nxPackageNamespace = major(nxVersion) >= 16 ? '@nx' : '@nrwl';
+  const addTailwind = options.addTailwind ?? true;
+  const addTRPC = options.addTRPC ?? false;
+
   return {
     ...options,
     ...allNames,
@@ -54,6 +57,8 @@ function normalizeOptions(
     offsetFromRoot,
     appsDir,
     nxPackageNamespace,
+    addTailwind,
+    addTRPC,
   };
 }
 
