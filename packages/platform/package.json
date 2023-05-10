@@ -30,5 +30,17 @@
     "@nx/devkit": "^16.0.0"
   },
   "generators": "./src/lib/nx-plugin/generators.json",
-  "schematics": "./src/lib/nx-plugin/generators.json"
+  "schematics": "./src/lib/nx-plugin/generators.json",
+  "ng-update": {
+    "packageGroup": [
+      "@analogjs/astro-angular",
+      "@analogjs/platform",
+      "@analogjs/content",
+      "@analogjs/router",
+      "@analogjs/trpc",
+      "@analogjs/vite-plugin-angular",
+      "@analogjs/vite-plugin-nitro"
+    ],
+    "migrations": "./migrations/migration.json"
+  }
 }
