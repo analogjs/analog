@@ -13,15 +13,13 @@ export default defineConfig(({ mode }) => {
     server: {
       host: '127.0.0.1'
     },
+    ssr: {
+      noExternal: '@analogjs/trpc/**',
+    },
     <% } %>
     optimizeDeps: {
       include: ['@angular/common', '@angular/forms'],
     },
-<% if (addTRPC) { %>
-    ssr: {
-      noExternal: '@analogjs/trpc/**',
-    },
-<% } %>
     build: {
       target: ['es2020'],
     },

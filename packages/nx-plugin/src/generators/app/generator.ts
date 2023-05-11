@@ -16,6 +16,7 @@ import { initializeAngularWorkspace } from './lib/initialize-analog-workspace';
 import { addFiles } from './lib/add-files';
 import { addTailwindConfig } from './lib/add-tailwind-config';
 import { addTRPC } from './lib/add-trpc';
+import { addIndexPages } from './lib/add-index-pages';
 
 export interface NormalizedOptions
   extends AnalogNxApplicationGeneratorOptions,
@@ -120,6 +121,8 @@ export async function appGenerator(
       normalizedOptions
     );
   }
+
+  addIndexPages(tree, normalizedOptions);
 
   if (!normalizedOptions.skipFormat) {
     await formatFiles(tree);
