@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { injectTRPCClient } from '../../trpc-client';
 import { AsyncPipe, DatePipe, JsonPipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { waitFor } from '../../wait-for';
+import { waitFor } from '@analogjs/trpc';
 import { Note } from '../../note';
 
 @Component({
