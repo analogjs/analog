@@ -9,7 +9,12 @@ An [Angular](https://angular.io) integration for rendering components in [Astro]
 Use the `astro add` command to install the integration
 
 ```sh
-astro add @analogjs/astro-angular
+# Using NPM
+npx astro add @analogjs/astro-angular
+# Using Yarn
+yarn astro add @analogjs/astro-angular
+# Using PNPM
+pnpm astro add @analogjs/astro-angular
 ```
 
 This command:
