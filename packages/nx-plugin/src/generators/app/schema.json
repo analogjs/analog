@@ -14,10 +14,16 @@
       },
       "x-prompt": "What name would you like to use for your AnalogJs app?"
     },
-    "skipTailwind": {
+    "addTailwind": {
       "type": "boolean",
-      "description": "Skip adding tailwind if set to true.",
-      "x-prompt": "Skip adding TailwindCSS?",
+      "description": "Adds tailwind if set to true.",
+      "x-prompt": "Add TailwindCSS for styling?",
+      "default": true
+    },
+    "addTRPC": {
+      "type": "boolean",
+      "description": "Adds tRPC if set to true.",
+      "x-prompt": "Add tRPC for typesafe client/server interaction?",
       "default": false
     },
     "tags": {

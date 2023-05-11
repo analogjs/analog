@@ -15,6 +15,8 @@ import { addAnalogDependencies } from './lib/add-analog-dependencies';
 import { initializeAngularWorkspace } from './lib/initialize-analog-workspace';
 import { addFiles } from './lib/add-files';
 import { addTailwindConfig } from './lib/add-tailwind-config';
+import { addTRPC } from './lib/add-trpc';
+import { addIndexPages } from './lib/add-index-pages';
 
 export interface NormalizedOptions
   extends AnalogNxApplicationGeneratorOptions,
@@ -43,6 +45,9 @@ function normalizeOptions(
     : [];
   const offsetFromRoot = determineOffsetFromRoot(projectRoot);
   const nxPackageNamespace = major(nxVersion) >= 16 ? '@nx' : '@nrwl';
+  const addTailwind = options.addTailwind ?? true;
+  const addTRPC = options.addTRPC ?? false;
+
   return {
     ...options,
     ...allNames,
@@ -53,6 +58,8 @@ function normalizeOptions(
     offsetFromRoot,
     appsDir,
     nxPackageNamespace,
+    addTailwind,
+    addTRPC,
   };
 }
 
@@ -97,7 +104,7 @@ export async function appGenerator(
 
   addFiles(tree, normalizedOptions, majorAngularVersion);
 
-  if (!normalizedOptions.skipTailwind) {
+  if (normalizedOptions.addTailwind) {
     await addTailwindConfig(
       tree,
       normalizedOptions.projectRoot,
@@ -105,6 +112,17 @@ export async function appGenerator(
       majorNxVersion
     );
   }
+
+  if (normalizedOptions.addTRPC) {
+    await addTRPC(
+      tree,
+      normalizedOptions.projectRoot,
+      majorAngularVersion,
+      normalizedOptions
+    );
+  }
+
+  addIndexPages(tree, normalizedOptions);
 
   if (!normalizedOptions.skipFormat) {
     await formatFiles(tree);
