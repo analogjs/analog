@@ -14,8 +14,8 @@
     "test": "ng test"
   },
   "dependencies": {
-    "@analogjs/content": "^0.2.0-beta.6",
-    "@analogjs/router": "^0.2.0-beta.6",
+    "@analogjs/content": "^0.2.0-beta.7",
+    "@analogjs/router": "^0.2.0-beta.7",
     "@angular/animations": "^15.0.0",
     "@angular/common": "^15.0.0",
     "@angular/compiler": "^15.0.0",
