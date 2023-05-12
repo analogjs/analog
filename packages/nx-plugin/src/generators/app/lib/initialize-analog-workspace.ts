@@ -69,6 +69,7 @@ export async function initializeAngularWorkspace(
           '@nx/angular/generators'
         )
       ).angularInitGenerator(tree, {
+        unitTestRunner: 'none' as any,
         skipInstall: true,
         skipFormat: normalizedOptions.skipFormat,
       });
