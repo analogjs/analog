@@ -2,22 +2,13 @@
  * Inspired by this awesome project to integrate trpc more into the angular way
  * of doing things https://github.com/Dafnik/ngx-trpc
  */
-import { InjectionToken, Provider, TransferState } from '@angular/core';
-import 'isomorphic-fetch';
-import { createTRPCProxyClient, httpBatchLink } from '@trpc/client';
-import { AnyRouter } from '@trpc/server';
-import { transferStateLink } from './links/transfer-state-link';
-import {
-  provideTrpcCacheState,
-  provideTrpcCacheStateStatusManager,
-  tRPC_CACHE_STATE,
-} from './cache-state';
-import { CreateTRPCClientOptions } from '@trpc/client/src/createTRPCUntypedClient';
-
-export type TrpcOptions<T extends AnyRouter> = {
-  url: string;
-  options?: Partial<CreateTRPCClientOptions<T>>;
-};
+import { InjectionToken, Provider, TransferState } from "@angular/core";
+import "isomorphic-fetch";
+import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
+import { AnyRouter } from "@trpc/server";
+import { transferStateLink } from "./links/transfer-state-link";
+import { provideTrpcCacheState, provideTrpcCacheStateStatusManager, tRPC_CACHE_STATE } from "./cache-state";
+import { TrpcOptions } from "./client-shared";
 
 export type TrpcClient<AppRouter extends AnyRouter> = ReturnType<
   typeof createTRPCProxyClient<AppRouter>
