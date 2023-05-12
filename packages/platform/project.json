@@ -39,12 +39,21 @@
       "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["packages/platform/**/*.ts"]
+        "lintFilePatterns": [
+          "packages/platform/**/*.ts"
+        ]
       }
     },
     "test": {
       "dependsOn": ["^build"],
       "executor": "@nx/vite:test"
+    },
+    "version": {
+      "executor": "@jscutlery/semver:version",
+      "options": {
+        "preset": "conventional",
+        "tagPrefix": "platform@"
+      }
     }
   },
   "tags": [],

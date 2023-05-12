@@ -32,6 +32,13 @@
     },
     "test": {
       "executor": "@nx/vite:test"
+    },
+    "version": {
+      "executor": "@jscutlery/semver:version",
+      "options": {
+        "preset": "conventional",
+        "tagPrefix": "router@"
+      }
     }
   },
   "tags": []

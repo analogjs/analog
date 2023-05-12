@@ -11,7 +11,9 @@
         "outputPath": "node_modules/@analogjs/astro-angular",
         "main": "packages/astro-angular/src/index.ts",
         "tsConfig": "packages/astro-angular/tsconfig.lib.json",
-        "assets": ["packages/astro-angular/*.md"],
+        "assets": [
+          "packages/astro-angular/*.md"
+        ],
         "updateBuildableProjectDepsInPackageJson": false
       }
     },
@@ -30,11 +32,20 @@
       "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["packages/astro-angular/**/*.ts"]
+        "lintFilePatterns": [
+          "packages/astro-angular/**/*.ts"
+        ]
       }
     },
     "test": {
       "executor": "@nx/vite:test"
+    },
+    "version": {
+      "executor": "@jscutlery/semver:version",
+      "options": {
+        "preset": "conventional",
+        "tagPrefix": "astro-angular@"
+      }
     }
   },
   "tags": []

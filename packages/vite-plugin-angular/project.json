@@ -11,12 +11,21 @@
         "outputPath": "node_modules/@analogjs/vite-plugin-angular",
         "main": "packages/vite-plugin-angular/src/index.ts",
         "tsConfig": "packages/vite-plugin-angular/tsconfig.lib.json",
-        "assets": ["packages/vite-plugin-angular/*.md"],
+        "assets": [
+          "packages/vite-plugin-angular/*.md"
+        ],
         "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "test": {
       "executor": "@nx/vite:test"
+    },
+    "version": {
+      "executor": "@jscutlery/semver:version",
+      "options": {
+        "preset": "conventional",
+        "tagPrefix": "vite-plugin-angular@"
+      }
     }
   },
   "tags": []
