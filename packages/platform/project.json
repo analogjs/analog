@@ -46,7 +46,7 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "executor": "@nrwl/vite:test"
+      "executor": "@nx/vite:test"
     },
     "version": {
       "executor": "@jscutlery/semver:version",
