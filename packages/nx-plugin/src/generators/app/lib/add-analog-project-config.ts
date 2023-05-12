@@ -24,6 +24,7 @@ export function addAnalogProjectConfig(
           `dist/${appsDir}/${projectName}/analog`,
         ],
         options: {
+          main: `${appsDir}/${projectName}/src/main.ts`,
           configFile: `${appsDir}/${projectName}/vite.config.ts`,
           outputPath: `dist/${appsDir}/${projectName}/client`,
         },
