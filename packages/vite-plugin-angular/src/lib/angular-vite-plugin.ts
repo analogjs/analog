@@ -270,10 +270,18 @@ export function angular(options?: PluginOptions): Plugin[] {
             templateUrls.forEach((templateUrlSet) => {
               const [templateFile, resolvedTemplateUrl] =
                 templateUrlSet.split('|');
-              data = data.replace(
-                `angular:jit:template:file;${templateFile}`,
-                `virtual:angular:jit:template:file;${resolvedTemplateUrl}`
-              );
+
+              if (watchMode) {
+                data = data.replace(
+                  `angular:jit:template:file;${templateFile}`,
+                  `virtual:angular:jit:template:file;${resolvedTemplateUrl}`
+                );
+              } else {
+                data = data.replace(
+                  `angular:jit:template:file;${templateFile}`,
+                  `${resolvedTemplateUrl}?raw`
+                );
+              }
             });
 
             styleUrls.forEach((styleUrlSet) => {
@@ -371,7 +379,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       ? viteServer!.pluginContainer.transform
       : (cssPlugin!.transform as PluginContainer['transform']);
 
-    if (!jit && !isProd) {
+    if (!jit) {
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
       });
@@ -390,41 +398,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     let typeScriptProgram: ts.Program;
     let angularCompiler: any;
 
-    if (watchMode) {
-      if (!jit) {
-        // Create the Angular specific program that contains the Angular compiler
-        const angularProgram: NgtscProgram = new compilerCli.NgtscProgram(
-          rootNames,
-          compilerOptions,
-          host as CompilerHost,
-          nextProgram as any
-        );
-        angularCompiler = angularProgram.compiler;
-        typeScriptProgram = angularProgram.getTsProgram();
-        augmentProgramWithVersioning(typeScriptProgram);
-
-        builder = builderProgram =
-          ts.createEmitAndSemanticDiagnosticsBuilderProgram(
-            typeScriptProgram,
-            host,
-            builderProgram
-          );
-
-        await angularCompiler.analyzeAsync();
-
-        nextProgram = angularProgram;
-      } else {
-        builder = builderProgram =
-          ts.createEmitAndSemanticDiagnosticsBuilderProgram(
-            rootNames,
-            compilerOptions,
-            host,
-            nextProgram as any
-          );
-
-        nextProgram = builderProgram as unknown as ts.Program;
-      }
-    } else {
+    if (!jit) {
       // Create the Angular specific program that contains the Angular compiler
       const angularProgram: NgtscProgram = new compilerCli.NgtscProgram(
         rootNames,
@@ -445,6 +419,21 @@ export function angular(options?: PluginOptions): Plugin[] {
 
       await angularCompiler.analyzeAsync();
 
+      nextProgram = angularProgram;
+    } else {
+      builder = builderProgram =
+        ts.createEmitAndSemanticDiagnosticsBuilderProgram(
+          rootNames,
+          compilerOptions,
+          host,
+          nextProgram as any
+        );
+
+      typeScriptProgram = builder.getProgram();
+      nextProgram = builderProgram as unknown as ts.Program;
+    }
+
+    if (!watchMode) {
       // When not in watch mode, the startup cost of the incremental analysis can be avoided by
       // using an abstract builder that only wraps a TypeScript program.
       builder = ts.createAbstractBuilder(typeScriptProgram, host);
@@ -457,7 +446,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         {
           before: [
             replaceBootstrap(getTypeChecker),
-            ...(jit && !isProd
+            ...(jit
               ? [
                   compilerCli.constructorParametersDownlevelTransform(
                     builder.getProgram()
@@ -471,7 +460,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           afterDeclarations:
             pluginOptions.advanced.tsTransformers.afterDeclarations,
         },
-        jit && !isProd ? {} : angularCompiler.prepareEmit().transformers
+        jit ? {} : angularCompiler.prepareEmit().transformers
       ),
       () => []
     );
