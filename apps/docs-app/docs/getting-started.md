@@ -16,6 +16,14 @@ Analog requires the following Node and Angular versions:
 
 ## Creating a New Application
 
+There are two methods for creating an Analog application. You have the option to utilize the `create-analog` command
+to scaffold a standalone project, or you can make use of the Nx plugin, which is included in the `@analogjs/platform` package.
+
+<Tabs groupId="app-creator">
+  <TabItem label="create-analog" value="create-analog">
+
+## create-analog
+
 Scaffold an Analog project with the following `create-analog` command:
 
 <Tabs groupId="package-manager">
@@ -44,7 +52,7 @@ pnpm create analog
   </TabItem>
 </Tabs>
 
-## Serving the application
+### Serving the application
 
 To start the development server for the application, run the `start` command.
 
@@ -78,7 +86,7 @@ Visit [http://localhost:5173](http://localhost:5173) in your browser to view the
 
 Next, you can [define additional routes using components](/docs/features/routing/overview) for navigation.
 
-## Building the Application
+### Building the Application
 
 To build the application for deployment
 
@@ -105,11 +113,57 @@ yarn build
 pnpm run build
 ```
 
+### Build Artifacts
+
+By default, Analog comes with [Server-Side Rendering](/docs/features/server/server-side-rendering) enabled.
+Client artifacts are located in the `dist/analog/public` directory.
+The server for the API/SSR build artifacts is located in the `dist/analog/server` directory.
+
+
   </TabItem>
 </Tabs>
 
-## Build Artifacts
+  </TabItem>
 
-The client build artifacts are located in the `dist/client` directory. The server for the API routes is located in the `dist/server` directory.
+  <TabItem label="Nx" value="nx">
 
-If you have [server side rendering](/docs/features/server/server-side-rendering) enabled, the client build artifacts are located in the `dist/analog/public` directory. The server for the API/SSR build artifacts is located in the `dist/analog/server` directory.
+## Nx
+
+Create a new Nx workspace with a preconfigured Analog application:
+
+```shell
+npx create-nx-workspace --preset=@analogjs/platform
+```
+
+The Analog preset prompts you to provide the name of your application. In this example, we simply use `analog-app`.
+Additionally, asks whether you would like to include [TailwindCSS](https://tailwindcss.com) and [tRPC](https://trpc.io) in your new project.
+If you choose to include either of them, all the required dependencies are installed automatically,
+and any necessary configurations is added.
+
+### Serving the application
+
+To start the development server for your application, run the `nx serve` command.
+
+```shell
+nx serve analog-app
+```
+
+### Building the Application
+
+To build the application for deployment run:
+
+```shell
+nx build analog-app
+```
+
+### Build Artifacts
+
+The client build artifacts are located in the dist folder of your Nx workspace.
+
+By default, Analog comes with [Server-Side Rendering](/docs/features/server/server-side-rendering) enabled.
+In the common apps/libs workspace layout, the `analog-app`'s client artifacts are located in the `dist/apps/analog-app/analog/public` directory.
+The server for the API/SSR build artifacts is located in the `dist/apps/analog-app/analog/server` directory.
+
+
+</TabItem>
+</Tabs>
