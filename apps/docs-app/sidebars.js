@@ -86,12 +86,17 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: 'Build & Deploy',
+      label: 'Deployment',
       items: [
         {
           type: 'doc',
           id: 'features/deployment/overview',
           label: 'Overview',
+        },
+        {
+          type: 'doc',
+          id: 'features/deployment/providers',
+          label: 'Providers',
         },
       ],
     },

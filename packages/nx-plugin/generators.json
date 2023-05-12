@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "name": "nx-plugin",
+  "version": "0.0.1",
+  "generators": {
+    "app": {
+      "factory": "./src/generators/app/generator",
+      "schema": "./src/generators/app/schema.json",
+      "description": "Generates an AnalogJs application"
+    },
+    "preset": {
+      "factory": "./src/generators/preset/generator",
+      "schema": "./src/generators/preset/schema.json",
+      "description": "Analog preset for create-nx-workspace",
+      "x-use-standalone-layout": true
+    }
+  },
+  "schematics": {
+    "app": {
+      "factory": "./src/generators/app/compat",
+      "schema": "./src/generators/app/schema.json",
+      "description": "Add Angular Three with proper packages and config"
+    }
+  }
+}

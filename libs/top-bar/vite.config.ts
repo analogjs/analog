@@ -1,12 +1,18 @@
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
-import { offsetFromRoot } from '@nrwl/devkit';
+import { offsetFromRoot } from '@nx/devkit';
+import angular from '@analogjs/vite-plugin-angular';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
     root: 'src',
+    plugins: [
+      angular({
+        tsconfig: 'libs/top-bar/tsconfig.spec.json',
+      }),
+    ],
     test: {
       globals: true,
       environment: 'jsdom',

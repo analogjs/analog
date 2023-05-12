@@ -39,7 +39,7 @@ export function getRoutes(
 
       const segments = key
         .replace(
-          /^\/(.*?)\/routes|^\/(.*?)\/pages|\/app\/routes|\.page|\.(js|ts|md)$/g,
+          /^\/(.*?)\/routes|^\/(.*?)\/pages|\/app\/routes|(\.page\.(js|ts)$)|(\.(ts|md)$)/g,
           ''
         )
         .replace(/\[\.{3}.+\]/, '**')
@@ -60,9 +60,6 @@ export function getRoutes(
         const insert = /^\w|\//.test(path) && !isCatchall ? 'unshift' : 'push';
 
         if (root) {
-          const dynamic = path.startsWith(':');
-          if (dynamic) return parent;
-
           const last = segments.length === 1;
           if (last) {
             const newRoute = {

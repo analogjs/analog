@@ -19,6 +19,7 @@ export default defineConfig(({ mode }) => {
       analog({
         ssrBuildDir: '../../dist/apps/analog-app/ssr',
         entryServer: 'apps/analog-app/src/main.server.ts',
+        apiPrefix: 'api',
         vite: {
           inlineStylesExtension: 'scss',
           tsconfig:

@@ -1,0 +1,72 @@
+/// <reference types="vitest" />
+
+import analog from '@analogjs/platform';
+import { visualizer } from 'rollup-plugin-visualizer';
+import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
+import tsConfigPaths from 'vite-tsconfig-paths';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => {
+  return {
+    publicDir: 'src/public',
+    <% if (addTRPC) { %>
+    server: {
+      host: '127.0.0.1'
+    },
+    ssr: {
+      noExternal: '@analogjs/trpc/**',
+    },
+    <% } %>
+    optimizeDeps: {
+      include: ['@angular/common', '@angular/forms'],
+    },
+    build: {
+      target: ['es2020'],
+    },
+    plugins: [
+      analog({
+        ssrBuildDir: '<%= offsetFromRoot %>dist/<%= appsDir %>/<%= projectName %>/ssr',
+        entryServer: '<%= appsDir %>/<%= projectName %>/src/main.server.ts',
+        vite: {
+          inlineStylesExtension: 'css',
+          tsconfig:
+            mode === 'test'
+              ? '<%= appsDir %>/<%= projectName %>/tsconfig.spec.json'
+              : '<%= appsDir %>/<%= projectName %>/tsconfig.app.json',
+        },
+        nitro: {
+          rootDir: '<%= appsDir %>/<%= projectName %>',
+          output: {
+            dir: '<%= offsetFromRoot %>../dist/<%= appsDir %>/<%= projectName %>/analog',
+            publicDir: '<%= offsetFromRoot %>../dist/<%= appsDir %>/<%= projectName %>/analog/public',
+          },
+          publicAssets: [{ dir: `<%= offsetFromRoot %>../dist/<%= appsDir %>/<%= projectName %>/client` }],
+          serverAssets: [
+            { baseName: 'public', dir: `./dist/<%= appsDir %>/<%= projectName %>/client` },
+          ],
+          buildDir: '<%= offsetFromRoot %>dist/<%= appsDir %>/<%= projectName %>/.nitro',
+        },
+        prerender: {
+          routes: ['/'],
+        },
+      }),
+      tsConfigPaths({
+        root: '<%= offsetFromRoot %>',
+      }),
+      visualizer() as Plugin,
+      splitVendorChunkPlugin(),
+    ],
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: ['src/test-setup.ts'],
+      include: ['**/*.spec.ts'],
+      cache: {
+        dir: `<%= offsetFromRoot %>node_modules/.vitest`,
+      },
+    },
+    define: {
+      'import.meta.vitest': mode !== 'production',
+    },
+  };
+});

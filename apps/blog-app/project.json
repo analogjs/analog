@@ -6,7 +6,7 @@
   "prefix": "blog",
   "targets": {
     "build": {
-      "executor": "@nrwl/vite:build",
+      "executor": "@nx/vite:build",
       "outputs": [
         "{options.outputPath}",
         "dist/apps/blog-app/.nitro",
@@ -29,7 +29,7 @@
       }
     },
     "serve": {
-      "executor": "@nrwl/vite:dev-server",
+      "executor": "@nx/vite:dev-server",
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "blog-app:build",
@@ -46,7 +46,7 @@
       }
     },
     "serve-nitro": {
-      "executor": "@nrwl/web:file-server",
+      "executor": "@nx/web:file-server",
       "options": {
         "buildTarget": "blog-app:build",
         "parallel": true,

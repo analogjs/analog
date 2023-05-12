@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/platform",
-  "version": "0.1.0-beta.19",
+  "version": "0.2.0-beta.7",
   "type": "commonjs",
   "description": "The fullstack meta-framework for Angular",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -25,6 +25,22 @@
   },
   "dependencies": {
     "nitropack": "^1.0.0",
-    "@analogjs/vite-plugin-angular": "latest"
+    "@analogjs/vite-plugin-angular": "^0.2.0-beta.7",
+    "@analogjs/vite-plugin-nitro": "^0.2.0-beta.7",
+    "@nx/devkit": "^16.0.0"
+  },
+  "generators": "./src/lib/nx-plugin/generators.json",
+  "schematics": "./src/lib/nx-plugin/generators.json",
+  "ng-update": {
+    "packageGroup": [
+      "@analogjs/astro-angular",
+      "@analogjs/platform",
+      "@analogjs/content",
+      "@analogjs/router",
+      "@analogjs/trpc",
+      "@analogjs/vite-plugin-angular",
+      "@analogjs/vite-plugin-nitro"
+    ],
+    "migrations": "./migrations/migration.json"
   }
 }

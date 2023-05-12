@@ -3,38 +3,48 @@ import TabItem from '@theme/TabItem';
 
 # Deployment
 
-## Building the Application
+Node.js deployment is the default Analog output preset for production builds.
 
-To build the application for deployment
+When running `npm run build` with the default preset, the result will be an entry point that launches a ready-to-run Node server.
 
-<Tabs groupId="package-manager">
-  <TabItem value="npm">
+To start up the standalone server, run:
 
-```shell
-npm run build
+```bash
+$ node dist/analog/server/index.mjs
+Listening on http://localhost:3000
 ```
 
-  </TabItem>
+### Environment Variables
 
-  <TabItem label="Yarn" value="yarn">
+You can customize server behavior using following environment variables:
 
-```shell
-yarn build
+- `NITRO_PORT` or `PORT` (defaults to `3000`)
+- `NITRO_HOST` or `HOST`
+
+## Built-in Presets
+
+Analog can generate different output formats suitable for different [hosting providers](/docs/features/deployment/providers) from the same code base, you can change the deploy preset using an environment variable or `vite.config.ts`.
+
+Using environment variable is recommended for deployments depending on CI/CD.
+
+**Example:** Using `NITRO_PRESET`
+
+```bash
+NITRO_PRESET=node-server
 ```
 
-  </TabItem>
+**Example:** Using `vite.config.ts`
 
-  <TabItem value="pnpm">
+```ts
+import { defineConfig } from 'vite';
 
-```shell
-pnpm run build
+export default defineConfig({
+  plugins: [
+    analog({
+      nitro: {
+        preset: 'node-server',
+      },
+    }),
+  ],
+});
 ```
-
-  </TabItem>
-</Tabs>
-
-## Build Artifacts
-
-The client build artifacts are located in the `dist/client` directory. The server for the API routes is located in the `dist/server` directory.
-
-If you have [server side rendering](/docs/features/server/server-side-rendering) enabled, the client build artifacts are located in the `dist/analog/public` directory. The server for the API/SSR build artifacts is located in the `dist/analog/server` directory.

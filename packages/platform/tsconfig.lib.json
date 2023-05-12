@@ -6,7 +6,15 @@
     "inlineSourceMap": true,
     "sourceMap": false,
     "declaration": true,
-    "types": []
+    "types": [],
+    "paths": {
+      "@analogjs/vite-plugin-angular": [
+        "./node_modules/@analogjs/vite-plugin-angular"
+      ],
+      "@analogjs/vite-plugin-nitro": [
+        "./node_modules/@analogjs/vite-plugin-nitro"
+      ]
+    }
   },
   "include": ["**/*.ts"],
   "exclude": [

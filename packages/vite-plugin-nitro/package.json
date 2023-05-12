@@ -1,0 +1,41 @@
+{
+  "name": "@analogjs/vite-plugin-nitro",
+  "version": "0.2.0-beta.7",
+  "type": "commonjs",
+  "description": "A Vite plugin for adding a nitro API server",
+  "author": "Brandon Roberts <robertsbt@gmail.com>",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "keywords": [
+    "angular",
+    "vite",
+    "plugin-vite",
+    "meta-framework"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/analogjs/analog/issues"
+  },
+  "homepage": "https://analogjs.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/analogjs/analog.git"
+  },
+  "dependencies": {
+    "nitropack": "^1.0.0"
+  },
+  "ng-update": {
+    "packageGroup": [
+      "@analogjs/astro-angular",
+      "@analogjs/platform",
+      "@analogjs/content",
+      "@analogjs/router",
+      "@analogjs/trpc",
+      "@analogjs/vite-plugin-angular",
+      "@analogjs/vite-plugin-nitro"
+    ],
+    "migrations": "./migrations/migration.json"
+  }
+}

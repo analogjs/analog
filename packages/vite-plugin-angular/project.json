@@ -5,10 +5,8 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "node_modules/@analogjs/vite-plugin-angular",
         "main": "packages/vite-plugin-angular/src/index.ts",

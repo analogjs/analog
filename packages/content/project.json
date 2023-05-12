@@ -9,13 +9,10 @@
   ],
   "targets": {
     "build": {
-      "executor": "@nrwl/angular:package",
-      "outputs": [
-        "node_modules/@analogjs/content"
-      ],
+      "executor": "@angular-devkit/build-angular:ng-packagr",
+      "outputs": ["node_modules/@analogjs/content"],
       "options": {
-        "project": "packages/content/ng-package.json",
-        "updateBuildableProjectDepsInPackageJson": false
+        "project": "packages/content/ng-package.json"
       },
       "configurations": {
         "production": {
@@ -28,10 +25,8 @@
       "defaultConfiguration": "production"
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
           "packages/content/**/*.ts",
@@ -40,9 +35,7 @@
       }
     },
     "test": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "executor": "@nrwl/vite:test"
     },
     "version": {

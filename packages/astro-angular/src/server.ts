@@ -1,6 +1,7 @@
 import 'zone.js/bundles/zone-node.umd.js';
 import type {
   ComponentMirror,
+  EnvironmentProviders,
   Provider,
   ɵComponentType as ComponentType,
 } from '@angular/core';
@@ -11,8 +12,11 @@ import {
 } from '@angular/core';
 import {
   BEFORE_APP_SERIALIZED,
+  provideServerRendering,
   renderApplication,
+  ɵSERVER_CONTEXT,
 } from '@angular/platform-server';
+import { bootstrapApplication } from '@angular/platform-browser';
 
 const ANALOG_ASTRO_STATIC_PROPS = new InjectionToken<{
   props: Record<string, unknown>;
@@ -70,24 +74,31 @@ const STATIC_PROPS_HOOK_PROVIDER: Provider = {
 };
 
 async function renderToStaticMarkup(
-  Component: ComponentType<unknown>,
+  Component: ComponentType<unknown> & {
+    renderProviders: (Provider | EnvironmentProviders)[];
+  },
   props: Record<string, unknown>,
   _children: unknown
 ) {
   const mirror = reflectComponentType(Component);
   const appId = mirror?.selector || Component.name.toString().toLowerCase();
   const document = `<${appId}></${appId}>`;
+  const bootstrap = () =>
+    bootstrapApplication(Component, {
+      providers: [
+        {
+          provide: ANALOG_ASTRO_STATIC_PROPS,
+          useValue: { props, mirror },
+        },
+        STATIC_PROPS_HOOK_PROVIDER,
+        provideServerRendering(),
+        { provide: ɵSERVER_CONTEXT, useValue: 'analog' },
+        ...(Component.renderProviders || []),
+      ],
+    });
 
-  const html = await renderApplication(Component, {
-    appId,
+  const html = await renderApplication(bootstrap, {
     document,
-    providers: [
-      {
-        provide: ANALOG_ASTRO_STATIC_PROPS,
-        useValue: { props, mirror },
-      },
-      STATIC_PROPS_HOOK_PROVIDER,
-    ],
   });
 
   return { html };

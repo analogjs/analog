@@ -4,19 +4,14 @@
   "sourceRoot": "packages/platform/src",
   "projectType": "library",
   "targets": {
-    "build": {
-      "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+    "build-package": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "node_modules/@analogjs/platform",
         "main": "packages/platform/src/index.ts",
         "tsConfig": "packages/platform/tsconfig.lib.json",
-        "assets": [
-          "packages/platform/*.md",
-          "packages/platform/src/lib/runtime/*.js"
-        ],
+        "assets": ["packages/platform/*.md"],
         "updateBuildableProjectDepsInPackageJson": false
       },
       "configurations": {
@@ -27,13 +22,22 @@
           "tsConfig": "packages/platform/tsconfig.lib.json"
         }
       },
-      "defaultConfiguration": "production"
+      "defaultConfiguration": "production",
+      "dependsOn": ["^build"]
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "yarn nx build-package platform",
+          "yarn nx build nx-plugin"
+        ],
+        "parallel": false
+      }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
           "packages/platform/**/*.ts"
@@ -52,5 +56,6 @@
       }
     }
   },
-  "tags": []
+  "tags": [],
+  "implicitDependencies": ["vite-plugin-angular", "vite-plugin-nitro"]
 }

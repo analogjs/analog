@@ -1,25 +1,23 @@
 import 'zone.js/node';
 import { enableProdMode } from '@angular/core';
+import { bootstrapApplication } from '@angular/platform-browser';
 import { renderApplication } from '@angular/platform-server';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
-import { provideFileRouter } from '@analogjs/router';
-import { withEnabledBlockingInitialNavigation } from '@angular/router';
 
+import { config } from './app/app.config.server';
 import { AppComponent } from './app/app.component';
 
 if (import.meta.env.PROD) {
   enableProdMode();
 }
 
+export function bootstrap() {
+  return bootstrapApplication(AppComponent, config);
+}
+
 export default async function render(url: string, document: string) {
-  const html = await renderApplication(AppComponent, {
-    appId: 'blog-app',
+  const html = await renderApplication(bootstrap, {
     document,
     url,
-    providers: [
-      provideFileRouter(withEnabledBlockingInitialNavigation()),
-      provideContent(withMarkdownRenderer()),
-    ],
   });
 
   return html;

@@ -1,7 +1,7 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-34-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-38-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
@@ -45,9 +45,15 @@ Follow the prompts to scaffold the project and start the development server.
 
 Analog is an MIT-licensed open source project with its ongoing development made by contributors:
 
-- [Sponsor me on GitHub Sponsors](https://github.com/sponsors/brandonroberts).
+### Sponsors
 
-As more contributors are added to the project, they will be added as sponsor recipients.
+<a href="https://github.blog/2023-04-12-github-accelerator-our-first-cohort-and-whats-next/" target="_blank">
+  <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/github-logo.svg" width="100px" height="100px" alt="GitHub Accelerator">
+</a>
+
+> As more contributors are added to the project, they will be added as sponsor recipients.
+
+[Become a Sponsor!](https://github.com/sponsors/brandonroberts).
 
 ## Contributing
 
@@ -109,6 +115,12 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="http://perko.dev"><img src="https://avatars.githubusercontent.com/u/5384791?v=4?s=100" width="100px;" alt="Chris Perko"/><br /><sub><b>Chris Perko</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=BaronVonPerko" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=BaronVonPerko" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://christianlydemann.com"><img src="https://avatars.githubusercontent.com/u/9210691?v=4?s=100" width="100px;" alt="Christian Lüdemann"/><br /><sub><b>Christian Lüdemann</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=lydemann" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://yasser.page"><img src="https://avatars.githubusercontent.com/u/9917969?v=4?s=100" width="100px;" alt="Yasser"/><br /><sub><b>Yasser</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=yassernasc" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/MDyrcz5"><img src="https://avatars.githubusercontent.com/u/23345904?v=4?s=100" width="100px;" alt="Michał Dyrcz"/><br /><sub><b>Michał Dyrcz</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=MDyrcz5" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/otonielguajardo"><img src="https://avatars.githubusercontent.com/u/23427095?v=4?s=100" width="100px;" alt="Otoniel Guajardo"/><br /><sub><b>Otoniel Guajardo</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=otonielguajardo" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/gergobergo"><img src="https://avatars.githubusercontent.com/u/25322572?v=4?s=100" width="100px;" alt="gergobergo"/><br /><sub><b>gergobergo</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=gergobergo" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/saurajit"><img src="https://avatars.githubusercontent.com/u/3590300?v=4?s=100" width="100px;" alt="saurajit"/><br /><sub><b>saurajit</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=saurajit" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

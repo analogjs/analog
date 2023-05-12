@@ -65,8 +65,6 @@ export function devServerPlugin(options: ServerOptions): Plugin {
                 </body>
               </html>
             `);
-
-            throw e;
           }
         });
       };

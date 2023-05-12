@@ -39,50 +39,18 @@ pnpm install @analogjs/content prismjs marked front-matter
 
 ### Setup
 
-In the `main.ts`, add the `provideContent()` function, along with the `withMarkdownRenderer()` feature to the `providers` array when bootstrapping the application.
+In the `src/app/app.config.ts`, add the `provideContent()` function, along with the `withMarkdownRenderer()` feature to the `providers` array when bootstrapping the application.
 
 ```ts
-import 'zone.js';
-import { bootstrapApplication } from '@angular/platform-browser';
-import { provideFileRouter } from '@analogjs/router';
+import { ApplicationConfig } from '@angular/core';
 import { provideContent, withMarkdownRenderer } from '@analogjs/content';
 
-import { AppComponent } from './app/app.component';
-
-bootstrapApplication(AppComponent, {
-  providers: [provideFileRouter(), provideContent(withMarkdownRenderer())],
-});
-```
-
-If you are using SSR, add it to the `main.server.ts` file also.
-
-```ts
-import 'zone.js/node';
-import { enableProdMode } from '@angular/core';
-import { renderApplication } from '@angular/platform-server';
-import { provideFileRouter } from '@analogjs/router';
-import { withEnabledBlockingInitialNavigation } from '@angular/router';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
-
-import { AppComponent } from './app/app.component';
-
-if (import.meta.env.PROD) {
-  enableProdMode();
-}
-
-export default async function render(url: string, document: string) {
-  const html = await renderApplication(AppComponent, {
-    appId: 'analog-app',
-    document,
-    url,
-    providers: [
-      provideFileRouter(withEnabledBlockingInitialNavigation()),
-      provideContent(withMarkdownRenderer()),
-    ],
-  });
-
-  return html;
-}
+export const appConfig: ApplicationConfig = {
+  providers: [
+    // ... other providers
+    provideContent(withMarkdownRenderer()),
+  ],
+};
 ```
 
 ## Defining Content Routes
@@ -125,7 +93,7 @@ Hello World
 
 ## Using the Content Files List
 
-To get a list using the list of content files in the `src/content` folder, use the `injectContentFiles()` function from the `@analogjs/content` package in your component.
+To get a list using the list of content files in the `src/content` folder, use the `injectContentFiles<Attributes>(filterFn?: InjectContentFilesFilterFunction<Attributes>)` function from the `@analogjs/content` package in your component. To narrow the files, you can use the `filterFn` predicate function as an argument. You can use the `InjectContentFilesFilterFunction<T>` type to set up your predicate.
 
 ```ts
 import { Component } from '@angular/core';
@@ -154,7 +122,9 @@ export interface PostAttributes {
   `,
 })
 export default class BlogComponent {
-  readonly posts = injectContentFiles<PostAttributes>();
+  private readonly contentFilterFn: InjectContentFilesFilterFunction<PostAttributes> =
+    (contentFile) => !!contentFile.filename.includes('/src/content/blog/');
+  readonly posts = injectContentFiles<PostAttributes>(contentFilterFn);
 }
 ```
 
@@ -203,17 +173,19 @@ This can be useful if, for instance, you have blog posts, as well as a portfolio
 ```ts
 src/
 └── app/
-    └── routes/
-        ├── posts/
-        │   ├── my-first-post.md
-        │   └── my-second-post.md
-        └── projects/
-            ├── my-first-project.md
-            └── my-second-project.md
+│   └── pages/
+│       └── project.[slug].page.ts
+└── content/
+    ├── posts/
+    │   ├── my-first-post.md
+    │   └── my-second-post.md
+    └── projects/
+        ├── my-first-project.md
+        └── my-second-project.md
 ```
 
 ```ts
-// /src/app/routes/project.[slug].page.ts
+// /src/app/pages/project.[slug].page.ts
 import { injectContent, MarkdownComponent } from '@analogjs/content';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { Component } from '@angular/core';

@@ -1,15 +1,15 @@
 import { describe, expect } from 'vitest';
 import { platformPlugin } from './platform-plugin';
 
-vi.mock('./vite-nitro-plugin');
+vi.mock('@analogjs/vite-plugin-nitro');
 vi.mock('./ssr/ssr-build-plugin');
 vi.mock('./ssr/dev-server-plugin');
 
 describe('platformPlugin', () => {
   const setup = async () => {
-    const viteNitroPluginImport = await import('./vite-nitro-plugin');
+    const viteNitroPluginImport = await import('@analogjs/vite-plugin-nitro');
     const viteNitroPluginSpy = vi.fn();
-    viteNitroPluginImport.viteNitroPlugin = viteNitroPluginSpy;
+    viteNitroPluginImport.default = viteNitroPluginSpy;
 
     const ssrBuildPluginImport = await import('./ssr/ssr-build-plugin');
     const ssrBuildPluginSpy = vi.fn();
@@ -67,5 +67,17 @@ describe('platformPlugin', () => {
     expect(viteNitroPluginSpy).toHaveBeenCalledWith({ ssr: false }, undefined);
     expect(ssrBuildPluginSpy).not.toHaveBeenCalled();
     expect(devServerPluginSpy).not.toHaveBeenCalled();
+  });
+
+  it('should pass the custom endpoint as part of the nitro runtimeConfig if options.apiPrefix is set to false', async () => {
+    const customPrefix = 'custom-endpoint';
+    const { viteNitroPluginSpy, platformPlugin } = await setup();
+    platformPlugin({ apiPrefix: customPrefix });
+
+    expect(viteNitroPluginSpy).toHaveBeenCalledWith(expect.anything(), {
+      runtimeConfig: {
+        apiPrefix: customPrefix,
+      },
+    });
   });
 });
