@@ -24,7 +24,7 @@
     "url": "https://github.com/analogjs/analog.git"
   },
   "dependencies": {
-    "nitropack": "^1.0.0"
+    "nitropack": "^2.0.0"
   },
   "ng-update": {
     "packageGroup": [

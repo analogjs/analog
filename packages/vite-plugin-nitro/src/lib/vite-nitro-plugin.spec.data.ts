@@ -19,7 +19,7 @@ export const mockNitroConfig: NitroConfig = {
   rootDir: '.',
   runtimeConfig: {},
   scanDirs: ['src/server'],
-  srcDir: 'src',
+  srcDir: 'src/server',
   prerender: {
     crawlLinks: undefined,
   },

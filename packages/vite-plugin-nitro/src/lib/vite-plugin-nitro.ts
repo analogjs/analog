@@ -15,7 +15,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
   let nitroConfig: NitroConfig = {
     rootDir,
     logLevel: nitroOptions?.logLevel || 0,
-    srcDir: normalizePath(`${rootDir}/src`),
+    srcDir: normalizePath(`${rootDir}/src/server`),
     scanDirs: [normalizePath(`${rootDir}/src/server`)],
     output: {
       dir: '../dist/analog',
