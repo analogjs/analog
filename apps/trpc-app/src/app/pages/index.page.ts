@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component } from "@angular/core";
-import { injectTRPCClient } from "../../trpc-client";
-import { AsyncPipe, DatePipe, JsonPipe, NgFor, NgIf } from "@angular/common";
-import { FormsModule, NgForm } from "@angular/forms";
-import { Note } from "../../note";
-import { BehaviorSubject, switchMap } from "rxjs";
-import { waitFor } from "@analogjs/trpc";
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { injectTRPCClient } from '../../trpc-client';
+import { AsyncPipe, DatePipe, JsonPipe, NgFor, NgIf } from '@angular/common';
+import { FormsModule, NgForm } from '@angular/forms';
+import { Note } from '../../note';
+import { BehaviorSubject, switchMap } from 'rxjs';
+import { waitFor } from '@analogjs/trpc';
 
 const inputTw =
   'focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:outline-0 block w-full appearance-none rounded-lg px-3 py-2 transition-colors text-base leading-tight md:text-sm bg-black/[.05] dark:bg-zinc-50/10 focus:bg-white dark:focus:bg-dark placeholder:text-zinc-500 dark:placeholder:text-zinc-400 contrast-more:border contrast-more:border-current';

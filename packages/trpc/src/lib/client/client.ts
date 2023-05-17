@@ -1,11 +1,15 @@
-import { InjectionToken, Provider, TransferState } from "@angular/core";
-import "isomorphic-fetch";
-import { httpBatchLink } from "@trpc/client";
-import { AnyRouter } from "@trpc/server";
-import { transferStateLink } from "./links/transfer-state-link";
-import { provideTrpcCacheState, provideTrpcCacheStateStatusManager, tRPC_CACHE_STATE } from "./cache-state";
-import { createTRPCRxJSProxyClient } from "./trpc-rxjs-proxy";
-import { CreateTRPCClientOptions } from "@trpc/client/src/createTRPCUntypedClient";
+import { InjectionToken, Provider, TransferState } from '@angular/core';
+import 'isomorphic-fetch';
+import { httpBatchLink } from '@trpc/client';
+import { AnyRouter } from '@trpc/server';
+import { transferStateLink } from './links/transfer-state-link';
+import {
+  provideTrpcCacheState,
+  provideTrpcCacheStateStatusManager,
+  tRPC_CACHE_STATE,
+} from './cache-state';
+import { createTRPCRxJSProxyClient } from './trpc-rxjs-proxy';
+import { CreateTRPCClientOptions } from '@trpc/client/src/createTRPCUntypedClient';
 
 export type TrpcOptions<T extends AnyRouter> = {
   url: string;
