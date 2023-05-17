@@ -13,7 +13,7 @@ import { CreateTRPCClientOptions } from '@trpc/client/src/createTRPCUntypedClien
 
 export type TrpcOptions<T extends AnyRouter> = {
   url: string;
-  options: Partial<CreateTRPCClientOptions<T>>;
+  options?: Partial<CreateTRPCClientOptions<T>>;
 };
 
 export type TrpcClient<AppRouter extends AnyRouter> = ReturnType<

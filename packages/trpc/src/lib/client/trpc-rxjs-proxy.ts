@@ -191,7 +191,7 @@ class TRPCClient<TRouter extends AnyRouter> {
     path: string;
     context?: OperationContext;
   }) {
-    const chain$ = createChain<TRouter, TInput, TOutput>({
+    const chain$ = createChain<AnyRouter, TInput, TOutput>({
       links: this.links as OperationLink<any, any, any>[],
       op: {
         id: ++this.requestId,
