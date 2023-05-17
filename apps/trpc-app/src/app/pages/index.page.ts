@@ -3,7 +3,7 @@ import { injectTRPCClient } from '../../trpc-client';
 import { AsyncPipe, DatePipe, JsonPipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Note } from '../../note';
-import { BehaviorSubject, switchMap } from 'rxjs';
+import { BehaviorSubject, shareReplay, switchMap } from 'rxjs';
 import { waitFor } from '@analogjs/trpc';
 
 const inputTw =
@@ -95,7 +95,8 @@ export default class HomeComponent {
   private _trpc = injectTRPCClient();
   public triggerRefresh$ = new BehaviorSubject(true);
   public notes$ = this.triggerRefresh$.pipe(
-    switchMap(() => this._trpc.note.list.query())
+    switchMap(() => this._trpc.note.list.query()),
+    shareReplay(1)
   );
   public newNote = '';
 
