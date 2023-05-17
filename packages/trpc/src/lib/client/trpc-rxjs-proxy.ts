@@ -24,10 +24,11 @@ import {
   TRPCClientRuntime,
 } from '@trpc/client/src/links/types';
 import { Observable as RxJSObservable } from 'rxjs';
-import { TRPCClientError, TRPCRequestOptions } from '@trpc/client';
+import { TRPCClientError } from '@trpc/client';
 import {
   createChain,
   CreateTRPCClientOptions,
+  TRPCRequestOptions,
   TRPCType,
 } from './shared-internal';
 import { Observable as TrpcObservable } from '@trpc/server/src/observable/types';

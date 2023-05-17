@@ -38,7 +38,6 @@ export interface TRPCRequestOptions {
    * Pass additional context to links
    */
   context?: OperationContext;
-  signal?: AbortSignal;
 }
 
 export function createChain<
