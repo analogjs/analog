@@ -98,7 +98,7 @@ The following structure below represents a nested route.
 ```treeview
 src/
 └── app/
-    └── routes/
+    └── pages/
         │   └── products/
         │      ├──[productId].ts
         │      └──(products-list).ts

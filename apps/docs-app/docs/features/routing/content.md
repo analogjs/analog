@@ -57,7 +57,7 @@ export const appConfig: ApplicationConfig = {
 
 Content routes include support for frontmatter, metatags, and syntax highlighting with PrismJS.
 
-The example route below in `src/app/routes/about.md` defines an `/about` route.
+The example route below in `src/app/pages/about.md` defines an `/about` route.
 
 ```md
 ---
@@ -135,7 +135,7 @@ Analog provides a `MarkdownComponent` and `injectContent()` function for renderi
 The `injectContent()` function uses the `slug` route parameter by default to get the content file from the `src/content` folder.
 
 ```ts
-// /src/app/routes/blog/posts.[slug].page.ts
+// /src/app/pages/blog/posts.[slug].page.ts
 import { injectContent, MarkdownComponent } from '@analogjs/content';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { Component } from '@angular/core';
