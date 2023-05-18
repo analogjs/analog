@@ -31,7 +31,7 @@ npm i -g @edgio/cli
 2. In your project's directory, initialize Edgio:
 
 ```bash
-edgio init --connector=@edgio/analogjs --edgioVersion=6.1.4
+edgio init --connector=@edgio/analogjs
 ```
 
 3. Deploy To Edgio
