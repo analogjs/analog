@@ -1,7 +1,7 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-39-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-40-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [![Discord server](https://dcbadge.vercel.app/api/server/mKC2Ec48U5?style=flat-square)](https://chat.analogjs.org/) [![Twitter](https://img.shields.io/twitter/follow/analogjs?color=%231DA1F2&style=flat-square)](https://twitter.com/analogjs)
@@ -124,6 +124,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/gergobergo"><img src="https://avatars.githubusercontent.com/u/25322572?v=4?s=100" width="100px;" alt="gergobergo"/><br /><sub><b>gergobergo</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=gergobergo" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/saurajit"><img src="https://avatars.githubusercontent.com/u/3590300?v=4?s=100" width="100px;" alt="saurajit"/><br /><sub><b>saurajit</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=saurajit" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://www.monocube.com"><img src="https://avatars.githubusercontent.com/u/2464830?v=4?s=100" width="100px;" alt="Mircea Rilă"/><br /><sub><b>Mircea Rilă</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=zawasp" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://dafnik.me"><img src="https://avatars.githubusercontent.com/u/16242839?v=4?s=100" width="100px;" alt="Dominik"/><br /><sub><b>Dominik</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Dafnik" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=Dafnik" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
