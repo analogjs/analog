@@ -372,6 +372,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "Dafnik",
+      "name": "Dominik",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16242839?v=4",
+      "profile": "https://dafnik.me",
+      "contributions": [
+        "doc",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
