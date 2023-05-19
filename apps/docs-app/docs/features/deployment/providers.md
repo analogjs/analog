@@ -14,7 +14,7 @@ Analog supports deploying on [Render](https://render.com/) with minimal configur
 
 4. Update the start command to `node dist/analog/server/index.mjs`
 
-5. Click 'Advanced' and add an environment variable with `NITRO_PRESET` set to `render-com`.
+5. Click 'Advanced' and add an environment variable with `BUILD_PRESET` set to `render-com`.
 
 6. Click 'Create Web Service'.
 
@@ -112,7 +112,7 @@ You can find more details in the [Firebase documentation](https://firebase.googl
 You can preview a local version of your site to test things out without deploying.
 
 ```bash
-NITRO_PRESET=firebase npm run build
+BUILD_PRESET=firebase npm run build
 firebase emulators:start
 ```
 
@@ -121,6 +121,6 @@ firebase emulators:start
 To deploy to Firebase Hosting, run the `firebase deploy` command.
 
 ```bash
-NITRO_PRESET=firebase npm run build
+BUILD_PRESET=firebase npm run build
 firebase deploy
 ```
