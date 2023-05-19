@@ -6,11 +6,17 @@
  * The package is shipped as commonjs
  * which won't be parsed by Nitro correctly.
  */
-import { eventHandler } from 'h3';
+import { eventHandler, proxyRequest } from 'h3';
 
 export default eventHandler(async (event) => {
   const apiPrefix = `/${import.meta.env.RUNTIME_CONFIG?.apiPrefix ?? 'api'}`;
-  if (event.req.url?.startsWith(apiPrefix)) {
-    return $fetch(`${event.req.url?.replace(apiPrefix, '')}`);
+  if (event.node.req.url?.startsWith(apiPrefix)) {
+    return proxyRequest(
+      event,
+      `${event.node.req.url?.replace(apiPrefix, '')}`,
+      {
+        fetch: $fetch.native,
+      }
+    );
   }
 });
