@@ -11,6 +11,7 @@ export async function buildServer(
 
   const nitro = await createNitro({
     dev: false,
+    preset: process.env['BUILD_PRESET'],
     ...nitroConfig,
   });
   await prepare(nitro);

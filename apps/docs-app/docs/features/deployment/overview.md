@@ -27,10 +27,10 @@ Analog can generate different output formats suitable for different [hosting pro
 
 Using environment variable is recommended for deployments depending on CI/CD.
 
-**Example:** Using `NITRO_PRESET`
+**Example:** Using `BUILD_PRESET`
 
 ```bash
-NITRO_PRESET=node-server
+BUILD_PRESET=node-server
 ```
 
 **Example:** Using `vite.config.ts`
