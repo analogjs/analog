@@ -100,9 +100,9 @@ src/
 └── app/
     └── pages/
         │   └── products/
-        │      ├──[productId].ts
-        │      └──(products-list).ts
-        └── products.ts
+        │      ├──[productId].page.ts
+        │      └──(products-list).page.ts
+        └── products.page.ts
 ```
 
 This defines two routes with a shared layout:
