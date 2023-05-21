@@ -382,6 +382,15 @@
         "doc",
         "code"
       ]
+    },
+    {
+      "login": "henriquecustodia",
+      "name": "Henrique Custódia",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5140430?v=4",
+      "profile": "https://henriquecustodia.dev",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
