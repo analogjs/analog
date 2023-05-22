@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vite-plugin-nitro",
-  "version": "0.2.0-beta.10",
+  "version": "0.2.0-beta.11",
   "type": "commonjs",
   "description": "A Vite plugin for adding a nitro API server",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
