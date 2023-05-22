@@ -51,4 +51,4 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-The static pages can be deployed from the `dist/analog/public` directory.
+The static pages can be deployed from the `dist/client` directory.
