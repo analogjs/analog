@@ -110,17 +110,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
         return {
           optimizeDeps: {
-            include: [
-              '@angular/animations',
-              '@angular/common',
-              '@angular/common/http',
-              '@angular/core',
-              '@angular/platform-browser',
-              '@angular/platform-browser/animations',
-              '@angular/platform-browser-dynamic',
-              'rxjs/operators',
-              'rxjs',
-            ],
+            include: ['rxjs/operators', 'rxjs'],
             exclude: ['@angular/platform-server'],
             esbuildOptions: {
               plugins: [
