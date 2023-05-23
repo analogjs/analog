@@ -62,5 +62,6 @@ export default defineConfig(({ mode }) => ({
     })
   ],
 }));
+```
 
 You can opt out of prerendering by passing an empty array of routes.
