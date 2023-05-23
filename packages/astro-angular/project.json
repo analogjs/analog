@@ -12,7 +12,8 @@
         "main": "packages/astro-angular/src/index.ts",
         "tsConfig": "packages/astro-angular/tsconfig.lib.json",
         "assets": [
-          "packages/astro-angular/*.md"
+          "packages/astro-angular/*.md",
+          "packages/astro-angular/migrations/migration.json"
         ],
         "updateBuildableProjectDepsInPackageJson": false
       }
@@ -32,9 +33,7 @@
       "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/astro-angular/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/astro-angular/**/*.ts"]
       }
     },
     "test": {
