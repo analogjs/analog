@@ -5,6 +5,8 @@ import * as ts from 'typescript';
 import { ModuleNode, Plugin, PluginContainer, ViteDevServer } from 'vite';
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
 import { createJitResourceTransformer } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/jit-resource-transformer';
+import * as path from 'path';
+
 import { createCompilerPlugin } from './compiler-plugin';
 import {
   hasStyleUrls,
@@ -103,6 +105,15 @@ export function angular(options?: PluginOptions): Plugin[] {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
         watchMode = command === 'serve';
+
+        pluginOptions.tsconfig =
+          options?.tsconfig ??
+          path.resolve(
+            config.root!,
+            process.env['NODE_ENV'] === 'test'
+              ? './tsconfig.spec.json'
+              : './tsconfig.app.json'
+          );
 
         compilerCli = await loadEsmModule<
           typeof import('@angular/compiler-cli')
