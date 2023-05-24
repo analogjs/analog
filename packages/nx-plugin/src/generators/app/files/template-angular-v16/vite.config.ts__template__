@@ -17,39 +17,11 @@ export default defineConfig(({ mode }) => {
       noExternal: '@analogjs/trpc/**',
     },
     <% } %>
-    optimizeDeps: {
-      include: ['@angular/common', '@angular/forms'],
-    },
     build: {
       target: ['es2020'],
     },
     plugins: [
-      analog({
-        ssrBuildDir: '<%= offsetFromRoot %>dist/<%= appsDir %>/<%= projectName %>/ssr',
-        entryServer: '<%= appsDir %>/<%= projectName %>/src/main.server.ts',
-        vite: {
-          inlineStylesExtension: 'css',
-          tsconfig:
-            mode === 'test'
-              ? '<%= appsDir %>/<%= projectName %>/tsconfig.spec.json'
-              : '<%= appsDir %>/<%= projectName %>/tsconfig.app.json',
-        },
-        nitro: {
-          rootDir: '<%= appsDir %>/<%= projectName %>',
-          output: {
-            dir: '<%= offsetFromRoot %>../dist/<%= appsDir %>/<%= projectName %>/analog',
-            publicDir: '<%= offsetFromRoot %>../dist/<%= appsDir %>/<%= projectName %>/analog/public',
-          },
-          publicAssets: [{ dir: `<%= offsetFromRoot %>../dist/<%= appsDir %>/<%= projectName %>/client` }],
-          serverAssets: [
-            { baseName: 'public', dir: `./dist/<%= appsDir %>/<%= projectName %>/client` },
-          ],
-          buildDir: '<%= offsetFromRoot %>dist/<%= appsDir %>/<%= projectName %>/.nitro',
-        },
-        prerender: {
-          routes: ['/'],
-        },
-      }),
+      analog(),
       tsConfigPaths({
         root: '<%= offsetFromRoot %>',
       }),
