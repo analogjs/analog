@@ -4,7 +4,13 @@ import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm'
 import { transformAsync } from '@babel/core';
 import angularApplicationPreset from '@angular-devkit/build-angular/src/babel/presets/application';
 
-export function buildOptimizerPlugin({ isProd }: { isProd: boolean }): Plugin {
+export function buildOptimizerPlugin({
+  isProd,
+  supportedBrowsers,
+}: {
+  isProd: boolean;
+  supportedBrowsers: string[];
+}): Plugin {
   return {
     name: '@analogjs/vite-plugin-angular-optimizer',
     apply: 'build',
@@ -31,6 +37,8 @@ export function buildOptimizerPlugin({ isProd }: { isProd: boolean }): Plugin {
             // NOTE: If esbuild adds support in the future, the babel support for these can be disabled.
             'async-generator': false,
             'for-await': false,
+            'class-field': false,
+            'class-static-field': false,
           },
         },
       };
@@ -78,6 +86,7 @@ export function buildOptimizerPlugin({ isProd }: { isProd: boolean }): Plugin {
                   linkerPluginCreator,
                 },
                 forceAsyncTransformation,
+                supportedBrowsers,
                 optimize: isProd && {
                   looseEnums: angularPackage,
                   pureTopLevel: angularPackage,

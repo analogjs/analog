@@ -66,7 +66,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           options?.advanced?.tsTransformers?.afterDeclarations ?? [],
       },
     },
-    supportedBrowsers: options?.supportedBrowsers ?? ['iOS <=15'],
+    supportedBrowsers: options?.supportedBrowsers ?? ['safari 15'],
     jit: options?.jit,
   };
 
@@ -349,7 +349,10 @@ export function angular(options?: PluginOptions): Plugin[] {
       jitPlugin({
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
       })) as Plugin,
-    buildOptimizerPlugin({ isProd }),
+    buildOptimizerPlugin({
+      isProd,
+      supportedBrowsers: pluginOptions.supportedBrowsers,
+    }),
   ].filter(Boolean) as Plugin[];
 
   function setupCompilation() {
