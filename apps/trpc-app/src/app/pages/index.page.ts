@@ -3,7 +3,7 @@ import { injectTRPCClient } from '../../trpc-client';
 import { AsyncPipe, DatePipe, JsonPipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Note } from '../../note';
-import { BehaviorSubject, shareReplay, switchMap } from 'rxjs';
+import { shareReplay, Subject, switchMap, take } from 'rxjs';
 import { waitFor } from '@analogjs/trpc';
 
 const inputTw =
@@ -93,7 +93,7 @@ const btnTw =
 })
 export default class HomeComponent {
   private _trpc = injectTRPCClient();
-  public triggerRefresh$ = new BehaviorSubject(true);
+  public triggerRefresh$ = new Subject<void>();
   public notes$ = this.triggerRefresh$.pipe(
     switchMap(() => this._trpc.note.list.query()),
     shareReplay(1)
@@ -102,6 +102,7 @@ export default class HomeComponent {
 
   constructor() {
     void waitFor(this.notes$);
+    this.triggerRefresh$.next();
   }
 
   public noteTrackBy = (index: number, note: Note) => {
@@ -115,7 +116,8 @@ export default class HomeComponent {
     }
     this._trpc.note.create
       .mutate({ title: this.newNote })
-      .subscribe(() => this.triggerRefresh$.next(true));
+      .pipe(take(1))
+      .subscribe(() => this.triggerRefresh$.next());
     this.newNote = '';
     form.form.reset();
   }
@@ -123,6 +125,7 @@ export default class HomeComponent {
   public removePost(id: number) {
     this._trpc.note.remove
       .mutate({ id })
-      .subscribe(() => this.triggerRefresh$.next(true));
+      .pipe(take(1))
+      .subscribe(() => this.triggerRefresh$.next());
   }
 }
