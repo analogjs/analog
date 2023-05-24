@@ -112,7 +112,7 @@
     "lint-staged": "^13.1.0",
     "minimist": "^1.2.7",
     "ng-packagr": "^16.0.0",
-    "nitropack": "^1.0.0",
+    "nitropack": "^2.0.0",
     "nx": "16.1.0",
     "playwright": "^1.30.0",
     "postcss": "^8.4.21",
