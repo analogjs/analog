@@ -48,6 +48,7 @@ export async function addAnalogDependencies(
       majorAngularVersion === 15 ? V15_FRONT_MATTER : V16_FRONT_MATTER,
     marked: majorAngularVersion === 15 ? V15_MARKED : V16_MARKED,
     prismjs: majorAngularVersion === 15 ? V15_PRISMJS : V16_PRISMJS,
+    h3: 'latest',
   };
 
   const nxViteDependency =
