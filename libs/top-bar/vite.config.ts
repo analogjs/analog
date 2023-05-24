@@ -8,11 +8,7 @@ import angular from '@analogjs/vite-plugin-angular';
 export default defineConfig(({ mode }) => {
   return {
     root: 'src',
-    plugins: [
-      angular({
-        tsconfig: 'libs/top-bar/tsconfig.spec.json',
-      }),
-    ],
+    plugins: [angular()],
     test: {
       globals: true,
       environment: 'jsdom',

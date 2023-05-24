@@ -11,7 +11,10 @@
         "outputPath": "node_modules/@analogjs/platform",
         "main": "packages/platform/src/index.ts",
         "tsConfig": "packages/platform/tsconfig.lib.json",
-        "assets": ["packages/platform/*.md"],
+        "assets": [
+          "packages/platform/*.md",
+          "packages/platform/migrations/migration.json"
+        ],
         "updateBuildableProjectDepsInPackageJson": false
       },
       "configurations": {
@@ -39,9 +42,7 @@
       "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/platform/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/platform/**/*.ts"]
       }
     },
     "test": {

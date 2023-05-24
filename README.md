@@ -1,7 +1,7 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-41-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-43-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [![Discord server](https://dcbadge.vercel.app/api/server/mKC2Ec48U5?style=flat-square)](https://chat.analogjs.org/) [![Twitter](https://img.shields.io/twitter/follow/analogjs?color=%231DA1F2&style=flat-square)](https://twitter.com/analogjs)
@@ -126,6 +126,10 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="http://www.monocube.com"><img src="https://avatars.githubusercontent.com/u/2464830?v=4?s=100" width="100px;" alt="Mircea Rilă"/><br /><sub><b>Mircea Rilă</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=zawasp" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://dafnik.me"><img src="https://avatars.githubusercontent.com/u/16242839?v=4?s=100" width="100px;" alt="Dominik"/><br /><sub><b>Dominik</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Dafnik" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=Dafnik" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://henriquecustodia.dev"><img src="https://avatars.githubusercontent.com/u/5140430?v=4?s=100" width="100px;" alt="Henrique Custódia"/><br /><sub><b>Henrique Custódia</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=henriquecustodia" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://isoden.dev"><img src="https://avatars.githubusercontent.com/u/3771988?v=4?s=100" width="100px;" alt="ISODA Yu"/><br /><sub><b>ISODA Yu</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=isoden" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="http://cynthia-developer.netlify.com"><img src="https://avatars.githubusercontent.com/u/37863089?v=4?s=100" width="100px;" alt="Cynthia Iradukunda"/><br /><sub><b>Cynthia Iradukunda</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ciradu2204" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

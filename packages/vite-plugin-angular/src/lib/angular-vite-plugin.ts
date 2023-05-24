@@ -5,6 +5,8 @@ import * as ts from 'typescript';
 import { ModuleNode, Plugin, PluginContainer, ViteDevServer } from 'vite';
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
 import { createJitResourceTransformer } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/jit-resource-transformer';
+import * as path from 'path';
+
 import { createCompilerPlugin } from './compiler-plugin';
 import {
   hasStyleUrls,
@@ -104,23 +106,22 @@ export function angular(options?: PluginOptions): Plugin[] {
       async config(config, { command }) {
         watchMode = command === 'serve';
 
+        pluginOptions.tsconfig =
+          options?.tsconfig ??
+          path.resolve(
+            config.root!,
+            process.env['NODE_ENV'] === 'test'
+              ? './tsconfig.spec.json'
+              : './tsconfig.app.json'
+          );
+
         compilerCli = await loadEsmModule<
           typeof import('@angular/compiler-cli')
         >('@angular/compiler-cli');
 
         return {
           optimizeDeps: {
-            include: [
-              '@angular/animations',
-              '@angular/common',
-              '@angular/common/http',
-              '@angular/core',
-              '@angular/platform-browser',
-              '@angular/platform-browser/animations',
-              '@angular/platform-browser-dynamic',
-              'rxjs/operators',
-              'rxjs',
-            ],
+            include: ['rxjs/operators', 'rxjs'],
             exclude: ['@angular/platform-server'],
             esbuildOptions: {
               plugins: [

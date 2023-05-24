@@ -88,7 +88,7 @@ export async function initializeAngularWorkspace(
 
   if (lt(angularVersion, MINIMUM_SUPPORTED_ANGULAR_VERSION)) {
     throw new Error(
-      stripIndents`AnalogJs only supports an Angular version of 15 and higher`
+      stripIndents`Analog only supports an Angular version of 15 and higher`
     );
   }
 

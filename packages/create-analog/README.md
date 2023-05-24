@@ -1,50 +1,45 @@
 # create-analog
 
-## Scaffolding Your First Analog Project
+Analog is the fullstack meta-framework for Angular.
+
+## Features
+
+- File-based routing
+- SSR/SSG support with prerendering
+- Support for API/server routes
+- Support for using markdown as content routes
+- Supports Angular CLI or Nx workspaces
+- Powered by Vite
+
+## Creating an Analog Project
 
 With NPM:
 
 ```bash
-$ npm create analog@latest
+npm create analog@latest
 ```
 
 With Yarn:
 
 ```bash
-$ yarn create analog
+yarn create analog
 ```
 
 With PNPM:
 
 ```bash
-$ pnpm create analog
+pnpm create analog
 ```
 
-Then follow the prompts!
+Follow the prompts to install the application dependencies and run the project in development mode!
 
-You can also directly specify the project name and the template you want to use via additional command line options. For example, to scaffold an Angular, run:
+## Next Steps
 
-```bash
-# npm 6.x
-npm create analog@latest my-angular-app --template angular-v15
+Learn more at [analogjs.org](https://analogjs.org)
 
-# npm 7+, extra double-dash is needed:
-npm create analog@latest my-angular-app -- --template angular-v15
+## Community
 
-# yarn
-yarn create analog my-angular-app --template angular-v15
-
-# pnpm
-pnpm create analog my-angular-app --template angular-v15
-```
-
-Currently supported template presets include:
-
-- `angular-v16-prerelease`
-- `angular-v15`
-
-You can use `.` for the project name to scaffold in the current directory.
-
-## Credits
-
-This project is inspired by `create-vite`.
+- Visit and Star the [GitHub Repo](https://github.com/analogjs/analog)
+- Join the [Discord](https://chat.analogjs.org)
+- Follow us on [Twitter](https://twitter.com/analogjs)
+- Become a [Sponsor](https://github.com/sponsors/brandonroberts)

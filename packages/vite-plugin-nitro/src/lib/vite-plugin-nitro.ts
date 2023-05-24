@@ -6,33 +6,20 @@ import { buildServer } from './build-server';
 import { buildSSRApp } from './build-ssr';
 import { normalizePath } from 'vite';
 import { Options } from './options';
+import * as path from 'path';
+
+let clientOutputPath = '';
 
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
-  const rootDir = nitroOptions?.rootDir || '.';
+  const workspaceRoot = process.cwd();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const apiPrefix = `/${nitroOptions?.runtimeConfig?.['apiPrefix'] ?? 'api'}`;
-
-  let nitroConfig: NitroConfig = {
-    rootDir,
-    logLevel: nitroOptions?.logLevel || 0,
-    srcDir: normalizePath(`${rootDir}/src`),
-    scanDirs: [normalizePath(`${rootDir}/src/server`)],
-    output: {
-      dir: '../dist/analog',
-      publicDir: '../dist/analog/public',
-      ...nitroOptions?.output,
-    },
-    buildDir: './dist/.nitro',
-    typescript: {
-      generateTsConfig: false,
-    },
-    runtimeConfig: { ...nitroOptions?.runtimeConfig },
-  };
 
   let isBuild = false;
   let isServe = false;
   let ssrBuild = false;
   let config: UserConfig;
+  let nitroConfig: NitroConfig;
 
   return {
     name: 'analogjs-vite-nitro-plugin',
@@ -41,6 +28,35 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
       isBuild = command === 'build';
       ssrBuild = _config.build?.ssr === true;
       config = _config;
+      const rootDir = config.root || '.';
+
+      nitroConfig = {
+        rootDir,
+        logLevel: nitroOptions?.logLevel || 0,
+        srcDir: normalizePath(`${rootDir}/src`),
+        scanDirs: [normalizePath(`${rootDir}/src/server`)],
+        output: {
+          dir: normalizePath(
+            path.resolve(workspaceRoot, 'dist', rootDir, 'analog')
+          ),
+          publicDir: normalizePath(
+            path.resolve(workspaceRoot, 'dist', rootDir, 'analog/public')
+          ),
+          ...nitroOptions?.output,
+        },
+        buildDir: normalizePath(
+          path.resolve(workspaceRoot, 'dist', rootDir, '.nitro')
+        ),
+        typescript: {
+          generateTsConfig: false,
+        },
+        runtimeConfig: { ...nitroOptions?.runtimeConfig },
+      };
+
+      if (!ssrBuild && !isTest) {
+        // store the client output path for the SSR build config
+        clientOutputPath = path.resolve(rootDir, config.build?.outDir!);
+      }
 
       if (isBuild) {
         if (isEmptyPrerenderRoutes(options)) {
@@ -63,8 +79,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
         if (ssrBuild) {
           nitroConfig = {
             ...nitroConfig,
-            publicAssets: [{ dir: `../dist/client` }],
-            serverAssets: [{ baseName: 'public', dir: `./dist/client` }],
+            publicAssets: [{ dir: clientOutputPath }],
+            serverAssets: [
+              {
+                baseName: 'public',
+                dir: clientOutputPath,
+              },
+            ],
             externals: {
               inline: ['zone.js/node'],
               external: ['rxjs', 'node-fetch-native/dist/polyfill', 'destr'],

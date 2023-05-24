@@ -21,7 +21,7 @@ This command:
 
 - Installs the `@analogjs/astro-angular` package.
 - Adds the `@analogjs/astro-angular` integration to the `astro.config.mjs` file.
-- Installs the necessary dependencies to render Angular components on the server and client, and common Angular dependencies, such as `@angular/common` and `@angular/forms`.
+- Installs the necessary dependencies to render Angular components on the server and client, and common Angular dependencies, such as `@angular/common`.
 
 ### Setting up the TypeScript config
 
@@ -113,8 +113,6 @@ export default defineConfig({
   integrations: [
     angular({
       vite: {
-        tsconfig: 'path/to/tsconfig.app.json',
-        workspaceRoot: 'rootDir',
         inlineStylesExtension: 'scss|sass|less',
       },
     }),

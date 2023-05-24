@@ -20,29 +20,11 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       analog({
-        ssrBuildDir: '../../dist/apps/trpc-app/ssr',
-        entryServer: 'apps/trpc-app/src/main.server.ts',
         vite: {
           inlineStylesExtension: 'css',
-          tsconfig:
-            mode === 'test'
-              ? 'apps/trpc-app/tsconfig.spec.json'
-              : 'apps/trpc-app/tsconfig.app.json',
         },
-        nitro: {
-          rootDir: 'apps/trpc-app',
-          output: {
-            dir: '../../../dist/apps/trpc-app/analog',
-            publicDir: '../../../dist/apps/trpc-app/analog/public',
-          },
-          publicAssets: [{ dir: `../../../dist/apps/trpc-app/client` }],
-          serverAssets: [
-            { baseName: 'public', dir: `./dist/apps/trpc-app/client` },
-          ],
-          buildDir: '../../dist/apps/trpc-app/.nitro',
-          prerender: {
-            routes: ['/'],
-          },
+        prerender: {
+          routes: ['/'],
         },
       }),
       tsConfigPaths({
