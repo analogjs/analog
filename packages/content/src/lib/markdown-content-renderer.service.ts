@@ -66,7 +66,6 @@ export class MarkdownContentRendererService implements ContentRenderer {
       gfm: true,
       breaks: false,
       sanitize: false,
-      smartLists: true,
       smartypants: false,
       xhtml: false,
     });
