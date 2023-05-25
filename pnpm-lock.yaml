@@ -6,7 +6,7 @@ importers:
     dependencies:
       '@analogjs/content':
         specifier: latest
-        version: 0.2.0-beta.12(@angular/common@16.0.0)(@angular/core@16.0.0)(@angular/platform-browser@16.0.0)(@angular/router@16.0.0)(front-matter@4.0.2)(marked@4.2.12)(prismjs@1.29.0)(rxjs@7.8.0)
+        version: 0.2.0-beta.13(@angular/common@16.0.0)(@angular/core@16.0.0)(@angular/platform-browser@16.0.0)(@angular/router@16.0.0)(front-matter@4.0.2)(marked@4.2.12)(prismjs@1.29.0)(rxjs@7.8.0)
       '@angular/animations':
         specifier: ^16.0.0
         version: 16.0.0(@angular/core@16.0.0)
@@ -272,6 +272,9 @@ importers:
       nx:
         specifier: 16.1.0
         version: 16.1.0(@swc-node/register@1.6.2)(@swc/core@1.3.42)
+      nx-cloud:
+        specifier: ^16.0.5
+        version: 16.0.5
       playwright:
         specifier: ^1.30.0
         version: 1.30.0
@@ -482,8 +485,8 @@ packages:
       '@jridgewell/gen-mapping': 0.3.2
       '@jridgewell/trace-mapping': 0.3.17
 
-  /@analogjs/content@0.2.0-beta.12(@angular/common@16.0.0)(@angular/core@16.0.0)(@angular/platform-browser@16.0.0)(@angular/router@16.0.0)(front-matter@4.0.2)(marked@4.2.12)(prismjs@1.29.0)(rxjs@7.8.0):
-    resolution: {integrity: sha512-tiK9BGWFHDApRskZoIRX72ky1mwcqJ5JJF1V7m6ltCcNrIMvRGJ4z3tSRdn3aLR/lA6mMF77U2ETarcMKIRMBA==}
+  /@analogjs/content@0.2.0-beta.13(@angular/common@16.0.0)(@angular/core@16.0.0)(@angular/platform-browser@16.0.0)(@angular/router@16.0.0)(front-matter@4.0.2)(marked@4.2.12)(prismjs@1.29.0)(rxjs@7.8.0):
+    resolution: {integrity: sha512-mULsaDWa/9d1fbmUQlgYtaClkZ9F3sUafMqeeMWsgtXHYVNPBcd5VfXZFYp6kPbGGrzNOfK1xnUvdcU26Y7bzQ==}
     peerDependencies:
       '@angular/common': ^15.0.0 || ^16.0.0
       '@angular/core': ^15.0.0 || ^16.0.0
@@ -5554,6 +5557,14 @@ packages:
       - supports-color
       - typescript
 
+  /@nrwl/nx-cloud@16.0.5:
+    resolution: {integrity: sha512-1p82ym8WE9ziejwgPslstn19iV/VkHfHfKr/5YOnfCHQS+NxUf92ogcYhHXtqWLblVZ9Zs4W4pkSXK4e04wCmQ==}
+    dependencies:
+      nx-cloud: 16.0.5
+    transitivePeerDependencies:
+      - debug
+    dev: true
+
   /@nrwl/nx-darwin-arm64@15.9.4:
     resolution: {integrity: sha512-XnvrnT9BJsgThY/4xUcYtE077ERq/img8CkRj7MOOBNOh0/nVcR4LGbBKDHtwE3HPk0ikyS/SxRyNa9msvi3QQ==}
     engines: {node: '>= 10'}
@@ -8179,6 +8190,16 @@ packages:
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
+
+  /axios@1.1.3:
+    resolution: {integrity: sha512-00tXVRwKx/FZr/IDVFt4C+f9FYairX517WoGCL6dpOntqLkZofjhu43F/Xl44UOpqa+9sLFDrG/XAnFsUYgkDA==}
+    dependencies:
+      follow-redirects: 1.15.2(debug@4.3.4)
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+    dev: true
 
   /axobject-query@3.1.1:
     resolution: {integrity: sha512-goKlv8DZrK9hUh975fnHzhNIO4jUnFCfv/dszV5VwUGDFjI6vQ2VwoyjYjYNEbBE8AH87TduWP5uyDR1D+Iteg==}
@@ -15295,6 +15316,10 @@ packages:
   /node-int64@0.4.0:
     resolution: {integrity: sha512-O5lz91xSOeoXP6DulyHfllpq+Eg00MWitZIbtPfoSEvqIHdl5gfcY6hYzDWnj0qD5tz52PI08u9qUvSVeUBeHw==}
 
+  /node-machine-id@1.1.12:
+    resolution: {integrity: sha512-QNABxbrPa3qEIfrE6GOJ7BYIuignnJw7iQ2YPbc3Nla1HzRJjXzZOiikfF8m7eAMfichLt3M4VgLOetqgDmgGQ==}
+    dev: true
+
   /node-releases@2.0.10:
     resolution: {integrity: sha512-5GFldHPXVG/YZmFzJvKK2zDSzPKhEp0+ZR5SVaoSag9fsL5YgHbUHDfnG5494ISANDcK4KwPXAx2xqVEydmd7w==}
 
@@ -15473,6 +15498,24 @@ packages:
   /nwsapi@2.2.2:
     resolution: {integrity: sha512-90yv+6538zuvUMnN+zCr8LuV6bPFdq50304114vJYJ8RDyK8D5O9Phpbd6SZWgI7PwzmmfN1upeOJlvybDSgCw==}
 
+  /nx-cloud@16.0.5:
+    resolution: {integrity: sha512-13P7r0aKikjBtmdZrNorwXzVPeVIV4MLEwqGY+DEG6doLBtI5KqEQk/d5B5l2dCF2BEi/LXEmLYCmf9gwbOJ+Q==}
+    hasBin: true
+    dependencies:
+      '@nrwl/nx-cloud': 16.0.5
+      axios: 1.1.3
+      chalk: 4.1.2
+      dotenv: 10.0.0
+      fs-extra: 11.1.1
+      node-machine-id: 1.1.12
+      open: 8.4.2
+      strip-json-comments: 3.1.1
+      tar: 6.1.11
+      yargs-parser: 21.1.1
+    transitivePeerDependencies:
+      - debug
+    dev: true
+
   /nx@15.9.4(@swc-node/register@1.6.2)(@swc/core@1.3.42):
     resolution: {integrity: sha512-P1G4t59UvE/lkHyruLeSOB5ZuNyh01IwU0tTUOi8f9s/NbP7+OQ8MYVwDV74JHTr6mQgjlS+n+4Eox8tVm9itA==}
     hasBin: true
@@ -15494,7 +15537,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.25
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.1.2
+      axios: 1.1.3
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -19212,6 +19255,18 @@ packages:
       fs-constants: 1.0.0
       inherits: 2.0.4
       readable-stream: 3.6.0
+
+  /tar@6.1.11:
+    resolution: {integrity: sha512-an/KZQzQUkZCkuoAA64hM92X0Urb6VpRhAFllDzz44U2mcD5scmT3zBc4VgVpkugF580+DQn8eAFSyoQt0tznA==}
+    engines: {node: '>= 10'}
+    dependencies:
+      chownr: 2.0.0
+      fs-minipass: 2.1.0
+      minipass: 3.3.4
+      minizlib: 2.1.2
+      mkdirp: 1.0.4
+      yallist: 4.0.0
+    dev: true
 
   /tar@6.1.13:
     resolution: {integrity: sha512-jdIBIN6LTIe2jqzay/2vtYLlBHa3JF42ot3h1dW8Q0PaAG4v8rm0cvpVePtau5C6OKXGGcgO9q2AMNSWxiLqKw==}

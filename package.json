@@ -134,6 +134,7 @@
     "ng-packagr": "^16.0.0",
     "nitropack": "^2.0.0",
     "nx": "16.1.0",
+    "nx-cloud": "^16.0.5",
     "playwright": "^1.30.0",
     "postcss": "^8.4.21",
     "postcss-import": "~15.1.0",
