@@ -380,7 +380,8 @@
       "profile": "https://dafnik.me",
       "contributions": [
         "doc",
-        "code"
+        "code",
+        "infra"
       ]
     },
     {
@@ -416,5 +417,6 @@
   "projectOwner": "analogjs",
   "repoType": "github",
   "repoHost": "https://github.com",
-  "skipCi": true
+  "skipCi": true,
+  "commitType": "docs"
 }
