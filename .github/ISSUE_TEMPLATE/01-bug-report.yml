@@ -25,12 +25,14 @@ body:
       options:
         - create-analog
         - vite-plugin-angular
-        - astro-angular
+        - vite-plugin-nitro
         - router
-        - platform
         - content
+        - platform
+        - trpc
+        - astro-angular
         - Docs
-        - Don't know / Other
+        - Don't know / other
     validations:
       required: true
 
