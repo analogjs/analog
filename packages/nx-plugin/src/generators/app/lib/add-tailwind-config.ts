@@ -1,4 +1,4 @@
-import { generateFiles, Tree } from '@nrwl/devkit';
+import { generateFiles, Tree } from '@nx/devkit';
 import * as path from 'path';
 
 export async function addTailwindConfig(
@@ -19,7 +19,7 @@ export async function addTailwindConfig(
     });
   } else {
     await (
-      await import('@nrwl/angular/generators')
+      await import('@nx/angular/generators')
     ).setupTailwindGenerator(tree, { project: projectName });
   }
 

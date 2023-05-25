@@ -1,8 +1,4 @@
-import {
-  addDependenciesToPackageJson,
-  generateFiles,
-  Tree,
-} from '@nrwl/devkit';
+import { addDependenciesToPackageJson, generateFiles, Tree } from '@nx/devkit';
 import * as path from 'path';
 import {
   V15_ANALOG_JS_TRPC,

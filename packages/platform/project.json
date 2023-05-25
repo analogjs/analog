@@ -31,10 +31,7 @@
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": [
-          "yarn nx build-package platform",
-          "yarn nx build nx-plugin"
-        ],
+        "commands": ["nx build-package platform", "nx build nx-plugin"],
         "parallel": false
       }
     },

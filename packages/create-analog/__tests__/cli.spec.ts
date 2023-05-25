@@ -1,5 +1,5 @@
 import type { ExecaSyncReturnValue, SyncOptions } from 'execa';
-import { commandSync } from 'execa';
+import { execaCommandSync as commandSync } from 'execa';
 import { mkdirpSync, readdirSync, remove, writeFileSync } from 'fs-extra';
 import { join } from 'node:path';
 import { afterEach, beforeAll, expect, test } from 'vitest';

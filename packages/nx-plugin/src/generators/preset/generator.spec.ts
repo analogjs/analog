@@ -2,7 +2,7 @@ import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing';
 import {
   readProjectConfiguration,
   addDependenciesToPackageJson,
-} from '@nrwl/devkit';
+} from '@nx/devkit';
 
 import generator from './generator';
 import { AnalogNxApplicationGeneratorOptions } from '../app/schema';
