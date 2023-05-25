@@ -11,7 +11,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "",
-        "command": "start-server-and-test 'yarn nx serve-nitro trpc-app' http://localhost:4205/api/health 'yarn nx run trpc-app-e2e-playwright:vitest'"
+        "command": "start-server-and-test 'nx serve-nitro trpc-app' http://localhost:4205/api/health 'nx run trpc-app-e2e-playwright:vitest'"
       }
     },
     "lint": {

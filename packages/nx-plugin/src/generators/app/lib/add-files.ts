@@ -1,4 +1,4 @@
-import { generateFiles, Tree } from '@nrwl/devkit';
+import { generateFiles, Tree } from '@nx/devkit';
 import * as path from 'path';
 import { NormalizedOptions } from '../generator';
 

@@ -3,7 +3,7 @@ import { readJson, readProjectConfiguration } from '@nx/devkit';
 
 import generator from './generator';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
-import { addDependenciesToPackageJson } from '@nrwl/devkit';
+import { addDependenciesToPackageJson } from '@nx/devkit';
 
 describe('nx-plugin generator', () => {
   const setup = async (options: AnalogNxApplicationGeneratorOptions) => {

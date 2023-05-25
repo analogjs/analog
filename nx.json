@@ -8,7 +8,7 @@
     "defaultBase": "main"
   },
   "cli": {
-    "packageManager": "yarn"
+    "packageManager": "pnpm"
   },
   "tasksRunnerOptions": {
     "default": {
