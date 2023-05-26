@@ -43,14 +43,25 @@ describe('tRPC Demo App', () => {
     ).toContain(/Analog + tRPC/i);
   });
 
-  test<TRPCTestContext>(`If user enters the first note the note should be stored
-    successfully and listed in the notes array`, async (ctx) => {
+  test<TRPCTestContext>(`
+  If user enters the first note the note should be storedsuccessfully and listed in the notes array.
+  Still unauthorized the user should not be able to delete the note and the error should be displayed.
+  After the users clicks the Login button and gets authorized, deleting the note again should work successfully,
+  and the error should disappear.
+     `, async (ctx) => {
     await ctx.notesPage.typeNote(notes.first.note);
 
     await ctx.notesPage.addNote();
     expect(await ctx.notesPage.notes().elementHandles()).toHaveLength(1);
 
     await ctx.notesPage.removeNote(0);
+    expect(await ctx.notesPage.notes().elementHandles()).toHaveLength(1);
+    expect(await ctx.notesPage.getDeleteErrorCount()).toBe(1);
+
+    await ctx.notesPage.toggleLogin();
+    await ctx.notesPage.removeNote(0);
+    await page.waitForSelector('.no-notes');
     expect(await ctx.notesPage.notes().elementHandles()).toHaveLength(0);
+    expect(await ctx.notesPage.getDeleteErrorCount()).toBe(0);
   });
 });

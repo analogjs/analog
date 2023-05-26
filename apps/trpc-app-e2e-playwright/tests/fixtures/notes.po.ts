@@ -3,6 +3,10 @@ import { Page } from 'playwright';
 export class NotesPage {
   constructor(readonly page: Page) {}
 
+  async toggleLogin() {
+    await this.page.getByTestId('loginBtn').click();
+  }
+
   async typeNote(note: string) {
     await this.page.getByTestId('newNoteInput').fill(note);
   }
@@ -16,7 +20,10 @@ export class NotesPage {
     await this.waitForTrpcResponse(
       this.page.getByTestId('removeNoteAtIndexBtn' + index).click()
     );
-    await this.page.waitForSelector('.no-notes');
+  }
+
+  async getDeleteErrorCount() {
+    return this.page.locator('[data-testid="deleteError"]').count();
   }
 
   notes() {

@@ -1,6 +1,6 @@
-import { InjectionToken, Provider, TransferState } from '@angular/core';
+import { InjectionToken, Provider, signal, TransferState } from '@angular/core';
 import 'isomorphic-fetch';
-import { httpBatchLink } from '@trpc/client';
+import { httpBatchLink, HttpBatchLinkOptions } from '@trpc/client';
 import { AnyRouter } from '@trpc/server';
 import { transferStateLink } from './links/transfer-state-link';
 import {
@@ -10,10 +10,12 @@ import {
 } from './cache-state';
 import { createTRPCRxJSProxyClient } from './trpc-rxjs-proxy';
 import { CreateTRPCClientOptions } from '@trpc/client/src/createTRPCUntypedClient';
+import { HTTPHeaders } from '@trpc/client/src/links/types';
 
 export type TrpcOptions<T extends AnyRouter> = {
   url: string;
   options?: Partial<CreateTRPCClientOptions<T>>;
+  batchLinkOptions?: Omit<HttpBatchLinkOptions, 'url' | 'headers'>;
 };
 
 export type TrpcClient<AppRouter extends AnyRouter> = ReturnType<
@@ -25,7 +27,9 @@ const tRPC_INJECTION_TOKEN = new InjectionToken<unknown>(
 export const createTrpcClient = <AppRouter extends AnyRouter>({
   url,
   options,
+  batchLinkOptions,
 }: TrpcOptions<AppRouter>) => {
+  const tRPCHeaders = signal<HTTPHeaders>({});
   const provideTRPCClient = (): Provider[] => [
     provideTrpcCacheState(),
     provideTrpcCacheStateStatusManager(),
@@ -40,6 +44,10 @@ export const createTrpcClient = <AppRouter extends AnyRouter>({
             ...(options?.links ?? []),
             transferStateLink(),
             httpBatchLink({
+              ...(batchLinkOptions ?? {}),
+              headers() {
+                return tRPCHeaders();
+              },
               url: url ?? '',
             }),
           ],
@@ -51,5 +59,6 @@ export const createTrpcClient = <AppRouter extends AnyRouter>({
   return {
     tRPCClient: tRPC_INJECTION_TOKEN as InjectionToken<TrpcClient<AppRouter>>,
     provideTRPCClient,
+    tRPCHeaders,
   };
 };
