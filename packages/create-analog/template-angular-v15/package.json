@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "engines": {
-    "node": ">=16.0.0"
+    "node": "^16.14.0 || >=18.10.0"
   },
   "scripts": {
     "dev": "ng serve",

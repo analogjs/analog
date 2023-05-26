@@ -1,4 +1,4 @@
-import { Tree } from '@nrwl/devkit';
+import { Tree } from '@nx/devkit';
 import { PresetGeneratorSchema } from './schema';
 
 export default async function (tree: Tree, options: PresetGeneratorSchema) {

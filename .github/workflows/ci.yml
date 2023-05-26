@@ -29,24 +29,82 @@ jobs:
         with:
           failOnWarnings: true
           helpURL: https://github.com/analogjs/analog/blob/main/CONTRIBUTING.md#-commit-message-guidelines
-  checks:
+
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version-file: .node-version
-          cache: yarn
+      - run: corepack enable
+      - run: pnpm --version
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
       - name: Install
-        run: yarn install --frozen-lockfile --non-interactive
+        run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Build
+        run: pnpm build
+
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .node-version
+      - run: corepack enable
+      - run: pnpm --version
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - name: Install
+        run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Test
+        run: pnpm test
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .node-version
+      - run: corepack enable
+      - run: pnpm --version
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - name: Install
+        run: pnpm install --frozen-lockfile --prefer-offline
       - name: Install Playwright
         run: npx playwright install --with-deps
-      - name: Build
-        run: yarn build
-      - name: Test
-        run: yarn test
+      - name: Install Cypress
+        run: npx cypress install
       - name: End-to-end test
-        run: yarn e2e
+        run: pnpm e2e
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .node-version
+      - run: corepack enable
+      - run: pnpm --version
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - name: Install
+        run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Build
+        run: pnpm exec nx build docs-app
       - name: Upload docs website
         # Runs on merge to the `main` branch
         if: github.event_name == 'push' && github.ref_name == 'main'
@@ -59,7 +117,11 @@ jobs:
 
   deploy-docs:
     name: '[Merge] Deploy docs website'
-    needs: checks
+    needs:
+      - build
+      - unit
+      - e2e
+      - docs
     # Runs on merge to the `main` branch
     if: github.event_name == 'push' && github.ref_name == 'main'
     runs-on: ubuntu-latest

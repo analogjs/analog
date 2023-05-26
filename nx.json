@@ -8,13 +8,14 @@
     "defaultBase": "main"
   },
   "cli": {
-    "packageManager": "yarn"
+    "packageManager": "pnpm"
   },
   "tasksRunnerOptions": {
     "default": {
-      "runner": "nx/tasks-runners/default",
+      "runner": "nx-cloud",
       "options": {
-        "cacheableOperations": ["build", "lint", "test", "e2e"]
+        "cacheableOperations": ["build", "lint", "test", "e2e"],
+        "accessToken": "NDRkYzdkYmMtNDI3NS00MDI0LWFkMGQtMmI0Zjc2MTY2YzU0fHJlYWQtb25seQ=="
       }
     }
   },

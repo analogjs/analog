@@ -76,7 +76,7 @@ export async function initializeAngularWorkspace(
       angularVersion = V16_ANGULAR;
     } else {
       await (
-        await import('@nrwl/angular/generators')
+        await import('@nx/angular/generators')
       ).angularInitGenerator(tree, {
         unitTestRunner: 'none' as any,
         skipInstall: true,
