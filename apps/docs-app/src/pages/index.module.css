@@ -49,3 +49,15 @@
   background-color: var(--angular-shield-color-dark);
   border-color: var(--angular-shield-color-dark);
 }
+
+:root[data-theme='dark'] .sponsorButton {
+  color: var(--ifm-color-white);
+  background-color: var(--angular-shield-color);
+  border-color: var(--angular-shield-color);
+}
+
+:root[data-theme='dark'] .sponsorButton:hover {
+  color: var(--ifm-color-secondary);
+  background-color: var(--angular-shield-color-dark);
+  border-color: var(--angular-shield-color-dark);
+}

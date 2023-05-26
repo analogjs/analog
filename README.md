@@ -1,7 +1,9 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
 [![All Contributors](https://img.shields.io/badge/all_contributors-43-orange.svg?style=flat-square)](#contributors-)
+
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [![Discord server](https://dcbadge.vercel.app/api/server/mKC2Ec48U5?style=flat-square)](https://chat.analogjs.org/) [![Twitter](https://img.shields.io/twitter/follow/analogjs?color=%231DA1F2&style=flat-square)](https://twitter.com/analogjs)
@@ -50,7 +52,11 @@ Analog is an MIT-licensed open source project with its ongoing development made 
 ### Sponsors
 
 <a href="https://github.blog/2023-04-12-github-accelerator-our-first-cohort-and-whats-next/" target="_blank">
-  <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/github-logo.svg" width="100px" height="100px" alt="GitHub Accelerator">
+  <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/github-logo.svg" width="100px" height="100px" alt="GitHub Accelerator" />
+</a>
+
+<a href="https://mirahi.io" target="_blank">
+  <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/mirahi-logo.svg" width="100px" height="100px" alt="Mirahi" />
 </a>
 
 > As more contributors are added to the project, they will be added as sponsor recipients.
