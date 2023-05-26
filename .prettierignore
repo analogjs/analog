@@ -4,3 +4,4 @@
 /coverage
 .prettierignore
 .docusaurus/
+pnpm-lock.yaml
