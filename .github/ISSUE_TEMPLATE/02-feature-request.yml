@@ -16,12 +16,14 @@ body:
       options:
         - create-analog
         - vite-plugin-angular
-        - astro-angular
+        - vite-plugin-nitro
         - router
-        - platform
         - content
+        - platform
+        - trpc
+        - astro-angular
         - Docs
-        - Don't known / other
+        - Don't know / other
     validations:
       required: true
 
@@ -32,7 +34,6 @@ body:
       description: Tell us what you want to be added to Analog
     validations:
       required: true
-
 
   - type: textarea
     id: alternatives
