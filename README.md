@@ -1,7 +1,9 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
 [![All Contributors](https://img.shields.io/badge/all_contributors-43-orange.svg?style=flat-square)](#contributors-)
+
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [![Discord server](https://dcbadge.vercel.app/api/server/mKC2Ec48U5?style=flat-square)](https://chat.analogjs.org/) [![Twitter](https://img.shields.io/twitter/follow/analogjs?color=%231DA1F2&style=flat-square)](https://twitter.com/analogjs)
@@ -45,7 +47,9 @@ Follow the prompts to scaffold the project and start the development server.
 
 ## Supporting Analog
 
-Analog is an MIT-licensed open source project with its ongoing development made by contributors:
+Analog is an MIT-licensed open source project with its ongoing development made possible by contributors and sponsors.
+
+[Become a Sponsor!](https://github.com/sponsors/brandonroberts).
 
 ### Sponsors
 
@@ -57,9 +61,9 @@ Analog is an MIT-licensed open source project with its ongoing development made 
   <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/mirahi-logo.svg" width="100px" height="100px" alt="Mirahi" />
 </a>
 
-> As more contributors are added to the project, they will be added as sponsor recipients.
-
-[Become a Sponsor!](https://github.com/sponsors/brandonroberts).
+<a href="https://houseofangular.io" target="_blank">
+  <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/house-of-angular.png" width="100px" height="100px" alt="House of Angular" />
+</a>
 
 ## Contributing
 
