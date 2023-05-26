@@ -6,7 +6,7 @@ importers:
     dependencies:
       '@analogjs/content':
         specifier: latest
-        version: 0.2.0-beta.13(@angular/common@16.0.0)(@angular/core@16.0.0)(@angular/platform-browser@16.0.0)(@angular/router@16.0.0)(front-matter@4.0.2)(marked@4.2.12)(prismjs@1.29.0)(rxjs@7.8.0)
+        version: 0.2.0-beta.13(@angular/common@16.0.0)(@angular/core@16.0.0)(@angular/platform-browser@16.0.0)(@angular/router@16.0.0)(front-matter@4.0.2)(marked@5.0.2)(prismjs@1.29.0)(rxjs@7.8.0)
       '@angular/animations':
         specifier: ^16.0.0
         version: 16.0.0(@angular/core@16.0.0)
@@ -83,8 +83,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       marked:
-        specifier: ^4.2.12
-        version: 4.2.12
+        specifier: ^5.0.2
+        version: 5.0.2
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -195,8 +195,8 @@ importers:
         specifier: 29.4.4
         version: 29.4.4
       '@types/marked':
-        specifier: ^4.0.8
-        version: 4.0.8
+        specifier: ^5.0.0
+        version: 5.0.0
       '@types/node':
         specifier: 18.11.18
         version: 18.11.18
@@ -485,7 +485,7 @@ packages:
       '@jridgewell/gen-mapping': 0.3.2
       '@jridgewell/trace-mapping': 0.3.17
 
-  /@analogjs/content@0.2.0-beta.13(@angular/common@16.0.0)(@angular/core@16.0.0)(@angular/platform-browser@16.0.0)(@angular/router@16.0.0)(front-matter@4.0.2)(marked@4.2.12)(prismjs@1.29.0)(rxjs@7.8.0):
+  /@analogjs/content@0.2.0-beta.13(@angular/common@16.0.0)(@angular/core@16.0.0)(@angular/platform-browser@16.0.0)(@angular/router@16.0.0)(front-matter@4.0.2)(marked@5.0.2)(prismjs@1.29.0)(rxjs@7.8.0):
     resolution: {integrity: sha512-mULsaDWa/9d1fbmUQlgYtaClkZ9F3sUafMqeeMWsgtXHYVNPBcd5VfXZFYp6kPbGGrzNOfK1xnUvdcU26Y7bzQ==}
     peerDependencies:
       '@angular/common': ^15.0.0 || ^16.0.0
@@ -502,7 +502,7 @@ packages:
       '@angular/platform-browser': 16.0.0(@angular/animations@16.0.0)(@angular/common@16.0.0)(@angular/core@16.0.0)
       '@angular/router': 16.0.0(@angular/common@16.0.0)(@angular/core@16.0.0)(@angular/platform-browser@16.0.0)(rxjs@7.8.0)
       front-matter: 4.0.2
-      marked: 4.2.12
+      marked: 5.0.2
       prismjs: 1.29.0
       rxjs: 7.8.0
       tslib: 2.5.0
@@ -7057,8 +7057,8 @@ packages:
     dependencies:
       '@types/node': 18.11.18
 
-  /@types/marked@4.0.8:
-    resolution: {integrity: sha512-HVNzMT5QlWCOdeuBsgXP8EZzKUf0+AXzN+sLmjvaB3ZlLqO+e4u0uXrdw9ub69wBKFs+c6/pA4r9sy6cCDvImw==}
+  /@types/marked@5.0.0:
+    resolution: {integrity: sha512-YcZe50jhltsCq7rc9MNZC/4QB/OnA2Pd6hrOSTOFajtabN+38slqgDDCeE/0F83SjkKBQcsZUj7VLWR0H5cKRA==}
     dev: true
 
   /@types/mdast@3.0.10:
@@ -14295,9 +14295,9 @@ packages:
     resolution: {integrity: sha512-y8j3a5/DkJCmS5x4dMCQL+OR0+2EAq3DOtio1COSHsmW2BGXnNCK3v12hJt1LrUz5iZH5g0LmuYOjDdI+czghA==}
     dev: true
 
-  /marked@4.2.12:
-    resolution: {integrity: sha512-yr8hSKa3Fv4D3jdZmtMMPghgVt6TWbk86WQaWhDloQjRSQhMMYCAro7jP7VDJrjjdV8pxVxMssXS8B8Y5DZ5aw==}
-    engines: {node: '>= 12'}
+  /marked@5.0.2:
+    resolution: {integrity: sha512-TXksm9GwqXCRNbFUZmMtqNLvy3K2cQHuWmyBDLOrY1e6i9UvZpOTJXoz7fBjYkJkaUFzV9hBFxMuZSyQt8R6KQ==}
+    engines: {node: '>= 18'}
     hasBin: true
     dev: false
 

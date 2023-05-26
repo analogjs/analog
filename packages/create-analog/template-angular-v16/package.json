@@ -27,7 +27,7 @@
     "@angular/router": "^16.0.0",
     "@nx/angular": "^16.0.0",
     "front-matter": "^4.0.2",
-    "marked": "^4.2.12",
+    "marked": "^5.0.2",
     "prismjs": "^1.29.0",
     "rxjs": "~7.5.6",
     "tslib": "^2.4.0",
