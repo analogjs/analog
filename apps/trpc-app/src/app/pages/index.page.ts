@@ -1,10 +1,17 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { injectTRPCClient } from '../../trpc-client';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  signal,
+} from '@angular/core';
+import { injectTRPCClient, tRPCHeaders } from '../../trpc-client';
 import { AsyncPipe, DatePipe, JsonPipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Note } from '../../note';
-import { shareReplay, Subject, switchMap, take } from 'rxjs';
+import { catchError, of, shareReplay, Subject, switchMap, take } from 'rxjs';
 import { waitFor } from '@analogjs/trpc';
+import { TRPCClientError } from '@trpc/client';
+import { AppRouter } from '../../server/trpc/routers';
 
 const inputTw =
   'focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:outline-0 block w-full appearance-none rounded-lg px-3 py-2 transition-colors text-base leading-tight md:text-sm bg-black/[.05] dark:bg-zinc-50/10 focus:bg-white dark:focus:bg-dark placeholder:text-zinc-500 dark:placeholder:text-zinc-400 contrast-more:border contrast-more:border-current';
@@ -28,6 +35,9 @@ const btnTw =
         src="/assets/spartan.svg"
       />
     </div>
+    <button data-testid="loginBtn" (click)="toggleLogin()" class="${btnTw}">
+      {{ loggedIn() ? 'Log out' : 'Log in' }}
+    </button>
     <form class="py-2 flex items-center" #f="ngForm" (ngSubmit)="addPost(f)">
       <label class="sr-only" for="newNote"> Note </label>
       <input
@@ -89,6 +99,9 @@ const btnTw =
         </div>
       </div>
     </ng-template>
+    <p data-testid="deleteError" *ngIf="error()?.message">
+      {{ error()?.message }}
+    </p>
   `,
 })
 export default class HomeComponent {
@@ -99,10 +112,23 @@ export default class HomeComponent {
     shareReplay(1)
   );
   public newNote = '';
+  public loggedIn = signal(false);
+  public error = signal<TRPCClientError<AppRouter> | undefined>(undefined);
 
   constructor() {
     void waitFor(this.notes$);
     this.triggerRefresh$.next();
+
+    effect(
+      () =>
+        tRPCHeaders.mutate(
+          (h) =>
+            (h['authorization'] = this.loggedIn()
+              ? 'Bearer authToken'
+              : undefined)
+        ),
+      { allowSignalWrites: true }
+    );
   }
 
   public noteTrackBy = (index: number, note: Note) => {
@@ -114,6 +140,7 @@ export default class HomeComponent {
       form.form.markAllAsTouched();
       return;
     }
+    console.log(tRPCHeaders());
     this._trpc.note.create
       .mutate({ title: this.newNote })
       .pipe(take(1))
@@ -123,9 +150,20 @@ export default class HomeComponent {
   }
 
   public removePost(id: number) {
+    this.error.set(undefined);
     this._trpc.note.remove
       .mutate({ id })
-      .pipe(take(1))
+      .pipe(
+        take(1),
+        catchError((e) => {
+          this.error.set(e);
+          return of(null);
+        })
+      )
       .subscribe(() => this.triggerRefresh$.next());
+  }
+
+  public toggleLogin() {
+    this.loggedIn.update((loggedIn) => !loggedIn);
   }
 }

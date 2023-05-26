@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { publicProcedure, router } from '../trpc';
+import { protectedProcedure, publicProcedure, router } from '../trpc';
 import { Note } from '../../../note';
 
 let noteId = 0;
@@ -19,7 +19,7 @@ export const noteRouter = router({
       })
     ),
   list: publicProcedure.query(() => notes),
-  remove: publicProcedure
+  remove: protectedProcedure
     .input(
       z.object({
         id: z.number(),
