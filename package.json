@@ -17,7 +17,8 @@
     "contributors:add": "all-contributors add",
     "contributors:generate": "all-contributors generate",
     "hook:commit-msg": "npx --no -- commitlint --edit $1",
-    "hook:pre-commit": "lint-staged"
+    "hook:pre-commit": "lint-staged",
+    "prettify": "prettier --write ."
   },
   "engines": {
     "node": "^16.14.0 || >=18.10.0",
