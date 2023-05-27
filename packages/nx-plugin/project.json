@@ -46,6 +46,5 @@
       "executor": "@nx/vite:test"
     }
   },
-  "tags": [],
-  "implicitDependencies": ["platform"]
+  "tags": []
 }
