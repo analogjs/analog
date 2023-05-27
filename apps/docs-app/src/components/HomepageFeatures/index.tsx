@@ -33,8 +33,8 @@ const FeatureList: FeatureItem[] = [
     Svg: require('@site/static/img/logos/analog-logo.svg').default,
     description: (
       <>
-        Analog uses file-based routing and supports API (server)
-        routes for Angular applications.
+        Analog uses file-based routing and supports API (server) routes for
+        Angular applications.
       </>
     ),
   },

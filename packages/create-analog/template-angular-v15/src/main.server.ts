@@ -16,7 +16,10 @@ export default async function render(url: string, document: string) {
     appId: 'analog-app',
     document,
     url,
-    providers: [provideFileRouter(withEnabledBlockingInitialNavigation()), ...mainProviders],
+    providers: [
+      provideFileRouter(withEnabledBlockingInitialNavigation()),
+      ...mainProviders,
+    ],
   });
 
   return html;

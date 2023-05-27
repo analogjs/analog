@@ -119,7 +119,6 @@ By default, Analog comes with [Server-Side Rendering](/docs/features/server/serv
 Client artifacts are located in the `dist/analog/public` directory.
 The server for the API/SSR build artifacts is located in the `dist/analog/server` directory.
 
-
   </TabItem>
 </Tabs>
 
@@ -163,7 +162,6 @@ The client build artifacts are located in the dist folder of your Nx workspace.
 By default, Analog comes with [Server-Side Rendering](/docs/features/server/server-side-rendering) enabled.
 In the common apps/libs workspace layout, the `analog-app`'s client artifacts are located in the `dist/apps/analog-app/analog/public` directory.
 The server for the API/SSR build artifacts is located in the `dist/apps/analog-app/analog/server` directory.
-
 
 </TabItem>
 </Tabs>
