@@ -6,6 +6,7 @@
 .stackblitzLink {
   display: flex;
   border: var(--ifm-global-border-width) solid var(--ifm-color-secondary);
+  color: var(--ifm-color-secondary);
 }
 
 .stackblitzLink:hover {
