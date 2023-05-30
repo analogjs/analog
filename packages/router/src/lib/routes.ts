@@ -5,6 +5,7 @@ import type { Route } from '@angular/router';
 import type { RouteExport, RouteMeta } from './models';
 import { toRouteConfig } from './route-config';
 import { toMarkdownModule } from './markdown-helpers';
+import { APP_DIR, ENDPOINT_EXTENSION } from './constants';
 
 const FILES = import.meta.glob<RouteExport>([
   '/app/routes/**/*.ts',

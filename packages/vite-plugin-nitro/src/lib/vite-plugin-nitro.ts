@@ -5,8 +5,11 @@ import { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { buildServer } from './build-server';
 import { buildSSRApp } from './build-ssr';
 import { normalizePath } from 'vite';
-import { Options } from './options';
 import * as path from 'path';
+
+import { Options } from './options';
+import { pageEndpointsPlugin } from './plugins/page-endpoints';
+import { getPageHandlers } from './utils/get-page-handlers';
 
 let clientOutputPath = '';
 
@@ -22,13 +25,15 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
   let nitroConfig: NitroConfig;
 
   return {
-    name: 'analogjs-vite-nitro-plugin',
+    name: '@analogjs/vite-nitro-plugin',
     async config(_config, { command }) {
       isServe = command === 'serve';
       isBuild = command === 'build';
       ssrBuild = _config.build?.ssr === true;
       config = _config;
       const rootDir = config.root || '.';
+
+      let pageHandlers = getPageHandlers({ workspaceRoot, rootDir });
 
       nitroConfig = {
         rootDir,
@@ -51,6 +56,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
           generateTsConfig: false,
         },
         runtimeConfig: { ...nitroOptions?.runtimeConfig },
+        rollupConfig: {
+          plugins: [pageEndpointsPlugin()],
+        },
+        handlers: [...pageHandlers],
       };
 
       if (!ssrBuild && !isTest) {
@@ -97,6 +106,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
                 handler: normalizePath(`${__dirname}/runtime/api-middleware`),
                 middleware: true,
               },
+              ...pageHandlers,
             ],
           };
         }
