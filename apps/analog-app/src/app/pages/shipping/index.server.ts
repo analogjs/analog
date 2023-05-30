@@ -1,5 +1,6 @@
 export const load = async () => {
+  console.log('shipping');
   return {
-    data: true,
+    shipping: true,
   };
 };

@@ -7,6 +7,9 @@ import { defineConfig } from 'vite';
 export default defineConfig(() => {
   return {
     publicDir: 'src/assets',
+    optimizeDeps: {
+      include: ['@angular/common'],
+    },
     build: {
       target: ['es2020'],
     },

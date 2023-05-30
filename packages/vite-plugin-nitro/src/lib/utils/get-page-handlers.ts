@@ -21,7 +21,8 @@ export function getPageHandlers({ workspaceRoot, rootDir }: GetHandlersArgs) {
       .replace(path.resolve(workspaceRoot, rootDir, 'src/app'), '')
       .replace(/\[\.{3}]/g, '**')
       .replace(/\[\.{3}(\w+)]/g, '**:$1')
-      .replace(/\[(\w+)]/g, ':$1');
+      .replace(/\[(\w+)]/g, ':$1')
+      .replace(/\./g, '/');
 
     return {
       handler: endpointFile,
