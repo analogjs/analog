@@ -15,7 +15,7 @@ describe('nitro', () => {
   });
 
   it('should work', () => {
-    expect(nitro({}).name).toEqual('analogjs-vite-nitro-plugin');
+    expect(nitro({}).name).toEqual('@analogjs/vite-nitro-plugin');
   });
 
   it(`should not call the route middleware in test mode `, async () => {
@@ -45,7 +45,11 @@ describe('nitro', () => {
     expect(buildSSRAppImportSpy).toHaveBeenCalledWith({}, { ssr: true });
     expect(buildServerImportSpy).toHaveBeenCalledWith(
       { ssr: true },
-      { ...mockNitroConfig, prerender: { routes: ['/'] } }
+      {
+        ...mockNitroConfig,
+        prerender: { routes: ['/'] },
+        rollupConfig: expect.anything(),
+      }
     );
   });
 
@@ -64,7 +68,11 @@ describe('nitro', () => {
     expect(buildSSRAppImportSpy).not.toHaveBeenCalled();
     expect(buildServerImportSpy).toHaveBeenCalledWith(
       { ssr: false },
-      { ...mockNitroConfig, prerender: { routes: ['/'] } }
+      {
+        ...mockNitroConfig,
+        prerender: { routes: ['/'] },
+        rollupConfig: expect.anything(),
+      }
     );
   });
 
@@ -88,7 +96,7 @@ describe('nitro', () => {
     );
     expect(buildServerImportSpy).toHaveBeenCalledWith(
       { ssr: true, ...prerenderRoutes },
-      { ...mockNitroConfig }
+      { ...mockNitroConfig, rollupConfig: expect.anything() }
     );
   });
 
@@ -112,7 +120,11 @@ describe('nitro', () => {
     );
     expect(buildServerImportSpy).toHaveBeenCalledWith(
       { ssr: true, ...prerenderRoutes },
-      { ...mockNitroConfig, ...prerenderRoutes }
+      {
+        ...mockNitroConfig,
+        ...prerenderRoutes,
+        rollupConfig: expect.anything(),
+      }
     );
   });
 });
