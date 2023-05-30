@@ -30,13 +30,13 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
   routeConfig.resolve = {
     ...routeConfig.resolve,
     load: async (route) => {
-      const http = inject(HttpClient);
       const { queryParams, fragment: hash, params } = route;
       const routeConfig = route.routeConfig as Route & {
         meta: { endpoint: string; endpointKey: string };
       };
 
       if (PAGE_ENDPOINTS[routeConfig.meta.endpointKey]) {
+        const http = inject(HttpClient);
         const url = new URL('', import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL']);
         url.pathname = `/api/_analog${routeConfig.meta.endpoint.replace(
           /\./g,

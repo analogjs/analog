@@ -34,7 +34,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
       const rootDir = config.root || '.';
 
       let pageHandlers = getPageHandlers({ workspaceRoot, rootDir });
-      console.log(pageHandlers);
+
       nitroConfig = {
         rootDir,
         logLevel: nitroOptions?.logLevel || 0,
