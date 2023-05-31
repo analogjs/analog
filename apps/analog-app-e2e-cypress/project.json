@@ -27,5 +27,5 @@
     }
   },
   "tags": [],
-  "implicitDependencies": ["analog-app"]
+  "implicitDependencies": ["analog-app", "platform"]
 }
