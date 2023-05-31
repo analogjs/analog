@@ -1,4 +1,5 @@
 import { PageServerLoad } from '@analogjs/router';
+
 import { Product } from '../products';
 
 export const load = async ({ fetch }: PageServerLoad) => {
@@ -8,5 +9,3 @@ export const load = async ({ fetch }: PageServerLoad) => {
     products: products,
   };
 };
-
-export type Load = Awaited<ReturnType<typeof load>>;

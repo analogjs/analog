@@ -7,3 +7,7 @@ export type PageServerLoad = {
   res: H3Event['node']['res'];
   fetch: $Fetch;
 };
+
+export type LoadReturn<
+  A extends (pageServerLoad: PageServerLoad) => Promise<any>
+> = Awaited<ReturnType<A>>;
