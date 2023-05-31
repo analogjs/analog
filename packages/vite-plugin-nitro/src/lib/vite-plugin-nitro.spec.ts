@@ -49,6 +49,7 @@ describe('nitro', () => {
         ...mockNitroConfig,
         prerender: { routes: ['/'] },
         rollupConfig: expect.anything(),
+        handlers: expect.anything(),
       }
     );
   });
@@ -72,6 +73,7 @@ describe('nitro', () => {
         ...mockNitroConfig,
         prerender: { routes: ['/'] },
         rollupConfig: expect.anything(),
+        handlers: expect.anything(),
       }
     );
   });
@@ -96,7 +98,11 @@ describe('nitro', () => {
     );
     expect(buildServerImportSpy).toHaveBeenCalledWith(
       { ssr: true, ...prerenderRoutes },
-      { ...mockNitroConfig, rollupConfig: expect.anything() }
+      {
+        ...mockNitroConfig,
+        rollupConfig: expect.anything(),
+        handlers: expect.anything(),
+      }
     );
   });
 
@@ -124,6 +130,7 @@ describe('nitro', () => {
         ...mockNitroConfig,
         ...prerenderRoutes,
         rollupConfig: expect.anything(),
+        handlers: expect.anything(),
       }
     );
   });

@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
       analog({
         apiPrefix: 'api',
         prerender: {
-          routes: ['/'],
+          routes: ['/', '/cart'],
         },
         vite: {
           inlineStylesExtension: 'scss',

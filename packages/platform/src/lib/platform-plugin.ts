@@ -6,6 +6,7 @@ import { ssrBuildPlugin } from './ssr/ssr-build-plugin';
 import { contentPlugin } from './content-plugin';
 import viteNitroPlugin from '@analogjs/vite-plugin-nitro';
 import angular from '@analogjs/vite-plugin-angular';
+import { clearClientPageEndpointsPlugin } from './clear-client-page-endpoint';
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
   const { apiPrefix, ...platformOptions } = {
@@ -32,5 +33,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
       ? devServerPlugin({ entryServer: opts.entryServer })
       : false) as Plugin,
     ...angular({ jit: platformOptions.jit, ...(opts?.vite ?? {}) }),
+    clearClientPageEndpointsPlugin(),
   ];
 }

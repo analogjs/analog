@@ -59,7 +59,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
         rollupConfig: {
           plugins: [pageEndpointsPlugin()],
         },
-        handlers: [...pageHandlers],
+        handlers: [
+          {
+            handler: normalizePath(`${__dirname}/runtime/api-middleware`),
+            middleware: true,
+          },
+          ...pageHandlers,
+        ],
       };
 
       if (!ssrBuild && !isTest) {

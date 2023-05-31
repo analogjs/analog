@@ -17,10 +17,11 @@ export function getPageHandlers({ workspaceRoot, rootDir }: GetHandlersArgs) {
 
   const handlers: NitroEventHandler[] = endpointFiles.map((endpointFile) => {
     const route = endpointFile
-      .replace(/\.server\.ts$/, '')
       .replace(path.resolve(workspaceRoot, rootDir, 'src/app'), '')
+      .replace(/\.server\.ts$/, '')
       .replace(/\[\.{3}]/g, '**')
       .replace(/\[\.{3}(\w+)]/g, '**:$1')
+      .replace(/\/\(.*?\)$/, '/index')
       .replace(/\[(\w+)]/g, ':$1')
       .replace(/\./g, '/');
 

@@ -7,3 +7,5 @@ export {
 export { RouteMeta } from './lib/models';
 export { provideFileRouter } from './lib/provide-file-router';
 export { MetaTag } from './lib/meta-tags';
+export { PageServerLoad } from './lib/route-types';
+export { useLoad } from './lib/use-load';

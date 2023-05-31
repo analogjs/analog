@@ -38,16 +38,21 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
       if (PAGE_ENDPOINTS[routeConfig.meta.endpointKey]) {
         const http = inject(HttpClient);
         const url = new URL('', import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL']);
-        url.pathname = `/api/_analog${routeConfig.meta.endpoint.replace(
-          /\./g,
-          '/'
-        )}`;
+        const endpoint = `/api/_analog${routeConfig.meta.endpoint
+          .replace(/\./g, '/')
+          .replace(/\/\(.*?\)$/, '/index')}`;
+
+        url.pathname = endpoint;
         url.search = `${new URLSearchParams(queryParams).toString()}`;
         url.hash = hash ?? '';
 
         Object.keys(params).forEach((param) => {
           url.pathname = url.pathname.replace(`[${param}]`, params[param]);
         });
+
+        if ((globalThis as any).$fetch) {
+          return (globalThis as any).$fetch(url.pathname);
+        }
 
         return firstValueFrom(http.get(`${url.href}`));
       }
