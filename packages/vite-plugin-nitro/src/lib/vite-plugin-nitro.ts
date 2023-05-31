@@ -57,6 +57,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
         },
         runtimeConfig: { ...nitroOptions?.runtimeConfig },
         rollupConfig: {
+          onwarn(warning) {
+            if (
+              warning.message.includes('empty chunk') &&
+              warning.message.endsWith('.server')
+            ) {
+              return;
+            }
+          },
           plugins: [pageEndpointsPlugin()],
         },
         handlers: [
