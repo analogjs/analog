@@ -73,6 +73,8 @@ jobs:
 
   unit:
     runs-on: ubuntu-latest
+    needs:
+      - build
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -91,6 +93,8 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    needs:
+      - build
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
