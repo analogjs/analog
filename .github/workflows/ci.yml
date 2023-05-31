@@ -114,7 +114,7 @@ jobs:
       - name: Install Cypress
         run: npx cypress install
       - name: End-to-end test
-        run: VITE_ANALOG_PUBLIC_BASE_URL={{ vars.VITE_ANALOG_PUBLIC_BASE_URL }} pnpm e2e
+        run: VITE_ANALOG_PUBLIC_BASE_URL=${{ vars.VITE_ANALOG_PUBLIC_BASE_URL }} pnpm e2e
 
   docs:
     runs-on: ubuntu-latest
