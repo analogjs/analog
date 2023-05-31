@@ -11,6 +11,7 @@ env:
   DOCS_APP_PATH: dist/apps/docs-app/
   NODE_OPTIONS: --max-old-space-size=6144
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+  VITE_ANALOG_PUBLIC_BASE_URL: ${{ vars.VITE_ANALOG_PUBLIC_BASE_URL }}
 
 jobs:
   commitlint:
