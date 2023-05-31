@@ -10,7 +10,6 @@ env:
   DOCS_APP_ARTIFACT_NAME: docs-app
   DOCS_APP_PATH: dist/apps/docs-app/
   NODE_OPTIONS: --max-old-space-size=6144
-  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
   VITE_ANALOG_PUBLIC_BASE_URL: ${{ vars.VITE_ANALOG_PUBLIC_BASE_URL }}
 
 jobs:
@@ -114,7 +113,7 @@ jobs:
       - name: Install Cypress
         run: npx cypress install
       - name: End-to-end test
-        run: VITE_ANALOG_PUBLIC_BASE_URL=http://localhost:3000 pnpm e2e
+        run: pnpm e2e
 
   docs:
     runs-on: ubuntu-latest
