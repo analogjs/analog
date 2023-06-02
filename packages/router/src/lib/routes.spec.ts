@@ -7,6 +7,11 @@ import { ROUTE_META_TAGS_KEY } from './meta-tags';
 describe('routes', () => {
   class RouteComponent {}
 
+  it('should return an empty array of routes when files record is empty', () => {
+    const routes = createRoutes({});
+    expect(routes).toEqual([]);
+  });
+
   describe('a root static route', () => {
     const files: Files = {
       '/app/routes/about.ts': () =>

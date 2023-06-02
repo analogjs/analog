@@ -28,6 +28,10 @@ type RawRoute = {
   children: RawRoute[];
 };
 
+type RawRouteMap = Record<string, RawRoute>;
+
+type RawRouteByLevelMap = Record<number, RawRouteMap>;
+
 /**
  * A function used to parse list of files and create configuration of routes.
  *
@@ -35,9 +39,19 @@ type RawRoute = {
  * @returns Array of routes
  */
 export function createRoutes(files: Files): Route[] {
-  const rawRoutesByLevelMap = Object.keys(files).reduce((acc, filename) => {
+  const filenames = Object.keys(files);
+
+  if (filenames.length === 0) {
+    return [];
+  }
+
+  // map filenames to raw routes and group them by level
+  const rawRoutesByLevelMap = filenames.reduce((acc, filename) => {
     const rawPath = toRawPath(filename);
     const rawSegments = rawPath.split('/');
+    // nesting level starts at 0
+    // rawPath: /products => level: 0
+    // rawPath: /products/:id => level: 1
     const level = rawSegments.length - 1;
     const rawSegment = rawSegments[level];
     const ancestorRawSegments = rawSegments.slice(0, level);
@@ -56,11 +70,12 @@ export function createRoutes(files: Files): Route[] {
         },
       },
     };
-  }, {} as Record<number, Record<string, RawRoute>>);
+  }, {} as RawRouteByLevelMap);
 
   const allLevels = Object.keys(rawRoutesByLevelMap).map(Number);
   const maxLevel = Math.max(...allLevels);
 
+  // add each raw route to its parent's children array
   for (let level = maxLevel; level > 0; level--) {
     const rawRoutesMap = rawRoutesByLevelMap[level];
     const rawPaths = Object.keys(rawRoutesMap);
@@ -72,6 +87,8 @@ export function createRoutes(files: Files): Route[] {
       const parentRawSegment =
         rawRoute.ancestorRawSegments[parentRawSegmentIndex];
 
+      // create the parent level and/or raw route if it does not exist
+      // parent route won't exist for nested routes that don't have a layout route
       rawRoutesByLevelMap[level - 1] ||= {};
       rawRoutesByLevelMap[level - 1][parentRawPath] ||= {
         filename: null,
@@ -89,7 +106,9 @@ export function createRoutes(files: Files): Route[] {
     }
   }
 
-  const rootRawRoutesMap = rawRoutesByLevelMap[0] || {};
+  // only take raw routes from the root level
+  // since they already contain nested routes as their children
+  const rootRawRoutesMap = rawRoutesByLevelMap[0];
   const rawRoutes = Object.keys(rootRawRoutesMap).map(
     (segment) => rootRawRoutesMap[segment]
   );
