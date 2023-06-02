@@ -1,19 +1,18 @@
 import { Route } from '@angular/router';
 import { of } from 'rxjs';
 import { RouteExport, RouteMeta } from './models';
-import { getRoutes } from './routes';
+import { createRoutes, Files } from './routes';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
 
-type Files = Record<string, () => Promise<RouteExport>>;
-type ModuleRoute = Route & {
-  _module?: () => Promise<RouteExport>;
-  _children?: ModuleRoute[];
-};
-
-class RouteComponent {}
-
 describe('routes', () => {
-  describe('a static route', () => {
+  class RouteComponent {}
+
+  it('should return an empty array of routes when files record is empty', () => {
+    const routes = createRoutes({});
+    expect(routes).toEqual([]);
+  });
+
+  describe('a root static route', () => {
     const files: Files = {
       '/app/routes/about.ts': () =>
         Promise.resolve<RouteExport>({
@@ -24,32 +23,19 @@ describe('routes', () => {
         }),
     };
 
-    const routes = getRoutes(files);
-    const route: ModuleRoute = routes[0];
+    const routes = createRoutes(files);
+    const route = routes[0];
 
     it('should have a path', () => {
       expect(route.path).toBe('about');
     });
 
-    it('should have a pathMatch set to prefix', () => {
-      expect(route.pathMatch).toBe('prefix');
-    });
-
-    it('should have a _module property', () => {
-      expect(route._module).toBeDefined();
-
-      expect(typeof route._module).toBe('function');
-    });
-
     it('should have a loadChildren property', () => {
       expect(route.loadChildren).toBeDefined();
-
       expect(typeof route.loadChildren).toBe('function');
     });
 
     it('should return an array of one route config from the loadChildren property', async () => {
-      expect(route.loadChildren).toBeDefined();
-
       const routes = (await route.loadChildren()) as Route[];
 
       expect(routes.length).toBe(1);
@@ -61,8 +47,6 @@ describe('routes', () => {
     });
 
     it('should contain the route meta properties in the inner route', async () => {
-      expect(route.loadChildren).toBeDefined();
-
       const routes = (await route.loadChildren()) as Route[];
 
       expect(routes.length).toBe(1);
@@ -73,7 +57,66 @@ describe('routes', () => {
     });
   });
 
-  describe('a dynamic route', () => {
+  describe('a nested static route', () => {
+    const files: Files = {
+      '/src/app/pages/auth/login.page.ts': () =>
+        Promise.resolve<RouteExport>({
+          default: RouteComponent,
+        }),
+    };
+
+    const routes = createRoutes(files);
+    const route = routes[0];
+
+    it('should have a path', () => {
+      expect(route.path).toBe('auth');
+      expect(route.children[0].path).toBe('login');
+    });
+
+    it('should return an array of one route config from the loadChildren property', async () => {
+      const routes = (await route.children[0].loadChildren()) as Route[];
+
+      expect(routes.length).toBe(1);
+
+      const innerRoute = routes.shift();
+
+      expect(innerRoute.path).toBe('');
+      expect(innerRoute.component).toBe(RouteComponent);
+    });
+  });
+
+  describe('a nested static route with pathless segments', () => {
+    const files: Files = {
+      '/src/app/pages/(foo)/auth/(bar)/login.page.ts': () =>
+        Promise.resolve<RouteExport>({
+          default: RouteComponent,
+        }),
+    };
+
+    const routes = createRoutes(files);
+    const route = routes[0];
+
+    it('should have a path', () => {
+      expect(route.path).toBe('');
+      expect(route.children[0].path).toBe('auth');
+      expect(route.children[0].children[0].path).toBe('');
+      expect(route.children[0].children[0].children[0].path).toBe('login');
+    });
+
+    it('should return an array of one route config from the loadChildren property', async () => {
+      const routes =
+        (await route.children[0].children[0].children[0].loadChildren()) as Route[];
+
+      expect(routes.length).toBe(1);
+
+      const innerRoute = routes.shift();
+
+      expect(innerRoute.path).toBe('');
+      expect(innerRoute.component).toBe(RouteComponent);
+    });
+  });
+
+  describe('a root dynamic route', () => {
     const files: Files = {
       '/app/routes/blog.[slug].ts': () =>
         Promise.resolve({
@@ -81,32 +124,79 @@ describe('routes', () => {
         }),
     };
 
-    const routes = getRoutes(files);
-    const route: ModuleRoute = routes[0];
+    const routes = createRoutes(files);
+    const route = routes[0];
 
     it('should have a path', () => {
       expect(route.path).toBe('blog/:slug');
     });
 
-    it('should have a pathMatch set to prefix', () => {
-      expect(route.pathMatch).toBe('prefix');
-    });
-
-    it('should have a _module property', () => {
-      expect(route._module).toBeDefined();
-
-      expect(typeof route._module).toBe('function');
-    });
-
     it('should have a loadChildren property', () => {
       expect(route.loadChildren).toBeDefined();
-
       expect(typeof route.loadChildren).toBe('function');
     });
 
     it('should return an array of one route config from the loadChildren property', async () => {
-      expect(route.loadChildren).toBeDefined();
+      const routes = (await route.loadChildren()) as Route[];
 
+      expect(routes.length).toBe(1);
+
+      const innerRoute = routes.shift();
+
+      expect(innerRoute.path).toBe('');
+      expect(innerRoute.component).toBe(RouteComponent);
+    });
+  });
+
+  describe('a root dynamic route with multiple dynamic segments', () => {
+    const files: Files = {
+      '/app/routes/categories.[categoryId].products.[productId].ts': () =>
+        Promise.resolve({ default: RouteComponent }),
+    };
+
+    const routes = createRoutes(files);
+    const route = routes[0];
+
+    it('should have a path', () => {
+      expect(route.path).toBe('categories/:categoryId/products/:productId');
+    });
+
+    it('should have a loadChildren property', () => {
+      expect(route.loadChildren).toBeDefined();
+      expect(typeof route.loadChildren).toBe('function');
+    });
+
+    it('should return an array of one route config from the loadChildren property', async () => {
+      const routes = (await route.loadChildren()) as Route[];
+
+      expect(routes.length).toBe(1);
+
+      const innerRoute = routes.shift();
+
+      expect(innerRoute.path).toBe('');
+      expect(innerRoute.component).toBe(RouteComponent);
+    });
+  });
+
+  describe('a root dynamic route with multiple dynamic segments and page suffix', () => {
+    const files: Files = {
+      '/app/pages/[productId].[partId].page.ts': () =>
+        Promise.resolve({ default: RouteComponent }),
+    };
+
+    const routes = createRoutes(files);
+    const route = routes[0];
+
+    it('should have a path', () => {
+      expect(route.path).toBe(':productId/:partId');
+    });
+
+    it('should have a loadChildren property', () => {
+      expect(route.loadChildren).toBeDefined();
+      expect(typeof route.loadChildren).toBe('function');
+    });
+
+    it('should return an array of one route config from the loadChildren property', async () => {
       const routes = (await route.loadChildren()) as Route[];
 
       expect(routes.length).toBe(1);
@@ -120,80 +210,20 @@ describe('routes', () => {
 
   describe('a nested dynamic route', () => {
     const files: Files = {
-      '/app/routes/categories.[categoryId].products.[productId].ts': () =>
+      '/src/app/pages/[categoryId]/[productId].page.ts': () =>
         Promise.resolve({ default: RouteComponent }),
     };
 
-    const routes = getRoutes(files);
-    const route: ModuleRoute = routes[0];
+    const routes = createRoutes(files);
+    const route = routes[0];
 
     it('should have a path', () => {
-      expect(route.path).toBe('categories/:categoryId/products/:productId');
-    });
-
-    it('should have a pathMatch set to prefix', () => {
-      expect(route.pathMatch).toBe('prefix');
-    });
-
-    it('should have a _module property', () => {
-      expect(route._module).toBeDefined();
-
-      expect(typeof route._module).toBe('function');
-    });
-
-    it('should have a loadChildren property', () => {
-      expect(route.loadChildren).toBeDefined();
-
-      expect(typeof route.loadChildren).toBe('function');
+      expect(route.path).toBe(':categoryId');
+      expect(route.children[0].path).toBe(':productId');
     });
 
     it('should return an array of one route config from the loadChildren property', async () => {
-      expect(route.loadChildren).toBeDefined();
-
-      const routes = (await route.loadChildren()) as Route[];
-
-      expect(routes.length).toBe(1);
-
-      const innerRoute = routes.shift();
-
-      expect(innerRoute.path).toBe('');
-      expect(innerRoute.component).toBe(RouteComponent);
-    });
-  });
-
-  describe('a root dynamic route', () => {
-    const files: Files = {
-      '/app/pages/[productId].[partId].page.ts': () =>
-        Promise.resolve({ default: RouteComponent }),
-    };
-
-    const routes = getRoutes(files);
-    const route: ModuleRoute = routes[0];
-
-    it('should have a path', () => {
-      expect(route.path).toBe(':productId/:partId');
-    });
-
-    it('should have a pathMatch set to prefix', () => {
-      expect(route.pathMatch).toBe('prefix');
-    });
-
-    it('should have a _module property', () => {
-      expect(route._module).toBeDefined();
-
-      expect(typeof route._module).toBe('function');
-    });
-
-    it('should have a loadChildren property', () => {
-      expect(route.loadChildren).toBeDefined();
-
-      expect(typeof route.loadChildren).toBe('function');
-    });
-
-    it('should return an array of one route config from the loadChildren property', async () => {
-      expect(route.loadChildren).toBeDefined();
-
-      const routes = (await route.loadChildren()) as Route[];
+      const routes = (await route.children[0].loadChildren()) as Route[];
 
       expect(routes.length).toBe(1);
 
@@ -210,32 +240,19 @@ describe('routes', () => {
         Promise.resolve({ default: RouteComponent }),
     };
 
-    const routes = getRoutes(files);
-    const route: ModuleRoute = routes[0];
+    const routes = createRoutes(files);
+    const route = routes[0];
 
     it('should have a path', () => {
-      expect(route.path).toBeDefined();
-    });
-
-    it('should have a pathMatch set to full', () => {
-      expect(route.pathMatch).toBe('full');
-    });
-
-    it('should have a _module property', () => {
-      expect(route._module).toBeDefined();
-
-      expect(typeof route._module).toBe('function');
+      expect(route.path).toBe('');
     });
 
     it('should have a loadChildren property', () => {
       expect(route.loadChildren).toBeDefined();
-
       expect(typeof route.loadChildren).toBe('function');
     });
 
     it('should return an array of one route config from the loadChildren property', async () => {
-      expect(route.loadChildren).toBeDefined();
-
       const routes = (await route.loadChildren()) as Route[];
 
       expect(routes.length).toBe(1);
@@ -253,32 +270,19 @@ describe('routes', () => {
         Promise.resolve({ default: RouteComponent }),
     };
 
-    const routes = getRoutes(files);
-    const route: ModuleRoute = routes[0];
+    const routes = createRoutes(files);
+    const route = routes[0];
 
     it('should have a path', () => {
-      expect(route.path).toBeDefined();
-    });
-
-    it('should have a pathMatch set to full', () => {
-      expect(route.pathMatch).toBe('full');
-    });
-
-    it('should have a _module property', () => {
-      expect(route._module).toBeDefined();
-
-      expect(typeof route._module).toBe('function');
+      expect(route.path).toBe('');
     });
 
     it('should have a loadChildren property', () => {
       expect(route.loadChildren).toBeDefined();
-
       expect(typeof route.loadChildren).toBe('function');
     });
 
     it('should return an array of one route config from the loadChildren property', async () => {
-      expect(route.loadChildren).toBeDefined();
-
       const routes = (await route.loadChildren()) as Route[];
 
       expect(routes.length).toBe(1);
@@ -290,71 +294,116 @@ describe('routes', () => {
     });
   });
 
-  describe('a parent/child route', () => {
+  describe('a layout route', () => {
+    class LayoutComponent {}
+
     const files: Files = {
       '/app/routes/products.ts': () =>
-        Promise.resolve({ default: RouteComponent }),
+        Promise.resolve({ default: LayoutComponent }),
       '/app/routes/products/[productId].ts': () =>
         Promise.resolve({ default: RouteComponent }),
     };
 
-    const routes = getRoutes(files);
-    const route: ModuleRoute = routes[0];
+    const routes = createRoutes(files);
+    const layoutRoute = routes[0];
 
-    describe('parent route', () => {
+    describe('layout route', () => {
       it('should have a path', () => {
-        expect(route.path).toBe('products');
-      });
-
-      it('should have a pathMatch set to prefix', () => {
-        expect(route.pathMatch).toBe('prefix');
-      });
-
-      it('should have a _module property', () => {
-        expect(route._module).toBeDefined();
-
-        expect(typeof route._module).toBe('function');
-      });
-
-      it('should have a _children property containing routes', () => {
-        expect(route._children).toBeDefined();
-
-        expect(route._children.length).toBe(1);
+        expect(layoutRoute.path).toBe('products');
       });
 
       it('should have a loadChildren property', () => {
-        expect(route.loadChildren).toBeDefined();
-
-        expect(typeof route.loadChildren).toBe('function');
+        expect(layoutRoute.loadChildren).toBeDefined();
+        expect(typeof layoutRoute.loadChildren).toBe('function');
       });
 
       it('should return an array of one route config from the loadChildren property', async () => {
-        expect(route.loadChildren).toBeDefined();
-
-        const routes = (await route.loadChildren()) as Route[];
+        const routes = (await layoutRoute.loadChildren()) as Route[];
 
         expect(routes.length).toBe(1);
 
         const innerRoute = routes.shift();
 
         expect(innerRoute.path).toBe('');
+        expect(innerRoute.component).toBe(LayoutComponent);
       });
     });
 
     describe('child route', () => {
-      it('should come from the parent route', async () => {
-        const routes = (await route.loadChildren()) as Route[];
+      it('should come from the layout route', async () => {
+        const routes = (await layoutRoute.loadChildren()) as Route[];
         const innerRoute = routes.shift();
 
         expect(innerRoute.path).toBe('');
         expect(innerRoute.children).toBeDefined();
 
-        const innerChildRoute = innerRoute.children.shift() as ModuleRoute;
+        const childRoute = innerRoute.children.shift();
 
-        expect(innerChildRoute.path).toBe(':productId');
-        expect(innerChildRoute.pathMatch).toBe('prefix');
-        expect(innerChildRoute._module).toBeDefined();
-        expect(innerChildRoute.loadChildren).toBeDefined();
+        expect(childRoute.path).toBe(':productId');
+        expect(childRoute.loadChildren).toBeDefined();
+
+        const innerChildRoutes = (await childRoute.loadChildren()) as Route[];
+        const innerChildRoute = innerChildRoutes[0];
+
+        expect(innerChildRoute.path).toBe('');
+        expect(innerChildRoute.component).toBe(RouteComponent);
+      });
+    });
+  });
+
+  describe('a pathless layout route', () => {
+    class LayoutComponent {}
+
+    const files: Files = {
+      '/src/app/pages/(auth).page.ts': () =>
+        Promise.resolve({ default: LayoutComponent }),
+      '/src/app/pages/(auth)/login.page.ts': () =>
+        Promise.resolve({ default: RouteComponent }),
+    };
+
+    const routes = createRoutes(files);
+    const layoutRoute = routes[0];
+
+    describe('layout route', () => {
+      it('should have a path', () => {
+        expect(layoutRoute.path).toBe('');
+      });
+
+      it('should have a loadChildren property', () => {
+        expect(layoutRoute.loadChildren).toBeDefined();
+        expect(typeof layoutRoute.loadChildren).toBe('function');
+      });
+
+      it('should return an array of one route config from the loadChildren property', async () => {
+        const routes = (await layoutRoute.loadChildren()) as Route[];
+
+        expect(routes.length).toBe(1);
+
+        const innerRoute = routes.shift();
+
+        expect(innerRoute.path).toBe('');
+        expect(innerRoute.component).toBe(LayoutComponent);
+      });
+    });
+
+    describe('child route', () => {
+      it('should come from the layout route', async () => {
+        const routes = (await layoutRoute.loadChildren()) as Route[];
+        const innerRoute = routes.shift();
+
+        expect(innerRoute.path).toBe('');
+        expect(innerRoute.children).toBeDefined();
+
+        const childRoute = innerRoute.children.shift();
+
+        expect(childRoute.path).toBe('login');
+        expect(childRoute.loadChildren).toBeDefined();
+
+        const innerChildRoutes = (await childRoute.loadChildren()) as Route[];
+        const innerChildRoute = innerChildRoutes[0];
+
+        expect(innerChildRoute.path).toBe('');
+        expect(innerChildRoute.component).toBe(RouteComponent);
       });
     });
   });
@@ -367,32 +416,19 @@ describe('routes', () => {
         }),
     };
 
-    const routes = getRoutes(files);
-    const route: ModuleRoute = routes[0];
+    const routes = createRoutes(files);
+    const route = routes[0];
 
     it('should have a path', () => {
       expect(route.path).toBe('**');
     });
 
-    it('should have a pathMatch set to prefix', () => {
-      expect(route.pathMatch).toBe('prefix');
-    });
-
-    it('should have a _module property', () => {
-      expect(route._module).toBeDefined();
-
-      expect(typeof route._module).toBe('function');
-    });
-
     it('should have a loadChildren property', () => {
       expect(route.loadChildren).toBeDefined();
-
       expect(typeof route.loadChildren).toBe('function');
     });
 
     it('should return an array of one route config from the loadChildren property', async () => {
-      expect(route.loadChildren).toBeDefined();
-
       const routes = (await route.loadChildren()) as Route[];
 
       expect(routes.length).toBe(1);
@@ -404,7 +440,7 @@ describe('routes', () => {
     });
   });
 
-  describe('a catchall route with pages', () => {
+  describe('a catchall route with page suffix', () => {
     const files: Files = {
       '/src/app/pages/[...page-not-found].page.ts': () =>
         Promise.resolve({
@@ -412,33 +448,48 @@ describe('routes', () => {
         }),
     };
 
-    const routes = getRoutes(files);
-    const route: ModuleRoute = routes[0];
+    const routes = createRoutes(files);
+    const route = routes[0];
 
     it('should have a path', () => {
       expect(route.path).toBe('**');
     });
 
-    it('should have a pathMatch set to prefix', () => {
-      expect(route.pathMatch).toBe('prefix');
-    });
-
-    it('should have a _module property', () => {
-      expect(route._module).toBeDefined();
-
-      expect(typeof route._module).toBe('function');
-    });
-
     it('should have a loadChildren property', () => {
       expect(route.loadChildren).toBeDefined();
-
       expect(typeof route.loadChildren).toBe('function');
     });
 
     it('should return an array of one route config from the loadChildren property', async () => {
-      expect(route.loadChildren).toBeDefined();
-
       const routes = (await route.loadChildren()) as Route[];
+
+      expect(routes.length).toBe(1);
+
+      const innerRoute = routes.shift();
+
+      expect(innerRoute.path).toBe('');
+      expect(innerRoute.component).toBe(RouteComponent);
+    });
+  });
+
+  describe('a nested catchall route', () => {
+    const files: Files = {
+      '/src/app/pages/users/[...not-found].page.ts': () =>
+        Promise.resolve({
+          default: RouteComponent,
+        }),
+    };
+
+    const routes = createRoutes(files);
+    const parentRoute = routes[0];
+
+    it('should have a path', () => {
+      expect(parentRoute.path).toBe('users');
+      expect(parentRoute.children[0].path).toBe('**');
+    });
+
+    it('should return an array of one route config from the loadChildren property', async () => {
+      const routes = (await parentRoute.children[0].loadChildren()) as Route[];
 
       expect(routes.length).toBe(1);
 
@@ -455,7 +506,7 @@ describe('routes', () => {
         '/app/routes/index.ts': () =>
           Promise.resolve({ default: RouteComponent, routeMeta }),
       };
-      const moduleRoute = getRoutes(files)[0] as ModuleRoute;
+      const moduleRoute = createRoutes(files)[0];
       const resolvedRoutes = (await moduleRoute.loadChildren?.()) as Route[];
 
       return { resolvedRoute: resolvedRoutes[0] };
@@ -508,6 +559,49 @@ describe('routes', () => {
       expect(routeMeta.resolve).not.toBe(resolvedRoute.resolve);
       // routeMeta.data should not be changed
       expect(resolvedRoute.data).toBe(routeMeta.data);
+    });
+  });
+
+  describe('routes order', () => {
+    const module = () => Promise.resolve({ default: RouteComponent });
+
+    const files: Files = {
+      '/src/app/pages/[...not-found].page.ts': module,
+      '/src/app/pages/static/[...not-found].page.ts': module,
+      '/src/app/pages/static/[dynamic].page.ts': module,
+      '/src/app/pages/[dynamic].page.ts': module,
+      '/src/app/pages/static/static.page.ts': module,
+      '/src/app/pages/static.page.ts': module,
+      '/src/app/pages/static-2.page.ts': module,
+    };
+
+    const routes = createRoutes(files);
+
+    it('should put root catchall route at the end', () => {
+      expect(routes.at(-1).path).toBe('**');
+    });
+
+    it('should put nested catchall route at the end', async () => {
+      const routeWithChildren = routes.find((route) => route.path === 'static');
+      const nestedRoutes = (await routeWithChildren.loadChildren()) as Route[];
+
+      expect(nestedRoutes[0].children.at(-1).path).toBe('**');
+    });
+
+    it('should put root dynamic route after static routes but before catchall', () => {
+      expect(routes.at(-2).path).toBe(':dynamic');
+    });
+
+    it('should put nested dynamic route after static routes but before catchall', async () => {
+      const routeWithChildren = routes.find((route) => route.path === 'static');
+      const nestedRoutes = (await routeWithChildren.loadChildren()) as Route[];
+
+      expect(nestedRoutes[0].children.at(-2).path).toBe(':dynamic');
+    });
+
+    it('should put static routes with fewer children first', () => {
+      expect(routes[0].path).toBe('static-2');
+      expect(routes[1].path).toBe('static');
     });
   });
 });
