@@ -13,18 +13,16 @@ import type {
   Plugin,
   PluginBuild,
 } from 'esbuild';
-import * as assert from 'node:assert';
 import { platform } from 'node:os';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import * as ts from 'typescript';
-import { CompilerPluginOptions } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/compiler-plugin';
+import { CompilerPluginOptions } from '@angular-devkit/build-angular/src/tools/esbuild/angular/compiler-plugin';
 import { maxWorkers } from '@angular-devkit/build-angular/src/utils/environment-options';
-import { FileEmitter } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/angular-compilation';
-import { AotCompilation } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/aot-compilation';
-import { JitCompilation } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/jit-compilation';
-import { AngularHostOptions } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/angular-host';
-import { JavaScriptTransformer } from '@angular-devkit/build-angular/src/builders/browser-esbuild/javascript-transformer';
+import { AotCompilation } from '@angular-devkit/build-angular/src/tools/esbuild/angular/aot-compilation';
+import { JitCompilation } from '@angular-devkit/build-angular/src/tools/esbuild/angular/jit-compilation';
+import { AngularHostOptions } from '@angular-devkit/build-angular/src/tools/esbuild/angular/angular-host';
+import { JavaScriptTransformer } from '@angular-devkit/build-angular/src/tools/esbuild/javascript-transformer';
 
 /**
  * Converts TypeScript Diagnostic related information into an esbuild compatible note object.
@@ -158,10 +156,11 @@ export function createCompilerPlugin(
         build.initialOptions.define[key] = value!.toString();
       }
 
-      // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
-      let fileEmitter: FileEmitter | undefined;
-
-      let compilation: AotCompilation | JitCompilation | undefined;
+      // The in-memory cache of TypeScript file outputs will be used during the build in `onLoad` callbacks for TS files.
+      // A string value indicates direct TS/NG output and a Uint8Array indicates fully transformed code.
+      const typeScriptFileCache =
+        pluginOptions.sourceFileCache?.typeScriptFileCache ??
+        new Map<string, string | Uint8Array>();
 
       build.onStart(async () => {
         const result: OnStartResult = {
@@ -179,7 +178,7 @@ export function createCompilerPlugin(
         };
 
         // Create new compilation if first build; otherwise, use existing for rebuilds
-        compilation ??= pluginOptions?.jit
+        const compilation = pluginOptions?.jit
           ? new JitCompilation()
           : new AotCompilation();
 
@@ -250,7 +249,9 @@ export function createCompilerPlugin(
           }
         }
 
-        fileEmitter = compilation.createFileEmitter();
+        for (const { filename, contents } of compilation.emitAffectedFiles()) {
+          typeScriptFileCache.set(pathToFileURL(filename).href, contents);
+        }
 
         // Reset the setup warnings so that they are only shown during the first build.
         setupWarnings = undefined;
@@ -263,8 +264,6 @@ export function createCompilerPlugin(
           filter: handleJs ? /\.[cm]?[jt]sx?$/ : /\.[cm]?tsx?$/,
         },
         async (args) => {
-          assert.ok(fileEmitter, 'Invalid plugin execution order');
-
           const request =
             pluginOptions.fileReplacements?.[args.path] ?? args.path;
 
@@ -282,36 +281,32 @@ export function createCompilerPlugin(
           );
 
           if (contents === undefined) {
-            const typescriptResult = await fileEmitter(request);
-            if (!typescriptResult?.content) {
-              // No TS result indicates the file is not part of the TypeScript program.
-              // If allowJs is enabled and the file is JS then defer to the next load hook.
-              if (handleJs && /\.[cm]?js$/.test(request)) {
-                return undefined;
-              }
-
-              // Otherwise return an error
-              return {
-                errors: [
-                  createMissingFileError(
-                    request,
-                    args.path,
-                    build.initialOptions.absWorkingDir ?? ''
-                  ),
-                ],
-              };
+            // No TS result indicates the file is not part of the TypeScript program.
+            // If allowJs is enabled and the file is JS then defer to the next load hook.
+            if (!handleJs && /\.[cm]?js$/.test(request)) {
+              return undefined;
             }
 
+            // Otherwise return an error
+            return {
+              errors: [
+                createMissingFileError(
+                  request,
+                  args.path,
+                  build.initialOptions.absWorkingDir ?? ''
+                ),
+              ],
+            };
+          } else if (typeof contents === 'string') {
+            // A string indicates untransformed output from the TS/NG compiler
             contents = await javascriptTransformer.transformData(
               request,
-              typescriptResult.content,
+              contents,
               true /* skipLinker */
             );
 
-            pluginOptions.sourceFileCache?.typeScriptFileCache.set(
-              pathToFileURL(request).href,
-              contents
-            );
+            // Store as the returned Uint8Array to allow caching the fully transformed code
+            typeScriptFileCache.set(pathToFileURL(request).href, contents);
           }
 
           return {

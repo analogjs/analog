@@ -28,7 +28,7 @@ export const provideTrpcCacheStateStatusManager = () => ({
       const isStablePromise = appRef.isStable
         .pipe(first((isStable) => isStable))
         .toPromise();
-      const pendingTasksPromise = pendingTasks.whenAllTasksComplete;
+      const pendingTasksPromise = pendingTasks.hasPendingTasks.toPromise();
 
       (Promise as any)
         .allSettled([isStablePromise, pendingTasksPromise])

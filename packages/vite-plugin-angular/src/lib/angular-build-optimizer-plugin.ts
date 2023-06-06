@@ -1,8 +1,8 @@
 import { Plugin } from 'vite';
-import { requiresLinking } from '@angular-devkit/build-angular/src/babel/webpack-loader';
+import { requiresLinking } from '@angular-devkit/build-angular/src/tools/babel/webpack-loader';
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
 import { transformAsync } from '@babel/core';
-import angularApplicationPreset from '@angular-devkit/build-angular/src/babel/presets/application';
+import angularApplicationPreset from '@angular-devkit/build-angular/src/tools/babel/presets/application';
 
 export function buildOptimizerPlugin({
   isProd,
