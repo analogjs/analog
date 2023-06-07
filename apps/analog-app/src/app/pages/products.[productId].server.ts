@@ -5,5 +5,3 @@ export const load = async ({ params, fetch }: PageServerLoad) => {
     slug: true,
   };
 };
-
-export type LoadType = Awaited<ReturnType<typeof load>>;
