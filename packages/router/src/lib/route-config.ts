@@ -31,13 +31,13 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
     ...routeConfig.resolve,
     load: async (route) => {
       const routeConfig = route.routeConfig as Route & {
-        meta: { endpoint: string; endpointKey: string };
+        analogMeta: { endpoint: string; endpointKey: string };
       };
 
-      if (PAGE_ENDPOINTS[routeConfig.meta.endpointKey]) {
+      if (PAGE_ENDPOINTS[routeConfig.analogMeta.endpointKey]) {
         const { queryParams, fragment: hash, params } = route;
         const url = new URL('', import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL']);
-        url.pathname = `/api/_analog${routeConfig.meta.endpoint}`;
+        url.pathname = `/api/_analog${routeConfig.analogMeta.endpoint}`;
         url.search = `${new URLSearchParams(queryParams).toString()}`;
         url.hash = hash ?? '';
 
