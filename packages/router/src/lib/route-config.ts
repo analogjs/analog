@@ -30,19 +30,14 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
   routeConfig.resolve = {
     ...routeConfig.resolve,
     load: async (route) => {
-      const { queryParams, fragment: hash, params } = route;
       const routeConfig = route.routeConfig as Route & {
         meta: { endpoint: string; endpointKey: string };
       };
 
       if (PAGE_ENDPOINTS[routeConfig.meta.endpointKey]) {
-        const http = inject(HttpClient);
+        const { queryParams, fragment: hash, params } = route;
         const url = new URL('', import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL']);
-        const endpoint = `/api/_analog${routeConfig.meta.endpoint
-          .replace(/\./g, '/')
-          .replace(/\/\(.*?\)$/, '/index')}`;
-
-        url.pathname = endpoint;
+        url.pathname = `/api/_analog${routeConfig.meta.endpoint}`;
         url.search = `${new URLSearchParams(queryParams).toString()}`;
         url.hash = hash ?? '';
 
@@ -54,6 +49,7 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
           return (globalThis as any).$fetch(url.pathname);
         }
 
+        const http = inject(HttpClient);
         return firstValueFrom(http.get(`${url.href}`));
       }
 

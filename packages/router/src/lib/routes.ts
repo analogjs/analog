@@ -145,15 +145,36 @@ function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
         ? toRoutes(rawRoute.children, files)
         : undefined;
     let module: (() => Promise<RouteExport>) | undefined = undefined;
+    let meta: { endpoint: string; endpointKey: string } | undefined = undefined;
 
     if (rawRoute.filename) {
       const isMarkdownFile = rawRoute.filename.endsWith('.md');
       module = isMarkdownFile
         ? toMarkdownModule(files[rawRoute.filename] as () => Promise<string>)
         : (files[rawRoute.filename] as () => Promise<RouteExport>);
+
+      const endpointKey = rawRoute.filename.replace(
+        /\.page\.ts$/,
+        ENDPOINT_EXTENSION
+      );
+
+      // get endpoint path
+      const rawEndpoint = rawRoute.filename
+        .replace(/\.page\.ts$/, '')
+        .split(APP_DIR)[1];
+
+      // replace periods, remove (index) paths
+      const endpoint = (rawEndpoint || '')
+        .replace(/\./g, '/')
+        .replace(/\/\(.*?\)$/, '/index');
+
+      meta = {
+        endpoint,
+        endpointKey,
+      };
     }
 
-    const route: Route = module
+    const route: Route & { meta?: typeof meta } = module
       ? {
           path: rawRoute.segment,
           loadChildren: () =>
@@ -163,6 +184,7 @@ function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
                 component: m.default,
                 ...toRouteConfig(m.routeMeta as RouteMeta | undefined),
                 children,
+                meta,
               },
             ]),
         }
