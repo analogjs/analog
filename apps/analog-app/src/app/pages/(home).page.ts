@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { RouteMeta, useLoad } from '@analogjs/router';
+import { RouteMeta, injectLoad } from '@analogjs/router';
 import { NgForOf, NgIf } from '@angular/common';
 import { RouterLinkWithHref } from '@angular/router';
 
@@ -51,7 +51,7 @@ export const routeMeta: RouteMeta = {
   ],
 })
 export default class ProductListComponent {
-  data = toSignal(useLoad<typeof load>(), { requireSync: true });
+  data = toSignal(injectLoad<typeof load>(), { requireSync: true });
 
   share() {
     window.alert('The product has been shared!');

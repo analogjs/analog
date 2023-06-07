@@ -8,6 +8,6 @@ export type PageServerLoad = {
   fetch: $Fetch;
 };
 
-export type LoadReturn<
+export type LoadResult<
   A extends (pageServerLoad: PageServerLoad) => Promise<any>
 > = Awaited<ReturnType<A>>;
