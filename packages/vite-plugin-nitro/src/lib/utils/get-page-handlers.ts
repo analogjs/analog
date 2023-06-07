@@ -21,7 +21,7 @@ export function getPageHandlers({ workspaceRoot, rootDir }: GetHandlersArgs) {
       .replace(/\.server\.ts$/, '')
       .replace(/\[\.{3}]/g, '**')
       .replace(/\[\.{3}(\w+)]/g, '**:$1')
-      .replace(/\/\(.*?\)$/, '/index')
+      .replace(/\/\((.*?)\)$/, '/-$1-')
       .replace(/\[(\w+)]/g, ':$1')
       .replace(/\./g, '/');
 

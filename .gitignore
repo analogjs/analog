@@ -56,4 +56,4 @@ stats.html
 .nitro
 /migrations.json
 
-.env
+/.env

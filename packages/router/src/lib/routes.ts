@@ -166,7 +166,7 @@ function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
       // replace periods, remove (index) paths
       const endpoint = (rawEndpoint || '')
         .replace(/\./g, '/')
-        .replace(/\/\(.*?\)$/, '/index');
+        .replace(/\/\((.*?)\)$/, '/-$1-');
 
       meta = {
         endpoint,
