@@ -6,6 +6,7 @@ import type { RouteExport, RouteMeta } from './models';
 import { toRouteConfig } from './route-config';
 import { toMarkdownModule } from './markdown-helpers';
 import { APP_DIR, ENDPOINT_EXTENSION } from './constants';
+import { ANALOG_META_KEY } from './endpoints';
 
 const FILES = import.meta.glob<RouteExport>([
   '/app/routes/**/*.ts',
@@ -185,7 +186,7 @@ function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
                 component: m.default,
                 ...toRouteConfig(m.routeMeta as RouteMeta | undefined),
                 children,
-                analogMeta,
+                [ANALOG_META_KEY]: analogMeta,
               },
             ]),
         }

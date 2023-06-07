@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { RedirectRouteMeta, RouteConfig, RouteMeta } from './models';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
-import { PAGE_ENDPOINTS } from './endpoints';
+import { PAGE_ENDPOINTS, ANALOG_META_KEY } from './endpoints';
 
 export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
   if (routeMeta && isRedirectRouteMeta(routeMeta)) {
@@ -31,13 +31,13 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
     ...routeConfig.resolve,
     load: async (route) => {
       const routeConfig = route.routeConfig as Route & {
-        analogMeta: { endpoint: string; endpointKey: string };
+        [ANALOG_META_KEY]: { endpoint: string; endpointKey: string };
       };
 
-      if (PAGE_ENDPOINTS[routeConfig.analogMeta.endpointKey]) {
+      if (PAGE_ENDPOINTS[routeConfig[ANALOG_META_KEY].endpointKey]) {
         const { queryParams, fragment: hash, params } = route;
         const url = new URL('', import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL']);
-        url.pathname = `/api/_analog${routeConfig.analogMeta.endpoint}`;
+        url.pathname = `/api/_analog${routeConfig[ANALOG_META_KEY].endpoint}`;
         url.search = `${new URLSearchParams(queryParams).toString()}`;
         url.hash = hash ?? '';
 
