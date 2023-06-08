@@ -515,7 +515,7 @@ describe('routes', () => {
     it('should add meta tags to data dictionary when they are defined as array', async () => {
       const routeMeta: RouteMeta = {
         data: { foo: 'bar' },
-        resolve: { x: () => of('y') },
+        resolve: { x: () => of('y'), load: expect.anything() },
         meta: [
           { charset: 'utf-8' },
           {
@@ -533,7 +533,7 @@ describe('routes', () => {
       // routeMeta.data should not be mutated
       expect(routeMeta.data).not.toBe(resolvedRoute.data);
       // routeMeta.resolve should not be changed
-      expect(resolvedRoute.resolve).toBe(routeMeta.resolve);
+      expect(resolvedRoute.resolve).toStrictEqual(routeMeta.resolve);
     });
 
     it('should add meta tags to resolve dictionary when they are defined as resolver', async () => {
@@ -554,6 +554,7 @@ describe('routes', () => {
       expect(resolvedRoute.resolve).toEqual({
         ...routeMeta.resolve,
         [ROUTE_META_TAGS_KEY]: routeMeta.meta,
+        load: expect.anything(),
       });
       // routeMeta.resolve should not be mutated
       expect(routeMeta.resolve).not.toBe(resolvedRoute.resolve);

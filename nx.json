@@ -27,6 +27,9 @@
     "test": {
       "dependsOn": ["^build"]
     },
+    "e2e": {
+      "dependsOn": ["^build"]
+    },
     "serve": {
       "dependsOn": ["^build"]
     },

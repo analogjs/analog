@@ -1,11 +1,11 @@
-import { RouteMeta } from '@analogjs/router';
+import { Component } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { RouteMeta, injectLoad } from '@analogjs/router';
 import { NgForOf, NgIf } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
 import { RouterLinkWithHref } from '@angular/router';
-import { catchError, of } from 'rxjs';
+
 import { ProductAlertsComponent } from '../product-alerts/product-alerts.component';
-import { Product } from '../products';
+import { load } from './(home).server';
 
 export const routeMeta: RouteMeta = {
   title: 'Product List',
@@ -18,7 +18,7 @@ export const routeMeta: RouteMeta = {
   template: `
     <h2>Products</h2>
 
-    <div *ngFor="let product of products">
+    <div *ngFor="let product of data().products">
       <h3>
         <a
           [title]="product.name + ' details'"
@@ -51,17 +51,7 @@ export const routeMeta: RouteMeta = {
   ],
 })
 export default class ProductListComponent {
-  products!: Product[];
-  http = inject(HttpClient);
-
-  ngOnInit() {
-    this.http
-      .get<Product[]>('/api/v1/products')
-      .pipe(catchError(() => of([])))
-      .subscribe((products) => {
-        this.products = products;
-      });
-  }
+  data = toSignal(injectLoad<typeof load>(), { requireSync: true });
 
   share() {
     window.alert('The product has been shared!');

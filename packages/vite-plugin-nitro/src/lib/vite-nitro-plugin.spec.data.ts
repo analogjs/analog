@@ -12,6 +12,7 @@ export const mockViteDevServer = {
 
 export const mockNitroConfig: NitroConfig = {
   buildDir: path.resolve('./dist/.nitro'),
+  handlers: [],
   logLevel: 0,
   output: {
     dir: path.resolve('dist/analog'),
@@ -26,6 +27,14 @@ export const mockNitroConfig: NitroConfig = {
   },
   typescript: {
     generateTsConfig: false,
+  },
+  rollupConfig: {
+    plugins: [
+      {
+        name: 'analogjs-vite-plugin-nitro-rollup-page-endpoint',
+        transform() {},
+      },
+    ],
   },
 };
 

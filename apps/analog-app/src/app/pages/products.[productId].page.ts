@@ -1,11 +1,11 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CurrencyPipe, NgIf } from '@angular/common';
 import { injectActivatedRoute } from '@analogjs/router';
+import { HttpClient } from '@angular/common/http';
+import { catchError, of } from 'rxjs';
 
 import { Product } from '../products';
 import { CartService } from '../cart.service';
-import { HttpClient } from '@angular/common/http';
-import { catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-product-details',
