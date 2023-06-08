@@ -17,7 +17,7 @@ if (process.env['CI'] === 'true') {
 
   // write BASE_URL env variable to .env file
   fs.writeFileSync(
-    path.resolve(__dirname, '.env.local'),
+    path.resolve(__dirname, '.env'),
     `VITE_ANALOG_PUBLIC_BASE_URL=${base}`
   );
 }
