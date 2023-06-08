@@ -15,7 +15,7 @@ if (process.env['CI'] === 'true') {
   }
 
   // write BASE_URL env variable to .env file
-  fs.writeFileSync('.env.local', `VITE_ANALOG_PUBLIC_BASE_URL=${base}`);
+  process.env['VITE_ANALOG_PUBLIC_BASE_URL'] = base;
 }
 
 // https://vitejs.dev/config/
