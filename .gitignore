@@ -57,3 +57,4 @@ stats.html
 /migrations.json
 
 /.env
+.env.local
