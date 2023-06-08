@@ -5,7 +5,6 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 import tsConfigPaths from 'vite-tsconfig-paths';
 import * as fs from 'fs';
-import * as path from 'path';
 
 // Only run in CI
 if (process.env['CI'] === 'true') {
@@ -16,10 +15,7 @@ if (process.env['CI'] === 'true') {
   }
 
   // write BASE_URL env variable to .env file
-  fs.writeFileSync(
-    path.resolve(__dirname, '.env'),
-    `VITE_ANALOG_PUBLIC_BASE_URL=${base}`
-  );
+  fs.writeFileSync('.env.local', `VITE_ANALOG_PUBLIC_BASE_URL=${base}`);
 }
 
 // https://vitejs.dev/config/
