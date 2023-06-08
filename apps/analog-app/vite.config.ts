@@ -4,9 +4,8 @@ import analog from '@analogjs/platform';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 import tsConfigPaths from 'vite-tsconfig-paths';
-import * as fs from 'fs';
 
-// Only run in CI
+// Only run in Netlify CI
 if (process.env['CI'] === 'true') {
   let base = process.env['URL'];
 
@@ -14,7 +13,7 @@ if (process.env['CI'] === 'true') {
     base = `${process.env['DEPLOY_PRIME_URL']}/`;
   }
 
-  // write BASE_URL env variable to .env file
+  // set process.env.VITE_ANALOG_PUBLIC_BASE_URL = base URL
   process.env['VITE_ANALOG_PUBLIC_BASE_URL'] = base;
 }
 
