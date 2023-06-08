@@ -86,7 +86,7 @@ type UntypedClientProperties =
   | 'mutation';
 
 // Nothing changed, only using new types
-export type CreateTRPCProxyClient<TRouter extends AnyRouter> =
+export type CreateTrpcProxyClient<TRouter extends AnyRouter> =
   DecoratedProcedureRecord<
     TRouter['_def']['record'],
     TRouter
@@ -100,7 +100,7 @@ export type CreateTRPCProxyClient<TRouter extends AnyRouter> =
 function createTRPCRxJSClientProxy<TRouter extends AnyRouter>(
   client: TRPCClient<TRouter>
 ) {
-  return createFlatProxy<CreateTRPCProxyClient<TRouter>>((key) => {
+  return createFlatProxy<CreateTrpcProxyClient<TRouter>>((key) => {
     // eslint-disable-next-line no-prototype-builtins
     if (client.hasOwnProperty(key)) {
       return (client as any)[key as any];
