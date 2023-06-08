@@ -4,14 +4,14 @@ import { provideFileRouter } from '@analogjs/router';
 import { AppComponent } from './app/app.component';
 import { mainProviders } from './main.providers';
 <% if (addTRPC) { %>
-import { provideTRPCClient } from './trpc-client';
+import { provideTrpcClient } from './trpc-client';
 <% } %>
 
 bootstrapApplication(AppComponent, {
   providers: [
     provideFileRouter(),
 <% if (addTRPC) { %>
-    provideTRPCClient(),
+    provideTrpcClient(),
 <% } %>
     ...mainProviders],
 });

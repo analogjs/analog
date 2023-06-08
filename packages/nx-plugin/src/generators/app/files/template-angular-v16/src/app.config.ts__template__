@@ -2,7 +2,7 @@ import { ApplicationConfig } from '@angular/core';
 import { provideClientHydration } from '@angular/platform-browser';
 import { provideFileRouter } from '@analogjs/router';
 <% if (addTRPC) { %>
-import { provideTRPCClient } from './trpc-client';
+import { provideTrpcClient } from './trpc-client';
 <% } %>
 
 export const appConfig: ApplicationConfig = {
@@ -10,7 +10,7 @@ export const appConfig: ApplicationConfig = {
     provideFileRouter(),
     provideClientHydration(),
 <% if (addTRPC) { %>
-    provideTRPCClient(),
+    provideTrpcClient(),
 <% } %>
   ],
 };

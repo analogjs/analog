@@ -1,360 +1,27 @@
 import { Component } from '@angular/core';
 import { AsyncPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { waitFor } from '@analogjs/trpc';
 import { shareReplay, Subject, switchMap, take } from 'rxjs';
-import { injectTRPCClient } from '../../trpc-client';
+import { waitFor } from '@analogjs/trpc';
+import { injectTrpcClient } from '../../trpc-client';
 import { Note } from '../../note';
 
 @Component({
-  selector: '<%= fileName %>-home',
+  selector: '<%= fileName %>-analog-welcome',
   standalone: true,
   imports: [AsyncPipe, FormsModule, NgFor, DatePipe, NgIf],
-   styles: [
-    `
-      a {
-        color: inherit;
-        text-decoration: inherit;
-      }
-
-      :host {
-        display: flex;
-        padding: 2rem;
-        flex-direction: column;
-        height: 100%;
-        min-height: 100vh;
-        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif,
-          'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-          'Noto Color Emoji';
-      }
-
-      .main {
-        margin-left: auto;
-        margin-right: auto;
-        flex: 1 1 0;
-      }
-
-      .section-main {
-        padding-top: 1.5rem;
-        padding-bottom: 2rem;
-        margin-top: 1.5rem;
-      }
-
-      @media (min-width: 768px) {
-        .section-main {
-          padding-top: 2.5rem;
-          padding-bottom: 3rem;
-        }
-      }
-
-      @media (min-width: 1024px) {
-        .section-main {
-          padding-top: 8rem;
-          padding-bottom: 8rem;
-        }
-      }
-
-      .main-icon {
-        margin-left: auto;
-        margin-right: auto;
-        margin-bottom: -1rem;
-        width: 4rem;
-        height: 4rem;
-      }
-
-      .container-main {
-        display: flex;
-        text-align: center;
-        flex-direction: column;
-        align-items: center;
-        gap: 1rem;
-      }
-
-      .button-badge {
-        padding-top: 0.375rem;
-        padding-bottom: 0.375rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
-        font-size: 0.875rem;
-        line-height: 1.25rem;
-        font-weight: 500;
-        border-radius: 1rem;
-        background-color: rgb(228 228 231);
-      }
-
-      .text-analog-red {
-        color: rgb(221, 0, 49);
-      }
-
-      .heading-1 {
-        font-size: 1.875rem;
-        line-height: 2.25rem;
-        font-weight: 500;
-        margin: 1rem 0;
-      }
-
-      @media (min-width: 640px) {
-        .heading-1 {
-          font-size: 2.25rem; /* 36px */
-          line-height: 2.5rem; /* 40px */
-        }
-      }
-
-      @media (min-width: 768px) {
-        .heading-1 {
-          font-size: 3rem; /* 48px */
-          line-height: 1;
-        }
-      }
-
-      @media (min-width: 1024px) {
-        .heading-1 {
-          font-size: 3.75rem; /* 60px */
-          line-height: 1;
-        }
-      }
-
-      .paragraph-intro {
-        line-height: 1.5;
-      }
-
-      @media (min-width: 640px) {
-        .paragraph-intro {
-          font-size: 1.25rem;
-          line-height: 2rem;
-        }
-      }
-
-      .button-group {
-        display: flex;
-        gap: 1rem;
-      }
-
-      .primary-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.875rem;
-        font-weight: 500;
-        transition-property: color, background-color;
-        transition-duration: 150ms;
-        outline-offset: 2px;
-        opacity: 1;
-        pointer-events: auto;
-        background-color: rgb(9, 9, 11);
-        color: rgb(250, 250, 250);
-        height: 2.75rem;
-        padding-left: 2rem;
-        padding-right: 2rem;
-        border-radius: 0.375rem;
-      }
-
-      .secondary-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.875rem;
-        font-weight: 500;
-        transition-property: color, background-color, border-color;
-        transition-duration: 150ms;
-        outline-offset: 2px;
-        opacity: 1;
-        pointer-events: auto;
-        background-color: rgb(250, 250, 250);
-        color: rgb(9, 9, 11);
-        height: 2.75rem;
-        padding-left: 2rem;
-        padding-right: 2rem;
-        border: 1px solid rgb(161, 161, 170, 0.25);
-        border-radius: 0.375rem;
-      }
-
-      .secondary-button:hover {
-        background-color: rgb(244 244 245);
-        color: rgb(9, 9, 11);
-      }
-
-      .section {
-        margin-top: 8rem;
-        margin-bottom: 8rem;
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-
-      @media (min-width: 768px) {
-        .section {
-          padding-top: 3rem;
-          padding-bottom: 3rem;
-        }
-      }
-
-      @media (min-width: 1024px) {
-        .section {
-          padding-top: 6rem;
-        }
-      }
-
-      .intro-container {
-        margin-left: auto;
-        margin-right: auto;
-        max-width: 58rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1rem;
-        text-align: center;
-      }
-
-      .title {
-        font-weight: 500;
-        font-size: 3rem;
-        line-height: 1.1;
-        text-align: center;
-        margin: 0;
-      }
-
-      .description {
-        max-width: 85%;
-        font-size: 1.125rem;
-        line-height: 1.75rem;
-      }
-
-      .feature-card {
-        position: relative;
-        overflow: hidden;
-        border: 1px solid rgb(228 228 231);
-        border-radius: 0.375rem;
-        padding: 0.5rem;
-      }
-
-      .status-badge {
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        border-radius: 0.5rem;
-        background-color: rgb(228, 228, 231);
-        padding: 0.375rem 0.75rem;
-        font-size: 0.75rem;
-        font-weight: 500;
-      }
-
-      .card-content {
-        display: flex;
-        height: 180px;
-        flex-direction: column;
-        justify-content: space-between;
-        border-radius: 0.375rem;
-        padding: 1.5rem;
-      }
-
-      .card-details {
-        margin-top: 0.5rem;
-      }
-
-      .card-title {
-        font-weight: bold;
-      }
-
-      .card-description {
-        font-size: 0.875rem;
-      }
-
-      .further-info-container {
-        margin-left: auto;
-        margin-right: auto;
-        text-align: center;
-        max-width: 58rem;
-      }
-
-      .description {
-        font-size: 1.125rem;
-        line-height: 1.75rem;
-      }
-
-      .note-form {
-        display: flex;
-        padding-bottom: 0.5rem;
-        margin-top: 2rem;
-        align-items: center;
-      }
-      .note-input {
-        display: flex;
-        height: 2.5rem;
-        width: 100%;
-        border-radius: 0.375rem;
-        border: 1px solid rgb(161, 161, 170, 0.25);
-        background-color: transparent;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.875rem;
-        outline: none;
-        font-family: inherit;
-        color: inherit;
-      }
-
-      .note-input::placeholder {
-        color: rgb(161, 161, 170, 0.8);
-      }
-
-      .note-input:focus-visible {
-        outline: 2px solid rgb(39, 39, 42);
-        outline-offset: 2px;
-      }
-      .note-input:disabled {
-        cursor: not-allowed;
-        opacity: 0.5;
-      }
-
-      .add-note-button {
-        margin-left: 0.5rem;
-        height: 2.5rem !important;
-      }
-      .hidden {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border-width: 0;
-      }
-      .note {
-        position: relative;
-      }
-      .note-grid {
-        display: flex;
-        margin-top: 1rem;
-        flex-direction: column;
-        gap: 1rem;
-      }
-      .delete-note-icon {
-        width: 1rem;
-        height: 1rem;
-      }
-      .delete-note-button {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        padding: 0.5rem !important;
-        height: 2rem !important;
-      }
-      .loading {
-        padding-top: 3rem;
-        text-align: center;
-      }
-    `,
-  ],
+  host: {
+    class:
+      'flex min-h-screen flex-col text-zinc-900 bg-zinc-50 px-4 pt-8 pb-32',
+  },
   template: `
-    <main class="main">
-      <section class="section-main">
-        <div class="container-main">
+    <main class="flex-1 mx-auto">
+      <section class="space-y-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:py-32">
+        <div
+          class="container flex max-w-[64rem] flex-col items-center gap-4 text-center"
+        >
           <svg
-            class="main-icon"
+            class="mx-auto h-16 w-16 -mb-4"
             xmlns="http://www.w3.org/2000/svg"
             xmlns:svg="http://www.w3.org/2000/svg"
             width="362.26562"
@@ -436,118 +103,110 @@ import { Note } from '../../note';
             </g>
           </svg>
           <a
-            class="button-badge"
+            class="rounded-2xl bg-zinc-200 px-4 py-1.5 text-sm font-medium"
             target="_blank"
             href="https://twitter.com/analogjs"
             >Follow along on Twitter</a
           >
-          <h1 class="heading-1">
-            <span class="text-analog-red">Analog.</span> The fullstack Angular
+          <h1
+            class="font-heading font-medium text-3xl sm:text-5xl md:text-6xl lg:text-7xl"
+          >
+            <span class="text-[#DD0031]">Analog.</span> The fullstack Angular
             meta-framework
           </h1>
-          <p class="paragraph-intro">
+          <p
+            class="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8"
+          >
             Analog is for building applications and websites with Angular.
             <br />Powered by Vite.
           </p>
-          <div class="button-group">
-            <a class="primary-button" href="https://analogjs.org"
-              >Read the docs</a
-            >
+          <div class="space-x-4">
             <a
-              class="secondary-button"
+              class="inline-flex items-center justify-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-zinc-950 text-zinc-50 hover:bg-zinc-950/90 h-11 px-8 rounded-md"
+              href="https://analogjs.org"
+              >Read the docs</a
+            ><a
+              target="_blank"
+              rel="noreferrer"
+              class="inline-flex items-center justify-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background border border-input hover:bg-zinc-50 hover:text-zinc-950 h-11 px-8 rounded-md"
               href="https://github.com/analogjs/analog"
               >GitHub</a
             >
           </div>
         </div>
       </section>
-      <section id="trpc-demo" class="section">
-        <div class="intro-container">
-          <h2 class="text-analog-red title">Leave a note</h2>
-          <p class="description">
+      <section id="trpc-demo" class="container py-8 md:py-12 lg:py-24">
+        <div
+          class="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center"
+        >
+          <h2 class="text-[#DD0031] font-medium text-3xl leading-[1.1]">
+            Leave a note
+          </h2>
+          <p
+            class="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7"
+          >
             This is an example of how to you can use tRPC to superpower you
             client server interaction.
           </p>
         </div>
-        <form class="note-form" #f="ngForm" (ngSubmit)="addPost(f)">
-          <label class="hidden" for="newNote"> Note </label>
+        <form
+          class="mt-8 pb-2 flex items-center"
+          #f="ngForm"
+          (ngSubmit)="addNote(f)"
+        >
+          <label class="sr-only" for="newNote"> Note </label>
           <input
             required
             autocomplete="off"
             data-testid="newNoteInput"
             name="newNote"
             [(ngModel)]="newNote"
-            class="note-input"
+            class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
           <button
             data-testid="addNoteBtn"
-            class="secondary-button add-note-button"
+            class="ml-2 inline-flex items-center justify-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background border border-input hover:bg-zinc-50 hover:text-zinc-950 px-8 h-10 rounded-md"
           >
             +
           </button>
         </form>
-
-        <ng-container *ngIf="notes$ | async as notes; else loading">
-          <div class="note-grid">
-            <div
-              *ngFor="
-                let note of notes ?? [];
-                trackBy: noteTrackBy;
-                let i = index
-              "
-              class="note feature-card"
-            >
+        <div class="mt-4" *ngIf="notes$ | async as notes; else loading">
+          <div
+            class="note mb-4 p-4 font-normal border border-zinc-500/40 rounded-md"
+            *ngFor="let note of notes; trackBy: noteTrackBy; let i = index"
+          >
+            <div class="flex items-center justify-between">
+              <p class="text-sm text-zinc-400">{{ note.createdAt | date }}</p>
               <button
                 [attr.data-testid]="'removeNoteAtIndexBtn' + i"
-                class="delete-note-button secondary-button"
-                (click)="removePost(note.id)"
+                class="text-xs text-center h-6 w-6 bg-opacity-10 hover:bg-opacity-50 bg-zinc-200 text-zinc-500"
+                (click)="removeNote(note.id)"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="delete-note-icon"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                x
               </button>
-              <div class="card-content">
-                <div class="card-details">
-                  <h3 class="card-title">{{ note.note }}</h3>
-                  <p class="card-description">
-                    {{ note.createdAt | date }}
-                  </p>
-                </div>
-              </div>
             </div>
+            <p class="mb-4">{{ note.note }}</p>
           </div>
 
-          <div *ngIf="notes.length === 0" class="feature-card">
-            <div class="card-content">
-              <div class="card-details">
-                <h3 class="card-title">No notes yet...</h3>
-                <p class="card-description">
-                  Add a new one and see them appear here...
-                </p>
-              </div>
-            </div>
+          <div
+            class="no-notes text-center rounded-xl p-20"
+            *ngIf="notes.length === 0"
+          >
+            <h3 class="text-xl font-medium">No notes yet!</h3>
+            <p class="text-zinc-400">
+              Add a new one and see them appear here...
+            </p>
           </div>
-        </ng-container>
+        </div>
         <ng-template #loading>
-          <p class="loading">Loading...</p>
+          <p class="text-center mt-4">Loading...</p>
         </ng-template>
       </section>
     </main>
   `,
 })
-export default class HomeComponent {
-   private _trpc = injectTRPCClient();
+export class AnalogWelcomeComponent {
+  private _trpc = injectTrpcClient();
   public triggerRefresh$ = new Subject<void>();
   public notes$ = this.triggerRefresh$.pipe(
     switchMap(() => this._trpc.note.list.query()),
@@ -564,7 +223,7 @@ export default class HomeComponent {
     return note.id;
   };
 
-  public addPost(form: NgForm) {
+  public addNote(form: NgForm) {
     if (!form.valid) {
       form.form.markAllAsTouched();
       return;
@@ -577,7 +236,7 @@ export default class HomeComponent {
     form.form.reset();
   }
 
-  public removePost(id: number) {
+  public removeNote(id: number) {
     this._trpc.note.remove
       .mutate({ id })
       .pipe(take(1))

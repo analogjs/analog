@@ -1,5 +1,5 @@
 export interface AnalogNxApplicationGeneratorOptions {
-  name: string;
+  analogAppName: string;
   tags?: string;
   addTailwind?: boolean;
   addTRPC?: boolean;
