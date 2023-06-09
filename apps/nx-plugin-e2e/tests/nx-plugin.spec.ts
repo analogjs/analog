@@ -26,9 +26,8 @@ describe('nx-plugin e2e', () => {
   it('should create hello-world', async () => {
     const project = uniq('app');
     const res = await runNxCommandAsync(
-      `generate @analogjs/platform:app ${project} --addTailwind=true --addTRPC=true --verbose`
+      `generate @analogjs/platform:app ${project} --addTailwind=true --addTRPC=true`
     );
-    console.log(res.stdout, res.stderr);
     copyNodeModules(['@analogjs']);
 
     await runNxCommandAsync(`test ${project}`);
