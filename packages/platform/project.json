@@ -25,15 +25,15 @@
           "tsConfig": "packages/platform/tsconfig.lib.json"
         }
       },
-      "defaultConfiguration": "production",
-      "dependsOn": ["^build"]
+      "defaultConfiguration": "production"
     },
     "build": {
       "executor": "nx:run-commands",
       "options": {
         "commands": ["nx build-package platform", "nx build nx-plugin"],
         "parallel": false
-      }
+      },
+      "dependsOn": ["^build"]
     },
     "lint": {
       "executor": "@nx/linter:eslint",
