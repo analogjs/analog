@@ -5,6 +5,18 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 import tsConfigPaths from 'vite-tsconfig-paths';
 
+// Only run in Netlify CI
+if (process.env['CI'] === 'true') {
+  let base = process.env['URL'];
+
+  if (process.env['CONTEXT'] === 'deploy-preview') {
+    base = `${process.env['DEPLOY_PRIME_URL']}/`;
+  }
+
+  // set process.env.VITE_ANALOG_PUBLIC_BASE_URL = base URL
+  process.env['VITE_ANALOG_PUBLIC_BASE_URL'] = base;
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
