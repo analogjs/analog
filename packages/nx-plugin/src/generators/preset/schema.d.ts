@@ -1,5 +1,5 @@
 export interface PresetGeneratorSchema {
-  name: string;
+  analogAppName: string;
   tags?: string;
   addTailwind?: boolean;
   addTRPC?: boolean;

@@ -4,7 +4,7 @@ import {
   effect,
   signal,
 } from '@angular/core';
-import { injectTRPCClient, tRPCHeaders } from '../../trpc-client';
+import { injectTrpcClient, TrpcHeaders } from '../../trpc-client';
 import { AsyncPipe, DatePipe, JsonPipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Note } from '../../note';
@@ -105,7 +105,7 @@ const btnTw =
   `,
 })
 export default class HomeComponent {
-  private _trpc = injectTRPCClient();
+  private _trpc = injectTrpcClient();
   public triggerRefresh$ = new Subject<void>();
   public notes$ = this.triggerRefresh$.pipe(
     switchMap(() => this._trpc.note.list.query()),
@@ -121,7 +121,7 @@ export default class HomeComponent {
 
     effect(
       () =>
-        tRPCHeaders.mutate(
+        TrpcHeaders.mutate(
           (h) =>
             (h['authorization'] = this.loggedIn()
               ? 'Bearer authToken'
@@ -140,7 +140,6 @@ export default class HomeComponent {
       form.form.markAllAsTouched();
       return;
     }
-    console.log(tRPCHeaders());
     this._trpc.note.create
       .mutate({ title: this.newNote })
       .pipe(take(1))

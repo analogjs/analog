@@ -24,13 +24,14 @@ export type TrpcClient<AppRouter extends AnyRouter> = ReturnType<
 const tRPC_INJECTION_TOKEN = new InjectionToken<unknown>(
   '@analogjs/trpc proxy client'
 );
+
 export const createTrpcClient = <AppRouter extends AnyRouter>({
   url,
   options,
   batchLinkOptions,
 }: TrpcOptions<AppRouter>) => {
-  const tRPCHeaders = signal<HTTPHeaders>({});
-  const provideTRPCClient = (): Provider[] => [
+  const TrpcHeaders = signal<HTTPHeaders>({});
+  const provideTrpcClient = (): Provider[] => [
     provideTrpcCacheState(),
     provideTrpcCacheStateStatusManager(),
     {
@@ -46,7 +47,7 @@ export const createTrpcClient = <AppRouter extends AnyRouter>({
             httpBatchLink({
               ...(batchLinkOptions ?? {}),
               headers() {
-                return tRPCHeaders();
+                return TrpcHeaders();
               },
               url: url ?? '',
             }),
@@ -56,9 +57,18 @@ export const createTrpcClient = <AppRouter extends AnyRouter>({
       deps: [tRPC_CACHE_STATE, TransferState],
     },
   ];
+  const TrpcClient = tRPC_INJECTION_TOKEN as InjectionToken<
+    TrpcClient<AppRouter>
+  >;
   return {
-    tRPCClient: tRPC_INJECTION_TOKEN as InjectionToken<TrpcClient<AppRouter>>,
-    provideTRPCClient,
-    tRPCHeaders,
+    TrpcClient,
+    provideTrpcClient,
+    TrpcHeaders,
+    /** @deprecated use TrpcClient instead */
+    tRPCClient: TrpcClient,
+    /** @deprecated use provideTrpcClient instead */
+    provideTRPCClient: provideTrpcClient,
+    /** @deprecated use TrpcHeaders instead */
+    tRPCHeaders: TrpcHeaders,
   };
 };

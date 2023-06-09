@@ -5,7 +5,7 @@
   "title": "",
   "type": "object",
   "properties": {
-    "name": {
+    "analogAppName": {
       "type": "string",
       "description": "",
       "$default": {
@@ -38,5 +38,5 @@
       "x-priority": "internal"
     }
   },
-  "required": ["name"]
+  "required": ["analogAppName"]
 }

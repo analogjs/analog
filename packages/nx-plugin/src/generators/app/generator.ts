@@ -16,7 +16,7 @@ import { initializeAngularWorkspace } from './lib/initialize-analog-workspace';
 import { addFiles } from './lib/add-files';
 import { addTailwindConfig } from './lib/add-tailwind-config';
 import { addTRPC } from './lib/add-trpc';
-import { addIndexPages } from './lib/add-index-pages';
+import { addHomePage } from './lib/add-home-page';
 
 export interface NormalizedOptions
   extends AnalogNxApplicationGeneratorOptions,
@@ -36,7 +36,7 @@ function normalizeOptions(
   nxVersion: string
 ): NormalizedOptions {
   const appsDir = getWorkspaceLayout(tree).appsDir;
-  const allNames = names(options.name);
+  const allNames = names(options.analogAppName);
   const projectDirectory = allNames.fileName;
   const projectName = projectDirectory.replace(new RegExp('/', 'g'), '-');
   const projectRoot = `${appsDir}/${projectDirectory}`;
@@ -122,7 +122,7 @@ export async function appGenerator(
     );
   }
 
-  addIndexPages(tree, normalizedOptions);
+  addHomePage(tree, normalizedOptions);
 
   if (!normalizedOptions.skipFormat) {
     await formatFiles(tree);

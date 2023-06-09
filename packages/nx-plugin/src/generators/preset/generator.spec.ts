@@ -12,7 +12,7 @@ describe('preset generator', () => {
     const tree = createTreeWithEmptyWorkspace({ layout: 'apps-libs' });
     addDependenciesToPackageJson(tree, { nx: '16.0.0' }, {});
     await generator(tree, options);
-    const config = readProjectConfiguration(tree, options.name);
+    const config = readProjectConfiguration(tree, options.analogAppName);
     return {
       tree,
       config,
@@ -20,7 +20,7 @@ describe('preset generator', () => {
   };
 
   it('should run successfully', async () => {
-    const { config } = await setup({ name: 'analog' });
+    const { config } = await setup({ analogAppName: 'analog' });
     expect(config).toBeDefined();
   });
 });
