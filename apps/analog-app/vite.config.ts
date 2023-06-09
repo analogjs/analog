@@ -6,7 +6,7 @@ import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 import tsConfigPaths from 'vite-tsconfig-paths';
 
 // Only run in Netlify CI
-if (process.env['CI'] === 'true') {
+if (process.env['CI'] === 'true' && process.env['GITHUB_ACTIONS'] === 'false') {
   let base = process.env['URL'];
 
   if (process.env['CONTEXT'] === 'deploy-preview') {
