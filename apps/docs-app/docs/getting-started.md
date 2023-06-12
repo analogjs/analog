@@ -187,7 +187,7 @@ ng update @analogjs/platform
 
 ### Nx Migrate
 
-Upgrade an Analog project with the following `nx migrate` command:
+Upgrade an Analog project with the following `nx migrate` command: 
 
 ```shell
 nx migrate @analogjs/platform
