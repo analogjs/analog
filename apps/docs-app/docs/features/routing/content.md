@@ -5,38 +5,6 @@ import TabItem from '@theme/TabItem';
 
 Analog also supports using markdown content as routes, and rendering markdown content in components.
 
-## Usage
-
-To use content files in Analog, install the `@analogjs/content` package and its dependencies:
-
-### Installation
-
-<Tabs groupId="package-manager">
-  <TabItem value="npm">
-
-```shell
-npm install @analogjs/content prismjs marked front-matter
-```
-
-  </TabItem>
-
-  <TabItem label="Yarn" value="yarn">
-
-```shell
-yarn install @analogjs/content prismjs marked front-matter
-```
-
-  </TabItem>
-
-  <TabItem value="pnpm">
-
-```shell
-pnpm install @analogjs/content prismjs marked front-matter
-```
-
-  </TabItem>
-</Tabs>
-
 ### Setup
 
 In the `src/app/app.config.ts`, add the `provideContent()` function, along with the `withMarkdownRenderer()` feature to the `providers` array when bootstrapping the application.
