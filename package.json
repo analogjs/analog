@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "0.2.0-beta.15",
+  "version": "0.2.0-beta.16",
   "license": "MIT",
   "scripts": {
     "dev": "nx serve",
@@ -9,7 +9,7 @@
     "prepare": "git config core.hookspath .githooks",
     "start": "nx serve",
     "build": "nx run-many --target build --all --parallel=1 --exclude=trpc-app",
-    "e2e": "nx run-many --target e2e --all --parallel=1 --exclude analog-app-e2e-playwright",
+    "e2e": "nx run-many --target e2e --all --parallel=1 --exclude analog-app-e2e-playwright,trpc-app-e2e-playwright",
     "test": "nx run-many --target test --all",
     "build:vite-ci": "nx run-many --target build --all",
     "test:vite-ci": "nx run-many --target test --all",
