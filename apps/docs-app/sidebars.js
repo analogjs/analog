@@ -33,6 +33,11 @@ const sidebars = {
             },
             {
               type: 'doc',
+              id: 'features/routing/metadata',
+              label: 'Route Metadata',
+            },
+            {
+              type: 'doc',
               id: 'features/routing/content',
               label: 'Content Routes',
             },
@@ -79,6 +84,11 @@ const sidebars = {
               type: 'doc',
               id: 'features/testing/overview',
               label: 'Overview',
+            },
+            {
+              type: 'doc',
+              id: 'features/testing/vitest',
+              label: 'Adding Vitest',
             },
           ],
         },
