@@ -1,10 +1,10 @@
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
 import { transformAsync } from '@babel/core';
-import angularApplicationPreset from '@angular-devkit/build-angular/src/babel/presets/application';
+import angularApplicationPreset from '@angular-devkit/build-angular/src/tools/babel/presets/application';
 import * as ts from 'typescript';
 import { ModuleNode, Plugin, PluginContainer, ViteDevServer } from 'vite';
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
-import { createJitResourceTransformer } from '@angular-devkit/build-angular/src/builders/browser-esbuild/angular/jit-resource-transformer';
+import { createJitResourceTransformer } from '@angular-devkit/build-angular/src/tools/esbuild/angular/jit-resource-transformer';
 import * as path from 'path';
 
 import { createCompilerPlugin } from './compiler-plugin';
