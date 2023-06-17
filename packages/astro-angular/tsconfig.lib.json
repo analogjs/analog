@@ -2,9 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "declaration": false,
-    "inlineSourceMap": true,
-    "sourceMap": false,
+    "declaration": true,
+    "declarationMap": true,
+    "inlineSources": true,
     "types": [],
     "paths": {
       "@analogjs/vite-plugin-angular": [
@@ -17,6 +17,7 @@
     "jest.config.ts",
     "**/*.spec.ts",
     "**/*.test.ts",
-    "vite.config.ts"
+    "vite.config.ts",
+    "src/test-setup.ts"
   ]
 }
