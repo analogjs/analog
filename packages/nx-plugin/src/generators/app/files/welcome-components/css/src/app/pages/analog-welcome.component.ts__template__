@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { AsyncPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 
 @Component({
   selector: '<%= fileName %>-analog-welcome',
@@ -347,4 +346,8 @@ import { AsyncPipe, DatePipe, NgFor, NgIf } from '@angular/common';
   `,
 })
 export class AnalogWelcomeComponent {
+  public count = 0;
+  public increment() {
+    this.count++;
+  }  
 }
