@@ -26,3 +26,14 @@ export function getInstalledPackageVersion(
     clean(installedPackageVersion) ?? coerce(installedPackageVersion).version
   );
 }
+
+export function getRawInstalledPackageVersion(
+  tree: Tree,
+  packageName: string
+): string | null {
+  const pkgJson = readJson(tree, 'package.json');
+  return (
+    (pkgJson.dependencies && pkgJson.dependencies[packageName]) ||
+    (pkgJson.devDependencies && pkgJson.devDependencies[packageName])
+  );
+}

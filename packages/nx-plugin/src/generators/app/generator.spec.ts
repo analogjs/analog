@@ -11,9 +11,20 @@ import { AnalogNxApplicationGeneratorOptions } from './schema';
 import { addDependenciesToPackageJson } from '@nx/devkit';
 
 describe('nx-plugin generator', () => {
-  const setup = async (options: AnalogNxApplicationGeneratorOptions) => {
+  const setup = async (
+    options: AnalogNxApplicationGeneratorOptions,
+    installedAngularVersion = 16
+  ) => {
     const tree = createTreeWithEmptyWorkspace({ layout: 'apps-libs' });
+
     addDependenciesToPackageJson(tree, { nx: '16.0.0' }, {});
+    if (installedAngularVersion !== 16) {
+      addDependenciesToPackageJson(
+        tree,
+        { '@angular/core': `${installedAngularVersion}.0.0` },
+        {}
+      );
+    }
     await generator(tree, options);
     const config = readProjectConfiguration(tree, options.analogAppName);
     return {
@@ -22,15 +33,48 @@ describe('nx-plugin generator', () => {
     };
   };
 
-  const verifyCoreDependencies = (
+  const verifyCoreDependenciesV15 = (
     dependencies: Record<string, string>,
     devDependencies: Record<string, string>
   ) => {
+    expect(dependencies['@analogjs/content']).toBe('^0.2.0-beta.16');
     expect(dependencies['@analogjs/router']).toBe('^0.2.0-beta.16');
-    expect(dependencies['@angular/platform-server']).toBe('^16.0.0');
+    expect(dependencies['@angular/platform-server']).toBe(
+      dependencies['@angular/core']
+    );
+    expect(dependencies['front-matter']).toBe('^4.0.2');
+    expect(dependencies['marked']).toBe('^5.0.2');
+    expect(dependencies['prismjs']).toBe('^1.29.0');
+
+    expect(devDependencies['@analogjs/platform']).toBe('0.1.0-beta.23');
+    expect(devDependencies['@nx/vite']).toBe('^15.7.0');
+    expect(devDependencies['jsdom']).toBe('^20.0.0');
+    expect(devDependencies['typescript']).toBe('~4.8.4');
+    expect(devDependencies['vite']).toBe('^4.0.3');
+    expect(devDependencies['vite-tsconfig-paths']).toBe('^4.0.2');
+    expect(devDependencies['vitest']).toBe('^0.31.0');
+  };
+
+  const verifyCoreDependenciesV16 = (
+    dependencies: Record<string, string>,
+    devDependencies: Record<string, string>
+  ) => {
+    expect(dependencies['@analogjs/content']).toBe('^0.2.0-beta.16');
+    expect(dependencies['@analogjs/router']).toBe('^0.2.0-beta.16');
+    expect(dependencies['@angular/platform-server']).toBe(
+      dependencies['@angular/core']
+    );
+    expect(dependencies['front-matter']).toBe('^4.0.2');
+    expect(dependencies['marked']).toBe('^5.0.2');
+    expect(dependencies['prismjs']).toBe('^1.29.0');
 
     expect(devDependencies['@analogjs/platform']).toBe('^0.2.0-beta.16');
+    expect(devDependencies['@nx/vite']).toBe('^16.0.0');
+    expect(devDependencies['jsdom']).toBe('^20.0.0');
+    expect(devDependencies['typescript']).toBe('~5.0.2');
+    expect(devDependencies['vite']).toBe('^4.0.3');
     expect(devDependencies['vite-tsconfig-paths']).toBe('^4.0.2');
+    expect(devDependencies['vitest']).toBe('^0.31.0');
   };
 
   const verifyConfig = (config: ProjectConfiguration, name: string) => {
@@ -49,12 +93,24 @@ describe('nx-plugin generator', () => {
     expect(hasWelcomeComponentFile).toBeTruthy();
   };
 
-  it('creates a default analogjs app in the source directory', async () => {
+  it('creates a default analogjs app in the source directory for Nx and Angular v16', async () => {
     const analogAppName = 'analog';
     const { config, tree } = await setup({ analogAppName });
     const { dependencies, devDependencies } = readJson(tree, 'package.json');
 
-    verifyCoreDependencies(dependencies, devDependencies);
+    verifyCoreDependenciesV16(dependencies, devDependencies);
+
+    verifyConfig(config, analogAppName);
+
+    verifyHomePageExists(tree, analogAppName);
+  });
+
+  it('creates a default analogjs app in the source directory for Nx and Angular v15', async () => {
+    const analogAppName = 'analog';
+    const { config, tree } = await setup({ analogAppName }, 15);
+    const { dependencies, devDependencies } = readJson(tree, 'package.json');
+
+    verifyCoreDependenciesV15(dependencies, devDependencies);
 
     verifyConfig(config, analogAppName);
 
@@ -66,7 +122,7 @@ describe('nx-plugin generator', () => {
     const { config, tree } = await setup({ analogAppName, addTailwind: true });
     const { dependencies, devDependencies } = readJson(tree, 'package.json');
 
-    verifyCoreDependencies(dependencies, devDependencies);
+    verifyCoreDependenciesV16(dependencies, devDependencies);
 
     verifyConfig(config, analogAppName);
 
@@ -88,7 +144,7 @@ describe('nx-plugin generator', () => {
     const { config, tree } = await setup({ analogAppName, addTRPC: true });
     const { dependencies, devDependencies } = readJson(tree, 'package.json');
 
-    verifyCoreDependencies(dependencies, devDependencies);
+    verifyCoreDependenciesV16(dependencies, devDependencies);
 
     verifyConfig(config, analogAppName);
 

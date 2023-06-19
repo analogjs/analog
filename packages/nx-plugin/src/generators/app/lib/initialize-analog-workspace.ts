@@ -7,10 +7,8 @@ import {
 } from '@nx/devkit';
 import {
   MINIMUM_SUPPORTED_ANGULAR_VERSION,
-  V15_ANGULAR,
   V15_NRWL_ANGULAR,
   V15_NRWL_DEVKIT,
-  V16_ANGULAR,
   V16_NX_ANGULAR,
   V16_NX_DEVKIT,
 } from '../versions';
@@ -61,29 +59,17 @@ export async function initializeAngularWorkspace(
       );
     }
 
-    if (major(installedNxVersion) === 16) {
-      await (
-        await import(
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          '@nx/angular/generators'
-        )
-      ).angularInitGenerator(tree, {
-        unitTestRunner: 'none' as any,
-        skipInstall: true,
-        skipFormat: normalizedOptions.skipFormat,
-      });
-      angularVersion = V16_ANGULAR;
-    } else {
-      await (
-        await import('@nx/angular/generators')
-      ).angularInitGenerator(tree, {
-        unitTestRunner: 'none' as any,
-        skipInstall: true,
-        skipFormat: normalizedOptions.skipFormat,
-      });
-      angularVersion = V15_ANGULAR;
-    }
+    // Nx by default installs the latest major Angular version corresponding to the Nx major version used
+    await (
+      await import('@nx/angular/generators')
+    ).angularInitGenerator(tree, {
+      unitTestRunner: 'none' as any,
+      skipInstall: true,
+      skipFormat: normalizedOptions.skipFormat,
+    });
+
+    // sync angular version to the version installed by the nx generator
+    angularVersion = getInstalledPackageVersion(tree, '@angular/core');
   }
 
   if (lt(angularVersion, MINIMUM_SUPPORTED_ANGULAR_VERSION)) {

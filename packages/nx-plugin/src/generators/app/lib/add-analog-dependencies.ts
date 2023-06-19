@@ -1,9 +1,9 @@
 import { addDependenciesToPackageJson, Tree } from '@nx/devkit';
+import { getRawInstalledPackageVersion } from '../../../utils/version-utils';
 import {
   V15_ANALOG_JS_CONTENT,
   V15_ANALOG_JS_PLATFORM,
   V15_ANALOG_JS_ROUTER,
-  V15_ANGULAR_PLATFORM_SERVER,
   V15_FRONT_MATTER,
   V15_JSDOM,
   V15_MARKED,
@@ -16,7 +16,6 @@ import {
   V16_ANALOG_JS_CONTENT,
   V16_ANALOG_JS_PLATFORM,
   V16_ANALOG_JS_ROUTER,
-  V16_ANGULAR_PLATFORM_SERVER,
   V16_FRONT_MATTER,
   V16_JSDOM,
   V16_MARKED,
@@ -33,6 +32,7 @@ export async function addAnalogDependencies(
   majorAngularVersion: number,
   majorNxVersion: number
 ) {
+  let rawAngularVersion = getRawInstalledPackageVersion(tree, '@angular/core');
   const dependencies = {
     '@analogjs/content':
       majorAngularVersion === 15
@@ -40,10 +40,7 @@ export async function addAnalogDependencies(
         : V16_ANALOG_JS_CONTENT,
     '@analogjs/router':
       majorAngularVersion === 15 ? V15_ANALOG_JS_ROUTER : V16_ANALOG_JS_ROUTER,
-    '@angular/platform-server':
-      majorAngularVersion === 15
-        ? V15_ANGULAR_PLATFORM_SERVER
-        : V16_ANGULAR_PLATFORM_SERVER,
+    '@angular/platform-server': rawAngularVersion,
     'front-matter':
       majorAngularVersion === 15 ? V15_FRONT_MATTER : V16_FRONT_MATTER,
     marked: majorAngularVersion === 15 ? V15_MARKED : V16_MARKED,
