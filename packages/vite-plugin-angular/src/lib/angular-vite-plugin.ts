@@ -1,10 +1,8 @@
+import { ModuleNode, Plugin, PluginContainer, ViteDevServer } from 'vite';
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
 import { transformAsync } from '@babel/core';
-import angularApplicationPreset from '@angular-devkit/build-angular/src/tools/babel/presets/application';
+
 import * as ts from 'typescript';
-import { ModuleNode, Plugin, PluginContainer, ViteDevServer } from 'vite';
-import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
-import { createJitResourceTransformer } from '@angular-devkit/build-angular/src/tools/esbuild/angular/jit-resource-transformer';
 import * as path from 'path';
 
 import { createCompilerPlugin } from './compiler-plugin';
@@ -17,6 +15,12 @@ import {
 import { augmentHostWithResources } from './host';
 import { jitPlugin } from './angular-jit-plugin';
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin';
+import {
+  loadEsmModule,
+  angularApplicationPreset,
+  createJitResourceTransformer,
+  SourceFileCache,
+} from './utils/devkit';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -84,7 +88,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     augmentProgramWithVersioning,
     augmentHostWithCaching,
   } = require('@ngtools/webpack/src/ivy/host');
-  const { SourceFileCache } = require('@ngtools/webpack/src/ivy/cache');
+
   let compilerCli: typeof import('@angular/compiler-cli');
   let rootNames: string[];
   let host: ts.CompilerHost;
@@ -165,7 +169,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       async handleHotUpdate(ctx) {
         if (TS_EXT_REGEX.test(ctx.file)) {
-          sourceFileCache.invalidate(ctx.file.replace(/\?(.*)/, ''));
+          sourceFileCache.invalidate([ctx.file.replace(/\?(.*)/, '')]);
           await buildAndAnalyze();
         }
 
@@ -185,7 +189,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           const mods: ModuleNode[] = [];
           ctx.modules.forEach((mod) => {
             mod.importers.forEach((imp) => {
-              sourceFileCache.invalidate(imp.id);
+              sourceFileCache.invalidate([imp.id as string]);
               ctx.server.moduleGraph.invalidateModule(imp);
               mods.push(imp);
             });
@@ -229,7 +233,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (isTest) {
             const tsMod = viteServer?.moduleGraph.getModuleById(id);
             if (tsMod) {
-              sourceFileCache.invalidate(id);
+              sourceFileCache.invalidate([id]);
               await buildAndAnalyze();
             }
           }
