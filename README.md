@@ -1,9 +1,7 @@
 # Analog
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-
-[![All Contributors](https://img.shields.io/badge/all_contributors-43-orange.svg?style=flat-square)](#contributors-)
-
+[![All Contributors](https://img.shields.io/badge/all_contributors-44-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [![Discord server](https://dcbadge.vercel.app/api/server/mKC2Ec48U5?style=flat-square)](https://chat.analogjs.org/) [![Twitter](https://img.shields.io/twitter/follow/analogjs?color=%231DA1F2&style=flat-square)](https://twitter.com/analogjs)
@@ -138,6 +136,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="http://cynthia-developer.netlify.com"><img src="https://avatars.githubusercontent.com/u/37863089?v=4?s=100" width="100px;" alt="Cynthia Iradukunda"/><br /><sub><b>Cynthia Iradukunda</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ciradu2204" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Drunkenpilot"><img src="https://avatars.githubusercontent.com/u/2257567?v=4?s=100" width="100px;" alt="Drunkenpilot"/><br /><sub><b>Drunkenpilot</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Drunkenpilot" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
