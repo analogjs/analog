@@ -166,7 +166,7 @@ The server for the API/SSR build artifacts is located in the `dist/apps/analog-a
 </TabItem>
 </Tabs>
 
-## Upgrade your existing application
+## Updating to the latest version
 
 There are two methods for upgrading an Analog application. You have the option to utilize the `ng update @analogjs/platform` command
 to Upgrade a standalone project, or you can make use of the Nx migrate command, which is `nx migrate @analogjs/platform`.
