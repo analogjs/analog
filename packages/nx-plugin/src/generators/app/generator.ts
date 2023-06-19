@@ -8,14 +8,14 @@ import {
   Tree,
 } from '@nx/devkit';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
-import { major } from 'semver';
+import { major, coerce } from 'semver';
 import { getInstalledPackageVersion } from '../../utils/version-utils';
 import { addAnalogProjectConfig } from './lib/add-analog-project-config';
 import { addAnalogDependencies } from './lib/add-analog-dependencies';
 import { initializeAngularWorkspace } from './lib/initialize-analog-workspace';
 import { addFiles } from './lib/add-files';
 import { addTailwindConfig } from './lib/add-tailwind-config';
-import { addTRPC } from './lib/add-trpc';
+import { addTrpc } from './lib/add-trpc';
 import { addHomePage } from './lib/add-home-page';
 
 export interface NormalizedOptions
@@ -80,9 +80,9 @@ export async function appGenerator(
     normalizedOptions
   );
   const majorNxVersion = major(nxVersion);
-  const majorAngularVersion = major(angularVersion);
+  const majorAngularVersion = major(coerce(angularVersion));
 
-  await addAnalogDependencies(tree, majorAngularVersion, majorNxVersion);
+  await addAnalogDependencies(tree, nxVersion, angularVersion);
 
   const {
     projectRoot,
@@ -114,10 +114,10 @@ export async function appGenerator(
   }
 
   if (normalizedOptions.addTRPC) {
-    await addTRPC(
+    await addTrpc(
       tree,
       normalizedOptions.projectRoot,
-      majorAngularVersion,
+      nxVersion,
       normalizedOptions
     );
   }

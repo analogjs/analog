@@ -4,7 +4,8 @@ import { clean, coerce } from 'semver';
 export function getInstalledPackageVersion(
   tree: Tree,
   packageName: string,
-  defaultVersion?: string
+  defaultVersion?: string,
+  raw = false
 ): string | null {
   const pkgJson = readJson(tree, 'package.json');
   const installedPackageVersion =
@@ -23,6 +24,7 @@ export function getInstalledPackageVersion(
   }
 
   return (
-    clean(installedPackageVersion) ?? coerce(installedPackageVersion).version
+    (raw ? installedPackageVersion : clean(installedPackageVersion)) ??
+    coerce(installedPackageVersion).version
   );
 }
