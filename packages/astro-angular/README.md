@@ -58,7 +58,8 @@ Create a `tsconfig.app.json` in the root of the project.
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
-    "strictTemplates": true
+    "strictTemplates": true,
+    "allowJs": false
   },
   "files": [],
   "include": ["src/**/*.ts", "src/**/*.tsx"]
