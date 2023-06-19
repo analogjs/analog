@@ -105,7 +105,7 @@ describe('nx-plugin generator', () => {
     expect(hasTrpcServerRoute).toBeTruthy();
 
     const providesTrpcClient = tree
-      .read('apps/trpc-app/src/app.config.ts')
+      .read('apps/trpc-app/src/app/app.config.ts')
       .includes('provideTrpcClient');
     const injectsTrpcClient = tree
       .read('apps/trpc-app/src/app/pages/analog-welcome.component.ts')
