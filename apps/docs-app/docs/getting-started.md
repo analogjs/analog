@@ -175,7 +175,7 @@ You can use the `ng update` command for an Angular CLI workspace, or the `nx mig
 
 ### ng update
 
-Upgrade an Analog project with the following `ng update` command:
+To update an Analog project with the `ng update` command:
 
 ```shell
 ng update @analogjs/platform
