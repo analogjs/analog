@@ -1,5 +1,5 @@
 import type { CompilerHost } from '@angular/compiler-cli';
-import { normalizePath } from 'vite';
+import { normalizePath } from '@ngtools/webpack/src/ivy/paths';
 import * as ts from 'typescript';
 
 export function augmentHostWithResources(
