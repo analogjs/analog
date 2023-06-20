@@ -19,14 +19,7 @@ export default defineConfig(({ mode }) => {
       target: ['es2020'],
     },
     plugins: [
-      analog({
-        vite: {
-          inlineStylesExtension: 'css',
-        },
-        prerender: {
-          routes: ['/'],
-        },
-      }),
+      analog(),
       tsConfigPaths({
         root: '../../',
       }),

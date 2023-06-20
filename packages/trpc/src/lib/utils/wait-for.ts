@@ -12,8 +12,14 @@ export async function waitFor<T>(prom: Promise<T> | Observable<T>): Promise<T> {
     {},
     () => {}
   );
-  return prom.then((p: T) => {
-    macroTask.invoke();
-    return p;
-  });
+  return prom.then(
+    (p: T) => {
+      macroTask.invoke();
+      return p;
+    },
+    (r) => {
+      macroTask.invoke();
+      return r;
+    }
+  );
 }

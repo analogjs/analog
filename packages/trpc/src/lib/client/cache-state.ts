@@ -22,16 +22,12 @@ export const provideTrpcCacheStateStatusManager = () => ({
   useFactory: () => {
     const appRef = inject(ApplicationRef);
     const cacheState = inject(tRPC_CACHE_STATE);
-    const pendingTasks = inject(InitialRenderPendingTasks);
 
+    // same logic as in https://github.com/angular/angular/blob/main/packages/common/http/src/transfer_cache.ts
     return () => {
-      const isStablePromise = appRef.isStable
+      appRef.isStable
         .pipe(first((isStable) => isStable))
-        .toPromise();
-      const pendingTasksPromise = pendingTasks.hasPendingTasks.toPromise();
-
-      (Promise as any)
-        .allSettled([isStablePromise, pendingTasksPromise])
+        .toPromise()
         .then(() => {
           cacheState.isCacheActive.next(false);
         });
