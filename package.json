@@ -44,7 +44,6 @@
     "apps/docs-app"
   ],
   "dependencies": {
-    "@analogjs/content": "latest",
     "@angular/animations": "^16.1.0",
     "@angular/common": "^16.1.0",
     "@angular/compiler": "^16.1.0",
