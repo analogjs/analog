@@ -13,12 +13,12 @@ Source code for the Analog framework exists under the `packages/` folder. To con
 
 ### Setup
 
-Analog uses [Yarn Classic](https://classic.yarnpkg.com/) to manage its dependencies.
+Analog uses [pnpm](https://pnpm.io/) to manage its dependencies.
 
 Before opening a pull request, run the following command from the root folder to make sure your development dependencies are up-to-date:
 
 ```shell
-yarn
+pnpm i
 ```
 
 ### Running locally
@@ -26,7 +26,7 @@ yarn
 To serve the example application locally, run the following command from the root folder:
 
 ```shell
-yarn dev
+pnpm dev
 ```
 
 ### Build
@@ -34,7 +34,7 @@ yarn dev
 Analog uses [Nx](https://nx.dev) for builds. To build all projects locally, run the following command from the root folder:
 
 ```shell
-yarn build
+pnpm build
 ```
 
 ### Testing
@@ -42,12 +42,12 @@ yarn build
 Analog uses [Jest](https://jestjs.io) for tests. To test all projects locally, run the following command from the root folder:
 
 ```shell
-yarn test
+pnpm test
 ```
 
 ## Contributing to the docs and analogjs.org website
 
-### Folder struture
+### Folder structure
 
 Source code for the Analog docs and the analogjs.org website exists under the `apps/docs-app` project folder. To contribute documentation or website content, locate the relevant source code in one of the sub-folders:
 
@@ -60,12 +60,12 @@ Source code for the Analog docs and the analogjs.org website exists under the `a
 
 ### Setup
 
-Analog uses [Yarn Classic](https://classic.yarnpkg.com/) to manage its dependencies.
+Analog uses [pnpm](https://pnpm.io/) to manage its dependencies.
 
 Before opening a pull request, run the following command from the root folder to make sure your development dependencies are up-to-date:
 
 ```shell
-yarn
+pnpm i
 ```
 
 ### Running locally
@@ -73,13 +73,13 @@ yarn
 Analog uses [Docusaurus](https://docusaurus.io/) to develop the docs and analogjs.org website. Run the following command from the `apps/docs-app` folder to serve the website:
 
 ```shell
-yarn nx serve
+pnpm nx serve
 ```
 
 or alternatively run this command from the root folder:
 
 ```shell
-yarn nx serve docs-app
+pnpm nx serve docs-app
 ```
 
 Once the development server is up and running, you can preview the docs and website by visiting [http://localhost:3000](http://localhost:3000).
@@ -89,45 +89,46 @@ Once the development server is up and running, you can preview the docs and webs
 Analog uses [Nx](https://nx.dev) to build the docs and analogjs.org website. To build the website locally, run the following command from the `apps/docs-app` folder:
 
 ```shell
-yarn nx build
+pnpm nx build
 ```
 
 or alternatively run this command from the root folder:
 
 ```shell
-yarn nx build docs-app
+pnpm nx build docs-app
 ```
 
 ### Running static website locally
 
-To run the the generated static website locally, run the following command from the `apps/docs-app` folder:
+To run the generated static website locally, run the following command from the `apps/docs-app` folder:
 
 ```shell
-yarn nx serve-static
+pnpm nx serve-static
 ```
 
 or alternatively run this command from the root folder:
 
 ```shell
-yarn nx serve-static docs-app
+pnpm nx serve-static docs-app
 ```
 
 ## Submitting pull requests
 
 **Please follow these basic steps to simplify pull request reviews. If you don't you'll probably just be asked to anyway.**
 
-- Please rebase your branch against the current master.
-- Run the `Setup` command to make sure your development dependencies are up-to-date.
+- Please rebase your branch against the current `main`.
+- Follow the `Setup` steps above to make sure your development dependencies are up-to-date.
 - Please ensure the test suite passes before submitting a PR.
 - If you've added new functionality, **please** include tests which validate its behavior.
 - Make reference to possible [issues](https://github.com/analogjs/analog/issues) on PR comment.
+- PRs may include multiple commits. However, please keep content of all commits related. Raise separate PRs for disjoint changes.
 
 ## Submitting bug reports
 
 - Search through issues to see if a previous issue has already been reported and/or fixed.
 - Provide a _small_ reproduction using a [StackBlitz project](https://stackblitz.com) or a GitHub repository.
 - Please detail the affected browser(s) and operating system(s).
-- Please be sure to state which version of Angular, node and npm you're using.
+- Please be sure to state which version of Angular, node, and package manager (npm, pnpm, yarn) you're using.
 
 ## Submitting new features
 
@@ -141,6 +142,7 @@ yarn nx serve-static docs-app
 Questions and requests for support should not be opened as issues and should be handled in the following ways:
 
 - Start a new [Q&A Discussion](https://github.com/analogjs/analog/discussions/new?category=q-a) on GitHub.
+- Start a new thread in the `#help` forum on the [Discord server](https://chat.analogjs.org/)
 
 ## <a name="commit"></a> Commit message guidelines
 
@@ -202,14 +204,17 @@ Must be one of the following:
 
 The scope should be the name of the npm package affected (as perceived by the person reading the changelog generated from commit messages.
 
-The following is the list of supported scopes:
+The following is the list of currently supported scopes:
 
-- **vite-angular-plugin**
-- **astro-angular**
+- **vite-plugin-angular**
+- **vite-plugin-nitro**
 - **create-analog**
+- **astro-angular**
 - **router**
 - **platform**
 - **content**
+- **nx-plugin**
+- **trpc**
 
 ### Subject
 
