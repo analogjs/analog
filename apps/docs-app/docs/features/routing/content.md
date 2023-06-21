@@ -67,6 +67,7 @@ To get a list using the list of content files in the `src/content` folder, use t
 import { Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { injectContentFiles } from '@analogjs/content';
+import { InjectContentFilesFilterFunction } from '@analogjs/content/lib/inject-content-files';
 import { NgFor } from '@angular/common';
 
 export interface PostAttributes {
@@ -80,19 +81,19 @@ export interface PostAttributes {
   standalone: true,
   imports: [RouterOutlet, RouterLink, NgFor],
   template: `
-    <ul *ngFor="let post of posts">
-      <li>
-        <a [routerLink]="['/blog', 'posts', post.slug]">
-          {{ post.attributes.title }}</a
-        >
+    <ul>
+      <li *ngFor="let post of posts">
+        <a [routerLink]="['/blog', 'posts', post.slug]">{{
+          post.attributes.title
+        }}</a>
       </li>
     </ul>
   `,
 })
 export default class BlogComponent {
   private readonly contentFilterFn: InjectContentFilesFilterFunction<PostAttributes> =
-    (contentFile) => !!contentFile.filename.includes('/src/content/blog/');
-  readonly posts = injectContentFiles<PostAttributes>(contentFilterFn);
+    (contentFile) => contentFile.filename.includes('/src/content/blog/');
+  readonly posts = injectContentFiles<PostAttributes>(this.contentFilterFn);
 }
 ```
 
