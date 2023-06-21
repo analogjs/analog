@@ -420,6 +420,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "jeremyhofer",
+      "name": "Jeremy Hofer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17076628?v=4",
+      "profile": "https://github.com/jeremyhofer",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
