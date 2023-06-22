@@ -1,14 +1,12 @@
-import { gt, clean } from 'semver';
-import { V_LATEST_NX_ANGULAR, V_LATEST_NX_DEVKIT } from './latest/versions';
-import { V16_1_0_NX_ANGULAR, V16_1_0_NX_DEVKIT } from './nx_16_1_0/versions';
+import { clean, lt } from 'semver';
+import { stripIndents } from '@nx/devkit';
+import { V16_X_NX_DEVKIT, V16_X_NX_ANGULAR } from './nx_16_X/versions';
 import {
-  V15_8_0_NRWL_ANGULAR,
-  V15_8_0_NRWL_DEVKIT,
-} from './nx_15_8_0/versions';
-import {
-  V15_2_0_NRWL_ANGULAR,
-  V15_2_0_NRWL_DEVKIT,
-} from './nx_15_2_0/versions';
+  V15_X_NRWL_DEVKIT,
+  V15_X_NX_DEVKIT,
+  V15_X_NRWL_ANGULAR,
+  V15_X_NX_ANGULAR,
+} from './nx_15_X/versions';
 
 const nrwlDependencyKeys = ['@nrwl/devkit', '@nrwl/angular'] as const;
 export type NrwlDependency = (typeof nrwlDependencyKeys)[number];
@@ -16,30 +14,26 @@ export const getNrwlDependencies = (
   nxVersion: string
 ): Record<NrwlDependency, string> => {
   const escapedNxVersion = clean(nxVersion);
-  if (gt(escapedNxVersion, '16.1.0')) {
+
+  // fail out for versions <15.2.0
+  if (lt(escapedNxVersion, '15.2.0')) {
+    throw new Error(
+      stripIndents`Nx v15.2.0 or newer is required to install Analog`
+    );
+  }
+
+  // install 15.8 deps for versions 15.8.0 =< 16.0.0
+  if (lt(escapedNxVersion, '16.0.0')) {
     return {
-      '@nrwl/angular': V_LATEST_NX_ANGULAR,
-      '@nrwl/devkit': V_LATEST_NX_DEVKIT,
+      '@nrwl/angular': V15_X_NRWL_ANGULAR,
+      '@nrwl/devkit': V15_X_NRWL_DEVKIT,
     };
   }
-  if (gt(escapedNxVersion, '15.8.0')) {
-    return {
-      '@nrwl/angular': V16_1_0_NX_ANGULAR,
-      '@nrwl/devkit': V16_1_0_NX_DEVKIT,
-    };
-  }
-  if (gt(escapedNxVersion, '15.2.0')) {
-    return {
-      '@nrwl/angular': V15_8_0_NRWL_ANGULAR,
-      '@nrwl/devkit': V15_8_0_NRWL_DEVKIT,
-    };
-  }
-  if (gt(escapedNxVersion, '15.0.0')) {
-    return {
-      '@nrwl/angular': V15_2_0_NRWL_ANGULAR,
-      '@nrwl/devkit': V15_2_0_NRWL_DEVKIT,
-    };
-  }
+
+  // error for @nrwl to @nx namespace change for Nx >= 16
+  throw new Error(
+    stripIndents`As of Nx 16.0.0 the @nrwl scope has been replaced with the @nx scope. Please use @nx scope to install version ${nxVersion}`
+  );
 };
 
 const nxDependencyKeys = ['@nx/devkit', '@nx/angular'] as const;
@@ -49,28 +43,24 @@ export const getNxDependencies = (
 ): Record<NxDependency, string> => {
   const escapedNxVersion = clean(nxVersion);
 
-  if (gt(escapedNxVersion, '16.1.0')) {
+  // error for @nrwl to @nx namespace changes for Nx < 16
+  if (lt(escapedNxVersion, '16.0.0')) {
+    throw new Error(
+      stripIndents`The @nx scope is only supported in Nx 16.0.0 and newer. Please use @nrwl scope to install version ${nxVersion}`
+    );
+  }
+
+  // install 16.0 deps for versions 16.0.0 =< 16.1.0
+  if (lt(escapedNxVersion, '16.1.0')) {
     return {
-      '@nx/angular': V_LATEST_NX_ANGULAR,
-      '@nx/devkit': V_LATEST_NX_DEVKIT,
+      '@nx/angular': V15_X_NX_ANGULAR,
+      '@nx/devkit': V15_X_NX_DEVKIT,
     };
   }
-  if (gt(escapedNxVersion, '15.8.0')) {
-    return {
-      '@nx/angular': V16_1_0_NX_ANGULAR,
-      '@nx/devkit': V16_1_0_NX_DEVKIT,
-    };
-  }
-  if (gt(escapedNxVersion, '15.2.0')) {
-    return {
-      '@nx/angular': V15_8_0_NRWL_ANGULAR,
-      '@nx/devkit': V15_8_0_NRWL_DEVKIT,
-    };
-  }
-  if (gt(escapedNxVersion, '15.0.0')) {
-    return {
-      '@nx/angular': V15_2_0_NRWL_ANGULAR,
-      '@nx/devkit': V15_2_0_NRWL_DEVKIT,
-    };
-  }
+
+  // return latest for >= 16.4.0
+  return {
+    '@nx/angular': V16_X_NX_ANGULAR,
+    '@nx/devkit': V16_X_NX_DEVKIT,
+  };
 };

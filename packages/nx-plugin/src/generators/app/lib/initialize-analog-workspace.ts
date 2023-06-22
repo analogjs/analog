@@ -7,12 +7,11 @@ import {
 } from '@nx/devkit';
 import { getInstalledPackageVersion } from '../../../utils/version-utils';
 import { NormalizedOptions } from '../generator';
-import { hasMinimumSupportedAngularVersion } from '../versions/minimum-supported-angular-version';
+import { belowMinimumSupportedAngularVersion } from '../versions/minimum-supported-versions';
 import {
   getNrwlDependencies,
   getNxDependencies,
 } from '../versions/nx-dependencies';
-import { readPackageJson } from 'nx/src/project-graph/file-utils';
 
 export async function initializeAngularWorkspace(
   tree: Tree,
@@ -41,7 +40,7 @@ export async function initializeAngularWorkspace(
     }
   }
 
-  if (hasMinimumSupportedAngularVersion(angularVersion)) {
+  if (belowMinimumSupportedAngularVersion(angularVersion)) {
     throw new Error(
       stripIndents`Analog only supports an Angular version of 15 and higher`
     );
@@ -78,6 +77,7 @@ const initWithNxNamespace = async (
       '@nx/angular/generators'
     )
   ).angularInitGenerator(tree, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     unitTestRunner: 'none' as any,
     skipInstall: true,
     skipFormat: skipFormat,
@@ -112,6 +112,7 @@ const initWithNrwlNamespace = async (
       '@nrwl/angular/generators'
     )
   ).angularInitGenerator(tree, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     unitTestRunner: 'none' as any,
     skipInstall: true,
     skipFormat: skipFormat,

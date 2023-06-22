@@ -17,6 +17,10 @@ import { addFiles } from './lib/add-files';
 import { addTailwindConfig } from './lib/add-tailwind-config';
 import { addTrpc } from './lib/add-trpc';
 import { addHomePage } from './lib/add-home-page';
+import {
+  belowMinimumSupportedNxVersion,
+  belowMinimumSupportedNxtRPCVersion,
+} from './versions/minimum-supported-versions';
 
 export interface NormalizedOptions
   extends AnalogNxApplicationGeneratorOptions,
@@ -71,6 +75,19 @@ export async function appGenerator(
 
   if (!nxVersion) {
     throw new Error(stripIndents`Nx must be installed to execute this plugin`);
+  }
+
+  if (belowMinimumSupportedNxVersion(nxVersion)) {
+    throw new Error(
+      stripIndents`Nx v15.2.0 or newer is required to install Analog`
+    );
+  }
+
+  if (belowMinimumSupportedNxtRPCVersion(nxVersion) && options.addTRPC) {
+    console.warn(
+      'Nx v16.1.0 or newer is required to use tRPC with Analog. Skipping installation.'
+    );
+    options.addTRPC = false;
   }
 
   const normalizedOptions = normalizeOptions(tree, options, nxVersion);

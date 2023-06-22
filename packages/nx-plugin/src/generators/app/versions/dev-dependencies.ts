@@ -1,45 +1,33 @@
-import { gt } from 'semver';
+import { lt } from 'semver';
 import {
-  V16_1_0_ANALOG_JS_PLATFORM,
-  V16_1_0_JSDOM,
-  V16_1_0_NX_VITE,
-  V16_1_0_TYPESCRIPT,
-  V16_1_0_VITE,
-  V16_1_0_VITE_TSCONFIG_PATHS,
-  V16_1_0_VITEST,
-} from './nx_16_1_0/versions';
+  V16_X_ANALOG_JS_PLATFORM,
+  V16_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
+  V16_X_JSDOM,
+  V16_X_NX_VITE,
+  V16_X_VITE,
+  V16_X_VITE_TSCONFIG_PATHS,
+  V16_X_VITEST,
+} from './nx_16_X/versions';
 import {
-  V15_8_0_ANALOG_JS_PLATFORM,
-  V15_8_0_JSDOM,
-  V15_8_0_NRWL_VITE,
-  V15_8_0_TYPESCRIPT,
-  V15_8_0_VITE,
-  V15_8_0_VITE_TSCONFIG_PATHS,
-  V15_8_0_VITEST,
-} from './nx_15_8_0/versions';
-import {
-  V_LATEST_ANALOG_JS_PLATFORM,
-  V_LATEST_JSDOM,
-  V_LATEST_NX_VITE,
-  V_LATEST_TYPESCRIPT,
-  V_LATEST_VITE,
-  V_LATEST_VITE_TSCONFIG_PATHS,
-  V_LATEST_VITEST,
-} from './latest/versions';
-import {
-  V15_2_0_ANALOG_JS_PLATFORM,
-  V15_2_0_JSDOM,
-  V15_2_0_NRWL_VITE,
-  V15_2_0_TYPESCRIPT,
-  V15_2_0_VITE,
-  V15_2_0_VITE_TSCONFIG_PATHS,
-  V15_2_0_VITEST,
-} from './nx_15_2_0/versions';
+  V15_X_ANALOG_JS_PLATFORM,
+  V15_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
+  V15_X_JSDOM,
+  V15_X_NRWL_VITE,
+  V15_X_NX_VITE,
+  V15_X_VITE,
+  V15_X_VITE_TSCONFIG_PATHS,
+  V15_X_VITEST,
+} from './nx_15_X/versions';
+import { stripIndents } from '@nx/devkit';
 
+// TODO: @analogjs/vite-plugin-angular is being defined as we must pin
+// a supported version for Angular 15.x. This is not necessary for 16.x,
+// so this could probably be amended to only add as an explicit
+// devDependency for 15.x.
 const devDependencyKeys = [
   '@analogjs/platform',
+  '@analogjs/vite-plugin-angular',
   'jsdom',
-  'typescript',
   'vite',
   'vite-tsconfig-paths',
   'vitest',
@@ -58,70 +46,59 @@ export const getAnalogDevDependencies = (
 };
 
 const getViteDependency = (escapedNxVersion: string) => {
-  if (gt(escapedNxVersion, '16.1.0')) {
+  // fail out for versions <15.2.0
+  if (lt(escapedNxVersion, '15.2.0')) {
+    throw new Error(
+      stripIndents`Nx v15.2.0 or newer is required to install Analog`
+    );
+  }
+  // install 15.8 deps for versions 15.8.0 =< 16.0.0
+  if (lt(escapedNxVersion, '16.0.0')) {
     return {
-      '@nx/vite': V_LATEST_NX_VITE,
+      '@nrwl/vite': V15_X_NRWL_VITE,
     };
   }
-  if (gt(escapedNxVersion, '15.8.0')) {
+
+  // install 16.0 deps for versions 16.0.0 =< 16.1.0
+  if (lt(escapedNxVersion, '16.1.0')) {
     return {
-      '@nx/vite': V16_1_0_NX_VITE,
+      '@nx/vite': V15_X_NX_VITE,
     };
   }
-  if (gt(escapedNxVersion, '15.2.0')) {
-    return {
-      '@nrwl/vite': V15_8_0_NRWL_VITE,
-    };
-  }
-  if (gt(escapedNxVersion, '15.0.0')) {
-    return {
-      '@nrwl/vite': V15_2_0_NRWL_VITE,
-    };
-  }
-  throw Error(
-    `Unsupported Nx version detected: ${escapedNxVersion}. Make sure to at least have V_LATEST.2.0 installed.`
-  );
+
+  // return latest deps for versions >= 16.4.0
+  return {
+    '@nx/vite': V16_X_NX_VITE,
+  };
 };
 
 const getDevDependencies = (escapedNxVersion: string) => {
-  if (gt(escapedNxVersion, '16.1.0')) {
+  // fail out for versions <15.2.0
+  if (lt(escapedNxVersion, '15.2.0')) {
+    throw new Error(
+      stripIndents`Nx v15.2.0 or newer is required to install Analog`
+    );
+  }
+
+  // install 15.x deps for versions <16.1.0
+  if (lt(escapedNxVersion, '16.1.0')) {
     return {
-      '@analogjs/platform': V_LATEST_ANALOG_JS_PLATFORM,
-      jsdom: V_LATEST_JSDOM,
-      typescript: V_LATEST_TYPESCRIPT,
-      vite: V_LATEST_VITE,
-      'vite-tsconfig-paths': V_LATEST_VITE_TSCONFIG_PATHS,
-      vitest: V_LATEST_VITEST,
+      '@analogjs/platform': V15_X_ANALOG_JS_PLATFORM,
+      '@analogjs/vite-plugin-angular': V15_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
+      jsdom: V15_X_JSDOM,
+      vite: V15_X_VITE,
+      'vite-tsconfig-paths': V15_X_VITE_TSCONFIG_PATHS,
+      vitest: V15_X_VITEST,
     };
   }
-  if (gt(escapedNxVersion, '15.8.0')) {
-    return {
-      '@analogjs/platform': V16_1_0_ANALOG_JS_PLATFORM,
-      jsdom: V16_1_0_JSDOM,
-      typescript: V16_1_0_TYPESCRIPT,
-      vite: V16_1_0_VITE,
-      'vite-tsconfig-paths': V16_1_0_VITE_TSCONFIG_PATHS,
-      vitest: V16_1_0_VITEST,
-    };
-  }
-  if (gt(escapedNxVersion, '15.2.0')) {
-    return {
-      '@analogjs/platform': V15_8_0_ANALOG_JS_PLATFORM,
-      jsdom: V15_8_0_JSDOM,
-      typescript: V15_8_0_TYPESCRIPT,
-      vite: V15_8_0_VITE,
-      'vite-tsconfig-paths': V15_8_0_VITE_TSCONFIG_PATHS,
-      vitest: V15_8_0_VITEST,
-    };
-  }
-  if (gt(escapedNxVersion, '15.0.0')) {
-    return {
-      '@analogjs/platform': V15_2_0_ANALOG_JS_PLATFORM,
-      jsdom: V15_2_0_JSDOM,
-      typescript: V15_2_0_TYPESCRIPT,
-      vite: V15_2_0_VITE,
-      'vite-tsconfig-paths': V15_2_0_VITE_TSCONFIG_PATHS,
-      vitest: V15_2_0_VITEST,
-    };
-  }
+
+  // return latest 16.x deps for versions >16.1.0
+  return {
+    '@analogjs/platform': V16_X_ANALOG_JS_PLATFORM,
+    '@analogjs/vite-plugin-angular': V16_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
+    jsdom: V16_X_JSDOM,
+    vite: V16_X_VITE,
+    'vite-tsconfig-paths': V16_X_VITE_TSCONFIG_PATHS,
+    vitest: V16_X_VITEST,
+  };
 };
