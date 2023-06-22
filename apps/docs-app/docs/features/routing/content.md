@@ -80,19 +80,19 @@ export interface PostAttributes {
   standalone: true,
   imports: [RouterOutlet, RouterLink, NgFor],
   template: `
-    <ul *ngFor="let post of posts">
-      <li>
-        <a [routerLink]="['/blog', 'posts', post.slug]">
-          {{ post.attributes.title }}</a
-        >
+    <ul>
+      <li *ngFor="let post of posts">
+        <a [routerLink]="['/blog', 'posts', post.slug]">{{
+          post.attributes.title
+        }}</a>
       </li>
     </ul>
   `,
 })
 export default class BlogComponent {
-  private readonly contentFilterFn: InjectContentFilesFilterFunction<PostAttributes> =
-    (contentFile) => !!contentFile.filename.includes('/src/content/blog/');
-  readonly posts = injectContentFiles<PostAttributes>(contentFilterFn);
+  readonly posts = injectContentFiles<PostAttributes>((contentFile) =>
+    contentFile.filename.includes('/src/content/blog/')
+  );
 }
 ```
 
