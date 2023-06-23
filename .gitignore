@@ -58,3 +58,6 @@ stats.html
 
 /.env
 .env.local
+
+# E2E test
+tmpanalogapp*
