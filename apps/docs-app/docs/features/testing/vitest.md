@@ -21,7 +21,7 @@ npm install @analogjs/vite-plugin-angular @nx/vite jsdom vite-tsconfig-paths --s
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn install @analogjs/vite-plugin-angular @nx/vite jsdom vite-tsconfig-paths --dev
+yarn add @analogjs/vite-plugin-angular @nx/vite jsdom vite-tsconfig-paths --dev
 ```
 
   </TabItem>

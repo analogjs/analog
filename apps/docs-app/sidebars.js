@@ -20,7 +20,7 @@ const sidebars = {
     'getting-started',
     {
       type: 'category',
-      label: 'Features',
+      label: 'Core Concepts',
       items: [
         {
           type: 'category',
@@ -76,33 +76,6 @@ const sidebars = {
             },
           ],
         },
-        {
-          type: 'category',
-          label: 'Testing',
-          items: [
-            {
-              type: 'doc',
-              id: 'features/testing/overview',
-              label: 'Overview',
-            },
-            {
-              type: 'doc',
-              id: 'features/testing/vitest',
-              label: 'Adding Vitest',
-            },
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Updating',
-          items: [
-            {
-              type: 'doc',
-              id: 'features/updating/overview',
-              label: 'Overview',
-            },
-          ],
-        },
       ],
     },
     {
@@ -123,18 +96,44 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'Testing',
+      items: [
+        {
+          type: 'doc',
+          id: 'features/testing/overview',
+          label: 'Overview',
+        },
+        {
+          type: 'doc',
+          id: 'features/testing/vitest',
+          label: 'Adding Vitest',
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Updating',
+      items: [
+        {
+          type: 'doc',
+          id: 'features/updating/overview',
+          label: 'Overview',
+        },
+      ],
+    },
+    {
+      type: 'category',
       label: 'Integrations',
       items: [
         {
-          type: 'category',
-          label: 'Astro Integration',
-          items: [
-            {
-              type: 'doc',
-              id: 'packages/astro-angular/overview',
-              label: 'Overview',
-            },
-          ],
+          type: 'doc',
+          id: 'integrations/nx/index',
+          label: 'Nx',
+        },
+        {
+          type: 'doc',
+          id: 'packages/astro-angular/overview',
+          label: 'Astro',
         },
       ],
     },

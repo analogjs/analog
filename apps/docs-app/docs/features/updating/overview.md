@@ -15,18 +15,18 @@ To update an Analog project with the `ng update` command:
 ```shell
 ng update @analogjs/platform
 ```
+
 </TabItem>
 
   <TabItem label="Nx" value="nx-migrate">
 
 ### Nx Migrate
 
-To update an Analog project with the `nx migrate` command: 
+To update an Analog project with the `nx migrate` command:
 
 ```shell
 nx migrate @analogjs/platform
 ```
+
 </TabItem>
 </Tabs>
-
-
