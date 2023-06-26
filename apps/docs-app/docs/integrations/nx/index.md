@@ -33,7 +33,7 @@ and any necessary configurations is added.
 To start the development server for your application, run the `nx serve` command.
 
 ```shell
-nx serve analog-app
+npx nx serve analog-app
 ```
 
 Navigate to `http://localhost:4200` in your browser to see the application running.
@@ -43,7 +43,7 @@ Navigate to `http://localhost:4200` in your browser to see the application runni
 To build the application for deployment run:
 
 ```shell
-nx build analog-app
+npx nx build analog-app
 ```
 
 ### Build Artifacts
@@ -96,7 +96,7 @@ npx nx g @analogjs/platform:app analog-app
 To start the development server for your application, run the `nx serve` command.
 
 ```shell
-nx serve analog-app
+npx nx serve analog-app
 ```
 
 Navigate to `http://localhost:4200` in your browser to see the application running.
@@ -106,7 +106,7 @@ Navigate to `http://localhost:4200` in your browser to see the application runni
 To build the application for deployment run:
 
 ```shell
-nx build analog-app
+npx nx build analog-app
 ```
 
 ### Build Artifacts
