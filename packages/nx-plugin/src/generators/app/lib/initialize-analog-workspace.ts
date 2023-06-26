@@ -16,6 +16,7 @@ import {
 } from '../versions';
 import { getInstalledPackageVersion } from '../../../utils/version-utils';
 import { NormalizedOptions } from '../generator';
+import { UnitTestRunner } from '@nx/angular/generators';
 
 export async function initializeAngularWorkspace(
   tree: Tree,
@@ -29,7 +30,7 @@ export async function initializeAngularWorkspace(
       'Angular has not been installed yet. Creating an Angular application'
     );
 
-    if (major(installedNxVersion) === 16) {
+    if (major(installedNxVersion) >= 16) {
       try {
         ensurePackage('@nx/devkit', V16_NX_DEVKIT);
         ensurePackage('@nx/angular', V16_NX_ANGULAR);
@@ -61,7 +62,7 @@ export async function initializeAngularWorkspace(
       );
     }
 
-    if (major(installedNxVersion) === 16) {
+    if (major(installedNxVersion) >= 16) {
       await (
         await import(
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -69,7 +70,7 @@ export async function initializeAngularWorkspace(
           '@nx/angular/generators'
         )
       ).angularInitGenerator(tree, {
-        unitTestRunner: 'none' as any,
+        unitTestRunner: UnitTestRunner.None,
         skipInstall: true,
         skipFormat: normalizedOptions.skipFormat,
       });
@@ -78,7 +79,7 @@ export async function initializeAngularWorkspace(
       await (
         await import('@nx/angular/generators')
       ).angularInitGenerator(tree, {
-        unitTestRunner: 'none' as any,
+        unitTestRunner: UnitTestRunner.None,
         skipInstall: true,
         skipFormat: normalizedOptions.skipFormat,
       });

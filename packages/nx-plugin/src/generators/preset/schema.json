@@ -8,7 +8,7 @@
     "analogAppName": {
       "type": "string",
       "description": "",
-      "x-prompt": "What name would you like to use for your AnalogJs app?"
+      "x-prompt": "What name would you like to use for your Analog app?"
     },
     "addTailwind": {
       "type": "boolean",

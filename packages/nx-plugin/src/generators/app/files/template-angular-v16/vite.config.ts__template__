@@ -1,7 +1,6 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
-import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 import tsConfigPaths from 'vite-tsconfig-paths';
 
@@ -25,7 +24,6 @@ export default defineConfig(({ mode }) => {
       tsConfigPaths({
         root: '<%= offsetFromRoot %>',
       }),
-      visualizer() as Plugin,
       splitVendorChunkPlugin(),
     ],
     test: {
