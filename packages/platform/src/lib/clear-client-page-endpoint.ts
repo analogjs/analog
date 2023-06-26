@@ -3,6 +3,7 @@ import { Plugin, normalizePath } from 'vite';
 export function clearClientPageEndpointsPlugin(): Plugin {
   return {
     name: 'analogjs-platform-clear-client-page-endpoint',
+    apply: 'build',
     config() {
       return {
         build: {
