@@ -11,20 +11,12 @@ import TabItem from '@theme/TabItem';
 
 Analog requires the following Node and Angular versions:
 
-- Node v16 or higher
+- Node v18.13.0 or higher is recommended
 - Angular v15 or higher
 
 ## Creating a New Application
 
-There are two methods for creating an Analog application. You have the option to utilize the `create-analog` command
-to scaffold a standalone project, or you can make use of the Nx plugin, which is included in the `@analogjs/platform` package.
-
-<Tabs groupId="app-creator">
-  <TabItem label="create-analog" value="create-analog">
-
-## create-analog
-
-Scaffold an Analog project with the following `create-analog` command:
+To create a new Analog project, you can use the `create-analog` package with your package manager of choice:
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
@@ -52,6 +44,8 @@ pnpm create analog
   </TabItem>
 </Tabs>
 
+You can also [scaffold a new project with Nx](/docs/integrations/nx).
+
 ### Serving the application
 
 To start the development server for the application, run the `start` command.
@@ -76,7 +70,7 @@ yarn start
   <TabItem value="pnpm">
 
 ```shell
-pnpm run start
+pnpm start
 ```
 
   </TabItem>
@@ -121,50 +115,3 @@ The server for the API/SSR build artifacts is located in the `dist/analog/server
 
   </TabItem>
 </Tabs>
-
-  </TabItem>
-
-  <TabItem label="Nx" value="nx">
-
-## Nx
-
-Create a new Nx workspace with a preconfigured Analog application:
-
-```shell
-npx create-nx-workspace --preset=@analogjs/platform
-```
-
-The Analog preset prompts you to provide the name of your application. In this example, we simply use `analog-app`.
-Additionally, asks whether you would like to include [TailwindCSS](https://tailwindcss.com) and [tRPC](https://trpc.io) in your new project.
-If you choose to include either of them, all the required dependencies are installed automatically,
-and any necessary configurations is added.
-
-### Serving the application
-
-To start the development server for your application, run the `nx serve` command.
-
-```shell
-nx serve analog-app
-```
-
-### Building the Application
-
-To build the application for deployment run:
-
-```shell
-nx build analog-app
-```
-
-### Build Artifacts
-
-The client build artifacts are located in the dist folder of your Nx workspace.
-
-By default, Analog comes with [Server-Side Rendering](/docs/features/server/server-side-rendering) enabled.
-In the common apps/libs workspace layout, the `analog-app`'s client artifacts are located in the `dist/apps/analog-app/analog/public` directory.
-The server for the API/SSR build artifacts is located in the `dist/apps/analog-app/analog/server` directory.
-
-</TabItem>
-</Tabs>
-
-
-
