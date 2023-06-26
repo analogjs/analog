@@ -113,7 +113,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         pluginOptions.tsconfig =
           options?.tsconfig ??
           path.resolve(
-            config.root!,
+            config.root || '.',
             process.env['NODE_ENV'] === 'test'
               ? './tsconfig.spec.json'
               : './tsconfig.app.json'
