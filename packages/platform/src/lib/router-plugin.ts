@@ -30,6 +30,11 @@ export function routerPlugin(): Plugin[] {
             ],
           },
           optimizeDeps: {
+            include: [
+              '@angular/common',
+              '@angular/common/http',
+              '@angular/core/rxjs-interop',
+            ],
             exclude: ['@angular/platform-server', '@analogjs/router'],
           },
         };
