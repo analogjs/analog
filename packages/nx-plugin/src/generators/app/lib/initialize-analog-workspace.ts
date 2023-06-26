@@ -16,7 +16,6 @@ import {
 } from '../versions';
 import { getInstalledPackageVersion } from '../../../utils/version-utils';
 import { NormalizedOptions } from '../generator';
-import { UnitTestRunner } from '@nx/angular/generators';
 
 export async function initializeAngularWorkspace(
   tree: Tree,
@@ -70,7 +69,7 @@ export async function initializeAngularWorkspace(
           '@nx/angular/generators'
         )
       ).angularInitGenerator(tree, {
-        unitTestRunner: UnitTestRunner.None,
+        unitTestRunner: 'none' as any,
         skipInstall: true,
         skipFormat: normalizedOptions.skipFormat,
       });
@@ -79,7 +78,7 @@ export async function initializeAngularWorkspace(
       await (
         await import('@nx/angular/generators')
       ).angularInitGenerator(tree, {
-        unitTestRunner: UnitTestRunner.None,
+        unitTestRunner: 'none' as any,
         skipInstall: true,
         skipFormat: normalizedOptions.skipFormat,
       });
