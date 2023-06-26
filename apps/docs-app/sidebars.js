@@ -92,6 +92,17 @@ const sidebars = {
             },
           ],
         },
+        {
+          type: 'category',
+          label: 'Updating',
+          items: [
+            {
+              type: 'doc',
+              id: 'features/updating/overview',
+              label: 'Overview',
+            },
+          ],
+        },
       ],
     },
     {
