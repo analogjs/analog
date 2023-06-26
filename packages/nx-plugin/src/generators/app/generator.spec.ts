@@ -26,10 +26,10 @@ describe('nx-plugin generator', () => {
     dependencies: Record<string, string>,
     devDependencies: Record<string, string>
   ) => {
-    expect(dependencies['@analogjs/router']).toBe('0.2.0-beta.18');
+    expect(dependencies['@analogjs/router']).toBe('0.2.0-beta.19');
     expect(dependencies['@angular/platform-server']).toBe('~16.1.0');
 
-    expect(devDependencies['@analogjs/platform']).toBe('0.2.0-beta.18');
+    expect(devDependencies['@analogjs/platform']).toBe('0.2.0-beta.19');
     expect(devDependencies['vite-tsconfig-paths']).toBe('^4.0.2');
   };
 
