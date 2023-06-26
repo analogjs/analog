@@ -4,6 +4,8 @@
  */
 import { inject, Injectable, PLATFORM_ID, Provider } from '@angular/core';
 import { marked } from 'marked';
+import { gfmHeadingId } from 'marked-gfm-heading-id';
+import { markedHighlight } from 'marked-highlight';
 
 import 'prismjs';
 import 'prismjs/plugins/toolbar/prism-toolbar';
@@ -21,9 +23,7 @@ declare const Prism: typeof import('prismjs');
 
 const renderer = new marked.Renderer();
 // wrap code block the way Prism.js expects it
-renderer.code = function (this: any, code, lang) {
-  // eslint-disable-next-line
-  code = this.options.highlight(code, lang);
+renderer.code = function (code, lang) {
   if (!lang) {
     return '<pre><code>' + code + '</code></pre>';
   }
@@ -46,29 +46,36 @@ export class MarkdownContentRendererService implements ContentRenderer {
   platformId = inject(PLATFORM_ID);
 
   async render(content: string) {
-    marked.setOptions({
-      renderer,
-      highlight: (code, lang) => {
-        lang = lang || 'typescript';
-        if (!Prism.languages[lang]) {
-          console.warn(`Notice:
-    ---------------------------------------------------------------------------------------
-      The requested language '${lang}' is not available with the provided setup.
-      To enable, import your main.ts as:
-        import  'prismjs/components/prism-${lang}';
-    ---------------------------------------------------------------------------------------
-          `);
-          return code;
-        }
-        return Prism.highlight(code, Prism.languages[lang], lang);
-      },
-      pedantic: false,
-      gfm: true,
-      breaks: false,
-      sanitize: false,
-      smartypants: false,
-      xhtml: false,
-    });
+    marked.use(
+      gfmHeadingId(),
+      markedHighlight({
+        highlight: (code, lang) => {
+          lang = lang || 'typescript';
+          if (!Prism.languages[lang]) {
+            console.warn(`Notice:
+  ---------------------------------------------------------------------------------------
+    The requested language '${lang}' is not available with the provided setup.
+    To enable, import your main.ts as:
+      import  'prismjs/components/prism-${lang}';
+  ---------------------------------------------------------------------------------------
+        `);
+            return code;
+          }
+          return Prism.highlight(code, Prism.languages[lang], lang);
+        },
+      }),
+      {
+        renderer,
+        pedantic: false,
+        gfm: true,
+        breaks: false,
+        sanitize: false,
+        smartypants: false,
+        xhtml: false,
+        mangle: false,
+        headerIds: false,
+      }
+    );
 
     return marked(content);
   }
