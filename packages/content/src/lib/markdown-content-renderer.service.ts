@@ -21,31 +21,34 @@ import { ContentRenderer } from './content-renderer';
 
 declare const Prism: typeof import('prismjs');
 
-const renderer = new marked.Renderer();
-// wrap code block the way Prism.js expects it
-renderer.code = function (code, lang) {
-  if (!lang) {
-    return '<pre><code>' + code + '</code></pre>';
-  }
-  // e.g. "language-js"
-  const langClass = 'language-' + lang;
-  return (
-    '<pre class="' +
-    langClass +
-    '"><code class="' +
-    langClass +
-    '">' +
-    code +
-    '</code></pre>'
-  );
-};
-// ------------------------------
+/**
+ * Generating a unique instance of Marked to avoid re-generation after each "use"
+ * Until the new marked types are released this was the best solution to avoid regenerating marked
+ * */
+const Marked = {
+  instantiated: false,
 
-@Injectable()
-export class MarkdownContentRendererService implements ContentRenderer {
-  platformId = inject(PLATFORM_ID);
+  setup: () => {
+    const renderer = new marked.Renderer();
+    // wrap code block the way Prism.js expects it
+    renderer.code = (code, lang) => {
+      if (!lang) {
+        return '<pre><code>' + code + '</code></pre>';
+      }
+      // e.g. "language-js"
+      const langClass = 'language-' + lang;
+      const html =
+        '<pre class="' +
+        langClass +
+        '"><code class="' +
+        langClass +
+        '">' +
+        code +
+        '</code></pre>';
+      return html;
+    };
+    // ------------------------------
 
-  async render(content: string) {
     marked.use(
       gfmHeadingId(),
       markedHighlight({
@@ -53,11 +56,11 @@ export class MarkdownContentRendererService implements ContentRenderer {
           lang = lang || 'typescript';
           if (!Prism.languages[lang]) {
             console.warn(`Notice:
-  ---------------------------------------------------------------------------------------
+    ---------------------------------------------------------------------------------------
     The requested language '${lang}' is not available with the provided setup.
     To enable, import your main.ts as:
       import  'prismjs/components/prism-${lang}';
-  ---------------------------------------------------------------------------------------
+    ---------------------------------------------------------------------------------------
         `);
             return code;
           }
@@ -73,11 +76,25 @@ export class MarkdownContentRendererService implements ContentRenderer {
         smartypants: false,
         xhtml: false,
         mangle: false,
-        headerIds: false,
       }
     );
 
-    return marked(content);
+    Marked.instantiated = true;
+  },
+
+  instance: () => {
+    if (!Marked.instantiated) Marked.setup();
+
+    return marked;
+  },
+};
+
+@Injectable()
+export class MarkdownContentRendererService implements ContentRenderer {
+  platformId = inject(PLATFORM_ID);
+
+  async render(content: string) {
+    return Marked.instance().parse(content);
   }
 
   // eslint-disable-next-line
