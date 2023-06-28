@@ -1,3 +1,7 @@
+/**
+ * Credit goes to Scully for original implementation
+ * https://github.com/scullyio/scully/blob/main/libs/scully/src/lib/fileHanderPlugins/markdown.ts
+ */
 import { Injectable } from '@angular/core';
 import { marked } from 'marked';
 import { gfmHeadingId } from 'marked-gfm-heading-id';
@@ -15,7 +19,7 @@ import 'prismjs/components/prism-typescript';
 
 declare const Prism: typeof import('prismjs');
 
-@Injectable({ providedIn: 'root' })
+@Injectable()
 export class MarkedSetupService {
   private readonly marked: typeof marked;
 
