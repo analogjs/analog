@@ -19,13 +19,21 @@ import { parseRawContentFile } from './parse-raw-content-file';
 export function injectContent<
   Attributes extends Record<string, any> = Record<string, any>
 >(
-  param: string | { param: string; subdirectory: string } = 'slug',
+  param:
+    | string
+    | {
+        param: string;
+        subdirectory: string;
+        customSlugAttribute: string;
+      } = 'slug',
   fallback = 'No Content Found'
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   const route = inject(ActivatedRoute);
   const contentFiles = inject(CONTENT_FILES_TOKEN);
   const prefix = typeof param === 'string' ? '' : `${param.subdirectory}/`;
   const paramKey = typeof param === 'string' ? param : param.param;
+  const customSlugAttribute =
+    typeof param === 'string' ? '' : param.customSlugAttribute;
   return route.paramMap.pipe(
     map((params) => params.get(paramKey)),
     switchMap((slug) => {
@@ -57,9 +65,11 @@ export function injectContent<
         const { content, attributes } =
           parseRawContentFile<Attributes>(rawContentFile);
 
+        const customSlug = attributes[customSlugAttribute] || '';
+
         return {
           filename,
-          slug: slug || '',
+          slug: customSlug || slug || '',
           attributes,
           content,
         };
