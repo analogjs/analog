@@ -1,10 +1,11 @@
 import { MarkdownContentRendererService } from './markdown-content-renderer.service';
 import { TestBed } from '@angular/core/testing';
+import { MarkedSetupService } from './marked-setup.service';
 
 describe('MarkdownContentRendererService', () => {
   function setup() {
     TestBed.configureTestingModule({
-      providers: [MarkdownContentRendererService],
+      providers: [MarkdownContentRendererService, MarkedSetupService],
     });
     return { service: TestBed.inject(MarkdownContentRendererService) };
   }
@@ -13,5 +14,22 @@ describe('MarkdownContentRendererService', () => {
     const { service } = setup();
     const result = await service.render('# Hello World');
     expect(result).toMatch('<h1 id="hello-world">Hello World</h1>\n');
+  });
+
+  it('render should correctly highlight code blocks', async () => {
+    const { service } = setup();
+    let testCode = "```javascript\nconsole.log('Hello, world!');\n```";
+    let result = await service.render(testCode);
+
+    expect(result).toContain(
+      '<pre class="language-javascript"><code class="language-javascript">'
+    );
+
+    testCode = "```typescript\nconsole.log('Hello, world!');\n```";
+    result = await service.render(testCode);
+
+    expect(result).toContain(
+      '<pre class="language-typescript"><code class="language-typescript">'
+    );
   });
 });
