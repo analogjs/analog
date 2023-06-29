@@ -438,6 +438,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "luishcastroc",
+      "name": "Luis Castro",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13698269?v=4",
+      "profile": "https://github.com/luishcastroc",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
