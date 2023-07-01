@@ -1,44 +1,16 @@
 import { addDependenciesToPackageJson, generateFiles, Tree } from '@nx/devkit';
 import * as path from 'path';
-import {
-  V15_ANALOG_JS_TRPC,
-  V15_ISOMORPHIC_FETCH,
-  V15_SUPERJSON,
-  V15_TRPC_CLIENT,
-  V15_TRPC_SERVER,
-  V15_ZOD,
-  V16_ANALOG_JS_TRPC,
-  V16_SUPERJSON,
-  V16_TRPC_CLIENT,
-  V16_TRPC_SERVER,
-  V16_ZOD,
-} from '../versions';
 import { NormalizedOptions } from '../generator';
+import { getTrpcDependencies } from '../versions/trpc-dependencies';
 
-export async function addTRPC(
+export async function addTrpc(
   tree: Tree,
   projectRoot: string,
-  majorAngularVersion: number,
+  nxVersion: string,
   options: NormalizedOptions
 ) {
-  addDependenciesToPackageJson(
-    tree,
-    {
-      '@analogjs/trpc':
-        majorAngularVersion === 15 ? V15_ANALOG_JS_TRPC : V16_ANALOG_JS_TRPC,
-      '@trpc/client':
-        majorAngularVersion === 15 ? V15_TRPC_CLIENT : V16_TRPC_CLIENT,
-      '@trpc/server':
-        majorAngularVersion === 15 ? V15_TRPC_SERVER : V16_TRPC_SERVER,
-      superjson: majorAngularVersion === 15 ? V15_SUPERJSON : V16_SUPERJSON,
-      'isomorphic-fetch':
-        majorAngularVersion === 15
-          ? V15_ISOMORPHIC_FETCH
-          : V15_ISOMORPHIC_FETCH,
-      zod: majorAngularVersion === 15 ? V15_ZOD : V16_ZOD,
-    },
-    {}
-  );
+  const dependencies = getTrpcDependencies(nxVersion);
+  addDependenciesToPackageJson(tree, dependencies, {});
 
   const templateOptions = {
     ...options,
