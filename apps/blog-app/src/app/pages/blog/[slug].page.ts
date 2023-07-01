@@ -1,7 +1,8 @@
 import { injectContent, MarkdownComponent } from '@analogjs/content';
+import { RouteMeta } from '@analogjs/router';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { Component } from '@angular/core';
-import { RouteMeta } from '@analogjs/router';
+import { tap } from 'rxjs';
 import { PostAttributes } from './models';
 import { postMetaResolver, postTitleResolver } from './resolvers';
 
@@ -21,5 +22,9 @@ export const routeMeta: RouteMeta = {
   `,
 })
 export default class BlogPostComponent {
-  readonly post$ = injectContent<PostAttributes>();
+  readonly post$ = injectContent<PostAttributes>({
+    param: 'slug',
+    subdirectory: '',
+    customSlugAttribute: 'custom_slug',
+  }).pipe(tap((data: any) => console.log('data in the post$ pipe', data)));
 }

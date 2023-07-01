@@ -6,7 +6,11 @@ import {
   withInMemoryScrolling,
 } from '@angular/router';
 import { provideFileRouter } from '@analogjs/router';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
+import {
+  CUSTOM_CONTENT_SLUG_TOKEN,
+  provideContent,
+  withMarkdownRenderer,
+} from '@analogjs/content';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -17,5 +21,6 @@ export const appConfig: ApplicationConfig = {
       withInMemoryScrolling({ anchorScrolling: 'enabled' }),
       withEnabledBlockingInitialNavigation()
     ),
+    { provide: CUSTOM_CONTENT_SLUG_TOKEN, useFactory: () => 'custom_slug' },
   ],
 };

@@ -1,16 +1,25 @@
+import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, ResolveFn } from '@angular/router';
 import { MetaTag } from '@analogjs/router';
-import { injectContentFiles } from '@analogjs/content';
+import {
+  CUSTOM_CONTENT_SLUG_TOKEN,
+  injectContentFiles,
+} from '@analogjs/content';
 import { PostAttributes } from './models';
 
 // temporary
 function injectActivePostAttributes(
   route: ActivatedRouteSnapshot
 ): PostAttributes {
-  return injectContentFiles<PostAttributes>().find(
-    (contentFile) =>
-      contentFile.filename === `/src/content/${route.params['slug']}.md`
-  )!.attributes;
+  const customSlugAttribute: string = inject(CUSTOM_CONTENT_SLUG_TOKEN);
+  const file = injectContentFiles<PostAttributes>().find((contentFile) => {
+    return customSlugAttribute
+      ? contentFile.attributes[customSlugAttribute as keyof PostAttributes] ===
+          route.params['slug']
+      : contentFile.filename === `/src/content/${route.params['slug']}.md`;
+  });
+
+  return file!.attributes;
 }
 
 export const postTitleResolver: ResolveFn<string> = (route) =>
