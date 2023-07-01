@@ -22,9 +22,7 @@ export const routeMeta: RouteMeta = {
   `,
 })
 export default class BlogPostComponent {
-  readonly post$ = injectContent<PostAttributes>({
-    param: 'slug',
-    subdirectory: '',
-    customSlugAttribute: 'custom_slug',
-  }).pipe(tap((data: any) => console.log('data in the post$ pipe', data)));
+  readonly post$ = injectContent<PostAttributes>().pipe(
+    tap((data: any) => console.log('data in the post$ pipe', data))
+  );
 }

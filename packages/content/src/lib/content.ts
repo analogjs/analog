@@ -10,6 +10,7 @@ import { CONTENT_FILES_TOKEN } from './content-files-token';
 import { waitFor } from './utils/zone-wait-for';
 import { parseRawContentFile } from './parse-raw-content-file';
 import { CONTENT_FILES_LIST_TOKEN } from './content-files-list-token';
+import { CUSTOM_CONTENT_SLUG_TOKEN } from './custom-content-slug-token';
 
 /**
  * Retrieves the static content using the provided param and/or prefix.
@@ -25,22 +26,16 @@ export function injectContent<
     | {
         param: string;
         subdirectory: string;
-        customSlugAttribute: string;
       } = 'slug',
   fallback = 'No Content Found'
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   const route = inject(ActivatedRoute);
   const contentFiles = inject(CONTENT_FILES_TOKEN);
   const contentFilesList = inject(CONTENT_FILES_LIST_TOKEN);
-  const prefix =
-    typeof param === 'string'
-      ? ''
-      : param.subdirectory
-      ? `${param.subdirectory}/`
-      : '';
+  const prefix = typeof param === 'string' ? '' : `${param.subdirectory}/`;
+
   const paramKey = typeof param === 'string' ? param : param.param;
-  const customSlugAttribute =
-    typeof param === 'string' ? '' : param.customSlugAttribute;
+  const customSlugAttribute = inject(CUSTOM_CONTENT_SLUG_TOKEN);
   return route.paramMap.pipe(
     map((params) => params.get(paramKey)),
     switchMap((slug) => {
