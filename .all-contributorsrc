@@ -427,7 +427,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/17076628?v=4",
       "profile": "https://github.com/jeremyhofer",
       "contributions": [
-        "doc"
+        "doc",
+        "code",
+        "infra"
       ]
     },
     {
