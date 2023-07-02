@@ -39,6 +39,7 @@ export function injectContent<
   return route.paramMap.pipe(
     map((params) => params.get(paramKey)),
     switchMap((slug) => {
+      // Get the file from the list of files based on the custom slug attribute, if it exists
       let fileFromList;
       let customFileSlug = '';
       if (customSlugAttribute) {
@@ -50,6 +51,7 @@ export function injectContent<
           : '';
       }
 
+      // If the file was not found in the list of files, use the slug as the filename
       const filenameSlug = fileFromList ? fileFromList.slug : slug;
       const filename = `/src/content/${prefix}${filenameSlug}.md`;
 
@@ -80,6 +82,7 @@ export function injectContent<
         const { content, attributes } =
           parseRawContentFile<Attributes>(rawContentFile);
 
+        // set the slug to the custom slug attribute if it exists, otherwise use the slug
         const slugToReturn = customFileSlug || slug || '';
 
         const returnObj = {
@@ -88,9 +91,6 @@ export function injectContent<
           attributes,
           content,
         };
-
-        // This prints out in the terminal and you can see that it has a file and all the info
-        console.log({ returnObj });
 
         return returnObj;
       });
