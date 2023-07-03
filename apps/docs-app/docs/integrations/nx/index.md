@@ -20,7 +20,7 @@ To scaffold a standalone Nx project, use the `create-nx-workspace` command with 
 Create a new Nx workspace with a preconfigured Analog application:
 
 ```shell
-npx create-nx-workspace --preset=@analogjs/platform
+npx create-nx-workspace@latest --preset=@analogjs/platform
 ```
 
 The Analog preset prompts you to provide the name of your application. In this example, we simply use `analog-app`.
