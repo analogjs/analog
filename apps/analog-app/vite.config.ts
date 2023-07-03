@@ -34,7 +34,6 @@ export default defineConfig(({ mode }) => {
           routes: ['/', '/cart'],
           sitemap: {
             domain: 'example.com/',
-            appName: 'analog-app',
           },
         },
         vite: {

@@ -28,7 +28,6 @@ export default defineConfig(() => {
           },
           sitemap: {
             domain: 'example.com/',
-            appName: 'blog-app',
           },
         },
       }),
