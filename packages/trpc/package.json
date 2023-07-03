@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/trpc",
-  "version": "0.2.0-beta.19",
+  "version": "0.2.0-beta.20",
   "description": "Angular/Nitro-based tRPC integration",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "keywords": [
