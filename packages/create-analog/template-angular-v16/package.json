@@ -28,6 +28,8 @@
     "@nx/angular": "^16.4.0",
     "front-matter": "^4.0.2",
     "marked": "^5.0.2",
+    "marked-gfm-heading-id": "^3.0.4",
+    "marked-highlight": "^2.0.1",
     "prismjs": "^1.29.0",
     "rxjs": "~7.5.6",
     "tslib": "^2.4.0",
