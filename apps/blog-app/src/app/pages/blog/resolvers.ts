@@ -11,12 +11,8 @@ import { PostAttributes } from './models';
 function injectActivePostAttributes(
   route: ActivatedRouteSnapshot
 ): PostAttributes {
-  const customSlugAttribute: string = inject(CUSTOM_CONTENT_SLUG_TOKEN);
   const file = injectContentFiles<PostAttributes>().find((contentFile) => {
-    return customSlugAttribute
-      ? contentFile.attributes[customSlugAttribute as keyof PostAttributes] ===
-          route.params['slug']
-      : contentFile.filename === `/src/content/${route.params['slug']}.md`;
+    return contentFile.slug === route.params['slug'];
   });
 
   return file!.attributes;
