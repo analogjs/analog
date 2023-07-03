@@ -10,6 +10,8 @@ import {
 describe('nitro', () => {
   vi.mock('./build-ssr');
   vi.mock('./build-server');
+  vi.mock('./build-sitemap');
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -32,7 +34,7 @@ describe('nitro', () => {
 
   it('should build the server with prerender route "/" if nothing was provided', async () => {
     // Arrange
-    const [buildSSRAppImportSpy, buildServerImportSpy] =
+    const [buildSSRAppImportSpy, buildServerImportSpy, buildSitemapImportSpy] =
       await mockBuildFunctions();
     const plugin = nitro({
       ssr: true,
@@ -43,6 +45,7 @@ describe('nitro', () => {
 
     // Assert
     expect(buildSSRAppImportSpy).toHaveBeenCalledWith({}, { ssr: true });
+    expect(buildSitemapImportSpy).not.toHaveBeenCalled();
     expect(buildServerImportSpy).toHaveBeenCalledWith(
       { ssr: true },
       {
@@ -56,7 +59,7 @@ describe('nitro', () => {
 
   it('should build the server with prerender route "/" even if ssr is false', async () => {
     // Arrange
-    const [buildSSRAppImportSpy, buildServerImportSpy] =
+    const [buildSSRAppImportSpy, buildServerImportSpy, buildSitemapImportSpy] =
       await mockBuildFunctions();
     const plugin = nitro({
       ssr: false,
@@ -67,6 +70,7 @@ describe('nitro', () => {
 
     // Assert
     expect(buildSSRAppImportSpy).not.toHaveBeenCalled();
+    expect(buildSitemapImportSpy).not.toHaveBeenCalled();
     expect(buildServerImportSpy).toHaveBeenCalledWith(
       { ssr: false },
       {
@@ -80,9 +84,14 @@ describe('nitro', () => {
 
   it('should build the server without prerender route when an empty array was passed', async () => {
     // Arrange
-    const [buildSSRAppImportSpy, buildServerImportSpy] =
+    const [buildSSRAppImportSpy, buildServerImportSpy, buildSitemapImportSpy] =
       await mockBuildFunctions();
-    const prerenderRoutes = { prerender: { routes: [] } };
+    const prerenderRoutes = {
+      prerender: {
+        routes: [],
+        sitemap: { domain: 'example.com' },
+      },
+    };
     const plugin = nitro({
       ssr: true,
       ...prerenderRoutes,
@@ -103,14 +112,24 @@ describe('nitro', () => {
         rollupConfig: expect.anything(),
         handlers: expect.anything(),
       }
+    );
+    expect(buildSitemapImportSpy).toHaveBeenCalledWith(
+      {},
+      { domain: 'example.com' },
+      prerenderRoutes.prerender.routes
     );
   });
 
   it('should build the server with provided routes', async () => {
     // Arrange
-    const [buildSSRAppImportSpy, buildServerImportSpy] =
+    const [buildSSRAppImportSpy, buildServerImportSpy, buildSitemapImportSpy] =
       await mockBuildFunctions();
-    const prerenderRoutes = { prerender: { routes: ['/blog', '/about'] } };
+    const prerenderRoutes = {
+      prerender: {
+        routes: ['/blog', '/about'],
+        sitemap: { domain: 'example.com' },
+      },
+    };
     const plugin = nitro({
       ssr: true,
       ...prerenderRoutes,
@@ -124,14 +143,23 @@ describe('nitro', () => {
       {},
       { ssr: true, ...prerenderRoutes }
     );
+
     expect(buildServerImportSpy).toHaveBeenCalledWith(
       { ssr: true, ...prerenderRoutes },
       {
         ...mockNitroConfig,
-        ...prerenderRoutes,
+        prerender: {
+          routes: prerenderRoutes.prerender.routes,
+        },
         rollupConfig: expect.anything(),
         handlers: expect.anything(),
       }
+    );
+
+    expect(buildSitemapImportSpy).toHaveBeenCalledWith(
+      {},
+      { domain: 'example.com' },
+      prerenderRoutes.prerender.routes
     );
   });
 });

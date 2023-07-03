@@ -26,6 +26,10 @@ export default defineConfig(() => {
               '/blog/2022-12-31-my-second-post',
             ];
           },
+          sitemap: {
+            domain: 'example.com/',
+            appName: 'blog-app',
+          },
         },
       }),
     ],

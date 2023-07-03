@@ -10,6 +10,7 @@ import * as path from 'path';
 import { Options } from './options';
 import { pageEndpointsPlugin } from './plugins/page-endpoints';
 import { getPageHandlers } from './utils/get-page-handlers';
+import { buildSitemap } from './build-sitemap';
 
 let clientOutputPath = '';
 
@@ -162,6 +163,16 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
 
         console.log('Building Server...');
         await buildServer(options, nitroConfig);
+
+        if (options?.prerender?.sitemap) {
+          console.log('Building Sitemap...');
+          // sitemap needs to be built after all directories are built
+          await buildSitemap(
+            config,
+            options.prerender.sitemap,
+            options.prerender.routes!
+          );
+        }
 
         console.log(
           `\n\nThe '@analogjs/platform' server has been successfully built.`
