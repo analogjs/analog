@@ -28,7 +28,8 @@
       "options": {
         "lintFilePatterns": [
           "packages/content/**/*.ts",
-          "packages/content/**/*.html"
+          "packages/content/**/*.html",
+          "packages/content/migrations.json"
         ]
       }
     },

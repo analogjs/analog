@@ -42,6 +42,6 @@
       "@analogjs/vite-plugin-angular",
       "@analogjs/vite-plugin-nitro"
     ],
-    "migrations": "./migrations/migration.json"
+    "migrations": "./migrations.json"
   }
 }
