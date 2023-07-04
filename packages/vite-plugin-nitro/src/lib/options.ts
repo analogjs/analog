@@ -19,4 +19,9 @@ export interface PrerenderOptions {
    * List of routes to prerender resolved statically or dynamically.
    */
   routes?: string[] | (() => Promise<(string | undefined)[]>);
+  sitemap?: SitemapConfig;
+}
+
+export interface SitemapConfig {
+  host: string;
 }
