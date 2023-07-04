@@ -450,6 +450,15 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "QuantariusRay",
+      "name": "Q",
+      "avatar_url": "https://avatars.githubusercontent.com/u/31900736?v=4",
+      "profile": "https://github.com/QuantariusRay",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-47-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-48-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -142,6 +142,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jeremyhofer"><img src="https://avatars.githubusercontent.com/u/17076628?v=4?s=100" width="100px;" alt="Jeremy Hofer"/><br /><sub><b>Jeremy Hofer</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=jeremyhofer" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=jeremyhofer" title="Code">💻</a> <a href="#infra-jeremyhofer" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://www.routechnology.tech"><img src="https://avatars.githubusercontent.com/u/61606062?v=4?s=100" width="100px;" alt="Olalekan Raheem"/><br /><sub><b>Olalekan Raheem</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=SOG-web" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/luishcastroc"><img src="https://avatars.githubusercontent.com/u/13698269?v=4?s=100" width="100px;" alt="Luis Castro"/><br /><sub><b>Luis Castro</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=luishcastroc" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=luishcastroc" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/QuantariusRay"><img src="https://avatars.githubusercontent.com/u/31900736?v=4?s=100" width="100px;" alt="Q"/><br /><sub><b>Q</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=QuantariusRay" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
