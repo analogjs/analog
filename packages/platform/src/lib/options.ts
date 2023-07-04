@@ -1,5 +1,6 @@
 import type { PluginOptions } from '@analogjs/vite-plugin-angular';
 import { NitroConfig } from 'nitropack';
+import { SitemapConfig } from '@analogjs/vite-plugin-nitro';
 
 export interface PrerenderOptions {
   /**
@@ -11,6 +12,7 @@ export interface PrerenderOptions {
    * List of routes to prerender resolved statically or dynamically.
    */
   routes?: string[] | (() => Promise<(string | undefined)[]>);
+  sitemap?: SitemapConfig;
 }
 
 export interface Options {

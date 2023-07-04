@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "0.2.0-beta.19",
+  "version": "0.2.0-beta.22",
   "license": "MIT",
   "scripts": {
     "dev": "nx serve",
@@ -125,6 +125,7 @@
     "eslint-config-prettier": "8.6.0",
     "eslint-plugin-cypress": "^2.12.1",
     "execa": "^7.1.1",
+    "fast-glob": "^3.2.12",
     "fs-extra": "^11.1.1",
     "jest": "^29.5.0",
     "jest-environment-jsdom": "^29.5.0",
@@ -155,6 +156,7 @@
     "vite-plugin-eslint": "^1.8.1",
     "vite-tsconfig-paths": "4.2.0",
     "vitest": "0.32.2",
-    "webpack-bundle-analyzer": "^4.7.0"
+    "webpack-bundle-analyzer": "^4.7.0",
+    "xmlbuilder2": "^3.0.2"
   }
 }

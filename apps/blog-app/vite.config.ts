@@ -26,6 +26,9 @@ export default defineConfig(() => {
               '/blog/2022-12-31-my-second-post',
             ];
           },
+          sitemap: {
+            host: 'https://analog-blog.netlify.app',
+          },
         },
       }),
     ],
