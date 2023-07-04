@@ -13,7 +13,7 @@ export const CONTENT_FILES_TOKEN = new InjectionToken<
 
     const lookup: Record<string, string> = {};
     contentFilesList.forEach((item) => {
-      lookup[item.filename] = item.slug;
+      lookup[item.filename] = item.slug || item.filename;
     });
 
     const newObject: Record<string, () => Promise<string>> = {};

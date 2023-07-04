@@ -3,5 +3,4 @@ export interface PostAttributes {
   slug: string;
   description: string;
   coverImage: string;
-  custom_slug: string;
 }

@@ -11,4 +11,3 @@ export {
 } from './lib/markdown-content-renderer.service';
 export { parseRawContentFile } from './lib/parse-raw-content-file';
 export { AnchorNavigationDirective } from './lib/anchor-navigation.directive';
-export { CUSTOM_CONTENT_SLUG_TOKEN } from './lib/custom-content-slug-token';

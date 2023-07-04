@@ -7,10 +7,8 @@ import { map, switchMap } from 'rxjs/operators';
 
 import { ContentFile } from './content-file';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
-import { waitFor } from './utils/zone-wait-for';
 import { parseRawContentFile } from './parse-raw-content-file';
-import { CONTENT_FILES_LIST_TOKEN } from './content-files-list-token';
-import { CUSTOM_CONTENT_SLUG_TOKEN } from './custom-content-slug-token';
+import { waitFor } from './utils/zone-wait-for';
 
 /**
  * Retrieves the static content using the provided param and/or prefix.
@@ -31,8 +29,6 @@ export function injectContent<
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   const route = inject(ActivatedRoute);
   const contentFiles = inject(CONTENT_FILES_TOKEN);
-  const contentFilesList = inject(CONTENT_FILES_LIST_TOKEN);
-  const prefix = typeof param === 'string' ? '' : `${param.subdirectory}/`;
 
   const paramKey = typeof param === 'string' ? param : param.param;
   return route.paramMap.pipe(
@@ -44,7 +40,7 @@ export function injectContent<
       if (!contentFile) {
         return of({
           attributes: {},
-          filename: '',
+          filename: slug || '',
           slug: slug || '',
           content: fallback,
         });
@@ -67,7 +63,7 @@ export function injectContent<
           parseRawContentFile<Attributes>(rawContentFile);
 
         const returnObj = {
-          filename: '',
+          filename: slug || '',
           slug: slug || '',
           attributes,
           content,
