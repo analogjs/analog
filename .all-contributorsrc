@@ -427,7 +427,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/17076628?v=4",
       "profile": "https://github.com/jeremyhofer",
       "contributions": [
-        "doc"
+        "doc",
+        "code",
+        "infra"
       ]
     },
     {
@@ -444,6 +446,16 @@
       "name": "Luis Castro",
       "avatar_url": "https://avatars.githubusercontent.com/u/13698269?v=4",
       "profile": "https://github.com/luishcastroc",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "QuantariusRay",
+      "name": "Q",
+      "avatar_url": "https://avatars.githubusercontent.com/u/31900736?v=4",
+      "profile": "https://github.com/QuantariusRay",
       "contributions": [
         "code"
       ]

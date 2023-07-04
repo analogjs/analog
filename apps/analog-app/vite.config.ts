@@ -32,6 +32,9 @@ export default defineConfig(({ mode }) => {
         apiPrefix: 'api',
         prerender: {
           routes: ['/', '/cart'],
+          sitemap: {
+            host: process.env['VITE_ANALOG_PUBLIC_BASE_URL'],
+          },
         },
         vite: {
           inlineStylesExtension: 'scss',
