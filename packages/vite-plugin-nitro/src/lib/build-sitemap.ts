@@ -1,9 +1,9 @@
-import { SitemapConfig } from './options';
 import * as fs from 'fs';
 import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 import { create } from 'xmlbuilder2';
 import { UserConfig } from 'vite';
 import * as path from 'path';
+import { SitemapConfig } from './options';
 
 export type PagesJson = {
   page: string;
@@ -19,7 +19,7 @@ export async function buildSitemap(
 
   if (routeList.length) {
     const sitemapData: PagesJson[] = routeList.map((page: string) => ({
-      page: `https://www.${sitemapConfig.domain}${page.replace(/^\/+/g, '')}`,
+      page: `${sitemapConfig.host}/${page.replace(/^\/+/g, '')}`,
       lastMod: new Date().toISOString().split('T')[0],
     }));
 
@@ -33,7 +33,7 @@ export async function buildSitemap(
 
     const mapPath = `${path.resolve(
       'dist',
-      config.root!,
+      config.root || '.',
       'analog/public'
     )}/sitemap.xml`;
     try {

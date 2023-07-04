@@ -27,7 +27,7 @@ export default defineConfig(() => {
             ];
           },
           sitemap: {
-            domain: 'example.com/',
+            host: 'https://analog-blog.netlify.app',
           },
         },
       }),

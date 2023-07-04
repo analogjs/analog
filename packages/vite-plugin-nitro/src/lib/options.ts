@@ -23,5 +23,5 @@ export interface PrerenderOptions {
 }
 
 export interface SitemapConfig {
-  domain: string;
+  host: string;
 }

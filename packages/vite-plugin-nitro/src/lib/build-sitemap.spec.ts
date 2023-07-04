@@ -3,7 +3,7 @@ import * as fs from 'fs';
 
 describe('build sitemap', () => {
   const config = { root: 'root' };
-  const sitemapConfig = { domain: 'domain.com' };
+  const sitemapConfig = { host: 'http://host.com' };
 
   beforeEach(() => {
     vi.mock('fs');

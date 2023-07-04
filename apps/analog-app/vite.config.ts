@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => {
         prerender: {
           routes: ['/', '/cart'],
           sitemap: {
-            domain: 'example.com/',
+            host: process.env['VITE_ANALOG_PUBLIC_BASE_URL'],
           },
         },
         vite: {
