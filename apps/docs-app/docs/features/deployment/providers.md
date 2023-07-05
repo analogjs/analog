@@ -6,17 +6,33 @@ Analog supports deployment to many providers with little or no additional config
 
 Analog supports deploying on [Render](https://render.com/) with minimal configuration.
 
+### Web Service Deployment
+
 1. [Create a new Web Service](https://dashboard.render.com/select-repo?type=web) and select the repository that contains your code.
 
 2. Ensure the 'Node' environment is selected.
 
-3. Depending on your package manager, set the build command to `yarn && yarn build`, `npm install && npm run build`, or `pnpm i --shamefully-hoist && pnpm build`.
+3. [Specify your Node version for Render to use](https://render.com/docs/node-version) (v18.13.0 or higher recommended) - Render by default uses Node 14, which fails to correctly build an Analog site
 
-4. Update the start command to `node dist/analog/server/index.mjs`
+4. Depending on your package manager, set the build command to `yarn && yarn build`, `npm install && npm run build`, or `pnpm i --shamefully-hoist && pnpm build`.
 
-5. Click 'Advanced' and add an environment variable with `BUILD_PRESET` set to `render-com`.
+5. Update the start command to `node dist/analog/server/index.mjs`
 
-6. Click 'Create Web Service'.
+6. Click 'Advanced' and add an environment variable with `BUILD_PRESET` set to `render-com`.
+
+7. Click 'Create Web Service'.
+
+### Static Site Deployment
+
+If using Analog to pre-render static content, you can deploy a static site on Render with minimal configuration
+
+1. [Create a new Static Site](https://dashboard.render.com/select-repo?type=static) and select the repository that contains your code.
+
+2. Depending on your package manager, set the build command to `yarn && yarn build`, `npm install && npm run build`, or `pnpm i --shamefully-hoist && pnpm build`..
+
+3. Set the publish directory to the `public` directory inside of the `dist` build directory (e.g. `dist/analog/public`)
+
+4. Click 'Create Static Site'
 
 ## Edgio
 
