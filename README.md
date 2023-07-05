@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-49-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-50-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -144,6 +144,9 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/luishcastroc"><img src="https://avatars.githubusercontent.com/u/13698269?v=4?s=100" width="100px;" alt="Luis Castro"/><br /><sub><b>Luis Castro</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=luishcastroc" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=luishcastroc" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/QuantariusRay"><img src="https://avatars.githubusercontent.com/u/31900736?v=4?s=100" width="100px;" alt="Q"/><br /><sub><b>Q</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=QuantariusRay" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=QuantariusRay" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/cskiwi"><img src="https://avatars.githubusercontent.com/u/847540?v=4?s=100" width="100px;" alt="Glenn Latomme"/><br /><sub><b>Glenn Latomme</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=cskiwi" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.justinrassier.com"><img src="https://avatars.githubusercontent.com/u/1228424?v=4?s=100" width="100px;" alt="Justin Rassier"/><br /><sub><b>Justin Rassier</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=justinrassier" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
