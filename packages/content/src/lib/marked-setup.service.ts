@@ -44,6 +44,7 @@ export class MarkedSetupService {
     marked.use(
       gfmHeadingId(),
       markedHighlight({
+        async: true,
         highlight: (code, lang) => {
           lang = lang || 'typescript';
           if (!Prism.languages[lang]) {
