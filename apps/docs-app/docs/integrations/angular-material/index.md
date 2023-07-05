@@ -47,8 +47,8 @@ export default defineConfig(({ mode }) => {
     plugins: [
       analog({
         vite: {
-          inlineStylesExtension: 'scss'
-        }
+          inlineStylesExtension: 'scss',
+        },
       }),
     ],
   };
@@ -60,19 +60,19 @@ export default defineConfig(({ mode }) => {
 ```html
 <head>
   <!-- other headers -->
-    <link rel="stylesheet" href="/src/styles.scss" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"
-    />
+  <link rel="stylesheet" href="/src/styles.scss" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    rel="stylesheet"
+  />
 </head>
 <body class="mat-typography">
-<!-- content -->
+  <!-- content -->
 </body>
 ```
 
@@ -85,16 +85,17 @@ export default defineConfig(({ mode }) => {
 $analog-primary: mat.define-palette(mat.$indigo-palette);
 $analog-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
 $analog-warn: mat.define-palette(mat.$red-palette);
-$analog-theme: mat.define-light-theme((
-  color: (
-    primary: $analog-primary,
-    accent: $analog-accent,
-    warn: $analog-warn,
+$analog-theme: mat.define-light-theme(
+  (
+    color: (
+      primary: $analog-primary,
+      accent: $analog-accent,
+      warn: $analog-warn,
+    ),
   )
-));
+);
 
 @include mat.all-component-themes($analog-theme);
-
 ```
 
 ## Optional Step: Configuring Animations
