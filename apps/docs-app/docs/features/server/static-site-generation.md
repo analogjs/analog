@@ -51,7 +51,7 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-The static pages can be deployed from the `dist/client` directory.
+The static pages can be deployed from the `dist/analog/public` directory.
 
 ### Sitemap Generation
 
