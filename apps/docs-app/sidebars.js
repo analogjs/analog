@@ -135,6 +135,11 @@ const sidebars = {
           id: 'packages/astro-angular/overview',
           label: 'Astro',
         },
+        {
+          type: 'doc',
+          id: 'integrations/angular-material/index',
+          label: 'Angular Material',
+        },
       ],
     },
     'contributors',
