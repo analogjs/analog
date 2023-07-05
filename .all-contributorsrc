@@ -469,6 +469,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "justinrassier",
+      "name": "Justin Rassier",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1228424?v=4",
+      "profile": "http://www.justinrassier.com",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
