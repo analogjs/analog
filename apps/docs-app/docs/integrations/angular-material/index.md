@@ -2,9 +2,6 @@
 sidebar_position: 3
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Angular Material Integration with Analog
 
 This tutorial will guide you through the process of integrating the Angular Material library within your Analog application.
@@ -50,8 +47,8 @@ export default defineConfig(({ mode }) => {
     plugins: [
       analog({
         vite: {
-          inlineStylesExtension: 'scss',
-        },
+          inlineStylesExtension: 'scss'
+        }
       }),
     ],
   };
@@ -63,19 +60,19 @@ export default defineConfig(({ mode }) => {
 ```html
 <head>
   <!-- other headers -->
-  <link rel="stylesheet" href="/src/styles.scss" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
-    rel="stylesheet"
-  />
-  <link
-    href="https://fonts.googleapis.com/icon?family=Material+Icons"
-    rel="stylesheet"
-  />
+    <link rel="stylesheet" href="/src/styles.scss" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
 </head>
 <body class="mat-typography">
-  <!-- content -->
+<!-- content -->
 </body>
 ```
 
@@ -88,22 +85,41 @@ export default defineConfig(({ mode }) => {
 $analog-primary: mat.define-palette(mat.$indigo-palette);
 $analog-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
 $analog-warn: mat.define-palette(mat.$red-palette);
-$analog-theme: mat.define-light-theme(
-  (
-    color: (
-      primary: $analog-primary,
-      accent: $analog-accent,
-      warn: $analog-warn,
-    ),
+$analog-theme: mat.define-light-theme((
+  color: (
+    primary: $analog-primary,
+    accent: $analog-accent,
+    warn: $analog-warn,
   )
-);
+));
 
 @include mat.all-component-themes($analog-theme);
 
-body {
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
-}
 ```
+
+## Optional Step: Configuring Animations
+
+If you want to (de)activate animations where needed, follow these additional steps:
+
+1. Open the `app.config.ts` file and add `provideAnimations()` as a provider
+
+```ts
+providers: [
+  // other providers
+  provideAnimations(),
+],
+```
+
+1. Open the `app.config.server.ts` file and add `provideNoopAnimations()` as a provider
+
+```ts
+providers: [
+  // other providers
+  provideNoopAnimations(),
+],
+```
+
+With these steps, you have configured animations to be enabled on the client and disbaled on the server in your Analog application.
 
 That's it! You have successfully installed and configured the Angular Material library for your Analog application. You can now start utilizing the Angular Material components and styles in your project.
 
