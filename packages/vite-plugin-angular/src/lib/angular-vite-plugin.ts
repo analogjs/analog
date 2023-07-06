@@ -34,6 +34,7 @@ export interface PluginOptions {
     tsTransformers?: ts.CustomTransformers;
   };
   supportedBrowsers?: string[];
+  transformFilter?: (code: string, id: string) => boolean;
 }
 
 interface EmitFileResult {
@@ -205,6 +206,15 @@ export function angular(options?: PluginOptions): Plugin[] {
         // Skip transforming node_modules
         if (id.includes('node_modules')) {
           return;
+        }
+
+        /**
+         * Check for options.transformFilter
+         */
+        if (options?.transformFilter) {
+          if (!(options?.transformFilter(code, id) ?? true)) {
+            return;
+          }
         }
 
         /**
