@@ -13,7 +13,45 @@ import { defineEventHandler } from 'h3';
 export default defineEventHandler(() => ({ message: 'Hello World' }));
 ```
 
-API routes are powered by [Nitro](https://nitro.unjs.io). See the Nitro docs for more examples around building API routes.
+## Defining XML Content
+
+To create an RSS feed for your site, set the `content-type` to be `text/xml` and Analog serves up the correct content type for the route.
+
+```ts
+//server/routes/rss.xml.ts
+
+import { defineEventHandler } from 'h3';
+export default defineEventHandler((event) => {
+  const feedString = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+</rss>
+  `;
+  event.node.res.setHeader('content-type', 'text/xml');
+  event.node.res.end(feedString);
+});
+```
+
+**Note:** For SSG content, set Analog to prerender an API route to make it available as prerendered content:
+
+```ts
+// vite.config.ts
+...
+prerender: {
+  routes: async () => {
+    return [
+      ...
+      '/api/rss.xml',
+      ...
+      .
+    ];
+  },
+  sitemap: {
+    host: 'https://analog-blog.netlify.app',
+  },
+},
+```
+
+The XML is available as a static XML document at `/dist/analog/public/api/rss.xml`
 
 ## Custom API prefix
 
@@ -35,3 +73,7 @@ export default defineConfig(({ mode }) => {
 With this configuration, Analog exposes the API routes under the `/services` prefix.
 
 A route defined in `src/server/routes/v1/hello.ts` can now be accessed at `/services/v1/hello`.
+
+## More Info
+
+API routes are powered by [Nitro](https://nitro.unjs.io). See the Nitro docs for more examples around building API routes.

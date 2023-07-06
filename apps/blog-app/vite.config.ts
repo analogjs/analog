@@ -22,6 +22,7 @@ export default defineConfig(() => {
               '/',
               '/blog',
               '/about',
+              '/api/rss.xml',
               '/blog/2022-12-27-my-first-post',
               '/blog/2022-12-31-my-second-post',
             ];
