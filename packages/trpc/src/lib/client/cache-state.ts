@@ -4,7 +4,6 @@ import {
   ApplicationRef,
   inject,
   InjectionToken,
-  ɵInitialRenderPendingTasks as InitialRenderPendingTasks,
 } from '@angular/core';
 
 export const tRPC_CACHE_STATE = new InjectionToken<{
@@ -22,20 +21,11 @@ export const provideTrpcCacheStateStatusManager = () => ({
   useFactory: () => {
     const appRef = inject(ApplicationRef);
     const cacheState = inject(tRPC_CACHE_STATE);
-    const pendingTasks = inject(InitialRenderPendingTasks);
 
-    return () => {
-      const isStablePromise = appRef.isStable
+    return () =>
+      appRef.isStable
         .pipe(first((isStable) => isStable))
-        .toPromise();
-      const pendingTasksPromise = pendingTasks.hasPendingTasks.toPromise();
-
-      (Promise as any)
-        .allSettled([isStablePromise, pendingTasksPromise])
-        .then(() => {
-          cacheState.isCacheActive.next(false);
-        });
-    };
+        .subscribe(() => cacheState.isCacheActive.next(false));
   },
-  deps: [ApplicationRef, tRPC_CACHE_STATE, InitialRenderPendingTasks],
+  deps: [ApplicationRef, tRPC_CACHE_STATE],
 });
