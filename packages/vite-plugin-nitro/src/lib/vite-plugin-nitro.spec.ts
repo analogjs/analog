@@ -175,72 +175,98 @@ describe('nitro', () => {
     );
   });
 
-  it('should use the analog output paths when preset is not vercel', async () => {
-    // Arrange
-    vi.mock('process');
-    process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
-    const { buildServerImportSpy } = await mockBuildFunctions();
+  describe('preset output', () => {
+    it('should use the analog output paths when preset is not vercel', async () => {
+      // Arrange
+      vi.mock('process');
+      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      const { buildServerImportSpy } = await mockBuildFunctions();
 
-    const plugin = nitro({}, {});
+      const plugin = nitro({}, {});
 
-    // Act
-    await runConfigAndCloseBundle(plugin);
+      // Act
+      await runConfigAndCloseBundle(plugin);
 
-    // Assert
-    expect(buildServerImportSpy).toHaveBeenCalledWith(
-      {},
-      expect.objectContaining({
-        output: {
-          dir: '/custom-root-directory/dist/analog',
-          publicDir: '/custom-root-directory/dist/analog/public',
-        },
-      })
-    );
-  });
+      // Assert
+      expect(buildServerImportSpy).toHaveBeenCalledWith(
+        {},
+        expect.objectContaining({
+          output: {
+            dir: '/custom-root-directory/dist/analog',
+            publicDir: '/custom-root-directory/dist/analog/public',
+          },
+        })
+      );
+    });
 
-  it('should use the .vercel output paths when preset is vercel', async () => {
-    // Arrange
-    vi.mock('process');
-    process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
-    const { buildServerImportSpy } = await mockBuildFunctions();
+    it('should use the .vercel output paths when preset is vercel', async () => {
+      // Arrange
+      vi.mock('process');
+      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      const { buildServerImportSpy } = await mockBuildFunctions();
 
-    const plugin = nitro({}, { preset: 'vercel' });
+      const plugin = nitro({}, { preset: 'vercel' });
 
-    // Act
-    await runConfigAndCloseBundle(plugin);
+      // Act
+      await runConfigAndCloseBundle(plugin);
 
-    // Assert
-    expect(buildServerImportSpy).toHaveBeenCalledWith(
-      {},
-      expect.objectContaining({
-        output: {
-          dir: '/custom-root-directory/.vercel/output',
-          publicDir: '/custom-root-directory/.vercel/output/static',
-        },
-      })
-    );
-  });
+      // Assert
+      expect(buildServerImportSpy).toHaveBeenCalledWith(
+        {},
+        expect.objectContaining({
+          output: {
+            dir: '/custom-root-directory/.vercel/output',
+            publicDir: '/custom-root-directory/.vercel/output/static',
+          },
+        })
+      );
+    });
 
-  it('should use the .vercel output paths when preset is vercel-edge', async () => {
-    // Arrange
-    vi.mock('process');
-    process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
-    const { buildServerImportSpy } = await mockBuildFunctions();
+    it('should use the .vercel output paths when preset is vercel-edge', async () => {
+      // Arrange
+      vi.mock('process');
+      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      const { buildServerImportSpy } = await mockBuildFunctions();
 
-    const plugin = nitro({}, { preset: 'vercel-edge' });
+      const plugin = nitro({}, { preset: 'vercel-edge' });
 
-    // Act
-    await runConfigAndCloseBundle(plugin);
+      // Act
+      await runConfigAndCloseBundle(plugin);
 
-    // Assert
-    expect(buildServerImportSpy).toHaveBeenCalledWith(
-      {},
-      expect.objectContaining({
-        output: {
-          dir: '/custom-root-directory/.vercel/output',
-          publicDir: '/custom-root-directory/.vercel/output/static',
-        },
-      })
-    );
+      // Assert
+      expect(buildServerImportSpy).toHaveBeenCalledWith(
+        {},
+        expect.objectContaining({
+          output: {
+            dir: '/custom-root-directory/.vercel/output',
+            publicDir: '/custom-root-directory/.vercel/output/static',
+          },
+        })
+      );
+    });
+
+    it('should use the .vercel output paths when preset is VERCEL environment variable is set', async () => {
+      // Arrange
+      vi.stubEnv('VERCEL', '1');
+      vi.mock('process');
+      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      const { buildServerImportSpy } = await mockBuildFunctions();
+
+      const plugin = nitro({}, {});
+
+      // Act
+      await runConfigAndCloseBundle(plugin);
+
+      // Assert
+      expect(buildServerImportSpy).toHaveBeenCalledWith(
+        {},
+        expect.objectContaining({
+          output: {
+            dir: '/custom-root-directory/.vercel/output',
+            publicDir: '/custom-root-directory/.vercel/output/static',
+          },
+        })
+      );
+    });
   });
 });

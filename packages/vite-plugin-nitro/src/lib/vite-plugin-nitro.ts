@@ -81,12 +81,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
         ],
       };
 
-      if (buildPreset && buildPreset.toLowerCase().includes('vercel')) {
-        nitroConfig = withVercelOutputAPI(
-          nitroConfig,
-          buildPreset,
-          workspaceRoot
-        );
+      if (isVercelPreset(buildPreset)) {
+        nitroConfig = withVercelOutputAPI(nitroConfig, workspaceRoot);
       }
 
       if (!ssrBuild && !isTest) {
@@ -204,9 +200,13 @@ function isEmptyPrerenderRoutes(options?: Options): boolean {
 function isArrayWithElements<T>(arr: unknown): arr is [T, ...T[]] {
   return !!(Array.isArray(arr) && arr.length);
 }
+
+const isVercelPreset = (buildPreset: string | undefined) =>
+  process.env['VERCEL'] ||
+  (buildPreset && buildPreset.toLowerCase().includes('vercel'));
+
 const withVercelOutputAPI = (
   nitroConfig: NitroConfig | undefined,
-  buildPreset: string,
   workspaceRoot: string
 ) => ({
   ...nitroConfig,
