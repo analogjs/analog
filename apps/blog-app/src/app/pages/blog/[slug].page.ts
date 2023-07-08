@@ -1,7 +1,7 @@
 import { injectContent, MarkdownComponent } from '@analogjs/content';
+import { RouteMeta } from '@analogjs/router';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { Component } from '@angular/core';
-import { RouteMeta } from '@analogjs/router';
 import { PostAttributes } from './models';
 import { postMetaResolver, postTitleResolver } from './resolvers';
 
