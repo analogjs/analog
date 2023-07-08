@@ -29,18 +29,19 @@ export function injectContent<
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   const route = inject(ActivatedRoute);
   const contentFiles = inject(CONTENT_FILES_TOKEN);
+  const prefix = typeof param === 'string' ? '' : `${param.subdirectory}/`;
 
   const paramKey = typeof param === 'string' ? param : param.param;
   return route.paramMap.pipe(
     map((params) => params.get(paramKey)),
     switchMap((slug) => {
-      // Get the file from the list of files based on the custom slug attribute, if it exists
-      const contentFile = contentFiles[slug || ''];
+      const filename = `/src/content/${prefix}${slug}.md`;
+      const contentFile = contentFiles[filename];
 
       if (!contentFile) {
         return of({
           attributes: {},
-          filename: slug || '',
+          filename: filename || '',
           slug: slug || '',
           content: fallback,
         });
@@ -63,7 +64,7 @@ export function injectContent<
           parseRawContentFile<Attributes>(rawContentFile);
 
         const returnObj = {
-          filename: slug || '',
+          filename,
           slug: slug || '',
           attributes,
           content,

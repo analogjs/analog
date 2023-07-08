@@ -13,20 +13,22 @@ export const CONTENT_FILES_TOKEN = new InjectionToken<
 
     const lookup: Record<string, string> = {};
     contentFilesList.forEach((item) => {
-      lookup[item.filename] = item.slug || item.filename;
+      const fileParts = item.filename.split('/');
+      const filePath = fileParts.slice(0, fileParts.length - 1).join('/');
+      lookup[item.filename] = `${filePath}/${item.slug}.md`;
     });
 
-    const newObject: Record<string, () => Promise<string>> = {};
+    const objectUsingSlugAttribute: Record<string, () => Promise<string>> = {};
     Object.entries(contentFiles).forEach((entry) => {
       const filename = entry[0];
       const value = entry[1];
 
-      const slug = lookup[filename];
-      if (slug !== undefined) {
-        newObject[slug] = value;
+      const newFilename = lookup[filename];
+      if (newFilename !== undefined) {
+        objectUsingSlugAttribute[newFilename] = value;
       }
     });
 
-    return newObject;
+    return objectUsingSlugAttribute;
   },
 });
