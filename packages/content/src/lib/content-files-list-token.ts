@@ -21,7 +21,7 @@ export const CONTENT_FILES_LIST_TOKEN = new InjectionToken<ContentFile[]>(
         return {
           filename,
           attributes,
-          slug: encodeURI(slug) ?? getSlug(filename),
+          slug: slug ? encodeURI(slug) : encodeURI(getSlug(filename)),
         };
       });
     },

@@ -41,7 +41,7 @@ export function injectContent<
       if (!contentFile) {
         return of({
           attributes: {},
-          filename: filename || '',
+          filename: filename,
           slug: slug || '',
           content: fallback,
         });
@@ -63,14 +63,12 @@ export function injectContent<
         const { content, attributes } =
           parseRawContentFile<Attributes>(rawContentFile);
 
-        const returnObj = {
+        return {
           filename,
           slug: slug || '',
           attributes,
           content,
         };
-
-        return returnObj;
       });
     })
   );
