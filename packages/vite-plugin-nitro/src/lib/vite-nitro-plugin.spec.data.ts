@@ -38,10 +38,7 @@ export const mockNitroConfig: NitroConfig = {
   },
 };
 
-export async function mockBuildFunctions(): Promise<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [Mock<any, any>, Mock<any, any>, Mock<any, any>]
-> {
+export async function mockBuildFunctions() {
   const buildServerImport = await import('./build-server');
   const buildServerImportSpy = vi.fn();
   buildServerImport.buildServer = buildServerImportSpy;
@@ -54,7 +51,7 @@ export async function mockBuildFunctions(): Promise<
   const buildSitemapImportSpy = vi.fn();
   buildSitemapImport.buildSitemap = buildSitemapImportSpy;
 
-  return [buildSSRAppImportSpy, buildServerImportSpy, buildSitemapImportSpy];
+  return { buildSSRAppImportSpy, buildServerImportSpy, buildSitemapImportSpy };
 }
 
 export async function runConfigAndCloseBundle(plugin: Plugin): Promise<void> {
