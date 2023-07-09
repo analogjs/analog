@@ -8,7 +8,7 @@
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:ng-packagr",
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/trpc"],
+      "outputs": ["node_modules/@analogjs/trpc"],
       "options": {
         "project": "packages/trpc/ng-package.json"
       },

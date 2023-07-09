@@ -8,7 +8,7 @@
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:ng-packagr",
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content"],
+      "outputs": ["node_modules/@analogjs/content"],
       "options": {
         "project": "packages/content/ng-package.json"
       },

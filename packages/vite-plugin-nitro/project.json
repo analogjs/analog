@@ -6,7 +6,7 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{workspaceRoot}{options.outputPath}"],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "node_modules/@analogjs/vite-plugin-nitro",
         "main": "packages/vite-plugin-nitro/src/index.ts",
