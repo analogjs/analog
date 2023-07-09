@@ -147,7 +147,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="http://www.justinrassier.com"><img src="https://avatars.githubusercontent.com/u/1228424?v=4?s=100" width="100px;" alt="Justin Rassier"/><br /><sub><b>Justin Rassier</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=justinrassier" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=justinrassier" title="Code">💻</a> <a href="#infra-justinrassier" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="http://riegler.fr"><img src="https://avatars.githubusercontent.com/u/1300985?v=4?s=100" width="100px;" alt="Matthieu Riegler"/><br /><sub><b>Matthieu Riegler</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=JeanMeche" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://riegler.fr"><img src="https://avatars.githubusercontent.com/u/1300985?v=4?s=100" width="100px;" alt="Matthieu Riegler"/><br /><sub><b>Matthieu Riegler</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=JeanMeche" title="Documentation">📖</a> <a href="#infra-JeanMeche" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
     </tr>
   </tbody>
 </table>
