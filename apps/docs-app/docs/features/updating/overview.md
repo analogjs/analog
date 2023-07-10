@@ -13,7 +13,7 @@ You can use the `ng update` command for an Angular CLI workspace, or the `nx mig
 To update an Analog project with the `ng update` command:
 
 ```shell
-ng update @analogjs/platform
+ng update @analogjs/platform@latest
 ```
 
 </TabItem>
@@ -25,7 +25,7 @@ ng update @analogjs/platform
 To update an Analog project with the `nx migrate` command:
 
 ```shell
-nx migrate @analogjs/platform
+nx migrate @analogjs/platform@latest
 ```
 
 </TabItem>
