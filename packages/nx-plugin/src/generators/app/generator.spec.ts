@@ -96,6 +96,15 @@ describe('nx-plugin generator', () => {
     expect(hasWelcomeComponentFile).toBeTruthy();
   };
 
+  const verifyEslint = (
+    tree: Tree,
+    config: ProjectConfiguration,
+    devDependencies: Record<string, string>
+  ) => {
+    expect(config.targets.lint).toBeDefined();
+    expect(devDependencies['eslint']).toBeDefined();
+  };
+
   const verifyTailwindIsSetUp = (
     tree: Tree,
     devDependencies: Record<string, string>
@@ -170,6 +179,8 @@ describe('nx-plugin generator', () => {
       verifyConfig(config, analogAppName);
 
       verifyHomePageExists(tree, analogAppName);
+
+      verifyEslint(tree, config, devDependencies);
     });
 
     it('creates an analogjs app in the source directory with tailwind set up', async () => {
@@ -217,6 +228,8 @@ describe('nx-plugin generator', () => {
       verifyConfig(config, analogAppName);
 
       verifyHomePageExists(tree, analogAppName);
+
+      verifyEslint(tree, config, devDependencies);
     });
 
     it('creates an analogjs app in the source directory with tailwind set up', async () => {
