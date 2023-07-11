@@ -19,7 +19,7 @@
     "app": {
       "factory": "./src/generators/app/compat",
       "schema": "./src/generators/app/schema.json",
-      "description": "Add Angular Three with proper packages and config"
+      "description": "Generates an AnalogJs application"
     }
   }
 }
