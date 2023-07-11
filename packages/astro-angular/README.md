@@ -121,6 +121,28 @@ export default defineConfig({
 });
 ```
 
+### Transforming Packages for SSR Compatibility
+
+In case you receive an error in development and build when using an Angular component with an external package and in combination with an Astro Client Directive such as `client:load`. 
+
+One option is to add the package(s) to Vite `ssr.noExternal` config.
+
+```js
+import { defineConfig } from 'astro/config';
+
+import angular from '@analogjs/astro-angular';
+
+export default defineConfig({
+  integrations: [angular()],
+  vite: {
+    ssr: {
+      // transform these packages during SSR. Globs supported
+      noExternal: ['@rx-angular/**']
+    }
+  }
+});
+```
+
 ## Defining A Component
 
 The Astro Angular integration **only** supports rendering standalone components:
