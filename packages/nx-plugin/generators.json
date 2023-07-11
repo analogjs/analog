@@ -6,7 +6,7 @@
     "app": {
       "factory": "./src/generators/app/generator",
       "schema": "./src/generators/app/schema.json",
-      "description": "Generates an AnalogJs application"
+      "description": "Generates an Analog application"
     },
     "preset": {
       "factory": "./src/generators/preset/generator",
@@ -19,7 +19,7 @@
     "app": {
       "factory": "./src/generators/app/compat",
       "schema": "./src/generators/app/schema.json",
-      "description": "Generates an AnalogJs application"
+      "description": "Generates an Analog application"
     }
   }
 }
