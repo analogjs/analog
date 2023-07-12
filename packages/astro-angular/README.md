@@ -121,6 +121,26 @@ export default defineConfig({
 });
 ```
 
+### Transforming Packages for SSR Compatibility
+
+To ensure Angular libraries are transformed during Astro's SSR process, add them to the `ssr.noExternal` array in the Vite config.
+
+```js
+import { defineConfig } from 'astro/config';
+
+import angular from '@analogjs/astro-angular';
+
+export default defineConfig({
+  integrations: [angular()],
+  vite: {
+    ssr: {
+      // transform these packages during SSR. Globs supported
+      noExternal: ['@rx-angular/**'],
+    },
+  },
+});
+```
+
 ## Defining A Component
 
 The Astro Angular integration **only** supports rendering standalone components:
