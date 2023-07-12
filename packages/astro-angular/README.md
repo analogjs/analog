@@ -125,7 +125,6 @@ export default defineConfig({
 
 To ensure Angular libraries are transformed during Astro's SSR process, add them to the `ssr.noExternal` array in the Vite config.
 
-
 ```js
 import { defineConfig } from 'astro/config';
 
@@ -136,9 +135,9 @@ export default defineConfig({
   vite: {
     ssr: {
       // transform these packages during SSR. Globs supported
-      noExternal: ['@rx-angular/**']
-    }
-  }
+      noExternal: ['@rx-angular/**'],
+    },
+  },
 });
 ```
 
