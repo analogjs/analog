@@ -123,7 +123,7 @@ export default defineConfig({
 
 ### Transforming Packages for SSR Compatibility
 
-In case you receive an error in development and build when using an Angular component with an external package and in combination with an Astro Client Directive such as `client:load`. 
+To ensure Angular libraries are transformed during Astro's SSR process, add them to the `ssr.noExternal` array in the Vite config.
 
 One option is to add the package(s) to Vite `ssr.noExternal` config.
 
