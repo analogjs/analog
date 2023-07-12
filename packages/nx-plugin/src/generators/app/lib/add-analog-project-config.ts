@@ -62,16 +62,6 @@ export function addAnalogProjectConfig(
           browserTarget: `${projectName}:build`,
         },
       },
-      lint: {
-        executor: `${nxPackageNamespace}/linter:eslint`,
-        outputs: ['{options.outputFile}'],
-        options: {
-          lintFilePatterns: [
-            `${appsDir}/${projectName}/**/*.ts`,
-            `${appsDir}/${projectName}/**/*.html`,
-          ],
-        },
-      },
       test: {
         executor: `${nxPackageNamespace}/vite:test`,
         outputs: [`${appsDir}/${projectName}/coverage`],
