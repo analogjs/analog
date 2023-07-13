@@ -37,18 +37,36 @@ const TEMPLATES = APPS.map(
   (f) => (f.variants && f.variants.map((v) => v.name)) || [f.name]
 ).reduce((a, b) => a.concat(b), []);
 
+const UI_FRAMEWORKS = [
+  {
+    name: 'none',
+    display: 'None',
+    color: yellow,
+  },
+  {
+    name: 'tailwind',
+    display: 'Tailwind',
+    color: yellow,
+  },
+  {
+    name: 'material',
+    display: 'Angular Material',
+    color: yellow,
+  },
+];
+
 const renameFiles = {
   _gitignore: '.gitignore',
 };
 
 async function init() {
-  let targetDir = formatTargetDir(argv._[0]);
-  let template = argv.template || argv.t;
-  let skipTailwind = argv.skipTailwind || false;
+  let usedTargetDir = formatTargetDir(argv._[0]);
+  let usedTemplate = argv.template || argv.t;
+  let usedUi = argv.ui || false;
 
   const defaultTargetDir = 'analog-project';
   const getProjectName = () =>
-    targetDir === '.' ? path.basename(path.resolve()) : targetDir;
+    usedTargetDir === '.' ? path.basename(path.resolve()) : usedTargetDir;
 
   let result = {};
 
@@ -56,22 +74,24 @@ async function init() {
     result = await prompts(
       [
         {
-          type: targetDir ? null : 'text',
+          type: usedTargetDir ? null : 'text',
           name: 'projectName',
           message: reset('Project name:'),
           initial: defaultTargetDir,
           onState: (state) => {
-            targetDir = formatTargetDir(state.value) || defaultTargetDir;
+            usedTargetDir = formatTargetDir(state.value) || defaultTargetDir;
           },
         },
         {
           type: () =>
-            !fs.existsSync(targetDir) || isEmpty(targetDir) ? null : 'confirm',
+            !fs.existsSync(usedTargetDir) || isEmpty(usedTargetDir)
+              ? null
+              : 'confirm',
           name: 'overwrite',
           message: () =>
-            (targetDir === '.'
+            (usedTargetDir === '.'
               ? 'Current directory'
-              : `Target directory "${targetDir}"`) +
+              : `Target directory "${usedTargetDir}"`) +
             ` is not empty. Remove existing files and continue?`,
         },
         {
@@ -92,12 +112,14 @@ async function init() {
             isValidPackageName(dir) || 'Invalid package.json name',
         },
         {
-          type: template && TEMPLATES.includes(template) ? null : 'select',
+          type:
+            usedTemplate && TEMPLATES.includes(usedTemplate) ? null : 'select',
           name: 'framework',
           message:
-            typeof template === 'string' && !TEMPLATES.includes(template)
+            typeof usedTemplate === 'string' &&
+            !TEMPLATES.includes(usedTemplate)
               ? reset(
-                  `"${template}" isn't a valid template. Please choose from below: `
+                  `"${usedTemplate}" isn't a valid template. Please choose from below: `
                 )
               : reset('Select a template:'),
           initial: 0,
@@ -125,9 +147,21 @@ async function init() {
             }),
         },
         {
-          type: skipTailwind ? null : 'confirm',
-          name: 'tailwind',
-          message: 'Would you like to add Tailwind to your project?',
+          type:
+            usedUi && UI_FRAMEWORKS?.map((ui) => ui.name).includes(usedUi)
+              ? null
+              : 'select',
+          name: 'ui',
+          message: reset('Select a UI framework:'),
+          // @ts-ignore
+          choices: () =>
+            UI_FRAMEWORKS.map((framework) => {
+              const variantColor = framework.color;
+              return {
+                title: variantColor(framework.name),
+                value: framework.name,
+              };
+            }),
         },
       ],
       {
@@ -142,9 +176,9 @@ async function init() {
   }
 
   // user choice associated with prompts
-  const { framework, overwrite, packageName, variant, tailwind } = result;
+  const { framework, overwrite, packageName, variant, ui } = result;
 
-  const root = path.join(cwd, targetDir);
+  const root = path.join(cwd, usedTargetDir);
 
   if (overwrite) {
     emptyDir(root);
@@ -153,15 +187,15 @@ async function init() {
   }
 
   // determine template
-  template = variant || framework || template;
-  skipTailwind = !tailwind || skipTailwind;
+  usedTemplate = variant || framework || usedTemplate;
+  usedUi = ui || usedUi;
 
   console.log(`\nScaffolding project in ${root}...`);
 
   const templateDir = path.resolve(
     fileURLToPath(import.meta.url),
     '..',
-    `template-${template}`
+    `template-${usedTemplate}`
   );
 
   const filesDir = path.resolve(fileURLToPath(import.meta.url), '..', `files`);
@@ -182,10 +216,20 @@ async function init() {
     write(file);
   }
 
-  if (!skipTailwind) {
-    addTailwindConfig(write, filesDir);
-    addPostCssConfig(write, filesDir);
-    addTailwindDirectives(write, filesDir);
+  switch (usedUi) {
+    case 'material':
+      addMaterialStylesSCSS(write, root, filesDir);
+      addMaterialIndex(write, root, filesDir);
+      addStyleExtensions(write, root);
+      break;
+    case 'tailwind':
+      addTailwindConfig(write, filesDir);
+      addPostCssConfig(write, filesDir);
+      addTailwindDirectives(write, filesDir);
+      break;
+    case 'none':
+    default:
+      break;
   }
 
   const pkgInfo = pkgFromUserAgent(process.env.npm_config_user_agent);
@@ -197,17 +241,27 @@ async function init() {
   pkg.name = packageName || getProjectName();
   pkg.scripts.start = getStartCommand(pkgManager);
 
-  if (!skipTailwind) addDevDependencies(pkg);
+  switch (usedUi) {
+    case 'material':
+      addMaterialDependencies(pkg, usedTemplate);
+      break;
+    case 'tailwind':
+      addTailwindDevDependencies(pkg);
+      break;
+    case 'none':
+    default:
+      break;
+  }
 
   write('package.json', JSON.stringify(pkg, null, 2));
 
   console.log(`\nInitializing git repository:`);
-  execSync(`git init ${targetDir} && cd ${targetDir} && git add .`);
+  execSync(`git init ${usedTargetDir} && cd ${usedTargetDir} && git add .`);
 
   // Fail Silent
   // Can fail when user does not have global git credentials
   try {
-    execSync(`cd ${targetDir} && git commit -m "initial commit"`);
+    execSync(`cd ${usedTargetDir} && git commit -m "initial commit"`);
   } catch {}
 
   console.log(`\nDone. Now run:\n`);
@@ -322,31 +376,98 @@ function getStartCommand(pkgManager) {
 function addTailwindDirectives(write, filesDir) {
   write(
     'src/styles.css',
-    fs.readFileSync(path.join(filesDir, `styles.css`), 'utf-8')
+    fs.readFileSync(path.join(filesDir, 'tailwind', `styles.css`), 'utf-8')
   );
 }
 
 function addPostCssConfig(write, filesDir) {
   write(
     'postcss.config.js',
-    fs.readFileSync(path.join(filesDir, `postcss.config.js`), 'utf-8')
+    fs.readFileSync(
+      path.join(filesDir, 'tailwind', `postcss.config.js`),
+      'utf-8'
+    )
   );
 }
 
 function addTailwindConfig(write, filesDir) {
   write(
     'tailwind.config.js',
-    fs.readFileSync(path.join(filesDir, `tailwind.config.js`), 'utf-8')
+    fs.readFileSync(
+      path.join(filesDir, 'tailwind', `tailwind.config.js`),
+      'utf-8'
+    )
   );
 }
 
-function addDevDependencies(pkg) {
+function addTailwindDevDependencies(pkg) {
   ['tailwindcss@^3.3.1', 'postcss@^8.4.21', 'autoprefixer@^10.4.14'].forEach(
     (packageName) => {
       const [name, version] = packageName.split('@');
       pkg.devDependencies[name] = version;
     }
   );
+}
+
+function addMaterialStylesSCSS(write, root, filesDir) {
+  // remove old styles.css
+  if (fs.existsSync(path.join(root, `src/styles.css`))) {
+    fs.unlinkSync(path.join(root, `src/styles.css`));
+  }
+
+  write(
+    'src/styles.scss',
+    fs.readFileSync(
+      path.join(filesDir, 'angular-material', `styles.scss`),
+      'utf-8'
+    )
+  );
+}
+
+function addStyleExtensions(write, root) {
+  // update vite.config.ts to add `inlineStylesExtension` to the analog vite plugin
+  const viteConfig = fs.readFileSync(
+    path.join(root, 'vite.config.ts'),
+    'utf-8'
+  );
+  const updatedViteConfig = viteConfig.replace(
+    `plugins: [analog()],`,
+    `plugins: [
+    analog({
+      vite: {
+        inlineStylesExtension: 'scss',
+      },
+    })
+  ],`
+  );
+  write('vite.config.ts', updatedViteConfig);
+}
+
+function addMaterialIndex(write, root, filesDir) {
+  // remove old styles.css
+  if (fs.existsSync(path.join(root, `src/index.html`))) {
+    fs.unlinkSync(path.join(root, `src/index.html`));
+  }
+
+  write(
+    'src/index.html',
+    fs.readFileSync(
+      path.join(filesDir, 'angular-material', `index.html`),
+      'utf-8'
+    )
+  );
+}
+
+function addMaterialDependencies(pkg, variant) {
+  const angularVersion = variant?.replace('angular-v', '');
+  [
+    `@angular/cdk@^${angularVersion}`,
+    `@angular/material@^${angularVersion}`,
+  ].forEach((packageName) => {
+    // split on last @ to get name and version
+    const [name, version] = packageName.split(/@(?=[^@]*$)/);
+    pkg.dependencies[name] = version;
+  });
 }
 
 init().catch((e) => {
