@@ -145,7 +145,7 @@ firebase deploy
 
 Analog supports deploying on [Vercel](https://vercel.com/) with no additional configuration.
 
-### Create the project
+### Deploying the Project
 
 By default, when deploying to Vercel, the build preset is handled automatically.
 
