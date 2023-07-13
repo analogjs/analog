@@ -153,7 +153,7 @@ You don't need to do anything special to deploy to Vercel, everything is handled
 
 2. Click 'Deploy'.
 
-### Vercel doesn't load the preset
+### Setting the Preset Manually
 
 There might be a case where Vercel doesn't load the preset automatically. In that case, you can do one of the following.
 
