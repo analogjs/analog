@@ -143,21 +143,22 @@ firebase deploy
 
 ## Vercel
 
-Analog supports deploying on [Vercel](https://vercel.com/) with minimal configuration.
+Analog supports deploying on [Vercel](https://vercel.com/) with no additional configuration.
 
-### Create a new project
+### Create the project
+
+You don't need to do anything special to deploy to Vercel, everything is handled automatically.
 
 1. Create a new project and select the repository that contains your code.
 
-2. Add an environment variable with `BUILD_PRESET` set to `vercel`.
+2. Click 'Deploy'.
 
-3. Click 'Deploy'.
+### Vercel doesn't load the preset
 
-### Nx and Vercel
+There might be a case where Vercel doesn't load the preset automatically. In that case, you can do one of the following.
 
-When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache will be reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can set the Nitro preset to `vercel` so that the build output matches the one on Vercel.
-
-To achieve this, you need to update the `vite.config.ts` file. Add the following code snippet to the `plugins` section:
+- Set the `BUILD_PRESET` environment variable to `vercel`.
+- Set the preset in the `vite.config.ts` file:
 
 ```ts [vite.config.ts]
 plugins: [
@@ -168,3 +169,7 @@ plugins: [
   }),
 ];
 ```
+
+#### Nx and vercel
+
+When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache will be reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can use the preset in the `vite.config.ts` file as a workaround.
