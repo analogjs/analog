@@ -172,4 +172,4 @@ plugins: [
 
 #### Nx and Vercel
 
-When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache will be reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can use the preset in the `vite.config.ts` file as a workaround.
+When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache is reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can use the preset in the `vite.config.ts` file as a workaround.
