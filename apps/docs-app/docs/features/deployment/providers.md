@@ -145,15 +145,15 @@ firebase deploy
 
 Analog supports deploying on [Vercel](https://vercel.com/) with no additional configuration.
 
-### Create the project
+### Deploying the Project
 
-You don't need to do anything special to deploy to Vercel, everything is handled automatically.
+By default, when deploying to Vercel, the build preset is handled automatically.
 
 1. Create a new project and select the repository that contains your code.
 
 2. Click 'Deploy'.
 
-### Vercel doesn't load the preset
+### Setting the Preset Manually
 
 There might be a case where Vercel doesn't load the preset automatically. In that case, you can do one of the following.
 
@@ -170,6 +170,6 @@ plugins: [
 ];
 ```
 
-#### Nx and vercel
+#### Nx and Vercel
 
-When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache will be reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can use the preset in the `vite.config.ts` file as a workaround.
+When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache is reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can use the preset in the `vite.config.ts` file as a workaround.
