@@ -61,3 +61,5 @@ stats.html
 
 # E2E test
 tmpanalogapp*
+~/.nvm/nvm-exec
+~/.nvm/nvm.sh

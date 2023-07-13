@@ -6,7 +6,7 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": ["{workspaceRoot}/{options.outputPath}"],
       "options": {
         "outputPath": "node_modules/@analogjs/platform/src/lib/nx-plugin",
         "main": "packages/nx-plugin/src/index.ts",

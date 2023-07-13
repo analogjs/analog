@@ -1,6 +1,6 @@
 ---
 title: My Second Post
-slug: 2022-12-31-my-second-post
+slug: my-second-post
 description: My Second Post Description
 coverImage: https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=928&q=80
 ---
@@ -13,6 +13,7 @@ coverImage: https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=r
 
 ### Contents
 
+- [Contents](#contents)
 - [Section 1](#section-1)
 - [Section 2](#section-2)
 

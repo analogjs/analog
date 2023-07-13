@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-50-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-52-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -138,7 +138,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="http://cynthia-developer.netlify.com"><img src="https://avatars.githubusercontent.com/u/37863089?v=4?s=100" width="100px;" alt="Cynthia Iradukunda"/><br /><sub><b>Cynthia Iradukunda</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ciradu2204" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Drunkenpilot"><img src="https://avatars.githubusercontent.com/u/2257567?v=4?s=100" width="100px;" alt="Drunkenpilot"/><br /><sub><b>Drunkenpilot</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Drunkenpilot" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Drunkenpilot"><img src="https://avatars.githubusercontent.com/u/2257567?v=4?s=100" width="100px;" alt="Drunkenpilot"/><br /><sub><b>Drunkenpilot</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Drunkenpilot" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=Drunkenpilot" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jeremyhofer"><img src="https://avatars.githubusercontent.com/u/17076628?v=4?s=100" width="100px;" alt="Jeremy Hofer"/><br /><sub><b>Jeremy Hofer</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=jeremyhofer" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=jeremyhofer" title="Code">💻</a> <a href="#infra-jeremyhofer" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://www.routechnology.tech"><img src="https://avatars.githubusercontent.com/u/61606062?v=4?s=100" width="100px;" alt="Olalekan Raheem"/><br /><sub><b>Olalekan Raheem</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=SOG-web" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/luishcastroc"><img src="https://avatars.githubusercontent.com/u/13698269?v=4?s=100" width="100px;" alt="Luis Castro"/><br /><sub><b>Luis Castro</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=luishcastroc" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=luishcastroc" title="Documentation">📖</a></td>
@@ -146,7 +146,9 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/cskiwi"><img src="https://avatars.githubusercontent.com/u/847540?v=4?s=100" width="100px;" alt="Glenn Latomme"/><br /><sub><b>Glenn Latomme</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=cskiwi" title="Documentation">📖</a></td>
     </tr>
     <tr>
-      <td align="center" valign="top" width="14.28%"><a href="http://www.justinrassier.com"><img src="https://avatars.githubusercontent.com/u/1228424?v=4?s=100" width="100px;" alt="Justin Rassier"/><br /><sub><b>Justin Rassier</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=justinrassier" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.justinrassier.com"><img src="https://avatars.githubusercontent.com/u/1228424?v=4?s=100" width="100px;" alt="Justin Rassier"/><br /><sub><b>Justin Rassier</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=justinrassier" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=justinrassier" title="Code">💻</a> <a href="#infra-justinrassier" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://riegler.fr"><img src="https://avatars.githubusercontent.com/u/1300985?v=4?s=100" width="100px;" alt="Matthieu Riegler"/><br /><sub><b>Matthieu Riegler</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=JeanMeche" title="Documentation">📖</a> <a href="#infra-JeanMeche" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ashley-hunter"><img src="https://avatars.githubusercontent.com/u/20795331?v=4?s=100" width="100px;" alt="Ashley Hunter"/><br /><sub><b>Ashley Hunter</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ashley-hunter" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

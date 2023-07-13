@@ -33,11 +33,15 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
       ssrBuild = _config.build?.ssr === true;
       config = _config;
       const rootDir = config.root || '.';
+      const buildPreset =
+        process.env['BUILD_PRESET'] ??
+        (nitroOptions?.preset as string | undefined);
 
-      let pageHandlers = getPageHandlers({ workspaceRoot, rootDir });
+      const pageHandlers = getPageHandlers({ workspaceRoot, rootDir });
 
       nitroConfig = {
         rootDir,
+        preset: buildPreset,
         logLevel: nitroOptions?.logLevel || 0,
         srcDir: normalizePath(`${rootDir}/src/server`),
         scanDirs: [normalizePath(`${rootDir}/src/server`)],
@@ -76,6 +80,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin {
           ...pageHandlers,
         ],
       };
+
+      if (isVercelPreset(buildPreset)) {
+        nitroConfig = withVercelOutputAPI(nitroConfig, workspaceRoot);
+      }
 
       if (!ssrBuild && !isTest) {
         // store the client output path for the SSR build config
@@ -192,3 +200,21 @@ function isEmptyPrerenderRoutes(options?: Options): boolean {
 function isArrayWithElements<T>(arr: unknown): arr is [T, ...T[]] {
   return !!(Array.isArray(arr) && arr.length);
 }
+
+const isVercelPreset = (buildPreset: string | undefined) =>
+  process.env['VERCEL'] ||
+  (buildPreset && buildPreset.toLowerCase().includes('vercel'));
+
+const withVercelOutputAPI = (
+  nitroConfig: NitroConfig | undefined,
+  workspaceRoot: string
+) => ({
+  ...nitroConfig,
+  output: {
+    ...nitroConfig?.output,
+    dir: normalizePath(path.resolve(workspaceRoot, '.vercel', 'output')),
+    publicDir: normalizePath(
+      path.resolve(workspaceRoot, '.vercel', 'output/static')
+    ),
+  },
+});

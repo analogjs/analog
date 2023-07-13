@@ -34,8 +34,11 @@ describe('nitro', () => {
 
   it('should build the server with prerender route "/" if nothing was provided', async () => {
     // Arrange
-    const [buildSSRAppImportSpy, buildServerImportSpy, buildSitemapImportSpy] =
-      await mockBuildFunctions();
+    const {
+      buildSSRAppImportSpy,
+      buildServerImportSpy,
+      buildSitemapImportSpy,
+    } = await mockBuildFunctions();
     const plugin = nitro({
       ssr: true,
     });
@@ -59,8 +62,11 @@ describe('nitro', () => {
 
   it('should build the server with prerender route "/" even if ssr is false', async () => {
     // Arrange
-    const [buildSSRAppImportSpy, buildServerImportSpy, buildSitemapImportSpy] =
-      await mockBuildFunctions();
+    const {
+      buildSSRAppImportSpy,
+      buildServerImportSpy,
+      buildSitemapImportSpy,
+    } = await mockBuildFunctions();
     const plugin = nitro({
       ssr: false,
     });
@@ -84,12 +90,15 @@ describe('nitro', () => {
 
   it('should build the server without prerender route when an empty array was passed', async () => {
     // Arrange
-    const [buildSSRAppImportSpy, buildServerImportSpy, buildSitemapImportSpy] =
-      await mockBuildFunctions();
+    const {
+      buildSSRAppImportSpy,
+      buildServerImportSpy,
+      buildSitemapImportSpy,
+    } = await mockBuildFunctions();
     const prerenderRoutes = {
       prerender: {
         routes: [],
-        sitemap: { domain: 'example.com' },
+        sitemap: { host: 'example.com' },
       },
     };
     const plugin = nitro({
@@ -115,19 +124,22 @@ describe('nitro', () => {
     );
     expect(buildSitemapImportSpy).toHaveBeenCalledWith(
       {},
-      { domain: 'example.com' },
+      { host: 'example.com' },
       prerenderRoutes.prerender.routes
     );
   });
 
   it('should build the server with provided routes', async () => {
     // Arrange
-    const [buildSSRAppImportSpy, buildServerImportSpy, buildSitemapImportSpy] =
-      await mockBuildFunctions();
+    const {
+      buildSSRAppImportSpy,
+      buildServerImportSpy,
+      buildSitemapImportSpy,
+    } = await mockBuildFunctions();
     const prerenderRoutes = {
       prerender: {
         routes: ['/blog', '/about'],
-        sitemap: { domain: 'example.com' },
+        sitemap: { host: 'example.com' },
       },
     };
     const plugin = nitro({
@@ -158,8 +170,103 @@ describe('nitro', () => {
 
     expect(buildSitemapImportSpy).toHaveBeenCalledWith(
       {},
-      { domain: 'example.com' },
+      { host: 'example.com' },
       prerenderRoutes.prerender.routes
     );
+  });
+
+  describe('preset output', () => {
+    it('should use the analog output paths when preset is not vercel', async () => {
+      // Arrange
+      vi.mock('process');
+      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      const { buildServerImportSpy } = await mockBuildFunctions();
+
+      const plugin = nitro({}, {});
+
+      // Act
+      await runConfigAndCloseBundle(plugin);
+
+      // Assert
+      expect(buildServerImportSpy).toHaveBeenCalledWith(
+        {},
+        expect.objectContaining({
+          output: {
+            dir: '/custom-root-directory/dist/analog',
+            publicDir: '/custom-root-directory/dist/analog/public',
+          },
+        })
+      );
+    });
+
+    it('should use the .vercel output paths when preset is vercel', async () => {
+      // Arrange
+      vi.mock('process');
+      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      const { buildServerImportSpy } = await mockBuildFunctions();
+
+      const plugin = nitro({}, { preset: 'vercel' });
+
+      // Act
+      await runConfigAndCloseBundle(plugin);
+
+      // Assert
+      expect(buildServerImportSpy).toHaveBeenCalledWith(
+        {},
+        expect.objectContaining({
+          output: {
+            dir: '/custom-root-directory/.vercel/output',
+            publicDir: '/custom-root-directory/.vercel/output/static',
+          },
+        })
+      );
+    });
+
+    it('should use the .vercel output paths when preset is vercel-edge', async () => {
+      // Arrange
+      vi.mock('process');
+      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      const { buildServerImportSpy } = await mockBuildFunctions();
+
+      const plugin = nitro({}, { preset: 'vercel-edge' });
+
+      // Act
+      await runConfigAndCloseBundle(plugin);
+
+      // Assert
+      expect(buildServerImportSpy).toHaveBeenCalledWith(
+        {},
+        expect.objectContaining({
+          output: {
+            dir: '/custom-root-directory/.vercel/output',
+            publicDir: '/custom-root-directory/.vercel/output/static',
+          },
+        })
+      );
+    });
+
+    it('should use the .vercel output paths when preset is VERCEL environment variable is set', async () => {
+      // Arrange
+      vi.stubEnv('VERCEL', '1');
+      vi.mock('process');
+      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      const { buildServerImportSpy } = await mockBuildFunctions();
+
+      const plugin = nitro({}, {});
+
+      // Act
+      await runConfigAndCloseBundle(plugin);
+
+      // Assert
+      expect(buildServerImportSpy).toHaveBeenCalledWith(
+        {},
+        expect.objectContaining({
+          output: {
+            dir: '/custom-root-directory/.vercel/output',
+            publicDir: '/custom-root-directory/.vercel/output/static',
+          },
+        })
+      );
+    });
   });
 });

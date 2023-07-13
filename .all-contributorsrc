@@ -418,7 +418,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/2257567?v=4",
       "profile": "https://github.com/Drunkenpilot",
       "contributions": [
-        "doc"
+        "doc",
+        "code"
       ]
     },
     {
@@ -476,7 +477,28 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/1228424?v=4",
       "profile": "http://www.justinrassier.com",
       "contributions": [
-        "doc"
+        "doc",
+        "code",
+        "infra"
+      ]
+    },
+    {
+      "login": "JeanMeche",
+      "name": "Matthieu Riegler",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1300985?v=4",
+      "profile": "http://riegler.fr",
+      "contributions": [
+        "doc",
+        "infra"
+      ]
+    },
+    {
+      "login": "ashley-hunter",
+      "name": "Ashley Hunter",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20795331?v=4",
+      "profile": "https://github.com/ashley-hunter",
+      "contributions": [
+        "code"
       ]
     }
   ],
