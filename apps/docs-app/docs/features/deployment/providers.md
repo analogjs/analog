@@ -147,7 +147,7 @@ Analog supports deploying on [Vercel](https://vercel.com/) with no additional co
 
 ### Create the project
 
-You don't need to do anything special to deploy to Vercel, everything is handled automatically.
+By default, when deploying to Vercel, the build preset is handled automatically.
 
 1. Create a new project and select the repository that contains your code.
 
