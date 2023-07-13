@@ -65,7 +65,11 @@
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals", "projectSpecificFiles"],
     "sharedGlobals": [],
-    "production": ["default", "!{projectRoot}/.eslintrc.json"],
+    "production": [
+      "default",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/src/test-setup.[jt]s"
+    ],
     "projectSpecificFiles": []
   }
 }
