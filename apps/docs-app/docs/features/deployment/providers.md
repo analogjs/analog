@@ -140,3 +140,31 @@ To deploy to Firebase Hosting, run the `firebase deploy` command.
 BUILD_PRESET=firebase npm run build
 firebase deploy
 ```
+
+## Vercel
+
+Analog supports deploying on [Vercel](https://vercel.com/) with minimal configuration.
+
+### Create a new project
+
+1. Create a new project and select the repository that contains your code.
+
+2. Add an environment variable with `BUILD_PRESET` set to `vercel`.
+
+3. Click 'Deploy'.
+
+### Nx and Vercel
+
+When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache will be reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can set the Nitro preset to `vercel` so that the build output matches the one on Vercel.
+
+To achieve this, you need to update the `vite.config.ts` file. Add the following code snippet to the `plugins` section:
+
+```ts [vite.config.ts]
+plugins: [
+  analog({
+    nitro: {
+      preset: 'vercel',
+    },
+  }),
+];
+```
