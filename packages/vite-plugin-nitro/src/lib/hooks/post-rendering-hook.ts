@@ -1,13 +1,12 @@
 import { Nitro, PrerenderRoute } from 'nitropack';
 
-export function runPostRenderingHooks(
+export function addPostRenderingHooks(
   nitro: Nitro,
-  hooks: ((pr: PrerenderRoute) => Promise<boolean>)[]
+  hooks: ((pr: PrerenderRoute) => Promise<void>)[]
 ): void {
   hooks.forEach((hook: (preRoute: PrerenderRoute) => void) => {
-    nitro.hooks.hook('prerender:generate', async (route: PrerenderRoute) => {
+    nitro.hooks.hook('prerender:generate', (route: PrerenderRoute) => {
       hook(route);
-      await Promise.resolve(true);
     });
   });
 }

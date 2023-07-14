@@ -1,7 +1,7 @@
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
 import { NitroConfig } from 'nitropack';
 import { Options } from './options';
-import { runPostRenderingHooks } from './hooks/post-rendering-hook';
+import { addPostRenderingHooks } from './hooks/post-rendering-hook';
 
 export async function buildServer(
   options?: Options,
@@ -17,7 +17,7 @@ export async function buildServer(
   });
 
   if (options?.prerender?.postRenderingHooks) {
-    runPostRenderingHooks(nitro, options.prerender.postRenderingHooks);
+    addPostRenderingHooks(nitro, options.prerender.postRenderingHooks);
   }
 
   await prepare(nitro);
