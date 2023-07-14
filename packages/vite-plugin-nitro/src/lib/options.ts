@@ -23,7 +23,7 @@ export interface PrerenderOptions {
   routes?: string[] | (() => Promise<(string | undefined)[]>);
   sitemap?: SitemapConfig;
   /** List of functions that will run after pre-rendering is complete. */
-  postRenderingHooks?: ((routes: PrerenderRoute) => Promise<void>)[];
+  postRenderingHooks?: ((routes: PrerenderRoute) => Promise<boolean>)[];
 }
 
 export interface SitemapConfig {
