@@ -163,7 +163,7 @@ And that's it!
   </TabItem>
 
   <TabItem label="Nx" value="yarn">
-In order to make it work with Nx, we need to define the specific app we want to build. There are several ways to do this, and you can choose one of the following methods (replace with your app name):
+In order to make it work with Nx, we need to define the specific app we want to build. There are several ways to do this, and you can choose one of the following methods (replace &#60;app&#62; with your app name):
 
 1. Define the `defaultProject` in your `nx.json`
 
