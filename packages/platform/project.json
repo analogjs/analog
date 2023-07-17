@@ -6,7 +6,6 @@
   "targets": {
     "build-package": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{workspaceRoot}/{options.outputPath}"],
       "options": {
         "outputPath": "node_modules/@analogjs/platform",
         "main": "packages/platform/src/index.ts",
@@ -29,6 +28,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/platform"],
       "options": {
         "commands": ["nx build-package platform", "nx build nx-plugin"],
         "parallel": false
