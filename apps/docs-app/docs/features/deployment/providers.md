@@ -1,3 +1,6 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Providers
 
 Analog supports deployment to many providers with little or no additional configuration using [Nitro](https://nitro.unjs.io) as its underlying server engine. You can find more providers in the [Nitro deployment docs](https://nitro.unjs.io/deploy).
@@ -140,3 +143,75 @@ To deploy to Firebase Hosting, run the `firebase deploy` command.
 BUILD_PRESET=firebase npm run build
 firebase deploy
 ```
+
+## Vercel
+
+Analog supports deploying on [Vercel](https://vercel.com/) with no additional configuration.
+
+### Deploying the Project
+
+<Tabs groupId="porject-type">
+  <TabItem label="Create analog" value="npm">
+By default, when deploying to Vercel, the build preset is handled automatically.
+
+1. Create a new project and select the repository that contains your code.
+
+2. Click 'Deploy'.
+
+And that's it!
+
+  </TabItem>
+
+  <TabItem label="Nx" value="yarn">
+In order to make it work with Nx, we need to define the specific app we want to build. There are several ways to do this, and you can choose one of the following methods (replace &#60;app&#62; with your app name):
+
+1. Define the `defaultProject` in your `nx.json`
+
+```json [nx.json]
+{
+  "defaultProject": "<app>"
+}
+```
+
+2. Create a `vercel.json` file in the root of your project and define the `buildCommand`:
+
+```json [vercel.json]
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "nx build <app>"
+}
+```
+
+3. Define the `buildCommand` in your `package.json`:
+
+```json [package.json]
+{
+  "scripts": {
+    "build": "nx build <app>"
+  }
+}
+```
+
+  </TabItem>
+</Tabs>
+
+### Setting the Preset Manually
+
+There might be a case where Vercel doesn't load the preset automatically. In that case, you can do one of the following.
+
+- Set the `BUILD_PRESET` environment variable to `vercel`.
+- Set the preset in the `vite.config.ts` file:
+
+```ts [vite.config.ts]
+plugins: [
+  analog({
+    nitro: {
+      preset: 'vercel',
+    },
+  }),
+];
+```
+
+#### Nx and Vercel
+
+When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache is reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can use the preset in the `vite.config.ts` file as a workaround.
