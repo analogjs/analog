@@ -8,13 +8,13 @@ export const noteRouter = router({
   create: publicProcedure
     .input(
       z.object({
-        title: z.string(),
+        note: z.string(),
       })
     )
     .mutation(({ input }) =>
       notes.push({
         id: noteId++,
-        note: input.title,
+        note: input.note,
         createdAt: new Date().toISOString(),
       })
     ),
