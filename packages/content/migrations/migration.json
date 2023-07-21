@@ -18,6 +18,16 @@
           "alwaysAddToPackageJson": true
         }
       }
+    },
+    "0.2.0-beta.26": {
+      "version": "0.2.0-beta.25",
+      "description": "Adds the new peer dependencies for mermaid",
+      "packages": {
+        "mermaid": {
+          "version": "^10.2.4",
+          "alwaysAddToPackageJson": true
+        }
+      }
     }
   }
 }
