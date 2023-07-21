@@ -31,7 +31,7 @@ export default class AboutPageComponent {
 
 ## Redirect Routes
 
-Routes can be defined for only the purpose of redirecting to another route.
+Routes can be defined for the sole purpose of redirecting to another route.
 
 To create a redirect route, add the `redirectTo` and `pathMatch` properties to the `routeMeta` object inside the route file:
 
@@ -45,7 +45,7 @@ export const routeMeta: RouteMeta = {
 };
 ```
 
-The example above is a redirect to the `/home` route from `/` route.
+The example above is a redirect from the `/` route to the `/home` route.
 
 :::tip
 
@@ -65,7 +65,7 @@ src/
             └── san-francisco.page.ts
 ```
 
-and the `routeMeta` definition in the `src/app/pages/cities/index.page.ts` file:
+and the following `routeMeta` definition to the `src/app/pages/cities/index.page.ts` file:
 
 ```ts
 import { RouteMeta } from '@analogjs/router';
@@ -77,6 +77,12 @@ export const routeMeta: RouteMeta = {
 ```
 
 navigating to `/cities` will redirect to `/cities/new-york`.
+
+:::note
+
+Nested redirects always require an absolute path.
+
+:::
 
 ## Route Meta Tags
 
