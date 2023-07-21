@@ -6,14 +6,18 @@ Analog supports filesystem-based routing on top of the Angular Router.
 
 Routes are defined using folders and files in the `src/app/pages` folder. Only files ending with `.page.ts` are collected and used to build the set of routes.
 
-> Route components **must** be defined as the default export and all route components are **lazy-loaded**.
+:::info
+
+Route components **must** be defined as the default export and all route components are **lazy-loaded**.
+
+:::
 
 There are 5 primary types of routes:
 
 - [Index Routes](#index-routes)
 - [Static Routes](#static-routes)
 - [Dynamic Routes](#dynamic-routes)
-- [Nested Routes](#nested-routes)
+- [Layout Routes](#layout-routes)
 - [Catch-all Routes](#catch-all-routes)
 
 These routes can be combined in different ways to build to URLs for navigation.
@@ -28,14 +32,17 @@ The example route below in `src/app/pages/(home).page.ts` defines an `/` route.
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-home',
   standalone: true,
   template: ` <h2>Welcome</h2> `,
 })
 export default class HomePageComponent {}
 ```
 
-> Index routes can also be defined by using _index.page.ts_ as the route filename.
+:::tip
+
+Index routes can also be defined by using `index.page.ts` as the route filename.
+
+:::
 
 ## Static Routes
 
@@ -47,7 +54,6 @@ The example route below in `src/app/pages/about.page.ts` defines an `/about` rou
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-about',
   standalone: true,
   template: `
     <h2>Hello Analog</h2>
@@ -58,11 +64,29 @@ import { Component } from '@angular/core';
 export default class AboutPageComponent {}
 ```
 
+It's also possible to define nested static routes in two different ways:
+
+1. By nesting the route files in folders - `src/app/pages/about/team.page.ts` defines an `/about/team` route.
+2. By using the dot notation in the filename - `src/app/pages/about.team.page.ts` also defines an `/about/team` route.
+
+### Route Groups
+
+Routes can be grouped together in the same folder without adding a route path segment by wrapping a folder name in parenthesis.
+
+```treeview
+src/
+└── app/
+    └── pages/
+        └── (auth)/
+            ├── login.page.ts
+            └── signup.page.ts
+```
+
+The above example defines `/login` and `/signup` routes.
+
 ## Dynamic Routes
 
-Dynamic routes are defined by using the filename as the route path enclosed in square brackets.
-
-The parameter for the route is extracted from the route path.
+Dynamic routes are defined by using the filename as the route path enclosed in square brackets. The parameter for the route is extracted from the route path.
 
 The example route below in `src/app/pages/products/[productId].page.ts` defines a `/products/:productId` route.
 
@@ -73,7 +97,6 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 @Component({
-  selector: 'app-product-details',
   standalone: true,
   imports: [AsyncPipe],
   template: `
@@ -90,6 +113,8 @@ export default class ProductDetailsPageComponent {
   );
 }
 ```
+
+Dynamic routes can also be defined using the dot notation in the filename - `src/app/pages/products.[productId].page.ts` defines a `/products/:productId` route.
 
 ### Using Route Component Input Bindings
 
@@ -120,7 +145,6 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 @Component({
-  selector: 'app-product-details',
   standalone: true,
   template: `
     <h2>Product Details</h2>
@@ -133,19 +157,19 @@ export default class ProductDetailsPageComponent {
 }
 ```
 
-## Nested Routes
+## Layout Routes
 
-Nested routes are defined by using a parent file and child folder with routes.
+Layout routes are defined by using a parent file and child folder with the same name.
 
-The following structure below represents a nested route.
+The following structure below represents a layout route.
 
 ```treeview
 src/
 └── app/
     └── pages/
-        │   └── products/
-        │      ├──[productId].page.ts
-        │      └──(products-list).page.ts
+        ├── products/
+        │   ├── [productId].page.ts
+        │   └── (products-list).page.ts
         └── products.page.ts
 ```
 
@@ -161,7 +185,6 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
-  selector: 'app-products',
   standalone: true,
   imports: [RouterOutlet],
   template: `
@@ -180,7 +203,6 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
-  selector: 'app-products-list',
   standalone: true,
   imports: [RouterOutlet],
   template: ` <h2>Products List</h2> `,
@@ -197,7 +219,6 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 @Component({
-  selector: 'app-product-details',
   standalone: true,
   imports: [AsyncPipe, JsonPipe],
   template: `
@@ -215,6 +236,22 @@ export default class ProductDetailsPageComponent {
 }
 ```
 
+### Pathless Layout Routes
+
+Layout routes can also be defined without adding a route path segment.
+
+```treeview
+src/
+└── app/
+    └── pages/
+        ├── (auth)/
+        │   ├── login.page.ts
+        │   └── signup.page.ts
+        └── (auth).page.ts
+```
+
+The above example defines `/login` and `/signup` routes with a shared layout. The parent `src/app/pages/(auth).page.ts` file contains the parent page with a router outlet.
+
 ## Catch-all routes
 
 Catch-all routes are defined by using the filename as the route path prefixed with 3 periods enclosed in square brackets.
@@ -226,7 +263,6 @@ import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 @Component({
-  selector: 'app-page-not-found',
   standalone: true,
   imports: [RouterLink],
   template: `
