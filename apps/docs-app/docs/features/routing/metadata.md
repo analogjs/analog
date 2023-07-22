@@ -76,7 +76,7 @@ export const routeMeta: RouteMeta = {
 };
 ```
 
-navigating to `/cities` will redirect to `/cities/new-york`.
+Navigating to `/cities` redirects to `/cities/new-york`.
 
 :::note
 
