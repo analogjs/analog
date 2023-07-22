@@ -17,7 +17,6 @@ export const routeMeta: RouteMeta = {
 };
 
 @Component({
-  selector: 'app-about',
   standalone: true,
   template: `
     <h2>Hello Analog</h2>
@@ -32,11 +31,9 @@ export default class AboutPageComponent {
 
 ## Redirect Routes
 
-Routes can be defined for only the purpose of redirecting to another route.
+Routes can be defined for the sole purpose of redirecting to another route.
 
-The example below is a redirect to the `/home` route from `/` route.
-
-Define the `redirectTo` and `pathMatch` inside the route file:
+To create a redirect route, add the `redirectTo` and `pathMatch` properties to the `routeMeta` object inside the route file:
 
 ```ts
 // src/app/pages/index.page.ts
@@ -48,7 +45,44 @@ export const routeMeta: RouteMeta = {
 };
 ```
 
-> An exported route component is not necessary when defining a redirect
+The example above is a redirect from the `/` route to the `/home` route.
+
+:::tip
+
+Redirect route files should not export a component.
+
+:::
+
+It's also possible to define nested redirect routes. For the following file structure:
+
+```treeview
+src/
+└── app/
+    └── pages/
+        └── cities/
+            ├── index.page.ts
+            ├── new-york.page.ts
+            └── san-francisco.page.ts
+```
+
+and the following `routeMeta` definition to the `src/app/pages/cities/index.page.ts` file:
+
+```ts
+import { RouteMeta } from '@analogjs/router';
+
+export const routeMeta: RouteMeta = {
+  redirectTo: '/cities/new-york',
+  pathMatch: 'full',
+};
+```
+
+Navigating to `/cities` redirects to `/cities/new-york`.
+
+:::note
+
+Nested redirects always require an absolute path.
+
+:::
 
 ## Route Meta Tags
 
@@ -71,7 +105,6 @@ export const routeMeta: RouteMeta = {
 };
 
 @Component({
-  selector: 'app-refresh',
   standalone: true,
   template: `
     <h2>Hello Analog</h2>
