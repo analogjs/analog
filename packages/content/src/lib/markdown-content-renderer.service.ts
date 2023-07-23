@@ -22,32 +22,25 @@ export class MarkdownContentRendererService implements ContentRenderer {
   enhance() {}
 }
 
-export interface MarkdownRendererOptions {
-  enableMermaid: boolean;
+export function withMarkdownRenderer(): Provider {
+  return {
+    provide: ContentRenderer,
+    useFactory: () => new MarkdownContentRendererService(),
+    deps: [MarkedSetupService],
+  };
 }
 
-export function withMarkdownRenderer(
-  options?: MarkdownRendererOptions
-): Provider[] {
-  return [
-    {
-      provide: ContentRenderer,
-      useFactory: () => new MarkdownContentRendererService(),
-      deps: [MarkedSetupService],
-    },
-    ...(options?.enableMermaid
-      ? [
-          {
-            provide: USE_MERMAID_TOKEN,
-            useValue: true,
-          },
-        ]
-      : []),
-  ];
+export function withMermaid(): Provider {
+  return {
+    provide: MERMAID_IMPORT_TOKEN,
+    useValue: import('mermaid'),
+  };
 }
 
 export function provideContent(...features: Provider[]) {
   return [...features, MarkedSetupService];
 }
 
-export const USE_MERMAID_TOKEN = new InjectionToken<boolean>('use_mermaid');
+export const MERMAID_IMPORT_TOKEN = new InjectionToken<
+  Promise<typeof import('mermaid')>
+>('mermaid_import');
