@@ -169,6 +169,14 @@ export function angular(options?: PluginOptions): Plugin[] {
         await buildAndAnalyze();
       },
       async handleHotUpdate(ctx) {
+        // The `handleHotUpdate` hook may be called before the `buildStart`,
+        // which sets the compilation. As a result, the `host` may not be available
+        // yet for use, leading to build errors such as "cannot read properties of undefined"
+        // (because `host` is undefined).
+        if (!host) {
+          return;
+        }
+
         if (TS_EXT_REGEX.test(ctx.file)) {
           sourceFileCache.invalidate([ctx.file.replace(/\?(.*)/, '')]);
           await buildAndAnalyze();
