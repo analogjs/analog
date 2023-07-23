@@ -6,9 +6,9 @@ interface Content {
   attributes: string;
 }
 
-const cache = new Map<string, Content>();
-
 export function contentPlugin(): Plugin[] {
+  const cache = new Map<string, Content>();
+
   return [
     {
       name: 'analogjs-content-frontmatter',
