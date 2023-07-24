@@ -9,8 +9,8 @@ import { createCompilerPlugin } from './compiler-plugin';
 import {
   hasStyleUrls,
   hasTemplateUrl,
-  resolveStyleUrls,
-  resolveTemplateUrls,
+  StyleUrlsResolver,
+  TemplateUrlsResolver,
 } from './component-resolvers';
 import { augmentHostWithResources } from './host';
 import { jitPlugin } from './angular-jit-plugin';
@@ -104,6 +104,9 @@ export function angular(options?: PluginOptions): Plugin[] {
   let viteServer: ViteDevServer | undefined;
   let cssPlugin: Plugin | undefined;
   let styleTransform: PluginContainer['transform'] | undefined;
+
+  const styleUrlsResolver = new StyleUrlsResolver();
+  const templateUrlsResolver = new TemplateUrlsResolver();
 
   function angularPlugin(): Plugin {
     return {
@@ -260,11 +263,11 @@ export function angular(options?: PluginOptions): Plugin[] {
           let styleUrls: string[] = [];
 
           if (hasTemplateUrl(code)) {
-            templateUrls = resolveTemplateUrls(code, id);
+            templateUrls = templateUrlsResolver.resolve(code, id);
           }
 
           if (hasStyleUrls(code)) {
-            styleUrls = resolveStyleUrls(code, id);
+            styleUrls = styleUrlsResolver.resolve(code, id);
           }
 
           if (watchMode) {
