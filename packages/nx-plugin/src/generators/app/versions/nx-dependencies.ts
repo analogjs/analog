@@ -1,14 +1,24 @@
 import { clean, lt } from 'semver';
 import { stripIndents } from '@nx/devkit';
-import { V16_X_NX_DEVKIT, V16_X_NX_ANGULAR } from './nx_16_X/versions';
+import {
+  V16_X_NX_DEVKIT,
+  V16_X_NX_ANGULAR,
+  V16_X_NX_LINTER,
+} from './nx_16_X/versions';
 import {
   V15_X_NRWL_DEVKIT,
   V15_X_NX_DEVKIT,
   V15_X_NRWL_ANGULAR,
   V15_X_NX_ANGULAR,
+  V15_X_NX_LINTER,
+  V15_X_NRWL_LINTER,
 } from './nx_15_X/versions';
 
-const nrwlDependencyKeys = ['@nrwl/devkit', '@nrwl/angular'] as const;
+const nrwlDependencyKeys = [
+  '@nrwl/devkit',
+  '@nrwl/angular',
+  '@nrwl/linter',
+] as const;
 export type NrwlDependency = (typeof nrwlDependencyKeys)[number];
 export const getNrwlDependencies = (
   nxVersion: string
@@ -27,6 +37,7 @@ export const getNrwlDependencies = (
     return {
       '@nrwl/angular': V15_X_NRWL_ANGULAR,
       '@nrwl/devkit': V15_X_NRWL_DEVKIT,
+      '@nrwl/linter': V15_X_NRWL_LINTER,
     };
   }
 
@@ -36,7 +47,7 @@ export const getNrwlDependencies = (
   );
 };
 
-const nxDependencyKeys = ['@nx/devkit', '@nx/angular'] as const;
+const nxDependencyKeys = ['@nx/devkit', '@nx/angular', '@nx/linter'] as const;
 export type NxDependency = (typeof nxDependencyKeys)[number];
 export const getNxDependencies = (
   nxVersion: string
@@ -55,6 +66,7 @@ export const getNxDependencies = (
     return {
       '@nx/angular': V15_X_NX_ANGULAR,
       '@nx/devkit': V15_X_NX_DEVKIT,
+      '@nx/linter': V15_X_NX_LINTER,
     };
   }
 
@@ -62,5 +74,6 @@ export const getNxDependencies = (
   return {
     '@nx/angular': V16_X_NX_ANGULAR,
     '@nx/devkit': V16_X_NX_DEVKIT,
+    '@nx/linter': V16_X_NX_LINTER,
   };
 };

@@ -18,6 +18,8 @@ export const V15_X_PRISMJS = '^1.29.0';
 
 // devDependencies
 export const V15_X_ANALOG_JS_PLATFORM = '0.1.0-beta.22';
+export const V15_X_NRWL_LINTER = '~15.9.0';
+export const V15_X_NX_LINTER = '~16.0.0';
 export const V15_X_NRWL_VITE = '~15.9.0';
 export const V15_X_NX_VITE = '~16.0.0';
 export const V15_X_JSDOM = '^20.0.0';
