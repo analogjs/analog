@@ -1,8 +1,4 @@
-import {
-  provideContent,
-  withMarkdownRenderer,
-  withMermaid,
-} from '@analogjs/content';
+import { provideContent, withMarkdownRenderer } from '@analogjs/content';
 import { provideFileRouter } from '@analogjs/router';
 import { provideHttpClient } from '@angular/common/http';
 import { ApplicationConfig } from '@angular/core';
@@ -16,7 +12,9 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideHttpClient(),
     provideClientHydration(),
-    provideContent(withMarkdownRenderer(), withMermaid()),
+    provideContent(
+      withMarkdownRenderer({ loadMermaid: () => import('mermaid') })
+    ),
     provideFileRouter(
       withInMemoryScrolling({ anchorScrolling: 'enabled' }),
       withEnabledBlockingInitialNavigation()
