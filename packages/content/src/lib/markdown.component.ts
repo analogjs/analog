@@ -17,7 +17,7 @@ import { catchError, map, mergeMap } from 'rxjs/operators';
 
 import { AnchorNavigationDirective } from './anchor-navigation.directive';
 import { ContentRenderer } from './content-renderer';
-import { USE_MERMAID_TOKEN } from './markdown-content-renderer.service';
+import { MERMAID_IMPORT_TOKEN } from './markdown-content-renderer.service';
 
 @Component({
   selector: 'analog-markdown',
@@ -35,8 +35,9 @@ export default class AnalogMarkdownComponent
   private route = inject(ActivatedRoute);
   private zone = inject(NgZone);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly useMermaid =
-    inject(USE_MERMAID_TOKEN, { optional: true }) ?? false;
+  private readonly mermaidImport = inject(MERMAID_IMPORT_TOKEN, {
+    optional: true,
+  });
   private mermaid: typeof import('mermaid') | undefined;
 
   public content$: Observable<SafeHtml> = of('');
@@ -47,14 +48,14 @@ export default class AnalogMarkdownComponent
   contentRenderer = inject(ContentRenderer);
 
   constructor() {
-    if (isPlatformBrowser(this.platformId) && this.useMermaid) {
+    if (isPlatformBrowser(this.platformId) && this.mermaidImport) {
       // Mermaid can only be loaded on client side
-      this.loadMermaid();
+      this.loadMermaid(this.mermaidImport);
     }
   }
 
-  async loadMermaid() {
-    this.mermaid = await import('mermaid');
+  async loadMermaid(mermaidImport: Promise<typeof import('mermaid')>) {
+    this.mermaid = await mermaidImport;
     this.mermaid.default.initialize({ startOnLoad: false });
     // Explicitly running mermaid as ngAfterViewChecked
     // has probably already been called
