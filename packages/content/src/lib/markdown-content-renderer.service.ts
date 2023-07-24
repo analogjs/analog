@@ -22,19 +22,28 @@ export class MarkdownContentRendererService implements ContentRenderer {
   enhance() {}
 }
 
-export function withMarkdownRenderer(): Provider {
-  return {
-    provide: ContentRenderer,
-    useFactory: () => new MarkdownContentRendererService(),
-    deps: [MarkedSetupService],
-  };
+export interface MarkdownRendererOptions {
+  loadMermaid?: () => Promise<typeof import('mermaid')>;
 }
 
-export function withMermaid(): Provider {
-  return {
-    provide: MERMAID_IMPORT_TOKEN,
-    useValue: import('mermaid'),
-  };
+export function withMarkdownRenderer(
+  options?: MarkdownRendererOptions
+): Provider {
+  return [
+    {
+      provide: ContentRenderer,
+      useFactory: () => new MarkdownContentRendererService(),
+      deps: [MarkedSetupService],
+    },
+    options?.loadMermaid
+      ? [
+          {
+            provide: MERMAID_IMPORT_TOKEN,
+            useFactory: options.loadMermaid,
+          },
+        ]
+      : [],
+  ];
 }
 
 export function provideContent(...features: Provider[]) {
