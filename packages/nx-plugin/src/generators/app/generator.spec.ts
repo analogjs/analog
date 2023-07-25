@@ -37,6 +37,7 @@ describe('nx-plugin generator', () => {
     );
     expect(dependencies['front-matter']).toBe('^4.0.2');
     expect(dependencies['marked']).toBe('^4.2.4');
+    expect(dependencies['mermaid']).toBe('^10.2.4');
     expect(dependencies['prismjs']).toBe('^1.29.0');
 
     expect(devDependencies['@nx/devkit']).toBe('~16.0.0');
@@ -68,6 +69,7 @@ describe('nx-plugin generator', () => {
     expect(dependencies['marked']).toBe('^5.0.2');
     expect(dependencies['marked-gfm-heading-id']).toBe('^3.0.4');
     expect(dependencies['marked-highlight']).toBe('^2.0.1');
+    expect(dependencies['mermaid']).toBe('^10.2.4');
     expect(dependencies['prismjs']).toBe('^1.29.0');
 
     expect(devDependencies['@nx/devkit']).toBe('^16.4.0');

@@ -30,6 +30,7 @@
     "marked": "^5.0.2",
     "marked-gfm-heading-id": "^3.0.4",
     "marked-highlight": "^2.0.1",
+    "mermaid": "^10.2.4",
     "prismjs": "^1.29.0",
     "rxjs": "~7.5.6",
     "tslib": "^2.4.0",
