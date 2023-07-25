@@ -60,8 +60,8 @@ describe('nx-plugin generator', () => {
     dependencies: Record<string, string>,
     devDependencies: Record<string, string>
   ) => {
-    expect(dependencies['@analogjs/content']).toBe('^0.2.0-beta.26');
-    expect(dependencies['@analogjs/router']).toBe('^0.2.0-beta.26');
+    expect(dependencies['@analogjs/content']).toBe('^0.2.0-beta.27');
+    expect(dependencies['@analogjs/router']).toBe('^0.2.0-beta.27');
     expect(dependencies['@angular/platform-server']).toBe(
       dependencies['@angular/core']
     );
@@ -77,9 +77,9 @@ describe('nx-plugin generator', () => {
     // we just check for truthy because @nx/linter generator
     // will install the correct version based on Nx version
     expect(devDependencies['@nx/linter']).toBeTruthy();
-    expect(devDependencies['@analogjs/platform']).toBe('^0.2.0-beta.26');
+    expect(devDependencies['@analogjs/platform']).toBe('^0.2.0-beta.27');
     expect(devDependencies['@analogjs/vite-plugin-angular']).toBe(
-      '^0.2.0-beta.26'
+      '^0.2.0-beta.27'
     );
     expect(devDependencies['@nx/vite']).toBe('^16.4.0');
     expect(devDependencies['jsdom']).toBe('^22.0.0');
