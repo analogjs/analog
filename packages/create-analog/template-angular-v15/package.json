@@ -28,6 +28,7 @@
     "@nrwl/angular": "^15.0.0",
     "front-matter": "^4.0.2",
     "marked": "^5.0.2",
+    "mermaid": "^10.2.4",
     "prismjs": "^1.29.0",
     "rxjs": "~7.5.6",
     "tslib": "^2.4.0",

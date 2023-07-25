@@ -14,6 +14,7 @@ export const V15_X_ISOMORPHIC_FETCH = '^3.0.0';
 export const V15_X_SUPERJSON = '^1.12.3';
 export const V15_X_FRONT_MATTER = '^4.0.2';
 export const V15_X_MARKED = '^4.2.4';
+export const V15_X_MERMAID = '^10.2.4';
 export const V15_X_PRISMJS = '^1.29.0';
 
 // devDependencies
