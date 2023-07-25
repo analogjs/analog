@@ -106,6 +106,8 @@ export function angular(options?: PluginOptions): Plugin[] {
   let styleTransform: PluginContainer['transform'] | undefined;
 
   function angularPlugin(): Plugin {
+    const watchedFiles = new Set<string>();
+
     return {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
@@ -268,15 +270,22 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
 
           if (watchMode) {
-            templateUrls.forEach((templateUrlSet) => {
-              const [, templateUrl] = templateUrlSet.split('|');
-              this.addWatchFile(templateUrl);
-            });
-
-            styleUrls.forEach((styleUrlSet) => {
-              const [, styleUrl] = styleUrlSet.split('|');
-              this.addWatchFile(styleUrl);
-            });
+            for (const urlSet of [...templateUrls, ...styleUrls]) {
+              // `urlSet` is a string where a relative path is joined with an
+              // absolute path using the `|` symbol.
+              // For example: `./app.component.html|/home/projects/analog/src/app/app.component.html`.
+              const [, absoluteFileUrl] = urlSet.split('|');
+              if (watchedFiles.has(absoluteFileUrl)) {
+                continue;
+              }
+              // Vite also has a set of internally watched files, but it doesn't check if the
+              // file is already watched when calling `ensureWatchedFile`. Vite uses the Rollup
+              // file watcher, which invokes system calls to the filesystem, such as `existsSync`,
+              // `resolve`, etc. Our local set ensures we don't trigger redudant system calls if
+              // the file is already watched.
+              watchedFiles.add(absoluteFileUrl);
+              this.addWatchFile(absoluteFileUrl);
+            }
           }
 
           const typescriptResult = await fileEmitter!(id);
