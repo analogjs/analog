@@ -76,13 +76,13 @@ The integration can also be installed manually
 ### Install the Astro Integration
 
 ```sh
-yarn add @analogjs/astro-angular --dev
+yarn add @analogjs/astro-angular
 ```
 
 ### Install the necessary Angular dependencies
 
 ```sh
-yarn add @angular-devkit/build-angular, @angular/animations, @angular/common, @angular/compiler-cli, @angular/compiler, @angular/core, @angular/language-service, @angular/forms, @angular/platform-browser, @angular/platform-browser-dynamic, @angular/platform-server, rxjs, zone.js, tslib --dev
+yarn add @angular-devkit/build-angular @angular/{animations,common,compiler-cli,compiler,core,language-service,forms,platform-browser,platform-browser-dynamic,platform-server} rxjs zone.js tslib
 ```
 
 ### Adding the integration
