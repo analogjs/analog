@@ -489,7 +489,8 @@
       "profile": "http://riegler.fr",
       "contributions": [
         "doc",
-        "infra"
+        "infra",
+        "code"
       ]
     },
     {
@@ -497,6 +498,15 @@
       "name": "Ashley Hunter",
       "avatar_url": "https://avatars.githubusercontent.com/u/20795331?v=4",
       "profile": "https://github.com/ashley-hunter",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "arturovt",
+      "name": "Artur Androsovych",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7337691?v=4",
+      "profile": "http://ng-guru.io",
       "contributions": [
         "code"
       ]

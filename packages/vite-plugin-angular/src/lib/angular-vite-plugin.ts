@@ -9,8 +9,8 @@ import { createCompilerPlugin } from './compiler-plugin';
 import {
   hasStyleUrls,
   hasTemplateUrl,
-  resolveStyleUrls,
-  resolveTemplateUrls,
+  StyleUrlsResolver,
+  TemplateUrlsResolver,
 } from './component-resolvers';
 import { augmentHostWithResources } from './host';
 import { jitPlugin } from './angular-jit-plugin';
@@ -105,7 +105,12 @@ export function angular(options?: PluginOptions): Plugin[] {
   let cssPlugin: Plugin | undefined;
   let styleTransform: PluginContainer['transform'] | undefined;
 
+  const styleUrlsResolver = new StyleUrlsResolver();
+  const templateUrlsResolver = new TemplateUrlsResolver();
+
   function angularPlugin(): Plugin {
+    const watchedFiles = new Set<string>();
+
     return {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
@@ -169,6 +174,14 @@ export function angular(options?: PluginOptions): Plugin[] {
         await buildAndAnalyze();
       },
       async handleHotUpdate(ctx) {
+        // The `handleHotUpdate` hook may be called before the `buildStart`,
+        // which sets the compilation. As a result, the `host` may not be available
+        // yet for use, leading to build errors such as "cannot read properties of undefined"
+        // (because `host` is undefined).
+        if (!host) {
+          return;
+        }
+
         if (TS_EXT_REGEX.test(ctx.file)) {
           sourceFileCache.invalidate([ctx.file.replace(/\?(.*)/, '')]);
           await buildAndAnalyze();
@@ -252,23 +265,30 @@ export function angular(options?: PluginOptions): Plugin[] {
           let styleUrls: string[] = [];
 
           if (hasTemplateUrl(code)) {
-            templateUrls = resolveTemplateUrls(code, id);
+            templateUrls = templateUrlsResolver.resolve(code, id);
           }
 
           if (hasStyleUrls(code)) {
-            styleUrls = resolveStyleUrls(code, id);
+            styleUrls = styleUrlsResolver.resolve(code, id);
           }
 
           if (watchMode) {
-            templateUrls.forEach((templateUrlSet) => {
-              const [, templateUrl] = templateUrlSet.split('|');
-              this.addWatchFile(templateUrl);
-            });
-
-            styleUrls.forEach((styleUrlSet) => {
-              const [, styleUrl] = styleUrlSet.split('|');
-              this.addWatchFile(styleUrl);
-            });
+            for (const urlSet of [...templateUrls, ...styleUrls]) {
+              // `urlSet` is a string where a relative path is joined with an
+              // absolute path using the `|` symbol.
+              // For example: `./app.component.html|/home/projects/analog/src/app/app.component.html`.
+              const [, absoluteFileUrl] = urlSet.split('|');
+              if (watchedFiles.has(absoluteFileUrl)) {
+                continue;
+              }
+              // Vite also has a set of internally watched files, but it doesn't check if the
+              // file is already watched when calling `ensureWatchedFile`. Vite uses the Rollup
+              // file watcher, which invokes system calls to the filesystem, such as `existsSync`,
+              // `resolve`, etc. Our local set ensures we don't trigger redudant system calls if
+              // the file is already watched.
+              watchedFiles.add(absoluteFileUrl);
+              this.addWatchFile(absoluteFileUrl);
+            }
           }
 
           const typescriptResult = await fileEmitter!(id);

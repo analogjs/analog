@@ -58,6 +58,7 @@ const initWithNxNamespace = async (
   try {
     ensurePackage('@nx/devkit', versions['@nx/devkit']);
     ensurePackage('@nx/angular', versions['@nx/angular']);
+    ensurePackage('@nx/linter', versions['@nx/linter']);
   } catch {
     // @nx/angular cannot be required so this fails but this will still allow executing the nx angular init later on
   }
@@ -67,6 +68,7 @@ const initWithNxNamespace = async (
     {
       '@nx/devkit': versions['@nx/devkit'],
       '@nx/angular': versions['@nx/angular'],
+      '@nx/linter': versions['@nx/linter'],
     }
   );
 
@@ -94,6 +96,7 @@ const initWithNrwlNamespace = async (
   try {
     ensurePackage('@nrwl/devkit', versions['@nrwl/devkit']);
     ensurePackage('@nrwl/angular', versions['@nrwl/angular']);
+    ensurePackage('@nrwl/linter', versions['@nrwl/linter']);
   } catch {
     // @nx/angular cannot be required so this fails but this will still allow executing the nx angular init later on
   }
@@ -103,6 +106,7 @@ const initWithNrwlNamespace = async (
     {
       '@nrwl/devkit': versions['@nrwl/devkit'],
       '@nrwl/angular': versions['@nrwl/angular'],
+      '@nrwl/linter': versions['@nrwl/linter'],
     }
   );
   await (

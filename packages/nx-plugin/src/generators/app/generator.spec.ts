@@ -37,10 +37,14 @@ describe('nx-plugin generator', () => {
     );
     expect(dependencies['front-matter']).toBe('^4.0.2');
     expect(dependencies['marked']).toBe('^4.2.4');
+    expect(dependencies['mermaid']).toBe('^10.2.4');
     expect(dependencies['prismjs']).toBe('^1.29.0');
 
     expect(devDependencies['@nx/devkit']).toBe('~16.0.0');
     expect(devDependencies['@nx/angular']).toBe('~16.0.0');
+    // we just check for truthy because @nx/linter generator
+    // will install the correct version based on Nx version
+    expect(devDependencies['@nx/linter']).toBeTruthy();
     expect(devDependencies['@analogjs/platform']).toBe('0.1.0-beta.22');
     expect(devDependencies['@analogjs/vite-plugin-angular']).toBe(
       '0.2.0-alpha.29'
@@ -56,8 +60,8 @@ describe('nx-plugin generator', () => {
     dependencies: Record<string, string>,
     devDependencies: Record<string, string>
   ) => {
-    expect(dependencies['@analogjs/content']).toBe('^0.2.0-beta.25');
-    expect(dependencies['@analogjs/router']).toBe('^0.2.0-beta.25');
+    expect(dependencies['@analogjs/content']).toBe('^0.2.0-beta.28');
+    expect(dependencies['@analogjs/router']).toBe('^0.2.0-beta.28');
     expect(dependencies['@angular/platform-server']).toBe(
       dependencies['@angular/core']
     );
@@ -65,13 +69,17 @@ describe('nx-plugin generator', () => {
     expect(dependencies['marked']).toBe('^5.0.2');
     expect(dependencies['marked-gfm-heading-id']).toBe('^3.0.4');
     expect(dependencies['marked-highlight']).toBe('^2.0.1');
+    expect(dependencies['mermaid']).toBe('^10.2.4');
     expect(dependencies['prismjs']).toBe('^1.29.0');
 
     expect(devDependencies['@nx/devkit']).toBe('^16.4.0');
     expect(devDependencies['@nx/angular']).toBe('^16.4.0');
-    expect(devDependencies['@analogjs/platform']).toBe('^0.2.0-beta.25');
+    // we just check for truthy because @nx/linter generator
+    // will install the correct version based on Nx version
+    expect(devDependencies['@nx/linter']).toBeTruthy();
+    expect(devDependencies['@analogjs/platform']).toBe('^0.2.0-beta.28');
     expect(devDependencies['@analogjs/vite-plugin-angular']).toBe(
-      '^0.2.0-beta.25'
+      '^0.2.0-beta.28'
     );
     expect(devDependencies['@nx/vite']).toBe('^16.4.0');
     expect(devDependencies['jsdom']).toBe('^22.0.0');

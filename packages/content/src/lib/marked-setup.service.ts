@@ -9,13 +9,13 @@ import { markedHighlight } from 'marked-highlight';
 
 import 'prismjs';
 import 'prismjs/plugins/toolbar/prism-toolbar';
-import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
 import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-css';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-markup';
 import 'prismjs/components/prism-typescript';
+import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
 
 declare const Prism: typeof import('prismjs');
 
@@ -26,6 +26,12 @@ export class MarkedSetupService {
   constructor() {
     const renderer = new marked.Renderer();
     renderer.code = (code, lang) => {
+      // Let's do a language based detection like on GitHub
+      // So we can still have non-interpreted mermaid code
+      if (lang === 'mermaid') {
+        return '<pre class="mermaid">' + code + '</pre>';
+      }
+
       if (!lang) {
         return '<pre><code>' + code + '</code></pre>';
       }
@@ -48,13 +54,15 @@ export class MarkedSetupService {
         highlight: (code, lang) => {
           lang = lang || 'typescript';
           if (!Prism.languages[lang]) {
-            console.warn(`Notice:
+            if (lang !== 'mermaid') {
+              console.warn(`Notice:
     ---------------------------------------------------------------------------------------
     The requested language '${lang}' is not available with the provided setup.
     To enable, import your main.ts as:
       import  'prismjs/components/prism-${lang}';
     ---------------------------------------------------------------------------------------
         `);
+            }
             return code;
           }
           return Prism.highlight(code, Prism.languages[lang], lang);
