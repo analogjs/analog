@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "cli": "nx",
+  "$id": "page",
+  "title": "Create an Analog page",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the page to be generated. Ex. `products/[products]`, `products`, `blog/post`, `index`. __Note: special names like product.[productId] or (blog) should be surrounded by single quotes__",
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      },
+      "x-priority": "important",
+      "x-prompt": "What name would you like to use for the page? Ex. `products/[products]`, `products`, `blog/post`, `index`"
+    },
+    "project": {
+      "type": "string",
+      "description": "The project where the page will be located.",
+      "x-prompt": "Which project will this page be located in?",
+      "$default": {
+        "$source": "projectName"
+      },
+      "x-dropdown": "projects"
+    },
+    "metadata": {
+      "description": "If metadata is needed for the route.",
+      "type": "boolean",
+      "default": false
+    },
+    "title": {
+      "type": "string",
+      "description": "The path to redirect to.",
+      "default": "Page Title"
+    },
+    "redirectPage": {
+      "description": "Whether the generated page is a redirect. _Note: Redirect path needs to be provided in the next prompt._",
+      "type": "boolean",
+      "default": false,
+      "x-priority": "important",
+      "x-prompt": "Is this a redirect page?"
+    },
+    "redirectPath": {
+      "description": "The path to redirect to. _Note: This is only needed if the previous prompt is set to true._",
+      "type": "string",
+      "default": "/",
+      "x-priority": "important",
+      "x-prompt": "What is the path to redirect to?"
+    },
+    "pathMatch": {
+      "type": "string",
+      "description": "The path to match for the redirect.",
+      "default": "full",
+      "enum": ["prefix", "full"],
+      "x-prompt": "What is the path to match for the redirect?"
+    }
+  },
+  "required": ["name", "project"]
+}
