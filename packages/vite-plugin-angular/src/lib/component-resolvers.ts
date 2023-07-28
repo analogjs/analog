@@ -8,9 +8,11 @@ export function hasStyleUrls(code: string) {
 }
 
 interface StyleUrlsCacheEntry {
-  code: string;
+  matchedStyleUrls: string;
   styleUrls: string[];
 }
+
+const EMPTY_ARRAY: any[] = [];
 
 export class StyleUrlsResolver {
   // These resolvers may be called multiple times during the same
@@ -20,32 +22,44 @@ export class StyleUrlsResolver {
   private readonly styleUrlsCache = new Map<string, StyleUrlsCacheEntry>();
 
   resolve(code: string, id: string): string[] {
+    const styleUrlsExecArray = styleUrlsRE.exec(code);
+
+    if (styleUrlsExecArray === null) {
+      return EMPTY_ARRAY;
+    }
+
+    // Given the code is the following:
+    // @Component({
+    //   styleUrls: [
+    //     './app.component.scss'
+    //   ]
+    // })
+    // The `matchedStyleUrls` would result in: `styleUrls: [\n    './app.component.scss'\n  ]`.
+    const [matchedStyleUrls] = styleUrlsExecArray;
     const entry = this.styleUrlsCache.get(id);
-    if (entry?.code === code) {
+    // We're using `matchedStyleUrls` as a key because the code may be changing continuously,
+    // resulting in the resolver being called multiple times. While the code changes, the
+    // `styleUrls` may remain constant, which means we should always return the previously
+    // resolved style URLs.
+    if (entry?.matchedStyleUrls === matchedStyleUrls) {
       return entry.styleUrls;
     }
 
-    const styleUrlsGroup = styleUrlsRE.exec(code);
+    // The `styleUrls` property is an array, which means we may have a list of
+    // CSS files provided there. Let `matchedStyleUrls` be equal to the following:
+    // "styleUrls: [\n    './app.component.scss',\n    '../global.scss'\n  ]"
+    const styleUrlPaths = matchedStyleUrls
+      .replace(/(styleUrls|\:|\s|\[|\]|"|')/g, '')
+      // The above replace will result in the following:
+      // "./app.component.scss,../global.scss"
+      .split(',');
 
-    if (Array.isArray(styleUrlsGroup) && styleUrlsGroup[0]) {
-      const styleUrls = styleUrlsGroup[0].replace(
-        /(styleUrls|\:|\s|\[|\]|"|')/g,
-        ''
-      );
-      const styleUrlPaths = styleUrls?.split(',') || [];
+    const styleUrls = styleUrlPaths.map((styleUrlPath) => {
+      return `${styleUrlPath}|${resolve(dirname(id), styleUrlPath)}`;
+    });
 
-      const newEntry = {
-        code,
-        styleUrls: styleUrlPaths.map((styleUrlPath) => {
-          return `${styleUrlPath}|${resolve(dirname(id), styleUrlPath)}`;
-        }),
-      };
-
-      this.styleUrlsCache.set(id, newEntry);
-      return newEntry.styleUrls;
-    }
-
-    return [];
+    this.styleUrlsCache.set(matchedStyleUrls, { styleUrls, matchedStyleUrls });
+    return styleUrls;
   }
 }
 

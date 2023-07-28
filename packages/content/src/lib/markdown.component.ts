@@ -10,9 +10,10 @@ import {
   ViewEncapsulation,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Data } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { Observable, from, of } from 'rxjs';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 
 import { AnchorNavigationDirective } from './anchor-navigation.directive';
@@ -54,15 +55,7 @@ export default class AnalogMarkdownComponent
     }
   }
 
-  async loadMermaid(mermaidImport: Promise<typeof import('mermaid')>) {
-    this.mermaid = await mermaidImport;
-    this.mermaid.default.initialize({ startOnLoad: false });
-    // Explicitly running mermaid as ngAfterViewChecked
-    // has probably already been called
-    this.zone.runOutsideAngular(() => this.mermaid?.default.run());
-  }
-
-  ngOnInit() {
+  ngOnInit(): void {
     this.updateContent();
   }
 
@@ -86,5 +79,21 @@ export default class AnalogMarkdownComponent
   ngAfterViewChecked() {
     this.contentRenderer.enhance();
     this.zone.runOutsideAngular(() => this.mermaid?.default.run());
+  }
+
+  private loadMermaid(mermaidImport: Promise<typeof import('mermaid')>) {
+    this.zone.runOutsideAngular(() =>
+      // Wrap into an observable to avoid redundant initialization once
+      // the markdown component is destroyed before the promise is resolved.
+      from(mermaidImport)
+        .pipe(takeUntilDestroyed())
+        .subscribe((mermaid) => {
+          this.mermaid = mermaid;
+          this.mermaid.default.initialize({ startOnLoad: false });
+          // Explicitly running mermaid as ngAfterViewChecked
+          // has probably already been called
+          this.mermaid?.default.run();
+        })
+    );
   }
 }
