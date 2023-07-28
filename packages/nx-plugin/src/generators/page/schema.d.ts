@@ -1,5 +1,5 @@
 export interface AnalogPageGeneratorSchema {
-  name: string;
+  pathname: string;
   project: string;
   metadata?: boolean;
   title?: string;

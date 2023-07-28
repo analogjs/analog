@@ -5,7 +5,7 @@
   "title": "Create an Analog page",
   "type": "object",
   "properties": {
-    "name": {
+    "pathname": {
       "type": "string",
       "description": "Name of the page to be generated. Ex. `products/[products]`, `products`, `blog/post`, `index`. __Note: special names like product.[productId] or (blog) should be surrounded by single quotes__",
       "$default": {
@@ -31,7 +31,7 @@
     },
     "title": {
       "type": "string",
-      "description": "The path to redirect to.",
+      "description": "The page title.",
       "default": "Page Title"
     },
     "redirectPage": {
@@ -42,7 +42,7 @@
       "x-prompt": "Is this a redirect page?"
     },
     "redirectPath": {
-      "description": "The path to redirect to. _Note: This is only needed if the previous prompt is set to true._",
+      "description": "The path to redirect to. _Note: This is only needed if the redirect page is set to true._",
       "type": "string",
       "default": "/",
       "x-priority": "important",
@@ -56,5 +56,5 @@
       "x-prompt": "What is the path to match for the redirect?"
     }
   },
-  "required": ["name", "project"]
+  "required": ["pathname", "project"]
 }

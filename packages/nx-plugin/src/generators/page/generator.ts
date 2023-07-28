@@ -38,7 +38,7 @@ function generateFileName(input: string) {
 }
 
 function addFiles(tree: Tree, options: NormalizedSchema) {
-  const splitName = options.name.split('/');
+  const splitName = options.pathname.split('/');
   const routeName = splitName[splitName.length - 1];
   const fileName = generateFileName(routeName);
   const templateOptions = {
@@ -50,7 +50,7 @@ function addFiles(tree: Tree, options: NormalizedSchema) {
     fileName,
   };
 
-  const pageFolders = options.name.toLowerCase().split('/');
+  const pageFolders = options.pathname.toLowerCase().split('/');
 
   const pageDir = path.join(
     options.projectRoot,
