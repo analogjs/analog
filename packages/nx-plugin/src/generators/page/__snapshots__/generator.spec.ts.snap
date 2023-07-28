@@ -6,7 +6,7 @@ exports[`analog-page generator > should create analog page correctly > page 1`] 
 @Component({
   standalone: true,
   imports: [],
-  template: \` {{ home page works!! }} \`,
+  template: \` <p>home page works!!</p> \`,
 })
 export default class HomePage {}
 "
@@ -23,7 +23,7 @@ export const routeMeta: RouteMeta = {
 @Component({
   standalone: true,
   imports: [],
-  template: \` {{ home page works!! }} \`,
+  template: \` <p>home page works!!</p> \`,
 })
 export default class HomePage {}
 "
@@ -45,7 +45,7 @@ exports[`analog-page generator > should create analog page with subfolder correc
 @Component({
   standalone: true,
   imports: [],
-  template: \` {{ post page works!! }} \`,
+  template: \` <p>post page works!!</p> \`,
 })
 export default class PostPage {}
 "
@@ -57,7 +57,7 @@ exports[`analog-page generator > should create analog page with subfolder correc
 @Component({
   standalone: true,
   imports: [],
-  template: \` {{ products page works!! }} \`,
+  template: \` <p>products page works!!</p> \`,
 })
 export default class ProductsPage {}
 "
@@ -69,7 +69,7 @@ exports[`analog-page generator > should create analog page with subfolder correc
 @Component({
   standalone: true,
   imports: [],
-  template: \` {{ productsProductId page works!! }} \`,
+  template: \` <p>productsProductId page works!!</p> \`,
 })
 export default class ProductsProductIdPage {}
 "
@@ -81,7 +81,7 @@ exports[`analog-page generator > should create analog page with subfolder correc
 @Component({
   standalone: true,
   imports: [],
-  template: \` {{ blog page works!! }} \`,
+  template: \` <p>blog page works!!</p> \`,
 })
 export default class BlogPage {}
 "

@@ -11,7 +11,7 @@ export const routeMeta: RouteMeta = {
   standalone: true,
   imports: [],
   template: `
-     {{ <%= propertyName %> page works!! }}
+     <p><%= propertyName %> page works!!</p>
   `,
 })
 export default class <%= className %>Page {
