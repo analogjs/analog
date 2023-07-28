@@ -295,7 +295,7 @@ src/
         │   └── signup.page.ts
         ├── (marketing)/
         │   ├── about.md
-        │   ├── contact.md
+        │   └── contact.md
         ├── products/
         │   ├── (product-list).page.ts
         │   ├── [productId].edit.page.ts
