@@ -68,8 +68,8 @@ export function hasTemplateUrl(code: string) {
 }
 
 interface TemplateUrlsCacheEntry {
-  code: string;
-  templateUrlPaths: string[];
+  matchedTemplateUrls: string;
+  templateUrls: string[];
 }
 
 export class TemplateUrlsResolver {
@@ -79,26 +79,32 @@ export class TemplateUrlsResolver {
   >();
 
   resolve(code: string, id: string): string[] {
+    const templateUrlMatchArrays = Array.from(code.matchAll(templateUrlRE));
+
+    if (templateUrlMatchArrays.length === 0) {
+      return EMPTY_ARRAY;
+    }
+
+    // The `matchedTemplateUrls` would result in the following:
+    // `templateUrl: "./app.component.html",./app.component.html|templateUrl: "./app1.component.html",./app1.component.html`.
+    const matchedTemplateUrls = templateUrlMatchArrays.join('|');
     const entry = this.templateUrlsCache.get(id);
-    if (entry?.code === code) {
-      return entry.templateUrlPaths;
+    if (entry?.matchedTemplateUrls === matchedTemplateUrls) {
+      return entry.templateUrls;
     }
 
-    const templateUrlGroup = Array.from(code.matchAll(templateUrlRE));
-    const templateUrlPaths: string[] = [];
+    const templateUrls: string[] = [];
+    templateUrlMatchArrays.forEach((matchArray) => {
+      const resolvedTemplatePath = matchArray[1].replace(
+        /templateUrl|\s|'|"|\:|,/g,
+        ''
+      );
 
-    if (Array.isArray(templateUrlGroup)) {
-      templateUrlGroup.forEach((trg) => {
-        const resolvedTemplatePath = trg[1].replace(
-          /templateUrl|\s|'|"|\:|,/g,
-          ''
-        );
-        const templateUrlPath = resolve(dirname(id), resolvedTemplatePath);
-        templateUrlPaths.push(`${resolvedTemplatePath}|${templateUrlPath}`);
-      });
-    }
+      const templateUrl = resolve(dirname(id), resolvedTemplatePath);
+      templateUrls.push(`${resolvedTemplatePath}|${templateUrl}`);
+    });
 
-    this.templateUrlsCache.set(id, { code, templateUrlPaths });
-    return templateUrlPaths;
+    this.templateUrlsCache.set(id, { matchedTemplateUrls, templateUrls });
+    return templateUrls;
   }
 }
