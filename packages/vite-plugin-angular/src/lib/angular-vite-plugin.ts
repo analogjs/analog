@@ -21,6 +21,7 @@ import {
   createJitResourceTransformer,
   SourceFileCache,
 } from './utils/devkit';
+import { getIvyHost, getIvyTransformation } from './utils/ngtools-webpack';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -80,15 +81,8 @@ export function angular(options?: PluginOptions): Plugin[] {
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
   let fileEmitter: FileEmitter | undefined;
   let compilerOptions = {};
-  // Temporary deep import for transformer support
-  const {
-    mergeTransformers,
-    replaceBootstrap,
-  } = require('@ngtools/webpack/src/ivy/transformation');
-  const {
-    augmentProgramWithVersioning,
-    augmentHostWithCaching,
-  } = require('@ngtools/webpack/src/ivy/host');
+  const { mergeTransformers, replaceBootstrap } = getIvyTransformation();
+  const { augmentProgramWithVersioning, augmentHostWithCaching } = getIvyHost();
 
   let compilerCli: typeof import('@angular/compiler-cli');
   let rootNames: string[];

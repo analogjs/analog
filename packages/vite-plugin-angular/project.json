@@ -5,16 +5,29 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
+      "executor": "@nx/rollup:rollup",
       "outputs": ["{workspaceRoot}/{options.outputPath}"],
       "options": {
+        "project": "packages/vite-plugin-angular/package.json",
         "outputPath": "node_modules/@analogjs/vite-plugin-angular",
-        "main": "packages/vite-plugin-angular/src/index.ts",
+        "entryFile": "packages/vite-plugin-angular/src/index.ts",
         "tsConfig": "packages/vite-plugin-angular/tsconfig.lib.json",
+        "compiler": "tsc",
+        "external": "all",
+        "generateExportsField": true,
         "assets": [
-          "packages/vite-plugin-angular/*.md",
-          "packages/vite-plugin-angular/migrations/migration.json"
+          {
+            "input": "packages/vite-plugin-angular",
+            "output": "/",
+            "glob": "*.md"
+          },
+          {
+            "input": "packages/vite-plugin-angular/migrations",
+            "output": "/migrations",
+            "glob": "*.json"
+          }
         ],
+        "format": ["esm", "cjs"],
         "updateBuildableProjectDepsInPackageJson": false
       }
     },

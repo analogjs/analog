@@ -1,4 +1,4 @@
-import viteAngular, { PluginOptions } from '@analogjs/vite-plugin-angular';
+import { angular, PluginOptions } from '@analogjs/vite-plugin-angular';
 import { enableProdMode } from '@angular/core';
 import { AstroIntegration, AstroRenderer } from 'astro';
 
@@ -39,7 +39,7 @@ function getViteConfiguration(vite?: PluginOptions) {
      *
      */
     plugins: [
-      (viteAngular as any).default(vite),
+      angular(vite),
       {
         name: '@analogjs/astro-angular-platform-server',
         transform(code: string, id: string) {

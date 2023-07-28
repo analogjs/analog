@@ -102,6 +102,7 @@
     "@nx/jest": "16.5.1",
     "@nx/linter": "16.5.1",
     "@nx/plugin": "16.5.1",
+    "@nx/rollup": "16.5.1",
     "@nx/vite": "16.5.1",
     "@nx/web": "16.5.1",
     "@schematics/angular": "^16.1.0",
