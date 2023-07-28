@@ -138,7 +138,7 @@ The `injectContent()` function can also be used with an object that contains the
 
 This can be useful if, for instance, you have blog posts, as well as a portfolio of project markdown files to be used on the site.
 
-```ts
+```treeview
 src/
 └── app/
 │   └── pages/

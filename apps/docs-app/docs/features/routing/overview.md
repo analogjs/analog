@@ -22,6 +22,12 @@ There are 5 primary types of routes:
 
 These routes can be combined in different ways to build to URLs for navigation.
 
+:::note
+
+In addition to the 5 primary types of routes, Analog also supports [Redirect Routes](/docs/features/routing/metadata#redirect-routes) and [Content Routes](/docs/features/routing/content).
+
+:::
+
 ## Index Routes
 
 Index routes are defined by using the filename as the route path enclosed in parenthesis.
@@ -252,7 +258,7 @@ src/
 
 The above example defines `/login` and `/signup` routes with a shared layout. The parent `src/app/pages/(auth).page.ts` file contains the parent page with a router outlet.
 
-## Catch-all routes
+## Catch-all Routes
 
 Catch-all routes are defined by using the filename as the route path prefixed with 3 periods enclosed in square brackets.
 
@@ -275,3 +281,41 @@ export default class PageNotFoundComponent {}
 ```
 
 Catch-all routes can also be defined as nested child routes.
+
+## Putting It All Together
+
+For the following file structure:
+
+```treeview
+src/
+└── app/
+    └── pages/
+        ├── (auth)/
+        │   ├── login.page.ts
+        │   └── signup.page.ts
+        ├── (marketing)/
+        │   ├── about.md
+        │   ├── contact.md
+        ├── products/
+        │   ├── (product-list).page.ts
+        │   ├── [productId].edit.page.ts
+        │   └── [productId].page.ts
+        ├── (auth).page.ts
+        ├── (home).page.ts
+        ├── [...not-found].md
+        └── products.page.ts
+```
+
+The filesystem-based router will generate the following routes:
+
+| Path               | Page                                                             |
+| ------------------ | ---------------------------------------------------------------- |
+| `/`                | `(home).page.ts`                                                 |
+| `/about`           | `(marketing)/about.md`                                           |
+| `/contact`         | `(marketing)/contact.md`                                         |
+| `/login`           | `(auth)/login.page.ts` (layout: `(auth).page.ts`)                |
+| `/signup`          | `(auth)/signup.page.ts` (layout: `(auth).page.ts`)               |
+| `/products`        | `products/(product-list).page.ts` (layout: `products.page.ts`)   |
+| `/products/1`      | `products/[productId].page.ts` (layout: `products.page.ts`)      |
+| `/products/1/edit` | `products/[productId].edit.page.ts` (layout: `products.page.ts`) |
+| `/unknown-url`     | `[...not-found].md`                                              |
