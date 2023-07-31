@@ -14,6 +14,12 @@
       "description": "Analog preset for create-nx-workspace",
       "x-use-standalone-layout": true,
       "hidden": true
+    },
+    "page": {
+      "factory": "./src/generators/page/generator",
+      "schema": "./src/generators/page/schema.json",
+      "description": "Creates a new Analog page in the given or default project.",
+      "aliases": ["p"]
     }
   },
   "schematics": {
@@ -21,6 +27,12 @@
       "factory": "./src/generators/app/compat",
       "schema": "./src/generators/app/schema.json",
       "description": "Generates an Analog application"
+    },
+    "page": {
+      "factory": "./src/generators/page/generator#analogPageGeneratorSchematic",
+      "schema": "./src/generators/page/schema.json",
+      "description": "Creates a new Analog page in the given or default project.",
+      "aliases": ["p"]
     }
   }
 }
