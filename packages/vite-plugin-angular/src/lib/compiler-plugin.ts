@@ -6,16 +6,19 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import type { Plugin, PluginBuild } from 'esbuild';
+import type { DepOptimizationConfig } from 'vite';
 
 import { CompilerPluginOptions, JavaScriptTransformer } from './utils/devkit';
 
+type EsbuildOptions = NonNullable<DepOptimizationConfig['esbuildOptions']>;
+type EsbuildPlugin = NonNullable<EsbuildOptions['plugins']>[number];
+
 export function createCompilerPlugin(
   pluginOptions: CompilerPluginOptions
-): Plugin {
+): EsbuildPlugin {
   return {
     name: 'analogjs-angular-esbuild-deps-optimizer-plugin',
-    async setup(build: PluginBuild): Promise<void> {
+    async setup(build) {
       const javascriptTransformer = new JavaScriptTransformer(pluginOptions, 1);
 
       build.onLoad({ filter: /\.[cm]?js$/ }, async (args) => {
