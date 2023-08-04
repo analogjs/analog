@@ -53,6 +53,7 @@ describe('nitro', () => {
       { ssr: true },
       {
         ...mockNitroConfig,
+        alias: expect.anything(),
         prerender: { routes: ['/'] },
         rollupConfig: expect.anything(),
         handlers: expect.anything(),
@@ -81,6 +82,7 @@ describe('nitro', () => {
       { ssr: false },
       {
         ...mockNitroConfig,
+        alias: expect.anything(),
         prerender: { routes: ['/'] },
         rollupConfig: expect.anything(),
         handlers: expect.anything(),
@@ -118,6 +120,7 @@ describe('nitro', () => {
       { ssr: true, ...prerenderRoutes },
       {
         ...mockNitroConfig,
+        alias: expect.anything(),
         rollupConfig: expect.anything(),
         handlers: expect.anything(),
       }
@@ -160,6 +163,7 @@ describe('nitro', () => {
       { ssr: true, ...prerenderRoutes },
       {
         ...mockNitroConfig,
+        alias: expect.anything(),
         prerender: {
           routes: prerenderRoutes.prerender.routes,
         },

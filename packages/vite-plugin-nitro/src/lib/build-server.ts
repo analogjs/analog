@@ -1,16 +1,13 @@
-import { NitroConfig } from 'nitropack';
+import { NitroConfig, copyPublicAssets, prerender } from 'nitropack';
+import { createNitro, build, prepare } from 'nitropack';
 
-import { Options } from './options';
-import { addPostRenderingHooks } from './hooks/post-rendering-hook';
-import { loadEsmModule } from './utils/load-esm';
+import { Options } from './options.js';
+import { addPostRenderingHooks } from './hooks/post-rendering-hook.js';
 
 export async function buildServer(
   options?: Options,
   nitroConfig?: NitroConfig
 ) {
-  const { createNitro, build, prepare, copyPublicAssets, prerender } =
-    await loadEsmModule<typeof import('nitropack')>('nitropack');
-
   const nitro = await createNitro({
     dev: false,
     preset: process.env['BUILD_PRESET'],

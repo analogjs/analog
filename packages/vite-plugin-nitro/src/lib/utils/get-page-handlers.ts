@@ -1,5 +1,6 @@
 import { NitroEventHandler } from 'nitropack';
 import * as path from 'path';
+import fg from 'fast-glob';
 
 type GetHandlersArgs = {
   workspaceRoot: string;
@@ -7,7 +8,6 @@ type GetHandlersArgs = {
 };
 
 export function getPageHandlers({ workspaceRoot, rootDir }: GetHandlersArgs) {
-  const fg = require('fast-glob');
   const root = path.resolve(workspaceRoot, rootDir);
 
   const endpointFiles: string[] = fg.sync(

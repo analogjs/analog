@@ -2,6 +2,7 @@
   "name": "@analogjs/vite-plugin-angular",
   "description": "Vite Plugin for Angular",
   "version": "0.2.0-rc.2",
+  "type": "module",
   "keywords": [
     "vite",
     "vitest",

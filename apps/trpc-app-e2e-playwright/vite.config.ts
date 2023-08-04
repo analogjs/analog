@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
-import { offsetFromRoot } from '@nx/devkit';
+import { offsetFromRoot } from '@nx/devkit/src/utils/offset-from-root.js';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {

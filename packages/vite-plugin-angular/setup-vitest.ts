@@ -1,7 +1,7 @@
 import 'zone.js';
-import 'zone.js/dist/sync-test';
-import 'zone.js/dist/proxy';
-import 'zone.js/testing';
+import 'zone.js/dist/sync-test.js';
+import 'zone.js/dist/proxy.js';
+import 'zone.js/bundles/zone-testing.umd.js';
 
 /**
  * Patch Vitest's describe/test/beforeEach/afterEach functions so test code

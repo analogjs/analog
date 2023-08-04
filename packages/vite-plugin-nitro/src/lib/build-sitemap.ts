@@ -3,7 +3,8 @@ import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 import { create } from 'xmlbuilder2';
 import { UserConfig } from 'vite';
 import * as path from 'path';
-import { SitemapConfig } from './options';
+
+import { SitemapConfig } from './options.js';
 
 export type PagesJson = {
   page: string;

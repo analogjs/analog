@@ -2,25 +2,28 @@ import { ModuleNode, Plugin, PluginContainer, ViteDevServer } from 'vite';
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
 import { transformAsync } from '@babel/core';
 
+import * as compilerCli from '@angular/compiler-cli';
 import * as ts from 'typescript';
-import * as path from 'path';
+import * as path from 'node:path';
+import { createRequire } from 'node:module';
 
-import { createCompilerPlugin } from './compiler-plugin';
+import { createCompilerPlugin } from './compiler-plugin.js';
 import {
   hasStyleUrls,
   hasTemplateUrl,
   StyleUrlsResolver,
   TemplateUrlsResolver,
-} from './component-resolvers';
-import { augmentHostWithResources } from './host';
-import { jitPlugin } from './angular-jit-plugin';
-import { buildOptimizerPlugin } from './angular-build-optimizer-plugin';
+} from './component-resolvers.js';
+import { augmentHostWithResources } from './host.js';
+import { jitPlugin } from './angular-jit-plugin.js';
+import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
 import {
-  loadEsmModule,
   angularApplicationPreset,
   createJitResourceTransformer,
   SourceFileCache,
-} from './utils/devkit';
+} from './utils/devkit.js';
+
+const require = createRequire(import.meta.url);
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -89,8 +92,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     augmentProgramWithVersioning,
     augmentHostWithCaching,
   } = require('@ngtools/webpack/src/ivy/host');
+  const ts = require('typescript');
 
-  let compilerCli: typeof import('@angular/compiler-cli');
   let rootNames: string[];
   let host: ts.CompilerHost;
   let nextProgram: NgtscProgram | undefined | ts.Program;
@@ -122,10 +125,6 @@ export function angular(options?: PluginOptions): Plugin[] {
               ? './tsconfig.spec.json'
               : './tsconfig.app.json'
           );
-
-        compilerCli = await loadEsmModule<
-          typeof import('@angular/compiler-cli')
-        >('@angular/compiler-cli');
 
         return {
           optimizeDeps: {

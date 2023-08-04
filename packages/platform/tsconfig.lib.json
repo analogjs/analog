@@ -1,11 +1,12 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "es2020",
     "outDir": "../../dist/out-tsc",
     "inlineSourceMap": true,
     "sourceMap": false,
     "declaration": true,
+    "esModuleInterop": false,
     "types": [],
     "paths": {
       "@analogjs/vite-plugin-angular": [

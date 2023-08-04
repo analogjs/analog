@@ -7,6 +7,7 @@
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "esModuleInterop": true,
     "importHelpers": true,
     "target": "es2015",
     "module": "esnext",
@@ -18,7 +19,10 @@
       "@analogjs/astro-angular": ["packages/astro-angular/src/index.ts"],
       "@analogjs/content": ["packages/content/src/index.ts"],
       "@analogjs/nx": ["packages/nx-plugin/src/index.ts"],
-      "@analogjs/platform": ["packages/platform/src/index.ts"],
+      "@analogjs/platform": [
+        "./node_modules/@analogjs/platform",
+        "packages/platform/src/index.ts"
+      ],
       "@analogjs/router": ["packages/router/src/index.ts"],
       "@analogjs/top-bar": ["libs/top-bar/src/index.ts"],
       "@analogjs/trpc": ["packages/trpc/src/index.ts"],

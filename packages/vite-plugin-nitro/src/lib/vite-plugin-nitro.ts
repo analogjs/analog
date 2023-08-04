@@ -1,20 +1,26 @@
-import type { NitroConfig } from 'nitropack';
+import {
+  NitroConfig,
+  build,
+  createDevServer,
+  createNitro,
+  prepare,
+} from 'nitropack';
 import { toNodeListener } from 'h3';
-import type { Plugin, UserConfig } from 'vite';
-import { normalizePath, ViteDevServer } from 'vite';
+import { Plugin, UserConfig, ViteDevServer } from 'vite';
+import { normalizePath } from 'vite';
 import * as path from 'path';
 
-import { buildServer } from './build-server';
-import { buildSSRApp } from './build-ssr';
-
-import { Options } from './options';
-import { pageEndpointsPlugin } from './plugins/page-endpoints';
-import { getPageHandlers } from './utils/get-page-handlers';
-import { buildSitemap } from './build-sitemap';
-import { devServerPlugin } from './plugins/dev-server-plugin';
-import { loadEsmModule } from './utils/load-esm';
+import { buildServer } from './build-server.js';
+import { buildSSRApp } from './build-ssr.js';
+import { Options } from './options.js';
+import { pageEndpointsPlugin } from './plugins/page-endpoints.js';
+import { getPageHandlers } from './utils/get-page-handlers.js';
+import { buildSitemap } from './build-sitemap.js';
+import { devServerPlugin } from './plugins/dev-server-plugin.js';
 
 let clientOutputPath = '';
+
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const workspaceRoot = process.cwd();
@@ -65,6 +71,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           ),
           typescript: {
             generateTsConfig: false,
+          },
+          alias: {
+            '#analog/index': normalizePath(
+              path.resolve(workspaceRoot, 'dist', rootDir, 'client/index.html')
+            ),
+            '#analog/ssr': normalizePath(
+              path.resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server.js')
+            ),
           },
           runtimeConfig: { ...nitroOptions?.runtimeConfig },
           rollupConfig: {
@@ -140,6 +154,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             };
           }
         }
+
         nitroConfig = {
           ...nitroConfig,
           ...nitroOptions,
@@ -147,9 +162,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
       },
       async configureServer(viteServer: ViteDevServer) {
         if (isServe && !isTest) {
-          const { createNitro, createDevServer, build, prepare } =
-            await loadEsmModule<typeof import('nitropack')>('nitropack');
-
           const nitro = await createNitro({
             dev: true,
             ...nitroConfig,
