@@ -115,27 +115,3 @@ The client build artifacts are located in the dist folder of your Nx workspace.
 
 In the common apps/libs workspace layout, the `analog-app`'s client artifacts are located in the `dist/apps/analog-app/analog/public` directory.
 The server for the API/SSR build artifacts is located in the `dist/apps/analog-app/analog/server` directory.
-
-### Generators
-
-The Analogjs Nx integration also provides a series of generators that help automate some of the frequent tasks inside an Nx Analog workspace, like generating a **Page**, a starting point for a **Blog** (work in progress), or generating **Posts** (work in progress). To use these generators, the **NxConsole** plugin can be installed or they can be invoked manually using:
-
-### Generate a Page
-
-This command will generate a page inside our `pages` folder with minimal configuration out of the box.
-
-```shell
-npx nx generate @analogjs/platform:page --pathname=index --project=analog-app
-```
-
-it also works with the Analog specific filenames, **Note: this names needs to be surrounded by single quotes** ex:
-
-```shell
-npx nx generate @analogjs/platform:page --pathname='(blog)' --project=analog-app
-```
-
-The schematic as well accepts subfolders to structure our project properly.
-
-```shell
-npx nx generate @analogjs/platform:page --pathname='products/[products]' --project=analog-app
-```

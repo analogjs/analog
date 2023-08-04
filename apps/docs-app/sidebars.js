@@ -76,6 +76,17 @@ const sidebars = {
             },
           ],
         },
+        {
+          type: 'category',
+          label: 'Code Generation',
+          items: [
+            {
+              type: 'doc',
+              id: 'features/generation/code-generation',
+              label: 'Overview',
+            },
+          ],
+        },
       ],
     },
     {
@@ -139,11 +150,6 @@ const sidebars = {
           type: 'doc',
           id: 'integrations/angular-material/index',
           label: 'Angular Material',
-        },
-        {
-          type: 'doc',
-          id: 'integrations/schematics/index',
-          label: 'Schematics',
         },
       ],
     },
