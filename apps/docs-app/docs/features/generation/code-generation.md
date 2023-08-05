@@ -36,7 +36,7 @@ npx nx generate @analogjs/platform:page --pathname='products/[products]' --proje
 
   <TabItem label="Schematics" value="schematics">
 
-## Angular Schematics
+### Angular Schematics
 
 Analog provides a series of schematics that help automate some of the frequent tasks inside an Analog workspace, like generating a **Page**. To use these schematics, use the generate command:
 
