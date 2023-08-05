@@ -54,9 +54,12 @@ export async function mockBuildFunctions() {
   return { buildSSRAppImportSpy, buildServerImportSpy, buildSitemapImportSpy };
 }
 
-export async function runConfigAndCloseBundle(plugin: Plugin): Promise<void> {
+export async function runConfigAndCloseBundle(plugin: Plugin[]): Promise<void> {
   await (
-    plugin.config as (config: UserConfig, env: ConfigEnv) => Promise<UserConfig>
+    plugin[1].config as (
+      config: UserConfig,
+      env: ConfigEnv
+    ) => Promise<UserConfig>
   )({}, { command: 'build' } as ConfigEnv);
-  await (plugin.closeBundle as () => Promise<void>)();
+  await (plugin[1].closeBundle as () => Promise<void>)();
 }
