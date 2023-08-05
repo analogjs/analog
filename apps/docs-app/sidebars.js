@@ -76,6 +76,17 @@ const sidebars = {
             },
           ],
         },
+        {
+          type: 'category',
+          label: 'Code Generation',
+          items: [
+            {
+              type: 'doc',
+              id: 'features/generation/code-generation',
+              label: 'Overview',
+            },
+          ],
+        },
       ],
     },
     {
