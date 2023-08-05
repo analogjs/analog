@@ -12,7 +12,7 @@ This command generates a page inside our `pages` folder with minimal configurati
 <Tabs groupId="project-type">
   <TabItem value="Nx">
 
-## Generators
+### Generators
 
 The Analog plugin for Nx provides a series of generators that help automate some of the frequent tasks inside an Analog project, like generating a **Page**. To use these generators, the **Nx Console** extension can be installed or they can be invoked manually using:
 
