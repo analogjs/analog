@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/platform",
-  "version": "0.2.0-rc.1",
+  "version": "0.2.0-rc.2",
   "type": "commonjs",
   "description": "The fullstack meta-framework for Angular",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -25,8 +25,8 @@
   },
   "dependencies": {
     "nitropack": "^2.0.0",
-    "@analogjs/vite-plugin-angular": "^0.2.0-rc.1",
-    "@analogjs/vite-plugin-nitro": "^0.2.0-rc.1",
+    "@analogjs/vite-plugin-angular": "^0.2.0-rc.2",
+    "@analogjs/vite-plugin-nitro": "^0.2.0-rc.2",
     "@nx/devkit": "^16.0.0"
   },
   "generators": "./src/lib/nx-plugin/generators.json",
