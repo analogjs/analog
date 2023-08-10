@@ -2,7 +2,6 @@
   "name": "analogjs-platform",
   "version": "0.2.0-rc.2",
   "license": "MIT",
-  "type": "module",
   "scripts": {
     "dev": "nx serve",
     "ng": "nx",

@@ -77,7 +77,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               path.resolve(workspaceRoot, 'dist', rootDir, 'client/index.html')
             ),
             '#analog/ssr': normalizePath(
-              path.resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server.js')
+              path.resolve(
+                workspaceRoot,
+                'dist',
+                rootDir,
+                'ssr/main.server.mjs'
+              )
             ),
           },
           runtimeConfig: { ...nitroOptions?.runtimeConfig },

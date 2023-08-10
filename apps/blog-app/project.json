@@ -14,7 +14,7 @@
         "dist/apps/blog-app/analog"
       ],
       "options": {
-        "configFile": "apps/blog-app/vite.config.ts",
+        "configFile": "apps/blog-app/vite.config.mts",
         "outputPath": "dist/apps/blog-app/client"
       },
       "defaultConfiguration": "production",

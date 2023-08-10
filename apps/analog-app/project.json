@@ -14,7 +14,7 @@
         "dist/apps/analog-app/analog"
       ],
       "options": {
-        "configFile": "apps/analog-app/vite.config.ts",
+        "configFile": "apps/analog-app/vite.config.mts",
         "outputPath": "dist/apps/analog-app/client"
       },
       "defaultConfiguration": "production",
