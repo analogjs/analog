@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
-import { offsetFromRoot } from '@nx/devkit/src/utils/offset-from-root.js';
+import nx from '@nx/devkit';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
       environment: 'node',
       include: ['**/*.spec.ts'],
       cache: {
-        dir: `${offsetFromRoot(
+        dir: `${nx.offsetFromRoot(
           'apps/nx-plugin-e2e'
         )}/node_modules/.vitest/nx-plugin-e2e`,
       },

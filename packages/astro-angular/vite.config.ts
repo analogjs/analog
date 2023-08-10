@@ -1,8 +1,7 @@
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
-import pkg from '@nx/devkit';
-const { offsetFromRoot } = pkg;
+import nx from '@nx/devkit';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -12,7 +11,7 @@ export default defineConfig(({ mode }) => {
       port: 3000,
     },
     build: {
-      outDir: `${offsetFromRoot(
+      outDir: `${nx.offsetFromRoot(
         'packages/astro-angular/src'
       )}/dist/packages/astro-angular`,
       emptyOutDir: true,
@@ -28,7 +27,7 @@ export default defineConfig(({ mode }) => {
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
       cache: {
-        dir: `${offsetFromRoot(
+        dir: `${nx.offsetFromRoot(
           'packages/astro-angular/src'
         )}/node_modules/.vitest`,
       },
