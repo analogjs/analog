@@ -12,7 +12,7 @@
         "build": {
           "builder": "@nx/vite:build",
           "options": {
-            "configFile": "vite.config.ts",
+            "configFile": "vite.config.mts",
             "main": "src/main.ts",
             "outputPath": "dist/client"
           },
