@@ -6,7 +6,6 @@
     "inlineSourceMap": true,
     "sourceMap": false,
     "declaration": true,
-    "esModuleInterop": false,
     "types": [],
     "paths": {
       "@analogjs/vite-plugin-angular": [
