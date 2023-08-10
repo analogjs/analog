@@ -14,7 +14,7 @@
         "dist/apps/trpc-app/analog"
       ],
       "options": {
-        "configFile": "apps/trpc-app/vite.config.ts",
+        "configFile": "apps/trpc-app/vite.config.mts",
         "outputPath": "dist/apps/trpc-app/client"
       },
       "defaultConfiguration": "production",
