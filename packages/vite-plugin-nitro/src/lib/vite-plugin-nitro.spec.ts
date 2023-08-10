@@ -125,7 +125,8 @@ describe('nitro', () => {
     expect(buildSitemapImportSpy).toHaveBeenCalledWith(
       {},
       { host: 'example.com' },
-      prerenderRoutes.prerender.routes
+      prerenderRoutes.prerender.routes,
+      expect.anything()
     );
   });
 
@@ -171,7 +172,8 @@ describe('nitro', () => {
     expect(buildSitemapImportSpy).toHaveBeenCalledWith(
       {},
       { host: 'example.com' },
-      prerenderRoutes.prerender.routes
+      prerenderRoutes.prerender.routes,
+      expect.anything()
     );
   });
 
