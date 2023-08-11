@@ -19,10 +19,10 @@ export function getPageHandlers({ workspaceRoot, rootDir }: GetHandlersArgs) {
     const route = endpointFile
       .replace(path.resolve(workspaceRoot, rootDir, 'src/app'), '')
       .replace(/\.server\.ts$/, '')
-      .replace(/\[\.{3}]/g, '**')
-      .replace(/\[\.{3}(\w+)]/g, '**:$1')
+      .replace(/\[\.{3}(.+)\]/g, '**:$1')
+      .replace(/\[\.{3}(\w+)\]/g, '**:$1')
       .replace(/\/\((.*?)\)$/, '/-$1-')
-      .replace(/\[(\w+)]/g, ':$1')
+      .replace(/\[(\w+)\]/g, ':$1')
       .replace(/\./g, '/');
 
     return {
