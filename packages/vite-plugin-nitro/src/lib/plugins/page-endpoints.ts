@@ -1,18 +1,47 @@
 import { normalizePath } from 'vite';
+import { buildSync } from 'esbuild';
 
 export function pageEndpointsPlugin() {
   return {
     name: 'analogjs-vite-plugin-nitro-rollup-page-endpoint',
-    transform(code: string, id: string) {
+    async transform(_code: string, id: string) {
       if (
         id.includes(normalizePath('src/app/pages')) &&
         id.endsWith('.server.ts')
       ) {
-        return {
-          code: `
+        const compiled = buildSync({
+          stdin: {
+            contents: _code,
+            sourcefile: id,
+            loader: 'ts',
+          },
+          write: false,
+          metafile: true,
+          platform: 'neutral',
+          format: 'esm',
+          logLevel: 'silent',
+        });
+
+        let fileExports: string[] = [];
+
+        for (let key in compiled.metafile?.outputs) {
+          if (compiled.metafile?.outputs[key].entryPoint) {
+            fileExports = compiled.metafile?.outputs[key].exports;
+          }
+        }
+
+        const code = `
             import { defineEventHandler } from 'h3';
 
-            ${code}
+            ${
+              fileExports.includes('load')
+                ? _code
+                : `
+                ${_code}
+                export const load = () => {
+                  return {};
+                }`
+            }
 
             export default defineEventHandler(async(event) => {
               try {
@@ -27,7 +56,10 @@ export function pageEndpointsPlugin() {
                 throw e;
               }
             });
-          `,
+          `;
+
+        return {
+          code,
           map: null,
         };
       }

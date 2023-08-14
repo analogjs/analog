@@ -1,3 +1,4 @@
 # These are supported funding model platforms
 
-github: brandonroberts # Replace with up to 4 GitHub Sponsors-enabled usernames e.g., [user1, user2]
+github: [brandonroberts, goetzrobin] # Replace with up to 4 GitHub Sponsors-enabled usernames e.g., [user1, user2]
+custom: https://analogjs.org/docs/sponsoring # Replace with a single custom sponsorship URL

@@ -182,3 +182,15 @@ export default class ProjectComponent {
   });
 }
 ```
+
+## Loading Custom Content
+
+By default, Analog uses the route params to build the filename for retrieving a content file from the `src/content` folder. Analog also supports using a custom filename for retrieving content from the `src/content` folder. This can be useful if, for instance, you have a custom markdown file that you want to load on a page.
+
+The `injectContent()` function can be used by passing an object that contains the `customFilename` property.
+
+```ts
+readonly post$ = injectContent<ProjectAttributes>({
+  customFilename: 'path/to/custom/file',
+});
+```

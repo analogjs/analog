@@ -1,0 +1,22 @@
+<% if(redirectPage || metadata ) { %>import { RouteMeta } from '@analogjs/router'; <% } %>
+<% if(!redirectPage) { %> import { Component } from '@angular/core'; <% } %>
+
+<% if(!redirectPage) { %>
+<% if(metadata) { %>
+export const routeMeta: RouteMeta = {
+  title: '<%= title %>',
+};
+<% } %>
+@Component({
+  standalone: true,
+  imports: [],
+  template: `
+     <p><%= propertyName %> page works!!</p>
+  `,
+})
+export default class <%= className %>Page {
+} <% } else { %>
+export const routeMeta: RouteMeta = {
+  redirectTo: '<%= redirectPath %>',
+  pathMatch: '<%= pathMatch %>',
+};<% } %>

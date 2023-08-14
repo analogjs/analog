@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-53-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-54-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -150,6 +150,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="http://riegler.fr"><img src="https://avatars.githubusercontent.com/u/1300985?v=4?s=100" width="100px;" alt="Matthieu Riegler"/><br /><sub><b>Matthieu Riegler</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=JeanMeche" title="Documentation">📖</a> <a href="#infra-JeanMeche" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/analogjs/analog/commits?author=JeanMeche" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ashley-hunter"><img src="https://avatars.githubusercontent.com/u/20795331?v=4?s=100" width="100px;" alt="Ashley Hunter"/><br /><sub><b>Ashley Hunter</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ashley-hunter" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://ng-guru.io"><img src="https://avatars.githubusercontent.com/u/7337691?v=4?s=100" width="100px;" alt="Artur Androsovych"/><br /><sub><b>Artur Androsovych</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=arturovt" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=arturovt" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://bjornlu.com"><img src="https://avatars.githubusercontent.com/u/34116392?v=4?s=100" width="100px;" alt="Bjorn Lu"/><br /><sub><b>Bjorn Lu</b></sub></a><br /><a href="#infra-bluwy" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
     </tr>
   </tbody>
 </table>
