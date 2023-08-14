@@ -7,6 +7,7 @@ import { Product } from './products';
 })
 export class CartService {
   items: Product[] = [];
+  private readonly apiURL = import.meta.env.VITE_ANALOG_PUBLIC_BASE_URL;
 
   constructor(private http: HttpClient) {}
 
@@ -25,7 +26,7 @@ export class CartService {
 
   getShippingPrices() {
     return this.http.get<{ type: string; price: number }[]>(
-      '/assets/shipping.json'
+      `${this.apiURL}/assets/shipping.json`
     );
   }
 }
