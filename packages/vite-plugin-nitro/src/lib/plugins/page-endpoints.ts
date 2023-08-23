@@ -49,7 +49,8 @@ export function pageEndpointsPlugin() {
                   params: event.context.params,
                   req: event.node.req,
                   res: event.node.res,
-                  fetch: $fetch
+                  fetch: $fetch,
+                  event
                 });
               } catch(e) {
                 console.error(\` An error occurred: \$\{e\}\`)
