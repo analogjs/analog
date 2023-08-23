@@ -74,9 +74,9 @@ With this configuration, Analog exposes the API routes under the `/services` pre
 
 A route defined in `src/server/routes/v1/hello.ts` can now be accessed at `/services/v1/hello`.
 
-## Route with Dynamic Parameters
+## Dynamic API Routes
 
-Routes can use dynamic parameters within brackets in the file name like `/api/hello/[name].ts` and be accessed via event.context.params.
+Dynamic API routes are defined by using the filename as the route path enclosed in square brackets. Parameters can be accessed via `event.context.params`.
 
 ```ts
 // /server/routes/v1/hello/[name].ts
@@ -87,7 +87,7 @@ export default defineEventHandler(
 );
 ```
 
-OR
+Another way to access route parameters is by using the `getRouterParam` function.
 
 ```ts
 // /server/routes/v1/hello/[name].ts
@@ -101,7 +101,7 @@ export default defineEventHandler((event) => {
 
 ## Specific HTTP request method
 
-File names can be suffixed with .get, .post, .put, .delete, ... to match request's HTTP Method.
+File names can be suffixed with `.get`, `.post`, `.put`, `.delete`, etc. to match the specific HTTP request method.
 
 ### GET
 
