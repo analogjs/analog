@@ -74,6 +74,108 @@ With this configuration, Analog exposes the API routes under the `/services` pre
 
 A route defined in `src/server/routes/v1/hello.ts` can now be accessed at `/services/v1/hello`.
 
+## Route with Dynamic Parameters
+
+Routes can use dynamic parameters within brackets in the file name like `/api/hello/[name].ts` and be accessed via event.context.params.
+
+```ts
+// /server/routes/v1/hello/[name].ts
+import { defineEventHandler } from 'h3';
+
+export default defineEventHandler(
+  (event: H3Event) => `Hello ${event.context.params?.['name']}!`
+);
+```
+
+OR
+
+```ts
+// /server/routes/v1/hello/[name].ts
+import { defineEventHandler, getRouterParam } from 'h3';
+
+export default defineEventHandler((event) => {
+  const name = getRouterParam(event, 'name');
+  return `Hello, ${name}!`;
+});
+```
+
+## Specific HTTP request method
+
+File names can be suffixed with .get, .post, .put, .delete, ... to match request's HTTP Method.
+
+### GET
+
+```ts
+// /server/routes/v1/users/[id].get.ts
+import { defineEventHandler, getRouterParam } from 'h3';
+
+export default defineEventHandler(async (event) => {
+  const id = getRouterParam(event, 'id');
+  // TODO: fetch user by id
+  return `User profile of ${id}!`;
+});
+```
+
+### POST
+
+```ts
+// /server/routes/v1/users.post.ts
+import { defineEventHandler, readBody } from 'h3';
+
+export default defineEventHandler(async (event) => {
+  const body = await readBody(event);
+  // TODO: Handle body and add user
+  return { updated: true };
+});
+```
+
+The [h3 JSDocs](https://www.jsdocs.io/package/h3#package-index-functions) provide more info and utilities, including readBody.
+
+## Requests with Query Parameters
+
+Sample query `/api/v1/query?param1=Analog&param2=Angular`
+
+```ts
+// routes/v1/query.ts
+import { defineEventHandler, getQuery } from 'h3';
+
+export default defineEventHandler((event) => {
+  const { param1, param2 } = getQuery(event);
+  return `Hello, ${param1} and ${param2}!`;
+});
+```
+
+## Catch-all Routes
+
+Catch-all routes are helpful for fallback route handling.
+
+```ts
+// routes/[...].ts
+export default defineEventHandler((event) => `Default page`);
+```
+
+## Error Handling
+
+If no errors are thrown, a status code of 200 OK will be returned. Any uncaught errors will return a 500 Internal Server Error HTTP Error.
+To return other error codes, throw an exception with createError
+
+```ts
+// routes/v1/[id].ts
+import { defineEventHandler, getRouterParam, createError } from 'h3';
+
+export default defineEventHandler((event) => {
+  const param = getRouterParam(event, 'id');
+  const id = parseInt(param ? param : '');
+  if (!Number.isInteger(id)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'ID should be an integer',
+    });
+  }
+  return `ID is ${id}`;
+});
+```
+
 ## More Info
 
 API routes are powered by [Nitro](https://nitro.unjs.io). See the Nitro docs for more examples around building API routes.
