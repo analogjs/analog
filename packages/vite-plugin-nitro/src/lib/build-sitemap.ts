@@ -14,7 +14,8 @@ export type PagesJson = {
 export async function buildSitemap(
   config: UserConfig,
   sitemapConfig: SitemapConfig,
-  routes: string[] | (() => Promise<(string | undefined)[]>)
+  routes: string[] | (() => Promise<(string | undefined)[]>),
+  outputDir: string
 ) {
   const routeList: string[] = await optionHasRoutes(routes);
 
@@ -33,11 +34,7 @@ export async function buildSitemap(
       page.ele('lastmod').txt(item.lastMod);
     }
 
-    const mapPath = `${path.resolve(
-      'dist',
-      config.root || '.',
-      'analog/public'
-    )}/sitemap.xml`;
+    const mapPath = `${path.resolve(outputDir)}/sitemap.xml`;
     try {
       console.log(`Writing sitemap at ${mapPath}`);
       fs.writeFileSync(mapPath, sitemap.end({ prettyPrint: true }));

@@ -1,12 +1,12 @@
-import { normalizePath } from 'vite';
 import { buildSync } from 'esbuild';
+import { normalizePath } from 'vite';
 
 export function pageEndpointsPlugin() {
   return {
     name: 'analogjs-vite-plugin-nitro-rollup-page-endpoint',
     async transform(_code: string, id: string) {
       if (
-        id.includes(normalizePath('src/app/pages')) &&
+        normalizePath(id).includes('src/app/pages') &&
         id.endsWith('.server.ts')
       ) {
         const compiled = buildSync({

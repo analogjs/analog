@@ -201,7 +201,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             await buildSitemap(
               config,
               options.prerender.sitemap,
-              options.prerender.routes!
+              options.prerender.routes!,
+              nitroConfig.output?.publicDir!
             );
           }
 

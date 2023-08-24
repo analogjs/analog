@@ -520,6 +520,15 @@
       "contributions": [
         "infra"
       ]
+    },
+    {
+      "login": "omarbelkhodja",
+      "name": "Omar BELKHODJA",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2501093?v=4",
+      "profile": "https://github.com/omarbelkhodja",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
