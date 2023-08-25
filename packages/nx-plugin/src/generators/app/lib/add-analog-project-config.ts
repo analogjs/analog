@@ -10,6 +10,8 @@ export function addAnalogProjectConfig(
   appsDir: string,
   nxPackageNamespace: string
 ) {
+  const isStandalone = appsDir === '.';
+  const workspaceAppsDir = isStandalone ? '' : `${appsDir}/`;
   const projectConfiguration: ProjectConfiguration = {
     root: projectRoot,
     projectType: 'application',
@@ -19,14 +21,14 @@ export function addAnalogProjectConfig(
         executor: `${nxPackageNamespace}/vite:build`,
         outputs: [
           '{options.outputPath}',
-          `dist/${appsDir}/${projectName}/.nitro`,
-          `dist/${appsDir}/${projectName}/ssr`,
-          `dist/${appsDir}/${projectName}/analog`,
+          `dist/${workspaceAppsDir}${projectName}/.nitro`,
+          `dist/${workspaceAppsDir}${projectName}/ssr`,
+          `dist/${workspaceAppsDir}${projectName}/analog`,
         ],
         options: {
-          main: `${appsDir}/${projectName}/src/main.ts`,
-          configFile: `${appsDir}/${projectName}/vite.config.ts`,
-          outputPath: `dist/${appsDir}/${projectName}/client`,
+          main: `${workspaceAppsDir}${projectName}/src/main.ts`,
+          configFile: `${workspaceAppsDir}${projectName}/vite.config.ts`,
+          outputPath: `dist/${workspaceAppsDir}${projectName}/client`,
         },
         defaultConfiguration: 'production',
         configurations: {
@@ -64,7 +66,7 @@ export function addAnalogProjectConfig(
       },
       test: {
         executor: `${nxPackageNamespace}/vite:test`,
-        outputs: [`${appsDir}/${projectName}/coverage`],
+        outputs: [`${workspaceAppsDir}${projectName}/coverage`],
       },
     },
     tags: parsedTags,
