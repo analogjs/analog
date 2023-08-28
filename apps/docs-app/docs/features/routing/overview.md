@@ -98,7 +98,7 @@ The example route below in `src/app/pages/products/[productId].page.ts` defines 
 
 ```ts
 import { Component, inject } from '@angular/core';
-import { AsyncPipe, JsonPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
@@ -132,6 +132,7 @@ First, add the `withComponentInputBinding()` to the arguments for the `provideFi
 // src/app/app.config.ts
 import { ApplicationConfig } from '@angular/core';
 import { provideFileRouter } from '@analogjs/router';
+import { withComponentInputBinding } from '@angular/router';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -145,10 +146,7 @@ Next, use the route parameter as an input.
 
 ```ts
 // src/app/pages/products/[productId].page.ts
-import { Component, inject } from '@angular/core';
-import { AsyncPipe, JsonPipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs';
+import { Component, Input } from '@angular/core';
 
 @Component({
   standalone: true,
@@ -160,7 +158,7 @@ import { map } from 'rxjs';
 })
 export default class ProductDetailsPageComponent {
   @Input() productId: string;
-}
+} 
 ```
 
 ## Layout Routes
