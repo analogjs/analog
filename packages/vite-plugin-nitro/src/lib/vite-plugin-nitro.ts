@@ -93,8 +93,21 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         if (!ssrBuild && !isTest) {
           // store the client output path for the SSR build config
-          clientOutputPath = path.resolve(rootDir, config.build?.outDir!);
+          clientOutputPath = path.resolve(
+            rootDir,
+            config.build?.outDir || 'dist/client'
+          );
         }
+
+        nitroConfig.alias = {
+          '#analog/ssr': normalizePath(
+            path.resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server.mjs')
+          ),
+          '#analog/index': normalizePath(
+            path.resolve(clientOutputPath, 'index.html')
+          ),
+          ...nitroOptions?.alias,
+        };
 
         if (isBuild) {
           if (isEmptyPrerenderRoutes(options)) {
