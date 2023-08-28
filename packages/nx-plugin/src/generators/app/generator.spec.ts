@@ -99,20 +99,20 @@ describe('nx-plugin generator', () => {
     const outputs = standalone
       ? [
           '{options.outputPath}',
-          `dist/${name}/.nitro`,
-          `dist/${name}/ssr`,
-          `dist/${name}/analog`,
+          `{workspaceRoot}/dist/${name}/.nitro`,
+          `{workspaceRoot}/dist/${name}/ssr`,
+          `{workspaceRoot}/dist/${name}/analog`,
         ]
       : [
           '{options.outputPath}',
-          `dist/apps/${name}/.nitro`,
-          `dist/apps/${name}/ssr`,
-          `dist/apps/${name}/analog`,
+          `{workspaceRoot}/dist/apps/${name}/.nitro`,
+          `{workspaceRoot}/dist/apps/${name}/ssr`,
+          `{workspaceRoot}/dist/apps/${name}/analog`,
         ];
     expect(config.targets.build.outputs).toStrictEqual(outputs);
-    expect(config.targets.test.outputs).toStrictEqual(
-      standalone ? [`${name}/coverage`] : [`apps/${name}/coverage`]
-    );
+    expect(config.targets.test.outputs).toStrictEqual([
+      `{projectRoot}/coverage`,
+    ]);
   };
 
   const verifyHomePageExists = (

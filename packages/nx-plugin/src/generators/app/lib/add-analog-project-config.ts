@@ -21,9 +21,9 @@ export function addAnalogProjectConfig(
         executor: `${nxPackageNamespace}/vite:build`,
         outputs: [
           '{options.outputPath}',
-          `dist/${workspaceAppsDir}${projectName}/.nitro`,
-          `dist/${workspaceAppsDir}${projectName}/ssr`,
-          `dist/${workspaceAppsDir}${projectName}/analog`,
+          `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/.nitro`,
+          `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/ssr`,
+          `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/analog`,
         ],
         options: {
           main: `${workspaceAppsDir}${projectName}/src/main.ts`,
@@ -66,7 +66,7 @@ export function addAnalogProjectConfig(
       },
       test: {
         executor: `${nxPackageNamespace}/vite:test`,
-        outputs: [`${workspaceAppsDir}${projectName}/coverage`],
+        outputs: [`{projectRoot}/coverage`],
       },
     },
     tags: parsedTags,

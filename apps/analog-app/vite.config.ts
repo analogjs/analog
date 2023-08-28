@@ -3,7 +3,7 @@
 import analog from '@analogjs/platform';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
-import tsConfigPaths from 'vite-tsconfig-paths';
+import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 
 // Only run in Netlify CI
 if (process.env['NETLIFY'] === 'true') {
@@ -40,9 +40,7 @@ export default defineConfig(({ mode }) => {
           inlineStylesExtension: 'scss',
         },
       }),
-      tsConfigPaths({
-        root: '../../',
-      }),
+      nxViteTsPaths(),
       visualizer() as Plugin,
       splitVendorChunkPlugin(),
     ],
