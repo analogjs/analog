@@ -158,7 +158,7 @@ import { Component, Input } from '@angular/core';
 })
 export default class ProductDetailsPageComponent {
   @Input() productId: string;
-} 
+}
 ```
 
 ## Layout Routes
