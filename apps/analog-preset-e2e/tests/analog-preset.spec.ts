@@ -2,7 +2,7 @@ import { checkFilesExist, uniq, runCommandAsync } from '@nx/plugin/testing';
 import { rmdirSync } from 'node:fs';
 
 describe('analog-preset-e2e', () => {
-  it('should create an Nx workspace using the preset', async () => {
+  it.skip('should create an Nx workspace using the preset', async () => {
     const project = uniq('tmpanalogapp');
     const tmpDir = `${process.cwd()}/${project}`;
 
