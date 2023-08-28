@@ -538,6 +538,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "mavrukin",
+      "name": "Michael Avrukin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/239147?v=4",
+      "profile": "https://github.com/mavrukin",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
