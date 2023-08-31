@@ -36,9 +36,10 @@ export class MarkedSetupService {
         return '<pre><code>' + code + '</code></pre>';
       }
 
-      const classes = lang.startsWith('diff')
-        ? `language-${lang} diff-highlight`
-        : `language-${lang}`;
+      const classes =
+        lang.startsWith('diff') && Prism.languages['diff']
+          ? `language-${lang} diff-highlight`
+          : `language-${lang.replace('diff-', '')}`;
       return `<pre class="${classes}"><code class="${classes}">${code}</code></pre>`;
     };
 
@@ -47,10 +48,11 @@ export class MarkedSetupService {
       markedHighlight({
         async: true,
         highlight: (code: string, lang: string) => {
-          const diff = lang?.startsWith('diff-');
+          let diff = lang?.startsWith('diff-');
           lang = diff ? lang.replace('diff-', '') : lang || 'typescript';
 
           if (diff && !Prism.languages['diff']) {
+            diff = false;
             console.warn(`Notice:
     ---------------------------------------------------------------------------------------
     The \`diff\` language and plugin are not available in the provided setup.
