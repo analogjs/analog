@@ -11,11 +11,13 @@ import 'prismjs';
 import 'prismjs/plugins/toolbar/prism-toolbar';
 import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-css';
+import 'prismjs/components/prism-diff';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-markup';
 import 'prismjs/components/prism-typescript';
 import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
+import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
 
 declare const Prism: typeof import('prismjs');
 
@@ -25,7 +27,7 @@ export class MarkedSetupService {
 
   constructor() {
     const renderer = new marked.Renderer();
-    renderer.code = (code, lang) => {
+    renderer.code = (code: string, lang: string) => {
       // Let's do a language based detection like on GitHub
       // So we can still have non-interpreted mermaid code
       if (lang === 'mermaid') {
@@ -35,24 +37,21 @@ export class MarkedSetupService {
       if (!lang) {
         return '<pre><code>' + code + '</code></pre>';
       }
-      const langClass = 'language-' + lang;
-      const html =
-        '<pre class="' +
-        langClass +
-        '"><code class="' +
-        langClass +
-        '">' +
-        code +
-        '</code></pre>';
-      return html;
+
+      const classes = lang.startsWith('diff')
+        ? `language-${lang} diff-highlight`
+        : `language-${lang}`;
+      return `<pre class="${classes}"><code class="${classes}">${code}</code></pre>`;
     };
 
     marked.use(
       gfmHeadingId(),
       markedHighlight({
         async: true,
-        highlight: (code, lang) => {
-          lang = lang || 'typescript';
+        highlight: (code: string, lang: string) => {
+          const diff = lang?.startsWith('diff-');
+          lang = diff ? lang.replace('diff-', '') : lang || 'typescript';
+
           if (!Prism.languages[lang]) {
             if (lang !== 'mermaid') {
               console.warn(`Notice:
@@ -65,7 +64,11 @@ export class MarkedSetupService {
             }
             return code;
           }
-          return Prism.highlight(code, Prism.languages[lang], lang);
+          return Prism.highlight(
+            code,
+            diff ? Prism.languages['diff'] : Prism.languages[lang],
+            lang
+          );
         },
       }),
       {
