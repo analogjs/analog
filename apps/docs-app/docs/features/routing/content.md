@@ -44,9 +44,17 @@ Analog is a meta-framework for Angular.
 [Back Home](./)
 ```
 
-### Using the diff highlight plugin
+### Using the diff Highlight Plugin
 
-Analog supports highlighting diff changes via PrismJS. Use the `diff` language tag to highlight them or
+Analog supports highlighting diff changes with PrismJS. Add the `diff`
+language and `diff-highlight` plugin imports to `app.config.ts`:
+
+```ts
+import 'prismjs/components/prism-diff';
+import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
+```
+
+Use the `diff` language tag to highlight them or
 `diff-<language>` to highlight the diff changes in a specific language.
 
 ````md
