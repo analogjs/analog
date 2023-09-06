@@ -21,7 +21,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   page = await browser.newPage({
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:4321',
   });
   await page.goto('/');
 });
