@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "license": "MIT",
   "scripts": {
     "dev": "nx serve",
@@ -19,7 +19,7 @@
     "prettify": "prettier --write ."
   },
   "engines": {
-    "node": "~16.17.0 || >=18.13.0",
+    "node": "~16.17.0 || >=18.17.1",
     "pnpm": "^8.0.0"
   },
   "packageManager": "pnpm@8.0.0",
@@ -51,7 +51,7 @@
     "@angular/platform-browser-dynamic": "16.2.2",
     "@angular/platform-server": "16.2.2",
     "@angular/router": "16.2.2",
-    "@astrojs/react": "^2.0.2",
+    "@astrojs/react": "^3.0.0",
     "@babel/core": "^7.21.8",
     "@mdx-js/react": "1.6.22",
     "@nx/angular": "16.7.4",
@@ -91,7 +91,7 @@
     "@angular/cli": "~16.2.0",
     "@angular/compiler-cli": "16.2.2",
     "@angular/language-service": "16.2.2",
-    "@astrojs/markdown-component": "^1.0.2",
+    "@astrojs/markdown-component": "^1.0.5",
     "@commitlint/cli": "^17.4.2",
     "@commitlint/config-conventional": "^17.4.2",
     "@ngtools/webpack": "^16.1.0",
@@ -114,7 +114,7 @@
     "@typescript-eslint/eslint-plugin": "5.62.0",
     "@typescript-eslint/parser": "5.62.0",
     "all-contributors-cli": "^6.24.0",
-    "astro": "2.0.2",
+    "astro": "3.0.8",
     "conventional-changelog": "^3.1.25",
     "conventional-changelog-cli": "^2.2.2",
     "cpy-cli": "^4.2.0",
