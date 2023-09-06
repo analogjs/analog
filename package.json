@@ -95,7 +95,6 @@
     "@commitlint/cli": "^17.4.2",
     "@commitlint/config-conventional": "^17.4.2",
     "@ngtools/webpack": "^16.1.0",
-    "@nx-plus/docusaurus": "15.0.0-rc.0",
     "@nx/cypress": "16.7.4",
     "@nx/eslint-plugin": "16.7.4",
     "@nx/jest": "16.7.4",
