@@ -156,7 +156,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/mavrukin"><img src="https://avatars.githubusercontent.com/u/239147?v=4?s=100" width="100px;" alt="Michael Avrukin"/><br /><sub><b>Michael Avrukin</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=mavrukin" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/rlmestre"><img src="https://avatars.githubusercontent.com/u/277805?v=4?s=100" width="100px;" alt="Rafael Mestre"/><br /><sub><b>Rafael Mestre</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=rlmestre" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=rlmestre" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/rlmestre"><img src="https://avatars.githubusercontent.com/u/277805?v=4?s=100" width="100px;" alt="Rafael Mestre"/><br /><sub><b>Rafael Mestre</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=rlmestre" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=rlmestre" title="Documentation">📖</a> <a href="#infra-rlmestre" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
     </tr>
   </tbody>
 </table>
