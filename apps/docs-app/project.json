@@ -5,14 +5,19 @@
   "sourceRoot": "apps/docs-app/src",
   "targets": {
     "build": {
-      "executor": "@nx-plus/docusaurus:browser",
+      "executor": "nx:run-commands",
       "options": {
+        "cwd": "apps/docs-app",
+        "command": "docusaurus build  --out-dir={args.out-dir}",
+        "out-dir": "../../dist/apps/docs-app",
         "outputPath": "dist/apps/docs-app"
       }
     },
     "serve": {
-      "executor": "@nx-plus/docusaurus:dev-server",
+      "executor": "nx:run-commands",
       "options": {
+        "cwd": "apps/docs-app",
+        "command": "docusaurus start --port={args.port}",
         "port": 3000
       },
       "dependsOn": []
@@ -20,6 +25,7 @@
     "serve-static": {
       "executor": "nx:run-commands",
       "options": {
+        "cwd": "apps/docs-app",
         "command": "docusaurus serve --config apps/docs-app/docusaurus.config.js --dir dist/apps/docs-app"
       },
       "dependsOn": ["build"]
