@@ -555,7 +555,8 @@
       "profile": "https://github.com/rlmestre",
       "contributions": [
         "code",
-        "doc"
+        "doc",
+        "infra"
       ]
     }
   ],
