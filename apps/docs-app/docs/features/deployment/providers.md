@@ -226,17 +226,17 @@ To deploy on Netlify we can use the Netlify preset provide by Nitro
 
 ```ts [vite.config.ts]
 plugins: [
-    analog({
-      nitro: {
-        externals: {
-          external: [],
-        },
-        preset: 'netlify',
-        output: {
-          serverDir: '{{ rootDir }}/.netlify/functions-internal',
-          publicDir: '../../dist/analog/public',
-        },
+  analog({
+    nitro: {
+      externals: {
+        external: [],
       },
-    }),
+      preset: 'netlify',
+      output: {
+        serverDir: '{{ rootDir }}/.netlify/functions-internal',
+        publicDir: '../../dist/analog/public',
+      },
+    },
+  }),
 ];
 ```
