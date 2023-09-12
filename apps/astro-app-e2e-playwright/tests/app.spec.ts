@@ -57,7 +57,7 @@ describe('AstroApp', () => {
       await elementLocator.click();
 
       await expect(await console).toBe('event received from card-1: clicked');
-    }, 1000000);
+    });
   });
 });
 
