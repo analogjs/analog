@@ -220,7 +220,7 @@ When using Nx and reusing the build cache on the Vercel build platform, there is
 
 Analog supports deploying on [Netlify](https://app.netlify.com/) with no additional configuration.
 
-To deploy on Netlify we can use the Netlify preset provide by Nitro
+To deploy on Netlify we can use the Netlify build preset.
 
 - Set the preset in the `vite.config.ts` file:
 
@@ -228,10 +228,6 @@ To deploy on Netlify we can use the Netlify preset provide by Nitro
 plugins: [
   analog({
     nitro: {
-      externals: {
-        external: [],
-      },
-      preset: 'netlify',
       output: {
         serverDir: '{{ rootDir }}/.netlify/functions-internal',
         publicDir: '../../dist/analog/public',
