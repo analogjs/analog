@@ -17,7 +17,15 @@ const config = {
   // to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en', 'es'],
+    localeConfigs: {
+      en: {
+        label: 'English',
+      },
+      es: {
+        label: 'Español',
+      },
+    },
   },
   favicon: 'img/favicon.ico',
   onBrokenLinks: 'throw',
@@ -129,6 +137,10 @@ const config = {
           {
             href: `https://chat.analogjs.org`,
             label: 'Discord',
+            position: 'right',
+          },
+          {
+            type: 'localeDropdown',
             position: 'right',
           },
         ],

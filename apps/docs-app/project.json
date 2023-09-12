@@ -29,6 +29,20 @@
         "command": "docusaurus serve --config apps/docs-app/docusaurus.config.js --dir dist/apps/docs-app"
       },
       "dependsOn": ["build"]
+    },
+    "serve-locale": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/docs-app",
+        "command": "docusaurus start --locale={args.locale}"
+      }
+    },
+    "write-translations": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/docs-app",
+        "command": "docusaurus write-translations --locale={args.locale}"
+      }
     }
   },
   "tags": [],
