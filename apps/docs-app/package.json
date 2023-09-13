@@ -20,7 +20,8 @@
     "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "2.2.0"
+    "@docusaurus/module-type-aliases": "2.2.0",
+    "@docusaurus/types": "2.4.1"
   },
   "overrides": {
     "@docusaurus/core": {

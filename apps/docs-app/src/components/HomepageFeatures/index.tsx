@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import React from 'react';
 import styles from './styles.module.css';
+import Translate, { translate } from '@docusaurus/Translate';
 
 type FeatureItem = {
   title: string;
@@ -10,31 +11,60 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Vite-powered',
+    title: translate({
+      message: 'Vite-powered',
+      id: 'features.title.vitePowered',
+      description: 'The title of the feature "Vite-powered"',
+    }),
     Svg: require('@site/static/img/logos/vite-logo.svg').default,
     description: (
       <>
-        Analog uses Vite for serving and building as well as Vitest for testing.
+        <Translate
+          id="features.vite"
+          description="The description of the feature 'Vite-powered'"
+        >
+          Analog uses Vite for serving and building as well as Vitest for
+          testing.
+        </Translate>
       </>
     ),
   },
   {
-    title: 'Hybrid SSR/SSG support',
+    title: translate({
+      message: 'Hybrid SSR/SSG support',
+      id: 'features.title.hybridSSR',
+      description: 'The title of the feature "Hybrid SSR/SSG support"',
+    }),
     Svg: require('@site/static/img/logos/angular-logo.svg').default,
     description: (
       <>
-        Analog supports both Server-Side Rendering (SSR) and Static Site
-        Generation (SSG) of Angular applications.
+        <Translate
+          id="features.hybridSSR"
+          description="The description of the feature 'Hybrid SSR/SSG support'"
+        >
+          Analog supports both Server-Side Rendering (SSR) and Static Site
+          Generation (SSG) of Angular applications.
+        </Translate>
       </>
     ),
   },
   {
-    title: 'File-based routing and API routes',
+    title: translate({
+      message: 'File-based routing and API routes',
+      id: 'features.title.fileBasedRouting',
+      description:
+        'The title of the feature "File-based routing and API routes"',
+    }),
     Svg: require('@site/static/img/logos/analog-logo.svg').default,
     description: (
       <>
-        Analog uses file-based routing and supports API (server) routes for
-        Angular applications.
+        <Translate
+          id="features.fileBasedRouting"
+          description="The description of the feature 'File-based routing and API routes'"
+        >
+          Analog uses file-based routing and supports API (server) routes for
+          Angular applications.
+        </Translate>
       </>
     ),
   },
