@@ -50,13 +50,14 @@ describe('AstroApp', () => {
     test('Then client side rendered CardComponent should emit an event on click', async () => {
       const console = waitForConsole();
       const componentLocator = page.locator(
-        'astro-island[component-export="CardComponent"]'
-        // '[data-analog-id=card-1]'
+        '[data-analog-id=card-component-1]'
       );
       const elementLocator = componentLocator.locator('li');
       await elementLocator.click();
 
-      await expect(await console).toBe('event received from card-1: clicked');
+      await expect(await console).toBe(
+        'event received from card-component-1: clicked'
+      );
     });
   });
 });

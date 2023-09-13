@@ -1,4 +1,4 @@
-export function addAnalogOutputListener(
+export function addOutputListener(
   analogId: string,
   outputName: string,
   callback: (...args: any[]) => unknown,

@@ -201,29 +201,29 @@ Find more information about [Client Directives](https://docs.astro.build/en/refe
 ### Listening to Component Outputs
 
 Outputs can be emitted by the Angular component are forwarded as HTML events to the Astro island.
-To enable this feature, add a client directive and a `[data-analog-id]` property to the Angular component:
+To enable this feature, add a client directive and a unique `[data-analog-id]` property to each Angular component:
 
 ```tsx
 ---
 import { HelloComponent } from '../components/hello.component';
 ---
 
-<HelloComponent client:visible data-analog-id="hello-1" />
+<HelloComponent client:visible data-analog-id="hello-component-1" />
 ```
 
-Then, listen to the event in the Astro component using the `addAnalogOutputListener` function:
+Then, listen to the event in the Astro component using the `addOutputListener` function:
 
 ```tsx
 ---
 import { HelloComponent } from '../components/hello.component';
 ---
 
-<HelloComponent client:visible data-analog-id="hello-1" />
+<HelloComponent client:visible data-analog-id="hello-component-1" />
 
 <script>
-  import { addAnalogOutputListener } from '@analogjs/astro-angular/utils';
+  import { addOutputListener } from '@analogjs/astro-angular/utils';
 
-  addAnalogOutputListener('hello-1', 'outputName', (event) => {
+  addOutputListener('hello-component-1', 'outputName', (event) => {
     console.log(event.detail);
   });
 </script>

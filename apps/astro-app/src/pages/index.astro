@@ -35,7 +35,7 @@ const serverSideTitle = 'Angular (server side binding)';
 			/>
 			<CardComponent
         client:visible
-        data-analog-id="card-1"
+        data-analog-id="card-component-1"
         href="https://angular.io/"
         title="Angular (Client Side)"
         body="Build with Angular. ❤️"
@@ -112,10 +112,10 @@ const serverSideTitle = 'Angular (server side binding)';
 </style>
 
 <script>
-  import { addAnalogOutputListener } from '@analogjs/astro-angular/utils';
+  import { addOutputListener } from '@analogjs/astro-angular/utils';
   console.log('Hello Astro');
 
-  addAnalogOutputListener('card-1', 'output', (event) => {
-    console.log('event received from card-1:', event.detail);
+  addOutputListener('card-component-1', 'output', (event) => {
+    console.log('event received from card-component-1:', event.detail);
   });
 </script>

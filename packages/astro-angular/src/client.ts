@@ -1,15 +1,13 @@
 import 'zone.js/dist/zone.js';
 import {
-  DestroyRef,
   EnvironmentProviders,
   Provider,
   reflectComponentType,
   ɵComponentType as ComponentType,
 } from '@angular/core';
 import { ApplicationRef, NgZone, createComponent } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { createApplication } from '@angular/platform-browser';
-import { Observable } from 'rxjs';
+import { Observable, Subject, takeUntil } from 'rxjs';
 
 export default (element: HTMLElement) => {
   return (
@@ -44,7 +42,7 @@ export default (element: HTMLElement) => {
         }
 
         if (mirror?.outputs.length && props?.['data-analog-id']) {
-          const destroyRef = appRef.injector.get(DestroyRef);
+          const destroySubject = new Subject<void>();
           element.setAttribute(
             'data-analog-id',
             props['data-analog-id'] as string
@@ -57,7 +55,7 @@ export default (element: HTMLElement) => {
               Observable<unknown>
             >;
             component[outputName]
-              .pipe(takeUntilDestroyed(destroyRef))
+              .pipe(takeUntil(destroySubject))
               .subscribe((detail) => {
                 const event = new CustomEvent(outputName, {
                   bubbles: true,
@@ -67,6 +65,11 @@ export default (element: HTMLElement) => {
                 });
                 element.dispatchEvent(event);
               });
+          });
+
+          appRef.onDestroy(() => {
+            destroySubject.next();
+            destroySubject.complete();
           });
         }
 
