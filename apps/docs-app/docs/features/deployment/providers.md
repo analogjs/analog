@@ -218,11 +218,10 @@ When using Nx and reusing the build cache on the Vercel build platform, there is
 
 ## Netlify
 
-Analog supports deploying on [Netlify](https://app.netlify.com/) with no additional configuration.
+Analog supports deploying on [Netlify](https://netlify.com/) with minimal configuration.
 
-To deploy on Netlify we can use the Netlify build preset.
+For the Netlify site, set the `Publish directory` to `dist/analog/public` and configure the output as below. This deploys the static assets, and the server as a Netlify function.
 
-- Set the preset in the `vite.config.ts` file:
 
 ```ts [vite.config.ts]
 plugins: [
