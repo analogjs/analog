@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-58-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-59-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -157,6 +157,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/mavrukin"><img src="https://avatars.githubusercontent.com/u/239147?v=4?s=100" width="100px;" alt="Michael Avrukin"/><br /><sub><b>Michael Avrukin</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=mavrukin" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/rlmestre"><img src="https://avatars.githubusercontent.com/u/277805?v=4?s=100" width="100px;" alt="Rafael Mestre"/><br /><sub><b>Rafael Mestre</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=rlmestre" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=rlmestre" title="Documentation">📖</a> <a href="#infra-rlmestre" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/santoshyadavdev"><img src="https://avatars.githubusercontent.com/u/11923975?v=4?s=100" width="100px;" alt="Santosh Yadav"/><br /><sub><b>Santosh Yadav</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=santoshyadavdev" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
