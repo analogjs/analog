@@ -2,7 +2,7 @@
 
 const lightCodeTheme = require('prism-react-renderer/themes/nightOwlLight');
 const darkCodeTheme = require('prism-react-renderer/themes/nightOwl');
-darkCodeTheme.plain.backgroundColor = '#0a1429';
+darkCodeTheme['plain'].backgroundColor = '#0a1429';
 
 const organizationName = 'analogjs';
 const projectName = 'analog';
