@@ -11,7 +11,7 @@ describe('build sitemap', () => {
 
   it('should not perform functionality if no predefined routes are present', () => {
     const spy = vi.spyOn(fs, 'writeFileSync');
-    buildSitemap(config, sitemapConfig, []);
+    buildSitemap(config, sitemapConfig, [], '');
 
     expect(spy).not.toHaveBeenCalled();
   });

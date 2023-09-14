@@ -1,6 +1,7 @@
-import { addPostRenderingHooks } from './post-rendering-hook';
-import { vi } from 'vitest';
 import { Nitro } from 'nitropack';
+import { vi } from 'vitest';
+
+import { addPostRenderingHooks } from './post-rendering-hook';
 
 describe('postRenderingHook', () => {
   const genRoute = {
@@ -10,11 +11,11 @@ describe('postRenderingHook', () => {
 
   const nitroMock = {
     hooks: {
-      hook: vi.fn((name: string, callback: (route) => void) =>
+      hook: vi.fn((name: string, callback: (route: any) => void) =>
         callback(genRoute)
       ),
     },
-  } as Nitro;
+  } as unknown as Nitro;
 
   const mockFunc1 = vi.fn();
   const mockFunc2 = vi.fn();
@@ -27,6 +28,6 @@ describe('postRenderingHook', () => {
   it('should call provided hooks', () => {
     addPostRenderingHooks(nitroMock, [mockFunc1, mockFunc2]);
     expect(mockFunc1).toHaveBeenCalledWith(genRoute);
-    expect(mockFunc2).toHaveBeenCalled(genRoute);
+    expect(mockFunc2).toHaveBeenCalled();
   });
 });

@@ -21,7 +21,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   page = await browser.newPage({
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:4321',
   });
   await page.goto('/');
 });
@@ -46,5 +46,28 @@ describe('AstroApp', () => {
         componentLocator.locator('>> text=Angular (server side binding)')
       ).toContain(/Angular \(server side binding\)/i);
     });
+
+    test('Then client side rendered CardComponent should emit an event on click', async () => {
+      const console = waitForConsole();
+      const componentLocator = page.locator(
+        '[data-analog-id=card-component-1]'
+      );
+      const elementLocator = componentLocator.locator('li');
+      await elementLocator.click();
+
+      await expect(await console).toBe(
+        'event received from card-component-1: clicked'
+      );
+    });
   });
 });
+
+async function waitForConsole(): Promise<string> {
+  return new Promise(function (resolve) {
+    page.on('console', (msg) => {
+      if (msg.type() === 'log') {
+        resolve(msg.text());
+      }
+    });
+  });
+}

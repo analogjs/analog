@@ -8,65 +8,45 @@ vi.mock('./ssr/dev-server-plugin');
 describe('platformPlugin', () => {
   const setup = async () => {
     const viteNitroPluginImport = await import('@analogjs/vite-plugin-nitro');
-    const viteNitroPluginSpy = vi.fn();
+    const viteNitroPluginSpy = vi.fn(() => []);
     viteNitroPluginImport.default = viteNitroPluginSpy;
 
     const ssrBuildPluginImport = await import('./ssr/ssr-build-plugin');
     const ssrBuildPluginSpy = vi.fn();
     ssrBuildPluginImport.ssrBuildPlugin = ssrBuildPluginSpy;
 
-    const devServerPluginImport = await import('./ssr/dev-server-plugin');
-    const devServerPluginSpy = vi.fn();
-    devServerPluginImport.devServerPlugin = devServerPluginSpy;
-
     return {
       viteNitroPluginSpy,
       ssrBuildPluginSpy,
-      devServerPluginSpy,
       platformPlugin,
     };
   };
 
   it('should default ssr to true and pass that value to other plugins if no ssr value provided in options', async () => {
-    const {
-      viteNitroPluginSpy,
-      ssrBuildPluginSpy,
-      devServerPluginSpy,
-      platformPlugin,
-    } = await setup();
+    const { viteNitroPluginSpy, ssrBuildPluginSpy, platformPlugin } =
+      await setup();
     platformPlugin();
 
     expect(viteNitroPluginSpy).toHaveBeenCalledWith({ ssr: true }, undefined);
     expect(ssrBuildPluginSpy).toHaveBeenCalled();
-    expect(devServerPluginSpy).toHaveBeenCalled();
   });
 
   it('should pass ssr value as true if options.ssr is set to true', async () => {
-    const {
-      viteNitroPluginSpy,
-      ssrBuildPluginSpy,
-      devServerPluginSpy,
-      platformPlugin,
-    } = await setup();
+    const { viteNitroPluginSpy, ssrBuildPluginSpy, platformPlugin } =
+      await setup();
     platformPlugin({ ssr: true });
 
     expect(viteNitroPluginSpy).toHaveBeenCalledWith({ ssr: true }, undefined);
     expect(ssrBuildPluginSpy).toHaveBeenCalled();
-    expect(devServerPluginSpy).toHaveBeenCalled();
   });
 
   it('should pass ssr value as false if options.ssr is set to false', async () => {
-    const {
-      viteNitroPluginSpy,
-      ssrBuildPluginSpy,
-      devServerPluginSpy,
-      platformPlugin,
-    } = await setup();
+    const { viteNitroPluginSpy, ssrBuildPluginSpy, platformPlugin } =
+      await setup();
     platformPlugin({ ssr: false });
 
     expect(viteNitroPluginSpy).toHaveBeenCalledWith({ ssr: false }, undefined);
     expect(ssrBuildPluginSpy).not.toHaveBeenCalled();
-    expect(devServerPluginSpy).not.toHaveBeenCalled();
   });
 
   it('should pass the custom endpoint as part of the nitro runtimeConfig if options.apiPrefix is set to false', async () => {

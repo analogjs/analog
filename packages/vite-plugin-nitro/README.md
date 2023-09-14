@@ -1,10 +1,10 @@
 # @analogjs/vite-plugin-nitro
 
-A Vite plugin for adding a nitro API server
+A Vite plugin for integrating with [Nitro](https://nitro.unjs.io).
 
 ## Install
 
-yarn add @analogjs/vite-plugin-nitro
+npm install @analogjs/vite-plugin-nitro --save-dev
 
 ## Setup
 

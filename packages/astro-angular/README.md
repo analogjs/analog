@@ -174,7 +174,7 @@ export class HelloComponent {
 
 Add the Angular component to the Astro component template. This only renders the HTML from the Angular component.
 
-```ts
+```tsx
 ---
 import { HelloComponent } from '../components/hello.component';
 
@@ -188,7 +188,7 @@ const helpText = "Helping binding";
 
 To hydrate the component on the client, use one of the Astro [client directives](https://docs.astro.build/en/reference/directives-reference/#client-directives):
 
-```ts
+```tsx
 ---
 import { HelloComponent } from '../components/hello.component';
 ---
@@ -197,6 +197,37 @@ import { HelloComponent } from '../components/hello.component';
 ```
 
 Find more information about [Client Directives](https://docs.astro.build/en/reference/directives-reference/#client-directives) in the Astro documentation.
+
+### Listening to Component Outputs
+
+Outputs can be emitted by the Angular component are forwarded as HTML events to the Astro island.
+To enable this feature, add a client directive and a unique `[data-analog-id]` property to each Angular component:
+
+```tsx
+---
+import { HelloComponent } from '../components/hello.component';
+---
+
+<HelloComponent client:visible data-analog-id="hello-component-1" />
+```
+
+Then, listen to the event in the Astro component using the `addOutputListener` function:
+
+```tsx
+---
+import { HelloComponent } from '../components/hello.component';
+---
+
+<HelloComponent client:visible data-analog-id="hello-component-1" />
+
+<script>
+  import { addOutputListener } from '@analogjs/astro-angular/utils';
+
+  addOutputListener('hello-component-1', 'outputName', (event) => {
+    console.log(event.detail);
+  });
+</script>
+```
 
 ## Adding Component Providers
 
@@ -295,4 +326,3 @@ import { HelloComponent } from "../../components/hello.component.ts";
 ## Current Limitations
 
 - Only standalone Angular components in version v14.2+ are supported
-- Component Outputs are not supported
