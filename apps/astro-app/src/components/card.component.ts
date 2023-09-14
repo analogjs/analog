@@ -1,8 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  EventEmitter,
   inject,
   Input,
+  Output,
   ViewEncapsulation,
 } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -12,7 +14,7 @@ import { HttpClient, provideHttpClient } from '@angular/common/http';
   selector: 'astro-card',
   standalone: true,
   template: `
-    <li class="link-card">
+    <li class="link-card" (click)="onClick()">
       <a [href]="href">
         <h2>
           {{ title }}
@@ -93,9 +95,14 @@ export class CardComponent {
   @Input() href = '';
   @Input() title = '';
   @Input() body = '';
+  @Output() output = new EventEmitter<string>();
 
   static renderProviders = [provideHttpClient()];
   static clientProviders = [CardComponent.renderProviders, provideAnimations()];
 
   private _http = inject(HttpClient);
+
+  onClick() {
+    this.output.emit('clicked');
+  }
 }

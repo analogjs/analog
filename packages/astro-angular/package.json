@@ -6,6 +6,7 @@
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
     ".": "./src/index.js",
+    "./utils": "./src/utils.js",
     "./client.js": "./src/client.js",
     "./server.js": "./src/server.js",
     "./package.json": "./package.json"
