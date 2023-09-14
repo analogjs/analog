@@ -5,7 +5,7 @@ import superjson from 'superjson';
 
 export const { provideTrpcClient, TrpcClient, TrpcHeaders } =
   createTrpcClient<AppRouter>({
-    url: 'http://localhost:4205/api/trpc',
+    url: '/api/trpc',
     options: {
       transformer: superjson,
     },
