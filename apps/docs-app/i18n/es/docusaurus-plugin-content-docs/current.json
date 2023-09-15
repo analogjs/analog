@@ -83,16 +83,16 @@
     "message": "Comenzando",
     "description": "The label for the doc item Getting Started in sidebar docsSidebar, linking to the doc getting-started"
   },
-  "sidebar.docsSidebar.doc.Contribuidores": {
+  "sidebar.docsSidebar.doc.Contributors": {
     "message": "Contribuidores",
-    "description": "The label for the doc item Contribuidores in sidebar docsSidebar, linking to the doc contributors"
+    "description": "The label for the doc item Contributors in sidebar docsSidebar, linking to the doc contributors"
   },
-  "sidebar.docsSidebar.doc.Contribuyendo": {
+  "sidebar.docsSidebar.doc.Contributing": {
     "message": "Contribuyendo",
-    "description": "The label for the doc item Contribuyendo in sidebar docsSidebar, linking to the doc contributing"
+    "description": "The label for the doc item Contributing in sidebar docsSidebar, linking to the doc contributing"
   },
-  "sidebar.docsSidebar.doc.Patrocinio": {
+  "sidebar.docsSidebar.doc.Sponsoring": {
     "message": "Patrocinio",
-    "description": "The label for the doc item Patrocinio in sidebar docsSidebar, linking to the doc sponsoring"
+    "description": "The label for the doc item Sponsoring in sidebar docsSidebar, linking to the doc sponsoring"
   }
 }
