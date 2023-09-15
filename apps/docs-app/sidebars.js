@@ -164,17 +164,17 @@ const sidebars = {
     {
       type: 'doc',
       id: 'contributors',
-      label: 'Contribuidores',
+      label: 'Contributors',
     },
     {
       type: 'doc',
       id: 'contributing',
-      label: 'Contribuyendo',
+      label: 'Contributing',
     },
     {
       type: 'doc',
       id: 'sponsoring',
-      label: 'Patrocinio',
+      label: 'Sponsoring',
     },
   ],
 
