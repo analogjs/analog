@@ -33,5 +33,5 @@ describe('nx-plugin e2e', () => {
     await runNxCommandAsync(`test ${project}`);
 
     expect(() => checkFilesExist(`${project}/index.html`)).not.toThrow();
-  }, 240000);
+  }, 120000);
 });
