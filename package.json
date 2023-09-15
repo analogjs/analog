@@ -79,7 +79,7 @@
     "ufo": "^1.1.2",
     "xhr2": "^0.2.1",
     "zod": "^3.21.4",
-    "zone.js": "0.13.1"
+    "zone.js": "^0.13.3"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "16.2.0",
