@@ -141,7 +141,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 inline: ['zone.js/node'],
                 external: ['rxjs', 'node-fetch-native/dist/polyfill', 'destr'],
               },
-              moduleSideEffects: ['zone.js/bundles/zone-node.umd.js'],
+              moduleSideEffects: ['zone.js/node'],
               renderer: normalizePath(`${__dirname}/runtime/renderer`),
               handlers: [
                 {
