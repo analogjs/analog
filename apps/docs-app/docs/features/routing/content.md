@@ -44,6 +44,37 @@ Analog is a meta-framework for Angular.
 [Back Home](./)
 ```
 
+### Using the diff Highlight Plugin
+
+Analog supports highlighting diff changes with PrismJS. Add the `diff`
+language and `diff-highlight` plugin imports to `app.config.ts`:
+
+```ts
+import 'prismjs/components/prism-diff';
+import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
+```
+
+Use the `diff` language tag to highlight them or
+`diff-<language>` to highlight the diff changes in a specific language.
+
+````md
+```diff
+- This is a sentence.
++ This is a longer sentence.
+```
+
+```diff-typescript
+- const foo = 'bar';
++ const foo = 'baz';
+```
+````
+
+To highlight changed line backgrounds instead of just the text, add this import to your global stylesheet:
+
+```css
+@import 'prismjs/plugins/diff-highlight/prism-diff-highlight.css';
+```
+
 ## Defining Content Files
 
 For more flexibility, markdown content files can be provided in the `src/content` folder. Here you can list markdown files such as blog posts.

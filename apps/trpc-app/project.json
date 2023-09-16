@@ -9,9 +9,9 @@
       "executor": "@nx/vite:build",
       "outputs": [
         "{options.outputPath}",
-        "dist/apps/trpc-app/.nitro",
-        "dist/apps/trpc-app/ssr",
-        "dist/apps/trpc-app/analog"
+        "{workspaceRoot}/dist/apps/trpc-app/.nitro",
+        "{workspaceRoot}/dist/apps/trpc-app/ssr",
+        "{workspaceRoot}/dist/apps/trpc-app/analog"
       ],
       "options": {
         "configFile": "apps/trpc-app/vite.config.mts",
@@ -68,7 +68,7 @@
     },
     "test": {
       "executor": "@nx/vite:test",
-      "outputs": ["apps/trpc-app/coverage"]
+      "outputs": ["{projectRoot}/coverage"]
     }
   },
   "tags": [],

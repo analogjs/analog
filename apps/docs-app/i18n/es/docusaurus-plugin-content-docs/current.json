@@ -1,0 +1,98 @@
+{
+  "version.label": {
+    "message": "Siguiente",
+    "description": "The label for version current"
+  },
+  "sidebar.docsSidebar.category.Core Concepts": {
+    "message": "Conceptos Básicos",
+    "description": "The label for category Core Concepts in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Routing": {
+    "message": "Enrutado",
+    "description": "The label for category Routing in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.API Routes": {
+    "message": "API Rutas",
+    "description": "The label for category API Routes in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Static Site Generation": {
+    "message": "Generación de sitios estáticos (SSG)",
+    "description": "The label for category Static Site Generation in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Server Side Rendering": {
+    "message": "Renderizado del lado del Servidor (SSR)",
+    "description": "The label for category Server Side Rendering in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Code Generation": {
+    "message": "Generación de Código",
+    "description": "The label for category Code Generation in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Deployment": {
+    "message": "Despliegue",
+    "description": "The label for category Deployment in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Testing": {
+    "message": "Pruebas",
+    "description": "The label for category Testing in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Updating": {
+    "message": "Actualizando",
+    "description": "The label for category Updating in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Integrations": {
+    "message": "Integraciones",
+    "description": "The label for category Integrations in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.doc.Overview": {
+    "message": "Visión General",
+    "description": "The label for the doc item Overview in sidebar docsSidebar, linking to the doc features/updating/overview"
+  },
+  "sidebar.docsSidebar.doc.Route Metadata": {
+    "message": "Metadata de Rutas",
+    "description": "The label for the doc item Route Metadata in sidebar docsSidebar, linking to the doc features/routing/metadata"
+  },
+  "sidebar.docsSidebar.doc.Content Routes": {
+    "message": "Rutas de Contenido",
+    "description": "The label for the doc item Content Routes in sidebar docsSidebar, linking to the doc features/routing/content"
+  },
+  "sidebar.docsSidebar.doc.Providers": {
+    "message": "Proveedores",
+    "description": "The label for the doc item Providers in sidebar docsSidebar, linking to the doc features/deployment/providers"
+  },
+  "sidebar.docsSidebar.doc.Adding Vitest": {
+    "message": "Agregando Vitest",
+    "description": "The label for the doc item Adding Vitest in sidebar docsSidebar, linking to the doc features/testing/vitest"
+  },
+  "sidebar.docsSidebar.doc.Nx": {
+    "message": "Nx",
+    "description": "The label for the doc item Nx in sidebar docsSidebar, linking to the doc integrations/nx/index"
+  },
+  "sidebar.docsSidebar.doc.Astro": {
+    "message": "Astro",
+    "description": "The label for the doc item Astro in sidebar docsSidebar, linking to the doc packages/astro-angular/overview"
+  },
+  "sidebar.docsSidebar.doc.Angular Material": {
+    "message": "Angular Material",
+    "description": "The label for the doc item Angular Material in sidebar docsSidebar, linking to the doc integrations/angular-material/index"
+  },
+  "sidebar.docsSidebar.doc.Introduction": {
+    "message": "Introducción",
+    "description": "The label for the doc item Introduction in sidebar docsSidebar, linking to the doc introduction"
+  },
+  "sidebar.docsSidebar.doc.Getting Started": {
+    "message": "Comenzando",
+    "description": "The label for the doc item Getting Started in sidebar docsSidebar, linking to the doc getting-started"
+  },
+  "sidebar.docsSidebar.doc.Contributors": {
+    "message": "Contribuidores",
+    "description": "The label for the doc item Contributors in sidebar docsSidebar, linking to the doc contributors"
+  },
+  "sidebar.docsSidebar.doc.Contributing": {
+    "message": "Contribuyendo",
+    "description": "The label for the doc item Contributing in sidebar docsSidebar, linking to the doc contributing"
+  },
+  "sidebar.docsSidebar.doc.Sponsoring": {
+    "message": "Patrocinio",
+    "description": "The label for the doc item Sponsoring in sidebar docsSidebar, linking to the doc sponsoring"
+  }
+}

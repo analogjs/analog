@@ -9,9 +9,9 @@
       "executor": "@nx/vite:build",
       "outputs": [
         "{options.outputPath}",
-        "dist/apps/blog-app/.nitro",
-        "dist/apps/blog-app/ssr",
-        "dist/apps/blog-app/analog"
+        "{workspaceRoot}/dist/apps/blog-app/.nitro",
+        "{workspaceRoot}/dist/apps/blog-app/ssr",
+        "{workspaceRoot}/dist/apps/blog-app/analog"
       ],
       "options": {
         "configFile": "apps/blog-app/vite.config.mts",

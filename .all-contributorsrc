@@ -75,7 +75,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/1209238?v=4",
       "profile": "https://github.com/Villanuevand",
       "contributions": [
-        "doc"
+        "doc",
+        "translation"
       ]
     },
     {
@@ -528,6 +529,44 @@
       "profile": "https://github.com/omarbelkhodja",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "deepakrudrapaul",
+      "name": "Deepak Rudra Paul",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25549935?v=4",
+      "profile": "https://github.com/deepakrudrapaul",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "mavrukin",
+      "name": "Michael Avrukin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/239147?v=4",
+      "profile": "https://github.com/mavrukin",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "rlmestre",
+      "name": "Rafael Mestre",
+      "avatar_url": "https://avatars.githubusercontent.com/u/277805?v=4",
+      "profile": "https://github.com/rlmestre",
+      "contributions": [
+        "code",
+        "doc",
+        "infra"
+      ]
+    },
+    {
+      "login": "santoshyadavdev",
+      "name": "Santosh Yadav",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11923975?v=4",
+      "profile": "https://github.com/santoshyadavdev",
+      "contributions": [
+        "doc"
       ]
     }
   ],

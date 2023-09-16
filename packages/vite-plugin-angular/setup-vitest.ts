@@ -1,7 +1,7 @@
 import 'zone.js';
-import 'zone.js/dist/sync-test.js';
-import 'zone.js/dist/proxy.js';
-import 'zone.js/bundles/zone-testing.umd.js';
+import 'zone.js/plugins/sync-test';
+import 'zone.js/plugins/proxy';
+import 'zone.js/testing';
 
 /**
  * Patch Vitest's describe/test/beforeEach/afterEach functions so test code
@@ -23,10 +23,10 @@ const SyncTestZoneSpec = Zone['SyncTestZoneSpec'];
 const ProxyZoneSpec = Zone['ProxyZoneSpec'];
 
 if (SyncTestZoneSpec === undefined) {
-  throw new Error('Missing: SyncTestZoneSpec (zone.js/dist/sync-test)');
+  throw new Error('Missing: SyncTestZoneSpec (zone.js/plugins/sync-test)');
 }
 if (ProxyZoneSpec === undefined) {
-  throw new Error('Missing: ProxyZoneSpec (zone.js/dist/proxy.js)');
+  throw new Error('Missing: ProxyZoneSpec (zone.js/plugins/proxy.js)');
 }
 
 const env = globalThis as any;
