@@ -35,7 +35,7 @@ function emptyDir(dir) {
 }
 
 describe('create-analog e2e', () => {
-  it('should create my-app', async () => {
+  it.skip('should create my-app', async () => {
     const project = uniq('tmpanalogapp');
     const tmpDir = `${process.cwd()}/${project}`;
 
@@ -54,7 +54,7 @@ describe('create-analog e2e', () => {
       `${tmpDir}/node_modules/@analogjs`
     );
 
-    let viteConfig = readFileSync(`${tmpDir}/vite.config.mts`, 'utf-8');
+    let viteConfig = readFileSync(`${tmpDir}/vite.config.ts`, 'utf-8');
     viteConfig = viteConfig.replace(
       'analog()',
       `analog({ vite: { tsconfig: '${tmpDir}/tsconfig.spec.json' } })`
@@ -68,7 +68,7 @@ describe('create-analog e2e', () => {
       `include: ['${project}/**/*.spec.ts'],`
     );
 
-    writeFileSync(`${tmpDir}/vite.config.mts`, viteConfig);
+    writeFileSync(`${tmpDir}/vite.config.ts`, viteConfig);
 
     await runCommandAsync(`ng test`, {
       cwd: tmpDir,

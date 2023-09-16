@@ -14,7 +14,7 @@
         "{workspaceRoot}/dist/apps/analog-app/analog"
       ],
       "options": {
-        "configFile": "apps/analog-app/vite.config.mts",
+        "configFile": "apps/analog-app/vite.config.ts",
         "outputPath": "dist/apps/analog-app/client"
       },
       "defaultConfiguration": "production",
