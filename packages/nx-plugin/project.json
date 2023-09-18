@@ -27,6 +27,11 @@
             "input": "./packages/nx-plugin",
             "glob": "generators.json",
             "output": "."
+          },
+          {
+            "input": "./packages/nx-plugin",
+            "glob": "executors.json",
+            "output": "."
           }
         ]
       }
@@ -38,7 +43,8 @@
         "lintFilePatterns": [
           "packages/nx-plugin/**/*.ts",
           "packages/nx-plugin/generators.json",
-          "packages/nx-plugin/package.json"
+          "packages/nx-plugin/package.json",
+          "packages/nx-plugin/executors.json"
         ]
       }
     },

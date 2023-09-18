@@ -13,6 +13,7 @@
     "lib": ["es2021", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
+    "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
       "@analogjs/astro-angular": ["packages/astro-angular/src/index.ts"],

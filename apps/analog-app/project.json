@@ -71,6 +71,10 @@
     "test": {
       "executor": "@nx/vite:test",
       "outputs": ["{projectRoot}/coverage"]
+    },
+
+    "application": {
+      "executor": "@analogjs/platform:dev-server"
     }
   },
   "tags": []
