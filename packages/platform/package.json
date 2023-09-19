@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/platform",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "type": "commonjs",
   "description": "The fullstack meta-framework for Angular",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
