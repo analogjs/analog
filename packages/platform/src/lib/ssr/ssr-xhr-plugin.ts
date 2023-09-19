@@ -6,6 +6,11 @@ export function ssrXhrBuildPlugin(): Plugin {
     apply: 'build',
     config() {
       return {
+        resolve: {
+          alias: {
+            'zone.js/node': 'zone.js/plugins/zone-node',
+          },
+        },
         ssr: {
           noExternal: ['xhr2'],
         },

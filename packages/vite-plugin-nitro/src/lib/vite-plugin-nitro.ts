@@ -101,7 +101,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         nitroConfig.alias = {
           '#analog/ssr': normalizePath(
-            path.resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server.mjs')
+            path.resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
           ),
           '#analog/index': normalizePath(
             path.resolve(clientOutputPath, 'index.html')
@@ -141,7 +141,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 inline: ['zone.js/node'],
                 external: ['rxjs', 'node-fetch-native/dist/polyfill', 'destr'],
               },
-              moduleSideEffects: ['zone.js/node'],
+              moduleSideEffects: ['zone.js/node', 'zone.js/plugins/zone-node'],
               renderer: normalizePath(`${__dirname}/runtime/renderer`),
               handlers: [
                 {
