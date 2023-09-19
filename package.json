@@ -19,7 +19,7 @@
     "prettify": "prettier --write ."
   },
   "engines": {
-    "node": "~16.17.0 || >=18.17.1",
+    "node": "^18.13.0",
     "pnpm": "^8.0.0"
   },
   "packageManager": "pnpm@8.0.0",

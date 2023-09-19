@@ -15,7 +15,7 @@
   ],
   "main": "index.js",
   "engines": {
-    "node": "~16.17.0 || >=18.13.0"
+    "node": "^18.13.0"
   },
   "repository": {
     "type": "git",
