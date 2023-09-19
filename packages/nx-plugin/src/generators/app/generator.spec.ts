@@ -1,15 +1,15 @@
-import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing';
 import {
+  addDependenciesToPackageJson,
   ProjectConfiguration,
   readJson,
   readProjectConfiguration,
   Tree,
 } from '@nx/devkit';
+import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing';
+import { test } from 'vitest';
 
 import generator from './generator';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
-import { addDependenciesToPackageJson } from '@nx/devkit';
-import { test } from 'vitest';
 
 describe('nx-plugin generator', () => {
   const setup = async (
@@ -70,7 +70,7 @@ describe('nx-plugin generator', () => {
     );
     expect(dependencies['front-matter']).toBe('^4.0.2');
     expect(dependencies['marked']).toBe('^5.0.2');
-    expect(dependencies['marked-gfm-heading-id']).toBe('^3.0.4');
+    expect(dependencies['marked-gfm-heading-id']).toBe('^3.1.0');
     expect(dependencies['marked-highlight']).toBe('^2.0.1');
     expect(dependencies['mermaid']).toBe('^10.2.4');
     expect(dependencies['prismjs']).toBe('^1.29.0');
