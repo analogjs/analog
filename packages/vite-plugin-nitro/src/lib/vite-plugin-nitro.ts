@@ -168,7 +168,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             ...nitroConfig,
           });
           const server = createDevServer(nitro);
-          await prepare(nitro);
           await build(nitro);
           viteServer.middlewares.use(apiPrefix, toNodeListener(server.app));
 

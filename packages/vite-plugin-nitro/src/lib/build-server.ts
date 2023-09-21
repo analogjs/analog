@@ -1,4 +1,5 @@
 import { NitroConfig } from 'nitropack';
+import * as fs from 'fs';
 
 import { Options } from './options';
 import { addPostRenderingHooks } from './hooks/post-rendering-hook';
@@ -23,6 +24,16 @@ export async function buildServer(
 
   await prepare(nitro);
   await copyPublicAssets(nitro);
+
+  if (
+    nitroConfig?.prerender?.routes &&
+    nitroConfig?.prerender?.routes.find((route) => route === '/')
+  ) {
+    // Remove the root index.html so it can be replaced with the prerendered version
+    if (fs.existsSync(`${nitroConfig?.output?.publicDir}/index.html`)) {
+      fs.unlinkSync(`${nitroConfig?.output?.publicDir}/index.html`);
+    }
+  }
 
   console.log(`Prerendering static pages...`);
   await prerender(nitro);
