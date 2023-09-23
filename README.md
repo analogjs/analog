@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-60-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-61-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -159,6 +159,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/rlmestre"><img src="https://avatars.githubusercontent.com/u/277805?v=4?s=100" width="100px;" alt="Rafael Mestre"/><br /><sub><b>Rafael Mestre</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=rlmestre" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=rlmestre" title="Documentation">📖</a> <a href="#infra-rlmestre" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/santoshyadavdev"><img src="https://avatars.githubusercontent.com/u/11923975?v=4?s=100" width="100px;" alt="Santosh Yadav"/><br /><sub><b>Santosh Yadav</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=santoshyadavdev" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Tenessy"><img src="https://avatars.githubusercontent.com/u/65855673?v=4?s=100" width="100px;" alt="Tenessy"/><br /><sub><b>Tenessy</b></sub></a><br /><a href="#infra-Tenessy" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Jad31"><img src="https://avatars.githubusercontent.com/u/46532649?v=4?s=100" width="100px;" alt="Jad Chahed"/><br /><sub><b>Jad Chahed</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Jad31" title="Documentation">📖</a> <a href="#translation-Jad31" title="Translation">🌍</a></td>
     </tr>
   </tbody>
 </table>
