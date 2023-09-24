@@ -3,6 +3,8 @@ import 'zone.js/plugins/sync-test';
 import 'zone.js/plugins/proxy';
 import 'zone.js/testing';
 
+import { reflectComponentType } from '@angular/core';
+
 /**
  * Patch Vitest's describe/test/beforeEach/afterEach functions so test code
  * always runs in a testZone (ProxyZone).
@@ -67,6 +69,82 @@ function wrapTestInZone(testBody: string | any[] | undefined) {
   }
 
   return wrappedFunc;
+}
+
+/**
+ *
+ * @returns customSnapshotSerializer for Angular Fixture Component
+ */
+const customSnapshotSerializer = () => {
+  function serialize(
+    val: any,
+    config: any,
+    indentation: any,
+    depth: any,
+    refs: any,
+    printer: any
+  ): string {
+    // `printer` is a function that serializes a value using existing plugins.
+    return `${printer(
+      fixtureVitestSerializer(val),
+      config,
+      indentation,
+      depth,
+      refs
+    )}`;
+  }
+  function test(val: any): boolean {
+    // * If it's a ComponentFixture we apply the transformation rules
+    return (
+      val &&
+      (Object.prototype.hasOwnProperty.call(val, 'componentRef') ||
+        Object.prototype.hasOwnProperty.call(val, 'componentType'))
+    );
+  }
+  return {
+    serialize,
+    test,
+  };
+};
+
+/**
+ * Serialize Angular fixture for Vitest
+ *
+ * @param fixture Angular Fixture Component
+ * @returns HTML Child Node
+ */
+function fixtureVitestSerializer(fixture: any): ChildNode {
+  // Get Component meta data
+  const mirror = reflectComponentType(
+    fixture && fixture.componentType
+      ? fixture.componentType
+      : fixture.componentRef.componentType
+  ) as any;
+
+  let inputsData;
+
+  //* Generates inputs for integration into the selector tag
+  Object.entries(mirror.type)
+    .filter(([key, value]) => key === 'propDecorators' && !!value)
+    .map(([_key, value]) => value)
+    .forEach((val: any) => {
+      inputsData = Object.entries(val)
+        .map(([key, value]) => `${key}="{${value}}"`)
+        .join('');
+    });
+
+  // Get DOM Elements
+  const divElement =
+    fixture && fixture.nativeElement
+      ? fixture.nativeElement
+      : fixture.location.nativeElement;
+
+  const document = new DOMParser().parseFromString(
+    `<${mirror.selector} ${inputsData}>${divElement.innerHTML}</${mirror.selector}>`,
+    'text/html'
+  );
+
+  return document.body.childNodes[0];
 }
 
 /**
@@ -145,9 +223,16 @@ const bindTest = (originalVitestFn: {
 
 ['beforeEach', 'afterEach', 'beforeAll', 'afterAll'].forEach((methodName) => {
   const originalvitestFn = env[methodName];
+
   env[methodName] = function (...args: any[]) {
     args[0] = wrapTestInZone(args[0]);
 
     return originalvitestFn.apply(this, args);
   };
+});
+
+['expect'].forEach((methodName) => {
+  const originalvitestFn = env[methodName];
+
+  return originalvitestFn.addSnapshotSerializer(customSnapshotSerializer());
 });
