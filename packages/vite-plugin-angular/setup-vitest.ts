@@ -105,7 +105,7 @@ const customSnapshotSerializer = () => {
 };
 
 /**
- * Check if is an angular fixture
+ * Check if is an Angular fixture
  *
  * @param val Angular fixture
  * @returns boolean who check if is an angular fixture
@@ -115,6 +115,7 @@ function isAngularFixture(val: any): boolean {
     return false;
   }
 
+  // * Angular fixture keys in Fixture component Object
   const fixtureKeys = [
     'componentRef',
     'ngZone',
@@ -134,6 +135,7 @@ function isAngularFixture(val: any): boolean {
     'nativeElement',
   ];
 
+  // * Angular fixture keys in Fixture componentRef Object
   const fixtureComponentRefKeys = [
     'location',
     '_rootLView',
