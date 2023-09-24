@@ -3,7 +3,11 @@ import 'zone.js/plugins/sync-test';
 import 'zone.js/plugins/proxy';
 import 'zone.js/testing';
 
-import { reflectComponentType } from '@angular/core';
+// ! require ES Module import core.mjs not supported
+let angular: any;
+import('@angular/core')
+  .then((res) => (angular = res))
+  .catch((err) => console.error('Error: import @angular/core failed', err));
 
 /**
  * Patch Vitest's describe/test/beforeEach/afterEach functions so test code
@@ -159,17 +163,15 @@ function isAngularFixture(val: any): boolean {
  * @param fixture Angular Fixture Component
  * @returns HTML Child Node
  */
-function fixtureVitestSerializer(fixture: any): ChildNode {
+function fixtureVitestSerializer(fixture: any) {
   // * Get Component meta data
-  const mirror = reflectComponentType(
+  const mirror = angular.reflectComponentType(
     fixture && fixture.componentType
       ? fixture.componentType
       : fixture.componentRef.componentType
-  ) as any;
-
+  );
   let inputsData: string = '';
 
-  // * Generates inputs for integration into the selector tag
   Object.entries(mirror.type)
     .filter(([key, value]) => key === 'propDecorators' && !!value)
     .map(([_key, value]) => value)
@@ -186,12 +188,12 @@ function fixtureVitestSerializer(fixture: any): ChildNode {
       : fixture.location.nativeElement;
 
   // * Convert string data to HTML data
-  const document = new DOMParser().parseFromString(
+  const doc = new DOMParser().parseFromString(
     `<${mirror.selector} ${inputsData}>${divElement.innerHTML}</${mirror.selector}>`,
     'text/html'
   );
 
-  return document.body.childNodes[0];
+  return doc.body.childNodes[0];
 }
 
 /**
