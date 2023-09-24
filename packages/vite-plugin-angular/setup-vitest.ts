@@ -72,6 +72,7 @@ function wrapTestInZone(testBody: string | any[] | undefined) {
 }
 
 /**
+ * Allows Vitest to handle Angular test fixtures
  *
  * @returns customSnapshotSerializer for Angular Fixture Component
  */
@@ -95,11 +96,7 @@ const customSnapshotSerializer = () => {
   }
   function test(val: any): boolean {
     // * If it's a ComponentFixture we apply the transformation rules
-    return (
-      val &&
-      (Object.prototype.hasOwnProperty.call(val, 'componentRef') ||
-        Object.prototype.hasOwnProperty.call(val, 'componentType'))
-    );
+    return val && isAngularFixture(val);
   }
   return {
     serialize,
@@ -108,22 +105,69 @@ const customSnapshotSerializer = () => {
 };
 
 /**
+ * Check if is an angular fixture
+ *
+ * @param val Angular fixture
+ * @returns boolean who check if is an angular fixture
+ */
+function isAngularFixture(val: any): boolean {
+  if (typeof val !== 'object') {
+    return false;
+  }
+
+  const fixtureKeys = [
+    'componentRef',
+    'ngZone',
+    '_autoDetect',
+    '_isStable',
+    '_isDestroyed',
+    '_resolve',
+    '_promise',
+    '_onUnstableSubscription',
+    '_onStableSubscription',
+    '_onMicrotaskEmptySubscription',
+    '_onErrorSubscription',
+    'changeDetectorRef',
+    'elementRef',
+    'debugElement',
+    'componentInstance',
+    'nativeElement',
+  ];
+
+  const fixtureComponentRefKeys = [
+    'location',
+    '_rootLView',
+    '_tNode',
+    'previousInputValues',
+    'instance',
+    'changeDetectorRef',
+    'hostView',
+    'componentType',
+  ];
+
+  return (
+    JSON.stringify(Object.keys(val)) === JSON.stringify(fixtureKeys) ||
+    JSON.stringify(Object.keys(val)) === JSON.stringify(fixtureComponentRefKeys)
+  );
+}
+
+/**
  * Serialize Angular fixture for Vitest
  *
  * @param fixture Angular Fixture Component
  * @returns HTML Child Node
  */
 function fixtureVitestSerializer(fixture: any): ChildNode {
-  // Get Component meta data
+  // * Get Component meta data
   const mirror = reflectComponentType(
     fixture && fixture.componentType
       ? fixture.componentType
       : fixture.componentRef.componentType
   ) as any;
 
-  let inputsData;
+  let inputsData: string = '';
 
-  //* Generates inputs for integration into the selector tag
+  // * Generates inputs for integration into the selector tag
   Object.entries(mirror.type)
     .filter(([key, value]) => key === 'propDecorators' && !!value)
     .map(([_key, value]) => value)
@@ -133,12 +177,13 @@ function fixtureVitestSerializer(fixture: any): ChildNode {
         .join('');
     });
 
-  // Get DOM Elements
+  // * Get DOM Elements
   const divElement =
     fixture && fixture.nativeElement
       ? fixture.nativeElement
       : fixture.location.nativeElement;
 
+  // * Convert string data to HTML data
   const document = new DOMParser().parseFromString(
     `<${mirror.selector} ${inputsData}>${divElement.innerHTML}</${mirror.selector}>`,
     'text/html'
