@@ -3,12 +3,6 @@ import 'zone.js/plugins/sync-test';
 import 'zone.js/plugins/proxy';
 import 'zone.js/testing';
 
-// ! require ES Module import core.mjs not supported
-let angular: any;
-import('@angular/core')
-  .then((res) => (angular = res))
-  .catch((err) => console.error('Error: import @angular/core failed', err));
-
 /**
  * Patch Vitest's describe/test/beforeEach/afterEach functions so test code
  * always runs in a testZone (ProxyZone).
@@ -165,21 +159,24 @@ function isAngularFixture(val: any): boolean {
  */
 function fixtureVitestSerializer(fixture: any) {
   // * Get Component meta data
-  const mirror = angular.reflectComponentType(
+  const componentType = (
     fixture && fixture.componentType
       ? fixture.componentType
       : fixture.componentRef.componentType
-  );
+  ) as any;
+
   let inputsData: string = '';
 
-  Object.entries(mirror.type)
-    .filter(([key, value]) => key === 'propDecorators' && !!value)
-    .map(([_key, value]) => value)
-    .forEach((val: any) => {
-      inputsData = Object.entries(val)
-        .map(([key, value]) => `${key}="{${value}}"`)
-        .join('');
-    });
+  const selector = Reflect.getOwnPropertyDescriptor(
+    componentType,
+    '__annotations__'
+  )?.value[0].selector;
+
+  if (componentType && componentType.propDecorators) {
+    inputsData = Object.entries(componentType.propDecorators)
+      .map(([key, value]) => `${key}="{${value}}"`)
+      .join('');
+  }
 
   // * Get DOM Elements
   const divElement =
@@ -189,7 +186,7 @@ function fixtureVitestSerializer(fixture: any) {
 
   // * Convert string data to HTML data
   const doc = new DOMParser().parseFromString(
-    `<${mirror.selector} ${inputsData}>${divElement.innerHTML}</${mirror.selector}>`,
+    `<${selector} ${inputsData}>${divElement.innerHTML}</${selector}>`,
     'text/html'
   );
 
@@ -282,6 +279,5 @@ const bindTest = (originalVitestFn: {
 
 ['expect'].forEach((methodName) => {
   const originalvitestFn = env[methodName];
-
   return originalvitestFn.addSnapshotSerializer(customSnapshotSerializer());
 });
