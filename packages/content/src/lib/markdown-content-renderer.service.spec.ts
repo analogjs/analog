@@ -1,5 +1,6 @@
-import { MarkdownContentRendererService } from './markdown-content-renderer.service';
 import { TestBed } from '@angular/core/testing';
+
+import { MarkdownContentRendererService } from './markdown-content-renderer.service';
 import { MarkedSetupService } from './marked-setup.service';
 
 describe('MarkdownContentRendererService', () => {
@@ -14,6 +15,36 @@ describe('MarkdownContentRendererService', () => {
     const { service } = setup();
     const result = await service.render('# Hello World');
     expect(result).toMatch('<h1 id="hello-world">Hello World</h1>\n');
+  });
+
+  it('should transform markdown and return a TOC', async () => {
+    const { service } = setup();
+    const content = `
+# Level 1 
+## Level 2
+
+lorem ipsum .... 
+
+# Level 1
+## Level 2
+### Level 3 ?? complex test && &@@
+
+Lorem ipsum 2....
+    `;
+
+    const result = await service.render(content);
+    expect(result).toMatch('<h1 id="level-1">Level 1</h1>');
+
+    const toc = await service.getContentHeadings();
+    expect(toc.length).toBe(5);
+    expect(toc[0].id).toBe('level-1');
+    expect(toc[0].text).toBe('Level 1');
+    expect(toc[0].level).toBe(1);
+    expect(toc[3].level).toBe(2);
+    expect(toc[4].level).toBe(3);
+
+    expect(toc[4].id).toBe('level-3--complex-test--');
+    expect(result).toMatch('id="level-3--complex-test--"');
   });
 
   it('render should correctly highlight code blocks', async () => {
