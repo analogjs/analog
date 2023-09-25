@@ -35,7 +35,7 @@ Lorem ipsum 2....
     const result = await service.render(content);
     expect(result).toMatch('<h1 id="level-1">Level 1</h1>');
 
-    const toc = await service.getContentHeadings();
+    const toc = service.getContentHeadings();
     expect(toc.length).toBe(5);
     expect(toc[0].id).toBe('level-1');
     expect(toc[0].text).toBe('Level 1');

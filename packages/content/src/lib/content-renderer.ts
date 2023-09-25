@@ -12,7 +12,7 @@ export abstract class ContentRenderer {
     return content;
   }
 
-  async getContentHeadings(): Promise<Array<TableOfContentItem>> {
+  getContentHeadings(): Array<TableOfContentItem> {
     return [];
   }
 
