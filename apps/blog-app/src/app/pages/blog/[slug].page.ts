@@ -6,7 +6,7 @@ import {
 import { RouteMeta } from '@analogjs/router';
 import { AsyncPipe, JsonPipe, NgFor, NgIf } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { switchMap } from 'rxjs';
+import { map } from 'rxjs';
 
 import { PostAttributes } from './models';
 import { postMetaResolver, postTitleResolver } from './resolvers';
@@ -39,7 +39,7 @@ export default class BlogPostComponent {
   readonly post$ = injectContent<PostAttributes>();
 
   readonly toc$ = this.post$.pipe(
-    switchMap(() => {
+    map(() => {
       return this.renderer.getContentHeadings();
     })
   );

@@ -22,7 +22,7 @@ export class MarkdownContentRendererService implements ContentRenderer {
   /**
    * The method is meant to be called after `render()`
    */
-  async getContentHeadings(): Promise<TableOfContentItem[]> {
+  getContentHeadings(): TableOfContentItem[] {
     return getHeadingList();
   }
 
