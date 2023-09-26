@@ -29,7 +29,7 @@ const config = {
         label: 'Français',
       },
       'pt-br': {
-        label: 'Português (Brasil) ',
+        label: 'Português (Brasil)',
         htmlLang: 'pt-BR',
       },
     },
