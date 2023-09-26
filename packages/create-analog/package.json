@@ -1,6 +1,6 @@
 {
   "name": "create-analog",
-  "version": "0.2.49",
+  "version": "0.2.51",
   "type": "module",
   "license": "MIT",
   "author": "Brandon Roberts",
@@ -10,7 +10,8 @@
   },
   "files": [
     "index.js",
-    "template-*",
+    "template-angular-v15",
+    "template-angular-v16",
     "files"
   ],
   "main": "index.js",
