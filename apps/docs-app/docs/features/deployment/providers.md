@@ -215,3 +215,22 @@ plugins: [
 #### Nx and Vercel
 
 When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache is reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can use the preset in the `vite.config.ts` file as a workaround.
+
+## Netlify
+
+Analog supports deploying on [Netlify](https://netlify.com/) with minimal configuration.
+
+For the Netlify site, set the `Publish directory` to `dist/analog/public` and configure the output as below. This deploys the static assets, and the server as a Netlify function.
+
+```ts [vite.config.ts]
+plugins: [
+  analog({
+    nitro: {
+      output: {
+        serverDir: '{{ rootDir }}/.netlify/functions-internal',
+        publicDir: '../../dist/analog/public',
+      },
+    },
+  }),
+];
+```

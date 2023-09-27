@@ -1,4 +1,9 @@
-import { fakeAsync, flushMicrotasks, TestBed } from '@angular/core/testing';
+import {
+  fakeAsync,
+  flushMicrotasks,
+  flush,
+  TestBed,
+} from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { expect } from 'vitest';
 import { Observable, of } from 'rxjs';
@@ -22,6 +27,7 @@ describe('injectContent', () => {
       expect(c.filename).toEqual('/src/content/test.md');
     });
     flushMicrotasks();
+    flush();
   }));
 
   it("should return ContentFile object with empty filename, empty attributes, and the custom fallback 'Custom Fallback' as content when no match between slug and files and custom fallback 'Custom Fallback' provided", fakeAsync(() => {
@@ -38,6 +44,7 @@ describe('injectContent', () => {
       expect(c.filename).toEqual('/src/content/test.md');
     });
     flushMicrotasks();
+    flush();
   }));
 
   it('should return ContentFile object with correct filename, correct attributes, and the correct content of the file when match between slug and files', fakeAsync(() => {
@@ -65,6 +72,7 @@ Test Content`),
       expect(c.slug).toEqual('test');
     });
     flushMicrotasks();
+    flush();
   }));
 
   it('should return ContentFile object with correct filename, correct attributes, and the correct content of the file when match between custom param and files', fakeAsync(() => {
@@ -94,6 +102,7 @@ Test Content`),
       expect(c.slug).toEqual('custom-slug-test');
     });
     flushMicrotasks();
+    flush();
   }));
 
   it('should return ContentFile object when a custom param with prefix is provided', fakeAsync(() => {
@@ -125,11 +134,45 @@ Test Content`),
       expect(c.slug).toEqual('custom-prefix-slug-test');
     });
     flushMicrotasks();
+    flush();
+  }));
+
+  it('should return ContentFile object when a custom filename is provided', fakeAsync(() => {
+    const customParam = { customFilename: 'custom-filename-test' };
+    const routeParams = {};
+    const contentFiles = {
+      '/src/content/dont-match.md': () =>
+        Promise.resolve(`---
+slug: 'dont-match'
+---
+Dont Match'`),
+      '/src/content/custom-filename-test.md': () =>
+        Promise.resolve(`---
+slug: 'custom-filename-test-slug'
+---
+Test Content`),
+    };
+    const { injectContent } = setup({
+      customParam,
+      routeParams,
+      contentFiles,
+    });
+    injectContent().subscribe((c) => {
+      expect(c.content).toMatch('Test Content');
+      expect(c.attributes).toEqual({ slug: 'custom-filename-test-slug' });
+      expect(c.filename).toEqual('/src/content/custom-filename-test.md');
+      expect(c.slug).toEqual('custom-filename-test');
+    });
+    flushMicrotasks();
+    flush();
   }));
 
   function setup(
     args: Partial<{
-      customParam: string | { subdirectory: string; param: string };
+      customParam:
+        | string
+        | { subdirectory: string; param: string }
+        | { customFilename: string };
       customFallback: string;
       routeParams: { [key: string]: any };
       contentFiles: Record<string, () => Promise<string>>;

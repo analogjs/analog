@@ -3,24 +3,17 @@ import { normalizePath, Plugin } from 'vite';
 export function ssrBuildPlugin(): Plugin {
   return {
     name: 'analogjs-ssr-build-plugin',
-    config(_config) {
-      return {
-        resolve: {
-          alias: {
-            'zone.js/node': 'zone.js/bundles/zone-node.umd.js',
-          },
-        },
-      };
-    },
     transform(code, id) {
       if (id.includes('platform-server')) {
-        code = code.replace(/global\./g, 'globalThis.');
-
         return {
-          code: code.replace(
-            'new xhr2.XMLHttpRequest',
-            'new (xhr2.default.XMLHttpRequest || xhr2.default)'
-          ),
+          code: code
+            .replace(
+              'new xhr2.XMLHttpRequest',
+              'new (xhr2.default.XMLHttpRequest || xhr2.default)'
+            )
+            .replaceAll('global.', 'globalThis.')
+            .replaceAll('global,', 'globalThis,')
+            .replaceAll(' global[', ' globalThis['),
         };
       }
 

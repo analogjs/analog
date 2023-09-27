@@ -4,15 +4,15 @@ import * as path from 'path';
 import { Options } from './options';
 
 export async function buildSSRApp(config: UserConfig, options?: Options) {
+  const rootDir = config.root || '.';
   const ssrBuildConfig = mergeConfig(config, {
     build: {
       ssr: true,
       rollupOptions: {
         input:
-          options?.entryServer ||
-          path.resolve(config.root!, './src/main.server.ts'),
+          options?.entryServer || path.resolve(rootDir, './src/main.server.ts'),
       },
-      outDir: options?.ssrBuildDir || path.resolve('dist', config.root!, 'ssr'),
+      outDir: options?.ssrBuildDir || path.resolve('dist', rootDir, 'ssr'),
     },
   });
 

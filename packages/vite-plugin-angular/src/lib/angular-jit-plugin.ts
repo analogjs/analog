@@ -36,11 +36,7 @@ export function jitPlugin({
       return;
     },
     async load(id: string) {
-      if (id.includes('virtual:angular:jit:template:file;')) {
-        const contents = readFileSync(id.split('file;')[1], 'utf-8');
-
-        return `export default \`${contents}\`;`;
-      } else if (id.includes('virtual:angular:jit:style:inline;')) {
+      if (id.includes('virtual:angular:jit:style:inline;')) {
         const styleId = id.split('style:inline;')[1];
 
         const decodedStyles = Buffer.from(

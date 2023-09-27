@@ -2,6 +2,7 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import StackblitzButton from '@site/src/components/StackblitzButton';
+import Translate, { translate } from '@docusaurus/Translate';
 import Layout from '@theme/Layout';
 import clsx from 'clsx';
 import React from 'react';
@@ -14,7 +15,13 @@ function HomepageHeader() {
     <header className={clsx('hero', styles.heroBanner)}>
       <div className="container">
         <h1 className="hero__title">{siteConfig.title}</h1>
-        <p className="hero__subtitle">{siteConfig.tagline}</p>
+        <p className="hero__subtitle">
+          {translate({
+            message: siteConfig.tagline,
+            id: 'homepage.tagline',
+            description: 'The tagline of the homepage',
+          })}
+        </p>
         <div className={styles.buttons}>
           <Link
             className={clsx(
@@ -23,7 +30,12 @@ function HomepageHeader() {
             )}
             to="/docs"
           >
-            Read the docs
+            <Translate
+              id="homepage.readDocs"
+              description="The label of the button to read the docs"
+            >
+              Read the Docs
+            </Translate>
           </Link>
           <StackblitzButton />
         </div>
@@ -36,8 +48,22 @@ function SponsorSection() {
   return (
     <section className={clsx('hero', styles.heroBanner)}>
       <div className="container">
-        <h3>Analog is free, open source, and supported by our sponsors.</h3>
-        <p className="hero__subtitle">Sponsors</p>
+        <h3>
+          <Translate
+            id="homepage.sponsorSection.title"
+            description="The title of the sponsor section"
+          >
+            Analog is free, open source, and supported by our sponsors.
+          </Translate>
+        </h3>
+        <p className="hero__subtitle">
+          <Translate
+            id="homepage.sponsorSection.subtitle"
+            description="The subtitle of the sponsor section on the homepage"
+          >
+            Sponsors
+          </Translate>
+        </p>
 
         <div>
           <a
@@ -63,7 +89,12 @@ function SponsorSection() {
             )}
             href="https://github.com/sponsors/brandonroberts"
           >
-            Sponsor Analog
+            <Translate
+              id="homepage.sponsorSection.sponsorButton"
+              description="The label of the button to sponsor Analog"
+            >
+              Sponsor Analog
+            </Translate>
           </Link>
         </div>
       </div>
@@ -74,7 +105,14 @@ function SponsorSection() {
 export default function Home(): JSX.Element {
   const { siteConfig } = useDocusaurusContext();
   return (
-    <Layout title={siteConfig.title} description={siteConfig.tagline}>
+    <Layout
+      title={siteConfig.title}
+      description={translate({
+        message: siteConfig.tagline,
+        id: 'homepage.description',
+        description: 'The description of the homepage',
+      })}
+    >
       <HomepageHeader />
       <main>
         <HomepageFeatures />

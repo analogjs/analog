@@ -1,6 +1,6 @@
 import 'zone.js';
-import 'zone.js/dist/sync-test';
-import 'zone.js/dist/proxy';
+import 'zone.js/plugins/sync-test';
+import 'zone.js/plugins/proxy';
 import 'zone.js/testing';
 
 /**
@@ -23,10 +23,10 @@ const SyncTestZoneSpec = Zone['SyncTestZoneSpec'];
 const ProxyZoneSpec = Zone['ProxyZoneSpec'];
 
 if (SyncTestZoneSpec === undefined) {
-  throw new Error('Missing: SyncTestZoneSpec (zone.js/dist/sync-test)');
+  throw new Error('Missing: SyncTestZoneSpec (zone.js/plugins/sync-test)');
 }
 if (ProxyZoneSpec === undefined) {
-  throw new Error('Missing: ProxyZoneSpec (zone.js/dist/proxy.js)');
+  throw new Error('Missing: ProxyZoneSpec (zone.js/plugins/proxy.js)');
 }
 
 const env = globalThis as any;

@@ -93,8 +93,21 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         if (!ssrBuild && !isTest) {
           // store the client output path for the SSR build config
-          clientOutputPath = path.resolve(rootDir, config.build?.outDir!);
+          clientOutputPath = path.resolve(
+            rootDir,
+            config.build?.outDir || 'dist/client'
+          );
         }
+
+        nitroConfig.alias = {
+          '#analog/ssr': normalizePath(
+            path.resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
+          ),
+          '#analog/index': normalizePath(
+            path.resolve(clientOutputPath, 'index.html')
+          ),
+          ...nitroOptions?.alias,
+        };
 
         if (isBuild) {
           if (isEmptyPrerenderRoutes(options)) {
@@ -125,10 +138,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 },
               ],
               externals: {
-                inline: ['zone.js/node'],
                 external: ['rxjs', 'node-fetch-native/dist/polyfill', 'destr'],
               },
-              moduleSideEffects: ['zone.js/bundles/zone-node.umd.js'],
+              moduleSideEffects: [
+                'zone.js/plugins/zone-node',
+                'zone.js/fesm2015/zone-node',
+              ],
               renderer: normalizePath(`${__dirname}/runtime/renderer`),
               handlers: [
                 {
@@ -155,7 +170,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             ...nitroConfig,
           });
           const server = createDevServer(nitro);
-          await prepare(nitro);
           await build(nitro);
           viteServer.middlewares.use(apiPrefix, toNodeListener(server.app));
 
@@ -184,7 +198,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             await buildSitemap(
               config,
               options.prerender.sitemap,
-              options.prerender.routes!
+              options.prerender.routes!,
+              nitroConfig.output?.publicDir!
             );
           }
 

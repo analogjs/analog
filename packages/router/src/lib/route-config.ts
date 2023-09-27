@@ -35,7 +35,9 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
       };
 
       if (PAGE_ENDPOINTS[routeConfig[ANALOG_META_KEY].endpointKey]) {
-        const { queryParams, fragment: hash, params } = route;
+        const { queryParams, fragment: hash, params, parent } = route;
+        const segment =
+          parent?.url.map((segment) => segment.path).join('/') || '';
         const url = new URL('', import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL']);
         url.pathname = `/api/_analog${routeConfig[ANALOG_META_KEY].endpoint}`;
         url.search = `${new URLSearchParams(queryParams).toString()}`;
@@ -44,6 +46,7 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
         Object.keys(params).forEach((param) => {
           url.pathname = url.pathname.replace(`[${param}]`, params[param]);
         });
+        url.pathname = url.pathname.replace('**', segment);
 
         if ((globalThis as any).$fetch) {
           return (globalThis as any).$fetch(url.pathname);

@@ -294,18 +294,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             templateUrls.forEach((templateUrlSet) => {
               const [templateFile, resolvedTemplateUrl] =
                 templateUrlSet.split('|');
-
-              if (watchMode) {
-                data = data.replace(
-                  `angular:jit:template:file;${templateFile}`,
-                  `virtual:angular:jit:template:file;${resolvedTemplateUrl}`
-                );
-              } else {
-                data = data.replace(
-                  `angular:jit:template:file;${templateFile}`,
-                  `${resolvedTemplateUrl}?raw`
-                );
-              }
+              data = data.replace(
+                `angular:jit:template:file;${templateFile}`,
+                `${resolvedTemplateUrl}?raw`
+              );
             });
 
             styleUrls.forEach((styleUrlSet) => {

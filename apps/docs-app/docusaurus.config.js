@@ -2,7 +2,7 @@
 
 const lightCodeTheme = require('prism-react-renderer/themes/nightOwlLight');
 const darkCodeTheme = require('prism-react-renderer/themes/nightOwl');
-darkCodeTheme.plain.backgroundColor = '#0a1429';
+darkCodeTheme['plain'].backgroundColor = '#0a1429';
 
 const organizationName = 'analogjs';
 const projectName = 'analog';
@@ -17,7 +17,22 @@ const config = {
   // to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en', 'es', 'fr', 'pt-br'],
+    localeConfigs: {
+      en: {
+        label: 'English',
+      },
+      es: {
+        label: 'Español',
+      },
+      fr: {
+        label: 'Français',
+      },
+      'pt-br': {
+        label: 'Português (Brasil)',
+        htmlLang: 'pt-BR',
+      },
+    },
   },
   favicon: 'img/favicon.ico',
   onBrokenLinks: 'throw',
@@ -129,6 +144,10 @@ const config = {
           {
             href: `https://chat.analogjs.org`,
             label: 'Discord',
+            position: 'right',
+          },
+          {
+            type: 'localeDropdown',
             position: 'right',
           },
         ],
