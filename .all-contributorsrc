@@ -587,6 +587,16 @@
         "doc",
         "translation"
       ]
+    },
+    {
+      "login": "gesielrosa",
+      "name": "Gesiel Rosa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40439982?v=4",
+      "profile": "https://www.gta-sa.com.br/",
+      "contributions": [
+        "doc",
+        "translation"
+      ]
     }
   ],
   "contributorsPerLine": 7,
