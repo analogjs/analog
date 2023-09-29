@@ -74,8 +74,10 @@
     },
 
     "application": {
-      "executor": "@analogjs/platform:dev-server"
+      "executor": "@analogjs/platform:dev-server",
+      "dependsOn": ["^build"]
     }
   },
-  "tags": []
+  "tags": [],
+  "implicitDependencies": ["platform"]
 }
