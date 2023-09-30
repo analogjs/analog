@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
   return {
     test: {
       globals: true,
-      environment: 'jsdom',
+      environment: 'node',
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
       cache: {

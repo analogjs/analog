@@ -1,6 +1,9 @@
 import { Component } from '@angular/core';
 import { TestBed, ComponentFixture, waitForAsync } from '@angular/core/testing';
 
+/**
+ * @vitest-environment jsdom
+ */
 describe('Angular Fixture Snapshot', () => {
   @Component({
     selector: 'app-test',
@@ -69,6 +72,10 @@ describe('Angular Fixture Snapshot', () => {
     expect(fixture).toMatchSnapshot();
   });
 
+  it('create angulardd fixture snapshot', () => {
+    expect('fixture').toMatchSnapshot();
+  });
+
   it('create angular component snapshot', () => {
     expect(component).toMatchSnapshot();
   });
@@ -133,7 +140,7 @@ describe('Angular Fixture Snapshot', () => {
   it('create angular component inline snapshot', () => {
     expect(component).toMatchInlineSnapshot(`
       TestComponent {
-        "__ngContext__": 6,
+        "__ngContext__": 8,
         "count": 0,
       }
     `);

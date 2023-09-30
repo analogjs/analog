@@ -2,7 +2,7 @@
 
 exports[`Angular Fixture Snapshot > create angular component snapshot 1`] = `
 TestComponent {
-  "__ngContext__": 2,
+  "__ngContext__": 4,
   "count": 0,
 }
 `;
@@ -61,3 +61,5 @@ exports[`Angular Fixture Snapshot > create angular fixture snapshot 1`] = `
   </p>
 </app-test>
 `;
+
+exports[`Angular Fixture Snapshot > create angulardd fixture snapshot 1`] = `"fixture"`;
