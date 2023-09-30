@@ -174,7 +174,7 @@ function fixtureVitestSerializer(fixture: any) {
 
   if (componentType && componentType.propDecorators) {
     inputsData = Object.entries(componentType.propDecorators)
-      .map(([key, value]) => `${key}="{${value}}"`)
+      .map(([key, value]) => `${key}="${value}"`)
       .join('');
   }
 
