@@ -72,6 +72,8 @@ function wrapTestInZone(testBody: string | any[] | undefined) {
 /**
  * Allows Vitest to handle Angular test fixtures
  *
+ * Vitest Snapshot guide ==> https://vitest.dev/guide/snapshot.html
+ *
  * @returns customSnapshotSerializer for Angular Fixture Component
  */
 const customSnapshotSerializer = () => {
