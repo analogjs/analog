@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "0.2.3",
+  "version": "0.2.10",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -20,7 +20,7 @@
     "prettify": "prettier --write ."
   },
   "engines": {
-    "node": "~16.17.0 || >=18.17.1",
+    "node": "^18.13.0",
     "pnpm": "^8.0.0"
   },
   "packageManager": "pnpm@8.0.0",
@@ -59,16 +59,13 @@
     "@nx/devkit": "16.8.1",
     "@trpc/client": "^10.25.0",
     "@trpc/server": "^10.25.0",
-    "@types/babel__core": "^7.20.0",
-    "@types/react": "^18.0.21",
-    "@types/react-dom": "^18.0.6",
     "ajv-formats": "^2.1.1",
     "destr": "^1.2.2",
     "front-matter": "^4.0.2",
     "h3": "^1.6.6",
     "isomorphic-fetch": "^3.0.0",
     "marked": "^5.0.2",
-    "marked-gfm-heading-id": "^3.0.4",
+    "marked-gfm-heading-id": "^3.1.0",
     "marked-highlight": "^2.0.1",
     "mermaid": "^10.2.4",
     "react": "^18.2.0",
@@ -108,10 +105,13 @@
     "@swc/cli": "0.1.62",
     "@swc/core": "^1.2.173",
     "@swc/helpers": "0.5.1",
+    "@types/babel__core": "^7.20.0",
     "@types/jest": "29.4.4",
     "@types/marked": "^5.0.0",
     "@types/node": "18.11.18",
     "@types/prismjs": "^1.26.0",
+    "@types/react": "^18.0.21",
+    "@types/react-dom": "^18.0.6",
     "@typescript-eslint/eslint-plugin": "5.62.0",
     "@typescript-eslint/parser": "5.62.0",
     "all-contributors-cli": "^6.24.0",

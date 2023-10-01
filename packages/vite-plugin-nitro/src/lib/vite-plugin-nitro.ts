@@ -157,10 +157,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 },
               ],
               externals: {
-                inline: ['zone.js/node'],
                 external: ['rxjs', 'node-fetch-native/dist/polyfill', 'destr'],
               },
-              moduleSideEffects: ['zone.js/node'],
+              moduleSideEffects: [
+                'zone.js/plugins/zone-node',
+                'zone.js/fesm2015/zone-node',
+              ],
               renderer: normalizePath(`${__dirname}/runtime/renderer`),
               handlers: [
                 {
@@ -185,7 +187,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             ...nitroConfig,
           });
           const server = createDevServer(nitro);
-          await prepare(nitro);
           await build(nitro);
           viteServer.middlewares.use(apiPrefix, toNodeListener(server.app));
 

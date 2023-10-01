@@ -5,13 +5,15 @@ export function ssrBuildPlugin(): Plugin {
     name: 'analogjs-ssr-build-plugin',
     transform(code, id) {
       if (id.includes('platform-server')) {
-        code = code.replace(/global\./g, 'globalThis.');
-
         return {
-          code: code.replace(
-            'new xhr2.XMLHttpRequest',
-            'new (xhr2.default.XMLHttpRequest || xhr2.default)'
-          ),
+          code: code
+            .replace(
+              'new xhr2.XMLHttpRequest',
+              'new (xhr2.default.XMLHttpRequest || xhr2.default)'
+            )
+            .replaceAll('global.', 'globalThis.')
+            .replaceAll('global,', 'globalThis,')
+            .replaceAll(' global[', ' globalThis['),
         };
       }
 

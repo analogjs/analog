@@ -7,6 +7,7 @@ import { routerPlugin } from './router-plugin.js';
 import { ssrBuildPlugin } from './ssr/ssr-build-plugin.js';
 import { contentPlugin } from './content-plugin.js';
 import { clearClientPageEndpointsPlugin } from './clear-client-page-endpoint.js';
+import { ssrXhrBuildPlugin } from './ssr/ssr-xhr-plugin.js';
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
   const { apiPrefix, ...platformOptions } = {
@@ -30,6 +31,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ...routerPlugin(),
     ...contentPlugin(),
     ...angular({ jit: platformOptions.jit, ...(opts?.vite ?? {}) }),
+    ssrXhrBuildPlugin(),
     clearClientPageEndpointsPlugin(),
   ];
 }
