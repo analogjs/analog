@@ -72,19 +72,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           typescript: {
             generateTsConfig: false,
           },
-          alias: {
-            '#analog/index': normalizePath(
-              path.resolve(workspaceRoot, 'dist', rootDir, 'client/index.html')
-            ),
-            '#analog/ssr': normalizePath(
-              path.resolve(
-                workspaceRoot,
-                'dist',
-                rootDir,
-                'ssr/main.server.mjs'
-              )
-            ),
-          },
           runtimeConfig: { ...nitroOptions?.runtimeConfig },
           rollupConfig: {
             onwarn(warning) {
