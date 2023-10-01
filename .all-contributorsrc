@@ -597,6 +597,16 @@
         "doc",
         "translation"
       ]
+    },
+    {
+      "login": "besimgurbuz",
+      "name": "Besim Gürbüz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33575384?v=4",
+      "profile": "http://besimgurbuz.dev/",
+      "contributions": [
+        "doc",
+        "translation"
+      ]
     }
   ],
   "contributorsPerLine": 7,
