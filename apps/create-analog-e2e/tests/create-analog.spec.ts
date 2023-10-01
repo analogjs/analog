@@ -35,7 +35,7 @@ function emptyDir(dir) {
 }
 
 describe('create-analog e2e', () => {
-  it.skip('should create my-app', async () => {
+  it('should create my-app', async () => {
     const project = uniq('tmpanalogapp');
     const tmpDir = `${process.cwd()}/${project}`;
 
@@ -52,6 +52,15 @@ describe('create-analog e2e', () => {
     copyDir(
       `${process.cwd()}/node_modules/@analogjs`,
       `${tmpDir}/node_modules/@analogjs`
+    );
+
+    const angularJson = JSON.parse(
+      readFileSync(`${tmpDir}/angular.json`, 'utf-8')
+    );
+    angularJson.projects['my-app'].root = '.';
+    writeFileSync(
+      `${tmpDir}/angular.json`,
+      JSON.stringify(angularJson, null, 2)
     );
 
     let viteConfig = readFileSync(`${tmpDir}/vite.config.ts`, 'utf-8');
