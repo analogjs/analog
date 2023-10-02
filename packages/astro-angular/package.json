@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/astro-angular",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "description": "Use Angular components within Astro",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -28,7 +28,7 @@
     "url": "https://github.com/analogjs/analog.git"
   },
   "dependencies": {
-    "@analogjs/vite-plugin-angular": "^0.2.10"
+    "@analogjs/vite-plugin-angular": "^0.2.11"
   },
   "peerDependencies": {
     "@angular-devkit/build-angular": "^16.0.0",
