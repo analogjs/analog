@@ -29,6 +29,7 @@ export function addAnalogProjectConfig(
           main: `${workspaceAppsDir}${projectName}/src/main.ts`,
           configFile: `${workspaceAppsDir}${projectName}/vite.config.ts`,
           outputPath: `dist/${workspaceAppsDir}${projectName}/client`,
+          tsConfig: `${workspaceAppsDir}${projectName}/tsconfig.app.json`,
         },
         defaultConfiguration: 'production',
         configurations: {
