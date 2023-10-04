@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "engines": {
-    "node": "^16.14.0 || >=18.10.0"
+    "node": ">=18.13.0"
   },
   "scripts": {
     "dev": "ng serve",
@@ -25,7 +25,7 @@
     "@angular/platform-browser-dynamic": "^16.2.0",
     "@angular/platform-server": "^16.2.0",
     "@angular/router": "^16.2.0",
-    "@nx/angular": "^16.7.0",
+    "@nx/angular": "~16.8.1",
     "front-matter": "^4.0.2",
     "marked": "^5.0.2",
     "marked-gfm-heading-id": "^3.1.0",
@@ -41,8 +41,8 @@
     "@angular-devkit/build-angular": "^16.2.0",
     "@angular/cli": "^16.2.0",
     "@angular/compiler-cli": "^16.2.0",
-    "@nx/vite": "^16.7.0",
-    "nx": "^16.7.0",
+    "@nx/vite": "~16.8.1",
+    "nx": "~16.8.1",
     "jsdom": "^22.1.0",
     "typescript": "~5.0.2",
     "vite": "^4.4.8",
