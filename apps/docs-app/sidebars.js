@@ -64,6 +64,17 @@ const sidebars = {
         },
         {
           type: 'category',
+          label: 'Data Fetching',
+          items: [
+            {
+              type: 'doc',
+              id: 'features/data-fetching/server-side-data-fetching',
+              label: 'Server-Side Data Fetching',
+            },
+          ],
+        },
+        {
+          type: 'category',
           label: 'Static Site Generation',
           items: [
             {
