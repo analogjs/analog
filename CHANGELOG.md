@@ -1,3 +1,10 @@
+## [0.2.12](https://github.com/analogjs/analog/compare/0.2.11...0.2.12) (2023-10-10)
+
+### Bug Fixes
+
+- **astro-angular:** warn about shiki in mdx astro integration and override with prism ([#691](https://github.com/analogjs/analog/issues/691)) ([10ed7e5](https://github.com/analogjs/analog/commit/10ed7e5e45a3f30fdba16e546cabfee78356a9fc))
+- **create-analog:** pin Nx packages to 16.8.1 ([#689](https://github.com/analogjs/analog/issues/689)) ([2a33363](https://github.com/analogjs/analog/commit/2a333630edfb6c702515b49799a5f04d08cd594b))
+
 ## [0.2.11](https://github.com/analogjs/analog/compare/0.2.10...0.2.11) (2023-10-02)
 
 ### Features
