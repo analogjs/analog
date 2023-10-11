@@ -7,7 +7,7 @@ import { TopBarComponent } from '@analogjs/top-bar';
   standalone: true,
   imports: [TopBarComponent, RouterOutlet],
   template: `
-    <analogjs-top-bar />
+    <analogjs-top-bar />s
 
     <div class="container">
       <router-outlet></router-outlet>

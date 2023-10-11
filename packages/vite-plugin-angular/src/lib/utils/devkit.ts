@@ -15,9 +15,9 @@ const angularApplicationPreset = app.default;
 import { createJitResourceTransformer } from '@angular-devkit/build-angular/src/tools/esbuild/angular/jit-resource-transformer';
 import { CompilerPluginOptions } from '@angular-devkit/build-angular/src/tools/esbuild/angular/compiler-plugin';
 import { JavaScriptTransformer } from '@angular-devkit/build-angular/src/tools/esbuild/javascript-transformer';
-import { SourceFileCache } from '@angular-devkit/build-angular/src/tools/esbuild/angular/compiler-plugin';
 
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
+import { SourceFileCache } from '@angular-devkit/build-angular/src/tools/esbuild/angular/source-file-cache';
 
 export {
   requiresLinking,
