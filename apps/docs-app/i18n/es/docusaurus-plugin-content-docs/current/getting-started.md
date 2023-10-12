@@ -106,11 +106,11 @@ yarn build
 pnpm run build
 ```
 
-### Compilando Artefactos
-
-By default, Analog comes with [Server-Side Rendering](/docs/features/server/server-side-rendering) enabled.
-Client artifacts are located in the `dist/analog/public` directory.
-The server for the API/SSR build artifacts is located in the `dist/analog/server` directory.
-
   </TabItem>
 </Tabs>
+
+### Compilando Artefactos
+
+Por Defecto, Analog viene con [Renderizado del lado del Servidor](/docs/es/features/server/server-side-rendering) habilitado.
+Artefactos del cliente están localizados en el directorio `dist/analog/public`.
+El servidor para los artefactos de compilación API/SSR está localizado en el directorio `dist/analog/server`.
