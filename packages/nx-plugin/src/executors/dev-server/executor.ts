@@ -13,7 +13,7 @@ export default async function* runExecutor(
   console.log('Executor ran for DevServer', context.root);
   const builderContext = await createBuilderContext(
     {
-      builderName: 'browser-esbuilds',
+      builderName: 'browser-esbuild',
       description: 'Build a browser application',
       optionSchema: await import(
         '@angular-devkit/build-angular/src/builders/browser-esbuild/schema.json'
@@ -24,24 +24,6 @@ export default async function* runExecutor(
   // console.log('builderContext', builderContext.workspaceRoot);
   builderContext.workspaceRoot = `${context.root}`;
 
-  const plugin = () => {
-    return {
-      name: 'test',
-      setup(build) {
-        console.log('setup plugin');
-        build.onResolve({ filter: /.*/ }, (args) => {
-          console.log('onResolve', args);
-          return undefined;
-        });
-
-        build.onLoad({ filter: /.*/ }, (args) => {
-          console.log('onLoad', args);
-          return undefined;
-        });
-      },
-    };
-  };
-  console.log('buildApplication');
   for await (const result of buildApplication(
     {
       aot: true,
@@ -55,7 +37,27 @@ export default async function* runExecutor(
       optimization: false,
     },
     builderContext as any,
-    [plugin()]
+    [
+      {
+        name: 'test',
+        setup(build) {
+          console.log('setup plugin');
+          build.onResolve({ filter: /.*/ }, (args) => {
+            if (args.path.includes('@analogjs')) {
+              console.log('onResolve', args.path);
+            }
+            return undefined;
+          });
+
+          build.onLoad({ filter: /.*/ }, (args) => {
+            console.log('onLoad', args.path);
+            if (args.path.includes('@analogjs')) {
+            }
+            return undefined;
+          });
+        },
+      },
+    ]
   )) {
     // console.log(result.outputFiles[0].contents);
   }
