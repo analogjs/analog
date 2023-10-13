@@ -111,6 +111,6 @@ pnpm run build
 
 ### Compilando Artefactos
 
-Por Defecto, Analog viene con [Renderizado del lado del Servidor](/docs/es/features/server/server-side-rendering) habilitado.
+Por Defecto, Analog viene con [Renderizado del lado del Servidor](/docs/features/server/server-side-rendering) habilitado.
 Artefactos del cliente están localizados en el directorio `dist/analog/public`.
 El servidor para los artefactos de compilación API/SSR está localizado en el directorio `dist/analog/server`.
