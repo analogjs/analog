@@ -121,12 +121,10 @@ export default class HomeComponent {
 
     effect(
       () =>
-        TrpcHeaders.mutate(
-          (h) =>
-            (h['authorization'] = this.loggedIn()
-              ? 'Bearer authToken'
-              : undefined)
-        ),
+        TrpcHeaders.update((h) => ({
+          ...h,
+          authorization: this.loggedIn() ? 'Bearer authToken' : undefined,
+        })),
       { allowSignalWrites: true }
     );
   }
