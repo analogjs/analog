@@ -8,7 +8,7 @@ export function ssrXhrBuildPlugin(): Plugin {
       return {
         resolve: {
           alias: {
-            'zone.js/node': 'zone.js/plugins/zone-node',
+            // 'zone.js/node': 'zone.js/plugins/zone-node',
           },
         },
         ssr: {
