@@ -85,7 +85,6 @@ const customSnapshotSerializer = () => {
     refs: any,
     printer: any
   ): string {
-    console.log('val', val);
     // `printer` is a function that serializes a value using existing plugins.
     return `${printer(
       fixtureVitestSerializer(val),
