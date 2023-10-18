@@ -138,13 +138,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 },
               ],
               externals: {
-                external: ['rxjs', 'node-fetch-native/dist/polyfill', 'destr'],
+                trace: false,
               },
-              moduleSideEffects: [
-                // 'zone.js/plugins/zone-node',
-                // 'zone.js/fesm2015/zone-node',
-                'zone.js/node',
-              ],
+              moduleSideEffects: ['zone.js/node'],
               renderer: normalizePath(`${__dirname}/runtime/renderer`),
               handlers: [
                 {
@@ -163,8 +159,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
       },
       async configureServer(viteServer: ViteDevServer) {
         if (isServe && !isTest) {
-          const { createNitro, createDevServer, build, prepare } =
-            await loadEsmModule<typeof import('nitropack')>('nitropack');
+          const { createNitro, createDevServer, build } = await loadEsmModule<
+            typeof import('nitropack')
+          >('nitropack');
 
           const nitro = await createNitro({
             dev: true,
