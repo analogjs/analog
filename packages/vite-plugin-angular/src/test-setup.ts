@@ -1,3 +1,4 @@
+import 'zone.js/plugins/zone-legacy';
 import '../setup-vitest';
 import '@angular/compiler';
 
