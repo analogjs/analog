@@ -39,6 +39,9 @@ export default defineConfig(({ mode }) => {
         vite: {
           inlineStylesExtension: 'scss',
         },
+        nitro: {
+          preset: 'netlify',
+        },
       }),
       nxViteTsPaths(),
       visualizer() as Plugin,
