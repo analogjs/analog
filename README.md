@@ -41,6 +41,12 @@ With npm:
 npm init analog
 ```
 
+With pnpm:
+
+```sh
+pnpm create analog
+```
+
 Follow the prompts to scaffold the project and start the development server.
 
 [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://analogjs.org/new)
