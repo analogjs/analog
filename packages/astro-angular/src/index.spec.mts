@@ -1,7 +1,7 @@
 import astroPlugin from './index';
 
 describe('angularVitePlugin', () => {
-  it.skip('should return astro configurations', () => {
+  it('should return astro configurations', () => {
     expect(astroPlugin().name).toEqual('@analogjs/astro-angular');
     expect(astroPlugin().hooks).toStrictEqual({
       'astro:config:setup': expect.anything(),
