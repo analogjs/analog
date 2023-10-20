@@ -19,8 +19,8 @@
     "url": "https://github.com/analogjs/analog.git"
   },
   "peerDependencies": {
-    "@angular/common": "^16.0.0",
-    "@angular/core": "^16.0.0",
+    "@angular/common": ">=16.0.0",
+    "@angular/core": ">=16.0.0",
     "@trpc/client": "^10.25.0",
     "@trpc/server": "^10.25.0",
     "isomorphic-fetch": "^3.0.0",
