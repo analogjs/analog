@@ -91,6 +91,7 @@
     "@astrojs/markdown-component": "^1.0.5",
     "@commitlint/cli": "^17.4.2",
     "@commitlint/config-conventional": "^17.4.2",
+    "@netlify/functions": "^2.3.0",
     "@ngtools/webpack": "^17.0.0-rc.0",
     "@nx/cypress": "16.8.1",
     "@nx/eslint-plugin": "16.8.1",

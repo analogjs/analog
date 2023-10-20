@@ -150,6 +150,9 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^17.4.2
         version: 17.4.2
+      '@netlify/functions':
+        specifier: ^2.3.0
+        version: 2.3.0
       '@ngtools/webpack':
         specifier: ^17.0.0-rc.0
         version: 17.0.0-rc.0(@angular/compiler-cli@17.0.0-rc.0)(typescript@5.2.2)(webpack@5.89.0)
