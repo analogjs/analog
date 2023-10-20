@@ -139,7 +139,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               ],
               externals: {
                 external: ['rxjs', 'node-fetch-native/dist/polyfill'],
-                trace: false,
               },
               moduleSideEffects: ['zone.js/node'],
               renderer: normalizePath(`${__dirname}/runtime/renderer`),
