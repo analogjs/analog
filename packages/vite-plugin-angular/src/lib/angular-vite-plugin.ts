@@ -138,6 +138,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                   sourcemap: !isProd,
                   advancedOptimizations: isProd,
                   jit,
+                  incremental: watchMode,
                 }),
               ],
               define: {

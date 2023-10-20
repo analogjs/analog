@@ -1,5 +1,5 @@
 import type { PluginOptions } from '@analogjs/vite-plugin-angular';
-import { NitroConfig, PrerenderRoute } from 'nitropack';
+import type { NitroConfig, PrerenderRoute } from 'nitropack';
 import { SitemapConfig } from '@analogjs/vite-plugin-nitro';
 
 export interface PrerenderOptions {

@@ -24,7 +24,7 @@
     "url": "https://github.com/analogjs/analog.git"
   },
   "dependencies": {
-    "nitropack": "^2.0.0",
+    "nitropack": "^2.6.0",
     "@analogjs/vite-plugin-angular": "^0.2.12",
     "@analogjs/vite-plugin-nitro": "^0.2.12",
     "@nx/devkit": "^16.0.0"

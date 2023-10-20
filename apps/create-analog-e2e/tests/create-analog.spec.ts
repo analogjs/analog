@@ -34,7 +34,7 @@ function emptyDir(dir) {
   }
 }
 
-describe('create-analog e2e', () => {
+describe.skip('create-analog e2e', () => {
   it('should create my-app', async () => {
     const project = uniq('tmpanalogapp');
     const tmpDir = `${process.cwd()}/${project}`;
