@@ -63,8 +63,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1(ajv@6.12.6)
       destr:
-        specifier: ^1.2.2
-        version: 1.2.2
+        specifier: ^2.0.1
+        version: 2.0.1
       front-matter:
         specifier: ^4.0.2
         version: 4.0.2
@@ -13393,13 +13393,8 @@ packages:
     resolution: {integrity: sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA==}
     engines: {node: '>=6'}
 
-  /destr@1.2.2:
-    resolution: {integrity: sha512-lrbCJwD9saUQrqUfXvl6qoM+QN3W7tLV5pAOs+OqOmopCCz/JkE05MHedJR1xfk4IAnZuJXPVuN5+7jNA2ZCiA==}
-    dev: false
-
   /destr@2.0.1:
     resolution: {integrity: sha512-M1Ob1zPSIvlARiJUkKqvAZ3VAqQY6Jcuth/pBKQ2b1dX/Qx0OnJ8Vux6J2H5PTMQeRzWrrbTu70VxBfv/OPDJA==}
-    dev: true
 
   /destroy@1.0.4:
     resolution: {integrity: sha512-3NdhDuEXnfun/z7x9GOElY49LoqVHoGScmOKwmxhsS8N5Y+Z8KyPPDnaSzqWgYt/ji4mqwfTS34Htrk0zPIXVg==}

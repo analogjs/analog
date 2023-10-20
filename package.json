@@ -60,7 +60,7 @@
     "@trpc/client": "^10.25.0",
     "@trpc/server": "^10.25.0",
     "ajv-formats": "^2.1.1",
-    "destr": "^1.2.2",
+    "destr": "^2.0.1",
     "front-matter": "^4.0.2",
     "isomorphic-fetch": "^3.0.0",
     "marked": "^5.0.2",
