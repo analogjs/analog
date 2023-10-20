@@ -1,5 +1,5 @@
 import type { NitroConfig } from 'nitropack';
-import { toNodeListener } from 'h3';
+import { App, toNodeListener } from 'h3';
 import type { Plugin, UserConfig } from 'vite';
 import { normalizePath, ViteDevServer } from 'vite';
 import * as path from 'path';
@@ -170,7 +170,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           });
           const server = createDevServer(nitro);
           await build(nitro);
-          viteServer.middlewares.use(apiPrefix, toNodeListener(server.app));
+          viteServer.middlewares.use(
+            apiPrefix,
+            toNodeListener(server.app as unknown as App)
+          );
 
           console.log(
             `\n\nThe server endpoints are accessible under the "${apiPrefix}" path.`
