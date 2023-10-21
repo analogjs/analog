@@ -610,6 +610,15 @@
         "doc",
         "translation"
       ]
+    },
+    {
+      "login": "lukasnys",
+      "name": "Lukas Nys",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22593230?v=4",
+      "profile": "https://github.com/lukasnys",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
