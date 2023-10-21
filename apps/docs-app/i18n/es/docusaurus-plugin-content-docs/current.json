@@ -12,7 +12,7 @@
     "description": "The label for category Routing in sidebar docsSidebar"
   },
   "sidebar.docsSidebar.category.API Routes": {
-    "message": "API Rutas",
+    "message": "Rutas API",
     "description": "The label for category API Routes in sidebar docsSidebar"
   },
   "sidebar.docsSidebar.category.Static Site Generation": {
