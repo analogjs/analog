@@ -174,6 +174,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             toNodeListener(server.app as unknown as App)
           );
 
+          viteServer.httpServer?.once('listening', () => {
+            process.env['ANALOG_HOST'] = !viteServer.config.server.host
+              ? 'localhost'
+              : (viteServer.config.server.host as string);
+            process.env['ANALOG_PORT'] = `${viteServer.config.server.port}`;
+          });
+
           console.log(
             `\n\nThe server endpoints are accessible under the "${apiPrefix}" path.`
           );
