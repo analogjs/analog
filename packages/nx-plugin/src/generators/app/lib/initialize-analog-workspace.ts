@@ -25,7 +25,7 @@ export async function initializeAngularWorkspace(
       'Angular has not been installed yet. Creating an Angular application'
     );
 
-    if (major(installedNxVersion) === 16) {
+    if (major(installedNxVersion) >= 16) {
       angularVersion = await initWithNxNamespace(
         tree,
         installedNxVersion,
