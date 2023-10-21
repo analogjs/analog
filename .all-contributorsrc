@@ -450,7 +450,8 @@
       "profile": "https://github.com/luishcastroc",
       "contributions": [
         "code",
-        "doc"
+        "doc",
+        "translation"
       ]
     },
     {
@@ -567,6 +568,47 @@
       "profile": "https://github.com/santoshyadavdev",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "Tenessy",
+      "name": "Tenessy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/65855673?v=4",
+      "profile": "https://github.com/Tenessy",
+      "contributions": [
+        "infra",
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "Jad31",
+      "name": "Jad Chahed",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46532649?v=4",
+      "profile": "https://github.com/Jad31",
+      "contributions": [
+        "doc",
+        "translation"
+      ]
+    },
+    {
+      "login": "gesielrosa",
+      "name": "Gesiel Rosa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40439982?v=4",
+      "profile": "https://www.gta-sa.com.br/",
+      "contributions": [
+        "doc",
+        "translation"
+      ]
+    },
+    {
+      "login": "besimgurbuz",
+      "name": "Besim Gürbüz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33575384?v=4",
+      "profile": "http://besimgurbuz.dev/",
+      "contributions": [
+        "doc",
+        "translation"
       ]
     }
   ],

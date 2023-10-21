@@ -1,5 +1,5 @@
 import type { NitroConfig } from 'nitropack';
-import { toNodeListener } from 'h3';
+import { App, toNodeListener } from 'h3';
 import type { Plugin, UserConfig } from 'vite';
 import { normalizePath, ViteDevServer } from 'vite';
 import * as path from 'path';
@@ -101,7 +101,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         nitroConfig.alias = {
           '#analog/ssr': normalizePath(
-            path.resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server.mjs')
+            path.resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
           ),
           '#analog/index': normalizePath(
             path.resolve(clientOutputPath, 'index.html')
@@ -138,10 +138,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 },
               ],
               externals: {
-                inline: ['zone.js/node'],
-                external: ['rxjs', 'node-fetch-native/dist/polyfill', 'destr'],
+                external: ['rxjs', 'node-fetch-native/dist/polyfill'],
               },
-              moduleSideEffects: ['zone.js/bundles/zone-node.umd.js'],
+              moduleSideEffects: ['zone.js/node'],
               renderer: normalizePath(`${__dirname}/runtime/renderer`),
               handlers: [
                 {
@@ -160,17 +159,27 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
       },
       async configureServer(viteServer: ViteDevServer) {
         if (isServe && !isTest) {
-          const { createNitro, createDevServer, build, prepare } =
-            await loadEsmModule<typeof import('nitropack')>('nitropack');
+          const { createNitro, createDevServer, build } = await loadEsmModule<
+            typeof import('nitropack')
+          >('nitropack');
 
           const nitro = await createNitro({
             dev: true,
             ...nitroConfig,
           });
           const server = createDevServer(nitro);
-          await prepare(nitro);
           await build(nitro);
-          viteServer.middlewares.use(apiPrefix, toNodeListener(server.app));
+          viteServer.middlewares.use(
+            apiPrefix,
+            toNodeListener(server.app as unknown as App)
+          );
+
+          viteServer.httpServer?.once('listening', () => {
+            process.env['ANALOG_HOST'] = !viteServer.config.server.host
+              ? 'localhost'
+              : (viteServer.config.server.host as string);
+            process.env['ANALOG_PORT'] = `${viteServer.config.server.port}`;
+          });
 
           console.log(
             `\n\nThe server endpoints are accessible under the "${apiPrefix}" path.`

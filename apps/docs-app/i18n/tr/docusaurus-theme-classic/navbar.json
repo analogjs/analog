@@ -1,0 +1,18 @@
+{
+  "title": {
+    "message": "Analog",
+    "description": "The title in the navbar"
+  },
+  "item.label.Docs": {
+    "message": "Dökümantasyon",
+    "description": "Navbar item with label Docs"
+  },
+  "item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Navbar item with label GitHub"
+  },
+  "item.label.Discord": {
+    "message": "Discord",
+    "description": "Navbar item with label Discord"
+  }
+}
