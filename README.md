@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-63-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-64-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -168,6 +168,9 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Jad31"><img src="https://avatars.githubusercontent.com/u/46532649?v=4?s=100" width="100px;" alt="Jad Chahed"/><br /><sub><b>Jad Chahed</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Jad31" title="Documentation">📖</a> <a href="#translation-Jad31" title="Translation">🌍</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.gta-sa.com.br/"><img src="https://avatars.githubusercontent.com/u/40439982?v=4?s=100" width="100px;" alt="Gesiel Rosa"/><br /><sub><b>Gesiel Rosa</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=gesielrosa" title="Documentation">📖</a> <a href="#translation-gesielrosa" title="Translation">🌍</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://besimgurbuz.dev/"><img src="https://avatars.githubusercontent.com/u/33575384?v=4?s=100" width="100px;" alt="Besim Gürbüz"/><br /><sub><b>Besim Gürbüz</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=besimgurbuz" title="Documentation">📖</a> <a href="#translation-besimgurbuz" title="Translation">🌍</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lukasnys"><img src="https://avatars.githubusercontent.com/u/22593230?v=4?s=100" width="100px;" alt="Lukas Nys"/><br /><sub><b>Lukas Nys</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=lukasnys" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
