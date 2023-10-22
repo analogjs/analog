@@ -47,7 +47,7 @@ export const getNrwlDependencies = (
   );
 };
 
-const nxDependencyKeys = ['@nx/devkit', '@nx/angular', '@nx/linter'] as const;
+const nxDependencyKeys = ['@nx/devkit', '@nx/angular', '@nx/eslint'] as const;
 export type NxDependency = (typeof nxDependencyKeys)[number];
 export const getNxDependencies = (
   nxVersion: string
@@ -66,7 +66,7 @@ export const getNxDependencies = (
     return {
       '@nx/angular': V15_X_NX_ANGULAR,
       '@nx/devkit': V15_X_NX_DEVKIT,
-      '@nx/linter': V15_X_NX_LINTER,
+      '@nx/eslint': V15_X_NX_LINTER,
     };
   }
 
@@ -74,6 +74,6 @@ export const getNxDependencies = (
   return {
     '@nx/angular': V16_X_NX_ANGULAR,
     '@nx/devkit': V16_X_NX_DEVKIT,
-    '@nx/linter': V16_X_NX_LINTER,
+    '@nx/eslint': V16_X_NX_LINTER,
   };
 };

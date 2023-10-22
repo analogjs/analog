@@ -18,7 +18,7 @@ export async function addEslint(
       await import(
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        '@nx/linter'
+        '@nx/eslint'
       )
     ).lintProjectGenerator(tree, linterOptions);
   } else {
