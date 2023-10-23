@@ -1,7 +1,8 @@
-## [0.2.13](https://github.com/analogjs/analog/compare/0.2.12...0.2.13) (2023-10-23)
+## [0.2.14](https://github.com/analogjs/analog/compare/0.2.12...0.2.14) (2023-10-23)
 
 ### Bug Fixes
 
+- add conditional import for Angular v17 ([99f0aa3](https://github.com/analogjs/analog/commit/99f0aa332a0ced648e5d397f4db5bfde22bf636a))
 - **nx-plugin:** use nx namespace for any nx version above version 16 ([#709](https://github.com/analogjs/analog/issues/709)) ([2b3f287](https://github.com/analogjs/analog/commit/2b3f287991a5544765f0ca063d58df2cd7828ff6))
 - **trpc:** adding host and port env variables to nitro dev process & … ([#695](https://github.com/analogjs/analog/issues/695)) ([bd013fe](https://github.com/analogjs/analog/commit/bd013feeb7edc73ef6b9dd2d7c61d863be35eecb))
 
