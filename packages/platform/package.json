@@ -27,7 +27,7 @@
     "nitropack": "^2.6.0",
     "@analogjs/vite-plugin-angular": "^0.2.12",
     "@analogjs/vite-plugin-nitro": "^0.2.12",
-    "@nx/devkit": "^16.0.0"
+    "@nx/devkit": "^16.0.0 || ^17.0.0"
   },
   "generators": "./src/lib/nx-plugin/generators.json",
   "schematics": "./src/lib/nx-plugin/generators.json",
