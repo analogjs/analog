@@ -13,7 +13,7 @@ export async function addEslint(
     eslintFilePatterns: [`${options.projectRoot}/**/*.{ts,html}`],
     skipFormat: true,
   };
-  if (majorNxVersion === 16) {
+  if (majorNxVersion >= 16) {
     await (
       await import(
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment

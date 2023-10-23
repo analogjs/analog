@@ -16,6 +16,14 @@ import {
   V15_X_ZOD,
 } from './nx_15_X/versions';
 import { stripIndents } from '@nx/devkit';
+import {
+  V17_X_ANALOG_JS_TRPC,
+  V17_X_TRPC_CLIENT,
+  V17_X_TRPC_SERVER,
+  V17_X_SUPERJSON,
+  V17_X_ISOMORPHIC_FETCH,
+  V17_X_ZOD,
+} from './nx_17_X/versions';
 
 const tRPCDependencyKeys = [
   '@analogjs/trpc',
@@ -51,13 +59,25 @@ export const getTrpcDependencies = (
     };
   }
 
-  // return latest deps for versions >= 16.1.0
+  // install 16.x deps for versions 17.0.0
+  if (lt(escapedNxVersion, '17.0.0')) {
+    return {
+      '@analogjs/trpc': V16_X_ANALOG_JS_TRPC,
+      '@trpc/client': V16_X_TRPC_CLIENT,
+      '@trpc/server': V16_X_TRPC_SERVER,
+      superjson: V16_X_SUPERJSON,
+      'isomorphic-fetch': V16_X_ISOMORPHIC_FETCH,
+      zod: V16_X_ZOD,
+    };
+  }
+
+  // return latest deps for versions >= 17.0.0
   return {
-    '@analogjs/trpc': V16_X_ANALOG_JS_TRPC,
-    '@trpc/client': V16_X_TRPC_CLIENT,
-    '@trpc/server': V16_X_TRPC_SERVER,
-    superjson: V16_X_SUPERJSON,
-    'isomorphic-fetch': V16_X_ISOMORPHIC_FETCH,
-    zod: V16_X_ZOD,
+    '@analogjs/trpc': V17_X_ANALOG_JS_TRPC,
+    '@trpc/client': V17_X_TRPC_CLIENT,
+    '@trpc/server': V17_X_TRPC_SERVER,
+    superjson: V17_X_SUPERJSON,
+    'isomorphic-fetch': V17_X_ISOMORPHIC_FETCH,
+    zod: V17_X_ZOD,
   };
 };
