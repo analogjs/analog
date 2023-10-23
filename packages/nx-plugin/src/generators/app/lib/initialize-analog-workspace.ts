@@ -58,7 +58,7 @@ const initWithNxNamespace = async (
   try {
     ensurePackage('@nx/devkit', versions['@nx/devkit']);
     ensurePackage('@nx/angular', versions['@nx/angular']);
-    ensurePackage('@nx/linter', versions['@nx/linter']);
+    ensurePackage('@nx/eslint', versions['@nx/eslint']);
   } catch {
     // @nx/angular cannot be required so this fails but this will still allow executing the nx angular init later on
   }
@@ -68,7 +68,7 @@ const initWithNxNamespace = async (
     {
       '@nx/devkit': versions['@nx/devkit'],
       '@nx/angular': versions['@nx/angular'],
-      '@nx/linter': versions['@nx/linter'],
+      '@nx/eslint': versions['@nx/eslint'],
     }
   );
 

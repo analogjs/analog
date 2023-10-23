@@ -5,3 +5,4 @@
 .prettierignore
 .docusaurus/
 pnpm-lock.yaml
+/.nx/cache

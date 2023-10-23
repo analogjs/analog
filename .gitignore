@@ -63,3 +63,5 @@ stats.html
 tmpanalogapp*
 ~/.nvm/nvm-exec
 ~/.nvm/nvm.sh
+
+.nx/cache

@@ -13,6 +13,11 @@ import {
   V15_X_NX_LINTER,
   V15_X_NRWL_LINTER,
 } from './nx_15_X/versions';
+import {
+  V17_X_NX_ANGULAR,
+  V17_X_NX_DEVKIT,
+  V17_X_NX_LINTER,
+} from './nx_17_X/versions';
 
 const nrwlDependencyKeys = [
   '@nrwl/devkit',
@@ -47,7 +52,7 @@ export const getNrwlDependencies = (
   );
 };
 
-const nxDependencyKeys = ['@nx/devkit', '@nx/angular', '@nx/linter'] as const;
+const nxDependencyKeys = ['@nx/devkit', '@nx/angular', '@nx/eslint'] as const;
 export type NxDependency = (typeof nxDependencyKeys)[number];
 export const getNxDependencies = (
   nxVersion: string
@@ -66,14 +71,23 @@ export const getNxDependencies = (
     return {
       '@nx/angular': V15_X_NX_ANGULAR,
       '@nx/devkit': V15_X_NX_DEVKIT,
-      '@nx/linter': V15_X_NX_LINTER,
+      '@nx/eslint': V15_X_NX_LINTER,
     };
   }
 
-  // return latest for >= 16.4.0
+  // install 16.0 deps for versions =< 17.0.0
+  if (lt(escapedNxVersion, '17.0.0')) {
+    return {
+      '@nx/angular': V16_X_NX_ANGULAR,
+      '@nx/devkit': V16_X_NX_DEVKIT,
+      '@nx/eslint': V16_X_NX_LINTER,
+    };
+  }
+
+  // return latest for >= 17.0.0
   return {
-    '@nx/angular': V16_X_NX_ANGULAR,
-    '@nx/devkit': V16_X_NX_DEVKIT,
-    '@nx/linter': V16_X_NX_LINTER,
+    '@nx/angular': V17_X_NX_ANGULAR,
+    '@nx/devkit': V17_X_NX_DEVKIT,
+    '@nx/eslint': V17_X_NX_LINTER,
   };
 };
