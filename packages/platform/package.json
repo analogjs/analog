@@ -29,6 +29,8 @@
     "@analogjs/vite-plugin-nitro": "^0.2.14",
     "@nx/devkit": "^16.0.0 || ^17.0.0"
   },
+  "builders": "./src/lib/nx-plugin/executors.json",
+  "executors": "./src/lib/nx-plugin/executors.json",
   "generators": "./src/lib/nx-plugin/generators.json",
   "schematics": "./src/lib/nx-plugin/generators.json",
   "ng-update": {
