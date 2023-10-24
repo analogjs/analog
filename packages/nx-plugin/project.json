@@ -27,6 +27,11 @@
             "input": "./packages/nx-plugin",
             "glob": "generators.json",
             "output": "."
+          },
+          {
+            "input": "./packages/nx-plugin",
+            "glob": "executors.json",
+            "output": "."
           }
         ]
       }
@@ -43,7 +48,7 @@
       }
     },
     "test": {
-      "executor": "@nx/vite:test"
+      "executor": "@analogjs/platform:vitest"
     }
   },
   "tags": []

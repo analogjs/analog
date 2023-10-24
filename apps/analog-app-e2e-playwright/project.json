@@ -5,7 +5,7 @@
   "projectType": "application",
   "targets": {
     "vitest": {
-      "executor": "@nx/vite:test"
+      "executor": "@analogjs/platform:vitest"
     },
     "e2e": {
       "executor": "nx:run-commands",

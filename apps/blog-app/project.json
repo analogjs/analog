@@ -6,7 +6,7 @@
   "prefix": "blog",
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
+      "executor": "@analogjs/platform:vite",
       "outputs": [
         "{options.outputPath}",
         "{workspaceRoot}/dist/apps/blog-app/.nitro",
@@ -29,7 +29,7 @@
       }
     },
     "serve": {
-      "executor": "@nx/vite:dev-server",
+      "executor": "@analogjs/platform:vite-dev-server",
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "blog-app:build",

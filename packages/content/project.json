@@ -4,7 +4,7 @@
   "projectType": "library",
   "sourceRoot": "packages/content/src",
   "prefix": "analogjs",
-  "implicitDependencies": ["vite-plugin-angular"],
+  "implicitDependencies": ["vite-plugin-angular", "platform"],
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:ng-packagr",
@@ -35,7 +35,7 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "executor": "@nx/vite:test"
+      "executor": "@analogjs/platform:vitest"
     },
     "version": {
       "executor": "@jscutlery/semver:version",

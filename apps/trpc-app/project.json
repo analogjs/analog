@@ -6,7 +6,7 @@
   "targets": {
     "build": {
       "dependsOn": ["^build"],
-      "executor": "@nx/vite:build",
+      "executor": "@analogjs/platform:vite",
       "outputs": [
         "{options.outputPath}",
         "{workspaceRoot}/dist/apps/trpc-app/.nitro",
@@ -29,7 +29,7 @@
       }
     },
     "serve": {
-      "executor": "@nx/vite:dev-server",
+      "executor": "@analogjs/platform:vite-dev-server",
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "trpc-app:build",
@@ -67,7 +67,7 @@
       }
     },
     "test": {
-      "executor": "@nx/vite:test",
+      "executor": "@analogjs/platform:vitest",
       "outputs": ["{projectRoot}/coverage"]
     }
   },
