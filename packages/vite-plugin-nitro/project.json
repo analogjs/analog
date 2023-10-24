@@ -34,7 +34,7 @@
       }
     },
     "test": {
-      "executor": "@analogjs/platform:vitest",
+      "executor": "@nx/vite:test",
       "outputs": ["{workspaceRoot}/coverage/packages/vite-plugin-nitro"],
       "options": {
         "passWithNoTests": true,

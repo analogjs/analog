@@ -66,7 +66,7 @@ export function addAnalogProjectConfig(
         },
       },
       test: {
-        executor: `@analogjs/platform:vitest`,
+        executor: `@nx/vite:test`,
         outputs: [`{projectRoot}/coverage`],
       },
     },

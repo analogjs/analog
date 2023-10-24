@@ -44,7 +44,7 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "executor": "@analogjs/platform:vitest"
+      "executor": "@nx/vite:test"
     },
     "version": {
       "executor": "@jscutlery/semver:version",

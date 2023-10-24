@@ -23,7 +23,7 @@
       "cache": true
     },
     "test": {
-      "dependsOn": ["^build", "platform:build"],
+      "dependsOn": ["^build"],
       "cache": true
     },
     "e2e": {

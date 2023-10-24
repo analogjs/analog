@@ -6,7 +6,7 @@
   "prefix": "analogjs",
   "targets": {
     "test": {
-      "executor": "@analogjs/platform:vitest"
+      "executor": "@nx/vite:test"
     },
     "lint": {
       "executor": "@nx/eslint:lint",

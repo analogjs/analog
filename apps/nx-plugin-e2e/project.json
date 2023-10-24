@@ -5,7 +5,7 @@
   "sourceRoot": "apps/nx-plugin-e2e/src",
   "targets": {
     "e2e": {
-      "executor": "@analogjs/platform:vitest"
+      "executor": "@nx/vite:test"
     }
   },
   "tags": [],
