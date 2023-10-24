@@ -619,6 +619,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "alaendle",
+      "name": "Andreas Ländle",
+      "avatar_url": "https://avatars.githubusercontent.com/u/969523?v=4",
+      "profile": "https://github.com/alaendle",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
