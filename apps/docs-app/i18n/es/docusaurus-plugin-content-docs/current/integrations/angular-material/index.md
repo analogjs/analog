@@ -5,7 +5,7 @@ sidebar_position: 3
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Angular Material Integration with Analog
+# Integración de Angular Material con Analog
 
 Este tutorial te guiará a través del proceso de integrar la biblioteca Angular Material en tu aplicación de Analog.
 
