@@ -1,16 +1,16 @@
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Updating to the latest version
+# Actualizando a la última versión
 
-You can use the `ng update` command for an Angular CLI workspace, or the `nx migrate` command for updating within an Nx workspace.
+Puedes usar el comando `ng update` para un espacio de trabajo de Angular CLI, o el comando `nx migrate` para actualizar dentro de un espacio de trabajo de Nx.
 
 <Tabs groupId="app-upgrader">
   <TabItem label="ng update" value="ng-update">
 
 ### ng update
 
-To update an Analog project with the `ng update` command:
+Para actualizar un proyecto de Analog con el comando `ng update`:
 
 ```shell
 ng update @analogjs/platform@latest
@@ -22,7 +22,7 @@ ng update @analogjs/platform@latest
 
 ### Nx Migrate
 
-To update an Analog project with the `nx migrate` command:
+Para actualizar un proyecto de Analog con el comando `nx migrate`:
 
 ```shell
 nx migrate @analogjs/platform@latest
