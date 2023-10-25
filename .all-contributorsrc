@@ -1,7 +1,8 @@
 {
   "files": [
     "README.md",
-    "apps/docs-app/docs/contributors.mdx"
+    "apps/docs-app/docs/contributors.mdx",
+    "apps/docs-app/i18n/es/docusaurus-plugin-content-docs/current/contributors.mdx"
   ],
   "imageSize": 100,
   "commit": false,
