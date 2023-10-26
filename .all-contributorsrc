@@ -628,6 +628,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Pascalmh",
+      "name": "Pascal Küsgen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/498197?v=4",
+      "profile": "https://ksgn.dev",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
