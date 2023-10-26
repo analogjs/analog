@@ -629,6 +629,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "alejandrocuba",
+      "name": "Alejandro Cuba Ruiz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6283346?v=4",
+      "profile": "http://alejandrocuba.com",
+      "contributions": [
+        "doc",
+        "translation"
+      ]
     }
   ],
   "contributorsPerLine": 7,
