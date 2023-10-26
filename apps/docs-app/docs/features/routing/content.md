@@ -161,7 +161,7 @@ export default class BlogPostComponent {
 }
 ```
 
-### Enabling support for mermaid
+### Enabling support for Mermaid
 
 Analog's markdown component supports [Mermaid](https://mermaid.js.org/). To enable support by the `MarkdownComponent` define a dynamic import for `loadMermaid` in `withMarkdownRenderer()`.
 
@@ -171,7 +171,7 @@ withMarkdownRenderer({
 });
 ```
 
-After it is enabled, mermaid blocks are transformed by mermaid into svgs.
+After it is enabled, Mermaid blocks are transformed by mermaid into SVGs.
 
 Example of mermaid graph:
 

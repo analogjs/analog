@@ -161,7 +161,26 @@ export default class BlogPostComponent {
 }
 ```
 
-## Soporte para Subdirectorios de Contenido
+### Habilitando soporte para Mermaid
+
+El componente markdown de Analog soporta [Mermaid](https://mermaid.js.org/). Para habilitar el soporte mediante el `MarkdownComponent`, define una importación dinámica para `loadMermaid` en el `withMarkdownRenderer()`.
+
+```ts
+withMarkdownRenderer({
+  loadMermaid: () => import('mermaid'),
+});
+```
+
+Una vez que esté habilitado, los bloques de Mermaid se transforman en SVGs mediante el plugin.
+
+Ejemplo de gráfico de Mermaid:
+
+```mermaid
+graph TD
+    A[Before] -->|Experimentando con Analog| B(Ahora sí!)
+```
+
+## Soporte para subdirectorios de contenido
 
 Analog también soporta subdirectorios dentro de tu subdirectorio de contenido.
 
