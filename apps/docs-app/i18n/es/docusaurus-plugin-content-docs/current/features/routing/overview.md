@@ -1,10 +1,10 @@
 # Enrutamiento
 
-Analog soporta el enrutamiento basado en el sistema de archivos sobre el enrutador de Angular.
+Analog soporta el enrutamiento basado en el sistema de ficheros sobre el enrutador de Angular.
 
 ## Definiendo Rutas
 
-Las rutas son definidas usando carpetas y archivos en la carpeta `src/app/pages`. Solo los archivos que terminan con `.page.ts` son recolectados y usados para construir el conjunto de rutas.
+Las rutas son definidas usando directorios y ficheros en el directorio `src/app/pages`. Solo los ficheros que terminan con `.page.ts` son recolectados y usados para construir el conjunto de rutas.
 
 :::info
 
@@ -30,7 +30,7 @@ En adición a los 5 tipos primarios de rutas, Analog también soporta [Rutas de 
 
 ## Rutas de Índice
 
-Las rutas de índice son definidas usando el nombre del archivo como la ruta, encerrado en paréntesis.
+Las rutas de índice son definidas usando el nombre del fichero como la ruta, encerrado en paréntesis.
 
 El ejemplo de ruta abajo en `src/app/pages/(home).page.ts` define una ruta `/`.
 
@@ -46,13 +46,13 @@ export default class HomePageComponent {}
 
 :::tip
 
-Las rutas de índice también pueden ser definidas usando `index.page.ts` como el nombre del archivo de la ruta.
+Las rutas de índice también pueden ser definidas usando `index.page.ts` como el nombre del fichero de la ruta.
 
 :::
 
 ## Rutas Estáticas
 
-Las rutas estáticas son definidas usando el nombre del archivo como la ruta.
+Las rutas estáticas son definidas usando el nombre del fichero como la ruta.
 
 El ejemplo de ruta abajo en `src/app/pages/about.page.ts` define una ruta `/about`.
 
@@ -72,12 +72,12 @@ export default class AboutPageComponent {}
 
 Es también posible definir rutas estáticas anidadas de dos maneras diferentes:
 
-1. Anidando los archivos de rutas en carpetas - `src/app/pages/about/team.page.ts` define una ruta `/about/team`.
-2. Usando la notación de punto en el nombre del archivo - `src/app/pages/about.team.page.ts` también define una ruta `/about/team`.
+1. Anidando los ficheros de rutas en directorios - `src/app/pages/about/team.page.ts` define una ruta `/about/team`.
+2. Usando la notación de punto en el nombre del fichero - `src/app/pages/about.team.page.ts` también define una ruta `/about/team`.
 
 ### Grupos de Rutas
 
-Las rutas pueden ser agrupadas en la misma carpeta sin añadir un segmento de ruta usando paréntesis.
+Las rutas pueden ser agrupadas en el mismo directorio sin añadir un segmento de ruta usando paréntesis.
 
 ```treeview
 src/
@@ -92,7 +92,7 @@ El ejemplo de arriba define las rutas `/login` y `/signup`.
 
 ## Rutas Dinámicas
 
-Las ruta dinámicas son definidas usando el nombre del archivo como la ruta, encerrado en corchetes. El parámetro para la ruta es extraído de la ruta.
+Las ruta dinámicas son definidas usando el nombre del fichero como la ruta, encerrado en corchetes. El parámetro para la ruta es extraído de la ruta.
 
 El ejemplo de ruta abajo en `src/app/pages/[productId].page.ts` define una ruta `/products/:productId`.
 
@@ -120,7 +120,7 @@ export default class ProductDetailsPageComponent {
 }
 ```
 
-Las rutas dinámicas también pueden ser definidas usando la notación de punto en el nombre del archivo - `src/app/pages/products.[productId].page.ts` define una ruta `/products/:productId`.
+Las rutas dinámicas también pueden ser definidas usando la notación de punto en el nombre del fichero - `src/app/pages/products.[productId].page.ts` define una ruta `/products/:productId`.
 
 ### Usando enlaces de entrada del componente de ruta
 
@@ -163,7 +163,7 @@ export default class ProductDetailsPageComponent {
 
 ## Rutas de Layout
 
-Las rutas de layout son definidas usando un archivo padre y una carpeta hija con el mismo nombre.
+Las rutas de layout son definidas usando un fichero padre y un directorio hijo con el mismo nombre.
 
 La siguiente estructura abajo representa una ruta de layout.
 
@@ -200,7 +200,7 @@ import { RouterOutlet } from '@angular/router';
 export default class ProductsComponent {}
 ```
 
-El archivo anidado `src/app/pages/products/[productId].page.ts` contiene la página de detalles `/products/:productId`.
+El fichero anidado `src/app/pages/products/[productId].page.ts` contiene la página de detalles `/products/:productId`.
 
 ```ts
 import { Component } from '@angular/core';
@@ -214,7 +214,7 @@ import { RouterOutlet } from '@angular/router';
 export default class ProductsListComponent {}
 ```
 
-El archivo anidado `src/app/pages/products/[productId].page.ts` contiene la página de detalles `/products/:productId`.
+El fichero anidado `src/app/pages/products/[productId].page.ts` contiene la página de detalles `/products/:productId`.
 
 ```ts
 import { Component, inject } from '@angular/core';
@@ -254,11 +254,11 @@ src/
         └── (auth).page.ts
 ```
 
-El siguiente ejemplo define las rutas `/login` y `/signup` con un layout compartido. El archivo padre `src/app/pages/(auth).page.ts` contiene la página padre con un router outlet.
+El siguiente ejemplo define las rutas `/login` y `/signup` con un layout compartido. El fichero padre `src/app/pages/(auth).page.ts` contiene la página padre con un router outlet.
 
 ## Rutas Catch-all
 
-Las rutas catch-all son definidas usando el nombre del archivo como la ruta, encerrado en corchetes. El parámetro para la ruta es extraído de la ruta.
+Las rutas catch-all son definidas usando el nombre del fichero como la ruta, encerrado en corchetes. El parámetro para la ruta es extraído de la ruta.
 
 El ejemplo de ruta abajo en `src/app/pages/[...page-not-found].page.ts` define una ruta `**`. Esta ruta es usualmente para páginas 404.
 
@@ -282,7 +282,7 @@ Las rutas Catch-all también pueden ser definidas como rutas anidadas.
 
 ## Usando todo junto
 
-Para la siguiente estructura de archivos:
+Para la siguiente estructura de ficheros:
 
 ```treeview
 src/
@@ -304,7 +304,7 @@ src/
         └── products.page.ts
 ```
 
-El enrutador basado en el sistema de archivos generará las siguientes rutas:
+El enrutador basado en el sistema de ficheros generará las siguientes rutas:
 
 | Directorio         | Página                                                           |
 | ------------------ | ---------------------------------------------------------------- |

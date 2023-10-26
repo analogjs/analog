@@ -1,13 +1,13 @@
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Rutado de Contenido
+# Rutado de contenido
 
 Analog también soporta el uso de contenido markdown como rutas, y renderizar contenido markdown en componentes.
 
 ### Configuración
 
-En el archivo `src/app/app.config.ts`, añade la función `provideContent()`, junto con la característica `withMarkdownRenderer()` al array de `providers` cuando se inicia la aplicación.
+En el fichero `src/app/app.config.ts`, añade la función `provideContent()`, junto con la característica `withMarkdownRenderer()` al array de `providers` cuando se inicia la aplicación.
 
 ```ts
 import { ApplicationConfig } from '@angular/core';
@@ -37,16 +37,16 @@ meta:
     content: About
 ---
 
-## About Analog
+## Acerca de Analog
 
-Analog is a meta-framework for Angular.
+Analog es un meta-framework de Angular.
 
-[Back Home](./)
+[Regresar al inicio](./)
 ```
 
-### Using the diff Highlight Plugin
+### Utilizando el plugin de resaltar cambios en el código
 
-Analog soporta resaltar los cambios de diff con PrismJS. Añade el lenguaje `diff`
+Analog soporta resaltar los cambios en el código con PrismJS. Añade el lenguaje `diff`
 y las importaciones del plugin `diff-highlight` a `app.config.ts`:
 
 ```ts
@@ -75,9 +75,9 @@ Para resaltar los cambios de fondo de línea en lugar de sólo el texto, añade 
 @import 'prismjs/plugins/diff-highlight/prism-diff-highlight.css';
 ```
 
-## Definiendo Archivos de Contenido
+## Definiendo ficheros de contenido
 
-Para mayor flexibilidad, los archivos de contenido markdown pueden ser proporcionados en la carpeta `src/content`. Aquí puedes listar archivos markdown como posts de blog.
+Para mayor flexibilidad, los ficheros de contenido markdown pueden ser proporcionados en el directorio `src/content`. Aquí puedes listar ficheros markdown como posts de blog.
 
 ```md
 ---
@@ -87,12 +87,12 @@ description: My First Post Description
 coverImage: https://images.unsplash.com/photo-1493612276216-ee3925520721?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=464&q=80
 ---
 
-Hello World
+¡Hola Mundo!
 ```
 
-## Usando la Lista de Archivos de Contenido
+## Usando la lista de ficheros de contenido
 
-Para obtener una lista usando la lista de archivos de contenido en la carpeta `src/content`, usa la función `injectContentFiles<Attributes>(filterFn?: InjectContentFilesFilterFunction<Attributes>)` del paquete `@analogjs/content` en tu componente. Para reducir los archivos, puedes usar la función de predicado `filterFn` como argumento. Puedes usar el tipo `InjectContentFilesFilterFunction<T>` para configurar tu predicado.
+Para obtener una lista usando la lista de ficheros de contenido en el directorio `src/content`, usa la función `injectContentFiles<Attributes>(filterFn?: InjectContentFilesFilterFunction<Attributes>)` del paquete `@analogjs/content` en tu componente. Para reducir los ficheros, puedes usar la función de predicado `filterFn` como argumento. Puedes usar el tipo `InjectContentFilesFilterFunction<T>` para configurar tu predicado.
 
 ```ts
 import { Component } from '@angular/core';
@@ -131,7 +131,7 @@ export default class BlogComponent {
 
 Analog provee un `MarkdownComponent` y una función `injectContent()` para renderizar contenido markdown con frontmatter.
 
-La función `injectContent()` usa el parámetro de ruta `slug` por defecto para obtener el archivo de contenido de la carpeta `src/content`.
+La función `injectContent()` usa el parámetro de ruta `slug` por defecto para obtener el fichero de contenido del directorio `src/content`.
 
 ```ts
 // /src/app/pages/blog/posts.[slug].page.ts
@@ -163,11 +163,11 @@ export default class BlogPostComponent {
 
 ## Soporte para Subdirectorios de Contenido
 
-Analog también soporta subdirectorios dentro de tu carpeta de contenido.
+Analog también soporta subdirectorios dentro de tu subdirectorio de contenido.
 
 La función `injectContent()` también puede ser usada con un objeto que contenga el parámetro de ruta y el nombre del subdirectorio.
 
-Esto puede ser útil si, por ejemplo, tienes posts de blog, así como un portafolio de archivos markdown de proyectos para ser usados en el sitio.
+Esto puede ser útil si, por ejemplo, tienes posts de blog, así como un portafolio de ficheros markdown de proyectos para ser usados en el sitio.
 
 ```treeview
 src/
@@ -216,7 +216,7 @@ export default class ProjectComponent {
 
 ## Caarga de Contenido Personalizado
 
-Por defecto, Analog usa los parámetros de ruta para construir el nombre del archivo para recuperar un archivo de contenido de la carpeta `src/content`. Analog también soporta el uso de un nombre de archivo personalizado para recuperar contenido de la carpeta `src/content`. Esto puede ser útil si, por ejemplo, tienes un archivo markdown personalizado que quieres cargar en una página.
+Por defecto, Analog usa los parámetros de ruta para construir el nombre del fichero para recuperar un fichero de contenido del directorio `src/content`. Analog también soporta el uso de un nombre de fichero personalizado para recuperar contenido deel directorio `src/content`. Esto puede ser útil si, por ejemplo, tienes un fichero markdown personalizado que quieres cargar en una página.
 
 La función `injectContent()` puede ser usada pasando un objeto que contenga la propiedad `customFilename`.
 

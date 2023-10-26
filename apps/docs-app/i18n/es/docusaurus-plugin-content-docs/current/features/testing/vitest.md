@@ -37,7 +37,7 @@ pnpm install -w @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsco
 
 ## Configuración para ejecutar las pruebas sobre Node
 
-Para configurar Vitest, crea un archivo `vite.config.ts` en la raíz de tu proyecto:
+Para configurar Vitest, crea un fichero `vite.config.ts` en la raíz de tu proyecto:
 
 ```ts
 /// <reference types="vitest" />

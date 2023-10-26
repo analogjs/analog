@@ -4,7 +4,7 @@ Analog admite la definición de rutas de API que se pueden utilizar para servir 
 
 ## Definición de una ruta API
 
-Las rutas API se definen en la carpeta `src/server/routes`. Las rutas API también se basan en el sistema de archivos y se exponen bajo el prefijo `/api` predeterminado en el desarrollo.
+Las rutas API se definen en el directorio `src/server/routes`. Las rutas API también se basan en el sistema de ficheros y se exponen bajo el prefijo `/api` predeterminado en el desarrollo.
 
 ```ts
 import { defineEventHandler } from 'h3';
@@ -74,7 +74,7 @@ Una ruta definida en `src/server/routes/v1/hello.ts` ahora se puede acceder en `
 
 ## Rutas API dinámicas
 
-Las rutas API dinámicas se definen usando el nombre de archivo como la ruta de la ruta encerrada entre corchetes. Los parámetros se pueden acceder a través de `event.context.params`.
+Las rutas API dinámicas se definen usando el nombre de fichero como la ruta de la ruta encerrada entre corchetes. Los parámetros se pueden acceder a través de `event.context.params`.
 
 ```ts
 // /server/routes/v1/hello/[name].ts
@@ -99,7 +99,7 @@ export default defineEventHandler((event) => {
 
 ## Métodos de solicitud HTTP específicos
 
-Los nombres de archivo se pueden sufijar con `.get`, `.post`, `.put`, `.delete`, etc. para que coincidan con el método de solicitud HTTP específico.
+Los nombres de fichero se pueden sufijar con `.get`, `.post`, `.put`, `.delete`, etc. para que coincidan con el método de solicitud HTTP específico.
 
 ### GET
 

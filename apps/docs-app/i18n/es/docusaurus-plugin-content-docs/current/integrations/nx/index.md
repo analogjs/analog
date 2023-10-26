@@ -47,7 +47,7 @@ npx nx build analog-app
 
 ### Artefactos de compilación
 
-Los artefactos de compilación del cliente se ubican en la carpeta dist de tu espacio de trabajo Nx.
+Los artefactos de compilación del cliente se ubican en el directorio `dist` de tu espacio de trabajo Nx.
 
 En el diseño de espacio de trabajo independiente, los artefactos del cliente de `analog-app` se encuentran en el directorio `dist/analog/public`.
 El servidor para los artefactos de compilación de la API/SSR se encuentra en el directorio `dist/analog/server`.

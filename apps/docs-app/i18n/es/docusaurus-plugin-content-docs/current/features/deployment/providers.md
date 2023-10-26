@@ -60,7 +60,7 @@ Eso es todo!
 }
 ```
 
-2. Crear un archivo `vercel.json` en la raíz de tu proyecto y definir el `buildCommand`:
+2. Crear un fichero `vercel.json` en la raíz de tu proyecto y definir el `buildCommand`:
 
 ```json [vercel.json]
 {
@@ -87,7 +87,7 @@ Eso es todo!
 Puede haber un caso en el que Vercel no cargue el preset automáticamente. En ese caso, puedes hacer una de las siguientes cosas.
 
 - Establece la variable de entorno `BUILD_PRESET` en `vercel`.
-- Establece el preset en el archivo `vite.config.ts`:
+- Establece el preset en el fichero `vite.config.ts`:
 
 ```ts [vite.config.ts]
 import { defineConfig } from 'vite';
@@ -108,7 +108,7 @@ export default defineConfig(({ mode }) => ({
 
 #### Nx y Vercel
 
-Cuando se usa Nx y se reutiliza la caché de compilación en la plataforma de compilación de Vercel, existe la posibilidad de que la caché se reutilice si la has construido localmente. Esto puede provocar que la salida se coloque en la ubicación incorrecta. Para resolver este problema, puedes usar el preset en el archivo `vite.config.ts` como solución alternativa.
+Cuando se usa Nx y se reutiliza la caché de compilación en la plataforma de compilación de Vercel, existe la posibilidad de que la caché se reutilice si la has construido localmente. Esto puede provocar que la salida se coloque en la ubicación incorrecta. Para resolver este problema, puedes usar el preset en el fichero `vite.config.ts` como solución alternativa.
 
 ## Cloudflare Pages y Workers
 
@@ -116,7 +116,7 @@ Anaalog soporta el despliegue en [Cloudflare](https://cloudflare.com/) pages y w
 
 ### Actualizando el punto de entrada del servidor
 
-El archivo `main.server.ts` debe actualizarse para proporcionar la URL completa y el token `APP_BASE_HREF` en el servidor para el soporte de Cloudflare.
+El fichero `main.server.ts` debe actualizarse para proporcionar la URL completa y el token `APP_BASE_HREF` en el servidor para el soporte de Cloudflare.
 
 ```ts
 import { renderApplication } from '@angular/platform-server';
@@ -199,9 +199,9 @@ Vea un [Repositorio de Ejemplo](https://github.com/brandonroberts/analog-angular
 
 **Nota**: Necesitas estar en el **plan Blaze** para usar Analog con Cloud Functions.
 
-Si aún no tienes un `firebase.json` en tu directorio raíz, Analog lo creará la primera vez que lo ejecutes. En este archivo, deberás reemplazar `<your_project_id>` con la ID de tu proyecto Firebase.
+Si aún no tienes un `firebase.json` en tu directorio raíz, Analog lo creará la primera vez que lo ejecutes. En este fichero, deberás reemplazar `<your_project_id>` con la ID de tu proyecto Firebase.
 
-Este archivo luego debe ser subido al control de versiones. También puedes crear un archivo `.firebaserc` si no quieres pasar manualmente la ID de tu proyecto a tus comandos `firebase` (con `--project <your_project_id>`):
+Este fichero luego debe ser subido al control de versiones. También puedes crear un fichero `.firebaserc` si no quieres pasar manualmente la ID de tu proyecto a tus comandos `firebase` (con `--project <your_project_id>`):
 
 ```json [.firebaserc]
 {

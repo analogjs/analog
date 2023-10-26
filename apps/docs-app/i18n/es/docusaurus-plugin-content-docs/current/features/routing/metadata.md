@@ -33,7 +33,7 @@ export default class AboutPageComponent {
 
 Las rutas pueden ser definidas con el único propósito de redirigir a otra ruta.
 
-Para crear una ruta de redirección, agrega las propiedades `redirectTo` y `pathMatch` al objeto `routeMeta` dentro del archivo de ruta:
+Para crear una ruta de redirección, agrega las propiedades `redirectTo` y `pathMatch` al objeto `routeMeta` dentro del fichero de ruta:
 
 ```ts
 // src/app/pages/index.page.ts
@@ -49,11 +49,11 @@ El ejemplo anterior es una redirección desde la ruta `/` a la ruta `/home`.
 
 :::tip
 
-Los archivos de rutas de redirección no deben exportar un componente.
+Los ficheros de rutas de redirección no deben exportar un componente.
 
 :::
 
-Es también posible definir rutas de redirección anidadas. Para la siguiente estructura de archivos:
+Es también posible definir rutas de redirección anidadas. Para la siguiente estructura de ficheros:
 
 ```treeview
 src/
@@ -65,7 +65,7 @@ src/
             └── san-francisco.page.ts
 ```
 
-Y la siguiente definición de `routeMeta` en el archivo `src/app/pages/cities/index.page.ts`:
+Y la siguiente definición de `routeMeta` en el fichero `src/app/pages/cities/index.page.ts`:
 
 ```ts
 import { RouteMeta } from '@analogjs/router';

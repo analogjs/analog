@@ -13,7 +13,7 @@ Parecido a otros meta-frameworks como Next.JS, Nuxt, SvelteKit, Qwik City y otro
 ## Características
 
 - Soporta Vite/Vitest/Playwright
-- [Enrutado basado en archivos](/docs/features/routing/overview)
+- [Enrutado basado en fichero](/docs/features/routing/overview)
 - [Soporte para usar markdown como rutas de contenido](/docs/features/routing/content)
 - [Soporte para rutas API/servidor](/docs/features/api/overview)
 - Soporta [SSR](/docs/features/server/server-side-rendering)/[SSG support](/docs/features/server/static-site-generation) híbrido.

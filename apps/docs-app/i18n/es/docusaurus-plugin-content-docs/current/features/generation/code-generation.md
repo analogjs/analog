@@ -7,7 +7,7 @@ Analog soporta la generación de código automatizada usando Nx Generators y Ang
 
 ## Generar una Página
 
-Este comando genera una página dentro de nuestra carpeta `pages` con una configuración mínima.
+Este comando genera una página dentro de nuestro directorio `pages` con una configuración mínima.
 
 <Tabs groupId="project-type">
   <TabItem value="Nx">
@@ -26,7 +26,7 @@ También funciona con los nombres específicos de Analog, **Nota: estos nombres 
 npx nx generate @analogjs/platform:page --pathname='(blog)' --project=analog-app
 ```
 
-el schematic también acepta subcarpetas para estructurar nuestro proyecto de manera adecuada.
+el schematic también acepta subdirectorios para estructurar nuestro proyecto de manera adecuada.
 
 ```shell
 npx nx generate @analogjs/platform:page --pathname='products/[products]' --project=analog-app
