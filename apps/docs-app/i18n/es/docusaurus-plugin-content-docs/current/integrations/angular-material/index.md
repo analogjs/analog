@@ -5,13 +5,13 @@ sidebar_position: 3
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Angular Material Integration with Analog
+# Integración de Angular Material con Analog
 
-This tutorial will guide you through the process of integrating the Angular Material library within your Analog application.
+Este tutorial te guiará a través del proceso de integrar la biblioteca Angular Material en tu aplicación de Analog.
 
-## Step 1: Installing the Angular Material library
+## Paso 1: Instalación de la biblioteca Angular Material
 
-To begin, you need to install the `@angular/cdk` and `@angular/material` packages. Depending on your preferred package manager, run one of the following commands:
+Para comenzar, instala los paquetes `@angular/cdk` y `@angular/material`. Ejecuta el comando correspondiente a tu gestor de paquetes preferido:
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
@@ -39,10 +39,10 @@ pnpm install @angular/cdk @angular/material
   </TabItem>
 </Tabs>
 
-## Step 2: Configuring the Angular Material library
+## Paso 2: Configuración de la biblioteca Angular Material
 
-1. Rename the file `styles.css` to `styles.scss`.
-2. Set the `inlineStylesExtension` property to `'scss'` in the `vite.config.ts` file:
+1. Renombra el fichero `styles.css` a `styles.scss`.
+2. Establece la propiedad `inlineStylesExtension` a `'scss'` ien el fichero `vite.config.ts`:
 
 ```ts
 export default defineConfig(({ mode }) => {
@@ -58,7 +58,7 @@ export default defineConfig(({ mode }) => {
 });
 ```
 
-3. Update the `index.html` file to reference the SCSS file:
+3. Actualiza el `index.html` para referenciar el nuevo fichero SCSS:
 
 ```html
 <head>
@@ -79,7 +79,7 @@ export default defineConfig(({ mode }) => {
 </body>
 ```
 
-4. Update the `styles.scss` file to import the Angular Material styles and define your custom theme:
+4. Actualiza el fichero `styles.scss` para importar los estilos de Angular Material y definir tu tema visual personalizado:
 
 ```scss
 @use '@angular/material' as mat;
@@ -101,11 +101,11 @@ $analog-theme: mat.define-light-theme(
 @include mat.all-component-themes($analog-theme);
 ```
 
-## Optional Step: Configuring Animations
+## Paso Opcional: Configuración de Animaciones
 
-If you want to activate or deactivate animations where needed, follow the correspondent steps:
+Si deseas activar o desactivar animaciones donde sea necesario, sigue los pasos correspondientes:
 
-1. Open the `app.config.ts` file and add `provideAnimations()` as a provider
+1. Abre el fichero `app.config.ts` y declara el proveedor `provideAnimations()`
 
 ```ts
 providers: [
@@ -114,7 +114,7 @@ providers: [
 ],
 ```
 
-2. Open the `app.config.server.ts` file and add `provideNoopAnimations()` as a provider
+2. Abre el fichero `app.config.server.ts` y declara el proveedor `provideNoopAnimations()`
 
 ```ts
 providers: [
@@ -123,8 +123,8 @@ providers: [
 ],
 ```
 
-With these steps, you have configured animations to be enabled on the client and disabled on the server in your Analog application.
+Con estos pasos, has configurado las animaciones para que estén habilitadas en el cliente y deshabilitadas en el servidor en tu aplicación de Analog.
 
-That's it! You have successfully installed and configured the Angular Material library for your Analog application. You can now start utilizing the Angular Material components and styles in your project.
+¡Eso es todo! Has instalado y configurado con éxito la biblioteca Angular Material para tu aplicación de Analog. Ahora puedes comenzar a utilizar los componentes y estilos de Angular Material en tu proyecto.
 
-For more information on theming with Angular Material, refer to the [Angular Material Theming Guide](https://material.angular.io/guide/theming).
+Para más información sobre la creación de temas visuales con Angular Material, consulta la [Guía de Temas de Angular Material.](https://material.angular.io/guide/theming).

@@ -275,11 +275,11 @@
     "description": "The label of the button to read the docs"
   },
   "homepage.sponsorSection.title": {
-    "message": "Analog es gratis, código abierto, y apoyado por nuestros patrocinantes.",
+    "message": "Analog es gratis, código abierto, y apoyado por nuestros patrocinadores.",
     "description": "The title of the sponsor section"
   },
   "homepage.sponsorSection.subtitle": {
-    "message": "Patrocinantes",
+    "message": "Patrocinadores",
     "description": "The subtitle of the sponsor section on the homepage"
   },
   "homepage.sponsorSection.sponsorButton": {
@@ -287,7 +287,7 @@
     "description": "The label of the button to sponsor Analog"
   },
   "features.fileBasedRouting": {
-    "message": "Analog usa enrutado basado en archivos y soporta rutas de API (servidor) para aplicaciones Angular.",
+    "message": "Analog usa enrutado basado en ficheros y soporta rutas de API (servidor) para aplicaciones Angular.",
     "description": "The description of the feature 'File-based routing and API routes'"
   },
   "features.vite": {
@@ -311,7 +311,7 @@
     "description": "The title of the feature \"Hybrid SSR/SSG support\""
   },
   "features.title.fileBasedRouting": {
-    "message": "Enrutado basado en archivos y rutas de API",
+    "message": "Enrutado basado en ficheros y rutas de API",
     "description": "The title of the feature \"File-based routing and API routes\""
   },
   "homepage.tagline": {

@@ -1,10 +1,10 @@
 # Obtención de datos en el lado del servidor
 
-Analog admite la obtención de datos del servidor antes de cargar una página. Esto se puede lograr definiendo una función `load` asíncrona en el archivo `.server.ts` de la página.
+Analog admite la obtención de datos del servidor antes de cargar una página. Esto se puede lograr definiendo una función `load` asíncrona en el fichero `.server.ts` de la página.
 
 ## Configuración de la URL base pública
 
-Analog requiere que la URL base pública se establezca al usar la obtención de datos del lado del servidor. Establezca una variable de entorno, usando un archivo `.env` para definir la URL base pública.
+Analog requiere que la URL base pública se establezca al usar la obtención de datos del lado del servidor. Establezca una variable de entorno, usando un fichero `.env` para definir la URL base pública.
 
 ```
 // .env
@@ -15,7 +15,7 @@ La variable de entorno también debe establecerse al compilar para implementaci�
 
 ## Obtención de datos
 
-Para obtener los datos del servidor, cree un archivo `.server.ts` que contenga la función `load` asíncrona junto con el archivo `.page.ts`.
+Para obtener los datos del servidor, cree un fichero `.server.ts` que contenga la función `load` asíncrona junto con el fichero `.page.ts`.
 
 ```ts
 // src/app/pages/index.server.ts

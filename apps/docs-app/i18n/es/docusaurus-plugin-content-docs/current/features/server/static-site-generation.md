@@ -1,6 +1,6 @@
 # Construyendo sitios estáticos
 
-Analog soporta la generación de sitios estáticos cuando se construye para el despliegue. Esto incluye prerenderizar las rutas proporcionadas a archivos HTML estáticos junto con la aplicación del lado del cliente.
+Analog soporta la generación de sitios estáticos cuando se construye para el despliegue. Esto incluye prerenderizar las rutas proporcionadas a ficheros HTML estáticos junto con la aplicación del lado del cliente.
 
 ## Generación de sitios estáticos
 
@@ -76,7 +76,7 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-Siempre que se proporcionen rutas, Analog genera un archivo `sitemap.xml` que contiene un mapeo de las propiedades `<loc>` y `<lastmod>` de las páginas.
+Siempre que se proporcionen rutas, Analog genera un fichero `sitemap.xml` que contiene un mapeo de las propiedades `<loc>` y `<lastmod>` de las páginas.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
