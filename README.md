@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-65-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-66-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -172,6 +172,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/lukasnys"><img src="https://avatars.githubusercontent.com/u/22593230?v=4?s=100" width="100px;" alt="Lukas Nys"/><br /><sub><b>Lukas Nys</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=lukasnys" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/alaendle"><img src="https://avatars.githubusercontent.com/u/969523?v=4?s=100" width="100px;" alt="Andreas Ländle"/><br /><sub><b>Andreas Ländle</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=alaendle" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://ksgn.dev"><img src="https://avatars.githubusercontent.com/u/498197?v=4?s=100" width="100px;" alt="Pascal Küsgen"/><br /><sub><b>Pascal Küsgen</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Pascalmh" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
