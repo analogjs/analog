@@ -138,9 +138,18 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 },
               ],
               externals: {
-                external: ['rxjs', 'node-fetch-native/dist/polyfill'],
+                ...nitroOptions?.externals,
+                external: [
+                  'rxjs',
+                  'node-fetch-native/dist/polyfill',
+                  ...(nitroOptions?.externals?.external || []),
+                ],
               },
-              moduleSideEffects: ['zone.js/node'],
+              moduleSideEffects: [
+                'zone.js/node',
+                'zone.js/fesm2015/zone-node',
+                ...(nitroOptions?.moduleSideEffects || []),
+              ],
               renderer: normalizePath(`${__dirname}/runtime/renderer`),
               handlers: [
                 {
