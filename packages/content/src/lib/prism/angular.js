@@ -1,4 +1,8 @@
 (function (Prism) {
+  if (typeof Prism === 'undefined') {
+    return;
+  }
+
   Prism.languages.angular = Prism.languages.extend('markup', {
     keyword:
       /(?:@if|@for|@switch|@defer|@loading|@error|@placeholder|prefetch)\b/,
