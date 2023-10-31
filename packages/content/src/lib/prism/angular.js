@@ -1,4 +1,4 @@
-(function (Prism) {
+(function () {
   if (typeof Prism === 'undefined') {
     return;
   }
@@ -20,4 +20,4 @@
   });
 
   Prism.languages.ng = Prism.languages.angular;
-})(Prism);
+})();
