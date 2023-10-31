@@ -1,3 +1,9 @@
+## [0.2.17](https://github.com/analogjs/analog/compare/0.2.16...0.2.17) (2023-10-31)
+
+### Bug Fixes
+
+- **content:** add check for defined Prism ([#739](https://github.com/analogjs/analog/issues/739)) ([475e114](https://github.com/analogjs/analog/commit/475e114256c81ae6b190ec15d6a787d06cf5ac6f))
+
 ## [0.2.16](https://github.com/analogjs/analog/compare/0.2.15...0.2.16) (2023-10-30)
 
 ### Bug Fixes
