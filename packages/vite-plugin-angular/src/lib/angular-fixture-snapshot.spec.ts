@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { TestBed, ComponentFixture, waitForAsync } from '@angular/core/testing';
+import { describe } from 'vitest';
 
 /**
  * @vitest-environment jsdom
  */
-describe('Angular Fixture Snapshot', () => {
+describe.skip('Angular Fixture Snapshot', () => {
   @Component({
     selector: 'app-test',
     standalone: true,

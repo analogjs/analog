@@ -1,7 +1,8 @@
 {
   "files": [
     "README.md",
-    "apps/docs-app/docs/contributors.mdx"
+    "apps/docs-app/docs/contributors.mdx",
+    "apps/docs-app/i18n/es/docusaurus-plugin-content-docs/current/contributors.mdx"
   ],
   "imageSize": 100,
   "commit": false,
@@ -450,7 +451,8 @@
       "profile": "https://github.com/luishcastroc",
       "contributions": [
         "code",
-        "doc"
+        "doc",
+        "translation"
       ]
     },
     {
@@ -608,6 +610,52 @@
       "contributions": [
         "doc",
         "translation"
+      ]
+    },
+    {
+      "login": "lukasnys",
+      "name": "Lukas Nys",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22593230?v=4",
+      "profile": "https://github.com/lukasnys",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "alaendle",
+      "name": "Andreas Ländle",
+      "avatar_url": "https://avatars.githubusercontent.com/u/969523?v=4",
+      "profile": "https://github.com/alaendle",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Pascalmh",
+      "name": "Pascal Küsgen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/498197?v=4",
+      "profile": "https://ksgn.dev",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "alejandrocuba",
+      "name": "Alejandro Cuba Ruiz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6283346?v=4",
+      "profile": "http://alejandrocuba.com",
+      "contributions": [
+        "doc",
+        "translation"
+      ]
+    },
+    {
+      "login": "Shreyas0410",
+      "name": "Shreyas0410",
+      "avatar_url": "https://avatars.githubusercontent.com/u/70795867?v=4",
+      "profile": "https://github.com/Shreyas0410",
+      "contributions": [
+        "doc"
       ]
     }
   ],

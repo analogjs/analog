@@ -13,18 +13,19 @@ export default defineConfig(({ mode }) => {
       include: ['@angular/common', '@angular/forms', 'isomorphic-fetch'],
     },
     ssr: {
-      noExternal: '@analogjs/trpc',
+      noExternal: ['@analogjs/trpc', '@trpc/server'],
     },
     build: {
       target: ['es2020'],
     },
     plugins: [
       analog({
-        vite: {
-          inlineStylesExtension: 'css',
-        },
-        prerender: {
-          routes: ['/'],
+        nitro: {
+          routeRules: {
+            '/': {
+              prerender: false,
+            },
+          },
         },
       }),
       nxViteTsPaths(),

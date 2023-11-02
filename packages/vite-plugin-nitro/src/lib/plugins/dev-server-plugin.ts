@@ -44,6 +44,7 @@ export function devServerPlugin(options: ServerOptions): Plugin {
               await viteServer.ssrLoadModule('~analog/entry-server')
             )['default'];
             const result = await entryServer(req.originalUrl, template);
+            res.setHeader('Content-Type', 'text/html');
             res.end(result);
           } catch (e) {
             viteServer && viteServer.ssrFixStacktrace(e as Error);

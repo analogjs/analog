@@ -1,6 +1,5 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "npmScope": "analogjs",
   "workspaceLayout": {
     "libsDir": "packages"
   },
@@ -12,16 +11,7 @@
   },
   "tasksRunnerOptions": {
     "default": {
-      "runner": "nx-cloud",
       "options": {
-        "cacheableOperations": [
-          "build-package",
-          "build",
-          "lint",
-          "test",
-          "e2e"
-        ],
-        "accessToken": "NDRkYzdkYmMtNDI3NS00MDI0LWFkMGQtMmI0Zjc2MTY2YzU0fHJlYWQtb25seQ==",
         "useLightClient": true
       }
     }
@@ -29,13 +19,16 @@
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["production", "^production"]
+      "inputs": ["production", "^production"],
+      "cache": true
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "cache": true
     },
     "e2e": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "cache": true
     },
     "serve": {
       "dependsOn": ["^build"]
@@ -44,7 +37,11 @@
       "inputs": ["default", "^production"]
     },
     "lint": {
-      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"]
+      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
+      "cache": true
+    },
+    "build-package": {
+      "cache": true
     }
   },
   "generators": {
@@ -72,5 +69,6 @@
       "!{projectRoot}/src/test-setup.[jt]s"
     ],
     "projectSpecificFiles": []
-  }
+  },
+  "nxCloudAccessToken": "NDRkYzdkYmMtNDI3NS00MDI0LWFkMGQtMmI0Zjc2MTY2YzU0fHJlYWQtb25seQ=="
 }

@@ -18,7 +18,7 @@ export function addAnalogProjectConfig(
     sourceRoot: `${projectRoot}/src`,
     targets: {
       build: {
-        executor: `${nxPackageNamespace}/vite:build`,
+        executor: `@analogjs/platform:vite`,
         outputs: [
           '{options.outputPath}',
           `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/.nitro`,
@@ -43,7 +43,7 @@ export function addAnalogProjectConfig(
         },
       },
       serve: {
-        executor: `${nxPackageNamespace}/vite:dev-server`,
+        executor: `@analogjs/platform:vite-dev-server`,
         defaultConfiguration: 'development',
         options: {
           buildTarget: `${projectName}:build`,
@@ -66,7 +66,7 @@ export function addAnalogProjectConfig(
         },
       },
       test: {
-        executor: `${nxPackageNamespace}/vite:test`,
+        executor: `@analogjs/platform:vitest`,
         outputs: [`{projectRoot}/coverage`],
       },
     },

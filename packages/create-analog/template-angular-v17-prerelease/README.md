@@ -20,8 +20,7 @@ Run `npm run test` to run unit tests with [Vitest](https://vitest.dev).
 
 ## Community
 
-- Join the [Discord](https://discord.gg/mKC2Ec48U5)
 - Visit and Star the [GitHub Repo](https://github.com/analogjs/analog)
-- Visit the [Website](https://analogjs.org/)
+- Join the [Discord](https://chat.analogjs.org)
 - Follow us on [Twitter](https://twitter.com/analogjs)
 - Become a [Sponsor](https://github.com/sponsors/brandonroberts)

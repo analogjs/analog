@@ -13,7 +13,7 @@ To add Vitest, install the necessary packages:
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/vite-plugin-angular @nx/vite jsdom vite-tsconfig-paths --save-dev
+npm install @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig-paths --save-dev
 ```
 
   </TabItem>
@@ -21,7 +21,7 @@ npm install @analogjs/vite-plugin-angular @nx/vite jsdom vite-tsconfig-paths --s
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/vite-plugin-angular @nx/vite jsdom vite-tsconfig-paths --dev
+yarn add @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig-paths --dev
 ```
 
   </TabItem>
@@ -29,7 +29,7 @@ yarn add @analogjs/vite-plugin-angular @nx/vite jsdom vite-tsconfig-paths --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/vite-plugin-angular @nx/vite jsdom vite-tsconfig-paths
+pnpm install -w @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig-paths
 ```
 
   </TabItem>
@@ -82,7 +82,7 @@ getTestBed().initTestEnvironment(
 );
 ```
 
-Next, update the `test` target in the `angular.json` to use the `@nx/vite:test` builder:
+Next, update the `test` target in the `angular.json` to use the `@analogjs/platform:vitest` builder:
 
 ```json
 {
@@ -97,7 +97,7 @@ Next, update the `test` target in the `angular.json` to use the `@nx/vite:test` 
         "serve": ...,
         "extract-i18n": ...,
         "test": {
-          "builder": "@nx/vite:test"
+          "builder": "@analogjs/platform:vitest"
         }
       }
     }

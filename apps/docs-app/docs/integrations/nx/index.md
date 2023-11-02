@@ -90,28 +90,3 @@ Next, use the application generator to scaffold a new application:
 ```shell
 npx nx g @analogjs/platform:app analog-app
 ```
-
-### Serving the application
-
-To start the development server for your application, run the `nx serve` command.
-
-```shell
-npx nx serve analog-app
-```
-
-Navigate to `http://localhost:4200` in your browser to see the application running.
-
-### Building the Application
-
-To build the application for deployment run:
-
-```shell
-npx nx build analog-app
-```
-
-### Build Artifacts
-
-The client build artifacts are located in the dist folder of your Nx workspace.
-
-In the common apps/libs workspace layout, the `analog-app`'s client artifacts are located in the `dist/apps/analog-app/analog/public` directory.
-The server for the API/SSR build artifacts is located in the `dist/apps/analog-app/analog/server` directory.

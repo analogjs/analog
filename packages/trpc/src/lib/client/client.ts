@@ -42,6 +42,21 @@ function customFetch(
         json: () => Promise.resolve(response._data),
       }));
   }
+
+  // dev server trpc for analog & nitro
+  if (typeof window === 'undefined') {
+    const host =
+      process.env['NITRO_HOST'] ?? process.env['ANALOG_HOST'] ?? 'localhost';
+    const port =
+      process.env['NITRO_PORT'] ?? process.env['ANALOG_PORT'] ?? 4205;
+    const base = `http://${host}:${port}`;
+    if (input instanceof Request) {
+      input = new Request(base, input);
+    } else {
+      input = new URL(input, base);
+    }
+  }
+
   return fetch(input, init);
 }
 

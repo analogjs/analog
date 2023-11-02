@@ -1,3 +1,49 @@
+## [0.2.18](https://github.com/analogjs/analog/compare/0.2.16...0.2.18) (2023-10-31)
+
+### Bug Fixes
+
+- **content:** add check for defined Prism ([#739](https://github.com/analogjs/analog/issues/739)) ([475e114](https://github.com/analogjs/analog/commit/475e114256c81ae6b190ec15d6a787d06cf5ac6f))
+
+## [0.2.16](https://github.com/analogjs/analog/compare/0.2.15...0.2.16) (2023-10-30)
+
+### Bug Fixes
+
+- **create-analog:** pin @nx/vite version to 16.8.1 for Angular CLI v16 template ([#735](https://github.com/analogjs/analog/issues/735)) ([304926b](https://github.com/analogjs/analog/commit/304926bf63842c82ba50d251066a921503d9d3ff))
+- **vite-plugin-nitro:** add zone.js import for cloudflare, config overrides ([#734](https://github.com/analogjs/analog/issues/734)) ([9e55b56](https://github.com/analogjs/analog/commit/9e55b56785ed8016072b9953cd2409a30e049704))
+
+### Features
+
+- **content:** add prism angular @-syntax support ([#733](https://github.com/analogjs/analog/issues/733)) ([0897970](https://github.com/analogjs/analog/commit/0897970b69a38282312fd124e207e12aff65d352))
+- **create-analog:** add template for Angular v17 pre-release ([#736](https://github.com/analogjs/analog/issues/736)) ([3173f73](https://github.com/analogjs/analog/commit/3173f73eb6a636298fa803a97f14d0ba591bba96))
+
+## [0.2.15](https://github.com/analogjs/analog/compare/0.2.14...0.2.15) (2023-10-24)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** add `Content-Type` header for responses ([#712](https://github.com/analogjs/analog/issues/712)). ([#717](https://github.com/analogjs/analog/issues/717)) ([3621b0b](https://github.com/analogjs/analog/commit/3621b0b3681cf0eebf96142c8535b3e7e60ca9af))
+
+### Features
+
+- **platform:** add Vite dev-server/build and Vitest executors ([#719](https://github.com/analogjs/analog/issues/719)) ([ff168ff](https://github.com/analogjs/analog/commit/ff168ff64c924316b4ddf451835338e5864317a6))
+
+## [0.2.14](https://github.com/analogjs/analog/compare/0.2.13...0.2.14) (2023-10-23)
+
+### Bug Fixes
+
+- add conditional import for Angular v17 ([99f0aa3](https://github.com/analogjs/analog/commit/99f0aa332a0ced648e5d397f4db5bfde22bf636a))
+
+## [0.2.13](https://github.com/analogjs/analog/compare/0.2.12...0.2.13) (2023-10-23)
+
+### Bug Fixes
+
+- **nx-plugin:** use nx namespace for any nx version above version 16 ([#709](https://github.com/analogjs/analog/issues/709)) ([2b3f287](https://github.com/analogjs/analog/commit/2b3f287991a5544765f0ca063d58df2cd7828ff6))
+- **trpc:** adding host and port env variables to nitro dev process & … ([#695](https://github.com/analogjs/analog/issues/695)) ([bd013fe](https://github.com/analogjs/analog/commit/bd013feeb7edc73ef6b9dd2d7c61d863be35eecb))
+
+### Features
+
+- update build and add support for Nx 17 to app generator and preset ([#715](https://github.com/analogjs/analog/issues/715)) ([5af632b](https://github.com/analogjs/analog/commit/5af632b6ea4ca6c6163b57791f31a4200b7aeecf))
+- upgrade packages to Angular v17 RC ([#704](https://github.com/analogjs/analog/issues/704)) ([5f6bbe6](https://github.com/analogjs/analog/commit/5f6bbe6870e5e6afa2522b11f798c5b6c7c0e0d3))
+
 ## [0.2.12](https://github.com/analogjs/analog/compare/0.2.11...0.2.12) (2023-10-10)
 
 ### Bug Fixes

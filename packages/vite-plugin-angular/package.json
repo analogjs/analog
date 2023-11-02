@@ -1,7 +1,7 @@
 {
   "name": "@analogjs/vite-plugin-angular",
   "description": "Vite Plugin for Angular",
-  "version": "0.2.12",
+  "version": "0.2.18",
   "keywords": [
     "vite",
     "vitest",
@@ -19,7 +19,7 @@
     "url": "https://github.com/analogjs/analog.git"
   },
   "peerDependencies": {
-    "@angular-devkit/build-angular": "^15.0.0 || ^16.0.0"
+    "@angular-devkit/build-angular": "^15.0.0 || >=16.0.0"
   },
   "ng-update": {
     "packageGroup": [
