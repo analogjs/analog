@@ -54,7 +54,7 @@ Para iniciar el servidor de desarrollo para la aplicación, ejecuta el comando `
   <TabItem value="npm">
 
 ```shell
-npm run start
+npm start
 ```
 
   </TabItem>
