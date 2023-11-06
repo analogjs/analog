@@ -6,6 +6,7 @@ import Translate, { translate } from '@docusaurus/Translate';
 type FeatureItem = {
   title: string;
   Svg: React.ComponentType<React.ComponentProps<'svg'>>;
+  png?: string;
   description: JSX.Element;
 };
 
@@ -36,6 +37,7 @@ const FeatureList: FeatureItem[] = [
       description: 'The title of the feature "Hybrid SSR/SSG support"',
     }),
     Svg: require('@site/static/img/logos/angular-logo.svg').default,
+    png: '/img/logos/angular-gradient.png',
     description: (
       <>
         <Translate
@@ -70,11 +72,12 @@ const FeatureList: FeatureItem[] = [
   },
 ];
 
-function Feature({ title, Svg, description }: FeatureItem) {
+function Feature({ title, Svg, description, png }: FeatureItem) {
   return (
     <div className={clsx('col col--4')}>
       <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
+        {!png && <Svg className={styles.featureSvg} role="img" />}
+        {png && <img src={png} className={styles.featureSvg} role="img" />}
       </div>
       <div className="text--center padding-horiz--md">
         <h3>{title}</h3>
