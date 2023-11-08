@@ -34,13 +34,13 @@ function emptyDir(dir) {
   }
 }
 
-describe.skip('create-analog e2e', () => {
+describe('create-analog e2e', () => {
   it('should create my-app', async () => {
     const project = uniq('tmpanalogapp');
     const tmpDir = `${process.cwd()}/${project}`;
 
     await runCommandAsync(
-      `node ./dist/packages/create-analog/index.js ${project} --template angular-v16 --skipTailwind true`,
+      `node ./dist/packages/create-analog/index.js ${project} --template angular-v17 --skipTailwind true`,
       { cwd: process.cwd() }
     );
 
@@ -90,7 +90,7 @@ describe.skip('create-analog e2e', () => {
     const tmpDir = `${process.cwd()}/${project}`;
 
     await runCommandAsync(
-      `node ./dist/packages/create-analog/index.js ${project} --template angular-v16 --skipTailwind true`,
+      `node ./dist/packages/create-analog/index.js ${project} --template angular-v17 --skipTailwind true`,
       { cwd: process.cwd() }
     );
 
