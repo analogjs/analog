@@ -1,6 +1,7 @@
 import * as wbl from '@angular-devkit/build-angular/src/tools/babel/webpack-loader.js';
 import * as app from '@angular-devkit/build-angular/src/tools/babel/presets/application.js';
 import * as cp from '@angular-devkit/build-angular/src/tools/esbuild/angular/compiler-plugin.js';
+import * as sfc from './source-file-cache.js';
 
 let requiresLinking: Function;
 /**
@@ -19,7 +20,6 @@ let sourceFileCache: any;
 if (typeof (cp as any)['SourceFileCache'] !== 'undefined') {
   sourceFileCache = (cp as any).SourceFileCache;
 } else {
-  const sfc = require('@angular-devkit/build-angular/src/tools/esbuild/angular/source-file-cache');
   sourceFileCache = sfc.SourceFileCache;
 }
 

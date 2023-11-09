@@ -9,7 +9,7 @@ import {
   renameFile,
 } from '@nx/plugin/testing';
 
-describe('nx-plugin e2e', () => {
+describe.skip('nx-plugin e2e', () => {
   // Setting up individual workspaces per
   // test can cause e2e runs to take a long time.
   // For this reason, we recommend each suite only

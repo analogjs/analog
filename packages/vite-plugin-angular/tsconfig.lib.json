@@ -4,7 +4,8 @@
     "module": "es2020",
     "outDir": "../../dist/out-tsc",
     "declaration": true,
-    "types": []
+    "types": [],
+    "allowSyntheticDefaultImports": true
   },
   "include": ["**/*.ts"],
   "exclude": [
