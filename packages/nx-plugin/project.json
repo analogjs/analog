@@ -27,12 +27,17 @@
             "input": "./packages/nx-plugin",
             "glob": "generators.json",
             "output": "."
+          },
+          {
+            "input": "./packages/nx-plugin",
+            "glob": "executors.json",
+            "output": "."
           }
         ]
       }
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
+      "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [

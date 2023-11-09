@@ -7,7 +7,7 @@ export async function addTailwindConfig(
   projectName: string,
   majorNxVersion: number
 ) {
-  if (majorNxVersion === 16) {
+  if (majorNxVersion >= 16) {
     await (
       await import(
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment

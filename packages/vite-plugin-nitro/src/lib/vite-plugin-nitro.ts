@@ -1,11 +1,5 @@
-import {
-  NitroConfig,
-  build,
-  createDevServer,
-  createNitro,
-  prepare,
-} from 'nitropack';
-import { toNodeListener } from 'h3';
+import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
+import { App, toNodeListener } from 'h3';
 import { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { normalizePath } from 'vite';
 import * as path from 'path';
@@ -35,10 +29,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
   return [
     (options?.ssr
-      ? devServerPlugin({ entryServer: options?.entryServer })
+      ? devServerPlugin({
+          entryServer: options?.entryServer,
+          index: options?.index,
+        })
       : false) as Plugin,
     {
-      name: '@analogjs/vite-nitro-plugin',
+      name: '@analogjs/vite-plugin-nitro',
       async config(_config, { command }) {
         isServe = command === 'serve';
         isBuild = command === 'build';
@@ -144,11 +141,17 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 },
               ],
               externals: {
-                external: ['rxjs', 'node-fetch-native/dist/polyfill', 'destr'],
+                ...nitroOptions?.externals,
+                external: [
+                  'rxjs',
+                  'node-fetch-native/dist/polyfill',
+                  ...(nitroOptions?.externals?.external || []),
+                ],
               },
               moduleSideEffects: [
-                'zone.js/plugins/zone-node',
+                'zone.js/node',
                 'zone.js/fesm2015/zone-node',
+                ...(nitroOptions?.moduleSideEffects || []),
               ],
               renderer: normalizePath(`${__dirname}/runtime/renderer`),
               handlers: [
@@ -175,7 +178,17 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           });
           const server = createDevServer(nitro);
           await build(nitro);
-          viteServer.middlewares.use(apiPrefix, toNodeListener(server.app));
+          viteServer.middlewares.use(
+            apiPrefix,
+            toNodeListener(server.app as unknown as App)
+          );
+
+          viteServer.httpServer?.once('listening', () => {
+            process.env['ANALOG_HOST'] = !viteServer.config.server.host
+              ? 'localhost'
+              : (viteServer.config.server.host as string);
+            process.env['ANALOG_PORT'] = `${viteServer.config.server.port}`;
+          });
 
           console.log(
             `\n\nThe server endpoints are accessible under the "${apiPrefix}" path.`

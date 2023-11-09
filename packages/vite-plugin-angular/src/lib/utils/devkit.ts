@@ -1,5 +1,6 @@
 import * as wbl from '@angular-devkit/build-angular/src/tools/babel/webpack-loader.js';
 import * as app from '@angular-devkit/build-angular/src/tools/babel/presets/application.js';
+import * as cp from '@angular-devkit/build-angular/src/tools/esbuild/angular/compiler-plugin.js';
 
 let requiresLinking: Function;
 /**
@@ -11,11 +12,21 @@ if (typeof (wbl as any)['requiresLinking'] !== 'undefined') {
   requiresLinking = (app as any)['requiresLinking'] as Function;
 }
 
+/**
+ * Workaround for compatibility with Angular 17.0+
+ */
+let sourceFileCache: any;
+if (typeof (cp as any)['SourceFileCache'] !== 'undefined') {
+  sourceFileCache = (cp as any).SourceFileCache;
+} else {
+  const sfc = require('@angular-devkit/build-angular/src/tools/esbuild/angular/source-file-cache');
+  sourceFileCache = sfc.SourceFileCache;
+}
+
 const angularApplicationPreset = app.default;
 import { createJitResourceTransformer } from '@angular-devkit/build-angular/src/tools/esbuild/angular/jit-resource-transformer.js';
 import { CompilerPluginOptions } from '@angular-devkit/build-angular/src/tools/esbuild/angular/compiler-plugin.js';
 import { JavaScriptTransformer } from '@angular-devkit/build-angular/src/tools/esbuild/javascript-transformer.js';
-import { SourceFileCache } from '@angular-devkit/build-angular/src/tools/esbuild/angular/compiler-plugin.js';
 
 export {
   requiresLinking,
@@ -23,5 +34,5 @@ export {
   createJitResourceTransformer,
   CompilerPluginOptions,
   JavaScriptTransformer,
-  SourceFileCache,
+  sourceFileCache as SourceFileCache,
 };

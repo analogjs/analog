@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/platform",
-  "version": "0.2.10",
+  "version": "0.2.19",
   "type": "module",
   "description": "The fullstack meta-framework for Angular",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -24,11 +24,13 @@
     "url": "https://github.com/analogjs/analog.git"
   },
   "dependencies": {
-    "nitropack": "^2.0.0",
-    "@analogjs/vite-plugin-angular": "^0.2.10",
-    "@analogjs/vite-plugin-nitro": "^0.2.10",
-    "@nx/devkit": "^16.0.0"
+    "nitropack": "^2.6.0",
+    "@analogjs/vite-plugin-angular": "^0.2.19",
+    "@analogjs/vite-plugin-nitro": "^0.2.19",
+    "@nx/devkit": "^16.0.0 || ^17.0.0"
   },
+  "builders": "./src/lib/nx-plugin/executors.json",
+  "executors": "./src/lib/nx-plugin/executors.json",
   "generators": "./src/lib/nx-plugin/generators.json",
   "schematics": "./src/lib/nx-plugin/generators.json",
   "ng-update": {

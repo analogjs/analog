@@ -1,0 +1,98 @@
+{
+  "version.label": {
+    "message": "Gelecek",
+    "description": "The label for version current"
+  },
+  "sidebar.docsSidebar.category.Core Concepts": {
+    "message": "Temel Kavramlar",
+    "description": "The label for category Core Concepts in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Routing": {
+    "message": "Routing",
+    "description": "The label for category Routing in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.API Routes": {
+    "message": "API Routes",
+    "description": "The label for category API Routes in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Static Site Generation": {
+    "message": "Statik Site Oluşumu (SSG)",
+    "description": "The label for category Static Site Generation in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Server Side Rendering": {
+    "message": "Sunucu Tarafında Derleme (SSR)",
+    "description": "The label for category Server Side Rendering in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Code Generation": {
+    "message": "Otomatik kod üretme",
+    "description": "The label for category Code Generation in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Deployment": {
+    "message": "Dağıtım",
+    "description": "The label for category Deployment in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Testing": {
+    "message": "Testing",
+    "description": "The label for category Testing in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Updating": {
+    "message": "Güncelleme",
+    "description": "The label for category Updating in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Integrations": {
+    "message": "Entegrasyonlar",
+    "description": "The label for category Integrations in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.doc.Overview": {
+    "message": "Genel bakış",
+    "description": "The label for the doc item Overview in sidebar docsSidebar, linking to the doc features/updating/overview"
+  },
+  "sidebar.docsSidebar.doc.Route Metadata": {
+    "message": "Route Meta Verisi",
+    "description": "The label for the doc item Route Metadata in sidebar docsSidebar, linking to the doc features/routing/metadata"
+  },
+  "sidebar.docsSidebar.doc.Content Routes": {
+    "message": "İçerik Route'ları",
+    "description": "The label for the doc item Content Routes in sidebar docsSidebar, linking to the doc features/routing/content"
+  },
+  "sidebar.docsSidebar.doc.Providers": {
+    "message": "Sağlayıcılar",
+    "description": "The label for the doc item Providers in sidebar docsSidebar, linking to the doc features/deployment/providers"
+  },
+  "sidebar.docsSidebar.doc.Adding Vitest": {
+    "message": "Vitest'i ekleme",
+    "description": "The label for the doc item Adding Vitest in sidebar docsSidebar, linking to the doc features/testing/vitest"
+  },
+  "sidebar.docsSidebar.doc.Nx": {
+    "message": "Nx",
+    "description": "The label for the doc item Nx in sidebar docsSidebar, linking to the doc integrations/nx/index"
+  },
+  "sidebar.docsSidebar.doc.Astro": {
+    "message": "Astro",
+    "description": "The label for the doc item Astro in sidebar docsSidebar, linking to the doc packages/astro-angular/overview"
+  },
+  "sidebar.docsSidebar.doc.Angular Material": {
+    "message": "Angular Material",
+    "description": "The label for the doc item Angular Material in sidebar docsSidebar, linking to the doc integrations/angular-material/index"
+  },
+  "sidebar.docsSidebar.doc.Introduction": {
+    "message": "Giriş",
+    "description": "The label for the doc item Introduction in sidebar docsSidebar, linking to the doc introduction"
+  },
+  "sidebar.docsSidebar.doc.Getting Started": {
+    "message": "Başlarken",
+    "description": "The label for the doc item Getting Started in sidebar docsSidebar, linking to the doc getting-started"
+  },
+  "sidebar.docsSidebar.doc.Contributors": {
+    "message": "Katkıda bulunanlar",
+    "description": "The label for the doc item Contributors in sidebar docsSidebar, linking to the doc contributors"
+  },
+  "sidebar.docsSidebar.doc.Contributing": {
+    "message": "Katkıda bulunma",
+    "description": "The label for the doc item Contributing in sidebar docsSidebar, linking to the doc contributing"
+  },
+  "sidebar.docsSidebar.doc.Sponsoring": {
+    "message": "Sponsorluk",
+    "description": "The label for the doc item Sponsoring in sidebar docsSidebar, linking to the doc sponsoring"
+  }
+}

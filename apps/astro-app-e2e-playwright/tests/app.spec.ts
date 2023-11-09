@@ -60,6 +60,18 @@ describe('AstroApp', () => {
       );
     });
   });
+  describe('Given the user has navigated to the test MDX page', () => {
+    beforeEach(async () => {
+      await page.goto('/test');
+    });
+
+    it('Then an Angular component should be rendered', async () => {
+      const componentLocator = page.locator('astro-card');
+      await expect(componentLocator.locator('>> text=Angular')).toContain(
+        /Angular/
+      );
+    });
+  });
 });
 
 async function waitForConsole(): Promise<string> {

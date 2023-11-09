@@ -21,6 +21,7 @@ in the range provided because there will have been bug fixes added since the fir
 
 | Nx Version _(min)_ | Angular Version | Analog Version    |
 | ------------------ | --------------- | ----------------- |
+| 17.0.0             | ^16.2.0         | **latest**        |
 | 16.1.0             | ^16.1.0         | **latest**        |
 | 16.0.0             | ~15.2.X         | **0.1.0-beta.22** |
 | 15.2.0             | ~15.2.X         | **0.1.0-beta.22** |

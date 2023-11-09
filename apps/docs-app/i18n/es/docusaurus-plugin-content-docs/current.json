@@ -12,7 +12,7 @@
     "description": "The label for category Routing in sidebar docsSidebar"
   },
   "sidebar.docsSidebar.category.API Routes": {
-    "message": "API Rutas",
+    "message": "Rutas API",
     "description": "The label for category API Routes in sidebar docsSidebar"
   },
   "sidebar.docsSidebar.category.Static Site Generation": {
@@ -60,7 +60,7 @@
     "description": "The label for the doc item Providers in sidebar docsSidebar, linking to the doc features/deployment/providers"
   },
   "sidebar.docsSidebar.doc.Adding Vitest": {
-    "message": "Agregando Vitest",
+    "message": "Incorporando Vitest",
     "description": "The label for the doc item Adding Vitest in sidebar docsSidebar, linking to the doc features/testing/vitest"
   },
   "sidebar.docsSidebar.doc.Nx": {
