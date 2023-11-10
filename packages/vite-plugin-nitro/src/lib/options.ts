@@ -9,6 +9,7 @@ export interface Options {
   static?: boolean;
   prerender?: PrerenderOptions;
   entryServer?: string;
+  index?: string;
 }
 
 export interface PrerenderOptions {

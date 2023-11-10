@@ -29,10 +29,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
   return [
     (options?.ssr
-      ? devServerPlugin({ entryServer: options?.entryServer })
+      ? devServerPlugin({
+          entryServer: options?.entryServer,
+          index: options?.index,
+        })
       : false) as Plugin,
     {
-      name: '@analogjs/vite-nitro-plugin',
+      name: '@analogjs/vite-plugin-nitro',
       async config(_config, { command }) {
         isServe = command === 'serve';
         isBuild = command === 'build';

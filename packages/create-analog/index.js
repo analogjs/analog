@@ -20,7 +20,7 @@ const APPS = [
     color: yellow,
     variants: [
       {
-        name: 'angular-v17-prerelease',
+        name: 'angular-v17',
         display: 'TypeScript',
         color: green,
       },

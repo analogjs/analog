@@ -1,3 +1,14 @@
+## [0.2.19](https://github.com/analogjs/analog/compare/0.2.18...0.2.19) (2023-11-08)
+
+### Bug Fixes
+
+- **create-analog:** add v17 pre-release to package.json files ([ba354b9](https://github.com/analogjs/analog/commit/ba354b94f6d5dbe9a7e51c01467e7de08bf2ce18))
+- **vite-plugin-nitro:** update plugin name, pass options to dev server ([#745](https://github.com/analogjs/analog/issues/745)) ([f45bb80](https://github.com/analogjs/analog/commit/f45bb8067a365695f516a1e09a0596aab2648de5))
+
+### Features
+
+- updated to new logo ([#744](https://github.com/analogjs/analog/issues/744)) ([45666bc](https://github.com/analogjs/analog/commit/45666bc9bc0d66dcc54e8ce5f6a78d439bb9051d))
+
 ## [0.2.18](https://github.com/analogjs/analog/compare/0.2.16...0.2.18) (2023-10-31)
 
 ### Bug Fixes
