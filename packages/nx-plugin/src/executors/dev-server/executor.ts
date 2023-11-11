@@ -5,12 +5,15 @@ import { createBuilderContext } from 'nx/src/adapter/ngcli-adapter';
 
 import { DevServerExecutorSchema } from './schema';
 import path = require('path');
+import { buildApplicationInternal } from '@angular-devkit/build-angular/src/builders/application';
+import { InlineStyleLanguage } from '@angular-devkit/build-angular/src/builders/application/schema';
 
 export default async function* runExecutor(
   options: DevServerExecutorSchema,
   context: ExecutorContext
 ) {
   console.log('Executor ran for DevServer', context.root);
+
   const builderContext = await createBuilderContext(
     {
       builderName: 'browser-esbuild',
@@ -23,43 +26,42 @@ export default async function* runExecutor(
   );
   // console.log('builderContext', builderContext.workspaceRoot);
   builderContext.workspaceRoot = `${context.root}`;
+  builderContext.currentDirectory = `${context.root}/apps/analog-app`;
+  builderContext.logger = {
+    warn() {},
+    error() {},
+    log() {},
+    debug() {},
+    info() {},
+    fatal() {},
+    createChild(name: string) {},
+  } as any;
 
-  for await (const result of buildApplication(
+  for await (const result of buildApplicationInternal(
     {
       aot: true,
-      browser: 'apps/analog-app/src/main.ts',
-      index: 'apps/analog-app/index.html',
-      server: 'apps/analog-app/src/main.server.ts',
+      entryPoints: new Set([
+        'apps/analog-app/src/main.ts',
+        'apps/analog-app/src/app/app.component.ts',
+        'apps/analog-app/src/app/pages/(home).page.ts',
+        'apps/analog-app/src/app/pages/cart.page.ts',
+      ]),
+      // browser: 'apps/analog-app/src/main.ts',
+      index: false,
+      // server: 'apps/analog-app/src/main.server.ts',
       outputPath: 'dist/apps/analog-app/client',
       tsConfig: 'apps/analog-app/tsconfig.app.json',
       progress: false,
-      watch: true,
+      // watch: true,
       optimization: false,
+      inlineStyleLanguage: InlineStyleLanguage.Scss,
     },
     builderContext as any,
-    [
-      {
-        name: 'test',
-        setup(build) {
-          console.log('setup plugin');
-          build.onResolve({ filter: /.*/ }, (args) => {
-            if (args.path.includes('@analogjs')) {
-              console.log('onResolve', args.path);
-            }
-            return undefined;
-          });
-
-          build.onLoad({ filter: /.*/ }, (args) => {
-            console.log('onLoad', args.path);
-            if (args.path.includes('@analogjs')) {
-            }
-            return undefined;
-          });
-        },
-      },
-    ]
+    { write: true }
   )) {
-    // console.log(result.outputFiles[0].contents);
+    // console.log(
+    //   result.outputFiles.find((f) => f.path.endsWith('app.component.js')).text
+    // );
   }
 
   return {

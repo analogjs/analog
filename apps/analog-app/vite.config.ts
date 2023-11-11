@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
+import { applicationPlugin } from '@analogjs/vite-plugin-angular';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
@@ -28,18 +29,19 @@ export default defineConfig(({ mode }) => {
       include: ['@angular/forms'],
     },
     plugins: [
-      analog({
-        apiPrefix: 'api',
-        prerender: {
-          routes: ['/', '/cart'],
-          sitemap: {
-            host: process.env['VITE_ANALOG_PUBLIC_BASE_URL'],
-          },
-        },
-        vite: {
-          inlineStylesExtension: 'scss',
-        },
-      }),
+      applicationPlugin(),
+      // analog({
+      //   apiPrefix: 'api',
+      //   prerender: {
+      //     routes: ['/', '/cart'],
+      //     sitemap: {
+      //       host: process.env['VITE_ANALOG_PUBLIC_BASE_URL'],
+      //     },
+      //   },
+      //   vite: {
+      //     inlineStylesExtension: 'scss',
+      //   },
+      // }),
       nxViteTsPaths(),
       visualizer() as Plugin,
       splitVendorChunkPlugin(),
