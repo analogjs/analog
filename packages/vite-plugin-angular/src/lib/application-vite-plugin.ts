@@ -6,7 +6,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { BuildOutputFile } from '@angular-devkit/build-angular/src/tools/esbuild/bundler-context';
 
 export function applicationPlugin(): Plugin {
-  console.log('plugin ran');
+  // console.log('plugin ran');
   const outputFiles = new Map<string, BuildOutputFile>();
   let config: UserConfig;
   let virtualProjectRoot: string;
@@ -15,12 +15,10 @@ export function applicationPlugin(): Plugin {
     config(_config) {
       config = _config;
       virtualProjectRoot = normalizePath(
-        join(process.cwd(), `.angular/vite-root`, 'analog-app')
+        join(process.cwd(), `.analog/vite-root`, 'analog-app')
       );
-      console.log(virtualProjectRoot);
     },
     async buildStart() {
-      console.log('Executor ran for DevServer');
       const builderContext: BuilderContext = {
         id: 0,
         builder: {
@@ -57,7 +55,7 @@ export function applicationPlugin(): Plugin {
           });
         },
         getBuilderNameForTarget: function (target: Target): Promise<string> {
-          // throw new Error("Function not impl/emented.");
+          // throw new Error("Function not implemented.");
           return Promise.resolve('');
         },
         validateOptions: function () {
@@ -93,40 +91,48 @@ export function applicationPlugin(): Plugin {
         {
           aot: true,
           entryPoints: new Set([
-            'apps/analog-app/src/main.ts',
+            `${config.root}/src/main.ts`,
+            `${config.root}/src/main.server.ts`,
             ...endpointFiles,
           ]),
-          // browser: 'apps/analog-app/src/main.ts',
           index: false,
-          // server: 'apps/analog-app/src/main.server.ts',
-          outputPath: 'dist/apps/analog-app/client',
-          tsConfig: 'apps/analog-app/tsconfig.app.json',
+          outputPath: config.build?.outDir as string,
+          tsConfig: `${config.root}/tsconfig.app.json`,
           progress: false,
-          // watch: true,
           optimization: false,
           namedChunks: true,
           inlineStyleLanguage: InlineStyleLanguage.Scss,
+          sourceMap: {
+            scripts: true,
+            styles: true,
+          },
         },
         builderContext as any,
         { write: false }
       )) {
         if (result.success && Array.isArray(result.outputFiles)) {
           for (const file of result.outputFiles) {
-            console.log(file);
-            outputFiles.set(join(virtualProjectRoot, file.path), file);
+            const ofile = join(virtualProjectRoot, file.path);
+            outputFiles.set(ofile, file);
           }
         }
       }
     },
     enforce: 'pre',
+    transformIndexHtml(html, ctx) {
+      // return html.replace('/src/main.ts', 'main.js');
+    },
     async resolveId(source, importer) {
-      // console.log('resolve', source);
-      // Prevent vite from resolving an explicit external dependency (`externalDependencies` option)
-      // if (externalMetadata.explicit.includes(source)) {
-      //   // This is still not ideal since Vite will still transform the import specifier to
-      //   // `/@id/${source}` but is currently closer to a raw external than a resolved file path.
-      //   // return source;
-      // }
+      if (source.includes('src')) {
+        // console.log('s', source);
+      }
+      if (source === '/src/main.ts') {
+        return join(virtualProjectRoot, 'main.js');
+      }
+
+      if (source === 'src/main.server.ts') {
+        return join(virtualProjectRoot, 'main.server.js');
+      }
 
       if (
         importer &&
@@ -148,21 +154,35 @@ export function applicationPlugin(): Plugin {
         return join(virtualProjectRoot, source);
       }
 
+      if (file.endsWith('page.ts')) {
+        const page = file
+          .split('/')
+          .pop()
+          ?.replace('.page.ts', '.page.js') as string;
+        if (outputFiles.has(join(virtualProjectRoot, page))) {
+          return join(virtualProjectRoot, page);
+        }
+      }
+      // console.log('source', source);
       return undefined;
     },
     load(id) {
-      const [file] = id.split('?', 1);
-      const relativeFile =
-        '/' +
-        normalizePath(relative(virtualProjectRoot, file)).replaceAll('/..', '');
-      const codeContents = outputFiles.get(
-        file === '/main.js' ? join(virtualProjectRoot, '/main.js') : file
-      )?.contents;
-      if (codeContents === undefined) {
-        //   if (relativeFile.endsWith('/node_modules/vite/dist/client/client.mjs')) {
-        //     return loadViteClientCode(file);
-        //   }
+      // console.log('load', id);
+      let [file] = id.split('?', 1);
+      file = file.replace('.ts', '.js');
+      let relativeFile = file;
 
+      if (file === '/main.js') {
+        relativeFile = join(virtualProjectRoot, '/main.js');
+      }
+
+      if (file === 'src/main.server.js') {
+        relativeFile = join(virtualProjectRoot, '/main.server.js');
+      }
+
+      const codeContents = outputFiles.get(relativeFile)?.contents;
+      if (codeContents === undefined) {
+        console.log('no contents', relativeFile);
         return;
       }
 

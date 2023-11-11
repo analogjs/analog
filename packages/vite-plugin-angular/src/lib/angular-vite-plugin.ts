@@ -21,6 +21,7 @@ import {
   createJitResourceTransformer,
   SourceFileCache,
 } from './utils/devkit';
+import { applicationPlugin } from './application-vite-plugin';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -360,17 +361,19 @@ export function angular(options?: PluginOptions): Plugin[] {
     };
   }
 
-  return [
-    angularPlugin(),
-    (jit &&
-      jitPlugin({
-        inlineStylesExtension: pluginOptions.inlineStylesExtension,
-      })) as Plugin,
-    buildOptimizerPlugin({
-      isProd,
-      supportedBrowsers: pluginOptions.supportedBrowsers,
-    }),
-  ].filter(Boolean) as Plugin[];
+  return [applicationPlugin()];
+
+  // return [
+  //   angularPlugin(),
+  //   (jit &&
+  //     jitPlugin({
+  //       inlineStylesExtension: pluginOptions.inlineStylesExtension,
+  //     })) as Plugin,
+  //   buildOptimizerPlugin({
+  //     isProd,
+  //     supportedBrowsers: pluginOptions.supportedBrowsers,
+  //   }),
+  // ].filter(Boolean) as Plugin[];
 
   function setupCompilation() {
     const { options: tsCompilerOptions, rootNames: rn } =
