@@ -107,7 +107,8 @@ Next, update the `test` target in the `angular.json` to use the `@analogjs/platf
 
 > You can also add a new target and name it `vitest` to run alongside your `test` target.
 
-Next, you may need to modify your `tsconfig.spec.json` to mandate using `vitest` rather than `jasmine` (or `jest`) as the type of your test runner, and add the `test.ts` file you created above:
+Next, modify your `tsconfig.spec.json` to stipulate `vitest` rather than `jasmine` (or `jest`) as your test runner, and add the `test.ts` file you created above:
+
 ```json
 {
   "extends": "./tsconfig.json",
@@ -119,6 +120,7 @@ Next, you may need to modify your `tsconfig.spec.json` to mandate using `vitest`
   "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]
 }
 ```
+
 Lastly, add the `src/test.ts` to `files` array in the `tsconfig.spec.json` in the root of your project, and update the `types`.
 
 ```json
