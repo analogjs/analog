@@ -87,36 +87,36 @@ export function applicationPlugin(): Plugin {
         { dot: true }
       );
 
-      for await (const result of buildApplicationInternal(
-        {
-          aot: true,
-          entryPoints: new Set([
-            `${config.root}/src/main.ts`,
-            `${config.root}/src/main.server.ts`,
-            ...endpointFiles,
-          ]),
-          index: false,
-          outputPath: config.build?.outDir as string,
-          tsConfig: `${config.root}/tsconfig.app.json`,
-          progress: false,
-          optimization: false,
-          namedChunks: true,
-          inlineStyleLanguage: InlineStyleLanguage.Scss,
-          sourceMap: {
-            scripts: true,
-            styles: true,
-          },
-        },
-        builderContext as any,
-        { write: false }
-      )) {
-        if (result.success && Array.isArray(result.outputFiles)) {
-          for (const file of result.outputFiles) {
-            const ofile = join(virtualProjectRoot, file.path);
-            outputFiles.set(ofile, file);
-          }
-        }
-      }
+      // for await (const result of buildApplicationInternal(
+      //   {
+      //     aot: true,
+      //     entryPoints: new Set([
+      //       `${config.root}/src/main.ts`,
+      //       `${config.root}/src/main.server.ts`,
+      //       ...endpointFiles,
+      //     ]),
+      //     index: false,
+      //     outputPath: config.build?.outDir as string,
+      //     tsConfig: `${config.root}/tsconfig.app.json`,
+      //     progress: false,
+      //     optimization: false,
+      //     namedChunks: true,
+      //     inlineStyleLanguage: InlineStyleLanguage.Scss,
+      //     sourceMap: {
+      //       scripts: true,
+      //       styles: true,
+      //     },
+      //   },
+      //   builderContext as any,
+      //   { write: false }
+      // )) {
+      //   if (result.success && Array.isArray(result.outputFiles)) {
+      //     for (const file of result.outputFiles) {
+      //       const ofile = join(virtualProjectRoot, file.path);
+      //       outputFiles.set(ofile, file);
+      //     }
+      //   }
+      // }
     },
     enforce: 'pre',
     transformIndexHtml(html, ctx) {
