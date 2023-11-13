@@ -11,8 +11,8 @@ import { Router, RouterLinkWithHref } from '@angular/router';
   imports: [RouterLinkWithHref],
   templateUrl: './template.html',
   encapsulation: ViewEncapsulation.Emulated,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  // changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TopBarComponent {
-  constructor(router: Router) {}
+  constructor(routers: Router) {}
 }

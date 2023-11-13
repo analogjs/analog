@@ -1,6 +1,9 @@
 import { Plugin, UserConfig, normalizePath } from 'vite';
 import { BuilderContext, Target } from '@angular-devkit/architect';
-import { buildApplicationInternal } from '@angular-devkit/build-angular/src/builders/application';
+import {
+  buildApplication,
+  buildApplicationInternal,
+} from '@angular-devkit/build-angular/src/builders/application';
 import { InlineStyleLanguage } from '@angular-devkit/build-angular/src/builders/application/schema';
 import { dirname, join, relative, resolve } from 'node:path';
 import { BuildOutputFile } from '@angular-devkit/build-angular/src/tools/esbuild/bundler-context';
@@ -87,40 +90,42 @@ export function applicationPlugin(): Plugin {
         { dot: true }
       );
 
-      // for await (const result of buildApplicationInternal(
-      //   {
-      //     aot: true,
-      //     entryPoints: new Set([
-      //       `${config.root}/src/main.ts`,
-      //       `${config.root}/src/main.server.ts`,
-      //       ...endpointFiles,
-      //     ]),
-      //     index: false,
-      //     outputPath: config.build?.outDir as string,
-      //     tsConfig: `${config.root}/tsconfig.app.json`,
-      //     progress: false,
-      //     optimization: false,
-      //     namedChunks: true,
-      //     inlineStyleLanguage: InlineStyleLanguage.Scss,
-      //     sourceMap: {
-      //       scripts: true,
-      //       styles: true,
-      //     },
-      //   },
-      //   builderContext as any,
-      //   { write: false }
-      // )) {
-      //   if (result.success && Array.isArray(result.outputFiles)) {
-      //     for (const file of result.outputFiles) {
-      //       const ofile = join(virtualProjectRoot, file.path);
-      //       outputFiles.set(ofile, file);
-      //     }
-      //   }
-      // }
+      for await (const result of buildApplication(
+        {
+          aot: true,
+          // entryPoints: new Set([
+          //   `${config.root}/src/main.ts`,
+          //   `${config.root}/src/main.server.ts`,
+          //   ...endpointFiles,
+          // ]),
+          browser: `${config.root}/src/main.ts`,
+          index: false,
+          outputPath: config.build?.outDir as string,
+          tsConfig: `${config.root}/tsconfig.app.json`,
+          progress: false,
+          optimization: false,
+          namedChunks: true,
+          watch: true,
+          inlineStyleLanguage: InlineStyleLanguage.Scss,
+          sourceMap: {
+            scripts: true,
+            styles: true,
+          },
+        },
+        builderContext as any
+      )) {
+        console.log(result);
+        if (result && result.success && Array.isArray(result.outputFiles)) {
+          for (const file of result.outputFiles) {
+            const ofile = join(virtualProjectRoot, file.path);
+            outputFiles.set(ofile, file);
+          }
+        }
+      }
     },
     enforce: 'pre',
     transformIndexHtml(html, ctx) {
-      // return html.replace('/src/main.ts', 'main.js');
+      return html.replace('/src/main.ts', 'main.js');
     },
     async resolveId(source, importer) {
       if (source.includes('src')) {

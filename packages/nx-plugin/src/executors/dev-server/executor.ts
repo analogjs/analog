@@ -10,7 +10,13 @@ import { DevServerExecutorSchema } from './schema';
 import path = require('path');
 import { buildApplicationInternal } from '@angular-devkit/build-angular/src/builders/application';
 import { InlineStyleLanguage } from '@angular-devkit/build-angular/src/builders/application/schema';
-import { Plugin, UserConfig, normalizePath, ViteDevServer } from 'vite';
+import {
+  Plugin,
+  UserConfig,
+  normalizePath,
+  ViteDevServer,
+  InlineConfig,
+} from 'vite';
 import { AddressInfo } from 'node:net';
 import { dirname, join, relative, resolve } from 'node:path';
 import { BuildOutputFile } from '@angular-devkit/build-angular/src/tools/esbuild/bundler-context';
@@ -23,7 +29,7 @@ export default async function* runExecutor(
 
   const builderContext = await createBuilderContext(
     {
-      builderName: '@angular-devkit/build-angular:application',
+      builderName: '@analogjs/platform:application',
       description: 'Build a browser application',
       optionSchema: await import(
         '@angular-devkit/build-angular/src/builders/application/schema.json'
@@ -46,25 +52,29 @@ export default async function* runExecutor(
   );
   const outputFiles = new Map<string, BuildOutputFile>();
   let config: UserConfig;
+  // console.log(builderContext);
+  const buildConfig = {
+    aot: true,
+    entryPoints: new Set([
+      'apps/analog-app/src/main.ts',
+      'apps/analog-app/src/main.server.ts',
+      ...endpointFiles,
+    ]),
+    index: false,
+    outputPath: 'dist/apps/analog-app/client',
+    tsConfig: 'apps/analog-app/tsconfig.app.json',
+    progress: true,
+    watch: true,
+    optimization: false,
+    inlineStyleLanguage: InlineStyleLanguage.Scss,
+    sourceMap: {
+      scripts: true,
+      styles: true,
+    },
+  };
 
   for await (const result of buildApplicationInternal(
-    {
-      aot: true,
-      entryPoints: new Set([
-        'apps/analog-app/src/main.ts',
-        'apps/analog-app/src/main.server.ts',
-        ...endpointFiles,
-      ]),
-      // browser: 'apps/analog-app/src/main.ts',
-      index: false,
-      // server: 'apps/analog-app/src/main.server.ts',
-      outputPath: 'dist/apps/analog-app/client',
-      tsConfig: 'apps/analog-app/tsconfig.app.json',
-      progress: false,
-      watch: true,
-      optimization: false,
-      inlineStyleLanguage: InlineStyleLanguage.Scss,
-    },
+    buildConfig,
     builderContext,
     { write: false }
   )) {
@@ -82,9 +92,10 @@ export default async function* runExecutor(
         path: '*',
       });
     } else {
-      server = await createServer({
+      const config: InlineConfig = {
         server: {
           port: 3000,
+          hmr: true,
         },
         root: 'apps/analog-app',
         plugins: [
@@ -93,6 +104,9 @@ export default async function* runExecutor(
             enforce: 'pre',
             transformIndexHtml(html) {
               return html.replace('/src/main.ts', 'main.js');
+            },
+            transform(code, id) {
+              // console.log(id);
             },
             async resolveId(source, importer) {
               if (source === '/src/main.ts') {
@@ -174,7 +188,9 @@ export default async function* runExecutor(
             },
           },
         ],
-      });
+      };
+
+      server = await createServer(config);
 
       await server.listen();
       listeningAddress = server.httpServer?.address() as AddressInfo;
