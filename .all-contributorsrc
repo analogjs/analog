@@ -675,6 +675,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "ocombe",
+      "name": "Olivier Combe",
+      "avatar_url": "https://avatars.githubusercontent.com/u/265378?v=4",
+      "profile": "https://twitter.com/OCombe",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
