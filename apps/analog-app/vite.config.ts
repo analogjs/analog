@@ -1,8 +1,6 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
-import { applicationPlugin } from '@analogjs/vite-plugin-angular';
-import nitro from '@analogjs/vite-plugin-nitro';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
@@ -31,7 +29,6 @@ export default defineConfig(({ mode }) => {
       noDiscovery: true,
     },
     plugins: [
-      // applicationPlugin(),
       analog({
         apiPrefix: 'api',
         prerender: {

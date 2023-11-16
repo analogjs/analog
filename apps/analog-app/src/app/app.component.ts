@@ -3,11 +3,11 @@ import { RouterOutlet } from '@angular/router';
 import { TopBarComponent } from '@analogjs/top-bar';
 
 @Component({
-  selector: 'analogjs-roots',
+  selector: 'analogjs-root',
   standalone: true,
   imports: [TopBarComponent, RouterOutlet],
   template: `
-    <analogjs-top-bar />s
+    <analogjs-top-bar />
 
     <div class="container">
       <router-outlet></router-outlet>

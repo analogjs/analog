@@ -1,22 +1,11 @@
 import { ExecutorContext } from '@nx/devkit';
-import { convertNxExecutor } from '@nx/devkit';
-import {
-  DevServerBuilderOutput,
-  buildApplication,
-} from '@angular-devkit/build-angular';
+import { DevServerBuilderOutput } from '@angular-devkit/build-angular';
 import { createBuilderContext } from 'nx/src/adapter/ngcli-adapter';
 
 import { DevServerExecutorSchema } from './schema';
-import path = require('path');
 import { buildApplicationInternal } from '@angular-devkit/build-angular/src/builders/application';
 import { InlineStyleLanguage } from '@angular-devkit/build-angular/src/builders/application/schema';
-import {
-  Plugin,
-  UserConfig,
-  normalizePath,
-  ViteDevServer,
-  InlineConfig,
-} from 'vite';
+import { UserConfig, normalizePath, ViteDevServer, InlineConfig } from 'vite';
 import { AddressInfo } from 'node:net';
 import { dirname, join, relative, resolve } from 'node:path';
 import { BuildOutputFile } from '@angular-devkit/build-angular/src/tools/esbuild/bundler-context';
@@ -25,7 +14,7 @@ export default async function* runExecutor(
   options: DevServerExecutorSchema,
   context: ExecutorContext
 ) {
-  console.log('Executor ran for DevServer', context.root);
+  // console.log('Executor ran for DevServer', context.root);
 
   const builderContext = await createBuilderContext(
     {
@@ -73,6 +62,13 @@ export default async function* runExecutor(
     },
   };
 
+  // Add cleanup logic via a builder teardown.
+  let deferred: () => void;
+  builderContext.addTeardown(async () => {
+    await server?.close();
+    deferred?.();
+  });
+
   for await (const result of buildApplicationInternal(
     buildConfig,
     builderContext,
@@ -87,6 +83,7 @@ export default async function* runExecutor(
       }
     }
     if (server) {
+      server.moduleGraph.invalidateAll();
       server.ws.send({
         type: 'full-reload',
         path: '*',
@@ -104,9 +101,6 @@ export default async function* runExecutor(
             enforce: 'pre',
             transformIndexHtml(html) {
               return html.replace('/src/main.ts', 'main.js');
-            },
-            transform(code, id) {
-              // console.log(id);
             },
             async resolveId(source, importer) {
               if (source === '/src/main.ts') {
@@ -149,11 +143,10 @@ export default async function* runExecutor(
                   return join(virtualProjectRoot, page);
                 }
               }
-              // console.log('source', source);
+
               return undefined;
             },
             load(id) {
-              // console.log('load', id);
               let [file] = id.split('?', 1);
               file = file.replace('.ts', '.js');
               let relativeFile = file;
@@ -198,20 +191,10 @@ export default async function* runExecutor(
       // log connection information
       server.printUrls();
 
-      // TODO: adjust output typings to reflect both development servers
       yield {
         success: true,
         port: listeningAddress?.port,
       } as unknown as DevServerBuilderOutput;
-    }
-
-    if (server) {
-      let deferred: () => void;
-      builderContext.addTeardown(async () => {
-        await server?.close();
-        deferred?.();
-      });
-      await new Promise<void>((resolve) => (deferred = resolve));
     }
   }
 }
