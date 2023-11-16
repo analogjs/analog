@@ -361,7 +361,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     };
   }
 
-  return [applicationPlugin()];
+  return [angularPlugin(), applicationPlugin()];
 
   // return [
   //   angularPlugin(),

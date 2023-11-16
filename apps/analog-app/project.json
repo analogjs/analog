@@ -76,6 +76,10 @@
     "application": {
       "executor": "@analogjs/platform:dev-server",
       "dependsOn": ["^platform:build"]
+    },
+
+    "vitest": {
+      "executor": "@analogjs/platform:test"
     }
   },
   "tags": [],
