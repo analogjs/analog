@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "0.2.19",
+  "version": "0.2.20",
   "license": "MIT",
   "scripts": {
     "dev": "nx serve",
@@ -22,7 +22,7 @@
     "node": "^18.13.0",
     "pnpm": "^8.0.0"
   },
-  "packageManager": "pnpm@8.0.0",
+  "packageManager": "pnpm@8.9.0",
   "keywords": [
     "vite-plugin",
     "angular",

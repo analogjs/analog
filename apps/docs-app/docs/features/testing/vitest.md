@@ -13,7 +13,7 @@ To add Vitest, install the necessary packages:
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig-paths --save-dev
+npm install @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig-paths @nx/vite --save-dev
 ```
 
   </TabItem>
@@ -21,7 +21,7 @@ npm install @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig-paths --dev
+yarn add @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig-paths @nx/vite --dev
 ```
 
   </TabItem>
@@ -29,7 +29,7 @@ yarn add @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig-pa
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig-paths
+pnpm install -w @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig-paths @nx/vite
 ```
 
   </TabItem>
