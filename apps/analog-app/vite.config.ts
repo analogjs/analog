@@ -26,7 +26,6 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       include: ['@angular/forms'],
-      noDiscovery: true,
     },
     plugins: [
       analog({

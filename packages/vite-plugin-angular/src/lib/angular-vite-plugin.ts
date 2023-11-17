@@ -361,19 +361,17 @@ export function angular(options?: PluginOptions): Plugin[] {
     };
   }
 
-  return [angularPlugin(), applicationPlugin()];
-
-  // return [
-  //   angularPlugin(),
-  //   (jit &&
-  //     jitPlugin({
-  //       inlineStylesExtension: pluginOptions.inlineStylesExtension,
-  //     })) as Plugin,
-  //   buildOptimizerPlugin({
-  //     isProd,
-  //     supportedBrowsers: pluginOptions.supportedBrowsers,
-  //   }),
-  // ].filter(Boolean) as Plugin[];
+  return [
+    angularPlugin(),
+    (jit &&
+      jitPlugin({
+        inlineStylesExtension: pluginOptions.inlineStylesExtension,
+      })) as Plugin,
+    buildOptimizerPlugin({
+      isProd,
+      supportedBrowsers: pluginOptions.supportedBrowsers,
+    }),
+  ].filter(Boolean) as Plugin[];
 
   function setupCompilation() {
     const { options: tsCompilerOptions, rootNames: rn } =

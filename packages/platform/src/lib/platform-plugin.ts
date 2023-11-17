@@ -27,11 +27,11 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
 
   return [
     ...viteNitroPlugin(platformOptions, nitroOptions),
-    // (platformOptions.ssr ? ssrBuildPlugin() : false) as Plugin,
+    (platformOptions.ssr ? ssrBuildPlugin() : false) as Plugin,
     ...routerPlugin(),
     ...contentPlugin(),
-    // ...angular({ jit: platformOptions.jit, ...(opts?.vite ?? {}) }),
-    // ssrXhrBuildPlugin(),
+    ...angular({ jit: platformOptions.jit, ...(opts?.vite ?? {}) }),
+    ssrXhrBuildPlugin(),
     clearClientPageEndpointsPlugin(),
   ];
 }

@@ -32,7 +32,7 @@ export default async function* runExecutor(
   let virtualProjectRoot = normalizePath(
     join(builderContext.workspaceRoot, `.analog/vite-root`, 'analog-app')
   );
-  const { createVitest } = await (Function(
+  const { startVitest } = await (Function(
     'return import("vitest/node")'
   )() as Promise<typeof import('vitest/node')>);
   const fg = require('fast-glob');
@@ -202,14 +202,8 @@ export default async function* runExecutor(
         ],
       };
 
-      server = await createVitest(
-        'test',
-        {
-          watch: false,
-        },
-        config
-      );
-      server.start();
+      server = await startVitest('test', [], undefined, config);
+      // server.start();
 
       yield {
         success: true,

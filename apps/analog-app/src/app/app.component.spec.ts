@@ -41,4 +41,9 @@ describe('AppComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('My Store');
   });
+
+  it('should create the app', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    expect(fixture).toMatchSnapshot();
+  });
 });
