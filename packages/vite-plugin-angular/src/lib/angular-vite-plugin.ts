@@ -21,6 +21,7 @@ import {
   createJitResourceTransformer,
   SourceFileCache,
 } from './utils/devkit';
+import { angularVitestPlugin } from './angular-vitest-plugin';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -366,6 +367,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       jitPlugin({
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
       })) as Plugin,
+    (isTest && angularVitestPlugin()) as Plugin,
     buildOptimizerPlugin({
       isProd,
       supportedBrowsers: pluginOptions.supportedBrowsers,
