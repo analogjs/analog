@@ -103,7 +103,7 @@ $analog-theme: mat.define-light-theme(
 
 ## Optional Step: Configuring Animations
 
-If you want to (de)activate animations where needed, follow these additional steps:
+If you want to activate or deactivate animations where needed, follow the correspondent steps:
 
 1. Open the `app.config.ts` file and add `provideAnimations()` as a provider
 
@@ -114,7 +114,7 @@ providers: [
 ],
 ```
 
-1. Open the `app.config.server.ts` file and add `provideNoopAnimations()` as a provider
+2. Open the `app.config.server.ts` file and add `provideNoopAnimations()` as a provider
 
 ```ts
 providers: [
@@ -123,7 +123,7 @@ providers: [
 ],
 ```
 
-With these steps, you have configured animations to be enabled on the client and disbaled on the server in your Analog application.
+With these steps, you have configured animations to be enabled on the client and disabled on the server in your Analog application.
 
 That's it! You have successfully installed and configured the Angular Material library for your Analog application. You can now start utilizing the Angular Material components and styles in your project.
 

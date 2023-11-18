@@ -16,6 +16,7 @@ import 'prismjs/components/prism-markup';
 import 'prismjs/components/prism-typescript';
 import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
 import 'prismjs/plugins/toolbar/prism-toolbar';
+import './prism/angular';
 
 declare const Prism: typeof import('prismjs');
 

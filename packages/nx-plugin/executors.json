@@ -1,0 +1,36 @@
+{
+  "builders": {
+    "vite-dev-server": {
+      "implementation": "./src/executors/vite-dev-server/compat",
+      "schema": "./src/executors/vite-dev-server/schema.json",
+      "description": "Vite dev server."
+    },
+    "vite": {
+      "implementation": "./src/executors/vite/compat",
+      "schema": "./src/executors/vite/schema.json",
+      "description": "Build with Vite."
+    },
+    "vitest": {
+      "implementation": "./src/executors/vitest/compat",
+      "schema": "./src/executors/vitest/schema.json",
+      "description": "Test with Vitest"
+    }
+  },
+  "executors": {
+    "vite-dev-server": {
+      "implementation": "./src/executors/vite-dev-server/vite-dev-server.impl",
+      "schema": "./src/executors/vite-dev-server/schema.json",
+      "description": "Vite dev server."
+    },
+    "vite": {
+      "implementation": "./src/executors/vite/vite.impl",
+      "schema": "./src/executors/vite/schema.json",
+      "description": "Build with Vite."
+    },
+    "vitest": {
+      "implementation": "./src/executors/vitest/vitest.impl",
+      "schema": "./src/executors/vitest/schema.json",
+      "description": "Test with Vitest"
+    }
+  }
+}

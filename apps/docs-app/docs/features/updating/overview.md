@@ -18,7 +18,7 @@ ng update @analogjs/platform@latest
 
 </TabItem>
 
-  <TabItem label="Nx" value="nx-migrate">
+  <TabItem label="Nx migrate" value="nx-migrate">
 
 ### Nx Migrate
 

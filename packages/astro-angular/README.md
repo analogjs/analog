@@ -279,13 +279,15 @@ export class TodosComponent implements OnInit {
 
 To use components with MDX pages, you must install and configure MDX support by following the Astro integration of [@astrojs/mdx](https://docs.astro.build/en/guides/integrations-guide/mdx/). Your `astro.config.mjs` should now include the `@astrojs/mdx` integration.
 
+> Note: Shiki is the default syntax highlighter for the MDX plugin and is currently unsupported. `astro-angular` will override this with `prism` but you should specify it in the config to prevent warnings or issues.
+
 ```js
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import angular from '@analogjs/astro-angular';
 
 export default defineConfig({
-  integrations: [mdx(), angular()],
+  integrations: [mdx({ syntaxHighlight: 'prism' }), angular()],
 });
 ```
 

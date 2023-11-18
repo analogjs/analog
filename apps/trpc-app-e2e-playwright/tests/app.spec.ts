@@ -44,14 +44,18 @@ describe('tRPC Demo App', () => {
   });
 
   test<TRPCTestContext>(`
-  If user enters the first note the note should be storedsuccessfully and listed in the notes array.
-  Still unauthorized the user should not be able to delete the note and the error should be displayed.
-  After the users clicks the Login button and gets authorized, deleting the note again should work successfully,
+  If user enters the first note the note should be stored successfully and listed in the notes array.
+  After reloading the page, the first note should show immediately, as the page is server side rendered.
+  Still unauthorized, the user should not be able to delete the note and the error should be displayed.
+  After the users clicks the "Login" button and gets authorized, deleting the note again should work successfully,
   and the error should disappear.
      `, async (ctx) => {
     await ctx.notesPage.typeNote(notes.first.note);
 
     await ctx.notesPage.addNote();
+    expect(await ctx.notesPage.notes().elementHandles()).toHaveLength(1);
+
+    await ctx.notesPage.page.reload();
     expect(await ctx.notesPage.notes().elementHandles()).toHaveLength(1);
 
     await ctx.notesPage.removeNote(0);

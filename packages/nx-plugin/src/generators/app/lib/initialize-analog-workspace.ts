@@ -25,7 +25,7 @@ export async function initializeAngularWorkspace(
       'Angular has not been installed yet. Creating an Angular application'
     );
 
-    if (major(installedNxVersion) === 16) {
+    if (major(installedNxVersion) >= 16) {
       angularVersion = await initWithNxNamespace(
         tree,
         installedNxVersion,
@@ -58,7 +58,7 @@ const initWithNxNamespace = async (
   try {
     ensurePackage('@nx/devkit', versions['@nx/devkit']);
     ensurePackage('@nx/angular', versions['@nx/angular']);
-    ensurePackage('@nx/linter', versions['@nx/linter']);
+    ensurePackage('@nx/eslint', versions['@nx/eslint']);
   } catch {
     // @nx/angular cannot be required so this fails but this will still allow executing the nx angular init later on
   }
@@ -68,7 +68,7 @@ const initWithNxNamespace = async (
     {
       '@nx/devkit': versions['@nx/devkit'],
       '@nx/angular': versions['@nx/angular'],
-      '@nx/linter': versions['@nx/linter'],
+      '@nx/eslint': versions['@nx/eslint'],
     }
   );
 
