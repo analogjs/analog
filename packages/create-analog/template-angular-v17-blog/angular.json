@@ -46,7 +46,7 @@
           }
         },
         "test": {
-          "builder": "@nx/vite:test"
+          "builder": "@analogjs/platform:vitest"
         }
       }
     }
