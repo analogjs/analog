@@ -10,9 +10,9 @@
   },
   "files": [
     "index.js",
-    "template-angular-v15",
     "template-angular-v16",
     "template-angular-v17",
+    "template-blog",
     "files"
   ],
   "main": "index.js",
