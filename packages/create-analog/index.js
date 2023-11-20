@@ -25,6 +25,11 @@ const APPS = [
         color: green,
       },
       {
+        name: 'blog',
+        display: 'TypeScript',
+        color: green,
+      },
+      {
         name: 'angular-v16',
         display: 'TypeScript',
         color: green,
