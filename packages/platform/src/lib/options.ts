@@ -30,4 +30,5 @@ export interface Options {
   nitro?: NitroConfig;
   apiPrefix?: string;
   jit?: boolean;
+  workspaceRoot?: string;
 }

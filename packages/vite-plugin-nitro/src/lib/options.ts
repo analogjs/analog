@@ -10,6 +10,7 @@ export interface Options {
   prerender?: PrerenderOptions;
   entryServer?: string;
   index?: string;
+  workspaceRoot?: string;
 }
 
 export interface PrerenderOptions {
