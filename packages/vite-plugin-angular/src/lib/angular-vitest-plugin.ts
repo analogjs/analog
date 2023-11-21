@@ -3,6 +3,7 @@ import { Plugin, transformWithEsbuild } from 'vite';
 export function angularVitestPlugin(): Plugin {
   return {
     name: '@analogjs/vitest-angular-esm-plugin',
+    enforce: 'post',
     apply: 'serve',
     config() {
       return {

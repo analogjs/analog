@@ -14,24 +14,21 @@ type EsbuildOptions = NonNullable<DepOptimizationConfig['esbuildOptions']>;
 type EsbuildPlugin = NonNullable<EsbuildOptions['plugins']>[number];
 
 export function createCompilerPlugin(
-  pluginOptions: CompilerPluginOptions,
-  isTest: boolean
+  pluginOptions: CompilerPluginOptions
 ): EsbuildPlugin {
-  const javascriptTransformer = new JavaScriptTransformer(pluginOptions, 1);
-
   return {
     name: 'analogjs-angular-esbuild-deps-optimizer-plugin',
     async setup(build) {
-      if (!isTest) {
-        build.onLoad({ filter: /\.[cm]?js$/ }, async (args) => {
-          const contents = await javascriptTransformer.transformFile(args.path);
+      const javascriptTransformer = new JavaScriptTransformer(pluginOptions, 1);
 
-          return {
-            contents,
-            loader: 'js',
-          };
-        });
-      }
+      build.onLoad({ filter: /\.[cm]?js$/ }, async (args) => {
+        const contents = await javascriptTransformer.transformFile(args.path);
+
+        return {
+          contents,
+          loader: 'js',
+        };
+      });
 
       build.onEnd(() => javascriptTransformer.close());
     },
