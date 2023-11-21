@@ -205,6 +205,29 @@ describe('nitro', () => {
       );
     });
 
+    it('should use the workspace root option when it is set', async () => {
+      // Arrange
+      vi.mock('process');
+      process.cwd = vi.fn().mockReturnValue('/some-other-root-directory');
+      const { buildServerImportSpy } = await mockBuildFunctions();
+
+      const plugin = nitro({ workspaceRoot: '/custom-root-directory' }, {});
+
+      // Act
+      await runConfigAndCloseBundle(plugin);
+
+      // Assert
+      expect(buildServerImportSpy).toHaveBeenCalledWith(
+        { workspaceRoot: '/custom-root-directory' },
+        expect.objectContaining({
+          output: {
+            dir: '/custom-root-directory/dist/analog',
+            publicDir: '/custom-root-directory/dist/analog/public',
+          },
+        })
+      );
+    });
+
     it('should use the .vercel output paths when preset is vercel', async () => {
       // Arrange
       vi.mock('process');
