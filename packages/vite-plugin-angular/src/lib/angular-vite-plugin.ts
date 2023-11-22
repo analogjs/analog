@@ -134,13 +134,16 @@ export function angular(options?: PluginOptions): Plugin[] {
             exclude: ['@angular/platform-server'],
             esbuildOptions: {
               plugins: [
-                createCompilerPlugin({
-                  tsconfig: pluginOptions.tsconfig,
-                  sourcemap: !isProd,
-                  advancedOptimizations: isProd,
-                  jit,
-                  incremental: watchMode,
-                }),
+                createCompilerPlugin(
+                  {
+                    tsconfig: pluginOptions.tsconfig,
+                    sourcemap: !isProd,
+                    advancedOptimizations: isProd,
+                    jit,
+                    incremental: watchMode,
+                  },
+                  isTest
+                ),
               ],
               define: {
                 ngJitMode: 'false',
