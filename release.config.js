@@ -82,8 +82,7 @@ module.exports = {
           'packages/vite-plugin-angular/package.json',
           'packages/vite-plugin-nitro/package.json',
         ],
-        message:
-          'chore: release ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}',
+        message: 'chore: release ${nextRelease.version} [skip ci]',
       },
     ],
     // [
