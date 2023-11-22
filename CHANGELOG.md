@@ -1,3 +1,20 @@
+## [0.2.21](https://github.com/analogjs/analog/compare/0.2.20...0.2.21) (2023-11-20)
+
+### Bug Fixes
+
+- **nx-plugin:** add angular-v17 template files ([#758](https://github.com/analogjs/analog/issues/758)) ([a0668d2](https://github.com/analogjs/analog/commit/a0668d29b4b2deb5c62851d0a79f4ab15ddece45))
+
+### Features
+
+- **create-analog:** add blog template to cli ([#761](https://github.com/analogjs/analog/issues/761)) ([f2c42df](https://github.com/analogjs/analog/commit/f2c42dff408e4ad5613dbc3ba49e40dfc79b5c71))
+- upgrade to Vite 5 and update template apps to Vite 5 ([#759](https://github.com/analogjs/analog/issues/759)) ([fa982dd](https://github.com/analogjs/analog/commit/fa982dd6987e7677562dff5e5a101e7502eeedf7))
+
+## [0.2.20](https://github.com/analogjs/analog/compare/0.2.19...0.2.20) (2023-11-15)
+
+### Bug Fixes
+
+- **nx-plugin:** add @angular/platform-server/init to main.server template files ([#747](https://github.com/analogjs/analog/issues/747)) ([f45a4df](https://github.com/analogjs/analog/commit/f45a4df3fa71cf1df9737a323b16762602e6ccdc))
+
 ## [0.2.19](https://github.com/analogjs/analog/compare/0.2.18...0.2.19) (2023-11-08)
 
 ### Bug Fixes
