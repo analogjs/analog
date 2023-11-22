@@ -1,3 +1,15 @@
+## [0.2.22](https://github.com/analogjs/analog/compare/0.2.21...0.2.22) (2023-11-22)
+
+### Bug Fixes
+
+- **create-analog:** add blog files to cli template ([7b33473](https://github.com/analogjs/analog/commit/7b33473f4fec88c5979f441343d02b7bd12d9958))
+- **platform:** add missing `index` option for the platform plugin ([#765](https://github.com/analogjs/analog/issues/765)) ([9bd6609](https://github.com/analogjs/analog/commit/9bd6609e29ae26c44e0d8f46828fdb9f43b3237a))
+- **vite-plugin-angular:** add Vitest plugin to transform async/await in Angular packages ([#760](https://github.com/analogjs/analog/issues/760)) ([8024c49](https://github.com/analogjs/analog/commit/8024c49cdb22e6e9f261f509cec86201581b14b8))
+
+### Features
+
+- **vite-plugin-nitro:** add `workspaceRoot` option to override `process.cwd` ([#764](https://github.com/analogjs/analog/issues/764)) ([90cac1c](https://github.com/analogjs/analog/commit/90cac1c84cc39fb7f28821529b8133f63016d9cc))
+
 ## [0.2.21](https://github.com/analogjs/analog/compare/0.2.20...0.2.21) (2023-11-20)
 
 ### Bug Fixes
