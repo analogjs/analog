@@ -6,7 +6,7 @@
   "tags": [],
   "projectType": "library",
   "targets": {
-    "test": {
+    "tests": {
       "executor": "@nx/vite:test"
     },
     "lint": {
