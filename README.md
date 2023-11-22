@@ -8,7 +8,7 @@
 
 [![Discord server](https://dcbadge.vercel.app/api/server/mKC2Ec48U5?style=flat-square)](https://chat.analogjs.org/) [![Twitter](https://img.shields.io/twitter/follow/analogjs)](https://twitter.com/analogjs)
 
-Analog is a meta-framework for building applications and websites with [Angular](https://angular.io).
+Analog is a meta-framework for building applications and websites with [Angular](https://angular.dev).
 
 Similar to other meta-frameworks such as Next.JS, Nuxt, SvelteKit and others, Analog provides a similar experience, building on top of Angular.
 
