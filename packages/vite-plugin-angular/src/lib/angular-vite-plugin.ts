@@ -22,6 +22,7 @@ import {
   SourceFileCache,
 } from './utils/devkit';
 import { applicationPlugin } from './application-vite-plugin';
+import { angularVitestPlugin } from './angular-vitest-plugin';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -134,13 +135,16 @@ export function angular(options?: PluginOptions): Plugin[] {
             exclude: ['@angular/platform-server'],
             esbuildOptions: {
               plugins: [
-                createCompilerPlugin({
-                  tsconfig: pluginOptions.tsconfig,
-                  sourcemap: !isProd,
-                  advancedOptimizations: isProd,
-                  jit,
-                  incremental: watchMode,
-                }),
+                createCompilerPlugin(
+                  {
+                    tsconfig: pluginOptions.tsconfig,
+                    sourcemap: !isProd,
+                    advancedOptimizations: isProd,
+                    jit,
+                    incremental: watchMode,
+                  },
+                  isTest
+                ),
               ],
               define: {
                 ngJitMode: 'false',
@@ -363,6 +367,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   return [
     angularPlugin(),
+    (isTest && angularVitestPlugin()) as Plugin,
     (jit &&
       jitPlugin({
         inlineStylesExtension: pluginOptions.inlineStylesExtension,

@@ -17,7 +17,7 @@ import { loadEsmModule } from './utils/load-esm';
 let clientOutputPath = '';
 
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
-  const workspaceRoot = process.cwd();
+  const workspaceRoot = options?.workspaceRoot ?? process.cwd();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const apiPrefix = `/${nitroOptions?.runtimeConfig?.['apiPrefix'] ?? 'api'}`;
 
