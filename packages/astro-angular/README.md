@@ -1,6 +1,6 @@
 # @analogjs/astro-angular
 
-An [Angular](https://angular.io) integration for rendering components in [Astro](https://astro.build)
+An [Angular](https://angular.dev) integration for rendering components in [Astro](https://astro.build)
 
 ## Setup
 

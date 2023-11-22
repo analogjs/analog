@@ -6,7 +6,7 @@ slug: /
 
 # Introduction
 
-Analog is a fullstack meta-framework for building applications and websites with [Angular](https://angular.io).
+Analog is a fullstack meta-framework for building applications and websites with [Angular](https://angular.dev).
 
 Similar to other meta-frameworks such as Next.JS, Nuxt, SvelteKit, Qwik City, and others, Analog provides a similar experience, building on top of Angular.
 
