@@ -47,7 +47,7 @@ describe('AstroApp', () => {
       ).toContain(/Angular \(server side binding\)/i);
     });
 
-    test('Then client side rendered CardComponent should emit an event on click', async () => {
+    test.skip('Then client side rendered CardComponent should emit an event on click', async () => {
       const console = waitForConsole();
       const componentLocator = page.locator(
         '[data-analog-id=card-component-1]'

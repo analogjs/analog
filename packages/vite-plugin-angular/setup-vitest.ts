@@ -119,6 +119,7 @@ function isAngularFixture(val: any): boolean {
   const fixtureKeys = [
     'componentRef',
     'ngZone',
+    'effectRunner',
     '_autoDetect',
     '_isStable',
     '_isDestroyed',
