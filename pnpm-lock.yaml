@@ -376,6 +376,14 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2
 
+  apps/analog-app-e2e-cypress: {}
+
+  apps/analog-app-e2e-playwright: {}
+
+  apps/astro-app-e2e-playwright: {}
+
+  apps/blog-app-e2e-cypress: {}
+
   apps/docs-app:
     dependencies:
       '@docusaurus/core':

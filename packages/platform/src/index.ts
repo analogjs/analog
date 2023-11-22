@@ -1,4 +1,4 @@
-import { platformPlugin } from './lib/platform-plugin';
+import { platformPlugin } from './lib/platform-plugin.js';
 
-export { Options } from './lib/options';
+export { Options } from './lib/options.js';
 export default platformPlugin;

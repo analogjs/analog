@@ -9,6 +9,7 @@
 import { eventHandler, proxyRequest } from 'h3';
 
 export default eventHandler(async (event) => {
+  // @ts-ignore
   const apiPrefix = `/${import.meta.env.RUNTIME_CONFIG?.apiPrefix ?? 'api'}`;
   if (event.node.req.url?.startsWith(apiPrefix)) {
     const reqUrl = event.node.req.url?.replace(apiPrefix, '');
@@ -23,6 +24,7 @@ export default eventHandler(async (event) => {
     }
 
     return proxyRequest(event, reqUrl, {
+      // @ts-ignore
       fetch: $fetch.native,
     });
   }

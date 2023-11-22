@@ -1,0 +1,5 @@
+{
+  "name": "astro-app-e2e-playwright",
+  "private": true,
+  "type": "commonjs"
+}

@@ -82,6 +82,7 @@ describe('nitro', () => {
       { ssr: false },
       {
         ...mockNitroConfig,
+        alias: expect.anything(),
         prerender: { routes: ['/'] },
         alias: expect.anything(),
         rollupConfig: expect.anything(),
@@ -164,6 +165,7 @@ describe('nitro', () => {
       { ssr: true, ...prerenderRoutes },
       {
         ...mockNitroConfig,
+        alias: expect.anything(),
         prerender: {
           routes: prerenderRoutes.prerender.routes,
         },

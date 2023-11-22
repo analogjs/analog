@@ -1,5 +1,5 @@
 import { describe, expect } from 'vitest';
-import { platformPlugin } from './platform-plugin';
+import { platformPlugin } from './platform-plugin.js';
 
 vi.mock('@analogjs/vite-plugin-nitro');
 vi.mock('./ssr/ssr-build-plugin');

@@ -1,4 +1,5 @@
 import * as path from 'path';
+import fg from 'fast-glob';
 
 import { NitroEventHandler } from 'nitropack';
 import { normalizePath } from 'vite';
@@ -9,7 +10,6 @@ type GetHandlersArgs = {
 };
 
 export function getPageHandlers({ workspaceRoot, rootDir }: GetHandlersArgs) {
-  const fg = require('fast-glob');
   const root = normalizePath(path.resolve(workspaceRoot, rootDir));
 
   const endpointFiles: string[] = fg.sync(

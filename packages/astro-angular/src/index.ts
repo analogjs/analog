@@ -39,7 +39,7 @@ function getViteConfiguration(vite?: PluginOptions) {
      *
      */
     plugins: [
-      (viteAngular as any).default(vite),
+      viteAngular(vite),
       {
         name: '@analogjs/astro-angular-platform-server',
         transform(code: string, id: string) {
