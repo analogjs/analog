@@ -1,0 +1,21 @@
+{
+  "name": "card",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/card/src",
+  "prefix": "lib",
+  "tags": [],
+  "projectType": "library",
+  "targets": {
+    "test": {
+      "executor": "@nx/vite:test"
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/card/**/*.ts", "libs/card/**/*.html"]
+      }
+    }
+  },
+  "implicitDependencies": ["vite-plugin-angular"]
+}

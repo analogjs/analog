@@ -4,6 +4,7 @@ export function angularVitestPlugin(): Plugin {
   return {
     name: '@analogjs/vitest-angular-esm-plugin',
     apply: 'serve',
+    enforce: 'post',
     config() {
       return {
         ssr: {
@@ -12,7 +13,8 @@ export function angularVitestPlugin(): Plugin {
       };
     },
     async transform(_code, id) {
-      if (/fesm2022/.test(id)) {
+      if (/fesm2022/.test(id) && _code.includes('async (')) {
+        console.log(id);
         const { code, map } = await transformWithEsbuild(_code, id, {
           loader: 'js',
           format: 'esm',

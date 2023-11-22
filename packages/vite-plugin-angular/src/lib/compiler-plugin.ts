@@ -24,6 +24,7 @@ export function createCompilerPlugin(
     async setup(build) {
       if (!isTest) {
         build.onLoad({ filter: /\.[cm]?js$/ }, async (args) => {
+          console.log(args.path);
           const contents = await javascriptTransformer.transformFile(args.path);
 
           return {
