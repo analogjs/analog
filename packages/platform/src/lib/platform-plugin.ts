@@ -30,7 +30,11 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     (platformOptions.ssr ? ssrBuildPlugin() : false) as Plugin,
     ...routerPlugin(),
     ...contentPlugin(),
-    ...angular({ jit: platformOptions.jit, ...(opts?.vite ?? {}) }),
+    ...angular({
+      jit: platformOptions.jit,
+      workspaceRoot: platformOptions.workspaceRoot,
+      ...(opts?.vite ?? {}),
+    }),
     ssrXhrBuildPlugin(),
     clearClientPageEndpointsPlugin(),
   ];

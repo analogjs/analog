@@ -5,7 +5,7 @@ import { describe } from 'vitest';
 /**
  * @vitest-environment jsdom
  */
-describe.skip('Angular Fixture Snapshot', () => {
+describe('Angular Fixture Snapshot', () => {
   @Component({
     selector: 'app-test',
     standalone: true,
