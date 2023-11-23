@@ -6,27 +6,43 @@
   "prefix": "analogjs",
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
-      "outputs": [
-        "{options.outputPath}",
-        "{workspaceRoot}/dist/apps/analog-app/.nitro",
-        "{workspaceRoot}/dist/apps/analog-app/ssr",
-        "{workspaceRoot}/dist/apps/analog-app/analog"
-      ],
+      "executor": "@angular-devkit/build-angular:application",
       "options": {
-        "configFile": "apps/analog-app/vite.config.ts",
-        "outputPath": "dist/apps/analog-app/client"
+        "outputPath": "dist/apps/analog-app/client",
+        "index": "apps/analog-app/index.html",
+        "browser": "apps/analog-app/src/main.ts",
+        "polyfills": ["zone.js"],
+        "tsConfig": "apps/analog-app/tsconfig.app.json",
+        "assets": [
+          "apps/analog-app/src/favicon.ico",
+          "apps/analog-app/src/assets"
+        ],
+        "styles": ["apps/analog-app/src/styles.css"],
+        "inlineStyleLanguage": "scss"
       },
-      "defaultConfiguration": "production",
       "configurations": {
-        "development": {
-          "mode": "development"
-        },
         "production": {
-          "sourcemap": false,
-          "mode": "production"
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "2kb",
+              "maximumError": "4kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
         }
-      }
+      },
+      "defaultConfiguration": "production"
     },
     "serve": {
       "executor": "@nx/vite:dev-server",
@@ -74,7 +90,15 @@
     },
     "application": {
       "executor": "@analogjs/platform:dev-server",
-      "dependsOn": ["^platform:build"]
+      "configurations": {
+        "production": {
+          "buildTarget": "analog-app:build:production"
+        },
+        "development": {
+          "buildTarget": "analog-app:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
     },
     "vitest": {
       "executor": "@analogjs/platform:test"
