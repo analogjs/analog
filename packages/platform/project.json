@@ -13,8 +13,7 @@
         "assets": [
           "packages/platform/*.md",
           "packages/platform/migrations/migration.json"
-        ],
-        "updateBuildableProjectDepsInPackageJson": false
+        ]
       },
       "configurations": {
         "production": {

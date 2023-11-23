@@ -14,8 +14,7 @@
         "assets": [
           "packages/vite-plugin-angular/*.md",
           "packages/vite-plugin-angular/migrations/migration.json"
-        ],
-        "updateBuildableProjectDepsInPackageJson": false
+        ]
       }
     },
     "test": {

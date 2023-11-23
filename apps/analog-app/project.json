@@ -56,7 +56,7 @@
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
-        "browserTarget": "analog-app:build"
+        "buildTarget": "analog-app:build"
       }
     },
     "lint": {
@@ -72,12 +72,10 @@
       "executor": "@nx/vite:test",
       "outputs": ["{projectRoot}/coverage"]
     },
-
     "application": {
       "executor": "@analogjs/platform:dev-server",
       "dependsOn": ["^platform:build"]
     },
-
     "vitest": {
       "executor": "@analogjs/platform:test"
     }

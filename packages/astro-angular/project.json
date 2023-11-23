@@ -14,8 +14,7 @@
         "assets": [
           "packages/astro-angular/*.md",
           "packages/astro-angular/migrations/migration.json"
-        ],
-        "updateBuildableProjectDepsInPackageJson": false
+        ]
       }
     },
     "publish": {
