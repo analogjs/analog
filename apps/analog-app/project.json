@@ -11,6 +11,7 @@
         "outputPath": "dist/apps/analog-app/client",
         "index": "apps/analog-app/index.html",
         "browser": "apps/analog-app/src/main.ts",
+        "server": "apps/analog-app/src/main.server.ts",
         "polyfills": ["zone.js"],
         "tsConfig": "apps/analog-app/tsconfig.app.json",
         "assets": [
@@ -18,7 +19,8 @@
           "apps/analog-app/src/assets"
         ],
         "styles": ["apps/analog-app/src/styles.css"],
-        "inlineStyleLanguage": "scss"
+        "inlineStyleLanguage": "scss",
+        "ssr": true
       },
       "configurations": {
         "production": {
@@ -99,6 +101,10 @@
         }
       },
       "defaultConfiguration": "development"
+    },
+
+    "nitro": {
+      "executor": "@analogjs/platform:nitro"
     },
     "vitest": {
       "executor": "@analogjs/platform:test"

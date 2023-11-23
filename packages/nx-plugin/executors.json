@@ -46,6 +46,11 @@
       "implementation": "./src/executors/test/executor",
       "schema": "./src/executors/test/schema.json",
       "description": "test executor"
+    },
+    "nitro": {
+      "implementation": "./src/executors/nitro/executor",
+      "schema": "./src/executors/nitro/schema.json",
+      "description": "nitro executor"
     }
   }
 }

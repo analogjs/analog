@@ -57,7 +57,7 @@ export default class ProductListComponent {
   http = inject(HttpClient);
   data = toSignal(
     this.http
-      .get<Product[]>('/api/v1/products')
+      .get<Product[]>('http://localhost:3000/api/v1/products')
       .pipe(map((products) => ({ products })))
   );
 

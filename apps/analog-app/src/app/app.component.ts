@@ -15,10 +15,4 @@ import { HttpClient } from '@angular/common/http';
     </div>
   `,
 })
-export class AppComponent {
-  http = inject(HttpClient);
-
-  ngOnInit() {
-    this.http.get('/api/v1/products').subscribe();
-  }
-}
+export class AppComponent {}
