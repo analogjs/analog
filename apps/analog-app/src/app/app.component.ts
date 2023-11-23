@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { TopBarComponent } from '@analogjs/top-bar';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'analogjs-root',
@@ -14,4 +15,10 @@ import { TopBarComponent } from '@analogjs/top-bar';
     </div>
   `,
 })
-export class AppComponent {}
+export class AppComponent {
+  http = inject(HttpClient);
+
+  ngOnInit() {
+    this.http.get('/api/v1/products').subscribe();
+  }
+}

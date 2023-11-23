@@ -14,6 +14,11 @@
       "implementation": "./src/executors/vitest/compat",
       "schema": "./src/executors/vitest/schema.json",
       "description": "Test with Vitest"
+    },
+    "dev-server": {
+      "implementation": "./src/executors/dev-server/compat",
+      "schema": "./src/executors/dev-server/schema.json",
+      "description": "dev-server builder"
     }
   },
   "executors": {

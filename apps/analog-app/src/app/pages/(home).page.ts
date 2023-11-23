@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouteMeta, injectLoad } from '@analogjs/router';
 import { NgForOf, NgIf } from '@angular/common';
@@ -6,6 +6,9 @@ import { RouterLinkWithHref } from '@angular/router';
 
 import { ProductAlertsComponent } from '../product-alerts/product-alerts.component';
 import { load } from './(home).server';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs';
+import { Product } from '../products';
 
 export const routeMeta: RouteMeta = {
   title: 'Product List',
@@ -18,7 +21,7 @@ export const routeMeta: RouteMeta = {
   template: `
     <h2>Products</h2>
 
-    <div *ngFor="let product of data().products">
+    <div *ngFor="let product of data()?.products">
       <h3>
         <a
           [title]="product.name + ' details'"
@@ -51,7 +54,12 @@ export const routeMeta: RouteMeta = {
   ],
 })
 export default class ProductListComponent {
-  data = toSignal(injectLoad<typeof load>(), { requireSync: true });
+  http = inject(HttpClient);
+  data = toSignal(
+    this.http
+      .get<Product[]>('/api/v1/products')
+      .pipe(map((products) => ({ products })))
+  );
 
   share() {
     window.alert('The product has been shared!');
