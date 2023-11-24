@@ -61,9 +61,6 @@ export default async function runExecutor(options: NitroExecutorSchema) {
         )
       ),
     },
-    prerender: {
-      routes: ['/'],
-    },
   };
 
   const nitro = await createNitro({
