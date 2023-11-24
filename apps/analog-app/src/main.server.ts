@@ -6,9 +6,9 @@ import { renderApplication } from '@angular/platform-server';
 import { config } from './app/app.config.server';
 import { AppComponent } from './app/app.component';
 
-if (import.meta.env.PROD) {
-  enableProdMode();
-}
+// if (import.meta.env.PROD) {
+enableProdMode();
+// }
 
 export function bootstrap() {
   return bootstrapApplication(AppComponent, config);

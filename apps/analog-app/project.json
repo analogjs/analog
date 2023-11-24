@@ -97,7 +97,8 @@
           "buildTarget": "analog-app:build:production"
         },
         "development": {
-          "buildTarget": "analog-app:build:development"
+          "buildTarget": "analog-app:build:development",
+          "port": 3000
         }
       },
       "defaultConfiguration": "development"

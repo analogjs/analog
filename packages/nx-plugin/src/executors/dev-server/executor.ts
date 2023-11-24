@@ -27,8 +27,8 @@ export default async function* runExecutor(
     context
   );
 
-  builderContext.getBuilderNameForTarget = () =>
-    Promise.resolve('@angular-devkit/build-angular:application');
+  // builderContext.getBuilderNameForTarget = () =>
+  //   Promise.resolve('@angular-devkit/build-angular:application');
 
   builderContext.getTargetOptions = (target) => {
     const appBuilderOptions: ApplicationBuilderOptions =

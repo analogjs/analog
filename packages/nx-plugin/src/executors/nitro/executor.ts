@@ -3,6 +3,7 @@ import { NitroExecutorSchema } from './schema';
 import { NitroConfig } from 'nitropack';
 import { normalizePath } from 'vite';
 import * as path from 'path';
+import * as fs from 'fs';
 
 export default async function runExecutor(options: NitroExecutorSchema) {
   console.log('Executor ran for Nitro', options);
@@ -60,6 +61,9 @@ export default async function runExecutor(options: NitroExecutorSchema) {
         )
       ),
     },
+    prerender: {
+      routes: ['/'],
+    },
   };
 
   const nitro = await createNitro({
@@ -70,6 +74,19 @@ export default async function runExecutor(options: NitroExecutorSchema) {
 
   await prepare(nitro);
   await copyPublicAssets(nitro);
+
+  if (
+    nitroConfig?.prerender?.routes &&
+    nitroConfig?.prerender?.routes.find((route) => route === '/')
+  ) {
+    // Remove the root index.html so it can be replaced with the prerendered version
+    if (fs.existsSync(`${nitroConfig?.output?.publicDir}/index.html`)) {
+      console.log(`rm ${nitroConfig?.output?.publicDir}/index.html`);
+      fs.unlinkSync(`${nitroConfig?.output?.publicDir}/index.html`);
+    }
+  }
+
+  await prerender(nitro);
   await build(nitro);
 
   return {
