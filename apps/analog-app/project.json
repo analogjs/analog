@@ -108,7 +108,11 @@
       "executor": "@analogjs/platform:nitro"
     },
     "vitest": {
-      "executor": "@analogjs/platform:test"
+      "executor": "@analogjs/platform:test",
+      "options": {
+        "tsConfig": "apps/analog-app/tsconfig.spec.json",
+        "setupFile": "src/test-setup.ts"
+      }
     }
   },
   "tags": [],

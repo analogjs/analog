@@ -44,15 +44,6 @@ export default defineConfig(({ mode }) => {
       visualizer() as Plugin,
       splitVendorChunkPlugin(),
     ],
-    test: {
-      globals: true,
-      environment: 'jsdom',
-      setupFiles: ['src/test-setup.ts'],
-      include: ['**/*.spec.ts'],
-      cache: {
-        dir: `../../node_modules/.vitest`,
-      },
-    },
     define: {
       'import.meta.vitest': mode !== 'production',
     },

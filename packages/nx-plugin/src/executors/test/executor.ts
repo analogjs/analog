@@ -1,33 +1,31 @@
 import { ExecutorContext } from '@nx/devkit';
-import { DevServerBuilderOutput } from '@angular-devkit/build-angular';
+import { buildApplicationInternal } from '@angular-devkit/build-angular/src/builders/application';
+import { ApplicationBuilderInternalOptions } from '@angular-devkit/build-angular/src/builders/application/options';
+import type { BuildOutputFile } from '@angular-devkit/build-angular/src/tools/esbuild/bundler-context';
 import { createBuilderContext } from 'nx/src/adapter/ngcli-adapter';
 
-import { DevServerExecutorSchema } from './schema';
-import { buildApplicationInternal } from '@angular-devkit/build-angular/src/builders/application';
-import { InlineStyleLanguage } from '@angular-devkit/build-angular/src/builders/application/schema';
-import { UserConfig, normalizePath, ViteDevServer, InlineConfig } from 'vite';
-import { AddressInfo } from 'node:net';
-import { dirname, join, relative, resolve } from 'node:path';
-import { BuildOutputFile } from '@angular-devkit/build-angular/src/tools/esbuild/bundler-context';
-import { Vitest } from 'vitest/node';
+import { Options as FastGlobOptions } from 'fast-glob';
+import { normalizePath, InlineConfig } from 'vite';
+import { dirname, join, relative } from 'node:path';
+import type { Vitest } from 'vitest/node';
+
+import { TestSchema } from './schema';
 
 export default async function* runExecutor(
-  options: DevServerExecutorSchema,
+  options: TestSchema,
   context: ExecutorContext
 ) {
-  // console.log('Executor ran for DevServer', context.root);
-
   const builderContext = await createBuilderContext(
     {
-      builderName: '@analogjs/platform:application',
-      description: 'Build a browser application',
+      builderName: '@angular-devkit/build-application:application',
+      description: 'Test an application',
       optionSchema: await import(
         '@angular-devkit/build-angular/src/builders/application/schema.json'
       ),
     },
     context
   );
-  let listeningAddress: AddressInfo | undefined;
+
   let server: Vitest;
   let virtualProjectRoot = normalizePath(
     join(builderContext.workspaceRoot, `.analog/vite-root`, 'analog-app')
@@ -36,35 +34,35 @@ export default async function* runExecutor(
     'return import("vitest/node")'
   )() as Promise<typeof import('vitest/node')>);
   const fg = require('fast-glob');
-  const root = normalizePath(resolve(process.cwd(), 'apps/analog-app'));
+  const projectRoot =
+    context.projectsConfigurations.projects[context.projectName].root;
+  const fgOptions: FastGlobOptions = {
+    cwd: projectRoot,
+    ignore: ['node_modules/**'].concat(options.exclude),
+  };
+  const included = await Promise.all(
+    options.include.map((pattern) => fg(pattern, fgOptions) as string[])
+  );
 
-  const endpointFiles: string[] = fg.sync(
-    [`${root}/src/app/pages/**/*.page.ts`],
-    { dot: true }
+  const testFiles = Array.from(new Set([...included.flat()])).map((file) =>
+    join(projectRoot, file)
   );
   const outputFiles = new Map<string, BuildOutputFile>();
-  let config: UserConfig;
-  // console.log(builderContext);
-  const buildConfig = {
+  const buildConfig: ApplicationBuilderInternalOptions = {
     aot: false,
-    entryPoints: new Set([
-      'apps/analog-app/src/app/app.component.spec.ts',
-      'apps/analog-app/src/test-setup.ts',
-      // 'apps/analog-app/src/main.ts',
-      // 'apps/analog-app/src/main.server.ts',
-      // ...endpointFiles,
-    ]),
+    entryPoints: new Set([...testFiles, join(projectRoot, options.setupFile)]),
     index: false,
-    outputPath: 'dist/apps/analog-app/client',
-    tsConfig: 'apps/analog-app/tsconfig.spec.json',
-    progress: true,
-    watch: true,
+    outputPath: '',
+    tsConfig: options.tsConfig,
+    progress: false,
+    watch: options.watch,
     optimization: false,
-    inlineStyleLanguage: InlineStyleLanguage.Scss,
     sourceMap: {
       scripts: true,
-      styles: true,
+      styles: false,
+      vendor: false,
     },
+    allowedCommonJsDependencies: ['@analogjs/vite-plugin-angular/setup-vitest'],
   };
 
   // Add cleanup logic via a builder teardown.
@@ -79,11 +77,9 @@ export default async function* runExecutor(
     builderContext,
     { write: false }
   )) {
-    console.log('result', result.success);
     if (result.success && Array.isArray(result.outputFiles)) {
       for (const file of result.outputFiles) {
         const ofile = join(virtualProjectRoot, file.path);
-        // console.log('file', ofile);
         outputFiles.set(ofile, file);
       }
     }
@@ -92,27 +88,12 @@ export default async function* runExecutor(
       server.start();
     } else {
       const config: InlineConfig = {
-        server: {
-          port: 3000,
-          hmr: true,
-        },
-        root: 'apps/analog-app',
+        root: projectRoot,
         plugins: [
           {
             name: 'angular',
             enforce: 'pre',
-            transformIndexHtml(html) {
-              return html.replace('/src/main.ts', 'main.js');
-            },
             async resolveId(source, importer) {
-              if (source === '/src/main.ts') {
-                return join(virtualProjectRoot, 'main.js');
-              }
-
-              if (source === 'src/main.server.ts') {
-                return join(virtualProjectRoot, 'main.server.js');
-              }
-
               if (
                 importer &&
                 source[0] === '.' &&
@@ -136,16 +117,6 @@ export default async function* runExecutor(
                 return join(virtualProjectRoot, source);
               }
 
-              if (file.endsWith('page.ts')) {
-                const page = file
-                  .split('/')
-                  .pop()
-                  ?.replace('.page.ts', '.page.js') as string;
-                if (outputFiles.has(join(virtualProjectRoot, page))) {
-                  return join(virtualProjectRoot, page);
-                }
-              }
-
               if (file.endsWith('spec.ts')) {
                 const page = file
                   .split('/')
@@ -155,9 +126,6 @@ export default async function* runExecutor(
                   return join(virtualProjectRoot, page);
                 }
               }
-              if (source.includes('src')) {
-                // console.log('src', source);
-              }
 
               return undefined;
             },
@@ -165,16 +133,7 @@ export default async function* runExecutor(
               let [file] = id.split('?', 1);
               file = file.replace('.ts', '.js');
               let relativeFile = file;
-              // console.log(file);
-              if (file === '/main.js') {
-                relativeFile = join(virtualProjectRoot, '/main.js');
-              }
-
-              if (file === 'src/main.server.js') {
-                relativeFile = join(virtualProjectRoot, '/main.server.js');
-              }
-
-              if (file.endsWith('src/test-setup.js')) {
+              if (file.endsWith('test-setup.js')) {
                 relativeFile = join(virtualProjectRoot, '/test-setup.js');
               }
 
@@ -200,14 +159,19 @@ export default async function* runExecutor(
             },
           },
         ],
+        test: {
+          globals: options.globals,
+          environment: options.environment,
+          setupFiles: [options.setupFile],
+          include: options.include,
+        },
       };
 
       server = await startVitest('test', [], undefined, config);
-      // server.start();
 
       yield {
         success: true,
-      } as unknown as DevServerBuilderOutput;
+      } as unknown;
     }
   }
 }
