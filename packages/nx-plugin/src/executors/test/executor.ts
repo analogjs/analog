@@ -26,15 +26,14 @@ export default async function* runExecutor(
     context
   );
 
-  let server: Vitest;
-  let virtualProjectRoot = normalizePath(
-    join(builderContext.workspaceRoot, `.analog/vite-root`, 'analog-app')
+  const projectRoot =
+    context.projectsConfigurations.projects[context.projectName].root;
+  const virtualProjectRoot = normalizePath(
+    join(builderContext.workspaceRoot, `.analog/vite-root`, projectRoot)
   );
   const { startVitest } = await (Function(
     'return import("vitest/node")'
   )() as Promise<typeof import('vitest/node')>);
-  const projectRoot =
-    context.projectsConfigurations.projects[context.projectName].root;
   const testFiles = await getTestFiles(projectRoot, options);
   const outputFiles = new Map<string, BuildOutputFile>();
 
@@ -55,6 +54,7 @@ export default async function* runExecutor(
     allowedCommonJsDependencies: ['@analogjs/vite-plugin-angular/setup-vitest'],
   };
 
+  let server: Vitest;
   // Add cleanup logic via a builder teardown.
   let deferred: () => void;
   builderContext.addTeardown(async () => {
@@ -78,97 +78,12 @@ export default async function* runExecutor(
       server.server.moduleGraph.invalidateAll();
       server.start();
     } else {
-      const config: UserConfig = {
-        root: projectRoot,
-        plugins: [
-          {
-            name: 'angular',
-            enforce: 'pre',
-            async resolveId(source, importer) {
-              if (
-                importer &&
-                source[0] === '.' &&
-                importer.startsWith(virtualProjectRoot)
-              ) {
-                // Remove query if present
-                const [importerFile] = importer.split('?', 1);
-
-                source =
-                  '/' +
-                  normalizePath(
-                    join(
-                      dirname(relative(virtualProjectRoot, importerFile)),
-                      source
-                    )
-                  );
-              }
-
-              const [file] = source.split('?', 1);
-              if (outputFiles.has(join(virtualProjectRoot, file))) {
-                return join(virtualProjectRoot, source);
-              }
-
-              if (
-                file.endsWith('spec.ts') ||
-                file.endsWith(options.setupFile)
-              ) {
-                const page = file
-                  .split('/')
-                  .pop()
-                  ?.replace('.ts', '.js') as string;
-                if (outputFiles.has(join(virtualProjectRoot, page))) {
-                  return join(virtualProjectRoot, page);
-                }
-              }
-
-              return undefined;
-            },
-            load(id) {
-              let [file] = id.split('?', 1);
-              file = file.replace('.ts', '.js');
-              let relativeFile = file;
-
-              if (
-                basename(file).endsWith(
-                  basename(options.setupFile.replace('.ts', '.js'))
-                )
-              ) {
-                relativeFile = join(
-                  virtualProjectRoot,
-                  basename(options.setupFile.replace('.ts', '.js'))
-                );
-              }
-
-              const codeContents = outputFiles.get(relativeFile)?.contents;
-              if (codeContents === undefined) {
-                return;
-              }
-
-              const code = Buffer.from(codeContents).toString('utf-8');
-              const mapContents = outputFiles.get(
-                relativeFile + '.map'
-              )?.contents;
-
-              return {
-                // Remove source map URL comments from the code if a sourcemap is present.
-                // Vite will inline and add an additional sourcemap URL for the sourcemap.
-                code: mapContents
-                  ? code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
-                  : code,
-                map: mapContents && Buffer.from(mapContents).toString('utf-8'),
-              };
-            },
-          },
-        ],
-        test: {
-          root: projectRoot,
-          globals: options.globals,
-          environment: options.environment,
-          setupFiles: [options.setupFile],
-          include: options.include,
-          watch: options.watch,
-        },
-      };
+      const config: UserConfig = getViteConfig(
+        projectRoot,
+        virtualProjectRoot,
+        outputFiles,
+        options
+      );
 
       if (options.watch) {
         startVitest('test', [], undefined, config).then(
@@ -191,6 +106,99 @@ export default async function* runExecutor(
       };
     }
   }
+}
+
+function getViteConfig(
+  projectRoot: string,
+  virtualProjectRoot: string,
+  outputFiles: Map<string, BuildOutputFile>,
+  options: TestSchema
+) {
+  const config: UserConfig = {
+    root: projectRoot,
+    plugins: [
+      {
+        name: 'angular',
+        enforce: 'pre',
+        async resolveId(source, importer) {
+          if (
+            importer &&
+            source[0] === '.' &&
+            importer.startsWith(virtualProjectRoot)
+          ) {
+            // Remove query if present
+            const [importerFile] = importer.split('?', 1);
+
+            source =
+              '/' +
+              normalizePath(
+                join(
+                  dirname(relative(virtualProjectRoot, importerFile)),
+                  source
+                )
+              );
+          }
+
+          const [file] = source.split('?', 1);
+          if (outputFiles.has(join(virtualProjectRoot, file))) {
+            return join(virtualProjectRoot, source);
+          }
+
+          if (file.endsWith('spec.ts') || file.endsWith(options.setupFile)) {
+            const page = file.split('/').pop()?.replace('.ts', '.js') as string;
+            if (outputFiles.has(join(virtualProjectRoot, page))) {
+              return join(virtualProjectRoot, page);
+            }
+          }
+
+          return undefined;
+        },
+        load(id) {
+          let [file] = id.split('?', 1);
+          file = file.replace('.ts', '.js');
+          let relativeFile = file;
+
+          if (
+            basename(file).endsWith(
+              basename(options.setupFile.replace('.ts', '.js'))
+            )
+          ) {
+            relativeFile = join(
+              virtualProjectRoot,
+              basename(options.setupFile.replace('.ts', '.js'))
+            );
+          }
+
+          const codeContents = outputFiles.get(relativeFile)?.contents;
+          if (codeContents === undefined) {
+            return;
+          }
+
+          const code = Buffer.from(codeContents).toString('utf-8');
+          const mapContents = outputFiles.get(relativeFile + '.map')?.contents;
+
+          return {
+            // Remove source map URL comments from the code if a sourcemap is present.
+            // Vite will inline and add an additional sourcemap URL for the sourcemap.
+            code: mapContents
+              ? code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
+              : code,
+            map: mapContents && Buffer.from(mapContents).toString('utf-8'),
+          };
+        },
+      },
+    ],
+    test: {
+      root: projectRoot,
+      globals: options.globals,
+      environment: options.environment,
+      setupFiles: [options.setupFile],
+      include: options.include,
+      watch: options.watch,
+    },
+  };
+
+  return config;
 }
 
 async function getTestFiles(projectRoot: string, options: TestSchema) {
