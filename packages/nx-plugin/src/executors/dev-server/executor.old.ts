@@ -47,7 +47,11 @@ export default async function* runExecutor(
     entryPoints: new Set([
       'apps/analog-app/src/main.ts',
       'apps/analog-app/src/main.server.ts',
-      ...endpointFiles,
+      ...endpointFiles.map((file) => {
+        const res = relative(process.cwd(), file);
+        console.log(res);
+        return res;
+      }),
     ]),
     index: false,
     outputPath: 'dist/apps/analog-app/client',

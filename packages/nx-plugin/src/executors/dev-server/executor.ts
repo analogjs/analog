@@ -48,7 +48,8 @@ export default async function* runExecutor(
     typeof import('nitropack')
   >('nitropack');
 
-  const rootDir = 'apps/analog-app';
+  const rootDir =
+    context.projectsConfigurations.projects[context.projectName].root;
   let nitroConfig: NitroConfig = {
     rootDir,
     logLevel: 3,
