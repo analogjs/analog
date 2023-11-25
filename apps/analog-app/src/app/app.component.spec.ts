@@ -1,22 +1,9 @@
-// import '@angular/compiler';
-// import '@analogjs/vite-plugin-angular/setup-vitest';
-
-import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
-import { getTestBed } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AppComponent } from './app.component';
 import { TopBarComponent } from '@analogjs/top-bar';
 
-getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
-);
-
-describe('AppComponent', () => {
+describe('AppComponents', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [

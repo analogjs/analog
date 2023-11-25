@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`AppComponent > should create the app 1`] = `
+exports[`AppComponents > should create the app 1`] = `
 <analogjs-root>
   <analogjs-top-bar
     _nghost-a-c3153525609=""

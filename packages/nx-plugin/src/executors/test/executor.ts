@@ -5,9 +5,9 @@ import type { BuildOutputFile } from '@angular-devkit/build-angular/src/tools/es
 import { createBuilderContext } from 'nx/src/adapter/ngcli-adapter';
 
 import { Options as FastGlobOptions } from 'fast-glob';
-import { normalizePath, InlineConfig } from 'vite';
-import { dirname, join, relative } from 'node:path';
-import type { Vitest } from 'vitest/node';
+import { normalizePath, UserConfig } from 'vite';
+import { basename, dirname, join, relative } from 'node:path';
+import { type Vitest } from 'vitest/node';
 
 import { TestSchema } from './schema';
 
@@ -33,28 +33,18 @@ export default async function* runExecutor(
   const { startVitest } = await (Function(
     'return import("vitest/node")'
   )() as Promise<typeof import('vitest/node')>);
-  const fg = require('fast-glob');
   const projectRoot =
     context.projectsConfigurations.projects[context.projectName].root;
-  const fgOptions: FastGlobOptions = {
-    cwd: projectRoot,
-    ignore: ['node_modules/**'].concat(options.exclude),
-  };
-  const included = await Promise.all(
-    options.include.map((pattern) => fg(pattern, fgOptions) as string[])
-  );
-
-  const testFiles = Array.from(new Set([...included.flat()])).map((file) =>
-    join(projectRoot, file)
-  );
+  const testFiles = await getTestFiles(projectRoot, options);
   const outputFiles = new Map<string, BuildOutputFile>();
-  const buildConfig: ApplicationBuilderInternalOptions = {
+
+  const testConfig: ApplicationBuilderInternalOptions = {
     aot: false,
     entryPoints: new Set([...testFiles, join(projectRoot, options.setupFile)]),
     index: false,
-    outputPath: '',
+    outputPath: `dist/${projectRoot}/.analog/vitest`,
     tsConfig: options.tsConfig,
-    progress: false,
+    progress: true,
     watch: options.watch,
     optimization: false,
     sourceMap: {
@@ -73,7 +63,7 @@ export default async function* runExecutor(
   });
 
   for await (const result of buildApplicationInternal(
-    buildConfig,
+    testConfig,
     builderContext,
     { write: false }
   )) {
@@ -83,11 +73,12 @@ export default async function* runExecutor(
         outputFiles.set(ofile, file);
       }
     }
+
     if (server) {
       server.server.moduleGraph.invalidateAll();
       server.start();
     } else {
-      const config: InlineConfig = {
+      const config: UserConfig = {
         root: projectRoot,
         plugins: [
           {
@@ -117,11 +108,14 @@ export default async function* runExecutor(
                 return join(virtualProjectRoot, source);
               }
 
-              if (file.endsWith('spec.ts')) {
+              if (
+                file.endsWith('spec.ts') ||
+                file.endsWith(options.setupFile)
+              ) {
                 const page = file
                   .split('/')
                   .pop()
-                  ?.replace('.spec.ts', '.spec.js') as string;
+                  ?.replace('.ts', '.js') as string;
                 if (outputFiles.has(join(virtualProjectRoot, page))) {
                   return join(virtualProjectRoot, page);
                 }
@@ -133,13 +127,20 @@ export default async function* runExecutor(
               let [file] = id.split('?', 1);
               file = file.replace('.ts', '.js');
               let relativeFile = file;
-              if (file.endsWith('test-setup.js')) {
-                relativeFile = join(virtualProjectRoot, '/test-setup.js');
+
+              if (
+                basename(file).endsWith(
+                  basename(options.setupFile.replace('.ts', '.js'))
+                )
+              ) {
+                relativeFile = join(
+                  virtualProjectRoot,
+                  basename(options.setupFile.replace('.ts', '.js'))
+                );
               }
 
               const codeContents = outputFiles.get(relativeFile)?.contents;
               if (codeContents === undefined) {
-                // console.log('no contents', relativeFile);
                 return;
               }
 
@@ -160,18 +161,51 @@ export default async function* runExecutor(
           },
         ],
         test: {
+          root: projectRoot,
           globals: options.globals,
           environment: options.environment,
           setupFiles: [options.setupFile],
           include: options.include,
+          watch: options.watch,
         },
       };
 
-      server = await startVitest('test', [], undefined, config);
+      if (options.watch) {
+        startVitest('test', [], undefined, config).then(
+          (vitest) => (server = vitest)
+        );
+      } else {
+        const server = await startVitest('test', [], undefined, config);
+
+        const success = server.state.getCountOfFailedTests() === 0;
+
+        yield {
+          success,
+        };
+
+        return;
+      }
 
       yield {
         success: true,
-      } as unknown;
+      };
     }
   }
+}
+
+async function getTestFiles(projectRoot: string, options: TestSchema) {
+  const fg = require('fast-glob');
+
+  const fgOptions: FastGlobOptions = {
+    cwd: projectRoot,
+    ignore: ['node_modules/**'].concat(options.exclude),
+  };
+  const included = await Promise.all(
+    options.include.map((pattern) => fg(pattern, fgOptions) as string[])
+  );
+
+  const testFiles = Array.from(new Set([...included.flat()])).map((file) =>
+    join(projectRoot, file)
+  );
+  return testFiles;
 }
