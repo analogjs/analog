@@ -6,7 +6,7 @@
   "prefix": "analogjs",
   "targets": {
     "build": {
-      "executor": "@angular-devkit/build-angular:application",
+      "executor": "@analogjs/platform:application",
       "options": {
         "outputPath": "dist/apps/analog-app/client",
         "index": "apps/analog-app/index.html",
@@ -91,7 +91,7 @@
       "executor": "@nx/vite:test",
       "outputs": ["{projectRoot}/coverage"]
     },
-    "application": {
+    "dev-server": {
       "executor": "@analogjs/platform:dev-server",
       "configurations": {
         "production": {

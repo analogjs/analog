@@ -2,16 +2,11 @@ import { ExecutorContext } from '@nx/devkit';
 import { createBuilderContext } from 'nx/src/adapter/ngcli-adapter';
 import {
   DevServerBuilderOutput,
-  executeDevServerBuilder,
-  DevServerBuilderOptions,
   ApplicationBuilderOptions,
   buildApplication,
 } from '@angular-devkit/build-angular';
 
-import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
-import { NitroConfig } from 'nitropack';
-import { Connect, normalizePath } from 'vite';
-import { createEvent } from 'h3';
+import { PageRoutesGlob } from '../utils/routes-plugin';
 
 export default async function* runExecutor(
   options: ApplicationBuilderOptions,
@@ -40,16 +35,19 @@ export default async function* runExecutor(
     return Promise.resolve(appBuilderOptions as any);
   };
 
-  let deferred: () => void;
-  builderContext.addTeardown(async () => {
-    deferred?.();
-  });
+  const rootDir =
+    context.projectsConfigurations.projects[context.projectName].root;
 
-  // buildApplication(options, builderContext, )
+  for await (const _ of buildApplication(options, builderContext, [
+    PageRoutesGlob({
+      projectRoot: rootDir,
+      pageGlobs: [`${rootDir}/src/app/pages/**/*.page.ts`],
+    }),
+  ])) {
+    // Nothing to do for each event, just wait for the whole build.
+  }
 
   yield {
     success: true,
   } as unknown as DevServerBuilderOutput;
-
-  await new Promise<void>((resolve) => (deferred = resolve));
 }
