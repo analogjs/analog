@@ -20,7 +20,8 @@
         ],
         "styles": ["apps/analog-app/src/styles.css"],
         "inlineStyleLanguage": "scss",
-        "ssr": true
+        "ssr": true,
+        "allowedCommonJsDependencies": ["front-matter", "prismjs"]
       },
       "configurations": {
         "production": {
