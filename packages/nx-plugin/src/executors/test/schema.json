@@ -17,7 +17,7 @@
       "items": {
         "type": "string"
       },
-      "default": [],
+      "default": ["node_modules", "dist", ".idea", ".git", ".cache"],
       "description": "Globs of files to exclude, relative to the project root."
     },
     "setupFile": {
@@ -30,20 +30,10 @@
       "description": "The name of the TypeScript configuration file.",
       "default": "tsconfig.spec.json"
     },
-    "globals": {
-      "type": "boolean",
-      "default": true,
-      "description": "Define vitest functions as globals"
-    },
     "watch": {
       "type": "boolean",
       "default": false,
       "description": "Run the tests in watch mode"
-    },
-    "environment": {
-      "type": "string",
-      "description": "The testing environment.",
-      "default": "jsdom"
     }
   },
   "additionalProperties": false,

@@ -189,11 +189,8 @@ function getViteConfig(
       },
     ],
     test: {
-      root: projectRoot,
-      globals: options.globals,
-      environment: options.environment,
-      setupFiles: [options.setupFile],
       include: options.include,
+      exclude: options.exclude,
       watch: options.watch,
     },
   };
