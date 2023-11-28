@@ -9,27 +9,7 @@ Analog supports deployment to many providers with little or no additional config
 
 Analog supports deploying on [Netlify](https://netlify.com/) with minimal configuration.
 
-For the Netlify site, set the `Publish directory` to `dist/analog/public` and configure the output as below in the `vite.config.ts`. This deploys the static assets, and the server as a Netlify function.
-
-```ts [vite.config.ts]
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
-// https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  /// ...other config
-  plugins: [
-    analog({
-      nitro: {
-        output: {
-          dir: './dist/analog',
-          serverDir: '{{ rootDir }}/.netlify/functions-internal',
-        },
-      },
-    }),
-  ],
-}));
-```
+In the build settings of your Netlify project, set the `Publish directory` to `dist/analog/public` to deploy the static assets and the `Functions directory` to `dist/analog` to deploy the server.
 
 ## Vercel
 
