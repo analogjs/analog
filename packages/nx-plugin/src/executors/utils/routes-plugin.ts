@@ -11,7 +11,7 @@ export const PageRoutesGlob = ({
   setup: (build) => {
     const fastGlob = require('fast-glob');
     build.onResolve({ filter: /\*/ }, async (args) => {
-      console.log(args.path);
+      // console.log(args.path);
       if (args.resolveDir === '') {
         return; // Ignore unresolvable paths
       }

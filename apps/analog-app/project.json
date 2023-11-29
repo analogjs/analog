@@ -48,21 +48,17 @@
       "defaultConfiguration": "production"
     },
     "serve": {
-      "executor": "@nx/vite:dev-server",
-      "defaultConfiguration": "development",
-      "options": {
-        "buildTarget": "analog-app:build",
-        "port": 3000
-      },
+      "executor": "@analogjs/platform:dev-server",
       "configurations": {
-        "development": {
-          "buildTarget": "analog-app:build:development",
-          "hmr": true
-        },
         "production": {
           "buildTarget": "analog-app:build:production"
+        },
+        "development": {
+          "buildTarget": "analog-app:build:development",
+          "port": 3000
         }
-      }
+      },
+      "defaultConfiguration": "development"
     },
     "serve-nitro": {
       "executor": "nx:run-commands",
@@ -90,19 +86,6 @@
     "tests": {
       "executor": "@nx/vite:test",
       "outputs": ["{projectRoot}/coverage"]
-    },
-    "dev-server": {
-      "executor": "@analogjs/platform:dev-server",
-      "configurations": {
-        "production": {
-          "buildTarget": "analog-app:build:production"
-        },
-        "development": {
-          "buildTarget": "analog-app:build:development",
-          "port": 3000
-        }
-      },
-      "defaultConfiguration": "development"
     },
 
     "nitro": {

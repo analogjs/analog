@@ -19,10 +19,10 @@ export default async function* runExecutor(
 ) {
   const builderContext = await createBuilderContext(
     {
-      builderName: '@angular-devkit/build-angular:application',
-      description: 'Build a browser application',
+      builderName: '@angular-devkit/build-angular:dev-server',
+      description: 'Serve an application',
       optionSchema: await import(
-        '@angular-devkit/build-angular/src/builders/application/schema.json'
+        '@angular-devkit/build-angular/src/builders/dev-server/schema.json'
       ),
     },
     context
