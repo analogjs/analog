@@ -7,7 +7,7 @@ import { Product } from './products';
 })
 export class CartService {
   items: Product[] = [];
-  private readonly apiURL = import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL'];
+  private readonly apiURL = 'http://localhost:3000';
 
   constructor(private http: HttpClient) {}
 

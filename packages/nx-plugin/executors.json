@@ -38,7 +38,7 @@
       "description": "Test with Vitest"
     },
     "dev-server": {
-      "implementation": "./src/executors/dev-server/executor.old",
+      "implementation": "./src/executors/dev-server/executor",
       "schema": "./src/executors/dev-server/schema.json",
       "description": "dev-server executor"
     },

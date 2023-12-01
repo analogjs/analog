@@ -81,7 +81,7 @@ export default async function* runExecutor(
     if (result.success && Array.isArray(result.outputFiles)) {
       for (const file of result.outputFiles) {
         const ofile = join(virtualProjectRoot, file.path);
-        console.log(ofile);
+        // console.log(ofile);
         outputFiles.set(ofile, file);
       }
     }

@@ -8,16 +8,16 @@ import { toMarkdownModule } from './markdown-helpers';
 import { APP_DIR, ENDPOINT_EXTENSION } from './constants';
 import { ANALOG_META_KEY } from './endpoints';
 
-const FILES = import.meta.glob<RouteExport>([
-  '/app/routes/**/*.ts',
-  '/src/app/routes/**/*.ts',
-  '/src/app/pages/**/*.page.ts',
-]);
+// const FILES = import.meta.glob<RouteExport>([
+//   '/app/routes/**/*.ts',
+//   '/src/app/routes/**/*.ts',
+//   '/src/app/pages/**/*.page.ts',
+// ]);
 
-const CONTENT_FILES = import.meta.glob<string>(
-  ['/src/app/routes/**/*.md', '/src/app/pages/**/*.md'],
-  { as: 'raw' }
-);
+// const CONTENT_FILES = import.meta.glob<string>(
+//   ['/src/app/routes/**/*.md', '/src/app/pages/**/*.md'],
+//   { as: 'raw' }
+// );
 
 export type Files = Record<string, () => Promise<RouteExport | string>>;
 
@@ -224,4 +224,4 @@ function deprioritizeSegment(segment: string): string {
   return segment.replace(':', '~~').replace('**', '~~~~');
 }
 
-export const routes: Route[] = createRoutes({ ...FILES, ...CONTENT_FILES });
+export const routes: Route[] = []; // createRoutes({ ...FILES, ...CONTENT_FILES });

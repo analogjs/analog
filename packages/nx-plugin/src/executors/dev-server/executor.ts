@@ -9,14 +9,15 @@ import {
 
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
 import { NitroConfig } from 'nitropack';
-import { Connect, normalizePath } from 'vite';
 import { createEvent } from 'h3';
+import type { Connect } from 'vite';
 import { PageRoutesGlob } from '../utils/routes-plugin';
 
 export default async function* runExecutor(
   options: DevServerBuilderOptions,
   context: ExecutorContext
 ) {
+  const { normalizePath } = await import('vite');
   const builderContext = await createBuilderContext(
     {
       builderName: '@angular-devkit/build-angular:dev-server',
@@ -83,7 +84,10 @@ export default async function* runExecutor(
     buildPlugins: [
       PageRoutesGlob({
         projectRoot: rootDir,
-        pageGlobs: [`${rootDir}/src/app/pages/**/*.page.ts`],
+        pageGlobs: [
+          `${rootDir}/src/app/pages/**/*.page.ts`,
+          `${rootDir}/src/app/pages/**/*.md`,
+        ],
       }),
     ],
   }).subscribe();

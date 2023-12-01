@@ -1,5 +1,5 @@
 import { Plugin, UserConfig, normalizePath } from 'vite';
-import { BuilderContext, Target } from '@angular-devkit/architect';
+// import { BuilderContext, Target } from '@angular-devkit/architect';
 import {
   buildApplication,
   buildApplicationInternal,
@@ -22,7 +22,7 @@ export function applicationPlugin(): Plugin {
       );
     },
     async buildStart() {
-      const builderContext: BuilderContext = {
+      const builderContext: any = {
         id: 0,
         builder: {
           builderName: 'browser-esbuild',
@@ -57,7 +57,7 @@ export function applicationPlugin(): Plugin {
             metadata: {},
           });
         },
-        getBuilderNameForTarget: function (target: Target): Promise<string> {
+        getBuilderNameForTarget: function (target: any): Promise<string> {
           // throw new Error("Function not implemented.");
           return Promise.resolve('');
         },

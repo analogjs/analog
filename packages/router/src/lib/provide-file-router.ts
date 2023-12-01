@@ -6,9 +6,10 @@ import {
 } from '@angular/core';
 import { provideRouter, RouterFeatures } from '@angular/router';
 
-import { routes } from './routes';
+// import { routes } from './routes';
 import { updateMetaTagsOnRouteChange } from './meta-tags';
-
+// @ts-ignore
+import routes from 'pages/**/*';
 /**
  * Sets up providers for the Angular router, and registers
  * file-based routes. Additional features can be provided

@@ -57,7 +57,7 @@ export default async function runExecutor(options: NitroExecutorSchema) {
       '#analog/index': normalizePath(
         path.join(
           workspaceRoot,
-          'dist/apps/analog-app/client/browser/index.html'
+          'dist/apps/analog-app/client/server/index.server.html'
         )
       ),
     },
