@@ -92,7 +92,14 @@
     },
 
     "nitro": {
-      "executor": "@analogjs/platform:nitro"
+      "executor": "@analogjs/platform:nitro",
+      "options": {
+        "buildOutputPath": "dist/apps/analog-app/client",
+        "outputPath": "dist/apps/analog-app/analog",
+        "staticBuildOutputPath": "dist/apps/analog-app/analog/public",
+        "serverBuildOutputPath": "dist/apps/analog-app/analog/server",
+        "runtimeRenderer": "packages/vite-plugin-nitro/src/lib/runtime/renderer"
+      }
     },
     "vitest": {
       "executor": "@analogjs/platform:test",

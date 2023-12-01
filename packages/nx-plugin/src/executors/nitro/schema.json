@@ -4,6 +4,33 @@
   "title": "Nitro executor",
   "description": "",
   "type": "object",
-  "properties": {},
-  "required": []
+  "properties": {
+    "preset": {
+      "type": "string",
+      "description": "Build preset.",
+      "default": "node-server"
+    },
+    "buildOutputPath": {
+      "type": "string",
+      "description": "Client build output directory."
+    },
+    "outputPath": {
+      "type": "string",
+      "description": "Build output directory."
+    },
+    "staticBuildOutputPath": {
+      "type": "string",
+      "description": "Build output directory."
+    },
+    "serverBuildOutputPath": {
+      "type": "string",
+      "description": "Build output directory."
+    }
+  },
+  "required": [
+    "buildOutputPath",
+    "outputPath",
+    "staticBuildOutputPath",
+    "serverBuildOutputPath"
+  ]
 }
