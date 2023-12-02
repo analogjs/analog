@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AppComponents should create the app 1`] = `
+<app-root>
+  <analogjs-top-bar>
+    <a
+      routerlink="/"
+    >
+      <h1>
+        My Store
+      </h1>
+    </a>
+    <a
+      class="button fancy-button"
+      routerlink="/cart"
+    >
+      <i
+        class="material-icons"
+      >
+        shopping_cart
+      </i>
+      Checkout
+    </a>
+  </analogjs-top-bar><div
+    class="container"
+  >
+    <router-outlet />
+  </div>
+</app-root>
+`;

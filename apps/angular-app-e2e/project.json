@@ -4,7 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/angular-app-e2e/src",
   "targets": {
-    "e2e": {
+    "e2es": {
       "executor": "@nx/cypress:cypress",
       "options": {
         "cypressConfig": "apps/angular-app-e2e/cypress.config.ts",

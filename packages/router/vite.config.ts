@@ -7,6 +7,26 @@ import { offsetFromRoot } from '@nx/devkit';
 export default defineConfig(({ mode }) => {
   return {
     root: 'src',
+    plugins: [
+      {
+        name: 'analogjs-pages-esbuild-routes-plugin',
+        enforce: 'pre',
+        resolveId(id) {
+          if (id === 'analog-pages/**/*') {
+            return '\0' + id;
+          }
+
+          return;
+        },
+        load(id) {
+          if (id.includes('analog-pages/**/*')) {
+            return `export default undefined;`;
+          }
+
+          return undefined;
+        },
+      },
+    ],
     test: {
       globals: true,
       environment: 'jsdom',
