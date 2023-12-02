@@ -10,7 +10,7 @@ import { BuildOutputFile } from '@angular-devkit/build-angular/src/tools/esbuild
 import { AddressInfo } from 'node:net';
 import { dirname, join, relative, resolve } from 'node:path';
 
-import { PageRoutesGlob } from '../utils/routes-plugin';
+import { PageRoutesGlob } from '../../plugins/routes-plugin';
 import { DevServerExecutorSchema } from './schema';
 
 export default async function* runExecutor(

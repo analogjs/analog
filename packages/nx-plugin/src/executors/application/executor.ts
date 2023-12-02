@@ -6,7 +6,7 @@ import {
   buildApplication,
 } from '@angular-devkit/build-angular';
 
-import { PageRoutesGlob } from '../utils/routes-plugin';
+import { PageRoutesGlob } from '../../plugins/routes-plugin';
 
 export default async function* runExecutor(
   options: ApplicationBuilderOptions,

@@ -7,17 +7,24 @@ import { toRouteConfig } from './route-config';
 import { toMarkdownModule } from './markdown-helpers';
 import { APP_DIR, ENDPOINT_EXTENSION } from './constants';
 import { ANALOG_META_KEY } from './endpoints';
+// @ts-ignore
+import pageImports from 'analog-pages/**/*';
 
-// const FILES = import.meta.glob<RouteExport>([
-//   '/app/routes/**/*.ts',
-//   '/src/app/routes/**/*.ts',
-//   '/src/app/pages/**/*.page.ts',
-// ]);
+let FILES: Files = pageImports;
+let CONTENT_FILES: Files = {};
 
-// const CONTENT_FILES = import.meta.glob<string>(
-//   ['/src/app/routes/**/*.md', '/src/app/pages/**/*.md'],
-//   { as: 'raw' }
-// );
+if (pageImports === undefined) {
+  FILES = import.meta.glob<RouteExport>([
+    '/app/routes/**/*.ts',
+    '/src/app/routes/**/*.ts',
+    '/src/app/pages/**/*.page.ts',
+  ]);
+
+  CONTENT_FILES = import.meta.glob<string>(
+    ['/src/app/routes/**/*.md', '/src/app/pages/**/*.md'],
+    { as: 'raw' }
+  );
+}
 
 export type Files = Record<string, () => Promise<RouteExport | string>>;
 
@@ -224,4 +231,4 @@ function deprioritizeSegment(segment: string): string {
   return segment.replace(':', '~~').replace('**', '~~~~');
 }
 
-export const routes: Route[] = []; // createRoutes({ ...FILES, ...CONTENT_FILES });
+export const routes: Route[] = createRoutes({ ...FILES, ...CONTENT_FILES });

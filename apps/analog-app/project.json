@@ -20,7 +20,9 @@
         ],
         "styles": ["apps/analog-app/src/styles.css"],
         "inlineStyleLanguage": "scss",
-        "ssr": true,
+        "ssr": {
+          "entry": "apps/analog-app/server.ts"
+        },
         "allowedCommonJsDependencies": ["front-matter", "prismjs"]
       },
       "configurations": {
@@ -61,7 +63,49 @@
           "port": 3000
         }
       },
-      "defaultConfiguration": "development"
+      "defaultConfiguration": "development",
+      "dependsOn": ["^build"]
+    },
+    "vite-build": {
+      "executor": "@nx/vite:build",
+      "outputs": [
+        "{options.outputPath}",
+        "{workspaceRoot}/dist/apps/analog-app/.nitro",
+        "{workspaceRoot}/dist/apps/analog-app/ssr",
+        "{workspaceRoot}/dist/apps/analog-app/analog"
+      ],
+      "options": {
+        "configFile": "apps/analog-app/vite.config.ts",
+        "outputPath": "dist/apps/analog-app/client"
+      },
+      "defaultConfiguration": "production",
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "sourcemap": false,
+          "mode": "production"
+        }
+      }
+    },
+    "vite-serve": {
+      "executor": "@nx/vite:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "analog-app:build-vite",
+        "port": 3000
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "analog-app:vite-build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "analog-app:vite-build:production"
+        }
+      },
+      "dependsOn": ["^build"]
     },
     "serve-nitro": {
       "executor": "nx:run-commands",
@@ -99,7 +143,8 @@
         "staticBuildOutputPath": "dist/apps/analog-app/analog/public",
         "serverBuildOutputPath": "dist/apps/analog-app/analog/server",
         "runtimeRenderer": "packages/vite-plugin-nitro/src/lib/runtime/renderer"
-      }
+      },
+      "dependsOn": ["build"]
     },
     "vitest": {
       "executor": "@analogjs/platform:test",

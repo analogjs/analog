@@ -34,9 +34,7 @@ export const PageRoutesGlob = ({
       ).sort();
 
       let importerCode = `
-        import { createRoutes } from '@analogjs/router';
-
-        const pages = {${(files as string[])
+        const pageImports = {${(files as string[])
           .map((page) => {
             return `'${page.replace(
               projectRoot,
@@ -46,8 +44,7 @@ export const PageRoutesGlob = ({
           .join(',')}
         };
       
-        const routes = createRoutes(pages);
-        export default routes;
+        export default pageImports;
       `;
 
       return { contents: importerCode, resolveDir: args.pluginData.resolveDir };

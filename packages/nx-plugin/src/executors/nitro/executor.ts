@@ -11,8 +11,9 @@ export default async function runExecutor(
 ) {
   // console.log('Executor ran for Nitro', options);
   const { normalizePath } = await import('vite');
-  const { createNitro, build, prepare, copyPublicAssets, prerender } =
-    await loadEsmModule<typeof import('nitropack')>('nitropack');
+  const { createNitro, build, prepare, copyPublicAssets } = await loadEsmModule<
+    typeof import('nitropack')
+  >('nitropack');
 
   const projectConfig =
     context.projectsConfigurations.projects[context.projectName];
@@ -21,7 +22,7 @@ export default async function runExecutor(
   const rootDir = projectConfig.root;
   const nitroConfig: NitroConfig = {
     rootDir,
-    logLevel: 3,
+    logLevel: 0,
     srcDir: normalizePath(`${rootDir}/src/server`),
     scanDirs: [normalizePath(`${rootDir}/src/server`)],
     output: {
@@ -33,6 +34,9 @@ export default async function runExecutor(
         path.resolve(workspaceRoot, options.serverBuildOutputPath)
       ),
     },
+    buildDir: normalizePath(
+      path.resolve(workspaceRoot, options.buildOutputPath, '.nitro')
+    ),
     publicAssets: [
       { dir: path.join(workspaceRoot, options.buildOutputPath, 'browser') },
     ],
@@ -44,22 +48,14 @@ export default async function runExecutor(
     ],
     handlers: [
       {
-        handler: path.join(
-          workspaceRoot,
-          'packages/vite-plugin-nitro/src/lib/runtime/api-middleware'
-        ),
+        handler: path.join(__dirname, './runtime/api-middleware'),
         middleware: true,
       },
     ],
-    renderer: path.join(workspaceRoot, options.runtimeRenderer),
+    renderer: path.join(__dirname, './runtime/renderer'),
     alias: {
       '#analog/ssr': normalizePath(
-        path.join(
-          workspaceRoot,
-          options.buildOutputPath,
-          'server',
-          'main.server'
-        )
+        path.join(workspaceRoot, options.buildOutputPath, 'server', 'server')
       ),
       '#analog/index': normalizePath(
         path.join(

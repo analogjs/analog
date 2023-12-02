@@ -11,7 +11,7 @@ import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm'
 import { NitroConfig } from 'nitropack';
 import { createEvent } from 'h3';
 import type { Connect } from 'vite';
-import { PageRoutesGlob } from '../utils/routes-plugin';
+import { PageRoutesGlob } from '../../plugins/routes-plugin';
 
 export default async function* runExecutor(
   options: DevServerBuilderOptions,

@@ -11,6 +11,24 @@ import { normalizePath, Plugin } from 'vite';
 export function routerPlugin(): Plugin[] {
   return [
     {
+      name: 'analogjs-pages-esbuild-routes-plugin',
+      enforce: 'pre',
+      resolveId(id) {
+        if (id === 'analog-pages/**/*') {
+          return '\0' + id;
+        }
+
+        return;
+      },
+      load(id) {
+        if (id.includes('analog-pages/**/*')) {
+          return `export default undefined;`;
+        }
+
+        return undefined;
+      },
+    },
+    {
       name: 'analogjs-router-plugin',
       config() {
         return {
