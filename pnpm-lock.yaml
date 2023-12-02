@@ -41,6 +41,9 @@ importers:
       '@angular/router':
         specifier: ^17.0.0
         version: 17.0.0(@angular/common@17.0.0)(@angular/core@17.0.0)(@angular/platform-browser@17.0.0)(rxjs@7.8.0)
+      '@angular/ssr':
+        specifier: ^17.0.0
+        version: 17.0.5(@angular/common@17.0.0)(@angular/core@17.0.0)
       '@astrojs/mdx':
         specifier: ^1.1.0
         version: 1.1.0(astro@3.0.8)
@@ -71,6 +74,9 @@ importers:
       destr:
         specifier: ^2.0.1
         version: 2.0.1
+      express:
+        specifier: ~4.18.2
+        version: 4.18.2
       front-matter:
         specifier: ^4.0.2
         version: 4.0.2
@@ -125,7 +131,7 @@ importers:
         version: 0.1700.0(chokidar@3.5.3)
       '@angular-devkit/build-angular':
         specifier: ^17.0.0
-        version: 17.0.0(@angular/compiler-cli@17.0.0)(@angular/platform-server@17.0.0)(@swc/core@1.3.99)(@types/node@18.11.18)(jest-environment-jsdom@29.5.0)(jest@29.5.0)(ng-packagr@17.0.0)(stylus@0.59.0)(tailwindcss@3.0.2)(typescript@5.2.2)
+        version: 17.0.0(@angular/compiler-cli@17.0.0)(@angular/platform-server@17.0.0)(@swc/core@1.3.99)(@types/express@4.17.14)(@types/node@18.11.18)(jest-environment-jsdom@29.5.0)(jest@29.5.0)(ng-packagr@17.0.0)(stylus@0.59.0)(tailwindcss@3.0.2)(typescript@5.2.2)
       '@angular-devkit/core':
         specifier: ^17.0.0
         version: 17.0.0(chokidar@3.5.3)
@@ -207,6 +213,9 @@ importers:
       '@types/babel__core':
         specifier: ^7.20.0
         version: 7.20.0
+      '@types/express':
+        specifier: 4.17.14
+        version: 4.17.14
       '@types/jest':
         specifier: 29.4.4
         version: 29.4.4
@@ -282,6 +291,9 @@ importers:
       jest-environment-jsdom:
         specifier: ^29.5.0
         version: 29.5.0
+      jest-preset-angular:
+        specifier: ~13.1.4
+        version: 13.1.4(@angular-devkit/build-angular@17.0.0)(@angular/compiler-cli@17.0.0)(@angular/core@17.0.0)(@angular/platform-browser-dynamic@17.0.0)(@babel/core@7.21.8)(jest@29.5.0)(typescript@5.2.2)
       jsdom:
         specifier: 22.1.0
         version: 22.1.0
@@ -573,7 +585,7 @@ packages:
     transitivePeerDependencies:
       - chokidar
 
-  /@angular-devkit/build-angular@17.0.0(@angular/compiler-cli@17.0.0)(@angular/platform-server@17.0.0)(@swc/core@1.3.99)(@types/node@18.11.18)(jest-environment-jsdom@29.5.0)(jest@29.5.0)(ng-packagr@17.0.0)(stylus@0.59.0)(tailwindcss@3.0.2)(typescript@5.2.2):
+  /@angular-devkit/build-angular@17.0.0(@angular/compiler-cli@17.0.0)(@angular/platform-server@17.0.0)(@swc/core@1.3.99)(@types/express@4.17.14)(@types/node@18.11.18)(jest-environment-jsdom@29.5.0)(jest@29.5.0)(ng-packagr@17.0.0)(stylus@0.59.0)(tailwindcss@3.0.2)(typescript@5.2.2):
     resolution: {integrity: sha512-hkV8k4moAnUquac2Dz5XPd5izDDgEF82NeUkSwizcTaqlJqYOdmWASMsXyVBzdrTmDtFKQiphfA96i7eo5MlvA==}
     engines: {node: ^18.13.0 || >=20.9.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
     peerDependencies:
@@ -1016,7 +1028,6 @@ packages:
       '@angular/core': 17.0.0(rxjs@7.8.0)(zone.js@0.14.0)
       '@angular/platform-browser': 17.0.0(@angular/animations@17.0.0)(@angular/common@17.0.0)(@angular/core@17.0.0)
       tslib: 2.6.2
-    dev: false
 
   /@angular/platform-browser@17.0.0(@angular/animations@17.0.0)(@angular/common@17.0.0)(@angular/core@17.0.0):
     resolution: {integrity: sha512-GIlgyMRWdJJeYexwtejbZ6cepdQ6UUOKEXVrIEIjLf23ROv5MpBdYu3ujt0eGngS4UiIEF2JkltTQRLnMPIQGg==}
@@ -1065,6 +1076,18 @@ packages:
       '@angular/core': 17.0.0(rxjs@7.8.0)(zone.js@0.14.0)
       '@angular/platform-browser': 17.0.0(@angular/animations@17.0.0)(@angular/common@17.0.0)(@angular/core@17.0.0)
       rxjs: 7.8.0
+      tslib: 2.6.2
+    dev: false
+
+  /@angular/ssr@17.0.5(@angular/common@17.0.0)(@angular/core@17.0.0):
+    resolution: {integrity: sha512-Snio+nw+Ur1p7utyZ68wK/0xajg7E+JZBZouA88L7U8f1++YQFJV80nAuRZNYQKIBN//IWoNW+xyM+FR15HQBA==}
+    peerDependencies:
+      '@angular/common': ^17.0.0
+      '@angular/core': ^17.0.0
+    dependencies:
+      '@angular/common': 17.0.0(@angular/core@17.0.0)(rxjs@7.8.0)
+      '@angular/core': 17.0.0(rxjs@7.8.0)(zone.js@0.14.0)
+      critters: 0.0.20
       tslib: 2.6.2
     dev: false
 
@@ -7208,7 +7231,7 @@ packages:
       esbuild:
         optional: true
     dependencies:
-      '@angular-devkit/build-angular': 17.0.0(@angular/compiler-cli@17.0.0)(@angular/platform-server@17.0.0)(@swc/core@1.3.99)(@types/node@18.11.18)(jest-environment-jsdom@29.5.0)(jest@29.5.0)(ng-packagr@17.0.0)(stylus@0.59.0)(tailwindcss@3.0.2)(typescript@5.2.2)
+      '@angular-devkit/build-angular': 17.0.0(@angular/compiler-cli@17.0.0)(@angular/platform-server@17.0.0)(@swc/core@1.3.99)(@types/express@4.17.14)(@types/node@18.11.18)(jest-environment-jsdom@29.5.0)(jest@29.5.0)(ng-packagr@17.0.0)(stylus@0.59.0)(tailwindcss@3.0.2)(typescript@5.2.2)
       '@angular-devkit/core': 17.0.0(chokidar@3.5.3)
       '@angular-devkit/schematics': 17.0.0
       '@nrwl/angular': 17.1.3(@angular-devkit/build-angular@17.0.0)(@angular-devkit/core@17.0.0)(@angular-devkit/schematics@17.0.0)(@schematics/angular@17.0.0)(@swc-node/register@1.6.8)(@swc/core@1.3.99)(@types/node@18.11.18)(cypress@13.2.0)(esbuild@0.19.5)(eslint@8.46.0)(nx@17.1.3)(rxjs@7.8.0)(ts-node@10.9.1)(typescript@5.2.2)
@@ -16169,6 +16192,41 @@ packages:
         optional: true
     dependencies:
       jest-resolve: 29.5.0
+
+  /jest-preset-angular@13.1.4(@angular-devkit/build-angular@17.0.0)(@angular/compiler-cli@17.0.0)(@angular/core@17.0.0)(@angular/platform-browser-dynamic@17.0.0)(@babel/core@7.21.8)(jest@29.5.0)(typescript@5.2.2):
+    resolution: {integrity: sha512-XKeWa8Qt7p37SzlJ85qEXgig06SgkfrzV057X2GSMqfz/HLJmTUjMFkHJKe65ZaQumNQWCcXpxXREr6EfZ9bow==}
+    engines: {node: ^14.15.0 || >=16.10.0}
+    peerDependencies:
+      '@angular-devkit/build-angular': '>=13.0.0 <18.0.0'
+      '@angular/compiler-cli': '>=13.0.0 <18.0.0'
+      '@angular/core': '>=13.0.0 <18.0.0'
+      '@angular/platform-browser-dynamic': '>=13.0.0 <18.0.0'
+      jest: ^29.0.0
+      typescript: '>=4.4'
+    dependencies:
+      '@angular-devkit/build-angular': 17.0.0(@angular/compiler-cli@17.0.0)(@angular/platform-server@17.0.0)(@swc/core@1.3.99)(@types/express@4.17.14)(@types/node@18.11.18)(jest-environment-jsdom@29.5.0)(jest@29.5.0)(ng-packagr@17.0.0)(stylus@0.59.0)(tailwindcss@3.0.2)(typescript@5.2.2)
+      '@angular/compiler-cli': 17.0.0(@angular/compiler@17.0.0)(typescript@5.2.2)
+      '@angular/core': 17.0.0(rxjs@7.8.0)(zone.js@0.14.0)
+      '@angular/platform-browser-dynamic': 17.0.0(@angular/common@17.0.0)(@angular/compiler@17.0.0)(@angular/core@17.0.0)(@angular/platform-browser@17.0.0)
+      bs-logger: 0.2.6
+      esbuild-wasm: 0.19.5
+      jest: 29.5.0(@types/node@18.11.18)(ts-node@10.9.1)
+      jest-environment-jsdom: 29.5.0
+      jest-util: 29.5.0
+      pretty-format: 29.5.0
+      ts-jest: 29.1.0(@babel/core@7.21.8)(esbuild@0.19.5)(jest@29.5.0)(typescript@5.2.2)
+      typescript: 5.2.2
+    optionalDependencies:
+      esbuild: 0.19.5
+    transitivePeerDependencies:
+      - '@babel/core'
+      - '@jest/types'
+      - babel-jest
+      - bufferutil
+      - canvas
+      - supports-color
+      - utf-8-validate
+    dev: true
 
   /jest-regex-util@29.4.3:
     resolution: {integrity: sha512-O4FglZaMmWXbGHSQInfXewIsd1LMn9p3ZXB/6r4FOkyhX2/iP/soMG98jGvk/A3HAN78+5VWcBGO0BJAPRh4kg==}
