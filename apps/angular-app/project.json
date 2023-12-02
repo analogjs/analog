@@ -10,7 +10,7 @@
       "executor": "@analogjs/platform:application",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/angular-app",
+        "outputPath": "dist/apps/angular-app/build",
         "index": "apps/angular-app/src/index.html",
         "browser": "apps/angular-app/src/main.ts",
         "polyfills": ["zone.js"],
@@ -94,6 +94,16 @@
         "buildTarget": "angular-app:build",
         "staticFilePath": "dist/apps/angular-app/browser"
       }
+    },
+    "nitro": {
+      "executor": "@analogjs/platform:nitro",
+      "options": {
+        "buildOutputPath": "dist/apps/angular-app/build",
+        "outputPath": "dist/apps/angular-app/analog",
+        "staticBuildOutputPath": "dist/apps/angular-app/analog/public",
+        "serverBuildOutputPath": "dist/apps/angular-app/analog/server"
+      },
+      "dependsOn": ["build"]
     }
   }
 }
