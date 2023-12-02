@@ -35,7 +35,7 @@ export default class ProductDetailsComponent implements OnInit {
     const productIdFromRoute = Number(routeParams.get('productId'));
 
     this.http
-      .get<Product[]>('http://localhost:3000/api/v1/products')
+      .get<Product[]>('http://localhost:55232/api/v1/products')
       .pipe(catchError(() => of([])))
       .subscribe((products) => {
         // Find the product that correspond with the id provided in route.

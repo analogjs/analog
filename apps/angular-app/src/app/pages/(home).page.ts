@@ -7,6 +7,7 @@ import { RouterLinkWithHref } from '@angular/router';
 import { ProductAlertsComponent } from '../product-alerts/product-alerts.component';
 import { load } from './(home).server';
 import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs';
 
 export const routeMeta: RouteMeta = {
   title: 'Product List',
@@ -53,7 +54,11 @@ export const routeMeta: RouteMeta = {
 })
 export default class ProductListComponent {
   http = inject(HttpClient);
-  data = toSignal(injectLoad<typeof load>());
+  data = toSignal(
+    this.http
+      .get('http://localhost:56084/api/v1/products')
+      .pipe(map((products: any) => ({ products })))
+  );
 
   share() {
     window.alert('The product has been shared!');
