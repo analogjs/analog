@@ -29,7 +29,6 @@ import { CompilerPluginOptions } from '@angular-devkit/build-angular/src/tools/e
 import { JavaScriptTransformer } from '@angular-devkit/build-angular/src/tools/esbuild/javascript-transformer';
 
 import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
-import { SourceFileCache } from '@angular-devkit/build-angular/src/tools/esbuild/angular/source-file-cache';
 
 export {
   requiresLinking,

@@ -48,6 +48,7 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],
+      include: ['**/*.spec.ts'],
       cache: {
         dir: `../../node_modules/.vitest`,
       },

@@ -21,7 +21,6 @@ import {
   createJitResourceTransformer,
   SourceFileCache,
 } from './utils/devkit';
-import { applicationPlugin } from './application-vite-plugin';
 import { angularVitestPlugin } from './angular-vitest-plugin';
 
 export interface PluginOptions {

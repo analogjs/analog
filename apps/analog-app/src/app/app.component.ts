@@ -1,7 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { TopBarComponent } from '@analogjs/top-bar';
-import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'analogjs-root',

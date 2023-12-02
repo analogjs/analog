@@ -18,7 +18,7 @@ export const routeMeta: RouteMeta = {
   template: `
     <h2>Products</h2>
 
-    <div *ngFor="let product of data()?.products">
+    <div *ngFor="let product of data().products">
       <h3>
         <a
           [title]="product.name + ' details'"
@@ -51,7 +51,7 @@ export const routeMeta: RouteMeta = {
   ],
 })
 export default class ProductListComponent {
-  data = toSignal(injectLoad<typeof load>());
+  data = toSignal(injectLoad<typeof load>(), { requireSync: true });
 
   share() {
     window.alert('The product has been shared!');

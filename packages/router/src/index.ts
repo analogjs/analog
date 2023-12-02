@@ -1,4 +1,4 @@
-export { routes, createRoutes } from './lib/routes';
+export { routes } from './lib/routes';
 export {
   defineRouteMeta,
   injectActivatedRoute,

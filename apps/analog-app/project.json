@@ -74,6 +74,5 @@
       "outputs": ["{projectRoot}/coverage"]
     }
   },
-  "tags": [],
-  "implicitDependencies": ["platform"]
+  "tags": []
 }

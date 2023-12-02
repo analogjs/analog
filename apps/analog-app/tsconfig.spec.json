@@ -2,10 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "types": ["node", "vitest/globals"],
-    "target": "ES2022",
-    "useDefineForClassFields": false
+    "types": ["node", "vitest/globals"]
   },
-  "files": ["src/test-setup.ts"],
+  "files": ["src/test-setup.ts", "src/polyfills.ts"],
   "include": ["src/**/*.spec.ts", "**/*.d.ts"]
 }
