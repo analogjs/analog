@@ -7,7 +7,7 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@angular-devkit/build-angular:application",
+      "executor": "@analogjs/platform:application",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/angular-app",
@@ -25,7 +25,9 @@
         "prerender": true,
         "ssr": {
           "entry": "apps/angular-app/server.ts"
-        }
+        },
+        "allowedCommonJsDependencies": ["prismjs", "front-matter"],
+        "inlineStyleLanguage": "scss"
       },
       "configurations": {
         "production": {
@@ -52,7 +54,7 @@
       "defaultConfiguration": "production"
     },
     "serve": {
-      "executor": "@angular-devkit/build-angular:dev-server",
+      "executor": "@analogjs/platform:dev-server",
       "configurations": {
         "production": {
           "buildTarget": "angular-app:build:production"
