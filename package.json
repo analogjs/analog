@@ -8,7 +8,7 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "git config core.hookspath .githooks",
     "start": "nx serve",
-    "build": "nx run-many --target build --all --parallel=1",
+    "build": "nx build platform --skip-nx-cache && nx run-many --target build --all --parallel=1",
     "e2e": "nx run-many --target e2e --all --parallel=1 --exclude analog-app-e2e-playwright",
     "test": "nx run-many --target test --all",
     "build:vite-ci": "npm run build",
