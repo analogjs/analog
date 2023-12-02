@@ -15,10 +15,20 @@
       "schema": "./src/executors/vitest/schema.json",
       "description": "Test with Vitest"
     },
+    "application": {
+      "implementation": "./src/executors/application/compat",
+      "schema": "./src/executors/application/schema.json",
+      "description": "application builder"
+    },
     "dev-server": {
       "implementation": "./src/executors/dev-server/compat",
       "schema": "./src/executors/dev-server/schema.json",
       "description": "dev-server builder"
+    },
+    "nitro": {
+      "implementation": "./src/executors/nitro/compat",
+      "schema": "./src/executors/nitro/schema.json",
+      "description": "nitro builder"
     }
   },
   "executors": {
@@ -37,25 +47,25 @@
       "schema": "./src/executors/vitest/schema.json",
       "description": "Test with Vitest"
     },
+    "application": {
+      "implementation": "./src/executors/application/executor",
+      "schema": "./src/executors/application/schema.json",
+      "description": "application executor"
+    },
     "dev-server": {
       "implementation": "./src/executors/dev-server/executor",
       "schema": "./src/executors/dev-server/schema.json",
       "description": "dev-server executor"
-    },
-    "test": {
-      "implementation": "./src/executors/test/executor",
-      "schema": "./src/executors/test/schema.json",
-      "description": "test executor"
     },
     "nitro": {
       "implementation": "./src/executors/nitro/executor",
       "schema": "./src/executors/nitro/schema.json",
       "description": "nitro executor"
     },
-    "application": {
-      "implementation": "./src/executors/application/executor",
-      "schema": "./src/executors/application/schema.json",
-      "description": "application executor"
+    "test": {
+      "implementation": "./src/executors/test/executor",
+      "schema": "./src/executors/test/schema.json",
+      "description": "test executor"
     }
   }
 }
