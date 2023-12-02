@@ -64,8 +64,8 @@ import { Note } from '../../note';
           <p
             class="max-w-[85%] leading-normal sm:text-lg sm:leading-7"
           >
-            This is an example of how to you can use tRPC to superpower you
-            client server interaction.
+            This is an example of how you can use tRPC to superpower your
+            client-server interaction.
           </p>
         </div>
         <form
