@@ -48,17 +48,17 @@
       "description": "Test with Vitest"
     },
     "application": {
-      "implementation": "./src/executors/application/executor",
+      "implementation": "./src/executors/application/application.impl",
       "schema": "./src/executors/application/schema.json",
       "description": "application executor"
     },
     "dev-server": {
-      "implementation": "./src/executors/dev-server/executor",
+      "implementation": "./src/executors/dev-server/dev-server.impl",
       "schema": "./src/executors/dev-server/schema.json",
       "description": "dev-server executor"
     },
     "nitro": {
-      "implementation": "./src/executors/nitro/executor",
+      "implementation": "./src/executors/nitro/nitro.impl",
       "schema": "./src/executors/nitro/schema.json",
       "description": "nitro executor"
     },
