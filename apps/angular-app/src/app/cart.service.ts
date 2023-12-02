@@ -7,7 +7,7 @@ import { Product } from './products';
 })
 export class CartService {
   items: Product[] = [];
-  private readonly apiURL = 'http://localhost:55232';
+  private readonly apiURL = 'http://localhost:4200';
 
   constructor(private http: HttpClient) {}
 

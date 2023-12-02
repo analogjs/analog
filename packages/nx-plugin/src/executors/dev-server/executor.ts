@@ -30,15 +30,15 @@ export default async function* runExecutor(
   );
 
   builderContext.getBuilderNameForTarget = () =>
-    Promise.resolve('@angular-devkit/build-angular:application');
+    Promise.resolve('@angular-devkit/build-angular:dev-server');
 
   builderContext.getTargetOptions = (target) => {
-    const appBuilderOptions: ApplicationBuilderOptions =
+    const devServerBuilderOptions: DevServerBuilderOptions =
       context.projectsConfigurations.projects[target.project].targets[
         target.target
       ].options;
 
-    return Promise.resolve(appBuilderOptions as any);
+    return Promise.resolve(devServerBuilderOptions as any);
   };
 
   let deferred: () => void;

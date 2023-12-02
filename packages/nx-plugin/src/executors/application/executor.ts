@@ -41,7 +41,10 @@ export default async function* runExecutor(
   for await (const _ of buildApplication(options, builderContext, [
     PageRoutesGlob({
       projectRoot: rootDir,
-      pageGlobs: [`${rootDir}/src/app/pages/**/*.page.ts`],
+      pageGlobs: [
+        `${rootDir}/src/app/pages/**/*.page.ts`,
+        `${rootDir}/src/app/pages/**/*.md`,
+      ],
     }),
   ])) {
     // Nothing to do for each event, just wait for the whole build.

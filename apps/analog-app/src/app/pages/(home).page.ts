@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouteMeta, injectLoad } from '@analogjs/router';
 import { NgForOf, NgIf } from '@angular/common';
@@ -6,7 +6,6 @@ import { RouterLinkWithHref } from '@angular/router';
 
 import { ProductAlertsComponent } from '../product-alerts/product-alerts.component';
 import { load } from './(home).server';
-import { HttpClient } from '@angular/common/http';
 
 export const routeMeta: RouteMeta = {
   title: 'Product List',
@@ -52,7 +51,6 @@ export const routeMeta: RouteMeta = {
   ],
 })
 export default class ProductListComponent {
-  http = inject(HttpClient);
   data = toSignal(injectLoad<typeof load>());
 
   share() {
