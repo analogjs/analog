@@ -123,8 +123,6 @@ export default defineConfig(() => {
           ],
         },
       }),
-      nxViteTsPaths(),
-      splitVendorChunkPlugin(),
     ],
   };
 });
@@ -172,8 +170,6 @@ export default defineConfig(() => {
           ],
         },
       }),
-      nxViteTsPaths(),
-      splitVendorChunkPlugin(),
     ],
   };
 });
