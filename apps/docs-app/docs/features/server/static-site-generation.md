@@ -94,3 +94,87 @@ mapping of the pages' `<loc>` and `<lastmod>` properties.
     </url>
 </urlset...>
 ```
+
+### Post Rednering Hooks
+
+Analog supports the post-rendering hooks during the prerendering process. The use case for post rendering hooks can be used for inlining critical css, add/remove scripts in HTML files etc.
+
+The sample code below showw how you can use `postRenderingHooks` in your code.
+
+```ts
+import analog from '@analogjs/platform';
+import { defineConfig } from 'vite';
+import { PrerenderRoute } from 'nitropack';
+
+// https://vitejs.dev/config/
+export default defineConfig(() => {
+  return {
+    publicDir: 'src/public',
+    build: {
+      target: ['es2020'],
+    },
+    plugins: [
+      analog({
+        static: true,
+        prerender: {
+          routes: async () => [],
+          postRenderingHooks: [
+            async (route: PrerenderRoute) => console.log(route),
+          ],
+        },
+      }),
+      nxViteTsPaths(),
+      splitVendorChunkPlugin(),
+    ],
+  };
+});
+```
+
+The `PrerenderRoute` gives you information about `route`,`contents`,`data` and `fileName` which can be useful for making changes to yout content duing prerendering phase.
+
+Below is an small example where we can add append a script to include google analytics during prerendering process using `postRenderingHooks`
+
+```ts
+/// <reference types="vitest" />
+
+import analog from '@analogjs/platform';
+import { defineConfig, splitVendorChunkPlugin } from 'vite';
+import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import { PrerenderRoute } from 'nitropack';
+
+// https://vitejs.dev/config/
+export default defineConfig(() => {
+  return {
+    publicDir: 'src/public',
+    build: {
+      target: ['es2020'],
+    },
+    plugins: [
+      analog({
+        static: true,
+        prerender: {
+          routes: async () => ['/', '/aboutus'],
+          postRenderingHooks: [
+            async (route: PrerenderRoute) => {
+              const gTag = `<script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+               
+                ga('create', 'UA-xxxxxx-1', 'auto');
+                ga('send', 'pageview');
+              </script>`;
+              if (route.route === '/aboutus') {
+                route.contents = route.contents?.concat(gTag);
+              }
+            },
+          ],
+        },
+      }),
+      nxViteTsPaths(),
+      splitVendorChunkPlugin(),
+    ],
+  };
+});
+```
