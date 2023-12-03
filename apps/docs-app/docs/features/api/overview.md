@@ -176,6 +176,48 @@ export default defineEventHandler((event) => {
 });
 ```
 
+## Accessing Cookies
+
+Analog allows setting cookies reading them in your server side calls.
+
+### Setting cookies
+
+```ts
+//(home).server.ts
+import { setCookie } from 'h3';
+import { PageServerLoad } from '@analogjs/router';
+
+import { Product } from '../products';
+
+export const load = async ({ fetch, event }: PageServerLoad) => {
+  setCookie(event, 'test', 'test'); // setting the cookie
+  const products = await fetch<Product[]>('/api/v1/products');
+
+  return {
+    products: products,
+  };
+};
+```
+
+### Reading cookies
+
+```ts
+//index.server.ts
+import { parseCookies } from 'h3';
+import { PageServerLoad } from '@analogjs/router';
+
+export const load = async ({ event }: PageServerLoad) => {
+  console.log('shipping');
+  const cookies = parseCookies(event);
+
+  console.log('test cookie', cookies['test']);
+
+  return {
+    shipping: true,
+  };
+};
+```
+
 ## More Info
 
 API routes are powered by [Nitro](https://nitro.unjs.io). See the Nitro docs for more examples around building API routes.
