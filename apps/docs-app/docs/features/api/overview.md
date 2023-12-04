@@ -178,7 +178,7 @@ export default defineEventHandler((event) => {
 
 ## Accessing Cookies
 
-Analog allows setting cookies reading them in your server side calls.
+Analog allows setting and reading cookies in your server-side calls.
 
 ### Setting cookies
 
