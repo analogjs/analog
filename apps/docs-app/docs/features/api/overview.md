@@ -190,7 +190,7 @@ import { PageServerLoad } from '@analogjs/router';
 import { Product } from '../products';
 
 export const load = async ({ fetch, event }: PageServerLoad) => {
-  setCookie(event, 'test', 'test'); // setting the cookie
+  setCookie(event, 'products', 'loaded'); // setting the cookie
   const products = await fetch<Product[]>('/api/v1/products');
 
   return {
@@ -207,10 +207,9 @@ import { parseCookies } from 'h3';
 import { PageServerLoad } from '@analogjs/router';
 
 export const load = async ({ event }: PageServerLoad) => {
-  console.log('shipping');
   const cookies = parseCookies(event);
 
-  console.log('test cookie', cookies['test']);
+  console.log('products cookie', cookies['products']);
 
   return {
     shipping: true,
