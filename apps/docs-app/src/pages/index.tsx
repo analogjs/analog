@@ -79,6 +79,17 @@ function SponsorSection() {
           </a>
         </div>
 
+        <div>
+          <a href="https://nx.dev" target="_blank">
+            <img
+              src="https://raw.githubusercontent.com/analogjs/analog/main/apps/docs-app/static/img/logos/nx.svg"
+              width="100px"
+              height="100px"
+              alt="NxDevTools"
+            />
+          </a>
+        </div>
+
         <br />
 
         <div className={styles.buttons}>

@@ -63,8 +63,8 @@ Analog is an MIT-licensed open source project with its ongoing development made 
   <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/github-logo.svg" width="100px" height="100px" alt="GitHub Accelerator" />
 </a>
 
-<a href="https://mirahi.io" target="_blank">
-  <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/mirahi-logo.svg" width="100px" height="100px" alt="Mirahi" />
+<a href="https://nx.dev" target="_blank">
+  <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/nx.svg" width="100px" height="100px" alt="NxDevTools" />
 </a>
 
 <a href="https://houseofangular.io" target="_blank">
