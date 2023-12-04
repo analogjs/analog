@@ -95,11 +95,11 @@ mapping of the pages' `<loc>` and `<lastmod>` properties.
 </urlset...>
 ```
 
-### Post Rednering Hooks
+### Post-rendering Hooks
 
-Analog supports the post-rendering hooks during the prerendering process. The use case for post rendering hooks can be used for inlining critical css, add/remove scripts in HTML files etc.
+Analog supports the post-rendering hooks during the prerendering process. The use case for post-rendering hooks can be inlining critical CSS, adding/removing scripts in HTML files, etc.
 
-The sample code below showw how you can use `postRenderingHooks` in your code.
+The sample code below shows how to use `postRenderingHooks` in your code:
 
 ```ts
 import analog from '@analogjs/platform';
@@ -128,9 +128,9 @@ export default defineConfig(() => {
 });
 ```
 
-The `PrerenderRoute` gives you information about `route`,`contents`,`data` and `fileName` which can be useful for making changes to yout content duing prerendering phase.
+The `PrerenderRoute` gives you information about `route`, `contents`, `data`, and `fileName`, which can be useful for making changes to your content during the prerendering phase.
 
-Below is an small example where we can add append a script to include google analytics during prerendering process using `postRenderingHooks`
+Below is a small example where we can append a script to include Google Analytics during the prerendering process using `postRenderingHooks`:
 
 ```ts
 /// <reference types="vitest" />
