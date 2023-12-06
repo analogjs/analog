@@ -114,6 +114,7 @@ Lastly, add the `src/test.ts` to `files` array in the `tsconfig.spec.json` in th
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
+    "target": "es2016",
     "types": ["vitest/globals", "node"]
   },
   "files": ["src/test.ts"],

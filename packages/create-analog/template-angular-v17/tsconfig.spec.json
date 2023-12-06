@@ -4,6 +4,7 @@
   "compilerOptions": {
     "composite": false,
     "outDir": "./out-tsc/spec",
+    "target": "es2016",
     "types": ["node", "vitest/globals"]
   },
   "files": ["src/test.ts"],
