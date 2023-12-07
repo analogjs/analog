@@ -34,7 +34,7 @@ const thePathsAreEqual = (actual: string[], expected: string[]) => {
   return true;
 };
 
-describe('component-resolvers styleUrls', () => {
+describe('component-resolvers', () => {
   const id = '/path/to/src/app.component.ts';
 
   describe('matcher', () => {
@@ -42,6 +42,23 @@ describe('component-resolvers styleUrls', () => {
       const code = `
         @Component({
           styleUrls: ['./app.component.css']
+        })
+        export class MyComponent {}
+      `;
+
+      const actualPaths = [
+        './app.component.css|/path/to/src/app.component.css',
+      ];
+      const templateUrlsResolver = new TemplateUrlsResolver();
+      const resolvedPaths = templateUrlsResolver.resolve(code, id);
+
+      expect(thePathsAreEqual(resolvedPaths, actualPaths));
+    });
+
+    it('should handle single line styleUrl', () => {
+      const code = `
+        @Component({
+          styleUrl: './app.component.css'
         })
         export class MyComponent {}
       `;
