@@ -28,8 +28,9 @@
     "@analogjs/vite-plugin-angular": "^0.2.23",
     "@analogjs/vite-plugin-nitro": "^0.2.23"
   },
-  "devDependencies": {
-    "@nx/devkit": "^16.0.0 || ^17.0.0"
+  "peerDependencies": {
+    "@nx/devkit": "^16.0.0 || ^17.0.0",
+    "@nx/vite": "^16.0.0 || ^17.0.0"
   },
   "builders": "./src/lib/nx-plugin/executors.json",
   "executors": "./src/lib/nx-plugin/executors.json",
