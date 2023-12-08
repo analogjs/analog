@@ -1,3 +1,13 @@
+## [0.2.24](https://github.com/analogjs/analog/compare/0.2.23...0.2.24) (2023-12-08)
+
+### Bug Fixes
+
+- **create-analog:** add npmrc to renamed files, re-enable e2e tests ([#786](https://github.com/analogjs/analog/issues/786)) ([dc9c37f](https://github.com/analogjs/analog/commit/dc9c37ffb4a18bf22e0a3304fb8a94eefdb58f80))
+
+### Features
+
+- **nx-plugin:** add schematic to setup Vitest for existing Angular projects ([#787](https://github.com/analogjs/analog/issues/787)) ([5deadfc](https://github.com/analogjs/analog/commit/5deadfcf23d26d97bf6a4be94d8fedfe5b397e2a))
+
 ## [0.2.23](https://github.com/analogjs/analog/compare/0.2.22...0.2.23) (2023-12-07)
 
 ### Bug Fixes
