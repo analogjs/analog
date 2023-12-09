@@ -1,3 +1,16 @@
+# [1.0.0-beta.2](https://github.com/analogjs/analog/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2023-12-09)
+
+### Bug Fixes
+
+- **create-analog:** add npmrc to renamed files, re-enable e2e tests ([#786](https://github.com/analogjs/analog/issues/786)) ([dc9c37f](https://github.com/analogjs/analog/commit/dc9c37ffb4a18bf22e0a3304fb8a94eefdb58f80))
+- **nx-plugin:** remove extra class in Tailwind/trpc example ([#772](https://github.com/analogjs/analog/issues/772)) ([b5ee6d5](https://github.com/analogjs/analog/commit/b5ee6d56489e569e6a2720507fcf677cde6dce5a))
+
+### Features
+
+- **create-analog:** update Vitest to 1.0.x, update angular-v17 template app ([#782](https://github.com/analogjs/analog/issues/782)) ([c80d05f](https://github.com/analogjs/analog/commit/c80d05fed6f42b1fba1eb741f09f50abe1141889))
+- **nx-plugin:** add schematic to setup Vitest for existing Angular projects ([#787](https://github.com/analogjs/analog/issues/787)) ([5deadfc](https://github.com/analogjs/analog/commit/5deadfcf23d26d97bf6a4be94d8fedfe5b397e2a))
+- **vite-plugin-angular:** add support for styleUrl in component decorator ([#784](https://github.com/analogjs/analog/issues/784)) ([4ae30a9](https://github.com/analogjs/analog/commit/4ae30a9fb96196dfb7b0999c8ac40524ead83fac))
+
 # 1.0.0-beta.1 (2023-11-22)
 
 ### Bug Fixes
