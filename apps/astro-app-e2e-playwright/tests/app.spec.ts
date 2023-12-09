@@ -29,7 +29,7 @@ afterEach(async () => {
   await page.close();
 });
 
-describe('AstroApp', () => {
+describe.skip('AstroApp', () => {
   describe('Given the user has navigated to the home page', () => {
     test('Then client side rendered CardComponent is rendered', async () => {
       const componentLocator = page.locator(

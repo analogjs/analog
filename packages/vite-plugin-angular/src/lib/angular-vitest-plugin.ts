@@ -1,4 +1,4 @@
-import { Plugin, transformWithEsbuild } from 'vite';
+import { Plugin, UserConfig, transformWithEsbuild } from 'vite';
 
 export function angularVitestPlugin(): Plugin {
   return {
@@ -10,7 +10,10 @@ export function angularVitestPlugin(): Plugin {
         ssr: {
           noExternal: [/fesm2022/],
         },
-      };
+        test: {
+          pool: 'vmThreads',
+        },
+      } as UserConfig;
     },
     async transform(_code, id) {
       if (/fesm2022/.test(id) && _code.includes('async (')) {

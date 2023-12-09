@@ -5,15 +5,17 @@ import TabItem from '@theme/TabItem';
 
 [Vitest](https://vitest.dev) can be added to existing Angular workspaces with a few steps.
 
-## Installation
+## Using a Schematic/Generator
 
-To add Vitest, install the necessary packages:
+Vitest can be installed and setup using a schematic/generator for Angular CLI or Nx workspaces.
+
+First, install the `@analogjs/platform` package:
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig-paths @nx/vite --save-dev
+npm install @analogjs/platform --save-dev
 ```
 
   </TabItem>
@@ -21,7 +23,7 @@ npm install @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig-paths @nx/vite --dev
+yarn add @analogjs/platform --dev
 ```
 
   </TabItem>
@@ -29,7 +31,45 @@ yarn add @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig-pa
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/vite-plugin-angular @analogjs/platform jsdom vite-tsconfig-paths @nx/vite
+pnpm install -w @analogjs/platform
+```
+
+  </TabItem>
+</Tabs>
+
+Next, run the schematic to set up the Vite config, test configuration files, and update the test configuration.
+
+```shell
+ng g @analogjs/platform:setup-vitest --project [your-project-name]
+```
+
+Next, go to [running tests](#running-tests)
+
+## Manual Installation
+
+To add Vitest manually, install the necessary packages:
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm install @analogjs/vite-plugin-angular @analogjs/platform jsdom @nx/vite --save-dev
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn" value="yarn">
+
+```shell
+yarn add @analogjs/vite-plugin-angular @analogjs/platform jsdom @nx/vite --dev
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm install -w @analogjs/vite-plugin-angular @analogjs/platform jsdom @nx/vite
 ```
 
   </TabItem>
@@ -44,18 +84,12 @@ To setup Vitest, create a `vite.config.ts` at the root of your project:
 import { defineConfig } from 'vite';
 
 import angular from '@analogjs/vite-plugin-angular';
-import viteTsConfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig(({ mode }) => ({
-  plugins: [
-    angular(),
-    viteTsConfigPaths({
-      root: './',
-    }),
-  ],
+  plugins: [angular()],
   test: {
     globals: true,
-    setupFiles: ['src/test.ts'],
+    setupFiles: ['src/test-setup.ts'],
     environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
   },
@@ -65,7 +99,7 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-Next, define a `src/test.ts` file to setup the `TestBed`:
+Next, define a `src/test-setup.ts` file to setup the `TestBed`:
 
 ```ts
 import '@analogjs/vite-plugin-angular/setup-vitest';
@@ -107,19 +141,22 @@ Next, update the `test` target in the `angular.json` to use the `@analogjs/platf
 
 > You can also add a new target and name it `vitest` to run alongside your `test` target.
 
-Lastly, add the `src/test.ts` to `files` array in the `tsconfig.spec.json` in the root of your project, and update the `types`.
+Lastly, add the `src/test-setup.ts` to `files` array in the `tsconfig.spec.json` in the root of your project, set the `target` to `es2016`, and update the `types`.
 
 ```json
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
+    "target": "es2016",
     "types": ["vitest/globals", "node"]
   },
-  "files": ["src/test.ts"],
+  "files": ["src/test-setup.ts"],
   "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]
 }
 ```
+
+Next, go to [running tests](#running-tests)
 
 ## Setup for Running Tests in the Browser
 
@@ -165,18 +202,12 @@ Update the `test` object in the `vite.config.ts`.
 import { defineConfig } from 'vite';
 
 import angular from '@analogjs/vite-plugin-angular';
-import viteTsConfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig(({ mode }) => ({
-  plugins: [
-    angular(),
-    viteTsConfigPaths({
-      root: './',
-    }),
-  ],
+  plugins: [angular()],
   test: {
     globals: true,
-    setupFiles: ['src/test.ts'],
+    setupFiles: ['src/test-setup.ts'],
     // environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     // Vitest browser config
@@ -222,3 +253,54 @@ pnpm test
 
   </TabItem>
 </Tabs>
+
+## Using TypeScript Config Path Aliases
+
+If you are using `paths` in your `tsconfig.json`, support for those aliases can be added to the `vite.config.ts`.
+
+First, install the `vite-tsconfig-paths` package.
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm install vite-tsconfig-paths --save-dev
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn" value="yarn">
+
+```shell
+yarn add vite-tsconfig-paths --dev
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm install -w vite-tsconfig-paths
+```
+
+  </TabItem>
+</Tabs>
+
+Next, add the plugin to the `plugins` array in the `vite.config.ts` with the `root` set as the relative path to the root of the project.
+
+```ts
+/// <reference types="vitest" />
+import { defineConfig } from 'vite';
+
+import angular from '@analogjs/vite-plugin-angular';
+import viteTsConfigPaths from 'vite-tsconfig-paths';
+
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    angular(),
+    viteTsConfigPaths({
+      root: './',
+    }),
+  ],
+}));
+```

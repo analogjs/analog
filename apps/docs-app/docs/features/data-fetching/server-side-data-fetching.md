@@ -42,7 +42,7 @@ Accessing the data fetched on the server can be done using the `injectLoad` func
 // src/app/pages/index.page.ts
 import { Component } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { LoadResult, injectLoad } from '@analogjs/router';
+import { injectLoad } from '@analogjs/router';
 
 import { load } from './index.server'; // not included in client build
 
@@ -85,7 +85,7 @@ Now to get the data in the component add an input called `load`.
 ```ts
 // src/app/pages/index.page.ts
 import { Component } from '@angular/core';
-import { LoadResult, injectLoad } from '@analogjs/router';
+import { LoadResult } from '@analogjs/router';
 
 import { load } from './index.server'; // not included in client build
 

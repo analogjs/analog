@@ -34,7 +34,7 @@ function emptyDir(dir) {
   }
 }
 
-describe.skip('create-analog e2e', () => {
+describe('create-analog e2e', () => {
   it('should create my-app', async () => {
     const project = uniq('tmpanalogapp');
     const tmpDir = `${process.cwd()}/${project}`;
@@ -68,18 +68,10 @@ describe.skip('create-analog e2e', () => {
       'analog()',
       `analog({ vite: { tsconfig: '${tmpDir}/tsconfig.spec.json' } })`
     );
-    viteConfig = viteConfig.replace(
-      `setupFiles: ['src/test.ts'],`,
-      `setupFiles: ['${project}/src/test.ts'],`
-    );
-    viteConfig = viteConfig.replace(
-      `include: ['**/*.spec.ts'],`,
-      `include: ['${project}/**/*.spec.ts'],`
-    );
 
     writeFileSync(`${tmpDir}/vite.config.ts`, viteConfig);
 
-    await runCommandAsync(`ng test`, {
+    await runCommandAsync(`vitest --no-watch`, {
       cwd: tmpDir,
     });
 
@@ -125,18 +117,10 @@ describe.skip('create-analog e2e', () => {
       'analog()',
       `analog({ vite: { tsconfig: '${tmpDir}/tsconfig.spec.json' } })`
     );
-    viteConfig = viteConfig.replace(
-      `setupFiles: ['src/test.ts'],`,
-      `setupFiles: ['${project}/src/test.ts'],`
-    );
-    viteConfig = viteConfig.replace(
-      `include: ['**/*.spec.ts'],`,
-      `include: ['${project}/**/*.spec.ts'],`
-    );
 
     writeFileSync(`${tmpDir}/vite.config.ts`, viteConfig);
 
-    await runCommandAsync(`ng test`, {
+    await runCommandAsync(`vitest --no-watch`, {
       cwd: tmpDir,
     });
 

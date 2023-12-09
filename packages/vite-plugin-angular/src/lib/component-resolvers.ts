@@ -1,6 +1,6 @@
 import { dirname, resolve } from 'path';
 
-const styleUrlsRE = /styleUrls\s*:\s*\[([^\[]*?)\]/;
+const styleUrlsRE = /styleUrls\s*:\s*\[([^\[]*?)\]|styleUrl:\s*["'](.*?)["']/;
 const templateUrlRE = /templateUrl:\s*["'](.*?)["']/g;
 
 export function hasStyleUrls(code: string) {
@@ -50,6 +50,7 @@ export class StyleUrlsResolver {
     // "styleUrls: [\n    './app.component.scss',\n    '../global.scss'\n  ]"
     const styleUrlPaths = matchedStyleUrls
       .replace(/(styleUrls|\:|\s|\[|\]|"|')/g, '')
+      .replace(/(styleUrl|:\s*["'](.*?)["'])/g, '')
       // The above replace will result in the following:
       // "./app.component.scss,../global.scss"
       .split(',');
