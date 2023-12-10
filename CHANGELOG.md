@@ -1,3 +1,9 @@
+# [1.0.0-beta.3](https://github.com/analogjs/analog/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2023-12-10)
+
+### Features
+
+- add npm publish job for packages ([2802c92](https://github.com/analogjs/analog/commit/2802c92cee93cfa7a076421c329383968b5f74a2))
+
 # [1.0.0-beta.2](https://github.com/analogjs/analog/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2023-12-09)
 
 ### Bug Fixes
