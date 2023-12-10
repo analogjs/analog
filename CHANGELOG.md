@@ -1,3 +1,13 @@
+# [1.0.0-beta.5](https://github.com/analogjs/analog/compare/v1.0.0-beta.4...v1.0.0-beta.5) (2023-12-10)
+
+### Bug Fixes
+
+- add release tag env variable ([379c546](https://github.com/analogjs/analog/commit/379c5466ba054fdf5fc6a9e579f3c17849004c88))
+
+### Features
+
+- update app templates to 1.0.0-beta ([5a23eb0](https://github.com/analogjs/analog/commit/5a23eb08718329ef2ec90135af47beb4a2c96bb7))
+
 # [1.0.0-beta.4](https://github.com/analogjs/analog/compare/v1.0.0-beta.3...v1.0.0-beta.4) (2023-12-10)
 
 ### Bug Fixes
