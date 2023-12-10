@@ -8,4 +8,4 @@ npm publish node_modules/@analogjs/router --access public --tag $RELEASE_TAG --d
 npm publish node_modules/@analogjs/trpc --access public --tag $RELEASE_TAG --dry-run
 npm publish node_modules/@analogjs/vite-plugin-angular --access public --tag $RELEASE_TAG --dry-run
 npm publish node_modules/@analogjs/vite-plugin-nitro --access public --tag $RELEASE_TAG --dry-run
-npm publish dist/packages/create-analog --tag $RELEASE_TAG --dry-run
+# npm publish dist/packages/create-analog --tag $RELEASE_TAG --dry-run
