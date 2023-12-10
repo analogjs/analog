@@ -254,6 +254,53 @@ pnpm test
   </TabItem>
 </Tabs>
 
+## Snapshot Testing with Vitest
+
+For Snapshot testing you can use `toMatchSnapshot` from `expect` API,
+
+Below is an small example of how to write a Snapshot test
+
+```ts
+// card.component.spec.ts
+
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { CardComponent } from './card.component';
+
+describe('CardComponent', () => {
+  let fixture: ComponentFixture<CardComponent>;
+  let component: CardComponent;
+
+  beforeEach(() =>
+    TestBed.configureTestingModule({
+      imports: [CardComponent],
+    })
+  );
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(CardComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create the app', () => {
+    expect(fixture).toMatchSnapshot();
+  });
+
+```
+
+Once you run the test, a `card.component.spec.ts.snap` file will be created under `__snapshots__` with below content
+
+```ts
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CardComponent > should create the app 1`] = `
+  <component-code>
+`;
+```
+
+You should commit artifacts generarted and they should be reviewed.
+
 ## Using TypeScript Config Path Aliases
 
 If you are using `paths` in your `tsconfig.json`, support for those aliases can be added to the `vite.config.ts`.
