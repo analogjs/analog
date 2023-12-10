@@ -1,3 +1,10 @@
+# [1.0.0-beta.6](https://github.com/analogjs/analog/compare/v1.0.0-beta.5...v1.0.0-beta.6) (2023-12-10)
+
+### Bug Fixes
+
+- only auto-publish [@analogjs](https://github.com/analogjs) packages ([98301dc](https://github.com/analogjs/analog/commit/98301dc08dac3f7cb46dfce3483679005ba0ed60))
+- use semantic release to publish ([8410660](https://github.com/analogjs/analog/commit/841066058ad83f5ddd190221b3d832a8dddf5497))
+
 # [1.0.0-beta.5](https://github.com/analogjs/analog/compare/v1.0.0-beta.4...v1.0.0-beta.5) (2023-12-10)
 
 ### Bug Fixes
