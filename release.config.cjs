@@ -1,6 +1,9 @@
 /**
  * @type {import('semantic-release').GlobalConfig}
  */
+
+const tag = process.env.RELEASE_TAG;
+
 module.exports = {
   branches: ['main', { name: 'beta', prerelease: true }],
   plugins: [
@@ -85,12 +88,12 @@ module.exports = {
         message: 'chore: release ${nextRelease.version} [skip ci]',
       },
     ],
-    // [
-    //   '@semantic-release/exec',
-    //   {
-    //     publishCmd: 'pnpm build --skip-nx-cache',
-    //   },
-    // ],
+    [
+      '@semantic-release/exec',
+      {
+        publishCmd: `pnpm build && RELEASE_TAG=${tag} ./tools/publish.sh`,
+      },
+    ],
   ],
   preset: 'angular',
 };
