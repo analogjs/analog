@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   version:
-    name: Version Packages
+    name: Version and Publish
     runs-on: ubuntu-latest
     permissions:
       contents: write # to be able to publish a GitHub release
@@ -46,7 +46,7 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
-          ./tools/publish.sh
+          RELEASE_TAG=$TAG ./tools/publish.sh
 
   # publish:
   #   name: Publish Packages
