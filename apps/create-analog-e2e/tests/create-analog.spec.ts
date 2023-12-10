@@ -80,7 +80,7 @@ describe('create-analog e2e', () => {
     });
 
     expect(() =>
-      checkFilesExist(`${tmpDir}/dist/client/index.html`)
+      checkFilesExist(`${tmpDir}/dist/analog/public/index.html`)
     ).not.toThrow();
 
     rmdirSync(tmpDir, { recursive: true });
@@ -129,7 +129,7 @@ describe('create-analog e2e', () => {
     });
 
     expect(() =>
-      checkFilesExist(`${tmpDir}/dist/client/index.html`)
+      checkFilesExist(`${tmpDir}/dist/analog/public/index.html`)
     ).not.toThrow();
 
     rmdirSync(tmpDir, { recursive: true });
