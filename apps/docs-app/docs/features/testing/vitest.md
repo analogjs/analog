@@ -254,11 +254,11 @@ pnpm test
   </TabItem>
 </Tabs>
 
-## Snapshot Testing with Vitest
+## Snapshot Testing
 
-For Snapshot testing you can use `toMatchSnapshot` from `expect` API,
+For snapshot testing you can use `toMatchSnapshot` from `expect` API.
 
-Below is an small example of how to write a Snapshot test
+Below is a small example of how to write a snapshot test:
 
 ```ts
 // card.component.spec.ts
@@ -289,7 +289,7 @@ describe('CardComponent', () => {
 
 ```
 
-Once you run the test, a `card.component.spec.ts.snap` file will be created under `__snapshots__` with below content
+After you run the test, a `card.component.spec.ts.snap` file is created in the`__snapshots__` folder with the below content:
 
 ```ts
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
@@ -299,7 +299,7 @@ exports[`CardComponent > should create the app 1`] = `
 `;
 ```
 
-You should commit artifacts generarted and they should be reviewed.
+The snapshots generated should be reviewed and added to version control.
 
 ## Using TypeScript Config Path Aliases
 
