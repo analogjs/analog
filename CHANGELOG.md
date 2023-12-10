@@ -1,3 +1,9 @@
+# [1.0.0-beta.4](https://github.com/analogjs/analog/compare/v1.0.0-beta.3...v1.0.0-beta.4) (2023-12-10)
+
+### Bug Fixes
+
+- set beta tag on publish ([c1b8211](https://github.com/analogjs/analog/commit/c1b8211153d5259214a5a5f807fb892f82a28600))
+
 # [1.0.0-beta.3](https://github.com/analogjs/analog/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2023-12-10)
 
 ### Features
