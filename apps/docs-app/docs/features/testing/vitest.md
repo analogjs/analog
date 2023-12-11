@@ -92,6 +92,7 @@ export default defineConfig(({ mode }) => ({
     setupFiles: ['src/test-setup.ts'],
     environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    reporters: ['default'],
   },
   define: {
     'import.meta.vitest': mode !== 'production',
@@ -210,6 +211,7 @@ export default defineConfig(({ mode }) => ({
     setupFiles: ['src/test-setup.ts'],
     // environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    reporters: ['default'],
     // Vitest browser config
     browser: {
       enabled: true,
