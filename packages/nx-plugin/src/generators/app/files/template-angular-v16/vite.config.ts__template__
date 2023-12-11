@@ -25,10 +25,13 @@ export default defineConfig(({ mode }) => {
               prerender: false,
             }
           }
-        }
+        },
+        tsConfigPath: 'tsconfig.base.json',
       }),
       <% } else { %>
-      analog(),
+      analog({
+        tsConfigPath: 'tsconfig.base.json',
+      }),
       <% } %>
       tsConfigPaths({
         root: '<%= offsetFromRoot %>',

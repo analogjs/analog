@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "nitropack": "^2.6.0",
+    "rollup-plugin-typescript-paths": "^1.4.0",
     "xmlbuilder2": "^3.0.2"
   },
   "ng-update": {

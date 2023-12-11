@@ -3,6 +3,7 @@ import { App, toNodeListener } from 'h3';
 import type { Plugin, UserConfig } from 'vite';
 import { normalizePath, ViteDevServer } from 'vite';
 import * as path from 'path';
+import { typescriptPaths } from 'rollup-plugin-typescript-paths';
 
 import { buildServer } from './build-server';
 import { buildSSRApp } from './build-ssr';
@@ -79,7 +80,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 return;
               }
             },
-            plugins: [pageEndpointsPlugin()],
+            plugins: [
+              pageEndpointsPlugin(),
+              typescriptPaths({
+                tsConfigPath: options?.tsConfigPath ?? 'tsconfig.json',
+                preserveExtensions: true,
+              }) as unknown as any,
+            ],
           },
           handlers: [
             {

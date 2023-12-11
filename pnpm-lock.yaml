@@ -327,6 +327,9 @@ importers:
       prompts:
         specifier: ^2.4.2
         version: 2.4.2
+      rollup-plugin-typescript-paths:
+        specifier: ^1.4.0
+        version: 1.4.0(typescript@5.2.2)
       rollup-plugin-visualizer:
         specifier: ^5.9.0
         version: 5.9.0
@@ -22105,6 +22108,14 @@ packages:
   /robust-predicates@3.0.2:
     resolution: {integrity: sha512-IXgzBWvWQwE6PrDI05OvmXUIruQTcoMDzRsOd5CDvHCVLcLHMTSYvOK5Cm46kWqlV3yAbuSpBZdJ5oP5OUoStg==}
     dev: false
+
+  /rollup-plugin-typescript-paths@1.4.0(typescript@5.2.2):
+    resolution: {integrity: sha512-6EgeLRjTVmymftEyCuYu91XzY5XMB5lR0YrJkeT0D7OG2RGSdbNL+C/hfPIdc/sjMa9Sl5NLsxIr6C/+/5EUpA==}
+    peerDependencies:
+      typescript: '>=3.4'
+    dependencies:
+      typescript: 5.2.2
+    dev: true
 
   /rollup-plugin-visualizer@5.9.0:
     resolution: {integrity: sha512-bbDOv47+Bw4C/cgs0czZqfm8L82xOZssk4ayZjG40y9zbXclNk7YikrZTDao6p7+HDiGxrN0b65SgZiVm9k1Cg==}

@@ -11,6 +11,7 @@ export interface Options {
   entryServer?: string;
   index?: string;
   workspaceRoot?: string;
+  tsConfigPath?: string;
 }
 
 export interface PrerenderOptions {
