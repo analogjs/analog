@@ -1,4 +1,11 @@
-# [1.0.0-beta.0](https://github.com/analogjs/analog/compare/0.2.24...1.0.0-beta.0) (2023-12-12)
+# [1.0.0-beta.1](https://github.com/analogjs/analog/compare/1.0.0-beta.0...1.0.0-beta.1) (2023-12-12)
+
+### Bug Fixes
+
+- **create-analog:** set app root for Vite/ESM support ([32ab9ce](https://github.com/analogjs/analog/commit/32ab9cecc6dc0d28e166edbc9a27a9071ba22069))
+- **vite-plugin-nitro:** use relative paths for root directory ([989fd6d](https://github.com/analogjs/analog/commit/989fd6d162d4d5a389ab543bead70e4a2188f931))
+
+# [1.0.0-beta.0](https://github.com/analogjs/analog/compare/0.2.25...1.0.0-beta.0) (2023-12-12)
 
 ### Bug Fixes
 
@@ -11,6 +18,12 @@
 
 - add npm publish job for packages ([2802c92](https://github.com/analogjs/analog/commit/2802c92cee93cfa7a076421c329383968b5f74a2))
 - update app templates to 1.0.0-beta ([5a23eb0](https://github.com/analogjs/analog/commit/5a23eb08718329ef2ec90135af47beb4a2c96bb7))
+
+## [0.2.25](https://github.com/analogjs/analog/compare/0.2.24...0.2.25) (2023-12-12)
+
+### Bug Fixes
+
+- add default reporters to vitest configuration ([#791](https://github.com/analogjs/analog/issues/791)) ([bdc216c](https://github.com/analogjs/analog/commit/bdc216c51353d32304a59f83591aba63636949ab))
 
 ## [0.2.24](https://github.com/analogjs/analog/compare/0.2.23...0.2.24) (2023-12-08)
 
