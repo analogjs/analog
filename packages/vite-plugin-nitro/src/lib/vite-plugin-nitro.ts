@@ -41,7 +41,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         isBuild = command === 'build';
         ssrBuild = _config.build?.ssr === true;
         config = _config;
-        const rootDir = config.root || '.';
+        const rootDir = path.relative(workspaceRoot, config.root || '.') || '.';
         const buildPreset =
           process.env['BUILD_PRESET'] ??
           (nitroOptions?.preset as string | undefined);
