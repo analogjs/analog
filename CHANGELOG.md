@@ -1,3 +1,9 @@
+## [0.2.25](https://github.com/analogjs/analog/compare/0.2.24...0.2.25) (2023-12-12)
+
+### Bug Fixes
+
+- add default reporters to vitest configuration ([#791](https://github.com/analogjs/analog/issues/791)) ([bdc216c](https://github.com/analogjs/analog/commit/bdc216c51353d32304a59f83591aba63636949ab))
+
 ## [0.2.24](https://github.com/analogjs/analog/compare/0.2.23...0.2.24) (2023-12-08)
 
 ### Bug Fixes
