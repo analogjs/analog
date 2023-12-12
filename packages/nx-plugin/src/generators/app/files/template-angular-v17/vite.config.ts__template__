@@ -38,6 +38,7 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
+      reporters: ['default'],
       cache: {
         dir: `<%= offsetFromRoot %>node_modules/.vitest`,
       },
