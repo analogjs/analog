@@ -44,7 +44,6 @@ const TEMPLATES = APPS.map(
 
 const renameFiles = {
   _gitignore: '.gitignore',
-  _npmrc: '.npmrc',
 };
 
 async function init() {

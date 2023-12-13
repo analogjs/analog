@@ -8,7 +8,7 @@ export function angularVitestPlugin(): Plugin {
     config() {
       return {
         ssr: {
-          noExternal: [/fesm2022/],
+          noExternal: [/cdk\/fesm2022/],
         },
         test: {
           pool: 'vmThreads',
