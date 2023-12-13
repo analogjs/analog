@@ -1,3 +1,13 @@
+## [0.2.26](https://github.com/analogjs/analog/compare/0.2.25...0.2.26) (2023-12-13)
+
+### Bug Fixes
+
+- **create-analog:** update templates to align package versions ([0d3ed35](https://github.com/analogjs/analog/commit/0d3ed358926c26e360685c41a50f7255acc88f79))
+
+### Performance Improvements
+
+- **vite-plugin-angular:** only filter to Angular CDK packages for ESM transform ([#796](https://github.com/analogjs/analog/issues/796)) ([d5256a8](https://github.com/analogjs/analog/commit/d5256a83c0aac7009e13ad0b3801e50b26a960ed))
+
 ## [0.2.25](https://github.com/analogjs/analog/compare/0.2.24...0.2.25) (2023-12-12)
 
 ### Bug Fixes
