@@ -1,4 +1,5 @@
 import { dirname, resolve } from 'path';
+import { normalizePath } from 'vite';
 
 const styleUrlsRE = /styleUrls\s*:\s*\[([^\[]*?)\]|styleUrl:\s*["'](.*?)["']/;
 const templateUrlRE = /templateUrl:\s*["'](.*?)["']/g;
@@ -56,7 +57,9 @@ export class StyleUrlsResolver {
       .split(',');
 
     const styleUrls = styleUrlPaths.map((styleUrlPath) => {
-      return `${styleUrlPath}|${resolve(dirname(id), styleUrlPath)}`;
+      return `${styleUrlPath}|${normalizePath(
+        resolve(dirname(id), styleUrlPath)
+      )}`;
     });
 
     this.styleUrlsCache.set(matchedStyleUrls, { styleUrls, matchedStyleUrls });
@@ -94,7 +97,9 @@ export class TemplateUrlsResolver {
           /templateUrl|\s|'|"|\:|,/g,
           ''
         );
-        const templateUrlPath = resolve(dirname(id), resolvedTemplatePath);
+        const templateUrlPath = normalizePath(
+          resolve(dirname(id), resolvedTemplatePath).replace(/\\/g, '/')
+        );
         templateUrlPaths.push(`${resolvedTemplatePath}|${templateUrlPath}`);
       });
     }
