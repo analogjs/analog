@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "0.2.27",
+  "version": "0.2.28",
   "license": "MIT",
   "scripts": {
     "dev": "nx serve",

@@ -1,3 +1,9 @@
+## [0.2.28](https://github.com/analogjs/analog/compare/0.2.27...0.2.28) (2023-12-15)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add sourcemap fix to optimizer plugin ([4144bab](https://github.com/analogjs/analog/commit/4144bab31a265f288cc50e9944e5d1fd0348510c))
+
 ## [0.2.27](https://github.com/analogjs/analog/compare/0.2.26...0.2.27) (2023-12-15)
 
 ### Bug Fixes
