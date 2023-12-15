@@ -1,3 +1,10 @@
+## [0.2.27](https://github.com/analogjs/analog/compare/0.2.26...0.2.27) (2023-12-15)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** improve compatibility with sourcemaps ([#803](https://github.com/analogjs/analog/issues/803)) ([ccc959b](https://github.com/analogjs/analog/commit/ccc959b8978525af3f0bc431924e1744d2c834e3))
+- **vite-plugin-angular:** support Windows path for templateUrl and styleUrl ([#799](https://github.com/analogjs/analog/issues/799)) ([c083461](https://github.com/analogjs/analog/commit/c083461dc063e693f41eda42863638556b3c19ef))
+
 ## [0.2.26](https://github.com/analogjs/analog/compare/0.2.25...0.2.26) (2023-12-13)
 
 ### Bug Fixes
