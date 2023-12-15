@@ -317,6 +317,9 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (jit) {
             return {
               code: data.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, ''),
+              map: {
+                mappings: '',
+              },
             };
           }
 
@@ -327,6 +330,9 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (!forceAsyncTransformation && !isProd) {
             return {
               code: data.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, ''),
+              map: {
+                mappings: '',
+              },
             };
           }
 
@@ -380,20 +386,16 @@ export function angular(options?: PluginOptions): Plugin[] {
   function setupCompilation() {
     const { options: tsCompilerOptions, rootNames: rn } =
       compilerCli.readConfiguration(pluginOptions.tsconfig, {
-        enableIvy: true,
-        noEmitOnError: false,
         suppressOutputPathCheck: true,
         outDir: undefined,
-        inlineSources: !isProd,
         inlineSourceMap: !isProd,
-        sourceMap: false,
-        mapRoot: undefined,
-        sourceRoot: undefined,
+        inlineSources: !isProd,
         declaration: false,
         declarationMap: false,
         allowEmptyCodegenFiles: false,
         annotationsAs: 'decorators',
         enableResourceInlining: false,
+        supportTestBed: false,
       });
 
     rootNames = rn;
