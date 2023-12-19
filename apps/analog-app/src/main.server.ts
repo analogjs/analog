@@ -20,8 +20,7 @@ export function bootstrap() {
 export default async function render(
   url: string,
   document: string,
-  req: Request,
-  res: Response
+  { req, res }: { req: Request; res: Response }
 ) {
   const html = await renderApplication(bootstrap, {
     document,
