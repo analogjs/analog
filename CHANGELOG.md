@@ -1,3 +1,14 @@
+## [0.2.29](https://github.com/analogjs/analog/compare/0.2.28...0.2.29) (2023-12-19)
+
+### Bug Fixes
+
+- **nx-plugin:** fix server tests and tsConfigPaths not being recognized ([#804](https://github.com/analogjs/analog/issues/804)) ([eda802b](https://github.com/analogjs/analog/commit/eda802b319561329800539c6176725bc15549a86))
+- **trpc:** remove imports to @trpc/client/src and @trpc/server/src ([#805](https://github.com/analogjs/analog/issues/805)) ([c432e95](https://github.com/analogjs/analog/commit/c432e959c67099d728da84da5ab3f5e98915eb8b))
+
+### Features
+
+- **vite-plugin-nitro:** provide support for Request and Response to server side renderer ([#806](https://github.com/analogjs/analog/issues/806)) ([33b0020](https://github.com/analogjs/analog/commit/33b00202ecc1a6eb88d1d0bbf66c0ee080f7ef74))
+
 ## [0.2.28](https://github.com/analogjs/analog/compare/0.2.27...0.2.28) (2023-12-15)
 
 ### Bug Fixes
