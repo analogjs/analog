@@ -711,6 +711,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Jefftopia",
+      "name": "Jeff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5161547?v=4",
+      "profile": "https://jeffreysmith.ninja",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
