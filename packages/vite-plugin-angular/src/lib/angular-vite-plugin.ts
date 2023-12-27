@@ -51,7 +51,7 @@ type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
  * Match .(c or m)ts, .ts extensions with an optional ? for query params
  * Ignore .tsx extensions
  */
-const TS_EXT_REGEX = /\.[cm]?ts[^x]?\??/;
+const TS_EXT_REGEX = /\.[cm]?(ts|ng)[^x]?\??/;
 
 export function angular(options?: PluginOptions): Plugin[] {
   /**
@@ -327,6 +327,12 @@ export function angular(options?: PluginOptions): Plugin[] {
             /for\s+await\s*\(|async\s+function\s*\*/.test(data);
           const useInputSourcemap = (!isProd ? undefined : false) as undefined;
 
+          if (id.includes('.ng') && fileEmitter) {
+            sourceFileCache.invalidate([`${id}.ts`]);
+            const ngFileResult = await fileEmitter!(`${id}.ts`);
+            data = ngFileResult?.content || '';
+          }
+
           if (!forceAsyncTransformation && !isProd) {
             return {
               code: data.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, ''),
@@ -398,7 +404,9 @@ export function angular(options?: PluginOptions): Plugin[] {
         supportTestBed: false,
       });
 
-    rootNames = rn;
+    rootNames = rn.concat([
+      `${process.cwd()}/apps/ng-app/src/app/app.component.ng.ts`,
+    ]);
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);
 
