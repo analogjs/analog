@@ -315,7 +315,32 @@ edgio deploy
 Analog supports deploying a static site on [GitHub Pages](https://pages.github.com/).
 When deploying your site to GitHub Pages, you must add an empty file called `.nojekyll` in the root directory of the `gh-pages` branch.
 
-You can automate the deployment using a GitHub action like this:
+You can automate the deployment using the [Analog Publish Github Pages](https://github.com/marketplace/actions/analog-publish-github-pages) action:
+
+```yaml
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - uses: k9n-dev/analog-publish-gh-pages@v1.0.0
+        with:
+          access-token: ${{ secrets.ACCESS_TOKEN }}
+          # further options are available.
+          # see: https://github.com/marketplace/actions/analog-publish-github-pages
+```
+
+Or you can do it by your own like this:
 
 ```yaml
 name: Build Deploy
