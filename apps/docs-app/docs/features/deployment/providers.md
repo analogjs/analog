@@ -309,3 +309,51 @@ edgio init --connector=@edgio/analogjs
 ```bash
 edgio deploy
 ```
+
+## GitHub Pages (Static Site Deployment)
+
+Analog supports deploying a static site on [GitHub Pages](https://pages.github.com/).
+When deploying your site to GitHub Pages, you must add an empty file called `.nojekyll` in the root directory of the `gh-pages` branch.
+
+You can automate the deployment using a GitHub action like this:
+
+```yaml
+name: Build Deploy
+
+on:
+  push:
+    branches:
+      - '*' # deploy on all branches (but a --dry-run flag is added for branches (see code below))
+
+env:
+  TARGET_DIR: dist/analog/public
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - name: Set environment variable based on branch
+        run: |
+          if [[ $GITHUB_REF == refs/heads/main || $GITHUB_REF == refs/heads/master ]]; then
+            echo "Branch is main or master. Setting DRY_RUN_OPTION to empty."
+            echo "DRY_RUN_OPTION=" >> $GITHUB_ENV
+          else
+            echo "Branch is not main or master. Setting DRY_RUN_OPTION to '--dry-run'."
+            echo "DRY_RUN_OPTION=--dry-run" >> $GITHUB_ENV
+          fi
+      - name: Install
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Deploy Website (gh-pages branch)
+        env:
+          GH_TOKEN: ${{ secrets.ACCESS_TOKEN }} # A token must be created to be able to deploy on the gh-pages branch
+          CNAME_OPTION: --cname=yourdomain.dev # omit if your not running it on a custom domain
+        run: |
+          echo "DRY_RUN_OPTION=$DRY_RUN_OPTION"
+          npx angular-cli-ghpages --no-silent --dir="${{env.TARGET_DIR}}" $CNAME_OPTION $DRY_RUN_OPTION
+```
