@@ -43,7 +43,10 @@ export function devServerPlugin(options: ServerOptions): Plugin {
             const entryServer = (
               await viteServer.ssrLoadModule('~analog/entry-server')
             )['default'];
-            const result = await entryServer(req.originalUrl, template);
+            const result = await entryServer(req.originalUrl, template, {
+              req,
+              res,
+            });
             res.setHeader('Content-Type', 'text/html');
             res.end(result);
           } catch (e) {

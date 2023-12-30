@@ -17,21 +17,24 @@ import {
   createRecursiveProxy,
   inferTransformedProcedureOutput,
 } from '@trpc/server/shared';
-import { inferObservableValue, share } from '@trpc/server/observable';
 import {
+  inferObservableValue,
+  share,
+  Observable as TrpcObservable,
+} from '@trpc/server/observable';
+import { Observable as RxJSObservable } from 'rxjs';
+import {
+  TRPCClientError,
   OperationContext,
   OperationLink,
   TRPCClientRuntime,
-} from '@trpc/client/src/links/types';
-import { Observable as RxJSObservable } from 'rxjs';
-import { TRPCClientError } from '@trpc/client';
+} from '@trpc/client';
 import {
   createChain,
   CreateTRPCClientOptions,
   TRPCRequestOptions,
   TRPCType,
 } from './shared-internal';
-import { Observable as TrpcObservable } from '@trpc/server/src/observable/types';
 
 // Changed to rxjs observable
 type Resolver<TProcedure extends AnyProcedure> = (

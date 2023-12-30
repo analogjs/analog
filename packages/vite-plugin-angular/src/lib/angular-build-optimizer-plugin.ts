@@ -57,6 +57,9 @@ export function buildOptimizerPlugin({
             code: isProd
               ? code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
               : code,
+            map: {
+              mappings: '',
+            },
           };
         }
 

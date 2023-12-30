@@ -2,7 +2,7 @@
   "extends": "<%= offsetFromRoot %>tsconfig.base.json",
   "files": [],
   "include": [],
-  "exclude": ["./src/server/**/*"],
+  "exclude": [],
   "references": [
     {
       "path": "./tsconfig.app.json"
