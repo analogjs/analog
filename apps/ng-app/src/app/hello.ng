@@ -1,0 +1,12 @@
+<script>
+  const metadata = {
+    selector: 'hello',
+  };
+
+  onDestroy(() => {
+    // console.log(Hello, CommonModule);
+    console.log('destroy');
+  });
+</script>
+
+<h1>Hello.ng again</h1>

@@ -39,9 +39,10 @@ export async function augmentHostWithResources(
     ...parameters
   ) => {
     if (fileName.includes('.ng')) {
+      console.log('fileName', fileName);
       const source = processNgFile(fileName, fromHtml, toHtml);
 
-      console.log('source', source);
+      // console.log('source', source);
 
       return ts.createSourceFile(
         fileName,
@@ -132,7 +133,7 @@ function processNgFile(
     templateRoot.children.push(child);
   }
 
-  console.log('contents', { fileName, ast });
+  // console.log('contents', { fileName, ast });
 
   const source = `
 import { Component } from '@angular/core';
@@ -140,9 +141,14 @@ import { Component } from '@angular/core';
 @Component({
   standalone: true,
   template: \`${toHtml(templateRoot)}\`,
-  styles: \`${styles}\`
+  styles: \`${styles}\`,
+  ${fileName.includes('app.component.ng') ? `imports: [Hello],` : ''}
 })
-export default class NgComponent {}
+export default class NgComponent {
+  // oninit //
+
+  // ondestroy //
+}
   `;
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -156,6 +162,9 @@ function processScript(fileName: string, source: string, script: Element) {
     imports: [],
     metadata: {},
     variables: {},
+    hooks: [],
+    init: [],
+    destroy: [],
   };
 
   transform(scriptAst, [ngScriptTransformer(test)]);
@@ -164,12 +173,29 @@ function processScript(fileName: string, source: string, script: Element) {
     source = `${importNode}\n${source}`;
   }
 
+  if (test.init.length > 0) {
+    source = source.replace('// oninit //', `ngOnInit() ${test.init}`);
+  } else {
+    source = source.replace('// oninit //', '');
+  }
+
+  if (test.destroy.length > 0) {
+    source = source.replace('// ondestroy //', `ngOnDestroy() ${test.destroy}`);
+  } else {
+    source = source.replace('// ondestroy //', '');
+  }
+
+  Object.entries(test.metadata).forEach(([metadataName, metadataValue]) => {
+    console.log(metadataName, metadataValue);
+  });
   const sourceAst = ast(source, fileName);
 
   const transformedSource = transform(sourceAst, [sourceTransformer(test)]);
+
   const updatedSourceText = ts
     .createPrinter()
     .printFile(transformedSource.transformed[0]);
+  console.log(updatedSourceText);
   return updatedSourceText;
 }
 
@@ -195,16 +221,20 @@ const sourceTransformer: (
                     decoratorArguments,
                     [
                       ...decoratorArguments.properties,
-                      ...Object.entries(record.metadata).map(
-                        ([metadataName, metadataValue]) => {
+                      ...Object.entries(record.metadata)
+                        .map(([metadataName, metadataValue]) => {
                           return context.factory.createPropertyAssignment(
                             context.factory.createIdentifier(metadataName),
                             context.factory.createStringLiteral(
                               metadataValue as string
                             )
                           );
-                        }
-                      ),
+                        })
+                        .filter((p) => {
+                          return (
+                            (p.name as ts.Identifier).escapedText !== 'imports'
+                          );
+                        }),
                     ]
                   ),
                 ]
@@ -216,17 +246,29 @@ const sourceTransformer: (
           node.name,
           node.typeParameters,
           node.heritageClauses,
-          Object.entries(record.variables).map(([varName, varData]) => {
-            return context.factory.createPropertyDeclaration(
-              [context.factory.createModifier(ts.SyntaxKind.ProtectedKeyword)],
-              varName,
+          [
+            ...node.members,
+            context.factory.createConstructorDeclaration(
               undefined,
-              undefined,
-              typeof varData === 'string'
-                ? context.factory.createStringLiteral(varData)
-                : chauBrute(varData as ts.Expression, context)
-            );
-          })
+              [],
+              context.factory.createBlock(record['hooks'], true)
+            ),
+            ...Object.entries(record.variables).map(([varName, varData]) => {
+              return context.factory.createPropertyDeclaration(
+                [
+                  context.factory.createModifier(
+                    ts.SyntaxKind.ProtectedKeyword
+                  ),
+                ],
+                varName,
+                undefined,
+                undefined,
+                typeof varData === 'string'
+                  ? context.factory.createStringLiteral(varData)
+                  : chauBrute(varData as ts.Expression, context)
+              );
+            }),
+          ]
         );
       }
 
@@ -287,6 +329,38 @@ const ngScriptTransformer: (
           ts.isStringLiteral(declarationInitializer)
             ? declarationInitializer.text
             : declarationInitializer;
+        return node;
+      }
+
+      if (ts.isExpressionStatement(node)) {
+        const callExp = node.expression as ts.CallExpression;
+        const callId = callExp.expression as ts.Identifier;
+
+        if (
+          ['effect', 'afterRender', 'afterNextRender'].includes(
+            callId.getText()
+          )
+        ) {
+          record['hooks'].push(node);
+          return node;
+        }
+
+        if (callId.getText() === 'onInit') {
+          const initBody = (callExp.arguments[0] as ts.ArrowFunction)
+            .body as ts.FunctionBody;
+
+          record['init'].push(initBody.getText());
+          return node;
+        }
+
+        if (callId.getText() === 'onDestroy') {
+          const destroyBody = (callExp.arguments[0] as ts.ArrowFunction)
+            .body as ts.FunctionBody;
+
+          record['destroy'].push(destroyBody.getText());
+          return node;
+        }
+
         return node;
       }
 

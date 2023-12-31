@@ -1,18 +1,45 @@
 <script>
-  import { inject, signal } from '@angular/core';
+  import { inject, signal, effect } from '@angular/core';
   import { DOCUMENT } from '@angular/common';
+  import { HttpClient } from '@angular/common/http';
+  import Hello from './hello.ng';
+  import { CommonModule } from '@angular/common';
 
   const title = 'Angular Analog';
   const document = inject(DOCUMENT);
   const counter = signal(1);
+  const http = inject(HttpClient);
+  const toggle = signal(true);
+
+  effect(() => {
+    console.log(this.counter());
+  });
 
   const metadata = {
     selector: 'app-root',
   };
+
+  onInit(() => {
+    // console.log(Hello, CommonModule);
+    // console.log('init');
+  });
 </script>
 
-<h1>Hello {{ title }}!!!!</h1>
+<!-- <h1>Hello {{ title }}!!!!</h1> -->
+
+@if(counter() < 5) {
+<h1>Hello {{ title }} !!!!</h1>
+}
+
+<button (click)="toggle.set(false)">toggle</button>
 <div>{{ document.title }}</div>
 
 <p>Counter: {{ counter() }}</p>
 <button (click)="counter.set(counter() + 1)">increment</button>
+<button (click)="counter.set(counter() - 1)">decrement</button>
+
+<style>
+  p {
+    color: red;
+  }
+</style>

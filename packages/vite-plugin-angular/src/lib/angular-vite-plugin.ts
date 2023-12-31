@@ -288,7 +288,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
-          const typescriptResult = await fileEmitter!(id);
+          const typescriptResult = fileEmitter && (await fileEmitter!(id));
 
           // return fileEmitter
           let data = typescriptResult?.content ?? '';
@@ -409,6 +409,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     rootNames = rn.concat([
       `${process.cwd()}/apps/ng-app/src/app/app.component.ng.ts`,
+      `${process.cwd()}/apps/ng-app/src/app/hello.ng.ts`,
     ]);
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);
