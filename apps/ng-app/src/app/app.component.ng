@@ -72,8 +72,4 @@
     padding: 1rem 0.5rem;
     border-radius: 0.5rem;
   }
-
-  h1 {
-    color: green;
-  }
 </style>

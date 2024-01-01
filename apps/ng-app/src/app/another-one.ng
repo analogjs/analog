@@ -7,3 +7,9 @@
 <template>
   <h1>DJ KHALED!!!</h1>
 </template>
+
+<style>
+  h1 {
+    color: green;
+  }
+</style>
