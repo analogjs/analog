@@ -54,8 +54,8 @@
   <button (click)="increment()">increment</button>
   <button (click)="decrement()">decrement</button>
 
-  @if (todo()) {
-  <pre>{{todo() | json }}</pre>
+  @if (todo(); as todo) {
+  <pre>{{todo | json }}</pre>
   } @else {
   <p>Loading todo...</p>
   }
@@ -64,5 +64,16 @@
 <style>
   p {
     color: red;
+  }
+
+  button {
+    background: blue;
+    color: white;
+    padding: 1rem 0.5rem;
+    border-radius: 0.5rem;
+  }
+
+  h1 {
+    color: green;
   }
 </style>

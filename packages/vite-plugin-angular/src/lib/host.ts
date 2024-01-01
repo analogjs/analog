@@ -114,7 +114,8 @@ function processNgFile(fileName: string) {
   const templateRegex = /<template>([\s\S]*?)<\/template>/i;
   const styleRegex = /<style>([\s\S]*?)<\/style>/i;
 
-  const [scriptContent, templateContent, styleContent] = [
+  // eslint-disable-next-line prefer-const
+  let [scriptContent, templateContent, styleContent] = [
     scriptRegex.exec(contents)?.pop()?.trim() || '',
     templateRegex.exec(contents)?.pop()?.trim() || '',
     styleRegex.exec(contents)?.pop()?.trim() || '',
@@ -128,6 +129,11 @@ function processNgFile(fileName: string) {
     });
   }
 
+  if (styleContent) {
+    templateContent = `<style>${styleContent.replace(/\n/g, '')}</style>
+${templateContent}`;
+  }
+
   const source = `
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 
@@ -135,8 +141,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   standalone: true,
   selector: '${componentDefaultSelectors.join(', ')}',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: \`${templateContent}\`,
-  styles: \`${styleContent}\`
+  template: \`${templateContent}\`
 })
 export default class NgComponent {
   constructor() {}
