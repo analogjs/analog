@@ -14,6 +14,8 @@ export function augmentHostWithResources(
   ) => ReturnType<any> | null,
   options: {
     inlineStylesExtension?: string;
+    supportNgFormat?: boolean;
+    isProd?: boolean;
   } = {}
 ) {
   const resourceHost = host as CompilerHost;
@@ -21,33 +23,34 @@ export function augmentHostWithResources(
     resourceHost as ts.CompilerHost
   ).getSourceFile.bind(resourceHost);
 
-  (resourceHost as ts.CompilerHost).getSourceFile = (
-    fileName,
-    languageVersionOrOptions,
-    onError,
-    ...parameters
-  ) => {
-    if (fileName.includes('.ng')) {
-      console.log('fileName', fileName);
-      const source = processNgFile(fileName);
-
-      return ts.createSourceFile(
-        fileName,
-        source,
-        languageVersionOrOptions,
-        onError as any,
-        ...(parameters as any)
-      );
-    }
-
-    return baseGetSourceFile.call(
-      resourceHost,
+  if (options.supportNgFormat) {
+    (resourceHost as ts.CompilerHost).getSourceFile = (
       fileName,
       languageVersionOrOptions,
       onError,
       ...parameters
-    );
-  };
+    ) => {
+      if (fileName.includes('.ng')) {
+        const source = processNgFile(fileName, options.isProd);
+
+        return ts.createSourceFile(
+          fileName,
+          source,
+          languageVersionOrOptions,
+          onError as any,
+          ...(parameters as any)
+        );
+      }
+
+      return baseGetSourceFile.call(
+        resourceHost,
+        fileName,
+        languageVersionOrOptions,
+        onError,
+        ...parameters
+      );
+    };
+  }
 
   resourceHost.readResource = function (fileName: string) {
     const filePath = normalizePath(fileName);
@@ -90,7 +93,7 @@ export function augmentHostWithResources(
   };
 }
 
-function processNgFile(fileName: string) {
+function processNgFile(fileName: string, isProd?: boolean) {
   const componentName = fileName.split('/').pop()?.split('.')[0];
   if (!componentName) {
     throw new Error(`[Analog] Missing component name ${fileName}`);
@@ -152,13 +155,13 @@ export default class NgComponent {
       scriptKind: ts.ScriptKind.TS,
     });
 
-    return processNgScript(fileName, project);
+    return processNgScript(fileName, project, isProd);
   }
 
   return source;
 }
 
-function processNgScript(fileName: string, project: Project) {
+function processNgScript(fileName: string, project: Project, isProd?: boolean) {
   const ngSourceFile = project.getSourceFile(fileName);
   const targetSourceFile = project.getSourceFile(`${fileName}.virtual.ts`);
   if (!ngSourceFile || !targetSourceFile) {
@@ -357,8 +360,11 @@ function processNgScript(fileName: string, project: Project) {
     });
   }
 
-  // PROD probably does not need this
-  targetSourceFile.formatText({ ensureNewLineAtEndOfFile: true });
-  console.log(fileName, targetSourceFile.getText());
+  if (!isProd) {
+    // PROD probably does not need this
+    targetSourceFile.formatText({ ensureNewLineAtEndOfFile: true });
+    // console.log(fileName, targetSourceFile.getText());
+  }
+
   return targetSourceFile.getText();
 }

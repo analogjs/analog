@@ -41,6 +41,9 @@ export interface PluginOptions {
      */
     tsTransformers?: ts.CustomTransformers;
   };
+  experimental?: {
+    dangerouslySupportNgFormat?: boolean;
+  };
   supportedBrowsers?: string[];
   transformFilter?: (code: string, id: string) => boolean;
 }
@@ -83,6 +86,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     },
     supportedBrowsers: options?.supportedBrowsers ?? ['safari 15'],
     jit: options?.jit,
+    supportNgFormat: options?.experimental?.dangerouslySupportNgFormat,
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -336,7 +340,11 @@ export function angular(options?: PluginOptions): Plugin[] {
             /for\s+await\s*\(|async\s+function\s*\*/.test(data);
           const useInputSourcemap = (!isProd ? undefined : false) as undefined;
 
-          if (id.includes('.ng') && fileEmitter) {
+          if (
+            id.includes('.ng') &&
+            pluginOptions.supportNgFormat &&
+            fileEmitter
+          ) {
             sourceFileCache.invalidate([`${id}.ts`]);
             const ngFileResult = await fileEmitter!(`${id}.ts`);
             data = ngFileResult?.content || '';
@@ -399,6 +407,10 @@ export function angular(options?: PluginOptions): Plugin[] {
   ].filter(Boolean) as Plugin[];
 
   function findNgFiles(config: UserConfig) {
+    if (!pluginOptions.supportNgFormat) {
+      return [];
+    }
+
     const fg = require('fast-glob');
     const root = normalizePath(
       path.resolve(pluginOptions.workspaceRoot, config.root || '.')
@@ -428,6 +440,13 @@ export function angular(options?: PluginOptions): Plugin[] {
         supportTestBed: false,
       });
 
+    if (pluginOptions.supportNgFormat) {
+      // Experimental Local Compilation is necessary
+      // for the Angular compiler to work with
+      // AOT and virtually compiled .ng files.
+      tsCompilerOptions.compilationMode = 'experimental-local';
+    }
+
     rootNames = rn.concat(ngFiles);
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);
@@ -439,6 +458,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     if (!jit) {
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
+        supportNgFormat: pluginOptions.supportNgFormat,
+        isProd: isProd,
       });
     }
   }
