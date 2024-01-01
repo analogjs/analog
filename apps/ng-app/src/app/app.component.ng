@@ -1,15 +1,17 @@
-<script>
+<script lang="ts">
   import { inject, signal, effect, computed } from '@angular/core';
   import { HttpClient } from '@angular/common/http';
   import Hello from './hello.ng';
   import AnotherOne from './another-one.ng';
   import { JsonPipe } from '@angular/common';
   import { delay } from 'rxjs';
+  import Highlight from './highlight.ng';
+  import Doubled from './doubled.ng';
 
-  const metadata = {
+  defineComponentMetadata({
     selector: 'app-root',
     imports: [JsonPipe],
-  };
+  });
 
   const title = 'Angular Analog';
 
@@ -50,7 +52,8 @@
   }
 
   <p>Counter: {{ counter() }}</p>
-  <p>Doubled: {{ doubled() }}</p>
+  <p highlight>Doubled: {{ doubled() }}</p>
+  <p>Doubled with Pipe: {{ counter() | doubled }}</p>
   <button (click)="increment()">increment</button>
   <button (click)="decrement()">decrement</button>
 

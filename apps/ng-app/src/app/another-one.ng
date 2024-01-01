@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   onInit(() => {
     console.log('anotherOne init');
   });

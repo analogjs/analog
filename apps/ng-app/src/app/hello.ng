@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { DestroyRef, inject } from '@angular/core';
 
   inject(DestroyRef).onDestroy(() => {

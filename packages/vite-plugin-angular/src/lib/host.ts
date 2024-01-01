@@ -1,7 +1,13 @@
 import { CompilerHost } from '@angular/compiler-cli';
 import { normalizePath } from '@ngtools/webpack/src/ivy/paths';
 import * as fs from 'fs';
-import { Node, Project, Scope, StructureKind } from 'ts-morph';
+import {
+  Node,
+  ObjectLiteralExpression,
+  Project,
+  Scope,
+  StructureKind,
+} from 'ts-morph';
 import * as ts from 'typescript';
 
 export function augmentHostWithResources(
@@ -93,7 +99,9 @@ export function augmentHostWithResources(
 }
 
 function processNgFile(fileName: string, isProd?: boolean) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { names } = require('@nx/devkit');
+
   const componentName = fileName.split('/').pop()?.split('.')[0];
   if (!componentName) {
     throw new Error(`[Analog] Missing component name ${fileName}`);
@@ -113,7 +121,7 @@ function processNgFile(fileName: string, isProd?: boolean) {
   const project = new Project();
   const contents = fs.readFileSync(fileName.replace('.ng.ts', '.ng'), 'utf-8');
 
-  const scriptRegex = /<script>([\s\S]*?)<\/script>/i;
+  const scriptRegex = /<script lang="ts">([\s\S]*?)<\/script>/i;
   const templateRegex = /<template>([\s\S]*?)<\/template>/i;
   const styleRegex = /<style>([\s\S]*?)<\/style>/i;
 
@@ -164,36 +172,38 @@ export default class NgComponent {
 function processNgScript(fileName: string, project: Project, isProd?: boolean) {
   const ngSourceFile = project.getSourceFile(fileName);
   const targetSourceFile = project.getSourceFile(`${fileName}.virtual.ts`);
+
   if (!ngSourceFile || !targetSourceFile) {
     throw new Error(`[Analog] Missing source files ${fileName}`);
   }
 
-  const componentClass = targetSourceFile.getClass(
-    (classDeclaration) => !!classDeclaration.getDecorator('Component')
+  const targetClass = targetSourceFile.getClass(
+    (classDeclaration) => classDeclaration.getName() === 'NgComponent'
   );
 
-  if (!componentClass) {
+  if (!targetClass) {
     throw new Error(`[Analog] Missing component class ${fileName}`);
   }
 
-  const componentMetadata = componentClass.getDecorator('Component');
+  const targetMetadata = targetClass.getDecorator('Component');
 
-  if (!componentMetadata) {
+  if (!targetMetadata) {
     throw new Error(`[Analog] Missing component metadata ${fileName}`);
   }
 
-  const componentMetadataArguments = componentMetadata.getArguments()[0];
+  let targetMetadataArguments =
+    targetMetadata.getArguments()[0] as ObjectLiteralExpression;
 
-  if (!Node.isObjectLiteralExpression(componentMetadataArguments)) {
+  if (!Node.isObjectLiteralExpression(targetMetadataArguments)) {
     throw new Error(
       `[Analog] Missing component metadata arguments ${fileName}`
     );
   }
 
-  const componentConstructor = componentClass.getConstructors()[0];
-  const componentConstructorBody = componentConstructor.getBody();
+  const targetConstructor = targetClass.getConstructors()[0];
+  const targetConstructorBody = targetConstructor.getBody();
 
-  if (!Node.isBlock(componentConstructorBody)) {
+  if (!Node.isBlock(targetConstructorBody)) {
     throw new Error(`[Analog] Missing component constructor body ${fileName}`);
   }
 
@@ -226,84 +236,54 @@ function processNgScript(fileName: string, project: Project, isProd?: boolean) {
       const initializer = declaration.getInitializer();
 
       if (initializer) {
-        if (declaration.getName() === 'metadata') {
-          // metadata
-          if (Node.isObjectLiteralExpression(initializer)) {
-            initializer.getPropertiesWithComments().forEach((property) => {
-              if (Node.isPropertyAssignment(property)) {
-                const propertyName = property.getName();
-                const propertyInitializer = property.getInitializer();
-                if (propertyInitializer) {
-                  if (propertyName === 'selector') {
-                    // remove the existing selector
-                    componentMetadataArguments
-                      .getProperty('selector')
-                      ?.remove();
-                    // add the new selector
-                    componentMetadataArguments.addPropertyAssignment({
-                      name: 'selector',
-                      initializer: propertyInitializer.getText(),
-                    });
-                  } else {
-                    if (propertyName)
-                      componentMetadataArguments.addPropertyAssignment({
-                        name: propertyName,
-                        initializer: propertyInitializer.getText(),
-                      });
-                  }
-                }
-              }
-            });
-          }
-        } else {
-          // these are variables as well as arrow functions
+        // add the property to the class
+        targetClass.addProperty({
+          name: declaration.getName(),
+          kind: StructureKind.Property,
+          scope: Scope.Protected,
+        });
 
-          // add the property to the class
-          componentClass.addProperty({
-            name: declaration.getName(),
-            kind: StructureKind.Property,
-            scope: Scope.Protected,
-          });
+        // add the variable initializer to the constructor
+        targetConstructor.addVariableStatement({
+          declarations: [
+            {
+              name: declaration.getName(),
+              initializer: initializer.getText(),
+              type: declaration.getTypeNode()?.getText(),
+            },
+          ],
+        });
 
-          // add the variable initializer to the constructor
-          componentConstructor.addVariableStatement({
-            declarations: [
-              {
-                name: declaration.getName(),
-                initializer: initializer.getText(),
-                type: declaration.getTypeNode()?.getText(),
-              },
-            ],
-          });
-
-          // assign the variable to the property
-          componentConstructor.addStatements(
-            Node.isArrowFunction(initializer)
-              ? `this.${declaration.getName()} = ${declaration.getName()}.bind(this);`
-              : `this.${declaration.getName()} = ${declaration.getName()};`
-          );
-        }
+        // assign the variable to the property
+        targetConstructor.addStatements(
+          Node.isArrowFunction(initializer)
+            ? `this.${declaration.getName()} = ${declaration.getName()}.bind(this);`
+            : `this.${declaration.getName()} = ${declaration.getName()};`
+        );
       }
     }
 
     if (Node.isFunctionDeclaration(node)) {
       // add the property to the class
-      componentClass.addProperty({
+      targetClass.addProperty({
         name: node.getName() || '',
         kind: StructureKind.Property,
         scope: Scope.Protected,
       });
 
       // add the variable initializer to the constructor
-      componentConstructor.addFunction({
+      targetConstructor.addFunction({
         name: node.getName() || '',
+        parameters: node
+          .getParameters()
+          .map((parameter) => parameter.getStructure()),
         statements: node
           .getStatements()
           .map((statement) => statement.getText()),
       });
 
       // assign the variable to the property
-      componentConstructor.addStatements(
+      targetConstructor.addStatements(
         `this.${node.getName()} = ${node.getName()}.bind(this)`
       );
     }
@@ -313,18 +293,56 @@ function processNgScript(fileName: string, project: Project, isProd?: boolean) {
       if (Node.isCallExpression(expression)) {
         // hooks, effects, basically Function calls
         const functionName = expression.getExpression().getText();
-        if (functionName === 'onInit') {
+        if (
+          functionName.endsWith('Metadata') &&
+          functionName.startsWith('define')
+        ) {
+          const type = functionName
+            .replace('define', '')
+            .replace('Metadata', '');
+          const metadata =
+            expression.getArguments()[0] as ObjectLiteralExpression;
+          if (type === 'Directive') {
+            targetMetadata.setExpression('Directive');
+            targetMetadata.addArgument(`{standalone: true}`);
+            targetMetadataArguments =
+              targetMetadata.getArguments()[0] as ObjectLiteralExpression;
+            // process the metadata
+            processMetadata(metadata, targetMetadataArguments);
+            // add Directive import
+            targetSourceFile.addImportDeclaration({
+              moduleSpecifier: '@angular/core',
+              namedImports: [{ name: 'Directive' }],
+            });
+          } else if (type === 'Pipe') {
+            // rename to Pipe
+            targetMetadata.setExpression('Pipe');
+            targetMetadata.addArgument(`{standalone: true}`);
+            targetMetadataArguments =
+              targetMetadata.getArguments()[0] as ObjectLiteralExpression;
+            // process the metadata
+            processMetadata(metadata, targetMetadataArguments);
+            // add Pipe import
+            targetSourceFile.addImportDeclaration({
+              moduleSpecifier: '@angular/core',
+              namedImports: [{ name: 'Pipe' }],
+            });
+          } else {
+            // process the metadata
+            processMetadata(metadata, targetMetadataArguments);
+          }
+        } else if (functionName === 'onInit') {
           const initFunction = expression.getArguments()[0];
           if (Node.isArrowFunction(initFunction)) {
             // add the property to the class
-            componentClass.addProperty({
+            targetClass.addProperty({
               name: 'onInit',
               kind: StructureKind.Property,
               scope: Scope.Protected,
             });
 
             // add the variable initializer to the constructor
-            componentConstructor.addFunction({
+            targetConstructor.addFunction({
               name: 'onInit',
               statements: initFunction
                 .getStatements()
@@ -332,32 +350,34 @@ function processNgScript(fileName: string, project: Project, isProd?: boolean) {
             });
 
             // assign the variable to the property
-            componentConstructor.addStatements(
-              `this.onInit = onInit.bind(this)`
-            );
-            componentClass.addMethod({
+            targetConstructor.addStatements(`this.onInit = onInit.bind(this)`);
+            targetClass.addMethod({
               name: 'ngOnInit',
               statements: `this.onInit();`,
             });
           }
         } else {
-          componentConstructor.addStatements(node.getText());
+          targetConstructor.addStatements(node.getText());
         }
       }
     }
   });
 
-  const importsMetadata = componentMetadataArguments.getProperty('imports');
-  if (importsMetadata && Node.isPropertyAssignment(importsMetadata)) {
-    const importsInitializer = importsMetadata.getInitializer();
-    if (Node.isArrayLiteralExpression(importsInitializer)) {
-      importsInitializer.addElement(declarations.filter(Boolean).join(', '));
+  try {
+    const importsMetadata = targetMetadataArguments.getProperty('imports');
+    if (importsMetadata && Node.isPropertyAssignment(importsMetadata)) {
+      const importsInitializer = importsMetadata.getInitializer();
+      if (Node.isArrayLiteralExpression(importsInitializer)) {
+        importsInitializer.addElement(declarations.filter(Boolean).join(', '));
+      }
+    } else {
+      targetMetadataArguments.addPropertyAssignment({
+        name: 'imports',
+        initializer: `[${declarations.filter(Boolean).join(', ')}]`,
+      });
     }
-  } else {
-    componentMetadataArguments.addPropertyAssignment({
-      name: 'imports',
-      initializer: `[${declarations.filter(Boolean).join(', ')}]`,
-    });
+  } catch (e) {
+    console.log(`[Analog] ${e}`);
   }
 
   if (!isProd) {
@@ -367,4 +387,59 @@ function processNgScript(fileName: string, project: Project, isProd?: boolean) {
   }
 
   return targetSourceFile.getText();
+}
+
+function processMetadata(
+  metadataObject: ObjectLiteralExpression,
+  targetMetadataArguments: ObjectLiteralExpression
+) {
+  metadataObject.getPropertiesWithComments().forEach((property) => {
+    if (Node.isPropertyAssignment(property)) {
+      const propertyName = property.getName();
+      const propertyInitializer = property.getInitializer();
+
+      if (propertyInitializer) {
+        if (propertyName === 'selector') {
+          // remove the existing selector
+          targetMetadataArguments.getProperty('selector')?.remove();
+          // add the new selector
+          targetMetadataArguments.addPropertyAssignment({
+            name: 'selector',
+            initializer: propertyInitializer.getText(),
+          });
+        } else if (propertyName) {
+          targetMetadataArguments.addPropertyAssignment({
+            name: propertyName,
+            initializer: propertyInitializer.getText(),
+          });
+        }
+      }
+    }
+  });
+
+  // if (Node.isObjectLiteralExpression(initializer)) {
+  //   initializer.getPropertiesWithComments().forEach((property) => {
+  //     if (Node.isPropertyAssignment(property)) {
+  //       const propertyName = property.getName();
+  //       const propertyInitializer = property.getInitializer();
+  //       if (propertyInitializer) {
+  //         if (propertyName === 'selector') {
+  //           // remove the existing selector
+  //           targetMetadataArguments.getProperty('selector')?.remove();
+  //           // add the new selector
+  //           targetMetadataArguments.addPropertyAssignment({
+  //             name: 'selector',
+  //             initializer: propertyInitializer.getText(),
+  //           });
+  //         } else {
+  //           if (propertyName)
+  //             targetMetadataArguments.addPropertyAssignment({
+  //               name: propertyName,
+  //               initializer: propertyInitializer.getText(),
+  //             });
+  //         }
+  //       }
+  //     }
+  //   });
+  // }
 }
