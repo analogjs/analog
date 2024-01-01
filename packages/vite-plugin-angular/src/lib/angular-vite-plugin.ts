@@ -42,6 +42,9 @@ export interface PluginOptions {
     tsTransformers?: ts.CustomTransformers;
   };
   experimental?: {
+    /**
+     * Enable experimental support for .ng file format! Use as your own risk!
+     */
     dangerouslySupportNgFormat?: boolean;
   };
   supportedBrowsers?: string[];
