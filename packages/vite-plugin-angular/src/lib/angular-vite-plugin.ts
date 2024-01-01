@@ -1,4 +1,11 @@
-import { ModuleNode, Plugin, PluginContainer, ViteDevServer } from 'vite';
+import {
+  ModuleNode,
+  normalizePath,
+  Plugin,
+  PluginContainer,
+  UserConfig,
+  ViteDevServer,
+} from 'vite';
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
 import { transformAsync } from '@babel/core';
 
@@ -92,6 +99,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   } = require('@ngtools/webpack/src/ivy/host');
 
   let compilerCli: typeof import('@angular/compiler-cli');
+  let userConfig: UserConfig;
   let rootNames: string[];
   let host: ts.CompilerHost;
   let nextProgram: NgtscProgram | undefined | ts.Program;
@@ -114,6 +122,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
         watchMode = command === 'serve';
+        userConfig = config;
 
         pluginOptions.tsconfig =
           options?.tsconfig ??
@@ -167,7 +176,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           cssPlugin = plugins.find((plugin) => plugin.name === 'vite:css');
         }
 
-        setupCompilation();
+        setupCompilation(userConfig);
 
         // Only store cache if in watch mode
         if (watchMode) {
@@ -389,7 +398,22 @@ export function angular(options?: PluginOptions): Plugin[] {
     }),
   ].filter(Boolean) as Plugin[];
 
-  function setupCompilation() {
+  function findNgFiles(config: UserConfig) {
+    const fg = require('fast-glob');
+    const root = normalizePath(
+      path.resolve(pluginOptions.workspaceRoot, config.root || '.')
+    );
+    const ngFiles: string[] = fg
+      .sync([`${root}/**/*.ng`], {
+        dot: true,
+      })
+      .map((file: string) => `${file}.ts`);
+
+    return ngFiles;
+  }
+
+  function setupCompilation(config: UserConfig) {
+    const ngFiles = findNgFiles(config);
     const { options: tsCompilerOptions, rootNames: rn } =
       compilerCli.readConfiguration(pluginOptions.tsconfig, {
         suppressOutputPathCheck: true,
@@ -404,11 +428,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         supportTestBed: false,
       });
 
-    rootNames = rn.concat([
-      `${process.cwd()}/apps/ng-app/src/app/app.component.ng.ts`,
-      `${process.cwd()}/apps/ng-app/src/app/hello.ng.ts`,
-      `${process.cwd()}/apps/ng-app/src/app/another-one.ng.ts`,
-    ]);
+    rootNames = rn.concat(ngFiles);
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);
 
