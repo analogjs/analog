@@ -1,13 +1,10 @@
 import { CompilerHost } from '@angular/compiler-cli';
 import { normalizePath } from '@ngtools/webpack/src/ivy/paths';
-import type { Root, Text, Element } from 'hast';
-import { decl } from 'postcss';
-import { transform, visitEachChild } from 'typescript';
-import * as ts from 'typescript';
 import * as fs from 'fs';
+import type { Element, Root, Text } from 'hast';
+import { Node, Project, Scope, StructureKind } from 'ts-morph';
+import * as ts from 'typescript';
 import { loadEsmModule } from './utils/devkit';
-import { tsquery, ast } from '@phenomnomnominal/tsquery';
-// import { fromHtml } from 'hast-util-from-html';
 
 export async function augmentHostWithResources(
   host: ts.CompilerHost,
@@ -41,8 +38,6 @@ export async function augmentHostWithResources(
     if (fileName.includes('.ng')) {
       console.log('fileName', fileName);
       const source = processNgFile(fileName, fromHtml, toHtml);
-
-      // console.log('source', source);
 
       return ts.createSourceFile(
         fileName,
@@ -108,6 +103,7 @@ function processNgFile(
   fromHtml: typeof import('hast-util-from-html').fromHtml,
   toHtml: typeof import('hast-util-to-html').toHtml
 ) {
+  const project = new Project();
   const contents = fs.readFileSync(fileName.replace('.ng.ts', '.ng'), 'utf-8');
 
   const ast = fromHtml(contents, { fragment: true, space: 'html' });
@@ -117,8 +113,9 @@ function processNgFile(
     data: ast.data,
     children: [],
   };
+
   let styles = '';
-  let script: Element;
+  let script: Element | undefined = undefined;
 
   for (const child of ast.children) {
     if (child.type !== 'element') continue;
@@ -130,243 +127,238 @@ function processNgFile(
       script = child;
       continue;
     }
-    templateRoot.children.push(child);
+    if (child.tagName === 'template') {
+      if (child.content?.children.length) {
+        templateRoot.children.push(...child.content.children);
+      } else {
+        templateRoot.children.push(...child.children);
+      }
+    }
   }
 
-  // console.log('contents', { fileName, ast });
+  if (!script) {
+    throw new Error(`[Analog] Missing <script> in ${fileName}`);
+  }
+
+  // the `.ng` file
+  project.createSourceFile(fileName, (script.children[0] as Text).value, {
+    overwrite: true,
+    scriptKind: ts.ScriptKind.TS,
+  });
 
   const source = `
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: \`${toHtml(templateRoot)}\`,
-  styles: \`${styles}\`,
-  ${fileName.includes('app.component.ng') ? `imports: [Hello],` : ''}
+  styles: \`${styles}\`
 })
 export default class NgComponent {
-  // oninit //
+  constructor() {}
+}`;
 
-  // ondestroy //
-}
-  `;
-
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return processScript(fileName, source, script!);
-}
-
-function processScript(fileName: string, source: string, script: Element) {
-  const scriptAst = ast((script.children[0] as Text).value);
-
-  const test: any = {
-    imports: [],
-    metadata: {},
-    variables: {},
-    hooks: [],
-    init: [],
-    destroy: [],
-  };
-
-  transform(scriptAst, [ngScriptTransformer(test)]);
-
-  for (const importNode of test.imports) {
-    source = `${importNode}\n${source}`;
-  }
-
-  if (test.init.length > 0) {
-    source = source.replace('// oninit //', `ngOnInit() ${test.init}`);
-  } else {
-    source = source.replace('// oninit //', '');
-  }
-
-  if (test.destroy.length > 0) {
-    source = source.replace('// ondestroy //', `ngOnDestroy() ${test.destroy}`);
-  } else {
-    source = source.replace('// ondestroy //', '');
-  }
-
-  Object.entries(test.metadata).forEach(([metadataName, metadataValue]) => {
-    console.log(metadataName, metadataValue);
+  project.createSourceFile(`${fileName}.virtual.ts`, source, {
+    scriptKind: ts.ScriptKind.TS,
   });
-  const sourceAst = ast(source, fileName);
 
-  const transformedSource = transform(sourceAst, [sourceTransformer(test)]);
-
-  const updatedSourceText = ts
-    .createPrinter()
-    .printFile(transformedSource.transformed[0]);
-  console.log(updatedSourceText);
-  return updatedSourceText;
+  return processNgScript(fileName, project);
 }
 
-const sourceTransformer: (
-  record: any
-) => ts.TransformerFactory<ts.SourceFile> = (record) => (context) => {
-  return (sourceFile) => {
-    const nodeVisitor = (node: ts.Node) => {
-      if (ts.isClassDeclaration(node)) {
-        const decorator = node.modifiers![0] as ts.Decorator;
-        const decoratorArguments = (decorator.expression as ts.CallExpression)
-          .arguments[0] as ts.ObjectLiteralExpression;
-        return context.factory.updateClassDeclaration(
-          node,
-          [
-            context.factory.updateDecorator(
-              decorator,
-              context.factory.createCallExpression(
-                context.factory.createIdentifier('Component'),
-                undefined,
-                [
-                  context.factory.updateObjectLiteralExpression(
-                    decoratorArguments,
-                    [
-                      ...decoratorArguments.properties,
-                      ...Object.entries(record.metadata)
-                        .map(([metadataName, metadataValue]) => {
-                          return context.factory.createPropertyAssignment(
-                            context.factory.createIdentifier(metadataName),
-                            context.factory.createStringLiteral(
-                              metadataValue as string
-                            )
-                          );
-                        })
-                        .filter((p) => {
-                          return (
-                            (p.name as ts.Identifier).escapedText !== 'imports'
-                          );
-                        }),
-                    ]
-                  ),
-                ]
-              )
-            ),
-            context.factory.createModifier(ts.SyntaxKind.ExportKeyword),
-            context.factory.createModifier(ts.SyntaxKind.DefaultKeyword),
-          ],
-          node.name,
-          node.typeParameters,
-          node.heritageClauses,
-          [
-            ...node.members,
-            context.factory.createConstructorDeclaration(
-              undefined,
-              [],
-              context.factory.createBlock(record['hooks'], true)
-            ),
-            ...Object.entries(record.variables).map(([varName, varData]) => {
-              return context.factory.createPropertyDeclaration(
-                [
-                  context.factory.createModifier(
-                    ts.SyntaxKind.ProtectedKeyword
-                  ),
-                ],
-                varName,
-                undefined,
-                undefined,
-                typeof varData === 'string'
-                  ? context.factory.createStringLiteral(varData)
-                  : chauBrute(varData as ts.Expression, context)
-              );
-            }),
-          ]
-        );
-      }
+function processNgScript(fileName: string, project: Project) {
+  const ngSourceFile = project.getSourceFile(fileName);
+  const targetSourceFile = project.getSourceFile(`${fileName}.virtual.ts`);
+  if (!ngSourceFile || !targetSourceFile) {
+    throw new Error(`[Analog] Missing source files ${fileName}`);
+  }
 
-      return ts.visitEachChild(node, nodeVisitor, context);
-    };
+  const componentClass = targetSourceFile.getClass(
+    (classDeclaration) => !!classDeclaration.getDecorator('Component')
+  );
 
-    return ts.visitNode(sourceFile, nodeVisitor) as ts.SourceFile;
-  };
-};
+  if (!componentClass) {
+    throw new Error(`[Analog] Missing component class ${fileName}`);
+  }
 
-function chauBrute(
-  expression: ts.Expression,
-  context: ts.TransformationContext
-) {
-  if (
-    ts.isCallExpression(expression) &&
-    expression.expression.getText() === 'signal'
-  ) {
-    return context.factory.createCallExpression(
-      context.factory.createIdentifier('signal'),
-      undefined,
-      expression.arguments.map((argument) => {
-        return context.factory.createNumericLiteral(argument.getText());
-      })
+  const componentMetadata = componentClass.getDecorator('Component');
+
+  if (!componentMetadata) {
+    throw new Error(`[Analog] Missing component metadata ${fileName}`);
+  }
+
+  const componentMetadataArguments = componentMetadata.getArguments()[0];
+
+  if (!Node.isObjectLiteralExpression(componentMetadataArguments)) {
+    throw new Error(
+      `[Analog] Missing component metadata arguments ${fileName}`
     );
   }
-  return expression;
-}
 
-const ngScriptTransformer: (
-  record: any
-) => ts.TransformerFactory<ts.SourceFile> = (record) => (context) => {
-  return (sourceFile) => {
-    const nodeVisitor = (node: ts.Node) => {
-      if (ts.isImportDeclaration(node)) {
-        record['imports'].push(node.getFullText(sourceFile));
-        return node;
+  const componentConstructor = componentClass.getConstructors()[0];
+  const componentConstructorBody = componentConstructor.getBody();
+
+  if (!Node.isBlock(componentConstructorBody)) {
+    throw new Error(`[Analog] Missing component constructor body ${fileName}`);
+  }
+
+  const declarations: string[] = [];
+
+  ngSourceFile.forEachChild((node) => {
+    if (Node.isImportDeclaration(node)) {
+      const moduleSpecifier = node.getModuleSpecifierValue();
+      if (moduleSpecifier.endsWith('.ng')) {
+        // other .ng files
+        declarations.push(node.getDefaultImport()?.getText() || '');
       }
 
-      if (ts.isVariableStatement(node)) {
-        const declaration = node.declarationList.declarations[0];
-        if (declaration.name.getText(sourceFile) === 'metadata') {
-          (
-            declaration.initializer as ts.ObjectLiteralExpression
-          ).properties.forEach((property) => {
-            record['metadata'][
-              (property as ts.PropertyAssignment).name.getText(sourceFile)
-            ] = (
-              (property as ts.PropertyAssignment)
-                .initializer as ts.StringLiteral
-            ).text;
+      targetSourceFile.addImportDeclaration({
+        moduleSpecifier: moduleSpecifier,
+        namedImports: node.getNamedImports().map((namedImport) => {
+          return {
+            name: namedImport.getName(),
+            alias: namedImport.getAliasNode()?.getText(),
+          };
+        }),
+        defaultImport: node.getDefaultImport()?.getText(),
+      });
+    }
+
+    if (Node.isVariableStatement(node)) {
+      const declarations = node.getDeclarations();
+      const declaration = declarations[0];
+
+      const initializer = declaration.getInitializer();
+
+      if (initializer) {
+        if (declaration.getName() === 'metadata') {
+          // metadata
+          if (Node.isObjectLiteralExpression(initializer)) {
+            initializer.getPropertiesWithComments().forEach((property) => {
+              if (Node.isPropertyAssignment(property)) {
+                const propertyName = property.getName();
+                const propertyInitializer = property.getInitializer();
+                if (propertyInitializer) {
+                  if (propertyName === 'host') {
+                    console.warn(`[Analog] Skipping host metadata ${fileName}`);
+                  } else {
+                    if (propertyName)
+                      componentMetadataArguments.addPropertyAssignment({
+                        name: propertyName,
+                        initializer: propertyInitializer.getText(),
+                      });
+                  }
+                }
+              }
+            });
+          }
+        } else {
+          // these are variables as well as arrow functions
+
+          // add the property to the class
+          componentClass.addProperty({
+            name: declaration.getName(),
+            kind: StructureKind.Property,
+            scope: Scope.Protected,
           });
-          return node;
-        }
 
-        const declarationInitializer = declaration.initializer as ts.Expression;
-        record['variables'][declaration.name.getText(sourceFile)] =
-          ts.isStringLiteral(declarationInitializer)
-            ? declarationInitializer.text
-            : declarationInitializer;
-        return node;
+          // add the variable initializer to the constructor
+          componentConstructor.addVariableStatement({
+            declarations: [
+              {
+                name: declaration.getName(),
+                initializer: initializer.getText(),
+                type: declaration.getTypeNode()?.getText(),
+              },
+            ],
+          });
+
+          // assign the variable to the property
+          componentConstructor.addStatements(
+            Node.isArrowFunction(initializer)
+              ? `this.${declaration.getName()} = ${declaration.getName()}.bind(this);`
+              : `this.${declaration.getName()} = ${declaration.getName()};`
+          );
+        }
       }
+    }
 
-      if (ts.isExpressionStatement(node)) {
-        const callExp = node.expression as ts.CallExpression;
-        const callId = callExp.expression as ts.Identifier;
+    if (Node.isFunctionDeclaration(node)) {
+      // add the property to the class
+      componentClass.addProperty({
+        name: node.getName() || '',
+        kind: StructureKind.Property,
+        scope: Scope.Protected,
+      });
 
-        if (
-          ['effect', 'afterRender', 'afterNextRender'].includes(
-            callId.getText()
-          )
-        ) {
-          record['hooks'].push(node);
-          return node;
+      // add the variable initializer to the constructor
+      componentConstructor.addFunction({
+        name: node.getName() || '',
+        statements: node
+          .getStatements()
+          .map((statement) => statement.getText()),
+      });
+
+      // assign the variable to the property
+      componentConstructor.addStatements(
+        `this.${node.getName()} = ${node.getName()}.bind(this)`
+      );
+    }
+
+    if (Node.isExpressionStatement(node)) {
+      const expression = node.getExpression();
+      if (Node.isCallExpression(expression)) {
+        // hooks, effects, basically Function calls
+        const functionName = expression.getExpression().getText();
+        if (functionName === 'onInit') {
+          const initFunction = expression.getArguments()[0];
+          if (Node.isArrowFunction(initFunction)) {
+            // add the property to the class
+            componentClass.addProperty({
+              name: 'onInit',
+              kind: StructureKind.Property,
+              scope: Scope.Protected,
+            });
+
+            // add the variable initializer to the constructor
+            componentConstructor.addFunction({
+              name: 'onInit',
+              statements: initFunction
+                .getStatements()
+                .map((statement) => statement.getText()),
+            });
+
+            // assign the variable to the property
+            componentConstructor.addStatements(
+              `this.onInit = onInit.bind(this)`
+            );
+            componentClass.addMethod({
+              name: 'ngOnInit',
+              statements: `this.onInit();`,
+            });
+          }
+        } else {
+          componentConstructor.addStatements(node.getText());
         }
-
-        if (callId.getText() === 'onInit') {
-          const initBody = (callExp.arguments[0] as ts.ArrowFunction)
-            .body as ts.FunctionBody;
-
-          record['init'].push(initBody.getText());
-          return node;
-        }
-
-        if (callId.getText() === 'onDestroy') {
-          const destroyBody = (callExp.arguments[0] as ts.ArrowFunction)
-            .body as ts.FunctionBody;
-
-          record['destroy'].push(destroyBody.getText());
-          return node;
-        }
-
-        return node;
       }
+    }
+  });
 
-      return ts.visitEachChild(node, nodeVisitor, context);
-    };
+  const importsMetadata = componentMetadataArguments.getProperty('imports');
+  if (importsMetadata && Node.isPropertyAssignment(importsMetadata)) {
+    const importsInitializer = importsMetadata.getInitializer();
+    if (Node.isArrayLiteralExpression(importsInitializer)) {
+      importsInitializer.addElement(declarations.filter(Boolean).join(', '));
+    }
+  } else {
+    componentMetadataArguments.addPropertyAssignment({
+      name: 'imports',
+      initializer: `[${declarations.filter(Boolean).join(', ')}]`,
+    });
+  }
 
-    return ts.visitNode(sourceFile, nodeVisitor) as ts.SourceFile;
-  };
-};
+  // PROD probably does not need this
+  targetSourceFile.formatText({ ensureNewLineAtEndOfFile: true });
+  console.log(fileName, targetSourceFile.getText());
+  return targetSourceFile.getText();
+}

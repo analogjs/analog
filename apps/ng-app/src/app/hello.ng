@@ -1,12 +1,15 @@
 <script>
+  import { DestroyRef, inject } from '@angular/core';
+
   const metadata = {
     selector: 'hello',
   };
 
-  onDestroy(() => {
-    // console.log(Hello, CommonModule);
-    console.log('destroy');
+  inject(DestroyRef).onDestroy(() => {
+    console.log('hello destroyed');
   });
 </script>
 
-<h1>Hello.ng again</h1>
+<template>
+  <h1>Hello.ng again</h1>
+</template>
