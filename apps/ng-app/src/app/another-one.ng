@@ -1,0 +1,9 @@
+<script>
+  onInit(() => {
+    console.log('anotherOne init');
+  });
+</script>
+
+<template>
+  <h1>DJ KHALED!!!</h1>
+</template>

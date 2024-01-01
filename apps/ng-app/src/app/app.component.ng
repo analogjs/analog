@@ -2,6 +2,7 @@
   import { inject, signal, effect, computed } from '@angular/core';
   import { HttpClient } from '@angular/common/http';
   import Hello from './hello.ng';
+  import AnotherOne from './another-one.ng';
   import { JsonPipe } from '@angular/common';
   import { delay } from 'rxjs';
 
@@ -44,7 +45,8 @@
 
 <template>
   @if (counter() > 5) {
-  <Hello></Hello>
+  <Hello />
+  <AnotherOne />
   }
 
   <p>Counter: {{ counter() }}</p>

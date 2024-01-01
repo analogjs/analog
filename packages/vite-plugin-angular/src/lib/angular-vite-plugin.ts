@@ -159,18 +159,15 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configureServer(server) {
         viteServer = server;
-        server.watcher.on('add', async () => void (await setupCompilation()));
-        server.watcher.on(
-          'unlink',
-          async () => void (await setupCompilation())
-        );
+        server.watcher.on('add', setupCompilation);
+        server.watcher.on('unlink', setupCompilation);
       },
       async buildStart({ plugins }) {
         if (Array.isArray(plugins)) {
           cssPlugin = plugins.find((plugin) => plugin.name === 'vite:css');
         }
 
-        await setupCompilation();
+        setupCompilation();
 
         // Only store cache if in watch mode
         if (watchMode) {
@@ -392,7 +389,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     }),
   ].filter(Boolean) as Plugin[];
 
-  async function setupCompilation() {
+  function setupCompilation() {
     const { options: tsCompilerOptions, rootNames: rn } =
       compilerCli.readConfiguration(pluginOptions.tsconfig, {
         suppressOutputPathCheck: true,
@@ -410,6 +407,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     rootNames = rn.concat([
       `${process.cwd()}/apps/ng-app/src/app/app.component.ng.ts`,
       `${process.cwd()}/apps/ng-app/src/app/hello.ng.ts`,
+      `${process.cwd()}/apps/ng-app/src/app/another-one.ng.ts`,
     ]);
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);
@@ -419,7 +417,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       : (cssPlugin!.transform as PluginContainer['transform']);
 
     if (!jit) {
-      await augmentHostWithResources(host, styleTransform, {
+      augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
       });
     }

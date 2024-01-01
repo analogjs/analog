@@ -1,13 +1,11 @@
 import { CompilerHost } from '@angular/compiler-cli';
 import { normalizePath } from '@ngtools/webpack/src/ivy/paths';
 import * as fs from 'fs';
-import type { Element, Root, Text } from 'hast';
 import { Node, Project, Scope, StructureKind } from 'ts-morph';
 import * as ts from 'typescript';
-import { loadEsmModule } from './utils/devkit';
 import { names } from '@nx/devkit';
 
-export async function augmentHostWithResources(
+export function augmentHostWithResources(
   host: ts.CompilerHost,
   transform: (
     code: string,
@@ -23,13 +21,6 @@ export async function augmentHostWithResources(
     resourceHost as ts.CompilerHost
   ).getSourceFile.bind(resourceHost);
 
-  const { fromHtml } = (await loadEsmModule(
-    'hast-util-from-html'
-  )) as typeof import('hast-util-from-html');
-  const { toHtml } = (await loadEsmModule(
-    'hast-util-to-html'
-  )) as typeof import('hast-util-to-html');
-
   (resourceHost as ts.CompilerHost).getSourceFile = (
     fileName,
     languageVersionOrOptions,
@@ -38,7 +29,7 @@ export async function augmentHostWithResources(
   ) => {
     if (fileName.includes('.ng')) {
       console.log('fileName', fileName);
-      const source = processNgFile(fileName, fromHtml, toHtml);
+      const source = processNgFile(fileName);
 
       return ts.createSourceFile(
         fileName,
@@ -99,11 +90,7 @@ export async function augmentHostWithResources(
   };
 }
 
-function processNgFile(
-  fileName: string,
-  fromHtml: typeof import('hast-util-from-html').fromHtml,
-  toHtml: typeof import('hast-util-to-html').toHtml
-) {
+function processNgFile(fileName: string) {
   const componentName = fileName.split('/').pop()?.split('.')[0];
   if (!componentName) {
     throw new Error(`[Analog] Missing component name ${fileName}`);
@@ -123,45 +110,23 @@ function processNgFile(
   const project = new Project();
   const contents = fs.readFileSync(fileName.replace('.ng.ts', '.ng'), 'utf-8');
 
-  const ast = fromHtml(contents, { fragment: true, space: 'html' });
+  const scriptRegex = /<script>([\s\S]*?)<\/script>/i;
+  const templateRegex = /<template>([\s\S]*?)<\/template>/i;
+  const styleRegex = /<style>([\s\S]*?)<\/style>/i;
 
-  const templateRoot: Root = {
-    type: 'root',
-    data: ast.data,
-    children: [],
-  };
-
-  let styles = '';
-  let script: Element | undefined = undefined;
-
-  for (const child of ast.children) {
-    if (child.type !== 'element') continue;
-    if (child.tagName === 'style') {
-      styles = (child.children[0] as Text).value;
-      continue;
-    }
-    if (child.tagName === 'script') {
-      script = child;
-      continue;
-    }
-    if (child.tagName === 'template') {
-      if (child.content?.children.length) {
-        templateRoot.children.push(...child.content.children);
-      } else {
-        templateRoot.children.push(...child.children);
-      }
-    }
-  }
-
-  if (!script) {
-    throw new Error(`[Analog] Missing <script> in ${fileName}`);
-  }
+  const [scriptContent, templateContent, styleContent] = [
+    scriptRegex.exec(contents)?.pop()?.trim() || '',
+    templateRegex.exec(contents)?.pop()?.trim() || '',
+    styleRegex.exec(contents)?.pop()?.trim() || '',
+  ];
 
   // the `.ng` file
-  project.createSourceFile(fileName, (script.children[0] as Text).value, {
-    overwrite: true,
-    scriptKind: ts.ScriptKind.TS,
-  });
+  if (scriptContent) {
+    project.createSourceFile(fileName, scriptContent, {
+      overwrite: true,
+      scriptKind: ts.ScriptKind.TS,
+    });
+  }
 
   const source = `
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -170,18 +135,22 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   standalone: true,
   selector: '${componentDefaultSelectors.join(', ')}',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: \`${toHtml(templateRoot)}\`,
-  styles: \`${styles}\`
+  template: \`${templateContent}\`,
+  styles: \`${styleContent}\`
 })
 export default class NgComponent {
   constructor() {}
 }`;
 
-  project.createSourceFile(`${fileName}.virtual.ts`, source, {
-    scriptKind: ts.ScriptKind.TS,
-  });
+  if (scriptContent) {
+    project.createSourceFile(`${fileName}.virtual.ts`, source, {
+      scriptKind: ts.ScriptKind.TS,
+    });
 
-  return processNgScript(fileName, project);
+    return processNgScript(fileName, project);
+  }
+
+  return source;
 }
 
 function processNgScript(fileName: string, project: Project) {
