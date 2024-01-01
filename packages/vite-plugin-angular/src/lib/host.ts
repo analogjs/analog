@@ -5,6 +5,7 @@ import type { Element, Root, Text } from 'hast';
 import { Node, Project, Scope, StructureKind } from 'ts-morph';
 import * as ts from 'typescript';
 import { loadEsmModule } from './utils/devkit';
+import { names } from '@nx/devkit';
 
 export async function augmentHostWithResources(
   host: ts.CompilerHost,
@@ -103,6 +104,22 @@ function processNgFile(
   fromHtml: typeof import('hast-util-from-html').fromHtml,
   toHtml: typeof import('hast-util-to-html').toHtml
 ) {
+  const componentName = fileName.split('/').pop()?.split('.')[0];
+  if (!componentName) {
+    throw new Error(`[Analog] Missing component name ${fileName}`);
+  }
+
+  const {
+    fileName: componentFileName,
+    className,
+    constantName,
+  } = names(componentName);
+  const componentDefaultSelectors = [
+    componentFileName,
+    className,
+    constantName,
+  ];
+
   const project = new Project();
   const contents = fs.readFileSync(fileName.replace('.ng.ts', '.ng'), 'utf-8');
 
@@ -151,6 +168,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   standalone: true,
+  selector: '${componentDefaultSelectors.join(', ')}',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: \`${toHtml(templateRoot)}\`,
   styles: \`${styles}\`
@@ -239,8 +257,16 @@ function processNgScript(fileName: string, project: Project) {
                 const propertyName = property.getName();
                 const propertyInitializer = property.getInitializer();
                 if (propertyInitializer) {
-                  if (propertyName === 'host') {
-                    console.warn(`[Analog] Skipping host metadata ${fileName}`);
+                  if (propertyName === 'selector') {
+                    // remove the existing selector
+                    componentMetadataArguments
+                      .getProperty('selector')
+                      ?.remove();
+                    // add the new selector
+                    componentMetadataArguments.addPropertyAssignment({
+                      name: 'selector',
+                      initializer: propertyInitializer.getText(),
+                    });
                   } else {
                     if (propertyName)
                       componentMetadataArguments.addPropertyAssignment({

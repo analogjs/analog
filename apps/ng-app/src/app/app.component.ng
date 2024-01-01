@@ -44,7 +44,7 @@
 
 <template>
   @if (counter() > 5) {
-  <hello></hello>
+  <Hello></Hello>
   }
 
   <p>Counter: {{ counter() }}</p>

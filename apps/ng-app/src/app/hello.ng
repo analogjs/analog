@@ -1,10 +1,6 @@
 <script>
   import { DestroyRef, inject } from '@angular/core';
 
-  const metadata = {
-    selector: 'hello',
-  };
-
   inject(DestroyRef).onDestroy(() => {
     console.log('hello destroyed');
   });
