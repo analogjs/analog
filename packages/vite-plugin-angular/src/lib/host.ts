@@ -3,7 +3,6 @@ import { normalizePath } from '@ngtools/webpack/src/ivy/paths';
 import * as fs from 'fs';
 import { Node, Project, Scope, StructureKind } from 'ts-morph';
 import * as ts from 'typescript';
-import { names } from '@nx/devkit';
 
 export function augmentHostWithResources(
   host: ts.CompilerHost,
@@ -94,6 +93,7 @@ export function augmentHostWithResources(
 }
 
 function processNgFile(fileName: string, isProd?: boolean) {
+  const { names } = require('@nx/devkit');
   const componentName = fileName.split('/').pop()?.split('.')[0];
   if (!componentName) {
     throw new Error(`[Analog] Missing component name ${fileName}`);
