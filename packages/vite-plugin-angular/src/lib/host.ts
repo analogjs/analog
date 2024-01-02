@@ -36,8 +36,6 @@ export function augmentHostWithResources(
         );
         const source = processNgFile(fileName, contents, options.isProd);
 
-        console.log(fileName, source);
-
         return ts.createSourceFile(
           fileName,
           source,
