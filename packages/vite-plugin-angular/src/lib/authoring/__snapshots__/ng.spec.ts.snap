@@ -25,9 +25,8 @@ export default class AnalogNgEntity {
 `;
 
 exports[`authoring ng file > should process directive as ng file 1`] = `
-"import { Component, ChangeDetectionStrategy } from '@angular/core';
+"import { Directive } from '@angular/core';
 import { inject, ElementRef, afterNextRender } from "@angular/core";
-import { Directive } from "@angular/core";
 
 @Directive({
     standalone: true,
@@ -43,95 +42,6 @@ export default class AnalogNgEntity {
     }
 
     protected elRef;
-}
-"
-`;
-
-exports[`authoring ng file > should process pipe as ng file 1`] = `
-"import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { Pipe } from "@angular/core";
-
-@Pipe({
-    standalone: true,
-    name: 'doubled'
-})
-export default class AnalogNgEntity {
-    constructor() {
-        function transform(value: number) {
-            return value * 2;
-        }
-        this.transform = transform.bind(this);
-    }
-
-    protected transform;
-}
-"
-`;
-
-exports[`authoring ng file should process component as ng file 1`] = `
-"import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { signal } from \\"@angular/core\\";
-
-@Component({
-    standalone: true,
-    selector: 'virtual,Virtual,VIRTUAL',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    template: \`<style>div {    color: red;  }  p {    color: blue;  }</style>
-<div>Component</div>
-  <p>{{ counter() }}</p>\`,
-    imports: []
-})
-export default class AnalogNgEntity {
-    constructor() {
-        let counter = signal(0);
-        this.counter = counter;
-    }
-
-    protected counter;
-}
-"
-`;
-
-exports[`authoring ng file should process directive as ng file 1`] = `
-"import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { inject, ElementRef, afterNextRender } from \\"@angular/core\\";
-import { Directive } from \\"@angular/core\\";
-
-@Directive({
-    standalone: true,
-    selector: 'input[directive]'
-})
-export default class AnalogNgEntity {
-    constructor() {
-        let elRef = inject(ElementRef);
-        this.elRef = elRef;
-        afterNextRender(() => {
-            elRef.nativeElement.focus();
-        });
-    }
-
-    protected elRef;
-}
-"
-`;
-
-exports[`authoring ng file should process pipe as ng file 1`] = `
-"import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { Pipe } from \\"@angular/core\\";
-
-@Pipe({
-    standalone: true,
-    name: 'doubled'
-})
-export default class AnalogNgEntity {
-    constructor() {
-        function transform(value: number) {
-            return value * 2;
-        }
-        this.transform = transform.bind(this);
-    }
-
-    protected transform;
 }
 "
 `;

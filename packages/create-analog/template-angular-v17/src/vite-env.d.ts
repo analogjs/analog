@@ -2,10 +2,10 @@
 
 // Uncomment the lines below to enable types for experimental .ng format support
 // declare global {
-//   import type { Component, Directive, Pipe } from '@angular/core';
+//   import type { Component } from '@angular/core';
 
 //   interface Window {
-//     defineComponentMetadata: (
+//     defineMetadata: (
 //       metadata: Omit<
 //         Component,
 //         | 'template'
@@ -18,10 +18,6 @@
 //         | 'styles'
 //       >
 //     ) => void;
-//     defineDirectiveMetadata: (
-//       metadata: Omit<Directive, 'host' | 'standalone'>
-//     ) => void;
-//     definePipeMetadata: (metadata: Omit<Pipe, 'standalone'>) => void;
 //   }
 // }
 

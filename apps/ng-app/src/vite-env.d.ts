@@ -9,10 +9,10 @@ interface ImportMeta {
 }
 
 declare global {
-  import type { Component, Directive, Pipe } from '@angular/core';
+  import type { Component } from '@angular/core';
 
   interface Window {
-    defineComponentMetadata: (
+    defineMetadata: (
       metadata: Omit<
         Component,
         | 'template'
@@ -25,10 +25,6 @@ declare global {
         | 'styles'
       >
     ) => void;
-    defineDirectiveMetadata: (
-      metadata: Omit<Directive, 'host' | 'standalone'>
-    ) => void;
-    definePipeMetadata: (metadata: Omit<Pipe, 'standalone'>) => void;
   }
 }
 

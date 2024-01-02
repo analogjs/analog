@@ -42,19 +42,33 @@ export function processNgFile(
     STYLE_TAG_REGEX.exec(content)?.pop()?.trim() || '',
   ];
 
+  if (!scriptContent && !templateContent) {
+    throw new Error(
+      `[Analog] Either <script> or <template> must exist in ${fileName}`
+    );
+  }
+
+  const ngType = templateContent ? 'Component' : 'Directive';
+
   if (styleContent) {
     templateContent = `<style>${styleContent.replace(/\n/g, '')}</style>
 ${templateContent}`;
   }
 
   const source = `
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { ${ngType}${
+    ngType === 'Component' ? ', ChangeDetectionStrategy' : ''
+  } } from '@angular/core';
 
-@Component({
+@${ngType}({
   standalone: true,
   selector: '${componentFileName},${className},${constantName}',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: \`${templateContent}\`
+  ${
+    ngType === 'Component'
+      ? `changeDetection: ChangeDetectionStrategy.OnPush,
+      template: \`${templateContent}\``
+      : ''
+  }
 })
 export default class AnalogNgEntity {
   constructor() {}
@@ -66,13 +80,18 @@ export default class AnalogNgEntity {
     project.createSourceFile(fileName, scriptContent);
     project.createSourceFile(`${fileName}.virtual.ts`, source);
 
-    return processNgScript(fileName, project, isProd);
+    return processNgScript(fileName, project, ngType, isProd);
   }
 
   return source;
 }
 
-function processNgScript(fileName: string, project: Project, isProd?: boolean) {
+function processNgScript(
+  fileName: string,
+  project: Project,
+  ngType: 'Component' | 'Directive',
+  isProd?: boolean
+) {
   const ngSourceFile = project.getSourceFile(fileName);
   const targetSourceFile = project.getSourceFile(`${fileName}.virtual.ts`);
 
@@ -88,13 +107,13 @@ function processNgScript(fileName: string, project: Project, isProd?: boolean) {
     throw new Error(`[Analog] Missing class ${fileName}`);
   }
 
-  const targetMetadata = targetClass.getDecorator('Component');
+  const targetMetadata = targetClass.getDecorator(ngType);
 
   if (!targetMetadata) {
     throw new Error(`[Analog] Missing metadata ${fileName}`);
   }
 
-  let targetMetadataArguments =
+  const targetMetadataArguments =
     targetMetadata.getArguments()[0] as ObjectLiteralExpression;
 
   if (!Node.isObjectLiteralExpression(targetMetadataArguments)) {
@@ -108,7 +127,6 @@ function processNgScript(fileName: string, project: Project, isProd?: boolean) {
     throw new Error(`[Analog] invalid constructor body ${fileName}`);
   }
 
-  let ngType: 'Component' | 'Directive' | 'Pipe' = 'Component';
   const declarations: string[] = [];
 
   ngSourceFile.forEachChild((node) => {
@@ -176,31 +194,9 @@ function processNgScript(fileName: string, project: Project, isProd?: boolean) {
       if (Node.isCallExpression(expression)) {
         // hooks, effects, basically Function calls
         const functionName = expression.getExpression().getText();
-        if (
-          functionName.endsWith('Metadata') &&
-          functionName.startsWith('define')
-        ) {
-          ngType = functionName
-            .replace('define', '')
-            .replace('Metadata', '') as typeof ngType;
+        if (functionName === 'defineMetadata') {
           const metadata =
             expression.getArguments()[0] as ObjectLiteralExpression;
-
-          // If the type is not Component, then we reset the default decorator metadata
-          if (ngType !== 'Component') {
-            targetMetadata.setExpression(ngType);
-            targetMetadata.addArgument(`{standalone: true}`);
-            targetMetadataArguments =
-              targetMetadata.getArguments()[0] as ObjectLiteralExpression;
-
-            // add type import
-            targetSourceFile.addImportDeclaration({
-              moduleSpecifier: '@angular/core',
-              namedImports: [{ name: ngType }],
-            });
-          }
-
-          // process the metadata
           processMetadata(metadata, targetMetadataArguments);
         } else if (functionName === ON_INIT) {
           const initFunction = expression.getArguments()[0];
