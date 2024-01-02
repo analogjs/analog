@@ -1,7 +1,7 @@
 {
   "name": "@analogjs/vite-plugin-angular",
   "description": "Vite Plugin for Angular",
-  "version": "0.2.30-beta.1",
+  "version": "0.2.30-beta.2",
   "keywords": [
     "vite",
     "vitest",
@@ -21,7 +21,7 @@
   "peerDependencies": {
     "@angular-devkit/build-angular": "^15.0.0 || >=16.0.0"
   },
-  "devDependencies": {
+  "dependencies": {
     "ts-morph": "^21.0.0"
   },
   "ng-update": {
