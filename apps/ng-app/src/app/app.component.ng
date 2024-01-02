@@ -6,11 +6,11 @@
   import { JsonPipe } from '@angular/common';
   import { delay } from 'rxjs';
   import Highlight from './highlight.ng';
-  import Doubled from './doubled.ng';
 
-  defineComponentMetadata({
+  defineMetadata({
     selector: 'app-root',
     imports: [JsonPipe],
+    exposes: [Math],
   });
 
   const title = 'Angular Analog';
@@ -53,9 +53,10 @@
 
   <p>Counter: {{ counter() }}</p>
   <p highlight>Doubled: {{ doubled() }}</p>
-  <p>Doubled with Pipe: {{ counter() | doubled }}</p>
   <button (click)="increment()">increment</button>
   <button (click)="decrement()">decrement</button>
+
+  <p>Random: {{ Math.random() }}</p>
 
   @if (todo(); as todo) {
   <pre>{{todo | json }}</pre>

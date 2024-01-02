@@ -4,6 +4,10 @@ const COMPONENT_CONTENT = `
 <script lang="ts">
 import { signal } from '@angular/core';
 
+defineMetadata({
+  exposes: [Math]
+});
+
 const counter = signal(0);
 </script>
 
@@ -27,7 +31,7 @@ const DIRECTIVE_CONTENT = `
 <script lang="ts">
 import { inject, ElementRef,afterNextRender } from '@angular/core';
 
-defineDirectiveMetadata({
+defineMetadata({
   selector: 'input[directive]',
 })
 
@@ -36,18 +40,6 @@ const elRef = inject(ElementRef);
 afterNextRender(() => {
   elRef.nativeElement.focus();
 });
-</script>
-`;
-
-const PIPE_CONTENT = `
-<script lang="ts">
-definePipeMetadata({
-  name: 'doubled',
-})
-
-function transform(value: number) {
-  return value * 2;
-}
 </script>
 `;
 
@@ -61,12 +53,6 @@ describe('authoring ng file', () => {
   it('should process directive as ng file', () => {
     const source = processNgFile('virtual.ng.ts', DIRECTIVE_CONTENT);
     expect(source).toContain('Directive');
-    expect(source).toMatchSnapshot();
-  });
-
-  it('should process pipe as ng file', () => {
-    const source = processNgFile('virtual.ng.ts', PIPE_CONTENT);
-    expect(source).toContain('Pipe');
     expect(source).toMatchSnapshot();
   });
 });
