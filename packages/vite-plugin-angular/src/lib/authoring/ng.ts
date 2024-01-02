@@ -15,6 +15,7 @@ const TEMPLATE_TAG_REGEX = /<template>([\s\S]*?)<\/template>/i;
 const STYLE_TAG_REGEX = /<style>([\s\S]*?)<\/style>/i;
 
 const ON_INIT = 'onInit';
+const ON_DESTROY = 'onDestroy';
 
 export function processNgFile(
   fileName: string,
@@ -198,13 +199,13 @@ function processNgScript(
           const metadata =
             expression.getArguments()[0] as ObjectLiteralExpression;
           processMetadata(metadata, targetMetadataArguments, targetClass);
-        } else if (functionName === ON_INIT) {
+        } else if (functionName === ON_INIT || functionName === ON_DESTROY) {
           const initFunction = expression.getArguments()[0];
           if (Node.isArrowFunction(initFunction)) {
             addPropertyToClass(
               targetClass,
               targetConstructor,
-              ON_INIT,
+              functionName,
               initFunction,
               (propertyName, propertyInitializer) => {
                 targetConstructor.addFunction({
@@ -215,7 +216,7 @@ function processNgScript(
                 });
 
                 targetClass.addMethod({
-                  name: 'ngOnInit',
+                  name: functionName === ON_INIT ? 'ngOnInit' : 'ngOnDestroy',
                   statements: `this.${propertyName}();`,
                 });
               }
@@ -277,16 +278,13 @@ function processMetadata(
             .getText()
             .replace(/[[\]]/g, '')
             .split(',')
-            .map((item) => item.trim());
-
-          for (const exposed of exposes) {
-            targetClass.addProperty({
-              name: exposed,
-              initializer: exposed,
-              kind: StructureKind.Property,
+            .map((item) => ({
+              name: item.trim(),
+              initializer: item.trim(),
               scope: Scope.Protected,
-            });
-          }
+            }));
+
+          targetClass.addProperties(exposes);
         } else {
           targetMetadataArguments.addPropertyAssignment({
             name: propertyName,

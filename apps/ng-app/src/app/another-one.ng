@@ -2,6 +2,10 @@
   onInit(() => {
     console.log('anotherOne init');
   });
+
+  onDestroy(() => {
+    console.log('anotherOne destroy');
+  });
 </script>
 
 <template>
