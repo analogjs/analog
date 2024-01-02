@@ -1,0 +1,9 @@
+<script lang="ts">
+  definePipeMetadata({
+    name: 'doubled',
+  });
+
+  function transform(value: number) {
+    return value * 2;
+  }
+</script>

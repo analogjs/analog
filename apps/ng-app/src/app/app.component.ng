@@ -1,0 +1,78 @@
+<script lang="ts">
+  import { inject, signal, effect, computed } from '@angular/core';
+  import { HttpClient } from '@angular/common/http';
+  import Hello from './hello.ng';
+  import AnotherOne from './another-one.ng';
+  import { JsonPipe } from '@angular/common';
+  import { delay } from 'rxjs';
+  import Highlight from './highlight.ng';
+  import Doubled from './doubled.ng';
+
+  defineComponentMetadata({
+    selector: 'app-root',
+    imports: [JsonPipe],
+  });
+
+  const title = 'Angular Analog';
+
+  const http = inject(HttpClient);
+
+  const counter = signal(1);
+  const doubled = computed(() => counter() * 2);
+  const todo = signal(null);
+
+  const increment = () => {
+    counter.update((value) => value + 1);
+  };
+
+  function decrement() {
+    counter.update((value) => value - 1);
+  }
+
+  effect(() => {
+    console.log('counter changed', counter());
+  });
+
+  onInit(() => {
+    console.log('App init');
+    http
+      .get('https://jsonplaceholder.typicode.com/todos/1')
+      .pipe(delay(2000))
+      .subscribe((data) => {
+        todo.set(data);
+        console.log('data', data);
+      });
+  });
+</script>
+
+<template>
+  @if (counter() > 5) {
+  <Hello />
+  <AnotherOne />
+  }
+
+  <p>Counter: {{ counter() }}</p>
+  <p highlight>Doubled: {{ doubled() }}</p>
+  <p>Doubled with Pipe: {{ counter() | doubled }}</p>
+  <button (click)="increment()">increment</button>
+  <button (click)="decrement()">decrement</button>
+
+  @if (todo(); as todo) {
+  <pre>{{todo | json }}</pre>
+  } @else {
+  <p>Loading todo...</p>
+  }
+</template>
+
+<style>
+  p {
+    color: red;
+  }
+
+  button {
+    background: blue;
+    color: white;
+    padding: 1rem 0.5rem;
+    border-radius: 0.5rem;
+  }
+</style>

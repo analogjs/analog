@@ -1,0 +1,11 @@
+<script lang="ts">
+  import { DestroyRef, inject } from '@angular/core';
+
+  inject(DestroyRef).onDestroy(() => {
+    console.log('hello destroyed');
+  });
+</script>
+
+<template>
+  <h1>Hello.ng again</h1>
+</template>
