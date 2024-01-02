@@ -197,7 +197,7 @@ function processNgScript(
         if (functionName === 'defineMetadata') {
           const metadata =
             expression.getArguments()[0] as ObjectLiteralExpression;
-          processMetadata(metadata, targetMetadataArguments);
+          processMetadata(metadata, targetMetadataArguments, targetClass);
         } else if (functionName === ON_INIT) {
           const initFunction = expression.getArguments()[0];
           if (Node.isArrowFunction(initFunction)) {
@@ -253,7 +253,8 @@ function processNgScript(
 
 function processMetadata(
   metadataObject: ObjectLiteralExpression,
-  targetMetadataArguments: ObjectLiteralExpression
+  targetMetadataArguments: ObjectLiteralExpression,
+  targetClass: ClassDeclaration
 ) {
   metadataObject.getPropertiesWithComments().forEach((property) => {
     if (Node.isPropertyAssignment(property)) {
@@ -269,7 +270,24 @@ function processMetadata(
             name: 'selector',
             initializer: propertyInitializer.getText(),
           });
-        } else if (propertyName) {
+        } else if (propertyName === 'exposes') {
+          // for exposes we're going to add the property to the class so they are accessible on the template
+          // parse the initializer to get the item in the exposes array
+          const exposes = propertyInitializer
+            .getText()
+            .replace(/[[\]]/g, '')
+            .split(',')
+            .map((item) => item.trim());
+
+          for (const exposed of exposes) {
+            targetClass.addProperty({
+              name: exposed,
+              initializer: exposed,
+              kind: StructureKind.Property,
+              scope: Scope.Protected,
+            });
+          }
+        } else {
           targetMetadataArguments.addPropertyAssignment({
             name: propertyName,
             initializer: propertyInitializer.getText(),

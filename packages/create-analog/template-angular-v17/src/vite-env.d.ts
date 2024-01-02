@@ -16,7 +16,7 @@
 //         | 'styleUrls'
 //         | 'styleUrl'
 //         | 'styles'
-//       >
+//       > & { exposes?: any[] }
 //     ) => void;
 //   }
 // }

@@ -4,6 +4,10 @@ const COMPONENT_CONTENT = `
 <script lang="ts">
 import { signal } from '@angular/core';
 
+defineMetadata({
+  exposes: [Math]
+});
+
 const counter = signal(0);
 </script>
 

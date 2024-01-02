@@ -19,6 +19,7 @@ export default class AnalogNgEntity {
         this.counter = counter;
     }
 
+    protected Math = Math;
     protected counter;
 }
 "

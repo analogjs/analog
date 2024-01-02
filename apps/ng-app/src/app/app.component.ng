@@ -10,6 +10,7 @@
   defineMetadata({
     selector: 'app-root',
     imports: [JsonPipe],
+    exposes: [Math],
   });
 
   const title = 'Angular Analog';
@@ -54,6 +55,8 @@
   <p highlight>Doubled: {{ doubled() }}</p>
   <button (click)="increment()">increment</button>
   <button (click)="decrement()">decrement</button>
+
+  <p>Random: {{ Math.random() }}</p>
 
   @if (todo(); as todo) {
   <pre>{{todo | json }}</pre>
