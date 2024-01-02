@@ -1,3 +1,9 @@
+## [0.2.30-beta.1](https://github.com/analogjs/analog/compare/0.2.30-beta.0...0.2.30-beta.1) (2024-01-02)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add ts-morph as devDependency ([2870b9c](https://github.com/analogjs/analog/commit/2870b9c49eaf85b1400d489cf6eb89dd2b1082cd))
+
 ## [0.2.30-beta.0](https://github.com/analogjs/analog/compare/0.2.29...0.2.30-beta.0) (2024-01-02)
 
 ### Features
