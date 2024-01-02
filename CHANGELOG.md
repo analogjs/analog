@@ -1,3 +1,10 @@
+## [0.2.30-beta.0](https://github.com/analogjs/analog/compare/0.2.29...0.2.30-beta.0) (2024-01-02)
+
+### Features
+
+- **trpc:** allow install of superjson version 2.2.1 and newer ([#793](https://github.com/analogjs/analog/issues/793)) ([4dffaf3](https://github.com/analogjs/analog/commit/4dffaf37657c0d04eedd16ec3b7262b78ace52c6))
+- **vite-plugin-angular:** introduce experimental support for .ng format ([#823](https://github.com/analogjs/analog/issues/823)) ([f12beeb](https://github.com/analogjs/analog/commit/f12beeb2ecc8ab8dc7377981555fa13e8c62f14b))
+
 ## [0.2.29](https://github.com/analogjs/analog/compare/0.2.28...0.2.29) (2023-12-19)
 
 ### Bug Fixes
