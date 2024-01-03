@@ -9,11 +9,15 @@ defineMetadata({
 });
 
 const counter = signal(0);
+const [a, b, , c = 4] = [1, 2, 3];
 </script>
 
 <template>
   <div>Component</div>
   <p>{{ counter() }}</p>
+  <p>{ a }</p>
+  <p>{ b }</p>
+  <p>{ c }</p>
 </template>
 
 <style>

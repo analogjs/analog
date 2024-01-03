@@ -10,17 +10,27 @@ import { signal } from "@angular/core";
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: \`<style>div {    color: red;  }  p {    color: blue;  }</style>
 <div>Component</div>
-  <p>{{ counter() }}</p>\`,
+  <p>{{ counter() }}</p>
+  <p>{ a }</p>
+  <p>{ b }</p>
+  <p>{ c }</p>\`,
     imports: []
 })
 export default class AnalogNgEntity {
     constructor() {
-        let counter = signal(0);
+        const counter = signal(0);
         this.counter = counter;
+        const [a, b, , c = 4] = [1, 2, 3];
+        this.a = a;
+        this.b = b;
+        this.c = c;
     }
 
     protected Math = Math;
     protected counter;
+    protected a;
+    protected b;
+    protected c;
 }
 "
 `;
@@ -35,7 +45,7 @@ import { inject, ElementRef, afterNextRender } from "@angular/core";
 })
 export default class AnalogNgEntity {
     constructor() {
-        let elRef = inject(ElementRef);
+        const elRef = inject(ElementRef);
         this.elRef = elRef;
         afterNextRender(() => {
             elRef.nativeElement.focus();
