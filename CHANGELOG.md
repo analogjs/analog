@@ -1,3 +1,11 @@
+## [0.2.30-beta.3](https://github.com/analogjs/analog/compare/0.2.30-beta.2...0.2.30-beta.3) (2024-01-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** remove Pipe support and add `exposes` ([#826](https://github.com/analogjs/analog/issues/826)) ([c750116](https://github.com/analogjs/analog/commit/c7501167764b1bad895b028822e5740d7b8ed5e3))
+
+## [0.2.30-beta.2](https://github.com/analogjs/analog/compare/0.2.30-beta.1...0.2.30-beta.2) (2024-01-02)
+
 ## [0.2.30-beta.1](https://github.com/analogjs/analog/compare/0.2.30-beta.0...0.2.30-beta.1) (2024-01-02)
 
 ### Bug Fixes
