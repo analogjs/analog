@@ -720,6 +720,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "thatsamsonkid",
+      "name": "Sammy Mohamed",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22568206?v=4",
+      "profile": "https://sammymohamed.com",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
