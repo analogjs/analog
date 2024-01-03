@@ -1,3 +1,9 @@
+## [0.2.30-beta.4](https://github.com/analogjs/analog/compare/0.2.30-beta.3...0.2.30-beta.4) (2024-01-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add support for destructuring in .ng files ([#834](https://github.com/analogjs/analog/issues/834)) ([8e7f18f](https://github.com/analogjs/analog/commit/8e7f18f7649f5a59cbb5904ddbb9a953de342600))
+
 ## [0.2.30-beta.3](https://github.com/analogjs/analog/compare/0.2.30-beta.2...0.2.30-beta.3) (2024-01-03)
 
 ### Bug Fixes
