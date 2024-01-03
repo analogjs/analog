@@ -8,6 +8,7 @@ import {
   Project,
   Scope,
   StructureKind,
+  SyntaxKind,
 } from 'ts-morph';
 
 const SCRIPT_TAG_REGEX = /<script lang="ts">([\s\S]*?)<\/script>/i;
@@ -145,28 +146,47 @@ function processNgScript(
 
     // for VariableStatement (e.g: const ... = ...)
     if (Node.isVariableStatement(node)) {
+      // NOTE: we do not support multiple declarations (i.e: const a, b, c)
       const declarations = node.getDeclarations();
       const declaration = declarations[0];
       const initializer = declaration.getInitializer();
 
       if (initializer) {
-        addPropertyToClass(
-          targetClass,
-          targetConstructor,
-          declaration.getName(),
-          initializer,
-          (propertyName, propertyInitializer) => {
-            targetConstructor.addVariableStatement({
-              declarations: [
-                {
-                  name: propertyName,
-                  initializer: propertyInitializer.getText(),
-                  type: declaration.getTypeNode()?.getText(),
-                },
-              ],
+        const declarationNameNode = declaration.getNameNode();
+
+        // destructures
+        if (
+          Node.isArrayBindingPattern(declarationNameNode) ||
+          Node.isObjectBindingPattern(declarationNameNode)
+        ) {
+          targetConstructor.addStatements(node.getText());
+
+          const bindingElements = declarationNameNode.getDescendantsOfKind(
+            SyntaxKind.BindingElement
+          );
+
+          for (const bindingElement of bindingElements) {
+            const bindingElementName = bindingElement.getName();
+            targetClass.addProperty({
+              name: bindingElementName,
+              kind: StructureKind.Property,
+              scope: Scope.Protected,
             });
+            targetConstructor.addStatements(
+              `this.${bindingElementName} = ${bindingElementName};`
+            );
           }
-        );
+        } else {
+          addPropertyToClass(
+            targetClass,
+            targetConstructor,
+            declaration.getName(),
+            initializer,
+            () => {
+              targetConstructor.addStatements(node.getText());
+            }
+          );
+        }
       }
     }
 
