@@ -18,17 +18,17 @@ const STYLE_TAG_REGEX = /<style>([\s\S]*?)<\/style>/i;
 const ON_INIT = 'onInit';
 const ON_DESTROY = 'onDestroy';
 
-export function processNgFile(
-  fileName: string,
-  content: string,
-  isProd = false
+export function compileNgFile(
+  filePath: string,
+  fileContent: string,
+  shouldFormat = false
 ) {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { names } = require('@nx/devkit');
 
-  const componentName = fileName.split('/').pop()?.split('.')[0];
+  const componentName = filePath.split('/').pop()?.split('.')[0];
   if (!componentName) {
-    throw new Error(`[Analog] Missing component name ${fileName}`);
+    throw new Error(`[Analog] Missing component name ${filePath}`);
   }
 
   const {
@@ -39,14 +39,14 @@ export function processNgFile(
 
   // eslint-disable-next-line prefer-const
   let [scriptContent, templateContent, styleContent] = [
-    SCRIPT_TAG_REGEX.exec(content)?.pop()?.trim() || '',
-    TEMPLATE_TAG_REGEX.exec(content)?.pop()?.trim() || '',
-    STYLE_TAG_REGEX.exec(content)?.pop()?.trim() || '',
+    SCRIPT_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
+    TEMPLATE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
+    STYLE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
   ];
 
   if (!scriptContent && !templateContent) {
     throw new Error(
-      `[Analog] Either <script> or <template> must exist in ${fileName}`
+      `[Analog] Either <script> or <template> must exist in ${filePath}`
     );
   }
 
@@ -79,10 +79,10 @@ export default class AnalogNgEntity {
   // the `.ng` file
   if (scriptContent) {
     const project = new Project({ useInMemoryFileSystem: true });
-    project.createSourceFile(fileName, scriptContent);
-    project.createSourceFile(`${fileName}.virtual.ts`, source);
+    project.createSourceFile(filePath, scriptContent);
+    project.createSourceFile(`${filePath}.virtual.ts`, source);
 
-    return processNgScript(fileName, project, ngType, isProd);
+    return processNgScript(filePath, project, ngType, shouldFormat);
   }
 
   return source;
