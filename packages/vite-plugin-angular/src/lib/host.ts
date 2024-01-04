@@ -2,7 +2,7 @@ import { CompilerHost } from '@angular/compiler-cli';
 import { normalizePath } from '@ngtools/webpack/src/ivy/paths';
 import { readFileSync } from 'node:fs';
 import * as ts from 'typescript';
-import { processNgFile } from './authoring/ng';
+import { compileNgFile } from './authoring/ng';
 
 export function augmentHostWithResources(
   host: ts.CompilerHost,
@@ -34,7 +34,7 @@ export function augmentHostWithResources(
           fileName.replace('.ng.ts', '.ng'),
           'utf-8'
         );
-        const source = processNgFile(fileName, contents, options.isProd);
+        const source = compileNgFile(fileName, contents, options.isProd);
 
         return ts.createSourceFile(
           fileName,
