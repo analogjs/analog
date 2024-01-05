@@ -1,6 +1,17 @@
 <script lang="ts">
+  import { ChangeDetectorRef, inject } from '@angular/core';
+
+  const cdr = inject(ChangeDetectorRef);
+
+  let lateVariable: string;
+
   onInit(() => {
     console.log('anotherOne init');
+    setTimeout(() => {
+      lateVariable = 'anotherOne';
+      cdr.detectChanges();
+      console.log(this);
+    }, 2000);
   });
 
   onDestroy(() => {
@@ -10,10 +21,17 @@
 
 <template>
   <h1>DJ KHALED!!!</h1>
+  @if (lateVariable) {
+  <h2>Late Variable here: {{ lateVariable }}</h2>
+  }
 </template>
 
 <style>
   h1 {
     color: green;
+  }
+
+  h2 {
+    color: tomato;
   }
 </style>

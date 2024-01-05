@@ -6,10 +6,11 @@
   import { JsonPipe } from '@angular/common';
   import { delay } from 'rxjs';
   import Highlight from './highlight.ng';
+  import { HelloOriginal } from './hello';
 
   defineMetadata({
     selector: 'app-root',
-    imports: [JsonPipe],
+    imports: [JsonPipe, HelloOriginal],
     exposes: [Math],
   });
 
@@ -49,6 +50,7 @@
   @if (counter() > 5) {
   <Hello />
   <AnotherOne />
+  <app-hello-original />
   }
 
   <p>Counter: {{ counter() }}</p>
