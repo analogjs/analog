@@ -1,3 +1,10 @@
+## [0.2.30-beta.5](https://github.com/analogjs/analog/compare/0.2.30-beta.4...0.2.30-beta.5) (2024-01-05)
+
+### Features
+
+- **vite-plugin-angular:** expose compileNgFile as public API ([#837](https://github.com/analogjs/analog/issues/837)) ([3bf3384](https://github.com/analogjs/analog/commit/3bf338466afde3d2c36086a4389b4815e53dd95c))
+- **vite-plugin-angular:** support let with getters ([#838](https://github.com/analogjs/analog/issues/838)) ([24d9a86](https://github.com/analogjs/analog/commit/24d9a86501b3bc62d6a1873c350f492842f45ccd))
+
 ## [0.2.30-beta.4](https://github.com/analogjs/analog/compare/0.2.30-beta.3...0.2.30-beta.4) (2024-01-03)
 
 ### Bug Fixes
