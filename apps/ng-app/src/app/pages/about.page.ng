@@ -1,0 +1,9 @@
+<script lang="ts">
+  import Hello from '../hello.ng';
+</script>
+
+<template>
+  About me works!
+
+  <Hello />
+</template>

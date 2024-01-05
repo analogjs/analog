@@ -1,16 +1,18 @@
 <script lang="ts">
   import { inject, signal, effect, computed } from '@angular/core';
   import { HttpClient } from '@angular/common/http';
+  import { JsonPipe } from '@angular/common';
+  import { RouterOutlet, RouterLink } from '@angular/router';
+  import { delay } from 'rxjs';
+
   import Hello from './hello.ng';
   import AnotherOne from './another-one.ng';
-  import { JsonPipe } from '@angular/common';
-  import { delay } from 'rxjs';
   import Highlight from './highlight.ng';
   import { HelloOriginal } from './hello';
 
   defineMetadata({
     selector: 'app-root',
-    imports: [JsonPipe, HelloOriginal],
+    imports: [JsonPipe, HelloOriginal, RouterOutlet, RouterLink],
     exposes: [Math],
   });
 
@@ -65,6 +67,14 @@
   } @else {
   <p>Loading todo...</p>
   }
+
+  <br/>
+
+  <a routerLink="/">Home</a> | <a routerLink="/about">About</a>
+
+  <br/>
+
+  <router-outlet />
 </template>
 
 <style>
