@@ -9,6 +9,7 @@ import {
   Scope,
   StructureKind,
   SyntaxKind,
+  VariableDeclarationKind,
 } from 'ts-morph';
 
 const SCRIPT_TAG_REGEX = /<script lang="ts">([\s\S]*?)<\/script>/i;
@@ -130,6 +131,7 @@ function processNgScript(
   }
 
   const declarations: string[] = [];
+  const getters: Array<{ propertyName: string; isFunction: boolean }> = [];
 
   ngSourceFile.forEachChild((node) => {
     // for ImportDeclaration (e.g: import ... from ...)
@@ -144,14 +146,21 @@ function processNgScript(
       targetSourceFile.addImportDeclaration(node.getStructure());
     }
 
-    // for VariableStatement (e.g: const ... = ...)
+    // for VariableStatement (e.g: const ... = ..., let ... = ...)
     if (Node.isVariableStatement(node)) {
       // NOTE: we do not support multiple declarations (i.e: const a, b, c)
       const declarations = node.getDeclarations();
       const declaration = declarations[0];
+      const isLet = node.getDeclarationKind() === VariableDeclarationKind.Let;
       const initializer = declaration.getInitializer();
 
-      if (initializer) {
+      if (!initializer && isLet) {
+        targetConstructor.addStatements(node.getText());
+        getters.push({
+          propertyName: declaration.getName(),
+          isFunction: false,
+        });
+      } else if (initializer) {
         const declarationNameNode = declaration.getNameNode();
 
         // destructures
@@ -161,20 +170,28 @@ function processNgScript(
         ) {
           targetConstructor.addStatements(node.getText());
 
-          const bindingElements = declarationNameNode.getDescendantsOfKind(
-            SyntaxKind.BindingElement
-          );
+          const bindingElements = declarationNameNode
+            .getDescendantsOfKind(SyntaxKind.BindingElement)
+            .map((bindingElement) => bindingElement.getName());
 
-          for (const bindingElement of bindingElements) {
-            const bindingElementName = bindingElement.getName();
-            targetClass.addProperty({
-              name: bindingElementName,
-              kind: StructureKind.Property,
-              scope: Scope.Protected,
-            });
-            targetConstructor.addStatements(
-              `this.${bindingElementName} = ${bindingElementName};`
+          if (isLet) {
+            getters.push(
+              ...bindingElements.map((bindingElement) => ({
+                propertyName: bindingElement,
+                isFunction: false,
+              }))
             );
+          } else {
+            for (const bindingElement of bindingElements) {
+              targetClass.addProperty({
+                name: bindingElement,
+                kind: StructureKind.Property,
+                scope: Scope.Protected,
+              });
+              targetConstructor.addStatements(
+                `this.${bindingElement} = ${bindingElement};`
+              );
+            }
           }
         } else {
           addPropertyToClass(
@@ -182,8 +199,12 @@ function processNgScript(
             targetConstructor,
             declaration.getName(),
             initializer,
-            () => {
+            isLet,
+            (isFunction, propertyName) => {
               targetConstructor.addStatements(node.getText());
+              if (isLet) {
+                getters.push({ propertyName, isFunction });
+              }
             }
           );
         }
@@ -196,13 +217,14 @@ function processNgScript(
         targetConstructor,
         node.getName() || '',
         node,
-        (propertyName, propertyInitializer) => {
+        false,
+        (_, propertyName) => {
           targetConstructor.addFunction({
             name: propertyName,
-            parameters: propertyInitializer
+            parameters: node
               .getParameters()
               .map((parameter) => parameter.getStructure()),
-            statements: propertyInitializer
+            statements: node
               .getStatements()
               .map((statement) => statement.getText()),
           });
@@ -227,10 +249,11 @@ function processNgScript(
               targetConstructor,
               functionName,
               initFunction,
-              (propertyName, propertyInitializer) => {
+              false,
+              (_isFunction, propertyName) => {
                 targetConstructor.addFunction({
                   name: propertyName,
-                  statements: propertyInitializer
+                  statements: initFunction
                     .getStatements()
                     .map((statement) => statement.getText()),
                 });
@@ -262,6 +285,20 @@ function processNgScript(
         initializer: `[${declarations.filter(Boolean).join(', ')}]`,
       });
     }
+  }
+
+  if (getters.length > 0) {
+    targetConstructor.addStatements(`
+Object.defineProperties(this, {
+${getters
+  .map(
+    ({ isFunction, propertyName }) =>
+      `${propertyName}:{get(){return ${
+        !isFunction ? `${propertyName}` : `${propertyName}.bind(this)`
+      };}},`
+  )
+  .join('\n')}
+});`);
   }
 
   if (!isProd) {
@@ -323,26 +360,31 @@ function addPropertyToClass<
   targetConstructor: ConstructorDeclaration,
   propertyName: string,
   propertyInitializer: TInitializer,
-  constructorUpdater: (
-    propertyName: string,
-    propertyInitializer: TInitializer
-  ) => void
+  isLet: boolean,
+  constructorUpdater: (isFunction: boolean, propertyName: string) => void
 ) {
-  // add the empty property the class (e.g: protected propertyName;)
-  targetClass.addProperty({
-    name: propertyName,
-    kind: StructureKind.Property,
-    scope: Scope.Protected,
-  });
+  if (!isLet) {
+    // add the empty property the class (e.g: protected propertyName;)
+    targetClass.addProperty({
+      name: propertyName,
+      kind: StructureKind.Property,
+      scope: Scope.Protected,
+    });
+  }
+
+  const isFunction =
+    Node.isArrowFunction(propertyInitializer) ||
+    Node.isFunctionDeclaration(propertyInitializer);
 
   // update the constructor
-  constructorUpdater(propertyName, propertyInitializer);
+  constructorUpdater(isFunction, propertyName);
 
-  // assign the variable to the property
-  targetConstructor.addStatements(
-    Node.isArrowFunction(propertyInitializer) ||
-      Node.isFunctionDeclaration(propertyInitializer)
-      ? `this.${propertyName} = ${propertyName}.bind(this);`
-      : `this.${propertyName} = ${propertyName};`
-  );
+  if (!isLet) {
+    // assign the variable to the property
+    targetConstructor.addStatements(
+      isFunction
+        ? `this.${propertyName} = ${propertyName}.bind(this);`
+        : `this.${propertyName} = ${propertyName};`
+    );
+  }
 }

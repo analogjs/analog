@@ -13,17 +13,26 @@ import { signal } from "@angular/core";
   <p>{{ counter() }}</p>
   <p>{ a }</p>
   <p>{ b }</p>
-  <p>{ c }</p>\`,
+  <p>{ c }</p>
+  <p>{{ test }}</p>\`,
     imports: []
 })
 export default class AnalogNgEntity {
     constructor() {
+        let test: string;
+        setTimeout(() => {
+            test = 'test';
+        }, 1000)
         const counter = signal(0);
         this.counter = counter;
         const [a, b, , c = 4] = [1, 2, 3];
         this.a = a;
         this.b = b;
         this.c = c;
+
+        Object.defineProperties(this, {
+            test: { get() { return test; } },
+        });
     }
 
     protected Math = Math;

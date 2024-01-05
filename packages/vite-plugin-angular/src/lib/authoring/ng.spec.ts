@@ -8,6 +8,12 @@ defineMetadata({
   exposes: [Math]
 });
 
+let test: string;
+
+setTimeout(() => {
+  test = 'test';
+}, 1000)
+
 const counter = signal(0);
 const [a, b, , c = 4] = [1, 2, 3];
 </script>
@@ -18,6 +24,7 @@ const [a, b, , c = 4] = [1, 2, 3];
   <p>{ a }</p>
   <p>{ b }</p>
   <p>{ c }</p>
+  <p>{{ test }}</p>
 </template>
 
 <style>
