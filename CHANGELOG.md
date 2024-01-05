@@ -1,3 +1,9 @@
+## [0.2.30-beta.6](https://github.com/analogjs/analog/compare/0.2.30-beta.5...0.2.30-beta.6) (2024-01-05)
+
+### Features
+
+- **router:** add filesystem-based routing support for .ng files ([#839](https://github.com/analogjs/analog/issues/839)) ([f0dadf0](https://github.com/analogjs/analog/commit/f0dadf0d0aadb8204a10cfa7b7e2b5250b8767bb))
+
 ## [0.2.30-beta.5](https://github.com/analogjs/analog/compare/0.2.30-beta.4...0.2.30-beta.5) (2024-01-05)
 
 ### Features
