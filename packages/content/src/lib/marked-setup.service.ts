@@ -8,14 +8,15 @@ import { gfmHeadingId } from 'marked-gfm-heading-id';
 import { markedHighlight } from 'marked-highlight';
 
 import 'prismjs';
-import 'prismjs/plugins/toolbar/prism-toolbar';
-import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
 import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-css';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-markup';
 import 'prismjs/components/prism-typescript';
+import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
+import 'prismjs/plugins/toolbar/prism-toolbar';
+import './prism/angular';
 
 declare const Prism: typeof import('prismjs');
 
@@ -25,39 +26,61 @@ export class MarkedSetupService {
 
   constructor() {
     const renderer = new marked.Renderer();
-    renderer.code = (code, lang) => {
+    renderer.code = (code: string, lang: string) => {
+      // Let's do a language based detection like on GitHub
+      // So we can still have non-interpreted mermaid code
+      if (lang === 'mermaid') {
+        return '<pre class="mermaid">' + code + '</pre>';
+      }
+
       if (!lang) {
         return '<pre><code>' + code + '</code></pre>';
       }
-      const langClass = 'language-' + lang;
-      const html =
-        '<pre class="' +
-        langClass +
-        '"><code class="' +
-        langClass +
-        '">' +
-        code +
-        '</code></pre>';
-      return html;
+
+      const classes =
+        lang.startsWith('diff') && Prism.languages['diff']
+          ? `language-${lang} diff-highlight`
+          : `language-${lang.replace('diff-', '')}`;
+      return `<pre class="${classes}"><code class="${classes}">${code}</code></pre>`;
     };
 
     marked.use(
       gfmHeadingId(),
       markedHighlight({
         async: true,
-        highlight: (code, lang) => {
-          lang = lang || 'typescript';
-          if (!Prism.languages[lang]) {
+        highlight: (code: string, lang: string) => {
+          let diff = lang?.startsWith('diff-');
+          lang = diff ? lang.replace('diff-', '') : lang || 'typescript';
+
+          if (diff && !Prism.languages['diff']) {
+            diff = false;
             console.warn(`Notice:
     ---------------------------------------------------------------------------------------
-    The requested language '${lang}' is not available with the provided setup.
-    To enable, import your main.ts as:
-      import  'prismjs/components/prism-${lang}';
+    The \`diff\` language and plugin are not available in the provided setup.
+    To enable it, add the following imports your \`main.ts\`:
+      import 'prismjs/components/prism-diff';
+      import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
     ---------------------------------------------------------------------------------------
-        `);
+            `);
+          }
+
+          if (!Prism.languages[lang]) {
+            if (lang !== 'mermaid') {
+              console.warn(`Notice:
+    ---------------------------------------------------------------------------------------
+    The requested language '${lang}' is not available in the provided setup.
+    To enable it, add the following import your \`main.ts\`:
+      import 'prismjs/components/prism-${lang}';
+    ---------------------------------------------------------------------------------------
+              `);
+            }
             return code;
           }
-          return Prism.highlight(code, Prism.languages[lang], lang);
+          return Prism.highlight(
+            code,
+            diff ? Prism.languages['diff'] : Prism.languages[lang],
+            lang
+          );
         },
       }),
       {

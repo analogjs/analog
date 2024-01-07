@@ -68,9 +68,29 @@ export default function (options?: AngularOptions): AstroIntegration {
   return {
     name: '@analogjs/astro-angular',
     hooks: {
-      'astro:config:setup': ({ addRenderer, updateConfig }) => {
+      'astro:config:setup': ({
+        addRenderer,
+        config,
+        isRestart,
+        updateConfig,
+      }) => {
+        if (!isRestart && config.markdown?.syntaxHighlight === 'shiki') {
+          config.markdown.syntaxHighlight = 'prism';
+        }
+
         addRenderer(getRenderer());
         updateConfig({ vite: getViteConfiguration(options?.vite) });
+      },
+      'astro:config:done': ({ config }) => {
+        if (
+          'markdown' in config &&
+          config.markdown.syntaxHighlight === 'shiki'
+        ) {
+          console.warn(
+            `[warning] The Angular integration doesn't support Shiki syntax highlighting in MDX files. Overriding with Prism.\n
+To disable this warning, set the syntaxHighlight option in your astro.config.mjs mdx() integration to 'prism' or false.`
+          );
+        }
       },
       'astro:build:setup': () => {
         enableProdMode();

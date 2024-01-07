@@ -1,6 +1,6 @@
 # @analogjs/astro-angular
 
-An [Angular](https://angular.io) integration for rendering components in [Astro](https://astro.build)
+An [Angular](https://angular.dev) integration for rendering components in [Astro](https://astro.build)
 
 ## Setup
 
@@ -76,13 +76,13 @@ The integration can also be installed manually
 ### Install the Astro Integration
 
 ```sh
-yarn add @analogjs/astro-angular --dev
+yarn add @analogjs/astro-angular
 ```
 
 ### Install the necessary Angular dependencies
 
 ```sh
-yarn add @angular-devkit/build-angular, @angular/animations, @angular/common, @angular/compiler-cli, @angular/compiler, @angular/core, @angular/language-service, @angular/forms, @angular/platform-browser, @angular/platform-browser-dynamic, @angular/platform-server, rxjs, zone.js, tslib --dev
+yarn add @angular-devkit/build-angular @angular/{animations,common,compiler-cli,compiler,core,language-service,forms,platform-browser,platform-browser-dynamic,platform-server} rxjs zone.js tslib
 ```
 
 ### Adding the integration
@@ -121,6 +121,26 @@ export default defineConfig({
 });
 ```
 
+### Transforming Packages for SSR Compatibility
+
+To ensure Angular libraries are transformed during Astro's SSR process, add them to the `ssr.noExternal` array in the Vite config.
+
+```js
+import { defineConfig } from 'astro/config';
+
+import angular from '@analogjs/astro-angular';
+
+export default defineConfig({
+  integrations: [angular()],
+  vite: {
+    ssr: {
+      // transform these packages during SSR. Globs supported
+      noExternal: ['@rx-angular/**'],
+    },
+  },
+});
+```
+
 ## Defining A Component
 
 The Astro Angular integration **only** supports rendering standalone components:
@@ -154,7 +174,7 @@ export class HelloComponent {
 
 Add the Angular component to the Astro component template. This only renders the HTML from the Angular component.
 
-```ts
+```tsx
 ---
 import { HelloComponent } from '../components/hello.component';
 
@@ -168,7 +188,7 @@ const helpText = "Helping binding";
 
 To hydrate the component on the client, use one of the Astro [client directives](https://docs.astro.build/en/reference/directives-reference/#client-directives):
 
-```ts
+```tsx
 ---
 import { HelloComponent } from '../components/hello.component';
 ---
@@ -177,6 +197,37 @@ import { HelloComponent } from '../components/hello.component';
 ```
 
 Find more information about [Client Directives](https://docs.astro.build/en/reference/directives-reference/#client-directives) in the Astro documentation.
+
+### Listening to Component Outputs
+
+Outputs can be emitted by the Angular component are forwarded as HTML events to the Astro island.
+To enable this feature, add a client directive and a unique `[data-analog-id]` property to each Angular component:
+
+```tsx
+---
+import { HelloComponent } from '../components/hello.component';
+---
+
+<HelloComponent client:visible data-analog-id="hello-component-1" />
+```
+
+Then, listen to the event in the Astro component using the `addOutputListener` function:
+
+```tsx
+---
+import { HelloComponent } from '../components/hello.component';
+---
+
+<HelloComponent client:visible data-analog-id="hello-component-1" />
+
+<script>
+  import { addOutputListener } from '@analogjs/astro-angular/utils';
+
+  addOutputListener('hello-component-1', 'outputName', (event) => {
+    console.log(event.detail);
+  });
+</script>
+```
 
 ## Adding Component Providers
 
@@ -228,13 +279,15 @@ export class TodosComponent implements OnInit {
 
 To use components with MDX pages, you must install and configure MDX support by following the Astro integration of [@astrojs/mdx](https://docs.astro.build/en/guides/integrations-guide/mdx/). Your `astro.config.mjs` should now include the `@astrojs/mdx` integration.
 
+> Note: Shiki is the default syntax highlighter for the MDX plugin and is currently unsupported. `astro-angular` will override this with `prism` but you should specify it in the config to prevent warnings or issues.
+
 ```js
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import angular from '@analogjs/astro-angular';
 
 export default defineConfig({
-  integrations: [mdx(), angular()],
+  integrations: [mdx({ syntaxHighlight: 'prism' }), angular()],
 });
 ```
 
@@ -275,4 +328,3 @@ import { HelloComponent } from "../../components/hello.component.ts";
 ## Current Limitations
 
 - Only standalone Angular components in version v14.2+ are supported
-- Component Outputs are not supported

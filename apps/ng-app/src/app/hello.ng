@@ -1,0 +1,18 @@
+<script lang="ts">
+  import { DestroyRef, inject } from '@angular/core';
+
+  const { foo: aliasFoo = 'tran', ...rest } = { foo: 'chau' };
+  const [a, b, , c = 5, ...restArray] = [1, 2, 3];
+
+  inject(DestroyRef).onDestroy(() => {
+    console.log('hello destroyed');
+  });
+</script>
+
+<template>
+  <h1>Hello.ng again</h1>
+  <p>{{ a }}</p>
+  <p>{{ b }}</p>
+  <p>{{ c }}</p>
+  <p>{{ aliasFoo }}</p>
+</template>

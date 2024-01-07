@@ -13,19 +13,19 @@ You can use the `ng update` command for an Angular CLI workspace, or the `nx mig
 To update an Analog project with the `ng update` command:
 
 ```shell
-ng update @analogjs/platform
+ng update @analogjs/platform@latest
 ```
 
 </TabItem>
 
-  <TabItem label="Nx" value="nx-migrate">
+  <TabItem label="Nx migrate" value="nx-migrate">
 
 ### Nx Migrate
 
 To update an Analog project with the `nx migrate` command:
 
 ```shell
-nx migrate @analogjs/platform
+nx migrate @analogjs/platform@latest
 ```
 
 </TabItem>

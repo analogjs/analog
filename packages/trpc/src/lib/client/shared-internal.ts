@@ -6,11 +6,12 @@ import {
   DefaultDataTransformer,
 } from '@trpc/server';
 import {
+  Operation,
+  TRPCLink,
   OperationContext,
   OperationLink,
   OperationResultObservable,
-} from '@trpc/client/src/links/types';
-import { Operation, TRPCLink } from '@trpc/client';
+} from '@trpc/client';
 import { observable } from '@trpc/server/observable';
 
 // Removed subscription

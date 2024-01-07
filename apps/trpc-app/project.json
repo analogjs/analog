@@ -9,9 +9,9 @@
       "executor": "@nx/vite:build",
       "outputs": [
         "{options.outputPath}",
-        "dist/apps/trpc-app/.nitro",
-        "dist/apps/trpc-app/ssr",
-        "dist/apps/trpc-app/analog"
+        "{workspaceRoot}/dist/apps/trpc-app/.nitro",
+        "{workspaceRoot}/dist/apps/trpc-app/ssr",
+        "{workspaceRoot}/dist/apps/trpc-app/analog"
       ],
       "options": {
         "configFile": "apps/trpc-app/vite.config.ts",
@@ -60,15 +60,15 @@
       }
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
+      "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["apps/trpc-app/**/*.ts", "apps/trpc-app/**/*.html"]
       }
     },
-    "test": {
+    "tests": {
       "executor": "@nx/vite:test",
-      "outputs": ["apps/trpc-app/coverage"]
+      "outputs": ["{projectRoot}/coverage"]
     }
   },
   "tags": [],

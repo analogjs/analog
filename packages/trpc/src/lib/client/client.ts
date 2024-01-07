@@ -1,6 +1,11 @@
 import { InjectionToken, Provider, signal, TransferState } from '@angular/core';
 import 'isomorphic-fetch';
-import { httpBatchLink, HttpBatchLinkOptions } from '@trpc/client';
+import {
+  httpBatchLink,
+  HttpBatchLinkOptions,
+  CreateTRPCClientOptions,
+  HTTPHeaders,
+} from '@trpc/client';
 import { AnyRouter } from '@trpc/server';
 import { transferStateLink } from './links/transfer-state-link';
 import {
@@ -9,8 +14,7 @@ import {
   tRPC_CACHE_STATE,
 } from './cache-state';
 import { createTRPCRxJSProxyClient } from './trpc-rxjs-proxy';
-import { CreateTRPCClientOptions } from '@trpc/client/src/createTRPCUntypedClient';
-import { HTTPHeaders } from '@trpc/client/src/links/types';
+import { FetchEsque } from '@trpc/client/dist/internals/types';
 
 export type TrpcOptions<T extends AnyRouter> = {
   url: string;
@@ -24,6 +28,40 @@ export type TrpcClient<AppRouter extends AnyRouter> = ReturnType<
 const tRPC_INJECTION_TOKEN = new InjectionToken<unknown>(
   '@analogjs/trpc proxy client'
 );
+
+function customFetch(
+  input: RequestInfo | URL,
+  init?: RequestInit & { method: 'GET' }
+) {
+  if ((globalThis as any).$fetch) {
+    return (globalThis as any).$fetch
+      .raw(input.toString(), init)
+      .catch((e: any) => {
+        throw e;
+      })
+      .then((response: any) => ({
+        ...response,
+        headers: response.headers,
+        json: () => Promise.resolve(response._data),
+      }));
+  }
+
+  // dev server trpc for analog & nitro
+  if (typeof window === 'undefined') {
+    const host =
+      process.env['NITRO_HOST'] ?? process.env['ANALOG_HOST'] ?? 'localhost';
+    const port =
+      process.env['NITRO_PORT'] ?? process.env['ANALOG_PORT'] ?? 4205;
+    const base = `http://${host}:${port}`;
+    if (input instanceof Request) {
+      input = new Request(base, input);
+    } else {
+      input = new URL(input, base);
+    }
+  }
+
+  return fetch(input, init);
+}
 
 export const createTrpcClient = <AppRouter extends AnyRouter>({
   url,
@@ -49,6 +87,7 @@ export const createTrpcClient = <AppRouter extends AnyRouter>({
               headers() {
                 return TrpcHeaders();
               },
+              fetch: customFetch as FetchEsque,
               url: url ?? '',
             }),
           ],

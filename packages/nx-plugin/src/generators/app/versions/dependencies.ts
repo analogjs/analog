@@ -6,6 +6,7 @@ import {
   V16_X_MARKED,
   V16_X_MARKED_GFM_HEADING_ID,
   V16_X_MARKED_HIGHLIGHT,
+  V16_X_MERMAID,
   V16_X_PRISMJS,
 } from './nx_16_X/versions';
 import {
@@ -13,9 +14,20 @@ import {
   V15_X_ANALOG_JS_ROUTER,
   V15_X_FRONT_MATTER,
   V15_X_MARKED,
+  V15_X_MERMAID,
   V15_X_PRISMJS,
 } from './nx_15_X/versions';
 import { stripIndents } from '@nx/devkit';
+import {
+  V17_X_ANALOG_JS_CONTENT,
+  V17_X_ANALOG_JS_ROUTER,
+  V17_X_FRONT_MATTER,
+  V17_X_MARKED,
+  V17_X_MARKED_GFM_HEADING_ID,
+  V17_X_MARKED_HIGHLIGHT,
+  V17_X_MERMAID,
+  V17_X_PRISMJS,
+} from './nx_17_X/versions';
 
 const dependencyKeys15 = [
   '@analogjs/content',
@@ -23,10 +35,15 @@ const dependencyKeys15 = [
   '@angular/platform-server',
   'front-matter',
   'marked',
+  'mermaid',
   'prismjs',
 ] as const;
 
-const dependencyKeys16 = ['marked-gfm-heading-id', 'marked-highlight'] as const;
+const dependencyKeys16 = [
+  'marked-gfm-heading-id',
+  'marked-highlight',
+  'mermaid',
+] as const;
 
 export type AnalogDependency15 = (typeof dependencyKeys15)[number];
 export type AnalogDependency16 = (typeof dependencyKeys16)[number];
@@ -58,19 +75,36 @@ export const getAnalogDependencies = (
       '@analogjs/router': V15_X_ANALOG_JS_ROUTER,
       'front-matter': V15_X_FRONT_MATTER,
       marked: V15_X_MARKED,
+      mermaid: V15_X_MERMAID,
       prismjs: V15_X_PRISMJS,
     };
   }
 
-  // return latest 16.X deps for versions >= 16.1.0
+  // install 16.X deps for versions 16.1.0 =< 16.10.0
+  if (lt(escapedNxVersion, '17.0.0')) {
+    return {
+      '@angular/platform-server': angularVersion,
+      '@analogjs/content': V16_X_ANALOG_JS_CONTENT,
+      '@analogjs/router': V16_X_ANALOG_JS_ROUTER,
+      'front-matter': V16_X_FRONT_MATTER,
+      marked: V16_X_MARKED,
+      'marked-gfm-heading-id': V16_X_MARKED_GFM_HEADING_ID,
+      'marked-highlight': V16_X_MARKED_HIGHLIGHT,
+      mermaid: V16_X_MERMAID,
+      prismjs: V16_X_PRISMJS,
+    };
+  }
+
+  // return latest 17.X deps for versions >= 17.0.0
   return {
     '@angular/platform-server': angularVersion,
-    '@analogjs/content': V16_X_ANALOG_JS_CONTENT,
-    '@analogjs/router': V16_X_ANALOG_JS_ROUTER,
-    'front-matter': V16_X_FRONT_MATTER,
-    marked: V16_X_MARKED,
-    'marked-gfm-heading-id': V16_X_MARKED_GFM_HEADING_ID,
-    'marked-highlight': V16_X_MARKED_HIGHLIGHT,
-    prismjs: V16_X_PRISMJS,
+    '@analogjs/content': V17_X_ANALOG_JS_CONTENT,
+    '@analogjs/router': V17_X_ANALOG_JS_ROUTER,
+    'front-matter': V17_X_FRONT_MATTER,
+    marked: V17_X_MARKED,
+    'marked-gfm-heading-id': V17_X_MARKED_GFM_HEADING_ID,
+    'marked-highlight': V17_X_MARKED_HIGHLIGHT,
+    mermaid: V17_X_MERMAID,
+    prismjs: V17_X_PRISMJS,
   };
 };

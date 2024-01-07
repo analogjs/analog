@@ -9,9 +9,9 @@
       "executor": "@nx/vite:build",
       "outputs": [
         "{options.outputPath}",
-        "dist/apps/analog-app/.nitro",
-        "dist/apps/analog-app/ssr",
-        "dist/apps/analog-app/analog"
+        "{workspaceRoot}/dist/apps/analog-app/.nitro",
+        "{workspaceRoot}/dist/apps/analog-app/ssr",
+        "{workspaceRoot}/dist/apps/analog-app/analog"
       ],
       "options": {
         "configFile": "apps/analog-app/vite.config.ts",
@@ -60,7 +60,7 @@
       }
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
+      "executor": "@nx/eslint:lint",
       "options": {
         "lintFilePatterns": [
           "apps/analog-app/**/*.ts",
@@ -68,9 +68,9 @@
         ]
       }
     },
-    "test": {
+    "tests": {
       "executor": "@nx/vite:test",
-      "outputs": ["apps/analog-app/coverage"]
+      "outputs": ["{projectRoot}/coverage"]
     }
   },
   "tags": []

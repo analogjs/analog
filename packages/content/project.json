@@ -8,7 +8,7 @@
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:ng-packagr",
-      "outputs": ["node_modules/@analogjs/content"],
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content"],
       "options": {
         "project": "packages/content/ng-package.json"
       },
@@ -23,7 +23,7 @@
       "defaultConfiguration": "production"
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
+      "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [

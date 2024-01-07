@@ -9,18 +9,27 @@ export default defineConfig(({ mode }) => {
   return {
     publicDir: 'src/public',
     <% if (addTRPC) { %>
-    server: {
-      host: '127.0.0.1'
-    },
     ssr: {
-      noExternal: '@analogjs/trpc/**',
+      noExternal: ['@analogjs/trpc','@trpc/server'],
     },
     <% } %>
     build: {
       target: ['es2020'],
     },
     plugins: [
+      <% if (addTRPC) { %>
+      analog({
+        nitro: {
+          routeRules: {
+            '/': {
+              prerender: false,
+            }
+          }
+        }
+      }),
+      <% } else { %>
       analog(),
+      <% } %>
       tsConfigPaths({
         root: '<%= offsetFromRoot %>',
       }),
@@ -31,6 +40,7 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
+      reporters: ['default'],
       cache: {
         dir: `<%= offsetFromRoot %>node_modules/.vitest`,
       },

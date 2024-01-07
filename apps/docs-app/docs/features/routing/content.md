@@ -44,6 +44,37 @@ Analog is a meta-framework for Angular.
 [Back Home](./)
 ```
 
+### Using the diff Highlight Plugin
+
+Analog supports highlighting diff changes with PrismJS. Add the `diff`
+language and `diff-highlight` plugin imports to `app.config.ts`:
+
+```ts
+import 'prismjs/components/prism-diff';
+import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
+```
+
+Use the `diff` language tag to highlight them or
+`diff-<language>` to highlight the diff changes in a specific language.
+
+````md
+```diff
+- This is a sentence.
++ This is a longer sentence.
+```
+
+```diff-typescript
+- const foo = 'bar';
++ const foo = 'baz';
+```
+````
+
+To highlight changed line backgrounds instead of just the text, add this import to your global stylesheet:
+
+```css
+@import 'prismjs/plugins/diff-highlight/prism-diff-highlight.css';
+```
+
 ## Defining Content Files
 
 For more flexibility, markdown content files can be provided in the `src/content` folder. Here you can list markdown files such as blog posts.
@@ -130,6 +161,25 @@ export default class BlogPostComponent {
 }
 ```
 
+### Enabling support for Mermaid
+
+Analog's markdown component supports [Mermaid](https://mermaid.js.org/). To enable support by the `MarkdownComponent` define a dynamic import for `loadMermaid` in `withMarkdownRenderer()`.
+
+```ts
+withMarkdownRenderer({
+  loadMermaid: () => import('mermaid'),
+});
+```
+
+After it is enabled, Mermaid blocks are transformed by mermaid into SVGs.
+
+Example of mermaid graph:
+
+```mermaid
+graph TD
+    A[Before] -->|Playing with AnalogJS| B(Now Yes !)
+```
+
 ## Support for Content Subdirectories
 
 Analog also supports subdirectories within your content folder.
@@ -138,7 +188,7 @@ The `injectContent()` function can also be used with an object that contains the
 
 This can be useful if, for instance, you have blog posts, as well as a portfolio of project markdown files to be used on the site.
 
-```ts
+```treeview
 src/
 └── app/
 │   └── pages/
@@ -181,4 +231,16 @@ export default class ProjectComponent {
     subdirectory: 'projects',
   });
 }
+```
+
+## Loading Custom Content
+
+By default, Analog uses the route params to build the filename for retrieving a content file from the `src/content` folder. Analog also supports using a custom filename for retrieving content from the `src/content` folder. This can be useful if, for instance, you have a custom markdown file that you want to load on a page.
+
+The `injectContent()` function can be used by passing an object that contains the `customFilename` property.
+
+```ts
+readonly post$ = injectContent<ProjectAttributes>({
+  customFilename: 'path/to/custom/file',
+});
 ```

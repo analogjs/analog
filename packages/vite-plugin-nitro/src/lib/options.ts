@@ -1,3 +1,5 @@
+import { PrerenderRoute } from 'nitropack';
+
 export interface Options {
   ssr?: boolean;
   ssrBuildDir?: string;
@@ -7,6 +9,8 @@ export interface Options {
   static?: boolean;
   prerender?: PrerenderOptions;
   entryServer?: string;
+  index?: string;
+  workspaceRoot?: string;
 }
 
 export interface PrerenderOptions {
@@ -20,6 +24,8 @@ export interface PrerenderOptions {
    */
   routes?: string[] | (() => Promise<(string | undefined)[]>);
   sitemap?: SitemapConfig;
+  /** List of functions that run for each route after pre-rendering is complete. */
+  postRenderingHooks?: ((routes: PrerenderRoute) => Promise<void>)[];
 }
 
 export interface SitemapConfig {

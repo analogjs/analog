@@ -3,29 +3,35 @@
  * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
+ * found in the LICENSE file at https://angular.dev/license
  */
 
-import type { Plugin, PluginBuild } from 'esbuild';
+import type { DepOptimizationConfig } from 'vite';
 
 import { CompilerPluginOptions, JavaScriptTransformer } from './utils/devkit';
 
+type EsbuildOptions = NonNullable<DepOptimizationConfig['esbuildOptions']>;
+type EsbuildPlugin = NonNullable<EsbuildOptions['plugins']>[number];
+
 export function createCompilerPlugin(
-  pluginOptions: CompilerPluginOptions
-): Plugin {
+  pluginOptions: CompilerPluginOptions,
+  isTest: boolean
+): EsbuildPlugin {
+  const javascriptTransformer = new JavaScriptTransformer(pluginOptions, 1);
+
   return {
     name: 'analogjs-angular-esbuild-deps-optimizer-plugin',
-    async setup(build: PluginBuild): Promise<void> {
-      const javascriptTransformer = new JavaScriptTransformer(pluginOptions, 1);
+    async setup(build) {
+      if (!isTest) {
+        build.onLoad({ filter: /\.[cm]?js$/ }, async (args) => {
+          const contents = await javascriptTransformer.transformFile(args.path);
 
-      build.onLoad({ filter: /\.[cm]?js$/ }, async (args) => {
-        const contents = await javascriptTransformer.transformFile(args.path);
-
-        return {
-          contents,
-          loader: 'js',
-        };
-      });
+          return {
+            contents,
+            loader: 'js',
+          };
+        });
+      }
 
       build.onEnd(() => javascriptTransformer.close());
     },

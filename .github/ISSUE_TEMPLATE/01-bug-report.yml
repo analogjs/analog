@@ -14,7 +14,7 @@ body:
     id: environment
     attributes:
       label: Please provide the environment you discovered this bug in.
-      description: Use the [Analog StackBlitz example](https://stackblitz.com/github/analogjs/analog/tree/main/packages/create-analog/template-angular-v14?file=vite.config.ts&preset=node) to create a reproduction.
+      description: Use the [Analog StackBlitz example](https://analogjs.org/new) to create a reproduction.
     validations:
       required: true
 

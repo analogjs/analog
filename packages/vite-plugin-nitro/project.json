@@ -6,7 +6,7 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": ["{workspaceRoot}/{options.outputPath}"],
       "options": {
         "outputPath": "node_modules/@analogjs/vite-plugin-nitro",
         "main": "packages/vite-plugin-nitro/src/index.ts",
@@ -27,7 +27,7 @@
       "dependsOn": ["build"]
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
+      "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["packages/vite-plugin-nitro/**/*.ts"]
@@ -35,7 +35,7 @@
     },
     "test": {
       "executor": "@nx/vite:test",
-      "outputs": ["coverage/packages/vite-plugin-nitro"],
+      "outputs": ["{workspaceRoot}/coverage/packages/vite-plugin-nitro"],
       "options": {
         "passWithNoTests": true,
         "reportsDirectory": "../../coverage/packages/vite-plugin-nitro"

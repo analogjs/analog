@@ -1,4 +1,11 @@
-import { ModuleNode, Plugin, PluginContainer, ViteDevServer } from 'vite';
+import {
+  ModuleNode,
+  normalizePath,
+  Plugin,
+  PluginContainer,
+  UserConfig,
+  ViteDevServer,
+} from 'vite';
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
 import { transformAsync } from '@babel/core';
 
@@ -9,8 +16,8 @@ import { createCompilerPlugin } from './compiler-plugin';
 import {
   hasStyleUrls,
   hasTemplateUrl,
-  resolveStyleUrls,
-  resolveTemplateUrls,
+  StyleUrlsResolver,
+  TemplateUrlsResolver,
 } from './component-resolvers';
 import { augmentHostWithResources } from './host';
 import { jitPlugin } from './angular-jit-plugin';
@@ -21,6 +28,7 @@ import {
   createJitResourceTransformer,
   SourceFileCache,
 } from './utils/devkit';
+import { angularVitestPlugin } from './angular-vitest-plugin';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -32,6 +40,12 @@ export interface PluginOptions {
      * Custom TypeScript transformers that are run before Angular compilation
      */
     tsTransformers?: ts.CustomTransformers;
+  };
+  experimental?: {
+    /**
+     * Enable experimental support for .ng file format! Use as your own risk!
+     */
+    dangerouslySupportNgFormat?: boolean;
   };
   supportedBrowsers?: string[];
   transformFilter?: (code: string, id: string) => boolean;
@@ -50,7 +64,7 @@ type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
  * Match .(c or m)ts, .ts extensions with an optional ? for query params
  * Ignore .tsx extensions
  */
-const TS_EXT_REGEX = /\.[cm]?ts[^x]?\??/;
+const TS_EXT_REGEX = /\.[cm]?(ts|ng)[^x]?\??/;
 
 export function angular(options?: PluginOptions): Plugin[] {
   /**
@@ -75,6 +89,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     },
     supportedBrowsers: options?.supportedBrowsers ?? ['safari 15'],
     jit: options?.jit,
+    supportNgFormat: options?.experimental?.dangerouslySupportNgFormat,
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -91,6 +106,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   } = require('@ngtools/webpack/src/ivy/host');
 
   let compilerCli: typeof import('@angular/compiler-cli');
+  let userConfig: UserConfig;
   let rootNames: string[];
   let host: ts.CompilerHost;
   let nextProgram: NgtscProgram | undefined | ts.Program;
@@ -105,11 +121,15 @@ export function angular(options?: PluginOptions): Plugin[] {
   let cssPlugin: Plugin | undefined;
   let styleTransform: PluginContainer['transform'] | undefined;
 
+  const styleUrlsResolver = new StyleUrlsResolver();
+  const templateUrlsResolver = new TemplateUrlsResolver();
+
   function angularPlugin(): Plugin {
     return {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
         watchMode = command === 'serve';
+        userConfig = config;
 
         pluginOptions.tsconfig =
           options?.tsconfig ??
@@ -130,12 +150,16 @@ export function angular(options?: PluginOptions): Plugin[] {
             exclude: ['@angular/platform-server'],
             esbuildOptions: {
               plugins: [
-                createCompilerPlugin({
-                  tsconfig: pluginOptions.tsconfig,
-                  sourcemap: !isProd,
-                  advancedOptimizations: isProd,
-                  jit,
-                }),
+                createCompilerPlugin(
+                  {
+                    tsconfig: pluginOptions.tsconfig,
+                    sourcemap: !isProd,
+                    advancedOptimizations: isProd,
+                    jit,
+                    incremental: watchMode,
+                  },
+                  isTest
+                ),
               ],
               define: {
                 ngJitMode: 'false',
@@ -159,7 +183,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           cssPlugin = plugins.find((plugin) => plugin.name === 'vite:css');
         }
 
-        setupCompilation();
+        setupCompilation(userConfig);
 
         // Only store cache if in watch mode
         if (watchMode) {
@@ -169,6 +193,14 @@ export function angular(options?: PluginOptions): Plugin[] {
         await buildAndAnalyze();
       },
       async handleHotUpdate(ctx) {
+        // The `handleHotUpdate` hook may be called before the `buildStart`,
+        // which sets the compilation. As a result, the `host` may not be available
+        // yet for use, leading to build errors such as "cannot read properties of undefined"
+        // (because `host` is undefined).
+        if (!host) {
+          return;
+        }
+
         if (TS_EXT_REGEX.test(ctx.file)) {
           sourceFileCache.invalidate([ctx.file.replace(/\?(.*)/, '')]);
           await buildAndAnalyze();
@@ -252,26 +284,24 @@ export function angular(options?: PluginOptions): Plugin[] {
           let styleUrls: string[] = [];
 
           if (hasTemplateUrl(code)) {
-            templateUrls = resolveTemplateUrls(code, id);
+            templateUrls = templateUrlsResolver.resolve(code, id);
           }
 
           if (hasStyleUrls(code)) {
-            styleUrls = resolveStyleUrls(code, id);
+            styleUrls = styleUrlsResolver.resolve(code, id);
           }
 
           if (watchMode) {
-            templateUrls.forEach((templateUrlSet) => {
-              const [, templateUrl] = templateUrlSet.split('|');
-              this.addWatchFile(templateUrl);
-            });
-
-            styleUrls.forEach((styleUrlSet) => {
-              const [, styleUrl] = styleUrlSet.split('|');
-              this.addWatchFile(styleUrl);
-            });
+            for (const urlSet of [...templateUrls, ...styleUrls]) {
+              // `urlSet` is a string where a relative path is joined with an
+              // absolute path using the `|` symbol.
+              // For example: `./app.component.html|/home/projects/analog/src/app/app.component.html`.
+              const [, absoluteFileUrl] = urlSet.split('|');
+              this.addWatchFile(absoluteFileUrl);
+            }
           }
 
-          const typescriptResult = await fileEmitter!(id);
+          const typescriptResult = fileEmitter && (await fileEmitter!(id));
 
           // return fileEmitter
           let data = typescriptResult?.content ?? '';
@@ -285,18 +315,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             templateUrls.forEach((templateUrlSet) => {
               const [templateFile, resolvedTemplateUrl] =
                 templateUrlSet.split('|');
-
-              if (watchMode) {
-                data = data.replace(
-                  `angular:jit:template:file;${templateFile}`,
-                  `virtual:angular:jit:template:file;${resolvedTemplateUrl}`
-                );
-              } else {
-                data = data.replace(
-                  `angular:jit:template:file;${templateFile}`,
-                  `${resolvedTemplateUrl}?raw`
-                );
-              }
+              data = data.replace(
+                `angular:jit:template:file;${templateFile}`,
+                `${resolvedTemplateUrl}?raw`
+              );
             });
 
             styleUrls.forEach((styleUrlSet) => {
@@ -311,6 +333,9 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (jit) {
             return {
               code: data.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, ''),
+              map: {
+                mappings: '',
+              },
             };
           }
 
@@ -318,9 +343,22 @@ export function angular(options?: PluginOptions): Plugin[] {
             /for\s+await\s*\(|async\s+function\s*\*/.test(data);
           const useInputSourcemap = (!isProd ? undefined : false) as undefined;
 
+          if (
+            id.includes('.ng') &&
+            pluginOptions.supportNgFormat &&
+            fileEmitter
+          ) {
+            sourceFileCache.invalidate([`${id}.ts`]);
+            const ngFileResult = await fileEmitter!(`${id}.ts`);
+            data = ngFileResult?.content || '';
+          }
+
           if (!forceAsyncTransformation && !isProd) {
             return {
               code: data.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, ''),
+              map: {
+                mappings: '',
+              },
             };
           }
 
@@ -360,6 +398,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   return [
     angularPlugin(),
+    (isTest && angularVitestPlugin()) as Plugin,
     (jit &&
       jitPlugin({
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
@@ -370,26 +409,48 @@ export function angular(options?: PluginOptions): Plugin[] {
     }),
   ].filter(Boolean) as Plugin[];
 
-  function setupCompilation() {
+  function findNgFiles(config: UserConfig) {
+    if (!pluginOptions.supportNgFormat) {
+      return [];
+    }
+
+    const fg = require('fast-glob');
+    const root = normalizePath(
+      path.resolve(pluginOptions.workspaceRoot, config.root || '.')
+    );
+    const ngFiles: string[] = fg
+      .sync([`${root}/**/*.ng`], {
+        dot: true,
+      })
+      .map((file: string) => `${file}.ts`);
+
+    return ngFiles;
+  }
+
+  function setupCompilation(config: UserConfig) {
+    const ngFiles = findNgFiles(config);
     const { options: tsCompilerOptions, rootNames: rn } =
       compilerCli.readConfiguration(pluginOptions.tsconfig, {
-        enableIvy: true,
-        noEmitOnError: false,
         suppressOutputPathCheck: true,
         outDir: undefined,
-        inlineSources: !isProd,
         inlineSourceMap: !isProd,
-        sourceMap: false,
-        mapRoot: undefined,
-        sourceRoot: undefined,
+        inlineSources: !isProd,
         declaration: false,
         declarationMap: false,
         allowEmptyCodegenFiles: false,
         annotationsAs: 'decorators',
         enableResourceInlining: false,
+        supportTestBed: false,
       });
 
-    rootNames = rn;
+    if (pluginOptions.supportNgFormat) {
+      // Experimental Local Compilation is necessary
+      // for the Angular compiler to work with
+      // AOT and virtually compiled .ng files.
+      tsCompilerOptions.compilationMode = 'experimental-local';
+    }
+
+    rootNames = rn.concat(ngFiles);
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);
 
@@ -400,6 +461,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     if (!jit) {
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
+        supportNgFormat: pluginOptions.supportNgFormat,
+        isProd: isProd,
       });
     }
   }

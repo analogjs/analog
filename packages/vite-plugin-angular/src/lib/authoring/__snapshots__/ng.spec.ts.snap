@@ -1,0 +1,67 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`authoring ng file > should process component as ng file 1`] = `
+"import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { signal } from "@angular/core";
+
+@Component({
+    standalone: true,
+    selector: 'virtual,Virtual,VIRTUAL',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: \`<style>div {    color: red;  }  p {    color: blue;  }</style>
+<div>Component</div>
+  <p>{{ counter() }}</p>
+  <p>{ a }</p>
+  <p>{ b }</p>
+  <p>{ c }</p>
+  <p>{{ test }}</p>\`,
+    imports: []
+})
+export default class AnalogNgEntity {
+    constructor() {
+        let test: string;
+        setTimeout(() => {
+            test = 'test';
+        }, 1000)
+        const counter = signal(0);
+        this.counter = counter;
+        const [a, b, , c = 4] = [1, 2, 3];
+        this.a = a;
+        this.b = b;
+        this.c = c;
+
+        Object.defineProperties(this, {
+            test: { get() { return test; } },
+        });
+    }
+
+    protected Math = Math;
+    protected counter;
+    protected a;
+    protected b;
+    protected c;
+}
+"
+`;
+
+exports[`authoring ng file > should process directive as ng file 1`] = `
+"import { Directive } from '@angular/core';
+import { inject, ElementRef, afterNextRender } from "@angular/core";
+
+@Directive({
+    standalone: true,
+    selector: 'input[directive]'
+})
+export default class AnalogNgEntity {
+    constructor() {
+        const elRef = inject(ElementRef);
+        this.elRef = elRef;
+        afterNextRender(() => {
+            elRef.nativeElement.focus();
+        });
+    }
+
+    protected elRef;
+}
+"
+`;

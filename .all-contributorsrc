@@ -1,7 +1,8 @@
 {
   "files": [
     "README.md",
-    "apps/docs-app/docs/contributors.mdx"
+    "apps/docs-app/docs/contributors.mdx",
+    "apps/docs-app/i18n/es/docusaurus-plugin-content-docs/current/contributors.mdx"
   ],
   "imageSize": 100,
   "commit": false,
@@ -75,7 +76,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/1209238?v=4",
       "profile": "https://github.com/Villanuevand",
       "contributions": [
-        "doc"
+        "doc",
+        "translation"
       ]
     },
     {
@@ -449,7 +451,8 @@
       "profile": "https://github.com/luishcastroc",
       "contributions": [
         "code",
-        "doc"
+        "doc",
+        "translation"
       ]
     },
     {
@@ -480,6 +483,251 @@
         "doc",
         "code",
         "infra"
+      ]
+    },
+    {
+      "login": "JeanMeche",
+      "name": "Matthieu Riegler",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1300985?v=4",
+      "profile": "http://riegler.fr",
+      "contributions": [
+        "doc",
+        "infra",
+        "code"
+      ]
+    },
+    {
+      "login": "ashley-hunter",
+      "name": "Ashley Hunter",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20795331?v=4",
+      "profile": "https://github.com/ashley-hunter",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "arturovt",
+      "name": "Artur Androsovych",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7337691?v=4",
+      "profile": "http://ng-guru.io",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "bluwy",
+      "name": "Bjorn Lu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/34116392?v=4",
+      "profile": "https://bjornlu.com",
+      "contributions": [
+        "infra"
+      ]
+    },
+    {
+      "login": "omarbelkhodja",
+      "name": "Omar BELKHODJA",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2501093?v=4",
+      "profile": "https://github.com/omarbelkhodja",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "deepakrudrapaul",
+      "name": "Deepak Rudra Paul",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25549935?v=4",
+      "profile": "https://github.com/deepakrudrapaul",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "mavrukin",
+      "name": "Michael Avrukin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/239147?v=4",
+      "profile": "https://github.com/mavrukin",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "rlmestre",
+      "name": "Rafael Mestre",
+      "avatar_url": "https://avatars.githubusercontent.com/u/277805?v=4",
+      "profile": "https://github.com/rlmestre",
+      "contributions": [
+        "code",
+        "doc",
+        "infra"
+      ]
+    },
+    {
+      "login": "santoshyadavdev",
+      "name": "Santosh Yadav",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11923975?v=4",
+      "profile": "https://github.com/santoshyadavdev",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "Tenessy",
+      "name": "Tenessy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/65855673?v=4",
+      "profile": "https://github.com/Tenessy",
+      "contributions": [
+        "infra",
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "Jad31",
+      "name": "Jad Chahed",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46532649?v=4",
+      "profile": "https://github.com/Jad31",
+      "contributions": [
+        "doc",
+        "translation"
+      ]
+    },
+    {
+      "login": "gesielrosa",
+      "name": "Gesiel Rosa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40439982?v=4",
+      "profile": "https://www.gta-sa.com.br/",
+      "contributions": [
+        "doc",
+        "translation"
+      ]
+    },
+    {
+      "login": "besimgurbuz",
+      "name": "Besim Gürbüz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33575384?v=4",
+      "profile": "http://besimgurbuz.dev/",
+      "contributions": [
+        "doc",
+        "translation"
+      ]
+    },
+    {
+      "login": "lukasnys",
+      "name": "Lukas Nys",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22593230?v=4",
+      "profile": "https://github.com/lukasnys",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "alaendle",
+      "name": "Andreas Ländle",
+      "avatar_url": "https://avatars.githubusercontent.com/u/969523?v=4",
+      "profile": "https://github.com/alaendle",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Pascalmh",
+      "name": "Pascal Küsgen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/498197?v=4",
+      "profile": "https://ksgn.dev",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "alejandrocuba",
+      "name": "Alejandro Cuba Ruiz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6283346?v=4",
+      "profile": "http://alejandrocuba.com",
+      "contributions": [
+        "doc",
+        "translation"
+      ]
+    },
+    {
+      "login": "Shreyas0410",
+      "name": "Shreyas0410",
+      "avatar_url": "https://avatars.githubusercontent.com/u/70795867?v=4",
+      "profile": "https://github.com/Shreyas0410",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "Den-dp",
+      "name": "Denis Bendrikov",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1770529?v=4",
+      "profile": "https://github.com/Den-dp",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "iancharlesdouglas",
+      "name": "iancharlesdouglas",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3481593?v=4",
+      "profile": "https://github.com/iancharlesdouglas",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "ocombe",
+      "name": "Olivier Combe",
+      "avatar_url": "https://avatars.githubusercontent.com/u/265378?v=4",
+      "profile": "https://twitter.com/OCombe",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "sasidharansd",
+      "name": "Sasidharan SD",
+      "avatar_url": "https://avatars.githubusercontent.com/u/47988127?v=4",
+      "profile": "https://github.com/sasidharansd",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "ajitzero",
+      "name": "Ajit Panigrahi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19947758?v=4",
+      "profile": "https://beta.ajitpanigrahi.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "nemu69",
+      "name": "nepage-l",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43633395?v=4",
+      "profile": "https://github.com/nemu69",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Jefftopia",
+      "name": "Jeff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5161547?v=4",
+      "profile": "https://jeffreysmith.ninja",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "thatsamsonkid",
+      "name": "Sammy Mohamed",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22568206?v=4",
+      "profile": "https://sammymohamed.com",
+      "contributions": [
+        "doc"
       ]
     }
   ],

@@ -7,8 +7,54 @@ import { map, switchMap } from 'rxjs/operators';
 
 import { ContentFile } from './content-file';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
-import { waitFor } from './utils/zone-wait-for';
 import { parseRawContentFile } from './parse-raw-content-file';
+import { waitFor } from './utils/zone-wait-for';
+
+function getContentFile<
+  Attributes extends Record<string, any> = Record<string, any>
+>(
+  contentFiles: Record<string, () => Promise<string>>,
+  prefix: string,
+  slug: string,
+  fallback: string
+): Observable<ContentFile<Attributes | Record<string, never>>> {
+  const filePath = `/src/content/${prefix}${slug}.md`;
+  const contentFile = contentFiles[filePath];
+  if (!contentFile) {
+    return of({
+      filename: filePath,
+      attributes: {},
+      slug: '',
+      content: fallback,
+    });
+  }
+
+  return new Observable<string>((observer) => {
+    const contentResolver = contentFile();
+
+    if (import.meta.env.SSR === true) {
+      waitFor(contentResolver).then((content) => {
+        observer.next(content);
+      });
+    } else {
+      contentResolver.then((content) => {
+        observer.next(content);
+      });
+    }
+  }).pipe(
+    map((rawContentFile) => {
+      const { content, attributes } =
+        parseRawContentFile<Attributes>(rawContentFile);
+
+      return {
+        filename: filePath,
+        slug,
+        attributes,
+        content,
+      };
+    })
+  );
+}
 
 /**
  * Retrieves the static content using the provided param and/or prefix.
@@ -19,51 +65,49 @@ import { parseRawContentFile } from './parse-raw-content-file';
 export function injectContent<
   Attributes extends Record<string, any> = Record<string, any>
 >(
-  param: string | { param: string; subdirectory: string } = 'slug',
+  param:
+    | string
+    | {
+        param: string;
+        subdirectory: string;
+      }
+    | {
+        customFilename: string;
+      } = 'slug',
   fallback = 'No Content Found'
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
-  const route = inject(ActivatedRoute);
   const contentFiles = inject(CONTENT_FILES_TOKEN);
-  const prefix = typeof param === 'string' ? '' : `${param.subdirectory}/`;
-  const paramKey = typeof param === 'string' ? param : param.param;
-  return route.paramMap.pipe(
-    map((params) => params.get(paramKey)),
-    switchMap((slug) => {
-      const filename = `/src/content/${prefix}${slug}.md`;
-      const contentFile = contentFiles[filename];
 
-      if (!contentFile) {
-        return of({
-          attributes: {},
-          filename,
-          slug: slug || '',
-          content: fallback,
-        });
-      }
-
-      return new Promise<string>((resolve) => {
-        const contentResolver = contentFile();
-
-        if (import.meta.env.SSR === true) {
-          waitFor(contentResolver).then((content) => {
-            resolve(content);
-          });
+  if (typeof param === 'string' || 'param' in param) {
+    const prefix = typeof param === 'string' ? '' : `${param.subdirectory}/`;
+    const route = inject(ActivatedRoute);
+    const paramKey = typeof param === 'string' ? param : param.param;
+    return route.paramMap.pipe(
+      map((params) => params.get(paramKey)),
+      switchMap((slug) => {
+        if (slug) {
+          return getContentFile<Attributes>(
+            contentFiles,
+            prefix,
+            slug,
+            fallback
+          );
         } else {
-          contentResolver.then((content) => {
-            resolve(content);
+          return of({
+            filename: '',
+            slug: '',
+            attributes: {},
+            content: fallback,
           });
         }
-      }).then((rawContentFile) => {
-        const { content, attributes } =
-          parseRawContentFile<Attributes>(rawContentFile);
-
-        return {
-          filename,
-          slug: slug || '',
-          attributes,
-          content,
-        };
-      });
-    })
-  );
+      })
+    );
+  } else {
+    return getContentFile<Attributes>(
+      contentFiles,
+      '',
+      param.customFilename,
+      fallback
+    );
+  }
 }

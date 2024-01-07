@@ -6,20 +6,43 @@
     "app": {
       "factory": "./src/generators/app/generator",
       "schema": "./src/generators/app/schema.json",
-      "description": "Generates an AnalogJs application"
+      "description": "Generates an Analog application"
     },
     "preset": {
       "factory": "./src/generators/preset/generator",
       "schema": "./src/generators/preset/schema.json",
       "description": "Analog preset for create-nx-workspace",
-      "x-use-standalone-layout": true
+      "x-use-standalone-layout": true,
+      "hidden": true
+    },
+    "page": {
+      "factory": "./src/generators/page/generator",
+      "schema": "./src/generators/page/schema.json",
+      "description": "Creates a new Analog page in the given or default project.",
+      "aliases": ["p"]
+    },
+    "setup-vitest": {
+      "factory": "./src/generators/setup-vitest/generator",
+      "schema": "./src/generators/setup-vitest/schema.json",
+      "description": "Setup the Vitest configuration."
     }
   },
   "schematics": {
     "app": {
       "factory": "./src/generators/app/compat",
       "schema": "./src/generators/app/schema.json",
-      "description": "Add Angular Three with proper packages and config"
+      "description": "Generates an Analog application"
+    },
+    "page": {
+      "factory": "./src/generators/page/generator#analogPageGeneratorSchematic",
+      "schema": "./src/generators/page/schema.json",
+      "description": "Creates a new Analog page in the given or default project.",
+      "aliases": ["p"]
+    },
+    "setup-vitest": {
+      "factory": "./src/generators/setup-vitest/compat",
+      "schema": "./src/generators/setup-vitest/schema.json",
+      "description": "Setup the Vitest configuration."
     }
   }
 }

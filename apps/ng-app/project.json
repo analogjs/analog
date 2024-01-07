@@ -1,0 +1,63 @@
+{
+  "name": "ng-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "apps/ng-app/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "outputs": [
+        "{options.outputPath}",
+        "{workspaceRoot}/dist/apps/ng-app/.nitro",
+        "{workspaceRoot}/dist/apps/ng-app/ssr",
+        "{workspaceRoot}/dist/apps/ng-app/analog"
+      ],
+      "options": {
+        "configFile": "apps/ng-app/vite.config.ts",
+        "outputPath": "dist/apps/ng-app/client"
+      },
+      "defaultConfiguration": "production",
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "sourcemap": false,
+          "mode": "production"
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/vite:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "ng-app:build",
+        "port": 3000
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "ng-app:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "ng-app:build:production"
+        }
+      }
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "buildTarget": "ng-app:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/ng-app/**/*.ts", "apps/ng-app/**/*.html"]
+      }
+    }
+  }
+}

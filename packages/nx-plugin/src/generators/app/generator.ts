@@ -21,6 +21,7 @@ import {
   belowMinimumSupportedNxVersion,
   belowMinimumSupportedNxtRPCVersion,
 } from './versions/minimum-supported-versions';
+import { addEslint } from './lib/add-eslint';
 
 export interface NormalizedOptions
   extends AnalogNxApplicationGeneratorOptions,
@@ -140,6 +141,8 @@ export async function appGenerator(
   }
 
   addHomePage(tree, normalizedOptions);
+
+  await addEslint(tree, majorNxVersion, normalizedOptions);
 
   if (!normalizedOptions.skipFormat) {
     await formatFiles(tree);

@@ -6,7 +6,6 @@
   "targets": {
     "build-package": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "node_modules/@analogjs/platform",
         "main": "packages/platform/src/index.ts",
@@ -29,6 +28,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/platform"],
       "options": {
         "commands": ["nx build-package platform", "nx build nx-plugin"],
         "parallel": false
@@ -36,7 +36,7 @@
       "dependsOn": ["^build"]
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
+      "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["packages/platform/**/*.ts"]

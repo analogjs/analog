@@ -10,23 +10,26 @@ export function addAnalogProjectConfig(
   appsDir: string,
   nxPackageNamespace: string
 ) {
+  const isStandalone = appsDir === '.';
+  const workspaceAppsDir = isStandalone ? '' : `${appsDir}/`;
   const projectConfiguration: ProjectConfiguration = {
     root: projectRoot,
     projectType: 'application',
     sourceRoot: `${projectRoot}/src`,
     targets: {
       build: {
-        executor: `${nxPackageNamespace}/vite:build`,
+        executor: `@analogjs/platform:vite`,
         outputs: [
           '{options.outputPath}',
-          `dist/${appsDir}/${projectName}/.nitro`,
-          `dist/${appsDir}/${projectName}/ssr`,
-          `dist/${appsDir}/${projectName}/analog`,
+          `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/.nitro`,
+          `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/ssr`,
+          `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/analog`,
         ],
         options: {
-          main: `${appsDir}/${projectName}/src/main.ts`,
-          configFile: `${appsDir}/${projectName}/vite.config.ts`,
-          outputPath: `dist/${appsDir}/${projectName}/client`,
+          main: `${workspaceAppsDir}${projectName}/src/main.ts`,
+          configFile: `${workspaceAppsDir}${projectName}/vite.config.ts`,
+          outputPath: `dist/${workspaceAppsDir}${projectName}/client`,
+          tsConfig: `${workspaceAppsDir}${projectName}/tsconfig.app.json`,
         },
         defaultConfiguration: 'production',
         configurations: {
@@ -40,7 +43,7 @@ export function addAnalogProjectConfig(
         },
       },
       serve: {
-        executor: `${nxPackageNamespace}/vite:dev-server`,
+        executor: `@analogjs/platform:vite-dev-server`,
         defaultConfiguration: 'development',
         options: {
           buildTarget: `${projectName}:build`,
@@ -62,19 +65,9 @@ export function addAnalogProjectConfig(
           browserTarget: `${projectName}:build`,
         },
       },
-      lint: {
-        executor: `${nxPackageNamespace}/linter:eslint`,
-        outputs: ['{options.outputFile}'],
-        options: {
-          lintFilePatterns: [
-            `${appsDir}/${projectName}/**/*.ts`,
-            `${appsDir}/${projectName}/**/*.html`,
-          ],
-        },
-      },
       test: {
-        executor: `${nxPackageNamespace}/vite:test`,
-        outputs: [`${appsDir}/${projectName}/coverage`],
+        executor: `@analogjs/platform:vitest`,
+        outputs: [`{projectRoot}/coverage`],
       },
     },
     tags: parsedTags,

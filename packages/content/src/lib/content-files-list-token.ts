@@ -1,5 +1,4 @@
 import { InjectionToken } from '@angular/core';
-
 import { ContentFile } from './content-file';
 import { getContentFilesList } from './get-content-files';
 
@@ -17,11 +16,12 @@ export const CONTENT_FILES_LIST_TOKEN = new InjectionToken<ContentFile[]>(
 
       return Object.keys(contentFiles).map((filename) => {
         const attributes = contentFiles[filename];
+        const slug = attributes['slug'];
 
         return {
           filename,
           attributes,
-          slug: encodeURI(getSlug(filename)),
+          slug: slug ? encodeURI(slug) : encodeURI(getSlug(filename)),
         };
       });
     },

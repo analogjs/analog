@@ -8,7 +8,7 @@
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:ng-packagr",
-      "outputs": ["node_modules/@analogjs/trpc"],
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/trpc"],
       "options": {
         "project": "packages/trpc/ng-package.json"
       },
@@ -23,7 +23,7 @@
       "defaultConfiguration": "production"
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
+      "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["packages/trpc/**/*.ts", "packages/trpc/**/*.html"]

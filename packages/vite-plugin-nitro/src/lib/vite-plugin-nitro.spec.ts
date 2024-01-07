@@ -17,7 +17,7 @@ describe('nitro', () => {
   });
 
   it('should work', () => {
-    expect(nitro({}).name).toEqual('@analogjs/vite-nitro-plugin');
+    expect(nitro({})[1].name).toEqual('@analogjs/vite-plugin-nitro');
   });
 
   it(`should not call the route middleware in test mode `, async () => {
@@ -25,7 +25,7 @@ describe('nitro', () => {
     const spy = vi.spyOn(mockViteDevServer.middlewares, 'use');
 
     // Act
-    await (nitro({}).configureServer as any)(mockViteDevServer);
+    await (nitro({})[1].configureServer as any)(mockViteDevServer);
 
     // Assert
     expect(spy).toHaveBeenCalledTimes(0);
@@ -53,6 +53,7 @@ describe('nitro', () => {
       { ssr: true },
       {
         ...mockNitroConfig,
+        alias: expect.anything(),
         prerender: { routes: ['/'] },
         rollupConfig: expect.anything(),
         handlers: expect.anything(),
@@ -82,6 +83,7 @@ describe('nitro', () => {
       {
         ...mockNitroConfig,
         prerender: { routes: ['/'] },
+        alias: expect.anything(),
         rollupConfig: expect.anything(),
         handlers: expect.anything(),
       }
@@ -118,6 +120,7 @@ describe('nitro', () => {
       { ssr: true, ...prerenderRoutes },
       {
         ...mockNitroConfig,
+        alias: expect.anything(),
         rollupConfig: expect.anything(),
         handlers: expect.anything(),
       }
@@ -125,7 +128,8 @@ describe('nitro', () => {
     expect(buildSitemapImportSpy).toHaveBeenCalledWith(
       {},
       { host: 'example.com' },
-      prerenderRoutes.prerender.routes
+      prerenderRoutes.prerender.routes,
+      expect.anything()
     );
   });
 
@@ -163,6 +167,7 @@ describe('nitro', () => {
         prerender: {
           routes: prerenderRoutes.prerender.routes,
         },
+        alias: expect.anything(),
         rollupConfig: expect.anything(),
         handlers: expect.anything(),
       }
@@ -171,7 +176,8 @@ describe('nitro', () => {
     expect(buildSitemapImportSpy).toHaveBeenCalledWith(
       {},
       { host: 'example.com' },
-      prerenderRoutes.prerender.routes
+      prerenderRoutes.prerender.routes,
+      expect.anything()
     );
   });
 
@@ -190,6 +196,29 @@ describe('nitro', () => {
       // Assert
       expect(buildServerImportSpy).toHaveBeenCalledWith(
         {},
+        expect.objectContaining({
+          output: {
+            dir: '/custom-root-directory/dist/analog',
+            publicDir: '/custom-root-directory/dist/analog/public',
+          },
+        })
+      );
+    });
+
+    it('should use the workspace root option when it is set', async () => {
+      // Arrange
+      vi.mock('process');
+      process.cwd = vi.fn().mockReturnValue('/some-other-root-directory');
+      const { buildServerImportSpy } = await mockBuildFunctions();
+
+      const plugin = nitro({ workspaceRoot: '/custom-root-directory' }, {});
+
+      // Act
+      await runConfigAndCloseBundle(plugin);
+
+      // Assert
+      expect(buildServerImportSpy).toHaveBeenCalledWith(
+        { workspaceRoot: '/custom-root-directory' },
         expect.objectContaining({
           output: {
             dir: '/custom-root-directory/dist/analog',

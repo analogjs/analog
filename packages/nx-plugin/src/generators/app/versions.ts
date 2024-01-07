@@ -10,11 +10,12 @@ export const V16_ANALOG_JS_TRPC = '0.2.0-beta.15';
 export const V16_TRPC_CLIENT = '^10.25.0';
 export const V16_TRPC_SERVER = '^10.25.0';
 export const V16_ISOMORPHIC_FETCH = '^3.0.0';
-export const V16_SUPERJSON = '^1.12.3';
+export const V16_SUPERJSON = '^2.2.1';
 
 export const V16_ANGULAR_PLATFORM_SERVER = '~16.0.0';
 export const V16_FRONT_MATTER = '^4.0.2';
 export const V16_MARKED = '^5.0.2';
+export const V16_MERMAID = '^10.2.4';
 export const V16_PRISMJS = '^1.29.0';
 
 // devDependencies
@@ -38,10 +39,11 @@ export const V15_ANALOG_JS_TRPC = '0.2.0-beta.15';
 export const V15_TRPC_CLIENT = '^10.25.0';
 export const V15_TRPC_SERVER = '^10.25.0';
 export const V15_ISOMORPHIC_FETCH = '^3.0.0';
-export const V15_SUPERJSON = '^1.12.3';
+export const V15_SUPERJSON = '^2.2.1';
 export const V15_ANGULAR_PLATFORM_SERVER = '^15.0.0';
 export const V15_FRONT_MATTER = '^4.0.2';
 export const V15_MARKED = '^5.0.2';
+export const V15_MERMAID = '^10.2.4';
 export const V15_PRISMJS = '^1.29.0';
 
 // devDependencies
