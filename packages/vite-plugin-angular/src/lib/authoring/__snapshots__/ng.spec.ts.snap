@@ -14,17 +14,15 @@ import { signal } from "@angular/core";
   <p>{ a }</p>
   <p>{ b }</p>
   <p>{ c }</p>
-  <p>{{ test }}</p>\`,
-    imports: []
+  <p>{{ test }}</p>\`
 })
-export default class AnalogNgEntity {
+export default class VirtualAnalogComponent {
     constructor() {
-        let test: string;
+        let test;
         setTimeout(() => {
             test = 'test';
         }, 1000)
-        const counter = signal(0);
-        this.counter = counter;
+        const counter = (this.counter = signal(0));
         const [a, b, , c = 4] = [1, 2, 3];
         this.a = a;
         this.b = b;
@@ -36,7 +34,6 @@ export default class AnalogNgEntity {
     }
 
     protected Math = Math;
-    protected counter;
     protected a;
     protected b;
     protected c;
@@ -52,16 +49,23 @@ import { inject, ElementRef, afterNextRender } from "@angular/core";
     standalone: true,
     selector: 'input[directive]'
 })
-export default class AnalogNgEntity {
+export default class VirtualAnalogDirective {
     constructor() {
-        const elRef = inject(ElementRef);
-        this.elRef = elRef;
+        const elRef = (this.elRef = inject(ElementRef));
         afterNextRender(() => {
             elRef.nativeElement.focus();
         });
+        this.onInit = () => {
+            console.log('init code');
+        }
+        effect(() => {
+            console.log('just some effect');
+        });
     }
 
-    protected elRef;
+    ngOnInit() {
+        this.onInit();
+    }
 }
 "
 `;
