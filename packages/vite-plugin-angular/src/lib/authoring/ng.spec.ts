@@ -51,6 +51,14 @@ const elRef = inject(ElementRef);
 afterNextRender(() => {
   elRef.nativeElement.focus();
 });
+
+onInit(() => {
+  console.log('init code');
+});
+
+effect(() => {
+  console.log('just some effect');
+});
 </script>
 `;
 
