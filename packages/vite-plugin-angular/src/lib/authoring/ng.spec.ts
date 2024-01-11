@@ -2,7 +2,7 @@ import { compileNgFile } from './ng';
 
 const COMPONENT_CONTENT = `
 <script lang="ts">
-import { signal } from '@angular/core';
+import { signal, input } from '@angular/core';
 
 defineMetadata({
   exposes: [Math]
@@ -16,6 +16,22 @@ setTimeout(() => {
 
 const counter = signal(0);
 const [a, b, , c = 4] = [1, 2, 3];
+
+const inputWithDefault = input(""); // InputSignal<string, string>
+const inputWithoutDefault = input<string>(); // InputSignal<string | undefined, string | undefined>
+const inputWithAlias = input("", { alias: "theAlias" }); // InputSignal<string, string>
+const inputWithoutDefaultWithAlias = input<string | undefined>(undefined, {
+    alias: "theAlias",
+  }); // InputSignal<string | undefined, string | undefined>
+const inputWithTransform = input<unknown, boolean>("", {
+    transform: booleanAttribute,
+  }); // InputSignal<unknown, boolean>
+const requiredInput = input.required<string>(); // InputSignal<string, string>
+const requiredInputWithTransform = input.required<unknown, number>({
+    transform: (value) => numberAttribute(value, 10),
+  });
+const output = new EventEmitter();
+const outputWithType = new EventEmitter<string>();
 </script>
 
 <template>
