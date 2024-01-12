@@ -1,3 +1,15 @@
+## [0.2.30-beta.7](https://github.com/analogjs/analog/compare/0.2.30-beta.6...0.2.30-beta.7) (2024-01-12)
+
+### Bug Fixes
+
+- **platform:** add SSR support for rxfire packages ([#851](https://github.com/analogjs/analog/issues/851)) ([7a96faa](https://github.com/analogjs/analog/commit/7a96faa2ad96255adf7414f4f3058d1abf637570))
+- **vite-plugin-angular:** adjust compiled output to be more concise ([#845](https://github.com/analogjs/analog/issues/845)) ([7ac2d23](https://github.com/analogjs/analog/commit/7ac2d233ebbe739237323a26275c10a43d592c14))
+- **vite-plugin-angular:** improve support for Angular snapshot detection ([#850](https://github.com/analogjs/analog/issues/850)) ([94a6ea7](https://github.com/analogjs/analog/commit/94a6ea7696ccc9916a4883746caf483c8888d38b))
+
+### Features
+
+- **vite-plugin-angular:** support inputs and outputs for .ng format ([#848](https://github.com/analogjs/analog/issues/848)) ([a6468db](https://github.com/analogjs/analog/commit/a6468db7c589a3380d58d653d6c8aa13e4d08061))
+
 ## [0.2.30-beta.6](https://github.com/analogjs/analog/compare/0.2.30-beta.5...0.2.30-beta.6) (2024-01-05)
 
 ### Features
