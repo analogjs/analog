@@ -27,7 +27,8 @@ const INVALID_METADATA_PROPERTIES = [
 ];
 
 const SCRIPT_TAG_REGEX = /<script lang="ts">([\s\S]*?)<\/script>/i;
-const TEMPLATE_TAG_REGEX = /<template>([\s\S]*?)<\/template>/i;
+const TEMPLATE_TAG_REGEX =
+  /(<template>|<template lang="md">)([\s\S]*?)<\/template>/i;
 const STYLE_TAG_REGEX = /<style>([\s\S]*?)<\/style>/i;
 
 const ON_INIT = 'onInit';
@@ -77,7 +78,12 @@ export function compileAnalogFile(
   const componentMetadata = (() => {
     if (ngType === 'Component') {
       const items = ['changeDetection: ChangeDetectionStrategy.OnPush'];
-      if (templateContent) {
+
+      if (fileContent.includes('lang="md"')) {
+        items.push(
+          `templateUrl: \`virtual-analog:${filePath.replace('.ts', '')}\``
+        );
+      } else if (templateContent) {
         items.push(`template: \`${templateContent}\``);
       }
 

@@ -8,8 +8,15 @@
   };
 </script>
 
-<template>
-  About me works!
+<template lang="md">
+  # About me works!
+
+  ## Subheader
+
+
+  ```sh
+  npm create analog
+  ```
 
   <Hello />
 </template>

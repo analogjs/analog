@@ -3,6 +3,7 @@ import { normalizePath } from '@ngtools/webpack/src/ivy/paths';
 import { readFileSync } from 'node:fs';
 import * as ts from 'typescript';
 import { compileAnalogFile } from './authoring/analog';
+import { MarkedSetupService } from './authoring/marked-setup.service';
 
 export function augmentHostWithResources(
   host: ts.CompilerHost,
@@ -53,14 +54,58 @@ export function augmentHostWithResources(
         ...parameters
       );
     };
+
+    const baseReadFile = (resourceHost as ts.CompilerHost).readFile;
+    const TEMPLATE_TAG_REGEX =
+      /(<template>|<template lang="md">)([\s\S]*?)<\/template>/i;
+
+    (resourceHost as ts.CompilerHost).readFile = function (fileName: string) {
+      if (fileName.includes('virtual-analog:')) {
+        const filePath = fileName.split('virtual-analog:')[1];
+        const fileContent =
+          baseReadFile.call(resourceHost, filePath) ||
+          'No Analog Markdown Content Found';
+
+        // eslint-disable-next-line prefer-const
+        const templateContent =
+          TEMPLATE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '';
+
+        return templateContent;
+      }
+
+      return baseReadFile.call(resourceHost, fileName);
+    };
+
+    const fileExists = (resourceHost as ts.CompilerHost).fileExists;
+
+    (resourceHost as ts.CompilerHost).fileExists = function (fileName: string) {
+      if (
+        fileName.includes('virtual-analog:') &&
+        !fileName.endsWith('analog.d')
+      ) {
+        return true;
+      }
+
+      return fileExists.call(resourceHost, fileName);
+    };
   }
 
-  resourceHost.readResource = function (fileName: string) {
+  resourceHost.readResource = async function (fileName: string) {
     const filePath = normalizePath(fileName);
 
     const content = (this as any).readFile(filePath);
     if (content === undefined) {
       throw new Error('Unable to locate component resource: ' + fileName);
+    }
+
+    if (fileName.includes('virtual-analog:')) {
+      // read template sections, parse markdown
+      const markedSetupService = new MarkedSetupService();
+      const mdContent = markedSetupService
+        .getMarkedInstance()
+        .parse(content) as unknown as Promise<string>;
+
+      return mdContent;
     }
 
     return content;
