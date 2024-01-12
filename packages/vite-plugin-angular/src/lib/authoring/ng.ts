@@ -1,11 +1,17 @@
 import {
+  ArrowFunction,
+  CallExpression,
   ClassDeclaration,
   ConstructorDeclaration,
   Expression,
   FunctionDeclaration,
+  Identifier,
+  NewExpression,
   Node,
   ObjectLiteralExpression,
+  OptionalKind,
   Project,
+  PropertyDeclarationStructure,
   Scope,
   StructureKind,
   SyntaxKind,
@@ -214,18 +220,53 @@ function processNgScript(
           const isFunctionInitializer = isFunction(initializer);
 
           if (!isLet) {
-            /**
-             * normal property
-             * const variable = initializer;
-             * We'll create a class property with the same variable name
-             */
-            addVariableToConstructor(
-              targetConstructor,
-              initializer.getText(),
-              name,
-              'const',
-              true
-            );
+            const ioStructure = getIOStructure(initializer);
+
+            if (ioStructure) {
+              // add structure to class
+              targetClass.addProperty({
+                ...ioStructure,
+                name,
+                scope: Scope.Protected,
+              });
+
+              // assign constructor variable
+              targetConstructor.addStatements(`const ${name} = this.${name}`);
+
+              // import Output (if needed)
+              if (ioStructure.decorators) {
+                const hasOutputImport = targetSourceFile.getImportDeclaration(
+                  (importDeclaration) =>
+                    importDeclaration.getModuleSpecifierValue() ===
+                      '@angular/core' &&
+                    importDeclaration
+                      .getNamedImports()
+                      .some(
+                        (importSpecifier) =>
+                          importSpecifier.getName() === 'Output'
+                      )
+                );
+                if (!hasOutputImport) {
+                  targetSourceFile.addImportDeclaration({
+                    namedImports: ['Output'],
+                    moduleSpecifier: '@angular/core',
+                  });
+                }
+              }
+            } else {
+              /**
+               * normal property
+               * const variable = initializer;
+               * We'll create a class property with the same variable name
+               */
+              addVariableToConstructor(
+                targetConstructor,
+                initializer.getText(),
+                name,
+                'const',
+                true
+              );
+            }
           } else {
             /**
              * let variable = initializer;
@@ -402,8 +443,43 @@ function addVariableToConstructor(
   targetConstructor.addStatements((statement += ';'));
 }
 
-function isFunction(initializer: Node) {
+function isFunction(
+  initializer: Node
+): initializer is ArrowFunction | FunctionDeclaration {
   return (
     Node.isArrowFunction(initializer) || Node.isFunctionDeclaration(initializer)
   );
+}
+
+function getIOStructure(
+  initializer: Node
+): Omit<OptionalKind<PropertyDeclarationStructure>, 'name'> | null {
+  const callableExpression =
+    (Node.isCallExpression(initializer) || Node.isNewExpression(initializer)) &&
+    initializer;
+
+  if (!callableExpression) return null;
+
+  const [expression, initializerText] = [
+    callableExpression.getExpression(),
+    callableExpression.getText(),
+  ];
+
+  if (initializerText.includes('new EventEmitter')) {
+    return {
+      initializer: initializerText,
+      decorators: [{ name: 'Output', arguments: [] }],
+    };
+  }
+
+  if (
+    (Node.isPropertyAccessExpression(expression) &&
+      expression.getText() === 'input.required') ||
+    Node.isIdentifier(expression) ||
+    expression.getText() === 'input'
+  ) {
+    return { initializer: initializer.getText() };
+  }
+
+  return null;
 }

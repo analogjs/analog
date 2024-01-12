@@ -7,7 +7,7 @@ import Hello from './hello.ng';
   template: `
     <p>I'm a boring hello</p>
     <p>Below me is a cool hello though</p>
-    <Hello />
+    <Hello text="this is from the boring HelloOriginal" />
   `,
   imports: [Hello],
 })

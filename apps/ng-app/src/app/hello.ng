@@ -1,8 +1,22 @@
 <script lang="ts">
-  import { DestroyRef, inject } from '@angular/core';
+  import {
+    DestroyRef,
+    inject,
+    input,
+    EventEmitter,
+    effect,
+  } from '@angular/core';
 
   const { foo: aliasFoo = 'tran', ...rest } = { foo: 'chau' };
   const [a, b, , c = 5, ...restArray] = [1, 2, 3];
+
+  const text = input('');
+
+  effect(() => {
+    console.log('text changed', text());
+  });
+
+  const clicked = new EventEmitter<MouseEvent>();
 
   inject(DestroyRef).onDestroy(() => {
     console.log('hello destroyed');
@@ -15,4 +29,15 @@
   <p>{{ b }}</p>
   <p>{{ c }}</p>
   <p>{{ aliasFoo }}</p>
+  <p>Text from input: {{ text() }}</p>
+  <button (click)="clicked.emit($event)">Emit The Click</button>
 </template>
+
+<style>
+  :host {
+    display: block;
+    padding: 1rem;
+    border: 1px dashed red;
+    border-radius: 0.5rem;
+  }
+</style>
