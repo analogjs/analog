@@ -27,6 +27,7 @@ export function routerPlugin(): Plugin[] {
               '@ngneat/**',
               'apollo-angular/**',
               'primeng/**',
+              'rxfire/**',
             ],
           },
           optimizeDeps: {
