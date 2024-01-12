@@ -2,12 +2,16 @@ import { compileNgFile } from './ng';
 
 const COMPONENT_CONTENT = `
 <script lang="ts">
-import { signal, input } from '@angular/core';
+import { signal, input, ViewChild, afterNextRender, ElementRef } from '@angular/core';
 
 defineMetadata({
-  exposes: [Math]
+  exposes: [Math],
+  queries: {
+    divElement: new ViewChild('divElement')
+  }
 });
 
+let divElement: ElementRef<HTMLDivElement>;
 let test: string;
 
 setTimeout(() => {
@@ -32,10 +36,15 @@ const requiredInputWithTransform = input.required<unknown, number>({
   });
 const output = new EventEmitter();
 const outputWithType = new EventEmitter<string>();
+
+afterNextRender(() => {
+  console.log('the div', divElement);
+})
+
 </script>
 
 <template>
-  <div>Component</div>
+  <div #divElement>Component</div>
   <p>{{ counter() }}</p>
   <p>{ a }</p>
   <p>{ b }</p>

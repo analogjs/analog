@@ -2,23 +2,27 @@
 
 exports[`authoring ng file > should process component as ng file 1`] = `
 "import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { signal, input } from "@angular/core";
-import { Output } from "@angular/core";
+import { signal, input, ViewChild, afterNextRender, ElementRef } from "@angular/core";
 
 @Component({
     standalone: true,
     selector: 'virtual,Virtual,VIRTUAL',
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: \`<style>div {    color: red;  }  p {    color: blue;  }</style>
-<div>Component</div>
+<div #divElement>Component</div>
   <p>{{ counter() }}</p>
   <p>{ a }</p>
   <p>{ b }</p>
   <p>{ c }</p>
-  <p>{{ test }}</p>\`
+  <p>{{ test }}</p>\`,
+    queries: {
+        divElement: new ViewChild('divElement')
+    },
+    outputs: ['output', 'outputWithType']
 })
 export default class VirtualAnalogComponent {
     constructor() {
+        let divElement;
         let test;
         setTimeout(() => {
             test = 'test';
@@ -37,9 +41,13 @@ export default class VirtualAnalogComponent {
         const requiredInputWithTransform = this.requiredInputWithTransform
         const output = this.output
         const outputWithType = this.outputWithType
+        afterNextRender(() => {
+            console.log('the div', divElement);
+        })
 
         Object.defineProperties(this, {
-            test: { get() { return test; } },
+            divElement: { get() { return divElement; }, set(v) { divElement = v; } },
+            test: { get() { return test; }, set(v) { test = v; } },
         });
     }
 
@@ -61,9 +69,7 @@ export default class VirtualAnalogComponent {
     protected requiredInputWithTransform = input.required<unknown, number>({
         transform: (value) => numberAttribute(value, 10),
     });
-    @Output()
     protected output = new EventEmitter();
-    @Output()
     protected outputWithType = new EventEmitter<string>();
 }
 "

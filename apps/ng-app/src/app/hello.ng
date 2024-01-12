@@ -5,7 +5,22 @@
     input,
     EventEmitter,
     effect,
+    ViewChild,
+    ElementRef,
+    afterNextRender,
   } from '@angular/core';
+
+  defineMetadata({
+    queries: {
+      divElement: new ViewChild('divElement'),
+    },
+  });
+
+  let divElement: ElementRef<HTMLDivElement>;
+
+  afterNextRender(() => {
+    console.log('the Div', divElement);
+  });
 
   const { foo: aliasFoo = 'tran', ...rest } = { foo: 'chau' };
   const [a, b, , c = 5, ...restArray] = [1, 2, 3];
@@ -31,6 +46,7 @@
   <p>{{ aliasFoo }}</p>
   <p>Text from input: {{ text() }}</p>
   <button (click)="clicked.emit($event)">Emit The Click</button>
+  <div #divElement>my div</div>
 </template>
 
 <style>

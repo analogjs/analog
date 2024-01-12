@@ -14,12 +14,13 @@
 //         Component,
 //         | 'template'
 //         | 'templateUrl'
-//         | 'host'
 //         | 'standalone'
 //         | 'changeDetection'
 //         | 'styleUrls'
 //         | 'styleUrl'
 //         | 'styles'
+//         | 'ouputs'
+//         | 'inputs'
 //       > & { exposes?: unknown[] }
 //     ) => void;
 //     /**

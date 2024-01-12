@@ -21,12 +21,13 @@ declare global {
         Component,
         | 'template'
         | 'templateUrl'
-        | 'host'
         | 'standalone'
         | 'changeDetection'
         | 'styleUrls'
         | 'styleUrl'
         | 'styles'
+        | 'outputs'
+        | 'inputs'
       >
     ) => void;
     /**

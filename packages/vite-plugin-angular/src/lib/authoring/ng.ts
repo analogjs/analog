@@ -145,7 +145,9 @@ function processNgScript(
   }
 
   const declarations: string[] = [];
-  const getters: Array<{ propertyName: string; isFunction: boolean }> = [];
+  const gettersSetters: Array<{ propertyName: string; isFunction: boolean }> =
+    [];
+  const outputs: string[] = [];
 
   ngSourceFile.forEachChild((node) => {
     // for ImportDeclaration (e.g: import ... from ...)
@@ -180,7 +182,7 @@ function processNgScript(
         // transfer the whole line `let variable;` over
         addVariableToConstructor(targetConstructor, '', name, 'let');
         // populate getters array for Object.defineProperties
-        getters.push({ propertyName: name, isFunction: false });
+        gettersSetters.push({ propertyName: name, isFunction: false });
       } else if (initializer) {
         // with initializer
         const nameNode = declaration.getNameNode();
@@ -198,7 +200,7 @@ function processNgScript(
             .map((bindingElement) => bindingElement.getName());
 
           if (isLet) {
-            getters.push(
+            gettersSetters.push(
               ...bindingElements.map((propertyName) => ({
                 propertyName,
                 isFunction: false,
@@ -223,36 +225,22 @@ function processNgScript(
             const ioStructure = getIOStructure(initializer);
 
             if (ioStructure) {
-              // add structure to class
+              // outputs
+              if (!!ioStructure.decorators) {
+                // track output name
+                outputs.push(name);
+              }
+
+              // track output name
               targetClass.addProperty({
                 ...ioStructure,
+                decorators: undefined,
                 name,
                 scope: Scope.Protected,
               });
 
               // assign constructor variable
               targetConstructor.addStatements(`const ${name} = this.${name}`);
-
-              // import Output (if needed)
-              if (ioStructure.decorators) {
-                const hasOutputImport = targetSourceFile.getImportDeclaration(
-                  (importDeclaration) =>
-                    importDeclaration.getModuleSpecifierValue() ===
-                      '@angular/core' &&
-                    importDeclaration
-                      .getNamedImports()
-                      .some(
-                        (importSpecifier) =>
-                          importSpecifier.getName() === 'Output'
-                      )
-                );
-                if (!hasOutputImport) {
-                  targetSourceFile.addImportDeclaration({
-                    namedImports: ['Output'],
-                    moduleSpecifier: '@angular/core',
-                  });
-                }
-              }
             } else {
               /**
                * normal property
@@ -278,7 +266,7 @@ function processNgScript(
               name,
               'let'
             );
-            getters.push({
+            gettersSetters.push({
               propertyName: name,
               isFunction: isFunctionInitializer,
             });
@@ -348,15 +336,22 @@ function processNgScript(
     }
   }
 
-  if (getters.length > 0) {
+  if (outputs.length > 0) {
+    targetMetadataArguments.addPropertyAssignment({
+      name: 'outputs',
+      initializer: `[${outputs.map((output) => `'${output}'`).join(',')}]`,
+    });
+  }
+
+  if (gettersSetters.length > 0) {
     targetConstructor.addStatements(`
 Object.defineProperties(this, {
-${getters
+${gettersSetters
   .map(
     ({ isFunction, propertyName }) =>
       `${propertyName}:{get(){return ${
         !isFunction ? `${propertyName}` : `${propertyName}.bind(this)`
-      };}},`
+      };},set(v){${propertyName}=v;}},`
   )
   .join('\n')}
 });`);
