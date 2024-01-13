@@ -1,3 +1,9 @@
+## [0.2.30-rc.0](https://github.com/analogjs/analog/compare/0.2.30-beta.7...0.2.30-rc.0) (2024-01-13)
+
+### Features
+
+- **vite-plugin-angular:** queries work and outputs are now in metadata ([#852](https://github.com/analogjs/analog/issues/852)) ([d081c79](https://github.com/analogjs/analog/commit/d081c7927008ea18fef9fa83f8b3e6caaf52cc2c))
+
 ## [0.2.30-beta.7](https://github.com/analogjs/analog/compare/0.2.30-beta.6...0.2.30-beta.7) (2024-01-12)
 
 ### Bug Fixes
