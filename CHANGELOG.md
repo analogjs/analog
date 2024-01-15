@@ -1,3 +1,9 @@
+## [0.2.30-rc.1](https://github.com/analogjs/analog/compare/0.2.30-rc.0...0.2.30-rc.1) (2024-01-15)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** force jit flag in JavaScript transformer ([#854](https://github.com/analogjs/analog/issues/854)) ([bdfd229](https://github.com/analogjs/analog/commit/bdfd229a04814ed9c3caf0efa250893622d1ecc8))
+
 ## [0.2.30-rc.0](https://github.com/analogjs/analog/compare/0.2.30-beta.7...0.2.30-rc.0) (2024-01-13)
 
 ### Features
