@@ -17,7 +17,10 @@ export function createCompilerPlugin(
   pluginOptions: CompilerPluginOptions,
   isTest: boolean
 ): EsbuildPlugin {
-  const javascriptTransformer = new JavaScriptTransformer(pluginOptions, 1);
+  const javascriptTransformer = new JavaScriptTransformer(
+    { ...pluginOptions, jit: true },
+    1
+  );
 
   return {
     name: 'analogjs-angular-esbuild-deps-optimizer-plugin',
