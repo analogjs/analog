@@ -7,12 +7,13 @@ import * as path from 'path';
 import { buildServer } from './build-server';
 import { buildSSRApp } from './build-ssr';
 
-import { Options } from './options';
+import { PrerenderContentFile, Options, PrerenderContentDir } from './options';
 import { pageEndpointsPlugin } from './plugins/page-endpoints';
 import { getPageHandlers } from './utils/get-page-handlers';
 import { buildSitemap } from './build-sitemap';
 import { devServerPlugin } from './plugins/dev-server-plugin';
 import { loadEsmModule } from './utils/load-esm';
+import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-files';
 
 let clientOutputPath = '';
 
@@ -122,12 +123,44 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             nitroConfig.prerender = nitroConfig.prerender ?? {};
             nitroConfig.prerender.crawlLinks = options?.prerender?.discover;
 
+            let routes: (string | PrerenderContentDir | undefined)[] = [];
+
             const prerenderRoutes = options?.prerender?.routes;
-            if (isArrayWithElements<string>(prerenderRoutes)) {
-              nitroConfig.prerender.routes = prerenderRoutes;
+            if (
+              isArrayWithElements<string | PrerenderContentDir>(prerenderRoutes)
+            ) {
+              routes = prerenderRoutes;
             } else if (typeof prerenderRoutes === 'function') {
-              nitroConfig.prerender.routes = await prerenderRoutes();
+              routes = await prerenderRoutes();
             }
+
+            nitroConfig.prerender.routes = routes.reduce<string[]>(
+              (prev, current) => {
+                if (!current) {
+                  return prev;
+                }
+                if (typeof current === 'string') {
+                  prev.push(current);
+                  return prev;
+                }
+                const affectedFiles: PrerenderContentFile[] =
+                  getMatchingContentFilesWithFrontMatter(
+                    workspaceRoot,
+                    rootDir,
+                    current.contentDir
+                  );
+
+                affectedFiles.forEach((f) => {
+                  const result = current.transform(f);
+                  if (result) {
+                    prev.push(result);
+                  }
+                });
+
+                return prev;
+              },
+              []
+            );
           }
 
           if (ssrBuild) {
@@ -212,13 +245,16 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
           await buildServer(options, nitroConfig);
 
-          if (options?.prerender?.sitemap) {
+          if (
+            nitroConfig.prerender?.routes?.length &&
+            options?.prerender?.sitemap
+          ) {
             console.log('Building Sitemap...');
             // sitemap needs to be built after all directories are built
             await buildSitemap(
               config,
               options.prerender.sitemap,
-              options.prerender.routes!,
+              nitroConfig.prerender.routes,
               nitroConfig.output?.publicDir!
             );
           }
