@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 
-import analog from '@analogjs/platform';
+import analog, { type PrerenderContentFile } from '@analogjs/platform';
 import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
@@ -25,6 +25,15 @@ export default defineConfig(() => {
               '/api/rss.xml',
               '/blog/2022-12-27-my-first-post',
               '/blog/my-second-post',
+              {
+                contentDir: '/src/content/archived',
+                transform: (file: PrerenderContentFile) => {
+                  if (file.attributes?.draft) {
+                    return false;
+                  }
+                  return `/archived/${file.attributes.slug || file.name}`;
+                },
+              },
             ];
           },
           sitemap: {
