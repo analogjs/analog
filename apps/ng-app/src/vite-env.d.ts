@@ -1,5 +1,7 @@
 /// <reference types="vite/client" />
 
+import { RouteMeta } from '@analogjs/router';
+
 interface ImportMetaEnv {
   readonly VITE_ANALOG_PUBLIC_BASE_URL: string;
 }
@@ -28,8 +30,11 @@ declare global {
         | 'styles'
         | 'outputs'
         | 'inputs'
-      >
+      > & {
+        route: RouteMeta;
+      }
     ) => void;
+
     /**
      * Invoke the callback when the component is initialized.
      */

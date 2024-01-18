@@ -296,7 +296,12 @@ function processNgScript(
         if (functionName === 'defineMetadata') {
           const metadata =
             expression.getArguments()[0] as ObjectLiteralExpression;
-          processMetadata(metadata, targetMetadataArguments, targetClass);
+          processMetadata(
+            metadata,
+            targetMetadataArguments,
+            targetClass,
+            targetSourceFile
+          );
         } else if (functionName === ON_INIT || functionName === ON_DESTROY) {
           const initFunction = expression.getArguments()[0];
           if (Node.isArrowFunction(initFunction)) {
@@ -368,7 +373,8 @@ ${gettersSetters
 function processMetadata(
   metadataObject: ObjectLiteralExpression,
   targetMetadataArguments: ObjectLiteralExpression,
-  targetClass: ClassDeclaration
+  targetClass: ClassDeclaration,
+  targetSourceFile: any
 ) {
   metadataObject.getPropertiesWithComments().forEach((property) => {
     if (Node.isPropertyAssignment(property)) {
@@ -398,6 +404,17 @@ function processMetadata(
             }));
 
           targetClass.addProperties(exposes);
+        } else if (propertyName === 'route') {
+          targetSourceFile.addVariableStatement({
+            isExported: true,
+            declarationKind: VariableDeclarationKind.Const,
+            declarations: [
+              {
+                name: 'routeMeta',
+                initializer: propertyInitializer.getText(),
+              },
+            ],
+          });
         } else {
           targetMetadataArguments.addPropertyAssignment({
             name: propertyName,
