@@ -294,12 +294,16 @@ function processNgScript(
     if (Node.isFunctionDeclaration(node)) {
       const functionName = node.getName();
       if (functionName) {
-        targetConstructor.addStatements([
-          // bring the function over
-          nodeFullText,
-          // assign class property
-          `this.${functionName} = ${functionName}.bind(this);`,
-        ]);
+        if (node.hasExportKeyword()) {
+          targetSourceFile.addStatements(nodeFullText);
+        } else {
+          targetConstructor.addStatements([
+            // bring the function over
+            nodeFullText,
+            // assign class property
+            `this.${functionName} = ${functionName}.bind(this);`,
+          ]);
+        }
       }
     }
 

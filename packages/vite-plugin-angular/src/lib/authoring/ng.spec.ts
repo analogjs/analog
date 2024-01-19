@@ -29,6 +29,10 @@ export enum Direction {
   Right,
 }
 
+export function myFunc(){
+  console.log('hello');
+}
+
 let divElement: ElementRef<HTMLDivElement>;
 let test: string;
 
