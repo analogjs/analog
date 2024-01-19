@@ -13,6 +13,7 @@ import {
   Project,
   PropertyDeclarationStructure,
   Scope,
+  SourceFile,
   StructureKind,
   SyntaxKind,
   VariableDeclarationKind,
@@ -374,7 +375,7 @@ function processMetadata(
   metadataObject: ObjectLiteralExpression,
   targetMetadataArguments: ObjectLiteralExpression,
   targetClass: ClassDeclaration,
-  targetSourceFile: any
+  targetSourceFile: SourceFile
 ) {
   metadataObject.getPropertiesWithComments().forEach((property) => {
     if (Node.isPropertyAssignment(property)) {
