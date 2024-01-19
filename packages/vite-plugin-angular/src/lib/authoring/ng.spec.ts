@@ -11,6 +11,28 @@ defineMetadata({
   }
 });
 
+export const routeMeta = {
+  title: 'My page',
+  canActivate: [() => true],
+}
+
+export interface MyInterface {
+  title: string
+}
+
+export type MyType = string;
+
+export enum Direction {
+  Up,
+  Down,
+  Left,
+  Right,
+}
+
+export function myFunc(){
+  console.log('hello');
+}
+
 let divElement: ElementRef<HTMLDivElement>;
 let test: string;
 

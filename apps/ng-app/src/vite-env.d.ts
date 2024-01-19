@@ -30,6 +30,7 @@ declare global {
         | 'inputs'
       >
     ) => void;
+
     /**
      * Invoke the callback when the component is initialized.
      */
