@@ -108,7 +108,6 @@ effect(() => {
 describe('authoring ng file', () => {
   it('should process component as ng file', () => {
     const source = compileNgFile('virtual.ng.ts', COMPONENT_CONTENT);
-    console.log(source);
     expect(source).toContain('Component');
     expect(source).toMatchSnapshot();
   });
