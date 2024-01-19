@@ -1,5 +1,11 @@
 <script lang="ts">
   import Hello from '../hello.ng';
+
+  defineMetadata({
+    route: {
+      title: 'My page',
+    },
+  });
 </script>
 
 <template>
