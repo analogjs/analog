@@ -9,11 +9,25 @@ defineMetadata({
   queries: {
     divElement: new ViewChild('divElement')
   }
-  route: {
-    title: 'My page',
-    canActivate: [() => true],
-  }
 });
+
+export const routeMeta = {
+  title: 'My page',
+  canActivate: [() => true],
+}
+
+export interface MyInterface {
+  title: string
+}
+
+export type MyType = string;
+
+export enum Direction {
+  Up,
+  Down,
+  Left,
+  Right,
+}
 
 let divElement: ElementRef<HTMLDivElement>;
 let test: string;
@@ -94,6 +108,7 @@ effect(() => {
 describe('authoring ng file', () => {
   it('should process component as ng file', () => {
     const source = compileNgFile('virtual.ng.ts', COMPONENT_CONTENT);
+    console.log(source);
     expect(source).toContain('Component');
     expect(source).toMatchSnapshot();
   });
