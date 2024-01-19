@@ -72,6 +72,11 @@ export default class VirtualAnalogComponent {
     protected output = new EventEmitter();
     protected outputWithType = new EventEmitter<string>();
 }
+
+export const routeMeta = {
+    title: 'My page',
+    canActivate: [() => true],
+};
 "
 `;
 

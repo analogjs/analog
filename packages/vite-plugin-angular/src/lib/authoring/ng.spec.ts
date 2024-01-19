@@ -9,6 +9,10 @@ defineMetadata({
   queries: {
     divElement: new ViewChild('divElement')
   }
+  route: {
+    title: 'My page',
+    canActivate: [() => true],
+  }
 });
 
 let divElement: ElementRef<HTMLDivElement>;
