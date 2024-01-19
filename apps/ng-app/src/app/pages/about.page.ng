@@ -4,6 +4,7 @@
 
   export const routeMeta: RouteMeta = {
     title: 'My page',
+    canActivate: [() => true],
   };
 </script>
 
