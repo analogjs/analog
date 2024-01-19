@@ -165,6 +165,16 @@ function processNgScript(
 
     const nodeFullText = node.getText();
 
+    if (
+      Node.isTypeAliasDeclaration(node) ||
+      Node.isInterfaceDeclaration(node) ||
+      Node.isEnumDeclaration(node)
+    ) {
+      if (node.hasExportKeyword()) {
+        targetSourceFile.addStatements(nodeFullText);
+      }
+    }
+
     // for VariableStatement (e.g: const ... = ..., let ... = ...)
     if (Node.isVariableStatement(node)) {
       // NOTE: we do not support multiple declarations (i.e: const a, b, c)
@@ -178,99 +188,103 @@ function processNgScript(
         declaration.getInitializer(),
       ];
 
-      // let variable; // no initializer
-      if (!initializer && isLet) {
-        // transfer the whole line `let variable;` over
-        addVariableToConstructor(targetConstructor, '', name, 'let');
-        // populate getters array for Object.defineProperties
-        gettersSetters.push({ propertyName: name, isFunction: false });
-      } else if (initializer) {
-        // with initializer
-        const nameNode = declaration.getNameNode();
+      if (node.hasExportKeyword()) {
+        targetSourceFile.addStatements(nodeFullText);
+      } else {
+        // let variable; // no initializer
+        if (!initializer && isLet) {
+          // transfer the whole line `let variable;` over
+          addVariableToConstructor(targetConstructor, '', name, 'let');
+          // populate getters array for Object.defineProperties
+          gettersSetters.push({ propertyName: name, isFunction: false });
+        } else if (initializer) {
+          // with initializer
+          const nameNode = declaration.getNameNode();
 
-        // if destructured.
-        // TODO: we don't have a good abstraction for handling destructured variables yet.
-        if (
-          Node.isArrayBindingPattern(nameNode) ||
-          Node.isObjectBindingPattern(nameNode)
-        ) {
-          targetConstructor.addStatements(nodeFullText);
+          // if destructured.
+          // TODO: we don't have a good abstraction for handling destructured variables yet.
+          if (
+            Node.isArrayBindingPattern(nameNode) ||
+            Node.isObjectBindingPattern(nameNode)
+          ) {
+            targetConstructor.addStatements(nodeFullText);
 
-          const bindingElements = nameNode
-            .getDescendantsOfKind(SyntaxKind.BindingElement)
-            .map((bindingElement) => bindingElement.getName());
+            const bindingElements = nameNode
+              .getDescendantsOfKind(SyntaxKind.BindingElement)
+              .map((bindingElement) => bindingElement.getName());
 
-          if (isLet) {
-            gettersSetters.push(
-              ...bindingElements.map((propertyName) => ({
-                propertyName,
-                isFunction: false,
-              }))
-            );
-          } else {
-            for (const bindingElement of bindingElements) {
-              targetClass.addProperty({
-                name: bindingElement,
-                kind: StructureKind.Property,
-                scope: Scope.Protected,
-              });
-              targetConstructor.addStatements(
-                `this.${bindingElement} = ${bindingElement};`
+            if (isLet) {
+              gettersSetters.push(
+                ...bindingElements.map((propertyName) => ({
+                  propertyName,
+                  isFunction: false,
+                }))
               );
-            }
-          }
-        } else {
-          const isFunctionInitializer = isFunction(initializer);
-
-          if (!isLet) {
-            const ioStructure = getIOStructure(initializer);
-
-            if (ioStructure) {
-              // outputs
-              if (!!ioStructure.decorators) {
-                // track output name
-                outputs.push(name);
+            } else {
+              for (const bindingElement of bindingElements) {
+                targetClass.addProperty({
+                  name: bindingElement,
+                  kind: StructureKind.Property,
+                  scope: Scope.Protected,
+                });
+                targetConstructor.addStatements(
+                  `this.${bindingElement} = ${bindingElement};`
+                );
               }
+            }
+          } else {
+            const isFunctionInitializer = isFunction(initializer);
 
-              // track output name
-              targetClass.addProperty({
-                ...ioStructure,
-                decorators: undefined,
-                name,
-                scope: Scope.Protected,
-              });
+            if (!isLet) {
+              const ioStructure = getIOStructure(initializer);
 
-              // assign constructor variable
-              targetConstructor.addStatements(`const ${name} = this.${name}`);
+              if (ioStructure) {
+                // outputs
+                if (!!ioStructure.decorators) {
+                  // track output name
+                  outputs.push(name);
+                }
+
+                // track output name
+                targetClass.addProperty({
+                  ...ioStructure,
+                  decorators: undefined,
+                  name,
+                  scope: Scope.Protected,
+                });
+
+                // assign constructor variable
+                targetConstructor.addStatements(`const ${name} = this.${name}`);
+              } else {
+                /**
+                 * normal property
+                 * const variable = initializer;
+                 * We'll create a class property with the same variable name
+                 */
+                addVariableToConstructor(
+                  targetConstructor,
+                  initializer.getText(),
+                  name,
+                  'const',
+                  true
+                );
+              }
             } else {
               /**
-               * normal property
-               * const variable = initializer;
-               * We'll create a class property with the same variable name
+               * let variable = initializer;
+               * We will NOT create a class property with the name because we will add it to the getters
                */
               addVariableToConstructor(
                 targetConstructor,
                 initializer.getText(),
                 name,
-                'const',
-                true
+                'let'
               );
+              gettersSetters.push({
+                propertyName: name,
+                isFunction: isFunctionInitializer,
+              });
             }
-          } else {
-            /**
-             * let variable = initializer;
-             * We will NOT create a class property with the name because we will add it to the getters
-             */
-            addVariableToConstructor(
-              targetConstructor,
-              initializer.getText(),
-              name,
-              'let'
-            );
-            gettersSetters.push({
-              propertyName: name,
-              isFunction: isFunctionInitializer,
-            });
           }
         }
       }
@@ -297,12 +311,7 @@ function processNgScript(
         if (functionName === 'defineMetadata') {
           const metadata =
             expression.getArguments()[0] as ObjectLiteralExpression;
-          processMetadata(
-            metadata,
-            targetMetadataArguments,
-            targetClass,
-            targetSourceFile
-          );
+          processMetadata(metadata, targetMetadataArguments, targetClass);
         } else if (functionName === ON_INIT || functionName === ON_DESTROY) {
           const initFunction = expression.getArguments()[0];
           if (Node.isArrowFunction(initFunction)) {
@@ -374,8 +383,7 @@ ${gettersSetters
 function processMetadata(
   metadataObject: ObjectLiteralExpression,
   targetMetadataArguments: ObjectLiteralExpression,
-  targetClass: ClassDeclaration,
-  targetSourceFile: SourceFile
+  targetClass: ClassDeclaration
 ) {
   metadataObject.getPropertiesWithComments().forEach((property) => {
     if (Node.isPropertyAssignment(property)) {
@@ -405,17 +413,6 @@ function processMetadata(
             }));
 
           targetClass.addProperties(exposes);
-        } else if (propertyName === 'route') {
-          targetSourceFile.addVariableStatement({
-            isExported: true,
-            declarationKind: VariableDeclarationKind.Const,
-            declarations: [
-              {
-                name: 'routeMeta',
-                initializer: propertyInitializer.getText(),
-              },
-            ],
-          });
         } else {
           targetMetadataArguments.addPropertyAssignment({
             name: propertyName,
