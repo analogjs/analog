@@ -24,10 +24,13 @@ export default class VirtualAnalogComponent {
     constructor() {
         let divElement;
         let test;
+
+
         setTimeout(() => {
             test = 'test';
         }, 1000)
         const counter = this.counter
+
         const [a, b, , c = 4] = [1, 2, 3];
         this.a = a;
         this.b = b;
@@ -41,6 +44,8 @@ export default class VirtualAnalogComponent {
         const requiredInputWithTransform = this.requiredInputWithTransform
         const output = this.output
         const outputWithType = this.outputWithType
+
+
         afterNextRender(() => {
             console.log('the div', divElement);
         })
@@ -72,20 +77,30 @@ export default class VirtualAnalogComponent {
     protected output = new EventEmitter();
     protected outputWithType = new EventEmitter<string>();
 }
+
+
 export const routeMeta = {
     title: 'My page',
     canActivate: [() => true],
 }
+
+
 export interface MyInterface {
     title: string
 }
+
+
 export type MyType = string;
+
+
 export enum Direction {
     Up,
     Down,
     Left,
     Right,
 }
+
+
 export function myFunc() {
     console.log('hello');
 }
@@ -103,12 +118,16 @@ import { inject, ElementRef, afterNextRender } from "@angular/core";
 export default class VirtualAnalogDirective {
     constructor() {
         const elRef = this.elRef
+
+
         afterNextRender(() => {
             elRef.nativeElement.focus();
         });
         this.onInit = () => {
             console.log('init code');
         }
+
+
         effect(() => {
             console.log('just some effect');
         });
