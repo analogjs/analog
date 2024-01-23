@@ -150,8 +150,13 @@ function processNgScript(
     [];
   const outputs: string[] = [];
 
-  ngSourceFile.forEachChild((node) => {
-    // for ImportDeclaration (e.g: import ... from ...)
+  const sourceSyntaxList = ngSourceFile.getChildren()[0]; // SyntaxList
+
+  if (!Node.isSyntaxList(sourceSyntaxList)) {
+    throw new Error(`[Analog] invalid source syntax list ${fileName}`);
+  }
+
+  for (const node of sourceSyntaxList.getChildren()) {
     if (Node.isImportDeclaration(node)) {
       const moduleSpecifier = node.getModuleSpecifierValue();
       if (moduleSpecifier.endsWith('.ng')) {
@@ -161,21 +166,16 @@ function processNgScript(
 
       // copy the import to the target `.ng.ts` file
       targetSourceFile.addImportDeclaration(node.getStructure());
+      continue;
     }
 
-    const nodeFullText = node.getText();
+    const nodeFullText = node.getFullText();
 
-    if (
-      Node.isTypeAliasDeclaration(node) ||
-      Node.isInterfaceDeclaration(node) ||
-      Node.isEnumDeclaration(node)
-    ) {
-      if (node.hasExportKeyword()) {
-        targetSourceFile.addStatements(nodeFullText);
-      }
+    if (Node.isExportable(node) && node.hasExportKeyword()) {
+      targetSourceFile.addStatements(nodeFullText);
+      continue;
     }
 
-    // for VariableStatement (e.g: const ... = ..., let ... = ...)
     if (Node.isVariableStatement(node)) {
       // NOTE: we do not support multiple declarations (i.e: const a, b, c)
       const [declaration, isLet] = [
@@ -188,127 +188,135 @@ function processNgScript(
         declaration.getInitializer(),
       ];
 
-      if (node.hasExportKeyword()) {
-        targetSourceFile.addStatements(nodeFullText);
-      } else {
-        // let variable; // no initializer
-        if (!initializer && isLet) {
-          // transfer the whole line `let variable;` over
-          addVariableToConstructor(targetConstructor, '', name, 'let');
-          // populate getters array for Object.defineProperties
-          gettersSetters.push({ propertyName: name, isFunction: false });
-        } else if (initializer) {
-          // with initializer
-          const nameNode = declaration.getNameNode();
+      if (!initializer && isLet) {
+        // transfer the whole line `let variable;` over
+        addVariableToConstructor(targetConstructor, '', name, 'let');
+        // populate getters array for Object.defineProperties
+        gettersSetters.push({ propertyName: name, isFunction: false });
 
-          // if destructured.
-          // TODO: we don't have a good abstraction for handling destructured variables yet.
-          if (
-            Node.isArrayBindingPattern(nameNode) ||
-            Node.isObjectBindingPattern(nameNode)
-          ) {
-            targetConstructor.addStatements(nodeFullText);
-
-            const bindingElements = nameNode
-              .getDescendantsOfKind(SyntaxKind.BindingElement)
-              .map((bindingElement) => bindingElement.getName());
-
-            if (isLet) {
-              gettersSetters.push(
-                ...bindingElements.map((propertyName) => ({
-                  propertyName,
-                  isFunction: false,
-                }))
-              );
-            } else {
-              for (const bindingElement of bindingElements) {
-                targetClass.addProperty({
-                  name: bindingElement,
-                  kind: StructureKind.Property,
-                  scope: Scope.Protected,
-                });
-                targetConstructor.addStatements(
-                  `this.${bindingElement} = ${bindingElement};`
-                );
-              }
-            }
-          } else {
-            const isFunctionInitializer = isFunction(initializer);
-
-            if (!isLet) {
-              const ioStructure = getIOStructure(initializer);
-
-              if (ioStructure) {
-                // outputs
-                if (!!ioStructure.decorators) {
-                  // track output name
-                  outputs.push(name);
-                }
-
-                // track output name
-                targetClass.addProperty({
-                  ...ioStructure,
-                  decorators: undefined,
-                  name,
-                  scope: Scope.Protected,
-                });
-
-                // assign constructor variable
-                targetConstructor.addStatements(`const ${name} = this.${name}`);
-              } else {
-                /**
-                 * normal property
-                 * const variable = initializer;
-                 * We'll create a class property with the same variable name
-                 */
-                addVariableToConstructor(
-                  targetConstructor,
-                  initializer.getText(),
-                  name,
-                  'const',
-                  true
-                );
-              }
-            } else {
-              /**
-               * let variable = initializer;
-               * We will NOT create a class property with the name because we will add it to the getters
-               */
-              addVariableToConstructor(
-                targetConstructor,
-                initializer.getText(),
-                name,
-                'let'
-              );
-              gettersSetters.push({
-                propertyName: name,
-                isFunction: isFunctionInitializer,
-              });
-            }
-          }
-        }
+        continue;
       }
+
+      if (initializer) {
+        // with initializer
+        const nameNode = declaration.getNameNode();
+
+        // if destructured.
+        // TODO: we don't have a good abstraction for handling destructured variables yet.
+        if (
+          Node.isArrayBindingPattern(nameNode) ||
+          Node.isObjectBindingPattern(nameNode)
+        ) {
+          targetConstructor.addStatements(nodeFullText);
+
+          const bindingElements = nameNode
+            .getDescendantsOfKind(SyntaxKind.BindingElement)
+            .map((bindingElement) => bindingElement.getName());
+
+          if (isLet) {
+            gettersSetters.push(
+              ...bindingElements.map((propertyName) => ({
+                propertyName,
+                isFunction: false,
+              }))
+            );
+            continue;
+          }
+
+          for (const bindingElement of bindingElements) {
+            targetClass.addProperty({
+              name: bindingElement,
+              kind: StructureKind.Property,
+              scope: Scope.Protected,
+            });
+            targetConstructor.addStatements(
+              `this.${bindingElement} = ${bindingElement};`
+            );
+          }
+          continue;
+        }
+
+        const isFunctionInitializer = isFunction(initializer);
+
+        if (!isLet) {
+          const ioStructure = getIOStructure(initializer);
+
+          if (ioStructure) {
+            // outputs
+            if (ioStructure.decorators) {
+              // track output name
+              outputs.push(name);
+            }
+
+            // track output name
+            targetClass.addProperty({
+              ...ioStructure,
+              decorators: undefined,
+              name,
+              scope: Scope.Protected,
+            });
+
+            // assign constructor variable
+            targetConstructor.addStatements(`const ${name} = this.${name}`);
+
+            continue;
+          }
+
+          /**
+           * normal property
+           * const variable = initializer;
+           * We'll create a class property with the same variable name
+           */
+          addVariableToConstructor(
+            targetConstructor,
+            initializer.getText(),
+            name,
+            'const',
+            true
+          );
+          continue;
+        }
+
+        /**
+         * let variable = initializer;
+         * We will NOT create a class property with the name because we will add it to the getters
+         */
+        addVariableToConstructor(
+          targetConstructor,
+          initializer.getText(),
+          name,
+          'let'
+        );
+        gettersSetters.push({
+          propertyName: name,
+          isFunction: isFunctionInitializer,
+        });
+
+        continue;
+      }
+
+      continue;
     }
 
-    // function fnName() {}
     if (Node.isFunctionDeclaration(node)) {
       const functionName = node.getName();
       if (functionName) {
-        if (node.hasExportKeyword()) {
-          targetSourceFile.addStatements(nodeFullText);
-        } else {
-          targetConstructor.addStatements([
-            // bring the function over
-            nodeFullText,
-            // assign class property
-            `this.${functionName} = ${functionName}.bind(this);`,
-          ]);
-        }
+        targetConstructor.addStatements([
+          // bring the function over
+          nodeFullText,
+          // assign class property
+          `this.${functionName} = ${functionName}.bind(this);`,
+        ]);
+
+        continue;
       }
+
+      continue;
     }
 
     if (Node.isExpressionStatement(node)) {
       const expression = node.getExpression();
+
       if (Node.isCallExpression(expression)) {
         // hooks, effects, basically Function calls
         const functionName = expression.getExpression().getText();
@@ -316,9 +324,15 @@ function processNgScript(
           const metadata =
             expression.getArguments()[0] as ObjectLiteralExpression;
           processMetadata(metadata, targetMetadataArguments, targetClass);
-        } else if (functionName === ON_INIT || functionName === ON_DESTROY) {
+          continue;
+        }
+
+        if (functionName === ON_INIT || functionName === ON_DESTROY) {
           const initFunction = expression.getArguments()[0];
-          if (Node.isArrowFunction(initFunction)) {
+          if (
+            Node.isArrowFunction(initFunction) ||
+            Node.isFunctionExpression(initFunction)
+          ) {
             // add the function to constructor
             targetConstructor.addStatements(
               `this.${functionName} = ${initFunction.getText()}`
@@ -329,40 +343,36 @@ function processNgScript(
               name: HOOKS_MAP[functionName],
               statements: `this.${functionName}();`,
             });
+
+            continue;
           }
-        } else {
-          // just add the entire node to the constructor. i.e: effect()
-          targetConstructor.addStatements(node.getText());
+
+          continue;
         }
+
+        // just add the entire node to the constructor. i.e: effect()
+        targetConstructor.addStatements(nodeFullText);
       }
     }
-  });
+  }
 
   if (ngType === 'Component' && declarations.length) {
-    const importsMetadata = targetMetadataArguments.getProperty('imports');
-    const declarationSymbols = declarations.filter(Boolean).join(', ');
-
-    if (importsMetadata && Node.isPropertyAssignment(importsMetadata)) {
-      const importsInitializer = importsMetadata.getInitializer();
-      if (Node.isArrayLiteralExpression(importsInitializer)) {
-        importsInitializer.addElement(declarationSymbols);
-      }
-    } else {
-      targetMetadataArguments.addPropertyAssignment({
-        name: 'imports',
-        initializer: `[${declarationSymbols}]`,
-      });
-    }
+    processArrayLiteralMetadata(
+      targetMetadataArguments,
+      'imports',
+      declarations
+    );
   }
 
-  if (outputs.length > 0) {
-    targetMetadataArguments.addPropertyAssignment({
-      name: 'outputs',
-      initializer: `[${outputs.map((output) => `'${output}'`).join(',')}]`,
-    });
+  if (outputs.length) {
+    processArrayLiteralMetadata(
+      targetMetadataArguments,
+      'outputs',
+      outputs.map((output) => `'${output}'`)
+    );
   }
 
-  if (gettersSetters.length > 0) {
+  if (gettersSetters.length) {
     targetConstructor.addStatements(`
 Object.defineProperties(this, {
 ${gettersSetters
@@ -382,6 +392,28 @@ ${gettersSetters
   }
 
   return targetSourceFile.getText();
+}
+
+function processArrayLiteralMetadata(
+  targetMetadataArguments: ObjectLiteralExpression,
+  metadataName: string,
+  items: string[]
+) {
+  let metadata = targetMetadataArguments.getProperty(metadataName);
+
+  if (!metadata) {
+    metadata = targetMetadataArguments.addPropertyAssignment({
+      name: metadataName,
+      initializer: '[]',
+    });
+  }
+
+  const initializer =
+    Node.isPropertyAssignment(metadata) && metadata.getInitializer();
+
+  if (initializer && Node.isArrayLiteralExpression(initializer)) {
+    initializer.addElements(items);
+  }
 }
 
 function processMetadata(
