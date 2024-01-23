@@ -1,3 +1,15 @@
+## [0.2.30](https://github.com/analogjs/analog/compare/0.2.30-rc.1...0.2.30) (2024-01-23)
+
+### Bug Fixes
+
+- **nx-plugin:** change logic to join folder for page generation ([#863](https://github.com/analogjs/analog/issues/863)) ([062624f](https://github.com/analogjs/analog/commit/062624f9cd725f1d96a50a729af850d6647ff219))
+
+### Features
+
+- upgrade docusaurus to 3.1.0 ([#847](https://github.com/analogjs/analog/issues/847)) ([44a0280](https://github.com/analogjs/analog/commit/44a02805ac37a16b42b26f7d0798845b7feb771a))
+- **vite-plugin-angular:** add ability to export from .ng files ([#856](https://github.com/analogjs/analog/issues/856)) ([633e659](https://github.com/analogjs/analog/commit/633e65941b908f70926a7ce509174c653fbcb9b8))
+- **vite-plugin-nitro:** add content directories to route pre-rendering ([#833](https://github.com/analogjs/analog/issues/833)) ([3b99b87](https://github.com/analogjs/analog/commit/3b99b87354144c1d95f3ed30ff1c463980e09c3c))
+
 ## [0.2.30-rc.1](https://github.com/analogjs/analog/compare/0.2.30-rc.0...0.2.30-rc.1) (2024-01-15)
 
 ### Bug Fixes
