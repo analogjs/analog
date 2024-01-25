@@ -81,7 +81,8 @@ async function renderToStaticMarkup(
   _children: unknown
 ) {
   const mirror = reflectComponentType(Component);
-  const appId = mirror?.selector || Component.name.toString().toLowerCase();
+  const appId =
+    mirror?.selector.split(',')[0] || Component.name.toString().toLowerCase();
   const document = `<${appId}></${appId}>`;
   const bootstrap = () =>
     bootstrapApplication(Component, {
