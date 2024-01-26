@@ -1,0 +1,8 @@
+<script lang="ts">
+import { signal } from '@angular/core';
+
+const value = signal('');
+</script>
+
+<template src="./external.html" />
+<style src="./external.css" />

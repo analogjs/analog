@@ -8,6 +8,7 @@
   import Hello from './hello.analog';
   import AnotherOne from './another-one.analog';
   import Highlight from './highlight.analog';
+  import External from './external/external.analog';
   import { HelloOriginal } from './hello';
 
   defineMetadata({
@@ -54,6 +55,8 @@
 </script>
 
 <template>
+  <External />
+
   @if (counter() > 5) {
   <Hello [text]="text()" (clicked)="onClick($event)" />
   <AnotherOne />

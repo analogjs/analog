@@ -19,7 +19,8 @@ import {
 const SCRIPT_TAG_REGEX = /<script lang="ts">([\s\S]*?)<\/script>/i;
 const TEMPLATE_TAG_REGEX =
   /<template(?:\s+src="([^"]*)")?(?:\s*>((.|\n)*?)<\/template>|\s*\/>)/i;
-const STYLE_TAG_REGEX = /<style>([\s\S]*?)<\/style>/i;
+const STYLE_TAG_REGEX =
+  /<style(?:\s+src="([^"]*)")?(?:\s*>((.|\n)*?)<\/style>|\s*\/>)/i;
 
 const ON_INIT = 'onInit';
 const ON_DESTROY = 'onDestroy';
@@ -47,6 +48,7 @@ export function compileAnalogFile(
     className,
     constantName,
   } = names(componentName);
+  const dirName = dirname(filePath);
 
   // eslint-disable-next-line prefer-const
   let [scriptContent, templateContent, styleContent] = [
@@ -55,7 +57,10 @@ export function compileAnalogFile(
       ?.filter((match) => Boolean(match?.trim()) && match !== '\n')
       ?.pop()
       ?.trim() || '',
-    STYLE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
+    STYLE_TAG_REGEX.exec(fileContent)
+      ?.filter((match) => Boolean(match?.trim()) && match !== '\n')
+      ?.pop()
+      ?.trim() || '',
   ];
 
   if (!scriptContent && !templateContent) {
@@ -68,7 +73,6 @@ export function compileAnalogFile(
   const entityName = `${className}Analog${ngType}`;
 
   if (templateContent && templateContent.endsWith('.html')) {
-    const dirName = dirname(filePath);
     const templatePath = join(dirName, templateContent);
     try {
       templateContent = readFileSync(templatePath, 'utf-8');
@@ -78,6 +82,19 @@ export function compileAnalogFile(
   }
 
   if (styleContent) {
+    if (
+      ['css', 'scss', 'sass', 'less'].some((ext) =>
+        styleContent.endsWith(`.${ext}`)
+      )
+    ) {
+      const stylePath = join(dirName, styleContent);
+      try {
+        styleContent = readFileSync(stylePath, 'utf-8');
+      } catch (err) {
+        throw new Error(`[Analog] Error reading style file ${stylePath}`);
+      }
+    }
+
     templateContent = `<style>${styleContent.replace(/\n/g, '')}</style>
 ${templateContent}`;
   }
