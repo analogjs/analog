@@ -1,5 +1,11 @@
 <script lang="ts">
+  import { RouteMeta } from '@analogjs/router';
   import Hello from '../hello.ng';
+
+  export const routeMeta: RouteMeta = {
+    title: 'My page',
+    canActivate: [() => true],
+  };
 </script>
 
 <template>

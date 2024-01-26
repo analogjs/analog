@@ -729,6 +729,24 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "joshuamorony",
+      "name": "Josh Morony",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2578009?v=4",
+      "profile": "https://www.joshmorony.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ilirbeqirii",
+      "name": "Ilir Beqiri",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24731032?v=4",
+      "profile": "https://github.com/ilirbeqirii",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,

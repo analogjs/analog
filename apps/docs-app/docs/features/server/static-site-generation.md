@@ -4,6 +4,8 @@ Analog supports Static Site Generation when building for deployment. This includ
 
 ## Static Site Generation
 
+### From Routes List
+
 To prerender pages, use the `prerender` property to configure routes to be rendered at build time. The routes to be prerendered can be provided asynchronously also.
 
 ```ts
@@ -26,6 +28,50 @@ export default defineConfig(({ mode }) => ({
   ],
 }));
 ```
+
+### From Content Directory
+
+You might want to prerender all routes that are the result of a rendered content directory.
+For example if you have a blog and all your articles are places as Markdown files in the `contents` directory.
+For such scenarios, you can add an object to the `routes` config to render everything within a directory.
+Keep in mind, that your directory structure may not be reflected 1:1 in your apps path.
+Therefore, you have to pass a `transform` function which maps the file paths to the URLs.
+The returning string should be the URL path in your app.
+Using `transform` allows you also filter out some routes by returning `false`.
+This does not include them in the prerender process, such as files marked as `draft` in the frontmatter.
+
+```ts
+import { defineConfig } from 'vite';
+import analog, { type PrerenderContentFile } from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      prerender: {
+        routes: async () => [
+          '/',
+          '/blog',
+          {
+            contentDir: 'src/content/blog',
+            transform: (file: PrerenderContentFile) => {
+              // do not include files marked as draft in frontmatter
+              if (file.attributes.draft) {
+                return false;
+              }
+              // use the slug from frontmatter if defined, otherwise use the files basename
+              const slug = file.attributes.slug || file.name;
+              return `/blog/${slug}`;
+            },
+          },
+        ],
+      },
+    }),
+  ],
+}));
+```
+
+### Only static pages
 
 To only prerender the static pages, use the `static: true` flag.
 
@@ -159,7 +205,7 @@ export default defineConfig(() => {
                 (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
                 m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
                 })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-               
+
                 ga('create', 'UA-xxxxxx-1', 'auto');
                 ga('send', 'pageview');
               </script>`;

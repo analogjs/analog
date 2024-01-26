@@ -22,6 +22,7 @@
 
   const counter = signal(1);
   const doubled = computed(() => counter() * 2);
+  const text = computed(() => `The count from parent is: ${counter()}`);
   const todo = signal(null);
 
   const increment = () => {
@@ -30,6 +31,10 @@
 
   function decrement() {
     counter.update((value) => value - 1);
+  }
+
+  function onClick(event: MouseEvent) {
+    console.log('the click from Hello', event);
   }
 
   effect(() => {
@@ -50,7 +55,7 @@
 
 <template>
   @if (counter() > 5) {
-  <Hello />
+  <Hello [text]="text()" (clicked)="onClick($event)" />
   <AnotherOne />
   <app-hello-original />
   }
@@ -68,11 +73,11 @@
   <p>Loading todo...</p>
   }
 
-  <br/>
+  <br />
 
   <a routerLink="/">Home</a> | <a routerLink="/about">About</a>
 
-  <br/>
+  <br />
 
   <router-outlet />
 </template>

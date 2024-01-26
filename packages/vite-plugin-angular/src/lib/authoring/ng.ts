@@ -1,16 +1,24 @@
 import {
+  ArrowFunction,
+  CallExpression,
   ClassDeclaration,
   ConstructorDeclaration,
   Expression,
   FunctionDeclaration,
+  Identifier,
+  NewExpression,
   Node,
   ObjectLiteralExpression,
+  OptionalKind,
   Project,
+  PropertyDeclarationStructure,
   Scope,
+  SourceFile,
   StructureKind,
   SyntaxKind,
   VariableDeclarationKind,
 } from 'ts-morph';
+import { isFunctionDeclaration } from 'typescript';
 
 const SCRIPT_TAG_REGEX = /<script lang="ts">([\s\S]*?)<\/script>/i;
 const TEMPLATE_TAG_REGEX = /<template>([\s\S]*?)<\/template>/i;
@@ -19,18 +27,23 @@ const STYLE_TAG_REGEX = /<style>([\s\S]*?)<\/style>/i;
 const ON_INIT = 'onInit';
 const ON_DESTROY = 'onDestroy';
 
+const HOOKS_MAP = {
+  [ON_INIT]: 'ngOnInit',
+  [ON_DESTROY]: 'ngOnDestroy',
+} as const;
+
 export function compileNgFile(
   filePath: string,
   fileContent: string,
   shouldFormat = false
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { names } = require('@nx/devkit');
-
   const componentName = filePath.split('/').pop()?.split('.')[0];
   if (!componentName) {
     throw new Error(`[Analog] Missing component name ${filePath}`);
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { names } = require('@nx/devkit');
 
   const {
     fileName: componentFileName,
@@ -52,6 +65,7 @@ export function compileNgFile(
   }
 
   const ngType = templateContent ? 'Component' : 'Directive';
+  const entityName = `${className}Analog${ngType}`;
 
   if (styleContent) {
     templateContent = `<style>${styleContent.replace(/\n/g, '')}</style>
@@ -73,7 +87,7 @@ import { ${ngType}${
       : ''
   }
 })
-export default class AnalogNgEntity {
+export default class ${entityName} {
   constructor() {}
 }`;
 
@@ -83,7 +97,7 @@ export default class AnalogNgEntity {
     project.createSourceFile(filePath, scriptContent);
     project.createSourceFile(`${filePath}.virtual.ts`, source);
 
-    return processNgScript(filePath, project, ngType, shouldFormat);
+    return processNgScript(filePath, project, ngType, entityName, shouldFormat);
   }
 
   return source;
@@ -93,6 +107,7 @@ function processNgScript(
   fileName: string,
   project: Project,
   ngType: 'Component' | 'Directive',
+  entityName: string,
   isProd?: boolean
 ) {
   const ngSourceFile = project.getSourceFile(fileName);
@@ -103,7 +118,7 @@ function processNgScript(
   }
 
   const targetClass = targetSourceFile.getClass(
-    (classDeclaration) => classDeclaration.getName() === 'AnalogNgEntity'
+    (classDeclaration) => classDeclaration.getName() === entityName
   );
 
   if (!targetClass) {
@@ -131,10 +146,17 @@ function processNgScript(
   }
 
   const declarations: string[] = [];
-  const getters: Array<{ propertyName: string; isFunction: boolean }> = [];
+  const gettersSetters: Array<{ propertyName: string; isFunction: boolean }> =
+    [];
+  const outputs: string[] = [];
 
-  ngSourceFile.forEachChild((node) => {
-    // for ImportDeclaration (e.g: import ... from ...)
+  const sourceSyntaxList = ngSourceFile.getChildren()[0]; // SyntaxList
+
+  if (!Node.isSyntaxList(sourceSyntaxList)) {
+    throw new Error(`[Analog] invalid source syntax list ${fileName}`);
+  }
+
+  for (const node of sourceSyntaxList.getChildren()) {
     if (Node.isImportDeclaration(node)) {
       const moduleSpecifier = node.getModuleSpecifierValue();
       if (moduleSpecifier.endsWith('.ng')) {
@@ -144,96 +166,157 @@ function processNgScript(
 
       // copy the import to the target `.ng.ts` file
       targetSourceFile.addImportDeclaration(node.getStructure());
+      continue;
     }
 
-    // for VariableStatement (e.g: const ... = ..., let ... = ...)
+    const nodeFullText = node.getFullText();
+
+    if (Node.isExportable(node) && node.hasExportKeyword()) {
+      targetSourceFile.addStatements(nodeFullText);
+      continue;
+    }
+
     if (Node.isVariableStatement(node)) {
       // NOTE: we do not support multiple declarations (i.e: const a, b, c)
-      const declarations = node.getDeclarations();
-      const declaration = declarations[0];
-      const isLet = node.getDeclarationKind() === VariableDeclarationKind.Let;
-      const initializer = declaration.getInitializer();
+      const [declaration, isLet] = [
+        node.getDeclarations()[0],
+        node.getDeclarationKind() === VariableDeclarationKind.Let,
+      ];
+
+      const [name, initializer] = [
+        declaration.getName(),
+        declaration.getInitializer(),
+      ];
 
       if (!initializer && isLet) {
-        targetConstructor.addStatements(node.getText());
-        getters.push({
-          propertyName: declaration.getName(),
-          isFunction: false,
-        });
-      } else if (initializer) {
-        const declarationNameNode = declaration.getNameNode();
+        // transfer the whole line `let variable;` over
+        addVariableToConstructor(targetConstructor, '', name, 'let');
+        // populate getters array for Object.defineProperties
+        gettersSetters.push({ propertyName: name, isFunction: false });
 
-        // destructures
+        continue;
+      }
+
+      if (initializer) {
+        // with initializer
+        const nameNode = declaration.getNameNode();
+
+        // if destructured.
+        // TODO: we don't have a good abstraction for handling destructured variables yet.
         if (
-          Node.isArrayBindingPattern(declarationNameNode) ||
-          Node.isObjectBindingPattern(declarationNameNode)
+          Node.isArrayBindingPattern(nameNode) ||
+          Node.isObjectBindingPattern(nameNode)
         ) {
-          targetConstructor.addStatements(node.getText());
+          targetConstructor.addStatements(nodeFullText);
 
-          const bindingElements = declarationNameNode
+          const bindingElements = nameNode
             .getDescendantsOfKind(SyntaxKind.BindingElement)
             .map((bindingElement) => bindingElement.getName());
 
           if (isLet) {
-            getters.push(
-              ...bindingElements.map((bindingElement) => ({
-                propertyName: bindingElement,
+            gettersSetters.push(
+              ...bindingElements.map((propertyName) => ({
+                propertyName,
                 isFunction: false,
               }))
             );
-          } else {
-            for (const bindingElement of bindingElements) {
-              targetClass.addProperty({
-                name: bindingElement,
-                kind: StructureKind.Property,
-                scope: Scope.Protected,
-              });
-              targetConstructor.addStatements(
-                `this.${bindingElement} = ${bindingElement};`
-              );
-            }
+            continue;
           }
-        } else {
-          addPropertyToClass(
-            targetClass,
-            targetConstructor,
-            declaration.getName(),
-            initializer,
-            isLet,
-            (isFunction, propertyName) => {
-              targetConstructor.addStatements(node.getText());
-              if (isLet) {
-                getters.push({ propertyName, isFunction });
-              }
-            }
-          );
+
+          for (const bindingElement of bindingElements) {
+            targetClass.addProperty({
+              name: bindingElement,
+              kind: StructureKind.Property,
+              scope: Scope.Protected,
+            });
+            targetConstructor.addStatements(
+              `this.${bindingElement} = ${bindingElement};`
+            );
+          }
+          continue;
         }
+
+        const isFunctionInitializer = isFunction(initializer);
+
+        if (!isLet) {
+          const ioStructure = getIOStructure(initializer);
+
+          if (ioStructure) {
+            // outputs
+            if (ioStructure.decorators) {
+              // track output name
+              outputs.push(name);
+            }
+
+            // track output name
+            targetClass.addProperty({
+              ...ioStructure,
+              decorators: undefined,
+              name,
+              scope: Scope.Protected,
+            });
+
+            // assign constructor variable
+            targetConstructor.addStatements(`const ${name} = this.${name}`);
+
+            continue;
+          }
+
+          /**
+           * normal property
+           * const variable = initializer;
+           * We'll create a class property with the same variable name
+           */
+          addVariableToConstructor(
+            targetConstructor,
+            initializer.getText(),
+            name,
+            'const',
+            true
+          );
+          continue;
+        }
+
+        /**
+         * let variable = initializer;
+         * We will NOT create a class property with the name because we will add it to the getters
+         */
+        addVariableToConstructor(
+          targetConstructor,
+          initializer.getText(),
+          name,
+          'let'
+        );
+        gettersSetters.push({
+          propertyName: name,
+          isFunction: isFunctionInitializer,
+        });
+
+        continue;
       }
+
+      continue;
     }
 
     if (Node.isFunctionDeclaration(node)) {
-      addPropertyToClass(
-        targetClass,
-        targetConstructor,
-        node.getName() || '',
-        node,
-        false,
-        (_, propertyName) => {
-          targetConstructor.addFunction({
-            name: propertyName,
-            parameters: node
-              .getParameters()
-              .map((parameter) => parameter.getStructure()),
-            statements: node
-              .getStatements()
-              .map((statement) => statement.getText()),
-          });
-        }
-      );
+      const functionName = node.getName();
+      if (functionName) {
+        targetConstructor.addStatements([
+          // bring the function over
+          nodeFullText,
+          // assign class property
+          `this.${functionName} = ${functionName}.bind(this);`,
+        ]);
+
+        continue;
+      }
+
+      continue;
     }
 
     if (Node.isExpressionStatement(node)) {
       const expression = node.getExpression();
+
       if (Node.isCallExpression(expression)) {
         // hooks, effects, basically Function calls
         const functionName = expression.getExpression().getText();
@@ -241,61 +324,63 @@ function processNgScript(
           const metadata =
             expression.getArguments()[0] as ObjectLiteralExpression;
           processMetadata(metadata, targetMetadataArguments, targetClass);
-        } else if (functionName === ON_INIT || functionName === ON_DESTROY) {
-          const initFunction = expression.getArguments()[0];
-          if (Node.isArrowFunction(initFunction)) {
-            addPropertyToClass(
-              targetClass,
-              targetConstructor,
-              functionName,
-              initFunction,
-              false,
-              (_isFunction, propertyName) => {
-                targetConstructor.addFunction({
-                  name: propertyName,
-                  statements: initFunction
-                    .getStatements()
-                    .map((statement) => statement.getText()),
-                });
-
-                targetClass.addMethod({
-                  name: functionName === ON_INIT ? 'ngOnInit' : 'ngOnDestroy',
-                  statements: `this.${propertyName}();`,
-                });
-              }
-            );
-          }
-        } else {
-          targetConstructor.addStatements(node.getText());
+          continue;
         }
-      }
-    }
-  });
 
-  if (ngType === 'Component') {
-    const importsMetadata = targetMetadataArguments.getProperty('imports');
-    if (importsMetadata && Node.isPropertyAssignment(importsMetadata)) {
-      const importsInitializer = importsMetadata.getInitializer();
-      if (Node.isArrayLiteralExpression(importsInitializer)) {
-        importsInitializer.addElement(declarations.filter(Boolean).join(', '));
+        if (functionName === ON_INIT || functionName === ON_DESTROY) {
+          const initFunction = expression.getArguments()[0];
+          if (
+            Node.isArrowFunction(initFunction) ||
+            Node.isFunctionExpression(initFunction)
+          ) {
+            // add the function to constructor
+            targetConstructor.addStatements(
+              `this.${functionName} = ${initFunction.getText()}`
+            );
+
+            // add life-cycle method to class
+            targetClass.addMethod({
+              name: HOOKS_MAP[functionName],
+              statements: `this.${functionName}();`,
+            });
+
+            continue;
+          }
+
+          continue;
+        }
+
+        // just add the entire node to the constructor. i.e: effect()
+        targetConstructor.addStatements(nodeFullText);
       }
-    } else {
-      targetMetadataArguments.addPropertyAssignment({
-        name: 'imports',
-        initializer: `[${declarations.filter(Boolean).join(', ')}]`,
-      });
     }
   }
 
-  if (getters.length > 0) {
+  if (ngType === 'Component' && declarations.length) {
+    processArrayLiteralMetadata(
+      targetMetadataArguments,
+      'imports',
+      declarations
+    );
+  }
+
+  if (outputs.length) {
+    processArrayLiteralMetadata(
+      targetMetadataArguments,
+      'outputs',
+      outputs.map((output) => `'${output}'`)
+    );
+  }
+
+  if (gettersSetters.length) {
     targetConstructor.addStatements(`
 Object.defineProperties(this, {
-${getters
+${gettersSetters
   .map(
     ({ isFunction, propertyName }) =>
       `${propertyName}:{get(){return ${
         !isFunction ? `${propertyName}` : `${propertyName}.bind(this)`
-      };}},`
+      };},set(v){${propertyName}=v;}},`
   )
   .join('\n')}
 });`);
@@ -307,6 +392,28 @@ ${getters
   }
 
   return targetSourceFile.getText();
+}
+
+function processArrayLiteralMetadata(
+  targetMetadataArguments: ObjectLiteralExpression,
+  metadataName: string,
+  items: string[]
+) {
+  let metadata = targetMetadataArguments.getProperty(metadataName);
+
+  if (!metadata) {
+    metadata = targetMetadataArguments.addPropertyAssignment({
+      name: metadataName,
+      initializer: '[]',
+    });
+  }
+
+  const initializer =
+    Node.isPropertyAssignment(metadata) && metadata.getInitializer();
+
+  if (initializer && Node.isArrayLiteralExpression(initializer)) {
+    initializer.addElements(items);
+  }
 }
 
 function processMetadata(
@@ -353,38 +460,72 @@ function processMetadata(
   });
 }
 
-function addPropertyToClass<
-  TInitializer extends Expression | FunctionDeclaration
->(
-  targetClass: ClassDeclaration,
+/**
+ * const variable = initializer;
+ * |
+ * v
+ * constructor() {
+ *  const variable = (this.variable = initializer);
+ * }
+ *
+ */
+function addVariableToConstructor(
   targetConstructor: ConstructorDeclaration,
-  propertyName: string,
-  propertyInitializer: TInitializer,
-  isLet: boolean,
-  constructorUpdater: (isFunction: boolean, propertyName: string) => void
+  initializerText: string,
+  variableName: string,
+  kind: 'let' | 'const',
+  withClassProperty = false
 ) {
-  if (!isLet) {
-    // add the empty property the class (e.g: protected propertyName;)
-    targetClass.addProperty({
-      name: propertyName,
-      kind: StructureKind.Property,
-      scope: Scope.Protected,
-    });
+  let statement = `${kind} ${variableName}`;
+
+  if (initializerText) {
+    statement += `= ${initializerText}`;
+
+    if (withClassProperty) {
+      statement = `${kind} ${variableName} = (this.${variableName} = ${initializerText})`;
+    }
   }
 
-  const isFunction =
-    Node.isArrowFunction(propertyInitializer) ||
-    Node.isFunctionDeclaration(propertyInitializer);
+  targetConstructor.addStatements((statement += ';'));
+}
 
-  // update the constructor
-  constructorUpdater(isFunction, propertyName);
+function isFunction(
+  initializer: Node
+): initializer is ArrowFunction | FunctionDeclaration {
+  return (
+    Node.isArrowFunction(initializer) || Node.isFunctionDeclaration(initializer)
+  );
+}
 
-  if (!isLet) {
-    // assign the variable to the property
-    targetConstructor.addStatements(
-      isFunction
-        ? `this.${propertyName} = ${propertyName}.bind(this);`
-        : `this.${propertyName} = ${propertyName};`
-    );
+function getIOStructure(
+  initializer: Node
+): Omit<OptionalKind<PropertyDeclarationStructure>, 'name'> | null {
+  const callableExpression =
+    (Node.isCallExpression(initializer) || Node.isNewExpression(initializer)) &&
+    initializer;
+
+  if (!callableExpression) return null;
+
+  const [expression, initializerText] = [
+    callableExpression.getExpression(),
+    callableExpression.getText(),
+  ];
+
+  if (initializerText.includes('new EventEmitter')) {
+    return {
+      initializer: initializerText,
+      decorators: [{ name: 'Output', arguments: [] }],
+    };
   }
+
+  if (
+    (Node.isPropertyAccessExpression(expression) &&
+      expression.getText() === 'input.required') ||
+    Node.isIdentifier(expression) ||
+    expression.getText() === 'input'
+  ) {
+    return { initializer: initializer.getText() };
+  }
+
+  return null;
 }

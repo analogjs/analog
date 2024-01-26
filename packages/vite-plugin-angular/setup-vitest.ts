@@ -115,6 +115,14 @@ function isAngularFixture(val: any): boolean {
     return false;
   }
 
+  if (val['componentRef'] || val['componentInstance']) {
+    return true;
+  }
+
+  if (val['componentType']) {
+    return true;
+  }
+
   // * Angular fixture keys in Fixture component Object
   const fixtureKeys = [
     'componentRef',

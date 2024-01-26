@@ -50,11 +50,11 @@ function addFiles(tree: Tree, options: NormalizedSchema) {
     fileName,
   };
 
-  const pageFolders = options.pathname.toLowerCase().split('/');
-
+  const pageFolders = options.pathname.split('/').slice(0, -1);
   const pageDir = path.join(
     options.projectRoot,
-    `/src/app/pages/${pageFolders.slice(0, -1)}`
+    'src/app/pages',
+    ...pageFolders
   );
 
   generateFiles(tree, path.join(__dirname, 'files'), pageDir, templateOptions);

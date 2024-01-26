@@ -21,14 +21,16 @@ declare global {
         Component,
         | 'template'
         | 'templateUrl'
-        | 'host'
         | 'standalone'
         | 'changeDetection'
         | 'styleUrls'
         | 'styleUrl'
         | 'styles'
+        | 'outputs'
+        | 'inputs'
       >
     ) => void;
+
     /**
      * Invoke the callback when the component is initialized.
      */

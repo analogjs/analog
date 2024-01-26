@@ -2,44 +2,107 @@
 
 exports[`authoring ng file > should process component as ng file 1`] = `
 "import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { signal } from "@angular/core";
+import { signal, input, ViewChild, afterNextRender, ElementRef } from "@angular/core";
 
 @Component({
     standalone: true,
     selector: 'virtual,Virtual,VIRTUAL',
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: \`<style>div {    color: red;  }  p {    color: blue;  }</style>
-<div>Component</div>
+<div #divElement>Component</div>
   <p>{{ counter() }}</p>
   <p>{ a }</p>
   <p>{ b }</p>
   <p>{ c }</p>
   <p>{{ test }}</p>\`,
-    imports: []
+    queries: {
+        divElement: new ViewChild('divElement')
+    },
+    outputs: ['output', 'outputWithType']
 })
-export default class AnalogNgEntity {
+export default class VirtualAnalogComponent {
     constructor() {
-        let test: string;
+        let divElement;
+        let test;
+
+
         setTimeout(() => {
             test = 'test';
         }, 1000)
-        const counter = signal(0);
-        this.counter = counter;
+        const counter = this.counter
+
         const [a, b, , c = 4] = [1, 2, 3];
         this.a = a;
         this.b = b;
         this.c = c;
+        const inputWithDefault = this.inputWithDefault
+        const inputWithoutDefault = this.inputWithoutDefault
+        const inputWithAlias = this.inputWithAlias
+        const inputWithoutDefaultWithAlias = this.inputWithoutDefaultWithAlias
+        const inputWithTransform = this.inputWithTransform
+        const requiredInput = this.requiredInput
+        const requiredInputWithTransform = this.requiredInputWithTransform
+        const output = this.output
+        const outputWithType = this.outputWithType
+
+
+        afterNextRender(() => {
+            console.log('the div', divElement);
+        })
 
         Object.defineProperties(this, {
-            test: { get() { return test; } },
+            divElement: { get() { return divElement; }, set(v) { divElement = v; } },
+            test: { get() { return test; }, set(v) { test = v; } },
         });
     }
 
     protected Math = Math;
-    protected counter;
+    protected counter = signal(0);
     protected a;
     protected b;
     protected c;
+    protected inputWithDefault = input("");
+    protected inputWithoutDefault = input<string>();
+    protected inputWithAlias = input("", { alias: "theAlias" });
+    protected inputWithoutDefaultWithAlias = input<string | undefined>(undefined, {
+        alias: "theAlias",
+    });
+    protected inputWithTransform = input<unknown, boolean>("", {
+        transform: booleanAttribute,
+    });
+    protected requiredInput = input.required<string>();
+    protected requiredInputWithTransform = input.required<unknown, number>({
+        transform: (value) => numberAttribute(value, 10),
+    });
+    protected output = new EventEmitter();
+    protected outputWithType = new EventEmitter<string>();
+}
+
+
+export const routeMeta = {
+    title: 'My page',
+    canActivate: [() => true],
+}
+
+
+export interface MyInterface {
+    title: string
+}
+
+
+export type MyType = string;
+
+
+export enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+
+export function myFunc() {
+    console.log('hello');
 }
 "
 `;
@@ -52,16 +115,29 @@ import { inject, ElementRef, afterNextRender } from "@angular/core";
     standalone: true,
     selector: 'input[directive]'
 })
-export default class AnalogNgEntity {
+export default class VirtualAnalogDirective {
     constructor() {
-        const elRef = inject(ElementRef);
-        this.elRef = elRef;
+        const elRef = this.elRef
+
+
         afterNextRender(() => {
             elRef.nativeElement.focus();
         });
+        this.onInit = () => {
+            console.log('init code');
+        }
+
+
+        effect(() => {
+            console.log('just some effect');
+        });
     }
 
-    protected elRef;
+    protected elRef = inject(ElementRef);
+
+    ngOnInit() {
+        this.onInit();
+    }
 }
 "
 `;

@@ -20,7 +20,7 @@ There are 5 primary types of routes:
 - [Layout Routes](#layout-routes)
 - [Catch-all Routes](#catch-all-routes)
 
-These routes can be combined in different ways to build to URLs for navigation.
+These routes can be combined in different ways to build URLs for navigation.
 
 :::note
 

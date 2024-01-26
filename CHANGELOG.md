@@ -1,3 +1,39 @@
+## [0.2.30](https://github.com/analogjs/analog/compare/0.2.30-rc.1...0.2.30) (2024-01-23)
+
+### Bug Fixes
+
+- **nx-plugin:** change logic to join folder for page generation ([#863](https://github.com/analogjs/analog/issues/863)) ([062624f](https://github.com/analogjs/analog/commit/062624f9cd725f1d96a50a729af850d6647ff219))
+
+### Features
+
+- upgrade docusaurus to 3.1.0 ([#847](https://github.com/analogjs/analog/issues/847)) ([44a0280](https://github.com/analogjs/analog/commit/44a02805ac37a16b42b26f7d0798845b7feb771a))
+- **vite-plugin-angular:** add ability to export from .ng files ([#856](https://github.com/analogjs/analog/issues/856)) ([633e659](https://github.com/analogjs/analog/commit/633e65941b908f70926a7ce509174c653fbcb9b8))
+- **vite-plugin-nitro:** add content directories to route pre-rendering ([#833](https://github.com/analogjs/analog/issues/833)) ([3b99b87](https://github.com/analogjs/analog/commit/3b99b87354144c1d95f3ed30ff1c463980e09c3c))
+
+## [0.2.30-rc.1](https://github.com/analogjs/analog/compare/0.2.30-rc.0...0.2.30-rc.1) (2024-01-15)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** force jit flag in JavaScript transformer ([#854](https://github.com/analogjs/analog/issues/854)) ([bdfd229](https://github.com/analogjs/analog/commit/bdfd229a04814ed9c3caf0efa250893622d1ecc8))
+
+## [0.2.30-rc.0](https://github.com/analogjs/analog/compare/0.2.30-beta.7...0.2.30-rc.0) (2024-01-13)
+
+### Features
+
+- **vite-plugin-angular:** queries work and outputs are now in metadata ([#852](https://github.com/analogjs/analog/issues/852)) ([d081c79](https://github.com/analogjs/analog/commit/d081c7927008ea18fef9fa83f8b3e6caaf52cc2c))
+
+## [0.2.30-beta.7](https://github.com/analogjs/analog/compare/0.2.30-beta.6...0.2.30-beta.7) (2024-01-12)
+
+### Bug Fixes
+
+- **platform:** add SSR support for rxfire packages ([#851](https://github.com/analogjs/analog/issues/851)) ([7a96faa](https://github.com/analogjs/analog/commit/7a96faa2ad96255adf7414f4f3058d1abf637570))
+- **vite-plugin-angular:** adjust compiled output to be more concise ([#845](https://github.com/analogjs/analog/issues/845)) ([7ac2d23](https://github.com/analogjs/analog/commit/7ac2d233ebbe739237323a26275c10a43d592c14))
+- **vite-plugin-angular:** improve support for Angular snapshot detection ([#850](https://github.com/analogjs/analog/issues/850)) ([94a6ea7](https://github.com/analogjs/analog/commit/94a6ea7696ccc9916a4883746caf483c8888d38b))
+
+### Features
+
+- **vite-plugin-angular:** support inputs and outputs for .ng format ([#848](https://github.com/analogjs/analog/issues/848)) ([a6468db](https://github.com/analogjs/analog/commit/a6468db7c589a3380d58d653d6c8aa13e4d08061))
+
 ## [0.2.30-beta.6](https://github.com/analogjs/analog/compare/0.2.30-beta.5...0.2.30-beta.6) (2024-01-05)
 
 ### Features
