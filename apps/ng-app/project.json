@@ -6,7 +6,7 @@
   "sourceRoot": "apps/ng-app/src",
   "tags": [],
   "targets": {
-    "build": {
+    "builds": {
       "executor": "@nx/vite:build",
       "outputs": [
         "{options.outputPath}",

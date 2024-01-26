@@ -41,12 +41,7 @@ export interface PluginOptions {
      */
     tsTransformers?: ts.CustomTransformers;
   };
-  experimental?: {
-    /**
-     * Enable experimental support for .ng file format! Use as your own risk!
-     */
-    dangerouslySupportNgFormat?: boolean;
-  };
+  experimental?: {};
   supportedBrowsers?: string[];
   transformFilter?: (code: string, id: string) => boolean;
 }
@@ -89,7 +84,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     },
     supportedBrowsers: options?.supportedBrowsers ?? ['safari 15'],
     jit: options?.jit,
-    supportNgFormat: options?.experimental?.dangerouslySupportNgFormat,
+    supportNgFormat: false,
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
