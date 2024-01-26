@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-// Uncomment the lines below to enable types for experimental .ng format support
+// Uncomment the lines below to enable types for experimental .analog format support
 // declare global {
 //   import type { Component } from '@angular/core';
 //
@@ -19,22 +19,22 @@
 //         | 'styleUrls'
 //         | 'styleUrl'
 //         | 'styles'
-//         | 'ouputs'
+//         | 'outputs'
 //         | 'inputs'
 //       > & { exposes?: unknown[] }
 //     ) => void;
 //     /**
 //      * Invoke the callback when the component is initialized.
 //      */
-//     onInit: () => void;
+//     onInit: (initFn: () => void) => void;
 //     /**
 //      * Invoke the callback when the component is destroyed.
 //      */
-//     onDestroy: () => void;
+//     onDestroy: (destroyFn: () => void) => void;
 //   }
 // }
 
-// declare module '*.ng' {
+// declare module '*.analog' {
 //   const cmp = any;
 //   export default cmp;
 // }

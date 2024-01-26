@@ -1,27 +1,24 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import {
   ArrowFunction,
-  CallExpression,
   ClassDeclaration,
   ConstructorDeclaration,
-  Expression,
   FunctionDeclaration,
-  Identifier,
-  NewExpression,
   Node,
   ObjectLiteralExpression,
   OptionalKind,
   Project,
   PropertyDeclarationStructure,
   Scope,
-  SourceFile,
   StructureKind,
   SyntaxKind,
   VariableDeclarationKind,
 } from 'ts-morph';
-import { isFunctionDeclaration } from 'typescript';
 
 const SCRIPT_TAG_REGEX = /<script lang="ts">([\s\S]*?)<\/script>/i;
-const TEMPLATE_TAG_REGEX = /<template>([\s\S]*?)<\/template>/i;
+const TEMPLATE_TAG_REGEX =
+  /<template(?:\s+src="([^"]*)")?(?:\s*>((.|\n)*?)<\/template>|\s*\/>)/i;
 const STYLE_TAG_REGEX = /<style>([\s\S]*?)<\/style>/i;
 
 const ON_INIT = 'onInit';
@@ -32,7 +29,7 @@ const HOOKS_MAP = {
   [ON_DESTROY]: 'ngOnDestroy',
 } as const;
 
-export function compileNgFile(
+export function compileAnalogFile(
   filePath: string,
   fileContent: string,
   shouldFormat = false
@@ -54,7 +51,10 @@ export function compileNgFile(
   // eslint-disable-next-line prefer-const
   let [scriptContent, templateContent, styleContent] = [
     SCRIPT_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
-    TEMPLATE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
+    TEMPLATE_TAG_REGEX.exec(fileContent)
+      ?.filter((match) => Boolean(match?.trim()) && match !== '\n')
+      ?.pop()
+      ?.trim() || '',
     STYLE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
   ];
 
@@ -66,6 +66,16 @@ export function compileNgFile(
 
   const ngType = templateContent ? 'Component' : 'Directive';
   const entityName = `${className}Analog${ngType}`;
+
+  if (templateContent && templateContent.endsWith('.html')) {
+    const dirName = dirname(filePath);
+    const templatePath = join(dirName, templateContent);
+    try {
+      templateContent = readFileSync(templatePath, 'utf-8');
+    } catch (err) {
+      throw new Error(`[Analog] Error reading template file ${templatePath}`);
+    }
+  }
 
   if (styleContent) {
     templateContent = `<style>${styleContent.replace(/\n/g, '')}</style>
@@ -159,12 +169,12 @@ function processNgScript(
   for (const node of sourceSyntaxList.getChildren()) {
     if (Node.isImportDeclaration(node)) {
       const moduleSpecifier = node.getModuleSpecifierValue();
-      if (moduleSpecifier.endsWith('.ng')) {
+      if (moduleSpecifier.endsWith('.analog')) {
         // other .ng files
         declarations.push(node.getDefaultImport()?.getText() || '');
       }
 
-      // copy the import to the target `.ng.ts` file
+      // copy the import to the target `.analog.ts` file
       targetSourceFile.addImportDeclaration(node.getStructure());
       continue;
     }

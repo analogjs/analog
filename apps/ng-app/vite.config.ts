@@ -15,6 +15,11 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     analog({
       ssr: false,
+      vite: {
+        experimental: {
+          dangerouslySupportAnalogFormat: true,
+        },
+      },
     }),
   ],
   test: {

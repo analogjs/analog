@@ -5,9 +5,9 @@
   import { RouterOutlet, RouterLink } from '@angular/router';
   import { delay } from 'rxjs';
 
-  import Hello from './hello.ng';
-  import AnotherOne from './another-one.ng';
-  import Highlight from './highlight.ng';
+  import Hello from './hello.analog';
+  import AnotherOne from './another-one.analog';
+  import Highlight from './highlight.analog';
   import { HelloOriginal } from './hello';
 
   defineMetadata({

@@ -34,15 +34,15 @@ declare global {
     /**
      * Invoke the callback when the component is initialized.
      */
-    onInit: () => void;
+    onInit: (initFn: () => void) => void;
     /**
      * Invoke the callback when the component is destroyed.
      */
-    onDestroy: () => void;
+    onDestroy: (destroyFn: () => void) => void;
   }
 }
 
-declare module '*.ng' {
+declare module '*.analog' {
   const cmp = any;
   export default cmp;
 }

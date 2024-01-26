@@ -1,5 +1,5 @@
 import { angular } from './lib/angular-vite-plugin';
 export { PluginOptions } from './lib/angular-vite-plugin';
-export { compileNgFile } from './lib/authoring/ng';
+export { compileAnalogFile } from './lib/authoring/analog';
 
 export default angular;

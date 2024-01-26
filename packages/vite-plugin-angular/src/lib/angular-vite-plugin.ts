@@ -1,3 +1,8 @@
+import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
+import { transformAsync } from '@babel/core';
+import * as path from 'path';
+
+import * as ts from 'typescript';
 import {
   ModuleNode,
   normalizePath,
@@ -6,11 +11,9 @@ import {
   UserConfig,
   ViteDevServer,
 } from 'vite';
-import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
-import { transformAsync } from '@babel/core';
-
-import * as ts from 'typescript';
-import * as path from 'path';
+import { buildOptimizerPlugin } from './angular-build-optimizer-plugin';
+import { jitPlugin } from './angular-jit-plugin';
+import { angularVitestPlugin } from './angular-vitest-plugin';
 
 import { createCompilerPlugin } from './compiler-plugin';
 import {
@@ -20,15 +23,12 @@ import {
   TemplateUrlsResolver,
 } from './component-resolvers';
 import { augmentHostWithResources } from './host';
-import { jitPlugin } from './angular-jit-plugin';
-import { buildOptimizerPlugin } from './angular-build-optimizer-plugin';
 import {
-  loadEsmModule,
   angularApplicationPreset,
   createJitResourceTransformer,
+  loadEsmModule,
   SourceFileCache,
 } from './utils/devkit';
-import { angularVitestPlugin } from './angular-vitest-plugin';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -41,7 +41,12 @@ export interface PluginOptions {
      */
     tsTransformers?: ts.CustomTransformers;
   };
-  experimental?: {};
+  experimental?: {
+    /**
+     * Enable experimental support for Analog file extension! Use at your own risk!
+     */
+    dangerouslySupportAnalogFormat?: boolean;
+  };
   supportedBrowsers?: string[];
   transformFilter?: (code: string, id: string) => boolean;
 }
@@ -59,7 +64,7 @@ type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
  * Match .(c or m)ts, .ts extensions with an optional ? for query params
  * Ignore .tsx extensions
  */
-const TS_EXT_REGEX = /\.[cm]?(ts|ng)[^x]?\??/;
+const TS_EXT_REGEX = /\.[cm]?(ts|analog)[^x]?\??/;
 
 export function angular(options?: PluginOptions): Plugin[] {
   /**
@@ -84,7 +89,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     },
     supportedBrowsers: options?.supportedBrowsers ?? ['safari 15'],
     jit: options?.jit,
-    supportNgFormat: false,
+    supportAnalogFormat:
+      options?.experimental?.dangerouslySupportAnalogFormat ?? false,
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -238,10 +244,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         /**
          * Check for options.transformFilter
          */
-        if (options?.transformFilter) {
-          if (!(options?.transformFilter(code, id) ?? true)) {
-            return;
-          }
+        if (
+          options?.transformFilter &&
+          !(options?.transformFilter(code, id) ?? true)
+        ) {
+          return;
         }
 
         /**
@@ -339,8 +346,8 @@ export function angular(options?: PluginOptions): Plugin[] {
           const useInputSourcemap = (!isProd ? undefined : false) as undefined;
 
           if (
-            id.includes('.ng') &&
-            pluginOptions.supportNgFormat &&
+            id.includes('.analog') &&
+            pluginOptions.supportAnalogFormat &&
             fileEmitter
           ) {
             sourceFileCache.invalidate([`${id}.ts`]);
@@ -404,8 +411,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     }),
   ].filter(Boolean) as Plugin[];
 
-  function findNgFiles(config: UserConfig) {
-    if (!pluginOptions.supportNgFormat) {
+  function findAnalogFiles(config: UserConfig) {
+    if (!pluginOptions.supportAnalogFormat) {
       return [];
     }
 
@@ -413,17 +420,16 @@ export function angular(options?: PluginOptions): Plugin[] {
     const root = normalizePath(
       path.resolve(pluginOptions.workspaceRoot, config.root || '.')
     );
-    const ngFiles: string[] = fg
-      .sync([`${root}/**/*.ng`], {
+
+    return fg
+      .sync([`${root}/**/*.analog`], {
         dot: true,
       })
       .map((file: string) => `${file}.ts`);
-
-    return ngFiles;
   }
 
   function setupCompilation(config: UserConfig) {
-    const ngFiles = findNgFiles(config);
+    const analogFiles = findAnalogFiles(config);
     const { options: tsCompilerOptions, rootNames: rn } =
       compilerCli.readConfiguration(pluginOptions.tsconfig, {
         suppressOutputPathCheck: true,
@@ -438,14 +444,14 @@ export function angular(options?: PluginOptions): Plugin[] {
         supportTestBed: false,
       });
 
-    if (pluginOptions.supportNgFormat) {
+    if (pluginOptions.supportAnalogFormat) {
       // Experimental Local Compilation is necessary
       // for the Angular compiler to work with
-      // AOT and virtually compiled .ng files.
+      // AOT and virtually compiled .analog files.
       tsCompilerOptions.compilationMode = 'experimental-local';
     }
 
-    rootNames = rn.concat(ngFiles);
+    rootNames = rn.concat(analogFiles);
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);
 
@@ -456,8 +462,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     if (!jit) {
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
-        supportNgFormat: pluginOptions.supportNgFormat,
-        isProd: isProd,
+        supportAnalogFormat: pluginOptions.supportAnalogFormat,
+        isProd,
       });
     }
   }

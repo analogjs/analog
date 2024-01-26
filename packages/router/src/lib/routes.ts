@@ -12,7 +12,7 @@ const FILES = import.meta.glob<RouteExport>([
   '/app/routes/**/*.ts',
   '/src/app/routes/**/*.ts',
   '/src/app/pages/**/*.page.ts',
-  '/src/app/pages/**/*.page.ng',
+  '/src/app/pages/**/*.page.analog',
 ]);
 
 const CONTENT_FILES = import.meta.glob<string>(
