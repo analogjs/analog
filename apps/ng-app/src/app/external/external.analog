@@ -3,10 +3,8 @@ import { signal } from '@angular/core';
 
 defineMetadata({
   templateUrl: './external.html',
-  styleUrl: './external.css'
+  styleUrls: ['./external.css', './external-two.css'],
 })
 
 const value = signal('');
 </script>
-
-

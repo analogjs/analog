@@ -1,5 +1,3 @@
-import { readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
 import {
   ArrowFunction,
   ClassDeclaration,
@@ -69,37 +67,28 @@ export function compileAnalogFile(
   let ngType: 'Component' | 'Directive';
   if (templateContent) {
     ngType = 'Component';
-    if (styleContent) {
-      templateContent = `<style>${styleContent}</style>${templateContent}`;
-    }
   } else if (scriptContent && !templateContent) {
-    const hasTemplateUrl = scriptContent.includes('templateUrl');
-    if (hasTemplateUrl) {
-      ngType = 'Component';
-      if (styleContent) {
-        const dirName = dirname(filePath);
-        const templatePath = join(dirName, templateContent);
-        try {
-          const content = readFileSync(templatePath, 'utf-8');
-          writeFileSync(
-            templatePath,
-            `<style>${styleContent}</style>${content}`,
-            'utf-8'
-          );
-        } catch (err) {
-          throw new Error(
-            `[Analog] Error reading template file ${templatePath}`
-          );
-        }
-      }
-    } else {
-      ngType = 'Directive';
-    }
+    ngType = scriptContent.includes('templateUrl') ? 'Component' : 'Directive';
   } else {
     throw new Error(`[Analog] Cannot determine entity type ${filePath}`);
   }
 
   const entityName = `${className}Analog${ngType}`;
+  const componentMetadata = (() => {
+    if (ngType === 'Component') {
+      const items = ['changeDetection: ChangeDetectionStrategy.OnPush'];
+      if (templateContent) {
+        items.push(`template: \`${templateContent}\``);
+      }
+
+      if (styleContent) {
+        items.push(`styles: \`${styleContent.replaceAll('\n', '')}\``);
+      }
+
+      return items.join(',\n  ');
+    }
+    return '';
+  })();
 
   const source = `
 import { ${ngType}${
@@ -109,16 +98,7 @@ import { ${ngType}${
 @${ngType}({
   standalone: true,
   selector: '${componentFileName},${className},${constantName}',
-  ${
-    ngType === 'Component'
-      ? `changeDetection: ChangeDetectionStrategy.OnPush,`
-      : ''
-  }
-  ${
-    ngType === 'Component' && templateContent
-      ? `template: \`${templateContent}\``
-      : ''
-  }
+  ${componentMetadata}
 })
 export default class ${entityName} {
   constructor() {}
@@ -127,7 +107,6 @@ export default class ${entityName} {
   // the `.analog` file
   if (scriptContent) {
     const project = new Project({ useInMemoryFileSystem: true });
-
     return processAnalogScript(
       filePath,
       project.createSourceFile(filePath, scriptContent),

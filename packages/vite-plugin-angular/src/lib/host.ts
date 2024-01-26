@@ -76,10 +76,13 @@ export function augmentHostWithResources(
       // Resource file only exists for external stylesheets
       const filename =
         context.resourceFile ??
-        `${context.containingFile.replace(
-          /\.ts$/,
-          `.${options?.inlineStylesExtension}`
-        )}`;
+        `${context.containingFile.replace(/(\.analog)?\.ts$/, (...args) => {
+          // NOTE: if the original file name contains `.analog`, we turn that into `-analog.css`
+          if (args.includes('.analog')) {
+            return `-analog.${options?.inlineStylesExtension}`;
+          }
+          return `.${options?.inlineStylesExtension}`;
+        })}`;
 
       let stylesheetResult;
 

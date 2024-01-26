@@ -9,6 +9,7 @@ import Hello from './hello.analog';
     <p>Below me is a cool hello though</p>
     <Hello text="this is from the boring HelloOriginal" />
   `,
+  styles: `p { color: teal; }`,
   imports: [Hello],
 })
 // eslint-disable-next-line @angular-eslint/component-class-suffix
