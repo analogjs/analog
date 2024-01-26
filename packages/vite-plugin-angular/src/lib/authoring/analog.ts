@@ -10,6 +10,7 @@ import {
   ObjectLiteralExpression,
   OptionalKind,
   Project,
+  PropertyAssignment,
   PropertyDeclarationStructure,
   Scope,
   SourceFile,
@@ -17,6 +18,18 @@ import {
   SyntaxKind,
   VariableDeclarationKind,
 } from 'ts-morph';
+
+const INVALID_METADATA_PROPERTIES = [
+  'template',
+  'templateUrl',
+  'standalone',
+  'changeDetection',
+  'styleUrls',
+  'styleUrl',
+  'styles',
+  'outputs',
+  'inputs',
+];
 
 const SCRIPT_TAG_REGEX = /<script lang="ts">([\s\S]*?)<\/script>/i;
 const TEMPLATE_TAG_REGEX =
@@ -345,7 +358,21 @@ function processAnalogScript(
         if (functionName === 'defineMetadata') {
           const metadata =
             expression.getArguments()[0] as ObjectLiteralExpression;
-          processMetadata(metadata, targetMetadataArguments, targetClass);
+          const metadataProperties = metadata
+            .getPropertiesWithComments()
+            .filter(
+              (property): property is PropertyAssignment =>
+                Node.isPropertyAssignment(property) &&
+                !INVALID_METADATA_PROPERTIES.includes(property.getName())
+            );
+
+          if (metadataProperties.length === 0) continue;
+
+          processMetadata(
+            metadataProperties,
+            targetMetadataArguments,
+            targetClass
+          );
           continue;
         }
 
@@ -435,45 +462,42 @@ function processArrayLiteralMetadata(
 }
 
 function processMetadata(
-  metadataObject: ObjectLiteralExpression,
+  metadataProperties: PropertyAssignment[],
   targetMetadataArguments: ObjectLiteralExpression,
   targetClass: ClassDeclaration
 ) {
-  metadataObject.getPropertiesWithComments().forEach((property) => {
-    if (Node.isPropertyAssignment(property)) {
-      const propertyInitializer = property.getInitializer();
+  metadataProperties.forEach((property) => {
+    const propertyInitializer = property.getInitializer();
+    if (propertyInitializer) {
+      const propertyName = property.getName(),
+        propertyInitializerText = propertyInitializer.getText();
 
-      if (propertyInitializer) {
-        const propertyName = property.getName(),
-          propertyInitializerText = propertyInitializer.getText();
+      if (propertyName === 'selector') {
+        // remove the existing selector
+        targetMetadataArguments.getProperty('selector')?.remove();
+        // add the new selector
+        targetMetadataArguments.addPropertyAssignment({
+          name: 'selector',
+          initializer: propertyInitializerText,
+        });
+      } else if (propertyName === 'exposes') {
+        // for exposes we're going to add the property to the class so they are accessible on the template
+        // parse the initializer to get the item in the exposes array
+        const exposes = propertyInitializerText
+          .replace(/[[\]]/g, '')
+          .split(',')
+          .map((item) => ({
+            name: item.trim(),
+            initializer: item.trim(),
+            scope: Scope.Protected,
+          }));
 
-        if (propertyName === 'selector') {
-          // remove the existing selector
-          targetMetadataArguments.getProperty('selector')?.remove();
-          // add the new selector
-          targetMetadataArguments.addPropertyAssignment({
-            name: 'selector',
-            initializer: propertyInitializerText,
-          });
-        } else if (propertyName === 'exposes') {
-          // for exposes we're going to add the property to the class so they are accessible on the template
-          // parse the initializer to get the item in the exposes array
-          const exposes = propertyInitializerText
-            .replace(/[[\]]/g, '')
-            .split(',')
-            .map((item) => ({
-              name: item.trim(),
-              initializer: item.trim(),
-              scope: Scope.Protected,
-            }));
-
-          targetClass.addProperties(exposes);
-        } else {
-          targetMetadataArguments.addPropertyAssignment({
-            name: propertyName,
-            initializer: propertyInitializerText,
-          });
-        }
+        targetClass.addProperties(exposes);
+      } else {
+        targetMetadataArguments.addPropertyAssignment({
+          name: propertyName,
+          initializer: propertyInitializerText,
+        });
       }
     }
   });
