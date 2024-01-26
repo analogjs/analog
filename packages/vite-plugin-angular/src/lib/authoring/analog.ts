@@ -5,12 +5,14 @@ import {
   ClassDeclaration,
   ConstructorDeclaration,
   FunctionDeclaration,
+  FunctionExpression,
   Node,
   ObjectLiteralExpression,
   OptionalKind,
   Project,
   PropertyDeclarationStructure,
   Scope,
+  SourceFile,
   StructureKind,
   SyntaxKind,
   VariableDeclarationKind,
@@ -118,32 +120,31 @@ export default class ${entityName} {
   constructor() {}
 }`;
 
-  // the `.ng` file
+  // the `.analog` file
   if (scriptContent) {
     const project = new Project({ useInMemoryFileSystem: true });
-    project.createSourceFile(filePath, scriptContent);
-    project.createSourceFile(`${filePath}.virtual.ts`, source);
 
-    return processNgScript(filePath, project, ngType, entityName, shouldFormat);
+    return processAnalogScript(
+      filePath,
+      project.createSourceFile(filePath, scriptContent),
+      project.createSourceFile(`${filePath}.virtual.ts`, source),
+      ngType,
+      entityName,
+      shouldFormat
+    );
   }
 
   return source;
 }
 
-function processNgScript(
+function processAnalogScript(
   fileName: string,
-  project: Project,
+  ngSourceFile: SourceFile,
+  targetSourceFile: SourceFile,
   ngType: 'Component' | 'Directive',
   entityName: string,
   isProd?: boolean
 ) {
-  const ngSourceFile = project.getSourceFile(fileName);
-  const targetSourceFile = project.getSourceFile(`${fileName}.virtual.ts`);
-
-  if (!ngSourceFile || !targetSourceFile) {
-    throw new Error(`[Analog] Missing source files ${fileName}`);
-  }
-
   const targetClass = targetSourceFile.getClass(
     (classDeclaration) => classDeclaration.getName() === entityName
   );
@@ -165,19 +166,17 @@ function processNgScript(
     throw new Error(`[Analog] invalid metadata arguments ${fileName}`);
   }
 
-  const targetConstructor = targetClass.getConstructors()[0];
-  const targetConstructorBody = targetConstructor.getBody();
+  const targetConstructor = targetClass.getConstructors()[0],
+    targetConstructorBody = targetConstructor.getBody();
 
   if (!Node.isBlock(targetConstructorBody)) {
     throw new Error(`[Analog] invalid constructor body ${fileName}`);
   }
 
-  const declarations: string[] = [];
-  const gettersSetters: Array<{ propertyName: string; isFunction: boolean }> =
-    [];
-  const outputs: string[] = [];
-
-  const sourceSyntaxList = ngSourceFile.getChildren()[0]; // SyntaxList
+  const declarations: Array<string> = [],
+    gettersSetters: Array<{ propertyName: string; isFunction: boolean }> = [],
+    outputs: Array<string> = [],
+    sourceSyntaxList = ngSourceFile.getChildren()[0]; // SyntaxList
 
   if (!Node.isSyntaxList(sourceSyntaxList)) {
     throw new Error(`[Analog] invalid source syntax list ${fileName}`);
@@ -205,15 +204,11 @@ function processNgScript(
 
     if (Node.isVariableStatement(node)) {
       // NOTE: we do not support multiple declarations (i.e: const a, b, c)
-      const [declaration, isLet] = [
-        node.getDeclarations()[0],
-        node.getDeclarationKind() === VariableDeclarationKind.Let,
-      ];
+      const declaration = node.getDeclarations()[0],
+        isLet = node.getDeclarationKind() === VariableDeclarationKind.Let;
 
-      const [name, initializer] = [
-        declaration.getName(),
-        declaration.getInitializer(),
-      ];
+      const name = declaration.getName(),
+        initializer = declaration.getInitializer();
 
       if (!initializer && isLet) {
         // transfer the whole line `let variable;` over
@@ -356,10 +351,7 @@ function processNgScript(
 
         if (functionName === ON_INIT || functionName === ON_DESTROY) {
           const initFunction = expression.getArguments()[0];
-          if (
-            Node.isArrowFunction(initFunction) ||
-            Node.isFunctionExpression(initFunction)
-          ) {
+          if (isFunction(initFunction)) {
             // add the function to constructor
             targetConstructor.addStatements(
               `this.${functionName} = ${initFunction.getText()}`
@@ -370,7 +362,6 @@ function processNgScript(
               name: HOOKS_MAP[functionName],
               statements: `this.${functionName}();`,
             });
-
             continue;
           }
 
@@ -450,23 +441,24 @@ function processMetadata(
 ) {
   metadataObject.getPropertiesWithComments().forEach((property) => {
     if (Node.isPropertyAssignment(property)) {
-      const propertyName = property.getName();
       const propertyInitializer = property.getInitializer();
 
       if (propertyInitializer) {
+        const propertyName = property.getName(),
+          propertyInitializerText = propertyInitializer.getText();
+
         if (propertyName === 'selector') {
           // remove the existing selector
           targetMetadataArguments.getProperty('selector')?.remove();
           // add the new selector
           targetMetadataArguments.addPropertyAssignment({
             name: 'selector',
-            initializer: propertyInitializer.getText(),
+            initializer: propertyInitializerText,
           });
         } else if (propertyName === 'exposes') {
           // for exposes we're going to add the property to the class so they are accessible on the template
           // parse the initializer to get the item in the exposes array
-          const exposes = propertyInitializer
-            .getText()
+          const exposes = propertyInitializerText
             .replace(/[[\]]/g, '')
             .split(',')
             .map((item) => ({
@@ -479,7 +471,7 @@ function processMetadata(
         } else {
           targetMetadataArguments.addPropertyAssignment({
             name: propertyName,
-            initializer: propertyInitializer.getText(),
+            initializer: propertyInitializerText,
           });
         }
       }
@@ -513,14 +505,16 @@ function addVariableToConstructor(
     }
   }
 
-  targetConstructor.addStatements((statement += ';'));
+  targetConstructor.addStatements(statement + ';');
 }
 
 function isFunction(
   initializer: Node
-): initializer is ArrowFunction | FunctionDeclaration {
+): initializer is ArrowFunction | FunctionDeclaration | FunctionExpression {
   return (
-    Node.isArrowFunction(initializer) || Node.isFunctionDeclaration(initializer)
+    Node.isArrowFunction(initializer) ||
+    Node.isFunctionDeclaration(initializer) ||
+    Node.isFunctionExpression(initializer)
   );
 }
 
@@ -533,10 +527,8 @@ function getIOStructure(
 
   if (!callableExpression) return null;
 
-  const [expression, initializerText] = [
-    callableExpression.getExpression(),
-    callableExpression.getText(),
-  ];
+  const expression = callableExpression.getExpression(),
+    initializerText = callableExpression.getText();
 
   if (initializerText.includes('new EventEmitter')) {
     return {
@@ -548,8 +540,7 @@ function getIOStructure(
   if (
     (Node.isPropertyAccessExpression(expression) &&
       expression.getText() === 'input.required') ||
-    Node.isIdentifier(expression) ||
-    expression.getText() === 'input'
+    (Node.isIdentifier(expression) && expression.getText() === 'input')
   ) {
     return { initializer: initializer.getText() };
   }
