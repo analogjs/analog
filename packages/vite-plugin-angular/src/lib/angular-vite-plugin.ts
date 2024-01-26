@@ -43,9 +43,9 @@ export interface PluginOptions {
   };
   experimental?: {
     /**
-     * Enable experimental support for Analog file extension! Use at your own risk!
+     * Enable experimental support for Analog file extension
      */
-    dangerouslySupportAnalogFormat?: boolean;
+    supportAnalogFormat?: boolean;
   };
   supportedBrowsers?: string[];
   transformFilter?: (code: string, id: string) => boolean;
@@ -89,8 +89,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     },
     supportedBrowsers: options?.supportedBrowsers ?? ['safari 15'],
     jit: options?.jit,
-    supportAnalogFormat:
-      options?.experimental?.dangerouslySupportAnalogFormat ?? false,
+    supportAnalogFormat: options?.experimental?.supportAnalogFormat ?? false,
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files

@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
       ssr: false,
       vite: {
         experimental: {
-          dangerouslySupportAnalogFormat: true,
+          supportAnalogFormat: true,
         },
       },
     }),
