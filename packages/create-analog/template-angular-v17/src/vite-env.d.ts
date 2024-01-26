@@ -13,11 +13,8 @@
 //       metadata: Omit<
 //         Component,
 //         | 'template'
-//         | 'templateUrl'
 //         | 'standalone'
 //         | 'changeDetection'
-//         | 'styleUrls'
-//         | 'styleUrl'
 //         | 'styles'
 //         | 'outputs'
 //         | 'inputs'

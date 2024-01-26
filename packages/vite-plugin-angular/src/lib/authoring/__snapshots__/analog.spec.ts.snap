@@ -8,13 +8,13 @@ import { signal, input, ViewChild, afterNextRender, ElementRef } from "@angular/
     standalone: true,
     selector: 'virtual,Virtual,VIRTUAL',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    template: \`<style>div {    color: red;  }  p {    color: blue;  }</style>
-<div #divElement>Component</div>
+    template: \`<div #divElement>Component</div>
   <p>{{ counter() }}</p>
   <p>{ a }</p>
   <p>{ b }</p>
   <p>{ c }</p>
   <p>{{ test }}</p>\`,
+    styles: \`div {    color: red;  }  p {    color: blue;  }\`,
     queries: {
         divElement: new ViewChild('divElement')
     },
