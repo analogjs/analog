@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import Hello from './hello.ng';
+import Hello from './hello.analog';
 
 @Component({
   selector: 'app-hello-original',
@@ -9,6 +9,7 @@ import Hello from './hello.ng';
     <p>Below me is a cool hello though</p>
     <Hello text="this is from the boring HelloOriginal" />
   `,
+  styles: `p { color: teal; }`,
   imports: [Hello],
 })
 // eslint-disable-next-line @angular-eslint/component-class-suffix

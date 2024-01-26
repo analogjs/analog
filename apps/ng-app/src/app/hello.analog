@@ -10,7 +10,7 @@
     afterNextRender,
   } from '@angular/core';
 
-  import { myFunc } from './export-stuff.ng';
+  import { myFunc } from './export-stuff.analog';
 
   defineMetadata({
     queries: {

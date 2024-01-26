@@ -1,4 +1,4 @@
-import { compileNgFile } from './ng';
+import { compileAnalogFile } from './analog';
 
 const COMPONENT_CONTENT = `
 <script lang="ts">
@@ -111,13 +111,13 @@ effect(() => {
 
 describe('authoring ng file', () => {
   it('should process component as ng file', () => {
-    const source = compileNgFile('virtual.ng.ts', COMPONENT_CONTENT);
+    const source = compileAnalogFile('virtual.analog.ts', COMPONENT_CONTENT);
     expect(source).toContain('Component');
     expect(source).toMatchSnapshot();
   });
 
   it('should process directive as ng file', () => {
-    const source = compileNgFile('virtual.ng.ts', DIRECTIVE_CONTENT);
+    const source = compileAnalogFile('virtual.analog.ts', DIRECTIVE_CONTENT);
     expect(source).toContain('Directive');
     expect(source).toMatchSnapshot();
   });

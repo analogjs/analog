@@ -8,13 +8,13 @@ import { signal, input, ViewChild, afterNextRender, ElementRef } from "@angular/
     standalone: true,
     selector: 'virtual,Virtual,VIRTUAL',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    template: \`<style>div {    color: red;  }  p {    color: blue;  }</style>
-<div #divElement>Component</div>
+    template: \`<div #divElement>Component</div>
   <p>{{ counter() }}</p>
   <p>{ a }</p>
   <p>{ b }</p>
   <p>{ c }</p>
   <p>{{ test }}</p>\`,
+    styles: \`div {    color: red;  }  p {    color: blue;  }\`,
     queries: {
         divElement: new ViewChild('divElement')
     },
@@ -29,7 +29,7 @@ export default class VirtualAnalogComponent {
         setTimeout(() => {
             test = 'test';
         }, 1000)
-        const counter = this.counter
+        const counter = (this.counter = signal(0));
 
         const [a, b, , c = 4] = [1, 2, 3];
         this.a = a;
@@ -57,7 +57,6 @@ export default class VirtualAnalogComponent {
     }
 
     protected Math = Math;
-    protected counter = signal(0);
     protected a;
     protected b;
     protected c;
@@ -117,7 +116,7 @@ import { inject, ElementRef, afterNextRender } from "@angular/core";
 })
 export default class VirtualAnalogDirective {
     constructor() {
-        const elRef = this.elRef
+        const elRef = (this.elRef = inject(ElementRef));
 
 
         afterNextRender(() => {
@@ -132,8 +131,6 @@ export default class VirtualAnalogDirective {
             console.log('just some effect');
         });
     }
-
-    protected elRef = inject(ElementRef);
 
     ngOnInit() {
         this.onInit();

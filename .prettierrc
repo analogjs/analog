@@ -2,7 +2,7 @@
   "singleQuote": true,
   "overrides": [
     {
-      "files": "*.ng",
+      "files": "*.analog",
       "options": {
         "parser": "html"
       }

@@ -2,7 +2,7 @@ import { CompilerHost } from '@angular/compiler-cli';
 import { normalizePath } from '@ngtools/webpack/src/ivy/paths';
 import { readFileSync } from 'node:fs';
 import * as ts from 'typescript';
-import { compileNgFile } from './authoring/ng';
+import { compileAnalogFile } from './authoring/analog';
 
 export function augmentHostWithResources(
   host: ts.CompilerHost,
@@ -13,7 +13,7 @@ export function augmentHostWithResources(
   ) => ReturnType<any> | null,
   options: {
     inlineStylesExtension?: string;
-    supportNgFormat?: boolean;
+    supportAnalogFormat?: boolean;
     isProd?: boolean;
   } = {}
 ) {
@@ -22,19 +22,19 @@ export function augmentHostWithResources(
     resourceHost as ts.CompilerHost
   ).getSourceFile.bind(resourceHost);
 
-  if (options.supportNgFormat) {
+  if (options.supportAnalogFormat) {
     (resourceHost as ts.CompilerHost).getSourceFile = (
       fileName,
       languageVersionOrOptions,
       onError,
       ...parameters
     ) => {
-      if (fileName.includes('.ng')) {
+      if (fileName.includes('.analog')) {
         const contents = readFileSync(
-          fileName.replace('.ng.ts', '.ng'),
+          fileName.replace('.analog.ts', '.analog'),
           'utf-8'
         );
-        const source = compileNgFile(fileName, contents, options.isProd);
+        const source = compileAnalogFile(fileName, contents, options.isProd);
 
         return ts.createSourceFile(
           fileName,
@@ -76,10 +76,13 @@ export function augmentHostWithResources(
       // Resource file only exists for external stylesheets
       const filename =
         context.resourceFile ??
-        `${context.containingFile.replace(
-          /\.ts$/,
-          `.${options?.inlineStylesExtension}`
-        )}`;
+        `${context.containingFile.replace(/(\.analog)?\.ts$/, (...args) => {
+          // NOTE: if the original file name contains `.analog`, we turn that into `-analog.css`
+          if (args.includes('.analog')) {
+            return `-analog.${options?.inlineStylesExtension}`;
+          }
+          return `.${options?.inlineStylesExtension}`;
+        })}`;
 
       let stylesheetResult;
 
