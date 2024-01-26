@@ -1,8 +1,12 @@
 <script lang="ts">
 import { signal } from '@angular/core';
 
+defineMetadata({
+  templateUrl: './external.html',
+  styleUrl: './external.css'
+})
+
 const value = signal('');
 </script>
 
-<template src="./external.html" />
-<style src="./external.css" />
+

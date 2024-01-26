@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import {
   ArrowFunction,
@@ -21,21 +21,16 @@ import {
 
 const INVALID_METADATA_PROPERTIES = [
   'template',
-  'templateUrl',
   'standalone',
   'changeDetection',
-  'styleUrls',
-  'styleUrl',
   'styles',
   'outputs',
   'inputs',
 ];
 
 const SCRIPT_TAG_REGEX = /<script lang="ts">([\s\S]*?)<\/script>/i;
-const TEMPLATE_TAG_REGEX =
-  /<template(?:\s+src="([^"]*)")?(?:\s*>((.|\n)*?)<\/template>|\s*\/>)/i;
-const STYLE_TAG_REGEX =
-  /<style(?:\s+src="([^"]*)")?(?:\s*>((.|\n)*?)<\/style>|\s*\/>)/i;
+const TEMPLATE_TAG_REGEX = /<template>([\s\S]*?)<\/template>/i;
+const STYLE_TAG_REGEX = /<style>([\s\S]*?)<\/style>/i;
 
 const ON_INIT = 'onInit';
 const ON_DESTROY = 'onDestroy';
@@ -63,56 +58,48 @@ export function compileAnalogFile(
     className,
     constantName,
   } = names(componentName);
-  const dirName = dirname(filePath);
 
   // eslint-disable-next-line prefer-const
   let [scriptContent, templateContent, styleContent] = [
     SCRIPT_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
-    TEMPLATE_TAG_REGEX.exec(fileContent)
-      ?.filter((match) => Boolean(match?.trim()) && match !== '\n')
-      ?.pop()
-      ?.trim() || '',
-    STYLE_TAG_REGEX.exec(fileContent)
-      ?.filter((match) => Boolean(match?.trim()) && match !== '\n')
-      ?.pop()
-      ?.trim() || '',
+    TEMPLATE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
+    STYLE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
   ];
 
-  if (!scriptContent && !templateContent) {
-    throw new Error(
-      `[Analog] Either <script> or <template> must exist in ${filePath}`
-    );
-  }
-
-  const ngType = templateContent ? 'Component' : 'Directive';
-  const entityName = `${className}Analog${ngType}`;
-
-  if (templateContent && templateContent.endsWith('.html')) {
-    const templatePath = join(dirName, templateContent);
-    try {
-      templateContent = readFileSync(templatePath, 'utf-8');
-    } catch (err) {
-      throw new Error(`[Analog] Error reading template file ${templatePath}`);
+  let ngType: 'Component' | 'Directive';
+  if (templateContent) {
+    ngType = 'Component';
+    if (styleContent) {
+      templateContent = `<style>${styleContent}</style>${templateContent}`;
     }
-  }
-
-  if (styleContent) {
-    if (
-      ['css', 'scss', 'sass', 'less'].some((ext) =>
-        styleContent.endsWith(`.${ext}`)
-      )
-    ) {
-      const stylePath = join(dirName, styleContent);
-      try {
-        styleContent = readFileSync(stylePath, 'utf-8');
-      } catch (err) {
-        throw new Error(`[Analog] Error reading style file ${stylePath}`);
+  } else if (scriptContent && !templateContent) {
+    const hasTemplateUrl = scriptContent.includes('templateUrl');
+    if (hasTemplateUrl) {
+      ngType = 'Component';
+      if (styleContent) {
+        const dirName = dirname(filePath);
+        const templatePath = join(dirName, templateContent);
+        try {
+          const content = readFileSync(templatePath, 'utf-8');
+          writeFileSync(
+            templatePath,
+            `<style>${styleContent}</style>${content}`,
+            'utf-8'
+          );
+        } catch (err) {
+          throw new Error(
+            `[Analog] Error reading template file ${templatePath}`
+          );
+        }
       }
+    } else {
+      ngType = 'Directive';
     }
-
-    templateContent = `<style>${styleContent.replace(/\n/g, '')}</style>
-${templateContent}`;
+  } else {
+    throw new Error(`[Analog] Cannot determine entity type ${filePath}`);
   }
+
+  const entityName = `${className}Analog${ngType}`;
 
   const source = `
 import { ${ngType}${
@@ -124,8 +111,12 @@ import { ${ngType}${
   selector: '${componentFileName},${className},${constantName}',
   ${
     ngType === 'Component'
-      ? `changeDetection: ChangeDetectionStrategy.OnPush,
-      template: \`${templateContent}\``
+      ? `changeDetection: ChangeDetectionStrategy.OnPush,`
+      : ''
+  }
+  ${
+    ngType === 'Component' && templateContent
+      ? `template: \`${templateContent}\``
       : ''
   }
 })
