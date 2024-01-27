@@ -1,3 +1,14 @@
+## [0.2.31-beta.0](https://github.com/analogjs/analog/compare/0.2.30...0.2.31-beta.0) (2024-01-27)
+
+### Bug Fixes
+
+- **astro-angular:** use first selector for component tag on server render ([#867](https://github.com/analogjs/analog/issues/867)) ([1351396](https://github.com/analogjs/analog/commit/135139663fd6d55307c927991b7dae93b1af591e))
+- **vite-plugin-angular:** remove experimental support for .ng files ([#869](https://github.com/analogjs/analog/issues/869)) ([6f59c0c](https://github.com/analogjs/analog/commit/6f59c0c2103571f9ac39617baf4c79ccf628c3cd))
+
+### Features
+
+- **vite-plugin-angular:** enable `.analog` support ([#870](https://github.com/analogjs/analog/issues/870)) ([5e09ab5](https://github.com/analogjs/analog/commit/5e09ab5860ce6d13d62d3820874dcca65d4619e9))
+
 ## [0.2.30](https://github.com/analogjs/analog/compare/0.2.30-rc.1...0.2.30) (2024-01-23)
 
 ### Bug Fixes
