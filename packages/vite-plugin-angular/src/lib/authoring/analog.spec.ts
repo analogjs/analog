@@ -109,6 +109,12 @@ effect(() => {
 </script>
 `;
 
+const MARKDOWN_CONTENT = `
+<template lang="md">
+  # Hello World
+</template>
+`;
+
 describe('authoring ng file', () => {
   it('should process component as ng file', () => {
     const source = compileAnalogFile('virtual.analog.ts', COMPONENT_CONTENT);
@@ -119,6 +125,12 @@ describe('authoring ng file', () => {
   it('should process directive as ng file', () => {
     const source = compileAnalogFile('virtual.analog.ts', DIRECTIVE_CONTENT);
     expect(source).toContain('Directive');
+    expect(source).toMatchSnapshot();
+  });
+
+  it('should process component with markdown as analog file with a virtual templateUrl', () => {
+    const source = compileAnalogFile('virtual.analog.ts', MARKDOWN_CONTENT);
+    expect(source).toContain('Component');
     expect(source).toMatchSnapshot();
   });
 });

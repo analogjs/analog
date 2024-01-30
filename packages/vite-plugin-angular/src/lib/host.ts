@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import * as ts from 'typescript';
 import { compileAnalogFile } from './authoring/analog';
 import { MarkedSetupService } from './authoring/marked-setup.service';
+import { TEMPLATE_TAG_REGEX } from './authoring/constants';
 
 export function augmentHostWithResources(
   host: ts.CompilerHost,
@@ -56,8 +57,6 @@ export function augmentHostWithResources(
     };
 
     const baseReadFile = (resourceHost as ts.CompilerHost).readFile;
-    const TEMPLATE_TAG_REGEX =
-      /(<template>|<template lang="md">)([\s\S]*?)<\/template>/i;
 
     (resourceHost as ts.CompilerHost).readFile = function (fileName: string) {
       if (fileName.includes('virtual-analog:')) {

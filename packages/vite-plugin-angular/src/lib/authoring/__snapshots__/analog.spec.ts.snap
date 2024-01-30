@@ -106,6 +106,21 @@ export function myFunc() {
 "
 `;
 
+exports[`authoring ng file > should process component with markdown as analog file with a virtual templateUrl 1`] = `
+"
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+
+@Component({
+  standalone: true,
+  selector: 'virtual,Virtual,VIRTUAL',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  templateUrl: \`virtual-analog:virtual.analog\`
+})
+export default class VirtualAnalogComponent {
+  constructor() {}
+}"
+`;
+
 exports[`authoring ng file > should process directive as ng file 1`] = `
 "import { Directive } from '@angular/core';
 import { inject, ElementRef, afterNextRender } from "@angular/core";
