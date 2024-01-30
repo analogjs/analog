@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`authoring ng file > should process component as ng file 1`] = `
+exports[`authoring ng file > should process component as an analog file 1`] = `
 "import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { signal, input, ViewChild, afterNextRender, ElementRef } from "@angular/core";
 
@@ -121,7 +121,7 @@ export default class VirtualAnalogComponent {
 }"
 `;
 
-exports[`authoring ng file > should process directive as ng file 1`] = `
+exports[`authoring ng file > should process directive as an analog file 1`] = `
 "import { Directive } from '@angular/core';
 import { inject, ElementRef, afterNextRender } from "@angular/core";
 

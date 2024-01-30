@@ -116,13 +116,13 @@ const MARKDOWN_CONTENT = `
 `;
 
 describe('authoring ng file', () => {
-  it('should process component as ng file', () => {
+  it('should process component as an analog file', () => {
     const source = compileAnalogFile('virtual.analog.ts', COMPONENT_CONTENT);
     expect(source).toContain('Component');
     expect(source).toMatchSnapshot();
   });
 
-  it('should process directive as ng file', () => {
+  it('should process directive as an analog file', () => {
     const source = compileAnalogFile('virtual.analog.ts', DIRECTIVE_CONTENT);
     expect(source).toContain('Directive');
     expect(source).toMatchSnapshot();
