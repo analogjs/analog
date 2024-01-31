@@ -16,27 +16,15 @@ import {
   SyntaxKind,
   VariableDeclarationKind,
 } from 'ts-morph';
-
-const INVALID_METADATA_PROPERTIES = [
-  'template',
-  'standalone',
-  'changeDetection',
-  'styles',
-  'outputs',
-  'inputs',
-];
-
-const SCRIPT_TAG_REGEX = /<script lang="ts">([\s\S]*?)<\/script>/i;
-const TEMPLATE_TAG_REGEX = /<template>([\s\S]*?)<\/template>/i;
-const STYLE_TAG_REGEX = /<style>([\s\S]*?)<\/style>/i;
-
-const ON_INIT = 'onInit';
-const ON_DESTROY = 'onDestroy';
-
-const HOOKS_MAP = {
-  [ON_INIT]: 'ngOnInit',
-  [ON_DESTROY]: 'ngOnDestroy',
-} as const;
+import {
+  HOOKS_MAP,
+  INVALID_METADATA_PROPERTIES,
+  ON_DESTROY,
+  ON_INIT,
+  SCRIPT_TAG_REGEX,
+  STYLE_TAG_REGEX,
+  TEMPLATE_TAG_REGEX,
+} from './constants';
 
 export function compileAnalogFile(
   filePath: string,
@@ -57,15 +45,17 @@ export function compileAnalogFile(
     constantName,
   } = names(componentName);
 
+  const isMarkdown = fileContent.includes('lang="md"');
+
   // eslint-disable-next-line prefer-const
   let [scriptContent, templateContent, styleContent] = [
     SCRIPT_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
-    TEMPLATE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
+    isMarkdown ? '' : TEMPLATE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
     STYLE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
   ];
 
   let ngType: 'Component' | 'Directive';
-  if (templateContent) {
+  if (templateContent || isMarkdown) {
     ngType = 'Component';
   } else if (scriptContent && !templateContent) {
     ngType = scriptContent.includes('templateUrl') ? 'Component' : 'Directive';
@@ -77,7 +67,12 @@ export function compileAnalogFile(
   const componentMetadata = (() => {
     if (ngType === 'Component') {
       const items = ['changeDetection: ChangeDetectionStrategy.OnPush'];
-      if (templateContent) {
+
+      if (isMarkdown) {
+        items.push(
+          `templateUrl: \`virtual-analog:${filePath.replace('.ts', '')}\``
+        );
+      } else if (templateContent) {
         items.push(`template: \`${templateContent}\``);
       }
 
