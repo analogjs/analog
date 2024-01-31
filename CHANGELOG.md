@@ -1,3 +1,9 @@
+## [0.2.31-beta.1](https://github.com/analogjs/analog/compare/0.2.31-beta.0...0.2.31-beta.1) (2024-01-31)
+
+### Features
+
+- **vite-plugin-angular:** add inline markdown support to analog template ([#872](https://github.com/analogjs/analog/issues/872)) ([94052e8](https://github.com/analogjs/analog/commit/94052e8a207d25320346caa4847479595078e0d1))
+
 ## [0.2.31-beta.0](https://github.com/analogjs/analog/compare/0.2.30...0.2.31-beta.0) (2024-01-27)
 
 ### Bug Fixes
