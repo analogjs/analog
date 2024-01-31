@@ -25,6 +25,17 @@ export class MarkedSetupService {
   constructor() {
     const renderer = new marked.Renderer();
     renderer.code = (code: string, lang: string) => {
+      // Escape commonly used HTML characters
+      // in Angular templates that cause template parse errors
+      // such as @, {, and ,}.
+      code = code.replace(/@/g, '&#64;');
+
+      if (code.includes('>{<') || code.includes('>}<')) {
+        code = code
+          .replace(/>\{</g, '>&#x2774;<')
+          .replace(/>\}</g, '>&#x2775;<');
+      }
+
       // Let's do a language based detection like on GitHub
       // So we can still have non-interpreted mermaid code
       if (lang === 'mermaid') {
