@@ -1,3 +1,9 @@
+## [0.2.31-beta.2](https://github.com/analogjs/analog/compare/0.2.31-beta.1...0.2.31-beta.2) (2024-02-01)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** escape common characters in code snippets for analog template ([#873](https://github.com/analogjs/analog/issues/873)) ([66ae8f2](https://github.com/analogjs/analog/commit/66ae8f22197466b29f5b3a751eabd9df9b807b84))
+
 ## [0.2.31-beta.1](https://github.com/analogjs/analog/compare/0.2.31-beta.0...0.2.31-beta.1) (2024-01-31)
 
 ### Features
