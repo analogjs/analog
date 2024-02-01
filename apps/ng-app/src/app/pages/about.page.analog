@@ -18,5 +18,14 @@
   npm create analog
   ```
 
+  ```ts
+  @Component({
+    selector: 'app-root',
+  })
+  class AppComponent {
+    doSomething() {}
+  }
+  ```
+
   <Hello />
 </template>
