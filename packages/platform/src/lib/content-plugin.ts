@@ -14,7 +14,7 @@ export function contentPlugin(): Plugin[] {
       name: 'analogjs-content-frontmatter',
       async transform(code, id) {
         // Transform only the frontmatter into a JSON object for lists
-        if (!id.includes('.md?analog-content-list')) {
+        if (!id.includes('analog-content-list=true')) {
           return;
         }
 
