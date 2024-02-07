@@ -31,9 +31,9 @@ export function augmentHostWithResources(
       onError,
       ...parameters
     ) => {
-      if (fileName.includes('.analog')) {
+      if (fileName.includes('.analog') || fileName.includes('.agx.ts')) {
         const contents = readFileSync(
-          fileName.replace('.analog.ts', '.analog'),
+          fileName.replace('.analog.ts', '.analog').replace('.agx.ts', '.agx'),
           'utf-8'
         );
         const source = compileAnalogFile(fileName, contents, options.isProd);
@@ -122,7 +122,7 @@ export function augmentHostWithResources(
         context.resourceFile ??
         `${context.containingFile.replace(/(\.analog)?\.ts$/, (...args) => {
           // NOTE: if the original file name contains `.analog`, we turn that into `-analog.css`
-          if (args.includes('.analog')) {
+          if (args.includes('.analog') || args.includes('.agx')) {
             return `-analog.${options?.inlineStylesExtension}`;
           }
           return `.${options?.inlineStylesExtension}`;

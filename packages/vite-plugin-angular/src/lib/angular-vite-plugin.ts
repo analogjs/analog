@@ -29,6 +29,7 @@ import {
   loadEsmModule,
   SourceFileCache,
 } from './utils/devkit';
+import { getFrontmatterMetadata } from './authoring/frontmatter';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -64,7 +65,7 @@ type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
  * Match .(c or m)ts, .ts extensions with an optional ? for query params
  * Ignore .tsx extensions
  */
-const TS_EXT_REGEX = /\.[cm]?(ts|analog)[^x]?\??/;
+const TS_EXT_REGEX = /\.[cm]?(ts|analog|ag)[^x]?\??/;
 
 export function angular(options?: PluginOptions): Plugin[] {
   /**
@@ -262,6 +263,13 @@ export function angular(options?: PluginOptions): Plugin[] {
           return;
         }
 
+        /**
+         * Skip transforming content files
+         */
+        if (id.includes('analog-content-list=true')) {
+          return;
+        }
+
         if (TS_EXT_REGEX.test(id)) {
           if (id.includes('.ts?')) {
             // Strip the query string off the ID
@@ -345,13 +353,18 @@ export function angular(options?: PluginOptions): Plugin[] {
           const useInputSourcemap = (!isProd ? undefined : false) as undefined;
 
           if (
-            id.includes('.analog') &&
+            (id.includes('.analog') || id.includes('.agx')) &&
             pluginOptions.supportAnalogFormat &&
             fileEmitter
           ) {
             sourceFileCache.invalidate([`${id}.ts`]);
             const ngFileResult = await fileEmitter!(`${id}.ts`);
             data = ngFileResult?.content || '';
+
+            if (id.includes('.agx')) {
+              const metadata = await getFrontmatterMetadata(code);
+              data += metadata;
+            }
           }
 
           if (!forceAsyncTransformation && !isProd) {
@@ -421,7 +434,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     );
 
     return fg
-      .sync([`${root}/**/*.analog`], {
+      .sync([`${root}/**/*.analog`, `${root}/**/*.agx`], {
         dot: true,
       })
       .map((file: string) => `${file}.ts`);
