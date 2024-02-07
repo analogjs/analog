@@ -1,0 +1,63 @@
+<script lang="ts">
+  import {
+    DestroyRef,
+    inject,
+    input,
+    EventEmitter,
+    effect,
+    ViewChild,
+    ElementRef,
+    afterNextRender,
+  } from '@angular/core';
+
+  import { myFunc } from './export-stuff.analog';
+
+  defineMetadata({
+    queries: {
+      divElement: new ViewChild('divElement'),
+    },
+    exposes: [myFunc],
+  });
+
+  let divElement: ElementRef<HTMLDivElement>;
+
+  afterNextRender(() => {
+    console.log('the Div', divElement);
+  });
+
+  const { foo: aliasFoo = 'tran', ...rest } = { foo: 'chau' };
+  const [a, b, , c = 5, ...restArray] = [1, 2, 3];
+
+  const text = input('');
+
+  effect(() => {
+    console.log('text changed', text());
+  });
+
+  const clicked = new EventEmitter<MouseEvent>();
+
+  inject(DestroyRef).onDestroy(() => {
+    console.log('hello destroyed');
+  });
+</script>
+
+<template>
+  <h1>Hello.ng again</h1>
+  <p>{{ a }}</p>
+  <p>{{ b }}</p>
+  <p>{{ c }}</p>
+  <p>{{ aliasFoo }}</p>
+  <p>Text from input: {{ text() }}</p>
+  <button (click)="clicked.emit($event)">Emit The Click</button>
+  <div #divElement>my div</div>
+  <p>From imported function: {{ myFunc() }}</p>
+</template>
+
+<style>
+  :host {
+    display: block;
+    padding: 1rem;
+    border: 1px dashed red;
+    border-radius: 0.5rem;
+  }
+</style>

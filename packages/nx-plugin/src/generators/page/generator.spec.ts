@@ -111,6 +111,15 @@ describe('analog-page generator', () => {
       tree.read('apps/test/src/app/pages/products/[products].page.ts', 'utf-8')
     ).toMatchSnapshot('page');
 
+    options.pathname = `(customers)/demo/home`;
+    await analogPageGenerator(tree, options);
+    expect(
+      tree.read(
+        'apps/test/src/app/pages/(customers)/demo/home.page.ts',
+        'utf-8'
+      )
+    ).toMatchSnapshot('page');
+
     options.pathname = 'products/products.[productId]';
     await analogPageGenerator(tree, options);
     expect(

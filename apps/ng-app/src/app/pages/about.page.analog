@@ -1,0 +1,31 @@
+<script lang="ts">
+  import { RouteMeta } from '@analogjs/router';
+  import Hello from '../hello.analog';
+
+  export const routeMeta: RouteMeta = {
+    title: 'My page',
+    canActivate: [() => true],
+  };
+</script>
+
+<template lang="md">
+  # About me works!
+
+  ## Subheader
+
+
+  ```sh
+  npm create analog
+  ```
+
+  ```ts
+  @Component({
+    selector: 'app-root',
+  })
+  class AppComponent {
+    doSomething() {}
+  }
+  ```
+
+  <Hello />
+</template>

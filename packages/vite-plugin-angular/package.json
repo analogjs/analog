@@ -22,6 +22,9 @@
   "peerDependencies": {
     "@angular-devkit/build-angular": "^15.0.0 || >=16.0.0"
   },
+  "dependencies": {
+    "ts-morph": "^21.0.0"
+  },
   "ng-update": {
     "packageGroup": [
       "@analogjs/astro-angular",

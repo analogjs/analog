@@ -1,8 +1,7 @@
 // @ts-check
 
-const lightCodeTheme = require('prism-react-renderer/themes/nightOwlLight');
-const darkCodeTheme = require('prism-react-renderer/themes/nightOwl');
-darkCodeTheme['plain'].backgroundColor = '#0a1429';
+import { themes } from 'prism-react-renderer';
+themes.nightOwl['plain'].backgroundColor = '#0a1429';
 
 const organizationName = 'analogjs';
 const projectName = 'analog';
@@ -157,8 +156,8 @@ const config = {
       },
       prism: {
         defaultLanguage: 'typescript',
-        theme: lightCodeTheme,
-        darkTheme: darkCodeTheme,
+        theme: themes.nightOwlLight,
+        darkTheme: themes.nightOwl,
       },
     }),
   title,

@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import { nitro } from './vite-plugin-nitro';
+
+import { PrerenderContentFile } from './options';
 import {
   mockBuildFunctions,
   mockNitroConfig,
   mockViteDevServer,
   runConfigAndCloseBundle,
 } from './vite-nitro-plugin.spec.data';
+import { nitro } from './vite-plugin-nitro';
 
 describe('nitro', () => {
   vi.mock('./build-ssr');
@@ -32,155 +34,216 @@ describe('nitro', () => {
     expect(spy).not.toHaveBeenCalledWith('/api', expect.anything());
   });
 
-  it('should build the server with prerender route "/" if nothing was provided', async () => {
-    // Arrange
-    const {
-      buildSSRAppImportSpy,
-      buildServerImportSpy,
-      buildSitemapImportSpy,
-    } = await mockBuildFunctions();
-    const plugin = nitro({
-      ssr: true,
+  describe('when prerendering is configured...', () => {
+    it('should build the server with prerender route "/" if nothing was provided', async () => {
+      // Arrange
+      const {
+        buildSSRAppImportSpy,
+        buildServerImportSpy,
+        buildSitemapImportSpy,
+      } = await mockBuildFunctions();
+      const plugin = nitro({
+        ssr: true,
+      });
+
+      // Act
+      await runConfigAndCloseBundle(plugin);
+
+      // Assert
+      expect(buildSSRAppImportSpy).toHaveBeenCalledWith({}, { ssr: true });
+      expect(buildSitemapImportSpy).not.toHaveBeenCalled();
+      expect(buildServerImportSpy).toHaveBeenCalledWith(
+        { ssr: true },
+        {
+          ...mockNitroConfig,
+          alias: expect.anything(),
+          prerender: { routes: ['/'] },
+          rollupConfig: expect.anything(),
+          handlers: expect.anything(),
+        }
+      );
     });
 
-    // Act
-    await runConfigAndCloseBundle(plugin);
+    it('should build the server with prerender route "/" even if ssr is false', async () => {
+      // Arrange
+      const {
+        buildSSRAppImportSpy,
+        buildServerImportSpy,
+        buildSitemapImportSpy,
+      } = await mockBuildFunctions();
+      const plugin = nitro({
+        ssr: false,
+      });
 
-    // Assert
-    expect(buildSSRAppImportSpy).toHaveBeenCalledWith({}, { ssr: true });
-    expect(buildSitemapImportSpy).not.toHaveBeenCalled();
-    expect(buildServerImportSpy).toHaveBeenCalledWith(
-      { ssr: true },
-      {
-        ...mockNitroConfig,
-        alias: expect.anything(),
-        prerender: { routes: ['/'] },
-        rollupConfig: expect.anything(),
-        handlers: expect.anything(),
-      }
-    );
-  });
+      // Act
+      await runConfigAndCloseBundle(plugin);
 
-  it('should build the server with prerender route "/" even if ssr is false', async () => {
-    // Arrange
-    const {
-      buildSSRAppImportSpy,
-      buildServerImportSpy,
-      buildSitemapImportSpy,
-    } = await mockBuildFunctions();
-    const plugin = nitro({
-      ssr: false,
+      // Assert
+      expect(buildSSRAppImportSpy).not.toHaveBeenCalled();
+      expect(buildSitemapImportSpy).not.toHaveBeenCalled();
+      expect(buildServerImportSpy).toHaveBeenCalledWith(
+        { ssr: false },
+        {
+          ...mockNitroConfig,
+          prerender: { routes: ['/'] },
+          alias: expect.anything(),
+          rollupConfig: expect.anything(),
+          handlers: expect.anything(),
+        }
+      );
     });
 
-    // Act
-    await runConfigAndCloseBundle(plugin);
-
-    // Assert
-    expect(buildSSRAppImportSpy).not.toHaveBeenCalled();
-    expect(buildSitemapImportSpy).not.toHaveBeenCalled();
-    expect(buildServerImportSpy).toHaveBeenCalledWith(
-      { ssr: false },
-      {
-        ...mockNitroConfig,
-        alias: expect.anything(),
-        prerender: { routes: ['/'] },
-        alias: expect.anything(),
-        rollupConfig: expect.anything(),
-        handlers: expect.anything(),
-      }
-    );
-  });
-
-  it('should build the server without prerender route when an empty array was passed', async () => {
-    // Arrange
-    const {
-      buildSSRAppImportSpy,
-      buildServerImportSpy,
-      buildSitemapImportSpy,
-    } = await mockBuildFunctions();
-    const prerenderRoutes = {
-      prerender: {
-        routes: [],
-        sitemap: { host: 'example.com' },
-      },
-    };
-    const plugin = nitro({
-      ssr: true,
-      ...prerenderRoutes,
-    });
-
-    // Act
-    await runConfigAndCloseBundle(plugin);
-
-    // Assert
-    expect(buildSSRAppImportSpy).toHaveBeenCalledWith(
-      {},
-      { ssr: true, ...prerenderRoutes }
-    );
-    expect(buildServerImportSpy).toHaveBeenCalledWith(
-      { ssr: true, ...prerenderRoutes },
-      {
-        ...mockNitroConfig,
-        alias: expect.anything(),
-        rollupConfig: expect.anything(),
-        handlers: expect.anything(),
-      }
-    );
-    expect(buildSitemapImportSpy).toHaveBeenCalledWith(
-      {},
-      { host: 'example.com' },
-      prerenderRoutes.prerender.routes,
-      expect.anything()
-    );
-  });
-
-  it('should build the server with provided routes', async () => {
-    // Arrange
-    const {
-      buildSSRAppImportSpy,
-      buildServerImportSpy,
-      buildSitemapImportSpy,
-    } = await mockBuildFunctions();
-    const prerenderRoutes = {
-      prerender: {
-        routes: ['/blog', '/about'],
-        sitemap: { host: 'example.com' },
-      },
-    };
-    const plugin = nitro({
-      ssr: true,
-      ...prerenderRoutes,
-    });
-
-    // Act
-    await runConfigAndCloseBundle(plugin);
-
-    // Assert
-    expect(buildSSRAppImportSpy).toHaveBeenCalledWith(
-      {},
-      { ssr: true, ...prerenderRoutes }
-    );
-
-    expect(buildServerImportSpy).toHaveBeenCalledWith(
-      { ssr: true, ...prerenderRoutes },
-      {
-        ...mockNitroConfig,
-        alias: expect.anything(),
+    it('should build the server without prerender route when an empty array was passed', async () => {
+      // Arrange
+      const {
+        buildSSRAppImportSpy,
+        buildServerImportSpy,
+        buildSitemapImportSpy,
+      } = await mockBuildFunctions();
+      const prerenderRoutes = {
         prerender: {
-          routes: prerenderRoutes.prerender.routes,
+          routes: [],
+          sitemap: { host: 'example.com' },
         },
-        alias: expect.anything(),
-        rollupConfig: expect.anything(),
-        handlers: expect.anything(),
-      }
-    );
+      };
+      const plugin = nitro({
+        ssr: true,
+        ...prerenderRoutes,
+      });
 
-    expect(buildSitemapImportSpy).toHaveBeenCalledWith(
-      {},
-      { host: 'example.com' },
-      prerenderRoutes.prerender.routes,
-      expect.anything()
-    );
+      // Act
+      await runConfigAndCloseBundle(plugin);
+
+      // Assert
+      expect(buildSSRAppImportSpy).toHaveBeenCalledWith(
+        {},
+        { ssr: true, ...prerenderRoutes }
+      );
+      expect(buildServerImportSpy).toHaveBeenCalledWith(
+        { ssr: true, ...prerenderRoutes },
+        {
+          ...mockNitroConfig,
+          alias: expect.anything(),
+          rollupConfig: expect.anything(),
+          handlers: expect.anything(),
+          preset: undefined,
+          prerender: {
+            ...mockNitroConfig.prerender,
+            routes: [],
+          },
+        }
+      );
+      expect(buildSitemapImportSpy).not.toHaveBeenCalled();
+    });
+
+    it('should build the server with provided routes', async () => {
+      // Arrange
+      const {
+        buildSSRAppImportSpy,
+        buildServerImportSpy,
+        buildSitemapImportSpy,
+      } = await mockBuildFunctions();
+      const prerenderRoutes = {
+        prerender: {
+          routes: ['/blog', '/about'],
+          sitemap: { host: 'example.com' },
+        },
+      };
+      const plugin = nitro({
+        ssr: true,
+        ...prerenderRoutes,
+      });
+
+      // Act
+      await runConfigAndCloseBundle(plugin);
+
+      // Assert
+      expect(buildSSRAppImportSpy).toHaveBeenCalledWith(
+        {},
+        { ssr: true, ...prerenderRoutes }
+      );
+
+      expect(buildServerImportSpy).toHaveBeenCalledWith(
+        { ssr: true, ...prerenderRoutes },
+        {
+          ...mockNitroConfig,
+          prerender: {
+            routes: prerenderRoutes.prerender.routes,
+          },
+          alias: expect.anything(),
+          rollupConfig: expect.anything(),
+          handlers: expect.anything(),
+        }
+      );
+
+      expect(buildSitemapImportSpy).toHaveBeenCalledWith(
+        {},
+        { host: 'example.com' },
+        prerenderRoutes.prerender.routes,
+        expect.anything()
+      );
+    });
+
+    it('should build the server with content dir routes', async () => {
+      // Arrange
+      const {
+        buildSSRAppImportSpy,
+        buildServerImportSpy,
+        buildSitemapImportSpy,
+      } = await mockBuildFunctions();
+      const prerenderRoutes = {
+        prerender: {
+          routes: [
+            '/blog',
+            '/about',
+            {
+              contentDir: '/packages/vite-plugin-nitro/test-data/content',
+              transform: (file: PrerenderContentFile) => {
+                if (file.attributes['draft']) {
+                  return false;
+                }
+                const slug = file.attributes['slug'] || file.name;
+                return `/blog/${slug}`;
+              },
+            },
+          ],
+          sitemap: { host: 'example.com' },
+        },
+      };
+      const plugin = nitro({
+        ssr: true,
+        ...prerenderRoutes,
+      });
+
+      // Act
+      await runConfigAndCloseBundle(plugin);
+
+      // Assert
+      expect(buildSSRAppImportSpy).toHaveBeenCalledWith(
+        {},
+        { ssr: true, ...prerenderRoutes }
+      );
+
+      expect(buildServerImportSpy).toHaveBeenCalledWith(
+        { ssr: true, ...prerenderRoutes },
+        {
+          ...mockNitroConfig,
+          prerender: {
+            routes: ['/blog', '/about', '/blog/first', '/blog/02-second'],
+          },
+          alias: expect.anything(),
+          rollupConfig: expect.anything(),
+          handlers: expect.anything(),
+        }
+      );
+
+      expect(buildSitemapImportSpy).toHaveBeenCalledWith(
+        {},
+        { host: 'example.com' },
+        ['/blog', '/about', '/blog/first', '/blog/02-second'],
+        expect.anything()
+      );
+    });
   });
 
   describe('preset output', () => {

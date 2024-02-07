@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
     noExternal: [
       'apollo-angular', // npm package import
       'apollo-angular/**', // npm package import along with sub-packages
-      '@spartan/**', // libs under the npmScope inside an Nx workspace
+      '@spartan-ng/**', // libs under the npmScope inside an Nx workspace
     ],
   },
   // ...other config
