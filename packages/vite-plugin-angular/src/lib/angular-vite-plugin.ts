@@ -450,9 +450,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     );
 
     const globs = [
-      `${appRoot}/**/*.analog`,
-      `${appRoot}/**/*.agx`,
-      ...extraGlobs.map((glob) => `${workspaceRoot}${glob}`),
+      `${appRoot}/**/*.{analog,agx}`,
+      ...extraGlobs.map((glob) => `${workspaceRoot}${glob}.{analog,agx}`),
     ];
 
     return fg
