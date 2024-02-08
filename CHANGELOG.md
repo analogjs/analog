@@ -1,5 +1,132 @@
 # [1.0.0-beta.2](https://github.com/analogjs/analog/compare/0.2.29...1.0.0-beta.2) (2023-12-30)
 
+# [1.0.0-beta.1](https://github.com/analogjs/analog/compare/1.0.0-beta.0...1.0.0-beta.1) (2023-12-12)
+
+### Bug Fixes
+
+- **create-analog:** set app root for Vite/ESM support ([32ab9ce](https://github.com/analogjs/analog/commit/32ab9cecc6dc0d28e166edbc9a27a9071ba22069))
+- **vite-plugin-nitro:** use relative paths for root directory ([989fd6d](https://github.com/analogjs/analog/commit/989fd6d162d4d5a389ab543bead70e4a2188f931))
+
+# [1.0.0-beta.0](https://github.com/analogjs/analog/compare/0.2.25...1.0.0-beta.0) (2023-12-12)
+
+### Bug Fixes
+
+- add release tag env variable ([379c546](https://github.com/analogjs/analog/commit/379c5466ba054fdf5fc6a9e579f3c17849004c88))
+- only auto-publish [@analogjs](https://github.com/analogjs) packages ([98301dc](https://github.com/analogjs/analog/commit/98301dc08dac3f7cb46dfce3483679005ba0ed60))
+- set beta tag on publish ([c1b8211](https://github.com/analogjs/analog/commit/c1b8211153d5259214a5a5f807fb892f82a28600))
+- use semantic release to publish ([8410660](https://github.com/analogjs/analog/commit/841066058ad83f5ddd190221b3d832a8dddf5497))
+
+### Features
+
+- add npm publish job for packages ([2802c92](https://github.com/analogjs/analog/commit/2802c92cee93cfa7a076421c329383968b5f74a2))
+- update app templates to 1.0.0-beta ([5a23eb0](https://github.com/analogjs/analog/commit/5a23eb08718329ef2ec90135af47beb4a2c96bb7))
+
+## [0.2.31](https://github.com/analogjs/analog/compare/0.2.31-beta.2...0.2.31) (2024-02-07)
+
+### Features
+
+- add initial support for agx content files ([#879](https://github.com/analogjs/analog/issues/879)) ([ad9ef43](https://github.com/analogjs/analog/commit/ad9ef4398ae4199c60ec20af016171539091698f))
+
+## [0.2.31-beta.2](https://github.com/analogjs/analog/compare/0.2.31-beta.1...0.2.31-beta.2) (2024-02-01)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** escape common characters in code snippets for analog template ([#873](https://github.com/analogjs/analog/issues/873)) ([66ae8f2](https://github.com/analogjs/analog/commit/66ae8f22197466b29f5b3a751eabd9df9b807b84))
+
+## [0.2.31-beta.1](https://github.com/analogjs/analog/compare/0.2.31-beta.0...0.2.31-beta.1) (2024-01-31)
+
+### Features
+
+- **vite-plugin-angular:** add inline markdown support to analog template ([#872](https://github.com/analogjs/analog/issues/872)) ([94052e8](https://github.com/analogjs/analog/commit/94052e8a207d25320346caa4847479595078e0d1))
+
+## [0.2.31-beta.0](https://github.com/analogjs/analog/compare/0.2.30...0.2.31-beta.0) (2024-01-27)
+
+### Bug Fixes
+
+- **astro-angular:** use first selector for component tag on server render ([#867](https://github.com/analogjs/analog/issues/867)) ([1351396](https://github.com/analogjs/analog/commit/135139663fd6d55307c927991b7dae93b1af591e))
+- **vite-plugin-angular:** remove experimental support for .ng files ([#869](https://github.com/analogjs/analog/issues/869)) ([6f59c0c](https://github.com/analogjs/analog/commit/6f59c0c2103571f9ac39617baf4c79ccf628c3cd))
+
+### Features
+
+- **vite-plugin-angular:** enable `.analog` support ([#870](https://github.com/analogjs/analog/issues/870)) ([5e09ab5](https://github.com/analogjs/analog/commit/5e09ab5860ce6d13d62d3820874dcca65d4619e9))
+
+## [0.2.30](https://github.com/analogjs/analog/compare/0.2.30-rc.1...0.2.30) (2024-01-23)
+
+### Bug Fixes
+
+- **nx-plugin:** change logic to join folder for page generation ([#863](https://github.com/analogjs/analog/issues/863)) ([062624f](https://github.com/analogjs/analog/commit/062624f9cd725f1d96a50a729af850d6647ff219))
+
+### Features
+
+- upgrade docusaurus to 3.1.0 ([#847](https://github.com/analogjs/analog/issues/847)) ([44a0280](https://github.com/analogjs/analog/commit/44a02805ac37a16b42b26f7d0798845b7feb771a))
+- **vite-plugin-angular:** add ability to export from .ng files ([#856](https://github.com/analogjs/analog/issues/856)) ([633e659](https://github.com/analogjs/analog/commit/633e65941b908f70926a7ce509174c653fbcb9b8))
+- **vite-plugin-nitro:** add content directories to route pre-rendering ([#833](https://github.com/analogjs/analog/issues/833)) ([3b99b87](https://github.com/analogjs/analog/commit/3b99b87354144c1d95f3ed30ff1c463980e09c3c))
+
+## [0.2.30-rc.1](https://github.com/analogjs/analog/compare/0.2.30-rc.0...0.2.30-rc.1) (2024-01-15)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** force jit flag in JavaScript transformer ([#854](https://github.com/analogjs/analog/issues/854)) ([bdfd229](https://github.com/analogjs/analog/commit/bdfd229a04814ed9c3caf0efa250893622d1ecc8))
+
+## [0.2.30-rc.0](https://github.com/analogjs/analog/compare/0.2.30-beta.7...0.2.30-rc.0) (2024-01-13)
+
+### Features
+
+- **vite-plugin-angular:** queries work and outputs are now in metadata ([#852](https://github.com/analogjs/analog/issues/852)) ([d081c79](https://github.com/analogjs/analog/commit/d081c7927008ea18fef9fa83f8b3e6caaf52cc2c))
+
+## [0.2.30-beta.7](https://github.com/analogjs/analog/compare/0.2.30-beta.6...0.2.30-beta.7) (2024-01-12)
+
+### Bug Fixes
+
+- **platform:** add SSR support for rxfire packages ([#851](https://github.com/analogjs/analog/issues/851)) ([7a96faa](https://github.com/analogjs/analog/commit/7a96faa2ad96255adf7414f4f3058d1abf637570))
+- **vite-plugin-angular:** adjust compiled output to be more concise ([#845](https://github.com/analogjs/analog/issues/845)) ([7ac2d23](https://github.com/analogjs/analog/commit/7ac2d233ebbe739237323a26275c10a43d592c14))
+- **vite-plugin-angular:** improve support for Angular snapshot detection ([#850](https://github.com/analogjs/analog/issues/850)) ([94a6ea7](https://github.com/analogjs/analog/commit/94a6ea7696ccc9916a4883746caf483c8888d38b))
+
+### Features
+
+- **vite-plugin-angular:** support inputs and outputs for .ng format ([#848](https://github.com/analogjs/analog/issues/848)) ([a6468db](https://github.com/analogjs/analog/commit/a6468db7c589a3380d58d653d6c8aa13e4d08061))
+
+## [0.2.30-beta.6](https://github.com/analogjs/analog/compare/0.2.30-beta.5...0.2.30-beta.6) (2024-01-05)
+
+### Features
+
+- **router:** add filesystem-based routing support for .ng files ([#839](https://github.com/analogjs/analog/issues/839)) ([f0dadf0](https://github.com/analogjs/analog/commit/f0dadf0d0aadb8204a10cfa7b7e2b5250b8767bb))
+
+## [0.2.30-beta.5](https://github.com/analogjs/analog/compare/0.2.30-beta.4...0.2.30-beta.5) (2024-01-05)
+
+### Features
+
+- **vite-plugin-angular:** expose compileNgFile as public API ([#837](https://github.com/analogjs/analog/issues/837)) ([3bf3384](https://github.com/analogjs/analog/commit/3bf338466afde3d2c36086a4389b4815e53dd95c))
+- **vite-plugin-angular:** support let with getters ([#838](https://github.com/analogjs/analog/issues/838)) ([24d9a86](https://github.com/analogjs/analog/commit/24d9a86501b3bc62d6a1873c350f492842f45ccd))
+
+## [0.2.30-beta.4](https://github.com/analogjs/analog/compare/0.2.30-beta.3...0.2.30-beta.4) (2024-01-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add support for destructuring in .ng files ([#834](https://github.com/analogjs/analog/issues/834)) ([8e7f18f](https://github.com/analogjs/analog/commit/8e7f18f7649f5a59cbb5904ddbb9a953de342600))
+
+## [0.2.30-beta.3](https://github.com/analogjs/analog/compare/0.2.30-beta.2...0.2.30-beta.3) (2024-01-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** remove Pipe support and add `exposes` ([#826](https://github.com/analogjs/analog/issues/826)) ([c750116](https://github.com/analogjs/analog/commit/c7501167764b1bad895b028822e5740d7b8ed5e3))
+
+## [0.2.30-beta.2](https://github.com/analogjs/analog/compare/0.2.30-beta.1...0.2.30-beta.2) (2024-01-02)
+
+## [0.2.30-beta.1](https://github.com/analogjs/analog/compare/0.2.30-beta.0...0.2.30-beta.1) (2024-01-02)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add ts-morph as devDependency ([2870b9c](https://github.com/analogjs/analog/commit/2870b9c49eaf85b1400d489cf6eb89dd2b1082cd))
+
+## [0.2.30-beta.0](https://github.com/analogjs/analog/compare/1.0.0-beta.2...0.2.30-beta.0) (2024-01-02)
+
+### Features
+
+- **vite-plugin-angular:** introduce experimental support for .ng format ([#823](https://github.com/analogjs/analog/issues/823)) ([f12beeb](https://github.com/analogjs/analog/commit/f12beeb2ecc8ab8dc7377981555fa13e8c62f14b))
+
+# [1.0.0-beta.2](https://github.com/analogjs/analog/compare/0.2.29...1.0.0-beta.2) (2023-12-30)
+
 ### Features
 
 - **trpc:** allow install of superjson version 2.2.1 and newer ([#793](https://github.com/analogjs/analog/issues/793)) ([4dffaf3](https://github.com/analogjs/analog/commit/4dffaf37657c0d04eedd16ec3b7262b78ace52c6))
