@@ -28,6 +28,16 @@ import {
   V17_X_MERMAID,
   V17_X_PRISMJS,
 } from './nx_17_X/versions';
+import {
+  V18_X_ANALOG_JS_CONTENT,
+  V18_X_ANALOG_JS_ROUTER,
+  V18_X_FRONT_MATTER,
+  V18_X_MARKED,
+  V18_X_MARKED_GFM_HEADING_ID,
+  V18_X_MARKED_HIGHLIGHT,
+  V18_X_MERMAID,
+  V18_X_PRISMJS,
+} from './nx_18_X/versions';
 
 const dependencyKeys15 = [
   '@analogjs/content',
@@ -95,16 +105,31 @@ export const getAnalogDependencies = (
     };
   }
 
-  // return latest 17.X deps for versions >= 17.0.0
+  // install 17.X deps for versions <18.0.0
+  if (lt(escapedNxVersion, '18.0.0')) {
+    return {
+      '@angular/platform-server': angularVersion,
+      '@analogjs/content': V17_X_ANALOG_JS_CONTENT,
+      '@analogjs/router': V17_X_ANALOG_JS_ROUTER,
+      'front-matter': V17_X_FRONT_MATTER,
+      marked: V17_X_MARKED,
+      'marked-gfm-heading-id': V17_X_MARKED_GFM_HEADING_ID,
+      'marked-highlight': V17_X_MARKED_HIGHLIGHT,
+      mermaid: V17_X_MERMAID,
+      prismjs: V17_X_PRISMJS,
+    };
+  }
+
+  // return latest 18.X deps for versions >= 18.0.0
   return {
     '@angular/platform-server': angularVersion,
-    '@analogjs/content': V17_X_ANALOG_JS_CONTENT,
-    '@analogjs/router': V17_X_ANALOG_JS_ROUTER,
-    'front-matter': V17_X_FRONT_MATTER,
-    marked: V17_X_MARKED,
-    'marked-gfm-heading-id': V17_X_MARKED_GFM_HEADING_ID,
-    'marked-highlight': V17_X_MARKED_HIGHLIGHT,
-    mermaid: V17_X_MERMAID,
-    prismjs: V17_X_PRISMJS,
+    '@analogjs/content': V18_X_ANALOG_JS_CONTENT,
+    '@analogjs/router': V18_X_ANALOG_JS_ROUTER,
+    'front-matter': V18_X_FRONT_MATTER,
+    marked: V18_X_MARKED,
+    'marked-gfm-heading-id': V18_X_MARKED_GFM_HEADING_ID,
+    'marked-highlight': V18_X_MARKED_HIGHLIGHT,
+    mermaid: V18_X_MERMAID,
+    prismjs: V18_X_PRISMJS,
   };
 };
