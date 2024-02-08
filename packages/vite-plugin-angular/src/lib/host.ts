@@ -14,7 +14,12 @@ export function augmentHostWithResources(
   ) => ReturnType<any> | null,
   options: {
     inlineStylesExtension?: string;
-    supportAnalogFormat?: boolean;
+    supportAnalogFormat?:
+      | boolean
+      | {
+          include: string[];
+        };
+
     isProd?: boolean;
   } = {}
 ) {

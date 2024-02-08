@@ -46,7 +46,11 @@ export interface PluginOptions {
     /**
      * Enable experimental support for Analog file extension
      */
-    supportAnalogFormat?: boolean;
+    supportAnalogFormat?:
+      | boolean
+      | {
+          include: string[];
+        };
   };
   supportedBrowsers?: string[];
   transformFilter?: (code: string, id: string) => boolean;
@@ -424,17 +428,35 @@ export function angular(options?: PluginOptions): Plugin[] {
   ].filter(Boolean) as Plugin[];
 
   function findAnalogFiles(config: UserConfig) {
-    if (!pluginOptions.supportAnalogFormat) {
+    const analogConfig = pluginOptions.supportAnalogFormat;
+    if (!analogConfig) {
       return [];
     }
 
+    let extraGlobs: string[] = [];
+
+    if (typeof analogConfig === 'object') {
+      if (analogConfig.include) {
+        extraGlobs = analogConfig.include;
+      }
+    }
+
     const fg = require('fast-glob');
-    const root = normalizePath(
+    const appRoot = normalizePath(
       path.resolve(pluginOptions.workspaceRoot, config.root || '.')
     );
+    const workspaceRoot = normalizePath(
+      path.resolve(pluginOptions.workspaceRoot)
+    );
+
+    const globs = [
+      `${appRoot}/**/*.analog`,
+      `${appRoot}/**/*.agx`,
+      ...extraGlobs.map((glob) => `${workspaceRoot}${glob}`),
+    ];
 
     return fg
-      .sync([`${root}/**/*.analog`, `${root}/**/*.agx`], {
+      .sync(globs, {
         dot: true,
       })
       .map((file: string) => `${file}.ts`);
