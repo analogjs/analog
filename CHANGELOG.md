@@ -1,3 +1,13 @@
+## [0.2.32](https://github.com/analogjs/analog/compare/0.2.31...0.2.32) (2024-02-08)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** import marked setup service dynamically ([#881](https://github.com/analogjs/analog/issues/881)) ([4d2ecbd](https://github.com/analogjs/analog/commit/4d2ecbd471f3974c79c1759817b317f0e48d7239))
+
+### Features
+
+- **nx-plugin:** add support for nx 18 ([#880](https://github.com/analogjs/analog/issues/880)) ([aa5c4fa](https://github.com/analogjs/analog/commit/aa5c4fa5b064a613b2cabfe3aed97509efbdd06f))
+
 ## [0.2.31](https://github.com/analogjs/analog/compare/0.2.31-beta.2...0.2.31) (2024-02-07)
 
 ### Features
