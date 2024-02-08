@@ -3,7 +3,6 @@ import { normalizePath } from '@ngtools/webpack/src/ivy/paths';
 import { readFileSync } from 'node:fs';
 import * as ts from 'typescript';
 import { compileAnalogFile } from './authoring/analog';
-import { MarkedSetupService } from './authoring/marked-setup.service';
 import { TEMPLATE_TAG_REGEX } from './authoring/constants';
 
 export function augmentHostWithResources(
@@ -98,6 +97,9 @@ export function augmentHostWithResources(
     }
 
     if (fileName.includes('virtual-analog:')) {
+      const { MarkedSetupService } = await import(
+        './authoring/marked-setup.service'
+      );
       // read template sections, parse markdown
       const markedSetupService = new MarkedSetupService();
       const mdContent = markedSetupService
