@@ -1,4 +1,17 @@
 export const MINIMUM_SUPPORTED_ANGULAR_VERSION = '15.0.0';
+// V17
+// dependencies
+export const V17_ANGULAR = '17.0.0';
+export const V17_NX_DEVKIT = '~18.0.0';
+export const V17_NX_ANGULAR = '~18.0.0';
+export const V17_ANALOG_JS_CONTENT = '0.2.0';
+export const V17_ANALOG_JS_ROUTER = '0.2.0';
+export const V17_ANALOG_JS_TRPC = '0.2.0';
+export const V17_TRPC_CLIENT = '^10.25.0';
+export const V17_TRPC_SERVER = '^10.25.0';
+export const V17_ISOMORPHIC_FETCH = '^3.0.0';
+export const V17_SUPERJSON = '^2.2.1';
+
 // V16
 // dependencies
 export const V16_ANGULAR = '16.0.0';

@@ -28,6 +28,15 @@ import {
   V17_X_VITE_TSCONFIG_PATHS,
   V17_X_VITEST,
 } from './nx_17_X/versions';
+import {
+  V18_X_NX_VITE,
+  V18_X_ANALOG_JS_PLATFORM,
+  V18_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
+  V18_X_JSDOM,
+  V18_X_VITE,
+  V18_X_VITE_TSCONFIG_PATHS,
+  V18_X_VITEST,
+} from './nx_18_X/versions';
 
 // TODO: @analogjs/vite-plugin-angular is being defined as we must pin
 // a supported version for Angular 15.x. This is not necessary for 16.x,
@@ -82,9 +91,16 @@ const getViteDependency = (escapedNxVersion: string) => {
     };
   }
 
-  // return latest deps for versions >= 16.4.0
+  // install 17.0 deps for versions =< 18.0.0
+  if (lt(escapedNxVersion, '18.0.0')) {
+    return {
+      '@nx/vite': V17_X_NX_VITE,
+    };
+  }
+
+  // return latest deps for versions >= 18.0.0
   return {
-    '@nx/vite': V17_X_NX_VITE,
+    '@nx/vite': V18_X_NX_VITE,
   };
 };
 
@@ -120,13 +136,25 @@ const getDevDependencies = (escapedNxVersion: string) => {
     };
   }
 
-  // return latest 17.x deps for versions >17.0.0
+  // install 17.x deps for versions <18.0.0
+  if (lt(escapedNxVersion, '18.0.0')) {
+    return {
+      '@analogjs/platform': V17_X_ANALOG_JS_PLATFORM,
+      '@analogjs/vite-plugin-angular': V17_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
+      jsdom: V17_X_JSDOM,
+      vite: V17_X_VITE,
+      'vite-tsconfig-paths': V17_X_VITE_TSCONFIG_PATHS,
+      vitest: V17_X_VITEST,
+    };
+  }
+
+  // return latest 18.x deps for versions >18.0.0
   return {
-    '@analogjs/platform': V17_X_ANALOG_JS_PLATFORM,
-    '@analogjs/vite-plugin-angular': V17_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
-    jsdom: V17_X_JSDOM,
-    vite: V17_X_VITE,
-    'vite-tsconfig-paths': V17_X_VITE_TSCONFIG_PATHS,
-    vitest: V17_X_VITEST,
+    '@analogjs/platform': V18_X_ANALOG_JS_PLATFORM,
+    '@analogjs/vite-plugin-angular': V18_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
+    jsdom: V18_X_JSDOM,
+    vite: V18_X_VITE,
+    'vite-tsconfig-paths': V18_X_VITE_TSCONFIG_PATHS,
+    vitest: V18_X_VITEST,
   };
 };
