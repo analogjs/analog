@@ -1,3 +1,9 @@
+## [0.2.31](https://github.com/analogjs/analog/compare/0.2.31-beta.2...0.2.31) (2024-02-07)
+
+### Features
+
+- add initial support for agx content files ([#879](https://github.com/analogjs/analog/issues/879)) ([ad9ef43](https://github.com/analogjs/analog/commit/ad9ef4398ae4199c60ec20af016171539091698f))
+
 ## [0.2.31-beta.2](https://github.com/analogjs/analog/compare/0.2.31-beta.1...0.2.31-beta.2) (2024-02-01)
 
 ### Bug Fixes
