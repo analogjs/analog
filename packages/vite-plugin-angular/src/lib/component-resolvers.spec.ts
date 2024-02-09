@@ -136,7 +136,7 @@ describe('component-resolvers', () => {
         const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
 
         expect(hasTemplateUrl(code)).toBeTruthy();
-        expect(thePathsAreEqual(resolvedTemplateUrls, [actualUrl]));
+        expect(thePathsAreEqual(resolvedTemplateUrls, [actualUrl])).toBe(true);
       });
 
       it('should handle templateUrls with double quotes', () => {
@@ -153,7 +153,7 @@ describe('component-resolvers', () => {
         const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
 
         expect(hasTemplateUrl(code)).toBeTruthy();
-        expect(thePathsAreEqual(resolvedTemplateUrls, [actualUrl]));
+        expect(thePathsAreEqual(resolvedTemplateUrls, [actualUrl])).toBe(true);
       });
 
       it('should handle multiple templateUrls in a single file', () => {
@@ -166,7 +166,7 @@ describe('component-resolvers', () => {
         @Component({
           templateUrl: "./app1.component.html"
         })
-        export class MyComponentTwo {}        
+        export class MyComponentTwo {}
       `;
 
         const actualUrl1 =
@@ -179,7 +179,21 @@ describe('component-resolvers', () => {
         expect(hasTemplateUrl(code)).toBeTruthy();
         expect(
           thePathsAreEqual(resolvedTemplateUrls, [actualUrl1, actualUrl2])
-        );
+        ).toBe(true);
+      });
+
+      it('should ignore commented out templateUrls', () => {
+        const code = `
+        @Component({
+          //templateUrl: './app.component.html'
+        })
+        export class MyComponent {}
+      `;
+
+        const templateUrlsResolver = new TemplateUrlsResolver();
+        const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
+
+        expect(resolvedTemplateUrls).toHaveLength(0);
       });
     });
   });
