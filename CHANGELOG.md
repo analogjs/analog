@@ -1,3 +1,14 @@
+## [0.2.33](https://github.com/analogjs/analog/compare/0.2.32...0.2.33) (2024-02-10)
+
+### Bug Fixes
+
+- **create-analog:** update vite dependecy to 5.0.x ([#885](https://github.com/analogjs/analog/issues/885)) ([a7cdb6b](https://github.com/analogjs/analog/commit/a7cdb6b77b3e24f063cfae3944d04774b5aaf9ac))
+- **vite-plugin-angular:** extract `templateUrl`s using AST ([#887](https://github.com/analogjs/analog/issues/887)) ([f91ab02](https://github.com/analogjs/analog/commit/f91ab025e7ef3eebf21b38a50673566f2463bb19))
+
+### Features
+
+- **vite-plugin-angular:** add include configuration for analog file globs ([#882](https://github.com/analogjs/analog/issues/882)) ([00baaf4](https://github.com/analogjs/analog/commit/00baaf4fb0162a2ec3161410665b21cfd421d864))
+
 ## [0.2.32](https://github.com/analogjs/analog/compare/0.2.31...0.2.32) (2024-02-08)
 
 ### Bug Fixes
