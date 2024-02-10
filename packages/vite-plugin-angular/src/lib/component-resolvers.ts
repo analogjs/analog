@@ -1,8 +1,8 @@
 import { dirname, resolve } from 'path';
+import { Project, SyntaxKind } from 'ts-morph';
 import { normalizePath } from 'vite';
 
 const styleUrlsRE = /styleUrls\s*:\s*\[([^\[]*?)\]|styleUrl:\s*["'](.*?)["']/;
-const templateUrlRE = /templateUrl:\s*["'](.*?)["']/g;
 
 export function hasStyleUrls(code: string) {
   return styleUrlsRE.test(code);
@@ -71,6 +71,18 @@ export function hasTemplateUrl(code: string) {
   return code.includes('templateUrl:');
 }
 
+export function getTemplateUrls(code: string) {
+  const project = new Project({ useInMemoryFileSystem: true });
+  const sourceFile = project.createSourceFile('cmp.ts', code);
+  return sourceFile
+    .getDescendantsOfKind(SyntaxKind.PropertyAssignment)
+    .filter((property) => property.getName() === 'templateUrl')
+    .map((property) =>
+      property.getInitializer()?.getText().replace(/['"]/g, '')
+    )
+    .filter((url): url is string => url !== undefined);
+}
+
 interface TemplateUrlsCacheEntry {
   code: string;
   templateUrlPaths: string[];
@@ -88,21 +100,10 @@ export class TemplateUrlsResolver {
       return entry.templateUrlPaths;
     }
 
-    const templateUrlGroup = Array.from(code.matchAll(templateUrlRE));
-    const templateUrlPaths: string[] = [];
-
-    if (Array.isArray(templateUrlGroup)) {
-      templateUrlGroup.forEach((trg) => {
-        const resolvedTemplatePath = trg[1].replace(
-          /templateUrl|\s|'|"|\:|,/g,
-          ''
-        );
-        const templateUrlPath = normalizePath(
-          resolve(dirname(id), resolvedTemplatePath).replace(/\\/g, '/')
-        );
-        templateUrlPaths.push(`${resolvedTemplatePath}|${templateUrlPath}`);
-      });
-    }
+    const templateUrlPaths = getTemplateUrls(code).map(
+      (url) =>
+        `${url}|${normalizePath(resolve(dirname(id), url).replace(/\\/g, '/'))}`
+    );
 
     this.templateUrlsCache.set(id, { code, templateUrlPaths });
     return templateUrlPaths;
