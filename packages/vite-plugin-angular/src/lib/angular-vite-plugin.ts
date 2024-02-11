@@ -16,12 +16,7 @@ import { jitPlugin } from './angular-jit-plugin';
 import { angularVitestPlugin } from './angular-vitest-plugin';
 
 import { createCompilerPlugin } from './compiler-plugin';
-import {
-  hasStyleUrls,
-  hasTemplateUrl,
-  StyleUrlsResolver,
-  TemplateUrlsResolver,
-} from './component-resolvers';
+import { StyleUrlsResolver, TemplateUrlsResolver } from './component-resolvers';
 import { augmentHostWithResources } from './host';
 import {
   angularApplicationPreset,
@@ -293,16 +288,8 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
-          let templateUrls: string[] = [];
-          let styleUrls: string[] = [];
-
-          if (hasTemplateUrl(code)) {
-            templateUrls = templateUrlsResolver.resolve(code, id);
-          }
-
-          if (hasStyleUrls(code)) {
-            styleUrls = styleUrlsResolver.resolve(code, id);
-          }
+          const templateUrls = templateUrlsResolver.resolve(code, id);
+          const styleUrls = styleUrlsResolver.resolve(code, id);
 
           if (watchMode) {
             for (const urlSet of [...templateUrls, ...styleUrls]) {
@@ -314,7 +301,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
-          const typescriptResult = fileEmitter && (await fileEmitter!(id));
+          const typescriptResult = await fileEmitter?.(id);
 
           // return fileEmitter
           let data = typescriptResult?.content ?? '';
