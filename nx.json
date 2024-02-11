@@ -33,14 +33,11 @@
     "serve": {
       "dependsOn": ["^build"]
     },
-    "cypress": {
-      "inputs": ["default", "^production"]
-    },
-    "lint": {
-      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
+    "build-package": {
       "cache": true
     },
-    "build-package": {
+    "@nx/eslint:lint": {
+      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
       "cache": true
     }
   },
