@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => {
   return {
     root: 'tests',
     test: {
+      reporters: ['default'],
       globals: true,
       environment: 'node',
       include: ['**/*.spec.ts'],

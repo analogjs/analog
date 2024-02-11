@@ -24,10 +24,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": ["packages/trpc/**/*.ts", "packages/trpc/**/*.html"]
-      }
+      "outputs": ["{options.outputFile}"]
     }
   }
 }
