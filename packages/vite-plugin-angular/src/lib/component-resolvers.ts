@@ -1,19 +1,16 @@
 import { dirname, resolve } from 'path';
-import { Project, SyntaxKind } from 'ts-morph';
+import {
+  ArrayLiteralExpression,
+  Project,
+  PropertyAssignment,
+  SyntaxKind,
+} from 'ts-morph';
 import { normalizePath } from 'vite';
 
-const styleUrlsRE = /styleUrls\s*:\s*\[([^\[]*?)\]|styleUrl:\s*["'](.*?)["']/;
-
-export function hasStyleUrls(code: string) {
-  return styleUrlsRE.test(code);
-}
-
 interface StyleUrlsCacheEntry {
-  matchedStyleUrls: string;
+  matchedStyleUrls: string[];
   styleUrls: string[];
 }
-
-const EMPTY_ARRAY: any[] = [];
 
 export class StyleUrlsResolver {
   // These resolvers may be called multiple times during the same
@@ -23,12 +20,6 @@ export class StyleUrlsResolver {
   private readonly styleUrlsCache = new Map<string, StyleUrlsCacheEntry>();
 
   resolve(code: string, id: string): string[] {
-    const styleUrlsExecArray = styleUrlsRE.exec(code);
-
-    if (styleUrlsExecArray === null) {
-      return EMPTY_ARRAY;
-    }
-
     // Given the code is the following:
     // @Component({
     //   styleUrls: [
@@ -36,51 +27,60 @@ export class StyleUrlsResolver {
     //   ]
     // })
     // The `matchedStyleUrls` would result in: `styleUrls: [\n    './app.component.scss'\n  ]`.
-    const [matchedStyleUrls] = styleUrlsExecArray;
+    const matchedStyleUrls = getStyleUrls(code);
     const entry = this.styleUrlsCache.get(id);
     // We're using `matchedStyleUrls` as a key because the code may be changing continuously,
     // resulting in the resolver being called multiple times. While the code changes, the
     // `styleUrls` may remain constant, which means we should always return the previously
     // resolved style URLs.
-    if (entry?.matchedStyleUrls === matchedStyleUrls) {
+    if (entry && entry.matchedStyleUrls === matchedStyleUrls) {
       return entry.styleUrls;
     }
 
-    // The `styleUrls` property is an array, which means we may have a list of
-    // CSS files provided there. Let `matchedStyleUrls` be equal to the following:
-    // "styleUrls: [\n    './app.component.scss',\n    '../global.scss'\n  ]"
-    const styleUrlPaths = matchedStyleUrls
-      .replace(/(styleUrls|\:|\s|\[|\]|"|')/g, '')
-      .replace(/(styleUrl|:\s*["'](.*?)["'])/g, '')
-      // The above replace will result in the following:
-      // "./app.component.scss,../global.scss"
-      .split(',');
-
-    const styleUrls = styleUrlPaths.map((styleUrlPath) => {
+    const styleUrls = matchedStyleUrls.map((styleUrlPath) => {
       return `${styleUrlPath}|${normalizePath(
         resolve(dirname(id), styleUrlPath)
       )}`;
     });
 
-    this.styleUrlsCache.set(matchedStyleUrls, { styleUrls, matchedStyleUrls });
+    this.styleUrlsCache.set(id, { styleUrls, matchedStyleUrls });
     return styleUrls;
   }
 }
 
-export function hasTemplateUrl(code: string) {
-  return code.includes('templateUrl:');
+function getTextByProperty(name: string, properties: PropertyAssignment[]) {
+  return properties
+    .filter((property) => property.getName() === name)
+    .map((property) =>
+      property.getInitializer()?.getText().replace(/['"]/g, '')
+    )
+    .filter((url): url is string => url !== undefined);
+}
+
+export function getStyleUrls(code: string) {
+  const project = new Project({ useInMemoryFileSystem: true });
+  const sourceFile = project.createSourceFile('cmp.ts', code);
+  const properties = sourceFile.getDescendantsOfKind(
+    SyntaxKind.PropertyAssignment
+  );
+  const styleUrl = getTextByProperty('styleUrl', properties);
+  const styleUrls = properties
+    .filter((property) => property.getName() === 'styleUrls')
+    .map((property) => property.getInitializer() as ArrayLiteralExpression)
+    .flatMap((array) =>
+      array.getElements().map((el) => el.getText().replace(/['"]/g, ''))
+    );
+
+  return [...styleUrls, ...styleUrl];
 }
 
 export function getTemplateUrls(code: string) {
   const project = new Project({ useInMemoryFileSystem: true });
   const sourceFile = project.createSourceFile('cmp.ts', code);
-  return sourceFile
-    .getDescendantsOfKind(SyntaxKind.PropertyAssignment)
-    .filter((property) => property.getName() === 'templateUrl')
-    .map((property) =>
-      property.getInitializer()?.getText().replace(/['"]/g, '')
-    )
-    .filter((url): url is string => url !== undefined);
+  const properties = sourceFile.getDescendantsOfKind(
+    SyntaxKind.PropertyAssignment
+  );
+  return getTextByProperty('templateUrl', properties);
 }
 
 interface TemplateUrlsCacheEntry {
