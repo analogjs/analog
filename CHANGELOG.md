@@ -1,3 +1,10 @@
+## [0.2.36](https://github.com/analogjs/analog/compare/0.2.34...0.2.36) (2024-02-12)
+
+### Bug Fixes
+
+- **nx-plugin:** fix eslint and root tsconfig.base.json ([6cd5dd8](https://github.com/analogjs/analog/commit/6cd5dd883b6ade9862a63fc1706a3a2ee2157802))
+- **nx-plugin:** pin to Vite 5.0.x on app generation ([7cebe8c](https://github.com/analogjs/analog/commit/7cebe8c76805686e5ced32fabca03ac8ce410d12))
+
 ## [0.2.34](https://github.com/analogjs/analog/compare/0.2.33...0.2.34) (2024-02-12)
 
 ### Bug Fixes
