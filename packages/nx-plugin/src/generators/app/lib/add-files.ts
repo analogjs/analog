@@ -22,4 +22,13 @@ export function addFiles(
     options.projectRoot,
     templateOptions
   );
+
+  if (!tree.read('/tsconfig.base.json')) {
+    generateFiles(
+      tree,
+      path.join(__dirname, '..', 'files', 'root'),
+      '.',
+      templateOptions
+    );
+  }
 }
