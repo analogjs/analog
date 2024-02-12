@@ -1,3 +1,9 @@
+## [0.2.34](https://github.com/analogjs/analog/compare/0.2.33...0.2.34) (2024-02-12)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** extract `styleUrl`s using AST ([#889](https://github.com/analogjs/analog/issues/889)) ([a7d5ff0](https://github.com/analogjs/analog/commit/a7d5ff02a546703885a56f62d39602444307feab))
+
 ## [0.2.33](https://github.com/analogjs/analog/compare/0.2.32...0.2.33) (2024-02-10)
 
 ### Bug Fixes
