@@ -16,6 +16,9 @@ export const V16_X_MARKED_GFM_HEADING_ID = '^3.1.0';
 export const V16_X_MARKED_HIGHLIGHT = '^2.0.1';
 export const V16_X_MERMAID = '^10.2.4';
 export const V16_X_PRISMJS = '^1.29.0';
+export const V16_X_TAILWINDCSS = '^3.0.2';
+export const V16_X_POSTCSS = '^8.4.5';
+export const V16_X_AUTOPREFIXER = '^10.4.0';
 
 // devDependencies
 export const V16_X_ANALOG_JS_PLATFORM = '^0.2.0';

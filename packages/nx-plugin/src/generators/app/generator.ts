@@ -21,7 +21,6 @@ import {
   belowMinimumSupportedNxVersion,
   belowMinimumSupportedNxtRPCVersion,
 } from './versions/minimum-supported-versions';
-import { addEslint } from './lib/add-eslint';
 
 export interface NormalizedOptions
   extends AnalogNxApplicationGeneratorOptions,
@@ -97,7 +96,6 @@ export async function appGenerator(
     nxVersion,
     normalizedOptions
   );
-  const majorNxVersion = major(nxVersion);
   const majorAngularVersion = major(coerce(angularVersion));
 
   await addAnalogDependencies(tree, nxVersion, angularVersion);
@@ -123,21 +121,11 @@ export async function appGenerator(
   addFiles(tree, normalizedOptions, majorAngularVersion);
 
   if (normalizedOptions.addTailwind) {
-    await addTailwindConfig(
-      tree,
-      normalizedOptions.projectRoot,
-      normalizedOptions.projectName,
-      majorNxVersion
-    );
+    await addTailwindConfig(tree, projectName);
   }
 
   if (normalizedOptions.addTRPC) {
-    await addTrpc(
-      tree,
-      normalizedOptions.projectRoot,
-      nxVersion,
-      normalizedOptions
-    );
+    await addTrpc(tree, projectRoot, nxVersion, normalizedOptions);
   }
 
   addHomePage(tree, normalizedOptions);

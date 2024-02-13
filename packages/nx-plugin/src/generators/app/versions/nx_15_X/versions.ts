@@ -16,6 +16,9 @@ export const V15_X_FRONT_MATTER = '^4.0.2';
 export const V15_X_MARKED = '^4.2.4';
 export const V15_X_MERMAID = '^10.2.4';
 export const V15_X_PRISMJS = '^1.29.0';
+export const V15_X_TAILWINDCSS = '^3.0.2';
+export const V15_X_POSTCSS = '^8.4.5';
+export const V15_X_AUTOPREFIXER = '^10.4.0';
 
 // devDependencies
 export const V15_X_ANALOG_JS_PLATFORM = '0.1.0-beta.22';
