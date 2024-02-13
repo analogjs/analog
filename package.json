@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "0.2.33",
+  "version": "0.2.36",
   "license": "MIT",
   "scripts": {
     "dev": "nx serve",
@@ -8,8 +8,10 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "git config core.hookspath .githooks",
     "start": "nx serve",
-    "build": "nx build platform && nx run-many --target build --all --parallel=1",
+    "prebuild": "nx build platform --skip-nx-cache",
+    "build": "nx run-many --target build --all --parallel=1",
     "e2e": "nx run-many --target e2e --projects create-analog-e2e,analog-app-e2e-cypress --parallel=1 --exclude analog-app-e2e-playwright",
+    "pretest": "nx build platform --skip-nx-cache",
     "test": "nx run-many --target test --all",
     "build:vite-ci": "npm run build",
     "test:vite-ci": "nx run-many --target test --all",
