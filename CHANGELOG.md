@@ -1,9 +1,21 @@
-## [0.2.36](https://github.com/analogjs/analog/compare/0.2.34...0.2.36) (2024-02-12)
+## [0.2.37](https://github.com/analogjs/analog/compare/0.2.36...0.2.37) (2024-02-14)
+
+### Bug Fixes
+
+- **nx-plugin:** update tailwind generator configuration for Nx 18 ([#891](https://github.com/analogjs/analog/issues/891)) ([bfb0423](https://github.com/analogjs/analog/commit/bfb0423ed4f4b6bf1e18d83fb6cd462131a0a97a))
+- **vite-plugin-nitro:** forward HTTP headers to the API endpoint ([#893](https://github.com/analogjs/analog/issues/893)) ([c998e81](https://github.com/analogjs/analog/commit/c998e81a23bf25ccecdcaa6c1cbdeedc7c9304a1))
+
+## [0.2.36](https://github.com/analogjs/analog/compare/0.2.35...0.2.36) (2024-02-12)
+
+### Bug Fixes
+
+- **nx-plugin:** pin to Vite 5.0.x on app generation ([7cebe8c](https://github.com/analogjs/analog/commit/7cebe8c76805686e5ced32fabca03ac8ce410d12))
+
+## [0.2.35](https://github.com/analogjs/analog/compare/0.2.34...0.2.35) (2024-02-12)
 
 ### Bug Fixes
 
 - **nx-plugin:** fix eslint and root tsconfig.base.json ([6cd5dd8](https://github.com/analogjs/analog/commit/6cd5dd883b6ade9862a63fc1706a3a2ee2157802))
-- **nx-plugin:** pin to Vite 5.0.x on app generation ([7cebe8c](https://github.com/analogjs/analog/commit/7cebe8c76805686e5ced32fabca03ac8ce410d12))
 
 ## [0.2.34](https://github.com/analogjs/analog/compare/0.2.33...0.2.34) (2024-02-12)
 
