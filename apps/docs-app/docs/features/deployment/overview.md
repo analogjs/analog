@@ -19,7 +19,6 @@ Listening on http://localhost:3000
 You can customize server behavior using following environment variables:
 
 - `NITRO_PORT` or `PORT` (defaults to `3000`)
-- `NITRO_HOST` or `HOST`
 
 ## Built-in Presets
 
