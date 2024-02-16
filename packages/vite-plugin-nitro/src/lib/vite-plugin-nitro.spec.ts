@@ -184,65 +184,72 @@ describe('nitro', () => {
       );
     });
 
-    it('should build the server with content dir routes', async () => {
-      // Arrange
-      const {
-        buildSSRAppImportSpy,
-        buildServerImportSpy,
-        buildSitemapImportSpy,
-      } = await mockBuildFunctions();
-      const prerenderRoutes = {
-        prerender: {
-          routes: [
-            '/blog',
-            '/about',
-            {
-              contentDir: '/packages/vite-plugin-nitro/test-data/content',
-              transform: (file: PrerenderContentFile) => {
-                if (file.attributes['draft']) {
-                  return false;
-                }
-                const slug = file.attributes['slug'] || file.name;
-                return `/blog/${slug}`;
-              },
+    describe('should build the server with content dir routes', () => {
+      [
+        '/packages/vite-plugin-nitro/test-data/content',
+        'packages/vite-plugin-nitro/test-data/content',
+      ].forEach((contentDir) => {
+        it(`contentDir: ${contentDir}`, async () => {
+          // Arrange
+          const {
+            buildSSRAppImportSpy,
+            buildServerImportSpy,
+            buildSitemapImportSpy,
+          } = await mockBuildFunctions();
+          const prerenderRoutes = {
+            prerender: {
+              routes: [
+                '/blog',
+                '/about',
+                {
+                  contentDir,
+                  transform: (file: PrerenderContentFile) => {
+                    if (file.attributes['draft']) {
+                      return false;
+                    }
+                    const slug = file.attributes['slug'] || file.name;
+                    return `/blog/${slug}`;
+                  },
+                },
+              ],
+              sitemap: { host: 'example.com' },
             },
-          ],
-          sitemap: { host: 'example.com' },
-        },
-      };
-      const plugin = nitro({
-        ssr: true,
-        ...prerenderRoutes,
+          };
+          const plugin = nitro({
+            ssr: true,
+            ...prerenderRoutes,
+          });
+
+          // Act
+          await runConfigAndCloseBundle(plugin);
+
+          // Assert
+          expect(buildSSRAppImportSpy).toHaveBeenCalledWith(
+            {},
+            { ssr: true, ...prerenderRoutes }
+          );
+
+          expect(buildServerImportSpy).toHaveBeenCalledWith(
+            { ssr: true, ...prerenderRoutes },
+            {
+              ...mockNitroConfig,
+              prerender: {
+                routes: ['/blog', '/about', '/blog/first', '/blog/02-second'],
+              },
+              alias: expect.anything(),
+              rollupConfig: expect.anything(),
+              handlers: expect.anything(),
+            }
+          );
+
+          expect(buildSitemapImportSpy).toHaveBeenCalledWith(
+            {},
+            { host: 'example.com' },
+            ['/blog', '/about', '/blog/first', '/blog/02-second'],
+            expect.anything()
+          );
+        });
       });
-
-      // Act
-      await runConfigAndCloseBundle(plugin);
-
-      // Assert
-      expect(buildSSRAppImportSpy).toHaveBeenCalledWith(
-        {},
-        { ssr: true, ...prerenderRoutes }
-      );
-
-      expect(buildServerImportSpy).toHaveBeenCalledWith(
-        { ssr: true, ...prerenderRoutes },
-        {
-          ...mockNitroConfig,
-          prerender: {
-            routes: ['/blog', '/about', '/blog/first', '/blog/02-second'],
-          },
-          alias: expect.anything(),
-          rollupConfig: expect.anything(),
-          handlers: expect.anything(),
-        }
-      );
-
-      expect(buildSitemapImportSpy).toHaveBeenCalledWith(
-        {},
-        { host: 'example.com' },
-        ['/blog', '/about', '/blog/first', '/blog/02-second'],
-        expect.anything()
-      );
     });
   });
 
