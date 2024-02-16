@@ -2,8 +2,7 @@
 
 exports[`authoring ng file > should process component as an analog file 1`] = `
 "import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { signal, input, ViewChild, afterNextRender, ElementRef } from "@angular/core";
-import { viewChild, viewChildren, contentChild, contentChildren } from "@angular/core";
+import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewChildren, contentChild, contentChildren } from "@angular/core";
 
 @Component({
     standalone: true,

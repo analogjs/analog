@@ -2,8 +2,7 @@ import { compileAnalogFile } from './analog';
 
 const COMPONENT_CONTENT = `
 <script lang="ts">
-import { signal, input, ViewChild, afterNextRender, ElementRef } from '@angular/core';
-import { viewChild, viewChildren, contentChild, contentChildren } from '@angular/core';
+import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewChildren, contentChild, contentChildren } from '@angular/core';
 
 defineMetadata({
   exposes: [Math],
