@@ -21,7 +21,9 @@ import {
   INVALID_METADATA_PROPERTIES,
   ON_DESTROY,
   ON_INIT,
+  REQUIRED_SIGNALS_MAP,
   SCRIPT_TAG_REGEX,
+  SIGNALS_MAP,
   STYLE_TAG_REGEX,
   TEMPLATE_TAG_REGEX,
 } from './constants';
@@ -528,8 +530,8 @@ function getIOStructure(
 
   if (
     (Node.isPropertyAccessExpression(expression) &&
-      expression.getText() === 'input.required') ||
-    (Node.isIdentifier(expression) && expression.getText() === 'input')
+      REQUIRED_SIGNALS_MAP[expression.getText()]) ||
+    (Node.isIdentifier(expression) && SIGNALS_MAP[expression.getText()])
   ) {
     return { initializer: initializer.getText() };
   }
