@@ -1,3 +1,9 @@
+## [0.2.38](https://github.com/analogjs/analog/compare/0.2.37...0.2.38) (2024-02-16)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** fix prerender from content directory ([#895](https://github.com/analogjs/analog/issues/895)) ([4434069](https://github.com/analogjs/analog/commit/44340690e8be41bac379bff7a8364aeccc709094))
+
 ## [0.2.37](https://github.com/analogjs/analog/compare/0.2.36...0.2.37) (2024-02-14)
 
 ### Bug Fixes
