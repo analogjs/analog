@@ -18,6 +18,7 @@ import {
 } from 'ts-morph';
 import {
   HOOKS_MAP,
+  IMPORT_STATEMENT_REGEX,
   INVALID_METADATA_PROPERTIES,
   ON_DESTROY,
   ON_INIT,
@@ -33,11 +34,9 @@ function extractAutoImports(
 ): [string, string[], string] {
   const autoImports = [];
   let importStatements = '';
-  const importRegex =
-    /import\s+({.*?})?\s*([\w\d]+)?\s+from\s+['"](.+?)['"]\s*;?/g;
 
   let match;
-  while ((match = importRegex.exec(templateContent)) !== null) {
+  while ((match = IMPORT_STATEMENT_REGEX.exec(templateContent)) !== null) {
     const defaultImport = match[2];
     const namedImports = match[1]
       ? match[1]
@@ -56,7 +55,7 @@ function extractAutoImports(
     importStatements += match[0] + '\n';
   }
 
-  templateContent = templateContent.replace(importRegex, '');
+  templateContent = templateContent.replace(IMPORT_STATEMENT_REGEX, '');
 
   return [templateContent.trim(), autoImports, importStatements.trim()];
 }
@@ -85,13 +84,17 @@ export function compileAnalogFile(
   // eslint-disable-next-line prefer-const
   let [scriptContent, templateContent, styleContent] = [
     SCRIPT_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
-    isMarkdown ? '' : TEMPLATE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
+    TEMPLATE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
     STYLE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
   ];
 
   const [extractedTemplateContent, autoImports, templateImportStatements] =
     extractAutoImports(templateContent);
   templateContent = extractedTemplateContent;
+
+  if (isMarkdown) {
+    templateContent = '';
+  }
 
   scriptContent = templateImportStatements + scriptContent;
 
