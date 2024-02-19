@@ -84,7 +84,7 @@
 
   <br />
 
-  <goodbye />
+  <Goodbye />
 
   <router-outlet />
 </template>
