@@ -5,10 +5,6 @@
   import { RouterOutlet, RouterLink } from '@angular/router';
   import { delay } from 'rxjs';
 
-  import Hello from './hello.analog';
-  import AnotherOne from './another-one.analog';
-  import Highlight from './highlight.analog';
-  import External from './external/external.analog';
   import { HelloOriginal } from './hello';
 
   defineMetadata({
@@ -55,6 +51,12 @@
 </script>
 
 <template>
+  import Hello from './hello.analog';
+  import AnotherOne from './another-one.analog';
+  import Highlight from './highlight.analog';
+  import External from './external/external.analog';
+  import { Goodbye } from './my-components';
+
   <External />
 
   @if (counter() > 5) {
@@ -81,6 +83,8 @@
   <a routerLink="/">Home</a> | <a routerLink="/about">About</a>
 
   <br />
+
+  <goodbye />
 
   <router-outlet />
 </template>

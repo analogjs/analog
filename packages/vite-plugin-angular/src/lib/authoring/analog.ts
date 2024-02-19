@@ -28,6 +28,39 @@ import {
   TEMPLATE_TAG_REGEX,
 } from './constants';
 
+function extractAutoImports(
+  templateContent: string
+): [string, string[], string] {
+  const autoImports = [];
+  let importStatements = '';
+  const importRegex =
+    /import\s+({.*?})?\s*([\w\d]+)?\s+from\s+['"](.+?)['"]\s*;?/g;
+
+  let match;
+  while ((match = importRegex.exec(templateContent)) !== null) {
+    const defaultImport = match[2];
+    const namedImports = match[1]
+      ? match[1]
+          .replace(/[{}]/g, '')
+          .split(',')
+          .map((i) => i.trim())
+      : [];
+
+    if (defaultImport) {
+      autoImports.push(defaultImport);
+    }
+    namedImports.forEach((importName) => {
+      autoImports.push(importName);
+    });
+
+    importStatements += match[0] + '\n';
+  }
+
+  templateContent = templateContent.replace(importRegex, '');
+
+  return [templateContent.trim(), autoImports, importStatements.trim()];
+}
+
 export function compileAnalogFile(
   filePath: string,
   fileContent: string,
@@ -55,6 +88,12 @@ export function compileAnalogFile(
     isMarkdown ? '' : TEMPLATE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
     STYLE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
   ];
+
+  const [extractedTemplateContent, autoImports, templateImportStatements] =
+    extractAutoImports(templateContent);
+  templateContent = extractedTemplateContent;
+
+  scriptContent = templateImportStatements + scriptContent;
 
   let ngType: 'Component' | 'Directive';
   if (templateContent || isMarkdown) {
@@ -110,6 +149,7 @@ export default class ${entityName} {
       project.createSourceFile(`${filePath}.virtual.ts`, source),
       ngType,
       entityName,
+      autoImports,
       shouldFormat
     );
   }
@@ -123,6 +163,7 @@ function processAnalogScript(
   targetSourceFile: SourceFile,
   ngType: 'Component' | 'Directive',
   entityName: string,
+  autoImports: string[],
   isProd?: boolean
 ) {
   const targetClass = targetSourceFile.getClass(
@@ -153,7 +194,7 @@ function processAnalogScript(
     throw new Error(`[Analog] invalid constructor body ${fileName}`);
   }
 
-  const declarations: Array<string> = [],
+  const declarations: Array<string> = autoImports,
     gettersSetters: Array<{ propertyName: string; isFunction: boolean }> = [],
     outputs: Array<string> = [],
     sourceSyntaxList = ngSourceFile.getChildren()[0]; // SyntaxList
@@ -164,12 +205,6 @@ function processAnalogScript(
 
   for (const node of sourceSyntaxList.getChildren()) {
     if (Node.isImportDeclaration(node)) {
-      const moduleSpecifier = node.getModuleSpecifierValue();
-      if (moduleSpecifier.endsWith('.analog')) {
-        // other .ng files
-        declarations.push(node.getDefaultImport()?.getText() || '');
-      }
-
       // copy the import to the target `.analog.ts` file
       targetSourceFile.addImportDeclaration(node.getStructure());
       continue;
