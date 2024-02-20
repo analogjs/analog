@@ -20,7 +20,7 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"],
-      "cache": true
+      "cache": false
     },
     "test": {
       "dependsOn": ["^build"],
@@ -34,7 +34,7 @@
       "dependsOn": ["^build"]
     },
     "build-package": {
-      "cache": true
+      "cache": false
     },
     "@nx/eslint:lint": {
       "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
