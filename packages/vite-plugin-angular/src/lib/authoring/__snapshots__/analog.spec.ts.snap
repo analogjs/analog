@@ -6,7 +6,7 @@ import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewC
 
 @Component({
     standalone: true,
-    selector: 'virtual,Virtual,VIRTUAL',
+    selector: 'virtual,Virtual',
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: \`<div #divElement>Component</div>
   <p>{{ counter() }}</p>
@@ -124,7 +124,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   standalone: true,
-  selector: 'virtual,Virtual,VIRTUAL',
+  selector: 'virtual,Virtual',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: \`virtual-analog:virtual.analog\`
 })
