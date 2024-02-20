@@ -1,7 +1,6 @@
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
 import { transformAsync } from '@babel/core';
 import * as path from 'path';
-
 import * as ts from 'typescript';
 import {
   ModuleNode,
@@ -14,7 +13,6 @@ import {
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin';
 import { jitPlugin } from './angular-jit-plugin';
 import { angularVitestPlugin } from './angular-vitest-plugin';
-
 import { createCompilerPlugin } from './compiler-plugin';
 import { StyleUrlsResolver, TemplateUrlsResolver } from './component-resolvers';
 import { augmentHostWithResources } from './host';

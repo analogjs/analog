@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ChangeDetectorRef, inject } from '@angular/core';
+  import Barrel from './barrel' with { type: 'template' };
 
   const cdr = inject(ChangeDetectorRef);
 
@@ -24,6 +25,8 @@
   @if (lateVariable) {
   <h2>Late Variable here: {{ lateVariable }}</h2>
   }
+
+  <Barrel />
 </template>
 
 <style>

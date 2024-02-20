@@ -1,19 +1,18 @@
 <script lang="ts">
   import { inject, signal, effect, computed } from '@angular/core';
   import { HttpClient } from '@angular/common/http';
-  import { JsonPipe } from '@angular/common';
-  import { RouterOutlet, RouterLink } from '@angular/router';
+  import { JsonPipe } from '@angular/common' with { type: 'template' };
+  import { RouterOutlet, RouterLink } from '@angular/router' with { type: 'template' }
   import { delay } from 'rxjs';
 
-  import Hello from './hello.analog';
-  import AnotherOne from './another-one.analog';
-  import Highlight from './highlight.analog';
-  import External from './external/external.analog';
-  import { HelloOriginal } from './hello';
+  import Hello from './hello.analog' with { type: 'template' };
+  import AnotherOne from './another-one.analog' with { type: 'template' };
+  import Highlight from './highlight.analog' with { type: 'template' };
+  import External from './external/external.analog' with { type: 'template' };
+  import { HelloOriginal } from './hello' with { type: 'template' };
 
   defineMetadata({
     selector: 'app-root',
-    imports: [JsonPipe, HelloOriginal, RouterOutlet, RouterLink],
     exposes: [Math],
   });
 

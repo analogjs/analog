@@ -4,10 +4,13 @@ import {
   ConstructorDeclaration,
   FunctionDeclaration,
   FunctionExpression,
+  ImportAttributeStructure,
+  ImportSpecifierStructure,
   Node,
   ObjectLiteralExpression,
   OptionalKind,
   Project,
+  ProjectOptions,
   PropertyAssignment,
   PropertyDeclarationStructure,
   Scope,
@@ -38,14 +41,10 @@ export function compileAnalogFile(
     throw new Error(`[Analog] Missing component name ${filePath}`);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { names } = require('@nx/devkit');
-
-  const {
-    fileName: componentFileName,
-    className,
-    constantName,
-  } = names(componentName);
+  const [componentFileName, className] = [
+    toFileName(componentName),
+    toClassName(componentName),
+  ];
 
   const isMarkdown = fileContent.includes('lang="md"');
 
@@ -94,7 +93,7 @@ import { ${ngType}${
 
 @${ngType}({
   standalone: true,
-  selector: '${componentFileName},${className},${constantName}',
+  selector: '${componentFileName},${className}',
   ${componentMetadata}
 })
 export default class ${entityName} {
@@ -104,6 +103,7 @@ export default class ${entityName} {
   // the `.analog` file
   if (scriptContent) {
     const project = new Project({ useInMemoryFileSystem: true });
+
     return processAnalogScript(
       filePath,
       project.createSourceFile(filePath, scriptContent),
@@ -164,14 +164,46 @@ function processAnalogScript(
 
   for (const node of sourceSyntaxList.getChildren()) {
     if (Node.isImportDeclaration(node)) {
-      const moduleSpecifier = node.getModuleSpecifierValue();
-      if (moduleSpecifier.endsWith('.analog')) {
-        // other .ng files
-        declarations.push(node.getDefaultImport()?.getText() || '');
+      // copy the import to the target `.analog.ts` file
+      const importStructure = node.getStructure();
+      const importAttributes: OptionalKind<ImportAttributeStructure>[] = [];
+
+      let hasAutoImport = false;
+
+      for (const attr of importStructure.attributes || []) {
+        if (attr.name === 'type' && attr.value === "'template'") {
+          hasAutoImport = true;
+          continue;
+        }
+
+        importAttributes.push(attr);
       }
 
-      // copy the import to the target `.analog.ts` file
-      targetSourceFile.addImportDeclaration(node.getStructure());
+      if (hasAutoImport) {
+        const { defaultImport, namedImports } = importStructure;
+        if (defaultImport) {
+          declarations.push(defaultImport);
+        }
+
+        if (namedImports && Array.isArray(namedImports)) {
+          const namedImportStructures = namedImports.filter(
+            (
+              namedImport
+            ): namedImport is OptionalKind<ImportSpecifierStructure> =>
+              typeof namedImport === 'object'
+          );
+
+          const importNames = namedImportStructures.map(
+            (structure) => structure.alias || structure.name
+          );
+          declarations.push(...importNames);
+        }
+      }
+
+      targetSourceFile.addImportDeclaration({
+        ...importStructure,
+        attributes: importAttributes.length ? importAttributes : undefined,
+      });
       continue;
     }
 
@@ -450,7 +482,7 @@ function processMetadata(
       } else if (propertyName === 'exposes') {
         // for exposes we're going to add the property to the class so they are accessible on the template
         // parse the initializer to get the item in the exposes array
-        const exposes = propertyInitializerText
+        const exposesMetadata = propertyInitializerText
           .replace(/[[\]]/g, '')
           .split(',')
           .map((item) => ({
@@ -459,7 +491,7 @@ function processMetadata(
             scope: Scope.Protected,
           }));
 
-        targetClass.addProperties(exposes);
+        targetClass.addProperties(exposesMetadata);
       } else {
         targetMetadataArguments.addPropertyAssignment({
           name: propertyName,
@@ -537,4 +569,36 @@ function getIOStructure(
   }
 
   return null;
+}
+
+function toFileName(str: string) {
+  return str
+    .replace(/([a-z\d])([A-Z])/g, '$1_$2')
+    .toLowerCase()
+    .replace(/(?!^[_])[ _]/g, '-');
+}
+
+/**
+ * Hyphenated to UpperCamelCase
+ */
+function toClassName(str: string) {
+  return toCapitalCase(toPropertyName(str));
+}
+/**
+ * Hyphenated to lowerCamelCase
+ */
+function toPropertyName(str: string) {
+  return str
+    .replace(/([^a-zA-Z0-9])+(.)?/g, (_, __, chr) =>
+      chr ? chr.toUpperCase() : ''
+    )
+    .replace(/[^a-zA-Z\d]/g, '')
+    .replace(/^([A-Z])/, (m) => m.toLowerCase());
+}
+
+/**
+ * Capitalizes the first letter of a string
+ */
+function toCapitalCase(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }

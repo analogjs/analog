@@ -19,7 +19,6 @@ export function augmentHostWithResources(
       | {
           include: string[];
         };
-
     isProd?: boolean;
   } = {}
 ) {
