@@ -51,11 +51,13 @@
 </script>
 
 <template>
-  import Hello from './hello.analog';
-  import AnotherOne from './another-one.analog';
-  import Highlight from './highlight.analog';
-  import External from './external/external.analog';
-  import { Goodbye } from './my-components';
+  <imports>
+    import Hello from './hello.analog';
+    import AnotherOne from './another-one.analog';
+    import Highlight from './highlight.analog';
+    import External from './external/external.analog';
+    import { Goodbye } from './my-components';
+  </imports>
 
   <External />
 

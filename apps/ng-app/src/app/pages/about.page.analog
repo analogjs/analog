@@ -8,7 +8,9 @@
 </script>
 
 <template lang="md">
-  import Hello from '../hello.analog';
+  <imports>
+    import Hello from '../hello.analog';
+  </imports>
 
   # About me works!
 

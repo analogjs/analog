@@ -19,6 +19,7 @@ import {
 import {
   HOOKS_MAP,
   IMPORT_STATEMENT_REGEX,
+  IMPORT_TAG_REGEX,
   INVALID_METADATA_PROPERTIES,
   ON_DESTROY,
   ON_INIT,
@@ -29,11 +30,8 @@ import {
   TEMPLATE_TAG_REGEX,
 } from './constants';
 
-function extractAutoImports(
-  templateContent: string
-): [string, string[], string] {
+function extractAutoImports(templateContent: string) {
   const autoImports = [];
-  let importStatements = '';
 
   let match;
   while ((match = IMPORT_STATEMENT_REGEX.exec(templateContent)) !== null) {
@@ -51,13 +49,9 @@ function extractAutoImports(
     namedImports.forEach((importName) => {
       autoImports.push(importName);
     });
-
-    importStatements += match[0] + '\n';
   }
 
-  templateContent = templateContent.replace(IMPORT_STATEMENT_REGEX, '');
-
-  return [templateContent.trim(), autoImports, importStatements.trim()];
+  return autoImports;
 }
 
 export function compileAnalogFile(
@@ -79,6 +73,12 @@ export function compileAnalogFile(
     constantName,
   } = names(componentName);
 
+  if ([componentFileName, className, constantName].includes('imports')) {
+    throw new Error(
+      `[Analog] "imports" can not be a selector name ${filePath}`
+    );
+  }
+
   const isMarkdown = fileContent.includes('lang="md"');
 
   // eslint-disable-next-line prefer-const
@@ -88,9 +88,11 @@ export function compileAnalogFile(
     STYLE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
   ];
 
-  const [extractedTemplateContent, autoImports, templateImportStatements] =
-    extractAutoImports(templateContent);
-  templateContent = extractedTemplateContent;
+  const templateImportStatements =
+    IMPORT_TAG_REGEX.exec(templateContent)?.pop()?.trim() || '';
+  const autoImports = extractAutoImports(templateContent);
+
+  templateContent = templateContent.replace(IMPORT_TAG_REGEX, '');
 
   if (isMarkdown) {
     templateContent = '';
@@ -480,6 +482,9 @@ function processMetadata(
       if (propertyName === 'selector') {
         // remove the existing selector
         targetMetadataArguments.getProperty('selector')?.remove();
+        if (propertyInitializerText === "'imports'") {
+          throw new Error(`[Analog] "imports" can not be a selector name`);
+        }
         // add the new selector
         targetMetadataArguments.addPropertyAssignment({
           name: 'selector',

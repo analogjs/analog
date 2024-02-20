@@ -3,10 +3,7 @@ import { normalizePath } from '@ngtools/webpack/src/ivy/paths';
 import { readFileSync } from 'node:fs';
 import * as ts from 'typescript';
 import { compileAnalogFile } from './authoring/analog';
-import {
-  IMPORT_STATEMENT_REGEX,
-  TEMPLATE_TAG_REGEX,
-} from './authoring/constants';
+import { IMPORT_TAG_REGEX, TEMPLATE_TAG_REGEX } from './authoring/constants';
 
 export function augmentHostWithResources(
   host: ts.CompilerHost,
@@ -76,7 +73,7 @@ export function augmentHostWithResources(
         let templateContent =
           TEMPLATE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '';
 
-        templateContent = templateContent.replace(IMPORT_STATEMENT_REGEX, '');
+        templateContent = templateContent.replace(IMPORT_TAG_REGEX, '');
 
         return templateContent;
       }
