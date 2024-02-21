@@ -1,3 +1,5 @@
+## [0.2.39](https://github.com/analogjs/analog/compare/0.2.38...0.2.39) (2024-02-21)
+
 ## [0.2.38](https://github.com/analogjs/analog/compare/0.2.37...0.2.38) (2024-02-16)
 
 ### Bug Fixes
