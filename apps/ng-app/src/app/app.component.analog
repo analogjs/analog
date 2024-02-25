@@ -11,6 +11,7 @@
   import External from './external/external.analog' with { meta: 'imports' };
   import { Goodbye } from './my-components' with { meta: 'imports' };
   import { HelloOriginal } from './hello' with { meta: 'imports'};
+  import { MyService } from './my.service' with { meta: 'providers'};
 
   defineMetadata({
     selector: 'app-root',
@@ -20,6 +21,7 @@
   const title = 'Angular Analog';
 
   const http = inject(HttpClient);
+  const myService = inject(MyService);
 
   const counter = signal(1);
   const doubled = computed(() => counter() * 2);
@@ -44,6 +46,7 @@
 
   onInit(() => {
     console.log('App init');
+    console.log(myService.sayHello());
     http
       .get('https://jsonplaceholder.typicode.com/todos/1')
       .pipe(delay(2000))
