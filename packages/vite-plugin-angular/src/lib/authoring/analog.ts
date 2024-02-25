@@ -149,8 +149,15 @@ function processAnalogScript(
     throw new Error(`[Analog] invalid constructor body ${fileName}`);
   }
 
-  const declarations: Array<string> = [],
-    gettersSetters: Array<{ propertyName: string; isFunction: boolean }> = [],
+  const meta: { [key: string]: Array<string> } = {
+    imports: [],
+    viewProviders: [],
+    providers: [],
+    exposes: [],
+  };
+
+  const gettersSetters: Array<{ propertyName: string; isFunction: boolean }> =
+      [],
     outputs: Array<string> = [],
     sourceSyntaxList = ngSourceFile.getChildren()[0]; // SyntaxList
 
@@ -160,10 +167,36 @@ function processAnalogScript(
 
   for (const node of sourceSyntaxList.getChildren()) {
     if (Node.isImportDeclaration(node)) {
-      const moduleSpecifier = node.getModuleSpecifierValue();
-      if (moduleSpecifier.endsWith('.analog')) {
-        // other .ng files
-        declarations.push(node.getDefaultImport()?.getText() || '');
+      const attributes = node.getStructure().attributes;
+
+      if (attributes) {
+        for (const attribute of attributes) {
+          const value = attribute.value.replaceAll("'", '');
+
+          if (!(value in meta)) {
+            throw new Error(
+              `[Analog] meta property "${value}" is not supported`
+            );
+          }
+
+          if (attribute.name === 'meta') {
+            const defaultImport = node.getDefaultImport();
+            if (defaultImport) {
+              meta[value].push(defaultImport.getText());
+            }
+
+            const namedImports = node.getNamedImports();
+
+            for (const namedImport of namedImports) {
+              const alias = namedImport.getAliasNode();
+              if (alias) {
+                meta[value].push(alias.getText());
+              } else {
+                meta[value].push(namedImport.getName());
+              }
+            }
+          }
+        }
       }
 
       // copy the import to the target `.analog.ts` file
@@ -364,12 +397,40 @@ function processAnalogScript(
     }
   }
 
-  if (ngType === 'Component' && declarations.length) {
+  if (ngType === 'Component') {
+    if (meta['viewProviders'].length) {
+      processArrayLiteralMetadata(
+        targetMetadataArguments,
+        'viewProviders',
+        meta['viewProviders']
+      );
+    }
+
+    if (meta['imports'].length) {
+      processArrayLiteralMetadata(
+        targetMetadataArguments,
+        'imports',
+        meta['imports']
+      );
+    }
+  }
+
+  if (meta['providers'].length) {
     processArrayLiteralMetadata(
       targetMetadataArguments,
-      'imports',
-      declarations
+      'providers',
+      meta['providers']
     );
+  }
+
+  if (meta['exposes'].length) {
+    const exposes = meta['exposes'].map((item) => ({
+      name: item.trim(),
+      initializer: item.trim(),
+      scope: Scope.Protected,
+    }));
+
+    targetClass.addProperties(exposes);
   }
 
   if (outputs.length) {

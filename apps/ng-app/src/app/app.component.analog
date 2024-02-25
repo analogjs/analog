@@ -1,19 +1,19 @@
 <script lang="ts">
   import { inject, signal, effect, computed } from '@angular/core';
   import { HttpClient } from '@angular/common/http';
-  import { JsonPipe } from '@angular/common';
-  import { RouterOutlet, RouterLink } from '@angular/router';
+  import { JsonPipe } from '@angular/common' with { meta: 'imports'};
+  import { RouterOutlet, RouterLink } from '@angular/router' with { meta: 'imports'};
   import { delay } from 'rxjs';
 
-  import Hello from './hello.analog';
-  import AnotherOne from './another-one.analog';
-  import Highlight from './highlight.analog';
-  import External from './external/external.analog';
-  import { HelloOriginal } from './hello';
+  import Hello from './hello.analog' with { meta: 'imports'};
+  import AnotherOne from './another-one.analog' with { meta: 'imports' };
+  import Highlight from './highlight.analog' with { meta: 'imports' };
+  import External from './external/external.analog' with { meta: 'imports' };
+  import { Goodbye } from './my-components' with { meta: 'imports' };
+  import { HelloOriginal } from './hello' with { meta: 'imports'};
 
   defineMetadata({
     selector: 'app-root',
-    imports: [JsonPipe, HelloOriginal, RouterOutlet, RouterLink],
     exposes: [Math],
   });
 
@@ -81,6 +81,8 @@
   <a routerLink="/">Home</a> | <a routerLink="/about">About</a>
 
   <br />
+
+  <Goodbye />
 
   <router-outlet />
 </template>
