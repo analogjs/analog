@@ -413,6 +413,16 @@ function processAnalogScript(
         meta['imports']
       );
     }
+
+    if (meta['exposes'].length) {
+      const exposes = meta['exposes'].map((item) => ({
+        name: item.trim(),
+        initializer: item.trim(),
+        scope: Scope.Protected,
+      }));
+
+      targetClass.addProperties(exposes);
+    }
   }
 
   if (meta['providers'].length) {
@@ -421,16 +431,6 @@ function processAnalogScript(
       'providers',
       meta['providers']
     );
-  }
-
-  if (meta['exposes'].length) {
-    const exposes = meta['exposes'].map((item) => ({
-      name: item.trim(),
-      initializer: item.trim(),
-      scope: Scope.Protected,
-    }));
-
-    targetClass.addProperties(exposes);
   }
 
   if (outputs.length) {
