@@ -174,9 +174,7 @@ function processAnalogScript(
           const value = attribute.value.replaceAll("'", '');
 
           if (!(value in meta)) {
-            throw new Error(
-              `[Analog] meta property "${value}" is not supported`
-            );
+            console.warn(`[Analog] meta property "${value}" is not supported`);
           }
 
           if (attribute.name === 'meta') {
