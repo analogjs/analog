@@ -4,6 +4,7 @@ import {
   ConstructorDeclaration,
   FunctionDeclaration,
   FunctionExpression,
+  ImportSpecifierStructure,
   Node,
   ObjectLiteralExpression,
   OptionalKind,
@@ -167,31 +168,28 @@ function processAnalogScript(
 
   for (const node of sourceSyntaxList.getChildren()) {
     if (Node.isImportDeclaration(node)) {
-      const attributes = node.getStructure().attributes;
+      const structure = node.getStructure();
+      const attributes = structure.attributes;
 
       if (attributes) {
         for (const attribute of attributes) {
           const value = attribute.value.replaceAll("'", '');
 
-          if (!(value in meta)) {
-            console.warn(`[Analog] meta property "${value}" is not supported`);
-          }
-
-          if (attribute.name === 'meta') {
-            const defaultImport = node.getDefaultImport();
+          if (!(attribute.name === 'meta' && value in meta)) {
+            console.warn(
+              `[Analog] "${attribute.name}: '${value}'" is not handled by Analog`
+            );
+          } else {
+            const defaultImport = structure.defaultImport;
             if (defaultImport) {
-              meta[value].push(defaultImport.getText());
+              meta[value].push(defaultImport);
             }
 
-            const namedImports = node.getNamedImports();
+            const namedImports =
+              structure.namedImports as OptionalKind<ImportSpecifierStructure>[];
 
             for (const namedImport of namedImports) {
-              const alias = namedImport.getAliasNode();
-              if (alias) {
-                meta[value].push(alias.getText());
-              } else {
-                meta[value].push(namedImport.getName());
-              }
+              meta[value].push(namedImport.alias ?? namedImport.name);
             }
           }
         }
