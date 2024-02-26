@@ -115,7 +115,6 @@ const initWithNrwlNamespace = async (
     )
   ).angularInitGenerator(tree, {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    unitTestRunner: 'none' as any,
     skipInstall: true,
     skipFormat: skipFormat,
   });
