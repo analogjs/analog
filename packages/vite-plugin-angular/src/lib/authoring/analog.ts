@@ -4,6 +4,7 @@ import {
   ConstructorDeclaration,
   FunctionDeclaration,
   FunctionExpression,
+  ImportAttributeStructure,
   ImportSpecifierStructure,
   Node,
   ObjectLiteralExpression,
@@ -170,35 +171,52 @@ function processAnalogScript(
     if (Node.isImportDeclaration(node)) {
       const structure = node.getStructure();
       const attributes = structure.attributes;
+      const passThroughAttributes: OptionalKind<ImportAttributeStructure>[] =
+        [];
+      let foundAttribute = '';
 
-      if (attributes) {
-        for (const attribute of attributes) {
+      for (const attribute of attributes || []) {
+        if (attribute.name === 'analog') {
           const value = attribute.value.replaceAll("'", '');
-
-          if (!(attribute.name === 'analog' && value in importAttributes)) {
-            console.warn(
-              `[Analog] "${attribute.name}: '${value}'" is not handled by Analog`
+          if (!(value in importAttributes)) {
+            throw new Error(
+              `[Analog] Invalid Analog import attribute ${value} in ${fileName}`
             );
-          } else {
-            const defaultImport = structure.defaultImport;
-            if (defaultImport) {
-              importAttributes[value].push(defaultImport);
-            }
-
-            const namedImports =
-              structure.namedImports as OptionalKind<ImportSpecifierStructure>[];
-
-            for (const namedImport of namedImports) {
-              importAttributes[value].push(
-                namedImport.alias ?? namedImport.name
-              );
-            }
           }
+          foundAttribute = value;
+          continue;
+        }
+
+        passThroughAttributes.push(attribute);
+      }
+
+      if (foundAttribute) {
+        const { defaultImport, namedImports } = structure;
+        if (defaultImport) {
+          importAttributes[foundAttribute].push(defaultImport);
+        }
+
+        if (namedImports && Array.isArray(namedImports)) {
+          const namedImportStructures = namedImports.filter(
+            (
+              namedImport
+            ): namedImport is OptionalKind<ImportSpecifierStructure> =>
+              typeof namedImport === 'object'
+          );
+          const importNames = namedImportStructures.map(
+            (namedImport) => namedImport.alias ?? namedImport.name
+          );
+          importAttributes[foundAttribute].push(...importNames);
         }
       }
 
       // copy the import to the target `.analog.ts` file
-      targetSourceFile.addImportDeclaration(node.getStructure());
+      targetSourceFile.addImportDeclaration({
+        ...structure,
+        attributes: passThroughAttributes.length
+          ? passThroughAttributes
+          : undefined,
+      });
       continue;
     }
 

@@ -3,6 +3,9 @@ import { compileAnalogFile } from './analog';
 const COMPONENT_CONTENT = `
 <script lang="ts">
 import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewChildren, contentChild, contentChildren } from '@angular/core';
+import External from './external.analog' with { analog: 'imports' };
+import { ExternalService } from './external' with { analog: 'providers' };
+import { ExternalEnum } from './external.model' with { analog: 'exposes' };
 
 defineMetadata({
   exposes: [Math],
