@@ -377,7 +377,13 @@ export function angular(options?: PluginOptions): Plugin[] {
             configFile: false,
             babelrc: false,
             browserslistConfigFile: false,
-            plugins: [],
+            plugins: ['@babel/plugin-syntax-import-attributes'],
+            parserOpts: {
+              plugins: [
+                'importAttributes',
+                ['importAttributes', { deprecatedAssertSyntax: true }],
+              ],
+            },
             presets: [
               [
                 angularApplicationPreset,

@@ -198,7 +198,7 @@ function processAnalogScript(
       }
 
       // copy the import to the target `.analog.ts` file
-      targetSourceFile.addImportDeclaration(node.getStructure());
+      targetSourceFile.addImportDeclaration(structure);
       continue;
     }
 
