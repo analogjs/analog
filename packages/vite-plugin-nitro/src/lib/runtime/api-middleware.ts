@@ -20,7 +20,7 @@ export default eventHandler(async (event) => {
       // and can render the XML correctly as a static asset
       !event.node.req.url?.endsWith('.xml')
     ) {
-      return $fetch(reqUrl);
+      return $fetch(reqUrl, { headers: event.node.req.headers });
     }
 
     return proxyRequest(event, reqUrl, {

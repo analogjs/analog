@@ -18,6 +18,11 @@ import {
   V17_X_NX_DEVKIT,
   V17_X_NX_LINTER,
 } from './nx_17_X/versions';
+import {
+  V18_X_NX_ANGULAR,
+  V18_X_NX_DEVKIT,
+  V18_X_NX_LINTER,
+} from './nx_18_X/versions';
 
 const nrwlDependencyKeys = [
   '@nrwl/devkit',
@@ -84,10 +89,19 @@ export const getNxDependencies = (
     };
   }
 
-  // return latest for >= 17.0.0
+  // install 17.0 deps for versions =< 18.0.0
+  if (lt(escapedNxVersion, '18.0.0')) {
+    return {
+      '@nx/angular': V17_X_NX_ANGULAR,
+      '@nx/devkit': V17_X_NX_DEVKIT,
+      '@nx/eslint': V17_X_NX_LINTER,
+    };
+  }
+
+  // return latest for >= 18.0.0
   return {
-    '@nx/angular': V17_X_NX_ANGULAR,
-    '@nx/devkit': V17_X_NX_DEVKIT,
-    '@nx/eslint': V17_X_NX_LINTER,
+    '@nx/angular': V18_X_NX_ANGULAR,
+    '@nx/devkit': V18_X_NX_DEVKIT,
+    '@nx/eslint': V18_X_NX_LINTER,
   };
 };

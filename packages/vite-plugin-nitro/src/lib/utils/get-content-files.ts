@@ -18,7 +18,7 @@ export function getMatchingContentFilesWithFrontMatter(
   const fm = require('front-matter');
   const root = normalizePath(path.resolve(workspaceRoot, rootDir));
 
-  const resolvedDir = normalizePath(path.resolve(root, glob));
+  const resolvedDir = normalizePath(path.relative(root, path.join(root, glob)));
   const contentFiles: string[] = fg.sync([`${root}/${resolvedDir}/*`], {
     dot: true,
   });

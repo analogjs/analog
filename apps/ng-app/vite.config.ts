@@ -5,8 +5,12 @@ import analog from '@analogjs/platform';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  root: __dirname,
   publicDir: 'src/assets',
   build: {
+    outDir: '../../dist/apps/ng-app/client',
+    reportCompressedSize: true,
+    commonjsOptions: { transformMixedEsModules: true },
     target: ['es2020'],
   },
   resolve: {
@@ -23,6 +27,10 @@ export default defineConfig(({ mode }) => ({
     }),
   ],
   test: {
+    coverage: {
+      reportsDirectory: '../../coverage/apps/ng-app',
+      provider: 'v8',
+    },
     globals: true,
     environment: 'jsdom',
     setupFiles: ['src/test.ts'],

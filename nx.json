@@ -20,7 +20,7 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"],
-      "cache": true
+      "cache": false
     },
     "test": {
       "dependsOn": ["^build"],
@@ -33,14 +33,11 @@
     "serve": {
       "dependsOn": ["^build"]
     },
-    "cypress": {
-      "inputs": ["default", "^production"]
-    },
-    "lint": {
-      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
-      "cache": true
-    },
     "build-package": {
+      "cache": false
+    },
+    "@nx/eslint:lint": {
+      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
       "cache": true
     }
   },

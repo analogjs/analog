@@ -4,7 +4,6 @@
   "projectType": "library",
   "sourceRoot": "packages/content/src",
   "prefix": "analogjs",
-  "implicitDependencies": ["vite-plugin-angular"],
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:ng-packagr",
@@ -24,14 +23,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": [
-          "packages/content/**/*.ts",
-          "packages/content/**/*.html",
-          "packages/content/migrations/migrations.json"
-        ]
-      }
+      "outputs": ["{options.outputFile}"]
     },
     "test": {
       "dependsOn": ["^build"],

@@ -21,7 +21,9 @@ import {
   INVALID_METADATA_PROPERTIES,
   ON_DESTROY,
   ON_INIT,
+  REQUIRED_SIGNALS_MAP,
   SCRIPT_TAG_REGEX,
+  SIGNALS_MAP,
   STYLE_TAG_REGEX,
   TEMPLATE_TAG_REGEX,
 } from './constants.js';
@@ -40,14 +42,10 @@ export function compileAnalogFile(
     throw new Error(`[Analog] Missing component name ${filePath}`);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { names } = require('@nx/devkit');
-
-  const {
-    fileName: componentFileName,
-    className,
-    constantName,
-  } = names(componentName);
+  const [componentFileName, className] = [
+    toFileName(componentName),
+    toClassName(componentName),
+  ];
 
   const isMarkdown = fileContent.includes('lang="md"');
 
@@ -96,7 +94,7 @@ import { ${ngType}${
 
 @${ngType}({
   standalone: true,
-  selector: '${componentFileName},${className},${constantName}',
+  selector: '${componentFileName},${className}',
   ${componentMetadata}
 })
 export default class ${entityName} {
@@ -532,11 +530,45 @@ function getIOStructure(
 
   if (
     (Node.isPropertyAccessExpression(expression) &&
-      expression.getText() === 'input.required') ||
-    (Node.isIdentifier(expression) && expression.getText() === 'input')
+      REQUIRED_SIGNALS_MAP[expression.getText()]) ||
+    (Node.isIdentifier(expression) && SIGNALS_MAP[expression.getText()])
   ) {
     return { initializer: initializer.getText() };
   }
 
   return null;
+}
+
+/**
+ * Hyphenated to UpperCamelCase
+ */
+function toClassName(str: string) {
+  return toCapitalCase(toPropertyName(str));
+}
+/**
+ * Hyphenated to lowerCamelCase
+ */
+function toPropertyName(str: string) {
+  return str
+    .replace(/([^a-zA-Z0-9])+(.)?/g, (_, __, chr) =>
+      chr ? chr.toUpperCase() : ''
+    )
+    .replace(/[^a-zA-Z\d]/g, '')
+    .replace(/^([A-Z])/, (m) => m.toLowerCase());
+}
+
+/**
+ * Upper camelCase to lowercase, hyphenated
+ */
+function toFileName(str: string) {
+  return str
+    .replace(/([a-z\d])([A-Z])/g, '$1_$2')
+    .toLowerCase()
+    .replace(/(?!^[_])[ _]/g, '-');
+}
+/**
+ * Capitalizes the first letter of a string
+ */
+function toCapitalCase(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
