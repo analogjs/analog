@@ -64,8 +64,8 @@ interface EmitFileResult {
   map?: string;
   dependencies: readonly string[];
   hash?: Uint8Array;
-  errors: string[];
-  warnings: string[];
+  errors: (string | ts.DiagnosticMessageChain)[];
+  warnings: (string | ts.DiagnosticMessageChain)[];
 }
 type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 

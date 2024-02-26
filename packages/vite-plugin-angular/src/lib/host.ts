@@ -108,7 +108,7 @@ export function augmentHostWithResources(
 
     if (fileName.includes('virtual-analog:')) {
       const { MarkedSetupService } = await import(
-        './authoring/marked-setup.service'
+        './authoring/marked-setup.service.js'
       );
       // read template sections, parse markdown
       const markedSetupService = new MarkedSetupService();
