@@ -150,7 +150,7 @@ function processAnalogScript(
     throw new Error(`[Analog] invalid constructor body ${fileName}`);
   }
 
-  const meta: { [key: string]: Array<string> } = {
+  const importAttributes: { [key: string]: Array<string> } = {
     imports: [],
     viewProviders: [],
     providers: [],
@@ -175,21 +175,23 @@ function processAnalogScript(
         for (const attribute of attributes) {
           const value = attribute.value.replaceAll("'", '');
 
-          if (!(attribute.name === 'meta' && value in meta)) {
+          if (!(attribute.name === 'analog' && value in importAttributes)) {
             console.warn(
               `[Analog] "${attribute.name}: '${value}'" is not handled by Analog`
             );
           } else {
             const defaultImport = structure.defaultImport;
             if (defaultImport) {
-              meta[value].push(defaultImport);
+              importAttributes[value].push(defaultImport);
             }
 
             const namedImports =
               structure.namedImports as OptionalKind<ImportSpecifierStructure>[];
 
             for (const namedImport of namedImports) {
-              meta[value].push(namedImport.alias ?? namedImport.name);
+              importAttributes[value].push(
+                namedImport.alias ?? namedImport.name
+              );
             }
           }
         }
@@ -394,24 +396,24 @@ function processAnalogScript(
   }
 
   if (ngType === 'Component') {
-    if (meta['viewProviders'].length) {
+    if (importAttributes['viewProviders'].length) {
       processArrayLiteralMetadata(
         targetMetadataArguments,
         'viewProviders',
-        meta['viewProviders']
+        importAttributes['viewProviders']
       );
     }
 
-    if (meta['imports'].length) {
+    if (importAttributes['imports'].length) {
       processArrayLiteralMetadata(
         targetMetadataArguments,
         'imports',
-        meta['imports']
+        importAttributes['imports']
       );
     }
 
-    if (meta['exposes'].length) {
-      const exposes = meta['exposes'].map((item) => ({
+    if (importAttributes['exposes'].length) {
+      const exposes = importAttributes['exposes'].map((item) => ({
         name: item.trim(),
         initializer: item.trim(),
         scope: Scope.Protected,
@@ -421,11 +423,11 @@ function processAnalogScript(
     }
   }
 
-  if (meta['providers'].length) {
+  if (importAttributes['providers'].length) {
     processArrayLiteralMetadata(
       targetMetadataArguments,
       'providers',
-      meta['providers']
+      importAttributes['providers']
     );
   }
 

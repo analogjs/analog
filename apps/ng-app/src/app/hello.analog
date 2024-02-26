@@ -10,7 +10,7 @@
     afterNextRender,
   } from '@angular/core';
 
-  import { myFunc } from './export-stuff.analog' with { meta: 'exposes'};
+  import { myFunc } from './export-stuff.analog' with { analog: 'exposes'};
 
   defineMetadata({
     queries: {
