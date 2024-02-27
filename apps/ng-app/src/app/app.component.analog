@@ -1,25 +1,27 @@
 <script lang="ts">
   import { inject, signal, effect, computed } from '@angular/core';
   import { HttpClient } from '@angular/common/http';
-  import { JsonPipe } from '@angular/common';
-  import { RouterOutlet, RouterLink } from '@angular/router';
+  import { JsonPipe } from '@angular/common' with { analog: 'imports'};
+  import { RouterOutlet, RouterLink } from '@angular/router' with { analog: 'imports'};
   import { delay } from 'rxjs';
 
-  import Hello from './hello.analog';
-  import AnotherOne from './another-one.analog';
-  import Highlight from './highlight.analog';
-  import External from './external/external.analog';
-  import { HelloOriginal } from './hello';
+  import Hello from './hello.analog' with { analog: 'imports'};
+  import AnotherOne from './another-one.analog' with { analog: 'imports' };
+  import Highlight from './highlight.analog' with { analog: 'imports' };
+  import External from './external/external.analog' with { analog: 'imports' };
+  import { Goodbye } from './my-components' with { analog: 'imports' };
+  import { HelloOriginal } from './hello' with { analog: 'imports'};
+  import { MyService } from './my.service' with { analog: 'providers'};
 
   defineMetadata({
     selector: 'app-root',
-    imports: [JsonPipe, HelloOriginal, RouterOutlet, RouterLink],
     exposes: [Math],
   });
 
   const title = 'Angular Analog';
 
   const http = inject(HttpClient);
+  const myService = inject(MyService);
 
   const counter = signal(1);
   const doubled = computed(() => counter() * 2);
@@ -44,6 +46,7 @@
 
   onInit(() => {
     console.log('App init');
+    console.log(myService.sayHello());
     http
       .get('https://jsonplaceholder.typicode.com/todos/1')
       .pipe(delay(2000))
@@ -81,6 +84,8 @@
   <a routerLink="/">Home</a> | <a routerLink="/about">About</a>
 
   <br />
+
+  <Goodbye />
 
   <router-outlet />
 </template>

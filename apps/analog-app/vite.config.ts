@@ -20,8 +20,12 @@ if (process.env['NETLIFY'] === 'true') {
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
+    root: __dirname,
     publicDir: 'src/public',
     build: {
+      outDir: '../../dist/apps/analog-app/client',
+      reportCompressedSize: true,
+      commonjsOptions: { transformMixedEsModules: true },
       target: ['es2020'],
     },
     optimizeDeps: {
@@ -45,6 +49,11 @@ export default defineConfig(({ mode }) => {
       splitVendorChunkPlugin(),
     ],
     test: {
+      reporters: ['default'],
+      coverage: {
+        reportsDirectory: '../../coverage/apps/analog-app',
+        provider: 'v8',
+      },
       globals: true,
       environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],

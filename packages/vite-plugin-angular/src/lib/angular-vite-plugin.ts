@@ -16,12 +16,7 @@ import { jitPlugin } from './angular-jit-plugin';
 import { angularVitestPlugin } from './angular-vitest-plugin';
 
 import { createCompilerPlugin } from './compiler-plugin';
-import {
-  hasStyleUrls,
-  hasTemplateUrl,
-  StyleUrlsResolver,
-  TemplateUrlsResolver,
-} from './component-resolvers';
+import { StyleUrlsResolver, TemplateUrlsResolver } from './component-resolvers';
 import { augmentHostWithResources } from './host';
 import {
   angularApplicationPreset,
@@ -46,7 +41,11 @@ export interface PluginOptions {
     /**
      * Enable experimental support for Analog file extension
      */
-    supportAnalogFormat?: boolean;
+    supportAnalogFormat?:
+      | boolean
+      | {
+          include: string[];
+        };
   };
   supportedBrowsers?: string[];
   transformFilter?: (code: string, id: string) => boolean;
@@ -57,6 +56,8 @@ interface EmitFileResult {
   map?: string;
   dependencies: readonly string[];
   hash?: Uint8Array;
+  errors: string[];
+  warnings: string[];
 }
 type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 
@@ -289,16 +290,8 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
-          let templateUrls: string[] = [];
-          let styleUrls: string[] = [];
-
-          if (hasTemplateUrl(code)) {
-            templateUrls = templateUrlsResolver.resolve(code, id);
-          }
-
-          if (hasStyleUrls(code)) {
-            styleUrls = styleUrlsResolver.resolve(code, id);
-          }
+          const templateUrls = templateUrlsResolver.resolve(code, id);
+          const styleUrls = styleUrlsResolver.resolve(code, id);
 
           if (watchMode) {
             for (const urlSet of [...templateUrls, ...styleUrls]) {
@@ -310,7 +303,18 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
-          const typescriptResult = fileEmitter && (await fileEmitter!(id));
+          const typescriptResult = await fileEmitter?.(id);
+
+          if (
+            typescriptResult?.warnings &&
+            typescriptResult?.warnings.length > 0
+          ) {
+            this.warn(`${typescriptResult.warnings.join('\n')}`);
+          }
+
+          if (typescriptResult?.errors && typescriptResult?.errors.length > 0) {
+            this.error(`${typescriptResult.errors.join('\n')}`);
+          }
 
           // return fileEmitter
           let data = typescriptResult?.content ?? '';
@@ -424,17 +428,34 @@ export function angular(options?: PluginOptions): Plugin[] {
   ].filter(Boolean) as Plugin[];
 
   function findAnalogFiles(config: UserConfig) {
-    if (!pluginOptions.supportAnalogFormat) {
+    const analogConfig = pluginOptions.supportAnalogFormat;
+    if (!analogConfig) {
       return [];
     }
 
+    let extraGlobs: string[] = [];
+
+    if (typeof analogConfig === 'object') {
+      if (analogConfig.include) {
+        extraGlobs = analogConfig.include;
+      }
+    }
+
     const fg = require('fast-glob');
-    const root = normalizePath(
+    const appRoot = normalizePath(
       path.resolve(pluginOptions.workspaceRoot, config.root || '.')
     );
+    const workspaceRoot = normalizePath(
+      path.resolve(pluginOptions.workspaceRoot)
+    );
+
+    const globs = [
+      `${appRoot}/**/*.{analog,agx}`,
+      ...extraGlobs.map((glob) => `${workspaceRoot}${glob}.{analog,agx}`),
+    ];
 
     return fg
-      .sync([`${root}/**/*.analog`, `${root}/**/*.agx`], {
+      .sync(globs, {
         dot: true,
       })
       .map((file: string) => `${file}.ts`);
@@ -446,6 +467,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       compilerCli.readConfiguration(pluginOptions.tsconfig, {
         suppressOutputPathCheck: true,
         outDir: undefined,
+        sourceMap: false,
         inlineSourceMap: !isProd,
         inlineSources: !isProd,
         declaration: false,
@@ -453,7 +475,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         allowEmptyCodegenFiles: false,
         annotationsAs: 'decorators',
         enableResourceInlining: false,
+        noEmitOnError: false,
+        mapRoot: undefined,
+        sourceRoot: undefined,
         supportTestBed: false,
+        supportJitMode: false,
       });
 
     if (pluginOptions.supportAnalogFormat) {
@@ -490,7 +516,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       | ts.BuilderProgram
       | ts.EmitAndSemanticDiagnosticsBuilderProgram;
     let typeScriptProgram: ts.Program;
-    let angularCompiler: any;
+    let angularCompiler: NgtscProgram['compiler'];
 
     if (!jit) {
       // Create the Angular specific program that contains the Angular compiler
@@ -554,9 +580,10 @@ export function angular(options?: PluginOptions): Plugin[] {
           afterDeclarations:
             pluginOptions.advanced.tsTransformers.afterDeclarations,
         },
-        jit ? {} : angularCompiler.prepareEmit().transformers
+        jit ? {} : angularCompiler!.prepareEmit().transformers
       ),
-      () => []
+      () => [],
+      angularCompiler!
     );
   }
 }
@@ -564,13 +591,26 @@ export function angular(options?: PluginOptions): Plugin[] {
 export function createFileEmitter(
   program: ts.BuilderProgram,
   transformers: ts.CustomTransformers = {},
-  onAfterEmit?: (sourceFile: ts.SourceFile) => void
+  onAfterEmit?: (sourceFile: ts.SourceFile) => void,
+  angularCompiler?: NgtscProgram['compiler']
 ): FileEmitter {
   return async (file: string) => {
     const sourceFile = program.getSourceFile(file);
     if (!sourceFile) {
       return undefined;
     }
+
+    const diagnostics = angularCompiler
+      ? angularCompiler.getDiagnosticsForFile(sourceFile, 1)
+      : [];
+
+    const errors = diagnostics
+      .filter((d) => d.category === ts.DiagnosticCategory.Error)
+      .map((d) => d.messageText);
+
+    const warnings = diagnostics
+      .filter((d) => d.category === ts.DiagnosticCategory.Warning)
+      .map((d) => d.messageText);
 
     let content: string | undefined;
     program.emit(
@@ -587,6 +627,6 @@ export function createFileEmitter(
 
     onAfterEmit?.(sourceFile);
 
-    return { content, dependencies: [] };
+    return { content, dependencies: [], errors, warnings };
   };
 }

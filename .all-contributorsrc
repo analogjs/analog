@@ -243,7 +243,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/281553?v=4",
       "profile": "http://ngrome.io",
       "contributions": [
-        "doc"
+        "doc",
+        "code"
       ]
     },
     {
@@ -746,6 +747,15 @@
       "profile": "https://github.com/ilirbeqirii",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "remes2000",
+      "name": "Michał Nieruchalski",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26173223?v=4",
+      "profile": "https://github.com/remes2000",
+      "contributions": [
+        "code"
       ]
     }
   ],

@@ -54,10 +54,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": ["apps/ng-app/**/*.ts", "apps/ng-app/**/*.html"]
-      }
+      "outputs": ["{options.outputFile}"]
     }
   }
 }

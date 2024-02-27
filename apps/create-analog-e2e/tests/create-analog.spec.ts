@@ -44,7 +44,7 @@ describe('create-analog e2e', () => {
       { cwd: process.cwd() }
     );
 
-    await runCommandAsync(`npm i`, {
+    await runCommandAsync(`npm i --legacy-peer-deps`, {
       cwd: tmpDir,
     });
 
@@ -86,7 +86,7 @@ describe('create-analog e2e', () => {
       { cwd: process.cwd() }
     );
 
-    await runCommandAsync(`npm i`, {
+    await runCommandAsync(`npm i --legacy-peer-deps`, {
       cwd: tmpDir,
     });
 

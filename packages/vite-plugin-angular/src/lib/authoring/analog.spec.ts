@@ -2,7 +2,10 @@ import { compileAnalogFile } from './analog';
 
 const COMPONENT_CONTENT = `
 <script lang="ts">
-import { signal, input, ViewChild, afterNextRender, ElementRef } from '@angular/core';
+import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewChildren, contentChild, contentChildren } from '@angular/core';
+import External from './external.analog' with { analog: 'imports' };
+import { ExternalService } from './external' with { analog: 'providers' };
+import { ExternalEnum } from './external.model' with { analog: 'exposes' };
 
 defineMetadata({
   exposes: [Math],
@@ -58,6 +61,16 @@ const requiredInputWithTransform = input.required<unknown, number>({
   });
 const output = new EventEmitter();
 const outputWithType = new EventEmitter<string>();
+
+const viewChildEl = viewChild<HTMLDivElement>('divElement');
+const viewChildRequiredEl = viewChild.required<HTMLDivElement>('divElement');
+
+const viewChildrenEl = viewChildren<HTMLDivElement[]>('divElement');
+
+const contentChildEl = contentChild<ElementRef>('divElement');
+const contentChildRequiredEl = contentChild.required<ElementRef>('divElement');
+
+const contentChildrenEl = contentChildren<HTMLDivElement[]>('divElement');
 
 afterNextRender(() => {
   console.log('the div', divElement);

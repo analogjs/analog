@@ -55,35 +55,33 @@ const initWithNxNamespace = async (
   skipFormat = true
 ) => {
   const versions = getNxDependencies(installedNxVersion);
-  try {
-    ensurePackage('@nx/devkit', versions['@nx/devkit']);
-    ensurePackage('@nx/angular', versions['@nx/angular']);
-    ensurePackage('@nx/eslint', versions['@nx/eslint']);
-  } catch {
-    // @nx/angular cannot be required so this fails but this will still allow executing the nx angular init later on
-  }
+
   addDependenciesToPackageJson(
     tree,
-    {},
     {
-      '@nx/devkit': versions['@nx/devkit'],
+      '@angular/animations': '^17.2.0',
+      '@angular/common': '^17.2.0',
+      '@angular/compiler': '^17.2.0',
+      '@angular/core': '^17.2.0',
+      '@angular/forms': '^17.2.0',
+      '@angular/platform-browser': '^17.2.0',
+      '@angular/platform-browser-dynamic': '^17.2.0',
+      '@angular/platform-server': '^17.2.0',
+      '@angular/router': '^17.2.0',
+      rxjs: '~7.5.6',
+      tslib: '^2.4.0',
+      'zone.js': '~0.14.0',
+    },
+    {
+      '@angular-devkit/build-angular': '^17.2.0',
+      '@angular/compiler-cli': '^17.2.0',
       '@nx/angular': versions['@nx/angular'],
+      '@nx/devkit': versions['@nx/devkit'],
       '@nx/eslint': versions['@nx/eslint'],
+      typescript: '~5.3.0',
     }
   );
 
-  await (
-    await import(
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      '@nx/angular/generators'
-    )
-  ).angularInitGenerator(tree, {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    unitTestRunner: 'none' as any,
-    skipInstall: true,
-    skipFormat: skipFormat,
-  });
   return getInstalledPackageVersion(tree, '@angular/core', null, true);
 };
 
@@ -117,7 +115,6 @@ const initWithNrwlNamespace = async (
     )
   ).angularInitGenerator(tree, {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    unitTestRunner: 'none' as any,
     skipInstall: true,
     skipFormat: skipFormat,
   });

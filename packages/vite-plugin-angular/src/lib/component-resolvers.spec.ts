@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import {
-  hasTemplateUrl,
-  StyleUrlsResolver,
-  TemplateUrlsResolver,
-} from './component-resolvers';
+import { StyleUrlsResolver, TemplateUrlsResolver } from './component-resolvers';
 import { normalizePath } from 'vite';
 import { relative } from 'path';
 
@@ -49,10 +45,10 @@ describe('component-resolvers', () => {
       const actualPaths = [
         './app.component.css|/path/to/src/app.component.css',
       ];
-      const templateUrlsResolver = new TemplateUrlsResolver();
-      const resolvedPaths = templateUrlsResolver.resolve(code, id);
+      const styleUrlsResolver = new StyleUrlsResolver();
+      const resolvedPaths = styleUrlsResolver.resolve(code, id);
 
-      expect(thePathsAreEqual(resolvedPaths, actualPaths));
+      expect(thePathsAreEqual(resolvedPaths, actualPaths)).toBe(true);
     });
 
     it('should handle single line styleUrl', () => {
@@ -66,10 +62,10 @@ describe('component-resolvers', () => {
       const actualPaths = [
         './app.component.css|/path/to/src/app.component.css',
       ];
-      const templateUrlsResolver = new TemplateUrlsResolver();
-      const resolvedPaths = templateUrlsResolver.resolve(code, id);
+      const styleUrlsResolver = new StyleUrlsResolver();
+      const resolvedPaths = styleUrlsResolver.resolve(code, id);
 
-      expect(thePathsAreEqual(resolvedPaths, actualPaths));
+      expect(thePathsAreEqual(resolvedPaths, actualPaths)).toBe(true);
     });
 
     it('should handle multi-line styleUrls', () => {
@@ -91,7 +87,7 @@ describe('component-resolvers', () => {
       const styleUrlsResolver = new StyleUrlsResolver();
       const resolvedPaths = styleUrlsResolver.resolve(code, id);
 
-      expect(thePathsAreEqual(resolvedPaths, actualPaths));
+      expect(thePathsAreEqual(resolvedPaths, actualPaths)).toBe(true);
     });
 
     it('should handle wrapped multi-line styleUrls', () => {
@@ -114,7 +110,24 @@ describe('component-resolvers', () => {
       const styleUrlsResolver = new StyleUrlsResolver();
       const resolvedPaths = styleUrlsResolver.resolve(code, id);
 
-      expect(thePathsAreEqual(resolvedPaths, actualPaths));
+      expect(thePathsAreEqual(resolvedPaths, actualPaths)).toBe(true);
+    });
+
+    it('should handle styleUrls with route params in filename', () => {
+      const code = `
+        @Component({
+          styleUrls: ['./[param].component.css']
+        })
+        export class MyComponent {}
+      `;
+
+      const actualPaths = [
+        './[param].component.css|/path/to/src/[param].component.css',
+      ];
+      const styleUrlsResolver = new StyleUrlsResolver();
+      const resolvedPaths = styleUrlsResolver.resolve(code, id);
+
+      expect(thePathsAreEqual(resolvedPaths, actualPaths)).toBe(true);
     });
   });
 
@@ -135,8 +148,23 @@ describe('component-resolvers', () => {
         const templateUrlsResolver = new TemplateUrlsResolver();
         const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
 
-        expect(hasTemplateUrl(code)).toBeTruthy();
-        expect(thePathsAreEqual(resolvedTemplateUrls, [actualUrl]));
+        expect(thePathsAreEqual(resolvedTemplateUrls, [actualUrl])).toBe(true);
+      });
+
+      it('should handle templateUrls with single quotes and route params', () => {
+        const code = `
+        @Component({
+          templateUrl: './[param].component.html'
+        })
+        export class MyComponent {}
+      `;
+
+        const actualUrl =
+          './[param].component.html|/path/to/src/[param].component.html';
+        const templateUrlsResolver = new TemplateUrlsResolver();
+        const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
+
+        expect(thePathsAreEqual(resolvedTemplateUrls, [actualUrl])).toBe(true);
       });
 
       it('should handle templateUrls with double quotes', () => {
@@ -152,8 +180,23 @@ describe('component-resolvers', () => {
         const templateUrlsResolver = new TemplateUrlsResolver();
         const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
 
-        expect(hasTemplateUrl(code)).toBeTruthy();
-        expect(thePathsAreEqual(resolvedTemplateUrls, [actualUrl]));
+        expect(thePathsAreEqual(resolvedTemplateUrls, [actualUrl])).toBe(true);
+      });
+
+      it('should handle templateUrls with double quotes and route params', () => {
+        const code = `
+        @Component({
+          templateUrl: "./[param].component.html"
+        })
+        export class MyComponent {}
+      `;
+
+        const actualUrl =
+          './[param].component.html|/path/to/src/[param].component.html';
+        const templateUrlsResolver = new TemplateUrlsResolver();
+        const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
+
+        expect(thePathsAreEqual(resolvedTemplateUrls, [actualUrl])).toBe(true);
       });
 
       it('should handle multiple templateUrls in a single file', () => {
@@ -166,7 +209,7 @@ describe('component-resolvers', () => {
         @Component({
           templateUrl: "./app1.component.html"
         })
-        export class MyComponentTwo {}        
+        export class MyComponentTwo {}
       `;
 
         const actualUrl1 =
@@ -176,10 +219,23 @@ describe('component-resolvers', () => {
         const templateUrlsResolver = new TemplateUrlsResolver();
         const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
 
-        expect(hasTemplateUrl(code)).toBeTruthy();
         expect(
           thePathsAreEqual(resolvedTemplateUrls, [actualUrl1, actualUrl2])
-        );
+        ).toBe(true);
+      });
+
+      it('should ignore commented out templateUrls', () => {
+        const code = `
+        @Component({
+          //templateUrl: './app.component.html'
+        })
+        export class MyComponent {}
+      `;
+
+        const templateUrlsResolver = new TemplateUrlsResolver();
+        const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
+
+        expect(resolvedTemplateUrls).toHaveLength(0);
       });
     });
   });

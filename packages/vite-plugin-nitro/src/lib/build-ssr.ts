@@ -4,7 +4,7 @@ import * as path from 'path';
 import { Options } from './options';
 
 export async function buildSSRApp(config: UserConfig, options?: Options) {
-  const rootDir = config.root || '.';
+  const rootDir = path.relative(process.cwd(), config.root || '.') || '.';
   const ssrBuildConfig = mergeConfig(config, {
     build: {
       ssr: true,
