@@ -3,6 +3,9 @@
 exports[`authoring ng file > should process component as an analog file 1`] = `
 "import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewChildren, contentChild, contentChildren } from "@angular/core";
+import External from "./external.analog";
+import { ExternalService } from "./external";
+import { ExternalEnum } from "./external.model";
 
 @Component({
     standalone: true,
@@ -18,6 +21,8 @@ import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewC
     queries: {
         divElement: new ViewChild('divElement')
     },
+    imports: [External],
+    providers: [ExternalService],
     outputs: ['output', 'outputWithType']
 })
 export default class VirtualAnalogComponent {
@@ -87,6 +92,7 @@ export default class VirtualAnalogComponent {
     protected contentChildEl = contentChild<ElementRef>('divElement');
     protected contentChildRequiredEl = contentChild.required<ElementRef>('divElement');
     protected contentChildrenEl = contentChildren<HTMLDivElement[]>('divElement');
+    protected ExternalEnum = ExternalEnum;
 }
 
 
