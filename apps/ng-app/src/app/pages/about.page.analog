@@ -1,6 +1,6 @@
 <script lang="ts">
   import { RouteMeta } from '@analogjs/router';
-  import Hello from '../hello.analog' with { analog: 'imports'};
+  import '../hello.analog' with { analog: 'imports'};
 
   export const routeMeta: RouteMeta = {
     title: 'My page',
