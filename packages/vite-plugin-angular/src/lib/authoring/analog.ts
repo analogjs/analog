@@ -172,7 +172,11 @@ function processAnalogScript(
     if (Node.isImportDeclaration(node)) {
       let structure = node.getStructure();
 
-      if (!structure.namedImports?.length && !structure.defaultImport) {
+      if (
+        !structure.namedImports?.length &&
+        !structure.defaultImport &&
+        structure.moduleSpecifier.endsWith('.analog')
+      ) {
         const generatedName = structure.moduleSpecifier.replace(
           /[^a-zA-Z]/g,
           ''
