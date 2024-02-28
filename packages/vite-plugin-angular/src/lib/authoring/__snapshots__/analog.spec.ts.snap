@@ -6,6 +6,7 @@ import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewC
 import External from "./external.analog";
 import { ExternalService } from "./external";
 import { ExternalEnum } from "./external.model";
+import nonameanalog from "./noname.analog";
 
 @Component({
     standalone: true,
@@ -21,7 +22,7 @@ import { ExternalEnum } from "./external.model";
     queries: {
         divElement: new ViewChild('divElement')
     },
-    imports: [External],
+    imports: [External, nonameanalog],
     providers: [ExternalService],
     outputs: ['output', 'outputWithType']
 })
