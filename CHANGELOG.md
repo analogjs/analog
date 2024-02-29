@@ -1,3 +1,10 @@
+## [0.2.41](https://github.com/analogjs/analog/compare/0.2.40...0.2.41) (2024-02-29)
+
+### Features
+
+- **vite-plugin-angular:** allow analog imports with no name ([#912](https://github.com/analogjs/analog/issues/912)) ([4f2d60e](https://github.com/analogjs/analog/commit/4f2d60e0bc6995bbc57d554c51029ca0d525be18))
+- **vite-plugin-angular:** expose esbuild entry point ([#910](https://github.com/analogjs/analog/issues/910)) ([f991473](https://github.com/analogjs/analog/commit/f9914730013c8ff02d85655d32b38938bb904175))
+
 ## [0.2.40](https://github.com/analogjs/analog/compare/0.2.39...0.2.40) (2024-02-27)
 
 ### Bug Fixes
