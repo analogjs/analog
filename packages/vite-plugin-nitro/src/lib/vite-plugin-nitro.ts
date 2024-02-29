@@ -3,6 +3,7 @@ import { App, toNodeListener } from 'h3';
 import type { Plugin, UserConfig } from 'vite';
 import { normalizePath, ViteDevServer } from 'vite';
 import * as path from 'path';
+import { platform } from 'node:os';
 
 import { buildServer } from './build-server';
 import { buildSSRApp } from './build-ssr';
@@ -15,6 +16,7 @@ import { devServerPlugin } from './plugins/dev-server-plugin';
 import { loadEsmModule } from './utils/load-esm';
 import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-files';
 
+const isWindows = platform() === 'win32';
 let clientOutputPath = '';
 
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
@@ -104,9 +106,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         }
 
         nitroConfig.alias = {
-          '#analog/ssr': normalizePath(
-            path.resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
-          ),
+          // This is not the final fix but start point to discuss a fix for windows
+          '#analog/ssr':
+            (isWindows ? 'file://' : '') +
+            normalizePath(
+              path.resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
+            ),
           '#analog/index': normalizePath(
             path.resolve(clientOutputPath, 'index.html')
           ),
