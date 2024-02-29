@@ -5,6 +5,7 @@ import {
   FunctionDeclaration,
   FunctionExpression,
   ImportAttributeStructure,
+  ImportDeclaration,
   ImportSpecifierStructure,
   Node,
   ObjectLiteralExpression,
@@ -169,7 +170,21 @@ function processAnalogScript(
 
   for (const node of sourceSyntaxList.getChildren()) {
     if (Node.isImportDeclaration(node)) {
-      const structure = node.getStructure();
+      let structure = node.getStructure();
+
+      if (
+        !structure.namedImports?.length &&
+        !structure.defaultImport &&
+        structure.moduleSpecifier.endsWith('.analog')
+      ) {
+        const generatedName = structure.moduleSpecifier.replace(
+          /[^a-zA-Z]/g,
+          ''
+        );
+        (node as ImportDeclaration).setDefaultImport(generatedName);
+        structure = node.getStructure();
+      }
+
       const attributes = structure.attributes;
       const passThroughAttributes: OptionalKind<ImportAttributeStructure>[] =
         [];
