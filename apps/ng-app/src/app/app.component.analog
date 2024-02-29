@@ -5,9 +5,11 @@
   import { RouterOutlet, RouterLink } from '@angular/router' with { analog: 'imports'};
   import { delay } from 'rxjs';
 
-  import './hello.analog' with { analog: 'imports'};
-  import './another-one.analog' with { analog: 'imports' };
-  import './highlight.analog' with { analog: 'imports' };
+  import Hello from './hello.analog' with { analog: 'imports'};
+  import AnotherOne from './another-one.analog' with { analog: 'imports' };
+  import Highlight from './highlight.analog' with { analog: 'imports' };
+
+  // components can optionally be imported with no default import name
   import './external/external.analog' with { analog: 'imports' };
   import { Goodbye } from './my-components' with { analog: 'imports' };
   import { HelloOriginal } from './hello' with { analog: 'imports'};
