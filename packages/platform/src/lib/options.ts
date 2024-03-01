@@ -34,6 +34,7 @@ export interface Options {
   jit?: boolean;
   index?: string;
   workspaceRoot?: string;
+  tsConfigPath?: string;
 }
 
 export interface PrerenderContentDir {
