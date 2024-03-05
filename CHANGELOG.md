@@ -1,3 +1,9 @@
+## [0.2.43](https://github.com/analogjs/analog/compare/0.2.42...0.2.43) (2024-03-05)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** check for agx.d in fileExists ([#918](https://github.com/analogjs/analog/issues/918)) ([a1f0ae1](https://github.com/analogjs/analog/commit/a1f0ae1756dfd604b4619f84f2615ff68b93f6ad))
+
 ## [0.2.42](https://github.com/analogjs/analog/compare/0.2.41...0.2.42) (2024-03-05)
 
 ### Bug Fixes
