@@ -84,7 +84,8 @@ export function augmentHostWithResources(
     (resourceHost as ts.CompilerHost).fileExists = function (fileName: string) {
       if (
         fileName.includes('virtual-analog:') &&
-        !fileName.endsWith('analog.d')
+        !fileName.endsWith('analog.d') &&
+        !fileName.endsWith('agx.d')
       ) {
         return true;
       }
