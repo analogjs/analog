@@ -85,7 +85,7 @@ export function augmentHostWithResources(
       if (
         fileName.includes('virtual-analog:') &&
         !fileName.endsWith('analog.d') &&
-        !fileName.endsWith('.agx.d')
+        !fileName.endsWith('agx.d')
       ) {
         return true;
       }
