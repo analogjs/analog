@@ -1,3 +1,9 @@
+## [0.2.42](https://github.com/analogjs/analog/compare/0.2.41...0.2.42) (2024-03-05)
+
+### Bug Fixes
+
+- add file protocol to solve windows pre rendering issues ([#915](https://github.com/analogjs/analog/issues/915)) ([cd1123f](https://github.com/analogjs/analog/commit/cd1123f48814e20bcfab099213274b6882c29c62))
+
 ## [0.2.41](https://github.com/analogjs/analog/compare/0.2.40...0.2.41) (2024-02-29)
 
 ### Features
