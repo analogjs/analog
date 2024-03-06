@@ -757,6 +757,25 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "angelfraga",
+      "name": "Angel Fraga Parodi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11693938?v=4",
+      "profile": "https://angelfraga.com/",
+      "contributions": [
+        "infra",
+        "code"
+      ]
+    },
+    {
+      "login": "alexfriesen",
+      "name": "Alex",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1307706?v=4",
+      "profile": "https://alexfriesen.net/",
+      "contributions": [
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,

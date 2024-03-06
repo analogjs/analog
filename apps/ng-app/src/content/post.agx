@@ -6,6 +6,12 @@ title: Hello World
   const name = 'Analog';
 </script>
 
-<template>
+<template lang="md">
   My First Post on {{ name }}
+
+  ## Header
+
+  ```ts
+  const test = "hi";
+  ```
 </template>

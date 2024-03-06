@@ -8,7 +8,9 @@
   import Hello from './hello.analog' with { analog: 'imports'};
   import AnotherOne from './another-one.analog' with { analog: 'imports' };
   import Highlight from './highlight.analog' with { analog: 'imports' };
-  import External from './external/external.analog' with { analog: 'imports' };
+
+  // components can optionally be imported with no default import name
+  import './external/external.analog' with { analog: 'imports' };
   import { Goodbye } from './my-components' with { analog: 'imports' };
   import { HelloOriginal } from './hello' with { analog: 'imports'};
   import { MyService } from './my.service' with { analog: 'providers'};
