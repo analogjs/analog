@@ -256,7 +256,7 @@ You can find more details in the [Firebase documentation](https://firebase.googl
 
 ### Firebase functions
 
-Ensure that you set up Firebase functions as described in the previous section. Next, you must [configure Nitro](../overview) correctly for Firebase Cloud Functions to work.
+Ensure that you set up Firebase functions as described in the previous section. Next, you must [configure Nitro](overview) correctly for Firebase Cloud Functions to work.
 
 In `vite.config.ts` update the `nitro` property with the configuration options that fit your needs, like your Node.js version and preferred region.
 
