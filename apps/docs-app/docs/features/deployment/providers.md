@@ -223,7 +223,7 @@ GitHub Action deploys
 
 Unless you have an existing Firebase project, select **Create a new project** to continue. Firebase will provision a new project and provide the URL to access the web console to manage it.
 
-Once your project is created, select **TypeScript** as the language to use to write Cloud Functions. Proceed with accepting the default parameters by pressing *Enter.*
+Once your project is created, select **TypeScript** as the language to use to write Cloud Functions. Proceed with accepting the default parameters by pressing _Enter._
 
 When prompted for the **public directory**, enter `dist/analog/public`.
 
@@ -245,7 +245,7 @@ After setup completes, ensure that the following properties are configured corre
         {
           "source": "**",
           "function": "server"
-          }
+        }
       ]
     }
   ]
@@ -295,6 +295,7 @@ firebase deploy
 ### Firebase Warnings
 
 When configuring or deploying Firebase you may see warnings like:
+
 ```
 npm WARN EBADENGINE Unsupported engine {
 npm WARN EBADENGINE   package: undefined,
@@ -302,9 +303,11 @@ npm WARN EBADENGINE   required: { node: '18' },
 npm WARN EBADENGINE   current: { node: 'v20.11.0', npm: '10.2.4' }
 npm WARN EBADENGINE }
 ```
+
 ```
  ⚠  functions: Couldn't find firebase-functions package in your source code. Have you run 'npm install'?
- ```
+```
+
 These are benign errors and can be ignored, so long as you make sure your environment configuration matches `Nitro`.
 
 ## Render.com
