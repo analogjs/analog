@@ -631,7 +631,7 @@ function getIOStructure(
  * Hyphenated to UpperCamelCase
  */
 function toClassName(str: string) {
-  return toCapitalCase(toPropertyName(str));
+  return toCapitalCase(toPropertyName(toNonNumeric(str)));
 }
 /**
  * Hyphenated to lowerCamelCase
@@ -659,4 +659,10 @@ function toFileName(str: string) {
  */
 function toCapitalCase(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
+}
+/**
+ * Removes numbers from a string
+ */
+function toNonNumeric(str: string) {
+  return str.replace(/[0-9]/g, '');
 }
