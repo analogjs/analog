@@ -15,7 +15,12 @@
           "packages/vite-plugin-angular/*.md",
           "packages/vite-plugin-angular/migrations/migration.json"
         ],
-        "updateBuildableProjectDepsInPackageJson": false
+        "updateBuildableProjectDepsInPackageJson": false,
+        "additionalEntryPoints": [
+          "packages/vite-plugin-angular/esbuild.ts",
+          "packages/vite-plugin-angular/setup-vitest.ts"
+        ],
+        "generateExportsField": true
       }
     },
     "test": {

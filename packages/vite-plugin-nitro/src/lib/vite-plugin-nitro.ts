@@ -3,6 +3,7 @@ import { App, toNodeListener } from 'h3';
 import { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { normalizePath } from 'vite';
 import * as path from 'path';
+import { platform } from 'node:os';
 
 import { buildServer } from './build-server.js';
 import { buildSSRApp } from './build-ssr.js';
@@ -17,6 +18,7 @@ import { buildSitemap } from './build-sitemap.js';
 import { devServerPlugin } from './plugins/dev-server-plugin.js';
 import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-files.js';
 
+const isWindows = platform() === 'win32';
 let clientOutputPath = '';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
@@ -108,9 +110,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         }
 
         nitroConfig.alias = {
-          '#analog/ssr': normalizePath(
-            path.resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
-          ),
+          // This is not the final fix but start point to discuss a fix for windows
+          '#analog/ssr':
+            (isWindows ? 'file://' : '') +
+            normalizePath(
+              path.resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
+            ),
           '#analog/index': normalizePath(
             path.resolve(clientOutputPath, 'index.html')
           ),
