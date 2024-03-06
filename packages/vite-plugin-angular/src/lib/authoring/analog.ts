@@ -642,7 +642,8 @@ function toPropertyName(str: string) {
       chr ? chr.toUpperCase() : ''
     )
     .replace(/[^a-zA-Z\d]/g, '')
-    .replace(/^([A-Z])/, (m) => m.toLowerCase());
+    .replace(/^([A-Z])/, (m) => m.toLowerCase())
+    .replace(/^\d+/, '');
 }
 
 /**
