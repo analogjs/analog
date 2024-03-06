@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as path from 'node:path';
 import fg from 'fast-glob';
 
 import { NitroEventHandler } from 'nitropack';

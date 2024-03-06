@@ -1,5 +1,5 @@
 import { generateFiles, Tree } from '@nx/devkit';
-import * as path from 'path';
+import * as path from 'node:path';
 import { NormalizedOptions } from '../generator';
 
 export function addFiles(

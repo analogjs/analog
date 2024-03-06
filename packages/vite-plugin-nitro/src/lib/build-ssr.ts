@@ -1,5 +1,5 @@
 import { build, mergeConfig, UserConfig } from 'vite';
-import * as path from 'path';
+import * as path from 'node:path';
 
 import { Options } from './options.js';
 

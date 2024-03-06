@@ -1,6 +1,6 @@
 import { NitroConfig, copyPublicAssets, prerender } from 'nitropack';
 import { createNitro, build, prepare } from 'nitropack';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 
 import { Options } from './options.js';
 import { addPostRenderingHooks } from './hooks/post-rendering-hook.js';

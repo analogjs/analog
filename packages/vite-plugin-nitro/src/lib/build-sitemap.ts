@@ -1,10 +1,10 @@
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 import { create } from 'xmlbuilder2';
 import { UserConfig } from 'vite';
-import * as path from 'path';
+import * as path from 'node:path';
 
-import { SitemapConfig } from './options.js';
+import { SitemapConfig } from './options';
 
 export type PagesJson = {
   page: string;

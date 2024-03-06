@@ -2,8 +2,8 @@
 // https://github.com/solidjs/solid-start/blob/main/packages/start/dev/server.js
 
 import { Connect, Plugin, ViteDevServer } from 'vite';
-import * as path from 'path';
-import * as fs from 'fs';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
 
 interface ServerOptions {
   index?: string;

@@ -1,5 +1,5 @@
 import { Plugin } from 'vite';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 
 interface Content {
   code: string;

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import { StyleUrlsResolver, TemplateUrlsResolver } from './component-resolvers';
 import { normalizePath } from 'vite';
-import { relative } from 'path';
+import { relative } from 'node:path';
 
 // array version of normalizePath
 const normalizePaths = (paths: string[]) =>

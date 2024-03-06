@@ -1,7 +1,7 @@
 import { NitroConfig } from 'nitropack';
 import { ConfigEnv, UserConfig, Plugin } from 'vite';
 import { Mock, vi } from 'vitest';
-import * as path from 'path';
+import * as path from 'node:path';
 
 export const mockViteDevServer = {
   middlewares: {

@@ -1,8 +1,8 @@
 import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
 import { App, toNodeListener } from 'h3';
-import { Plugin, UserConfig, ViteDevServer } from 'vite';
+import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { normalizePath } from 'vite';
-import * as path from 'path';
+import * as path from 'node:path';
 import { platform } from 'node:os';
 
 import { buildServer } from './build-server.js';

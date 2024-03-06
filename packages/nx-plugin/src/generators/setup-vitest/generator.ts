@@ -5,7 +5,7 @@ import {
   installPackagesTask,
   Tree,
 } from '@nx/devkit';
-import * as path from 'path';
+import * as path from 'node:path';
 
 import { getInstalledPackageVersion } from '../../utils/version-utils';
 import { addAnalogDependencies } from './lib/add-analog-dependencies';
