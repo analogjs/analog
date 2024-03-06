@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-80-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-81-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -191,6 +191,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ilirbeqirii"><img src="https://avatars.githubusercontent.com/u/24731032?v=4?s=100" width="100px;" alt="Ilir Beqiri"/><br /><sub><b>Ilir Beqiri</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ilirbeqirii" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/remes2000"><img src="https://avatars.githubusercontent.com/u/26173223?v=4?s=100" width="100px;" alt="Michał Nieruchalski"/><br /><sub><b>Michał Nieruchalski</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=remes2000" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://angelfraga.com/"><img src="https://avatars.githubusercontent.com/u/11693938?v=4?s=100" width="100px;" alt="Angel Fraga Parodi"/><br /><sub><b>Angel Fraga Parodi</b></sub></a><br /><a href="#infra-angelfraga" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/analogjs/analog/commits?author=angelfraga" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://alexfriesen.net/"><img src="https://avatars.githubusercontent.com/u/1307706?v=4?s=100" width="100px;" alt="Alex"/><br /><sub><b>Alex</b></sub></a><br /><a href="#infra-alexfriesen" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
     </tr>
   </tbody>
 </table>
