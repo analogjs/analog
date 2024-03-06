@@ -7,6 +7,7 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
+    root: __dirname,
     publicDir: 'src/public',
     <% if (addTRPC) { %>
     ssr: {
@@ -14,6 +15,9 @@ export default defineConfig(({ mode }) => {
     },
     <% } %>
     build: {
+      outDir: '<%= offsetFromRoot %>dist/<%= projectRoot %>/client',
+      reportCompressedSize: true,
+      commonjsOptions: { transformMixedEsModules: true },      
       target: ['es2020'],
     },
     plugins: [

@@ -8,6 +8,10 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
+interface ImportAttributes {
+  analog: 'imports' | 'providers' | 'viewProviders' | 'exposes';
+}
+
 declare global {
   import type { Component } from '@angular/core';
 

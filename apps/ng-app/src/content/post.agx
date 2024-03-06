@@ -1,0 +1,17 @@
+---
+title: Hello World
+---
+
+<script lang="ts">
+  const name = 'Analog';
+</script>
+
+<template lang="md">
+  My First Post on {{ name }}
+
+  ## Header
+
+  ```ts
+  const test = "hi";
+  ```
+</template>

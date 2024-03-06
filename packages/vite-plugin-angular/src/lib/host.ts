@@ -3,7 +3,6 @@ import { normalizePath } from '@ngtools/webpack/src/ivy/paths';
 import { readFileSync } from 'node:fs';
 import * as ts from 'typescript';
 import { compileAnalogFile } from './authoring/analog';
-import { MarkedSetupService } from './authoring/marked-setup.service';
 import { TEMPLATE_TAG_REGEX } from './authoring/constants';
 
 export function augmentHostWithResources(
@@ -15,7 +14,12 @@ export function augmentHostWithResources(
   ) => ReturnType<any> | null,
   options: {
     inlineStylesExtension?: string;
-    supportAnalogFormat?: boolean;
+    supportAnalogFormat?:
+      | boolean
+      | {
+          include: string[];
+        };
+
     isProd?: boolean;
   } = {}
 ) {
@@ -31,9 +35,9 @@ export function augmentHostWithResources(
       onError,
       ...parameters
     ) => {
-      if (fileName.includes('.analog')) {
+      if (fileName.includes('.analog') || fileName.includes('.agx.ts')) {
         const contents = readFileSync(
-          fileName.replace('.analog.ts', '.analog'),
+          fileName.replace('.analog.ts', '.analog').replace('.agx.ts', '.agx'),
           'utf-8'
         );
         const source = compileAnalogFile(fileName, contents, options.isProd);
@@ -80,7 +84,8 @@ export function augmentHostWithResources(
     (resourceHost as ts.CompilerHost).fileExists = function (fileName: string) {
       if (
         fileName.includes('virtual-analog:') &&
-        !fileName.endsWith('analog.d')
+        !fileName.endsWith('analog.d') &&
+        !fileName.endsWith('agx.d')
       ) {
         return true;
       }
@@ -98,6 +103,9 @@ export function augmentHostWithResources(
     }
 
     if (fileName.includes('virtual-analog:')) {
+      const { MarkedSetupService } = await import(
+        './authoring/marked-setup.service'
+      );
       // read template sections, parse markdown
       const markedSetupService = new MarkedSetupService();
       const mdContent = markedSetupService
@@ -122,7 +130,7 @@ export function augmentHostWithResources(
         context.resourceFile ??
         `${context.containingFile.replace(/(\.analog)?\.ts$/, (...args) => {
           // NOTE: if the original file name contains `.analog`, we turn that into `-analog.css`
-          if (args.includes('.analog')) {
+          if (args.includes('.analog') || args.includes('.agx')) {
             return `-analog.${options?.inlineStylesExtension}`;
           }
           return `.${options?.inlineStylesExtension}`;

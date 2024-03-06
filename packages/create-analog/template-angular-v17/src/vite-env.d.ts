@@ -1,6 +1,10 @@
 /// <reference types="vite/client" />
 
 // Uncomment the lines below to enable types for experimental .analog format support
+// interface ImportAttributes {
+//   analog: 'imports' | 'providers' | 'viewProviders' | 'exposes';
+// }
+//
 // declare global {
 //   import type { Component } from '@angular/core';
 //

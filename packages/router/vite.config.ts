@@ -6,8 +6,9 @@ import { offsetFromRoot } from '@nx/devkit';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
-    root: 'src',
+    root: __dirname,
     test: {
+      reporters: ['default'],
       globals: true,
       environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],

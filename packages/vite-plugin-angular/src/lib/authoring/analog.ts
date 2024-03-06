@@ -4,6 +4,9 @@ import {
   ConstructorDeclaration,
   FunctionDeclaration,
   FunctionExpression,
+  ImportAttributeStructure,
+  ImportDeclaration,
+  ImportSpecifierStructure,
   Node,
   ObjectLiteralExpression,
   OptionalKind,
@@ -21,7 +24,9 @@ import {
   INVALID_METADATA_PROPERTIES,
   ON_DESTROY,
   ON_INIT,
+  REQUIRED_SIGNALS_MAP,
   SCRIPT_TAG_REGEX,
+  SIGNALS_MAP,
   STYLE_TAG_REGEX,
   TEMPLATE_TAG_REGEX,
 } from './constants';
@@ -36,14 +41,10 @@ export function compileAnalogFile(
     throw new Error(`[Analog] Missing component name ${filePath}`);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { names } = require('@nx/devkit');
-
-  const {
-    fileName: componentFileName,
-    className,
-    constantName,
-  } = names(componentName);
+  const [componentFileName, className] = [
+    toFileName(componentName),
+    toClassName(componentName),
+  ];
 
   const isMarkdown = fileContent.includes('lang="md"');
 
@@ -92,7 +93,7 @@ import { ${ngType}${
 
 @${ngType}({
   standalone: true,
-  selector: '${componentFileName},${className},${constantName}',
+  selector: '${componentFileName},${className}',
   ${componentMetadata}
 })
 export default class ${entityName} {
@@ -151,8 +152,15 @@ function processAnalogScript(
     throw new Error(`[Analog] invalid constructor body ${fileName}`);
   }
 
-  const declarations: Array<string> = [],
-    gettersSetters: Array<{ propertyName: string; isFunction: boolean }> = [],
+  const importAttributes: { [key: string]: Array<string> } = {
+    imports: [],
+    viewProviders: [],
+    providers: [],
+    exposes: [],
+  };
+
+  const gettersSetters: Array<{ propertyName: string; isFunction: boolean }> =
+      [],
     outputs: Array<string> = [],
     sourceSyntaxList = ngSourceFile.getChildren()[0]; // SyntaxList
 
@@ -162,14 +170,68 @@ function processAnalogScript(
 
   for (const node of sourceSyntaxList.getChildren()) {
     if (Node.isImportDeclaration(node)) {
-      const moduleSpecifier = node.getModuleSpecifierValue();
-      if (moduleSpecifier.endsWith('.analog')) {
-        // other .ng files
-        declarations.push(node.getDefaultImport()?.getText() || '');
+      let structure = node.getStructure();
+
+      if (
+        !structure.namedImports?.length &&
+        !structure.defaultImport &&
+        structure.moduleSpecifier.endsWith('.analog')
+      ) {
+        const generatedName = structure.moduleSpecifier.replace(
+          /[^a-zA-Z]/g,
+          ''
+        );
+        (node as ImportDeclaration).setDefaultImport(generatedName);
+        structure = node.getStructure();
+      }
+
+      const attributes = structure.attributes;
+      const passThroughAttributes: OptionalKind<ImportAttributeStructure>[] =
+        [];
+      let foundAttribute = '';
+
+      for (const attribute of attributes || []) {
+        if (attribute.name === 'analog') {
+          const value = attribute.value.replaceAll("'", '');
+          if (!(value in importAttributes)) {
+            throw new Error(
+              `[Analog] Invalid Analog import attribute ${value} in ${fileName}`
+            );
+          }
+          foundAttribute = value;
+          continue;
+        }
+
+        passThroughAttributes.push(attribute);
+      }
+
+      if (foundAttribute) {
+        const { defaultImport, namedImports } = structure;
+        if (defaultImport) {
+          importAttributes[foundAttribute].push(defaultImport);
+        }
+
+        if (namedImports && Array.isArray(namedImports)) {
+          const namedImportStructures = namedImports.filter(
+            (
+              namedImport
+            ): namedImport is OptionalKind<ImportSpecifierStructure> =>
+              typeof namedImport === 'object'
+          );
+          const importNames = namedImportStructures.map(
+            (namedImport) => namedImport.alias ?? namedImport.name
+          );
+          importAttributes[foundAttribute].push(...importNames);
+        }
       }
 
       // copy the import to the target `.analog.ts` file
-      targetSourceFile.addImportDeclaration(node.getStructure());
+      targetSourceFile.addImportDeclaration({
+        ...structure,
+        attributes: passThroughAttributes.length
+          ? passThroughAttributes
+          : undefined,
+      });
       continue;
     }
 
@@ -366,11 +428,39 @@ function processAnalogScript(
     }
   }
 
-  if (ngType === 'Component' && declarations.length) {
+  if (ngType === 'Component') {
+    if (importAttributes['viewProviders'].length) {
+      processArrayLiteralMetadata(
+        targetMetadataArguments,
+        'viewProviders',
+        importAttributes['viewProviders']
+      );
+    }
+
+    if (importAttributes['imports'].length) {
+      processArrayLiteralMetadata(
+        targetMetadataArguments,
+        'imports',
+        importAttributes['imports']
+      );
+    }
+
+    if (importAttributes['exposes'].length) {
+      const exposes = importAttributes['exposes'].map((item) => ({
+        name: item.trim(),
+        initializer: item.trim(),
+        scope: Scope.Protected,
+      }));
+
+      targetClass.addProperties(exposes);
+    }
+  }
+
+  if (importAttributes['providers'].length) {
     processArrayLiteralMetadata(
       targetMetadataArguments,
-      'imports',
-      declarations
+      'providers',
+      importAttributes['providers']
     );
   }
 
@@ -528,11 +618,46 @@ function getIOStructure(
 
   if (
     (Node.isPropertyAccessExpression(expression) &&
-      expression.getText() === 'input.required') ||
-    (Node.isIdentifier(expression) && expression.getText() === 'input')
+      REQUIRED_SIGNALS_MAP[expression.getText()]) ||
+    (Node.isIdentifier(expression) && SIGNALS_MAP[expression.getText()])
   ) {
     return { initializer: initializer.getText() };
   }
 
   return null;
+}
+
+/**
+ * Hyphenated to UpperCamelCase
+ */
+function toClassName(str: string) {
+  return toCapitalCase(toPropertyName(str));
+}
+/**
+ * Hyphenated to lowerCamelCase
+ */
+function toPropertyName(str: string) {
+  return str
+    .replace(/([^a-zA-Z0-9])+(.)?/g, (_, __, chr) =>
+      chr ? chr.toUpperCase() : ''
+    )
+    .replace(/[^a-zA-Z\d]/g, '')
+    .replace(/^([A-Z])/, (m) => m.toLowerCase())
+    .replace(/^\d+/, '');
+}
+
+/**
+ * Upper camelCase to lowercase, hyphenated
+ */
+function toFileName(str: string) {
+  return str
+    .replace(/([a-z\d])([A-Z])/g, '$1_$2')
+    .toLowerCase()
+    .replace(/(?!^[_])[ _]/g, '-');
+}
+/**
+ * Capitalizes the first letter of a string
+ */
+function toCapitalCase(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }

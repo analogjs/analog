@@ -1,3 +1,94 @@
+## [0.2.43](https://github.com/analogjs/analog/compare/0.2.42...0.2.43) (2024-03-05)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** check for agx.d in fileExists ([#918](https://github.com/analogjs/analog/issues/918)) ([a1f0ae1](https://github.com/analogjs/analog/commit/a1f0ae1756dfd604b4619f84f2615ff68b93f6ad))
+
+## [0.2.42](https://github.com/analogjs/analog/compare/0.2.41...0.2.42) (2024-03-05)
+
+### Bug Fixes
+
+- add file protocol to solve windows pre rendering issues ([#915](https://github.com/analogjs/analog/issues/915)) ([cd1123f](https://github.com/analogjs/analog/commit/cd1123f48814e20bcfab099213274b6882c29c62))
+
+## [0.2.41](https://github.com/analogjs/analog/compare/0.2.40...0.2.41) (2024-02-29)
+
+### Features
+
+- **vite-plugin-angular:** allow analog imports with no name ([#912](https://github.com/analogjs/analog/issues/912)) ([4f2d60e](https://github.com/analogjs/analog/commit/4f2d60e0bc6995bbc57d554c51029ca0d525be18))
+- **vite-plugin-angular:** expose esbuild entry point ([#910](https://github.com/analogjs/analog/issues/910)) ([f991473](https://github.com/analogjs/analog/commit/f9914730013c8ff02d85655d32b38938bb904175))
+
+## [0.2.40](https://github.com/analogjs/analog/compare/0.2.39...0.2.40) (2024-02-27)
+
+### Bug Fixes
+
+- align vitest peer dependency ([#907](https://github.com/analogjs/analog/issues/907)) ([d36ea80](https://github.com/analogjs/analog/commit/d36ea808092048d4100995e80e6316d7800f97f1))
+- **nx-plugin:** remove option from angular generator ([#908](https://github.com/analogjs/analog/issues/908)) ([73698f5](https://github.com/analogjs/analog/commit/73698f58aaf0b66e72dc7461ed116f13c54b1d0b))
+- **vite-plugin-angular:** add reporting of compilation warnings and errors ([#902](https://github.com/analogjs/analog/issues/902)) ([49f8518](https://github.com/analogjs/analog/commit/49f8518a4a746789a4ef1a495ae46780900a872e))
+
+### Features
+
+- **vite-plugin-angular:** add support for import attributes ([#905](https://github.com/analogjs/analog/issues/905)) ([8f65c23](https://github.com/analogjs/analog/commit/8f65c23537c2ea8e23c30aa6b33670a5c0574ed0))
+
+## [0.2.39](https://github.com/analogjs/analog/compare/0.2.38...0.2.39) (2024-02-21)
+
+## [0.2.38](https://github.com/analogjs/analog/compare/0.2.37...0.2.38) (2024-02-16)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** fix prerender from content directory ([#895](https://github.com/analogjs/analog/issues/895)) ([4434069](https://github.com/analogjs/analog/commit/44340690e8be41bac379bff7a8364aeccc709094))
+
+## [0.2.37](https://github.com/analogjs/analog/compare/0.2.36...0.2.37) (2024-02-14)
+
+### Bug Fixes
+
+- **nx-plugin:** update tailwind generator configuration for Nx 18 ([#891](https://github.com/analogjs/analog/issues/891)) ([bfb0423](https://github.com/analogjs/analog/commit/bfb0423ed4f4b6bf1e18d83fb6cd462131a0a97a))
+- **vite-plugin-nitro:** forward HTTP headers to the API endpoint ([#893](https://github.com/analogjs/analog/issues/893)) ([c998e81](https://github.com/analogjs/analog/commit/c998e81a23bf25ccecdcaa6c1cbdeedc7c9304a1))
+
+## [0.2.36](https://github.com/analogjs/analog/compare/0.2.35...0.2.36) (2024-02-12)
+
+### Bug Fixes
+
+- **nx-plugin:** pin to Vite 5.0.x on app generation ([7cebe8c](https://github.com/analogjs/analog/commit/7cebe8c76805686e5ced32fabca03ac8ce410d12))
+
+## [0.2.35](https://github.com/analogjs/analog/compare/0.2.34...0.2.35) (2024-02-12)
+
+### Bug Fixes
+
+- **nx-plugin:** fix eslint and root tsconfig.base.json ([6cd5dd8](https://github.com/analogjs/analog/commit/6cd5dd883b6ade9862a63fc1706a3a2ee2157802))
+
+## [0.2.34](https://github.com/analogjs/analog/compare/0.2.33...0.2.34) (2024-02-12)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** extract `styleUrl`s using AST ([#889](https://github.com/analogjs/analog/issues/889)) ([a7d5ff0](https://github.com/analogjs/analog/commit/a7d5ff02a546703885a56f62d39602444307feab))
+
+## [0.2.33](https://github.com/analogjs/analog/compare/0.2.32...0.2.33) (2024-02-10)
+
+### Bug Fixes
+
+- **create-analog:** update vite dependecy to 5.0.x ([#885](https://github.com/analogjs/analog/issues/885)) ([a7cdb6b](https://github.com/analogjs/analog/commit/a7cdb6b77b3e24f063cfae3944d04774b5aaf9ac))
+- **vite-plugin-angular:** extract `templateUrl`s using AST ([#887](https://github.com/analogjs/analog/issues/887)) ([f91ab02](https://github.com/analogjs/analog/commit/f91ab025e7ef3eebf21b38a50673566f2463bb19))
+
+### Features
+
+- **vite-plugin-angular:** add include configuration for analog file globs ([#882](https://github.com/analogjs/analog/issues/882)) ([00baaf4](https://github.com/analogjs/analog/commit/00baaf4fb0162a2ec3161410665b21cfd421d864))
+
+## [0.2.32](https://github.com/analogjs/analog/compare/0.2.31...0.2.32) (2024-02-08)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** import marked setup service dynamically ([#881](https://github.com/analogjs/analog/issues/881)) ([4d2ecbd](https://github.com/analogjs/analog/commit/4d2ecbd471f3974c79c1759817b317f0e48d7239))
+
+### Features
+
+- **nx-plugin:** add support for nx 18 ([#880](https://github.com/analogjs/analog/issues/880)) ([aa5c4fa](https://github.com/analogjs/analog/commit/aa5c4fa5b064a613b2cabfe3aed97509efbdd06f))
+
+## [0.2.31](https://github.com/analogjs/analog/compare/0.2.31-beta.2...0.2.31) (2024-02-07)
+
+### Features
+
+- add initial support for agx content files ([#879](https://github.com/analogjs/analog/issues/879)) ([ad9ef43](https://github.com/analogjs/analog/commit/ad9ef4398ae4199c60ec20af016171539091698f))
+
 ## [0.2.31-beta.2](https://github.com/analogjs/analog/compare/0.2.31-beta.1...0.2.31-beta.2) (2024-02-01)
 
 ### Bug Fixes

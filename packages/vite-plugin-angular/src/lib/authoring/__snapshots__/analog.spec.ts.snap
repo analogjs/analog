@@ -2,11 +2,15 @@
 
 exports[`authoring ng file > should process component as an analog file 1`] = `
 "import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { signal, input, ViewChild, afterNextRender, ElementRef } from "@angular/core";
+import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewChildren, contentChild, contentChildren } from "@angular/core";
+import External from "./external.analog";
+import { ExternalService } from "./external";
+import { ExternalEnum } from "./external.model";
+import nonameanalog from "./noname.analog";
 
 @Component({
     standalone: true,
-    selector: 'virtual,Virtual,VIRTUAL',
+    selector: 'virtual,Virtual',
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: \`<div #divElement>Component</div>
   <p>{{ counter() }}</p>
@@ -18,6 +22,8 @@ import { signal, input, ViewChild, afterNextRender, ElementRef } from "@angular/
     queries: {
         divElement: new ViewChild('divElement')
     },
+    imports: [External, nonameanalog],
+    providers: [ExternalService],
     outputs: ['output', 'outputWithType']
 })
 export default class VirtualAnalogComponent {
@@ -44,6 +50,12 @@ export default class VirtualAnalogComponent {
         const requiredInputWithTransform = this.requiredInputWithTransform
         const output = this.output
         const outputWithType = this.outputWithType
+        const viewChildEl = this.viewChildEl
+        const viewChildRequiredEl = this.viewChildRequiredEl
+        const viewChildrenEl = this.viewChildrenEl
+        const contentChildEl = this.contentChildEl
+        const contentChildRequiredEl = this.contentChildRequiredEl
+        const contentChildrenEl = this.contentChildrenEl
 
 
         afterNextRender(() => {
@@ -75,6 +87,13 @@ export default class VirtualAnalogComponent {
     });
     protected output = new EventEmitter();
     protected outputWithType = new EventEmitter<string>();
+    protected viewChildEl = viewChild<HTMLDivElement>('divElement');
+    protected viewChildRequiredEl = viewChild.required<HTMLDivElement>('divElement');
+    protected viewChildrenEl = viewChildren<HTMLDivElement[]>('divElement');
+    protected contentChildEl = contentChild<ElementRef>('divElement');
+    protected contentChildRequiredEl = contentChild.required<ElementRef>('divElement');
+    protected contentChildrenEl = contentChildren<HTMLDivElement[]>('divElement');
+    protected ExternalEnum = ExternalEnum;
 }
 
 
@@ -112,7 +131,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   standalone: true,
-  selector: 'virtual,Virtual,VIRTUAL',
+  selector: 'virtual,Virtual',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: \`virtual-analog:virtual.analog\`
 })
