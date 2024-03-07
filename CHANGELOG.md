@@ -1,4 +1,4 @@
-# [1.0.0-beta.5](https://github.com/analogjs/analog/compare/0.2.43...1.0.0-beta.5) (2024-03-06)
+# [1.0.0-rc.0](https://github.com/analogjs/analog/compare/1.0.0-beta.5...1.0.0-rc.0) (2024-03-07)
 
 # [1.0.0-beta.2](https://github.com/analogjs/analog/compare/0.2.29...1.0.0-beta.2) (2023-12-30)
 
@@ -22,6 +22,16 @@
 
 - add npm publish job for packages ([2802c92](https://github.com/analogjs/analog/commit/2802c92cee93cfa7a076421c329383968b5f74a2))
 - update app templates to 1.0.0-beta ([5a23eb0](https://github.com/analogjs/analog/commit/5a23eb08718329ef2ec90135af47beb4a2c96bb7))
+
+## [0.2.44](https://github.com/analogjs/analog/compare/0.2.43...0.2.44) (2024-03-06)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** remove numbers at beginning in toPropertyName ([#919](https://github.com/analogjs/analog/issues/919)) ([187d8b1](https://github.com/analogjs/analog/commit/187d8b140c0f009589530fb80a2f42f9e3d45aba))
+
+### Features
+
+- **router:** expose router internals for custom routers ([#921](https://github.com/analogjs/analog/issues/921)) ([6af5de1](https://github.com/analogjs/analog/commit/6af5de194dbcd91648bedf66617e4116626d1b28))
 
 ## [0.2.43](https://github.com/analogjs/analog/compare/0.2.42...0.2.43) (2024-03-05)
 
