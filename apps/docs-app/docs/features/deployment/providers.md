@@ -211,32 +211,68 @@ npm install -g firebase-tools
 
 #### Initialize your Firebase project
 
+Login to Firebase and select the **Hosting** and **Functions** options as shown below:
+
 ```bash
 firebase login
-firebase init hosting
+firebase init
+ ◉ Functions: Configure a Cloud Functions directory and its files
+ ◉ Hosting: Configure files for Firebase Hosting and (optionally) set up
+GitHub Action deploys
 ```
 
-When prompted, enter `dist/analog/public` as the `public` directory.
+Unless you have an existing Firebase project, select **Create a new project** to continue. Firebase will provision a new project and provide the URL to access the web console to manage it.
 
-In the next step, **do not** configure your project as a single-page app.
+Once your project is created, select **TypeScript** as the language to use to write Cloud Functions. Proceed with accepting the default parameters by pressing _Enter._
 
-After setup completes, add the following to your `firebase.json` to enable server rendering in Cloud Functions:
+When prompted for the **public directory**, enter `dist/analog/public`.
+
+In the next step, take the default option, N, on whether to configure as a **single-page app.** This is important! **Do not** configure your project as a single-page app.
+
+After setup completes, ensure that the following properties are configured correctly in your `firebase.json` file. This ensures server-side rendering will work correctly with Cloud Functions:
 
 ```json [firebase.json]
 {
-  "functions": { "source": "dist/analog/server" },
+  "functions": {
+    "source": "dist/analog/server"
+  },
   "hosting": [
     {
       "site": "<your_project_id>",
       "public": "dist/analog/public",
       "cleanUrls": true,
-      "rewrites": [{ "source": "**", "function": "server" }]
+      "rewrites": [
+        {
+          "source": "**",
+          "function": "server"
+        }
+      ]
     }
   ]
 }
 ```
 
 You can find more details in the [Firebase documentation](https://firebase.google.com/docs/hosting/quickstart).
+
+### Firebase functions
+
+Ensure that you set up Firebase functions as described in the previous section. Next, you must [configure Nitro](overview) correctly for Firebase Cloud Functions to work.
+
+In `vite.config.ts` update the `nitro` property with the configuration options that fit your needs, like your Node.js version and preferred region.
+
+```js [vite.config.ts]
+nitro: {
+  preset: 'firebase',
+  firebase: {
+    nodeVersion: '20',
+    gen: 2,
+    httpsOptions: {
+      region: 'us-east1',
+      maxInstances: 100,
+    },
+  },
+},
+```
 
 ### Local preview
 
@@ -255,6 +291,24 @@ To deploy to Firebase Hosting, run the `firebase deploy` command.
 BUILD_PRESET=firebase npm run build
 firebase deploy
 ```
+
+### Firebase Warnings
+
+When configuring or deploying Firebase you may see warnings like:
+
+```
+npm WARN EBADENGINE Unsupported engine {
+npm WARN EBADENGINE   package: undefined,
+npm WARN EBADENGINE   required: { node: '18' },
+npm WARN EBADENGINE   current: { node: 'v20.11.0', npm: '10.2.4' }
+npm WARN EBADENGINE }
+```
+
+```
+ ⚠  functions: Couldn't find firebase-functions package in your source code. Have you run 'npm install'?
+```
+
+These are benign errors and can be ignored, so long as you make sure your environment configuration matches `Nitro`.
 
 ## Render.com
 
