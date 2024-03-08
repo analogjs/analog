@@ -22,5 +22,6 @@ export const getContentFilesList = () =>
  */
 export const getContentFiles = () =>
   import.meta.glob(['/src/content/**/*.md', '/src/content/**/*.agx'], {
-    as: 'raw',
+    query: '?raw',
+    import: 'default',
   });

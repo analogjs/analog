@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import * as ts from 'typescript';
 import { compileAnalogFile } from './authoring/analog.js';
 import { TEMPLATE_TAG_REGEX } from './authoring/constants.js';
+import { MarkdownTemplateTransform } from './authoring/markdown-transform.js';
 
 import { createRequire } from 'node:module';
 
@@ -25,6 +26,7 @@ export function augmentHostWithResources(
         };
 
     isProd?: boolean;
+    markdownTemplateTransforms?: MarkdownTemplateTransform[];
   } = {}
 ) {
   const ts = require('typescript');
@@ -102,22 +104,16 @@ export function augmentHostWithResources(
   resourceHost.readResource = async function (fileName: string) {
     const filePath = normalizePath(fileName);
 
-    const content = (this as any).readFile(filePath);
+    let content = (this as any).readFile(filePath);
+
     if (content === undefined) {
       throw new Error('Unable to locate component resource: ' + fileName);
     }
 
     if (fileName.includes('virtual-analog:')) {
-      const { MarkedSetupService } = await import(
-        './authoring/marked-setup.service.js'
-      );
-      // read template sections, parse markdown
-      const markedSetupService = new MarkedSetupService();
-      const mdContent = markedSetupService
-        .getMarkedInstance()
-        .parse(content) as unknown as Promise<string>;
-
-      return mdContent;
+      for (const transform of options.markdownTemplateTransforms || []) {
+        content = await transform(content, fileName);
+      }
     }
 
     return content;

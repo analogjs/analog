@@ -23,6 +23,13 @@
 - add npm publish job for packages ([2802c92](https://github.com/analogjs/analog/commit/2802c92cee93cfa7a076421c329383968b5f74a2))
 - update app templates to 1.0.0-beta ([5a23eb0](https://github.com/analogjs/analog/commit/5a23eb08718329ef2ec90135af47beb4a2c96bb7))
 
+## [0.2.45](https://github.com/analogjs/analog/compare/0.2.44...0.2.45) (2024-03-08)
+
+### Features
+
+- **create-analog:** add support for Vite 5.1 to template apps ([#925](https://github.com/analogjs/analog/issues/925)) ([8c6d45f](https://github.com/analogjs/analog/commit/8c6d45fbb181e8203fbf70207d5296788a881027))
+- **vite-plugin-angular:** add pipeline to transform analog markdown template ([#875](https://github.com/analogjs/analog/issues/875)) ([789fa06](https://github.com/analogjs/analog/commit/789fa062d6a36bfbe0da6689da3509e78c41e658))
+
 ## [0.2.44](https://github.com/analogjs/analog/compare/0.2.43...0.2.44) (2024-03-06)
 
 ### Bug Fixes
