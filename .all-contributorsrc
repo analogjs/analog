@@ -785,6 +785,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "nckirik",
+      "name": "N. Can KIRIK",
+      "avatar_url": "https://avatars.githubusercontent.com/u/53273233?v=4",
+      "profile": "https://github.com/nckirik",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
