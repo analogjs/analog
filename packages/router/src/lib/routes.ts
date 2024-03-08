@@ -17,7 +17,7 @@ const FILES = import.meta.glob<RouteExport>([
 
 const CONTENT_FILES = import.meta.glob<string>(
   ['/src/app/routes/**/*.md', '/src/app/pages/**/*.md'],
-  { as: 'raw' }
+  { query: '?raw', import: 'default' }
 );
 
 export type Files = Record<string, () => Promise<RouteExport | string>>;
