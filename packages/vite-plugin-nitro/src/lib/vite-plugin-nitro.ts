@@ -233,7 +233,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           });
 
           console.log(
-            `\n\nThe server endpoints are accessible under the "${apiPrefix}" `
+            `\n\nThe server endpoints are accessible under the "${apiPrefix}" path.`
           );
         }
       },
