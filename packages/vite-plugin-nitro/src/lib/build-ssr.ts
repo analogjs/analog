@@ -1,20 +1,18 @@
 import { build, mergeConfig, UserConfig } from 'vite';
-import * as path from 'node:path';
+import { relative, resolve } from 'node:path';
 
 import { Options } from './options.js';
 
 export async function buildSSRApp(config: UserConfig, options?: Options) {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
-  const rootDir = path.relative(workspaceRoot, config.root || '.') || '.';
-
+  const rootDir = relative(workspaceRoot, config.root || '.') || '.';
   const ssrBuildConfig = mergeConfig(config, {
     build: {
       ssr: true,
       rollupOptions: {
-        input:
-          options?.entryServer || path.resolve(rootDir, './src/main.server.ts'),
+        input: options?.entryServer || resolve(rootDir, './src/main.server.ts'),
       },
-      outDir: options?.ssrBuildDir || path.resolve('dist', rootDir, 'ssr'),
+      outDir: options?.ssrBuildDir || resolve('dist', rootDir, 'ssr'),
     },
   });
 

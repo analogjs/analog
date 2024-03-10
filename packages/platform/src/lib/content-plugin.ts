@@ -1,5 +1,5 @@
 import { Plugin } from 'vite';
-import * as fs from 'node:fs';
+import { readFileSync } from 'node:fs';
 
 interface Content {
   code: string;
@@ -32,7 +32,7 @@ export function contentPlugin(): Plugin[] {
         // when running unit tests. It's safe to retrieve `default` first, since we still
         // fallback to the original implementation.
         const frontmatter = fm.default || fm;
-        const fileContents = fs.readFileSync(id.split('?')[0], 'utf8');
+        const fileContents = readFileSync(id.split('?')[0], 'utf8');
         const { attributes } = frontmatter(fileContents);
         const content = {
           code,

@@ -8,7 +8,7 @@ import {
   stripIndents,
   Tree,
 } from '@nx/devkit';
-import * as path from 'node:path';
+import { join } from 'node:path';
 import { AnalogPageGeneratorSchema, NormalizedSchema } from './schema';
 
 function normalizeOptions(
@@ -51,13 +51,9 @@ function addFiles(tree: Tree, options: NormalizedSchema) {
   };
 
   const pageFolders = options.pathname.split('/').slice(0, -1);
-  const pageDir = path.join(
-    options.projectRoot,
-    'src/app/pages',
-    ...pageFolders
-  );
+  const pageDir = join(options.projectRoot, 'src/app/pages', ...pageFolders);
 
-  generateFiles(tree, path.join(__dirname, 'files'), pageDir, templateOptions);
+  generateFiles(tree, join(__dirname, 'files'), pageDir, templateOptions);
 }
 
 export async function analogPageGenerator(

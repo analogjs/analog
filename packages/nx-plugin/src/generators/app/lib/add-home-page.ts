@@ -1,5 +1,5 @@
 import { generateFiles, Tree } from '@nx/devkit';
-import * as path from 'node:path';
+import { join } from 'node:path';
 import { NormalizedOptions } from '../generator';
 
 export function addHomePage(tree: Tree, options: NormalizedOptions) {
@@ -10,7 +10,7 @@ export function addHomePage(tree: Tree, options: NormalizedOptions) {
 
   generateFiles(
     tree,
-    path.join(__dirname, '..', 'files', 'index-page'),
+    join(__dirname, '..', 'files', 'index-page'),
     options.projectRoot,
     templateOptions
   );
@@ -22,7 +22,7 @@ export function addHomePage(tree: Tree, options: NormalizedOptions) {
 
   generateFiles(
     tree,
-    path.join(__dirname, '..', 'files', 'welcome-components', pageDirectory),
+    join(__dirname, '..', 'files', 'welcome-components', pageDirectory),
     options.projectRoot,
     templateOptions
   );

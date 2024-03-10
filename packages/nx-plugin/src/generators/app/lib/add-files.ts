@@ -1,5 +1,5 @@
 import { generateFiles, Tree } from '@nx/devkit';
-import * as path from 'node:path';
+import { join } from 'node:path';
 import { NormalizedOptions } from '../generator';
 
 export function addFiles(
@@ -13,12 +13,7 @@ export function addFiles(
   };
   generateFiles(
     tree,
-    path.join(
-      __dirname,
-      '..',
-      'files',
-      'template-angular-v' + majorAngularVersion
-    ),
+    join(__dirname, '..', 'files', 'template-angular-v' + majorAngularVersion),
     options.projectRoot,
     templateOptions
   );
@@ -26,7 +21,7 @@ export function addFiles(
   if (!tree.read('/tsconfig.base.json')) {
     generateFiles(
       tree,
-      path.join(__dirname, '..', 'files', 'root'),
+      join(__dirname, '..', 'files', 'root'),
       '.',
       templateOptions
     );

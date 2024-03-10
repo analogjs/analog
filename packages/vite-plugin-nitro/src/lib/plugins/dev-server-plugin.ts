@@ -2,8 +2,8 @@
 // https://github.com/solidjs/solid-start/blob/main/packages/start/dev/server.js
 
 import { Connect, Plugin, ViteDevServer } from 'vite';
-import * as path from 'node:path';
-import * as fs from 'node:fs';
+import { resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
 
 interface ServerOptions {
   index?: string;
@@ -29,8 +29,8 @@ export function devServerPlugin(options: ServerOptions): Plugin {
       return async () => {
         remove_html_middlewares(viteServer.middlewares);
         viteServer.middlewares.use(async (req, res) => {
-          let template = fs.readFileSync(
-            path.resolve(viteServer.config.root, index),
+          let template = readFileSync(
+            resolve(viteServer.config.root, index),
             'utf-8'
           );
 

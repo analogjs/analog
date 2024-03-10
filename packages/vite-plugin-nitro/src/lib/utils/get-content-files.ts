@@ -1,5 +1,5 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import { readFileSync } from 'node:fs';
+import { join, relative, resolve } from 'node:path';
 import { normalizePath } from 'vite';
 import { createRequire } from 'node:module';
 
@@ -16,15 +16,15 @@ export function getMatchingContentFilesWithFrontMatter(
   const fg = require('fast-glob');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const fm = require('front-matter');
-  const root = normalizePath(path.resolve(workspaceRoot, rootDir));
+  const root = normalizePath(resolve(workspaceRoot, rootDir));
 
-  const resolvedDir = normalizePath(path.relative(root, path.join(root, glob)));
+  const resolvedDir = normalizePath(relative(root, join(root, glob)));
   const contentFiles: string[] = fg.sync([`${root}/${resolvedDir}/*`], {
     dot: true,
   });
 
   const mappedFilesWithFm: PrerenderContentFile[] = contentFiles.map((f) => {
-    const fileContents = fs.readFileSync(f, 'utf8');
+    const fileContents = readFileSync(f, 'utf8');
     const raw = fm(fileContents);
     const filepath = f.replace(root, '');
 
