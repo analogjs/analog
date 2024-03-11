@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-82-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-83-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -193,6 +193,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://angelfraga.com/"><img src="https://avatars.githubusercontent.com/u/11693938?v=4?s=100" width="100px;" alt="Angel Fraga Parodi"/><br /><sub><b>Angel Fraga Parodi</b></sub></a><br /><a href="#infra-angelfraga" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/analogjs/analog/commits?author=angelfraga" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://alexfriesen.net/"><img src="https://avatars.githubusercontent.com/u/1307706?v=4?s=100" width="100px;" alt="Alex"/><br /><sub><b>Alex</b></sub></a><br /><a href="#infra-alexfriesen" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/duluca"><img src="https://avatars.githubusercontent.com/u/822159?v=4?s=100" width="100px;" alt="Doguhan Uluca"/><br /><sub><b>Doguhan Uluca</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=duluca" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/nckirik"><img src="https://avatars.githubusercontent.com/u/53273233?v=4?s=100" width="100px;" alt="N. Can KIRIK"/><br /><sub><b>N. Can KIRIK</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=nckirik" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
