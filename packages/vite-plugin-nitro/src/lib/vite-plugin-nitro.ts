@@ -2,7 +2,7 @@ import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
 import { App, toNodeListener } from 'h3';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { normalizePath } from 'vite';
-import { relative, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
 
 import { buildServer } from './build-server.js';
@@ -21,7 +21,7 @@ import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-file
 const isWindows = platform() === 'win32';
 let clientOutputPath = '';
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __dirname = dirname(new URL(import.meta.url).pathname);
 
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
