@@ -1,3 +1,9 @@
+# [1.0.0-rc.2](https://github.com/analogjs/analog/compare/1.0.0-rc.1...1.0.0-rc.2) (2024-03-12)
+
+### Bug Fixes
+
+- **nx-plugin:** update package versions to 1.0 RC ([#933](https://github.com/analogjs/analog/issues/933)) ([d37a9c2](https://github.com/analogjs/analog/commit/d37a9c2c75d7739d56b4af6942f63c4ff77b8ade))
+
 # [1.0.0-rc.1](https://github.com/analogjs/analog/compare/0.2.45...1.0.0-rc.1) (2024-03-08)
 
 # [1.0.0-rc.0](https://github.com/analogjs/analog/compare/1.0.0-beta.5...1.0.0-rc.0) (2024-03-07)
