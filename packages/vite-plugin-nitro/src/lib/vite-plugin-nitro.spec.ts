@@ -293,8 +293,9 @@ describe('nitro', () => {
         { workspaceRoot: '/custom-root-directory' },
         expect.objectContaining({
           output: {
-            dir: '/custom-root-directory/dist/analog',
-            publicDir: '/custom-root-directory/dist/analog/public',
+            dir: '/custom-root-directory/some-other-root-directory/analog',
+            publicDir:
+              '/custom-root-directory/some-other-root-directory/analog/public',
           },
         })
       );
