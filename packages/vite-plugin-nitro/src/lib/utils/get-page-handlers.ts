@@ -1,4 +1,4 @@
-import * as path from 'path';
+import { resolve } from 'node:path';
 import fg from 'fast-glob';
 
 import { NitroEventHandler } from 'nitropack';
@@ -10,7 +10,7 @@ type GetHandlersArgs = {
 };
 
 export function getPageHandlers({ workspaceRoot, rootDir }: GetHandlersArgs) {
-  const root = normalizePath(path.resolve(workspaceRoot, rootDir));
+  const root = normalizePath(resolve(workspaceRoot, rootDir));
 
   const endpointFiles: string[] = fg.sync(
     [`${root}/src/app/pages/**/*.server.ts`],
@@ -19,10 +19,7 @@ export function getPageHandlers({ workspaceRoot, rootDir }: GetHandlersArgs) {
 
   const handlers: NitroEventHandler[] = endpointFiles.map((endpointFile) => {
     const route = endpointFile
-      .replace(
-        normalizePath(path.resolve(workspaceRoot, rootDir, 'src/app')),
-        ''
-      )
+      .replace(normalizePath(resolve(workspaceRoot, rootDir, 'src/app')), '')
       .replace(/\.server\.ts$/, '')
       .replace(/\[\.{3}(.+)\]/g, '**:$1')
       .replace(/\[\.{3}(\w+)\]/g, '**:$1')

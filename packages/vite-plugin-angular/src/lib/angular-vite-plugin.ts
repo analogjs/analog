@@ -1,6 +1,6 @@
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
 import { transformAsync } from '@babel/core';
-import * as path from 'node:path';
+import { resolve } from 'node:path';
 
 import * as compilerCli from '@angular/compiler-cli';
 import * as ts from 'typescript';
@@ -152,7 +152,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
         pluginOptions.tsconfig =
           options?.tsconfig ??
-          path.resolve(
+          resolve(
             config.root || '.',
             process.env['NODE_ENV'] === 'test'
               ? './tsconfig.spec.json'
@@ -456,11 +456,9 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     const fg = require('fast-glob');
     const appRoot = normalizePath(
-      path.resolve(pluginOptions.workspaceRoot, config.root || '.')
+      resolve(pluginOptions.workspaceRoot, config.root || '.')
     );
-    const workspaceRoot = normalizePath(
-      path.resolve(pluginOptions.workspaceRoot)
-    );
+    const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));
 
     const globs = [
       `${appRoot}/**/*.{analog,agx}`,

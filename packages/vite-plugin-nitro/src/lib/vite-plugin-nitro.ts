@@ -1,8 +1,8 @@
 import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
 import { App, toNodeListener } from 'h3';
-import { Plugin, UserConfig, ViteDevServer } from 'vite';
+import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { normalizePath } from 'vite';
-import * as path from 'path';
+import { dirname, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
 
 import { buildServer } from './build-server.js';
@@ -21,7 +21,7 @@ import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-file
 const isWindows = platform() === 'win32';
 let clientOutputPath = '';
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __dirname = dirname(new URL(import.meta.url).pathname);
 
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
@@ -48,7 +48,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         isBuild = command === 'build';
         ssrBuild = _config.build?.ssr === true;
         config = _config;
-        const rootDir = path.relative(workspaceRoot, config.root || '.') || '.';
+        const rootDir = relative(workspaceRoot, config.root || '.') || '.';
         const buildPreset =
           process.env['BUILD_PRESET'] ??
           (nitroOptions?.preset as string | undefined);
@@ -63,15 +63,15 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           scanDirs: [normalizePath(`${rootDir}/src/server`)],
           output: {
             dir: normalizePath(
-              path.resolve(workspaceRoot, 'dist', rootDir, 'analog')
+              resolve(workspaceRoot, 'dist', rootDir, 'analog')
             ),
             publicDir: normalizePath(
-              path.resolve(workspaceRoot, 'dist', rootDir, 'analog/public')
+              resolve(workspaceRoot, 'dist', rootDir, 'analog/public')
             ),
             ...nitroOptions?.output,
           },
           buildDir: normalizePath(
-            path.resolve(workspaceRoot, 'dist', rootDir, '.nitro')
+            resolve(workspaceRoot, 'dist', rootDir, '.nitro')
           ),
           typescript: {
             generateTsConfig: false,
@@ -103,7 +103,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         if (!ssrBuild && !isTest) {
           // store the client output path for the SSR build config
-          clientOutputPath = path.resolve(
+          clientOutputPath = resolve(
             rootDir,
             config.build?.outDir || 'dist/client'
           );
@@ -114,10 +114,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           '#analog/ssr':
             (isWindows ? 'file://' : '') +
             normalizePath(
-              path.resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
+              resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
             ),
           '#analog/index': normalizePath(
-            path.resolve(clientOutputPath, 'index.html')
+            resolve(clientOutputPath, 'index.html')
           ),
           ...nitroOptions?.alias,
         };
@@ -296,9 +296,9 @@ const withVercelOutputAPI = (
   ...nitroConfig,
   output: {
     ...nitroConfig?.output,
-    dir: normalizePath(path.resolve(workspaceRoot, '.vercel', 'output')),
+    dir: normalizePath(resolve(workspaceRoot, '.vercel', 'output')),
     publicDir: normalizePath(
-      path.resolve(workspaceRoot, '.vercel', 'output/static')
+      resolve(workspaceRoot, '.vercel', 'output/static')
     ),
   },
 });
