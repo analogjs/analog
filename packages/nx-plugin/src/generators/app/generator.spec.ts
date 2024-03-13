@@ -211,10 +211,10 @@ describe('nx-plugin generator', () => {
   ) => {
     expect(devDependencies['tailwindcss']).toBeDefined();
     const hasTailwindConfigFile = tree.exists(
-      'apps/tailwind-app/tailwind.config.js'
+      'apps/tailwind-app/tailwind.config.cjs'
     );
     const hasPostCSSConfigFile = tree.exists(
-      'apps/tailwind-app/postcss.config.js'
+      'apps/tailwind-app/postcss.config.cjs'
     );
     expect(hasTailwindConfigFile).toBeTruthy();
     expect(hasPostCSSConfigFile).toBeTruthy();
