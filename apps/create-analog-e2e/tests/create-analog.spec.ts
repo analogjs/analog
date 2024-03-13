@@ -40,7 +40,7 @@ describe('create-analog e2e', () => {
     const tmpDir = `${process.cwd()}/${project}`;
 
     await runCommandAsync(
-      `node ./dist/packages/create-analog/index.js ${project} --template angular-v17 --skipTailwind true`,
+      `node ./dist/packages/create-analog/index.js ${project} --template angular-v17 --skipTailwind --no-skipGit`,
       { cwd: process.cwd() }
     );
 
@@ -75,14 +75,14 @@ describe('create-analog e2e', () => {
     ).not.toThrow();
 
     rmdirSync(tmpDir, { recursive: true });
-  }, 120000);
+  }, 480000);
 
   it('should create my-app with the next release', async () => {
     const project = uniq('tmpanalogapp');
     const tmpDir = `${process.cwd()}/${project}`;
 
     await runCommandAsync(
-      `node ./dist/packages/create-analog/index.js ${project} --template angular-v17 --skipTailwind true`,
+      `node ./dist/packages/create-analog/index.js ${project} --template angular-v17 --skipTailwind --no-skipGit`,
       { cwd: process.cwd() }
     );
 
@@ -124,5 +124,5 @@ describe('create-analog e2e', () => {
     ).not.toThrow();
 
     rmdirSync(tmpDir, { recursive: true });
-  }, 120000);
+  }, 480000);
 });
