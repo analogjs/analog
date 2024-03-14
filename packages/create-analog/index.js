@@ -50,7 +50,6 @@ async function init() {
   let targetDir = formatTargetDir(argv._[0]);
   let template = argv.template || argv.t;
   let skipTailwind = argv.skipTailwind || false;
-  let skipGit = argv.skipGit || false;
 
   const defaultTargetDir = 'analog-project';
   const getProjectName = () =>
@@ -207,17 +206,14 @@ async function init() {
 
   write('package.json', JSON.stringify(pkg, null, 2));
 
-  skipGit = isGitInitialized(cwd) || skipGit;
-  if (!skipGit) {
-    console.log(`\nInitializing git repository:`);
-    execSync(`git init ${targetDir} && cd ${targetDir} && git add .`);
+  console.log(`\nInitializing git repository:`);
+  execSync(`git init ${targetDir} && cd ${targetDir} && git add .`);
 
-    // Fail Silent
-    // Can fail when user does not have global git credentials
-    try {
-      execSync(`cd ${targetDir} && git commit -m "initial commit"`);
-    } catch {}
-  }
+  // Fail Silent
+  // Can fail when user does not have global git credentials
+  try {
+    execSync(`cd ${targetDir} && git commit -m "initial commit"`);
+  } catch {}
 
   console.log(`\nDone. Now run:\n`);
   if (root !== cwd) {
@@ -356,16 +352,6 @@ function addDevDependencies(pkg) {
       pkg.devDependencies[name] = version;
     }
   );
-}
-
-function isGitInitialized(dir) {
-  const gitDir = path.join(dir, '.git');
-  if (fs.existsSync(gitDir)) return true;
-
-  const parentDir = path.dirname(dir);
-  if (parentDir === dir) return false;
-
-  return isGitInitialized(parentDir);
 }
 
 init().catch((e) => {
