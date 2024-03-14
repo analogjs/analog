@@ -20,14 +20,14 @@ To create an RSS feed for your site, set the `content-type` to be `text/xml` and
 ```ts
 //server/routes/rss.xml.ts
 
-import { defineEventHandler } from 'h3';
+import { defineEventHandler, setHeader } from 'h3';
 export default defineEventHandler((event) => {
   const feedString = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
 </rss>
   `;
-  event.node.res.setHeader('content-type', 'text/xml');
-  event.node.res.end(feedString);
+  setHeader(event, 'content-type', 'text/xml');
+  return feedString;
 });
 ```
 
@@ -83,7 +83,7 @@ Dynamic API routes are defined by using the filename as the route path enclosed 
 import { defineEventHandler } from 'h3';
 
 export default defineEventHandler(
-  (event: H3Event) => `Hello ${event.context.params?.['name']}!`
+  (event) => `Hello ${event.context.params?.['name']}!`
 );
 ```
 
@@ -219,4 +219,4 @@ export const load = async ({ event }: PageServerLoad) => {
 
 ## More Info
 
-API routes are powered by [Nitro](https://nitro.unjs.io). See the Nitro docs for more examples around building API routes.
+API routes are powered by [Nitro](https://nitro.unjs.io/guide/routing) and [h3](https://h3.unjs.io/). See the Nitro and h3 docs for for more examples around building API routes.
