@@ -37,7 +37,6 @@ yarn-error.log
 /libpeerconnection.log
 testem.log
 /typings
-/.npmrc
 
 # System files
 .DS_Store

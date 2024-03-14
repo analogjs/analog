@@ -94,8 +94,8 @@ describe('nx-plugin generator', () => {
     dependencies: Record<string, string>,
     devDependencies: Record<string, string>
   ) => {
-    expect(dependencies['@analogjs/content']).toBe('^0.2.0');
-    expect(dependencies['@analogjs/router']).toBe('^0.2.0');
+    expect(dependencies['@analogjs/content']).toBe('^1.0.0-rc.0');
+    expect(dependencies['@analogjs/router']).toBe('^1.0.0-rc.0');
     expect(dependencies['@angular/platform-server']).toBe(
       dependencies['@angular/core']
     );
@@ -111,8 +111,10 @@ describe('nx-plugin generator', () => {
     // we just check for truthy because @nx/eslint generator
     // will install the correct version based on Nx version
     expect(devDependencies['@nx/eslint']).toBeTruthy();
-    expect(devDependencies['@analogjs/platform']).toBe('^0.2.0');
-    expect(devDependencies['@analogjs/vite-plugin-angular']).toBe('^0.2.0');
+    expect(devDependencies['@analogjs/platform']).toBe('^1.0.0-rc.0');
+    expect(devDependencies['@analogjs/vite-plugin-angular']).toBe(
+      '^1.0.0-rc.0'
+    );
     expect(devDependencies['@nx/vite']).toBe('^17.0.0');
     expect(devDependencies['jsdom']).toBe('^22.0.0');
     expect(devDependencies['vite']).toBe('^4.4.8');
@@ -124,8 +126,8 @@ describe('nx-plugin generator', () => {
     dependencies: Record<string, string>,
     devDependencies: Record<string, string>
   ) => {
-    expect(dependencies['@analogjs/content']).toBe('^0.2.0');
-    expect(dependencies['@analogjs/router']).toBe('^0.2.0');
+    expect(dependencies['@analogjs/content']).toBe('^1.0.0-rc.0');
+    expect(dependencies['@analogjs/router']).toBe('^1.0.0-rc.0');
     expect(dependencies['@angular/platform-server']).toBe(
       dependencies['@angular/core']
     );
@@ -141,13 +143,15 @@ describe('nx-plugin generator', () => {
     // we just check for truthy because @nx/eslint generator
     // will install the correct version based on Nx version
     expect(devDependencies['@nx/eslint']).toBeTruthy();
-    expect(devDependencies['@analogjs/platform']).toBe('^0.2.0');
-    expect(devDependencies['@analogjs/vite-plugin-angular']).toBe('^0.2.0');
+    expect(devDependencies['@analogjs/platform']).toBe('^1.0.0-rc.0');
+    expect(devDependencies['@analogjs/vite-plugin-angular']).toBe(
+      '^1.0.0-rc.0'
+    );
     expect(devDependencies['@nx/vite']).toBe('^18.0.0');
     expect(devDependencies['jsdom']).toBe('^22.1.0');
-    expect(devDependencies['vite']).toBe('~5.0.0');
+    expect(devDependencies['vite']).toBe('^5.0.0');
     expect(devDependencies['vite-tsconfig-paths']).toBe('^4.2.0');
-    expect(devDependencies['vitest']).toBe('^1.0.4');
+    expect(devDependencies['vitest']).toBe('^1.3.1');
   };
 
   const verifyConfig = (
@@ -207,10 +211,10 @@ describe('nx-plugin generator', () => {
   ) => {
     expect(devDependencies['tailwindcss']).toBeDefined();
     const hasTailwindConfigFile = tree.exists(
-      'apps/tailwind-app/tailwind.config.js'
+      'apps/tailwind-app/tailwind.config.cjs'
     );
     const hasPostCSSConfigFile = tree.exists(
-      'apps/tailwind-app/postcss.config.js'
+      'apps/tailwind-app/postcss.config.cjs'
     );
     expect(hasTailwindConfigFile).toBeTruthy();
     expect(hasPostCSSConfigFile).toBeTruthy();

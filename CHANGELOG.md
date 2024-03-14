@@ -1,9 +1,75 @@
-## [0.2.45](https://github.com/analogjs/analog/compare/0.2.44...0.2.45) (2024-03-08)
+# [1.0.0](https://github.com/analogjs/analog/compare/1.0.0-rc.3...1.0.0) (2024-03-14)
+
+# [1.0.0-rc.3](https://github.com/analogjs/analog/compare/1.0.0-rc.2...1.0.0-rc.3) (2024-03-14)
+
+### Bug Fixes
+
+- **nx-plugin:** rename template files and adjust versions ([#936](https://github.com/analogjs/analog/issues/936)) ([e0d4b6b](https://github.com/analogjs/analog/commit/e0d4b6b2cec348482b07f33b666451b724afbabf))
+
+# [1.0.0-rc.2](https://github.com/analogjs/analog/compare/1.0.0-rc.1...1.0.0-rc.2) (2024-03-12)
+
+### Bug Fixes
+
+- **nx-plugin:** update package versions to 1.0 RC ([#933](https://github.com/analogjs/analog/issues/933)) ([d37a9c2](https://github.com/analogjs/analog/commit/d37a9c2c75d7739d56b4af6942f63c4ff77b8ade))
+
+# [1.0.0-rc.1](https://github.com/analogjs/analog/compare/0.2.45...1.0.0-rc.1) (2024-03-08)
+
+# [1.0.0-rc.0](https://github.com/analogjs/analog/compare/1.0.0-beta.5...1.0.0-rc.0) (2024-03-07)
+
+# [1.0.0-beta.2](https://github.com/analogjs/analog/compare/0.2.29...1.0.0-beta.2) (2023-12-30)
+
+# [1.0.0-beta.1](https://github.com/analogjs/analog/compare/1.0.0-beta.0...1.0.0-beta.1) (2023-12-12)
+
+### Bug Fixes
+
+- **create-analog:** set app root for Vite/ESM support ([32ab9ce](https://github.com/analogjs/analog/commit/32ab9cecc6dc0d28e166edbc9a27a9071ba22069))
+- **vite-plugin-nitro:** use relative paths for root directory ([989fd6d](https://github.com/analogjs/analog/commit/989fd6d162d4d5a389ab543bead70e4a2188f931))
+
+# [1.0.0-beta.0](https://github.com/analogjs/analog/compare/0.2.25...1.0.0-beta.0) (2023-12-12)
+
+### Bug Fixes
+
+- add release tag env variable ([379c546](https://github.com/analogjs/analog/commit/379c5466ba054fdf5fc6a9e579f3c17849004c88))
+- only auto-publish [@analogjs](https://github.com/analogjs) packages ([98301dc](https://github.com/analogjs/analog/commit/98301dc08dac3f7cb46dfce3483679005ba0ed60))
+- set beta tag on publish ([c1b8211](https://github.com/analogjs/analog/commit/c1b8211153d5259214a5a5f807fb892f82a28600))
+- use semantic release to publish ([8410660](https://github.com/analogjs/analog/commit/841066058ad83f5ddd190221b3d832a8dddf5497))
+
+### Features
+
+- add npm publish job for packages ([2802c92](https://github.com/analogjs/analog/commit/2802c92cee93cfa7a076421c329383968b5f74a2))
+- update app templates to 1.0.0-beta ([5a23eb0](https://github.com/analogjs/analog/commit/5a23eb08718329ef2ec90135af47beb4a2c96bb7))
+
+## [0.2.45](https://github.com/analogjs/analog/compare/1.0.0-rc.0...0.2.45) (2024-03-08)
 
 ### Features
 
 - **create-analog:** add support for Vite 5.1 to template apps ([#925](https://github.com/analogjs/analog/issues/925)) ([8c6d45f](https://github.com/analogjs/analog/commit/8c6d45fbb181e8203fbf70207d5296788a881027))
 - **vite-plugin-angular:** add pipeline to transform analog markdown template ([#875](https://github.com/analogjs/analog/issues/875)) ([789fa06](https://github.com/analogjs/analog/commit/789fa062d6a36bfbe0da6689da3509e78c41e658))
+
+# [1.0.0-rc.0](https://github.com/analogjs/analog/compare/1.0.0-beta.5...1.0.0-rc.0) (2024-03-07)
+
+# [1.0.0-beta.2](https://github.com/analogjs/analog/compare/0.2.29...1.0.0-beta.2) (2023-12-30)
+
+# [1.0.0-beta.1](https://github.com/analogjs/analog/compare/1.0.0-beta.0...1.0.0-beta.1) (2023-12-12)
+
+### Bug Fixes
+
+- **create-analog:** set app root for Vite/ESM support ([32ab9ce](https://github.com/analogjs/analog/commit/32ab9cecc6dc0d28e166edbc9a27a9071ba22069))
+- **vite-plugin-nitro:** use relative paths for root directory ([989fd6d](https://github.com/analogjs/analog/commit/989fd6d162d4d5a389ab543bead70e4a2188f931))
+
+# [1.0.0-beta.0](https://github.com/analogjs/analog/compare/0.2.25...1.0.0-beta.0) (2023-12-12)
+
+### Bug Fixes
+
+- add release tag env variable ([379c546](https://github.com/analogjs/analog/commit/379c5466ba054fdf5fc6a9e579f3c17849004c88))
+- only auto-publish [@analogjs](https://github.com/analogjs) packages ([98301dc](https://github.com/analogjs/analog/commit/98301dc08dac3f7cb46dfce3483679005ba0ed60))
+- set beta tag on publish ([c1b8211](https://github.com/analogjs/analog/commit/c1b8211153d5259214a5a5f807fb892f82a28600))
+- use semantic release to publish ([8410660](https://github.com/analogjs/analog/commit/841066058ad83f5ddd190221b3d832a8dddf5497))
+
+### Features
+
+- add npm publish job for packages ([2802c92](https://github.com/analogjs/analog/commit/2802c92cee93cfa7a076421c329383968b5f74a2))
+- update app templates to 1.0.0-beta ([5a23eb0](https://github.com/analogjs/analog/commit/5a23eb08718329ef2ec90135af47beb4a2c96bb7))
 
 ## [0.2.44](https://github.com/analogjs/analog/compare/0.2.43...0.2.44) (2024-03-06)
 
@@ -90,7 +156,7 @@
 
 - **vite-plugin-angular:** add include configuration for analog file globs ([#882](https://github.com/analogjs/analog/issues/882)) ([00baaf4](https://github.com/analogjs/analog/commit/00baaf4fb0162a2ec3161410665b21cfd421d864))
 
-## [0.2.32](https://github.com/analogjs/analog/compare/0.2.31...0.2.32) (2024-02-08)
+## [0.2.32](https://github.com/analogjs/analog/compare/1.0.0-beta.3...0.2.32) (2024-02-08)
 
 ### Bug Fixes
 
@@ -99,6 +165,29 @@
 ### Features
 
 - **nx-plugin:** add support for nx 18 ([#880](https://github.com/analogjs/analog/issues/880)) ([aa5c4fa](https://github.com/analogjs/analog/commit/aa5c4fa5b064a613b2cabfe3aed97509efbdd06f))
+
+# [1.0.0-beta.2](https://github.com/analogjs/analog/compare/0.2.29...1.0.0-beta.2) (2023-12-30)
+
+# [1.0.0-beta.1](https://github.com/analogjs/analog/compare/1.0.0-beta.0...1.0.0-beta.1) (2023-12-12)
+
+### Bug Fixes
+
+- **create-analog:** set app root for Vite/ESM support ([32ab9ce](https://github.com/analogjs/analog/commit/32ab9cecc6dc0d28e166edbc9a27a9071ba22069))
+- **vite-plugin-nitro:** use relative paths for root directory ([989fd6d](https://github.com/analogjs/analog/commit/989fd6d162d4d5a389ab543bead70e4a2188f931))
+
+# [1.0.0-beta.0](https://github.com/analogjs/analog/compare/0.2.25...1.0.0-beta.0) (2023-12-12)
+
+### Bug Fixes
+
+- add release tag env variable ([379c546](https://github.com/analogjs/analog/commit/379c5466ba054fdf5fc6a9e579f3c17849004c88))
+- only auto-publish [@analogjs](https://github.com/analogjs) packages ([98301dc](https://github.com/analogjs/analog/commit/98301dc08dac3f7cb46dfce3483679005ba0ed60))
+- set beta tag on publish ([c1b8211](https://github.com/analogjs/analog/commit/c1b8211153d5259214a5a5f807fb892f82a28600))
+- use semantic release to publish ([8410660](https://github.com/analogjs/analog/commit/841066058ad83f5ddd190221b3d832a8dddf5497))
+
+### Features
+
+- add npm publish job for packages ([2802c92](https://github.com/analogjs/analog/commit/2802c92cee93cfa7a076421c329383968b5f74a2))
+- update app templates to 1.0.0-beta ([5a23eb0](https://github.com/analogjs/analog/commit/5a23eb08718329ef2ec90135af47beb4a2c96bb7))
 
 ## [0.2.31](https://github.com/analogjs/analog/compare/0.2.31-beta.2...0.2.31) (2024-02-07)
 
@@ -198,12 +287,38 @@
 
 - **vite-plugin-angular:** add ts-morph as devDependency ([2870b9c](https://github.com/analogjs/analog/commit/2870b9c49eaf85b1400d489cf6eb89dd2b1082cd))
 
-## [0.2.30-beta.0](https://github.com/analogjs/analog/compare/0.2.29...0.2.30-beta.0) (2024-01-02)
+## [0.2.30-beta.0](https://github.com/analogjs/analog/compare/1.0.0-beta.2...0.2.30-beta.0) (2024-01-02)
+
+### Features
+
+- **vite-plugin-angular:** introduce experimental support for .ng format ([#823](https://github.com/analogjs/analog/issues/823)) ([f12beeb](https://github.com/analogjs/analog/commit/f12beeb2ecc8ab8dc7377981555fa13e8c62f14b))
+
+# [1.0.0-beta.2](https://github.com/analogjs/analog/compare/0.2.29...1.0.0-beta.2) (2023-12-30)
 
 ### Features
 
 - **trpc:** allow install of superjson version 2.2.1 and newer ([#793](https://github.com/analogjs/analog/issues/793)) ([4dffaf3](https://github.com/analogjs/analog/commit/4dffaf37657c0d04eedd16ec3b7262b78ace52c6))
-- **vite-plugin-angular:** introduce experimental support for .ng format ([#823](https://github.com/analogjs/analog/issues/823)) ([f12beeb](https://github.com/analogjs/analog/commit/f12beeb2ecc8ab8dc7377981555fa13e8c62f14b))
+
+# [1.0.0-beta.1](https://github.com/analogjs/analog/compare/1.0.0-beta.0...1.0.0-beta.1) (2023-12-12)
+
+### Bug Fixes
+
+- **create-analog:** set app root for Vite/ESM support ([32ab9ce](https://github.com/analogjs/analog/commit/32ab9cecc6dc0d28e166edbc9a27a9071ba22069))
+- **vite-plugin-nitro:** use relative paths for root directory ([989fd6d](https://github.com/analogjs/analog/commit/989fd6d162d4d5a389ab543bead70e4a2188f931))
+
+# [1.0.0-beta.0](https://github.com/analogjs/analog/compare/0.2.25...1.0.0-beta.0) (2023-12-12)
+
+### Bug Fixes
+
+- add release tag env variable ([379c546](https://github.com/analogjs/analog/commit/379c5466ba054fdf5fc6a9e579f3c17849004c88))
+- only auto-publish [@analogjs](https://github.com/analogjs) packages ([98301dc](https://github.com/analogjs/analog/commit/98301dc08dac3f7cb46dfce3483679005ba0ed60))
+- set beta tag on publish ([c1b8211](https://github.com/analogjs/analog/commit/c1b8211153d5259214a5a5f807fb892f82a28600))
+- use semantic release to publish ([8410660](https://github.com/analogjs/analog/commit/841066058ad83f5ddd190221b3d832a8dddf5497))
+
+### Features
+
+- add npm publish job for packages ([2802c92](https://github.com/analogjs/analog/commit/2802c92cee93cfa7a076421c329383968b5f74a2))
+- update app templates to 1.0.0-beta ([5a23eb0](https://github.com/analogjs/analog/commit/5a23eb08718329ef2ec90135af47beb4a2c96bb7))
 
 ## [0.2.29](https://github.com/analogjs/analog/compare/0.2.28...0.2.29) (2023-12-19)
 
@@ -229,7 +344,7 @@
 - **vite-plugin-angular:** improve compatibility with sourcemaps ([#803](https://github.com/analogjs/analog/issues/803)) ([ccc959b](https://github.com/analogjs/analog/commit/ccc959b8978525af3f0bc431924e1744d2c834e3))
 - **vite-plugin-angular:** support Windows path for templateUrl and styleUrl ([#799](https://github.com/analogjs/analog/issues/799)) ([c083461](https://github.com/analogjs/analog/commit/c083461dc063e693f41eda42863638556b3c19ef))
 
-## [0.2.26](https://github.com/analogjs/analog/compare/0.2.25...0.2.26) (2023-12-13)
+## [0.2.26](https://github.com/analogjs/analog/compare/1.0.0-beta.1...0.2.26) (2023-12-13)
 
 ### Bug Fixes
 
@@ -238,6 +353,27 @@
 ### Performance Improvements
 
 - **vite-plugin-angular:** only filter to Angular CDK packages for ESM transform ([#796](https://github.com/analogjs/analog/issues/796)) ([d5256a8](https://github.com/analogjs/analog/commit/d5256a83c0aac7009e13ad0b3801e50b26a960ed))
+
+# [1.0.0-beta.1](https://github.com/analogjs/analog/compare/1.0.0-beta.0...1.0.0-beta.1) (2023-12-12)
+
+### Bug Fixes
+
+- **create-analog:** set app root for Vite/ESM support ([32ab9ce](https://github.com/analogjs/analog/commit/32ab9cecc6dc0d28e166edbc9a27a9071ba22069))
+- **vite-plugin-nitro:** use relative paths for root directory ([989fd6d](https://github.com/analogjs/analog/commit/989fd6d162d4d5a389ab543bead70e4a2188f931))
+
+# [1.0.0-beta.0](https://github.com/analogjs/analog/compare/0.2.25...1.0.0-beta.0) (2023-12-12)
+
+### Bug Fixes
+
+- add release tag env variable ([379c546](https://github.com/analogjs/analog/commit/379c5466ba054fdf5fc6a9e579f3c17849004c88))
+- only auto-publish [@analogjs](https://github.com/analogjs) packages ([98301dc](https://github.com/analogjs/analog/commit/98301dc08dac3f7cb46dfce3483679005ba0ed60))
+- set beta tag on publish ([c1b8211](https://github.com/analogjs/analog/commit/c1b8211153d5259214a5a5f807fb892f82a28600))
+- use semantic release to publish ([8410660](https://github.com/analogjs/analog/commit/841066058ad83f5ddd190221b3d832a8dddf5497))
+
+### Features
+
+- add npm publish job for packages ([2802c92](https://github.com/analogjs/analog/commit/2802c92cee93cfa7a076421c329383968b5f74a2))
+- update app templates to 1.0.0-beta ([5a23eb0](https://github.com/analogjs/analog/commit/5a23eb08718329ef2ec90135af47beb4a2c96bb7))
 
 ## [0.2.25](https://github.com/analogjs/analog/compare/0.2.24...0.2.25) (2023-12-12)
 

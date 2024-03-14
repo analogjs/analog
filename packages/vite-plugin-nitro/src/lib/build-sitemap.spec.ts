@@ -1,5 +1,5 @@
 import { buildSitemap } from './build-sitemap';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 
 describe('build sitemap', () => {
   const config = { root: 'root' };

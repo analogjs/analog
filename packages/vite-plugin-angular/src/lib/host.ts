@@ -1,10 +1,14 @@
 import { CompilerHost } from '@angular/compiler-cli';
-import { normalizePath } from '@ngtools/webpack/src/ivy/paths';
+import { normalizePath } from '@ngtools/webpack/src/ivy/paths.js';
 import { readFileSync } from 'node:fs';
 import * as ts from 'typescript';
-import { compileAnalogFile } from './authoring/analog';
-import { TEMPLATE_TAG_REGEX } from './authoring/constants';
-import { MarkdownTemplateTransform } from './authoring/markdown-transform';
+import { compileAnalogFile } from './authoring/analog.js';
+import { TEMPLATE_TAG_REGEX } from './authoring/constants.js';
+import { MarkdownTemplateTransform } from './authoring/markdown-transform.js';
+
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
 
 export function augmentHostWithResources(
   host: ts.CompilerHost,
@@ -25,6 +29,7 @@ export function augmentHostWithResources(
     markdownTemplateTransforms?: MarkdownTemplateTransform[];
   } = {}
 ) {
+  const ts = require('typescript');
   const resourceHost = host as CompilerHost;
   const baseGetSourceFile = (
     resourceHost as ts.CompilerHost

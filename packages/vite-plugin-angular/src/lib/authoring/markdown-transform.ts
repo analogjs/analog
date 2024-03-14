@@ -5,7 +5,7 @@ export type MarkdownTemplateTransform = (
 
 export const defaultMarkdownTemplateTransform: MarkdownTemplateTransform =
   async (content: string) => {
-    const { MarkedSetupService } = await import('./marked-setup.service');
+    const { MarkedSetupService } = await import('./marked-setup.service.js');
 
     // read template sections, parse markdown
     const markedSetupService = new MarkedSetupService();

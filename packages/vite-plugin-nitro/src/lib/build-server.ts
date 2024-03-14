@@ -1,17 +1,14 @@
-import { NitroConfig } from 'nitropack';
-import * as fs from 'fs';
+import { NitroConfig, copyPublicAssets, prerender } from 'nitropack';
+import { createNitro, build, prepare } from 'nitropack';
+import { existsSync, unlinkSync } from 'node:fs';
 
-import { Options } from './options';
-import { addPostRenderingHooks } from './hooks/post-rendering-hook';
-import { loadEsmModule } from './utils/load-esm';
+import { Options } from './options.js';
+import { addPostRenderingHooks } from './hooks/post-rendering-hook.js';
 
 export async function buildServer(
   options?: Options,
   nitroConfig?: NitroConfig
 ) {
-  const { createNitro, build, prepare, copyPublicAssets, prerender } =
-    await loadEsmModule<typeof import('nitropack')>('nitropack');
-
   const nitro = await createNitro({
     dev: false,
     preset: process.env['BUILD_PRESET'],
@@ -30,8 +27,8 @@ export async function buildServer(
     nitroConfig?.prerender?.routes.find((route) => route === '/')
   ) {
     // Remove the root index.html so it can be replaced with the prerendered version
-    if (fs.existsSync(`${nitroConfig?.output?.publicDir}/index.html`)) {
-      fs.unlinkSync(`${nitroConfig?.output?.publicDir}/index.html`);
+    if (existsSync(`${nitroConfig?.output?.publicDir}/index.html`)) {
+      unlinkSync(`${nitroConfig?.output?.publicDir}/index.html`);
     }
   }
 

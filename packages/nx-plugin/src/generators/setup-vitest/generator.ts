@@ -5,7 +5,7 @@ import {
   installPackagesTask,
   Tree,
 } from '@nx/devkit';
-import * as path from 'path';
+import { join } from 'node:path';
 
 import { getInstalledPackageVersion } from '../../utils/version-utils';
 import { addAnalogDependencies } from './lib/add-analog-dependencies';
@@ -25,7 +25,7 @@ function addFiles(tree: Tree, options: SetupVitestGeneratorSchema) {
 
   generateFiles(
     tree,
-    path.join(__dirname, 'files'),
+    join(__dirname, 'files'),
     projectConfig.root || '.',
     templateOptions
   );

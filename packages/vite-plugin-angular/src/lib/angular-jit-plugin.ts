@@ -1,5 +1,4 @@
 import { Plugin, PluginContainer, ViteDevServer } from 'vite';
-import { readFileSync } from 'fs';
 
 export function jitPlugin({
   inlineStylesExtension,

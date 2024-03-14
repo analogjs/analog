@@ -1,6 +1,5 @@
 /// <reference types="vitest" />
 
-import { offsetFromRoot } from '@nx/devkit';
 import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
@@ -14,7 +13,7 @@ export default defineConfig(({ mode }) => {
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
       cache: {
-        dir: `${offsetFromRoot('packages/platform/src')}/node_modules/.vitest`,
+        dir: `../../node_modules/.vitest`,
       },
     },
     define: {

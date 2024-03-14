@@ -13,7 +13,7 @@
         "tsConfig": "packages/vite-plugin-nitro/tsconfig.lib.json",
         "assets": [
           "packages/vite-plugin-nitro/*.md",
-          "packages/vite-plugin-nitro/src/lib/runtime/*.js",
+          "packages/vite-plugin-nitro/src/lib/runtime/*.ts",
           "packages/vite-plugin-nitro/migrations/migration.json"
         ],
         "updateBuildableProjectDepsInPackageJson": false

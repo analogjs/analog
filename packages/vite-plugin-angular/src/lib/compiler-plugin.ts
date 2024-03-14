@@ -8,7 +8,10 @@
 
 import type { DepOptimizationConfig } from 'vite';
 
-import { CompilerPluginOptions, JavaScriptTransformer } from './utils/devkit';
+import {
+  CompilerPluginOptions,
+  JavaScriptTransformer,
+} from './utils/devkit.js';
 
 type EsbuildOptions = NonNullable<DepOptimizationConfig['esbuildOptions']>;
 type EsbuildPlugin = NonNullable<EsbuildOptions['plugins']>[number];

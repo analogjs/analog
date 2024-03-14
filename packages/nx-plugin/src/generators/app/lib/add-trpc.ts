@@ -1,5 +1,5 @@
 import { addDependenciesToPackageJson, generateFiles, Tree } from '@nx/devkit';
-import * as path from 'path';
+import { join } from 'node:path';
 import { NormalizedOptions } from '../generator';
 import { getTrpcDependencies } from '../versions/trpc-dependencies';
 
@@ -18,7 +18,7 @@ export async function addTrpc(
   };
   generateFiles(
     tree,
-    path.join(__dirname, '..', 'files', 'trpc'),
+    join(__dirname, '..', 'files', 'trpc'),
     projectRoot,
     templateOptions
   );

@@ -29,7 +29,11 @@ import {
   SIGNALS_MAP,
   STYLE_TAG_REGEX,
   TEMPLATE_TAG_REGEX,
-} from './constants';
+} from './constants.js';
+
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
 
 export function compileAnalogFile(
   filePath: string,
