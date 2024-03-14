@@ -1,3 +1,9 @@
+# [1.0.0-rc.3](https://github.com/analogjs/analog/compare/1.0.0-rc.2...1.0.0-rc.3) (2024-03-14)
+
+### Bug Fixes
+
+- **nx-plugin:** rename template files and adjust versions ([#936](https://github.com/analogjs/analog/issues/936)) ([e0d4b6b](https://github.com/analogjs/analog/commit/e0d4b6b2cec348482b07f33b666451b724afbabf))
+
 # [1.0.0-rc.2](https://github.com/analogjs/analog/compare/1.0.0-rc.1...1.0.0-rc.2) (2024-03-12)
 
 ### Bug Fixes
