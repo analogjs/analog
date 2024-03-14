@@ -1,3 +1,5 @@
+# [1.0.0](https://github.com/analogjs/analog/compare/1.0.0-rc.3...1.0.0) (2024-03-14)
+
 # [1.0.0-rc.3](https://github.com/analogjs/analog/compare/1.0.0-rc.2...1.0.0-rc.3) (2024-03-14)
 
 ### Bug Fixes
