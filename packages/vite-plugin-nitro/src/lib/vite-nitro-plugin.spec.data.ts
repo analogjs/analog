@@ -1,7 +1,7 @@
 import { NitroConfig } from 'nitropack';
 import { ConfigEnv, UserConfig, Plugin } from 'vite';
 import { Mock, vi } from 'vitest';
-import * as path from 'path';
+import { resolve } from 'node:path';
 
 export const mockViteDevServer = {
   middlewares: {
@@ -11,12 +11,12 @@ export const mockViteDevServer = {
 };
 
 export const mockNitroConfig: NitroConfig = {
-  buildDir: path.resolve('./dist/.nitro'),
+  buildDir: resolve('./dist/.nitro'),
   handlers: [],
   logLevel: 0,
   output: {
-    dir: path.resolve('dist/analog'),
-    publicDir: path.resolve('dist/analog/public'),
+    dir: resolve('dist/analog'),
+    publicDir: resolve('dist/analog/public'),
   },
   rootDir: '.',
   runtimeConfig: {},

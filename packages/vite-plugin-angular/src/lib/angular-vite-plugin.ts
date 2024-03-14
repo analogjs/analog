@@ -1,8 +1,10 @@
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
 import { transformAsync } from '@babel/core';
-import * as path from 'path';
+import { resolve } from 'node:path';
 
+import * as compilerCli from '@angular/compiler-cli';
 import * as ts from 'typescript';
+import { createRequire } from 'node:module';
 import {
   ModuleNode,
   normalizePath,
@@ -11,24 +13,30 @@ import {
   UserConfig,
   ViteDevServer,
 } from 'vite';
-import { buildOptimizerPlugin } from './angular-build-optimizer-plugin';
-import { jitPlugin } from './angular-jit-plugin';
-import { angularVitestPlugin } from './angular-vitest-plugin';
 
-import { createCompilerPlugin } from './compiler-plugin';
-import { StyleUrlsResolver, TemplateUrlsResolver } from './component-resolvers';
-import { augmentHostWithResources } from './host';
+import { createCompilerPlugin } from './compiler-plugin.js';
+import {
+  StyleUrlsResolver,
+  TemplateUrlsResolver,
+} from './component-resolvers.js';
+import { augmentHostWithResources } from './host.js';
+import { jitPlugin } from './angular-jit-plugin.js';
+import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
+
 import {
   angularApplicationPreset,
   createJitResourceTransformer,
-  loadEsmModule,
   SourceFileCache,
-} from './utils/devkit';
-import { getFrontmatterMetadata } from './authoring/frontmatter';
+} from './utils/devkit.js';
+import { angularVitestPlugin } from './angular-vitest-plugin.js';
+
+const require = createRequire(import.meta.url);
+
+import { getFrontmatterMetadata } from './authoring/frontmatter.js';
 import {
   defaultMarkdownTemplateTransforms,
   MarkdownTemplateTransform,
-} from './authoring/markdown-transform';
+} from './authoring/markdown-transform.js';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -61,8 +69,8 @@ interface EmitFileResult {
   map?: string;
   dependencies: readonly string[];
   hash?: Uint8Array;
-  errors: string[];
-  warnings: string[];
+  errors: (string | ts.DiagnosticMessageChain)[];
+  warnings: (string | ts.DiagnosticMessageChain)[];
 }
 type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 
@@ -114,8 +122,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     augmentProgramWithVersioning,
     augmentHostWithCaching,
   } = require('@ngtools/webpack/src/ivy/host');
+  const ts = require('typescript');
 
-  let compilerCli: typeof import('@angular/compiler-cli');
+  // let compilerCli: typeof import('@angular/compiler-cli');
   let userConfig: UserConfig;
   let rootNames: string[];
   let host: ts.CompilerHost;
@@ -143,16 +152,12 @@ export function angular(options?: PluginOptions): Plugin[] {
 
         pluginOptions.tsconfig =
           options?.tsconfig ??
-          path.resolve(
+          resolve(
             config.root || '.',
             process.env['NODE_ENV'] === 'test'
               ? './tsconfig.spec.json'
               : './tsconfig.app.json'
           );
-
-        compilerCli = await loadEsmModule<
-          typeof import('@angular/compiler-cli')
-        >('@angular/compiler-cli');
 
         return {
           optimizeDeps: {
@@ -451,11 +456,9 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     const fg = require('fast-glob');
     const appRoot = normalizePath(
-      path.resolve(pluginOptions.workspaceRoot, config.root || '.')
+      resolve(pluginOptions.workspaceRoot, config.root || '.')
     );
-    const workspaceRoot = normalizePath(
-      path.resolve(pluginOptions.workspaceRoot)
-    );
+    const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));
 
     const globs = [
       `${appRoot}/**/*.{analog,agx}`,

@@ -774,7 +774,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/1307706?v=4",
       "profile": "https://alexfriesen.net/",
       "contributions": [
-        "infra"
+        "infra",
+        "code"
       ]
     },
     {
@@ -784,6 +785,15 @@
       "profile": "https://github.com/duluca",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "nckirik",
+      "name": "N. Can KIRIK",
+      "avatar_url": "https://avatars.githubusercontent.com/u/53273233?v=4",
+      "profile": "https://github.com/nckirik",
+      "contributions": [
+        "code"
       ]
     }
   ],

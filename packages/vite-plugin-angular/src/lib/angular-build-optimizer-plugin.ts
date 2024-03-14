@@ -1,10 +1,8 @@
 import { Plugin } from 'vite';
 import { transformAsync } from '@babel/core';
-import {
-  angularApplicationPreset,
-  loadEsmModule,
-  requiresLinking,
-} from './utils/devkit';
+import { createEs2015LinkerPlugin as linkerPluginCreator } from '@angular/compiler-cli/linker/babel';
+
+import { angularApplicationPreset, requiresLinking } from './utils/devkit.js';
 
 export function buildOptimizerPlugin({
   isProd,
@@ -48,13 +46,6 @@ export function buildOptimizerPlugin({
     async transform(code, id) {
       if (/\.[cm]?js$/.test(id)) {
         const angularPackage = /[\\/]node_modules[\\/]@angular[\\/]/.test(id);
-
-        const linkerPluginCreator = (
-          await loadEsmModule<
-            typeof import('@angular/compiler-cli/linker/babel')
-          >('@angular/compiler-cli/linker/babel')
-        ).createEs2015LinkerPlugin;
-
         const forceAsyncTransformation =
           !/[\\/][_f]?esm2015[\\/]/.test(id) &&
           /for\s+await\s*\(|async\s+function\s*\*/.test(code);

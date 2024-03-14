@@ -1,6 +1,5 @@
 /// <reference types="vitest" />
 
-import { offsetFromRoot } from '@nx/devkit';
 import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
@@ -13,9 +12,7 @@ export default defineConfig(({ mode }) => {
       environment: 'node',
       include: ['**/*.spec.ts'],
       cache: {
-        dir: `${offsetFromRoot(
-          'packages/astro-app-e2e-playwright'
-        )}/node_modules/.vitest/astro-app-e2e-playwright`,
+        dir: `../../node_modules/.vitest`,
       },
     },
     define: {

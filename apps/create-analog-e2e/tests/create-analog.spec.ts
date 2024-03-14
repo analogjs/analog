@@ -54,6 +54,15 @@ describe('create-analog e2e', () => {
       `${tmpDir}/node_modules/@analogjs`
     );
 
+    const angularJson = JSON.parse(
+      readFileSync(`${tmpDir}/angular.json`, 'utf-8')
+    );
+    angularJson.projects['my-app'].root = '.';
+    writeFileSync(
+      `${tmpDir}/angular.json`,
+      JSON.stringify(angularJson, null, 2)
+    );
+
     let viteConfig = readFileSync(`${tmpDir}/vite.config.ts`, 'utf-8');
     viteConfig = viteConfig.replace(
       'analog()',

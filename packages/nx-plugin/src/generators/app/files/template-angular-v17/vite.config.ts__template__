@@ -20,6 +20,11 @@ export default defineConfig(({ mode }) => {
       commonjsOptions: { transformMixedEsModules: true },      
       target: ['es2020'],
     },
+    server: {
+      fs: {
+        allow: ['.'],
+      },
+    },    
     plugins: [
       <% if (addTRPC) { %>
       analog({

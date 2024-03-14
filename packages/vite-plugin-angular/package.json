@@ -1,7 +1,8 @@
 {
   "name": "@analogjs/vite-plugin-angular",
+  "version": "1.0.0",
   "description": "Vite Plugin for Angular",
-  "version": "0.2.45",
+  "type": "module",
   "keywords": [
     "vite",
     "vitest",

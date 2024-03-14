@@ -16,7 +16,7 @@ import {
   GeneratorOptions,
   NormalizedGeneratorOptions,
 } from './add-tailwind-config';
-import { relative } from 'path';
+import { relative } from 'node:path';
 
 export function normalizeOptions(
   options: GeneratorOptions

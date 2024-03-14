@@ -1,6 +1,7 @@
-import * as wbl from '@angular-devkit/build-angular/src/tools/babel/webpack-loader';
-import * as app from '@angular-devkit/build-angular/src/tools/babel/presets/application';
-import * as cp from '@angular-devkit/build-angular/src/tools/esbuild/angular/compiler-plugin';
+import * as wbl from '@angular-devkit/build-angular/src/tools/babel/webpack-loader.js';
+import * as app from '@angular-devkit/build-angular/src/tools/babel/presets/application.js';
+import * as cp from '@angular-devkit/build-angular/src/tools/esbuild/angular/compiler-plugin.js';
+import * as sfc from './source-file-cache.js';
 
 let requiresLinking: Function;
 /**
@@ -19,20 +20,16 @@ let sourceFileCache: any;
 if (typeof (cp as any)['SourceFileCache'] !== 'undefined') {
   sourceFileCache = (cp as any).SourceFileCache;
 } else {
-  const sfc = require('@angular-devkit/build-angular/src/tools/esbuild/angular/source-file-cache');
   sourceFileCache = sfc.SourceFileCache;
 }
 
 const angularApplicationPreset = app.default;
-import { createJitResourceTransformer } from '@angular-devkit/build-angular/src/tools/esbuild/angular/jit-resource-transformer';
-import { CompilerPluginOptions } from '@angular-devkit/build-angular/src/tools/esbuild/angular/compiler-plugin';
-import { JavaScriptTransformer } from '@angular-devkit/build-angular/src/tools/esbuild/javascript-transformer';
-
-import { loadEsmModule } from '@angular-devkit/build-angular/src/utils/load-esm';
+import { createJitResourceTransformer } from '@angular-devkit/build-angular/src/tools/esbuild/angular/jit-resource-transformer.js';
+import { CompilerPluginOptions } from '@angular-devkit/build-angular/src/tools/esbuild/angular/compiler-plugin.js';
+import { JavaScriptTransformer } from '@angular-devkit/build-angular/src/tools/esbuild/javascript-transformer.js';
 
 export {
   requiresLinking,
-  loadEsmModule,
   angularApplicationPreset,
   createJitResourceTransformer,
   CompilerPluginOptions,
