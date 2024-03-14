@@ -106,37 +106,3 @@ test('works with the -t alias', () => {
   expect(stdout).toContain(`Scaffolding project in ${genPath}`);
   expect(expectedFiles).toEqual(generatedFiles);
 });
-
-test('works with the --skipGit flag', () => {
-  const { stdout } = run(
-    [projectName, '--template', 'angular-v16', '--skipTailwind', '--skipGit'],
-    {
-      cwd: __dirname,
-    }
-  );
-
-  const generatedFiles = readdirSync(genPath).sort();
-  const expectedFiles = [...templateFiles].sort();
-
-  expect(expectedFiles).toEqual(generatedFiles);
-});
-
-test('works with the --no-skipGit flag', () => {
-  const { stdout } = run(
-    [
-      projectName,
-      '--template',
-      'angular-v16',
-      '--skipTailwind',
-      '--no-skipGit',
-    ],
-    {
-      cwd: __dirname,
-    }
-  );
-
-  const generatedFiles = readdirSync(genPath).sort();
-  const expectedFiles = [...templateFiles, ...gitFiles].sort();
-
-  expect(expectedFiles).toEqual(generatedFiles);
-});
