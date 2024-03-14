@@ -28,15 +28,17 @@ const createNonEmptyDir = () => {
 
 // Angular v16 starter template
 let templateFiles = readdirSync(join(CLI_PATH, 'template-angular-v16'));
+templateFiles.push('.git');
 // _gitignore is renamed to .gitignore
-templateFiles = templateFiles.map((filePath) =>
-  filePath === '_gitignore' ? '.gitignore' : filePath
-);
+templateFiles = templateFiles
+  .map((filePath) => (filePath === '_gitignore' ? '.gitignore' : filePath))
+  .sort();
 // starter with tailwind
-const tailwindFiles = ['tailwind.config.js', 'postcss.config.js'];
-// starter with git
-const gitFiles = ['.git'];
-
+const templateFilesTailwind = [
+  ...templateFiles,
+  'tailwind.config.js',
+  'postcss.config.js',
+].sort();
 beforeAll(() => remove(genPath));
 afterEach(() => remove(genPath));
 
@@ -88,11 +90,10 @@ test('successfully scaffolds a project based on angular starter template', () =>
     }
   );
   const generatedFiles = readdirSync(genPath).sort();
-  const expectedFiles = [...templateFiles].sort();
 
   // Assertions
   expect(stdout).toContain(`Scaffolding project in ${genPath}`);
-  expect(expectedFiles).toEqual(generatedFiles);
+  expect(templateFiles).toEqual(generatedFiles);
 });
 
 test('works with the -t alias', () => {
@@ -100,9 +101,8 @@ test('works with the -t alias', () => {
     cwd: __dirname,
   });
   const generatedFiles = readdirSync(genPath).sort();
-  const expectedFiles = [...templateFiles].sort();
 
   // Assertions
   expect(stdout).toContain(`Scaffolding project in ${genPath}`);
-  expect(expectedFiles).toEqual(generatedFiles);
+  expect(templateFiles).toEqual(generatedFiles);
 });
