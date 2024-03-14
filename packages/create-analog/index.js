@@ -50,7 +50,7 @@ async function init() {
   let targetDir = formatTargetDir(argv._[0]);
   let template = argv.template || argv.t;
   let skipTailwind = argv.skipTailwind || false;
-  const skipGit = argv.skipGit ?? isGitInitialized(cwd);
+  let skipGit = argv.skipGit || false;
 
   const defaultTargetDir = 'analog-project';
   const getProjectName = () =>
@@ -207,6 +207,7 @@ async function init() {
 
   write('package.json', JSON.stringify(pkg, null, 2));
 
+  skipGit = isGitInitialized(cwd) || skipGit;
   if (!skipGit) {
     console.log(`\nInitializing git repository:`);
     execSync(`git init ${targetDir} && cd ${targetDir} && git add .`);
