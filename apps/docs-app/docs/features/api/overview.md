@@ -219,4 +219,4 @@ export const load = async ({ event }: PageServerLoad) => {
 
 ## More Info
 
-API routes are powered by [Nitro](https://nitro.unjs.io/guide/routing) and [h3](https://h3.unjs.io/). See the Nitro and h3 docs for for more examples around building API routes.
+API routes are powered by [Nitro](https://nitro.unjs.io/guide/routing) and [h3](https://h3.unjs.io/). See the Nitro and h3 docs for more examples around building API routes.
