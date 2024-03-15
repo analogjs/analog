@@ -1,3 +1,44 @@
+## [1.0.1](https://github.com/analogjs/analog/compare/1.0.0...1.0.1) (2024-03-15)
+
+# [1.0.0-rc.3](https://github.com/analogjs/analog/compare/1.0.0-rc.2...1.0.0-rc.3) (2024-03-14)
+
+### Bug Fixes
+
+- **nx-plugin:** rename template files and adjust versions ([#936](https://github.com/analogjs/analog/issues/936)) ([e0d4b6b](https://github.com/analogjs/analog/commit/e0d4b6b2cec348482b07f33b666451b724afbabf))
+
+# [1.0.0-rc.2](https://github.com/analogjs/analog/compare/1.0.0-rc.1...1.0.0-rc.2) (2024-03-12)
+
+### Bug Fixes
+
+- **nx-plugin:** update package versions to 1.0 RC ([#933](https://github.com/analogjs/analog/issues/933)) ([d37a9c2](https://github.com/analogjs/analog/commit/d37a9c2c75d7739d56b4af6942f63c4ff77b8ade))
+
+# [1.0.0-rc.1](https://github.com/analogjs/analog/compare/0.2.45...1.0.0-rc.1) (2024-03-08)
+
+# [1.0.0-rc.0](https://github.com/analogjs/analog/compare/1.0.0-beta.5...1.0.0-rc.0) (2024-03-07)
+
+# [1.0.0-beta.2](https://github.com/analogjs/analog/compare/0.2.29...1.0.0-beta.2) (2023-12-30)
+
+# [1.0.0-beta.1](https://github.com/analogjs/analog/compare/1.0.0-beta.0...1.0.0-beta.1) (2023-12-12)
+
+### Bug Fixes
+
+- **create-analog:** set app root for Vite/ESM support ([32ab9ce](https://github.com/analogjs/analog/commit/32ab9cecc6dc0d28e166edbc9a27a9071ba22069))
+- **vite-plugin-nitro:** use relative paths for root directory ([989fd6d](https://github.com/analogjs/analog/commit/989fd6d162d4d5a389ab543bead70e4a2188f931))
+
+# [1.0.0-beta.0](https://github.com/analogjs/analog/compare/0.2.25...1.0.0-beta.0) (2023-12-12)
+
+### Bug Fixes
+
+- add release tag env variable ([379c546](https://github.com/analogjs/analog/commit/379c5466ba054fdf5fc6a9e579f3c17849004c88))
+- only auto-publish [@analogjs](https://github.com/analogjs) packages ([98301dc](https://github.com/analogjs/analog/commit/98301dc08dac3f7cb46dfce3483679005ba0ed60))
+- set beta tag on publish ([c1b8211](https://github.com/analogjs/analog/commit/c1b8211153d5259214a5a5f807fb892f82a28600))
+- use semantic release to publish ([8410660](https://github.com/analogjs/analog/commit/841066058ad83f5ddd190221b3d832a8dddf5497))
+
+### Features
+
+- add npm publish job for packages ([2802c92](https://github.com/analogjs/analog/commit/2802c92cee93cfa7a076421c329383968b5f74a2))
+- update app templates to 1.0.0-beta ([5a23eb0](https://github.com/analogjs/analog/commit/5a23eb08718329ef2ec90135af47beb4a2c96bb7))
+
 # [1.0.0](https://github.com/analogjs/analog/compare/1.0.0-rc.3...1.0.0) (2024-03-14)
 
 # [1.0.0-rc.3](https://github.com/analogjs/analog/compare/1.0.0-rc.2...1.0.0-rc.3) (2024-03-14)
