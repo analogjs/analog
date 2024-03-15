@@ -340,7 +340,7 @@ function addPostCssConfig(write, filesDir) {
 
 function addTailwindConfig(write, filesDir) {
   write(
-    'tailwind.config.js',
+    'tailwind.config.cjs',
     fs.readFileSync(path.join(filesDir, `tailwind.config.js`), 'utf-8')
   );
 }
