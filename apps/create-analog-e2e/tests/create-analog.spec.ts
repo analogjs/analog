@@ -40,7 +40,7 @@ describe('create-analog e2e', () => {
     const tmpDir = `${process.cwd()}/${project}`;
 
     await runCommandAsync(
-      `node ./dist/packages/create-analog/index.js ${project} --template angular-v17 --skipTailwind true`,
+      `node ./dist/packages/create-analog/index.js ${project} --template angular-v17 --skipTailwind --skipGit`,
       { cwd: process.cwd() }
     );
 
@@ -91,7 +91,7 @@ describe('create-analog e2e', () => {
     const tmpDir = `${process.cwd()}/${project}`;
 
     await runCommandAsync(
-      `node ./dist/packages/create-analog/index.js ${project} --template angular-v17 --skipTailwind true`,
+      `node ./dist/packages/create-analog/index.js ${project} --template angular-v17 --skipTailwind --skipGit`,
       { cwd: process.cwd() }
     );
 
