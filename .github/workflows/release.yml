@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - beta
+      - main
 
 permissions:
   contents: read # for checkout
@@ -34,10 +35,10 @@ jobs:
           cache-dependency-path: '**/pnpm-lock.yaml'
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
-      # - name: Release
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      #   run: |
-      #     TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
-      #     RELEASE_TAG=$TAG npx semantic-release
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
+          RELEASE_TAG=$TAG npx semantic-release
