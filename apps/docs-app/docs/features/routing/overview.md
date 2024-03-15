@@ -204,11 +204,9 @@ The nested `src/app/pages/products/(products-list).page.ts` file contains the `/
 
 ```ts
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 
 @Component({
   standalone: true,
-  imports: [RouterOutlet],
   template: ` <h2>Products List</h2> `,
 })
 export default class ProductsListComponent {}
