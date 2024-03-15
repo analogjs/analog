@@ -50,6 +50,7 @@ async function init() {
   let targetDir = formatTargetDir(argv._[0]);
   let template = argv.template || argv.t;
   let skipTailwind = argv.skipTailwind || false;
+  let skipGit = argv.skipGit || false;
 
   const defaultTargetDir = 'analog-project';
   const getProjectName = () =>
@@ -134,6 +135,12 @@ async function init() {
           name: 'tailwind',
           message: 'Would you like to add Tailwind to your project?',
         },
+        {
+          type: skipGit ? null : 'confirm',
+          name: 'git',
+          message: 'Would you like to initialize a Git repository?',
+          initial: true,
+        },
       ],
       {
         onCancel: () => {
@@ -147,7 +154,7 @@ async function init() {
   }
 
   // user choice associated with prompts
-  const { framework, overwrite, packageName, variant, tailwind } = result;
+  const { framework, overwrite, packageName, variant, tailwind, git } = result;
 
   const root = path.join(cwd, targetDir);
 
@@ -160,6 +167,7 @@ async function init() {
   // determine template
   template = variant || framework || template;
   skipTailwind = !tailwind || skipTailwind;
+  skipGit = !git || skipGit;
 
   console.log(`\nScaffolding project in ${root}...`);
 
@@ -206,14 +214,16 @@ async function init() {
 
   write('package.json', JSON.stringify(pkg, null, 2));
 
-  console.log(`\nInitializing git repository:`);
-  execSync(`git init ${targetDir} && cd ${targetDir} && git add .`);
+  if (!skipGit) {
+    console.log(`\nInitializing git repository:`);
+    execSync(`git init ${targetDir} && cd ${targetDir} && git add .`);
 
-  // Fail Silent
-  // Can fail when user does not have global git credentials
-  try {
-    execSync(`cd ${targetDir} && git commit -m "initial commit"`);
-  } catch {}
+    // Fail Silent
+    // Can fail when user does not have global git credentials
+    try {
+      execSync(`cd ${targetDir} && git commit -m "initial commit"`);
+    } catch {}
+  }
 
   console.log(`\nDone. Now run:\n`);
   if (root !== cwd) {
