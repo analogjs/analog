@@ -28,17 +28,11 @@ const createNonEmptyDir = () => {
 
 // Angular v16 starter template
 let templateFiles = readdirSync(join(CLI_PATH, 'template-angular-v16'));
-templateFiles.push('.git');
 // _gitignore is renamed to .gitignore
 templateFiles = templateFiles
   .map((filePath) => (filePath === '_gitignore' ? '.gitignore' : filePath))
   .sort();
-// starter with tailwind
-const templateFilesTailwind = [
-  ...templateFiles,
-  'tailwind.config.js',
-  'postcss.config.js',
-].sort();
+
 beforeAll(() => remove(genPath));
 afterEach(() => remove(genPath));
 
@@ -84,7 +78,7 @@ test('asks to overwrite non-empty current directory', () => {
 
 test('successfully scaffolds a project based on angular starter template', () => {
   const { stdout } = run(
-    [projectName, '--template', 'angular-v16', '--skipTailwind'],
+    [projectName, '--template', 'angular-v16', '--skipTailwind', '--skipGit'],
     {
       cwd: __dirname,
     }
@@ -97,12 +91,20 @@ test('successfully scaffolds a project based on angular starter template', () =>
 });
 
 test('works with the -t alias', () => {
-  const { stdout } = run([projectName, '-t', 'angular-v16', '--skipTailwind'], {
-    cwd: __dirname,
-  });
+  const { stdout } = run(
+    [projectName, '-t', 'angular-v16', '--skipTailwind', '--skipGit'],
+    {
+      cwd: __dirname,
+    }
+  );
   const generatedFiles = readdirSync(genPath).sort();
 
   // Assertions
   expect(stdout).toContain(`Scaffolding project in ${genPath}`);
   expect(templateFiles).toEqual(generatedFiles);
+});
+
+test('prompts for git initialization on not supplying a value for --skipGit', () => {
+  const { stdout } = run([projectName, '-t', 'angular-v16', '--skipTailwind']);
+  expect(stdout).toContain('Would you like to initialize a Git repository?');
 });
