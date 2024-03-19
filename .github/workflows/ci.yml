@@ -3,6 +3,7 @@ name: ci
 on:
   push:
     branches:
+      - beta
       - main
   pull_request: {}
 
