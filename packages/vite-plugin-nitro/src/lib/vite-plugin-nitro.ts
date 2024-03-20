@@ -198,7 +198,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 ...(nitroOptions?.moduleSideEffects || []),
               ],
               renderer: normalizePath(
-                `${filePrefix}${__dirname}/runtime/renderer.js`
+                `${filePrefix}${__dirname}/runtime/renderer`
               ),
               handlers: [
                 {
