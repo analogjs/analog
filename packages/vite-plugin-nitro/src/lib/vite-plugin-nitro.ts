@@ -4,6 +4,7 @@ import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { normalizePath } from 'vite';
 import { dirname, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
+import { fileURLToPath } from 'node:url';
 
 import { buildServer } from './build-server.js';
 import { buildSSRApp } from './build-ssr.js';
@@ -19,9 +20,11 @@ import { devServerPlugin } from './plugins/dev-server-plugin.js';
 import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-files.js';
 
 const isWindows = platform() === 'win32';
+const filePrefix = isWindows ? 'file://' : '';
 let clientOutputPath = '';
 
-const __dirname = dirname(new URL(import.meta.url).pathname);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
@@ -110,9 +113,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         }
 
         nitroConfig.alias = {
-          // This is not the final fix but start point to discuss a fix for windows
           '#analog/ssr':
-            (isWindows ? 'file://' : '') +
+            filePrefix +
             normalizePath(
               resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
             ),
@@ -195,7 +197,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 'zone.js/fesm2015/zone-node',
                 ...(nitroOptions?.moduleSideEffects || []),
               ],
-              renderer: normalizePath(`${__dirname}/runtime/renderer`),
+              renderer: normalizePath(
+                `${filePrefix}${__dirname}/runtime/renderer`
+              ),
               handlers: [
                 {
                   handler: normalizePath(`${__dirname}/runtime/api-middleware`),
