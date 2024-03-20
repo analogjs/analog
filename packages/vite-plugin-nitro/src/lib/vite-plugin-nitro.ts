@@ -89,7 +89,18 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 return;
               }
             },
-            plugins: [pageEndpointsPlugin()],
+            plugins: [
+              pageEndpointsPlugin(),
+              {
+                name: 'renderer',
+                transform(code, id) {
+                  if (id.includes('runtime/renderer.ts')) {
+                    console.log(code, id);
+                  }
+                  return;
+                },
+              },
+            ],
           },
           handlers: [
             {
@@ -197,7 +208,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 'zone.js/fesm2015/zone-node',
                 ...(nitroOptions?.moduleSideEffects || []),
               ],
-              renderer: `#analogInternal/runtime/renderer.js`,
+              renderer: isWindows
+                ? `${__dirname}/runtime/renderer`
+                : `#analogInternal/runtime/renderer`,
               handlers: [
                 {
                   handler: normalizePath(`${__dirname}/runtime/api-middleware`),
