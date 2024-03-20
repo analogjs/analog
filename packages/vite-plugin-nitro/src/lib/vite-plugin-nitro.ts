@@ -209,7 +209,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 ...(nitroOptions?.moduleSideEffects || []),
               ],
               renderer: isWindows
-                ? `${filePrefix}${__dirname}/runtime/renderer`
+                ? normalizePath(`${filePrefix}${__dirname}/runtime/renderer`)
                 : `#analogInternal/runtime/renderer`,
               handlers: [
                 {
