@@ -121,6 +121,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           '#analog/index': normalizePath(
             resolve(clientOutputPath, 'index.html')
           ),
+          '#analogInternal': normalizePath(__dirname),
           ...nitroOptions?.alias,
         };
 
@@ -197,9 +198,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 'zone.js/fesm2015/zone-node',
                 ...(nitroOptions?.moduleSideEffects || []),
               ],
-              renderer: normalizePath(
-                `${filePrefix}${__dirname}/runtime/renderer`
-              ),
+              renderer: `#analogInternal/runtime/renderer.js`,
               handlers: [
                 {
                   handler: normalizePath(`${__dirname}/runtime/api-middleware`),
