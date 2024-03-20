@@ -25,7 +25,9 @@ import render from '#analog/ssr';
 import template from '#analog/index';
 
 export default eventHandler(async (event) => {
-  const html = await render(event.req.url, template);
-
+  const html = await render(event.node.req.url, template, {
+    req: event.node.req,
+    res: event.node.res,
+  });
   return html;
 });
