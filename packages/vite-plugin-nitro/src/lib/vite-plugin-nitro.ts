@@ -198,7 +198,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 'zone.js/fesm2015/zone-node',
                 ...(nitroOptions?.moduleSideEffects || []),
               ],
-              renderer: `#analogInternal/runtime/renderer.js`,
+              renderer: `@analogjs/vite-plugin-nitro/lib/runtime/renderer`,
               handlers: [
                 {
                   handler: normalizePath(`${__dirname}/runtime/api-middleware`),
