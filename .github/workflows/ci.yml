@@ -89,7 +89,7 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Build
-        run: pnpm build
+        run: pnpm exec nx build analog-app
 
   unit:
     runs-on: ubuntu-latest

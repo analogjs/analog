@@ -20,7 +20,7 @@ import { devServerPlugin } from './plugins/dev-server-plugin.js';
 import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-files.js';
 
 const isWindows = platform() === 'win32';
-const filePrefix = isWindows ? 'file://' : '';
+const filePrefix = isWindows ? 'file:///' : '';
 let clientOutputPath = '';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -113,11 +113,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         }
 
         nitroConfig.alias = {
-          '#analog/ssr':
+          '#analog/ssr': normalizePath(
             filePrefix +
-            normalizePath(
               resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
-            ),
+          ),
           '#analog/index': normalizePath(
             resolve(clientOutputPath, 'index.html')
           ),
@@ -198,7 +197,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 'zone.js/fesm2015/zone-node',
                 ...(nitroOptions?.moduleSideEffects || []),
               ],
-              renderer: `@analogjs/vite-plugin-nitro/lib/runtime/renderer`,
+              renderer: `#analogInternal/runtime/renderer.js`,
               handlers: [
                 {
                   handler: normalizePath(`${__dirname}/runtime/api-middleware`),
