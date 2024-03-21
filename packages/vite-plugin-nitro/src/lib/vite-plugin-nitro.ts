@@ -2,7 +2,7 @@ import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
 import { App, toNodeListener } from 'h3';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { normalizePath } from 'vite';
-import { dirname, relative, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'pathe';
 import { platform } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
@@ -90,28 +90,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               }
             },
 
-            plugins: [
-              pageEndpointsPlugin(),
-              {
-                name: 'renderer',
-                // resolveId(id) {
-                //   if (id.includes('renderer')) {
-                //     console.log(id);
-                //   }
-                //   return id;
-                // },
-                transform(code, id) {
-                  if (id.includes('renderer')) {
-                    console.log(id);
-                  }
-                  return;
-                },
-              },
-            ],
+            plugins: [pageEndpointsPlugin()],
           },
           handlers: [
             {
-              handler: normalizePath(`${__dirname}/runtime/api-middleware`),
+              handler: resolve(__dirname, `runtime/api-middleware`),
               middleware: true,
             },
             ...pageHandlers,
@@ -132,13 +115,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         nitroConfig.alias = {
           '#analog/ssr': normalizePath(
-            filePrefix +
-              resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server.js')
+            resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
           ),
           '#analog/index': normalizePath(
             resolve(clientOutputPath, 'index.html')
           ),
-          '#analogInternal': normalizePath(__dirname),
           ...nitroOptions?.alias,
         };
 
@@ -215,14 +196,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 'zone.js/fesm2015/zone-node',
                 ...(nitroOptions?.moduleSideEffects || []),
               ],
-              renderer: isWindows
-                ? normalizePath(
-                    `${filePrefix}${workspaceRoot}/node_modules/@analogjs/vite-plugin-nitro/src/lib/runtime/renderer`
-                  )
-                : `#analogInternal/runtime/renderer`,
+              renderer: resolve(__dirname, `runtime/renderer`),
               handlers: [
                 {
-                  handler: normalizePath(`${__dirname}/runtime/api-middleware`),
+                  handler: resolve(__dirname, `runtime/api-middleware`),
                   middleware: true,
                 },
                 ...pageHandlers,
