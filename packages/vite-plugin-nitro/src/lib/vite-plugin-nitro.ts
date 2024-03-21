@@ -2,7 +2,7 @@ import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
 import { App, toNodeListener } from 'h3';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { normalizePath } from 'vite';
-import { dirname, relative, resolve } from 'node:path';
+import { dirname, relative, resolve, join } from 'node:path';
 import { platform } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
@@ -19,7 +19,7 @@ import { buildSitemap } from './build-sitemap.js';
 import { devServerPlugin } from './plugins/dev-server-plugin.js';
 import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-files.js';
 
-const isWindows = platform() === 'win32';
+const isWindows = platform() !== 'win32';
 const filePrefix = isWindows ? 'file:///' : '';
 let clientOutputPath = '';
 
@@ -89,13 +89,20 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 return;
               }
             },
+
             plugins: [
               pageEndpointsPlugin(),
               {
                 name: 'renderer',
+                // resolveId(id) {
+                //   if (id.includes('renderer')) {
+                //     console.log(id);
+                //   }
+                //   return id;
+                // },
                 transform(code, id) {
-                  if (id.includes('runtime/renderer.ts')) {
-                    console.log(code, id);
+                  if (id.includes('renderer')) {
+                    console.log(id);
                   }
                   return;
                 },
@@ -126,7 +133,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         nitroConfig.alias = {
           '#analog/ssr': normalizePath(
             filePrefix +
-              resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
+              resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server.js')
           ),
           '#analog/index': normalizePath(
             resolve(clientOutputPath, 'index.html')
@@ -209,7 +216,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 ...(nitroOptions?.moduleSideEffects || []),
               ],
               renderer: isWindows
-                ? normalizePath(`${filePrefix}${__dirname}/runtime/renderer`)
+                ? normalizePath(
+                    `${filePrefix}${workspaceRoot}/node_modules/@analogjs/vite-plugin-nitro/src/lib/runtime/renderer`
+                  )
                 : `#analogInternal/runtime/renderer`,
               handlers: [
                 {
