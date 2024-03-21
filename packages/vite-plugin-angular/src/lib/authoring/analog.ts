@@ -657,7 +657,8 @@ function toFileName(str: string) {
   return str
     .replace(/([a-z\d])([A-Z])/g, '$1_$2')
     .toLowerCase()
-    .replace(/(?!^[_])[ _]/g, '-');
+    .replace(/(?!^[_])[ _]/g, '-')
+    .replace(/^\d+-?/, '');
 }
 /**
  * Capitalizes the first letter of a string
