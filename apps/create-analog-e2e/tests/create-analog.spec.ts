@@ -44,7 +44,11 @@ describe('create-analog e2e', () => {
       { cwd: process.cwd() }
     );
 
-    await runCommandAsync(`npm i --legacy-peer-deps`, {
+    await runCommandAsync(`pnpm i`, {
+      cwd: tmpDir,
+    });
+
+    await runCommandAsync(`ng config cli.packageManager pnpm`, {
       cwd: tmpDir,
     });
 
@@ -95,7 +99,11 @@ describe('create-analog e2e', () => {
       { cwd: process.cwd() }
     );
 
-    await runCommandAsync(`npm i --legacy-peer-deps`, {
+    await runCommandAsync(`pnpm i`, {
+      cwd: tmpDir,
+    });
+
+    await runCommandAsync(`ng config cli.packageManager pnpm`, {
       cwd: tmpDir,
     });
 
