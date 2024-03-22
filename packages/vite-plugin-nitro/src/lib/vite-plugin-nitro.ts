@@ -78,7 +78,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         const rendererEntry =
           filePrefix +
           normalizePath(
-            join(__dirname, `runtime/renderer${filePrefix ? '.mjs' : '.mjs'}`)
+            join(__dirname, `runtime/renderer${filePrefix ? '.mjs' : ''}`)
           );
 
         nitroConfig = {
