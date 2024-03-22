@@ -31,9 +31,6 @@ import { Component } from '@angular/core';
       .logo:hover {
         filter: drop-shadow(0 0 2em #646cffaa);
       }
-      .logo.angular:hover {
-        filter: drop-shadow(0 0 2em #42b883aa);
-      }
       .read-the-docs {
         color: #888;
       }
