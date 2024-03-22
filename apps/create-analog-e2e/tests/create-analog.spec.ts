@@ -1,9 +1,8 @@
 import { checkFilesExist, uniq, runCommandAsync } from '@nx/plugin/testing';
-import { readFileSync, writeFileSync, rmdirSync } from 'node:fs';
-import fs from 'node:fs';
-import path from 'node:path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
-function copy(src, dest) {
+function copy(src: string, dest: string) {
   const stat = fs.statSync(src);
   if (stat.isDirectory()) {
     copyDir(src, dest);
@@ -16,7 +15,7 @@ function copy(src, dest) {
  * @param {string} srcDir
  * @param {string} destDir
  */
-function copyDir(srcDir, destDir) {
+function copyDir(srcDir: string, destDir: string) {
   fs.mkdirSync(destDir, { recursive: true });
   for (const file of fs.readdirSync(srcDir)) {
     const srcFile = path.resolve(srcDir, file);
@@ -25,7 +24,7 @@ function copyDir(srcDir, destDir) {
   }
 }
 
-function emptyDir(dir) {
+function emptyDir(dir: string) {
   if (!fs.existsSync(dir)) {
     return;
   }
@@ -59,21 +58,21 @@ describe('create-analog e2e', () => {
     );
 
     const angularJson = JSON.parse(
-      readFileSync(`${tmpDir}/angular.json`, 'utf-8')
+      fs.readFileSync(`${tmpDir}/angular.json`, 'utf-8')
     );
     angularJson.projects['my-app'].root = '.';
-    writeFileSync(
+    fs.writeFileSync(
       `${tmpDir}/angular.json`,
       JSON.stringify(angularJson, null, 2)
     );
 
-    let viteConfig = readFileSync(`${tmpDir}/vite.config.ts`, 'utf-8');
+    let viteConfig = fs.readFileSync(`${tmpDir}/vite.config.ts`, 'utf-8');
     viteConfig = viteConfig.replace(
       'analog()',
       `analog({ vite: { tsconfig: '${tmpDir}/tsconfig.spec.json' } })`
     );
 
-    writeFileSync(`${tmpDir}/vite.config.ts`, viteConfig);
+    fs.writeFileSync(`${tmpDir}/vite.config.ts`, viteConfig);
 
     await runCommandAsync(`vitest --no-watch`, {
       cwd: tmpDir,
@@ -87,7 +86,7 @@ describe('create-analog e2e', () => {
       checkFilesExist(`${tmpDir}/dist/analog/public/index.html`)
     ).not.toThrow();
 
-    rmdirSync(tmpDir, { recursive: true });
+    fs.rmdirSync(tmpDir, { recursive: true });
   }, 120000);
 
   it('should create my-app with the next release', async () => {
@@ -120,13 +119,13 @@ describe('create-analog e2e', () => {
       `${tmpDir}/node_modules/@analogjs`
     );
 
-    let viteConfig = readFileSync(`${tmpDir}/vite.config.ts`, 'utf-8');
+    let viteConfig = fs.readFileSync(`${tmpDir}/vite.config.ts`, 'utf-8');
     viteConfig = viteConfig.replace(
       'analog()',
       `analog({ vite: { tsconfig: '${tmpDir}/tsconfig.spec.json' } })`
     );
 
-    writeFileSync(`${tmpDir}/vite.config.ts`, viteConfig);
+    fs.writeFileSync(`${tmpDir}/vite.config.ts`, viteConfig);
 
     await runCommandAsync(`vitest --no-watch`, {
       cwd: tmpDir,
@@ -140,6 +139,6 @@ describe('create-analog e2e', () => {
       checkFilesExist(`${tmpDir}/dist/analog/public/index.html`)
     ).not.toThrow();
 
-    rmdirSync(tmpDir, { recursive: true });
+    fs.rmdirSync(tmpDir, { recursive: true });
   }, 120000);
 });
