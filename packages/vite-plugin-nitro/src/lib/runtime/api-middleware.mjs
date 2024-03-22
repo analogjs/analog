@@ -1,8 +1,12 @@
+/**
+ * This file is shipped as ESM for Windows support,
+ * as it won't resolve the api-middleware.ts file correctly in node.
+ */
 import { eventHandler, proxyRequest } from 'h3';
 
 export default eventHandler(async (event) => {
   // @ts-ignore
-  const apiPrefix = `/${import.meta.env.RUNTIME_CONFIG?.apiPrefix ?? 'api'}`;
+  const apiPrefix = `/${import.meta.env?.RUNTIME_CONFIG?.apiPrefix ?? 'api'}`;
   if (event.node.req.url?.startsWith(apiPrefix)) {
     const reqUrl = event.node.req.url?.replace(apiPrefix, '');
 
