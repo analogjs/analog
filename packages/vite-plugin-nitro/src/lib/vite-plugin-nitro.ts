@@ -61,7 +61,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         const apiMiddlewareHandler =
           filePrefix +
           normalizePath(
-            join(__dirname, `runtime/api-middleware${filePrefix ? '.js' : ''}`)
+            join(__dirname, `runtime/api-middleware${filePrefix ? '.mjs' : ''}`)
           );
         const ssrEntry = normalizePath(
           filePrefix +
@@ -73,7 +73,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         const rendererEntry =
           filePrefix +
           normalizePath(
-            join(__dirname, `runtime/renderer${filePrefix ? '.mjs' : ''}`)
+            join(__dirname, `runtime/renderer${filePrefix ? '.mjs' : '.mjs'}`)
           );
 
         nitroConfig = {
@@ -108,21 +108,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               }
             },
 
-            plugins: [
-              pageEndpointsPlugin(),
-              isWindows
-                ? {
-                    name: 'resolve-analog-ssr',
-                    resolveId(id) {
-                      if (id === '#analog/ssr') {
-                        return ssrEntry;
-                      }
-
-                      return null;
-                    },
-                  }
-                : false,
-            ],
+            plugins: [pageEndpointsPlugin()],
           },
           handlers: [
             {
