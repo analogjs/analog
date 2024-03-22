@@ -2,7 +2,7 @@ import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
 import { App, toNodeListener } from 'h3';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { normalizePath } from 'vite';
-import { dirname, relative, resolve } from 'pathe';
+import { dirname, join, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
@@ -90,11 +90,34 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               }
             },
 
-            plugins: [pageEndpointsPlugin()],
+            plugins: [
+              pageEndpointsPlugin(),
+              // {
+              //   name: 'nitro:resolve',
+              //   resolveId(id) {
+              //     if (id === '#analog/ssr') {
+              //       console.log(id);
+              //       return id;
+              //     }
+              //     if (id === '#analog/index') {
+              //       console.log(id);
+              //       return id;
+              //     }
+              //     return;
+              //   },
+              // },
+            ],
           },
           handlers: [
             {
-              handler: resolve(__dirname, `runtime/api-middleware`),
+              handler:
+                filePrefix +
+                normalizePath(
+                  join(
+                    __dirname,
+                    `runtime/api-middleware${filePrefix ? '.mjs' : ''}`
+                  )
+                ),
               middleware: true,
             },
             ...pageHandlers,
@@ -115,7 +138,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         nitroConfig.alias = {
           '#analog/ssr': normalizePath(
-            resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
+            filePrefix +
+              resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
           ),
           '#analog/index': normalizePath(
             resolve(clientOutputPath, 'index.html')
@@ -196,10 +220,21 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 'zone.js/fesm2015/zone-node',
                 ...(nitroOptions?.moduleSideEffects || []),
               ],
-              renderer: resolve(__dirname, `runtime/renderer`),
+              renderer:
+                filePrefix +
+                normalizePath(
+                  join(__dirname, `runtime/renderer${filePrefix ? '.mjs' : ''}`)
+                ),
               handlers: [
                 {
-                  handler: resolve(__dirname, `runtime/api-middleware`),
+                  handler:
+                    filePrefix +
+                    normalizePath(
+                      join(
+                        __dirname,
+                        `runtime/api-middleware${filePrefix ? '.mjs' : ''}`
+                      )
+                    ),
                   middleware: true,
                 },
                 ...pageHandlers,

@@ -315,9 +315,6 @@ importers:
       nx:
         specifier: 18.0.4
         version: 18.0.4(@swc-node/register@1.8.0)(@swc/core@1.3.99)
-      pathe:
-        specifier: ^1.1.2
-        version: 1.1.2
       playwright:
         specifier: ^1.30.0
         version: 1.30.0

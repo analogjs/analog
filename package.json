@@ -148,7 +148,6 @@
     "ng-packagr": "^17.2.0",
     "nitropack": "^2.9.0",
     "nx": "18.0.4",
-    "pathe": "^1.1.2",
     "playwright": "^1.30.0",
     "postcss": "^8.4.21",
     "postcss-import": "~15.1.0",
