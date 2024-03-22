@@ -57,6 +57,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           (nitroOptions?.preset as string | undefined);
 
         const pageHandlers = getPageHandlers({ workspaceRoot, rootDir });
+        const apiMiddlewareHandler =
+          filePrefix +
+          normalizePath(
+            join(__dirname, `runtime/api-middleware${filePrefix ? '.js' : ''}`)
+          );
 
         nitroConfig = {
           rootDir,
@@ -110,14 +115,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           },
           handlers: [
             {
-              handler:
-                filePrefix +
-                normalizePath(
-                  join(
-                    __dirname,
-                    `runtime/api-middleware${filePrefix ? '.mjs' : ''}`
-                  )
-                ),
+              handler: apiMiddlewareHandler,
               middleware: true,
             },
             ...pageHandlers,
@@ -227,14 +225,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 ),
               handlers: [
                 {
-                  handler:
-                    filePrefix +
-                    normalizePath(
-                      join(
-                        __dirname,
-                        `runtime/api-middleware${filePrefix ? '.mjs' : ''}`
-                      )
-                    ),
+                  handler: apiMiddlewareHandler,
                   middleware: true,
                 },
                 ...pageHandlers,
