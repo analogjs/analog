@@ -57,10 +57,23 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           (nitroOptions?.preset as string | undefined);
 
         const pageHandlers = getPageHandlers({ workspaceRoot, rootDir });
+
         const apiMiddlewareHandler =
           filePrefix +
           normalizePath(
             join(__dirname, `runtime/api-middleware${filePrefix ? '.js' : ''}`)
+          );
+        const ssrEntry = normalizePath(
+          filePrefix +
+            resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server.js')
+        );
+        const indexEntry = normalizePath(
+          resolve(clientOutputPath, 'index.html')
+        );
+        const rendererEntry =
+          filePrefix +
+          normalizePath(
+            join(__dirname, `runtime/renderer${filePrefix ? '.mjs' : ''}`)
           );
 
         nitroConfig = {
@@ -97,20 +110,18 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
             plugins: [
               pageEndpointsPlugin(),
-              // {
-              //   name: 'nitro:resolve',
-              //   resolveId(id) {
-              //     if (id === '#analog/ssr') {
-              //       console.log(id);
-              //       return id;
-              //     }
-              //     if (id === '#analog/index') {
-              //       console.log(id);
-              //       return id;
-              //     }
-              //     return;
-              //   },
-              // },
+              isWindows
+                ? {
+                    name: 'resolve-analog-ssr',
+                    resolveId(id) {
+                      if (id === '#analog/ssr') {
+                        return ssrEntry;
+                      }
+
+                      return null;
+                    },
+                  }
+                : false,
             ],
           },
           handlers: [
@@ -135,13 +146,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         }
 
         nitroConfig.alias = {
-          '#analog/ssr': normalizePath(
-            filePrefix +
-              resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server')
-          ),
-          '#analog/index': normalizePath(
-            resolve(clientOutputPath, 'index.html')
-          ),
+          '#analog/ssr': ssrEntry,
+          '#analog/index': indexEntry,
           ...nitroOptions?.alias,
         };
 
@@ -218,11 +224,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 'zone.js/fesm2015/zone-node',
                 ...(nitroOptions?.moduleSideEffects || []),
               ],
-              renderer:
-                filePrefix +
-                normalizePath(
-                  join(__dirname, `runtime/renderer${filePrefix ? '.mjs' : ''}`)
-                ),
+              renderer: rendererEntry,
               handlers: [
                 {
                   handler: apiMiddlewareHandler,
