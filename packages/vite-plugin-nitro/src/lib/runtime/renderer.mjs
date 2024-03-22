@@ -1,20 +1,8 @@
 /**
- * This file is written in JavaScript
- * because it is used by Nitro to build
- * the renderer for SSR.
- *
- * The package is shipped as commonjs
- * which won't be parsed by Nitro correctly.
+ * This file is shipped as ESM for Windows support,
+ * as it won't resolve the renderer.ts file correctly in node.
  */
 import { eventHandler } from 'h3';
-/**
- * This file is written in JavaScript
- * because it is used by Nitro to build
- * the renderer for SSR.
- *
- * The package is shipped as commonjs
- * which won't be parsed by Nitro correctly.
- */
 // @ts-ignore
 // import { eventHandler } from 'h3';
 

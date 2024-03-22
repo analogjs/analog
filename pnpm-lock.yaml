@@ -67,7 +67,7 @@ importers:
         version: 10.25.0
       ajv-formats:
         specifier: ^2.1.1
-        version: 2.1.1(ajv@6.12.6)
+        version: 2.1.1(ajv@8.12.0)
       destr:
         specifier: ^2.0.1
         version: 2.0.1
@@ -310,7 +310,7 @@ importers:
         specifier: ^17.2.0
         version: 17.2.0(@angular/compiler-cli@17.2.1)(tailwindcss@3.0.2)(tslib@2.4.0)(typescript@5.3.3)
       nitropack:
-        specifier: ^2.9.0
+        specifier: ^2.6.0
         version: 2.9.4
       nx:
         specifier: 18.0.4
@@ -9917,8 +9917,8 @@ packages:
     dependencies:
       '@mapbox/node-pre-gyp': 1.0.10
       '@rollup/pluginutils': 4.2.1
-      acorn: 8.10.0
-      acorn-import-attributes: 1.9.2(acorn@8.10.0)
+      acorn: 8.11.3
+      acorn-import-attributes: 1.9.2(acorn@8.11.3)
       async-sema: 3.1.1
       bindings: 1.5.0
       estree-walker: 2.0.2
@@ -10148,12 +10148,12 @@ packages:
     dependencies:
       acorn: 8.10.0
 
-  /acorn-import-attributes@1.9.2(acorn@8.10.0):
+  /acorn-import-attributes@1.9.2(acorn@8.11.3):
     resolution: {integrity: sha512-O+nfJwNolEA771IYJaiLWK1UAwjNsQmZbTRqqwBYxCgVQTmpFEMvBw6LOIQV0Me339L5UMVYFyRohGnGlQDdIQ==}
     peerDependencies:
       acorn: ^8
     dependencies:
-      acorn: 8.10.0
+      acorn: 8.11.3
     dev: true
 
   /acorn-jsx@5.3.2(acorn@8.10.0):
@@ -10266,17 +10266,6 @@ packages:
       clean-stack: 5.2.0
       indent-string: 5.0.0
     dev: true
-
-  /ajv-formats@2.1.1(ajv@6.12.6):
-    resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
-    peerDependencies:
-      ajv: ^8.0.0
-    peerDependenciesMeta:
-      ajv:
-        optional: true
-    dependencies:
-      ajv: 6.12.6
-    dev: false
 
   /ajv-formats@2.1.1(ajv@8.12.0):
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
@@ -25127,10 +25116,10 @@ packages:
   /unctx@2.3.1:
     resolution: {integrity: sha512-PhKke8ZYauiqh3FEMVNm7ljvzQiph0Mt3GBRve03IJm7ukfaON2OBK795tLwhbyfzknuRRkW0+Ze+CQUmzOZ+A==}
     dependencies:
-      acorn: 8.10.0
+      acorn: 8.11.3
       estree-walker: 3.0.3
       magic-string: 0.30.8
-      unplugin: 1.5.0
+      unplugin: 1.10.0
     dev: true
 
   /undici-types@5.26.5:
@@ -25404,15 +25393,6 @@ packages:
       chokidar: 3.6.0
       webpack-sources: 3.2.3
       webpack-virtual-modules: 0.6.1
-    dev: true
-
-  /unplugin@1.5.0:
-    resolution: {integrity: sha512-9ZdRwbh/4gcm1JTOkp9lAkIDrtOyOxgHmY7cjuwI8L/2RTikMcVG25GsZwNAgRuap3iDw2jeq7eoqtAsz5rW3A==}
-    dependencies:
-      acorn: 8.10.0
-      chokidar: 3.6.0
-      webpack-sources: 3.2.3
-      webpack-virtual-modules: 0.5.0
     dev: true
 
   /unstorage@1.10.2(ioredis@5.3.2):
@@ -26224,10 +26204,6 @@ packages:
     dependencies:
       typed-assert: 1.0.9
       webpack: 5.90.1(@swc/core@1.3.99)(esbuild@0.20.0)
-
-  /webpack-virtual-modules@0.5.0:
-    resolution: {integrity: sha512-kyDivFZ7ZM0BVOUteVbDFhlRt7Ah/CSPwJdi8hBpkK7QLumUqdLtVfm/PX/hkcnrvr0i77fO5+TjZ94Pe+C9iw==}
-    dev: true
 
   /webpack-virtual-modules@0.6.1:
     resolution: {integrity: sha512-poXpCylU7ExuvZK8z+On3kX+S8o/2dQ/SVYueKA0D4WEMXROXgY8Ez50/bQEUmvoSMMrWcrJqCHuhAbsiwg7Dg==}

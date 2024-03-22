@@ -65,7 +65,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           );
         const ssrEntry = normalizePath(
           filePrefix +
-            resolve(workspaceRoot, 'dist', rootDir, 'ssr/main.server.js')
+            resolve(
+              workspaceRoot,
+              'dist',
+              rootDir,
+              `ssr/main.server${filePrefix ? '.js' : ''}`
+            )
         );
         const indexEntry = normalizePath(
           resolve(clientOutputPath, 'index.html')
@@ -107,7 +112,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 return;
               }
             },
-
             plugins: [pageEndpointsPlugin()],
           },
           handlers: [
