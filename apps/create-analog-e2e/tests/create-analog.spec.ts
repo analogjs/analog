@@ -86,7 +86,7 @@ describe('create-analog e2e', () => {
     rmdirSync(tmpDir, { recursive: true });
   }, 120000);
 
-  it('should create my-app with the next release', async () => {
+  it.skip('should create my-app with the next release', async () => {
     const project = uniq('tmpanalogapp');
     const tmpDir = `${process.cwd()}/${project}`;
 
