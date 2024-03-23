@@ -14,4 +14,11 @@ title: Hello World
   ```ts
   const test = "hi";
   ```
+
+  Make cool apps with `@analogjs/platform`:
+
+  ```ts
+  import { CoolStuff } from "@analogjs/platform"
+  ```
+
 </template>
