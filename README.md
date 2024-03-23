@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-85-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-86-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -198,6 +198,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://pavankjadda.dev"><img src="https://avatars.githubusercontent.com/u/17564080?v=4?s=100" width="100px;" alt="Pavan Kumar Jadda"/><br /><sub><b>Pavan Kumar Jadda</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=pavankjadda" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://monacodelisa.com/"><img src="https://avatars.githubusercontent.com/u/64324417?v=4?s=100" width="100px;" alt="Esther White"/><br /><sub><b>Esther White</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=monacodelisa" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
