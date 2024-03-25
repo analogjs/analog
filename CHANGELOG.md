@@ -1,3 +1,15 @@
+## [1.0.2](https://github.com/analogjs/analog/compare/v1.0.1...v1.0.2) (2024-03-25)
+
+### Bug Fixes
+
+- **create-analog:** improve E2E testing for create-analog ([#955](https://github.com/analogjs/analog/issues/955)) ([72b039d](https://github.com/analogjs/analog/commit/72b039d2fc545f5181267de6296c23d3263ef185))
+- **create-analog:** removing unused css ([#958](https://github.com/analogjs/analog/issues/958)) ([2f2bbbe](https://github.com/analogjs/analog/commit/2f2bbbeeceefb0f181c4298eea34d31a6c9f981b))
+- **nx-plugin:** rename Vite config and correct Vitest version for Vitest schematic ([#965](https://github.com/analogjs/analog/issues/965)) ([dceb37e](https://github.com/analogjs/analog/commit/dceb37e37bb958c1d21a2797290b52a68f34993d))
+- **vite-plugin-angular:** escape breaking characters for codespan ([#953](https://github.com/analogjs/analog/issues/953)) ([bd87e70](https://github.com/analogjs/analog/commit/bd87e708f3d298d2854ad86e69572f5e7c7200b6))
+- **vite-plugin-angular:** plugin causing build failures in version migration ([#961](https://github.com/analogjs/analog/issues/961)) ([e020700](https://github.com/analogjs/analog/commit/e020700baf2cc3511e5b7721de1dc095760b9ea4))
+- **vite-plugin-angular:** remove numbers from beginning of file name selector ([#952](https://github.com/analogjs/analog/issues/952)) ([528a5d8](https://github.com/analogjs/analog/commit/528a5d8963b1d2a14e5728fae87e2456fb85c5cc))
+- **vite-plugin-nitro:** resolve internal runtime files on Windows and add Windows build workflow ([#949](https://github.com/analogjs/analog/issues/949)) ([cf5886a](https://github.com/analogjs/analog/commit/cf5886ad7634093817e18582d8a7dd2b6a5d37dc))
+
 ## [1.0.1](https://github.com/analogjs/analog/compare/v1.1.0-beta.1...v1.0.1) (2024-03-19)
 
 ### Bug Fixes
