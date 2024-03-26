@@ -173,7 +173,7 @@ jobs:
       - e2e
       - docs
     # Runs on merge to the `main` branch
-    if: github.event_name == 'push' && github.ref_name == 'main'
+    if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'beta')
     runs-on: ubuntu-latest
     environment:
       name: github-pages
