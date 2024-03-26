@@ -90,10 +90,8 @@ export default function (options?: AngularOptions): AstroIntegration {
             `[warning] The Angular integration doesn't support Shiki syntax highlighting in MDX files. Overriding with Prism.\n
 To disable this warning, set the syntaxHighlight option in your astro.config.mjs mdx() integration to 'prism' or false.`
           );
+          enableProdMode();
         }
-      },
-      'astro:build:setup': () => {
-        enableProdMode();
       },
     },
   };

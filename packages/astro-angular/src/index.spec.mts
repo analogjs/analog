@@ -6,7 +6,6 @@ describe('angularVitePlugin', () => {
     expect(astroPlugin().hooks).toStrictEqual({
       'astro:config:setup': expect.anything(),
       'astro:config:done': expect.anything(),
-      'astro:build:setup': expect.anything(),
     });
   });
 });
