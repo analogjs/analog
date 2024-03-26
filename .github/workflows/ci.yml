@@ -155,8 +155,8 @@ jobs:
       - name: Build
         run: pnpm exec nx build docs-app
       - name: Upload docs website
-        # Runs on merge to the `main/beta` branch
-        if: github.event_name == 'push' && (github.ref_name == 'main'  || github.ref_name == 'beta')
+        # Runs on merge to the `main` branch
+        if: github.event_name == 'push' && github.ref_name == 'main'
         uses: actions/upload-artifact@v3
         with:
           if-no-files-found: error
@@ -172,8 +172,8 @@ jobs:
       - unit
       - e2e
       - docs
-    # Runs on merge to the `main/beta` branch
-    if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'beta')
+    # Runs on merge to the `main` branch
+    if: github.event_name == 'push' && github.ref_name == 'main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
