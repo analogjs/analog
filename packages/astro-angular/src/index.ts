@@ -91,7 +91,7 @@ export default function (options?: AngularOptions): AstroIntegration {
 To disable this warning, set the syntaxHighlight option in your astro.config.mjs mdx() integration to 'prism' or false.`
           );
         }
-        if (process.env.NODE_ENV === 'production') {
+        if (process.env['NODE_ENV'] === 'production') {
           enableProdMode();
         }
       },
