@@ -5,22 +5,13 @@
   "sourceRoot": "apps/astro-app/src",
   "targets": {
     "serve": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "astro dev --root apps/astro-app"
-      }
+      "command": "astro dev --root apps/astro-app"
     },
     "build": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "astro build --root apps/astro-app"
-      }
+      "command": "astro build --root apps/astro-app"
     },
     "preview": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "astro preview --root apps/astro-app"
-      }
+      "command": "astro preview --root apps/astro-app"
     }
   },
   "tags": [],

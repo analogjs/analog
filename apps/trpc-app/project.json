@@ -63,7 +63,7 @@
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
     },
-    "tests": {
+    "test": {
       "executor": "@nx/vite:test",
       "outputs": ["{projectRoot}/coverage"]
     }
