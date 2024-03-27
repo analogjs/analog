@@ -333,15 +333,15 @@ function addTailwindDirectives(write, filesDir) {
 
 function addPostCssConfig(write, filesDir) {
   write(
-    'postcss.config.js',
-    fs.readFileSync(path.join(filesDir, `postcss.config.js`), 'utf-8')
+    'postcss.config.cjs',
+    fs.readFileSync(path.join(filesDir, `postcss.config.cjs`), 'utf-8')
   );
 }
 
 function addTailwindConfig(write, filesDir) {
   write(
-    'tailwind.config.js',
-    fs.readFileSync(path.join(filesDir, `tailwind.config.js`), 'utf-8')
+    'tailwind.config.cjs',
+    fs.readFileSync(path.join(filesDir, `tailwind.config.cjs`), 'utf-8')
   );
 }
 

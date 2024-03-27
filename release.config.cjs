@@ -40,6 +40,13 @@ module.exports = {
       '@semantic-release/npm',
       {
         npmPublish: false,
+        pkgRoot: './packages/create-analog/',
+      },
+    ],
+    [
+      '@semantic-release/npm',
+      {
+        npmPublish: false,
         pkgRoot: './packages/platform/',
       },
     ],
@@ -48,13 +55,6 @@ module.exports = {
       {
         npmPublish: false,
         pkgRoot: './packages/router/',
-      },
-    ],
-    [
-      '@semantic-release/npm',
-      {
-        npmPublish: false,
-        pkgRoot: './packages/trpc/',
       },
     ],
     [
@@ -79,9 +79,9 @@ module.exports = {
           'package.json',
           'packages/astro-angular/package.json',
           'packages/content/package.json',
+          'packages/create-analog/package.json',
           'packages/platform/package.json',
           'packages/router/package.json',
-          'packages/trpc/package.json',
           'packages/vite-plugin-angular/package.json',
           'packages/vite-plugin-nitro/package.json',
         ],

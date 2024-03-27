@@ -795,6 +795,42 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "ShPelles",
+      "name": "ShPelles",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43875468?v=4",
+      "profile": "https://github.com/ShPelles",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "pavankjadda",
+      "name": "Pavan Kumar Jadda",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17564080?v=4",
+      "profile": "https://pavankjadda.dev",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "monacodelisa",
+      "name": "Esther White",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64324417?v=4",
+      "profile": "https://monacodelisa.com/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Micha-Richter",
+      "name": "Michael Richter",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12509902?v=4",
+      "profile": "https://github.com/Micha-Richter",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
