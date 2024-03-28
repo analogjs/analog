@@ -6,6 +6,8 @@
     title: 'My page',
     canActivate: [() => true],
   };
+
+  const helloInput = "test";
 </script>
 
 <template lang="md">
@@ -27,5 +29,5 @@
   }
   ```
 
-  <Hello />
+  <Hello [text]="helloInput" />
 </template>

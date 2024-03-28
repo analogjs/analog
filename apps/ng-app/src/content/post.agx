@@ -3,7 +3,11 @@ title: Hello World
 ---
 
 <script lang="ts">
-  const name = 'Analog';
+import Hello from '../app/hello.analog' with { analog: 'imports' };
+
+const name = 'Analog';
+const greetings = ['Hello', 'Hi'];
+const show = false;
 </script>
 
 <template lang="md">
@@ -20,5 +24,13 @@ title: Hello World
   ```ts
   import { CoolStuff } from "@analogjs/platform"
   ```
+
+  @for(greeting of greetings; track $index){
+    <Hello [text]="greeting" />
+  }
+
+  @if(show){
+    <p>I am hidden</p>
+  }
 
 </template>

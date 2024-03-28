@@ -30,8 +30,19 @@ export class MarkedSetupService {
       return `<code>${code}</code>`;
     };
 
+    renderer.paragraph = (text: string) => {
+      if (
+        this.detectAngularComponent(text) ||
+        this.detectAngularControlFlow(text)
+      ) {
+        return this.decodeHtmlEntities(text.trim());
+      }
+      return `<p>${text}</p>`;
+    };
+
     renderer.code = (code: string, lang: string) => {
       code = this.escapeBreakingCharacters(code);
+
       // Let's do a language based detection like on GitHub
       // So we can still have non-interpreted mermaid code
       if (lang === 'mermaid') {
@@ -46,6 +57,7 @@ export class MarkedSetupService {
         lang.startsWith('diff') && Prism.languages['diff']
           ? `language-${lang} diff-highlight`
           : `language-${lang.replace('diff-', '')}`;
+
       return `<pre class="${classes}"><code class="${classes}">${code}</code></pre>`;
     };
 
@@ -115,6 +127,29 @@ export class MarkedSetupService {
     }
 
     return code;
+  }
+
+  detectAngularComponent(text: string) {
+    return text.trim().startsWith('&lt;') && text.trim().endsWith('/&gt;');
+  }
+
+  detectAngularControlFlow(text: string) {
+    return (
+      (text.trim().startsWith('@if') ||
+        text.trim().startsWith('@for') ||
+        text.trim().startsWith('@switch') ||
+        text.trim().startsWith('@defer')) &&
+      text.trim().endsWith('}')
+    );
+  }
+
+  decodeHtmlEntities(text: string) {
+    return text
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&amp;/g, '&');
   }
 
   getMarkedInstance(): typeof marked {
