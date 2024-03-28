@@ -190,15 +190,19 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configureServer(server) {
         viteServer = server;
-        server.watcher.on('add', setupCompilation);
-        server.watcher.on('unlink', setupCompilation);
+        const context = this;
+        server.watcher.on('add', () => setupCompilation(userConfig, context));
+        server.watcher.on('unlink', () =>
+          setupCompilation(userConfig, context)
+        );
       },
       async buildStart({ plugins }) {
         if (Array.isArray(plugins)) {
           cssPlugin = plugins.find((plugin) => plugin.name === 'vite:css');
         }
 
-        setupCompilation(userConfig);
+        const context = this;
+        setupCompilation(userConfig, context);
 
         // Only store cache if in watch mode
         if (watchMode) {
@@ -472,7 +476,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       .map((file: string) => `${file}.ts`);
   }
 
-  function setupCompilation(config: UserConfig) {
+  function setupCompilation(config: UserConfig, context?: unknown) {
     const analogFiles = findAnalogFiles(config);
     const { options: tsCompilerOptions, rootNames: rn } =
       compilerCli.readConfiguration(pluginOptions.tsconfig, {
@@ -506,7 +510,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     styleTransform = watchMode
       ? viteServer!.pluginContainer.transform
-      : (cssPlugin!.transform as PluginContainer['transform']);
+      : (cssPlugin!.transform as PluginContainer['transform']).bind(context);
 
     if (!jit) {
       augmentHostWithResources(host, styleTransform, {
