@@ -5,7 +5,7 @@
   "sourceRoot": "libs/top-bar/src",
   "prefix": "analogjs",
   "targets": {
-    "tests": {
+    "test": {
       "executor": "@nx/vite:test"
     },
     "lint": {
