@@ -186,14 +186,24 @@ This encourages best practices when using Angular signals since many of the othe
 
 # Inputs and Outputs
 
-To use inputs and outputs use the signals APIs for them
+To add inputs and outputs to an Analog component, you use the new Angular signals API.
+
+Let's explore what that looks like in practical terms.
 
 ## Inputs
 
 Inputs can be added to a component or directive in the Analog format using [the new `input` signal API](https://angular.io/guide/signal-inputs):
 
 ```typescript
-const name = input();
+const namedInput = input();
+```
+
+This will add an input with the name of `namedInput` that can be used in the template like so:
+
+```html
+<template>
+  <SomeComponent [namedInput]="someValue"/>
+</template>
 ```
 
 ## Outputs
@@ -202,7 +212,7 @@ Outputs are added in the Analog format like so:
 
 ```html
 <script lang="ts">
-  const selectFeed = new EventEmitter();
+  const selectItem = new EventEmitter();
 </script>
 ```
 
@@ -210,8 +220,16 @@ The above will be transformed to:
 
 ```typescript
 class Component {
-  @Output() selectFeed = new EventEmitter();
+  @Output() selectItem = new EventEmitter();
 }
+```
+
+And can be used in the template like so:
+
+```html
+<template>
+  <SomeComponent (selectItem)="doSomething($event)"/>
+</template>
 ```
 
 > In the future, this will be replaced with [the `output` signals API](https://blog.angular.io/meet-angulars-new-output-api-253a41ffa13c).
@@ -254,18 +272,19 @@ Here's an example of a directive that focuses an input and has two lifecycle met
 
 # Markdown
 
+If you'd like to write Markdown as your template rather than Angular-enhanced HTML, you can add `lang="md"` to your `<template>` tag in an `.analog` file:
+
 ```html
 <template lang="md">
   # Hello World
 </template>
 ```
 
-<!-- Can this be mixed and matched with `<script>`? -->
-
-<!-- Can this be mixed and matched with `<style>`? -->
+This can be used in combination with the other SFC tags: `<script>` and `<style>`.
 
 # Limitations
 
-- Cannot use decorator APIs (`@Input`, `@Component`, `@ViewChild`)
-- You must have `lang="ts"` present in the `<script>`
+There are a few limitations to the Analog format:
 
+- You cannot use decorator APIs (`@Input`, `@Component`, `@ViewChild`)
+- You must have `lang="ts"` present in the `<script>`
