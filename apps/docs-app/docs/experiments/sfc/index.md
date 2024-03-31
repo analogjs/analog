@@ -347,6 +347,24 @@ If you'd like to write Markdown as your template rather than Angular-enhanced HT
 
 This can be used in combination with the other SFC tags: `<script>` and `<style>`.
 
+## Using Components in Markdown
+
+`lang="md"` templates in Analog also support Analog and Angular components in their templates:
+
+```html
+<script lang="ts">
+  import Hello from './hello.analog';
+</script>
+
+<template lang="md">
+  # Greeting
+
+  <Hello />
+
+  > You might want to say "Hello" back!
+</template>
+```
+
 # Limitations
 
 There are a few limitations to the Analog format:
