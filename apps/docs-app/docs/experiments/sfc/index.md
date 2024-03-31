@@ -224,19 +224,35 @@ Instead, you can use components directly from their imported name:
 </template>
 ```
 
+> A component's `selector` is not determined by the imported name, but rather determined by the name of the file. If you change your imported name to:
+>
+> ```html
+> <script lang="ts">
+>   import LayoutHeaderHeading from '../ui-layout/layout-header.analog';
+> </script>
+>
+> <template>
+>   <LayoutHeaderHeading />
+> </template>
+> ```
+>
+> It would not work as expected. To solve this, you'll need the name of the default import to match the file name of the `.analog` file.
+>
+> An official solution for this problem, from Angular, has been hinted by the Angular team and may come in a future version of Angular.
+
 ## Alternate Component Import
 
 When importing a `.analog` component, you have two options:
 
-1) Include the `.analog` extension in your import
+1. Include the `.analog` extension in your import
 
 ```html
 <script lang="ts">
-  import YourComponent from "./your-component.analog";
+  import YourComponent from './your-component.analog';
 </script>
 ```
 
-2) Using [import attributes](https://github.com/tc39/proposal-import-attributes) to denote an Analog file
+2. Using [import attributes](https://github.com/tc39/proposal-import-attributes) to denote an Analog file
 
 ```html
 <script lang="ts">
