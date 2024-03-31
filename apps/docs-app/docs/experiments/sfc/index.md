@@ -101,6 +101,25 @@ Here's a demonstration of the Analog format building a simple todo list:
 </style>
 ```
 
+# Usage
+
+To use the Analog SFC format, you'll need to use the Analog Vite plugin or the [Analog Astro plugin](/docs/packages/astro-angular/overview) with an additional flag to enable its usage:
+
+```typescript
+import {defineConfig} from 'vite';
+import analog from '@analogjs/vite-plugin-angular';
+
+export default defineConfig({
+  // ...
+  plugins: [analog({
+    experimental: {
+    	// Required to use the Analog SFC format
+      supportAnalogFormat: true
+  	}
+  })],
+});
+```
+
 # Metadata
 
 While class decorators are used to add metadata to a component or directive in the traditional Angular authoring methods, they're replaced in the Analog format with the `defineMetadata` global function:
