@@ -111,6 +111,8 @@ defineMetadata({
 });
 ```
 
+This supports all of the decorator properties of `@Component` or `@Directive` with a few exceptions.
+
 ## Disallowed Metadata Properties
 
 The following properties are not allowed on the metadata fields:
