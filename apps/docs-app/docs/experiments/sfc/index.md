@@ -8,6 +8,99 @@ sidebar_position: 1
 >
 > This file format and API is extremely experimental and is a community project, not an official Angular proposal API. Use it at your own risk.
 
+The `.analog` file extension denotes a new file format for Angular Single File Components (SFCs) that aims to simplify the authoring experience of Angular components.
+
+Together, it combines:
+
+- Colocated template, script, and style
+- No decorators
+- Performance-first defaults (`OnPush` change detection, no accesss to `ngDoCheck`, etc.)
+
+Here's a demonstration of the Analog format building a simple todo list:
+
+```html
+
+<script lang="ts">
+  import { signal } from '@angular/core';
+
+  let id = 0;
+
+  interface TodoItem {
+    number;
+    string;
+    boolean;
+  }
+
+  const list = signal < TodoItem[] > ([]);
+
+  function onSubmit(e: SubmitEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const formData = new FormData(e.target);
+    const name = formData.get('name')
+    as
+    string;
+    list.update(prevList => [...prevList, {
+      name,
+      done: false,
+      id: ++id
+    }]);
+  }
+
+  function onDone(id: number) {
+    list.update(prevList => prevList.map(item => {
+      if (item.id === id) {
+        return {
+          ...item,
+          done: !item.done
+        };
+      }
+      return item;
+    }));
+  }
+</script>
+
+<template>
+  <div class="container">
+    <h1>Todo list</h1>
+    <ul class="todoList">
+      @for (item of list(); track $index) {
+        <li class="todoItem">
+          <span>{{ item.name }}</span>
+          <input type="checkbox" [checked]="item.done" (change)="onDone(item.id)" />
+        </li>
+      }
+    </ul>
+    <form (submit)="onSubmit($event)">
+      <h2>Add a task</h2>
+      <label>
+        <div>Task name</div>
+        <input name="name" />
+      </label>
+      <button>Add task</button>
+    </form>
+  </div>
+</template>
+
+<style>
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .todoList:empty::after {
+    content: 'No tasks';
+  }
+
+  .todoItem {
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+```
+
 # Metadata
 
 While class decorators are used to add metadata to a component or directive in the traditional Angular authoring methods, they're replaced in the Analog format with the `defineMetadata` global function:
@@ -89,6 +182,8 @@ You use these lifecycle methods like so:
 </script>
 ```
 
+This encourages best practices when using Angular signals since many of the other lifecycle methods can introduce performance issues or are easily replaced with other APIs.
+
 # Inputs and Outputs
 
 To use inputs and outputs use the signals APIs for them
@@ -107,7 +202,7 @@ Outputs are added in the Analog format like so:
 
 ```html
 <script lang="ts">
-const selectFeed = new EventEmitter();
+  const selectFeed = new EventEmitter();
 </script>
 ```
 
