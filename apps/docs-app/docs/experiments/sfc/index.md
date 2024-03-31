@@ -240,6 +240,28 @@ The new [`model` signal API](https://angular.io/api/core/model) is not yet suppo
 
 # Dedicated Template and Style Files
 
+If you like the developer experience of Analog's `<script>` to build your logic, but don't want your template and styling in the same file, you can break those out to their own files using:
+
+- `templateUrl`
+- `styleUrl`
+- `styleUrls`
+
+In `defineMetadata`, like so:
+
+```html
+<script lang="ts">
+  defineMetadata({
+    selector: "app-root",
+    templateUrl: "./test.html",
+    styleUrl: "./test.css"
+  })
+  
+  onInit(() => {
+    alert('Hello World');
+  });
+</script>
+```
+
 # Directives
 
 Any `.analog` file without a `<template>` tag or usage of `templateUrl` in the `defineMetadata` function are treated as Angular Directives.
