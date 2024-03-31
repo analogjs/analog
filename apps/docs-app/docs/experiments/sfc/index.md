@@ -24,10 +24,15 @@ Here's a demonstration of the Analog format building a simple todo list:
 
   let id = 0;
 
+  // Optional for most components
+  defineMetadata({
+    selector: 'app-root',
+  });
+
   interface TodoItem {
-    number;
-    string;
-    boolean;
+    id: number;
+    name: string;
+    done: boolean;
   }
 
   const list = signal<TodoItem[]>([]);
@@ -36,9 +41,7 @@ Here's a demonstration of the Analog format building a simple todo list:
     e.preventDefault();
     e.stopPropagation();
     const formData = new FormData(e.target);
-    const name = formData.get('name');
-    as;
-    string;
+    const name = formData.get('name') as string;
     list.update((prevList) => [
       ...prevList,
       {
@@ -68,7 +71,7 @@ Here's a demonstration of the Analog format building a simple todo list:
   <div class="container">
     <h1>Todo list</h1>
     <ul class="todoList">
-      @for (item of list(); track $index) {
+      @for (item of list(); track item.id) {
       <li class="todoItem">
         <span>{{ item.name }}</span>
         <input
@@ -304,7 +307,7 @@ Here's an example of a directive that focuses an input and has two lifecycle met
 
 ```html
 <script lang="ts">
-  import { inject, ElementRef, afterNextRender } from '@angular/core';
+  import { inject, ElementRef, afterNextRender, effect } from '@angular/core';
 
   defineMetadata({
     selector: 'input[directive]',
