@@ -197,7 +197,7 @@ bootstrapApplication(App, appConfig).catch((err) => console.error(err));
 
 Further, when importing an `.analog` file into another `.analog` file, you do not need to add them to your `imports` like you do with non-analog components and directives.
 
-Instead, you can utilize components directly from their imported name:
+Instead, you can use components directly from their imported name:
 
 ```html
 <!-- layout.analog -->
@@ -222,6 +222,38 @@ Instead, you can utilize components directly from their imported name:
   <router-outlet />
   <LayoutFooter />
 </template>
+```
+
+## Alternate Component Import
+
+When importing a `.analog` component, you have two options:
+
+1) Include the `.analog` extension in your import
+
+```html
+<script lang="ts">
+  import YourComponent from "./your-component.analog";
+</script>
+```
+
+2) Using [import attributes](https://github.com/tc39/proposal-import-attributes) to denote an Analog file
+
+```html
+<script lang="ts">
+  import { YourComponent } from "your-component" with { analog: 'imports' }
+</script>
+```
+
+Using the import attribute method will add the component to your metadata's `imports` and can be used for other imports you want to add to the metadata, like so:
+
+```html
+<script lang="ts">
+  // This will add to the `providers` array in your metadata
+  import { MyService } from './my.service' with { analog: 'providers'};
+  // This will add the `ExternalEnum` field to your component's constructor so that you can use it in your template
+  import { ExternalEnum } from './external.model' with { analog: 'exposes' };
+  // ...
+</script>
 ```
 
 # Lifecycle Methods
