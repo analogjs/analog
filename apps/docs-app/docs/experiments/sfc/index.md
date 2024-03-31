@@ -133,6 +133,14 @@ export default defineConfig({
 });
 ```
 
+## IDE Support
+
+To support syntax highlighting and other IDE functionality with `.analog` files, you'll need to install an extension to support the format for:
+
+- [WebStorm 2024.1+ or IDEA Ultimate 2024.1+](https://github.com/analogjs/idea-plugin)
+
+> [Support for VSCode is coming! Please see this issue for more details](https://github.com/volarjs/angular-language-tools/).
+
 # Metadata
 
 While class decorators are used to add metadata to a component or directive in the traditional Angular authoring methods, they're replaced in the Analog format with the `defineMetadata` global function:
