@@ -19,7 +19,6 @@ Together, it combines:
 Here's a demonstration of the Analog format building a simple todo list:
 
 ```html
-
 <script lang="ts">
   import { signal } from '@angular/core';
 
@@ -31,32 +30,37 @@ Here's a demonstration of the Analog format building a simple todo list:
     boolean;
   }
 
-  const list = signal < TodoItem[] > ([]);
+  const list = signal<TodoItem[]>([]);
 
   function onSubmit(e: SubmitEvent) {
     e.preventDefault();
     e.stopPropagation();
     const formData = new FormData(e.target);
-    const name = formData.get('name')
-    as
+    const name = formData.get('name');
+    as;
     string;
-    list.update(prevList => [...prevList, {
-      name,
-      done: false,
-      id: ++id
-    }]);
+    list.update((prevList) => [
+      ...prevList,
+      {
+        name,
+        done: false,
+        id: ++id,
+      },
+    ]);
   }
 
   function onDone(id: number) {
-    list.update(prevList => prevList.map(item => {
-      if (item.id === id) {
-        return {
-          ...item,
-          done: !item.done
-        };
-      }
-      return item;
-    }));
+    list.update((prevList) =>
+      prevList.map((item) => {
+        if (item.id === id) {
+          return {
+            ...item,
+            done: !item.done,
+          };
+        }
+        return item;
+      })
+    );
   }
 </script>
 
@@ -65,10 +69,14 @@ Here's a demonstration of the Analog format building a simple todo list:
     <h1>Todo list</h1>
     <ul class="todoList">
       @for (item of list(); track $index) {
-        <li class="todoItem">
-          <span>{{ item.name }}</span>
-          <input type="checkbox" [checked]="item.done" (change)="onDone(item.id)" />
-        </li>
+      <li class="todoItem">
+        <span>{{ item.name }}</span>
+        <input
+          type="checkbox"
+          [checked]="item.done"
+          (change)="onDone(item.id)"
+        />
+      </li>
       }
     </ul>
     <form (submit)="onSubmit($event)">
@@ -106,17 +114,19 @@ Here's a demonstration of the Analog format building a simple todo list:
 To use the Analog SFC format, you'll need to use the Analog Vite plugin or the [Analog Astro plugin](/docs/packages/astro-angular/overview) with an additional flag to enable its usage:
 
 ```typescript
-import {defineConfig} from 'vite';
+import { defineConfig } from 'vite';
 import analog from '@analogjs/vite-plugin-angular';
 
 export default defineConfig({
   // ...
-  plugins: [analog({
-    experimental: {
-    	// Required to use the Analog SFC format
-      supportAnalogFormat: true
-  	}
-  })],
+  plugins: [
+    analog({
+      experimental: {
+        // Required to use the Analog SFC format
+        supportAnalogFormat: true,
+      },
+    }),
+  ],
 });
 ```
 
@@ -175,7 +185,10 @@ Instead, you can utilize components directly from their imported name:
 </script>
 
 <template>
-  <LayoutHeader [isAuthenticated]="authStore.isAuthenticated()" [username]="authStore.username()" />
+  <LayoutHeader
+    [isAuthenticated]="authStore.isAuthenticated()"
+    [username]="authStore.username()"
+  />
   <router-outlet />
   <LayoutFooter />
 </template>
@@ -194,12 +207,12 @@ You use these lifecycle methods like so:
 <!-- app.analog -->
 <script lang="ts">
   onInit(() => {
-    console.log("I am mounting");
-  })
+    console.log('I am mounting');
+  });
 
   onDestroy(() => {
-    console.log("I am unmounting");
-  })
+    console.log('I am unmounting');
+  });
 </script>
 ```
 
@@ -223,7 +236,7 @@ This will add an input with the name of `namedInput` that can be used in the tem
 
 ```html
 <template>
-  <SomeComponent [namedInput]="someValue"/>
+  <SomeComponent [namedInput]="someValue" />
 </template>
 ```
 
@@ -249,7 +262,7 @@ And can be used in the template like so:
 
 ```html
 <template>
-  <SomeComponent (selectItem)="doSomething($event)"/>
+  <SomeComponent (selectItem)="doSomething($event)" />
 </template>
 ```
 
@@ -272,11 +285,11 @@ In `defineMetadata`, like so:
 ```html
 <script lang="ts">
   defineMetadata({
-    selector: "app-root",
-    templateUrl: "./test.html",
-    styleUrl: "./test.css"
-  })
-  
+    selector: 'app-root',
+    templateUrl: './test.html',
+    styleUrl: './test.css',
+  });
+
   onInit(() => {
     alert('Hello World');
   });
@@ -295,7 +308,7 @@ Here's an example of a directive that focuses an input and has two lifecycle met
 
   defineMetadata({
     selector: 'input[directive]',
-  })
+  });
 
   const elRef = inject(ElementRef);
 
@@ -318,9 +331,7 @@ Here's an example of a directive that focuses an input and has two lifecycle met
 If you'd like to write Markdown as your template rather than Angular-enhanced HTML, you can add `lang="md"` to your `<template>` tag in an `.analog` file:
 
 ```html
-<template lang="md">
-  # Hello World
-</template>
+<template lang="md"> # Hello World </template>
 ```
 
 This can be used in combination with the other SFC tags: `<script>` and `<style>`.
