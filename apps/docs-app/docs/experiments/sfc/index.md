@@ -141,6 +141,25 @@ To support syntax highlighting and other IDE functionality with `.analog` files,
 
 > [Support for VSCode is coming! Please see this issue for more details](https://github.com/volarjs/angular-language-tools/).
 
+## Additional Configuration
+
+If you are using `.analog` files outside a project's root you will need to specify all paths of `.analog` files using globs, like so:
+
+```typescript
+export default defineConfig(({ mode }) => ({
+  // ...
+  plugins: [
+    analog({
+      experimental: {
+        supportAnalogFormat: {
+          include: ['/libs/shared/ui/**/*', '/libs/angularstart/ui/**/*'],
+        },
+      },
+    }),
+  ],
+}));
+```
+
 # Metadata
 
 While class decorators are used to add metadata to a component or directive in the traditional Angular authoring methods, they're replaced in the Analog format with the `defineMetadata` global function:
