@@ -103,7 +103,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
     },
     supportedBrowsers: options?.supportedBrowsers ?? ['safari 15'],
-    jit: options?.jit,
+    jit: options?.experimental?.supportAnalogFormat ? false : options?.jit,
     supportAnalogFormat: options?.experimental?.supportAnalogFormat ?? false,
     markdownTemplateTransforms:
       options?.experimental?.markdownTemplateTransforms ??
@@ -374,7 +374,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           const useInputSourcemap = (!isProd ? undefined : false) as undefined;
 
           if (
-            (id.includes('.analog') || id.includes('.agx')) &&
+            (id.endsWith('.analog') || id.endsWith('.agx')) &&
             pluginOptions.supportAnalogFormat &&
             fileEmitter
           ) {
