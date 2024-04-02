@@ -66,94 +66,38 @@ export default defineConfig(({ mode }) => ({
 
 # Authoring an SFC
 
-Here's a demonstration of the Analog format building a simple todo list:
+Here's a demonstration of the Analog format building a simple counter:
 
 ```html
-<!-- app-root.analog -->
 <script lang="ts">
+  // counter.analog
   import { signal } from '@angular/core';
 
-  let id = 0;
+  const count = signal(0);
 
-  interface TodoItem {
-    id: number;
-    name: string;
-    done: boolean;
-  }
-
-  const list = signal<TodoItem[]>([]);
-
-  function onSubmit(e: SubmitEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    const formData = new FormData(e.target);
-    const name = formData.get('name') as string;
-    list.update((prevList) => [
-      ...prevList,
-      {
-        name,
-        done: false,
-        id: ++id,
-      },
-    ]);
-  }
-
-  function onDone(id: number) {
-    list.update((prevList) =>
-      prevList.map((item) => {
-        if (item.id === id) {
-          return {
-            ...item,
-            done: !item.done,
-          };
-        }
-        return item;
-      })
-    );
+  function add() {
+    count.set(count() + 1);
   }
 </script>
 
 <template>
   <div class="container">
-    <h1>Todo list</h1>
-    <ul class="todoList">
-      @for (item of list(); track item.id) {
-      <li class="todoItem">
-        <span>{{ item.name }}</span>
-        <input
-          type="checkbox"
-          [checked]="item.done"
-          (change)="onDone(item.id)"
-        />
-      </li>
-      }
-    </ul>
-    <form (submit)="onSubmit($event)">
-      <h2>Add a task</h2>
-      <label>
-        <div>Task name</div>
-        <input name="name" />
-      </label>
-      <button>Add task</button>
-    </form>
+    <button (click)="add()">{{count()}}</button>
   </div>
 </template>
 
 <style>
   .container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 1rem;
-    text-align: center;
-  }
-
-  .todoList:empty::after {
-    content: 'No tasks';
-  }
-
-  .todoItem {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+  }
+
+  button {
+    font-size: 2rem;
+    padding: 1rem 2rem;
+    border-radius: 0.5rem;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
   }
 </style>
 ```
