@@ -72,9 +72,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               `ssr/main.server${filePrefix ? '.js' : ''}`
             )
         );
-        const indexEntry = normalizePath(
-          resolve(clientOutputPath, 'index.html')
-        );
         const rendererEntry =
           filePrefix +
           normalizePath(
@@ -130,10 +127,15 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         if (!ssrBuild && !isTest) {
           // store the client output path for the SSR build config
           clientOutputPath = resolve(
+            workspaceRoot,
             rootDir,
             config.build?.outDir || 'dist/client'
           );
         }
+
+        const indexEntry = normalizePath(
+          resolve(clientOutputPath, 'index.html')
+        );
 
         nitroConfig.alias = {
           '#analog/ssr': ssrEntry,

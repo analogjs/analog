@@ -10,9 +10,12 @@ export async function buildSSRApp(config: UserConfig, options?: Options) {
     build: {
       ssr: true,
       rollupOptions: {
-        input: options?.entryServer || resolve(rootDir, './src/main.server.ts'),
+        input:
+          options?.entryServer ||
+          resolve(workspaceRoot, rootDir, 'src/main.server.ts'),
       },
-      outDir: options?.ssrBuildDir || resolve('dist', rootDir, 'ssr'),
+      outDir:
+        options?.ssrBuildDir || resolve(workspaceRoot, 'dist', rootDir, 'ssr'),
     },
   });
 
