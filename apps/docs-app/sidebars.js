@@ -174,11 +174,11 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: 'Experiments',
+      label: 'Experimental',
       items: [
         {
           type: 'doc',
-          id: 'experiments/sfc/index',
+          id: 'experimental/sfc/index',
           label: 'Analog SFCs',
         },
       ],

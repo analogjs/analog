@@ -6,28 +6,74 @@ sidebar_position: 1
 
 > **Note:**
 >
-> This file format and API is extremely experimental and is a community project, not an official Angular proposal API. Use it at your own risk.
+> This file format and API is experimental, is a community-driven initiative, and is not an officially proposed change to Angular. Use it at your own risk.
 
 The `.analog` file extension denotes a new file format for Angular Single File Components (SFCs) that aims to simplify the authoring experience of Angular components.
 
 Together, it combines:
 
-- Colocated template, script, and style
+- Colocated template, script, and style tags
 - No decorators
 - Performance-first defaults (`OnPush` change detection, no accesss to `ngDoCheck`, etc.)
+
+# Usage
+
+To use the Analog SFC format, you need to use the Analog Vite plugin or the [Analog Astro plugin](/docs/packages/astro-angular/overview) with an additional flag to enable its usage:
+
+```typescript
+import { defineConfig } from 'vite';
+import analog from '@analogjs/vite-plugin-angular';
+
+export default defineConfig({
+  // ...
+  plugins: [
+    analog({
+      experimental: {
+        // Required to use the Analog SFC format
+        supportAnalogFormat: true,
+      },
+    }),
+  ],
+});
+```
+
+## IDE Support
+
+To support syntax highlighting and other IDE functionality with `.analog` files, you need to install an extension to support the format for:
+
+- [WebStorm 2024.1+ or IDEA Ultimate 2024.1+](https://github.com/analogjs/idea-plugin)
+
+> [Support for VSCode is coming! Please see this issue for more details](https://github.com/volarjs/angular-language-tools/).
+
+## Additional Configuration
+
+If you are using `.analog` files outside a project's root you will need to specify all paths of `.analog` files using globs, like so:
+
+```typescript
+export default defineConfig(({ mode }) => ({
+  // ...
+  plugins: [
+    analog({
+      experimental: {
+        supportAnalogFormat: {
+          include: ['/libs/shared/ui/**/*', '/libs/angularstart/ui/**/*'],
+        },
+      },
+    }),
+  ],
+}));
+```
+
+# Authoring an SFC
 
 Here's a demonstration of the Analog format building a simple todo list:
 
 ```html
+<!-- app-root.analog -->
 <script lang="ts">
   import { signal } from '@angular/core';
 
   let id = 0;
-
-  // Optional for most components
-  defineMetadata({
-    selector: 'app-root',
-  });
 
   interface TodoItem {
     id: number;
@@ -112,53 +158,7 @@ Here's a demonstration of the Analog format building a simple todo list:
 </style>
 ```
 
-# Usage
-
-To use the Analog SFC format, you'll need to use the Analog Vite plugin or the [Analog Astro plugin](/docs/packages/astro-angular/overview) with an additional flag to enable its usage:
-
-```typescript
-import { defineConfig } from 'vite';
-import analog from '@analogjs/vite-plugin-angular';
-
-export default defineConfig({
-  // ...
-  plugins: [
-    analog({
-      experimental: {
-        // Required to use the Analog SFC format
-        supportAnalogFormat: true,
-      },
-    }),
-  ],
-});
-```
-
-## IDE Support
-
-To support syntax highlighting and other IDE functionality with `.analog` files, you'll need to install an extension to support the format for:
-
-- [WebStorm 2024.1+ or IDEA Ultimate 2024.1+](https://github.com/analogjs/idea-plugin)
-
-> [Support for VSCode is coming! Please see this issue for more details](https://github.com/volarjs/angular-language-tools/).
-
-## Additional Configuration
-
-If you are using `.analog` files outside a project's root you will need to specify all paths of `.analog` files using globs, like so:
-
-```typescript
-export default defineConfig(({ mode }) => ({
-  // ...
-  plugins: [
-    analog({
-      experimental: {
-        supportAnalogFormat: {
-          include: ['/libs/shared/ui/**/*', '/libs/angularstart/ui/**/*'],
-        },
-      },
-    }),
-  ],
-}));
-```
+See the [defineMetadata](#metadata) section for adding additional component metadata.
 
 # Metadata
 
@@ -260,7 +260,7 @@ When importing a `.analog` component, you have two options:
 </script>
 ```
 
-Using the import attribute method will add the component to your metadata's `imports` and can be used for other imports you want to add to the metadata, like so:
+Using the import attribute method adds the component to your metadata's `imports` and can be used for other imports you want to add to the metadata, like so:
 
 ```html
 <script lang="ts">
@@ -350,7 +350,7 @@ And can be used in the template like so:
 
 The new [`model` signal API](https://angular.io/api/core/model) is not yet supported.
 
-# Dedicated Template and Style Files
+# Using an External Template and Styles
 
 If you like the developer experience of Analog's `<script>` to build your logic, but don't want your template and styling in the same file, you can break those out to their own files using:
 
@@ -374,7 +374,7 @@ In `defineMetadata`, like so:
 </script>
 ```
 
-# Directives
+# Authoring Directives
 
 Any `.analog` file without a `<template>` tag or usage of `templateUrl` in the `defineMetadata` function are treated as Angular Directives.
 
@@ -404,7 +404,7 @@ Here's an example of a directive that focuses an input and has two lifecycle met
 </script>
 ```
 
-# Markdown
+# Authoring SFCs using Markdown
 
 If you'd like to write Markdown as your template rather than Angular-enhanced HTML, you can add `lang="md"` to your `<template>` tag in an `.analog` file:
 
