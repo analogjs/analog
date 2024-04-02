@@ -1,3 +1,16 @@
+# [1.1.0](https://github.com/analogjs/analog/compare/v1.0.2...v1.1.0) (2024-04-02)
+
+### Bug Fixes
+
+- **astro-angular:** enable angular-prod mode at the astro:config:done step ([#970](https://github.com/analogjs/analog/issues/970)) ([68a9cc8](https://github.com/analogjs/analog/commit/68a9cc80de3404508f9ab952dffc4f8ea699468b))
+- **vite-plugin-angular:** add support for testing Analog SFCs ([#984](https://github.com/analogjs/analog/issues/984)) ([12c7f6b](https://github.com/analogjs/analog/commit/12c7f6bbddd86ef097a268e36921299b3e6b8f9c))
+- **vite-plugin-angular:** bind css transform to correct plugin scope ([#979](https://github.com/analogjs/analog/issues/979)) ([acdf195](https://github.com/analogjs/analog/commit/acdf195ddd809517c4187f64a645fc6c1625fb97))
+
+### Features
+
+- add support for Nx w/Project Crystal setup ([#991](https://github.com/analogjs/analog/issues/991)) ([2d7a581](https://github.com/analogjs/analog/commit/2d7a581af87818767d11932b7b9c8e60c2e4b4aa))
+- **vite-plugin-angular:** support components and control flow in markdown ([#976](https://github.com/analogjs/analog/issues/976)) ([fde8c2f](https://github.com/analogjs/analog/commit/fde8c2f6f732d9dc4bad94556aaf91c19f96b242))
+
 ## [1.0.2](https://github.com/analogjs/analog/compare/v1.0.1...v1.0.2) (2024-03-25)
 
 ### Bug Fixes
