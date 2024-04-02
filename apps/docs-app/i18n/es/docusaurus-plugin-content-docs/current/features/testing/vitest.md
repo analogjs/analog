@@ -47,12 +47,7 @@ import angular from '@analogjs/vite-plugin-angular';
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig(({ mode }) => ({
-  plugins: [
-    angular(),
-    viteTsConfigPaths({
-      root: './',
-    }),
-  ],
+  plugins: [angular(), viteTsConfigPaths()],
   test: {
     globals: true,
     setupFiles: ['src/test.ts'],
@@ -168,12 +163,7 @@ import angular from '@analogjs/vite-plugin-angular';
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig(({ mode }) => ({
-  plugins: [
-    angular(),
-    viteTsConfigPaths({
-      root: './',
-    }),
-  ],
+  plugins: [angular(), viteTsConfigPaths()],
   test: {
     globals: true,
     setupFiles: ['src/test.ts'],

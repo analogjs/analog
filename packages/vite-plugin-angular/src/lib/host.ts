@@ -42,7 +42,7 @@ export function augmentHostWithResources(
       onError,
       ...parameters
     ) => {
-      if (fileName.includes('.analog') || fileName.includes('.agx.ts')) {
+      if (fileName.endsWith('.analog.ts') || fileName.endsWith('.agx.ts')) {
         const contents = readFileSync(
           fileName.replace('.analog.ts', '.analog').replace('.agx.ts', '.agx'),
           'utf-8'

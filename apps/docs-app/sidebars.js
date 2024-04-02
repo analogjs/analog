@@ -167,6 +167,11 @@ const sidebars = {
         },
         {
           type: 'doc',
+          id: 'packages/vite-plugin-angular/overview',
+          label: 'Vite',
+        },
+        {
+          type: 'doc',
           id: 'integrations/angular-material/index',
           label: 'Angular Material',
         },

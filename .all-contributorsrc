@@ -831,6 +831,33 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "alator21",
+      "name": "Rafael Triantafillidis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24437129?v=4",
+      "profile": "https://a21.dev",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "pi0",
+      "name": "Pooya Parsa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5158436?v=4",
+      "profile": "https://github.com/pi0",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "crutchcorn",
+      "name": "Corbin Crutchley",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9100169?v=4",
+      "profile": "https://crutchcorn.dev",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,

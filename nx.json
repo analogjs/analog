@@ -3,9 +3,6 @@
   "workspaceLayout": {
     "libsDir": "packages"
   },
-  "affected": {
-    "defaultBase": "main"
-  },
   "cli": {
     "packageManager": "pnpm"
   },
@@ -67,5 +64,6 @@
     ],
     "projectSpecificFiles": []
   },
-  "nxCloudAccessToken": "NDRkYzdkYmMtNDI3NS00MDI0LWFkMGQtMmI0Zjc2MTY2YzU0fHJlYWQtb25seQ=="
+  "nxCloudAccessToken": "NDRkYzdkYmMtNDI3NS00MDI0LWFkMGQtMmI0Zjc2MTY2YzU0fHJlYWQtb25seQ==",
+  "defaultBase": "main"
 }

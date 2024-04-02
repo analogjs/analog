@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-87-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-90-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -200,6 +200,9 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://pavankjadda.dev"><img src="https://avatars.githubusercontent.com/u/17564080?v=4?s=100" width="100px;" alt="Pavan Kumar Jadda"/><br /><sub><b>Pavan Kumar Jadda</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=pavankjadda" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://monacodelisa.com/"><img src="https://avatars.githubusercontent.com/u/64324417?v=4?s=100" width="100px;" alt="Esther White"/><br /><sub><b>Esther White</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=monacodelisa" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Micha-Richter"><img src="https://avatars.githubusercontent.com/u/12509902?v=4?s=100" width="100px;" alt="Michael Richter"/><br /><sub><b>Michael Richter</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Micha-Richter" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://a21.dev"><img src="https://avatars.githubusercontent.com/u/24437129?v=4?s=100" width="100px;" alt="Rafael Triantafillidis"/><br /><sub><b>Rafael Triantafillidis</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=alator21" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/pi0"><img src="https://avatars.githubusercontent.com/u/5158436?v=4?s=100" width="100px;" alt="Pooya Parsa"/><br /><sub><b>Pooya Parsa</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=pi0" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://crutchcorn.dev"><img src="https://avatars.githubusercontent.com/u/9100169?v=4?s=100" width="100px;" alt="Corbin Crutchley"/><br /><sub><b>Corbin Crutchley</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=crutchcorn" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
