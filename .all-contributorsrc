@@ -849,6 +849,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "crutchcorn",
+      "name": "Corbin Crutchley",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9100169?v=4",
+      "profile": "https://crutchcorn.dev",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
