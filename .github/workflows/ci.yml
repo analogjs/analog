@@ -15,24 +15,6 @@ env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
 jobs:
-  commitlint:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      # Required by wagoid/commitlint-github-action
-      pull-requests: read
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          # Required by wagoid/commitlint-github-action
-          fetch-depth: 0
-      - name: Lint commit messages
-        uses: wagoid/commitlint-github-action@v5
-        with:
-          failOnWarnings: true
-          helpURL: https://github.com/analogjs/analog/blob/main/CONTRIBUTING.md#-commit-message-guidelines
-
   prettier:
     runs-on: ubuntu-latest
     steps:
@@ -155,8 +137,8 @@ jobs:
       - name: Build
         run: pnpm exec nx build docs-app
       - name: Upload docs website
-        # Runs on merge to the `main` branch
-        if: github.event_name == 'push' && github.ref_name == 'main'
+        # Runs on merge to the `beta` branch
+        if: github.event_name == 'push' && github.ref_name == 'beta'
         uses: actions/upload-artifact@v3
         with:
           if-no-files-found: error
@@ -172,8 +154,8 @@ jobs:
       - unit
       - e2e
       - docs
-    # Runs on merge to the `main` branch
-    if: github.event_name == 'push' && github.ref_name == 'main'
+    # Runs on merge to the `beta` branch
+    if: github.event_name == 'push' && github.ref_name == 'beta'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -185,7 +167,7 @@ jobs:
       id-token: write
     concurrency:
       # Group concurrency on workflow, then:
-      # - Is merge run? Group on branch name (`refs/heads/main`)
+      # - Is merge run? Group on branch name (`refs/heads/beta`)
       # - Is pull request? Group on pull request branch name, for example `feat/add-awesome-feature`
       group: >-
         ${{ github.workflow }}-deploy-docs-${{
