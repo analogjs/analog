@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/analogjs/analog/compare/v1.1.0...v1.1.1) (2024-04-04)
+
+### Bug Fixes
+
+- add TanStack packages for SSR transform ([#998](https://github.com/analogjs/analog/issues/998)) ([0c5d1f6](https://github.com/analogjs/analog/commit/0c5d1f63458e5376cefd8cfb62c2c302bbf80c22))
+- **vite-plugin-angular:** add support for output and model Signal API to Analog SFC ([#1004](https://github.com/analogjs/analog/issues/1004)) ([e212676](https://github.com/analogjs/analog/commit/e212676bb938a53fc59e933f68781e8a45d28cd3))
+
 # [1.1.0](https://github.com/analogjs/analog/compare/v1.0.2...v1.1.0) (2024-04-02)
 
 ### Bug Fixes
