@@ -1,0 +1,375 @@
+---
+sidebar_position: 1
+---
+
+# Analog SFCs
+
+> **Note:**
+>
+> This file format and API is experimental, is a community-driven initiative, and is not an officially proposed change to Angular. Use it at your own risk.
+
+The `.analog` file extension denotes a new file format for Angular Single File Components (SFCs) that aims to simplify the authoring experience of Angular components.
+
+Together, it combines:
+
+- Colocated template, script, and style tags
+- No decorators
+- Performance-first defaults (`OnPush` change detection, no accesss to `ngDoCheck`, etc.)
+
+# Usage
+
+To use the Analog SFC format, you need to use the Analog Vite plugin or the [Analog Astro plugin](/docs/packages/astro-angular/overview) with an additional flag to enable its usage:
+
+```typescript
+import { defineConfig } from 'vite';
+import analog from '@analogjs/vite-plugin-angular';
+
+export default defineConfig({
+  // ...
+  plugins: [
+    analog({
+      vite: {
+        // Required to use the Analog SFC format
+        experimental: {
+          supportAnalogFormat: true,
+        },
+      },
+    }),
+  ],
+});
+```
+
+## IDE Support
+
+To support syntax highlighting and other IDE functionality with `.analog` files, you need to install an extension to support the format for:
+
+- [WebStorm 2024.1+ or IDEA Ultimate 2024.1+](https://github.com/analogjs/idea-plugin)
+
+> [Support for VSCode is coming! Please see this issue for more details](https://github.com/volarjs/angular-language-tools/).
+
+## Additional Configuration
+
+If you are using `.analog` files outside a project's root you will need to specify all paths of `.analog` files using globs, like so:
+
+```typescript
+export default defineConfig(({ mode }) => ({
+  // ...
+  plugins: [
+    analog({
+      vite: {
+        experimental: {
+          supportAnalogFormat: {
+            include: ['/libs/shared/ui/**/*', '/libs/some-lib/ui/**/*'],
+          },
+        },
+      },
+    }),
+  ],
+}));
+```
+
+# Authoring an SFC
+
+Here's a demonstration of the Analog format building a simple counter:
+
+```html
+<script lang="ts">
+  // counter.analog
+  import { signal } from '@angular/core';
+
+  const count = signal(0);
+
+  function add() {
+    count.set(count() + 1);
+  }
+</script>
+
+<template>
+  <div class="container">
+    <button (click)="add()">{{count()}}</button>
+  </div>
+</template>
+
+<style>
+  .container {
+    display: flex;
+    justify-content: center;
+  }
+
+  button {
+    font-size: 2rem;
+    padding: 1rem 2rem;
+    border-radius: 0.5rem;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+  }
+</style>
+```
+
+See the [defineMetadata](#metadata) section for adding additional component metadata.
+
+# Metadata
+
+While class decorators are used to add metadata to a component or directive in the traditional Angular authoring methods, they're replaced in the Analog format with the `defineMetadata` global function:
+
+```typescript
+defineMetadata({
+  host: { class: 'block articles-toggle' },
+});
+```
+
+This supports all of the decorator properties of `@Component` or `@Directive` with a few exceptions.
+
+## Disallowed Metadata Properties
+
+The following properties are not allowed on the metadata fields:
+
+- `template`: Use the SFC `<template>` or `defineMetadata.templateUrl` instead
+- `standalone`: Always set to `true`
+- `changeDetection`: Always set to `OnPush`
+- `styles`: Use the SFC `<style>` tag
+- `outputs`: Implicitly added with `new EventEmitter()` usage
+- `inputs`: Use the `input` signal API instead
+
+# Using Components
+
+When using the Analog format, you do not need to explicitly export anything; the component is the default export of the `.analog` file:
+
+```typescript
+import { bootstrapApplication } from '@angular/platform-browser';
+import App from './app/app.analog';
+import { appConfig } from './app/app.config';
+
+bootstrapApplication(App, appConfig).catch((err) => console.error(err));
+```
+
+To use the components you will need to add them to your `imports` (alternatively, you can use **import attributes** as explained in the following section):
+
+```html
+<!-- layout.analog -->
+<script lang="ts">
+  import { inject } from '@angular/core';
+  import { RouterOutlet } from '@angular/router';
+  import { AuthStore } from '../shared-data-access-auth/auth.store';
+  import LayoutFooter from '../ui-layout/layout-footer.analog';
+  import LayoutHeader from '../ui-layout/layout-header.analog';
+
+  defineMetadata({ imports: [RouterOutlet, LayoutFooter, LayoutHeader] });
+
+  const authStore = inject(AuthStore);
+</script>
+
+<template>
+  <LayoutHeader
+    [isAuthenticated]="authStore.isAuthenticated()"
+    [username]="authStore.username()"
+  />
+  <router-outlet />
+  <LayoutFooter />
+</template>
+```
+
+> A component's `selector` is not determined by the imported name, but rather determined by the name of the file. If you change your imported name to:
+>
+> ```html
+> <script lang="ts">
+>   import LayoutHeaderHeading from '../ui-layout/layout-header.analog';
+> </script>
+>
+> <template>
+>   <LayoutHeaderHeading />
+> </template>
+> ```
+>
+> It would not work as expected. To solve this, you'll need the name of the default import to match the file name of the `.analog` file.
+>
+> An official solution for this problem, from Angular, has been hinted by the Angular team and may come in a future version of Angular.
+
+## Import Attributes
+
+To avoid the necessity of manually adding components to the `imports` metadata, you can also use [import attributes](https://github.com/tc39/proposal-import-attributes)
+
+```html
+<script lang="ts">
+  import YourComponent from './your-component.analog' with { analog: 'imports' };
+</script>
+```
+
+Using the import attribute method adds the component to your metadata's `imports` and can be used for other imports you want to add to the metadata, like so:
+
+```html
+<script lang="ts">
+  // This will add to the `providers` array in your metadata
+  import { MyService } from './my.service' with { analog: 'providers'};
+  // This will add the `ExternalEnum` field to your component's constructor so that you can use it in your template
+  import { ExternalEnum } from './external.model' with { analog: 'exposes' };
+  // ...
+</script>
+```
+
+# Lifecycle Methods
+
+Currently, only two lifecycle methods from Angular are available to `.analog` SFCs:
+
+- `onInit`
+- `onDestroy`
+
+You use these lifecycle methods like so:
+
+```html
+<!-- app.analog -->
+<script lang="ts">
+  onInit(() => {
+    console.log('I am mounting');
+  });
+
+  onDestroy(() => {
+    console.log('I am unmounting');
+  });
+</script>
+```
+
+This encourages best practices when using Angular signals since many of the other lifecycle methods can introduce performance issues or are easily replaced with other APIs.
+
+# Inputs and Outputs
+
+To add inputs and outputs to an Analog component, you use the new Angular signals API.
+
+Let's explore what that looks like in practical terms.
+
+## Inputs
+
+Inputs can be added to a component or directive in the Analog format using [the new `input` signal API](https://angular.io/guide/signal-inputs):
+
+```typescript
+const namedInput = input();
+```
+
+This will add an input with the name of `namedInput` that can be used in the template like so:
+
+```html
+<template>
+  <SomeComponent [namedInput]="someValue" />
+</template>
+```
+
+## Outputs
+
+Outputs are added in the Analog format like so:
+
+```html
+<script lang="ts">
+  const selectItem = new EventEmitter();
+</script>
+```
+
+The above will be transformed to:
+
+```typescript
+class Component {
+  @Output() selectItem = new EventEmitter();
+}
+```
+
+And can be used in the template like so:
+
+```html
+<template>
+  <SomeComponent (selectItem)="doSomething($event)" />
+</template>
+```
+
+> In the future, this will be replaced with [the `output` signals API](https://blog.angular.io/meet-angulars-new-output-api-253a41ffa13c).
+
+## Models
+
+The new [`model` signal API](https://angular.io/api/core/model) is not yet supported.
+
+# Using an External Template and Styles
+
+If you like the developer experience of Analog's `<script>` to build your logic, but don't want your template and styling in the same file, you can break those out to their own files using:
+
+- `templateUrl`
+- `styleUrl`
+- `styleUrls`
+
+In `defineMetadata`, like so:
+
+```html
+<script lang="ts">
+  defineMetadata({
+    selector: 'app-root',
+    templateUrl: './test.html',
+    styleUrl: './test.css',
+  });
+
+  onInit(() => {
+    alert('Hello World');
+  });
+</script>
+```
+
+# Authoring Directives
+
+Any `.analog` file without a `<template>` tag or usage of `templateUrl` in the `defineMetadata` function are treated as Angular Directives.
+
+Here's an example of a directive that focuses an input and has two lifecycle methods:
+
+```html
+<script lang="ts">
+  import { inject, ElementRef, afterNextRender, effect } from '@angular/core';
+
+  defineMetadata({
+    selector: 'input[directive]',
+  });
+
+  const elRef = inject(ElementRef);
+
+  afterNextRender(() => {
+    elRef.nativeElement.focus();
+  });
+
+  onInit(() => {
+    console.log('init code');
+  });
+
+  effect(() => {
+    console.log('just some effect');
+  });
+</script>
+```
+
+# Authoring SFCs using Markdown
+
+If you'd like to write Markdown as your template rather than Angular-enhanced HTML, you can add `lang="md"` to your `<template>` tag in an `.analog` file:
+
+```html
+<template lang="md"> # Hello World </template>
+```
+
+This can be used in combination with the other SFC tags: `<script>` and `<style>`.
+
+## Using Components in Markdown
+
+`lang="md"` templates in Analog also support Analog and Angular components in their templates:
+
+```html
+<script lang="ts">
+  import Hello from './hello.analog' with { analog: 'imports' };
+</script>
+
+<template lang="md">
+  # Greeting
+
+  <Hello />
+
+  > You might want to say "Hello" back!
+</template>
+```
+
+# Limitations
+
+There are a few limitations to the Analog format:
+
+- You cannot use decorator APIs (`@Input`, `@Component`, `@ViewChild`)
+- You must have `lang="ts"` present in the `<script>`
