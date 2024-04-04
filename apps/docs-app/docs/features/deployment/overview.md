@@ -98,4 +98,4 @@ Given a `vite.config.ts` file similar to this:
         apiPrefix: 'api',
 ```
 
-Nitro will prefix all api routes with `/basehref/api`.
+Nitro prefixes all API routes with `/basehref/api`.
