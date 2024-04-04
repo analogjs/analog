@@ -39,7 +39,9 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
         const segment =
           parent?.url.map((segment) => segment.path).join('/') || '';
         const url = new URL('', import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL']);
-        url.pathname = `/api/_analog${routeConfig[ANALOG_META_KEY].endpoint}`;
+        url.pathname = `${
+          url.pathname.endsWith('/') ? url.pathname : url.pathname + '/'
+        }api/_analog${routeConfig[ANALOG_META_KEY].endpoint}`;
         url.search = `${new URLSearchParams(queryParams).toString()}`;
         url.hash = hash ?? '';
 
