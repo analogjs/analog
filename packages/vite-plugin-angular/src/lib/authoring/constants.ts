@@ -15,6 +15,8 @@ export const STYLE_TAG_REGEX = /<style>([\s\S]*?)<\/style>/i;
 export const ON_INIT = 'onInit';
 export const ON_DESTROY = 'onDestroy';
 export const INPUT = 'input';
+export const OUTPUT = 'output';
+export const MODEL = 'model';
 export const INPUT_REQUIRED = 'input.required';
 export const VIEWCHILD = 'viewChild';
 export const VIEWCHILD_REQUIRED = 'viewChild.required';
@@ -30,6 +32,8 @@ export const HOOKS_MAP = {
 
 export const SIGNALS_MAP: Record<string, string> = {
   [INPUT]: 'input',
+  [OUTPUT]: 'output',
+  [MODEL]: 'model',
   [VIEWCHILD]: 'viewChild',
   [VIEWCHILDREN]: 'viewChildren',
   [CONTENT_CHILD]: 'contentChild',
