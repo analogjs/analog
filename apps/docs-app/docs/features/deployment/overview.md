@@ -90,7 +90,7 @@ export const appConfig = mergeApplicationConfig(envConfig, {
 NITRO_APP_BASE_URL="/basehref/"
 ```
 
-given a `vite.config.ts` file similar to this:
+Given a `vite.config.ts` file similar to this:
 
 ```ts
     plugins: [
