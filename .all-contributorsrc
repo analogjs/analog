@@ -865,7 +865,18 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/730804?v=4",
       "profile": "http://www.robusthaven.com",
       "contributions": [
-        "infra"
+        "infra",
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "jculvey",
+      "name": "James Culveyhouse",
+      "avatar_url": "https://avatars.githubusercontent.com/u/204386?v=4",
+      "profile": "https://github.com/jculvey",
+      "contributions": [
+        "code"
       ]
     }
   ],

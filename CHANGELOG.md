@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/analogjs/analog/compare/v1.1.1...v1.1.2) (2024-04-04)
+
+### Bug Fixes
+
+- **router:** support server-side-data-fetching when using a custom basehref ([#997](https://github.com/analogjs/analog/issues/997)) ([433c50e](https://github.com/analogjs/analog/commit/433c50e8a018ee832872a1c7caca014d0271d358))
+- **vite-plugin-nitro:** retain event context when fetching API routes ([#1005](https://github.com/analogjs/analog/issues/1005)) ([68b01fe](https://github.com/analogjs/analog/commit/68b01fe26ad6d33c08c2542eeacca630e7a9bd56))
+
 ## [1.1.1](https://github.com/analogjs/analog/compare/v1.1.0...v1.1.1) (2024-04-04)
 
 ### Bug Fixes
