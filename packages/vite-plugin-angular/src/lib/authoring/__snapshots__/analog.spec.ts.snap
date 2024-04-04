@@ -2,7 +2,7 @@
 
 exports[`authoring ng file > should process component as an analog file 1`] = `
 "import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewChildren, contentChild, contentChildren } from "@angular/core";
+import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewChildren, contentChild, contentChildren, output, model } from "@angular/core";
 import External from "./external.analog";
 import { ExternalService } from "./external";
 import { ExternalEnum } from "./external.model";
@@ -49,7 +49,9 @@ export default class VirtualAnalogComponent {
         const requiredInput = this.requiredInput
         const requiredInputWithTransform = this.requiredInputWithTransform
         const output = this.output
+        const newOutput = this.newOutput
         const outputWithType = this.outputWithType
+        const myModel = this.myModel
         const viewChildEl = this.viewChildEl
         const viewChildRequiredEl = this.viewChildRequiredEl
         const viewChildrenEl = this.viewChildrenEl
@@ -86,7 +88,9 @@ export default class VirtualAnalogComponent {
         transform: (value) => numberAttribute(value, 10),
     });
     protected output = new EventEmitter();
+    protected newOutput = output();
     protected outputWithType = new EventEmitter<string>();
+    protected myModel = model();
     protected viewChildEl = viewChild<HTMLDivElement>('divElement');
     protected viewChildRequiredEl = viewChild.required<HTMLDivElement>('divElement');
     protected viewChildrenEl = viewChildren<HTMLDivElement[]>('divElement');

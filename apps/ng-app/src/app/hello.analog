@@ -3,11 +3,11 @@
     DestroyRef,
     inject,
     input,
-    EventEmitter,
     effect,
     ViewChild,
     ElementRef,
     afterNextRender,
+    output,
   } from '@angular/core';
 
   import { myFunc } from './export-stuff.analog' with { analog: 'exposes'};
@@ -33,7 +33,7 @@
     console.log('text changed', text());
   });
 
-  const clicked = new EventEmitter<MouseEvent>();
+  const clicked = output();
 
   inject(DestroyRef).onDestroy(() => {
     console.log('hello destroyed');

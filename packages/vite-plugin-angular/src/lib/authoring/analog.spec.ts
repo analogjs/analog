@@ -2,7 +2,7 @@ import { compileAnalogFile } from './analog';
 
 const COMPONENT_CONTENT = `
 <script lang="ts">
-import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewChildren, contentChild, contentChildren } from '@angular/core';
+import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewChildren, contentChild, contentChildren, output, model } from '@angular/core';
 import External from './external.analog' with { analog: 'imports' };
 import { ExternalService } from './external' with { analog: 'providers' };
 import { ExternalEnum } from './external.model' with { analog: 'exposes' };
@@ -61,7 +61,10 @@ const requiredInputWithTransform = input.required<unknown, number>({
     transform: (value) => numberAttribute(value, 10),
   });
 const output = new EventEmitter();
+const newOutput = output();
 const outputWithType = new EventEmitter<string>();
+
+const myModel = model();
 
 const viewChildEl = viewChild<HTMLDivElement>('divElement');
 const viewChildRequiredEl = viewChild.required<HTMLDivElement>('divElement');
