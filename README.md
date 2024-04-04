@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-91-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-92-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -204,6 +204,9 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/pi0"><img src="https://avatars.githubusercontent.com/u/5158436?v=4?s=100" width="100px;" alt="Pooya Parsa"/><br /><sub><b>Pooya Parsa</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=pi0" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://crutchcorn.dev"><img src="https://avatars.githubusercontent.com/u/9100169?v=4?s=100" width="100px;" alt="Corbin Crutchley"/><br /><sub><b>Corbin Crutchley</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=crutchcorn" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://www.robusthaven.com"><img src="https://avatars.githubusercontent.com/u/730804?v=4?s=100" width="100px;" alt="Leblanc Meneses"/><br /><sub><b>Leblanc Meneses</b></sub></a><br /><a href="#infra-leblancmeneses" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jculvey"><img src="https://avatars.githubusercontent.com/u/204386?v=4?s=100" width="100px;" alt="James Culveyhouse"/><br /><sub><b>James Culveyhouse</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=jculvey" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
