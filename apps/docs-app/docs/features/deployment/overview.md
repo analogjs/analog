@@ -49,7 +49,7 @@ export default defineConfig({
 });
 ```
 
-## Deploying to a non root url
+## Deploying with a Custom URL Prefix
 
 If you are deploying to a non-root URL, https://domain.com/`basehref`/ you must do these steps for [server-side-data-fetching](https://analogjs.org/docs/features/data-fetching/server-side-data-fetching), [html markup and assets](https://angular.io/api/common/APP_BASE_HREF), and [dynamic api routes](https://analogjs.org/docs/features/api/overview) to work correctly on the specified `basehref`.
 
