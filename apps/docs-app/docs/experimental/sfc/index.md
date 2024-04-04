@@ -143,9 +143,7 @@ import { appConfig } from './app/app.config';
 bootstrapApplication(App, appConfig).catch((err) => console.error(err));
 ```
 
-Further, when importing an `.analog` file into another `.analog` file, you do not need to add them to your `imports` like you do with non-analog components and directives.
-
-Instead, you can use components directly from their imported name:
+To use the components you will need to add them to your `imports` (alternatively, you can use **import attributes** as explained in the following section):
 
 ```html
 <!-- layout.analog -->
@@ -156,8 +154,7 @@ Instead, you can use components directly from their imported name:
   import LayoutFooter from '../ui-layout/layout-footer.analog';
   import LayoutHeader from '../ui-layout/layout-header.analog';
 
-  // You still need to add non-Analog items to `imports`:
-  defineMetadata({ imports: [RouterOutlet] });
+  defineMetadata({ imports: [RouterOutlet, LayoutFooter, LayoutHeader] });
 
   const authStore = inject(AuthStore);
 </script>
@@ -188,23 +185,13 @@ Instead, you can use components directly from their imported name:
 >
 > An official solution for this problem, from Angular, has been hinted by the Angular team and may come in a future version of Angular.
 
-## Alternate Component Import
+## Import Attributes
 
-When importing a `.analog` component, you have two options:
-
-1. Include the `.analog` extension in your import
+To avoid the necessity of manually adding components to the `imports` metadata, you can also use [import attributes](https://github.com/tc39/proposal-import-attributes)
 
 ```html
 <script lang="ts">
-  import YourComponent from './your-component.analog';
-</script>
-```
-
-2. Using [import attributes](https://github.com/tc39/proposal-import-attributes) to denote an Analog file
-
-```html
-<script lang="ts">
-  import { YourComponent } from "your-component" with { analog: 'imports' }
+  import YourComponent from './your-component.analog' with { analog: 'imports' };
 </script>
 ```
 
