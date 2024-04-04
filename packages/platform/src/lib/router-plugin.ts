@@ -28,6 +28,7 @@ export function routerPlugin(): Plugin[] {
               'apollo-angular/**',
               'primeng/**',
               'rxfire/**',
+              '@tanstack/**',
             ],
           },
           optimizeDeps: {
