@@ -155,6 +155,27 @@ To connect your repository and deploy automatically to Cloudflare:
 
 The application deploys to Cloudflare's network on each push to the repository.
 
+:::note
+
+For Nx workspace, the build output will be under the app name, so you can update the output `dir` and `server` to `.dist` and `.dist/_worker.js` instead.
+
+```
+output: {
+  dir: './dist',
+  serverDir: './dist/_worker.js',
+},
+```
+
+After that, enter `YOUR_APP_NAME/dist` as the `Build output directory`.
+
+You can test the build locally by running the following command:
+
+```
+BUILD_PRESET=cloudflare-pages npx nx build YOUR_APP_NAME
+```
+
+:::
+
 ### Running the application locally using Wrangler
 
 You can also preview the application running on Cloudflare locally:
