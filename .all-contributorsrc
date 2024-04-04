@@ -865,7 +865,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/730804?v=4",
       "profile": "http://www.robusthaven.com",
       "contributions": [
-        "infra"
+        "infra",
+        "code",
+        "doc"
       ]
     },
     {
