@@ -32,7 +32,7 @@ export default defineConfig({
         // Required to use the Analog SFC format
         experimental: {
           supportAnalogFormat: true,
-        }
+        },
       },
     }),
   ],
@@ -61,7 +61,7 @@ export default defineConfig(({ mode }) => ({
           supportAnalogFormat: {
             include: ['/libs/shared/ui/**/*', '/libs/some-lib/ui/**/*'],
           },
-        }
+        },
       },
     }),
   ],
