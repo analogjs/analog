@@ -157,7 +157,7 @@ The application deploys to Cloudflare's network on each push to the repository.
 
 :::note
 
-For Nx workspace, the build output will be under the app name, so you can update the output `dir` and `server` to `.dist` and `.dist/_worker.js` instead.
+For Nx workspaces, the build output is be under the app name, so you can update the client output directory and server output directory to `./dist` and `./dist/_worker.js` instead.
 
 ```
 output: {
@@ -168,7 +168,7 @@ output: {
 
 After that, enter `YOUR_APP_NAME/dist` as the `Build output directory`.
 
-You can test the build locally by running the following command:
+To test the build locally, run the following command:
 
 ```
 BUILD_PRESET=cloudflare-pages npx nx build YOUR_APP_NAME
