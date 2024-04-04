@@ -355,7 +355,7 @@ This can be used in combination with the other SFC tags: `<script>` and `<style>
 
 ```html
 <script lang="ts">
-  import Hello from './hello.analog';
+  import Hello from './hello.analog' with { analog: 'imports' };
 </script>
 
 <template lang="md">
