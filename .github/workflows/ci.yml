@@ -14,6 +14,10 @@ env:
   VITE_ANALOG_PUBLIC_BASE_URL: ${{ vars.VITE_ANALOG_PUBLIC_BASE_URL || 'http://localhost:3000' }}
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   prettier:
     runs-on: ubuntu-latest
