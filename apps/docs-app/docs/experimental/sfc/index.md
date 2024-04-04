@@ -28,9 +28,11 @@ export default defineConfig({
   // ...
   plugins: [
     analog({
-      experimental: {
+      vite: {
         // Required to use the Analog SFC format
-        supportAnalogFormat: true,
+        experimental: {
+          supportAnalogFormat: true,
+        }
       },
     }),
   ],
@@ -54,10 +56,12 @@ export default defineConfig(({ mode }) => ({
   // ...
   plugins: [
     analog({
-      experimental: {
-        supportAnalogFormat: {
-          include: ['/libs/shared/ui/**/*', '/libs/angularstart/ui/**/*'],
-        },
+      vite: {
+        experimental: {
+          supportAnalogFormat: {
+            include: ['/libs/shared/ui/**/*', '/libs/some-lib/ui/**/*'],
+          },
+        }
       },
     }),
   ],
