@@ -75,7 +75,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         const rendererEntry =
           filePrefix +
           normalizePath(
-            join(__dirname, `runtime/renderer${filePrefix ? '.mjs' : ''}`)
+            join(
+              __dirname,
+              `runtime/renderer${!options?.ssr ? '-client' : ''}${
+                filePrefix ? '.mjs' : ''
+              }`
+            )
           );
 
         nitroConfig = {
@@ -118,6 +123,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             },
             ...pageHandlers,
           ],
+          renderer: rendererEntry,
         };
 
         if (isVercelPreset(buildPreset)) {
@@ -144,6 +150,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         };
 
         if (isBuild) {
+          nitroConfig.publicAssets = [{ dir: clientOutputPath }];
+          nitroConfig.serverAssets = [
+            {
+              baseName: 'public',
+              dir: clientOutputPath,
+            },
+          ];
+
           if (isEmptyPrerenderRoutes(options)) {
             nitroConfig.prerender = {};
             nitroConfig.prerender.routes = ['/'];
@@ -196,13 +210,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           if (ssrBuild) {
             nitroConfig = {
               ...nitroConfig,
-              publicAssets: [{ dir: clientOutputPath }],
-              serverAssets: [
-                {
-                  baseName: 'public',
-                  dir: clientOutputPath,
-                },
-              ],
               externals: {
                 ...nitroOptions?.externals,
                 external: [
@@ -216,7 +223,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 'zone.js/fesm2015/zone-node',
                 ...(nitroOptions?.moduleSideEffects || []),
               ],
-              renderer: rendererEntry,
               handlers: [
                 {
                   handler: apiMiddlewareHandler,
