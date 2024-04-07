@@ -6,9 +6,12 @@
     afterNextRender,
     ViewContainerRef,
     ChangeDetectorRef,
-    signal
+    signal,
+    effect
   } from '@angular/core';
-  import { injectContentFiles } from '@analogjs/content';
+  import { toSignal } from '@angular/core/rxjs-interop';
+  import { MarkdownComponent } from '@analogjs/content' with { analog: 'imports'};
+  import { injectContentFiles, injectContent } from '@analogjs/content';
 
   defineMetadata({
     queries: {
@@ -36,9 +39,36 @@
   onInit(() => {
     console.log('posts', posts);
   });
+
+  const mdPost$ = injectContent({
+    customFilename: 'mdpost'
+  });
+  const mdPost = toSignal(mdPost$);
+
+  const agxPost$ = injectContent({
+    customFilename: 'post'
+  });
+  const agxPost = toSignal(agxPost$)
+
+  effect(() => {
+    console.log("MD POST")
+    console.log(mdPost());
+    console.log("AGX POST")
+    console.log(agxPost());
+  })
 </script>
 
 <template>
+  Normal markdown:
+  @if(mdPost()){
+    <analog-markdown [content]="mdPost().content"></analog-markdown>
+  }
+
+  Agx markdown:
+  @if(agxPost()){
+    <analog-markdown [content]="agxPost().content"></analog-markdown>
+  }
+
   Posts
 
   @for (post of posts; track post) {
@@ -50,7 +80,7 @@
   <h2>Post</h2>
 
   <h3>{{ title() }}</h3>
-  
+
   <div #post></div>
 </template>
 

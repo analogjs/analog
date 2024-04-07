@@ -43,7 +43,9 @@ export default class AnalogMarkdownComponent
 
   public content$: Observable<SafeHtml> = of('');
 
-  @Input() content!: string | undefined | null;
+  // TODO: handle agx component - still pass in as "content"
+
+  @Input() content!: string | object | undefined | null;
   @Input() classes = 'analog-markdown';
 
   contentRenderer = inject(ContentRenderer);
@@ -64,12 +66,16 @@ export default class AnalogMarkdownComponent
   }
 
   updateContent() {
-    this.content$ = this.route.data.pipe(
-      map<Data, string>((data) => this.content ?? data['_analogContent']),
-      mergeMap((contentString) => this.renderContent(contentString)),
-      map((content) => this.sanitizer.bypassSecurityTrustHtml(content)),
-      catchError((e) => of(`There was an error ${e}`))
-    );
+    if (this.content && typeof this.content !== 'string') {
+      console.log('render agx');
+    } else {
+      this.content$ = this.route.data.pipe(
+        map<Data, string>((data) => this.content ?? data['_analogContent']),
+        mergeMap((contentString) => this.renderContent(contentString)),
+        map((content) => this.sanitizer.bypassSecurityTrustHtml(content)),
+        catchError((e) => of(`There was an error ${e}`))
+      );
+    }
   }
 
   async renderContent(content: string): Promise<string> {
