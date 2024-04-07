@@ -123,7 +123,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             },
             ...pageHandlers,
           ],
-          renderer: rendererEntry,
         };
 
         if (isVercelPreset(buildPreset)) {
@@ -157,6 +156,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               dir: clientOutputPath,
             },
           ];
+          nitroConfig.renderer = rendererEntry;
 
           if (isEmptyPrerenderRoutes(options)) {
             nitroConfig.prerender = {};
