@@ -1,12 +1,15 @@
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
 import {
   AfterViewChecked,
+  ChangeDetectorRef,
   Component,
   Input,
   NgZone,
   OnChanges,
   OnInit,
   PLATFORM_ID,
+  ViewChild,
+  ViewContainerRef,
   ViewEncapsulation,
   inject,
 } from '@angular/core';
@@ -27,7 +30,11 @@ import { MERMAID_IMPORT_TOKEN } from './markdown-content-renderer.service';
   hostDirectives: [AnchorNavigationDirective],
   preserveWhitespaces: true,
   encapsulation: ViewEncapsulation.None,
-  template: `<div [innerHTML]="content$ | async" [class]="classes"></div>`,
+  template: `<div
+    #container
+    [innerHTML]="content$ | async"
+    [class]="classes"
+  ></div>`,
 })
 export default class AnalogMarkdownComponent
   implements OnInit, OnChanges, AfterViewChecked
@@ -35,6 +42,7 @@ export default class AnalogMarkdownComponent
   private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
   private zone = inject(NgZone);
+  private cdr = inject(ChangeDetectorRef);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly mermaidImport = inject(MERMAID_IMPORT_TOKEN, {
     optional: true,
@@ -43,10 +51,11 @@ export default class AnalogMarkdownComponent
 
   public content$: Observable<SafeHtml> = of('');
 
-  // TODO: handle agx component - still pass in as "content"
-
   @Input() content!: string | object | undefined | null;
   @Input() classes = 'analog-markdown';
+
+  @ViewChild('container', { static: true, read: ViewContainerRef })
+  container!: ViewContainerRef;
 
   contentRenderer = inject(ContentRenderer);
 
@@ -67,7 +76,11 @@ export default class AnalogMarkdownComponent
 
   updateContent() {
     if (this.content && typeof this.content !== 'string') {
-      console.log('render agx');
+      if (this.container) {
+        this.container.clear();
+        this.container.createComponent(this.content as any);
+        this.cdr.detectChanges();
+      }
     } else {
       this.content$ = this.route.data.pipe(
         map<Data, string>((data) => this.content ?? data['_analogContent']),

@@ -12,12 +12,9 @@ export const CONTENT_FILES_TOKEN = new InjectionToken<
     const agxFiles = getAgxFiles();
     const allFiles = { ...contentFiles, ...agxFiles };
     const contentFilesList = inject(CONTENT_FILES_LIST_TOKEN);
-    console.log('ALL FILES');
-    console.log(allFiles);
 
     const lookup: Record<string, string> = {};
     contentFilesList.forEach((item) => {
-      console.log(item);
       const fileParts = item.filename.split('/');
       const filePath = fileParts.slice(0, fileParts.length - 1).join('/');
       const fileNameParts = fileParts[fileParts.length - 1].split('.');
