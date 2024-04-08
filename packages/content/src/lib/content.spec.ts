@@ -167,6 +167,59 @@ Test Content`),
     flush();
   }));
 
+  it('should return ContentFile object matching md file if both md and agx available', fakeAsync(() => {
+    const routeParams = { slug: 'test' };
+    const contentFiles = {
+      '/src/content/test.md': () =>
+        Promise.resolve(`---
+slug: 'test'
+---
+Test md Content`),
+      '/src/content/test.agx': () =>
+        Promise.resolve(`---
+slug: 'test'
+---
+Test agx Content`),
+    };
+    const { injectContent } = setup({
+      routeParams,
+      contentFiles,
+    });
+    injectContent().subscribe((c) => {
+      expect(c.content).toMatch('Test md Content');
+      expect(c.attributes).toEqual({ slug: 'test' });
+      expect(c.filename).toEqual('/src/content/test');
+      expect(c.slug).toEqual('test');
+    });
+    flushMicrotasks();
+    flush();
+  }));
+
+  it('should return ContentFile object with data set to exports for non-string contentFiles', fakeAsync(() => {
+    const routeParams = { slug: 'test' };
+    const metadataExport = { title: 'test' };
+    const defaultExport = 'default';
+    const contentFiles = {
+      '/src/content/test.agx': () =>
+        Promise.resolve({
+          default: defaultExport,
+          metadata: metadataExport,
+        }),
+    };
+    const { injectContent } = setup({
+      routeParams,
+      contentFiles,
+    });
+    injectContent().subscribe((c) => {
+      expect(c.content).toMatch(defaultExport);
+      expect(c.attributes).toEqual(metadataExport);
+      expect(c.filename).toEqual('/src/content/test');
+      expect(c.slug).toEqual('test');
+    });
+    flushMicrotasks();
+    flush();
+  }));
+
   function setup(
     args: Partial<{
       customParam:
@@ -175,7 +228,10 @@ Test Content`),
         | { customFilename: string };
       customFallback: string;
       routeParams: { [key: string]: any };
-      contentFiles: Record<string, () => Promise<string>>;
+      contentFiles: Record<
+        string,
+        () => Promise<string | { default: any; metadata: any }>
+      >;
     }>
   ) {
     TestBed.configureTestingModule({
