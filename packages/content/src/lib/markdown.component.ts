@@ -42,7 +42,6 @@ export default class AnalogMarkdownComponent
   private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
   private zone = inject(NgZone);
-  private cdr = inject(ChangeDetectorRef);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly mermaidImport = inject(MERMAID_IMPORT_TOKEN, {
     optional: true,
@@ -76,11 +75,9 @@ export default class AnalogMarkdownComponent
 
   updateContent() {
     if (this.content && typeof this.content !== 'string') {
-      if (this.container) {
-        this.container.clear();
-        this.container.createComponent(this.content as any);
-        this.cdr.detectChanges();
-      }
+      this.container.clear();
+      const componentRef = this.container.createComponent(this.content as any);
+      componentRef.changeDetectorRef.detectChanges();
     } else {
       this.content$ = this.route.data.pipe(
         map<Data, string>((data) => this.content ?? data['_analogContent']),
