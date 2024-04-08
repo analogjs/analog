@@ -23,6 +23,7 @@ export async function buildServer(
   await copyPublicAssets(nitro);
 
   if (
+    options?.ssr &&
     nitroConfig?.prerender?.routes &&
     nitroConfig?.prerender?.routes.find((route) => route === '/')
   ) {
