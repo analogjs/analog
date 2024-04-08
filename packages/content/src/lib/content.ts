@@ -56,14 +56,13 @@ function getContentFile<
           attributes,
           content,
         };
-      } else {
-        return {
-          filename: filePath,
-          slug,
-          attributes: contentFile.metadata,
-          content: contentFile.default,
-        };
       }
+      return {
+        filename: filePath,
+        slug,
+        attributes: contentFile.metadata,
+        content: contentFile.default,
+      };
     })
   );
 }
