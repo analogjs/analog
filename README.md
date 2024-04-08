@@ -71,6 +71,10 @@ Analog is an MIT-licensed open source project with its ongoing development made 
   <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/house-of-angular.png" width="100px" height="100px" alt="House of Angular" />
 </a>
 
+<a href="https://code.build" target="_blank">
+  <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/code.build-1x1.svg" width="100px" height="100px" alt="Code.Build" />
+</a>
+
 ## Contributing
 
 Analog welcomes contributors! Please read the [contributing doc](https://github.com/analogjs/analog/blob/main/CONTRIBUTING.md) for details.
