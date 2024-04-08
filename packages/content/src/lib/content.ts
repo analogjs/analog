@@ -104,14 +104,13 @@ export function injectContent<
             slug,
             fallback
           );
-        } else {
-          return of({
-            filename: '',
-            slug: '',
-            attributes: {},
-            content: fallback,
-          });
         }
+        return of({
+          filename: '',
+          slug: '',
+          attributes: {},
+          content: fallback,
+        });
       })
     );
   } else {
