@@ -2,6 +2,7 @@
   import {
     inject,
     signal,
+    effect,
   } from '@angular/core';
   import { toSignal } from '@angular/core/rxjs-interop';
   import { MarkdownComponent } from '@analogjs/content' with { analog: 'imports'};
@@ -16,9 +17,14 @@
   });
 
   const post$ = injectContent({
-    customFilename: 'post'
+    customFilename: 'hello'
   });
   const post = toSignal(post$)
+
+  effect(() => {
+    console.log("POST")
+    console.log(post());
+  })
 </script>
 
 <template>
