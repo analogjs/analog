@@ -1,3 +1,9 @@
+# [1.2.0-beta.2](https://github.com/analogjs/analog/compare/v1.2.0-beta.1...v1.2.0-beta.2) (2024-04-08)
+
+### Bug Fixes
+
+- update package dependencies when versioning ([7848ec8](https://github.com/analogjs/analog/commit/7848ec8953c913738ed625a0a0f91c2ca42688f3))
+
 # [1.2.0-beta.1](https://github.com/analogjs/analog/compare/v1.1.2...v1.2.0-beta.1) (2024-04-08)
 
 ### Bug Fixes
