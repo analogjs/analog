@@ -20,11 +20,6 @@
     customFilename: 'hello'
   });
   const post = toSignal(post$)
-
-  effect(() => {
-    console.log("POST")
-    console.log(post());
-  })
 </script>
 
 <template>
