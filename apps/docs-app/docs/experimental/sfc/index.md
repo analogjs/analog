@@ -395,9 +395,9 @@ This can be used in combination with the other SFC tags: `<script>` and `<style>
 </template>
 ```
 
-## Using SFCs as Content Files
+## Using SFCs as Interactive Content Files
 
-You can also create content files with front matter within the `src/content` folder using the Analog SFC format by using the `.agx` extension instead of `.analog`. This provides an experience similar to `.mdx` for authoring content:
+You can also create content files with frontmatter within the `src/content` folder using the Analog SFC format by using the `.agx` extension instead of `.analog`. This provides an experience similar to MDX for authoring content:
 
 ```html
 ---
