@@ -3,6 +3,6 @@ export interface ContentFile<
 > {
   filename: string;
   slug: string;
-  content?: string;
+  content?: string | object;
   attributes: Attributes;
 }

@@ -1,44 +1,32 @@
 <script lang="ts">
   import {
     inject,
-    ViewChild,
-    ElementRef,
-    afterNextRender,
-    ViewContainerRef,
-    ChangeDetectorRef,
-    signal
+    signal,
+    effect,
   } from '@angular/core';
-  import { injectContentFiles } from '@analogjs/content';
+  import { toSignal } from '@angular/core/rxjs-interop';
+  import { MarkdownComponent } from '@analogjs/content' with { analog: 'imports'};
+  import { injectContentFiles, injectContent } from '@analogjs/content';
 
-  defineMetadata({
-    queries: {
-      divPost: new ViewChild('post', { static: true, read: ViewContainerRef }),
-    }
-  });
-
-  let divPost: ElementRef<HTMLDivElement>;
-  const cdr = inject(ChangeDetectorRef);
   let title = signal('');
-
-  afterNextRender(() => {
-    console.log('the post', divPost);
-
-    const postId = 'post';
-    import(`../../content/${postId}.agx`).then(m => {
-      divPost.createComponent(m.default);
-      title.set(m.metadata.title);
-      cdr.detectChanges();
-    });
-  });
 
   const posts = injectContentFiles();
 
   onInit(() => {
     console.log('posts', posts);
   });
+
+  const post$ = injectContent({
+    customFilename: 'hello'
+  });
+  const post = toSignal(post$)
 </script>
 
 <template>
+  @if(post()){
+    <analog-markdown [content]="post().content"></analog-markdown>
+  }
+
   Posts
 
   @for (post of posts; track post) {
@@ -50,7 +38,5 @@
   <h2>Post</h2>
 
   <h3>{{ title() }}</h3>
-  
-  <div #post></div>
 </template>
 
