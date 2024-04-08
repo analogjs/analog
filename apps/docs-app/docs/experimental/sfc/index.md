@@ -410,7 +410,7 @@ slug: 'hello'
   const name = 'Analog';
 </script>
 
-<template lang="md"> ## Heading My First Post on {{ name }} </template>
+<template lang="md"> My First Post on {{ name }} </template>
 ```
 
 Just like with `.md` files you can dynamically search and filter `.agx` content files using [injectContentFiles](https://analogjs.org/docs/features/routing/content#using-the-content-files-list) and you can render content within a component using [injectContent](https://analogjs.org/docs/features/routing/content#using-the-analog-markdown-component) and the `MarkdownComponent`:
