@@ -4,6 +4,14 @@
 
 const tag = process.env.RELEASE_TAG;
 
+const replacementFiles = [
+  'packages/astro-angular/package.json',
+  'packages/create-analog/template-angular-v17/package.json',
+  'packages/create-analog/template-blog/package.json',
+  'packages/platform/package.json',
+  'packages/router/package.json',
+];
+
 module.exports = {
   branches: ['main', { name: 'beta', prerelease: true }],
   plugins: [
@@ -72,6 +80,38 @@ module.exports = {
       },
     ],
     [
+      'semantic-release-replace-plugin',
+      {
+        replacements: [
+          {
+            files: replacementFiles,
+            from: '"@analogjs/vite-plugin-angular": ".*"',
+            to: '"@analogjs/vite-plugin-angular": "^${nextRelease.version}"',
+          },
+          {
+            files: replacementFiles,
+            from: '"@analogjs/vite-plugin-nitro": ".*"',
+            to: '"@analogjs/vite-plugin-nitro": "^${nextRelease.version}"',
+          },
+          {
+            files: replacementFiles,
+            from: '"@analogjs/platform": ".*"',
+            to: '"@analogjs/platform": "^${nextRelease.version}"',
+          },
+          {
+            files: replacementFiles,
+            from: '"@analogjs/content": ".*"',
+            to: '"@analogjs/content": "^${nextRelease.version}"',
+          },
+          {
+            files: replacementFiles,
+            from: '"@analogjs/router": ".*"',
+            to: '"@analogjs/router": "^${nextRelease.version}"',
+          },
+        ],
+      },
+    ],
+    [
       '@semantic-release/git',
       {
         assets: [
@@ -80,6 +120,8 @@ module.exports = {
           'packages/astro-angular/package.json',
           'packages/content/package.json',
           'packages/create-analog/package.json',
+          'packages/create-analog/template-angular-v17/package.json',
+          'packages/create-analog/template-blog/package.json',
           'packages/platform/package.json',
           'packages/router/package.json',
           'packages/vite-plugin-angular/package.json',
