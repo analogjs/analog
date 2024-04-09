@@ -395,6 +395,47 @@ This can be used in combination with the other SFC tags: `<script>` and `<style>
 </template>
 ```
 
+## Using SFCs as Interactive Content Files
+
+You can also create content files with frontmatter within the `src/content` folder using the Analog SFC format by using the `.agx` extension instead of `.analog`. This provides an experience similar to MDX for authoring content:
+
+```html
+---
+title: Hello World
+slug: 'hello'
+---
+
+<script lang="ts">
+  // src/content/post.agx
+  const name = 'Analog';
+</script>
+
+<template lang="md"> My First Post on {{ name }} </template>
+```
+
+Just like with `.md` files you can dynamically search and filter `.agx` content files using [injectContentFiles](https://analogjs.org/docs/features/routing/content#using-the-content-files-list) and you can render content within a component using [injectContent](https://analogjs.org/docs/features/routing/content#using-the-analog-markdown-component) and the `MarkdownComponent`:
+
+```html
+<script lang="ts">
+  // posts.[slug].page.analog
+  import { injectContent } from '@analogjs/content';
+  import { MarkdownComponent } from '@analogjs/content' with { analog: 'imports' }
+  import { toSignal } from '@angular/core/rxjs-interop';
+
+  import { PostAttributes } from './models';
+
+  // inject content file based on current slug
+  const post$ = injectContent<PostAttributes>();
+  const post = toSignal(post$);
+</script>
+
+<template>
+  @if(post()){
+  <analog-markdown [content]="post().content"></analog-markdown>
+  }
+</template>
+```
+
 ## Limitations
 
 There are a few limitations to the Analog format:
