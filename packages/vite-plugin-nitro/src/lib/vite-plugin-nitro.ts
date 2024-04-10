@@ -342,6 +342,6 @@ const withCloudflareOutput = (nitroConfig: NitroConfig | undefined) => ({
   ...nitroConfig,
   output: {
     ...nitroConfig?.output,
-    serverDir: '{{ output.dir }}/_worker.js',
+    serverDir: '{{ output.publicDir }}/_worker.js',
   },
 });
