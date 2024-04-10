@@ -33,9 +33,6 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       analog({
-        entryServer: process.env['CF_PAGES_URL']
-          ? __dirname + '/src/main-cf.server.ts'
-          : __dirname + '/src/main.server.ts',
         apiPrefix: 'api',
         prerender: {
           routes: ['/', '/cart'],
