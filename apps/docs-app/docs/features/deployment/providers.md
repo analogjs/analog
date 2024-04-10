@@ -90,9 +90,9 @@ export default defineConfig(({ mode }) => ({
 
 When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache is reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can use the preset in the `vite.config.ts` file as a workaround.
 
-## Cloudflare Pages and Workers
+## Cloudflare Pages and Functions
 
-Analog supports deploying to [Cloudflare](https://cloudflare.com/) pages and workers with some configuration.
+Analog supports deploying to [Cloudflare](https://cloudflare.com/) pages and functions with minimal configuration.
 
 ### Updating the Server Entry Point
 
@@ -118,30 +118,6 @@ export default async function render(url: string, document: string) {
 }
 ```
 
-### Setting the Output Directory
-
-For the Cloudflare deployment, set the output as below. This combines the static assets, along with the Cloudflare worker in the same output directory.
-
-```ts [vite.config.ts]
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
-// https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  /// ...other config
-  plugins: [
-    analog({
-      nitro: {
-        output: {
-          dir: './dist/analog/public',
-          serverDir: './dist/analog/public/_worker.js',
-        },
-      },
-    }),
-  ],
-}));
-```
-
 ### Deploying to Cloudflare
 
 To connect your repository and deploy automatically to Cloudflare:
@@ -155,26 +131,19 @@ To connect your repository and deploy automatically to Cloudflare:
 
 The application deploys to Cloudflare's network on each push to the repository.
 
-:::note
+#### Nx and Cloudlfare
 
-For Nx workspaces, the build output is be under the app name, so you can update the client output directory and server output directory to `./dist` and `./dist/_worker.js` instead.
+For Nx workspaces, the build output is under the app name. Update the `Build output directory` accordingly.
 
-```
-output: {
-  dir: './dist',
-  serverDir: './dist/_worker.js',
-},
-```
+For example:
 
-After that, enter `YOUR_APP_NAME/dist` as the `Build output directory`.
+Build output directory: `dist/[your-project-name]/analog/public`
 
 To test the build locally, run the following command:
 
 ```
-BUILD_PRESET=cloudflare-pages npx nx build YOUR_APP_NAME
+BUILD_PRESET=cloudflare-pages npx nx build [your-project-name]
 ```
-
-:::
 
 ### Running the application locally using Wrangler
 
