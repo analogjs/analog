@@ -129,6 +129,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           nitroConfig = withVercelOutputAPI(nitroConfig, workspaceRoot);
         }
 
+        if (isCloudflarePreset(buildPreset)) {
+          nitroConfig = withCloudflareOutput(nitroConfig);
+        }
+
         if (!ssrBuild && !isTest) {
           // store the client output path for the SSR build config
           clientOutputPath = resolve(
@@ -327,5 +331,17 @@ const withVercelOutputAPI = (
     publicDir: normalizePath(
       resolve(workspaceRoot, '.vercel', 'output/static')
     ),
+  },
+});
+
+const isCloudflarePreset = (buildPreset: string | undefined) =>
+  process.env['CF_PAGES'] ||
+  (buildPreset && buildPreset.toLowerCase().includes('cloudflare-pages'));
+
+const withCloudflareOutput = (nitroConfig: NitroConfig | undefined) => ({
+  ...nitroConfig,
+  output: {
+    ...nitroConfig?.output,
+    serverDir: '{{ output.publicDir }}/_worker.js',
   },
 });
