@@ -1,3 +1,5 @@
+# [1.2.0](https://github.com/analogjs/analog/compare/v1.2.0-beta.5...v1.2.0) (2024-04-11)
+
 # [1.2.0-beta.5](https://github.com/analogjs/analog/compare/v1.2.0-beta.4...v1.2.0-beta.5) (2024-04-11)
 
 ### Bug Fixes
@@ -21,16 +23,6 @@
 ### Bug Fixes
 
 - update package dependencies when versioning ([7848ec8](https://github.com/analogjs/analog/commit/7848ec8953c913738ed625a0a0f91c2ca42688f3))
-
-# [1.2.0-beta.1](https://github.com/analogjs/analog/compare/v1.1.2...v1.2.0-beta.1) (2024-04-08)
-
-### Bug Fixes
-
-- **vite-plugin-nitro:** produce consistent builds for CSR mode ([#1011](https://github.com/analogjs/analog/issues/1011)) ([d97dceb](https://github.com/analogjs/analog/commit/d97dcebac240bf60a7c626ac03cdb10fc3279a57))
-
-### Features
-
-- **content:** add agx support for injectContent ([#1012](https://github.com/analogjs/analog/issues/1012)) ([62f0f86](https://github.com/analogjs/analog/commit/62f0f86e5dde3878bb4b9826fe69bd7c6971ca14))
 
 # [1.2.0-beta.1](https://github.com/analogjs/analog/compare/v1.1.2...v1.2.0-beta.1) (2024-04-08)
 
