@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/router",
-  "version": "1.2.0-beta.3",
+  "version": "1.2.0-beta.4",
   "description": "Filesystem-based routing for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -24,7 +24,7 @@
     "@angular/router": "^15.0.0 || >=16.0.0"
   },
   "optionalDependencies": {
-    "@analogjs/content": "^1.2.0-beta.3"
+    "@analogjs/content": "^1.2.0-beta.4"
   },
   "dependencies": {
     "tslib": "^2.0.0"

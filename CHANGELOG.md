@@ -1,3 +1,9 @@
+# [1.2.0-beta.4](https://github.com/analogjs/analog/compare/v1.2.0-beta.3...v1.2.0-beta.4) (2024-04-11)
+
+### Features
+
+- **vite-plugin-angular:** allows host bindings on `<template>` ([#1024](https://github.com/analogjs/analog/issues/1024)) ([e3455b2](https://github.com/analogjs/analog/commit/e3455b2453b2c2627fb9b150aa02f4283e46ff79))
+
 # [1.2.0-beta.3](https://github.com/analogjs/analog/compare/v1.2.0-beta.2...v1.2.0-beta.3) (2024-04-11)
 
 ### Features
