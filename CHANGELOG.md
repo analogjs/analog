@@ -1,3 +1,9 @@
+# [1.2.0-beta.5](https://github.com/analogjs/analog/compare/v1.2.0-beta.4...v1.2.0-beta.5) (2024-04-11)
+
+### Bug Fixes
+
+- **platform:** add ngxtension to common packages for SSR ([#1028](https://github.com/analogjs/analog/issues/1028)) ([6f75c1c](https://github.com/analogjs/analog/commit/6f75c1c6162305ca309d69565716dc9f037bd164))
+
 # [1.2.0-beta.4](https://github.com/analogjs/analog/compare/v1.2.0-beta.3...v1.2.0-beta.4) (2024-04-11)
 
 ### Features
