@@ -90,9 +90,9 @@ export default defineConfig(({ mode }) => ({
 
 When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache is reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can use the preset in the `vite.config.ts` file as a workaround.
 
-## Cloudflare Pages and Functions
+## Cloudflare Pages
 
-Analog supports deploying to [Cloudflare](https://cloudflare.com/) pages and functions with minimal configuration.
+Analog supports deploying to [Cloudflare](https://cloudflare.com/) Pages with minimal configuration.
 
 ### Updating the Server Entry Point
 
@@ -103,10 +103,10 @@ import { renderApplication } from '@angular/platform-server';
 import { APP_BASE_HREF } from '@angular/common';
 /// imports and bootstrap code ...
 
-export default async function render(url: string, document: string) {
-  // set the base href
-  const baseHref = process.env['CF_PAGES_URL'] ?? `http://localhost:8888`;
+// set the base href
+const baseHref = process.env['CF_PAGES_URL'] ?? `http://localhost:8888`;
 
+export default async function render(url: string, document: string) {
   // Use the full URL and provide the APP_BASE_HREF
   const html = await renderApplication(bootstrap, {
     document,
