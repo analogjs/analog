@@ -1,5 +1,8 @@
 ---
 title: Hello World
+slug: 'hello'
+description: 'a description'
+coverImage: ''
 ---
 
 <script lang="ts">

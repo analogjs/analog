@@ -4,7 +4,7 @@
     {
       "files": "*.analog",
       "options": {
-        "parser": "html"
+        "parser": "angular"
       }
     }
   ]

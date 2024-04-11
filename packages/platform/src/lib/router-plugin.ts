@@ -29,6 +29,7 @@ export function routerPlugin(): Plugin[] {
               'primeng/**',
               'rxfire/**',
               '@tanstack/**',
+              'ngxtension/**',
             ],
           },
           optimizeDeps: {

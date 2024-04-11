@@ -1,12 +1,15 @@
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
 import {
   AfterViewChecked,
+  ChangeDetectorRef,
   Component,
   Input,
   NgZone,
   OnChanges,
   OnInit,
   PLATFORM_ID,
+  ViewChild,
+  ViewContainerRef,
   ViewEncapsulation,
   inject,
 } from '@angular/core';
@@ -27,7 +30,11 @@ import { MERMAID_IMPORT_TOKEN } from './markdown-content-renderer.service';
   hostDirectives: [AnchorNavigationDirective],
   preserveWhitespaces: true,
   encapsulation: ViewEncapsulation.None,
-  template: `<div [innerHTML]="content$ | async" [class]="classes"></div>`,
+  template: `<div
+    #container
+    [innerHTML]="content$ | async"
+    [class]="classes"
+  ></div>`,
 })
 export default class AnalogMarkdownComponent
   implements OnInit, OnChanges, AfterViewChecked
@@ -43,8 +50,11 @@ export default class AnalogMarkdownComponent
 
   public content$: Observable<SafeHtml> = of('');
 
-  @Input() content!: string | undefined | null;
+  @Input() content!: string | object | undefined | null;
   @Input() classes = 'analog-markdown';
+
+  @ViewChild('container', { static: true, read: ViewContainerRef })
+  container!: ViewContainerRef;
 
   contentRenderer = inject(ContentRenderer);
 
@@ -64,12 +74,18 @@ export default class AnalogMarkdownComponent
   }
 
   updateContent() {
-    this.content$ = this.route.data.pipe(
-      map<Data, string>((data) => this.content ?? data['_analogContent']),
-      mergeMap((contentString) => this.renderContent(contentString)),
-      map((content) => this.sanitizer.bypassSecurityTrustHtml(content)),
-      catchError((e) => of(`There was an error ${e}`))
-    );
+    if (this.content && typeof this.content !== 'string') {
+      this.container.clear();
+      const componentRef = this.container.createComponent(this.content as any);
+      componentRef.changeDetectorRef.detectChanges();
+    } else {
+      this.content$ = this.route.data.pipe(
+        map<Data, string>((data) => this.content ?? data['_analogContent']),
+        mergeMap((contentString) => this.renderContent(contentString)),
+        map((content) => this.sanitizer.bypassSecurityTrustHtml(content)),
+        catchError((e) => of(`There was an error ${e}`))
+      );
+    }
   }
 
   async renderContent(content: string): Promise<string> {

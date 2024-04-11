@@ -18,8 +18,9 @@ function getContentFile<
   slug: string,
   fallback: string
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
-  const filePath = `/src/content/${prefix}${slug}.md`;
-  const contentFile = contentFiles[filePath];
+  const filePath = `/src/content/${prefix}${slug}`;
+  const contentFile =
+    contentFiles[`${filePath}.md`] ?? contentFiles[`${filePath}.agx`];
   if (!contentFile) {
     return of({
       filename: filePath,
@@ -29,28 +30,38 @@ function getContentFile<
     });
   }
 
-  return new Observable<string>((observer) => {
-    const contentResolver = contentFile();
+  return new Observable<string | { default: any; metadata: any }>(
+    (observer) => {
+      const contentResolver = contentFile();
 
-    if (import.meta.env.SSR === true) {
-      waitFor(contentResolver).then((content) => {
-        observer.next(content);
-      });
-    } else {
-      contentResolver.then((content) => {
-        observer.next(content);
-      });
+      if (import.meta.env.SSR === true) {
+        waitFor(contentResolver).then((content) => {
+          observer.next(content);
+        });
+      } else {
+        contentResolver.then((content) => {
+          observer.next(content);
+        });
+      }
     }
-  }).pipe(
-    map((rawContentFile) => {
-      const { content, attributes } =
-        parseRawContentFile<Attributes>(rawContentFile);
+  ).pipe(
+    map((contentFile) => {
+      if (typeof contentFile === 'string') {
+        const { content, attributes } =
+          parseRawContentFile<Attributes>(contentFile);
 
+        return {
+          filename: filePath,
+          slug,
+          attributes,
+          content,
+        };
+      }
       return {
         filename: filePath,
         slug,
-        attributes,
-        content,
+        attributes: contentFile.metadata,
+        content: contentFile.default,
       };
     })
   );
@@ -92,14 +103,13 @@ export function injectContent<
             slug,
             fallback
           );
-        } else {
-          return of({
-            filename: '',
-            slug: '',
-            attributes: {},
-            content: fallback,
-          });
         }
+        return of({
+          filename: '',
+          slug: '',
+          attributes: {},
+          content: fallback,
+        });
       })
     );
   } else {

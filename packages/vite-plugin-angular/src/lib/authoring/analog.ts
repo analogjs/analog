@@ -52,12 +52,20 @@ export function compileAnalogFile(
 
   const isMarkdown = fileContent.includes('lang="md"');
 
-  // eslint-disable-next-line prefer-const
-  let [scriptContent, templateContent, styleContent] = [
+  const [scriptContent, styleContent] = [
     SCRIPT_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
-    isMarkdown ? '' : TEMPLATE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
     STYLE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '',
   ];
+
+  const templateContentMatches = TEMPLATE_TAG_REGEX.exec(fileContent) ?? [];
+  const templateAttributeString =
+    templateContentMatches[2]?.trim().replace(/\n/g, '') ?? '';
+
+  let templateContent = '';
+
+  if (!isMarkdown) {
+    templateContent = templateContentMatches[3]?.trim() || '';
+  }
 
   let ngType: 'Component' | 'Directive';
   if (templateContent || isMarkdown) {
@@ -83,6 +91,11 @@ export function compileAnalogFile(
 
       if (styleContent) {
         items.push(`styles: \`${styleContent.replaceAll('\n', '')}\``);
+      }
+
+      if (templateAttributeString) {
+        const attributes = parseAttributes(templateAttributeString);
+        items.push(`host: ${JSON.stringify(attributes)}`);
       }
 
       return items.join(',\n  ');
@@ -665,4 +678,26 @@ function toFileName(str: string) {
  */
 function toCapitalCase(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Parses the attribute string and returns a key-value pair
+ *
+ * @param attributeString
+ */
+function parseAttributes(attributeString: string): Record<string, string> {
+  const attributes: Record<string, string> = {};
+  const pattern = /([^\s"'=]+)=?(?:(["'])(.*?\2)|(.+?))(?=\s|$)/g; // Regex to capture key-value pairs
+
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(attributeString)) !== null) {
+    const [, key, , quotedValue, unquotedValue] = match;
+    let value = quotedValue || unquotedValue || ''; // Use quoted or unquoted value
+    if (value.endsWith('"')) {
+      value = value.slice(0, -1);
+    }
+    attributes[key.trim()] = value.trim();
+  }
+
+  return attributes;
 }

@@ -133,6 +133,37 @@ The following properties are not allowed on the metadata fields:
 - `outputs`: Use the `output` signal API instead
 - `inputs`: Use the `input` signal API instead
 
+### Host Metadata
+
+As shown above, you can add host metadata to your component using the `host` field:
+
+```typescript
+defineMetadata({
+  host: { class: 'block articles-toggle' },
+});
+```
+
+Another way to add host metadata is to use the `<template>` tag
+
+```analog
+<template class="block articles-toggle"></template>
+```
+
+You can also have **Property Binding** and **Event Binding** in the `<template>` tag:
+
+```analog
+<script lang="ts">
+  import { signal } from '@angular/core';
+
+  const bg = signal('black');
+
+  function handleClick() {
+  }
+</script>
+
+<template [style.backgroundColor]="bg()" (click)="handleClick()"></template>
+```
+
 ### Using an External Template and Styles
 
 If you like the developer experience of Analog's `<script>` to build your logic, but don't want your template and styling in the same file, you can break those out to their own files using:
@@ -392,6 +423,47 @@ This can be used in combination with the other SFC tags: `<script>` and `<style>
   <Hello />
 
   > You might want to say "Hello" back!
+</template>
+```
+
+## Using SFCs as Interactive Content Files
+
+You can also create content files with frontmatter within the `src/content` folder using the Analog SFC format by using the `.agx` extension instead of `.analog`. This provides an experience similar to MDX for authoring content:
+
+```html
+---
+title: Hello World
+slug: 'hello'
+---
+
+<script lang="ts">
+  // src/content/post.agx
+  const name = 'Analog';
+</script>
+
+<template lang="md"> My First Post on {{ name }} </template>
+```
+
+Just like with `.md` files you can dynamically search and filter `.agx` content files using [injectContentFiles](https://analogjs.org/docs/features/routing/content#using-the-content-files-list) and you can render content within a component using [injectContent](https://analogjs.org/docs/features/routing/content#using-the-analog-markdown-component) and the `MarkdownComponent`:
+
+```html
+<script lang="ts">
+  // posts.[slug].page.analog
+  import { injectContent } from '@analogjs/content';
+  import { MarkdownComponent } from '@analogjs/content' with { analog: 'imports' }
+  import { toSignal } from '@angular/core/rxjs-interop';
+
+  import { PostAttributes } from './models';
+
+  // inject content file based on current slug
+  const post$ = injectContent<PostAttributes>();
+  const post = toSignal(post$);
+</script>
+
+<template>
+  @if(post()){
+  <analog-markdown [content]="post().content"></analog-markdown>
+  }
 </template>
 ```
 

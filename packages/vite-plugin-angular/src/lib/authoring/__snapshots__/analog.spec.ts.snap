@@ -19,6 +19,7 @@ import nonameanalog from "./noname.analog";
   <p>{ c }</p>
   <p>{{ test }}</p>\`,
     styles: \`div {    color: red;  }  p {    color: blue;  }\`,
+    host: { "class": "flex flex-col", "[class.binding]": "counter()", "(click)": "handleClick($event)" },
     queries: {
         divElement: new ViewChild('divElement')
     },
@@ -137,7 +138,8 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   standalone: true,
   selector: 'virtual,Virtual',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: \`virtual-analog:virtual.analog\`
+  templateUrl: \`virtual-analog:virtual.analog\`,
+  host: {"lang":"md","class":"flex flex-col","[style]":"{ color: 'red' }"}
 })
 export default class VirtualAnalogComponent {
   constructor() {}

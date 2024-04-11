@@ -1,0 +1,37 @@
+<script lang="ts">
+import {
+  ContentRenderer,
+  injectContent,
+} from '@analogjs/content';
+import { MarkdownComponent } from '@analogjs/content' with { analog: 'imports' }
+import { RouteMeta } from '@analogjs/router';
+import { AsyncPipe, JsonPipe, NgFor, NgIf } from '@angular/common' with { analog: 'imports'};
+import { Component, inject } from '@angular/core';
+import { map } from 'rxjs';
+
+import { PostAttributes } from './models';
+
+const renderer = inject(ContentRenderer);
+const post$ = injectContent<PostAttributes>();
+
+const toc$ = this.post$.pipe(
+  map(() => {
+    return this.renderer.getContentHeadings();
+  })
+);
+</script>
+
+<template>
+    <ng-container *ngIf="post$ | async as post">
+      <h1>{{ post.attributes.title }}</h1>
+      <div *ngIf="toc$ | async as toc">
+        <ul>
+          <li *ngFor="let item of toc">
+            <a href="#{{ item.id }}">{{ item.text }}</a>
+          </li>
+        </ul>
+      </div>
+
+      <analog-markdown [content]="post.content"></analog-markdown>
+    </ng-container>
+</template>

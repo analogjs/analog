@@ -8,8 +8,9 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": [
-    "jest.config.ts",
+    "vite.config.ts",
     "src/**/*.spec.ts",
+    "src/**/*.spec.data.ts",
     "src/**/*.test.ts",
     "src/lib/runtime/*.ts"
   ]

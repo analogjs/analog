@@ -82,7 +82,7 @@ afterNextRender(() => {
 
 </script>
 
-<template>
+<template class="flex flex-col" [class.binding]="counter()" (click)="handleClick($event)">
   <div #divElement>Component</div>
   <p>{{ counter() }}</p>
   <p>{ a }</p>
@@ -127,7 +127,11 @@ effect(() => {
 `;
 
 const MARKDOWN_CONTENT = `
-<template lang="md">
+<template
+  lang="md"
+  class="flex flex-col"
+  [style]="{ color: 'red' }"
+ >
   # Hello World
 </template>
 `;

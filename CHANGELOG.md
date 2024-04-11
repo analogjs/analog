@@ -1,3 +1,39 @@
+# [1.2.0](https://github.com/analogjs/analog/compare/v1.2.0-beta.5...v1.2.0) (2024-04-11)
+
+# [1.2.0-beta.5](https://github.com/analogjs/analog/compare/v1.2.0-beta.4...v1.2.0-beta.5) (2024-04-11)
+
+### Bug Fixes
+
+- **platform:** add ngxtension to common packages for SSR ([#1028](https://github.com/analogjs/analog/issues/1028)) ([6f75c1c](https://github.com/analogjs/analog/commit/6f75c1c6162305ca309d69565716dc9f037bd164))
+
+# [1.2.0-beta.4](https://github.com/analogjs/analog/compare/v1.2.0-beta.3...v1.2.0-beta.4) (2024-04-11)
+
+### Features
+
+- **vite-plugin-angular:** allows host bindings on `<template>` ([#1024](https://github.com/analogjs/analog/issues/1024)) ([e3455b2](https://github.com/analogjs/analog/commit/e3455b2453b2c2627fb9b150aa02f4283e46ff79))
+
+# [1.2.0-beta.3](https://github.com/analogjs/analog/compare/v1.2.0-beta.2...v1.2.0-beta.3) (2024-04-11)
+
+### Features
+
+- **vite-plugin-nitro:** add internal deployment support for cloudflare ([#1020](https://github.com/analogjs/analog/issues/1020)) ([56ee19d](https://github.com/analogjs/analog/commit/56ee19d19ba4e89a8990d93a7d17985f916bf1b8))
+
+# [1.2.0-beta.2](https://github.com/analogjs/analog/compare/v1.2.0-beta.1...v1.2.0-beta.2) (2024-04-08)
+
+### Bug Fixes
+
+- update package dependencies when versioning ([7848ec8](https://github.com/analogjs/analog/commit/7848ec8953c913738ed625a0a0f91c2ca42688f3))
+
+# [1.2.0-beta.1](https://github.com/analogjs/analog/compare/v1.1.2...v1.2.0-beta.1) (2024-04-08)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** produce consistent builds for CSR mode ([#1011](https://github.com/analogjs/analog/issues/1011)) ([d97dceb](https://github.com/analogjs/analog/commit/d97dcebac240bf60a7c626ac03cdb10fc3279a57))
+
+### Features
+
+- **content:** add agx support for injectContent ([#1012](https://github.com/analogjs/analog/issues/1012)) ([62f0f86](https://github.com/analogjs/analog/commit/62f0f86e5dde3878bb4b9826fe69bd7c6971ca14))
+
 ## [1.1.2](https://github.com/analogjs/analog/compare/v1.1.1...v1.1.2) (2024-04-04)
 
 ### Bug Fixes

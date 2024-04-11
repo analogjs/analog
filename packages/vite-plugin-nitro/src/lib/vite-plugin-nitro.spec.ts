@@ -58,8 +58,11 @@ describe('nitro', () => {
           ...mockNitroConfig,
           alias: expect.anything(),
           prerender: { routes: ['/'] },
+          renderer: expect.anything(),
           rollupConfig: expect.anything(),
           handlers: expect.anything(),
+          publicAssets: expect.anything(),
+          serverAssets: expect.anything(),
         }
       );
     });
@@ -88,7 +91,10 @@ describe('nitro', () => {
           prerender: { routes: ['/'] },
           alias: expect.anything(),
           rollupConfig: expect.anything(),
+          renderer: expect.anything(),
           handlers: expect.anything(),
+          publicAssets: expect.anything(),
+          serverAssets: expect.anything(),
         }
       );
     });
@@ -125,12 +131,15 @@ describe('nitro', () => {
           ...mockNitroConfig,
           alias: expect.anything(),
           rollupConfig: expect.anything(),
+          renderer: expect.anything(),
           handlers: expect.anything(),
           preset: undefined,
           prerender: {
             ...mockNitroConfig.prerender,
             routes: [],
           },
+          publicAssets: expect.anything(),
+          serverAssets: expect.anything(),
         }
       );
       expect(buildSitemapImportSpy).not.toHaveBeenCalled();
@@ -172,7 +181,10 @@ describe('nitro', () => {
           },
           alias: expect.anything(),
           rollupConfig: expect.anything(),
+          renderer: expect.anything(),
           handlers: expect.anything(),
+          publicAssets: expect.anything(),
+          serverAssets: expect.anything(),
         }
       );
 
@@ -237,8 +249,11 @@ describe('nitro', () => {
                 routes: ['/blog', '/about', '/blog/first', '/blog/02-second'],
               },
               alias: expect.anything(),
+              publicAssets: expect.anything(),
               rollupConfig: expect.anything(),
+              renderer: expect.anything(),
               handlers: expect.anything(),
+              serverAssets: expect.anything(),
             }
           );
 
