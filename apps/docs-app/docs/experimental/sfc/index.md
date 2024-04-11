@@ -133,6 +133,37 @@ The following properties are not allowed on the metadata fields:
 - `outputs`: Use the `output` signal API instead
 - `inputs`: Use the `input` signal API instead
 
+### Host Metadata
+
+As shown above, you can add host metadata to your component using the `host` field:
+
+```typescript
+defineMetadata({
+  host: { class: 'block articles-toggle' },
+});
+```
+
+Another way to add host metadata is to use the `<template>` tag
+
+```analog
+<template class="block articles-toggle"></template>
+```
+
+You can also have **Property Binding** and **Event Binding** in the `<template>` tag:
+
+```analog
+<script lang="ts">
+  import { signal } from '@angular/core';
+
+  const bg = signal('black');
+
+  function handleClick() {
+  }
+</script>
+
+<template [style.backgroundColor]="bg()" (click)="handleClick()"></template>
+```
+
 ### Using an External Template and Styles
 
 If you like the developer experience of Analog's `<script>` to build your logic, but don't want your template and styling in the same file, you can break those out to their own files using:
