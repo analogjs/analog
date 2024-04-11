@@ -9,7 +9,7 @@ export const INVALID_METADATA_PROPERTIES = [
 
 export const SCRIPT_TAG_REGEX = /<script lang="ts">([\s\S]*?)<\/script>/i;
 export const TEMPLATE_TAG_REGEX =
-  /(<template>|<template lang="md">)([\s\S]*?)<\/template>/i;
+  /(<template(?:\s+([^>]*?))?>)([\s\S]*?)<\/template>/i;
 export const STYLE_TAG_REGEX = /<style>([\s\S]*?)<\/style>/i;
 
 export const ON_INIT = 'onInit';

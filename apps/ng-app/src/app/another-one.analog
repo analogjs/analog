@@ -5,6 +5,10 @@
 
   let lateVariable: string;
 
+  function onClick(event: MouseEvent) {
+    console.log('click on host', event);
+  }
+
   onInit(() => {
     console.log('anotherOne init');
     setTimeout(() => {
@@ -19,7 +23,7 @@
   });
 </script>
 
-<template>
+<template [style]="{ backgroundColor: 'red', display: 'block' }" class="another-one-test" (click)="onClick($event)">
   <h1>DJ KHALED!!!</h1>
   @if (lateVariable) {
   <h2>Late Variable here: {{ lateVariable }}</h2>
