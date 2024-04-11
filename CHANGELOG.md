@@ -1,3 +1,9 @@
+# [1.2.0-beta.3](https://github.com/analogjs/analog/compare/v1.2.0-beta.2...v1.2.0-beta.3) (2024-04-11)
+
+### Features
+
+- **vite-plugin-nitro:** add internal deployment support for cloudflare ([#1020](https://github.com/analogjs/analog/issues/1020)) ([56ee19d](https://github.com/analogjs/analog/commit/56ee19d19ba4e89a8990d93a7d17985f916bf1b8))
+
 # [1.2.0-beta.2](https://github.com/analogjs/analog/compare/v1.2.0-beta.1...v1.2.0-beta.2) (2024-04-08)
 
 ### Bug Fixes
