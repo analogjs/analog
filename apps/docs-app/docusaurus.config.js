@@ -159,6 +159,11 @@ const config = {
         theme: themes.nightOwlLight,
         darkTheme: themes.nightOwl,
       },
+      algolia: {
+        appId: '8W3CAMYOQF',
+        apiKey: '650d723674c8cd38658add35fb9433e3',
+        indexName: 'analogjs',
+      },
     }),
   title,
   // GitHub Pages adds a trailing slash to Docusaurus URLs by default.
