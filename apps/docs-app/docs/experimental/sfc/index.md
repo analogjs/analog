@@ -145,13 +145,13 @@ defineMetadata({
 
 Another way to add host metadata is to use the `<template>` tag
 
-```analog
+```html
 <template class="block articles-toggle"></template>
 ```
 
 You can also have **Property Binding** and **Event Binding** in the `<template>` tag:
 
-```analog
+```html
 <script lang="ts">
   import { signal } from '@angular/core';
 
