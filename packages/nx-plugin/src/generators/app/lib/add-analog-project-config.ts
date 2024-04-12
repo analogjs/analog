@@ -1,5 +1,5 @@
 import type { ProjectConfiguration, Tree } from '@nx/devkit';
-import { addProjectConfiguration } from '@nx/devkit';
+import { addProjectConfiguration, updateJson } from '@nx/devkit';
 
 export function addAnalogProjectConfig(
   tree: Tree,
@@ -11,26 +11,17 @@ export function addAnalogProjectConfig(
   nxPackageNamespace: string
 ) {
   const isStandalone = appsDir === '.';
-  const workspaceAppsDir = isStandalone ? '' : `${appsDir}/`;
+  const isNx = tree.exists('/nx.json');
+  const workspaceAppsDir = isStandalone || !isNx ? '' : `${appsDir}/`;
+  const targets = isNx ? 'targets' : 'architect';
+  const builders = isNx ? 'executor' : 'builder';
+
   const projectConfiguration: ProjectConfiguration = {
     root: projectRoot,
     projectType: 'application',
-    sourceRoot: `${projectRoot}/src`,
-    targets: {
+    [targets]: {
       build: {
-        executor: `@analogjs/platform:vite`,
-        outputs: [
-          '{options.outputPath}',
-          `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/.nitro`,
-          `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/ssr`,
-          `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/analog`,
-        ],
-        options: {
-          main: `${workspaceAppsDir}${projectName}/src/main.ts`,
-          configFile: `${workspaceAppsDir}${projectName}/vite.config.ts`,
-          outputPath: `dist/${workspaceAppsDir}${projectName}/client`,
-          tsConfig: `${workspaceAppsDir}${projectName}/tsconfig.app.json`,
-        },
+        [builders]: `@analogjs/platform:vite`,
         defaultConfiguration: 'production',
         configurations: {
           development: {
@@ -43,7 +34,7 @@ export function addAnalogProjectConfig(
         },
       },
       serve: {
-        executor: `@analogjs/platform:vite-dev-server`,
+        [builders]: `@analogjs/platform:vite-dev-server`,
         defaultConfiguration: 'development',
         options: {
           buildTarget: `${projectName}:build`,
@@ -59,19 +50,47 @@ export function addAnalogProjectConfig(
           },
         },
       },
-      'extract-i18n': {
-        executor: `@angular-devkit/build-angular:extract-i18n`,
-        options: {
-          browserTarget: `${projectName}:build`,
-        },
-      },
       test: {
-        executor: `@analogjs/platform:vitest`,
-        outputs: [`{projectRoot}/coverage`],
+        [builders]: `@analogjs/platform:vitest`,
       },
     },
-    tags: parsedTags,
   };
 
-  addProjectConfiguration(tree, name, projectConfiguration);
+  if (isNx) {
+    projectConfiguration.targets['build'].outputs = [
+      '{options.outputPath}',
+      `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/.nitro`,
+      `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/ssr`,
+      `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/analog`,
+    ];
+    projectConfiguration[targets]['build'].options = {
+      main: `${workspaceAppsDir}${projectName}/src/main.ts`,
+      configFile: `${workspaceAppsDir}${projectName}/vite.config.ts`,
+      outputPath: `dist/${workspaceAppsDir}${projectName}/client`,
+      tsConfig: `${workspaceAppsDir}${projectName}/tsconfig.app.json`,
+    };
+    projectConfiguration[targets]['test'].outputs = [`{projectRoot}/coverage`];
+
+    projectConfiguration.tags = parsedTags;
+    projectConfiguration.sourceRoot = `${projectRoot}/src`;
+  } else {
+    projectConfiguration[targets]['build'].options = {
+      main: `projects/${projectName}/src/main.ts`,
+      configFile: `projects/${projectName}/vite.config.ts`,
+      outputPath: `dist/projects/${projectName}/client`,
+      tsConfig: `projects/${projectName}/tsconfig.app.json`,
+    };
+
+    projectConfiguration.sourceRoot = `src`;
+  }
+
+  if (isNx) {
+    addProjectConfiguration(tree, name, projectConfiguration);
+  } else {
+    updateJson(tree, '/angular.json', (json) => {
+      json.projects[projectName] = projectConfiguration;
+
+      return json;
+    });
+  }
 }

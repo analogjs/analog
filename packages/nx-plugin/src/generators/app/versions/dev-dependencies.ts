@@ -27,6 +27,7 @@ import {
   V17_X_VITE,
   V17_X_VITE_TSCONFIG_PATHS,
   V17_X_VITEST,
+  V17_X_ANGULAR_DEVKIT_BUILD_ANGULAR,
 } from './nx_17_X/versions';
 import {
   V18_X_NX_VITE,
@@ -36,6 +37,7 @@ import {
   V18_X_VITE,
   V18_X_VITE_TSCONFIG_PATHS,
   V18_X_VITEST,
+  V18_X_ANGULAR_DEVKIT_BUILD_ANGULAR,
 } from './nx_18_X/versions';
 
 // TODO: @analogjs/vite-plugin-angular is being defined as we must pin
@@ -141,6 +143,7 @@ const getDevDependencies = (escapedNxVersion: string) => {
     return {
       '@analogjs/platform': V17_X_ANALOG_JS_PLATFORM,
       '@analogjs/vite-plugin-angular': V17_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
+      '@angular-devkit/build-angular': V17_X_ANGULAR_DEVKIT_BUILD_ANGULAR,
       jsdom: V17_X_JSDOM,
       vite: V17_X_VITE,
       'vite-tsconfig-paths': V17_X_VITE_TSCONFIG_PATHS,
@@ -152,6 +155,7 @@ const getDevDependencies = (escapedNxVersion: string) => {
   return {
     '@analogjs/platform': V18_X_ANALOG_JS_PLATFORM,
     '@analogjs/vite-plugin-angular': V18_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
+    '@angular-devkit/build-angular': V18_X_ANGULAR_DEVKIT_BUILD_ANGULAR,
     jsdom: V18_X_JSDOM,
     vite: V18_X_VITE,
     'vite-tsconfig-paths': V18_X_VITE_TSCONFIG_PATHS,
