@@ -1,3 +1,9 @@
+## [1.2.1-beta.1](https://github.com/analogjs/analog/compare/v1.2.0...v1.2.1-beta.1) (2024-04-15)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** support backticks with templateUrl and styleUrls ([#1030](https://github.com/analogjs/analog/issues/1030)) ([2980d44](https://github.com/analogjs/analog/commit/2980d440aa8eece0cdaed6dc4e3773c1d8e6ed0c))
+
 # [1.2.0](https://github.com/analogjs/analog/compare/v1.2.0-beta.5...v1.2.0) (2024-04-11)
 
 # [1.2.0-beta.5](https://github.com/analogjs/analog/compare/v1.2.0-beta.4...v1.2.0-beta.5) (2024-04-11)
