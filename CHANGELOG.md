@@ -1,3 +1,9 @@
+## [1.2.1-beta.2](https://github.com/analogjs/analog/compare/v1.2.1-beta.1...v1.2.1-beta.2) (2024-04-16)
+
+### Bug Fixes
+
+- **nx-plugin:** add support for app generator in Angular CLI workspaces ([#1035](https://github.com/analogjs/analog/issues/1035)) ([2b6e0a0](https://github.com/analogjs/analog/commit/2b6e0a0fb48138feb3d0d63b6e87bee5289b2071))
+
 ## [1.2.1-beta.1](https://github.com/analogjs/analog/compare/v1.2.0...v1.2.1-beta.1) (2024-04-15)
 
 ### Bug Fixes
