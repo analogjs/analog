@@ -7,9 +7,11 @@ export function addFiles(
   options: NormalizedOptions,
   majorAngularVersion: number
 ) {
+  const isNx = tree.exists('/nx.json');
   const templateOptions = {
     ...options,
     template: '',
+    tsconfig: isNx ? 'tsconfig.base.json' : 'tsconfig.json',
   };
   generateFiles(
     tree,
@@ -18,7 +20,7 @@ export function addFiles(
     templateOptions
   );
 
-  if (!tree.read('/tsconfig.base.json')) {
+  if (!tree.exists('/angular.json') && !tree.exists('/tsconfig.base.json')) {
     generateFiles(
       tree,
       join(__dirname, '..', 'files', 'root'),

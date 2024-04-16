@@ -39,7 +39,8 @@ function normalizeOptions(
   options: AnalogNxApplicationGeneratorOptions,
   nxVersion: string
 ): NormalizedOptions {
-  const appsDir = getWorkspaceLayout(tree).appsDir;
+  const isNx = tree.exists('/nx.json');
+  const appsDir = isNx ? getWorkspaceLayout(tree).appsDir : 'projects';
   const allNames = names(options.analogAppName);
   const projectDirectory = allNames.fileName;
   const projectName = projectDirectory.replace(new RegExp('/', 'g'), '-');
