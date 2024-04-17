@@ -157,8 +157,7 @@ You can also have **Property Binding** and **Event Binding** in the `<template>`
 
   const bg = signal('black');
 
-  function handleClick() {
-  }
+  function handleClick() {}
 </script>
 
 <template [style.backgroundColor]="bg()" (click)="handleClick()"></template>
