@@ -887,6 +887,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "SerkanSipahi",
+      "name": "Bitcollage",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1880749?v=4",
+      "profile": "https://honey.glass/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
