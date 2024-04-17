@@ -269,6 +269,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 },
                 ...pageHandlers,
               ],
+              nodeModulesDirs: [
+                isWindows ? resolve(workspaceRoot, 'node_modules') : undefined,
+                ...(nitroOptions?.nodeModulesDirs || []),
+              ],
             };
           }
         }
