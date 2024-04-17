@@ -76,6 +76,8 @@ jobs:
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Build
         run: pnpm build
+      - name: Verify
+        run: more dist\apps\blog-app\analog\public\index.html
 
   unit:
     runs-on: ubuntu-latest
