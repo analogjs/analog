@@ -11,6 +11,7 @@ export function injectContentFiles<Attributes extends Record<string, any>>(
   const allContentFiles = inject(
     CONTENT_FILES_LIST_TOKEN
   ) as ContentFile<Attributes>[];
+  renderTaskService.clearRenderTask(task);
 
   if (filterFn) {
     const filteredContentFiles = allContentFiles.filter(filterFn);
@@ -18,7 +19,6 @@ export function injectContentFiles<Attributes extends Record<string, any>>(
     return filteredContentFiles;
   }
 
-  renderTaskService.clearRenderTask(task);
   return allContentFiles;
 }
 
