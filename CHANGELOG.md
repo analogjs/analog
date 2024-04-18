@@ -1,3 +1,5 @@
+## [1.2.2](https://github.com/analogjs/analog/compare/v1.2.1...v1.2.2) (2024-04-18)
+
 ## [1.2.1](https://github.com/analogjs/analog/compare/v1.2.1-beta.4...v1.2.1) (2024-04-18)
 
 ## [1.2.1-beta.4](https://github.com/analogjs/analog/compare/v1.2.1-beta.3...v1.2.1-beta.4) (2024-04-18)
