@@ -1,22 +1,25 @@
 import {
+  ENVIRONMENT_INITIALIZER,
   inject,
   Injectable,
   InjectionToken,
-  PLATFORM_ID,
   Provider,
 } from '@angular/core';
 import { getHeadingList } from 'marked-gfm-heading-id';
 
 import { ContentRenderer, TableOfContentItem } from './content-renderer';
 import { MarkedSetupService } from './marked-setup.service';
+import { RenderTaskService } from './render-task.service';
 
 @Injectable()
 export class MarkdownContentRendererService implements ContentRenderer {
-  platformId = inject(PLATFORM_ID);
   #marked = inject(MarkedSetupService, { self: true });
+  #renderTaskService = inject(RenderTaskService);
 
   async render(content: string): Promise<string> {
-    return this.#marked.getMarkedInstance().parse(content);
+    const result = this.#marked.getMarkedInstance().parse(content);
+    this.#renderTaskService.clearRenderTask();
+    return result;
   }
 
   /**
@@ -38,6 +41,20 @@ export function withMarkdownRenderer(
   options?: MarkdownRendererOptions
 ): Provider {
   return [
+    MarkedSetupService,
+    RenderTaskService,
+    {
+      provide: ENVIRONMENT_INITIALIZER,
+      multi: true,
+      useFactory: () => {
+        // Eagerly inject this service to add a
+        // render task to the PendingTasks queue
+        // so we can delay SSR serialization
+        // until this task is cleared.
+        inject(RenderTaskService);
+        return () => {};
+      },
+    },
     {
       provide: ContentRenderer,
       useFactory: () => new MarkdownContentRendererService(),
@@ -55,7 +72,7 @@ export function withMarkdownRenderer(
 }
 
 export function provideContent(...features: Provider[]) {
-  return [...features, MarkedSetupService];
+  return [...features];
 }
 
 export const MERMAID_IMPORT_TOKEN = new InjectionToken<
