@@ -3,29 +3,16 @@ import {
   inject,
   ɵPendingTasks as PendingTasks,
 } from '@angular/core';
-import { filter, first, timeout } from 'rxjs';
 
 @Injectable()
 export class RenderTaskService {
-  pendingTasks = inject(PendingTasks);
-  private readonly renderTask = this.pendingTasks.add();
+  #pendingTasks = inject(PendingTasks);
 
-  constructor() {
-    this.pendingTasks.hasPendingTasks
-      .pipe(
-        filter((isStable) => !isStable),
-        timeout(100),
-        first()
-      )
-      .subscribe({
-        next: () => {},
-        error: () => {
-          this.clearRenderTask();
-        },
-      });
+  addRenderTask() {
+    return this.#pendingTasks.add();
   }
 
-  clearRenderTask() {
-    this.pendingTasks.remove(this.renderTask);
+  clearRenderTask(id: number) {
+    this.#pendingTasks.remove(id);
   }
 }

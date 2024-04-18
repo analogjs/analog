@@ -2,16 +2,11 @@ import { TestBed } from '@angular/core/testing';
 
 import { MarkdownContentRendererService } from './markdown-content-renderer.service';
 import { MarkedSetupService } from './marked-setup.service';
-import { RenderTaskService } from './render-task.service';
 
 describe('MarkdownContentRendererService', () => {
   function setup() {
     TestBed.configureTestingModule({
-      providers: [
-        MarkdownContentRendererService,
-        MarkedSetupService,
-        RenderTaskService,
-      ],
+      providers: [MarkdownContentRendererService, MarkedSetupService],
     });
     return { service: TestBed.inject(MarkdownContentRendererService) };
   }
