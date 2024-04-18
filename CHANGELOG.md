@@ -1,3 +1,9 @@
+## [1.2.1-beta.4](https://github.com/analogjs/analog/compare/v1.2.1-beta.3...v1.2.1-beta.4) (2024-04-18)
+
+### Bug Fixes
+
+- **content:** use PendingTasks to ensure content has been rendered before SSR serialization ([#1044](https://github.com/analogjs/analog/issues/1044)) ([2f5abbd](https://github.com/analogjs/analog/commit/2f5abbd88597ec3d4d0602087764e1b73fabb4c7))
+
 ## [1.2.1-beta.3](https://github.com/analogjs/analog/compare/v1.2.1-beta.2...v1.2.1-beta.3) (2024-04-17)
 
 ### Bug Fixes
