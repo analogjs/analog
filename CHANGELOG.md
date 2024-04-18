@@ -1,3 +1,31 @@
+## [1.2.2](https://github.com/analogjs/analog/compare/v1.2.1...v1.2.2) (2024-04-18)
+
+## [1.2.1](https://github.com/analogjs/analog/compare/v1.2.1-beta.4...v1.2.1) (2024-04-18)
+
+## [1.2.1-beta.4](https://github.com/analogjs/analog/compare/v1.2.1-beta.3...v1.2.1-beta.4) (2024-04-18)
+
+### Bug Fixes
+
+- **content:** use PendingTasks to ensure content has been rendered before SSR serialization ([#1044](https://github.com/analogjs/analog/issues/1044)) ([2f5abbd](https://github.com/analogjs/analog/commit/2f5abbd88597ec3d4d0602087764e1b73fabb4c7))
+
+## [1.2.1-beta.3](https://github.com/analogjs/analog/compare/v1.2.1-beta.2...v1.2.1-beta.3) (2024-04-17)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** inline renderer and template on Windows for prerendering ([#1041](https://github.com/analogjs/analog/issues/1041)) ([ac81da1](https://github.com/analogjs/analog/commit/ac81da1ad78f7413b70ec71a472d804f514e3d8a))
+
+## [1.2.1-beta.2](https://github.com/analogjs/analog/compare/v1.2.1-beta.1...v1.2.1-beta.2) (2024-04-16)
+
+### Bug Fixes
+
+- **nx-plugin:** add support for app generator in Angular CLI workspaces ([#1035](https://github.com/analogjs/analog/issues/1035)) ([2b6e0a0](https://github.com/analogjs/analog/commit/2b6e0a0fb48138feb3d0d63b6e87bee5289b2071))
+
+## [1.2.1-beta.1](https://github.com/analogjs/analog/compare/v1.2.0...v1.2.1-beta.1) (2024-04-15)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** support backticks with templateUrl and styleUrls ([#1030](https://github.com/analogjs/analog/issues/1030)) ([2980d44](https://github.com/analogjs/analog/commit/2980d440aa8eece0cdaed6dc4e3773c1d8e6ed0c))
+
 # [1.2.0](https://github.com/analogjs/analog/compare/v1.2.0-beta.5...v1.2.0) (2024-04-11)
 
 # [1.2.0-beta.5](https://github.com/analogjs/analog/compare/v1.2.0-beta.4...v1.2.0-beta.5) (2024-04-11)

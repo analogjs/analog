@@ -1,5 +1,5 @@
 {
-  "extends": "<%= offsetFromRoot %>tsconfig.base.json",
+  "extends": "<%= offsetFromRoot %><%= tsconfig %>",
   "files": [],
   "include": [],
   "exclude": [],

@@ -3,12 +3,13 @@
 import { inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { map, switchMap, tap } from 'rxjs/operators';
 
 import { ContentFile } from './content-file';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
 import { parseRawContentFile } from './parse-raw-content-file';
 import { waitFor } from './utils/zone-wait-for';
+import { RenderTaskService } from './render-task.service';
 
 function getContentFile<
   Attributes extends Record<string, any> = Record<string, any>
@@ -88,6 +89,8 @@ export function injectContent<
   fallback = 'No Content Found'
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   const contentFiles = inject(CONTENT_FILES_TOKEN);
+  const renderTaskService = inject(RenderTaskService);
+  const task = renderTaskService.addRenderTask();
 
   if (typeof param === 'string' || 'param' in param) {
     const prefix = typeof param === 'string' ? '' : `${param.subdirectory}/`;
@@ -110,7 +113,8 @@ export function injectContent<
           attributes: {},
           content: fallback,
         });
-      })
+      }),
+      tap(() => renderTaskService.clearRenderTask(task))
     );
   } else {
     return getContentFile<Attributes>(
@@ -118,6 +122,6 @@ export function injectContent<
       '',
       param.customFilename,
       fallback
-    );
+    ).pipe(tap(() => renderTaskService.clearRenderTask(task)));
   }
 }

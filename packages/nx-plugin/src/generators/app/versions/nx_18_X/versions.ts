@@ -2,10 +2,10 @@
 // dependencies
 export const V18_X_NX_DEVKIT = '^18.0.0';
 export const V18_X_NX_ANGULAR = '^18.0.0';
-export const V18_X_ANALOG_JS_CONTENT = '^1.0.0-rc.0';
-export const V18_X_ANALOG_JS_ROUTER = '^1.0.0-rc.0';
+export const V18_X_ANALOG_JS_CONTENT = '^1.2.0';
+export const V18_X_ANALOG_JS_ROUTER = '^1.2.0';
 export const V18_X_ANALOG_JS_TRPC = '~0.2.45';
-export const V18_X_ANALOG_JS_VITE_PLUGIN_ANGULAR = '^1.0.0-rc.0';
+export const V18_X_ANALOG_JS_VITE_PLUGIN_ANGULAR = '^1.2.0';
 export const V18_X_TRPC_CLIENT = '^10.25.0';
 export const V18_X_TRPC_SERVER = '^10.25.0';
 export const V18_X_ISOMORPHIC_FETCH = '^3.0.0';
@@ -21,7 +21,8 @@ export const V18_X_POSTCSS = '^8.4.5';
 export const V18_X_AUTOPREFIXER = '^10.4.0';
 
 // devDependencies
-export const V18_X_ANALOG_JS_PLATFORM = '^1.0.0-rc.0';
+export const V18_X_ANALOG_JS_PLATFORM = '^1.2.0';
+export const V18_X_ANGULAR_DEVKIT_BUILD_ANGULAR = '^17.2.0';
 export const V18_X_NX_VITE = '^18.0.0';
 export const V18_X_NX_LINTER = '^18.0.0';
 export const V18_X_JSDOM = '^22.1.0';

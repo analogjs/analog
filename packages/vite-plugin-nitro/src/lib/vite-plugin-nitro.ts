@@ -5,6 +5,7 @@ import { normalizePath } from 'vite';
 import { dirname, join, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 import { buildServer } from './build-server.js';
 import { buildSSRApp } from './build-ssr.js';
@@ -212,6 +213,40 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           }
 
           if (ssrBuild) {
+            if (isWindows) {
+              const indexContents = readFileSync(
+                normalizePath(join(clientOutputPath, 'index.html')),
+                'utf-8'
+              );
+
+              // Write out the renderer manually because
+              // Windows doesn't resolve the aliases
+              // correctly in its native environment
+              writeFileSync(
+                normalizePath(rendererEntry.replace(filePrefix, '')),
+                `
+              /**
+               * This file is shipped as ESM for Windows support,
+               * as it won't resolve the renderer.ts file correctly in node.
+               */
+              import { eventHandler } from 'h3';
+              
+              // @ts-ignore
+              import renderer from '${ssrEntry}';
+              // @ts-ignore
+              const template = \`${indexContents}\`;
+              
+              export default eventHandler(async (event) => {
+                const html = await renderer(event.node.req.url, template, {
+                  req: event.node.req,
+                  res: event.node.res,
+                });
+                return html;
+              });                    
+              `
+              );
+            }
+
             nitroConfig = {
               ...nitroConfig,
               externals: {

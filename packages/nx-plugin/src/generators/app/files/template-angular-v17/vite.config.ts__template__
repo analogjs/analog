@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
     publicDir: 'src/public',
+    cacheDir: `<%= offsetFromRoot %>node_modules/.vite`,
     <% if (addTRPC) { %>
     ssr: {
       noExternal: ['@analogjs/trpc','@trpc/server'],
@@ -48,9 +49,6 @@ export default defineConfig(({ mode }) => {
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
       reporters: ['default'],
-      cache: {
-        dir: `<%= offsetFromRoot %>node_modules/.vitest`,
-      },
     },
     define: {
       'import.meta.vitest': mode !== 'production',

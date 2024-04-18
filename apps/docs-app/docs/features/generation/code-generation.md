@@ -5,16 +5,22 @@ import TabItem from '@theme/TabItem';
 
 Analog supports automated code generation using Nx Generators and Angular Schematics.
 
-## Generate a Page
-
-This command generates a page inside our `pages` folder with minimal configuration out of the box.
-
 <Tabs groupId="project-type">
-  <TabItem value="Nx">
+  <TabItem value="Nx Generators">
 
 ### Generators
 
-The Analog plugin for Nx provides a series of generators that help automate some of the frequent tasks inside an Analog project, like generating a **Page**. To use these generators, the **Nx Console** extension can be installed or they can be invoked manually using:
+The Analog plugin for Nx provides a series of generators that help automate some of the frequent tasks inside an Nx workspace, like generating an **application** or **page**. To use these generators, the **Nx Console** extension can be installed or they can be invoked manually using the Nx CLI:
+
+### Generating an application
+
+To generate a new Analog application within an Nx workspace, use the application generator:
+
+```shell
+npx nx generate @analogjs/platform:application my-app
+```
+
+### Generating pages
 
 ```shell
 npx nx generate @analogjs/platform:page --pathname=index --project=analog-app
@@ -34,26 +40,36 @@ npx nx generate @analogjs/platform:page --pathname='products/[products]' --proje
 
   </TabItem>
 
-  <TabItem label="Schematics" value="schematics">
+  <TabItem label="Angular Schematics" value="schematics">
 
 ### Angular Schematics
 
-Analog provides a series of schematics that help automate some of the frequent tasks inside an Analog workspace, like generating a **Page**. To use these schematics, use the generate command:
+Analog provides a series of schematics that help automate some of the frequent tasks inside an Angular CLI workspace, like generating an **application** or a **page**. To use these schematics, use the generate command:
+
+### Generating an application
+
+To generate a new Analog application within an Angular CLI workspace, use the application schematic:
 
 ```shell
-ng g @analogjs/platform:page --pathname=index --project=/
+npx ng generate @analogjs/platform:application my-app
+```
+
+### Generating pages
+
+```shell
+npx ng g @analogjs/platform:page --pathname=index --project=/
 ```
 
 it also works with the Analog specific filenames, **Note: this names needs to be surrounded by single quotes** ex:
 
 ```shell
-ng g @analogjs/platform:page --pathname='(blog)' --project=/
+npx ng g @analogjs/platform:page --pathname='(blog)' --project=/
 ```
 
 The schematic as well accepts subfolders to structure our project properly.
 
 ```shell
-ng g @analogjs/platform:page --pathname='products/[products]' --project=/
+npx ng g @analogjs/platform:page --pathname='products/[products]' --project=/
 ```
 
   </TabItem>

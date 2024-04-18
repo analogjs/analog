@@ -6,6 +6,7 @@ import {
   injectContentFiles,
   InjectContentFilesFilterFunction,
 } from './inject-content-files';
+import { RenderTaskService } from './render-task.service';
 
 describe('injectContentFiles', () => {
   it('should provide empty files if no files provided', () => {
@@ -78,6 +79,9 @@ describe('injectContentFiles', () => {
     contentFiles: ContentFile[] = [],
     filterFn?: InjectContentFilesFilterFunction<Attributes>
   ) {
+    TestBed.configureTestingModule({
+      providers: [RenderTaskService],
+    });
     TestBed.overrideProvider(CONTENT_FILES_LIST_TOKEN, {
       useValue: contentFiles,
     });

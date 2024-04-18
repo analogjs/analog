@@ -43,6 +43,10 @@
     "message": "Integraciones",
     "description": "The label for category Integrations in sidebar docsSidebar"
   },
+  "sidebar.docsSidebar.category.Experimental": {
+    "message": "Experimental",
+    "description": "The label for category Experimental in sidebar docsSidebar"
+  },
   "sidebar.docsSidebar.doc.Overview": {
     "message": "Visión General",
     "description": "The label for the doc item Overview in sidebar docsSidebar, linking to the doc features/updating/overview"

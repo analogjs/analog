@@ -18,7 +18,7 @@
       "type": "boolean",
       "description": "Adds tailwind if set to true.",
       "x-prompt": "Add TailwindCSS for styling?",
-      "default": true
+      "default": false
     },
     "addTRPC": {
       "type": "boolean",

@@ -129,6 +129,90 @@ describe('component-resolvers', () => {
 
       expect(thePathsAreEqual(resolvedPaths, actualPaths)).toBe(true);
     });
+
+    it('should handle styleUrl with backticks', () => {
+      const code = `
+      @Component({
+        styleUrl: \`./app.component.css\`
+      })
+      export class MyComponent {}
+    `;
+
+      const actualPaths = [
+        './app.component.css|/path/to/src/app.component.css',
+      ];
+      const styleUrlsResolver = new StyleUrlsResolver();
+      const resolvedPaths = styleUrlsResolver.resolve(code, id);
+
+      expect(thePathsAreEqual(resolvedPaths, actualPaths)).toBe(true);
+    });
+
+    it('should handle multi-line styleUrls with backticks', () => {
+      const code = `
+        @Component({
+          styleUrls: [
+            \`./app.component.css\`,
+            \`../styles.css\`
+          ]
+        })
+        export class MyComponent {}
+      `;
+
+      const actualPaths = [
+        './app.component.css|/path/to/src/app.component.css',
+        '../styles.css|/path/to/styles.css',
+      ];
+
+      const styleUrlsResolver = new StyleUrlsResolver();
+      const resolvedPaths = styleUrlsResolver.resolve(code, id);
+
+      expect(thePathsAreEqual(resolvedPaths, actualPaths)).toBe(true);
+    });
+
+    it('should handle multi-line styleUrls with backticks and single quotes', () => {
+      const code = `
+        @Component({
+          styleUrls: [
+            \`./app.component.css\`,
+            '../styles.css'
+          ]
+        })
+        export class MyComponent {}
+      `;
+
+      const actualPaths = [
+        './app.component.css|/path/to/src/app.component.css',
+        '../styles.css|/path/to/styles.css',
+      ];
+
+      const styleUrlsResolver = new StyleUrlsResolver();
+      const resolvedPaths = styleUrlsResolver.resolve(code, id);
+
+      expect(thePathsAreEqual(resolvedPaths, actualPaths)).toBe(true);
+    });
+
+    it('should handle wrapped multi-line styleUrls with backticks', () => {
+      const code = `
+        @Component({
+          styleUrls: [
+            \`./app.component.css\`, \`./another.css\`,
+            \`../styles.css\`
+          ]
+        })
+        export class MyComponent {}
+      `;
+
+      const actualPaths = [
+        './app.component.css|/path/to/src/app.component.css',
+        './another.css|/path/to/src/another.css',
+        '../styles.css|/path/to/styles.css',
+      ];
+
+      const styleUrlsResolver = new StyleUrlsResolver();
+      const resolvedPaths = styleUrlsResolver.resolve(code, id);
+
+      expect(thePathsAreEqual(resolvedPaths, actualPaths)).toBe(true);
+    });
   });
 
   describe('component-resolvers templateUrl', () => {
@@ -236,6 +320,22 @@ describe('component-resolvers', () => {
         const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
 
         expect(resolvedTemplateUrls).toHaveLength(0);
+      });
+
+      it('should handle templateUrl with backticks', () => {
+        const code = `
+        @Component({
+          templateUrl: \`./app.component.html\`
+        })
+        export class MyComponent {}
+      `;
+
+        const actualUrl =
+          './app.component.html|/path/to/src/app.component.html';
+        const templateUrlsResolver = new TemplateUrlsResolver();
+        const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
+
+        expect(thePathsAreEqual(resolvedTemplateUrls, [actualUrl])).toBe(true);
       });
     });
   });
