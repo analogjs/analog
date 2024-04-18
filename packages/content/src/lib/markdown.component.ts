@@ -1,7 +1,6 @@
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
 import {
   AfterViewChecked,
-  ChangeDetectorRef,
   Component,
   Input,
   NgZone,
@@ -48,7 +47,7 @@ export default class AnalogMarkdownComponent
   });
   private mermaid: typeof import('mermaid') | undefined;
 
-  public content$: Observable<SafeHtml> = of('');
+  public content$: Observable<SafeHtml> = this.getContentSource();
 
   @Input() content!: string | object | undefined | null;
   @Input() classes = 'analog-markdown';
@@ -79,13 +78,17 @@ export default class AnalogMarkdownComponent
       const componentRef = this.container.createComponent(this.content as any);
       componentRef.changeDetectorRef.detectChanges();
     } else {
-      this.content$ = this.route.data.pipe(
-        map<Data, string>((data) => this.content ?? data['_analogContent']),
-        mergeMap((contentString) => this.renderContent(contentString)),
-        map((content) => this.sanitizer.bypassSecurityTrustHtml(content)),
-        catchError((e) => of(`There was an error ${e}`))
-      );
+      this.content$ = this.getContentSource();
     }
+  }
+
+  getContentSource() {
+    return this.route.data.pipe(
+      map<Data, string>((data) => this.content ?? data['_analogContent']),
+      mergeMap((contentString) => this.renderContent(contentString)),
+      map((content) => this.sanitizer.bypassSecurityTrustHtml(content)),
+      catchError((e) => of(`There was an error ${e}`))
+    );
   }
 
   async renderContent(content: string): Promise<string> {

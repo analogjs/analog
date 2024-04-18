@@ -11,6 +11,7 @@ import { Observable, of } from 'rxjs';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
 import { injectContent } from './content';
 import { ContentFile } from './content-file';
+import { RenderTaskService } from './render-task.service';
 
 describe('injectContent', () => {
   type TestAttributes = {
@@ -236,6 +237,7 @@ Test agx Content`),
   ) {
     TestBed.configureTestingModule({
       providers: [
+        RenderTaskService,
         {
           provide: ActivatedRoute,
           useValue: {
