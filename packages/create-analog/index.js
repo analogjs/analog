@@ -202,7 +202,8 @@ async function init() {
   pkg.name = packageName || getProjectName();
   pkg.scripts.start = getStartCommand(pkgManager);
 
-  if (!skipTailwind) addDevDependencies(pkg);
+  if (!skipTailwind) addTailwindDevDependencies(pkg);
+  if (pkgManager === 'yarn') addYarnDevDependencies(pkg);
 
   write('package.json', JSON.stringify(pkg, null, 2));
 
@@ -345,13 +346,17 @@ function addTailwindConfig(write, filesDir) {
   );
 }
 
-function addDevDependencies(pkg) {
+function addTailwindDevDependencies(pkg) {
   ['tailwindcss@^3.3.1', 'postcss@^8.4.21', 'autoprefixer@^10.4.14'].forEach(
     (packageName) => {
       const [name, version] = packageName.split('@');
       pkg.devDependencies[name] = version;
     }
   );
+}
+
+function addYarnDevDependencies(pkg) {
+  pkg.devDependencies['@angular-devkit/build-angular'] = ['^17.3.5'];
 }
 
 init().catch((e) => {
