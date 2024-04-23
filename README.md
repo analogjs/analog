@@ -8,9 +8,9 @@
 
 [![Discord server](https://dcbadge.vercel.app/api/server/mKC2Ec48U5?style=flat-square)](https://chat.analogjs.org/) [![Twitter](https://img.shields.io/twitter/follow/analogjs)](https://twitter.com/analogjs)
 
-Analog is a meta-framework for building applications and websites with [Angular](https://angular.dev).
+Analog is the meta-framework for building applications and websites with [Angular](https://angular.dev).
 
-Similar to other meta-frameworks such as Next.JS, Nuxt, SvelteKit and others, Analog provides a similar experience, building on top of Angular.
+Similar to other meta-frameworks such as Next.JS, Nuxt, SvelteKit, Qwik City, and others, Analog provides a similar experience, building on top of Angular.
 
 ## Documentation
 
@@ -19,32 +19,40 @@ Visit the docs at [https://analogjs.org](https://analogjs.org)
 ## Features
 
 - Supports Vite/Vitest/Playwright
+- Server and deployment integrations powered by [Nitro](https://nitro.unjs.io)
 - File-based routing
+- Server-side data fetching
 - Support for using markdown as content routes
-- Support for API/server routes
+- Integrated API/server routes
 - Hybrid SSR/SSG support
-- Supports Angular CLI or Nx workspaces
+- Supports Angular CLI and Nx workspaces
 
 ## Getting Started
 
 Use your package manager of choice to create a new project
 
-With yarn:
-
-```sh
-yarn create analog
-```
-
 With npm:
 
 ```sh
-npm init analog
+npm create analog@latest
 ```
 
 With pnpm:
 
 ```sh
-pnpm create analog
+pnpm create analog@latest
+```
+
+With Yarn:
+
+```sh
+yarn create analog@latest
+```
+
+With Bun:
+
+```sh
+bun create analog@latest
 ```
 
 Follow the prompts to scaffold the project and start the development server.
@@ -53,9 +61,10 @@ Follow the prompts to scaffold the project and start the development server.
 
 ## Supporting Analog
 
-Analog is an MIT-licensed open source project with its ongoing development made possible by contributors and sponsors.
-
-[Become a Sponsor!](https://github.com/sponsors/brandonroberts).
+- Star the [GitHub Repo](https://github.com/analogjs/analog)
+- Join the [Discord](https://chat.analogjs.org)
+- Follow us on [Twitter](https://twitter.com/analogjs)
+- Become a [Sponsor](https://analogjs.org/docs/sponsoring)
 
 ### Sponsors
 

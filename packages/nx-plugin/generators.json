@@ -25,6 +25,11 @@
       "factory": "./src/generators/setup-vitest/generator",
       "schema": "./src/generators/setup-vitest/schema.json",
       "description": "Setup the Vitest configuration."
+    },
+    "init": {
+      "factory": "./src/generators/init/generator",
+      "schema": "./src/generators/init/schema.json",
+      "description": "Setup the Analog configuration."
     }
   },
   "schematics": {
@@ -43,6 +48,11 @@
       "factory": "./src/generators/setup-vitest/compat",
       "schema": "./src/generators/setup-vitest/schema.json",
       "description": "Setup the Vitest configuration."
+    },
+    "init": {
+      "factory": "./src/generators/init/compat",
+      "schema": "./src/generators/init/schema.json",
+      "description": "Setup the Analog configuration."
     }
   }
 }
