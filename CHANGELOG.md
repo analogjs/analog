@@ -1,3 +1,9 @@
+## [1.2.3-beta.2](https://github.com/analogjs/analog/compare/v1.2.3-beta.1...v1.2.3-beta.2) (2024-04-24)
+
+### Bug Fixes
+
+- **create-analog:** add dev dependency when using yarn ([#1048](https://github.com/analogjs/analog/issues/1048)) ([770dcdf](https://github.com/analogjs/analog/commit/770dcdf42cc03dedb214fcf382d77636eb8812fb))
+
 ## [1.2.3-beta.1](https://github.com/analogjs/analog/compare/v1.2.2...v1.2.3-beta.1) (2024-04-24)
 
 ### Bug Fixes
