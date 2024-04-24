@@ -1,3 +1,9 @@
+## [1.2.3-beta.1](https://github.com/analogjs/analog/compare/v1.2.2...v1.2.3-beta.1) (2024-04-24)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add support for more test filtering functions ([#1050](https://github.com/analogjs/analog/issues/1050)) ([97823ba](https://github.com/analogjs/analog/commit/97823ba905c517eadde3903ee68e4f750390de31))
+
 ## [1.2.2](https://github.com/analogjs/analog/compare/v1.2.1...v1.2.2) (2024-04-18)
 
 ## [1.2.1](https://github.com/analogjs/analog/compare/v1.2.1-beta.4...v1.2.1) (2024-04-18)
