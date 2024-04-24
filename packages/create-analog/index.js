@@ -203,7 +203,8 @@ async function init() {
   pkg.scripts.start = getStartCommand(pkgManager);
 
   if (!skipTailwind) addTailwindDevDependencies(pkg);
-  if (pkgManager === 'yarn') addYarnDevDependencies(pkg);
+  if (pkgManager === 'yarn' && variant === 'angular-v17')
+    addYarnDevDependencies(pkg);
 
   write('package.json', JSON.stringify(pkg, null, 2));
 
