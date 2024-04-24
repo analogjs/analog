@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-94-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-95-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -213,6 +213,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jculvey"><img src="https://avatars.githubusercontent.com/u/204386?v=4?s=100" width="100px;" alt="James Culveyhouse"/><br /><sub><b>James Culveyhouse</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=jculvey" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/naaajii"><img src="https://avatars.githubusercontent.com/u/54370141?v=4?s=100" width="100px;" alt="Naji"/><br /><sub><b>Naji</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=naaajii" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://honey.glass/"><img src="https://avatars.githubusercontent.com/u/1880749?v=4?s=100" width="100px;" alt="Bitcollage"/><br /><sub><b>Bitcollage</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=SerkanSipahi" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/sonukapoor"><img src="https://avatars.githubusercontent.com/u/59734?v=4?s=100" width="100px;" alt="Sonu Kapoor"/><br /><sub><b>Sonu Kapoor</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=sonukapoor" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
