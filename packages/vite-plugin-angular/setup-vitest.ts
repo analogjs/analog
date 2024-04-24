@@ -257,8 +257,8 @@ const bindTest = (originalVitestFn: {
   };
   env[methodName].each = bindDescribe(originalvitestFn.each);
   if (methodName === 'describe') {
-    env[methodName].only = env['fdescribe'];
-    env[methodName].skip = env['xdescribe'];
+    env[methodName].only = bindDescribe(originalvitestFn.only);
+    env[methodName].skip = bindDescribe(originalvitestFn.skip);
   }
 });
 
@@ -270,6 +270,8 @@ const bindTest = (originalVitestFn: {
     return originalvitestFn.apply(this, args);
   };
   env[methodName].each = bindTest(originalvitestFn.each);
+  env[methodName].only = bindTest(originalvitestFn.only);
+  env[methodName].skip = bindTest(originalvitestFn.skip);
 
   if (methodName === 'test' || methodName === 'it') {
     env[methodName].todo = function (...args: any) {
