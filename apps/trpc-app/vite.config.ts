@@ -19,7 +19,6 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: '../../dist/apps/trpc-app/client',
       reportCompressedSize: true,
-      commonjsOptions: { transformMixedEsModules: true },
       target: ['es2020'],
     },
     plugins: [
