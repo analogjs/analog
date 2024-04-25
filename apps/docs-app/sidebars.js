@@ -153,6 +153,17 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'Guides',
+      items: [
+        {
+          type: 'doc',
+          id: 'guides/migrating',
+          label: 'Migrating an Angular app to Analog',
+        },
+      ],
+    },
+    {
+      type: 'category',
       label: 'Integrations',
       items: [
         {
