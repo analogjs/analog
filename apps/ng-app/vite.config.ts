@@ -10,7 +10,6 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: '../../dist/apps/ng-app/client',
     reportCompressedSize: true,
-    commonjsOptions: { transformMixedEsModules: true },
     target: ['es2020'],
   },
   resolve: {

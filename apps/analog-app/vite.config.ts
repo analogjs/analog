@@ -25,7 +25,6 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: '../../dist/apps/analog-app/client',
       reportCompressedSize: true,
-      commonjsOptions: { transformMixedEsModules: true },
       target: ['es2020'],
     },
     optimizeDeps: {

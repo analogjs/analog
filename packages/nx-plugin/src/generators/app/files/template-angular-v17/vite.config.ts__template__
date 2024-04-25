@@ -17,8 +17,7 @@ export default defineConfig(({ mode }) => {
     <% } %>
     build: {
       outDir: '<%= offsetFromRoot %>dist/<%= projectRoot %>/client',
-      reportCompressedSize: true,
-      commonjsOptions: { transformMixedEsModules: true },      
+      reportCompressedSize: true,    
       target: ['es2020'],
     },
     server: {
