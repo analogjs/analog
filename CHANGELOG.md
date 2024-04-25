@@ -1,3 +1,9 @@
+# [1.3.0-beta.1](https://github.com/analogjs/analog/compare/v1.2.3-beta.2...v1.3.0-beta.1) (2024-04-25)
+
+### Features
+
+- **nx-plugin:** add init schematic/generator for migrating an Angular SPA to Analog ([#1049](https://github.com/analogjs/analog/issues/1049)) ([ca2b3df](https://github.com/analogjs/analog/commit/ca2b3df56dde0b8fd196a1554f71866704337fa1))
+
 ## [1.2.3-beta.2](https://github.com/analogjs/analog/compare/v1.2.3-beta.1...v1.2.3-beta.2) (2024-04-24)
 
 ### Bug Fixes
