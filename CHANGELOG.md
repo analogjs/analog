@@ -1,3 +1,10 @@
+# [1.3.0-beta.2](https://github.com/analogjs/analog/compare/v1.3.0-beta.1...v1.3.0-beta.2) (2024-04-25)
+
+### Bug Fixes
+
+- **nx-plugin:** add support for nx tsconfig paths for vitest setup ([#1057](https://github.com/analogjs/analog/issues/1057)) ([efe3712](https://github.com/analogjs/analog/commit/efe371228d0ff24cc7a93c0493d0c400a1914aeb))
+- remove commonjsOptions from Nx setup ([#1052](https://github.com/analogjs/analog/issues/1052)) ([a2892d7](https://github.com/analogjs/analog/commit/a2892d72b52ee32a52b3a7ade3414bcdc6830e3e))
+
 # [1.3.0-beta.1](https://github.com/analogjs/analog/compare/v1.2.3-beta.2...v1.3.0-beta.1) (2024-04-25)
 
 ### Features
