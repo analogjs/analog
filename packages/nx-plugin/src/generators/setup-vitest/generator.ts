@@ -9,17 +9,19 @@ import { join } from 'node:path';
 
 import { getInstalledPackageVersion } from '../../utils/version-utils';
 import { addAnalogDependencies } from './lib/add-analog-dependencies';
-import { updateTsConfig } from './lib/update-tsconfig';
 import { updateTestTarget } from './lib/update-test-target';
+import { updateTsConfig } from './lib/update-tsconfig';
 import { SetupVitestGeneratorSchema } from './schema';
 
 function addFiles(tree: Tree, options: SetupVitestGeneratorSchema) {
   const projects = getProjects(tree);
+  const isNx = tree.exists('/nx.json');
 
   const projectConfig = projects.get(options.project);
 
   const templateOptions = {
     ...options,
+    addNxPaths: isNx,
     template: '',
   };
 
