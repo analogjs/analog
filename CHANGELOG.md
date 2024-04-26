@@ -1,3 +1,9 @@
+# [1.3.0-beta.3](https://github.com/analogjs/analog/compare/v1.3.0-beta.2...v1.3.0-beta.3) (2024-04-26)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add @ngtools/webpack to peer deps of Angular Vite plugin ([#1053](https://github.com/analogjs/analog/issues/1053)) ([c6490e2](https://github.com/analogjs/analog/commit/c6490e22bc13aa447ea11c95649f4b2b29f8eaf7))
+
 # [1.3.0-beta.2](https://github.com/analogjs/analog/compare/v1.3.0-beta.1...v1.3.0-beta.2) (2024-04-25)
 
 ### Bug Fixes
