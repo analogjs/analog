@@ -186,6 +186,11 @@ const sidebars = {
           id: 'integrations/angular-material/index',
           label: 'Angular Material',
         },
+        {
+          type: 'doc',
+          id: 'integrations/ionic/index',
+          label: 'Ionic Framework',
+        },
       ],
     },
     {
