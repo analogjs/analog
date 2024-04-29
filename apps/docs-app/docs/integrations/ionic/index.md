@@ -7,7 +7,7 @@ import TabItem from '@theme/TabItem';
 
 # Ionic Integration with Analog
 
-This tutorial will guide you through the process of integrating Ionic Framework within your Analog application so you can leverage the power of Ionic's iOS and Android components in your applications.
+This tutorial guides you through the process of integrating Ionic Framework within your Analog application so you can leverage the power of Ionic's iOS and Android components in your applications.
 
 ## Step 1: Install Ionic Framework
 
@@ -261,7 +261,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.ionic.capacitor',
   appName: 'ionic-capacitor',
-  webDir: 'dist/client',
+  webDir: 'dist/analog/public',
 };
 
 export default config;
