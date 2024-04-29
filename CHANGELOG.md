@@ -1,3 +1,11 @@
+# [1.3.0-beta.5](https://github.com/analogjs/analog/compare/v1.3.0-beta.4...v1.3.0-beta.5) (2024-04-29)
+
+### Bug Fixes
+
+- add TanStack packages for SSR transform ([#998](https://github.com/analogjs/analog/issues/998)) ([43d8bbf](https://github.com/analogjs/analog/commit/43d8bbf75e6f00705533199720f13bbab17c4762))
+- **nx-plugin:** add support for nx tsconfig paths for vitest setup ([#1057](https://github.com/analogjs/analog/issues/1057)) ([967594b](https://github.com/analogjs/analog/commit/967594bb15ac8c0209e5a84e1ba4e40fbed7efb5))
+- remove commonjsOptions from Nx setup ([#1052](https://github.com/analogjs/analog/issues/1052)) ([2dcf391](https://github.com/analogjs/analog/commit/2dcf3910936844d8909855894b0755f77afbcb33))
+
 # [1.3.0-beta.4](https://github.com/analogjs/analog/compare/v1.3.0-beta.3...v1.3.0-beta.4) (2024-04-29)
 
 ### Bug Fixes
