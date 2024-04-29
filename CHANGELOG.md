@@ -1,3 +1,9 @@
+# [1.3.0-beta.4](https://github.com/analogjs/analog/compare/v1.3.0-beta.3...v1.3.0-beta.4) (2024-04-29)
+
+### Bug Fixes
+
+- **create-analog:** update support for Angular v16 projects ([#1062](https://github.com/analogjs/analog/issues/1062)) ([b16ec6f](https://github.com/analogjs/analog/commit/b16ec6f4c98171474347fecdaf7caf1a78a666ee))
+
 # [1.3.0-beta.3](https://github.com/analogjs/analog/compare/v1.3.0-beta.2...v1.3.0-beta.3) (2024-04-26)
 
 ### Bug Fixes
