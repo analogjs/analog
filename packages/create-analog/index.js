@@ -34,16 +34,6 @@ const APPS = [
         display: 'TypeScript',
         color: green,
       },
-      {
-        name: 'template-ionic',
-        display: 'TypeScript',
-        color: green,
-      },
-      {
-        name: 'template-ionic-capacitor',
-        display: 'TypeScript',
-        color: green,
-      },
     ],
   },
 ];
