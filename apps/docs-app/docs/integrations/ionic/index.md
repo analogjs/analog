@@ -113,7 +113,7 @@ ssr: {
 },
 ```
 
-2. Add in your `app.config.ts` the `provideIonicAngular` method and `IonicRouteStrategy`provider.
+2. Add in your `app.config.ts` the `provideIonicAngular` method and `IonicRouteStrategy` provider.
 
 ```ts
 import { RouteReuseStrategy, provideRouter } from '@angular/router';
