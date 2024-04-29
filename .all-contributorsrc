@@ -914,6 +914,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "eduardoRoth",
+      "name": "Eduardo Roth",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419161?v=4",
+      "profile": "https://eduardoroth.dev",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
