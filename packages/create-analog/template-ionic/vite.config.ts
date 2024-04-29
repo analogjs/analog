@@ -7,7 +7,7 @@ import analog from '@analogjs/platform';
 export default defineConfig(({ mode }) => ({
   publicDir: 'src/assets',
   ssr: {
-    noExternal: ['@template-ionic/**', '@stencil/**', 'ionicons'],
+    noExternal: ['@ionic/**', '@stencil/**', 'ionicons'],
   },
   build: {
     target: ['es2020'],

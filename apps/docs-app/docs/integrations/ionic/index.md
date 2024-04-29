@@ -17,7 +17,7 @@ To begin, you need to install the `@ionic/angular@latest` package. Depending on 
   <TabItem value="npm">
 
 ```shell
-npm install @template-ionic/angular@latest
+npm install @ionic/angular@latest
 ```
 
   </TabItem>
@@ -25,7 +25,7 @@ npm install @template-ionic/angular@latest
   <TabItem label="yarn" value="yarn">
 
 ```shell
-yarn add @template-ionic/angular@latest
+yarn add @ionic/angular@latest
 ```
 
   </TabItem>
@@ -33,7 +33,7 @@ yarn add @template-ionic/angular@latest
   <TabItem value="pnpm">
 
 ```shell
-pnpm install @template-ionic/angular@latest
+pnpm install @ionic/angular@latest
 ```
 
   </TabItem>
@@ -47,7 +47,7 @@ Ionic also offers a set of schematics that can help you create components follow
   <TabItem value="npm">
 
 ```shell
-npm install -D @template-ionic/angular-toolkit
+npm install -D @ionic/angular-toolkit
 ```
 
   </TabItem>
@@ -55,7 +55,7 @@ npm install -D @template-ionic/angular-toolkit
   <TabItem label="yarn" value="yarn">
 
 ```shell
-yarn add -D @template-ionic/angular-toolkit
+yarn add -D @ionic/angular-toolkit
 ```
 
   </TabItem>
@@ -63,7 +63,7 @@ yarn add -D @template-ionic/angular-toolkit
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -D @template-ionic/angular-toolkit
+pnpm install -D @ionic/angular-toolkit
 ```
 
   </TabItem>
@@ -106,7 +106,7 @@ pnpm install ionicons
 ```json
 ssr: {
   noExternal: [
-    '@template-ionic/**',
+    '@ionic/**',
     '@stencil/**',
     'ionicons',
   ],
@@ -120,7 +120,7 @@ import { RouteReuseStrategy, provideRouter } from '@angular/router';
 import {
   IonicRouteStrategy,
   provideIonicAngular,
-} from '@template-ionic/angular/standalone';
+} from '@ionic/angular/standalone';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -137,7 +137,7 @@ export const appConfig: ApplicationConfig = {
 
 ```ts
 import { Component } from '@angular/core';
-import { IonApp, IonRouterOutlet } from '@template-ionic/angular/standalone';
+import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
 
 @Component({
   selector: 'demo-root',
@@ -205,8 +205,8 @@ export default defineConfig(({ mode }) => {
  * https://ionicframework.com/docs/theming/dark-mode
  */
 
-/* @import "@template-ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@template-ionic/angular/css/palettes/dark.class.css"; */
+/* @import "@ionic/angular/css/palettes/dark.always.css"; */
+/* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import '@ionic/angular/css/palettes/dark.system.css';
 
 :root {
@@ -324,8 +324,8 @@ npx cap init
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.template-ionic.capacitor',
-  appName: 'template-template-ionic-capacitor',
+  appId: 'com.ionic.capacitor',
+  appName: 'ionic-capacitor',
   webDir: 'dist/client',
 };
 
