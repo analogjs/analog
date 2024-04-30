@@ -246,9 +246,11 @@ Ionic Framework [doesn't support the Angular's new Client Hydration](https://git
        selector: 'demo-root',
        standalone: true,
        imports: [IonApp, IonRouterOutlet],
-       template: `<ion-app ngSkipHydration
-         ><ion-router-outlet></ion-router-outlet
-       ></ion-app>`,
+       template: `
+         <ion-app ngSkipHydration>
+           <ion-router-outlet></ion-router-outlet>
+         </ion-app>
+       `,
      })
      export class AppComponent {}
      ```
