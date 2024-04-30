@@ -210,7 +210,7 @@ export default defineConfig(({ mode }) => {
 
 ### Server Side Rendering Caveat
 
-Ionic Framework [doesn't support the Angular's new Client Hydration](https://github.com/ionic-team/ionic-framework/issues/28625#issuecomment-1843919548), as `@angular/ssr` [doesn't support web components](https://github.com/angular/angular/issues/52275), and when they are supported, work has to be done on the Stencil components to enable it. So right now there are three ways to handle this:
+Ionic Framework [doesn't support the Angular's new Client Hydration](https://github.com/ionic-team/ionic-framework/issues/28625#issuecomment-1843919548), as Angular [doesn't support SSR with web components](https://github.com/angular/angular/issues/52275), and when they are supported, work has to be done on the Stencil components to enable it. So right now there are three options to handle this:
 
 1. Remove `provideClientHydration()` from `app.config.ts` providers.
 
