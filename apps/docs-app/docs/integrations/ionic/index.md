@@ -214,56 +214,56 @@ Ionic Framework [doesn't support the Angular's new Client Hydration](https://git
 
 1. Remove `provideClientHydration()` from `app.config.ts` providers.
 
-- This removes the new client hydration mechanism from Angular and reverts to the previous one, which will cause a flicker when re-rendering the DOM from the client.
+   - This removes the new client hydration mechanism from Angular and reverts to the previous one, which will cause a flicker when re-rendering the DOM from the client.
 
-```ts
-import { RouteReuseStrategy, provideRouter } from '@angular/router';
-import {
-  IonicRouteStrategy,
-  provideIonicAngular,
-} from '@ionic/angular/standalone';
+   ```ts
+   import { RouteReuseStrategy, provideRouter } from '@angular/router';
+   import {
+     IonicRouteStrategy,
+     provideIonicAngular,
+   } from '@ionic/angular/standalone';
 
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideFileRouter(),
-    //provideClientHydration(), // remove this.
-    provideHttpClient(withFetch()),
-    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    provideIonicAngular(),
-  ],
-};
-```
+   export const appConfig: ApplicationConfig = {
+     providers: [
+       provideFileRouter(),
+       //provideClientHydration(), // remove this.
+       provideHttpClient(withFetch()),
+       { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+       provideIonicAngular(),
+     ],
+   };
+   ```
 
 2. Add `ngSkipHydration` attribute to the `ion-app` tag.
 
-- This will disable the client hydration mechanism for the `ion-app` element and children, but will continue to use client hydration on other elements. This will also cause a flicker in the page for the Ionic components. This is not that helpful for other elements/components as, with Ionic apps, all your Ionic components exist inside the `ion-app` tag.
+   - This will disable the client hydration mechanism for the `ion-app` element and children, but will continue to use client hydration on other elements. This will also cause a flicker in the page for the Ionic components. This is not that helpful for other elements/components as, with Ionic apps, all your Ionic components exist inside the `ion-app` tag.
 
-  ```ts
-  import { Component } from '@angular/core';
-  import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
+     ```ts
+     import { Component } from '@angular/core';
+     import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
 
-  @Component({
-    selector: 'demo-root',
-    standalone: true,
-    imports: [IonApp, IonRouterOutlet],
-    template: `<ion-app ngSkipHydration
-      ><ion-router-outlet></ion-router-outlet
-    ></ion-app>`,
-  })
-  export class AppComponent {}
-  ```
+     @Component({
+       selector: 'demo-root',
+       standalone: true,
+       imports: [IonApp, IonRouterOutlet],
+       template: `<ion-app ngSkipHydration
+         ><ion-router-outlet></ion-router-outlet
+       ></ion-app>`,
+     })
+     export class AppComponent {}
+     ```
 
 3. Disable SSR completely
 
-- Disable SSR in the `vite.config.ts` file. This will disable SSR in your whole app but **will eliminate the flickering**.
+   - Disable SSR in the `vite.config.ts` file. This will disable SSR in your whole app but **will eliminate the flickering**.
 
-  ```ts
-  plugins: [
-    analog({
-      ssr: false,
-    }),
-  ],
-  ```
+     ```ts
+     plugins: [
+       analog({
+         ssr: false,
+       }),
+     ],
+     ```
 
 You **must** pick one of the previous options, as not configuring this will make your app throw errors on runtime, like the following:
 
