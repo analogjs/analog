@@ -1,3 +1,50 @@
+# [1.3.0](https://github.com/analogjs/analog/compare/v1.3.0-beta.5...v1.3.0) (2024-04-30)
+
+# [1.3.0-beta.5](https://github.com/analogjs/analog/compare/v1.3.0-beta.4...v1.3.0-beta.5) (2024-04-29)
+
+### Bug Fixes
+
+- add TanStack packages for SSR transform ([#998](https://github.com/analogjs/analog/issues/998)) ([43d8bbf](https://github.com/analogjs/analog/commit/43d8bbf75e6f00705533199720f13bbab17c4762))
+- **nx-plugin:** add support for nx tsconfig paths for vitest setup ([#1057](https://github.com/analogjs/analog/issues/1057)) ([967594b](https://github.com/analogjs/analog/commit/967594bb15ac8c0209e5a84e1ba4e40fbed7efb5))
+- remove commonjsOptions from Nx setup ([#1052](https://github.com/analogjs/analog/issues/1052)) ([2dcf391](https://github.com/analogjs/analog/commit/2dcf3910936844d8909855894b0755f77afbcb33))
+
+# [1.3.0-beta.4](https://github.com/analogjs/analog/compare/v1.3.0-beta.3...v1.3.0-beta.4) (2024-04-29)
+
+### Bug Fixes
+
+- **create-analog:** update support for Angular v16 projects ([#1062](https://github.com/analogjs/analog/issues/1062)) ([b16ec6f](https://github.com/analogjs/analog/commit/b16ec6f4c98171474347fecdaf7caf1a78a666ee))
+
+# [1.3.0-beta.3](https://github.com/analogjs/analog/compare/v1.3.0-beta.2...v1.3.0-beta.3) (2024-04-26)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add @ngtools/webpack to peer deps of Angular Vite plugin ([#1053](https://github.com/analogjs/analog/issues/1053)) ([c6490e2](https://github.com/analogjs/analog/commit/c6490e22bc13aa447ea11c95649f4b2b29f8eaf7))
+
+# [1.3.0-beta.2](https://github.com/analogjs/analog/compare/v1.3.0-beta.1...v1.3.0-beta.2) (2024-04-25)
+
+### Bug Fixes
+
+- **nx-plugin:** add support for nx tsconfig paths for vitest setup ([#1057](https://github.com/analogjs/analog/issues/1057)) ([efe3712](https://github.com/analogjs/analog/commit/efe371228d0ff24cc7a93c0493d0c400a1914aeb))
+- remove commonjsOptions from Nx setup ([#1052](https://github.com/analogjs/analog/issues/1052)) ([a2892d7](https://github.com/analogjs/analog/commit/a2892d72b52ee32a52b3a7ade3414bcdc6830e3e))
+
+# [1.3.0-beta.1](https://github.com/analogjs/analog/compare/v1.2.3-beta.2...v1.3.0-beta.1) (2024-04-25)
+
+### Features
+
+- **nx-plugin:** add init schematic/generator for migrating an Angular SPA to Analog ([#1049](https://github.com/analogjs/analog/issues/1049)) ([ca2b3df](https://github.com/analogjs/analog/commit/ca2b3df56dde0b8fd196a1554f71866704337fa1))
+
+## [1.2.3-beta.2](https://github.com/analogjs/analog/compare/v1.2.3-beta.1...v1.2.3-beta.2) (2024-04-24)
+
+### Bug Fixes
+
+- **create-analog:** add dev dependency when using yarn ([#1048](https://github.com/analogjs/analog/issues/1048)) ([770dcdf](https://github.com/analogjs/analog/commit/770dcdf42cc03dedb214fcf382d77636eb8812fb))
+
+## [1.2.3-beta.1](https://github.com/analogjs/analog/compare/v1.2.2...v1.2.3-beta.1) (2024-04-24)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add support for more test filtering functions ([#1050](https://github.com/analogjs/analog/issues/1050)) ([97823ba](https://github.com/analogjs/analog/commit/97823ba905c517eadde3903ee68e4f750390de31))
+
 ## [1.2.2](https://github.com/analogjs/analog/compare/v1.2.1...v1.2.2) (2024-04-18)
 
 ## [1.2.1](https://github.com/analogjs/analog/compare/v1.2.1-beta.4...v1.2.1) (2024-04-18)

@@ -896,6 +896,42 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "sonukapoor",
+      "name": "Sonu Kapoor",
+      "avatar_url": "https://avatars.githubusercontent.com/u/59734?v=4",
+      "profile": "https://github.com/sonukapoor",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ezzabuzaid",
+      "name": "ezzabuzaid",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29958503?v=4",
+      "profile": "https://www.linkedin.com/in/ezzabuzaid",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "eduardoRoth",
+      "name": "Eduardo Roth",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419161?v=4",
+      "profile": "https://eduardoroth.dev",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "RyanClementsHax",
+      "name": "Ryan Clements",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20916810?v=4",
+      "profile": "https://ryanclements.dev/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,

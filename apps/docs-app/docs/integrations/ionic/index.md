@@ -5,7 +5,7 @@ sidebar_position: 4
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Ionic Integration with Analog
+# Ionic Framework Integration with Analog
 
 This tutorial guides you through the process of integrating Ionic Framework within your Analog application so you can leverage the power of Ionic's iOS and Android components in your applications.
 
@@ -133,7 +133,7 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-3. Update your `app.component.ts` file to set in the template the required Ionic tags. You need to add the `ngSkipHydration` attribute to the `ion-app` tag as [Ionic doesn't yet support client hydration](https://github.com/ionic-team/ionic-framework/issues/28625#issuecomment-1843919548)
+3. Update your `app.component.ts` file to set in the template the required Ionic tags. You will need to look at [Server Side Rendering caveat](#server-side-rendering-caveat) as [Ionic doesn't yet support client hydration](https://github.com/ionic-team/ionic-framework/issues/28625#issuecomment-1843919548)
 
 ```ts
 import { Component } from '@angular/core';
@@ -143,9 +143,7 @@ import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
   selector: 'demo-root',
   standalone: true,
   imports: [IonApp, IonRouterOutlet],
-  template: ` <ion-app ngSkipHydration>
-    <ion-router-outlet></ion-router-outlet>
-  </ion-app>`,
+  template: `<ion-app><ion-router-outlet></ion-router-outlet></ion-app>`,
 })
 export class AppComponent {}
 ```
@@ -208,6 +206,91 @@ export default defineConfig(({ mode }) => {
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import '@ionic/angular/css/palettes/dark.system.css';
+```
+
+### Server Side Rendering Caveat
+
+Ionic Framework [doesn't support Angular's new Client Hydration](https://github.com/ionic-team/ionic-framework/issues/28625#issuecomment-1843919548), as Angular [doesn't support SSR with web components](https://github.com/angular/angular/issues/52275), and when they are supported, work has to be done on the Stencil components to enable it. So right now there are three options to handle this:
+
+1. Remove `provideClientHydration()` from `app.config.ts` providers.
+
+   - This removes the new client hydration mechanism from Angular and reverts to the previous one, which will cause a flicker when re-rendering the DOM from the client.
+
+   ```ts
+   import { RouteReuseStrategy, provideRouter } from '@angular/router';
+   import {
+     IonicRouteStrategy,
+     provideIonicAngular,
+   } from '@ionic/angular/standalone';
+
+   export const appConfig: ApplicationConfig = {
+     providers: [
+       provideFileRouter(),
+       //provideClientHydration(), // remove this.
+       provideHttpClient(withFetch()),
+       { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+       provideIonicAngular(),
+     ],
+   };
+   ```
+
+2. Add `ngSkipHydration` attribute to the `ion-app` tag.
+
+   - This will disable the client hydration mechanism for the `ion-app` element and children, but will continue to use client hydration on other elements. This will also cause a flicker in the page for the Ionic components. This is not that helpful for other elements/components as, with Ionic apps, all your Ionic components exist inside the `ion-app` tag.
+
+     ```ts
+     import { Component } from '@angular/core';
+     import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
+
+     @Component({
+       selector: 'demo-root',
+       standalone: true,
+       imports: [IonApp, IonRouterOutlet],
+       template: `
+         <ion-app ngSkipHydration>
+           <ion-router-outlet></ion-router-outlet>
+         </ion-app>
+       `,
+     })
+     export class AppComponent {}
+     ```
+
+3. Disable SSR completely
+
+   - Disable SSR in the `vite.config.ts` file. This **will eliminate the flickering** but you will lose all the benefits of having SSR in your app.
+
+     ```ts
+     plugins: [
+       analog({
+         ssr: false,
+       }),
+     ],
+     ```
+
+You **must** pick one of the previous options, as not configuring this will make your app throw errors on runtime, like the following:
+
+```js
+ERROR Error: NG0500: During hydration Angular expected <ion-toolbar> but found a comment node.
+
+Angular expected this DOM:
+
+  <ion-toolbar color="secondary">…</ion-toolbar>  <-- AT THIS LOCATION
+  …
+
+
+Actual DOM is:
+
+<ion-header _ngcontent-ng-c1775393043="">
+  <!--  -->  <-- AT THIS LOCATION
+  …
+</ion-header>
+
+Note: attributes are only displayed to better represent the DOM but have no effect on hydration mismatches.
+
+To fix this problem:
+  * check the "AppComponent" component for hydration-related issues
+  * check to see if your template has valid HTML structure
+  * or skip hydration by adding the `ngSkipHydration` attribute to its host node in a template
 ```
 
 ## Step 3: Adding Capacitor (Optional)

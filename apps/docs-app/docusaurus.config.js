@@ -158,6 +158,7 @@ const config = {
         defaultLanguage: 'typescript',
         theme: themes.nightOwlLight,
         darkTheme: themes.nightOwl,
+        additionalLanguages: ['toml', 'json', 'bash'],
       },
       algolia: {
         appId: '8W3CAMYOQF',

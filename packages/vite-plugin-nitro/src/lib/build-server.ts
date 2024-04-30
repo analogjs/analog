@@ -33,8 +33,13 @@ export async function buildServer(
     }
   }
 
-  console.log(`Prerendering static pages...`);
-  await prerender(nitro);
+  if (
+    nitroConfig?.prerender?.routes &&
+    nitroConfig?.prerender?.routes?.length > 0
+  ) {
+    console.log(`Prerendering static pages...`);
+    await prerender(nitro);
+  }
 
   if (!options?.static) {
     console.log('Building Server...');

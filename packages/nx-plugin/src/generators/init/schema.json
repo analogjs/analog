@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "cli": "nx",
+  "$id": "page",
+  "title": "Adds an Analog configuration",
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "The project that will be updated.",
+      "x-prompt": "Which project would you like to update?",
+      "$default": {
+        "$source": "projectName"
+      },
+      "x-dropdown": "projects"
+    },
+    "vitest": {
+      "type": "boolean",
+      "description": "Add testing with Vitest",
+      "x-prompt": "Would you like to configure unit testing with Vitest?",
+      "default": false
+    }
+  },
+  "required": ["project"]
+}
