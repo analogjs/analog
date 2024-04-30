@@ -39,6 +39,7 @@ Therefore, you have to pass a `transform` function which maps the file paths to 
 The returning string should be the URL path in your app.
 Using `transform` allows you also filter out some routes by returning `false`.
 This does not include them in the prerender process, such as files marked as `draft` in the frontmatter.
+The `contentDir` value of that object can be a glob pattern, not just a specific path.
 
 ```ts
 import { defineConfig } from 'vite';

@@ -38,7 +38,7 @@ export interface Options {
 
 export interface PrerenderContentDir {
   /**
-   * The directory where files should be grabbed from.
+   * The directory glob pattern where the files should be grabbed from.
    * @example `/src/contents/blog`
    */
   contentDir: string;
