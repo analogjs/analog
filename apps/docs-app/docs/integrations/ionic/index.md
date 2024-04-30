@@ -133,7 +133,7 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-3. Update your `app.component.ts` file to set in the template the required Ionic tags. You need to add the `ngSkipHydration` attribute to the `ion-app` tag as [Ionic doesn't yet support client hydration](https://github.com/ionic-team/ionic-framework/issues/28625#issuecomment-1843919548)
+3. Update your `app.component.ts` file to set in the template the required Ionic tags. You will need to look at [Server Side Rendering caveat](#server-side-rendering-caveat) as [Ionic doesn't yet support client hydration](https://github.com/ionic-team/ionic-framework/issues/28625#issuecomment-1843919548)
 
 ```ts
 import { Component } from '@angular/core';
