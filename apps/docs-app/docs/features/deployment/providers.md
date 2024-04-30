@@ -9,7 +9,31 @@ Analog supports deployment to many providers with little or no additional config
 
 Analog supports deploying on [Netlify](https://netlify.com/) with minimal configuration.
 
-In the build settings of your Netlify project, set the `Publish directory` to `dist/analog/public` to deploy the static assets and the `Functions directory` to `dist/analog` to deploy the server.
+### Deploying the Project
+
+<Tabs groupId="porject-type">
+  <TabItem label="Create analog" value="create-analog">
+In the build settings of your Netlify project, set the [publish directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `dist/analog/public` to deploy the static assets and the [functions directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `dist/analog` to deploy the server.
+  </TabItem>
+
+  <TabItem label="Nx" value="nx">
+In the build settings of your Netlify project on the web UI, do the following.
+1. Set the [build command](https://docs.netlify.com/configure-builds/overview/#definitions) to `nx build [your-project-name]`
+2. Set the [publish directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `dist/[your-project-name]/analog/public` to deploy the static assets
+3. Set the [functions directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `dist/[your-project-name]/analog` to deploy the server.
+
+You can also configure this by putting a `netlify.toml` at the root of your repository. Below is an example config.
+
+```toml
+# replace "my-analog-app" with the name of the app you want to deploy
+[build]
+  command = "nx build my-analog-app"
+  publish = "dist/my-analog-app/analog/public"
+  functions = "dist/my-analog-app/analog"
+```
+
+  </TabItem>
+</Tabs>
 
 ## Vercel
 
@@ -18,7 +42,7 @@ Analog supports deploying on [Vercel](https://vercel.com/) with no additional co
 ### Deploying the Project
 
 <Tabs groupId="porject-type">
-  <TabItem label="Create analog" value="npm">
+  <TabItem label="Create analog" value="create-analog">
 By default, when deploying to Vercel, the build preset is handled automatically.
 
 1. Create a new project and select the repository that contains your code.
@@ -29,7 +53,7 @@ And that's it!
 
   </TabItem>
 
-  <TabItem label="Nx" value="yarn">
+  <TabItem label="Nx" value="nx">
 In order to make it work with Nx, we need to define the specific app we want to build. There are several ways to do this, and you can choose one of the following methods (replace &#60;app&#62; with your app name):
 
 1. Define the `defaultProject` in your `nx.json`
@@ -141,7 +165,7 @@ Build output directory: `dist/[your-project-name]/analog/public`
 
 To test the build locally, run the following command:
 
-```
+```bash
 BUILD_PRESET=cloudflare-pages npx nx build [your-project-name]
 ```
 
@@ -151,13 +175,13 @@ You can also preview the application running on Cloudflare locally:
 
 1. Set the environment variable `BUILD_PRESET` to `cloudflare-pages` before running the build
 
-```sh
+```bash
 BUILD_PRESET=cloudflare-pages npm run build
 ```
 
 2. Use the `wrangler` CLI to run the application locally
 
-```sh
+```bash
 npx wrangler pages dev ./dist/analog/public
 ```
 
