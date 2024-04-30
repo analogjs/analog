@@ -923,6 +923,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "RyanClementsHax",
+      "name": "Ryan Clements",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20916810?v=4",
+      "profile": "https://ryanclements.dev/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
