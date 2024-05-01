@@ -160,6 +160,11 @@ const sidebars = {
           id: 'guides/migrating',
           label: 'Migrating an Angular app to Analog',
         },
+        {
+          type: 'doc',
+          id: 'guides/compatibility',
+          label: 'Version Compatibilty',
+        },
       ],
     },
     {
