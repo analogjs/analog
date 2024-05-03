@@ -943,6 +943,16 @@
         "doc",
         "translation"
       ]
+    },
+    {
+      "login": "yjaaidi",
+      "name": "Younes Jaaidi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2674658?v=4",
+      "profile": "https://marmicode.io",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7,
