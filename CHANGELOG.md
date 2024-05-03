@@ -1,3 +1,9 @@
+## [1.3.1-beta.4](https://github.com/analogjs/analog/compare/v1.3.1-beta.3...v1.3.1-beta.4) (2024-05-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** honour user's test.pool choice ([#1080](https://github.com/analogjs/analog/issues/1080)) ([b3d27eb](https://github.com/analogjs/analog/commit/b3d27ebe67909b3151fd657b25cf4c52396f7051))
+
 ## [1.3.1-beta.3](https://github.com/analogjs/analog/compare/v1.3.1-beta.2...v1.3.1-beta.3) (2024-05-03)
 
 ### Bug Fixes
