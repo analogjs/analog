@@ -1,3 +1,9 @@
+## [1.3.1-beta.2](https://github.com/analogjs/analog/compare/v1.3.1-beta.1...v1.3.1-beta.2) (2024-05-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add detection of StackBlitz environment for testing ([#1078](https://github.com/analogjs/analog/issues/1078)) ([978ea6c](https://github.com/analogjs/analog/commit/978ea6c44e0f04bedfa586c41f32a07db1a966fb))
+
 ## [1.3.1-beta.1](https://github.com/analogjs/analog/compare/v1.3.0...v1.3.1-beta.1) (2024-05-03)
 
 ### Bug Fixes
