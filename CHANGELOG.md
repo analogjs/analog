@@ -1,3 +1,9 @@
+## [1.3.1-beta.3](https://github.com/analogjs/analog/compare/v1.3.1-beta.2...v1.3.1-beta.3) (2024-05-03)
+
+### Bug Fixes
+
+- **nx-plugin:** remove $schema from vitest executor ([#1079](https://github.com/analogjs/analog/issues/1079)) ([6122672](https://github.com/analogjs/analog/commit/6122672c826f9507a3f8a00a650686a526189339))
+
 ## [1.3.1-beta.2](https://github.com/analogjs/analog/compare/v1.3.1-beta.1...v1.3.1-beta.2) (2024-05-03)
 
 ### Bug Fixes
