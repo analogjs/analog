@@ -933,6 +933,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "ByeongGi",
+      "name": "ByeongGi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11059706?v=4",
+      "profile": "https://byeonggi.vercel.app/",
+      "contributions": [
+        "doc",
+        "translation"
+      ]
     }
   ],
   "contributorsPerLine": 7,
