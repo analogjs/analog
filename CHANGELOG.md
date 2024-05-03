@@ -1,3 +1,9 @@
+## [1.3.1-beta.1](https://github.com/analogjs/analog/compare/v1.3.0...v1.3.1-beta.1) (2024-05-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use conditional imports across Angular Devkit versions ([#1077](https://github.com/analogjs/analog/issues/1077)) ([9df13e3](https://github.com/analogjs/analog/commit/9df13e3f1071ba9c1571b3edac73388bea80fabc))
+
 # [1.3.0](https://github.com/analogjs/analog/compare/v1.3.0-beta.5...v1.3.0) (2024-04-30)
 
 # [1.3.0-beta.5](https://github.com/analogjs/analog/compare/v1.3.0-beta.4...v1.3.0-beta.5) (2024-04-29)
