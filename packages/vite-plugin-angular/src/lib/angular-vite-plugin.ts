@@ -134,6 +134,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   const sourceFileCache = new SourceFileCache();
   const isProd = process.env['NODE_ENV'] === 'production';
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+  const isStackBlitz = !!process.versions['webcontainer'];
   const jit =
     typeof pluginOptions?.jit !== 'undefined' ? pluginOptions.jit : isTest;
   let viteServer: ViteDevServer | undefined;
@@ -433,7 +434,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   return [
     angularPlugin(),
-    (isTest && angularVitestPlugin()) as Plugin,
+    (isTest && !isStackBlitz && angularVitestPlugin()) as Plugin,
     (jit &&
       jitPlugin({
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
