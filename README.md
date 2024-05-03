@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-98-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-99-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -226,6 +226,9 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/ezzabuzaid"><img src="https://avatars.githubusercontent.com/u/29958503?v=4?s=100" width="100px;" alt="ezzabuzaid"/><br /><sub><b>ezzabuzaid</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ezzabuzaid" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://eduardoroth.dev"><img src="https://avatars.githubusercontent.com/u/5419161?v=4?s=100" width="100px;" alt="Eduardo Roth"/><br /><sub><b>Eduardo Roth</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=eduardoRoth" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://ryanclements.dev/"><img src="https://avatars.githubusercontent.com/u/20916810?v=4?s=100" width="100px;" alt="Ryan Clements"/><br /><sub><b>Ryan Clements</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=RyanClementsHax" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://byeonggi.vercel.app/"><img src="https://avatars.githubusercontent.com/u/11059706?v=4?s=100" width="100px;" alt="ByeongGi"/><br /><sub><b>ByeongGi</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ByeongGi" title="Documentation">📖</a> <a href="#translation-ByeongGi" title="Translation">🌍</a></td>
     </tr>
   </tbody>
 </table>
