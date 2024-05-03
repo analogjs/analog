@@ -161,6 +161,70 @@ export default class BlogPostComponent {
 }
 ```
 
+### Using A Resolver For Metatags
+
+The `postMetaResolver` function is responsible for fetching the meta tags for a post. This function should return an array of meta tags. Here's an example:
+
+```ts
+export const postMetaResolver: ResolveFn<MetaTag[]> = (route) => {
+  const postAttributes = injectActivePostAttributes(route);
+
+  return [
+    {
+      name: 'description',
+      content: postAttributes.description,
+    },
+    {
+      name: 'author',
+      content: 'Analog Team',
+    },
+    {
+      property: 'og:title',
+      content: postAttributes.title,
+    },
+    {
+      property: 'og:description',
+      content: postAttributes.description,
+    },
+    {
+      property: 'og:image',
+      content: postAttributes.coverImage,
+    },
+  ];
+};
+```
+
+In your route configuration, you can use the `RouteMeta` object to resolve meta tags for a route. This is done by assigning the `postMetaResolver` function to the `meta` property. Here's an example:
+
+```ts
+export const routeMeta: RouteMeta = {
+  title: postTitleResolver,
+  meta: postMetaResolver,
+};
+```
+
+The resolved meta tags can be accessed in the `BlogPostComponent` using the `ActivatedRoute` service. These meta tags can then be passed to the `MarkdownComponent`. Here's an example:
+
+```ts
+export default class BlogPostComponent {
+  readonly route = inject(ActivatedRoute);
+  readonly metaTags$ = this.route.data.pipe(pluck('meta'));
+
+  // In the template
+  <analog-markdown [content]="post.content" [metaTags]="metaTags$ | async"></analog-markdown>
+}
+```
+
+The `MarkdownComponent` should be modified to accept an input for meta tags and use these when rendering the markdown content. Here's an example:
+
+```ts
+export default class MarkdownComponent {
+  @Input() metaTags!: string;
+
+  // Use this.metaTags when converting the markdown content to HTML
+}
+```
+
 ### Enabling support for Mermaid
 
 Analog's markdown component supports [Mermaid](https://mermaid.js.org/). To enable support by the `MarkdownComponent` define a dynamic import for `loadMermaid` in `withMarkdownRenderer()`.
