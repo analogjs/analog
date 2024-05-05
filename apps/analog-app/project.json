@@ -8,6 +8,15 @@
   "tags": [],
   "targets": {
     "build": {
+      "command": "vite build -c apps/analog-app/vite.config.ts",
+      "outputs": [
+        "{options.outputPath}",
+        "{workspaceRoot}/dist/apps/analog-app/.nitro",
+        "{workspaceRoot}/dist/apps/analog-app/ssr",
+        "{workspaceRoot}/dist/apps/analog-app/analog"
+      ]
+    },
+    "build-legacy": {
       "executor": "@nx/vite:build",
       "outputs": [
         "{options.outputPath}",

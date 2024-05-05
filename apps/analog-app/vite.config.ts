@@ -23,6 +23,7 @@ export default defineConfig(({ mode, isSsrBuild }) => {
       outDir: '../../dist/apps/analog-app/client',
       reportCompressedSize: true,
       target: ['es2020'],
+      emptyOutDir: true,
     },
     optimizeDeps: {
       include: ['@angular/forms'],
@@ -49,11 +50,11 @@ export default defineConfig(({ mode, isSsrBuild }) => {
       nxViteTsPaths(),
       visualizer() as Plugin,
       // splitVendorChunkPlugin(),
-      !isSsrBuild &&
-        inspect({
-          build: true,
-          outputDir: '../../.vite-inspect/analog-app',
-        }),
+      // !isSsrBuild &&
+      // inspect({
+      //   build: true,
+      //   outputDir: '../../.vite-inspect/analog-app',
+      // }),
     ],
     test: {
       reporters: ['default'],

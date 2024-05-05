@@ -8,7 +8,6 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readFileSync, writeFileSync } from 'node:fs';
 
 import { buildServer } from './build-server.js';
-import { buildSSRApp } from './build-ssr.js';
 import {
   Options,
   PrerenderContentDir,
@@ -29,7 +28,7 @@ const __dirname = dirname(__filename);
 
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
-  const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+  let isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const apiPrefix = `/${options?.apiPrefix || 'api'}`;
   const useAPIMiddleware =
     typeof options?.useAPIMiddleware !== 'undefined'
@@ -46,11 +45,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
     (options?.ssr ? devServerPlugin(options) : false) as Plugin,
     {
       name: '@analogjs/vite-plugin-nitro',
-      async config(_config, { command }) {
+      async config(userConfig, { mode, command }) {
         isServe = command === 'serve';
         isBuild = command === 'build';
-        ssrBuild = _config.build?.ssr === true;
-        config = _config;
+        ssrBuild = userConfig.build?.ssr === true;
+        config = userConfig;
+        isTest = isTest ? isTest : mode === 'test';
+
         const rootDir = relative(workspaceRoot, config.root || '.') || '.';
         const buildPreset =
           process.env['BUILD_PRESET'] ??
@@ -64,7 +65,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         const ssrEntryPath = resolve(
           options?.ssrBuildDir ||
-            resolve(workspaceRoot, 'dist', rootDir, `ssr`),
+          resolve(workspaceRoot, 'dist', rootDir, `ssr`),
           `main.server${filePrefix ? '.js' : ''}`,
         );
         const ssrEntry = normalizePath(filePrefix + ssrEntryPath);
@@ -73,8 +74,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           normalizePath(
             join(
               __dirname,
-              `runtime/renderer${!options?.ssr ? '-client' : ''}${
-                filePrefix ? '.mjs' : ''
+              `runtime/renderer${!options?.ssr ? '-client' : ''}${filePrefix ? '.mjs' : ''
               }`,
             ),
           );
@@ -122,21 +122,21 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           handlers: [
             ...(useAPIMiddleware
               ? [
-                  {
-                    handler: '#ANALOG_API_MIDDLEWARE',
-                    middleware: true,
-                  },
-                ]
+                {
+                  handler: '#ANALOG_API_MIDDLEWARE',
+                  middleware: true,
+                },
+              ]
               : []),
             ...pageHandlers,
           ],
           routeRules: useAPIMiddleware
             ? undefined
             : {
-                [`${apiPrefix}/**`]: {
-                  proxy: { to: '/**' },
-                },
+              [`${apiPrefix}/**`]: {
+                proxy: { to: '/**' },
               },
+            },
           virtual: {
             '#ANALOG_API_MIDDLEWARE': `
         import { eventHandler, proxyRequest } from 'h3';
@@ -304,11 +304,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               handlers: [
                 ...(useAPIMiddleware
                   ? [
-                      {
-                        handler: '#ANALOG_API_MIDDLEWARE',
-                        middleware: true,
-                      },
-                    ]
+                    {
+                      handler: '#ANALOG_API_MIDDLEWARE',
+                      middleware: true,
+                    },
+                  ]
                   : []),
                 ...pageHandlers,
               ],
@@ -320,6 +320,52 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           nitroConfig,
           nitroOptions as Record<string, any>,
         );
+
+        return {
+          environments: {
+            ssr: {
+              build: {
+                ssr: true,
+                rollupOptions: {
+                  input:
+                    options?.entryServer ||
+                    resolve(workspaceRoot, rootDir, 'src/main.server.ts'),
+                },
+                outDir:
+                  options?.ssrBuildDir ||
+                  resolve(workspaceRoot, 'dist', rootDir, 'ssr'),
+              },
+            },
+          },
+          builder: {
+            sharedPlugins: true,
+            buildApp: async (builder) => {
+              await Promise.all([
+                builder.build(builder.environments['client']),
+                builder.build(builder.environments['ssr']),
+              ]);
+              await buildServer(options, nitroConfig);
+
+              if (
+                nitroConfig.prerender?.routes?.length &&
+                options?.prerender?.sitemap
+              ) {
+                console.log('Building Sitemap...');
+                // sitemap needs to be built after all directories are built
+                await buildSitemap(
+                  config,
+                  options.prerender.sitemap,
+                  nitroConfig.prerender.routes,
+                  nitroConfig.output?.publicDir!
+                );
+              }
+
+              console.log(
+                `\n\nThe '@analogjs/platform' server has been successfully built.`
+              );
+            },
+          },
+        };
       },
       async configureServer(viteServer: ViteDevServer) {
         if (isServe && !isTest) {
@@ -348,39 +394,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
           console.log(
             `\n\nThe server endpoints are accessible under the "${apiPrefix}" path.`,
-          );
-        }
-      },
-
-      async closeBundle() {
-        if (ssrBuild) {
-          return;
-        }
-
-        if (isBuild) {
-          if (options?.ssr) {
-            console.log('Building SSR application...');
-            await buildSSRApp(config, options);
-          }
-
-          if (
-            nitroConfig.prerender?.routes?.length &&
-            options?.prerender?.sitemap
-          ) {
-            console.log('Building Sitemap...');
-            // sitemap needs to be built after all directories are built
-            await buildSitemap(
-              config,
-              options.prerender.sitemap,
-              nitroConfig.prerender.routes,
-              clientOutputPath,
-            );
-          }
-
-          await buildServer(options, nitroConfig);
-
-          console.log(
-            `\n\nThe '@analogjs/platform' server has been successfully built.`,
           );
         }
       },

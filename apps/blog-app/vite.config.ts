@@ -17,15 +17,13 @@ process.env['VITE_ANALOG_BASE_URL'] = base;
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
+    build: {
+      outDir: '../../dist/apps/blog-app/client',
+    },
     root: __dirname,
     publicDir: 'src/assets',
     optimizeDeps: {
-      include: ['@angular/common'],
-    },
-    build: {
-      outDir: '../../dist/apps/blog-app/client',
-      reportCompressedSize: true,
-      target: ['es2020'],
+      include: ['@angular/common', 'lodash-es', 'mermaid'],
     },
     plugins: [
       analog({

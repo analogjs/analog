@@ -51,15 +51,11 @@ export async function mockBuildFunctions() {
   const buildServerImportSpy = vi.fn();
   buildServerImport.buildServer = buildServerImportSpy;
 
-  const buildSSRAppImport = await import('./build-ssr');
-  const buildSSRAppImportSpy = vi.fn();
-  buildSSRAppImport.buildSSRApp = buildSSRAppImportSpy;
-
   const buildSitemapImport = await import('./build-sitemap');
   const buildSitemapImportSpy = vi.fn();
   buildSitemapImport.buildSitemap = buildSitemapImportSpy;
 
-  return { buildSSRAppImportSpy, buildServerImportSpy, buildSitemapImportSpy };
+  return { buildServerImportSpy, buildSitemapImportSpy };
 }
 
 export async function runConfigAndCloseBundle(plugin: Plugin[]): Promise<void> {
@@ -69,5 +65,4 @@ export async function runConfigAndCloseBundle(plugin: Plugin[]): Promise<void> {
       env: ConfigEnv,
     ) => Promise<UserConfig>
   )({}, { command: 'build' } as ConfigEnv);
-  await (plugin[1].closeBundle as () => Promise<void>)();
 }
