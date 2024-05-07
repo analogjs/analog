@@ -1,3 +1,9 @@
+## [1.3.1-beta.5](https://github.com/analogjs/analog/compare/v1.3.1-beta.4...v1.3.1-beta.5) (2024-05-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** allow passing options to analogSFC esbuild plugin ([#1085](https://github.com/analogjs/analog/issues/1085)) ([5177d91](https://github.com/analogjs/analog/commit/5177d91be8188e81346c4a8215ef81485c43165a))
+
 ## [1.3.1-beta.4](https://github.com/analogjs/analog/compare/v1.3.1-beta.3...v1.3.1-beta.4) (2024-05-03)
 
 ### Bug Fixes
