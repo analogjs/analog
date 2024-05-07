@@ -7,11 +7,13 @@ export const analogSFC: (options?: PluginOptions) => esbuild.Plugin = (
 ) => ({
   name: 'analog-sfc-esbuild-plugin',
   async setup(build) {
-    const analogPlugins: any = analog(
-      options ?? {
-        experimental: { supportAnalogFormat: true },
-      }
-    );
+    const analogPlugins: any = analog({
+       ...(options || {}),
+        experimental: {
+          supportAnalogFormat: true,
+          ...(options?.experimental || {})
+        },
+    });
 
     const analogPlugin = analogPlugins[0];
     await analogPlugin.config({ root: '.' }, { command: 'build' });
