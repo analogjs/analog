@@ -12,6 +12,7 @@ export const mockViteDevServer = {
 
 export const mockNitroConfig: NitroConfig = {
   buildDir: resolve('./dist/.nitro'),
+  preset: undefined,
   handlers: [],
   logLevel: 0,
   output: {
@@ -19,7 +20,6 @@ export const mockNitroConfig: NitroConfig = {
     publicDir: resolve('dist/analog/public'),
   },
   rootDir: '.',
-  runtimeConfig: {},
   scanDirs: ['src/server'],
   srcDir: 'src/server',
   prerender: {
