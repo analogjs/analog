@@ -1,3 +1,9 @@
+## [1.3.1-beta.6](https://github.com/analogjs/analog/compare/v1.3.1-beta.5...v1.3.1-beta.6) (2024-05-13)
+
+### Bug Fixes
+
+- **platform:** add support in @analogjs/platform for older Angular versions ([#1088](https://github.com/analogjs/analog/issues/1088)) ([f9dc0ff](https://github.com/analogjs/analog/commit/f9dc0ff6443844a16d48aeabc94abcb05747921c))
+
 ## [1.3.1-beta.5](https://github.com/analogjs/analog/compare/v1.3.1-beta.4...v1.3.1-beta.5) (2024-05-07)
 
 ### Bug Fixes
