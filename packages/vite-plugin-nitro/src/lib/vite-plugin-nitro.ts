@@ -1,7 +1,7 @@
 import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
 import { App, toNodeListener } from 'h3';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
-import { normalizePath } from 'vite';
+import { mergeConfig, normalizePath } from 'vite';
 import { dirname, join, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -97,7 +97,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             publicDir: normalizePath(
               resolve(workspaceRoot, 'dist', rootDir, 'analog/public')
             ),
-            ...nitroOptions?.output,
           },
           buildDir: normalizePath(
             resolve(workspaceRoot, 'dist', rootDir, '.nitro')
@@ -105,7 +104,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           typescript: {
             generateTsConfig: false,
           },
-          runtimeConfig: { ...nitroOptions?.runtimeConfig },
           rollupConfig: {
             onwarn(warning) {
               if (
@@ -150,7 +148,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         nitroConfig.alias = {
           '#analog/ssr': ssrEntry,
           '#analog/index': indexEntry,
-          ...nitroOptions?.alias,
         };
 
         if (isBuild) {
@@ -250,18 +247,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             nitroConfig = {
               ...nitroConfig,
               externals: {
-                ...nitroOptions?.externals,
-                external: [
-                  'rxjs',
-                  'node-fetch-native/dist/polyfill',
-                  ...(nitroOptions?.externals?.external || []),
-                ],
+                external: ['rxjs', 'node-fetch-native/dist/polyfill'],
               },
-              moduleSideEffects: [
-                'zone.js/node',
-                'zone.js/fesm2015/zone-node',
-                ...(nitroOptions?.moduleSideEffects || []),
-              ],
+              moduleSideEffects: ['zone.js/node', 'zone.js/fesm2015/zone-node'],
               handlers: [
                 {
                   handler: apiMiddlewareHandler,
@@ -273,10 +261,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           }
         }
 
-        nitroConfig = {
-          ...nitroConfig,
-          ...nitroOptions,
-        };
+        nitroConfig = mergeConfig(
+          nitroConfig,
+          nitroOptions as Record<string, any>
+        );
       },
       async configureServer(viteServer: ViteDevServer) {
         if (isServe && !isTest) {

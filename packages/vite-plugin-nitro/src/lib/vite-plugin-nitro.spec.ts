@@ -247,6 +247,7 @@ describe('nitro', () => {
               ...mockNitroConfig,
               prerender: {
                 routes: ['/blog', '/about', '/blog/first', '/blog/02-second'],
+                crawlLinks: undefined,
               },
               alias: expect.anything(),
               publicAssets: expect.anything(),
