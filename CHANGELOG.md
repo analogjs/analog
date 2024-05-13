@@ -1,3 +1,9 @@
+## [1.3.1-beta.8](https://github.com/analogjs/analog/compare/v1.3.1-beta.7...v1.3.1-beta.8) (2024-05-13)
+
+### Bug Fixes
+
+- **nx-plugin:** adjust templates/docs for adding Analog to existing Angular projects ([#1090](https://github.com/analogjs/analog/issues/1090)) ([474081a](https://github.com/analogjs/analog/commit/474081a9e1f0cfa3a94e44a87463e765e4a2efc1))
+
 ## [1.3.1-beta.7](https://github.com/analogjs/analog/compare/v1.3.1-beta.6...v1.3.1-beta.7) (2024-05-13)
 
 ### Bug Fixes
