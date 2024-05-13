@@ -39,7 +39,7 @@ export const getAnalogDevDependencies = (
 
 const getDevDependencies = (escapedAngularVersion: string) => {
   // fail out for versions <15.2.0
-  if (lt(escapedAngularVersion, '16.0.0')) {
+  if (lt(escapedAngularVersion, '15.0.0')) {
     throw new Error(stripIndents`Angular v16.0.0 or newer is required.`);
   }
 
