@@ -15,7 +15,7 @@ First, install the `@analogjs/platform` package:
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/platform --save-dev
+npm install @analogjs/platform nx@18 --save-dev
 ```
 
   </TabItem>
@@ -23,7 +23,7 @@ npm install @analogjs/platform --save-dev
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/platform --dev
+yarn add @analogjs/platform nx@18 --dev
 ```
 
   </TabItem>
@@ -31,7 +31,7 @@ yarn add @analogjs/platform --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/platform
+pnpm install -w @analogjs/platform nx@18
 ```
 
   </TabItem>
