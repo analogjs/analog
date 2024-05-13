@@ -1,3 +1,9 @@
+## [1.3.1-beta.7](https://github.com/analogjs/analog/compare/v1.3.1-beta.6...v1.3.1-beta.7) (2024-05-13)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** correctly merge Nitro config customizations ([#1089](https://github.com/analogjs/analog/issues/1089)) ([a604ec6](https://github.com/analogjs/analog/commit/a604ec6d1e17dfc7e43928f1f3bc4d347d232f61))
+
 ## [1.3.1-beta.6](https://github.com/analogjs/analog/compare/v1.3.1-beta.5...v1.3.1-beta.6) (2024-05-13)
 
 ### Bug Fixes
