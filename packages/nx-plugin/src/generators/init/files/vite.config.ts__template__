@@ -13,7 +13,6 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: '<%= offsetFromRoot %>dist/<%= projectRoot %>/client',
       reportCompressedSize: true,
-      commonjsOptions: { transformMixedEsModules: true },
       target: ['es2020'],
     },
     plugins: [

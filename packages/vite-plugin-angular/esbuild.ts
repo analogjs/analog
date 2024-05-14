@@ -1,11 +1,18 @@
 import analog from '@analogjs/vite-plugin-angular';
 import type * as esbuild from 'esbuild';
+import { PluginOptions } from './src';
 
-export const analogSFC: () => esbuild.Plugin = () => ({
+export const analogSFC: (options?: PluginOptions) => esbuild.Plugin = (
+  options
+) => ({
   name: 'analog-sfc-esbuild-plugin',
   async setup(build) {
     const analogPlugins: any = analog({
-      experimental: { supportAnalogFormat: true },
+      ...(options || {}),
+      experimental: {
+        supportAnalogFormat: true,
+        ...(options?.experimental || {}),
+      },
     });
 
     const analogPlugin = analogPlugins[0];

@@ -355,7 +355,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/25322572?v=4",
       "profile": "https://github.com/gergobergo",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -931,6 +932,26 @@
       "profile": "https://ryanclements.dev/",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "ByeongGi",
+      "name": "ByeongGi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11059706?v=4",
+      "profile": "https://byeonggi.vercel.app/",
+      "contributions": [
+        "doc",
+        "translation"
+      ]
+    },
+    {
+      "login": "yjaaidi",
+      "name": "Younes Jaaidi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2674658?v=4",
+      "profile": "https://marmicode.io",
+      "contributions": [
+        "code",
+        "test"
       ]
     }
   ],

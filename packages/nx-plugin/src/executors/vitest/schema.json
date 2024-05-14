@@ -1,5 +1,4 @@
 {
-  "$schema": "https://json-schema.org/schema",
   "version": 2,
   "cli": "nx",
   "title": "Vitest executor",

@@ -16,6 +16,14 @@ import {
   V17_X_VITE_TSCONFIG_PATHS,
   V17_X_VITEST,
 } from './ng_17_X/versions';
+import {
+  V15_X_ANALOG_JS_PLATFORM,
+  V15_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
+  V15_X_NX_VITE,
+  V15_X_JSDOM,
+  V15_X_VITE_TSCONFIG_PATHS,
+  V15_X_VITEST,
+} from './ng_15_X/versions';
 
 const devDependencyKeys = [
   '@analogjs/platform',
@@ -39,8 +47,20 @@ export const getAnalogDevDependencies = (
 
 const getDevDependencies = (escapedAngularVersion: string) => {
   // fail out for versions <15.2.0
+  if (lt(escapedAngularVersion, '15.0.0')) {
+    throw new Error(stripIndents`Angular v15.0.0 or newer is required.`);
+  }
+
+  // install 15.x deps for versions <15.0.0
   if (lt(escapedAngularVersion, '16.0.0')) {
-    throw new Error(stripIndents`Angular v16.0.0 or newer is required.`);
+    return {
+      '@analogjs/platform': V15_X_ANALOG_JS_PLATFORM,
+      '@analogjs/vite-plugin-angular': V15_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
+      '@nx/vite': V15_X_NX_VITE,
+      jsdom: V15_X_JSDOM,
+      'vite-tsconfig-paths': V15_X_VITE_TSCONFIG_PATHS,
+      vitest: V15_X_VITEST,
+    };
   }
 
   // install 16.x deps for versions <17.0.0

@@ -83,6 +83,10 @@ In order to make it work with Nx, we need to define the specific app we want to 
 }
 ```
 
+#### Nx and Vercel
+
+When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache is reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can use the preset in the `vite.config.ts` file as a workaround.
+
   </TabItem>
 </Tabs>
 
@@ -109,10 +113,6 @@ export default defineConfig(({ mode }) => ({
   ],
 }));
 ```
-
-#### Nx and Vercel
-
-When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache is reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can use the preset in the `vite.config.ts` file as a workaround.
 
 ## Cloudflare Pages
 

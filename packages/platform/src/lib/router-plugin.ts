@@ -1,3 +1,4 @@
+import { VERSION } from '@angular/compiler-cli';
 import { normalizePath, Plugin } from 'vite';
 
 /**
@@ -36,7 +37,9 @@ export function routerPlugin(): Plugin[] {
             include: [
               '@angular/common',
               '@angular/common/http',
-              '@angular/core/rxjs-interop',
+              ...(Number(VERSION.major) > 15
+                ? ['@angular/core/rxjs-interop']
+                : []),
             ],
             exclude: ['@angular/platform-server', '@analogjs/router'],
           },
