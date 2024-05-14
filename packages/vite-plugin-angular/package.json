@@ -20,8 +20,8 @@
     "url": "https://github.com/analogjs/analog.git"
   },
   "peerDependencies": {
-    "@angular-devkit/build-angular": "^15.0.0 || >=16.0.0",
-    "@ngtools/webpack": "^15.0.0 || >=16.0.0"
+    "@angular-devkit/build-angular": ">=15.0.0 || ^18.0.0-rc.0",
+    "@ngtools/webpack": ">=15.0.0 || ^18.0.0-rc.0"
   },
   "dependencies": {
     "ts-morph": "^21.0.0"

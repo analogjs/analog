@@ -19,10 +19,10 @@
     "url": "https://github.com/analogjs/analog.git"
   },
   "peerDependencies": {
-    "@angular/common": "^15.0.0 || >=16.0.0",
-    "@angular/core": "^15.0.0 || >=16.0.0",
-    "@angular/platform-browser": "^15.0.0 || >=16.0.0",
-    "@angular/router": "^15.0.0 || >=16.0.0",
+    "@angular/common": ">=15.0.0 || ^18.0.0-rc.0",
+    "@angular/core": ">=15.0.0 || ^18.0.0-rc.0",
+    "@angular/platform-browser": ">=15.0.0 || ^18.0.0-rc.0",
+    "@angular/router": ">=15.0.0 || ^18.0.0-rc.0",
     "rxjs": "^6.5.0 || ^7.5.0",
     "marked": "^5.0.2",
     "marked-gfm-heading-id": "^3.0.4",
