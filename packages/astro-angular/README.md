@@ -1,6 +1,8 @@
 # @analogjs/astro-angular
 
-An [Angular](https://angular.dev) integration for rendering components in [Astro](https://astro.build)
+[Astro](https://astro.build) is a modern web framework designed for building fast, content-focused websites, compatible with all major frontend frameworks. Though primarily a static site generation (SSG) tool, it can also integrate dynamic components called "islands", which support partial hydration.
+
+This package allows rendering [Angular](https://angular.dev) components as islands in Astro.
 
 ## Setup
 
