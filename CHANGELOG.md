@@ -1,3 +1,9 @@
+## [1.3.1-beta.9](https://github.com/analogjs/analog/compare/v1.3.1-beta.8...v1.3.1-beta.9) (2024-05-14)
+
+### Bug Fixes
+
+- adjust peer deps to support Nx 19 and Angular v18.0.0 RCs ([1f75ac3](https://github.com/analogjs/analog/commit/1f75ac3ad181306ea3a89619d0dbbf7367a55523))
+
 ## [1.3.1-beta.8](https://github.com/analogjs/analog/compare/v1.3.1-beta.7...v1.3.1-beta.8) (2024-05-13)
 
 ### Bug Fixes
