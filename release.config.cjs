@@ -8,6 +8,7 @@ const replacementFiles = [
   'packages/astro-angular/package.json',
   'packages/create-analog/template-angular-v17/package.json',
   'packages/create-analog/template-blog/package.json',
+  'packages/create-analog/template-latest/package.json',
   'packages/platform/package.json',
   'packages/router/package.json',
 ];
