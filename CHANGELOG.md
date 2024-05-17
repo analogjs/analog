@@ -1,3 +1,9 @@
+# [1.4.0-beta.2](https://github.com/analogjs/analog/compare/v1.4.0-beta.1...v1.4.0-beta.2) (2024-05-17)
+
+### Bug Fixes
+
+- **create-analog:** add fixes for v18 template ([#1095](https://github.com/analogjs/analog/issues/1095)) ([759a341](https://github.com/analogjs/analog/commit/759a341d84e3d0c2cf4b9f4c6d27e6a4ea91445b))
+
 # [1.4.0-beta.1](https://github.com/analogjs/analog/compare/v1.3.1...v1.4.0-beta.1) (2024-05-17)
 
 ### Features
