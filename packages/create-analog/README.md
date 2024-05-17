@@ -4,12 +4,15 @@ Analog is the fullstack meta-framework for Angular.
 
 ## Features
 
-- File-based routing
-- SSR/SSG support with prerendering
-- Support for API/server routes
+- Powerd by Vite
+- Supports Vitest/Storybook
+- Server and deployment integrations powered by [Nitro](https://nitro.unjs.io)
+- Filesystem-based routing
+- Server-side data fetching
 - Support for using markdown as content routes
-- Supports Angular CLI or Nx workspaces
-- Powered by Vite
+- Integrated API/server routes
+- Hybrid SSR/SSG support
+- Supports Angular CLI and Nx workspaces
 
 ## Creating an Analog Project
 
@@ -37,9 +40,9 @@ Follow the prompts to install the application dependencies and run the project i
 
 Learn more at [analogjs.org](https://analogjs.org)
 
-## Community
+## Supporting Analog
 
-- Visit and Star the [GitHub Repo](https://github.com/analogjs/analog)
+- Star the [GitHub Repo](https://github.com/analogjs/analog)
 - Join the [Discord](https://chat.analogjs.org)
 - Follow us on [Twitter](https://twitter.com/analogjs)
-- Become a [Sponsor](https://github.com/sponsors/brandonroberts)
+- Become a [Sponsor](https://analogjs.org/docs/sponsoring)
