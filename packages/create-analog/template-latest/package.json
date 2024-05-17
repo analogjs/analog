@@ -24,6 +24,7 @@
     "@angular/forms": "^18.0.0-rc.0",
     "@angular/platform-browser": "^18.0.0-rc.0",
     "@angular/platform-browser-dynamic": "^18.0.0-rc.0",
+    "@angular/platform-server": "^18.0.0-rc.0",
     "@angular/router": "^18.0.0-rc.0",
     "@nx/angular": "~19.0.0",
     "front-matter": "^4.0.2",
