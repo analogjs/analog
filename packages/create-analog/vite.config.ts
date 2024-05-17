@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: 'jsdom',
       include: ['__tests__/**/*.spec.ts'],
+      reporters: ['default'],
     },
     define: {
       'import.meta.vitest': mode !== 'production',
