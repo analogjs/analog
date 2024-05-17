@@ -11,7 +11,7 @@ import TabItem from '@theme/TabItem';
 
 Analog requires the following Node and Angular versions:
 
-- Node 16.17.0, or v18.13.0 and higher is recommended
+- Node v18.13.0 and higher is recommended
 - Angular v15 or higher
 
 ## Creating a New Application
@@ -115,3 +115,7 @@ The server for the API/SSR build artifacts is located in the `dist/analog/server
 
   </TabItem>
 </Tabs>
+
+## Migrating an Existing Application
+
+You can also migrate an existing Angular application to Analog. See the [migration guide](/docs/guides/migrating) for migration steps.

@@ -18,7 +18,8 @@ Visit the docs at [https://analogjs.org](https://analogjs.org)
 
 ## Features
 
-- Supports Vite/Vitest/Playwright
+- Powerd by Vite
+- Supports Vitest/Storybook
 - Server and deployment integrations powered by [Nitro](https://nitro.unjs.io)
 - File-based routing
 - Server-side data fetching

@@ -42,7 +42,7 @@ const templateFilesTailwind = [
 beforeAll(() => remove(genPath));
 afterEach(() => remove(genPath));
 
-test.skip('prompts for the project name if none supplied', () => {
+test('prompts for the project name if none supplied', () => {
   const { stdout, exitCode } = run([]);
   expect(stdout).toContain('Project name:');
 });
