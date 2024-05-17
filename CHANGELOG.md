@@ -1,3 +1,9 @@
+# [1.4.0-beta.1](https://github.com/analogjs/analog/compare/v1.3.1...v1.4.0-beta.1) (2024-05-17)
+
+### Features
+
+- **create-analog:** simplify prompts add template for upcoming Angular v18 release ([#1094](https://github.com/analogjs/analog/issues/1094)) ([29c42a1](https://github.com/analogjs/analog/commit/29c42a133a0602667b3282620ef7ad1365262476))
+
 ## [1.3.1](https://github.com/analogjs/analog/compare/v1.3.1-beta.9...v1.3.1) (2024-05-14)
 
 ## [1.3.1-beta.9](https://github.com/analogjs/analog/compare/v1.3.1-beta.8...v1.3.1-beta.9) (2024-05-14)
