@@ -13,6 +13,7 @@
     "template-angular-v16",
     "template-angular-v17",
     "template-blog",
+    "template-latest",
     "files"
   ],
   "main": "index.js",
