@@ -163,7 +163,7 @@ export default class BlogPostComponent {
 
 ### Using A Resolver For Metatags
 
-In your route configuration, you can use the `RouteMeta` object to resolve meta tags for a route. This is done by assigning the `postMetaResolver` function to the `meta` property. 
+In your route configuration, you can use the `RouteMeta` object to resolve meta tags for a route. This is done by assigning the `postMetaResolver` function to the `meta` property.
 
 Below is an example of using a `postMetaResolver` function that fetches the meta tags for a post. This function returns an array of meta tags.
 
@@ -205,9 +205,9 @@ export const routeMeta: RouteMeta = {
 };
 ```
 
-The resolved meta tags can also be accessed in the component using the `ActivatedRoute` service. 
+The resolved meta tags can also be accessed in the component using the `ActivatedRoute` service.
 
-```ts
+````ts
 export default class BlogPostComponent {
   readonly route = inject(ActivatedRoute);
   readonly metaTags$ = this.route.data.pipe(map(data => data['meta']));
@@ -215,17 +215,6 @@ export default class BlogPostComponent {
   // In the template
   <my-component [metaTags]="metaTags$ | async"></my-component>
 }
-```
-
-The `MarkdownComponent` should be modified to accept an input for meta tags and use these when rendering the markdown content. Here's an example:
-
-```ts
-export default class MarkdownComponent {
-  @Input() metaTags!: string;
-
-  // Use this.metaTags when converting the markdown content to HTML
-}
-```
 
 ### Enabling support for Mermaid
 
@@ -235,7 +224,7 @@ Analog's markdown component supports [Mermaid](https://mermaid.js.org/). To enab
 withMarkdownRenderer({
   loadMermaid: () => import('mermaid'),
 });
-```
+````
 
 After it is enabled, Mermaid blocks are transformed by mermaid into SVGs.
 
