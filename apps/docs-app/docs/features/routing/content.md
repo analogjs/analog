@@ -163,7 +163,9 @@ export default class BlogPostComponent {
 
 ### Using A Resolver For Metatags
 
-The `postMetaResolver` function is responsible for fetching the meta tags for a post. This function should return an array of meta tags. Here's an example:
+In your route configuration, you can use the `RouteMeta` object to resolve meta tags for a route. This is done by assigning the `postMetaResolver` function to the `meta` property. 
+
+Below is an example of using a `postMetaResolver` function that fetches the meta tags for a post. This function returns an array of meta tags.
 
 ```ts
 export const postMetaResolver: ResolveFn<MetaTag[]> = (route) => {
@@ -194,7 +196,7 @@ export const postMetaResolver: ResolveFn<MetaTag[]> = (route) => {
 };
 ```
 
-In your route configuration, you can use the `RouteMeta` object to resolve meta tags for a route. This is done by assigning the `postMetaResolver` function to the `meta` property. Here's an example:
+The meta tags can be done asynchronously also. Assign the `postMetaResolver` function to the `meta` property.
 
 ```ts
 export const routeMeta: RouteMeta = {
@@ -203,15 +205,15 @@ export const routeMeta: RouteMeta = {
 };
 ```
 
-The resolved meta tags can be accessed in the `BlogPostComponent` using the `ActivatedRoute` service. These meta tags can then be passed to the `MarkdownComponent`. Here's an example:
+The resolved meta tags can also be accessed in the component using the `ActivatedRoute` service. 
 
 ```ts
 export default class BlogPostComponent {
   readonly route = inject(ActivatedRoute);
-  readonly metaTags$ = this.route.data.pipe(pluck('meta'));
+  readonly metaTags$ = this.route.data.pipe(map(data => data['meta']));
 
   // In the template
-  <analog-markdown [content]="post.content" [metaTags]="metaTags$ | async"></analog-markdown>
+  <my-component [metaTags]="metaTags$ | async"></my-component>
 }
 ```
 
