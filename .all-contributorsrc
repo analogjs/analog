@@ -962,6 +962,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "AmGarera",
+      "name": "Anthony Garera",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6021169?v=4",
+      "profile": "https://www.anthonygarera.com",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
