@@ -1,3 +1,9 @@
+# [1.4.0-beta.3](https://github.com/analogjs/analog/compare/v1.4.0-beta.2...v1.4.0-beta.3) (2024-05-21)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add @analogjs/router to vitest inline deps ([#1098](https://github.com/analogjs/analog/issues/1098)) ([69f4efa](https://github.com/analogjs/analog/commit/69f4efa0f6785d51518d1c087c515f9220a69ca6))
+
 # [1.4.0-beta.2](https://github.com/analogjs/analog/compare/v1.4.0-beta.1...v1.4.0-beta.2) (2024-05-17)
 
 ### Bug Fixes
