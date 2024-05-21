@@ -224,7 +224,6 @@ Analog's markdown component supports [Mermaid](https://mermaid.js.org/). To enab
 withMarkdownRenderer({
   loadMermaid: () => import('mermaid'),
 });
-````
 
 After it is enabled, Mermaid blocks are transformed by mermaid into SVGs.
 
