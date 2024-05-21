@@ -207,7 +207,7 @@ export const routeMeta: RouteMeta = {
 
 The resolved meta tags can also be accessed in the component using the `ActivatedRoute` service.
 
-````ts
+```ts
 export default class BlogPostComponent {
   readonly route = inject(ActivatedRoute);
   readonly metaTags$ = this.route.data.pipe(map(data => data['meta']));
@@ -215,6 +215,7 @@ export default class BlogPostComponent {
   // In the template
   <my-component [metaTags]="metaTags$ | async"></my-component>
 }
+```
 
 ### Enabling support for Mermaid
 
@@ -224,6 +225,7 @@ Analog's markdown component supports [Mermaid](https://mermaid.js.org/). To enab
 withMarkdownRenderer({
   loadMermaid: () => import('mermaid'),
 });
+```
 
 After it is enabled, Mermaid blocks are transformed by mermaid into SVGs.
 
