@@ -12,8 +12,13 @@ export function angularVitestPlugin(): Plugin {
         },
         test: {
           pool: userConfig.test?.pool ?? 'vmThreads',
+          server: {
+            deps: {
+              inline: ['@analogjs/router'],
+            },
+          },
         },
-      } as UserConfig;
+      };
     },
     async transform(_code, id) {
       if (/fesm2022/.test(id) && _code.includes('async (')) {
