@@ -1,6 +1,7 @@
 import viteAngular, { PluginOptions } from '@analogjs/vite-plugin-angular';
 import { enableProdMode } from '@angular/core';
-import { AstroIntegration, AstroRenderer } from 'astro';
+import type { AstroIntegration, AstroRenderer, ViteUserConfig } from 'astro';
+import type { DeepPartial } from 'astro/dist/type-utils';
 
 interface AngularOptions {
   vite?: PluginOptions;
@@ -79,7 +80,11 @@ export default function (options?: AngularOptions): AstroIntegration {
         }
 
         addRenderer(getRenderer());
-        updateConfig({ vite: getViteConfiguration(options?.vite) });
+        updateConfig({
+          vite: getViteConfiguration(
+            options?.vite
+          ) as DeepPartial<ViteUserConfig>,
+        });
       },
       'astro:config:done': ({ config }) => {
         if (

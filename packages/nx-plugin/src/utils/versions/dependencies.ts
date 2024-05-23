@@ -15,6 +15,11 @@ import {
   V15_X_ANALOG_JS_ROUTER,
   V15_X_NX_ANGULAR,
 } from './ng_15_X/versions';
+import {
+  V18_X_ANALOG_JS_CONTENT,
+  V18_X_ANALOG_JS_ROUTER,
+  V18_X_NX_ANGULAR,
+} from './ng_18_X/versions';
 
 const dependencyKeys = [
   '@analogjs/content',
@@ -57,10 +62,19 @@ const getDependencies = (escapedAngularVersion: string) => {
     };
   }
 
-  // return latest 17.x deps for versions >17.0.0
+  // install 17.x deps for versions <18.0.0
+  if (lt(escapedAngularVersion, '18.0.0')) {
+    return {
+      '@analogjs/content': V17_X_ANALOG_JS_CONTENT,
+      '@analogjs/router': V17_X_ANALOG_JS_ROUTER,
+      '@nx/angular': V17_X_NX_ANGULAR,
+    };
+  }
+
+  // return latest 18.x deps for versions >18.0.0
   return {
-    '@analogjs/content': V17_X_ANALOG_JS_CONTENT,
-    '@analogjs/router': V17_X_ANALOG_JS_ROUTER,
-    '@nx/angular': V17_X_NX_ANGULAR,
+    '@analogjs/content': V18_X_ANALOG_JS_CONTENT,
+    '@analogjs/router': V18_X_ANALOG_JS_ROUTER,
+    '@nx/angular': V18_X_NX_ANGULAR,
   };
 };

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - beta
+      - main
 
 permissions:
   contents: read # for checkout
