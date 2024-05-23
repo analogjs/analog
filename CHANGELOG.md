@@ -1,3 +1,9 @@
+# [1.4.0-beta.4](https://github.com/analogjs/analog/compare/v1.4.0-beta.3...v1.4.0-beta.4) (2024-05-23)
+
+### Features
+
+- update deps and apps to Angular v18 release ([#1101](https://github.com/analogjs/analog/issues/1101)) ([ef9bbee](https://github.com/analogjs/analog/commit/ef9bbeee6aeb73edcb66d94569fffd5443273ca5))
+
 # [1.4.0-beta.3](https://github.com/analogjs/analog/compare/v1.4.0-beta.2...v1.4.0-beta.3) (2024-05-21)
 
 ### Bug Fixes
