@@ -1,3 +1,9 @@
+# [1.4.0-beta.5](https://github.com/analogjs/analog/compare/v1.4.0-beta.4...v1.4.0-beta.5) (2024-05-23)
+
+### Bug Fixes
+
+- adjust peer dependency ranges ([1bc4e59](https://github.com/analogjs/analog/commit/1bc4e59e3cc850a4cf6bf8956ebd38ff70265e4b))
+
 # [1.4.0-beta.4](https://github.com/analogjs/analog/compare/v1.4.0-beta.3...v1.4.0-beta.4) (2024-05-23)
 
 ### Features
