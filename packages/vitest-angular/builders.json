@@ -1,0 +1,9 @@
+{
+  "builders": {
+    "test": {
+      "implementation": "./src/lib/vitest.impl",
+      "schema": "./src/lib/schema.json",
+      "description": "Test with Vitest"
+    }
+  }
+}

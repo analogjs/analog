@@ -17,6 +17,7 @@ body:
         - create-analog
         - vite-plugin-angular
         - vite-plugin-nitro
+        - vitest-angular
         - router
         - content
         - platform

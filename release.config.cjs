@@ -81,6 +81,13 @@ module.exports = {
       },
     ],
     [
+      '@semantic-release/npm',
+      {
+        npmPublish: false,
+        pkgRoot: './packages/vitest-angular/',
+      },
+    ],
+    [
       'semantic-release-replace-plugin',
       {
         replacements: [
@@ -127,6 +134,7 @@ module.exports = {
           'packages/router/package.json',
           'packages/vite-plugin-angular/package.json',
           'packages/vite-plugin-nitro/package.json',
+          'packages/vitest-angular/package.json',
         ],
         message: 'chore: release ${nextRelease.version} [skip ci]',
       },
