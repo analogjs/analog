@@ -21,7 +21,7 @@ const APPS = [
     variants: [
       {
         name: 'Full-stack Application',
-        template: 'angular-v17',
+        template: 'latest',
         color: green,
       },
       {
