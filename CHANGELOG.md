@@ -1,3 +1,9 @@
+# [1.4.0-beta.6](https://github.com/analogjs/analog/compare/v1.4.0-beta.5...v1.4.0-beta.6) (2024-05-24)
+
+### Features
+
+- introduce vitest-angular package ([#1105](https://github.com/analogjs/analog/issues/1105)) ([4d73542](https://github.com/analogjs/analog/commit/4d735423a7cffb523fca2d5866c08cb4d1594bdb))
+
 # [1.4.0-beta.5](https://github.com/analogjs/analog/compare/v1.4.0-beta.4...v1.4.0-beta.5) (2024-05-23)
 
 ### Bug Fixes
