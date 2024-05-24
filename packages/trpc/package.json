@@ -30,13 +30,13 @@
   "dependencies": {},
   "ng-update": {
     "packageGroup": [
-      "@analogjs/astro-angular",
       "@analogjs/platform",
       "@analogjs/content",
       "@analogjs/router",
       "@analogjs/trpc",
       "@analogjs/vite-plugin-angular",
-      "@analogjs/vite-plugin-nitro"
+      "@analogjs/vite-plugin-nitro",
+      "@analogjs/vitest-angular"
     ],
     "migrations": "./migrations/migration.json"
   }

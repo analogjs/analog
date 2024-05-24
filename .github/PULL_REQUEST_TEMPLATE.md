@@ -25,6 +25,7 @@ What kind of change does this PR introduce?
 
 - [ ] vite-plugin-angular
 - [ ] vite-plugin-nitro
+- [ ] vitest-angular
 - [ ] astro-angular
 - [ ] create-analog
 - [ ] router
