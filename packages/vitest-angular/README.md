@@ -58,7 +58,7 @@ export default defineConfig(({ mode }) => ({
 Next, define a `src/test-setup.ts` file to setup the `TestBed`:
 
 ```ts
-import '@analogjs/vitest-angular/setup';
+import '@analogjs/vitest-angular/setup-zone';
 
 import {
   BrowserDynamicTestingModule,
