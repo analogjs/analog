@@ -1,3 +1,9 @@
+# [1.4.0-beta.7](https://github.com/analogjs/analog/compare/v1.4.0-beta.6...v1.4.0-beta.7) (2024-05-24)
+
+### Bug Fixes
+
+- **vitest-angular:** rename testing setup file and add to build ([#1106](https://github.com/analogjs/analog/issues/1106)) ([9ef4f3b](https://github.com/analogjs/analog/commit/9ef4f3b5bb224b600e6ddc8cc7ef689f676cff12))
+
 # [1.4.0-beta.6](https://github.com/analogjs/analog/compare/v1.4.0-beta.5...v1.4.0-beta.6) (2024-05-24)
 
 ### Features
