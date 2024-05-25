@@ -221,6 +221,48 @@ Test agx Content`),
     flush();
   }));
 
+  it('should finish the stream when content is resolved', fakeAsync(() => {
+    const routeParams = {};
+    const contentFiles = {
+      '/src/content/test.md': () =>
+        Promise.resolve(`---
+slug: 'test'
+---
+Test Content`),
+    };
+    const { injectContent } = setup({
+      routeParams,
+      contentFiles,
+      customParam: {
+        customFilename: 'test',
+      },
+    });
+
+    let completed = false;
+    let content: ContentFile<TestAttributes | Record<string, never>> | null =
+      null;
+
+    injectContent().subscribe({
+      next: (c) => {
+        content = c;
+      },
+      complete: () => {
+        completed = true;
+      },
+    });
+
+    flushMicrotasks();
+    flush();
+
+    expect(completed).toBe(true);
+    expect(content).toEqual({
+      content: 'Test Content',
+      attributes: { slug: 'test' },
+      filename: '/src/content/test',
+      slug: 'test',
+    });
+  }));
+
   function setup(
     args: Partial<{
       customParam:
