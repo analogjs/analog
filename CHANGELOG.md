@@ -1,3 +1,9 @@
+# [1.4.0-beta.9](https://github.com/analogjs/analog/compare/v1.4.0-beta.8...v1.4.0-beta.9) (2024-05-26)
+
+### Bug Fixes
+
+- **content:** getContentFile stream should be finished ([#1110](https://github.com/analogjs/analog/issues/1110)) ([e0ce74f](https://github.com/analogjs/analog/commit/e0ce74fd0513122ba416ac4be74bd4e55d3d572d))
+
 # [1.4.0-beta.8](https://github.com/analogjs/analog/compare/v1.4.0-beta.7...v1.4.0-beta.8) (2024-05-26)
 
 ### Bug Fixes
