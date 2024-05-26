@@ -971,6 +971,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "stewones",
+      "name": "Stewan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/719763?v=4",
+      "profile": "http://stewan.io",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7,
