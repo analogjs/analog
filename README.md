@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-102-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-103-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -233,6 +233,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://marmicode.io"><img src="https://avatars.githubusercontent.com/u/2674658?v=4?s=100" width="100px;" alt="Younes Jaaidi"/><br /><sub><b>Younes Jaaidi</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=yjaaidi" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=yjaaidi" title="Tests">⚠️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://boogiemonsta.com/"><img src="https://avatars.githubusercontent.com/u/73052877?v=4?s=100" width="100px;" alt="BoogMon"/><br /><sub><b>BoogMon</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=BoogieMonsta" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.anthonygarera.com"><img src="https://avatars.githubusercontent.com/u/6021169?v=4?s=100" width="100px;" alt="Anthony Garera"/><br /><sub><b>Anthony Garera</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=AmGarera" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://stewan.io"><img src="https://avatars.githubusercontent.com/u/719763?v=4?s=100" width="100px;" alt="Stewan"/><br /><sub><b>Stewan</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=stewones" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=stewones" title="Tests">⚠️</a></td>
     </tr>
   </tbody>
 </table>
