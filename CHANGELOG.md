@@ -1,3 +1,9 @@
+# [1.4.0-beta.8](https://github.com/analogjs/analog/compare/v1.4.0-beta.7...v1.4.0-beta.8) (2024-05-26)
+
+### Bug Fixes
+
+- **nx-plugin:** update typescript dependency ([#1109](https://github.com/analogjs/analog/issues/1109)) ([4b9a51e](https://github.com/analogjs/analog/commit/4b9a51e8eaf450e5c91020bb93b37c104a54bf68))
+
 # [1.4.0-beta.7](https://github.com/analogjs/analog/compare/v1.4.0-beta.6...v1.4.0-beta.7) (2024-05-24)
 
 ### Bug Fixes
