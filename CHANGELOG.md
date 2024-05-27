@@ -1,3 +1,9 @@
+# [1.4.0-beta.11](https://github.com/analogjs/analog/compare/v1.4.0-beta.10...v1.4.0-beta.11) (2024-05-27)
+
+### Bug Fixes
+
+- **platform:** add Nx deps as peerDependencies ([#1117](https://github.com/analogjs/analog/issues/1117)) ([b255370](https://github.com/analogjs/analog/commit/b255370182e8ff8bc1792113c8583a824c42ad8b))
+
 # [1.4.0-beta.10](https://github.com/analogjs/analog/compare/v1.4.0-beta.9...v1.4.0-beta.10) (2024-05-27)
 
 ### Bug Fixes
