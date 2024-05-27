@@ -6,6 +6,6 @@
     "target": "es2016",
     "types": ["node", "vitest/globals"]
   },
-  "files": ["src/test.ts"],
+  "files": ["src/test-setup.ts"],
   "include": ["src/**/*.spec.ts", "src/**/*.ts"]
 }

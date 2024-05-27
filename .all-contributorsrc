@@ -953,6 +953,43 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "BoogieMonsta",
+      "name": "BoogMon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/73052877?v=4",
+      "profile": "https://boogiemonsta.com/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "AmGarera",
+      "name": "Anthony Garera",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6021169?v=4",
+      "profile": "https://www.anthonygarera.com",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "stewones",
+      "name": "Stewan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/719763?v=4",
+      "profile": "http://stewan.io",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "NateRadebaugh",
+      "name": "Nate Radebaugh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/130445?v=4",
+      "profile": "https://naterad.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

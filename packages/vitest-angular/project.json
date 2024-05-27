@@ -1,0 +1,25 @@
+{
+  "name": "vitest-angular",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/vitest-angular/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "node_modules/@analogjs/vitest-angular",
+        "main": "packages/vitest-angular/src/index.ts",
+        "tsConfig": "packages/vitest-angular/tsconfig.lib.json",
+        "assets": [
+          "packages/vitest-angular/*.md",
+          "packages/vitest-angular/builders.json"
+        ],
+        "updateBuildableProjectDepsInPackageJson": false,
+        "additionalEntryPoints": ["packages/vitest-angular/setup-zone.ts"],
+        "generateExportsField": true
+      }
+    }
+  }
+}

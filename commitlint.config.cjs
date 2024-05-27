@@ -9,6 +9,7 @@ module.exports = {
       [
         'vite-plugin-angular',
         'vite-plugin-nitro',
+        'vitest-angular',
         'create-analog',
         'astro-angular',
         'router',

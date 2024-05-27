@@ -38,10 +38,12 @@ function getContentFile<
       if (import.meta.env.SSR === true) {
         waitFor(contentResolver).then((content) => {
           observer.next(content);
+          observer.complete();
         });
       } else {
         contentResolver.then((content) => {
           observer.next(content);
+          observer.complete();
         });
       }
     }

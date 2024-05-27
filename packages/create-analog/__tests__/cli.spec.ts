@@ -26,8 +26,8 @@ const createNonEmptyDir = () => {
   writeFileSync(pkgJson, '{ "foo": "bar" }');
 };
 
-// Angular v16 starter template
-let templateFiles = readdirSync(join(CLI_PATH, 'template-angular-v16'));
+// Angular v18 starter template
+let templateFiles = readdirSync(join(CLI_PATH, 'template-latest'));
 templateFiles.push('.git');
 // _gitignore is renamed to .gitignore
 templateFiles = templateFiles
@@ -47,23 +47,18 @@ test('prompts for the project name if none supplied', () => {
   expect(stdout).toContain('Project name:');
 });
 
-test('prompts for the framework if none supplied when target dir is current directory', () => {
+test('prompts for the starter if none supplied when target dir is current directory', () => {
   mkdirpSync(genPath);
   const { stdout } = run(['.'], { cwd: genPath });
-  expect(stdout).toContain('Select a template:');
+  expect(stdout).toContain('What would you like to start?:');
 });
 
-test('prompts for the framework if none supplied', () => {
+test('prompts for the starter if none supplied', () => {
   const { stdout } = run([projectName]);
-  expect(stdout).toContain('Select a template:');
+  expect(stdout).toContain('What would you like to start?:');
 });
 
-test('prompts for the framework on not supplying a value for --template', () => {
-  const { stdout } = run([projectName, '--template']);
-  expect(stdout).toContain('Select a template:');
-});
-
-test('prompts for the framework on supplying an invalid template', () => {
+test.skip('prompts for the framework on supplying an invalid template', () => {
   const { stdout } = run([projectName, '--template', 'unknown']);
   expect(stdout).toContain(
     `"unknown" isn't a valid template. Please choose from below:`
@@ -84,7 +79,7 @@ test('asks to overwrite non-empty current directory', () => {
 
 test('successfully scaffolds a project based on angular starter template', () => {
   const { stdout } = run(
-    [projectName, '--template', 'angular-v16', '--skipTailwind'],
+    [projectName, '--template', 'latest', '--skipTailwind'],
     {
       cwd: __dirname,
     }
@@ -97,7 +92,7 @@ test('successfully scaffolds a project based on angular starter template', () =>
 });
 
 test('works with the -t alias', () => {
-  const { stdout } = run([projectName, '-t', 'angular-v16', '--skipTailwind'], {
+  const { stdout } = run([projectName, '-t', 'latest', '--skipTailwind'], {
     cwd: __dirname,
   });
   const generatedFiles = readdirSync(genPath).sort();

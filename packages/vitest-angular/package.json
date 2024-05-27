@@ -1,0 +1,46 @@
+{
+  "name": "@analogjs/vitest-angular",
+  "version": "1.4.0-beta.11",
+  "description": "Vitest Builder for Angular",
+  "type": "module",
+  "author": "Brandon Roberts <robertsbt@gmail.com>",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "keywords": [
+    "angular",
+    "vite",
+    "vitest",
+    "meta-framework"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/analogjs/analog/issues"
+  },
+  "homepage": "https://analogjs.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/analogjs/analog.git"
+  },
+  "builders": "./builders.json",
+  "ng-add": {
+    "save": "devDependencies"
+  },
+  "peerDependencies": {
+    "@analogjs/vite-plugin-angular": "^1.3.0",
+    "@angular-devkit/architect": "^0.1500.0 || ^0.1600.0 || ^0.1700.0 || ^0.1800.0",
+    "vitest": "^1.3.1"
+  },
+  "ng-update": {
+    "packageGroup": [
+      "@analogjs/platform",
+      "@analogjs/content",
+      "@analogjs/router",
+      "@analogjs/trpc",
+      "@analogjs/vite-plugin-angular",
+      "@analogjs/vite-plugin-nitro",
+      "@analogjs/vitest-angular"
+    ]
+  }
+}

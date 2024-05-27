@@ -20,27 +20,18 @@ const APPS = [
     color: yellow,
     variants: [
       {
-        name: 'angular-v17',
-        display: 'TypeScript',
+        name: 'Full-stack Application',
+        template: 'latest',
         color: green,
       },
       {
-        name: 'blog',
-        display: 'TypeScript',
-        color: green,
-      },
-      {
-        name: 'angular-v16',
-        display: 'TypeScript',
-        color: green,
+        name: 'Blog',
+        template: 'blog',
+        color: yellow,
       },
     ],
   },
 ];
-
-const TEMPLATES = APPS.map(
-  (f) => (f.variants && f.variants.map((v) => v.name)) || [f.name]
-).reduce((a, b) => a.concat(b), []);
 
 const renameFiles = {
   _gitignore: '.gitignore',
@@ -97,37 +88,17 @@ async function init() {
             isValidPackageName(dir) || 'Invalid package.json name',
         },
         {
-          type: template && TEMPLATES.includes(template) ? null : 'select',
-          name: 'framework',
-          message:
-            typeof template === 'string' && !TEMPLATES.includes(template)
-              ? reset(
-                  `"${template}" isn't a valid template. Please choose from below: `
-                )
-              : reset('Select a template:'),
-          initial: 0,
-          choices: APPS.map((framework) => {
-            const frameworkColor = framework.color;
+          type: template ? null : 'select',
+          name: 'variant',
+          message: reset('What would you like to start?:'),
+          // @ts-ignore
+          choices: APPS[0].variants.map((variant) => {
+            const variantColor = variant.color;
             return {
-              title: frameworkColor(framework.name),
-              value: framework,
+              title: variantColor(variant.name),
+              value: variant.template,
             };
           }),
-        },
-        {
-          type: (framework) =>
-            framework && framework.variants ? 'select' : null,
-          name: 'variant',
-          message: reset('Select a variant:'),
-          // @ts-ignore
-          choices: (framework) =>
-            framework.variants.map((variant) => {
-              const variantColor = variant.color;
-              return {
-                title: variantColor(variant.name),
-                value: variant.name,
-              };
-            }),
         },
         {
           type: skipTailwind ? null : 'confirm',
