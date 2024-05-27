@@ -1,3 +1,9 @@
+# [1.4.0-beta.10](https://github.com/analogjs/analog/compare/v1.4.0-beta.9...v1.4.0-beta.10) (2024-05-27)
+
+### Bug Fixes
+
+- **vitest-angular:** update peerDependencies for @angular-devkit/architect version pattern range ([#1113](https://github.com/analogjs/analog/issues/1113)) ([1765d48](https://github.com/analogjs/analog/commit/1765d481bceb7815665bd4461109607d52551100))
+
 # [1.4.0-beta.9](https://github.com/analogjs/analog/compare/v1.4.0-beta.8...v1.4.0-beta.9) (2024-05-26)
 
 ### Bug Fixes
