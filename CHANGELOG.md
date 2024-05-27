@@ -1,3 +1,22 @@
+# [1.4.0](https://github.com/analogjs/analog/compare/v1.3.1...v1.4.0) (2024-05-27)
+
+### Bug Fixes
+
+- adjust peer dependency ranges ([1bc4e59](https://github.com/analogjs/analog/commit/1bc4e59e3cc850a4cf6bf8956ebd38ff70265e4b))
+- **content:** getContentFile stream should be finished ([#1110](https://github.com/analogjs/analog/issues/1110)) ([e0ce74f](https://github.com/analogjs/analog/commit/e0ce74fd0513122ba416ac4be74bd4e55d3d572d))
+- **create-analog:** add fixes for v18 template ([#1095](https://github.com/analogjs/analog/issues/1095)) ([759a341](https://github.com/analogjs/analog/commit/759a341d84e3d0c2cf4b9f4c6d27e6a4ea91445b))
+- **nx-plugin:** update typescript dependency ([#1109](https://github.com/analogjs/analog/issues/1109)) ([4b9a51e](https://github.com/analogjs/analog/commit/4b9a51e8eaf450e5c91020bb93b37c104a54bf68))
+- **platform:** add Nx deps as peerDependencies ([#1117](https://github.com/analogjs/analog/issues/1117)) ([b255370](https://github.com/analogjs/analog/commit/b255370182e8ff8bc1792113c8583a824c42ad8b))
+- **vite-plugin-angular:** add @analogjs/router to vitest inline deps ([#1098](https://github.com/analogjs/analog/issues/1098)) ([69f4efa](https://github.com/analogjs/analog/commit/69f4efa0f6785d51518d1c087c515f9220a69ca6))
+- **vitest-angular:** rename testing setup file and add to build ([#1106](https://github.com/analogjs/analog/issues/1106)) ([9ef4f3b](https://github.com/analogjs/analog/commit/9ef4f3b5bb224b600e6ddc8cc7ef689f676cff12))
+- **vitest-angular:** update peerDependencies for @angular-devkit/architect version pattern range ([#1113](https://github.com/analogjs/analog/issues/1113)) ([1765d48](https://github.com/analogjs/analog/commit/1765d481bceb7815665bd4461109607d52551100))
+
+### Features
+
+- **create-analog:** simplify prompts add template for upcoming Angular v18 release ([#1094](https://github.com/analogjs/analog/issues/1094)) ([29c42a1](https://github.com/analogjs/analog/commit/29c42a133a0602667b3282620ef7ad1365262476))
+- introduce vitest-angular package ([#1105](https://github.com/analogjs/analog/issues/1105)) ([4d73542](https://github.com/analogjs/analog/commit/4d735423a7cffb523fca2d5866c08cb4d1594bdb))
+- update deps and apps to Angular v18 release ([#1101](https://github.com/analogjs/analog/issues/1101)) ([ef9bbee](https://github.com/analogjs/analog/commit/ef9bbeee6aeb73edcb66d94569fffd5443273ca5))
+
 # [1.4.0-beta.11](https://github.com/analogjs/analog/compare/v1.4.0-beta.10...v1.4.0-beta.11) (2024-05-27)
 
 ### Bug Fixes
