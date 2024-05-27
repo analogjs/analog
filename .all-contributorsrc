@@ -981,6 +981,15 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "NateRadebaugh",
+      "name": "Nate Radebaugh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/130445?v=4",
+      "profile": "https://naterad.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
