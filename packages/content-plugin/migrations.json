@@ -1,14 +1,14 @@
 {
   "generators": {
     "update-markdown-renderer-feature": {
-      "version": "1.4.0-beta.1",
+      "version": "1.5.0-beta.1",
       "description": "Update withMarkdownRenderer feature with withPrismHighlighter",
       "implementation": "./src/migrations/update-markdown-renderer-feature/update-markdown-renderer-feature"
     }
   },
   "schematics": {
     "update-markdown-renderer-feature": {
-      "version": "1.4.0-beta.1",
+      "version": "1.5.0-beta.1",
       "description": "Update withMarkdownRenderer feature with withPrismHighlighter",
       "factory": "./src/migrations/update-markdown-renderer-feature/compat"
     }
@@ -51,8 +51,8 @@
         }
       }
     },
-    "1.4.0-beta.1": {
-      "version": "1.3.0",
+    "1.5.0-beta.1": {
+      "version": "1.4.0",
       "description": "Adds marked-mangle dependency for deprecated marked feature",
       "packages": {
         "marked-mangle": {
