@@ -1,3 +1,9 @@
+# [1.5.0-beta.1](https://github.com/analogjs/analog/compare/v1.4.0...v1.5.0-beta.1) (2024-05-28)
+
+### Features
+
+- **content:** custom syntax highlighter and add shiki as one ([#1121](https://github.com/analogjs/analog/issues/1121)) ([f22d899](https://github.com/analogjs/analog/commit/f22d8994d26c59e7f0e9d8d092d9f752bf11d6a5))
+
 # [1.4.0](https://github.com/analogjs/analog/compare/v1.3.1...v1.4.0) (2024-05-27)
 
 ### Bug Fixes
