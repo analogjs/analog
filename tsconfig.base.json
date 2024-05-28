@@ -40,6 +40,7 @@
         "./node_modules/@analogjs/vite-plugin-nitro",
         "packages/vite-plugin-nitro/src/index.ts"
       ],
+      "@analogjs/content-plugin": ["packages/content-plugin/src/index.ts"],
       "libs/card": ["libs/card/src/index.ts"],
       "vitest-angular": [
         "./node_modules/@analogjs/vitest-angular",

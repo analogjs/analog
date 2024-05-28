@@ -16,9 +16,7 @@ import './prism/angular';
 declare const Prism: typeof import('prismjs');
 
 @Injectable()
-export class PrismHighlighter extends MarkedContentHighlighter<
-  ReturnType<typeof markedHighlight>
-> {
+export class PrismHighlighter extends MarkedContentHighlighter {
   override augmentCodeBlock(code: string, lang: string): string {
     const classes =
       lang.startsWith('diff') && Prism.languages['diff']

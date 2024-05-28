@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Content Routes
 
 Analog also supports using markdown content as routes, and rendering markdown content in components.
@@ -44,7 +41,25 @@ Analog is a meta-framework for Angular.
 [Back Home](./)
 ```
 
-### Using the diff Highlight Plugin
+### PrismJS Syntax Highlighting
+
+Analog supports syntax highlighting with PrismJS. To enable syntax highlighting with `PrismJS`, add `withPrismHighlighter()` to the `provideContent()` function in `app.config.ts`.
+
+```diff-ts
+import { ApplicationConfig } from '@angular/core';
+import { provideContent, withMarkdownRenderer } from '@analogjs/content';
++ import { withPrismHighlighter } from '@analogjs/content/prism-highlighter';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    // ... other providers
+-   provideContent(withMarkdownRenderer()),
++   provideContent(withMarkdownRenderer(), withPrismHighlighter()),
+  ],
+};
+```
+
+#### Using the `diff` Highlight Plugin
 
 Analog supports highlighting diff changes with PrismJS. Add the `diff`
 language and `diff-highlight` plugin imports to `app.config.ts`:
@@ -73,6 +88,110 @@ To highlight changed line backgrounds instead of just the text, add this import 
 
 ```css
 @import 'prismjs/plugins/diff-highlight/prism-diff-highlight.css';
+```
+
+### Shiki Syntax Highlighting
+
+Analog also supports syntax highlighting with Shiki. To enable syntax highlighting with `Shiki`, add `withShikiHighlighter()` to the `provideContent()` function in `app.config.ts`.
+
+```diff-ts
+import { ApplicationConfig } from '@angular/core';
+import { provideContent, withMarkdownRenderer } from '@analogjs/content';
++ import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    // ... other providers
+-   provideContent(withMarkdownRenderer()),
++   provideContent(withMarkdownRenderer(), withShikiHighlighter()),
+  ],
+};
+```
+
+#### Configure Shiki Highlighter
+
+> Please check out [Shiki Documentation](https://shiki.style/) for more information on configuring Shiki.
+
+To configure Shiki, you can pass a `ShikiOptions` object to the `withShikiHighlighter()` function.
+
+```ts
+import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
+
+provideContent(
+  withMarkdownRenderer(),
+  withShikiHighlighter({
+    highlight: { theme: 'nord' },
+  })
+);
+```
+
+By default, `withShikiHighlighter` has the following options.
+
+```json
+{
+  "highlight": {
+    "themes": {
+      "dark": "github-dark",
+      "light": "github-light"
+    }
+  },
+  "highlighter": {
+    "langs": [
+      "json",
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "html",
+      "css",
+      "angular-html",
+      "angular-ts"
+    ],
+    "themes": ["github-dark", "github-light"]
+  }
+}
+```
+
+Provided options will be merged **shallowly**. For example:
+
+```ts
+import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
+
+withShikiHighlighter({
+  highlighter: {
+    // langs will be provied by the default options
+    themes: ['ayu-dark'], // only ayu-dark will be bundled
+  },
+  highlight: {
+    theme: 'ayu-dark', // use ayu-dark as the theme
+    // theme: 'dark-plus' // ERROR: dark-plus is not bundled
+  },
+});
+```
+
+### Custom Syntax Highlighter
+
+If you want to use a custom syntax highlighter, you can use the `withHighlighter()` function to provide a custom highlighter.
+
+```ts
+import { withHighlighter, MarkedContentHighlighter } from '@analogjs/content';
+// NOTE: make sure to install 'marked-highlight' if not already installed
+import { markedHighlight } from 'marked-highlight';
+
+class CustomHighlighter extends MarkedContentHighlighter {
+  override getHighlightExtension() {
+    return markedHighlight({
+      highlight: (code, lang) => {
+        return 'your custom highlight';
+      },
+    });
+  }
+}
+
+provideContent(
+  withMarkdownRenderer(),
+  withHighlighter({ useClass: CustomHighlighter })
+);
 ```
 
 ## Defining Content Files

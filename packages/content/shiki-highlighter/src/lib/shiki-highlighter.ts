@@ -48,15 +48,13 @@ export const [
 ];
 
 @Injectable()
-export class ShikiHighlighter extends MarkedContentHighlighter<
-  ReturnType<typeof markedShiki>
-> {
+export class ShikiHighlighter extends MarkedContentHighlighter {
   private readonly highlighterOptions = inject(SHIKI_HIGHLIGHTER_OPTIONS);
   private readonly highlightOptions = inject(SHIKI_HIGHLIGHT_OPTIONS);
   private readonly highlighterContainer = inject(SHIKI_CONTAINER_OPTION);
   private readonly highlighter = getHighlighter(this.highlighterOptions);
 
-  override getHighlightExtension(): ReturnType<typeof markedShiki> {
+  override getHighlightExtension() {
     return markedShiki({
       container: this.highlighterContainer,
       highlight: async (code, lang, props) => {

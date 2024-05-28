@@ -1,4 +1,5 @@
-import { MarkedContentHighlighter } from '@analogjs/content';
+import { withHighlighter } from '@analogjs/content';
+import { Provider } from '@angular/core';
 import {
   defaultHighlighterOptions,
   SHIKI_CONTAINER_OPTION,
@@ -21,14 +22,25 @@ export function withShikiHighlighter({
   highlighter = {},
   highlight = {},
   container = '%s',
-}: WithShikiHighlighterOptions = {}) {
+}: WithShikiHighlighterOptions = {}): Provider {
+  if (!highlighter.themes) {
+    if (highlight.theme) {
+      highlighter.themes = [highlight.theme];
+    } else if (highlight.themes && typeof highlight.themes === 'object') {
+      highlighter.themes = Object.values(highlight.themes) as string[];
+    } else {
+      highlighter.themes = defaultHighlighterOptions.themes;
+    }
+  }
+
+  if (!highlighter.langs) {
+    highlighter.langs = defaultHighlighterOptions.langs;
+  }
+
   return [
-    {
-      provide: SHIKI_HIGHLIGHTER_OPTIONS,
-      useValue: Object.assign(defaultHighlighterOptions, highlighter),
-    },
+    { provide: SHIKI_HIGHLIGHTER_OPTIONS, useValue: highlighter },
     { provide: SHIKI_HIGHLIGHT_OPTIONS, useValue: highlight },
     { provide: SHIKI_CONTAINER_OPTION, useValue: container },
-    { provide: MarkedContentHighlighter, useClass: ShikiHighlighter },
+    withHighlighter({ useClass: ShikiHighlighter }),
   ];
 }

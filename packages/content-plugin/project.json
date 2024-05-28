@@ -1,0 +1,52 @@
+{
+  "name": "content-plugin",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/content-plugin/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "node_modules/@analogjs/content/plugin",
+        "main": "packages/content-plugin/src/index.ts",
+        "tsConfig": "packages/content-plugin/tsconfig.lib.json",
+        "assets": [
+          "packages/content-plugin/*.md",
+          {
+            "input": "./packages/content-plugin/src",
+            "glob": "**/!(*.ts)",
+            "output": "./src"
+          },
+          {
+            "input": "./packages/content-plugin/src",
+            "glob": "**/*.d.ts",
+            "output": "./src"
+          },
+          {
+            "input": "./packages/content-plugin",
+            "glob": "generators.json",
+            "output": "."
+          },
+          {
+            "input": "./packages/content-plugin",
+            "glob": "executors.json",
+            "output": "."
+          },
+          {
+            "input": "./packages/content-plugin",
+            "glob": "migrations.json",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/vite:test"
+    }
+  }
+}
