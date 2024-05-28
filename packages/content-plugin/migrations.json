@@ -1,6 +1,18 @@
 {
-  "$schema": "../../../node_modules/@angular-devkit/schematics/collection-schema.json",
-  "schematics": {},
+  "generators": {
+    "update-markdown-renderer-feature": {
+      "version": "1.5.0-beta.1",
+      "description": "Update withMarkdownRenderer feature with withPrismHighlighter",
+      "implementation": "./src/migrations/update-markdown-renderer-feature/update-markdown-renderer-feature"
+    }
+  },
+  "schematics": {
+    "update-markdown-renderer-feature": {
+      "version": "1.5.0-beta.1",
+      "description": "Update withMarkdownRenderer feature with withPrismHighlighter",
+      "factory": "./src/migrations/update-markdown-renderer-feature/compat"
+    }
+  },
   "packageJsonUpdates": {
     "0.2.0-beta.23": {
       "version": "0.2.0-beta.19",
@@ -35,6 +47,16 @@
       "packages": {
         "marked-gfm-heading-id": {
           "version": "^3.1.0",
+          "alwaysAddToPackageJson": true
+        }
+      }
+    },
+    "1.5.0-beta.1": {
+      "version": "1.4.0",
+      "description": "Adds marked-mangle dependency for deprecated marked feature",
+      "packages": {
+        "marked-mangle": {
+          "version": "^1.1.7",
           "alwaysAddToPackageJson": true
         }
       }
