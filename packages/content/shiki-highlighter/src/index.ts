@@ -41,7 +41,7 @@ export function withShikiHighlighter({
   }
 
   if (highlighter.additionalLangs) {
-    highlighter.langs = [...highlighter.langs, ...highlighter.additionalLangs];
+    highlighter.langs.push(...highlighter.additionalLangs);
     delete highlighter.additionalLangs;
   }
 
