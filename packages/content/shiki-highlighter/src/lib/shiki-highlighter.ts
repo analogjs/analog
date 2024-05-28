@@ -3,7 +3,6 @@ import {
   MERMAID_IMPORT_TOKEN,
 } from '@analogjs/content';
 import { inject, Injectable, InjectionToken } from '@angular/core';
-import { Param } from '@swc/core';
 import markedShiki from 'marked-shiki';
 import {
   type BundledLanguage,
@@ -11,9 +10,7 @@ import {
   type CodeOptionsMeta,
   type CodeOptionsMultipleThemes,
   type CodeOptionsSingleTheme,
-  type CodeToHastOptions,
-  CodeToHastOptionsCommon,
-  codeToHtml,
+  type CodeToHastOptionsCommon,
   getHighlighter,
 } from 'shiki';
 

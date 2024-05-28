@@ -112,7 +112,7 @@ export const appConfig: ApplicationConfig = {
 
 > Please check out [Shiki Documentation](https://shiki.style/) for more information on configuring Shiki.
 
-To configure Shiki, you can pass a `ShikiOptions` object to the `withShikiHighlighter()` function.
+To configure Shiki, you can pass a `WithShikiHighlighterOptions` object to the `withShikiHighlighter()` function.
 
 ```ts
 import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';

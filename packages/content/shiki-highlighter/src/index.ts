@@ -1,6 +1,6 @@
 import { withHighlighter } from '@analogjs/content';
 import { Provider } from '@angular/core';
-import { BundledLanguage } from 'shiki';
+import type { BundledLanguage } from 'shiki';
 import {
   defaultHighlighterOptions,
   SHIKI_CONTAINER_OPTION,
