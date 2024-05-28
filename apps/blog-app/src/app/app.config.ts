@@ -1,4 +1,5 @@
 import { provideContent, withMarkdownRenderer } from '@analogjs/content';
+import { withPrismHighlighter } from '@analogjs/content/prism-highlighter';
 import { provideFileRouter } from '@analogjs/router';
 import { provideHttpClient } from '@angular/common/http';
 import { ApplicationConfig } from '@angular/core';
@@ -13,7 +14,8 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     provideClientHydration(),
     provideContent(
-      withMarkdownRenderer({ loadMermaid: () => import('mermaid') })
+      withMarkdownRenderer({ loadMermaid: () => import('mermaid') }),
+      withPrismHighlighter()
     ),
     provideFileRouter(
       withInMemoryScrolling({ anchorScrolling: 'enabled' }),

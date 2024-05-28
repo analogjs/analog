@@ -306,6 +306,9 @@ importers:
       lint-staged:
         specifier: ^13.1.0
         version: 13.1.0
+      marked-mangle:
+        specifier: ^1.1.7
+        version: 1.1.7(marked@5.0.2)
       marked-shiki:
         specifier: ^1.1.0
         version: 1.1.0(marked@5.0.2)(shiki@1.6.1)
@@ -18389,6 +18392,14 @@ packages:
     dependencies:
       marked: 5.0.2
     dev: false
+
+  /marked-mangle@1.1.7(marked@5.0.2):
+    resolution: {integrity: sha512-bLsXKovJEEs/Dl++TBPmjX8ALFmrH5G0doTs+BdDOloBKWYRf3acyJghce78SnwInDkNPJ6crubr4MnFG7urOA==}
+    peerDependencies:
+      marked: '>=4 <13'
+    dependencies:
+      marked: 5.0.2
+    dev: true
 
   /marked-shiki@1.1.0(marked@5.0.2)(shiki@1.6.1):
     resolution: {integrity: sha512-PNiC0X4rYnzF63T6CDscwTxQB8l5Aur9XR7MRNBi/Y9nSxmPxasWT+V5OVam8Pj+NycWjzG6idO7fbc2bDD16w==}

@@ -145,6 +145,7 @@
     "jsonc-eslint-parser": "^2.1.0",
     "kolorist": "^1.6.0",
     "lint-staged": "^13.1.0",
+    "marked-mangle": "^1.1.7",
     "marked-shiki": "^1.1.0",
     "minimist": "^1.2.7",
     "ng-packagr": "^18.0.0",

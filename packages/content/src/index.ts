@@ -12,3 +12,4 @@ export { default as MarkdownRouteComponent } from './lib/markdown-route.componen
 export { default as MarkdownComponent } from './lib/markdown.component';
 export { parseRawContentFile } from './lib/parse-raw-content-file';
 export { MarkedSetupService } from './lib/marked-setup.service';
+export { MarkedContentHighlighter } from './lib/marked-content-highlighter';
