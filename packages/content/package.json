@@ -27,8 +27,11 @@
     "marked": "^5.0.2",
     "marked-gfm-heading-id": "^3.0.4",
     "marked-highlight": "^2.0.1",
+    "marked-mangle": "^1.1.7",
+    "marked-shiki": "^1.1.0",
     "mermaid": "^10.2.4",
     "prismjs": "^1.29.0",
+    "shiki": "^1.6.1",
     "front-matter": "^4.0.2"
   },
   "dependencies": {

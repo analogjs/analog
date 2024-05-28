@@ -18,6 +18,22 @@ function sum(n1: number, n2: number): number {
 }
 ```
 
+```angular-ts
+@Component({
+  template: `
+    @if (show()) {
+      <div>Hi there</div>
+    } @else {
+      <div>Booo!</div>
+      <button (click)="show.set(false)">Show</button>
+    }
+  `
+})
+export class MyCmp {
+  show = signal(true);
+}
+```
+
 ### Section 2
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna
