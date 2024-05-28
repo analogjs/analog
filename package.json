@@ -80,8 +80,8 @@
     "zone.js": "^0.14.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^18.0.0",
     "@angular-devkit/architect": "^0.1800.0",
+    "@angular-devkit/build-angular": "^18.0.0",
     "@angular-devkit/core": "^18.0.0",
     "@angular-devkit/schematics": "^18.0.0",
     "@angular-eslint/eslint-plugin": "17.3.0",
@@ -142,6 +142,8 @@
     "jsonc-eslint-parser": "^2.1.0",
     "kolorist": "^1.6.0",
     "lint-staged": "^13.1.0",
+    "marked-mangle": "^1.1.7",
+    "marked-shiki": "^1.1.0",
     "minimist": "^1.2.7",
     "ng-packagr": "^18.0.0",
     "nitropack": "^2.9.0",
@@ -157,6 +159,7 @@
     "rollup-plugin-visualizer": "^5.9.0",
     "semantic-release": "^22.0.7",
     "semantic-release-replace-plugin": "^1.2.7",
+    "shiki": "^1.6.1",
     "start-server-and-test": "^1.15.4",
     "tailwindcss": "^3.0.2",
     "ts-jest": "29.1.0",

@@ -1,5 +1,6 @@
 import { withHighlighter } from '@analogjs/content';
 import { Provider } from '@angular/core';
+import { BundledLanguage } from 'shiki';
 import {
   defaultHighlighterOptions,
   SHIKI_CONTAINER_OPTION,
@@ -13,7 +14,9 @@ import {
 export { ShikiHighlighter };
 
 export interface WithShikiHighlighterOptions {
-  highlighter?: Partial<ShikiHighlighterOptions>;
+  highlighter?: Partial<ShikiHighlighterOptions> & {
+    additionalLangs?: BundledLanguage[];
+  };
   highlight?: ShikiHighlightOptions;
   container?: string;
 }
@@ -35,6 +38,11 @@ export function withShikiHighlighter({
 
   if (!highlighter.langs) {
     highlighter.langs = defaultHighlighterOptions.langs;
+  }
+
+  if (highlighter.additionalLangs) {
+    highlighter.langs = [...highlighter.langs, ...highlighter.additionalLangs];
+    delete highlighter.additionalLangs;
   }
 
   return [

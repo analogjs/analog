@@ -7,6 +7,7 @@ export {
   MarkdownContentRendererService,
   provideContent,
   withMarkdownRenderer,
+  MERMAID_IMPORT_TOKEN,
 } from './lib/markdown-content-renderer.service';
 export { default as MarkdownRouteComponent } from './lib/markdown-route.component';
 export { default as MarkdownComponent } from './lib/markdown.component';

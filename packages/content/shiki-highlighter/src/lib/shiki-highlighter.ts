@@ -1,4 +1,7 @@
-import { MarkedContentHighlighter } from '@analogjs/content';
+import {
+  MarkedContentHighlighter,
+  MERMAID_IMPORT_TOKEN,
+} from '@analogjs/content';
 import { inject, Injectable, InjectionToken } from '@angular/core';
 import { Param } from '@swc/core';
 import markedShiki from 'marked-shiki';
@@ -52,12 +55,19 @@ export class ShikiHighlighter extends MarkedContentHighlighter {
   private readonly highlighterOptions = inject(SHIKI_HIGHLIGHTER_OPTIONS);
   private readonly highlightOptions = inject(SHIKI_HIGHLIGHT_OPTIONS);
   private readonly highlighterContainer = inject(SHIKI_CONTAINER_OPTION);
+  private readonly hasLoadMermaid = inject(MERMAID_IMPORT_TOKEN, {
+    optional: true,
+  });
   private readonly highlighter = getHighlighter(this.highlighterOptions);
 
   override getHighlightExtension() {
     return markedShiki({
       container: this.highlighterContainer,
       highlight: async (code, lang, props) => {
+        if (this.hasLoadMermaid && lang === 'mermaid') {
+          return `<pre class="mermaid">${code}</pre>`;
+        }
+
         const { codeToHtml } = await this.highlighter;
         return codeToHtml(
           code,
