@@ -4,8 +4,8 @@
 import { green, red, reset, yellow } from 'kolorist';
 import minimist from 'minimist';
 import { execSync } from 'node:child_process';
-import fs from 'node:fs';
-import path from 'node:path';
+import fs, { readdirSync } from 'node:fs';
+import path, { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import prompts from 'prompts';
 
@@ -185,10 +185,6 @@ async function init() {
       ? path.join(root, renameFiles[file])
       : path.join(root, file);
 
-    if (file.includes('app.config.ts') && variant === 'blog' && highlighter) {
-      content = addHighlighter(path.join(templateDir, file), highlighter);
-    }
-
     if (content) {
       fs.writeFileSync(targetPath, content);
     } else {
@@ -216,9 +212,11 @@ async function init() {
   pkg.name = packageName || getProjectName();
   pkg.scripts.start = getStartCommand(pkgManager);
 
+  if (template === 'blog' && highlighter) {
+    ensureSyntaxHighlighter(root, pkg, highlighter);
+  }
+
   if (!skipTailwind) addTailwindDevDependencies(pkg);
-  if (variant === 'blog' && highlighter)
-    addHighlighterDependencies(pkg, highlighter);
   if (pkgManager === 'yarn' && variant === 'angular-v17')
     addYarnDevDependencies(pkg);
 
@@ -376,18 +374,21 @@ function addYarnDevDependencies(pkg) {
   pkg.devDependencies['@angular-devkit/build-angular'] = ['^17.3.5'];
 }
 
-function addHighlighter(file, syntaxHighlighter) {
-  const content = fs.readFileSync(file, 'utf-8');
-  return content
-    .replace('__HIGHLIGHTER__', HIGHLIGHTERS[syntaxHighlighter].highlighter)
-    .replace(
-      '__HIGHLIGHTER_ENTRY_POINT__',
-      HIGHLIGHTERS[syntaxHighlighter].entryPoint
-    );
-}
+function ensureSyntaxHighlighter(root, pkg, highlighter) {
+  const appConfigPath = path.join(root, 'src/app/app.config.ts');
+  const appConfigContent = fs.readFileSync(appConfigPath, 'utf-8');
 
-function addHighlighterDependencies(pkg, syntaxHighlighter) {
-  const dependencies = HIGHLIGHTERS[syntaxHighlighter].dependencies;
+  fs.writeFileSync(
+    appConfigPath,
+    appConfigContent
+      .replace(/__HIGHLIGHTER__/g, HIGHLIGHTERS[highlighter].highlighter)
+      .replace(
+        /__HIGHLIGHTER_ENTRY_POINT__/g,
+        HIGHLIGHTERS[highlighter].entryPoint
+      )
+  );
+
+  const dependencies = HIGHLIGHTERS[highlighter].dependencies;
   for (const [name, version] of Object.entries(dependencies)) {
     pkg.dependencies[name] = version;
   }
