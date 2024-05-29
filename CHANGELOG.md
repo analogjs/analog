@@ -1,3 +1,9 @@
+# [1.5.0-beta.2](https://github.com/analogjs/analog/compare/v1.5.0-beta.1...v1.5.0-beta.2) (2024-05-29)
+
+### Bug Fixes
+
+- **content:** adjust project config ([#1122](https://github.com/analogjs/analog/issues/1122)) ([2570d65](https://github.com/analogjs/analog/commit/2570d654db3a1326780a555a82258c5b6635ca9f))
+
 # [1.5.0-beta.1](https://github.com/analogjs/analog/compare/v1.4.0...v1.5.0-beta.1) (2024-05-28)
 
 ### Features
