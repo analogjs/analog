@@ -7,6 +7,15 @@
   "tags": [],
   "targets": {
     "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content"],
+      "options": {
+        "commands": ["nx build-package content", "nx build content-plugin"],
+        "parallel": false
+      },
+      "dependsOn": ["^build"]
+    },
+    "build-package": {
       "executor": "@angular-devkit/build-angular:ng-packagr",
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/content"],
       "options": {
