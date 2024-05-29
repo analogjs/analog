@@ -1,3 +1,9 @@
+# [1.5.0-beta.6](https://github.com/analogjs/analog/compare/v1.5.0-beta.5...v1.5.0-beta.6) (2024-05-29)
+
+### Bug Fixes
+
+- **create-analog:** modify app config after the file is added ([#1126](https://github.com/analogjs/analog/issues/1126)) ([d91f01e](https://github.com/analogjs/analog/commit/d91f01efed061555759302661751aa8b58c99fe6))
+
 # [1.5.0-beta.5](https://github.com/analogjs/analog/compare/v1.5.0-beta.4...v1.5.0-beta.5) (2024-05-29)
 
 ### Features
