@@ -1,3 +1,9 @@
+# [1.5.0-beta.3](https://github.com/analogjs/analog/compare/v1.5.0-beta.2...v1.5.0-beta.3) (2024-05-29)
+
+### Bug Fixes
+
+- **content:** delete npmignore from ng-packagr after build ([616eedd](https://github.com/analogjs/analog/commit/616eedd046ea371abdfbc2e47ce7924c3527c096))
+
 # [1.5.0-beta.2](https://github.com/analogjs/analog/compare/v1.5.0-beta.1...v1.5.0-beta.2) (2024-05-29)
 
 ### Bug Fixes
