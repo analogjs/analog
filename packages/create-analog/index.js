@@ -388,7 +388,7 @@ function ensureSyntaxHighlighter(root, pkg, highlighter) {
       )
   );
 
-  const dependencies = HIGHLIGHTERS[syntaxHighlighter].dependencies;
+  const dependencies = HIGHLIGHTERS[highlighter].dependencies;
   for (const [name, version] of Object.entries(dependencies)) {
     pkg.dependencies[name] = version;
   }
