@@ -3,15 +3,19 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "sourceRoot": "apps/docs-app/src",
+  "tags": [],
+  "namedInputs": {
+    "projectSpecificFiles": ["{workspaceRoot}/CONTRIBUTING.md"]
+  },
   "targets": {
     "build": {
       "executor": "nx:run-commands",
       "options": {
         "cwd": "apps/docs-app",
         "command": "docusaurus build  --out-dir={args.out-dir}",
-        "out-dir": "../../dist/apps/docs-app",
-        "outputPath": "dist/apps/docs-app"
-      }
+        "out-dir": "../../dist/apps/docs-app"
+      },
+      "outputs": ["{workspaceRoot}/dist/apps/docs-app"]
     },
     "serve": {
       "executor": "nx:run-commands",
@@ -44,9 +48,5 @@
         "command": "docusaurus write-translations --locale={args.locale}"
       }
     }
-  },
-  "tags": [],
-  "namedInputs": {
-    "projectSpecificFiles": ["{workspaceRoot}/CONTRIBUTING.md"]
   }
 }

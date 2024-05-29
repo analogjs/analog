@@ -4,6 +4,7 @@
   "projectType": "library",
   "sourceRoot": "libs/top-bar/src",
   "prefix": "analogjs",
+  "tags": [],
   "targets": {
     "test": {
       "executor": "@nx/vite:test"
@@ -12,6 +13,5 @@
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
     }
-  },
-  "tags": []
+  }
 }

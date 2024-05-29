@@ -4,6 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/analog-app/src",
   "prefix": "analogjs",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/vite:build",
@@ -66,6 +67,5 @@
       "executor": "@nx/vite:test",
       "outputs": ["{projectRoot}/coverage"]
     }
-  },
-  "tags": []
+  }
 }
