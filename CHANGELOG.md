@@ -1,3 +1,9 @@
+# [1.5.0-beta.5](https://github.com/analogjs/analog/compare/v1.5.0-beta.4...v1.5.0-beta.5) (2024-05-29)
+
+### Features
+
+- **create-analog:** add syntax highlighter option for blog template ([#1125](https://github.com/analogjs/analog/issues/1125)) ([4cb0bc2](https://github.com/analogjs/analog/commit/4cb0bc20af5550df344ebb6f39113fcede295ce1))
+
 # [1.5.0-beta.4](https://github.com/analogjs/analog/compare/v1.5.0-beta.3...v1.5.0-beta.4) (2024-05-29)
 
 ### Bug Fixes
