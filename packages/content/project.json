@@ -10,7 +10,11 @@
       "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/content"],
       "options": {
-        "commands": ["nx build-package content", "nx build content-plugin"],
+        "commands": [
+          "nx build-package content",
+          "nx build content-plugin",
+          "rm node_modules/@analogjs/content/.npmignore"
+        ],
         "parallel": false
       },
       "dependsOn": ["^build"]
