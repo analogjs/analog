@@ -32,6 +32,24 @@ const APPS = [
     ],
   },
 ];
+const HIGHLIGHTERS = {
+  prismjs: {
+    highlighter: 'withPrismHighlighter',
+    entryPoint: 'prism-highlighter',
+    dependencies: {
+      'marked-highlight': '^2.0.1',
+      prismjs: '^1.29.0',
+    },
+  },
+  shiki: {
+    highlighter: 'withShikiHighlighter',
+    entryPoint: 'shiki-highlighter',
+    dependencies: {
+      'marked-shiki': '^1.1.0',
+      shiki: '^1.6.1',
+    },
+  },
+};
 
 const renameFiles = {
   _gitignore: '.gitignore',
@@ -101,6 +119,16 @@ async function init() {
           }),
         },
         {
+          type: (prev) => (prev === 'blog' ? 'select' : null),
+          name: 'syntaxHighlighter',
+          message: reset('Choose a syntax highlighter:'),
+          choices: Object.keys(HIGHLIGHTERS).map((highlighter) => ({
+            title: highlighter,
+            value: highlighter,
+          })),
+          initial: 1,
+        },
+        {
           type: skipTailwind ? null : 'confirm',
           name: 'tailwind',
           message: 'Would you like to add Tailwind to your project?',
@@ -118,7 +146,14 @@ async function init() {
   }
 
   // user choice associated with prompts
-  const { framework, overwrite, packageName, variant, tailwind } = result;
+  const {
+    framework,
+    overwrite,
+    packageName,
+    variant,
+    tailwind,
+    syntaxHighlighter,
+  } = result;
 
   const root = path.join(cwd, targetDir);
 
@@ -130,6 +165,9 @@ async function init() {
 
   // determine template
   template = variant || framework || template;
+  // determine syntax highlighter
+  let highlighter =
+    syntaxHighlighter ?? (template === 'blog' ? 'prismjs' : null);
   skipTailwind = !tailwind || skipTailwind;
 
   console.log(`\nScaffolding project in ${root}...`);
@@ -146,6 +184,11 @@ async function init() {
     const targetPath = renameFiles[file]
       ? path.join(root, renameFiles[file])
       : path.join(root, file);
+
+    if (file.includes('app.config.ts') && variant === 'blog' && highlighter) {
+      content = addHighlighter(path.join(templateDir, file), highlighter);
+    }
+
     if (content) {
       fs.writeFileSync(targetPath, content);
     } else {
@@ -174,6 +217,8 @@ async function init() {
   pkg.scripts.start = getStartCommand(pkgManager);
 
   if (!skipTailwind) addTailwindDevDependencies(pkg);
+  if (variant === 'blog' && highlighter)
+    addHighlighterDependencies(pkg, highlighter);
   if (pkgManager === 'yarn' && variant === 'angular-v17')
     addYarnDevDependencies(pkg);
 
@@ -329,6 +374,23 @@ function addTailwindDevDependencies(pkg) {
 
 function addYarnDevDependencies(pkg) {
   pkg.devDependencies['@angular-devkit/build-angular'] = ['^17.3.5'];
+}
+
+function addHighlighter(file, syntaxHighlighter) {
+  const content = fs.readFileSync(file, 'utf-8');
+  return content
+    .replace('__HIGHLIGHTER__', HIGHLIGHTERS[syntaxHighlighter].highlighter)
+    .replace(
+      '__HIGHLIGHTER_ENTRY_POINT__',
+      HIGHLIGHTERS[syntaxHighlighter].entryPoint
+    );
+}
+
+function addHighlighterDependencies(pkg, syntaxHighlighter) {
+  const dependencies = HIGHLIGHTERS[syntaxHighlighter].dependencies;
+  for (const [name, version] of Object.entries(dependencies)) {
+    pkg.dependencies[name] = version;
+  }
 }
 
 init().catch((e) => {
