@@ -4,6 +4,7 @@
   "projectType": "library",
   "sourceRoot": "packages/content/src",
   "prefix": "analogjs",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:ng-packagr",
@@ -36,6 +37,5 @@
         "tagPrefix": "content@"
       }
     }
-  },
-  "tags": []
+  }
 }

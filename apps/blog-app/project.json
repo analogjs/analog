@@ -4,6 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/blog-app/src",
   "prefix": "blog",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/vite:build",
@@ -54,6 +55,5 @@
         "staticFilePath": "dist/apps/blog-app/analog/public"
       }
     }
-  },
-  "tags": []
+  }
 }

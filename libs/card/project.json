@@ -3,8 +3,9 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/card/src",
   "prefix": "lib",
-  "tags": [],
   "projectType": "library",
+  "tags": [],
+  "implicitDependencies": ["vite-plugin-angular"],
   "targets": {
     "test": {
       "executor": "@nx/vite:test"
@@ -13,6 +14,5 @@
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
     }
-  },
-  "implicitDependencies": ["vite-plugin-angular"]
+  }
 }

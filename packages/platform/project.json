@@ -3,6 +3,8 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/platform/src",
   "projectType": "library",
+  "tags": [],
+  "implicitDependencies": ["vite-plugin-angular", "vite-plugin-nitro"],
   "targets": {
     "build-package": {
       "executor": "@nx/js:tsc",
@@ -50,7 +52,5 @@
         "tagPrefix": "platform@"
       }
     }
-  },
-  "tags": [],
-  "implicitDependencies": ["vite-plugin-angular", "vite-plugin-nitro"]
+  }
 }

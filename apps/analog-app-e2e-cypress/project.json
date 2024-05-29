@@ -3,6 +3,8 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/analog-app-e2e-cypress/src",
   "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["analog-app"],
   "targets": {
     "e2e": {
       "executor": "@nx/cypress:cypress",
@@ -22,7 +24,5 @@
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
     }
-  },
-  "tags": [],
-  "implicitDependencies": ["analog-app"]
+  }
 }
