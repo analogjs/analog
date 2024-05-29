@@ -1,3 +1,9 @@
+# [1.5.0-beta.4](https://github.com/analogjs/analog/compare/v1.5.0-beta.3...v1.5.0-beta.4) (2024-05-29)
+
+### Bug Fixes
+
+- **content:** adjust peer dependencies meta for different highlighters ([#1124](https://github.com/analogjs/analog/issues/1124)) ([5708d7d](https://github.com/analogjs/analog/commit/5708d7d0e91151b45bf8277dd471688468cf77f5))
+
 # [1.5.0-beta.3](https://github.com/analogjs/analog/compare/v1.5.0-beta.2...v1.5.0-beta.3) (2024-05-29)
 
 ### Bug Fixes
