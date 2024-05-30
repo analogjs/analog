@@ -4,6 +4,7 @@ import {
   CanActivateFn,
   CanDeactivateFn,
   CanMatchFn,
+  DeprecatedGuard,
   ResolveFn,
   Route,
 } from '@angular/router';
@@ -25,7 +26,7 @@ export type RouteConfig = Omit<Route, OmittedRouteProps>;
 
 export interface DefaultRouteMeta
   extends Omit<Route, OmittedRouteProps | keyof RedirectRouteMeta> {
-  canActivate?: CanActivateFn[];
+  canActivate?: CanActivateFn[] | DeprecatedGuard[];
   canActivateChild?: CanActivateChildFn[];
   canDeactivate?: CanDeactivateFn<unknown>[];
   canMatch?: CanMatchFn[];
