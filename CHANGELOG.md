@@ -1,3 +1,9 @@
+# [1.5.0-beta.7](https://github.com/analogjs/analog/compare/v1.5.0-beta.6...v1.5.0-beta.7) (2024-05-30)
+
+### Bug Fixes
+
+- **create-analog:** add dependencies based on template and package manager ([#1128](https://github.com/analogjs/analog/issues/1128)) ([0381aa4](https://github.com/analogjs/analog/commit/0381aa4158957afe2aa49ef246d7021b10931fb3))
+
 # [1.5.0-beta.6](https://github.com/analogjs/analog/compare/v1.5.0-beta.5...v1.5.0-beta.6) (2024-05-29)
 
 ### Bug Fixes
