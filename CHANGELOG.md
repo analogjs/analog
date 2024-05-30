@@ -1,3 +1,9 @@
+# [1.5.0-beta.8](https://github.com/analogjs/analog/compare/v1.5.0-beta.7...v1.5.0-beta.8) (2024-05-30)
+
+### Features
+
+- **router:** add support for @angular/fire guards ([#1131](https://github.com/analogjs/analog/issues/1131)) ([84646d8](https://github.com/analogjs/analog/commit/84646d8491e3e6d4e205e7af4a81b97be552d5e8))
+
 # [1.5.0-beta.7](https://github.com/analogjs/analog/compare/v1.5.0-beta.6...v1.5.0-beta.7) (2024-05-30)
 
 ### Bug Fixes
