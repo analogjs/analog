@@ -45,6 +45,7 @@ const HIGHLIGHTERS = {
     highlighter: 'withShikiHighlighter',
     entryPoint: 'shiki-highlighter',
     dependencies: {
+      marked: '^7.0.0',
       'marked-shiki': '^1.1.0',
       shiki: '^1.6.1',
     },
@@ -217,8 +218,9 @@ async function init() {
   }
 
   if (!skipTailwind) addTailwindDevDependencies(pkg);
-  if (pkgManager === 'yarn' && variant === 'angular-v17')
-    addYarnDevDependencies(pkg);
+  if (pkgManager === 'yarn') {
+    addYarnDevDependencies(pkg, template);
+  }
 
   write('package.json', JSON.stringify(pkg, null, 2));
 
@@ -370,8 +372,16 @@ function addTailwindDevDependencies(pkg) {
   );
 }
 
-function addYarnDevDependencies(pkg) {
-  pkg.devDependencies['@angular-devkit/build-angular'] = ['^17.3.5'];
+function addYarnDevDependencies(pkg, template) {
+  // v18
+  if (template === 'latest' || template === 'blog') {
+    pkg.devDependencies['@nx/angular'] = ['^19.1.0'];
+    pkg.devDependencies['@nx/devkit'] = ['^19.1.0'];
+    pkg.devDependencies['@nx/vite'] = ['^19.1.0'];
+    pkg.devDependencies['nx'] = ['^19.1.0'];
+  } else if (template === 'angular-v17') {
+    pkg.devDependencies['@angular-devkit/build-angular'] = ['^17.3.5'];
+  }
 }
 
 function ensureSyntaxHighlighter(root, pkg, highlighter) {
