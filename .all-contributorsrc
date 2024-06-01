@@ -990,6 +990,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "WolfSoko",
+      "name": "Wolfram Sokollek",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8589105?v=4",
+      "profile": "https://angularexamples.wolsok.de/",
+      "contributions": [
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
