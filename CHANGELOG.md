@@ -1,3 +1,9 @@
+# [1.5.0-beta.9](https://github.com/analogjs/analog/compare/v1.5.0-beta.8...v1.5.0-beta.9) (2024-06-03)
+
+### Features
+
+- **vite-plugin-nitro:** handle web Response object in dev server plugin ([#1141](https://github.com/analogjs/analog/issues/1141)) ([a8b0f32](https://github.com/analogjs/analog/commit/a8b0f3218c4c0d4d302b8144f6bea33446c65d24))
+
 # [1.5.0-beta.8](https://github.com/analogjs/analog/compare/v1.5.0-beta.7...v1.5.0-beta.8) (2024-05-30)
 
 ### Features
