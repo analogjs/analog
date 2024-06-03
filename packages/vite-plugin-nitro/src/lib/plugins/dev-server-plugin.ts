@@ -4,6 +4,7 @@
 import { Connect, Plugin, ViteDevServer } from 'vite';
 import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
+import { createEvent, sendWebResponse } from 'h3';
 
 interface ServerOptions {
   index?: string;
@@ -43,10 +44,20 @@ export function devServerPlugin(options: ServerOptions): Plugin {
             const entryServer = (
               await viteServer.ssrLoadModule('~analog/entry-server')
             )['default'];
-            const result = await entryServer(req.originalUrl, template, {
-              req,
-              res,
-            });
+            const result: string | Response = await entryServer(
+              req.originalUrl,
+              template,
+              {
+                req,
+                res,
+              }
+            );
+
+            if (result instanceof Response) {
+              sendWebResponse(createEvent(req, res), result);
+              return;
+            }
+
             res.setHeader('Content-Type', 'text/html');
             res.end(result);
           } catch (e) {
