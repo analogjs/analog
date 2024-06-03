@@ -999,6 +999,15 @@
       "contributions": [
         "infra"
       ]
+    },
+    {
+      "login": "muhammaduxair",
+      "name": "Muhammad Uzair",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64395440?v=4",
+      "profile": "https://github.com/muhammaduxair",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
