@@ -85,6 +85,10 @@ Follow the prompts to scaffold the project and start the development server.
   <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/code.build-1x1.svg" width="100px" height="100px" alt="Code.Build" />
 </a>
 
+<a href="https://snyder.tech/" target="_blank">
+  <img src="https://media.licdn.com/dms/image/C4E0BAQG4hMvLznt6_Q/company-logo_200_200/0/1630618311041/snydertechnologies_logo?e=2147483647&v=beta&t=TFq6VKWAgb5oI0FmbvaeTPFzMJR9S94_LvnLnlRqfLI" width="100px" height="100px" alt="Snyder Tech" />
+</a>
+
 ## Contributing
 
 Analog welcomes contributors! Please read the [contributing doc](https://github.com/analogjs/analog/blob/main/CONTRIBUTING.md) for details.
