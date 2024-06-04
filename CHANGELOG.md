@@ -1,3 +1,9 @@
+# [1.5.0-beta.10](https://github.com/analogjs/analog/compare/v1.5.0-beta.9...v1.5.0-beta.10) (2024-06-04)
+
+### Bug Fixes
+
+- **nx-plugin:** update rxjs dependency ([#1142](https://github.com/analogjs/analog/issues/1142)) ([c697365](https://github.com/analogjs/analog/commit/c69736576a6884d16bcf4aec409d3d4c35ec2fd7))
+
 # [1.5.0-beta.9](https://github.com/analogjs/analog/compare/v1.5.0-beta.8...v1.5.0-beta.9) (2024-06-03)
 
 ### Features
