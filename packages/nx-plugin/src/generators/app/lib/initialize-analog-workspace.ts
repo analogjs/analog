@@ -68,7 +68,7 @@ const initWithNxNamespace = async (
       '@angular/platform-browser-dynamic': '^18.0.0',
       '@angular/platform-server': '^18.0.0',
       '@angular/router': '^18.0.0',
-      rxjs: '~7.5.6',
+      rxjs: '~7.8.0',
       tslib: '^2.4.0',
       'zone.js': '~0.14.0',
     },
