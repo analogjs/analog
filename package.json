@@ -24,7 +24,7 @@
     "node": "^18.13.0 || ^20.0.0",
     "pnpm": "^8.0.0"
   },
-  "packageManager": "pnpm@8.9.0+sha512.ef8859938e1f0537b9fcf0309044311392f3b38b344176e6cd4fdee21b225524b0ac2a1b08ae2ae2ddd5b3ff4b8ca496d6778e950f3e7c9f555b81325982441c",
+  "packageManager": "pnpm@8.9.0",
   "keywords": [
     "vite-plugin",
     "angular",
