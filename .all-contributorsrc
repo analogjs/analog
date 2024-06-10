@@ -1008,6 +1008,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "Laphatize",
+      "name": "Pranav Ramesh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23617187?v=4",
+      "profile": "https://pranavramesh.dev",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
