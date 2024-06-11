@@ -10,7 +10,6 @@
       "outputs": ["{workspaceRoot}/{options.outputPath}"],
       "options": {
         "outputPath": "node_modules/@analogjs/platform/src/lib/nx-plugin",
-        "clean": true,
         "main": "packages/nx-plugin/src/index.ts",
         "tsConfig": "packages/nx-plugin/tsconfig.lib.json",
         "assets": [
