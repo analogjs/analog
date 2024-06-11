@@ -1,3 +1,9 @@
+# [1.5.0-beta.13](https://github.com/analogjs/analog/compare/v1.5.0-beta.12...v1.5.0-beta.13) (2024-06-11)
+
+### Bug Fixes
+
+- **create-analog:** add legacy dependencies to older templates ([#1153](https://github.com/analogjs/analog/issues/1153)) ([71ba755](https://github.com/analogjs/analog/commit/71ba7556dd05323c81ce6f0e5a9321e71e776078))
+
 # [1.5.0-beta.12](https://github.com/analogjs/analog/compare/v1.5.0-beta.11...v1.5.0-beta.12) (2024-06-11)
 
 ### Features
