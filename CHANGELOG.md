@@ -1,3 +1,9 @@
+# [1.5.0-beta.12](https://github.com/analogjs/analog/compare/v1.5.0-beta.11...v1.5.0-beta.12) (2024-06-11)
+
+### Features
+
+- **router:** add utility function to read server side resolver from another resolver ([#1144](https://github.com/analogjs/analog/issues/1144)) ([db7aace](https://github.com/analogjs/analog/commit/db7aace77198a73057595e60fe0b459015b75d6b))
+
 # [1.5.0-beta.11](https://github.com/analogjs/analog/compare/v1.5.0-beta.10...v1.5.0-beta.11) (2024-06-11)
 
 ### Bug Fixes
