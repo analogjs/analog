@@ -33,6 +33,9 @@
     "build-package": {
       "cache": false
     },
+    "@nx/js:tsc": {
+      "cache": false
+    },
     "@nx/eslint:lint": {
       "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
       "cache": true

@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { formatFiles, Tree, visitNotIgnoredFiles } from '@nx/devkit';
+import {
+  addDependenciesToPackageJson,
+  formatFiles,
+  installPackagesTask,
+  Tree,
+  visitNotIgnoredFiles,
+} from '@nx/devkit';
 import { CallExpression, Node, Project } from 'ts-morph';
 
 export default async function update(host: Tree) {
@@ -44,5 +50,17 @@ export default async function update(host: Tree) {
     }
   });
 
+  // NOTE: we only add the dependency if the project is an Angular project
+  //  Nx projects can add the dependency from migrations.json
+  let dependencyAdded = false;
+  if (host.exists('/angular.json')) {
+    addDependenciesToPackageJson(host, { 'marked-mangle': '^1.1.7' }, {});
+    dependencyAdded = true;
+  }
+
   await formatFiles(host);
+
+  if (dependencyAdded) {
+    return () => installPackagesTask(host);
+  }
 }
