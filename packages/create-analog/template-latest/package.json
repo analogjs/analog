@@ -48,5 +48,8 @@
     "vite": "^6.0.0",
     "vite-tsconfig-paths": "^4.2.0",
     "vitest": "^3.0.0"
+  },
+  "stackblitz": {
+    "startCommand": "vite"
   }
 }
