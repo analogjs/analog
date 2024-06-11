@@ -1,3 +1,9 @@
+# [1.5.0-beta.11](https://github.com/analogjs/analog/compare/v1.5.0-beta.10...v1.5.0-beta.11) (2024-06-11)
+
+### Bug Fixes
+
+- **content:** add migration for marked-mangle dependency ([#1151](https://github.com/analogjs/analog/issues/1151)) ([d8522ff](https://github.com/analogjs/analog/commit/d8522ffc4c24b0e729abad8be3dee51feba4cb1a))
+
 # [1.5.0-beta.10](https://github.com/analogjs/analog/compare/v1.5.0-beta.9...v1.5.0-beta.10) (2024-06-04)
 
 ### Bug Fixes
