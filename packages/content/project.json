@@ -4,8 +4,22 @@
   "projectType": "library",
   "sourceRoot": "packages/content/src",
   "prefix": "analogjs",
+  "tags": [],
   "targets": {
     "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content"],
+      "options": {
+        "commands": [
+          "nx build-package content",
+          "nx build content-plugin",
+          "rm node_modules/@analogjs/content/.npmignore"
+        ],
+        "parallel": false
+      },
+      "dependsOn": ["^build"]
+    },
+    "build-package": {
       "executor": "@angular-devkit/build-angular:ng-packagr",
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/content"],
       "options": {
@@ -36,6 +50,5 @@
         "tagPrefix": "content@"
       }
     }
-  },
-  "tags": []
+  }
 }

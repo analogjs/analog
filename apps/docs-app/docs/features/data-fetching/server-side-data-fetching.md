@@ -104,3 +104,22 @@ export default class BlogComponent {
   data!: LoadResult<typeof load>;
 }
 ```
+
+## Accessing to the server load data
+
+Accessing to the server load data from `RouteMeta` resolver can be done using the `getLoadResolver` function provided by `@analogjs/router`.
+
+```ts
+import { getLoadResolver } from '@analogjs/router';
+
+export const routeMeta: RouteMeta = {
+  resolve: {
+    data: async (route) => {
+      // call server load resolver for this route from another resolver
+      const data = await getLoadResolver(route);
+
+      return { ...data };
+    },
+  },
+};
+```

@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vite-plugin-nitro",
-  "version": "1.4.0",
+  "version": "1.5.0-beta.14",
   "description": "A Vite plugin for adding a nitro API server",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -25,14 +25,14 @@
   },
   "dependencies": {
     "nitropack": "^2.9.0",
-    "xmlbuilder2": "^3.0.2"
+    "xmlbuilder2": "^3.0.2",
+    "esbuild": "^0.20.1"
   },
   "ng-update": {
     "packageGroup": [
       "@analogjs/platform",
       "@analogjs/content",
       "@analogjs/router",
-      "@analogjs/trpc",
       "@analogjs/vite-plugin-angular",
       "@analogjs/vite-plugin-nitro",
       "@analogjs/vitest-angular"

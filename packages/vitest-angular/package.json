@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vitest-angular",
-  "version": "1.4.0",
+  "version": "1.5.0-beta.14",
   "description": "Vitest Builder for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -37,7 +37,6 @@
       "@analogjs/platform",
       "@analogjs/content",
       "@analogjs/router",
-      "@analogjs/trpc",
       "@analogjs/vite-plugin-angular",
       "@analogjs/vite-plugin-nitro",
       "@analogjs/vitest-angular"

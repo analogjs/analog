@@ -1,3 +1,87 @@
+# [1.5.0-beta.14](https://github.com/analogjs/analog/compare/v1.5.0-beta.13...v1.5.0-beta.14) (2024-06-12)
+
+### Bug Fixes
+
+- **platform:** add Firebase packages to known SSR transform list ([#1154](https://github.com/analogjs/analog/issues/1154)) ([79c4575](https://github.com/analogjs/analog/commit/79c457576e44a315899c061b3370f6bc68e29ae4))
+
+# [1.5.0-beta.13](https://github.com/analogjs/analog/compare/v1.5.0-beta.12...v1.5.0-beta.13) (2024-06-11)
+
+### Bug Fixes
+
+- **create-analog:** add legacy dependencies to older templates ([#1153](https://github.com/analogjs/analog/issues/1153)) ([71ba755](https://github.com/analogjs/analog/commit/71ba7556dd05323c81ce6f0e5a9321e71e776078))
+
+# [1.5.0-beta.12](https://github.com/analogjs/analog/compare/v1.5.0-beta.11...v1.5.0-beta.12) (2024-06-11)
+
+### Features
+
+- **router:** add utility function to read server side resolver from another resolver ([#1144](https://github.com/analogjs/analog/issues/1144)) ([db7aace](https://github.com/analogjs/analog/commit/db7aace77198a73057595e60fe0b459015b75d6b))
+
+# [1.5.0-beta.11](https://github.com/analogjs/analog/compare/v1.5.0-beta.10...v1.5.0-beta.11) (2024-06-11)
+
+### Bug Fixes
+
+- **content:** add migration for marked-mangle dependency ([#1151](https://github.com/analogjs/analog/issues/1151)) ([d8522ff](https://github.com/analogjs/analog/commit/d8522ffc4c24b0e729abad8be3dee51feba4cb1a))
+
+# [1.5.0-beta.10](https://github.com/analogjs/analog/compare/v1.5.0-beta.9...v1.5.0-beta.10) (2024-06-04)
+
+### Bug Fixes
+
+- **nx-plugin:** update rxjs dependency ([#1142](https://github.com/analogjs/analog/issues/1142)) ([c697365](https://github.com/analogjs/analog/commit/c69736576a6884d16bcf4aec409d3d4c35ec2fd7))
+
+# [1.5.0-beta.9](https://github.com/analogjs/analog/compare/v1.5.0-beta.8...v1.5.0-beta.9) (2024-06-03)
+
+### Features
+
+- **vite-plugin-nitro:** handle web Response object in dev server plugin ([#1141](https://github.com/analogjs/analog/issues/1141)) ([a8b0f32](https://github.com/analogjs/analog/commit/a8b0f3218c4c0d4d302b8144f6bea33446c65d24))
+
+# [1.5.0-beta.8](https://github.com/analogjs/analog/compare/v1.5.0-beta.7...v1.5.0-beta.8) (2024-05-30)
+
+### Features
+
+- **router:** add support for @angular/fire guards ([#1131](https://github.com/analogjs/analog/issues/1131)) ([84646d8](https://github.com/analogjs/analog/commit/84646d8491e3e6d4e205e7af4a81b97be552d5e8))
+
+# [1.5.0-beta.7](https://github.com/analogjs/analog/compare/v1.5.0-beta.6...v1.5.0-beta.7) (2024-05-30)
+
+### Bug Fixes
+
+- **create-analog:** add dependencies based on template and package manager ([#1128](https://github.com/analogjs/analog/issues/1128)) ([0381aa4](https://github.com/analogjs/analog/commit/0381aa4158957afe2aa49ef246d7021b10931fb3))
+
+# [1.5.0-beta.6](https://github.com/analogjs/analog/compare/v1.5.0-beta.5...v1.5.0-beta.6) (2024-05-29)
+
+### Bug Fixes
+
+- **create-analog:** modify app config after the file is added ([#1126](https://github.com/analogjs/analog/issues/1126)) ([d91f01e](https://github.com/analogjs/analog/commit/d91f01efed061555759302661751aa8b58c99fe6))
+
+# [1.5.0-beta.5](https://github.com/analogjs/analog/compare/v1.5.0-beta.4...v1.5.0-beta.5) (2024-05-29)
+
+### Features
+
+- **create-analog:** add syntax highlighter option for blog template ([#1125](https://github.com/analogjs/analog/issues/1125)) ([4cb0bc2](https://github.com/analogjs/analog/commit/4cb0bc20af5550df344ebb6f39113fcede295ce1))
+
+# [1.5.0-beta.4](https://github.com/analogjs/analog/compare/v1.5.0-beta.3...v1.5.0-beta.4) (2024-05-29)
+
+### Bug Fixes
+
+- **content:** adjust peer dependencies meta for different highlighters ([#1124](https://github.com/analogjs/analog/issues/1124)) ([5708d7d](https://github.com/analogjs/analog/commit/5708d7d0e91151b45bf8277dd471688468cf77f5))
+
+# [1.5.0-beta.3](https://github.com/analogjs/analog/compare/v1.5.0-beta.2...v1.5.0-beta.3) (2024-05-29)
+
+### Bug Fixes
+
+- **content:** delete npmignore from ng-packagr after build ([616eedd](https://github.com/analogjs/analog/commit/616eedd046ea371abdfbc2e47ce7924c3527c096))
+
+# [1.5.0-beta.2](https://github.com/analogjs/analog/compare/v1.5.0-beta.1...v1.5.0-beta.2) (2024-05-29)
+
+### Bug Fixes
+
+- **content:** adjust project config ([#1122](https://github.com/analogjs/analog/issues/1122)) ([2570d65](https://github.com/analogjs/analog/commit/2570d654db3a1326780a555a82258c5b6635ca9f))
+
+# [1.5.0-beta.1](https://github.com/analogjs/analog/compare/v1.4.0...v1.5.0-beta.1) (2024-05-28)
+
+### Features
+
+- **content:** custom syntax highlighter and add shiki as one ([#1121](https://github.com/analogjs/analog/issues/1121)) ([f22d899](https://github.com/analogjs/analog/commit/f22d8994d26c59e7f0e9d8d092d9f752bf11d6a5))
+
 # [1.4.0](https://github.com/analogjs/analog/compare/v1.3.1...v1.4.0) (2024-05-27)
 
 ### Bug Fixes

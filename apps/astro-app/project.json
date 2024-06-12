@@ -3,6 +3,8 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "sourceRoot": "apps/astro-app/src",
+  "tags": [],
+  "implicitDependencies": ["astro-angular"],
   "targets": {
     "serve": {
       "command": "astro dev --root apps/astro-app"
@@ -13,7 +15,5 @@
     "preview": {
       "command": "astro preview --root apps/astro-app"
     }
-  },
-  "tags": [],
-  "implicitDependencies": ["astro-angular"]
+  }
 }

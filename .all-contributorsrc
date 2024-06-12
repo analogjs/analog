@@ -990,6 +990,33 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "WolfSoko",
+      "name": "Wolfram Sokollek",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8589105?v=4",
+      "profile": "https://angularexamples.wolsok.de/",
+      "contributions": [
+        "infra"
+      ]
+    },
+    {
+      "login": "muhammaduxair",
+      "name": "Muhammad Uzair",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64395440?v=4",
+      "profile": "https://github.com/muhammaduxair",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "Laphatize",
+      "name": "Pranav Ramesh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23617187?v=4",
+      "profile": "https://pranavramesh.dev",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,

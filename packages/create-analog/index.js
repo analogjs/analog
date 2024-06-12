@@ -4,8 +4,8 @@
 import { green, red, reset, yellow } from 'kolorist';
 import minimist from 'minimist';
 import { execSync } from 'node:child_process';
-import fs from 'node:fs';
-import path from 'node:path';
+import fs, { readdirSync } from 'node:fs';
+import path, { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import prompts from 'prompts';
 
@@ -32,6 +32,25 @@ const APPS = [
     ],
   },
 ];
+const HIGHLIGHTERS = {
+  prismjs: {
+    highlighter: 'withPrismHighlighter',
+    entryPoint: 'prism-highlighter',
+    dependencies: {
+      'marked-highlight': '^2.0.1',
+      prismjs: '^1.29.0',
+    },
+  },
+  shiki: {
+    highlighter: 'withShikiHighlighter',
+    entryPoint: 'shiki-highlighter',
+    dependencies: {
+      marked: '^7.0.0',
+      'marked-shiki': '^1.1.0',
+      shiki: '^1.6.1',
+    },
+  },
+};
 
 const renameFiles = {
   _gitignore: '.gitignore',
@@ -101,6 +120,16 @@ async function init() {
           }),
         },
         {
+          type: (prev) => (prev === 'blog' ? 'select' : null),
+          name: 'syntaxHighlighter',
+          message: reset('Choose a syntax highlighter:'),
+          choices: Object.keys(HIGHLIGHTERS).map((highlighter) => ({
+            title: highlighter,
+            value: highlighter,
+          })),
+          initial: 1,
+        },
+        {
           type: skipTailwind ? null : 'confirm',
           name: 'tailwind',
           message: 'Would you like to add Tailwind to your project?',
@@ -118,7 +147,14 @@ async function init() {
   }
 
   // user choice associated with prompts
-  const { framework, overwrite, packageName, variant, tailwind } = result;
+  const {
+    framework,
+    overwrite,
+    packageName,
+    variant,
+    tailwind,
+    syntaxHighlighter,
+  } = result;
 
   const root = path.join(cwd, targetDir);
 
@@ -130,6 +166,9 @@ async function init() {
 
   // determine template
   template = variant || framework || template;
+  // determine syntax highlighter
+  let highlighter =
+    syntaxHighlighter ?? (template === 'blog' ? 'prismjs' : null);
   skipTailwind = !tailwind || skipTailwind;
 
   console.log(`\nScaffolding project in ${root}...`);
@@ -146,6 +185,7 @@ async function init() {
     const targetPath = renameFiles[file]
       ? path.join(root, renameFiles[file])
       : path.join(root, file);
+
     if (content) {
       fs.writeFileSync(targetPath, content);
     } else {
@@ -173,9 +213,14 @@ async function init() {
   pkg.name = packageName || getProjectName();
   pkg.scripts.start = getStartCommand(pkgManager);
 
+  if (template === 'blog' && highlighter) {
+    ensureSyntaxHighlighter(root, pkg, highlighter);
+  }
+
   if (!skipTailwind) addTailwindDevDependencies(pkg);
-  if (pkgManager === 'yarn' && variant === 'angular-v17')
-    addYarnDevDependencies(pkg);
+  if (pkgManager === 'yarn') {
+    addYarnDevDependencies(pkg, template);
+  }
 
   write('package.json', JSON.stringify(pkg, null, 2));
 
@@ -327,8 +372,36 @@ function addTailwindDevDependencies(pkg) {
   );
 }
 
-function addYarnDevDependencies(pkg) {
-  pkg.devDependencies['@angular-devkit/build-angular'] = ['^17.3.5'];
+function addYarnDevDependencies(pkg, template) {
+  // v18
+  if (template === 'latest' || template === 'blog') {
+    pkg.devDependencies['@nx/angular'] = ['^19.1.0'];
+    pkg.devDependencies['@nx/devkit'] = ['^19.1.0'];
+    pkg.devDependencies['@nx/vite'] = ['^19.1.0'];
+    pkg.devDependencies['nx'] = ['^19.1.0'];
+  } else if (template === 'angular-v17') {
+    pkg.devDependencies['@angular-devkit/build-angular'] = ['^17.3.5'];
+  }
+}
+
+function ensureSyntaxHighlighter(root, pkg, highlighter) {
+  const appConfigPath = path.join(root, 'src/app/app.config.ts');
+  const appConfigContent = fs.readFileSync(appConfigPath, 'utf-8');
+
+  fs.writeFileSync(
+    appConfigPath,
+    appConfigContent
+      .replace(/__HIGHLIGHTER__/g, HIGHLIGHTERS[highlighter].highlighter)
+      .replace(
+        /__HIGHLIGHTER_ENTRY_POINT__/g,
+        HIGHLIGHTERS[highlighter].entryPoint
+      )
+  );
+
+  const dependencies = HIGHLIGHTERS[highlighter].dependencies;
+  for (const [name, version] of Object.entries(dependencies)) {
+    pkg.dependencies[name] = version;
+  }
 }
 
 init().catch((e) => {

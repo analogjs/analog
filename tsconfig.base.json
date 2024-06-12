@@ -18,6 +18,12 @@
     "paths": {
       "@analogjs/astro-angular": ["packages/astro-angular/src/index.ts"],
       "@analogjs/content": ["packages/content/src/index.ts"],
+      "@analogjs/content/prism-highlighter": [
+        "packages/content/prism-highlighter/src/index.ts"
+      ],
+      "@analogjs/content/shiki-highlighter": [
+        "packages/content/shiki-highlighter/src/index.ts"
+      ],
       "@analogjs/nx": ["packages/nx-plugin/src/index.ts"],
       "@analogjs/platform": [
         "./node_modules/@analogjs/platform",
@@ -34,6 +40,7 @@
         "./node_modules/@analogjs/vite-plugin-nitro",
         "packages/vite-plugin-nitro/src/index.ts"
       ],
+      "@analogjs/content-plugin": ["packages/content-plugin/src/index.ts"],
       "libs/card": ["libs/card/src/index.ts"],
       "vitest-angular": [
         "./node_modules/@analogjs/vitest-angular",

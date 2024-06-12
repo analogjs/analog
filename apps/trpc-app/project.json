@@ -3,6 +3,8 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "sourceRoot": "apps/trpc-app/src",
+  "tags": [],
+  "implicitDependencies": ["trpc"],
   "targets": {
     "build": {
       "dependsOn": ["^build"],
@@ -67,7 +69,5 @@
       "executor": "@nx/vite:test",
       "outputs": ["{projectRoot}/coverage"]
     }
-  },
-  "tags": [],
-  "implicitDependencies": ["trpc"]
+  }
 }

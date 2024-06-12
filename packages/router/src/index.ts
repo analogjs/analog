@@ -11,3 +11,4 @@ export { provideFileRouter } from './lib/provide-file-router';
 export { MetaTag } from './lib/meta-tags';
 export { PageServerLoad, LoadResult } from './lib/route-types';
 export { injectLoad } from './lib/inject-load';
+export { getLoadResolver } from './lib/get-load-resolver';

@@ -3,11 +3,11 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "sourceRoot": "apps/nx-plugin-e2e/src",
+  "tags": [],
+  "implicitDependencies": ["platform", "trpc", "content"],
   "targets": {
     "e2e": {
       "executor": "@nx/vite:test"
     }
-  },
-  "tags": [],
-  "implicitDependencies": ["platform", "trpc", "content"]
+  }
 }

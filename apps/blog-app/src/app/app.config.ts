@@ -1,4 +1,5 @@
 import { provideContent, withMarkdownRenderer } from '@analogjs/content';
+import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
 import { provideFileRouter } from '@analogjs/router';
 import { provideHttpClient } from '@angular/common/http';
 import { ApplicationConfig } from '@angular/core';
@@ -13,7 +14,12 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     provideClientHydration(),
     provideContent(
-      withMarkdownRenderer({ loadMermaid: () => import('mermaid') })
+      withMarkdownRenderer({ loadMermaid: () => import('mermaid') }),
+      withShikiHighlighter({
+        highlighter: {
+          additionalLangs: ['mermaid'],
+        },
+      })
     ),
     provideFileRouter(
       withInMemoryScrolling({ anchorScrolling: 'enabled' }),

@@ -3,6 +3,8 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/astro-app-e2e-playwright/src",
   "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["astro-app"],
   "targets": {
     "vitest": {
       "executor": "@nx/vite:test"
@@ -18,7 +20,5 @@
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
     }
-  },
-  "tags": [],
-  "implicitDependencies": ["astro-app"]
+  }
 }

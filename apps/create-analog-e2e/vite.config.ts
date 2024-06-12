@@ -11,9 +11,7 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: 'node',
       include: ['**/*.spec.ts'],
-      cache: {
-        dir: `../../node_modules/.vitest`,
-      },
+      cacheDir: `../../node_modules/.vitest`,
     },
     define: {
       'import.meta.vitest': mode !== 'production',

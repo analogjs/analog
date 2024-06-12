@@ -45,8 +45,12 @@ function HomepageHeader() {
 }
 
 function SponsorSection() {
+  // Define your light and dark theme logos
+  const lightThemeLogo = 'https://link-to-light-theme-logo';
+  const darkThemeLogo = 'https://link-to-dark-theme-logo';
+
   return (
-    <section className={clsx('hero', styles.heroBanner)}>
+    <section className={clsx('hero', styles.heroBanner, styles.horizontal)}>
       <div className="container">
         <h3>
           <Translate
@@ -65,27 +69,31 @@ function SponsorSection() {
           </Translate>
         </p>
 
-        <div>
+        <div className={styles.horizontalSponsors}>
           <a
             href="https://github.blog/2023-04-12-github-accelerator-our-first-cohort-and-whats-next/"
             target="_blank"
           >
             <img
-              src="https://raw.githubusercontent.com/analogjs/analog/main/apps/docs-app/static/img/logos/github-logo.svg"
-              width="100px"
-              height="100px"
+              src="../img/logos/github-logo.svg"
               alt="GitHub Accelerator"
+              style={{ marginRight: '30px', width: '80px', height: '100px' }}
             />
           </a>
-        </div>
 
-        <div>
           <a href="https://nx.dev" target="_blank">
             <img
-              src="https://raw.githubusercontent.com/analogjs/analog/main/apps/docs-app/static/img/logos/nx.svg"
-              width="100px"
-              height="100px"
-              alt="NxDevTools"
+              src="./img/logos/nx-logo.light.svg"
+              alt="NX Dev"
+              style={{ marginRight: '30px', width: '100px', height: '100px' }}
+            />
+          </a>
+
+          <a href="https://snyder.tech" target="_blank">
+            <img
+              src="./img/logos/snyder-logo.light.svg"
+              alt="Snyder Tech"
+              style={{ marginRight: '30px', width: '250px', height: '100px' }}
             />
           </a>
         </div>

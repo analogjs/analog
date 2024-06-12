@@ -21,16 +21,19 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "cache": true
+      "cache": false
     },
     "e2e": {
       "dependsOn": ["^build"],
-      "cache": true
+      "cache": false
     },
     "serve": {
       "dependsOn": ["^build"]
     },
     "build-package": {
+      "cache": false
+    },
+    "@nx/js:tsc": {
       "cache": false
     },
     "@nx/eslint:lint": {
