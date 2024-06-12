@@ -1017,6 +1017,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "benpsnyder",
+      "name": "Ben Snyder",
+      "avatar_url": "https://avatars.githubusercontent.com/u/707567?v=4",
+      "profile": "https://snyder.tech",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
