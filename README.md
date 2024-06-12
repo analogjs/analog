@@ -74,7 +74,7 @@ Follow the prompts to scaffold the project and start the development server.
 </a>
 
 <a href="https://nx.dev" target="_blank">
-  <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/nx.svg" width="100px" height="100px" alt="NxDevTools" />
+  <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/nx-logo.dark.svg" width="100px" height="100px" alt="NxDevTools" />
 </a>
 
 <a href="https://houseofangular.io" target="_blank">
