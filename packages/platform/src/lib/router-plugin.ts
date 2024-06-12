@@ -31,6 +31,8 @@ export function routerPlugin(): Plugin[] {
               'rxfire/**',
               '@tanstack/**',
               'ngxtension/**',
+              'firebase/**',
+              'firebase-admin/**',
             ],
           },
           optimizeDeps: {

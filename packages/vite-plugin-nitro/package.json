@@ -25,7 +25,8 @@
   },
   "dependencies": {
     "nitropack": "^2.9.0",
-    "xmlbuilder2": "^3.0.2"
+    "xmlbuilder2": "^3.0.2",
+    "esbuild": "^0.20.1"
   },
   "ng-update": {
     "packageGroup": [
