@@ -1,3 +1,9 @@
+# [1.5.0-beta.14](https://github.com/analogjs/analog/compare/v1.5.0-beta.13...v1.5.0-beta.14) (2024-06-12)
+
+### Bug Fixes
+
+- **platform:** add Firebase packages to known SSR transform list ([#1154](https://github.com/analogjs/analog/issues/1154)) ([79c4575](https://github.com/analogjs/analog/commit/79c457576e44a315899c061b3370f6bc68e29ae4))
+
 # [1.5.0-beta.13](https://github.com/analogjs/analog/compare/v1.5.0-beta.12...v1.5.0-beta.13) (2024-06-11)
 
 ### Bug Fixes
