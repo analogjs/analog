@@ -44,16 +44,16 @@ With pnpm:
 pnpm create analog@latest
 ```
 
-With Yarn:
-
-```sh
-yarn create analog@latest
-```
-
 With Bun:
 
 ```sh
 bun create analog@latest
+```
+
+With Yarn:
+
+```sh
+yarn create analog
 ```
 
 Follow the prompts to scaffold the project and start the development server.
