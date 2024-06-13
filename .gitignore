@@ -65,3 +65,4 @@ tmpanalogapp*
 ~/.nvm/nvm.sh
 
 .nx/cache
+.nx/workspace-data
