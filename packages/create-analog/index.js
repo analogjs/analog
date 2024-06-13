@@ -375,12 +375,12 @@ function addTailwindDevDependencies(pkg) {
 function addYarnDevDependencies(pkg, template) {
   // v18
   if (template === 'latest' || template === 'blog') {
-    pkg.devDependencies['@nx/angular'] = ['^19.1.0'];
-    pkg.devDependencies['@nx/devkit'] = ['^19.1.0'];
-    pkg.devDependencies['@nx/vite'] = ['^19.1.0'];
-    pkg.devDependencies['nx'] = ['^19.1.0'];
+    pkg.devDependencies['@nx/angular'] = '^19.1.0';
+    pkg.devDependencies['@nx/devkit'] = '^19.1.0';
+    pkg.devDependencies['@nx/vite'] = '^19.1.0';
+    pkg.devDependencies['nx'] = '^19.1.0';
   } else if (template === 'angular-v17') {
-    pkg.devDependencies['@angular-devkit/build-angular'] = ['^17.3.5'];
+    pkg.devDependencies['@angular-devkit/build-angular'] = '^17.2.0';
   }
 }
 
