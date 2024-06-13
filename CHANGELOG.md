@@ -1,3 +1,9 @@
+## [1.5.1-beta.1](https://github.com/analogjs/analog/compare/v1.5.0...v1.5.1-beta.1) (2024-06-13)
+
+### Bug Fixes
+
+- **create-analog:** correctly set package versions for yarn and pin Vite ([#1159](https://github.com/analogjs/analog/issues/1159)) ([847963c](https://github.com/analogjs/analog/commit/847963c25cd61c83cd1f8555fd4b996104850952))
+
 # [1.5.0](https://github.com/analogjs/analog/compare/v1.4.0...v1.5.0) (2024-06-12)
 
 ### Bug Fixes
