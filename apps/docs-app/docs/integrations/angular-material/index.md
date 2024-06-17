@@ -83,22 +83,31 @@ export default defineConfig(({ mode }) => {
 
 ```scss
 @use '@angular/material' as mat;
-@include mat.core();
 
-$analog-primary: mat.define-palette(mat.$indigo-palette);
-$analog-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
-$analog-warn: mat.define-palette(mat.$red-palette);
-$analog-theme: mat.define-light-theme(
+$theme: mat.define-theme(
   (
     color: (
-      primary: $analog-primary,
-      accent: $analog-accent,
-      warn: $analog-warn,
+      theme-type: light,
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
     ),
   )
 );
 
-@include mat.all-component-themes($analog-theme);
+body {
+  @include mat.all-component-themes($theme);
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  margin: 0;
+  padding: 30px;
+  height: 100%;
+}
+
+html {
+  height: 100%;
+}
+
+@include mat.core();
+@include mat.color-variants-backwards-compatibility($theme);
 ```
 
 ## Optional Step: Configuring Animations
