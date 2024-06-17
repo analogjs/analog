@@ -65,14 +65,8 @@ export default defineConfig(({ mode }) => {
   <!-- other headers -->
   <link rel="stylesheet" href="/src/styles.scss" />
   <link rel="preconnect" href="https://fonts.gstatic.com" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
-    rel="stylesheet"
-  />
-  <link
-    href="https://fonts.googleapis.com/icon?family=Material+Icons"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 </head>
 <body class="mat-typography">
   <!-- content -->
@@ -84,17 +78,19 @@ export default defineConfig(({ mode }) => {
 ```scss
 @use '@angular/material' as mat;
 
-$theme: mat.define-theme((
-  color: (
-    theme-type: light,
-    primary: mat.$azure-palette,
-    tertiary: mat.$blue-palette,
+$theme: mat.define-theme(
+  (
+    color: (
+      theme-type: light,
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
   )
-));
+);
 
 body {
   @include mat.all-component-themes($theme);
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
   margin: 0;
   padding: 30px;
   height: 100%;
