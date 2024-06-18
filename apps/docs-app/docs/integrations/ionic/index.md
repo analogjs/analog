@@ -101,7 +101,7 @@ pnpm install ionicons
 
 ## Step 2: Configuring Ionic Framework in your application
 
-1. Update your `vite.config.ts` file to exclude Ionic packages from the **SSR** process, adding them to the `noExternal` property. ionicons is required only if you installed the ionicons package. If you use Vitest, inline the @ionic/angular package to allow Vitest to build that package properly for Vitest.
+1. Update your `vite.config.ts` file to include Ionic packages in the **SSR** process, adding them to the `noExternal` array. ionicons is required only if you installed the ionicons package. If you use Vitest, inline the @ionic/angular package to allow Vitest to build that package properly for Vitest.
 
 ```ts
 export default defineConfig(({ mode }) => {
