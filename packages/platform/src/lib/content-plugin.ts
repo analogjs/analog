@@ -65,6 +65,13 @@ export function contentPlugin(
     {
       name: 'analogjs-content-file',
       enforce: 'post',
+      config() {
+        return {
+          define: {
+            ANALOG_CONTENT_RENDERER_PROVIDERS: highlighter === 'prism',
+          },
+        };
+      },
       async load(id) {
         if (!id.includes('analog-content-file=true')) {
           return;
