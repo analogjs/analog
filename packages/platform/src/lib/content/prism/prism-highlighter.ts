@@ -1,21 +1,20 @@
-import { MarkedContentHighlighter } from '@analogjs/content';
-import { Injectable } from '@angular/core';
 import { markedHighlight } from 'marked-highlight';
 
 import 'prismjs';
-import 'prismjs/components/prism-bash';
-import 'prismjs/components/prism-css';
-import 'prismjs/components/prism-javascript';
-import 'prismjs/components/prism-json';
-import 'prismjs/components/prism-markup';
-import 'prismjs/components/prism-typescript';
-import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
-import 'prismjs/plugins/toolbar/prism-toolbar';
-import './prism/angular';
+import 'prismjs/components/prism-bash.js';
+import 'prismjs/components/prism-css.js';
+import 'prismjs/components/prism-javascript.js';
+import 'prismjs/components/prism-json.js';
+import 'prismjs/components/prism-markup.js';
+import 'prismjs/components/prism-typescript.js';
+import 'prismjs/plugins/toolbar/prism-toolbar.js';
+import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard.js';
+import './angular.js';
+
+import { MarkedContentHighlighter } from '../marked-content-highlighter.js';
 
 declare const Prism: typeof import('prismjs');
 
-@Injectable()
 export class PrismHighlighter extends MarkedContentHighlighter {
   override augmentCodeBlock(code: string, lang: string): string {
     const classes =
@@ -38,8 +37,8 @@ export class PrismHighlighter extends MarkedContentHighlighter {
     ---------------------------------------------------------------------------------------
     The \`diff\` language and plugin are not available in the provided setup.
     To enable it, add the following imports your \`main.ts\`:
-      import 'prismjs/components/prism-diff';
-      import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
+      import 'prismjs/components/prism-diff.js';
+      import 'prismjs/plugins/diff-highlight/prism-diff-highlight.js';
     ---------------------------------------------------------------------------------------
             `);
         }
@@ -50,7 +49,7 @@ export class PrismHighlighter extends MarkedContentHighlighter {
     ---------------------------------------------------------------------------------------
     The requested language '${lang}' is not available in the provided setup.
     To enable it, add the following import your \`main.ts\`:
-      import 'prismjs/components/prism-${lang}';
+      import 'prismjs/components/prism-${lang}.js';
     ---------------------------------------------------------------------------------------
               `);
           }

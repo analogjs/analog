@@ -2,6 +2,8 @@ import type { PluginOptions } from '@analogjs/vite-plugin-angular';
 import type { NitroConfig, PrerenderRoute } from 'nitropack';
 import type { SitemapConfig } from '@analogjs/vite-plugin-nitro';
 
+import type { WithShikiHighlighterOptions } from './content/shiki/index.js';
+
 export interface PrerenderOptions {
   /**
    * Add additional routes to prerender through crawling page links.
@@ -34,6 +36,10 @@ export interface Options {
   jit?: boolean;
   index?: string;
   workspaceRoot?: string;
+  content?: {
+    highlighter: 'shiki' | 'prism';
+    shikiOptions?: WithShikiHighlighterOptions;
+  };
 }
 
 export interface PrerenderContentDir {

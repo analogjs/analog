@@ -22,7 +22,7 @@ export const getContentFilesList = () =>
  */
 export const getContentFiles = () =>
   import.meta.glob(['/src/content/**/*.md'], {
-    query: '?raw',
+    query: '?analog-content-file=true',
     import: 'default',
   });
 

@@ -1,13 +1,32 @@
 import { Plugin } from 'vite';
 import { readFileSync } from 'node:fs';
 
+import {
+  WithShikiHighlighterOptions,
+  getShikiHighlighter,
+} from './content/shiki/index.js';
+import { getPrismHighlighter } from './content/prism/index.js';
+
 interface Content {
   code: string;
   attributes: string;
 }
 
-export function contentPlugin(): Plugin[] {
+export function contentPlugin(
+  {
+    highlighter,
+    shikiOptions,
+  }: {
+    highlighter?: 'shiki' | 'prism';
+    shikiOptions?: WithShikiHighlighterOptions;
+  } = { highlighter: 'prism' }
+): Plugin[] {
   const cache = new Map<string, Content>();
+
+  const markedHighlighter =
+    highlighter === 'shiki'
+      ? getShikiHighlighter(shikiOptions)
+      : getPrismHighlighter();
 
   return [
     {
@@ -41,6 +60,36 @@ export function contentPlugin(): Plugin[] {
         cache.set(id, content);
 
         return `export default ${content.attributes}`;
+      },
+    },
+    {
+      name: 'analogjs-content-file',
+      enforce: 'post',
+      async load(id) {
+        if (!id.includes('analog-content-file=true')) {
+          return;
+        }
+
+        const fm: any = await import('front-matter');
+        // The `default` property will be available in CommonJS environment, for instance,
+        // when running unit tests. It's safe to retrieve `default` first, since we still
+        // fallback to the original implementation.
+        const frontmatterFn = fm.default || fm;
+        const fileContents = readFileSync(id.split('?')[0], 'utf8');
+        const { body, frontmatter } = frontmatterFn(fileContents);
+
+        // parse markdown and highlight
+        const { MarkedSetupService } = await import(
+          './content/marked-setup.service.js'
+        );
+        const markedSetupService = new MarkedSetupService(markedHighlighter);
+        const mdContent = (await markedSetupService
+          .getMarkedInstance()
+          .parse(body)) as unknown as string;
+
+        return `export default ${JSON.stringify(
+          `---\n${frontmatter}\n---\n\n${mdContent}`
+        )}`;
       },
     },
   ];

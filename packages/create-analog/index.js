@@ -402,6 +402,14 @@ function ensureSyntaxHighlighter(root, pkg, highlighter) {
   for (const [name, version] of Object.entries(dependencies)) {
     pkg.dependencies[name] = version;
   }
+
+  const viteConfigPath = path.join(root, 'vite.config.ts');
+  const viteConfigContent = fs.readFileSync(viteConfigPath, 'utf-8');
+
+  fs.writeFileSync(
+    viteConfigPath,
+    viteConfigContent.replace(/__CONTENT_HIGHLIGHTER__/g, highlighter)
+  );
 }
 
 init().catch((e) => {

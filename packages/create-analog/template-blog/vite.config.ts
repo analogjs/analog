@@ -13,6 +13,9 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     analog({
+      content: {
+        highlighter: '__CONTENT_HIGHLIGHTER__',
+      },
       prerender: {
         routes: ['/blog', '/blog/2022-12-27-my-first-post'],
       },
