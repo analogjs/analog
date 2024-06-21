@@ -87,13 +87,9 @@ export function contentPlugin(
           .getMarkedInstance()
           .parse(body)) as unknown as string;
 
-        if (highlighter === 'prism') {
-          return `export default ${JSON.stringify(fileContents)}`;
-        } else {
-          return `export default ${JSON.stringify(
-            `---\n${frontmatter}\n---\n\n${mdContent}`
-          )}`;
-        }
+        return `export default ${JSON.stringify(
+          `---\n${frontmatter}\n---\n\n${mdContent}`
+        )}`;
       },
     },
   ];
