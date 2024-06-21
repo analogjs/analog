@@ -1,3 +1,9 @@
+# [1.6.0-beta.1](https://github.com/analogjs/analog/compare/v1.5.1-beta.1...v1.6.0-beta.1) (2024-06-21)
+
+### Features
+
+- **content:** introduce build-time rendering/highlighting for markdown ([#1174](https://github.com/analogjs/analog/issues/1174)) ([9ccf6b2](https://github.com/analogjs/analog/commit/9ccf6b296b3d54a3069eb87b84bdbd80377ff7b4))
+
 ## [1.5.1-beta.1](https://github.com/analogjs/analog/compare/v1.5.0...v1.5.1-beta.1) (2024-06-13)
 
 ### Bug Fixes
