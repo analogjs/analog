@@ -8,16 +8,14 @@ export interface MarkdownRendererOptions {
   loadMermaid?: () => Promise<typeof import('mermaid')>;
 }
 
-const CONTENT_RENDERER_PROVIDERS: Provider[] = [];
-declare const ANALOG_CONTENT_RENDERER_PROVIDERS: boolean;
-
-if (ANALOG_CONTENT_RENDERER_PROVIDERS === true) {
-  CONTENT_RENDERER_PROVIDERS.push(MarkedSetupService, {
+const CONTENT_RENDERER_PROVIDERS: Provider[] = [
+  MarkedSetupService,
+  {
     provide: ContentRenderer,
     useFactory: () => new MarkdownContentRendererService(),
     deps: [MarkedSetupService],
-  });
-}
+  },
+];
 
 export function withMarkdownRenderer(
   options?: MarkdownRendererOptions
