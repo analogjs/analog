@@ -23,6 +23,11 @@ export function contentPlugin(
 ): Plugin[] {
   const cache = new Map<string, Content>();
 
+  const markedHighlighter =
+    highlighter === 'shiki'
+      ? getShikiHighlighter(shikiOptions)
+      : getPrismHighlighter();
+
   return [
     {
       name: 'analogjs-content-frontmatter',
@@ -77,11 +82,6 @@ export function contentPlugin(
         const { MarkedSetupService } = await import(
           './content/marked-setup.service.js'
         );
-
-        const markedHighlighter =
-          highlighter === 'shiki'
-            ? getShikiHighlighter(shikiOptions)
-            : getPrismHighlighter();
         const markedSetupService = new MarkedSetupService(markedHighlighter);
         const mdContent = (await markedSetupService
           .getMarkedInstance()
