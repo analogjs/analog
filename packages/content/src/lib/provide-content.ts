@@ -1,7 +1,5 @@
 import { Provider, InjectionToken } from '@angular/core';
-import { ContentRenderer } from './content-renderer';
-import { MarkdownContentRendererService } from './markdown-content-renderer.service';
-import { MarkedSetupService } from './marked-setup.service';
+import { ContentRenderer, NoopContentRenderer } from './content-renderer';
 import { RenderTaskService } from './render-task.service';
 
 export interface MarkdownRendererOptions {
@@ -9,11 +7,9 @@ export interface MarkdownRendererOptions {
 }
 
 const CONTENT_RENDERER_PROVIDERS: Provider[] = [
-  MarkedSetupService,
   {
     provide: ContentRenderer,
-    useFactory: () => new MarkdownContentRendererService(),
-    deps: [MarkedSetupService],
+    useClass: NoopContentRenderer,
   },
 ];
 
