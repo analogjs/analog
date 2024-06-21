@@ -19,3 +19,13 @@ export abstract class ContentRenderer {
   // eslint-disable-next-line
   enhance() {}
 }
+
+export class NoopContentRenderer implements ContentRenderer {
+  async render(val: string) {
+    return val;
+  }
+  enhance() {}
+  getContentHeadings() {
+    return [];
+  }
+}

@@ -1,8 +1,3 @@
-import {
-  MarkedContentHighlighter,
-  MERMAID_IMPORT_TOKEN,
-} from '@analogjs/content';
-import { inject, Injectable, InjectionToken } from '@angular/core';
 import markedShiki from 'marked-shiki';
 import {
   type BundledLanguage,
@@ -13,6 +8,8 @@ import {
   type CodeToHastOptionsCommon,
   getHighlighter,
 } from 'shiki';
+
+import { MarkedContentHighlighter } from '../marked-content-highlighter.js';
 
 export type ShikiHighlighterOptions = Parameters<typeof getHighlighter>[0];
 export type ShikiHighlightOptions = Partial<
@@ -37,29 +34,20 @@ export const defaultHighlighterOptions = {
   themes: ['github-dark', 'github-light'],
 };
 
-export const [
-  SHIKI_HIGHLIGHTER_OPTIONS,
-  SHIKI_HIGHLIGHT_OPTIONS,
-  SHIKI_CONTAINER_OPTION,
-] = [
-  new InjectionToken<ShikiHighlighterOptions>('SHIKI_HIGHLIGHTER_OPTIONS'),
-  new InjectionToken<ShikiHighlightOptions>('SHIKI_HIGHLIGHT_OPTIONS'),
-  new InjectionToken<string>('SHIKI_CONTAINER_OPTION'),
-];
-
-@Injectable()
 export class ShikiHighlighter extends MarkedContentHighlighter {
-  private readonly highlighterOptions = inject(SHIKI_HIGHLIGHTER_OPTIONS);
-  private readonly highlightOptions = inject(SHIKI_HIGHLIGHT_OPTIONS);
-  private readonly highlighterContainer = inject(SHIKI_CONTAINER_OPTION);
-  private readonly hasLoadMermaid = inject(MERMAID_IMPORT_TOKEN, {
-    optional: true,
-  });
   private readonly highlighter = getHighlighter(this.highlighterOptions);
 
-  override getHighlightExtension() {
+  constructor(
+    private highlighterOptions: ShikiHighlighterOptions,
+    private highlightOptions: ShikiHighlightOptions,
+    private container: string,
+    private hasLoadMermaid = false
+  ) {
+    super();
+  }
+  getHighlightExtension() {
     return markedShiki({
-      container: this.highlighterContainer,
+      container: this.container,
       highlight: async (code, lang, props) => {
         if (this.hasLoadMermaid && lang === 'mermaid') {
           return `<pre class="mermaid">${code}</pre>`;
@@ -73,7 +61,7 @@ export class ShikiHighlighter extends MarkedContentHighlighter {
               lang,
               // required by `transformerMeta*`
               meta: { __raw: props.join(' ') },
-              themes: { dark: 'github-dark', light: 'github-light' },
+              theme: 'github-dark',
             },
             this.highlightOptions
           )

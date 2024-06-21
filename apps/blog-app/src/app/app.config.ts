@@ -14,12 +14,10 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     provideClientHydration(),
     provideContent(
-      withMarkdownRenderer({ loadMermaid: () => import('mermaid') }),
-      withShikiHighlighter({
-        highlighter: {
-          additionalLangs: ['mermaid'],
-        },
-      })
+      withMarkdownRenderer({
+        loadMermaid: () => import('mermaid'),
+      }),
+      withShikiHighlighter()
     ),
     provideFileRouter(
       withInMemoryScrolling({ anchorScrolling: 'enabled' }),

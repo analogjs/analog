@@ -19,6 +19,14 @@ export default defineConfig(() => {
     plugins: [
       analog({
         static: true,
+        content: {
+          highlighter: 'shiki',
+          shikiOptions: {
+            highlighter: {
+              additionalLangs: ['mermaid'],
+            },
+          },
+        },
         prerender: {
           routes: async () => {
             return [

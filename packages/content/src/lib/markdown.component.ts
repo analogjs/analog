@@ -20,7 +20,7 @@ import { catchError, map, mergeMap } from 'rxjs/operators';
 
 import { AnchorNavigationDirective } from './anchor-navigation.directive';
 import { ContentRenderer } from './content-renderer';
-import { MERMAID_IMPORT_TOKEN } from './markdown-content-renderer.service';
+import { MERMAID_IMPORT_TOKEN } from './provide-content';
 
 @Component({
   selector: 'analog-markdown',
