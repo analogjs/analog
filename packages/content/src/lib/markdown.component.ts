@@ -49,7 +49,6 @@ export default class AnalogMarkdownComponent
 
   public content$: Observable<SafeHtml> = this.getContentSource();
 
-  @Input() contentHeadingsId = 'analog-content-id';
   @Input() content!: string | object | undefined | null;
   @Input() classes = 'analog-markdown';
 

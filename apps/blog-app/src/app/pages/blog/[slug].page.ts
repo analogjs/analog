@@ -30,10 +30,7 @@ export const routeMeta: RouteMeta = {
         </ul>
       </div>
 
-      <analog-markdown
-        [content]="post.content"
-        [contentHeadingsId]="post.filename"
-      ></analog-markdown>
+      <analog-markdown [content]="post.content"></analog-markdown>
     </ng-container>
   `,
 })
