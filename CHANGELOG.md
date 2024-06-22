@@ -1,3 +1,9 @@
+# [1.6.0-beta.4](https://github.com/analogjs/analog/compare/v1.6.0-beta.3...v1.6.0-beta.4) (2024-06-22)
+
+### Bug Fixes
+
+- **content:** import prismjs on client for prism highlighter ([#1178](https://github.com/analogjs/analog/issues/1178)) ([334c189](https://github.com/analogjs/analog/commit/334c1891efa20d77fad5394adc121a7bf14d2b21))
+
 # [1.6.0-beta.3](https://github.com/analogjs/analog/compare/v1.6.0-beta.2...v1.6.0-beta.3) (2024-06-22)
 
 ### Bug Fixes
