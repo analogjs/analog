@@ -1,3 +1,9 @@
+# [1.6.0-beta.2](https://github.com/analogjs/analog/compare/v1.6.0-beta.1...v1.6.0-beta.2) (2024-06-22)
+
+### Bug Fixes
+
+- **platform:** lazy load highlighters ([#1176](https://github.com/analogjs/analog/issues/1176)) ([707c532](https://github.com/analogjs/analog/commit/707c5326ca32d27cab6da731e214ac18e125dd67))
+
 # [1.6.0-beta.1](https://github.com/analogjs/analog/compare/v1.5.1-beta.1...v1.6.0-beta.1) (2024-06-21)
 
 ### Features
