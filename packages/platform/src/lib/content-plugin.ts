@@ -1,11 +1,8 @@
 import { Plugin } from 'vite';
 import { readFileSync } from 'node:fs';
 
-import {
-  WithShikiHighlighterOptions,
-  getShikiHighlighter,
-} from './content/shiki/index.js';
-import { getPrismHighlighter } from './content/prism/index.js';
+import { WithShikiHighlighterOptions } from './content/shiki/index.js';
+import { MarkedContentHighlighter } from './content/marked-content-highlighter.js';
 
 interface Content {
   code: string;
@@ -23,10 +20,7 @@ export function contentPlugin(
 ): Plugin[] {
   const cache = new Map<string, Content>();
 
-  const markedHighlighter =
-    highlighter === 'shiki'
-      ? getShikiHighlighter(shikiOptions)
-      : getPrismHighlighter();
+  let markedHighlighter: MarkedContentHighlighter;
 
   return [
     {
@@ -65,6 +59,19 @@ export function contentPlugin(
     {
       name: 'analogjs-content-file',
       enforce: 'post',
+      async config() {
+        if (highlighter === 'shiki') {
+          const { getShikiHighlighter } = await import(
+            './content/shiki/index.js'
+          );
+          markedHighlighter = getShikiHighlighter(shikiOptions);
+        } else {
+          const { getPrismHighlighter } = await import(
+            './content/prism/index.js'
+          );
+          markedHighlighter = getPrismHighlighter();
+        }
+      },
       async load(id) {
         if (!id.includes('analog-content-file=true')) {
           return;
