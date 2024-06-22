@@ -1,3 +1,9 @@
+# [1.6.0-beta.3](https://github.com/analogjs/analog/compare/v1.6.0-beta.2...v1.6.0-beta.3) (2024-06-22)
+
+### Bug Fixes
+
+- disable esbuild if not configured to enable correct sourcemaps ([#1177](https://github.com/analogjs/analog/issues/1177)) ([c51e472](https://github.com/analogjs/analog/commit/c51e472e9cd8f185531d2fc0691fce76abdb2204))
+
 # [1.6.0-beta.2](https://github.com/analogjs/analog/compare/v1.6.0-beta.1...v1.6.0-beta.2) (2024-06-22)
 
 ### Bug Fixes
