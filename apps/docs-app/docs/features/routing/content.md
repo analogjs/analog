@@ -61,11 +61,31 @@ export const appConfig: ApplicationConfig = {
 
 #### Using the `diff` Highlight Plugin
 
-Analog supports highlighting diff changes with PrismJS. Add the `diff`
-language and `diff-highlight` plugin imports to `app.config.ts`:
+Analog supports highlighting diff changes with PrismJS.
+
+Add the `prism-diff` language to the `additionalLangs` in the `analog` plugin:
 
 ```ts
-import 'prismjs/components/prism-diff';
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+export default defineConfig({
+  // ...
+  plugins: [
+    analog({
+      content: {
+        prismOptions: {
+          additionalLangs: ['prism-diff'],
+        },
+      },
+    }),
+  ],
+});
+```
+
+Add the `diff-highlight` plugin import to the `app.config.ts`:
+
+```ts
 import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
 ```
 

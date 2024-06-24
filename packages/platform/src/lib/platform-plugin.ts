@@ -29,10 +29,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ...viteNitroPlugin(platformOptions, nitroOptions),
     (platformOptions.ssr ? ssrBuildPlugin() : false) as Plugin,
     ...routerPlugin(),
-    ...contentPlugin({
-      highlighter: platformOptions?.content?.highlighter,
-      shikiOptions: platformOptions?.content?.shikiOptions,
-    }),
+    ...contentPlugin(platformOptions?.content),
     ...angular({
       jit: platformOptions.jit,
       workspaceRoot: platformOptions.workspaceRoot,

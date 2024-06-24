@@ -2,21 +2,32 @@ import { Plugin } from 'vite';
 import { readFileSync } from 'node:fs';
 
 import { WithShikiHighlighterOptions } from './content/shiki/index.js';
-import { MarkedContentHighlighter } from './content/marked-content-highlighter.js';
+import { MarkedContentHighlighter } from './content/marked/marked-content-highlighter.js';
+import { WithPrismHighlighterOptions } from './content/prism/index.js';
+import { WithMarkedOptions } from './content/marked/index.js';
 
 interface Content {
   code: string;
   attributes: string;
 }
 
+export type ContentPluginOptions = {
+  highlighter?: 'shiki' | 'prism';
+  markedOptions?: WithMarkedOptions;
+  shikiOptions?: WithShikiHighlighterOptions;
+  prismOptions?: WithPrismHighlighterOptions;
+};
+
 export function contentPlugin(
   {
     highlighter,
+    markedOptions,
     shikiOptions,
-  }: {
-    highlighter?: 'shiki' | 'prism';
-    shikiOptions?: WithShikiHighlighterOptions;
-  } = { highlighter: 'prism' }
+    prismOptions,
+  }: ContentPluginOptions = {
+    highlighter: 'prism',
+    markedOptions: { mangle: true },
+  }
 ): Plugin[] {
   const cache = new Map<string, Content>();
 
@@ -70,6 +81,26 @@ export function contentPlugin(
             './content/prism/index.js'
           );
           markedHighlighter = getPrismHighlighter();
+
+          const langs = [
+            'bash',
+            'css',
+            'javascript',
+            'json',
+            'markup',
+            'typescript',
+          ];
+
+          if (
+            Array.isArray(prismOptions?.additionalLangs) &&
+            prismOptions?.additionalLangs?.length > 0
+          ) {
+            langs.push(...prismOptions.additionalLangs);
+          }
+
+          const loadLanguages = await import('prismjs/components/index.js');
+
+          (loadLanguages as unknown as { default: Function }).default(langs);
         }
       },
       async load(id) {
@@ -87,9 +118,12 @@ export function contentPlugin(
 
         // parse markdown and highlight
         const { MarkedSetupService } = await import(
-          './content/marked-setup.service.js'
+          './content/marked/marked-setup.service.js'
         );
-        const markedSetupService = new MarkedSetupService(markedHighlighter);
+        const markedSetupService = new MarkedSetupService(
+          markedOptions,
+          markedHighlighter
+        );
         const mdContent = (await markedSetupService
           .getMarkedInstance()
           .parse(body)) as unknown as string;
