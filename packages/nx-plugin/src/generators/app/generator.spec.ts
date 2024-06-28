@@ -226,7 +226,7 @@ describe('nx-plugin generator', () => {
     const hasTrpcClientFile = tree.exists('apps/trpc-app/src/trpc-client.ts');
     const hasNoteFile = tree.exists('apps/trpc-app/src/note.ts');
     const hasTrpcServerRoute = tree.exists(
-      'apps/trpc-app/src/server/routes/trpc/[trpc].ts',
+      'apps/trpc-app/src/server/routes/api/trpc/[trpc].ts',
     );
     expect(hasTrpcClientFile).toBeTruthy();
     expect(hasNoteFile).toBeTruthy();

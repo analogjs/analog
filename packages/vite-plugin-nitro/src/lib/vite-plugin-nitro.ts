@@ -46,7 +46,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let hasAPIDir = false;
 
   return [
-    (options?.ssr ? devServerPlugin(options) : false) as Plugin,
+    (options?.ssr
+      ? devServerPlugin({
+          entryServer: options?.entryServer,
+          index: options?.index,
+          routeRules: nitroOptions?.routeRules,
+        })
+      : false) as Plugin,
     {
       name: '@analogjs/vite-plugin-nitro',
       async config(userConfig, { mode, command }) {
@@ -288,17 +294,25 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                * as it won't resolve the renderer.ts file correctly in node.
                */
               import { eventHandler } from 'h3';
-
+              import { eventHandler, getResponseHeader } from 'h3';
+              
               // @ts-ignore
               import renderer from '${ssrEntry}';
               // @ts-ignore
               const template = \`${indexContents}\`;
 
               export default eventHandler(async (event) => {
+                const noSSR = getResponseHeader(event, 'x-analog-no-ssr');
+
+                if (noSSR === 'true') {
+                  return template;
+                }
+              
                 const html = await renderer(event.node.req.url, template, {
                   req: event.node.req,
                   res: event.node.res,
                 });
+
                 return html;
               });
               `,
