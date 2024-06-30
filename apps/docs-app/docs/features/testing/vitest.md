@@ -31,7 +31,7 @@ yarn add @analogjs/platform --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/platform
+pnpm install -w @analogjs/platform --save-dev
 ```
 
   </TabItem>
@@ -53,7 +53,7 @@ To add Vitest manually, install the necessary packages:
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/vite-plugin-angular @analogjs/platform jsdom @nx/vite --save-dev
+npm install @analogjs/vite-plugin-angular @analogjs/vitest-angular jsdom --save-dev
 ```
 
   </TabItem>
@@ -61,7 +61,7 @@ npm install @analogjs/vite-plugin-angular @analogjs/platform jsdom @nx/vite --sa
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/vite-plugin-angular @analogjs/platform jsdom @nx/vite --dev
+yarn add @analogjs/vite-plugin-angular @analogjs/vitest-angular jsdom --dev
 ```
 
   </TabItem>
@@ -69,7 +69,7 @@ yarn add @analogjs/vite-plugin-angular @analogjs/platform jsdom @nx/vite --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/vite-plugin-angular @analogjs/platform jsdom @nx/vite
+pnpm install -w @analogjs/vite-plugin-angular @analogjs/vitest-angular jsdom --save-dev
 ```
 
   </TabItem>
@@ -103,7 +103,7 @@ export default defineConfig(({ mode }) => ({
 Next, define a `src/test-setup.ts` file to setup the `TestBed`:
 
 ```ts
-import '@analogjs/vite-plugin-angular/setup-vitest';
+import '@analogjs/vitest-angular/setup-zone';
 
 import {
   BrowserDynamicTestingModule,
@@ -117,7 +117,7 @@ getTestBed().initTestEnvironment(
 );
 ```
 
-Next, update the `test` target in the `angular.json` to use the `@analogjs/platform:vitest` builder:
+Next, update the `test` target in the `angular.json` to use the `@analogjs/vitest-angular:test` builder:
 
 ```json
 {
@@ -132,7 +132,7 @@ Next, update the `test` target in the `angular.json` to use the `@analogjs/platf
         "serve": ...,
         "extract-i18n": ...,
         "test": {
-          "builder": "@analogjs/platform:vitest"
+          "builder": "@analogjs/vitest-angular:test"
         }
       }
     }
@@ -307,6 +307,8 @@ The snapshots generated should be reviewed and added to version control.
 
 If you are using `paths` in your `tsconfig.json`, support for those aliases can be added to the `vite.config.ts`.
 
+### With Angular CLI
+
 First, install the `vite-tsconfig-paths` package.
 
 <Tabs groupId="package-manager">
@@ -329,7 +331,7 @@ yarn add vite-tsconfig-paths --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w vite-tsconfig-paths
+pnpm install -w vite-tsconfig-paths --save-dev
 ```
 
   </TabItem>
@@ -346,5 +348,21 @@ import viteTsConfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig(({ mode }) => ({
   plugins: [angular(), viteTsConfigPaths()],
+}));
+```
+
+### With Nx
+
+For Nx workspaces, import and use the `nxViteTsPaths` plugin from the `@nx/vite` package.
+
+```ts
+/// <reference types="vitest" />
+import { defineConfig } from 'vite';
+
+import angular from '@analogjs/vite-plugin-angular';
+import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+
+export default defineConfig(({ mode }) => ({
+  plugins: [angular(), nxViteTsPaths()],
 }));
 ```
