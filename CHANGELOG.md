@@ -1,3 +1,9 @@
+# [1.6.0-beta.6](https://github.com/analogjs/analog/compare/v1.6.0-beta.5...v1.6.0-beta.6) (2024-07-01)
+
+### Features
+
+- **platform:** add support for configuring marked, and Prism ([#1185](https://github.com/analogjs/analog/issues/1185)) ([79e6242](https://github.com/analogjs/analog/commit/79e6242a72e5fabbfe177de14fee5ddb888e92a2))
+
 # [1.6.0-beta.5](https://github.com/analogjs/analog/compare/v1.6.0-beta.4...v1.6.0-beta.5) (2024-06-30)
 
 ### Features
