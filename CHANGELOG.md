@@ -1,3 +1,22 @@
+# [1.6.0](https://github.com/analogjs/analog/compare/v1.5.0...v1.6.0) (2024-07-01)
+
+### Bug Fixes
+
+- **content:** import prismjs on client for prism highlighter ([#1178](https://github.com/analogjs/analog/issues/1178)) ([334c189](https://github.com/analogjs/analog/commit/334c1891efa20d77fad5394adc121a7bf14d2b21))
+- **create-analog:** add vitest-angular to package.json deps ([#1187](https://github.com/analogjs/analog/issues/1187)) ([65869c6](https://github.com/analogjs/analog/commit/65869c6bb216e103d6651f9aa5ffd30b6cb46664))
+- **create-analog:** correctly set package versions for yarn and pin Vite ([#1159](https://github.com/analogjs/analog/issues/1159)) ([847963c](https://github.com/analogjs/analog/commit/847963c25cd61c83cd1f8555fd4b996104850952))
+- disable esbuild if not configured to enable correct sourcemaps ([#1177](https://github.com/analogjs/analog/issues/1177)) ([c51e472](https://github.com/analogjs/analog/commit/c51e472e9cd8f185531d2fc0691fce76abdb2204))
+- **nx-plugin:** set nx variable for init file template ([#1186](https://github.com/analogjs/analog/issues/1186)) ([e13643c](https://github.com/analogjs/analog/commit/e13643c40346fd104e648f4481441b5b7a09ad02))
+- **platform:** lazy load highlighters ([#1176](https://github.com/analogjs/analog/issues/1176)) ([707c532](https://github.com/analogjs/analog/commit/707c5326ca32d27cab6da731e214ac18e125dd67))
+- **vite-plugin-angular:** prevent context loss for "each" tests ([#1190](https://github.com/analogjs/analog/issues/1190)) ([13df344](https://github.com/analogjs/analog/commit/13df34478496e5225f41e6071f0a9c9e23a9190a))
+- **vite-plugin-angular:** prevent context loss for "each" tests ([#1190](https://github.com/analogjs/analog/issues/1190)) ([610f406](https://github.com/analogjs/analog/commit/610f40621efe91d544edb34c717296c3cf872081))
+
+### Features
+
+- **content:** introduce build-time rendering/highlighting for markdown ([#1174](https://github.com/analogjs/analog/issues/1174)) ([9ccf6b2](https://github.com/analogjs/analog/commit/9ccf6b296b3d54a3069eb87b84bdbd80377ff7b4))
+- **platform:** add support for configuring marked, and Prism ([#1185](https://github.com/analogjs/analog/issues/1185)) ([79e6242](https://github.com/analogjs/analog/commit/79e6242a72e5fabbfe177de14fee5ddb888e92a2))
+- setup Vitest with standalone vitest-angular package ([#1184](https://github.com/analogjs/analog/issues/1184)) ([f6c2d00](https://github.com/analogjs/analog/commit/f6c2d0086b5b03f1dc4514242f51f0cac17d2cfe))
+
 # [1.6.0-beta.9](https://github.com/analogjs/analog/compare/v1.6.0-beta.8...v1.6.0-beta.9) (2024-07-01)
 
 ### Bug Fixes
