@@ -1,3 +1,9 @@
+# [1.6.0-beta.7](https://github.com/analogjs/analog/compare/v1.6.0-beta.6...v1.6.0-beta.7) (2024-07-01)
+
+### Bug Fixes
+
+- **nx-plugin:** set nx variable for init file template ([#1186](https://github.com/analogjs/analog/issues/1186)) ([e13643c](https://github.com/analogjs/analog/commit/e13643c40346fd104e648f4481441b5b7a09ad02))
+
 # [1.6.0-beta.6](https://github.com/analogjs/analog/compare/v1.6.0-beta.5...v1.6.0-beta.6) (2024-07-01)
 
 ### Features
