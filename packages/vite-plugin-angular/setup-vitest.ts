@@ -229,22 +229,25 @@ const bindDescribe = (originalVitestFn: {
 /**
  * bind test method to wrap test.each function
  */
-const bindTest = (originalVitestFn: {
-  apply: (
-    arg0: any,
-    arg1: any[]
-  ) => {
-    (): any;
-    new (): any;
-    apply: { (arg0: any, arg1: any[]): any; new (): any };
-  };
-}) =>
+const bindTest = (
+  self: any,
+  originalVitestFn: {
+    apply: (
+      arg0: any,
+      arg1: any[]
+    ) => {
+      (): any;
+      new (): any;
+      apply: { (arg0: any, arg1: any[]): any; new (): any };
+    };
+  }
+) =>
   function (...eachArgs: any) {
     return function (...args: any[]) {
       args[1] = wrapTestInZone(args[1]);
 
       // @ts-ignore
-      return originalVitestFn.apply(this, eachArgs).apply(this, args);
+      return originalVitestFn.apply(self, eachArgs).apply(self, args);
     };
   };
 
@@ -269,9 +272,9 @@ const bindTest = (originalVitestFn: {
 
     return originalvitestFn.apply(this, args);
   };
-  env[methodName].each = bindTest(originalvitestFn.each);
-  env[methodName].only = bindTest(originalvitestFn.only);
-  env[methodName].skip = bindTest(originalvitestFn.skip);
+  env[methodName].each = bindTest(originalvitestFn, originalvitestFn.each);
+  env[methodName].only = bindTest(originalvitestFn, originalvitestFn.only);
+  env[methodName].skip = bindTest(originalvitestFn, originalvitestFn.skip);
 
   if (methodName === 'test' || methodName === 'it') {
     env[methodName].todo = function (...args: any) {
