@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-109-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-110-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -246,6 +246,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://pranavramesh.dev"><img src="https://avatars.githubusercontent.com/u/23617187?v=4?s=100" width="100px;" alt="Pranav Ramesh"/><br /><sub><b>Pranav Ramesh</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Laphatize" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://snyder.tech"><img src="https://avatars.githubusercontent.com/u/707567?v=4?s=100" width="100px;" alt="Ben Snyder"/><br /><sub><b>Ben Snyder</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=benpsnyder" title="Documentation">📖</a> <a href="#infra-benpsnyder" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://wordman.dev"><img src="https://avatars.githubusercontent.com/u/6104311?v=4?s=100" width="100px;" alt="Jan-Niklas W."/><br /><sub><b>Jan-Niklas W.</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=niklas-wortmann" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/gultyayev"><img src="https://avatars.githubusercontent.com/u/22374911?v=4?s=100" width="100px;" alt="Sergey Gultyayev (Serhii Hultiaiev)"/><br /><sub><b>Sergey Gultyayev (Serhii Hultiaiev)</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=gultyayev" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
