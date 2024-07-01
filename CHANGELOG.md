@@ -1,3 +1,9 @@
+# [1.6.0-beta.8](https://github.com/analogjs/analog/compare/v1.6.0-beta.7...v1.6.0-beta.8) (2024-07-01)
+
+### Bug Fixes
+
+- **create-analog:** add vitest-angular to package.json deps ([#1187](https://github.com/analogjs/analog/issues/1187)) ([65869c6](https://github.com/analogjs/analog/commit/65869c6bb216e103d6651f9aa5ffd30b6cb46664))
+
 # [1.6.0-beta.7](https://github.com/analogjs/analog/compare/v1.6.0-beta.6...v1.6.0-beta.7) (2024-07-01)
 
 ### Bug Fixes
