@@ -375,12 +375,12 @@ function addTailwindDevDependencies(pkg) {
 function addYarnDevDependencies(pkg, template) {
   // v18
   if (template === 'latest' || template === 'blog') {
-    pkg.devDependencies['@nx/angular'] = ['^19.1.0'];
-    pkg.devDependencies['@nx/devkit'] = ['^19.1.0'];
-    pkg.devDependencies['@nx/vite'] = ['^19.1.0'];
-    pkg.devDependencies['nx'] = ['^19.1.0'];
+    pkg.devDependencies['@nx/angular'] = '^19.1.0';
+    pkg.devDependencies['@nx/devkit'] = '^19.1.0';
+    pkg.devDependencies['@nx/vite'] = '^19.1.0';
+    pkg.devDependencies['nx'] = '^19.1.0';
   } else if (template === 'angular-v17') {
-    pkg.devDependencies['@angular-devkit/build-angular'] = ['^17.3.5'];
+    pkg.devDependencies['@angular-devkit/build-angular'] = '^17.2.0';
   }
 }
 
@@ -402,6 +402,14 @@ function ensureSyntaxHighlighter(root, pkg, highlighter) {
   for (const [name, version] of Object.entries(dependencies)) {
     pkg.dependencies[name] = version;
   }
+
+  const viteConfigPath = path.join(root, 'vite.config.ts');
+  const viteConfigContent = fs.readFileSync(viteConfigPath, 'utf-8');
+
+  fs.writeFileSync(
+    viteConfigPath,
+    viteConfigContent.replace(/__CONTENT_HIGHLIGHTER__/g, highlighter)
+  );
 }
 
 init().catch((e) => {

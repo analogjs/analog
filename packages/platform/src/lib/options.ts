@@ -2,6 +2,8 @@ import type { PluginOptions } from '@analogjs/vite-plugin-angular';
 import type { NitroConfig, PrerenderRoute } from 'nitropack';
 import type { SitemapConfig } from '@analogjs/vite-plugin-nitro';
 
+import { ContentPluginOptions } from './content-plugin.js';
+
 export interface PrerenderOptions {
   /**
    * Add additional routes to prerender through crawling page links.
@@ -34,6 +36,7 @@ export interface Options {
   jit?: boolean;
   index?: string;
   workspaceRoot?: string;
+  content?: ContentPluginOptions;
 }
 
 export interface PrerenderContentDir {

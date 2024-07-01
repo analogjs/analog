@@ -51,7 +51,7 @@ export function addAnalogProjectConfig(
         },
       },
       test: {
-        [builders]: `@analogjs/platform:vitest`,
+        [builders]: `@analogjs/vitest-angular:test`,
       },
     },
   };

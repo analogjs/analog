@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/content",
-  "version": "1.5.0",
+  "version": "1.6.0-beta.9",
   "description": "Content Rendering for Analog",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -24,29 +24,9 @@
     "@angular/platform-browser": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0",
     "@angular/router": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0",
     "@nx/devkit": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
+    "front-matter": "^4.0.2",
     "rxjs": "^6.5.0 || ^7.5.0",
-    "marked": ">=5.0.2",
-    "marked-gfm-heading-id": "^3.0.4",
-    "marked-highlight": "^2.0.1",
-    "marked-mangle": "^1.1.7",
-    "marked-shiki": "^1.1.0",
-    "prismjs": "^1.29.0",
-    "shiki": "^1.6.1",
-    "front-matter": "^4.0.2"
-  },
-  "peerDependenciesMeta": {
-    "shiki": {
-      "optional": true
-    },
-    "marked-shiki": {
-      "optional": true
-    },
-    "prismjs": {
-      "optional": true
-    },
-    "marked-highlight": {
-      "optional": true
-    }
+    "prismjs": "^1.29.0"
   },
   "dependencies": {
     "tslib": "^2.3.0"

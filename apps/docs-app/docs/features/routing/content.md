@@ -61,11 +61,31 @@ export const appConfig: ApplicationConfig = {
 
 #### Using the `diff` Highlight Plugin
 
-Analog supports highlighting diff changes with PrismJS. Add the `diff`
-language and `diff-highlight` plugin imports to `app.config.ts`:
+Analog supports highlighting diff changes with PrismJS.
+
+Add the `prism-diff` language to the `additionalLangs` in the `analog` plugin:
 
 ```ts
-import 'prismjs/components/prism-diff';
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+export default defineConfig({
+  // ...
+  plugins: [
+    analog({
+      content: {
+        prismOptions: {
+          additionalLangs: ['prism-diff'],
+        },
+      },
+    }),
+  ],
+});
+```
+
+Add the `diff-highlight` plugin import to the `app.config.ts`:
+
+```ts
 import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
 ```
 
@@ -108,33 +128,64 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
+To enable build-time syntax highlighting with `shiki`, configure the `analog` plugin in the `vite.config.ts`.
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+export default defineConfig({
+  // ...
+  plugins: [
+    analog({
+      content: {
+        highlighter: 'shiki',
+      },
+    }),
+  ],
+});
+```
+
 #### Configure Shiki Highlighter
 
 > Please check out [Shiki Documentation](https://shiki.style/) for more information on configuring Shiki.
 
-To configure Shiki, you can pass a `WithShikiHighlighterOptions` object to the `withShikiHighlighter()` function.
+To configure Shiki, you can pass options to the `shikiOptions` object.
 
 ```ts
-import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
 
-provideContent(
-  withMarkdownRenderer(),
-  withShikiHighlighter({
-    highlight: { theme: 'nord' },
-  })
-);
+export default defineConfig({
+  // ...
+  plugins: [
+    analog({
+      content: {
+        highlighter: 'shiki',
+        shikiOptions: {
+          highlight: {
+            // alternate theme
+            theme: 'ayu-dark'
+          }
+          highlighter: {
+             // add more languages
+            additionalLangs: ['mermaid'],
+          },
+        },
+      },
+    }),
+  ],
+});
 ```
 
-By default, `withShikiHighlighter` has the following options.
+By default, `shikiOptions` has the following options.
 
-```json
+```ts
 {
+  "container": "%s",
   "highlight": {
-    "themes": {
-      "dark": "github-dark",
-      "light": "github-light"
-    }
-  },
+    "theme": "github-dark"
+  }
   "highlighter": {
     "langs": [
       "json",
@@ -145,53 +196,11 @@ By default, `withShikiHighlighter` has the following options.
       "html",
       "css",
       "angular-html",
-      "angular-ts"
+      "angular-ts",
     ],
     "themes": ["github-dark", "github-light"]
   }
 }
-```
-
-Provided options will be merged **shallowly**. For example:
-
-```ts
-import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
-
-withShikiHighlighter({
-  highlighter: {
-    // langs will be provied by the default options
-    themes: ['ayu-dark'], // only ayu-dark will be bundled
-  },
-  highlight: {
-    theme: 'ayu-dark', // use ayu-dark as the theme
-    // theme: 'dark-plus' // ERROR: dark-plus is not bundled
-  },
-});
-```
-
-### Custom Syntax Highlighter
-
-If you want to use a custom syntax highlighter, you can use the `withHighlighter()` function to provide a custom highlighter.
-
-```ts
-import { withHighlighter, MarkedContentHighlighter } from '@analogjs/content';
-// NOTE: make sure to install 'marked-highlight' if not already installed
-import { markedHighlight } from 'marked-highlight';
-
-class CustomHighlighter extends MarkedContentHighlighter {
-  override getHighlightExtension() {
-    return markedHighlight({
-      highlight: (code, lang) => {
-        return 'your custom highlight';
-      },
-    });
-  }
-}
-
-provideContent(
-  withMarkdownRenderer(),
-  withHighlighter({ useClass: CustomHighlighter })
-);
 ```
 
 ## Defining Content Files

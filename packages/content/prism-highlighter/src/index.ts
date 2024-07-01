@@ -1,9 +1,9 @@
-import { withHighlighter } from '@analogjs/content';
+import { ContentRenderer, NoopContentRenderer } from '@analogjs/content';
 import { Provider } from '@angular/core';
-import { PrismHighlighter } from './lib/prism-highlighter';
+import 'prismjs';
+import 'prismjs/plugins/toolbar/prism-toolbar.js';
+import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard.js';
 
-export { PrismHighlighter };
-
-export function withPrismHighlighter(): Provider {
-  return withHighlighter({ useClass: PrismHighlighter });
+export function withPrismHighlighter(): Provider[] {
+  return [{ provide: ContentRenderer, useClass: NoopContentRenderer }];
 }

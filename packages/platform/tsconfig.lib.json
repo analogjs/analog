@@ -7,6 +7,7 @@
     "sourceMap": false,
     "declaration": true,
     "types": [],
+    "allowJs": true,
     "paths": {
       "@analogjs/vite-plugin-angular": [
         "./node_modules/@analogjs/vite-plugin-angular"

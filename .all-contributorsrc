@@ -821,7 +821,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/64324417?v=4",
       "profile": "https://monacodelisa.com/",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -1016,6 +1017,34 @@
       "profile": "https://pranavramesh.dev",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "benpsnyder",
+      "name": "Ben Snyder",
+      "avatar_url": "https://avatars.githubusercontent.com/u/707567?v=4",
+      "profile": "https://snyder.tech",
+      "contributions": [
+        "doc",
+        "infra"
+      ]
+    },
+    {
+      "login": "niklas-wortmann",
+      "name": "Jan-Niklas W.",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6104311?v=4",
+      "profile": "https://wordman.dev",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "gultyayev",
+      "name": "Sergey Gultyayev (Serhii Hultiaiev)",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22374911?v=4",
+      "profile": "https://github.com/gultyayev",
+      "contributions": [
+        "code"
       ]
     }
   ],

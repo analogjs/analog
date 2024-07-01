@@ -6,6 +6,7 @@ const tag = process.env.RELEASE_TAG;
 
 const replacementFiles = [
   'packages/astro-angular/package.json',
+  'packages/create-analog/template-angular-v16/package.json',
   'packages/create-analog/template-angular-v17/package.json',
   'packages/create-analog/template-blog/package.json',
   'packages/create-analog/template-latest/package.json',
@@ -98,6 +99,11 @@ module.exports = {
           },
           {
             files: replacementFiles,
+            from: '"@analogjs/vitest-angular": ".*"',
+            to: '"@analogjs/vitest-angular": "^${nextRelease.version}"',
+          },
+          {
+            files: replacementFiles,
             from: '"@analogjs/vite-plugin-nitro": ".*"',
             to: '"@analogjs/vite-plugin-nitro": "^${nextRelease.version}"',
           },
@@ -128,6 +134,7 @@ module.exports = {
           'packages/astro-angular/package.json',
           'packages/content/package.json',
           'packages/create-analog/package.json',
+          'packages/create-analog/template-angular-v16/package.json',
           'packages/create-analog/template-angular-v17/package.json',
           'packages/create-analog/template-blog/package.json',
           'packages/create-analog/template-latest/package.json',

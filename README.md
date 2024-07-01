@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-107-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-110-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -44,16 +44,16 @@ With pnpm:
 pnpm create analog@latest
 ```
 
-With Yarn:
-
-```sh
-yarn create analog@latest
-```
-
 With Bun:
 
 ```sh
 bun create analog@latest
+```
+
+With Yarn:
+
+```sh
+yarn create analog
 ```
 
 Follow the prompts to scaffold the project and start the development server.
@@ -74,7 +74,7 @@ Follow the prompts to scaffold the project and start the development server.
 </a>
 
 <a href="https://nx.dev" target="_blank">
-  <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/nx.svg" width="100px" height="100px" alt="NxDevTools" />
+  <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/nx-logo.dark.svg" width="100px" height="100px" alt="NxDevTools" />
 </a>
 
 <a href="https://houseofangular.io" target="_blank">
@@ -216,7 +216,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://pavankjadda.dev"><img src="https://avatars.githubusercontent.com/u/17564080?v=4?s=100" width="100px;" alt="Pavan Kumar Jadda"/><br /><sub><b>Pavan Kumar Jadda</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=pavankjadda" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://monacodelisa.com/"><img src="https://avatars.githubusercontent.com/u/64324417?v=4?s=100" width="100px;" alt="Esther White"/><br /><sub><b>Esther White</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=monacodelisa" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://monacodelisa.com/"><img src="https://avatars.githubusercontent.com/u/64324417?v=4?s=100" width="100px;" alt="Esther White"/><br /><sub><b>Esther White</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=monacodelisa" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=monacodelisa" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Micha-Richter"><img src="https://avatars.githubusercontent.com/u/12509902?v=4?s=100" width="100px;" alt="Michael Richter"/><br /><sub><b>Michael Richter</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Micha-Richter" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://a21.dev"><img src="https://avatars.githubusercontent.com/u/24437129?v=4?s=100" width="100px;" alt="Rafael Triantafillidis"/><br /><sub><b>Rafael Triantafillidis</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=alator21" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/pi0"><img src="https://avatars.githubusercontent.com/u/5158436?v=4?s=100" width="100px;" alt="Pooya Parsa"/><br /><sub><b>Pooya Parsa</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=pi0" title="Documentation">📖</a></td>
@@ -244,6 +244,9 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/muhammaduxair"><img src="https://avatars.githubusercontent.com/u/64395440?v=4?s=100" width="100px;" alt="Muhammad Uzair"/><br /><sub><b>Muhammad Uzair</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=muhammaduxair" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://pranavramesh.dev"><img src="https://avatars.githubusercontent.com/u/23617187?v=4?s=100" width="100px;" alt="Pranav Ramesh"/><br /><sub><b>Pranav Ramesh</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Laphatize" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://snyder.tech"><img src="https://avatars.githubusercontent.com/u/707567?v=4?s=100" width="100px;" alt="Ben Snyder"/><br /><sub><b>Ben Snyder</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=benpsnyder" title="Documentation">📖</a> <a href="#infra-benpsnyder" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://wordman.dev"><img src="https://avatars.githubusercontent.com/u/6104311?v=4?s=100" width="100px;" alt="Jan-Niklas W."/><br /><sub><b>Jan-Niklas W.</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=niklas-wortmann" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/gultyayev"><img src="https://avatars.githubusercontent.com/u/22374911?v=4?s=100" width="100px;" alt="Sergey Gultyayev (Serhii Hultiaiev)"/><br /><sub><b>Sergey Gultyayev (Serhii Hultiaiev)</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=gultyayev" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

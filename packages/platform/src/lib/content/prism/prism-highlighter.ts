@@ -1,21 +1,12 @@
-import { MarkedContentHighlighter } from '@analogjs/content';
-import { Injectable } from '@angular/core';
 import { markedHighlight } from 'marked-highlight';
 
 import 'prismjs';
-import 'prismjs/components/prism-bash';
-import 'prismjs/components/prism-css';
-import 'prismjs/components/prism-javascript';
-import 'prismjs/components/prism-json';
-import 'prismjs/components/prism-markup';
-import 'prismjs/components/prism-typescript';
-import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
-import 'prismjs/plugins/toolbar/prism-toolbar';
-import './prism/angular';
+import './angular.js';
+
+import { MarkedContentHighlighter } from '../marked/marked-content-highlighter.js';
 
 declare const Prism: typeof import('prismjs');
 
-@Injectable()
 export class PrismHighlighter extends MarkedContentHighlighter {
   override augmentCodeBlock(code: string, lang: string): string {
     const classes =
@@ -37,9 +28,20 @@ export class PrismHighlighter extends MarkedContentHighlighter {
           console.warn(`Notice:
     ---------------------------------------------------------------------------------------
     The \`diff\` language and plugin are not available in the provided setup.
-    To enable it, add the following imports your \`main.ts\`:
-      import 'prismjs/components/prism-diff';
-      import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
+
+    To enable, add it to the \`analog\` plugin in your \`vite.config.ts\`:
+      analog({
+        content: {
+          prismOptions: {
+            additionalLangs: [
+              'prism-diff'
+            ]
+          }
+        }
+      })
+
+    Add the plugin import to your \`app.config.ts\`
+    import 'prismjs/plugins/diff-highlight/prism-diff-highlight.js';
     ---------------------------------------------------------------------------------------
             `);
         }
@@ -49,8 +51,16 @@ export class PrismHighlighter extends MarkedContentHighlighter {
             console.warn(`Notice:
     ---------------------------------------------------------------------------------------
     The requested language '${lang}' is not available in the provided setup.
-    To enable it, add the following import your \`main.ts\`:
-      import 'prismjs/components/prism-${lang}';
+    To enable, add it to the \`analog\` plugin in your \`vite.config.ts\`:
+      analog({
+        content: {
+          prismOptions: {
+            additionalLangs: [
+              '${lang}',
+            ]
+          }
+        }
+      })
     ---------------------------------------------------------------------------------------
               `);
           }

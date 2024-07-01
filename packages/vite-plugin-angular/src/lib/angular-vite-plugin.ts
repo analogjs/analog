@@ -161,6 +161,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           );
 
         return {
+          esbuild: config.esbuild ?? false,
           optimizeDeps: {
             include: ['rxjs/operators', 'rxjs'],
             exclude: ['@angular/platform-server'],
@@ -285,7 +286,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         /**
          * Skip transforming content files
          */
-        if (id.includes('analog-content-list=true')) {
+        if (id.includes('analog-content-')) {
           return;
         }
 
@@ -363,10 +364,8 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           if (jit) {
             return {
-              code: data.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, ''),
-              map: {
-                mappings: '',
-              },
+              code: data,
+              map: null,
             };
           }
 
@@ -391,10 +390,8 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           if (!forceAsyncTransformation && !isProd) {
             return {
-              code: data.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, ''),
-              map: {
-                mappings: '',
-              },
+              code: data,
+              map: null,
             };
           }
 

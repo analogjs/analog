@@ -18,6 +18,7 @@ import { updatePackageJson } from './lib/update-package-json';
 import { updateIndex } from './lib/update-index-html';
 import { updateMain } from './lib/update-main';
 import { updateAppTsConfig } from './lib/update-app-tsconfig';
+import { updateGitIgnore } from './lib/update-git-ignore';
 
 function addFiles(tree: Tree, options: SetupAnalogGeneratorSchema) {
   const isNx = tree.read('/nx.json');
@@ -29,6 +30,7 @@ function addFiles(tree: Tree, options: SetupAnalogGeneratorSchema) {
     offsetFromRoot: isNx ? '../../' : './',
     projectRoot: projectConfig.root,
     template: '',
+    isNx,
   };
 
   generateFiles(
@@ -67,6 +69,7 @@ export async function setupAnalogGenerator(
   updatePackageJson(tree, options);
   updateIndex(tree, options);
   updateMain(tree, options);
+  updateGitIgnore(tree);
 
   addFiles(tree, options);
 
