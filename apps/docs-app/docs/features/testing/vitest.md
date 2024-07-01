@@ -288,7 +288,7 @@ describe('CardComponent', () => {
   it('should create the app', () => {
     expect(fixture).toMatchSnapshot();
   });
-
+});
 ```
 
 After you run the test, a `card.component.spec.ts.snap` file is created in the`__snapshots__` folder with the below content:
