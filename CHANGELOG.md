@@ -1,3 +1,9 @@
+# [1.6.0-beta.9](https://github.com/analogjs/analog/compare/v1.6.0-beta.8...v1.6.0-beta.9) (2024-07-01)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** prevent context loss for "each" tests ([#1190](https://github.com/analogjs/analog/issues/1190)) ([13df344](https://github.com/analogjs/analog/commit/13df34478496e5225f41e6071f0a9c9e23a9190a))
+
 # [1.6.0-beta.8](https://github.com/analogjs/analog/compare/v1.6.0-beta.7...v1.6.0-beta.8) (2024-07-01)
 
 ### Bug Fixes
