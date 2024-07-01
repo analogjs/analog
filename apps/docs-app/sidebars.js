@@ -196,6 +196,11 @@ const sidebars = {
           id: 'integrations/ionic/index',
           label: 'Ionic Framework',
         },
+        {
+          type: 'doc',
+          id: 'integrations/storybook/index',
+          label: 'Storybook',
+        },
       ],
     },
     {
