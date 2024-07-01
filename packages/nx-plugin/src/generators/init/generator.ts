@@ -30,6 +30,7 @@ function addFiles(tree: Tree, options: SetupAnalogGeneratorSchema) {
     offsetFromRoot: isNx ? '../../' : './',
     projectRoot: projectConfig.root,
     template: '',
+    isNx,
   };
 
   generateFiles(
