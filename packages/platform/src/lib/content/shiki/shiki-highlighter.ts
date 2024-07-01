@@ -9,7 +9,7 @@ import {
   getHighlighter,
 } from 'shiki';
 
-import { MarkedContentHighlighter } from '../marked-content-highlighter.js';
+import { MarkedContentHighlighter } from '../marked/marked-content-highlighter.js';
 
 export type ShikiHighlighterOptions = Parameters<typeof getHighlighter>[0];
 export type ShikiHighlightOptions = Partial<
