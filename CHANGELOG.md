@@ -1,3 +1,9 @@
+## [1.6.1-beta.1](https://github.com/analogjs/analog/compare/v1.6.0...v1.6.1-beta.1) (2024-07-02)
+
+### Bug Fixes
+
+- **router:** add error message when default export is missing from component ([#1194](https://github.com/analogjs/analog/issues/1194)) ([4d33677](https://github.com/analogjs/analog/commit/4d336777d3b81191181d2964cbd247c9d3a1ba8f))
+
 # [1.6.0](https://github.com/analogjs/analog/compare/v1.5.0...v1.6.0) (2024-07-01)
 
 ### Bug Fixes
