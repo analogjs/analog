@@ -182,15 +182,27 @@ function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
       ? {
           path: rawRoute.segment,
           loadChildren: () =>
-            module!().then((m) => [
-              {
-                path: '',
-                component: m.default,
-                ...toRouteConfig(m.routeMeta as RouteMeta | undefined),
-                children,
-                [ANALOG_META_KEY]: analogMeta,
-              },
-            ]),
+            module!().then((m) => {
+              const hasModuleDefault = !!m.default;
+              if (
+                process.env['NODE_ENV'] !== 'production' &&
+                !hasModuleDefault
+              ) {
+                throw new Error(
+                  `[Analog] Missing default export at ${rawRoute.filename}`
+                );
+              }
+
+              return [
+                {
+                  path: '',
+                  component: m.default,
+                  ...toRouteConfig(m.routeMeta as RouteMeta | undefined),
+                  children,
+                  [ANALOG_META_KEY]: analogMeta,
+                },
+              ];
+            }),
         }
       : { path: rawRoute.segment, children };
 
