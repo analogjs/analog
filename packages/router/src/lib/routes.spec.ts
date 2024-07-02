@@ -1,5 +1,6 @@
 import { Route } from '@angular/router';
 import { of } from 'rxjs';
+import { expect, vi } from 'vitest';
 import { RouteExport, RouteMeta } from './models';
 import { createRoutes, Files } from './routes';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
@@ -608,19 +609,21 @@ describe('routes', () => {
 
   describe('a route without default export', () => {
     it('should throw error when default export is falsy', async () => {
+      const fileName = '/app/routes/index.ts';
       const files: Files = {
-        '/app/routes/index.ts': () =>
-          Promise.resolve({} as unknown as RouteExport),
+        [fileName]: () => Promise.resolve({} as unknown as RouteExport),
       };
 
       const routes = createRoutes(files);
       const route = routes[0];
 
-      try {
-        await route.loadChildren?.();
-      } catch (error) {
-        expect(error?.toString()).toMatch('Missing default export');
-      }
+      const spy = vi.spyOn(console, 'warn');
+
+      await route.loadChildren?.();
+
+      expect(spy).toHaveBeenCalledWith(
+        `[Analog] Missing default export at ${fileName}`
+      );
     });
   });
 });

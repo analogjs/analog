@@ -183,14 +183,14 @@ function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
           path: rawRoute.segment,
           loadChildren: () =>
             module!().then((m) => {
-              const hasModuleDefault = !!m.default;
-              if (
-                process.env['NODE_ENV'] !== 'production' &&
-                !hasModuleDefault
-              ) {
-                throw new Error(
-                  `[Analog] Missing default export at ${rawRoute.filename}`
-                );
+              if (!import.meta.env.PROD) {
+                const hasModuleDefault = !!m.default;
+
+                if (!hasModuleDefault) {
+                  console.warn(
+                    `[Analog] Missing default export at ${rawRoute.filename}`
+                  );
+                }
               }
 
               return [
