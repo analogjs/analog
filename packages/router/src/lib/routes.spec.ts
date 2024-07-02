@@ -605,4 +605,22 @@ describe('routes', () => {
       expect(routes[1].path).toBe('static');
     });
   });
+
+  describe('a route without default export', () => {
+    it('should throw error when default export is falsy', async () => {
+      const files: Files = {
+        '/app/routes/index.ts': () =>
+          Promise.resolve({} as unknown as RouteExport),
+      };
+
+      const routes = createRoutes(files);
+      const route = routes[0];
+
+      try {
+        await route.loadChildren?.();
+      } catch (error) {
+        expect(error?.toString()).toMatch('Missing default export');
+      }
+    });
+  });
 });
