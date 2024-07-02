@@ -1,5 +1,6 @@
 import { Route } from '@angular/router';
 import { of } from 'rxjs';
+import { expect, vi } from 'vitest';
 import { RouteExport, RouteMeta } from './models';
 import { createRoutes, Files } from './routes';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
@@ -603,6 +604,26 @@ describe('routes', () => {
     it('should put static routes with fewer children first', () => {
       expect(routes[0].path).toBe('static-2');
       expect(routes[1].path).toBe('static');
+    });
+  });
+
+  describe('a route without default export', () => {
+    it('should throw error when default export is falsy', async () => {
+      const fileName = '/app/routes/index.ts';
+      const files: Files = {
+        [fileName]: () => Promise.resolve({} as unknown as RouteExport),
+      };
+
+      const routes = createRoutes(files);
+      const route = routes[0];
+
+      const spy = vi.spyOn(console, 'warn');
+
+      await route.loadChildren?.();
+
+      expect(spy).toHaveBeenCalledWith(
+        `[Analog] Missing default export at ${fileName}`
+      );
     });
   });
 });
