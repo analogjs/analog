@@ -1,3 +1,10 @@
+## [1.6.1-beta.2](https://github.com/analogjs/analog/compare/v1.6.1-beta.1...v1.6.1-beta.2) (2024-07-02)
+
+### Bug Fixes
+
+- **nx-plugin:** add vitest types in tsconfig.spec.json ([#1197](https://github.com/analogjs/analog/issues/1197)) ([acaf6dc](https://github.com/analogjs/analog/commit/acaf6dca35d84ff2777589ef2b6245054c5b4aba))
+- **vite-plugin-angular:** prevent context loss for "each" describe bl… ([#1195](https://github.com/analogjs/analog/issues/1195)) ([595a6b3](https://github.com/analogjs/analog/commit/595a6b3120735be4ed55286b2a8849f059abd32a))
+
 ## [1.6.1-beta.1](https://github.com/analogjs/analog/compare/v1.6.0...v1.6.1-beta.1) (2024-07-02)
 
 ### Bug Fixes
