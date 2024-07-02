@@ -68,7 +68,13 @@ const config = {
       colorMode: {
         respectPrefersColorScheme: true,
       },
-      image: 'img/logos/analog-logo.svg',
+      metadata: [
+        {
+          name: 'twitter:image',
+          content: 'https://analogjs.org/img/analog-banner.png',
+        },
+      ],
+      image: 'img/analog-banner.png',
       footer: {
         logo: {
           alt: 'Analog logo',
