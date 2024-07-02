@@ -1046,6 +1046,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "andersonmfjr",
+      "name": "Anderson Feitosa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/66845464?v=4",
+      "profile": "http://andersonmfjr.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
