@@ -7,6 +7,7 @@ interface TsConfig {
   compilerOptions: {
     module?: string;
     target?: string;
+    types?: string[];
   };
 }
 
@@ -29,6 +30,9 @@ export function updateTsConfig(tree: Tree, schema: SetupVitestGeneratorSchema) {
         json.compilerOptions.module = undefined;
         json.compilerOptions.target ??= 'es2016';
         json.files ??= ['src/test-setup.ts'];
+        json.compilerOptions.types = (json.compilerOptions.types ?? ['node'])
+          .filter((type) => type !== 'jest')
+          .concat(['vitest/globals']);
 
         return json;
       },
