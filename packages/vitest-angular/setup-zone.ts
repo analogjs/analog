@@ -207,22 +207,25 @@ function fixtureVitestSerializer(fixture: any) {
 /**
  * bind describe method to wrap describe.each function
  */
-const bindDescribe = (originalVitestFn: {
-  apply: (
-    arg0: any,
-    arg1: any[]
-  ) => {
-    (): any;
-    new (): any;
-    apply: { (arg0: any, arg1: any[]): any; new (): any };
-  };
-}) =>
+const bindDescribe = (
+  self: any,
+  originalVitestFn: {
+    apply: (
+      arg0: any,
+      arg1: any[]
+    ) => {
+      (): any;
+      new (): any;
+      apply: { (arg0: any, arg1: any[]): any; new (): any };
+    };
+  }
+) =>
   function (...eachArgs: any) {
     return function (...args: any[]) {
       args[1] = wrapDescribeInZone(args[1]);
 
       // @ts-ignore
-      return originalVitestFn.apply(this, eachArgs).apply(this, args);
+      return originalVitestFn.apply(self, eachArgs).apply(self, args);
     };
   };
 
@@ -258,10 +261,16 @@ const bindTest = (
 
     return originalvitestFn.apply(this, args);
   };
-  env[methodName].each = bindDescribe(originalvitestFn.each);
+  env[methodName].each = bindDescribe(originalvitestFn, originalvitestFn.each);
   if (methodName === 'describe') {
-    env[methodName].only = bindDescribe(originalvitestFn.only);
-    env[methodName].skip = bindDescribe(originalvitestFn.skip);
+    env[methodName].only = bindDescribe(
+      originalvitestFn,
+      originalvitestFn.only
+    );
+    env[methodName].skip = bindDescribe(
+      originalvitestFn,
+      originalvitestFn.skip
+    );
   }
 });
 
