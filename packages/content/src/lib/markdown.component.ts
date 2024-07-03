@@ -16,7 +16,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Data } from '@angular/router';
 import { Observable, from, of } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+import { catchError, map, mergeMap, filter } from 'rxjs/operators';
 
 import { AnchorNavigationDirective } from './anchor-navigation.directive';
 import { ContentRenderer } from './content-renderer';
@@ -85,6 +85,7 @@ export default class AnalogMarkdownComponent
   getContentSource() {
     return this.route.data.pipe(
       map<Data, string>((data) => this.content ?? data['_analogContent']),
+      filter((content) => typeof content === 'string'),
       mergeMap((contentString) => this.renderContent(contentString)),
       map((content) => this.sanitizer.bypassSecurityTrustHtml(content)),
       catchError((e) => of(`There was an error ${e}`))

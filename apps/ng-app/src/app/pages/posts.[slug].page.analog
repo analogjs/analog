@@ -14,24 +14,22 @@ import { PostAttributes } from './models';
 const renderer = inject(ContentRenderer);
 const post$ = injectContent<PostAttributes>();
 
-const toc$ = this.post$.pipe(
+const toc$ = post$.pipe(
   map(() => {
-    return this.renderer.getContentHeadings();
+    return renderer.getContentHeadings();
   })
 );
 </script>
 
-<template>
-    <ng-container *ngIf="post$ | async as post">
-      <h1>{{ post.attributes.title }}</h1>
-      <div *ngIf="toc$ | async as toc">
-        <ul>
-          <li *ngFor="let item of toc">
-            <a href="#{{ item.id }}">{{ item.text }}</a>
-          </li>
-        </ul>
-      </div>
+<template><ng-container *ngIf="post$ | async as post">
+  <h1>{{ post.attributes.title }}</h1>
+  <div *ngIf="toc$ | async as toc">
+    <ul>
+      <li *ngFor="let item of toc">
+        <a href="#{{ item.id }}">{{ item.text }}</a>
+      </li>
+    </ul>
+  </div>
 
-      <analog-markdown [content]="post.content"></analog-markdown>
-    </ng-container>
-</template>
+  <analog-markdown [content]="post.content"></analog-markdown>
+</ng-container></template>
