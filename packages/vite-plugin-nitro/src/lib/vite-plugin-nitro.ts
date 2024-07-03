@@ -303,8 +303,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             await buildSSRApp(config, options);
           }
 
-          await buildServer(options, nitroConfig);
-
           if (
             nitroConfig.prerender?.routes?.length &&
             options?.prerender?.sitemap
@@ -315,9 +313,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               config,
               options.prerender.sitemap,
               nitroConfig.prerender.routes,
-              nitroConfig.output?.publicDir!
+              clientOutputPath
             );
           }
+
+          await buildServer(options, nitroConfig);
 
           console.log(
             `\n\nThe '@analogjs/platform' server has been successfully built.`
