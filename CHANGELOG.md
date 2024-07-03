@@ -1,3 +1,9 @@
+## [1.6.1-beta.3](https://github.com/analogjs/analog/compare/v1.6.1-beta.2...v1.6.1-beta.3) (2024-07-03)
+
+### Bug Fixes
+
+- **content:** filter out string content when using agx files ([#1200](https://github.com/analogjs/analog/issues/1200)) ([c6b94ea](https://github.com/analogjs/analog/commit/c6b94eaba5a5019ce665428b0f07bed29a752dbf))
+
 ## [1.6.1-beta.2](https://github.com/analogjs/analog/compare/v1.6.1-beta.1...v1.6.1-beta.2) (2024-07-02)
 
 ### Bug Fixes
