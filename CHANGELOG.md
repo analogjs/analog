@@ -1,3 +1,9 @@
+## [1.6.1-beta.4](https://github.com/analogjs/analog/compare/v1.6.1-beta.3...v1.6.1-beta.4) (2024-07-03)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** make sitemap available for SSR build ([#1201](https://github.com/analogjs/analog/issues/1201)) ([90cc7bd](https://github.com/analogjs/analog/commit/90cc7bdc9919822c15a26a7513123f1790b226eb))
+
 ## [1.6.1-beta.3](https://github.com/analogjs/analog/compare/v1.6.1-beta.2...v1.6.1-beta.3) (2024-07-03)
 
 ### Bug Fixes
