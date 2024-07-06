@@ -1,3 +1,28 @@
+## [1.6.1-beta.4](https://github.com/analogjs/analog/compare/v1.6.1-beta.3...v1.6.1-beta.4) (2024-07-03)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** make sitemap available for SSR build ([#1201](https://github.com/analogjs/analog/issues/1201)) ([90cc7bd](https://github.com/analogjs/analog/commit/90cc7bdc9919822c15a26a7513123f1790b226eb))
+
+## [1.6.1-beta.3](https://github.com/analogjs/analog/compare/v1.6.1-beta.2...v1.6.1-beta.3) (2024-07-03)
+
+### Bug Fixes
+
+- **content:** filter out string content when using agx files ([#1200](https://github.com/analogjs/analog/issues/1200)) ([c6b94ea](https://github.com/analogjs/analog/commit/c6b94eaba5a5019ce665428b0f07bed29a752dbf))
+
+## [1.6.1-beta.2](https://github.com/analogjs/analog/compare/v1.6.1-beta.1...v1.6.1-beta.2) (2024-07-02)
+
+### Bug Fixes
+
+- **nx-plugin:** add vitest types in tsconfig.spec.json ([#1197](https://github.com/analogjs/analog/issues/1197)) ([acaf6dc](https://github.com/analogjs/analog/commit/acaf6dca35d84ff2777589ef2b6245054c5b4aba))
+- **vite-plugin-angular:** prevent context loss for "each" describe bl… ([#1195](https://github.com/analogjs/analog/issues/1195)) ([595a6b3](https://github.com/analogjs/analog/commit/595a6b3120735be4ed55286b2a8849f059abd32a))
+
+## [1.6.1-beta.1](https://github.com/analogjs/analog/compare/v1.6.0...v1.6.1-beta.1) (2024-07-02)
+
+### Bug Fixes
+
+- **router:** add error message when default export is missing from component ([#1194](https://github.com/analogjs/analog/issues/1194)) ([4d33677](https://github.com/analogjs/analog/commit/4d336777d3b81191181d2964cbd247c9d3a1ba8f))
+
 # [1.6.0](https://github.com/analogjs/analog/compare/v1.5.0...v1.6.0) (2024-07-01)
 
 ### Bug Fixes

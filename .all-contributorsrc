@@ -1044,6 +1044,16 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/22374911?v=4",
       "profile": "https://github.com/gultyayev",
       "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "andersonmfjr",
+      "name": "Anderson Feitosa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/66845464?v=4",
+      "profile": "http://andersonmfjr.com",
+      "contributions": [
         "code"
       ]
     }
