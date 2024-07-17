@@ -1,3 +1,9 @@
+## [1.6.2-beta.1](https://github.com/analogjs/analog/compare/v1.6.1...v1.6.2-beta.1) (2024-07-17)
+
+### Bug Fixes
+
+- **content:** export prism highlighter for custom client rendering ([#1209](https://github.com/analogjs/analog/issues/1209)) ([768ac1a](https://github.com/analogjs/analog/commit/768ac1af43d8b89e861267aeeb68cf6b0a81eb19))
+
 ## [1.6.1](https://github.com/analogjs/analog/compare/v1.6.0...v1.6.1) (2024-07-06)
 
 ### Bug Fixes
