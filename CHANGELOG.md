@@ -1,3 +1,9 @@
+## [1.6.2-beta.2](https://github.com/analogjs/analog/compare/v1.6.2-beta.1...v1.6.2-beta.2) (2024-07-17)
+
+### Bug Fixes
+
+- **router:** skip default export warning for redirect page routes ([#1210](https://github.com/analogjs/analog/issues/1210)) ([a4aa195](https://github.com/analogjs/analog/commit/a4aa1956b5c805ba7b450a5b87902b54a8895634))
+
 ## [1.6.2-beta.1](https://github.com/analogjs/analog/compare/v1.6.1...v1.6.2-beta.1) (2024-07-17)
 
 ### Bug Fixes
