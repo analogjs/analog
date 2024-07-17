@@ -185,8 +185,9 @@ function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
             module!().then((m) => {
               if (!import.meta.env.PROD) {
                 const hasModuleDefault = !!m.default;
+                const hasRedirect = !!m.routeMeta?.redirectTo;
 
-                if (!hasModuleDefault) {
+                if (!hasModuleDefault && !hasRedirect) {
                   console.warn(
                     `[Analog] Missing default export at ${rawRoute.filename}`
                   );
