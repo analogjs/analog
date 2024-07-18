@@ -1,3 +1,9 @@
+## [1.6.2-beta.4](https://github.com/analogjs/analog/compare/v1.6.2-beta.3...v1.6.2-beta.4) (2024-07-18)
+
+### Bug Fixes
+
+- **create-analog:** update templates to use Vite 5.x ([#1215](https://github.com/analogjs/analog/issues/1215)) ([5069e34](https://github.com/analogjs/analog/commit/5069e348e23b286e69d9d4ab228b3de78ef4fd21))
+
 ## [1.6.2-beta.3](https://github.com/analogjs/analog/compare/v1.6.2-beta.2...v1.6.2-beta.3) (2024-07-18)
 
 ### Bug Fixes
