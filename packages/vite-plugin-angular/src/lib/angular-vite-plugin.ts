@@ -9,9 +9,9 @@ import {
   ModuleNode,
   normalizePath,
   Plugin,
-  PluginContainer,
   UserConfig,
   ViteDevServer,
+  preprocessCSS,
 } from 'vite';
 
 import { createCompilerPlugin } from './compiler-plugin.js';
@@ -139,7 +139,10 @@ export function angular(options?: PluginOptions): Plugin[] {
     typeof pluginOptions?.jit !== 'undefined' ? pluginOptions.jit : isTest;
   let viteServer: ViteDevServer | undefined;
   let cssPlugin: Plugin | undefined;
-  let styleTransform: PluginContainer['transform'] | undefined;
+  let styleTransform: (
+    code: string,
+    filename: string
+  ) => ReturnType<typeof preprocessCSS> | undefined;
 
   const styleUrlsResolver = new StyleUrlsResolver();
   const templateUrlsResolver = new TemplateUrlsResolver();
@@ -506,9 +509,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);
 
-    styleTransform = watchMode
-      ? viteServer!.pluginContainer.transform
-      : (cssPlugin!.transform as PluginContainer['transform']).bind(context);
+    styleTransform = (code: string, filename: string) =>
+      preprocessCSS(code, filename, config as any);
 
     if (!jit) {
       augmentHostWithResources(host, styleTransform, {
