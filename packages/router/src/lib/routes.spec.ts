@@ -608,7 +608,7 @@ describe('routes', () => {
   });
 
   describe('a route without default export', () => {
-    it('should throw error when default export is falsy', async () => {
+    it('should log a warning when default export is falsy', async () => {
       const fileName = '/app/routes/index.ts';
       const files: Files = {
         [fileName]: () => Promise.resolve({} as unknown as RouteExport),
@@ -622,6 +622,27 @@ describe('routes', () => {
       await route.loadChildren?.();
 
       expect(spy).toHaveBeenCalledWith(
+        `[Analog] Missing default export at ${fileName}`
+      );
+    });
+
+    it('should not log a warning default export is falsy with a redirect', async () => {
+      const fileName = '/app/routes/index.ts';
+      const files: Files = {
+        [fileName]: () =>
+          Promise.resolve({
+            routeMeta: { redirectTo: '/home' },
+          } as unknown as RouteExport),
+      };
+
+      const routes = createRoutes(files);
+      const route = routes[0];
+
+      const spy = vi.spyOn(console, 'warn');
+
+      await route.loadChildren?.();
+
+      expect(spy).not.toHaveBeenCalledWith(
         `[Analog] Missing default export at ${fileName}`
       );
     });

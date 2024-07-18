@@ -1,3 +1,27 @@
+## [1.6.2-beta.4](https://github.com/analogjs/analog/compare/v1.6.2-beta.3...v1.6.2-beta.4) (2024-07-18)
+
+### Bug Fixes
+
+- **create-analog:** update templates to use Vite 5.x ([#1215](https://github.com/analogjs/analog/issues/1215)) ([5069e34](https://github.com/analogjs/analog/commit/5069e348e23b286e69d9d4ab228b3de78ef4fd21))
+
+## [1.6.2-beta.3](https://github.com/analogjs/analog/compare/v1.6.2-beta.2...v1.6.2-beta.3) (2024-07-18)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use Vite preprocessCSS function for component decorator styles ([#1214](https://github.com/analogjs/analog/issues/1214)) ([76d024b](https://github.com/analogjs/analog/commit/76d024b1bd22c6edecac17f8682ef7f235b719c5))
+
+## [1.6.2-beta.2](https://github.com/analogjs/analog/compare/v1.6.2-beta.1...v1.6.2-beta.2) (2024-07-17)
+
+### Bug Fixes
+
+- **router:** skip default export warning for redirect page routes ([#1210](https://github.com/analogjs/analog/issues/1210)) ([a4aa195](https://github.com/analogjs/analog/commit/a4aa1956b5c805ba7b450a5b87902b54a8895634))
+
+## [1.6.2-beta.1](https://github.com/analogjs/analog/compare/v1.6.1...v1.6.2-beta.1) (2024-07-17)
+
+### Bug Fixes
+
+- **content:** export prism highlighter for custom client rendering ([#1209](https://github.com/analogjs/analog/issues/1209)) ([768ac1a](https://github.com/analogjs/analog/commit/768ac1af43d8b89e861267aeeb68cf6b0a81eb19))
+
 ## [1.6.1](https://github.com/analogjs/analog/compare/v1.6.0...v1.6.1) (2024-07-06)
 
 ### Bug Fixes
