@@ -1,3 +1,9 @@
+## [1.6.2-beta.3](https://github.com/analogjs/analog/compare/v1.6.2-beta.2...v1.6.2-beta.3) (2024-07-18)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use Vite preprocessCSS function for component decorator styles ([#1214](https://github.com/analogjs/analog/issues/1214)) ([76d024b](https://github.com/analogjs/analog/commit/76d024b1bd22c6edecac17f8682ef7f235b719c5))
+
 ## [1.6.2-beta.2](https://github.com/analogjs/analog/compare/v1.6.2-beta.1...v1.6.2-beta.2) (2024-07-17)
 
 ### Bug Fixes
