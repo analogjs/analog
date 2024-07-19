@@ -28,7 +28,7 @@
     "description": "The label of footer link with label=Contributing linking to docs/contributing"
   },
   "link.item.label.Sponsor": {
-    "message": "赞助商",
+    "message": "赞助",
     "description": "The label of footer link with label=Sponsor linking to docs/sponsoring"
   },
   "link.item.label.GitHub": {
