@@ -167,8 +167,7 @@ async function init() {
   // determine template
   template = variant || framework || template;
   // determine syntax highlighter
-  let highlighter =
-    syntaxHighlighter ?? (template === 'blog' ? 'prismjs' : null);
+  let highlighter = syntaxHighlighter ?? (template === 'blog' ? 'prism' : null);
   skipTailwind = !tailwind || skipTailwind;
 
   console.log(`\nScaffolding project in ${root}...`);
