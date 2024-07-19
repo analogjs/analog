@@ -1,3 +1,9 @@
+## [1.6.3-beta.2](https://github.com/analogjs/analog/compare/v1.6.3-beta.1...v1.6.3-beta.2) (2024-07-19)
+
+### Bug Fixes
+
+- **astro-angular:** pass Astro/Starlight defaults for esbuild ([#1219](https://github.com/analogjs/analog/issues/1219)) ([b29fc65](https://github.com/analogjs/analog/commit/b29fc659b2f2c5ae9859616cd4829129059980d6))
+
 ## [1.6.3-beta.1](https://github.com/analogjs/analog/compare/v1.6.2...v1.6.3-beta.1) (2024-07-19)
 
 ### Bug Fixes
