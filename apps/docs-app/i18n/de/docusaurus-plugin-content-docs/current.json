@@ -28,7 +28,7 @@
     "description": "The label for category Code Generation in sidebar docsSidebar"
   },
   "sidebar.docsSidebar.category.Deployment": {
-    "message": "Bereitstellung",
+    "message": "Veröffentlichung",
     "description": "The label for category Deployment in sidebar docsSidebar"
   },
   "sidebar.docsSidebar.category.Testing": {
