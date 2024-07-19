@@ -27,4 +27,4 @@ Analog ist ein fullstack Meta-Framework für die Entwicklung von Anwendungen und
 - Das [GitHub Repo](https://github.com/analogjs/analog) besuchen und einen Stern geben
 - [Discord](https://chat.analogjs.org) beitreten
 - Auf [Twitter](https://twitter.com/analogjs) folgen
-- [Sponsor](./docs/sponsoring) werden
+- [Sponsor](/de/docs/sponsoring) werden

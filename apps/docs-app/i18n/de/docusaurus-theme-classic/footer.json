@@ -40,7 +40,7 @@
     "description": "The label of footer link with label=Stack Overflow linking to https://stackoverflow.com/questions/tagged/analogjs"
   },
   "copyright": {
-    "message": "\n          Copyright © 2022-2023 Analog. Lizensiert unter MIT.\n          <p>\n            <a href=\"https://www.netlify.com\"> <img src=\"https://www.netlify.com/v3/img/components/netlify-color-accent.svg\" alt=\"Bereitstellungen durch Netlify\" /> </a>\n          </p>\n        ",
+    "message": "\n          Copyright © 2022-2023 Analog. Lizensiert unter MIT.\n          <p>\n            <a href=\"https://www.netlify.com\"> <img src=\"https://www.netlify.com/v3/img/components/netlify-color-accent.svg\" alt=\"Veröffentlichung durch Netlify\" /> </a>\n          </p>\n        ",
     "description": "The footer copyright"
   }
 }

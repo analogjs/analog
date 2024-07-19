@@ -16,11 +16,11 @@
     "description": "The title of the 404 page"
   },
   "theme.NotFound.p1": {
-    "message": "Wir konnten nicht finden, wonach Sie gesucht haben.",
+    "message": "Wir konnten nicht finden, wonach du gesucht hast.",
     "description": "The first paragraph of the 404 page"
   },
   "theme.NotFound.p2": {
-    "message": "Bitte wenden Sie sich an den Inhaber der Website, die Sie mit der ursprünglichen URL verlinkt hat, und teilen Sie ihm mit, dass der Link nicht mehr funktioniert.",
+    "message": "Bitte wende dich an den Inhaber der Website, die dich mit der ursprünglichen URL verlinkt hat, und teile ihm mit, dass der Link nicht mehr funktioniert.",
     "description": "The 2nd paragraph of the 404 page"
   },
   "theme.admonition.note": {
@@ -144,7 +144,7 @@
     "description": "The label used to tell the user that he's browsing an unmaintained doc version"
   },
   "theme.docs.versions.latestVersionSuggestionLabel": {
-    "message": "Eine aktualisierte Dokumentation finden Sie unter {latestVersionLink} ({versionLabel}).",
+    "message": "Eine aktualisierte Dokumentation finden du unter {latestVersionLink} ({versionLabel}).",
     "description": "The label used to tell the user to check the latest version"
   },
   "theme.docs.versions.latestVersionLinkLabel": {
