@@ -6,15 +6,11 @@ import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 
 // Only run in Netlify CI
+let base = process.env['URL'] || 'http://localhost:3000';
 if (process.env['NETLIFY'] === 'true') {
-  let base = process.env['URL'];
-
   if (process.env['CONTEXT'] === 'deploy-preview') {
     base = `${process.env['DEPLOY_PRIME_URL']}/`;
   }
-
-  // set process.env.VITE_ANALOG_PUBLIC_BASE_URL = base URL
-  process.env['VITE_ANALOG_PUBLIC_BASE_URL'] = base;
 }
 
 // https://vitejs.dev/config/
@@ -36,7 +32,7 @@ export default defineConfig(({ mode }) => {
         prerender: {
           routes: ['/', '/cart'],
           sitemap: {
-            host: process.env['VITE_ANALOG_PUBLIC_BASE_URL'],
+            host: base,
           },
         },
         vite: {

@@ -21,9 +21,7 @@ export function requestContextInterceptor(
 ) {
   const baseUrl = injectBaseURL();
   const transferState = inject(TransferState);
-  const storeKey = makeStateKey<HttpResponse<unknown>>(
-    `analog_${req.urlWithParams}`
-  );
+  const storeKey = makeStateKey<unknown>(`analog_${req.urlWithParams}`);
 
   // during prerendering with Nitro
   if (
@@ -32,18 +30,25 @@ export function requestContextInterceptor(
     baseUrl &&
     (req.url.startsWith('/') || req.url.startsWith(baseUrl))
   ) {
-    return from(
-      global.$fetch(req.url, { ...(req as any) }).then((res) => {
-        const transferResponse = new HttpResponse({
-          body: res,
-          status: 200,
-          statusText: 'OK',
-          url: req.urlWithParams,
-        });
+    const requestUrl = new URL(req.url, baseUrl);
 
-        transferState.set(storeKey, transferResponse);
-        return transferResponse;
-      })
+    return from(
+      global
+        .$fetch(requestUrl.pathname, {
+          method: req.method as any,
+          params: requestUrl.searchParams,
+        })
+        .then((res) => {
+          const transferResponse = new HttpResponse({
+            body: res,
+            status: 200,
+            statusText: 'OK',
+            url: req.urlWithParams,
+          });
+
+          transferState.set(storeKey, transferResponse);
+          return transferResponse;
+        })
     );
   }
 
@@ -53,7 +58,7 @@ export function requestContextInterceptor(
 
     if (cacheResponse) {
       transferState.remove(storeKey);
-      return of(cacheResponse);
+      return of(new HttpResponse(cacheResponse));
     }
 
     return next(
