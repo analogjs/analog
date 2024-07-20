@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-112-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-113-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -249,6 +249,9 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/gultyayev"><img src="https://avatars.githubusercontent.com/u/22374911?v=4?s=100" width="100px;" alt="Sergey Gultyayev (Serhii Hultiaiev)"/><br /><sub><b>Sergey Gultyayev (Serhii Hultiaiev)</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=gultyayev" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=gultyayev" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://andersonmfjr.com"><img src="https://avatars.githubusercontent.com/u/66845464?v=4?s=100" width="100px;" alt="Anderson Feitosa"/><br /><sub><b>Anderson Feitosa</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=andersonmfjr" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/reboot25"><img src="https://avatars.githubusercontent.com/u/5337080?v=4?s=100" width="100px;" alt="Jun"/><br /><sub><b>Jun</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=reboot25" title="Documentation">📖</a> <a href="#translation-reboot25" title="Translation">🌍</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/DerHerrGammler"><img src="https://avatars.githubusercontent.com/u/30802629?v=4?s=100" width="100px;" alt="Felix Herold"/><br /><sub><b>Felix Herold</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=DerHerrGammler" title="Documentation">📖</a> <a href="#translation-DerHerrGammler" title="Translation">🌍</a></td>
     </tr>
   </tbody>
 </table>
