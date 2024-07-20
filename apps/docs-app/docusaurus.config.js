@@ -43,7 +43,7 @@ const config = {
       },
       de: {
         label: 'Deutsch',
-      },      
+      },
     },
   },
   favicon: 'img/favicon.ico',
