@@ -44,7 +44,9 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
           '',
           import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL'] ||
             baseUrl ||
-            (typeof window !== 'undefined' && window.location.origin)
+            (typeof window !== 'undefined' && window.location.origin
+              ? window.location.origin
+              : '')
         );
 
         url.pathname = `${
