@@ -31,10 +31,13 @@ export function requestContextInterceptor(
     (req.url.startsWith('/') || req.url.startsWith(baseUrl))
   ) {
     const requestUrl = new URL(req.url, baseUrl);
+    const fetchUrl = req.url.includes('/api')
+      ? requestUrl.pathname
+      : requestUrl.href;
 
     return from(
       global
-        .$fetch(requestUrl.pathname, {
+        .$fetch(fetchUrl, {
           method: req.method as any,
           params: requestUrl.searchParams,
         })
@@ -43,7 +46,7 @@ export function requestContextInterceptor(
             body: res,
             status: 200,
             statusText: 'OK',
-            url: req.urlWithParams,
+            url: fetchUrl,
           };
           const transferResponse = new HttpResponse(cacheResponse);
 
