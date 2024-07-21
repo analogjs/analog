@@ -78,7 +78,7 @@ pnpm start
 
 Besuche [http://localhost:5173](http://localhost:5173) in deinem Browser, um die laufende Anwendung zu sehen.
 
-Als nächstes kannst du [zusätzliche Routen mit Hilfe von Komponenten](/docs/features/routing/overview) für die Navigation definieren.
+Als nächstes kannst du [zusätzliche Routen mit Hilfe von Komponenten](/de/docs/features/routing/overview) für die Navigation definieren.
 
 ### Erstellung der Anwendung
 
