@@ -31,7 +31,7 @@ export function requestContextInterceptor(
     (req.url.startsWith('/') || req.url.startsWith(baseUrl))
   ) {
     const requestUrl = new URL(req.url, baseUrl);
-    const fetchUrl = req.url.includes('/api')
+    const fetchUrl = req.url.includes('/api/')
       ? requestUrl.pathname
       : requestUrl.href;
 
@@ -60,7 +60,6 @@ export function requestContextInterceptor(
   if (!import.meta.env.SSR && req.url.startsWith('/')) {
     const cacheRestoreResponse = transferState.get(storeKey, null);
 
-    console.log('cr', cacheRestoreResponse);
     if (cacheRestoreResponse) {
       transferState.remove(storeKey);
       return of(new HttpResponse(cacheRestoreResponse));
