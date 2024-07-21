@@ -39,14 +39,15 @@ export function requestContextInterceptor(
           params: requestUrl.searchParams,
         })
         .then((res) => {
-          const transferResponse = new HttpResponse({
+          const cacheResponse = {
             body: res,
             status: 200,
             statusText: 'OK',
             url: req.urlWithParams,
-          });
+          };
+          const transferResponse = new HttpResponse(cacheResponse);
 
-          transferState.set(storeKey, transferResponse);
+          transferState.set(storeKey, cacheResponse);
           return transferResponse;
         })
     );
@@ -54,11 +55,12 @@ export function requestContextInterceptor(
 
   // on the client
   if (!import.meta.env.SSR && req.url.startsWith('/')) {
-    const cacheResponse = transferState.get(storeKey, null);
+    const cacheRestoreResponse = transferState.get(storeKey, null);
 
-    if (cacheResponse) {
+    console.log('cr', cacheRestoreResponse);
+    if (cacheRestoreResponse) {
       transferState.remove(storeKey);
-      return of(new HttpResponse(cacheResponse));
+      return of(new HttpResponse(cacheRestoreResponse));
     }
 
     return next(
