@@ -1,3 +1,4 @@
+import { StaticProvider, ɵresetCompiledComponents } from '@angular/core';
 import { ɵSERVER_CONTEXT as SERVER_CONTEXT } from '@angular/platform-server';
 
 import {
@@ -14,8 +15,12 @@ export function providerServerContext({
 }: {
   req: ServerRequest;
   res: ServerResponse;
-}) {
+}): StaticProvider[] {
   const baseUrl = getBaseUrl(req);
+
+  if (import.meta.env.DEV) {
+    ɵresetCompiledComponents();
+  }
 
   return [
     { provide: SERVER_CONTEXT, useValue: 'ssr-analog' },
