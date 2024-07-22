@@ -17,7 +17,7 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { renderApplication } from '@angular/platform-server';
 
 // Analog server context
-import { providerServerContext } from '@analogjs/router/server';
+import { provideServerContext } from '@analogjs/router/server';
 import { ServerContext } from '@analogjs/router/tokens';
 
 import { config } from './app/app.config.server';
@@ -39,7 +39,7 @@ export default async function render(
   const html = await renderApplication(bootstrap, {
     document,
     url,
-    platformProviders: [providerServerContext(serverContext)],
+    platformProviders: [provideServerContext(serverContext)],
   });
 
   return html;

@@ -1,1 +1,1 @@
-export { providerServerContext } from './provide-server-context';
+export { provideServerContext } from './provide-server-context';

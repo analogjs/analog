@@ -9,7 +9,7 @@ import {
   ServerResponse,
 } from '@analogjs/router/tokens';
 
-export function providerServerContext({
+export function provideServerContext({
   req,
   res,
 }: {
