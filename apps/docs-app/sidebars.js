@@ -69,7 +69,7 @@ const sidebars = {
             {
               type: 'doc',
               id: 'features/data-fetching/overview',
-              label: 'Overiview',
+              label: 'Overview',
             },
             {
               type: 'doc',

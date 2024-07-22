@@ -1,5 +1,10 @@
 import { TransferState, inject, makeStateKey } from '@angular/core';
-import { HttpHandlerFn, HttpRequest, HttpResponse } from '@angular/common/http';
+import {
+  HttpHandlerFn,
+  HttpHeaders,
+  HttpRequest,
+  HttpResponse,
+} from '@angular/common/http';
 
 import { from, of } from 'rxjs';
 
@@ -36,14 +41,21 @@ export function requestContextInterceptor(
       : requestUrl.href;
 
     return from(
-      global
-        .$fetch(fetchUrl, {
+      global.$fetch
+        .raw(fetchUrl, {
           method: req.method as any,
           params: requestUrl.searchParams,
+          headers: req.headers.keys().reduce((hdrs, current) => {
+            return {
+              ...hdrs,
+              [current]: req.headers.get(current),
+            };
+          }, {}),
         })
         .then((res) => {
           const cacheResponse = {
-            body: res,
+            body: res._data,
+            headers: new HttpHeaders(res.headers),
             status: 200,
             statusText: 'OK',
             url: fetchUrl,
