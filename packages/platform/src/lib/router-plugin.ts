@@ -1,5 +1,9 @@
 import { VERSION } from '@angular/compiler-cli';
-import { normalizePath, Plugin } from 'vite';
+import { normalizePath, Plugin, UserConfig } from 'vite';
+import fg from 'fast-glob';
+import { resolve } from 'node:path';
+
+import { Options } from './options.js';
 
 /**
  * This plugin invalidates the files for routes when new files
@@ -9,11 +13,18 @@ import { normalizePath, Plugin } from 'vite';
  *
  * @returns
  */
-export function routerPlugin(): Plugin[] {
+export function routerPlugin(options?: Options): Plugin[] {
+  const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  let config: UserConfig;
+  let root: string;
+
   return [
     {
       name: 'analogjs-router-plugin',
-      config() {
+      config(_config) {
+        config = _config;
+        root = resolve(workspaceRoot, config.root || '.') || '.';
+
         return {
           ssr: {
             noExternal: [
@@ -89,25 +100,35 @@ export function routerPlugin(): Plugin[] {
           code.includes('ANALOG_CONTENT_FILES') &&
           id.includes('analogjs')
         ) {
+          const routeFiles: string[] = fg.sync(
+            [
+              `${root}/src/app/pages/**/*.page.ts`,
+              `${root}/src/app/pages/**/*.page.analog`,
+            ],
+            { dot: true }
+          );
+
+          const contentRouteFiles: string[] = fg.sync(
+            [`${root}/src/app/pages/**/*.md`],
+            { dot: true }
+          );
+
           const result = code
             .replace(
               'let ANALOG_ROUTE_FILES = {};',
               `
-            let ANALOG_ROUTE_FILES = import.meta.glob([
-              '/app/routes/**/*.ts',
-              '/src/app/routes/**/*.ts',
-              '/src/app/pages/**/*.page.ts',
-              '/src/app/pages/**/*.page.analog',
-            ]);
+            let ANALOG_ROUTE_FILES = {${routeFiles.map(
+              (module) => `"${module}": () => import('${module}')`
+            )}};
           `
             )
             .replace(
               'let ANALOG_CONTENT_FILES = {};',
               `
-          let ANALOG_CONTENT_FILES = import.meta.glob(
-            ['/src/app/routes/**/*.md', '/src/app/pages/**/*.md'],
-            { query: '?analog-content-file=true', import: 'default' }
-          );
+          let ANALOG_CONTENT_FILES = {${contentRouteFiles.map(
+            (module) =>
+              `"${module}": () => import('${module}?analog-content-file=true').then(m => m.default)`
+          )}};
           `
             );
 
@@ -123,12 +144,17 @@ export function routerPlugin(): Plugin[] {
       name: 'analog-glob-endpoints',
       transform(code, id) {
         if (code.includes('PAGE_ENDPOINTS') && id.includes('analogjs')) {
+          const endpointFiles: string[] = fg.sync(
+            [`${root}/src/app/pages/**/*.server.ts`],
+            { dot: true }
+          );
+
           const result = code.replace(
-            'let PAGE_ENDPOINTS: any = {};',
+            'let PAGE_ENDPOINTS = {};',
             `
-            let PAGE_ENDPOINTS = import.meta.glob([
-              '/src/app/pages/**/*.server.ts',
-            ]);
+            let PAGE_ENDPOINTS = {${endpointFiles.map(
+              (module) => `"${module}": () => import('${module}')`
+            )}};
           `
           );
 
