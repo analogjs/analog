@@ -2,7 +2,8 @@
   "files": [
     "README.md",
     "apps/docs-app/docs/contributors.mdx",
-    "apps/docs-app/i18n/es/docusaurus-plugin-content-docs/current/contributors.mdx"
+    "apps/docs-app/i18n/es/docusaurus-plugin-content-docs/current/contributors.mdx",
+    "apps/docs-app/i18n/de/docusaurus-plugin-content-docs/current/contributors.mdx"
   ],
   "imageSize": 100,
   "commit": false,
@@ -1055,6 +1056,26 @@
       "profile": "http://andersonmfjr.com",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "reboot25",
+      "name": "Jun",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5337080?v=4",
+      "profile": "https://github.com/reboot25",
+      "contributions": [
+        "doc",
+        "translation"
+      ]
+    },
+    {
+      "login": "DerHerrGammler",
+      "name": "Felix Herold",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30802629?v=4",
+      "profile": "https://github.com/DerHerrGammler",
+      "contributions": [
+        "doc",
+        "translation"
       ]
     }
   ],
