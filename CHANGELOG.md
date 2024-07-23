@@ -1,3 +1,10 @@
+## [1.6.3](https://github.com/analogjs/analog/compare/v1.6.2...v1.6.3) (2024-07-23)
+
+### Bug Fixes
+
+- **astro-angular:** pass Astro/Starlight defaults for esbuild ([#1219](https://github.com/analogjs/analog/issues/1219)) ([b29fc65](https://github.com/analogjs/analog/commit/b29fc659b2f2c5ae9859616cd4829129059980d6))
+- **create-analog:** typo on prism highlighter ([#1218](https://github.com/analogjs/analog/issues/1218)) ([eb8e753](https://github.com/analogjs/analog/commit/eb8e7531e3d9be95fe2e0490dd89cb7e7cf572a6))
+
 ## [1.6.3-beta.2](https://github.com/analogjs/analog/compare/v1.6.3-beta.1...v1.6.3-beta.2) (2024-07-19)
 
 ### Bug Fixes
