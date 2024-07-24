@@ -529,7 +529,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     rootNames = rn.concat(analogFiles, includeFiles);
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);
-    console.log(rootNames);
+
     styleTransform = (code: string, filename: string) =>
       preprocessCSS(code, filename, config as any);
 

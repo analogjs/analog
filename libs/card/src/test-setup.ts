@@ -1,4 +1,4 @@
-import '@analogjs/vite-plugin-angular/setup-vitest';
+import '@analogjs/vitest-angular/setup-zone';
 
 /**
  * Initialize TestBed for all tests inside of content

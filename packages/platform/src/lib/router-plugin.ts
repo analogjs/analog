@@ -112,7 +112,6 @@ export function routerPlugin(options?: Options): Plugin[] {
             ],
             { dot: true }
           );
-          // console.log(options?.additionalPagesDirs, routeFiles);
 
           const contentRouteFiles: string[] = fg.sync(
             [
@@ -124,7 +123,6 @@ export function routerPlugin(options?: Options): Plugin[] {
             ],
             { dot: true }
           );
-          console.log(contentRouteFiles);
 
           const result = code
             .replace(
@@ -162,7 +160,12 @@ export function routerPlugin(options?: Options): Plugin[] {
       transform(code, id) {
         if (code.includes('PAGE_ENDPOINTS') && id.includes('analogjs')) {
           const endpointFiles: string[] = fg.sync(
-            [`${root}/src/app/pages/**/*.server.ts`],
+            [
+              `${root}/src/app/pages/**/*.server.ts`,
+              ...(options?.additionalPagesDirs || [])?.map(
+                (glob) => `${workspaceRoot}${glob}/**/*.server.ts`
+              ),
+            ],
             { dot: true }
           );
 

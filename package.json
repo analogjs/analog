@@ -141,7 +141,6 @@
     "happy-dom": "^12.10.3",
     "jest": "^29.5.0",
     "jest-environment-jsdom": "^29.5.0",
-    "jest-preset-angular": "~14.1.0",
     "jsdom": "22.1.0",
     "jsonc-eslint-parser": "^2.1.0",
     "kolorist": "^1.6.0",
