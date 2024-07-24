@@ -96,12 +96,14 @@ export function routerPlugin(options?: Options): Plugin[] {
       name: 'analog-glob-routes',
       transform(code, id) {
         if (
-          code.includes('ANALOG_ROUTE_FILES') &&
-          code.includes('ANALOG_CONTENT_FILES') &&
+          (code.includes('ANALOG_ROUTE_FILES') ||
+            code.includes('ANALOG_CONTENT_ROUTE_FILES')) &&
           id.includes('analogjs')
         ) {
           const routeFiles: string[] = fg.sync(
             [
+              `${root}/app/routes/**/*.ts`,
+              `${root}/src/app/routes/**/*.ts`,
               `${root}/src/app/pages/**/*.page.ts`,
               `${root}/src/app/pages/**/*.page.analog`,
             ],
@@ -109,7 +111,7 @@ export function routerPlugin(options?: Options): Plugin[] {
           );
 
           const contentRouteFiles: string[] = fg.sync(
-            [`${root}/src/app/pages/**/*.md`],
+            [`${root}/src/app/routes/**/*.md`, `${root}/src/content/**/*.md`],
             { dot: true }
           );
 
@@ -118,16 +120,20 @@ export function routerPlugin(options?: Options): Plugin[] {
               'let ANALOG_ROUTE_FILES = {};',
               `
             let ANALOG_ROUTE_FILES = {${routeFiles.map(
-              (module) => `"${module}": () => import('${module}')`
+              (module) =>
+                `"${module.replace(root, '')}": () => import('${module}')`
             )}};
           `
             )
             .replace(
-              'let ANALOG_CONTENT_FILES = {};',
+              'let ANALOG_CONTENT_ROUTE_FILES = {};',
               `
-          let ANALOG_CONTENT_FILES = {${contentRouteFiles.map(
+          let ANALOG_CONTENT_ROUTE_FILES = {${contentRouteFiles.map(
             (module) =>
-              `"${module}": () => import('${module}?analog-content-file=true').then(m => m.default)`
+              `"${module.replace(
+                root,
+                ''
+              )}": () => import('${module}?analog-content-file=true').then(m => m.default)`
           )}};
           `
             );

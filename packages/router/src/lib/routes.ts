@@ -16,7 +16,7 @@ let ANALOG_ROUTE_FILES = {};
 /**
  * This variable reference is replaced with a glob of all content routes.
  */
-let ANALOG_CONTENT_FILES = {};
+let ANALOG_CONTENT_ROUTE_FILES = {};
 
 export type Files = Record<string, () => Promise<RouteExport | string>>;
 
@@ -238,5 +238,5 @@ function deprioritizeSegment(segment: string): string {
 
 export const routes: Route[] = createRoutes({
   ...ANALOG_ROUTE_FILES,
-  ...ANALOG_CONTENT_FILES,
+  ...ANALOG_CONTENT_ROUTE_FILES,
 });
