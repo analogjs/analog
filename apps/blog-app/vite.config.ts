@@ -19,6 +19,7 @@ export default defineConfig(() => {
     plugins: [
       analog({
         static: true,
+        additionalPagesDirs: ['/libs/shared/feature'],
         content: {
           highlighter: 'shiki',
           shikiOptions: {

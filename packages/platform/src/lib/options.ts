@@ -37,6 +37,18 @@ export interface Options {
   index?: string;
   workspaceRoot?: string;
   content?: ContentPluginOptions;
+  /**
+   * Additional page paths to include
+   */
+  additionalPagesDirs?: string[];
+  /**
+   * Additional page paths to include
+   */
+  additionalContentDirs?: string[];
+  /**
+   * Additional files to include in compilation
+   */
+  include?: string[];
 }
 
 export interface PrerenderContentDir {

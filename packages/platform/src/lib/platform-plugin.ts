@@ -33,6 +33,12 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ...angular({
       jit: platformOptions.jit,
       workspaceRoot: platformOptions.workspaceRoot,
+      include: [
+        ...(platformOptions.include ?? []),
+        ...(platformOptions.additionalPagesDirs ?? []).map(
+          (pageDir) => `${pageDir}/**/*.page.ts`
+        ),
+      ],
       ...(opts?.vite ?? {}),
     }),
     ssrXhrBuildPlugin(),

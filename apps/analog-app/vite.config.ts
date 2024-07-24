@@ -33,6 +33,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       analog({
         apiPrefix: 'api',
+        additionalPagesDirs: ['/libs/shared/feature'],
         prerender: {
           routes: ['/', '/cart'],
           sitemap: {

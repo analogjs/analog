@@ -54,13 +54,27 @@ export function contentPlugin(
           id.includes('analogjs')
         ) {
           const contentFilesList: string[] = fg.sync(
-            [`${root}/src/content/**/*.md`, `${root}/src/content/**/*.agx`],
+            [
+              `${root}/src/content/**/*.md`,
+              `${root}/src/content/**/*.agx`,
+              ...(options?.additionalContentDirs || [])?.map(
+                (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`
+              ),
+            ],
             { dot: true }
           );
 
-          const agxFiles: string[] = fg.sync([`${root}/src/content/**/*.agx`], {
-            dot: true,
-          });
+          const agxFiles: string[] = fg.sync(
+            [
+              `${root}/src/content/**/*.agx`,
+              ...(options?.additionalContentDirs || [])?.map(
+                (glob) => `${workspaceRoot}${glob}/**/*.agx`
+              ),
+            ],
+            {
+              dot: true,
+            }
+          );
 
           const eagerImports: string[] = [];
 

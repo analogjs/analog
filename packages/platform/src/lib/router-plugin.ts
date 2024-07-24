@@ -106,12 +106,22 @@ export function routerPlugin(options?: Options): Plugin[] {
               `${root}/src/app/routes/**/*.ts`,
               `${root}/src/app/pages/**/*.page.ts`,
               `${root}/src/app/pages/**/*.page.analog`,
+              ...(options?.additionalPagesDirs || [])?.map(
+                (glob) => `${workspaceRoot}${glob}/**/*.page.ts`
+              ),
             ],
             { dot: true }
           );
+          console.log(options?.additionalPagesDirs, routeFiles);
 
           const contentRouteFiles: string[] = fg.sync(
-            [`${root}/src/app/routes/**/*.md`, `${root}/src/content/**/*.md`],
+            [
+              `${root}/src/app/routes/**/*.md`,
+              `${root}/src/content/**/*.md`,
+              ...(options?.additionalContentDirs || [])?.map(
+                (glob) => `${workspaceRoot}${glob}/**/*.md`
+              ),
+            ],
             { dot: true }
           );
 
@@ -159,7 +169,8 @@ export function routerPlugin(options?: Options): Plugin[] {
             'let PAGE_ENDPOINTS = {};',
             `
             let PAGE_ENDPOINTS = {${endpointFiles.map(
-              (module) => `"${module}": () => import('${module}')`
+              (module) =>
+                `"${module.replace(root, '')}": () => import('${module}')`
             )}};
           `
           );
