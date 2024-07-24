@@ -203,8 +203,12 @@ export function contentPlugin(
           `
           );
 
+          if (!code.includes('analog_module_')) {
+            result = `${eagerImports.join('\n')}\n${result}`;
+          }
+
           return {
-            code: `${eagerImports.join('\n')}\n${result}`,
+            code: result,
             map: null,
           };
         }
