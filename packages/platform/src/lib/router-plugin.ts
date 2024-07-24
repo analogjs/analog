@@ -112,7 +112,7 @@ export function routerPlugin(options?: Options): Plugin[] {
             ],
             { dot: true }
           );
-          console.log(options?.additionalPagesDirs, routeFiles);
+          // console.log(options?.additionalPagesDirs, routeFiles);
 
           const contentRouteFiles: string[] = fg.sync(
             [
@@ -124,6 +124,7 @@ export function routerPlugin(options?: Options): Plugin[] {
             ],
             { dot: true }
           );
+          console.log(contentRouteFiles);
 
           const result = code
             .replace(

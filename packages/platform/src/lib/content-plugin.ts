@@ -3,11 +3,11 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import fg from 'fast-glob';
 
-import { WithShikiHighlighterOptions } from './content/shiki/index.js';
+import type { WithShikiHighlighterOptions } from './content/shiki/index.js';
 import { MarkedContentHighlighter } from './content/marked/marked-content-highlighter.js';
-import { WithPrismHighlighterOptions } from './content/prism/index.js';
-import { WithMarkedOptions } from './content/marked/index.js';
-import { Options } from './options.js';
+import type { WithPrismHighlighterOptions } from './content/prism/index.js';
+import type { WithMarkedOptions } from './content/marked/index.js';
+import type { Options } from './options.js';
 
 interface Content {
   code: string;
@@ -41,77 +41,6 @@ export function contentPlugin(
   let root: string;
 
   return [
-    {
-      name: 'analog-content-glob-routes',
-      config(_config) {
-        config = _config;
-        root = resolve(workspaceRoot, config.root || '.') || '.';
-      },
-      transform(code, id) {
-        if (
-          code.includes('ANALOG_CONTENT_FILE_LIST') &&
-          code.includes('ANALOG_AGX_FILES') &&
-          id.includes('analogjs')
-        ) {
-          const contentFilesList: string[] = fg.sync(
-            [
-              `${root}/src/content/**/*.md`,
-              `${root}/src/content/**/*.agx`,
-              ...(options?.additionalContentDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`
-              ),
-            ],
-            { dot: true }
-          );
-
-          const agxFiles: string[] = fg.sync(
-            [
-              `${root}/src/content/**/*.agx`,
-              ...(options?.additionalContentDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.agx`
-              ),
-            ],
-            {
-              dot: true,
-            }
-          );
-
-          const eagerImports: string[] = [];
-
-          contentFilesList.forEach((module, index) => {
-            eagerImports.push(
-              `import { default as analog_module_${index} } from "${module}?analog-content-list=true";`
-            );
-          });
-
-          const result = code
-            .replace(
-              'let ANALOG_CONTENT_FILE_LIST = {};',
-              `
-            let ANALOG_CONTENT_FILE_LIST = {${contentFilesList.map(
-              (module, index) =>
-                `"${module.replace(root, '')}": analog_module_${index}`
-            )}};
-          `
-            )
-            .replace(
-              'let ANALOG_AGX_FILES = {};',
-              `
-          let ANALOG_AGX_FILES = {${agxFiles.map(
-            (module) =>
-              `"${module.replace(root, '')}": () => import('${module}')`
-          )}};
-          `
-            );
-
-          return {
-            code: `${eagerImports.join('\n')}\n${result}`,
-          };
-        }
-
-        return;
-      },
-    },
     {
       name: 'analogjs-content-frontmatter',
       async transform(code, id) {
@@ -209,6 +138,77 @@ export function contentPlugin(
         return `export default ${JSON.stringify(
           `---\n${frontmatter}\n---\n\n${mdContent}`
         )}`;
+      },
+    },
+    {
+      name: 'analog-content-glob-routes',
+      config(_config) {
+        config = _config;
+        root = resolve(workspaceRoot, config.root || '.') || '.';
+      },
+      transform(code, id) {
+        if (
+          code.includes('ANALOG_CONTENT_FILE_LIST') &&
+          code.includes('ANALOG_AGX_FILES') &&
+          id.includes('analogjs')
+        ) {
+          const contentFilesList: string[] = fg.sync(
+            [
+              `${root}/src/content/**/*.md`,
+              `${root}/src/content/**/*.agx`,
+              ...(options?.additionalContentDirs || [])?.map(
+                (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`
+              ),
+            ],
+            { dot: true }
+          );
+
+          const agxFiles: string[] = fg.sync(
+            [
+              `${root}/src/content/**/*.agx`,
+              ...(options?.additionalContentDirs || [])?.map(
+                (glob) => `${workspaceRoot}${glob}/**/*.agx`
+              ),
+            ],
+            {
+              dot: true,
+            }
+          );
+
+          const eagerImports: string[] = [];
+
+          contentFilesList.forEach((module, index) => {
+            eagerImports.push(
+              `import { default as analog_module_${index} } from "${module}?analog-content-list=true";`
+            );
+          });
+
+          const result = code
+            .replace(
+              'let ANALOG_CONTENT_FILE_LIST = {};',
+              `
+            let ANALOG_CONTENT_FILE_LIST = {${contentFilesList.map(
+              (module, index) =>
+                `"${module.replace(root, '')}": analog_module_${index}`
+            )}};
+          `
+            )
+            .replace(
+              'let ANALOG_AGX_FILES = {};',
+              `
+          let ANALOG_AGX_FILES = {${agxFiles.map(
+            (module) =>
+              `"${module.replace(root, '')}": () => import('${module}')`
+          )}};
+          `
+            );
+
+          return {
+            code: `${eagerImports.join('\n')}\n${result}`,
+          };
+        }
+
+        return;
       },
     },
   ];

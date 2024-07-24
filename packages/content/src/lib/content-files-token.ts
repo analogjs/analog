@@ -28,7 +28,10 @@ export const CONTENT_FILES_TOKEN = new InjectionToken<
       const filename = entry[0];
       const value = entry[1];
 
-      const newFilename = lookup[filename];
+      const newFilename = lookup[filename].replace(
+        /^\/(.*?)src\/content/,
+        '/src/content'
+      );
       if (newFilename !== undefined) {
         objectUsingSlugAttribute[newFilename] = value as () => Promise<string>;
       }
