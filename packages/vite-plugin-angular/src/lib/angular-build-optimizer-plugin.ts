@@ -14,33 +14,43 @@ export function buildOptimizerPlugin({
   return {
     name: '@analogjs/vite-plugin-angular-optimizer',
     apply: 'build',
-    config() {
+    config(userConfig) {
       return {
-        esbuild: {
-          legalComments: 'none',
-          keepNames: false,
-          define: isProd
-            ? {
-                ngDevMode: 'false',
-                ngJitMode: 'false',
-                ngI18nClosureMode: 'false',
-              }
-            : undefined,
-          supported: {
-            // Native async/await is not supported with Zone.js. Disabling support here will cause
-            // esbuild to downlevel async/await to a Zone.js supported form.
-            'async-await': false,
-            // Zone.js also does not support async generators or async iterators. However, esbuild does
-            // not currently support downleveling either of them. Instead babel is used within the JS/TS
-            // loader to perform the downlevel transformation. They are both disabled here to allow
-            // esbuild to handle them in the future if support is ever added.
-            // NOTE: If esbuild adds support in the future, the babel support for these can be disabled.
-            'async-generator': false,
-            'for-await': false,
-            'class-field': false,
-            'class-static-field': false,
-          },
-        },
+        esbuild: !userConfig.esbuild
+          ? {
+              legalComments: 'none',
+              keepNames: false,
+              define: isProd
+                ? {
+                    ngDevMode: 'false',
+                    ngJitMode: 'false',
+                    ngI18nClosureMode: 'false',
+                  }
+                : undefined,
+              supported: {
+                // Native async/await is not supported with Zone.js. Disabling support here will cause
+                // esbuild to downlevel async/await to a Zone.js supported form.
+                'async-await': false,
+                // Zone.js also does not support async generators or async iterators. However, esbuild does
+                // not currently support downleveling either of them. Instead babel is used within the JS/TS
+                // loader to perform the downlevel transformation. They are both disabled here to allow
+                // esbuild to handle them in the future if support is ever added.
+                // NOTE: If esbuild adds support in the future, the babel support for these can be disabled.
+                'async-generator': false,
+                'for-await': false,
+                'class-field': false,
+                'class-static-field': false,
+              },
+            }
+          : {
+              define: isProd
+                ? {
+                    ngDevMode: 'false',
+                    ngJitMode: 'false',
+                    ngI18nClosureMode: 'false',
+                  }
+                : undefined,
+            },
       };
     },
     async transform(code, id) {

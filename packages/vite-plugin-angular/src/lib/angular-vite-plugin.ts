@@ -135,10 +135,10 @@ export function angular(options?: PluginOptions): Plugin[] {
   const isProd = process.env['NODE_ENV'] === 'production';
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isStackBlitz = !!process.versions['webcontainer'];
+  const isAstroIntegration = process.env['ANALOG_ASTRO'] === 'true';
   const jit =
     typeof pluginOptions?.jit !== 'undefined' ? pluginOptions.jit : isTest;
   let viteServer: ViteDevServer | undefined;
-  let cssPlugin: Plugin | undefined;
   let styleTransform: (
     code: string,
     filename: string
@@ -178,7 +178,8 @@ export function angular(options?: PluginOptions): Plugin[] {
                     jit,
                     incremental: watchMode,
                   },
-                  isTest
+                  isTest,
+                  !isAstroIntegration
                 ),
               ],
               define: {
@@ -201,11 +202,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           setupCompilation(userConfig, context)
         );
       },
-      async buildStart({ plugins }) {
-        if (Array.isArray(plugins)) {
-          cssPlugin = plugins.find((plugin) => plugin.name === 'vite:css');
-        }
-
+      async buildStart() {
         const context = this;
         setupCompilation(userConfig, context);
 
