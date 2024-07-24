@@ -1,20 +1,11 @@
+import { WithShikiHighlighterOptions } from './options.js';
 import {
   defaultHighlighterOptions,
   ShikiHighlighter,
   ShikiHighlighterOptions,
-  ShikiHighlightOptions,
 } from './shiki-highlighter.js';
-import { BundledLanguage } from 'shiki/langs';
 
 export { ShikiHighlighter };
-
-export interface WithShikiHighlighterOptions {
-  highlighter?: Partial<ShikiHighlighterOptions> & {
-    additionalLangs?: BundledLanguage[];
-  };
-  highlight?: ShikiHighlightOptions;
-  container?: string;
-}
 
 export function getShikiHighlighter({
   highlighter = {},

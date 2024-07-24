@@ -31,7 +31,7 @@ export const CONTENT_FILES_TOKEN = new InjectionToken<
       const newFilename = lookup[filename];
       if (newFilename !== undefined) {
         const objectFilename = newFilename.replace(
-          /^\/(.*?)src\/content/,
+          /^\/(.*?)\/content/,
           '/src/content'
         );
         objectUsingSlugAttribute[objectFilename] =

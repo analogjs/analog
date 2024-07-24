@@ -3,9 +3,9 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import fg from 'fast-glob';
 
-import type { WithShikiHighlighterOptions } from './content/shiki/index.js';
+import type { WithShikiHighlighterOptions } from './content/shiki/options.js';
 import { MarkedContentHighlighter } from './content/marked/marked-content-highlighter.js';
-import type { WithPrismHighlighterOptions } from './content/prism/index.js';
+import type { WithPrismHighlighterOptions } from './content/prism/options.js';
 import type { WithMarkedOptions } from './content/marked/index.js';
 import type { Options } from './options.js';
 
