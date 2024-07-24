@@ -65,7 +65,7 @@ export function routerPlugin(options?: Options): Plugin[] {
         function invalidateRoutes(path: string) {
           if (
             path.includes(normalizePath(`/app/routes/`)) ||
-            path.includes(normalizePath(`/app/pages/`))
+            path.includes(normalizePath(`/pages/`))
           ) {
             server.moduleGraph.fileToModulesMap.forEach((mods) => {
               mods.forEach((mod) => {
@@ -116,6 +116,7 @@ export function routerPlugin(options?: Options): Plugin[] {
           const contentRouteFiles: string[] = fg.sync(
             [
               `${root}/src/app/routes/**/*.md`,
+              `${root}/src/app/pages/**/*.md`,
               `${root}/src/content/**/*.md`,
               ...(options?.additionalContentDirs || [])?.map(
                 (glob) => `${workspaceRoot}${glob}/**/*.md`
@@ -124,19 +125,19 @@ export function routerPlugin(options?: Options): Plugin[] {
             { dot: true }
           );
 
-          const result = code
-            .replace(
-              'let ANALOG_ROUTE_FILES = {};',
-              `
+          let result = code.replace(
+            'let ANALOG_ROUTE_FILES = {};',
+            `
             let ANALOG_ROUTE_FILES = {${routeFiles.map(
               (module) =>
                 `"${module.replace(root, '')}": () => import('${module}')`
             )}};
           `
-            )
-            .replace(
-              'let ANALOG_CONTENT_ROUTE_FILES = {};',
-              `
+          );
+
+          result = result.replace(
+            'let ANALOG_CONTENT_ROUTE_FILES = {};',
+            `
           let ANALOG_CONTENT_ROUTE_FILES = {${contentRouteFiles.map(
             (module) =>
               `"${module.replace(
@@ -145,10 +146,11 @@ export function routerPlugin(options?: Options): Plugin[] {
               )}": () => import('${module}?analog-content-file=true').then(m => m.default)`
           )}};
           `
-            );
+          );
 
           return {
             code: result,
+            map: null,
           };
         }
 
@@ -181,6 +183,7 @@ export function routerPlugin(options?: Options): Plugin[] {
 
           return {
             code: result,
+            map: null,
           };
         }
 

@@ -28,12 +28,14 @@ export const CONTENT_FILES_TOKEN = new InjectionToken<
       const filename = entry[0];
       const value = entry[1];
 
-      const newFilename = lookup[filename].replace(
-        /^\/(.*?)src\/content/,
-        '/src/content'
-      );
+      const newFilename = lookup[filename];
       if (newFilename !== undefined) {
-        objectUsingSlugAttribute[newFilename] = value as () => Promise<string>;
+        const objectFilename = newFilename.replace(
+          /^\/(.*?)src\/content/,
+          '/src/content'
+        );
+        objectUsingSlugAttribute[objectFilename] =
+          value as () => Promise<string>;
       }
     });
 
