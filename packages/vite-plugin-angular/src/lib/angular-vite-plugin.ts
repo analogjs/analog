@@ -62,6 +62,10 @@ export interface PluginOptions {
   };
   supportedBrowsers?: string[];
   transformFilter?: (code: string, id: string) => boolean;
+  /**
+   * Additional files to include in compilation
+   */
+  include?: string[];
 }
 
 interface EmitFileResult {
@@ -108,6 +112,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     markdownTemplateTransforms:
       options?.experimental?.markdownTemplateTransforms ??
       defaultMarkdownTemplateTransforms,
+    include: options?.include ?? [],
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -474,8 +479,24 @@ export function angular(options?: PluginOptions): Plugin[] {
       .map((file: string) => `${file}.ts`);
   }
 
+  function findIncludes() {
+    const fg = require('fast-glob');
+
+    const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));
+
+    const globs = [
+      ...pluginOptions.include.map((glob) => `${workspaceRoot}${glob}`),
+    ];
+
+    return fg.sync(globs, {
+      dot: true,
+    });
+  }
+
   function setupCompilation(config: UserConfig, context?: unknown) {
     const analogFiles = findAnalogFiles(config);
+    const includeFiles = findIncludes();
+
     const { options: tsCompilerOptions, rootNames: rn } =
       compilerCli.readConfiguration(pluginOptions.tsconfig, {
         suppressOutputPathCheck: true,
@@ -502,7 +523,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions.compilationMode = 'experimental-local';
     }
 
-    rootNames = rn.concat(analogFiles);
+    rootNames = rn.concat(analogFiles, includeFiles);
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);
 

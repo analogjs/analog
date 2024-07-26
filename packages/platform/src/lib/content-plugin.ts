@@ -1,10 +1,13 @@
-import { Plugin } from 'vite';
+import { Plugin, UserConfig, normalizePath } from 'vite';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import fg from 'fast-glob';
 
-import { WithShikiHighlighterOptions } from './content/shiki/index.js';
+import type { WithShikiHighlighterOptions } from './content/shiki/options.js';
 import { MarkedContentHighlighter } from './content/marked/marked-content-highlighter.js';
-import { WithPrismHighlighterOptions } from './content/prism/index.js';
-import { WithMarkedOptions } from './content/marked/index.js';
+import type { WithPrismHighlighterOptions } from './content/prism/options.js';
+import type { WithMarkedOptions } from './content/marked/index.js';
+import type { Options } from './options.js';
 
 interface Content {
   code: string;
@@ -27,11 +30,15 @@ export function contentPlugin(
   }: ContentPluginOptions = {
     highlighter: 'prism',
     markedOptions: { mangle: true },
-  }
+  },
+  options?: Options
 ): Plugin[] {
   const cache = new Map<string, Content>();
 
   let markedHighlighter: MarkedContentHighlighter;
+  const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  let config: UserConfig;
+  let root: string;
 
   return [
     {
@@ -131,6 +138,112 @@ export function contentPlugin(
         return `export default ${JSON.stringify(
           `---\n${frontmatter}\n---\n\n${mdContent}`
         )}`;
+      },
+    },
+    {
+      name: 'analog-content-glob-routes',
+      config(_config) {
+        config = _config;
+        root = resolve(workspaceRoot, config.root || '.') || '.';
+      },
+      transform(code, id) {
+        if (
+          code.includes('ANALOG_CONTENT_FILE_LIST') &&
+          code.includes('ANALOG_AGX_FILES') &&
+          id.includes('analogjs')
+        ) {
+          const contentFilesList: string[] = fg.sync(
+            [
+              `${root}/src/content/**/*.md`,
+              `${root}/src/content/**/*.agx`,
+              ...(options?.additionalContentDirs || [])?.map(
+                (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`
+              ),
+            ],
+            { dot: true }
+          );
+
+          const eagerImports: string[] = [];
+
+          contentFilesList.forEach((module, index) => {
+            eagerImports.push(
+              `import { default as analog_module_${index} } from "${module}?analog-content-list=true";`
+            );
+          });
+
+          let result = code.replace(
+            'let ANALOG_CONTENT_FILE_LIST = {};',
+            `
+            let ANALOG_CONTENT_FILE_LIST = {${contentFilesList.map(
+              (module, index) =>
+                `"${module.replace(root, '')}": analog_module_${index}`
+            )}};
+          `
+          );
+
+          const agxFiles: string[] = fg.sync(
+            [
+              `${root}/src/content/**/*.agx`,
+              ...(options?.additionalContentDirs || [])?.map(
+                (glob) => `${workspaceRoot}${glob}/**/*.agx`
+              ),
+            ],
+            {
+              dot: true,
+            }
+          );
+
+          result = result.replace(
+            'let ANALOG_AGX_FILES = {};',
+            `
+          let ANALOG_AGX_FILES = {${agxFiles.map(
+            (module) =>
+              `"${module.replace(root, '')}": () => import('${module}')`
+          )}};
+          `
+          );
+
+          if (!code.includes('analog_module_')) {
+            result = `${eagerImports.join('\n')}\n${result}`;
+          }
+
+          return {
+            code: result,
+            map: null,
+          };
+        }
+
+        return;
+      },
+    },
+    {
+      name: 'analogjs-invalidate-content-dirs',
+      configureServer(server) {
+        function invalidateContent(path: string) {
+          if (path.includes(normalizePath(`/src/content/`))) {
+            server.moduleGraph.fileToModulesMap.forEach((mods) => {
+              mods.forEach((mod) => {
+                if (
+                  mod.id?.includes('analogjs') &&
+                  mod.id?.includes('content')
+                ) {
+                  server.moduleGraph.invalidateModule(mod);
+
+                  mod.importers.forEach((imp) => {
+                    server.moduleGraph.invalidateModule(imp);
+                  });
+                }
+              });
+            });
+
+            server.ws.send({
+              type: 'full-reload',
+            });
+          }
+        }
+
+        server.watcher.on('add', invalidateContent);
+        server.watcher.on('unlink', invalidateContent);
       },
     },
   ];

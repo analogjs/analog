@@ -30,11 +30,17 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ...viteNitroPlugin(platformOptions, nitroOptions),
     (platformOptions.ssr ? ssrBuildPlugin() : false) as Plugin,
     ...depsPlugin(),
-    ...routerPlugin(),
-    ...contentPlugin(platformOptions?.content),
+    ...routerPlugin(platformOptions),
+    ...contentPlugin(platformOptions?.content, platformOptions),
     ...angular({
       jit: platformOptions.jit,
       workspaceRoot: platformOptions.workspaceRoot,
+      include: [
+        ...(platformOptions.include ?? []),
+        ...(platformOptions.additionalPagesDirs ?? []).map(
+          (pageDir) => `${pageDir}/**/*.page.ts`
+        ),
+      ],
       ...(opts?.vite ?? {}),
     }),
     ssrXhrBuildPlugin(),
