@@ -89,7 +89,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           preset: buildPreset,
           logLevel: nitroOptions?.logLevel || 0,
           srcDir: normalizePath(`${rootDir}/src/server`),
-          scanDirs: [normalizePath(`${rootDir}/src/server`)],
+          scanDirs: [
+            normalizePath(`${rootDir}/src/server`),
+            ...(options?.additionalAPIDirs || []).map((dir) =>
+              normalizePath(`${workspaceRoot}${dir}`)
+            ),
+          ],
           output: {
             dir: normalizePath(
               resolve(workspaceRoot, 'dist', rootDir, 'analog')

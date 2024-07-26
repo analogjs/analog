@@ -11,6 +11,7 @@ export interface Options {
   entryServer?: string;
   index?: string;
   workspaceRoot?: string;
+  additionalAPIDirs?: string[];
 }
 
 export interface PrerenderOptions {

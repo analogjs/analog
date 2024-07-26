@@ -46,6 +46,10 @@ export interface Options {
    */
   additionalContentDirs?: string[];
   /**
+   * Additional API paths to include
+   */
+  additionalAPIDirs?: string[];
+  /**
    * Additional files to include in compilation
    */
   include?: string[];
