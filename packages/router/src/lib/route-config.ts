@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { RedirectRouteMeta, RouteConfig, RouteMeta } from './models';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
-import { PAGE_ENDPOINTS, ANALOG_META_KEY } from './endpoints';
+import { ANALOG_PAGE_ENDPOINTS, ANALOG_META_KEY } from './endpoints';
 
 export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
   if (routeMeta && isRedirectRouteMeta(routeMeta)) {
@@ -36,7 +36,7 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
         [ANALOG_META_KEY]: { endpoint: string; endpointKey: string };
       };
 
-      if (PAGE_ENDPOINTS[routeConfig[ANALOG_META_KEY].endpointKey]) {
+      if (ANALOG_PAGE_ENDPOINTS[routeConfig[ANALOG_META_KEY].endpointKey]) {
         const { queryParams, fragment: hash, params, parent } = route;
         const segment =
           parent?.url.map((segment) => segment.path).join('/') || '';

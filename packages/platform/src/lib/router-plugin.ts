@@ -1,4 +1,3 @@
-import { VERSION } from '@angular/compiler-cli';
 import { normalizePath, Plugin, UserConfig } from 'vite';
 import fg from 'fast-glob';
 import { resolve } from 'node:path';
@@ -58,11 +57,10 @@ export function routerPlugin(options?: Options): Plugin[] {
         config = _config;
         root = resolve(workspaceRoot, config.root || '.') || '.';
       },
-      transform(code, id) {
+      transform(code) {
         if (
-          (code.includes('ANALOG_ROUTE_FILES') ||
-            code.includes('ANALOG_CONTENT_ROUTE_FILES')) &&
-          id.includes('analogjs')
+          code.includes('ANALOG_ROUTE_FILES') ||
+          code.includes('ANALOG_CONTENT_ROUTE_FILES')
         ) {
           const routeFiles: string[] = fg.sync(
             [
@@ -114,7 +112,7 @@ export function routerPlugin(options?: Options): Plugin[] {
 
           return {
             code: result,
-            map: null,
+            map: { mappings: '' },
           };
         }
 
@@ -123,8 +121,8 @@ export function routerPlugin(options?: Options): Plugin[] {
     },
     {
       name: 'analog-glob-endpoints',
-      transform(code, id) {
-        if (code.includes('PAGE_ENDPOINTS') && id.includes('analogjs')) {
+      transform(code) {
+        if (code.includes('ANALOG_PAGE_ENDPOINTS')) {
           const endpointFiles: string[] = fg.sync(
             [
               `${root}/src/app/pages/**/*.server.ts`,
@@ -136,9 +134,9 @@ export function routerPlugin(options?: Options): Plugin[] {
           );
 
           const result = code.replace(
-            'let PAGE_ENDPOINTS = {};',
+            'let ANALOG_PAGE_ENDPOINTS = {};',
             `
-            let PAGE_ENDPOINTS = {${endpointFiles.map(
+            let ANALOG_PAGE_ENDPOINTS = {${endpointFiles.map(
               (module) =>
                 `"${module.replace(root, '')}": () => import('${module}')`
             )}};
@@ -147,7 +145,7 @@ export function routerPlugin(options?: Options): Plugin[] {
 
           return {
             code: result,
-            map: null,
+            map: { mappings: '' },
           };
         }
 
