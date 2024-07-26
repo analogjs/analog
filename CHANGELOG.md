@@ -1,3 +1,15 @@
+## [1.6.4](https://github.com/analogjs/analog/compare/v1.6.3...v1.6.4) (2024-07-25)
+
+### Bug Fixes
+
+- **astro-angular:** add better support for Astro environment detection ([#1229](https://github.com/analogjs/analog/issues/1229)) ([01d59dc](https://github.com/analogjs/analog/commit/01d59dc35c2dd0a35531efd5f665287d98f1636e))
+
+## [1.6.4-beta.1](https://github.com/analogjs/analog/compare/v1.6.3...v1.6.4-beta.1) (2024-07-24)
+
+### Bug Fixes
+
+- **astro-angular:** add better support for Astro environment detection ([#1229](https://github.com/analogjs/analog/issues/1229)) ([01d59dc](https://github.com/analogjs/analog/commit/01d59dc35c2dd0a35531efd5f665287d98f1636e))
+
 ## [1.6.3](https://github.com/analogjs/analog/compare/v1.6.2...v1.6.3) (2024-07-23)
 
 ### Bug Fixes

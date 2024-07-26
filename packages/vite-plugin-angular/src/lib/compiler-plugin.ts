@@ -18,7 +18,8 @@ type EsbuildPlugin = NonNullable<EsbuildOptions['plugins']>[number];
 
 export function createCompilerPlugin(
   pluginOptions: CompilerPluginOptions,
-  isTest: boolean
+  isTest: boolean,
+  closeTransformer: boolean
 ): EsbuildPlugin {
   const javascriptTransformer = new JavaScriptTransformer(
     { ...pluginOptions, jit: true },
@@ -39,7 +40,9 @@ export function createCompilerPlugin(
         });
       }
 
-      build.onEnd(() => javascriptTransformer.close());
+      if (closeTransformer) {
+        build.onEnd(() => javascriptTransformer.close());
+      }
     },
   };
 }
