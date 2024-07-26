@@ -1,5 +1,7 @@
-import { normalizePath, Plugin } from 'vite';
+import { VERSION } from '@angular/compiler-cli';
+import { normalizePath, Plugin, UserConfig } from 'vite';
 import fg from 'fast-glob';
+import { resolve } from 'node:path';
 
 import { Options } from './options.js';
 
@@ -13,6 +15,7 @@ import { Options } from './options.js';
  */
 export function routerPlugin(options?: Options): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  let config: UserConfig;
   let root: string;
 
   return [
@@ -51,6 +54,10 @@ export function routerPlugin(options?: Options): Plugin[] {
     },
     {
       name: 'analog-glob-routes',
+      config(_config) {
+        config = _config;
+        root = resolve(workspaceRoot, config.root || '.') || '.';
+      },
       transform(code, id) {
         if (
           (code.includes('ANALOG_ROUTE_FILES') ||
