@@ -17,11 +17,11 @@ export const RESPONSE = new InjectionToken<ServerResponse>(
 export const BASE_URL = new InjectionToken<string>('@analogjs/router Base URL');
 
 export function injectRequest() {
-  return inject(REQUEST);
+  return inject(REQUEST, { optional: true });
 }
 
 export function injectResponse() {
-  return inject(RESPONSE);
+  return inject(RESPONSE, { optional: true });
 }
 
 export function injectBaseURL() {
