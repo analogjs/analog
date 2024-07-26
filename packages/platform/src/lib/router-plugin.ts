@@ -1,7 +1,5 @@
-import { VERSION } from '@angular/compiler-cli';
-import { normalizePath, Plugin, UserConfig } from 'vite';
+import { normalizePath, Plugin } from 'vite';
 import fg from 'fast-glob';
-import { resolve } from 'node:path';
 
 import { Options } from './options.js';
 
@@ -15,50 +13,9 @@ import { Options } from './options.js';
  */
 export function routerPlugin(options?: Options): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
-  let config: UserConfig;
   let root: string;
 
   return [
-    {
-      name: 'analogjs-router-plugin',
-      config(_config) {
-        config = _config;
-        root = resolve(workspaceRoot, config.root || '.') || '.';
-
-        return {
-          ssr: {
-            noExternal: [
-              '@analogjs/**',
-              '@analogjs/trpc/**',
-              '@angular/**',
-              '@angular/cdk/**',
-              '@angular/fire/**',
-              '@ngrx/**',
-              '@rx-angular/**',
-              '@ng-bootstrap/**',
-              '@ngneat/**',
-              'apollo-angular/**',
-              'primeng/**',
-              'rxfire/**',
-              '@tanstack/**',
-              'ngxtension/**',
-              'firebase/**',
-              'firebase-admin/**',
-            ],
-          },
-          optimizeDeps: {
-            include: [
-              '@angular/common',
-              '@angular/common/http',
-              ...(Number(VERSION.major) > 15
-                ? ['@angular/core/rxjs-interop']
-                : []),
-            ],
-            exclude: ['@angular/platform-server', '@analogjs/router'],
-          },
-        };
-      },
-    },
     {
       name: 'analogjs-router-invalidate-routes',
       configureServer(server) {

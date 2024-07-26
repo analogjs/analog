@@ -1,3 +1,9 @@
+# [1.7.0-beta.1](https://github.com/analogjs/analog/compare/v1.6.4...v1.7.0-beta.1) (2024-07-26)
+
+### Features
+
+- **platform:** add support for auto-discovery of SSR and optimization dependencies ([#1226](https://github.com/analogjs/analog/issues/1226)) ([40d03e6](https://github.com/analogjs/analog/commit/40d03e6e0884a7f08bea244607b719516a044493))
+
 ## [1.6.4](https://github.com/analogjs/analog/compare/v1.6.3...v1.6.4) (2024-07-25)
 
 ### Bug Fixes
