@@ -107,14 +107,14 @@ yarn build
 pnpm run build
 ```
 
+  </TabItem>
+</Tabs>
+
 ### Build Artifacts
 
 By default, Analog comes with [Server-Side Rendering](/docs/features/server/server-side-rendering) enabled.
 Client artifacts are located in the `dist/analog/public` directory.
 The server for the API/SSR build artifacts is located in the `dist/analog/server` directory.
-
-  </TabItem>
-</Tabs>
 
 ## Migrating an Existing Application
 
