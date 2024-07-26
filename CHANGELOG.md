@@ -1,3 +1,9 @@
+# [1.7.0-beta.3](https://github.com/analogjs/analog/compare/v1.7.0-beta.2...v1.7.0-beta.3) (2024-07-26)
+
+### Features
+
+- **router:** provide server context awareness to routing and HttpClient requests ([#1223](https://github.com/analogjs/analog/issues/1223)) ([b1cdd08](https://github.com/analogjs/analog/commit/b1cdd08fdf329f22ac3228fd6ef667c4d8b7fedf))
+
 # [1.7.0-beta.2](https://github.com/analogjs/analog/compare/v1.7.0-beta.1...v1.7.0-beta.2) (2024-07-26)
 
 ### Features
