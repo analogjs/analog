@@ -1,3 +1,9 @@
+# [1.7.0-beta.4](https://github.com/analogjs/analog/compare/v1.7.0-beta.3...v1.7.0-beta.4) (2024-07-26)
+
+### Bug Fixes
+
+- **platform:** adjust transform filters for routes ([#1231](https://github.com/analogjs/analog/issues/1231)) ([8b488ff](https://github.com/analogjs/analog/commit/8b488ffd0b97c2db0e6cd067b2dbeefbbfcee523))
+
 # [1.7.0-beta.3](https://github.com/analogjs/analog/compare/v1.7.0-beta.2...v1.7.0-beta.3) (2024-07-26)
 
 ### Features
