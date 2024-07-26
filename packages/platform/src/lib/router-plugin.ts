@@ -1,4 +1,3 @@
-import { VERSION } from '@angular/compiler-cli';
 import { normalizePath, Plugin } from 'vite';
 
 /**
@@ -11,43 +10,6 @@ import { normalizePath, Plugin } from 'vite';
  */
 export function routerPlugin(): Plugin[] {
   return [
-    {
-      name: 'analogjs-router-plugin',
-      config() {
-        return {
-          ssr: {
-            noExternal: [
-              '@analogjs/**',
-              '@analogjs/trpc/**',
-              '@angular/**',
-              '@angular/cdk/**',
-              '@angular/fire/**',
-              '@ngrx/**',
-              '@rx-angular/**',
-              '@ng-bootstrap/**',
-              '@ngneat/**',
-              'apollo-angular/**',
-              'primeng/**',
-              'rxfire/**',
-              '@tanstack/**',
-              'ngxtension/**',
-              'firebase/**',
-              'firebase-admin/**',
-            ],
-          },
-          optimizeDeps: {
-            include: [
-              '@angular/common',
-              '@angular/common/http',
-              ...(Number(VERSION.major) > 15
-                ? ['@angular/core/rxjs-interop']
-                : []),
-            ],
-            exclude: ['@angular/platform-server', '@analogjs/router'],
-          },
-        };
-      },
-    },
     {
       name: 'analogjs-router-invalidate-routes',
       configureServer(server) {
