@@ -146,11 +146,10 @@ export function contentPlugin(
         config = _config;
         root = resolve(workspaceRoot, config.root || '.') || '.';
       },
-      transform(code, id) {
+      transform(code) {
         if (
           code.includes('ANALOG_CONTENT_FILE_LIST') &&
-          code.includes('ANALOG_AGX_FILES') &&
-          id.includes('analogjs')
+          code.includes('ANALOG_AGX_FILES')
         ) {
           const contentFilesList: string[] = fg.sync(
             [
@@ -209,7 +208,7 @@ export function contentPlugin(
 
           return {
             code: result,
-            map: null,
+            map: { mappings: '' },
           };
         }
 
@@ -220,7 +219,7 @@ export function contentPlugin(
       name: 'analogjs-invalidate-content-dirs',
       configureServer(server) {
         function invalidateContent(path: string) {
-          if (path.includes(normalizePath(`/src/content/`))) {
+          if (path.includes(normalizePath(`/content/`))) {
             server.moduleGraph.fileToModulesMap.forEach((mods) => {
               mods.forEach((mod) => {
                 if (

@@ -26,7 +26,6 @@ export function depsPlugin(options?: Options): Plugin[] {
             ],
             exclude: [
               '@angular/platform-server',
-              '@analogjs/content',
               '@analogjs/router',
               '@nx/angular',
               '@nx/vite',
