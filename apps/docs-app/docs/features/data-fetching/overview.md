@@ -60,7 +60,7 @@ import {
 
 class MyService {
   request = injectRequest(); // <- Server Request Object
-  response = injectRequest(); // <- Server Response Object
+  response = injectResponse(); // <- Server Response Object
   baseUrl = injectBaseURL(); // <-- Server Base URL
 }
 ```
