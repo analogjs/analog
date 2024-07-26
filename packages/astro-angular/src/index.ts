@@ -17,6 +17,9 @@ function getRenderer(): AstroRenderer {
 
 function getViteConfiguration(vite?: PluginOptions) {
   return {
+    esbuild: {
+      jsxDev: true,
+    },
     optimizeDeps: {
       include: [
         '@angular/platform-browser',
@@ -28,17 +31,7 @@ function getViteConfiguration(vite?: PluginOptions) {
         '@analogjs/astro-angular/server.js',
       ],
     },
-    /**
-     *
-     * Why I am casting viteAngular as any
-     *
-     * The vite angular plugins is shipped as commonjs, while this astro
-     * integration is shipped using ESM and if you call the default
-     * function, you get the following error: viteAngular is not a function.
-     * Attempt to use ESM for the angular vite plugin broke something, hence
-     * this workaround for now.
-     *
-     */
+
     plugins: [
       viteAngular(vite),
       {
@@ -66,6 +59,8 @@ function getViteConfiguration(vite?: PluginOptions) {
 }
 
 export default function (options?: AngularOptions): AstroIntegration {
+  process.env['ANALOG_ASTRO'] = 'true';
+
   return {
     name: '@analogjs/astro-angular',
     hooks: {
