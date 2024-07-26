@@ -60,6 +60,13 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
         });
         url.pathname = url.pathname.replace('**', segment);
 
+        if (
+          !!import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL'] &&
+          (globalThis as any).$fetch
+        ) {
+          return (globalThis as any).$fetch(url.pathname);
+        }
+
         const http = inject(HttpClient);
         return firstValueFrom(http.get(`${url.href}`));
       }
