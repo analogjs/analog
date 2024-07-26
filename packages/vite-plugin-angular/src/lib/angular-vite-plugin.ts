@@ -62,6 +62,10 @@ export interface PluginOptions {
   };
   supportedBrowsers?: string[];
   transformFilter?: (code: string, id: string) => boolean;
+  /**
+   * Additional files to include in compilation
+   */
+  include?: string[];
 }
 
 interface EmitFileResult {
@@ -108,6 +112,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     markdownTemplateTransforms:
       options?.experimental?.markdownTemplateTransforms ??
       defaultMarkdownTemplateTransforms,
+    include: options?.include ?? [],
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -135,10 +140,10 @@ export function angular(options?: PluginOptions): Plugin[] {
   const isProd = process.env['NODE_ENV'] === 'production';
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isStackBlitz = !!process.versions['webcontainer'];
+  const isAstroIntegration = process.env['ANALOG_ASTRO'] === 'true';
   const jit =
     typeof pluginOptions?.jit !== 'undefined' ? pluginOptions.jit : isTest;
   let viteServer: ViteDevServer | undefined;
-  let cssPlugin: Plugin | undefined;
   let styleTransform: (
     code: string,
     filename: string
@@ -178,7 +183,8 @@ export function angular(options?: PluginOptions): Plugin[] {
                     jit,
                     incremental: watchMode,
                   },
-                  isTest
+                  isTest,
+                  !isAstroIntegration
                 ),
               ],
               define: {
@@ -201,11 +207,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           setupCompilation(userConfig, context)
         );
       },
-      async buildStart({ plugins }) {
-        if (Array.isArray(plugins)) {
-          cssPlugin = plugins.find((plugin) => plugin.name === 'vite:css');
-        }
-
+      async buildStart() {
         const context = this;
         setupCompilation(userConfig, context);
 
@@ -477,8 +479,24 @@ export function angular(options?: PluginOptions): Plugin[] {
       .map((file: string) => `${file}.ts`);
   }
 
+  function findIncludes() {
+    const fg = require('fast-glob');
+
+    const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));
+
+    const globs = [
+      ...pluginOptions.include.map((glob) => `${workspaceRoot}${glob}`),
+    ];
+
+    return fg.sync(globs, {
+      dot: true,
+    });
+  }
+
   function setupCompilation(config: UserConfig, context?: unknown) {
     const analogFiles = findAnalogFiles(config);
+    const includeFiles = findIncludes();
+
     const { options: tsCompilerOptions, rootNames: rn } =
       compilerCli.readConfiguration(pluginOptions.tsconfig, {
         suppressOutputPathCheck: true,
@@ -505,7 +523,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions.compilationMode = 'experimental-local';
     }
 
-    rootNames = rn.concat(analogFiles);
+    rootNames = rn.concat(analogFiles, includeFiles);
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);
 

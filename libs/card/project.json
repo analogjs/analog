@@ -5,7 +5,7 @@
   "prefix": "lib",
   "projectType": "library",
   "tags": [],
-  "implicitDependencies": ["vite-plugin-angular"],
+  "implicitDependencies": ["vitest-angular"],
   "targets": {
     "test": {
       "executor": "@nx/vite:test"

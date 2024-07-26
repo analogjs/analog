@@ -1,3 +1,46 @@
+# [1.7.0-beta.4](https://github.com/analogjs/analog/compare/v1.7.0-beta.3...v1.7.0-beta.4) (2024-07-26)
+
+### Bug Fixes
+
+- **platform:** adjust transform filters for routes ([#1231](https://github.com/analogjs/analog/issues/1231)) ([8b488ff](https://github.com/analogjs/analog/commit/8b488ffd0b97c2db0e6cd067b2dbeefbbfcee523))
+
+# [1.7.0-beta.3](https://github.com/analogjs/analog/compare/v1.7.0-beta.2...v1.7.0-beta.3) (2024-07-26)
+
+### Features
+
+- **router:** provide server context awareness to routing and HttpClient requests ([#1223](https://github.com/analogjs/analog/issues/1223)) ([b1cdd08](https://github.com/analogjs/analog/commit/b1cdd08fdf329f22ac3228fd6ef667c4d8b7fedf))
+
+# [1.7.0-beta.2](https://github.com/analogjs/analog/compare/v1.7.0-beta.1...v1.7.0-beta.2) (2024-07-26)
+
+### Features
+
+- add support for configuring additional page/content route sources ([#1228](https://github.com/analogjs/analog/issues/1228)) ([869cfb5](https://github.com/analogjs/analog/commit/869cfb588bf9c6077590f35a2506865720327133))
+
+# [1.7.0-beta.1](https://github.com/analogjs/analog/compare/v1.6.4...v1.7.0-beta.1) (2024-07-26)
+
+### Features
+
+- **platform:** add support for auto-discovery of SSR and optimization dependencies ([#1226](https://github.com/analogjs/analog/issues/1226)) ([40d03e6](https://github.com/analogjs/analog/commit/40d03e6e0884a7f08bea244607b719516a044493))
+
+## [1.6.4](https://github.com/analogjs/analog/compare/v1.6.3...v1.6.4) (2024-07-25)
+
+### Bug Fixes
+
+- **astro-angular:** add better support for Astro environment detection ([#1229](https://github.com/analogjs/analog/issues/1229)) ([01d59dc](https://github.com/analogjs/analog/commit/01d59dc35c2dd0a35531efd5f665287d98f1636e))
+
+## [1.6.4-beta.1](https://github.com/analogjs/analog/compare/v1.6.3...v1.6.4-beta.1) (2024-07-24)
+
+### Bug Fixes
+
+- **astro-angular:** add better support for Astro environment detection ([#1229](https://github.com/analogjs/analog/issues/1229)) ([01d59dc](https://github.com/analogjs/analog/commit/01d59dc35c2dd0a35531efd5f665287d98f1636e))
+
+## [1.6.3](https://github.com/analogjs/analog/compare/v1.6.2...v1.6.3) (2024-07-23)
+
+### Bug Fixes
+
+- **astro-angular:** pass Astro/Starlight defaults for esbuild ([#1219](https://github.com/analogjs/analog/issues/1219)) ([b29fc65](https://github.com/analogjs/analog/commit/b29fc659b2f2c5ae9859616cd4829129059980d6))
+- **create-analog:** typo on prism highlighter ([#1218](https://github.com/analogjs/analog/issues/1218)) ([eb8e753](https://github.com/analogjs/analog/commit/eb8e7531e3d9be95fe2e0490dd89cb7e7cf572a6))
+
 ## [1.6.3-beta.2](https://github.com/analogjs/analog/compare/v1.6.3-beta.1...v1.6.3-beta.2) (2024-07-19)
 
 ### Bug Fixes

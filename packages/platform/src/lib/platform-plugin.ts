@@ -8,6 +8,7 @@ import { ssrBuildPlugin } from './ssr/ssr-build-plugin.js';
 import { contentPlugin } from './content-plugin.js';
 import { clearClientPageEndpointsPlugin } from './clear-client-page-endpoint.js';
 import { ssrXhrBuildPlugin } from './ssr/ssr-xhr-plugin.js';
+import { depsPlugin } from './deps-plugin.js';
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
   const { apiPrefix, ...platformOptions } = {
@@ -28,11 +29,18 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   return [
     ...viteNitroPlugin(platformOptions, nitroOptions),
     (platformOptions.ssr ? ssrBuildPlugin() : false) as Plugin,
-    ...routerPlugin(),
-    ...contentPlugin(platformOptions?.content),
+    ...depsPlugin(),
+    ...routerPlugin(platformOptions),
+    ...contentPlugin(platformOptions?.content, platformOptions),
     ...angular({
       jit: platformOptions.jit,
       workspaceRoot: platformOptions.workspaceRoot,
+      include: [
+        ...(platformOptions.include ?? []),
+        ...(platformOptions.additionalPagesDirs ?? []).map(
+          (pageDir) => `${pageDir}/**/*.page.ts`
+        ),
+      ],
       ...(opts?.vite ?? {}),
     }),
     ssrXhrBuildPlugin(),

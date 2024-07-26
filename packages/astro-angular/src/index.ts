@@ -59,6 +59,8 @@ function getViteConfiguration(vite?: PluginOptions) {
 }
 
 export default function (options?: AngularOptions): AstroIntegration {
+  process.env['ANALOG_ASTRO'] = 'true';
+
   return {
     name: '@analogjs/astro-angular',
     hooks: {
