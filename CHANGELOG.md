@@ -1,3 +1,9 @@
+# [1.7.0-beta.2](https://github.com/analogjs/analog/compare/v1.7.0-beta.1...v1.7.0-beta.2) (2024-07-26)
+
+### Features
+
+- add support for configuring additional page/content route sources ([#1228](https://github.com/analogjs/analog/issues/1228)) ([869cfb5](https://github.com/analogjs/analog/commit/869cfb588bf9c6077590f35a2506865720327133))
+
 # [1.7.0-beta.1](https://github.com/analogjs/analog/compare/v1.6.4...v1.7.0-beta.1) (2024-07-26)
 
 ### Features
