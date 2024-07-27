@@ -148,7 +148,7 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-3. 更新你的 `app.component.ts` 文件以在模板中设置所需的 Ionic 标签。你可能要查看 [服务端渲染注意事项](#server-side-rendering-caveat) 因为 [Ionic 尚不支持客户端水合](https://github.com/ionic-team/
+3. 更新你的 `app.component.ts` 文件以在模板中设置所需的 Ionic 标签。你可能要查看 [服务端渲染注意事项](#server-side-rendering-caveat) 因为 [Ionic 尚不支持客户端水合](https://github.com/ionic-team/)
 
 ```ts
 import { Component } from '@angular/core';
