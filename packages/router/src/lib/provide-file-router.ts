@@ -2,7 +2,6 @@ import {
   ENVIRONMENT_INITIALIZER,
   EnvironmentProviders,
   makeEnvironmentProviders,
-  Provider,
 } from '@angular/core';
 import { provideRouter, RouterFeatures } from '@angular/router';
 
@@ -21,13 +20,7 @@ export function provideFileRouter(
   ...features: RouterFeatures[]
 ): EnvironmentProviders {
   return makeEnvironmentProviders([
-    // TODO: remove type casting after Angular >=15.1.1 upgrade
-    // https://github.com/angular/angular/pull/48720
-    (
-      provideRouter(routes, ...features) as unknown as {
-        ɵproviders: Provider[];
-      }
-    ).ɵproviders,
+    provideRouter(routes, ...features),
     {
       provide: ENVIRONMENT_INITIALIZER,
       multi: true,
