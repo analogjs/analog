@@ -11,6 +11,13 @@ export interface Options {
   entryServer?: string;
   index?: string;
   workspaceRoot?: string;
+  /**
+   * Additional page paths to include
+   */
+  additionalPagesDirs?: string[];
+  /**
+   * Additional API paths to include
+   */
   additionalAPIDirs?: string[];
 }
 
