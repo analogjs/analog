@@ -5,10 +5,7 @@ export function pageEndpointsPlugin() {
   return {
     name: 'analogjs-vite-plugin-nitro-rollup-page-endpoint',
     async transform(_code: string, id: string) {
-      if (
-        normalizePath(id).includes('src/app/pages') &&
-        id.endsWith('.server.ts')
-      ) {
+      if (normalizePath(id).includes('/pages/') && id.endsWith('.server.ts')) {
         const compiled = buildSync({
           stdin: {
             contents: _code,

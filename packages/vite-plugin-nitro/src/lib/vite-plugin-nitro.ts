@@ -57,7 +57,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           process.env['BUILD_PRESET'] ??
           (nitroOptions?.preset as string | undefined);
 
-        const pageHandlers = getPageHandlers({ workspaceRoot, rootDir });
+        const pageHandlers = getPageHandlers({
+          workspaceRoot,
+          rootDir,
+          additionalPagesDirs: options?.additionalPagesDirs,
+        });
 
         const apiMiddlewareHandler =
           filePrefix +

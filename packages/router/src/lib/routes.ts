@@ -163,7 +163,7 @@ function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
       const rawEndpoint = rawRoute.filename
         .replace(/\.page\.(ts|analog)$/, '')
         .replace(/\[\.{3}.+\]/, '**') // [...not-found] => **
-        .split(APP_DIR)[1];
+        .replace(/^(.*?)\/pages/, '/pages');
 
       // replace periods, remove (index) paths
       const endpoint = (rawEndpoint || '')
