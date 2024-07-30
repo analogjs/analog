@@ -1,3 +1,9 @@
+# [1.7.0-beta.5](https://github.com/analogjs/analog/compare/v1.7.0-beta.4...v1.7.0-beta.5) (2024-07-30)
+
+### Bug Fixes
+
+- **create-analog:** add proper component naming ([#1237](https://github.com/analogjs/analog/issues/1237)) ([24518fc](https://github.com/analogjs/analog/commit/24518fcb146111c09e3c9caa32e3a2833ab768bd))
+
 # [1.7.0-beta.4](https://github.com/analogjs/analog/compare/v1.7.0-beta.3...v1.7.0-beta.4) (2024-07-26)
 
 ### Bug Fixes
