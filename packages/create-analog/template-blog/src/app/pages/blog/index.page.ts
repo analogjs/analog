@@ -31,6 +31,6 @@ import { RouterLink } from '@angular/router';
     `,
   ],
 })
-export default class HomeComponent {
+export default class BlogComponent {
   readonly posts = injectContentFiles<PostAttributes>();
 }
