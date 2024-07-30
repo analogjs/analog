@@ -1,3 +1,9 @@
+# [1.7.0-beta.6](https://github.com/analogjs/analog/compare/v1.7.0-beta.5...v1.7.0-beta.6) (2024-07-30)
+
+### Bug Fixes
+
+- **router:** correctly discover page endpoints from additional sources ([#1238](https://github.com/analogjs/analog/issues/1238)) ([ef2cc86](https://github.com/analogjs/analog/commit/ef2cc866f255226bcd65bad1d1de08737531ccc5))
+
 # [1.7.0-beta.5](https://github.com/analogjs/analog/compare/v1.7.0-beta.4...v1.7.0-beta.5) (2024-07-30)
 
 ### Bug Fixes
