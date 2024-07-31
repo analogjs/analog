@@ -15,7 +15,6 @@
     "message": "API-Routen",
     "description": "The label for category API Routes in sidebar docsSidebar"
   },
-
   "sidebar.docsSidebar.category.Data Fetching": {
     "message": "Datenabruf",
     "description": "The label for category Data Fetching in sidebar docsSidebar"
