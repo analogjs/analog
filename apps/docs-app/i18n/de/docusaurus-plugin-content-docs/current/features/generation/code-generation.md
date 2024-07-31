@@ -42,7 +42,7 @@ npx nx generate @analogjs/platform:page --pathname='products/[products]' --proje
 
   <TabItem label="Angular Schematics" value="schematics">
 
-### Angular Schematics
+### Angular Schemata
 
 Analog stellt eine Reihe von Schemata zur Verfügung, die dabei helfen, einige häufige Aufgaben innerhalb eines Angular-CLI-Arbeitsbereichs zu automatisieren, wie z. B. die Erzeugung einer **application** oder einer **page**. Um diese Schemata zu verwenden, verwenden Sie den Befehl generate:
 
