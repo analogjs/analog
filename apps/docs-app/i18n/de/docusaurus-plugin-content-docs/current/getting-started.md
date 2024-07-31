@@ -112,10 +112,10 @@ pnpm run build
 
 ### Artefakte bauen
 
-Standardmäßig ist bei Analog das [Server-Side Rendering](/docs/features/server/server-side-rendering) aktiviert.
+Standardmäßig ist bei Analog das [Server-Side Rendering](/de/docs/features/server/server-side-rendering) aktiviert.
 Die Client-Artefakte befinden sich im Verzeichnis `dist/analog/public`.
 Der Server für die API/SSR-Build-Artefakte befindet sich im Verzeichnis `dist/analog/server`.
 
 ## Migration einer bestehenden Anwendung
 
-Du kannst auch eine bestehende Angular-Anwendung zu Analog migrieren. Siehe den [Migrationsleitfaden](/docs/guides/migrating) für Migrationsschritte.
+Du kannst auch eine bestehende Angular-Anwendung zu Analog migrieren. Siehe den [Migrationsleitfaden](/de/docs/guides/migrating) für Migrationsschritte.
