@@ -98,7 +98,7 @@ export const appConfig: ApplicationConfig = {
 
 ## Anfragen erstellen
 
-Verwende in der Komponente/dem Dienst `HttpClient` zusammen mit [/de/docs/features/api/overview](API-Routen) mit einer vollständige URL.
+Verwende in der Komponente/dem Dienst `HttpClient` zusammen mit [API-Routen](/de/docs/features/api/overview) mit einer vollständige URL.
 
 Eine Beispiel-API-Route, die ToDos abruft.
 
