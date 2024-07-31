@@ -65,7 +65,7 @@ class MyService {
 }
 ```
 
-## Abfänger für den Anfragekontext
+## Injektor des Anfragekontext
 
 Analog bietet auch `requestContextInterceptor` für den HttpClient, der die Umwandlung jeder URL-Anfrage, die mit einem `/` beginnt, in eine vollständige URL-Anfrage auf dem Server, dem Client und während des Prerenderings übernimmt.
 
