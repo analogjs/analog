@@ -122,4 +122,4 @@ Analog ermittelt automatisch die öffentliche Basis-URL, die bei der Verwendung 
 VITE_ANALOG_PUBLIC_BASE_URL="http://localhost:5173"
 ```
 
-Die Umgebungsvariable muss auch beim Erstellen für die Bereitstellung gesetzt werden.
+Die Umgebungsvariable muss auch beim Erstellen der Veröffentlichung gesetzt werden.
