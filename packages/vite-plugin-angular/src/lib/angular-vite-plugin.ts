@@ -37,6 +37,14 @@ import {
   defaultMarkdownTemplateTransforms,
   MarkdownTemplateTransform,
 } from './authoring/markdown-transform.js';
+import {
+  augmentHostWithCaching,
+  augmentProgramWithVersioning,
+} from './utils/ngtools/ivy/host.js';
+import {
+  mergeTransformers,
+  replaceBootstrap,
+} from './utils/ngtools/ivy/transformation.js';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -118,15 +126,6 @@ export function angular(options?: PluginOptions): Plugin[] {
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
   let fileEmitter: FileEmitter | undefined;
   let compilerOptions = {};
-  // Temporary deep import for transformer support
-  const {
-    mergeTransformers,
-    replaceBootstrap,
-  } = require('@ngtools/webpack/src/ivy/transformation');
-  const {
-    augmentProgramWithVersioning,
-    augmentHostWithCaching,
-  } = require('@ngtools/webpack/src/ivy/host');
   const ts = require('typescript');
 
   // let compilerCli: typeof import('@angular/compiler-cli');

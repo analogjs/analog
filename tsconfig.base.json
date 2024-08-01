@@ -30,7 +30,10 @@
         "./node_modules/@analogjs/platform",
         "packages/platform/src/index.ts"
       ],
-      "@analogjs/router": ["packages/router/src/index.ts"],
+      "@analogjs/router": [
+        "./node_modules/@analogjs/router",
+        "packages/router/src/index.ts"
+      ],
       "@analogjs/router/server": ["packages/router/server/src/index.ts"],
       "@analogjs/router/tokens": ["packages/router/tokens/src/index.ts"],
       "@analogjs/top-bar": ["libs/top-bar/src/index.ts"],
