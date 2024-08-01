@@ -28,7 +28,7 @@
     "save": "devDependencies"
   },
   "peerDependencies": {
-    "@analogjs/vite-plugin-angular": "^1.3.0 || ^1.3.0-beta.0",
+    "@analogjs/vite-plugin-angular": "*",
     "@angular-devkit/architect": "^0.1500.0 || ^0.1600.0 || ^0.1700.0 || ^0.1800.0",
     "vitest": "^1.3.1"
   },
