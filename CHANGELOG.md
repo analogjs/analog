@@ -1,3 +1,9 @@
+# [1.7.0-beta.7](https://github.com/analogjs/analog/compare/v1.7.0-beta.6...v1.7.0-beta.7) (2024-08-01)
+
+### Bug Fixes
+
+- update peer dependencies for router and vitest-angular packages ([#1242](https://github.com/analogjs/analog/issues/1242)) ([5fa4205](https://github.com/analogjs/analog/commit/5fa4205189738d44ad13b1d4f015268688f1edbe))
+
 # [1.7.0-beta.6](https://github.com/analogjs/analog/compare/v1.7.0-beta.5...v1.7.0-beta.6) (2024-07-30)
 
 ### Bug Fixes
