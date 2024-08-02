@@ -30,9 +30,29 @@ With Yarn:
 yarn install @analogjs/vitest-angular vitest --dev
 ```
 
-## Setup for Running Tests in Node
+## Automated Setup Using a Schematic
 
-To setup Vitest, create a `vite.config.ts` at the root of your project:
+A schematic can be used to setup Vitest in an existing Angular project:
+
+Install the `@analogjs/platform` package:
+
+```sh
+npm i @analogjs/platform --save-dev
+```
+
+Run the schematic to install Vitest, and update the `test` builder:
+
+```sh
+npx ng generate @analogjs/platform:setup-vitest --project [your-project-name]
+```
+
+## Manual Setup
+
+Vitest can be setup manually also using the steps below.
+
+### Setup for Running Tests in Node
+
+To setup Vitest, create a `vite.config.mts` at the root of your project:
 
 ```ts
 /// <reference types="vitest" />

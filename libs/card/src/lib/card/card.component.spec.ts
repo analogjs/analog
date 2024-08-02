@@ -47,4 +47,8 @@ describe('CardComponent', () => {
   it('should create the app', () => {
     expect(fixture).toMatchSnapshot();
   });
+
+  it.skip('should skip this test', () => {
+    expect(false).toBeTruthy();
+  });
 });
