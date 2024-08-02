@@ -15,12 +15,12 @@ Analog ist ein fullstack Meta-Framework für die Entwicklung von Anwendungen und
 - Unterstützt Vite/Vitest/Playwright
 - Server- und Bereitstellungsintegrationen unterstützt durch [Nitro](https://nitro.unjs.io)
 - [Dateibasiertes Routing](/de/docs/features/routing/overview)
-- [Server-seitiger Datenabruf](/docs/features/data-fetching/server-side-data-fetching.md)
+- [Server-seitiger Datenabruf](/de/docs/features/data-fetching/server-side-data-fetching)
 - [Unterstützung für die Verwendung von Markdown für inhaltliche Routen](/de/docs/features/routing/content)
 - [API/Server-Routen](/de/docs/features/api/overview)
-- Hybride [SSR](/docs/features/server/server-side-rendering)/[SSG](/docs/features/server/static-site-generation) Unterstützung
-- Unterstützt Angular CLI/[Nx Arbeitsbereiche](/docs/integrations/nx)
-- Unterstützt [Angular Komponenten](/docs/packages/astro-angular/overview) mit Astro
+- Hybride [SSR](/de/docs/features/server/server-side-rendering)/[SSG](/de/docs/features/server/static-site-generation) Unterstützung
+- Unterstützt Angular CLI/[Nx Arbeitsbereiche](/de/docs/integrations/nx)
+- Unterstützt [Angular Komponenten](/de/docs/packages/astro-angular/overview) mit Astro
 
 ## Unterstütze uns
 
