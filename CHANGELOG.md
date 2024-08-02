@@ -1,3 +1,9 @@
+# [1.7.0-beta.8](https://github.com/analogjs/analog/compare/v1.7.0-beta.7...v1.7.0-beta.8) (2024-08-02)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use Vite preprocessCSS function for JIT CSS transform ([#1243](https://github.com/analogjs/analog/issues/1243)) ([f84bbf0](https://github.com/analogjs/analog/commit/f84bbf0a550104c65cf364e1dd887e89c9ccb30a))
+
 # [1.7.0-beta.7](https://github.com/analogjs/analog/compare/v1.7.0-beta.6...v1.7.0-beta.7) (2024-08-01)
 
 ### Bug Fixes
