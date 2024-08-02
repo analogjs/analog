@@ -2,11 +2,12 @@
   "name": "@analogjs/vitest-angular",
   "version": "1.7.0-beta.9",
   "description": "Vitest Builder for Angular",
-  "type": "module",
+  "type": "commonjs",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
     ".": "./src/index.js",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./setup-zone": "./setup-zone.js"
   },
   "keywords": [
     "angular",

@@ -5,7 +5,7 @@
   "projectType": "library",
   "tags": [],
   "targets": {
-    "build": {
+    "build-package": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
@@ -20,6 +20,20 @@
         "additionalEntryPoints": ["packages/vitest-angular/setup-zone.ts"],
         "generateExportsField": true
       }
+    },
+    "build-setup-zone": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "node_modules/@analogjs/vitest-angular",
+        "main": "packages/vitest-angular/src/index.ts",
+        "tsConfig": "packages/vitest-angular/tsconfig.setup-zone.json",
+        "updateBuildableProjectDepsInPackageJson": false,
+        "clean": false
+      }
+    },
+    "build": {
+      "command": "nx build-package vitest-angular && nx build-setup-zone vitest-angular"
     }
   }
 }

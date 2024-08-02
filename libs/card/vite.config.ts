@@ -8,15 +8,14 @@ export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
     plugins: [angular()],
+    cacheDir: `../../node_modules/.vitest`,
     test: {
       reporters: ['default'],
       globals: true,
       environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
-      cache: {
-        dir: `../../node_modules/.vitest`,
-      },
+      passWithNoTests: true,
     },
     define: {
       'import.meta.vitest': mode !== 'production',

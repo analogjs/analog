@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
+import { CommonModule, NgIf } from '@angular/common';
+import { MatCard, MatCardModule } from '@angular/material/card';
 
 @Component({
   selector: 'lib-card',
   standalone: true,
-  imports: [CommonModule, MatCardModule],
+  imports: [NgIf, MatCard],
   templateUrl: './card.component.html',
   styleUrls: ['./card.component.css'],
 })

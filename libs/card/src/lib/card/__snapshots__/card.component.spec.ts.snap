@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`CardComponent > should create the app 1`] = `
-<lib-card>
+<undefined>
   card-works
 
   <button
@@ -14,5 +14,5 @@ exports[`CardComponent > should create the app 1`] = `
   <!--bindings={
   "ng-reflect-ng-if": "false"
 }-->
-</lib-card>
+</undefined>
 `;
