@@ -4,6 +4,15 @@ export function ssrBuildPlugin(): Plugin {
   return {
     name: 'analogjs-ssr-build-plugin',
     transform(code, id) {
+      if (
+        id.includes('zone-node') &&
+        code.includes('const global = globalThis;')
+      ) {
+        return {
+          code: code.replace('const global = globalThis;', ''),
+        };
+      }
+
       if (id.includes('platform-server')) {
         return {
           code: code
