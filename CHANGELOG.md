@@ -1,3 +1,9 @@
+# [1.7.0-beta.9](https://github.com/analogjs/analog/compare/v1.7.0-beta.8...v1.7.0-beta.9) (2024-08-02)
+
+### Bug Fixes
+
+- **platform:** add workaround for redefined global in zone.js 0.14.5+ ([#1245](https://github.com/analogjs/analog/issues/1245)) ([9ff8a4d](https://github.com/analogjs/analog/commit/9ff8a4dec8c0da3f4bd6fffa10f182dc2781fea9))
+
 # [1.7.0-beta.8](https://github.com/analogjs/analog/compare/v1.7.0-beta.7...v1.7.0-beta.8) (2024-08-02)
 
 ### Bug Fixes
