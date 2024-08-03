@@ -1,3 +1,9 @@
+# [1.7.0-beta.10](https://github.com/analogjs/analog/compare/v1.7.0-beta.9...v1.7.0-beta.10) (2024-08-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add additionalContentDirs to analog globs ([#1246](https://github.com/analogjs/analog/issues/1246)) ([b0abaa2](https://github.com/analogjs/analog/commit/b0abaa223f0606ae631a53d2676b831ceed21cd3))
+
 # [1.7.0-beta.9](https://github.com/analogjs/analog/compare/v1.7.0-beta.8...v1.7.0-beta.9) (2024-08-02)
 
 ### Bug Fixes
