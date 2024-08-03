@@ -473,7 +473,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       `${appRoot}/**/*.{analog,agx}`,
       ...extraGlobs.map((glob) => `${workspaceRoot}${glob}.{analog,agx}`),
       ...(pluginOptions.additionalContentDirs || [])?.map(
-        (glob) => `${workspaceRoot}${glob}/**/*.{analog,agx}`
+        (glob) => `${workspaceRoot}${glob}/**/*.agx`
       ),
     ];
 
