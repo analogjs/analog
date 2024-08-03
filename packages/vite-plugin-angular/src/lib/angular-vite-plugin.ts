@@ -66,6 +66,7 @@ export interface PluginOptions {
    * Additional files to include in compilation
    */
   include?: string[];
+  additionalContentDirs?: string[];
 }
 
 interface EmitFileResult {
@@ -113,6 +114,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       options?.experimental?.markdownTemplateTransforms ??
       defaultMarkdownTemplateTransforms,
     include: options?.include ?? [],
+    additionalContentDirs: options?.additionalContentDirs ?? [],
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -470,6 +472,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     const globs = [
       `${appRoot}/**/*.{analog,agx}`,
       ...extraGlobs.map((glob) => `${workspaceRoot}${glob}.{analog,agx}`),
+      ...(pluginOptions.additionalContentDirs || [])?.map(
+        (glob) => `${workspaceRoot}${glob}/**/*.agx`
+      ),
     ];
 
     return fg
