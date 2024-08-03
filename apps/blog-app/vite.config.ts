@@ -19,6 +19,11 @@ export default defineConfig(() => {
     plugins: [
       analog({
         static: true,
+        vite: {
+          experimental: {
+            supportAnalogFormat: true,
+          },
+        },
         additionalPagesDirs: ['/libs/shared/feature'],
         additionalContentDirs: ['/libs/shared/feature/src/content'],
         content: {

@@ -41,6 +41,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
           (pageDir) => `${pageDir}/**/*.page.ts`
         ),
       ],
+      additionalContentDirs: platformOptions.additionalContentDirs,
       ...(opts?.vite ?? {}),
     }),
     ssrXhrBuildPlugin(),
