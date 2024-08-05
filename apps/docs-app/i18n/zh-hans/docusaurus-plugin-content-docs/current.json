@@ -85,7 +85,7 @@
     "description": "The label for the doc item Content Routes in sidebar docsSidebar, linking to the doc features/routing/content"
   },
   "sidebar.docsSidebar.doc.Providers": {
-    "message": "依赖提供者",
+    "message": "服务器提供商",
     "description": "The label for the doc item Providers in sidebar docsSidebar, linking to the doc features/deployment/providers"
   },
   "sidebar.docsSidebar.doc.Adding Vitest": {
