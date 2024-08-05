@@ -15,6 +15,10 @@
     "message": "API-Routen",
     "description": "The label for category API Routes in sidebar docsSidebar"
   },
+  "sidebar.docsSidebar.category.Data Fetching": {
+    "message": "Datenabruf",
+    "description": "The label for category Data Fetching in sidebar docsSidebar"
+  },
   "sidebar.docsSidebar.category.Static Site Generation": {
     "message": "Generierung statischer Websites (SSG)",
     "description": "The label for category Static Site Generation in sidebar docsSidebar"
@@ -39,9 +43,29 @@
     "message": "Aktualisierung",
     "description": "The label for category Updating in sidebar docsSidebar"
   },
+  "sidebar.docsSidebar.category.Guides": {
+    "message": "Leitfäden",
+    "description": "The label for category Guides in sidebar docsSidebar"
+  },
   "sidebar.docsSidebar.category.Integrations": {
     "message": "Integrationen",
     "description": "The label for category Integrations in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Experimental": {
+    "message": "Experimentelles",
+    "description": "The label for category Experimental in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.doc.Analog SFCs": {
+    "message": "Analog SFCs",
+    "description": "The label for the doc item Analog SFCs in sidebar docsSidebar, linking to the doc experimental/sfc/index"
+  },
+  "sidebar.docsSidebar.doc.Migrating an Angular app to Analog": {
+    "message": "Migrieren einer Angular-Anwendung zu Analog",
+    "description": "The label for the doc item Migrating an Angular app to Analog in sidebar docsSidebar, linking to the doc guides/migrating"
+  },
+  "sidebar.docsSidebar.doc.Version Compatibilty": {
+    "message": "Kompatibilität der Versionen",
+    "description": "The label for the doc item Version Compatibilty in sidebar docsSidebar, linking to the doc guides/compatibility"
   },
   "sidebar.docsSidebar.doc.Overview": {
     "message": "Übersicht",
@@ -54,6 +78,10 @@
   "sidebar.docsSidebar.doc.Content Routes": {
     "message": "Inhaltliche Routen",
     "description": "The label for the doc item Content Routes in sidebar docsSidebar, linking to the doc features/routing/content"
+  },
+  "sidebar.docsSidebar.doc.Server-Side Data Fetching": {
+    "message": "Server-seitiger Datenabruf",
+    "description": "The label for the doc item Server-Side Data Fetching in sidebar docsSidebar, linking to the doc features/data-fetching/server-side-data-fetching"
   },
   "sidebar.docsSidebar.doc.Providers": {
     "message": "Anbieter",

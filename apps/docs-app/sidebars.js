@@ -68,6 +68,11 @@ const sidebars = {
           items: [
             {
               type: 'doc',
+              id: 'features/data-fetching/overview',
+              label: 'Overview',
+            },
+            {
+              type: 'doc',
               id: 'features/data-fetching/server-side-data-fetching',
               label: 'Server-Side Data Fetching',
             },

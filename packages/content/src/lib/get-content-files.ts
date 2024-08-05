@@ -5,25 +5,25 @@
  *
  * @returns
  */
-export const getContentFilesList = () =>
-  import.meta.glob<Record<string, any>>(
-    ['/src/content/**/*.md', '/src/content/**/*.agx'],
-    {
-      eager: true,
-      import: 'default',
-      query: { 'analog-content-list': true },
-    }
-  );
+export const getContentFilesList = () => {
+  let ANALOG_CONTENT_FILE_LIST = {};
+
+  return ANALOG_CONTENT_FILE_LIST as Record<string, Record<string, any>>;
+};
 
 /**
  * Returns the lazy loaded content files for lookups.
  *
  * @returns
  */
-export const getContentFiles = () =>
-  import.meta.glob(['/src/content/**/*.md'], {
-    query: '?analog-content-file=true',
-    import: 'default',
-  });
+export const getContentFiles = () => {
+  let ANALOG_CONTENT_ROUTE_FILES = {};
 
-export const getAgxFiles = () => import.meta.glob(['/src/content/**/*.agx']);
+  return ANALOG_CONTENT_ROUTE_FILES;
+};
+
+export const getAgxFiles = () => {
+  let ANALOG_AGX_FILES = {};
+
+  return ANALOG_AGX_FILES;
+};

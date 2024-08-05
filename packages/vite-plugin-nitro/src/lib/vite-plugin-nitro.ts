@@ -57,7 +57,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           process.env['BUILD_PRESET'] ??
           (nitroOptions?.preset as string | undefined);
 
-        const pageHandlers = getPageHandlers({ workspaceRoot, rootDir });
+        const pageHandlers = getPageHandlers({
+          workspaceRoot,
+          rootDir,
+          additionalPagesDirs: options?.additionalPagesDirs,
+        });
 
         const apiMiddlewareHandler =
           filePrefix +
@@ -89,7 +93,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           preset: buildPreset,
           logLevel: nitroOptions?.logLevel || 0,
           srcDir: normalizePath(`${rootDir}/src/server`),
-          scanDirs: [normalizePath(`${rootDir}/src/server`)],
+          scanDirs: [
+            normalizePath(`${rootDir}/src/server`),
+            ...(options?.additionalAPIDirs || []).map((dir) =>
+              normalizePath(`${workspaceRoot}${dir}`)
+            ),
+          ],
           output: {
             dir: normalizePath(
               resolve(workspaceRoot, 'dist', rootDir, 'analog')

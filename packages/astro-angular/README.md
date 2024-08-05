@@ -10,13 +10,22 @@ This package allows rendering [Angular](https://angular.dev) components as islan
 
 Use the `astro add` command to install the integration
 
+Using npm:
+
 ```sh
-# Using NPM
 npx astro add @analogjs/astro-angular
-# Using Yarn
-yarn astro add @analogjs/astro-angular
-# Using PNPM
+```
+
+Using pnpm:
+
+```sh
 pnpm astro add @analogjs/astro-angular
+```
+
+Using yarn:
+
+```sh
+yarn astro add @analogjs/astro-angular
 ```
 
 This command:

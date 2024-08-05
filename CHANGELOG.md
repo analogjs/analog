@@ -1,3 +1,63 @@
+# [1.7.0-beta.10](https://github.com/analogjs/analog/compare/v1.7.0-beta.9...v1.7.0-beta.10) (2024-08-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add additionalContentDirs to analog globs ([#1246](https://github.com/analogjs/analog/issues/1246)) ([b0abaa2](https://github.com/analogjs/analog/commit/b0abaa223f0606ae631a53d2676b831ceed21cd3))
+
+# [1.7.0-beta.9](https://github.com/analogjs/analog/compare/v1.7.0-beta.8...v1.7.0-beta.9) (2024-08-02)
+
+### Bug Fixes
+
+- **platform:** add workaround for redefined global in zone.js 0.14.5+ ([#1245](https://github.com/analogjs/analog/issues/1245)) ([9ff8a4d](https://github.com/analogjs/analog/commit/9ff8a4dec8c0da3f4bd6fffa10f182dc2781fea9))
+
+# [1.7.0-beta.8](https://github.com/analogjs/analog/compare/v1.7.0-beta.7...v1.7.0-beta.8) (2024-08-02)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use Vite preprocessCSS function for JIT CSS transform ([#1243](https://github.com/analogjs/analog/issues/1243)) ([f84bbf0](https://github.com/analogjs/analog/commit/f84bbf0a550104c65cf364e1dd887e89c9ccb30a))
+
+# [1.7.0-beta.7](https://github.com/analogjs/analog/compare/v1.7.0-beta.6...v1.7.0-beta.7) (2024-08-01)
+
+### Bug Fixes
+
+- update peer dependencies for router and vitest-angular packages ([#1242](https://github.com/analogjs/analog/issues/1242)) ([5fa4205](https://github.com/analogjs/analog/commit/5fa4205189738d44ad13b1d4f015268688f1edbe))
+
+# [1.7.0-beta.6](https://github.com/analogjs/analog/compare/v1.7.0-beta.5...v1.7.0-beta.6) (2024-07-30)
+
+### Bug Fixes
+
+- **router:** correctly discover page endpoints from additional sources ([#1238](https://github.com/analogjs/analog/issues/1238)) ([ef2cc86](https://github.com/analogjs/analog/commit/ef2cc866f255226bcd65bad1d1de08737531ccc5))
+
+# [1.7.0-beta.5](https://github.com/analogjs/analog/compare/v1.7.0-beta.4...v1.7.0-beta.5) (2024-07-30)
+
+### Bug Fixes
+
+- **create-analog:** add proper component naming ([#1237](https://github.com/analogjs/analog/issues/1237)) ([24518fc](https://github.com/analogjs/analog/commit/24518fcb146111c09e3c9caa32e3a2833ab768bd))
+
+# [1.7.0-beta.4](https://github.com/analogjs/analog/compare/v1.7.0-beta.3...v1.7.0-beta.4) (2024-07-26)
+
+### Bug Fixes
+
+- **platform:** adjust transform filters for routes ([#1231](https://github.com/analogjs/analog/issues/1231)) ([8b488ff](https://github.com/analogjs/analog/commit/8b488ffd0b97c2db0e6cd067b2dbeefbbfcee523))
+
+# [1.7.0-beta.3](https://github.com/analogjs/analog/compare/v1.7.0-beta.2...v1.7.0-beta.3) (2024-07-26)
+
+### Features
+
+- **router:** provide server context awareness to routing and HttpClient requests ([#1223](https://github.com/analogjs/analog/issues/1223)) ([b1cdd08](https://github.com/analogjs/analog/commit/b1cdd08fdf329f22ac3228fd6ef667c4d8b7fedf))
+
+# [1.7.0-beta.2](https://github.com/analogjs/analog/compare/v1.7.0-beta.1...v1.7.0-beta.2) (2024-07-26)
+
+### Features
+
+- add support for configuring additional page/content route sources ([#1228](https://github.com/analogjs/analog/issues/1228)) ([869cfb5](https://github.com/analogjs/analog/commit/869cfb588bf9c6077590f35a2506865720327133))
+
+# [1.7.0-beta.1](https://github.com/analogjs/analog/compare/v1.6.4...v1.7.0-beta.1) (2024-07-26)
+
+### Features
+
+- **platform:** add support for auto-discovery of SSR and optimization dependencies ([#1226](https://github.com/analogjs/analog/issues/1226)) ([40d03e6](https://github.com/analogjs/analog/commit/40d03e6e0884a7f08bea244607b719516a044493))
+
 ## [1.6.4](https://github.com/analogjs/analog/compare/v1.6.3...v1.6.4) (2024-07-25)
 
 ### Bug Fixes

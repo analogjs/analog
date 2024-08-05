@@ -118,30 +118,6 @@ export default defineConfig(({ mode }) => ({
 
 Analog supports deploying to [Cloudflare](https://cloudflare.com/) Pages with minimal configuration.
 
-### Updating the Server Entry Point
-
-The `main.server.ts` file should be updated to provide the full URL and the `APP_BASE_HREF` token on the server for Cloudflare support.
-
-```ts
-import { renderApplication } from '@angular/platform-server';
-import { APP_BASE_HREF } from '@angular/common';
-/// imports and bootstrap code ...
-
-// set the base href
-const baseHref = process.env['CF_PAGES_URL'] ?? `http://localhost:8888`;
-
-export default async function render(url: string, document: string) {
-  // Use the full URL and provide the APP_BASE_HREF
-  const html = await renderApplication(bootstrap, {
-    document,
-    url: `${baseHref}${url}`,
-    platformProviders: [{ provide: APP_BASE_HREF, useValue: baseHref }],
-  });
-
-  return html;
-}
-```
-
 ### Deploying to Cloudflare
 
 To connect your repository and deploy automatically to Cloudflare:

@@ -24,6 +24,6 @@ import PostAttributes from '../../post-attributes';
     `,
   ],
 })
-export default class HomeComponent {
+export default class BlogPostComponent {
   readonly post$ = injectContent<PostAttributes>('slug');
 }

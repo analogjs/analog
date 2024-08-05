@@ -1,0 +1,12 @@
+---
+title: Shared Test Agx
+slug: shared-test-agx
+---
+
+<script lang="ts">
+  const name = 'Analog';
+</script>
+
+<template lang="md">
+  My First Post on {{ name }}
+</template>

@@ -78,7 +78,7 @@ pnpm start
 
 Besuche [http://localhost:5173](http://localhost:5173) in deinem Browser, um die laufende Anwendung zu sehen.
 
-Als nächstes kannst du [zusätzliche Routen mit Hilfe von Komponenten](/docs/features/routing/overview) für die Navigation definieren.
+Als nächstes kannst du [zusätzliche Routen mit Hilfe von Komponenten](/de/docs/features/routing/overview) für die Navigation definieren.
 
 ### Erstellung der Anwendung
 
@@ -107,15 +107,15 @@ yarn build
 pnpm run build
 ```
 
-### Artefakte bauen
-
-Standardmäßig ist bei Analog das [Server-Side Rendering](/docs/features/server/server-side-rendering) aktiviert.
-Die Client-Artefakte befinden sich im Verzeichnis `dist/analog/public`.
-Der Server für die API/SSR-Build-Artefakte befindet sich im Verzeichnis `dist/analog/server`.
-
   </TabItem>
 </Tabs>
 
+### Artefakte bauen
+
+Standardmäßig ist bei Analog das [Server-Side Rendering](/de/docs/features/server/server-side-rendering) aktiviert.
+Die Client-Artefakte befinden sich im Verzeichnis `dist/analog/public`.
+Der Server für die API/SSR-Build-Artefakte befindet sich im Verzeichnis `dist/analog/server`.
+
 ## Migration einer bestehenden Anwendung
 
-Du kannst auch eine bestehende Angular-Anwendung zu Analog migrieren. Siehe den [Migrationsleitfaden](/docs/guides/migrating) für Migrationsschritte.
+Du kannst auch eine bestehende Angular-Anwendung zu Analog migrieren. Siehe den [Migrationsleitfaden](/de/docs/guides/migrating) für Migrationsschritte.

@@ -8,6 +8,7 @@
     "declaration": true,
     "types": [],
     "allowJs": true,
+    "allowSyntheticDefaultImports": true,
     "paths": {
       "@analogjs/vite-plugin-angular": [
         "./node_modules/@analogjs/vite-plugin-angular"
