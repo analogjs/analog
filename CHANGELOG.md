@@ -1,3 +1,9 @@
+## [1.7.1-beta.1](https://github.com/analogjs/analog/compare/v1.7.0...v1.7.1-beta.1) (2024-08-05)
+
+### Bug Fixes
+
+- **vitest-angular:** add vitest@2 to peerDependencies ([#1252](https://github.com/analogjs/analog/issues/1252)) ([4964be5](https://github.com/analogjs/analog/commit/4964be5ea944b51c9cd962ce161b67069a22fe8a))
+
 # [1.7.0](https://github.com/analogjs/analog/compare/v1.6.4...v1.7.0) (2024-08-05)
 
 ### Bug Fixes

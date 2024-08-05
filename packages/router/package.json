@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/router",
-  "version": "1.7.0",
+  "version": "1.7.1-beta.1",
   "description": "Filesystem-based routing for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -20,7 +20,7 @@
     "url": "https://github.com/analogjs/analog.git"
   },
   "peerDependencies": {
-    "@analogjs/content": "^1.7.0",
+    "@analogjs/content": "^1.7.1-beta.1",
     "@angular/core": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0",
     "@angular/router": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0"
   },
