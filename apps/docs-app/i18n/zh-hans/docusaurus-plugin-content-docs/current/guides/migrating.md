@@ -5,7 +5,7 @@ title: 从Angular迁移到Analog
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# 将 Angular 应用转换成 Analog
+# 从 Angular 迁移到 Analog
 
 一个现有的 Angular 单页应用可以通过一个 Angular CLI 或者 Nx 工作区的原理器/生成器配置成使用 Analog。
 
