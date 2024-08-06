@@ -1077,6 +1077,15 @@
         "doc",
         "translation"
       ]
+    },
+    {
+      "login": "s0h311",
+      "name": "Soheil Nazari [CHECK24]",
+      "avatar_url": "https://avatars.githubusercontent.com/u/113988347?v=4",
+      "profile": "http://soheilnazari.de",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
