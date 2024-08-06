@@ -141,6 +141,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           nitroConfig = withCloudflareOutput(nitroConfig);
         }
 
+        if (isNetlifyPreset(buildPreset)) {
+          nitroConfig = withNetlifyOutput(nitroConfig);
+        }
+
         if (!ssrBuild && !isTest) {
           // store the client output path for the SSR build config
           clientOutputPath = resolve(
@@ -375,5 +379,18 @@ const withCloudflareOutput = (nitroConfig: NitroConfig | undefined) => ({
   output: {
     ...nitroConfig?.output,
     serverDir: '{{ output.publicDir }}/_worker.js',
+  },
+});
+
+const isNetlifyPreset = (buildPreset: string | undefined) =>
+  process.env['NETLIFY'] ||
+  process.env['NETLIFY_LOCAL'] ||
+  (buildPreset && buildPreset.toLowerCase().includes('netlify'));
+
+const withNetlifyOutput = (nitroConfig: NitroConfig | undefined) => ({
+  ...nitroConfig,
+  output: {
+    ...nitroConfig?.output,
+    dir: '{{ rootDir }}/.netlify/functions-internal',
   },
 });

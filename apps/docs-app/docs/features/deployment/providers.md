@@ -13,14 +13,13 @@ Analog supports deploying on [Netlify](https://netlify.com/) with minimal config
 
 <Tabs groupId="porject-type">
   <TabItem label="Create analog" value="create-analog">
-In the build settings of your Netlify project, set the [publish directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `dist/analog/public` to deploy the static assets and the [functions directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `dist/analog` to deploy the server.
+In the build settings of your Netlify project, set the [publish directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `dist/analog/public` to deploy the static assets.
   </TabItem>
 
   <TabItem label="Nx" value="nx">
 In the build settings of your Netlify project on the web UI, do the following.
 1. Set the [build command](https://docs.netlify.com/configure-builds/overview/#definitions) to `nx build [your-project-name]`
 2. Set the [publish directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `dist/[your-project-name]/analog/public` to deploy the static assets
-3. Set the [functions directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `dist/[your-project-name]/analog` to deploy the server.
 
 You can also configure this by putting a `netlify.toml` at the root of your repository. Below is an example config.
 
@@ -29,7 +28,6 @@ You can also configure this by putting a `netlify.toml` at the root of your repo
 [build]
   command = "nx build my-analog-app"
   publish = "dist/my-analog-app/analog/public"
-  functions = "dist/my-analog-app/analog"
 ```
 
   </TabItem>
