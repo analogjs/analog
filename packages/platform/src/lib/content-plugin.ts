@@ -158,7 +158,7 @@ export function contentPlugin(
               ...(options?.additionalContentDirs || [])?.map(
                 (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`
               ),
-            ],
+            ].map((path) => normalizePath(path)),
             { dot: true }
           );
 
@@ -186,7 +186,7 @@ export function contentPlugin(
               ...(options?.additionalContentDirs || [])?.map(
                 (glob) => `${workspaceRoot}${glob}/**/*.agx`
               ),
-            ],
+            ].map((path) => normalizePath(path)),
             {
               dot: true,
             }

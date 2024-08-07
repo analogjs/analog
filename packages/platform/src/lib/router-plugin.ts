@@ -71,7 +71,7 @@ export function routerPlugin(options?: Options): Plugin[] {
               ...(options?.additionalPagesDirs || [])?.map(
                 (glob) => `${workspaceRoot}${glob}/**/*.page.ts`
               ),
-            ],
+            ].map((path) => normalizePath(path)),
             { dot: true }
           );
 
@@ -83,7 +83,7 @@ export function routerPlugin(options?: Options): Plugin[] {
               ...(options?.additionalContentDirs || [])?.map(
                 (glob) => `${workspaceRoot}${glob}/**/*.md`
               ),
-            ],
+            ].map((path) => normalizePath(path)),
             { dot: true }
           );
 
