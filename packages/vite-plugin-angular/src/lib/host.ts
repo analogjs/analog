@@ -1,5 +1,4 @@
 import { CompilerHost } from '@angular/compiler-cli';
-import { normalizePath } from '@ngtools/webpack/src/ivy/paths.js';
 import { readFileSync } from 'node:fs';
 import * as ts from 'typescript';
 import { compileAnalogFile } from './authoring/analog.js';
@@ -7,6 +6,7 @@ import { TEMPLATE_TAG_REGEX } from './authoring/constants.js';
 import { MarkdownTemplateTransform } from './authoring/markdown-transform.js';
 
 import { createRequire } from 'node:module';
+import { normalizePath } from 'vite';
 
 const require = createRequire(import.meta.url);
 
