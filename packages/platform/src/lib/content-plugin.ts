@@ -144,7 +144,7 @@ export function contentPlugin(
       name: 'analog-content-glob-routes',
       config(_config) {
         config = _config;
-        root = resolve(workspaceRoot, config.root || '.') || '.';
+        root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
       },
       transform(code) {
         if (

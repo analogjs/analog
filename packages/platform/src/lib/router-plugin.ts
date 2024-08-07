@@ -55,7 +55,7 @@ export function routerPlugin(options?: Options): Plugin[] {
       name: 'analog-glob-routes',
       config(_config) {
         config = _config;
-        root = resolve(workspaceRoot, config.root || '.') || '.';
+        root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
       },
       transform(code) {
         if (
