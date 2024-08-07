@@ -1,3 +1,9 @@
+## [1.7.1-beta.2](https://github.com/analogjs/analog/compare/v1.7.1-beta.1...v1.7.1-beta.2) (2024-08-07)
+
+### Bug Fixes
+
+- **platform:** normalize root for finding page routes on Windows ([#1255](https://github.com/analogjs/analog/issues/1255)) ([1e7ff22](https://github.com/analogjs/analog/commit/1e7ff2240de86238d307c86b1f58b85513b80bc1))
+
 ## [1.7.1-beta.1](https://github.com/analogjs/analog/compare/v1.7.0...v1.7.1-beta.1) (2024-08-05)
 
 ### Bug Fixes
