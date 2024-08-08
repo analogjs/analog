@@ -491,6 +491,9 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     const globs = [
       ...pluginOptions.include.map((glob) => `${workspaceRoot}${glob}`),
+      ...pluginOptions.include.map((glob) =>
+        `${workspaceRoot}${glob}`.replace(/\.ts$/, '.analog')
+      ),
     ];
 
     return fg.sync(globs, {
