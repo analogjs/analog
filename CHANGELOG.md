@@ -1,3 +1,9 @@
+## [1.7.1-beta.3](https://github.com/analogjs/analog/compare/v1.7.1-beta.2...v1.7.1-beta.3) (2024-08-08)
+
+### Bug Fixes
+
+- **platform:** more normalization fixes ([#1259](https://github.com/analogjs/analog/issues/1259)) ([3c909a8](https://github.com/analogjs/analog/commit/3c909a862984f0aafdd9ab2ab73fb178f5ce428a))
+
 ## [1.7.1-beta.2](https://github.com/analogjs/analog/compare/v1.7.1-beta.1...v1.7.1-beta.2) (2024-08-07)
 
 ### Bug Fixes
