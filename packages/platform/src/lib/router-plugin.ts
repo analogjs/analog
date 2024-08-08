@@ -13,7 +13,7 @@ import { Options } from './options.js';
  * @returns
  */
 export function routerPlugin(options?: Options): Plugin[] {
-  const workspaceRoot = normalize path(options?.workspaceRoot ?? process.cwd());
+  const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
   let config: UserConfig;
   let root: string;
 
