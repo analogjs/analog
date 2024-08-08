@@ -13,7 +13,7 @@
         "commands": [
           "nx build-package content",
           "nx build content-plugin",
-          "rm node_modules/@analogjs/content/.npmignore"
+          "npx rimraf node_modules/@analogjs/content/.npmignore"
         ],
         "parallel": false
       },
