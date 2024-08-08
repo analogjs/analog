@@ -1086,6 +1086,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "illunix",
+      "name": "Maksymilian Szokalski",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42069493?v=4",
+      "profile": "https://github.com/illunix",
+      "contributions": [
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
