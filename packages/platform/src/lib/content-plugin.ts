@@ -36,7 +36,7 @@ export function contentPlugin(
   const cache = new Map<string, Content>();
 
   let markedHighlighter: MarkedContentHighlighter;
-  const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
   let config: UserConfig;
   let root: string;
 
