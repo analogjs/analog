@@ -1,3 +1,9 @@
+## [1.7.1-beta.4](https://github.com/analogjs/analog/compare/v1.7.1-beta.3...v1.7.1-beta.4) (2024-08-08)
+
+### Bug Fixes
+
+- **router:** support additional dir paths windows ([#1260](https://github.com/analogjs/analog/issues/1260)) ([dd0696e](https://github.com/analogjs/analog/commit/dd0696eab1ad1fc23cd783c6fe2a6d583cb3240f))
+
 ## [1.7.1-beta.3](https://github.com/analogjs/analog/compare/v1.7.1-beta.2...v1.7.1-beta.3) (2024-08-08)
 
 ### Bug Fixes
