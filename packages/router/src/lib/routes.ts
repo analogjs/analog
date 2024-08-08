@@ -122,7 +122,7 @@ function toRawPath(filename: string): string {
   return filename
     .replace(
       // convert to relative path and remove file extension
-      /^\/(.*?)\/routes\/|^\/(.*?)\/pages\/|\/app\/routes\/|(\.page\.(js|ts|analog)$)|(\.(ts|md|analog)$)/g,
+      /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)[\\/]))|(\.page\.(js|ts|analog)$)|(\.(ts|md|analog)$)/g,
       ''
     )
     .replace(/\[\.{3}.+\]/, '**') // [...not-found] => **
