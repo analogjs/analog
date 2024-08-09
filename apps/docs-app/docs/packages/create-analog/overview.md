@@ -54,9 +54,9 @@ To scaffold an Angular application in the `my-angular-app` directory, run:
 
 ```shell
 # npm >=7.0
-npm create analog@latest my-angular-app -- --template Full-stack application
+npm create analog@latest my-angular-app -- --template latest
 # npm 6.x
-npm create analog@latest my-angular-app --template Blog
+npm create analog@latest my-angular-app -- --template blog
 ```
 
   </TabItem>
@@ -64,7 +64,7 @@ npm create analog@latest my-angular-app --template Blog
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn create analog my-angular-app --template Blog
+yarn create analog my-angular-app --template blog
 ```
 
   </TabItem>
@@ -72,7 +72,7 @@ yarn create analog my-angular-app --template Blog
   <TabItem value="pnpm">
 
 ```shell
-pnpm create analog my-angular-app --template Blog
+pnpm create analog my-angular-app --template blog
 ```
 
   </TabItem>
