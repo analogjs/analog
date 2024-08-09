@@ -1,3 +1,9 @@
+## [1.7.1-beta.5](https://github.com/analogjs/analog/compare/v1.7.1-beta.4...v1.7.1-beta.5) (2024-08-09)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** include analog page files in additional compilation includes ([#1264](https://github.com/analogjs/analog/issues/1264)) ([bde2104](https://github.com/analogjs/analog/commit/bde2104cae5bff8d8d3233d0f19063ce01ecbadd))
+
 ## [1.7.1-beta.4](https://github.com/analogjs/analog/compare/v1.7.1-beta.3...v1.7.1-beta.4) (2024-08-08)
 
 ### Bug Fixes
