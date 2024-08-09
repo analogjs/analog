@@ -475,6 +475,9 @@ export function angular(options?: PluginOptions): Plugin[] {
       ...(pluginOptions.additionalContentDirs || [])?.map(
         (glob) => `${workspaceRoot}${glob}/**/*.agx`
       ),
+      ...pluginOptions.include.map((glob) =>
+        `${workspaceRoot}${glob}`.replace(/\.ts$/, '.analog')
+      ),
     ];
 
     return fg
@@ -491,9 +494,6 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     const globs = [
       ...pluginOptions.include.map((glob) => `${workspaceRoot}${glob}`),
-      ...pluginOptions.include.map((glob) =>
-        `${workspaceRoot}${glob}`.replace(/\.ts$/, '.analog')
-      ),
     ];
 
     return fg.sync(globs, {
