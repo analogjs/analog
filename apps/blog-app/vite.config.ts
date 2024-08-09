@@ -43,6 +43,8 @@ export default defineConfig(() => {
               '/api/rss.xml',
               '/blog/2022-12-27-my-first-post',
               '/blog/my-second-post',
+              '/about-me',
+              '/about-you',
               {
                 contentDir: '/src/content/archived',
                 transform: (file: PrerenderContentFile) => {
@@ -56,6 +58,11 @@ export default defineConfig(() => {
           },
           sitemap: {
             host: 'https://analog-blog.netlify.app',
+          },
+        },
+        nitro: {
+          prerender: {
+            failOnError: true,
           },
         },
       }),
