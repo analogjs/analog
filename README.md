@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-113-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-115-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -252,6 +252,8 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/DerHerrGammler"><img src="https://avatars.githubusercontent.com/u/30802629?v=4?s=100" width="100px;" alt="Felix Herold"/><br /><sub><b>Felix Herold</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=DerHerrGammler" title="Documentation">📖</a> <a href="#translation-DerHerrGammler" title="Translation">🌍</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://soheilnazari.de"><img src="https://avatars.githubusercontent.com/u/113988347?v=4?s=100" width="100px;" alt="Soheil Nazari [CHECK24]"/><br /><sub><b>Soheil Nazari [CHECK24]</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=s0h311" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/illunix"><img src="https://avatars.githubusercontent.com/u/42069493?v=4?s=100" width="100px;" alt="Maksymilian Szokalski"/><br /><sub><b>Maksymilian Szokalski</b></sub></a><br /><a href="#infra-illunix" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/analogjs/analog/commits?author=illunix" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

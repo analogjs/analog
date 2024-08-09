@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vitest-angular",
-  "version": "1.7.0",
+  "version": "1.7.1-beta.5",
   "description": "Vitest Builder for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -30,7 +30,7 @@
   "peerDependencies": {
     "@analogjs/vite-plugin-angular": "*",
     "@angular-devkit/architect": "^0.1500.0 || ^0.1600.0 || ^0.1700.0 || ^0.1800.0",
-    "vitest": "^1.3.1"
+    "vitest": "^1.3.1 || ^2.0.0"
   },
   "ng-update": {
     "packageGroup": [

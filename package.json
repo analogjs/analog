@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "1.7.0",
+  "version": "1.7.1-beta.5",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -159,6 +159,7 @@
     "prettier": "^2.8.3",
     "prismjs": "^1.29.0",
     "prompts": "^2.4.2",
+    "rimraf": "^6.0.1",
     "rollup-plugin-visualizer": "^5.9.0",
     "semantic-release": "^22.0.7",
     "semantic-release-replace-plugin": "^1.2.7",

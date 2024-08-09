@@ -1,3 +1,33 @@
+## [1.7.1-beta.5](https://github.com/analogjs/analog/compare/v1.7.1-beta.4...v1.7.1-beta.5) (2024-08-09)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** include analog page files in additional compilation includes ([#1264](https://github.com/analogjs/analog/issues/1264)) ([bde2104](https://github.com/analogjs/analog/commit/bde2104cae5bff8d8d3233d0f19063ce01ecbadd))
+
+## [1.7.1-beta.4](https://github.com/analogjs/analog/compare/v1.7.1-beta.3...v1.7.1-beta.4) (2024-08-08)
+
+### Bug Fixes
+
+- **router:** support additional dir paths windows ([#1260](https://github.com/analogjs/analog/issues/1260)) ([dd0696e](https://github.com/analogjs/analog/commit/dd0696eab1ad1fc23cd783c6fe2a6d583cb3240f))
+
+## [1.7.1-beta.3](https://github.com/analogjs/analog/compare/v1.7.1-beta.2...v1.7.1-beta.3) (2024-08-08)
+
+### Bug Fixes
+
+- **platform:** more normalization fixes ([#1259](https://github.com/analogjs/analog/issues/1259)) ([3c909a8](https://github.com/analogjs/analog/commit/3c909a862984f0aafdd9ab2ab73fb178f5ce428a))
+
+## [1.7.1-beta.2](https://github.com/analogjs/analog/compare/v1.7.1-beta.1...v1.7.1-beta.2) (2024-08-07)
+
+### Bug Fixes
+
+- **platform:** normalize root for finding page routes on Windows ([#1255](https://github.com/analogjs/analog/issues/1255)) ([1e7ff22](https://github.com/analogjs/analog/commit/1e7ff2240de86238d307c86b1f58b85513b80bc1))
+
+## [1.7.1-beta.1](https://github.com/analogjs/analog/compare/v1.7.0...v1.7.1-beta.1) (2024-08-05)
+
+### Bug Fixes
+
+- **vitest-angular:** add vitest@2 to peerDependencies ([#1252](https://github.com/analogjs/analog/issues/1252)) ([4964be5](https://github.com/analogjs/analog/commit/4964be5ea944b51c9cd962ce161b67069a22fe8a))
+
 # [1.7.0](https://github.com/analogjs/analog/compare/v1.6.4...v1.7.0) (2024-08-05)
 
 ### Bug Fixes

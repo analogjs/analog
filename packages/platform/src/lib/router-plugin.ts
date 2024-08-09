@@ -13,7 +13,7 @@ import { Options } from './options.js';
  * @returns
  */
 export function routerPlugin(options?: Options): Plugin[] {
-  const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
   let config: UserConfig;
   let root: string;
 
@@ -55,7 +55,7 @@ export function routerPlugin(options?: Options): Plugin[] {
       name: 'analog-glob-routes',
       config(_config) {
         config = _config;
-        root = resolve(workspaceRoot, config.root || '.') || '.';
+        root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
       },
       transform(code) {
         if (
@@ -69,7 +69,7 @@ export function routerPlugin(options?: Options): Plugin[] {
               `${root}/src/app/pages/**/*.page.ts`,
               `${root}/src/app/pages/**/*.page.analog`,
               ...(options?.additionalPagesDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.page.ts`
+                (glob) => `${workspaceRoot}${glob}/**/*.page.{ts,analog}`
               ),
             ],
             { dot: true }
@@ -81,7 +81,7 @@ export function routerPlugin(options?: Options): Plugin[] {
               `${root}/src/app/pages/**/*.md`,
               `${root}/src/content/**/*.md`,
               ...(options?.additionalContentDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.md`
+                (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`
               ),
             ],
             { dot: true }

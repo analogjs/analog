@@ -1,19 +1,15 @@
----
-title: 从Angular迁移到Analog
----
-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# 从 Angular 迁移到 Analog
+# Migrieren einer Angular-Anwendung zu Analog
 
-一个现有的 Angular 单页应用可以通过一个 Angular CLI 或者 Nx 工作区的原理器/生成器配置成使用 Analog。
+Eine bestehende Angular Single Page Application kann mit Hilfe eines Schemas/Generators für Angular CLI oder Nx Workspaces für die Verwendung von Analog konfiguriert werden.
 
-> Analog 兼容 Angular v15 及以上版本.
+> Analog ist kompatibel mit Angular v15 und höher.
 
-## 使用原理器/生成器
+## Verwendung eines Schemas/Generators
 
-首先，安装 `@analogjs/platform` 软件包：
+Installiere zunächst das Paket `@analogjs/platform`:
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
@@ -41,21 +37,21 @@ pnpm install -w @analogjs/platform
   </TabItem>
 </Tabs>
 
-下一步，执行一下命令来配置 Vite，更新项目配置的构建/伺服的目标，移动必须的文件并且设置 Vitest 进行单元测试（可选）
+Führe anschließend den Befehl aus, um die Vite-Konfiguration einzurichten, aktualisiere die Build/Serve-Ziele in der Projektkonfiguration, verschieben die erforderlichen Dateien und richte optional Vitest für Unit-Tests ein.
 
 ```shell
 npx ng generate @analogjs/platform:init --project [your-project-name]
 ```
 
-Nx 项目:
+Für Nx-Projekte:
 
 ```shell
 npx nx generate @analogjs/platform:init --project [your-project-name]
 ```
 
-## 更新全局样式和脚本
+## Aktualisierung der globalen Stile und Skripte
 
-如果在你的 `angular.json` 里有全局的脚本或者样式文件，把他们移动到 `index.html` 里的 `head` 里。
+Wenn globale Skripte oder Stile in der `angular.json` konfiguriert sind, verschiebe diese in den `head`-Tag in der `index.html`.
 
 ```html
 <!DOCTYPE html>

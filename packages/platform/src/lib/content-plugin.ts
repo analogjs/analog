@@ -36,7 +36,7 @@ export function contentPlugin(
   const cache = new Map<string, Content>();
 
   let markedHighlighter: MarkedContentHighlighter;
-  const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
   let config: UserConfig;
   let root: string;
 
@@ -144,7 +144,7 @@ export function contentPlugin(
       name: 'analog-content-glob-routes',
       config(_config) {
         config = _config;
-        root = resolve(workspaceRoot, config.root || '.') || '.';
+        root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
       },
       transform(code) {
         if (
