@@ -15,8 +15,8 @@
     "test": "ng test"
   },
   "dependencies": {
-    "@analogjs/content": "^1.7.2-beta.1",
-    "@analogjs/router": "^1.7.2-beta.1",
+    "@analogjs/content": "^1.7.2-beta.2",
+    "@analogjs/router": "^1.7.2-beta.2",
     "@angular/animations": "^17.2.0",
     "@angular/common": "^17.2.0",
     "@angular/compiler": "^17.2.0",
@@ -38,9 +38,9 @@
     "zone.js": "~0.14.0"
   },
   "devDependencies": {
-    "@analogjs/platform": "^1.7.2-beta.1",
-    "@analogjs/vite-plugin-angular": "^1.7.2-beta.1",
-    "@analogjs/vitest-angular": "^1.7.2-beta.1",
+    "@analogjs/platform": "^1.7.2-beta.2",
+    "@analogjs/vite-plugin-angular": "^1.7.2-beta.2",
+    "@analogjs/vitest-angular": "^1.7.2-beta.2",
     "@angular-devkit/build-angular": "^17.2.0",
     "@angular/cli": "^17.2.0",
     "@angular/compiler-cli": "^17.2.0",
