@@ -1,7 +1,11 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withFetch,
+  withInterceptors,
+} from '@angular/common/http';
 import { provideClientHydration } from '@angular/platform-browser';
-import { provideFileRouter } from '@analogjs/router';
+import { provideFileRouter, requestContextInterceptor } from '@analogjs/router';
 <% if (addTRPC) { %>
 import { provideTrpcClient } from '../trpc-client';
 <% } %>
@@ -11,7 +15,10 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideFileRouter(),
     provideClientHydration(),
-    provideHttpClient(withFetch()),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([requestContextInterceptor])
+    ),
 <% if (addTRPC) { %>
     provideTrpcClient(),
 <% } %>
