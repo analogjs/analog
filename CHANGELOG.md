@@ -1,3 +1,10 @@
+## [1.7.2-beta.1](https://github.com/analogjs/analog/compare/v1.7.1...v1.7.2-beta.1) (2024-08-12)
+
+### Bug Fixes
+
+- **nx-plugin:** add server context to Nx generator template ([#1270](https://github.com/analogjs/analog/issues/1270)) ([4009439](https://github.com/analogjs/analog/commit/400943952129f380479c5441bab3356069f12043))
+- **vite-plugin-nitro:** support server middleware in development ([#1269](https://github.com/analogjs/analog/issues/1269)) ([454889e](https://github.com/analogjs/analog/commit/454889e6ea3cbc681b34ab369faf164990be0701))
+
 ## [1.7.1](https://github.com/analogjs/analog/compare/v1.7.0...v1.7.1) (2024-08-09)
 
 ### Bug Fixes
