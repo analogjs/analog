@@ -39,12 +39,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let nitroConfig: NitroConfig;
 
   return [
-    (options?.ssr
-      ? devServerPlugin({
-          entryServer: options?.entryServer,
-          index: options?.index,
-        })
-      : false) as Plugin,
+    (options?.ssr ? devServerPlugin(options) : false) as Plugin,
     {
       name: '@analogjs/vite-plugin-nitro',
       async config(_config, { command }) {

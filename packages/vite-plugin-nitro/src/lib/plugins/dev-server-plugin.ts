@@ -1,23 +1,33 @@
 // SSR dev server, middleware and error page source modified from
 // https://github.com/solidjs/solid-start/blob/main/packages/start/dev/server.js
 
-import { Connect, Plugin, ViteDevServer } from 'vite';
+import {
+  Connect,
+  Plugin,
+  UserConfig,
+  ViteDevServer,
+  normalizePath,
+} from 'vite';
 import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { createEvent, sendWebResponse } from 'h3';
 
-interface ServerOptions {
-  index?: string;
-  entryServer?: string;
-}
+import { registerDevServerMiddleware } from '../utils/register-dev-middleware.js';
+import { Options } from '../options.js';
 
-export function devServerPlugin(options: ServerOptions): Plugin {
+export function devServerPlugin(options: Options): Plugin {
+  const workspaceRoot = options?.workspaceRoot || process.cwd();
   const entryServer = options.entryServer || 'src/main.server.ts';
   const index = options.index || 'index.html';
+  let config: UserConfig;
+  let root: string;
 
   return {
     name: 'analogjs-dev-ssr-plugin',
-    config() {
+    config(userConfig) {
+      config = userConfig;
+      root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
+
       return {
         resolve: {
           alias: {
@@ -29,6 +39,8 @@ export function devServerPlugin(options: ServerOptions): Plugin {
     configureServer(viteServer) {
       return async () => {
         remove_html_middlewares(viteServer.middlewares);
+        registerDevServerMiddleware(root, viteServer);
+
         viteServer.middlewares.use(async (req, res) => {
           let template = readFileSync(
             resolve(viteServer.config.root, index),
