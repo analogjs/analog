@@ -1,15 +1,15 @@
-import { Plugin, preprocessCSS } from 'vite';
+import { Plugin, ResolvedConfig, preprocessCSS } from 'vite';
 
 export function jitPlugin({
   inlineStylesExtension,
 }: {
   inlineStylesExtension: string;
 }): Plugin {
-  let config: any;
+  let config: ResolvedConfig;
 
   return {
     name: '@analogjs/vite-plugin-angular-jit',
-    config(_config) {
+    configResolved(_config) {
       config = _config;
     },
     resolveId(id: string) {

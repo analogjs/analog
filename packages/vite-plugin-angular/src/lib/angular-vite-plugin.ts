@@ -12,6 +12,7 @@ import {
   UserConfig,
   ViteDevServer,
   preprocessCSS,
+  ResolvedConfig,
 } from 'vite';
 
 import { createCompilerPlugin } from './compiler-plugin.js';
@@ -133,6 +134,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   // let compilerCli: typeof import('@angular/compiler-cli');
   let userConfig: UserConfig;
+  let resolvedConfig: ResolvedConfig;
   let rootNames: string[];
   let host: ts.CompilerHost;
   let nextProgram: NgtscProgram | undefined | ts.Program;
@@ -201,17 +203,16 @@ export function angular(options?: PluginOptions): Plugin[] {
           },
         };
       },
+      configResolved(config) {
+        resolvedConfig = config;
+      },
       configureServer(server) {
         viteServer = server;
-        const context = this;
-        server.watcher.on('add', () => setupCompilation(userConfig, context));
-        server.watcher.on('unlink', () =>
-          setupCompilation(userConfig, context)
-        );
+        server.watcher.on('add', () => setupCompilation(resolvedConfig));
+        server.watcher.on('unlink', () => setupCompilation(resolvedConfig));
       },
       async buildStart() {
-        const context = this;
-        setupCompilation(userConfig, context);
+        setupCompilation(resolvedConfig);
 
         // Only store cache if in watch mode
         if (watchMode) {
@@ -449,7 +450,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     }),
   ].filter(Boolean) as Plugin[];
 
-  function findAnalogFiles(config: UserConfig) {
+  function findAnalogFiles(config: ResolvedConfig) {
     const analogConfig = pluginOptions.supportAnalogFormat;
     if (!analogConfig) {
       return [];
@@ -501,7 +502,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     });
   }
 
-  function setupCompilation(config: UserConfig, context?: unknown) {
+  function setupCompilation(config: ResolvedConfig, context?: unknown) {
     const analogFiles = findAnalogFiles(config);
     const includeFiles = findIncludes();
 
