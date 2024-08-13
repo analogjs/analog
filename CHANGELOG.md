@@ -1,3 +1,9 @@
+## [1.7.2-beta.3](https://github.com/analogjs/analog/compare/v1.7.2-beta.2...v1.7.2-beta.3) (2024-08-13)
+
+### Bug Fixes
+
+- update cookie interceptor in example app ([#1274](https://github.com/analogjs/analog/issues/1274)) ([1c209bd](https://github.com/analogjs/analog/commit/1c209bd17b481f2fd193a5f8aead52f352e1fa6e))
+
 ## [1.7.2-beta.2](https://github.com/analogjs/analog/compare/v1.7.2-beta.1...v1.7.2-beta.2) (2024-08-12)
 
 ### Bug Fixes
