@@ -190,6 +190,7 @@ export default defineConfig(({ mode }) => {
     name="viewport"
     content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
   />
+  <meta name="color-scheme" content="light dark" />
   <meta name="format-detection" content="telephone=no" />
   <meta name="msapplication-tap-highlight" content="no" />
 
