@@ -179,12 +179,23 @@ export default defineConfig(({ mode }) => {
 });
 ```
 
-6. Update the `index.html` file to reference the SCSS file:
+6. Update the `index.html` file to reference the SCSS file, and to include the required meta tags for Ionic apps:
 
 ```html
 <head>
   <!-- other headers -->
   <link rel="stylesheet" href="/src/styles.scss" />
+
+  <meta
+      name="viewport"
+      content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="msapplication-tap-highlight" content="no" />
+
+  <!-- add to homescreen for ios -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 </head>
 <body>
   <!-- content -->
