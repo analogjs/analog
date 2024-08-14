@@ -4,7 +4,10 @@ import {
   withInterceptors,
 } from '@angular/common/http';
 import { ApplicationConfig } from '@angular/core';
-import { provideClientHydration } from '@angular/platform-browser';
+import {
+  provideClientHydration,
+  withEventReplay,
+} from '@angular/platform-browser';
 import { provideFileRouter, requestContextInterceptor } from '@analogjs/router';
 import { withNavigationErrorHandler } from '@angular/router';
 
@@ -15,6 +18,6 @@ export const appConfig: ApplicationConfig = {
       withFetch(),
       withInterceptors([requestContextInterceptor])
     ),
-    provideClientHydration(),
+    provideClientHydration(withEventReplay()),
   ],
 };
