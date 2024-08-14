@@ -9,7 +9,7 @@ export function cookieInterceptor(
   location = inject(PLATFORM_ID),
   serverRequest = injectRequest()
 ) {
-  if (isPlatformServer(location)) {
+  if (isPlatformServer(location) && req.url.includes('/api/_analog/')) {
     let headers = new HttpHeaders();
     const cookies = serverRequest?.headers.cookie;
     headers = headers.set('cookie', cookies ?? '');
