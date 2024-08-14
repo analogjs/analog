@@ -1,3 +1,9 @@
+## [1.7.2-beta.5](https://github.com/analogjs/analog/compare/v1.7.2-beta.4...v1.7.2-beta.5) (2024-08-14)
+
+### Bug Fixes
+
+- **platform:** add support for event replay with SSR ([#1277](https://github.com/analogjs/analog/issues/1277)) ([11631a2](https://github.com/analogjs/analog/commit/11631a2a7a40a2f61f9095b26ba0d75af16688b6))
+
 ## [1.7.2-beta.4](https://github.com/analogjs/analog/compare/v1.7.2-beta.3...v1.7.2-beta.4) (2024-08-14)
 
 ### Bug Fixes
