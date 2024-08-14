@@ -8,14 +8,12 @@ import { provideClientHydration } from '@angular/platform-browser';
 import { provideFileRouter, requestContextInterceptor } from '@analogjs/router';
 import { withNavigationErrorHandler } from '@angular/router';
 
-import { cookieInterceptor } from './interceptors/cookies.interceptor';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(withNavigationErrorHandler(console.error)),
     provideHttpClient(
       withFetch(),
-      withInterceptors([cookieInterceptor, requestContextInterceptor])
+      withInterceptors([requestContextInterceptor])
     ),
     provideClientHydration(),
   ],
