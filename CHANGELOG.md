@@ -1,3 +1,9 @@
+## [1.7.2-beta.4](https://github.com/analogjs/analog/compare/v1.7.2-beta.3...v1.7.2-beta.4) (2024-08-14)
+
+### Bug Fixes
+
+- **router:** handle cookie header internally for server data loading ([#1276](https://github.com/analogjs/analog/issues/1276)) ([838646c](https://github.com/analogjs/analog/commit/838646c6d21cf31bb7b6d47b2c0b8bee8f4f3859))
+
 ## [1.7.2-beta.3](https://github.com/analogjs/analog/compare/v1.7.2-beta.2...v1.7.2-beta.3) (2024-08-13)
 
 ### Bug Fixes
