@@ -1,7 +1,6 @@
 import { VERSION } from '@angular/compiler-cli';
 import { Plugin } from 'vite';
 import { crawlFrameworkPkgs } from 'vitefu';
-import { relative } from 'node:path';
 
 import { Options } from './options.js';
 
@@ -49,10 +48,8 @@ export function depsPlugin(options?: Options): Plugin[] {
     {
       name: 'analogjs-auto-discover-deps',
       async config(config, { command }) {
-        const root = relative(workspaceRoot, config.root || '.') || '.';
-
         const pkgConfig = await crawlFrameworkPkgs({
-          root,
+          root: workspaceRoot,
           isBuild: command === 'build',
           viteUserConfig: config,
           isSemiFrameworkPkgByJson(pkgJson) {
