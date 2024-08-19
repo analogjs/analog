@@ -1,3 +1,9 @@
+## [1.7.2-beta.6](https://github.com/analogjs/analog/compare/v1.7.2-beta.5...v1.7.2-beta.6) (2024-08-19)
+
+### Bug Fixes
+
+- **platform:** use workspace root when discovering packages for SSR transform ([#1280](https://github.com/analogjs/analog/issues/1280)) ([fa82328](https://github.com/analogjs/analog/commit/fa82328a22ab07e1fc393b1a4e844257e5f014a2))
+
 ## [1.7.2-beta.5](https://github.com/analogjs/analog/compare/v1.7.2-beta.4...v1.7.2-beta.5) (2024-08-14)
 
 ### Bug Fixes
