@@ -15,7 +15,7 @@ Similar to other meta-frameworks such as Next.JS, Nuxt, SvelteKit, Qwik City, an
 - Supports Vite/Vitest/Playwright
 - Server and deployment integrations powered by [Nitro](https://nitro.unjs.io)
 - [File-based routing](/docs/features/routing/overview)
-- [Server-side data fetching](/docs/features/data-fetching/server-side-data-fetching.md)
+- [Server-side data fetching](/docs/features/data-fetching/server-side-data-fetching)
 - [Support for using Markdown as content routes](/docs/features/routing/content)
 - [API/server routes](/docs/features/api/overview)
 - Hybrid [SSR](/docs/features/server/server-side-rendering)/[SSG support](/docs/features/server/static-site-generation)
