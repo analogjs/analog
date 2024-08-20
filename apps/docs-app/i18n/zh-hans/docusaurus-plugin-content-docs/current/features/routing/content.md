@@ -288,7 +288,7 @@ export default class BlogPostComponent {
 }
 ```
 
-### 使用源标签解析器
+### 使用 meta 标签解析器
 
 在路由配置中通过为 `RouteMeta` 对象的 `meta` 属性设置一个 `postMetaResolver` 函数，可以为一个路由解析 meta 标签。
 
