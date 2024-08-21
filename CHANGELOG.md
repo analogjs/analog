@@ -1,3 +1,15 @@
+## [1.7.2](https://github.com/analogjs/analog/compare/v1.7.1...v1.7.2) (2024-08-21)
+
+### Bug Fixes
+
+- **nx-plugin:** add server context to Nx generator template ([#1270](https://github.com/analogjs/analog/issues/1270)) ([4009439](https://github.com/analogjs/analog/commit/400943952129f380479c5441bab3356069f12043))
+- **platform:** add support for event replay with SSR ([#1277](https://github.com/analogjs/analog/issues/1277)) ([11631a2](https://github.com/analogjs/analog/commit/11631a2a7a40a2f61f9095b26ba0d75af16688b6))
+- **platform:** use workspace root when discovering packages for SSR transform ([#1280](https://github.com/analogjs/analog/issues/1280)) ([fa82328](https://github.com/analogjs/analog/commit/fa82328a22ab07e1fc393b1a4e844257e5f014a2))
+- **router:** handle cookie header internally for server data loading ([#1276](https://github.com/analogjs/analog/issues/1276)) ([838646c](https://github.com/analogjs/analog/commit/838646c6d21cf31bb7b6d47b2c0b8bee8f4f3859))
+- update cookie interceptor in example app ([#1274](https://github.com/analogjs/analog/issues/1274)) ([1c209bd](https://github.com/analogjs/analog/commit/1c209bd17b481f2fd193a5f8aead52f352e1fa6e))
+- **vite-plugin-angular:** use resolved config for CSS preprocessor ([#1271](https://github.com/analogjs/analog/issues/1271)) ([c70fdb1](https://github.com/analogjs/analog/commit/c70fdb1416ccd980377eb99b34d36033ba6b5758))
+- **vite-plugin-nitro:** support server middleware in development ([#1269](https://github.com/analogjs/analog/issues/1269)) ([454889e](https://github.com/analogjs/analog/commit/454889e6ea3cbc681b34ab369faf164990be0701))
+
 ## [1.7.2-beta.6](https://github.com/analogjs/analog/compare/v1.7.2-beta.5...v1.7.2-beta.6) (2024-08-19)
 
 ### Bug Fixes
