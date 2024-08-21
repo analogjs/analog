@@ -49,6 +49,11 @@ const sidebars = {
               id: 'features/routing/content',
               label: 'Content Routes',
             },
+            {
+              type: 'doc',
+              id: 'features/routing/middleware',
+              label: 'Middleware',
+            },
           ],
         },
         {

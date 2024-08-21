@@ -9,6 +9,7 @@ import { contentPlugin } from './content-plugin.js';
 import { clearClientPageEndpointsPlugin } from './clear-client-page-endpoint.js';
 import { ssrXhrBuildPlugin } from './ssr/ssr-xhr-plugin.js';
 import { depsPlugin } from './deps-plugin.js';
+import { injectHTMLPlugin } from './ssr/inject-html-plugin.js';
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
   const { apiPrefix, ...platformOptions } = {
@@ -28,7 +29,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
 
   return [
     ...viteNitroPlugin(platformOptions, nitroOptions),
-    (platformOptions.ssr ? ssrBuildPlugin() : false) as Plugin,
+    ...(platformOptions.ssr ? [ssrBuildPlugin(), ...injectHTMLPlugin()] : []),
     ...depsPlugin(),
     ...routerPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),

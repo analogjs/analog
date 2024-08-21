@@ -1096,6 +1096,15 @@
         "infra",
         "code"
       ]
+    },
+    {
+      "login": "osnoser1",
+      "name": "Alfonso Andrés López Molina",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1179744?v=4",
+      "profile": "https://github.com/osnoser1",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
