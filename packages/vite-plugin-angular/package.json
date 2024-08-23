@@ -24,7 +24,13 @@
     "@ngtools/webpack": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0"
   },
   "dependencies": {
-    "ts-morph": "^21.0.0"
+    "ts-morph": "^21.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.0",
+    "remark-stringify": "^11.0.0",
+    "unified": "^11.0.5",
+    "unist": "^0.0.1",
+    "unist-util-visit": "^5.0.0"
   },
   "ng-update": {
     "packageGroup": [
