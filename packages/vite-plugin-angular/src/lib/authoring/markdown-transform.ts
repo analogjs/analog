@@ -29,10 +29,11 @@ export const defaultMarkdownTemplateTransform: MarkdownTemplateTransform =
     return mdContent;
   };
 
-export const remarkRehypeMarkdownTemplateTransform: MarkdownTemplateTransform =
+export const remarkRehypeMarkdownTemplateTransform =
+  (options: RemarkRehypeOptions = {}): MarkdownTemplateTransform =>
   async (content: string) => {
-    // TODO: can I add an optional config here for passing in remark/rehype plugins?
-    const remarkSetupService = new RemarkSetupService();
+    const { RemarkSetupService } = await import('./remark-setup.service.js');
+    const remarkSetupService = new RemarkSetupService(options);
     const mdContent = await remarkSetupService
       .getRemarkInstance()
       .process(content);

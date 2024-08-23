@@ -5,7 +5,7 @@ import { visit } from 'unist-util-visit';
 import rehypeStringify from 'rehype-stringify';
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
-import { UnifiedPlugins } from './markdown-transform';
+import { RemarkRehypeOptions, UnifiedPlugins } from './markdown-transform';
 
 const rehypeAnalog: Plugin = () => {
   return (tree) => {
@@ -64,33 +64,22 @@ const applyPlugins = (plugins: UnifiedPlugins, parser: Processor) => {
 };
 
 export class RemarkSetupService {
-  constructor() {
-    // TODO:
-    const remarkPlugins: any = [];
-    const rehypePlugins: any = [];
+  private processor!: Processor;
 
+  constructor(options: RemarkRehypeOptions) {
     const toMDAST = unified().use(remarkParse);
-    applyPlugins(remarkPlugins, toMDAST);
+    applyPlugins(options.remarkPlugins || [], toMDAST);
     const toHAST = toMDAST.use(remarkRehype, { allowDangerousHtml: true });
-    applyPlugins(rehypePlugins, toHAST);
+    applyPlugins(options.rehypePlugins || [], toHAST);
 
-    const processor = toHAST
+    this.processor = toHAST
       .use(rehypeStringify, {
         allowDangerousHtml: true,
       })
       .use(rehypeAnalog);
   }
-  // private readonly remark = unified()
-  //   .use(remarkParse)
-  //   // TODO: add remark plugins here
-  //   .use(remarkRehype, { allowDangerousHtml: true })
-  //   // TODO: add rehype plugins here
-  //   .use(rehypeStringify, {
-  //     allowDangerousHtml: true,
-  //   })
-  //   .use(rehypeAnalog);
-  //
-  // getRemarkInstance() {
-  //   return this.remark;
-  // }
+
+  getRemarkInstance() {
+    return this.processor;
+  }
 }

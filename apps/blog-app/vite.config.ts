@@ -22,6 +22,12 @@ export default defineConfig(() => {
         vite: {
           experimental: {
             supportAnalogFormat: true,
+            markdownTemplateTransforms: [
+              remarkRehypeMarkdownTemplateTransform({
+                remarkPlugins: [someRemarkPlugin, someOtherRemarkPlugin],
+                rehypePlugins: [[someRehypePlugin, { withOptions: 0.4 }]],
+              }),
+            ],
           },
         },
         additionalPagesDirs: ['/libs/shared/feature'],
