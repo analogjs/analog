@@ -66,9 +66,9 @@ export default defineConfig(({ mode }) => ({
 
 To support syntax highlighting and other IDE functionality with `.analog` files, you need to install an extension to support the format for:
 
-- [WebStorm 2024.1+ or IDEA Ultimate 2024.1+ (EAP)](https://github.com/analogjs/idea-plugin)
+- [VSCode](https://marketplace.visualstudio.com/items?itemName=AnalogJS.vscode-analog).
 
-> [Support for VSCode is coming! Please see this issue for more details](https://github.com/analogjs/analog/issues/858/).
+- [WebStorm 2024.1+ or IDEA Ultimate 2024.1+ (EAP)](https://github.com/analogjs/idea-plugin)
 
 ## Authoring an SFC
 
