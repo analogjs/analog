@@ -17,7 +17,8 @@ function getContentFile<
   contentFiles: Record<string, () => Promise<string>>,
   prefix: string,
   slug: string,
-  fallback: string
+  fallback: string,
+  renderTaskService: RenderTaskService
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   const filePath = `/src/content/${prefix}${slug}`;
   const contentFile =
@@ -31,6 +32,7 @@ function getContentFile<
     });
   }
 
+  const contentTask = renderTaskService.addRenderTask();
   return new Observable<string | { default: any; metadata: any }>(
     (observer) => {
       const contentResolver = contentFile();
@@ -39,6 +41,8 @@ function getContentFile<
         waitFor(contentResolver).then((content) => {
           observer.next(content);
           observer.complete();
+
+          setTimeout(() => renderTaskService.clearRenderTask(contentTask), 10);
         });
       } else {
         contentResolver.then((content) => {
@@ -106,7 +110,8 @@ export function injectContent<
             contentFiles,
             prefix,
             slug,
-            fallback
+            fallback,
+            renderTaskService
           );
         }
         return of({
@@ -123,7 +128,8 @@ export function injectContent<
       contentFiles,
       '',
       param.customFilename,
-      fallback
+      fallback,
+      renderTaskService
     ).pipe(tap(() => renderTaskService.clearRenderTask(task)));
   }
 }
