@@ -1,3 +1,9 @@
+## [1.7.3-beta.1](https://github.com/analogjs/analog/compare/v1.7.2...v1.7.3-beta.1) (2024-08-24)
+
+### Bug Fixes
+
+- **content:** initial support for running with Zoneless change detection ([#1284](https://github.com/analogjs/analog/issues/1284)) ([d5404c9](https://github.com/analogjs/analog/commit/d5404c9e26c12c0b32c42af436f9366e74f209a6))
+
 ## [1.7.2](https://github.com/analogjs/analog/compare/v1.7.1...v1.7.2) (2024-08-21)
 
 ### Bug Fixes
