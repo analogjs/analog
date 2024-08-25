@@ -24,6 +24,10 @@
     "type": "git",
     "url": "git+https://github.com/analogjs/analog.git"
   },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/brandonroberts"
+  },
   "bugs": {
     "url": "https://github.com/analogjs/analog/issues"
   },

@@ -18,6 +18,10 @@
     "type": "git",
     "url": "https://github.com/analogjs/analog.git"
   },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/brandonroberts"
+  },
   "peerDependencies": {
     "@angular/common": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0",
     "@angular/core": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0",
