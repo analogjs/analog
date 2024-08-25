@@ -1,3 +1,9 @@
+## [1.7.3-beta.2](https://github.com/analogjs/analog/compare/v1.7.3-beta.1...v1.7.3-beta.2) (2024-08-25)
+
+### Bug Fixes
+
+- update templates to use vitest-angular import for testing ([#1292](https://github.com/analogjs/analog/issues/1292)) ([0587112](https://github.com/analogjs/analog/commit/05871121cebfe84306fb14b79e47a025d64c3dc3))
+
 ## [1.7.3-beta.1](https://github.com/analogjs/analog/compare/v1.7.2...v1.7.3-beta.1) (2024-08-24)
 
 ### Bug Fixes
