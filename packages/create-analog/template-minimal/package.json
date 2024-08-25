@@ -1,0 +1,49 @@
+{
+  "name": "my-app",
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=18.19.1"
+  },
+  "scripts": {
+    "ng": "ng",
+    "dev": "ng serve",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test"
+  },
+  "private": true,
+  "dependencies": {
+    "@analogjs/content": "^1.7.3-beta.1",
+    "@analogjs/router": "^1.7.3-beta.1",
+    "@angular/animations": "^18.0.0",
+    "@angular/common": "^18.0.0",
+    "@angular/compiler": "^18.0.0",
+    "@angular/core": "^18.0.0",
+    "@angular/forms": "^18.0.0",
+    "@angular/platform-browser": "^18.0.0",
+    "@angular/platform-browser-dynamic": "^18.0.0",
+    "@angular/platform-server": "^18.0.0",
+    "@angular/router": "^18.0.0",
+    "front-matter": "^4.0.2",
+    "marked": "^5.0.2",
+    "marked-gfm-heading-id": "^3.1.0",
+    "marked-highlight": "^2.0.1",
+    "marked-mangle": "^1.1.7",
+    "prismjs": "^1.29.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.14.3"
+  },
+  "devDependencies": {
+    "@analogjs/platform": "^1.7.3-beta.1",
+    "@analogjs/vite-plugin-angular": "^1.7.3-beta.1",
+    "@analogjs/vitest-angular": "^1.7.3-beta.1",
+    "@angular-devkit/build-angular": "^18.0.0",
+    "@angular/cli": "^18.0.0",
+    "@angular/compiler-cli": "^18.0.0",
+    "typescript": "~5.4.2",
+    "vite": "^5.0.0"
+  }
+}
