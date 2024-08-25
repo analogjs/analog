@@ -1,3 +1,9 @@
+## [1.7.3-beta.3](https://github.com/analogjs/analog/compare/v1.7.3-beta.2...v1.7.3-beta.3) (2024-08-25)
+
+### Bug Fixes
+
+- **create-analog:** add minimal template option ([#1293](https://github.com/analogjs/analog/issues/1293)) ([2af66fc](https://github.com/analogjs/analog/commit/2af66fc93c6ac400665ce852aff2954975ef5114))
+
 ## [1.7.3-beta.2](https://github.com/analogjs/analog/compare/v1.7.3-beta.1...v1.7.3-beta.2) (2024-08-25)
 
 ### Bug Fixes
