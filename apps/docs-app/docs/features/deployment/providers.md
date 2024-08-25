@@ -426,3 +426,7 @@ jobs:
           echo "DRY_RUN_OPTION=$DRY_RUN_OPTION"
           npx angular-cli-ghpages --no-silent --dir="${{env.TARGET_DIR}}" $CNAME_OPTION $DRY_RUN_OPTION
 ```
+
+## Zerops
+
+Analog supports deploying on [Zerops](https://zerops.io) with some additional configuration which provides you with more control over your analog app.
