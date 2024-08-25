@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // @ts-check
-import { green, red, reset, yellow } from 'kolorist';
+import { blue, green, red, reset, yellow } from 'kolorist';
 import minimist from 'minimist';
 import { execSync } from 'node:child_process';
 import fs, { readdirSync } from 'node:fs';
@@ -28,6 +28,11 @@ const APPS = [
         name: 'Blog',
         template: 'blog',
         color: yellow,
+      },
+      {
+        name: 'Minimal',
+        template: 'minimal',
+        color: blue,
       },
     ],
   },
