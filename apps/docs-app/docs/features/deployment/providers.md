@@ -463,7 +463,7 @@ services:
     enableSubdomainAccess: true
 ```
 
-This will create a project called `recipe-analog` with a Zerops Static service called `app`.
+This creates a project called `recipe-analog` with a Zerops Static service called `app`.
 
 #### Setting up Zerops.yml
 
