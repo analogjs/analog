@@ -431,18 +431,6 @@ jobs:
 
 Analog supports deploying on [Zerops](https://zerops.io) with some additional configuration which provides you with more control over your analog projects.
 
-:::info
-
-### 🚀 Analog x Zerops Quickrun
-
-Want to test running Analog on Zerops without installing or setting up anything? Using repositories [**Zerops x Analog - Static**](https://github.com/zeropsio/recipe-analog-static) or [**Zerops x Analog - SSR**](https://github.com/zeropsio/recipe-analog-nodejs) on Node.js you can deploy example Analog site with a single click.
-
-#### Deploy with a single click
-
-- [**Analog Static & Analog SSR**](https://app.zerops.io/recipe/analog) (Test both at once)
-- [**Analog Static**](http://app.zerops.io/recipe/analog-static)
-- [**Analog SSR**](http://app.zerops.io/recipe/analog-nodejs)
-  :::
 
 This guide will walk you through seting up and deploying both Static and SSR Analog projects on Zerops.
 
