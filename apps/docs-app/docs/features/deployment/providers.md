@@ -429,7 +429,7 @@ jobs:
 
 ## Zerops
 
-Analog supports deploying on [Zerops](https://zerops.io) with some additional configuration which provides you with more control over your analog projects.
+Analog supports deploying on [Zerops](https://zerops.io) with some additional configuration which provides you with more control over your Analog projects.
 
 
 This guide walks you through setting up and deploying both Static and SSR Analog projects on Zerops.
