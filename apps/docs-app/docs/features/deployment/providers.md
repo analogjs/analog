@@ -506,7 +506,7 @@ services:
     enableSubdomainAccess: true
 ```
 
-This will create a project called `recipe-analog` with Zerops Node.js service called `app`.
+This creates a project called `recipe-analog` with Zerops Node.js service called `app`.
 
 #### Setting up Zerops.yml
 
