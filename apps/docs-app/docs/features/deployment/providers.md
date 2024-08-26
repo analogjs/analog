@@ -429,43 +429,31 @@ jobs:
 
 ## Zerops
 
-Analog supports deploying on [Zerops](https://zerops.io) with some additional configuration which provides you with more control over your Analog projects.
-
-
-This guide walks you through setting up and deploying both Static and SSR Analog projects on Zerops.
-
-Running apps on Zerops requires two steps:
-
-1. Creating a project
-2. Triggering build & deploy pipeline
+Analog supports deploying both static and server-side rendered apps to [Zerops](https://zerops.io) with a simple configuration file.
 
 :::info
-One Zerops project can contain multiple Analog projects.
+One Zerops project can contain multiple Analog projects. See example repositories for [static](https://github.com/zeropsio/recipe-analog-static) and [server-side rendered](https://github.com/zeropsio/recipe-analog-nodejs) Analog apps for a quick start.
 :::
 
-### Setting up SSG
+### Static (SSG) Analog app
 
-If your project is not SSG Ready - Setup your project for [Static Site Generation](/docs/features/server/static-site-generation)
+If your project is not SSG Ready, set up your project for [Static Site Generation](/docs/features/server/static-site-generation).
 
-#### Project Creation
+#### 1. Create a project in Zerops
 
-Projects and services can be added either through a [Project add](https://app.zerops.io/dashboard/project-add) wizard or imported using a yaml structure:
+Projects and services can be added either through a [Project add](https://app.zerops.io/dashboard/project-add) wizard or imported using a YAML structure:
 
 ```yml
 project:
   name: recipe-analog
-  tags:
-    - zerops-recipe
-
 services:
   - hostname: app
     type: static
-    enableSubdomainAccess: true
 ```
 
 This creates a project called `recipe-analog` with a Zerops Static service called `app`.
 
-#### Setting up Zerops.yml
+#### 2. Add zerops.yml configuration
 
 To tell Zerops how to build and run your site, add a `zerops.yml` to your repository:
 
@@ -484,31 +472,27 @@ zerops:
       base: static
 ```
 
-Now you can [trigger the build & deploy pipeline](#deploying-the-project-2) using the [Zerops CLI](http://github.com/zeropsio/zcli) or by connecting the app service with your [GitHub](https://docs.zerops.io/references/github-integration/) / [GitLab](https://docs.zerops.io/references/gitlab-integration) repository from inside the service detail.
+#### 3. [Trigger the build & deploy pipeline](#build-deploy-your-code)
 
-### Setting up SSR
+### Server-side rendered (SSR) Analog app
 
-If your project is not SSR Ready - Setup your project for [Server Side Rendering](/docs/features/server/server-side-rendering)
+If your project is not SSR Ready, set up your project for [Server Side Rendering](/docs/features/server/server-side-rendering).
 
-#### Project Creation
+#### 1. Create a project in Zerops
 
-Projects and services can be added either through a [Project add](https://app.zerops.io/dashboard/project-add) wizard or imported using a yaml structure:
+Projects and services can be added either through a [Project add](https://app.zerops.io/dashboard/project-add) wizard or imported using a YAML structure:
 
 ```yml
 project:
   name: recipe-analog
-  tags:
-    - zerops-recipe
-
 services:
   - hostname: app
     type: nodejs@20
-    enableSubdomainAccess: true
 ```
 
-This creates a project called `recipe-analog` with Zerops Node.js service called `app`.
+This creates a project called `recipe-analog` with a Zerops Node.js service called `app`.
 
-#### Setting up Zerops.yml
+#### 2. Add zerops.yml configuration
 
 To tell Zerops how to build and run your site, add a `zerops.yml` to your repository:
 
@@ -532,11 +516,19 @@ zerops:
       start: node dist/analog/server/index.mjs
 ```
 
-Now you can [trigger the build & deploy pipeline](#deploying-the-project-2) using the [Zerops CLI](http://github.com/zeropsio/zcli) or by connecting the app service with your [GitHub](https://docs.zerops.io/references/github-integration/) / [GitLab](https://docs.zerops.io/references/gitlab-integration) repository from inside the service detail.
+#### 3. [Trigger the build & deploy pipeline](#build-deploy-your-code)
 
-### Deploying the Project
+---
+
+### Build & deploy your code
+
+#### Trigger the pipeline by connecting the service with your GitHub / GitLab repository
+
+Your code can be deployed automatically on each commit or a new tag by connecting the service with your GitHub / GitLab repository. This connection can be set up in the service detail.
 
 #### Trigger the pipeline using Zerops CLI (zcli)
+
+You can also trigger the pipeline manually from your terminal or your existing CI/CD by using Zerops CLI.
 
 1. Install the Zerops CLI.
 
