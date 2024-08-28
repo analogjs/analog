@@ -1105,6 +1105,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "nermalcat69",
+      "name": "Nermal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/73933669?v=4",
+      "profile": "https://arjunaditya.xyz",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,

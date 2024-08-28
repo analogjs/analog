@@ -1,3 +1,9 @@
+## [1.7.3-beta.4](https://github.com/analogjs/analog/compare/v1.7.3-beta.3...v1.7.3-beta.4) (2024-08-27)
+
+### Bug Fixes
+
+- **platform:** prevent rxfire package from being externalized during SSR ([#1298](https://github.com/analogjs/analog/issues/1298)) ([89f63a4](https://github.com/analogjs/analog/commit/89f63a4465f8f0a20e971ad6805fa740e29b12ed))
+
 ## [1.7.3-beta.3](https://github.com/analogjs/analog/compare/v1.7.3-beta.2...v1.7.3-beta.3) (2024-08-25)
 
 ### Bug Fixes
