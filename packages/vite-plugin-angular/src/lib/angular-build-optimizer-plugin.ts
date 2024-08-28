@@ -36,7 +36,7 @@ export function buildOptimizerPlugin({
     },
     async transform(code, id) {
       if (/\.[cm]?js$/.test(id)) {
-        const angularPackage = /[\\/]node_modules[\\/]@angular[\\/]/.test(id);
+        const angularPackage = /fesm20/.test(id);
 
         if (!angularPackage) {
           return {
