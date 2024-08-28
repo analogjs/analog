@@ -1,3 +1,9 @@
+## [1.7.3-beta.5](https://github.com/analogjs/analog/compare/v1.7.3-beta.4...v1.7.3-beta.5) (2024-08-28)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use JavaScript transformer from Angular Devkit for build optimizations ([#1302](https://github.com/analogjs/analog/issues/1302)) ([46da68a](https://github.com/analogjs/analog/commit/46da68a2b431dc63501d216eaedffd44e822e203))
+
 ## [1.7.3-beta.4](https://github.com/analogjs/analog/compare/v1.7.3-beta.3...v1.7.3-beta.4) (2024-08-27)
 
 ### Bug Fixes
