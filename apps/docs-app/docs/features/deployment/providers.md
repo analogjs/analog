@@ -472,7 +472,7 @@ zerops:
       base: static
 ```
 
-#### 3. [Trigger the build & deploy pipeline](#build-deploy-your-code)
+#### 3. [Trigger the build & deploy pipeline](#build--deploy-your-code)
 
 ### Server-side rendered (SSR) Analog app
 
