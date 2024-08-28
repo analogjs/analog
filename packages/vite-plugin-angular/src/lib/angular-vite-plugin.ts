@@ -1,5 +1,4 @@
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
-import { transformAsync } from '@babel/core';
 import { resolve } from 'node:path';
 
 import * as compilerCli from '@angular/compiler-cli';
@@ -25,7 +24,6 @@ import { jitPlugin } from './angular-jit-plugin.js';
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
 
 import {
-  angularApplicationPreset,
   createJitResourceTransformer,
   SourceFileCache,
 } from './utils/devkit.js';
@@ -377,10 +375,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             };
           }
 
-          const forceAsyncTransformation =
-            /for\s+await\s*\(|async\s+function\s*\*/.test(data);
-          const useInputSourcemap = (!isProd ? undefined : false) as undefined;
-
           if (
             (id.endsWith('.analog') || id.endsWith('.agx')) &&
             pluginOptions.supportAnalogFormat &&
@@ -396,39 +390,9 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
-          if (!forceAsyncTransformation && !isProd) {
-            return {
-              code: data,
-              map: null,
-            };
-          }
-
-          const babelResult = await transformAsync(data, {
-            filename: id,
-            inputSourceMap: (useInputSourcemap
-              ? undefined
-              : false) as undefined,
-            sourceMaps: !isProd ? 'inline' : false,
-            compact: false,
-            configFile: false,
-            babelrc: false,
-            browserslistConfigFile: false,
-            plugins: [],
-            presets: [
-              [
-                angularApplicationPreset,
-                {
-                  supportedBrowsers: pluginOptions.supportedBrowsers,
-                  forceAsyncTransformation,
-                  optimize: isProd && {},
-                },
-              ],
-            ],
-          });
-
           return {
-            code: babelResult?.code ?? '',
-            map: babelResult?.map,
+            code: data,
+            map: null,
           };
         }
 
