@@ -1,5 +1,6 @@
 import { CompilerHost } from '@angular/compiler-cli';
-import { normalizePath } from '@ngtools/webpack/src/ivy/paths.js';
+import { normalizePath } from 'vite';
+
 import { readFileSync } from 'node:fs';
 import * as ts from 'typescript';
 import { compileAnalogFile } from './authoring/analog.js';
@@ -7,6 +8,7 @@ import { TEMPLATE_TAG_REGEX } from './authoring/constants.js';
 import { MarkdownTemplateTransform } from './authoring/markdown-transform.js';
 
 import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
 
 const require = createRequire(import.meta.url);
 
@@ -150,4 +152,77 @@ export function augmentHostWithResources(
 
     return null;
   };
+}
+
+export function augmentProgramWithVersioning(program: ts.Program): void {
+  const baseGetSourceFiles = program.getSourceFiles;
+  program.getSourceFiles = function (...parameters) {
+    const files: readonly (ts.SourceFile & { version?: string })[] =
+      baseGetSourceFiles(...parameters);
+
+    for (const file of files) {
+      if (file.version === undefined) {
+        file.version = createHash('sha256').update(file.text).digest('hex');
+      }
+    }
+
+    return files;
+  };
+}
+
+export function augmentHostWithCaching(
+  host: ts.CompilerHost,
+  cache: Map<string, ts.SourceFile>
+): void {
+  const baseGetSourceFile = host.getSourceFile;
+  host.getSourceFile = function (
+    fileName,
+    languageVersion,
+    onError,
+    shouldCreateNewSourceFile,
+    ...parameters
+  ) {
+    if (!shouldCreateNewSourceFile && cache.has(fileName)) {
+      return cache.get(fileName);
+    }
+
+    const file = baseGetSourceFile.call(
+      host,
+      fileName,
+      languageVersion,
+      onError,
+      true,
+      ...parameters
+    );
+
+    if (file) {
+      cache.set(fileName, file);
+    }
+
+    return file;
+  };
+}
+
+export function mergeTransformers(
+  first: ts.CustomTransformers,
+  second: ts.CustomTransformers
+): ts.CustomTransformers {
+  const result: ts.CustomTransformers = {};
+
+  if (first.before || second.before) {
+    result.before = [...(first.before || []), ...(second.before || [])];
+  }
+
+  if (first.after || second.after) {
+    result.after = [...(first.after || []), ...(second.after || [])];
+  }
+
+  if (first.afterDeclarations || second.afterDeclarations) {
+    result.afterDeclarations = [
+      ...(first.afterDeclarations || []),
+      ...(second.afterDeclarations || []),
+    ];
+  }
+
+  return result;
 }
