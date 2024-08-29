@@ -1114,6 +1114,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "tobiasegli",
+      "name": "tobiasegli",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20181671?v=4",
+      "profile": "http://tobiasegli.ch",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
