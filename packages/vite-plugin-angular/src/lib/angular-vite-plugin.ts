@@ -8,7 +8,6 @@ import {
   ModuleNode,
   normalizePath,
   Plugin,
-  UserConfig,
   ViteDevServer,
   preprocessCSS,
   ResolvedConfig,
@@ -19,7 +18,12 @@ import {
   StyleUrlsResolver,
   TemplateUrlsResolver,
 } from './component-resolvers.js';
-import { augmentHostWithResources } from './host.js';
+import {
+  augmentHostWithCaching,
+  augmentHostWithResources,
+  augmentProgramWithVersioning,
+  mergeTransformers,
+} from './host.js';
 import { jitPlugin } from './angular-jit-plugin.js';
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
 
@@ -119,19 +123,8 @@ export function angular(options?: PluginOptions): Plugin[] {
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
   let fileEmitter: FileEmitter | undefined;
   let compilerOptions = {};
-  // Temporary deep import for transformer support
-  const {
-    mergeTransformers,
-    replaceBootstrap,
-  } = require('@ngtools/webpack/src/ivy/transformation');
-  const {
-    augmentProgramWithVersioning,
-    augmentHostWithCaching,
-  } = require('@ngtools/webpack/src/ivy/host');
   const ts = require('typescript');
 
-  // let compilerCli: typeof import('@angular/compiler-cli');
-  let userConfig: UserConfig;
   let resolvedConfig: ResolvedConfig;
   let rootNames: string[];
   let host: ts.CompilerHost;
@@ -159,7 +152,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
         watchMode = command === 'serve';
-        userConfig = config;
 
         pluginOptions.tsconfig =
           options?.tsconfig ??
@@ -572,7 +564,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       mergeTransformers(
         {
           before: [
-            replaceBootstrap(getTypeChecker),
             ...(jit
               ? [
                   compilerCli.constructorParametersDownlevelTransform(

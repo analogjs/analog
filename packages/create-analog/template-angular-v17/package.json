@@ -44,7 +44,6 @@
     "@angular-devkit/build-angular": "^17.2.0",
     "@angular/cli": "^17.2.0",
     "@angular/compiler-cli": "^17.2.0",
-    "@ngtools/webpack": "^17.2.0",
     "@nx/vite": "~18.0.0",
     "nx": "~18.0.0",
     "jsdom": "^22.1.0",
