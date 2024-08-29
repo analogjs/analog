@@ -1,3 +1,9 @@
+## [1.7.3-beta.8](https://github.com/analogjs/analog/compare/v1.7.3-beta.7...v1.7.3-beta.8) (2024-08-29)
+
+### Bug Fixes
+
+- **nx-plugin:** remove fileReplacements from vite build schema ([#1306](https://github.com/analogjs/analog/issues/1306)) ([6d9c7c8](https://github.com/analogjs/analog/commit/6d9c7c855db149bb6ee5200a744b1d5fc3ebbbfc))
+
 ## [1.7.3-beta.7](https://github.com/analogjs/analog/compare/v1.7.3-beta.6...v1.7.3-beta.7) (2024-08-29)
 
 ### Bug Fixes
