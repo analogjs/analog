@@ -1,3 +1,9 @@
+## [1.7.3-beta.7](https://github.com/analogjs/analog/compare/v1.7.3-beta.6...v1.7.3-beta.7) (2024-08-29)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** remove @ngtools/webpack and make @angular-devkit/build-angular optional ([#1304](https://github.com/analogjs/analog/issues/1304)) ([7b4a947](https://github.com/analogjs/analog/commit/7b4a9470687f6163445d358114104258a3300f46))
+
 ## [1.7.3-beta.6](https://github.com/analogjs/analog/compare/v1.7.3-beta.5...v1.7.3-beta.6) (2024-08-29)
 
 ### Bug Fixes
