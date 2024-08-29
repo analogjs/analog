@@ -1,3 +1,9 @@
+## [1.7.3-beta.6](https://github.com/analogjs/analog/compare/v1.7.3-beta.5...v1.7.3-beta.6) (2024-08-29)
+
+### Bug Fixes
+
+- **trpc:** support running with Zoneless change detection ([#1301](https://github.com/analogjs/analog/issues/1301)) ([fc7d50a](https://github.com/analogjs/analog/commit/fc7d50ac50b37a63476421c2b909f04fb3102840))
+
 ## [1.7.3-beta.5](https://github.com/analogjs/analog/compare/v1.7.3-beta.4...v1.7.3-beta.5) (2024-08-28)
 
 ### Bug Fixes
