@@ -13,7 +13,12 @@ export function depsPlugin(options?: Options): Plugin[] {
       config() {
         return {
           ssr: {
-            noExternal: ['@analogjs/**', 'firebase/**', 'firebase-admin/**'],
+            noExternal: [
+              '@analogjs/**',
+              'firebase/**',
+              'firebase-admin/**',
+              'rxfire',
+            ],
           },
           optimizeDeps: {
             include: [
@@ -40,6 +45,7 @@ export function depsPlugin(options?: Options): Plugin[] {
               '@nx/workspace',
               '@nx/eslint',
               'webpack',
+              'fsevents',
             ],
           },
         };

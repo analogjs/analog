@@ -1,6 +1,6 @@
 {
   "name": "create-analog",
-  "version": "1.7.2",
+  "version": "1.7.3-beta.8",
   "type": "module",
   "license": "MIT",
   "author": "Brandon Roberts",
@@ -14,6 +14,7 @@
     "template-angular-v17",
     "template-blog",
     "template-latest",
+    "template-minimal",
     "files"
   ],
   "main": "index.js",
@@ -23,6 +24,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/analogjs/analog.git"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/brandonroberts"
   },
   "bugs": {
     "url": "https://github.com/analogjs/analog/issues"

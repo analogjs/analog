@@ -84,6 +84,10 @@
     "message": "内容路由",
     "description": "The label for the doc item Content Routes in sidebar docsSidebar, linking to the doc features/routing/content"
   },
+  "sidebar.docsSidebar.doc.Middleware": {
+    "message": "中间件",
+    "description": "The label for the doc item Middleware in sidebar docsSidebar, linking to the doc features/routing/middleware"
+  },
   "sidebar.docsSidebar.doc.Providers": {
     "message": "服务器提供商",
     "description": "The label for the doc item Providers in sidebar docsSidebar, linking to the doc features/deployment/providers"

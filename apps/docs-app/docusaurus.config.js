@@ -114,7 +114,7 @@ const config = {
                 to: 'docs/contributing',
               },
               {
-                label: 'Sponsor',
+                label: 'Sponsoring',
                 to: 'docs/sponsoring',
               },
             ],
@@ -153,6 +153,12 @@ const config = {
             label: 'Docs',
             position: 'left',
             to: 'docs',
+          },
+          {
+            activeBasePath: 'docs',
+            label: 'Support',
+            position: 'left',
+            to: 'docs/support',
           },
           {
             href: `https://github.com/${organizationName}/${projectName}`,

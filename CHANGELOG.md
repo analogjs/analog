@@ -1,3 +1,51 @@
+## [1.7.3-beta.8](https://github.com/analogjs/analog/compare/v1.7.3-beta.7...v1.7.3-beta.8) (2024-08-29)
+
+### Bug Fixes
+
+- **nx-plugin:** remove fileReplacements from vite build schema ([#1306](https://github.com/analogjs/analog/issues/1306)) ([6d9c7c8](https://github.com/analogjs/analog/commit/6d9c7c855db149bb6ee5200a744b1d5fc3ebbbfc))
+
+## [1.7.3-beta.7](https://github.com/analogjs/analog/compare/v1.7.3-beta.6...v1.7.3-beta.7) (2024-08-29)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** remove @ngtools/webpack and make @angular-devkit/build-angular optional ([#1304](https://github.com/analogjs/analog/issues/1304)) ([7b4a947](https://github.com/analogjs/analog/commit/7b4a9470687f6163445d358114104258a3300f46))
+
+## [1.7.3-beta.6](https://github.com/analogjs/analog/compare/v1.7.3-beta.5...v1.7.3-beta.6) (2024-08-29)
+
+### Bug Fixes
+
+- **trpc:** support running with Zoneless change detection ([#1301](https://github.com/analogjs/analog/issues/1301)) ([fc7d50a](https://github.com/analogjs/analog/commit/fc7d50ac50b37a63476421c2b909f04fb3102840))
+
+## [1.7.3-beta.5](https://github.com/analogjs/analog/compare/v1.7.3-beta.4...v1.7.3-beta.5) (2024-08-28)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use JavaScript transformer from Angular Devkit for build optimizations ([#1302](https://github.com/analogjs/analog/issues/1302)) ([46da68a](https://github.com/analogjs/analog/commit/46da68a2b431dc63501d216eaedffd44e822e203))
+
+## [1.7.3-beta.4](https://github.com/analogjs/analog/compare/v1.7.3-beta.3...v1.7.3-beta.4) (2024-08-27)
+
+### Bug Fixes
+
+- **platform:** prevent rxfire package from being externalized during SSR ([#1298](https://github.com/analogjs/analog/issues/1298)) ([89f63a4](https://github.com/analogjs/analog/commit/89f63a4465f8f0a20e971ad6805fa740e29b12ed))
+
+## [1.7.3-beta.3](https://github.com/analogjs/analog/compare/v1.7.3-beta.2...v1.7.3-beta.3) (2024-08-25)
+
+### Bug Fixes
+
+- **create-analog:** add minimal template option ([#1293](https://github.com/analogjs/analog/issues/1293)) ([2af66fc](https://github.com/analogjs/analog/commit/2af66fc93c6ac400665ce852aff2954975ef5114))
+
+## [1.7.3-beta.2](https://github.com/analogjs/analog/compare/v1.7.3-beta.1...v1.7.3-beta.2) (2024-08-25)
+
+### Bug Fixes
+
+- update templates to use vitest-angular import for testing ([#1292](https://github.com/analogjs/analog/issues/1292)) ([0587112](https://github.com/analogjs/analog/commit/05871121cebfe84306fb14b79e47a025d64c3dc3))
+
+## [1.7.3-beta.1](https://github.com/analogjs/analog/compare/v1.7.2...v1.7.3-beta.1) (2024-08-24)
+
+### Bug Fixes
+
+- **content:** initial support for running with Zoneless change detection ([#1284](https://github.com/analogjs/analog/issues/1284)) ([d5404c9](https://github.com/analogjs/analog/commit/d5404c9e26c12c0b32c42af436f9366e74f209a6))
+
 ## [1.7.2](https://github.com/analogjs/analog/compare/v1.7.1...v1.7.2) (2024-08-21)
 
 ### Bug Fixes

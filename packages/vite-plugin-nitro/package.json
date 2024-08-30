@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vite-plugin-nitro",
-  "version": "1.7.2",
+  "version": "1.7.3-beta.8",
   "description": "A Vite plugin for adding a nitro API server",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -22,6 +22,10 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/analogjs/analog.git"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/brandonroberts"
   },
   "dependencies": {
     "nitropack": "^2.9.0",

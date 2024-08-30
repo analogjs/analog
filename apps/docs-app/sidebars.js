@@ -226,13 +226,8 @@ const sidebars = {
     },
     {
       type: 'doc',
-      id: 'contributing',
-      label: 'Contributing',
-    },
-    {
-      type: 'doc',
-      id: 'sponsoring',
-      label: 'Sponsoring',
+      id: 'support',
+      label: 'Support',
     },
   ],
 

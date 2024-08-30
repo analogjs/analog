@@ -19,8 +19,11 @@ import { Component, signal } from '@angular/core';
     </div>
 
     <p class="read-the-docs">
-      For guides on how to customize this project, visit the
-      <a href="https://analogjs.org" target="_blank">Analog documentation</a>
+      <a href="https://analogjs.org" target="_blank">Docs</a> |
+      <a href="https://github.com/analogjs/analog" target="_blank">GitHub</a> |
+      <a href="https://github.com/sponsors/brandonroberts" target="_blank"
+        >Sponsor</a
+      >
     </p>
   `,
   styles: [
@@ -31,8 +34,8 @@ import { Component, signal } from '@angular/core';
       .logo:hover {
         filter: drop-shadow(0 0 2em #646cffaa);
       }
-      .read-the-docs {
-        color: #888;
+      .read-the-docs > * {
+        color: #fff;
       }
     `,
   ],

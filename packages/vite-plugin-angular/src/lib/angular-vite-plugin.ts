@@ -1,5 +1,4 @@
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
-import { transformAsync } from '@babel/core';
 import { resolve } from 'node:path';
 
 import * as compilerCli from '@angular/compiler-cli';
@@ -9,7 +8,6 @@ import {
   ModuleNode,
   normalizePath,
   Plugin,
-  UserConfig,
   ViteDevServer,
   preprocessCSS,
   ResolvedConfig,
@@ -20,12 +18,16 @@ import {
   StyleUrlsResolver,
   TemplateUrlsResolver,
 } from './component-resolvers.js';
-import { augmentHostWithResources } from './host.js';
+import {
+  augmentHostWithCaching,
+  augmentHostWithResources,
+  augmentProgramWithVersioning,
+  mergeTransformers,
+} from './host.js';
 import { jitPlugin } from './angular-jit-plugin.js';
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
 
 import {
-  angularApplicationPreset,
   createJitResourceTransformer,
   SourceFileCache,
 } from './utils/devkit.js';
@@ -121,19 +123,8 @@ export function angular(options?: PluginOptions): Plugin[] {
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
   let fileEmitter: FileEmitter | undefined;
   let compilerOptions = {};
-  // Temporary deep import for transformer support
-  const {
-    mergeTransformers,
-    replaceBootstrap,
-  } = require('@ngtools/webpack/src/ivy/transformation');
-  const {
-    augmentProgramWithVersioning,
-    augmentHostWithCaching,
-  } = require('@ngtools/webpack/src/ivy/host');
   const ts = require('typescript');
 
-  // let compilerCli: typeof import('@angular/compiler-cli');
-  let userConfig: UserConfig;
   let resolvedConfig: ResolvedConfig;
   let rootNames: string[];
   let host: ts.CompilerHost;
@@ -161,7 +152,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
         watchMode = command === 'serve';
-        userConfig = config;
 
         pluginOptions.tsconfig =
           options?.tsconfig ??
@@ -377,10 +367,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             };
           }
 
-          const forceAsyncTransformation =
-            /for\s+await\s*\(|async\s+function\s*\*/.test(data);
-          const useInputSourcemap = (!isProd ? undefined : false) as undefined;
-
           if (
             (id.endsWith('.analog') || id.endsWith('.agx')) &&
             pluginOptions.supportAnalogFormat &&
@@ -396,39 +382,9 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
-          if (!forceAsyncTransformation && !isProd) {
-            return {
-              code: data,
-              map: null,
-            };
-          }
-
-          const babelResult = await transformAsync(data, {
-            filename: id,
-            inputSourceMap: (useInputSourcemap
-              ? undefined
-              : false) as undefined,
-            sourceMaps: !isProd ? 'inline' : false,
-            compact: false,
-            configFile: false,
-            babelrc: false,
-            browserslistConfigFile: false,
-            plugins: [],
-            presets: [
-              [
-                angularApplicationPreset,
-                {
-                  supportedBrowsers: pluginOptions.supportedBrowsers,
-                  forceAsyncTransformation,
-                  optimize: isProd && {},
-                },
-              ],
-            ],
-          });
-
           return {
-            code: babelResult?.code ?? '',
-            map: babelResult?.map,
+            code: data,
+            map: null,
           };
         }
 
@@ -608,7 +564,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       mergeTransformers(
         {
           before: [
-            replaceBootstrap(getTypeChecker),
             ...(jit
               ? [
                   compilerCli.constructorParametersDownlevelTransform(
