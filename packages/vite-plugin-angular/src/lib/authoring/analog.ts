@@ -192,7 +192,8 @@ function processAnalogScript(
       if (
         !structure.namedImports?.length &&
         !structure.defaultImport &&
-        structure.moduleSpecifier.endsWith('.analog')
+        (structure.moduleSpecifier.endsWith('.analog') ||
+          structure.moduleSpecifier.endsWith('.ag'))
       ) {
         const generatedName = structure.moduleSpecifier.replace(
           /[^a-zA-Z]/g,

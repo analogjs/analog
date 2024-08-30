@@ -368,7 +368,9 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
 
           if (
-            (id.endsWith('.analog') || id.endsWith('.agx')) &&
+            (id.endsWith('.analog') ||
+              id.endsWith('.agx') ||
+              id.endsWith('.ag')) &&
             pluginOptions.supportAnalogFormat &&
             fileEmitter
           ) {
@@ -427,8 +429,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));
 
     const globs = [
-      `${appRoot}/**/*.{analog,agx}`,
-      ...extraGlobs.map((glob) => `${workspaceRoot}${glob}.{analog,agx}`),
+      `${appRoot}/**/*.{analog,agx,ag}`,
+      ...extraGlobs.map((glob) => `${workspaceRoot}${glob}.{analog,agx,ag}`),
       ...(pluginOptions.additionalContentDirs || [])?.map(
         (glob) => `${workspaceRoot}${glob}/**/*.agx`
       ),
