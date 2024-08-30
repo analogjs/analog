@@ -1,4 +1,4 @@
-import { Plugin, UserConfig, transformWithEsbuild } from 'vite';
+import { Plugin, transformWithEsbuild } from 'vite';
 
 export function angularVitestPlugin(): Plugin {
   return {
@@ -7,6 +7,8 @@ export function angularVitestPlugin(): Plugin {
     enforce: 'post',
     config(userConfig) {
       return {
+        // Disable esbuild for proper support for sourcemaps/coverage
+        esbuild: false,
         ssr: {
           noExternal: [/cdk\/fesm2022/],
         },
