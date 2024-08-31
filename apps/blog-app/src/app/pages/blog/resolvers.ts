@@ -1,6 +1,7 @@
 import { injectContentFiles } from '@analogjs/content';
 import { MetaTag } from '@analogjs/router';
 import { ActivatedRouteSnapshot, ResolveFn } from '@angular/router';
+
 import { PostAttributes } from './models';
 
 // temporary
@@ -42,7 +43,9 @@ export const postMetaResolver: ResolveFn<MetaTag[]> = (route) => {
     },
     {
       property: 'og:image',
-      content: postAttributes.coverImage,
+      content: `https://analog-blog.netlify.app/api/v1/og-images?title=${encodeURIComponent(
+        postAttributes.title
+      )}`,
     },
   ];
 };
