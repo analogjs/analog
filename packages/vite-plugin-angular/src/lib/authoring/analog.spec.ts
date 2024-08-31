@@ -7,6 +7,7 @@ import External from './external.analog' with { analog: 'imports' };
 import { ExternalService } from './external' with { analog: 'providers' };
 import { ExternalEnum } from './external.model' with { analog: 'exposes' };
 import './noname.analog' with { analog: 'imports' };
+import './noname.ag' with { analog: 'imports' };
 
 defineMetadata({
   exposes: [Math],

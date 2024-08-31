@@ -44,9 +44,16 @@ export function augmentHostWithResources(
       onError,
       ...parameters
     ) => {
-      if (fileName.endsWith('.analog.ts') || fileName.endsWith('.agx.ts')) {
+      if (
+        fileName.endsWith('.analog.ts') ||
+        fileName.endsWith('.agx.ts') ||
+        fileName.endsWith('.ag.ts')
+      ) {
         const contents = readFileSync(
-          fileName.replace('.analog.ts', '.analog').replace('.agx.ts', '.agx'),
+          fileName
+            .replace('.analog.ts', '.analog')
+            .replace('.agx.ts', '.agx')
+            .replace('.ag.ts', '.ag'),
           'utf-8'
         );
         const source = compileAnalogFile(fileName, contents, options.isProd);
@@ -131,13 +138,20 @@ export function augmentHostWithResources(
       // Resource file only exists for external stylesheets
       const filename =
         context.resourceFile ??
-        `${context.containingFile.replace(/(\.analog)?\.ts$/, (...args) => {
-          // NOTE: if the original file name contains `.analog`, we turn that into `-analog.css`
-          if (args.includes('.analog') || args.includes('.agx')) {
-            return `-analog.${options?.inlineStylesExtension}`;
+        `${context.containingFile.replace(
+          /(\.analog|\.ag)?\.ts$/,
+          (...args) => {
+            // NOTE: if the original file name contains `.analog`, we turn that into `-analog.css`
+            if (
+              args.includes('.analog') ||
+              args.includes('.ag') ||
+              args.includes('.agx')
+            ) {
+              return `-analog.${options?.inlineStylesExtension}`;
+            }
+            return `.${options?.inlineStylesExtension}`;
           }
-          return `.${options?.inlineStylesExtension}`;
-        })}`;
+        )}`;
 
       let stylesheetResult;
 

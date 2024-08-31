@@ -6,7 +6,7 @@
   import { delay } from 'rxjs';
 
   import Hello from './hello.analog' with { analog: 'imports'};
-  import AnotherOne from './another-one.analog' with { analog: 'imports' };
+  import AnotherOne from './another-one.ag' with { analog: 'imports' };
   import Highlight from './highlight.analog' with { analog: 'imports' };
 
   // components can optionally be imported with no default import name

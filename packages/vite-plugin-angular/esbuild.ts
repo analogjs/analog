@@ -28,7 +28,7 @@ export const analogSFC: (options?: PluginOptions) => esbuild.Plugin = (
       ],
     });
 
-    build.onLoad({ filter: /.analog$/ }, async (args) => {
+    build.onLoad({ filter: /\.(analog|ag)$/ }, async (args) => {
       await analogPlugin.handleHotUpdate?.({ file: args.path, modules: [] });
       const result = await analogPlugin.transform?.('', args.path);
       return { loader: 'js', contents: result?.code };
