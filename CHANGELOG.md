@@ -1,3 +1,9 @@
+## [1.7.4-beta.1](https://github.com/analogjs/analog/compare/v1.7.3...v1.7.4-beta.1) (2024-08-31)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** prevent handling further middleware on return ([#1313](https://github.com/analogjs/analog/issues/1313)) ([f8ee855](https://github.com/analogjs/analog/commit/f8ee8557cb4c955b5ede964e4d0ebf59ec20f326))
+
 ## [1.7.3](https://github.com/analogjs/analog/compare/v1.7.2...v1.7.3) (2024-08-30)
 
 ### Bug Fixes
