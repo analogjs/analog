@@ -32,6 +32,7 @@ import {
   SourceFileCache,
 } from './utils/devkit.js';
 import { angularVitestPlugin } from './angular-vitest-plugin.js';
+import { angularStorybookPlugin } from './angular-storybook-plugin.js';
 
 const require = createRequire(import.meta.url);
 
@@ -136,6 +137,11 @@ export function angular(options?: PluginOptions): Plugin[] {
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isStackBlitz = !!process.versions['webcontainer'];
   const isAstroIntegration = process.env['ANALOG_ASTRO'] === 'true';
+  const isStorybook =
+    process.env['npm_lifecycle_script']?.includes('storybook') ||
+    process.env['_']?.includes('storybook') ||
+    process.env['ANALOG_STORYBOOK'] === 'true';
+
   const jit =
     typeof pluginOptions?.jit !== 'undefined' ? pluginOptions.jit : isTest;
   let viteServer: ViteDevServer | undefined;
@@ -406,6 +412,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       isProd,
       supportedBrowsers: pluginOptions.supportedBrowsers,
     }),
+    (isStorybook && angularStorybookPlugin()) as Plugin,
   ].filter(Boolean) as Plugin[];
 
   function findAnalogFiles(config: ResolvedConfig) {
