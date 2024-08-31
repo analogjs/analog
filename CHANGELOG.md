@@ -1,3 +1,11 @@
+# [1.8.0-beta.1](https://github.com/analogjs/analog/compare/v1.7.4-beta.1...v1.8.0-beta.1) (2024-08-31)
+
+### Features
+
+- **content:** add og sub-package for generating Open Graph images ([#1316](https://github.com/analogjs/analog/issues/1316)) ([1df068d](https://github.com/analogjs/analog/commit/1df068de048f3c9955cda51c9890dd3d1644f685))
+- **vite-plugin-angular:** add internal plugin to detect Storybook environment ([#1314](https://github.com/analogjs/analog/issues/1314)) ([4045922](https://github.com/analogjs/analog/commit/40459220b73c72d851d79bde34ea2039a61cb793))
+- **vite-plugin-angular:** add support for .ag extension ([#1307](https://github.com/analogjs/analog/issues/1307)) ([4754793](https://github.com/analogjs/analog/commit/475479318cea36b4cd16950ff47a30780950fb5b))
+
 ## [1.7.4-beta.1](https://github.com/analogjs/analog/compare/v1.7.3...v1.7.4-beta.1) (2024-08-31)
 
 ### Bug Fixes
