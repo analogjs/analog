@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   `;
 
   return new ImageResponse(template, {
-    debug: false, // disable caching
+    // debug: false, // disable caching
     fonts: [
       {
         name: 'Inter Latin',
