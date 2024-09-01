@@ -45,7 +45,7 @@ export const postMetaResolver: ResolveFn<MetaTag[]> = (route) => {
       property: 'og:image',
       content: `${
         import.meta.env['VITE_ANALOG_BASE_URL'] || 'http://localhost:3000'
-      }/api/v1/og-images?title=${encodeURIComponent(postAttributes.title)}`,
+      }api/v1/og-images?title=${encodeURIComponent(postAttributes.title)}`,
     },
   ];
 };
