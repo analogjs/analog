@@ -11,7 +11,16 @@ export default defineEventHandler(async (event) => {
 
   const template = `
     <div tw="bg-gray-50 flex w-full h-full items-center justify-center">
-        <div tw="flex flex-col md:flex-row w-full py-12 px-4 md:items-center justify-between p-8">
+        <div tw="flex flex-col items-center w-full py-12 px-4 p-8">
+          <div tw="flex">
+            <img src="${
+              process.env['VITE_ANALOG_BASE_URL']
+            }/analog.svg" width="600" height="450"/>
+
+            <img src="${
+              process.env['VITE_ANALOG_BASE_URL']
+            }/angular-gradient.png" width="400" height="400"/>
+          </div>
           <h2 tw="flex flex-col text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 text-left">
             <span>${query['title'] ? `${query['title']}` : 'Hello World'}</span>
           </h2>
