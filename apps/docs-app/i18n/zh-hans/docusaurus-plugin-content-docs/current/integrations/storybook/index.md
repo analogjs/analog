@@ -63,7 +63,7 @@ bun install @analogjs/vite-plugin-angular @storybook/builder-vite --save-dev
 
 ## 配置 Storybook 使用 Vite 构建器
 
-更新 `.storybook/main.ts` 文件并使用 `@storybook/builder-vite` 并且添加 `viteFinal` 配置函数来配置 Angular 的 Vite 插件。
+更新 `.storybook/main.ts` 文件以使用 `@storybook/builder-vite`，并且添加 `viteFinal` 配置函数来配置 Angular 的 Vite 插件。
 
 ```ts
 import { StorybookConfig } from '@storybook/angular';
