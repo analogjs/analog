@@ -1,3 +1,9 @@
+# [1.8.0-beta.2](https://github.com/analogjs/analog/compare/v1.8.0-beta.1...v1.8.0-beta.2) (2024-09-02)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add detection for storybook target in Nx workspace ([f9014d4](https://github.com/analogjs/analog/commit/f9014d407a2f3f733f0baa1abcc883ab2fd6eec7))
+
 # [1.8.0-beta.1](https://github.com/analogjs/analog/compare/v1.7.4-beta.1...v1.8.0-beta.1) (2024-08-31)
 
 ### Features
