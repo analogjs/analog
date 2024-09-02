@@ -8,6 +8,12 @@ export function angularStorybookPlugin() {
           '"@storybook/angular/dist/client"'
         );
       }
+      if (code.includes("'@storybook/angular'")) {
+        return code.replace(
+          /\'@storybook\/angular\'/g,
+          "'@storybook/angular/dist/client'"
+        );
+      }
 
       return;
     },

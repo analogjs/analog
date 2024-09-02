@@ -140,6 +140,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   const isStorybook =
     process.env['npm_lifecycle_script']?.includes('storybook') ||
     process.env['_']?.includes('storybook') ||
+    process.env['NX_TASK_TARGET_TARGET']?.includes('storybook') ||
     process.env['ANALOG_STORYBOOK'] === 'true';
 
   const jit =

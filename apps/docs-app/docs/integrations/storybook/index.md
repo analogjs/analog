@@ -68,15 +68,15 @@ Update the `.storybook/main.ts` file to use the `@storybook/builder-vite` and ad
 ```ts
 import { UserConfig } from 'vite';
 
-+const config = {
+const config = {
   // other config, addons, etc.
-  "core": {
-    "builder": {
-      "name": "@storybook/builder-vite",
-      "options": {
-        viteConfigPath: undefined
-      }
-    }
+  core: {
+    builder: {
+      name: '@storybook/builder-vite',
+      options: {
+        viteConfigPath: undefined,
+      },
+    },
   },
   async viteFinal(config: UserConfig) {
     // Merge custom configuration into the default config
@@ -90,14 +90,11 @@ import { UserConfig } from 'vite';
           '@storybook/angular',
           '@storybook/angular/dist/client',
           '@angular/compiler',
-          '@storybook/addon-docs/angular',
           '@storybook/blocks',
-          'tslib'
-        ]
+          'tslib',
+        ],
       },
-      plugins: [
-        angular({ jit: true, tsconfig: './.storybook/tsconfig.json' })
-      ]
+      plugins: [angular({ jit: true, tsconfig: './.storybook/tsconfig.json' })],
     });
   },
 };
