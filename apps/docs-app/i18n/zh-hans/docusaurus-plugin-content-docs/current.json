@@ -23,6 +23,10 @@
     "message": "API路由",
     "description": "The label for category API Routes in sidebar docsSidebar"
   },
+  "sidebar.docsSidebar.doc.OG Image Generation": {
+    "message": "OG 图片生成",
+    "description": "The label for doc item OG Image Generation in sidebar docsSidebar"
+  },
   "sidebar.docsSidebar.category.Data Fetching": {
     "message": "数据获取",
     "description": "The label for category Data Fetching in sidebar docsSidebar"
@@ -108,6 +112,10 @@
     "message": "Angular Material",
     "description": "The label for the doc item Angular Material in sidebar docsSidebar, linking to the doc integrations/angular-material/index"
   },
+  "sidebar.docsSidebar.doc.Storybook": {
+    "message": "Storybook",
+    "description": "The label for the doc item Storybook in sidebar docsSidebar, linking to the doc integrations/storybook/index"
+  },
   "sidebar.docsSidebar.category.Experimental": {
     "message": "实验性功能",
     "description": "The label for category Experimental in sidebar docsSidebar"
@@ -127,5 +135,9 @@
   "sidebar.docsSidebar.doc.Sponsoring": {
     "message": "赞助",
     "description": "The label for the doc item Sponsoring in sidebar docsSidebar, linking to the doc sponsoring"
+  },
+  "sidebar.docsSidebar.doc.Support": {
+    "message": "支持",
+    "description": "The label for the doc item Support in sidebar docsSidebar, linking to the doc support"
   }
 }
