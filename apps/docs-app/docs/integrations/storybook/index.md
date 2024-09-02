@@ -11,7 +11,7 @@ import TabItem from '@theme/TabItem';
 
 By default, Angular and Storybook uses Webpack to build and serve the Storybook application.
 
-This guides you through the process of switching to building and serving your Storybook with Angular using Vite. This process can be applied to _any_ Angular application using Storybook.
+This guides you through the process of switching to building and serving your Storybook with Angular using Vite. This process can be applied to _any_ Angular project using Storybook.
 
 ## Setting up Storybook
 
@@ -66,9 +66,11 @@ bun install @analogjs/vite-plugin-angular @storybook/builder-vite --save-dev
 Update the `.storybook/main.ts` file to use the `@storybook/builder-vite` and add the `viteFinal` config function to configure the Vite Plugin for Angular.
 
 ```ts
+import { StorybookConfig } from '@storybook/angular';
+import { StorybookConfigVite } from '@storybook/builder-vite';
 import { UserConfig } from 'vite';
 
-const config = {
+const config: StorybookConfig & StorybookConfigVite = {
   // other config, addons, etc.
   core: {
     builder: {
@@ -100,13 +102,15 @@ const config = {
 };
 ```
 
-Update the `package.json` to run the Storybook commands directly.
+Remove the existing `webpackFinal` config function if present.
+
+Next, Update the `package.json` to run the Storybook commands directly.
 
 ```json
 {
   "name": "my-app",
   "scripts": {
-    "storybook": "storybook dev",
+    "storybook": "storybook dev --port 4400",
     "build-storybook": "storybook build"
   }
 }
@@ -121,21 +125,23 @@ If you're using [Nx](https://nx.dev), update your `project.json` storybook targe
       "executor": "nx:run-commands",
       "options": {
         "cwd": "apps/my-app",
-        "command": "storybook dev"
+        "command": "storybook dev --port 4400"
       }
     },
     "build-storybook": {
       "executor": "nx:run-commands",
       "options": {
         "cwd": "apps/my-app",
-        "command": "storybook build"
+        "command": "storybook build --output-dir ../../dist/storybook/my-app"
       }
     }
 ```
 
+Add the `/storybook-static` folder to your `.gitignore` file.
+
 ## Running Storybook
 
-Run the storybook commands directly for development and building.
+Run the storybook commands directly for running the development server.
 
 ```sh
 npm run storybook
@@ -143,8 +149,8 @@ npm run storybook
 
 ## Building Storybook
 
+Run the storybook commands for building the storybook.
+
 ```sh
 npm run build-storybook
 ```
-
-Add the `/storybook-static` folder to your `.gitignore` file.
