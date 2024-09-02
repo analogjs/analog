@@ -112,6 +112,10 @@
     "message": "Angular Material",
     "description": "The label for the doc item Angular Material in sidebar docsSidebar, linking to the doc integrations/angular-material/index"
   },
+  "sidebar.docsSidebar.doc.Storybook": {
+    "message": "Storybook",
+    "description": "The label for the doc item Storybook in sidebar docsSidebar, linking to the doc integrations/storybook/index"
+  },
   "sidebar.docsSidebar.category.Experimental": {
     "message": "实验性功能",
     "description": "The label for category Experimental in sidebar docsSidebar"
