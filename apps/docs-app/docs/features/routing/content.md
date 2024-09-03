@@ -59,6 +59,12 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
+Add the `prism.css` to your global stylesheet:
+
+```css
+@import 'prismjs/themes/prism.css';
+```
+
 #### Using the `diff` Highlight Plugin
 
 Analog supports highlighting diff changes with PrismJS.
