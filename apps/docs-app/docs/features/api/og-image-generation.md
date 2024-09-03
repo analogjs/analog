@@ -41,8 +41,6 @@ Next, define an API route in the `src/server/routes` directory.
 
 ```ts
 // src/server/routes/v1/og-images.ts
-import { defineEventHandler, getQuery } from 'h3';
-
 import { ImageResponse } from '@analogjs/content/og';
 
 export default defineEventHandler(async (event) => {
@@ -88,11 +86,11 @@ Open Graph images are registered through meta tags inside the HTML `head` tag.
   <head>
     <meta
       property="og:image"
-      content="https://your-url.com/api/v1/og-images?name=Developer"
+      content="https://your-url.com/api/v1/og-images?title=Developer"
     />
     <meta
       name="twitter:image"
-      content="https://your-url.com/api/v1/og-images?name=Developer"
+      content="https://your-url.com/api/v1/og-images?title=Developer"
       key="twitter:image"
     />
     ...
