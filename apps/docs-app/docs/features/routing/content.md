@@ -59,7 +59,7 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-Add the `prism.css` to your global stylesheet:
+Import a Prism theme into to your global stylesheet:
 
 ```css
 @import 'prismjs/themes/prism.css';
