@@ -1,3 +1,5 @@
+import { FRONTMATTER_REGEX } from './constants.js';
+
 export type MarkdownTemplateTransform = (
   content: string,
   fileName: string
@@ -11,7 +13,9 @@ export const defaultMarkdownTemplateTransform: MarkdownTemplateTransform =
     const markedSetupService = new MarkedSetupService();
     const mdContent = markedSetupService
       .getMarkedInstance()
-      .parse(content) as unknown as Promise<string>;
+      .parse(
+        content.replace(FRONTMATTER_REGEX, '')
+      ) as unknown as Promise<string>;
 
     return mdContent;
   };

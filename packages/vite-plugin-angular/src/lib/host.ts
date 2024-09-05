@@ -4,7 +4,10 @@ import { normalizePath } from 'vite';
 import { readFileSync } from 'node:fs';
 import * as ts from 'typescript';
 import { compileAnalogFile } from './authoring/analog.js';
-import { TEMPLATE_TAG_REGEX } from './authoring/constants.js';
+import {
+  FRONTMATTER_REGEX,
+  TEMPLATE_TAG_REGEX,
+} from './authoring/constants.js';
 import { MarkdownTemplateTransform } from './authoring/markdown-transform.js';
 
 import { createRequire } from 'node:module';
@@ -88,6 +91,14 @@ export function augmentHostWithResources(
         // eslint-disable-next-line prefer-const
         const templateContent =
           TEMPLATE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '';
+
+        const frontmatterContent = FRONTMATTER_REGEX.exec(fileContent)
+          ?.pop()
+          ?.trim();
+
+        if (frontmatterContent) {
+          return frontmatterContent + '\n\n' + templateContent;
+        }
 
         return templateContent;
       }

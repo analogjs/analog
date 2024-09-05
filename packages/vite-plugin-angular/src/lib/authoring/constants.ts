@@ -11,6 +11,7 @@ export const SCRIPT_TAG_REGEX = /<script lang="ts">([\s\S]*?)<\/script>/i;
 export const TEMPLATE_TAG_REGEX =
   /(<template(?:\s+([^>]*?))?>)([\s\S]*?)<\/template>/i;
 export const STYLE_TAG_REGEX = /<style>([\s\S]*?)<\/style>/i;
+export const FRONTMATTER_REGEX = /^\s*---[\s\S]*?---/;
 
 export const ON_INIT = 'onInit';
 export const ON_DESTROY = 'onDestroy';
