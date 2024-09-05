@@ -92,10 +92,15 @@ export function augmentHostWithResources(
         const templateContent =
           TEMPLATE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '';
 
-        const frontmatterContent =
-          FRONTMATTER_REGEX.exec(fileContent)?.pop()?.trim() || '';
+        const frontmatterContent = FRONTMATTER_REGEX.exec(fileContent)
+          ?.pop()
+          ?.trim();
 
-        return frontmatterContent + '\n\n' + templateContent;
+        if (frontmatterContent) {
+          return frontmatterContent + '\n\n' + templateContent;
+        }
+
+        return templateContent;
       }
 
       return baseReadFile.call(resourceHost, fileName);
