@@ -1,3 +1,9 @@
+# [1.8.0-beta.3](https://github.com/analogjs/analog/compare/v1.8.0-beta.2...v1.8.0-beta.3) (2024-09-05)
+
+### Features
+
+- **vite-plugin-angular:** include frontmatter in markdown transform content ([#1323](https://github.com/analogjs/analog/issues/1323)) ([283950d](https://github.com/analogjs/analog/commit/283950d31f0a12808d6f58598b734ced8e1887d7))
+
 # [1.8.0-beta.2](https://github.com/analogjs/analog/compare/v1.8.0-beta.1...v1.8.0-beta.2) (2024-09-02)
 
 ### Bug Fixes
