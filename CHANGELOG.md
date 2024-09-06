@@ -1,3 +1,9 @@
+# [1.8.0-beta.6](https://github.com/analogjs/analog/compare/v1.8.0-beta.5...v1.8.0-beta.6) (2024-09-06)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** remove deprecated parameter from marked ([#1327](https://github.com/analogjs/analog/issues/1327)) ([fe2ba78](https://github.com/analogjs/analog/commit/fe2ba782f1ff9afef0b87c9290190b271c9770fb))
+
 # [1.8.0-beta.5](https://github.com/analogjs/analog/compare/v1.8.0-beta.4...v1.8.0-beta.5) (2024-09-06)
 
 ### Bug Fixes
