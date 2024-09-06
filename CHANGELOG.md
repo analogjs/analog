@@ -1,3 +1,9 @@
+# [1.8.0-beta.5](https://github.com/analogjs/analog/compare/v1.8.0-beta.4...v1.8.0-beta.5) (2024-09-06)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** correctly capture diagnostics from errors and warnings ([#1325](https://github.com/analogjs/analog/issues/1325)) ([5086d95](https://github.com/analogjs/analog/commit/5086d95970db4c95d0ec62dc48053c0da747aa00))
+
 # [1.8.0-beta.4](https://github.com/analogjs/analog/compare/v1.8.0-beta.3...v1.8.0-beta.4) (2024-09-06)
 
 ### Bug Fixes
