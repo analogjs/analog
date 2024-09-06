@@ -1,3 +1,9 @@
+# [1.8.0-beta.4](https://github.com/analogjs/analog/compare/v1.8.0-beta.3...v1.8.0-beta.4) (2024-09-06)
+
+### Bug Fixes
+
+- **router:** add responseType in requestContextInterceptor for HttpClient ([#1326](https://github.com/analogjs/analog/issues/1326)) ([88c077f](https://github.com/analogjs/analog/commit/88c077faf62ecc9e17c96fc17e63d348d55f4e73))
+
 # [1.8.0-beta.3](https://github.com/analogjs/analog/compare/v1.8.0-beta.2...v1.8.0-beta.3) (2024-09-05)
 
 ### Features
