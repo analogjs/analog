@@ -613,11 +613,11 @@ export function createFileEmitter(
       : [];
 
     const errors = diagnostics
-      .filter((d) => d.category === ts.DiagnosticCategory?.Error)
+      .filter((d) => d.category === 1)
       .map((d) => d.messageText);
 
     const warnings = diagnostics
-      .filter((d) => d.category === ts.DiagnosticCategory?.Warning)
+      .filter((d) => d.category === 0)
       .map((d) => d.messageText);
 
     let content: string | undefined;
