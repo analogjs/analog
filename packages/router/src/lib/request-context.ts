@@ -39,12 +39,15 @@ export function requestContextInterceptor(
     const fetchUrl = req.url.includes('/api/')
       ? requestUrl.pathname
       : requestUrl.href;
+    const responseType =
+      req.responseType === 'arraybuffer' ? 'arrayBuffer' : req.responseType;
 
     return from(
       global.$fetch
         .raw(fetchUrl, {
           method: req.method as any,
           params: requestUrl.searchParams,
+          responseType,
           headers: req.headers.keys().reduce((hdrs, current) => {
             return {
               ...hdrs,
