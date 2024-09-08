@@ -29,7 +29,7 @@
     },
     {
       "files": ["*.html"],
-      "extends": ["plugin:<%= nxPackageNamespace %>/nx/angular-template"],
+      "extends": ["plugin:<%= nxPackageNamespace %>/angular-template"],
       "rules": {}
     }
   ]
