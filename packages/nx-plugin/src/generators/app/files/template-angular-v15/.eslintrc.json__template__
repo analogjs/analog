@@ -5,7 +5,7 @@
     {
       "files": ["*.ts"],
       "extends": [
-        "plugin:<%= nxPackageNamespace %>/nx/angular",
+        "plugin:<%= nxPackageNamespace %>/angular",
         "plugin:@angular-eslint/template/process-inline-templates"
       ],
       "rules": {
