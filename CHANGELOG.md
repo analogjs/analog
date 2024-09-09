@@ -1,3 +1,9 @@
+# [1.8.0-beta.9](https://github.com/analogjs/analog/compare/v1.8.0-beta.8...v1.8.0-beta.9) (2024-09-09)
+
+### Bug Fixes
+
+- **vitest-angular:** pass custom config file path to runner ([#1334](https://github.com/analogjs/analog/issues/1334)) ([a1661e3](https://github.com/analogjs/analog/commit/a1661e37b3b1a7b10f241dd519b9edf072b7dc4b))
+
 # [1.8.0-beta.8](https://github.com/analogjs/analog/compare/v1.8.0-beta.7...v1.8.0-beta.8) (2024-09-09)
 
 ### Bug Fixes
