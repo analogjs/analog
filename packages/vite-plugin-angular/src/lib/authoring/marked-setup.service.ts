@@ -106,10 +106,6 @@ export class MarkedSetupService {
         pedantic: false,
         gfm: true,
         breaks: false,
-        sanitize: false,
-        smartypants: false,
-        xhtml: false,
-        mangle: false,
       }
     );
 

@@ -1123,6 +1123,24 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "lars0n",
+      "name": "Larson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15248125?v=4",
+      "profile": "https://github.com/lars0n",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ilyassFouih",
+      "name": "Ilyass ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33469478?v=4",
+      "profile": "https://github.com/ilyassFouih",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

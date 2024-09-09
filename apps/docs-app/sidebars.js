@@ -65,6 +65,11 @@ const sidebars = {
               id: 'features/api/overview',
               label: 'Overview',
             },
+            {
+              type: 'doc',
+              id: 'features/api/og-image-generation',
+              label: 'OG Image Generation',
+            },
           ],
         },
         {
@@ -205,6 +210,11 @@ const sidebars = {
           type: 'doc',
           id: 'integrations/ionic/index',
           label: 'Ionic Framework',
+        },
+        {
+          type: 'doc',
+          id: 'integrations/storybook/index',
+          label: 'Storybook',
         },
       ],
     },

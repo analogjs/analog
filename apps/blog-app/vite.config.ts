@@ -3,6 +3,16 @@
 import analog, { type PrerenderContentFile } from '@analogjs/platform';
 import { defineConfig } from 'vite';
 
+// Only run in Netlify CI
+let base = process.env['URL'] || 'http://localhost:3000';
+if (process.env['NETLIFY'] === 'true') {
+  if (process.env['CONTEXT'] === 'deploy-preview') {
+    base = `${process.env['DEPLOY_PRIME_URL']}/`;
+  }
+}
+
+process.env['VITE_ANALOG_BASE_URL'] = base;
+
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
@@ -18,7 +28,6 @@ export default defineConfig(() => {
     },
     plugins: [
       analog({
-        static: true,
         vite: {
           experimental: {
             supportAnalogFormat: true,

@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "1.7.3",
+  "version": "1.8.0-beta.10",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -160,8 +160,11 @@
     "prompts": "^2.4.2",
     "rimraf": "^6.0.1",
     "rollup-plugin-visualizer": "^5.9.0",
+    "satori": "^0.10.14",
+    "satori-html": "^0.3.2",
     "semantic-release": "^22.0.7",
     "semantic-release-replace-plugin": "^1.2.7",
+    "sharp": "^0.33.5",
     "shiki": "^1.6.1",
     "start-server-and-test": "^1.15.4",
     "tailwindcss": "^3.0.2",

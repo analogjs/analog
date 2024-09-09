@@ -14,8 +14,11 @@ export async function registerDevServerMiddleware(
         .ssrLoadModule(file)
         .then((m: unknown) => (m as { default: EventHandler }).default);
 
-      middlewareHandler(createEvent(req, res));
-      next();
+      const result = await middlewareHandler(createEvent(req, res));
+
+      if (!result) {
+        next();
+      }
     });
   });
 }

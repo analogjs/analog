@@ -4,9 +4,11 @@ import { JavaScriptTransformer } from './utils/devkit.js';
 
 export function buildOptimizerPlugin({
   isProd,
+  jit,
 }: {
   isProd: boolean;
   supportedBrowsers: string[];
+  jit: boolean;
 }): Plugin {
   const javascriptTransformer = new JavaScriptTransformer(
     {
@@ -49,10 +51,13 @@ export function buildOptimizerPlugin({
           };
         }
 
+        const sideEffects =
+          jit && id.includes('@angular/compiler') ? true : false;
         const result: Uint8Array = await javascriptTransformer.transformData(
           id,
           code,
-          false
+          false,
+          sideEffects
         );
 
         return {

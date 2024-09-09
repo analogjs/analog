@@ -59,6 +59,12 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
+将 `prism.css` 样式添加到全局样式表里:
+
+```css
+@import 'prismjs/themes/prism.css';
+```
+
 #### 使用 `diff` 高亮插件
 
 Analog 支持基于 PrismJS 高亮差异。

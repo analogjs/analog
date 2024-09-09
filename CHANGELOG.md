@@ -1,3 +1,71 @@
+# [1.8.0-beta.10](https://github.com/analogjs/analog/compare/v1.8.0-beta.9...v1.8.0-beta.10) (2024-09-09)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** mark @angular/compiler with sideEffects during jit build ([#1337](https://github.com/analogjs/analog/issues/1337)) ([4912562](https://github.com/analogjs/analog/commit/49125629f922136a25a9d74e545ddba37ea92d66))
+
+# [1.8.0-beta.9](https://github.com/analogjs/analog/compare/v1.8.0-beta.8...v1.8.0-beta.9) (2024-09-09)
+
+### Bug Fixes
+
+- **vitest-angular:** pass custom config file path to runner ([#1334](https://github.com/analogjs/analog/issues/1334)) ([a1661e3](https://github.com/analogjs/analog/commit/a1661e37b3b1a7b10f241dd519b9edf072b7dc4b))
+
+# [1.8.0-beta.8](https://github.com/analogjs/analog/compare/v1.8.0-beta.7...v1.8.0-beta.8) (2024-09-09)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fix optimization bug with bundles w/o side effects ([#1332](https://github.com/analogjs/analog/issues/1332)) ([df48c49](https://github.com/analogjs/analog/commit/df48c49bd45f74969e410b4e415daf323e0af496))
+
+# [1.8.0-beta.7](https://github.com/analogjs/analog/compare/v1.8.0-beta.6...v1.8.0-beta.7) (2024-09-09)
+
+### Bug Fixes
+
+- **nx-plugin:** typo that causes Nx graph to crash ([#1330](https://github.com/analogjs/analog/issues/1330)) ([102cf83](https://github.com/analogjs/analog/commit/102cf83e93a9b21a8468c9b035ee5043b2293bb1))
+
+# [1.8.0-beta.6](https://github.com/analogjs/analog/compare/v1.8.0-beta.5...v1.8.0-beta.6) (2024-09-06)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** remove deprecated parameter from marked ([#1327](https://github.com/analogjs/analog/issues/1327)) ([fe2ba78](https://github.com/analogjs/analog/commit/fe2ba782f1ff9afef0b87c9290190b271c9770fb))
+
+# [1.8.0-beta.5](https://github.com/analogjs/analog/compare/v1.8.0-beta.4...v1.8.0-beta.5) (2024-09-06)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** correctly capture diagnostics from errors and warnings ([#1325](https://github.com/analogjs/analog/issues/1325)) ([5086d95](https://github.com/analogjs/analog/commit/5086d95970db4c95d0ec62dc48053c0da747aa00))
+
+# [1.8.0-beta.4](https://github.com/analogjs/analog/compare/v1.8.0-beta.3...v1.8.0-beta.4) (2024-09-06)
+
+### Bug Fixes
+
+- **router:** add responseType in requestContextInterceptor for HttpClient ([#1326](https://github.com/analogjs/analog/issues/1326)) ([88c077f](https://github.com/analogjs/analog/commit/88c077faf62ecc9e17c96fc17e63d348d55f4e73))
+
+# [1.8.0-beta.3](https://github.com/analogjs/analog/compare/v1.8.0-beta.2...v1.8.0-beta.3) (2024-09-05)
+
+### Features
+
+- **vite-plugin-angular:** include frontmatter in markdown transform content ([#1323](https://github.com/analogjs/analog/issues/1323)) ([283950d](https://github.com/analogjs/analog/commit/283950d31f0a12808d6f58598b734ced8e1887d7))
+
+# [1.8.0-beta.2](https://github.com/analogjs/analog/compare/v1.8.0-beta.1...v1.8.0-beta.2) (2024-09-02)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add detection for storybook target in Nx workspace ([f9014d4](https://github.com/analogjs/analog/commit/f9014d407a2f3f733f0baa1abcc883ab2fd6eec7))
+
+# [1.8.0-beta.1](https://github.com/analogjs/analog/compare/v1.7.4-beta.1...v1.8.0-beta.1) (2024-08-31)
+
+### Features
+
+- **content:** add og sub-package for generating Open Graph images ([#1316](https://github.com/analogjs/analog/issues/1316)) ([1df068d](https://github.com/analogjs/analog/commit/1df068de048f3c9955cda51c9890dd3d1644f685))
+- **vite-plugin-angular:** add internal plugin to detect Storybook environment ([#1314](https://github.com/analogjs/analog/issues/1314)) ([4045922](https://github.com/analogjs/analog/commit/40459220b73c72d851d79bde34ea2039a61cb793))
+- **vite-plugin-angular:** add support for .ag extension ([#1307](https://github.com/analogjs/analog/issues/1307)) ([4754793](https://github.com/analogjs/analog/commit/475479318cea36b4cd16950ff47a30780950fb5b))
+
+## [1.7.4-beta.1](https://github.com/analogjs/analog/compare/v1.7.3...v1.7.4-beta.1) (2024-08-31)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** prevent handling further middleware on return ([#1313](https://github.com/analogjs/analog/issues/1313)) ([f8ee855](https://github.com/analogjs/analog/commit/f8ee8557cb4c955b5ede964e4d0ebf59ec20f326))
+
 ## [1.7.3](https://github.com/analogjs/analog/compare/v1.7.2...v1.7.3) (2024-08-30)
 
 ### Bug Fixes

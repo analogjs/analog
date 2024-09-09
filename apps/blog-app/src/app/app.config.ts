@@ -15,7 +15,7 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(),
     provideContent(
       withMarkdownRenderer({
-        loadMermaid: () => import('mermaid'),
+        loadMermaid: !import.meta.env.SSR ? () => import('mermaid') : undefined,
       }),
       withShikiHighlighter()
     ),

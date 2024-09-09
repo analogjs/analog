@@ -7,6 +7,7 @@ import External from "./external.analog";
 import { ExternalService } from "./external";
 import { ExternalEnum } from "./external.model";
 import nonameanalog from "./noname.analog";
+import nonameag from "./noname.ag";
 
 @Component({
     standalone: true,
@@ -23,7 +24,7 @@ import nonameanalog from "./noname.analog";
     queries: {
         divElement: new ViewChild('divElement')
     },
-    imports: [External, nonameanalog],
+    imports: [External, nonameanalog, nonameag],
     providers: [ExternalService],
     outputs: ['output', 'outputWithType']
 })
