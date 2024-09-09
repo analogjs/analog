@@ -1,3 +1,9 @@
+# [1.8.0-beta.8](https://github.com/analogjs/analog/compare/v1.8.0-beta.7...v1.8.0-beta.8) (2024-09-09)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fix optimization bug with bundles w/o side effects ([#1332](https://github.com/analogjs/analog/issues/1332)) ([df48c49](https://github.com/analogjs/analog/commit/df48c49bd45f74969e410b4e415daf323e0af496))
+
 # [1.8.0-beta.7](https://github.com/analogjs/analog/compare/v1.8.0-beta.6...v1.8.0-beta.7) (2024-09-09)
 
 ### Bug Fixes
