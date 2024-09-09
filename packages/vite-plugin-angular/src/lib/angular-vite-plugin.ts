@@ -412,6 +412,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     buildOptimizerPlugin({
       isProd,
       supportedBrowsers: pluginOptions.supportedBrowsers,
+      jit,
     }),
     (isStorybook && angularStorybookPlugin()) as Plugin,
   ].filter(Boolean) as Plugin[];
