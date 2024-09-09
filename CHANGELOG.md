@@ -1,3 +1,9 @@
+# [1.8.0-beta.7](https://github.com/analogjs/analog/compare/v1.8.0-beta.6...v1.8.0-beta.7) (2024-09-09)
+
+### Bug Fixes
+
+- **nx-plugin:** typo that causes Nx graph to crash ([#1330](https://github.com/analogjs/analog/issues/1330)) ([102cf83](https://github.com/analogjs/analog/commit/102cf83e93a9b21a8468c9b035ee5043b2293bb1))
+
 # [1.8.0-beta.6](https://github.com/analogjs/analog/compare/v1.8.0-beta.5...v1.8.0-beta.6) (2024-09-06)
 
 ### Bug Fixes
