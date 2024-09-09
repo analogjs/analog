@@ -52,6 +52,7 @@ export function buildOptimizerPlugin({
         const result: Uint8Array = await javascriptTransformer.transformData(
           id,
           code,
+          false,
           false
         );
 
