@@ -24,6 +24,7 @@ async function vitestBuilder(
   const config = {
     root: `${projectConfig['root'] || '.'}`,
     watch: options.watch === true,
+    config: options.configFile,
     ...extraArgs,
   };
 
