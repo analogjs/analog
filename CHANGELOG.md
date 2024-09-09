@@ -1,3 +1,9 @@
+# [1.8.0-beta.10](https://github.com/analogjs/analog/compare/v1.8.0-beta.9...v1.8.0-beta.10) (2024-09-09)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** mark @angular/compiler with sideEffects during jit build ([#1337](https://github.com/analogjs/analog/issues/1337)) ([4912562](https://github.com/analogjs/analog/commit/49125629f922136a25a9d74e545ddba37ea92d66))
+
 # [1.8.0-beta.9](https://github.com/analogjs/analog/compare/v1.8.0-beta.8...v1.8.0-beta.9) (2024-09-09)
 
 ### Bug Fixes
