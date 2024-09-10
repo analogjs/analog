@@ -1,3 +1,10 @@
+## [1.8.1-beta.1](https://github.com/analogjs/analog/compare/v1.8.0...v1.8.1-beta.1) (2024-09-10)
+
+### Bug Fixes
+
+- **router:** generate rawPath for ag page routes correctly ([7081bb6](https://github.com/analogjs/analog/commit/7081bb6850032e371cd7838f38bce4ad49e0c01f))
+- **vite-plugin-angular:** add check for ag files in fileExists function ([2f5400d](https://github.com/analogjs/analog/commit/2f5400d2b18efb424034ed7afca010a95bb377d6))
+
 # [1.8.0](https://github.com/analogjs/analog/compare/v1.7.3...v1.8.0) (2024-09-09)
 
 ### Bug Fixes
