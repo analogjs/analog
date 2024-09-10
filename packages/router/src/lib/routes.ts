@@ -122,7 +122,7 @@ function toRawPath(filename: string): string {
   return filename
     .replace(
       // convert to relative path and remove file extension
-      /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)[\\/]))|(\.page\.(js|ts|analog)$)|(\.(ts|md|analog)$)/g,
+      /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)[\\/]))|(\.page\.(js|ts|analog|ag)$)|(\.(ts|md|analog|ag)$)/g,
       ''
     )
     .replace(/\[\.{3}.+\]/, '**') // [...not-found] => **
@@ -155,13 +155,13 @@ function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
         : (files[rawRoute.filename] as () => Promise<RouteExport>);
 
       const endpointKey = rawRoute.filename.replace(
-        /\.page\.(ts|analog)$/,
+        /\.page\.(ts|analog|ag)$/,
         ENDPOINT_EXTENSION
       );
 
       // get endpoint path
       const rawEndpoint = rawRoute.filename
-        .replace(/\.page\.(ts|analog)$/, '')
+        .replace(/\.page\.(ts|analog|ag)$/, '')
         .replace(/\[\.{3}.+\]/, '**') // [...not-found] => **
         .replace(/^(.*?)\/pages/, '/pages');
 
