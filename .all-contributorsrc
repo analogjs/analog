@@ -1141,6 +1141,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "bbodine1",
+      "name": "Brad Bodine",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2924609?v=4",
+      "profile": "http://bradbodine.dev",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
