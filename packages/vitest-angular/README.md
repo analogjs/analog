@@ -2,6 +2,13 @@
 
 A standalone builder for running tests with Vitest and Angular.
 
+## Supporting Analog
+
+- Star the [GitHub Repo](https://github.com/analogjs/analog)
+- Join the [Discord](https://chat.analogjs.org)
+- Follow us on [Twitter](https://twitter.com/analogjs)
+- Become a [Sponsor](https://analogjs.org/docs/sponsoring)
+
 ## Installation
 
 Use your package manager of choice to install the necessary packages.
@@ -79,6 +86,23 @@ Next, define a `src/test-setup.ts` file to setup the `TestBed`:
 
 ```ts
 import '@analogjs/vitest-angular/setup-zone';
+
+import {
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting,
+} from '@angular/platform-browser-dynamic/testing';
+import { getTestBed } from '@angular/core/testing';
+
+getTestBed().initTestEnvironment(
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting()
+);
+```
+
+If you are using `Zoneless` change detection, only import the `setup-snapshots` script.
+
+```ts
+import '@analogjs/vitest-angular/setup-snapshots';
 
 import {
   BrowserDynamicTestingModule,
@@ -230,9 +254,18 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-## Supporting Analog
+### With Nx
 
-- Star the [GitHub Repo](https://github.com/analogjs/analog)
-- Join the [Discord](https://chat.analogjs.org)
-- Follow us on [Twitter](https://twitter.com/analogjs)
-- Become a [Sponsor](https://analogjs.org/docs/sponsoring)
+For Nx workspaces, import and use the `nxViteTsPaths` plugin from the `@nx/vite` package.
+
+```ts
+/// <reference types="vitest" />
+import { defineConfig } from 'vite';
+
+import angular from '@analogjs/vite-plugin-angular';
+import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+
+export default defineConfig(({ mode }) => ({
+  plugins: [angular(), nxViteTsPaths()],
+}));
+```
