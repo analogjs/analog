@@ -83,7 +83,7 @@
 
   <br />
 
-  <a routerLink="/">Home</a> | <a routerLink="/about">About</a>
+  <a routerLink="/">Home</a> | <a routerLink="/about">About</a> | <a routerLink="/another">Another</a>
 
   <br />
 
