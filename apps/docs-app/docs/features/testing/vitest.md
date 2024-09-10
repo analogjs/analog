@@ -1,11 +1,11 @@
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Adding Vitest To An Existing Project
+# Using Vitest with An Angular Project
 
-[Vitest](https://vitest.dev) can be added to existing Angular workspaces with a few steps.
+[Vitest](https://vitest.dev) can be added to **_any_** existing Angular project with a few steps.
 
-## Using a Schematic/Generator
+## Automated Setup Using a Schematic/Generator
 
 Vitest can be installed and setup using a schematic/generator for Angular CLI or Nx workspaces.
 
@@ -102,8 +102,31 @@ export default defineConfig(({ mode }) => ({
 
 Next, define a `src/test-setup.ts` file to setup the `TestBed`:
 
+### Zone.js setup
+
+If you are using `Zone.js` for change detection, import the `setup-zone` script. This script automatically includes support for setting up snapshot tests.
+
 ```ts
 import '@analogjs/vitest-angular/setup-zone';
+
+import {
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting,
+} from '@angular/platform-browser-dynamic/testing';
+import { getTestBed } from '@angular/core/testing';
+
+getTestBed().initTestEnvironment(
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting()
+);
+```
+
+### Zoneless setup
+
+If you are using `Zoneless` change detection, only import the `setup-snapshots` script.
+
+```ts
+import '@analogjs/vitest-angular/setup-snapshots';
 
 import {
   BrowserDynamicTestingModule,
@@ -226,6 +249,24 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
+Next, add the `@angular/compiler` import to the `src/test-setup.ts` file.
+
+```ts
+import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-zone';
+
+import {
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting,
+} from '@angular/platform-browser-dynamic/testing';
+import { getTestBed } from '@angular/core/testing';
+
+getTestBed().initTestEnvironment(
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting()
+);
+```
+
 ## Running Tests
 
 To run unit tests, use the `test` command:
@@ -255,6 +296,8 @@ pnpm test
 
   </TabItem>
 </Tabs>
+
+> The `npx vitest` command can also be used directly.
 
 ## Snapshot Testing
 
