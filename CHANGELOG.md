@@ -1,3 +1,9 @@
+## [1.8.1-beta.2](https://github.com/analogjs/analog/compare/v1.8.1-beta.1...v1.8.1-beta.2) (2024-09-10)
+
+### Bug Fixes
+
+- **vitest-angular:** setup separate import for configuring snapshots ([#1340](https://github.com/analogjs/analog/issues/1340)) ([fa50a4d](https://github.com/analogjs/analog/commit/fa50a4d78b00e7415b83ab5ece018b75ddaadc7e))
+
 ## [1.8.1-beta.1](https://github.com/analogjs/analog/compare/v1.8.0...v1.8.1-beta.1) (2024-09-10)
 
 ### Bug Fixes
