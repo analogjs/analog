@@ -387,7 +387,14 @@ export function angular(options?: PluginOptions): Plugin[] {
 
             if (id.includes('.agx')) {
               const metadata = await getFrontmatterMetadata(code);
+              let vfile = {};
+              for (const transform of pluginOptions.markdownTemplateTransforms ||
+                []) {
+                const result = await transform(code, id);
+                vfile = typeof result === 'object' ? result.vfile : vfile;
+              }
               data += metadata;
+              data += `\n\nexport const vfile = ${JSON.stringify(vfile)}`;
             }
           }
 

@@ -3,7 +3,7 @@ import { FRONTMATTER_REGEX } from './constants.js';
 export type MarkdownTemplateTransform = (
   content: string,
   fileName: string
-) => string | Promise<string>;
+) => string | Promise<string> | Promise<{ content: string; vfile: object }>;
 
 export const defaultMarkdownTemplateTransform: MarkdownTemplateTransform =
   async (content: string) => {

@@ -22,6 +22,7 @@ export default defineConfig(({ mode }) => ({
       vite: {
         experimental: {
           supportAnalogFormat: true,
+          markdownTemplateTransforms: [],
         },
       },
     }),
@@ -41,3 +42,11 @@ export default defineConfig(({ mode }) => ({
     'import.meta.vitest': mode !== 'production',
   },
 }));
+
+// adding vfile data in markdown transform
+export const vFileTemplateTransform = async (content: string) => {
+  return {
+    content: 'transformed content',
+    vfile: { data: { headings: { title: 'hello' } } },
+  };
+};
