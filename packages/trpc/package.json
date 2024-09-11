@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/trpc",
-  "version": "0.2.45",
+  "version": "0.2.46",
   "description": "Angular/Nitro-based tRPC integration",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -29,14 +29,6 @@
   },
   "dependencies": {},
   "ng-update": {
-    "packageGroup": [
-      "@analogjs/platform",
-      "@analogjs/content",
-      "@analogjs/router",
-      "@analogjs/vite-plugin-angular",
-      "@analogjs/vite-plugin-nitro",
-      "@analogjs/vitest-angular"
-    ],
     "migrations": "./migrations/migration.json"
   }
 }
