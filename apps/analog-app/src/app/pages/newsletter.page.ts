@@ -1,20 +1,26 @@
 import { Component, signal } from '@angular/core';
 
-import { FormActionDirective } from './form-action.directive';
-import type { action } from './newsletter.server';
+import { FormAction } from './form-action.directive';
+
+type FormErrors =
+  | {
+      email?: string;
+    }
+  | undefined;
 
 @Component({
   selector: 'app-newsletter-page',
   standalone: true,
-  imports: [FormActionDirective],
+  imports: [FormAction],
   template: `
     <h3>Newsletter Signup</h3>
 
     @if (!signedUp()) {
     <form
       method="post"
-      (onSuccess)="onSuccess($event)"
-      (onError)="onError($event)"
+      (onSuccess)="onSuccess()"
+      (onError)="onError($any($event))"
+      (onStateChange)="errors.set(undefined)"
     >
       <div>
         <label for="email"> Email </label>
@@ -23,23 +29,24 @@ import type { action } from './newsletter.server';
 
       <button class="button" type="submit">Submit</button>
     </form>
-    } @else {
+
+    @if( errors()?.email ) {
+    <p>{{ errors()?.email }}</p>
+    } } @else {
     <div>Thanks for signing up!</div>
     }
   `,
 })
 export default class NewsletterComponent {
   signedUp = signal(false);
+  errors = signal<FormErrors>(undefined);
 
-  onSuccess(result: unknown) {
-    const formResult = result as Awaited<ReturnType<typeof action>>;
-
-    if (formResult.type === 'success') {
-      this.signedUp.set(true);
-    }
+  onSuccess() {
+    this.signedUp.set(true);
   }
 
-  onError(result: unknown) {
+  onError(result?: FormErrors) {
+    this.errors.set(result);
     console.log({ result });
   }
 }
