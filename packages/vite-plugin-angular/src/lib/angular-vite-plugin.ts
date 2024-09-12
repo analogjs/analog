@@ -391,7 +391,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               for (const transform of pluginOptions.markdownTemplateTransforms ||
                 []) {
                 const result = await transform(code, id);
-                vfile = typeof result === 'object' ? result.vfile : vfile;
+                vfile = typeof result === 'object' ? result : vfile;
               }
               data += metadata;
               data += `\n\nexport const vfile = ${JSON.stringify(vfile)}`;
