@@ -35,6 +35,7 @@ export class FormAction {
       this.state.emit('navigate');
       this.router.navigate([path], {
         queryParams: params,
+        onSameUrlNavigation: 'reload',
       });
     } else {
       fetch(this.action() || `/api/_analog/pages${path}`, {
@@ -44,9 +45,9 @@ export class FormAction {
         .then((res) => {
           if (res.ok) {
             if (res.redirected) {
-              const redirectUrl = res.url;
+              const redirectUrl = new URL(res.url).pathname;
               this.state.emit('redirect');
-              this.router.navigateByUrl(new URL(redirectUrl).pathname);
+              this.router.navigate([redirectUrl]);
             } else if (res.headers.get('Content-type') === 'application/json') {
               res.json().then((result) => {
                 this.onSuccess.emit(result);

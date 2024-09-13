@@ -28,6 +28,8 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
     routeConfig = {};
   }
 
+  routeConfig.runGuardsAndResolvers =
+    routeConfig.runGuardsAndResolvers ?? 'paramsOrQueryParamsChange';
   routeConfig.resolve = {
     ...routeConfig.resolve,
     load: async (route) => {

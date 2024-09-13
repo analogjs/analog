@@ -1,12 +1,15 @@
+import type { PageServerLoad } from '@analogjs/router';
 import {
   fail,
   json,
   redirect,
   type PageServerAction,
 } from '@analogjs/router/server/actions';
-import { readFormData } from 'h3';
+import { getQuery, readFormData } from 'h3';
 
-export function load() {
+export function load({ event }: PageServerLoad) {
+  const query = getQuery(event);
+  console.log('loaded', query['search']);
   return {
     loaded: true,
   };
