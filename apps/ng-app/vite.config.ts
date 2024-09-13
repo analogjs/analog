@@ -2,6 +2,7 @@
 
 import { defineConfig } from 'vite';
 import analog from '@analogjs/platform';
+import { type VFile } from 'vfile';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -22,7 +23,6 @@ export default defineConfig(({ mode }) => ({
       vite: {
         experimental: {
           supportAnalogFormat: true,
-          markdownTemplateTransforms: [],
         },
       },
     }),
@@ -53,5 +53,5 @@ const vFileTemplateTransform = async (content: string) => {
     toString() {
       return 'this is the transformed content';
     },
-  };
+  } as unknown as VFile;
 };
