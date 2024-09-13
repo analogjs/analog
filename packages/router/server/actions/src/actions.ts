@@ -35,14 +35,14 @@ export function redirect<T = object>(
     return new Response(null, {
       status: config,
       headers: {
-        'X-Analog-Redirect': url,
+        'X-Analog-Redirect': `${url}`,
       },
     }) as T;
   }
 
   return new Response(null, {
     headers: {
-      'X-Analog-Redirect': url,
+      'X-Analog-Redirect': `${url}`,
     },
     ...config,
   }) as T;
