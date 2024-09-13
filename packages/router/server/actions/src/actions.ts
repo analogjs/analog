@@ -15,7 +15,7 @@ export function fail<T = object>(status: number, errors: T) {
     headers: {
       'X-Analog-Errors': 'true',
     },
-  }) as T;
+  });
 }
 
 export function json<T = object>(data: T, config?: ResponseInit) {
@@ -24,20 +24,17 @@ export function json<T = object>(data: T, config?: ResponseInit) {
       'Content-Type': 'application/json; charset=utf-8',
     },
     ...config,
-  }) as T;
+  });
 }
 
-export function redirect<T = object>(
-  url: string,
-  config: number | ResponseInit = 302
-) {
+export function redirect(url: string, config: number | ResponseInit = 302) {
   if (typeof config === 'number') {
     return new Response(null, {
       status: config,
       headers: {
         Location: `${url}`,
       },
-    }) as T;
+    });
   }
 
   return new Response(null, {
@@ -45,5 +42,5 @@ export function redirect<T = object>(
       Location: `${url}`,
     },
     ...config,
-  }) as T;
+  });
 }
