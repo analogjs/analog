@@ -43,7 +43,11 @@ export class FormAction {
       })
         .then((res) => {
           if (res.ok) {
-            if (res.headers.get('Content-type') === 'application/json') {
+            if (res.redirected) {
+              const redirectUrl = res.url;
+              this.state.emit('redirect');
+              this.router.navigateByUrl(new URL(redirectUrl).pathname);
+            } else if (res.headers.get('Content-type') === 'application/json') {
               res.json().then((result) => {
                 this.onSuccess.emit(result);
                 this.state.emit('success');
@@ -55,13 +59,7 @@ export class FormAction {
               });
             }
           } else {
-            if (res.headers.get('X-Analog-Redirect')) {
-              const redirectUrl = res.headers.get(
-                'X-Analog-Redirect'
-              ) as string;
-              this.state.emit('redirect');
-              this.router.navigate([redirectUrl]);
-            } else if (res.headers.get('X-Analog-Errors')) {
+            if (res.headers.get('X-Analog-Errors')) {
               res.json().then((errors: unknown) => {
                 this.onError.emit(errors);
                 this.state.emit('error');
