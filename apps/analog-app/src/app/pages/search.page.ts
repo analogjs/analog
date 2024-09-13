@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
-import { injectActivatedRoute } from '@analogjs/router';
+import { Component, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { injectLoad } from '@analogjs/router';
 
 import { FormAction } from './form-action.directive';
+import type { load } from './search.server';
 
 @Component({
   selector: 'app-search-page',
@@ -15,7 +15,7 @@ import { FormAction } from './form-action.directive';
     <form method="get">
       <div>
         <label for="search"> Search </label>
-        <input type="text" name="search" />
+        <input type="text" name="search" [value]="searchTerm()" />
       </div>
 
       <button class="button" type="submit">Submit</button>
@@ -27,8 +27,6 @@ import { FormAction } from './form-action.directive';
   `,
 })
 export default class NewsletterComponent {
-  route = injectActivatedRoute();
-  searchTerm = toSignal(
-    this.route.queryParamMap.pipe(map((params) => params.get('search')))
-  );
+  loader = toSignal(injectLoad<typeof load>(), { requireSync: true });
+  searchTerm = computed(() => this.loader().searchTerm);
 }

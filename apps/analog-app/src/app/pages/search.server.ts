@@ -7,11 +7,13 @@ import {
 } from '@analogjs/router/server/actions';
 import { getQuery, readFormData } from 'h3';
 
-export function load({ event }: PageServerLoad) {
+export async function load({ event }: PageServerLoad) {
   const query = getQuery(event);
-  console.log('loaded', query['search']);
+  console.log('loaded search', query['search']);
+
   return {
     loaded: true,
+    searchTerm: `${query['search']}`,
   };
 }
 
