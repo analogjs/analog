@@ -54,7 +54,7 @@ npx nx generate @analogjs/platform:init --project [your-project-name]
 If you have any global scripts or styles configured in the `angular.json`, reference them inside the `head` tag in the `index.html`.
 
 ```html
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -165,10 +165,6 @@ Add the environment files to `files` array in the `tsconfig.app.json` may also b
 {
   "extends": "./tsconfig.json",
   // other config
-  "files": [
-    "src/main.ts",
-    "src/main.server.ts",
-    "src/environments/environment.prod.ts"
-  ]
+  "files": ["src/main.ts", "src/main.server.ts", "src/environments/environment.prod.ts"]
 }
 ```

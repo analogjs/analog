@@ -46,9 +46,7 @@ import { defineEventHandler, getQuery } from 'h3';
 import { ImageResponse } from '@analogjs/content/og';
 
 export default defineEventHandler(async (event) => {
-  const fontFile = await fetch(
-    'https://og-playground.vercel.app/inter-latin-ext-700-normal.woff'
-  );
+  const fontFile = await fetch('https://og-playground.vercel.app/inter-latin-ext-700-normal.woff');
   const fontData: ArrayBuffer = await fontFile.arrayBuffer();
   const query = getQuery(event); // query params
 
@@ -86,15 +84,8 @@ export default defineEventHandler(async (event) => {
 ```html
 <html>
   <head>
-    <meta
-      property="og:image"
-      content="https://your-url.com/api/v1/og-images?name=Developer"
-    />
-    <meta
-      name="twitter:image"
-      content="https://your-url.com/api/v1/og-images?name=Developer"
-      key="twitter:image"
-    />
+    <meta property="og:image" content="https://your-url.com/api/v1/og-images?name=Developer" />
+    <meta name="twitter:image" content="https://your-url.com/api/v1/og-images?name=Developer" key="twitter:image" />
     ...
   </head>
 </html>

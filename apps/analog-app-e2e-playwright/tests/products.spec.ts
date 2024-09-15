@@ -63,7 +63,7 @@ describe('Products', () => {
 
     await productsListPage.getNotifyButtonByName(phones.xl.name).click();
     expect(dialogMessage).toMatch(
-      /you will be notified when the product goes on sale/i
+      /you will be notified when the product goes on sale/i,
     );
   });
 
@@ -75,7 +75,7 @@ describe('Products', () => {
     const phone = phones.standard;
     await productsListPage.navigateToDetail(phone.name);
     expect(await productDetailPage.getPrice().textContent()).toContain(
-      phone.price
+      phone.price,
     );
   });
 

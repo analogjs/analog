@@ -44,9 +44,7 @@ Next, define an API route in the `src/server/routes` directory.
 import { ImageResponse } from '@analogjs/content/og';
 
 export default defineEventHandler(async (event) => {
-  const fontFile = await fetch(
-    'https://og-playground.vercel.app/inter-latin-ext-700-normal.woff'
-  );
+  const fontFile = await fetch('https://og-playground.vercel.app/inter-latin-ext-700-normal.woff');
   const fontData: ArrayBuffer = await fontFile.arrayBuffer();
   const query = getQuery(event); // query params
 
@@ -84,15 +82,8 @@ Open Graph images are registered through meta tags inside the HTML `head` tag.
 ```html
 <html>
   <head>
-    <meta
-      property="og:image"
-      content="https://your-url.com/api/v1/og-images?title=Developer"
-    />
-    <meta
-      name="twitter:image"
-      content="https://your-url.com/api/v1/og-images?title=Developer"
-      key="twitter:image"
-    />
+    <meta property="og:image" content="https://your-url.com/api/v1/og-images?title=Developer" />
+    <meta name="twitter:image" content="https://your-url.com/api/v1/og-images?title=Developer" key="twitter:image" />
     ...
   </head>
 </html>

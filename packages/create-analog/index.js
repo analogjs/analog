@@ -144,7 +144,7 @@ async function init() {
         onCancel: () => {
           throw new Error(red('✖') + ' Operation cancelled');
         },
-      }
+      },
     );
   } catch (cancelled) {
     console.log(cancelled.message);
@@ -180,7 +180,7 @@ async function init() {
   const templateDir = path.resolve(
     fileURLToPath(import.meta.url),
     '..',
-    `template-${template}`
+    `template-${template}`,
   );
 
   const filesDir = path.resolve(fileURLToPath(import.meta.url), '..', `files`);
@@ -211,7 +211,7 @@ async function init() {
   const pkgInfo = pkgFromUserAgent(process.env.npm_config_user_agent);
   const pkgManager = pkgInfo ? pkgInfo.name : 'npm';
   const pkg = JSON.parse(
-    fs.readFileSync(path.join(templateDir, `package.json`), 'utf-8')
+    fs.readFileSync(path.join(templateDir, `package.json`), 'utf-8'),
   );
 
   pkg.name = packageName || getProjectName();
@@ -267,7 +267,7 @@ function copy(src, dest) {
  */
 function isValidPackageName(projectName) {
   return /^(?:@[a-z0-9-*~][a-z0-9-*._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/.test(
-    projectName
+    projectName,
   );
 }
 
@@ -349,21 +349,21 @@ function getStartCommand(pkgManager) {
 function addTailwindDirectives(write, filesDir) {
   write(
     'src/styles.css',
-    fs.readFileSync(path.join(filesDir, `styles.css`), 'utf-8')
+    fs.readFileSync(path.join(filesDir, `styles.css`), 'utf-8'),
   );
 }
 
 function addPostCssConfig(write, filesDir) {
   write(
     'postcss.config.cjs',
-    fs.readFileSync(path.join(filesDir, `postcss.config.cjs`), 'utf-8')
+    fs.readFileSync(path.join(filesDir, `postcss.config.cjs`), 'utf-8'),
   );
 }
 
 function addTailwindConfig(write, filesDir) {
   write(
     'tailwind.config.cjs',
-    fs.readFileSync(path.join(filesDir, `tailwind.config.cjs`), 'utf-8')
+    fs.readFileSync(path.join(filesDir, `tailwind.config.cjs`), 'utf-8'),
   );
 }
 
@@ -372,7 +372,7 @@ function addTailwindDevDependencies(pkg) {
     (packageName) => {
       const [name, version] = packageName.split('@');
       pkg.devDependencies[name] = version;
-    }
+    },
   );
 }
 
@@ -398,8 +398,8 @@ function ensureSyntaxHighlighter(root, pkg, highlighter) {
       .replace(/__HIGHLIGHTER__/g, HIGHLIGHTERS[highlighter].highlighter)
       .replace(
         /__HIGHLIGHTER_ENTRY_POINT__/g,
-        HIGHLIGHTERS[highlighter].entryPoint
-      )
+        HIGHLIGHTERS[highlighter].entryPoint,
+      ),
   );
 
   const dependencies = HIGHLIGHTERS[highlighter].dependencies;
@@ -412,7 +412,7 @@ function ensureSyntaxHighlighter(root, pkg, highlighter) {
 
   fs.writeFileSync(
     viteConfigPath,
-    viteConfigContent.replace(/__CONTENT_HIGHLIGHTER__/g, highlighter)
+    viteConfigContent.replace(/__CONTENT_HIGHLIGHTER__/g, highlighter),
   );
 }
 

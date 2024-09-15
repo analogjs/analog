@@ -273,9 +273,7 @@ export class TodosComponent implements OnInit {
   todos: Todo[] = [];
 
   ngOnInit() {
-    this.http
-      .get<Todo[]>('https://jsonplaceholder.typicode.com/todos')
-      .subscribe((todos) => (this.todos = todos));
+    this.http.get<Todo[]>('https://jsonplaceholder.typicode.com/todos').subscribe((todos) => (this.todos = todos));
   }
 }
 ```

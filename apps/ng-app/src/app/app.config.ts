@@ -11,7 +11,7 @@ export const appConfig: ApplicationConfig = {
     provideContent(
       withMarkdownRenderer(),
       // NOTE: .agx files are not affected by the highlighter yet.
-      withPrismHighlighter()
+      withPrismHighlighter(),
     ),
   ],
 };

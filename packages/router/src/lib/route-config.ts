@@ -46,7 +46,7 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
             baseUrl ||
             (typeof window !== 'undefined' && window.location.origin
               ? window.location.origin
-              : '')
+              : ''),
         );
 
         url.pathname = `${
@@ -79,7 +79,7 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
 }
 
 function isRedirectRouteMeta(
-  routeMeta: RouteMeta
+  routeMeta: RouteMeta,
 ): routeMeta is RedirectRouteMeta {
   return !!routeMeta.redirectTo;
 }

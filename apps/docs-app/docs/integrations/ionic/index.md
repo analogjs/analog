@@ -131,19 +131,10 @@ export default defineConfig(({ mode }) => {
 
 ```ts
 import { RouteReuseStrategy, provideRouter } from '@angular/router';
-import {
-  IonicRouteStrategy,
-  provideIonicAngular,
-} from '@ionic/angular/standalone';
+import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideFileRouter(),
-    provideClientHydration(),
-    provideHttpClient(withFetch()),
-    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    provideIonicAngular(),
-  ],
+  providers: [provideFileRouter(), provideClientHydration(), provideHttpClient(withFetch()), { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }, provideIonicAngular()],
 };
 ```
 
@@ -186,10 +177,7 @@ export default defineConfig(({ mode }) => {
   <!-- other headers -->
   <link rel="stylesheet" href="/src/styles.scss" />
 
-  <meta
-    name="viewport"
-    content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
-  />
+  <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="color-scheme" content="light dark" />
   <meta name="format-detection" content="telephone=no" />
   <meta name="msapplication-tap-highlight" content="no" />
@@ -244,10 +232,7 @@ Ionic Framework [doesn't support Angular's new Client Hydration](https://github.
 
    ```ts
    import { RouteReuseStrategy, provideRouter } from '@angular/router';
-   import {
-     IonicRouteStrategy,
-     provideIonicAngular,
-   } from '@ionic/angular/standalone';
+   import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
 
    export const appConfig: ApplicationConfig = {
      providers: [

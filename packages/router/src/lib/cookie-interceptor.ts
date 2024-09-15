@@ -7,7 +7,7 @@ export function cookieInterceptor(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
   location = inject(PLATFORM_ID),
-  serverRequest = injectRequest()
+  serverRequest = injectRequest(),
 ) {
   if (isPlatformServer(location) && req.url.includes('/api/_analog/')) {
     let headers = new HttpHeaders();

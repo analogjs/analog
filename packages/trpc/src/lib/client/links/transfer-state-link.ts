@@ -9,7 +9,7 @@ function makeCacheKey(request: Operation<unknown>): StateKey<string> {
   const { type, path, input } = request;
   const encodedParams = Object.entries(input ?? {}).reduce(
     (prev, [key, value]) => prev + `${key}=${JSON.stringify(value)}`,
-    ''
+    '',
   );
   const key = type + '.' + path + '?' + encodedParams;
   const hash = generateHash(key);
@@ -61,7 +61,7 @@ export const transferStateLink =
         // use superjson to parse our superjson string and retrieve our
         // data return it instead of calling next trpc link
         return observable((observer) =>
-          observer.next(superjson.parse(storeValue))
+          observer.next(superjson.parse(storeValue)),
         );
       }
 

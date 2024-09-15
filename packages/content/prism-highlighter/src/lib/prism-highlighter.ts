@@ -48,7 +48,7 @@ export class PrismHighlighter extends MarkedContentHighlighter {
         return Prism.highlight(
           code,
           diff ? Prism.languages['diff'] : Prism.languages[lang],
-          lang
+          lang,
         );
       },
     });

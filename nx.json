@@ -59,7 +59,7 @@
   "defaultProject": "analog-app",
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals", "projectSpecificFiles"],
-    "sharedGlobals": [],
+    "sharedGlobals": ["{workspaceRoot}/pnpm-lock.yaml"],
     "production": [
       "default",
       "!{projectRoot}/.eslintrc.json",

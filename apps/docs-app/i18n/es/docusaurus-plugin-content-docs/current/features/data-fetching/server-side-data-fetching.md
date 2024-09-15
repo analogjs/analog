@@ -69,14 +69,7 @@ import { provideFileRouter } from '@analogjs/router';
 import { withNavigationErrorHandler } from '@angular/router';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideFileRouter(
-      withComponentInputBinding(),
-      withNavigationErrorHandler(console.error)
-    ),
-    provideHttpClient(),
-    provideClientHydration(),
-  ],
+  providers: [provideFileRouter(withComponentInputBinding(), withNavigationErrorHandler(console.error)), provideHttpClient(), provideClientHydration()],
 };
 ```
 

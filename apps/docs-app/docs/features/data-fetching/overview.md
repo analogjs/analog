@@ -31,11 +31,7 @@ export function bootstrap() {
   return bootstrapApplication(AppComponent, config);
 }
 
-export default async function render(
-  url: string,
-  document: string,
-  serverContext: ServerContext
-) {
+export default async function render(url: string, document: string, serverContext: ServerContext) {
   const html = await renderApplication(bootstrap, {
     document,
     url,
@@ -52,11 +48,7 @@ This provides the `Request` and `Response`, and `Base URL` from the server and r
 
 ```ts
 import { inject } from '@angular/core';
-import {
-  injectRequest,
-  injectResponse,
-  injectBaseURL,
-} from '@analogjs/router/tokens';
+import { injectRequest, injectResponse, injectBaseURL } from '@analogjs/router/tokens';
 
 class MyService {
   request = injectRequest(); // <- Server Request Object
@@ -72,25 +64,14 @@ Analog also provides `requestContextInterceptor` for the HttpClient that handles
 Use it with the `withInterceptors` function from the `@angular/common/http` packages.
 
 ```ts
-import {
-  provideHttpClient,
-  withFetch,
-  withInterceptors,
-} from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig } from '@angular/core';
 import { provideClientHydration } from '@angular/platform-browser';
 import { provideFileRouter, requestContextInterceptor } from '@analogjs/router';
 import { withNavigationErrorHandler } from '@angular/router';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideFileRouter(withNavigationErrorHandler(console.error)),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([requestContextInterceptor])
-    ),
-    provideClientHydration(),
-  ],
+  providers: [provideFileRouter(withNavigationErrorHandler(console.error)), provideHttpClient(withFetch(), withInterceptors([requestContextInterceptor])), provideClientHydration()],
 };
 ```
 

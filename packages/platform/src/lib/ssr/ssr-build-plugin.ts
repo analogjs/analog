@@ -18,7 +18,7 @@ export function ssrBuildPlugin(): Plugin {
           code: code
             .replace(
               'new xhr2.XMLHttpRequest',
-              'new (xhr2.default.XMLHttpRequest || xhr2.default)'
+              'new (xhr2.default.XMLHttpRequest || xhr2.default)',
             )
             .replaceAll('global.', 'globalThis.')
             .replaceAll('global,', 'globalThis,')

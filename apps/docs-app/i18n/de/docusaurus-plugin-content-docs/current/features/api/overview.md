@@ -81,9 +81,7 @@ Dynamische API-Routen werden durch die Verwendung des Dateinamens als Routenpfad
 // /server/routes/v1/hello/[name].ts
 import { defineEventHandler } from 'h3';
 
-export default defineEventHandler(
-  (event) => `Hello ${event.context.params?.['name']}!`
-);
+export default defineEventHandler((event) => `Hello ${event.context.params?.['name']}!`);
 ```
 
 Eine weitere Möglichkeit, auf Routenparameter zuzugreifen, besteht in der Verwendung der Funktion `getRouterParam`.

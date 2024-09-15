@@ -21,11 +21,11 @@ export class MarkedSetupService {
       // Let's do a language based detection like on GitHub
       // So we can still have non-interpreted mermaid code
       if (lang === 'mermaid') {
-        return '<pre class="mermaid">' + code + '</pre>';
+        return `<pre class="mermaid">${code}</pre>`;
       }
 
       if (!lang) {
-        return '<pre><code>' + code + '</code></pre>';
+        return `<pre><code>${code}</code></pre>`;
       }
 
       if (this.highlighter?.augmentCodeBlock) {

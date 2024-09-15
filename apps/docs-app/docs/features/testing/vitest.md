@@ -109,16 +109,10 @@ If you are using `Zone.js` for change detection, import the `setup-zone` script.
 ```ts
 import '@analogjs/vitest-angular/setup-zone';
 
-import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
 import { getTestBed } from '@angular/core/testing';
 
-getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
-);
+getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
 ```
 
 ### Zoneless setup
@@ -128,16 +122,10 @@ If you are using `Zoneless` change detection, only import the `setup-snapshots` 
 ```ts
 import '@analogjs/vitest-angular/setup-snapshots';
 
-import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
 import { getTestBed } from '@angular/core/testing';
 
-getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
-);
+getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
 ```
 
 Next, update the `test` target in the `angular.json` to use the `@analogjs/vitest-angular:test` builder:
@@ -255,16 +243,10 @@ Next, add the `@angular/compiler` import to the `src/test-setup.ts` file.
 import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-zone';
 
-import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
 import { getTestBed } from '@angular/core/testing';
 
-getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
-);
+getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
 ```
 
 ## Running Tests
@@ -319,7 +301,7 @@ describe('CardComponent', () => {
   beforeEach(() =>
     TestBed.configureTestingModule({
       imports: [CardComponent],
-    })
+    }),
   );
 
   beforeEach(() => {

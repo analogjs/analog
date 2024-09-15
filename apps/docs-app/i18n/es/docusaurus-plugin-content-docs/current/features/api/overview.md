@@ -80,9 +80,7 @@ Las rutas API dinámicas se definen usando el nombre de fichero como la ruta de 
 // /server/routes/v1/hello/[name].ts
 import { defineEventHandler } from 'h3';
 
-export default defineEventHandler(
-  (event: H3Event) => `Hello ${event.context.params?.['name']}!`
-);
+export default defineEventHandler((event: H3Event) => `Hello ${event.context.params?.['name']}!`);
 ```
 
 Otra manera de acceder a los parámetros de la ruta es usando la función `getRouterParam`.

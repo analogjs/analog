@@ -96,7 +96,7 @@ export function createRoutes(files: Files): Route[] {
         rawSegment: parentRawSegment,
         ancestorRawSegments: rawRoute.ancestorRawSegments.slice(
           0,
-          parentRawSegmentIndex
+          parentRawSegmentIndex,
         ),
         segment: toSegment(parentRawSegment),
         level: level - 1,
@@ -111,7 +111,7 @@ export function createRoutes(files: Files): Route[] {
   // since they already contain nested routes as their children
   const rootRawRoutesMap = rawRoutesByLevelMap[0];
   const rawRoutes = Object.keys(rootRawRoutesMap).map(
-    (segment) => rootRawRoutesMap[segment]
+    (segment) => rootRawRoutesMap[segment],
   );
   sortRawRoutes(rawRoutes);
 
@@ -123,7 +123,7 @@ function toRawPath(filename: string): string {
     .replace(
       // convert to relative path and remove file extension
       /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)[\\/]))|(\.page\.(js|ts|analog|ag)$)|(\.(ts|md|analog|ag)$)/g,
-      ''
+      '',
     )
     .replace(/\[\.{3}.+\]/, '**') // [...not-found] => **
     .replace(/\[([^\]]+)\]/g, ':$1'); // [id] => :id
@@ -156,7 +156,7 @@ function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
 
       const endpointKey = rawRoute.filename.replace(
         /\.page\.(ts|analog|ag)$/,
-        ENDPOINT_EXTENSION
+        ENDPOINT_EXTENSION,
       );
 
       // get endpoint path
@@ -187,7 +187,7 @@ function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
 
                 if (!hasModuleDefault && !hasRedirect) {
                   console.warn(
-                    `[Analog] Missing default export at ${rawRoute.filename}`
+                    `[Analog] Missing default export at ${rawRoute.filename}`,
                   );
                 }
               }

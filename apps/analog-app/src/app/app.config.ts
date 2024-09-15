@@ -16,7 +16,7 @@ export const appConfig: ApplicationConfig = {
     provideFileRouter(withNavigationErrorHandler(console.error)),
     provideHttpClient(
       withFetch(),
-      withInterceptors([requestContextInterceptor])
+      withInterceptors([requestContextInterceptor]),
     ),
     provideClientHydration(withEventReplay()),
   ],

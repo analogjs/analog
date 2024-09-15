@@ -88,7 +88,7 @@ export default class AnalogMarkdownComponent
       filter((content) => typeof content === 'string'),
       mergeMap((contentString) => this.renderContent(contentString)),
       map((content) => this.sanitizer.bypassSecurityTrustHtml(content)),
-      catchError((e) => of(`There was an error ${e}`))
+      catchError((e) => of(`There was an error ${e}`)),
     );
   }
 
@@ -113,7 +113,7 @@ export default class AnalogMarkdownComponent
           // Explicitly running mermaid as ngAfterViewChecked
           // has probably already been called
           this.mermaid?.default.run();
-        })
+        }),
     );
   }
 }

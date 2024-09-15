@@ -38,7 +38,7 @@ const require = createRequire(import.meta.url);
 export function compileAnalogFile(
   filePath: string,
   fileContent: string,
-  shouldFormat = false
+  shouldFormat = false,
 ) {
   const componentName = filePath.split('/').pop()?.split('.')[0];
   if (!componentName) {
@@ -83,7 +83,7 @@ export function compileAnalogFile(
 
       if (isMarkdown) {
         items.push(
-          `templateUrl: \`virtual-analog:${filePath.replace('.ts', '')}\``
+          `templateUrl: \`virtual-analog:${filePath.replace('.ts', '')}\``,
         );
       } else if (templateContent) {
         items.push(`template: \`${templateContent}\``);
@@ -126,7 +126,7 @@ export default class ${entityName} {
       project.createSourceFile(`${filePath}.virtual.ts`, source),
       ngType,
       entityName,
-      shouldFormat
+      shouldFormat,
     );
   }
 
@@ -139,10 +139,10 @@ function processAnalogScript(
   targetSourceFile: SourceFile,
   ngType: 'Component' | 'Directive',
   entityName: string,
-  isProd?: boolean
+  isProd?: boolean,
 ) {
   const targetClass = targetSourceFile.getClass(
-    (classDeclaration) => classDeclaration.getName() === entityName
+    (classDeclaration) => classDeclaration.getName() === entityName,
   );
 
   if (!targetClass) {
@@ -197,7 +197,7 @@ function processAnalogScript(
       ) {
         const generatedName = structure.moduleSpecifier.replace(
           /[^a-zA-Z]/g,
-          ''
+          '',
         );
         (node as ImportDeclaration).setDefaultImport(generatedName);
         structure = node.getStructure();
@@ -213,7 +213,7 @@ function processAnalogScript(
           const value = attribute.value.replaceAll("'", '');
           if (!(value in importAttributes)) {
             throw new Error(
-              `[Analog] Invalid Analog import attribute ${value} in ${fileName}`
+              `[Analog] Invalid Analog import attribute ${value} in ${fileName}`,
             );
           }
           foundAttribute = value;
@@ -232,12 +232,12 @@ function processAnalogScript(
         if (namedImports && Array.isArray(namedImports)) {
           const namedImportStructures = namedImports.filter(
             (
-              namedImport
+              namedImport,
             ): namedImport is OptionalKind<ImportSpecifierStructure> =>
-              typeof namedImport === 'object'
+              typeof namedImport === 'object',
           );
           const importNames = namedImportStructures.map(
-            (namedImport) => namedImport.alias ?? namedImport.name
+            (namedImport) => namedImport.alias ?? namedImport.name,
           );
           importAttributes[foundAttribute].push(...importNames);
         }
@@ -298,7 +298,7 @@ function processAnalogScript(
               ...bindingElements.map((propertyName) => ({
                 propertyName,
                 isFunction: false,
-              }))
+              })),
             );
             continue;
           }
@@ -310,7 +310,7 @@ function processAnalogScript(
               scope: Scope.Protected,
             });
             targetConstructor.addStatements(
-              `this.${bindingElement} = ${bindingElement};`
+              `this.${bindingElement} = ${bindingElement};`,
             );
           }
           continue;
@@ -352,7 +352,7 @@ function processAnalogScript(
             initializer.getText(),
             name,
             'const',
-            true
+            true,
           );
           continue;
         }
@@ -365,7 +365,7 @@ function processAnalogScript(
           targetConstructor,
           initializer.getText(),
           name,
-          'let'
+          'let',
         );
         gettersSetters.push({
           propertyName: name,
@@ -408,7 +408,7 @@ function processAnalogScript(
             .filter(
               (property): property is PropertyAssignment =>
                 Node.isPropertyAssignment(property) &&
-                !INVALID_METADATA_PROPERTIES.includes(property.getName())
+                !INVALID_METADATA_PROPERTIES.includes(property.getName()),
             );
 
           if (metadataProperties.length === 0) continue;
@@ -416,7 +416,7 @@ function processAnalogScript(
           processMetadata(
             metadataProperties,
             targetMetadataArguments,
-            targetClass
+            targetClass,
           );
           continue;
         }
@@ -426,7 +426,7 @@ function processAnalogScript(
           if (isFunction(initFunction)) {
             // add the function to constructor
             targetConstructor.addStatements(
-              `this.${functionName} = ${initFunction.getText()}`
+              `this.${functionName} = ${initFunction.getText()}`,
             );
 
             // add life-cycle method to class
@@ -451,7 +451,7 @@ function processAnalogScript(
       processArrayLiteralMetadata(
         targetMetadataArguments,
         'viewProviders',
-        importAttributes['viewProviders']
+        importAttributes['viewProviders'],
       );
     }
 
@@ -459,7 +459,7 @@ function processAnalogScript(
       processArrayLiteralMetadata(
         targetMetadataArguments,
         'imports',
-        importAttributes['imports']
+        importAttributes['imports'],
       );
     }
 
@@ -478,7 +478,7 @@ function processAnalogScript(
     processArrayLiteralMetadata(
       targetMetadataArguments,
       'providers',
-      importAttributes['providers']
+      importAttributes['providers'],
     );
   }
 
@@ -486,7 +486,7 @@ function processAnalogScript(
     processArrayLiteralMetadata(
       targetMetadataArguments,
       'outputs',
-      outputs.map((output) => `'${output}'`)
+      outputs.map((output) => `'${output}'`),
     );
   }
 
@@ -498,7 +498,7 @@ ${gettersSetters
     ({ isFunction, propertyName }) =>
       `${propertyName}:{get(){return ${
         !isFunction ? `${propertyName}` : `${propertyName}.bind(this)`
-      };},set(v){${propertyName}=v;}},`
+      };},set(v){${propertyName}=v;}},`,
   )
   .join('\n')}
 });`);
@@ -515,7 +515,7 @@ ${gettersSetters
 function processArrayLiteralMetadata(
   targetMetadataArguments: ObjectLiteralExpression,
   metadataName: string,
-  items: string[]
+  items: string[],
 ) {
   let metadata = targetMetadataArguments.getProperty(metadataName);
 
@@ -537,7 +537,7 @@ function processArrayLiteralMetadata(
 function processMetadata(
   metadataProperties: PropertyAssignment[],
   targetMetadataArguments: ObjectLiteralExpression,
-  targetClass: ClassDeclaration
+  targetClass: ClassDeclaration,
 ) {
   metadataProperties.forEach((property) => {
     const propertyInitializer = property.getInitializer();
@@ -590,7 +590,7 @@ function addVariableToConstructor(
   initializerText: string,
   variableName: string,
   kind: 'let' | 'const',
-  withClassProperty = false
+  withClassProperty = false,
 ) {
   let statement = `${kind} ${variableName}`;
 
@@ -606,7 +606,7 @@ function addVariableToConstructor(
 }
 
 function isFunction(
-  initializer: Node
+  initializer: Node,
 ): initializer is ArrowFunction | FunctionDeclaration | FunctionExpression {
   return (
     Node.isArrowFunction(initializer) ||
@@ -616,7 +616,7 @@ function isFunction(
 }
 
 function getIOStructure(
-  initializer: Node
+  initializer: Node,
 ): Omit<OptionalKind<PropertyDeclarationStructure>, 'name'> | null {
   const callableExpression =
     (Node.isCallExpression(initializer) || Node.isNewExpression(initializer)) &&
@@ -657,7 +657,7 @@ function toClassName(str: string) {
 function toPropertyName(str: string) {
   return str
     .replace(/([^a-zA-Z0-9])+(.)?/g, (_, __, chr) =>
-      chr ? chr.toUpperCase() : ''
+      chr ? chr.toUpperCase() : '',
     )
     .replace(/[^a-zA-Z\d]/g, '')
     .replace(/^([A-Z])/, (m) => m.toLowerCase())

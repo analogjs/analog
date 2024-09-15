@@ -26,7 +26,7 @@ function HomepageHeader() {
           <Link
             className={clsx(
               'button button--secondary button--lg',
-              styles.readDocsButton
+              styles.readDocsButton,
             )}
             to="/docs"
           >
@@ -104,7 +104,7 @@ function SponsorSection() {
           <Link
             className={clsx(
               'button button--secondary button--lg',
-              styles.sponsorButton
+              styles.sponsorButton,
             )}
             href="https://github.com/sponsors/brandonroberts"
           >

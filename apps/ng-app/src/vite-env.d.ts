@@ -29,7 +29,7 @@ declare global {
         | 'styles'
         | 'outputs'
         | 'inputs'
-      >
+      >,
     ) => void;
 
     /**

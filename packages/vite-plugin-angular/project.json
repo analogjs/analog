@@ -7,7 +7,6 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-
       "options": {
         "outputPath": "node_modules/@analogjs/vite-plugin-angular",
         "main": "packages/vite-plugin-angular/src/index.ts",

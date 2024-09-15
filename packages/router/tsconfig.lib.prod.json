@@ -4,8 +4,5 @@
     "declarationMap": false,
     "target": "ES2022",
     "useDefineForClassFields": false
-  },
-  "angularCompilerOptions": {
-    "compilationMode": "partial"
   }
 }

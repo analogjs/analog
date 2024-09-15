@@ -2,7 +2,7 @@ import { VERSION } from '@angular/compiler-cli';
 import { Plugin } from 'vite';
 import { crawlFrameworkPkgs } from 'vitefu';
 
-import { Options } from './options.js';
+import { Options } from './options';
 
 export function depsPlugin(options?: Options): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();

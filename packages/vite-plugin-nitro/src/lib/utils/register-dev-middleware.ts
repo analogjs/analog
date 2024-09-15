@@ -4,7 +4,7 @@ import fg from 'fast-glob';
 
 export async function registerDevServerMiddleware(
   root: string,
-  viteServer: ViteDevServer
+  viteServer: ViteDevServer,
 ) {
   const middlewareFiles = fg.sync([`${root}/src/server/middleware/**/*.ts`]);
 

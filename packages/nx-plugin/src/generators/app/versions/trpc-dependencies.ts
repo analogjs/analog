@@ -44,14 +44,14 @@ const tRPCDependencyKeys = [
 export type TrpcDependency = (typeof tRPCDependencyKeys)[number];
 
 export const getTrpcDependencies = (
-  nxVersion: string
+  nxVersion: string,
 ): Record<TrpcDependency, string> => {
   const escapedNxVersion = clean(nxVersion);
 
   // fail out for versions <15.2.0
   if (lt(escapedNxVersion, '15.2.0')) {
     throw new Error(
-      stripIndents`Nx v15.2.0 or newer is required to install Analog`
+      stripIndents`Nx v15.2.0 or newer is required to install Analog`,
     );
   }
 

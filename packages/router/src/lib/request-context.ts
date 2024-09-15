@@ -22,7 +22,7 @@ import { injectBaseURL } from '@analogjs/router/tokens';
  */
 export function requestContextInterceptor(
   req: HttpRequest<unknown>,
-  next: HttpHandlerFn
+  next: HttpHandlerFn,
 ) {
   const baseUrl = injectBaseURL();
   const transferState = inject(TransferState);
@@ -67,7 +67,7 @@ export function requestContextInterceptor(
 
           transferState.set(storeKey, cacheResponse);
           return transferResponse;
-        })
+        }),
     );
   }
 
@@ -83,7 +83,7 @@ export function requestContextInterceptor(
     return next(
       req.clone({
         url: `${window.location.origin}${req.url}`,
-      })
+      }),
     );
   }
 
@@ -97,7 +97,7 @@ export function requestContextInterceptor(
     return next(
       req.clone({
         url: requestUrl,
-      })
+      }),
     );
   }
 

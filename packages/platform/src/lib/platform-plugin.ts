@@ -1,4 +1,4 @@
-import { Plugin } from 'vite';
+import type { Plugin } from 'vite';
 import viteNitroPlugin from '@analogjs/vite-plugin-nitro';
 import angular from '@analogjs/vite-plugin-angular';
 
@@ -39,7 +39,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
       include: [
         ...(platformOptions.include ?? []),
         ...(platformOptions.additionalPagesDirs ?? []).map(
-          (pageDir) => `${pageDir}/**/*.page.ts`
+          (pageDir) => `${pageDir}/**/*.page.ts`,
         ),
       ],
       additionalContentDirs: platformOptions.additionalContentDirs,

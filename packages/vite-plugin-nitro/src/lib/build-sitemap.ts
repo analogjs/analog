@@ -14,7 +14,7 @@ export async function buildSitemap(
   config: UserConfig,
   sitemapConfig: SitemapConfig,
   routes: (string | undefined)[] | (() => Promise<(string | undefined)[]>),
-  outputDir: string
+  outputDir: string,
 ) {
   const routeList: string[] = await optionHasRoutes(routes);
 
@@ -57,7 +57,7 @@ function checkSlash(host: string): string {
 }
 
 async function optionHasRoutes(
-  routes: (string | undefined)[] | (() => Promise<(string | undefined)[]>)
+  routes: (string | undefined)[] | (() => Promise<(string | undefined)[]>),
 ): Promise<string[]> {
   let routeList: (string | undefined)[];
 

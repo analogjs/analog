@@ -1,27 +1,23 @@
 /// <reference types="vitest" />
-
 import { defineConfig } from 'vite';
 
-// https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
-  return {
-    root: __dirname,
-    esbuild: false,
-    resolve: {
-      mainFields: ['module'],
+import viteTsConfigPaths from 'vite-tsconfig-paths';
+
+export default defineConfig(() => ({
+  root: __dirname,
+  cacheDir: '../../node_modules/.vite/astro-angular',
+  plugins: [
+    viteTsConfigPaths({
+      root: '../../',
+      projects: [],
+    }),
+  ],
+  test: {
+    reporters: ['default'],
+    globals: true,
+    cache: {
+      dir: '../../node_modules/.vitest',
     },
-    test: {
-      reporters: ['default'],
-      passWithNoTests: true,
-      globals: true,
-      setupFiles: ['src/test-setup.ts'],
-      include: ['**/*.spec.ts'],
-      cache: {
-        dir: `../../node_modules/.vitest`,
-      },
-    },
-    define: {
-      'import.meta.vitest': mode !== 'production',
-    },
-  };
-});
+    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+  },
+}));

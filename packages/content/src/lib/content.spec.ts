@@ -130,7 +130,7 @@ Test Content`),
       expect(c.content).toMatch('Test Content');
       expect(c.attributes).toEqual({ slug: 'custom-prefix-slug-test' });
       expect(c.filename).toEqual(
-        '/src/content/customPrefix/custom-prefix-slug-test'
+        '/src/content/customPrefix/custom-prefix-slug-test',
       );
       expect(c.slug).toEqual('custom-prefix-slug-test');
     });
@@ -275,7 +275,7 @@ Test Content`),
         string,
         () => Promise<string | { default: any; metadata: any }>
       >;
-    }>
+    }>,
   ) {
     TestBed.configureTestingModule({
       providers: [
@@ -284,7 +284,7 @@ Test Content`),
           provide: ActivatedRoute,
           useValue: {
             paramMap: of(
-              convertToParamMap(args.routeParams ?? { slug: 'test' })
+              convertToParamMap(args.routeParams ?? { slug: 'test' }),
             ),
           },
         },
@@ -298,7 +298,7 @@ Test Content`),
         ContentFile<TestAttributes | Record<string, never>>
       > =>
         TestBed.runInInjectionContext(() =>
-          injectContent<TestAttributes>(args.customParam, args.customFallback)
+          injectContent<TestAttributes>(args.customParam, args.customFallback),
         ),
     };
   }

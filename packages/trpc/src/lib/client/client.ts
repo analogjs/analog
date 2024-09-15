@@ -26,12 +26,12 @@ export type TrpcClient<AppRouter extends AnyRouter> = ReturnType<
   typeof createTRPCRxJSProxyClient<AppRouter>
 >;
 const tRPC_INJECTION_TOKEN = new InjectionToken<unknown>(
-  '@analogjs/trpc proxy client'
+  '@analogjs/trpc proxy client',
 );
 
 function customFetch(
   input: RequestInfo | URL,
-  init?: RequestInit & { method: 'GET' }
+  init?: RequestInit & { method: 'GET' },
 ) {
   if ((globalThis as any).$fetch) {
     return (globalThis as any).$fetch

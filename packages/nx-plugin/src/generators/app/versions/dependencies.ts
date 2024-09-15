@@ -66,14 +66,14 @@ export type ExtendedDependenciesRecord = AnalogDependency15Record &
 
 export const getAnalogDependencies = (
   nxVersion: string,
-  angularVersion: string
+  angularVersion: string,
 ): ExtendedDependenciesRecord => {
   const escapedNxVersion = nxVersion.replace(/[~^]/, '');
 
   // fail out for versions <15.2.0
   if (lt(escapedNxVersion, '15.2.0')) {
     throw new Error(
-      stripIndents`Nx v15.2.0 or newer is required to install Analog`
+      stripIndents`Nx v15.2.0 or newer is required to install Analog`,
     );
   }
 

@@ -3,6 +3,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatCardHarness } from '@angular/material/card/testing';
+import { MatCardModule } from '@angular/material/card';
 
 import { CardComponent } from './card.component';
 
@@ -11,17 +12,17 @@ describe('CardComponent', () => {
   let fixture: ComponentFixture<CardComponent>;
   let component: CardComponent;
 
-  beforeEach(() =>
-    TestBed.configureTestingModule({
-      imports: [CardComponent],
-    })
-  );
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [CardComponent, MatCardModule], // Correctly import CardComponent
+    }).compileComponents();
 
-  beforeEach(() => {
     fixture = TestBed.createComponent(CardComponent);
     component = fixture.componentInstance;
     loader = TestbedHarnessEnvironment.loader(fixture);
     fixture.detectChanges();
+    await fixture.whenStable(); // Ensure async operations complete
+    console.log(component); // Log the component to check initialization
   });
 
   it('should show a card once we click on the button', async () => {
@@ -31,6 +32,7 @@ describe('CardComponent', () => {
     expect(card).toBeNull();
 
     await button.click();
+    fixture.detectChanges(); // Trigger change detection after the button click
 
     const cardAfterClick = await loader.getHarnessOrNull(MatCardHarness);
     expect(cardAfterClick).not.toBeNull();
@@ -44,7 +46,7 @@ describe('CardComponent', () => {
     expect(component.title).toEqual('card-works');
   });
 
-  it('should create the app', () => {
+  it('should match the snapshot', () => {
     expect(fixture).toMatchSnapshot();
   });
 

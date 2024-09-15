@@ -5,20 +5,20 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 
-import { ContentFile } from './content-file';
+import type { ContentFile } from './content-file';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
 import { parseRawContentFile } from './parse-raw-content-file';
 import { waitFor } from './utils/zone-wait-for';
 import { RenderTaskService } from './render-task.service';
 
 function getContentFile<
-  Attributes extends Record<string, any> = Record<string, any>
+  Attributes extends Record<string, any> = Record<string, any>,
 >(
   contentFiles: Record<string, () => Promise<string>>,
   prefix: string,
   slug: string,
   fallback: string,
-  renderTaskService: RenderTaskService
+  renderTaskService: RenderTaskService,
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   const filePath = `/src/content/${prefix}${slug}`;
   const contentFile =
@@ -50,7 +50,7 @@ function getContentFile<
           observer.complete();
         });
       }
-    }
+    },
   ).pipe(
     map((contentFile) => {
       if (typeof contentFile === 'string') {
@@ -70,7 +70,7 @@ function getContentFile<
         attributes: contentFile.metadata,
         content: contentFile.default,
       };
-    })
+    }),
   );
 }
 
@@ -81,7 +81,7 @@ function getContentFile<
  * @param fallback fallback text if content file is not found (default: 'No Content Found')
  */
 export function injectContent<
-  Attributes extends Record<string, any> = Record<string, any>
+  Attributes extends Record<string, any> = Record<string, any>,
 >(
   param:
     | string
@@ -92,7 +92,7 @@ export function injectContent<
     | {
         customFilename: string;
       } = 'slug',
-  fallback = 'No Content Found'
+  fallback = 'No Content Found',
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   const contentFiles = inject(CONTENT_FILES_TOKEN);
   const renderTaskService = inject(RenderTaskService);
@@ -111,7 +111,7 @@ export function injectContent<
             prefix,
             slug,
             fallback,
-            renderTaskService
+            renderTaskService,
           );
         }
         return of({
@@ -121,15 +121,14 @@ export function injectContent<
           content: fallback,
         });
       }),
-      tap(() => renderTaskService.clearRenderTask(task))
+      tap(() => renderTaskService.clearRenderTask(task)),
     );
-  } else {
-    return getContentFile<Attributes>(
-      contentFiles,
-      '',
-      param.customFilename,
-      fallback,
-      renderTaskService
-    ).pipe(tap(() => renderTaskService.clearRenderTask(task)));
   }
+  return getContentFile<Attributes>(
+    contentFiles,
+    '',
+    param.customFilename,
+    fallback,
+    renderTaskService,
+  ).pipe(tap(() => renderTaskService.clearRenderTask(task)));
 }

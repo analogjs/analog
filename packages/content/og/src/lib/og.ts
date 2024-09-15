@@ -4,11 +4,11 @@ import satori from 'satori';
 import { html as toReactElement } from 'satori-html';
 import sharp from 'sharp';
 
-import { ImageResponseOptions } from './options.js';
+import type { ImageResponseOptions } from './options';
 
 export const generateImage = async (
   element: string,
-  options: ImageResponseOptions
+  options: ImageResponseOptions,
 ) => {
   const elementHtml = toReactElement(element);
   const svg = await satori(elementHtml as any, {
@@ -37,7 +37,8 @@ export class ImageResponse extends Response {
       },
     });
 
-    return new Response(body, {
+    // Remove the return statement
+    new Response(body, {
       headers: {
         'Content-Type': 'image/png',
         'Cache-Control': options.debug

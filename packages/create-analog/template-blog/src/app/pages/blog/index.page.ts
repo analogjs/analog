@@ -9,11 +9,11 @@ import { RouterLink } from '@angular/router';
   imports: [RouterLink],
   template: `
     <h1>Blog Archive</h1>
-    @for (post of posts;track post.attributes.slug) {
-    <a [routerLink]="['/blog/', post.attributes.slug]">
-      <h2 class="post__title">{{ post.attributes.title }}</h2>
-      <p class="post__desc">{{ post.attributes.description }}</p>
-    </a>
+    @for (post of posts; track post.attributes.slug) {
+      <a [routerLink]="['/blog/', post.attributes.slug]">
+        <h2 class="post__title">{{ post.attributes.title }}</h2>
+        <p class="post__desc">{{ post.attributes.description }}</p>
+      </a>
     }
   `,
   styles: [

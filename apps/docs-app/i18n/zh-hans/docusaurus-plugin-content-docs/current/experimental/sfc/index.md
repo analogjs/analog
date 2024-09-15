@@ -216,10 +216,7 @@ bootstrapApplication(App, appConfig).catch((err) => console.error(err));
 </script>
 
 <template>
-  <LayoutHeader
-    [isAuthenticated]="authStore.isAuthenticated()"
-    [username]="authStore.username()"
-  />
+  <LayoutHeader [isAuthenticated]="authStore.isAuthenticated()" [username]="authStore.username()" />
   <router-outlet />
   <LayoutFooter />
 </template>
@@ -449,7 +446,7 @@ slug: 'hello'
 <script lang="ts">
   // posts.[slug].page.analog
   import { injectContent } from '@analogjs/content';
-  import { MarkdownComponent } from '@analogjs/content' with { analog: 'imports' }
+  import { MarkdownComponent } from '@analogjs/content' with { analog: 'imports' };
   import { toSignal } from '@angular/core/rxjs-interop';
 
   import { PostAttributes } from './models';

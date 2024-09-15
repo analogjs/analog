@@ -30,7 +30,7 @@ const ANALOG_ASTRO_STATIC_PROPS = new InjectionToken<{
 function check(
   Component: ComponentType<unknown>,
   _props: Record<string, unknown>,
-  _children: unknown
+  _children: unknown,
 ) {
   return !!reflectComponentType(Component);
 }
@@ -47,7 +47,7 @@ const STATIC_PROPS_HOOK_PROVIDER: Provider = {
     }: {
       props: Record<string, unknown>;
       mirror: ComponentMirror<unknown>;
-    }
+    },
   ) => {
     return () => {
       const compRef = appRef.components[0];
@@ -59,7 +59,7 @@ const STATIC_PROPS_HOOK_PROVIDER: Provider = {
             // that aren't actually Input defined on the Component
             mirror.inputs.some(
               ({ templateName, propName }) =>
-                templateName === key || propName === key
+                templateName === key || propName === key,
             )
           ) {
             compRef.setInput(key, value);
@@ -78,7 +78,7 @@ async function renderToStaticMarkup(
     renderProviders: (Provider | EnvironmentProviders)[];
   },
   props: Record<string, unknown>,
-  _children: unknown
+  _children: unknown,
 ) {
   const mirror = reflectComponentType(Component);
   const appId =

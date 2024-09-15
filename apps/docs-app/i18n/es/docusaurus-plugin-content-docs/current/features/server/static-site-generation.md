@@ -15,12 +15,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     analog({
       prerender: {
-        routes: async () => [
-          '/',
-          '/about',
-          '/blog',
-          '/blog/posts/2023-02-01-my-first-post',
-        ],
+        routes: async () => ['/', '/about', '/blog', '/blog/posts/2023-02-01-my-first-post'],
       },
     }),
   ],
@@ -39,12 +34,7 @@ export default defineConfig(({ mode }) => ({
     analog({
       static: true,
       prerender: {
-        routes: async () => [
-          '/',
-          '/about',
-          '/blog',
-          '/blog/posts/2023-02-01-my-first-post',
-        ],
+        routes: async () => ['/', '/about', '/blog', '/blog/posts/2023-02-01-my-first-post'],
       },
     }),
   ],

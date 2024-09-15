@@ -33,30 +33,30 @@ describe.skip('AstroApp', () => {
   describe('Given the user has navigated to the home page', () => {
     test('Then client side rendered CardComponent is rendered', async () => {
       const componentLocator = page.locator(
-        'astro-island[component-export="CardComponent"]'
+        'astro-island[component-export="CardComponent"]',
       );
       await expect(
-        componentLocator.locator('>> text=Angular (Client Side)')
+        componentLocator.locator('>> text=Angular (Client Side)'),
       ).toContain(/Angular \(Client Side\)/i);
     });
 
     test('Then server side rendered CardComponent is rendered', async () => {
       const componentLocator = page.locator('astro-card');
       await expect(
-        componentLocator.locator('>> text=Angular (server side binding)')
+        componentLocator.locator('>> text=Angular (server side binding)'),
       ).toContain(/Angular \(server side binding\)/i);
     });
 
     test.skip('Then client side rendered CardComponent should emit an event on click', async () => {
       const console = waitForConsole();
       const componentLocator = page.locator(
-        '[data-analog-id=card-component-1]'
+        '[data-analog-id=card-component-1]',
       );
       const elementLocator = componentLocator.locator('li');
       await elementLocator.click();
 
       await expect(await console).toBe(
-        'event received from card-component-1: clicked'
+        'event received from card-component-1: clicked',
       );
     });
   });
@@ -68,7 +68,7 @@ describe.skip('AstroApp', () => {
     it('Then an Angular component should be rendered', async () => {
       const componentLocator = page.locator('astro-card');
       await expect(componentLocator.locator('>> text=Angular')).toContain(
-        /Angular/
+        /Angular/,
       );
     });
   });

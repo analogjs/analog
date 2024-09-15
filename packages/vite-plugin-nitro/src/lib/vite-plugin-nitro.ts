@@ -61,7 +61,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         const apiMiddlewareHandler =
           filePrefix +
           normalizePath(
-            join(__dirname, `runtime/api-middleware${filePrefix ? '.mjs' : ''}`)
+            join(
+              __dirname,
+              `runtime/api-middleware${filePrefix ? '.mjs' : ''}`,
+            ),
           );
         const ssrEntry = normalizePath(
           filePrefix +
@@ -69,8 +72,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               workspaceRoot,
               'dist',
               rootDir,
-              `ssr/main.server${filePrefix ? '.js' : ''}`
-            )
+              `ssr/main.server${filePrefix ? '.js' : ''}`,
+            ),
         );
         const rendererEntry =
           filePrefix +
@@ -79,8 +82,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               __dirname,
               `runtime/renderer${!options?.ssr ? '-client' : ''}${
                 filePrefix ? '.mjs' : ''
-              }`
-            )
+              }`,
+            ),
           );
 
         nitroConfig = {
@@ -91,19 +94,19 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           scanDirs: [
             normalizePath(`${rootDir}/src/server`),
             ...(options?.additionalAPIDirs || []).map((dir) =>
-              normalizePath(`${workspaceRoot}${dir}`)
+              normalizePath(`${workspaceRoot}${dir}`),
             ),
           ],
           output: {
             dir: normalizePath(
-              resolve(workspaceRoot, 'dist', rootDir, 'analog')
+              resolve(workspaceRoot, 'dist', rootDir, 'analog'),
             ),
             publicDir: normalizePath(
-              resolve(workspaceRoot, 'dist', rootDir, 'analog/public')
+              resolve(workspaceRoot, 'dist', rootDir, 'analog/public'),
             ),
           },
           buildDir: normalizePath(
-            resolve(workspaceRoot, 'dist', rootDir, '.nitro')
+            resolve(workspaceRoot, 'dist', rootDir, '.nitro'),
           ),
           typescript: {
             generateTsConfig: false,
@@ -141,12 +144,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           clientOutputPath = resolve(
             workspaceRoot,
             rootDir,
-            config.build?.outDir || 'dist/client'
+            config.build?.outDir || 'dist/client',
           );
         }
 
         const indexEntry = normalizePath(
-          resolve(clientOutputPath, 'index.html')
+          resolve(clientOutputPath, 'index.html'),
         );
 
         nitroConfig.alias = {
@@ -197,7 +200,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   getMatchingContentFilesWithFrontMatter(
                     workspaceRoot,
                     rootDir,
-                    current.contentDir
+                    current.contentDir,
                   );
 
                 affectedFiles.forEach((f) => {
@@ -209,7 +212,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
                 return prev;
               },
-              []
+              [],
             );
           }
 
@@ -217,7 +220,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             if (isWindows) {
               const indexContents = readFileSync(
                 normalizePath(join(clientOutputPath, 'index.html')),
-                'utf-8'
+                'utf-8',
               );
 
               // Write out the renderer manually because
@@ -244,7 +247,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 });
                 return html;
               });                    
-              `
+              `,
               );
             }
 
@@ -267,7 +270,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         nitroConfig = mergeConfig(
           nitroConfig,
-          nitroOptions as Record<string, any>
+          nitroOptions as Record<string, any>,
         );
       },
       async configureServer(viteServer: ViteDevServer) {
@@ -280,7 +283,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           await build(nitro);
           viteServer.middlewares.use(
             apiPrefix,
-            toNodeListener(server.app as unknown as App)
+            toNodeListener(server.app as unknown as App),
           );
 
           viteServer.httpServer?.once('listening', () => {
@@ -291,7 +294,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           });
 
           console.log(
-            `\n\nThe server endpoints are accessible under the "${apiPrefix}" path.`
+            `\n\nThe server endpoints are accessible under the "${apiPrefix}" path.`,
           );
         }
       },
@@ -317,14 +320,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               config,
               options.prerender.sitemap,
               nitroConfig.prerender.routes,
-              clientOutputPath
+              clientOutputPath,
             );
           }
 
           await buildServer(options, nitroConfig);
 
           console.log(
-            `\n\nThe '@analogjs/platform' server has been successfully built.`
+            `\n\nThe '@analogjs/platform' server has been successfully built.`,
           );
         }
       },
@@ -349,14 +352,14 @@ const isVercelPreset = (buildPreset: string | undefined) =>
 
 const withVercelOutputAPI = (
   nitroConfig: NitroConfig | undefined,
-  workspaceRoot: string
+  workspaceRoot: string,
 ) => ({
   ...nitroConfig,
   output: {
     ...nitroConfig?.output,
     dir: normalizePath(resolve(workspaceRoot, '.vercel', 'output')),
     publicDir: normalizePath(
-      resolve(workspaceRoot, '.vercel', 'output/static')
+      resolve(workspaceRoot, '.vercel', 'output/static'),
     ),
   },
 });

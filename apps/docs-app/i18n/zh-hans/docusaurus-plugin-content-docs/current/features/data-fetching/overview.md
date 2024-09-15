@@ -35,11 +35,7 @@ export function bootstrap() {
   return bootstrapApplication(AppComponent, config);
 }
 
-export default async function render(
-  url: string,
-  document: string,
-  serverContext: ServerContext
-) {
+export default async function render(url: string, document: string, serverContext: ServerContext) {
   const html = await renderApplication(bootstrap, {
     document,
     url,
@@ -56,11 +52,7 @@ export default async function render(
 
 ```ts
 import { inject } from '@angular/core';
-import {
-  injectRequest,
-  injectResponse,
-  injectBaseURL,
-} from '@analogjs/router/tokens';
+import { injectRequest, injectResponse, injectBaseURL } from '@analogjs/router/tokens';
 
 class MyService {
   request = injectRequest(); // <- Server Request Object
@@ -76,25 +68,14 @@ Analog 同样为 HttpClient 提供了 `requestContextInterceptor` 以在服务�
 在 `@angular/common/http` 软件包的 `withInterceptors` 函数中使用。
 
 ```ts
-import {
-  provideHttpClient,
-  withFetch,
-  withInterceptors,
-} from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig } from '@angular/core';
 import { provideClientHydration } from '@angular/platform-browser';
 import { provideFileRouter, requestContextInterceptor } from '@analogjs/router';
 import { withNavigationErrorHandler } from '@angular/router';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideFileRouter(withNavigationErrorHandler(console.error)),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([requestContextInterceptor])
-    ),
-    provideClientHydration(),
-  ],
+  providers: [provideFileRouter(withNavigationErrorHandler(console.error)), provideHttpClient(withFetch(), withInterceptors([requestContextInterceptor])), provideClientHydration()],
 };
 ```
 

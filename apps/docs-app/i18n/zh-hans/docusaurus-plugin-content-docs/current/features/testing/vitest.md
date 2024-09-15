@@ -109,16 +109,10 @@ export default defineConfig(({ mode }) => ({
 ```ts
 import '@analogjs/vitest-angular/setup-zone';
 
-import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
 import { getTestBed } from '@angular/core/testing';
 
-getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
-);
+getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
 ```
 
 然后，更新 `angular.json` 里的 `test` 目标，使用 `@analogjs/vitest-angular:test` 构建器：
@@ -280,7 +274,7 @@ describe('CardComponent', () => {
   beforeEach(() =>
     TestBed.configureTestingModule({
       imports: [CardComponent],
-    })
+    }),
   );
 
   beforeEach(() => {

@@ -2,7 +2,7 @@ import { normalizePath, Plugin, UserConfig } from 'vite';
 import fg from 'fast-glob';
 import { resolve } from 'node:path';
 
-import { Options } from './options.js';
+import { Options } from './options';
 
 /**
  * This plugin invalidates the files for routes when new files
@@ -70,10 +70,10 @@ export function routerPlugin(options?: Options): Plugin[] {
               `${root}/src/app/pages/**/*.page.analog`,
               `${root}/src/app/pages/**/*.page.ag`,
               ...(options?.additionalPagesDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.page.{ts,analog,ag}`
+                (glob) => `${workspaceRoot}${glob}/**/*.page.{ts,analog,ag}`,
               ),
             ],
-            { dot: true }
+            { dot: true },
           );
 
           const contentRouteFiles: string[] = fg.sync(
@@ -82,10 +82,10 @@ export function routerPlugin(options?: Options): Plugin[] {
               `${root}/src/app/pages/**/*.md`,
               `${root}/src/content/**/*.md`,
               ...(options?.additionalContentDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`
+                (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`,
               ),
             ],
-            { dot: true }
+            { dot: true },
           );
 
           let result = code.replace(
@@ -93,9 +93,9 @@ export function routerPlugin(options?: Options): Plugin[] {
             `
             let ANALOG_ROUTE_FILES = {${routeFiles.map(
               (module) =>
-                `"${module.replace(root, '')}": () => import('${module}')`
+                `"${module.replace(root, '')}": () => import('${module}')`,
             )}};
-          `
+          `,
           );
 
           result = result.replace(
@@ -105,10 +105,10 @@ export function routerPlugin(options?: Options): Plugin[] {
             (module) =>
               `"${module.replace(
                 root,
-                ''
-              )}": () => import('${module}?analog-content-file=true').then(m => m.default)`
+                '',
+              )}": () => import('${module}?analog-content-file=true').then(m => m.default)`,
           )}};
-          `
+          `,
           );
 
           return {
@@ -128,10 +128,10 @@ export function routerPlugin(options?: Options): Plugin[] {
             [
               `${root}/src/app/pages/**/*.server.ts`,
               ...(options?.additionalPagesDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.server.ts`
+                (glob) => `${workspaceRoot}${glob}/**/*.server.ts`,
               ),
             ],
-            { dot: true }
+            { dot: true },
           );
 
           const result = code.replace(
@@ -139,9 +139,9 @@ export function routerPlugin(options?: Options): Plugin[] {
             `
             let ANALOG_PAGE_ENDPOINTS = {${endpointFiles.map(
               (module) =>
-                `"${module.replace(root, '')}": () => import('${module}')`
+                `"${module.replace(root, '')}": () => import('${module}')`,
             )}};
-          `
+          `,
           );
 
           return {

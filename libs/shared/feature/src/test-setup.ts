@@ -11,5 +11,5 @@ import {
 
 TestBed.initTestEnvironment(
   BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
+  platformBrowserDynamicTesting(),
 );

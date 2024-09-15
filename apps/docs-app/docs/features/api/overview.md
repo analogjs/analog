@@ -82,9 +82,7 @@ Dynamic API routes are defined by using the filename as the route path enclosed 
 // /server/routes/v1/hello/[name].ts
 import { defineEventHandler } from 'h3';
 
-export default defineEventHandler(
-  (event) => `Hello ${event.context.params?.['name']}!`
-);
+export default defineEventHandler((event) => `Hello ${event.context.params?.['name']}!`);
 ```
 
 Another way to access route parameters is by using the `getRouterParam` function.

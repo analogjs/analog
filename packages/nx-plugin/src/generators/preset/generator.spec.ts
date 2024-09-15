@@ -10,7 +10,7 @@ import { AnalogNxApplicationGeneratorOptions } from '../app/schema';
 describe('preset generator', () => {
   const setup = async (
     options: AnalogNxApplicationGeneratorOptions,
-    nxVersion = '17.0.0'
+    nxVersion = '17.0.0',
   ) => {
     const tree = createTreeWithEmptyWorkspace({ layout: 'apps-libs' });
     addDependenciesToPackageJson(tree, { nx: nxVersion }, {});

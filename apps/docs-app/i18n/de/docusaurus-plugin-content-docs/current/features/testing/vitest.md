@@ -105,16 +105,10 @@ Als nächstes wird eine Datei `src/test-setup.ts` definiert, um das `TestBed` ei
 ```ts
 import '@analogjs/vitest-angular/setup-zone';
 
-import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
 import { getTestBed } from '@angular/core/testing';
 
-getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
-);
+getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
 ```
 
 Als Nächstes aktualisiere das Ziel `test` in der Datei `angular.json`, um den Builder `@analogjs/vitest-angular:test` zu verwenden:
@@ -276,7 +270,7 @@ describe('CardComponent', () => {
   beforeEach(() =>
     TestBed.configureTestingModule({
       imports: [CardComponent],
-    })
+    }),
   );
 
   beforeEach(() => {

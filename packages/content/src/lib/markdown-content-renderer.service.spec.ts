@@ -53,14 +53,14 @@ Lorem ipsum 2....
     let result = await service.render(testCode);
 
     expect(result).toContain(
-      '<pre class="language-javascript"><code class="language-javascript">'
+      '<pre class="language-javascript"><code class="language-javascript">',
     );
 
     testCode = "```typescript\nconsole.log('Hello, world!');\n```";
     result = await service.render(testCode);
 
     expect(result).toContain(
-      '<pre class="language-typescript"><code class="language-typescript">'
+      '<pre class="language-typescript"><code class="language-typescript">',
     );
   });
 });

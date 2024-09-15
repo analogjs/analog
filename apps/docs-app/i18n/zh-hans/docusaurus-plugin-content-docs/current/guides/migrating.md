@@ -58,7 +58,7 @@ npx nx generate @analogjs/platform:init --project [your-project-name]
 如果在你的 `angular.json` 里有全局的脚本或者样式文件，把他们移动到 `index.html` 里的 `head` 里。
 
 ```html
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />

@@ -12,7 +12,7 @@ export function addHomePage(tree: Tree, options: NormalizedOptions) {
     tree,
     join(__dirname, '..', 'files', 'index-page'),
     options.projectRoot,
-    templateOptions
+    templateOptions,
   );
 
   let pageDirectory = options.addTailwind ? 'tailwind' : 'css';
@@ -24,6 +24,6 @@ export function addHomePage(tree: Tree, options: NormalizedOptions) {
     tree,
     join(__dirname, '..', 'files', 'welcome-components', pageDirectory),
     options.projectRoot,
-    templateOptions
+    templateOptions,
   );
 }

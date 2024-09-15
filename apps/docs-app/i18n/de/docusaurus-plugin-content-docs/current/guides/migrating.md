@@ -54,7 +54,7 @@ npx nx generate @analogjs/platform:init --project [your-project-name]
 Wenn globale Skripte oder Stile in der `angular.json` konfiguriert sind, verschiebe diese in den `head`-Tag in der `index.html`.
 
 ```html
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />

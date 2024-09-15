@@ -87,16 +87,10 @@ Next, define a `src/test-setup.ts` file to setup the `TestBed`:
 ```ts
 import '@analogjs/vitest-angular/setup-zone';
 
-import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
 import { getTestBed } from '@angular/core/testing';
 
-getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
-);
+getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
 ```
 
 If you are using `Zoneless` change detection, only import the `setup-snapshots` script.
@@ -104,16 +98,10 @@ If you are using `Zoneless` change detection, only import the `setup-snapshots` 
 ```ts
 import '@analogjs/vitest-angular/setup-snapshots';
 
-import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
 import { getTestBed } from '@angular/core/testing';
 
-getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
-);
+getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
 ```
 
 Next, update the `test` target in the `angular.json` to use the `@analogjs/vitest-angular:test` builder:
@@ -188,7 +176,7 @@ describe('CardComponent', () => {
   beforeEach(() =>
     TestBed.configureTestingModule({
       imports: [CardComponent],
-    })
+    }),
   );
 
   beforeEach(() => {

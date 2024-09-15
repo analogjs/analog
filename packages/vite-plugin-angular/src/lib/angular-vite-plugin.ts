@@ -148,7 +148,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let viteServer: ViteDevServer | undefined;
   let styleTransform: (
     code: string,
-    filename: string
+    filename: string,
   ) => ReturnType<typeof preprocessCSS> | undefined;
 
   const styleUrlsResolver = new StyleUrlsResolver();
@@ -166,7 +166,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             config.root || '.',
             process.env['NODE_ENV'] === 'test'
               ? './tsconfig.spec.json'
-              : './tsconfig.app.json'
+              : './tsconfig.app.json',
           );
 
         return {
@@ -185,7 +185,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                     incremental: watchMode,
                   },
                   isTest,
-                  !isAstroIntegration
+                  !isAstroIntegration,
                 ),
               ],
               define: {
@@ -238,7 +238,7 @@ export function angular(options?: PluginOptions): Plugin[] {
            * for an external resource (styles, html).
            */
           const isDirect = ctx.modules.find(
-            (mod) => ctx.file === mod.file && mod.id?.includes('?direct')
+            (mod) => ctx.file === mod.file && mod.id?.includes('?direct'),
           );
 
           if (isDirect) {
@@ -346,7 +346,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (jit && data.includes('angular:jit:')) {
             data = data.replace(
               /angular:jit:style:inline;/g,
-              'virtual:angular:jit:style:inline;'
+              'virtual:angular:jit:style:inline;',
             );
 
             templateUrls.forEach((templateUrlSet) => {
@@ -354,7 +354,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                 templateUrlSet.split('|');
               data = data.replace(
                 `angular:jit:template:file;${templateFile}`,
-                `${resolvedTemplateUrl}?raw`
+                `${resolvedTemplateUrl}?raw`,
               );
             });
 
@@ -362,7 +362,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               const [styleFile, resolvedStyleUrl] = styleUrlSet.split('|');
               data = data.replace(
                 `angular:jit:style:file;${styleFile}`,
-                `${resolvedStyleUrl}?inline`
+                `${resolvedStyleUrl}?inline`,
               );
             });
           }
@@ -433,7 +433,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     const fg = require('fast-glob');
     const appRoot = normalizePath(
-      resolve(pluginOptions.workspaceRoot, config.root || '.')
+      resolve(pluginOptions.workspaceRoot, config.root || '.'),
     );
     const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));
 
@@ -441,10 +441,10 @@ export function angular(options?: PluginOptions): Plugin[] {
       `${appRoot}/**/*.{analog,agx,ag}`,
       ...extraGlobs.map((glob) => `${workspaceRoot}${glob}.{analog,agx,ag}`),
       ...(pluginOptions.additionalContentDirs || [])?.map(
-        (glob) => `${workspaceRoot}${glob}/**/*.agx`
+        (glob) => `${workspaceRoot}${glob}/**/*.agx`,
       ),
       ...pluginOptions.include.map((glob) =>
-        `${workspaceRoot}${glob}`.replace(/\.ts$/, '.analog')
+        `${workspaceRoot}${glob}`.replace(/\.ts$/, '.analog'),
       ),
     ];
 
@@ -534,7 +534,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         rootNames,
         compilerOptions,
         host as CompilerHost,
-        nextProgram as any
+        nextProgram as any,
       );
       angularCompiler = angularProgram.compiler;
       typeScriptProgram = angularProgram.getTsProgram();
@@ -544,7 +544,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         ts.createEmitAndSemanticDiagnosticsBuilderProgram(
           typeScriptProgram,
           host,
-          builderProgram
+          builderProgram,
         );
 
       await angularCompiler.analyzeAsync();
@@ -556,7 +556,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           rootNames,
           compilerOptions,
           host,
-          nextProgram as any
+          nextProgram as any,
         );
 
       typeScriptProgram = builder.getProgram();
@@ -578,7 +578,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             ...(jit
               ? [
                   compilerCli.constructorParametersDownlevelTransform(
-                    builder.getProgram()
+                    builder.getProgram(),
                   ),
                   createJitResourceTransformer(getTypeChecker),
                 ]
@@ -589,10 +589,10 @@ export function angular(options?: PluginOptions): Plugin[] {
           afterDeclarations:
             pluginOptions.advanced.tsTransformers.afterDeclarations,
         },
-        jit ? {} : angularCompiler!.prepareEmit().transformers
+        jit ? {} : angularCompiler!.prepareEmit().transformers,
       ),
       () => [],
-      angularCompiler!
+      angularCompiler!,
     );
   }
 }
@@ -601,7 +601,7 @@ export function createFileEmitter(
   program: ts.BuilderProgram,
   transformers: ts.CustomTransformers = {},
   onAfterEmit?: (sourceFile: ts.SourceFile) => void,
-  angularCompiler?: NgtscProgram['compiler']
+  angularCompiler?: NgtscProgram['compiler'],
 ): FileEmitter {
   return async (file: string) => {
     const sourceFile = program.getSourceFile(file);
@@ -631,7 +631,7 @@ export function createFileEmitter(
       },
       undefined /* cancellationToken */,
       undefined /* emitOnlyDtsFiles */,
-      transformers
+      transformers,
     );
 
     onAfterEmit?.(sourceFile);

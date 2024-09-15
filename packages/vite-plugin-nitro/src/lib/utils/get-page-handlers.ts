@@ -21,10 +21,10 @@ export function getPageHandlers({
     [
       `${root}/src/app/pages/**/*.server.ts`,
       ...(additionalPagesDirs || []).map(
-        (dir) => `${workspaceRoot}${dir}/**/*.server.ts`
+        (dir) => `${workspaceRoot}${dir}/**/*.server.ts`,
       ),
     ],
-    { dot: true }
+    { dot: true },
   );
 
   const handlers: NitroEventHandler[] = endpointFiles.map((endpointFile) => {

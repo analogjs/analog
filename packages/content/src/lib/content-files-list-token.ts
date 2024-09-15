@@ -1,5 +1,5 @@
 import { InjectionToken } from '@angular/core';
-import { ContentFile } from './content-file';
+import type { ContentFile } from './content-file';
 import { getContentFilesList } from './get-content-files';
 
 function getSlug(filename: string) {
@@ -25,5 +25,5 @@ export const CONTENT_FILES_LIST_TOKEN = new InjectionToken<ContentFile[]>(
         };
       });
     },
-  }
+  },
 );

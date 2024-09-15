@@ -9,7 +9,7 @@ import { getAnalogDevDependencies } from '../versions/dev-dependencies';
 export async function addAnalogDependencies(
   tree: Tree,
   nxVersion: string,
-  angularVersion: string
+  angularVersion: string,
 ) {
   const dependencies = getAnalogDependencies(nxVersion, angularVersion);
   const devDependencies = getAnalogDevDependencies(nxVersion);
@@ -18,7 +18,7 @@ export async function addAnalogDependencies(
   removeDependenciesFromPackageJson(
     tree,
     ['@analogjs/platform'],
-    ['@analogjs/platform']
+    ['@analogjs/platform'],
   );
   addDependenciesToPackageJson(tree, dependencies, devDependencies);
 }

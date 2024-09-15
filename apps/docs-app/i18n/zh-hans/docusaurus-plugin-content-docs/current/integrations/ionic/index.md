@@ -132,19 +132,10 @@ export default defineConfig(({ mode }) => {
 
 ```ts
 import { RouteReuseStrategy, provideRouter } from '@angular/router';
-import {
-  IonicRouteStrategy,
-  provideIonicAngular,
-} from '@ionic/angular/standalone';
+import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideFileRouter(),
-    provideClientHydration(),
-    provideHttpClient(withFetch()),
-    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    provideIonicAngular(),
-  ],
+  providers: [provideFileRouter(), provideClientHydration(), provideHttpClient(withFetch()), { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }, provideIonicAngular()],
 };
 ```
 
@@ -233,10 +224,7 @@ Ionic 框架 [尚不支持 Angular 新的客户端水合](https://github.com/ion
 
    ```ts
    import { RouteReuseStrategy, provideRouter } from '@angular/router';
-   import {
-     IonicRouteStrategy,
-     provideIonicAngular,
-   } from '@ionic/angular/standalone';
+   import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
 
    export const appConfig: ApplicationConfig = {
      providers: [

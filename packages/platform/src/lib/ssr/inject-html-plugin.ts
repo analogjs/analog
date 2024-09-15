@@ -11,7 +11,7 @@ function eventReplayPlugin(): Plugin {
     async transformIndexHtml() {
       const eventReplayScript = await readFile(
         require.resolve('@angular/core/event-dispatch-contract.min.js'),
-        'utf-8'
+        'utf-8',
       );
 
       return [

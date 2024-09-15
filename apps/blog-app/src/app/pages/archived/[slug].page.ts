@@ -44,6 +44,6 @@ export default class ArchivedPostComponent {
   readonly toc$ = this.post$.pipe(
     map(() => {
       return this.renderer.getContentHeadings();
-    })
+    }),
   );
 }

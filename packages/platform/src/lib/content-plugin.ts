@@ -3,11 +3,11 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import fg from 'fast-glob';
 
-import type { WithShikiHighlighterOptions } from './content/shiki/options.js';
-import { MarkedContentHighlighter } from './content/marked/marked-content-highlighter.js';
-import type { WithPrismHighlighterOptions } from './content/prism/options.js';
-import type { WithMarkedOptions } from './content/marked/index.js';
-import type { Options } from './options.js';
+import type { WithShikiHighlighterOptions } from './content/shiki/options';
+import { MarkedContentHighlighter } from './content/marked/marked-content-highlighter';
+import type { WithPrismHighlighterOptions } from './content/prism/options';
+import type { WithMarkedOptions } from './content/marked/index';
+import type { Options } from './options';
 
 interface Content {
   code: string;
@@ -31,7 +31,7 @@ export function contentPlugin(
     highlighter: 'prism',
     markedOptions: { mangle: true },
   },
-  options?: Options
+  options?: Options,
 ): Plugin[] {
   const cache = new Map<string, Content>();
 
@@ -129,14 +129,14 @@ export function contentPlugin(
         );
         const markedSetupService = new MarkedSetupService(
           markedOptions,
-          markedHighlighter
+          markedHighlighter,
         );
         const mdContent = (await markedSetupService
           .getMarkedInstance()
           .parse(body)) as unknown as string;
 
         return `export default ${JSON.stringify(
-          `---\n${frontmatter}\n---\n\n${mdContent}`
+          `---\n${frontmatter}\n---\n\n${mdContent}`,
         )}`;
       },
     },
@@ -156,17 +156,17 @@ export function contentPlugin(
               `${root}/src/content/**/*.md`,
               `${root}/src/content/**/*.agx`,
               ...(options?.additionalContentDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`
+                (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`,
               ),
             ],
-            { dot: true }
+            { dot: true },
           );
 
           const eagerImports: string[] = [];
 
           contentFilesList.forEach((module, index) => {
             eagerImports.push(
-              `import { default as analog_module_${index} } from "${module}?analog-content-list=true";`
+              `import { default as analog_module_${index} } from "${module}?analog-content-list=true";`,
             );
           });
 
@@ -175,21 +175,21 @@ export function contentPlugin(
             `
             let ANALOG_CONTENT_FILE_LIST = {${contentFilesList.map(
               (module, index) =>
-                `"${module.replace(root, '')}": analog_module_${index}`
+                `"${module.replace(root, '')}": analog_module_${index}`,
             )}};
-          `
+          `,
           );
 
           const agxFiles: string[] = fg.sync(
             [
               `${root}/src/content/**/*.agx`,
               ...(options?.additionalContentDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.agx`
+                (glob) => `${workspaceRoot}${glob}/**/*.agx`,
               ),
             ],
             {
               dot: true,
-            }
+            },
           );
 
           result = result.replace(
@@ -197,9 +197,9 @@ export function contentPlugin(
             `
           let ANALOG_AGX_FILES = {${agxFiles.map(
             (module) =>
-              `"${module.replace(root, '')}": () => import('${module}')`
+              `"${module.replace(root, '')}": () => import('${module}')`,
           )}};
-          `
+          `,
           );
 
           if (!code.includes('analog_module_')) {

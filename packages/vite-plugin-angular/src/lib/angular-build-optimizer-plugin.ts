@@ -17,7 +17,7 @@ export function buildOptimizerPlugin({
       advancedOptimizations: true,
       jit: true,
     },
-    1
+    1,
   );
 
   return {
@@ -57,7 +57,7 @@ export function buildOptimizerPlugin({
           id,
           code,
           false,
-          sideEffects
+          sideEffects,
         );
 
         return {

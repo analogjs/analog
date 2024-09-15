@@ -2,7 +2,7 @@ import { FRONTMATTER_REGEX } from './constants.js';
 
 export type MarkdownTemplateTransform = (
   content: string,
-  fileName: string
+  fileName: string,
 ) => string | Promise<string>;
 
 export const defaultMarkdownTemplateTransform: MarkdownTemplateTransform =
@@ -14,7 +14,7 @@ export const defaultMarkdownTemplateTransform: MarkdownTemplateTransform =
     const mdContent = markedSetupService
       .getMarkedInstance()
       .parse(
-        content.replace(FRONTMATTER_REGEX, '')
+        content.replace(FRONTMATTER_REGEX, ''),
       ) as unknown as Promise<string>;
 
     return mdContent;

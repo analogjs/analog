@@ -16,33 +16,33 @@ import {
 export async function initializeAngularWorkspace(
   tree: Tree,
   installedNxVersion: string,
-  normalizedOptions: NormalizedOptions
+  normalizedOptions: NormalizedOptions,
 ) {
   let angularVersion = getInstalledPackageVersion(tree, '@angular/core');
 
   if (!angularVersion) {
     console.log(
-      'Angular has not been installed yet. Creating an Angular application'
+      'Angular has not been installed yet. Creating an Angular application',
     );
 
     if (major(installedNxVersion) >= 16) {
       angularVersion = await initWithNxNamespace(
         tree,
         installedNxVersion,
-        normalizedOptions.skipFormat
+        normalizedOptions.skipFormat,
       );
     } else {
       angularVersion = await initWithNrwlNamespace(
         tree,
         installedNxVersion,
-        normalizedOptions.skipFormat
+        normalizedOptions.skipFormat,
       );
     }
   }
 
   if (belowMinimumSupportedAngularVersion(angularVersion)) {
     throw new Error(
-      stripIndents`Analog only supports an Angular version of 15 and higher`
+      stripIndents`Analog only supports an Angular version of 15 and higher`,
     );
   }
 
@@ -52,7 +52,7 @@ export async function initializeAngularWorkspace(
 const initWithNxNamespace = async (
   tree: Tree,
   installedNxVersion: string,
-  skipFormat = true
+  skipFormat = true,
 ) => {
   const versions = getNxDependencies(installedNxVersion);
 
@@ -79,7 +79,7 @@ const initWithNxNamespace = async (
       '@nx/devkit': versions['@nx/devkit'],
       '@nx/eslint': versions['@nx/eslint'],
       typescript: '~5.4.2',
-    }
+    },
   );
 
   return getInstalledPackageVersion(tree, '@angular/core', null, true);
@@ -88,7 +88,7 @@ const initWithNxNamespace = async (
 const initWithNrwlNamespace = async (
   tree: Tree,
   installedNxVersion: string,
-  skipFormat = true
+  skipFormat = true,
 ) => {
   const versions = getNrwlDependencies(installedNxVersion);
   try {
@@ -105,7 +105,7 @@ const initWithNrwlNamespace = async (
       '@nrwl/devkit': versions['@nrwl/devkit'],
       '@nrwl/angular': versions['@nrwl/angular'],
       '@nrwl/linter': versions['@nrwl/linter'],
-    }
+    },
   );
   await (
     await import(

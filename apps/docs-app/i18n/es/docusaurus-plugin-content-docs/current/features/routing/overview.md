@@ -114,9 +114,7 @@ import { map } from 'rxjs';
 export default class ProductDetailsPageComponent {
   private readonly route = inject(ActivatedRoute);
 
-  readonly productId$ = this.route.paramMap.pipe(
-    map((params) => params.get('productId'))
-  );
+  readonly productId$ = this.route.paramMap.pipe(map((params) => params.get('productId')));
 }
 ```
 
@@ -234,9 +232,7 @@ import { map } from 'rxjs';
 export default class ProductDetailsPageComponent {
   private readonly route = inject(ActivatedRoute);
 
-  readonly productId$ = this.route.paramMap.pipe(
-    map((params) => params.get('productId'))
-  );
+  readonly productId$ = this.route.paramMap.pipe(map((params) => params.get('productId')));
 }
 ```
 

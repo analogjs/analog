@@ -5,7 +5,7 @@ import { NormalizedOptions } from '../generator';
 export function addFiles(
   tree: Tree,
   options: NormalizedOptions,
-  majorAngularVersion: number
+  majorAngularVersion: number,
 ) {
   const isNx = tree.exists('/nx.json');
   const templateOptions = {
@@ -17,7 +17,7 @@ export function addFiles(
     tree,
     join(__dirname, '..', 'files', 'template-angular-v' + majorAngularVersion),
     options.projectRoot,
-    templateOptions
+    templateOptions,
   );
 
   if (!tree.exists('/angular.json') && !tree.exists('/tsconfig.base.json')) {
@@ -25,7 +25,7 @@ export function addFiles(
       tree,
       join(__dirname, '..', 'files', 'root'),
       '.',
-      templateOptions
+      templateOptions,
     );
   }
 }

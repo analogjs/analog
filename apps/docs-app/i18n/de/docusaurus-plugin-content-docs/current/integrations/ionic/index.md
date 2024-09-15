@@ -131,19 +131,10 @@ export default defineConfig(({ mode }) => {
 
 ```ts
 import { RouteReuseStrategy, provideRouter } from '@angular/router';
-import {
-  IonicRouteStrategy,
-  provideIonicAngular,
-} from '@ionic/angular/standalone';
+import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideFileRouter(),
-    provideClientHydration(),
-    provideHttpClient(withFetch()),
-    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    provideIonicAngular(),
-  ],
+  providers: [provideFileRouter(), provideClientHydration(), provideHttpClient(withFetch()), { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }, provideIonicAngular()],
 };
 ```
 
@@ -232,10 +223,7 @@ Das Ionic Framework [unterstützt nicht Angulars neue Client Hydration](https://
 
 ```ts
 import { RouteReuseStrategy, provideRouter } from '@angular/router';
-import {
-  IonicRouteStrategy,
-  provideIonicAngular,
-} from '@ionic/angular/standalone';
+import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
 
 export const appConfig: ApplicationConfig = {
   providers: [

@@ -65,16 +65,10 @@ Luego, crea un fichero `src/test.ts` para configurar el `TestBed`:
 ```ts
 import '@analogjs/vite-plugin-angular/setup-vitest';
 
-import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
 import { getTestBed } from '@angular/core/testing';
 
-getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
-);
+getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
 ```
 
 A continuación, actualiza la propiedad `test` en el fichero `angular.json` para usar el constructor `@analogjs/platform:vitest`:

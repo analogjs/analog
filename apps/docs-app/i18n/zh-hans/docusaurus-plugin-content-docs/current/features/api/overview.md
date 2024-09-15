@@ -80,9 +80,7 @@ export default defineConfig(({ mode }) => {
 // /server/routes/v1/hello/[name].ts
 import { defineEventHandler } from 'h3';
 
-export default defineEventHandler(
-  (event) => `Hello ${event.context.params?.['name']}!`
-);
+export default defineEventHandler((event) => `Hello ${event.context.params?.['name']}!`);
 ```
 
 另一个访问路由参数的方法是调用 `getRouterParam` 函数

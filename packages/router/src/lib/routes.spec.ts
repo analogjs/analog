@@ -622,7 +622,7 @@ describe('routes', () => {
       await route.loadChildren?.();
 
       expect(spy).toHaveBeenCalledWith(
-        `[Analog] Missing default export at ${fileName}`
+        `[Analog] Missing default export at ${fileName}`,
       );
     });
 
@@ -643,7 +643,7 @@ describe('routes', () => {
       await route.loadChildren?.();
 
       expect(spy).not.toHaveBeenCalledWith(
-        `[Analog] Missing default export at ${fileName}`
+        `[Analog] Missing default export at ${fileName}`,
       );
     });
   });

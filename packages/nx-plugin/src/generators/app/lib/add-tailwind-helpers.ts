@@ -19,7 +19,7 @@ import {
 import { relative } from 'node:path';
 
 export function normalizeOptions(
-  options: GeneratorOptions
+  options: GeneratorOptions,
 ): NormalizedGeneratorOptions {
   return {
     ...options,
@@ -28,7 +28,7 @@ export function normalizeOptions(
 }
 
 export function detectTailwindInstalledVersion(
-  tree: Tree
+  tree: Tree,
 ): '2' | '3' | undefined {
   const { dependencies, devDependencies } = readJson(tree, 'package.json');
   const tailwindVersion =
@@ -41,7 +41,7 @@ export function detectTailwindInstalledVersion(
   const version = checkAndCleanWithSemver('tailwindcss', tailwindVersion);
   if (lt(version, '2.0.0')) {
     throw new Error(
-      `The Tailwind CSS version "${tailwindVersion}" is not supported. Please upgrade to v2.0.0 or higher.`
+      `The Tailwind CSS version "${tailwindVersion}" is not supported. Please upgrade to v2.0.0 or higher.`,
     );
   }
 
@@ -57,20 +57,20 @@ export function addTailwindRequiredPackages(tree: Tree): GeneratorCallback {
       autoprefixer: pkgVersions.autoprefixer,
       postcss: pkgVersions.postcss,
       tailwindcss: pkgVersions.tailwindcss,
-    }
+    },
   );
 }
 
 export function updateApplicationStyles(
   tree: Tree,
   options: NormalizedGeneratorOptions,
-  project: ProjectConfiguration
+  project: ProjectConfiguration,
 ): void {
   let stylesEntryPoint = options.stylesEntryPoint;
 
   if (stylesEntryPoint && !tree.exists(stylesEntryPoint)) {
     throw new Error(
-      `The provided styles entry point "${stylesEntryPoint}" could not be found.`
+      `The provided styles entry point "${stylesEntryPoint}" could not be found.`,
     );
   }
 
@@ -80,7 +80,7 @@ export function updateApplicationStyles(
     if (!stylesEntryPoint) {
       throw new Error(
         stripIndents`Could not find a styles entry point for project "${options.project}".
-        Please specify a styles entry point using the "--stylesEntryPoint" option.`
+        Please specify a styles entry point using the "--stylesEntryPoint" option.`,
       );
     }
   }
@@ -92,14 +92,14 @@ export function updateApplicationStyles(
     @tailwind components;
     @tailwind utilities;
 
-    ${stylesEntryPointContent}`
+    ${stylesEntryPointContent}`,
   );
 }
 
 function findStylesEntryPoint(
   tree: Tree,
   options: NormalizedGeneratorOptions,
-  project: ProjectConfiguration
+  project: ProjectConfiguration,
 ): string | undefined {
   // first check for common names
   const possibleStylesEntryPoints = [
@@ -110,7 +110,7 @@ function findStylesEntryPoint(
   ];
 
   const stylesEntryPoint = possibleStylesEntryPoints.find((s) =>
-    tree.exists(s)
+    tree.exists(s),
   );
   if (stylesEntryPoint) {
     return stylesEntryPoint;
@@ -130,7 +130,7 @@ function findStylesEntryPoint(
       ? s.startsWith(project.root) && tree.exists(s)
       : s.input.startsWith(project.root) &&
         s.inject !== false &&
-        tree.exists(s.input)
+        tree.exists(s.input),
   );
 
   if (!style) {
@@ -143,7 +143,7 @@ function findStylesEntryPoint(
 export function addTailwindConfigPathToProject(
   tree: Tree,
   options: NormalizedGeneratorOptions,
-  project: ProjectConfiguration
+  project: ProjectConfiguration,
 ): void {
   const buildTarget = project.targets?.[options.buildTarget];
 
@@ -151,7 +151,7 @@ export function addTailwindConfigPathToProject(
     throw new Error(
       stripIndents`The target "${options.buildTarget}" was not found for project "${options.project}".
       If you are using a different build target, please provide it using the "--buildTarget" option.
-      If the project is not a buildable or publishable library, you don't need to setup TailwindCSS for it.`
+      If the project is not a buildable or publishable library, you don't need to setup TailwindCSS for it.`,
     );
   }
 
@@ -161,7 +161,7 @@ export function addTailwindConfigPathToProject(
   ) {
     throw new Error(
       stripIndents`The "${buildTarget.options.tailwindConfig}" file is already configured for the project "${options.project}". Are you sure this is the right project to set up Tailwind?
-      If you are sure, you can remove the configuration and re-run the generator.`
+      If you are sure, you can remove the configuration and re-run the generator.`,
     );
   }
 
@@ -176,12 +176,12 @@ export function addTailwindConfigPathToProject(
 export function addTailwindConfigFile(
   tree: Tree,
   options: GeneratorOptions,
-  project: ProjectConfiguration
+  project: ProjectConfiguration,
 ): void {
   if (tree.exists(joinPathFragments(project.root, 'tailwind.config.js'))) {
     throw new Error(
       stripIndents`The "tailwind.config.js" file already exists in the project "${options.project}". Are you sure this is the right project to set up Tailwind?
-      If you are sure, you can remove the existing file and re-run the generator.`
+      If you are sure, you can remove the existing file and re-run the generator.`,
     );
   }
 
@@ -192,6 +192,6 @@ export function addTailwindConfigFile(
     {
       relativeSourceRoot: relative(project.root, project.sourceRoot),
       template: '',
-    }
+    },
   );
 }

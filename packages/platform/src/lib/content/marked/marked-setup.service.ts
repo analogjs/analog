@@ -10,7 +10,7 @@ export class MarkedSetupService {
 
   constructor(
     private readonly options?: WithMarkedOptions,
-    private readonly highlighter?: MarkedContentHighlighter
+    private readonly highlighter?: MarkedContentHighlighter,
   ) {
     const renderer = new marked.Renderer();
     renderer.code = (code: string, lang: string) => {
