@@ -41,7 +41,6 @@ import {
   defaultMarkdownTemplateTransforms,
   MarkdownTemplateTransform,
 } from './authoring/markdown-transform.js';
-import { type VFile } from 'vfile';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -387,24 +386,12 @@ export function angular(options?: PluginOptions): Plugin[] {
             data = ngFileResult?.content || '';
 
             if (id.includes('.agx')) {
-              const metadata = await getFrontmatterMetadata(code);
-              let vfile: Partial<VFile> = {};
-              for (const transform of pluginOptions.markdownTemplateTransforms ||
-                []) {
-                const result = await transform(code, id);
-                vfile = typeof result === 'object' ? result : vfile;
-              }
+              const metadata = await getFrontmatterMetadata(
+                code,
+                id,
+                pluginOptions.markdownTemplateTransforms || []
+              );
               data += metadata;
-
-              const stringifiedVFile = JSON.stringify({
-                path: vfile.path,
-                data: vfile.data,
-                messages: vfile.messages,
-                history: vfile.history,
-                cwd: vfile.cwd,
-              });
-
-              data += `\n\nexport const vfile = ${stringifiedVFile}`;
             }
           }
 
