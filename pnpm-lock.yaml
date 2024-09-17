@@ -458,6 +458,15 @@ importers:
         specifier: ~5.5.4
         version: 5.5.4
 
+  packages/vite-plugin-angular:
+    dependencies:
+      ts-morph:
+        specifier: ^21.0.0
+        version: 21.0.1
+      vfile:
+        specifier: ^6.0.3
+        version: 6.0.3
+
 packages:
 
   '@aashutoshrathi/word-wrap@1.2.6':
@@ -19330,7 +19339,7 @@ snapshots:
   '@ts-morph/common@0.22.0':
     dependencies:
       fast-glob: 3.3.2
-      minimatch: 9.0.3
+      minimatch: 9.0.4
       mkdirp: 3.0.1
       path-browserify: 1.0.1
 
