@@ -17,15 +17,9 @@ export default defineConfig(({ mode }) => {
       cache: {
         dir: `../../node_modules/.vitest`,
       },
-      deps: {
-        inline: ['@analogjs/vitest-angular', 'zone.js'],
-      },
     },
     define: {
       'import.meta.vitest': mode !== 'production',
-    },
-    ssr: {
-      noExternal: ['@analogjs/vitest-angular', 'zone.js'],
     },
   };
 });
