@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vitest-angular",
-  "version": "1.8.1-beta.2",
+  "version": "1.8.1-beta.3",
   "description": "Vitest Builder for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",

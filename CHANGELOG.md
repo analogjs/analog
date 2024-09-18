@@ -1,3 +1,9 @@
+## [1.8.1-beta.3](https://github.com/analogjs/analog/compare/v1.8.1-beta.2...v1.8.1-beta.3) (2024-09-18)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add better support for angular/cdk in vitest browser testing ([#1353](https://github.com/analogjs/analog/issues/1353)) ([157d9e2](https://github.com/analogjs/analog/commit/157d9e272ddce9673bbd3dafb26519c50a7d13f4))
+
 ## [1.8.1-beta.2](https://github.com/analogjs/analog/compare/v1.8.1-beta.1...v1.8.1-beta.2) (2024-09-10)
 
 ### Bug Fixes
