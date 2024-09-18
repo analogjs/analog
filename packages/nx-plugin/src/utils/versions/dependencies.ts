@@ -5,6 +5,7 @@ import {
   V16_X_MARKED,
   V16_X_MARKED_GFM_HEADING_ID,
   V16_X_MARKED_HIGHLIGHT,
+  V16_X_MARKED_MANGLE,
   V16_X_NX_ANGULAR,
   V16_X_PRISMJS,
 } from './ng_16_X/versions';
@@ -15,6 +16,7 @@ import {
   V17_X_MARKED,
   V17_X_MARKED_GFM_HEADING_ID,
   V17_X_MARKED_HIGHLIGHT,
+  V17_X_MARKED_MANGLE,
   V17_X_NX_ANGULAR,
   V17_X_PRISMJS,
 } from './ng_17_X/versions';
@@ -24,6 +26,7 @@ import {
   V15_X_MARKED,
   V15_X_MARKED_GFM_HEADING_ID,
   V15_X_MARKED_HIGHLIGHT,
+  V15_X_MARKED_MANGLE,
   V15_X_NX_ANGULAR,
   V15_X_PRISMJS,
 } from './ng_15_X/versions';
@@ -33,6 +36,7 @@ import {
   V18_X_MARKED,
   V18_X_MARKED_GFM_HEADING_ID,
   V18_X_MARKED_HIGHLIGHT,
+  V18_X_MARKED_MANGLE,
   V18_X_NX_ANGULAR,
   V18_X_PRISMJS,
 } from './ng_18_X/versions';
@@ -73,6 +77,7 @@ const getDependencies = (escapedAngularVersion: string) => {
       marked: V15_X_MARKED,
       'marked-gfm-heading-id': V15_X_MARKED_GFM_HEADING_ID,
       'marked-highlight': V15_X_MARKED_HIGHLIGHT,
+      'marked-mangle': V15_X_MARKED_MANGLE,
       prismjs: V15_X_PRISMJS,
     };
   }
@@ -86,6 +91,7 @@ const getDependencies = (escapedAngularVersion: string) => {
       marked: V16_X_MARKED,
       'marked-gfm-heading-id': V16_X_MARKED_GFM_HEADING_ID,
       'marked-highlight': V16_X_MARKED_HIGHLIGHT,
+      'marked-mangle': V16_X_MARKED_MANGLE,
       prismjs: V16_X_PRISMJS,
     };
   }
@@ -99,6 +105,7 @@ const getDependencies = (escapedAngularVersion: string) => {
       marked: V17_X_MARKED,
       'marked-gfm-heading-id': V17_X_MARKED_GFM_HEADING_ID,
       'marked-highlight': V17_X_MARKED_HIGHLIGHT,
+      'marked-mangle': V17_X_MARKED_MANGLE,
       prismjs: V17_X_PRISMJS,
     };
   }
@@ -111,6 +118,7 @@ const getDependencies = (escapedAngularVersion: string) => {
     marked: V18_X_MARKED,
     'marked-gfm-heading-id': V18_X_MARKED_GFM_HEADING_ID,
     'marked-highlight': V18_X_MARKED_HIGHLIGHT,
+    'marked-mangle': V18_X_MARKED_MANGLE,
     prismjs: V18_X_PRISMJS,
   };
 };
