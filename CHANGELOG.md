@@ -1,3 +1,9 @@
+## [1.8.1-beta.4](https://github.com/analogjs/analog/compare/v1.8.1-beta.3...v1.8.1-beta.4) (2024-09-18)
+
+### Bug Fixes
+
+- **nx-plugin:** add marked-mangle to installed dependencies on new app/migration ([#1354](https://github.com/analogjs/analog/issues/1354)) ([e845850](https://github.com/analogjs/analog/commit/e8458507933eeb3763b85e348a35553c4469029c))
+
 ## [1.8.1-beta.3](https://github.com/analogjs/analog/compare/v1.8.1-beta.2...v1.8.1-beta.3) (2024-09-18)
 
 ### Bug Fixes
