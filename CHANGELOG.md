@@ -1,3 +1,9 @@
+## [1.8.1-beta.7](https://github.com/analogjs/analog/compare/v1.8.1-beta.6...v1.8.1-beta.7) (2024-09-19)
+
+### Bug Fixes
+
+- **platform:** add support for [@ng-web-apis](https://github.com/ng-web-apis) and [@taiga-ui](https://github.com/taiga-ui) deps w/SSR ([#1357](https://github.com/analogjs/analog/issues/1357)) ([7f7d192](https://github.com/analogjs/analog/commit/7f7d1926859c053a215459f0b22d1fcfcb1f6942))
+
 ## [1.8.1-beta.6](https://github.com/analogjs/analog/compare/v1.8.1-beta.5...v1.8.1-beta.6) (2024-09-19)
 
 ### Bug Fixes
