@@ -18,6 +18,8 @@ export function depsPlugin(options?: Options): Plugin[] {
               'firebase/**',
               'firebase-admin/**',
               'rxfire',
+              '@ng-web-apis/**',
+              '@taiga-ui/**',
             ],
           },
           optimizeDeps: {
