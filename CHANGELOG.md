@@ -1,3 +1,9 @@
+## [1.8.1-beta.5](https://github.com/analogjs/analog/compare/v1.8.1-beta.4...v1.8.1-beta.5) (2024-09-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** allow supplying and exporting vfile data for agx files ([#1344](https://github.com/analogjs/analog/issues/1344)) ([6d555aa](https://github.com/analogjs/analog/commit/6d555aa980f1b61e9514d80c6f1102609c687294))
+
 ## [1.8.1-beta.4](https://github.com/analogjs/analog/compare/v1.8.1-beta.3...v1.8.1-beta.4) (2024-09-18)
 
 ### Bug Fixes
