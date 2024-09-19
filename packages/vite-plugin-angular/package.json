@@ -36,7 +36,8 @@
     }
   },
   "dependencies": {
-    "ts-morph": "^21.0.0"
+    "ts-morph": "^21.0.0",
+    "vfile": "^6.0.3"
   },
   "ng-update": {
     "packageGroup": [

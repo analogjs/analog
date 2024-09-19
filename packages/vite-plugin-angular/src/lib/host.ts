@@ -133,7 +133,7 @@ export function augmentHostWithResources(
 
     if (fileName.includes('virtual-analog:')) {
       for (const transform of options.markdownTemplateTransforms || []) {
-        content = await transform(content, fileName);
+        content = String(await transform(content, fileName));
       }
     }
 
