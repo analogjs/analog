@@ -1,3 +1,9 @@
+## [1.8.1-beta.6](https://github.com/analogjs/analog/compare/v1.8.1-beta.5...v1.8.1-beta.6) (2024-09-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use defaultMarkdownTemplateTransform if none supplied ([#1356](https://github.com/analogjs/analog/issues/1356)) ([ff9a0ee](https://github.com/analogjs/analog/commit/ff9a0eee7f0caa3505bfe0d60b7bcd1f53ff66bd))
+
 ## [1.8.1-beta.5](https://github.com/analogjs/analog/compare/v1.8.1-beta.4...v1.8.1-beta.5) (2024-09-19)
 
 ### Bug Fixes
