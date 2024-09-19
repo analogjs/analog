@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => ({
       vite: {
         experimental: {
           supportAnalogFormat: true,
+          markdownTemplateTransforms: [],
         },
       },
     }),

@@ -114,9 +114,10 @@ export function angular(options?: PluginOptions): Plugin[] {
     supportedBrowsers: options?.supportedBrowsers ?? ['safari 15'],
     jit: options?.experimental?.supportAnalogFormat ? false : options?.jit,
     supportAnalogFormat: options?.experimental?.supportAnalogFormat ?? false,
-    markdownTemplateTransforms:
-      options?.experimental?.markdownTemplateTransforms ??
-      defaultMarkdownTemplateTransforms,
+    markdownTemplateTransforms: options?.experimental
+      ?.markdownTemplateTransforms?.length
+      ? options.experimental.markdownTemplateTransforms
+      : defaultMarkdownTemplateTransforms,
     include: options?.include ?? [],
     additionalContentDirs: options?.additionalContentDirs ?? [],
   };
