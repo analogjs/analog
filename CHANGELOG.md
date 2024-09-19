@@ -1,3 +1,46 @@
+## [1.8.1-beta.7](https://github.com/analogjs/analog/compare/v1.8.1-beta.6...v1.8.1-beta.7) (2024-09-19)
+
+### Bug Fixes
+
+- **platform:** add support for [@ng-web-apis](https://github.com/ng-web-apis) and [@taiga-ui](https://github.com/taiga-ui) deps w/SSR ([#1357](https://github.com/analogjs/analog/issues/1357)) ([7f7d192](https://github.com/analogjs/analog/commit/7f7d1926859c053a215459f0b22d1fcfcb1f6942))
+
+## [1.8.1-beta.6](https://github.com/analogjs/analog/compare/v1.8.1-beta.5...v1.8.1-beta.6) (2024-09-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use defaultMarkdownTemplateTransform if none supplied ([#1356](https://github.com/analogjs/analog/issues/1356)) ([ff9a0ee](https://github.com/analogjs/analog/commit/ff9a0eee7f0caa3505bfe0d60b7bcd1f53ff66bd))
+
+## [1.8.1-beta.5](https://github.com/analogjs/analog/compare/v1.8.1-beta.4...v1.8.1-beta.5) (2024-09-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** allow supplying and exporting vfile data for agx files ([#1344](https://github.com/analogjs/analog/issues/1344)) ([6d555aa](https://github.com/analogjs/analog/commit/6d555aa980f1b61e9514d80c6f1102609c687294))
+
+## [1.8.1-beta.4](https://github.com/analogjs/analog/compare/v1.8.1-beta.3...v1.8.1-beta.4) (2024-09-18)
+
+### Bug Fixes
+
+- **nx-plugin:** add marked-mangle to installed dependencies on new app/migration ([#1354](https://github.com/analogjs/analog/issues/1354)) ([e845850](https://github.com/analogjs/analog/commit/e8458507933eeb3763b85e348a35553c4469029c))
+
+## [1.8.1-beta.3](https://github.com/analogjs/analog/compare/v1.8.1-beta.2...v1.8.1-beta.3) (2024-09-18)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add better support for angular/cdk in vitest browser testing ([#1353](https://github.com/analogjs/analog/issues/1353)) ([157d9e2](https://github.com/analogjs/analog/commit/157d9e272ddce9673bbd3dafb26519c50a7d13f4))
+
+## [1.8.1-beta.2](https://github.com/analogjs/analog/compare/v1.8.1-beta.1...v1.8.1-beta.2) (2024-09-10)
+
+### Bug Fixes
+
+- **vitest-angular:** setup separate import for configuring snapshots ([#1340](https://github.com/analogjs/analog/issues/1340)) ([fa50a4d](https://github.com/analogjs/analog/commit/fa50a4d78b00e7415b83ab5ece018b75ddaadc7e))
+
+## [1.8.1-beta.1](https://github.com/analogjs/analog/compare/v1.8.0...v1.8.1-beta.1) (2024-09-10)
+
+### Bug Fixes
+
+- **router:** generate rawPath for ag page routes correctly ([7081bb6](https://github.com/analogjs/analog/commit/7081bb6850032e371cd7838f38bce4ad49e0c01f))
+- **vite-plugin-angular:** add check for ag files in fileExists function ([2f5400d](https://github.com/analogjs/analog/commit/2f5400d2b18efb424034ed7afca010a95bb377d6))
+
 # [1.8.0](https://github.com/analogjs/analog/compare/v1.7.3...v1.8.0) (2024-09-09)
 
 ### Bug Fixes

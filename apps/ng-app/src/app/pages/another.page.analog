@@ -1,0 +1,33 @@
+<script lang="ts">
+  import { RouteMeta } from '@analogjs/router';
+  import Hello from '../hello.analog' with { analog: 'imports' };
+
+  export const routeMeta: RouteMeta = {
+    title: 'My page',
+    canActivate: [() => true],
+  };
+
+  const helloInput = "test";
+</script>
+
+<template lang="md">
+  # Another works!
+
+  ## Subheader
+
+
+  ```sh
+  npm create analog
+  ```
+
+  ```ts
+  @Component({
+    selector: 'app-root',
+  })
+  class AppComponent {
+    doSomething() {}
+  }
+  ```
+
+  <Hello [text]="helloInput" />
+</template>

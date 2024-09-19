@@ -112,7 +112,8 @@ export function augmentHostWithResources(
       if (
         fileName.includes('virtual-analog:') &&
         !fileName.endsWith('analog.d') &&
-        !fileName.endsWith('agx.d')
+        !fileName.endsWith('agx.d') &&
+        !fileName.endsWith('ag.d')
       ) {
         return true;
       }
@@ -132,7 +133,7 @@ export function augmentHostWithResources(
 
     if (fileName.includes('virtual-analog:')) {
       for (const transform of options.markdownTemplateTransforms || []) {
-        content = await transform(content, fileName);
+        content = String(await transform(content, fileName));
       }
     }
 

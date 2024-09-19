@@ -124,8 +124,8 @@ describe('nx-plugin generator', () => {
     dependencies: Record<string, string>,
     devDependencies: Record<string, string>
   ) => {
-    expect(dependencies['@analogjs/content']).toBe('^1.3.0');
-    expect(dependencies['@analogjs/router']).toBe('^1.3.0');
+    expect(dependencies['@analogjs/content']).toBe('^1.7.0');
+    expect(dependencies['@analogjs/router']).toBe('^1.7.0');
     expect(dependencies['@angular/platform-server']).toBe(
       dependencies['@angular/core']
     );
@@ -133,6 +133,7 @@ describe('nx-plugin generator', () => {
     expect(dependencies['marked']).toBe('^5.0.2');
     expect(dependencies['marked-gfm-heading-id']).toBe('^3.1.0');
     expect(dependencies['marked-highlight']).toBe('^2.0.1');
+    expect(dependencies['marked-mangle']).toBe('^1.1.7');
     expect(dependencies['mermaid']).toBe('^10.2.4');
     expect(dependencies['prismjs']).toBe('^1.29.0');
 
@@ -141,8 +142,8 @@ describe('nx-plugin generator', () => {
     // we just check for truthy because @nx/eslint generator
     // will install the correct version based on Nx version
     expect(devDependencies['@nx/eslint']).toBeTruthy();
-    expect(devDependencies['@analogjs/platform']).toBe('^1.3.0');
-    expect(devDependencies['@analogjs/vite-plugin-angular']).toBe('^1.3.0');
+    expect(devDependencies['@analogjs/platform']).toBe('^1.7.0');
+    expect(devDependencies['@analogjs/vite-plugin-angular']).toBe('^1.7.0');
     expect(devDependencies['@nx/vite']).toBe('^19.1.0');
     expect(devDependencies['jsdom']).toBe('^22.1.0');
     expect(devDependencies['vite']).toBe('^5.0.0');

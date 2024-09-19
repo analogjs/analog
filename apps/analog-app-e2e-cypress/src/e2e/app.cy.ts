@@ -7,12 +7,12 @@ describe('My Store', () => {
     app.getTitle().contains(/my store/i);
   });
 
-  it(`Given the user has navigated an invalid page then the page not found title is visible`, () => {
+  it('Given the user has navigated an invalid page then the page not found title is visible', () => {
     cy.visit('/bad');
     app.get404Title().contains(/page not found/i);
   });
 
-  it(`Given the user has navigated an invalid nested page then the page not found title is visible`, () => {
+  it('Given the user has navigated an invalid nested page then the page not found title is visible', () => {
     cy.visit('/shipping/bad');
     app.getNested404Title().contains(/shipping page not found/i);
   });

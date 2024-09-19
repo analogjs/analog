@@ -8,7 +8,7 @@ body:
       value: |
         Thanks for helping us grow. ❤️
         If do you like Analog enough please consider support through [sponsoring](https://github.com/sponsors/brandonroberts) 💖
-        Please search GitHub for a similar [issue](https://github.com/analogjs/analog/issues) or [PR](https://github.com/analogjs/analog/issues)  before submitting a new issue.
+        Please search GitHub for a similar [issue](https://github.com/analogjs/analog/issues) or [PR](https://github.com/analogjs/analog/pulls)  before submitting a new issue.
   - type: dropdown
     id: type_bug
     attributes:
