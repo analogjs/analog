@@ -10,7 +10,7 @@ on:
 env:
   DOCS_APP_ARTIFACT_NAME: docs-app
   DOCS_APP_PATH: dist/apps/docs-app/
-  NODE_OPTIONS: --max-old-space-size=6144
+  NODE_OPTIONS: --max-old-space-size=16384
   VITE_ANALOG_PUBLIC_BASE_URL: ${{ vars.VITE_ANALOG_PUBLIC_BASE_URL || 'http://localhost:3000' }}
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 

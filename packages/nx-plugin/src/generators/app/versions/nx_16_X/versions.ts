@@ -14,6 +14,7 @@ export const V16_X_FRONT_MATTER = '^4.0.2';
 export const V16_X_MARKED = '^5.0.2';
 export const V16_X_MARKED_GFM_HEADING_ID = '^3.1.0';
 export const V16_X_MARKED_HIGHLIGHT = '^2.0.1';
+export const V16_X_MARKED_MANGLE = '^1.1.7';
 export const V16_X_MERMAID = '^10.2.4';
 export const V16_X_PRISMJS = '^1.29.0';
 export const V16_X_TAILWINDCSS = '^3.0.2';

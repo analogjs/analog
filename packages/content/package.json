@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/content",
-  "version": "1.8.1-beta.2",
+  "version": "1.8.1",
   "description": "Content Rendering for Analog",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",

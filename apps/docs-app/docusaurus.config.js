@@ -6,7 +6,7 @@ themes.nightOwl['plain'].backgroundColor = '#0a1429';
 const organizationName = 'analogjs';
 const projectName = 'analog';
 const title = 'Analog';
-const url = `https://analogjs.org`;
+const url = 'https://analogjs.org';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -166,7 +166,7 @@ const config = {
             position: 'right',
           },
           {
-            href: `https://chat.analogjs.org`,
+            href: 'https://chat.analogjs.org',
             label: 'Discord',
             position: 'right',
           },

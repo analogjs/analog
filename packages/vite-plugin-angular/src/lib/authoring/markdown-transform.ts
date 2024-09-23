@@ -1,9 +1,10 @@
 import { FRONTMATTER_REGEX } from './constants.js';
+import { type VFile } from 'vfile';
 
 export type MarkdownTemplateTransform = (
   content: string,
   fileName: string
-) => string | Promise<string>;
+) => string | Promise<string> | Promise<VFile>;
 
 export const defaultMarkdownTemplateTransform: MarkdownTemplateTransform =
   async (content: string) => {
