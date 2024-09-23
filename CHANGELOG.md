@@ -1,3 +1,9 @@
+## [1.8.2-beta.1](https://github.com/analogjs/analog/compare/v1.8.1...v1.8.2-beta.1) (2024-09-23)
+
+### Bug Fixes
+
+- **create-analog:** read the doc color scheme in light mode ([#1361](https://github.com/analogjs/analog/issues/1361)) ([90d9b7b](https://github.com/analogjs/analog/commit/90d9b7b5d4767dd8399fa8ee33c91f9a4671f409))
+
 ## [1.8.1](https://github.com/analogjs/analog/compare/v1.8.0...v1.8.1) (2024-09-19)
 
 ### Bug Fixes
