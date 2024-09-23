@@ -246,11 +246,16 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               });                    
               `
               );
+
+              nitroConfig.externals = {
+                inline: ['std-env'],
+              };
             }
 
             nitroConfig = {
               ...nitroConfig,
               externals: {
+                ...nitroConfig.externals,
                 external: ['rxjs', 'node-fetch-native/dist/polyfill'],
               },
               moduleSideEffects: ['zone.js/node', 'zone.js/fesm2015/zone-node'],
