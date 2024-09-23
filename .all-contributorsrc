@@ -1150,6 +1150,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "kilesh-mhzn",
+      "name": "Kilesh Maharjan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78723506?v=4",
+      "profile": "https://github.com/kilesh-mhzn",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
