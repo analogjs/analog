@@ -1,3 +1,9 @@
+## [1.8.2-beta.2](https://github.com/analogjs/analog/compare/v1.8.2-beta.1...v1.8.2-beta.2) (2024-09-23)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** inline std-env package for Windows build ([#1362](https://github.com/analogjs/analog/issues/1362)) ([a6a93c0](https://github.com/analogjs/analog/commit/a6a93c00d067b8cfa245c6d20685aff46723119a))
+
 ## [1.8.2-beta.1](https://github.com/analogjs/analog/compare/v1.8.1...v1.8.2-beta.1) (2024-09-23)
 
 ### Bug Fixes
