@@ -37,6 +37,12 @@ import { Component, signal } from '@angular/core';
       .read-the-docs > * {
         color: #fff;
       }
+
+      @media (prefers-color-scheme: light) {
+        .read-the-docs > * {
+          color: #213547;
+        }
+      }
     `,
   ],
 })
