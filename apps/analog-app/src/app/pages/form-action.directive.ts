@@ -65,7 +65,7 @@ export class FormAction {
           } else {
             res.text().then((result) => {
               this.onSuccess.emit(result);
-              this.onSuccess.emit('success');
+              this.state.emit('success');
             });
           }
         } else {
