@@ -1,8 +1,7 @@
-import { StateKey, TransferState, inject, makeStateKey } from '@angular/core';
+import { TransferState, inject, makeStateKey } from '@angular/core';
 import {
   HttpHandlerFn,
   HttpHeaders,
-  HttpParams,
   HttpRequest,
   HttpResponse,
 } from '@angular/common/http';
@@ -10,6 +9,8 @@ import {
 import { from, of } from 'rxjs';
 
 import { injectBaseURL, injectAPIPrefix } from '@analogjs/router/tokens';
+
+import { makeCacheKey } from './cache-key';
 
 /**
  * Interceptor that is server-aware when making HttpClient requests.
@@ -50,6 +51,7 @@ export function requestContextInterceptor(
       global.$fetch
         .raw(fetchUrl, {
           method: req.method as any,
+          body: req.body ? req.body : undefined,
           params: requestUrl.searchParams,
           responseType,
           headers: req.headers.keys().reduce((hdrs, current) => {
@@ -115,49 +117,4 @@ export function requestContextInterceptor(
   }
 
   return next(req);
-}
-
-function sortAndConcatParams(params: HttpParams | URLSearchParams): string {
-  return [...params.keys()]
-    .sort()
-    .map((k) => `${k}=${params.getAll(k)}`)
-    .join('&');
-}
-
-function makeCacheKey(
-  request: HttpRequest<any>,
-  mappedRequestUrl: string
-): StateKey<unknown> {
-  // make the params encoded same as a url so it's easy to identify
-  const { params, method, responseType } = request;
-  const encodedParams = sortAndConcatParams(params);
-
-  let serializedBody = request.serializeBody();
-  if (serializedBody instanceof URLSearchParams) {
-    serializedBody = sortAndConcatParams(serializedBody);
-  } else if (typeof serializedBody !== 'string') {
-    serializedBody = '';
-  }
-
-  const key = [
-    method,
-    responseType,
-    mappedRequestUrl,
-    serializedBody,
-    encodedParams,
-  ].join('|');
-
-  const hash = generateHash(key);
-
-  return makeStateKey(hash);
-}
-
-function generateHash(str: string) {
-  let hash = 0;
-  for (let i = 0, len = str.length; i < len; i++) {
-    let chr = str.charCodeAt(i);
-    hash = (hash << 5) - hash + chr;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return `${hash}`;
 }
