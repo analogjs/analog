@@ -443,7 +443,7 @@ function setProjectTitle(root, title) {
     const fileContent = fs.readFileSync(filePath, 'utf-8');
     fs.writeFileSync(
       filePath,
-      fileContent.replace(/\*\*PROJECT_TITLE\*\*/g, title)
+      fileContent.replace(/__PROJECT_TITLE__/g, title)
     );
   }
 }
