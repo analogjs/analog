@@ -221,12 +221,20 @@ async function init() {
     ensureSyntaxHighlighter(root, pkg, highlighter);
   }
 
-  if (!skipTailwind) addTailwindDevDependencies(pkg);
+  if (!skipTailwind) {
+    addTailwindDevDependencies(pkg);
+  }
+
   if (pkgManager === 'yarn') {
     addYarnDevDependencies(pkg, template);
   }
 
+  pkg.dependencies = sortObjectKeys(pkg.dependencies);
+  pkg.devDependencies = sortObjectKeys(pkg.devDependencies);
+
   write('package.json', JSON.stringify(pkg, null, 2));
+
+  setProjectTitle(root, getProjectName());
 
   console.log(`\nInitializing git repository:`);
   execSync(`git init ${targetDir} && cd ${targetDir} && git add .`);
@@ -414,6 +422,30 @@ function ensureSyntaxHighlighter(root, pkg, highlighter) {
     viteConfigPath,
     viteConfigContent.replace(/__CONTENT_HIGHLIGHTER__/g, highlighter)
   );
+}
+
+function sortObjectKeys(obj) {
+  return Object.keys(obj)
+    .sort()
+    .reduce((result, key) => {
+      result[key] = obj[key];
+      return result;
+    }, {});
+}
+
+function setProjectTitle(root, title) {
+  const filePaths = [
+    path.join(root, 'index.html'),
+    path.join(root, 'README.md'),
+  ];
+
+  for (const filePath of filePaths) {
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    fs.writeFileSync(
+      filePath,
+      fileContent.replace(/\*\*PROJECT_TITLE\*\*/g, title)
+    );
+  }
 }
 
 init().catch((e) => {

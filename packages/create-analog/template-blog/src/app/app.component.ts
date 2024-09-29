@@ -9,7 +9,7 @@ import { RouterOutlet } from '@angular/router';
     <nav>
       <a href="/">Home</a>
     </nav>
-    <router-outlet></router-outlet>
+    <router-outlet />
   `,
   styles: [
     `
