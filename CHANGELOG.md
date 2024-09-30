@@ -1,3 +1,9 @@
+# [1.9.0-beta.1](https://github.com/analogjs/analog/compare/v1.8.2...v1.9.0-beta.1) (2024-09-30)
+
+### Features
+
+- **create-analog:** set project title based on project name; sort deps ([#1374](https://github.com/analogjs/analog/issues/1374)) ([775eeab](https://github.com/analogjs/analog/commit/775eeab1ce3812e43070e7b18fa22adfa8e02ff3))
+
 ## [1.8.2](https://github.com/analogjs/analog/compare/v1.8.1...v1.8.2) (2024-09-30)
 
 ### Bug Fixes
