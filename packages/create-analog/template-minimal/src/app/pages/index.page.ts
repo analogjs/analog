@@ -8,7 +8,7 @@ import { Component } from '@angular/core';
 
     <h3>The fullstack meta-framework for Angular!</h3>
 
-    <p>
+    <p class="read-the-docs">
       <a href="https://analogjs.org" target="_blank">Docs</a> |
       <a href="https://github.com/analogjs/analog" target="_blank">GitHub</a> |
       <a href="https://github.com/sponsors/brandonroberts" target="_blank"
@@ -22,6 +22,15 @@ import { Component } from '@angular/core';
       flex-direction: column;
       justify-content: center;
       align-items: center;
+    }
+    .read-the-docs > * {
+      color: #fff;
+    }
+
+    @media (prefers-color-scheme: light) {
+      .read-the-docs > * {
+        color: #213547;
+      }
     }
   `,
 })
