@@ -8,5 +8,5 @@ pnpm-lock.yaml
 /.nx/cache
 .angular
 *.analog
-
 /.nx/workspace-data
+/packages/create-analog/template-*
