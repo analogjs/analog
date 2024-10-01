@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
       },
       prerender: {
         routes: ['/blog', '/blog/2022-12-27-my-first-post'],
-      },
+      },__ANALOG_SFC_CONFIG__
     }),
   ],
   test: {

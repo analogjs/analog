@@ -4,8 +4,8 @@
 import { blue, green, red, reset, yellow } from 'kolorist';
 import minimist from 'minimist';
 import { execSync } from 'node:child_process';
-import fs, { readdirSync } from 'node:fs';
-import path, { join } from 'node:path';
+import fs from 'node:fs';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import prompts from 'prompts';
 
@@ -135,6 +135,11 @@ async function init() {
           initial: 1,
         },
         {
+          type: 'confirm',
+          name: 'useAnalogSFC',
+          message: 'Would you like to use Analog SFCs?',
+        },
+        {
           type: skipTailwind ? null : 'confirm',
           name: 'tailwind',
           message: 'Would you like to add Tailwind to your project?',
@@ -157,6 +162,7 @@ async function init() {
     overwrite,
     packageName,
     variant,
+    useAnalogSFC,
     tailwind,
     syntaxHighlighter,
   } = result;
@@ -235,6 +241,7 @@ async function init() {
   write('package.json', JSON.stringify(pkg, null, 2));
 
   setProjectTitle(root, getProjectName());
+  setComponentFormat(root, filesDir, write, template, useAnalogSFC);
 
   console.log(`\nInitializing git repository:`);
   execSync(`git init ${targetDir} && cd ${targetDir} && git add .`);
@@ -397,31 +404,19 @@ function addYarnDevDependencies(pkg, template) {
 }
 
 function ensureSyntaxHighlighter(root, pkg, highlighter) {
-  const appConfigPath = path.join(root, 'src/app/app.config.ts');
-  const appConfigContent = fs.readFileSync(appConfigPath, 'utf-8');
-
-  fs.writeFileSync(
-    appConfigPath,
-    appConfigContent
-      .replace(/__HIGHLIGHTER__/g, HIGHLIGHTERS[highlighter].highlighter)
-      .replace(
-        /__HIGHLIGHTER_ENTRY_POINT__/g,
-        HIGHLIGHTERS[highlighter].entryPoint
-      )
-  );
+  replacePlaceholders(root, 'src/app/app.config.ts', {
+    __HIGHLIGHTER__: HIGHLIGHTERS[highlighter].highlighter,
+    __HIGHLIGHTER_ENTRY_POINT__: HIGHLIGHTERS[highlighter].entryPoint,
+  });
 
   const dependencies = HIGHLIGHTERS[highlighter].dependencies;
   for (const [name, version] of Object.entries(dependencies)) {
     pkg.dependencies[name] = version;
   }
 
-  const viteConfigPath = path.join(root, 'vite.config.ts');
-  const viteConfigContent = fs.readFileSync(viteConfigPath, 'utf-8');
-
-  fs.writeFileSync(
-    viteConfigPath,
-    viteConfigContent.replace(/__CONTENT_HIGHLIGHTER__/g, highlighter)
-  );
+  replacePlaceholders(root, 'vite.config.ts', {
+    __CONTENT_HIGHLIGHTER__: highlighter,
+  });
 }
 
 function sortObjectKeys(obj) {
@@ -434,18 +429,73 @@ function sortObjectKeys(obj) {
 }
 
 function setProjectTitle(root, title) {
-  const filePaths = [
-    path.join(root, 'index.html'),
-    path.join(root, 'README.md'),
-  ];
+  replacePlaceholders(root, ['index.html', 'README.md'], {
+    __PROJECT_TITLE__: title,
+  });
+}
 
-  for (const filePath of filePaths) {
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    fs.writeFileSync(
-      filePath,
-      fileContent.replace(/__PROJECT_TITLE__/g, title)
+function setComponentFormat(root, filesDir, write, template, useAnalogSFC) {
+  const getSFCConfig = () => {
+    const sfcConfigOption =
+      'vite: { experimental: { supportAnalogFormat: true } }';
+
+    return template === 'latest'
+      ? `{ ${sfcConfigOption} }`
+      : `\n      ${sfcConfigOption},`;
+  };
+
+  replacePlaceholders(root, 'vite.config.ts', {
+    __ANALOG_SFC_CONFIG__: useAnalogSFC ? getSFCConfig() : '',
+  });
+  replacePlaceholders(root, ['src/main.ts', 'src/main.server.ts'], {
+    __APP_COMPONENT__: useAnalogSFC ? 'App' : 'AppComponent',
+    __APP_COMPONENT_IMPORT__: useAnalogSFC
+      ? "import App from './app/app-root.ag';"
+      : "import { AppComponent } from './app/app.component';",
+  });
+
+  const cmpForDelete = useAnalogSFC ? 'app.component' : 'app-root';
+  const deleteExt = useAnalogSFC ? 'ts' : 'ag';
+  deleteFiles(root, [
+    useAnalogSFC ? `src/app/${cmpForDelete}.ts` : `src/app/${cmpForDelete}.ag`,
+    template === 'blog'
+      ? [
+          `src/app/pages/blog/index.page.${deleteExt}`,
+          `src/app/pages/blog/[slug].page.${deleteExt}`,
+        ]
+      : `src/app/pages/index.page.${deleteExt}`,
+    template !== 'minimal' && `src/app/${cmpForDelete}.spec.ts`,
+  ]);
+
+  if (useAnalogSFC) {
+    write(
+      'src/analog-env.d.ts',
+      fs.readFileSync(path.join(filesDir, 'analog-env.d.ts'), 'utf-8')
     );
   }
+}
+
+function replacePlaceholders(root, files, config) {
+  for (const file of toFlatArray(files)) {
+    const filePath = path.join(root, file);
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const newFileContent = Object.keys(config).reduce(
+      (content, placeholder) =>
+        content.replace(RegExp(placeholder, 'g'), config[placeholder]),
+      fileContent
+    );
+    fs.writeFileSync(filePath, newFileContent);
+  }
+}
+
+function deleteFiles(root, files) {
+  for (const file of toFlatArray(files)) {
+    fs.unlinkSync(path.join(root, file));
+  }
+}
+
+function toFlatArray(value) {
+  return (Array.isArray(value) ? value : [value]).filter(Boolean).flat();
 }
 
 init().catch((e) => {

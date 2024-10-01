@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
       static: true,
       prerender: {
         routes: [],
-      },
+      },__ANALOG_SFC_CONFIG__
     }),
   ],
 }));

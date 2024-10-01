@@ -21,30 +21,30 @@ import { Component, signal } from '@angular/core';
     <p class="read-the-docs">
       <a href="https://analogjs.org" target="_blank">Docs</a> |
       <a href="https://github.com/analogjs/analog" target="_blank">GitHub</a> |
-      <a href="https://github.com/sponsors/brandonroberts" target="_blank"
-        >Sponsor</a
-      >
+      <a href="https://github.com/sponsors/brandonroberts" target="_blank">
+        Sponsor
+      </a>
     </p>
   `,
-  styles: [
-    `
-      .logo {
-        will-change: filter;
-      }
-      .logo:hover {
-        filter: drop-shadow(0 0 2em #646cffaa);
-      }
-      .read-the-docs > * {
-        color: #fff;
-      }
+  styles: `
+    .logo {
+      will-change: filter;
+    }
 
-      @media (prefers-color-scheme: light) {
-        .read-the-docs > * {
-          color: #213547;
-        }
+    .logo:hover {
+      filter: drop-shadow(0 0 2em #646cffaa);
+    }
+
+    .read-the-docs > * {
+      color: #fff;
+    }
+
+    @media (prefers-color-scheme: light) {
+      .read-the-docs > * {
+        color: #213547;
       }
-    `,
-  ],
+    }
+  `,
 })
 export default class HomeComponent {
   count = signal(0);

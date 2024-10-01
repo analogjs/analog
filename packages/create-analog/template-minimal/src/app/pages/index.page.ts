@@ -11,9 +11,9 @@ import { Component } from '@angular/core';
     <p class="read-the-docs">
       <a href="https://analogjs.org" target="_blank">Docs</a> |
       <a href="https://github.com/analogjs/analog" target="_blank">GitHub</a> |
-      <a href="https://github.com/sponsors/brandonroberts" target="_blank"
-        >Sponsor</a
-      >
+      <a href="https://github.com/sponsors/brandonroberts" target="_blank">
+        Sponsor
+      </a>
     </p>
   `,
   styles: `
@@ -23,6 +23,7 @@ import { Component } from '@angular/core';
       justify-content: center;
       align-items: center;
     }
+
     .read-the-docs > * {
       color: #fff;
     }
