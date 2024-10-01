@@ -1,3 +1,9 @@
+# [1.9.0-beta.2](https://github.com/analogjs/analog/compare/v1.9.0-beta.1...v1.9.0-beta.2) (2024-10-01)
+
+### Features
+
+- **create-analog:** optionally generate new projects with Analog SFCs ([#1375](https://github.com/analogjs/analog/issues/1375)) ([9b46f08](https://github.com/analogjs/analog/commit/9b46f081d1fd20e2c4e99ca6eee0e09237568704))
+
 # [1.9.0-beta.1](https://github.com/analogjs/analog/compare/v1.8.2...v1.9.0-beta.1) (2024-09-30)
 
 ### Features
