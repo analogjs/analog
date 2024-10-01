@@ -64,7 +64,8 @@ const renameFiles = {
 async function init() {
   let targetDir = formatTargetDir(argv._[0]);
   let template = argv.template || argv.t;
-  let skipTailwind = argv.skipTailwind || false;
+  let skipTailwind = fromBoolArg(argv.skipTailwind);
+  let useAnalogSFC = fromBoolArg(argv.analogSFC);
 
   const defaultTargetDir = 'analog-project';
   const getProjectName = () =>
@@ -135,12 +136,12 @@ async function init() {
           initial: 1,
         },
         {
-          type: 'confirm',
-          name: 'useAnalogSFC',
+          type: useAnalogSFC === undefined ? 'confirm' : null,
+          name: 'analogSFC',
           message: 'Would you like to use Analog SFCs?',
         },
         {
-          type: skipTailwind ? null : 'confirm',
+          type: skipTailwind === undefined ? 'confirm' : null,
           name: 'tailwind',
           message: 'Would you like to add Tailwind to your project?',
         },
@@ -162,7 +163,7 @@ async function init() {
     overwrite,
     packageName,
     variant,
-    useAnalogSFC,
+    analogSFC,
     tailwind,
     syntaxHighlighter,
   } = result;
@@ -179,7 +180,8 @@ async function init() {
   template = variant || framework || template;
   // determine syntax highlighter
   let highlighter = syntaxHighlighter ?? (template === 'blog' ? 'prism' : null);
-  skipTailwind = !tailwind || skipTailwind;
+  skipTailwind = skipTailwind ?? !tailwind;
+  useAnalogSFC = useAnalogSFC ?? analogSFC;
 
   console.log(`\nScaffolding project in ${root}...`);
 
@@ -496,6 +498,12 @@ function deleteFiles(root, files) {
 
 function toFlatArray(value) {
   return (Array.isArray(value) ? value : [value]).filter(Boolean).flat();
+}
+
+function fromBoolArg(arg) {
+  return ['boolean', 'undefined'].includes(typeof arg)
+    ? arg
+    : ['', 'true'].includes(arg);
 }
 
 init().catch((e) => {
