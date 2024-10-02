@@ -64,4 +64,30 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-You can opt out of prerendering by passing an empty array of routes.
+You can opt out of prerendering by passing an empty array of routes and disabling prerender on the root route.
+
+```js
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  // ...other config
+  plugins: [
+    analog({
+      ssr: true,
+      nitro: {
+        routeRules: {
+          '/': {
+            prerender: false,
+          },
+        },
+      },
+      prerender: {
+        routes: async () => {
+          return ['/'];
+        },
+      },
+    }),
+  ],
+}));
+```

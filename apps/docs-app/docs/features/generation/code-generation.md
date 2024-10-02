@@ -17,7 +17,7 @@ The Analog plugin for Nx provides a series of generators that help automate some
 To generate a new Analog application within an Nx workspace, use the application generator:
 
 ```shell
-npx nx generate @analogjs/platform:application my-app
+npx nx generate @analogjs/platform:app my-app
 ```
 
 ### Generating pages
@@ -51,7 +51,7 @@ Analog provides a series of schematics that help automate some of the frequent t
 To generate a new Analog application within an Angular CLI workspace, use the application schematic:
 
 ```shell
-npx ng generate @analogjs/platform:application my-app
+npx ng generate @analogjs/platform:app my-app
 ```
 
 ### Generating pages
