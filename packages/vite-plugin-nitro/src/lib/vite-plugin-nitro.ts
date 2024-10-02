@@ -30,7 +30,11 @@ const __dirname = dirname(__filename);
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
-  const apiPrefix = `/${nitroOptions?.runtimeConfig?.['apiPrefix'] ?? 'api'}`;
+  const apiPrefix = `/${options?.apiPrefix || 'api'}`;
+  const useAPIMiddleware =
+    typeof options?.useAPIMiddleware !== 'undefined'
+      ? options?.useAPIMiddleware
+      : true;
 
   let isBuild = false;
   let isServe = false;
@@ -120,12 +124,21 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             plugins: [pageEndpointsPlugin()],
           },
           handlers: [
-            {
-              handler: apiMiddlewareHandler,
-              middleware: true,
-            },
+            ...(useAPIMiddleware
+              ? [
+                  {
+                    handler: apiMiddlewareHandler,
+                    middleware: true,
+                  },
+                ]
+              : []),
             ...pageHandlers,
           ],
+          routeRules: useAPIMiddleware
+            ? undefined
+            : {
+                [`${apiPrefix}/**`]: { proxy: { to: '/**' } },
+              },
         };
 
         if (isVercelPreset(buildPreset)) {
@@ -260,10 +273,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               },
               moduleSideEffects: ['zone.js/node', 'zone.js/fesm2015/zone-node'],
               handlers: [
-                {
-                  handler: apiMiddlewareHandler,
-                  middleware: true,
-                },
+                ...(useAPIMiddleware
+                  ? [
+                      {
+                        handler: apiMiddlewareHandler,
+                        middleware: true,
+                      },
+                    ]
+                  : []),
                 ...pageHandlers,
               ],
             };

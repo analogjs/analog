@@ -36,6 +36,7 @@ export const mockNitroConfig: NitroConfig = {
       },
     ],
   },
+  routeRules: undefined,
 };
 
 export async function mockBuildFunctions() {
