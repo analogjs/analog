@@ -19,6 +19,7 @@ export interface Options {
    * Additional API paths to include
    */
   additionalAPIDirs?: string[];
+  apiPrefix?: string;
 }
 
 export interface PrerenderOptions {

@@ -12,20 +12,12 @@ import { depsPlugin } from './deps-plugin.js';
 import { injectHTMLPlugin } from './ssr/inject-html-plugin.js';
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
-  const { apiPrefix, ...platformOptions } = {
+  const { ...platformOptions } = {
     ssr: true,
     ...opts,
   };
 
   let nitroOptions = platformOptions?.nitro;
-  if (apiPrefix) {
-    nitroOptions = {
-      ...nitroOptions,
-      runtimeConfig: {
-        apiPrefix,
-      },
-    };
-  }
 
   return [
     ...viteNitroPlugin(platformOptions, nitroOptions),
