@@ -1,3 +1,9 @@
+# [1.9.0-beta.3](https://github.com/analogjs/analog/compare/v1.9.0-beta.2...v1.9.0-beta.3) (2024-10-02)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** add option use proxy for API requests instead of custom middleware ([#1378](https://github.com/analogjs/analog/issues/1378)) ([f72087f](https://github.com/analogjs/analog/commit/f72087f43bd09fb51407f3e699d7265d05b96e44))
+
 # [1.9.0-beta.2](https://github.com/analogjs/analog/compare/v1.9.0-beta.1...v1.9.0-beta.2) (2024-10-01)
 
 ### Features
