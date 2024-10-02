@@ -20,6 +20,13 @@ export interface Options {
    */
   additionalAPIDirs?: string[];
   apiPrefix?: string;
+
+  /**
+   * Toggles internal API middleware.
+   * If disabled, a proxy request is used to route /api
+   * requests to / in the production server build.
+   */
+  useAPIMiddleware?: boolean;
 }
 
 export interface PrerenderOptions {

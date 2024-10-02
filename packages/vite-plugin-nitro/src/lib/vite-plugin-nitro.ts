@@ -31,6 +31,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const apiPrefix = `/${options?.apiPrefix || 'api'}`;
+  const useAPIMiddleware =
+    typeof options?.useAPIMiddleware !== 'undefined'
+      ? options?.useAPIMiddleware
+      : true;
 
   let isBuild = false;
   let isServe = false;
@@ -58,6 +62,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           additionalPagesDirs: options?.additionalPagesDirs,
         });
 
+        const apiMiddlewareHandler =
+          filePrefix +
+          normalizePath(
+            join(__dirname, `runtime/api-middleware${filePrefix ? '.mjs' : ''}`)
+          );
         const ssrEntry = normalizePath(
           filePrefix +
             resolve(
@@ -114,10 +123,22 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             },
             plugins: [pageEndpointsPlugin()],
           },
-          handlers: [...pageHandlers],
-          routeRules: {
-            [`${apiPrefix}/**`]: { proxy: { to: '/**' } },
-          },
+          handlers: [
+            ...(useAPIMiddleware
+              ? [
+                  {
+                    handler: apiMiddlewareHandler,
+                    middleware: true,
+                  },
+                ]
+              : []),
+            ...pageHandlers,
+          ],
+          routeRules: useAPIMiddleware
+            ? undefined
+            : {
+                [`${apiPrefix}/**`]: { proxy: { to: '/**' } },
+              },
         };
 
         if (isVercelPreset(buildPreset)) {
@@ -251,7 +272,17 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 external: ['rxjs', 'node-fetch-native/dist/polyfill'],
               },
               moduleSideEffects: ['zone.js/node', 'zone.js/fesm2015/zone-node'],
-              handlers: [...pageHandlers],
+              handlers: [
+                ...(useAPIMiddleware
+                  ? [
+                      {
+                        handler: apiMiddlewareHandler,
+                        middleware: true,
+                      },
+                    ]
+                  : []),
+                ...pageHandlers,
+              ],
             };
           }
         }

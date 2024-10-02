@@ -36,9 +36,7 @@ export const mockNitroConfig: NitroConfig = {
       },
     ],
   },
-  routeRules: {
-    '/api/**': { proxy: { to: '/**' } },
-  },
+  routeRules: undefined,
 };
 
 export async function mockBuildFunctions() {
