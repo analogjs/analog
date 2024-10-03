@@ -1,9 +1,13 @@
 declare module '*.analog' {
-  const cmp: any;
+  import { Type } from '@angular/core';
+
+  const cmp: Type<unknown>;
   export default cmp;
 }
 
 declare module '*.ag' {
-  const cmp: any;
+  import { Type } from '@angular/core';
+
+  const cmp: Type<unknown>;
   export default cmp;
 }
