@@ -1,3 +1,9 @@
+# [1.9.0-beta.4](https://github.com/analogjs/analog/compare/v1.9.0-beta.3...v1.9.0-beta.4) (2024-10-03)
+
+### Features
+
+- **router:** introduce server support for form actions ([#1346](https://github.com/analogjs/analog/issues/1346)) ([1d15109](https://github.com/analogjs/analog/commit/1d15109b40935319d7fdf32af751acb1f6effaf7))
+
 # [1.9.0-beta.3](https://github.com/analogjs/analog/compare/v1.9.0-beta.2...v1.9.0-beta.3) (2024-10-02)
 
 ### Bug Fixes
