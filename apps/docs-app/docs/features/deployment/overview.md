@@ -91,7 +91,6 @@ Given a `vite.config.ts` file similar to this:
 ```ts
     plugins: [
       analog({
-        ssr: true,
         apiPrefix: 'api',
         nitro: {
           routeRules: {
