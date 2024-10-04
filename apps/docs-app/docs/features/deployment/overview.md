@@ -101,7 +101,7 @@ Given a `vite.config.ts` file similar to this:
         },
         prerender: {
           routes: async () => {
-            return ['/'];
+            return [];
           }
         }
 ```
