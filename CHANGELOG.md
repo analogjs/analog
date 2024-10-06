@@ -1,3 +1,9 @@
+# [1.9.0-beta.5](https://github.com/analogjs/analog/compare/v1.9.0-beta.4...v1.9.0-beta.5) (2024-10-06)
+
+### Bug Fixes
+
+- **create-analog:** add Analog SFCs to Tailwind config ([#1388](https://github.com/analogjs/analog/issues/1388)) ([c051f05](https://github.com/analogjs/analog/commit/c051f056974b2336e209ea6941c42822c808ab81))
+
 # [1.9.0-beta.4](https://github.com/analogjs/analog/compare/v1.9.0-beta.3...v1.9.0-beta.4) (2024-10-03)
 
 ### Features
