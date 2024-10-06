@@ -167,7 +167,7 @@
     "sharp": "^0.33.5",
     "shiki": "^1.6.1",
     "start-server-and-test": "^1.15.4",
-    "tailwindcss": "^3.0.2",
+    "tailwindcss": "^3.1.0",
     "ts-jest": "29.1.0",
     "ts-morph": "^21.0.1",
     "ts-node": "10.9.1",

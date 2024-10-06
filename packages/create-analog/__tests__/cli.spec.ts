@@ -36,7 +36,7 @@ templateFiles = templateFiles
 // starter with tailwind
 const templateFilesTailwind = [
   ...templateFiles,
-  'tailwind.config.js',
+  'tailwind.config.ts',
   'postcss.config.js',
 ].sort();
 beforeAll(() => remove(genPath));
