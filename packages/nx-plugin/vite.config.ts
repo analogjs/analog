@@ -11,9 +11,7 @@ export default defineConfig(({ mode }) => {
       globals: true,
       include: ['**/*.spec.ts'],
       exclude: ['**/files/**/*.spec.ts'],
-      cache: {
-        dir: `../../node_modules/.vitest`,
-      },
+      cacheDir: '../../node_modules/.vitest',
     },
     define: {
       'import.meta.vitest': mode !== 'production',

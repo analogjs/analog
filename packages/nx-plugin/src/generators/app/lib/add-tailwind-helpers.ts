@@ -165,10 +165,19 @@ export function addTailwindConfigPathToProject(
     );
   }
 
-  buildTarget.options = {
-    ...buildTarget.options,
-    tailwindConfig: joinPathFragments(project.root, 'tailwind.config.js'),
-  };
+  const tailwindInstalledVersion = detectTailwindInstalledVersion(tree);
+
+  if (tailwindInstalledVersion === '2') {
+    buildTarget.options = {
+      ...buildTarget.options,
+      tailwindConfig: joinPathFragments(project.root, 'tailwind.config.js'),
+    };
+  } else {
+    buildTarget.options = {
+      ...buildTarget.options,
+      tailwindConfig: joinPathFragments(project.root, 'tailwind.config.ts'),
+    };
+  }
 
   updateProjectConfiguration(tree, options.project, project);
 }
@@ -180,14 +189,29 @@ export function addTailwindConfigFile(
 ): void {
   if (tree.exists(joinPathFragments(project.root, 'tailwind.config.js'))) {
     throw new Error(
-      stripIndents`The "tailwind.config.js" file already exists in the project "${options.project}". Are you sure this is the right project to set up Tailwind?
+      stripIndents`The "tailwind.config" file already exists in the project "${options.project}". Are you sure this is the right project to set up Tailwind?
       If you are sure, you can remove the existing file and re-run the generator.`
     );
   }
 
+  const tailwindInstalledVersion = detectTailwindInstalledVersion(tree);
+
+  if (tailwindInstalledVersion === '2') {
+    generateFiles(
+      tree,
+      joinPathFragments(__dirname, '..', 'files', 'tailwind/v2'),
+      project.root,
+      {
+        relativeSourceRoot: relative(project.root, project.sourceRoot),
+        template: '',
+      }
+    );
+    return;
+  }
+
   generateFiles(
     tree,
-    joinPathFragments(__dirname, '..', 'files', 'tailwind'),
+    joinPathFragments(__dirname, '..', 'files', 'tailwind/latest'),
     project.root,
     {
       relativeSourceRoot: relative(project.root, project.sourceRoot),
