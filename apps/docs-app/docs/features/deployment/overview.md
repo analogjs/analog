@@ -58,6 +58,7 @@ If you are deploying with a custom URL prefix, such as https://domain.com/ `base
 This instructs Angular on how recognize and generate URLs.
 
 ```ts
+import { ApplicationConfig } from '@angular/core';
 import { APP_BASE_HREF } from '@angular/common';
 
 export const appConfig: ApplicationConfig = {
