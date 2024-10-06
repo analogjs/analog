@@ -53,7 +53,7 @@ export default defineConfig({
 
 If you are deploying with a custom URL prefix, such as https://domain.com/ `basehref` you must do these steps for [server-side-data-fetching](https://analogjs.org/docs/features/data-fetching/server-side-data-fetching), [html markup and assets](https://angular.io/api/common/APP_BASE_HREF), and [dynamic api routes](https://analogjs.org/docs/features/api/overview) to work correctly on the specified `basehref`.
 
-1. Update the `app.config.ts` file to use the new file.
+1. Update the `app.config.ts` file.
 
 This instructs Angular on how recognize and generate URLs.
 
