@@ -1,3 +1,9 @@
+# [1.9.0-beta.6](https://github.com/analogjs/analog/compare/v1.9.0-beta.5...v1.9.0-beta.6) (2024-10-07)
+
+### Features
+
+- **create-analog:** update app generators and templates to use TypeScript for Tailwind config ([#1387](https://github.com/analogjs/analog/issues/1387)) ([586adae](https://github.com/analogjs/analog/commit/586adae9b4ef0770dcb5d14344cd5943645b38a9))
+
 # [1.9.0-beta.5](https://github.com/analogjs/analog/compare/v1.9.0-beta.4...v1.9.0-beta.5) (2024-10-06)
 
 ### Bug Fixes
