@@ -42,6 +42,10 @@
     console.log('the click from Hello', event);
   }
 
+  function onTimer(event: number) {
+    console.log('the timer from Hello', event);
+  }
+
   effect(() => {
     console.log('counter changed', counter());
   });
@@ -63,7 +67,7 @@
   <External />
 
   @if (counter() > 5) {
-  <Hello [text]="text()" (clicked)="onClick($event)" />
+  <Hello [text]="text()" (clicked)="onClick($event)" (timer)="onTimer($event)" />
   <AnotherOne />
   <app-hello-original />
   }

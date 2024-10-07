@@ -2,13 +2,12 @@
 
 exports[`authoring ng file > should process component as an analog file 1`] = `
 "import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewChildren, contentChild, contentChildren, output, model } from "@angular/core";
+import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewChildren, contentChild, contentChildren, output, model, outputFromObservable } from "@angular/core";
 import External from "./external.analog";
 import { ExternalService } from "./external";
 import { ExternalEnum } from "./external.model";
 import nonameanalog from "./noname.analog";
 import nonameag from "./noname.ag";
-
 @Component({
     standalone: true,
     selector: 'virtual,Virtual',
@@ -25,106 +24,81 @@ import nonameag from "./noname.ag";
         divElement: new ViewChild('divElement')
     },
     imports: [External, nonameanalog, nonameag],
-    providers: [ExternalService],
-    outputs: ['output', 'outputWithType']
+    providers: [ExternalService]
 })
 export default class VirtualAnalogComponent {
     constructor() {
-        let divElement;
-        let test;
-
-
-        setTimeout(() => {
-            test = 'test';
-        }, 1000)
-        const counter = (this.counter = signal(0));
-
         const [a, b, , c = 4] = [1, 2, 3];
         this.a = a;
         this.b = b;
         this.c = c;
-        const inputWithDefault = this.inputWithDefault
-        const inputWithoutDefault = this.inputWithoutDefault
-        const inputWithAlias = this.inputWithAlias
-        const inputWithoutDefaultWithAlias = this.inputWithoutDefaultWithAlias
-        const inputWithTransform = this.inputWithTransform
-        const requiredInput = this.requiredInput
-        const requiredInputWithTransform = this.requiredInputWithTransform
-        const output = this.output
-        const newOutput = this.newOutput
-        const outputWithType = this.outputWithType
-        const myModel = this.myModel
-        const viewChildEl = this.viewChildEl
-        const viewChildRequiredEl = this.viewChildRequiredEl
-        const viewChildrenEl = this.viewChildrenEl
-        const contentChildEl = this.contentChildEl
-        const contentChildRequiredEl = this.contentChildRequiredEl
-        const contentChildrenEl = this.contentChildrenEl
-
-
+        let divElement;
+        let test;
+        const counter = this.counter;
+        const inputWithDefault = this.inputWithDefault;
+        const inputWithoutDefault = this.inputWithoutDefault;
+        const inputWithAlias = this.inputWithAlias;
+        const inputWithoutDefaultWithAlias = this.inputWithoutDefaultWithAlias;
+        const inputWithTransform = this.inputWithTransform;
+        const requiredInput = this.requiredInput;
+        const requiredInputWithTransform = this.requiredInputWithTransform;
+        const newOutput = this.newOutput;
+        const stream$ = this.stream$;
+        const outputWithObservable = this.outputWithObservable;
+        const myModel = this.myModel;
+        const viewChildEl = this.viewChildEl;
+        const viewChildRequiredEl = this.viewChildRequiredEl;
+        const viewChildrenEl = this.viewChildrenEl;
+        const contentChildEl = this.contentChildEl;
+        const contentChildRequiredEl = this.contentChildRequiredEl;
+        const contentChildrenEl = this.contentChildrenEl;
+        setTimeout(() => {
+            test = 'test';
+        }, 1000)
         afterNextRender(() => {
             console.log('the div', divElement);
         })
-
         Object.defineProperties(this, {
-            divElement: { get() { return divElement; }, set(v) { divElement = v; } },
-            test: { get() { return test; }, set(v) { test = v; } },
-        });
+            divElement: { set(v) { divElement = v; }get() { return divElement } },
+            test: { set(v) { test = v; }get() { return test } },
+        })
     }
-
-    protected Math = Math;
-    protected a;
-    protected b;
-    protected c;
-    protected inputWithDefault = input("");
-    protected inputWithoutDefault = input<string>();
-    protected inputWithAlias = input("", { alias: "theAlias" });
-    protected inputWithoutDefaultWithAlias = input<string | undefined>(undefined, {
+    protected readonly Math = Math;
+    a;
+    b;
+    c;
+    protected readonly routeMeta = routeMeta;
+    counter = signal(0);
+    inputWithDefault = input("");
+    inputWithoutDefault = input<string>();
+    inputWithAlias = input("", { alias: "theAlias" });
+    inputWithoutDefaultWithAlias = input<string | undefined>(undefined, {
         alias: "theAlias",
     });
-    protected inputWithTransform = input<unknown, boolean>("", {
+    inputWithTransform = input<unknown, boolean>("", {
         transform: booleanAttribute,
     });
-    protected requiredInput = input.required<string>();
-    protected requiredInputWithTransform = input.required<unknown, number>({
+    requiredInput = input.required<string>();
+    requiredInputWithTransform = input.required<unknown, number>({
         transform: (value) => numberAttribute(value, 10),
     });
-    protected output = new EventEmitter();
-    protected newOutput = output();
-    protected outputWithType = new EventEmitter<string>();
-    protected myModel = model();
-    protected viewChildEl = viewChild<HTMLDivElement>('divElement');
-    protected viewChildRequiredEl = viewChild.required<HTMLDivElement>('divElement');
-    protected viewChildrenEl = viewChildren<HTMLDivElement[]>('divElement');
-    protected contentChildEl = contentChild<ElementRef>('divElement');
-    protected contentChildRequiredEl = contentChild.required<ElementRef>('divElement');
-    protected contentChildrenEl = contentChildren<HTMLDivElement[]>('divElement');
-    protected ExternalEnum = ExternalEnum;
+    newOutput = output();
+    stream$ = new BehaviorSubject<string>('hello');
+    outputWithObservable = outputFromObservable(this.stream$);
+    myModel = model();
+    viewChildEl = viewChild<HTMLDivElement>('divElement');
+    viewChildRequiredEl = viewChild.required<HTMLDivElement>('divElement');
+    viewChildrenEl = viewChildren<HTMLDivElement[]>('divElement');
+    contentChildEl = contentChild<ElementRef>('divElement');
+    contentChildRequiredEl = contentChild.required<ElementRef>('divElement');
+    contentChildrenEl = contentChildren<HTMLDivElement[]>('divElement');
+    protected readonly myFunc = myFunc;
+    protected readonly ExternalEnum = ExternalEnum;
 }
-
-
 export const routeMeta = {
     title: 'My page',
     canActivate: [() => true],
 }
-
-
-export interface MyInterface {
-    title: string
-}
-
-
-export type MyType = string;
-
-
-export enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
-
 export function myFunc() {
     console.log('hello');
 }
@@ -150,29 +124,24 @@ export default class VirtualAnalogComponent {
 exports[`authoring ng file > should process directive as an analog file 1`] = `
 "import { Directive } from '@angular/core';
 import { inject, ElementRef, afterNextRender } from "@angular/core";
-
 @Directive({
     standalone: true,
     selector: 'input[directive]'
 })
 export default class VirtualAnalogDirective {
     constructor() {
-        const elRef = (this.elRef = inject(ElementRef));
-
-
+        const elRef = this.elRef;
         afterNextRender(() => {
             elRef.nativeElement.focus();
         });
         this.onInit = () => {
             console.log('init code');
         }
-
-
         effect(() => {
             console.log('just some effect');
         });
     }
-
+    elRef = inject(ElementRef);
     ngOnInit() {
         this.onInit();
     }

@@ -2,7 +2,7 @@ import { compileAnalogFile } from './analog';
 
 const COMPONENT_CONTENT = `
 <script lang="ts">
-import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewChildren, contentChild, contentChildren, output, model } from '@angular/core';
+import { signal, input, ViewChild, afterNextRender, ElementRef, viewChild, viewChildren, contentChild, contentChildren, output, model, outputFromObservable } from '@angular/core';
 import External from './external.analog' with { analog: 'imports' };
 import { ExternalService } from './external' with { analog: 'providers' };
 import { ExternalEnum } from './external.model' with { analog: 'exposes' };
@@ -61,9 +61,10 @@ const requiredInput = input.required<string>(); // InputSignal<string, string>
 const requiredInputWithTransform = input.required<unknown, number>({
     transform: (value) => numberAttribute(value, 10),
   });
-const output = new EventEmitter();
 const newOutput = output();
-const outputWithType = new EventEmitter<string>();
+
+const stream$ = new BehaviorSubject<string>('hello');
+const outputWithObservable = outputFromObservable(stream$);
 
 const myModel = model();
 
