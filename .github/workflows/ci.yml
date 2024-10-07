@@ -83,6 +83,25 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .node-version
+      - run: corepack enable
+      - run: pnpm --version
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - name: Install
+        run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Test
+        run: pnpm test
+
+  unit-windows:
+    runs-on: windows-latest
+    needs:
       - build-windows
     steps:
       - uses: actions/checkout@v3
