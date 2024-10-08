@@ -1,3 +1,9 @@
+# [1.9.0-beta.7](https://github.com/analogjs/analog/compare/v1.9.0-beta.6...v1.9.0-beta.7) (2024-10-08)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** support outputFromObservable ([#1392](https://github.com/analogjs/analog/issues/1392)) ([8c255ec](https://github.com/analogjs/analog/commit/8c255ece5594e1f7a16b8a15cfa4619bf55770e8))
+
 # [1.9.0-beta.6](https://github.com/analogjs/analog/compare/v1.9.0-beta.5...v1.9.0-beta.6) (2024-10-07)
 
 ### Features
