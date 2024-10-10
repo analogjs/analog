@@ -72,7 +72,10 @@ export function requestContextInterceptor(
   }
 
   // on the client
-  if (!import.meta.env.SSR && req.url.startsWith('/')) {
+  if (
+    !import.meta.env.SSR &&
+    (req.url.startsWith('/') || req.url.includes('/_analog/'))
+  ) {
     const cacheRestoreResponse = transferState.get(storeKey, null);
 
     if (cacheRestoreResponse) {
@@ -80,9 +83,14 @@ export function requestContextInterceptor(
       return of(new HttpResponse(cacheRestoreResponse));
     }
 
+    // /_analog/ requests are full URLs
+    const url = req.url.includes('/_analog/')
+      ? req.url
+      : `${window.location.origin}${req.url}`;
+
     return next(
       req.clone({
-        url: `${window.location.origin}${req.url}`,
+        url,
       })
     );
   }
