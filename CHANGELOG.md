@@ -1,3 +1,9 @@
+# [1.9.0-beta.10](https://github.com/analogjs/analog/compare/v1.9.0-beta.9...v1.9.0-beta.10) (2024-10-10)
+
+### Bug Fixes
+
+- **create-analog:** add minimal template to semver during release ([0e030cc](https://github.com/analogjs/analog/commit/0e030cca96f60b42d0c6feaf5c997cc54ce0a5da))
+
 # [1.9.0-beta.9](https://github.com/analogjs/analog/compare/v1.9.0-beta.8...v1.9.0-beta.9) (2024-10-10)
 
 ### Bug Fixes
