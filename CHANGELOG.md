@@ -1,3 +1,9 @@
+# [1.9.0-beta.8](https://github.com/analogjs/analog/compare/v1.9.0-beta.7...v1.9.0-beta.8) (2024-10-10)
+
+### Bug Fixes
+
+- **platform:** add better cache invalidation for file changes ([#1394](https://github.com/analogjs/analog/issues/1394)) ([c38900d](https://github.com/analogjs/analog/commit/c38900da1b8ffa89e5e5e826840095755e820791))
+
 # [1.9.0-beta.7](https://github.com/analogjs/analog/compare/v1.9.0-beta.6...v1.9.0-beta.7) (2024-10-08)
 
 ### Bug Fixes
