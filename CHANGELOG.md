@@ -1,3 +1,9 @@
+# [1.9.0-beta.9](https://github.com/analogjs/analog/compare/v1.9.0-beta.8...v1.9.0-beta.9) (2024-10-10)
+
+### Bug Fixes
+
+- **router:** retrieve initial server page load from transfer state ([#1396](https://github.com/analogjs/analog/issues/1396)) ([f9f1d9b](https://github.com/analogjs/analog/commit/f9f1d9b28e6b156ff91e657fa916dabe6bdcf4d9))
+
 # [1.9.0-beta.8](https://github.com/analogjs/analog/compare/v1.9.0-beta.7...v1.9.0-beta.8) (2024-10-10)
 
 ### Bug Fixes
