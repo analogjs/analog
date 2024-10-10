@@ -3,7 +3,13 @@ import {
   EnvironmentProviders,
   makeEnvironmentProviders,
 } from '@angular/core';
-import { provideRouter, RouterFeatures } from '@angular/router';
+import {
+  provideRouter,
+  RouterFeature,
+  RouterFeatures,
+  ROUTES,
+  Routes,
+} from '@angular/router';
 import { ɵHTTP_ROOT_INTERCEPTOR_FNS as HTTP_ROOT_INTERCEPTOR_FNS } from '@angular/common/http';
 
 import { routes } from './routes';
@@ -34,4 +40,13 @@ export function provideFileRouter(
       useValue: cookieInterceptor,
     },
   ]);
+}
+
+export function withExtraRoutes(routes: Routes): RouterFeatures[] {
+  return [
+    {
+      ɵkind: 100 as any,
+      ɵproviders: [{ provide: ROUTES, useValue: routes }],
+    },
+  ];
 }
