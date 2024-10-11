@@ -1,3 +1,9 @@
+# [1.9.0-beta.11](https://github.com/analogjs/analog/compare/v1.9.0-beta.10...v1.9.0-beta.11) (2024-10-11)
+
+### Bug Fixes
+
+- **router:** expose inject function for page endpoint URL ([#1397](https://github.com/analogjs/analog/issues/1397)) ([42486cc](https://github.com/analogjs/analog/commit/42486ccd5c520bd5258b9d93c372566424001d02))
+
 # [1.9.0-beta.10](https://github.com/analogjs/analog/compare/v1.9.0-beta.9...v1.9.0-beta.10) (2024-10-10)
 
 ### Bug Fixes
