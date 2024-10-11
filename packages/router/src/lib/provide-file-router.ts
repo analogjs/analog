@@ -3,13 +3,7 @@ import {
   EnvironmentProviders,
   makeEnvironmentProviders,
 } from '@angular/core';
-import {
-  provideRouter,
-  RouterFeature,
-  RouterFeatures,
-  ROUTES,
-  Routes,
-} from '@angular/router';
+import { provideRouter, RouterFeatures, ROUTES, Routes } from '@angular/router';
 import { ɵHTTP_ROOT_INTERCEPTOR_FNS as HTTP_ROOT_INTERCEPTOR_FNS } from '@angular/common/http';
 
 import { routes } from './routes';
