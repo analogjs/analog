@@ -31,7 +31,7 @@ import {
   createJitResourceTransformer,
   SourceFileCache,
 } from './utils/devkit.js';
-import { angularVitestPlugin } from './angular-vitest-plugin.js';
+import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import { angularStorybookPlugin } from './angular-storybook-plugin.js';
 
 const require = createRequire(import.meta.url);
@@ -409,7 +409,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   return [
     angularPlugin(),
-    (isTest && !isStackBlitz && angularVitestPlugin()) as Plugin,
+    ...(isTest && !isStackBlitz ? angularVitestPlugins() : []),
     (jit &&
       jitPlugin({
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
