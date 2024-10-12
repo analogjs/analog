@@ -1,3 +1,9 @@
+# [1.9.0-beta.12](https://github.com/analogjs/analog/compare/v1.9.0-beta.11...v1.9.0-beta.12) (2024-10-12)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use esbuild to postprocess sourcemaps during testing ([#1399](https://github.com/analogjs/analog/issues/1399)) ([bdf8cee](https://github.com/analogjs/analog/commit/bdf8cee28b201871886ead48127600fd00f4af37))
+
 # [1.9.0-beta.11](https://github.com/analogjs/analog/compare/v1.9.0-beta.10...v1.9.0-beta.11) (2024-10-11)
 
 ### Bug Fixes
