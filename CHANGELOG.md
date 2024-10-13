@@ -1,3 +1,9 @@
+# [1.9.0-beta.13](https://github.com/analogjs/analog/compare/v1.9.0-beta.12...v1.9.0-beta.13) (2024-10-13)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** inline and apply api prefix to endpoints ([#1401](https://github.com/analogjs/analog/issues/1401)) ([94bfc2e](https://github.com/analogjs/analog/commit/94bfc2e00c3ee1bb9076a9718b2d16496a1ef142))
+
 # [1.9.0-beta.12](https://github.com/analogjs/analog/compare/v1.9.0-beta.11...v1.9.0-beta.12) (2024-10-12)
 
 ### Bug Fixes
