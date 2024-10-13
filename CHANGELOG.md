@@ -1,3 +1,9 @@
+# [1.9.0-beta.14](https://github.com/analogjs/analog/compare/v1.9.0-beta.13...v1.9.0-beta.14) (2024-10-13)
+
+### Bug Fixes
+
+- **platform:** load content highlighter on first content request ([#1402](https://github.com/analogjs/analog/issues/1402)) ([ead2aba](https://github.com/analogjs/analog/commit/ead2ababbd31c55af5713f584aa9201b146c91e9))
+
 # [1.9.0-beta.13](https://github.com/analogjs/analog/compare/v1.9.0-beta.12...v1.9.0-beta.13) (2024-10-13)
 
 ### Bug Fixes
