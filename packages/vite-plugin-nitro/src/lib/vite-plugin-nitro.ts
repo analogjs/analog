@@ -62,15 +62,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           additionalPagesDirs: options?.additionalPagesDirs,
         });
 
-        const ssrEntry = normalizePath(
-          filePrefix +
-            resolve(
-              workspaceRoot,
-              'dist',
-              rootDir,
-              `ssr/main.server${filePrefix ? '.js' : ''}`
-            )
+        const ssrEntryPath = resolve(
+          options?.ssrBuildDir ||
+            resolve(workspaceRoot, 'dist', rootDir, `ssr`),
+          `main.server${filePrefix ? '.js' : ''}`
         );
+        const ssrEntry = normalizePath(filePrefix + ssrEntryPath);
         const rendererEntry =
           filePrefix +
           normalizePath(
