@@ -1,5 +1,5 @@
 import type { ActivatedRouteSnapshot, Route } from '@angular/router';
-import { injectBaseURL } from '@analogjs/router/tokens';
+import { injectBaseURL, injectAPIPrefix } from '@analogjs/router/tokens';
 
 import { ANALOG_META_KEY } from './endpoints';
 
@@ -8,6 +8,7 @@ export function injectRouteEndpointURL(route: ActivatedRouteSnapshot) {
     [ANALOG_META_KEY]: { endpoint: string; endpointKey: string };
   };
 
+  const apiPrefix = injectAPIPrefix();
   const baseUrl = injectBaseURL();
   const { queryParams, fragment: hash, params, parent } = route;
   const segment = parent?.url.map((segment) => segment.path).join('/') || '';
@@ -19,10 +20,9 @@ export function injectRouteEndpointURL(route: ActivatedRouteSnapshot) {
         ? window.location.origin
         : '')
   );
-
   url.pathname = `${
     url.pathname.endsWith('/') ? url.pathname : url.pathname + '/'
-  }api/_analog${routeConfig[ANALOG_META_KEY].endpoint}`;
+  }${apiPrefix}/_analog${routeConfig[ANALOG_META_KEY].endpoint}`;
   url.search = `${new URLSearchParams(queryParams).toString()}`;
   url.hash = hash ?? '';
 
