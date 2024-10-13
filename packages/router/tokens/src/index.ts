@@ -16,6 +16,10 @@ export const RESPONSE = new InjectionToken<ServerResponse>(
 );
 export const BASE_URL = new InjectionToken<string>('@analogjs/router Base URL');
 
+export const API_PREFIX = new InjectionToken<string>(
+  '@analogjs/router API Prefix'
+);
+
 export function injectRequest() {
   return inject(REQUEST, { optional: true });
 }
@@ -26,4 +30,8 @@ export function injectResponse() {
 
 export function injectBaseURL() {
   return inject(BASE_URL, { optional: true });
+}
+
+export function injectAPIPrefix() {
+  return inject(API_PREFIX);
 }

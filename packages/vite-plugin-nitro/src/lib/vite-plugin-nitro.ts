@@ -62,11 +62,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           additionalPagesDirs: options?.additionalPagesDirs,
         });
 
-        const apiMiddlewareHandler =
-          filePrefix +
-          normalizePath(
-            join(__dirname, `runtime/api-middleware${filePrefix ? '.mjs' : ''}`)
-          );
         const ssrEntry = normalizePath(
           filePrefix +
             resolve(
@@ -112,6 +107,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           typescript: {
             generateTsConfig: false,
           },
+          runtimeConfig: {
+            apiPrefix: apiPrefix.substring(1),
+          },
           rollupConfig: {
             onwarn(warning) {
               if (
@@ -127,7 +125,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             ...(useAPIMiddleware
               ? [
                   {
-                    handler: apiMiddlewareHandler,
+                    handler: '#ANALOG_API_MIDDLEWARE',
                     middleware: true,
                   },
                 ]
@@ -137,8 +135,37 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           routeRules: useAPIMiddleware
             ? undefined
             : {
-                [`${apiPrefix}/**`]: { proxy: { to: '/**' } },
+                [`${apiPrefix}/**`]: {
+                  proxy: { to: '/**' },
+                },
               },
+          virtual: {
+            '#ANALOG_API_MIDDLEWARE': `
+        import { eventHandler, proxyRequest } from 'h3';
+        import { useRuntimeConfig } from '#imports';
+        
+        export default eventHandler(async (event) => {
+          const apiPrefix = \`/\${useRuntimeConfig().apiPrefix}\`;
+
+          if (event.node.req.url?.startsWith(apiPrefix)) {
+            const reqUrl = event.node.req.url?.replace(apiPrefix, '');
+
+            if (
+              event.node.req.method === 'GET' &&
+              // in the case of XML routes, we want to proxy the request so that nitro gets the correct headers
+              // and can render the XML correctly as a static asset
+              !event.node.req.url?.endsWith('.xml')
+            ) {
+              return $fetch(reqUrl, { headers: event.node.req.headers });
+            }
+
+            return proxyRequest(event, reqUrl, {
+              // @ts-ignore
+              fetch: $fetch.native,
+            });
+          }
+        });`,
+          },
         };
 
         if (isVercelPreset(buildPreset)) {
@@ -276,7 +303,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 ...(useAPIMiddleware
                   ? [
                       {
-                        handler: apiMiddlewareHandler,
+                        handler: '#ANALOG_API_MIDDLEWARE',
                         middleware: true,
                       },
                     ]
@@ -349,6 +376,16 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             `\n\nThe '@analogjs/platform' server has been successfully built.`
           );
         }
+      },
+    },
+    {
+      name: '@analogjs/vite-plugin-nitro-api-prefix',
+      config() {
+        return {
+          define: {
+            ANALOG_API_PREFIX: `"${apiPrefix.substring(1)}"`,
+          },
+        };
       },
     },
   ];
