@@ -1,3 +1,9 @@
+# [1.9.0-beta.15](https://github.com/analogjs/analog/compare/v1.9.0-beta.14...v1.9.0-beta.15) (2024-10-13)
+
+### Bug Fixes
+
+- **nx-plugin:** added missing import for 'join' in tailwind template ([#1405](https://github.com/analogjs/analog/issues/1405)) ([02d7898](https://github.com/analogjs/analog/commit/02d7898fba018c0f92016199900f33dd48141e0d))
+
 # [1.9.0-beta.14](https://github.com/analogjs/analog/compare/v1.9.0-beta.13...v1.9.0-beta.14) (2024-10-13)
 
 ### Bug Fixes
