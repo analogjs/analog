@@ -77,42 +77,43 @@ export function contentPlugin(
     {
       name: 'analogjs-content-file',
       enforce: 'post',
-      async config() {
-        if (highlighter === 'shiki') {
-          const { getShikiHighlighter } = await import(
-            './content/shiki/index.js'
-          );
-          markedHighlighter = getShikiHighlighter(shikiOptions);
-        } else {
-          const { getPrismHighlighter } = await import(
-            './content/prism/index.js'
-          );
-          markedHighlighter = getPrismHighlighter();
-
-          const langs = [
-            'bash',
-            'css',
-            'javascript',
-            'json',
-            'markup',
-            'typescript',
-          ];
-
-          if (
-            Array.isArray(prismOptions?.additionalLangs) &&
-            prismOptions?.additionalLangs?.length > 0
-          ) {
-            langs.push(...prismOptions.additionalLangs);
-          }
-
-          const loadLanguages = await import('prismjs/components/index.js');
-
-          (loadLanguages as unknown as { default: Function }).default(langs);
-        }
-      },
       async load(id) {
         if (!id.includes('analog-content-file=true')) {
           return;
+        }
+
+        if (!markedHighlighter) {
+          if (highlighter === 'shiki') {
+            const { getShikiHighlighter } = await import(
+              './content/shiki/index.js'
+            );
+            markedHighlighter = getShikiHighlighter(shikiOptions);
+          } else {
+            const { getPrismHighlighter } = await import(
+              './content/prism/index.js'
+            );
+            markedHighlighter = getPrismHighlighter();
+
+            const langs = [
+              'bash',
+              'css',
+              'javascript',
+              'json',
+              'markup',
+              'typescript',
+            ];
+
+            if (
+              Array.isArray(prismOptions?.additionalLangs) &&
+              prismOptions?.additionalLangs?.length > 0
+            ) {
+              langs.push(...prismOptions.additionalLangs);
+            }
+
+            const loadLanguages = await import('prismjs/components/index.js');
+
+            (loadLanguages as unknown as { default: Function }).default(langs);
+          }
         }
 
         const fm: any = await import('front-matter');
