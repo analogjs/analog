@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { injectContent, MarkdownComponent } from '@analogjs/content';
 import { AsyncPipe } from '@angular/common';
+import { injectContent, MarkdownComponent } from '@analogjs/content';
 
 import PostAttributes from '../../post-attributes';
 
@@ -16,13 +16,11 @@ import PostAttributes from '../../post-attributes';
     </article>
     }
   `,
-  styles: [
-    `
-      .post__image {
-        max-height: 40vh;
-      }
-    `,
-  ],
+  styles: `
+    .post__image {
+      max-height: 40vh;
+    }
+  `,
 })
 export default class BlogPostComponent {
   readonly post$ = injectContent<PostAttributes>('slug');

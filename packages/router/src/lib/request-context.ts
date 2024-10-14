@@ -8,7 +8,7 @@ import {
 
 import { from, of } from 'rxjs';
 
-import { injectBaseURL } from '@analogjs/router/tokens';
+import { injectBaseURL, injectAPIPrefix } from '@analogjs/router/tokens';
 
 /**
  * Interceptor that is server-aware when making HttpClient requests.
@@ -24,6 +24,7 @@ export function requestContextInterceptor(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn
 ) {
+  const apiPrefix = injectAPIPrefix();
   const baseUrl = injectBaseURL();
   const transferState = inject(TransferState);
   const storeKey = makeStateKey<unknown>(`analog_${req.urlWithParams}`);
@@ -36,7 +37,7 @@ export function requestContextInterceptor(
     (req.url.startsWith('/') || req.url.startsWith(baseUrl))
   ) {
     const requestUrl = new URL(req.url, baseUrl);
-    const fetchUrl = req.url.includes('/api/')
+    const fetchUrl = req.url.includes(`/${apiPrefix}/`)
       ? requestUrl.pathname
       : requestUrl.href;
     const responseType =
@@ -72,7 +73,10 @@ export function requestContextInterceptor(
   }
 
   // on the client
-  if (!import.meta.env.SSR && req.url.startsWith('/')) {
+  if (
+    !import.meta.env.SSR &&
+    (req.url.startsWith('/') || req.url.includes('/_analog/'))
+  ) {
     const cacheRestoreResponse = transferState.get(storeKey, null);
 
     if (cacheRestoreResponse) {
@@ -80,9 +84,14 @@ export function requestContextInterceptor(
       return of(new HttpResponse(cacheRestoreResponse));
     }
 
+    // /_analog/ requests are full URLs
+    const url = req.url.includes('/_analog/')
+      ? req.url
+      : `${window.location.origin}${req.url}`;
+
     return next(
       req.clone({
-        url: `${window.location.origin}${req.url}`,
+        url,
       })
     );
   }

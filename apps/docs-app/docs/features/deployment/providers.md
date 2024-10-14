@@ -264,6 +264,42 @@ nitro: {
 },
 ```
 
+### Alternatively, multiple AnalogJS projects (/app1, /app2) in a single Firebase Hosting site
+
+This leverages cloud run services to host AnalogJS projects and uses rewrite rules for forwarding traffic from firebase to cloud run.
+
+[Deploying with a custom URL prefix](/docs/features/deployment/overview#deploying-with-a-custom-url-prefix).
+
+```json [firebase.json]
+{
+  "hosting": [
+    {
+      "site": "<your_project_id>",
+      "public": "public",
+      "cleanUrls": true,
+      "rewrites": [
+        {
+          "source": "/app1",
+          "run": {
+            "serviceId": "app1",
+            "region": "us-central1",
+            "pinTag": false
+          }
+        },
+        {
+          "source": "/app1/**",
+          "run": {
+            "serviceId": "app1",
+            "region": "us-central1",
+            "pinTag": false
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
 ### Local preview
 
 You can preview a local version of your site to test things out without deploying.

@@ -1159,6 +1159,25 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "redfox-mx",
+      "name": "Diego Jesús",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20145660?v=4",
+      "profile": "https://github.com/redfox-mx",
+      "contributions": [
+        "code",
+        "infra"
+      ]
+    },
+    {
+      "login": "Rockerturner",
+      "name": "Rockerturner",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25847930?v=4",
+      "profile": "https://github.com/Rockerturner",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

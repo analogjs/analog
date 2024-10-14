@@ -1,0 +1,7 @@
+<script lang="ts">
+  import { RouterOutlet } from '@angular/router' with { analog: 'imports' };
+</script>
+
+<template>
+  <router-outlet />
+</template>

@@ -30,7 +30,11 @@ const __dirname = dirname(__filename);
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
-  const apiPrefix = `/${nitroOptions?.runtimeConfig?.['apiPrefix'] ?? 'api'}`;
+  const apiPrefix = `/${options?.apiPrefix || 'api'}`;
+  const useAPIMiddleware =
+    typeof options?.useAPIMiddleware !== 'undefined'
+      ? options?.useAPIMiddleware
+      : true;
 
   let isBuild = false;
   let isServe = false;
@@ -58,20 +62,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           additionalPagesDirs: options?.additionalPagesDirs,
         });
 
-        const apiMiddlewareHandler =
-          filePrefix +
-          normalizePath(
-            join(__dirname, `runtime/api-middleware${filePrefix ? '.mjs' : ''}`)
-          );
-        const ssrEntry = normalizePath(
-          filePrefix +
-            resolve(
-              workspaceRoot,
-              'dist',
-              rootDir,
-              `ssr/main.server${filePrefix ? '.js' : ''}`
-            )
+        const ssrEntryPath = resolve(
+          options?.ssrBuildDir ||
+            resolve(workspaceRoot, 'dist', rootDir, `ssr`),
+          `main.server${filePrefix ? '.js' : ''}`
         );
+        const ssrEntry = normalizePath(filePrefix + ssrEntryPath);
         const rendererEntry =
           filePrefix +
           normalizePath(
@@ -108,6 +104,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           typescript: {
             generateTsConfig: false,
           },
+          runtimeConfig: {
+            apiPrefix: apiPrefix.substring(1),
+          },
           rollupConfig: {
             onwarn(warning) {
               if (
@@ -120,12 +119,50 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             plugins: [pageEndpointsPlugin()],
           },
           handlers: [
-            {
-              handler: apiMiddlewareHandler,
-              middleware: true,
-            },
+            ...(useAPIMiddleware
+              ? [
+                  {
+                    handler: '#ANALOG_API_MIDDLEWARE',
+                    middleware: true,
+                  },
+                ]
+              : []),
             ...pageHandlers,
           ],
+          routeRules: useAPIMiddleware
+            ? undefined
+            : {
+                [`${apiPrefix}/**`]: {
+                  proxy: { to: '/**' },
+                },
+              },
+          virtual: {
+            '#ANALOG_API_MIDDLEWARE': `
+        import { eventHandler, proxyRequest } from 'h3';
+        import { useRuntimeConfig } from '#imports';
+        
+        export default eventHandler(async (event) => {
+          const apiPrefix = \`/\${useRuntimeConfig().apiPrefix}\`;
+
+          if (event.node.req.url?.startsWith(apiPrefix)) {
+            const reqUrl = event.node.req.url?.replace(apiPrefix, '');
+
+            if (
+              event.node.req.method === 'GET' &&
+              // in the case of XML routes, we want to proxy the request so that nitro gets the correct headers
+              // and can render the XML correctly as a static asset
+              !event.node.req.url?.endsWith('.xml')
+            ) {
+              return $fetch(reqUrl, { headers: event.node.req.headers });
+            }
+
+            return proxyRequest(event, reqUrl, {
+              // @ts-ignore
+              fetch: $fetch.native,
+            });
+          }
+        });`,
+          },
         };
 
         if (isVercelPreset(buildPreset)) {
@@ -260,10 +297,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               },
               moduleSideEffects: ['zone.js/node', 'zone.js/fesm2015/zone-node'],
               handlers: [
-                {
-                  handler: apiMiddlewareHandler,
-                  middleware: true,
-                },
+                ...(useAPIMiddleware
+                  ? [
+                      {
+                        handler: '#ANALOG_API_MIDDLEWARE',
+                        middleware: true,
+                      },
+                    ]
+                  : []),
                 ...pageHandlers,
               ],
             };
@@ -332,6 +373,16 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             `\n\nThe '@analogjs/platform' server has been successfully built.`
           );
         }
+      },
+    },
+    {
+      name: '@analogjs/vite-plugin-nitro-api-prefix',
+      config() {
+        return {
+          define: {
+            ANALOG_API_PREFIX: `"${apiPrefix.substring(1)}"`,
+          },
+        };
       },
     },
   ];

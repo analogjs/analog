@@ -6,15 +6,15 @@ import { renderApplication } from '@angular/platform-server';
 import { provideServerContext } from '@analogjs/router/server';
 import { ServerContext } from '@analogjs/router/tokens';
 
+__APP_COMPONENT_IMPORT__
 import { config } from './app/app.config.server';
-import { AppComponent } from './app/app.component';
 
 if (import.meta.env.PROD) {
   enableProdMode();
 }
 
 export function bootstrap() {
-  return bootstrapApplication(AppComponent, config);
+  return bootstrapApplication(__APP_COMPONENT__, config);
 }
 
 export default async function render(

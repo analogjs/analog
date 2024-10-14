@@ -23,15 +23,13 @@ export function routerPlugin(options?: Options): Plugin[] {
       configureServer(server) {
         function invalidateRoutes(path: string) {
           if (
-            path.includes(normalizePath(`/app/routes/`)) ||
-            path.includes(normalizePath(`/pages/`))
+            path.includes(`routes`) ||
+            path.includes(`pages`) ||
+            path.includes('content')
           ) {
             server.moduleGraph.fileToModulesMap.forEach((mods) => {
               mods.forEach((mod) => {
-                if (
-                  mod.id?.includes('analogjs') &&
-                  mod.id?.includes('router')
-                ) {
+                if (mod.id?.includes('analogjs') && mod.id?.includes('fesm')) {
                   server.moduleGraph.invalidateModule(mod);
 
                   mod.importers.forEach((imp) => {

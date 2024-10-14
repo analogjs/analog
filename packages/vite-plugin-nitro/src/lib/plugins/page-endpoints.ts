@@ -40,18 +40,43 @@ export function pageEndpointsPlugin() {
                 }`
             }
 
+            ${
+              fileExports.includes('action')
+                ? ''
+                : `
+                export const action = () => {
+                  return {};
+                }              
+              `
+            }
+
             export default defineEventHandler(async(event) => {
-              try {
-                return await load({
-                  params: event.context.params,
-                  req: event.node.req,
-                  res: event.node.res,
-                  fetch: $fetch,
-                  event
-                });
-              } catch(e) {
-                console.error(\` An error occurred: \$\{e\}\`)
-                throw e;
+              if (event.method === 'GET') {
+                try {
+                  return await load({
+                    params: event.context.params,
+                    req: event.node.req,
+                    res: event.node.res,
+                    fetch: $fetch,
+                    event
+                  });
+                } catch(e) {
+                  console.error(\` An error occurred: \$\{e\}\`)
+                  throw e;
+                }
+              } else {
+                try {
+                  return await action({
+                    params: event.context.params,
+                    req: event.node.req,
+                    res: event.node.res,
+                    fetch: $fetch,
+                    event
+                  });
+                } catch(e) {
+                  console.error(\` An error occurred: \$\{e\}\`)
+                  throw e;
+                }               
               }
             });
           `;

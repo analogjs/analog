@@ -51,28 +51,22 @@ export default defineConfig({
 
 ## Deploying with a Custom URL Prefix
 
-If you are deploying with a custom URL prefix, such as https://domain.com/`basehref`/ you must do these steps for [server-side-data-fetching](https://analogjs.org/docs/features/data-fetching/server-side-data-fetching), [html markup and assets](https://angular.io/api/common/APP_BASE_HREF), and [dynamic api routes](https://analogjs.org/docs/features/api/overview) to work correctly on the specified `basehref`.
+If you are deploying with a custom URL prefix, such as https://domain.com/ `basehref` you must do these steps for [server-side-data-fetching](https://analogjs.org/docs/features/data-fetching/server-side-data-fetching), [html markup and assets](https://angular.io/api/common/APP_BASE_HREF), and [dynamic api routes](https://analogjs.org/docs/features/api/overview) to work correctly on the specified `basehref`.
 
-1. Instruct Angular on how recognize and generate URLs. Create a new file `app.config.env.ts`.
+1. Update the `app.config.ts` file.
+
+This instructs Angular on how recognize and generate URLs.
 
 ```ts
 import { ApplicationConfig } from '@angular/core';
 import { APP_BASE_HREF } from '@angular/common';
 
-export const envConfig: ApplicationConfig = {
-  providers: [{ provide: APP_BASE_HREF, useValue: '/basehref/' }],
+export const appConfig: ApplicationConfig = {
+  providers: [
+    [{ provide: APP_BASE_HREF, useValue: import.meta.env.BASE_URL || '/' }],
+    ...
+  ],
 };
-```
-
-2. Update the `app.config.ts` file to use the new file.
-
-```ts
-import { mergeApplicationConfig } from '@angular/core';
-import { envConfig } from './app.config.env';
-
-export const appConfig = mergeApplicationConfig(envConfig, {
-....
-});
 ```
 
 3. In CI production build
@@ -80,8 +74,11 @@ export const appConfig = mergeApplicationConfig(envConfig, {
 ```bash
   # sets the base url for server-side data fetching
   export VITE_ANALOG_PUBLIC_BASE_URL="https://domain.com/basehref"
-  # prefixes all assets and html with /basehref/
+  # Prefixes all assets and html with /basehref/
+  # if using nx:
   npx nx run appname:build:production --baseHref='/basehref/'
+  # if using angular build directly:
+  npx ng build --baseHref="/basehref/"
 ```
 
 4. In production containers specify the env flag `NITRO_APP_BASE_URL`.
@@ -96,6 +93,18 @@ Given a `vite.config.ts` file similar to this:
     plugins: [
       analog({
         apiPrefix: 'api',
+        nitro: {
+          routeRules: {
+            '/': {
+              prerender: false,
+            },
+          },
+        },
+        prerender: {
+          routes: async () => {
+            return ['/'];
+          }
+        }
 ```
 
 Nitro prefixes all API routes with `/basehref/api`.

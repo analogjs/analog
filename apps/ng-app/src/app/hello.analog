@@ -9,6 +9,8 @@
     afterNextRender,
     output,
   } from '@angular/core';
+  import { outputFromObservable } from '@angular/core/rxjs-interop';
+  import { interval } from 'rxjs';
 
   import { myFunc } from './export-stuff.analog' with { analog: 'exposes'};
 
@@ -32,6 +34,9 @@
   effect(() => {
     console.log('text changed', text());
   });
+
+  const stream$ = interval(1000);
+  const timer = outputFromObservable(stream$);
 
   const clicked = output();
 

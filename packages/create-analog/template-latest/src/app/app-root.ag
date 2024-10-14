@@ -1,0 +1,16 @@
+<script lang="ts">
+  import { RouterOutlet } from '@angular/router' with { analog: 'imports' };
+</script>
+
+<template>
+  <router-outlet />
+</template>
+
+<style>
+  :host {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+    text-align: center;
+  }
+</style>
