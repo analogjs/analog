@@ -1,3 +1,9 @@
+# [1.9.0-beta.16](https://github.com/analogjs/analog/compare/v1.9.0-beta.15...v1.9.0-beta.16) (2024-10-14)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** use ssrBuildDir if provided for SSR entry point ([#1407](https://github.com/analogjs/analog/issues/1407)) ([132f70d](https://github.com/analogjs/analog/commit/132f70d600d4925598da3b96440d23a942f91f1d))
+
 # [1.9.0-beta.15](https://github.com/analogjs/analog/compare/v1.9.0-beta.14...v1.9.0-beta.15) (2024-10-13)
 
 ### Bug Fixes
