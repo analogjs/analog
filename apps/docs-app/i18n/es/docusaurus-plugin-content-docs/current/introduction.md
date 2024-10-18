@@ -13,9 +13,18 @@ Parecido a otros meta-frameworks como Next.JS, Nuxt, SvelteKit, Qwik City y otro
 ## Características
 
 - Soporta Vite/Vitest/Playwright
-- [Enrutado basado en fichero](/docs/features/routing/overview)
-- [Soporte para usar markdown como rutas de contenido](/docs/features/routing/content)
-- [Soporte para rutas API/servidor](/docs/features/api/overview)
-- Soporta [SSR](/docs/features/server/server-side-rendering)/[SSG support](/docs/features/server/static-site-generation) híbrido.
-- Soporta Angular CLI/[Nx workspaces](/docs/integrations/nx)
-- Soporta [Angular components](/docs/packages/astro-angular/overview) con Astro
+- Integraciones de servidor y despliegue impulsadas por [Nitro](https://nitro.unjs.io)
+- [Enrutamiento basado en archivos](/docs/features/routing/overview)
+- [Obtención de datos del lado del servidor](/docs/features/data-fetching/server-side-data-fetching)
+- [Soporte para usar Markdown como rutas de contenido](/docs/features/routing/content)
+- [Rutas API/servidor](/docs/features/api/overview)
+- Híbrido [SSR](/docs/features/server/server-side-rendering)/[soporte SSG](/docs/features/server/static-site-generation)
+- Soporta Angular CLI/[espacios de trabajo Nx](/docs/integrations/nx)
+- Soporta [componentes de Angular](/docs/packages/astro-angular/overview) con Astro
+
+## Apóyanos
+
+- Visita y dale una estrella al [Repositorio de GitHub](https://github.com/analogjs/analog)
+- Únete al [Discord](https://chat.analogjs.org)
+- Síguenos en [Twitter](https://twitter.com/analogjs)
+- Conviértete en un [Patrocinador](/docs/sponsoring)
