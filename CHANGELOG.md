@@ -1,3 +1,9 @@
+## [1.9.1-beta.1](https://github.com/analogjs/analog/compare/v1.9.0...v1.9.1-beta.1) (2024-10-18)
+
+### Bug Fixes
+
+- add Nx 20.x to package.json dev dependencies ([#1411](https://github.com/analogjs/analog/issues/1411)) ([cae8861](https://github.com/analogjs/analog/commit/cae8861d51defdc601c8456ab4a1d03617a52ca9))
+
 # [1.9.0](https://github.com/analogjs/analog/compare/v1.8.2...v1.9.0) (2024-10-14)
 
 ### Bug Fixes
