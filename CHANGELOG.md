@@ -1,3 +1,10 @@
+## [1.9.1-beta.2](https://github.com/analogjs/analog/compare/v1.9.1-beta.1...v1.9.1-beta.2) (2024-10-18)
+
+### Bug Fixes
+
+- **content:** fix install dependencies, remove marked mangle warnings ([#1413](https://github.com/analogjs/analog/issues/1413)) ([bc3b6df](https://github.com/analogjs/analog/commit/bc3b6dfd916203f31dd5c6daf7b92ba606b93977))
+- **router:** inject HttpClient only when page endpoint is configured ([#1412](https://github.com/analogjs/analog/issues/1412)) ([c037b01](https://github.com/analogjs/analog/commit/c037b01549f4ee52dce761e9ef01064964816c04))
+
 ## [1.9.1-beta.1](https://github.com/analogjs/analog/compare/v1.9.0...v1.9.1-beta.1) (2024-10-18)
 
 ### Bug Fixes
