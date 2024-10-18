@@ -1,38 +1,38 @@
 # Enrutamiento
 
-Analog soporta el enrutamiento basado en el sistema de ficheros sobre el enrutador de Angular.
+Analog soporta el enrutamiento basado en el sistema de archivos sobre el Angular Router.
 
 ## Definiendo Rutas
 
-Las rutas son definidas usando directorios y ficheros en el directorio `src/app/pages`. Solo los ficheros que terminan con `.page.ts` son recolectados y usados para construir el conjunto de rutas.
+Las rutas se definen usando carpetas y archivos en la carpeta `src/app/pages`. Solo se recopilan y utilizan archivos que terminen con `.page.ts` para construir el conjunto de rutas.
 
 :::info
 
-los componentes de rutas **deben** ser definidos como la exportación por defecto y todos los componentes de rutas son **cargados de forma diferida**.
+Los componentes de ruta **deben** estar definidos como la exportación predeterminada y todos los componentes de ruta son **cargados de forma diferida**.
 
 :::
 
-Existen 5 tipos primarios de rutas:
+Hay 5 tipos principales de rutas:
 
-- [Rutas de Índice](#rutas-de-índice)
-- [Rutas Estáticas](#rutas-estáticas)
-- [Rutas Dinámicas](#rutas-dinámicas)
-- [Rutas de Layout](#rutas-de-layout)
-- [Rutas Catch-all](#rutas-catch-all)
+- [Rutas de Índice](#index-routes)
+- [Rutas Estáticas](#static-routes)
+- [Rutas Dinámicas](#dynamic-routes)
+- [Rutas de Layout](#layout-routes)
+- [Rutas Catch-all](#catch-all-routes)
 
-Estas rutas pueden ser combinadas de diferentes maneras para construir URLs para la navegación.
+Estas rutas pueden combinarse de diferentes maneras para construir URLs para la navegación.
 
 :::note
 
-En adición a los 5 tipos primarios de rutas, Analog también soporta [Rutas de Redirección](/docs/features/routing/metadata#redirect-routes) y [Rutas de Contenido](/docs/features/routing/content).
+Además de los 5 tipos principales de rutas, Analog también soporta [Rutas de Redirección](/docs/features/routing/metadata#redirect-routes) y [Rutas de Contenido](/docs/features/routing/content).
 
 :::
 
 ## Rutas de Índice
 
-Las rutas de índice son definidas usando el nombre del fichero como la ruta, encerrado en paréntesis.
+Las rutas de índice se definen usando el nombre del archivo como la ruta encerrada en paréntesis.
 
-El ejemplo de ruta abajo en `src/app/pages/(home).page.ts` define una ruta `/`.
+El ejemplo de ruta a continuación en `src/app/pages/(home).page.ts` define una ruta `/`.
 
 ```ts
 import { Component } from '@angular/core';
@@ -46,15 +46,15 @@ export default class HomePageComponent {}
 
 :::tip
 
-Las rutas de índice también pueden ser definidas usando `index.page.ts` como el nombre del fichero de la ruta.
+Las rutas de índice también pueden definirse usando `index.page.ts` como el nombre del archivo de ruta.
 
 :::
 
 ## Rutas Estáticas
 
-Las rutas estáticas son definidas usando el nombre del fichero como la ruta.
+Las rutas estáticas se definen usando el nombre del archivo como la ruta.
 
-El ejemplo de ruta abajo en `src/app/pages/about.page.ts` define una ruta `/about`.
+El ejemplo de ruta a continuación en `src/app/pages/about.page.ts` define una ruta `/about`.
 
 ```ts
 import { Component } from '@angular/core';
@@ -70,14 +70,14 @@ import { Component } from '@angular/core';
 export default class AboutPageComponent {}
 ```
 
-Es también posible definir rutas estáticas anidadas de dos maneras diferentes:
+También es posible definir rutas estáticas anidadas de dos maneras diferentes:
 
-1. Anidando los ficheros de rutas en directorios - `src/app/pages/about/team.page.ts` define una ruta `/about/team`.
-2. Usando la notación de punto en el nombre del fichero - `src/app/pages/about.team.page.ts` también define una ruta `/about/team`.
+1. Anidando los archivos de ruta en carpetas - `src/app/pages/about/team.page.ts` define una ruta `/about/team`.
+2. Usando la notación de puntos en el nombre del archivo - `src/app/pages/about.team.page.ts` también define una ruta `/about/team`.
 
 ### Grupos de Rutas
 
-Las rutas pueden ser agrupadas en el mismo directorio sin añadir un segmento de ruta usando paréntesis.
+Las rutas pueden agruparse en la misma carpeta sin añadir un segmento de ruta agregando el nombre de la carpeta entre paréntesis.
 
 ```treeview
 src/
@@ -88,13 +88,13 @@ src/
             └── signup.page.ts
 ```
 
-El ejemplo de arriba define las rutas `/login` y `/signup`.
+El ejemplo anterior define las rutas `/login` y `/signup`.
 
 ## Rutas Dinámicas
 
-Las ruta dinámicas son definidas usando el nombre del fichero como la ruta, encerrado en corchetes. El parámetro para la ruta es extraído de la ruta.
+Las rutas dinámicas se definen usando el nombre del archivo como la ruta encerrada en corchetes. El parámetro para la ruta se extrae del camino de la ruta.
 
-El ejemplo de ruta abajo en `src/app/pages/[productId].page.ts` define una ruta `/products/:productId`.
+El ejemplo de ruta a continuación en `src/app/pages/products/[productId].page.ts` define una ruta `/products/:productId`.
 
 ```ts
 import { Component, inject } from '@angular/core';
@@ -120,11 +120,11 @@ export default class ProductDetailsPageComponent {
 }
 ```
 
-Las rutas dinámicas también pueden ser definidas usando la notación de punto en el nombre del fichero - `src/app/pages/products.[productId].page.ts` define una ruta `/products/:productId`.
+Las rutas dinámicas también pueden definirse usando la notación de puntos en el nombre del archivo - `src/app/pages/products.[productId].page.ts` define una ruta `/products/:productId`.
 
-### Usando enlaces de entrada del componente de ruta
+### Usando Enlaces de Entrada de Componentes de Ruta
 
-Si estás utilizando la función `withComponentInputBinding()` con el enrutador de Angular, puedes usar el decorador **Input**, junto con el mismo **nombre del parámetro**, para obtener el parámetro de la ruta.
+Si estás usando la característica `withComponentInputBinding()` con el Angular Router, puedes usar el decorador **Input**, junto con el mismo **nombre de parámetro** para obtener el parámetro de ruta.
 
 Primero, añade `withComponentInputBinding()` a los argumentos de la función `provideFileRouter()`.
 
@@ -137,12 +137,12 @@ import { withComponentInputBinding } from '@angular/router';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(withComponentInputBinding()),
-    // other providers
+    // otros proveedores
   ],
 };
 ```
 
-A continuación, usa el parámetro de la ruta como una entrada.
+Luego, usa el parámetro de ruta como una entrada.
 
 ```ts
 // src/app/pages/products/[productId].page.ts
@@ -163,9 +163,9 @@ export default class ProductDetailsPageComponent {
 
 ## Rutas de Layout
 
-Las rutas de layout son definidas usando un fichero padre y un directorio hijo con el mismo nombre.
+Las rutas de layout se definen usando un archivo padre y una carpeta hija con el mismo nombre.
 
-La siguiente estructura abajo representa una ruta de layout.
+La siguiente estructura representa una ruta de layout.
 
 ```treeview
 src/
@@ -182,7 +182,7 @@ Esto define dos rutas con un layout compartido:
 - `/products`
 - `/products/:productId`
 
-The parent `src/app/pages/products.page.ts` file contains the parent page with a router outlet.
+El archivo padre `src/app/pages/products.page.ts` contiene la página padre con un router outlet.
 
 ```ts
 import { Component } from '@angular/core';
@@ -200,21 +200,19 @@ import { RouterOutlet } from '@angular/router';
 export default class ProductsComponent {}
 ```
 
-El fichero anidado `src/app/pages/products/[productId].page.ts` contiene la página de detalles `/products/:productId`.
+El archivo anidado `src/app/pages/products/(products-list).page.ts` contiene la página de lista `/products`.
 
 ```ts
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 
 @Component({
   standalone: true,
-  imports: [RouterOutlet],
   template: ` <h2>Products List</h2> `,
 })
 export default class ProductsListComponent {}
 ```
 
-El fichero anidado `src/app/pages/products/[productId].page.ts` contiene la página de detalles `/products/:productId`.
+El archivo anidado `src/app/pages/products/[productId].page.ts` contiene la página de detalles `/products/:productId`.
 
 ```ts
 import { Component, inject } from '@angular/core';
@@ -240,9 +238,9 @@ export default class ProductDetailsPageComponent {
 }
 ```
 
-### Rutas de Layout sin Directorio
+### Rutas de Layout sin Ruta
 
-Las rutas de layout también pueden ser definidas sin añadir un segmento representando el directorio.
+Las rutas de layout también pueden definirse sin añadir un segmento de ruta.
 
 ```treeview
 src/
@@ -254,13 +252,13 @@ src/
         └── (auth).page.ts
 ```
 
-El siguiente ejemplo define las rutas `/login` y `/signup` con un layout compartido. El fichero padre `src/app/pages/(auth).page.ts` contiene la página padre con un router outlet.
+El ejemplo anterior define las rutas `/login` y `/signup` con un layout compartido. El archivo padre `src/app/pages/(auth).page.ts` contiene la página padre con un router outlet.
 
 ## Rutas Catch-all
 
-Las rutas catch-all son definidas usando el nombre del fichero como la ruta, encerrado en corchetes. El parámetro para la ruta es extraído de la ruta.
+Las rutas catch-all se definen usando el nombre del archivo como la ruta prefijada con 3 puntos encerrados en corchetes.
 
-El ejemplo de ruta abajo en `src/app/pages/[...page-not-found].page.ts` define una ruta `**`. Esta ruta es usualmente para páginas 404.
+El ejemplo de ruta a continuación en `src/app/pages/[...page-not-found].page.ts` define una ruta comodín `**`. Esta ruta generalmente es para páginas 404.
 
 ```ts
 import { Component } from '@angular/core';
@@ -278,11 +276,11 @@ import { RouterLink } from '@angular/router';
 export default class PageNotFoundComponent {}
 ```
 
-Las rutas Catch-all también pueden ser definidas como rutas anidadas.
+Las rutas catch-all también pueden definirse como rutas hijas anidadas.
 
-## Usando todo junto
+## Integrando Todo
 
-Para la siguiente estructura de ficheros:
+Para la siguiente estructura de archivos:
 
 ```treeview
 src/
@@ -304,9 +302,9 @@ src/
         └── products.page.ts
 ```
 
-El enrutador basado en el sistema de ficheros generará las siguientes rutas:
+El enrutador basado en el sistema de archivos generará las siguientes rutas:
 
-| Directorio         | Página                                                           |
+| Ruta               | Página                                                           |
 | ------------------ | ---------------------------------------------------------------- |
 | `/`                | `(home).page.ts`                                                 |
 | `/about`           | `(marketing)/about.md`                                           |

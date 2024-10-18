@@ -1,13 +1,13 @@
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Usando Vitest con un Proyecto Angular
+# Migrando una Aplicación Angular a Analog
 
-[Vitest](https://vitest.dev) puede ser añadido a **_cualquier_** proyecto Angular existente con unos pocos pasos.
+Una Aplicación SPA Angular existente puede configurarse para usar Analog utilizando un schematic/generator para Angular CLI o espacios de trabajo Nx.
 
-## Configuración Automatizada Usando un Schematic/Generator
+> Analog es compatible con Angular v15 y versiones superiores.
 
-Vitest puede ser instalado y configurado usando un schematic/generator para Angular CLI o espacios de trabajo Nx.
+## Usando un Schematic/Generator
 
 Primero, instala el paquete `@analogjs/platform`:
 
@@ -31,67 +31,126 @@ yarn add @analogjs/platform --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/platform --save-dev
+pnpm install -w @analogjs/platform
 ```
 
   </TabItem>
 </Tabs>
 
-A continuación, ejecuta el schematic para configurar la configuración de Vite, archivos de configuración de pruebas y actualizar la configuración de pruebas.
+A continuación, ejecuta el comando para configurar la configuración de Vite, actualizar los objetivos de build/serve en la configuración del proyecto, mover los archivos necesarios y opcionalmente configurar Vitest para pruebas unitarias.
 
 ```shell
-ng g @analogjs/platform:setup-vitest --project [your-project-name]
+npx ng generate @analogjs/platform:init --project [your-project-name]
 ```
 
-Luego, ve a [ejecutando pruebas](#running-tests)
-
-## Instalación Manual
-
-Para añadir Vitest manualmente, instala los paquetes necesarios:
-
-<Tabs groupId="package-manager">
-  <TabItem value="npm">
+Para proyectos Nx:
 
 ```shell
-npm install @analogjs/vite-plugin-angular @analogjs/vitest-angular jsdom --save-dev
+npx nx generate @analogjs/platform:init --project [your-project-name]
 ```
 
-  </TabItem>
+## Actualizando Estilos y Scripts Globales
 
-  <TabItem label="Yarn" value="yarn">
+Si tienes scripts o estilos globales configurados en el archivo `angular.json`, referencia estos dentro de la etiqueta `head` en el `index.html`.
 
-```shell
-yarn add @analogjs/vite-plugin-angular @analogjs/vitest-angular jsdom --dev
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>My Analog app</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <app-root></app-root>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
 ```
 
-  </TabItem>
+## Configurando Entornos
 
-  <TabItem value="pnpm">
+En una aplicación Angular, los `fileReplacements` se configuran en el archivo `angular.json` para diferentes entornos.
 
-```shell
-pnpm install -w @analogjs/vite-plugin-angular @analogjs/vitest-angular jsdom --save-dev
+### Usando Variables de Entorno
+
+En Analog, puedes configurar y usar variables de entorno. Este es el enfoque **recomendado**.
+
+Añade un archivo `.env` en la raíz de tu aplicación y prefija cualquier variable de entorno **pública** con `VITE_`. **No** incluyas este archivo en tu repositorio de código fuente.
+
+```sh
+VITE_MY_API_KEY=development-key
+
+# Solo disponible en la build del servidor
+MY_SERVER_API_KEY=development-server-key
 ```
 
-  </TabItem>
-</Tabs>
+Importa y usa la variable de entorno en tu código.
 
-## Configuración para Ejecutar las Pruebas en Node
+```ts
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 
-Para configurar Vitest, crea un archivo `vite.config.ts` en la raíz de tu proyecto:
+@Injectable({
+  providedIn: 'root',
+})
+export class AuthService {
+  private readonly apiKey = import.meta.env['VITE_MY_API_KEY'];
+
+  constructor(private http: HttpClient) {}
+}
+```
+
+Al desplegar, configura tus variables de entorno a sus equivalentes de producción.
+
+```sh
+VITE_MY_API_KEY=production-key
+
+# Solo disponible en la build del servidor
+MY_SERVER_API_KEY=production-server-key
+```
+
+Lee [aquí](https://vitejs.dev/guide/env-and-mode.html) para más información sobre variables de entorno.
+
+### Usando Reemplazos de Archivos
+
+También puedes usar el plugin `replaceFiles()` de Nx para reemplazar archivos durante tu build.
+
+Importa el plugin y configúralo:
 
 ```ts
 /// <reference types="vitest" />
+
 import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+import { replaceFiles } from '@nx/vite/plugins/rollup-replace-files.plugin';
 
-import angular from '@analogjs/vite-plugin-angular';
-
+// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  plugins: [angular()],
+  build: {
+    target: ['es2020'],
+  },
+  resolve: {
+    mainFields: ['module'],
+  },
+  plugins: [
+    analog(),
+    mode === 'production' &&
+      replaceFiles([
+        {
+          replace: 'src/environments/environment.ts',
+          with: 'src/environments/environment.prod.ts',
+        },
+      ]),
+  ],
   test: {
     globals: true,
-    setupFiles: ['src/test-setup.ts'],
     environment: 'jsdom',
-    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    setupFiles: ['src/test-setup.ts'],
+    include: ['**/*.spec.ts'],
     reporters: ['default'],
   },
   define: {
@@ -100,93 +159,25 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-Luego, crea un archivo `src/test-setup.ts` para configurar el `TestBed`:
-
-### Configuración de Zone.js
-
-Si estás usando `Zone.js` para la detección de cambios, importa el script `setup-zone`. Este script incluye automáticamente soporte para configurar pruebas de snapshots.
-
-```ts
-import '@analogjs/vitest-angular/setup-zone';
-
-import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
-import { getTestBed } from '@angular/core/testing';
-
-getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
-);
-```
-
-### Configuración Sin Zone
-
-Si estás usando detección de cambios `Zoneless`, solo importa el script `setup-snapshots`.
-
-```ts
-import '@analogjs/vitest-angular/setup-snapshots';
-
-import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
-import { getTestBed } from '@angular/core/testing';
-
-getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
-);
-```
-
-A continuación, actualiza la propiedad `test` en el archivo `angular.json` para usar el constructor `@analogjs/vitest-angular:test`:
-
-```json
-{
-  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
-  "version": 1,
-  "newProjectRoot": "projects",
-  "projects": {
-    "your-project": {
-      "projectType": "application",
-      "architect": {
-        "build": ...,
-        "serve": ...,
-        "extract-i18n": ...,
-        "test": {
-          "builder": "@analogjs/vitest-angular:test"
-        }
-      }
-    }
-  }
-}
-```
-
-> También puedes agregar una nueva propiedad denominada `vitest` para que se ejecute junto a tu objetivo `test`.
-
-Por último, añade `src/test-setup.ts` al arreglo `files` en el archivo `tsconfig.spec.json` en la raíz del proyecto, y actualiza la propiedad `types`.
+Añade los archivos de entorno al arreglo `files` en el archivo `tsconfig.app.json` también puede ser necesario.
 
 ```json
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "outDir": "./out-tsc/spec",
-    "target": "es2016",
-    "types": ["vitest/globals", "node"]
-  },
-  "files": ["src/test-setup.ts"],
-  "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]
+  // otra configuración
+  "files": [
+    "src/main.ts",
+    "src/main.server.ts",
+    "src/environments/environment.prod.ts"
+  ]
 }
 ```
-
-Luego, ve a [ejecutando pruebas](#running-tests)
 
 ## Configuración para Ejecutar las Pruebas en el Navegador
 
 Si prefieres ejecutar tus pruebas en un navegador, Vitest ofrece soporte experimental para ello.
 
-Primero, sigue los pasos para [ejecutar pruebas en node](#setup-for-running-tests-for-node).
+Primero, sigue los pasos para [ejecutar pruebas en Node](#setup-for-running-tests-for-node).
 
 Luego, instala los paquetes necesarios para ejecutar pruebas en el navegador:
 
@@ -267,7 +258,7 @@ getTestBed().initTestEnvironment(
 );
 ```
 
-## Ejecutando las Pruebas
+# Ejecutando las Pruebas
 
 Para ejecutar pruebas unitarias, utiliza el comando `test`:
 

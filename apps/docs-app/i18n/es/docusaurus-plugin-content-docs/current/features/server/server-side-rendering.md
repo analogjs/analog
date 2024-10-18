@@ -1,12 +1,12 @@
-# Renderizado del lado del servidor
+# Renderización del Lado del Servidor
 
-Analógico soporta el renderizado del lado del servidor durante el desarrollo y la construcción para producción.
+Analog soporta la renderización del lado del servidor durante el desarrollo y la construcción para producción.
 
-## Transformando paquetes para la compatibilidad con SSR
+## Transformando Paquetes para Compatibilidad con SSR
 
-Algunas dependencias pueden necesitar transformaciones adicionales para funcionar para el renderizado del lado del servidor. Si recibe un error durante el SSR en desarrollo, una opción es agregar el paquete(s) a la matriz `ssr.noExternal` en la configuración de Vite.
+Algunas dependencias pueden necesitar transformaciones adicionales para funcionar con la renderización del lado del servidor. Si recibes un error durante SSR en desarrollo, una opción es añadir el/los paquete(s) al arreglo `ssr.noExternal` en la configuración de Vite.
 
-Puedes usar patrones glob para incluir conjuntos de paquetes o bibliotecas. Algunos ejemplos se enumeran a continuación.
+Puedes usar patrones glob para incluir conjuntos de paquetes o bibliotecas. A continuación se listan algunos ejemplos.
 
 ```ts
 import { defineConfig } from 'vite';
@@ -16,20 +16,20 @@ import analog from '@analogjs/platform';
 export default defineConfig(({ mode }) => ({
   ssr: {
     noExternal: [
-      'apollo-angular', // npm package import
-      'apollo-angular/**', // npm package import along with sub-packages
-      '@spartan-ng/**', // libs under the npmScope inside an Nx workspace
+      'apollo-angular', // importación de paquete npm
+      'apollo-angular/**', // importación de paquete npm junto con sub-paquetes
+      '@spartan-ng/**', // libs bajo el npmScope dentro de un workspace de Nx
     ],
   },
-  // ...other config
+  // ...otra configuración
 }));
 ```
 
-Para obtener más información sobre los externos con SSR, consulte la [documentación de Vite](https://vitejs.dev/guide/ssr.html#ssr-externals).
+Para más información sobre externals con SSR, consulta la [documentación de Vite](https://vitejs.dev/guide/ssr.html#ssr-externals).
 
-## Desactivando SSR
+## Deshabilitando SSR
 
-SSR está habilitado por defecto. Puedes optar por no usarlo y generar una compilación sólo para el cliente añadiendo la siguiente opción al plugin `analog()` en tu `vite.config.ts`:
+SSR está habilitado por defecto. Puedes optar por no usarlo y generar una compilación solo del cliente añadiendo la siguiente opción al plugin `analog()` en tu `vite.config.ts`:
 
 ```ts
 import { defineConfig } from 'vite';
@@ -37,23 +37,23 @@ import analog from '@analogjs/platform';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // ...other config
+  // ...otra configuración
   plugins: [analog({ ssr: false })],
 }));
 ```
 
-## Prerenderización de rutas
+## Prerenderizando Rutas
 
-Con SSR, la ruta `"/"` se prerrenderiza por defecto.
+Con SSR, la ruta `"/"` se prerenderiza por defecto.
 
-Es necesario añadir la ruta `"/"` a la configuración de prerrenderizado para devolver un HTML renderizado cuando el usuario visita la raíz de la aplicación. Las rutas prerrenderizadas pueden ser personalizadas, pero ten en cuenta que también hay que incluir la ruta `"/"`.
+Es un paso necesario para devolver un HTML renderizado cuando el usuario visita la raíz de la aplicación. Las rutas prerenderizadas pueden personalizarse, pero ten en cuenta incluir también la ruta `"/"`.
 
 ```js
 import { defineConfig } from 'vite';
 import analog from '@analogjs/platform';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // ...other config
+  // ...otra configuración
   plugins: [
     analog({
       prerender: {
@@ -64,4 +64,30 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-Puedes optar por no prerrenderizar pasando un arreglo vacío de rutas.
+Puedes optar por no prerenderizar pasando un arreglo vacío de rutas y deshabilitando el prerender en la ruta raíz.
+
+```js
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  // ...otra configuración
+  plugins: [
+    analog({
+      ssr: true,
+      nitro: {
+        routeRules: {
+          '/': {
+            prerender: false,
+          },
+        },
+      },
+      prerender: {
+        routes: async () => {
+          return [];
+        },
+      },
+    }),
+  ],
+}));
+```

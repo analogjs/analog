@@ -16,6 +16,8 @@ Juntos, combina:
 - Uso de APIs de Señales de Angular sin decoradores
 - Predeterminados orientados al rendimiento (`OnPush` detección de cambios, sin acceso a `ngDoCheck`, etc.)
 
+## Uso
+
 Para usar el SFC análogo, necesita usar el plugin de Analog Vite o el [plugin de Analog Astro](/docs/packages/astro-angular/overview) con una bandera adicional para habilitar su uso:
 
 ```typescript
@@ -60,13 +62,13 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-### Soporte IDE
+### Soporte para IDE
 
 Para soportar el resaltado de sintaxis y otras funcionalidades del IDE con archivos `.analog`, necesitas instalar una extensión para soportar el formato para:
 
-- [WebStorm 2024.1+ or IDEA Ultimate 2024.1+ (EAP)](https://github.com/analogjs/idea-plugin)
+- [VSCode](https://marketplace.visualstudio.com/items?itemName=AnalogJS.vscode-analog)
 
-> [¡El soporte para VSCode está en camino! Por favor, vea este problema para más detalles](https://github.com/analogjs/analog/issues/858/).
+- [WebStorm 2024.1+ o IDEA Ultimate 2024.1+ (EAP)](https://github.com/analogjs/idea-plugin)
 
 ## Implementando un SFC
 
