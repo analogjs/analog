@@ -1,3 +1,9 @@
+## [1.9.1-beta.3](https://github.com/analogjs/analog/compare/v1.9.1-beta.2...v1.9.1-beta.3) (2024-10-22)
+
+### Bug Fixes
+
+- **router:** serialize transfer state cache key for internal API requests ([#1415](https://github.com/analogjs/analog/issues/1415)) ([855a314](https://github.com/analogjs/analog/commit/855a3144875d6cbbbcd40f92fa34fc9caf4cbcec))
+
 ## [1.9.1-beta.2](https://github.com/analogjs/analog/compare/v1.9.1-beta.1...v1.9.1-beta.2) (2024-10-18)
 
 ### Bug Fixes
