@@ -11,7 +11,7 @@ import TabItem from '@theme/TabItem';
 
 Analog requiere las siguientes versiones de Node y Angular:
 
-- Node 16.17.0, o v18.13.0 y superior es recomendado
+- Node v18.13.0 y superior es recomendado
 - Angular v15 o superior
 
 ## Creando una nueva aplicación
@@ -111,6 +111,10 @@ pnpm run build
 
 ### Compilando Artefactos
 
-Por Defecto, Analog viene con [Renderizado del lado del Servidor](/docs/features/server/server-side-rendering) habilitado.
+Por Defecto, Analog viene con [Renderizado del lado del Servidor (SSR)](/docs/features/server/server-side-rendering) habilitado.
 Artefactos del cliente están localizados en el directorio `dist/analog/public`.
 El servidor para los artefactos de compilación API/SSR está localizado en el directorio `dist/analog/server`.
+
+## Migrando una Aplicación Existente
+
+También puedes migrar una aplicación desarrollada con Angular hacia Analog. Puedes serguir la [guía de migración](/docs/guides/migrating) pasa saber los pasos a seguir.
