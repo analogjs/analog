@@ -206,8 +206,14 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configureServer(server) {
         viteServer = server;
-        server.watcher.on('add', () => setupCompilation(resolvedConfig));
-        server.watcher.on('unlink', () => setupCompilation(resolvedConfig));
+        server.watcher.on('add', async () => {
+          setupCompilation(resolvedConfig);
+          await buildAndAnalyze();
+        });
+        server.watcher.on('unlink', async () => {
+          setupCompilation(resolvedConfig);
+          await buildAndAnalyze();
+        });
       },
       async buildStart() {
         setupCompilation(resolvedConfig);
