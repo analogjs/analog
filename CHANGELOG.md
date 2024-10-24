@@ -1,3 +1,9 @@
+## [1.9.1-beta.4](https://github.com/analogjs/analog/compare/v1.9.1-beta.3...v1.9.1-beta.4) (2024-10-24)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** force rebuild and analysis on filesystem changes ([#1416](https://github.com/analogjs/analog/issues/1416)) ([94e7da1](https://github.com/analogjs/analog/commit/94e7da13127ba761c274b321e9e85792d36c0180))
+
 ## [1.9.1-beta.3](https://github.com/analogjs/analog/compare/v1.9.1-beta.2...v1.9.1-beta.3) (2024-10-22)
 
 ### Bug Fixes
