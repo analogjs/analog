@@ -1,3 +1,9 @@
+## [1.9.1-beta.5](https://github.com/analogjs/analog/compare/v1.9.1-beta.4...v1.9.1-beta.5) (2024-10-24)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** set ngDevMode in during build optimization ([#1417](https://github.com/analogjs/analog/issues/1417)) ([8e1a3b4](https://github.com/analogjs/analog/commit/8e1a3b487087e17d5194cc228133692a17eab216))
+
 ## [1.9.1-beta.4](https://github.com/analogjs/analog/compare/v1.9.1-beta.3...v1.9.1-beta.4) (2024-10-24)
 
 ### Bug Fixes
