@@ -25,6 +25,13 @@ export function buildOptimizerPlugin({
     apply: 'build',
     config() {
       return {
+        define: isProd
+          ? {
+              ngJitMode: 'false',
+              ngI18nClosureMode: 'false',
+              ngDevMode: 'false',
+            }
+          : {},
         esbuild: {
           define: isProd
             ? {
