@@ -60,12 +60,11 @@ Follow the prompts to scaffold the project and start the development server.
 
 [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://analogjs.org/new)
 
-## Supporting Analog
+### Partners
 
-- Star the [GitHub Repo](https://github.com/analogjs/analog)
-- Join the [Discord](https://chat.analogjs.org)
-- Follow us on [Twitter](https://twitter.com/analogjs)
-- Become a [Sponsor](https://analogjs.org/docs/sponsoring)
+<a href="https://zerops.io?utm_source=analog&utm_medium=github&utm_campaign=partnership" target="_blank">
+  <img src="https://github.com/analogjs/analog/blob/main/apps/docs-app/static/img/logos/zerops-logo.svg" width="100px" height="100px" alt="Zerops" />
+</a>
 
 ### Sponsors
 
@@ -88,6 +87,13 @@ Follow the prompts to scaffold the project and start the development server.
 <a href="https://snyder.tech/" target="_blank">
   <img src="https://media.licdn.com/dms/image/C4E0BAQG4hMvLznt6_Q/company-logo_200_200/0/1630618311041/snydertechnologies_logo?e=2147483647&v=beta&t=TFq6VKWAgb5oI0FmbvaeTPFzMJR9S94_LvnLnlRqfLI" width="100px" height="100px" alt="Snyder Tech" />
 </a>
+
+## Supporting Analog
+
+- Star the [GitHub Repo](https://github.com/analogjs/analog)
+- Join the [Discord](https://chat.analogjs.org)
+- Follow us on [Twitter](https://twitter.com/analogjs)
+- Become a [Sponsor](https://analogjs.org/docs/sponsoring)
 
 ## Contributing
 
