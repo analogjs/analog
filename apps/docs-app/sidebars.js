@@ -67,6 +67,11 @@ const sidebars = {
             },
             {
               type: 'doc',
+              id: 'features/api/websockets',
+              label: 'Websockets',
+            },
+            {
+              type: 'doc',
               id: 'features/api/og-image-generation',
               label: 'OG Image Generation',
             },
