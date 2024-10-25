@@ -2,9 +2,9 @@
 
 Analog also supports `WebSockets` and `Server-Sent Events` through Nitro.
 
-## Enable WebSockets
+## Enabling WebSockets
 
-Currently, WebSocket support in [Nitro](https://nitro.unjs.io/guide/websocket) is experimental and it should be enabled:
+Currently, WebSocket support in [Nitro](https://nitro.unjs.io/guide/websocket) is experimental and it can be enabled in the `analog` plugin:
 
 `vite.config.ts`
 
@@ -83,9 +83,9 @@ export default defineWebSocketHandler({
 
 ### WebSocket Routes
 
-Due to technical limitations in the Analog-Nitro integration, WebSocket routes are exposed without the `/api` prefix.
+Analog's internal API middleware is not applied to WebSocket routes, therefore, WebSocket routes are exposed without the `/api` prefix.
 
-For example, `src/server/routes/ws/chat.ts` will be exposed as `ws://example.com/ws/chat` instead of `ws://example.com/api/ws/chat`
+For example, `src/server/routes/ws/chat.ts` is exposed as `ws://example.com/ws/chat` instead of `ws://example.com/api/ws/chat`
 
 ## Defining a Server-sent Event Handler
 
