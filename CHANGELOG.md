@@ -1,3 +1,9 @@
+## [1.9.1-beta.6](https://github.com/analogjs/analog/compare/v1.9.1-beta.5...v1.9.1-beta.6) (2024-10-25)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** enable websocket support & add docs ([#1419](https://github.com/analogjs/analog/issues/1419)) ([9ac357f](https://github.com/analogjs/analog/commit/9ac357f7714b02f2cfac0c66a61efd6d54fbb99e))
+
 ## [1.9.1-beta.5](https://github.com/analogjs/analog/compare/v1.9.1-beta.4...v1.9.1-beta.5) (2024-10-24)
 
 ### Bug Fixes
