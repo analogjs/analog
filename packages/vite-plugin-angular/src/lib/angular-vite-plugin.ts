@@ -134,7 +134,6 @@ export function angular(options?: PluginOptions): Plugin[] {
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode = false;
   const sourceFileCache = new SourceFileCache();
-  const isProd = process.env['NODE_ENV'] === 'production';
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isStackBlitz = !!process.versions['webcontainer'];
   const isAstroIntegration = process.env['ANALOG_ASTRO'] === 'true';
@@ -156,11 +155,13 @@ export function angular(options?: PluginOptions): Plugin[] {
   const templateUrlsResolver = new TemplateUrlsResolver();
 
   function angularPlugin(): Plugin {
+    let isProd = false;
+
     return {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
         watchMode = command === 'serve';
-
+        isProd = config.mode === 'production';
         pluginOptions.tsconfig =
           options?.tsconfig ??
           resolve(
@@ -421,7 +422,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
       })) as Plugin,
     buildOptimizerPlugin({
-      isProd,
       supportedBrowsers: pluginOptions.supportedBrowsers,
       jit,
     }),
@@ -481,6 +481,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   }
 
   function setupCompilation(config: ResolvedConfig, context?: unknown) {
+    const isProd = config.mode === 'production';
     const analogFiles = findAnalogFiles(config);
     const includeFiles = findIncludes();
 
