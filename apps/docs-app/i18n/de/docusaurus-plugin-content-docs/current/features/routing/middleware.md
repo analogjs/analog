@@ -4,8 +4,7 @@ Analog unterstützt serverseitige Middleware, die verwendet werden kann, um Anfr
 
 ## Middleware einrichten
 
-Middleware is automatically registered when placed in the `src/server/middleware` folder.
-Middleware wird automatisch registriert, wenn sie im Ordner `src/server/middleware` platziert wird.
+Eine Middleware wird automatisch registriert, wenn sie im Ordner `src/server/middleware` platziert wird.
 
 ```treeview
 src/
@@ -14,7 +13,7 @@ src/
         └── auth.ts
 ```
 
-Middleware wird mit der Funktion `defineEventHandler` definiert.
+Eine Middleware wird mit der Funktion `defineEventHandler` definiert.
 
 ```ts
 import { defineEventHandler, sendRedirect, setHeaders } from 'h3';
@@ -30,12 +29,12 @@ export default eventHandler((event) => {
 });
 ```
 
-- Middleware sollte nur Anfragen ändern und nichts zurückgeben!
-- Middleware wird in der Reihenfolge der definierten Dateinamen ausgeführt. Setze den Dateinamen eine Zahl voran, um eine bestimmte Reihenfolge zu erzwingen.
+- Eine Middleware sollte nur Anfragen ändern und nichts zurückgeben!
+- Eine Middleware wird in der Reihenfolge der definierten Dateinamen ausgeführt. Setze den Dateinamen eine Zahl voran, um eine bestimmte Reihenfolge zu erzwingen.
 
 ## Filterung in Middleware
 
-Middleware kann durch Filterung nur auf bestimmte Routen angewendet werden.
+Eine Middleware kann durch Filterung nur auf bestimmte Routen angewendet werden.
 
 ```ts
 export default defineEventHandler(async (event) => {
