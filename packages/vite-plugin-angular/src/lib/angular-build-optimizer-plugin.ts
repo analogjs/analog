@@ -3,10 +3,8 @@ import { Plugin } from 'vite';
 import { JavaScriptTransformer } from './utils/devkit.js';
 
 export function buildOptimizerPlugin({
-  isProd,
   jit,
 }: {
-  isProd: boolean;
   supportedBrowsers: string[];
   jit: boolean;
 }): Plugin {
@@ -19,11 +17,14 @@ export function buildOptimizerPlugin({
     },
     1
   );
+  let isProd = false;
 
   return {
     name: '@analogjs/vite-plugin-angular-optimizer',
     apply: 'build',
-    config() {
+    config(userConfig) {
+      isProd = userConfig.mode === 'production';
+
       return {
         define: isProd
           ? {
