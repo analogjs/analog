@@ -1,3 +1,9 @@
+## [1.9.1-beta.7](https://github.com/analogjs/analog/compare/v1.9.1-beta.6...v1.9.1-beta.7) (2024-10-27)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** infer production build from config mode instead of NODE_ENV ([#1423](https://github.com/analogjs/analog/issues/1423)) ([98e4bab](https://github.com/analogjs/analog/commit/98e4babd1d5005cc7172260075d4b3a28de1bab6))
+
 ## [1.9.1-beta.6](https://github.com/analogjs/analog/compare/v1.9.1-beta.5...v1.9.1-beta.6) (2024-10-25)
 
 ### Bug Fixes
