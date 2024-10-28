@@ -1,3 +1,16 @@
+## [1.9.1](https://github.com/analogjs/analog/compare/v1.9.0...v1.9.1) (2024-10-28)
+
+### Bug Fixes
+
+- add Nx 20.x to package.json dev dependencies ([#1411](https://github.com/analogjs/analog/issues/1411)) ([cae8861](https://github.com/analogjs/analog/commit/cae8861d51defdc601c8456ab4a1d03617a52ca9))
+- **content:** fix install dependencies, remove marked mangle warnings ([#1413](https://github.com/analogjs/analog/issues/1413)) ([bc3b6df](https://github.com/analogjs/analog/commit/bc3b6dfd916203f31dd5c6daf7b92ba606b93977))
+- **router:** inject HttpClient only when page endpoint is configured ([#1412](https://github.com/analogjs/analog/issues/1412)) ([c037b01](https://github.com/analogjs/analog/commit/c037b01549f4ee52dce761e9ef01064964816c04))
+- **router:** serialize transfer state cache key for internal API requests ([#1415](https://github.com/analogjs/analog/issues/1415)) ([855a314](https://github.com/analogjs/analog/commit/855a3144875d6cbbbcd40f92fa34fc9caf4cbcec))
+- **vite-plugin-angular:** force rebuild and analysis on filesystem changes ([#1416](https://github.com/analogjs/analog/issues/1416)) ([94e7da1](https://github.com/analogjs/analog/commit/94e7da13127ba761c274b321e9e85792d36c0180))
+- **vite-plugin-angular:** infer production build from config mode instead of NODE_ENV ([#1423](https://github.com/analogjs/analog/issues/1423)) ([98e4bab](https://github.com/analogjs/analog/commit/98e4babd1d5005cc7172260075d4b3a28de1bab6))
+- **vite-plugin-angular:** set ngDevMode in during build optimization ([#1417](https://github.com/analogjs/analog/issues/1417)) ([8e1a3b4](https://github.com/analogjs/analog/commit/8e1a3b487087e17d5194cc228133692a17eab216))
+- **vite-plugin-nitro:** enable websocket support & add docs ([#1419](https://github.com/analogjs/analog/issues/1419)) ([9ac357f](https://github.com/analogjs/analog/commit/9ac357f7714b02f2cfac0c66a61efd6d54fbb99e))
+
 ## [1.9.1-beta.7](https://github.com/analogjs/analog/compare/v1.9.1-beta.6...v1.9.1-beta.7) (2024-10-27)
 
 ### Bug Fixes
