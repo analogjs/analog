@@ -1,31 +1,20 @@
-# Obtención de datos en el lado del servidor
+# Obtención de Datos del Lado del Servidor
 
-Analog admite la obtención de datos del servidor antes de cargar una página. Esto se puede lograr definiendo una función `load` asíncrona en el fichero `.server.ts` de la página.
+Analog soporta la obtención de datos desde el servidor antes de cargar una página. Esto se puede lograr definiendo una función `load` asíncrona en el archivo `.server.ts` de la página.
 
-## Configuración de la URL base pública
+## Obtención de los Datos
 
-Analog requiere que la URL base pública se establezca al usar la obtención de datos del lado del servidor. Establezca una variable de entorno, usando un fichero `.env` para definir la URL base pública.
-
-```
-// .env
-VITE_ANALOG_PUBLIC_BASE_URL="http://localhost:5173"
-```
-
-La variable de entorno también debe establecerse al compilar para implementación.
-
-## Obtención de datos
-
-Para obtener los datos del servidor, cree un fichero `.server.ts` que contenga la función `load` asíncrona junto con el fichero `.page.ts`.
+Para obtener los datos desde el servidor, crea un archivo `.server.ts` que contenga la función asíncrona `load` junto al archivo `.page.ts`.
 
 ```ts
 // src/app/pages/index.server.ts
 import { PageServerLoad } from '@analogjs/router';
 
 export const load = async ({
-  params, // params/queryParams de la ruta
+  params, // params/queryParams de la solicitud
   req, // Solicitud H3
-  res, // Manejador de la respuesta de H3
-  fetch, // fetch interno para llamadas API directas
+  res, // Manejador de Respuesta H3
+  fetch, // fetch interno para llamadas API directas,
   event, // evento de solicitud completo
 }: PageServerLoad) => {
   return {
@@ -34,22 +23,23 @@ export const load = async ({
 };
 ```
 
-## Inyectar los datos
+## Inyección de los Datos
 
-El acceso a los datos obtenidos en el servidor se puede hacer usando la función `injectLoad` proporcionada por `@analogjs/router`.
+Acceder a los datos obtenidos en el servidor se puede hacer utilizando la función `injectLoad` proporcionada por `@analogjs/router`.  
+La función `load` se resuelve utilizando resolutores de rutas de Angular, por lo que establecer `requireSync: false` y `initialValue: {}` no ofrece ninguna ventaja, ya que `load` se obtiene antes de que el componente sea instanciado.
 
 ```ts
 // src/app/pages/index.page.ts
 import { Component } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { LoadResult, injectLoad } from '@analogjs/router';
+import { injectLoad } from '@analogjs/router';
 
-import { load } from './index.server'; // no incluido en el build del cliente
+import { load } from './index.server'; // no incluido en la compilación del cliente
 
 @Component({
   standalone: true,
   template: `
-    <h2>Home</h2>
+    <h2>Inicio</h2>
 
     Loaded: {{ data().loaded }}
   `,
@@ -59,7 +49,7 @@ export default class BlogComponent {
 }
 ```
 
-Accessing the data can also be done with Component Inputs and Component Input Bindings provided in the Angular Router configuration. To configure the Angular Router for `Component Input Bindings`, add `withComponentInputBinding()` to the arguments passed to `provideFileRouter()` in the `app.config.ts`.
+Acceder a los datos también se puede hacer con Entradas de Componentes y Enlaces de Entradas de Componentes proporcionados en la configuración del Router de Angular. Para configurar el Router de Angular para `Component Input Bindings`, agrega `withComponentInputBinding()` a los argumentos pasados a `provideFileRouter()` en el `app.config.ts`.
 
 ```ts
 import { provideHttpClient } from '@angular/common/http';
@@ -80,19 +70,19 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-Ahora, para obtener los datos en el componente, agregue una entrada llamada `load`.
+Ahora, para obtener los datos en el componente, agrega una entrada llamada `load`.
 
 ```ts
 // src/app/pages/index.page.ts
-import { Component } from '@angular/core';
-import { LoadResult, injectLoad } from '@analogjs/router';
+import { Component, Input } from '@angular/core';
+import { LoadResult } from '@analogjs/router';
 
-import { load } from './index.server'; // no incluido en el build del cliente
+import { load } from './index.server'; // no incluido en la compilación del cliente
 
 @Component({
   standalone: true,
   template: `
-    <h2>Home</h2>
+    <h2>Inicio</h2>
     Loaded: {{ data.loaded }}
   `,
 })
@@ -104,3 +94,33 @@ export default class BlogComponent {
   data!: LoadResult<typeof load>;
 }
 ```
+
+## Acceso a los Datos de Carga del Servidor
+
+Acceder a los datos de carga del servidor desde el resolutor `RouteMeta` se puede hacer utilizando la función `getLoadResolver` proporcionada por `@analogjs/router`.
+
+```ts
+import { getLoadResolver } from '@analogjs/router';
+
+export const routeMeta: RouteMeta = {
+  resolve: {
+    data: async (route) => {
+      // llamar al resolutor de carga del servidor para esta ruta desde otro resolutor
+      const data = await getLoadResolver(route);
+
+      return { ...data };
+    },
+  },
+};
+```
+
+## Sobrescribir la URL Base Pública
+
+Analog infiere automáticamente la URL base pública que se debe establecer al usar la obtención de datos del lado del servidor a través de su [Contexto de Solicitud del Servidor](/docs/features/data-fetching/overview#server-request-context) y [Interceptor de Contexto de Solicitud](/docs/features/data-fetching/overview#request-context-interceptor). Para establecer explícitamente la URL base, configura una variable de entorno utilizando un archivo `.env` para definir la URL base pública.
+
+```
+# .env
+VITE_ANALOG_PUBLIC_BASE_URL="http://localhost:5173"
+```
+
+La variable de entorno también debe estar configurada al construir para despliegue.

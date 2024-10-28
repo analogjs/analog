@@ -140,7 +140,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             '#ANALOG_API_MIDDLEWARE': `
         import { eventHandler, proxyRequest } from 'h3';
         import { useRuntimeConfig } from '#imports';
-        
+
         export default eventHandler(async (event) => {
           const apiPrefix = \`/\${useRuntimeConfig().apiPrefix}\`;
 
@@ -268,19 +268,19 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                * as it won't resolve the renderer.ts file correctly in node.
                */
               import { eventHandler } from 'h3';
-              
+
               // @ts-ignore
               import renderer from '${ssrEntry}';
               // @ts-ignore
               const template = \`${indexContents}\`;
-              
+
               export default eventHandler(async (event) => {
                 const html = await renderer(event.node.req.url, template, {
                   req: event.node.req,
                   res: event.node.res,
                 });
                 return html;
-              });                    
+              });
               `
               );
 
@@ -335,6 +335,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               : (viteServer.config.server.host as string);
             process.env['ANALOG_PORT'] = `${viteServer.config.server.port}`;
           });
+
+          // handle upgrades if websockets are enabled
+          if (nitroOptions?.experimental?.websocket) {
+            viteServer.httpServer?.on('upgrade', server.upgrade);
+          }
 
           console.log(
             `\n\nThe server endpoints are accessible under the "${apiPrefix}" path.`

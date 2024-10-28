@@ -33,12 +33,12 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
   routeConfig.resolve = {
     ...routeConfig.resolve,
     load: async (route) => {
-      const http = inject(HttpClient);
       const routeConfig = route.routeConfig as Route & {
         [ANALOG_META_KEY]: { endpoint: string; endpointKey: string };
       };
 
       if (ANALOG_PAGE_ENDPOINTS[routeConfig[ANALOG_META_KEY].endpointKey]) {
+        const http = inject(HttpClient);
         const url = injectRouteEndpointURL(route);
 
         if (
