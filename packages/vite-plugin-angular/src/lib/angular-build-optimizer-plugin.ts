@@ -31,6 +31,7 @@ export function buildOptimizerPlugin({
               ngJitMode: 'false',
               ngI18nClosureMode: 'false',
               ngDevMode: 'false',
+              ngServerMode: `${!!userConfig.build?.ssr}`,
             }
           : {},
         esbuild: {
@@ -39,6 +40,7 @@ export function buildOptimizerPlugin({
                 ngDevMode: 'false',
                 ngJitMode: 'false',
                 ngI18nClosureMode: 'false',
+                ngServerMode: `${!!userConfig.build?.ssr}`,
               }
             : undefined,
         },
