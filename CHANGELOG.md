@@ -1,3 +1,9 @@
+## [1.9.2-beta.1](https://github.com/analogjs/analog/compare/v1.9.1...v1.9.2-beta.1) (2024-10-30)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add define option for ngServerMode ([#1427](https://github.com/analogjs/analog/issues/1427)) ([b3a460f](https://github.com/analogjs/analog/commit/b3a460fe98efdc6a41fa7e8200a7bb5d6d27b54b))
+
 ## [1.9.1](https://github.com/analogjs/analog/compare/v1.9.0...v1.9.1) (2024-10-28)
 
 ### Bug Fixes
