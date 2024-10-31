@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-124-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-125-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -271,6 +271,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/kilesh-mhzn"><img src="https://avatars.githubusercontent.com/u/78723506?v=4?s=100" width="100px;" alt="Kilesh Maharjan"/><br /><sub><b>Kilesh Maharjan</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=kilesh-mhzn" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/redfox-mx"><img src="https://avatars.githubusercontent.com/u/20145660?v=4?s=100" width="100px;" alt="Diego Jesús"/><br /><sub><b>Diego Jesús</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=redfox-mx" title="Code">💻</a> <a href="#infra-redfox-mx" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Rockerturner"><img src="https://avatars.githubusercontent.com/u/25847930?v=4?s=100" width="100px;" alt="Rockerturner"/><br /><sub><b>Rockerturner</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Rockerturner" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://gillespie59.github.io/"><img src="https://avatars.githubusercontent.com/u/555768?v=4?s=100" width="100px;" alt="Emmanuel DEMEY"/><br /><sub><b>Emmanuel DEMEY</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=EmmanuelDemey" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
