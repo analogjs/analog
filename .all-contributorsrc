@@ -1169,6 +1169,24 @@
         "code",
         "infra"
       ]
+    },
+    {
+      "login": "Rockerturner",
+      "name": "Rockerturner",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25847930?v=4",
+      "profile": "https://github.com/Rockerturner",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "EmmanuelDemey",
+      "name": "Emmanuel DEMEY",
+      "avatar_url": "https://avatars.githubusercontent.com/u/555768?v=4",
+      "profile": "http://gillespie59.github.io/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,

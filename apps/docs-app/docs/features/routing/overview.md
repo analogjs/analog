@@ -14,11 +14,17 @@ Route components **must** be defined as the default export and all route compone
 
 There are 5 primary types of routes:
 
-- [Index Routes](#index-routes)
-- [Static Routes](#static-routes)
-- [Dynamic Routes](#dynamic-routes)
-- [Layout Routes](#layout-routes)
-- [Catch-all Routes](#catch-all-routes)
+- [Routing](#routing)
+  - [Defining Routes](#defining-routes)
+  - [Index Routes](#index-routes)
+  - [Static Routes](#static-routes)
+    - [Route Groups](#route-groups)
+  - [Dynamic Routes](#dynamic-routes)
+    - [Using Route Component Input Bindings](#using-route-component-input-bindings)
+  - [Layout Routes](#layout-routes)
+    - [Pathless Layout Routes](#pathless-layout-routes)
+  - [Catch-all Routes](#catch-all-routes)
+  - [Putting It All Together](#putting-it-all-together)
 
 These routes can be combined in different ways to build URLs for navigation.
 
@@ -263,6 +269,22 @@ The example route below in `src/app/pages/[...page-not-found].page.ts` defines a
 ```ts
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { injectResponse } from '@analogjs/router/tokens';
+import { RouteMeta } from '@analogjs/router';
+
+export const routeMeta: RouteMeta = {
+  title: 'Page Not Found',
+  canActivate: [
+    () => {
+      const response = injectResponse();
+      if (import.meta.env.SSR && response) {
+        response.statusCode = 404;
+        response.end();
+      }
+      return true;
+    },
+  ],
+};
 
 @Component({
   standalone: true,

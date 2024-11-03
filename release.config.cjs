@@ -10,6 +10,7 @@ const replacementFiles = [
   'packages/create-analog/template-angular-v17/package.json',
   'packages/create-analog/template-blog/package.json',
   'packages/create-analog/template-latest/package.json',
+  'packages/create-analog/template-minimal/package.json',
   'packages/platform/package.json',
   'packages/router/package.json',
 ];
@@ -138,6 +139,7 @@ module.exports = {
           'packages/create-analog/template-angular-v17/package.json',
           'packages/create-analog/template-blog/package.json',
           'packages/create-analog/template-latest/package.json',
+          'packages/create-analog/template-minimal/package.json',
           'packages/platform/package.json',
           'packages/router/package.json',
           'packages/vite-plugin-angular/package.json',

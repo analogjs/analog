@@ -31,7 +31,7 @@ import {
   createJitResourceTransformer,
   SourceFileCache,
 } from './utils/devkit.js';
-import { angularVitestPlugin } from './angular-vitest-plugin.js';
+import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import { angularStorybookPlugin } from './angular-storybook-plugin.js';
 
 const require = createRequire(import.meta.url);
@@ -134,7 +134,6 @@ export function angular(options?: PluginOptions): Plugin[] {
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode = false;
   const sourceFileCache = new SourceFileCache();
-  const isProd = process.env['NODE_ENV'] === 'production';
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isStackBlitz = !!process.versions['webcontainer'];
   const isAstroIntegration = process.env['ANALOG_ASTRO'] === 'true';
@@ -156,11 +155,13 @@ export function angular(options?: PluginOptions): Plugin[] {
   const templateUrlsResolver = new TemplateUrlsResolver();
 
   function angularPlugin(): Plugin {
+    let isProd = false;
+
     return {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
         watchMode = command === 'serve';
-
+        isProd = config.mode === 'production';
         pluginOptions.tsconfig =
           options?.tsconfig ??
           resolve(
@@ -206,8 +207,14 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configureServer(server) {
         viteServer = server;
-        server.watcher.on('add', () => setupCompilation(resolvedConfig));
-        server.watcher.on('unlink', () => setupCompilation(resolvedConfig));
+        server.watcher.on('add', async () => {
+          setupCompilation(resolvedConfig);
+          await buildAndAnalyze();
+        });
+        server.watcher.on('unlink', async () => {
+          setupCompilation(resolvedConfig);
+          await buildAndAnalyze();
+        });
       },
       async buildStart() {
         setupCompilation(resolvedConfig);
@@ -409,13 +416,12 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   return [
     angularPlugin(),
-    (isTest && !isStackBlitz && angularVitestPlugin()) as Plugin,
+    ...(isTest && !isStackBlitz ? angularVitestPlugins() : []),
     (jit &&
       jitPlugin({
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
       })) as Plugin,
     buildOptimizerPlugin({
-      isProd,
       supportedBrowsers: pluginOptions.supportedBrowsers,
       jit,
     }),
@@ -475,6 +481,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   }
 
   function setupCompilation(config: ResolvedConfig, context?: unknown) {
+    const isProd = config.mode === 'production';
     const analogFiles = findAnalogFiles(config);
     const includeFiles = findIncludes();
 

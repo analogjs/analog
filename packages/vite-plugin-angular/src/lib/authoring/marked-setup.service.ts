@@ -106,6 +106,7 @@ export class MarkedSetupService {
         pedantic: false,
         gfm: true,
         breaks: false,
+        mangle: false,
       }
     );
 

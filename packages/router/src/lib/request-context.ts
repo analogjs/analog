@@ -1,14 +1,15 @@
-import { TransferState, inject, makeStateKey } from '@angular/core';
+import { StateKey, TransferState, inject, makeStateKey } from '@angular/core';
 import {
   HttpHandlerFn,
   HttpHeaders,
+  HttpParams,
   HttpRequest,
   HttpResponse,
 } from '@angular/common/http';
 
 import { from, of } from 'rxjs';
 
-import { injectBaseURL } from '@analogjs/router/tokens';
+import { injectBaseURL, injectAPIPrefix } from '@analogjs/router/tokens';
 
 /**
  * Interceptor that is server-aware when making HttpClient requests.
@@ -24,9 +25,9 @@ export function requestContextInterceptor(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn
 ) {
+  const apiPrefix = injectAPIPrefix();
   const baseUrl = injectBaseURL();
   const transferState = inject(TransferState);
-  const storeKey = makeStateKey<unknown>(`analog_${req.urlWithParams}`);
 
   // during prerendering with Nitro
   if (
@@ -36,7 +37,9 @@ export function requestContextInterceptor(
     (req.url.startsWith('/') || req.url.startsWith(baseUrl))
   ) {
     const requestUrl = new URL(req.url, baseUrl);
-    const fetchUrl = req.url.includes('/api/')
+    const cacheKey = makeCacheKey(req, new URL(requestUrl).pathname);
+    const storeKey = makeStateKey<unknown>(`analog_${cacheKey}`);
+    const fetchUrl = req.url.includes(`/${apiPrefix}/`)
       ? requestUrl.pathname
       : requestUrl.href;
     const responseType =
@@ -72,7 +75,16 @@ export function requestContextInterceptor(
   }
 
   // on the client
-  if (!import.meta.env.SSR && req.url.startsWith('/')) {
+  if (
+    !import.meta.env.SSR &&
+    (req.url.startsWith('/') || req.url.includes('/_analog/'))
+  ) {
+    // /_analog/ requests are full URLs
+    const requestUrl = req.url.includes('/_analog/')
+      ? req.url
+      : `${window.location.origin}${req.url}`;
+    const cacheKey = makeCacheKey(req, new URL(requestUrl).pathname);
+    const storeKey = makeStateKey<unknown>(`analog_${cacheKey}`);
     const cacheRestoreResponse = transferState.get(storeKey, null);
 
     if (cacheRestoreResponse) {
@@ -82,7 +94,7 @@ export function requestContextInterceptor(
 
     return next(
       req.clone({
-        url: `${window.location.origin}${req.url}`,
+        url: requestUrl,
       })
     );
   }
@@ -102,4 +114,49 @@ export function requestContextInterceptor(
   }
 
   return next(req);
+}
+
+function sortAndConcatParams(params: HttpParams | URLSearchParams): string {
+  return [...params.keys()]
+    .sort()
+    .map((k) => `${k}=${params.getAll(k)}`)
+    .join('&');
+}
+
+function makeCacheKey(
+  request: HttpRequest<any>,
+  mappedRequestUrl: string
+): StateKey<unknown> {
+  // make the params encoded same as a url so it's easy to identify
+  const { params, method, responseType } = request;
+  const encodedParams = sortAndConcatParams(params);
+
+  let serializedBody = request.serializeBody();
+  if (serializedBody instanceof URLSearchParams) {
+    serializedBody = sortAndConcatParams(serializedBody);
+  } else if (typeof serializedBody !== 'string') {
+    serializedBody = '';
+  }
+
+  const key = [
+    method,
+    responseType,
+    mappedRequestUrl,
+    serializedBody,
+    encodedParams,
+  ].join('|');
+
+  const hash = generateHash(key);
+
+  return makeStateKey(hash);
+}
+
+function generateHash(str: string) {
+  let hash = 0;
+  for (let i = 0, len = str.length; i < len; i++) {
+    let chr = str.charCodeAt(i);
+    hash = (hash << 5) - hash + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return `${hash}`;
 }

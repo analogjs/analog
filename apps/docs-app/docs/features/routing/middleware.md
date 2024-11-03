@@ -18,7 +18,7 @@ Middleware is defined using the `defineEventHandler` function.
 ```ts
 import { defineEventHandler, sendRedirect, setHeaders } from 'h3';
 
-export default eventHandler((event) => {
+export default defineEventHandler((event) => {
   if (event.node.req.originalUrl === '/checkout') {
     console.log('event url', event.node.req.originalUrl);
 

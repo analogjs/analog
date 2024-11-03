@@ -1,8 +1,8 @@
-# Metadata de Rutas
+# Metadatos de Ruta
 
-Metadata adicional puede ser agregada a las rutas generadas usando el tipo `RouteMeta`. Aquí es donde se puede definir el título de la página, cualquier guardia necesario, resolvers, providers, y más.
+Los metadatos adicionales para agregar a la configuración de ruta generada para cada ruta se pueden hacer usando el tipo `RouteMeta`. Aquí es donde puedes definir el título de la página, cualquier guardia necesaria, resolvers, providers y más.
 
-## Definiendo Metadata de Rutas
+## Definiendo Metadatos de Ruta
 
 ```ts
 import { Component } from '@angular/core';
@@ -31,9 +31,9 @@ export default class AboutPageComponent {
 
 ## Rutas de Redirección
 
-Las rutas pueden ser definidas con el único propósito de redirigir a otra ruta.
+Las rutas pueden definirse con el único propósito de redirigir a otra ruta.
 
-Para crear una ruta de redirección, agrega las propiedades `redirectTo` y `pathMatch` al objeto `routeMeta` dentro del fichero de ruta:
+Para crear una ruta de redirección, añade las propiedades `redirectTo` y `pathMatch` al objeto `routeMeta` dentro del archivo de ruta:
 
 ```ts
 // src/app/pages/index.page.ts
@@ -49,11 +49,11 @@ El ejemplo anterior es una redirección desde la ruta `/` a la ruta `/home`.
 
 :::tip
 
-Los ficheros de rutas de redirección no deben exportar un componente.
+Los archivos de rutas de redirección no deben exportar un componente.
 
 :::
 
-Es también posible definir rutas de redirección anidadas. Para la siguiente estructura de ficheros:
+También es posible definir rutas de redirección anidadas. Para la siguiente estructura de archivos:
 
 ```treeview
 src/
@@ -65,7 +65,7 @@ src/
             └── san-francisco.page.ts
 ```
 
-Y la siguiente definición de `routeMeta` en el fichero `src/app/pages/cities/index.page.ts`:
+y la siguiente definición de `routeMeta` en el archivo `src/app/pages/cities/index.page.ts`:
 
 ```ts
 import { RouteMeta } from '@analogjs/router';
@@ -84,9 +84,9 @@ Las redirecciones anidadas siempre requieren una ruta absoluta.
 
 :::
 
-## Rutas con Meta Tags
+## Metatags de Ruta
 
-El tipo `RouteMeta` tiene una propiedad `meta` que puede ser usada para definir una lista de meta tags para cada ruta:
+El tipo `RouteMeta` tiene una propiedad `meta` que puede usarse para definir una lista de metatags para cada ruta:
 
 ```ts
 import { Component } from '@angular/core';
@@ -115,13 +115,13 @@ export const routeMeta: RouteMeta = {
 export default class RefreshComponent {}
 ```
 
-El ejemplo anterior define el meta tag `<meta http-equiv="refresh" content="30">`, que fuerza al navegador a refrescar la página cada 30 segundos.
+El ejemplo anterior establece la etiqueta meta `<meta http-equiv="refresh" content="30">`, lo que fuerza al navegador a refrescar la página cada 30 segundos.
 
-Para leer más sobre los posibles meta tags estándar, por favor visita la [documentación](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta) oficial.
+Para leer más sobre posibles metatags estándar, por favor visita la [documentación oficial](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta).
 
-## Meta Tags de Open Graph
+## Metatags de Open Graph
 
-La propiedad `meta` de arriba también puede ser usada para definir meta tags de OpenGraph para optimizaciones de SEO y aplicaciones sociales:
+La propiedad `meta` anterior también puede usarse para definir metatags de OpenGraph para optimizaciones de SEO y aplicaciones sociales:
 
 ```ts
 export const routeMeta: RouteMeta = {
@@ -150,4 +150,4 @@ export const routeMeta: RouteMeta = {
 };
 ```
 
-Este ejemplo permitirá que las aplicaciones sociales como Facebook o Twitter muestren títulos, descripciones e imágenes de manera óptima.
+Este ejemplo permitirá que aplicaciones sociales como Facebook o Twitter muestren títulos, descripciones e imágenes de manera óptima.

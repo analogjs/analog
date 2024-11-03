@@ -1,5 +1,6 @@
 import { Directive, inject, input, output } from '@angular/core';
-import { Params, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
+import { injectRouteEndpointURL } from '@analogjs/router';
 
 @Directive({
   selector: 'form[action],form[method]',
@@ -15,19 +16,20 @@ export class FormAction {
   state = output<
     'submitting' | 'error' | 'redirect' | 'success' | 'navigate'
   >();
-  router = inject(Router);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private path = this._getPath();
 
   submitted($event: { target: HTMLFormElement } & Event) {
     $event.preventDefault();
 
     this.state.emit('submitting');
     const body = new FormData($event.target);
-    const path = window.location.pathname;
 
     if ($event.target.method.toUpperCase() === 'GET') {
-      this._handleGet(body, path);
+      this._handleGet(body, this.path);
     } else {
-      this._handlePost(body, path, $event);
+      this._handlePost(body, this.path, $event);
     }
   }
 
@@ -47,7 +49,7 @@ export class FormAction {
     path: string,
     $event: { target: HTMLFormElement } & Event
   ) {
-    fetch(this.action() || `/api/_analog/pages${path}`, {
+    fetch(path, {
       method: $event.target.method,
       body,
     })
@@ -82,5 +84,13 @@ export class FormAction {
       .catch((_) => {
         this.state.emit('error');
       });
+  }
+
+  private _getPath() {
+    if (this.route) {
+      return injectRouteEndpointURL(this.route.snapshot).pathname;
+    }
+
+    return `/api/_analog/pages${window.location.pathname}`;
   }
 }

@@ -57,9 +57,38 @@ function SponsorSection() {
             id="homepage.sponsorSection.title"
             description="The title of the sponsor section"
           >
-            Analog is free, open source, and supported by our sponsors.
+            Analog is free, open source, and supported by our partners and
+            sponsors.
           </Translate>
         </h3>
+
+        <p className="hero__subtitle">
+          <Translate
+            id="homepage.partnerSection.subtitle"
+            description="The subtitle of the partner section on the homepage"
+          >
+            Partners
+          </Translate>
+        </p>
+
+        <div className={styles.horizontalPartners}>
+          <h2>Zerops - Official Deployment Partner</h2>
+          <div className={styles.zerops}>
+            <a
+              href="https://zerops.io?utm_source=analog&utm_medium=docs&utm_campaign=partnership"
+              target="_blank"
+            >
+              <img
+                src="../img/logos/zerops-logo.svg"
+                alt="Zerops"
+                style={{ width: '80px', height: '100px' }}
+              />
+            </a>
+          </div>
+        </div>
+
+        <br />
+
         <p className="hero__subtitle">
           <Translate
             id="homepage.sponsorSection.subtitle"

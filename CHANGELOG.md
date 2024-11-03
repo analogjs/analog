@@ -1,3 +1,143 @@
+## [1.9.2-beta.1](https://github.com/analogjs/analog/compare/v1.9.1...v1.9.2-beta.1) (2024-10-30)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add define option for ngServerMode ([#1427](https://github.com/analogjs/analog/issues/1427)) ([b3a460f](https://github.com/analogjs/analog/commit/b3a460fe98efdc6a41fa7e8200a7bb5d6d27b54b))
+
+## [1.9.1](https://github.com/analogjs/analog/compare/v1.9.0...v1.9.1) (2024-10-28)
+
+### Bug Fixes
+
+- add Nx 20.x to package.json dev dependencies ([#1411](https://github.com/analogjs/analog/issues/1411)) ([cae8861](https://github.com/analogjs/analog/commit/cae8861d51defdc601c8456ab4a1d03617a52ca9))
+- **content:** fix install dependencies, remove marked mangle warnings ([#1413](https://github.com/analogjs/analog/issues/1413)) ([bc3b6df](https://github.com/analogjs/analog/commit/bc3b6dfd916203f31dd5c6daf7b92ba606b93977))
+- **router:** inject HttpClient only when page endpoint is configured ([#1412](https://github.com/analogjs/analog/issues/1412)) ([c037b01](https://github.com/analogjs/analog/commit/c037b01549f4ee52dce761e9ef01064964816c04))
+- **router:** serialize transfer state cache key for internal API requests ([#1415](https://github.com/analogjs/analog/issues/1415)) ([855a314](https://github.com/analogjs/analog/commit/855a3144875d6cbbbcd40f92fa34fc9caf4cbcec))
+- **vite-plugin-angular:** force rebuild and analysis on filesystem changes ([#1416](https://github.com/analogjs/analog/issues/1416)) ([94e7da1](https://github.com/analogjs/analog/commit/94e7da13127ba761c274b321e9e85792d36c0180))
+- **vite-plugin-angular:** infer production build from config mode instead of NODE_ENV ([#1423](https://github.com/analogjs/analog/issues/1423)) ([98e4bab](https://github.com/analogjs/analog/commit/98e4babd1d5005cc7172260075d4b3a28de1bab6))
+- **vite-plugin-angular:** set ngDevMode in during build optimization ([#1417](https://github.com/analogjs/analog/issues/1417)) ([8e1a3b4](https://github.com/analogjs/analog/commit/8e1a3b487087e17d5194cc228133692a17eab216))
+- **vite-plugin-nitro:** enable websocket support & add docs ([#1419](https://github.com/analogjs/analog/issues/1419)) ([9ac357f](https://github.com/analogjs/analog/commit/9ac357f7714b02f2cfac0c66a61efd6d54fbb99e))
+
+## [1.9.1-beta.7](https://github.com/analogjs/analog/compare/v1.9.1-beta.6...v1.9.1-beta.7) (2024-10-27)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** infer production build from config mode instead of NODE_ENV ([#1423](https://github.com/analogjs/analog/issues/1423)) ([98e4bab](https://github.com/analogjs/analog/commit/98e4babd1d5005cc7172260075d4b3a28de1bab6))
+
+## [1.9.1-beta.6](https://github.com/analogjs/analog/compare/v1.9.1-beta.5...v1.9.1-beta.6) (2024-10-25)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** enable websocket support & add docs ([#1419](https://github.com/analogjs/analog/issues/1419)) ([9ac357f](https://github.com/analogjs/analog/commit/9ac357f7714b02f2cfac0c66a61efd6d54fbb99e))
+
+## [1.9.1-beta.5](https://github.com/analogjs/analog/compare/v1.9.1-beta.4...v1.9.1-beta.5) (2024-10-24)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** set ngDevMode in during build optimization ([#1417](https://github.com/analogjs/analog/issues/1417)) ([8e1a3b4](https://github.com/analogjs/analog/commit/8e1a3b487087e17d5194cc228133692a17eab216))
+
+## [1.9.1-beta.4](https://github.com/analogjs/analog/compare/v1.9.1-beta.3...v1.9.1-beta.4) (2024-10-24)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** force rebuild and analysis on filesystem changes ([#1416](https://github.com/analogjs/analog/issues/1416)) ([94e7da1](https://github.com/analogjs/analog/commit/94e7da13127ba761c274b321e9e85792d36c0180))
+
+## [1.9.1-beta.3](https://github.com/analogjs/analog/compare/v1.9.1-beta.2...v1.9.1-beta.3) (2024-10-22)
+
+### Bug Fixes
+
+- **router:** serialize transfer state cache key for internal API requests ([#1415](https://github.com/analogjs/analog/issues/1415)) ([855a314](https://github.com/analogjs/analog/commit/855a3144875d6cbbbcd40f92fa34fc9caf4cbcec))
+
+## [1.9.1-beta.2](https://github.com/analogjs/analog/compare/v1.9.1-beta.1...v1.9.1-beta.2) (2024-10-18)
+
+### Bug Fixes
+
+- **content:** fix install dependencies, remove marked mangle warnings ([#1413](https://github.com/analogjs/analog/issues/1413)) ([bc3b6df](https://github.com/analogjs/analog/commit/bc3b6dfd916203f31dd5c6daf7b92ba606b93977))
+- **router:** inject HttpClient only when page endpoint is configured ([#1412](https://github.com/analogjs/analog/issues/1412)) ([c037b01](https://github.com/analogjs/analog/commit/c037b01549f4ee52dce761e9ef01064964816c04))
+
+## [1.9.1-beta.1](https://github.com/analogjs/analog/compare/v1.9.0...v1.9.1-beta.1) (2024-10-18)
+
+### Bug Fixes
+
+- add Nx 20.x to package.json dev dependencies ([#1411](https://github.com/analogjs/analog/issues/1411)) ([cae8861](https://github.com/analogjs/analog/commit/cae8861d51defdc601c8456ab4a1d03617a52ca9))
+
+# [1.9.0](https://github.com/analogjs/analog/compare/v1.8.2...v1.9.0) (2024-10-14)
+
+### Bug Fixes
+
+- **create-analog:** add Analog SFCs to Tailwind config ([#1388](https://github.com/analogjs/analog/issues/1388)) ([c051f05](https://github.com/analogjs/analog/commit/c051f056974b2336e209ea6941c42822c808ab81))
+- **create-analog:** add minimal template to semver during release ([0e030cc](https://github.com/analogjs/analog/commit/0e030cca96f60b42d0c6feaf5c997cc54ce0a5da))
+- **nx-plugin:** added missing import for 'join' in tailwind template ([#1405](https://github.com/analogjs/analog/issues/1405)) ([02d7898](https://github.com/analogjs/analog/commit/02d7898fba018c0f92016199900f33dd48141e0d))
+- **platform:** add better cache invalidation for file changes ([#1394](https://github.com/analogjs/analog/issues/1394)) ([c38900d](https://github.com/analogjs/analog/commit/c38900da1b8ffa89e5e5e826840095755e820791))
+- **platform:** load content highlighter on first content request ([#1402](https://github.com/analogjs/analog/issues/1402)) ([ead2aba](https://github.com/analogjs/analog/commit/ead2ababbd31c55af5713f584aa9201b146c91e9))
+- **router:** expose inject function for page endpoint URL ([#1397](https://github.com/analogjs/analog/issues/1397)) ([42486cc](https://github.com/analogjs/analog/commit/42486ccd5c520bd5258b9d93c372566424001d02))
+- **router:** retrieve initial server page load from transfer state ([#1396](https://github.com/analogjs/analog/issues/1396)) ([f9f1d9b](https://github.com/analogjs/analog/commit/f9f1d9b28e6b156ff91e657fa916dabe6bdcf4d9))
+- **vite-plugin-angular:** support outputFromObservable ([#1392](https://github.com/analogjs/analog/issues/1392)) ([8c255ec](https://github.com/analogjs/analog/commit/8c255ece5594e1f7a16b8a15cfa4619bf55770e8))
+- **vite-plugin-angular:** use esbuild to postprocess sourcemaps during testing ([#1399](https://github.com/analogjs/analog/issues/1399)) ([bdf8cee](https://github.com/analogjs/analog/commit/bdf8cee28b201871886ead48127600fd00f4af37))
+- **vite-plugin-nitro:** add option use proxy for API requests instead of custom middleware ([#1378](https://github.com/analogjs/analog/issues/1378)) ([f72087f](https://github.com/analogjs/analog/commit/f72087f43bd09fb51407f3e699d7265d05b96e44))
+- **vite-plugin-nitro:** inline and apply api prefix to endpoints ([#1401](https://github.com/analogjs/analog/issues/1401)) ([94bfc2e](https://github.com/analogjs/analog/commit/94bfc2e00c3ee1bb9076a9718b2d16496a1ef142))
+- **vite-plugin-nitro:** use ssrBuildDir if provided for SSR entry point ([#1407](https://github.com/analogjs/analog/issues/1407)) ([132f70d](https://github.com/analogjs/analog/commit/132f70d600d4925598da3b96440d23a942f91f1d))
+
+### Features
+
+- **create-analog:** optionally generate new projects with Analog SFCs ([#1375](https://github.com/analogjs/analog/issues/1375)) ([9b46f08](https://github.com/analogjs/analog/commit/9b46f081d1fd20e2c4e99ca6eee0e09237568704))
+- **create-analog:** set project title based on project name; sort deps ([#1374](https://github.com/analogjs/analog/issues/1374)) ([775eeab](https://github.com/analogjs/analog/commit/775eeab1ce3812e43070e7b18fa22adfa8e02ff3))
+- **create-analog:** update app generators and templates to use TypeScript for Tailwind config ([#1387](https://github.com/analogjs/analog/issues/1387)) ([586adae](https://github.com/analogjs/analog/commit/586adae9b4ef0770dcb5d14344cd5943645b38a9))
+- **router:** introduce server support for form actions ([#1346](https://github.com/analogjs/analog/issues/1346)) ([1d15109](https://github.com/analogjs/analog/commit/1d15109b40935319d7fdf32af751acb1f6effaf7))
+
+# [1.9.0-beta.16](https://github.com/analogjs/analog/compare/v1.9.0-beta.15...v1.9.0-beta.16) (2024-10-14)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** use ssrBuildDir if provided for SSR entry point ([#1407](https://github.com/analogjs/analog/issues/1407)) ([132f70d](https://github.com/analogjs/analog/commit/132f70d600d4925598da3b96440d23a942f91f1d))
+
+# [1.9.0-beta.15](https://github.com/analogjs/analog/compare/v1.9.0-beta.14...v1.9.0-beta.15) (2024-10-13)
+
+### Bug Fixes
+
+- **nx-plugin:** added missing import for 'join' in tailwind template ([#1405](https://github.com/analogjs/analog/issues/1405)) ([02d7898](https://github.com/analogjs/analog/commit/02d7898fba018c0f92016199900f33dd48141e0d))
+
+# [1.9.0-beta.14](https://github.com/analogjs/analog/compare/v1.9.0-beta.13...v1.9.0-beta.14) (2024-10-13)
+
+### Bug Fixes
+
+- **platform:** load content highlighter on first content request ([#1402](https://github.com/analogjs/analog/issues/1402)) ([ead2aba](https://github.com/analogjs/analog/commit/ead2ababbd31c55af5713f584aa9201b146c91e9))
+
+# [1.9.0-beta.13](https://github.com/analogjs/analog/compare/v1.9.0-beta.12...v1.9.0-beta.13) (2024-10-13)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** inline and apply api prefix to endpoints ([#1401](https://github.com/analogjs/analog/issues/1401)) ([94bfc2e](https://github.com/analogjs/analog/commit/94bfc2e00c3ee1bb9076a9718b2d16496a1ef142))
+
+# [1.9.0-beta.12](https://github.com/analogjs/analog/compare/v1.9.0-beta.11...v1.9.0-beta.12) (2024-10-12)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use esbuild to postprocess sourcemaps during testing ([#1399](https://github.com/analogjs/analog/issues/1399)) ([bdf8cee](https://github.com/analogjs/analog/commit/bdf8cee28b201871886ead48127600fd00f4af37))
+
+# [1.9.0-beta.11](https://github.com/analogjs/analog/compare/v1.9.0-beta.10...v1.9.0-beta.11) (2024-10-11)
+
+### Bug Fixes
+
+- **router:** expose inject function for page endpoint URL ([#1397](https://github.com/analogjs/analog/issues/1397)) ([42486cc](https://github.com/analogjs/analog/commit/42486ccd5c520bd5258b9d93c372566424001d02))
+
+# [1.9.0-beta.10](https://github.com/analogjs/analog/compare/v1.9.0-beta.9...v1.9.0-beta.10) (2024-10-10)
+
+### Bug Fixes
+
+- **create-analog:** add minimal template to semver during release ([0e030cc](https://github.com/analogjs/analog/commit/0e030cca96f60b42d0c6feaf5c997cc54ce0a5da))
+
+# [1.9.0-beta.9](https://github.com/analogjs/analog/compare/v1.9.0-beta.8...v1.9.0-beta.9) (2024-10-10)
+
+### Bug Fixes
+
+- **router:** retrieve initial server page load from transfer state ([#1396](https://github.com/analogjs/analog/issues/1396)) ([f9f1d9b](https://github.com/analogjs/analog/commit/f9f1d9b28e6b156ff91e657fa916dabe6bdcf4d9))
+
+# [1.9.0-beta.8](https://github.com/analogjs/analog/compare/v1.9.0-beta.7...v1.9.0-beta.8) (2024-10-10)
+
+### Bug Fixes
+
+- **platform:** add better cache invalidation for file changes ([#1394](https://github.com/analogjs/analog/issues/1394)) ([c38900d](https://github.com/analogjs/analog/commit/c38900da1b8ffa89e5e5e826840095755e820791))
+
 # [1.9.0-beta.7](https://github.com/analogjs/analog/compare/v1.9.0-beta.6...v1.9.0-beta.7) (2024-10-08)
 
 ### Bug Fixes

@@ -1,4 +1,4 @@
-import { Plugin, transformWithEsbuild } from 'vite';
+import { Plugin, transformWithEsbuild, UserConfig } from 'vite';
 
 export function angularVitestPlugin(): Plugin {
   return {
@@ -45,4 +45,48 @@ export function angularVitestPlugin(): Plugin {
       return undefined;
     },
   };
+}
+
+/**
+ * This eagerly disables esbuild so Vitest
+ * disables it when its internal plugin
+ * is configured.
+ */
+export function angularVitestEsbuildPlugin(): Plugin {
+  return {
+    name: '@analogjs/vitest-angular-esbuild-plugin',
+    enforce: 'pre',
+    config(userConfig: UserConfig) {
+      return {
+        esbuild: userConfig.esbuild ?? false,
+      };
+    },
+  };
+}
+
+/**
+ * This plugin does post-processing with esbuild
+ * instead of preprocessing to re-align
+ * the sourcemaps so breakpoints and coverage reports
+ * work correctly.
+ */
+export function angularVitestSourcemapPlugin(): Plugin {
+  return {
+    name: '@analogjs/vitest-angular-sourcemap-plugin',
+    async transform(code: string, id: string) {
+      const result = await transformWithEsbuild(code, id, {
+        loader: 'js',
+      });
+
+      return result;
+    },
+  };
+}
+
+export function angularVitestPlugins() {
+  return [
+    angularVitestPlugin(),
+    angularVitestEsbuildPlugin(),
+    angularVitestSourcemapPlugin(),
+  ];
 }
