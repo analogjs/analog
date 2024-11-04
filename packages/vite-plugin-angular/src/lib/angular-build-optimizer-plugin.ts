@@ -23,7 +23,9 @@ export function buildOptimizerPlugin({
     name: '@analogjs/vite-plugin-angular-optimizer',
     apply: 'build',
     config(userConfig) {
-      isProd = userConfig.mode === 'production';
+      isProd =
+        userConfig.mode === 'production' ||
+        process.env['NODE_ENV'] === 'production';
 
       return {
         define: isProd
