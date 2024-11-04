@@ -10,6 +10,7 @@ import { clearClientPageEndpointsPlugin } from './clear-client-page-endpoint.js'
 import { ssrXhrBuildPlugin } from './ssr/ssr-xhr-plugin.js';
 import { depsPlugin } from './deps-plugin.js';
 import { injectHTMLPlugin } from './ssr/inject-html-plugin.js';
+import { serverModePlugin } from '../server-mode-plugin.js';
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
   const { ...platformOptions } = {
@@ -37,6 +38,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
       additionalContentDirs: platformOptions.additionalContentDirs,
       ...(opts?.vite ?? {}),
     }),
+    serverModePlugin(),
     ssrXhrBuildPlugin(),
     clearClientPageEndpointsPlugin(),
   ];
