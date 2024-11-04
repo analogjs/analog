@@ -1,3 +1,9 @@
+## [1.9.2-beta.2](https://github.com/analogjs/analog/compare/v1.9.2-beta.1...v1.9.2-beta.2) (2024-11-04)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add NODE_ENV check as fallback for production ([#1432](https://github.com/analogjs/analog/issues/1432)) ([763c797](https://github.com/analogjs/analog/commit/763c797c06a961132d10e9e7a8b56307b4860033))
+
 ## [1.9.2-beta.1](https://github.com/analogjs/analog/compare/v1.9.1...v1.9.2-beta.1) (2024-10-30)
 
 ### Bug Fixes
