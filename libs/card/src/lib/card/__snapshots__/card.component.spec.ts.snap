@@ -5,7 +5,6 @@ exports[`CardComponent > should create the app 1`] = `
   card-works
 
   <button
-    _ngcontent-a-c1042141038=""
     color="primary"
     mat-button=""
   >
