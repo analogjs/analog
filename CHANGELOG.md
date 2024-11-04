@@ -1,3 +1,9 @@
+## [1.9.2-beta.3](https://github.com/analogjs/analog/compare/v1.9.2-beta.2...v1.9.2-beta.3) (2024-11-04)
+
+### Bug Fixes
+
+- add support for Angular v19-rc.0 ([#1431](https://github.com/analogjs/analog/issues/1431)) ([68a7b1d](https://github.com/analogjs/analog/commit/68a7b1d04f9194d03b1040f8d121495e23f92b49))
+
 ## [1.9.2-beta.2](https://github.com/analogjs/analog/compare/v1.9.2-beta.1...v1.9.2-beta.2) (2024-11-04)
 
 ### Bug Fixes
