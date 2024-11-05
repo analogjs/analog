@@ -161,7 +161,9 @@ export function angular(options?: PluginOptions): Plugin[] {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
         watchMode = command === 'serve';
-        isProd = config.mode === 'production';
+        isProd =
+          config.mode === 'production' ||
+          process.env['NODE_ENV'] === 'production';
         pluginOptions.tsconfig =
           options?.tsconfig ??
           resolve(

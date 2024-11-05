@@ -23,7 +23,9 @@ export function buildOptimizerPlugin({
     name: '@analogjs/vite-plugin-angular-optimizer',
     apply: 'build',
     config(userConfig) {
-      isProd = userConfig.mode === 'production';
+      isProd =
+        userConfig.mode === 'production' ||
+        process.env['NODE_ENV'] === 'production';
 
       return {
         define: isProd
@@ -31,6 +33,7 @@ export function buildOptimizerPlugin({
               ngJitMode: 'false',
               ngI18nClosureMode: 'false',
               ngDevMode: 'false',
+              ngServerMode: `${!!userConfig.build?.ssr}`,
             }
           : {},
         esbuild: {
@@ -39,6 +42,7 @@ export function buildOptimizerPlugin({
                 ngDevMode: 'false',
                 ngJitMode: 'false',
                 ngI18nClosureMode: 'false',
+                ngServerMode: `${!!userConfig.build?.ssr}`,
               }
             : undefined,
         },

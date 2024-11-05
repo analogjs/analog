@@ -48,6 +48,7 @@ export function depsPlugin(options?: Options): Plugin[] {
               '@nx/eslint',
               'webpack',
               'fsevents',
+              'nx',
             ],
           },
         };

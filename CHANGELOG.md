@@ -1,3 +1,27 @@
+## [1.9.2-beta.4](https://github.com/analogjs/analog/compare/v1.9.2-beta.3...v1.9.2-beta.4) (2024-11-05)
+
+### Bug Fixes
+
+- **platform:** exclude Nx package from Vite optimizations ([#1434](https://github.com/analogjs/analog/issues/1434)) ([c27a59e](https://github.com/analogjs/analog/commit/c27a59e91927fd12a270896e429fb1c4dc7c842a))
+
+## [1.9.2-beta.3](https://github.com/analogjs/analog/compare/v1.9.2-beta.2...v1.9.2-beta.3) (2024-11-04)
+
+### Bug Fixes
+
+- add support for Angular v19-rc.0 ([#1431](https://github.com/analogjs/analog/issues/1431)) ([68a7b1d](https://github.com/analogjs/analog/commit/68a7b1d04f9194d03b1040f8d121495e23f92b49))
+
+## [1.9.2-beta.2](https://github.com/analogjs/analog/compare/v1.9.2-beta.1...v1.9.2-beta.2) (2024-11-04)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add NODE_ENV check as fallback for production ([#1432](https://github.com/analogjs/analog/issues/1432)) ([763c797](https://github.com/analogjs/analog/commit/763c797c06a961132d10e9e7a8b56307b4860033))
+
+## [1.9.2-beta.1](https://github.com/analogjs/analog/compare/v1.9.1...v1.9.2-beta.1) (2024-10-30)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add define option for ngServerMode ([#1427](https://github.com/analogjs/analog/issues/1427)) ([b3a460f](https://github.com/analogjs/analog/commit/b3a460fe98efdc6a41fa7e8200a7bb5d6d27b54b))
+
 ## [1.9.1](https://github.com/analogjs/analog/compare/v1.9.0...v1.9.1) (2024-10-28)
 
 ### Bug Fixes
