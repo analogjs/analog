@@ -17,7 +17,10 @@
     "baseUrl": ".",
     "paths": {
       "@analogjs/astro-angular": ["packages/astro-angular/src/index.ts"],
-      "@analogjs/content": ["packages/content/src/index.ts"],
+      "@analogjs/content": [
+        "./node_modules/@analogjs/content",
+        "packages/content/src/index.ts"
+      ],
       "@analogjs/content-plugin": ["packages/content-plugin/src/index.ts"],
       "@analogjs/content/prism-highlighter": [
         "packages/content/prism-highlighter/src/index.ts"
@@ -30,7 +33,10 @@
         "./node_modules/@analogjs/platform",
         "packages/platform/src/index.ts"
       ],
-      "@analogjs/router": ["packages/router/src/index.ts"],
+      "@analogjs/router": [
+        "./node_modules/@analogjs/router",
+        "packages/router/src/index.ts"
+      ],
       "@analogjs/router/server": ["packages/router/server/src/index.ts"],
       "@analogjs/router/tokens": ["packages/router/tokens/src/index.ts"],
       "@analogjs/top-bar": ["libs/top-bar/src/index.ts"],
