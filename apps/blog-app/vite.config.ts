@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 
 import analog, { type PrerenderContentFile } from '@analogjs/platform';
+import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
 
 // Only run in Netlify CI
@@ -75,6 +76,7 @@ export default defineConfig(() => {
           },
         },
       }),
+      nxViteTsPaths(),
     ],
   };
 });
