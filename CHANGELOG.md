@@ -1,3 +1,9 @@
+## [1.9.2-beta.4](https://github.com/analogjs/analog/compare/v1.9.2-beta.3...v1.9.2-beta.4) (2024-11-05)
+
+### Bug Fixes
+
+- **platform:** exclude Nx package from Vite optimizations ([#1434](https://github.com/analogjs/analog/issues/1434)) ([c27a59e](https://github.com/analogjs/analog/commit/c27a59e91927fd12a270896e429fb1c4dc7c842a))
+
 ## [1.9.2-beta.3](https://github.com/analogjs/analog/compare/v1.9.2-beta.2...v1.9.2-beta.3) (2024-11-04)
 
 ### Bug Fixes
