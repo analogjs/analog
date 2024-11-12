@@ -4,6 +4,11 @@
       "implementation": "./src/lib/vitest.impl",
       "schema": "./src/lib/schema.json",
       "description": "Test with Vitest"
+    },
+    "test-application": {
+      "implementation": "./src/lib/test-application/vitest.impl",
+      "schema": "./src/lib/test-application/schema.json",
+      "description": "Test with Vitest"
     }
   }
 }

@@ -5,7 +5,8 @@
     "declaration": true,
     "declarationMap": true,
     "inlineSources": true,
-    "types": []
+    "types": [],
+    "esModuleInterop": true
   },
   "exclude": ["src/**/*.spec.ts", "vite.config.ts"],
   "include": ["src/**/*.ts"]
