@@ -1,3 +1,9 @@
+## [1.9.3](https://github.com/analogjs/analog/compare/v1.9.2...v1.9.3) (2024-11-12)
+
+### Bug Fixes
+
+- **vitest-angular:** set correct type in package.json based on output format ([#1438](https://github.com/analogjs/analog/issues/1438)) ([1f078ff](https://github.com/analogjs/analog/commit/1f078ffb57b559540e43ef5e46e2bff70b652fce))
+
 ## [1.9.3-beta.1](https://github.com/analogjs/analog/compare/v1.9.2...v1.9.3-beta.1) (2024-11-08)
 
 ### Bug Fixes
