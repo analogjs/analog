@@ -10,8 +10,7 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 import { normalizePath, type Plugin } from 'vite';
-// @ts-ignore
-import { loadEsmModule } from '@angular/build/private';
+
 import { AngularMemoryOutputFiles } from '../utils';
 
 interface AngularMemoryPluginOptions {
@@ -25,7 +24,6 @@ export function createAngularMemoryPlugin(
   options: AngularMemoryPluginOptions
 ): Plugin {
   const { virtualProjectRoot, outputFiles, external } = options;
-  // const { normalizePath } = await loadEsmModule<typeof import('vite')>('vite');
 
   return {
     name: 'vite:angular-memory',
@@ -53,6 +51,12 @@ export function createAngularMemoryPlugin(
       }
 
       const [file] = source.split('?', 1);
+      const fileSplits = file.split('/');
+      // console.log({ file });
+      if (outputFiles.has(fileSplits[fileSplits.length - 1])) {
+        return fileSplits[fileSplits.length - 1];
+      }
+
       if (outputFiles.has(file)) {
         return join(virtualProjectRoot, source);
       }
@@ -60,15 +64,16 @@ export function createAngularMemoryPlugin(
     },
     load(id) {
       const [file] = id.split('?', 1);
-      const relativeFilePath =
-        '/' + normalizePath(relative(virtualProjectRoot, file));
-      const relativeFileParts = relativeFilePath.split('/');
-      const relativeFile = relativeFileParts[
-        relativeFileParts.length - 1
-      ].replace('.ts', '.js');
+      const relativeFile =
+        'spec-' +
+        normalizePath(relative(virtualProjectRoot, file))
+          .replace('.ts', '.js')
+          .replace(/^[./]+/, '_')
+          .replace(/\//g, '-');
 
-      const codeContents = outputFiles.get(relativeFile)?.contents;
-      console.log({ codeContents, relativeFile, outputFiles });
+      const codeContents =
+        outputFiles.get(relativeFile)?.contents ||
+        outputFiles.get(id)?.contents;
       if (codeContents === undefined) {
         if (
           relativeFile.endsWith('/node_modules/vite/dist/client/client.mjs')

@@ -8,10 +8,8 @@ exports[`CardComponent > should create the app 1`] = `
     color="primary"
     mat-button=""
   >
-    Render card
+    Render card2
   </button>
-  <!--bindings={
-  "ng-reflect-ng-if": "false"
-}-->
+  <!---->
 </lib-card>
 `;

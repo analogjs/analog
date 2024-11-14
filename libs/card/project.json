@@ -8,7 +8,12 @@
   "implicitDependencies": ["vitest-angular"],
   "targets": {
     "test": {
-      "executor": "@analogjs/vitest-angular:test-application"
+      "executor": "@analogjs/vitest-angular:test-application",
+      "options": {
+        "tsConfig": "libs/card/tsconfig.spec.json",
+        "setupFile": "libs/card/src/test-setup.ts",
+        "include": ["**/*.spec.ts"]
+      }
     },
     "lint": {
       "executor": "@nx/eslint:lint",

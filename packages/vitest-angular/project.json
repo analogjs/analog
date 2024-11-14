@@ -19,7 +19,8 @@
         "updateBuildableProjectDepsInPackageJson": false,
         "additionalEntryPoints": [
           "packages/vitest-angular/setup-zone.ts",
-          "packages/vitest-angular/setup-snapshots.ts"
+          "packages/vitest-angular/setup-snapshots.ts",
+          "packages/vitest-angular/utils.ts"
         ],
         "generateExportsField": true
       }

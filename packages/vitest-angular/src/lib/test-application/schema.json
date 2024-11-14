@@ -23,7 +23,7 @@
     "setupFile": {
       "type": "string",
       "description": "The path to the setup file.",
-      "default": "src/test.ts"
+      "default": "src/test-setup.ts"
     },
     "tsConfig": {
       "type": "string",

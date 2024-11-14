@@ -1,14 +1,15 @@
-import {
-  BuilderContext,
-  BuilderOutput,
-  createBuilder,
-} from '@angular-devkit/architect';
+import { BuilderOutput, createBuilder } from '@angular-devkit/architect';
 // @ts-ignore
 import { buildApplicationInternal } from '@angular/build/private';
-import { createAngularMemoryPlugin } from './plugins/angular-memory-plugin';
-import { VitestSchema } from './schema';
+import * as path from 'path';
+import { UserConfig } from 'vitest';
 
-const outputFiles = new Map();
+import { getOutputFiles } from '../../../utils';
+
+import { VitestSchema } from './schema';
+import { normalizePath } from 'vite';
+
+const outputFiles = getOutputFiles();
 
 async function vitestBuilder(
   options: VitestSchema,
@@ -23,65 +24,82 @@ async function vitestBuilder(
 
   const projectConfig = await context.getProjectMetadata(context.target);
   const extraArgs = await getExtraArgs(options);
-  const config = {
+  const setupFile = path.relative(
+    projectConfig['root'],
+    options.setupFile || 'src/test-setup.ts'
+  );
+
+  const config: UserConfig = {
     root: `${projectConfig['root'] || '.'}`,
     watch: options.watch === true,
-    config: undefined,
-    plugins: [
-      createAngularMemoryPlugin({
-        virtualProjectRoot: projectConfig['root'],
-        outputFiles: new Map(),
-      }),
-      // {
-      //   name: 'debug',
-      //   transform(code, id) {
-      //     // console.log({ id })
-      //   }
-      // }
-    ],
-    // test: {
-    //   reporters: ['default'],
-    //   globals: true,
-    //   environment: 'jsdom',
-    //   setupFiles: ['src/test-setup.ts'],
-    //   include: ['**/*.spec.ts'],
-    //   pool: 'vmThreads',
-    //   server: {
-    //     deps: {
-    //       inline: ['@analogjs/router', '@analogjs/vitest-angular/setup-zone'],
-    //     },
-    //   },
-    // },
-    // define: {
-    //   'import.meta.vitest': 'true',
-    // },
+    config: options.configFile,
+    setupFiles: [setupFile],
+    globals: true,
+    reporters: ['default'],
+    environment: 'jsdom',
     ...extraArgs,
   };
 
+  const includes: string[] = findIncludes({
+    projectRoot: projectConfig['root'],
+    include: options.include || [],
+  });
+  const testFiles = [
+    path.relative(
+      context.workspaceRoot,
+      options.setupFile || 'src/test-setup.ts'
+    ),
+    ...includes.map((inc) => path.relative(context.workspaceRoot, inc)),
+  ];
+
+  const seen = new Set();
   for await (const result of buildApplicationInternal(
     {
       aot: false,
       index: false,
       progress: false,
-      outputPath: 'dist',
-      tsConfig: 'libs/card/tsconfig.spec.json',
-      entryPoints: new Set(['libs/card/src/lib/card/card.component.spec.ts']),
+      prerender: false,
+      outputPath: 'dist/libs/card',
+      tsConfig: options.tsConfig,
+      watch: false,
+      entryPoints: new Map(
+        Array.from(testFiles, (testFile) => {
+          const relativePath = path
+            .relative(
+              testFile.startsWith(projectConfig['root'])
+                ? projectConfig['root']
+                : context.workspaceRoot,
+              testFile
+            )
+            .replace(/^[./]+/, '_')
+            .replace(/\//g, '-');
+
+          let uniqueName = `spec-${path.basename(
+            relativePath,
+            path.extname(relativePath)
+          )}`;
+          let suffix = 2;
+          while (seen.has(uniqueName)) {
+            uniqueName = `${relativePath}-${suffix}`;
+            ++suffix;
+          }
+          seen.add(uniqueName);
+
+          return [uniqueName, testFile];
+        })
+      ),
       allowedCommonJsDependencies: ['@analogjs/vitest-angular/setup-zone'],
     },
     context
   )) {
     if (result.kind === 1) {
       Object.keys(result.files).forEach((key) => {
-        console.log(result.files[key]);
-        outputFiles.set(key, result.files[key].contents);
+        outputFiles.set(key, result.files[key]);
       });
     }
   }
-  const server = await startVitest(
-    'test',
-    options.testFiles ?? ['libs/card/src/lib/card/card.component.spec.ts'],
-    config
-  );
+
+  const server = await startVitest('test', testFiles, config);
 
   let hasErrors = false;
 
@@ -121,6 +139,17 @@ export async function getExtraArgs(
   }
 
   return extraArgs;
+}
+
+function findIncludes(options: { projectRoot: string; include: string[] }) {
+  const fg = require('fast-glob');
+
+  const projectRoot = normalizePath(path.resolve(options.projectRoot));
+  const globs = [...options.include.map((glob) => `${projectRoot}/${glob}`)];
+
+  return fg.sync(globs, {
+    dot: true,
+  });
 }
 
 export default createBuilder(vitestBuilder) as any;
