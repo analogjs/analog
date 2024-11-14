@@ -29,8 +29,8 @@ async function vitestBuilder(
     config: undefined,
     plugins: [
       createAngularMemoryPlugin({
-        virtualProjectRoot: __dirname,
-        outputFiles,
+        virtualProjectRoot: projectConfig['root'],
+        outputFiles: new Map(),
       }),
       // {
       //   name: 'debug',
@@ -39,22 +39,22 @@ async function vitestBuilder(
       //   }
       // }
     ],
-    test: {
-      reporters: ['default'],
-      globals: true,
-      environment: 'jsdom',
-      setupFiles: ['src/test-setup.ts'],
-      include: ['**/*.spec.ts'],
-      pool: 'vmThreads',
-      server: {
-        deps: {
-          inline: ['@analogjs/router', '@analogjs/vitest-angular/setup-zone'],
-        },
-      },
-    },
-    define: {
-      'import.meta.vitest': 'true',
-    },
+    // test: {
+    //   reporters: ['default'],
+    //   globals: true,
+    //   environment: 'jsdom',
+    //   setupFiles: ['src/test-setup.ts'],
+    //   include: ['**/*.spec.ts'],
+    //   pool: 'vmThreads',
+    //   server: {
+    //     deps: {
+    //       inline: ['@analogjs/router', '@analogjs/vitest-angular/setup-zone'],
+    //     },
+    //   },
+    // },
+    // define: {
+    //   'import.meta.vitest': 'true',
+    // },
     ...extraArgs,
   };
 

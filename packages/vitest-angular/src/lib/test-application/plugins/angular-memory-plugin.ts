@@ -10,8 +10,6 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 import { normalizePath, type Plugin } from 'vite';
-// @ts-ignore
-import { loadEsmModule } from '@angular/build/private';
 
 import { AngularMemoryOutputFiles } from '../utils';
 
@@ -32,33 +30,33 @@ export function createAngularMemoryPlugin(
     name: 'vite:angular-memory',
     // Ensures plugin hooks run before built-in Vite hooks
     enforce: 'pre',
-    async resolveId(source, importer) {
-      // Prevent vite from resolving an explicit external dependency (`externalDependencies` option)
-      if (external?.includes(source)) {
-        // This is still not ideal since Vite will still transform the import specifier to
-        // `/@id/${source}` but is currently closer to a raw external than a resolved file path.
-        return source;
-      }
+    // async resolveId(source, importer) {
+    //   // Prevent vite from resolving an explicit external dependency (`externalDependencies` option)
+    //   if (external?.includes(source)) {
+    //     // This is still not ideal since Vite will still transform the import specifier to
+    //     // `/@id/${source}` but is currently closer to a raw external than a resolved file path.
+    //     return source;
+    //   }
 
-      if (importer) {
-        if (
-          source[0] === '.' &&
-          normalizePath(importer).startsWith(virtualProjectRoot)
-        ) {
-          // Remove query if present
-          const [importerFile] = importer.split('?', 1);
-          source =
-            '/' +
-            join(dirname(relative(virtualProjectRoot, importerFile)), source);
-        }
-      }
+    //   if (importer) {
+    //     if (
+    //       source[0] === '.' &&
+    //       normalizePath(importer).startsWith(virtualProjectRoot)
+    //     ) {
+    //       // Remove query if present
+    //       const [importerFile] = importer.split('?', 1);
+    //       source =
+    //         '/' +
+    //         join(dirname(relative(virtualProjectRoot, importerFile)), source);
+    //     }
+    //   }
 
-      const [file] = source.split('?', 1);
-      if (outputFiles.has(file)) {
-        return join(virtualProjectRoot, source);
-      }
-      return;
-    },
+    //   const [file] = source.split('?', 1);
+    //   if (outputFiles.has(file)) {
+    //     return join(virtualProjectRoot, source);
+    //   }
+    //   return;
+    // },
     load(id) {
       const [file] = id.split('?', 1);
       const relativeFilePath =
@@ -68,7 +66,7 @@ export function createAngularMemoryPlugin(
         relativeFileParts.length - 1
       ].replace('.ts', '.js');
 
-      console.log({ relativeFile, outputFiles });
+      // console.log({ relativeFile, outputFiles });
       const codeContents = outputFiles.get(relativeFile)?.contents;
       if (codeContents === undefined) {
         if (
