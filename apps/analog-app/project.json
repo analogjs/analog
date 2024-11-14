@@ -64,7 +64,7 @@
       "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@nx/vite:test",
+      "executor": "@analogjs/vitest-angular:test",
       "outputs": ["{projectRoot}/coverage"]
     }
   }
