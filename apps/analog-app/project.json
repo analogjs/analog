@@ -4,6 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/analog-app/src",
   "prefix": "analogjs",
+  "implicitDependencies": ["vitest-angular"],
   "tags": [],
   "targets": {
     "build": {
