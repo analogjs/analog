@@ -8,7 +8,7 @@
   "implicitDependencies": ["vitest-angular"],
   "targets": {
     "test": {
-      "executor": "@analogjs/vitest-angular:test"
+      "executor": "@nx/vite:test"
     },
     "lint": {
       "executor": "@nx/eslint:lint",
