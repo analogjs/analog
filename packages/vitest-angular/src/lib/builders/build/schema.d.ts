@@ -1,9 +1,9 @@
 export interface VitestSchema {
   mode?: string;
-  setupFile?: string;
+  setupFile: string;
   configFile?: string;
   reportsDirectory?: string;
-  include?: string[];
+  include: string[];
   exclude?: string[];
   watch?: boolean;
   tsConfig: string;

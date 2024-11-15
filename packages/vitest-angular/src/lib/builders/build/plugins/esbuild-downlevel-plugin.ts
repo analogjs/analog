@@ -1,9 +1,10 @@
-import { Plugin, transformWithEsbuild } from 'vite';
-
-export function esbuildDownlevelPlugin(): Plugin {
+export async function esbuildDownlevelPlugin() {
+  const { transformWithEsbuild } = await (Function(
+    'return import("vite")'
+  )() as Promise<typeof import('vite')>);
   return {
     name: 'analogs-vitest-esbuild-downlevel-plugin',
-    async transform(_code, id) {
+    async transform(_code: string, id: string) {
       if (_code.includes('async (')) {
         const { code, map } = await transformWithEsbuild(_code, id, {
           loader: 'js',

@@ -8,21 +8,24 @@
 
 // import assert from 'node:assert';
 import { dirname, join, relative, resolve } from 'node:path';
-import { normalizePath, UserConfig, type Plugin } from 'vite';
 
 import { AngularMemoryOutputFiles } from '../utils';
 
 interface AngularMemoryPluginOptions {
   workspaceRoot?: string;
+  angularVersion: number;
   outputFiles: AngularMemoryOutputFiles;
   external?: string[];
 }
 
-export function createAngularMemoryPlugin(
+export async function createAngularMemoryPlugin(
   options: AngularMemoryPluginOptions
-): Plugin {
+) {
+  const { normalizePath } = await (Function(
+    'return import("vite")'
+  )() as Promise<typeof import('vite')>);
   const { outputFiles, external } = options;
-  let config: UserConfig;
+  let config;
   let projectRoot: string;
   const workspaceRoot = options?.workspaceRoot || process.cwd();
 
@@ -30,11 +33,11 @@ export function createAngularMemoryPlugin(
     name: 'vite:angular-memory',
     // Ensures plugin hooks run before built-in Vite hooks
     enforce: 'pre',
-    config(userConfig) {
+    config(userConfig: any) {
       config = userConfig;
       projectRoot = resolve(workspaceRoot, config.root || '.');
     },
-    async resolveId(source, importer) {
+    async resolveId(source: string, importer: string) {
       // Prevent vite from resolving an explicit external dependency (`externalDependencies` option)
       if (external?.includes(source)) {
         // This is still not ideal since Vite will still transform the import specifier to
@@ -66,14 +69,18 @@ export function createAngularMemoryPlugin(
       }
       return;
     },
-    load(id) {
+    load(id: string) {
       const [file] = id.split('?', 1);
       const relativeFile =
-        'spec-' +
-        normalizePath(relative(projectRoot, file))
-          .replace('.ts', '.js')
-          .replace(/^[./]+/, '_')
-          .replace(/\//g, '-');
+        options.angularVersion < 19
+          ? normalizePath(relative(projectRoot, file))
+              .replace(/^.*\//, '')
+              .replace('.ts', '.js')
+          : 'spec-' +
+            normalizePath(relative(projectRoot, file))
+              .replace('.ts', '.js')
+              .replace(/^[./]+/, '_')
+              .replace(/\//g, '-');
 
       const codeContents =
         outputFiles.get(relativeFile)?.contents ||

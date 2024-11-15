@@ -4,12 +4,19 @@
   "description": "Vitest target options",
   "type": "object",
   "properties": {
+    "configFile": {
+      "type": "string",
+      "description": "The path to the local vitest config",
+      "x-completion-type": "file",
+      "x-completion-glob": "@vitest.config@(.js|.ts|.mts)",
+      "aliases": ["config"]
+    },
     "include": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "default": ["**/*.spec.ts"],
+      "default": ["src/**/*.spec.ts"],
       "description": "Globs of files to include, relative to project root."
     },
     "exclude": {

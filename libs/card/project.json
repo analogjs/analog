@@ -11,8 +11,7 @@
       "executor": "@analogjs/vitest-angular:build-test",
       "options": {
         "tsConfig": "libs/card/tsconfig.spec.json",
-        "setupFile": "libs/card/src/test-setup.ts",
-        "include": ["**/*.spec.ts"]
+        "setupFile": "libs/card/src/test-setup.ts"
       }
     },
     "lint": {
