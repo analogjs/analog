@@ -7,7 +7,6 @@
  */
 
 // import assert from 'node:assert';
-import { readFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 import { normalizePath, UserConfig, type Plugin } from 'vite';
 
@@ -80,12 +79,6 @@ export function createAngularMemoryPlugin(
         outputFiles.get(relativeFile)?.contents ||
         outputFiles.get(id)?.contents;
       if (codeContents === undefined) {
-        if (
-          relativeFile.endsWith('/node_modules/vite/dist/client/client.mjs')
-        ) {
-          return loadViteClientCode(file);
-        }
-
         return undefined;
       }
 
@@ -102,30 +95,4 @@ export function createAngularMemoryPlugin(
       };
     },
   };
-}
-
-/**
- * Reads the resolved Vite client code from disk and updates the content to remove
- * an unactionable suggestion to update the Vite configuration file to disable the
- * error overlay. The Vite configuration file is not present when used in the Angular
- * CLI.
- * @param file The absolute path to the Vite client code.
- * @returns
- */
-async function loadViteClientCode(file: string): Promise<string> {
-  const originalContents = await readFile(file, 'utf-8');
-  const updatedContents = originalContents.replace(
-    `"You can also disable this overlay by setting ",
-      h("code", { part: "config-option-name" }, "server.hmr.overlay"),
-      " to ",
-      h("code", { part: "config-option-value" }, "false"),
-      " in ",
-      h("code", { part: "config-file-name" }, hmrConfigName),
-      "."`,
-    ''
-  );
-
-  // assert(originalContents !== updatedContents, 'Failed to update Vite client error overlay text.');
-
-  return updatedContents;
 }

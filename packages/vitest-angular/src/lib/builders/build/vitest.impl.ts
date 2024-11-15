@@ -2,14 +2,12 @@ import { BuilderOutput, createBuilder } from '@angular-devkit/architect';
 // @ts-ignore
 import { buildApplicationInternal } from '@angular/build/private';
 import * as path from 'path';
-import { normalizePath } from 'vite';
+import { normalizePath, UserConfig as ViteUserConfig } from 'vite';
 import { Vitest, UserConfig } from 'vitest';
 
-import { getOutputFiles } from '../../../utils';
-
 import { VitestSchema } from './schema';
-
-const outputFiles = getOutputFiles();
+import { createAngularMemoryPlugin } from './plugins/angular-memory-plugin';
+import { esbuildDownlevelPlugin } from './plugins/esbuild-downlevel-plugin';
 
 async function vitestBuilder(
   options: VitestSchema,
@@ -38,6 +36,7 @@ async function vitestBuilder(
     pool: 'vmThreads',
     reporters: ['default'],
     environment: 'jsdom',
+    exclude: options?.exclude || [],
     ...extraArgs,
   };
 
@@ -58,6 +57,18 @@ async function vitestBuilder(
     testFiles,
     context,
   });
+
+  const outputFiles = new Map();
+
+  const viteConfig: ViteUserConfig = {
+    plugins: [
+      createAngularMemoryPlugin({
+        workspaceRoot: context.workspaceRoot,
+        outputFiles,
+      }),
+      esbuildDownlevelPlugin(),
+    ],
+  };
 
   let server: Vitest | undefined;
   for await (const result of buildApplicationInternal(
@@ -82,10 +93,10 @@ async function vitestBuilder(
     }
 
     if (options.watch) {
-      const vitestServer = await startVitest('test', [], config);
+      const vitestServer = await startVitest('test', [], config, viteConfig);
       server = vitestServer;
     } else {
-      server = await startVitest('test', [], config);
+      server = await startVitest('test', [], config, viteConfig);
 
       const success = server?.state.getCountOfFailedTests() === 0;
 

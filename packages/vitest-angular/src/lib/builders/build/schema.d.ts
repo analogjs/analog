@@ -4,6 +4,7 @@ export interface VitestSchema {
   configFile?: string;
   reportsDirectory?: string;
   include?: string[];
+  exclude?: string[];
   watch?: boolean;
   tsConfig: string;
 }

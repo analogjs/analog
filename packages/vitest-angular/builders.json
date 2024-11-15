@@ -1,14 +1,14 @@
 {
   "builders": {
     "test": {
-      "implementation": "./src/lib/vitest.impl",
+      "implementation": "./src/lib/builders/test/vitest.impl",
       "schema": "./src/lib/schema.json",
-      "description": "Test with Vitest"
+      "description": "Run tests with Vitest"
     },
-    "test-application": {
-      "implementation": "./src/lib/test-application/vitest.impl",
-      "schema": "./src/lib/test-application/schema.json",
-      "description": "Test with Vitest"
+    "build-test": {
+      "implementation": "./src/lib/builders/build/vitest.impl",
+      "schema": "./src/lib/builders/build/schema.json",
+      "description": "Bundle and run tests with Vitest using the Application Builder"
     }
   }
 }

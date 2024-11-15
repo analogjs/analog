@@ -8,7 +8,7 @@
   "implicitDependencies": ["vitest-angular"],
   "targets": {
     "test": {
-      "executor": "@analogjs/vitest-angular:test-application",
+      "executor": "@analogjs/vitest-angular:build-test",
       "options": {
         "tsConfig": "libs/card/tsconfig.spec.json",
         "setupFile": "libs/card/src/test-setup.ts",
