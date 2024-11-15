@@ -34,7 +34,7 @@
     },
     "tsConfig": {
       "type": "string",
-      "description": "The name of the TypeScript configuration file.",
+      "description": "The relative path to the TypeScript configuration file for running tests.",
       "default": "tsconfig.spec.json"
     },
     "watch": {
@@ -43,6 +43,5 @@
       "description": "Run the tests in watch mode"
     }
   },
-  "additionalProperties": true,
-  "required": ["tsConfig"]
+  "additionalProperties": true
 }

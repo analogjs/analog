@@ -33,10 +33,12 @@ async function* vitestApplicationBuilder(
 
   const projectConfig = await context.getProjectMetadata(context.target);
   const extraArgs = await getExtraArgs(options);
-  const setupFile = path.relative(projectConfig['root'], options.setupFile);
+  const workspaceRoot = context.workspaceRoot;
+  const projectRoot = projectConfig['root'];
+  const setupFile = path.relative(projectRoot, options.setupFile);
 
   const config: VitestConfig = {
-    root: `${projectConfig['root'] || '.'}`,
+    root: `${projectRoot || '.'}`,
     watch: options.watch === true,
     config: options.configFile,
     setupFiles: [setupFile],
@@ -49,19 +51,19 @@ async function* vitestApplicationBuilder(
   };
 
   const includes: string[] = findIncludes({
-    workspaceRoot: context.workspaceRoot,
-    projectRoot: projectConfig['root'],
+    workspaceRoot,
+    projectRoot,
     include: options.include,
     exclude: options.exclude || [],
   });
 
   const testFiles = [
-    path.relative(context.workspaceRoot, options.setupFile),
-    ...includes.map((inc) => path.relative(context.workspaceRoot, inc)),
+    path.relative(workspaceRoot, options.setupFile),
+    ...includes.map((inc) => path.relative(workspaceRoot, inc)),
   ];
 
   const entryPoints = generateEntryPoints({
-    projectRoot: projectConfig['root'],
+    projectRoot: projectRoot,
     testFiles,
     context,
     angularVersion,
@@ -73,7 +75,7 @@ async function* vitestApplicationBuilder(
     plugins: [
       (await createAngularMemoryPlugin({
         angularVersion,
-        workspaceRoot: context.workspaceRoot,
+        workspaceRoot,
         outputFiles,
       })) as Plugin,
       await esbuildDownlevelPlugin(),
@@ -89,7 +91,7 @@ async function* vitestApplicationBuilder(
       prerender: false,
       optimization: false,
       outputPath: `.angular/.vitest/${projectConfig['name']}`,
-      tsConfig: options.tsConfig,
+      tsConfig: path.relative(workspaceRoot, options.tsConfig),
       watch: options.watch === true,
       entryPoints,
       allowedCommonJsDependencies: ['@analogjs/vitest-angular/setup-zone'],
@@ -211,4 +213,4 @@ function generateEntryPoints({
   );
 }
 
-export default createBuilder(vitestApplicationBuilder) as any;
+export default createBuilder(vitestApplicationBuilder) as unknown;

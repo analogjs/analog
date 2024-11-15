@@ -2,7 +2,6 @@ export interface VitestSchema {
   mode?: string;
   setupFile: string;
   configFile?: string;
-  reportsDirectory?: string;
   include: string[];
   exclude?: string[];
   watch?: boolean;
