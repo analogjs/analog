@@ -6,7 +6,9 @@
     "declarationMap": true,
     "inlineSources": true,
     "types": [],
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "moduleResolution": "bundler"
   },
   "exclude": ["src/**/*.spec.ts", "vite.config.ts"],
   "include": ["src/**/*.ts"]

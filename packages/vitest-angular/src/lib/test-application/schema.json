@@ -36,6 +36,6 @@
       "description": "Run the tests in watch mode"
     }
   },
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": ["tsConfig"]
 }

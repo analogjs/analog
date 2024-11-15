@@ -1,21 +1,12 @@
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
-import { getOutputFiles } from '@analogjs/vitest-angular/utils';
-
-import { createAngularMemoryPlugin } from './plugins/angular-memory-plugin';
-
-const outputFiles = getOutputFiles();
+import { angularVitest } from '@analogjs/vitest-angular/plugin';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
-    // root: __dirname,
-    plugins: [
-      createAngularMemoryPlugin({
-        virtualProjectRoot: __dirname,
-        outputFiles,
-      }),
-    ],
+    root: __dirname,
+    plugins: [angularVitest()],
   };
 });

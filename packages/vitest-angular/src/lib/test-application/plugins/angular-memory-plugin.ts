@@ -8,27 +8,33 @@
 
 // import assert from 'node:assert';
 import { readFile } from 'node:fs/promises';
-import { dirname, join, relative } from 'node:path';
-import { normalizePath, type Plugin } from 'vite';
+import { dirname, join, relative, resolve } from 'node:path';
+import { normalizePath, UserConfig, type Plugin } from 'vite';
 
 import { AngularMemoryOutputFiles } from '../utils';
 
 interface AngularMemoryPluginOptions {
-  virtualProjectRoot: string;
+  workspaceRoot?: string;
   outputFiles: AngularMemoryOutputFiles;
   external?: string[];
-  skipViteClient?: boolean;
 }
 
 export function createAngularMemoryPlugin(
   options: AngularMemoryPluginOptions
 ): Plugin {
-  const { virtualProjectRoot, outputFiles, external } = options;
+  const { outputFiles, external } = options;
+  let config: UserConfig;
+  let projectRoot: string;
+  const workspaceRoot = options?.workspaceRoot || process.cwd();
 
   return {
     name: 'vite:angular-memory',
     // Ensures plugin hooks run before built-in Vite hooks
     enforce: 'pre',
+    config(userConfig) {
+      config = userConfig;
+      projectRoot = resolve(workspaceRoot, config.root || '.');
+    },
     async resolveId(source, importer) {
       // Prevent vite from resolving an explicit external dependency (`externalDependencies` option)
       if (external?.includes(source)) {
@@ -40,25 +46,24 @@ export function createAngularMemoryPlugin(
       if (importer) {
         if (
           source[0] === '.' &&
-          normalizePath(importer).startsWith(virtualProjectRoot)
+          normalizePath(importer).startsWith(projectRoot)
         ) {
           // Remove query if present
           const [importerFile] = importer.split('?', 1);
           source =
-            '/' +
-            join(dirname(relative(virtualProjectRoot, importerFile)), source);
+            '/' + join(dirname(relative(projectRoot, importerFile)), source);
         }
       }
 
       const [file] = source.split('?', 1);
       const fileSplits = file.split('/');
-      // console.log({ file });
+
       if (outputFiles.has(fileSplits[fileSplits.length - 1])) {
         return fileSplits[fileSplits.length - 1];
       }
 
       if (outputFiles.has(file)) {
-        return join(virtualProjectRoot, source);
+        return join(projectRoot, source);
       }
       return;
     },
@@ -66,7 +71,7 @@ export function createAngularMemoryPlugin(
       const [file] = id.split('?', 1);
       const relativeFile =
         'spec-' +
-        normalizePath(relative(virtualProjectRoot, file))
+        normalizePath(relative(projectRoot, file))
           .replace('.ts', '.js')
           .replace(/^[./]+/, '_')
           .replace(/\//g, '-');
@@ -78,7 +83,7 @@ export function createAngularMemoryPlugin(
         if (
           relativeFile.endsWith('/node_modules/vite/dist/client/client.mjs')
         ) {
-          return options.skipViteClient ? '' : loadViteClientCode(file);
+          return loadViteClientCode(file);
         }
 
         return undefined;

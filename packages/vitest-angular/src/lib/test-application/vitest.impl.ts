@@ -2,12 +2,12 @@ import { BuilderOutput, createBuilder } from '@angular-devkit/architect';
 // @ts-ignore
 import { buildApplicationInternal } from '@angular/build/private';
 import * as path from 'path';
-import { UserConfig } from 'vitest';
+import { normalizePath } from 'vite';
+import { Vitest, UserConfig } from 'vitest';
 
 import { getOutputFiles } from '../../../utils';
 
 import { VitestSchema } from './schema';
-import { normalizePath } from 'vite';
 
 const outputFiles = getOutputFiles();
 
@@ -35,6 +35,7 @@ async function vitestBuilder(
     config: options.configFile,
     setupFiles: [setupFile],
     globals: true,
+    pool: 'vmThreads',
     reporters: ['default'],
     environment: 'jsdom',
     ...extraArgs,
@@ -52,42 +53,24 @@ async function vitestBuilder(
     ...includes.map((inc) => path.relative(context.workspaceRoot, inc)),
   ];
 
-  const seen = new Set();
+  const entryPoints = generateEntryPoints({
+    projectRoot: projectConfig['root'],
+    testFiles,
+    context,
+  });
+
+  let server: Vitest | undefined;
   for await (const result of buildApplicationInternal(
     {
       aot: false,
       index: false,
       progress: false,
       prerender: false,
-      outputPath: 'dist/libs/card',
+      optimization: false,
+      outputPath: `dist/libs/${projectConfig['name']}`,
       tsConfig: options.tsConfig,
-      watch: false,
-      entryPoints: new Map(
-        Array.from(testFiles, (testFile) => {
-          const relativePath = path
-            .relative(
-              testFile.startsWith(projectConfig['root'])
-                ? projectConfig['root']
-                : context.workspaceRoot,
-              testFile
-            )
-            .replace(/^[./]+/, '_')
-            .replace(/\//g, '-');
-
-          let uniqueName = `spec-${path.basename(
-            relativePath,
-            path.extname(relativePath)
-          )}`;
-          let suffix = 2;
-          while (seen.has(uniqueName)) {
-            uniqueName = `${relativePath}-${suffix}`;
-            ++suffix;
-          }
-          seen.add(uniqueName);
-
-          return [uniqueName, testFile];
-        })
-      ),
+      watch: options.watch === true,
+      entryPoints,
       allowedCommonJsDependencies: ['@analogjs/vitest-angular/setup-zone'],
     },
     context
@@ -97,32 +80,23 @@ async function vitestBuilder(
         outputFiles.set(key, result.files[key]);
       });
     }
-  }
 
-  const server = await startVitest('test', testFiles, config);
-
-  let hasErrors = false;
-
-  const processExit = () => {
-    // server?.exit();
-    if (hasErrors) {
-      process.exit(1);
+    if (options.watch) {
+      const vitestServer = await startVitest('test', [], config);
+      server = vitestServer;
     } else {
-      process.exit(0);
+      server = await startVitest('test', [], config);
+
+      const success = server?.state.getCountOfFailedTests() === 0;
+
+      return {
+        success,
+      };
     }
-  };
-
-  if (options.watch) {
-    process.on('SIGINT', processExit);
-    process.on('SIGTERM', processExit);
-    process.on('exit', processExit);
   }
-
-  // vitest sets the exitCode = 1 when code coverage isn't met
-  hasErrors = (process.exitCode && process.exitCode !== 0) as boolean;
 
   return {
-    success: !hasErrors,
+    success: true,
   };
 }
 
@@ -150,6 +124,45 @@ function findIncludes(options: { projectRoot: string; include: string[] }) {
   return fg.sync(globs, {
     dot: true,
   });
+}
+
+function generateEntryPoints({
+  projectRoot,
+  testFiles,
+  context,
+}: {
+  projectRoot: string;
+  testFiles: string[];
+  context: any;
+}) {
+  const seen = new Set();
+
+  return new Map(
+    Array.from(testFiles, (testFile) => {
+      const relativePath = path
+        .relative(
+          testFile.startsWith(projectRoot)
+            ? projectRoot
+            : context.workspaceRoot,
+          testFile
+        )
+        .replace(/^[./]+/, '_')
+        .replace(/\//g, '-');
+
+      let uniqueName = `spec-${path.basename(
+        relativePath,
+        path.extname(relativePath)
+      )}`;
+      let suffix = 2;
+      while (seen.has(uniqueName)) {
+        uniqueName = `${relativePath}-${suffix}`;
+        ++suffix;
+      }
+      seen.add(uniqueName);
+
+      return [uniqueName, testFile];
+    })
+  );
 }
 
 export default createBuilder(vitestBuilder) as any;
