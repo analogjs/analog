@@ -159,6 +159,9 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     return {
       name: '@analogjs/vite-plugin-angular',
+      async watchChange() {
+        await buildAndAnalyze();
+      },
       async config(config, { command }) {
         watchMode = command === 'serve';
         isProd =
@@ -320,7 +323,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             const tsMod = viteServer?.moduleGraph.getModuleById(id);
             if (tsMod) {
               sourceFileCache.invalidate([id]);
-              await buildAndAnalyze();
             }
           }
 
