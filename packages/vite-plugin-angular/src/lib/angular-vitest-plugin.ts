@@ -7,6 +7,10 @@ export function angularVitestPlugin(): Plugin {
     enforce: 'post',
     config(userConfig) {
       return {
+        optimizeDeps: {
+          include: ['tslib', '@angular/cdk/testing/testbed'],
+          exclude: ['@angular/cdk/testing'],
+        },
         ssr: {
           noExternal: [/cdk\/fesm2022/],
         },
@@ -15,6 +19,7 @@ export function angularVitestPlugin(): Plugin {
           server: {
             deps: {
               inline: [
+                '@angular/material',
                 '@analogjs/router',
                 '@analogjs/vitest-angular/setup-zone',
               ],
@@ -74,6 +79,12 @@ export function angularVitestSourcemapPlugin(): Plugin {
   return {
     name: '@analogjs/vitest-angular-sourcemap-plugin',
     async transform(code: string, id: string) {
+      const [, query] = id.split('?');
+
+      if (query && query.includes('inline')) {
+        return;
+      }
+
       const result = await transformWithEsbuild(code, id, {
         loader: 'js',
       });

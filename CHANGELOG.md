@@ -1,3 +1,9 @@
+## [1.9.4-beta.1](https://github.com/analogjs/analog/compare/v1.9.3...v1.9.4-beta.1) (2024-11-14)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** improve support for Angular Material and testing using harnesses ([#1442](https://github.com/analogjs/analog/issues/1442)) ([8338d42](https://github.com/analogjs/analog/commit/8338d4209f1cd72899669e0fa14e46d40ad4be7f))
+
 ## [1.9.3](https://github.com/analogjs/analog/compare/v1.9.2...v1.9.3) (2024-11-12)
 
 ### Bug Fixes
