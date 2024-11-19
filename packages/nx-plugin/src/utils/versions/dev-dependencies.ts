@@ -36,6 +36,15 @@ import {
   V18_X_VITEST,
   V18_X_ANALOG_JS_VITEST_ANGULAR,
 } from './ng_18_X/versions';
+import {
+  V19_X_ANALOG_JS_PLATFORM,
+  V19_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
+  V19_X_ANALOG_JS_VITEST_ANGULAR,
+  V19_X_NX_VITE,
+  V19_X_JSDOM,
+  V19_X_VITE_TSCONFIG_PATHS,
+  V19_X_VITEST,
+} from './ng_19_X/versions';
 
 const devDependencyKeys = [
   '@analogjs/platform',
@@ -102,14 +111,27 @@ const getDevDependencies = (escapedAngularVersion: string) => {
     };
   }
 
-  // return latest 18.x deps for versions >18.0.0
+  // install 18.x deps for versions <19.0.0
+  if (lt(escapedAngularVersion, '18.0.0')) {
+    return {
+      '@analogjs/platform': V18_X_ANALOG_JS_PLATFORM,
+      '@analogjs/vite-plugin-angular': V18_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
+      '@analogjs/vitest-angular': V18_X_ANALOG_JS_VITEST_ANGULAR,
+      '@nx/vite': V18_X_NX_VITE,
+      jsdom: V18_X_JSDOM,
+      'vite-tsconfig-paths': V18_X_VITE_TSCONFIG_PATHS,
+      vitest: V18_X_VITEST,
+    };
+  }
+
+  // return latest 19.x deps for versions >19.0.0
   return {
-    '@analogjs/platform': V18_X_ANALOG_JS_PLATFORM,
-    '@analogjs/vite-plugin-angular': V18_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
-    '@analogjs/vitest-angular': V18_X_ANALOG_JS_VITEST_ANGULAR,
-    '@nx/vite': V18_X_NX_VITE,
-    jsdom: V18_X_JSDOM,
-    'vite-tsconfig-paths': V18_X_VITE_TSCONFIG_PATHS,
-    vitest: V18_X_VITEST,
+    '@analogjs/platform': V19_X_ANALOG_JS_PLATFORM,
+    '@analogjs/vite-plugin-angular': V19_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
+    '@analogjs/vitest-angular': V19_X_ANALOG_JS_VITEST_ANGULAR,
+    '@nx/vite': V19_X_NX_VITE,
+    jsdom: V19_X_JSDOM,
+    'vite-tsconfig-paths': V19_X_VITE_TSCONFIG_PATHS,
+    vitest: V19_X_VITEST,
   };
 };

@@ -4,7 +4,7 @@ import { AnalogWelcomeComponent } from './analog-welcome.component';
 
 @Component({
   selector: '<%= fileName %>-home',
-  standalone: true,
+  <% if (majorAngularVersion < 19) { %>standalone: true,<% } %>
   imports: [AnalogWelcomeComponent],
   template: `
      <<%= fileName %>-analog-welcome/>

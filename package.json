@@ -41,6 +41,8 @@
   },
   "private": true,
   "dependencies": {
+    "@analogjs/content": "^1.7.0",
+    "@analogjs/router": "^1.7.0",
     "@angular/animations": "^19.0.0",
     "@angular/cdk": "^19.0.0",
     "@angular/common": "^19.0.0",
@@ -80,6 +82,8 @@
     "zone.js": "^0.15.0"
   },
   "devDependencies": {
+    "@analogjs/platform": "^1.7.0",
+    "@analogjs/vite-plugin-angular": "^1.7.0",
     "@angular-devkit/architect": "^0.1900.0",
     "@angular-devkit/build-angular": "^19.0.0",
     "@angular-devkit/core": "^19.0.0",
