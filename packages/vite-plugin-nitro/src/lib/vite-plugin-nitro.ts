@@ -82,6 +82,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         nitroConfig = {
           rootDir,
           preset: buildPreset,
+          compatibilityDate: '2024-11-19',
           logLevel: nitroOptions?.logLevel || 0,
           srcDir: normalizePath(`${rootDir}/src/server`),
           scanDirs: [

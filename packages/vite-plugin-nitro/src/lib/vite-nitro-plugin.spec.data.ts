@@ -13,6 +13,7 @@ export const mockViteDevServer = {
 export const mockNitroConfig: NitroConfig = {
   buildDir: resolve('./dist/.nitro'),
   preset: undefined,
+  compatibilityDate: '2024-11-19',
   handlers: [],
   logLevel: 0,
   output: {

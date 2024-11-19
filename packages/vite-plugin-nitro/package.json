@@ -28,7 +28,7 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "dependencies": {
-    "nitropack": "^2.9.0",
+    "nitropack": "^2.10.0",
     "xmlbuilder2": "^3.0.2",
     "esbuild": "^0.20.1"
   },
