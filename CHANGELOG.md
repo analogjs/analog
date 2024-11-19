@@ -1,3 +1,9 @@
+# [1.10.0-beta.3](https://github.com/analogjs/analog/compare/v1.10.0-beta.2...v1.10.0-beta.3) (2024-11-19)
+
+### Features
+
+- **vite-plugin-nitro:** update Nitro to 2.10.x and add default compatibility date ([#1450](https://github.com/analogjs/analog/issues/1450)) ([5e75b50](https://github.com/analogjs/analog/commit/5e75b507e51364ef1d3619eb5ef74db955bca3ed))
+
 # [1.10.0-beta.2](https://github.com/analogjs/analog/compare/v1.10.0-beta.1...v1.10.0-beta.2) (2024-11-19)
 
 ### Bug Fixes
