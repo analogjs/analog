@@ -1,3 +1,9 @@
+## [1.9.5-beta.1](https://github.com/analogjs/analog/compare/v1.9.4...v1.9.5-beta.1) (2024-11-19)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** speed up tests by reusing compiler ([#1444](https://github.com/analogjs/analog/issues/1444)) ([a7f4587](https://github.com/analogjs/analog/commit/a7f4587ef2047ce7c623046b650037a77465f9e2))
+
 ## [1.9.4](https://github.com/analogjs/analog/compare/v1.9.3...v1.9.4) (2024-11-18)
 
 ### Bug Fixes
