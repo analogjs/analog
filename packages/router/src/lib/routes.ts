@@ -181,7 +181,7 @@ function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
           path: rawRoute.segment,
           loadChildren: () =>
             module!().then((m) => {
-              if (!import.meta.env.PROD) {
+              if (import.meta.env.DEV) {
                 const hasModuleDefault = !!m.default;
                 const hasRedirect = !!m.routeMeta?.redirectTo;
 
