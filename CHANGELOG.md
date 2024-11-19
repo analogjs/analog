@@ -1,3 +1,9 @@
+# [1.10.0-beta.1](https://github.com/analogjs/analog/compare/v1.9.5-beta.1...v1.10.0-beta.1) (2024-11-19)
+
+### Features
+
+- **create-analog:** update template for latest to Angular v19 ([#1447](https://github.com/analogjs/analog/issues/1447)) ([72b8dc7](https://github.com/analogjs/analog/commit/72b8dc79b2cd28ad66c3a297d1725a4e51974693))
+
 ## [1.9.5-beta.1](https://github.com/analogjs/analog/compare/v1.9.4...v1.9.5-beta.1) (2024-11-19)
 
 ### Performance Improvements
