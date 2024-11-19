@@ -160,7 +160,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     return {
       name: '@analogjs/vite-plugin-angular',
       async watchChange() {
-        await buildAndAnalyze();
+        if (isTest) {
+          await buildAndAnalyze();
+        }
       },
       async config(config, { command }) {
         watchMode = command === 'serve';
