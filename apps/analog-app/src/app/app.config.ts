@@ -8,9 +8,12 @@ import {
   provideClientHydration,
   withEventReplay,
 } from '@angular/platform-browser';
-import { provideFileRouter, requestContextInterceptor } from '@analogjs/router';
+import {
+  provideFileRouter,
+  withExtraRoutes,
+  requestContextInterceptor,
+} from '@analogjs/router';
 import { withNavigationErrorHandler } from '@angular/router';
-import { withExtraRoutes } from '@analogjs/router';
 
 const fallbackRoutes = [
   { path: 'about', loadComponent: () => import('./about') },
