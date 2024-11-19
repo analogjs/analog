@@ -1,3 +1,9 @@
+# [1.10.0-beta.2](https://github.com/analogjs/analog/compare/v1.10.0-beta.1...v1.10.0-beta.2) (2024-11-19)
+
+### Bug Fixes
+
+- **router:** make withExtraRoutes function public ([#1446](https://github.com/analogjs/analog/issues/1446)) ([2008bd8](https://github.com/analogjs/analog/commit/2008bd8059be1f5d1e177078591a17e37f681b33))
+
 # [1.10.0-beta.1](https://github.com/analogjs/analog/compare/v1.9.5-beta.1...v1.10.0-beta.1) (2024-11-19)
 
 ### Features
