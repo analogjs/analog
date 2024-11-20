@@ -1,3 +1,9 @@
+# [1.10.0-beta.4](https://github.com/analogjs/analog/compare/v1.10.0-beta.3...v1.10.0-beta.4) (2024-11-20)
+
+### Features
+
+- **nx-plugin:** add template for Angular v19 ([#1451](https://github.com/analogjs/analog/issues/1451)) ([cdff236](https://github.com/analogjs/analog/commit/cdff23662c9b88b342b00c34faa74d285a7be200))
+
 # [1.10.0-beta.3](https://github.com/analogjs/analog/compare/v1.10.0-beta.2...v1.10.0-beta.3) (2024-11-19)
 
 ### Features
