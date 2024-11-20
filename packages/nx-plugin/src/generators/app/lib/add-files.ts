@@ -12,6 +12,7 @@ export function addFiles(
     ...options,
     template: '',
     tsconfig: isNx ? 'tsconfig.base.json' : 'tsconfig.json',
+    majorAngularVersion,
   };
   generateFiles(
     tree,

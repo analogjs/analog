@@ -129,7 +129,7 @@ export async function appGenerator(
     await addTrpc(tree, projectRoot, nxVersion, normalizedOptions);
   }
 
-  addHomePage(tree, normalizedOptions);
+  addHomePage(tree, normalizedOptions, majorAngularVersion);
 
   // await addEslint(tree, majorNxVersion, normalizedOptions);
 
