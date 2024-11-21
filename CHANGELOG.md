@@ -1,3 +1,9 @@
+# [1.10.0-beta.5](https://github.com/analogjs/analog/compare/v1.10.0-beta.4...v1.10.0-beta.5) (2024-11-21)
+
+### Bug Fixes
+
+- **router:** support transfer state/prerendering for static assets ([#1453](https://github.com/analogjs/analog/issues/1453)) ([3ad2dec](https://github.com/analogjs/analog/commit/3ad2dec2267d8c644737e2ea11580cbcd21dcab9))
+
 # [1.10.0-beta.4](https://github.com/analogjs/analog/compare/v1.10.0-beta.3...v1.10.0-beta.4) (2024-11-20)
 
 ### Features
