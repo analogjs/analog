@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => {
         additionalPagesDirs: ['/libs/shared/feature'],
         additionalAPIDirs: ['/libs/shared/feature/src/api'],
         prerender: {
-          routes: ['/', '/cart'],
+          routes: ['/', '/cart', '/shipping'],
           sitemap: {
             host: base,
           },
