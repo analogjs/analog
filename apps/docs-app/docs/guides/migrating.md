@@ -141,8 +141,8 @@ export default defineConfig(({ mode }) => ({
     mode === 'production' &&
       replaceFiles([
         {
-          replace: 'src/environments/environment.ts',
-          with: 'src/environments/environment.prod.ts',
+          replace: './src/environments/environment.ts',
+          with: './src/environments/environment.prod.ts',
         },
       ]),
   ],
@@ -171,4 +171,24 @@ Add the environment files to `files` array in the `tsconfig.app.json` may also b
     "src/environments/environment.prod.ts"
   ]
 }
+```
+
+## Copying Assets
+
+Static assets in the `public` directory are copied to the build output directory by default. If you want to copy additional assets outside of that directory, use the `nxCopyAssetsPlugin` Vite plugin.
+
+Import the plugin and set it up:
+
+```ts
+/// <reference types="vitest" />
+
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  // ...
+  plugins: [analog(), nxCopyAssetsPlugin(['*.md'])],
+}));
 ```
