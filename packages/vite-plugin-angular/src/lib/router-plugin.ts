@@ -7,8 +7,9 @@ export function routerPlugin() {
     name: 'analogjs-router-optimization',
     enforce: 'pre',
     async transform(_code: string, id: string) {
-      if (id.endsWith('analogjs-router.mjs')) {
-        const contents = await javascriptTransformer.transformFile(id, false);
+      if (id.includes('analogjs-') && id.includes('.mjs')) {
+        const path = id.split('?')[0];
+        const contents = await javascriptTransformer.transformFile(path);
 
         return {
           code: Buffer.from(contents).toString('utf-8'),

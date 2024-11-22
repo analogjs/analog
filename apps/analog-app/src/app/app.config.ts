@@ -11,6 +11,7 @@ import {
 import {
   provideFileRouter,
   withExtraRoutes,
+  withDebugRoutes,
   requestContextInterceptor,
 } from '@analogjs/router';
 import { withNavigationErrorHandler } from '@angular/router';
@@ -23,6 +24,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(
       withNavigationErrorHandler(console.error),
+      withDebugRoutes(),
       withExtraRoutes(fallbackRoutes)
     ),
     provideHttpClient(
