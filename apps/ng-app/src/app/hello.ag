@@ -12,7 +12,7 @@
   import { outputFromObservable } from '@angular/core/rxjs-interop';
   import { interval } from 'rxjs';
 
-  import { myFunc } from './export-stuff.analog' with { analog: 'exposes'};
+  import { myFunc } from './export-stuff.ag' with { analog: 'exposes'};
 
   defineMetadata({
     queries: {
