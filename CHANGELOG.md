@@ -1,3 +1,9 @@
+# [1.10.0-beta.6](https://github.com/analogjs/analog/compare/v1.10.0-beta.5...v1.10.0-beta.6) (2024-11-26)
+
+### Bug Fixes
+
+- **platform:** exclude Nx Module Federation package from optimization ([#1460](https://github.com/analogjs/analog/issues/1460)) ([b767a79](https://github.com/analogjs/analog/commit/b767a79efac843f9d657933eccf8cc63a82fe775))
+
 # [1.10.0-beta.5](https://github.com/analogjs/analog/compare/v1.10.0-beta.4...v1.10.0-beta.5) (2024-11-21)
 
 ### Bug Fixes
