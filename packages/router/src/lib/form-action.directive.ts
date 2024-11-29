@@ -1,6 +1,7 @@
 import { Directive, inject, input, output } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { injectRouteEndpointURL } from '@analogjs/router';
+
+import { injectRouteEndpointURL } from './inject-route-endpoint-url';
 
 @Directive({
   selector: 'form[action],form[method]',

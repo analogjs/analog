@@ -14,3 +14,4 @@ export { injectLoad } from './lib/inject-load';
 export { getLoadResolver } from './lib/get-load-resolver';
 export { requestContextInterceptor } from './lib/request-context';
 export { injectRouteEndpointURL } from './lib/inject-route-endpoint-url';
+export { FormAction } from './lib/form-action.directive';
