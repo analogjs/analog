@@ -109,3 +109,62 @@ export async function action({ event }: PageServerAction) {
 - The `json` function returns a JSON response.
 - The `redirect` function returns a redirect response to the client. This should be an absolute path.
 - The `fail` function is used for returning form validation errors.
+
+## Handling GET Requests
+
+Forms with a `GET` action can be used to navigate to the same URL, with the form inputs passed as query parameters.
+
+The example below defines a search form with the `search` field as a query param.
+
+```ts
+// src/app/pages/search.page.ts
+import { Component, computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { injectLoad, FormAction } from '@analogjs/router';
+
+import type { load } from './search.server';
+
+@Component({
+  selector: 'app-search-page',
+  standalone: true,
+  imports: [FormAction],
+  template: `
+    <h3>Search</h3>
+
+    <form method="get">
+      <div>
+        <label for="search"> Search </label>
+        <input type="text" name="search" [value]="searchTerm()" />
+      </div>
+
+      <button class="button" type="submit">Submit</button>
+    </form>
+
+    @if(searchTerm()) {
+    <p>Search Term: {{ searchTerm() }}</p>
+    }
+  `,
+})
+export default class NewsletterComponent {
+  loader = toSignal(injectLoad<typeof load>(), { requireSync: true });
+  searchTerm = computed(() => this.loader().searchTerm);
+}
+```
+
+The query parameter can be accessed through the server form action.
+
+```ts
+// src/app/pages/search.server.ts
+import type { PageServerLoad } from '@analogjs/router';
+import { getQuery } from 'h3';
+
+export async function load({ event }: PageServerLoad) {
+  const query = getQuery(event);
+  console.log('loaded search', query['search']);
+
+  return {
+    loaded: true,
+    searchTerm: `${query['search']}`,
+  };
+}
+```
