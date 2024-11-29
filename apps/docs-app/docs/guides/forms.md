@@ -106,6 +106,6 @@ export async function action({ event }: PageServerAction) {
 }
 ```
 
-- The `redirect` function returns a redirect response to the client. This should be an absolute URL.
 - The `json` function returns a JSON response.
+- The `redirect` function returns a redirect response to the client. This should be an absolute path.
 - The `fail` function is used for returning form validation errors.
