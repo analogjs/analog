@@ -27,5 +27,5 @@ import type { load } from './search.server';
 })
 export default class NewsletterComponent {
   loader = toSignal(injectLoad<typeof load>(), { requireSync: true });
-  searchTerm = computed(() => this.loader().searchTerm || '');
+  searchTerm = computed(() => this.loader().searchTerm);
 }
