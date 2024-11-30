@@ -28,7 +28,7 @@ export class FormAction {
     const body = new FormData($event.target);
 
     if ($event.target.method.toUpperCase() === 'GET') {
-      this._handleGet(body, this.path);
+      this._handleGet(body, this.router.url);
     } else {
       this._handlePost(body, this.path, $event);
     }
@@ -39,7 +39,8 @@ export class FormAction {
     body.forEach((formVal, formKey) => (params[formKey] = formVal));
 
     this.state.emit('navigate');
-    this.router.navigate([path], {
+    const url = path.split('?')[0];
+    this.router.navigate([url], {
       queryParams: params,
       onSameUrlNavigation: 'reload',
     });
