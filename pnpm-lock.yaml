@@ -289,8 +289,8 @@ importers:
         specifier: ^11.1.1
         version: 11.1.1
       h3:
-        specifier: ^1.8.2
-        version: 1.8.2
+        specifier: ^1.13.0
+        version: 1.13.0
       happy-dom:
         specifier: ^12.10.3
         version: 12.10.3
@@ -6448,9 +6448,6 @@ packages:
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
-  cookie-es@1.0.0:
-    resolution: {integrity: sha512-mWYvfOLrfEc996hlKcdABeIiPHUPC6DM2QYZdGGOvhOTbA3tjm2eBwqlJpoFdjC89NI4Qt6h0Pu06Mp+1Pj5OQ==}
-
   cookie-es@1.2.2:
     resolution: {integrity: sha512-+W7VmiVINB+ywl1HGXJXmrqkOhpKrIiVZV6tQuV54ZyQC7MMuBt81Vc336GMLoHBq5hV/F9eXgt5Mnx0Rha5Fg==}
 
@@ -7115,9 +7112,6 @@ packages:
   define-properties@1.2.1:
     resolution: {integrity: sha512-8QmQKqEASLd5nx0U1B1okLElbUuuttJ/AnYmRXbbbGDWh6uS208EjD4Xqq/I9wK7u0v6O08XhTWnt5XtEbR6Dg==}
     engines: {node: '>= 0.4'}
-
-  defu@6.1.2:
-    resolution: {integrity: sha512-+uO4+qr7msjNNWKYPHqN/3+Dx3NFkmIzayk2L1MyZQlvgZb/J1A0fo410dpKrN2SnqFjt8n4JL8fDJE0wIgjFQ==}
 
   defu@6.1.4:
     resolution: {integrity: sha512-mEQCMmwJu317oSz8CwdIOdwf3xMif1ttiM8LTufzc3g6kR+9Pe236twL8j3IYT1F7GfRgGcW6MWxzZjLIkuHIg==}
@@ -8231,9 +8225,6 @@ packages:
   h3@1.13.0:
     resolution: {integrity: sha512-vFEAu/yf8UMUcB4s43OaDaigcqpQd14yanmOsn+NcRX3/guSKncyE2rOYhq8RIchgJrPSs/QiIddnTTR1ddiAg==}
 
-  h3@1.8.2:
-    resolution: {integrity: sha512-1Ca0orJJlCaiFY68BvzQtP2lKLk46kcLAxVM8JgYbtm2cUg6IY7pjpYgWMwUvDO9QI30N5JAukOKoT8KD3Q0PQ==}
-
   handle-thing@2.0.1:
     resolution: {integrity: sha512-9Qn4yBxelxoh2Ow62nP+Ka/kMnOXRi8BXnRaUwezLNhqelnN49xKz4F/dPP8OYLxLxq6JDtZb2i9XznUQbNPTg==}
 
@@ -8685,9 +8676,6 @@ packages:
   ipaddr.js@2.2.0:
     resolution: {integrity: sha512-Ag3wB2o37wslZS19hZqorUnrnzSkpOVy+IiiDEiTqNubEYpYuHWIf6K4psgN2ZWKExS4xhVCrRVfb/wfW8fWJA==}
     engines: {node: '>= 10'}
-
-  iron-webcrypto@0.10.1:
-    resolution: {integrity: sha512-QGOS8MRMnj/UiOa+aMIgfyHcvkhqNUsUxb1XzskENvbo+rEfp6TOwqd1KPuDzXC4OnGHcMSVxDGRoilqB8ViqA==}
 
   iron-webcrypto@1.2.1:
     resolution: {integrity: sha512-feOM6FaSr6rEABp/eDfVseKyTMDt+KGpeB35SkVn9Tyn0CqvVsY3EwI0v5i8nMHyJnzCIQf7nsy3p41TPkJZhg==}
@@ -10366,9 +10354,6 @@ packages:
     resolution: {integrity: sha512-E2WEOVsgs7O16zsURJ/eH8BqhF029wGpEOnv7Urwdo2wmQanOACwJQh0devF9D9RhoZru0+9JXIS0dBXIAz+lA==}
     engines: {node: '>=18'}
 
-  node-fetch-native@1.6.2:
-    resolution: {integrity: sha512-69mtXOFZ6hSkYiXAVB5SqaRvrbITC/NPyqv7yuu/qw0nmgPyYbIMYYNIDhNtwPrzk0ptrimrLz/hhjvm4w5Z+w==}
-
   node-fetch-native@1.6.4:
     resolution: {integrity: sha512-IhOigYzAKHd244OC0JIMIUrjzctirCmPkaIfhDeGcEETWof5zKYUW7e7MYvChGWh/4CJeXEgsRyGzuF334rOOQ==}
 
@@ -11920,9 +11905,6 @@ packages:
   quick-lru@5.1.1:
     resolution: {integrity: sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==}
     engines: {node: '>=10'}
-
-  radix3@1.1.0:
-    resolution: {integrity: sha512-pNsHDxbGORSvuSScqNJ+3Km6QAVqk8CfsCBIEoDgpqLrkD2f3QM4I7d1ozJJ172OmIcoUcerZaNWqtLkRXTV3A==}
 
   radix3@1.1.2:
     resolution: {integrity: sha512-b484I/7b8rDEdSDKckSSBA8knMpcdsXudlE/LNL639wFoHKwLbEkQFZHWEYwDC0wa0FKUcCY+GAF73Z7wxNVFA==}
@@ -13569,9 +13551,6 @@ packages:
 
   unenv@1.10.0:
     resolution: {integrity: sha512-wY5bskBQFL9n3Eca5XnhH6KbUo/tfvkwm9OpcdCvLaeA7piBNbavbOKJySEwQ1V0RH6HvNlSAFRTpvTqgKRQXQ==}
-
-  unenv@1.7.4:
-    resolution: {integrity: sha512-fjYsXYi30It0YCQYqLOcT6fHfMXsBr2hw9XC7ycf8rTG7Xxpe3ZssiqUnD0khrjiZEmkBXWLwm42yCSCH46fMw==}
 
   unherit@3.0.0:
     resolution: {integrity: sha512-UmvIQZGEc9qdLIQ8mv8/61n6PiMgfbOoASPKHpCvII5srShCQSa6jSjBjlZOR4bxt2XnT6uo6csmPKRi+zQ0Jg==}
@@ -22727,8 +22706,6 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  cookie-es@1.0.0: {}
-
   cookie-es@1.2.2: {}
 
   cookie-signature@1.0.6: {}
@@ -23507,8 +23484,6 @@ snapshots:
       define-data-property: 1.1.4
       has-property-descriptors: 1.0.2
       object-keys: 1.1.1
-
-  defu@6.1.2: {}
 
   defu@6.1.4: {}
 
@@ -24914,17 +24889,6 @@ snapshots:
       uncrypto: 0.1.3
       unenv: 1.10.0
 
-  h3@1.8.2:
-    dependencies:
-      cookie-es: 1.0.0
-      defu: 6.1.2
-      destr: 2.0.1
-      iron-webcrypto: 0.10.1
-      radix3: 1.1.0
-      ufo: 1.5.4
-      uncrypto: 0.1.3
-      unenv: 1.7.4
-
   handle-thing@2.0.1: {}
 
   handlebars@4.7.7:
@@ -25523,8 +25487,6 @@ snapshots:
   ipaddr.js@1.9.1: {}
 
   ipaddr.js@2.2.0: {}
-
-  iron-webcrypto@0.10.1: {}
 
   iron-webcrypto@1.2.1: {}
 
@@ -27950,8 +27912,6 @@ snapshots:
       emojilib: 2.4.0
       skin-tone: 2.0.0
 
-  node-fetch-native@1.6.2: {}
-
   node-fetch-native@1.6.4: {}
 
   node-fetch@2.6.9(encoding@0.1.13):
@@ -29496,8 +29456,6 @@ snapshots:
   quick-lru@4.0.1: {}
 
   quick-lru@5.1.1: {}
-
-  radix3@1.1.0: {}
 
   radix3@1.1.2: {}
 
@@ -31498,14 +31456,6 @@ snapshots:
       defu: 6.1.4
       mime: 3.0.0
       node-fetch-native: 1.6.4
-      pathe: 1.1.2
-
-  unenv@1.7.4:
-    dependencies:
-      consola: 3.2.3
-      defu: 6.1.2
-      mime: 3.0.0
-      node-fetch-native: 1.6.2
       pathe: 1.1.2
 
   unherit@3.0.0: {}
