@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "title": "Vitest schema for Test Facade.",
+  "description": "Vitest target options",
+  "type": "object",
+  "properties": {
+    "configFile": {
+      "type": "string",
+      "description": "The path to the local vitest config",
+      "x-completion-type": "file",
+      "x-completion-glob": "@vitest.config@(.js|.ts|.mts)",
+      "aliases": ["config"]
+    },
+    "include": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": ["src/**/*.spec.ts"],
+      "description": "Globs of files to include, relative to project root."
+    },
+    "exclude": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": ["node_modules", "dist", ".idea", ".git", ".cache"],
+      "description": "Globs of files to exclude, relative to the project root."
+    },
+    "setupFile": {
+      "type": "string",
+      "description": "The path to the setup file.",
+      "default": "src/test-setup.ts"
+    },
+    "tsConfig": {
+      "type": "string",
+      "description": "The relative path to the TypeScript configuration file for running tests.",
+      "default": "tsconfig.spec.json"
+    },
+    "watch": {
+      "type": "boolean",
+      "default": false,
+      "description": "Run the tests in watch mode"
+    }
+  },
+  "additionalProperties": true
+}
