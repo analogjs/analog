@@ -10,7 +10,8 @@
     "noFallthroughCasesInSwitch": true,
     "sourceMap": false,
     "inlineSourceMap": true,
-    "inlineSources": true
+    "inlineSources": true,
+    "resolveJsonModule": true
   },
   "files": [],
   "include": [],

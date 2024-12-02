@@ -1,3 +1,9 @@
+# [1.10.0-beta.7](https://github.com/analogjs/analog/compare/v1.10.0-beta.6...v1.10.0-beta.7) (2024-12-02)
+
+### Features
+
+- **vitest-angular:** introduce application bundle-based Vitest builder ([#1443](https://github.com/analogjs/analog/issues/1443)) ([0bbefa0](https://github.com/analogjs/analog/commit/0bbefa0a06c558c37bef30335233f5805a681acd))
+
 # [1.10.0-beta.6](https://github.com/analogjs/analog/compare/v1.10.0-beta.5...v1.10.0-beta.6) (2024-11-26)
 
 ### Bug Fixes

@@ -5,6 +5,11 @@
     "declaration": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "setup-zone.ts", "setup-snapshots.ts"],
+  "include": [
+    "src/**/*.ts",
+    "setup-zone.ts",
+    "setup-snapshots.ts",
+    "plugin.ts"
+  ],
   "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"]
 }
