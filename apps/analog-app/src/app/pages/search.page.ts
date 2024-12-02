@@ -1,8 +1,7 @@
 import { Component, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { injectLoad } from '@analogjs/router';
+import { injectLoad, FormAction } from '@analogjs/router';
 
-import { FormAction } from './form-action.directive';
 import type { load } from './search.server';
 
 @Component({

@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 
-import { FormAction } from './form-action.directive';
+import { FormAction } from '@analogjs/router';
 
 type FormErrors =
   | {

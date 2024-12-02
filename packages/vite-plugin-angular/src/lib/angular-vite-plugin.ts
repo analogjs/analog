@@ -41,6 +41,7 @@ import {
   defaultMarkdownTemplateTransforms,
   MarkdownTemplateTransform,
 } from './authoring/markdown-transform.js';
+import { routerPlugin } from './router-plugin.js';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -432,6 +433,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       jit,
     }),
     (isStorybook && angularStorybookPlugin()) as Plugin,
+    routerPlugin(),
   ].filter(Boolean) as Plugin[];
 
   function findAnalogFiles(config: ResolvedConfig) {

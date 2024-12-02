@@ -7,6 +7,6 @@ export async function load({ event }: PageServerLoad) {
 
   return {
     loaded: true,
-    searchTerm: `${query['search']}`,
+    searchTerm: `${query['search'] || ''}`,
   };
 }

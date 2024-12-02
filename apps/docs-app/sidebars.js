@@ -116,6 +116,11 @@ const sidebars = {
           ],
         },
         {
+          type: 'doc',
+          id: 'guides/forms',
+          label: 'Form Actions',
+        },
+        {
           type: 'category',
           label: 'Code Generation',
           items: [
