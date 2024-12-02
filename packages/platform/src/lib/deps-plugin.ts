@@ -46,6 +46,8 @@ export function depsPlugin(options?: Options): Plugin[] {
               '@nx/web',
               '@nx/workspace',
               '@nx/eslint',
+              '@nx/module-federation',
+              '@nx/rspack',
               'webpack',
               'fsevents',
               'nx',

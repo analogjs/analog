@@ -34,14 +34,15 @@ export function requestContextInterceptor(
     typeof global !== 'undefined' &&
     global.$fetch &&
     baseUrl &&
-    (req.url.startsWith('/') || req.url.startsWith(baseUrl))
+    (req.url.startsWith('/') ||
+      req.url.startsWith(baseUrl) ||
+      req.url.startsWith(`/${apiPrefix}`))
   ) {
     const requestUrl = new URL(req.url, baseUrl);
     const cacheKey = makeCacheKey(req, new URL(requestUrl).pathname);
     const storeKey = makeStateKey<unknown>(`analog_${cacheKey}`);
-    const fetchUrl = req.url.includes(`/${apiPrefix}/`)
-      ? requestUrl.pathname
-      : requestUrl.href;
+    const fetchUrl = requestUrl.pathname;
+
     const responseType =
       req.responseType === 'arraybuffer' ? 'arrayBuffer' : req.responseType;
 

@@ -6,7 +6,7 @@ coverImage: ''
 ---
 
 <script lang="ts">
-import Hello from '../app/hello.analog' with { analog: 'imports' };
+import Hello from '../app/hello.ag' with { analog: 'imports' };
 
 const name = 'Analog';
 const greetings = ['Hello', 'Hi'];

@@ -1,3 +1,63 @@
+# [1.10.0-beta.6](https://github.com/analogjs/analog/compare/v1.10.0-beta.5...v1.10.0-beta.6) (2024-11-26)
+
+### Bug Fixes
+
+- **platform:** exclude Nx Module Federation package from optimization ([#1460](https://github.com/analogjs/analog/issues/1460)) ([b767a79](https://github.com/analogjs/analog/commit/b767a79efac843f9d657933eccf8cc63a82fe775))
+
+# [1.10.0-beta.5](https://github.com/analogjs/analog/compare/v1.10.0-beta.4...v1.10.0-beta.5) (2024-11-21)
+
+### Bug Fixes
+
+- **router:** support transfer state/prerendering for static assets ([#1453](https://github.com/analogjs/analog/issues/1453)) ([3ad2dec](https://github.com/analogjs/analog/commit/3ad2dec2267d8c644737e2ea11580cbcd21dcab9))
+
+# [1.10.0-beta.4](https://github.com/analogjs/analog/compare/v1.10.0-beta.3...v1.10.0-beta.4) (2024-11-20)
+
+### Features
+
+- **nx-plugin:** add template for Angular v19 ([#1451](https://github.com/analogjs/analog/issues/1451)) ([cdff236](https://github.com/analogjs/analog/commit/cdff23662c9b88b342b00c34faa74d285a7be200))
+
+# [1.10.0-beta.3](https://github.com/analogjs/analog/compare/v1.10.0-beta.2...v1.10.0-beta.3) (2024-11-19)
+
+### Features
+
+- **vite-plugin-nitro:** update Nitro to 2.10.x and add default compatibility date ([#1450](https://github.com/analogjs/analog/issues/1450)) ([5e75b50](https://github.com/analogjs/analog/commit/5e75b507e51364ef1d3619eb5ef74db955bca3ed))
+
+# [1.10.0-beta.2](https://github.com/analogjs/analog/compare/v1.10.0-beta.1...v1.10.0-beta.2) (2024-11-19)
+
+### Bug Fixes
+
+- **router:** make withExtraRoutes function public ([#1446](https://github.com/analogjs/analog/issues/1446)) ([2008bd8](https://github.com/analogjs/analog/commit/2008bd8059be1f5d1e177078591a17e37f681b33))
+
+# [1.10.0-beta.1](https://github.com/analogjs/analog/compare/v1.9.5-beta.1...v1.10.0-beta.1) (2024-11-19)
+
+### Features
+
+- **create-analog:** update template for latest to Angular v19 ([#1447](https://github.com/analogjs/analog/issues/1447)) ([72b8dc7](https://github.com/analogjs/analog/commit/72b8dc79b2cd28ad66c3a297d1725a4e51974693))
+
+## [1.9.5-beta.1](https://github.com/analogjs/analog/compare/v1.9.4...v1.9.5-beta.1) (2024-11-19)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** speed up tests by reusing compiler ([#1444](https://github.com/analogjs/analog/issues/1444)) ([a7f4587](https://github.com/analogjs/analog/commit/a7f4587ef2047ce7c623046b650037a77465f9e2))
+
+## [1.9.4](https://github.com/analogjs/analog/compare/v1.9.3...v1.9.4) (2024-11-18)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** improve support for Angular Material and testing using harnesses ([#1442](https://github.com/analogjs/analog/issues/1442)) ([8338d42](https://github.com/analogjs/analog/commit/8338d4209f1cd72899669e0fa14e46d40ad4be7f))
+
+## [1.9.4-beta.1](https://github.com/analogjs/analog/compare/v1.9.3...v1.9.4-beta.1) (2024-11-14)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** improve support for Angular Material and testing using harnesses ([#1442](https://github.com/analogjs/analog/issues/1442)) ([8338d42](https://github.com/analogjs/analog/commit/8338d4209f1cd72899669e0fa14e46d40ad4be7f))
+
+## [1.9.3](https://github.com/analogjs/analog/compare/v1.9.2...v1.9.3) (2024-11-12)
+
+### Bug Fixes
+
+- **vitest-angular:** set correct type in package.json based on output format ([#1438](https://github.com/analogjs/analog/issues/1438)) ([1f078ff](https://github.com/analogjs/analog/commit/1f078ffb57b559540e43ef5e46e2bff70b652fce))
+
 ## [1.9.3-beta.1](https://github.com/analogjs/analog/compare/v1.9.2...v1.9.3-beta.1) (2024-11-08)
 
 ### Bug Fixes

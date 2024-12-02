@@ -2,10 +2,15 @@ import { generateFiles, Tree } from '@nx/devkit';
 import { join } from 'node:path';
 import { NormalizedOptions } from '../generator';
 
-export function addHomePage(tree: Tree, options: NormalizedOptions) {
+export function addHomePage(
+  tree: Tree,
+  options: NormalizedOptions,
+  majorAngularVersion: number
+) {
   const templateOptions = {
     ...options,
     template: '',
+    majorAngularVersion,
   };
 
   generateFiles(

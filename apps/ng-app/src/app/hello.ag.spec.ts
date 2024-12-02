@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import Hello from './hello.analog';
+import Hello from './hello.ag';
 
 describe('Hello', () => {
   beforeEach(async () => {

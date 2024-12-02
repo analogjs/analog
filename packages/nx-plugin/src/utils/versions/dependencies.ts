@@ -40,6 +40,16 @@ import {
   V18_X_NX_ANGULAR,
   V18_X_PRISMJS,
 } from './ng_18_X/versions';
+import {
+  V19_X_ANALOG_JS_CONTENT,
+  V19_X_ANALOG_JS_ROUTER,
+  V19_X_NX_ANGULAR,
+  V19_X_MARKED,
+  V19_X_MARKED_GFM_HEADING_ID,
+  V19_X_MARKED_HIGHLIGHT,
+  V19_X_MARKED_MANGLE,
+  V19_X_PRISMJS,
+} from './ng_19_X/versions';
 
 const dependencyKeys = [
   '@analogjs/content',
@@ -110,15 +120,29 @@ const getDependencies = (escapedAngularVersion: string) => {
     };
   }
 
-  // return latest 18.x deps for versions >18.0.0
+  // install 18.x deps for versions <19.0.0
+  if (lt(escapedAngularVersion, '19.0.0')) {
+    return {
+      '@analogjs/content': V18_X_ANALOG_JS_CONTENT,
+      '@analogjs/router': V18_X_ANALOG_JS_ROUTER,
+      '@nx/angular': V18_X_NX_ANGULAR,
+      marked: V18_X_MARKED,
+      'marked-gfm-heading-id': V18_X_MARKED_GFM_HEADING_ID,
+      'marked-highlight': V18_X_MARKED_HIGHLIGHT,
+      'marked-mangle': V18_X_MARKED_MANGLE,
+      prismjs: V18_X_PRISMJS,
+    };
+  }
+
+  // return latest 19.x deps for versions >19.0.0
   return {
-    '@analogjs/content': V18_X_ANALOG_JS_CONTENT,
-    '@analogjs/router': V18_X_ANALOG_JS_ROUTER,
-    '@nx/angular': V18_X_NX_ANGULAR,
-    marked: V18_X_MARKED,
-    'marked-gfm-heading-id': V18_X_MARKED_GFM_HEADING_ID,
-    'marked-highlight': V18_X_MARKED_HIGHLIGHT,
-    'marked-mangle': V18_X_MARKED_MANGLE,
-    prismjs: V18_X_PRISMJS,
+    '@analogjs/content': V19_X_ANALOG_JS_CONTENT,
+    '@analogjs/router': V19_X_ANALOG_JS_ROUTER,
+    '@nx/angular': V19_X_NX_ANGULAR,
+    marked: V19_X_MARKED,
+    'marked-gfm-heading-id': V19_X_MARKED_GFM_HEADING_ID,
+    'marked-highlight': V19_X_MARKED_HIGHLIGHT,
+    'marked-mangle': V19_X_MARKED_MANGLE,
+    prismjs: V19_X_PRISMJS,
   };
 };

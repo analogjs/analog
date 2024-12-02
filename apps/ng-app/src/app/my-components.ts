@@ -1,3 +1,3 @@
-import Goodbye from './goodbye.analog';
+import Goodbye from './goodbye.ag';
 
 export { Goodbye };
