@@ -1,3 +1,9 @@
+# [1.10.0-beta.8](https://github.com/analogjs/analog/compare/v1.10.0-beta.7...v1.10.0-beta.8) (2024-12-02)
+
+### Features
+
+- **router:** expose form action directive to support server forms ([#1462](https://github.com/analogjs/analog/issues/1462)) ([db4829f](https://github.com/analogjs/analog/commit/db4829f38e71b26493594e18724f8844a74cff23))
+
 # [1.10.0-beta.7](https://github.com/analogjs/analog/compare/v1.10.0-beta.6...v1.10.0-beta.7) (2024-12-02)
 
 ### Features
