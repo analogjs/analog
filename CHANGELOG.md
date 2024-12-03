@@ -1,3 +1,9 @@
+# [1.10.0-beta.9](https://github.com/analogjs/analog/compare/v1.10.0-beta.8...v1.10.0-beta.9) (2024-12-03)
+
+### Features
+
+- **router:** add support for visualizing routes for debugging ([#1464](https://github.com/analogjs/analog/issues/1464)) ([e204a71](https://github.com/analogjs/analog/commit/e204a7153e47a311b1a0c8abbb4ec21bd21ebbba))
+
 # [1.10.0-beta.8](https://github.com/analogjs/analog/compare/v1.10.0-beta.7...v1.10.0-beta.8) (2024-12-02)
 
 ### Features
