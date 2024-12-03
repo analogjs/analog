@@ -15,3 +15,5 @@ export { getLoadResolver } from './lib/get-load-resolver';
 export { requestContextInterceptor } from './lib/request-context';
 export { injectRouteEndpointURL } from './lib/inject-route-endpoint-url';
 export { FormAction } from './lib/form-action.directive';
+export { injectDebugRoutes } from './lib/debug/routes';
+export { withDebugRoutes } from './lib/debug';

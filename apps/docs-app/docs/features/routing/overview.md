@@ -359,3 +359,22 @@ export const appConfig: ApplicationConfig = {
   providers: [provideFileRouter(withExtraRoutes(customRoutes))],
 };
 ```
+
+## Visualizing and Debugging Routes
+
+When you are building the pages for your application, it can help to visually see the routes based on the filesystem structure. You can use the `withDebugRoutes()` function to provide a debug route that displays the pages and layouts for your application.
+
+Use the `withDebugRoutes` function in the `app.config.ts`:
+
+```ts
+import { ApplicationConfig } from '@angular/core';
+import { provideFileRouter, withDebugRoutes } from '@analogjs/router';
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideFileRouter(withDebugRoutes())],
+};
+```
+
+Navigate the `__analog/routes` URL in the browser to see the routes table.
+
+![debug routes page](/img/debug-routes.png)
