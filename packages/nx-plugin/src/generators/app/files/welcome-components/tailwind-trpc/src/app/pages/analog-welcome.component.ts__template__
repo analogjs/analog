@@ -8,7 +8,7 @@ import { Note } from '../../note';
 
 @Component({
   selector: '<%= fileName %>-analog-welcome',
-  standalone: true,
+  <% if (majorAngularVersion < 19) { %>standalone: true,<% } %>
   imports: [AsyncPipe, FormsModule, NgFor, DatePipe, NgIf],
   host: {
     class:

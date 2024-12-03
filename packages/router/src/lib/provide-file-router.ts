@@ -24,8 +24,12 @@ declare const ANALOG_API_PREFIX: string;
 export function provideFileRouter(
   ...features: RouterFeatures[]
 ): EnvironmentProviders {
+  const extraRoutesFeature = features.filter((feat) => feat.ɵkind >= 100);
+  const routerFeatures = features.filter((feat) => feat.ɵkind < 100);
+
   return makeEnvironmentProviders([
-    provideRouter(routes, ...features),
+    extraRoutesFeature.map((erf) => erf.ɵproviders),
+    provideRouter(routes, ...routerFeatures),
     {
       provide: ENVIRONMENT_INITIALIZER,
       multi: true,
@@ -47,11 +51,15 @@ export function provideFileRouter(
   ]);
 }
 
-export function withExtraRoutes(routes: Routes): RouterFeatures[] {
-  return [
-    {
-      ɵkind: 100 as any,
-      ɵproviders: [{ provide: ROUTES, useValue: routes }],
-    },
-  ];
+/**
+ * Provides extra custom routes in addition to the routes
+ * discovered from the filesystem-based routing. These routes are
+ * inserted before the filesystem-based routes, and take priority in
+ * route matching.
+ */
+export function withExtraRoutes(routes: Routes): RouterFeatures {
+  return {
+    ɵkind: 100 as number,
+    ɵproviders: [{ provide: ROUTES, useValue: routes, multi: true }],
+  };
 }

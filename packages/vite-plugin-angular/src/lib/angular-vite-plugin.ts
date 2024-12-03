@@ -41,6 +41,7 @@ import {
   defaultMarkdownTemplateTransforms,
   MarkdownTemplateTransform,
 } from './authoring/markdown-transform.js';
+import { routerPlugin } from './router-plugin.js';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -159,6 +160,11 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     return {
       name: '@analogjs/vite-plugin-angular',
+      async watchChange() {
+        if (isTest) {
+          await buildAndAnalyze();
+        }
+      },
       async config(config, { command }) {
         watchMode = command === 'serve';
         isProd =
@@ -320,7 +326,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             const tsMod = viteServer?.moduleGraph.getModuleById(id);
             if (tsMod) {
               sourceFileCache.invalidate([id]);
-              await buildAndAnalyze();
             }
           }
 
@@ -428,6 +433,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       jit,
     }),
     (isStorybook && angularStorybookPlugin()) as Plugin,
+    routerPlugin(),
   ].filter(Boolean) as Plugin[];
 
   function findAnalogFiles(config: ResolvedConfig) {

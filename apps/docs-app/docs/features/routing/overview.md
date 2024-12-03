@@ -337,3 +337,44 @@ The filesystem-based router will generate the following routes:
 | `/products/1`      | `products/[productId].page.ts` (layout: `products.page.ts`)      |
 | `/products/1/edit` | `products/[productId].edit.page.ts` (layout: `products.page.ts`) |
 | `/unknown-url`     | `[...not-found].md`                                              |
+
+## Providing Extra Routes
+
+Routes can be added manually in addition to the routes discovered through the filesystem. Use the `withExtraRoutes` with an array of routes to be prepended to the discovered routes array. All the routes are merged into a single array.
+
+```ts
+import { ApplicationConfig } from '@angular/core';
+import { Routes } from '@angular/router';
+import { provideFileRouter, withExtraRoutes } from '@analogjs/router';
+
+const customRoutes: Routes = [
+  {
+    path: '/custom',
+    loadComponent: () =>
+      import('./custom-component').then((m) => m.CustomComponent),
+  },
+];
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideFileRouter(withExtraRoutes(customRoutes))],
+};
+```
+
+## Visualizing and Debugging Routes
+
+When you are building the pages for your application, it can help to visually see the routes based on the filesystem structure. You can use the `withDebugRoutes()` function to provide a debug route that displays the pages and layouts for your application.
+
+Use the `withDebugRoutes` function in the `app.config.ts`:
+
+```ts
+import { ApplicationConfig } from '@angular/core';
+import { provideFileRouter, withDebugRoutes } from '@analogjs/router';
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideFileRouter(withDebugRoutes())],
+};
+```
+
+Navigate the `__analog/routes` URL in the browser to see the routes table.
+
+![debug routes page](/img/debug-routes.png)

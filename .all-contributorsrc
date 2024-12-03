@@ -1187,6 +1187,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "nickytonline",
+      "name": "Nick Taylor",
+      "avatar_url": "https://avatars.githubusercontent.com/u/833231?v=4",
+      "profile": "https://nickyt.co",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

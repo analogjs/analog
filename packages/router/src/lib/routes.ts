@@ -1,22 +1,20 @@
-/// <reference types="vite/client" />
-
 import type { Route } from '@angular/router';
 
 import type { RouteExport, RouteMeta } from './models';
 import { toRouteConfig } from './route-config';
 import { toMarkdownModule } from './markdown-helpers';
-import { APP_DIR, ENDPOINT_EXTENSION } from './constants';
+import { ENDPOINT_EXTENSION } from './constants';
 import { ANALOG_META_KEY } from './endpoints';
 
 /**
  * This variable reference is replaced with a glob of all page routes.
  */
-let ANALOG_ROUTE_FILES = {};
+export let ANALOG_ROUTE_FILES = {};
 
 /**
  * This variable reference is replaced with a glob of all content routes.
  */
-let ANALOG_CONTENT_ROUTE_FILES = {};
+export let ANALOG_CONTENT_ROUTE_FILES = {};
 
 export type Files = Record<string, () => Promise<RouteExport | string>>;
 
@@ -39,7 +37,7 @@ type RawRouteByLevelMap = Record<number, RawRouteMap>;
  * @param files
  * @returns Array of routes
  */
-export function createRoutes(files: Files): Route[] {
+export function createRoutes(files: Files, debug = false): Route[] {
   const filenames = Object.keys(files);
 
   if (filenames.length === 0) {
@@ -115,7 +113,7 @@ export function createRoutes(files: Files): Route[] {
   );
   sortRawRoutes(rawRoutes);
 
-  return toRoutes(rawRoutes, files);
+  return toRoutes(rawRoutes, files, debug);
 }
 
 function toRawPath(filename: string): string {
@@ -136,13 +134,13 @@ function toSegment(rawSegment: string): string {
     .replace(/^\/+|\/+$/g, ''); // remove trailing slashes
 }
 
-function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
+function toRoutes(rawRoutes: RawRoute[], files: Files, debug = false): Route[] {
   const routes: Route[] = [];
 
   for (const rawRoute of rawRoutes) {
     const children: Route[] | undefined =
       rawRoute.children.length > 0
-        ? toRoutes(rawRoute.children, files)
+        ? toRoutes(rawRoute.children, files, debug)
         : undefined;
     let module: (() => Promise<RouteExport>) | undefined = undefined;
     let analogMeta: { endpoint: string; endpointKey: string } | undefined =
@@ -150,9 +148,12 @@ function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
 
     if (rawRoute.filename) {
       const isMarkdownFile = rawRoute.filename.endsWith('.md');
-      module = isMarkdownFile
-        ? toMarkdownModule(files[rawRoute.filename] as () => Promise<string>)
-        : (files[rawRoute.filename] as () => Promise<RouteExport>);
+
+      if (!debug) {
+        module = isMarkdownFile
+          ? toMarkdownModule(files[rawRoute.filename] as () => Promise<string>)
+          : (files[rawRoute.filename] as () => Promise<RouteExport>);
+      }
 
       const endpointKey = rawRoute.filename.replace(
         /\.page\.(ts|analog|ag)$/,
@@ -176,12 +177,17 @@ function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
       };
     }
 
-    const route: Route & { meta?: typeof analogMeta } = module
+    type DebugRoute = Route & {
+      filename?: string | null | undefined;
+      isLayout?: boolean;
+    };
+
+    const route: Route & { meta?: typeof analogMeta } & DebugRoute = module
       ? {
           path: rawRoute.segment,
           loadChildren: () =>
             module!().then((m) => {
-              if (!import.meta.env.PROD) {
+              if (import.meta.env.DEV) {
                 const hasModuleDefault = !!m.default;
                 const hasRedirect = !!m.routeMeta?.redirectTo;
 
@@ -203,7 +209,16 @@ function toRoutes(rawRoutes: RawRoute[], files: Files): Route[] {
               ];
             }),
         }
-      : { path: rawRoute.segment, children };
+      : {
+          path: rawRoute.segment,
+          ...(debug
+            ? {
+                filename: rawRoute.filename ? rawRoute.filename : undefined,
+                isLayout: children && children.length > 0 ? true : false,
+              }
+            : {}),
+          children,
+        };
 
     routes.push(route);
   }

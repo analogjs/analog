@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import Hello from './hello.analog';
+import Hello from './hello.ag';
 
 @Component({
   selector: 'app-hello-original',
