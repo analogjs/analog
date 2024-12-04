@@ -1,3 +1,9 @@
+## [1.10.1-beta.1](https://github.com/analogjs/analog/compare/v1.10.0...v1.10.1-beta.1) (2024-12-04)
+
+### Bug Fixes
+
+- **vitest-angular:** fix path to schema.json for test builder ([#1466](https://github.com/analogjs/analog/issues/1466)) ([35d9adb](https://github.com/analogjs/analog/commit/35d9adb1fb7565e49b4b45b25d33f128bb3632f5))
+
 # [1.10.0](https://github.com/analogjs/analog/compare/v1.9.4...v1.10.0) (2024-12-03)
 
 ### Bug Fixes
