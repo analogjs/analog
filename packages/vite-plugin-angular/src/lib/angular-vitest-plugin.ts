@@ -25,10 +25,6 @@ export function angularVitestPlugin(): Plugin {
           server: {
             deps: {
               inline: [
-                '@angular/common',
-                '@angular/core',
-                '@angular/router',
-                '@angular/platform-browser',
                 '@angular/material',
                 '@analogjs/router',
                 '@analogjs/vitest-angular/setup-zone',
