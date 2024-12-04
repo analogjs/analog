@@ -1,3 +1,27 @@
+## [1.10.1-beta.4](https://github.com/analogjs/analog/compare/v1.10.1-beta.3...v1.10.1-beta.4) (2024-12-04)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** remove default additional angular packages for testing ([#1469](https://github.com/analogjs/analog/issues/1469)) ([e331eb9](https://github.com/analogjs/analog/commit/e331eb98f6cf894462d7753f3de59441219d228c))
+
+## [1.10.1-beta.3](https://github.com/analogjs/analog/compare/v1.10.1-beta.2...v1.10.1-beta.3) (2024-12-04)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add inline deps for angular testing library ([#1467](https://github.com/analogjs/analog/issues/1467)) ([915a57a](https://github.com/analogjs/analog/commit/915a57a506cfaf879cda9ea6b4e181af66af7f85))
+
+## [1.10.1-beta.2](https://github.com/analogjs/analog/compare/v1.10.1-beta.1...v1.10.1-beta.2) (2024-12-04)
+
+### Bug Fixes
+
+- **create-analog:** add npm overrides for @nx/angular ([#1468](https://github.com/analogjs/analog/issues/1468)) ([8f537aa](https://github.com/analogjs/analog/commit/8f537aac68ebd860e6ebcd585311a1890ad3c149))
+
+## [1.10.1-beta.1](https://github.com/analogjs/analog/compare/v1.10.0...v1.10.1-beta.1) (2024-12-04)
+
+### Bug Fixes
+
+- **vitest-angular:** fix path to schema.json for test builder ([#1466](https://github.com/analogjs/analog/issues/1466)) ([35d9adb](https://github.com/analogjs/analog/commit/35d9adb1fb7565e49b4b45b25d33f128bb3632f5))
+
 # [1.10.0](https://github.com/analogjs/analog/compare/v1.9.4...v1.10.0) (2024-12-03)
 
 ### Bug Fixes

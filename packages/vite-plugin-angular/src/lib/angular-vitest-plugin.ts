@@ -1,5 +1,11 @@
 import { Plugin, transformWithEsbuild, UserConfig } from 'vite';
 
+/**
+ * Sets up test config for Vitest
+ * and downlevels any dependencies that use
+ * async/await to support zone.js testing
+ * and tests w/fakeAsync
+ */
 export function angularVitestPlugin(): Plugin {
   return {
     name: '@analogjs/vitest-angular-esm-plugin',
@@ -18,11 +24,7 @@ export function angularVitestPlugin(): Plugin {
           pool: userConfig.test?.pool ?? 'vmThreads',
           server: {
             deps: {
-              inline: [
-                '@angular/material',
-                '@analogjs/router',
-                '@analogjs/vitest-angular/setup-zone',
-              ],
+              inline: [/fesm2022(.*?)testing/],
             },
           },
         },
@@ -30,7 +32,7 @@ export function angularVitestPlugin(): Plugin {
     },
     async transform(_code, id) {
       if (
-        (/fesm2022/.test(id) && _code.includes('async (')) ||
+        (/fesm2022/.test(id) && _code.includes('async ')) ||
         _code.includes('@angular/cdk')
       ) {
         const { code, map } = await transformWithEsbuild(_code, id, {

@@ -15,10 +15,9 @@
   },
   "private": true,
   "dependencies": {
-    "@analogjs/content": "^1.10.0",
-    "@analogjs/router": "^1.10.0",
+    "@analogjs/content": "^1.10.1-beta.4",
+    "@analogjs/router": "^1.10.1-beta.4",
     "@angular/animations": "^19.0.0",
-    "@angular/build": "^19.0.0",
     "@angular/common": "^19.0.0",
     "@angular/compiler": "^19.0.0",
     "@angular/core": "^19.0.0",
@@ -37,9 +36,11 @@
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
-    "@analogjs/platform": "^1.10.0",
-    "@analogjs/vite-plugin-angular": "^1.10.0",
-    "@analogjs/vitest-angular": "^1.10.0",
+    "@analogjs/platform": "^1.10.1-beta.4",
+    "@analogjs/vite-plugin-angular": "^1.10.1-beta.4",
+    "@analogjs/vitest-angular": "^1.10.1-beta.4",
+    "@angular-devkit/build-angular": "^19.0.0",
+    "@angular/build": "^19.0.0",
     "@angular/cli": "^19.0.0",
     "@angular/compiler-cli": "^19.0.0",
     "jsdom": "^22.0.0",
@@ -47,5 +48,10 @@
     "vite": "^5.0.0",
     "vite-tsconfig-paths": "^4.2.0",
     "vitest": "^2.0.0"
+  },
+  "overrides": {
+    "@nx/angular": {
+      "@angular-devkit/build-angular": "$@angular-devkit/build-angular"
+    }
   }
 }

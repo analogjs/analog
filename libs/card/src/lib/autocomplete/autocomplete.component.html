@@ -1,0 +1,16 @@
+<mat-form-field>
+  <mat-label>Test runners</mat-label>
+  <input
+    matInput
+    type="text"
+    aria-label="Test runners"
+    placeholder="Pick one"
+    [matAutocomplete]="autocomplete"
+    [(ngModel)]="value"
+  />
+  <mat-autocomplete #autocomplete="matAutocomplete" autoActiveFirstOption>
+    @for (option of filteredOptions(); track option) {
+    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+    }
+  </mat-autocomplete>
+</mat-form-field>
