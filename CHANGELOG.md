@@ -1,3 +1,9 @@
+## [1.10.1-beta.2](https://github.com/analogjs/analog/compare/v1.10.1-beta.1...v1.10.1-beta.2) (2024-12-04)
+
+### Bug Fixes
+
+- **create-analog:** add npm overrides for @nx/angular ([#1468](https://github.com/analogjs/analog/issues/1468)) ([8f537aa](https://github.com/analogjs/analog/commit/8f537aac68ebd860e6ebcd585311a1890ad3c149))
+
 ## [1.10.1-beta.1](https://github.com/analogjs/analog/compare/v1.10.0...v1.10.1-beta.1) (2024-12-04)
 
 ### Bug Fixes
