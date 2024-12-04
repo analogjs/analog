@@ -24,16 +24,7 @@ export function angularVitestPlugin(): Plugin {
           pool: userConfig.test?.pool ?? 'vmThreads',
           server: {
             deps: {
-              inline: [
-                '@angular/common',
-                '@angular/core',
-                '@angular/router',
-                '@angular/platform-browser',
-                '@angular/material',
-                '@analogjs/router',
-                '@analogjs/vitest-angular/setup-zone',
-                '@testing-library/angular',
-              ],
+              inline: [/fesm2022(.*?)testing/],
             },
           },
         },

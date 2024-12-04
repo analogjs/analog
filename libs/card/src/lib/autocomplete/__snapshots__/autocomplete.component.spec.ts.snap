@@ -1,0 +1,409 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`GIVEN AutocompleteComponent > WHEN input value is empty > AND input is focused > THEN component should match snapshot 1`] = `
+<div
+  id="root2"
+  ng-version="19.0.0"
+>
+  <mat-form-field
+    class="mat-mdc-form-field ng-tns-c508571215-0 mat-mdc-form-field-type-mat-input mat-form-field-no-animations mat-form-field-appearance-fill mat-primary ng-untouched ng-pristine ng-valid mat-mdc-form-field-label-always-float mat-focused"
+  >
+    <!--container-->
+    <div
+      class="mat-mdc-text-field-wrapper mdc-text-field ng-tns-c508571215-0 mdc-text-field--filled mdc-text-field--focused"
+    >
+      <div
+        class="mat-mdc-form-field-focus-overlay ng-tns-c508571215-0 ng-star-inserted"
+      />
+      <!--container-->
+      <div
+        class="mat-mdc-form-field-flex ng-tns-c508571215-0"
+      >
+        <!--container-->
+        <!--container-->
+        <!--container-->
+        <div
+          class="mat-mdc-form-field-infix ng-tns-c508571215-0"
+        >
+          <label
+            class="mdc-floating-label mat-mdc-floating-label ng-tns-c508571215-0 ng-star-inserted mdc-floating-label--float-above"
+            for="mat-input-a2"
+            id="mat-mdc-form-field-label-a2"
+            matformfieldfloatinglabel=""
+            ng-reflect-floating="true"
+            ng-reflect-monitor-resize="false"
+          >
+            <mat-label
+              class="ng-tns-c508571215-0"
+            >
+              Test runners
+            </mat-label>
+            <!--container-->
+          </label>
+          <!--container-->
+          <!--bindings={
+  "ng-reflect-ng-template-outlet": "[object Object]"
+}-->
+          <!--container-->
+          <input
+            aria-activedescendant="mat-option-a6"
+            aria-autocomplete="list"
+            aria-controls="mat-autocomplete-a2"
+            aria-expanded="true"
+            aria-haspopup="listbox"
+            aria-invalid="false"
+            aria-label="Test runners"
+            aria-required="false"
+            autocomplete="off"
+            class="mat-mdc-autocomplete-trigger mat-mdc-input-element ng-tns-c508571215-0 ng-untouched ng-pristine ng-valid mat-mdc-form-field-input-control mdc-text-field__input cdk-text-field-autofill-monitored"
+            id="mat-input-a2"
+            matinput=""
+            ng-reflect-autocomplete="[object Object]"
+            ng-reflect-model=""
+            ng-reflect-placeholder="Pick one"
+            ng-reflect-type="text"
+            placeholder="Pick one"
+            role="combobox"
+            type="text"
+          />
+          <!--container-->
+          <mat-autocomplete
+            autoactivefirstoption=""
+            class="mat-mdc-autocomplete ng-tns-c3964489799-1 ng-tns-c508571215-0 ng-star-inserted"
+            ng-reflect-auto-active-first-option=""
+          >
+            <!--container-->
+          </mat-autocomplete>
+        </div>
+        <!--container-->
+        <!--container-->
+      </div>
+      <div
+        class="mdc-line-ripple ng-tns-c508571215-0 ng-star-inserted mdc-line-ripple--active"
+        matformfieldlineripple=""
+      />
+      <!--container-->
+    </div>
+    <div
+      class="mat-mdc-form-field-subscript-wrapper mat-mdc-form-field-bottom-align ng-tns-c508571215-0"
+    >
+      <!--container-->
+      <div
+        class="mat-mdc-form-field-hint-wrapper ng-tns-c508571215-0 ng-trigger ng-trigger-transitionMessages ng-star-inserted"
+        style="opacity: 1; transform: translateY(0%);"
+      >
+        <!--container-->
+        <div
+          class="mat-mdc-form-field-hint-spacer ng-tns-c508571215-0"
+        />
+      </div>
+      <!--container-->
+    </div>
+  </mat-form-field>
+</div>
+`;
+
+exports[`GIVEN AutocompleteComponent > WHEN input value is empty > THEN component should match snapshot 1`] = `
+<div
+  id="root1"
+  ng-version="19.0.0"
+>
+  <mat-form-field
+    class="mat-mdc-form-field ng-tns-c508571215-0 mat-mdc-form-field-type-mat-input mat-form-field-no-animations mat-form-field-appearance-fill mat-form-field-hide-placeholder mat-primary ng-untouched ng-pristine ng-valid"
+  >
+    <!--container-->
+    <div
+      class="mat-mdc-text-field-wrapper mdc-text-field ng-tns-c508571215-0 mdc-text-field--filled"
+    >
+      <div
+        class="mat-mdc-form-field-focus-overlay ng-tns-c508571215-0 ng-star-inserted"
+      />
+      <!--container-->
+      <div
+        class="mat-mdc-form-field-flex ng-tns-c508571215-0"
+      >
+        <!--container-->
+        <!--container-->
+        <!--container-->
+        <div
+          class="mat-mdc-form-field-infix ng-tns-c508571215-0"
+        >
+          <label
+            class="mdc-floating-label mat-mdc-floating-label ng-tns-c508571215-0 ng-star-inserted"
+            for="mat-input-a1"
+            id="mat-mdc-form-field-label-a1"
+            matformfieldfloatinglabel=""
+            ng-reflect-floating="false"
+            ng-reflect-monitor-resize="false"
+          >
+            <mat-label
+              class="ng-tns-c508571215-0"
+            >
+              Test runners
+            </mat-label>
+            <!--container-->
+          </label>
+          <!--container-->
+          <!--bindings={
+  "ng-reflect-ng-template-outlet": "[object Object]"
+}-->
+          <!--container-->
+          <input
+            aria-autocomplete="list"
+            aria-expanded="false"
+            aria-haspopup="listbox"
+            aria-invalid="false"
+            aria-label="Test runners"
+            aria-required="false"
+            autocomplete="off"
+            class="mat-mdc-autocomplete-trigger mat-mdc-input-element ng-tns-c508571215-0 ng-untouched ng-pristine ng-valid mat-mdc-form-field-input-control mdc-text-field__input cdk-text-field-autofill-monitored"
+            id="mat-input-a1"
+            matinput=""
+            ng-reflect-autocomplete="[object Object]"
+            ng-reflect-model=""
+            ng-reflect-placeholder="Pick one"
+            ng-reflect-type="text"
+            placeholder="Pick one"
+            role="combobox"
+            type="text"
+          />
+          <!--container-->
+          <mat-autocomplete
+            autoactivefirstoption=""
+            class="mat-mdc-autocomplete ng-tns-c3964489799-1 ng-tns-c508571215-0 ng-star-inserted"
+            ng-reflect-auto-active-first-option=""
+          >
+            <!--container-->
+          </mat-autocomplete>
+        </div>
+        <!--container-->
+        <!--container-->
+      </div>
+      <div
+        class="mdc-line-ripple ng-tns-c508571215-0 mdc-line-ripple--deactivating ng-star-inserted"
+        matformfieldlineripple=""
+      />
+      <!--container-->
+    </div>
+    <div
+      class="mat-mdc-form-field-subscript-wrapper mat-mdc-form-field-bottom-align ng-tns-c508571215-0"
+    >
+      <!--container-->
+      <div
+        class="mat-mdc-form-field-hint-wrapper ng-tns-c508571215-0 ng-trigger ng-trigger-transitionMessages ng-star-inserted"
+        style="opacity: 1; transform: translateY(0%);"
+      >
+        <!--container-->
+        <div
+          class="mat-mdc-form-field-hint-spacer ng-tns-c508571215-0"
+        />
+      </div>
+      <!--container-->
+    </div>
+  </mat-form-field>
+</div>
+`;
+
+exports[`GIVEN AutocompleteComponent > WHEN input value is not empty > AND input is focused > THEN component should match snapshot 1`] = `
+<div
+  id="root7"
+  ng-version="19.0.0"
+>
+  <mat-form-field
+    class="mat-mdc-form-field ng-tns-c508571215-0 mat-mdc-form-field-type-mat-input mat-form-field-no-animations mat-form-field-appearance-fill mat-primary ng-untouched ng-pristine ng-valid mat-mdc-form-field-label-always-float mat-focused"
+  >
+    <!--container-->
+    <div
+      class="mat-mdc-text-field-wrapper mdc-text-field ng-tns-c508571215-0 mdc-text-field--filled mdc-text-field--focused"
+    >
+      <div
+        class="mat-mdc-form-field-focus-overlay ng-tns-c508571215-0 ng-star-inserted"
+      />
+      <!--container-->
+      <div
+        class="mat-mdc-form-field-flex ng-tns-c508571215-0"
+      >
+        <!--container-->
+        <!--container-->
+        <!--container-->
+        <div
+          class="mat-mdc-form-field-infix ng-tns-c508571215-0"
+        >
+          <label
+            class="mdc-floating-label mat-mdc-floating-label ng-tns-c508571215-0 ng-star-inserted mdc-floating-label--float-above"
+            for="mat-input-a7"
+            id="mat-mdc-form-field-label-a7"
+            matformfieldfloatinglabel=""
+            ng-reflect-floating="true"
+            ng-reflect-monitor-resize="false"
+          >
+            <mat-label
+              class="ng-tns-c508571215-0"
+            >
+              Test runners
+            </mat-label>
+            <!--container-->
+          </label>
+          <!--container-->
+          <!--bindings={
+  "ng-reflect-ng-template-outlet": "[object Object]"
+}-->
+          <!--container-->
+          <input
+            aria-activedescendant="mat-option-a19"
+            aria-autocomplete="list"
+            aria-controls="mat-autocomplete-a7"
+            aria-expanded="true"
+            aria-haspopup="listbox"
+            aria-invalid="false"
+            aria-label="Test runners"
+            aria-required="false"
+            autocomplete="off"
+            class="mat-mdc-autocomplete-trigger mat-mdc-input-element ng-tns-c508571215-0 ng-untouched ng-pristine ng-valid mat-mdc-form-field-input-control mdc-text-field__input cdk-text-field-autofill-monitored"
+            id="mat-input-a7"
+            matinput=""
+            ng-reflect-autocomplete="[object Object]"
+            ng-reflect-model="est"
+            ng-reflect-placeholder="Pick one"
+            ng-reflect-type="text"
+            placeholder="Pick one"
+            role="combobox"
+            type="text"
+          />
+          <!--container-->
+          <mat-autocomplete
+            autoactivefirstoption=""
+            class="mat-mdc-autocomplete ng-tns-c3964489799-1 ng-tns-c508571215-0 ng-star-inserted"
+            ng-reflect-auto-active-first-option=""
+          >
+            <!--container-->
+          </mat-autocomplete>
+        </div>
+        <!--container-->
+        <!--container-->
+      </div>
+      <div
+        class="mdc-line-ripple ng-tns-c508571215-0 ng-star-inserted mdc-line-ripple--active"
+        matformfieldlineripple=""
+      />
+      <!--container-->
+    </div>
+    <div
+      class="mat-mdc-form-field-subscript-wrapper mat-mdc-form-field-bottom-align ng-tns-c508571215-0"
+    >
+      <!--container-->
+      <div
+        class="mat-mdc-form-field-hint-wrapper ng-tns-c508571215-0 ng-trigger ng-trigger-transitionMessages ng-star-inserted"
+        style="opacity: 1; transform: translateY(0%);"
+      >
+        <!--container-->
+        <div
+          class="mat-mdc-form-field-hint-spacer ng-tns-c508571215-0"
+        />
+      </div>
+      <!--container-->
+    </div>
+  </mat-form-field>
+</div>
+`;
+
+exports[`GIVEN AutocompleteComponent > WHEN input value is not empty > THEN component should match snapshot 1`] = `
+<div
+  id="root6"
+  ng-version="19.0.0"
+>
+  <mat-form-field
+    class="mat-mdc-form-field ng-tns-c508571215-0 mat-mdc-form-field-type-mat-input mat-form-field-no-animations mat-form-field-appearance-fill mat-form-field-hide-placeholder mat-primary ng-untouched ng-pristine ng-valid"
+  >
+    <!--container-->
+    <div
+      class="mat-mdc-text-field-wrapper mdc-text-field ng-tns-c508571215-0 mdc-text-field--filled"
+    >
+      <div
+        class="mat-mdc-form-field-focus-overlay ng-tns-c508571215-0 ng-star-inserted"
+      />
+      <!--container-->
+      <div
+        class="mat-mdc-form-field-flex ng-tns-c508571215-0"
+      >
+        <!--container-->
+        <!--container-->
+        <!--container-->
+        <div
+          class="mat-mdc-form-field-infix ng-tns-c508571215-0"
+        >
+          <label
+            class="mdc-floating-label mat-mdc-floating-label ng-tns-c508571215-0 ng-star-inserted"
+            for="mat-input-a6"
+            id="mat-mdc-form-field-label-a6"
+            matformfieldfloatinglabel=""
+            ng-reflect-floating="false"
+            ng-reflect-monitor-resize="false"
+          >
+            <mat-label
+              class="ng-tns-c508571215-0"
+            >
+              Test runners
+            </mat-label>
+            <!--container-->
+          </label>
+          <!--container-->
+          <!--bindings={
+  "ng-reflect-ng-template-outlet": "[object Object]"
+}-->
+          <!--container-->
+          <input
+            aria-autocomplete="list"
+            aria-expanded="false"
+            aria-haspopup="listbox"
+            aria-invalid="false"
+            aria-label="Test runners"
+            aria-required="false"
+            autocomplete="off"
+            class="mat-mdc-autocomplete-trigger mat-mdc-input-element ng-tns-c508571215-0 ng-untouched ng-pristine ng-valid mat-mdc-form-field-input-control mdc-text-field__input cdk-text-field-autofill-monitored"
+            id="mat-input-a6"
+            matinput=""
+            ng-reflect-autocomplete="[object Object]"
+            ng-reflect-model="est"
+            ng-reflect-placeholder="Pick one"
+            ng-reflect-type="text"
+            placeholder="Pick one"
+            role="combobox"
+            type="text"
+          />
+          <!--container-->
+          <mat-autocomplete
+            autoactivefirstoption=""
+            class="mat-mdc-autocomplete ng-tns-c3964489799-1 ng-tns-c508571215-0 ng-star-inserted"
+            ng-reflect-auto-active-first-option=""
+          >
+            <!--container-->
+          </mat-autocomplete>
+        </div>
+        <!--container-->
+        <!--container-->
+      </div>
+      <div
+        class="mdc-line-ripple ng-tns-c508571215-0 mdc-line-ripple--deactivating ng-star-inserted"
+        matformfieldlineripple=""
+      />
+      <!--container-->
+    </div>
+    <div
+      class="mat-mdc-form-field-subscript-wrapper mat-mdc-form-field-bottom-align ng-tns-c508571215-0"
+    >
+      <!--container-->
+      <div
+        class="mat-mdc-form-field-hint-wrapper ng-tns-c508571215-0 ng-trigger ng-trigger-transitionMessages ng-star-inserted"
+        style="opacity: 1; transform: translateY(0%);"
+      >
+        <!--container-->
+        <div
+          class="mat-mdc-form-field-hint-spacer ng-tns-c508571215-0"
+        />
+      </div>
+      <!--container-->
+    </div>
+  </mat-form-field>
+</div>
+`;
