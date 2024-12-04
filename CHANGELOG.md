@@ -1,3 +1,9 @@
+## [1.10.1-beta.3](https://github.com/analogjs/analog/compare/v1.10.1-beta.2...v1.10.1-beta.3) (2024-12-04)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add inline deps for angular testing library ([#1467](https://github.com/analogjs/analog/issues/1467)) ([915a57a](https://github.com/analogjs/analog/commit/915a57a506cfaf879cda9ea6b4e181af66af7f85))
+
 ## [1.10.1-beta.2](https://github.com/analogjs/analog/compare/v1.10.1-beta.1...v1.10.1-beta.2) (2024-12-04)
 
 ### Bug Fixes
