@@ -2,7 +2,7 @@
   "builders": {
     "test": {
       "implementation": "./src/lib/builders/test/vitest.impl",
-      "schema": "./src/lib/schema.json",
+      "schema": "./src/lib/builders/test/schema.json",
       "description": "Run tests with Vitest"
     },
     "build-test": {
