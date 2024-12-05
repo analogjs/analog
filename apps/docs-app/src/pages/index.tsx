@@ -72,7 +72,14 @@ function SponsorSection() {
         </p>
 
         <div className={styles.horizontalPartners}>
-          <h2>Zerops - Official Deployment Partner</h2>
+          <h2>
+            <Translate
+              id="homepage.partnerSection.zerops"
+              description="The name of the partner Zerops"
+            >
+              Zerops - Official Deployment Partner
+            </Translate>
+          </h2>
           <div className={styles.zerops}>
             <a
               href="https://zerops.io?utm_source=analog&utm_medium=docs&utm_campaign=partnership"
