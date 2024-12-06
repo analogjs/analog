@@ -16,16 +16,15 @@
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["production", "^production"],
-      "cache": false
+      "inputs": ["production", "^production"]
     },
     "test": {
       "dependsOn": ["^build"],
-      "cache": false
+      "cache": true
     },
     "e2e": {
       "dependsOn": ["^build"],
-      "cache": false
+      "cache": true
     },
     "serve": {
       "dependsOn": ["^build"]
