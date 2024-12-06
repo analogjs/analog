@@ -1,6 +1,16 @@
-# Server Form Actions
+# Form Server Actions
 
-Analog supports server-side handling of form submissions. This can be achieved by using a directive, and defining an async `action` function in `.server.ts` file for the page.
+Analog supports server-side handling of form submissions and validation.
+
+<div className="video-container">
+  <div className="video-responsive-wrapper">
+    <iframe
+      width="560"
+      height="315"
+      src="https://www.youtube.com/embed/4pFPO1OpD4Q?si=HcESaJI03LgEljpQ&amp;controls=0">
+    </iframe>
+  </div>
+</div>
 
 ## Setting up the Form
 
@@ -65,7 +75,6 @@ export default class NewsletterComponent {
 
   onError(result?: FormErrors) {
     this.errors.set(result);
-    console.log({ result });
   }
 }
 ```
@@ -100,8 +109,6 @@ export async function action({ event }: PageServerAction) {
     return redirect('/');
   }
 
-  console.log({ email: body.get('email') });
-
   return json({ type: 'success' });
 }
 ```
@@ -109,6 +116,36 @@ export async function action({ event }: PageServerAction) {
 - The `json` function returns a JSON response.
 - The `redirect` function returns a redirect response to the client. This should be an absolute path.
 - The `fail` function is used for returning form validation errors.
+
+### Handling Multiple Forms
+
+To handle multiple forms on the same page, add a hidden input to distinguish each form.
+
+```html
+<form method="post">
+  <div>
+    <label for="email"> Email </label>
+    <input type="email" name="email" />
+  </div>
+
+  <input type="hidden" name="action" value="register" />
+
+  <button class="button" type="submit">Submit</button>
+</form>
+```
+
+In the server action, use the `action` value.
+
+```ts
+export async function action({ event }: PageServerAction) {
+  const body = await readFormData(event);
+  const action = body.get('action') as string;
+
+  if (action === 'register') {
+    // process register form
+  }
+}
+```
 
 ## Handling GET Requests
 
