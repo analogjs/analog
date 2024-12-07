@@ -1,3 +1,9 @@
+## [1.10.2-beta.1](https://github.com/analogjs/analog/compare/v1.10.1...v1.10.2-beta.1) (2024-12-07)
+
+### Bug Fixes
+
+- **create-analog:** set root property to empty on angular.json ([#1481](https://github.com/analogjs/analog/issues/1481)) ([d9cdbe2](https://github.com/analogjs/analog/commit/d9cdbe20b82145bc24662ae1bdbd5d86b4f202e2))
+
 ## [1.10.1](https://github.com/analogjs/analog/compare/v1.10.0...v1.10.1) (2024-12-04)
 
 ### Bug Fixes
