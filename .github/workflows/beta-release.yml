@@ -1,0 +1,56 @@
+name: Release
+
+on: workflow_dispatch
+
+jobs:
+  create-analog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+      - run: corepack enable
+      - run: npm --version
+      - name: Create Analog Application
+        run: npm create analog@beta analog-app
+      - name: Build and Test
+        run: |
+          cd analog-app
+          npm install
+          npm run build
+          npm run test
+      - name: Verify
+        run: cat dist/analog/public/index.html
+
+  # create-nx-workspace:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/setup-node@v3
+  #     - run: corepack enable
+  #     - run: npm --version
+  #     - name: Create Nx Workspace
+  #       run: |
+  #         npx create-nx-workspace@latest analog-nx-workspace --preset analog@beta --analogAppName my-analog-app --ci skip
+  #     - name: Build App
+  #       run: |
+  #         cd analog-nx-workspace
+  #         npx nx build my-analog-app
+  #     - name: Run Tests
+  #       run: npx nx test my-analog-app
+  #     - name: Verify
+  #       run: cat dist/apps/my-analog-app/analog/public/index.html
+
+  # migrate-angular-app:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/setup-node@v3
+  #     - run: corepack enable
+  #     - run: npm --version
+  #     - name: Create Angular App
+  #       run: |
+  #         npx @angular/cli@latest my-angular-app --style css --no-ssr
+  #     - name: Build App
+  #       run: cd analog-nx-workspace
+  #       run: npx nx build my-analog-app
+  #     - name: Run Tests App
+  #       run: npx nx test my-analog-app
+  #     - name: Verify
+  #       run: cat dist/apps/my-analog-app/public/index.html
