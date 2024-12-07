@@ -1196,6 +1196,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "alexrosepizant",
+      "name": "Alex Rose-Pizant",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7753376?v=4",
+      "profile": "https://github.com/alexrosepizant",
+      "contributions": [
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
