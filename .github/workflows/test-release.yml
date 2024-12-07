@@ -13,7 +13,7 @@ jobs:
         run: |
           TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
       - name: Create Analog Application
-        run: npm create analog@$TAG analog-app
+        run: npm create analog@$TAG analog-app -- --skipTailwind --analogSFC=false --template latest
       - name: Build and Test
         run: |
           cd analog-app
