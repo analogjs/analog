@@ -5,7 +5,7 @@
   "projects": {
     "blog": {
       "projectType": "application",
-      "root": ".",
+      "root": "",
       "sourceRoot": "src",
       "prefix": "blog",
       "architect": {
