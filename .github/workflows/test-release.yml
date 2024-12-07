@@ -1,4 +1,4 @@
-name: Release
+name: Release Test
 
 on: workflow_dispatch
 
@@ -9,8 +9,11 @@ jobs:
       - uses: actions/setup-node@v3
       - run: corepack enable
       - run: npm --version
+      - name: Set Release Tag
+        run: |
+          TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
       - name: Create Analog Application
-        run: npm create analog@beta analog-app
+        run: npm create analog@$TAG analog-app
       - name: Build and Test
         run: |
           cd analog-app
