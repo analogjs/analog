@@ -1,3 +1,9 @@
+## [1.10.2-beta.2](https://github.com/analogjs/analog/compare/v1.10.2-beta.1...v1.10.2-beta.2) (2024-12-08)
+
+### Bug Fixes
+
+- **nx-plugin:** update Nx preset to 20.x and Angular 19.x ([#1484](https://github.com/analogjs/analog/issues/1484)) ([7d8ee23](https://github.com/analogjs/analog/commit/7d8ee23498e483a5026a00c819ee05de8e62bc23))
+
 ## [1.10.2-beta.1](https://github.com/analogjs/analog/compare/v1.10.1...v1.10.2-beta.1) (2024-12-07)
 
 ### Bug Fixes
