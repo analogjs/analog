@@ -3,6 +3,14 @@ name: Release Test
 on:
   workflow_dispatch:
     inputs:
+      analog_build_tag:
+        description: 'Analog Build Tag'
+        required: true
+        default: 'latest'
+        type: choice
+        options:
+          - latest
+          - beta    
       angular_build_tag:
         description: 'Angular Build Tag'
         required: true
@@ -27,11 +35,8 @@ jobs:
       - uses: actions/setup-node@v3
       - run: corepack enable
       - run: npm --version
-      - name: Set Release Tag
-        run: |
-          TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
       - name: Create Analog Application
-        run: npm create analog@$TAG analog-app -- --skipTailwind --analogSFC=false --template latest
+        run: npm create analog@${{ inputs.analog_build_tag }} analog-app -- --skipTailwind --analogSFC=false --template latest
       - name: Build, Test, and Validate
         run: |
           cd analog-app
@@ -46,12 +51,9 @@ jobs:
       - uses: actions/setup-node@v3
       - run: corepack enable
       - run: npm --version
-      - name: Set Release Tag
-        run: |
-          TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
       - name: Create Nx Workspace
         run: |
-          npx create-nx-workspace@${{ inputs.nx_build_tag }} analog-nx-workspace --preset @analogjs/platform@$TAG --analogAppName my-analog-app --addTailwind=false --addTRPC=false --ci skip
+          npx create-nx-workspace@${{ inputs.nx_build_tag }} analog-nx-workspace --preset @analogjs/platform@${{ inputs.analog_build_tag }} --analogAppName my-analog-app --addTailwind=false --addTRPC=false --ci skip
       - name: Build, Test, and Validate
         run: |
           cd analog-nx-workspace
@@ -66,16 +68,13 @@ jobs:
       - uses: actions/setup-node@v3
       - run: corepack enable
       - run: npm --version
-      - name: Set Release Tag
-        run: |
-          TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
       - name: Create Angular App
         run: |
           npx @angular/cli@${{ inputs.angular_build_tag }} new my-angular-app --style css --no-ssr
       - name: Migrate, Build, Test, and Validate
         run: |
           cd my-angular-app
-          npm install @analogjs/platform@$TAG --save-dev
+          npm install @analogjs/platform@${{ inputs.analog_build_tag }} --save-dev
           npx ng g @analogjs/platform:init --project my-angular-app --vitest=true
           npm run build
           npm run test
