@@ -60,7 +60,7 @@ jobs:
           npm install
           npx nx build my-analog-app
           npx nx test my-analog-app
-          cat ./dist/apps/my-analog-app/analog/public/index.html
+          cat ./dist/my-analog-app/analog/public/index.html
 
   migrate-angular-app:
     runs-on: ubuntu-latest
