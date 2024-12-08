@@ -51,7 +51,7 @@ jobs:
           TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
       - name: Create Nx Workspace
         run: |
-          npx create-nx-workspace@${{ inputs.nx_build_tag }} analog-nx-workspace --preset analog@$TAG --analogAppName my-analog-app --ci skip
+          npx create-nx-workspace@${{ inputs.nx_build_tag }} analog-nx-workspace --preset @analogjs/platform@$TAG --analogAppName my-analog-app --ci skip
       - name: Build, Test, and Validate
         run: |
           cd analog-nx-workspace
@@ -76,7 +76,7 @@ jobs:
         run: |
           cd my-angular-app
           npm install @analogjs/platform@$TAG --save-dev
-          npx ng g @analogjs/platform:init --project my-angular-app
+          npx ng g @analogjs/platform:init --project my-angular-app --vitest=true
           npm run build
           npm run test
           cat ./dist/analog/public/index.html
