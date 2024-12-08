@@ -51,7 +51,7 @@ jobs:
           TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
       - name: Create Nx Workspace
         run: |
-          npx create-nx-workspace@{{ inputs.nx_build_tag }} analog-nx-workspace --preset analog@$TAG --analogAppName my-analog-app --ci skip
+          npx create-nx-workspace@${{ inputs.nx_build_tag }} analog-nx-workspace --preset analog@$TAG --analogAppName my-analog-app --ci skip
       - name: Build, Test, and Validate
         run: |
           cd analog-nx-workspace
@@ -71,7 +71,7 @@ jobs:
           TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
       - name: Create Angular App
         run: |
-          npx @angular/cli@{{ inputs.angular_build_tag }} new my-angular-app --style css --no-ssr
+          npx @angular/cli@${{ inputs.angular_build_tag }} new my-angular-app --style css --no-ssr
       - name: Migrate, Build, Test, and Validate
         run: |
           cd my-angular-app
