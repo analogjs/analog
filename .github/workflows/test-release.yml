@@ -51,7 +51,7 @@ jobs:
           TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
       - name: Create Nx Workspace
         run: |
-          npx create-nx-workspace@${{ inputs.nx_build_tag }} analog-nx-workspace --preset @analogjs/platform@$TAG --analogAppName my-analog-app --ci skip
+          npx create-nx-workspace@${{ inputs.nx_build_tag }} analog-nx-workspace --preset @analogjs/platform@$TAG --analogAppName my-analog-app --addTailwind=false --addTRPC=false --ci skip
       - name: Build, Test, and Validate
         run: |
           cd analog-nx-workspace

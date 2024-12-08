@@ -14,7 +14,7 @@ import { AnalogNxApplicationGeneratorOptions } from './schema';
 describe('nx-plugin generator', () => {
   const setup = async (
     options: AnalogNxApplicationGeneratorOptions,
-    nxVersion = '18.0.0',
+    nxVersion = '20.0.0',
     standalone = false
   ) => {
     const tree = createTreeWithEmptyWorkspace(
@@ -124,8 +124,8 @@ describe('nx-plugin generator', () => {
     dependencies: Record<string, string>,
     devDependencies: Record<string, string>
   ) => {
-    expect(dependencies['@analogjs/content']).toBe('^1.7.0');
-    expect(dependencies['@analogjs/router']).toBe('^1.7.0');
+    expect(dependencies['@analogjs/content']).toBe('^1.10.0');
+    expect(dependencies['@analogjs/router']).toBe('^1.10.0');
     expect(dependencies['@angular/platform-server']).toBe(
       dependencies['@angular/core']
     );
@@ -137,18 +137,19 @@ describe('nx-plugin generator', () => {
     expect(dependencies['mermaid']).toBe('^10.2.4');
     expect(dependencies['prismjs']).toBe('^1.29.0');
 
-    expect(devDependencies['@nx/devkit']).toBe('^19.1.0');
-    expect(devDependencies['@nx/angular']).toBe('^19.1.0');
+    expect(devDependencies['@nx/devkit']).toBe('^20.0.0');
+    expect(devDependencies['@nx/angular']).toBe('^20.0.0');
     // we just check for truthy because @nx/eslint generator
     // will install the correct version based on Nx version
     expect(devDependencies['@nx/eslint']).toBeTruthy();
-    expect(devDependencies['@analogjs/platform']).toBe('^1.7.0');
-    expect(devDependencies['@analogjs/vite-plugin-angular']).toBe('^1.7.0');
-    expect(devDependencies['@nx/vite']).toBe('^19.1.0');
+    expect(devDependencies['@analogjs/platform']).toBe('^1.10.0');
+    expect(devDependencies['@analogjs/vite-plugin-angular']).toBe('^1.10.0');
+    expect(devDependencies['@analogjs/vitest-angular']).toBe('^1.10.0');
+    expect(devDependencies['@nx/vite']).toBe('^20.0.0');
     expect(devDependencies['jsdom']).toBe('^22.1.0');
     expect(devDependencies['vite']).toBe('^5.0.0');
     expect(devDependencies['vite-tsconfig-paths']).toBe('^4.2.0');
-    expect(devDependencies['vitest']).toBe('^1.3.1');
+    expect(devDependencies['vitest']).toBe('^2.0.0');
   };
 
   const verifyConfig = (
