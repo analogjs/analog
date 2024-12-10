@@ -311,6 +311,14 @@ export function angular(options?: PluginOptions): Plugin[] {
           return;
         }
 
+        /**
+         * Skip re-transforming files already JIT compiled
+         * with external styles or templates.
+         */
+        if (jit && code.includes('angular:jit:')) {
+          return;
+        }
+
         if (TS_EXT_REGEX.test(id)) {
           if (id.includes('.ts?')) {
             // Strip the query string off the ID
