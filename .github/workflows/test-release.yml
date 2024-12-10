@@ -10,7 +10,7 @@ on:
         type: choice
         options:
           - latest
-          - beta    
+          - beta
       angular_build_tag:
         description: 'Angular Build Tag'
         required: true
