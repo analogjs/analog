@@ -1,3 +1,9 @@
+## [1.10.2-beta.4](https://github.com/analogjs/analog/compare/v1.10.2-beta.3...v1.10.2-beta.4) (2024-12-10)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** skip re-transform in JIT mode ([#1489](https://github.com/analogjs/analog/issues/1489)) ([30533c6](https://github.com/analogjs/analog/commit/30533c6f0deaa3457847a65b170d3938c15ee087))
+
 ## [1.10.2-beta.3](https://github.com/analogjs/analog/compare/v1.10.2-beta.2...v1.10.2-beta.3) (2024-12-10)
 
 ### Bug Fixes
