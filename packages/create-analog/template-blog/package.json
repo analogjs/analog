@@ -48,10 +48,5 @@
     "vite": "^5.0.0",
     "vite-tsconfig-paths": "^4.2.0",
     "vitest": "^2.0.0"
-  },
-  "overrides": {
-    "@nx/angular": {
-      "@angular-devkit/build-angular": "$@angular-devkit/build-angular"
-    }
   }
 }
