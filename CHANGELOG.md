@@ -1,3 +1,9 @@
+## [1.10.2-beta.6](https://github.com/analogjs/analog/compare/v1.10.2-beta.5...v1.10.2-beta.6) (2024-12-11)
+
+### Bug Fixes
+
+- exclude astro-app from builds ([ebabc90](https://github.com/analogjs/analog/commit/ebabc90b486169796d45f71e1c80d59a1d3fe584))
+
 ## [1.10.2-beta.5](https://github.com/analogjs/analog/compare/v1.10.2-beta.4...v1.10.2-beta.5) (2024-12-11)
 
 ### Bug Fixes
