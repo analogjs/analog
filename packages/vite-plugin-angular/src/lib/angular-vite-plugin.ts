@@ -1,5 +1,5 @@
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 
 import * as compilerCli from '@angular/compiler-cli';
 import * as ts from 'typescript';
@@ -276,6 +276,16 @@ export function angular(options?: PluginOptions): Plugin[] {
 
         return ctx.modules;
       },
+      resolveId(id, importer) {
+        if (id.startsWith('angular:jit:')) {
+          const path = id.split(';')[1];
+          return `${normalizePath(
+            resolve(dirname(importer as string), path)
+          )}?raw`;
+        }
+
+        return id;
+      },
       async transform(code, id) {
         // Skip transforming node_modules
         if (id.includes('node_modules')) {
@@ -308,14 +318,6 @@ export function angular(options?: PluginOptions): Plugin[] {
          * Skip transforming content files
          */
         if (id.includes('analog-content-')) {
-          return;
-        }
-
-        /**
-         * Skip re-transforming files already JIT compiled
-         * with external styles or templates.
-         */
-        if (jit && code.includes('angular:jit:')) {
           return;
         }
 
