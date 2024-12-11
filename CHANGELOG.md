@@ -1,3 +1,9 @@
+## [1.10.2-beta.5](https://github.com/analogjs/analog/compare/v1.10.2-beta.4...v1.10.2-beta.5) (2024-12-11)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** resolve JIT external template/style files ([#1493](https://github.com/analogjs/analog/issues/1493)) ([54e9488](https://github.com/analogjs/analog/commit/54e9488f222f56fd055d8b837459eb668c94d0a3))
+
 ## [1.10.2-beta.4](https://github.com/analogjs/analog/compare/v1.10.2-beta.3...v1.10.2-beta.4) (2024-12-10)
 
 ### Bug Fixes
