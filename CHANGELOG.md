@@ -1,3 +1,9 @@
+## [1.10.2-beta.7](https://github.com/analogjs/analog/compare/v1.10.2-beta.6...v1.10.2-beta.7) (2024-12-12)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** return undefined when not resolving id ([#1495](https://github.com/analogjs/analog/issues/1495)) ([ac6a854](https://github.com/analogjs/analog/commit/ac6a854bcc921d9e4c77383f99bfd63186dce582))
+
 ## [1.10.2-beta.6](https://github.com/analogjs/analog/compare/v1.10.2-beta.5...v1.10.2-beta.6) (2024-12-11)
 
 ### Bug Fixes
