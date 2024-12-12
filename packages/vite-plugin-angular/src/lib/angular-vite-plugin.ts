@@ -284,7 +284,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           )}?raw`;
         }
 
-        return id;
+        return undefined;
       },
       async transform(code, id) {
         // Skip transforming node_modules
