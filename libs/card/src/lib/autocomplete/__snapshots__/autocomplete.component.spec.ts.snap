@@ -3,7 +3,7 @@
 exports[`GIVEN AutocompleteComponent > WHEN input value is empty > AND input is focused > THEN component should match snapshot 1`] = `
 <div
   id="root2"
-  ng-version="19.0.0"
+  ng-version="19.0.4"
 >
   <mat-form-field
     class="mat-mdc-form-field ng-tns-c508571215-0 mat-mdc-form-field-type-mat-input mat-form-field-no-animations mat-form-field-appearance-fill mat-primary ng-untouched ng-pristine ng-valid mat-mdc-form-field-label-always-float mat-focused"
@@ -106,7 +106,7 @@ exports[`GIVEN AutocompleteComponent > WHEN input value is empty > AND input is 
 exports[`GIVEN AutocompleteComponent > WHEN input value is empty > THEN component should match snapshot 1`] = `
 <div
   id="root1"
-  ng-version="19.0.0"
+  ng-version="19.0.4"
 >
   <mat-form-field
     class="mat-mdc-form-field ng-tns-c508571215-0 mat-mdc-form-field-type-mat-input mat-form-field-no-animations mat-form-field-appearance-fill mat-form-field-hide-placeholder mat-primary ng-untouched ng-pristine ng-valid"
@@ -207,7 +207,7 @@ exports[`GIVEN AutocompleteComponent > WHEN input value is empty > THEN componen
 exports[`GIVEN AutocompleteComponent > WHEN input value is not empty > AND input is focused > THEN component should match snapshot 1`] = `
 <div
   id="root7"
-  ng-version="19.0.0"
+  ng-version="19.0.4"
 >
   <mat-form-field
     class="mat-mdc-form-field ng-tns-c508571215-0 mat-mdc-form-field-type-mat-input mat-form-field-no-animations mat-form-field-appearance-fill mat-primary ng-untouched ng-pristine ng-valid mat-mdc-form-field-label-always-float mat-focused"
@@ -310,7 +310,7 @@ exports[`GIVEN AutocompleteComponent > WHEN input value is not empty > AND input
 exports[`GIVEN AutocompleteComponent > WHEN input value is not empty > THEN component should match snapshot 1`] = `
 <div
   id="root6"
-  ng-version="19.0.0"
+  ng-version="19.0.4"
 >
   <mat-form-field
     class="mat-mdc-form-field ng-tns-c508571215-0 mat-mdc-form-field-type-mat-input mat-form-field-no-animations mat-form-field-appearance-fill mat-form-field-hide-placeholder mat-primary ng-untouched ng-pristine ng-valid"
