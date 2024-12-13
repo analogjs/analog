@@ -1,3 +1,9 @@
+## [1.10.2-beta.8](https://github.com/analogjs/analog/compare/v1.10.2-beta.7...v1.10.2-beta.8) (2024-12-13)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fix Angular v18/v19 support for ɵPendingTasks ([#1497](https://github.com/analogjs/analog/issues/1497)) ([3215ab4](https://github.com/analogjs/analog/commit/3215ab4e0dfb67d694d660ce21087d182bcb8be5))
+
 ## [1.10.2-beta.7](https://github.com/analogjs/analog/compare/v1.10.2-beta.6...v1.10.2-beta.7) (2024-12-12)
 
 ### Bug Fixes
