@@ -115,7 +115,7 @@ export default class ${entityName} {
   // the `.analog` file
   if (scriptContent) {
     const project = new Project({ useInMemoryFileSystem: true });
-    return processAnalogScriptV2(
+    return processAnalogScript(
       filePath,
       project.createSourceFile(filePath, scriptContent),
       project.createSourceFile(`${filePath}.virtual.ts`, source),
@@ -136,7 +136,7 @@ interface ClassMember {
   isLet: boolean;
 }
 
-function processAnalogScriptV2(
+function processAnalogScript(
   fileName: string,
   ngSourceFile: SourceFile,
   targetSourceFile: SourceFile,
@@ -514,56 +514,98 @@ function processInitializer(
   }
 
   if (Node.isCallExpression(initializer)) {
-    // IO, queries, other callable things
     const expression = initializer.getExpression(),
       expressionText = expression.getText();
+
     if (REQUIRED_SIGNALS_MAP[expressionText] || SIGNALS_MAP[expressionText]) {
-      // outputFromObservable
       if (expressionText === OUTPUT_FROM_OBSERVABLE) {
-        const arg = initializer.getArguments()[0];
-
-        let isClassMember = false;
-
-        if (Node.isPropertyAccessExpression(arg) || Node.isIdentifier(arg)) {
-          // outputFromObservable(stream$);
-          // outputFromObservable(store.stream$);
-          const argExpr = Node.isIdentifier(arg)
-            ? arg.getText()
-            : arg.getExpression().getText();
-
-          isClassMember = classMembers.has(argExpr);
-        } else if (Node.isCallExpression(arg)) {
-          // outputFromObservable(thing());
-          // outputFromObservable(other.thing());
-          let deepestExpression = arg.getExpression();
-          while (Node.isPropertyAccessExpression(deepestExpression)) {
-            deepestExpression = deepestExpression.getExpression();
-          }
-
-          isClassMember =
-            Node.isIdentifier(deepestExpression) &&
-            classMembers.has(deepestExpression.getText());
-        }
-
-        writer.write(expressionText);
-        writer.write(`(`);
-        writer.write(isClassMember ? `this.${arg.getText()}` : arg.getText());
-        writer.write(`)`);
-
+        writer.write(
+          processCallExpressionOrPropertyAccessExpressionForClassMember(
+            initializer,
+            classMembers
+          )
+        );
         return;
       }
 
-      // TODO (chau): complex transform for inputs does not work properly
       writer.write(initializer.getText());
       return;
     }
-
-    writer.write(initializer.getText());
-    return;
   }
 
-  // regular `const var = initializer;`
-  writer.write(initializer.getText());
+  writer.write(
+    processCallExpressionOrPropertyAccessExpressionForClassMember(
+      initializer,
+      classMembers
+    )
+  );
+}
+
+function processCallExpressionOrPropertyAccessExpressionForClassMember(
+  initializer: Expression,
+  classMembers: Map<string, ClassMember>
+) {
+  if (Node.isCallExpression(initializer)) {
+    const currentExpression = initializer.getExpression();
+    let deepestExpression = currentExpression;
+
+    // find deepest expression
+    // i.e: route.snapshot.paramMap.get('id') -> route is the deepest expression
+    while (Node.isPropertyAccessExpression(deepestExpression)) {
+      deepestExpression = deepestExpression.getExpression();
+    }
+
+    let fullExpressionText = currentExpression.getText();
+    if (
+      Node.isIdentifier(deepestExpression) &&
+      classMembers.has(deepestExpression.getText())
+    ) {
+      // if it's part of the classMembers, add `this.`
+      fullExpressionText = `this.${fullExpressionText}`;
+    }
+
+    // process arguments of the call expression
+    const args: string[] = initializer.getArguments().map((arg) => {
+      // if it's part of the classMembers, add `this.`
+      if (Node.isIdentifier(arg) && classMembers.has(arg.getText())) {
+        return `this.${arg.getText()}`;
+      }
+
+      // recurse if needs to
+      if (Node.isPropertyAccessExpression(arg) || Node.isCallExpression(arg)) {
+        return processCallExpressionOrPropertyAccessExpressionForClassMember(
+          arg,
+          classMembers
+        );
+      }
+
+      // otherwise just reutrn
+      return arg.getText();
+    });
+
+    return `${fullExpressionText}(${args.join(', ')})`;
+  }
+
+  if (Node.isPropertyAccessExpression(initializer)) {
+    let deepestExpression = initializer.getExpression();
+
+    // find deepest expression
+    // i.e: route.snapshot.paramMap -> route is the deepest expression
+    while (Node.isPropertyAccessExpression(deepestExpression)) {
+      deepestExpression = deepestExpression.getExpression();
+    }
+
+    if (
+      Node.isIdentifier(deepestExpression) &&
+      classMembers.has(deepestExpression.getText())
+    ) {
+      return `this.${initializer.getText()}`;
+    }
+
+    return initializer.getText();
+  }
+
+  return initializer.getText();
 }
 
 function processArrayLiteralMetadata(

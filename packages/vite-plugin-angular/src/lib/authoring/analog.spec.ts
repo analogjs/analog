@@ -78,6 +78,9 @@ const contentChildRequiredEl = contentChild.required<ElementRef>('divElement');
 
 const contentChildrenEl = contentChildren<HTMLDivElement[]>('divElement');
 
+const route = inject(ActivatedRoute);
+const id = route.snapshot.paramMap.get('id');
+
 afterNextRender(() => {
   console.log('the div', divElement);
 })

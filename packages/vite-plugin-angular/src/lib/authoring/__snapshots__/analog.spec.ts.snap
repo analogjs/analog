@@ -52,6 +52,8 @@ export default class VirtualAnalogComponent {
         const contentChildEl = this.contentChildEl;
         const contentChildRequiredEl = this.contentChildRequiredEl;
         const contentChildrenEl = this.contentChildrenEl;
+        const route = this.route;
+        const id = this.id;
         setTimeout(() => {
             test = 'test';
         }, 1000)
@@ -92,6 +94,8 @@ export default class VirtualAnalogComponent {
     contentChildEl = contentChild<ElementRef>('divElement');
     contentChildRequiredEl = contentChild.required<ElementRef>('divElement');
     contentChildrenEl = contentChildren<HTMLDivElement[]>('divElement');
+    route = inject(ActivatedRoute);
+    id = this.route.snapshot.paramMap.get('id');
     protected readonly myFunc = myFunc;
     protected readonly ExternalEnum = ExternalEnum;
 }
