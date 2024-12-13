@@ -42,6 +42,7 @@ import {
   MarkdownTemplateTransform,
 } from './authoring/markdown-transform.js';
 import { routerPlugin } from './router-plugin.js';
+import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -444,6 +445,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     }),
     (isStorybook && angularStorybookPlugin()) as Plugin,
     routerPlugin(),
+    pendingTasksPlugin(),
   ].filter(Boolean) as Plugin[];
 
   function findAnalogFiles(config: ResolvedConfig) {
