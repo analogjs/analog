@@ -1,3 +1,9 @@
+## [1.10.2-beta.9](https://github.com/analogjs/analog/compare/v1.10.2-beta.8...v1.10.2-beta.9) (2024-12-14)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** process call expr and property access expr property ([#1498](https://github.com/analogjs/analog/issues/1498)) ([cf7db8f](https://github.com/analogjs/analog/commit/cf7db8f05902fa138c8f1e0042c01430e5ef7ab9))
+
 ## [1.10.2-beta.8](https://github.com/analogjs/analog/compare/v1.10.2-beta.7...v1.10.2-beta.8) (2024-12-13)
 
 ### Bug Fixes
