@@ -1,3 +1,9 @@
+## [1.10.2-beta.10](https://github.com/analogjs/analog/compare/v1.10.2-beta.9...v1.10.2-beta.10) (2024-12-14)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** process destructured objects ([#1499](https://github.com/analogjs/analog/issues/1499)) ([cba76da](https://github.com/analogjs/analog/commit/cba76da9156f2d1c8b4d50d104e057ff5da78c9d))
+
 ## [1.10.2-beta.9](https://github.com/analogjs/analog/compare/v1.10.2-beta.8...v1.10.2-beta.9) (2024-12-14)
 
 ### Bug Fixes
