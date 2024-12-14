@@ -28,13 +28,17 @@ import nonameag from "./noname.ag";
 })
 export default class VirtualAnalogComponent {
     constructor() {
-        const [a, b, , c = 4] = [1, 2, 3];
-        this.a = a;
-        this.b = b;
-        this.c = c;
         let divElement;
         let test;
         const counter = this.counter;
+        const a = this.a;
+        const b = this.b;
+        const c = this.c;
+        const restArr = this.restArr;
+        const foo = this.foo;
+        const renamedBar = this.renamedBar;
+        const nonExist = this.nonExist;
+        const restObj = this.restObj;
         const inputWithDefault = this.inputWithDefault;
         const inputWithoutDefault = this.inputWithoutDefault;
         const inputWithAlias = this.inputWithAlias;
@@ -54,6 +58,8 @@ export default class VirtualAnalogComponent {
         const contentChildrenEl = this.contentChildrenEl;
         const route = this.route;
         const id = this.id;
+        const nativeElement = this.nativeElement;
+        const elementId = this.elementId;
         setTimeout(() => {
             test = 'test';
         }, 1000)
@@ -66,11 +72,25 @@ export default class VirtualAnalogComponent {
         })
     }
     protected readonly Math = Math;
-    a;
-    b;
-    c;
     protected readonly routeMeta = routeMeta;
     counter = signal(0);
+    private readonly __destructured1 = [1, 2, 3];
+    a = this.__destructured1.a;
+    b = this.__destructured1.b;
+    c = this.__destructured1.c === undefined ? 4 : this.__destructured1.c;
+    private readonly __destructured2 = [1, 2, 3, 4, 5];
+    restArr = (() => {
+        const [, , ...restArr] = this.__destructured2;
+        return restArr;
+    })();
+    private readonly __destructured3 = { foo: 1, bar: 2, baz: 3 };
+    foo = this.__destructured3.foo;
+    renamedBar = this.__destructured3.bar;
+    nonExist = this.__destructured3.nonExist === undefined ? 4 : this.__destructured3.nonExist;
+    restObj = (() => {
+        const { foo, bar: renamedBar, nonExist = 4, ...restObj } = this.__destructured3;
+        return restObj;
+    })();
     inputWithDefault = input("");
     inputWithoutDefault = input<string>();
     inputWithAlias = input("", { alias: "theAlias" });
@@ -96,6 +116,9 @@ export default class VirtualAnalogComponent {
     contentChildrenEl = contentChildren<HTMLDivElement[]>('divElement');
     route = inject(ActivatedRoute);
     id = this.route.snapshot.paramMap.get('id');
+    private readonly __destructured4 = inject(ElementRef);
+    nativeElement = this.__destructured4.nativeElement;
+    elementId = this.nativeElement.id;
     protected readonly myFunc = myFunc;
     protected readonly ExternalEnum = ExternalEnum;
 }

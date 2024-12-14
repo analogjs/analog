@@ -47,6 +47,8 @@ setTimeout(() => {
 
 const counter = signal(0);
 const [a, b, , c = 4] = [1, 2, 3];
+const [, , ...restArr] = [1, 2, 3, 4, 5];
+const { foo, bar: renamedBar, nonExist = 4, ...restObj } = { foo: 1, bar: 2, baz: 3 };
 
 const inputWithDefault = input(""); // InputSignal<string, string>
 const inputWithoutDefault = input<string>(); // InputSignal<string | undefined, string | undefined>
@@ -80,6 +82,9 @@ const contentChildrenEl = contentChildren<HTMLDivElement[]>('divElement');
 
 const route = inject(ActivatedRoute);
 const id = route.snapshot.paramMap.get('id');
+
+const { nativeElement } = inject<ElementRef<HTMLElement>>(ElementRef);
+const elementId = nativeElement.id;
 
 afterNextRender(() => {
   console.log('the div', divElement);
