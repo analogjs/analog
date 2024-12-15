@@ -1,3 +1,9 @@
+## [1.10.2-beta.11](https://github.com/analogjs/analog/compare/v1.10.2-beta.10...v1.10.2-beta.11) (2024-12-15)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** only apply sourcemap transform to TS files during testing ([#1500](https://github.com/analogjs/analog/issues/1500)) ([0b56d46](https://github.com/analogjs/analog/commit/0b56d463ac75f3d917919e2f658f171a68b5cd26))
+
 ## [1.10.2-beta.10](https://github.com/analogjs/analog/compare/v1.10.2-beta.9...v1.10.2-beta.10) (2024-12-14)
 
 ### Bug Fixes
