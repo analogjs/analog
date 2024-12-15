@@ -81,6 +81,10 @@ export function angularVitestSourcemapPlugin(): Plugin {
   return {
     name: '@analogjs/vitest-angular-sourcemap-plugin',
     async transform(code: string, id: string) {
+      if (!/\.ts/.test(id)) {
+        return;
+      }
+
       const [, query] = id.split('?');
 
       if (query && query.includes('inline')) {
