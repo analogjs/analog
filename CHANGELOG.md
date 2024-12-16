@@ -1,3 +1,9 @@
+## [1.10.2-beta.12](https://github.com/analogjs/analog/compare/v1.10.2-beta.11...v1.10.2-beta.12) (2024-12-16)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** properly transform files during testing with watch mode ([#1503](https://github.com/analogjs/analog/issues/1503)) ([6d9179f](https://github.com/analogjs/analog/commit/6d9179f5e624d9ff65c8f1069424b07903cd9865))
+
 ## [1.10.2-beta.11](https://github.com/analogjs/analog/compare/v1.10.2-beta.10...v1.10.2-beta.11) (2024-12-15)
 
 ### Bug Fixes
