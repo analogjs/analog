@@ -8,6 +8,7 @@ const replacementFiles = [
   'packages/astro-angular/package.json',
   'packages/create-analog/template-angular-v16/package.json',
   'packages/create-analog/template-angular-v17/package.json',
+  'packages/create-analog/template-angular-v18/package.json',
   'packages/create-analog/template-blog/package.json',
   'packages/create-analog/template-latest/package.json',
   'packages/create-analog/template-minimal/package.json',
@@ -16,7 +17,7 @@ const replacementFiles = [
 ];
 
 module.exports = {
-  branches: ['main', { name: 'beta', prerelease: true }],
+  branches: ['main', { name: 'beta', prerelease: true }, { name: 'alpha', prerelease: true }],
   plugins: [
     '@semantic-release/commit-analyzer',
     '@semantic-release/release-notes-generator',
@@ -127,6 +128,12 @@ module.exports = {
       },
     ],
     [
+      '@semantic-release/exec',
+      {
+        publishCmd: `pnpm build && RELEASE_TAG=${tag} ./tools/publish.sh`,
+      },
+    ],    
+    [
       '@semantic-release/git',
       {
         assets: [
@@ -137,6 +144,7 @@ module.exports = {
           'packages/create-analog/package.json',
           'packages/create-analog/template-angular-v16/package.json',
           'packages/create-analog/template-angular-v17/package.json',
+          'packages/create-analog/template-angular-v18/package.json',
           'packages/create-analog/template-blog/package.json',
           'packages/create-analog/template-latest/package.json',
           'packages/create-analog/template-minimal/package.json',
@@ -147,12 +155,6 @@ module.exports = {
           'packages/vitest-angular/package.json',
         ],
         message: 'chore: release ${nextRelease.version} [skip ci]',
-      },
-    ],
-    [
-      '@semantic-release/exec',
-      {
-        publishCmd: `pnpm build && RELEASE_TAG=${tag} ./tools/publish.sh`,
       },
     ],
   ],
