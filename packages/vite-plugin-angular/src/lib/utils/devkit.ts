@@ -5,14 +5,16 @@ import * as sfc from './source-file-cache.js';
 
 const require = createRequire(import.meta.url);
 
-const angularVersion = Number(VERSION.major);
+const angularMajor = Number(VERSION.major);
+const angularMinor = Number(VERSION.minor);
+const angularPatch = Number(VERSION.patch);
 let sourceFileCache: any;
 let cjt: Function;
 let jt: any;
 
-if (angularVersion < 15) {
+if (angularMajor < 15) {
   throw new Error('AnalogJS is not compatible with Angular v14 and lower');
-} else if (angularVersion >= 15 && angularVersion < 16) {
+} else if (angularMajor >= 15 && angularMajor < 16) {
   const cp = require('@angular-devkit/build-angular/src/builders/browser-esbuild/compiler-plugin.js');
   const {
     createJitResourceTransformer,
@@ -24,7 +26,7 @@ if (angularVersion < 15) {
   sourceFileCache = cp.SourceFileCache;
   cjt = createJitResourceTransformer;
   jt = JavaScriptTransformer;
-} else if (angularVersion >= 16 && angularVersion < 18) {
+} else if (angularMajor >= 16 && angularMajor < 18) {
   const cp = require('@angular-devkit/build-angular/src/tools/esbuild/angular/compiler-plugin.js');
   const {
     createJitResourceTransformer,
@@ -61,4 +63,7 @@ export {
   jt as JavaScriptTransformer,
   sourceFileCache as SourceFileCache,
   CompilerPluginOptions,
+  angularMajor,
+  angularMinor,
+  angularPatch,
 };

@@ -1,0 +1,81 @@
+name: Release Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      analog_build_tag:
+        description: 'Analog Build Tag'
+        required: true
+        default: 'latest'
+        type: choice
+        options:
+          - latest
+          - beta
+      angular_build_tag:
+        description: 'Angular Build Tag'
+        required: true
+        default: 'latest'
+        type: choice
+        options:
+          - latest
+          - next
+      nx_build_tag:
+        description: 'Nx Build Tag'
+        required: true
+        default: 'latest'
+        type: choice
+        options:
+          - latest
+          - canary
+
+jobs:
+  create-analog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+      - run: corepack enable
+      - run: npm --version
+      - name: Create Analog Application
+        run: npm create analog@${{ inputs.analog_build_tag }} analog-app -- --skipTailwind --analogSFC=false --template latest
+      - name: Build, Test, and Validate
+        run: |
+          cd analog-app
+          npm install
+          npm run build
+          npm run test
+          cat ./dist/analog/public/index.html
+
+  create-nx-workspace:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+      - run: corepack enable
+      - run: npm --version
+      - name: Create Nx Workspace
+        run: |
+          npx create-nx-workspace@${{ inputs.nx_build_tag }} analog-nx-workspace --preset @analogjs/platform@${{ inputs.analog_build_tag }} --analogAppName my-analog-app --addTailwind=false --addTRPC=false --ci skip
+      - name: Build, Test, and Validate
+        run: |
+          cd analog-nx-workspace
+          npm install
+          npx nx build my-analog-app
+          npx nx test my-analog-app
+          cat ./dist/my-analog-app/analog/public/index.html
+
+  migrate-angular-app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+      - run: corepack enable
+      - run: npm --version
+      - name: Create Angular App
+        run: |
+          npx @angular/cli@${{ inputs.angular_build_tag }} new my-angular-app --style css --no-ssr
+      - name: Migrate, Build, Test, and Validate
+        run: |
+          cd my-angular-app
+          npm install @analogjs/platform@${{ inputs.analog_build_tag }} --save-dev
+          npx ng g @analogjs/platform:init --project my-angular-app --vitest=true
+          npm run build
+          npm run test
+          cat ./dist/analog/public/index.html

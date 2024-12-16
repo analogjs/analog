@@ -1,18 +1,19 @@
-import {
-  Injectable,
-  inject,
-  ɵPendingTasks as PendingTasks,
-} from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { ɵPendingTasksInternal as ɵPendingTasks } from '@angular/core';
 
 @Injectable()
 export class RenderTaskService {
-  #pendingTasks = inject(PendingTasks);
+  #pendingTasks = inject(ɵPendingTasks);
 
   addRenderTask() {
     return this.#pendingTasks.add();
   }
 
-  clearRenderTask(id: number) {
-    this.#pendingTasks.remove(id);
+  clearRenderTask(clear: number | Function) {
+    if (typeof clear === 'function') {
+      clear();
+    } else if (typeof (this.#pendingTasks as any).remove === 'function') {
+      (this.#pendingTasks as any).remove(clear);
+    }
   }
 }

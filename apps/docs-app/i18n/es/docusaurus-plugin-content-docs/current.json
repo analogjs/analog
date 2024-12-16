@@ -98,5 +98,9 @@
   "sidebar.docsSidebar.doc.Sponsoring": {
     "message": "Patrocinio",
     "description": "The label for the doc item Sponsoring in sidebar docsSidebar, linking to the doc sponsoring"
+  },
+  "sidebar.docsSidebar.doc.Support": {
+    "message": "Soporte",
+    "description": "The label for the doc item Support in sidebar docsSidebar, linking to the doc sponsoring"
   }
 }

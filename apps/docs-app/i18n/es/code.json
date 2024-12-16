@@ -286,6 +286,10 @@
     "message": "Patrocina Analog",
     "description": "The label of the button to sponsor Analog"
   },
+  "homepage.partnerSection.zerops": {
+    "message": "Partner Oficial de Despliegues",
+    "description": "The label of the official deployment partner"
+  },
   "features.fileBasedRouting": {
     "message": "Analog usa enrutado basado en ficheros y soporta rutas de API (servidor) para aplicaciones Angular.",
     "description": "The description of the feature 'File-based routing and API routes'"

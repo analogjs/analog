@@ -12,7 +12,6 @@ import {
   Scope,
   SourceFile,
   SyntaxKind,
-  VariableDeclaration,
   VariableDeclarationKind,
 } from 'ts-morph';
 import {
@@ -40,7 +39,7 @@ export function compileAnalogFile(
     throw new Error(`[Analog] Missing component name ${filePath}`);
   }
 
-  const [componentFileName, className] = [
+  const [fileName, className] = [
     toFileName(componentName),
     toClassName(componentName),
   ];
@@ -105,7 +104,7 @@ import { ${ngType}${
 
 @${ngType}({
   standalone: true,
-  selector: '${componentFileName},${className}',
+  selector: '${fileName},${className}',
   ${componentMetadata}
 })
 export default class ${entityName} {
@@ -115,7 +114,7 @@ export default class ${entityName} {
   // the `.analog` file
   if (scriptContent) {
     const project = new Project({ useInMemoryFileSystem: true });
-    return processAnalogScriptV2(
+    return processAnalogScript(
       filePath,
       project.createSourceFile(filePath, scriptContent),
       project.createSourceFile(`${filePath}.virtual.ts`, source),
@@ -130,13 +129,13 @@ export default class ${entityName} {
 
 interface ClassMember {
   name: string;
-  initializer?: Expression;
-  declaration: VariableDeclaration;
+  initializer?: Expression | ((writer: CodeBlockWriter) => void);
   hasExportKeyword: boolean;
   isLet: boolean;
+  isVirtual?: boolean;
 }
 
-function processAnalogScriptV2(
+function processAnalogScript(
   fileName: string,
   ngSourceFile: SourceFile,
   targetSourceFile: SourceFile,
@@ -185,8 +184,9 @@ function processAnalogScriptV2(
     exposes: [],
   };
 
-  const classMembers = new Map<string, ClassMember>(),
-    callsQueue: Array<() => void> = [];
+  let destructuredCount = 0;
+  const memberRegistry = new Map<string, ClassMember>(),
+    pendingOperations: Array<() => void> = [];
 
   for (const node of sourceSyntaxList.getChildren()) {
     // Handle import statements
@@ -279,26 +279,82 @@ function processAnalogScriptV2(
         Node.isObjectBindingPattern(nameNode)
       ) {
         // destructuring
-        // NOTE/TODO (chau): not supporting destructured variables for input/output
-        targetConstructor.addStatements(nodeFullText);
+        // NOTE: we do not support nested destructuring
 
-        const bindingElements = nameNode
-          .getDescendantsOfKind(SyntaxKind.BindingElement)
-          .map((bindingElement) => bindingElement.getName());
+        // this also gets rid of OmittedExpression (i.e: skipped elements in array destructuring)
+        const bindingElements = nameNode.getDescendantsOfKind(
+          SyntaxKind.BindingElement
+        );
+
+        // nothing to do here
+        if (bindingElements.length <= 0) continue;
+
+        destructuredCount += 1;
+
+        // add a virtual class property for the destructuring initializer
+        const destructuredVirtualName = `__destructured${destructuredCount}`;
+        memberRegistry.set(destructuredVirtualName, {
+          name: destructuredVirtualName,
+          isVirtual: true,
+          initializer,
+          isLet: false,
+          hasExportKeyword: false,
+        });
 
         for (const bindingElement of bindingElements) {
-          targetClass.addProperty({ name: bindingElement });
-          targetConstructor.addStatements(
-            `this.${bindingElement} = ${bindingElement};`
-          );
+          const bindingName = bindingElement.getName(),
+            bindingPropertyName = bindingElement
+              .getPropertyNameNode()
+              ?.getText(),
+            bindingInitializer = bindingElement.getInitializer(),
+            bindingDotDotDot = bindingElement.getDotDotDotToken();
+
+          // rest element
+          if (bindingDotDotDot) {
+            memberRegistry.set(bindingName, {
+              name: bindingName,
+              isLet: false,
+              hasExportKeyword: false,
+              initializer: (writer) => {
+                // for rest, we'll write an iife
+                writer.write(`(() => {
+  const ${nameNode.getFullText()} = this.${destructuredVirtualName};
+  return ${bindingName};
+})()`);
+              },
+            });
+
+            continue;
+          }
+
+          // regular destructured element
+          memberRegistry.set(bindingName, {
+            name: bindingName,
+            isLet: false,
+            hasExportKeyword: false,
+            initializer: (writer) => {
+              const propertyAccess = `this.${destructuredVirtualName}.${
+                bindingPropertyName ?? bindingName
+              }`;
+
+              // using `=== undefined` to strictly follow destructuring rule
+              if (bindingInitializer) {
+                writer.write(
+                  `${propertyAccess} === undefined ? ${bindingInitializer.getText()} : ${propertyAccess}`
+                );
+              } else {
+                writer.write(propertyAccess);
+              }
+            },
+          });
         }
+
         continue;
       }
 
-      classMembers.set(name, {
+      memberRegistry.set(name, {
         name,
         initializer,
-        declaration,
         isLet,
         hasExportKeyword,
       });
@@ -316,7 +372,7 @@ function processAnalogScriptV2(
         targetSourceFile.addStatements(nodeFullText);
       }
 
-      callsQueue.push(() => {
+      pendingOperations.push(() => {
         if (hasExportKeyword) {
           targetClass.addProperty({
             name: functionName,
@@ -370,7 +426,7 @@ function processAnalogScriptV2(
         const initFunction = expression.getArguments()[0];
         if (!Node.isFunctionLikeDeclaration(initFunction)) continue;
 
-        callsQueue.push(() => {
+        pendingOperations.push(() => {
           // add the function to constructor
           targetConstructor.addStatements(
             `this.${fnName} = ${initFunction.getText()}`
@@ -387,16 +443,23 @@ function processAnalogScriptV2(
       }
 
       // other function calls
-      callsQueue.push(() => targetConstructor.addStatements(nodeFullText));
+      pendingOperations.push(() =>
+        targetConstructor.addStatements(nodeFullText)
+      );
     }
   }
 
   const gettersSetters: Array<{ propertyName: string; isFunction: boolean }> =
     [];
 
-  for (const classMember of classMembers.values()) {
-    const { isLet, hasExportKeyword, name, initializer, declaration } =
-      classMember;
+  for (const member of memberRegistry.values()) {
+    const {
+      isLet,
+      hasExportKeyword,
+      name,
+      initializer,
+      isVirtual = false,
+    } = member;
     if (isLet && hasExportKeyword) {
       console.warn(`[Analog] let variable cannot be exported: ${name}`);
       continue;
@@ -405,29 +468,46 @@ function processAnalogScriptV2(
     if (isLet) {
       targetConstructor.addStatements((writer) => {
         writer.write(`let ${name}`);
-        if (initializer) writer.write(`=${initializer.getText()}`);
+        if (initializer) {
+          if (typeof initializer === 'function') {
+            initializer(writer);
+          } else {
+            writer.write(`=${initializer.getText()}`);
+          }
+        }
         writer.write(';');
       });
       // push to gettersSetters
       gettersSetters.push({
         propertyName: name,
         isFunction:
-          !!initializer && Node.isFunctionLikeDeclaration(initializer),
+          !!initializer &&
+          typeof initializer !== 'function' &&
+          Node.isFunctionLikeDeclaration(initializer),
       });
     } else {
       targetClass.addProperty({
         name,
         initializer: (writer) => {
+          if (typeof initializer === 'function') {
+            initializer(writer);
+            return;
+          }
+
           if (hasExportKeyword) {
             writer.write(name);
           } else {
-            processInitializer(writer, declaration, classMembers, initializer);
+            processInitializer(writer, name, memberRegistry, initializer);
           }
         },
-        isReadonly: hasExportKeyword,
-        scope: hasExportKeyword ? Scope.Protected : undefined,
+        isReadonly: hasExportKeyword || isVirtual,
+        scope: hasExportKeyword
+          ? Scope.Protected
+          : isVirtual
+          ? Scope.Private
+          : undefined,
       });
-      if (name !== ROUTE_META) {
+      if (name !== ROUTE_META && !isVirtual) {
         targetConstructor.addStatements((writer) => {
           writer.write(`const ${name} = this.${name};`);
         });
@@ -435,7 +515,7 @@ function processAnalogScriptV2(
     }
   }
 
-  for (const call of callsQueue) {
+  for (const call of pendingOperations) {
     call();
   }
 
@@ -502,68 +582,108 @@ ${gettersSetters.reduce((acc, { isFunction, propertyName }) => {
 
 function processInitializer(
   writer: CodeBlockWriter,
-  declaration: VariableDeclaration,
-  classMembers: Map<string, ClassMember>,
+  name: string,
+  memberRegistry: Map<string, ClassMember>,
   initializer?: Expression
 ) {
   if (!initializer) {
-    console.warn(
-      `[Analog] const variable must have an initializer: ${declaration.getName()}`
-    );
+    console.warn(`[Analog] const variable must have an initializer: ${name}`);
     return;
   }
 
   if (Node.isCallExpression(initializer)) {
-    // IO, queries, other callable things
     const expression = initializer.getExpression(),
       expressionText = expression.getText();
+
     if (REQUIRED_SIGNALS_MAP[expressionText] || SIGNALS_MAP[expressionText]) {
-      // outputFromObservable
       if (expressionText === OUTPUT_FROM_OBSERVABLE) {
-        const arg = initializer.getArguments()[0];
-
-        let isClassMember = false;
-
-        if (Node.isPropertyAccessExpression(arg) || Node.isIdentifier(arg)) {
-          // outputFromObservable(stream$);
-          // outputFromObservable(store.stream$);
-          const argExpr = Node.isIdentifier(arg)
-            ? arg.getText()
-            : arg.getExpression().getText();
-
-          isClassMember = classMembers.has(argExpr);
-        } else if (Node.isCallExpression(arg)) {
-          // outputFromObservable(thing());
-          // outputFromObservable(other.thing());
-          let deepestExpression = arg.getExpression();
-          while (Node.isPropertyAccessExpression(deepestExpression)) {
-            deepestExpression = deepestExpression.getExpression();
-          }
-
-          isClassMember =
-            Node.isIdentifier(deepestExpression) &&
-            classMembers.has(deepestExpression.getText());
-        }
-
-        writer.write(expressionText);
-        writer.write(`(`);
-        writer.write(isClassMember ? `this.${arg.getText()}` : arg.getText());
-        writer.write(`)`);
-
+        writer.write(
+          processCallExpressionOrPropertyAccessExpressionForClassMember(
+            initializer,
+            memberRegistry
+          )
+        );
         return;
       }
 
-      // TODO (chau): complex transform for inputs does not work properly
       writer.write(initializer.getText());
       return;
     }
-
-    writer.write(initializer.getText());
-    return;
   }
 
-  // regular `const var = initializer;`
-  writer.write(initializer.getText());
+  writer.write(
+    processCallExpressionOrPropertyAccessExpressionForClassMember(
+      initializer,
+      memberRegistry
+    )
+  );
+}
+
+function processCallExpressionOrPropertyAccessExpressionForClassMember(
+  initializer: Expression,
+  memberRegistry: Map<string, ClassMember>
+) {
+  if (Node.isCallExpression(initializer)) {
+    const currentExpression = initializer.getExpression();
+    let deepestExpression = currentExpression;
+
+    // find deepest expression
+    // i.e: route.snapshot.paramMap.get('id') -> route is the deepest expression
+    while (Node.isPropertyAccessExpression(deepestExpression)) {
+      deepestExpression = deepestExpression.getExpression();
+    }
+
+    let fullExpressionText = currentExpression.getText();
+    if (
+      Node.isIdentifier(deepestExpression) &&
+      memberRegistry.has(deepestExpression.getText())
+    ) {
+      // if it's part of the classMembers, add `this.`
+      fullExpressionText = `this.${fullExpressionText}`;
+    }
+
+    // process arguments of the call expression
+    const args: string[] = initializer.getArguments().map((arg) => {
+      // if it's part of the classMembers, add `this.`
+      if (Node.isIdentifier(arg) && memberRegistry.has(arg.getText())) {
+        return `this.${arg.getText()}`;
+      }
+
+      // recurse if needs to
+      if (Node.isPropertyAccessExpression(arg) || Node.isCallExpression(arg)) {
+        return processCallExpressionOrPropertyAccessExpressionForClassMember(
+          arg,
+          memberRegistry
+        );
+      }
+
+      // otherwise just reutrn
+      return arg.getText();
+    });
+
+    return `${fullExpressionText}(${args.join(', ')})`;
+  }
+
+  if (Node.isPropertyAccessExpression(initializer)) {
+    let deepestExpression = initializer.getExpression();
+
+    // find deepest expression
+    // i.e: route.snapshot.paramMap -> route is the deepest expression
+    while (Node.isPropertyAccessExpression(deepestExpression)) {
+      deepestExpression = deepestExpression.getExpression();
+    }
+
+    if (
+      Node.isIdentifier(deepestExpression) &&
+      memberRegistry.has(deepestExpression.getText())
+    ) {
+      return `this.${initializer.getText()}`;
+    }
+
+    return initializer.getText();
+  }
+
+  return initializer.getText();
 }
 
 function processArrayLiteralMetadata(

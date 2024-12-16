@@ -1,5 +1,5 @@
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 
 import * as compilerCli from '@angular/compiler-cli';
 import * as ts from 'typescript';
@@ -42,6 +42,7 @@ import {
   MarkdownTemplateTransform,
 } from './authoring/markdown-transform.js';
 import { routerPlugin } from './router-plugin.js';
+import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -134,6 +135,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let nextProgram: NgtscProgram | undefined | ts.Program;
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode = false;
+  let testWatchMode = false;
   const sourceFileCache = new SourceFileCache();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isStackBlitz = !!process.versions['webcontainer'];
@@ -212,6 +214,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configResolved(config) {
         resolvedConfig = config;
+        testWatchMode = !(config.server.watch === null);
       },
       configureServer(server) {
         viteServer = server;
@@ -276,6 +279,16 @@ export function angular(options?: PluginOptions): Plugin[] {
 
         return ctx.modules;
       },
+      resolveId(id, importer) {
+        if (id.startsWith('angular:jit:')) {
+          const path = id.split(';')[1];
+          return `${normalizePath(
+            resolve(dirname(importer as string), path)
+          )}?raw`;
+        }
+
+        return undefined;
+      },
       async transform(code, id) {
         // Skip transforming node_modules
         if (id.includes('node_modules')) {
@@ -326,6 +339,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             const tsMod = viteServer?.moduleGraph.getModuleById(id);
             if (tsMod) {
               sourceFileCache.invalidate([id]);
+
+              if (testWatchMode) {
+                await buildAndAnalyze();
+              }
             }
           }
 
@@ -434,6 +451,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     }),
     (isStorybook && angularStorybookPlugin()) as Plugin,
     routerPlugin(),
+    pendingTasksPlugin(),
   ].filter(Boolean) as Plugin[];
 
   function findAnalogFiles(config: ResolvedConfig) {

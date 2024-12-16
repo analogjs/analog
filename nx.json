@@ -16,16 +16,15 @@
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["production", "^production"],
-      "cache": false
+      "inputs": ["production", "^production"]
     },
     "test": {
       "dependsOn": ["^build"],
-      "cache": false
+      "cache": true
     },
     "e2e": {
       "dependsOn": ["^build"],
-      "cache": false
+      "cache": true
     },
     "serve": {
       "dependsOn": ["^build"]
@@ -68,6 +67,6 @@
     "projectSpecificFiles": []
   },
   "nxCloudAccessToken": "NDRkYzdkYmMtNDI3NS00MDI0LWFkMGQtMmI0Zjc2MTY2YzU0fHJlYWQtb25seQ==",
-  "defaultBase": "main",
+  "defaultBase": "beta",
   "useLegacyCache": true
 }
