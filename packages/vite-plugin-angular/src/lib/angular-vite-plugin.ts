@@ -135,6 +135,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let nextProgram: NgtscProgram | undefined | ts.Program;
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode = false;
+  let testWatchMode = false;
   const sourceFileCache = new SourceFileCache();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isStackBlitz = !!process.versions['webcontainer'];
@@ -213,6 +214,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configResolved(config) {
         resolvedConfig = config;
+        testWatchMode = !(config.server.watch === null);
       },
       configureServer(server) {
         viteServer = server;
@@ -337,6 +339,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             const tsMod = viteServer?.moduleGraph.getModuleById(id);
             if (tsMod) {
               sourceFileCache.invalidate([id]);
+
+              if (testWatchMode) {
+                await buildAndAnalyze();
+              }
             }
           }
 
