@@ -1,3 +1,20 @@
+## [1.10.2](https://github.com/analogjs/analog/compare/v1.10.1...v1.10.2) (2024-12-16)
+
+### Bug Fixes
+
+- **create-analog:** remove override for @nx/angular package ([#1487](https://github.com/analogjs/analog/issues/1487)) ([cb3d70b](https://github.com/analogjs/analog/commit/cb3d70bc1a5a2451c29f43e04d98e29826a07f40))
+- **create-analog:** set root property to empty on angular.json ([#1481](https://github.com/analogjs/analog/issues/1481)) ([d9cdbe2](https://github.com/analogjs/analog/commit/d9cdbe20b82145bc24662ae1bdbd5d86b4f202e2))
+- exclude astro-app from builds ([ebabc90](https://github.com/analogjs/analog/commit/ebabc90b486169796d45f71e1c80d59a1d3fe584))
+- **nx-plugin:** update Nx preset to 20.x and Angular 19.x ([#1484](https://github.com/analogjs/analog/issues/1484)) ([7d8ee23](https://github.com/analogjs/analog/commit/7d8ee23498e483a5026a00c819ee05de8e62bc23))
+- **vite-plugin-angular:** fix Angular v18/v19 support for ɵPendingTasks ([#1497](https://github.com/analogjs/analog/issues/1497)) ([3215ab4](https://github.com/analogjs/analog/commit/3215ab4e0dfb67d694d660ce21087d182bcb8be5))
+- **vite-plugin-angular:** only apply sourcemap transform to TS files during testing ([#1500](https://github.com/analogjs/analog/issues/1500)) ([0b56d46](https://github.com/analogjs/analog/commit/0b56d463ac75f3d917919e2f658f171a68b5cd26))
+- **vite-plugin-angular:** process call expr and property access expr property ([#1498](https://github.com/analogjs/analog/issues/1498)) ([cf7db8f](https://github.com/analogjs/analog/commit/cf7db8f05902fa138c8f1e0042c01430e5ef7ab9))
+- **vite-plugin-angular:** process destructured objects ([#1499](https://github.com/analogjs/analog/issues/1499)) ([cba76da](https://github.com/analogjs/analog/commit/cba76da9156f2d1c8b4d50d104e057ff5da78c9d))
+- **vite-plugin-angular:** properly transform files during testing with watch mode ([#1503](https://github.com/analogjs/analog/issues/1503)) ([6d9179f](https://github.com/analogjs/analog/commit/6d9179f5e624d9ff65c8f1069424b07903cd9865))
+- **vite-plugin-angular:** resolve JIT external template/style files ([#1493](https://github.com/analogjs/analog/issues/1493)) ([54e9488](https://github.com/analogjs/analog/commit/54e9488f222f56fd055d8b837459eb668c94d0a3))
+- **vite-plugin-angular:** return undefined when not resolving id ([#1495](https://github.com/analogjs/analog/issues/1495)) ([ac6a854](https://github.com/analogjs/analog/commit/ac6a854bcc921d9e4c77383f99bfd63186dce582))
+- **vite-plugin-angular:** skip re-transform in JIT mode ([#1489](https://github.com/analogjs/analog/issues/1489)) ([30533c6](https://github.com/analogjs/analog/commit/30533c6f0deaa3457847a65b170d3938c15ee087))
+
 ## [1.10.2-beta.12](https://github.com/analogjs/analog/compare/v1.10.2-beta.11...v1.10.2-beta.12) (2024-12-16)
 
 ### Bug Fixes
