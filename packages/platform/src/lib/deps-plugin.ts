@@ -29,6 +29,7 @@ export function depsPlugin(options?: Options): Plugin[] {
               ...(Number(VERSION.major) > 15
                 ? ['@angular/core/rxjs-interop']
                 : []),
+              'front-matter',
             ],
             exclude: [
               '@angular/platform-server',
