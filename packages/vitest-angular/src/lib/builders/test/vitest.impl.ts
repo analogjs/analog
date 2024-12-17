@@ -12,7 +12,6 @@ async function vitestBuilder(
 ): Promise<BuilderOutput> {
   process.env['TEST'] = 'true';
   process.env['VITEST'] = 'true';
-  process.env['ANALOG_VITEST_WATCH'] = `${options.watch === true}`;
 
   const { startVitest } = await (Function(
     'return import("vitest/node")'
@@ -22,14 +21,17 @@ async function vitestBuilder(
     context.target as unknown as string
   );
   const extraArgs = await getExtraArgs(options);
+  const watch = options.watch === true;
   const config = {
     root: `${projectConfig['root'] || '.'}`,
-    watch: options.watch === true,
+    watch,
     config: options.configFile,
     ...extraArgs,
   };
 
-  const server = await startVitest('test', options.testFiles ?? [], config);
+  const server = await startVitest('test', options.testFiles ?? [], config, {
+    test: { watch },
+  });
 
   let hasErrors = false;
 
