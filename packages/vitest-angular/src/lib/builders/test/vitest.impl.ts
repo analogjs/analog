@@ -12,6 +12,7 @@ async function vitestBuilder(
 ): Promise<BuilderOutput> {
   process.env['TEST'] = 'true';
   process.env['VITEST'] = 'true';
+  process.env['ANALOG_VITEST_WATCH'] = `${options.watch === true}`;
 
   const { startVitest } = await (Function(
     'return import("vitest/node")'
