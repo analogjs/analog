@@ -135,7 +135,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let nextProgram: NgtscProgram | undefined | ts.Program;
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode = false;
-  let testWatchMode = process.env['ANALOG_VITEST_WATCH'] === 'true';
+  let testWatchMode = false;
   const sourceFileCache = new SourceFileCache();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isStackBlitz = !!process.versions['webcontainer'];
@@ -216,13 +216,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         resolvedConfig = config;
 
         // set test watch mode
-        // - environment variable from vitest-angular
+        // - vite override from vitest-angular
         // - @nx/vite executor set server.watch explicitly to undefined (watch)/null (watch=false)
         // - vite config for test.watch variable
         testWatchMode =
-          testWatchMode ||
-          !(config.server.watch === null) ||
-          config.test?.watch === true;
+          !(config.server.watch === null) || config.test?.watch === true;
       },
       configureServer(server) {
         viteServer = server;
