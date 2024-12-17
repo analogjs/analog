@@ -215,9 +215,9 @@ export function angular(options?: PluginOptions): Plugin[] {
       configResolved(config) {
         resolvedConfig = config;
 
-        // set watch mode
+        // set test watch mode
         // - environment variable from vitest-angular
-        // - @nx/vite executor set server.watch explicitly to undefined/null
+        // - @nx/vite executor set server.watch explicitly to undefined (watch)/null (watch=false)
         // - vite config for test.watch variable
         testWatchMode =
           testWatchMode ||
