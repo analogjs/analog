@@ -1,3 +1,9 @@
+## [1.10.3-beta.1](https://github.com/analogjs/analog/compare/v1.10.2...v1.10.3-beta.1) (2024-12-17)
+
+### Bug Fixes
+
+- **vitest-angular:** set watch mode flag when passed from CLI args ([#1508](https://github.com/analogjs/analog/issues/1508)) ([f4fbe77](https://github.com/analogjs/analog/commit/f4fbe77b7c819bdb601cd4cfa2c041038f85ace5))
+
 ## [1.10.2](https://github.com/analogjs/analog/compare/v1.10.1...v1.10.2) (2024-12-16)
 
 ### Bug Fixes
