@@ -1,3 +1,21 @@
+# [2.0.0-alpha.1](https://github.com/analogjs/analog/compare/v1.10.3...v2.0.0-alpha.1) (2024-12-17)
+
+### Features
+
+- upgrade to Vite 6.x ([5ce9829](https://github.com/analogjs/analog/commit/5ce9829a87b586a178a29d041f2a9221661f72f8))
+
+### BREAKING CHANGES
+
+- The base version of Vite is updated.
+
+BEFORE:
+
+Vite 5.x is the base version.
+
+AFTER:
+
+Vite 6.x is the base version.
+
 ## [1.10.3](https://github.com/analogjs/analog/compare/v1.10.2...v1.10.3) (2024-12-17)
 
 ### Bug Fixes
