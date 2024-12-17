@@ -1,8 +1,7 @@
 import { createBuilder } from '@angular-devkit/architect';
 import * as path from 'path';
-import type { Vitest } from 'vitest/node';
-import type { Plugin, UserConfig } from 'vite';
-import type { UserConfig as VitestConfig } from 'vitest';
+import type { Vitest, UserConfig as VitestConfig } from 'vitest/node';
+import type { Plugin } from 'vite';
 
 import { VitestSchema } from './schema';
 import { createAngularMemoryPlugin } from './plugins/angular-memory-plugin';
@@ -71,7 +70,7 @@ async function* vitestApplicationBuilder(
 
   const outputFiles = new Map();
 
-  const viteConfig: UserConfig = {
+  const viteConfig: any = {
     plugins: [
       (await createAngularMemoryPlugin({
         angularVersion,

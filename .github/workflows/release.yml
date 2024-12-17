@@ -5,6 +5,7 @@ on:
     branches:
       - beta
       - main
+      - alpha
 
 permissions:
   contents: read # for checkout
@@ -41,4 +42,4 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
-          RELEASE_TAG=$TAG npx semantic-release
+          RELEASE_TAG=$TAG npx semantic-release --dry-run

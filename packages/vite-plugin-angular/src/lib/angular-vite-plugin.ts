@@ -220,7 +220,8 @@ export function angular(options?: PluginOptions): Plugin[] {
         // - @nx/vite executor set server.watch explicitly to undefined (watch)/null (watch=false)
         // - vite config for test.watch variable
         testWatchMode =
-          !(config.server.watch === null) || config.test?.watch === true;
+          !(config.server.watch === null) ||
+          (config as any).test?.watch === true;
       },
       configureServer(server) {
         viteServer = server;

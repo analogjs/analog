@@ -28,10 +28,16 @@ async function vitestBuilder(
     config: options.configFile,
     ...extraArgs,
   };
-
-  const server = await startVitest('test', options.testFiles ?? [], config, {
+  const viteOverrides: any = {
     test: { watch },
-  });
+  };
+
+  const server = await startVitest(
+    'test',
+    options.testFiles ?? [],
+    config,
+    viteOverrides
+  );
 
   let hasErrors = false;
 
