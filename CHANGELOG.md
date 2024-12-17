@@ -1,3 +1,9 @@
+## [1.10.3-beta.2](https://github.com/analogjs/analog/compare/v1.10.3-beta.1...v1.10.3-beta.2) (2024-12-17)
+
+### Bug Fixes
+
+- **vitest-angular:** use vite overrides to pass test watch mode ([#1509](https://github.com/analogjs/analog/issues/1509)) ([438571f](https://github.com/analogjs/analog/commit/438571fc847ed9cf1594e7efac9c510b812c1cd0))
+
 ## [1.10.3-beta.1](https://github.com/analogjs/analog/compare/v1.10.2...v1.10.3-beta.1) (2024-12-17)
 
 ### Bug Fixes
