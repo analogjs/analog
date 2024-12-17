@@ -21,14 +21,17 @@ async function vitestBuilder(
     context.target as unknown as string
   );
   const extraArgs = await getExtraArgs(options);
+  const watch = options.watch === true;
   const config = {
     root: `${projectConfig['root'] || '.'}`,
-    watch: options.watch === true,
+    watch,
     config: options.configFile,
     ...extraArgs,
   };
 
-  const server = await startVitest('test', options.testFiles ?? [], config);
+  const server = await startVitest('test', options.testFiles ?? [], config, {
+    test: { watch },
+  });
 
   let hasErrors = false;
 

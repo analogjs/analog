@@ -214,7 +214,13 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configResolved(config) {
         resolvedConfig = config;
-        testWatchMode = !(config.server.watch === null);
+
+        // set test watch mode
+        // - vite override from vitest-angular
+        // - @nx/vite executor set server.watch explicitly to undefined (watch)/null (watch=false)
+        // - vite config for test.watch variable
+        testWatchMode =
+          !(config.server.watch === null) || config.test?.watch === true;
       },
       configureServer(server) {
         viteServer = server;
