@@ -1,3 +1,9 @@
+## [1.10.3-beta.3](https://github.com/analogjs/analog/compare/v1.10.3-beta.2...v1.10.3-beta.3) (2024-12-17)
+
+### Bug Fixes
+
+- **platform:** add front-matter for default optimization ([#1510](https://github.com/analogjs/analog/issues/1510)) ([faab0d5](https://github.com/analogjs/analog/commit/faab0d5d9c23ac571cc1be77efdbaf99b8db0a3c))
+
 ## [1.10.3-beta.2](https://github.com/analogjs/analog/compare/v1.10.3-beta.1...v1.10.3-beta.2) (2024-12-17)
 
 ### Bug Fixes
