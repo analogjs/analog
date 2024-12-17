@@ -1,3 +1,11 @@
+## [1.10.3](https://github.com/analogjs/analog/compare/v1.10.2...v1.10.3) (2024-12-17)
+
+### Bug Fixes
+
+- **platform:** add front-matter for default optimization ([#1510](https://github.com/analogjs/analog/issues/1510)) ([faab0d5](https://github.com/analogjs/analog/commit/faab0d5d9c23ac571cc1be77efdbaf99b8db0a3c))
+- **vitest-angular:** set watch mode flag when passed from CLI args ([#1508](https://github.com/analogjs/analog/issues/1508)) ([f4fbe77](https://github.com/analogjs/analog/commit/f4fbe77b7c819bdb601cd4cfa2c041038f85ace5))
+- **vitest-angular:** use vite overrides to pass test watch mode ([#1509](https://github.com/analogjs/analog/issues/1509)) ([438571f](https://github.com/analogjs/analog/commit/438571fc847ed9cf1594e7efac9c510b812c1cd0))
+
 ## [1.10.3-beta.3](https://github.com/analogjs/analog/compare/v1.10.3-beta.2...v1.10.3-beta.3) (2024-12-17)
 
 ### Bug Fixes
