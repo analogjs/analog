@@ -1,4 +1,4 @@
-# __PROJECT_TITLE__
+# AnalogJS on StackBlitz
 
 This project was generated with [Analog](https://analogjs.org), the fullstack meta-framework for Angular.
 
