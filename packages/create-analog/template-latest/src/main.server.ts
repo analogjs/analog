@@ -2,7 +2,7 @@ import 'zone.js/node';
 import '@angular/platform-server/init';
 import { render } from '@analogjs/router/server';
 
-__APP_COMPONENT_IMPORT__
+import { AppComponent } from './app/app.component';
 import { config } from './app/app.config.server';
 
-export default render(__APP_COMPONENT__, config);
+export default render(AppComponent, config);
