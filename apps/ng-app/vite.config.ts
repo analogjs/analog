@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => ({
     analog({
       ssr: false,
       static: true,
+      liveReload: true,
       vite: {
         experimental: {
           supportAnalogFormat: true,

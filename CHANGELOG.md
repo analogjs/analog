@@ -16,6 +16,16 @@ AFTER:
 
 Vite 6.x is the base version.
 
+# [1.11.0-beta.1](https://github.com/analogjs/analog/compare/v1.10.3...v1.11.0-beta.1) (2024-12-20)
+
+### Bug Fixes
+
+- **vitest-angular:** reuse vitest server in watch mode for build-test ([#1519](https://github.com/analogjs/analog/issues/1519)) ([724d1f1](https://github.com/analogjs/analog/commit/724d1f13caa55c6fc315321ef75d29eff9b96e41))
+
+### Features
+
+- **router:** introduce support for Analog Server Components ([#1518](https://github.com/analogjs/analog/issues/1518)) ([44289b0](https://github.com/analogjs/analog/commit/44289b0008a9a62288d22866ec089f48fa502d80))
+
 ## [1.10.3](https://github.com/analogjs/analog/compare/v1.10.2...v1.10.3) (2024-12-17)
 
 ### Bug Fixes

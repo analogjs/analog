@@ -87,9 +87,9 @@ export function routerPlugin(options?: Options): Plugin[] {
           );
 
           let result = code.replace(
-            'let ANALOG_ROUTE_FILES = {};',
+            'ANALOG_ROUTE_FILES = {};',
             `
-            let ANALOG_ROUTE_FILES = {${routeFiles.map(
+            ANALOG_ROUTE_FILES = {${routeFiles.map(
               (module) =>
                 `"${module.replace(root, '')}": () => import('${module}')`
             )}};
@@ -97,9 +97,9 @@ export function routerPlugin(options?: Options): Plugin[] {
           );
 
           result = result.replace(
-            'let ANALOG_CONTENT_ROUTE_FILES = {};',
+            'ANALOG_CONTENT_ROUTE_FILES = {};',
             `
-          let ANALOG_CONTENT_ROUTE_FILES = {${contentRouteFiles.map(
+          ANALOG_CONTENT_ROUTE_FILES = {${contentRouteFiles.map(
             (module) =>
               `"${module.replace(
                 root,
@@ -133,9 +133,9 @@ export function routerPlugin(options?: Options): Plugin[] {
           );
 
           const result = code.replace(
-            'let ANALOG_PAGE_ENDPOINTS = {};',
+            'ANALOG_PAGE_ENDPOINTS = {};',
             `
-            let ANALOG_PAGE_ENDPOINTS = {${endpointFiles.map(
+            ANALOG_PAGE_ENDPOINTS = {${endpointFiles.map(
               (module) =>
                 `"${module.replace(root, '')}": () => import('${module}')`
             )}};

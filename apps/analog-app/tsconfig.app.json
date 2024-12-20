@@ -10,6 +10,7 @@
   "include": [
     "src/**/*.d.ts",
     "src/app/pages/**/*.page.ts",
+    "src/server/components/**/*.ts",
     "src/server/middleware/**/*.ts"
   ],
   "exclude": ["**/*.test.ts", "**/*.spec.ts"]
