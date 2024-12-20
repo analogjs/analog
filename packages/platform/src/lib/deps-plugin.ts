@@ -69,7 +69,6 @@ export function depsPlugin(options?: Options): Plugin[] {
             return pkgJson['module'] && pkgJson['module'].includes('fesm');
           },
         });
-
         return pkgConfig;
       },
     },

@@ -32,13 +32,16 @@ export default defineConfig(({ mode }) => {
         additionalPagesDirs: ['/libs/shared/feature'],
         additionalAPIDirs: ['/libs/shared/feature/src/api'],
         prerender: {
-          routes: ['/', '/cart', '/shipping'],
+          routes: ['/', '/cart', '/shipping', '/client'],
           sitemap: {
             host: base,
           },
         },
         vite: {
           inlineStylesExtension: 'scss',
+          experimental: {
+            supportAnalogFormat: true,
+          },
         },
       }),
       nxViteTsPaths(),
