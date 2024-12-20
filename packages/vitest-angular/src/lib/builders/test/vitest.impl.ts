@@ -31,7 +31,7 @@ async function vitestBuilder(
 
   const server = await startVitest('test', options.testFiles ?? [], config, {
     test: { watch },
-  });
+  } as any);
 
   let hasErrors = false;
 
