@@ -36,6 +36,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
         ),
       ],
       additionalContentDirs: platformOptions.additionalContentDirs,
+      liveReload: platformOptions.liveReload,
       ...(opts?.vite ?? {}),
     }),
     serverModePlugin(),

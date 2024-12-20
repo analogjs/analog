@@ -37,6 +37,12 @@ export interface Options {
   index?: string;
   workspaceRoot?: string;
   content?: ContentPluginOptions;
+
+  /**
+   * Enables Angular's HMR during development
+   */
+  liveReload?: boolean;
+
   /**
    * Additional page paths to include
    */

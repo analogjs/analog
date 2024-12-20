@@ -43,6 +43,7 @@ export default defineConfig(({ mode }) => {
             supportAnalogFormat: true,
           },
         },
+        liveReload: true,
       }),
       nxViteTsPaths(),
       visualizer() as Plugin,
