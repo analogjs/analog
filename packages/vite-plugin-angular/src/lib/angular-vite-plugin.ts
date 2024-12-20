@@ -1,9 +1,10 @@
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
-import { dirname, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 
 import * as compilerCli from '@angular/compiler-cli';
 import * as ts from 'typescript';
 import { createRequire } from 'node:module';
+import { ServerResponse } from 'node:http';
 import {
   ModuleNode,
   normalizePath,
@@ -11,6 +12,7 @@ import {
   ViteDevServer,
   preprocessCSS,
   ResolvedConfig,
+  Connect,
 } from 'vite';
 
 import { createCompilerPlugin } from './compiler-plugin.js';
@@ -30,6 +32,7 @@ import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
 import {
   createJitResourceTransformer,
   SourceFileCache,
+  angularMajor,
 } from './utils/devkit.js';
 import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import { angularStorybookPlugin } from './angular-storybook-plugin.js';
@@ -73,6 +76,7 @@ export interface PluginOptions {
    */
   include?: string[];
   additionalContentDirs?: string[];
+  liveReload?: boolean;
 }
 
 interface EmitFileResult {
@@ -82,6 +86,7 @@ interface EmitFileResult {
   hash?: Uint8Array;
   errors: (string | ts.DiagnosticMessageChain)[];
   warnings: (string | ts.DiagnosticMessageChain)[];
+  hmrUpdateCode?: string | null;
 }
 type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 
@@ -91,6 +96,8 @@ type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
  * Ignore .tsx extensions
  */
 const TS_EXT_REGEX = /\.[cm]?(ts|analog|ag)[^x]?\??/;
+const ANGULAR_COMPONENT_PREFIX = '/@ng/component';
+const classNames = new Map();
 
 export function angular(options?: PluginOptions): Plugin[] {
   /**
@@ -122,6 +129,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       : defaultMarkdownTemplateTransforms,
     include: options?.include ?? [],
     additionalContentDirs: options?.additionalContentDirs ?? [],
+    liveReload: options?.liveReload ?? false,
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -159,6 +167,10 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   function angularPlugin(): Plugin {
     let isProd = false;
+
+    if (angularMajor < 19 || isTest) {
+      pluginOptions.liveReload = false;
+    }
 
     return {
       name: '@analogjs/vite-plugin-angular',
@@ -232,6 +244,43 @@ export function angular(options?: PluginOptions): Plugin[] {
           setupCompilation(resolvedConfig);
           await buildAndAnalyze();
         });
+
+        if (pluginOptions.liveReload) {
+          const angularComponentMiddleware: Connect.HandleFunction = async (
+            req: Connect.IncomingMessage,
+            res: ServerResponse<Connect.IncomingMessage>,
+            next: Connect.NextFunction
+          ) => {
+            if (req.url === undefined || res.writableEnded) {
+              return;
+            }
+
+            if (!req.url.startsWith(ANGULAR_COMPONENT_PREFIX)) {
+              next();
+
+              return;
+            }
+
+            const requestUrl = new URL(req.url, 'http://localhost');
+            const componentId = requestUrl.searchParams.get('c');
+
+            if (!componentId) {
+              res.statusCode = 400;
+              res.end();
+
+              return;
+            }
+
+            const [fileId] = decodeURIComponent(componentId).split('@');
+            const result = await fileEmitter?.(resolve(process.cwd(), fileId));
+
+            res.setHeader('Content-Type', 'text/javascript');
+            res.setHeader('Cache-Control', 'no-cache');
+            res.end(`${result?.hmrUpdateCode || ''}`);
+          };
+
+          viteServer.middlewares.use(angularComponentMiddleware);
+        }
       },
       async buildStart() {
         setupCompilation(resolvedConfig);
@@ -253,8 +302,22 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         if (TS_EXT_REGEX.test(ctx.file)) {
-          sourceFileCache.invalidate([ctx.file.replace(/\?(.*)/, '')]);
+          const fileId =
+            ctx.file.split('?')[0] +
+            (pluginOptions.supportAnalogFormat ? '.ts' : '');
+          sourceFileCache.invalidate([fileId]);
           await buildAndAnalyze();
+
+          if (pluginOptions.liveReload && classNames.get(fileId)) {
+            const relativeFileId = `${relative(
+              process.cwd(),
+              fileId
+            )}@${classNames.get(fileId)}`;
+
+            sendHMRComponentUpdate(ctx.server, relativeFileId);
+
+            return [];
+          }
         }
 
         if (/\.(html|htm|css|less|sass|scss)$/.test(ctx.file)) {
@@ -265,21 +328,40 @@ export function angular(options?: PluginOptions): Plugin[] {
           const isDirect = ctx.modules.find(
             (mod) => ctx.file === mod.file && mod.id?.includes('?direct')
           );
-
           if (isDirect) {
             return ctx.modules;
           }
 
           const mods: ModuleNode[] = [];
+          const updates: string[] = [];
           ctx.modules.forEach((mod) => {
             mod.importers.forEach((imp) => {
-              sourceFileCache.invalidate([imp.id as string]);
+              sourceFileCache.invalidate([imp.id]);
               ctx.server.moduleGraph.invalidateModule(imp);
-              mods.push(imp);
+
+              if (pluginOptions.liveReload && classNames.get(imp.id)) {
+                updates.push(imp.id as string);
+              } else {
+                mods.push(imp);
+              }
             });
           });
 
           await buildAndAnalyze();
+
+          if (updates.length > 0) {
+            updates.forEach((updateId) => {
+              const impRelativeFileId = `${relative(
+                process.cwd(),
+                updateId
+              )}@${classNames.get(updateId)}`;
+
+              sendHMRComponentUpdate(ctx.server, impRelativeFileId);
+            });
+
+            return ctx.modules;
+          }
+
           return mods;
         }
 
@@ -294,6 +376,31 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         return undefined;
+      },
+      async load(id, options) {
+        if (
+          pluginOptions.liveReload &&
+          options?.ssr &&
+          id.startsWith(ANGULAR_COMPONENT_PREFIX)
+        ) {
+          const requestUrl = new URL(id.slice(1), 'http://localhost');
+          const componentId = requestUrl.searchParams.get('c');
+
+          if (!componentId) {
+            return;
+          }
+
+          const result = await fileEmitter?.(
+            resolve(
+              process.cwd(),
+              decodeURIComponent(componentId).split('@')[0]
+            )
+          );
+
+          return result?.hmrUpdateCode || '';
+        }
+
+        return;
       },
       async transform(code, id) {
         // Skip transforming node_modules
@@ -543,6 +650,10 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions.compilationMode = 'experimental-local';
     }
 
+    if (pluginOptions.liveReload) {
+      tsCompilerOptions['_enableHmr'] = true;
+    }
+
     rootNames = rn.concat(analogFiles, includeFiles);
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);
@@ -636,16 +747,27 @@ export function angular(options?: PluginOptions): Plugin[] {
         jit ? {} : angularCompiler!.prepareEmit().transformers
       ),
       () => [],
-      angularCompiler!
+      angularCompiler!,
+      pluginOptions.liveReload
     );
   }
+}
+
+function sendHMRComponentUpdate(server: ViteDevServer, id: string) {
+  server.ws.send('angular:component-update', {
+    id: encodeURIComponent(id),
+    timestamp: Date.now(),
+  });
+
+  classNames.delete(id);
 }
 
 export function createFileEmitter(
   program: ts.BuilderProgram,
   transformers: ts.CustomTransformers = {},
   onAfterEmit?: (sourceFile: ts.SourceFile) => void,
-  angularCompiler?: NgtscProgram['compiler']
+  angularCompiler?: NgtscProgram['compiler'],
+  liveReload?: boolean
 ): FileEmitter {
   return async (file: string) => {
     const sourceFile = program.getSourceFile(file);
@@ -665,6 +787,17 @@ export function createFileEmitter(
       .filter((d) => d.category === ts.DiagnosticCategory?.Warning)
       .map((d) => d.messageText);
 
+    let hmrUpdateCode: string | null | undefined = undefined;
+
+    if (liveReload) {
+      for (const node of sourceFile.statements) {
+        if (ts.isClassDeclaration(node) && node.name != null) {
+          hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node);
+          classNames.set(file, node.name.getText());
+        }
+      }
+    }
+
     let content: string | undefined;
     program.emit(
       sourceFile,
@@ -680,6 +813,6 @@ export function createFileEmitter(
 
     onAfterEmit?.(sourceFile);
 
-    return { content, dependencies: [], errors, warnings };
+    return { content, dependencies: [], errors, warnings, hmrUpdateCode };
   };
 }
