@@ -1,3 +1,14 @@
+# [2.0.0-alpha.2](https://github.com/analogjs/analog/compare/v2.0.0-alpha.1...v2.0.0-alpha.2) (2024-12-23)
+
+### Bug Fixes
+
+- **vitest-angular:** reuse vitest server in watch mode for build-test ([#1519](https://github.com/analogjs/analog/issues/1519)) ([724d1f1](https://github.com/analogjs/analog/commit/724d1f13caa55c6fc315321ef75d29eff9b96e41))
+
+### Features
+
+- **router:** introduce support for Analog Server Components ([#1518](https://github.com/analogjs/analog/issues/1518)) ([44289b0](https://github.com/analogjs/analog/commit/44289b0008a9a62288d22866ec089f48fa502d80))
+- **vite-plugin-angular:** introduce support for Angular v19 HMR/live reload ([3820dc4](https://github.com/analogjs/analog/commit/3820dc4e000c216216d881e7ee4e3fad4fb13d3c))
+
 # [2.0.0-alpha.1](https://github.com/analogjs/analog/compare/v1.10.3...v2.0.0-alpha.1) (2024-12-17)
 
 ### Features
