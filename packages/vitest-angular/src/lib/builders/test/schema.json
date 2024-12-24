@@ -28,6 +28,14 @@
     "watch": {
       "description": "Watch files for changes and rerun tests related to changed files.",
       "type": "boolean"
+    },
+    "ui": {
+      "description": "Run tests using Vitest UI Mode.",
+      "type": "boolean"
+    },
+    "coverage": {
+      "description": "Enable code coverage analysis.",
+      "type": "boolean"
     }
   },
   "required": []
