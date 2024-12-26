@@ -20,10 +20,7 @@ async function vitestBuilder(
   const projectConfig = await context.getProjectMetadata(
     context.target as unknown as string
   );
-  const {
-    coverageArgs,
-    ...extraArgs
-  } = await getExtraArgs(options);
+  const { coverageArgs, ...extraArgs } = await getExtraArgs(options);
   const watch = options.watch === true;
   const ui = options.ui === true;
   const coverageEnabled = options.coverage === true;
