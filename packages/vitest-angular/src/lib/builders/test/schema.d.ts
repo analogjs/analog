@@ -4,4 +4,6 @@ export interface VitestSchema {
   reportsDirectory?: string;
   testFiles?: string[];
   watch?: boolean;
+  ui?: boolean;
+  coverage?: boolean;
 }
