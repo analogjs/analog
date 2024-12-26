@@ -1205,6 +1205,15 @@
       "contributions": [
         "infra"
       ]
+    },
+    {
+      "login": "jorgeandrespadilla",
+      "name": "Jorge Andrés Padilla",
+      "avatar_url": "https://avatars.githubusercontent.com/u/58148764?v=4",
+      "profile": "https://jorgeandrespadilla.pages.dev/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
