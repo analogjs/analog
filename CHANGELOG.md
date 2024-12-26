@@ -1,3 +1,9 @@
+# [1.11.0-beta.2](https://github.com/analogjs/analog/compare/v1.11.0-beta.1...v1.11.0-beta.2) (2024-12-26)
+
+### Features
+
+- **vitest-angular:** add UI and coverage options to test builder ([#1521](https://github.com/analogjs/analog/issues/1521)) ([026b3dc](https://github.com/analogjs/analog/commit/026b3dce2f5cfe07da65922496b4c366642b3788))
+
 # [1.11.0-beta.1](https://github.com/analogjs/analog/compare/v1.10.3...v1.11.0-beta.1) (2024-12-20)
 
 ### Bug Fixes
