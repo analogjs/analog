@@ -307,9 +307,15 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         if (TS_EXT_REGEX.test(ctx.file)) {
-          const fileId =
-            ctx.file.split('?')[0] +
-            (pluginOptions.supportAnalogFormat ? '.ts' : '');
+          let [fileId] = ctx.file.split('?');
+
+          if (
+            pluginOptions.supportAnalogFormat &&
+            ['ag', 'analog', 'agx'].some((ext) => fileId.endsWith(ext))
+          ) {
+            fileId += '.ts';
+          }
+
           const stale = sourceFileCache.get(fileId);
           sourceFileCache.invalidate([fileId]);
           await buildAndAnalyze();
@@ -327,10 +333,17 @@ export function angular(options?: PluginOptions): Plugin[] {
             )}@${classNames.get(fileId)}`;
 
             sendHMRComponentUpdate(ctx.server, relativeFileId);
-            ctx.server.config.logger.info(
-              `[HMR Update]: ${relativeFileId.split('@')[0]}`
-            );
-            return [];
+
+            return ctx.modules.map((mod) => {
+              if (mod.id === ctx.file) {
+                return {
+                  ...mod,
+                  isSelfAccepting: true,
+                } as ModuleNode;
+              }
+
+              return mod;
+            });
           }
         }
 
