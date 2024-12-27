@@ -1,3 +1,9 @@
+# [1.11.0-beta.3](https://github.com/analogjs/analog/compare/v1.11.0-beta.2...v1.11.0-beta.3) (2024-12-27)
+
+### Features
+
+- **vite-plugin-angular:** introduce support for Angular v19 HMR/live reload ([#1523](https://github.com/analogjs/analog/issues/1523)) ([0602a8f](https://github.com/analogjs/analog/commit/0602a8f79ae3c16897c966f3defe7ac3309c32a6))
+
 # [1.11.0-beta.2](https://github.com/analogjs/analog/compare/v1.11.0-beta.1...v1.11.0-beta.2) (2024-12-26)
 
 ### Features
