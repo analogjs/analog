@@ -46,6 +46,7 @@ import {
 } from './authoring/markdown-transform.js';
 import { routerPlugin } from './router-plugin.js';
 import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
+import { analyzeFileUpdates } from './utils/hmr-candidates.js';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -84,11 +85,15 @@ interface EmitFileResult {
   map?: string;
   dependencies: readonly string[];
   hash?: Uint8Array;
-  errors: (string | ts.DiagnosticMessageChain)[];
-  warnings: (string | ts.DiagnosticMessageChain)[];
+  errors?: (string | ts.DiagnosticMessageChain)[];
+  warnings?: (string | ts.DiagnosticMessageChain)[];
   hmrUpdateCode?: string | null;
+  hmrEligible?: boolean;
 }
-type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
+type FileEmitter = (
+  file: string,
+  source?: ts.SourceFile
+) => Promise<EmitFileResult | undefined>;
 
 /**
  * TypeScript file extension regex
@@ -306,17 +311,26 @@ export function angular(options?: PluginOptions): Plugin[] {
           const fileId =
             ctx.file.split('?')[0] +
             (pluginOptions.supportAnalogFormat ? '.ts' : '');
+          const stale = sourceFileCache.get(fileId);
           sourceFileCache.invalidate([fileId]);
           await buildAndAnalyze();
 
-          if (pluginOptions.liveReload && classNames.get(fileId)) {
+          const result = await fileEmitter?.(fileId, stale);
+
+          if (
+            pluginOptions.liveReload &&
+            !!result?.hmrEligible &&
+            classNames.get(fileId)
+          ) {
             const relativeFileId = `${relative(
               process.cwd(),
               fileId
             )}@${classNames.get(fileId)}`;
 
             sendHMRComponentUpdate(ctx.server, relativeFileId);
-
+            ctx.server.config.logger.info(
+              `[HMR Update]: ${relativeFileId.split('@')[0]}`
+            );
             return [];
           }
         }
@@ -360,7 +374,16 @@ export function angular(options?: PluginOptions): Plugin[] {
               sendHMRComponentUpdate(ctx.server, impRelativeFileId);
             });
 
-            return ctx.modules;
+            return ctx.modules.map((mod) => {
+              if (mod.id === ctx.file) {
+                return {
+                  ...mod,
+                  isSelfAccepting: true,
+                } as ModuleNode;
+              }
+
+              return mod;
+            });
           }
 
           return mods;
@@ -770,10 +793,19 @@ export function createFileEmitter(
   angularCompiler?: NgtscProgram['compiler'],
   liveReload?: boolean
 ): FileEmitter {
-  return async (file: string) => {
+  return async (file: string, stale?: ts.SourceFile) => {
     const sourceFile = program.getSourceFile(file);
     if (!sourceFile) {
       return undefined;
+    }
+
+    if (stale) {
+      const hmrEligible = !!analyzeFileUpdates(
+        stale,
+        sourceFile,
+        angularCompiler!
+      );
+      return { dependencies: [], hmrEligible };
     }
 
     const diagnostics = angularCompiler
