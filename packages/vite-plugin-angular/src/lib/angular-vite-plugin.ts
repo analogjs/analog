@@ -277,8 +277,20 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
 
             const [fileId] = decodeURIComponent(componentId).split('@');
-            const result = await fileEmitter?.(resolve(process.cwd(), fileId));
+            const resolvedId = resolve(process.cwd(), fileId);
+            const invalidated =
+              !!server.moduleGraph.getModuleById(resolvedId)
+                ?.lastInvalidationTimestamp;
 
+            // don't send an HMR update until the file has been invalidated
+            if (!invalidated) {
+              res.setHeader('Content-Type', 'text/javascript');
+              res.setHeader('Cache-Control', 'no-cache');
+              res.end('');
+              return;
+            }
+
+            const result = await fileEmitter?.(resolvedId);
             res.setHeader('Content-Type', 'text/javascript');
             res.setHeader('Cache-Control', 'no-cache');
             res.end(`${result?.hmrUpdateCode || ''}`);
@@ -336,6 +348,11 @@ export function angular(options?: PluginOptions): Plugin[] {
 
             return ctx.modules.map((mod) => {
               if (mod.id === ctx.file) {
+                // support Vite 6
+                if ('_clientModule' in mod) {
+                  (mod as any)['_clientModule'].isSelfAccepting = true;
+                }
+
                 return {
                   ...mod,
                   isSelfAccepting: true,
@@ -388,6 +405,11 @@ export function angular(options?: PluginOptions): Plugin[] {
 
             return ctx.modules.map((mod) => {
               if (mod.id === ctx.file) {
+                // support Vite 6
+                if ('_clientModule' in mod) {
+                  (mod as any)['_clientModule'].isSelfAccepting = true;
+                }
+
                 return {
                   ...mod,
                   isSelfAccepting: true,
