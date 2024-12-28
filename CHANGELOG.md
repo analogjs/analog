@@ -1,3 +1,9 @@
+# [1.11.0-beta.4](https://github.com/analogjs/analog/compare/v1.11.0-beta.3...v1.11.0-beta.4) (2024-12-28)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** invalidation fixes for HMR/live reload ([#1526](https://github.com/analogjs/analog/issues/1526)) ([7b783d9](https://github.com/analogjs/analog/commit/7b783d9d114f5050a14786254aab6d3f198cc893))
+
 # [1.11.0-beta.3](https://github.com/analogjs/analog/compare/v1.11.0-beta.2...v1.11.0-beta.3) (2024-12-27)
 
 ### Features
