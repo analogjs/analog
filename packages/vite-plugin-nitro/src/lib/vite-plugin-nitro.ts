@@ -174,6 +174,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           nitroConfig = withCloudflareOutput(nitroConfig);
         }
 
+        if (isFirebaseAppHosting()) {
+          nitroConfig = withAppHostingOutput(nitroConfig);
+        }
+
         if (!ssrBuild && !isTest) {
           // store the client output path for the SSR build config
           clientOutputPath = resolve(
@@ -434,3 +438,40 @@ const withCloudflareOutput = (nitroConfig: NitroConfig | undefined) => ({
     serverDir: '{{ output.publicDir }}/_worker.js',
   },
 });
+
+const isFirebaseAppHosting = () => !!process.env['NG_BUILD_LOGS_JSON'];
+const withAppHostingOutput = (nitroConfig: NitroConfig) => {
+  let hasOutput = false;
+
+  return <NitroConfig>{
+    ...nitroConfig,
+    serveStatic: true,
+    rollupConfig: {
+      ...nitroConfig.rollupConfig,
+      output: {
+        ...nitroConfig.rollupConfig?.output,
+        entryFileNames: 'server.mjs',
+      },
+    },
+    hooks: {
+      ...nitroConfig.hooks,
+      compiled: () => {
+        if (!hasOutput) {
+          const buildOutput = {
+            errors: [],
+            warnings: [],
+            outputPaths: {
+              root: `${nitroConfig.output?.dir}`,
+              browser: `${nitroConfig.output?.publicDir}`,
+              server: `${nitroConfig.output?.dir}/server`,
+            },
+          };
+
+          // Log the build output for Firebase App Hosting to pick up
+          console.log(JSON.stringify(buildOutput, null, 2));
+          hasOutput = true;
+        }
+      },
+    },
+  };
+};
