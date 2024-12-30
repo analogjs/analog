@@ -4,7 +4,7 @@ import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { mergeConfig, normalizePath } from 'vite';
 import { dirname, join, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readFileSync, writeFileSync } from 'node:fs';
 
 import { buildServer } from './build-server.js';
@@ -461,9 +461,9 @@ const withAppHostingOutput = (nitroConfig: NitroConfig) => {
             errors: [],
             warnings: [],
             outputPaths: {
-              root: `${nitroConfig.output?.dir}`,
-              browser: `${nitroConfig.output?.publicDir}`,
-              server: `${nitroConfig.output?.dir}/server`,
+              root: pathToFileURL(`${nitroConfig.output?.dir}`),
+              browser: pathToFileURL(`${nitroConfig.output?.publicDir}`),
+              server: pathToFileURL(`${nitroConfig.output?.dir}/server`),
             },
           };
 
