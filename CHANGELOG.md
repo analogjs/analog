@@ -1,3 +1,9 @@
+# [1.11.0-beta.6](https://github.com/analogjs/analog/compare/v1.11.0-beta.5...v1.11.0-beta.6) (2024-12-30)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** normalize outputPaths for app hosting ([09b1fa5](https://github.com/analogjs/analog/commit/09b1fa57a5dd038d5631febe5091311c0d9e1050))
+
 # [1.11.0-beta.5](https://github.com/analogjs/analog/compare/v1.11.0-beta.4...v1.11.0-beta.5) (2024-12-30)
 
 ### Features
