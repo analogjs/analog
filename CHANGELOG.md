@@ -1,3 +1,9 @@
+# [1.11.0-beta.5](https://github.com/analogjs/analog/compare/v1.11.0-beta.4...v1.11.0-beta.5) (2024-12-30)
+
+### Features
+
+- **vite-plugin-nitro:** add support for Firebase App Hosting deployment ([#1529](https://github.com/analogjs/analog/issues/1529)) ([3657bf1](https://github.com/analogjs/analog/commit/3657bf17c1f2c3ee03bd008de008b6fdf80b2795))
+
 # [1.11.0-beta.4](https://github.com/analogjs/analog/compare/v1.11.0-beta.3...v1.11.0-beta.4) (2024-12-28)
 
 ### Bug Fixes
