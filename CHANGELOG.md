@@ -1,3 +1,43 @@
+# [1.11.0-beta.6](https://github.com/analogjs/analog/compare/v1.11.0-beta.5...v1.11.0-beta.6) (2024-12-30)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** normalize outputPaths for app hosting ([09b1fa5](https://github.com/analogjs/analog/commit/09b1fa57a5dd038d5631febe5091311c0d9e1050))
+
+# [1.11.0-beta.5](https://github.com/analogjs/analog/compare/v1.11.0-beta.4...v1.11.0-beta.5) (2024-12-30)
+
+### Features
+
+- **vite-plugin-nitro:** add support for Firebase App Hosting deployment ([#1529](https://github.com/analogjs/analog/issues/1529)) ([3657bf1](https://github.com/analogjs/analog/commit/3657bf17c1f2c3ee03bd008de008b6fdf80b2795))
+
+# [1.11.0-beta.4](https://github.com/analogjs/analog/compare/v1.11.0-beta.3...v1.11.0-beta.4) (2024-12-28)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** invalidation fixes for HMR/live reload ([#1526](https://github.com/analogjs/analog/issues/1526)) ([7b783d9](https://github.com/analogjs/analog/commit/7b783d9d114f5050a14786254aab6d3f198cc893))
+
+# [1.11.0-beta.3](https://github.com/analogjs/analog/compare/v1.11.0-beta.2...v1.11.0-beta.3) (2024-12-27)
+
+### Features
+
+- **vite-plugin-angular:** introduce support for Angular v19 HMR/live reload ([#1523](https://github.com/analogjs/analog/issues/1523)) ([0602a8f](https://github.com/analogjs/analog/commit/0602a8f79ae3c16897c966f3defe7ac3309c32a6))
+
+# [1.11.0-beta.2](https://github.com/analogjs/analog/compare/v1.11.0-beta.1...v1.11.0-beta.2) (2024-12-26)
+
+### Features
+
+- **vitest-angular:** add UI and coverage options to test builder ([#1521](https://github.com/analogjs/analog/issues/1521)) ([026b3dc](https://github.com/analogjs/analog/commit/026b3dce2f5cfe07da65922496b4c366642b3788))
+
+# [1.11.0-beta.1](https://github.com/analogjs/analog/compare/v1.10.3...v1.11.0-beta.1) (2024-12-20)
+
+### Bug Fixes
+
+- **vitest-angular:** reuse vitest server in watch mode for build-test ([#1519](https://github.com/analogjs/analog/issues/1519)) ([724d1f1](https://github.com/analogjs/analog/commit/724d1f13caa55c6fc315321ef75d29eff9b96e41))
+
+### Features
+
+- **router:** introduce support for Analog Server Components ([#1518](https://github.com/analogjs/analog/issues/1518)) ([44289b0](https://github.com/analogjs/analog/commit/44289b0008a9a62288d22866ec089f48fa502d80))
+
 ## [1.10.3](https://github.com/analogjs/analog/compare/v1.10.2...v1.10.3) (2024-12-17)
 
 ### Bug Fixes

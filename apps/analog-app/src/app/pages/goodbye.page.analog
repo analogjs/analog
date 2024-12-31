@@ -1,0 +1,9 @@
+<script lang="ts">
+  import { ServerOnly } from '@analogjs/router' with { analog: 'imports' };
+</script>
+
+<template>
+  Goodbye on the client
+
+  <ServerOnly component="goodbye" />
+</template>

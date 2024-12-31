@@ -20,18 +20,25 @@ async function vitestBuilder(
   const projectConfig = await context.getProjectMetadata(
     context.target as unknown as string
   );
-  const extraArgs = await getExtraArgs(options);
+  const { coverageArgs, ...extraArgs } = await getExtraArgs(options);
   const watch = options.watch === true;
+  const ui = options.ui === true;
+  const coverageEnabled = options.coverage === true;
   const config = {
     root: `${projectConfig['root'] || '.'}`,
     watch,
+    ui,
     config: options.configFile,
+    coverage: {
+      enabled: coverageEnabled,
+      ...coverageArgs,
+    },
     ...extraArgs,
   };
 
   const server = await startVitest('test', options.testFiles ?? [], config, {
     test: { watch },
-  });
+  } as any);
 
   let hasErrors = false;
 

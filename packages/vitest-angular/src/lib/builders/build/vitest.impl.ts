@@ -2,7 +2,7 @@ import { createBuilder } from '@angular-devkit/architect';
 import * as path from 'path';
 import type { Vitest } from 'vitest/node';
 import type { Plugin, UserConfig } from 'vite';
-import type { UserConfig as VitestConfig } from 'vitest';
+import type { UserConfig as VitestConfig } from 'vitest/node';
 
 import { VitestSchema } from './schema';
 import { createAngularMemoryPlugin } from './plugins/angular-memory-plugin';
@@ -91,15 +91,22 @@ async function* vitestApplicationBuilder(
       prerender: false,
       optimization: false,
       outputPath: `.angular/.vitest/${projectConfig['name']}`,
+      outExtension: 'mjs',
+      outputHashing: 2, // None
       tsConfig: path.relative(workspaceRoot, options.tsConfig),
       watch: options.watch === true,
       entryPoints,
       allowedCommonJsDependencies: ['@analogjs/vitest-angular/setup-zone'],
+      sourceMap: {
+        scripts: true,
+        styles: false,
+        vendor: false,
+      },
     },
     context
   )) {
     if (buildOutput.kind === ResultKind.Failure) {
-      yield { success: false };
+      return { success: false };
     } else if (
       buildOutput.kind === ResultKind.Incremental ||
       buildOutput.kind === ResultKind.Full
@@ -117,8 +124,11 @@ async function* vitestApplicationBuilder(
     }
 
     if (options.watch) {
-      const vitestServer = await startVitest('test', [], config, viteConfig);
-      server = vitestServer;
+      if (!server) {
+        server = await startVitest('test', [], config, viteConfig);
+      } else {
+        await server.start([]);
+      }
 
       yield { success: true };
     } else {
