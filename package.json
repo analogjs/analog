@@ -13,7 +13,7 @@
     "e2e": "nx run-many --target e2e --projects create-analog-e2e,analog-app-e2e-cypress --parallel=1 --exclude analog-app-e2e-playwright",
     "test": "nx run-many --target test",
     "build:vite-ci": "npm run build",
-    "test:vite-ci": "nx run-many --target test --all",
+    "test:vite-ci": "nx run-many --target test --all --skip-nx-cache",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "contributors:add": "all-contributors add",
     "contributors:generate": "all-contributors generate",
