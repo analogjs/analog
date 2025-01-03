@@ -1,3 +1,9 @@
+## [1.11.1-beta.1](https://github.com/analogjs/analog/compare/v1.11.0...v1.11.1-beta.1) (2025-01-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** skip rebuilds before invalidation during testing ([#1536](https://github.com/analogjs/analog/issues/1536)) ([4610be7](https://github.com/analogjs/analog/commit/4610be7378392662bec3a56f63290cc15ce721cc))
+
 # [1.11.0](https://github.com/analogjs/analog/compare/v1.10.3...v1.11.0) (2024-12-31)
 
 ### Bug Fixes
