@@ -509,9 +509,11 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (isTest) {
             const tsMod = viteServer?.moduleGraph.getModuleById(id);
             if (tsMod) {
-              sourceFileCache.invalidate([id]);
+              const invalidated = tsMod.lastInvalidationTimestamp;
 
-              if (testWatchMode) {
+              if (testWatchMode && invalidated) {
+                sourceFileCache.invalidate([id]);
+
                 await buildAndAnalyze();
               }
             }
