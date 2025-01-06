@@ -14,6 +14,7 @@ import {
   ResolvedConfig,
   Connect,
 } from 'vite';
+import { encapsulateStyle } from '@angular/compiler';
 
 import { createCompilerPlugin } from './compiler-plugin.js';
 import {
@@ -368,17 +369,14 @@ export function angular(options?: PluginOptions): Plugin[] {
           );
           if (pluginOptions.liveReload && isDirect?.id && isDirect.file) {
             const isComponentStyle =
-              isDirect.type === 'css' && isDirect.id?.includes('ngcomp=');
+              isDirect.type === 'css' && isComponentStyleSheet(isDirect.id);
             if (isComponentStyle) {
-              const encapsulation = new URL(
-                isDirect.id,
-                'http://localhost'
-              ).searchParams.get('e');
+              const { encapsulation } = getComponentStyleSheetMeta(isDirect.id);
 
-              // Track if the component uses ShadowDOM encapsulation (3 = ViewEncapsulation.ShadowDom)
+              // Track if the component uses ShadowDOM encapsulation
               // Shadow DOM components currently require a full reload.
               // Vite's CSS hot replacement does not support shadow root searching.
-              if (encapsulation !== '3') {
+              if (encapsulation !== 'shadow') {
                 ctx.server.ws.send({
                   type: 'update',
                   updates: [
@@ -517,6 +515,20 @@ export function angular(options?: PluginOptions): Plugin[] {
          */
         if (id.includes('analog-content-')) {
           return;
+        }
+
+        /**
+         * Encapsulate component stylesheets that use emulated encapsulation
+         */
+        if (pluginOptions.liveReload && isComponentStyleSheet(id)) {
+          const { encapsulation, componentId } = getComponentStyleSheetMeta(id);
+          if (encapsulation === 'emulated' && componentId) {
+            const encapsulated = encapsulateStyle(code, componentId);
+            return {
+              code: encapsulated,
+              map: null,
+            };
+          }
         }
 
         if (TS_EXT_REGEX.test(id)) {
@@ -954,4 +966,26 @@ function markModuleSelfAccepting(mod: ModuleNode): ModuleNode {
     ...mod,
     isSelfAccepting: true,
   } as ModuleNode;
+}
+
+function isComponentStyleSheet(id: string): boolean {
+  return id.includes('ngcomp=');
+}
+
+function getComponentStyleSheetMeta(id: string): {
+  componentId: string;
+  encapsulation: 'emulated' | 'shadow' | 'none';
+} {
+  const params = new URL(id, 'http://localhost').searchParams;
+  const encapsulationMapping = {
+    '0': 'emulated',
+    '2': 'none',
+    '3': 'shadow',
+  };
+  return {
+    componentId: params.get('ngcomp')!,
+    encapsulation: encapsulationMapping[
+      params.get('e') as keyof typeof encapsulationMapping
+    ] as 'emulated' | 'shadow' | 'none',
+  };
 }
