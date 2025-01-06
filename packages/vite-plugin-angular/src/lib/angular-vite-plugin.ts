@@ -350,15 +350,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
             return ctx.modules.map((mod) => {
               if (mod.id === ctx.file) {
-                // support Vite 6
-                if ('_clientModule' in mod) {
-                  (mod as any)['_clientModule'].isSelfAccepting = true;
-                }
-
-                return {
-                  ...mod,
-                  isSelfAccepting: true,
-                } as ModuleNode;
+                return markModuleSelfAccepting(mod);
               }
 
               return mod;
@@ -374,7 +366,45 @@ export function angular(options?: PluginOptions): Plugin[] {
           const isDirect = ctx.modules.find(
             (mod) => ctx.file === mod.file && mod.id?.includes('?direct')
           );
-          if (isDirect) {
+          if (pluginOptions.liveReload && isDirect?.id && isDirect.file) {
+            const isComponentStyle =
+              isDirect.type === 'css' && isDirect.id?.includes('ngcomp=');
+            if (isComponentStyle) {
+              const encapsulation = new URL(
+                isDirect.id,
+                'http://localhost'
+              ).searchParams.get('e');
+
+              // Track if the component uses ShadowDOM encapsulation (3 = ViewEncapsulation.ShadowDom)
+              // Shadow DOM components currently require a full reload.
+              // Vite's CSS hot replacement does not support shadow root searching.
+              if (encapsulation !== '3') {
+                ctx.server.ws.send({
+                  type: 'update',
+                  updates: [
+                    {
+                      type: 'css-update',
+                      timestamp: Date.now(),
+                      path: isDirect.id,
+                      acceptedPath: isDirect.file,
+                    },
+                  ],
+                });
+
+                return ctx.modules
+                  .filter((mod) => {
+                    // Component stylesheets will have 2 modules (*.component.scss and *.component.scss?direct&ngcomp=xyz&e=x)
+                    // We remove the module with the query params to prevent vite double logging the stylesheet name "hmr update *.component.scss, *.component.scss?direct&ngcomp=xyz&e=x"
+                    return mod.file !== ctx.file || mod.id !== isDirect.id;
+                  })
+                  .map((mod) => {
+                    if (mod.file === ctx.file) {
+                      return markModuleSelfAccepting(mod);
+                    }
+                    return mod;
+                  }) as ModuleNode[];
+              }
+            }
             return ctx.modules;
           }
 
@@ -407,15 +437,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
             return ctx.modules.map((mod) => {
               if (mod.id === ctx.file) {
-                // support Vite 6
-                if ('_clientModule' in mod) {
-                  (mod as any)['_clientModule'].isSelfAccepting = true;
-                }
-
-                return {
-                  ...mod,
-                  isSelfAccepting: true,
-                } as ModuleNode;
+                return markModuleSelfAccepting(mod);
               }
 
               return mod;
@@ -920,4 +942,16 @@ function getDiagnosticsForSourceFile(
     ...semanticDiagnostics,
     ...angularDiagnostics,
   ];
+}
+
+function markModuleSelfAccepting(mod: ModuleNode): ModuleNode {
+  // support Vite 6
+  if ('_clientModule' in mod) {
+    (mod as any)['_clientModule'].isSelfAccepting = true;
+  }
+
+  return {
+    ...mod,
+    isSelfAccepting: true,
+  } as ModuleNode;
 }
