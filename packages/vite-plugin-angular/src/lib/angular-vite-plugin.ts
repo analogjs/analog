@@ -14,7 +14,7 @@ import {
   ResolvedConfig,
   Connect,
 } from 'vite';
-import { encapsulateStyle } from '@angular/compiler';
+import * as ngCompiler from '@angular/compiler';
 
 import { createCompilerPlugin } from './compiler-plugin.js';
 import {
@@ -523,7 +523,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         if (pluginOptions.liveReload && isComponentStyleSheet(id)) {
           const { encapsulation, componentId } = getComponentStyleSheetMeta(id);
           if (encapsulation === 'emulated' && componentId) {
-            const encapsulated = encapsulateStyle(code, componentId);
+            const encapsulated = ngCompiler.encapsulateStyle(code, componentId);
             return {
               code: encapsulated,
               map: null,
