@@ -1,3 +1,9 @@
+# [1.12.0-beta.1](https://github.com/analogjs/analog/compare/v1.11.1-beta.2...v1.12.0-beta.1) (2025-01-06)
+
+### Features
+
+- **vite-plugin-angular:** fix .ts typechecking and add disableTypeChecking option ([#1538](https://github.com/analogjs/analog/issues/1538)) ([56b0ffe](https://github.com/analogjs/analog/commit/56b0ffe42db52d76fc12ee22f895917f2be3b4a5))
+
 ## [1.11.1-beta.2](https://github.com/analogjs/analog/compare/v1.11.1-beta.1...v1.11.1-beta.2) (2025-01-06)
 
 ### Bug Fixes
