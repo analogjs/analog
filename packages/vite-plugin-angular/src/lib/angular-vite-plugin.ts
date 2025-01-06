@@ -78,6 +78,7 @@ export interface PluginOptions {
   include?: string[];
   additionalContentDirs?: string[];
   liveReload?: boolean;
+  disableTypeChecking?: boolean;
 }
 
 interface EmitFileResult {
@@ -135,6 +136,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     include: options?.include ?? [],
     additionalContentDirs: options?.additionalContentDirs ?? [],
     liveReload: options?.liveReload ?? false,
+    disableTypeChecking: options?.disableTypeChecking ?? false,
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -811,7 +813,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       ),
       () => [],
       angularCompiler!,
-      pluginOptions.liveReload
+      pluginOptions.liveReload,
+      pluginOptions.disableTypeChecking
     );
   }
 }
@@ -830,7 +833,8 @@ export function createFileEmitter(
   transformers: ts.CustomTransformers = {},
   onAfterEmit?: (sourceFile: ts.SourceFile) => void,
   angularCompiler?: NgtscProgram['compiler'],
-  liveReload?: boolean
+  liveReload?: boolean,
+  disableTypeChecking?: boolean
 ): FileEmitter {
   return async (file: string, stale?: ts.SourceFile) => {
     const sourceFile = program.getSourceFile(file);
@@ -847,9 +851,12 @@ export function createFileEmitter(
       return { dependencies: [], hmrEligible };
     }
 
-    const diagnostics = angularCompiler
-      ? angularCompiler.getDiagnosticsForFile(sourceFile, 1)
-      : [];
+    const diagnostics = getDiagnosticsForSourceFile(
+      sourceFile,
+      !!disableTypeChecking,
+      program,
+      angularCompiler
+    );
 
     const errors = diagnostics
       .filter((d) => d.category === ts.DiagnosticCategory?.Error)
@@ -887,4 +894,29 @@ export function createFileEmitter(
 
     return { content, dependencies: [], errors, warnings, hmrUpdateCode };
   };
+}
+
+function getDiagnosticsForSourceFile(
+  sourceFile: ts.SourceFile,
+  disableTypeChecking: boolean,
+  program: ts.BuilderProgram,
+  angularCompiler?: NgtscProgram['compiler']
+) {
+  const syntacticDiagnostics = program.getSyntacticDiagnostics(sourceFile);
+
+  if (disableTypeChecking) {
+    // Syntax errors are cheap to compute and the app will not run if there are any
+    // So always show these types of errors regardless if type checking is disabled
+    return syntacticDiagnostics;
+  }
+
+  const semanticDiagnostics = program.getSemanticDiagnostics(sourceFile);
+  const angularDiagnostics = angularCompiler
+    ? angularCompiler.getDiagnosticsForFile(sourceFile, 1)
+    : [];
+  return [
+    ...syntacticDiagnostics,
+    ...semanticDiagnostics,
+    ...angularDiagnostics,
+  ];
 }
