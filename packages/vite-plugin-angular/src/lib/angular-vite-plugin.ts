@@ -746,7 +746,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions.compilationMode = 'experimental-local';
     }
 
-    if (pluginOptions.liveReload) {
+    if (pluginOptions.liveReload && watchMode) {
       tsCompilerOptions['_enableHmr'] = true;
       tsCompilerOptions['externalRuntimeStyles'] = true;
       // Workaround for https://github.com/angular/angular/issues/59310
