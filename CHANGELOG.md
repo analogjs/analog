@@ -1,3 +1,9 @@
+## [1.11.1-beta.2](https://github.com/analogjs/analog/compare/v1.11.1-beta.1...v1.11.1-beta.2) (2025-01-06)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fix HMR of component styles w/tsconfig flag ([#1539](https://github.com/analogjs/analog/issues/1539)) ([ee67cc6](https://github.com/analogjs/analog/commit/ee67cc62d3bce1b0190e28d3b542a520137798c7))
+
 ## [1.11.1-beta.1](https://github.com/analogjs/analog/compare/v1.11.0...v1.11.1-beta.1) (2025-01-03)
 
 ### Bug Fixes
