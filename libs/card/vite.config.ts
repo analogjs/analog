@@ -16,6 +16,7 @@ export default defineConfig(({ mode }) => {
       include: ['**/*.spec.ts'],
       cacheDir: '../../node_modules/.vitest',
       pool: 'vmForks',
+      fileParallelism: false,
     },
     define: {
       'import.meta.vitest': mode !== 'production',
