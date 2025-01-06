@@ -764,6 +764,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     if (pluginOptions.liveReload && watchMode) {
       tsCompilerOptions['_enableHmr'] = true;
+      tsCompilerOptions['externalRuntimeStyles'] = true;
       // Workaround for https://github.com/angular/angular/issues/59310
       // Force extra instructions to be generated for HMR w/defer
       tsCompilerOptions['supportTestBed'] = true;
