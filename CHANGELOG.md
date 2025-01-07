@@ -1,3 +1,9 @@
+# [1.12.0-beta.2](https://github.com/analogjs/analog/compare/v1.12.0-beta.1...v1.12.0-beta.2) (2025-01-07)
+
+### Performance Improvements
+
+- **platform:** exclude TypeScript files from Vite esbuild plugin ([#1543](https://github.com/analogjs/analog/issues/1543)) ([de85100](https://github.com/analogjs/analog/commit/de851003761a77e6f536a0c8a43351f5f21274de))
+
 # [1.12.0-beta.1](https://github.com/analogjs/analog/compare/v1.11.1-beta.2...v1.12.0-beta.1) (2025-01-06)
 
 ### Features
