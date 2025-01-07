@@ -1,3 +1,9 @@
+## [1.12.1-beta.1](https://github.com/analogjs/analog/compare/v1.12.0...v1.12.1-beta.1) (2025-01-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fix SSG and HMR of external component stylesheets ([#1548](https://github.com/analogjs/analog/issues/1548)) ([e6de3d7](https://github.com/analogjs/analog/commit/e6de3d71acb292b9abb6e5939fea9902a2a41d38))
+
 # [1.12.0](https://github.com/analogjs/analog/compare/v1.11.0...v1.12.0) (2025-01-07)
 
 ### Bug Fixes
