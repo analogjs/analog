@@ -1,3 +1,13 @@
+# [1.12.0-beta.3](https://github.com/analogjs/analog/compare/v1.12.0-beta.2...v1.12.0-beta.3) (2025-01-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** correctly implement HMR of component styles ([#1542](https://github.com/analogjs/analog/issues/1542)) ([5ec113f](https://github.com/analogjs/analog/commit/5ec113f3d789336ca0753c78c3a83b29263710df))
+
+### Reverts
+
+- Revert "fix(vite-plugin-angular): fix HMR of component styles" ([#1544](https://github.com/analogjs/analog/issues/1544)) ([eff770c](https://github.com/analogjs/analog/commit/eff770c7e40ce3eb6fe3fe523596c672f1f4fb8c))
+
 # [1.12.0-beta.2](https://github.com/analogjs/analog/compare/v1.12.0-beta.1...v1.12.0-beta.2) (2025-01-07)
 
 ### Performance Improvements
