@@ -1,3 +1,9 @@
+# [1.12.0-beta.5](https://github.com/analogjs/analog/compare/v1.12.0-beta.4...v1.12.0-beta.5) (2025-01-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use ssr.noExternal for matching libraries during testing ([#1545](https://github.com/analogjs/analog/issues/1545)) ([3f365e9](https://github.com/analogjs/analog/commit/3f365e9b9bdcb45573977270c8c4136b0a592e10))
+
 # [1.12.0-beta.4](https://github.com/analogjs/analog/compare/v1.12.0-beta.3...v1.12.0-beta.4) (2025-01-07)
 
 ### Bug Fixes
