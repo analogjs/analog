@@ -152,6 +152,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode = false;
   let testWatchMode = false;
+  let inlineComponentStyles: Map<string, string> | undefined;
   const sourceFileCache = new SourceFileCache();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isStackBlitz = !!process.versions['webcontainer'];
@@ -462,6 +463,17 @@ export function angular(options?: PluginOptions): Plugin[] {
         return undefined;
       },
       async load(id, options) {
+        if (isComponentStyleSheet(id)) {
+          const filename = new URL(id, 'http://localhost').pathname.replace(
+            /^\//,
+            ''
+          );
+          const componentStyles = inlineComponentStyles?.get(filename);
+          if (componentStyles) {
+            return componentStyles;
+          }
+        }
+
         if (
           pluginOptions.liveReload &&
           options?.ssr &&
@@ -766,11 +778,15 @@ export function angular(options?: PluginOptions): Plugin[] {
       preprocessCSS(code, filename, config as any);
 
     if (!jit) {
+      inlineComponentStyles = tsCompilerOptions['externalRuntimeStyles']
+        ? new Map()
+        : undefined;
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
         supportAnalogFormat: pluginOptions.supportAnalogFormat,
         isProd,
         markdownTemplateTransforms: pluginOptions.markdownTemplateTransforms,
+        inlineComponentStyles,
       });
     }
   }
