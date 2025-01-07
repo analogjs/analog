@@ -14,6 +14,7 @@ import {
   ResolvedConfig,
   Connect,
 } from 'vite';
+import * as ngCompiler from '@angular/compiler';
 
 import { createCompilerPlugin } from './compiler-plugin.js';
 import {
@@ -151,6 +152,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode = false;
   let testWatchMode = false;
+  let inlineComponentStyles: Map<string, string> | undefined;
   const sourceFileCache = new SourceFileCache();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isStackBlitz = !!process.versions['webcontainer'];
@@ -350,15 +352,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
             return ctx.modules.map((mod) => {
               if (mod.id === ctx.file) {
-                // support Vite 6
-                if ('_clientModule' in mod) {
-                  (mod as any)['_clientModule'].isSelfAccepting = true;
-                }
-
-                return {
-                  ...mod,
-                  isSelfAccepting: true,
-                } as ModuleNode;
+                return markModuleSelfAccepting(mod);
               }
 
               return mod;
@@ -375,6 +369,45 @@ export function angular(options?: PluginOptions): Plugin[] {
             (mod) => ctx.file === mod.file && mod.id?.includes('?direct')
           );
           if (isDirect) {
+            if (pluginOptions.liveReload && isDirect?.id && isDirect.file) {
+              const isComponentStyle =
+                isDirect.type === 'css' && isComponentStyleSheet(isDirect.id);
+              if (isComponentStyle) {
+                const { encapsulation } = getComponentStyleSheetMeta(
+                  isDirect.id
+                );
+
+                // Track if the component uses ShadowDOM encapsulation
+                // Shadow DOM components currently require a full reload.
+                // Vite's CSS hot replacement does not support shadow root searching.
+                if (encapsulation !== 'shadow') {
+                  ctx.server.ws.send({
+                    type: 'update',
+                    updates: [
+                      {
+                        type: 'css-update',
+                        timestamp: Date.now(),
+                        path: isDirect.id,
+                        acceptedPath: isDirect.file,
+                      },
+                    ],
+                  });
+
+                  return ctx.modules
+                    .filter((mod) => {
+                      // Component stylesheets will have 2 modules (*.component.scss and *.component.scss?direct&ngcomp=xyz&e=x)
+                      // We remove the module with the query params to prevent vite double logging the stylesheet name "hmr update *.component.scss, *.component.scss?direct&ngcomp=xyz&e=x"
+                      return mod.file !== ctx.file || mod.id !== isDirect.id;
+                    })
+                    .map((mod) => {
+                      if (mod.file === ctx.file) {
+                        return markModuleSelfAccepting(mod);
+                      }
+                      return mod;
+                    }) as ModuleNode[];
+                }
+              }
+            }
             return ctx.modules;
           }
 
@@ -407,15 +440,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
             return ctx.modules.map((mod) => {
               if (mod.id === ctx.file) {
-                // support Vite 6
-                if ('_clientModule' in mod) {
-                  (mod as any)['_clientModule'].isSelfAccepting = true;
-                }
-
-                return {
-                  ...mod,
-                  isSelfAccepting: true,
-                } as ModuleNode;
+                return markModuleSelfAccepting(mod);
               }
 
               return mod;
@@ -438,6 +463,17 @@ export function angular(options?: PluginOptions): Plugin[] {
         return undefined;
       },
       async load(id, options) {
+        if (isComponentStyleSheet(id)) {
+          const filename = new URL(id, 'http://localhost').pathname.replace(
+            /^\//,
+            ''
+          );
+          const componentStyles = inlineComponentStyles?.get(filename);
+          if (componentStyles) {
+            return componentStyles;
+          }
+        }
+
         if (
           pluginOptions.liveReload &&
           options?.ssr &&
@@ -495,6 +531,20 @@ export function angular(options?: PluginOptions): Plugin[] {
          */
         if (id.includes('analog-content-')) {
           return;
+        }
+
+        /**
+         * Encapsulate component stylesheets that use emulated encapsulation
+         */
+        if (pluginOptions.liveReload && isComponentStyleSheet(id)) {
+          const { encapsulation, componentId } = getComponentStyleSheetMeta(id);
+          if (encapsulation === 'emulated' && componentId) {
+            const encapsulated = ngCompiler.encapsulateStyle(code, componentId);
+            return {
+              code: encapsulated,
+              map: null,
+            };
+          }
         }
 
         if (TS_EXT_REGEX.test(id)) {
@@ -712,7 +762,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions.compilationMode = 'experimental-local';
     }
 
-    if (pluginOptions.liveReload) {
+    if (pluginOptions.liveReload && watchMode) {
       tsCompilerOptions['_enableHmr'] = true;
       // Workaround for https://github.com/angular/angular/issues/59310
       // Force extra instructions to be generated for HMR w/defer
@@ -727,11 +777,15 @@ export function angular(options?: PluginOptions): Plugin[] {
       preprocessCSS(code, filename, config as any);
 
     if (!jit) {
+      inlineComponentStyles = tsCompilerOptions['externalRuntimeStyles']
+        ? new Map()
+        : undefined;
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
         supportAnalogFormat: pluginOptions.supportAnalogFormat,
         isProd,
         markdownTemplateTransforms: pluginOptions.markdownTemplateTransforms,
+        inlineComponentStyles,
       });
     }
   }
@@ -919,4 +973,38 @@ function getDiagnosticsForSourceFile(
     ...semanticDiagnostics,
     ...angularDiagnostics,
   ];
+}
+
+function markModuleSelfAccepting(mod: ModuleNode): ModuleNode {
+  // support Vite 6
+  if ('_clientModule' in mod) {
+    (mod as any)['_clientModule'].isSelfAccepting = true;
+  }
+
+  return {
+    ...mod,
+    isSelfAccepting: true,
+  } as ModuleNode;
+}
+
+function isComponentStyleSheet(id: string): boolean {
+  return id.includes('ngcomp=');
+}
+
+function getComponentStyleSheetMeta(id: string): {
+  componentId: string;
+  encapsulation: 'emulated' | 'shadow' | 'none';
+} {
+  const params = new URL(id, 'http://localhost').searchParams;
+  const encapsulationMapping = {
+    '0': 'emulated',
+    '2': 'none',
+    '3': 'shadow',
+  };
+  return {
+    componentId: params.get('ngcomp')!,
+    encapsulation: encapsulationMapping[
+      params.get('e') as keyof typeof encapsulationMapping
+    ] as 'emulated' | 'shadow' | 'none',
+  };
 }
