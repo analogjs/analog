@@ -1,3 +1,31 @@
+# [2.0.0-alpha.3](https://github.com/analogjs/analog/compare/v2.0.0-alpha.2...v2.0.0-alpha.3) (2025-01-07)
+
+### Bug Fixes
+
+- analyze files for HMR updates ([a1fad0a](https://github.com/analogjs/analog/commit/a1fad0a96ffa4960ecd0beb907164e2538999daa))
+- **vite-plugin-angular:** correctly implement HMR of component styles ([#1542](https://github.com/analogjs/analog/issues/1542)) ([5ec113f](https://github.com/analogjs/analog/commit/5ec113f3d789336ca0753c78c3a83b29263710df))
+- **vite-plugin-angular:** fix HMR of component styles w/tsconfig flag ([#1539](https://github.com/analogjs/analog/issues/1539)) ([6b9c75c](https://github.com/analogjs/analog/commit/6b9c75cf29cd3539b5b4d93606ba43ef41c351f1))
+- **vite-plugin-angular:** fix HMR of component styles w/tsconfig flag ([#1539](https://github.com/analogjs/analog/issues/1539)) ([ee67cc6](https://github.com/analogjs/analog/commit/ee67cc62d3bce1b0190e28d3b542a520137798c7))
+- **vite-plugin-angular:** invalidation fixes for HMR/live reload ([#1526](https://github.com/analogjs/analog/issues/1526)) ([7b783d9](https://github.com/analogjs/analog/commit/7b783d9d114f5050a14786254aab6d3f198cc893))
+- **vite-plugin-angular:** skip rebuilds before invalidation during testing ([#1536](https://github.com/analogjs/analog/issues/1536)) ([4610be7](https://github.com/analogjs/analog/commit/4610be7378392662bec3a56f63290cc15ce721cc))
+- **vite-plugin-angular:** use ssr.noExternal for matching libraries during testing ([#1545](https://github.com/analogjs/analog/issues/1545)) ([3f365e9](https://github.com/analogjs/analog/commit/3f365e9b9bdcb45573977270c8c4136b0a592e10))
+- **vite-plugin-nitro:** normalize outputPaths for app hosting ([09b1fa5](https://github.com/analogjs/analog/commit/09b1fa57a5dd038d5631febe5091311c0d9e1050))
+
+### Features
+
+- **vite-plugin-angular:** fix .ts typechecking and add disableTypeChecking option ([#1538](https://github.com/analogjs/analog/issues/1538)) ([56b0ffe](https://github.com/analogjs/analog/commit/56b0ffe42db52d76fc12ee22f895917f2be3b4a5))
+- **vite-plugin-angular:** introduce support for Angular v19 HMR/live reload ([#1523](https://github.com/analogjs/analog/issues/1523)) ([0602a8f](https://github.com/analogjs/analog/commit/0602a8f79ae3c16897c966f3defe7ac3309c32a6))
+- **vite-plugin-nitro:** add support for Firebase App Hosting deployment ([#1529](https://github.com/analogjs/analog/issues/1529)) ([3657bf1](https://github.com/analogjs/analog/commit/3657bf17c1f2c3ee03bd008de008b6fdf80b2795))
+- **vitest-angular:** add UI and coverage options to test builder ([#1521](https://github.com/analogjs/analog/issues/1521)) ([026b3dc](https://github.com/analogjs/analog/commit/026b3dce2f5cfe07da65922496b4c366642b3788))
+
+### Performance Improvements
+
+- **platform:** exclude TypeScript files from Vite esbuild plugin ([#1543](https://github.com/analogjs/analog/issues/1543)) ([de85100](https://github.com/analogjs/analog/commit/de851003761a77e6f536a0c8a43351f5f21274de))
+
+### Reverts
+
+- Revert "fix(vite-plugin-angular): fix HMR of component styles" ([#1544](https://github.com/analogjs/analog/issues/1544)) ([eff770c](https://github.com/analogjs/analog/commit/eff770c7e40ce3eb6fe3fe523596c672f1f4fb8c))
+
 # [2.0.0-alpha.2](https://github.com/analogjs/analog/compare/v2.0.0-alpha.1...v2.0.0-alpha.2) (2024-12-23)
 
 ### Bug Fixes
