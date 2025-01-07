@@ -4,6 +4,7 @@ import analog from '@analogjs/platform';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import inspect from 'vite-plugin-inspect';
 
 // Only run in Netlify CI
 let base = process.env['URL'] || 'http://localhost:3000';
@@ -14,7 +15,7 @@ if (process.env['NETLIFY'] === 'true') {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, isSsrBuild }) => {
   return {
     root: __dirname,
     publicDir: 'src/public',
@@ -47,7 +48,12 @@ export default defineConfig(({ mode }) => {
       }),
       nxViteTsPaths(),
       visualizer() as Plugin,
-      splitVendorChunkPlugin(),
+      // splitVendorChunkPlugin(),
+      !isSsrBuild &&
+        inspect({
+          build: true,
+          outputDir: '../../.vite-inspect/analog-app',
+        }),
     ],
     test: {
       reporters: ['default'],

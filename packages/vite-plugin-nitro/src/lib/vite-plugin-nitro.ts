@@ -4,7 +4,7 @@ import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { mergeConfig, normalizePath } from 'vite';
 import { dirname, join, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readFileSync, writeFileSync } from 'node:fs';
 
 import { buildServer } from './build-server.js';
@@ -172,6 +172,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         if (isCloudflarePreset(buildPreset)) {
           nitroConfig = withCloudflareOutput(nitroConfig);
+        }
+
+        if (isFirebaseAppHosting()) {
+          nitroConfig = withAppHostingOutput(nitroConfig);
         }
 
         if (!ssrBuild && !isTest) {
@@ -434,3 +438,40 @@ const withCloudflareOutput = (nitroConfig: NitroConfig | undefined) => ({
     serverDir: '{{ output.publicDir }}/_worker.js',
   },
 });
+
+const isFirebaseAppHosting = () => !!process.env['NG_BUILD_LOGS_JSON'];
+const withAppHostingOutput = (nitroConfig: NitroConfig) => {
+  let hasOutput = false;
+
+  return <NitroConfig>{
+    ...nitroConfig,
+    serveStatic: true,
+    rollupConfig: {
+      ...nitroConfig.rollupConfig,
+      output: {
+        ...nitroConfig.rollupConfig?.output,
+        entryFileNames: 'server.mjs',
+      },
+    },
+    hooks: {
+      ...nitroConfig.hooks,
+      compiled: () => {
+        if (!hasOutput) {
+          const buildOutput = {
+            errors: [],
+            warnings: [],
+            outputPaths: {
+              root: pathToFileURL(`${nitroConfig.output?.dir}`),
+              browser: pathToFileURL(`${nitroConfig.output?.publicDir}`),
+              server: pathToFileURL(`${nitroConfig.output?.dir}/server`),
+            },
+          };
+
+          // Log the build output for Firebase App Hosting to pick up
+          console.log(JSON.stringify(buildOutput, null, 2));
+          hasOutput = true;
+        }
+      },
+    },
+  };
+};

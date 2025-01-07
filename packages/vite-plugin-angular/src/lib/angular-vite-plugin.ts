@@ -14,6 +14,7 @@ import {
   ResolvedConfig,
   Connect,
 } from 'vite';
+import * as ngCompiler from '@angular/compiler';
 
 import { createCompilerPlugin } from './compiler-plugin.js';
 import {
@@ -78,6 +79,7 @@ export interface PluginOptions {
   include?: string[];
   additionalContentDirs?: string[];
   liveReload?: boolean;
+  disableTypeChecking?: boolean;
 }
 
 interface EmitFileResult {
@@ -135,6 +137,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     include: options?.include ?? [],
     additionalContentDirs: options?.additionalContentDirs ?? [],
     liveReload: options?.liveReload ?? false,
+    disableTypeChecking: options?.disableTypeChecking ?? false,
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -149,6 +152,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode = false;
   let testWatchMode = false;
+  let inlineComponentStyles: Map<string, string> | undefined;
   const sourceFileCache = new SourceFileCache();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isStackBlitz = !!process.versions['webcontainer'];
@@ -278,8 +282,20 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
 
             const [fileId] = decodeURIComponent(componentId).split('@');
-            const result = await fileEmitter?.(resolve(process.cwd(), fileId));
+            const resolvedId = resolve(process.cwd(), fileId);
+            const invalidated =
+              !!server.moduleGraph.getModuleById(resolvedId)
+                ?.lastInvalidationTimestamp;
 
+            // don't send an HMR update until the file has been invalidated
+            if (!invalidated) {
+              res.setHeader('Content-Type', 'text/javascript');
+              res.setHeader('Cache-Control', 'no-cache');
+              res.end('');
+              return;
+            }
+
+            const result = await fileEmitter?.(resolvedId);
             res.setHeader('Content-Type', 'text/javascript');
             res.setHeader('Cache-Control', 'no-cache');
             res.end(`${result?.hmrUpdateCode || ''}`);
@@ -308,9 +324,15 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         if (TS_EXT_REGEX.test(ctx.file)) {
-          const fileId =
-            ctx.file.split('?')[0] +
-            (pluginOptions.supportAnalogFormat ? '.ts' : '');
+          let [fileId] = ctx.file.split('?');
+
+          if (
+            pluginOptions.supportAnalogFormat &&
+            ['ag', 'analog', 'agx'].some((ext) => fileId.endsWith(ext))
+          ) {
+            fileId += '.ts';
+          }
+
           const stale = sourceFileCache.get(fileId);
           sourceFileCache.invalidate([fileId]);
           await buildAndAnalyze();
@@ -328,10 +350,14 @@ export function angular(options?: PluginOptions): Plugin[] {
             )}@${classNames.get(fileId)}`;
 
             sendHMRComponentUpdate(ctx.server, relativeFileId);
-            ctx.server.config.logger.info(
-              `[HMR Update]: ${relativeFileId.split('@')[0]}`
-            );
-            return [];
+
+            return ctx.modules.map((mod) => {
+              if (mod.id === ctx.file) {
+                return markModuleSelfAccepting(mod);
+              }
+
+              return mod;
+            });
           }
         }
 
@@ -344,6 +370,45 @@ export function angular(options?: PluginOptions): Plugin[] {
             (mod) => ctx.file === mod.file && mod.id?.includes('?direct')
           );
           if (isDirect) {
+            if (pluginOptions.liveReload && isDirect?.id && isDirect.file) {
+              const isComponentStyle =
+                isDirect.type === 'css' && isComponentStyleSheet(isDirect.id);
+              if (isComponentStyle) {
+                const { encapsulation } = getComponentStyleSheetMeta(
+                  isDirect.id
+                );
+
+                // Track if the component uses ShadowDOM encapsulation
+                // Shadow DOM components currently require a full reload.
+                // Vite's CSS hot replacement does not support shadow root searching.
+                if (encapsulation !== 'shadow') {
+                  ctx.server.ws.send({
+                    type: 'update',
+                    updates: [
+                      {
+                        type: 'css-update',
+                        timestamp: Date.now(),
+                        path: isDirect.id,
+                        acceptedPath: isDirect.file,
+                      },
+                    ],
+                  });
+
+                  return ctx.modules
+                    .filter((mod) => {
+                      // Component stylesheets will have 2 modules (*.component.scss and *.component.scss?direct&ngcomp=xyz&e=x)
+                      // We remove the module with the query params to prevent vite double logging the stylesheet name "hmr update *.component.scss, *.component.scss?direct&ngcomp=xyz&e=x"
+                      return mod.file !== ctx.file || mod.id !== isDirect.id;
+                    })
+                    .map((mod) => {
+                      if (mod.file === ctx.file) {
+                        return markModuleSelfAccepting(mod);
+                      }
+                      return mod;
+                    }) as ModuleNode[];
+                }
+              }
+            }
             return ctx.modules;
           }
 
@@ -376,10 +441,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
             return ctx.modules.map((mod) => {
               if (mod.id === ctx.file) {
-                return {
-                  ...mod,
-                  isSelfAccepting: true,
-                } as ModuleNode;
+                return markModuleSelfAccepting(mod);
               }
 
               return mod;
@@ -402,6 +464,17 @@ export function angular(options?: PluginOptions): Plugin[] {
         return undefined;
       },
       async load(id, options) {
+        if (isComponentStyleSheet(id)) {
+          const filename = new URL(id, 'http://localhost').pathname.replace(
+            /^\//,
+            ''
+          );
+          const componentStyles = inlineComponentStyles?.get(filename);
+          if (componentStyles) {
+            return componentStyles;
+          }
+        }
+
         if (
           pluginOptions.liveReload &&
           options?.ssr &&
@@ -461,6 +534,20 @@ export function angular(options?: PluginOptions): Plugin[] {
           return;
         }
 
+        /**
+         * Encapsulate component stylesheets that use emulated encapsulation
+         */
+        if (pluginOptions.liveReload && isComponentStyleSheet(id)) {
+          const { encapsulation, componentId } = getComponentStyleSheetMeta(id);
+          if (encapsulation === 'emulated' && componentId) {
+            const encapsulated = ngCompiler.encapsulateStyle(code, componentId);
+            return {
+              code: encapsulated,
+              map: null,
+            };
+          }
+        }
+
         if (TS_EXT_REGEX.test(id)) {
           if (id.includes('.ts?')) {
             // Strip the query string off the ID
@@ -475,9 +562,11 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (isTest) {
             const tsMod = viteServer?.moduleGraph.getModuleById(id);
             if (tsMod) {
-              sourceFileCache.invalidate([id]);
+              const invalidated = tsMod.lastInvalidationTimestamp;
 
-              if (testWatchMode) {
+              if (testWatchMode && invalidated) {
+                sourceFileCache.invalidate([id]);
+
                 await buildAndAnalyze();
               }
             }
@@ -674,8 +763,12 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions.compilationMode = 'experimental-local';
     }
 
-    if (pluginOptions.liveReload) {
+    if (pluginOptions.liveReload && watchMode) {
       tsCompilerOptions['_enableHmr'] = true;
+      tsCompilerOptions['externalRuntimeStyles'] = true;
+      // Workaround for https://github.com/angular/angular/issues/59310
+      // Force extra instructions to be generated for HMR w/defer
+      tsCompilerOptions['supportTestBed'] = true;
     }
 
     rootNames = rn.concat(analogFiles, includeFiles);
@@ -686,11 +779,15 @@ export function angular(options?: PluginOptions): Plugin[] {
       preprocessCSS(code, filename, config as any);
 
     if (!jit) {
+      inlineComponentStyles = tsCompilerOptions['externalRuntimeStyles']
+        ? new Map()
+        : undefined;
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
         supportAnalogFormat: pluginOptions.supportAnalogFormat,
         isProd,
         markdownTemplateTransforms: pluginOptions.markdownTemplateTransforms,
+        inlineComponentStyles,
       });
     }
   }
@@ -772,7 +869,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       ),
       () => [],
       angularCompiler!,
-      pluginOptions.liveReload
+      pluginOptions.liveReload,
+      pluginOptions.disableTypeChecking
     );
   }
 }
@@ -791,7 +889,8 @@ export function createFileEmitter(
   transformers: ts.CustomTransformers = {},
   onAfterEmit?: (sourceFile: ts.SourceFile) => void,
   angularCompiler?: NgtscProgram['compiler'],
-  liveReload?: boolean
+  liveReload?: boolean,
+  disableTypeChecking?: boolean
 ): FileEmitter {
   return async (file: string, stale?: ts.SourceFile) => {
     const sourceFile = program.getSourceFile(file);
@@ -808,9 +907,12 @@ export function createFileEmitter(
       return { dependencies: [], hmrEligible };
     }
 
-    const diagnostics = angularCompiler
-      ? angularCompiler.getDiagnosticsForFile(sourceFile, 1)
-      : [];
+    const diagnostics = getDiagnosticsForSourceFile(
+      sourceFile,
+      !!disableTypeChecking,
+      program,
+      angularCompiler
+    );
 
     const errors = diagnostics
       .filter((d) => d.category === ts.DiagnosticCategory?.Error)
@@ -847,5 +949,64 @@ export function createFileEmitter(
     onAfterEmit?.(sourceFile);
 
     return { content, dependencies: [], errors, warnings, hmrUpdateCode };
+  };
+}
+
+function getDiagnosticsForSourceFile(
+  sourceFile: ts.SourceFile,
+  disableTypeChecking: boolean,
+  program: ts.BuilderProgram,
+  angularCompiler?: NgtscProgram['compiler']
+) {
+  const syntacticDiagnostics = program.getSyntacticDiagnostics(sourceFile);
+
+  if (disableTypeChecking) {
+    // Syntax errors are cheap to compute and the app will not run if there are any
+    // So always show these types of errors regardless if type checking is disabled
+    return syntacticDiagnostics;
+  }
+
+  const semanticDiagnostics = program.getSemanticDiagnostics(sourceFile);
+  const angularDiagnostics = angularCompiler
+    ? angularCompiler.getDiagnosticsForFile(sourceFile, 1)
+    : [];
+  return [
+    ...syntacticDiagnostics,
+    ...semanticDiagnostics,
+    ...angularDiagnostics,
+  ];
+}
+
+function markModuleSelfAccepting(mod: ModuleNode): ModuleNode {
+  // support Vite 6
+  if ('_clientModule' in mod) {
+    (mod as any)['_clientModule'].isSelfAccepting = true;
+  }
+
+  return {
+    ...mod,
+    isSelfAccepting: true,
+  } as ModuleNode;
+}
+
+function isComponentStyleSheet(id: string): boolean {
+  return id.includes('ngcomp=');
+}
+
+function getComponentStyleSheetMeta(id: string): {
+  componentId: string;
+  encapsulation: 'emulated' | 'shadow' | 'none';
+} {
+  const params = new URL(id, 'http://localhost').searchParams;
+  const encapsulationMapping = {
+    '0': 'emulated',
+    '2': 'none',
+    '3': 'shadow',
+  };
+  return {
+    componentId: params.get('ngcomp')!,
+    encapsulation: encapsulationMapping[
+      params.get('e') as keyof typeof encapsulationMapping
+    ] as 'emulated' | 'shadow' | 'none',
   };
 }

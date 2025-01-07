@@ -18,15 +18,10 @@ export function angularVitestPlugin(): Plugin {
           exclude: ['@angular/cdk/testing'],
         },
         ssr: {
-          noExternal: [/cdk\/fesm2022/],
+          noExternal: [/cdk\/fesm2022/, /fesm2022(.*?)testing/, /fesm2015/],
         },
         test: {
           pool: (userConfig as any).test?.pool ?? 'vmThreads',
-          server: {
-            deps: {
-              inline: [/fesm2022(.*?)testing/],
-            },
-          },
         },
       };
     },
