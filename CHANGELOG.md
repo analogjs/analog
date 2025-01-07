@@ -1,3 +1,49 @@
+# [1.12.0-beta.5](https://github.com/analogjs/analog/compare/v1.12.0-beta.4...v1.12.0-beta.5) (2025-01-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use ssr.noExternal for matching libraries during testing ([#1545](https://github.com/analogjs/analog/issues/1545)) ([3f365e9](https://github.com/analogjs/analog/commit/3f365e9b9bdcb45573977270c8c4136b0a592e10))
+
+# [1.12.0-beta.4](https://github.com/analogjs/analog/compare/v1.12.0-beta.3...v1.12.0-beta.4) (2025-01-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fix HMR of component styles w/tsconfig flag ([#1539](https://github.com/analogjs/analog/issues/1539)) ([6b9c75c](https://github.com/analogjs/analog/commit/6b9c75cf29cd3539b5b4d93606ba43ef41c351f1))
+
+# [1.12.0-beta.3](https://github.com/analogjs/analog/compare/v1.12.0-beta.2...v1.12.0-beta.3) (2025-01-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** correctly implement HMR of component styles ([#1542](https://github.com/analogjs/analog/issues/1542)) ([5ec113f](https://github.com/analogjs/analog/commit/5ec113f3d789336ca0753c78c3a83b29263710df))
+
+### Reverts
+
+- Revert "fix(vite-plugin-angular): fix HMR of component styles" ([#1544](https://github.com/analogjs/analog/issues/1544)) ([eff770c](https://github.com/analogjs/analog/commit/eff770c7e40ce3eb6fe3fe523596c672f1f4fb8c))
+
+# [1.12.0-beta.2](https://github.com/analogjs/analog/compare/v1.12.0-beta.1...v1.12.0-beta.2) (2025-01-07)
+
+### Performance Improvements
+
+- **platform:** exclude TypeScript files from Vite esbuild plugin ([#1543](https://github.com/analogjs/analog/issues/1543)) ([de85100](https://github.com/analogjs/analog/commit/de851003761a77e6f536a0c8a43351f5f21274de))
+
+# [1.12.0-beta.1](https://github.com/analogjs/analog/compare/v1.11.1-beta.2...v1.12.0-beta.1) (2025-01-06)
+
+### Features
+
+- **vite-plugin-angular:** fix .ts typechecking and add disableTypeChecking option ([#1538](https://github.com/analogjs/analog/issues/1538)) ([56b0ffe](https://github.com/analogjs/analog/commit/56b0ffe42db52d76fc12ee22f895917f2be3b4a5))
+
+## [1.11.1-beta.2](https://github.com/analogjs/analog/compare/v1.11.1-beta.1...v1.11.1-beta.2) (2025-01-06)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fix HMR of component styles w/tsconfig flag ([#1539](https://github.com/analogjs/analog/issues/1539)) ([ee67cc6](https://github.com/analogjs/analog/commit/ee67cc62d3bce1b0190e28d3b542a520137798c7))
+
+## [1.11.1-beta.1](https://github.com/analogjs/analog/compare/v1.11.0...v1.11.1-beta.1) (2025-01-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** skip rebuilds before invalidation during testing ([#1536](https://github.com/analogjs/analog/issues/1536)) ([4610be7](https://github.com/analogjs/analog/commit/4610be7378392662bec3a56f63290cc15ce721cc))
+
 # [1.11.0](https://github.com/analogjs/analog/compare/v1.10.3...v1.11.0) (2024-12-31)
 
 ### Bug Fixes

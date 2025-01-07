@@ -1205,6 +1205,15 @@
       "contributions": [
         "infra"
       ]
+    },
+    {
+      "login": "mattlewis92",
+      "name": "Matt Lewis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6425649?v=4",
+      "profile": "https://mattlewis.me/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

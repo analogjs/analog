@@ -23,7 +23,7 @@ export function augmentHostWithResources(
     options?: { ssr?: boolean }
   ) => ReturnType<any> | null,
   options: {
-    inlineStylesExtension?: string;
+    inlineStylesExtension: string;
     supportAnalogFormat?:
       | boolean
       | {
@@ -32,13 +32,15 @@ export function augmentHostWithResources(
 
     isProd?: boolean;
     markdownTemplateTransforms?: MarkdownTemplateTransform[];
-  } = {}
+    inlineComponentStyles?: Map<string, string>;
+  }
 ) {
   const ts = require('typescript');
   const resourceHost = host as CompilerHost;
   const baseGetSourceFile = (
     resourceHost as ts.CompilerHost
   ).getSourceFile.bind(resourceHost);
+  const externalStylesheets = new Map<string, string>();
 
   if (options.supportAnalogFormat) {
     (resourceHost as ts.CompilerHost).getSourceFile = (
@@ -146,35 +148,42 @@ export function augmentHostWithResources(
       return null;
     }
 
-    if (options.inlineStylesExtension) {
-      // Resource file only exists for external stylesheets
-      const filename =
-        context.resourceFile ??
-        `${context.containingFile.replace(
-          /(\.analog|\.ag)?\.ts$/,
-          (...args) => {
-            // NOTE: if the original file name contains `.analog`, we turn that into `-analog.css`
-            if (
-              args.includes('.analog') ||
-              args.includes('.ag') ||
-              args.includes('.agx')
-            ) {
-              return `-analog.${options?.inlineStylesExtension}`;
-            }
-            return `.${options?.inlineStylesExtension}`;
-          }
-        )}`;
-
-      let stylesheetResult;
-
-      try {
-        stylesheetResult = await transform(data, `${filename}?direct`);
-      } catch (e) {
-        console.error(`${e}`);
-      }
-
-      return { content: stylesheetResult?.code || '' };
+    if (options.inlineComponentStyles) {
+      const id = createHash('sha256')
+        .update(context.containingFile)
+        .update(context.className)
+        .update(String(context.order))
+        .update(data)
+        .digest('hex');
+      const filename = id + '.' + options.inlineStylesExtension;
+      options.inlineComponentStyles.set(filename, data);
+      return { content: filename };
     }
+
+    // Resource file only exists for external stylesheets
+    const filename =
+      context.resourceFile ??
+      `${context.containingFile.replace(/(\.analog|\.ag)?\.ts$/, (...args) => {
+        // NOTE: if the original file name contains `.analog`, we turn that into `-analog.css`
+        if (
+          args.includes('.analog') ||
+          args.includes('.ag') ||
+          args.includes('.agx')
+        ) {
+          return `-analog.${options?.inlineStylesExtension}`;
+        }
+        return `.${options?.inlineStylesExtension}`;
+      })}`;
+
+    let stylesheetResult;
+
+    try {
+      stylesheetResult = await transform(data, `${filename}?direct`);
+    } catch (e) {
+      console.error(`${e}`);
+    }
+
+    return { content: stylesheetResult?.code || '' };
 
     return null;
   };
