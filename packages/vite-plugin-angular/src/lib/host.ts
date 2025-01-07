@@ -12,7 +12,7 @@ import { MarkdownTemplateTransform } from './authoring/markdown-transform.js';
 
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
-import path from 'path';
+import path from 'node:path';
 
 const require = createRequire(import.meta.url);
 
