@@ -153,6 +153,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let watchMode = false;
   let testWatchMode = false;
   let inlineComponentStyles: Map<string, string> | undefined;
+  let externalComponentStyles: Map<string, string> | undefined;
   const sourceFileCache = new SourceFileCache();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isStackBlitz = !!process.versions['webcontainer'];
@@ -387,7 +388,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                       {
                         type: 'css-update',
                         timestamp: Date.now(),
-                        path: isDirect.id,
+                        path: isDirect.url,
                         acceptedPath: isDirect.file,
                       },
                     ],
@@ -460,15 +461,24 @@ export function angular(options?: PluginOptions): Plugin[] {
           )}?raw`;
         }
 
+        // Map angular external styleUrls to the source file
+        if (isComponentStyleSheet(id)) {
+          const componentStyles = externalComponentStyles?.get(
+            getFilenameFromPath(id)
+          );
+          if (componentStyles) {
+            return componentStyles + new URL(id, 'http://localhost').search;
+          }
+        }
+
         return undefined;
       },
       async load(id, options) {
+        // Map angular inline styles to the source text
         if (isComponentStyleSheet(id)) {
-          const filename = new URL(id, 'http://localhost').pathname.replace(
-            /^\//,
-            ''
+          const componentStyles = inlineComponentStyles?.get(
+            getFilenameFromPath(id)
           );
-          const componentStyles = inlineComponentStyles?.get(filename);
           if (componentStyles) {
             return componentStyles;
           }
@@ -781,12 +791,16 @@ export function angular(options?: PluginOptions): Plugin[] {
       inlineComponentStyles = tsCompilerOptions['externalRuntimeStyles']
         ? new Map()
         : undefined;
+      externalComponentStyles = tsCompilerOptions['externalRuntimeStyles']
+        ? new Map()
+        : undefined;
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
         supportAnalogFormat: pluginOptions.supportAnalogFormat,
         isProd,
         markdownTemplateTransforms: pluginOptions.markdownTemplateTransforms,
         inlineComponentStyles,
+        externalComponentStyles,
       });
     }
   }
@@ -1008,4 +1022,13 @@ function getComponentStyleSheetMeta(id: string): {
       params.get('e') as keyof typeof encapsulationMapping
     ] as 'emulated' | 'shadow' | 'none',
   };
+}
+
+/**
+ * Removes leading / and query string from a url path
+ * e.g. /foo.scss?direct&ngcomp=ng-c3153525609&e=0 returns foo.scss
+ * @param id
+ */
+function getFilenameFromPath(id: string): string {
+  return new URL(id, 'http://localhost').pathname.replace(/^\//, '');
 }

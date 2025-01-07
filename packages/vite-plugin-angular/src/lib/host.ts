@@ -12,6 +12,7 @@ import { MarkdownTemplateTransform } from './authoring/markdown-transform.js';
 
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
+import path from 'node:path';
 
 const require = createRequire(import.meta.url);
 
@@ -33,6 +34,7 @@ export function augmentHostWithResources(
     isProd?: boolean;
     markdownTemplateTransforms?: MarkdownTemplateTransform[];
     inlineComponentStyles?: Map<string, string>;
+    externalComponentStyles?: Map<string, string>;
   }
 ) {
   const ts = require('typescript');
@@ -40,7 +42,6 @@ export function augmentHostWithResources(
   const baseGetSourceFile = (
     resourceHost as ts.CompilerHost
   ).getSourceFile.bind(resourceHost);
-  const externalStylesheets = new Map<string, string>();
 
   if (options.supportAnalogFormat) {
     (resourceHost as ts.CompilerHost).getSourceFile = (
@@ -187,6 +188,33 @@ export function augmentHostWithResources(
 
     return null;
   };
+
+  resourceHost.resourceNameToFileName = function (
+    resourceName,
+    containingFile
+  ) {
+    const resolvedPath = path.join(path.dirname(containingFile), resourceName);
+
+    // All resource names that have template file extensions are assumed to be templates
+    if (
+      !options.externalComponentStyles ||
+      hasTemplateExtension(resolvedPath)
+    ) {
+      return resolvedPath;
+    }
+
+    // For external stylesheets, create a unique identifier and store the mapping
+    let externalId = options.externalComponentStyles.get(resolvedPath);
+    if (externalId === undefined) {
+      externalId = createHash('sha256').update(resolvedPath).digest('hex');
+    }
+
+    const filename = externalId + path.extname(resolvedPath);
+
+    options.externalComponentStyles.set(filename, resolvedPath);
+
+    return filename;
+  };
 }
 
 export function augmentProgramWithVersioning(program: ts.Program): void {
@@ -260,4 +288,17 @@ export function mergeTransformers(
   }
 
   return result;
+}
+
+function hasTemplateExtension(file: string): boolean {
+  const extension = path.extname(file).toLowerCase();
+
+  switch (extension) {
+    case '.htm':
+    case '.html':
+    case '.svg':
+      return true;
+  }
+
+  return false;
 }
