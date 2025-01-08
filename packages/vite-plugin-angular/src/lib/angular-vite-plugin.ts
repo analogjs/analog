@@ -285,7 +285,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             const resolvedId = resolve(process.cwd(), fileId);
             const invalidated =
               !!server.moduleGraph.getModuleById(resolvedId)
-                ?.lastInvalidationTimestamp;
+                ?.lastInvalidationTimestamp && classNames.get(resolvedId);
 
             // don't send an HMR update until the file has been invalidated
             if (!invalidated) {
@@ -451,6 +451,8 @@ export function angular(options?: PluginOptions): Plugin[] {
           return mods;
         }
 
+        // clear HMR updates with a full reload
+        classNames.clear();
         return ctx.modules;
       },
       resolveId(id, importer) {
@@ -941,7 +943,7 @@ export function createFileEmitter(
       for (const node of sourceFile.statements) {
         if (ts.isClassDeclaration(node) && node.name != null) {
           hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node);
-          classNames.set(file, node.name.getText());
+          !!hmrUpdateCode && classNames.set(file, node.name.getText());
         }
       }
     }
