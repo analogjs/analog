@@ -1,3 +1,9 @@
+## [1.12.1-beta.2](https://github.com/analogjs/analog/compare/v1.12.1-beta.1...v1.12.1-beta.2) (2025-01-08)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** only store valid HMR updates and clear updates on a full page reload ([#1550](https://github.com/analogjs/analog/issues/1550)) ([aaa7d1a](https://github.com/analogjs/analog/commit/aaa7d1ae259a9842e366c0db2b52d2f2c752e027))
+
 ## [1.12.1-beta.1](https://github.com/analogjs/analog/compare/v1.12.0...v1.12.1-beta.1) (2025-01-07)
 
 ### Bug Fixes
