@@ -65,6 +65,10 @@ export interface Options {
    * requests to / in the production server build.
    */
   useAPIMiddleware?: boolean;
+  /**
+   * Disable type checking diagnostics by the Angular compiler
+   */
+  disableTypeChecking?: boolean;
 }
 
 export interface PrerenderContentDir {
