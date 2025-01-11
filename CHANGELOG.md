@@ -1,3 +1,9 @@
+## [1.12.1-beta.3](https://github.com/analogjs/analog/compare/v1.12.1-beta.2...v1.12.1-beta.3) (2025-01-11)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** disable type checking diagnostics in vite plugin by default ([#1552](https://github.com/analogjs/analog/issues/1552)) ([2945ea8](https://github.com/analogjs/analog/commit/2945ea82d7a3a8f1f07d23bfb61a48f95a698d27))
+
 ## [1.12.1-beta.2](https://github.com/analogjs/analog/compare/v1.12.1-beta.1...v1.12.1-beta.2) (2025-01-08)
 
 ### Bug Fixes
