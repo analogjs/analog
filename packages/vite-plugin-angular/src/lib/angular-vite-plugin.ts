@@ -137,7 +137,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     include: options?.include ?? [],
     additionalContentDirs: options?.additionalContentDirs ?? [],
     liveReload: options?.liveReload ?? false,
-    disableTypeChecking: options?.disableTypeChecking ?? false,
+    disableTypeChecking: options?.disableTypeChecking ?? true,
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
