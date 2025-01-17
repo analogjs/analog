@@ -1,6 +1,6 @@
 import { Plugin } from 'vite';
 
-import { angularMajor, angularPatch } from './utils/devkit.js';
+import { angularMajor, angularMinor, angularPatch } from './utils/devkit.js';
 
 /**
  * This plugin is a workaround for the ɵPendingTasks symbol being renamed
@@ -14,7 +14,7 @@ export function pendingTasksPlugin(): Plugin {
     name: 'analogjs-pending-tasks-plugin',
     transform(code, id) {
       if (
-        Number(`${angularMajor}.${angularPatch}`) < 19.4 &&
+        Number(`${angularMajor}${angularMinor}${angularPatch}`) < 1904 &&
         id.includes('analogjs-content.mjs')
       ) {
         return {
