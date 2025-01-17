@@ -1,3 +1,12 @@
+## [1.12.1](https://github.com/analogjs/analog/compare/v1.12.0...v1.12.1) (2025-01-17)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** disable type checking diagnostics in vite plugin by default ([#1552](https://github.com/analogjs/analog/issues/1552)) ([2945ea8](https://github.com/analogjs/analog/commit/2945ea82d7a3a8f1f07d23bfb61a48f95a698d27))
+- **vite-plugin-angular:** fix SSG and HMR of external component stylesheets ([#1548](https://github.com/analogjs/analog/issues/1548)) ([e6de3d7](https://github.com/analogjs/analog/commit/e6de3d71acb292b9abb6e5939fea9902a2a41d38))
+- **vite-plugin-angular:** only store valid HMR updates and clear updates on a full page reload ([#1550](https://github.com/analogjs/analog/issues/1550)) ([aaa7d1a](https://github.com/analogjs/analog/commit/aaa7d1ae259a9842e366c0db2b52d2f2c752e027))
+- **vite-plugin-angular:** use whole angular version for pending tasks replacement ([#1555](https://github.com/analogjs/analog/issues/1555)) ([5f8bedb](https://github.com/analogjs/analog/commit/5f8bedbcd990c5146c904e1d1757a477f8b55878))
+
 ## [1.12.1-beta.4](https://github.com/analogjs/analog/compare/v1.12.1-beta.3...v1.12.1-beta.4) (2025-01-17)
 
 ### Bug Fixes
