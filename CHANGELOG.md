@@ -1,3 +1,9 @@
+## [1.12.1-beta.4](https://github.com/analogjs/analog/compare/v1.12.1-beta.3...v1.12.1-beta.4) (2025-01-17)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use whole angular version for pending tasks replacement ([#1555](https://github.com/analogjs/analog/issues/1555)) ([5f8bedb](https://github.com/analogjs/analog/commit/5f8bedbcd990c5146c904e1d1757a477f8b55878))
+
 ## [1.12.1-beta.3](https://github.com/analogjs/analog/compare/v1.12.1-beta.2...v1.12.1-beta.3) (2025-01-11)
 
 ### Bug Fixes
