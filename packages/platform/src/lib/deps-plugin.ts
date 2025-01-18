@@ -21,7 +21,7 @@ export function depsPlugin(options?: Options): Plugin[] {
               'rxfire',
               '@ng-web-apis/**',
               '@taiga-ui/**',
-              '@tanstack/angular-query-experimental'
+              '@tanstack/angular-query-experimental',
             ],
           },
           optimizeDeps: {
