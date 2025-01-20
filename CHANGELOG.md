@@ -1,3 +1,9 @@
+## [1.12.2-beta.1](https://github.com/analogjs/analog/compare/v1.12.1...v1.12.2-beta.1) (2025-01-20)
+
+### Bug Fixes
+
+- **platform:** add @tanstack/angular-query-experimental to the internal SSR deps list ([#1558](https://github.com/analogjs/analog/issues/1558)) ([c382e88](https://github.com/analogjs/analog/commit/c382e88c857d6fdef41f0b98c6a2ba5a58dde495))
+
 ## [1.12.1](https://github.com/analogjs/analog/compare/v1.12.0...v1.12.1) (2025-01-17)
 
 ### Bug Fixes
