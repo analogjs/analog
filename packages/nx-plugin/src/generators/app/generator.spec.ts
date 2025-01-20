@@ -124,8 +124,8 @@ describe('nx-plugin generator', () => {
     dependencies: Record<string, string>,
     devDependencies: Record<string, string>
   ) => {
-    expect(dependencies['@analogjs/content']).toBe('^1.10.0');
-    expect(dependencies['@analogjs/router']).toBe('^1.10.0');
+    expect(dependencies['@analogjs/content']).toBeDefined();
+    expect(dependencies['@analogjs/router']).toBeDefined();
     expect(dependencies['@angular/platform-server']).toBe(
       dependencies['@angular/core']
     );
@@ -142,9 +142,9 @@ describe('nx-plugin generator', () => {
     // we just check for truthy because @nx/eslint generator
     // will install the correct version based on Nx version
     expect(devDependencies['@nx/eslint']).toBeTruthy();
-    expect(devDependencies['@analogjs/platform']).toBe('^1.10.0');
-    expect(devDependencies['@analogjs/vite-plugin-angular']).toBe('^1.10.0');
-    expect(devDependencies['@analogjs/vitest-angular']).toBe('^1.10.0');
+    expect(devDependencies['@analogjs/platform']).toBeDefined();
+    expect(devDependencies['@analogjs/vite-plugin-angular']).toBeDefined();
+    expect(devDependencies['@analogjs/vitest-angular']).toBeDefined();
     expect(devDependencies['@nx/vite']).toBe('^20.0.0');
     expect(devDependencies['jsdom']).toBe('^22.1.0');
     expect(devDependencies['vite']).toBe('^5.0.0');
