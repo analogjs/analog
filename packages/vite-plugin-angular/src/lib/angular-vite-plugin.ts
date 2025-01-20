@@ -265,7 +265,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               return;
             }
 
-            if (!req.url.startsWith(ANGULAR_COMPONENT_PREFIX)) {
+            if (!req.url.includes(ANGULAR_COMPONENT_PREFIX)) {
               next();
 
               return;
