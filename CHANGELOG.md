@@ -1,3 +1,9 @@
+## [1.12.2-beta.2](https://github.com/analogjs/analog/compare/v1.12.2-beta.1...v1.12.2-beta.2) (2025-01-20)
+
+### Bug Fixes
+
+- **nx-plugin:** add SuperJSON transformer to the tRPC template ([#1560](https://github.com/analogjs/analog/issues/1560)) ([a6c08d4](https://github.com/analogjs/analog/commit/a6c08d4d3a3bb17cff10eac56a7b3451177a6e23))
+
 ## [1.12.2-beta.1](https://github.com/analogjs/analog/compare/v1.12.1...v1.12.2-beta.1) (2025-01-20)
 
 ### Bug Fixes
