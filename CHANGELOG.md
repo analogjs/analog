@@ -1,3 +1,9 @@
+## [1.12.2-beta.3](https://github.com/analogjs/analog/compare/v1.12.2-beta.2...v1.12.2-beta.3) (2025-01-21)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fix component HMR with angular 19.1.2 ([#1563](https://github.com/analogjs/analog/issues/1563)) ([ee58f28](https://github.com/analogjs/analog/commit/ee58f28b33aa652b29480eeb887acaa183ed21b5))
+
 ## [1.12.2-beta.2](https://github.com/analogjs/analog/compare/v1.12.2-beta.1...v1.12.2-beta.2) (2025-01-20)
 
 ### Bug Fixes
