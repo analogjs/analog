@@ -1,3 +1,9 @@
+## [1.12.2-beta.5](https://github.com/analogjs/analog/compare/v1.12.2-beta.4...v1.12.2-beta.5) (2025-01-22)
+
+### Bug Fixes
+
+- **trpc:** separate client/server imports ([#1567](https://github.com/analogjs/analog/issues/1567)) ([dd0d63b](https://github.com/analogjs/analog/commit/dd0d63b3b30fa21649928c1d70ecfd1f9c7ed5f6))
+
 ## [1.12.2-beta.4](https://github.com/analogjs/analog/compare/v1.12.2-beta.3...v1.12.2-beta.4) (2025-01-22)
 
 ### Bug Fixes
