@@ -1,3 +1,9 @@
+## [1.12.2-beta.4](https://github.com/analogjs/analog/compare/v1.12.2-beta.3...v1.12.2-beta.4) (2025-01-22)
+
+### Bug Fixes
+
+- **nx-plugin:** ensure correct installation of Angular/Vite packages ([#1566](https://github.com/analogjs/analog/issues/1566)) ([48ca6f7](https://github.com/analogjs/analog/commit/48ca6f77f3d5904bb350f90138b38d60613d00bb))
+
 ## [1.12.2-beta.3](https://github.com/analogjs/analog/compare/v1.12.2-beta.2...v1.12.2-beta.3) (2025-01-21)
 
 ### Bug Fixes
