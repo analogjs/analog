@@ -16,3 +16,4 @@ export const V19_X_NX_VITE = '^20.0.0';
 export const V19_X_JSDOM = '^22.0.0';
 export const V19_X_VITE_TSCONFIG_PATHS = '^4.2.0';
 export const V19_X_VITEST = '^2.0.0';
+export const V19_X_VITE = '^5.0.0';
