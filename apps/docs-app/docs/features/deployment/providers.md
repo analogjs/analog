@@ -573,7 +573,8 @@ env:
   TARGET_DIR: dist/analog/public
 
 jobs:
-  build:
+  # build the project and push it to the gh-pages branch
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -597,7 +598,39 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.ACCESS_TOKEN }} # A token must be created to be able to deploy on the gh-pages branch
           CNAME_OPTION: --cname=yourdomain.dev # omit if your not running it on a custom domain
+        # run the deployment script to push the built project to the gh-pages branch
+        # the default contributor is github-actions[bot]
         run: |
           echo "DRY_RUN_OPTION=$DRY_RUN_OPTION"
-          npx angular-cli-ghpages --no-silent --dir="${{env.TARGET_DIR}}" $CNAME_OPTION $DRY_RUN_OPTION
+          npx angular-cli-ghpages --no-silent --dir="${{env.TARGET_DIR}}" \
+            --name="github-actions[bot]" \
+            --email="github-actions[bot]@users.noreply.github.com" \
+            --branch="gh-pages" \
+            --message="Deploy: $(git log -1 --pretty=%B)" \
+            $DRY_RUN_OPTION
+
+  # deploy from gh-pages branch
+  deploy-pages:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 ```
