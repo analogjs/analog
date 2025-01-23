@@ -291,7 +291,10 @@ export interface PostAttributes {
   `,
 })
 export default class BlogPostComponent {
-  readonly post$ = injectContent<PostAttributes>();
+  readonly post$ = injectContent<PostAttributes>({
+    param: 'slug',
+    subdirectory: 'blog',
+  });
 }
 ```
 
