@@ -1,3 +1,9 @@
+## [1.12.2-beta.6](https://github.com/analogjs/analog/compare/v1.12.2-beta.5...v1.12.2-beta.6) (2025-01-23)
+
+### Bug Fixes
+
+- **nx-plugin:** bump @analogjs/trpc package for preset ([#1569](https://github.com/analogjs/analog/issues/1569)) ([fc575f8](https://github.com/analogjs/analog/commit/fc575f8d02935f6a51ee064cfa4da711a7762c74))
+
 ## [1.12.2-beta.5](https://github.com/analogjs/analog/compare/v1.12.2-beta.4...v1.12.2-beta.5) (2025-01-22)
 
 ### Bug Fixes
