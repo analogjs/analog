@@ -265,7 +265,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               return;
             }
 
-            if (!req.url.startsWith(ANGULAR_COMPONENT_PREFIX)) {
+            if (!req.url.includes(ANGULAR_COMPONENT_PREFIX)) {
               next();
 
               return;
@@ -489,7 +489,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         if (
           pluginOptions.liveReload &&
           options?.ssr &&
-          id.startsWith(ANGULAR_COMPONENT_PREFIX)
+          id.includes(ANGULAR_COMPONENT_PREFIX)
         ) {
           const requestUrl = new URL(id.slice(1), 'http://localhost');
           const componentId = requestUrl.searchParams.get('c');

@@ -1,6 +1,8 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "outDir": "../../dist/out-tsc",
     "declaration": true,
     "types": ["node"]

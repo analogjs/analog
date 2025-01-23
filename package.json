@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "1.12.1",
+  "version": "1.12.2-beta.6",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -150,7 +150,7 @@
     "ng-packagr": "^19.0.0",
     "nitropack": "^2.10.0",
     "nx": "20.1.2",
-    "playwright": "^1.30.0",
+    "playwright": "^1.49.1",
     "postcss": "^8.4.21",
     "postcss-import": "~15.1.0",
     "postcss-preset-env": "~8.0.1",

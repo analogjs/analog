@@ -84,7 +84,7 @@ export const getAnalogDependencies = (
   // install 15.X deps for versions 15.8.0 =< 16.1.0
   if (lt(escapedNxVersion, '16.1.0')) {
     return {
-      '@angular/platform-server': angularVersion,
+      '@angular/platform-server': `^${angularVersion}`,
       '@analogjs/content': V15_X_ANALOG_JS_CONTENT,
       '@analogjs/router': V15_X_ANALOG_JS_ROUTER,
       'front-matter': V15_X_FRONT_MATTER,
@@ -97,7 +97,7 @@ export const getAnalogDependencies = (
   // install 16.X deps for versions 16.1.0 =< 16.10.0
   if (lt(escapedNxVersion, '17.0.0')) {
     return {
-      '@angular/platform-server': angularVersion,
+      '@angular/platform-server': `^${angularVersion}`,
       '@analogjs/content': V16_X_ANALOG_JS_CONTENT,
       '@analogjs/router': V16_X_ANALOG_JS_ROUTER,
       'front-matter': V16_X_FRONT_MATTER,
@@ -113,7 +113,7 @@ export const getAnalogDependencies = (
   // install 17.X deps for versions <18.0.0
   if (lt(escapedNxVersion, '18.0.0')) {
     return {
-      '@angular/platform-server': angularVersion,
+      '@angular/platform-server': `^${angularVersion}`,
       '@analogjs/content': V17_X_ANALOG_JS_CONTENT,
       '@analogjs/router': V17_X_ANALOG_JS_ROUTER,
       'front-matter': V17_X_FRONT_MATTER,
@@ -128,7 +128,7 @@ export const getAnalogDependencies = (
 
   // return latest 18.X deps for versions >= 18.0.0
   return {
-    '@angular/platform-server': angularVersion,
+    '@angular/platform-server': `^${angularVersion}`,
     '@analogjs/content': V18_X_ANALOG_JS_CONTENT,
     '@analogjs/router': V18_X_ANALOG_JS_ROUTER,
     'front-matter': V18_X_FRONT_MATTER,

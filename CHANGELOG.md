@@ -1,3 +1,39 @@
+## [1.12.2-beta.6](https://github.com/analogjs/analog/compare/v1.12.2-beta.5...v1.12.2-beta.6) (2025-01-23)
+
+### Bug Fixes
+
+- **nx-plugin:** bump @analogjs/trpc package for preset ([#1569](https://github.com/analogjs/analog/issues/1569)) ([fc575f8](https://github.com/analogjs/analog/commit/fc575f8d02935f6a51ee064cfa4da711a7762c74))
+
+## [1.12.2-beta.5](https://github.com/analogjs/analog/compare/v1.12.2-beta.4...v1.12.2-beta.5) (2025-01-22)
+
+### Bug Fixes
+
+- **trpc:** separate client/server imports ([#1567](https://github.com/analogjs/analog/issues/1567)) ([dd0d63b](https://github.com/analogjs/analog/commit/dd0d63b3b30fa21649928c1d70ecfd1f9c7ed5f6))
+
+## [1.12.2-beta.4](https://github.com/analogjs/analog/compare/v1.12.2-beta.3...v1.12.2-beta.4) (2025-01-22)
+
+### Bug Fixes
+
+- **nx-plugin:** ensure correct installation of Angular/Vite packages ([#1566](https://github.com/analogjs/analog/issues/1566)) ([48ca6f7](https://github.com/analogjs/analog/commit/48ca6f77f3d5904bb350f90138b38d60613d00bb))
+
+## [1.12.2-beta.3](https://github.com/analogjs/analog/compare/v1.12.2-beta.2...v1.12.2-beta.3) (2025-01-21)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fix component HMR with angular 19.1.2 ([#1563](https://github.com/analogjs/analog/issues/1563)) ([ee58f28](https://github.com/analogjs/analog/commit/ee58f28b33aa652b29480eeb887acaa183ed21b5))
+
+## [1.12.2-beta.2](https://github.com/analogjs/analog/compare/v1.12.2-beta.1...v1.12.2-beta.2) (2025-01-20)
+
+### Bug Fixes
+
+- **nx-plugin:** add SuperJSON transformer to the tRPC template ([#1560](https://github.com/analogjs/analog/issues/1560)) ([a6c08d4](https://github.com/analogjs/analog/commit/a6c08d4d3a3bb17cff10eac56a7b3451177a6e23))
+
+## [1.12.2-beta.1](https://github.com/analogjs/analog/compare/v1.12.1...v1.12.2-beta.1) (2025-01-20)
+
+### Bug Fixes
+
+- **platform:** add @tanstack/angular-query-experimental to the internal SSR deps list ([#1558](https://github.com/analogjs/analog/issues/1558)) ([c382e88](https://github.com/analogjs/analog/commit/c382e88c857d6fdef41f0b98c6a2ba5a58dde495))
+
 ## [1.12.1](https://github.com/analogjs/analog/compare/v1.12.0...v1.12.1) (2025-01-17)
 
 ### Bug Fixes
