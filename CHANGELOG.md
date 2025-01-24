@@ -1,3 +1,9 @@
+# [1.13.0-beta.3](https://github.com/analogjs/analog/compare/v1.13.0-beta.2...v1.13.0-beta.3) (2025-01-24)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** unwrap typechecking diagnostic messages ([#1576](https://github.com/analogjs/analog/issues/1576)) ([6b9e71f](https://github.com/analogjs/analog/commit/6b9e71fda3289ca3c98de640f17eabce880ed83e))
+
 # [1.13.0-beta.2](https://github.com/analogjs/analog/compare/v1.13.0-beta.1...v1.13.0-beta.2) (2025-01-24)
 
 ### Bug Fixes
