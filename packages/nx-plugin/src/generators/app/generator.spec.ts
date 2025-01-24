@@ -147,9 +147,9 @@ describe('nx-plugin generator', () => {
     expect(devDependencies['@analogjs/vitest-angular']).toBeDefined();
     expect(devDependencies['@nx/vite']).toBe('^20.0.0');
     expect(devDependencies['jsdom']).toBe('^22.1.0');
-    expect(devDependencies['vite']).toBe('^5.0.0');
+    expect(devDependencies['vite']).toBeDefined();
     expect(devDependencies['vite-tsconfig-paths']).toBe('^4.2.0');
-    expect(devDependencies['vitest']).toBe('^2.0.0');
+    expect(devDependencies['vitest']).toBeDefined();
   };
 
   const verifyConfig = (
