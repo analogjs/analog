@@ -1,3 +1,9 @@
+# [1.13.0-beta.2](https://github.com/analogjs/analog/compare/v1.13.0-beta.1...v1.13.0-beta.2) (2025-01-24)
+
+### Bug Fixes
+
+- **create-analog:** add overrides for Vite 6/Vitest 3 to templates ([#1575](https://github.com/analogjs/analog/issues/1575)) ([24de7c1](https://github.com/analogjs/analog/commit/24de7c14febff35309000f944bc0e09921fff045))
+
 # [1.13.0-beta.1](https://github.com/analogjs/analog/compare/v1.12.2...v1.13.0-beta.1) (2025-01-24)
 
 ### Features
