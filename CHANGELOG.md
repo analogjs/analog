@@ -1,3 +1,9 @@
+# [1.13.0-beta.1](https://github.com/analogjs/analog/compare/v1.12.2...v1.13.0-beta.1) (2025-01-24)
+
+### Features
+
+- add support for Vite 6 and Vitest 3 ([#1573](https://github.com/analogjs/analog/issues/1573)) ([0df2c77](https://github.com/analogjs/analog/commit/0df2c77d9f48bbbdaf154f1602d8d5cde9b5d218))
+
 ## [1.12.2](https://github.com/analogjs/analog/compare/v1.12.1...v1.12.2) (2025-01-23)
 
 ### Bug Fixes
