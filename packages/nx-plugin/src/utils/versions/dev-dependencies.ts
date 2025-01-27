@@ -44,6 +44,7 @@ import {
   V19_X_JSDOM,
   V19_X_VITE_TSCONFIG_PATHS,
   V19_X_VITEST,
+  V19_X_VITE,
 } from './ng_19_X/versions';
 
 const devDependencyKeys = [
@@ -53,6 +54,7 @@ const devDependencyKeys = [
   'vite-tsconfig-paths',
   'vitest',
   '@nx/vite',
+  'vite',
 ] as const;
 export type AnalogDevDependency = (typeof devDependencyKeys)[number];
 
@@ -81,6 +83,7 @@ const getDevDependencies = (escapedAngularVersion: string) => {
       '@nx/vite': V15_X_NX_VITE,
       jsdom: V15_X_JSDOM,
       'vite-tsconfig-paths': V15_X_VITE_TSCONFIG_PATHS,
+      vite: V19_X_VITE,
       vitest: V15_X_VITEST,
     };
   }
@@ -94,6 +97,7 @@ const getDevDependencies = (escapedAngularVersion: string) => {
       '@nx/vite': V16_X_NX_VITE,
       jsdom: V16_X_JSDOM,
       'vite-tsconfig-paths': V16_X_VITE_TSCONFIG_PATHS,
+      vite: V19_X_VITE,
       vitest: V16_X_VITEST,
     };
   }
@@ -107,6 +111,7 @@ const getDevDependencies = (escapedAngularVersion: string) => {
       '@nx/vite': V17_X_NX_VITE,
       jsdom: V17_X_JSDOM,
       'vite-tsconfig-paths': V17_X_VITE_TSCONFIG_PATHS,
+      vite: V19_X_VITE,
       vitest: V17_X_VITEST,
     };
   }
@@ -120,6 +125,7 @@ const getDevDependencies = (escapedAngularVersion: string) => {
       '@nx/vite': V18_X_NX_VITE,
       jsdom: V18_X_JSDOM,
       'vite-tsconfig-paths': V18_X_VITE_TSCONFIG_PATHS,
+      vite: V19_X_VITE,
       vitest: V18_X_VITEST,
     };
   }
@@ -132,6 +138,7 @@ const getDevDependencies = (escapedAngularVersion: string) => {
     '@nx/vite': V19_X_NX_VITE,
     jsdom: V19_X_JSDOM,
     'vite-tsconfig-paths': V19_X_VITE_TSCONFIG_PATHS,
+    vite: V19_X_VITE,
     vitest: V19_X_VITEST,
   };
 };

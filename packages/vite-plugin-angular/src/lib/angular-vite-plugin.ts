@@ -137,7 +137,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     include: options?.include ?? [],
     additionalContentDirs: options?.additionalContentDirs ?? [],
     liveReload: options?.liveReload ?? false,
-    disableTypeChecking: options?.disableTypeChecking ?? false,
+    disableTypeChecking: options?.disableTypeChecking ?? true,
   };
 
   // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
@@ -153,6 +153,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let watchMode = false;
   let testWatchMode = false;
   let inlineComponentStyles: Map<string, string> | undefined;
+  let externalComponentStyles: Map<string, string> | undefined;
   const sourceFileCache = new SourceFileCache();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isStackBlitz = !!process.versions['webcontainer'];
@@ -265,7 +266,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               return;
             }
 
-            if (!req.url.startsWith(ANGULAR_COMPONENT_PREFIX)) {
+            if (!req.url.includes(ANGULAR_COMPONENT_PREFIX)) {
               next();
 
               return;
@@ -285,7 +286,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             const resolvedId = resolve(process.cwd(), fileId);
             const invalidated =
               !!server.moduleGraph.getModuleById(resolvedId)
-                ?.lastInvalidationTimestamp;
+                ?.lastInvalidationTimestamp && classNames.get(resolvedId);
 
             // don't send an HMR update until the file has been invalidated
             if (!invalidated) {
@@ -388,7 +389,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                       {
                         type: 'css-update',
                         timestamp: Date.now(),
-                        path: isDirect.id,
+                        path: isDirect.url,
                         acceptedPath: isDirect.file,
                       },
                     ],
@@ -451,6 +452,8 @@ export function angular(options?: PluginOptions): Plugin[] {
           return mods;
         }
 
+        // clear HMR updates with a full reload
+        classNames.clear();
         return ctx.modules;
       },
       resolveId(id, importer) {
@@ -461,15 +464,24 @@ export function angular(options?: PluginOptions): Plugin[] {
           )}?raw`;
         }
 
+        // Map angular external styleUrls to the source file
+        if (isComponentStyleSheet(id)) {
+          const componentStyles = externalComponentStyles?.get(
+            getFilenameFromPath(id)
+          );
+          if (componentStyles) {
+            return componentStyles + new URL(id, 'http://localhost').search;
+          }
+        }
+
         return undefined;
       },
       async load(id, options) {
+        // Map angular inline styles to the source text
         if (isComponentStyleSheet(id)) {
-          const filename = new URL(id, 'http://localhost').pathname.replace(
-            /^\//,
-            ''
+          const componentStyles = inlineComponentStyles?.get(
+            getFilenameFromPath(id)
           );
-          const componentStyles = inlineComponentStyles?.get(filename);
           if (componentStyles) {
             return componentStyles;
           }
@@ -478,7 +490,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         if (
           pluginOptions.liveReload &&
           options?.ssr &&
-          id.startsWith(ANGULAR_COMPONENT_PREFIX)
+          id.includes(ANGULAR_COMPONENT_PREFIX)
         ) {
           const requestUrl = new URL(id.slice(1), 'http://localhost');
           const componentId = requestUrl.searchParams.get('c');
@@ -782,12 +794,16 @@ export function angular(options?: PluginOptions): Plugin[] {
       inlineComponentStyles = tsCompilerOptions['externalRuntimeStyles']
         ? new Map()
         : undefined;
+      externalComponentStyles = tsCompilerOptions['externalRuntimeStyles']
+        ? new Map()
+        : undefined;
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
         supportAnalogFormat: pluginOptions.supportAnalogFormat,
         isProd,
         markdownTemplateTransforms: pluginOptions.markdownTemplateTransforms,
         inlineComponentStyles,
+        externalComponentStyles,
       });
     }
   }
@@ -916,7 +932,11 @@ export function createFileEmitter(
 
     const errors = diagnostics
       .filter((d) => d.category === ts.DiagnosticCategory?.Error)
-      .map((d) => d.messageText);
+      .map((d) =>
+        typeof d.messageText === 'object'
+          ? d.messageText.messageText
+          : d.messageText
+      );
 
     const warnings = diagnostics
       .filter((d) => d.category === ts.DiagnosticCategory?.Warning)
@@ -928,7 +948,7 @@ export function createFileEmitter(
       for (const node of sourceFile.statements) {
         if (ts.isClassDeclaration(node) && node.name != null) {
           hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node);
-          classNames.set(file, node.name.getText());
+          !!hmrUpdateCode && classNames.set(file, node.name.getText());
         }
       }
     }
@@ -1009,4 +1029,13 @@ function getComponentStyleSheetMeta(id: string): {
       params.get('e') as keyof typeof encapsulationMapping
     ] as 'emulated' | 'shadow' | 'none',
   };
+}
+
+/**
+ * Removes leading / and query string from a url path
+ * e.g. /foo.scss?direct&ngcomp=ng-c3153525609&e=0 returns foo.scss
+ * @param id
+ */
+function getFilenameFromPath(id: string): string {
+  return new URL(id, 'http://localhost').pathname.replace(/^\//, '');
 }

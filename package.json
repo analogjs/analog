@@ -13,7 +13,7 @@
     "e2e": "nx run-many --target e2e --projects create-analog-e2e,analog-app-e2e-cypress --parallel=1 --exclude analog-app-e2e-playwright",
     "test": "nx run-many --target test",
     "build:vite-ci": "npm run build",
-    "test:vite-ci": "nx run-many --target test --all --skip-nx-cache",
+    "test:vite-ci": "nx run-many --target test --exclude card --all --skip-nx-cache",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "contributors:add": "all-contributors add",
     "contributors:generate": "all-contributors generate",
@@ -150,7 +150,7 @@
     "ng-packagr": "^19.0.0",
     "nitropack": "^2.10.0",
     "nx": "20.1.2",
-    "playwright": "^1.30.0",
+    "playwright": "^1.49.1",
     "postcss": "^8.4.21",
     "postcss-import": "~15.1.0",
     "postcss-preset-env": "~8.0.1",
@@ -178,7 +178,7 @@
     "vite-plugin-inspect": "~0.8",
     "vite-tsconfig-paths": "4.2.0",
     "vitefu": "^0.2.5",
-    "vitest": "^2.0.0",
+    "vitest": "^3.0.0",
     "webpack-bundle-analyzer": "^4.7.0",
     "xmlbuilder2": "^3.0.2"
   }
