@@ -608,6 +608,10 @@ describe('routes', () => {
   });
 
   describe('a route without default export', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
     it('should log a warning when default export is falsy', async () => {
       const fileName = '/app/routes/index.ts';
       const files: Files = {

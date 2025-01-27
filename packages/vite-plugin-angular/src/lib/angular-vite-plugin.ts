@@ -931,7 +931,11 @@ export function createFileEmitter(
 
     const errors = diagnostics
       .filter((d) => d.category === ts.DiagnosticCategory?.Error)
-      .map((d) => d.messageText);
+      .map((d) =>
+        typeof d.messageText === 'object'
+          ? d.messageText.messageText
+          : d.messageText
+      );
 
     const warnings = diagnostics
       .filter((d) => d.category === ts.DiagnosticCategory?.Warning)
