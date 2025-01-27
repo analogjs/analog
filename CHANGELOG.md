@@ -1,3 +1,15 @@
+# [1.13.0](https://github.com/analogjs/analog/compare/v1.12.2...v1.13.0) (2025-01-27)
+
+### Bug Fixes
+
+- **create-analog:** add overrides for Vite 6/Vitest 3 to templates ([#1575](https://github.com/analogjs/analog/issues/1575)) ([24de7c1](https://github.com/analogjs/analog/commit/24de7c14febff35309000f944bc0e09921fff045))
+- **create-analog:** set root in angular.json for templates ([#1578](https://github.com/analogjs/analog/issues/1578)) ([f8de730](https://github.com/analogjs/analog/commit/f8de730f859424368e54643d470cacbfb940bb12))
+- **vite-plugin-angular:** unwrap typechecking diagnostic messages ([#1576](https://github.com/analogjs/analog/issues/1576)) ([6b9e71f](https://github.com/analogjs/analog/commit/6b9e71fda3289ca3c98de640f17eabce880ed83e))
+
+### Features
+
+- add support for Vite 6 and Vitest 3 ([#1573](https://github.com/analogjs/analog/issues/1573)) ([0df2c77](https://github.com/analogjs/analog/commit/0df2c77d9f48bbbdaf154f1602d8d5cde9b5d218))
+
 # [1.13.0-beta.4](https://github.com/analogjs/analog/compare/v1.13.0-beta.3...v1.13.0-beta.4) (2025-01-27)
 
 ### Bug Fixes
