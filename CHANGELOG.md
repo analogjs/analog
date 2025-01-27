@@ -1,3 +1,9 @@
+# [1.13.0-beta.4](https://github.com/analogjs/analog/compare/v1.13.0-beta.3...v1.13.0-beta.4) (2025-01-27)
+
+### Bug Fixes
+
+- **create-analog:** set root in angular.json for templates ([#1578](https://github.com/analogjs/analog/issues/1578)) ([f8de730](https://github.com/analogjs/analog/commit/f8de730f859424368e54643d470cacbfb940bb12))
+
 # [1.13.0-beta.3](https://github.com/analogjs/analog/compare/v1.13.0-beta.2...v1.13.0-beta.3) (2025-01-24)
 
 ### Bug Fixes
