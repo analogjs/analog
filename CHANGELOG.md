@@ -1,3 +1,25 @@
+# [2.0.0-alpha.4](https://github.com/analogjs/analog/compare/v2.0.0-alpha.3...v2.0.0-alpha.4) (2025-01-27)
+
+### Bug Fixes
+
+- **create-analog:** add overrides for Vite 6/Vitest 3 to templates ([#1575](https://github.com/analogjs/analog/issues/1575)) ([24de7c1](https://github.com/analogjs/analog/commit/24de7c14febff35309000f944bc0e09921fff045))
+- **create-analog:** set root in angular.json for templates ([#1578](https://github.com/analogjs/analog/issues/1578)) ([f8de730](https://github.com/analogjs/analog/commit/f8de730f859424368e54643d470cacbfb940bb12))
+- **nx-plugin:** add SuperJSON transformer to the tRPC template ([#1560](https://github.com/analogjs/analog/issues/1560)) ([a6c08d4](https://github.com/analogjs/analog/commit/a6c08d4d3a3bb17cff10eac56a7b3451177a6e23))
+- **nx-plugin:** bump @analogjs/trpc package for preset ([#1569](https://github.com/analogjs/analog/issues/1569)) ([fc575f8](https://github.com/analogjs/analog/commit/fc575f8d02935f6a51ee064cfa4da711a7762c74))
+- **nx-plugin:** ensure correct installation of Angular/Vite packages ([#1566](https://github.com/analogjs/analog/issues/1566)) ([48ca6f7](https://github.com/analogjs/analog/commit/48ca6f77f3d5904bb350f90138b38d60613d00bb))
+- **platform:** add @tanstack/angular-query-experimental to the internal SSR deps list ([#1558](https://github.com/analogjs/analog/issues/1558)) ([c382e88](https://github.com/analogjs/analog/commit/c382e88c857d6fdef41f0b98c6a2ba5a58dde495))
+- **trpc:** separate client/server imports ([#1567](https://github.com/analogjs/analog/issues/1567)) ([dd0d63b](https://github.com/analogjs/analog/commit/dd0d63b3b30fa21649928c1d70ecfd1f9c7ed5f6))
+- **vite-plugin-angular:** disable type checking diagnostics in vite plugin by default ([#1552](https://github.com/analogjs/analog/issues/1552)) ([2945ea8](https://github.com/analogjs/analog/commit/2945ea82d7a3a8f1f07d23bfb61a48f95a698d27))
+- **vite-plugin-angular:** fix component HMR with angular 19.1.2 ([#1563](https://github.com/analogjs/analog/issues/1563)) ([ee58f28](https://github.com/analogjs/analog/commit/ee58f28b33aa652b29480eeb887acaa183ed21b5))
+- **vite-plugin-angular:** fix SSG and HMR of external component stylesheets ([#1548](https://github.com/analogjs/analog/issues/1548)) ([e6de3d7](https://github.com/analogjs/analog/commit/e6de3d71acb292b9abb6e5939fea9902a2a41d38))
+- **vite-plugin-angular:** only store valid HMR updates and clear updates on a full page reload ([#1550](https://github.com/analogjs/analog/issues/1550)) ([aaa7d1a](https://github.com/analogjs/analog/commit/aaa7d1ae259a9842e366c0db2b52d2f2c752e027))
+- **vite-plugin-angular:** unwrap typechecking diagnostic messages ([#1576](https://github.com/analogjs/analog/issues/1576)) ([6b9e71f](https://github.com/analogjs/analog/commit/6b9e71fda3289ca3c98de640f17eabce880ed83e))
+- **vite-plugin-angular:** use whole angular version for pending tasks replacement ([#1555](https://github.com/analogjs/analog/issues/1555)) ([5f8bedb](https://github.com/analogjs/analog/commit/5f8bedbcd990c5146c904e1d1757a477f8b55878))
+
+### Features
+
+- add support for Vite 6 and Vitest 3 ([#1573](https://github.com/analogjs/analog/issues/1573)) ([0df2c77](https://github.com/analogjs/analog/commit/0df2c77d9f48bbbdaf154f1602d8d5cde9b5d218))
+
 # [2.0.0-alpha.3](https://github.com/analogjs/analog/compare/v2.0.0-alpha.2...v2.0.0-alpha.3) (2025-01-07)
 
 ### Bug Fixes
