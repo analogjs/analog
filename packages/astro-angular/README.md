@@ -132,6 +132,27 @@ export default defineConfig({
 });
 ```
 
+### Filtering File Transforms
+
+For better compatibility when integrating with other plugins such as [Starlight](https://starlight.astro.build), put the Angular components in a specific folder and use the `transformFilter` callback function to only transform those files.
+
+```js
+import { defineConfig } from 'astro/config';
+import angular from '@analogjs/astro-angular';
+
+export default defineConfig({
+  integrations: [
+    angular({
+      vite: {
+        transformFilter: (_code, id) => {
+          return id.includes('src/components'); // <- only transform Angular TypeScript files
+        },
+      },
+    }),
+  ],
+});
+```
+
 ### Transforming Packages for SSR Compatibility
 
 To ensure Angular libraries are transformed during Astro's SSR process, add them to the `ssr.noExternal` array in the Vite config.
