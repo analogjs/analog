@@ -1,3 +1,9 @@
+## [1.13.1-beta.1](https://github.com/analogjs/analog/compare/v1.13.0...v1.13.1-beta.1) (2025-01-30)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** cache MarkedSetupService creation ([#1584](https://github.com/analogjs/analog/issues/1584)) ([9b8c90d](https://github.com/analogjs/analog/commit/9b8c90d1451844867ba3b7d79b0aaa11b5428527))
+
 # [1.13.0](https://github.com/analogjs/analog/compare/v1.12.2...v1.13.0) (2025-01-27)
 
 ### Bug Fixes
