@@ -1,7 +1,7 @@
 import { CompilerHost } from '@angular/compiler-cli';
 import { normalizePath } from 'vite';
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import * as ts from 'typescript';
 import { compileAnalogFile } from './authoring/analog.js';
 import {
@@ -39,6 +39,8 @@ export function augmentHostWithResources(
 ) {
   const ts = require('typescript');
   const resourceHost = host as CompilerHost;
+  const resourceCache = new Map<string, { content: string; mtime: number }>();
+
   const baseGetSourceFile = (
     resourceHost as ts.CompilerHost
   ).getSourceFile.bind(resourceHost);
@@ -135,9 +137,18 @@ export function augmentHostWithResources(
     }
 
     if (fileName.includes('virtual-analog:')) {
+      const agxFilePath = fileName.split('virtual-analog:')[1];
+      const { mtimeMs } = statSync(agxFilePath);
+      const cached = resourceCache.get(agxFilePath);
+      if (cached && cached.mtime === mtimeMs) {
+        return cached.content;
+      }
+
       for (const transform of options.markdownTemplateTransforms || []) {
         content = String(await transform(content, fileName));
       }
+
+      resourceCache.set(agxFilePath, { content, mtime: mtimeMs });
     }
 
     return content;
