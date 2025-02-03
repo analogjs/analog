@@ -1,3 +1,10 @@
+## [1.13.1-beta.2](https://github.com/analogjs/analog/compare/v1.13.1-beta.1...v1.13.1-beta.2) (2025-02-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** cache resource reads for agx files ([#1587](https://github.com/analogjs/analog/issues/1587)) ([3eb5fa9](https://github.com/analogjs/analog/commit/3eb5fa95fb85a577dc7eca325b775599e413ee9e))
+- **vite-plugin-angular:** support double quotes in analog import attributes ([#1590](https://github.com/analogjs/analog/issues/1590)) ([0b4e245](https://github.com/analogjs/analog/commit/0b4e245a37774c5bcc448029cfb3fd558636d96f))
+
 ## [1.13.1-beta.1](https://github.com/analogjs/analog/compare/v1.13.0...v1.13.1-beta.1) (2025-01-30)
 
 ### Bug Fixes
