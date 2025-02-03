@@ -78,14 +78,14 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0(encoding@0.1.13)
       marked:
-        specifier: ^5.0.2
-        version: 5.0.2
+        specifier: ^15.0.0
+        version: 15.0.6
       marked-gfm-heading-id:
-        specifier: ^3.1.0
-        version: 3.1.0(marked@5.0.2)
+        specifier: ^4.1.1
+        version: 4.1.1(marked@15.0.6)
       marked-highlight:
-        specifier: ^2.0.1
-        version: 2.0.1(marked@5.0.2)
+        specifier: ^2.2.1
+        version: 2.2.1(marked@15.0.6)
       mermaid:
         specifier: ^10.2.4
         version: 10.2.4
@@ -223,8 +223,8 @@ importers:
         specifier: 29.5.14
         version: 29.5.14
       '@types/marked':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@types/node':
         specifier: 18.19.15
         version: 18.19.15
@@ -313,11 +313,11 @@ importers:
         specifier: ^13.1.0
         version: 13.1.0(enquirer@2.3.6)
       marked-mangle:
-        specifier: ^1.1.7
-        version: 1.1.7(marked@5.0.2)
+        specifier: ^1.1.10
+        version: 1.1.10(marked@15.0.6)
       marked-shiki:
-        specifier: ^1.1.0
-        version: 1.1.0(marked@5.0.2)(shiki@1.6.1)
+        specifier: ^1.2.0
+        version: 1.2.0(marked@15.0.6)(shiki@1.6.1)
       minimist:
         specifier: ^1.2.7
         version: 1.2.7
@@ -5054,8 +5054,9 @@ packages:
   '@types/keyv@3.1.4':
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
 
-  '@types/marked@5.0.0':
-    resolution: {integrity: sha512-YcZe50jhltsCq7rc9MNZC/4QB/OnA2Pd6hrOSTOFajtabN+38slqgDDCeE/0F83SjkKBQcsZUj7VLWR0H5cKRA==}
+  '@types/marked@6.0.0':
+    resolution: {integrity: sha512-jmjpa4BwUsmhxcfsgUit/7A9KbrC48Q0q8KvnY107ogcjGgTFDlIL3RpihNpx2Mu1hM4mdFQjoVc4O6JoGKHsA==}
+    deprecated: This is a stub types definition. marked provides its own type definitions, so you do not need this installed.
 
   '@types/mdast@3.0.10':
     resolution: {integrity: sha512-W864tg/Osz1+9f4lrGTZpCSO5/z4608eUp19tbozkq2HJK6i3z1kT0H9tlADXuYIb1YYOBByU4Jsqkk75q48qA==}
@@ -9854,23 +9855,23 @@ packages:
   markdown-table@3.0.2:
     resolution: {integrity: sha512-y8j3a5/DkJCmS5x4dMCQL+OR0+2EAq3DOtio1COSHsmW2BGXnNCK3v12hJt1LrUz5iZH5g0LmuYOjDdI+czghA==}
 
-  marked-gfm-heading-id@3.1.0:
-    resolution: {integrity: sha512-PYgLXDbL64Ga6kCpvVuKVoIVsV6MKUtkOXnR8mIqyjiycAeKNhQxcGpO0mHEogOTzyY8A8TcK49k5VwYMUCCbg==}
+  marked-gfm-heading-id@4.1.1:
+    resolution: {integrity: sha512-EeQZieAQmsI6c2tWLx0ETd0VjPwLV8qi+HT0dIsfVMERm0rCIuXfRvZXJbo1SgUi++lmuR1LVY+QzgNiLNvVpw==}
     peerDependencies:
-      marked: '>=4 <10'
+      marked: '>=13 <16'
 
-  marked-highlight@2.0.1:
-    resolution: {integrity: sha512-LDUfR/zDvD+dJ+lQOWHkxvBLNxiXcaN8pBtwJ/i4pI0bkDC/Ef6Mz1qUrAuHXfnpdr2rabdMpVFhqFuU+5Mskg==}
+  marked-highlight@2.2.1:
+    resolution: {integrity: sha512-SiCIeEiQbs9TxGwle9/OwbOejHCZsohQRaNTY2u8euEXYt2rYUFoiImUirThU3Gd/o6Q1gHGtH9qloHlbJpNIA==}
     peerDependencies:
-      marked: ^4 || ^5
+      marked: '>=4 <16'
 
-  marked-mangle@1.1.7:
-    resolution: {integrity: sha512-bLsXKovJEEs/Dl++TBPmjX8ALFmrH5G0doTs+BdDOloBKWYRf3acyJghce78SnwInDkNPJ6crubr4MnFG7urOA==}
+  marked-mangle@1.1.10:
+    resolution: {integrity: sha512-TrpN67SMJJdzXXWIzOd/QmnpsC5o1B44PUYaG2bh1XEbqVjA0UCI2ijFuE5LWESwKeI2gCP5FqcUHRGQwFtDIA==}
     peerDependencies:
-      marked: '>=4 <13'
+      marked: '>=4 <16'
 
-  marked-shiki@1.1.0:
-    resolution: {integrity: sha512-PNiC0X4rYnzF63T6CDscwTxQB8l5Aur9XR7MRNBi/Y9nSxmPxasWT+V5OVam8Pj+NycWjzG6idO7fbc2bDD16w==}
+  marked-shiki@1.2.0:
+    resolution: {integrity: sha512-N924hp8veE6Mc91g5/kCNVoTU7TkeJfB2G2XEWb+k1fVA0Bck2T0rVt93d39BlOYH6ohP4Q9BFlPk+UkblhXbg==}
     peerDependencies:
       marked: '>=7.0.0'
       shiki: '>=1.0.0'
@@ -9881,8 +9882,8 @@ packages:
     peerDependencies:
       marked: '>=1 <12'
 
-  marked@5.0.2:
-    resolution: {integrity: sha512-TXksm9GwqXCRNbFUZmMtqNLvy3K2cQHuWmyBDLOrY1e6i9UvZpOTJXoz7fBjYkJkaUFzV9hBFxMuZSyQt8R6KQ==}
+  marked@15.0.6:
+    resolution: {integrity: sha512-Y07CUOE+HQXbVDCGl3LXggqJDbXDP2pArc2C1N1RRMN0ONiShoSsIInMd5Gsxupe7fKLpgimTV+HOJ9r7bA+pg==}
     engines: {node: '>= 18'}
     hasBin: true
 
@@ -21054,7 +21055,9 @@ snapshots:
     dependencies:
       '@types/node': 18.19.15
 
-  '@types/marked@5.0.0': {}
+  '@types/marked@6.0.0':
+    dependencies:
+      marked: 15.0.6
 
   '@types/mdast@3.0.10':
     dependencies:
@@ -27137,22 +27140,22 @@ snapshots:
 
   markdown-table@3.0.2: {}
 
-  marked-gfm-heading-id@3.1.0(marked@5.0.2):
+  marked-gfm-heading-id@4.1.1(marked@15.0.6):
     dependencies:
       github-slugger: 2.0.0
-      marked: 5.0.2
+      marked: 15.0.6
 
-  marked-highlight@2.0.1(marked@5.0.2):
+  marked-highlight@2.2.1(marked@15.0.6):
     dependencies:
-      marked: 5.0.2
+      marked: 15.0.6
 
-  marked-mangle@1.1.7(marked@5.0.2):
+  marked-mangle@1.1.10(marked@15.0.6):
     dependencies:
-      marked: 5.0.2
+      marked: 15.0.6
 
-  marked-shiki@1.1.0(marked@5.0.2)(shiki@1.6.1):
+  marked-shiki@1.2.0(marked@15.0.6)(shiki@1.6.1):
     dependencies:
-      marked: 5.0.2
+      marked: 15.0.6
       shiki: 1.6.1
 
   marked-terminal@6.2.0(marked@9.1.6):
@@ -27165,7 +27168,7 @@ snapshots:
       node-emoji: 2.1.3
       supports-hyperlinks: 3.0.0
 
-  marked@5.0.2: {}
+  marked@15.0.6: {}
 
   marked@9.1.6: {}
 

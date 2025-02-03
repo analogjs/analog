@@ -37,11 +37,11 @@
     "@nx/angular": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0",
     "@nx/devkit": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0",
     "@nx/vite": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0",
-    "marked": ">=5.0.2",
-    "marked-gfm-heading-id": "^3.0.4",
-    "marked-highlight": "^2.0.1",
-    "marked-mangle": "^1.1.7",
-    "marked-shiki": "^1.1.0",
+    "marked": "^15.0.6",
+    "marked-gfm-heading-id": "^4.1.1",
+    "marked-highlight": "^2.2.1",
+    "marked-mangle": "^1.1.10",
+    "marked-shiki": "^1.2.0",
     "shiki": "^1.6.1"
   },
   "overrides": {
