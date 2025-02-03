@@ -1214,6 +1214,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "BaptisteMahe",
+      "name": "Baptiste Mahé",
+      "avatar_url": "https://avatars.githubusercontent.com/u/41227846?v=4",
+      "profile": "https://www.linkedin.com/in/baptiste-mah%C3%A9-95b425180/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
