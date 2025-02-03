@@ -215,7 +215,7 @@ function processAnalogScript(
 
       for (const attribute of attributes || []) {
         if (attribute.name === 'analog') {
-          const value = attribute.value.replaceAll("'", '');
+          const value = attribute.value.replaceAll("'", '').replaceAll('"', '');
           if (!(value in importAttributes)) {
             throw new Error(
               `[Analog] Invalid Analog import attribute ${value} in ${fileName}`
