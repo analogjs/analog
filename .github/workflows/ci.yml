@@ -141,7 +141,7 @@ jobs:
       - name: Upload docs website
         # Runs on merge to the `beta` branch
         if: github.event_name == 'push' && github.ref_name == 'beta'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
           name: ${{ env.DOCS_APP_ARTIFACT_NAME }}
@@ -182,7 +182,7 @@ jobs:
       cancel-in-progress: ${{ github.event_name != 'push' }}
     steps:
       - name: Download docs website
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ env.DOCS_APP_ARTIFACT_NAME }}
           path: ${{ env.DOCS_APP_PATH }}
