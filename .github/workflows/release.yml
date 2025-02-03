@@ -26,6 +26,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version-file: .node-version
+      - run: npm install --global corepack@0.31.0
       - run: corepack enable
       - run: pnpm --version
       - name: Install dependencies
