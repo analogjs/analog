@@ -69,11 +69,6 @@ jobs:
         with:
           node-version-file: .node-version
       - run: corepack enable
-      - run: pnpm --version
-      - uses: actions/setup-node@v3
-        with:
-          cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Build
@@ -109,7 +104,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0          
+      - run: npm install --global corepack@0.31.0
       - run: corepack enable
       - run: pnpm --version
       - uses: actions/setup-node@v3
@@ -132,7 +127,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0          
+      - run: npm install --global corepack@0.31.0
       - run: corepack enable
       - run: pnpm --version
       - uses: actions/setup-node@v3
