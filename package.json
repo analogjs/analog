@@ -179,7 +179,7 @@
     "vite-plugin-inspect": "~0.8",
     "vite-tsconfig-paths": "4.2.0",
     "vitefu": "^0.2.5",
-    "vitest": "^3.0.0",
+    "vitest": "^3.0.5",
     "webpack-bundle-analyzer": "^4.7.0",
     "xmlbuilder2": "^3.0.2"
   }
