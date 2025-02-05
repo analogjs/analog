@@ -1,3 +1,9 @@
+## [1.13.1-beta.4](https://github.com/analogjs/analog/compare/v1.13.1-beta.3...v1.13.1-beta.4) (2025-02-05)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** check for style extension in resourceNameToFileName ([#1596](https://github.com/analogjs/analog/issues/1596)) ([4ff66a4](https://github.com/analogjs/analog/commit/4ff66a4ddcfe29534d1c680230f7ddfd6b5bb0f2))
+
 ## [1.13.1-beta.3](https://github.com/analogjs/analog/compare/v1.13.1-beta.2...v1.13.1-beta.3) (2025-02-05)
 
 ### Bug Fixes
