@@ -1,3 +1,9 @@
+## [1.13.1-beta.3](https://github.com/analogjs/analog/compare/v1.13.1-beta.2...v1.13.1-beta.3) (2025-02-05)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add exception for agx to resourceNameToFileName ([#1595](https://github.com/analogjs/analog/issues/1595)) ([718a0dc](https://github.com/analogjs/analog/commit/718a0dcd52ce50a51dec9458385a0fa070b8be07))
+
 ## [1.13.1-beta.2](https://github.com/analogjs/analog/compare/v1.13.1-beta.1...v1.13.1-beta.2) (2025-02-03)
 
 ### Bug Fixes
