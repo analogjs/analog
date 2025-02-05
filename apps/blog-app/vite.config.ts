@@ -29,6 +29,7 @@ export default defineConfig(() => {
     },
     plugins: [
       analog({
+        liveReload: true,
         vite: {
           experimental: {
             supportAnalogFormat: true,

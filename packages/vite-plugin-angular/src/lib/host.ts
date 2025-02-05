@@ -308,6 +308,7 @@ function hasTemplateExtension(file: string): boolean {
     case '.htm':
     case '.html':
     case '.svg':
+    case '.agx':
       return true;
   }
 
