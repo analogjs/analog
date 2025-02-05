@@ -207,10 +207,7 @@ export function augmentHostWithResources(
     const resolvedPath = path.join(path.dirname(containingFile), resourceName);
 
     // All resource names that have template file extensions are assumed to be templates
-    if (
-      !options.externalComponentStyles ||
-      hasTemplateExtension(resolvedPath)
-    ) {
+    if (!options.externalComponentStyles || !hasStyleExtension(resolvedPath)) {
       return resolvedPath;
     }
 
@@ -301,14 +298,12 @@ export function mergeTransformers(
   return result;
 }
 
-function hasTemplateExtension(file: string): boolean {
+function hasStyleExtension(file: string): boolean {
   const extension = path.extname(file).toLowerCase();
 
   switch (extension) {
-    case '.htm':
-    case '.html':
-    case '.svg':
-    case '.agx':
+    case '.css':
+    case '.scss':
       return true;
   }
 
