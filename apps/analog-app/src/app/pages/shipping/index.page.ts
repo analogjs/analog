@@ -1,12 +1,10 @@
 import { AsyncPipe, CurrencyPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 
-import { Observable } from 'rxjs';
 import { CartService } from '../../cart.service';
 
 @Component({
   selector: 'app-shipping',
-  standalone: true,
   imports: [CurrencyPipe, AsyncPipe],
   template: `
     <h3>Shipping Prices</h3>
@@ -26,6 +24,5 @@ import { CartService } from '../../cart.service';
 export default class ShippingComponent {
   private readonly cartService = inject(CartService);
 
-  shippingCosts: Observable<{ type: string; price: number }[]> =
-    this.cartService.getShippingPrices();
+  shippingCosts = this.cartService.getShippingPrices();
 }

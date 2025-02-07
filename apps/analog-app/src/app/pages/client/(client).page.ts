@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { ServerOnly } from '@analogjs/router';
 
 @Component({
-  standalone: true,
   imports: [ServerOnly],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `

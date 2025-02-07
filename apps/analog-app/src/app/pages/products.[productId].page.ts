@@ -9,7 +9,6 @@ import { Product } from '../products';
 
 @Component({
   selector: 'app-product-details',
-  standalone: true,
   imports: [CurrencyPipe],
   template: `
     <h2>Product Details</h2>

@@ -30,8 +30,7 @@ export const routeMeta: RouteMeta = {
       <p>Description: {{ product.description }}</p>
       }
       <button type="button" (click)="share()">Share</button>
-      <app-product-alerts [product]="product" (notify)="onNotify()">
-      </app-product-alerts>
+      <app-product-alerts [product]="product" (notify)="onNotify()" />
     </div>
     }
   `,
