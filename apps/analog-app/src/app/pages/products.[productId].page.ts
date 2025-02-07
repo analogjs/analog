@@ -1,31 +1,33 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { CurrencyPipe, NgIf } from '@angular/common';
 import { injectActivatedRoute } from '@analogjs/router';
+import { CurrencyPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { Component, inject, OnInit } from '@angular/core';
 import { catchError, of } from 'rxjs';
 
-import { Product } from '../products';
 import { CartService } from '../cart.service';
+import { Product } from '../products';
 
 @Component({
   selector: 'app-product-details',
-  standalone: true,
-  imports: [NgIf, CurrencyPipe],
+  imports: [CurrencyPipe],
   template: `
     <h2>Product Details</h2>
 
-    <div *ngIf="product">
+    @if ( product ) {
+
+    <div>
       <h3>{{ product.name }}</h3>
       <h4>{{ product.price | currency }}</h4>
       <p>{{ product.description }}</p>
       <button type="button" (click)="addToCart(product)">Buy</button>
     </div>
+    }
   `,
 })
 export default class ProductDetailsComponent implements OnInit {
-  private route = injectActivatedRoute();
-  private cartService = inject(CartService);
-  private http = inject(HttpClient);
+  private readonly route = injectActivatedRoute();
+  private readonly cartService = inject(CartService);
+  private readonly http = inject(HttpClient);
 
   product: Product | undefined;
 
