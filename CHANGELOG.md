@@ -1,3 +1,9 @@
+## [1.13.1-beta.5](https://github.com/analogjs/analog/compare/v1.13.1-beta.4...v1.13.1-beta.5) (2025-02-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add detection for Vitest CLI in watch mode ([#1602](https://github.com/analogjs/analog/issues/1602)) ([9cae439](https://github.com/analogjs/analog/commit/9cae43967c62dad40cba9500dc78071a5601b33b))
+
 ## [1.13.1-beta.4](https://github.com/analogjs/analog/compare/v1.13.1-beta.3...v1.13.1-beta.4) (2025-02-05)
 
 ### Bug Fixes
