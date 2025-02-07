@@ -56,7 +56,7 @@ const devDependencyKeys = [
 export type AnalogDevDependency = (typeof devDependencyKeys)[number];
 
 export const getAnalogDevDependencies = (
-  nxVersion: string
+  nxVersion: string,
 ): Record<AnalogDevDependency, string> => {
   const escapedNxVersion = nxVersion.replace(/[~^]/, '');
 
@@ -70,7 +70,7 @@ const getViteDependency = (escapedNxVersion: string) => {
   // fail out for versions <15.2.0
   if (lt(escapedNxVersion, '15.2.0')) {
     throw new Error(
-      stripIndents`Nx v15.2.0 or newer is required to install Analog`
+      stripIndents`Nx v15.2.0 or newer is required to install Analog`,
     );
   }
   // install 15.8 deps for versions 15.8.0 =< 16.0.0
@@ -111,7 +111,7 @@ const getDevDependencies = (escapedNxVersion: string) => {
   // fail out for versions <15.2.0
   if (lt(escapedNxVersion, '15.2.0')) {
     throw new Error(
-      stripIndents`Nx v15.2.0 or newer is required to install Analog`
+      stripIndents`Nx v15.2.0 or newer is required to install Analog`,
     );
   }
 

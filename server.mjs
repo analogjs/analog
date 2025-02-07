@@ -18,14 +18,14 @@ async function createServer() {
       resolve('dist/apps/analog-app/client'),
       {
         index: false,
-      }
-    )
+      },
+    ),
   );
 
   app.use(
     '/api',
     (await import(resolve('dist/apps/analog-app/server/server/index.mjs')))
-      .listener
+      .listener,
   );
 
   app.use('*', async (req, res, next) => {
@@ -34,7 +34,7 @@ async function createServer() {
     try {
       const template = fs.readFileSync(
         path.resolve(__dirname, 'dist/apps/analog-app/client/index.html'),
-        'utf-8'
+        'utf-8',
       );
 
       const render = (

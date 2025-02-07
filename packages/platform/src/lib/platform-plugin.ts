@@ -33,7 +33,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
       include: [
         ...(platformOptions.include ?? []),
         ...(platformOptions.additionalPagesDirs ?? []).map(
-          (pageDir) => `${pageDir}/**/*.page.ts`
+          (pageDir) => `${pageDir}/**/*.page.ts`,
         ),
       ],
       additionalContentDirs: platformOptions.additionalContentDirs,

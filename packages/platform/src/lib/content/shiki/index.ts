@@ -35,6 +35,6 @@ export function getShikiHighlighter({
     highlighter as ShikiHighlighterOptions,
     highlight,
     container,
-    !!highlighter.langs.includes('mermaid')
+    !!highlighter.langs.includes('mermaid'),
   );
 }

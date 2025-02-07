@@ -5,7 +5,7 @@ export function getInstalledPackageVersion(
   tree: Tree,
   packageName: string,
   defaultVersion?: string,
-  raw = false
+  raw = false,
 ): string | null {
   const pkgJson = readJson(tree, 'package.json');
   const installedPackageVersion =

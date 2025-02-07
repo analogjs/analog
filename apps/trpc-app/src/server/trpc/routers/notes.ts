@@ -9,21 +9,21 @@ export const noteRouter = router({
     .input(
       z.object({
         title: z.string(),
-      })
+      }),
     )
     .mutation(({ input }) =>
       notes.push({
         id: noteId++,
         note: input.title,
         createdAt: new Date(),
-      })
+      }),
     ),
   list: publicProcedure.query(() => notes),
   remove: protectedProcedure
     .input(
       z.object({
         id: z.number(),
-      })
+      }),
     )
     .mutation(({ input }) => {
       const index = notes.findIndex((note) => input.id === note.id);

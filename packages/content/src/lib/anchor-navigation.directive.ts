@@ -40,7 +40,7 @@ function hasTargetSelf(anchorElement: HTMLAnchorElement): boolean {
 
 function isInternalUrl(
   anchorElement: HTMLAnchorElement,
-  document: Document
+  document: Document,
 ): boolean {
   return (
     anchorElement.host === document.location.host &&

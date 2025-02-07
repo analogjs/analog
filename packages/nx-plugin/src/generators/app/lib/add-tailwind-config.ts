@@ -33,7 +33,7 @@ export interface NormalizedGeneratorOptions extends GeneratorOptions {
 
 export async function setupTailwindGenerator(
   tree: Tree,
-  rawOptions: GeneratorOptions
+  rawOptions: GeneratorOptions,
 ): Promise<GeneratorCallback> {
   const options = normalizeOptions(rawOptions);
   const project = readProjectConfiguration(tree, options.project);

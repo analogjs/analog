@@ -18,7 +18,7 @@ export class NotesPage {
 
   async removeNote(index: number) {
     await this.waitForTrpcResponse(
-      this.page.getByTestId('removeNoteAtIndexBtn' + index).click()
+      this.page.getByTestId('removeNoteAtIndexBtn' + index).click(),
     );
   }
 

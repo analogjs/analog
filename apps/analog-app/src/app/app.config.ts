@@ -25,11 +25,11 @@ export const appConfig: ApplicationConfig = {
     provideFileRouter(
       withNavigationErrorHandler(console.error),
       withDebugRoutes(),
-      withExtraRoutes(fallbackRoutes)
+      withExtraRoutes(fallbackRoutes),
     ),
     provideHttpClient(
       withFetch(),
-      withInterceptors([requestContextInterceptor])
+      withInterceptors([requestContextInterceptor]),
     ),
     provideClientHydration(withEventReplay()),
   ],

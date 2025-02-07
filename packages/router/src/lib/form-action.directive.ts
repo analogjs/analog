@@ -49,7 +49,7 @@ export class FormAction {
   private _handlePost(
     body: FormData,
     path: string,
-    $event: { target: HTMLFormElement } & Event
+    $event: { target: HTMLFormElement } & Event,
   ) {
     fetch(path, {
       method: $event.target.method,

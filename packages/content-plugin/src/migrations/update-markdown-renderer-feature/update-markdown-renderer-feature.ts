@@ -33,7 +33,7 @@ export default async function update(host: Tree) {
           (node): node is CallExpression =>
             Node.isCallExpression(node) &&
             node.getText().includes('provideContent') &&
-            node.getText().includes('withMarkdownRenderer')
+            node.getText().includes('withMarkdownRenderer'),
         );
 
         if (provideContentNode) {

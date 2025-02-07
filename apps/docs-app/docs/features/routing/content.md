@@ -256,7 +256,7 @@ export interface PostAttributes {
 })
 export default class BlogComponent {
   readonly posts = injectContentFiles<PostAttributes>((contentFile) =>
-    contentFile.filename.includes('/src/content/blog/')
+    contentFile.filename.includes('/src/content/blog/'),
   );
 }
 ```

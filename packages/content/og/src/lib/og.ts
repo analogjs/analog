@@ -8,7 +8,7 @@ import { ImageResponseOptions } from './options.js';
 
 export const generateImage = async (
   element: string,
-  options: ImageResponseOptions
+  options: ImageResponseOptions,
 ) => {
   const elementHtml = toReactElement(element);
   const svg = await satori(elementHtml as any, {

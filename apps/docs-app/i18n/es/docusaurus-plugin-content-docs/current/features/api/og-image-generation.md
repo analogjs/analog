@@ -45,7 +45,7 @@ import { ImageResponse } from '@analogjs/content/og';
 
 export default defineEventHandler(async (event) => {
   const fontFile = await fetch(
-    'https://og-playground.vercel.app/inter-latin-ext-700-normal.woff'
+    'https://og-playground.vercel.app/inter-latin-ext-700-normal.woff',
   );
   const fontData: ArrayBuffer = await fontFile.arrayBuffer();
   const query = getQuery(event); // query params

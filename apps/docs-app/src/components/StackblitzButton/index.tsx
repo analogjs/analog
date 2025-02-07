@@ -12,7 +12,7 @@ export default function StackblitzButton(): JSX.Element {
     <Link
       className={clsx(
         'button button--outline button--lg',
-        styles.stackblitzLink
+        styles.stackblitzLink,
       )}
       to="https://analogjs.org/new"
     >

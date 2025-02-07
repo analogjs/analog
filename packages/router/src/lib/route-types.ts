@@ -10,5 +10,5 @@ export type PageServerLoad = {
 };
 
 export type LoadResult<
-  A extends (pageServerLoad: PageServerLoad) => Promise<any>
+  A extends (pageServerLoad: PageServerLoad) => Promise<any>,
 > = Awaited<ReturnType<A>>;

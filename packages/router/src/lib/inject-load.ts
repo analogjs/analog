@@ -5,12 +5,12 @@ import { Observable, map } from 'rxjs';
 import { PageServerLoad } from './route-types';
 
 export function injectLoad<
-  T extends (pageServerLoad: PageServerLoad) => Promise<any>
+  T extends (pageServerLoad: PageServerLoad) => Promise<any>,
 >(options?: { injector?: Injector }): Observable<Awaited<ReturnType<T>>> {
   const injector = options?.injector ?? inject(Injector);
   const route = injector.get(ActivatedRoute);
 
   return route.data.pipe(
-    map<Data, Awaited<ReturnType<T>>>((data) => data['load'])
+    map<Data, Awaited<ReturnType<T>>>((data) => data['load']),
   );
 }

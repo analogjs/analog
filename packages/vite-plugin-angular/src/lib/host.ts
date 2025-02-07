@@ -21,7 +21,7 @@ export function augmentHostWithResources(
   transform: (
     code: string,
     id: string,
-    options?: { ssr?: boolean }
+    options?: { ssr?: boolean },
   ) => ReturnType<any> | null,
   options: {
     inlineStylesExtension: string;
@@ -35,7 +35,7 @@ export function augmentHostWithResources(
     markdownTemplateTransforms?: MarkdownTemplateTransform[];
     inlineComponentStyles?: Map<string, string>;
     externalComponentStyles?: Map<string, string>;
-  }
+  },
 ) {
   const ts = require('typescript');
   const resourceHost = host as CompilerHost;
@@ -62,7 +62,7 @@ export function augmentHostWithResources(
             .replace('.analog.ts', '.analog')
             .replace('.agx.ts', '.agx')
             .replace('.ag.ts', '.ag'),
-          'utf-8'
+          'utf-8',
         );
         const source = compileAnalogFile(fileName, contents, options.isProd);
 
@@ -71,7 +71,7 @@ export function augmentHostWithResources(
           source,
           languageVersionOrOptions,
           onError as any,
-          ...(parameters as any)
+          ...(parameters as any),
         );
       }
 
@@ -80,7 +80,7 @@ export function augmentHostWithResources(
         fileName,
         languageVersionOrOptions,
         onError,
-        ...parameters
+        ...parameters,
       );
     };
 
@@ -202,7 +202,7 @@ export function augmentHostWithResources(
 
   resourceHost.resourceNameToFileName = function (
     resourceName,
-    containingFile
+    containingFile,
   ) {
     const resolvedPath = path.join(path.dirname(containingFile), resourceName);
 
@@ -243,7 +243,7 @@ export function augmentProgramWithVersioning(program: ts.Program): void {
 
 export function augmentHostWithCaching(
   host: ts.CompilerHost,
-  cache: Map<string, ts.SourceFile>
+  cache: Map<string, ts.SourceFile>,
 ): void {
   const baseGetSourceFile = host.getSourceFile;
   host.getSourceFile = function (
@@ -263,7 +263,7 @@ export function augmentHostWithCaching(
       languageVersion,
       onError,
       true,
-      ...parameters
+      ...parameters,
     );
 
     if (file) {
@@ -276,7 +276,7 @@ export function augmentHostWithCaching(
 
 export function mergeTransformers(
   first: ts.CustomTransformers,
-  second: ts.CustomTransformers
+  second: ts.CustomTransformers,
 ): ts.CustomTransformers {
   const result: ts.CustomTransformers = {};
 

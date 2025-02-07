@@ -31,14 +31,14 @@ const nrwlDependencyKeys = [
 ] as const;
 export type NrwlDependency = (typeof nrwlDependencyKeys)[number];
 export const getNrwlDependencies = (
-  nxVersion: string
+  nxVersion: string,
 ): Record<NrwlDependency, string> => {
   const escapedNxVersion = clean(nxVersion);
 
   // fail out for versions <15.2.0
   if (lt(escapedNxVersion, '15.2.0')) {
     throw new Error(
-      stripIndents`Nx v15.2.0 or newer is required to install Analog`
+      stripIndents`Nx v15.2.0 or newer is required to install Analog`,
     );
   }
 
@@ -53,21 +53,21 @@ export const getNrwlDependencies = (
 
   // error for @nrwl to @nx namespace change for Nx >= 16
   throw new Error(
-    stripIndents`As of Nx 16.0.0 the @nrwl scope has been replaced with the @nx scope. Please use @nx scope to install version ${nxVersion}`
+    stripIndents`As of Nx 16.0.0 the @nrwl scope has been replaced with the @nx scope. Please use @nx scope to install version ${nxVersion}`,
   );
 };
 
 const nxDependencyKeys = ['@nx/devkit', '@nx/angular', '@nx/eslint'] as const;
 export type NxDependency = (typeof nxDependencyKeys)[number];
 export const getNxDependencies = (
-  nxVersion: string
+  nxVersion: string,
 ): Record<NxDependency, string> => {
   const escapedNxVersion = clean(nxVersion);
 
   // error for @nrwl to @nx namespace changes for Nx < 16
   if (lt(escapedNxVersion, '16.0.0')) {
     throw new Error(
-      stripIndents`The @nx scope is only supported in Nx 16.0.0 and newer. Please use @nrwl scope to install version ${nxVersion}`
+      stripIndents`The @nx scope is only supported in Nx 16.0.0 and newer. Please use @nrwl scope to install version ${nxVersion}`,
     );
   }
 

@@ -18,7 +18,7 @@ export function injectRouteEndpointURL(route: ActivatedRouteSnapshot) {
       baseUrl ||
       (typeof window !== 'undefined' && window.location.origin
         ? window.location.origin
-        : '')
+        : ''),
   );
   url.pathname = `${
     url.pathname.endsWith('/') ? url.pathname : url.pathname + '/'

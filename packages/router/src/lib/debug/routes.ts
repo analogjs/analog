@@ -17,12 +17,12 @@ export const DEBUG_ROUTES = new InjectionToken(
           ...ANALOG_ROUTE_FILES,
           ...ANALOG_CONTENT_ROUTE_FILES,
         },
-        true
+        true,
       );
 
       return debugRoutes as (Route & DebugRoute)[];
     },
-  }
+  },
 );
 
 export type DebugRoute = {

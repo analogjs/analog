@@ -41,7 +41,7 @@ export class ShikiHighlighter extends MarkedContentHighlighter {
     private highlighterOptions: ShikiHighlighterOptions,
     private highlightOptions: ShikiHighlightOptions,
     private container: string,
-    private hasLoadMermaid = false
+    private hasLoadMermaid = false,
   ) {
     super();
   }
@@ -63,8 +63,8 @@ export class ShikiHighlighter extends MarkedContentHighlighter {
               meta: { __raw: props.join(' ') },
               theme: 'github-dark',
             },
-            this.highlightOptions
-          )
+            this.highlightOptions,
+          ),
         );
       },
     });

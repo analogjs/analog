@@ -20,8 +20,8 @@ import type { load } from './search.server';
       <button class="button" type="submit">Submit</button>
     </form>
 
-    @if(searchTerm()) {
-    <p>Search Term: {{ searchTerm() }}</p>
+    @if (searchTerm()) {
+      <p>Search Term: {{ searchTerm() }}</p>
     }
   `,
 })

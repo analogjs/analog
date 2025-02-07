@@ -20,7 +20,7 @@ process.env['VITE_CJS_IGNORE_WARNING'] = 'true';
 
 async function* vitestApplicationBuilder(
   options: VitestSchema,
-  context: any
+  context: any,
 ): AsyncIterable<{ success: boolean }> {
   process.env['TEST'] = 'true';
   process.env['VITEST'] = 'true';
@@ -28,7 +28,7 @@ async function* vitestApplicationBuilder(
   const { buildApplicationInternal, angularVersion } =
     await getBuildApplicationFunction();
   const { startVitest } = await (Function(
-    'return import("vitest/node")'
+    'return import("vitest/node")',
   )() as Promise<typeof import('vitest/node')>);
 
   const projectConfig = await context.getProjectMetadata(context.target);
@@ -103,7 +103,7 @@ async function* vitestApplicationBuilder(
         vendor: false,
       },
     },
-    context
+    context,
   )) {
     if (buildOutput.kind === ResultKind.Failure) {
       return { success: false };
@@ -144,7 +144,7 @@ async function* vitestApplicationBuilder(
 }
 
 export async function getExtraArgs(
-  options: VitestSchema
+  options: VitestSchema,
 ): Promise<Record<string, any>> {
   // support passing extra args to Vitest CLI
   const schema = await import('./schema.json');
@@ -168,7 +168,7 @@ function findIncludes(options: {
   const { normalizePath } = require('vite');
 
   const projectRoot = normalizePath(
-    path.resolve(options.workspaceRoot, options.projectRoot)
+    path.resolve(options.workspaceRoot, options.projectRoot),
   );
   const globs = [...options.include.map((glob) => `${projectRoot}/${glob}`)];
 
@@ -202,14 +202,14 @@ function generateEntryPoints({
           testFile.startsWith(projectRoot)
             ? projectRoot
             : context.workspaceRoot,
-          testFile
+          testFile,
         )
         .replace(/^[./]+/, '_')
         .replace(/\//g, '-');
 
       let uniqueName = `spec-${path.basename(
         relativePath,
-        path.extname(relativePath)
+        path.extname(relativePath),
       )}`;
       let suffix = 2;
       while (seen.has(uniqueName)) {
@@ -219,7 +219,7 @@ function generateEntryPoints({
       seen.add(uniqueName);
 
       return [uniqueName, testFile];
-    })
+    }),
   );
 }
 

@@ -29,13 +29,13 @@ function addFiles(tree: Tree, options: SetupVitestGeneratorSchema) {
     tree,
     join(__dirname, 'files'),
     projectConfig.root || '.',
-    templateOptions
+    templateOptions,
   );
 }
 
 export async function setupVitestGenerator(
   tree: Tree,
-  options: SetupVitestGeneratorSchema
+  options: SetupVitestGeneratorSchema,
 ) {
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
 

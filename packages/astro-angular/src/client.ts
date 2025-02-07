@@ -15,7 +15,7 @@ export default (element: HTMLElement) => {
       clientProviders?: (Provider | EnvironmentProviders)[];
     },
     props?: Record<string, unknown>,
-    _childHTML?: unknown
+    _childHTML?: unknown,
   ) => {
     createApplication({
       providers: [...(Component.clientProviders || [])],
@@ -33,7 +33,7 @@ export default (element: HTMLElement) => {
             if (
               mirror.inputs.some(
                 ({ templateName, propName }) =>
-                  templateName === key || propName === key
+                  templateName === key || propName === key,
               )
             ) {
               componentRef.setInput(key, value);
@@ -45,7 +45,7 @@ export default (element: HTMLElement) => {
           const destroySubject = new Subject<void>();
           element.setAttribute(
             'data-analog-id',
-            props['data-analog-id'] as string
+            props['data-analog-id'] as string,
           );
 
           mirror.outputs.forEach(({ templateName, propName }) => {

@@ -8,5 +8,5 @@ import { getTestBed } from '@angular/core/testing';
 
 getTestBed().initTestEnvironment(
   BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
+  platformBrowserDynamicTesting(),
 );

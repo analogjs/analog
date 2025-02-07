@@ -44,8 +44,8 @@ export class AutocompleteComponent {
 
     return Object.freeze(
       this.options.filter((option) =>
-        option.label.toLocaleLowerCase().includes(value)
-      )
+        option.label.toLocaleLowerCase().includes(value),
+      ),
     );
   });
 }

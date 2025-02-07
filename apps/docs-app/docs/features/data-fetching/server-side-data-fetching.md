@@ -63,7 +63,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(
       withComponentInputBinding(),
-      withNavigationErrorHandler(console.error)
+      withNavigationErrorHandler(console.error),
     ),
     provideHttpClient(),
     provideClientHydration(),

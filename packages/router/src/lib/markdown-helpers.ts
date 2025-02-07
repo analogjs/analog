@@ -10,7 +10,7 @@ declare const Zone: any;
 const isNgZoneEnabled = typeof Zone !== 'undefined' && !!Zone.root;
 
 export function toMarkdownModule(
-  markdownFileFactory: () => Promise<string>
+  markdownFileFactory: () => Promise<string>,
 ): () => Promise<RouteExport> {
   return async () => {
     const createLoader = () =>

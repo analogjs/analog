@@ -304,7 +304,7 @@ describe('component-resolvers', () => {
         const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
 
         expect(
-          thePathsAreEqual(resolvedTemplateUrls, [actualUrl1, actualUrl2])
+          thePathsAreEqual(resolvedTemplateUrls, [actualUrl1, actualUrl2]),
         ).toBe(true);
       });
 

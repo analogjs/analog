@@ -81,7 +81,7 @@ Las rutas API dinámicas se definen usando el nombre de fichero como la ruta de 
 import { defineEventHandler } from 'h3';
 
 export default defineEventHandler(
-  (event: H3Event) => `Hello ${event.context.params?.['name']}!`
+  (event: H3Event) => `Hello ${event.context.params?.['name']}!`,
 );
 ```
 

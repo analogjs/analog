@@ -115,7 +115,7 @@ export default class ProductDetailsPageComponent {
   private readonly route = inject(ActivatedRoute);
 
   readonly productId$ = this.route.paramMap.pipe(
-    map((params) => params.get('productId'))
+    map((params) => params.get('productId')),
   );
 }
 ```
@@ -233,7 +233,7 @@ export default class ProductDetailsPageComponent {
   private readonly route = inject(ActivatedRoute);
 
   readonly productId$ = this.route.paramMap.pipe(
-    map((params) => params.get('productId'))
+    map((params) => params.get('productId')),
   );
 }
 ```

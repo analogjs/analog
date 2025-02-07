@@ -40,7 +40,7 @@ export default class ProductDetailsComponent implements OnInit {
       .subscribe((products) => {
         // Find the product that correspond with the id provided in route.
         this.product = products.find(
-          (product) => product.id === productIdFromRoute
+          (product) => product.id === productIdFromRoute,
         );
       });
   }

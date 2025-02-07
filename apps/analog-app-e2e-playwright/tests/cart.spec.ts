@@ -70,7 +70,7 @@ describe('Cart', () => {
     });
     await cartPage.navigateTo();
     expect(
-      await cartPage.getPriceByName(phone.name, phone.price).elementHandle()
+      await cartPage.getPriceByName(phone.name, phone.price).elementHandle(),
     ).toBeTruthy();
   });
 
@@ -92,12 +92,12 @@ describe('Cart', () => {
 
     for (const phone of allPhones) {
       expect(
-        await cartPage.getPriceByName(phone.name, phone.price).elementHandle()
+        await cartPage.getPriceByName(phone.name, phone.price).elementHandle(),
       ).toBeTruthy();
     }
 
     expect(await cartPage.cartItems().elementHandles()).toHaveLength(
-      allPhones.length
+      allPhones.length,
     );
   });
 
@@ -132,7 +132,7 @@ describe('Cart', () => {
     await cartPage.purchaseOrder();
 
     expect(await message[0].evaluate((p) => p)).toMatch(
-      /your order has been submitted/i
+      /your order has been submitted/i,
     );
     expect(await message[1].evaluate((p) => p)).toEqual({ name, address });
     expect(await cartPage.cartItems().elementHandles()).toHaveLength(0);

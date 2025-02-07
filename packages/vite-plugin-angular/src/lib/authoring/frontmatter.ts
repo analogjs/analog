@@ -4,7 +4,7 @@ import { type VFile } from 'vfile';
 export async function getFrontmatterMetadata(
   content: string,
   id: string,
-  transforms: MarkdownTemplateTransform[]
+  transforms: MarkdownTemplateTransform[],
 ) {
   const fm: any = await import('front-matter');
   // The `default` property will be available in CommonJS environment, for instance,

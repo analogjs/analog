@@ -199,7 +199,7 @@ function setup() {
     .injector.get(AnchorNavigationDirective);
   const handleNavigation = vi.spyOn(
     anchorNavigationDirective,
-    'handleNavigation'
+    'handleNavigation',
   );
 
   function selectById(id: string): HTMLElement {
