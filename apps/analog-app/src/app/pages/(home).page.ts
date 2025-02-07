@@ -1,7 +1,6 @@
+import { RouteMeta, injectLoad } from '@analogjs/router';
 import { Component } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { RouteMeta, injectLoad } from '@analogjs/router';
-import { NgForOf, NgIf } from '@angular/common';
 import { RouterLinkWithHref } from '@angular/router';
 
 import { ProductAlertsComponent } from '../product-alerts/product-alerts.component';
@@ -13,12 +12,12 @@ export const routeMeta: RouteMeta = {
 
 @Component({
   selector: 'app-product-list',
-  standalone: true,
-  imports: [NgForOf, NgIf, ProductAlertsComponent, RouterLinkWithHref],
+  imports: [ProductAlertsComponent, RouterLinkWithHref],
   template: `
     <h2>Products</h2>
 
-    <div *ngFor="let product of data().products">
+    @for (product of data().products; track product.id) {
+    <div>
       <h3>
         <a
           [title]="product.name + ' details'"
@@ -27,14 +26,14 @@ export const routeMeta: RouteMeta = {
           {{ product.name }}
         </a>
       </h3>
-
-      <p *ngIf="product.description">Description: {{ product.description }}</p>
-
+      @if ( product.description ) {
+      <p>Description: {{ product.description }}</p>
+      }
       <button type="button" (click)="share()">Share</button>
-
       <app-product-alerts [product]="product" (notify)="onNotify()">
       </app-product-alerts>
     </div>
+    }
   `,
   styles: [
     `
