@@ -151,7 +151,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let nextProgram: NgtscProgram | undefined | ts.Program;
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode = false;
-  let testWatchMode = false;
+  let testWatchMode = isTestWatchMode();
   let inlineComponentStyles: Map<string, string> | undefined;
   let externalComponentStyles: Map<string, string> | undefined;
   const sourceFileCache = new SourceFileCache();
@@ -241,8 +241,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         // - vite override from vitest-angular
         // - @nx/vite executor set server.watch explicitly to undefined (watch)/null (watch=false)
         // - vite config for test.watch variable
+        // - vitest watch mode detected from the command line
         testWatchMode =
-          !(config.server.watch === null) || config.test?.watch === true;
+          !(config.server.watch === null) ||
+          config.test?.watch === true ||
+          testWatchMode;
       },
       configureServer(server) {
         viteServer = server;
@@ -1037,4 +1040,47 @@ function getComponentStyleSheetMeta(id: string): {
  */
 function getFilenameFromPath(id: string): string {
   return new URL(id, 'http://localhost').pathname.replace(/^\//, '');
+}
+
+/**
+ * Checks for vitest run from the command line
+ * @returns boolean
+ */
+export function isTestWatchMode(
+  command = process.env['_'],
+  args = process.argv
+) {
+  const isVitestCommand = command?.includes('vitest');
+
+  // vitest command was not used
+  if (!isVitestCommand) {
+    return false;
+  }
+
+  // vitest --run
+  const hasRun = args.find((arg) => arg.includes('--run'));
+  if (hasRun) {
+    return false;
+  }
+
+  // vitest --no-run
+  const hasNoRun = args.find((arg) => arg.includes('--no-run'));
+  if (hasNoRun) {
+    return true;
+  }
+
+  // check for --watch=false or --no-watch
+  const hasWatch = args.find((arg) => arg.includes('watch'));
+  if (hasWatch && ['false', 'no'].some((neg) => hasWatch.includes(neg))) {
+    return false;
+  }
+
+  // check for --watch false
+  const watchIndex = args.findIndex((arg) => arg.includes('watch'));
+  const watchArg = args[watchIndex + 1];
+  if (watchArg && watchArg === 'false') {
+    return false;
+  }
+
+  return true;
 }
