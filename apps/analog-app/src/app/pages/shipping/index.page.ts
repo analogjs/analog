@@ -6,20 +6,8 @@ import { CartService } from '../../cart.service';
 @Component({
   selector: 'app-shipping',
   imports: [CurrencyPipe, AsyncPipe],
-  template: `
-    <h3>Shipping Prices</h3>
-    @for (shipping of shippingCosts | async; track $index) {
-    <div class="shipping-item">
-      <span>{{ shipping.type }}</span>
-      <span>{{ shipping.price | currency }}</span>
-    </div>
-    }
-  `,
-  styles: `
-  h3 {
-  border: solid 1px darkblue;
-  }
-  `,
+  templateUrl: './shipping.html',
+  styleUrls: ['./shipping.scss'],
 })
 export default class ShippingComponent {
   private readonly cartService = inject(CartService);
