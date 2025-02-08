@@ -64,11 +64,11 @@ describe('injectContentFiles', () => {
     ];
 
     const contentFilterFn: InjectContentFilesFilterFunction<TestAttributes> = (
-      contentFile
+      contentFile,
     ) => !!contentFile.filename.includes('/src/content/blog/');
     const { injectContentFiles } = setup<TestAttributes>(
       contentFiles,
-      contentFilterFn
+      contentFilterFn,
     );
     const injectedFiles = injectContentFiles();
     const expectedContentFiles = [contentFiles[2]];
@@ -77,7 +77,7 @@ describe('injectContentFiles', () => {
 
   function setup<Attributes extends Record<string, any>>(
     contentFiles: ContentFile[] = [],
-    filterFn?: InjectContentFilesFilterFunction<Attributes>
+    filterFn?: InjectContentFilesFilterFunction<Attributes>,
   ) {
     TestBed.configureTestingModule({
       providers: [RenderTaskService],
@@ -88,7 +88,7 @@ describe('injectContentFiles', () => {
     return {
       injectContentFiles: () =>
         TestBed.runInInjectionContext(() =>
-          injectContentFiles<Attributes>(filterFn)
+          injectContentFiles<Attributes>(filterFn),
         ),
     };
   }

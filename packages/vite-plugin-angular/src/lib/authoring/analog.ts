@@ -32,7 +32,7 @@ import {
 export function compileAnalogFile(
   filePath: string,
   fileContent: string,
-  shouldFormat = false
+  shouldFormat = false,
 ) {
   const componentName = filePath.split('/').pop()?.split('.')[0];
   if (!componentName) {
@@ -77,7 +77,7 @@ export function compileAnalogFile(
 
       if (isMarkdown) {
         items.push(
-          `templateUrl: \`virtual-analog:${filePath.replace('.ts', '')}\``
+          `templateUrl: \`virtual-analog:${filePath.replace('.ts', '')}\``,
         );
       } else if (templateContent) {
         items.push(`template: \`${templateContent}\``);
@@ -120,7 +120,7 @@ export default class ${entityName} {
       project.createSourceFile(`${filePath}.virtual.ts`, source),
       ngType,
       entityName,
-      shouldFormat
+      shouldFormat,
     );
   }
 
@@ -141,10 +141,10 @@ function processAnalogScript(
   targetSourceFile: SourceFile,
   ngType: 'Component' | 'Directive',
   entityName: string,
-  isProd?: boolean
+  isProd?: boolean,
 ) {
   const targetClass = targetSourceFile.getClass(
-    (classDeclaration) => classDeclaration.getName() === entityName
+    (classDeclaration) => classDeclaration.getName() === entityName,
   );
 
   if (!targetClass) {
@@ -202,7 +202,7 @@ function processAnalogScript(
       ) {
         const generatedName = importStruct.moduleSpecifier.replace(
           /[^a-zA-Z]/g,
-          ''
+          '',
         );
         node.setDefaultImport(generatedName);
         importStruct = node.getStructure();
@@ -218,7 +218,7 @@ function processAnalogScript(
           const value = attribute.value.replaceAll("'", '').replaceAll('"', '');
           if (!(value in importAttributes)) {
             throw new Error(
-              `[Analog] Invalid Analog import attribute ${value} in ${fileName}`
+              `[Analog] Invalid Analog import attribute ${value} in ${fileName}`,
             );
           }
           foundAttribute = value;
@@ -234,12 +234,12 @@ function processAnalogScript(
         if (namedImports && Array.isArray(namedImports)) {
           const namedImportStructures = namedImports.filter(
             (
-              namedImport
+              namedImport,
             ): namedImport is OptionalKind<ImportSpecifierStructure> =>
-              typeof namedImport === 'object'
+              typeof namedImport === 'object',
           );
           const importNames = namedImportStructures.map(
-            (namedImport) => namedImport.alias ?? namedImport.name
+            (namedImport) => namedImport.alias ?? namedImport.name,
           );
           importAttributes[foundAttribute].push(...importNames);
         }
@@ -283,7 +283,7 @@ function processAnalogScript(
 
         // this also gets rid of OmittedExpression (i.e: skipped elements in array destructuring)
         const bindingElements = nameNode.getDescendantsOfKind(
-          SyntaxKind.BindingElement
+          SyntaxKind.BindingElement,
         );
 
         // nothing to do here
@@ -340,7 +340,7 @@ function processAnalogScript(
               // using `=== undefined` to strictly follow destructuring rule
               if (bindingInitializer) {
                 writer.write(
-                  `${propertyAccess} === undefined ? ${bindingInitializer.getText()} : ${propertyAccess}`
+                  `${propertyAccess} === undefined ? ${bindingInitializer.getText()} : ${propertyAccess}`,
                 );
               } else {
                 writer.write(propertyAccess);
@@ -408,7 +408,7 @@ function processAnalogScript(
           .filter(
             (property): property is PropertyAssignment =>
               Node.isPropertyAssignment(property) &&
-              !INVALID_METADATA_PROPERTIES.includes(property.getName())
+              !INVALID_METADATA_PROPERTIES.includes(property.getName()),
           );
 
         if (metadataProperties.length === 0) continue;
@@ -416,7 +416,7 @@ function processAnalogScript(
         processMetadata(
           metadataProperties,
           targetMetadataArguments,
-          targetClass
+          targetClass,
         );
 
         continue;
@@ -429,7 +429,7 @@ function processAnalogScript(
         pendingOperations.push(() => {
           // add the function to constructor
           targetConstructor.addStatements(
-            `this.${fnName} = ${initFunction.getText()}`
+            `this.${fnName} = ${initFunction.getText()}`,
           );
 
           // add life-cycle method to class
@@ -444,7 +444,7 @@ function processAnalogScript(
 
       // other function calls
       pendingOperations.push(() =>
-        targetConstructor.addStatements(nodeFullText)
+        targetConstructor.addStatements(nodeFullText),
       );
     }
   }
@@ -504,8 +504,8 @@ function processAnalogScript(
         scope: hasExportKeyword
           ? Scope.Protected
           : isVirtual
-          ? Scope.Private
-          : undefined,
+            ? Scope.Private
+            : undefined,
       });
       if (name !== ROUTE_META && !isVirtual) {
         targetConstructor.addStatements((writer) => {
@@ -524,7 +524,7 @@ function processAnalogScript(
       processArrayLiteralMetadata(
         targetMetadataArguments,
         'viewProviders',
-        importAttributes['viewProviders']
+        importAttributes['viewProviders'],
       );
     }
 
@@ -532,7 +532,7 @@ function processAnalogScript(
       processArrayLiteralMetadata(
         targetMetadataArguments,
         'imports',
-        importAttributes['imports']
+        importAttributes['imports'],
       );
     }
 
@@ -552,7 +552,7 @@ function processAnalogScript(
     processArrayLiteralMetadata(
       targetMetadataArguments,
       'providers',
-      importAttributes['providers']
+      importAttributes['providers'],
     );
   }
 
@@ -584,7 +584,7 @@ function processInitializer(
   writer: CodeBlockWriter,
   name: string,
   memberRegistry: Map<string, ClassMember>,
-  initializer?: Expression
+  initializer?: Expression,
 ) {
   if (!initializer) {
     console.warn(`[Analog] const variable must have an initializer: ${name}`);
@@ -600,8 +600,8 @@ function processInitializer(
         writer.write(
           processCallExpressionOrPropertyAccessExpressionForClassMember(
             initializer,
-            memberRegistry
-          )
+            memberRegistry,
+          ),
         );
         return;
       }
@@ -614,14 +614,14 @@ function processInitializer(
   writer.write(
     processCallExpressionOrPropertyAccessExpressionForClassMember(
       initializer,
-      memberRegistry
-    )
+      memberRegistry,
+    ),
   );
 }
 
 function processCallExpressionOrPropertyAccessExpressionForClassMember(
   initializer: Expression,
-  memberRegistry: Map<string, ClassMember>
+  memberRegistry: Map<string, ClassMember>,
 ) {
   if (Node.isCallExpression(initializer)) {
     const currentExpression = initializer.getExpression();
@@ -653,7 +653,7 @@ function processCallExpressionOrPropertyAccessExpressionForClassMember(
       if (Node.isPropertyAccessExpression(arg) || Node.isCallExpression(arg)) {
         return processCallExpressionOrPropertyAccessExpressionForClassMember(
           arg,
-          memberRegistry
+          memberRegistry,
         );
       }
 
@@ -689,7 +689,7 @@ function processCallExpressionOrPropertyAccessExpressionForClassMember(
 function processArrayLiteralMetadata(
   targetMetadataArguments: ObjectLiteralExpression,
   metadataName: string,
-  items: string[]
+  items: string[],
 ) {
   let metadata = targetMetadataArguments.getProperty(metadataName);
 
@@ -711,7 +711,7 @@ function processArrayLiteralMetadata(
 function processMetadata(
   metadataProperties: PropertyAssignment[],
   targetMetadataArguments: ObjectLiteralExpression,
-  targetClass: ClassDeclaration
+  targetClass: ClassDeclaration,
 ) {
   metadataProperties.forEach((property) => {
     const propertyInitializer = property.getInitializer();
@@ -764,7 +764,7 @@ function toClassName(str: string) {
 function toPropertyName(str: string) {
   return str
     .replace(/([^a-zA-Z0-9])+(.)?/g, (_, __, chr) =>
-      chr ? chr.toUpperCase() : ''
+      chr ? chr.toUpperCase() : '',
     )
     .replace(/[^a-zA-Z\d]/g, '')
     .replace(/^([A-Z])/, (m) => m.toLowerCase())

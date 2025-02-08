@@ -1,6 +1,6 @@
 export async function esbuildDownlevelPlugin() {
   const { transformWithEsbuild } = await (Function(
-    'return import("vite")'
+    'return import("vite")',
   )() as Promise<typeof import('vite')>);
   return {
     name: 'analogs-vitest-esbuild-downlevel-plugin',

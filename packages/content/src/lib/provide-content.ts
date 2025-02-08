@@ -14,7 +14,7 @@ const CONTENT_RENDERER_PROVIDERS: Provider[] = [
 ];
 
 export function withMarkdownRenderer(
-  options?: MarkdownRendererOptions
+  options?: MarkdownRendererOptions,
 ): Provider {
   return [
     CONTENT_RENDERER_PROVIDERS,

@@ -41,6 +41,6 @@ export default class BlogPostComponent {
   readonly toc$ = this.post$.pipe(
     map(() => {
       return this.renderer.getContentHeadings();
-    })
+    }),
   );
 }

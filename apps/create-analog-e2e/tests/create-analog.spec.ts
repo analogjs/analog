@@ -40,7 +40,7 @@ describe.skip('create-analog e2e', () => {
 
     await runCommandAsync(
       `node ./dist/packages/create-analog/index.js ${project} --template angular-v17 --skipTailwind`,
-      { cwd: process.cwd() }
+      { cwd: process.cwd() },
     );
 
     await runCommandAsync(`pnpm i`, {
@@ -54,22 +54,22 @@ describe.skip('create-analog e2e', () => {
     emptyDir(`${tmpDir}/node_modules/@analogjs`);
     copyDir(
       `${process.cwd()}/node_modules/@analogjs`,
-      `${tmpDir}/node_modules/@analogjs`
+      `${tmpDir}/node_modules/@analogjs`,
     );
 
     const angularJson = JSON.parse(
-      fs.readFileSync(`${tmpDir}/angular.json`, 'utf-8')
+      fs.readFileSync(`${tmpDir}/angular.json`, 'utf-8'),
     );
     angularJson.projects['my-app'].root = '.';
     fs.writeFileSync(
       `${tmpDir}/angular.json`,
-      JSON.stringify(angularJson, null, 2)
+      JSON.stringify(angularJson, null, 2),
     );
 
     let viteConfig = fs.readFileSync(`${tmpDir}/vite.config.ts`, 'utf-8');
     viteConfig = viteConfig.replace(
       'analog()',
-      `analog({ vite: { tsconfig: '${tmpDir}/tsconfig.spec.json' } })`
+      `analog({ vite: { tsconfig: '${tmpDir}/tsconfig.spec.json' } })`,
     );
 
     fs.writeFileSync(`${tmpDir}/vite.config.ts`, viteConfig);
@@ -83,7 +83,7 @@ describe.skip('create-analog e2e', () => {
     });
 
     expect(() =>
-      checkFilesExist(`${tmpDir}/dist/analog/public/index.html`)
+      checkFilesExist(`${tmpDir}/dist/analog/public/index.html`),
     ).not.toThrow();
 
     fs.rmdirSync(tmpDir, { recursive: true });
@@ -95,7 +95,7 @@ describe.skip('create-analog e2e', () => {
 
     await runCommandAsync(
       `node ./dist/packages/create-analog/index.js ${project} --template blog --skipTailwind`,
-      { cwd: process.cwd() }
+      { cwd: process.cwd() },
     );
 
     await runCommandAsync(`pnpm i`, {
@@ -109,23 +109,23 @@ describe.skip('create-analog e2e', () => {
     emptyDir(`${tmpDir}/node_modules/@analogjs`);
     copyDir(
       `${process.cwd()}/node_modules/@analogjs`,
-      `${tmpDir}/node_modules/@analogjs`
+      `${tmpDir}/node_modules/@analogjs`,
     );
 
     const angularJson = JSON.parse(
-      fs.readFileSync(`${tmpDir}/angular.json`, 'utf-8')
+      fs.readFileSync(`${tmpDir}/angular.json`, 'utf-8'),
     );
 
     angularJson.projects['blog'].root = '.';
     fs.writeFileSync(
       `${tmpDir}/angular.json`,
-      JSON.stringify(angularJson, null, 2)
+      JSON.stringify(angularJson, null, 2),
     );
 
     let viteConfig = fs.readFileSync(`${tmpDir}/vite.config.ts`, 'utf-8');
     viteConfig = viteConfig.replace(
       'analog()',
-      `analog({ vite: { tsconfig: '${tmpDir}/tsconfig.spec.json' } })`
+      `analog({ vite: { tsconfig: '${tmpDir}/tsconfig.spec.json' } })`,
     );
 
     fs.writeFileSync(`${tmpDir}/vite.config.ts`, viteConfig);
@@ -140,16 +140,16 @@ describe.skip('create-analog e2e', () => {
 
     const appConfigContent = fs.readFileSync(
       `${tmpDir}/src/app/app.config.ts`,
-      'utf-8'
+      'utf-8',
     );
 
     // ensure highlighter is added
     expect(appConfigContent).toContain(
-      `import { withPrismHighlighter } from '@analogjs/content/prism-highlighter'`
+      `import { withPrismHighlighter } from '@analogjs/content/prism-highlighter'`,
     );
 
     expect(() =>
-      checkFilesExist(`${tmpDir}/dist/analog/public/index.html`)
+      checkFilesExist(`${tmpDir}/dist/analog/public/index.html`),
     ).not.toThrow();
 
     fs.rmdirSync(tmpDir, { recursive: true });
@@ -161,7 +161,7 @@ describe.skip('create-analog e2e', () => {
 
     await runCommandAsync(
       `node ./dist/packages/create-analog/index.js ${project} --template angular-v17 --skipTailwind`,
-      { cwd: process.cwd() }
+      { cwd: process.cwd() },
     );
 
     await runCommandAsync(`pnpm i`, {
@@ -176,19 +176,19 @@ describe.skip('create-analog e2e', () => {
       `ng update @angular/cli @angular/core --next --allow-dirty`,
       {
         cwd: tmpDir,
-      }
+      },
     );
 
     emptyDir(`${tmpDir}/node_modules/@analogjs`);
     copyDir(
       `${process.cwd()}/node_modules/@analogjs`,
-      `${tmpDir}/node_modules/@analogjs`
+      `${tmpDir}/node_modules/@analogjs`,
     );
 
     let viteConfig = fs.readFileSync(`${tmpDir}/vite.config.ts`, 'utf-8');
     viteConfig = viteConfig.replace(
       'analog()',
-      `analog({ vite: { tsconfig: '${tmpDir}/tsconfig.spec.json' } })`
+      `analog({ vite: { tsconfig: '${tmpDir}/tsconfig.spec.json' } })`,
     );
 
     fs.writeFileSync(`${tmpDir}/vite.config.ts`, viteConfig);
@@ -202,7 +202,7 @@ describe.skip('create-analog e2e', () => {
     });
 
     expect(() =>
-      checkFilesExist(`${tmpDir}/dist/analog/public/index.html`)
+      checkFilesExist(`${tmpDir}/dist/analog/public/index.html`),
     ).not.toThrow();
 
     fs.rmdirSync(tmpDir, { recursive: true });

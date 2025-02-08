@@ -346,8 +346,8 @@ importers:
         specifier: ~10.1.3
         version: 10.1.3(postcss@8.4.38)
       prettier:
-        specifier: ^2.8.3
-        version: 2.8.3
+        specifier: ^3.4.2
+        version: 3.4.2
       prismjs:
         specifier: ^1.29.0
         version: 1.29.0
@@ -359,7 +359,7 @@ importers:
         version: 6.0.1
       rollup-plugin-visualizer:
         specifier: ^5.9.0
-        version: 5.9.0(rollup@4.26.0)
+        version: 5.9.0(rollup@4.24.4)
       satori:
         specifier: ^0.10.14
         version: 0.10.14
@@ -407,7 +407,7 @@ importers:
         version: 1.8.1(eslint@8.57.0)(vite@6.0.11(@types/node@18.19.15)(jiti@2.4.0)(less@4.1.3)(sass@1.80.7)(stylus@0.64.0)(terser@5.36.0)(yaml@2.5.1))
       vite-plugin-inspect:
         specifier: ~0.8
-        version: 0.8.9(rollup@4.26.0)(vite@6.0.11(@types/node@18.19.15)(jiti@2.4.0)(less@4.1.3)(sass@1.80.7)(stylus@0.64.0)(terser@5.36.0)(yaml@2.5.1))
+        version: 0.8.9(rollup@4.24.4)(vite@6.0.11(@types/node@18.19.15)(jiti@2.4.0)(less@4.1.3)(sass@1.80.7)(stylus@0.64.0)(terser@5.36.0)(yaml@2.5.1))
       vite-tsconfig-paths:
         specifier: 4.2.0
         version: 4.2.0(typescript@5.5.4)(vite@6.0.11(@types/node@18.19.15)(jiti@2.4.0)(less@4.1.3)(sass@1.80.7)(stylus@0.64.0)(terser@5.36.0)(yaml@2.5.1))
@@ -9687,6 +9687,7 @@ packages:
 
   lodash.isequal@4.5.0:
     resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
+    deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
 
   lodash.isfunction@3.0.9:
     resolution: {integrity: sha512-AirXNj15uRIMMPihnkInB4i3NHeb4iBtNg9WRWuK2o31S+ePwwNmDPaTL3o7dTJ+VXNZim7rFs4rxN4YU1oUJw==}
@@ -11908,9 +11909,9 @@ packages:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
 
-  prettier@2.8.3:
-    resolution: {integrity: sha512-tJ/oJ4amDihPoufT5sM0Z1SKEuKay8LfVAMlbbhnnkvt6BUserZylqo2PN+p9KeljLr0OHa2rXHU1T8reeoTrw==}
-    engines: {node: '>=10.13.0'}
+  prettier@3.4.2:
+    resolution: {integrity: sha512-e9MewbtFo+Fevyuxn/4rrcDAaq0IYxPGLvObpQjiZBMAzB9IGmzlnG9RZy3FFas+eBMu2vA0CszMeduow5dIuQ==}
+    engines: {node: '>=14'}
     hasBin: true
 
   pretty-bytes@5.6.0:
@@ -29833,7 +29834,7 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier@2.8.3: {}
+  prettier@3.4.2: {}
 
   pretty-bytes@5.6.0: {}
 
@@ -30574,14 +30575,14 @@ snapshots:
     optionalDependencies:
       rollup: 4.26.0
 
-  rollup-plugin-visualizer@5.9.0(rollup@4.26.0):
+  rollup-plugin-visualizer@5.9.0(rollup@4.24.4):
     dependencies:
       open: 8.4.2
       picomatch: 2.3.1
       source-map: 0.7.4
       yargs: 17.7.2
     optionalDependencies:
-      rollup: 4.26.0
+      rollup: 4.24.4
 
   rollup@2.79.1:
     optionalDependencies:
@@ -32365,10 +32366,10 @@ snapshots:
       rollup: 2.79.1
       vite: 6.0.11(@types/node@18.19.15)(jiti@2.4.0)(less@4.1.3)(sass@1.80.7)(stylus@0.64.0)(terser@5.36.0)(yaml@2.5.1)
 
-  vite-plugin-inspect@0.8.9(rollup@4.26.0)(vite@6.0.11(@types/node@18.19.15)(jiti@2.4.0)(less@4.1.3)(sass@1.80.7)(stylus@0.64.0)(terser@5.36.0)(yaml@2.5.1)):
+  vite-plugin-inspect@0.8.9(rollup@4.24.4)(vite@6.0.11(@types/node@18.19.15)(jiti@2.4.0)(less@4.1.3)(sass@1.80.7)(stylus@0.64.0)(terser@5.36.0)(yaml@2.5.1)):
     dependencies:
       '@antfu/utils': 0.7.10
-      '@rollup/pluginutils': 5.1.4(rollup@4.26.0)
+      '@rollup/pluginutils': 5.1.4(rollup@4.24.4)
       debug: 4.4.0(supports-color@9.4.0)
       error-stack-parser-es: 0.1.5
       fs-extra: 11.2.0

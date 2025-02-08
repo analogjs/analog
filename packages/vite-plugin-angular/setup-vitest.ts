@@ -83,7 +83,7 @@ const customSnapshotSerializer = () => {
     indentation: any,
     depth: any,
     refs: any,
-    printer: any
+    printer: any,
   ): string {
     // `printer` is a function that serializes a value using existing plugins.
     return `${printer(
@@ -91,7 +91,7 @@ const customSnapshotSerializer = () => {
       config,
       indentation,
       depth,
-      refs
+      refs,
     )}`;
   }
   function test(val: any): boolean {
@@ -180,7 +180,7 @@ function fixtureVitestSerializer(fixture: any) {
 
   const selector = Reflect.getOwnPropertyDescriptor(
     componentType,
-    '__annotations__'
+    '__annotations__',
   )?.value[0].selector;
 
   if (componentType && componentType.propDecorators) {
@@ -198,7 +198,7 @@ function fixtureVitestSerializer(fixture: any) {
   // * Convert string data to HTML data
   const doc = new DOMParser().parseFromString(
     `<${selector} ${inputsData}>${divElement.innerHTML}</${selector}>`,
-    'text/html'
+    'text/html',
   );
 
   return doc.body.childNodes[0];
@@ -212,13 +212,13 @@ const bindDescribe = (
   originalVitestFn: {
     apply: (
       arg0: any,
-      arg1: any[]
+      arg1: any[],
     ) => {
       (): any;
       new (): any;
       apply: { (arg0: any, arg1: any[]): any; new (): any };
     };
-  }
+  },
 ) =>
   function (...eachArgs: any) {
     return function (...args: any[]) {
@@ -237,13 +237,13 @@ const bindTest = (
   originalVitestFn: {
     apply: (
       arg0: any,
-      arg1: any[]
+      arg1: any[],
     ) => {
       (): any;
       new (): any;
       apply: { (arg0: any, arg1: any[]): any; new (): any };
     };
-  }
+  },
 ) =>
   function (...eachArgs: any) {
     return function (...args: any[]) {
@@ -265,11 +265,11 @@ const bindTest = (
   if (methodName === 'describe') {
     env[methodName].only = bindDescribe(
       originalvitestFn,
-      originalvitestFn.only
+      originalvitestFn.only,
     );
     env[methodName].skip = bindDescribe(
       originalvitestFn,
-      originalvitestFn.skip
+      originalvitestFn.skip,
     );
   }
 });

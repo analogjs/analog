@@ -63,7 +63,7 @@ const dependencyKeys = [
 export type AnalogDependency = (typeof dependencyKeys)[number];
 
 export const getAnalogDependencies = (
-  ngVersion: string
+  ngVersion: string,
 ): Record<AnalogDependency, string> => {
   const escapedNgVersion = ngVersion.replace(/[~^]/, '');
 

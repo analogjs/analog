@@ -78,13 +78,13 @@ const bindDescribe = (
   originalVitestFn: {
     apply: (
       arg0: any,
-      arg1: any[]
+      arg1: any[],
     ) => {
       (): any;
       new (): any;
       apply: { (arg0: any, arg1: any[]): any; new (): any };
     };
-  }
+  },
 ) =>
   function (...eachArgs: any) {
     return function (...args: any[]) {
@@ -103,13 +103,13 @@ const bindTest = (
   originalVitestFn: {
     apply: (
       arg0: any,
-      arg1: any[]
+      arg1: any[],
     ) => {
       (): any;
       new (): any;
       apply: { (arg0: any, arg1: any[]): any; new (): any };
     };
-  }
+  },
 ) =>
   function (...eachArgs: any) {
     return function (...args: any[]) {
@@ -131,11 +131,11 @@ const bindTest = (
   if (methodName === 'describe') {
     env[methodName].only = bindDescribe(
       originalvitestFn,
-      originalvitestFn.only
+      originalvitestFn.only,
     );
     env[methodName].skip = bindDescribe(
       originalvitestFn,
-      originalvitestFn.skip
+      originalvitestFn.skip,
     );
   }
 });

@@ -4,12 +4,12 @@ import { CONTENT_FILES_LIST_TOKEN } from './content-files-list-token';
 import { RenderTaskService } from './render-task.service';
 
 export function injectContentFiles<Attributes extends Record<string, any>>(
-  filterFn?: InjectContentFilesFilterFunction<Attributes>
+  filterFn?: InjectContentFilesFilterFunction<Attributes>,
 ): ContentFile<Attributes>[] {
   const renderTaskService = inject(RenderTaskService);
   const task = renderTaskService.addRenderTask();
   const allContentFiles = inject(
-    CONTENT_FILES_LIST_TOKEN
+    CONTENT_FILES_LIST_TOKEN,
   ) as ContentFile<Attributes>[];
   renderTaskService.clearRenderTask(task);
 
@@ -25,5 +25,5 @@ export function injectContentFiles<Attributes extends Record<string, any>>(
 export type InjectContentFilesFilterFunction<T extends Record<string, any>> = (
   value: ContentFile<T>,
   index: number,
-  array: ContentFile<T>[]
+  array: ContentFile<T>[],
 ) => boolean;

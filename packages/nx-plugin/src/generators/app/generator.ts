@@ -37,7 +37,7 @@ export interface NormalizedOptions
 function normalizeOptions(
   tree: Tree,
   options: AnalogNxApplicationGeneratorOptions,
-  nxVersion: string
+  nxVersion: string,
 ): NormalizedOptions {
   const isNx = tree.exists('/nx.json');
   const appsDir = isNx ? getWorkspaceLayout(tree).appsDir : 'projects';
@@ -70,7 +70,7 @@ function normalizeOptions(
 
 export async function appGenerator(
   tree: Tree,
-  options: AnalogNxApplicationGeneratorOptions
+  options: AnalogNxApplicationGeneratorOptions,
 ) {
   const nxVersion = getInstalledPackageVersion(tree, 'nx');
 
@@ -80,13 +80,13 @@ export async function appGenerator(
 
   if (belowMinimumSupportedNxVersion(nxVersion)) {
     throw new Error(
-      stripIndents`Nx v15.2.0 or newer is required to install Analog`
+      stripIndents`Nx v15.2.0 or newer is required to install Analog`,
     );
   }
 
   if (belowMinimumSupportedNxtRPCVersion(nxVersion) && options.addTRPC) {
     console.warn(
-      'Nx v16.1.0 or newer is required to use tRPC with Analog. Skipping installation.'
+      'Nx v16.1.0 or newer is required to use tRPC with Analog. Skipping installation.',
     );
     options.addTRPC = false;
   }
@@ -95,7 +95,7 @@ export async function appGenerator(
   const angularVersion = await initializeAngularWorkspace(
     tree,
     nxVersion,
-    normalizedOptions
+    normalizedOptions,
   );
   const majorAngularVersion = major(coerce(angularVersion));
 
@@ -116,7 +116,7 @@ export async function appGenerator(
     parsedTags,
     name,
     appsDir,
-    nxPackageNamespace
+    nxPackageNamespace,
   );
 
   addFiles(tree, normalizedOptions, majorAngularVersion);

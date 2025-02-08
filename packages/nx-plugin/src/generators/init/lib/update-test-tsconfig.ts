@@ -13,7 +13,7 @@ interface TsConfig {
 
 export function updateTestTsConfig(
   tree: Tree,
-  schema: SetupAnalogGeneratorSchema
+  schema: SetupAnalogGeneratorSchema,
 ) {
   const projects = getProjects(tree);
 
@@ -21,7 +21,7 @@ export function updateTestTsConfig(
 
   const tsconfigPath = joinPathFragments(
     projectConfig.root,
-    'tsconfig.spec.json'
+    'tsconfig.spec.json',
   );
 
   if (tree.exists(tsconfigPath)) {
@@ -37,7 +37,7 @@ export function updateTestTsConfig(
 
         return json;
       },
-      { expectComments: true, allowTrailingComma: true }
+      { expectComments: true, allowTrailingComma: true },
     );
   }
 }

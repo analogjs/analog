@@ -32,7 +32,7 @@ export const CONTENT_FILES_TOKEN = new InjectionToken<
       if (newFilename !== undefined) {
         const objectFilename = newFilename.replace(
           /^\/(.*?)\/content/,
-          '/src/content'
+          '/src/content',
         );
         objectUsingSlugAttribute[objectFilename] =
           value as () => Promise<string>;

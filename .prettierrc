@@ -2,6 +2,12 @@
   "singleQuote": true,
   "overrides": [
     {
+      "files": "*.md",
+      "options": {
+        "printWidth": 80
+      }
+    },
+    {
       "files": "*.analog",
       "options": {
         "parser": "angular"

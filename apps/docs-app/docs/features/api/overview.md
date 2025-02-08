@@ -83,7 +83,7 @@ Dynamic API routes are defined by using the filename as the route path enclosed 
 import { defineEventHandler } from 'h3';
 
 export default defineEventHandler(
-  (event) => `Hello ${event.context.params?.['name']}!`
+  (event) => `Hello ${event.context.params?.['name']}!`,
 );
 ```
 

@@ -8,7 +8,7 @@ export function addAnalogProjectConfig(
   parsedTags: string[],
   name: string,
   appsDir: string,
-  nxPackageNamespace: string
+  nxPackageNamespace: string,
 ) {
   const isStandalone = appsDir === '.';
   const isNx = tree.exists('/nx.json');

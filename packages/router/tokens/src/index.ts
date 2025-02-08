@@ -9,15 +9,15 @@ export type ServerResponse = NodeServerResponse;
 export type ServerContext = { req: ServerRequest; res: ServerResponse };
 
 export const REQUEST = new InjectionToken<ServerRequest>(
-  '@analogjs/router Server Request'
+  '@analogjs/router Server Request',
 );
 export const RESPONSE = new InjectionToken<ServerResponse>(
-  '@analogjs/router Server Response'
+  '@analogjs/router Server Response',
 );
 export const BASE_URL = new InjectionToken<string>('@analogjs/router Base URL');
 
 export const API_PREFIX = new InjectionToken<string>(
-  '@analogjs/router API Prefix'
+  '@analogjs/router API Prefix',
 );
 
 export function injectRequest() {

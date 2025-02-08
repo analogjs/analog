@@ -39,7 +39,7 @@ export class StyleUrlsResolver {
 
     const styleUrls = matchedStyleUrls.map((styleUrlPath) => {
       return `${styleUrlPath}|${normalizePath(
-        resolve(dirname(id), styleUrlPath)
+        resolve(dirname(id), styleUrlPath),
       )}`;
     });
 
@@ -52,7 +52,7 @@ function getTextByProperty(name: string, properties: PropertyAssignment[]) {
   return properties
     .filter((property) => property.getName() === name)
     .map((property) =>
-      property.getInitializer()?.getText().replace(/['"`]/g, '')
+      property.getInitializer()?.getText().replace(/['"`]/g, ''),
     )
     .filter((url): url is string => url !== undefined);
 }
@@ -61,14 +61,14 @@ export function getStyleUrls(code: string) {
   const project = new Project({ useInMemoryFileSystem: true });
   const sourceFile = project.createSourceFile('cmp.ts', code);
   const properties = sourceFile.getDescendantsOfKind(
-    SyntaxKind.PropertyAssignment
+    SyntaxKind.PropertyAssignment,
   );
   const styleUrl = getTextByProperty('styleUrl', properties);
   const styleUrls = properties
     .filter((property) => property.getName() === 'styleUrls')
     .map((property) => property.getInitializer() as ArrayLiteralExpression)
     .flatMap((array) =>
-      array.getElements().map((el) => el.getText().replace(/['"`]/g, ''))
+      array.getElements().map((el) => el.getText().replace(/['"`]/g, '')),
     );
 
   return [...styleUrls, ...styleUrl];
@@ -78,7 +78,7 @@ export function getTemplateUrls(code: string) {
   const project = new Project({ useInMemoryFileSystem: true });
   const sourceFile = project.createSourceFile('cmp.ts', code);
   const properties = sourceFile.getDescendantsOfKind(
-    SyntaxKind.PropertyAssignment
+    SyntaxKind.PropertyAssignment,
   );
   return getTextByProperty('templateUrl', properties);
 }
@@ -102,7 +102,7 @@ export class TemplateUrlsResolver {
 
     const templateUrlPaths = getTemplateUrls(code).map(
       (url) =>
-        `${url}|${normalizePath(resolve(dirname(id), url).replace(/\\/g, '/'))}`
+        `${url}|${normalizePath(resolve(dirname(id), url).replace(/\\/g, '/'))}`,
     );
 
     this.templateUrlsCache.set(id, { code, templateUrlPaths });

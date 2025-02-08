@@ -10,7 +10,7 @@ import { SetupAnalogGeneratorSchema } from '../schema';
 
 export function updatePackageJson(
   tree: Tree,
-  schema: SetupAnalogGeneratorSchema
+  schema: SetupAnalogGeneratorSchema,
 ) {
   const angularJsonPath = '/angular.json';
   const packageJsonPath = '/package.json';
@@ -27,7 +27,7 @@ export function updatePackageJson(
 
     const packageJsonPath = joinPathFragments(
       projectConfig.root,
-      'package.json'
+      'package.json',
     );
 
     writeJson(tree, packageJsonPath, { type: 'module' });

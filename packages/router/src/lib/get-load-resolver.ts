@@ -7,7 +7,7 @@ import { ActivatedRouteSnapshot } from '@angular/router';
  * @returns Returns server load resolver data for the route
  */
 export async function getLoadResolver<T>(
-  route: ActivatedRouteSnapshot
+  route: ActivatedRouteSnapshot,
 ): Promise<T> {
   return route.routeConfig?.resolve?.['load']?.(route);
 }

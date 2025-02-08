@@ -4,7 +4,7 @@ import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
 export const ROUTE_META_TAGS_KEY = Symbol(
-  '@analogjs/router Route Meta Tags Key'
+  '@analogjs/router Route Meta Tags Key',
 );
 
 const CHARSET_KEY = 'charset';

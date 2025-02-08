@@ -20,7 +20,7 @@ describe('Products', () => {
 
     cy.on('window:alert', (alert) => {
       expect(alert).to.contain(
-        /you will be notified when the product goes on sale/i
+        /you will be notified when the product goes on sale/i,
       );
     });
   });

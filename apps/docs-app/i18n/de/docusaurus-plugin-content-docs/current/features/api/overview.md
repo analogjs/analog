@@ -82,7 +82,7 @@ Dynamische API-Routen werden durch die Verwendung des Dateinamens als Routenpfad
 import { defineEventHandler } from 'h3';
 
 export default defineEventHandler(
-  (event) => `Hello ${event.context.params?.['name']}!`
+  (event) => `Hello ${event.context.params?.['name']}!`,
 );
 ```
 

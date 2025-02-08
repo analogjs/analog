@@ -17,11 +17,11 @@ export const appConfig: ApplicationConfig = {
       withMarkdownRenderer({
         loadMermaid: !import.meta.env.SSR ? () => import('mermaid') : undefined,
       }),
-      withShikiHighlighter()
+      withShikiHighlighter(),
     ),
     provideFileRouter(
       withInMemoryScrolling({ anchorScrolling: 'enabled' }),
-      withEnabledBlockingInitialNavigation()
+      withEnabledBlockingInitialNavigation(),
     ),
   ],
 };

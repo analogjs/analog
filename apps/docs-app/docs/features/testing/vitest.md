@@ -117,7 +117,7 @@ import { getTestBed } from '@angular/core/testing';
 
 getTestBed().initTestEnvironment(
   BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
+  platformBrowserDynamicTesting(),
 );
 ```
 
@@ -136,7 +136,7 @@ import { getTestBed } from '@angular/core/testing';
 
 getTestBed().initTestEnvironment(
   BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
+  platformBrowserDynamicTesting(),
 );
 ```
 
@@ -263,7 +263,7 @@ import { getTestBed } from '@angular/core/testing';
 
 getTestBed().initTestEnvironment(
   BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
+  platformBrowserDynamicTesting(),
 );
 ```
 
@@ -319,7 +319,7 @@ describe('CardComponent', () => {
   beforeEach(() =>
     TestBed.configureTestingModule({
       imports: [CardComponent],
-    })
+    }),
   );
 
   beforeEach(() => {

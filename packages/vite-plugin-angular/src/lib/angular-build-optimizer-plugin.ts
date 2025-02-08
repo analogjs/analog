@@ -15,7 +15,7 @@ export function buildOptimizerPlugin({
       advancedOptimizations: true,
       jit: true,
     },
-    1
+    1,
   );
   let isProd = false;
 
@@ -69,7 +69,7 @@ export function buildOptimizerPlugin({
           id,
           code,
           false,
-          sideEffects
+          sideEffects,
         );
 
         return {

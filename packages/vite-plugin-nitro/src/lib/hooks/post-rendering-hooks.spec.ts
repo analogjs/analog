@@ -12,7 +12,7 @@ describe('postRenderingHook', () => {
   const nitroMock = {
     hooks: {
       hook: vi.fn((name: string, callback: (route: any) => void) =>
-        callback(genRoute)
+        callback(genRoute),
       ),
     },
   } as unknown as Nitro;

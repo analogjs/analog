@@ -2,12 +2,12 @@ export function addOutputListener(
   analogId: string,
   outputName: string,
   callback: (...args: any[]) => unknown,
-  eventListenerOptions: EventListenerOptions = {}
+  eventListenerOptions: EventListenerOptions = {},
 ) {
   const observer = new MutationObserver((mutations) => {
     const foundTarget = mutations.find(
       (mutation) =>
-        (mutation.target as HTMLElement).dataset?.['analogId'] === analogId
+        (mutation.target as HTMLElement).dataset?.['analogId'] === analogId,
     )?.target;
 
     if (foundTarget) {

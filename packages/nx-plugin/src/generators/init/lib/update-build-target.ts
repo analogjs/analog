@@ -10,7 +10,7 @@ import { SetupAnalogGeneratorSchema } from '../schema';
 
 export function updateBuildTarget(
   tree: Tree,
-  schema: SetupAnalogGeneratorSchema
+  schema: SetupAnalogGeneratorSchema,
 ) {
   const angularJsonPath = '/angular.json';
 
@@ -54,13 +54,13 @@ export function updateBuildTarget(
       options: {
         configFile: `${joinPathFragments(
           projectConfig.root,
-          'vite.config.ts'
+          'vite.config.ts',
         )}`,
         main: `${joinPathFragments(projectConfig.root, 'src/main.ts')}`,
         outputPath: `dist/${joinPathFragments(projectConfig.root, 'client')}`,
         tsConfig: `${joinPathFragments(
           projectConfig.root,
-          'tsconfig.app.json'
+          'tsconfig.app.json',
         )}`,
       },
     };

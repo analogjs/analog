@@ -18,7 +18,7 @@ export function updateTsConfig(tree: Tree, schema: SetupVitestGeneratorSchema) {
 
   const tsconfigPath = joinPathFragments(
     projectConfig.root,
-    'tsconfig.spec.json'
+    'tsconfig.spec.json',
   );
 
   if (tree.exists(tsconfigPath)) {
@@ -36,7 +36,7 @@ export function updateTsConfig(tree: Tree, schema: SetupVitestGeneratorSchema) {
 
         return json;
       },
-      { expectComments: true, allowTrailingComma: true }
+      { expectComments: true, allowTrailingComma: true },
     );
   }
 }
