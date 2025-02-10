@@ -20,7 +20,7 @@ import type { load } from './search.server';
     </form>
 
     @if (searchTerm()) {
-      <p>Search Term: {{ searchTerm() }}</p>
+    <p>Search Term: {{ searchTerm() }}</p>
     }
   `,
 })

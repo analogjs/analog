@@ -10,7 +10,7 @@
   />
   <mat-autocomplete #autocomplete="matAutocomplete" autoActiveFirstOption>
     @for (option of filteredOptions(); track option) {
-      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+    <mat-option [value]="option.value">{{ option.label }}</mat-option>
     }
   </mat-autocomplete>
 </mat-form-field>
