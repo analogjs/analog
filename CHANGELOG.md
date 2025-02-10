@@ -1,3 +1,9 @@
+## [1.13.1-beta.6](https://github.com/analogjs/analog/compare/v1.13.1-beta.5...v1.13.1-beta.6) (2025-02-10)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** remove check for Vitest command in watch mode ([#1606](https://github.com/analogjs/analog/issues/1606)) ([744ed1f](https://github.com/analogjs/analog/commit/744ed1fcf8f2f3228177698fc81fc64d1648110e))
+
 ## [1.13.1-beta.5](https://github.com/analogjs/analog/compare/v1.13.1-beta.4...v1.13.1-beta.5) (2025-02-07)
 
 ### Bug Fixes
