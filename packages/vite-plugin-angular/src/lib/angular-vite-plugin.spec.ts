@@ -8,50 +8,44 @@ describe('angularVitePlugin', () => {
 });
 
 describe('isTestWatchMode', () => {
-  it('should return false if vitest command not included in the command', () => {
-    const result = isTestWatchMode('vite');
-
-    expect(result).toBeFalsy();
-  });
-
   it('should return false for vitest --run', () => {
-    const result = isTestWatchMode('vitest', ['--run']);
+    const result = isTestWatchMode(['--run']);
 
     expect(result).toBeFalsy();
   });
 
   it('should return true for vitest --no-run', () => {
-    const result = isTestWatchMode('vitest', ['--no-run']);
+    const result = isTestWatchMode(['--no-run']);
 
     expect(result).toBeTruthy();
   });
 
   it('should return true for vitest --watch', () => {
-    const result = isTestWatchMode('vitest', ['--watch']);
+    const result = isTestWatchMode(['--watch']);
 
     expect(result).toBeTruthy();
   });
 
   it('should return true for vitest watch', () => {
-    const result = isTestWatchMode('vitest', ['watch']);
+    const result = isTestWatchMode(['watch']);
 
     expect(result).toBeTruthy();
   });
 
   it('should return false for vitest --no-watch', () => {
-    const result = isTestWatchMode('vitest', ['--no-watch']);
+    const result = isTestWatchMode(['--no-watch']);
 
     expect(result).toBeFalsy();
   });
 
   it('should return false for vitest --watch=false', () => {
-    const result = isTestWatchMode('vitest', ['--watch=false']);
+    const result = isTestWatchMode(['--watch=false']);
 
     expect(result).toBeFalsy();
   });
 
   it('should return false for vitest --watch false', () => {
-    const result = isTestWatchMode('vitest', ['--watch', 'false']);
+    const result = isTestWatchMode(['--watch', 'false']);
 
     expect(result).toBeFalsy();
   });

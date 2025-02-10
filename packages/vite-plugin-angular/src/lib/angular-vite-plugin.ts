@@ -237,15 +237,17 @@ export function angular(options?: PluginOptions): Plugin[] {
       configResolved(config) {
         resolvedConfig = config;
 
-        // set test watch mode
-        // - vite override from vitest-angular
-        // - @nx/vite executor set server.watch explicitly to undefined (watch)/null (watch=false)
-        // - vite config for test.watch variable
-        // - vitest watch mode detected from the command line
-        testWatchMode =
-          !(config.server.watch === null) ||
-          config.test?.watch === true ||
-          testWatchMode;
+        if (isTest) {
+          // set test watch mode
+          // - vite override from vitest-angular
+          // - @nx/vite executor set server.watch explicitly to undefined (watch)/null (watch=false)
+          // - vite config for test.watch variable
+          // - vitest watch mode detected from the command line
+          testWatchMode =
+            !(config.server.watch === null) ||
+            config.test?.watch === true ||
+            testWatchMode;
+        }
       },
       configureServer(server) {
         viteServer = server;
@@ -1046,17 +1048,7 @@ function getFilenameFromPath(id: string): string {
  * Checks for vitest run from the command line
  * @returns boolean
  */
-export function isTestWatchMode(
-  command = process.env['_'],
-  args = process.argv,
-) {
-  const isVitestCommand = command?.includes('vitest');
-
-  // vitest command was not used
-  if (!isVitestCommand) {
-    return false;
-  }
-
+export function isTestWatchMode(args = process.argv) {
   // vitest --run
   const hasRun = args.find((arg) => arg.includes('--run'));
   if (hasRun) {

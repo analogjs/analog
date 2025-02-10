@@ -22,19 +22,17 @@ type CollectedRoute = {
         <div class="header-cell">Type</div>
       </div>
       <div class="table-body">
-        @for (
-          collectedRoute of collectedRoutes;
-          track collectedRoute.filename
+        @for ( collectedRoute of collectedRoutes; track collectedRoute.filename
         ) {
-          <div class="table-row">
-            <div class="table-cell">{{ collectedRoute.path }}</div>
-            <div class="table-cell" [title]="collectedRoute.filename">
-              {{ collectedRoute.file }}
-            </div>
-            <div class="table-cell">
-              {{ collectedRoute.isLayout ? 'Layout' : 'Page' }}
-            </div>
+        <div class="table-row">
+          <div class="table-cell">{{ collectedRoute.path }}</div>
+          <div class="table-cell" [title]="collectedRoute.filename">
+            {{ collectedRoute.file }}
           </div>
+          <div class="table-cell">
+            {{ collectedRoute.isLayout ? 'Layout' : 'Page' }}
+          </div>
+        </div>
         }
       </div>
     </div>

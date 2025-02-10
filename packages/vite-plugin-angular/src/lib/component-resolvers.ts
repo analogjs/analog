@@ -102,7 +102,9 @@ export class TemplateUrlsResolver {
 
     const templateUrlPaths = getTemplateUrls(code).map(
       (url) =>
-        `${url}|${normalizePath(resolve(dirname(id), url).replace(/\\/g, '/'))}`,
+        `${url}|${normalizePath(
+          resolve(dirname(id), url).replace(/\\/g, '/'),
+        )}`,
     );
 
     this.templateUrlsCache.set(id, { code, templateUrlPaths });
