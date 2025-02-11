@@ -6,6 +6,11 @@ import {
 } from '@analogjs/router/server/actions';
 import { readFormData } from 'h3';
 
+export type NewsletterSubmitResponse = {
+  type: 'success';
+  email: string;
+};
+
 export function load() {
   return {
     loaded: true,
@@ -24,7 +29,5 @@ export async function action({ event }: PageServerAction) {
     return redirect('/');
   }
 
-  console.log({ email: body.get('email') });
-
-  return json({ type: 'success' });
+  return json<NewsletterSubmitResponse>({ type: 'success', email });
 }

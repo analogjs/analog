@@ -61,7 +61,7 @@ export class FormAction {
             const redirectUrl = new URL(res.url).pathname;
             this.state.emit('redirect');
             this.router.navigate([redirectUrl]);
-          } else if (res.headers.get('Content-type') === 'application/json') {
+          } else if (this._isJSON(res.headers.get('Content-type'))) {
             res.json().then((result) => {
               this.onSuccess.emit(result);
               this.state.emit('success');
@@ -94,5 +94,12 @@ export class FormAction {
     }
 
     return `/api/_analog/pages${window.location.pathname}`;
+  }
+
+  private _isJSON(contentType: string | null): boolean {
+    const mime = contentType ? contentType.split(';') : [];
+    const essence = mime[0];
+
+    return essence === 'application/json';
   }
 }
