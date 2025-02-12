@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-129-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-130-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -205,7 +205,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://twitter.com/OCombe"><img src="https://avatars.githubusercontent.com/u/265378?v=4?s=100" width="100px;" alt="Olivier Combe"/><br /><sub><b>Olivier Combe</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ocombe" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/sasidharansd"><img src="https://avatars.githubusercontent.com/u/47988127?v=4?s=100" width="100px;" alt="Sasidharan SD"/><br /><sub><b>Sasidharan SD</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=sasidharansd" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://beta.ajitpanigrahi.com"><img src="https://avatars.githubusercontent.com/u/19947758?v=4?s=100" width="100px;" alt="Ajit Panigrahi"/><br /><sub><b>Ajit Panigrahi</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ajitzero" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://ajitpanigrahi.com"><img src="https://avatars.githubusercontent.com/u/19947758?v=4?s=100" width="100px;" alt="Ajit Panigrahi"/><br /><sub><b>Ajit Panigrahi</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=ajitzero" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/nemu69"><img src="https://avatars.githubusercontent.com/u/43633395?v=4?s=100" width="100px;" alt="nepage-l"/><br /><sub><b>nepage-l</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=nemu69" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://jeffreysmith.ninja"><img src="https://avatars.githubusercontent.com/u/5161547?v=4?s=100" width="100px;" alt="Jeff"/><br /><sub><b>Jeff</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Jefftopia" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://sammymohamed.com"><img src="https://avatars.githubusercontent.com/u/22568206?v=4?s=100" width="100px;" alt="Sammy Mohamed"/><br /><sub><b>Sammy Mohamed</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=thatsamsonkid" title="Documentation">📖</a></td>
@@ -278,6 +278,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/alexrosepizant"><img src="https://avatars.githubusercontent.com/u/7753376?v=4?s=100" width="100px;" alt="Alex Rose-Pizant"/><br /><sub><b>Alex Rose-Pizant</b></sub></a><br /><a href="#infra-alexrosepizant" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://mattlewis.me/"><img src="https://avatars.githubusercontent.com/u/6425649?v=4?s=100" width="100px;" alt="Matt Lewis"/><br /><sub><b>Matt Lewis</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=mattlewis92" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/baptiste-mah%C3%A9-95b425180/"><img src="https://avatars.githubusercontent.com/u/41227846?v=4?s=100" width="100px;" alt="Baptiste Mahé"/><br /><sub><b>Baptiste Mahé</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=BaptisteMahe" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/milosdanilov"><img src="https://avatars.githubusercontent.com/u/12774464?v=4?s=100" width="100px;" alt="Miloš Danilov"/><br /><sub><b>Miloš Danilov</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=milosdanilov" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
