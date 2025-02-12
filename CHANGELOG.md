@@ -1,3 +1,9 @@
+## [1.13.1-beta.7](https://github.com/analogjs/analog/compare/v1.13.1-beta.6...v1.13.1-beta.7) (2025-02-12)
+
+### Bug Fixes
+
+- **router:** properly parse json response in the FormAction ([#1605](https://github.com/analogjs/analog/issues/1605)) ([6a8fc20](https://github.com/analogjs/analog/commit/6a8fc20037d28720b9aa809ef1670f2f6b19ee6b))
+
 ## [1.13.1-beta.6](https://github.com/analogjs/analog/compare/v1.13.1-beta.5...v1.13.1-beta.6) (2025-02-10)
 
 ### Bug Fixes
