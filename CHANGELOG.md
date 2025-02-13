@@ -1,3 +1,9 @@
+## [1.13.1-beta.8](https://github.com/analogjs/analog/compare/v1.13.1-beta.7...v1.13.1-beta.8) (2025-02-13)
+
+### Bug Fixes
+
+- **vitest-angular:** expand semver range of @angular-devkit/architect ([#1611](https://github.com/analogjs/analog/issues/1611)) ([272eabc](https://github.com/analogjs/analog/commit/272eabc529e6f1000dcad9c9185a36a150ca586e))
+
 ## [1.13.1-beta.7](https://github.com/analogjs/analog/compare/v1.13.1-beta.6...v1.13.1-beta.7) (2025-02-12)
 
 ### Bug Fixes
