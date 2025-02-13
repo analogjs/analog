@@ -98,7 +98,7 @@ export class ServerOnly {
                 };
               }
               return throwError(
-                () => ({} as { html: string; outputs: ServerOutputs }),
+                () => ({}) as { html: string; outputs: ServerOutputs },
               );
             }),
             catchError((error: unknown) => {

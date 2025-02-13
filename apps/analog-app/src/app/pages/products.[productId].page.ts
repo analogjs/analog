@@ -13,14 +13,13 @@ import { Product } from '../products';
   template: `
     <h2>Product Details</h2>
 
-    @if ( product ) {
-
-    <div>
-      <h3>{{ product.name }}</h3>
-      <h4>{{ product.price | currency }}</h4>
-      <p>{{ product.description }}</p>
-      <button type="button" (click)="addToCart(product)">Buy</button>
-    </div>
+    @if (product) {
+      <div>
+        <h3>{{ product.name }}</h3>
+        <h4>{{ product.price | currency }}</h4>
+        <p>{{ product.description }}</p>
+        <button type="button" (click)="addToCart(product)">Buy</button>
+      </div>
     }
   `,
 })

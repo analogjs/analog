@@ -504,8 +504,8 @@ function processAnalogScript(
         scope: hasExportKeyword
           ? Scope.Protected
           : isVirtual
-          ? Scope.Private
-          : undefined,
+            ? Scope.Private
+            : undefined,
       });
       if (name !== ROUTE_META && !isVirtual) {
         targetConstructor.addStatements((writer) => {

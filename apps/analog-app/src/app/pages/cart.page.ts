@@ -16,11 +16,10 @@ import { CartService } from '../cart.service';
     </p>
 
     @for (item of items; track $index) {
-
-    <div class="cart-item">
-      <span>{{ item.name }} </span>
-      <span>{{ item.price | currency }}</span>
-    </div>
+      <div class="cart-item">
+        <span>{{ item.name }} </span>
+        <span>{{ item.price | currency }}</span>
+      </div>
     }
 
     <form [formGroup]="checkoutForm" (ngSubmit)="onSubmit()">

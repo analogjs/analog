@@ -44,24 +44,25 @@ type FormErrors =
     <h3>Newsletter Signup</h3>
 
     @if (!signedUp()) {
-    <form
-      method="post"
-      (onSuccess)="onSuccess()"
-      (onError)="onError($any($event))"
-      (onStateChange)="errors.set(undefined)"
-    >
-      <div>
-        <label for="email"> Email </label>
-        <input type="email" name="email" />
-      </div>
+      <form
+        method="post"
+        (onSuccess)="onSuccess()"
+        (onError)="onError($any($event))"
+        (onStateChange)="errors.set(undefined)"
+      >
+        <div>
+          <label for="email"> Email </label>
+          <input type="email" name="email" />
+        </div>
 
-      <button class="button" type="submit">Submit</button>
-    </form>
+        <button class="button" type="submit">Submit</button>
+      </form>
 
-    @if (errors()?.email) {
-    <p>{{ errors()?.email }}</p>
-    } } @else {
-    <div>Thanks for signing up!</div>
+      @if (errors()?.email) {
+        <p>{{ errors()?.email }}</p>
+      }
+    } @else {
+      <div>Thanks for signing up!</div>
     }
   `,
 })
@@ -178,7 +179,7 @@ import type { load } from './search.server';
     </form>
 
     @if (searchTerm()) {
-    <p>Search Term: {{ searchTerm() }}</p>
+      <p>Search Term: {{ searchTerm() }}</p>
     }
   `,
 })

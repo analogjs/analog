@@ -50,10 +50,10 @@ type DecorateProcedure<
       query: Resolver<TProcedure>;
     }
   : TProcedure extends AnyMutationProcedure
-  ? {
-      mutate: Resolver<TProcedure>;
-    }
-  : never;
+    ? {
+        mutate: Resolver<TProcedure>;
+      }
+    : never;
 
 // Removed subscription and using new type
 type DecoratedProcedureRecord<
@@ -66,8 +66,8 @@ type DecoratedProcedureRecord<
         TProcedures[TKey]
       >
     : TProcedures[TKey] extends AnyProcedure
-    ? DecorateProcedure<TProcedures[TKey], TRouter>
-    : never;
+      ? DecorateProcedure<TProcedures[TKey], TRouter>
+      : never;
 };
 
 // Removed subscription and using new type

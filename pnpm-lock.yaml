@@ -346,8 +346,8 @@ importers:
         specifier: ~10.1.3
         version: 10.1.3(postcss@8.4.38)
       prettier:
-        specifier: ^3.4.2
-        version: 3.4.2
+        specifier: ^3.5.0
+        version: 3.5.1
       prismjs:
         specifier: ^1.29.0
         version: 1.29.0
@@ -359,7 +359,7 @@ importers:
         version: 6.0.1
       rollup-plugin-visualizer:
         specifier: ^5.9.0
-        version: 5.9.0(rollup@4.24.4)
+        version: 5.9.0(rollup@4.26.0)
       satori:
         specifier: ^0.10.14
         version: 0.10.14
@@ -407,7 +407,7 @@ importers:
         version: 1.8.1(eslint@8.57.0)(vite@6.0.11(@types/node@18.19.15)(jiti@2.4.0)(less@4.1.3)(sass@1.80.7)(stylus@0.64.0)(terser@5.36.0)(yaml@2.5.1))
       vite-plugin-inspect:
         specifier: ~0.8
-        version: 0.8.9(rollup@4.24.4)(vite@6.0.11(@types/node@18.19.15)(jiti@2.4.0)(less@4.1.3)(sass@1.80.7)(stylus@0.64.0)(terser@5.36.0)(yaml@2.5.1))
+        version: 0.8.9(rollup@4.26.0)(vite@6.0.11(@types/node@18.19.15)(jiti@2.4.0)(less@4.1.3)(sass@1.80.7)(stylus@0.64.0)(terser@5.36.0)(yaml@2.5.1))
       vite-tsconfig-paths:
         specifier: 4.2.0
         version: 4.2.0(typescript@5.5.4)(vite@6.0.11(@types/node@18.19.15)(jiti@2.4.0)(less@4.1.3)(sass@1.80.7)(stylus@0.64.0)(terser@5.36.0)(yaml@2.5.1))
@@ -11909,8 +11909,8 @@ packages:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
 
-  prettier@3.4.2:
-    resolution: {integrity: sha512-e9MewbtFo+Fevyuxn/4rrcDAaq0IYxPGLvObpQjiZBMAzB9IGmzlnG9RZy3FFas+eBMu2vA0CszMeduow5dIuQ==}
+  prettier@3.5.1:
+    resolution: {integrity: sha512-hPpFQvHwL3Qv5AdRvBFMhnKo4tYxp0ReXiPn2bxkiohEX6mBeBwEpBSQTkD458RaaDKQMYSp4hX4UtfUTA5wDw==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -29834,7 +29834,7 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier@3.4.2: {}
+  prettier@3.5.1: {}
 
   pretty-bytes@5.6.0: {}
 
@@ -30575,14 +30575,14 @@ snapshots:
     optionalDependencies:
       rollup: 4.26.0
 
-  rollup-plugin-visualizer@5.9.0(rollup@4.24.4):
+  rollup-plugin-visualizer@5.9.0(rollup@4.26.0):
     dependencies:
       open: 8.4.2
       picomatch: 2.3.1
       source-map: 0.7.4
       yargs: 17.7.2
     optionalDependencies:
-      rollup: 4.24.4
+      rollup: 4.26.0
 
   rollup@2.79.1:
     optionalDependencies:
@@ -32366,10 +32366,10 @@ snapshots:
       rollup: 2.79.1
       vite: 6.0.11(@types/node@18.19.15)(jiti@2.4.0)(less@4.1.3)(sass@1.80.7)(stylus@0.64.0)(terser@5.36.0)(yaml@2.5.1)
 
-  vite-plugin-inspect@0.8.9(rollup@4.24.4)(vite@6.0.11(@types/node@18.19.15)(jiti@2.4.0)(less@4.1.3)(sass@1.80.7)(stylus@0.64.0)(terser@5.36.0)(yaml@2.5.1)):
+  vite-plugin-inspect@0.8.9(rollup@4.26.0)(vite@6.0.11(@types/node@18.19.15)(jiti@2.4.0)(less@4.1.3)(sass@1.80.7)(stylus@0.64.0)(terser@5.36.0)(yaml@2.5.1)):
     dependencies:
       '@antfu/utils': 0.7.10
-      '@rollup/pluginutils': 5.1.4(rollup@4.24.4)
+      '@rollup/pluginutils': 5.1.4(rollup@4.26.0)
       debug: 4.4.0(supports-color@9.4.0)
       error-stack-parser-es: 0.1.5
       fs-extra: 11.2.0

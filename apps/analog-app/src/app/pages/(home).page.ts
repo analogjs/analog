@@ -17,21 +17,21 @@ export const routeMeta: RouteMeta = {
     <h2>Products</h2>
 
     @for (product of data().products; track product.id) {
-    <div>
-      <h3>
-        <a
-          [title]="product.name + ' details'"
-          [routerLink]="['/products', product.id]"
-        >
-          {{ product.name }}
-        </a>
-      </h3>
-      @if ( product.description ) {
-      <p>Description: {{ product.description }}</p>
-      }
-      <button type="button" (click)="share()">Share</button>
-      <app-product-alerts [product]="product" (notify)="onNotify()" />
-    </div>
+      <div>
+        <h3>
+          <a
+            [title]="product.name + ' details'"
+            [routerLink]="['/products', product.id]"
+          >
+            {{ product.name }}
+          </a>
+        </h3>
+        @if (product.description) {
+          <p>Description: {{ product.description }}</p>
+        }
+        <button type="button" (click)="share()">Share</button>
+        <app-product-alerts [product]="product" (notify)="onNotify()" />
+      </div>
     }
   `,
   styles: [
