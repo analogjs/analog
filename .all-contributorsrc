@@ -1232,6 +1232,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "r-yanyo",
+      "name": "r-yanyo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6813556?v=4",
+      "profile": "https://www.r-yanyo.com/profile",
+      "contributions": [
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
