@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-130-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-131-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -279,6 +279,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://mattlewis.me/"><img src="https://avatars.githubusercontent.com/u/6425649?v=4?s=100" width="100px;" alt="Matt Lewis"/><br /><sub><b>Matt Lewis</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=mattlewis92" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/baptiste-mah%C3%A9-95b425180/"><img src="https://avatars.githubusercontent.com/u/41227846?v=4?s=100" width="100px;" alt="Baptiste Mahé"/><br /><sub><b>Baptiste Mahé</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=BaptisteMahe" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/milosdanilov"><img src="https://avatars.githubusercontent.com/u/12774464?v=4?s=100" width="100px;" alt="Miloš Danilov"/><br /><sub><b>Miloš Danilov</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=milosdanilov" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.r-yanyo.com/profile"><img src="https://avatars.githubusercontent.com/u/6813556?v=4?s=100" width="100px;" alt="r-yanyo"/><br /><sub><b>r-yanyo</b></sub></a><br /><a href="#infra-r-yanyo" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
     </tr>
   </tbody>
 </table>
