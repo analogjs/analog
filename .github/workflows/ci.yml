@@ -189,9 +189,9 @@ jobs:
       - name: Set up GitHub Pages
         uses: actions/configure-pages@v1
       - name: Upload GitHub Pages-compatible tarball
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ env.DOCS_APP_PATH }}
       - name: Deploy docs website tarball
         id: deploy
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v4
