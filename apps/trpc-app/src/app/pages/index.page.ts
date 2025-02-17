@@ -109,7 +109,7 @@ export default class HomeComponent {
   public triggerRefresh$ = new Subject<void>();
   public notes$ = this.triggerRefresh$.pipe(
     switchMap(() => this._trpc.note.list.query()),
-    shareReplay(1)
+    shareReplay(1),
   );
   public newNote = '';
   public loggedIn = signal(false);
@@ -125,7 +125,7 @@ export default class HomeComponent {
           ...h,
           authorization: this.loggedIn() ? 'Bearer authToken' : undefined,
         })),
-      { allowSignalWrites: true }
+      { allowSignalWrites: true },
     );
   }
 
@@ -155,7 +155,7 @@ export default class HomeComponent {
         catchError((e) => {
           this.error.set(e);
           return of(null);
-        })
+        }),
       )
       .subscribe(() => this.triggerRefresh$.next());
   }

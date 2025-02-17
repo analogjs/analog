@@ -87,8 +87,8 @@ describe('updateMetaTagsOnRouteChange', () => {
                           property: 'og:description',
                           content: childMetaTagValues.ogDescription,
                         },
-                      ] as MetaTag[]
-                  )
+                      ] as MetaTag[],
+                  ),
                 ),
             },
           },
@@ -113,26 +113,26 @@ describe('updateMetaTagsOnRouteChange', () => {
     const getMetaElements = () => ({
       charset: document.querySelector('meta[charset]') as HTMLMetaElement,
       httpEquivRefresh: document.querySelector(
-        'meta[http-equiv="refresh"]'
+        'meta[http-equiv="refresh"]',
       ) as HTMLMetaElement,
       httpEquivContentSec: document.querySelector(
-        'meta[http-equiv="content-security-policy"]'
+        'meta[http-equiv="content-security-policy"]',
       ) as HTMLMetaElement,
       description: document.querySelector(
-        'meta[name="description"]'
+        'meta[name="description"]',
       ) as HTMLMetaElement,
       keywords: document.querySelector(
-        'meta[name="keywords"]'
+        'meta[name="keywords"]',
       ) as HTMLMetaElement,
       author: document.querySelector('meta[name="author"]') as HTMLMetaElement,
       ogTitle: document.querySelector(
-        'meta[property="og:title"]'
+        'meta[property="og:title"]',
       ) as HTMLMetaElement,
       ogDescription: document.querySelector(
-        'meta[property="og:description"]'
+        'meta[property="og:description"]',
       ) as HTMLMetaElement,
       ogImage: document.querySelector(
-        'meta[property="og:image"]'
+        'meta[property="og:image"]',
       ) as HTMLMetaElement,
     });
 
@@ -147,13 +147,13 @@ describe('updateMetaTagsOnRouteChange', () => {
 
     const metaElements = getMetaElements();
     expect(metaElements.charset.getAttribute('charset')).toBe(
-      parentMetaTagValues.charset
+      parentMetaTagValues.charset,
     );
     expect(metaElements.httpEquivRefresh.content).toBe(
-      parentMetaTagValues.httpEquivRefresh
+      parentMetaTagValues.httpEquivRefresh,
     );
     expect(metaElements.description.content).toBe(
-      parentMetaTagValues.description
+      parentMetaTagValues.description,
     );
     expect(metaElements.keywords.content).toBe(parentMetaTagValues.keywords);
     expect(metaElements.ogTitle.content).toBe(parentMetaTagValues.ogTitle);
@@ -170,21 +170,21 @@ describe('updateMetaTagsOnRouteChange', () => {
 
     const metaElements = getMetaElements();
     expect(metaElements.charset.getAttribute('charset')).toBe(
-      childMetaTagValues.charset
+      childMetaTagValues.charset,
     );
     expect(metaElements.httpEquivRefresh.content).toBe(
-      childMetaTagValues.httpEquivRefresh
+      childMetaTagValues.httpEquivRefresh,
     );
     expect(metaElements.httpEquivContentSec.content).toBe(
-      childMetaTagValues.httpEquivContentSec
+      childMetaTagValues.httpEquivContentSec,
     );
     expect(metaElements.description.content).toBe(
-      childMetaTagValues.description
+      childMetaTagValues.description,
     );
     expect(metaElements.author.content).toBe(childMetaTagValues.author);
     expect(metaElements.ogTitle.content).toBe(childMetaTagValues.ogTitle);
     expect(metaElements.ogDescription.content).toBe(
-      childMetaTagValues.ogDescription
+      childMetaTagValues.ogDescription,
     );
     // meta tags inherited from parent route
     expect(metaElements.keywords.content).toBe(parentMetaTagValues.keywords);
@@ -203,24 +203,24 @@ describe('updateMetaTagsOnRouteChange', () => {
 
     const metaElements = getMetaElements();
     expect(metaElements.charset.getAttribute('charset')).toBe(
-      parentMetaTagValues.charset
+      parentMetaTagValues.charset,
     );
     expect(metaElements.description.content).toBe(
-      parentMetaTagValues.description
+      parentMetaTagValues.description,
     );
     expect(metaElements.keywords.content).toBe(parentMetaTagValues.keywords);
     expect(metaElements.httpEquivRefresh.content).toBe(
-      parentMetaTagValues.httpEquivRefresh
+      parentMetaTagValues.httpEquivRefresh,
     );
     expect(metaElements.ogTitle.content).toBe(parentMetaTagValues.ogTitle);
     expect(metaElements.ogImage.content).toBe(parentMetaTagValues.ogImage);
     // meta tags that are not changed
     expect(metaElements.httpEquivContentSec.content).toBe(
-      childMetaTagValues.httpEquivContentSec
+      childMetaTagValues.httpEquivContentSec,
     );
     expect(metaElements.author.content).toBe(childMetaTagValues.author);
     expect(metaElements.ogDescription.content).toBe(
-      childMetaTagValues.ogDescription
+      childMetaTagValues.ogDescription,
     );
   }));
 });

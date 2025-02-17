@@ -3,7 +3,7 @@ import type * as esbuild from 'esbuild';
 import { PluginOptions } from './src';
 
 export const analogSFC: (options?: PluginOptions) => esbuild.Plugin = (
-  options
+  options,
 ) => ({
   name: 'analog-sfc-esbuild-plugin',
   async setup(build) {

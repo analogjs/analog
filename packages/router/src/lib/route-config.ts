@@ -59,7 +59,7 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
 }
 
 function isRedirectRouteMeta(
-  routeMeta: RouteMeta
+  routeMeta: RouteMeta,
 ): routeMeta is RedirectRouteMeta {
   return !!routeMeta.redirectTo;
 }

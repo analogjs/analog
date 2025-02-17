@@ -6,7 +6,7 @@ import { PostAttributes } from './models';
 
 // temporary
 function injectActivePostAttributes(
-  route: ActivatedRouteSnapshot
+  route: ActivatedRouteSnapshot,
 ): PostAttributes {
   const file = injectContentFiles<PostAttributes>().find((contentFile) => {
     return (

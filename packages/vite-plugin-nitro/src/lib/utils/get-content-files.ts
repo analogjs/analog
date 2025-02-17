@@ -10,7 +10,7 @@ const require = createRequire(import.meta.url);
 export function getMatchingContentFilesWithFrontMatter(
   workspaceRoot: string,
   rootDir: string,
-  glob: string
+  glob: string,
 ): PrerenderContentFile[] {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const fg = require('fast-glob');

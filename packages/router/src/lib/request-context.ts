@@ -24,7 +24,7 @@ import { makeCacheKey } from './cache-key';
  */
 export function requestContextInterceptor(
   req: HttpRequest<unknown>,
-  next: HttpHandlerFn
+  next: HttpHandlerFn,
 ) {
   const apiPrefix = injectAPIPrefix();
   const baseUrl = injectBaseURL();
@@ -73,7 +73,7 @@ export function requestContextInterceptor(
 
           transferState.set(storeKey, cacheResponse);
           return transferResponse;
-        })
+        }),
     );
   }
 
@@ -98,7 +98,7 @@ export function requestContextInterceptor(
     return next(
       req.clone({
         url: requestUrl,
-      })
+      }),
     );
   }
 
@@ -112,7 +112,7 @@ export function requestContextInterceptor(
     return next(
       req.clone({
         url: requestUrl,
-      })
+      }),
     );
   }
 

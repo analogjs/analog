@@ -43,7 +43,7 @@ function getViteConfiguration(vite?: PluginOptions) {
             return {
               code: code.replace(
                 'new xhr2.XMLHttpRequest',
-                'new (xhr2.default.XMLHttpRequest || xhr2.default)'
+                'new (xhr2.default.XMLHttpRequest || xhr2.default)',
               ),
             };
           }
@@ -77,7 +77,7 @@ export default function (options?: AngularOptions): AstroIntegration {
         addRenderer(getRenderer());
         updateConfig({
           vite: getViteConfiguration(
-            options?.vite
+            options?.vite,
           ) as DeepPartial<ViteUserConfig>,
         });
       },
@@ -88,7 +88,7 @@ export default function (options?: AngularOptions): AstroIntegration {
         ) {
           console.warn(
             `[warning] The Angular integration doesn't support Shiki syntax highlighting in MDX files. Overriding with Prism.\n
-To disable this warning, set the syntaxHighlight option in your astro.config.mjs mdx() integration to 'prism' or false.`
+To disable this warning, set the syntaxHighlight option in your astro.config.mjs mdx() integration to 'prism' or false.`,
           );
         }
         if (process.env['NODE_ENV'] === 'production') {

@@ -49,7 +49,7 @@ export class NoopContentRenderer implements ContentRenderer {
 
   getContentHeadings(): Array<TableOfContentItem> {
     const key = makeStateKey<TableOfContentItem[]>(
-      `content-headings-${this.contentId}`
+      `content-headings-${this.contentId}`,
     );
 
     if (import.meta.env.SSR === true) {

@@ -96,7 +96,7 @@ export class MarkedSetupService {
           return Prism.highlight(
             code,
             diff ? Prism.languages['diff'] : Prism.languages[lang],
-            lang
+            lang,
           );
         },
       }),
@@ -107,7 +107,7 @@ export class MarkedSetupService {
         gfm: true,
         breaks: false,
         mangle: false,
-      }
+      },
     );
 
     this.marked = marked;

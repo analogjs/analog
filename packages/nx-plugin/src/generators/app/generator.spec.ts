@@ -15,10 +15,10 @@ describe('nx-plugin generator', () => {
   const setup = async (
     options: AnalogNxApplicationGeneratorOptions,
     nxVersion = '20.0.0',
-    standalone = false
+    standalone = false,
   ) => {
     const tree = createTreeWithEmptyWorkspace(
-      standalone ? {} : { layout: 'apps-libs' }
+      standalone ? {} : { layout: 'apps-libs' },
     );
     console.log('nx', nxVersion);
     addDependenciesToPackageJson(tree, {}, { nx: nxVersion });
@@ -32,12 +32,12 @@ describe('nx-plugin generator', () => {
 
   const verifyCoreDependenciesNxV16_0_0_AngularV15_X = (
     dependencies: Record<string, string>,
-    devDependencies: Record<string, string>
+    devDependencies: Record<string, string>,
   ) => {
     expect(dependencies['@analogjs/content']).toBe('0.1.9');
     expect(dependencies['@analogjs/router']).toBe('0.1.0-alpha.10');
     expect(dependencies['@angular/platform-server']).toBe(
-      dependencies['@angular/core']
+      dependencies['@angular/core'],
     );
     expect(dependencies['front-matter']).toBe('^4.0.2');
     expect(dependencies['marked']).toBe('^4.2.4');
@@ -51,7 +51,7 @@ describe('nx-plugin generator', () => {
     expect(devDependencies['@nx/eslint']).toBeTruthy();
     expect(devDependencies['@analogjs/platform']).toBe('0.1.0-beta.22');
     expect(devDependencies['@analogjs/vite-plugin-angular']).toBe(
-      '0.2.0-alpha.29'
+      '0.2.0-alpha.29',
     );
     expect(devDependencies['@nx/vite']).toBe('~16.0.0');
     expect(devDependencies['jsdom']).toBe('^20.0.0');
@@ -62,12 +62,12 @@ describe('nx-plugin generator', () => {
 
   const verifyCoreDependenciesAngularV16_X = (
     dependencies: Record<string, string>,
-    devDependencies: Record<string, string>
+    devDependencies: Record<string, string>,
   ) => {
     expect(dependencies['@analogjs/content']).toBe('^0.2.0');
     expect(dependencies['@analogjs/router']).toBe('^0.2.0');
     expect(dependencies['@angular/platform-server']).toBe(
-      dependencies['@angular/core']
+      dependencies['@angular/core'],
     );
     expect(dependencies['front-matter']).toBe('^4.0.2');
     expect(dependencies['marked']).toBe('^5.0.2');
@@ -92,12 +92,12 @@ describe('nx-plugin generator', () => {
 
   const verifyCoreDependenciesNxV17_AngularV16_X = (
     dependencies: Record<string, string>,
-    devDependencies: Record<string, string>
+    devDependencies: Record<string, string>,
   ) => {
     expect(dependencies['@analogjs/content']).toBe('^1.2.0');
     expect(dependencies['@analogjs/router']).toBe('^1.2.0');
     expect(dependencies['@angular/platform-server']).toBe(
-      dependencies['@angular/core']
+      dependencies['@angular/core'],
     );
     expect(dependencies['front-matter']).toBe('^4.0.2');
     expect(dependencies['marked']).toBe('^5.0.2');
@@ -122,12 +122,12 @@ describe('nx-plugin generator', () => {
 
   const verifyCoreDependenciesNxV18_AngularV17_X = (
     dependencies: Record<string, string>,
-    devDependencies: Record<string, string>
+    devDependencies: Record<string, string>,
   ) => {
     expect(dependencies['@analogjs/content']).toBeDefined();
     expect(dependencies['@analogjs/router']).toBeDefined();
     expect(dependencies['@angular/platform-server']).toBe(
-      dependencies['@angular/core']
+      dependencies['@angular/core'],
     );
     expect(dependencies['front-matter']).toBe('^4.0.2');
     expect(dependencies['marked']).toBe('^5.0.2');
@@ -155,7 +155,7 @@ describe('nx-plugin generator', () => {
   const verifyConfig = (
     config: ProjectConfiguration,
     name: string,
-    standalone = false
+    standalone = false,
   ) => {
     expect(config.projectType).toBe('application');
     expect(config.root).toBe(standalone ? name : 'apps/' + name);
@@ -181,15 +181,15 @@ describe('nx-plugin generator', () => {
   const verifyHomePageExists = (
     tree: Tree,
     appName: string,
-    standalone = false
+    standalone = false,
   ) => {
     const hasHomePageFile = tree.exists(
-      `${standalone ? '' : 'apps/'}${appName}/src/app/pages/(home).page.ts`
+      `${standalone ? '' : 'apps/'}${appName}/src/app/pages/(home).page.ts`,
     );
     const hasWelcomeComponentFile = tree.exists(
       `${
         standalone ? '' : 'apps/'
-      }${appName}/src/app/pages/analog-welcome.component.ts`
+      }${appName}/src/app/pages/analog-welcome.component.ts`,
     );
     expect(hasHomePageFile).toBeTruthy();
     expect(hasWelcomeComponentFile).toBeTruthy();
@@ -198,21 +198,21 @@ describe('nx-plugin generator', () => {
   const verifyEslint = (
     tree: Tree,
     config: ProjectConfiguration,
-    devDependencies: Record<string, string>
+    devDependencies: Record<string, string>,
   ) => {
     expect(devDependencies['@nx/eslint']).toBeDefined();
   };
 
   const verifyTailwindIsSetUp = (
     tree: Tree,
-    devDependencies: Record<string, string>
+    devDependencies: Record<string, string>,
   ) => {
     expect(devDependencies['tailwindcss']).toBeDefined();
     const hasTailwindConfigFile = tree.exists(
-      'apps/tailwind-app/tailwind.config.ts'
+      'apps/tailwind-app/tailwind.config.ts',
     );
     const hasPostCSSConfigFile = tree.exists(
-      'apps/tailwind-app/postcss.config.cjs'
+      'apps/tailwind-app/postcss.config.cjs',
     );
     expect(hasTailwindConfigFile).toBeTruthy();
     expect(hasPostCSSConfigFile).toBeTruthy();
@@ -220,13 +220,13 @@ describe('nx-plugin generator', () => {
 
   const verifyTrpcIsSetUp = (
     tree: Tree,
-    dependencies: Record<string, string>
+    dependencies: Record<string, string>,
   ) => {
     expect(dependencies['@analogjs/trpc']).toBeDefined();
     const hasTrpcClientFile = tree.exists('apps/trpc-app/src/trpc-client.ts');
     const hasNoteFile = tree.exists('apps/trpc-app/src/note.ts');
     const hasTrpcServerRoute = tree.exists(
-      'apps/trpc-app/src/server/routes/trpc/[trpc].ts'
+      'apps/trpc-app/src/server/routes/trpc/[trpc].ts',
     );
     expect(hasTrpcClientFile).toBeTruthy();
     expect(hasNoteFile).toBeTruthy();
@@ -244,13 +244,13 @@ describe('nx-plugin generator', () => {
 
   const verifyTrpcIsNotSetUp = (
     tree: Tree,
-    dependencies: Record<string, string>
+    dependencies: Record<string, string>,
   ) => {
     expect(dependencies['@analogjs/trpc']).not.toBeDefined();
     const hasTrpcClientFile = tree.exists('apps/trpc-app/src/trpc-client.ts');
     const hasNoteFile = tree.exists('apps/trpc-app/src/note.ts');
     const hasTrpcServerRoute = tree.exists(
-      'apps/trpc-app/src/server/routes/trpc/[trpc].ts'
+      'apps/trpc-app/src/server/routes/trpc/[trpc].ts',
     );
     expect(hasTrpcClientFile).toBeFalsy();
     expect(hasNoteFile).toBeFalsy();
@@ -362,7 +362,7 @@ describe('nx-plugin generator', () => {
           analogAppName,
           addTailwind: true,
         },
-        '17.0.0'
+        '17.0.0',
       );
       const { dependencies, devDependencies } = readJson(tree, 'package.json');
 
@@ -379,7 +379,7 @@ describe('nx-plugin generator', () => {
       const analogAppName = 'trpc-app';
       const { config, tree } = await setup(
         { analogAppName, addTRPC: true },
-        '17.0.0'
+        '17.0.0',
       );
       const { dependencies, devDependencies } = readJson(tree, 'package.json');
 
@@ -428,7 +428,7 @@ describe('nx-plugin generator', () => {
           analogAppName,
           addTailwind: true,
         },
-        '16.10.0'
+        '16.10.0',
       );
       const { dependencies, devDependencies } = readJson(tree, 'package.json');
 
@@ -445,7 +445,7 @@ describe('nx-plugin generator', () => {
       const analogAppName = 'trpc-app';
       const { config, tree } = await setup(
         { analogAppName, addTRPC: true },
-        '16.10.0'
+        '16.10.0',
       );
       const { dependencies, devDependencies } = readJson(tree, 'package.json');
 
@@ -466,7 +466,7 @@ describe('nx-plugin generator', () => {
 
       verifyCoreDependenciesNxV16_0_0_AngularV15_X(
         dependencies,
-        devDependencies
+        devDependencies,
       );
 
       verifyConfig(config, analogAppName);
@@ -483,13 +483,13 @@ describe('nx-plugin generator', () => {
           analogAppName,
           addTailwind: true,
         },
-        '16.0.0'
+        '16.0.0',
       );
       const { dependencies, devDependencies } = readJson(tree, 'package.json');
 
       verifyCoreDependenciesNxV16_0_0_AngularV15_X(
         dependencies,
-        devDependencies
+        devDependencies,
       );
 
       verifyConfig(config, analogAppName);
@@ -503,13 +503,13 @@ describe('nx-plugin generator', () => {
       const analogAppName = 'trpc-app';
       const { config, tree } = await setup(
         { analogAppName, addTRPC: true },
-        '16.0.0'
+        '16.0.0',
       );
       const { dependencies, devDependencies } = readJson(tree, 'package.json');
 
       verifyCoreDependenciesNxV16_0_0_AngularV15_X(
         dependencies,
-        devDependencies
+        devDependencies,
       );
 
       verifyConfig(config, analogAppName);
@@ -523,7 +523,7 @@ describe('nx-plugin generator', () => {
     test('should error out due to unsupported Nx version', async () => {
       const analogAppName = 'analog';
       await expect(setup({ analogAppName }, '15.1.0')).rejects.toThrow(
-        'Nx v15.2.0 or newer is required to install Analog'
+        'Nx v15.2.0 or newer is required to install Analog',
       );
     });
   });

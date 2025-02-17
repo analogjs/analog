@@ -39,7 +39,7 @@ export function getBaseUrl(req: ServerRequest) {
       originalUrl.endsWith('/')
         ? originalUrl.substring(0, originalUrl.length - 1)
         : originalUrl
-    }`
+    }`,
   );
   const baseUrl = parsedUrl.origin;
 
@@ -48,7 +48,7 @@ export function getBaseUrl(req: ServerRequest) {
 
 export function getRequestProtocol(
   req: ServerRequest,
-  opts: { xForwardedProto?: boolean } = {}
+  opts: { xForwardedProto?: boolean } = {},
 ) {
   if (
     opts.xForwardedProto !== false &&

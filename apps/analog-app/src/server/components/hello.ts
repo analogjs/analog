@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  OnInit,
+} from '@angular/core';
 
 import {
   injectStaticOutputs,
@@ -7,7 +12,6 @@ import {
 
 @Component({
   selector: 'app-hello',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h3>Hello From the Server</h3>
@@ -22,7 +26,7 @@ import {
     }
   `,
 })
-export default class HelloComponent {
+export default class HelloComponent implements OnInit {
   Date = Date;
   props = injectStaticProps();
   outputs = injectStaticOutputs<{ loaded: boolean }>();

@@ -13,7 +13,7 @@ import { AnalogPageGeneratorSchema, NormalizedSchema } from './schema';
 
 function normalizeOptions(
   tree: Tree,
-  options: AnalogPageGeneratorSchema
+  options: AnalogPageGeneratorSchema,
 ): NormalizedSchema {
   const projectRoot = `${getWorkspaceLayout(tree).appsDir}/${options.project}`;
   return {
@@ -28,7 +28,7 @@ function generateFileName(input: string) {
     return input.replace(/\[[a-zA-Z0-9-]+\]/, (match) => {
       const wordId = match.slice(1, -1);
       const camelCaseWordId = wordId.replace(/-([a-zA-Z0-9])/g, (_, letter) =>
-        letter.toUpperCase()
+        letter.toUpperCase(),
       );
       return `[${camelCaseWordId}]`;
     });
@@ -58,12 +58,12 @@ function addFiles(tree: Tree, options: NormalizedSchema) {
 
 export async function analogPageGenerator(
   tree: Tree,
-  options: AnalogPageGeneratorSchema
+  options: AnalogPageGeneratorSchema,
 ) {
   const normalizedOptions = normalizeOptions(tree, options);
   if (options.redirectPage && !options.redirectPath) {
     throw new Error(
-      stripIndents`A redirectPath is required when redirectPage is true.`
+      stripIndents`A redirectPath is required when redirectPage is true.`,
     );
   }
   addFiles(tree, normalizedOptions);

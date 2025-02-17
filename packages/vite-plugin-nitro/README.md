@@ -52,7 +52,7 @@ export default async function render(_url: string, document: string) {
   const html = ReactDOMServer.renderToString(
     <React.StrictMode>
       <App />
-    </React.StrictMode>
+    </React.StrictMode>,
   );
   return document.replace('<!--app-html-->', html);
 }

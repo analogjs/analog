@@ -7,7 +7,7 @@ import { addPostRenderingHooks } from './hooks/post-rendering-hook.js';
 
 export async function buildServer(
   options?: Options,
-  nitroConfig?: NitroConfig
+  nitroConfig?: NitroConfig,
 ) {
   const nitro = await createNitro({
     dev: false,

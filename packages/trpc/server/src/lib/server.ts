@@ -21,7 +21,7 @@ import type { TRPCResponse } from '@trpc/server/rpc';
 type MaybePromise<T> = T | Promise<T>;
 
 export type CreateContextFn<TRouter extends AnyRouter> = (
-  event: H3Event
+  event: H3Event,
 ) => MaybePromise<inferRouterContext<TRouter>>;
 
 export interface ResponseMetaFnPayload<TRouter extends AnyRouter> {
@@ -33,7 +33,7 @@ export interface ResponseMetaFnPayload<TRouter extends AnyRouter> {
 }
 
 export type ResponseMetaFn<TRouter extends AnyRouter> = (
-  opts: ResponseMetaFnPayload<TRouter>
+  opts: ResponseMetaFnPayload<TRouter>,
 ) => ResponseMeta;
 
 export interface OnErrorPayload<TRouter extends AnyRouter> {
@@ -46,7 +46,7 @@ export interface OnErrorPayload<TRouter extends AnyRouter> {
 }
 
 export type OnErrorFn<TRouter extends AnyRouter> = (
-  opts: OnErrorPayload<TRouter>
+  opts: OnErrorPayload<TRouter>,
 ) => void;
 
 export interface ResolveHTTPRequestOptions<TRouter extends AnyRouter> {

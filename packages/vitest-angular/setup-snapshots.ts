@@ -14,7 +14,7 @@ const customSnapshotSerializer = () => {
     indentation: any,
     depth: any,
     refs: any,
-    printer: any
+    printer: any,
   ): string {
     // `printer` is a function that serializes a value using existing plugins.
     return `${printer(
@@ -22,7 +22,7 @@ const customSnapshotSerializer = () => {
       config,
       indentation,
       depth,
-      refs
+      refs,
     )}`;
   }
   function test(val: any): boolean {
@@ -111,7 +111,7 @@ function fixtureVitestSerializer(fixture: any) {
 
   const selector = Reflect.getOwnPropertyDescriptor(
     componentType,
-    '__annotations__'
+    '__annotations__',
   )?.value[0].selector;
 
   if (componentType && componentType.propDecorators) {
@@ -129,7 +129,7 @@ function fixtureVitestSerializer(fixture: any) {
   // * Convert string data to HTML data
   const doc = new DOMParser().parseFromString(
     `<${selector} ${inputsData}>${divElement.innerHTML}</${selector}>`,
-    'text/html'
+    'text/html',
   );
 
   return doc.body.childNodes[0];

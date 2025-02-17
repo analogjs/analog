@@ -60,7 +60,7 @@ export class ServerOnly {
         new Headers({
           'Content-type': 'application/json',
           'X-Analog-Component': componentId,
-        })
+        }),
       );
 
       const componentUrl = this.getComponentUrl(componentId);
@@ -69,10 +69,10 @@ export class ServerOnly {
       });
       const cacheKey = makeCacheKey(
         httpRequest,
-        new URL(componentUrl).pathname
+        new URL(componentUrl).pathname,
       );
       const storeKey = makeStateKey<{ html: string; outputs: ServerOutputs }>(
-        cacheKey
+        cacheKey,
       );
       const componentState = this.transferState.get<{
         html: string;
@@ -98,7 +98,7 @@ export class ServerOnly {
                 };
               }
               return throwError(
-                () => ({} as { html: string; outputs: ServerOutputs })
+                () => ({}) as { html: string; outputs: ServerOutputs },
               );
             }),
             catchError((error: unknown) => {
@@ -107,12 +107,12 @@ export class ServerOnly {
                 html: '',
                 outputs: {} as ServerOutputs,
               });
-            })
+            }),
           )
           .subscribe((content) =>
             this.updateContent(
-              content as { html: string; outputs: ServerOutputs }
-            )
+              content as { html: string; outputs: ServerOutputs },
+            ),
           );
       }
     });

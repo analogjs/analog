@@ -449,7 +449,7 @@ Just like with `.md` files you can dynamically search and filter `.agx` content 
 <script lang="ts">
   // posts.[slug].page.analog
   import { injectContent } from '@analogjs/content';
-  import { MarkdownComponent } from '@analogjs/content' with { analog: 'imports' }
+  import { MarkdownComponent } from '@analogjs/content' with { analog: 'imports' };
   import { toSignal } from '@angular/core/rxjs-interop';
 
   import { PostAttributes } from './models';

@@ -20,7 +20,7 @@ type ComponentLoader = () => Promise<Type<unknown>>;
 export function serverComponentRequest(serverContext: ServerContext) {
   const serverComponentId = getHeader(
     createEvent(serverContext.req, serverContext.res),
-    'X-Analog-Component'
+    'X-Analog-Component',
   );
 
   if (
@@ -43,7 +43,7 @@ const components = import.meta.glob([
 export async function renderServerComponent(
   url: string,
   serverContext: ServerContext,
-  config?: ApplicationConfig
+  config?: ApplicationConfig,
 ) {
   const componentReqId = serverComponentRequest(serverContext) as string;
   const { componentLoader, componentId } = getComponentLoader(componentReqId);
@@ -139,10 +139,10 @@ function getComponentLoader(componentReqId: string): {
 
 function retrieveTransferredState(
   html: string,
-  appId: string
+  appId: string,
 ): Record<string, unknown | undefined> {
   const regex = new RegExp(
-    `<script id="${appId}-state" type="application/json">(.*?)<\/script>`
+    `<script id="${appId}-state" type="application/json">(.*?)<\/script>`,
   );
   const match = html.match(regex);
 

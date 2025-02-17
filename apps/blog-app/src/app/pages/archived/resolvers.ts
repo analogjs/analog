@@ -5,7 +5,7 @@ import { ArchivedPostAttributes } from './models';
 
 // temporary
 function injectActivePostAttributes(
-  route: ActivatedRouteSnapshot
+  route: ActivatedRouteSnapshot,
 ): ArchivedPostAttributes {
   const file = injectContentFiles<ArchivedPostAttributes>().find(
     (contentFile) => {
@@ -14,7 +14,7 @@ function injectActivePostAttributes(
           `/src/content/archived/${route.params['slug']}.md` ||
         contentFile.slug === route.params['slug']
       );
-    }
+    },
   );
 
   return file!.attributes;

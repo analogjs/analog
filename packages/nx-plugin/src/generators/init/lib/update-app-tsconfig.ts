@@ -8,7 +8,7 @@ interface TsConfig {
 
 export function updateAppTsConfig(
   tree: Tree,
-  schema: SetupAnalogGeneratorSchema
+  schema: SetupAnalogGeneratorSchema,
 ) {
   const projects = getProjects(tree);
 
@@ -16,7 +16,7 @@ export function updateAppTsConfig(
 
   const tsconfigPath = joinPathFragments(
     projectConfig.root,
-    'tsconfig.app.json'
+    'tsconfig.app.json',
   );
 
   if (tree.exists(tsconfigPath)) {
@@ -28,7 +28,7 @@ export function updateAppTsConfig(
 
         return json;
       },
-      { expectComments: true, allowTrailingComma: true }
+      { expectComments: true, allowTrailingComma: true },
     );
   }
 }

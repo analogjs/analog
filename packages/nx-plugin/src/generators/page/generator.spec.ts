@@ -40,7 +40,7 @@ describe('analog-page generator', () => {
     await setup(options);
     await analogPageGenerator(tree, options);
     expect(
-      tree.read('apps/test/src/app/pages/home.page.ts', 'utf-8')
+      tree.read('apps/test/src/app/pages/home.page.ts', 'utf-8'),
     ).toMatchSnapshot('page');
   });
 
@@ -54,7 +54,7 @@ describe('analog-page generator', () => {
 
     await setup(options);
     await expect(analogPageGenerator(tree, options)).rejects.toThrow(
-      'A redirectPath is required when redirectPage is true.'
+      'A redirectPath is required when redirectPage is true.',
     );
   });
 
@@ -70,7 +70,7 @@ describe('analog-page generator', () => {
     await setup(options);
     await analogPageGenerator(tree, options);
     expect(
-      tree.read('apps/test/src/app/pages/home.page.ts', 'utf-8')
+      tree.read('apps/test/src/app/pages/home.page.ts', 'utf-8'),
     ).toMatchSnapshot('page');
   });
 
@@ -87,7 +87,7 @@ describe('analog-page generator', () => {
     await setup(options);
     await analogPageGenerator(tree, options);
     expect(
-      tree.read('apps/test/src/app/pages/home.page.ts', 'utf-8')
+      tree.read('apps/test/src/app/pages/home.page.ts', 'utf-8'),
     ).toMatchSnapshot('page');
   });
 
@@ -102,13 +102,13 @@ describe('analog-page generator', () => {
     await setup(options);
     await analogPageGenerator(tree, options);
     expect(
-      tree.read('apps/test/src/app/pages/blog/post.page.ts', 'utf-8')
+      tree.read('apps/test/src/app/pages/blog/post.page.ts', 'utf-8'),
     ).toMatchSnapshot('page');
 
     options.pathname = 'products/[products]';
     await analogPageGenerator(tree, options);
     expect(
-      tree.read('apps/test/src/app/pages/products/[products].page.ts', 'utf-8')
+      tree.read('apps/test/src/app/pages/products/[products].page.ts', 'utf-8'),
     ).toMatchSnapshot('page');
 
     options.pathname = `(customers)/demo/home`;
@@ -116,8 +116,8 @@ describe('analog-page generator', () => {
     expect(
       tree.read(
         'apps/test/src/app/pages/(customers)/demo/home.page.ts',
-        'utf-8'
-      )
+        'utf-8',
+      ),
     ).toMatchSnapshot('page');
 
     options.pathname = 'products/products.[productId]';
@@ -125,14 +125,14 @@ describe('analog-page generator', () => {
     expect(
       tree.read(
         'apps/test/src/app/pages/products/products.[productId].page.ts',
-        'utf-8'
-      )
+        'utf-8',
+      ),
     ).toMatchSnapshot('page');
 
     options.pathname = '(blog)';
     await analogPageGenerator(tree, options);
     expect(
-      tree.read('apps/test/src/app/pages/(blog).page.ts', 'utf-8')
+      tree.read('apps/test/src/app/pages/(blog).page.ts', 'utf-8'),
     ).toMatchSnapshot('page');
   });
 });

@@ -27,7 +27,7 @@ export default class AnalogMarkdownRouteComponent implements AfterViewChecked {
   contentRenderer = inject(ContentRenderer);
 
   protected content: SafeHtml = this.sanitizer.bypassSecurityTrustHtml(
-    this.route.snapshot.data['renderedAnalogContent']
+    this.route.snapshot.data['renderedAnalogContent'],
   );
 
   @Input() classes = 'analog-markdown-route';

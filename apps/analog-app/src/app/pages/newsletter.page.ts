@@ -2,6 +2,8 @@ import { Component, signal } from '@angular/core';
 
 import { FormAction } from '@analogjs/router';
 
+import { type NewsletterSubmitResponse } from './newsletter.server';
+
 type FormErrors =
   | {
       email?: string;
@@ -15,34 +17,37 @@ type FormErrors =
   template: `
     <h3>Newsletter Signup</h3>
 
-    @if (!signedUp()) {
-    <form
-      method="post"
-      (onSuccess)="onSuccess()"
-      (onError)="onError($any($event))"
-      (onStateChange)="errors.set(undefined)"
-    >
-      <div>
-        <label for="email"> Email </label>
-        <input type="email" name="email" />
+    @if (signedUpEmail()) {
+      <div id="signup-message">
+        Thanks for signing up, {{ signedUpEmail() }}!
       </div>
+    } @else {
+      <form
+        method="post"
+        (onSuccess)="onSuccess($any($event))"
+        (onError)="onError($any($event))"
+        (onStateChange)="errors.set(undefined)"
+      >
+        <div>
+          <label for="email"> Email </label>
+          <input type="email" name="email" />
+        </div>
 
-      <button class="button" type="submit">Submit</button>
-    </form>
+        <button class="button" type="submit">Submit</button>
+      </form>
 
-    @if( errors()?.email ) {
-    <p>{{ errors()?.email }}</p>
-    } } @else {
-    <div>Thanks for signing up!</div>
+      @if (errors()?.email) {
+        <p>{{ errors()?.email }}</p>
+      }
     }
   `,
 })
 export default class NewsletterComponent {
-  signedUp = signal(false);
+  signedUpEmail = signal('');
   errors = signal<FormErrors>(undefined);
 
-  onSuccess() {
-    this.signedUp.set(true);
+  onSuccess(res: NewsletterSubmitResponse) {
+    this.signedUpEmail.set(res.email);
   }
 
   onError(result?: FormErrors) {

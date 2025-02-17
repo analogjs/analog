@@ -701,7 +701,7 @@
       "login": "ajitzero",
       "name": "Ajit Panigrahi",
       "avatar_url": "https://avatars.githubusercontent.com/u/19947758?v=4",
-      "profile": "https://beta.ajitpanigrahi.com",
+      "profile": "https://ajitpanigrahi.com",
       "contributions": [
         "code"
       ]
@@ -1103,7 +1103,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/1179744?v=4",
       "profile": "https://github.com/osnoser1",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -1213,6 +1214,33 @@
       "profile": "https://mattlewis.me/",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "BaptisteMahe",
+      "name": "Baptiste Mahé",
+      "avatar_url": "https://avatars.githubusercontent.com/u/41227846?v=4",
+      "profile": "https://www.linkedin.com/in/baptiste-mah%C3%A9-95b425180/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "milosdanilov",
+      "name": "Miloš Danilov",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12774464?v=4",
+      "profile": "https://github.com/milosdanilov",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "r-yanyo",
+      "name": "r-yanyo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6813556?v=4",
+      "profile": "https://www.r-yanyo.com/profile",
+      "contributions": [
+        "infra"
       ]
     }
   ],

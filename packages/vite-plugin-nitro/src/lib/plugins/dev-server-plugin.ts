@@ -44,12 +44,12 @@ export function devServerPlugin(options: Options): Plugin {
         viteServer.middlewares.use(async (req, res) => {
           let template = readFileSync(
             resolve(viteServer.config.root, index),
-            'utf-8'
+            'utf-8',
           );
 
           template = await viteServer.transformIndexHtml(
             req.originalUrl as string,
-            template
+            template,
           );
 
           try {
@@ -62,7 +62,7 @@ export function devServerPlugin(options: Options): Plugin {
               {
                 req,
                 res,
-              }
+              },
             );
 
             if (result instanceof Response) {
@@ -84,7 +84,7 @@ export function devServerPlugin(options: Options): Plugin {
                   <script type="module">
                     import { ErrorOverlay } from '/@vite/client'
                     document.body.appendChild(new ErrorOverlay(${JSON.stringify(
-                      prepareError(req, e)
+                      prepareError(req, e),
                     ).replace(/</g, '\\u003c')}))
                   </script>
                 </head>

@@ -11,7 +11,7 @@ const genPath = join(__dirname, projectName);
 
 const run = (
   args: string[],
-  options: SyncOptions<string> = {}
+  options: SyncOptions<string> = {},
 ): ExecaSyncReturnValue<string> => {
   return commandSync(`node ${CLI_PATH} ${args.join(' ')}`, options);
 };
@@ -61,7 +61,7 @@ test('prompts for the starter if none supplied', () => {
 test.skip('prompts for the framework on supplying an invalid template', () => {
   const { stdout } = run([projectName, '--template', 'unknown']);
   expect(stdout).toContain(
-    `"unknown" isn't a valid template. Please choose from below:`
+    `"unknown" isn't a valid template. Please choose from below:`,
   );
 });
 
@@ -87,7 +87,7 @@ test('successfully scaffolds a project based on angular starter template', () =>
       '--analogSFC',
       'false',
     ],
-    { cwd: __dirname }
+    { cwd: __dirname },
   );
   const generatedFiles = readdirSync(genPath).sort();
 
@@ -99,7 +99,7 @@ test('successfully scaffolds a project based on angular starter template', () =>
 test('works with the -t alias', () => {
   const { stdout } = run(
     [projectName, '-t', 'latest', '--skipTailwind', '--analogSFC', 'false'],
-    { cwd: __dirname }
+    { cwd: __dirname },
   );
   const generatedFiles = readdirSync(genPath).sort();
 
