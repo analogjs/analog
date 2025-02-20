@@ -8,7 +8,7 @@ describe('analog-preset-e2e', () => {
 
     await runCommandAsync(
       `npx create-nx-workspace@latest ${project} --preset @analogjs/platform --analogAppName analog-app --no-nx-cloud`,
-      { cwd: process.cwd() }
+      { cwd: process.cwd() },
     );
 
     await runCommandAsync(`nx test analog-app`, {
@@ -20,7 +20,7 @@ describe('analog-preset-e2e', () => {
     });
 
     expect(() =>
-      checkFilesExist(`${tmpDir}/dist/analog-app/client/index.html`)
+      checkFilesExist(`${tmpDir}/dist/analog-app/client/index.html`),
     ).not.toThrow();
 
     rmdirSync(tmpDir, { recursive: true });

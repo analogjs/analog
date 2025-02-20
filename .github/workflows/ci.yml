@@ -29,6 +29,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version-file: .node-version
+      - run: npm install --global corepack@0.31.0
       - run: corepack enable
       - run: pnpm --version
       - uses: actions/setup-node@v3
@@ -39,7 +40,7 @@ jobs:
         run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Validate
-        run: pnpm exec prettier --check .
+        run: pnpm run prettier:check
 
   build:
     runs-on: ubuntu-latest
@@ -48,6 +49,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version-file: .node-version
+      - run: npm install --global corepack@0.31.0
       - run: corepack enable
       - run: pnpm --version
       - uses: actions/setup-node@v3
@@ -67,11 +69,6 @@ jobs:
         with:
           node-version-file: .node-version
       - run: corepack enable
-      - run: pnpm --version
-      - uses: actions/setup-node@v3
-        with:
-          cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Build
@@ -86,6 +83,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version-file: .node-version
+      - run: npm install --global corepack@0.31.0
       - run: corepack enable
       - run: pnpm --version
       - uses: actions/setup-node@v3
@@ -106,6 +104,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version-file: .node-version
+      - run: npm install --global corepack@0.31.0
       - run: corepack enable
       - run: pnpm --version
       - uses: actions/setup-node@v3
@@ -128,6 +127,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version-file: .node-version
+      - run: npm install --global corepack@0.31.0
       - run: corepack enable
       - run: pnpm --version
       - uses: actions/setup-node@v3
@@ -141,7 +141,7 @@ jobs:
       - name: Upload docs website
         # Runs on merge to the `beta` branch
         if: github.event_name == 'push' && github.ref_name == 'beta'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
           name: ${{ env.DOCS_APP_ARTIFACT_NAME }}
@@ -182,16 +182,16 @@ jobs:
       cancel-in-progress: ${{ github.event_name != 'push' }}
     steps:
       - name: Download docs website
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ env.DOCS_APP_ARTIFACT_NAME }}
           path: ${{ env.DOCS_APP_PATH }}
       - name: Set up GitHub Pages
         uses: actions/configure-pages@v1
       - name: Upload GitHub Pages-compatible tarball
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ env.DOCS_APP_PATH }}
       - name: Deploy docs website tarball
         id: deploy
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v4

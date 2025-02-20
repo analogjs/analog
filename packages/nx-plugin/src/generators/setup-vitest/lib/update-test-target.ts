@@ -9,7 +9,7 @@ import { SetupVitestGeneratorSchema } from '../schema';
 
 export function updateTestTarget(
   tree: Tree,
-  schema: SetupVitestGeneratorSchema
+  schema: SetupVitestGeneratorSchema,
 ) {
   const angularJsonPath = '/angular.json';
 
@@ -24,7 +24,7 @@ export function updateTestTarget(
 
         return json;
       },
-      { expectComments: true, allowTrailingComma: true }
+      { expectComments: true, allowTrailingComma: true },
     );
   } else {
     const projects = getProjects(tree);

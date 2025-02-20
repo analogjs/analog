@@ -21,7 +21,7 @@ export type WithShikiHighlighterOptions = ShikiHighlightOptions & {
 };
 
 export function withShikiHighlighter(
-  _opts: WithShikiHighlighterOptions = {}
+  _opts: WithShikiHighlighterOptions = {},
 ): Provider[] {
   return [
     {

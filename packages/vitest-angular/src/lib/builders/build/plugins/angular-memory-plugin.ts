@@ -19,10 +19,10 @@ interface AngularMemoryPluginOptions {
 }
 
 export async function createAngularMemoryPlugin(
-  options: AngularMemoryPluginOptions
+  options: AngularMemoryPluginOptions,
 ) {
   const { normalizePath } = await (Function(
-    'return import("vite")'
+    'return import("vite")',
   )() as Promise<typeof import('vite')>);
   const { outputFiles, external } = options;
   let config;

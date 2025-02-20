@@ -25,5 +25,5 @@ export const CONTENT_FILES_LIST_TOKEN = new InjectionToken<ContentFile[]>(
         };
       });
     },
-  }
+  },
 );

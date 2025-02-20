@@ -4,7 +4,7 @@ import { NormalizedOptions } from '../generator';
 export async function addEslint(
   tree: Tree,
   majorNxVersion: number,
-  options: NormalizedOptions
+  options: NormalizedOptions,
 ): Promise<void> {
   const linterOptions = {
     // needed to not depend on linter package

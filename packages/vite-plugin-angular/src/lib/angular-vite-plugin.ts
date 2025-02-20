@@ -65,10 +65,10 @@ export interface PluginOptions {
      * Enable experimental support for Analog file extension
      */
     supportAnalogFormat?:
-      | boolean
-      | {
-          include: string[];
-        };
+    | boolean
+    | {
+      include: string[];
+    };
     markdownTemplateTransforms?: MarkdownTemplateTransform[];
   };
   supportedBrowsers?: string[];
@@ -94,7 +94,7 @@ interface EmitFileResult {
 }
 type FileEmitter = (
   file: string,
-  source?: ts.SourceFile
+  source?: ts.SourceFile,
 ) => Promise<EmitFileResult | undefined>;
 
 /**
@@ -151,7 +151,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let nextProgram: NgtscProgram | undefined | ts.Program;
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode = false;
-  let testWatchMode = false;
+  let testWatchMode = isTestWatchMode();
   let inlineComponentStyles: Map<string, string> | undefined;
   let externalComponentStyles: Map<string, string> | undefined;
   const sourceFileCache = new SourceFileCache();
@@ -169,7 +169,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let viteServer: ViteDevServer | undefined;
   let styleTransform: (
     code: string,
-    filename: string
+    filename: string,
   ) => ReturnType<typeof preprocessCSS> | undefined;
 
   const styleUrlsResolver = new StyleUrlsResolver();
@@ -200,7 +200,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             config.root || '.',
             process.env['NODE_ENV'] === 'test'
               ? './tsconfig.spec.json'
-              : './tsconfig.app.json'
+              : './tsconfig.app.json',
           );
 
         return {
@@ -219,7 +219,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                     incremental: watchMode,
                   },
                   isTest,
-                  !isAstroIntegration
+                  !isAstroIntegration,
                 ),
               ],
               define: {
@@ -237,13 +237,17 @@ export function angular(options?: PluginOptions): Plugin[] {
       configResolved(config) {
         resolvedConfig = config;
 
-        // set test watch mode
-        // - vite override from vitest-angular
-        // - @nx/vite executor set server.watch explicitly to undefined (watch)/null (watch=false)
-        // - vite config for test.watch variable
-        testWatchMode =
-          !(config.server.watch === null) ||
-          (config as any).test?.watch === true;
+        if (isTest) {
+          // set test watch mode
+          // - vite override from vitest-angular
+          // - @nx/vite executor set server.watch explicitly to undefined (watch)/null (watch=false)
+          // - vite config for test.watch variable
+          // - vitest watch mode detected from the command line
+          testWatchMode =
+            !(config.server.watch === null) ||
+            config.test?.watch === true ||
+            testWatchMode;
+        }
       },
       configureServer(server) {
         viteServer = server;
@@ -260,7 +264,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           const angularComponentMiddleware: Connect.HandleFunction = async (
             req: Connect.IncomingMessage,
             res: ServerResponse<Connect.IncomingMessage>,
-            next: Connect.NextFunction
+            next: Connect.NextFunction,
           ) => {
             if (req.url === undefined || res.writableEnded) {
               return;
@@ -347,7 +351,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           ) {
             const relativeFileId = `${relative(
               process.cwd(),
-              fileId
+              fileId,
             )}@${classNames.get(fileId)}`;
 
             sendHMRComponentUpdate(ctx.server, relativeFileId);
@@ -368,7 +372,7 @@ export function angular(options?: PluginOptions): Plugin[] {
            * for an external resource (styles, html).
            */
           const isDirect = ctx.modules.find(
-            (mod) => ctx.file === mod.file && mod.id?.includes('?direct')
+            (mod) => ctx.file === mod.file && mod.id?.includes('?direct'),
           );
           if (isDirect) {
             if (pluginOptions.liveReload && isDirect?.id && isDirect.file) {
@@ -376,7 +380,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                 isDirect.type === 'css' && isComponentStyleSheet(isDirect.id);
               if (isComponentStyle) {
                 const { encapsulation } = getComponentStyleSheetMeta(
-                  isDirect.id
+                  isDirect.id,
                 );
 
                 // Track if the component uses ShadowDOM encapsulation
@@ -434,7 +438,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             updates.forEach((updateId) => {
               const impRelativeFileId = `${relative(
                 process.cwd(),
-                updateId
+                updateId,
               )}@${classNames.get(updateId)}`;
 
               sendHMRComponentUpdate(ctx.server, impRelativeFileId);
@@ -460,14 +464,14 @@ export function angular(options?: PluginOptions): Plugin[] {
         if (id.startsWith('angular:jit:')) {
           const path = id.split(';')[1];
           return `${normalizePath(
-            resolve(dirname(importer as string), path)
+            resolve(dirname(importer as string), path),
           )}?raw`;
         }
 
         // Map angular external styleUrls to the source file
         if (isComponentStyleSheet(id)) {
           const componentStyles = externalComponentStyles?.get(
-            getFilenameFromPath(id)
+            getFilenameFromPath(id),
           );
           if (componentStyles) {
             return componentStyles + new URL(id, 'http://localhost').search;
@@ -480,7 +484,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         // Map angular inline styles to the source text
         if (isComponentStyleSheet(id)) {
           const componentStyles = inlineComponentStyles?.get(
-            getFilenameFromPath(id)
+            getFilenameFromPath(id),
           );
           if (componentStyles) {
             return componentStyles;
@@ -502,8 +506,8 @@ export function angular(options?: PluginOptions): Plugin[] {
           const result = await fileEmitter?.(
             resolve(
               process.cwd(),
-              decodeURIComponent(componentId).split('@')[0]
-            )
+              decodeURIComponent(componentId).split('@')[0],
+            ),
           );
 
           return result?.hmrUpdateCode || '';
@@ -616,7 +620,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (jit && data.includes('angular:jit:')) {
             data = data.replace(
               /angular:jit:style:inline;/g,
-              'virtual:angular:jit:style:inline;'
+              'virtual:angular:jit:style:inline;',
             );
 
             templateUrls.forEach((templateUrlSet) => {
@@ -624,7 +628,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                 templateUrlSet.split('|');
               data = data.replace(
                 `angular:jit:template:file;${templateFile}`,
-                `${resolvedTemplateUrl}?raw`
+                `${resolvedTemplateUrl}?raw`,
               );
             });
 
@@ -632,7 +636,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               const [styleFile, resolvedStyleUrl] = styleUrlSet.split('|');
               data = data.replace(
                 `angular:jit:style:file;${styleFile}`,
-                `${resolvedStyleUrl}?inline`
+                `${resolvedStyleUrl}?inline`,
               );
             });
           }
@@ -659,7 +663,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               const metadata = await getFrontmatterMetadata(
                 code,
                 id,
-                pluginOptions.markdownTemplateTransforms || []
+                pluginOptions.markdownTemplateTransforms || [],
               );
               data += metadata;
             }
@@ -708,7 +712,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     const fg = require('fast-glob');
     const appRoot = normalizePath(
-      resolve(pluginOptions.workspaceRoot, config.root || '.')
+      resolve(pluginOptions.workspaceRoot, config.root || '.'),
     );
     const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));
 
@@ -716,10 +720,10 @@ export function angular(options?: PluginOptions): Plugin[] {
       `${appRoot}/**/*.{analog,agx,ag}`,
       ...extraGlobs.map((glob) => `${workspaceRoot}${glob}.{analog,agx,ag}`),
       ...(pluginOptions.additionalContentDirs || [])?.map(
-        (glob) => `${workspaceRoot}${glob}/**/*.agx`
+        (glob) => `${workspaceRoot}${glob}/**/*.agx`,
       ),
       ...pluginOptions.include.map((glob) =>
-        `${workspaceRoot}${glob}`.replace(/\.ts$/, '.analog')
+        `${workspaceRoot}${glob}`.replace(/\.ts$/, '.analog'),
       ),
     ];
 
@@ -826,7 +830,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         rootNames,
         compilerOptions,
         host as CompilerHost,
-        nextProgram as any
+        nextProgram as any,
       );
       angularCompiler = angularProgram.compiler;
       typeScriptProgram = angularProgram.getTsProgram();
@@ -836,7 +840,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         ts.createEmitAndSemanticDiagnosticsBuilderProgram(
           typeScriptProgram,
           host,
-          builderProgram
+          builderProgram,
         );
 
       await angularCompiler.analyzeAsync();
@@ -848,7 +852,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           rootNames,
           compilerOptions,
           host,
-          nextProgram as any
+          nextProgram as any,
         );
 
       typeScriptProgram = builder.getProgram();
@@ -869,11 +873,11 @@ export function angular(options?: PluginOptions): Plugin[] {
           before: [
             ...(jit
               ? [
-                  compilerCli.constructorParametersDownlevelTransform(
-                    builder.getProgram()
-                  ),
-                  createJitResourceTransformer(getTypeChecker),
-                ]
+                compilerCli.constructorParametersDownlevelTransform(
+                  builder.getProgram(),
+                ),
+                createJitResourceTransformer(getTypeChecker),
+              ]
               : []),
             ...pluginOptions.advanced.tsTransformers.before,
           ],
@@ -881,12 +885,12 @@ export function angular(options?: PluginOptions): Plugin[] {
           afterDeclarations:
             pluginOptions.advanced.tsTransformers.afterDeclarations,
         },
-        jit ? {} : angularCompiler!.prepareEmit().transformers
+        jit ? {} : angularCompiler!.prepareEmit().transformers,
       ),
       () => [],
       angularCompiler!,
       pluginOptions.liveReload,
-      pluginOptions.disableTypeChecking
+      pluginOptions.disableTypeChecking,
     );
   }
 }
@@ -906,7 +910,7 @@ export function createFileEmitter(
   onAfterEmit?: (sourceFile: ts.SourceFile) => void,
   angularCompiler?: NgtscProgram['compiler'],
   liveReload?: boolean,
-  disableTypeChecking?: boolean
+  disableTypeChecking?: boolean,
 ): FileEmitter {
   return async (file: string, stale?: ts.SourceFile) => {
     const sourceFile = program.getSourceFile(file);
@@ -918,7 +922,7 @@ export function createFileEmitter(
       const hmrEligible = !!analyzeFileUpdates(
         stale,
         sourceFile,
-        angularCompiler!
+        angularCompiler!,
       );
       return { dependencies: [], hmrEligible };
     }
@@ -927,7 +931,7 @@ export function createFileEmitter(
       sourceFile,
       !!disableTypeChecking,
       program,
-      angularCompiler
+      angularCompiler,
     );
 
     const errors = diagnostics
@@ -935,7 +939,7 @@ export function createFileEmitter(
       .map((d) =>
         typeof d.messageText === 'object'
           ? d.messageText.messageText
-          : d.messageText
+          : d.messageText,
       );
 
     const warnings = diagnostics
@@ -963,7 +967,7 @@ export function createFileEmitter(
       },
       undefined /* cancellationToken */,
       undefined /* emitOnlyDtsFiles */,
-      transformers
+      transformers,
     );
 
     onAfterEmit?.(sourceFile);
@@ -976,7 +980,7 @@ function getDiagnosticsForSourceFile(
   sourceFile: ts.SourceFile,
   disableTypeChecking: boolean,
   program: ts.BuilderProgram,
-  angularCompiler?: NgtscProgram['compiler']
+  angularCompiler?: NgtscProgram['compiler'],
 ) {
   const syntacticDiagnostics = program.getSyntacticDiagnostics(sourceFile);
 
@@ -1038,4 +1042,37 @@ function getComponentStyleSheetMeta(id: string): {
  */
 function getFilenameFromPath(id: string): string {
   return new URL(id, 'http://localhost').pathname.replace(/^\//, '');
+}
+
+/**
+ * Checks for vitest run from the command line
+ * @returns boolean
+ */
+export function isTestWatchMode(args = process.argv) {
+  // vitest --run
+  const hasRun = args.find((arg) => arg.includes('--run'));
+  if (hasRun) {
+    return false;
+  }
+
+  // vitest --no-run
+  const hasNoRun = args.find((arg) => arg.includes('--no-run'));
+  if (hasNoRun) {
+    return true;
+  }
+
+  // check for --watch=false or --no-watch
+  const hasWatch = args.find((arg) => arg.includes('watch'));
+  if (hasWatch && ['false', 'no'].some((neg) => hasWatch.includes(neg))) {
+    return false;
+  }
+
+  // check for --watch false
+  const watchIndex = args.findIndex((arg) => arg.includes('watch'));
+  const watchArg = args[watchIndex + 1];
+  if (watchArg && watchArg === 'false') {
+    return false;
+  }
+
+  return true;
 }

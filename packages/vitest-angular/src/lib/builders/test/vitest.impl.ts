@@ -8,17 +8,17 @@ import { VitestSchema } from './schema';
 
 async function vitestBuilder(
   options: VitestSchema,
-  context: BuilderContext
+  context: BuilderContext,
 ): Promise<BuilderOutput> {
   process.env['TEST'] = 'true';
   process.env['VITEST'] = 'true';
 
   const { startVitest } = await (Function(
-    'return import("vitest/node")'
+    'return import("vitest/node")',
   )() as Promise<typeof import('vitest/node')>);
 
   const projectConfig = await context.getProjectMetadata(
-    context.target as unknown as string
+    context.target as unknown as string,
   );
   const { coverageArgs, ...extraArgs } = await getExtraArgs(options);
   const watch = options.watch === true;
@@ -72,7 +72,7 @@ async function vitestBuilder(
 }
 
 export async function getExtraArgs(
-  options: VitestSchema
+  options: VitestSchema,
 ): Promise<Record<string, any>> {
   // support passing extra args to Vitest CLI
   const schema = await import('./schema.json');

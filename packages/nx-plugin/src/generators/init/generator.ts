@@ -37,7 +37,7 @@ function addFiles(tree: Tree, options: SetupAnalogGeneratorSchema) {
     tree,
     join(__dirname, 'files'),
     projectConfig.root || '.',
-    templateOptions
+    templateOptions,
   );
 
   if (options.vitest) {
@@ -45,14 +45,14 @@ function addFiles(tree: Tree, options: SetupAnalogGeneratorSchema) {
       tree,
       join(__dirname, 'test-files'),
       projectConfig.root || '.',
-      templateOptions
+      templateOptions,
     );
   }
 }
 
 export async function setupAnalogGenerator(
   tree: Tree,
-  options: SetupAnalogGeneratorSchema
+  options: SetupAnalogGeneratorSchema,
 ) {
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
 

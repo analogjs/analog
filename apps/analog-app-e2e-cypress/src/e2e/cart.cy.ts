@@ -15,7 +15,7 @@ describe('Cart', () => {
       onBeforeLoad: (win) => {
         cy.stub(win.console, 'warn').as('consoleWarn');
       },
-    })
+    }),
   );
 
   it(`Given the user has added a phone to the cart
@@ -33,7 +33,7 @@ describe('Cart', () => {
     cart.navigateTo();
 
     Object.values(phones).forEach((phone) =>
-      cart.getPriceByName(phone.name).contains(phone.price)
+      cart.getPriceByName(phone.name).contains(phone.price),
     );
   });
 
@@ -55,7 +55,7 @@ describe('Cart', () => {
     cy.get('@consoleWarn').should(
       'have.been.calledWithMatch',
       /your order has been submitted/i,
-      { name, address }
+      { name, address },
     );
     cart.getItems().should('not.exist');
   });

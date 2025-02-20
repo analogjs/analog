@@ -63,7 +63,7 @@ describe('nitro', () => {
           handlers: expect.anything(),
           publicAssets: expect.anything(),
           serverAssets: expect.anything(),
-        }
+        },
       );
     });
 
@@ -95,7 +95,7 @@ describe('nitro', () => {
           handlers: expect.anything(),
           publicAssets: expect.anything(),
           serverAssets: expect.anything(),
-        }
+        },
       );
     });
 
@@ -123,7 +123,7 @@ describe('nitro', () => {
       // Assert
       expect(buildSSRAppImportSpy).toHaveBeenCalledWith(
         {},
-        { ssr: true, ...prerenderRoutes }
+        { ssr: true, ...prerenderRoutes },
       );
       expect(buildServerImportSpy).toHaveBeenCalledWith(
         { ssr: true, ...prerenderRoutes },
@@ -140,7 +140,7 @@ describe('nitro', () => {
           },
           publicAssets: expect.anything(),
           serverAssets: expect.anything(),
-        }
+        },
       );
       expect(buildSitemapImportSpy).not.toHaveBeenCalled();
     });
@@ -169,7 +169,7 @@ describe('nitro', () => {
       // Assert
       expect(buildSSRAppImportSpy).toHaveBeenCalledWith(
         {},
-        { ssr: true, ...prerenderRoutes }
+        { ssr: true, ...prerenderRoutes },
       );
 
       expect(buildServerImportSpy).toHaveBeenCalledWith(
@@ -185,14 +185,14 @@ describe('nitro', () => {
           handlers: expect.anything(),
           publicAssets: expect.anything(),
           serverAssets: expect.anything(),
-        }
+        },
       );
 
       expect(buildSitemapImportSpy).toHaveBeenCalledWith(
         {},
         { host: 'example.com' },
         prerenderRoutes.prerender.routes,
-        expect.anything()
+        expect.anything(),
       );
     });
 
@@ -238,7 +238,7 @@ describe('nitro', () => {
           // Assert
           expect(buildSSRAppImportSpy).toHaveBeenCalledWith(
             {},
-            { ssr: true, ...prerenderRoutes }
+            { ssr: true, ...prerenderRoutes },
           );
 
           expect(buildServerImportSpy).toHaveBeenCalledWith(
@@ -255,14 +255,14 @@ describe('nitro', () => {
               renderer: expect.anything(),
               handlers: expect.anything(),
               serverAssets: expect.anything(),
-            }
+            },
           );
 
           expect(buildSitemapImportSpy).toHaveBeenCalledWith(
             {},
             { host: 'example.com' },
             ['/blog', '/about', '/blog/first', '/blog/02-second'],
-            expect.anything()
+            expect.anything(),
           );
         });
       });
@@ -289,7 +289,7 @@ describe('nitro', () => {
             dir: '/custom-root-directory/dist/analog',
             publicDir: '/custom-root-directory/dist/analog/public',
           },
-        })
+        }),
       );
     });
 
@@ -313,7 +313,7 @@ describe('nitro', () => {
             publicDir:
               '/custom-root-directory/some-other-root-directory/analog/public',
           },
-        })
+        }),
       );
     });
 
@@ -336,7 +336,7 @@ describe('nitro', () => {
             dir: '/custom-root-directory/.vercel/output',
             publicDir: '/custom-root-directory/.vercel/output/static',
           },
-        })
+        }),
       );
     });
 
@@ -359,7 +359,7 @@ describe('nitro', () => {
             dir: '/custom-root-directory/.vercel/output',
             publicDir: '/custom-root-directory/.vercel/output/static',
           },
-        })
+        }),
       );
     });
 
@@ -383,7 +383,7 @@ describe('nitro', () => {
             dir: '/custom-root-directory/.vercel/output',
             publicDir: '/custom-root-directory/.vercel/output/static',
           },
-        })
+        }),
       );
     });
   });

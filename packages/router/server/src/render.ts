@@ -30,7 +30,7 @@ if (import.meta.env.PROD) {
 export function render(
   rootComponent: Type<unknown>,
   config: ApplicationConfig,
-  platformProviders: Provider[] = []
+  platformProviders: Provider[] = [],
 ) {
   function bootstrap() {
     return bootstrapApplication(rootComponent, config);
@@ -39,7 +39,7 @@ export function render(
   return async function render(
     url: string,
     document: string,
-    serverContext: ServerContext
+    serverContext: ServerContext,
   ) {
     if (serverComponentRequest(serverContext)) {
       return await renderServerComponent(url, serverContext);

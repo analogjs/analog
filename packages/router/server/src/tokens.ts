@@ -8,11 +8,11 @@ import {
 } from '@angular/core';
 
 export const STATIC_PROPS = new InjectionToken<Record<string, any>>(
-  'Static Props'
+  'Static Props',
 );
 
 export function provideStaticProps<T = Record<string, any>>(
-  props: T
+  props: T,
 ): Provider {
   return {
     provide: STATIC_PROPS,

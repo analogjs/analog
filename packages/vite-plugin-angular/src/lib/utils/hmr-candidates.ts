@@ -25,7 +25,7 @@ import ts from 'typescript';
 export function collectHmrCandidates(
   modifiedFiles: Set<string>,
   { compiler }: ng.NgtscProgram,
-  staleSourceFiles: Map<string, ts.SourceFile> | undefined
+  staleSourceFiles: Map<string, ts.SourceFile> | undefined,
 ): Set<ts.ClassDeclaration> {
   const candidates = new Set<ts.ClassDeclaration>();
 
@@ -34,7 +34,7 @@ export function collectHmrCandidates(
     const templateFileNodes = compiler.getComponentsWithTemplateFile(file);
     if (templateFileNodes.size) {
       templateFileNodes.forEach((node) =>
-        candidates.add(node as ts.ClassDeclaration)
+        candidates.add(node as ts.ClassDeclaration),
       );
       continue;
     }
@@ -43,7 +43,7 @@ export function collectHmrCandidates(
     const styleFileNodes = compiler.getComponentsWithStyleFile(file);
     if (styleFileNodes.size) {
       styleFileNodes.forEach((node) =>
-        candidates.add(node as ts.ClassDeclaration)
+        candidates.add(node as ts.ClassDeclaration),
       );
       continue;
     }
@@ -66,7 +66,7 @@ export function collectHmrCandidates(
     const fileCandidates = analyzeFileUpdates(
       staleSource,
       updatedSource,
-      compiler
+      compiler,
     );
     if (fileCandidates) {
       fileCandidates.forEach((node) => candidates.add(node));
@@ -93,7 +93,7 @@ export function collectHmrCandidates(
 export function analyzeFileUpdates(
   stale: ts.SourceFile,
   updated: ts.SourceFile,
-  compiler: ng.NgtscProgram['compiler']
+  compiler: ng.NgtscProgram['compiler'],
 ): ts.ClassDeclaration[] | null {
   if (stale.statements.length !== updated.statements.length) {
     return null;
@@ -119,7 +119,7 @@ export function analyzeFileUpdates(
           updatedNode.heritageClauses,
           updated,
           staleNode.heritageClauses,
-          stale
+          stale,
         )
       ) {
         return null;
@@ -130,8 +130,8 @@ export function analyzeFileUpdates(
         updatedModifiers?.length !== staleModifiers?.length ||
         !updatedModifiers?.every((updatedModifier) =>
           staleModifiers?.some(
-            (staleModifier) => updatedModifier.kind === staleModifier.kind
-          )
+            (staleModifier) => updatedModifier.kind === staleModifier.kind,
+          ),
         )
       ) {
         return null;
@@ -161,13 +161,13 @@ export function analyzeFileUpdates(
         const metaDecoratorIndex = updatedDecorators?.indexOf(meta.decorator);
         assert(
           metaDecoratorIndex !== undefined,
-          'Component metadata decorator should always be present on component class.'
+          'Component metadata decorator should always be present on component class.',
         );
         const updatedDecoratorExpression = meta.decorator.expression;
         assert(
           ts.isCallExpression(updatedDecoratorExpression) &&
             updatedDecoratorExpression.arguments.length === 1,
-          'Component metadata decorator should contain a call expression with a single argument.'
+          'Component metadata decorator should contain a call expression with a single argument.',
         );
 
         // Check the matching stale index for the component decorator
@@ -193,7 +193,7 @@ export function analyzeFileUpdates(
             updatedDecoratorExpression.expression,
             updated,
             staleDecoratorExpression.expression,
-            stale
+            stale,
           )
         ) {
           return null;
@@ -205,7 +205,7 @@ export function analyzeFileUpdates(
             staleDecoratorExpression,
             stale,
             updatedDecoratorExpression,
-            updated
+            updated,
           )
         ) {
           return null;
@@ -217,7 +217,7 @@ export function analyzeFileUpdates(
             updatedNode.members,
             updated,
             staleNode.members,
-            stale
+            stale,
           )
         ) {
           // A change to a member outside a component's metadata is unsupported
@@ -265,7 +265,7 @@ function hasUnsupportedMetaUpdates(
   staleCall: ts.CallExpression,
   staleSource: ts.SourceFile,
   updatedCall: ts.CallExpression,
-  updatedSource: ts.SourceFile
+  updatedSource: ts.SourceFile,
 ): boolean {
   const staleObject = staleCall.arguments[0];
   const updatedObject = updatedCall.arguments[0];
@@ -317,7 +317,7 @@ function hasUnsupportedMetaUpdates(
         property.initializer,
         updatedSource,
         unsupportedFields[i++],
-        staleSource
+        staleSource,
       )
     ) {
       return true;
@@ -340,7 +340,7 @@ function equalRangeText(
   firstRange: ts.ReadonlyTextRange | undefined,
   firstSource: ts.SourceFile,
   secondRange: ts.ReadonlyTextRange | undefined,
-  secondSource: ts.SourceFile
+  secondSource: ts.SourceFile,
 ): boolean {
   // Check matching undefined values
   if (!firstRange || !secondRange) {

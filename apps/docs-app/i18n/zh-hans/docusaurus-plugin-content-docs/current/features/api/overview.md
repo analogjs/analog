@@ -81,7 +81,7 @@ export default defineConfig(({ mode }) => {
 import { defineEventHandler } from 'h3';
 
 export default defineEventHandler(
-  (event) => `Hello ${event.context.params?.['name']}!`
+  (event) => `Hello ${event.context.params?.['name']}!`,
 );
 ```
 

@@ -40,7 +40,7 @@ export const appConfig: ApplicationConfig = {
       withMarkdownRenderer()
     )
   ],
-};`
+};`,
     );
   }
 
@@ -49,7 +49,7 @@ export const appConfig: ApplicationConfig = {
     await update(tree);
     const configContent = tree.read(
       'apps/my-app/src/app/app.config.ts',
-      'utf-8'
+      'utf-8',
     );
     expect(configContent).toContain('withPrismHighlighter()');
     expect(configContent).toContain('@analogjs/content/prism-highlighter');

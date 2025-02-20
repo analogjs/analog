@@ -9,7 +9,7 @@ import { SetupAnalogGeneratorSchema } from '../schema';
 
 export function updateServeTarget(
   tree: Tree,
-  schema: SetupAnalogGeneratorSchema
+  schema: SetupAnalogGeneratorSchema,
 ) {
   const angularJsonPath = '/angular.json';
 
@@ -43,7 +43,7 @@ export function updateServeTarget(
 
         return json;
       },
-      { expectComments: true, allowTrailingComma: true }
+      { expectComments: true, allowTrailingComma: true },
     );
   } else {
     const projects = getProjects(tree);

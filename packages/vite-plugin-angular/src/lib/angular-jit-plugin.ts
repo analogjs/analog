@@ -25,7 +25,7 @@ export function jitPlugin({
 
         const decodedStyles = Buffer.from(
           decodeURIComponent(styleId),
-          'base64'
+          'base64',
         ).toString();
 
         let styles: string | undefined = '';
@@ -34,7 +34,7 @@ export function jitPlugin({
           const compiled = await preprocessCSS(
             decodedStyles,
             `${styleId}.${inlineStylesExtension}?direct`,
-            config
+            config,
           );
           styles = compiled?.code;
         } catch (e) {

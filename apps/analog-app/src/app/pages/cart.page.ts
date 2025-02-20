@@ -1,4 +1,4 @@
-import { CurrencyPipe, NgForOf } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLinkWithHref } from '@angular/router';
@@ -7,8 +7,7 @@ import { CartService } from '../cart.service';
 
 @Component({
   selector: 'app-cart',
-  standalone: true,
-  imports: [RouterLinkWithHref, NgForOf, CurrencyPipe, ReactiveFormsModule],
+  imports: [RouterLinkWithHref, CurrencyPipe, ReactiveFormsModule],
   template: `
     <h3>Cart</h3>
 
@@ -16,10 +15,12 @@ import { CartService } from '../cart.service';
       <a routerLink="/shipping">Shipping Prices</a>
     </p>
 
-    <div class="cart-item" *ngFor="let item of items">
-      <span>{{ item.name }} </span>
-      <span>{{ item.price | currency }}</span>
-    </div>
+    @for (item of items; track $index) {
+      <div class="cart-item">
+        <span>{{ item.name }} </span>
+        <span>{{ item.price | currency }}</span>
+      </div>
+    }
 
     <form [formGroup]="checkoutForm" (ngSubmit)="onSubmit()">
       <div>
@@ -37,8 +38,8 @@ import { CartService } from '../cart.service';
   `,
 })
 export default class CartComponent {
-  private cartService = inject(CartService);
-  private formBuilder = inject(FormBuilder);
+  private readonly cartService = inject(CartService);
+  private readonly formBuilder = inject(FormBuilder);
 
   items = this.cartService.getItems();
 

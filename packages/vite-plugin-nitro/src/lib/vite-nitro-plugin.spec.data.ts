@@ -66,7 +66,7 @@ export async function runConfigAndCloseBundle(plugin: Plugin[]): Promise<void> {
   await (
     plugin[1].config as (
       config: UserConfig,
-      env: ConfigEnv
+      env: ConfigEnv,
     ) => Promise<UserConfig>
   )({}, { command: 'build' } as ConfigEnv);
   await (plugin[1].closeBundle as () => Promise<void>)();

@@ -5,7 +5,7 @@ import { NormalizedOptions } from '../generator';
 export function addHomePage(
   tree: Tree,
   options: NormalizedOptions,
-  majorAngularVersion: number
+  majorAngularVersion: number,
 ) {
   const templateOptions = {
     ...options,
@@ -17,7 +17,7 @@ export function addHomePage(
     tree,
     join(__dirname, '..', 'files', 'index-page'),
     options.projectRoot,
-    templateOptions
+    templateOptions,
   );
 
   let pageDirectory = options.addTailwind ? 'tailwind' : 'css';
@@ -29,6 +29,6 @@ export function addHomePage(
     tree,
     join(__dirname, '..', 'files', 'welcome-components', pageDirectory),
     options.projectRoot,
-    templateOptions
+    templateOptions,
   );
 }

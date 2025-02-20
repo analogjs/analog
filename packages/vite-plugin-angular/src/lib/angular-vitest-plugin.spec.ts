@@ -13,7 +13,7 @@ describe(angularVitestPlugin.name, () => {
       defineConfig({
         plugins: [angularVitestPlugin()],
       }),
-      'serve'
+      'serve',
     );
     expect(config.test?.pool).toBe('vmThreads');
   });
@@ -26,7 +26,7 @@ describe(angularVitestPlugin.name, () => {
           pool: 'threads',
         },
       }),
-      'serve'
+      'serve',
     );
     expect(config.test?.pool).toBe('threads');
   });

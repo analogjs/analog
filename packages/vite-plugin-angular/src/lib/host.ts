@@ -1,7 +1,7 @@
 import { CompilerHost } from '@angular/compiler-cli';
 import { normalizePath } from 'vite';
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import * as ts from 'typescript';
 import { compileAnalogFile } from './authoring/analog.js';
 import {
@@ -21,7 +21,7 @@ export function augmentHostWithResources(
   transform: (
     code: string,
     id: string,
-    options?: { ssr?: boolean }
+    options?: { ssr?: boolean },
   ) => ReturnType<any> | null,
   options: {
     inlineStylesExtension: string;
@@ -35,10 +35,12 @@ export function augmentHostWithResources(
     markdownTemplateTransforms?: MarkdownTemplateTransform[];
     inlineComponentStyles?: Map<string, string>;
     externalComponentStyles?: Map<string, string>;
-  }
+  },
 ) {
   const ts = require('typescript');
   const resourceHost = host as CompilerHost;
+  const resourceCache = new Map<string, { content: string; mtime: number }>();
+
   const baseGetSourceFile = (
     resourceHost as ts.CompilerHost
   ).getSourceFile.bind(resourceHost);
@@ -60,7 +62,7 @@ export function augmentHostWithResources(
             .replace('.analog.ts', '.analog')
             .replace('.agx.ts', '.agx')
             .replace('.ag.ts', '.ag'),
-          'utf-8'
+          'utf-8',
         );
         const source = compileAnalogFile(fileName, contents, options.isProd);
 
@@ -69,7 +71,7 @@ export function augmentHostWithResources(
           source,
           languageVersionOrOptions,
           onError as any,
-          ...(parameters as any)
+          ...(parameters as any),
         );
       }
 
@@ -78,7 +80,7 @@ export function augmentHostWithResources(
         fileName,
         languageVersionOrOptions,
         onError,
-        ...parameters
+        ...parameters,
       );
     };
 
@@ -135,9 +137,18 @@ export function augmentHostWithResources(
     }
 
     if (fileName.includes('virtual-analog:')) {
+      const agxFilePath = fileName.split('virtual-analog:')[1];
+      const { mtimeMs } = statSync(agxFilePath);
+      const cached = resourceCache.get(agxFilePath);
+      if (cached && cached.mtime === mtimeMs) {
+        return cached.content;
+      }
+
       for (const transform of options.markdownTemplateTransforms || []) {
         content = String(await transform(content, fileName));
       }
+
+      resourceCache.set(agxFilePath, { content, mtime: mtimeMs });
     }
 
     return content;
@@ -191,15 +202,12 @@ export function augmentHostWithResources(
 
   resourceHost.resourceNameToFileName = function (
     resourceName,
-    containingFile
+    containingFile,
   ) {
     const resolvedPath = path.join(path.dirname(containingFile), resourceName);
 
     // All resource names that have template file extensions are assumed to be templates
-    if (
-      !options.externalComponentStyles ||
-      hasTemplateExtension(resolvedPath)
-    ) {
+    if (!options.externalComponentStyles || !hasStyleExtension(resolvedPath)) {
       return resolvedPath;
     }
 
@@ -235,7 +243,7 @@ export function augmentProgramWithVersioning(program: ts.Program): void {
 
 export function augmentHostWithCaching(
   host: ts.CompilerHost,
-  cache: Map<string, ts.SourceFile>
+  cache: Map<string, ts.SourceFile>,
 ): void {
   const baseGetSourceFile = host.getSourceFile;
   host.getSourceFile = function (
@@ -255,7 +263,7 @@ export function augmentHostWithCaching(
       languageVersion,
       onError,
       true,
-      ...parameters
+      ...parameters,
     );
 
     if (file) {
@@ -268,7 +276,7 @@ export function augmentHostWithCaching(
 
 export function mergeTransformers(
   first: ts.CustomTransformers,
-  second: ts.CustomTransformers
+  second: ts.CustomTransformers,
 ): ts.CustomTransformers {
   const result: ts.CustomTransformers = {};
 
@@ -290,13 +298,12 @@ export function mergeTransformers(
   return result;
 }
 
-function hasTemplateExtension(file: string): boolean {
+function hasStyleExtension(file: string): boolean {
   const extension = path.extname(file).toLowerCase();
 
   switch (extension) {
-    case '.htm':
-    case '.html':
-    case '.svg':
+    case '.css':
+    case '.scss':
       return true;
   }
 

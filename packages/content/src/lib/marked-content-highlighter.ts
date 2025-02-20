@@ -24,7 +24,7 @@ export function withHighlighter(
           | AbstractType<MarkedContentHighlighter>;
       }
     | { useFactory: (...deps: any[]) => MarkedContentHighlighter }
-  ) & { deps?: ProviderToken<any>[] }
+  ) & { deps?: ProviderToken<any>[] },
 ): Provider {
   return { provide: MarkedContentHighlighter, ...provider } as Provider;
 }

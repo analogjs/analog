@@ -6,7 +6,6 @@ import type { load } from './search.server';
 
 @Component({
   selector: 'app-search-page',
-  standalone: true,
   imports: [FormAction],
   template: `
     <h3>Search</h3>
@@ -20,8 +19,8 @@ import type { load } from './search.server';
       <button class="button" type="submit">Submit</button>
     </form>
 
-    @if(searchTerm()) {
-    <p>Search Term: {{ searchTerm() }}</p>
+    @if (searchTerm()) {
+      <p>Search Term: {{ searchTerm() }}</p>
     }
   `,
 })

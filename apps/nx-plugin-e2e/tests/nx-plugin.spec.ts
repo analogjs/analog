@@ -29,7 +29,7 @@ describe.skip('nx-plugin e2e', () => {
   it('should create hello-world', async () => {
     const project = uniq('app');
     await runNxCommandAsync(
-      `generate @analogjs/platform:app ${project} --addTailwind=true --addTRPC=true`
+      `generate @analogjs/platform:app ${project} --addTailwind=true --addTRPC=true`,
     );
     copyNodeModules(['@analogjs']);
 
@@ -39,12 +39,12 @@ describe.skip('nx-plugin e2e', () => {
     renameFile(`${project}/postcss.config.js`, `${project}/postcss.config.cjs`);
     renameFile(
       `${project}/tailwind.config.js`,
-      `${project}/tailwind.config.cjs`
+      `${project}/tailwind.config.cjs`,
     );
     const postCssConfig = readFile(`${project}/postcss.config.cjs`);
     updateFile(
       `${project}/postcss.config.cjs`,
-      postCssConfig.replace('tailwind.config.js', 'tailwind.config.cjs')
+      postCssConfig.replace('tailwind.config.js', 'tailwind.config.cjs'),
     );
 
     await runNxCommandAsync(`test ${project}`);

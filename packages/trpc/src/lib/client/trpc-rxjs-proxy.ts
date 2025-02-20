@@ -44,21 +44,21 @@ type Resolver<TProcedure extends AnyProcedure> = (
 // Removed subscription and using new type
 type DecorateProcedure<
   TProcedure extends AnyProcedure,
-  TRouter extends AnyRouter
+  TRouter extends AnyRouter,
 > = TProcedure extends AnyQueryProcedure
   ? {
       query: Resolver<TProcedure>;
     }
   : TProcedure extends AnyMutationProcedure
-  ? {
-      mutate: Resolver<TProcedure>;
-    }
-  : never;
+    ? {
+        mutate: Resolver<TProcedure>;
+      }
+    : never;
 
 // Removed subscription and using new type
 type DecoratedProcedureRecord<
   TProcedures extends ProcedureRouterRecord,
-  TRouter extends AnyRouter
+  TRouter extends AnyRouter,
 > = {
   [TKey in keyof TProcedures]: TProcedures[TKey] extends AnyRouter
     ? DecoratedProcedureRecord<
@@ -66,8 +66,8 @@ type DecoratedProcedureRecord<
         TProcedures[TKey]
       >
     : TProcedures[TKey] extends AnyProcedure
-    ? DecorateProcedure<TProcedures[TKey], TRouter>
-    : never;
+      ? DecorateProcedure<TProcedures[TKey], TRouter>
+      : never;
 };
 
 // Removed subscription and using new type
@@ -101,7 +101,7 @@ export type CreateTrpcProxyClient<TRouter extends AnyRouter> =
 
 // Nothing changed, only using new types
 function createTRPCRxJSClientProxy<TRouter extends AnyRouter>(
-  client: TRPCClient<TRouter>
+  client: TRPCClient<TRouter>,
 ) {
   return createFlatProxy<CreateTrpcProxyClient<TRouter>>((key) => {
     // eslint-disable-next-line no-prototype-builtins
@@ -126,7 +126,7 @@ function createTRPCRxJSClientProxy<TRouter extends AnyRouter>(
 }
 
 export function createTRPCRxJSProxyClient<TRouter extends AnyRouter>(
-  opts: CreateTRPCClientOptions<TRouter>
+  opts: CreateTRPCClientOptions<TRouter>,
 ) {
   const client = new TRPCClient<TRouter>(opts);
   const proxy = createTRPCRxJSClientProxy(client as TRPCClient<TRouter>);
@@ -212,7 +212,7 @@ class TRPCClient<TRouter extends AnyRouter> {
   public query<
     TQueries extends TRouter['_def']['queries'],
     TPath extends string & keyof TQueries,
-    TInput extends inferProcedureInput<TQueries[TPath]>
+    TInput extends inferProcedureInput<TQueries[TPath]>,
   >(path: TPath, input?: TInput, opts?: TRPCRequestOptions) {
     type TOutput = inferProcedureOutput<TQueries[TPath]>;
     return this.$request<TInput, TOutput>({
@@ -226,7 +226,7 @@ class TRPCClient<TRouter extends AnyRouter> {
   public mutation<
     TMutations extends TRouter['_def']['mutations'],
     TPath extends string & keyof TMutations,
-    TInput extends inferProcedureInput<TMutations[TPath]>
+    TInput extends inferProcedureInput<TMutations[TPath]>,
   >(path: TPath, input?: TInput, opts?: TRPCRequestOptions) {
     type TOutput = inferTransformedProcedureOutput<TMutations[TPath]>;
     return this.$request<TInput, TOutput>({
@@ -239,7 +239,7 @@ class TRPCClient<TRouter extends AnyRouter> {
 }
 
 function trpcObservableToRxJsObservable<TValue>(
-  observable: TrpcObservable<TValue, unknown>
+  observable: TrpcObservable<TValue, unknown>,
 ) {
   return new RxJSObservable<TValue>((subscriber) => {
     const sub = observable.subscribe({

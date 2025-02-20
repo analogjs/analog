@@ -7,7 +7,7 @@ export async function addTrpc(
   tree: Tree,
   projectRoot: string,
   nxVersion: string,
-  options: NormalizedOptions
+  options: NormalizedOptions,
 ) {
   const dependencies = getTrpcDependencies(nxVersion);
   addDependenciesToPackageJson(tree, dependencies, {});
@@ -20,6 +20,6 @@ export async function addTrpc(
     tree,
     join(__dirname, '..', 'files', 'trpc'),
     projectRoot,
-    templateOptions
+    templateOptions,
   );
 }
