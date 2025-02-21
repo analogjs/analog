@@ -1,3 +1,9 @@
+# [1.14.0-beta.1](https://github.com/analogjs/analog/compare/v1.13.1...v1.14.0-beta.1) (2025-02-21)
+
+### Features
+
+- **vite-plugin-nitro:** implement support for Vite Environment API ([#1618](https://github.com/analogjs/analog/issues/1618)) ([74a5f52](https://github.com/analogjs/analog/commit/74a5f52b6491d6995ee7b698da04d64f2bd0ec10))
+
 ## [1.13.1](https://github.com/analogjs/analog/compare/v1.13.0...v1.13.1) (2025-02-17)
 
 ### Bug Fixes
