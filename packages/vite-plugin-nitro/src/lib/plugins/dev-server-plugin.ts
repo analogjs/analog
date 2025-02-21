@@ -6,7 +6,6 @@ import {
   Plugin,
   UserConfig,
   ViteDevServer,
-  createServerModuleRunner,
   normalizePath,
 } from 'vite';
 import { resolve } from 'node:path';
@@ -43,8 +42,6 @@ export function devServerPlugin(options: Options): Plugin {
         return;
       }
 
-      const runner = createServerModuleRunner(viteServer.environments.ssr);
-
       return async () => {
         remove_html_middlewares(viteServer.middlewares);
         registerDevServerMiddleware(root, viteServer);
@@ -61,13 +58,17 @@ export function devServerPlugin(options: Options): Plugin {
           );
 
           try {
-            const entryServer = (await runner.import('~analog/entry-server'))[
-              'default'
-            ];
-            const result = await entryServer(req.originalUrl, template, {
-              req,
-              res,
-            });
+            const entryServer = (
+              await viteServer.ssrLoadModule('~analog/entry-server')
+            )['default'];
+            const result: string | Response = await entryServer(
+              req.originalUrl,
+              template,
+              {
+                req,
+                res,
+              },
+            );
 
             if (result instanceof Response) {
               sendWebResponse(createEvent(req, res), result);
