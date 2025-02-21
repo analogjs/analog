@@ -21,13 +21,14 @@ export function devServerPlugin(options: Options): Plugin {
   const index = options.index || 'index.html';
   let config: UserConfig;
   let root: string;
+  let isTest = false;
 
   return {
     name: 'analogjs-dev-ssr-plugin',
-    config(userConfig) {
+    config(userConfig, { mode }) {
       config = userConfig;
       root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
-
+      isTest = isTest ? isTest : mode === 'test';
       return {
         resolve: {
           alias: {
@@ -37,6 +38,10 @@ export function devServerPlugin(options: Options): Plugin {
       };
     },
     configureServer(viteServer) {
+      if (isTest) {
+        return;
+      }
+
       return async () => {
         remove_html_middlewares(viteServer.middlewares);
         registerDevServerMiddleware(root, viteServer);
@@ -69,7 +74,6 @@ export function devServerPlugin(options: Options): Plugin {
               sendWebResponse(createEvent(req, res), result);
               return;
             }
-
             res.setHeader('Content-Type', 'text/html');
             res.end(result);
           } catch (e) {

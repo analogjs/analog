@@ -29,7 +29,7 @@ const __dirname = dirname(__filename);
 
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
-  const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+  let isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const apiPrefix = `/${options?.apiPrefix || 'api'}`;
   const useAPIMiddleware =
     typeof options?.useAPIMiddleware !== 'undefined'
@@ -41,16 +41,19 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let ssrBuild = false;
   let config: UserConfig;
   let nitroConfig: NitroConfig;
+  let environmentBuild = false;
 
   return [
     (options?.ssr ? devServerPlugin(options) : false) as Plugin,
     {
       name: '@analogjs/vite-plugin-nitro',
-      async config(_config, { command }) {
+      async config(userConfig, { mode, command }) {
         isServe = command === 'serve';
         isBuild = command === 'build';
-        ssrBuild = _config.build?.ssr === true;
-        config = _config;
+        ssrBuild = userConfig.build?.ssr === true;
+        config = userConfig;
+        isTest = isTest ? isTest : mode === 'test';
+
         const rootDir = relative(workspaceRoot, config.root || '.') || '.';
         const buildPreset =
           process.env['BUILD_PRESET'] ??
@@ -320,6 +323,53 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           nitroConfig,
           nitroOptions as Record<string, any>,
         );
+
+        return {
+          environments: {
+            ssr: {
+              build: {
+                ssr: true,
+                rollupOptions: {
+                  input:
+                    options?.entryServer ||
+                    resolve(workspaceRoot, rootDir, 'src/main.server.ts'),
+                },
+                outDir:
+                  options?.ssrBuildDir ||
+                  resolve(workspaceRoot, 'dist', rootDir, 'ssr'),
+              },
+            },
+          },
+          builder: {
+            sharedPlugins: true,
+            buildApp: async (builder) => {
+              environmentBuild = true;
+              await Promise.all([
+                builder.build(builder.environments['client']),
+                builder.build(builder.environments['ssr']),
+              ]);
+              await buildServer(options, nitroConfig);
+
+              if (
+                nitroConfig.prerender?.routes?.length &&
+                options?.prerender?.sitemap
+              ) {
+                console.log('Building Sitemap...');
+                // sitemap needs to be built after all directories are built
+                await buildSitemap(
+                  config,
+                  options.prerender.sitemap,
+                  nitroConfig.prerender.routes,
+                  nitroConfig.output?.publicDir!,
+                );
+              }
+
+              console.log(
+                `\n\nThe '@analogjs/platform' server has been successfully built.`,
+              );
+            },
+          },
+        };
       },
       async configureServer(viteServer: ViteDevServer) {
         if (isServe && !isTest) {
@@ -353,6 +403,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
       },
 
       async closeBundle() {
+        // Skip when build is triggered by the Environment API
+        if (environmentBuild) {
+          return;
+        }
+
         if (ssrBuild) {
           return;
         }

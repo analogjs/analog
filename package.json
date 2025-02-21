@@ -24,9 +24,9 @@
   },
   "engines": {
     "node": "^18.13.0 || ^20.0.0 || ^22.0.0",
-    "pnpm": "^9.0.0"
+    "pnpm": "^10.0.0"
   },
-  "packageManager": "pnpm@9.10.0",
+  "packageManager": "pnpm@10.4.1",
   "keywords": [
     "vite-plugin",
     "angular",
