@@ -6,6 +6,7 @@ import {
   Plugin,
   UserConfig,
   ViteDevServer,
+  createServerModuleRunner,
   normalizePath,
 } from 'vite';
 import { resolve } from 'node:path';
@@ -21,13 +22,14 @@ export function devServerPlugin(options: Options): Plugin {
   const index = options.index || 'index.html';
   let config: UserConfig;
   let root: string;
+  let isTest = false;
 
   return {
     name: 'analogjs-dev-ssr-plugin',
-    config(userConfig) {
+    config(userConfig, { mode }) {
       config = userConfig;
       root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
-
+      isTest = isTest ? isTest : mode === 'test';
       return {
         resolve: {
           alias: {
@@ -37,6 +39,12 @@ export function devServerPlugin(options: Options): Plugin {
       };
     },
     configureServer(viteServer) {
+      if (isTest) {
+        return;
+      }
+
+      const runner = createServerModuleRunner(viteServer.environments.ssr);
+
       return async () => {
         remove_html_middlewares(viteServer.middlewares);
         registerDevServerMiddleware(root, viteServer);
@@ -53,23 +61,18 @@ export function devServerPlugin(options: Options): Plugin {
           );
 
           try {
-            const entryServer = (
-              await viteServer.ssrLoadModule('~analog/entry-server')
-            )['default'];
-            const result: string | Response = await entryServer(
-              req.originalUrl,
-              template,
-              {
-                req,
-                res,
-              },
-            );
+            const entryServer = (await runner.import('~analog/entry-server'))[
+              'default'
+            ];
+            const result = await entryServer(req.originalUrl, template, {
+              req,
+              res,
+            });
 
             if (result instanceof Response) {
               sendWebResponse(createEvent(req, res), result);
               return;
             }
-
             res.setHeader('Content-Type', 'text/html');
             res.end(result);
           } catch (e) {
