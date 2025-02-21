@@ -1,4 +1,4 @@
-# Version Compatiblity
+# Version Compatibility
 
 Analog is compatible across multiple versions of Angular, Nx, and Vite.
 
@@ -10,6 +10,7 @@ The table shows the minimum version of Nx, the supported Angular version, and th
 
 | Nx Version _(min)_ | Angular Version | Analog Version | Vite Version |
 | ------------------ | --------------- | -------------- | ------------ |
+| 20.4.0             | ^19.1.0         | **latest**     | ^6.0.0       |
 | 18.0.0             | ^17.0.0         | **latest**     | ^5.0.0       |
 | 17.0.0             | ^17.0.0         | **latest**     | ^5.0.0       |
 | 16.1.0             | ^16.1.0         | **latest**     | ^5.0.0       |
