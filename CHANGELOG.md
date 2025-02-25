@@ -1,3 +1,9 @@
+# [1.14.0-beta.2](https://github.com/analogjs/analog/compare/v1.14.0-beta.1...v1.14.0-beta.2) (2025-02-25)
+
+### Features
+
+- **vite-plugin-nitro:** add support for API routes without middleware/proxy ([#1621](https://github.com/analogjs/analog/issues/1621)) ([a57ef2a](https://github.com/analogjs/analog/commit/a57ef2ad9869cf2686e6f9bddc8386f02540a53d))
+
 # [1.14.0-beta.1](https://github.com/analogjs/analog/compare/v1.13.1...v1.14.0-beta.1) (2025-02-21)
 
 ### Features
