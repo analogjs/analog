@@ -8,12 +8,14 @@ type GetHandlersArgs = {
   workspaceRoot: string;
   rootDir: string;
   additionalPagesDirs?: string[];
+  hasAPIDir?: boolean;
 };
 
 export function getPageHandlers({
   workspaceRoot,
   rootDir,
   additionalPagesDirs,
+  hasAPIDir,
 }: GetHandlersArgs) {
   const root = normalizePath(resolve(workspaceRoot, rootDir));
 
@@ -39,7 +41,7 @@ export function getPageHandlers({
 
     return {
       handler: endpointFile,
-      route: `/_analog${route}`,
+      route: `${hasAPIDir ? '/api' : ''}/_analog${route}`,
       lazy: true,
     };
   });

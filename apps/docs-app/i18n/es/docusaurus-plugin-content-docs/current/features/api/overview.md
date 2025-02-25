@@ -70,14 +70,14 @@ export default defineConfig(({ mode }) => {
 
 Con esta configuración, Analog expone las rutas de API bajo el prefijo `/services`.
 
-Una ruta definida en `src/server/routes/v1/hello.ts` ahora se puede acceder en `/services/v1/hello`.
+Una ruta definida en `src/server/routes/api/v1/hello.ts` ahora se puede acceder en `/services/v1/hello`.
 
 ## Rutas API dinámicas
 
 Las rutas API dinámicas se definen usando el nombre de fichero como la ruta de la ruta encerrada entre corchetes. Los parámetros se pueden acceder a través de `event.context.params`.
 
 ```ts
-// /server/routes/v1/hello/[name].ts
+// /server/routes/api/v1/hello/[name].ts
 import { defineEventHandler } from 'h3';
 
 export default defineEventHandler(
@@ -88,7 +88,7 @@ export default defineEventHandler(
 Otra manera de acceder a los parámetros de la ruta es usando la función `getRouterParam`.
 
 ```ts
-// /server/routes/v1/hello/[name].ts
+// /server/routes/api/v1/hello/[name].ts
 import { defineEventHandler, getRouterParam } from 'h3';
 
 export default defineEventHandler((event) => {
@@ -104,7 +104,7 @@ Los nombres de fichero se pueden sufijar con `.get`, `.post`, `.put`, `.delete`,
 ### GET
 
 ```ts
-// /server/routes/v1/users/[id].get.ts
+// /server/routes/api/v1/users/[id].get.ts
 import { defineEventHandler, getRouterParam } from 'h3';
 
 export default defineEventHandler(async (event) => {
@@ -117,7 +117,7 @@ export default defineEventHandler(async (event) => {
 ### POST
 
 ```ts
-// /server/routes/v1/users.post.ts
+// /server/routes/api/v1/users.post.ts
 import { defineEventHandler, readBody } from 'h3';
 
 export default defineEventHandler(async (event) => {

@@ -103,7 +103,7 @@ En tu componente/servicio, usa `HttpClient` junto con [/docs/features/api/overvi
 Un ejemplo de ruta API que obtiene todos los todos.
 
 ```ts
-// src/server/routes/v1/todos.ts -> /api/v1/todos
+// src/server/routes/api/v1/todos.ts -> /api/v1/todos
 import { eventHandler } from 'h3';
 
 export default eventHandler(async () => {

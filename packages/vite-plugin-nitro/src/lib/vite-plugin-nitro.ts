@@ -5,7 +5,7 @@ import { mergeConfig, normalizePath } from 'vite';
 import { dirname, join, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 import { buildServer } from './build-server.js';
 import { buildSSRApp } from './build-ssr.js';
@@ -19,6 +19,7 @@ import { getPageHandlers } from './utils/get-page-handlers.js';
 import { buildSitemap } from './build-sitemap.js';
 import { devServerPlugin } from './plugins/dev-server-plugin.js';
 import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-files.js';
+import { IncomingMessage, ServerResponse } from 'node:http';
 
 const isWindows = platform() === 'win32';
 const filePrefix = isWindows ? 'file:///' : '';
@@ -42,6 +43,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let config: UserConfig;
   let nitroConfig: NitroConfig;
   let environmentBuild = false;
+  let hasAPIDir = false;
 
   return [
     (options?.ssr ? devServerPlugin(options) : false) as Plugin,
@@ -55,6 +57,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         isTest = isTest ? isTest : mode === 'test';
 
         const rootDir = relative(workspaceRoot, config.root || '.') || '.';
+        hasAPIDir = existsSync(
+          resolve(workspaceRoot, rootDir, 'src/server/routes/api'),
+        );
         const buildPreset =
           process.env['BUILD_PRESET'] ??
           (nitroOptions?.preset as string | undefined);
@@ -63,6 +68,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           workspaceRoot,
           rootDir,
           additionalPagesDirs: options?.additionalPagesDirs,
+          hasAPIDir,
         });
 
         const ssrEntryPath = resolve(
@@ -123,25 +129,31 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             plugins: [pageEndpointsPlugin()],
           },
           handlers: [
-            ...(useAPIMiddleware
-              ? [
-                  {
-                    handler: '#ANALOG_API_MIDDLEWARE',
-                    middleware: true,
-                  },
-                ]
-              : []),
+            ...(hasAPIDir
+              ? []
+              : useAPIMiddleware
+                ? [
+                    {
+                      handler: '#ANALOG_API_MIDDLEWARE',
+                      middleware: true,
+                    },
+                  ]
+                : []),
             ...pageHandlers,
           ],
-          routeRules: useAPIMiddleware
+          routeRules: hasAPIDir
+            ? undefined
+            : useAPIMiddleware
+              ? undefined
+              : {
+                  [`${apiPrefix}/**`]: {
+                    proxy: { to: '/**' },
+                  },
+                },
+          virtual: hasAPIDir
             ? undefined
             : {
-                [`${apiPrefix}/**`]: {
-                  proxy: { to: '/**' },
-                },
-              },
-          virtual: {
-            '#ANALOG_API_MIDDLEWARE': `
+                '#ANALOG_API_MIDDLEWARE': `
         import { eventHandler, proxyRequest } from 'h3';
         import { useRuntimeConfig } from '#imports';
 
@@ -166,7 +178,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             });
           }
         });`,
-          },
+              },
         };
 
         if (isVercelPreset(buildPreset)) {
@@ -305,14 +317,16 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               },
               moduleSideEffects: ['zone.js/node', 'zone.js/fesm2015/zone-node'],
               handlers: [
-                ...(useAPIMiddleware
-                  ? [
-                      {
-                        handler: '#ANALOG_API_MIDDLEWARE',
-                        middleware: true,
-                      },
-                    ]
-                  : []),
+                ...(hasAPIDir
+                  ? []
+                  : useAPIMiddleware
+                    ? [
+                        {
+                          handler: '#ANALOG_API_MIDDLEWARE',
+                          middleware: true,
+                        },
+                      ]
+                    : []),
                 ...pageHandlers,
               ],
             };
@@ -379,10 +393,22 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           });
           const server = createDevServer(nitro);
           await build(nitro);
-          viteServer.middlewares.use(
-            apiPrefix,
-            toNodeListener(server.app as unknown as App),
-          );
+          const apiHandler = toNodeListener(server.app as unknown as App);
+
+          if (hasAPIDir) {
+            viteServer.middlewares.use(
+              (req: IncomingMessage, res: ServerResponse, next: Function) => {
+                if (req.url?.startsWith(apiPrefix)) {
+                  apiHandler(req, res);
+                  return;
+                }
+
+                next();
+              },
+            );
+          } else {
+            viteServer.middlewares.use(apiPrefix, apiHandler);
+          }
 
           viteServer.httpServer?.once('listening', () => {
             process.env['ANALOG_HOST'] = !viteServer.config.server.host

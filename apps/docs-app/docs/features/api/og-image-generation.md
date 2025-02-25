@@ -37,10 +37,10 @@ pnpm install -w satori satori-html sharp
 
 ## Setting Up An API Route
 
-Next, define an API route in the `src/server/routes` directory.
+Next, define an API route in the `src/server/routes/api` directory.
 
 ```ts
-// src/server/routes/v1/og-images.ts
+// src/server/routes/api/v1/og-images.ts
 import { ImageResponse } from '@analogjs/content/og';
 
 export default defineEventHandler(async (event) => {
