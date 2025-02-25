@@ -27,9 +27,39 @@ export default defineConfig(({ mode }) => ({
 
 For more information about externals with SSR, check out the [Vite documentation](https://vitejs.dev/guide/ssr.html#ssr-externals).
 
+## Hybrid Rendering with Client-Only Routes
+
+SSR is enabled by default. For a hybrid approach, you can specific some routes to only be rendered client-side, and not be server side rendered. This is done through the `routeRules` configuration object by specifying an `ssr` option.
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  // ...other config
+  plugins: [
+    analog({
+      prerender: {
+        routes: ['/', '/404.html'],
+      },
+      nitro: {
+        routeRules: {
+          // All admin URLs are only rendered on the client
+          '/admin/**': { ssr: false },
+
+          // Render a 404 page as a fallback page
+          '/404.html': { ssr: false },
+        },
+      },
+    }),
+  ],
+}));
+```
+
 ## Disabling SSR
 
-SSR is enabled by default. You can opt-out of it and generate a client-only build by adding the following option to the `analog()` plugin in your `vite.config.ts`:
+You can opt-out of it and generate a client-only build by adding the following option to the `analog()` plugin in your `vite.config.ts`:
 
 ```ts
 import { defineConfig } from 'vite';
