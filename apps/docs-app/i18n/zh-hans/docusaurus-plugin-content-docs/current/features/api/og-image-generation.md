@@ -40,7 +40,7 @@ pnpm install -w satori satori-html sharp
 然后，在 `src/server/routes` 目录下定义一个 API 路由。
 
 ```ts
-// src/server/routes/v1/og-images.ts
+// src/server/routes/api/v1/og-images.ts
 import { defineEventHandler, getQuery } from 'h3';
 
 import { ImageResponse } from '@analogjs/content/og';

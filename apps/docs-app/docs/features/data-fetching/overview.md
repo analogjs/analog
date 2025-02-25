@@ -103,7 +103,7 @@ In your component/service, use `HttpClient` along with [/docs/features/api/overv
 An example API route that fetches todos.
 
 ```ts
-// src/server/routes/v1/todos.ts -> /api/v1/todos
+// src/server/routes/api/v1/todos.ts -> /api/v1/todos
 import { eventHandler } from 'h3';
 
 export default eventHandler(async () => {

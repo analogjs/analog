@@ -103,7 +103,7 @@ Verwende in der Komponente/dem Dienst `HttpClient` zusammen mit [API-Routen](/de
 Eine Beispiel-API-Route, die ToDos abruft.
 
 ```ts
-// src/server/routes/v1/todos.ts -> /api/v1/todos
+// src/server/routes/api/v1/todos.ts -> /api/v1/todos
 import { eventHandler } from 'h3';
 
 export default eventHandler(async () => {
