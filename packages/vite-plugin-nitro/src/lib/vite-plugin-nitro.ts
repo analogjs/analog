@@ -293,7 +293,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                * This file is shipped as ESM for Windows support,
                * as it won't resolve the renderer.ts file correctly in node.
                */
-              import { eventHandler } from 'h3';
               import { eventHandler, getResponseHeader } from 'h3';
               
               // @ts-ignore
