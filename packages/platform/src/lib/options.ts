@@ -4,6 +4,16 @@ import type { SitemapConfig } from '@analogjs/vite-plugin-nitro';
 
 import { ContentPluginOptions } from './content-plugin.js';
 
+declare module 'nitropack' {
+  interface NitroRouteConfig {
+    ssr?: boolean;
+  }
+
+  interface NitroRouteRules {
+    ssr?: boolean;
+  }
+}
+
 export interface PrerenderOptions {
   /**
    * Add additional routes to prerender through crawling page links.

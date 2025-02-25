@@ -20,6 +20,27 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
 
   let nitroOptions = platformOptions?.nitro;
 
+  if (nitroOptions?.routeRules) {
+    nitroOptions = {
+      ...nitroOptions,
+      routeRules: Object.keys(nitroOptions.routeRules).reduce(
+        (config, curr) => {
+          return {
+            ...config,
+            [curr]: {
+              ...config[curr],
+              headers: {
+                ...config[curr].headers,
+                'x-analog-no-ssr': !config[curr].ssr ? 'true' : undefined,
+              } as any,
+            },
+          };
+        },
+        nitroOptions.routeRules,
+      ),
+    };
+  }
+
   return [
     ...viteNitroPlugin(platformOptions, nitroOptions),
     ...(platformOptions.ssr ? [ssrBuildPlugin(), ...injectHTMLPlugin()] : []),

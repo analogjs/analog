@@ -11,11 +11,16 @@ import {
 import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { createEvent, sendWebResponse } from 'h3';
+import { createRouter as createRadixRouter, toRouteMatcher } from 'radix3';
+import { defu } from 'defu';
+import { NitroRouteRules } from 'nitropack';
 
 import { registerDevServerMiddleware } from '../utils/register-dev-middleware.js';
 import { Options } from '../options.js';
 
-export function devServerPlugin(options: Options): Plugin {
+type ServerOptions = Options & { routeRules?: Record<string, any> | undefined };
+
+export function devServerPlugin(options: ServerOptions): Plugin {
   const workspaceRoot = options?.workspaceRoot || process.cwd();
   const entryServer = options.entryServer || 'src/main.server.ts';
   const index = options.index || 'index.html';
@@ -57,18 +62,32 @@ export function devServerPlugin(options: Options): Plugin {
             template,
           );
 
+          const _routeRulesMatcher = toRouteMatcher(
+            createRadixRouter({ routes: options.routeRules }),
+          );
+          const _getRouteRules = (path: string) =>
+            defu(
+              {},
+              ..._routeRulesMatcher.matchAll(path).reverse(),
+            ) as NitroRouteRules;
+
           try {
-            const entryServer = (
-              await viteServer.ssrLoadModule('~analog/entry-server')
-            )['default'];
-            const result: string | Response = await entryServer(
-              req.originalUrl,
-              template,
-              {
+            let result: string | Response;
+            // Check for route rules explicitly disabling prerender
+            if (
+              _getRouteRules(req.originalUrl as string).prerender === false ||
+              _getRouteRules(req.originalUrl as string).ssr === false
+            ) {
+              result = template;
+            } else {
+              const entryServer = (
+                await viteServer.ssrLoadModule('~analog/entry-server')
+              )['default'];
+              result = await entryServer(req.originalUrl, template, {
                 req,
                 res,
-              },
-            );
+              });
+            }
 
             if (result instanceof Response) {
               sendWebResponse(createEvent(req, res), result);

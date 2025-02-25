@@ -2,7 +2,7 @@
 
 import analog from '@analogjs/platform';
 import { visualizer } from 'rollup-plugin-visualizer';
-import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
+import { defineConfig, Plugin } from 'vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import inspect from 'vite-plugin-inspect';
 
@@ -33,7 +33,7 @@ export default defineConfig(({ mode, isSsrBuild }) => {
         additionalPagesDirs: ['/libs/shared/feature'],
         additionalAPIDirs: ['/libs/shared/feature/src/api'],
         prerender: {
-          routes: ['/', '/cart', '/shipping', '/client'],
+          routes: ['/', '/cart', '/shipping', '/client', '/404.html'],
           sitemap: {
             host: base,
           },
@@ -45,6 +45,16 @@ export default defineConfig(({ mode, isSsrBuild }) => {
           },
         },
         liveReload: true,
+        nitro: {
+          routeRules: {
+            '/cart/**': {
+              ssr: false,
+            },
+            '/404.html': {
+              ssr: false,
+            },
+          },
+        },
       }),
       nxViteTsPaths(),
       visualizer() as Plugin,
