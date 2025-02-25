@@ -1,3 +1,9 @@
+# [1.14.0-beta.3](https://github.com/analogjs/analog/compare/v1.14.0-beta.2...v1.14.0-beta.3) (2025-02-25)
+
+### Features
+
+- **vite-plugin-nitro:** add support for hybrid server side rendering at runtime ([#1623](https://github.com/analogjs/analog/issues/1623)) ([fa81e94](https://github.com/analogjs/analog/commit/fa81e948095462012aba8b96f45c80d1ece2fc04))
+
 # [1.14.0-beta.2](https://github.com/analogjs/analog/compare/v1.14.0-beta.1...v1.14.0-beta.2) (2025-02-25)
 
 ### Features
