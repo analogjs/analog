@@ -33,7 +33,7 @@ export default defineConfig(({ mode, isSsrBuild }) => {
         additionalPagesDirs: ['/libs/shared/feature'],
         additionalAPIDirs: ['/libs/shared/feature/src/api'],
         prerender: {
-          routes: ['/', '/cart', '/shipping', '/client'],
+          routes: ['/', '/cart', '/shipping', '/client', '/404.html'],
           sitemap: {
             host: base,
           },
@@ -48,6 +48,9 @@ export default defineConfig(({ mode, isSsrBuild }) => {
         nitro: {
           routeRules: {
             '/cart/**': {
+              ssr: false,
+            },
+            '/404.html': {
               ssr: false,
             },
           },
