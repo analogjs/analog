@@ -1,3 +1,9 @@
+# [1.14.0-beta.4](https://github.com/analogjs/analog/compare/v1.14.0-beta.3...v1.14.0-beta.4) (2025-02-26)
+
+### Features
+
+- **vitest-angular:** add support for snapshot updates in test builder ([#1626](https://github.com/analogjs/analog/issues/1626)) ([4581f8b](https://github.com/analogjs/analog/commit/4581f8b69e3226512c098b93aff3df84e2b39a68))
+
 # [1.14.0-beta.3](https://github.com/analogjs/analog/compare/v1.14.0-beta.2...v1.14.0-beta.3) (2025-02-25)
 
 ### Features
