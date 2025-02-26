@@ -6,4 +6,5 @@ export interface VitestSchema {
   watch?: boolean;
   ui?: boolean;
   coverage?: boolean;
+  update?: boolean;
 }

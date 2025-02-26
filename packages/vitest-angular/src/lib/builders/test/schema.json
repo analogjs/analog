@@ -36,6 +36,11 @@
     "coverage": {
       "description": "Enable code coverage analysis.",
       "type": "boolean"
+    },
+    "update": {
+      "description": "Update snapshot.",
+      "type": "boolean",
+      "aliases": ["u"]
     }
   },
   "required": []
