@@ -24,6 +24,7 @@ async function vitestBuilder(
   const watch = options.watch === true;
   const ui = options.ui === true;
   const coverageEnabled = options.coverage === true;
+  const update = options.update === true;
   const config = {
     root: `${projectConfig['root'] || '.'}`,
     watch,
@@ -33,6 +34,7 @@ async function vitestBuilder(
       enabled: coverageEnabled,
       ...coverageArgs,
     },
+    update,
     ...extraArgs,
   };
 
