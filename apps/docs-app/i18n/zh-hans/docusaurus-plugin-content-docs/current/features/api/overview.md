@@ -70,14 +70,14 @@ export default defineConfig(({ mode }) => {
 
 基于以上配置，Ananlog 会在 `/services` 提供 API 接口。
 
-在 `src/server/routes/v1/hello.ts` 里定义的路由将通过 `/services/v1/hello` 地址来访问。
+在 `src/server/routes/api/v1/hello.ts` 里定义的路由将通过 `/services/v1/hello` 地址来访问。
 
 ## 动态 API 路由
 
 动态路由通过文件名中[]中括号部分提供。参数可以通过 `event.context.params` 来访问。
 
 ```ts
-// /server/routes/v1/hello/[name].ts
+// /server/routes/api/v1/hello/[name].ts
 import { defineEventHandler } from 'h3';
 
 export default defineEventHandler(
@@ -88,7 +88,7 @@ export default defineEventHandler(
 另一个访问路由参数的方法是调用 `getRouterParam` 函数
 
 ```ts
-// /server/routes/v1/hello/[name].ts
+// /server/routes/api/v1/hello/[name].ts
 import { defineEventHandler, getRouterParam } from 'h3';
 
 export default defineEventHandler((event) => {
@@ -104,7 +104,7 @@ export default defineEventHandler((event) => {
 ### GET
 
 ```ts
-// /server/routes/v1/users/[id].get.ts
+// /server/routes/api/v1/users/[id].get.ts
 import { defineEventHandler, getRouterParam } from 'h3';
 
 export default defineEventHandler(async (event) => {
@@ -117,7 +117,7 @@ export default defineEventHandler(async (event) => {
 ### POST
 
 ```ts
-// /server/routes/v1/users.post.ts
+// /server/routes/api/v1/users.post.ts
 import { defineEventHandler, readBody } from 'h3';
 
 export default defineEventHandler(async (event) => {

@@ -73,10 +73,24 @@ Also setup the placeholder to be replaced in the `index.html`:
 </html>
 ```
 
+## API Routes
+
+API routes are defined in the `src/server/routes/api` folder. API routes are also filesystem based,
+and are exposed under the default `/api` prefix.
+
+```ts
+// src/server/routes/api/v1/hello
+import { defineEventHandler } from 'h3';
+
+export default defineEventHandler(() => ({ message: 'Hello World' }));
+```
+
+The API route can be accessed as `/api/v1/hello`.
+
 ## Examples
 
-React: https://github.com/brandonroberts/vite-nitro-react
-SolidJS: https://github.com/brandonroberts/vite-nitro-solid
+React: https://github.com/brandonroberts/vite-nitro-react \
+SolidJS: https://github.com/brandonroberts/vite-nitro-solid \
 Vue: https://github.com/brandonroberts/vite-nitro-vue
 
 ## Community

@@ -4,8 +4,8 @@ Analog supports defining API routes that can be used to serve data to the applic
 
 ## Defining an API Route
 
-API routes are defined in the `src/server/routes` folder. API routes are also filesystem based,
-and are exposed under the default `/api` prefix in development.
+API routes are defined in the `src/server/routes/api` folder. API routes are also filesystem based,
+and are exposed under the default `/api` prefix.
 
 ```ts
 import { defineEventHandler } from 'h3';
@@ -18,7 +18,7 @@ export default defineEventHandler(() => ({ message: 'Hello World' }));
 To create an RSS feed for your site, set the `content-type` to be `text/xml` and Analog serves up the correct content type for the route.
 
 ```ts
-//server/routes/rss.xml.ts
+//server/routes/api/rss.xml.ts
 
 import { defineEventHandler, setHeader } from 'h3';
 export default defineEventHandler((event) => {
@@ -53,33 +53,12 @@ prerender: {
 
 The XML is available as a static XML document at `/dist/analog/public/api/rss.xml`
 
-## Custom API prefix
-
-The prefix under which API routes are exposed can be configured with the
-`apiPrefix` parameter passed to the `analog` vite plugin.
-
-```ts
-export default defineConfig(({ mode }) => {
-  return {
-    plugins: [
-      analog({
-        apiPrefix: 'services',
-      }),
-    ],
-  };
-});
-```
-
-With this configuration, Analog exposes the API routes under the `/services` prefix.
-
-A route defined in `src/server/routes/v1/hello.ts` can now be accessed at `/services/v1/hello`.
-
 ## Dynamic API Routes
 
 Dynamic API routes are defined by using the filename as the route path enclosed in square brackets. Parameters can be accessed via `event.context.params`.
 
 ```ts
-// /server/routes/v1/hello/[name].ts
+// /server/routes/api/v1/hello/[name].ts
 import { defineEventHandler } from 'h3';
 
 export default defineEventHandler(
@@ -90,7 +69,7 @@ export default defineEventHandler(
 Another way to access route parameters is by using the `getRouterParam` function.
 
 ```ts
-// /server/routes/v1/hello/[name].ts
+// /server/routes/api/v1/hello/[name].ts
 import { defineEventHandler, getRouterParam } from 'h3';
 
 export default defineEventHandler((event) => {
@@ -106,7 +85,7 @@ File names can be suffixed with `.get`, `.post`, `.put`, `.delete`, etc. to matc
 ### GET
 
 ```ts
-// /server/routes/v1/users/[id].get.ts
+// /server/routes/api/v1/users/[id].get.ts
 import { defineEventHandler, getRouterParam } from 'h3';
 
 export default defineEventHandler(async (event) => {
@@ -119,7 +98,7 @@ export default defineEventHandler(async (event) => {
 ### POST
 
 ```ts
-// /server/routes/v1/users.post.ts
+// /server/routes/api/v1/users.post.ts
 import { defineEventHandler, readBody } from 'h3';
 
 export default defineEventHandler(async (event) => {
@@ -136,7 +115,7 @@ The [h3 JSDocs](https://www.jsdocs.io/package/h3#package-index-functions) provid
 Sample query `/api/v1/query?param1=Analog&param2=Angular`
 
 ```ts
-// routes/v1/query.ts
+// routes/api/v1/query.ts
 import { defineEventHandler, getQuery } from 'h3';
 
 export default defineEventHandler((event) => {
@@ -150,7 +129,7 @@ export default defineEventHandler((event) => {
 Catch-all routes are helpful for fallback route handling.
 
 ```ts
-// routes/[...].ts
+// routes/api/[...].ts
 export default defineEventHandler((event) => `Default page`);
 ```
 
@@ -160,7 +139,7 @@ If no errors are thrown, a status code of 200 OK will be returned. Any uncaught 
 To return other error codes, throw an exception with createError
 
 ```ts
-// routes/v1/[id].ts
+// routes/api/v1/[id].ts
 import { defineEventHandler, getRouterParam, createError } from 'h3';
 
 export default defineEventHandler((event) => {

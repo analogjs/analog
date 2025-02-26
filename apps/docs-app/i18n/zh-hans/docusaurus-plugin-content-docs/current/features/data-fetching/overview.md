@@ -107,7 +107,7 @@ export const appConfig: ApplicationConfig = {
 一个获取 todo 列表的 API 路由的例子。
 
 ```ts
-// src/server/routes/v1/todos.ts -> /api/v1/todos
+// src/server/routes/api/v1/todos.ts -> /api/v1/todos
 import { eventHandler } from 'h3';
 
 export default eventHandler(async () => {

@@ -19,7 +19,7 @@ export async function buildSitemap(
   const routeList: string[] = await optionHasRoutes(routes);
 
   if (routeList.length) {
-    const slash = checkSlash(sitemapConfig.host);
+    const slash = checkSlash(sitemapConfig.host || '');
     const sitemapData: PagesJson[] = routeList.map((page: string) => ({
       page: `${sitemapConfig.host}${slash}${page.replace(/^\/+/g, '')}`,
       lastMod: new Date().toISOString().split('T')[0],

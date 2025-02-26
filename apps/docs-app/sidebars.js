@@ -213,6 +213,11 @@ const sidebars = {
         },
         {
           type: 'doc',
+          id: 'packages/vite-plugin-nitro/overview',
+          label: 'Nitro',
+        },
+        {
+          type: 'doc',
           id: 'integrations/angular-material/index',
           label: 'Angular Material',
         },
