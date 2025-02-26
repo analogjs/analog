@@ -1,12 +1,6 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "@docusaurus/tsconfig",
   "compilerOptions": {
-    "allowJs": true,
-    "esModuleInterop": true,
-    "jsx": "react",
-    "lib": ["DOM"],
-    "noEmit": true,
-    "noImplicitAny": false,
     "types": [
       "node",
       "@docusaurus/module-type-aliases",
@@ -16,5 +10,6 @@
     "paths": {
       "@site/*": ["./*"]
     }
-  }
+  },
+  "exclude": [".docusaurus", "build"]
 }

@@ -1,5 +1,6 @@
 import clsx from 'clsx';
-import React from 'react';
+import Heading from '@theme/Heading';
+import type { ReactNode } from 'react';
 import styles from './styles.module.css';
 import Translate, { translate } from '@docusaurus/Translate';
 
@@ -7,7 +8,7 @@ type FeatureItem = {
   title: string;
   Svg: React.ComponentType<React.ComponentProps<'svg'>>;
   png?: string;
-  description: JSX.Element;
+  description: ReactNode;
 };
 
 const FeatureList: FeatureItem[] = [
@@ -80,14 +81,14 @@ function Feature({ title, Svg, description, png }: FeatureItem) {
         {png && <img src={png} className={styles.featureSvg} role="img" />}
       </div>
       <div className="text--center padding-horiz--md">
-        <h3>{title}</h3>
+        <Heading as="h3">{title}</Heading>
         <p>{description}</p>
       </div>
     </div>
   );
 }
 
-export default function HomepageFeatures(): JSX.Element {
+export default function HomepageFeatures(): ReactNode {
   return (
     <section className={styles.features}>
       <div className="container">
