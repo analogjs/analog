@@ -1,3 +1,24 @@
+# [2.0.0-alpha.5](https://github.com/analogjs/analog/compare/v2.0.0-alpha.4...v2.0.0-alpha.5) (2025-02-26)
+
+### Bug Fixes
+
+- **router:** properly parse json response in the FormAction ([#1605](https://github.com/analogjs/analog/issues/1605)) ([6a8fc20](https://github.com/analogjs/analog/commit/6a8fc20037d28720b9aa809ef1670f2f6b19ee6b))
+- **vite-plugin-angular:** add detection for Vitest CLI in watch mode ([#1602](https://github.com/analogjs/analog/issues/1602)) ([9cae439](https://github.com/analogjs/analog/commit/9cae43967c62dad40cba9500dc78071a5601b33b))
+- **vite-plugin-angular:** add exception for agx to resourceNameToFileName ([#1595](https://github.com/analogjs/analog/issues/1595)) ([718a0dc](https://github.com/analogjs/analog/commit/718a0dcd52ce50a51dec9458385a0fa070b8be07))
+- **vite-plugin-angular:** cache MarkedSetupService creation ([#1584](https://github.com/analogjs/analog/issues/1584)) ([9b8c90d](https://github.com/analogjs/analog/commit/9b8c90d1451844867ba3b7d79b0aaa11b5428527))
+- **vite-plugin-angular:** cache resource reads for agx files ([#1587](https://github.com/analogjs/analog/issues/1587)) ([3eb5fa9](https://github.com/analogjs/analog/commit/3eb5fa95fb85a577dc7eca325b775599e413ee9e))
+- **vite-plugin-angular:** check for style extension in resourceNameToFileName ([#1596](https://github.com/analogjs/analog/issues/1596)) ([4ff66a4](https://github.com/analogjs/analog/commit/4ff66a4ddcfe29534d1c680230f7ddfd6b5bb0f2))
+- **vite-plugin-angular:** remove check for Vitest command in watch mode ([#1606](https://github.com/analogjs/analog/issues/1606)) ([744ed1f](https://github.com/analogjs/analog/commit/744ed1fcf8f2f3228177698fc81fc64d1648110e))
+- **vite-plugin-angular:** support double quotes in analog import attributes ([#1590](https://github.com/analogjs/analog/issues/1590)) ([0b4e245](https://github.com/analogjs/analog/commit/0b4e245a37774c5bcc448029cfb3fd558636d96f))
+- **vitest-angular:** expand semver range of @angular-devkit/architect ([#1611](https://github.com/analogjs/analog/issues/1611)) ([272eabc](https://github.com/analogjs/analog/commit/272eabc529e6f1000dcad9c9185a36a150ca586e))
+
+### Features
+
+- **vite-plugin-nitro:** add support for API routes without middleware/proxy ([#1621](https://github.com/analogjs/analog/issues/1621)) ([a57ef2a](https://github.com/analogjs/analog/commit/a57ef2ad9869cf2686e6f9bddc8386f02540a53d))
+- **vite-plugin-nitro:** add support for hybrid server side rendering at runtime ([#1623](https://github.com/analogjs/analog/issues/1623)) ([fa81e94](https://github.com/analogjs/analog/commit/fa81e948095462012aba8b96f45c80d1ece2fc04))
+- **vite-plugin-nitro:** implement support for Vite Environment API ([#1618](https://github.com/analogjs/analog/issues/1618)) ([74a5f52](https://github.com/analogjs/analog/commit/74a5f52b6491d6995ee7b698da04d64f2bd0ec10))
+- **vitest-angular:** add support for snapshot updates in test builder ([#1626](https://github.com/analogjs/analog/issues/1626)) ([4581f8b](https://github.com/analogjs/analog/commit/4581f8b69e3226512c098b93aff3df84e2b39a68))
+
 # [2.0.0-alpha.4](https://github.com/analogjs/analog/compare/v2.0.0-alpha.3...v2.0.0-alpha.4) (2025-01-27)
 
 ### Bug Fixes
