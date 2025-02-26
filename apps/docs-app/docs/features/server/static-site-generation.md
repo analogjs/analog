@@ -91,7 +91,14 @@ export default defineConfig(({ mode }) => ({
           '/about',
           '/blog',
           '/blog/posts/2023-02-01-my-first-post',
+          // Prerender 404.html page for SPAs
+          '/404.html',
         ],
+      },
+      nitro: {
+        routeRules: {
+          '/404.html': { ssr: false },
+        },
       },
     }),
   ],

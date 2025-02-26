@@ -1,3 +1,27 @@
+# [1.14.0-beta.4](https://github.com/analogjs/analog/compare/v1.14.0-beta.3...v1.14.0-beta.4) (2025-02-26)
+
+### Features
+
+- **vitest-angular:** add support for snapshot updates in test builder ([#1626](https://github.com/analogjs/analog/issues/1626)) ([4581f8b](https://github.com/analogjs/analog/commit/4581f8b69e3226512c098b93aff3df84e2b39a68))
+
+# [1.14.0-beta.3](https://github.com/analogjs/analog/compare/v1.14.0-beta.2...v1.14.0-beta.3) (2025-02-25)
+
+### Features
+
+- **vite-plugin-nitro:** add support for hybrid server side rendering at runtime ([#1623](https://github.com/analogjs/analog/issues/1623)) ([fa81e94](https://github.com/analogjs/analog/commit/fa81e948095462012aba8b96f45c80d1ece2fc04))
+
+# [1.14.0-beta.2](https://github.com/analogjs/analog/compare/v1.14.0-beta.1...v1.14.0-beta.2) (2025-02-25)
+
+### Features
+
+- **vite-plugin-nitro:** add support for API routes without middleware/proxy ([#1621](https://github.com/analogjs/analog/issues/1621)) ([a57ef2a](https://github.com/analogjs/analog/commit/a57ef2ad9869cf2686e6f9bddc8386f02540a53d))
+
+# [1.14.0-beta.1](https://github.com/analogjs/analog/compare/v1.13.1...v1.14.0-beta.1) (2025-02-21)
+
+### Features
+
+- **vite-plugin-nitro:** implement support for Vite Environment API ([#1618](https://github.com/analogjs/analog/issues/1618)) ([74a5f52](https://github.com/analogjs/analog/commit/74a5f52b6491d6995ee7b698da04d64f2bd0ec10))
+
 ## [1.13.1](https://github.com/analogjs/analog/compare/v1.13.0...v1.13.1) (2025-02-17)
 
 ### Bug Fixes

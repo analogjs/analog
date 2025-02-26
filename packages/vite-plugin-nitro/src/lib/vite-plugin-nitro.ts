@@ -5,7 +5,7 @@ import { mergeConfig, normalizePath } from 'vite';
 import { dirname, join, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 import { buildServer } from './build-server.js';
 import { buildSSRApp } from './build-ssr.js';
@@ -19,6 +19,7 @@ import { getPageHandlers } from './utils/get-page-handlers.js';
 import { buildSitemap } from './build-sitemap.js';
 import { devServerPlugin } from './plugins/dev-server-plugin.js';
 import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-files.js';
+import { IncomingMessage, ServerResponse } from 'node:http';
 
 const isWindows = platform() === 'win32';
 const filePrefix = isWindows ? 'file:///' : '';
@@ -29,7 +30,7 @@ const __dirname = dirname(__filename);
 
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
-  const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+  let isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const apiPrefix = `/${options?.apiPrefix || 'api'}`;
   const useAPIMiddleware =
     typeof options?.useAPIMiddleware !== 'undefined'
@@ -41,17 +42,30 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let ssrBuild = false;
   let config: UserConfig;
   let nitroConfig: NitroConfig;
+  let environmentBuild = false;
+  let hasAPIDir = false;
 
   return [
-    (options?.ssr ? devServerPlugin(options) : false) as Plugin,
+    (options?.ssr
+      ? devServerPlugin({
+          entryServer: options?.entryServer,
+          index: options?.index,
+          routeRules: nitroOptions?.routeRules,
+        })
+      : false) as Plugin,
     {
       name: '@analogjs/vite-plugin-nitro',
-      async config(_config, { command }) {
+      async config(userConfig, { mode, command }) {
         isServe = command === 'serve';
         isBuild = command === 'build';
-        ssrBuild = _config.build?.ssr === true;
-        config = _config;
+        ssrBuild = userConfig.build?.ssr === true;
+        config = userConfig;
+        isTest = isTest ? isTest : mode === 'test';
+
         const rootDir = relative(workspaceRoot, config.root || '.') || '.';
+        hasAPIDir = existsSync(
+          resolve(workspaceRoot, rootDir, 'src/server/routes/api'),
+        );
         const buildPreset =
           process.env['BUILD_PRESET'] ??
           (nitroOptions?.preset as string | undefined);
@@ -60,6 +74,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           workspaceRoot,
           rootDir,
           additionalPagesDirs: options?.additionalPagesDirs,
+          hasAPIDir,
         });
 
         const ssrEntryPath = resolve(
@@ -120,25 +135,31 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             plugins: [pageEndpointsPlugin()],
           },
           handlers: [
-            ...(useAPIMiddleware
-              ? [
-                  {
-                    handler: '#ANALOG_API_MIDDLEWARE',
-                    middleware: true,
-                  },
-                ]
-              : []),
+            ...(hasAPIDir
+              ? []
+              : useAPIMiddleware
+                ? [
+                    {
+                      handler: '#ANALOG_API_MIDDLEWARE',
+                      middleware: true,
+                    },
+                  ]
+                : []),
             ...pageHandlers,
           ],
-          routeRules: useAPIMiddleware
+          routeRules: hasAPIDir
+            ? undefined
+            : useAPIMiddleware
+              ? undefined
+              : {
+                  [`${apiPrefix}/**`]: {
+                    proxy: { to: '/**' },
+                  },
+                },
+          virtual: hasAPIDir
             ? undefined
             : {
-                [`${apiPrefix}/**`]: {
-                  proxy: { to: '/**' },
-                },
-              },
-          virtual: {
-            '#ANALOG_API_MIDDLEWARE': `
+                '#ANALOG_API_MIDDLEWARE': `
         import { eventHandler, proxyRequest } from 'h3';
         import { useRuntimeConfig } from '#imports';
 
@@ -163,7 +184,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             });
           }
         });`,
-          },
+              },
         };
 
         if (isVercelPreset(buildPreset)) {
@@ -272,18 +293,25 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                * This file is shipped as ESM for Windows support,
                * as it won't resolve the renderer.ts file correctly in node.
                */
-              import { eventHandler } from 'h3';
-
+              import { eventHandler, getResponseHeader } from 'h3';
+              
               // @ts-ignore
               import renderer from '${ssrEntry}';
               // @ts-ignore
               const template = \`${indexContents}\`;
 
               export default eventHandler(async (event) => {
+                const noSSR = getResponseHeader(event, 'x-analog-no-ssr');
+
+                if (noSSR === 'true') {
+                  return template;
+                }
+              
                 const html = await renderer(event.node.req.url, template, {
                   req: event.node.req,
                   res: event.node.res,
                 });
+
                 return html;
               });
               `,
@@ -302,14 +330,16 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               },
               moduleSideEffects: ['zone.js/node', 'zone.js/fesm2015/zone-node'],
               handlers: [
-                ...(useAPIMiddleware
-                  ? [
-                      {
-                        handler: '#ANALOG_API_MIDDLEWARE',
-                        middleware: true,
-                      },
-                    ]
-                  : []),
+                ...(hasAPIDir
+                  ? []
+                  : useAPIMiddleware
+                    ? [
+                        {
+                          handler: '#ANALOG_API_MIDDLEWARE',
+                          middleware: true,
+                        },
+                      ]
+                    : []),
                 ...pageHandlers,
               ],
             };
@@ -320,6 +350,53 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           nitroConfig,
           nitroOptions as Record<string, any>,
         );
+
+        return {
+          environments: {
+            ssr: {
+              build: {
+                ssr: true,
+                rollupOptions: {
+                  input:
+                    options?.entryServer ||
+                    resolve(workspaceRoot, rootDir, 'src/main.server.ts'),
+                },
+                outDir:
+                  options?.ssrBuildDir ||
+                  resolve(workspaceRoot, 'dist', rootDir, 'ssr'),
+              },
+            },
+          },
+          builder: {
+            sharedPlugins: true,
+            buildApp: async (builder) => {
+              environmentBuild = true;
+              await Promise.all([
+                builder.build(builder.environments['client']),
+                builder.build(builder.environments['ssr']),
+              ]);
+              await buildServer(options, nitroConfig);
+
+              if (
+                nitroConfig.prerender?.routes?.length &&
+                options?.prerender?.sitemap
+              ) {
+                console.log('Building Sitemap...');
+                // sitemap needs to be built after all directories are built
+                await buildSitemap(
+                  config,
+                  options.prerender.sitemap,
+                  nitroConfig.prerender.routes,
+                  nitroConfig.output?.publicDir!,
+                );
+              }
+
+              console.log(
+                `\n\nThe '@analogjs/platform' server has been successfully built.`,
+              );
+            },
+          },
+        };
       },
       async configureServer(viteServer: ViteDevServer) {
         if (isServe && !isTest) {
@@ -329,10 +406,22 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           });
           const server = createDevServer(nitro);
           await build(nitro);
-          viteServer.middlewares.use(
-            apiPrefix,
-            toNodeListener(server.app as unknown as App),
-          );
+          const apiHandler = toNodeListener(server.app as unknown as App);
+
+          if (hasAPIDir) {
+            viteServer.middlewares.use(
+              (req: IncomingMessage, res: ServerResponse, next: Function) => {
+                if (req.url?.startsWith(apiPrefix)) {
+                  apiHandler(req, res);
+                  return;
+                }
+
+                next();
+              },
+            );
+          } else {
+            viteServer.middlewares.use(apiPrefix, apiHandler);
+          }
 
           viteServer.httpServer?.once('listening', () => {
             process.env['ANALOG_HOST'] = !viteServer.config.server.host
@@ -353,6 +442,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
       },
 
       async closeBundle() {
+        // Skip when build is triggered by the Environment API
+        if (environmentBuild) {
+          return;
+        }
+
         if (ssrBuild) {
           return;
         }

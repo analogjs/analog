@@ -11,23 +11,29 @@ import {
 import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { createEvent, sendWebResponse } from 'h3';
+import { createRouter as createRadixRouter, toRouteMatcher } from 'radix3';
+import { defu } from 'defu';
+import { NitroRouteRules } from 'nitropack';
 
 import { registerDevServerMiddleware } from '../utils/register-dev-middleware.js';
 import { Options } from '../options.js';
 
-export function devServerPlugin(options: Options): Plugin {
+type ServerOptions = Options & { routeRules?: Record<string, any> | undefined };
+
+export function devServerPlugin(options: ServerOptions): Plugin {
   const workspaceRoot = options?.workspaceRoot || process.cwd();
   const entryServer = options.entryServer || 'src/main.server.ts';
   const index = options.index || 'index.html';
   let config: UserConfig;
   let root: string;
+  let isTest = false;
 
   return {
     name: 'analogjs-dev-ssr-plugin',
-    config(userConfig) {
+    config(userConfig, { mode }) {
       config = userConfig;
       root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
-
+      isTest = isTest ? isTest : mode === 'test';
       return {
         resolve: {
           alias: {
@@ -37,6 +43,10 @@ export function devServerPlugin(options: Options): Plugin {
       };
     },
     configureServer(viteServer) {
+      if (isTest) {
+        return;
+      }
+
       return async () => {
         remove_html_middlewares(viteServer.middlewares);
         registerDevServerMiddleware(root, viteServer);
@@ -52,24 +62,37 @@ export function devServerPlugin(options: Options): Plugin {
             template,
           );
 
+          const _routeRulesMatcher = toRouteMatcher(
+            createRadixRouter({ routes: options.routeRules }),
+          );
+          const _getRouteRules = (path: string) =>
+            defu(
+              {},
+              ..._routeRulesMatcher.matchAll(path).reverse(),
+            ) as NitroRouteRules;
+
           try {
-            const entryServer = (
-              await viteServer.ssrLoadModule('~analog/entry-server')
-            )['default'];
-            const result: string | Response = await entryServer(
-              req.originalUrl,
-              template,
-              {
+            let result: string | Response;
+            // Check for route rules explicitly disabling prerender
+            if (
+              _getRouteRules(req.originalUrl as string).prerender === false ||
+              _getRouteRules(req.originalUrl as string).ssr === false
+            ) {
+              result = template;
+            } else {
+              const entryServer = (
+                await viteServer.ssrLoadModule('~analog/entry-server')
+              )['default'];
+              result = await entryServer(req.originalUrl, template, {
                 req,
                 res,
-              },
-            );
+              });
+            }
 
             if (result instanceof Response) {
               sendWebResponse(createEvent(req, res), result);
               return;
             }
-
             res.setHeader('Content-Type', 'text/html');
             res.end(result);
           } catch (e) {

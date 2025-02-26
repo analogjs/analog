@@ -1242,6 +1242,24 @@
       "contributions": [
         "infra"
       ]
+    },
+    {
+      "login": "nikosanif",
+      "name": "Nikos Anifantis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15191697?v=4",
+      "profile": "https://github.com/nikosanif",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "kudoas",
+      "name": "Daichi Kudo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45157831?v=4",
+      "profile": "https://www.da1chi.net",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
