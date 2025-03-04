@@ -1,3 +1,9 @@
+## [1.14.1-beta.1](https://github.com/analogjs/analog/compare/v1.14.0...v1.14.1-beta.1) (2025-03-04)
+
+### Bug Fixes
+
+- **router:** set full parent path for route path on debug page ([#1632](https://github.com/analogjs/analog/issues/1632)) ([ccfeca5](https://github.com/analogjs/analog/commit/ccfeca523e605a23d4c1c15d2f131583859d926f))
+
 # [1.14.0](https://github.com/analogjs/analog/compare/v1.13.1...v1.14.0) (2025-02-26)
 
 ### Features
