@@ -1,3 +1,9 @@
+## [1.14.1-beta.2](https://github.com/analogjs/analog/compare/v1.14.1-beta.1...v1.14.1-beta.2) (2025-03-06)
+
+### Bug Fixes
+
+- **nx-plugin:** add check for nx version inside generator for Vite/Vitest ([#1635](https://github.com/analogjs/analog/issues/1635)) ([9db028c](https://github.com/analogjs/analog/commit/9db028cec93eccb19ec0a518a590b3896c64d503))
+
 ## [1.14.1-beta.1](https://github.com/analogjs/analog/compare/v1.14.0...v1.14.1-beta.1) (2025-03-04)
 
 ### Bug Fixes
