@@ -8,6 +8,8 @@ import {
   V19_X_VITE_TSCONFIG_PATHS,
   V19_X_VITEST,
   V19_X_VITE,
+  NX_X_LATEST_VITE,
+  NX_X_LATEST_VITEST,
 } from '../../utils/versions/ng_19_X/versions';
 
 describe('setup-vitest generator', () => {
@@ -29,6 +31,7 @@ describe('setup-vitest generator', () => {
       dependencies: {
         '@angular/core': '19.0.0',
         '@nx/angular': '20.0.0',
+        nx: '20.0.0',
       },
       devDependencies: {},
     });
@@ -150,7 +153,8 @@ describe('setup-vitest generator', () => {
     });
 
     const packageJson = JSON.parse(tree.read('package.json', 'utf-8'));
-    expect(packageJson.devDependencies.vite).toBe(V19_X_VITE);
+    expect(packageJson.devDependencies.vite).toBe(NX_X_LATEST_VITE); // '^6.0.0'
+    expect(packageJson.devDependencies.vitest).toBe(NX_X_LATEST_VITEST); // '^3.0.0'
   });
 
   it('should create test-setup.ts with correct content', async () => {

@@ -45,7 +45,8 @@ import {
   V19_X_VITE_TSCONFIG_PATHS,
   V19_X_VITEST,
   V19_X_VITE,
-  NX20_4_VITE,
+  NX_X_LATEST_VITE,
+  NX_X_LATEST_VITEST,
 } from './ng_19_X/versions';
 
 const devDependencyKeys = [
@@ -149,8 +150,11 @@ const getDevDependencies = (
     'vite-tsconfig-paths': V19_X_VITE_TSCONFIG_PATHS,
     vite:
       escapedNxVersion && lt(escapedNxVersion, '20.5.0')
-        ? NX20_4_VITE
-        : V19_X_VITE,
-    vitest: V19_X_VITEST,
+        ? V19_X_VITE
+        : NX_X_LATEST_VITE,
+    vitest:
+      escapedNxVersion && lt(escapedNxVersion, '20.5.0')
+        ? V19_X_VITEST
+        : NX_X_LATEST_VITEST,
   };
 };
