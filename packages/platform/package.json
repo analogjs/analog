@@ -31,7 +31,7 @@
     "nitropack": "^2.10.0",
     "@analogjs/vite-plugin-angular": "^1.14.1-beta.2",
     "@analogjs/vite-plugin-nitro": "^1.14.1-beta.2",
-    "vitefu": "^0.2.5"
+    "vitefu": "^1.0.0"
   },
   "peerDependencies": {
     "@nx/angular": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0",
