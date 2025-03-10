@@ -133,7 +133,7 @@
     "conventional-changelog-cli": "^2.2.2",
     "cpy-cli": "^4.2.0",
     "cypress": "13.14.2",
-    "esbuild": "0.19.5",
+    "esbuild": "0.25.0",
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.0.0",
     "eslint-plugin-cypress": "3.5.0",
