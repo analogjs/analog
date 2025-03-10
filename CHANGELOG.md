@@ -1,3 +1,9 @@
+## [1.14.1-beta.4](https://github.com/analogjs/analog/compare/v1.14.1-beta.3...v1.14.1-beta.4) (2025-03-10)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** bump esbuild dependency to 0.25.0 ([#1641](https://github.com/analogjs/analog/issues/1641)) ([72dff37](https://github.com/analogjs/analog/commit/72dff373df32989a5930a51e3278fbc99ad3e804))
+
 ## [1.14.1-beta.3](https://github.com/analogjs/analog/compare/v1.14.1-beta.2...v1.14.1-beta.3) (2025-03-10)
 
 ### Bug Fixes
