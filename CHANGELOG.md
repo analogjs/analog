@@ -1,3 +1,9 @@
+## [1.14.1-beta.5](https://github.com/analogjs/analog/compare/v1.14.1-beta.4...v1.14.1-beta.5) (2025-03-14)
+
+### Bug Fixes
+
+- **nx-plugin:** overwrite files array when setting up Vitest ([#1646](https://github.com/analogjs/analog/issues/1646)) ([17f5c65](https://github.com/analogjs/analog/commit/17f5c652ee9a07cf2c5307c19fd57dc5e2bc4afb))
+
 ## [1.14.1-beta.4](https://github.com/analogjs/analog/compare/v1.14.1-beta.3...v1.14.1-beta.4) (2025-03-10)
 
 ### Bug Fixes
