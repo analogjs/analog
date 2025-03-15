@@ -63,7 +63,33 @@ bun install @analogjs/vite-plugin-angular @storybook/builder-vite --save-dev
 
 ## Configuring Storybook to use the Vite Builder
 
-Update the `.storybook/main.ts` file to use the `@storybook/builder-vite` and add the `viteFinal` config function to configure the Vite Plugin for Angular.
+Add the `zone.js` import to the top of your `.storybook/preview.ts` file.
+
+```ts
+import 'zone.js';
+import { applicationConfig, type Preview } from '@storybook/angular';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+
+const preview: Preview = {
+  decorators: [
+    applicationConfig({
+      providers: [provideNoopAnimations()],
+    }),
+  ],
+  parameters: {
+    controls: {
+      matchers: {
+        color: /(background|color)$/i,
+        date: /Date$/i,
+      },
+    },
+  },
+};
+
+export default preview;
+```
+
+Next, update the `.storybook/main.ts` file to use the `@storybook/builder-vite` and add the `viteFinal` config function to configure the Vite Plugin for Angular.
 
 ```ts
 import { StorybookConfig } from '@storybook/angular';
@@ -97,6 +123,11 @@ const config: StorybookConfig & StorybookConfigVite = {
         ],
       },
       plugins: [angular({ jit: true, tsconfig: './.storybook/tsconfig.json' })],
+      define: {
+        STORYBOOK_ANGULAR_OPTIONS: JSON.stringify({
+          experimentalZoneless: false,
+        }),
+      },
     });
   },
 };
@@ -153,4 +184,102 @@ Run the storybook commands for building the storybook.
 
 ```sh
 npm run build-storybook
+```
+
+## Using shared CSS paths
+
+To load shared CSS paths, configure them using `loadPaths` css option in the vite config.
+
+```ts
+import path from 'node:path';
+
+async viteFinal(config: UserConfig) {
+  // Merge custom configuration into the default config
+  const { mergeConfig } = await import('vite');
+  const { default: angular } = await import('@analogjs/vite-plugin-angular');
+
+  return mergeConfig(config, {
+    css: {
+      preprocessorOptions: {
+        scss: {
+          loadPaths: `${path.resolve(__dirname, '../src/lib/styles')}`
+        }
+      }
+    }
+  });
+},
+```
+
+## Using TypeScript Config Path Aliases
+
+If you are using `paths` in your `tsconfig.json`, support for those aliases can be added to the `vite.config.ts`.
+
+### With Angular CLI
+
+First, install the `vite-tsconfig-paths` package.
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm install vite-tsconfig-paths --save-dev
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn" value="yarn">
+
+```shell
+yarn add vite-tsconfig-paths --dev
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm install -w vite-tsconfig-paths --save-dev
+```
+
+  </TabItem>
+</Tabs>
+
+Next, add the plugin to the `plugins` array in the `vite.config.ts` with the `root` set as the relative path to the root of the project.
+
+```ts
+import viteTsConfigPaths from 'vite-tsconfig-paths';
+
+async viteFinal(config: UserConfig) {
+  // Merge custom configuration into the default config
+  const { mergeConfig } = await import('vite');
+  const { default: angular } = await import('@analogjs/vite-plugin-angular');
+
+  return mergeConfig(config, {
+    plugins: [
+      angular(),
+      viteTsConfigPaths()
+    ],
+  });
+}
+```
+
+### With Nx
+
+For Nx workspaces, import and use the `nxViteTsPaths` plugin from the `@nx/vite` package.
+
+```ts
+import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+
+async viteFinal(config: UserConfig) {
+  // Merge custom configuration into the default config
+  const { mergeConfig } = await import('vite');
+  const { default: angular } = await import('@analogjs/vite-plugin-angular');
+
+  return mergeConfig(config, {
+    plugins: [
+      angular(),
+      nxViteTsPaths()
+    ],
+  });
+}
 ```
