@@ -1,6 +1,8 @@
 import { Provider, InjectionToken } from '@angular/core';
 import { ContentRenderer, NoopContentRenderer } from './content-renderer';
 import { RenderTaskService } from './render-task.service';
+import { withContentFileLoader } from './content-file-loader';
+import { withContentListLoader } from './content-list-loader';
 
 export interface MarkdownRendererOptions {
   loadMermaid?: () => Promise<typeof import('mermaid')>;
@@ -11,6 +13,8 @@ const CONTENT_RENDERER_PROVIDERS: Provider[] = [
     provide: ContentRenderer,
     useClass: NoopContentRenderer,
   },
+  withContentFileLoader(),
+  withContentListLoader(),
 ];
 
 export function withMarkdownRenderer(

@@ -25,6 +25,10 @@
       "@analogjs/content/prism-highlighter": [
         "packages/content/prism-highlighter/src/index.ts"
       ],
+      "@analogjs/content/resources": [
+        "./node_modules/@analogjs/content/resources",
+        "packages/content/resources/src/index.ts"
+      ],
       "@analogjs/content/shiki-highlighter": [
         "packages/content/shiki-highlighter/src/index.ts"
       ],

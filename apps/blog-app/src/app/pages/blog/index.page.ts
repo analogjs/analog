@@ -1,23 +1,28 @@
-import { injectContentFiles } from '@analogjs/content';
 import { Component } from '@angular/core';
-import { PostAttributes } from './models';
 import { RouterLink } from '@angular/router';
-import { NgFor } from '@angular/common';
+import { contentFilesResource } from '@analogjs/content/resources';
+
+import { PostAttributes } from './models';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, NgFor],
+  imports: [RouterLink],
   template: `
     <h1>Blog</h1>
+
     <ul>
-      <li *ngFor="let post of posts">
-        <a [routerLink]="post.slug"> {{ post.attributes.title }}</a>
-      </li>
+      @for (post of contentFilesResource.value(); track post.slug) {
+        <li>
+          <a [routerLink]="post.slug"> {{ post.attributes.title }}</a>
+        </li>
+      }
     </ul>
   `,
 })
 export default class BlogComponent {
-  readonly posts = injectContentFiles<PostAttributes>((contentFile) => {
-    return !contentFile.filename.includes('/archived/');
-  });
+  readonly contentFilesResource = contentFilesResource<PostAttributes>(
+    (contentFile) => {
+      return !contentFile.filename.includes('/archived/');
+    },
+  );
 }

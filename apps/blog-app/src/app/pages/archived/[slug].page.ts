@@ -1,15 +1,13 @@
-import {
-  ContentRenderer,
-  injectContent,
-  MarkdownComponent,
-} from '@analogjs/content';
+import { ContentRenderer, MarkdownComponent } from '@analogjs/content';
+import { contentFileResource } from '@analogjs/content/resources';
 import { RouteMeta } from '@analogjs/router';
-import { AsyncPipe, JsonPipe, NgFor, NgIf } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 
 import { ArchivedPostAttributes } from './models';
 import { postMetaResolver, postTitleResolver } from './resolvers';
+import { ActivatedRoute } from '@angular/router';
 
 export const routeMeta: RouteMeta = {
   title: postTitleResolver,
@@ -18,32 +16,41 @@ export const routeMeta: RouteMeta = {
 
 @Component({
   standalone: true,
-  imports: [MarkdownComponent, AsyncPipe, NgIf, NgFor, JsonPipe],
+  imports: [MarkdownComponent],
   template: `
-    <ng-container *ngIf="post$ | async as post">
-      <h1>{{ post.attributes.title }}</h1>
-      <div *ngIf="toc$ | async as toc">
-        <ul>
-          <li *ngFor="let item of toc">
-            <a href="#{{ item.id }}">{{ item.text }}</a>
-          </li>
-        </ul>
-      </div>
+    @let post = postResource.value();
+    @if (post) {
+      <h1>{{ $any(post.attributes).title }}</h1>
+      @if (toc()) {
+        <div>
+          <ul>
+            @for (item of toc(); track item) {
+              <li>
+                <a href="#{{ item.id }}">{{ item.text }}</a>
+              </li>
+            }
+          </ul>
+        </div>
+      }
 
       <analog-markdown [content]="post.content"></analog-markdown>
-    </ng-container>
+    }
   `,
 })
 export default class ArchivedPostComponent {
-  readonly renderer = inject(ContentRenderer);
-  readonly post$ = injectContent<ArchivedPostAttributes>({
-    param: 'slug',
-    subdirectory: 'archived',
-  });
-
-  readonly toc$ = this.post$.pipe(
-    map(() => {
-      return this.renderer.getContentHeadings();
-    }),
+  slug = toSignal(
+    inject(ActivatedRoute).paramMap.pipe(
+      map((params) => params.get('slug') as string),
+    ),
+    { requireSync: true },
   );
+  params = computed(() => ({ customFilename: `archived/${this.slug()}` }));
+  readonly postResource = contentFileResource<ArchivedPostAttributes>(
+    this.params,
+  );
+  readonly renderer = inject(ContentRenderer);
+  readonly toc = computed(() => {
+    const post = this.postResource.value();
+    return post && this.renderer.getContentHeadings();
+  });
 }

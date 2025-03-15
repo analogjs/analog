@@ -1,6 +1,8 @@
-import { ContentFile } from './content-file';
 import { inject } from '@angular/core';
+
+import { ContentFile } from './content-file';
 import { CONTENT_FILES_LIST_TOKEN } from './content-files-list-token';
+import { CONTENT_FILES_TOKEN } from './content-files-token';
 import { RenderTaskService } from './render-task.service';
 
 export function injectContentFiles<Attributes extends Record<string, any>>(
@@ -27,3 +29,7 @@ export type InjectContentFilesFilterFunction<T extends Record<string, any>> = (
   index: number,
   array: ContentFile<T>[],
 ) => boolean;
+
+export function injectContentFilesMap() {
+  return inject(CONTENT_FILES_TOKEN);
+}
