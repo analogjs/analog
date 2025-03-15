@@ -1,12 +1,7 @@
-import {
-  ContentRenderer,
-  injectContent,
-  MarkdownComponent,
-} from '@analogjs/content';
+import { ContentRenderer, MarkdownComponent } from '@analogjs/content';
+import { contentFileResource } from '@analogjs/content/resources';
 import { RouteMeta } from '@analogjs/router';
-import { AsyncPipe, JsonPipe, NgFor, NgIf } from '@angular/common';
-import { Component, inject } from '@angular/core';
-import { map } from 'rxjs';
+import { Component, computed, inject } from '@angular/core';
 
 import { PostAttributes } from './models';
 import { postMetaResolver, postTitleResolver } from './resolvers';
@@ -18,29 +13,35 @@ export const routeMeta: RouteMeta = {
 
 @Component({
   standalone: true,
-  imports: [MarkdownComponent, AsyncPipe, NgIf, NgFor, JsonPipe],
+  imports: [MarkdownComponent],
   template: `
-    <ng-container *ngIf="post$ | async as post">
+    @let post = postResource.value();
+    @let tocHeadings = toc();
+
+    @if (post) {
       <h1>{{ post.attributes.title }}</h1>
-      <div *ngIf="toc$ | async as toc">
-        <ul>
-          <li *ngFor="let item of toc">
-            <a href="#{{ item.id }}">{{ item.text }}</a>
-          </li>
-        </ul>
-      </div>
+
+      @if (tocHeadings) {
+        <div>
+          <ul>
+            @for (item of tocHeadings; track item) {
+              <li>
+                <a href="#{{ item.id }}">{{ item.text }}</a>
+              </li>
+            }
+          </ul>
+        </div>
+      }
 
       <analog-markdown [content]="post.content"></analog-markdown>
-    </ng-container>
+    }
   `,
 })
 export default class BlogPostComponent {
   readonly renderer = inject(ContentRenderer);
-  readonly post$ = injectContent<PostAttributes>();
-
-  readonly toc$ = this.post$.pipe(
-    map(() => {
-      return this.renderer.getContentHeadings();
-    }),
-  );
+  readonly postResource = contentFileResource<PostAttributes>();
+  readonly toc = computed(() => {
+    const post = this.postResource.value();
+    return post && this.renderer.getContentHeadings();
+  });
 }
