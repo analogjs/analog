@@ -278,6 +278,14 @@
     "message": "Analog 免费，开源并由我们的支持者赞助",
     "description": "The title of the sponsor section"
   },
+  "homepage.partnerSection.zerops": {
+    "message": "Zerops - 官方部署合作伙伴",
+    "description": "The name of the partner Zerops"
+  },
+  "homepage.partnerSection.subtitle": {
+    "message": "合作伙伴",
+    "description": "The subtitle of the partner section on the homepage"
+  },
   "homepage.sponsorSection.subtitle": {
     "message": "赞助商",
     "description": "The subtitle of the sponsor section on the homepage"

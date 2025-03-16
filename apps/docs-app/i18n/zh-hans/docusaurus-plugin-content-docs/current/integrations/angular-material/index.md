@@ -8,7 +8,7 @@ import TabItem from '@theme/TabItem';
 
 # 集成 Angular Material
 
-此向导将向你展示如何在 Analog 应用里集成 Angular Material。
+此向导将向你展示如何在 Analog 应用里集成 [Angular Material](https://material.angular.io)。
 
 ## 步骤 1: 安装 Angular Material 库
 
@@ -39,6 +39,8 @@ pnpm install @angular/cdk @angular/material
 
   </TabItem>
 </Tabs>
+
+> 确保你已安装 `sass` 版本 1.85.1 或更高版本。
 
 ## 步骤 2: 配置 Angular Material 库
 
@@ -85,18 +87,18 @@ export default defineConfig(({ mode }) => {
 ```scss
 @use '@angular/material' as mat;
 
-$theme: mat.define-theme(
-  (
-    color: (
-      theme-type: light,
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
-    ),
-  )
-);
+html {
+  color-scheme: light dark;
+  @include mat.theme(
+    (
+      color: mat.$violet-palette,
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
 
 body {
-  @include mat.all-component-themes($theme);
   font-family: Roboto, 'Helvetica Neue', sans-serif;
   margin: 0;
   padding: 30px;
@@ -106,9 +108,6 @@ body {
 html {
   height: 100%;
 }
-
-@include mat.core();
-@include mat.color-variants-backwards-compatibility($theme);
 ```
 
 ## 可选步骤: 配置动画

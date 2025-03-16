@@ -64,4 +64,30 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-你可以传入一个空数组来禁用预渲染。
+你可以通过传入一个空数组来禁用预渲染，并在根路由上禁用预渲染。
+
+```js
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  // ...other config
+  plugins: [
+    analog({
+      ssr: true,
+      nitro: {
+        routeRules: {
+          '/': {
+            prerender: false,
+          },
+        },
+      },
+      prerender: {
+        routes: async () => {
+          return [];
+        },
+      },
+    }),
+  ],
+}));
+```

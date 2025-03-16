@@ -44,6 +44,10 @@
     "message": "服务端渲染（SSR）",
     "description": "The label for category Server Side Rendering in sidebar docsSidebar"
   },
+  "sidebar.docsSidebar.doc.Form Actions": {
+    "message": "表单行为",
+    "description": "The label for category Form Actions in sidebar docsSidebar"
+  },
   "sidebar.docsSidebar.category.Code Generation": {
     "message": "代码生成",
     "description": "The label for category Code Generation in sidebar docsSidebar"
