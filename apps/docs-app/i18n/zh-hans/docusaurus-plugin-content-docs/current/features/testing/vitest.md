@@ -47,7 +47,7 @@ pnpm install -w @analogjs/platform --save-dev
 ng g @analogjs/platform:setup-vitest --project [your-project-name]
 ```
 
-下一步，[运行测试](#running-tests)
+然后，[运行测试](#运行测试)
 
 ## 手动安装
 
@@ -106,6 +106,10 @@ export default defineConfig(({ mode }) => ({
 
 下一步，定义 `src/test-setup.ts` 来配置 `TestBed`：
 
+### Zone.js 设置
+
+如果你使用 `Zone.js` 进行变更检测，导入 `setup-zone` 脚本。此脚本自动包含设置快照测试的支持。
+
 ```ts
 import '@analogjs/vitest-angular/setup-zone';
 
@@ -121,7 +125,35 @@ getTestBed().initTestEnvironment(
 );
 ```
 
-然后，更新 `angular.json` 里的 `test` 目标，使用 `@analogjs/vitest-angular:test` 构建器：
+### 无 Zone 设置
+
+如果你使用 `Zoneless` 变更检测，使用以下设置：
+
+```ts
+import '@analogjs/vitest-angular/setup-snapshots';
+
+import {
+  provideExperimentalZonelessChangeDetection,
+  NgModule,
+} from '@angular/core';
+import {
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting,
+} from '@angular/platform-browser-dynamic/testing';
+import { getTestBed } from '@angular/core/testing';
+
+@NgModule({
+  providers: [provideExperimentalZonelessChangeDetection()],
+})
+export class ZonelessTestModule {}
+
+getTestBed().initTestEnvironment(
+  [BrowserDynamicTestingModule, ZonelessTestModule],
+  platformBrowserDynamicTesting(),
+);
+```
+
+接下来，更新 `angular.json` 中的 `test` 目标以使用 `@analogjs/vitest-angular:test` 构建器：
 
 ```json
 {
@@ -144,9 +176,9 @@ getTestBed().initTestEnvironment(
 }
 ```
 
-> 你可以不改变原有的 `test`，添加一个新的目标并且命名为 `vitest`。
+> 你也可以添加一个新的目标并命名为 `vitest` 以与 `test` 目标一起运行。
 
-最后，将 `src/test-setup.ts` 添加到你项目根目录的 `tsconfig.spec.json` 文件的 `files` 列表里，设置 `target` 为 `es2016`，并且更新 `types`。
+最后，将 `src/test-setup.ts` 添加到项目根目录的 `tsconfig.spec.json` 的 `files` 数组中，将 `target` 设置为 `es2016`，并更新 `types`。
 
 ```json
 {
@@ -161,15 +193,15 @@ getTestBed().initTestEnvironment(
 }
 ```
 
-然后，[运行测试](#运行测试)
+接下来，前往 [运行测试](#运行测试)
 
-## 配置在浏览器里运行测试
+## 在浏览器中运行测试的设置
 
-如果你想在浏览器里运行测试的话，Vitest 也支持，不过现在仍处于实验性阶段。
+如果你更喜欢在浏览器中运行测试，Vitest 也有实验性的浏览器测试支持。
 
-首先，按照 [通过 Node 运行测试的配置](#通过Node运行测试的配置).
+首先，按照[在 Node 中运行测试](#通过 Node 运行测试的配置)的步骤进行操作。
 
-然后，安装在浏览器里运行测试所必须的包：
+然后，安装在浏览器中运行测试所需的包：
 
 <Tabs groupId="package-manager-browser">
   <TabItem value="npm">
@@ -197,10 +229,10 @@ pnpm install -w @vitest/browser playwright
   </TabItem>
 </Tabs>
 
-更新 `vite.config.ts` 的 `test` 对象。
+更新 `vite.config.ts` 中的 `test` 对象。
 
 - 移除 `environment: 'jsdom'` 属性。
-- 添加 `browser` 配置。
+- 为 Vitest 添加一个 `browser` 配置。
 
 ```ts
 /// <reference types="vitest" />
@@ -216,11 +248,11 @@ export default defineConfig(({ mode }) => ({
     // environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
-    // Vitest browser config
+    // Vitest 浏览器配置
     browser: {
       enabled: true,
       name: 'chromium',
-      headless: false, // set to true in CI
+      headless: false, // 在 CI 中设置为 true
       provider: 'playwright',
     },
   },
@@ -230,9 +262,27 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
+接下来，添加 `@angular/compiler` 导入到 `src/test-setup.ts` 文件。
+
+```ts
+import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-zone';
+
+import {
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting,
+} from '@angular/platform-browser-dynamic/testing';
+import { getTestBed } from '@angular/core/testing';
+
+getTestBed().initTestEnvironment(
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting(),
+);
+```
+
 ## 运行测试
 
-使用 `test` 命令来运行测试：
+要运行单元测试，使用 `test` 命令：
 
 <Tabs groupId="package-manager-node">
   <TabItem value="npm">
@@ -260,11 +310,13 @@ pnpm test
   </TabItem>
 </Tabs>
 
+> 也可以直接使用 `npx vitest` 命令。
+
 ## 快照测试
 
-你可以调用 `expect` API 的 `toMatchSnapshot` 来运行快照测试。
+对于快照测试，你可以使用 `expect` API 中的 `toMatchSnapshot`。
 
-下面时一个如何写一个快照测试的小例子：
+下面是一个如何编写快照测试的小例子：
 
 ```ts
 // card.component.spec.ts
@@ -295,7 +347,7 @@ describe('CardComponent', () => {
 });
 ```
 
-在你运行这个测试以后，一个 `card.component.spec.ts.snap` 文件将会在 `__snapshots__` 目录下被创建，并包含如下内容：
+运行测试后，会在 `__snapshots__` 文件夹中创建一个 `card.component.spec.ts.snap` 文件，内容如下：
 
 ```ts
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
@@ -305,15 +357,15 @@ exports[`CardComponent > should create the app 1`] = `
 `;
 ```
 
-生成的快照应该进行审核并添加到版本控制里去。
+生成的快照应进行审核并添加到版本控制中。
 
-## 使用 TypeScript 配置目录别名
+## 使用 TypeScript 配置路径别名
 
-如果你使用了 `tsconfig.json` 里的 `paths`，这些别名可以被添加到 `vite.config.ts` 里。
+如果你在 `tsconfig.json` 中使用了 `paths`，可以在 `vite.config.ts` 中添加对这些别名的支持。
 
-### 基于 Angular CLI
+### 使用 Angular CLI
 
-首先，运行 `vite-tsconfig-paths` 包。
+首先，安装 `vite-tsconfig-paths` 包。
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
@@ -341,7 +393,7 @@ pnpm install -w vite-tsconfig-paths --save-dev
   </TabItem>
 </Tabs>
 
-下一步，把这个插件添加到 `vite.config.ts` 的 `plugins` 列表，并且设置 `root` 为项目根目录的相对路径。
+接下来，在 `vite.config.ts` 中的 `plugins` 数组中添加该插件，并将 `root` 设置为项目根目录的相对路径。
 
 ```ts
 /// <reference types="vitest" />
@@ -355,9 +407,9 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-### 基于 Nx
+### 使用 Nx
 
-从 `@nx/vite` 包导入并使用 `nxViteTsPaths` 插件。
+对于 Nx 工作区，从 `@nx/vite` 包中导入并使用 `nxViteTsPaths` 插件。
 
 ```ts
 /// <reference types="vitest" />

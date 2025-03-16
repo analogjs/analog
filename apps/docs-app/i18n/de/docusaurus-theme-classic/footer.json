@@ -27,7 +27,7 @@
     "message": "Beitragen",
     "description": "The label of footer link with label=Contributing linking to docs/contributing"
   },
-  "link.item.label.Sponsor": {
+  "link.item.label.Sponsoring": {
     "message": "Unterstützen",
     "description": "The label of footer link with label=Sponsor linking to docs/sponsoring"
   },

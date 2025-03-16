@@ -27,6 +27,8 @@ export const load = async ({
 
 通过 `@analogjs/router` 包提供的 `injectLoad` 函数可以访问从服务端获取的数据。
 
+`load` 函数是通过 Angular 的路由解析器来解析的，所以 `requireSync: false` 设置 和 `initialValue: {}` 不会带来任何好处，因为 load 是在组件实例化之前被调用的。
+
 ```ts
 // src/app/pages/index.page.ts
 import { Component } from '@angular/core';
