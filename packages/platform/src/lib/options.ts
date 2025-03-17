@@ -1,6 +1,11 @@
 import type { PluginOptions } from '@analogjs/vite-plugin-angular';
 import type { NitroConfig, PrerenderRoute } from 'nitropack';
-import type { SitemapConfig } from '@analogjs/vite-plugin-nitro';
+import type {
+  SitemapConfig,
+  PrerenderContentDir,
+  PrerenderContentFile,
+  PrerenderRouteConfig,
+} from '@analogjs/vite-plugin-nitro';
 
 import { ContentPluginOptions } from './content-plugin.js';
 
@@ -24,8 +29,10 @@ export interface PrerenderOptions {
    * List of routes to prerender resolved statically or dynamically.
    */
   routes?:
-    | (string | PrerenderContentDir)[]
-    | (() => Promise<(string | PrerenderContentDir | undefined)[]>);
+    | (string | PrerenderContentDir | PrerenderRouteConfig)[]
+    | (() => Promise<
+        (string | PrerenderContentDir | PrerenderRouteConfig | undefined)[]
+      >);
   sitemap?: SitemapConfig;
   /** List of functions that run for each route after pre-rendering is complete. */
   postRenderingHooks?: ((routes: PrerenderRoute) => Promise<void>)[];
@@ -81,31 +88,4 @@ export interface Options {
   disableTypeChecking?: boolean;
 }
 
-export interface PrerenderContentDir {
-  /**
-   * The directory or glob pattern where the files should be grabbed from.
-   * @example `/src/contents/blog`
-   */
-  contentDir: string;
-  /**
-   * Transform the matching content files path into a route.
-   * The function is called for each matching content file within the specified contentDir.
-   * @param file information of the matching file (`path`, `name`, `extension`, `attributes`)
-   * @returns a string with the route should be returned (e. g. `/blog/<slug>`) or the value `false`, when the route should not be prerendered.
-   */
-  transform: (file: PrerenderContentFile) => string | false;
-}
-
-/**
- * @param path the path to the content file
- * @param name the basename of the matching content file without the file extension
- * @param extension the file extension
- * @param attributes the frontmatter attributes extracted from the frontmatter section of the file
- * @returns a string with the route should be returned (e. g. `/blog/<slug>`) or the value `false`, when the route should not be prerendered.
- */
-export interface PrerenderContentFile {
-  path: string;
-  attributes: Record<string, any>;
-  name: string;
-  extension: string;
-}
+export { PrerenderContentDir, PrerenderContentFile };
