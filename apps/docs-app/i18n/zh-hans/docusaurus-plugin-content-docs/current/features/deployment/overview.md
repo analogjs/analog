@@ -69,17 +69,6 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-1. 更新 `app.config.ts` 去导入这个新的文件
-
-```ts
-import { mergeApplicationConfig } from '@angular/core';
-import { envConfig } from './app.config.env';
-
-export const appConfig = mergeApplicationConfig(envConfig, {
-....
-});
-```
-
 2. 在 CI 生产环境构建
 
 ```bash
