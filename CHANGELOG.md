@@ -1,3 +1,14 @@
+## [1.14.1](https://github.com/analogjs/analog/compare/v1.14.0...v1.14.1) (2025-03-18)
+
+### Bug Fixes
+
+- **create-analog:** remove overrides from templates for Vite/Vitest ([#1640](https://github.com/analogjs/analog/issues/1640)) ([e428f80](https://github.com/analogjs/analog/commit/e428f80c00280569630b849f237efa6a3e9c331d))
+- **nx-plugin:** add check for nx version inside generator for Vite/Vitest ([#1635](https://github.com/analogjs/analog/issues/1635)) ([9db028c](https://github.com/analogjs/analog/commit/9db028cec93eccb19ec0a518a590b3896c64d503))
+- **nx-plugin:** overwrite files array when setting up Vitest ([#1646](https://github.com/analogjs/analog/issues/1646)) ([17f5c65](https://github.com/analogjs/analog/commit/17f5c652ee9a07cf2c5307c19fd57dc5e2bc4afb))
+- **router:** set full parent path for route path on debug page ([#1632](https://github.com/analogjs/analog/issues/1632)) ([ccfeca5](https://github.com/analogjs/analog/commit/ccfeca523e605a23d4c1c15d2f131583859d926f))
+- **vite-plugin-nitro:** bump esbuild dependency to 0.25.0 ([#1641](https://github.com/analogjs/analog/issues/1641)) ([72dff37](https://github.com/analogjs/analog/commit/72dff373df32989a5930a51e3278fbc99ad3e804))
+- **vite-plugin-nitro:** handle Nitro Base URL for API routes in development ([#1653](https://github.com/analogjs/analog/issues/1653)) ([5eeff15](https://github.com/analogjs/analog/commit/5eeff15be49b1cfddbd4d6f0938183ba9ef9e01f))
+
 ## [1.14.1-beta.6](https://github.com/analogjs/analog/compare/v1.14.1-beta.5...v1.14.1-beta.6) (2025-03-18)
 
 ### Bug Fixes
