@@ -1,31 +1,162 @@
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# 服务器供应商
+# 提供商
 
-Analog 使用 [Nitro](https://nitro.unjs.io) 作为其底层服务器引擎，支持部署到许多服务器供应商，几乎无需额外配置。您可以在 [Nitro 部署文档](https://nitro.unjs.io/deploy) 中找到更多服务器供应商。
+Analog 支持通过 [Nitro](https://nitro.unjs.io) 作为其底层服务器引擎，几乎无需额外配置即可部署到许多提供商。您可以在 [Nitro 部署文档](https://nitro.unjs.io/deploy) 中找到更多提供商。
+
+## Zerops
+
+:::info
+[Zerops](https://zerops.io) 是 AnalogJS 的**官方**部署合作伙伴。
+:::
+
+Analog 支持通过简单的配置文件将静态和服务器端渲染的应用程序部署到 [Zerops](https://zerops.io)。
+
+> 一个 Zerops 项目可以包含多个 Analog 项目。请参阅 [静态](https://github.com/zeropsio/recipe-analog-static) 和 [服务器端渲染](https://github.com/zeropsio/recipe-analog-nodejs) Analog 应用程序的示例仓库以快速入门。
+
+### 静态 (SSG) Analog 应用
+
+如果您的项目不支持 SSG，请设置您的项目以进行[静态站点生成](/docs/features/server/static-site-generation)。
+
+#### 1. 在 Zerops 中创建一个项目
+
+项目和服务可以通过 [添加项目](https://app.zerops.io/dashboard/project-add) 向导添加或使用 YAML 结构导入：
+
+```yml
+project:
+  name: recipe-analog
+services:
+  - hostname: app
+    type: static
+```
+
+这将创建一个名为 `recipe-analog` 的项目，并包含一个名为 `app` 的 Zerops 静态服务。
+
+#### 2. 添加 zerops.yml 配置
+
+要告诉 Zerops 如何构建和运行您的站点，请将 `zerops.yml` 添加到您的仓库：
+
+```yml
+zerops:
+  - setup: app
+    build:
+      base: nodejs@20
+      buildCommands:
+        - pnpm i
+        - pnpm build
+      deployFiles:
+        - public
+        - dist/analog/public/~
+    run:
+      base: static
+```
+
+#### 3. [触发构建和部署管道](#build--deploy-your-code)
+
+### 服务器端渲染 (SSR) Analog 应用
+
+如果您的项目尚未准备好 SSR，请设置您的项目以进行[服务器端渲染](/docs/features/server/server-side-rendering)。
+
+#### 1. 在 Zerops 中创建一个项目
+
+项目和服务可以通过 [添加项目](https://app.zerops.io/dashboard/project-add) 向导添加或使用 YAML 结构导入：
+
+```yml
+project:
+  name: recipe-analog
+services:
+  - hostname: app
+    type: nodejs@20
+```
+
+这将创建一个名为 `recipe-analog` 的项目，并包含一个名为 `app` 的 Zerops Node.js 服务。
+
+#### 2. 添加 zerops.yml 配置
+
+要告诉 Zerops 如何构建和运行您的站点，请将 `zerops.yml` 添加到您的仓库：
+
+```yml
+zerops:
+  - setup: app
+    build:
+      base: nodejs@20
+      buildCommands:
+        - pnpm i
+        - pnpm build
+      deployFiles:
+        - public
+        - node_modules
+        - dist
+    run:
+      base: nodejs@20
+      ports:
+        - port: 3000
+          httpSupport: true
+      start: node dist/analog/server/index.mjs
+```
+
+#### 3. [触发构建和部署管道](#build-deploy-your-code)
+
+---
+
+### 构建和部署您的代码
+
+#### 通过将服务与您的 GitHub / GitLab 仓库连接来触发管道
+
+通过将服务与您的 GitHub / GitLab 仓库连接，您的代码可以在每次提交或添加新标签时自动部署。此连接可以在服务详细信息中设置。
+
+#### 使用 Zerops CLI (zcli) 触发管道
+
+您还可以使用 Zerops CLI 从终端或现有的 CI/CD 手动触发管道。
+
+1. 安装 Zerops CLI。
+
+```bash
+# 直接下载 zcli 二进制文件，
+# 使用 https://github.com/zeropsio/zcli/releases
+npm i -g @zerops/zcli
+```
+
+2. 在 Zerops 应用中打开 [设置 > 访问令牌管理](https://app.zerops.io/settings/token-management) 并生成一个新的访问令牌。
+
+3. 使用以下命令登录您的访问令牌：
+
+```bash
+zcli login <token>
+```
+
+4. 导航到您的应用程序根目录（`zerops.yml` 所在位置）并运行以下命令以触发部署：
+
+```bash
+zcli push
+```
+
+#### 使用 GitHub / Gitlab 触发管道
+
+您还可以查看 [Zerops 文档](https://docs.zerops.io/) 中的 [Github 集成](https://docs.zerops.io/references/github-integration) / [Gitlab 集成](https://docs.zerops.io/references/gitlab-integration) 以进行 git 集成。
 
 ## Netlify
 
-Analog 仅需少许配置即可部署到 [Netlify](https://netlify.com/)。
+Analog 支持通过 [Netlify](https://netlify.com/) 进行部署，几乎无需额外配置。
 
 ### 部署项目
 
 <Tabs groupId="porject-type">
   <TabItem label="Create analog" value="create-analog">
-在你的Netily项目里，设置 [publish directory](https://docs.netlify.com/configure-builds/overview/#definitions) 为 `dist/analog/public` 来部署静态资源，设置 [functions directory](https://docs.netlify.com/configure-builds/overview/#definitions) 为 `dist/analog` 来部署服务端。
+在 Netlify 项目的构建设置中，将 [发布目录](https://docs.netlify.com/configure-builds/overview/#definitions) 设置为 `dist/analog/public` 以部署静态资源，并将 [函数目录](https://docs.netlify.com/configure-builds/overview/#definitions) 设置为 `dist/analog` 以部署服务器。
   </TabItem>
 
   <TabItem label="Nx" value="nx">
-在你的Netlify项目的界面的构建配置上，执行以下操作：
-1. 设置 [build command](https://docs.netlify.com/configure-builds/overview/#definitions) 为 `nx build [your-project-name]`
-2. 设置 [publish directory](https://docs.netlify.com/configure-builds/overview/#definitions) 为 `dist/[your-project-name]/analog/public` 来部署静态资源。
-3. 设置 [functions directory](https://docs.netlify.com/configure-builds/overview/#definitions) 为 `dist/[your-project-name]/analog` 来部署服务端。
+在 Netlify 项目的 Web UI 中的构建设置中，执行以下操作。
+1. 将 [构建命令](https://docs.netlify.com/configure-builds/overview/#definitions) 设置为 `nx build [your-project-name]`
+2. 将 [发布目录](https://docs.netlify.com/configure-builds/overview/#definitions) 设置为 `dist/[your-project-name]/analog/public` 以部署静态资源
+3. 将 [函数目录](https://docs.netlify.com/configure-builds/overview/#definitions) 设置为 `dist/[your-project-name]/analog` 以部署服务器。
 
-你也可以通过在项目的根目录放置一个 `netlify.toml` 来配置。下面是一个例子。
+您还可以通过在存储库的根目录中放置一个 `netlify.toml` 文件来进行配置。以下是一个示例配置。
 
 ```toml
-# 将 "my-analog-app" 修改成你想要部署的名字
+# 将 "my-analog-app" 替换为您要部署的应用名称
 [build]
   command = "nx build my-analog-app"
   publish = "dist/my-analog-app/analog/public"
@@ -37,26 +168,26 @@ Analog 仅需少许配置即可部署到 [Netlify](https://netlify.com/)。
 
 ## Vercel
 
-Analog 无需额外配置即可部署到 [Vercel](https://vercel.com/)。
+Analog 支持在 [Vercel](https://vercel.com/) 上进行部署，无需额外配置。
 
 ### 部署项目
 
 <Tabs groupId="porject-type">
   <TabItem label="Create analog" value="create-analog">
-默认情况下，部署到Vercel时，构建预设可以自动被处理。
+默认情况下，部署到 Vercel 时，构建预设会自动处理。
 
-1. 创建一个项目并且原则你的代码仓。
+1. 创建一个新项目并选择包含代码的存储库。
 
-2. 点击 '部署'。
+2. 点击“Deploy”。
 
-就这样！
+就这么简单！
 
   </TabItem>
 
   <TabItem label="Nx" value="nx">
-为了支持Nx的项目，我们需要指定我们要部署的app。有几种方法可以实现，你可以选择以下任何一种（将 &#60;app&#62; 修改成你的app的名字）：
+为了使其与 Nx 一起工作，我们需要定义要构建的特定应用程序。您可以选择以下方法之一（将 &#60;app&#62; 替换为您的应用名称）：
 
-1. 在你的 `nx.json` 里指定 `defaultProject`
+1. 在 `nx.json` 中定义 `defaultProject`
 
 ```json [nx.json]
 {
@@ -64,7 +195,7 @@ Analog 无需额外配置即可部署到 [Vercel](https://vercel.com/)。
 }
 ```
 
-2. 在你的项目根目录添加 `vercel.json` 并且定义 `buildCommand`：
+2. 在项目根目录中创建一个 `vercel.json` 文件并定义 `buildCommand`：
 
 ```json [vercel.json]
 {
@@ -73,7 +204,7 @@ Analog 无需额外配置即可部署到 [Vercel](https://vercel.com/)。
 }
 ```
 
-3. 在你的 `package.json` 里定义 `buildCommand`：
+3. 在 `package.json` 中定义 `buildCommand`：
 
 ```json [package.json]
 {
@@ -85,17 +216,17 @@ Analog 无需额外配置即可部署到 [Vercel](https://vercel.com/)。
 
 #### Nx 和 Vercel
 
-当使用 Nx 并在 Vercel 构建平台重用构建缓存时，如果你在本地构建时，缓存可能会被重用。这可能导致输出被存放到错误的目录。要解决这个问题，你可以用下面 `vite.config.ts` 的预设作为一个解决方案。
+当在 Vercel 构建平台上使用 Nx 并重用构建缓存时，如果您在本地构建了它，可能会导致缓存被重用。这可能导致输出被放置在错误的位置。为了解决这个问题，您可以在 `vite.config.ts` 文件中使用预设作为解决方法。
 
   </TabItem>
 </Tabs>
 
 ### 手动设置预设
 
-Vecel 有可能不会自动加载预设，这时，你可以执行以下操作的一种。
+在某些情况下，Vercel 可能不会自动加载预设。在这种情况下，您可以执行以下操作之一。
 
-- 设置 `BUILD_PRESET` 环境变量为 `vercel`.
-- 在 `vite.config.ts` 文件里指定预设：
+- 将 `BUILD_PRESET` 环境变量设置为 `vercel`。
+- 在 `vite.config.ts` 文件中设置预设：
 
 ```ts [vite.config.ts]
 import { defineConfig } from 'vite';
@@ -114,88 +245,72 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-## Cloudflare 页面
+## Cloudflare Pages
 
-Analog 仅需少许配置即可部署到 [Cloudflare](https://cloudflare.com/) 页面。
-
-### 更新服务端的入口
-
-需要在服务端的 `main.server.ts` 文件里提供完整的 URL 和 `APP_BASE_HREF` 令牌来支持 Cloudflare。
-
-```ts
-import { renderApplication } from '@angular/platform-server';
-import { APP_BASE_HREF } from '@angular/common';
-/// imports and bootstrap code ...
-
-// set the base href
-const baseHref = process.env['CF_PAGES_URL'] ?? `http://localhost:8888`;
-
-export default async function render(url: string, document: string) {
-  // Use the full URL and provide the APP_BASE_HREF
-  const html = await renderApplication(bootstrap, {
-    document,
-    url: `${baseHref}${url}`,
-    platformProviders: [{ provide: APP_BASE_HREF, useValue: baseHref }],
-  });
-
-  return html;
-}
-```
+Analog 支持通过 [Cloudflare](https://cloudflare.com/) Pages 进行部署，几乎无需额外配置。
 
 ### 部署到 Cloudflare
 
-要连接到你的代码仓并自动部署到 Cloudflare：
+要连接您的存储库并自动部署到 Cloudflare：
 
-1. 登录到 Cloudflare 仪表板并选择你的账户。
-2. 在账户首页，选择 Workers & Pages。
-3. 选择 Create application > Pages > Connect to Git。
-4. 输入 `npm run build` 作为 `Build Command`。
-5. 输入 `dist/analog/public` 作为 `Build output directory`。
-6. 保持其他设置默认，点击 `Save and Deploy`。
+1. 登录到 Cloudflare 仪表板并选择您的帐户。
+2. 在帐户主页中，选择 Workers & Pages。
+3. 选择创建应用程序 > Pages > 连接到 Git。
+4. 将 `npm run build` 输入为 `Build Command`。
+5. 将 `dist/analog/public` 输入为 `Build output directory`。
+6. 保留其他默认设置，点击“保存并部署”。
 
-应用程序在每次 push 到代码仓时会自动部署到 Cloudflare 的网络。
+应用程序将在每次推送到存储库时部署到 Cloudflare 的网络。
 
-#### Nx 和 Cloudlfare
+#### Nx 和 Cloudflare
 
-在 Nx 工作区里，构建的输出在应用名下的目录，请按此更新 `Build output directory`。
+对于 Nx 工作区，构建输出位于应用程序名称下。相应地更新 `Build output directory`。
 
 例如：
 
 构建输出目录：`dist/[your-project-name]/analog/public`
 
-要在本地测试构建的话，运行以下的命令：
+要在本地测试构建，请运行以下命令：
 
 ```bash
 BUILD_PRESET=cloudflare-pages npx nx build [your-project-name]
 ```
 
-### 在本地用 Wrangler 运行应用程序
+### 使用 Wrangler 本地运行应用程序
 
-你也可以在本地预览 Cloudflare 上部署的应用：
+您还可以在本地预览在 Cloudflare 上运行的应用程序：
 
-1. 运行之前，设置环境变量 `BUILD_PRESET` 为 `cloudflare-pages`
+1. 在运行构建之前将环境变量 `BUILD_PRESET` 设置为 `cloudflare-pages`
 
 ```bash
 BUILD_PRESET=cloudflare-pages npm run build
 ```
 
-2. 用 `wrangler` CLI 在本地运行应用
+2. 使用 `wrangler` CLI 在本地运行应用程序
 
 ```bash
 npx wrangler pages dev ./dist/analog/public
 ```
 
-## Firebase
+## Firebase 应用托管
 
-Analog 原生支持 [Firebase Hosting](https://firebase.google.com/docs/hosting) 以及云函数。
+Analog 支持 [Firebase 应用托管](https://firebase.google.com/docs/app-hosting)，无需额外配置。
 
-请查看已经配置了 Firebase 的[示例代码仓](https://github.com/brandonroberts/analog-angular-firebase-example)
+**注意**：您需要使用 **Blaze 计划** 才能使用 Firebase 应用托管部署 Analog 应用程序。
 
-**注意**: 你需要购买 **Blaze plan** 来使用云函数。
+请按照 [入门指南](https://firebase.google.com/docs/app-hosting/get-started#step-1:) 将您的 GitHub 存储库连接到 Firebase 应用托管。
 
-如果你的根目录还没有 `firebase.json`，Analog 会在你第一次运行的时候为你创建。在这个文件里，你需要将 `<your_project_id>` 修改为你的 Firebase 项目的 ID。
+## Firebase 托管
 
-这个文件应该被提交到版本控制里。如果你想在 `firebase` 命令里手动设置你的项目 ID (通过 `--project <your_project_id>`)，你也可以创建一个 `.firebaserc` 文件：
+Analog 支持使用 Cloud Functions 和 [Firebase 应用托管](https://firebase.google.com/docs/app-hosting) 的 [Firebase 托管](https://firebase.google.com/docs/hosting)，无需额外配置。
+
+请参阅配置了 Firebase 的 [示例仓库](https://github.com/brandonroberts/analog-angular-firebase-example)
+
+**注意**：您需要使用 **Blaze 计划** 才能使用 Analog 和 Cloud Functions。
+
+如果您的根目录中尚未有 `firebase.json` 文件，Analog 会在您第一次运行时创建一个。在此文件中，您需要将 `<your_project_id>` 替换为您的 Firebase 项目 ID。
+
+此文件应提交到版本控制中。如果您不想手动将项目 ID 传递给 `firebase` 命令（使用 `--project <your_project_id>`），您还可以创建一个 `.firebaserc` 文件：
 
 ```json [.firebaserc]
 {
@@ -205,7 +320,7 @@ Analog 原生支持 [Firebase Hosting](https://firebase.google.com/docs/hosting)
 }
 ```
 
-然后，只要在你的项目里安装 Firebase 依赖：
+然后，只需将 Firebase 依赖项添加到您的项目中：
 
 ```bash
 npm install -D firebase-admin firebase-functions firebase-functions-test
@@ -213,7 +328,7 @@ npm install -D firebase-admin firebase-functions firebase-functions-test
 
 ### 使用 Firebase CLI
 
-如果你希望使用 Firebase CLI 来设置您的项目，它将为您获取项目 ID，添加所需的依赖项（参见上文），甚至使用 GitHub Actions 设置自动部署。
+如果您更喜欢使用 Firebase CLI 设置项目，它将为您获取项目 ID，添加所需的依赖项（见上文），甚至设置与 GitHub Actions 的自动部署。
 
 #### 全局安装 Firebase CLI
 
@@ -221,11 +336,11 @@ npm install -D firebase-admin firebase-functions firebase-functions-test
 npm install -g firebase-tools
 ```
 
-**注意**: 要部署 nodejs18 函数，你需要安装 [^11.18.0](https://github.com/firebase/firebase-tools/releases/tag/v11.18.0)。
+**注意**：您需要使用 [^11.18.0](https://github.com/firebase/firebase-tools/releases/tag/v11.18.0) 才能部署 nodejs18 函数。
 
-#### 初始化你的 Firebase 项目
+#### 初始化您的 Firebase 项目
 
-登录到 Firebase 并按照如下选择 **Hosting** 和 **Functions** 的选项：
+登录 Firebase 并选择 **Hosting** 和 **Functions** 选项，如下所示：
 
 ```bash
 firebase login
@@ -235,15 +350,15 @@ firebase init
 GitHub Action deploys
 ```
 
-除非你已经有了一个 Firebase 项目，选择 **Create a new project** 继续。Firebase 会创建一个新的项目并提供访问 web 控制台的 URL。
+除非您有现有的 Firebase 项目，否则请选择 **创建新项目** 继续。Firebase 将提供一个新项目并提供访问 Web 控制台以管理它的 URL。
 
-一旦你的项目创建以后，选择 **TypeScript** 作为语言来写云函数。按 _回车_ 选择默认参数。
+项目创建后，选择 **TypeScript** 作为编写 Cloud Functions 的语言。按 _Enter_ 接受默认参数继续。
 
-当让你选择 **public directory** 时，输入 `dist/analog/public`。
+当提示输入 **public directory** 时，输入 `dist/analog/public`。
 
-下一步，让选择是否配置为 **single-page app.** 时，选择默认选项，N，这很重要！**不要**将你的项目配置成单页应用。
+在下一步中，是否配置为 **单页应用程序**，选择默认选项 N 。这很重要！**不要** 将项目配置为单页应用程序。
 
-配置完成以后，确保你的 `firebase.json` 文件里以下的属性都已经正确配置。这确保服务端以及云函数可以正确运行。
+设置完成后，确保在 `firebase.json` 文件中正确配置以下属性。这确保服务器端渲染可以与 Cloud Functions 一起正常工作：
 
 ```json [firebase.json]
 {
@@ -266,13 +381,13 @@ GitHub Action deploys
 }
 ```
 
-你可以在 [Firebase 文档](https://firebase.google.com/docs/hosting/quickstart) 查看更多细节。
+您可以在 [Firebase 文档](https://firebase.google.com/docs/hosting/quickstart) 中找到更多详细信息。
 
 ### Firebase 函数
 
-确保你按照前面的章节正确的配置了 Firebase 函数。下一步，你必须正确 [配置 Nitro](overview) 以使 Firebase 云函数工作。
+确保按照上一节中的描述设置 Firebase 函数。接下来，您必须正确配置 [Nitro](overview) 以使 Firebase Cloud Functions 正常工作。
 
-在 `vite.config.ts` 里按照你的需求更新 `nitro` 的配置属性，类似 Node.js 的版本以及部署的区域。
+在 `vite.config.ts` 中使用适合您需求的配置选项更新 `nitro` 属性，例如您的 Node.js 版本和首选区域。
 
 ```js [vite.config.ts]
 nitro: {
@@ -288,18 +403,54 @@ nitro: {
 },
 ```
 
+### 或者，在单个 Firebase 托管站点中使用多个 AnalogJS 项目（/app1，/app2）
+
+这利用 cloud run 服务来托管 AnalogJS 项目，并使用重写规则将流量从 firebase 转发到 cloud run。
+
+[使用自定义 URL 前缀进行部署](/docs/features/deployment/overview#deploying-with-a-custom-url-prefix)。
+
+```json [firebase.json]
+{
+  "hosting": [
+    {
+      "site": "<your_project_id>",
+      "public": "public",
+      "cleanUrls": true,
+      "rewrites": [
+        {
+          "source": "/app1",
+          "run": {
+            "serviceId": "app1",
+            "region": "us-central1",
+            "pinTag": false
+          }
+        },
+        {
+          "source": "/app1/**",
+          "run": {
+            "serviceId": "app1",
+            "region": "us-central1",
+            "pinTag": false
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
 ### 本地预览
 
-你可以预览你站点的本地版本而无需部署。
+您可以预览站点的本地版本以进行测试，而无需部署。
 
 ```bash
 BUILD_PRESET=firebase npm run build
 firebase emulators:start
 ```
 
-### 用 CLI 部署到 Firebase
+### 使用 CLI 部署到 Firebase 托管
 
-要部署到 Firebase，运行 `firebase deploy` 命令。
+要部署到 Firebase 托管，请运行 `firebase deploy` 命令。
 
 ```bash
 BUILD_PRESET=firebase npm run build
@@ -308,7 +459,7 @@ firebase deploy
 
 ### Firebase 警告
 
-当你配置或者部署到 Firebase 时，你可能会看到如下的警告：
+在配置或部署 Firebase 时，您可能会看到如下警告：
 
 ```
 npm WARN EBADENGINE Unsupported engine {
@@ -322,51 +473,51 @@ npm WARN EBADENGINE }
  ⚠  functions: Couldn't find firebase-functions package in your source code. Have you run 'npm install'?
 ```
 
-这些都是良性错误，可以忽略，只要您确保您的环境配置与 `Nitro` 匹配。
+这些是无害的错误，可以忽略，只要确保您的环境配置与 `Nitro` 匹配即可。
 
 ## Render.com
 
-Analog 仅需少许配置即可部署到 [Render](https://cloudflare.com/)。
+Analog 支持通过 [Render](https://render.com/) 进行部署，几乎无需额外配置。
 
 ### Web 服务部署
 
-1. [创建一个 Web 服务](https://dashboard.render.com/select-repo?type=web) 并选择要部署的代码仓。
+1. [创建一个新的 Web 服务](https://dashboard.render.com/select-repo?type=web) 并选择包含代码的存储库。
 
-2. 确保选择了 'Node' 环境。
+2. 确保选择 'Node' 环境。
 
-3. [选择 Render 使用的 Node 版本](https://render.com/docs/node-version) (推荐 v18.13.0 或者更高) - Render 默认使用 Node 14, 会导致 Analog 站点构建失败。
+3. [指定 Render 使用的 Node 版本](https://render.com/docs/node-version)（推荐使用 v18.13.0 或更高版本）- Render 默认使用 Node 14，这会导致 Analog 站点构建失败。
 
-4. 取决于你的包管理工具，设置构建命令为 `yarn && yarn build`，`npm install && npm run build` 或者 `pnpm i --shamefully-hoist && pnpm build`。
+4. 根据您的包管理器，将构建命令设置为 `yarn && yarn build`、`npm install && npm run build` 或 `pnpm i --shamefully-hoist && pnpm build`。
 
-5. 设置启动命令为 `node dist/analog/server/index.mjs`。
+5. 更新启动命令为 `node dist/analog/server/index.mjs`。
 
-6. 点击 '高级' 并且添加加一个环境变量 `BUILD_PRESET` 值为 `render-com`。
+6. 点击 'Advanced' 并添加一个环境变量 `BUILD_PRESET`，值为 `render-com`。
 
-7. 点击 '创建 Web 服务'。
+7. 点击 'Create Web Service'。
 
 ### 静态站点部署
 
-如果使用 Analog 来预渲染静态内容，仅需少量配置即可部署静态站点 到 Render。
+如果使用 Analog 预渲染静态内容，可以通过最少的配置在 Render 上部署静态站点。
 
-1. [创建一个新的静态站](https://dashboard.render.com/select-repo?type=static) 并选择你的代码仓。
+1. [创建一个新的静态站点](https://dashboard.render.com/select-repo?type=static) 并选择包含代码的存储库。
 
-2. 取决于你的包管理工具，设置构建命令为 `yarn && yarn build`，`npm install && npm run build` 或者 `pnpm i --shamefully-hoist && pnpm build`。
+2. 根据您的包管理器，将构建命令设置为 `yarn && yarn build`、`npm install && npm run build` 或 `pnpm i --shamefully-hoist && pnpm build`。
 
-3. 设置发布目录为 `dist` 构建目录里的 `public` （例如： `dist/analog/public`）
+3. 将发布目录设置为 `dist` 构建目录中的 `public` 目录（例如 `dist/analog/public`）。
 
-4. 点击 '创建静态站点'
+4. 点击 'Create Static Site'。
 
 ## Edgio
 
-Analog 仅需少许配置即可部署到 [Edgio](https://edg.io)。
+Analog 支持通过 [Edgio](https://edg.io) 进行部署，几乎无需额外配置。
 
-1. 安装 Edgio CLI:
+1. 安装 Edgio CLI：
 
 ```bash
 npm i -g @edgio/cli
 ```
 
-2. 在你的项目目录，初始化 Edgio：
+2. 在项目目录中初始化 Edgio：
 
 ```bash
 edgio init --connector=@edgio/analogjs
@@ -378,12 +529,12 @@ edgio init --connector=@edgio/analogjs
 edgio deploy
 ```
 
-## GitHub 页面 (静态站点部署)
+## GitHub Pages（静态站点部署）
 
-Analog 支持部署到静态站点到 [GitHub 页面](https://pages.github.com/)。
-当部署到 Github 页面时，你必须在 `gh-pages` 分支的根目录添加一个名为 `.nojekyll` 的空文件。
+Analog 支持在 [GitHub Pages](https://pages.github.com/) 上部署静态站点。
+在将站点部署到 GitHub Pages 时，必须在 `gh-pages` 分支的根目录中添加一个名为 `.nojekyll` 的空文件。
 
-你可以用 [Analog Publish Github Pages](https://github.com/marketplace/actions/analog-publish-github-pages) 动作来自动化部署：
+您可以使用 [Analog Publish Github Pages](https://github.com/marketplace/actions/analog-publish-github-pages) 动作自动化部署：
 
 ```yaml
 name: Build and Deploy
@@ -404,11 +555,11 @@ jobs:
       - uses: k9n-dev/analog-publish-gh-pages@v1.0.0
         with:
           access-token: ${{ secrets.ACCESS_TOKEN }}
-          # further options are available.
-          # see: https://github.com/marketplace/actions/analog-publish-github-pages
+          # 还有更多选项可用。
+          # 参见：https://github.com/marketplace/actions/analog-publish-github-pages
 ```
 
-或者你也可以像这样自己实现：
+或者，您可以像这样自己进行操作：
 
 ```yaml
 name: Build Deploy
@@ -416,13 +567,14 @@ name: Build Deploy
 on:
   push:
     branches:
-      - '*' # deploy on all branches (but a --dry-run flag is added for branches (see code below))
+      - '*' # 在所有分支上部署（但为分支添加了 --dry-run 标志（见下文代码））
 
 env:
   TARGET_DIR: dist/analog/public
 
 jobs:
-  build:
+  # 构建项目并将其推送到 gh-pages 分支
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -444,9 +596,41 @@ jobs:
         run: npm run build
       - name: Deploy Website (gh-pages branch)
         env:
-          GH_TOKEN: ${{ secrets.ACCESS_TOKEN }} # A token must be created to be able to deploy on the gh-pages branch
-          CNAME_OPTION: --cname=yourdomain.dev # omit if your not running it on a custom domain
+          GH_TOKEN: ${{ secrets.ACCESS_TOKEN }} # 必须创建一个令牌才能在 gh-pages 分支上部署
+          CNAME_OPTION: --cname=yourdomain.dev # 如果不在自定义域上运行，请省略
+        # 运行部署脚本将构建的项目推送到 gh-pages 分支
+        # 默认贡献者是 github-actions[bot]
         run: |
           echo "DRY_RUN_OPTION=$DRY_RUN_OPTION"
-          npx angular-cli-ghpages --no-silent --dir="${{env.TARGET_DIR}}" $CNAME_OPTION $DRY_RUN_OPTION
+          npx angular-cli-ghpages --no-silent --dir="${{env.TARGET_DIR}}" \
+            --name="github-actions[bot]" \
+            --email="github-actions[bot]@users.noreply.github.com" \
+            --branch="gh-pages" \
+            --message="Deploy: $(git log -1 --pretty=%B)" \
+            $DRY_RUN_OPTION
+
+  # 从 gh-pages 分支部署
+  deploy-pages:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 ```

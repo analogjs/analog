@@ -31,6 +31,8 @@ const __dirname = dirname(__filename);
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
   let isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+  const baseURL = process.env['NITRO_APP_BASE_URL'] || '';
+  const prefix = baseURL ? baseURL.substring(0, baseURL.length - 1) : '';
   const apiPrefix = `/${options?.apiPrefix || 'api'}`;
   const useAPIMiddleware =
     typeof options?.useAPIMiddleware !== 'undefined'
@@ -122,6 +124,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           },
           runtimeConfig: {
             apiPrefix: apiPrefix.substring(1),
+            prefix,
           },
           rollupConfig: {
             onwarn(warning) {
@@ -152,7 +155,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             : useAPIMiddleware
               ? undefined
               : {
-                  [`${apiPrefix}/**`]: {
+                  [`${prefix}${apiPrefix}/**`]: {
                     proxy: { to: '/**' },
                   },
                 },
@@ -164,7 +167,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         import { useRuntimeConfig } from '#imports';
 
         export default eventHandler(async (event) => {
-          const apiPrefix = \`/\${useRuntimeConfig().apiPrefix}\`;
+          const prefix = useRuntimeConfig().prefix;
+          const apiPrefix = \`\${prefix}/\${useRuntimeConfig().apiPrefix}\`;
 
           if (event.node.req.url?.startsWith(apiPrefix)) {
             const reqUrl = event.node.req.url?.replace(apiPrefix, '');
@@ -411,7 +415,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           if (hasAPIDir) {
             viteServer.middlewares.use(
               (req: IncomingMessage, res: ServerResponse, next: Function) => {
-                if (req.url?.startsWith(apiPrefix)) {
+                if (req.url?.startsWith(`${prefix}${apiPrefix}`)) {
                   apiHandler(req, res);
                   return;
                 }
@@ -436,7 +440,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           }
 
           console.log(
-            `\n\nThe server endpoints are accessible under the "${apiPrefix}" path.`,
+            `\n\nThe server endpoints are accessible under the "${prefix}${apiPrefix}" path.`,
           );
         }
       },
@@ -484,7 +488,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
       config() {
         return {
           define: {
-            ANALOG_API_PREFIX: `"${apiPrefix.substring(1)}"`,
+            ANALOG_API_PREFIX: `"${baseURL.substring(1)}${apiPrefix.substring(1)}"`,
           },
         };
       },

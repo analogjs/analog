@@ -7,7 +7,7 @@ import TabItem from '@theme/TabItem';
 
 # Angular Material Integration with Analog
 
-This tutorial will guide you through the process of integrating the Angular Material library within your Analog application.
+This tutorial will guide you through the process of integrating the [Angular Material](https://material.angular.io) component library into your Analog application.
 
 ## Step 1: Installing the Angular Material library
 
@@ -38,6 +38,8 @@ pnpm install @angular/cdk @angular/material
 
   </TabItem>
 </Tabs>
+
+> Make sure you have installed `sass` version 1.85.1 or higher.
 
 ## Step 2: Configuring the Angular Material library
 
@@ -84,18 +86,18 @@ export default defineConfig(({ mode }) => {
 ```scss
 @use '@angular/material' as mat;
 
-$theme: mat.define-theme(
-  (
-    color: (
-      theme-type: light,
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
-    ),
-  )
-);
+html {
+  color-scheme: light dark;
+  @include mat.theme(
+    (
+      color: mat.$violet-palette,
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
 
 body {
-  @include mat.all-component-themes($theme);
   font-family: Roboto, 'Helvetica Neue', sans-serif;
   margin: 0;
   padding: 30px;
@@ -105,9 +107,6 @@ body {
 html {
   height: 100%;
 }
-
-@include mat.core();
-@include mat.color-variants-backwards-compatibility($theme);
 ```
 
 ## Optional Step: Configuring Animations

@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "1.14.0",
+  "version": "1.14.1-beta.6",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -133,7 +133,7 @@
     "conventional-changelog-cli": "^2.2.2",
     "cpy-cli": "^4.2.0",
     "cypress": "13.14.2",
-    "esbuild": "0.19.5",
+    "esbuild": "0.25.0",
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.0.0",
     "eslint-plugin-cypress": "3.5.0",
@@ -181,7 +181,7 @@
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-inspect": "~0.8",
     "vite-tsconfig-paths": "4.2.0",
-    "vitefu": "^0.2.5",
+    "vitefu": "^1.0.0",
     "vitest": "^3.0.5",
     "webpack-bundle-analyzer": "^4.7.0",
     "xmlbuilder2": "^3.0.2"

@@ -126,6 +126,27 @@ export default defineConfig({
 });
 ```
 
+### 过滤文件转换
+
+为了更好地与其他插件（如 [Starlight](https://starlight.astro.build)）集成，将 Angular 组件放在特定文件夹中，并使用 `transformFilter` 回调函数仅转换这些文件。
+
+```js
+import { defineConfig } from 'astro/config';
+import angular from '@analogjs/astro-angular';
+
+export default defineConfig({
+  integrations: [
+    angular({
+      vite: {
+        transformFilter: (_code, id) => {
+          return id.includes('src/components'); // <- only transform Angular TypeScript files
+        },
+      },
+    }),
+  ],
+});
+```
+
 ### 转换包以实现 SSR 兼容性
 
 为了确保 Angular 库在 Astro 的 SSR 过程中进行转换，请将他们添加到 Vite 配置中的 `ssr.noExternal` 列表里。

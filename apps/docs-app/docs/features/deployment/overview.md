@@ -69,7 +69,7 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-3. In CI production build
+2. In CI production build
 
 ```bash
   # sets the base url for server-side data fetching
@@ -81,7 +81,7 @@ export const appConfig: ApplicationConfig = {
   npx ng build --baseHref="/basehref/"
 ```
 
-4. In production containers specify the env flag `NITRO_APP_BASE_URL`.
+3. In production containers specify the env flag `NITRO_APP_BASE_URL`.
 
 ```bash
 NITRO_APP_BASE_URL="/basehref/"

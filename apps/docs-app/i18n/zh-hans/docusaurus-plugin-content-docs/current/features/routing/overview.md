@@ -14,11 +14,17 @@ Analog 在 Angular 路由之上支持基于文件系统的路由。
 
 路由主要由以下 5 种：
 
-- [索引页路由](#索引页路由)
-- [静态路由](#静态路由)
-- [动态路由](#动态路由)
-- [布局路由](#布局路由)
-- [Catch-all 路由](#catch-all-路由)
+- [路由](#路由)
+  - [定义路由](#定义路由)
+  - [索引页路由](#索引页路由)
+  - [静态路由](#静态路由)
+    - [路由组](#路由组)
+  - [动态路由](#动态路由)
+    - [使用路由组件的输入绑定](#使用路由组件的输入绑定)
+  - [布局路由](#布局路由)
+    - [隐式布局路由](#隐式布局路由)
+  - [Catch-all 路由](#catch-all-路由)
+  - [多种路由的组合](#多种路由的组合)
 
 这些路由可以通过不同的方式组合来生成导航 URL。
 
@@ -263,6 +269,22 @@ Catch-all 路由通过一个包含`[]`并且以`...`为开头的文件来定义
 ```ts
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { injectResponse } from '@analogjs/router/tokens';
+import { RouteMeta } from '@analogjs/router';
+
+export const routeMeta: RouteMeta = {
+  title: 'Page Not Found',
+  canActivate: [
+    () => {
+      const response = injectResponse();
+      if (import.meta.env.SSR && response) {
+        response.statusCode = 404;
+        response.end();
+      }
+      return true;
+    },
+  ],
+};
 
 @Component({
   standalone: true,
