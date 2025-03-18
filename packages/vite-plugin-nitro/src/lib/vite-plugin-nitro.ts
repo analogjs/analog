@@ -229,12 +229,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         if (isBuild) {
           nitroConfig.publicAssets = [{ dir: clientOutputPath }];
-          nitroConfig.serverAssets = [
-            {
-              baseName: 'public',
-              dir: clientOutputPath,
-            },
-          ];
           nitroConfig.renderer = rendererEntry;
 
           if (isEmptyPrerenderRoutes(options)) {
