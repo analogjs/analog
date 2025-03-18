@@ -1,3 +1,9 @@
+# [1.15.0-beta.1](https://github.com/analogjs/analog/compare/v1.14.1...v1.15.0-beta.1) (2025-03-18)
+
+### Features
+
+- **vite-plugin-nitro:** allow customization of sitemap definition for prerendered routes ([#1650](https://github.com/analogjs/analog/issues/1650)) ([7edff18](https://github.com/analogjs/analog/commit/7edff1869f906d88ddd482f93d7fc8400539ed19))
+
 ## [1.14.1](https://github.com/analogjs/analog/compare/v1.14.0...v1.14.1) (2025-03-18)
 
 ### Bug Fixes
