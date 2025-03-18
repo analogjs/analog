@@ -1,3 +1,9 @@
+## [1.14.1-beta.6](https://github.com/analogjs/analog/compare/v1.14.1-beta.5...v1.14.1-beta.6) (2025-03-18)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** handle Nitro Base URL for API routes in development ([#1653](https://github.com/analogjs/analog/issues/1653)) ([5eeff15](https://github.com/analogjs/analog/commit/5eeff15be49b1cfddbd4d6f0938183ba9ef9e01f))
+
 ## [1.14.1-beta.5](https://github.com/analogjs/analog/compare/v1.14.1-beta.4...v1.14.1-beta.5) (2025-03-14)
 
 ### Bug Fixes
