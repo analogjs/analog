@@ -38,8 +38,9 @@ export async function setupVitestGenerator(
   options: SetupVitestGeneratorSchema,
 ) {
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
+  const nxVersion = getInstalledPackageVersion(tree, 'nx');
 
-  addAnalogDependencies(tree, angularVersion);
+  addAnalogDependencies(tree, angularVersion, nxVersion);
   updateTsConfig(tree, options);
   updateTestTarget(tree, options);
 

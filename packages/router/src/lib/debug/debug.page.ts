@@ -131,7 +131,10 @@ export default class DebugRoutesComponent {
       });
 
       if (route.children) {
-        this.traverseRoutes(route.children, route.path || '');
+        const parentSegments = [parent, route.path];
+
+        const fullParentPath = parentSegments.filter((s) => !!s).join('/');
+        this.traverseRoutes(route.children, fullParentPath);
       }
     });
   }

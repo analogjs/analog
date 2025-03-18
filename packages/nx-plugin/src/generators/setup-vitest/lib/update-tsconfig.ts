@@ -29,7 +29,7 @@ export function updateTsConfig(tree: Tree, schema: SetupVitestGeneratorSchema) {
         json.compilerOptions ??= {};
         json.compilerOptions.module = undefined;
         json.compilerOptions.target ??= 'es2016';
-        json.files ??= ['src/test-setup.ts'];
+        json.files = ['src/test-setup.ts'];
         json.compilerOptions.types = (json.compilerOptions.types ?? ['node'])
           .filter((type) => type !== 'jest')
           .concat(['vitest/globals']);

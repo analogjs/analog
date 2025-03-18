@@ -46,6 +46,8 @@ export default defineConfig({
 });
 ```
 
+> The `angular` plugin should be listed **first** in the plugins array.
+
 ## Setting up the TypeScript config
 
 The integration needs a `tsconfig.app.json` at the root of the project for compilation.

@@ -33,7 +33,7 @@ export function updateTestTsConfig(
         json.compilerOptions.module = undefined;
         json.compilerOptions.target ??= 'es2016';
         json.compilerOptions.types = ['vitest/globals', 'node'];
-        json.files ??= ['src/test-setup.ts'];
+        json.files = ['src/test-setup.ts'];
 
         return json;
       },

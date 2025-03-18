@@ -45,6 +45,8 @@ import {
   V19_X_VITE_TSCONFIG_PATHS,
   V19_X_VITEST,
   V19_X_VITE,
+  NX_X_LATEST_VITE,
+  NX_X_LATEST_VITEST,
 } from './ng_19_X/versions';
 
 const devDependencyKeys = [
@@ -60,21 +62,29 @@ export type AnalogDevDependency = (typeof devDependencyKeys)[number];
 
 export const getAnalogDevDependencies = (
   ngVersion: string,
+  nxVersion?: string,
 ): Record<AnalogDevDependency, string> => {
   const escapedNgVersion = ngVersion.replace(/[~^]/, '');
+  const escapedNxVersion = nxVersion ? nxVersion.replace(/[~^]/, '') : null;
 
-  const devDependencies = getDevDependencies(escapedNgVersion);
+  const devDependencies = getDevDependencies(
+    escapedNgVersion,
+    escapedNxVersion,
+  );
 
   return { ...devDependencies };
 };
 
-const getDevDependencies = (escapedAngularVersion: string) => {
-  // fail out for versions <15.2.0
+const getDevDependencies = (
+  escapedAngularVersion: string,
+  escapedNxVersion: string | null,
+) => {
+  // fail out for versions <15.0.0
   if (lt(escapedAngularVersion, '15.0.0')) {
     throw new Error(stripIndents`Angular v15.0.0 or newer is required.`);
   }
 
-  // install 15.x deps for versions <15.0.0
+  // install 15.x deps for versions <16.0.0
   if (lt(escapedAngularVersion, '16.0.0')) {
     return {
       '@analogjs/platform': V15_X_ANALOG_JS_PLATFORM,
@@ -117,7 +127,7 @@ const getDevDependencies = (escapedAngularVersion: string) => {
   }
 
   // install 18.x deps for versions <19.0.0
-  if (lt(escapedAngularVersion, '18.0.0')) {
+  if (lt(escapedAngularVersion, '19.0.0')) {
     return {
       '@analogjs/platform': V18_X_ANALOG_JS_PLATFORM,
       '@analogjs/vite-plugin-angular': V18_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
@@ -130,7 +140,7 @@ const getDevDependencies = (escapedAngularVersion: string) => {
     };
   }
 
-  // return latest 19.x deps for versions >19.0.0
+  // return latest 19.x deps for versions >=19.0.0
   return {
     '@analogjs/platform': V19_X_ANALOG_JS_PLATFORM,
     '@analogjs/vite-plugin-angular': V19_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
@@ -138,7 +148,13 @@ const getDevDependencies = (escapedAngularVersion: string) => {
     '@nx/vite': V19_X_NX_VITE,
     jsdom: V19_X_JSDOM,
     'vite-tsconfig-paths': V19_X_VITE_TSCONFIG_PATHS,
-    vite: V19_X_VITE,
-    vitest: V19_X_VITEST,
+    vite:
+      escapedNxVersion && lt(escapedNxVersion, '20.5.0')
+        ? V19_X_VITE
+        : NX_X_LATEST_VITE,
+    vitest:
+      escapedNxVersion && lt(escapedNxVersion, '20.5.0')
+        ? V19_X_VITEST
+        : NX_X_LATEST_VITEST,
   };
 };

@@ -30,7 +30,7 @@
   "dependencies": {
     "nitropack": "^2.10.0",
     "xmlbuilder2": "^3.0.2",
-    "esbuild": "^0.20.1",
+    "esbuild": "^0.25.0",
     "radix3": "^1.1.1",
     "defu": "^6.1.4"
   },

@@ -5,7 +5,7 @@ import TabItem from '@theme/TabItem';
 
 Node.js 部署是 Analog 为生产环境构建的默认预设输出。
 
-在默认预设情况下运行 `npm run build` 时，编译结果就是一个 ready-to-run 的 Node 服务器器入口。
+在默认预设情况下运行 `npm run build` 时，编译结果就是一个 ready-to-run 的 Node 服务。
 
 要单独启动这个服务，可以运行：
 
@@ -51,40 +51,37 @@ export default defineConfig({
 
 ## 部署时自定义 URL 前缀
 
-如果你部署是需要指定一个自定义的 URL 前缀，例如 https://domain.com/`basehref`/ 你必须确保 [服务端数据获取](https://analogjs.org/docs/features/data-fetching/server-side-data-fetching)，[HTML 标记和资源](https://angular.io/api/common/APP_BASE_HREF) 和 [动态 API 路由](https://analogjs.org/docs/features/api/overview) 能在 `basehref` 下正常工作。
+如果你部署是需要指定一个自定义的 URL 前缀，例如 https://domain.com/ `basehref`/ 你必须确保 [服务端数据获取](https://analogjs.org/docs/features/data-fetching/server-side-data-fetching)，[HTML 标记和资源](https://angular.io/api/common/APP_BASE_HREF) 和 [动态 API 路由](https://analogjs.org/docs/features/api/overview) 能在 `basehref` 下正常工作。
 
-1. 指示 Angular 识别并生成对应的 URL。创建一个新的文件 `app.config.env.ts`。
+1. 更新文件 `app.config.env.ts`。
+
+这里告知 Angular 如何识别并生成对应的 URL
 
 ```ts
 import { ApplicationConfig } from '@angular/core';
 import { APP_BASE_HREF } from '@angular/common';
 
-export const envConfig: ApplicationConfig = {
-  providers: [{ provide: APP_BASE_HREF, useValue: '/basehref/' }],
+export const appConfig: ApplicationConfig = {
+  providers: [
+    [{ provide: APP_BASE_HREF, useValue: import.meta.env.BASE_URL || '/' }],
+    ...
+  ],
 };
 ```
 
-2. 更新 `app.config.ts` 去导入这个新的文件
-
-```ts
-import { mergeApplicationConfig } from '@angular/core';
-import { envConfig } from './app.config.env';
-
-export const appConfig = mergeApplicationConfig(envConfig, {
-....
-});
-```
-
-3. 在 CI 生产环境构建
+2. 在 CI 生产环境构建
 
 ```bash
   # sets the base url for server-side data fetching
   export VITE_ANALOG_PUBLIC_BASE_URL="https://domain.com/basehref"
-  # prefixes all assets and html with /basehref/
+  # Prefixes all assets and html with /basehref/
+  # if using nx:
   npx nx run appname:build:production --baseHref='/basehref/'
+  # if using angular build directly:
+  npx ng build --baseHref="/basehref/"
 ```
 
-4. 在生产环境的镜像指定新的环境变量。
+3. 在生产环境的镜像指定环境变量 `NITRO_APP_BASE_URL`。
 
 ```bash
 NITRO_APP_BASE_URL="/basehref/"
@@ -96,6 +93,18 @@ NITRO_APP_BASE_URL="/basehref/"
     plugins: [
       analog({
         apiPrefix: 'api',
+        nitro: {
+          routeRules: {
+            '/': {
+              prerender: false,
+            },
+          },
+        },
+        prerender: {
+          routes: async () => {
+            return ['/'];
+          }
+        }
 ```
 
 Nitro 所有的 API 路由将基于 `/basehref/api` 。

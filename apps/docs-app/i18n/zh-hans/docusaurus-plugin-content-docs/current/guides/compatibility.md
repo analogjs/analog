@@ -10,6 +10,7 @@ Analog 兼容多个版本的 Angular，Nx 和 Vite。
 
 | Nx Version _(min)_ | Angular Version | Analog Version | Vite Version |
 | ------------------ | --------------- | -------------- | ------------ |
+| 20.4.0             | ^19.1.0         | **latest**     | ^6.0.0       |
 | 18.0.0             | ^17.0.0         | **latest**     | ^5.0.0       |
 | 17.0.0             | ^17.0.0         | **latest**     | ^5.0.0       |
 | 16.1.0             | ^16.1.0         | **latest**     | ^5.0.0       |
