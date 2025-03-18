@@ -1,3 +1,9 @@
+# [1.15.0-beta.2](https://github.com/analogjs/analog/compare/v1.15.0-beta.1...v1.15.0-beta.2) (2025-03-18)
+
+### Performance Improvements
+
+- **vite-plugin-nitro:** remove server assets from build process ([#1656](https://github.com/analogjs/analog/issues/1656)) ([5a148d7](https://github.com/analogjs/analog/commit/5a148d7a58dd187c4606b32bf04c9b7e4dae83df))
+
 # [1.15.0-beta.1](https://github.com/analogjs/analog/compare/v1.14.1...v1.15.0-beta.1) (2025-03-18)
 
 ### Features
