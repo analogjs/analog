@@ -76,6 +76,8 @@ export default defineConfig(({ mode }) => ({
 
 To only prerender the static pages, use the `static: true` flag.
 
+> The `ssr` flag must still be set to `true` for prerendering static pages.
+
 ```ts
 import { defineConfig } from 'vite';
 import analog from '@analogjs/platform';
@@ -109,8 +111,7 @@ The static pages can be deployed from the `dist/analog/public` directory.
 
 ### Sitemap Generation
 
-Analog also supports automatic sitemap generation. Analog generates a sitemap in the `dist/analog/public`
-directory when running a build if a sitemap configuration is provided.
+Analog also supports automatic sitemap generation. Analog generates a sitemap in the `dist/analog/public` directory when running a build if a sitemap configuration is provided.
 
 ```ts
 import { defineConfig } from 'vite';
@@ -131,8 +132,51 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-As long as routes are provided, Analog generates a `sitemap.xml` file containing a
-mapping of the pages' `<loc>` and `<lastmod>` properties.
+To customize the sitemap definition, use the `sitemap` callback function to customize the `lastmod`, `changefreq`, and `priority` fields.
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+import fs from 'node:fs';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      prerender: {
+        sitemap: {
+          host: 'https://analogjs.org/',
+        },
+        routes: async () => [
+          '/',
+          '/blog',
+          {
+            route: '/blog/2022-12-27-my-first-post',
+            sitemap: {
+              lastmod: '2022-12-27',
+            },
+          },
+          {
+            contentDir: '/src/content/archived',
+            transform: (file: PrerenderContentFile) => {
+              return `/archived/${file.attributes.slug || file.name}`;
+            },
+            sitemap: (file: PrerenderContentFile) => {
+              return {
+                lastmod: 'read last modified date for content file',
+                changefreq: 'never',
+              };
+            },
+          },
+        ],
+      },
+    }),
+  ],
+}));
+```
+
+As long as prerender routes are provided, Analog generates a `sitemap.xml` file containing a
+mapping of the pages' `<loc>`, `<lastmod>`, `<changefreq>`, and `<priority>` properties.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -143,8 +187,13 @@ mapping of the pages' `<loc>` and `<lastmod>` properties.
         <lastmod>2023-07-01</lastmod>
     </url>
     <url>
-        <loc>https://analogjs.org/blog</loc>
-        <lastmod>2023-07-01</lastmod>
+        <loc>https://analogjs.org/blog/2022-12-27-my-first-post</loc>
+        <lastmod>2022-12-27</lastmod>
+    </url>
+    <url>
+        <loc>https://analogjs.org/blog/archived/hello-world</loc>
+        <lastmod>2022-12-01</lastmod>
+        <changefreq>never</changefreq>
     </url>
 </urlset...>
 ```

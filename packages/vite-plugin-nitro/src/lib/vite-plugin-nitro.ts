@@ -13,6 +13,8 @@ import {
   Options,
   PrerenderContentDir,
   PrerenderContentFile,
+  PrerenderRouteConfig,
+  PrerenderSitemapConfig,
 } from './options.js';
 import { pageEndpointsPlugin } from './plugins/page-endpoints.js';
 import { getPageHandlers } from './utils/get-page-handlers.js';
@@ -46,6 +48,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let nitroConfig: NitroConfig;
   let environmentBuild = false;
   let hasAPIDir = false;
+  let routeSitemaps: Record<
+    string,
+    PrerenderSitemapConfig | (() => PrerenderSitemapConfig)
+  > = {};
 
   return [
     (options?.ssr
@@ -240,7 +246,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             nitroConfig.prerender = nitroConfig.prerender ?? {};
             nitroConfig.prerender.crawlLinks = options?.prerender?.discover;
 
-            let routes: (string | PrerenderContentDir | undefined)[] = [];
+            let routes: (
+              | string
+              | PrerenderContentDir
+              | PrerenderRouteConfig
+              | undefined
+            )[] = [];
 
             const prerenderRoutes = options?.prerender?.routes;
             if (
@@ -260,6 +271,16 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   prev.push(current);
                   return prev;
                 }
+
+                if ('route' in current) {
+                  if (current.sitemap) {
+                    routeSitemaps[current.route] = current.sitemap;
+                  }
+
+                  prev.push(current.route);
+                  return prev;
+                }
+
                 const affectedFiles: PrerenderContentFile[] =
                   getMatchingContentFilesWithFrontMatter(
                     workspaceRoot,
@@ -269,7 +290,15 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
                 affectedFiles.forEach((f) => {
                   const result = current.transform(f);
+
                   if (result) {
+                    if (current.sitemap) {
+                      routeSitemaps[result] =
+                        current.sitemap && typeof current.sitemap === 'function'
+                          ? current.sitemap?.(f)
+                          : current.sitemap;
+                    }
+
                     prev.push(result);
                   }
                 });
@@ -392,6 +421,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   options.prerender.sitemap,
                   nitroConfig.prerender.routes,
                   nitroConfig.output?.publicDir!,
+                  routeSitemaps,
                 );
               }
 
@@ -472,6 +502,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               options.prerender.sitemap,
               nitroConfig.prerender.routes,
               clientOutputPath,
+              routeSitemaps,
             );
           }
 
