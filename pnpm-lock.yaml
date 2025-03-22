@@ -81,14 +81,14 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0(encoding@0.1.13)
       marked:
-        specifier: ^5.0.2
-        version: 5.0.2
+        specifier: ^15.0.7
+        version: 15.0.7
       marked-gfm-heading-id:
-        specifier: ^3.1.0
-        version: 3.1.0(marked@5.0.2)
+        specifier: ^4.1.1
+        version: 4.1.1(marked@15.0.7)
       marked-highlight:
-        specifier: ^2.0.1
-        version: 2.0.1(marked@5.0.2)
+        specifier: ^2.2.1
+        version: 2.2.1(marked@15.0.7)
       mermaid:
         specifier: ^10.2.4
         version: 10.2.4
@@ -320,10 +320,10 @@ importers:
         version: 13.1.0(enquirer@2.3.6)
       marked-mangle:
         specifier: ^1.1.7
-        version: 1.1.7(marked@5.0.2)
+        version: 1.1.7(marked@15.0.7)
       marked-shiki:
         specifier: ^1.1.0
-        version: 1.1.0(marked@5.0.2)(shiki@1.6.1)
+        version: 1.1.0(marked@15.0.7)(shiki@1.6.1)
       minimist:
         specifier: ^1.2.7
         version: 1.2.7
@@ -9879,15 +9879,15 @@ packages:
   markdown-table@3.0.2:
     resolution: {integrity: sha512-y8j3a5/DkJCmS5x4dMCQL+OR0+2EAq3DOtio1COSHsmW2BGXnNCK3v12hJt1LrUz5iZH5g0LmuYOjDdI+czghA==}
 
-  marked-gfm-heading-id@3.1.0:
-    resolution: {integrity: sha512-PYgLXDbL64Ga6kCpvVuKVoIVsV6MKUtkOXnR8mIqyjiycAeKNhQxcGpO0mHEogOTzyY8A8TcK49k5VwYMUCCbg==}
+  marked-gfm-heading-id@4.1.1:
+    resolution: {integrity: sha512-EeQZieAQmsI6c2tWLx0ETd0VjPwLV8qi+HT0dIsfVMERm0rCIuXfRvZXJbo1SgUi++lmuR1LVY+QzgNiLNvVpw==}
     peerDependencies:
-      marked: '>=4 <10'
+      marked: '>=13 <16'
 
-  marked-highlight@2.0.1:
-    resolution: {integrity: sha512-LDUfR/zDvD+dJ+lQOWHkxvBLNxiXcaN8pBtwJ/i4pI0bkDC/Ef6Mz1qUrAuHXfnpdr2rabdMpVFhqFuU+5Mskg==}
+  marked-highlight@2.2.1:
+    resolution: {integrity: sha512-SiCIeEiQbs9TxGwle9/OwbOejHCZsohQRaNTY2u8euEXYt2rYUFoiImUirThU3Gd/o6Q1gHGtH9qloHlbJpNIA==}
     peerDependencies:
-      marked: ^4 || ^5
+      marked: '>=4 <16'
 
   marked-mangle@1.1.7:
     resolution: {integrity: sha512-bLsXKovJEEs/Dl++TBPmjX8ALFmrH5G0doTs+BdDOloBKWYRf3acyJghce78SnwInDkNPJ6crubr4MnFG7urOA==}
@@ -9906,8 +9906,8 @@ packages:
     peerDependencies:
       marked: '>=1 <12'
 
-  marked@5.0.2:
-    resolution: {integrity: sha512-TXksm9GwqXCRNbFUZmMtqNLvy3K2cQHuWmyBDLOrY1e6i9UvZpOTJXoz7fBjYkJkaUFzV9hBFxMuZSyQt8R6KQ==}
+  marked@15.0.7:
+    resolution: {integrity: sha512-dgLIeKGLx5FwziAnsk4ONoGwHwGPJzselimvlVskE9XLN4Orv9u2VA3GWw/lYUqjfA0rUT/6fqKwfZJapP9BEg==}
     engines: {node: '>= 18'}
     hasBin: true
 
@@ -27184,22 +27184,22 @@ snapshots:
 
   markdown-table@3.0.2: {}
 
-  marked-gfm-heading-id@3.1.0(marked@5.0.2):
+  marked-gfm-heading-id@4.1.1(marked@15.0.7):
     dependencies:
       github-slugger: 2.0.0
-      marked: 5.0.2
+      marked: 15.0.7
 
-  marked-highlight@2.0.1(marked@5.0.2):
+  marked-highlight@2.2.1(marked@15.0.7):
     dependencies:
-      marked: 5.0.2
+      marked: 15.0.7
 
-  marked-mangle@1.1.7(marked@5.0.2):
+  marked-mangle@1.1.7(marked@15.0.7):
     dependencies:
-      marked: 5.0.2
+      marked: 15.0.7
 
-  marked-shiki@1.1.0(marked@5.0.2)(shiki@1.6.1):
+  marked-shiki@1.1.0(marked@15.0.7)(shiki@1.6.1):
     dependencies:
-      marked: 5.0.2
+      marked: 15.0.7
       shiki: 1.6.1
 
   marked-terminal@6.2.0(marked@9.1.6):
@@ -27212,7 +27212,7 @@ snapshots:
       node-emoji: 2.1.3
       supports-hyperlinks: 3.0.0
 
-  marked@5.0.2: {}
+  marked@15.0.7: {}
 
   marked@9.1.6: {}
 

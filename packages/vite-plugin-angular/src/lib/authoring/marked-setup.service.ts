@@ -25,12 +25,12 @@ export class MarkedSetupService {
   constructor() {
     const renderer = new marked.Renderer();
 
-    renderer.codespan = (code: string) => {
-      code = this.escapeBreakingCharacters(code);
+    renderer.codespan = ({ text }) => {
+      const code = this.escapeBreakingCharacters(text);
       return `<code>${code}</code>`;
     };
 
-    renderer.paragraph = (text: string) => {
+    renderer.paragraph = ({ text }) => {
       if (
         this.detectAngularComponent(text) ||
         this.detectAngularControlFlow(text)
@@ -40,8 +40,8 @@ export class MarkedSetupService {
       return `<p>${text}</p>`;
     };
 
-    renderer.code = (code: string, lang: string) => {
-      code = this.escapeBreakingCharacters(code);
+    renderer.code = ({ text, lang }) => {
+      const code = this.escapeBreakingCharacters(text);
 
       // Let's do a language based detection like on GitHub
       // So we can still have non-interpreted mermaid code
@@ -106,7 +106,6 @@ export class MarkedSetupService {
         pedantic: false,
         gfm: true,
         breaks: false,
-        mangle: false,
       },
     );
 
