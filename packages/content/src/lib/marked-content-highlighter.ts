@@ -12,7 +12,7 @@ export interface MarkedContentHighlighter {
 
 @Injectable()
 export abstract class MarkedContentHighlighter {
-  abstract getHighlightExtension(): import('marked').marked.MarkedExtension;
+  abstract getHighlightExtension(): import('marked').MarkedExtension;
 }
 
 export function withHighlighter(
