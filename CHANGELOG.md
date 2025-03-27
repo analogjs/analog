@@ -1,3 +1,9 @@
+# [1.15.0-beta.3](https://github.com/analogjs/analog/compare/v1.15.0-beta.2...v1.15.0-beta.3) (2025-03-27)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** update angular-storybook-plugin with @storybook/angular v8.6.8+ ([#1661](https://github.com/analogjs/analog/issues/1661)) ([6ab7038](https://github.com/analogjs/analog/commit/6ab7038bf1f035324836109e8dafc141d0441371))
+
 # [1.15.0-beta.2](https://github.com/analogjs/analog/compare/v1.15.0-beta.1...v1.15.0-beta.2) (2025-03-18)
 
 ### Performance Improvements
