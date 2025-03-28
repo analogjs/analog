@@ -17,7 +17,7 @@ zerops:
       # of deploy path, this example would deploy
       # files in the dist folder
       deployFiles:
-        - dist/apps/docs-app
+        - dist/apps/docs-app/~
 
       # *optional*: which files / folders
       # to cache for the next build run
