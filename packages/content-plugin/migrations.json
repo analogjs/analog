@@ -72,7 +72,7 @@
       }
     },
     "1.15.0-beta.3": {
-      "version": "1.4.1",
+      "version": "1.14.1",
       "description": "Adds marked dependency to support markdown rendering",
       "packages": {
         "marked": {
