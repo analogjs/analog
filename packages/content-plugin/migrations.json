@@ -6,7 +6,7 @@
       "implementation": "./src/migrations/update-markdown-renderer-feature/update-markdown-renderer-feature"
     },
     "update-marked-version": {
-      "version": "1.5.0-beta.3",
+      "version": "1.15.0-beta.3",
       "description": "Update marked version to 15.0.7",
       "implementation": "./src/migrations/update-markdown-version/update-markdown-version"
     }
@@ -18,7 +18,7 @@
       "factory": "./src/migrations/update-markdown-renderer-feature/compat"
     },
     "update-marked-version": {
-      "version": "1.5.0-beta.3",
+      "version": "1.15.0-beta.3",
       "description": "Update marked version to 15.0.7",
       "factory": "./src/migrations/update-markdown-version/compat"
     }
@@ -71,7 +71,7 @@
         }
       }
     },
-    "1.5.0-beta.3": {
+    "1.15.0-beta.3": {
       "version": "1.4.1",
       "description": "Adds marked dependency to support markdown rendering",
       "packages": {
