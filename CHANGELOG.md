@@ -1,3 +1,9 @@
+# [1.15.0-beta.4](https://github.com/analogjs/analog/compare/v1.15.0-beta.3...v1.15.0-beta.4) (2025-03-28)
+
+### Features
+
+- **content:** update marked to latest version and fix custom renderer compatibility ([#1658](https://github.com/analogjs/analog/issues/1658)) ([ade8a0a](https://github.com/analogjs/analog/commit/ade8a0a7c47fd5906db2ff35f950546a6022e97b))
+
 # [1.15.0-beta.3](https://github.com/analogjs/analog/compare/v1.15.0-beta.2...v1.15.0-beta.3) (2025-03-27)
 
 ### Bug Fixes
