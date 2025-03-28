@@ -6,7 +6,7 @@
  * found in the LICENSE file at https://angular.dev/license
  */
 
-import type ng from '@angular/compiler-cli';
+import { NgtscProgram } from '@angular/compiler-cli';
 import assert from 'node:assert';
 import ts from 'typescript';
 
@@ -24,7 +24,7 @@ import ts from 'typescript';
  */
 export function collectHmrCandidates(
   modifiedFiles: Set<string>,
-  { compiler }: ng.NgtscProgram,
+  { compiler }: NgtscProgram,
   staleSourceFiles: Map<string, ts.SourceFile> | undefined,
 ): Set<ts.ClassDeclaration> {
   const candidates = new Set<ts.ClassDeclaration>();
@@ -93,7 +93,7 @@ export function collectHmrCandidates(
 export function analyzeFileUpdates(
   stale: ts.SourceFile,
   updated: ts.SourceFile,
-  compiler: ng.NgtscProgram['compiler'],
+  compiler: NgtscProgram['compiler'],
 ): ts.ClassDeclaration[] | null {
   if (stale.statements.length !== updated.statements.length) {
     return null;

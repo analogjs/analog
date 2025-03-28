@@ -68,3 +68,4 @@ tmpanalogapp*
 .nx/workspace-data
 vite.config.*.timestamp*
 .vite-inspect
+vitest.config.*.timestamp*
