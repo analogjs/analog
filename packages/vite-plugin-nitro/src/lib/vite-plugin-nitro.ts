@@ -132,6 +132,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             apiPrefix: apiPrefix.substring(1),
             prefix,
           },
+          // Fixes support for Rolldown
+          imports: {
+            autoImport: false,
+          },
           rollupConfig: {
             onwarn(warning) {
               if (
