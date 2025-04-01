@@ -135,9 +135,6 @@ const config = {
         ],
         copyright: `
           Copyright © 2022-${new Date().getFullYear()} Analog. Licensed under MIT.
-          <p>
-            <a href="https://www.netlify.com"> <img src="https://www.netlify.com/v3/img/components/netlify-color-accent.svg" alt="Deploys by Netlify" /> </a>
-          </p>
         `,
       },
       navbar: {

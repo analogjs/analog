@@ -3,11 +3,17 @@ import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 import { create } from 'xmlbuilder2';
 import { UserConfig } from 'vite';
 import { resolve } from 'node:path';
-import { SitemapConfig } from './options';
+import {
+  PrerenderContentFile,
+  PrerenderSitemapConfig,
+  SitemapConfig,
+} from './options';
 
 export type PagesJson = {
   page: string;
   lastMod: string;
+  changefreq?: string;
+  priority?: string;
 };
 
 export async function buildSitemap(
@@ -15,15 +21,27 @@ export async function buildSitemap(
   sitemapConfig: SitemapConfig,
   routes: (string | undefined)[] | (() => Promise<(string | undefined)[]>),
   outputDir: string,
+  routeSitemaps: Record<
+    string,
+    PrerenderSitemapConfig | (() => PrerenderSitemapConfig) | undefined
+  >,
 ) {
   const routeList: string[] = await optionHasRoutes(routes);
 
   if (routeList.length) {
     const slash = checkSlash(sitemapConfig.host || '');
-    const sitemapData: PagesJson[] = routeList.map((page: string) => ({
-      page: `${sitemapConfig.host}${slash}${page.replace(/^\/+/g, '')}`,
-      lastMod: new Date().toISOString().split('T')[0],
-    }));
+    const sitemapData: PagesJson[] = routeList.map((page: string) => {
+      const url = `${slash}${page.replace(/^\/+/g, '')}`;
+      const config = routeSitemaps[url];
+      const props = typeof config === 'object' ? config : config?.();
+
+      return {
+        page: `${sitemapConfig.host}${url}`,
+        lastMod: props?.lastmod ?? new Date().toISOString().split('T')[0],
+        changefreq: props?.changefreq,
+        priority: props?.priority,
+      };
+    });
 
     const sitemap = createXml('urlset');
 
@@ -31,6 +49,14 @@ export async function buildSitemap(
       const page = sitemap.ele('url');
       page.ele('loc').txt(item.page);
       page.ele('lastmod').txt(item.lastMod);
+
+      if (item.changefreq) {
+        page.ele('changefreq').txt(item.changefreq);
+      }
+
+      if (item.priority) {
+        page.ele('priority').txt(item.priority);
+      }
     }
 
     const mapPath = `${resolve(outputDir)}/sitemap.xml`;
