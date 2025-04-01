@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-133-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-135-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -282,6 +282,10 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://www.r-yanyo.com/profile"><img src="https://avatars.githubusercontent.com/u/6813556?v=4?s=100" width="100px;" alt="r-yanyo"/><br /><sub><b>r-yanyo</b></sub></a><br /><a href="#infra-r-yanyo" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/nikosanif"><img src="https://avatars.githubusercontent.com/u/15191697?v=4?s=100" width="100px;" alt="Nikos Anifantis"/><br /><sub><b>Nikos Anifantis</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=nikosanif" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.da1chi.net"><img src="https://avatars.githubusercontent.com/u/45157831?v=4?s=100" width="100px;" alt="Daichi Kudo"/><br /><sub><b>Daichi Kudo</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=kudoas" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://3cloudsolutions.com"><img src="https://avatars.githubusercontent.com/u/1328532?v=4?s=100" width="100px;" alt="Roydon Gyles-Bedford"/><br /><sub><b>Roydon Gyles-Bedford</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=rgylesbedford" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://jordanpowell88.com"><img src="https://avatars.githubusercontent.com/u/3605268?v=4?s=100" width="100px;" alt="Jordan"/><br /><sub><b>Jordan</b></sub></a><br /><a href="#infra-jordanpowell88" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
     </tr>
   </tbody>
 </table>

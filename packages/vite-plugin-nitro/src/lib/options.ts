@@ -43,8 +43,10 @@ export interface PrerenderOptions {
    * List of routes to prerender resolved statically or dynamically.
    */
   routes?:
-    | (string | PrerenderContentDir)[]
-    | (() => Promise<(string | PrerenderContentDir | undefined)[]>);
+    | (string | PrerenderContentDir | PrerenderRouteConfig)[]
+    | (() => Promise<
+        (string | PrerenderContentDir | PrerenderRouteConfig | undefined)[]
+      >);
   sitemap?: SitemapConfig;
   /** List of functions that run for each route after pre-rendering is complete. */
   postRenderingHooks?: ((routes: PrerenderRoute) => Promise<void>)[];
@@ -67,6 +69,15 @@ export interface PrerenderContentDir {
    * @returns a string with the route should be returned (e. g. `/blog/<slug>`) or the value `false`, when the route should not be prerendered.
    */
   transform: (file: PrerenderContentFile) => string | false;
+
+  /**
+   * Customize the sitemap definition for the prerendered route
+   *
+   * https://www.sitemaps.org/protocol.html#xmlTagDefinitions
+   */
+  sitemap?:
+    | PrerenderSitemapConfig
+    | ((file: PrerenderContentFile) => PrerenderSitemapConfig);
 }
 
 /**
@@ -81,4 +92,27 @@ export interface PrerenderContentFile {
   attributes: Record<string, any>;
   name: string;
   extension: string;
+}
+
+export interface PrerenderSitemapConfig {
+  lastmod?: string;
+  changefreq?:
+    | 'always'
+    | 'hourly'
+    | 'daily'
+    | 'weekly'
+    | 'monthly'
+    | 'yearly'
+    | 'never';
+  priority?: string;
+}
+
+export interface PrerenderRouteConfig {
+  route: string;
+  /**
+   * Customize the sitemap definition for the prerendered route
+   *
+   * https://www.sitemaps.org/protocol.html#xmlTagDefinitions
+   */
+  sitemap?: PrerenderSitemapConfig | (() => PrerenderSitemapConfig);
 }

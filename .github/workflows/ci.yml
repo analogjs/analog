@@ -8,10 +8,7 @@ on:
   pull_request: {}
 
 env:
-  DOCS_APP_ARTIFACT_NAME: docs-app
-  DOCS_APP_PATH: dist/apps/docs-app/
   NODE_OPTIONS: --max-old-space-size=16384
-  VITE_ANALOG_PUBLIC_BASE_URL: ${{ vars.VITE_ANALOG_PUBLIC_BASE_URL || 'http://localhost:3000' }}
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
 concurrency:
@@ -119,79 +116,3 @@ jobs:
         run: npx cypress install
       - name: End-to-end test
         run: pnpm e2e
-
-  docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0
-      - run: corepack enable
-      - run: pnpm --version
-      - uses: actions/setup-node@v3
-        with:
-          cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
-      - name: Install
-        run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Build
-        run: pnpm exec nx build docs-app
-      - name: Upload docs website
-        # Runs on merge to the `beta` branch
-        if: github.event_name == 'push' && github.ref_name == 'beta'
-        uses: actions/upload-artifact@v4
-        with:
-          if-no-files-found: error
-          name: ${{ env.DOCS_APP_ARTIFACT_NAME }}
-          path: ${{ env.DOCS_APP_PATH }}
-          retention-days: 1
-
-  deploy-docs:
-    name: '[Merge] Deploy docs website'
-    needs:
-      - build
-      - build-windows
-      - unit
-      - e2e
-      - docs
-    # Runs on merge to the `beta` branch
-    if: github.event_name == 'push' && github.ref_name == 'beta'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
-    # Authorize deployment to GitHub Pages
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    concurrency:
-      # Group concurrency on workflow, then:
-      # - Is merge run? Group on branch name (`refs/heads/beta`)
-      # - Is pull request? Group on pull request branch name, for example `feat/add-awesome-feature`
-      group: >-
-        ${{ github.workflow }}-deploy-docs-${{
-          github.event_name == 'push'
-            && github.ref
-            || github.head_ref
-        }}
-      # Run merge workflows in sequence to prevent parallel deployments and releases
-      # Cancel stale pull request runs in progress for the same branch
-      cancel-in-progress: ${{ github.event_name != 'push' }}
-    steps:
-      - name: Download docs website
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.DOCS_APP_ARTIFACT_NAME }}
-          path: ${{ env.DOCS_APP_PATH }}
-      - name: Set up GitHub Pages
-        uses: actions/configure-pages@v1
-      - name: Upload GitHub Pages-compatible tarball
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ${{ env.DOCS_APP_PATH }}
-      - name: Deploy docs website tarball
-        id: deploy
-        uses: actions/deploy-pages@v4

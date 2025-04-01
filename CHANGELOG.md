@@ -1,3 +1,39 @@
+# [1.15.0-beta.6](https://github.com/analogjs/analog/compare/v1.15.0-beta.5...v1.15.0-beta.6) (2025-04-01)
+
+### Features
+
+- **vite-plugin-nitro:** update nitropack to 2.11.x ([#1666](https://github.com/analogjs/analog/issues/1666)) ([8414192](https://github.com/analogjs/analog/commit/8414192db6154f62a7147fb78d6c607bada75956))
+
+# [1.15.0-beta.5](https://github.com/analogjs/analog/compare/v1.15.0-beta.4...v1.15.0-beta.5) (2025-04-01)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** disable internal autoImports by default ([#1665](https://github.com/analogjs/analog/issues/1665)) ([1d09c74](https://github.com/analogjs/analog/commit/1d09c74edb6f18879aaaf2d3ae9305ed7989f9b9))
+
+# [1.15.0-beta.4](https://github.com/analogjs/analog/compare/v1.15.0-beta.3...v1.15.0-beta.4) (2025-03-28)
+
+### Features
+
+- **content:** update marked to latest version and fix custom renderer compatibility ([#1658](https://github.com/analogjs/analog/issues/1658)) ([ade8a0a](https://github.com/analogjs/analog/commit/ade8a0a7c47fd5906db2ff35f950546a6022e97b))
+
+# [1.15.0-beta.3](https://github.com/analogjs/analog/compare/v1.15.0-beta.2...v1.15.0-beta.3) (2025-03-27)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** update angular-storybook-plugin with @storybook/angular v8.6.8+ ([#1661](https://github.com/analogjs/analog/issues/1661)) ([6ab7038](https://github.com/analogjs/analog/commit/6ab7038bf1f035324836109e8dafc141d0441371))
+
+# [1.15.0-beta.2](https://github.com/analogjs/analog/compare/v1.15.0-beta.1...v1.15.0-beta.2) (2025-03-18)
+
+### Performance Improvements
+
+- **vite-plugin-nitro:** remove server assets from build process ([#1656](https://github.com/analogjs/analog/issues/1656)) ([5a148d7](https://github.com/analogjs/analog/commit/5a148d7a58dd187c4606b32bf04c9b7e4dae83df))
+
+# [1.15.0-beta.1](https://github.com/analogjs/analog/compare/v1.14.1...v1.15.0-beta.1) (2025-03-18)
+
+### Features
+
+- **vite-plugin-nitro:** allow customization of sitemap definition for prerendered routes ([#1650](https://github.com/analogjs/analog/issues/1650)) ([7edff18](https://github.com/analogjs/analog/commit/7edff1869f906d88ddd482f93d7fc8400539ed19))
+
 ## [1.14.1](https://github.com/analogjs/analog/compare/v1.14.0...v1.14.1) (2025-03-18)
 
 ### Bug Fixes

@@ -1,5 +1,11 @@
 import { nitro } from './lib/vite-plugin-nitro.js';
-export { Options, SitemapConfig } from './lib/options.js';
+export {
+  Options,
+  SitemapConfig,
+  PrerenderRouteConfig,
+  PrerenderContentDir,
+  PrerenderContentFile,
+} from './lib/options.js';
 
 declare module 'nitropack' {
   interface NitroRouteConfig {

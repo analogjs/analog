@@ -3,6 +3,7 @@
 import analog, { type PrerenderContentFile } from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
+import fs from 'node:fs';
 
 // Only run in Netlify CI
 let base = process.env['URL'] || 'http://localhost:3000';
@@ -52,7 +53,14 @@ export default defineConfig(() => {
               '/blog',
               '/about',
               '/api/rss.xml',
-              '/blog/2022-12-27-my-first-post',
+              {
+                route: '/blog/2022-12-27-my-first-post',
+                sitemap: () => {
+                  return {
+                    lastmod: '2022-12-27',
+                  };
+                },
+              },
               '/blog/my-second-post',
               '/about-me',
               '/about-you',
@@ -63,6 +71,12 @@ export default defineConfig(() => {
                     return false;
                   }
                   return `/archived/${file.attributes.slug || file.name}`;
+                },
+                sitemap: (file: PrerenderContentFile) => {
+                  console.log(file.name);
+                  return {
+                    changefreq: 'never',
+                  };
                 },
               },
             ];
