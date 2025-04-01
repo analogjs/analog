@@ -1,3 +1,9 @@
+# [1.15.0-beta.5](https://github.com/analogjs/analog/compare/v1.15.0-beta.4...v1.15.0-beta.5) (2025-04-01)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** disable internal autoImports by default ([#1665](https://github.com/analogjs/analog/issues/1665)) ([1d09c74](https://github.com/analogjs/analog/commit/1d09c74edb6f18879aaaf2d3ae9305ed7989f9b9))
+
 # [1.15.0-beta.4](https://github.com/analogjs/analog/compare/v1.15.0-beta.3...v1.15.0-beta.4) (2025-03-28)
 
 ### Features
