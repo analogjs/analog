@@ -11,3 +11,4 @@ pnpm-lock.yaml
 /.nx/workspace-data
 /packages/create-analog/template-*
 .vite-inspect
+.all-contributorsrc

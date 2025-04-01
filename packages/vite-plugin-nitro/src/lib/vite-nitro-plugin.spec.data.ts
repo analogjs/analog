@@ -29,6 +29,9 @@ export const mockNitroConfig: NitroConfig = {
   typescript: {
     generateTsConfig: false,
   },
+  imports: {
+    autoImport: false,
+  },
   rollupConfig: {
     plugins: [
       {
