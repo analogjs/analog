@@ -1,3 +1,9 @@
+# [1.15.0-beta.6](https://github.com/analogjs/analog/compare/v1.15.0-beta.5...v1.15.0-beta.6) (2025-04-01)
+
+### Features
+
+- **vite-plugin-nitro:** update nitropack to 2.11.x ([#1666](https://github.com/analogjs/analog/issues/1666)) ([8414192](https://github.com/analogjs/analog/commit/8414192db6154f62a7147fb78d6c607bada75956))
+
 # [1.15.0-beta.5](https://github.com/analogjs/analog/compare/v1.15.0-beta.4...v1.15.0-beta.5) (2025-04-01)
 
 ### Bug Fixes
