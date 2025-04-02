@@ -1,10 +1,10 @@
 // V19_X
 export const V19_X_ANALOG_JS_ROUTER = '^1.15.0';
 export const V19_X_ANALOG_JS_CONTENT = '^1.15.0';
-export const V19_X_MARKED = '^5.0.2';
-export const V19_X_MARKED_GFM_HEADING_ID = '^3.0.4';
-export const V19_X_MARKED_HIGHLIGHT = '^2.0.1';
-export const V19_X_MARKED_MANGLE = '^1.1.7';
+export const V19_X_MARKED = '^15.0.7';
+export const V19_X_MARKED_GFM_HEADING_ID = '^4.1.1';
+export const V19_X_MARKED_HIGHLIGHT = '^2.2.1';
+export const V19_X_MARKED_MANGLE = '^1.10.0';
 export const V19_X_PRISMJS = '^1.29.0';
 
 // devDependencies

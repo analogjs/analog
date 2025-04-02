@@ -130,10 +130,10 @@ describe('nx-plugin generator', () => {
       dependencies['@angular/core'],
     );
     expect(dependencies['front-matter']).toBe('^4.0.2');
-    expect(dependencies['marked']).toBe('^5.0.2');
-    expect(dependencies['marked-gfm-heading-id']).toBe('^3.1.0');
-    expect(dependencies['marked-highlight']).toBe('^2.0.1');
-    expect(dependencies['marked-mangle']).toBe('^1.1.7');
+    expect(dependencies['marked']).toBe('^15.0.7');
+    expect(dependencies['marked-gfm-heading-id']).toBe('^4.1.1');
+    expect(dependencies['marked-highlight']).toBe('^2.2.1');
+    expect(dependencies['marked-mangle']).toBe('^1.10.0');
     expect(dependencies['mermaid']).toBe('^10.2.4');
     expect(dependencies['prismjs']).toBe('^1.29.0');
 
