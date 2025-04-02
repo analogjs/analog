@@ -1,3 +1,9 @@
+## [1.15.1-beta.1](https://github.com/analogjs/analog/compare/v1.15.0...v1.15.1-beta.1) (2025-04-02)
+
+### Bug Fixes
+
+- **nx-plugin:** update marked dependencies for Nx generator/preset ([#1668](https://github.com/analogjs/analog/issues/1668)) ([2a7dba5](https://github.com/analogjs/analog/commit/2a7dba5bc90d181a7d57060c764305eb280eeae2))
+
 # [1.15.0](https://github.com/analogjs/analog/compare/v1.14.1...v1.15.0) (2025-04-01)
 
 ### Bug Fixes
