@@ -1,3 +1,9 @@
+## [1.15.1-beta.2](https://github.com/analogjs/analog/compare/v1.15.1-beta.1...v1.15.1-beta.2) (2025-04-02)
+
+### Bug Fixes
+
+- **nx-plugin:** adjust marked-mangle version ([cdad143](https://github.com/analogjs/analog/commit/cdad14326bda0ee589d8bc7d91c1e1f446309469))
+
 ## [1.15.1-beta.1](https://github.com/analogjs/analog/compare/v1.15.0...v1.15.1-beta.1) (2025-04-02)
 
 ### Bug Fixes
