@@ -29,9 +29,3 @@ zerops:
     run:
       base: static
 
-      # *optional*: setup redirects for
-      # SPA applications
-      routing:
-        redirects:
-          - from: /*
-            to: /index.html
