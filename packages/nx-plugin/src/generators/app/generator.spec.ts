@@ -133,7 +133,7 @@ describe('nx-plugin generator', () => {
     expect(dependencies['marked']).toBe('^15.0.7');
     expect(dependencies['marked-gfm-heading-id']).toBe('^4.1.1');
     expect(dependencies['marked-highlight']).toBe('^2.2.1');
-    expect(dependencies['marked-mangle']).toBe('^1.10.0');
+    expect(dependencies['marked-mangle']).toBe('^1.1.10');
     expect(dependencies['mermaid']).toBe('^10.2.4');
     expect(dependencies['prismjs']).toBe('^1.29.0');
 
