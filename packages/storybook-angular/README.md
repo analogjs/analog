@@ -1,19 +1,8 @@
----
-sidebar_position: 3
----
+# @analogjs/storybook-angular
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+Integration package for Storybook using Angular & Vite.
 
-# Using Storybook with Angular and Vite
-
-[Storybook](https://storybook.js.org) is a frontend workshop for building UI components and pages in isolation.
-
-By default, Angular and Storybook uses Webpack to build and serve the Storybook application.
-
-This guides you through the process of switching to building and serving your Storybook with Angular using Vite. This process can be applied to _any_ Angular project using Storybook.
-
-## Setting up Storybook
+## Setup
 
 If you don't have Storybook setup already, run the following command to initialize Storybook for your project:
 
@@ -27,43 +16,13 @@ Follow the provided prompts, and commit your changes.
 
 Install the Storybook Plugin for Angular and Vite. Depending on your preferred package manager, run one of the following commands:
 
-<Tabs groupId="package-manager">
-  <TabItem value="npm">
-
 ```shell
 npm install @analogjs/storybook-angular --save-dev
 ```
 
-  </TabItem>
-
-  <TabItem label="yarn" value="yarn">
-
-```shell
-yarn add @analogjs/storybook-angular --dev
-```
-
-  </TabItem>
-
-  <TabItem value="pnpm">
-
-```shell
-pnpm install @analogjs/storybook-angular -w --save-dev
-```
-
-  </TabItem>
-
-  <TabItem value="bun">
-
-```shell
-bun install @analogjs/storybook-angular --save-dev
-```
-
-  </TabItem>  
-</Tabs>
-
 ## Configuring Storybook
 
-Add the `zone.js` import to the top of your `.storybook/preview.ts` file.
+Add the `zone.js` import to the top of the `.storybook/preview.ts` file.
 
 ```ts
 import 'zone.js';
@@ -105,7 +64,7 @@ const config: StorybookConfig = {
 
 Remove the existing `webpackFinal` config function if present.
 
-Next, update the Storybook targets in the `angular.json` or `project.json`
+Next, update the Storybook builders in the `angular.json` or `project.json`.
 
 ```json
     "storybook": {
@@ -118,7 +77,7 @@ Next, update the Storybook targets in the `angular.json` or `project.json`
 
 Remove any `webpack` specific options and remove the `browserTarget` option.
 
-Add the `/storybook-static` folder to the `.gitignore` file.
+Add the `/storybook-static` folder to your `.gitignore` file.
 
 ## Running Storybook
 
@@ -164,31 +123,9 @@ If you are using `paths` in your `tsconfig.json`, support for those aliases can 
 
 First, install the `vite-tsconfig-paths` package.
 
-<Tabs groupId="package-manager">
-  <TabItem value="npm">
-
 ```shell
 npm install vite-tsconfig-paths --save-dev
 ```
-
-  </TabItem>
-
-  <TabItem label="Yarn" value="yarn">
-
-```shell
-yarn add vite-tsconfig-paths --dev
-```
-
-  </TabItem>
-
-  <TabItem value="pnpm">
-
-```shell
-pnpm install -w vite-tsconfig-paths --save-dev
-```
-
-  </TabItem>
-</Tabs>
 
 Next, add the plugin to the `plugins` array.
 

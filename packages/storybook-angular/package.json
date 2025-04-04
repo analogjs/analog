@@ -1,0 +1,99 @@
+{
+  "name": "@analogjs/storybook-angular",
+  "version": "1.16.0-beta.5",
+  "description": "Storybook Integration for Angular & Vite",
+  "keywords": [
+    "storybook",
+    "angular",
+    "vite"
+  ],
+  "homepage": "https://analogjs.org",
+  "bugs": {
+    "url": "https://github.com/analogjs/analog/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/analogjs/analog.git",
+    "directory": "packages/storybook-angular"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/brandonroberts"
+  },
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js",
+      "require": "./src/index.js"
+    },
+    "./preset": "./src/preset.js",
+    "./package.json": "./package.json",
+    "./*": "./src/*"
+  },
+  "main": "src/index.js",
+  "dependencies": {
+    "@storybook/angular": ">=8.6.0",
+    "@storybook/builder-vite": ">=8.6.0",
+    "@storybook/components": ">=8.6.0",
+    "@storybook/global": "^5.0.0",
+    "@storybook/manager-api": ">=8.6.0",
+    "@storybook/preview-api": ">=8.6.0",
+    "@storybook/theming": ">=8.6.0",
+    "fd-package-json": "^1.2.0",
+    "find-up": "^5.0.0",
+    "semver": "^7.3.7",
+    "telejson": "^7.2.0",
+    "ts-dedent": "^2.0.0",
+    "util-deprecate": "^1.0.2"
+  },
+  "peerDependencies": {
+    "@analogjs/vite-plugin-angular": ">=1.12.0 < 2.0.0",
+    "@angular-devkit/architect": ">=0.1500.0 < 0.2000.0",
+    "@angular-devkit/build-angular": ">=15.0.0 < 20.0.0",
+    "@angular-devkit/core": ">=15.0.0 < 20.0.0",
+    "@angular/animations": ">=15.0.0 < 20.0.0",
+    "@angular/cli": ">=15.0.0 < 20.0.0",
+    "@angular/common": ">=15.0.0 < 20.0.0",
+    "@angular/compiler": ">=15.0.0 < 20.0.0",
+    "@angular/compiler-cli": ">=15.0.0 < 20.0.0",
+    "@angular/core": ">=15.0.0 < 20.0.0",
+    "@angular/forms": ">=15.0.0 < 20.0.0",
+    "@angular/platform-browser": ">=15.0.0 < 20.0.0",
+    "@angular/platform-browser-dynamic": ">=15.0.0 < 20.0.0",
+    "rxjs": "^6.0.0 || ^7.4.0",
+    "storybook": ">=8.6.0",
+    "typescript": "^5.0.0",
+    "vite": "*",
+    "zone.js": ">= 0.11.1 < 1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@angular/animations": {
+      "optional": true
+    },
+    "@angular/cli": {
+      "optional": true
+    },
+    "zone.js": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "builders": "src/lib/builders.json",
+  "ng-add": {
+    "save": "devDependencies"
+  },
+  "ng-update": {
+    "packageGroup": [
+      "@analogjs/platform",
+      "@analogjs/content",
+      "@analogjs/router",
+      "@analogjs/storybook-angular",
+      "@analogjs/vite-plugin-angular",
+      "@analogjs/vite-plugin-nitro",
+      "@analogjs/vitest-angular"
+    ]
+  }
+}
