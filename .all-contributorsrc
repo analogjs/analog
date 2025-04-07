@@ -1278,6 +1278,15 @@
       "contributions": [
         "infra"
       ]
+    },
+    {
+      "login": "shannonmoeller",
+      "name": "Shannon Moeller 🧢",
+      "avatar_url": "https://avatars.githubusercontent.com/u/155164?v=4",
+      "profile": "https://shannonmoeller.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
