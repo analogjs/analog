@@ -1,7 +1,7 @@
 name: Release Test
 
 on:
-  release: 
+  release:
     types: [released, prereleased]
   workflow_dispatch:
     inputs:

@@ -28,4 +28,3 @@ zerops:
     # ==== How to run your application ====
     run:
       base: static
-
