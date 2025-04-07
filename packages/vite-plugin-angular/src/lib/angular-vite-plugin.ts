@@ -789,8 +789,8 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     if (tsCompilerOptions.compilationMode === 'partial') {
       // These options can't be false in partial mode
-      tsCompilerOptions.supportTestBed = true;
-      tsCompilerOptions.supportJitMode = true;
+      tsCompilerOptions['supportTestBed'] = true;
+      tsCompilerOptions['supportJitMode'] = true;
     }
 
     rootNames = rn.concat(analogFiles, includeFiles);
