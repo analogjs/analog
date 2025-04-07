@@ -1,3 +1,9 @@
+## [1.15.1-beta.3](https://github.com/analogjs/analog/compare/v1.15.1-beta.2...v1.15.1-beta.3) (2025-04-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** reenables test bed and jit mode for partial compilations ([#1675](https://github.com/analogjs/analog/issues/1675)) ([2d9999d](https://github.com/analogjs/analog/commit/2d9999d57798250949133ea3d75d6057d465ecad))
+
 ## [1.15.1-beta.2](https://github.com/analogjs/analog/compare/v1.15.1-beta.1...v1.15.1-beta.2) (2025-04-02)
 
 ### Bug Fixes
