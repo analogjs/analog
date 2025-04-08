@@ -22,7 +22,8 @@ type ServerOptions = Options & { routeRules?: Record<string, any> | undefined };
 
 export function devServerPlugin(options: ServerOptions): Plugin {
   const workspaceRoot = options?.workspaceRoot || process.cwd();
-  const entryServer = options.entryServer || 'src/main.server.ts';
+  const sourceRoot = options?.sourceRoot ?? 'src';
+  const entryServer = options.entryServer || `${sourceRoot}/main.server.ts`;
   const index = options.index || 'index.html';
   let config: UserConfig;
   let root: string;
@@ -49,7 +50,7 @@ export function devServerPlugin(options: ServerOptions): Plugin {
 
       return async () => {
         remove_html_middlewares(viteServer.middlewares);
-        registerDevServerMiddleware(root, viteServer);
+        registerDevServerMiddleware(root, sourceRoot, viteServer);
 
         viteServer.middlewares.use(async (req, res) => {
           let template = readFileSync(
