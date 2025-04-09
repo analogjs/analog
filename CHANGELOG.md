@@ -1,3 +1,11 @@
+# [2.0.0-alpha.8](https://github.com/analogjs/analog/compare/v2.0.0-alpha.7...v2.0.0-alpha.8) (2025-04-09)
+
+### Bug Fixes
+
+- **nx-plugin:** adjust marked-mangle version ([cdad143](https://github.com/analogjs/analog/commit/cdad14326bda0ee589d8bc7d91c1e1f446309469))
+- **nx-plugin:** update marked dependencies for Nx generator/preset ([#1668](https://github.com/analogjs/analog/issues/1668)) ([2a7dba5](https://github.com/analogjs/analog/commit/2a7dba5bc90d181a7d57060c764305eb280eeae2))
+- **vite-plugin-angular:** reenables test bed and jit mode for partial compilations ([#1675](https://github.com/analogjs/analog/issues/1675)) ([2d9999d](https://github.com/analogjs/analog/commit/2d9999d57798250949133ea3d75d6057d465ecad))
+
 # [2.0.0-alpha.7](https://github.com/analogjs/analog/compare/v2.0.0-alpha.6...v2.0.0-alpha.7) (2025-04-01)
 
 ### Bug Fixes

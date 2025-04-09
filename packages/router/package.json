@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/router",
-  "version": "2.0.0-alpha.7",
+  "version": "2.0.0-alpha.8",
   "description": "Filesystem-based routing for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -24,7 +24,7 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "peerDependencies": {
-    "@analogjs/content": "^2.0.0-alpha.7",
+    "@analogjs/content": "^2.0.0-alpha.8",
     "@angular/core": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
     "@angular/router": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
   },
