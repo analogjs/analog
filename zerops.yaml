@@ -28,10 +28,3 @@ zerops:
     # ==== How to run your application ====
     run:
       base: static
-
-      # *optional*: setup redirects for
-      # SPA applications
-      routing:
-        redirects:
-          - from: /*
-            to: /index.html

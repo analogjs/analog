@@ -65,10 +65,10 @@ export interface PluginOptions {
      * Enable experimental support for Analog file extension
      */
     supportAnalogFormat?:
-    | boolean
-    | {
-      include: string[];
-    };
+      | boolean
+      | {
+          include: string[];
+        };
     markdownTemplateTransforms?: MarkdownTemplateTransform[];
   };
   supportedBrowsers?: string[];
@@ -787,6 +787,12 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['supportTestBed'] = true;
     }
 
+    if (tsCompilerOptions.compilationMode === 'partial') {
+      // These options can't be false in partial mode
+      tsCompilerOptions['supportTestBed'] = true;
+      tsCompilerOptions['supportJitMode'] = true;
+    }
+
     rootNames = rn.concat(analogFiles, includeFiles);
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);
@@ -873,11 +879,11 @@ export function angular(options?: PluginOptions): Plugin[] {
           before: [
             ...(jit
               ? [
-                compilerCli.constructorParametersDownlevelTransform(
-                  builder.getProgram(),
-                ),
-                createJitResourceTransformer(getTypeChecker),
-              ]
+                  compilerCli.constructorParametersDownlevelTransform(
+                    builder.getProgram(),
+                  ),
+                  createJitResourceTransformer(getTypeChecker),
+                ]
               : []),
             ...pluginOptions.advanced.tsTransformers.before,
           ],
