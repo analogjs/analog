@@ -787,6 +787,12 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['supportTestBed'] = true;
     }
 
+    if (tsCompilerOptions.compilationMode === 'partial') {
+      // These options can't be false in partial mode
+      tsCompilerOptions['supportTestBed'] = true;
+      tsCompilerOptions['supportJitMode'] = true;
+    }
+
     rootNames = rn.concat(analogFiles, includeFiles);
     compilerOptions = tsCompilerOptions;
     host = ts.createIncrementalCompilerHost(compilerOptions);

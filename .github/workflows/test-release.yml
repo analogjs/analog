@@ -1,6 +1,8 @@
 name: Release Test
 
 on:
+  release:
+    types: [released, prereleased]
   workflow_dispatch:
     inputs:
       analog_build_tag:
