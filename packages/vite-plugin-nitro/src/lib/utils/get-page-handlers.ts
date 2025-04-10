@@ -6,6 +6,7 @@ import { normalizePath } from 'vite';
 
 type GetHandlersArgs = {
   workspaceRoot: string;
+  sourceRoot: string;
   rootDir: string;
   additionalPagesDirs?: string[];
   hasAPIDir?: boolean;
@@ -13,6 +14,7 @@ type GetHandlersArgs = {
 
 export function getPageHandlers({
   workspaceRoot,
+  sourceRoot,
   rootDir,
   additionalPagesDirs,
   hasAPIDir,
@@ -21,7 +23,7 @@ export function getPageHandlers({
 
   const endpointFiles: string[] = fg.sync(
     [
-      `${root}/src/app/pages/**/*.server.ts`,
+      `${root}/${sourceRoot}/app/pages/**/*.server.ts`,
       ...(additionalPagesDirs || []).map(
         (dir) => `${workspaceRoot}${dir}/**/*.server.ts`,
       ),
