@@ -1,3 +1,9 @@
+# [1.16.0-beta.1](https://github.com/analogjs/analog/compare/v1.15.1...v1.16.0-beta.1) (2025-04-10)
+
+### Features
+
+- **vite-plugin-nitro:** make source root configurable/optional ([#1681](https://github.com/analogjs/analog/issues/1681)) ([6477173](https://github.com/analogjs/analog/commit/6477173e7b4ab3759421b96bbd4c6df1aea25b05))
+
 ## [1.15.1](https://github.com/analogjs/analog/compare/v1.15.0...v1.15.1) (2025-04-09)
 
 ### Bug Fixes
