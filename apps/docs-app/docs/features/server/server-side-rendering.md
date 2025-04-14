@@ -29,7 +29,7 @@ For more information about externals with SSR, check out the [Vite documentation
 
 ## Hybrid Rendering with Client-Only Routes
 
-SSR is enabled by default. For a hybrid approach, you can specific some routes to only be rendered client-side, and not be server side rendered. This is done through the `routeRules` configuration object by specifying an `ssr` option.
+SSR is enabled by default. For a hybrid approach, you can specify certain routes to only be rendered client-side, and not be server side rendered. This is done through the `routeRules` configuration object by specifying an `ssr` option.
 
 ```ts
 import { defineConfig } from 'vite';
