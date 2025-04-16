@@ -1,3 +1,9 @@
+# [1.16.0-beta.2](https://github.com/analogjs/analog/compare/v1.16.0-beta.1...v1.16.0-beta.2) (2025-04-16)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** fix behavior when opting out of prerendering ([#1688](https://github.com/analogjs/analog/issues/1688)) ([aa7f02a](https://github.com/analogjs/analog/commit/aa7f02abc457d2d8d7a2af97b4fb1847ebb0ae19))
+
 # [1.16.0-beta.1](https://github.com/analogjs/analog/compare/v1.15.1...v1.16.0-beta.1) (2025-04-10)
 
 ### Features
