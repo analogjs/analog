@@ -25,9 +25,10 @@ export async function buildServer(
   if (
     options?.ssr &&
     nitroConfig?.prerender?.routes &&
-    nitroConfig?.prerender?.routes.find((route) => route === '/')
+    (nitroConfig?.prerender?.routes.find((route) => route === '/') ||
+      nitroConfig?.prerender?.routes?.length === 0)
   ) {
-    // Remove the root index.html so it can be replaced with the prerendered version
+    // Remove the root index.html
     if (existsSync(`${nitroConfig?.output?.publicDir}/index.html`)) {
       unlinkSync(`${nitroConfig?.output?.publicDir}/index.html`);
     }
