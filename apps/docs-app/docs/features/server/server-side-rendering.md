@@ -29,7 +29,7 @@ For more information about externals with SSR, check out the [Vite documentation
 
 ## Hybrid Rendering with Client-Only Routes
 
-SSR is enabled by default. For a hybrid approach, you can specific some routes to only be rendered client-side, and not be server side rendered. This is done through the `routeRules` configuration object by specifying an `ssr` option.
+SSR is enabled by default. For a hybrid approach, you can specify some routes to only be rendered client-side, and not be server side rendered. This is done through the `routeRules` configuration object by specifying an `ssr` option.
 
 ```ts
 import { defineConfig } from 'vite';
@@ -94,24 +94,18 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-You can opt out of prerendering by passing an empty array of routes and disabling prerender on the root route.
+You can opt-out of prerendering altogether by passing an empty array of routes.
 
 ```js
 import { defineConfig } from 'vite';
 import analog from '@analogjs/platform';
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...other config
   plugins: [
     analog({
       ssr: true,
-      nitro: {
-        routeRules: {
-          '/': {
-            prerender: false,
-          },
-        },
-      },
       prerender: {
         routes: async () => {
           return [];
