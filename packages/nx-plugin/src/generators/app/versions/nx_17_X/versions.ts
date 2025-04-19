@@ -17,8 +17,9 @@ export const V17_X_MARKED_HIGHLIGHT = '^2.0.1';
 export const V17_X_MARKED_MANGLE = '^1.1.7';
 export const V17_X_MERMAID = '^10.2.4';
 export const V17_X_PRISMJS = '^1.29.0';
-export const V17_X_TAILWINDCSS = '^3.0.2';
-export const V17_X_POSTCSS = '^8.4.5';
+export const V17_X_TAILWINDCSS = '^4.1.4';
+export const V17_X_TAILWINDCSS_VITE = '^4.1.4';
+export const V17_X_POSTCSS = '^8.5.3';
 export const V17_X_AUTOPREFIXER = '^10.4.0';
 
 // devDependencies
