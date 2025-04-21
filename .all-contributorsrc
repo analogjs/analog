@@ -1287,6 +1287,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "vsternbach",
+      "name": "Vlad Sternbach",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3830668?v=4",
+      "profile": "https://github.com/vsternbach",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
