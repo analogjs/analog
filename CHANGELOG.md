@@ -1,3 +1,9 @@
+# [1.16.0-beta.3](https://github.com/analogjs/analog/compare/v1.16.0-beta.2...v1.16.0-beta.3) (2025-04-21)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** check for compiler when using JiT and HMR ([#1693](https://github.com/analogjs/analog/issues/1693)) ([0173944](https://github.com/analogjs/analog/commit/01739448589da6100a3b9cfd4274174db3f1050e))
+
 # [1.16.0-beta.2](https://github.com/analogjs/analog/compare/v1.16.0-beta.1...v1.16.0-beta.2) (2025-04-16)
 
 ### Bug Fixes
