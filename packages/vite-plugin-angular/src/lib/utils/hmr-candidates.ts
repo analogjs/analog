@@ -138,7 +138,7 @@ export function analyzeFileUpdates(
       }
 
       // Check for component class nodes
-      const meta = compiler.getMeta(updatedNode);
+      const meta = compiler?.getMeta(updatedNode);
       if (
         meta?.decorator &&
         (meta as { isComponent?: boolean }).isComponent === true
