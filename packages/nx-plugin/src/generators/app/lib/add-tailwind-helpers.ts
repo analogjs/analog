@@ -236,7 +236,7 @@ export function addTailwindConfigFile(
   if (tailwindInstalledVersion === '3') {
     generateFiles(
       tree,
-      joinPathFragments(__dirname, '..', 'files', 'tailwind/latest'),
+      joinPathFragments(__dirname, '..', 'files', 'tailwind/v3'),
       project.root,
       {
         relativeSourceRoot: relative(project.root, project.sourceRoot),
