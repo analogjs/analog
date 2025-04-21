@@ -31,7 +31,8 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
               ...config[curr],
               headers: {
                 ...config[curr].headers,
-                'x-analog-no-ssr': !config[curr].ssr ? 'true' : undefined,
+                'x-analog-no-ssr':
+                  config[curr]?.ssr === false ? 'true' : undefined,
               } as any,
             },
           };
