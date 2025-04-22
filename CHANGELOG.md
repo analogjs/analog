@@ -1,3 +1,9 @@
+# [1.16.0-beta.4](https://github.com/analogjs/analog/compare/v1.16.0-beta.3...v1.16.0-beta.4) (2025-04-22)
+
+### Bug Fixes
+
+- **platform:** align logic for determining client only rendering ([#1695](https://github.com/analogjs/analog/issues/1695)) ([1f7f560](https://github.com/analogjs/analog/commit/1f7f5601f43e4a9dd99c4783a20eaeb2b55b83a3))
+
 # [1.16.0-beta.3](https://github.com/analogjs/analog/compare/v1.16.0-beta.2...v1.16.0-beta.3) (2025-04-21)
 
 ### Bug Fixes
