@@ -74,11 +74,8 @@ export function devServerPlugin(options: ServerOptions): Plugin {
 
           try {
             let result: string | Response;
-            // Check for route rules explicitly disabling prerender
-            if (
-              _getRouteRules(req.originalUrl as string).prerender === false ||
-              _getRouteRules(req.originalUrl as string).ssr === false
-            ) {
+            // Check for route rules explicitly disabling SSR
+            if (_getRouteRules(req.originalUrl as string).ssr === false) {
               result = template;
             } else {
               const entryServer = (
