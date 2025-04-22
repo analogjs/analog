@@ -1,3 +1,9 @@
+# [1.16.0-beta.5](https://github.com/analogjs/analog/compare/v1.16.0-beta.4...v1.16.0-beta.5) (2025-04-22)
+
+### Features
+
+- **nx-plugin:** update templates to use Tailwind version 4.x ([#1692](https://github.com/analogjs/analog/issues/1692)) ([2e561ed](https://github.com/analogjs/analog/commit/2e561ed41e2be22893115455a2f57f6082856a58))
+
 # [1.16.0-beta.4](https://github.com/analogjs/analog/compare/v1.16.0-beta.3...v1.16.0-beta.4) (2025-04-22)
 
 ### Bug Fixes
