@@ -29,7 +29,7 @@ export function normalizeOptions(
 
 export function detectTailwindInstalledVersion(
   tree: Tree,
-): '2' | '3' | undefined {
+): '2' | '3' | '4' | undefined {
   const { dependencies, devDependencies } = readJson(tree, 'package.json');
   const tailwindVersion =
     dependencies?.tailwindcss ?? devDependencies?.tailwindcss;
@@ -44,20 +44,22 @@ export function detectTailwindInstalledVersion(
       `The Tailwind CSS version "${tailwindVersion}" is not supported. Please upgrade to v2.0.0 or higher.`,
     );
   }
-
-  return lt(version, '3.0.0') ? '2' : '3';
+  if (lt(version, '3.0.0')) {
+    return '2';
+  }
+  return lt(version, '4.0.0') ? '3' : '4';
 }
 
 export function addTailwindRequiredPackages(tree: Tree): GeneratorCallback {
   const pkgVersions = getTailwindDependencies();
   return addDependenciesToPackageJson(
     tree,
-    {},
     {
-      autoprefixer: pkgVersions.autoprefixer,
       postcss: pkgVersions.postcss,
       tailwindcss: pkgVersions.tailwindcss,
+      '@tailwindcss/vite': pkgVersions['@tailwindcss/vite'],
     },
+    {},
   );
 }
 
@@ -66,6 +68,8 @@ export function updateApplicationStyles(
   options: NormalizedGeneratorOptions,
   project: ProjectConfiguration,
 ): void {
+  const tailwindInstalledVersion = detectTailwindInstalledVersion(tree);
+
   let stylesEntryPoint = options.stylesEntryPoint;
 
   if (stylesEntryPoint && !tree.exists(stylesEntryPoint)) {
@@ -86,14 +90,35 @@ export function updateApplicationStyles(
   }
 
   const stylesEntryPointContent = tree.read(stylesEntryPoint, 'utf-8');
-  tree.write(
-    stylesEntryPoint,
-    stripIndents`@tailwind base;
-    @tailwind components;
-    @tailwind utilities;
 
-    ${stylesEntryPointContent}`,
-  );
+  if (tailwindInstalledVersion < '4') {
+    tree.write(
+      stylesEntryPoint,
+      stripIndents`@tailwind base;
+      @tailwind components;
+      @tailwind utilities;
+
+      ${stylesEntryPointContent}`,
+    );
+  } else {
+    if (!isStyleEntryPointCss(stylesEntryPoint)) {
+      throw new Error(
+        `Tailwind CSS v4 is not compatible with any css preprocessors like sass or less. Please use a css file as the styles entry point.`,
+      );
+    }
+
+    tree.write(
+      stylesEntryPoint,
+      stripIndents`@import "tailwindcss";
+
+
+      ${stylesEntryPointContent}`,
+    );
+  }
+}
+
+function isStyleEntryPointCss(stylesEntryPoint) {
+  return stylesEntryPoint.endsWith('.css');
 }
 
 function findStylesEntryPoint(
@@ -208,14 +233,16 @@ export function addTailwindConfigFile(
     );
     return;
   }
-
-  generateFiles(
-    tree,
-    joinPathFragments(__dirname, '..', 'files', 'tailwind/latest'),
-    project.root,
-    {
-      relativeSourceRoot: relative(project.root, project.sourceRoot),
-      template: '',
-    },
-  );
+  if (tailwindInstalledVersion === '3') {
+    generateFiles(
+      tree,
+      joinPathFragments(__dirname, '..', 'files', 'tailwind/v3'),
+      project.root,
+      {
+        relativeSourceRoot: relative(project.root, project.sourceRoot),
+        template: '',
+      },
+    );
+    return;
+  }
 }

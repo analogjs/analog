@@ -211,8 +211,6 @@ async function init() {
   }
 
   if (!skipTailwind) {
-    addTailwindConfig(write, filesDir);
-    addPostCssConfig(write, filesDir);
     addTailwindDirectives(write, filesDir);
   }
 
@@ -230,7 +228,7 @@ async function init() {
   }
 
   if (!skipTailwind) {
-    addTailwindDevDependencies(pkg);
+    addTailwindDependencies(pkg);
   }
 
   if (pkgManager === 'yarn') {
@@ -370,27 +368,10 @@ function addTailwindDirectives(write, filesDir) {
   );
 }
 
-function addPostCssConfig(write, filesDir) {
-  write(
-    'postcss.config.cjs',
-    fs.readFileSync(path.join(filesDir, `postcss.config.cjs`), 'utf-8'),
-  );
-}
-
-function addTailwindConfig(write, filesDir) {
-  write(
-    'tailwind.config.ts',
-    fs.readFileSync(path.join(filesDir, `tailwind.config.ts`), 'utf-8'),
-  );
-}
-
-function addTailwindDevDependencies(pkg) {
-  ['tailwindcss@^3.3.1', 'postcss@^8.4.21', 'autoprefixer@^10.4.14'].forEach(
-    (packageName) => {
-      const [name, version] = packageName.split('@');
-      pkg.devDependencies[name] = version;
-    },
-  );
+function addTailwindDependencies(pkg) {
+  pkg.dependencies['tailwindcss'] = '^4.1.4';
+  pkg.dependencies['postcss'] = '^8.5.3';
+  pkg.dependencies['@tailwindcss/vite'] = '^4.1.4';
 }
 
 function addYarnDevDependencies(pkg, template) {
