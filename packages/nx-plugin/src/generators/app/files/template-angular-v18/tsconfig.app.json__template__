@@ -9,7 +9,8 @@
   "files": ["src/main.ts", "src/main.server.ts"],
   "include": [
     "src/**/*.d.ts",
-    "src/app/pages/**/*.page.ts"
+    "src/app/pages/**/*.page.ts",
+    "src/server/middleware/**/*.ts"
   ],
   "exclude": ["**/*.test.ts", "**/*.spec.ts"]
 }
