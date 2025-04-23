@@ -1,3 +1,9 @@
+# [1.16.0-beta.6](https://github.com/analogjs/analog/compare/v1.16.0-beta.5...v1.16.0-beta.6) (2025-04-23)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** remove compressed index files for SSR-only rendering ([#1700](https://github.com/analogjs/analog/issues/1700)) ([06419c1](https://github.com/analogjs/analog/commit/06419c108f7753a50990e85ee28995c50affc079))
+
 # [1.16.0-beta.5](https://github.com/analogjs/analog/compare/v1.16.0-beta.4...v1.16.0-beta.5) (2025-04-22)
 
 ### Features
