@@ -1,0 +1,38 @@
+{
+  "name": "storybook-angular",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "tags": ["type:release"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+
+      "options": {
+        "outputPath": "node_modules/@analogjs/storybook-angular",
+        "main": "packages/storybook-angular/src/index.ts",
+        "tsConfig": "packages/storybook-angular/tsconfig.lib.json",
+        "clean": true,
+        "assets": [
+          "packages/storybook-angular/*.md",
+          {
+            "input": "./packages/storybook-angular/src",
+            "glob": "**/!(*.ts)",
+            "output": "./src"
+          },
+          {
+            "input": "./packages/storybook-angular/src",
+            "glob": "**/*.d.ts",
+            "output": "./src"
+          }
+        ]
+      }
+    },
+    "tests": {
+      "dependsOn": ["^build"],
+      "executor": "@nx/vite:test",
+      "options": {
+        "passWithNoTests": true
+      }
+    }
+  }
+}

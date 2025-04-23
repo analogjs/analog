@@ -41,6 +41,7 @@
       "@analogjs/platform",
       "@analogjs/content",
       "@analogjs/router",
+      "@analogjs/storybook-angular",
       "@analogjs/vite-plugin-angular",
       "@analogjs/vite-plugin-nitro",
       "@analogjs/vitest-angular"
