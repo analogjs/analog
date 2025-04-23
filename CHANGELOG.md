@@ -1,3 +1,9 @@
+# [1.16.0-beta.8](https://github.com/analogjs/analog/compare/v1.16.0-beta.7...v1.16.0-beta.8) (2025-04-23)
+
+### Bug Fixes
+
+- **nx-plugin:** add middleware include to app templates, update docs ([#1701](https://github.com/analogjs/analog/issues/1701)) ([1ff4ebb](https://github.com/analogjs/analog/commit/1ff4ebb1f0dee0857ee5f4f86a0c18962f731b57))
+
 # [1.16.0-beta.7](https://github.com/analogjs/analog/compare/v1.16.0-beta.6...v1.16.0-beta.7) (2025-04-23)
 
 ### Features
