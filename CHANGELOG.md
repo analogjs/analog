@@ -1,3 +1,9 @@
+# [1.16.0-beta.7](https://github.com/analogjs/analog/compare/v1.16.0-beta.6...v1.16.0-beta.7) (2025-04-23)
+
+### Features
+
+- introduce @analogjs/storybook-angular package ([#1699](https://github.com/analogjs/analog/issues/1699)) ([f0c5760](https://github.com/analogjs/analog/commit/f0c5760226fe6c80b63e6c521d2ecaacdb2f3b86))
+
 # [1.16.0-beta.6](https://github.com/analogjs/analog/compare/v1.16.0-beta.5...v1.16.0-beta.6) (2025-04-23)
 
 ### Bug Fixes
