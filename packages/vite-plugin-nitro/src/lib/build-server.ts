@@ -28,10 +28,16 @@ export async function buildServer(
     (nitroConfig?.prerender?.routes.find((route) => route === '/') ||
       nitroConfig?.prerender?.routes?.length === 0)
   ) {
-    // Remove the root index.html
-    if (existsSync(`${nitroConfig?.output?.publicDir}/index.html`)) {
-      unlinkSync(`${nitroConfig?.output?.publicDir}/index.html`);
-    }
+    const indexFileExts = ['', '.br', '.gz'];
+
+    indexFileExts.forEach((fileExt) => {
+      // Remove the root index.html(.br|.gz) files
+      const indexFilePath = `${nitroConfig?.output?.publicDir}/index.html${fileExt ? `${fileExt}` : ''}`;
+
+      if (existsSync(indexFilePath)) {
+        unlinkSync(indexFilePath);
+      }
+    });
   }
 
   if (
