@@ -24,7 +24,11 @@ export function updateAppTsConfig(
       tree,
       tsconfigPath,
       (json) => {
-        json.include = [...json.include, 'src/app/pages/**/*.page.ts'];
+        json.include = [
+          ...json.include,
+          'src/app/pages/**/*.page.ts',
+          'src/server/middleware/**/*.ts',
+        ];
 
         return json;
       },
