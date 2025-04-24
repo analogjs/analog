@@ -1,3 +1,9 @@
+# [1.16.0-beta.13](https://github.com/analogjs/analog/compare/v1.16.0-beta.12...v1.16.0-beta.13) (2025-04-24)
+
+### Features
+
+- **content:** add ability to pass extensions to marked instance ([#1707](https://github.com/analogjs/analog/issues/1707)) ([47d1598](https://github.com/analogjs/analog/commit/47d15989fdcfa3a9dfa072ebe5925381b6812cbb))
+
 # [1.16.0-beta.12](https://github.com/analogjs/analog/compare/v1.16.0-beta.11...v1.16.0-beta.12) (2025-04-24)
 
 ### Bug Fixes
