@@ -1,3 +1,9 @@
+# [1.16.0-beta.14](https://github.com/analogjs/analog/compare/v1.16.0-beta.13...v1.16.0-beta.14) (2025-04-24)
+
+### Bug Fixes
+
+- **platform:** allow marked extensions to add new renderers ([#1708](https://github.com/analogjs/analog/issues/1708)) ([a0bfb70](https://github.com/analogjs/analog/commit/a0bfb705c097f12bfd13f46f8da516c1eff0033c))
+
 # [1.16.0-beta.13](https://github.com/analogjs/analog/compare/v1.16.0-beta.12...v1.16.0-beta.13) (2025-04-24)
 
 ### Features
