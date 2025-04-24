@@ -37,6 +37,7 @@ export const viteFinal: NonNullable<StorybookConfig['viteFinal']> = async (
     optimizeDeps: {
       include: [
         '@storybook/angular/dist/client/index.js',
+        '@analogjs/storybook-angular',
         '@angular/compiler',
         '@angular/platform-browser/animations',
         '@storybook/addon-docs/angular',
