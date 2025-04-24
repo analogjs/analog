@@ -1,3 +1,9 @@
+# [1.16.0-beta.12](https://github.com/analogjs/analog/compare/v1.16.0-beta.11...v1.16.0-beta.12) (2025-04-24)
+
+### Bug Fixes
+
+- **storybook-angular:** adjust vite peer dep ([17e23d5](https://github.com/analogjs/analog/commit/17e23d5bd75d56e6f5957ff7509c649ad807a226))
+
 # [1.16.0-beta.11](https://github.com/analogjs/analog/compare/v1.16.0-beta.10...v1.16.0-beta.11) (2025-04-24)
 
 ### Bug Fixes
