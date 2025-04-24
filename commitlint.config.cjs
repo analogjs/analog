@@ -13,6 +13,7 @@ module.exports = {
         'create-analog',
         'astro-angular',
         'router',
+        'storybook-angular',
         'platform',
         'content',
         'nx-plugin',
