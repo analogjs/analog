@@ -1,3 +1,9 @@
+# [1.16.0-beta.9](https://github.com/analogjs/analog/compare/v1.16.0-beta.8...v1.16.0-beta.9) (2025-04-24)
+
+### Bug Fixes
+
+- **storybook-angular:** only include explicit deps in package.json ([#1703](https://github.com/analogjs/analog/issues/1703)) ([63ef9fe](https://github.com/analogjs/analog/commit/63ef9fec6a9b66637192ec0cf4e30820e0258e43))
+
 # [1.16.0-beta.8](https://github.com/analogjs/analog/compare/v1.16.0-beta.7...v1.16.0-beta.8) (2025-04-23)
 
 ### Bug Fixes
