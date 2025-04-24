@@ -33,11 +33,11 @@
   },
   "main": "src/index.js",
   "dependencies": {
-    "@storybook/builder-vite": "latest || next"
+    "@storybook/builder-vite": ">=8.6.0 || next"
   },
   "peerDependencies": {
     "@storybook/angular": ">=8.6.0 || next",
-    "@analogjs/vite-plugin-angular": ">=1.12.0 < 2.0.0",
+    "@analogjs/vite-plugin-angular": ">=1.12.0 < 2.0.0 || beta",
     "storybook": ">=8.6.0 || next",
     "vite": "*"
   },

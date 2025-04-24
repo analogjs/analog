@@ -42,7 +42,6 @@ export const viteFinal: NonNullable<StorybookConfig['viteFinal']> = async (
         '@angular/platform-browser/animations',
         '@storybook/addon-docs/angular',
         'react/jsx-dev-runtime',
-        '@storybook/blocks',
         'tslib',
         'zone.js',
       ],
