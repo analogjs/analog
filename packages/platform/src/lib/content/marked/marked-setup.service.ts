@@ -1,4 +1,4 @@
-import { marked, Parser } from 'marked';
+import { marked, Parser, MarkedExtension } from 'marked';
 import { gfmHeadingId } from 'marked-gfm-heading-id';
 import { mangle } from 'marked-mangle';
 
@@ -12,34 +12,43 @@ export class MarkedSetupService {
     private readonly options?: WithMarkedOptions,
     private readonly highlighter?: MarkedContentHighlighter,
   ) {
-    const renderer = new marked.Renderer();
-    const parser = new Parser({ renderer });
-    renderer.code = ({ text, lang }) => {
-      // Let's do a language based detection like on GitHub
-      // So we can still have non-interpreted mermaid code
-      if (lang === 'mermaid') {
-        return '<pre class="mermaid">' + text + '</pre>';
-      }
+    const analogMarkedExtension: MarkedExtension = {
+      pedantic: false,
+      gfm: true,
+      breaks: false,
+      renderer: {
+        code({ text, lang }) {
+          // Let's do a language based detection like on GitHub
+          // So we can still have non-interpreted mermaid code
+          if (lang === 'mermaid') {
+            return '<pre class="mermaid">' + text + '</pre>';
+          }
 
-      if (!lang) {
-        return '<pre><code>' + text + '</code></pre>';
-      }
+          if (!lang) {
+            return '<pre><code>' + text + '</code></pre>';
+          }
 
-      if (this.highlighter?.augmentCodeBlock) {
-        return this.highlighter?.augmentCodeBlock(text, lang);
-      }
+          if (highlighter?.augmentCodeBlock) {
+            return highlighter?.augmentCodeBlock(text, lang);
+          }
 
-      return `<pre class="language-${lang}"><code class="language-${lang}">${text}</code></pre>`;
+          return `<pre class="language-${lang}"><code class="language-${lang}">${text}</code></pre>`;
+        },
+        codespan({ text }) {
+          return `<code>${text}</code>`;
+        },
+        paragraph({ tokens }) {
+          const text = this.parser.parseInline(tokens);
+          return `<p>${text}</p>`;
+        },
+      },
     };
 
-    renderer.codespan = ({ text }) => `<code>${text}</code>`;
-
-    renderer.paragraph = ({ tokens }) => {
-      const text = parser.parseInline(tokens);
-      return `<p>${text}</p>`;
-    };
-
-    const extensions = [gfmHeadingId(), ...(options?.extensions || [])];
+    const extensions = [
+      analogMarkedExtension,
+      gfmHeadingId(),
+      ...(options?.extensions || []),
+    ];
 
     if (this.options?.mangle) {
       extensions.push(mangle());
@@ -49,12 +58,7 @@ export class MarkedSetupService {
       extensions.push(this.highlighter.getHighlightExtension());
     }
 
-    marked.use(...extensions, {
-      renderer,
-      pedantic: false,
-      gfm: true,
-      breaks: false,
-    });
+    marked.use(...extensions);
 
     this.marked = marked;
   }
