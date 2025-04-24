@@ -39,7 +39,7 @@ export class MarkedSetupService {
       return `<p>${text}</p>`;
     };
 
-    const extensions = [gfmHeadingId()];
+    const extensions = [gfmHeadingId(), ...(options?.extensions || [])];
 
     if (this.options?.mangle) {
       extensions.push(mangle());
