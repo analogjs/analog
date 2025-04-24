@@ -1,3 +1,9 @@
+# [1.16.0-beta.11](https://github.com/analogjs/analog/compare/v1.16.0-beta.10...v1.16.0-beta.11) (2025-04-24)
+
+### Bug Fixes
+
+- **storybook-angular:** adjust peer deps versions ([0042da6](https://github.com/analogjs/analog/commit/0042da6955e170f6f9e2ee6865e0b72525318366))
+
 # [1.16.0-beta.10](https://github.com/analogjs/analog/compare/v1.16.0-beta.9...v1.16.0-beta.10) (2025-04-24)
 
 ### Bug Fixes
