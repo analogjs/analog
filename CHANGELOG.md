@@ -1,3 +1,9 @@
+# [1.16.0-beta.15](https://github.com/analogjs/analog/compare/v1.16.0-beta.14...v1.16.0-beta.15) (2025-04-28)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** allow the plugin to be imported with commonjs/require ([#1710](https://github.com/analogjs/analog/issues/1710)) ([84cb758](https://github.com/analogjs/analog/commit/84cb758f6bb256fa5c9875a6bdf5564bcbc80ca5))
+
 # [1.16.0-beta.14](https://github.com/analogjs/analog/compare/v1.16.0-beta.13...v1.16.0-beta.14) (2025-04-24)
 
 ### Bug Fixes
