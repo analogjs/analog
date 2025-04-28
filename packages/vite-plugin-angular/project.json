@@ -21,7 +21,7 @@
           "packages/vite-plugin-angular/esbuild.ts",
           "packages/vite-plugin-angular/setup-vitest.ts"
         ],
-        "generateExportsField": true
+        "generateExportsField": false
       }
     },
     "test": {
