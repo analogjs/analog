@@ -67,7 +67,7 @@ Add the `zone.js` import to the top of your `.storybook/preview.ts` file.
 
 ```ts
 import 'zone.js';
-import { applicationConfig, type Preview } from '@storybook/angular';
+import { applicationConfig, type Preview } from '@analogjs/storybook-angular';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 const preview: Preview = {
@@ -102,6 +102,8 @@ const config: StorybookConfig = {
   },
 };
 ```
+
+If you have any global styles, import them directly in the `.storybook/preview.ts` file.
 
 Remove the existing `webpackFinal` config function if present.
 
