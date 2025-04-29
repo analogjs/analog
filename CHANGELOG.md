@@ -1,3 +1,26 @@
+# [1.16.0](https://github.com/analogjs/analog/compare/v1.15.1...v1.16.0) (2025-04-29)
+
+### Bug Fixes
+
+- **nx-plugin:** add middleware include to app templates, update docs ([#1701](https://github.com/analogjs/analog/issues/1701)) ([1ff4ebb](https://github.com/analogjs/analog/commit/1ff4ebb1f0dee0857ee5f4f86a0c18962f731b57))
+- **platform:** align logic for determining client only rendering ([#1695](https://github.com/analogjs/analog/issues/1695)) ([1f7f560](https://github.com/analogjs/analog/commit/1f7f5601f43e4a9dd99c4783a20eaeb2b55b83a3))
+- **platform:** allow marked extensions to add new renderers ([#1708](https://github.com/analogjs/analog/issues/1708)) ([a0bfb70](https://github.com/analogjs/analog/commit/a0bfb705c097f12bfd13f46f8da516c1eff0033c))
+- **storybook-angular:** adjust peer deps versions ([0042da6](https://github.com/analogjs/analog/commit/0042da6955e170f6f9e2ee6865e0b72525318366))
+- **storybook-angular:** adjust vite peer dep ([17e23d5](https://github.com/analogjs/analog/commit/17e23d5bd75d56e6f5957ff7509c649ad807a226))
+- **storybook-angular:** move storybook to peer deps ([dc91f4b](https://github.com/analogjs/analog/commit/dc91f4be0af0dcccef4b0380b0861399e3cf185d))
+- **storybook-angular:** only include explicit deps in package.json ([#1703](https://github.com/analogjs/analog/issues/1703)) ([63ef9fe](https://github.com/analogjs/analog/commit/63ef9fec6a9b66637192ec0cf4e30820e0258e43))
+- **vite-plugin-angular:** allow the plugin to be imported with commonjs/require ([#1710](https://github.com/analogjs/analog/issues/1710)) ([84cb758](https://github.com/analogjs/analog/commit/84cb758f6bb256fa5c9875a6bdf5564bcbc80ca5))
+- **vite-plugin-angular:** check for compiler when using JiT and HMR ([#1693](https://github.com/analogjs/analog/issues/1693)) ([0173944](https://github.com/analogjs/analog/commit/01739448589da6100a3b9cfd4274174db3f1050e))
+- **vite-plugin-nitro:** fix behavior when opting out of prerendering ([#1688](https://github.com/analogjs/analog/issues/1688)) ([aa7f02a](https://github.com/analogjs/analog/commit/aa7f02abc457d2d8d7a2af97b4fb1847ebb0ae19))
+- **vite-plugin-nitro:** remove compressed index files for SSR-only rendering ([#1700](https://github.com/analogjs/analog/issues/1700)) ([06419c1](https://github.com/analogjs/analog/commit/06419c108f7753a50990e85ee28995c50affc079))
+
+### Features
+
+- **content:** add ability to pass extensions to marked instance ([#1707](https://github.com/analogjs/analog/issues/1707)) ([47d1598](https://github.com/analogjs/analog/commit/47d15989fdcfa3a9dfa072ebe5925381b6812cbb))
+- introduce @analogjs/storybook-angular package ([#1699](https://github.com/analogjs/analog/issues/1699)) ([f0c5760](https://github.com/analogjs/analog/commit/f0c5760226fe6c80b63e6c521d2ecaacdb2f3b86))
+- **nx-plugin:** update templates to use Tailwind version 4.x ([#1692](https://github.com/analogjs/analog/issues/1692)) ([2e561ed](https://github.com/analogjs/analog/commit/2e561ed41e2be22893115455a2f57f6082856a58))
+- **vite-plugin-nitro:** make source root configurable/optional ([#1681](https://github.com/analogjs/analog/issues/1681)) ([6477173](https://github.com/analogjs/analog/commit/6477173e7b4ab3759421b96bbd4c6df1aea25b05))
+
 # [1.16.0-beta.15](https://github.com/analogjs/analog/compare/v1.16.0-beta.14...v1.16.0-beta.15) (2025-04-28)
 
 ### Bug Fixes
