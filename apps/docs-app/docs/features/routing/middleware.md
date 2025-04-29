@@ -13,6 +13,19 @@ src/
         └── auth.ts
 ```
 
+Also, if not present, add the middleware files to `include` array in the `tsconfig.app.json`.
+
+```json
+{
+  // other config ...
+  "include": [
+    "src/**/*.d.ts",
+    "src/app/pages/**/*.page.ts",
+    "src/server/middleware/**/*.ts" <----
+  ],
+}
+```
+
 Middleware is defined using the `defineEventHandler` function.
 
 ```ts
@@ -50,3 +63,25 @@ export default defineEventHandler(async (event) => {
   }
 });
 ```
+
+## Accessing Environment Variables
+
+Use the `process.env` global to access environment variables inside the middleware functions. Both server-only and publicly accessible environment variables defined in `.env` files can be read from the middleware.
+
+```ts
+import { defineEventHandler, getRequestURL } from 'h3';
+
+export default defineEventHandler((event) => {
+  console.log('Path:', getRequestURL(event).pathname);
+  console.log(
+    'Server Only Environment Variable:',
+    process.env['SERVER_ONLY_VARIABLE'],
+  );
+  console.log(
+    'Public Environment Variable:',
+    process.env['VITE_EXAMPLE_VARIABLE'],
+  );
+});
+```
+
+Learn more about [environment variables](https://vite.dev/guide/env-and-mode.html#env-variables) in the Vite documentation.

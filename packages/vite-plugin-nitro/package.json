@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vite-plugin-nitro",
-  "version": "1.15.1",
+  "version": "1.16.0-beta.15",
   "description": "A Vite plugin for adding a nitro API server",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -39,6 +39,7 @@
       "@analogjs/platform",
       "@analogjs/content",
       "@analogjs/router",
+      "@analogjs/storybook-angular",
       "@analogjs/vite-plugin-angular",
       "@analogjs/vite-plugin-nitro",
       "@analogjs/vitest-angular"

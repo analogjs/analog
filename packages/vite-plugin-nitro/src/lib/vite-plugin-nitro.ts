@@ -32,6 +32,7 @@ const __dirname = dirname(__filename);
 
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  const sourceRoot = options?.sourceRoot ?? 'src';
   let isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const baseURL = process.env['NITRO_APP_BASE_URL'] || '';
   const prefix = baseURL ? baseURL.substring(0, baseURL.length - 1) : '';
@@ -72,7 +73,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         const rootDir = relative(workspaceRoot, config.root || '.') || '.';
         hasAPIDir = existsSync(
-          resolve(workspaceRoot, rootDir, 'src/server/routes/api'),
+          resolve(workspaceRoot, rootDir, `${sourceRoot}/server/routes/api`),
         );
         const buildPreset =
           process.env['BUILD_PRESET'] ??
@@ -80,6 +81,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         const pageHandlers = getPageHandlers({
           workspaceRoot,
+          sourceRoot,
           rootDir,
           additionalPagesDirs: options?.additionalPagesDirs,
           hasAPIDir,
@@ -107,9 +109,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           preset: buildPreset,
           compatibilityDate: '2024-11-19',
           logLevel: nitroOptions?.logLevel || 0,
-          srcDir: normalizePath(`src/server`),
+          srcDir: normalizePath(`${sourceRoot}/server`),
           scanDirs: [
-            normalizePath(`${rootDir}/src/server`),
+            normalizePath(`${rootDir}/${sourceRoot}/server`),
             ...(options?.additionalAPIDirs || []).map((dir) =>
               normalizePath(`${workspaceRoot}${dir}`),
             ),
@@ -390,7 +392,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 rollupOptions: {
                   input:
                     options?.entryServer ||
-                    resolve(workspaceRoot, rootDir, 'src/main.server.ts'),
+                    resolve(
+                      workspaceRoot,
+                      rootDir,
+                      `${sourceRoot}/main.server.ts`,
+                    ),
                 },
                 outDir:
                   options?.ssrBuildDir ||
@@ -402,10 +408,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             sharedPlugins: true,
             buildApp: async (builder) => {
               environmentBuild = true;
-              await Promise.all([
-                builder.build(builder.environments['client']),
-                builder.build(builder.environments['ssr']),
-              ]);
+              const builds = [builder.build(builder.environments['client'])];
+
+              if (options?.ssr || nitroConfig.prerender?.routes?.length) {
+                builds.push(builder.build(builder.environments['ssr']));
+              }
+
+              await Promise.all(builds);
               await buildServer(options, nitroConfig);
 
               if (

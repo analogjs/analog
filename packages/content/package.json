@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/content",
-  "version": "1.15.1",
+  "version": "1.16.0-beta.15",
   "description": "Content Rendering for Analog",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -58,6 +58,7 @@
       "@analogjs/platform",
       "@analogjs/content",
       "@analogjs/router",
+      "@analogjs/storybook-angular",
       "@analogjs/vite-plugin-angular",
       "@analogjs/vite-plugin-nitro",
       "@analogjs/vitest-angular"

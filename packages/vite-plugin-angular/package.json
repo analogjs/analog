@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vite-plugin-angular",
-  "version": "1.15.1",
+  "version": "1.16.0-beta.15",
   "description": "Vite Plugin for Angular",
   "type": "module",
   "keywords": [
@@ -44,10 +44,22 @@
       "@analogjs/platform",
       "@analogjs/content",
       "@analogjs/router",
+      "@analogjs/storybook-angular",
       "@analogjs/vite-plugin-angular",
       "@analogjs/vite-plugin-nitro",
       "@analogjs/vitest-angular"
     ],
     "migrations": "./migrations/migration.json"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js",
+      "require": "./src/index.js",
+      "default": "./src/index.js"
+    },
+    "./esbuild": "./esbuild.js",
+    "./setup-vitest": "./setup-vitest.js"
   }
 }

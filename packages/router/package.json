@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/router",
-  "version": "1.15.1",
+  "version": "1.16.0-beta.15",
   "description": "Filesystem-based routing for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -24,7 +24,7 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "peerDependencies": {
-    "@analogjs/content": "^1.15.1",
+    "@analogjs/content": "^1.16.0-beta.15",
     "@angular/core": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
     "@angular/router": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
   },
@@ -36,6 +36,7 @@
       "@analogjs/platform",
       "@analogjs/content",
       "@analogjs/router",
+      "@analogjs/storybook-angular",
       "@analogjs/vite-plugin-angular",
       "@analogjs/vite-plugin-nitro",
       "@analogjs/vitest-angular"

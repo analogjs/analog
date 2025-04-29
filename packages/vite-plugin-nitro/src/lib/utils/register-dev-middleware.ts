@@ -4,9 +4,12 @@ import fg from 'fast-glob';
 
 export async function registerDevServerMiddleware(
   root: string,
+  sourceRoot: string,
   viteServer: ViteDevServer,
 ) {
-  const middlewareFiles = fg.sync([`${root}/src/server/middleware/**/*.ts`]);
+  const middlewareFiles = fg.sync([
+    `${root}/${sourceRoot}/server/middleware/**/*.ts`,
+  ]);
 
   middlewareFiles.forEach((file) => {
     viteServer.middlewares.use(async (req, res, next) => {

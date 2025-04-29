@@ -23,15 +23,15 @@ npx storybook@latest init
 
 Follow the provided prompts, and commit your changes.
 
-## Installing the Storybook and Vite packages
+## Installing the Storybook package
 
-Install the Vite Plugin for Angular and the Vite Builder for Storybook. Depending on your preferred package manager, run one of the following commands:
+Install the Storybook Plugin for Angular and Vite. Depending on your preferred package manager, run one of the following commands:
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/vite-plugin-angular @storybook/builder-vite --save-dev
+npm install @analogjs/storybook-angular --save-dev
 ```
 
   </TabItem>
@@ -39,7 +39,7 @@ npm install @analogjs/vite-plugin-angular @storybook/builder-vite --save-dev
   <TabItem label="yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/vite-plugin-angular @storybook/builder-vite --dev
+yarn add @analogjs/storybook-angular --dev
 ```
 
   </TabItem>
@@ -47,7 +47,7 @@ yarn add @analogjs/vite-plugin-angular @storybook/builder-vite --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install @analogjs/vite-plugin-angular @storybook/builder-vite -w --save-dev
+pnpm install @analogjs/storybook-angular -w --save-dev
 ```
 
   </TabItem>
@@ -55,19 +55,19 @@ pnpm install @analogjs/vite-plugin-angular @storybook/builder-vite -w --save-dev
   <TabItem value="bun">
 
 ```shell
-bun install @analogjs/vite-plugin-angular @storybook/builder-vite --save-dev
+bun install @analogjs/storybook-angular --save-dev
 ```
 
   </TabItem>  
 </Tabs>
 
-## Configuring Storybook to use the Vite Builder
+## Configuring Storybook
 
 Add the `zone.js` import to the top of your `.storybook/preview.ts` file.
 
 ```ts
 import 'zone.js';
-import { applicationConfig, type Preview } from '@storybook/angular';
+import { applicationConfig, type Preview } from '@analogjs/storybook-angular';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 const preview: Preview = {
@@ -89,90 +89,42 @@ const preview: Preview = {
 export default preview;
 ```
 
-Next, update the `.storybook/main.ts` file to use the `@storybook/builder-vite` and add the `viteFinal` config function to configure the Vite Plugin for Angular.
+Next, update the `.storybook/main.ts` file to use the `StorybookConfig`. Also update the `framework` to use the `@analogjs/storybook-angular` package.
 
 ```ts
-import { StorybookConfig } from '@storybook/angular';
-import { StorybookConfigVite } from '@storybook/builder-vite';
-import { UserConfig } from 'vite';
+import { StorybookConfig } from '@analogjs/storybook-angular';
 
-const config: StorybookConfig & StorybookConfigVite = {
+const config: StorybookConfig = {
   // other config, addons, etc.
-  core: {
-    builder: {
-      name: '@storybook/builder-vite',
-      options: {
-        viteConfigPath: undefined,
-      },
-    },
-  },
-  async viteFinal(config: UserConfig) {
-    // Merge custom configuration into the default config
-    const { mergeConfig } = await import('vite');
-    const { default: angular } = await import('@analogjs/vite-plugin-angular');
-
-    return mergeConfig(config, {
-      // Add dependencies to pre-optimization
-      optimizeDeps: {
-        include: [
-          '@storybook/angular',
-          '@storybook/angular/dist/client',
-          '@angular/compiler',
-          '@storybook/blocks',
-          'tslib',
-        ],
-      },
-      plugins: [angular({ jit: true, tsconfig: './.storybook/tsconfig.json' })],
-      define: {
-        STORYBOOK_ANGULAR_OPTIONS: JSON.stringify({
-          experimentalZoneless: false,
-        }),
-      },
-    });
+  framework: {
+    name: '@analogjs/storybook-angular',
+    options: {},
   },
 };
 ```
 
+If you have any global styles, import them directly in the `.storybook/preview.ts` file.
+
 Remove the existing `webpackFinal` config function if present.
 
-Next, Update the `package.json` to run the Storybook commands directly.
-
-```json
-{
-  "name": "my-app",
-  "scripts": {
-    "storybook": "storybook dev --port 4400",
-    "build-storybook": "storybook build"
-  }
-}
-```
-
-> You can also remove the Storybook targets in the angular.json
-
-If you're using [Nx](https://nx.dev), update your `project.json` storybook targets to run the Storybook commands:
+Next, update the Storybook targets in the `angular.json` or `project.json`
 
 ```json
     "storybook": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "apps/my-app",
-        "command": "storybook dev --port 4400"
-      }
+      "builder": "@analogjs/storybook-angular:start-storybook",
     },
     "build-storybook": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "apps/my-app",
-        "command": "storybook build --output-dir ../../dist/storybook/my-app"
-      }
+      "builder": "@analogjs/storybook-angular:build-storybook"
     }
 ```
 
-Add the `/storybook-static` folder to your `.gitignore` file.
+Remove any `webpack` specific options and remove the `browserTarget` option.
+
+Add the `/storybook-static` folder to the `.gitignore` file.
 
 ## Running Storybook
 
-Run the storybook commands directly for running the development server.
+Run the command for starting the development server.
 
 ```sh
 npm run storybook
@@ -180,7 +132,7 @@ npm run storybook
 
 ## Building Storybook
 
-Run the storybook commands for building the storybook.
+Run the command for building the storybook.
 
 ```sh
 npm run build-storybook
@@ -188,17 +140,13 @@ npm run build-storybook
 
 ## Using shared CSS paths
 
-To load shared CSS paths, configure them using `loadPaths` css option in the vite config.
+To load shared CSS paths, configure them using `loadPaths` css option in the `viteFinal` function.
 
 ```ts
 import path from 'node:path';
 
-async viteFinal(config: UserConfig) {
-  // Merge custom configuration into the default config
-  const { mergeConfig } = await import('vite');
-  const { default: angular } = await import('@analogjs/vite-plugin-angular');
-
-  return mergeConfig(config, {
+async viteFinal() {
+  return {
     css: {
       preprocessorOptions: {
         scss: {
@@ -206,8 +154,8 @@ async viteFinal(config: UserConfig) {
         }
       }
     }
-  });
-},
+  };
+}
 ```
 
 ## Using TypeScript Config Path Aliases
@@ -244,22 +192,17 @@ pnpm install -w vite-tsconfig-paths --save-dev
   </TabItem>
 </Tabs>
 
-Next, add the plugin to the `plugins` array in the `vite.config.ts` with the `root` set as the relative path to the root of the project.
+Next, add the plugin to the `plugins` array.
 
 ```ts
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 
-async viteFinal(config: UserConfig) {
-  // Merge custom configuration into the default config
-  const { mergeConfig } = await import('vite');
-  const { default: angular } = await import('@analogjs/vite-plugin-angular');
-
-  return mergeConfig(config, {
+async viteFinal() {
+  return {
     plugins: [
-      angular(),
       viteTsConfigPaths()
     ],
-  });
+  };
 }
 ```
 
@@ -271,15 +214,10 @@ For Nx workspaces, import and use the `nxViteTsPaths` plugin from the `@nx/vite`
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 
 async viteFinal(config: UserConfig) {
-  // Merge custom configuration into the default config
-  const { mergeConfig } = await import('vite');
-  const { default: angular } = await import('@analogjs/vite-plugin-angular');
-
-  return mergeConfig(config, {
+  return {
     plugins: [
-      angular(),
       nxViteTsPaths()
     ],
-  });
+  };
 }
 ```

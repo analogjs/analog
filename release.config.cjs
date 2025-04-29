@@ -77,6 +77,13 @@ module.exports = {
       '@semantic-release/npm',
       {
         npmPublish: false,
+        pkgRoot: './packages/storybook-angular/',
+      },
+    ],
+    [
+      '@semantic-release/npm',
+      {
+        npmPublish: false,
         pkgRoot: './packages/vite-plugin-angular/',
       },
     ],
@@ -201,6 +208,7 @@ module.exports = {
           'packages/create-analog/template-minimal/package.json',
           'packages/platform/package.json',
           'packages/router/package.json',
+          'packages/storybook-angular/package.json',
           'packages/vite-plugin-angular/package.json',
           'packages/vite-plugin-nitro/package.json',
           'packages/vitest-angular/package.json',
