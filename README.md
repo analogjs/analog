@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-136-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-138-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -287,6 +287,8 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://3cloudsolutions.com"><img src="https://avatars.githubusercontent.com/u/1328532?v=4?s=100" width="100px;" alt="Roydon Gyles-Bedford"/><br /><sub><b>Roydon Gyles-Bedford</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=rgylesbedford" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://jordanpowell88.com"><img src="https://avatars.githubusercontent.com/u/3605268?v=4?s=100" width="100px;" alt="Jordan"/><br /><sub><b>Jordan</b></sub></a><br /><a href="#infra-jordanpowell88" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://shannonmoeller.com"><img src="https://avatars.githubusercontent.com/u/155164?v=4?s=100" width="100px;" alt="Shannon Moeller 🧢"/><br /><sub><b>Shannon Moeller 🧢</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=shannonmoeller" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/vsternbach"><img src="https://avatars.githubusercontent.com/u/3830668?v=4?s=100" width="100px;" alt="Vlad Sternbach"/><br /><sub><b>Vlad Sternbach</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=vsternbach" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/meeroslav"><img src="https://avatars.githubusercontent.com/u/881612?v=4?s=100" width="100px;" alt="Miroslav Jonaš"/><br /><sub><b>Miroslav Jonaš</b></sub></a><br /><a href="#infra-meeroslav" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
     </tr>
   </tbody>
 </table>

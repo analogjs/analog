@@ -10,6 +10,13 @@ export interface Options {
   prerender?: PrerenderOptions;
   entryServer?: string;
   index?: string;
+  /**
+   * Relative path to source files. Default is 'src'.
+   */
+  sourceRoot?: string;
+  /**
+   * Absolute path to workspace root. Default is 'process.cwd()'
+   */
   workspaceRoot?: string;
   /**
    * Additional page paths to include

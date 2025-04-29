@@ -3,6 +3,10 @@
 import analog from '@analogjs/platform';
 import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+<% if (addTailwind) { %>
+// @ts-expect-error @tailwindcss/vite currently uses mts. TypeScript is complaining this, but it works as expected.
+import tailwindcss from '@tailwindcss/vite';
+<% } %>
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -16,15 +20,18 @@ export default defineConfig(({ mode }) => {
     <% } %>
     build: {
       outDir: '<%= offsetFromRoot %>dist/<%= projectRoot %>/client',
-      reportCompressedSize: true,    
+      reportCompressedSize: true,
       target: ['es2020'],
     },
     server: {
       fs: {
         allow: ['.'],
       },
-    },    
+    },
     plugins: [
+       <% if (addTailwind) { %>
+      tailwindcss(),
+      <% } %>
       <% if (addTRPC) { %>
       analog({
         nitro: {

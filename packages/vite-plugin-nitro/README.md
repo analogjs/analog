@@ -6,6 +6,7 @@ A lightweight [Vite](https://vite.dev) plugin for integrating with [Nitro](https
 - Build-time Pre-rendering
 - Static Site Generation
 - API routes
+- Sitemaps
 
 ## Install
 
@@ -86,6 +87,29 @@ export default defineEventHandler(() => ({ message: 'Hello World' }));
 ```
 
 The API route can be accessed as `/api/v1/hello`.
+
+## Custom Source Root Directory
+
+By default, the `src` folder is used as the path for the discovery of server files and API routes. You can customize the folder with the `sourceRoot` option.
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite';
+import nitro from '@analogjs/vite-plugin-nitro';
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [
+    nitro({
+      ssr: true,
+      entryServer: 'app/main.server.tsx',
+      sourceRoot: 'app',
+    }),
+  ],
+});
+```
+
+With this configuration, API routes are discovered under the `app/server/routes/api` directory. You can also make the it optional by setting the `sourceRoot` to `'.'`;
 
 ## Examples
 

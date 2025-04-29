@@ -1,0 +1,62 @@
+{
+  "name": "@analogjs/storybook-angular",
+  "version": "1.16.0",
+  "description": "Storybook Integration for Angular & Vite",
+  "keywords": [
+    "storybook",
+    "angular",
+    "vite"
+  ],
+  "homepage": "https://analogjs.org",
+  "bugs": {
+    "url": "https://github.com/analogjs/analog/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/analogjs/analog.git",
+    "directory": "packages/storybook-angular"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/brandonroberts"
+  },
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js",
+      "require": "./src/index.js"
+    },
+    "./preset": "./src/preset.js",
+    "./package.json": "./package.json",
+    "./*": "./src/*"
+  },
+  "main": "src/index.js",
+  "dependencies": {
+    "@storybook/builder-vite": ">=8.6.0 || next"
+  },
+  "peerDependencies": {
+    "@storybook/angular": ">=8.6.0 || next",
+    "@analogjs/vite-plugin-angular": ">=1.12.0 < 2.0.0 || beta",
+    "storybook": ">=8.6.0 || next",
+    "vite": "^5.0.0 || ^6.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "builders": "src/lib/builders.json",
+  "ng-add": {
+    "save": "devDependencies"
+  },
+  "ng-update": {
+    "packageGroup": [
+      "@analogjs/platform",
+      "@analogjs/content",
+      "@analogjs/router",
+      "@analogjs/storybook-angular",
+      "@analogjs/vite-plugin-angular",
+      "@analogjs/vite-plugin-nitro",
+      "@analogjs/vitest-angular"
+    ]
+  }
+}

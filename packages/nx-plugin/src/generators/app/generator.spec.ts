@@ -7,9 +7,11 @@ import {
 } from '@nx/devkit';
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing';
 import { test } from 'vitest';
+import { lt } from 'semver';
 
 import generator from './generator';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
+import { checkAndCleanWithSemver } from '@nx/devkit/src/utils/semver';
 
 describe('nx-plugin generator', () => {
   const setup = async (
@@ -205,17 +207,42 @@ describe('nx-plugin generator', () => {
 
   const verifyTailwindIsSetUp = (
     tree: Tree,
-    devDependencies: Record<string, string>,
+    dependencies: Record<string, string>,
   ) => {
-    expect(devDependencies['tailwindcss']).toBeDefined();
-    const hasTailwindConfigFile = tree.exists(
-      'apps/tailwind-app/tailwind.config.ts',
+    expect(dependencies['tailwindcss']).toBeDefined();
+
+    const version = checkAndCleanWithSemver(
+      'tailwindcss',
+      dependencies['tailwindcss'],
     );
-    const hasPostCSSConfigFile = tree.exists(
-      'apps/tailwind-app/postcss.config.cjs',
-    );
-    expect(hasTailwindConfigFile).toBeTruthy();
-    expect(hasPostCSSConfigFile).toBeTruthy();
+
+    if (lt(version, '4.0.0')) {
+      const hasTailwindConfigFile = tree.exists(
+        'apps/tailwind-app/tailwind.config.ts',
+      );
+      const hasPostCSSConfigFile = tree.exists(
+        'apps/tailwind-app/postcss.config.cjs',
+      );
+      expect(hasTailwindConfigFile).toBeTruthy();
+      expect(hasPostCSSConfigFile).toBeTruthy();
+    } else {
+      expect(dependencies['@tailwindcss/vite']).toBeDefined();
+
+      console.log(tree.read('apps/tailwind-app/src/styles.css').toString());
+
+      const hasCorrectCssImplementation = tree
+        .read('apps/tailwind-app/src/styles.css')
+        .includes(`@import 'tailwindcss';`);
+
+      const regex = /plugins: \[.*\btailwindcss\(\)/s;
+
+      const viteConfig = tree
+        .read('apps/tailwind-app/vite.config.ts')
+        .toString();
+
+      expect(regex.test(viteConfig)).toBeTruthy();
+      expect(hasCorrectCssImplementation).toBeTruthy();
+    }
   };
 
   const verifyTrpcIsSetUp = (
@@ -309,7 +336,7 @@ describe('nx-plugin generator', () => {
 
       verifyHomePageExists(tree, analogAppName);
 
-      verifyTailwindIsSetUp(tree, devDependencies);
+      verifyTailwindIsSetUp(tree, dependencies);
     });
 
     it('creates an analogjs app in the source directory with trpc set up', async () => {
@@ -372,7 +399,7 @@ describe('nx-plugin generator', () => {
 
       verifyHomePageExists(tree, analogAppName);
 
-      verifyTailwindIsSetUp(tree, devDependencies);
+      verifyTailwindIsSetUp(tree, dependencies);
     });
 
     it('creates an analogjs app in the source directory with trpc set up', async () => {
@@ -438,7 +465,7 @@ describe('nx-plugin generator', () => {
 
       verifyHomePageExists(tree, analogAppName);
 
-      verifyTailwindIsSetUp(tree, devDependencies);
+      verifyTailwindIsSetUp(tree, dependencies);
     });
 
     it('creates an analogjs app in the source directory with trpc set up', async () => {
@@ -496,7 +523,7 @@ describe('nx-plugin generator', () => {
 
       verifyHomePageExists(tree, analogAppName);
 
-      verifyTailwindIsSetUp(tree, devDependencies);
+      verifyTailwindIsSetUp(tree, dependencies);
     });
 
     it('creates an analogjs app in the source directory without trpc due to unsupported Nx version', async () => {
