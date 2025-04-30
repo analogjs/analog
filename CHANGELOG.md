@@ -1,3 +1,9 @@
+## [1.16.1-beta.1](https://github.com/analogjs/analog/compare/v1.16.0...v1.16.1-beta.1) (2025-04-30)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** check for custom apiPrefix with api directory ([#1715](https://github.com/analogjs/analog/issues/1715)) ([11c4f36](https://github.com/analogjs/analog/commit/11c4f36bb76e74dda2cffa08a6b17dd6cea069c4))
+
 # [1.16.0](https://github.com/analogjs/analog/compare/v1.15.1...v1.16.0) (2025-04-29)
 
 ### Bug Fixes
