@@ -73,7 +73,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         const rootDir = relative(workspaceRoot, config.root || '.') || '.';
         hasAPIDir = existsSync(
-          resolve(workspaceRoot, rootDir, `${sourceRoot}/server/routes/api`),
+          resolve(
+            workspaceRoot,
+            rootDir,
+            `${sourceRoot}/server/routes/${options?.apiPrefix || 'api'}`,
+          ),
         );
         const buildPreset =
           process.env['BUILD_PRESET'] ??
