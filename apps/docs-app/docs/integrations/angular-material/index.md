@@ -39,16 +39,22 @@ pnpm install @angular/cdk @angular/material
   </TabItem>
 </Tabs>
 
-> Make sure you have installed `sass` version 1.85.1 or higher.
-
 ## Step 2: Configuring the Angular Material library
 
-1. Rename the file `styles.css` to `styles.scss`.
-2. Set the `inlineStylesExtension` property to `'scss'` in the `vite.config.ts` file:
+1. Rename the `src/styles.css` file to `src/styles.scss`.
+2. If you're using `zone.js`, configure the `scss` preprocessorOptions to use the `legacy` api.
+3. Set the `inlineStylesExtension` property to `'scss'` in the `vite.config.ts` file:
 
 ```ts
 export default defineConfig(({ mode }) => {
   return {
+    css: {
+      preprocessorOptions: {
+        scss: {
+          api: 'legacy',
+        },
+      },
+    },
     plugins: [
       analog({
         vite: {
@@ -60,7 +66,7 @@ export default defineConfig(({ mode }) => {
 });
 ```
 
-3. Update the `index.html` file to reference the SCSS file:
+4. Update the `index.html` file to reference the SCSS file:
 
 ```html
 <head>
@@ -81,7 +87,7 @@ export default defineConfig(({ mode }) => {
 </body>
 ```
 
-4. Update the `styles.scss` file to import the Angular Material styles and define your custom theme:
+5. Update the `styles.scss` file to import the Angular Material styles and define your custom theme:
 
 ```scss
 @use '@angular/material' as mat;
