@@ -140,14 +140,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     disableTypeChecking: options?.disableTypeChecking ?? true,
   };
 
-  // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
-  let fileEmitter: FileEmitter | undefined;
-  let compilerOptions = {};
-  const ts = require('typescript');
-
   let resolvedConfig: ResolvedConfig;
-  let rootNames: string[];
-  let host: ts.CompilerHost;
   let nextProgram: NgtscProgram | undefined | ts.Program;
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode = false;
@@ -167,13 +160,13 @@ export function angular(options?: PluginOptions): Plugin[] {
   const jit =
     typeof pluginOptions?.jit !== 'undefined' ? pluginOptions.jit : isTest;
   let viteServer: ViteDevServer | undefined;
-  let styleTransform: (
-    code: string,
-    filename: string,
-  ) => ReturnType<typeof preprocessCSS> | undefined;
 
   const styleUrlsResolver = new StyleUrlsResolver();
   const templateUrlsResolver = new TemplateUrlsResolver();
+  const outputFiles = new Map<string, EmitFileResult>();
+  const fileEmitter = (file: string, stale?: ts.SourceFile) => {
+    return outputFiles.get(file);
+  };
 
   function angularPlugin(): Plugin {
     let isProd = false;
@@ -184,11 +177,6 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     return {
       name: '@analogjs/vite-plugin-angular',
-      async watchChange() {
-        if (isTest) {
-          await buildAndAnalyze();
-        }
-      },
       async config(config, { command }) {
         watchMode = command === 'serve';
         isProd =
@@ -252,12 +240,10 @@ export function angular(options?: PluginOptions): Plugin[] {
       configureServer(server) {
         viteServer = server;
         server.watcher.on('add', async () => {
-          setupCompilation(resolvedConfig);
-          await buildAndAnalyze();
+          await performCompilation(resolvedConfig);
         });
         server.watcher.on('unlink', async () => {
-          setupCompilation(resolvedConfig);
-          await buildAndAnalyze();
+          await performCompilation(resolvedConfig);
         });
 
         if (pluginOptions.liveReload) {
@@ -300,7 +286,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               return;
             }
 
-            const result = await fileEmitter?.(resolvedId);
+            const result = fileEmitter(resolvedId);
             res.setHeader('Content-Type', 'text/javascript');
             res.setHeader('Cache-Control', 'no-cache');
             res.end(`${result?.hmrUpdateCode || ''}`);
@@ -310,23 +296,21 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
       },
       async buildStart() {
-        setupCompilation(resolvedConfig);
+        const { host } = await performCompilation(resolvedConfig);
 
         // Only store cache if in watch mode
         if (watchMode) {
           augmentHostWithCaching(host, sourceFileCache);
         }
-
-        await buildAndAnalyze();
       },
       async handleHotUpdate(ctx) {
         // The `handleHotUpdate` hook may be called before the `buildStart`,
         // which sets the compilation. As a result, the `host` may not be available
         // yet for use, leading to build errors such as "cannot read properties of undefined"
         // (because `host` is undefined).
-        if (!host) {
-          return;
-        }
+        // if (!host) {
+        //   return;
+        // }
 
         if (TS_EXT_REGEX.test(ctx.file)) {
           let [fileId] = ctx.file.split('?');
@@ -340,9 +324,9 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           const stale = sourceFileCache.get(fileId);
           sourceFileCache.invalidate([fileId]);
-          await buildAndAnalyze();
+          await performCompilation(resolvedConfig);
 
-          const result = await fileEmitter?.(fileId, stale);
+          const result = fileEmitter(fileId, stale);
 
           if (
             pluginOptions.liveReload &&
@@ -432,7 +416,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
           });
 
-          await buildAndAnalyze();
+          await performCompilation(resolvedConfig);
 
           if (updates.length > 0) {
             updates.forEach((updateId) => {
@@ -503,7 +487,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             return;
           }
 
-          const result = await fileEmitter?.(
+          const result = fileEmitter(
             resolve(
               process.cwd(),
               decodeURIComponent(componentId).split('@')[0],
@@ -583,7 +567,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               if (testWatchMode && invalidated) {
                 sourceFileCache.invalidate([id]);
 
-                await buildAndAnalyze();
+                await performCompilation(resolvedConfig);
               }
             }
           }
@@ -601,7 +585,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
-          const typescriptResult = await fileEmitter?.(id);
+          const typescriptResult = outputFiles.get(id);
 
           if (
             typescriptResult?.warnings &&
@@ -615,7 +599,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
 
           // return fileEmitter
-          let data = typescriptResult?.content ?? '';
+          let data = typescriptResult?.content || '';
 
           if (jit && data.includes('angular:jit:')) {
             data = data.replace(
@@ -719,7 +703,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     const globs = [
       `${appRoot}/**/*.{analog,agx,ag}`,
       ...extraGlobs.map((glob) => `${workspaceRoot}${glob}.{analog,agx,ag}`),
-      ...(pluginOptions.additionalContentDirs || [])?.map(
+      ...(pluginOptions.additionalContentDirs || []).map(
         (glob) => `${workspaceRoot}${glob}/**/*.agx`,
       ),
       ...pluginOptions.include.map((glob) =>
@@ -748,12 +732,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     });
   }
 
-  function setupCompilation(config: ResolvedConfig, context?: unknown) {
+  async function performCompilation(config: ResolvedConfig) {
     const isProd = config.mode === 'production';
     const analogFiles = findAnalogFiles(config);
     const includeFiles = findIncludes();
 
-    const { options: tsCompilerOptions, rootNames: rn } =
+    let { options: tsCompilerOptions, rootNames } =
       compilerCli.readConfiguration(pluginOptions.tsconfig, {
         suppressOutputPathCheck: true,
         outDir: undefined,
@@ -793,14 +777,13 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['supportJitMode'] = true;
     }
 
-    rootNames = rn.concat(analogFiles, includeFiles);
-    compilerOptions = tsCompilerOptions;
-    host = ts.createIncrementalCompilerHost(compilerOptions);
-
-    styleTransform = (code: string, filename: string) =>
-      preprocessCSS(code, filename, config as any);
+    rootNames = rootNames.concat(analogFiles, includeFiles);
+    const ts = require('typescript');
+    const host = ts.createIncrementalCompilerHost(tsCompilerOptions);
 
     if (!jit) {
+      const styleTransform = (code: string, filename: string) =>
+        preprocessCSS(code, filename, config);
       inlineComponentStyles = tsCompilerOptions['externalRuntimeStyles']
         ? new Map()
         : undefined;
@@ -816,14 +799,12 @@ export function angular(options?: PluginOptions): Plugin[] {
         externalComponentStyles,
       });
     }
-  }
 
-  /**
-   * Creates a new NgtscProgram to analyze/re-analyze
-   * the source files and create a file emitter.
-   * This is shared between an initial build and a hot update.
-   */
-  async function buildAndAnalyze() {
+    /**
+     * Creates a new NgtscProgram to analyze/re-analyze
+     * the source files and create a file emitter.
+     * This is shared between an initial build and a hot update.
+     */
     let builder:
       | ts.BuilderProgram
       | ts.EmitAndSemanticDiagnosticsBuilderProgram;
@@ -834,7 +815,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       // Create the Angular specific program that contains the Angular compiler
       const angularProgram: NgtscProgram = new compilerCli.NgtscProgram(
         rootNames,
-        compilerOptions,
+        tsCompilerOptions,
         host as CompilerHost,
         nextProgram as any,
       );
@@ -853,16 +834,14 @@ export function angular(options?: PluginOptions): Plugin[] {
 
       nextProgram = angularProgram;
     } else {
-      builder = builderProgram =
-        ts.createEmitAndSemanticDiagnosticsBuilderProgram(
-          rootNames,
-          compilerOptions,
-          host,
-          nextProgram as any,
-        );
+      builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
+        rootNames,
+        tsCompilerOptions,
+        host,
+        undefined,
+      );
 
       typeScriptProgram = builder.getProgram();
-      nextProgram = builderProgram as unknown as ts.Program;
     }
 
     if (!watchMode) {
@@ -871,33 +850,51 @@ export function angular(options?: PluginOptions): Plugin[] {
       builder = ts.createAbstractBuilder(typeScriptProgram, host);
     }
 
-    const getTypeChecker = () => builder.getProgram().getTypeChecker();
-    fileEmitter = createFileEmitter(
-      builder,
-      mergeTransformers(
-        {
-          before: [
-            ...(jit
-              ? [
-                  compilerCli.constructorParametersDownlevelTransform(
-                    builder.getProgram(),
-                  ),
-                  createJitResourceTransformer(getTypeChecker),
-                ]
-              : []),
-            ...pluginOptions.advanced.tsTransformers.before,
-          ],
-          after: pluginOptions.advanced.tsTransformers.after,
-          afterDeclarations:
-            pluginOptions.advanced.tsTransformers.afterDeclarations,
-        },
-        jit ? {} : angularCompiler!.prepareEmit().transformers,
-      ),
-      () => [],
-      angularCompiler!,
-      pluginOptions.liveReload,
-      pluginOptions.disableTypeChecking,
+    const beforeTransformers = jit
+      ? [
+          compilerCli.constructorParametersDownlevelTransform(
+            builder.getProgram(),
+          ),
+          createJitResourceTransformer(() =>
+            builder.getProgram().getTypeChecker(),
+          ),
+        ]
+      : [];
+
+    const transformers = mergeTransformers(
+      { before: beforeTransformers },
+      jit ? {} : angularCompiler!.prepareEmit().transformers,
     );
+
+    const writeFileCallback: ts.WriteFileCallback = (
+      _filename,
+      content,
+      _a,
+      _b,
+      sourceFiles,
+    ) => {
+      if (!sourceFiles?.length) {
+        return;
+      }
+
+      outputFiles.set(sourceFiles[0].fileName, { content, dependencies: [] });
+    };
+
+    // TypeScript will loop until there are no more affected files in the program
+    while (
+      (
+        builder as ts.EmitAndSemanticDiagnosticsBuilderProgram
+      ).emitNextAffectedFile(
+        writeFileCallback,
+        undefined,
+        undefined,
+        transformers,
+      )
+    ) {
+      /* empty */
+    }
+
+    return { host };
   }
 }
 
