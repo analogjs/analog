@@ -92,10 +92,6 @@ interface EmitFileResult {
   hmrUpdateCode?: string | null;
   hmrEligible?: boolean;
 }
-type FileEmitter = (
-  file: string,
-  source?: ts.SourceFile,
-) => Promise<EmitFileResult | undefined>;
 
 /**
  * TypeScript file extension regex
@@ -164,7 +160,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   const styleUrlsResolver = new StyleUrlsResolver();
   const templateUrlsResolver = new TemplateUrlsResolver();
   const outputFiles = new Map<string, EmitFileResult>();
-  const fileEmitter = (file: string, stale?: ts.SourceFile) => {
+  const fileEmitter = (file: string) => {
     return outputFiles.get(file);
   };
 
@@ -326,7 +322,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           sourceFileCache.invalidate([fileId]);
           await performCompilation(resolvedConfig);
 
-          const result = fileEmitter(fileId, stale);
+          const result = fileEmitter(fileId);
 
           if (
             pluginOptions.liveReload &&
@@ -444,7 +440,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         classNames.clear();
         return ctx.modules;
       },
-      resolveId(id, importer) {
+      resolveId(id, importer, options) {
         if (id.startsWith('angular:jit:')) {
           const path = id.split(';')[1];
           return `${normalizePath(
@@ -460,6 +456,18 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (componentStyles) {
             return componentStyles + new URL(id, 'http://localhost').search;
           }
+        }
+
+        if (options?.ssr && id.includes('@ng')) {
+          const requestUrl = new URL(id.slice(1), 'http://localhost');
+          const componentId = requestUrl.searchParams.get('c');
+
+          const res = resolve(
+            process.cwd(),
+            decodeURIComponent(componentId as string).split('@')[0],
+          );
+
+          return res;
         }
 
         return undefined;
@@ -866,6 +874,12 @@ export function angular(options?: PluginOptions): Plugin[] {
       jit ? {} : angularCompiler!.prepareEmit().transformers,
     );
 
+    const fileMetadata = getFileMetadata(
+      builder,
+      angularCompiler!,
+      pluginOptions.liveReload,
+      pluginOptions.disableTypeChecking,
+    );
     const writeFileCallback: ts.WriteFileCallback = (
       _filename,
       content,
@@ -877,7 +891,22 @@ export function angular(options?: PluginOptions): Plugin[] {
         return;
       }
 
-      outputFiles.set(sourceFiles[0].fileName, { content, dependencies: [] });
+      const filename = sourceFiles[0].fileName;
+
+      if (filename.includes('ngtypecheck.ts')) {
+        return;
+      }
+
+      const metadata = fileMetadata(filename, sourceFileCache.get(filename));
+
+      outputFiles.set(filename, {
+        content,
+        dependencies: [],
+        errors: metadata.errors,
+        warnings: metadata.warnings,
+        hmrUpdateCode: metadata.hmrUpdateCode,
+        hmrEligible: metadata.hmrEligible,
+      });
     };
 
     // TypeScript will loop until there are no more affected files in the program
@@ -907,28 +936,23 @@ function sendHMRComponentUpdate(server: ViteDevServer, id: string) {
   classNames.delete(id);
 }
 
-export function createFileEmitter(
+export function getFileMetadata(
   program: ts.BuilderProgram,
-  transformers: ts.CustomTransformers = {},
-  onAfterEmit?: (sourceFile: ts.SourceFile) => void,
   angularCompiler?: NgtscProgram['compiler'],
   liveReload?: boolean,
   disableTypeChecking?: boolean,
-): FileEmitter {
-  return async (file: string, stale?: ts.SourceFile) => {
+) {
+  const ts = require('typescript');
+  return (file: string, stale?: ts.SourceFile) => {
     const sourceFile = program.getSourceFile(file);
     if (!sourceFile) {
-      return undefined;
+      return {};
     }
 
-    if (stale) {
-      const hmrEligible = !!analyzeFileUpdates(
-        stale,
-        sourceFile,
-        angularCompiler!,
-      );
-      return { dependencies: [], hmrEligible };
-    }
+    const hmrEligible =
+      liveReload && stale
+        ? !!analyzeFileUpdates(stale, sourceFile, angularCompiler!)
+        : false;
 
     const diagnostics = getDiagnosticsForSourceFile(
       sourceFile,
@@ -953,29 +977,14 @@ export function createFileEmitter(
 
     if (liveReload) {
       for (const node of sourceFile.statements) {
-        if (ts.isClassDeclaration(node) && node.name != null) {
-          hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node);
-          !!hmrUpdateCode && classNames.set(file, node.name.getText());
+        if (ts.isClassDeclaration(node) && (node as any).name != null) {
+          hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node as any);
+          !!hmrUpdateCode && classNames.set(file, (node as any).name.getText());
         }
       }
     }
 
-    let content: string | undefined;
-    program.emit(
-      sourceFile,
-      (filename, data) => {
-        if (/\.[cm]?js$/.test(filename)) {
-          content = data;
-        }
-      },
-      undefined /* cancellationToken */,
-      undefined /* emitOnlyDtsFiles */,
-      transformers,
-    );
-
-    onAfterEmit?.(sourceFile);
-
-    return { content, dependencies: [], errors, warnings, hmrUpdateCode };
+    return { errors, warnings, hmrUpdateCode, hmrEligible };
   };
 }
 

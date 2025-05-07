@@ -40,9 +40,6 @@ export default defineConfig(({ mode, isSsrBuild }) => {
         },
         vite: {
           inlineStylesExtension: 'scss',
-          experimental: {
-            supportAnalogFormat: true,
-          },
         },
         liveReload: true,
         nitro: {
