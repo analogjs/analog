@@ -910,41 +910,52 @@ export function angular(options?: PluginOptions): Plugin[] {
       });
     };
 
-    if (ids && ids.length > 0) {
-      ids.forEach((id) => {
-        const sourceFile = builder.getSourceFile(id);
-        if (!sourceFile) {
-          return;
-        }
+    const writeOutputFile = (id: string) => {
+      const sourceFile = builder.getSourceFile(id);
+      if (!sourceFile) {
+        return;
+      }
 
-        let content = '';
-        builder.emit(
-          sourceFile,
-          (filename, data) => {
-            if (/\.[cm]?js$/.test(filename)) {
-              content = data;
-            }
-          },
-          undefined /* cancellationToken */,
-          undefined /* emitOnlyDtsFiles */,
-          transformers,
-        );
+      let content = '';
+      builder.emit(
+        sourceFile,
+        (filename, data) => {
+          if (/\.[cm]?js$/.test(filename)) {
+            content = data;
+          }
+        },
+        undefined /* cancellationToken */,
+        undefined /* emitOnlyDtsFiles */,
+        transformers,
+      );
 
-        writeFileCallback(id, content, false, undefined, [sourceFile]);
-      });
+      writeFileCallback(id, content, false, undefined, [sourceFile]);
+    };
+
+    if (!watchMode) {
+      for (const sf of builder.getSourceFiles()) {
+        const id = sf!.fileName;
+        writeOutputFile(id);
+      }
     } else {
-      // TypeScript will loop until there are no more affected files in the program
-      while (
-        (
-          builder as ts.EmitAndSemanticDiagnosticsBuilderProgram
-        ).emitNextAffectedFile(
-          writeFileCallback,
-          undefined,
-          undefined,
-          transformers,
-        )
-      ) {
-        /* empty */
+      if (ids && ids.length > 0) {
+        ids.forEach((id) => {
+          writeOutputFile(id);
+        });
+      } else {
+        // TypeScript will loop until there are no more affected files in the program
+        while (
+          (
+            builder as ts.EmitAndSemanticDiagnosticsBuilderProgram
+          ).emitNextAffectedFile(
+            writeFileCallback,
+            undefined,
+            undefined,
+            transformers,
+          )
+        ) {
+          /* empty */
+        }
       }
     }
 
