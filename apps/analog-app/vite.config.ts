@@ -41,7 +41,7 @@ export default defineConfig(({ mode, isSsrBuild }) => {
         vite: {
           inlineStylesExtension: 'scss',
         },
-        liveReload: true,
+        liveReload: false,
         nitro: {
           routeRules: {
             '/cart/**': {

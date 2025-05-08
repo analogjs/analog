@@ -318,9 +318,8 @@ export function angular(options?: PluginOptions): Plugin[] {
             fileId += '.ts';
           }
 
-          const stale = sourceFileCache.get(fileId);
           sourceFileCache.invalidate([fileId]);
-          await performCompilation(resolvedConfig);
+          await performCompilation(resolvedConfig, [fileId]);
 
           const result = fileEmitter(fileId);
 
@@ -412,7 +411,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
           });
 
-          await performCompilation(resolvedConfig);
+          await performCompilation(resolvedConfig, updates);
 
           if (updates.length > 0) {
             updates.forEach((updateId) => {
@@ -458,7 +457,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
         }
 
-        if (options?.ssr && id.includes('@ng')) {
+        if (options?.ssr && id.includes(ANGULAR_COMPONENT_PREFIX)) {
           const requestUrl = new URL(id.slice(1), 'http://localhost');
           const componentId = requestUrl.searchParams.get('c');
 
@@ -575,7 +574,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               if (testWatchMode && invalidated) {
                 sourceFileCache.invalidate([id]);
 
-                await performCompilation(resolvedConfig);
+                await performCompilation(resolvedConfig, [id]);
               }
             }
           }
@@ -607,7 +606,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
 
           // return fileEmitter
-          let data = typescriptResult?.content || '';
+          let data = typescriptResult?.content ?? '';
 
           if (jit && data.includes('angular:jit:')) {
             data = data.replace(
@@ -740,7 +739,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     });
   }
 
-  async function performCompilation(config: ResolvedConfig) {
+  async function performCompilation(config: ResolvedConfig, ids?: string[]) {
     const isProd = config.mode === 'production';
     const analogFiles = findAnalogFiles(config);
     const includeFiles = findIncludes();
@@ -822,7 +821,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     if (!jit) {
       // Create the Angular specific program that contains the Angular compiler
       const angularProgram: NgtscProgram = new compilerCli.NgtscProgram(
-        rootNames,
+        ids && ids.length > 0 ? ids : rootNames,
         tsCompilerOptions,
         host as CompilerHost,
         nextProgram as any,
@@ -831,22 +830,23 @@ export function angular(options?: PluginOptions): Plugin[] {
       typeScriptProgram = angularProgram.getTsProgram();
       augmentProgramWithVersioning(typeScriptProgram);
 
-      builder = builderProgram =
-        ts.createEmitAndSemanticDiagnosticsBuilderProgram(
-          typeScriptProgram,
-          host,
-          builderProgram,
-        );
+      builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
+        typeScriptProgram,
+        host,
+        builderProgram,
+      );
 
       await angularCompiler.analyzeAsync();
 
       nextProgram = angularProgram;
+      builderProgram =
+        builder as unknown as ts.EmitAndSemanticDiagnosticsBuilderProgram;
     } else {
       builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
         rootNames,
         tsCompilerOptions,
         host,
-        undefined,
+        nextProgram,
       );
 
       typeScriptProgram = builder.getProgram();
@@ -880,6 +880,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       pluginOptions.liveReload,
       pluginOptions.disableTypeChecking,
     );
+
     const writeFileCallback: ts.WriteFileCallback = (
       _filename,
       content,
@@ -909,18 +910,42 @@ export function angular(options?: PluginOptions): Plugin[] {
       });
     };
 
-    // TypeScript will loop until there are no more affected files in the program
-    while (
-      (
-        builder as ts.EmitAndSemanticDiagnosticsBuilderProgram
-      ).emitNextAffectedFile(
-        writeFileCallback,
-        undefined,
-        undefined,
-        transformers,
-      )
-    ) {
-      /* empty */
+    if (ids && ids.length > 0) {
+      ids.forEach((id) => {
+        const sourceFile = builder.getSourceFile(id);
+        if (!sourceFile) {
+          return;
+        }
+
+        let content = '';
+        builder.emit(
+          sourceFile,
+          (filename, data) => {
+            if (/\.[cm]?js$/.test(filename)) {
+              content = data;
+            }
+          },
+          undefined /* cancellationToken */,
+          undefined /* emitOnlyDtsFiles */,
+          transformers,
+        );
+
+        writeFileCallback(id, content, false, undefined, [sourceFile]);
+      });
+    } else {
+      // TypeScript will loop until there are no more affected files in the program
+      while (
+        (
+          builder as ts.EmitAndSemanticDiagnosticsBuilderProgram
+        ).emitNextAffectedFile(
+          writeFileCallback,
+          undefined,
+          undefined,
+          transformers,
+        )
+      ) {
+        /* empty */
+      }
     }
 
     return { host };
