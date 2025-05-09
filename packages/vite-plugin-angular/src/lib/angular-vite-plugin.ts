@@ -145,6 +145,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let externalComponentStyles: Map<string, string> | undefined;
   const sourceFileCache = new SourceFileCache();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+  const isVitestVscode = !!process.env['VITEST_VSCODE'];
   const isStackBlitz = !!process.versions['webcontainer'];
   const isAstroIntegration = process.env['ANALOG_ASTRO'] === 'true';
   const isStorybook =
@@ -163,6 +164,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   const fileEmitter = (file: string) => {
     return outputFiles.get(normalizePath(file));
   };
+  let initialCompilation = false;
 
   function angularPlugin(): Plugin {
     let isProd = false;
@@ -292,22 +294,18 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
       },
       async buildStart() {
-        const { host } = await performCompilation(resolvedConfig);
+        // Defer the first compilation in test mode
+        if (!isVitestVscode) {
+          const { host } = await performCompilation(resolvedConfig);
+          initialCompilation = true;
 
-        // Only store cache if in watch mode
-        if (watchMode) {
-          augmentHostWithCaching(host, sourceFileCache);
+          // Only store cache if in watch mode
+          if (watchMode) {
+            augmentHostWithCaching(host, sourceFileCache);
+          }
         }
       },
       async handleHotUpdate(ctx) {
-        // The `handleHotUpdate` hook may be called before the `buildStart`,
-        // which sets the compilation. As a result, the `host` may not be available
-        // yet for use, leading to build errors such as "cannot read properties of undefined"
-        // (because `host` is undefined).
-        // if (!host) {
-        //   return;
-        // }
-
         if (TS_EXT_REGEX.test(ctx.file)) {
           let [fileId] = ctx.file.split('?');
 
@@ -567,6 +565,12 @@ export function angular(options?: PluginOptions): Plugin[] {
            * for test(Vitest)
            */
           if (isTest) {
+            if (isVitestVscode && !initialCompilation) {
+              // Do full initial compilation
+              await performCompilation(resolvedConfig);
+              initialCompilation = true;
+            }
+
             const tsMod = viteServer?.moduleGraph.getModuleById(id);
             if (tsMod) {
               const invalidated = tsMod.lastInvalidationTimestamp;
