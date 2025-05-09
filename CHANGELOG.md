@@ -1,3 +1,9 @@
+## [1.16.1-beta.3](https://github.com/analogjs/analog/compare/v1.16.1-beta.2...v1.16.1-beta.3) (2025-05-09)
+
+### Bug Fixes
+
+- **nx-plugin:** update Angular v19 template files ([#1720](https://github.com/analogjs/analog/issues/1720)) ([9b1e065](https://github.com/analogjs/analog/commit/9b1e06576c491093d18ac03622e12b57cf5aa9d1))
+
 ## [1.16.1-beta.2](https://github.com/analogjs/analog/compare/v1.16.1-beta.1...v1.16.1-beta.2) (2025-05-09)
 
 ### Performance Improvements
