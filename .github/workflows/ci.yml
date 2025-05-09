@@ -10,6 +10,7 @@ on:
 env:
   NODE_OPTIONS: --max-old-space-size=16384
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+  NX_VERBOSE_LOGGING: ${{ vars.NX_VERBOSE_LOGGING }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.sha }}

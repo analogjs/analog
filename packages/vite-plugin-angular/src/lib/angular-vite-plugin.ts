@@ -92,10 +92,6 @@ interface EmitFileResult {
   hmrUpdateCode?: string | null;
   hmrEligible?: boolean;
 }
-type FileEmitter = (
-  file: string,
-  source?: ts.SourceFile,
-) => Promise<EmitFileResult | undefined>;
 
 /**
  * TypeScript file extension regex
@@ -140,14 +136,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     disableTypeChecking: options?.disableTypeChecking ?? true,
   };
 
-  // The file emitter created during `onStart` that will be used during the build in `onLoad` callbacks for TS files
-  let fileEmitter: FileEmitter | undefined;
-  let compilerOptions = {};
-  const ts = require('typescript');
-
   let resolvedConfig: ResolvedConfig;
-  let rootNames: string[];
-  let host: ts.CompilerHost;
   let nextProgram: NgtscProgram | undefined | ts.Program;
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode = false;
@@ -167,13 +156,13 @@ export function angular(options?: PluginOptions): Plugin[] {
   const jit =
     typeof pluginOptions?.jit !== 'undefined' ? pluginOptions.jit : isTest;
   let viteServer: ViteDevServer | undefined;
-  let styleTransform: (
-    code: string,
-    filename: string,
-  ) => ReturnType<typeof preprocessCSS> | undefined;
 
   const styleUrlsResolver = new StyleUrlsResolver();
   const templateUrlsResolver = new TemplateUrlsResolver();
+  const outputFiles = new Map<string, EmitFileResult>();
+  const fileEmitter = (file: string) => {
+    return outputFiles.get(normalizePath(file));
+  };
 
   function angularPlugin(): Plugin {
     let isProd = false;
@@ -184,11 +173,6 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     return {
       name: '@analogjs/vite-plugin-angular',
-      async watchChange() {
-        if (isTest) {
-          await buildAndAnalyze();
-        }
-      },
       async config(config, { command }) {
         watchMode = command === 'serve';
         isProd =
@@ -252,12 +236,10 @@ export function angular(options?: PluginOptions): Plugin[] {
       configureServer(server) {
         viteServer = server;
         server.watcher.on('add', async () => {
-          setupCompilation(resolvedConfig);
-          await buildAndAnalyze();
+          await performCompilation(resolvedConfig);
         });
         server.watcher.on('unlink', async () => {
-          setupCompilation(resolvedConfig);
-          await buildAndAnalyze();
+          await performCompilation(resolvedConfig);
         });
 
         if (pluginOptions.liveReload) {
@@ -300,7 +282,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               return;
             }
 
-            const result = await fileEmitter?.(resolvedId);
+            const result = fileEmitter(resolvedId);
             res.setHeader('Content-Type', 'text/javascript');
             res.setHeader('Cache-Control', 'no-cache');
             res.end(`${result?.hmrUpdateCode || ''}`);
@@ -310,23 +292,21 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
       },
       async buildStart() {
-        setupCompilation(resolvedConfig);
+        const { host } = await performCompilation(resolvedConfig);
 
         // Only store cache if in watch mode
         if (watchMode) {
           augmentHostWithCaching(host, sourceFileCache);
         }
-
-        await buildAndAnalyze();
       },
       async handleHotUpdate(ctx) {
         // The `handleHotUpdate` hook may be called before the `buildStart`,
         // which sets the compilation. As a result, the `host` may not be available
         // yet for use, leading to build errors such as "cannot read properties of undefined"
         // (because `host` is undefined).
-        if (!host) {
-          return;
-        }
+        // if (!host) {
+        //   return;
+        // }
 
         if (TS_EXT_REGEX.test(ctx.file)) {
           let [fileId] = ctx.file.split('?');
@@ -338,11 +318,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             fileId += '.ts';
           }
 
-          const stale = sourceFileCache.get(fileId);
           sourceFileCache.invalidate([fileId]);
-          await buildAndAnalyze();
+          await performCompilation(resolvedConfig, [fileId]);
 
-          const result = await fileEmitter?.(fileId, stale);
+          const result = fileEmitter(fileId);
 
           if (
             pluginOptions.liveReload &&
@@ -432,7 +411,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
           });
 
-          await buildAndAnalyze();
+          await performCompilation(resolvedConfig, updates);
 
           if (updates.length > 0) {
             updates.forEach((updateId) => {
@@ -460,7 +439,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         classNames.clear();
         return ctx.modules;
       },
-      resolveId(id, importer) {
+      resolveId(id, importer, options) {
         if (id.startsWith('angular:jit:')) {
           const path = id.split(';')[1];
           return `${normalizePath(
@@ -476,6 +455,18 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (componentStyles) {
             return componentStyles + new URL(id, 'http://localhost').search;
           }
+        }
+
+        if (options?.ssr && id.includes(ANGULAR_COMPONENT_PREFIX)) {
+          const requestUrl = new URL(id.slice(1), 'http://localhost');
+          const componentId = requestUrl.searchParams.get('c');
+
+          const res = resolve(
+            process.cwd(),
+            decodeURIComponent(componentId as string).split('@')[0],
+          );
+
+          return res;
         }
 
         return undefined;
@@ -503,7 +494,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             return;
           }
 
-          const result = await fileEmitter?.(
+          const result = fileEmitter(
             resolve(
               process.cwd(),
               decodeURIComponent(componentId).split('@')[0],
@@ -583,7 +574,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               if (testWatchMode && invalidated) {
                 sourceFileCache.invalidate([id]);
 
-                await buildAndAnalyze();
+                await performCompilation(resolvedConfig, [id]);
               }
             }
           }
@@ -601,7 +592,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
-          const typescriptResult = await fileEmitter?.(id);
+          const typescriptResult = fileEmitter(id);
 
           if (
             typescriptResult?.warnings &&
@@ -656,7 +647,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             fileEmitter
           ) {
             sourceFileCache.invalidate([`${id}.ts`]);
-            const ngFileResult = await fileEmitter!(`${id}.ts`);
+            const ngFileResult = fileEmitter(`${id}.ts`);
             data = ngFileResult?.content || '';
 
             if (id.includes('.agx')) {
@@ -719,7 +710,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     const globs = [
       `${appRoot}/**/*.{analog,agx,ag}`,
       ...extraGlobs.map((glob) => `${workspaceRoot}${glob}.{analog,agx,ag}`),
-      ...(pluginOptions.additionalContentDirs || [])?.map(
+      ...(pluginOptions.additionalContentDirs || []).map(
         (glob) => `${workspaceRoot}${glob}/**/*.agx`,
       ),
       ...pluginOptions.include.map((glob) =>
@@ -748,12 +739,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     });
   }
 
-  function setupCompilation(config: ResolvedConfig, context?: unknown) {
+  async function performCompilation(config: ResolvedConfig, ids?: string[]) {
     const isProd = config.mode === 'production';
     const analogFiles = findAnalogFiles(config);
     const includeFiles = findIncludes();
 
-    const { options: tsCompilerOptions, rootNames: rn } =
+    let { options: tsCompilerOptions, rootNames } =
       compilerCli.readConfiguration(pluginOptions.tsconfig, {
         suppressOutputPathCheck: true,
         outDir: undefined,
@@ -793,14 +784,13 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['supportJitMode'] = true;
     }
 
-    rootNames = rn.concat(analogFiles, includeFiles);
-    compilerOptions = tsCompilerOptions;
-    host = ts.createIncrementalCompilerHost(compilerOptions);
-
-    styleTransform = (code: string, filename: string) =>
-      preprocessCSS(code, filename, config as any);
+    rootNames = rootNames.concat(analogFiles, includeFiles);
+    const ts = require('typescript');
+    const host = ts.createIncrementalCompilerHost(tsCompilerOptions);
 
     if (!jit) {
+      const styleTransform = (code: string, filename: string) =>
+        preprocessCSS(code, filename, config);
       inlineComponentStyles = tsCompilerOptions['externalRuntimeStyles']
         ? new Map()
         : undefined;
@@ -816,14 +806,12 @@ export function angular(options?: PluginOptions): Plugin[] {
         externalComponentStyles,
       });
     }
-  }
 
-  /**
-   * Creates a new NgtscProgram to analyze/re-analyze
-   * the source files and create a file emitter.
-   * This is shared between an initial build and a hot update.
-   */
-  async function buildAndAnalyze() {
+    /**
+     * Creates a new NgtscProgram to analyze/re-analyze
+     * the source files and create a file emitter.
+     * This is shared between an initial build and a hot update.
+     */
     let builder:
       | ts.BuilderProgram
       | ts.EmitAndSemanticDiagnosticsBuilderProgram;
@@ -833,8 +821,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     if (!jit) {
       // Create the Angular specific program that contains the Angular compiler
       const angularProgram: NgtscProgram = new compilerCli.NgtscProgram(
-        rootNames,
-        compilerOptions,
+        ids && ids.length > 0 ? ids : rootNames,
+        tsCompilerOptions,
         host as CompilerHost,
         nextProgram as any,
       );
@@ -842,27 +830,26 @@ export function angular(options?: PluginOptions): Plugin[] {
       typeScriptProgram = angularProgram.getTsProgram();
       augmentProgramWithVersioning(typeScriptProgram);
 
-      builder = builderProgram =
-        ts.createEmitAndSemanticDiagnosticsBuilderProgram(
-          typeScriptProgram,
-          host,
-          builderProgram,
-        );
+      builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
+        typeScriptProgram,
+        host,
+        builderProgram,
+      );
 
       await angularCompiler.analyzeAsync();
 
       nextProgram = angularProgram;
+      builderProgram =
+        builder as unknown as ts.EmitAndSemanticDiagnosticsBuilderProgram;
     } else {
-      builder = builderProgram =
-        ts.createEmitAndSemanticDiagnosticsBuilderProgram(
-          rootNames,
-          compilerOptions,
-          host,
-          nextProgram as any,
-        );
+      builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
+        rootNames,
+        tsCompilerOptions,
+        host,
+        nextProgram,
+      );
 
       typeScriptProgram = builder.getProgram();
-      nextProgram = builderProgram as unknown as ts.Program;
     }
 
     if (!watchMode) {
@@ -871,33 +858,108 @@ export function angular(options?: PluginOptions): Plugin[] {
       builder = ts.createAbstractBuilder(typeScriptProgram, host);
     }
 
-    const getTypeChecker = () => builder.getProgram().getTypeChecker();
-    fileEmitter = createFileEmitter(
+    const beforeTransformers = jit
+      ? [
+          compilerCli.constructorParametersDownlevelTransform(
+            builder.getProgram(),
+          ),
+          createJitResourceTransformer(() =>
+            builder.getProgram().getTypeChecker(),
+          ),
+        ]
+      : [];
+
+    const transformers = mergeTransformers(
+      { before: beforeTransformers },
+      jit ? {} : angularCompiler!.prepareEmit().transformers,
+    );
+
+    const fileMetadata = getFileMetadata(
       builder,
-      mergeTransformers(
-        {
-          before: [
-            ...(jit
-              ? [
-                  compilerCli.constructorParametersDownlevelTransform(
-                    builder.getProgram(),
-                  ),
-                  createJitResourceTransformer(getTypeChecker),
-                ]
-              : []),
-            ...pluginOptions.advanced.tsTransformers.before,
-          ],
-          after: pluginOptions.advanced.tsTransformers.after,
-          afterDeclarations:
-            pluginOptions.advanced.tsTransformers.afterDeclarations,
-        },
-        jit ? {} : angularCompiler!.prepareEmit().transformers,
-      ),
-      () => [],
       angularCompiler!,
       pluginOptions.liveReload,
       pluginOptions.disableTypeChecking,
     );
+
+    const writeFileCallback: ts.WriteFileCallback = (
+      _filename,
+      content,
+      _a,
+      _b,
+      sourceFiles,
+    ) => {
+      if (!sourceFiles?.length) {
+        return;
+      }
+
+      const filename = normalizePath(sourceFiles[0].fileName);
+
+      if (filename.includes('ngtypecheck.ts') || filename.includes('.d.')) {
+        return;
+      }
+
+      const metadata = watchMode
+        ? fileMetadata(filename, sourceFileCache.get(filename))
+        : {};
+
+      outputFiles.set(filename, {
+        content,
+        dependencies: [],
+        errors: metadata.errors,
+        warnings: metadata.warnings,
+        hmrUpdateCode: metadata.hmrUpdateCode,
+        hmrEligible: metadata.hmrEligible,
+      });
+    };
+
+    const writeOutputFile = (id: string) => {
+      const sourceFile = builder.getSourceFile(id);
+      if (!sourceFile) {
+        return;
+      }
+
+      let content = '';
+      builder.emit(
+        sourceFile,
+        (filename, data) => {
+          if (/\.[cm]?js$/.test(filename)) {
+            content = data;
+          }
+        },
+        undefined /* cancellationToken */,
+        undefined /* emitOnlyDtsFiles */,
+        transformers,
+      );
+
+      writeFileCallback(id, content, false, undefined, [sourceFile]);
+    };
+
+    if (!watchMode) {
+      for (const sf of builder.getSourceFiles()) {
+        const id = sf!.fileName;
+        writeOutputFile(id);
+      }
+    } else {
+      if (ids && ids.length > 0) {
+        ids.forEach((id) => writeOutputFile(id));
+      } else {
+        // TypeScript will loop until there are no more affected files in the program
+        while (
+          (
+            builder as ts.EmitAndSemanticDiagnosticsBuilderProgram
+          ).emitNextAffectedFile(
+            writeFileCallback,
+            undefined,
+            undefined,
+            transformers,
+          )
+        ) {
+          /* empty */
+        }
+      }
+    }
+
+    return { host };
   }
 }
 
@@ -910,28 +972,23 @@ function sendHMRComponentUpdate(server: ViteDevServer, id: string) {
   classNames.delete(id);
 }
 
-export function createFileEmitter(
+export function getFileMetadata(
   program: ts.BuilderProgram,
-  transformers: ts.CustomTransformers = {},
-  onAfterEmit?: (sourceFile: ts.SourceFile) => void,
   angularCompiler?: NgtscProgram['compiler'],
   liveReload?: boolean,
   disableTypeChecking?: boolean,
-): FileEmitter {
-  return async (file: string, stale?: ts.SourceFile) => {
+) {
+  const ts = require('typescript');
+  return (file: string, stale?: ts.SourceFile) => {
     const sourceFile = program.getSourceFile(file);
     if (!sourceFile) {
-      return undefined;
+      return {};
     }
 
-    if (stale) {
-      const hmrEligible = !!analyzeFileUpdates(
-        stale,
-        sourceFile,
-        angularCompiler!,
-      );
-      return { dependencies: [], hmrEligible };
-    }
+    const hmrEligible =
+      liveReload && stale
+        ? !!analyzeFileUpdates(stale, sourceFile, angularCompiler!)
+        : false;
 
     const diagnostics = getDiagnosticsForSourceFile(
       sourceFile,
@@ -956,29 +1013,14 @@ export function createFileEmitter(
 
     if (liveReload) {
       for (const node of sourceFile.statements) {
-        if (ts.isClassDeclaration(node) && node.name != null) {
-          hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node);
-          !!hmrUpdateCode && classNames.set(file, node.name.getText());
+        if (ts.isClassDeclaration(node) && (node as any).name != null) {
+          hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node as any);
+          !!hmrUpdateCode && classNames.set(file, (node as any).name.getText());
         }
       }
     }
 
-    let content: string | undefined;
-    program.emit(
-      sourceFile,
-      (filename, data) => {
-        if (/\.[cm]?js$/.test(filename)) {
-          content = data;
-        }
-      },
-      undefined /* cancellationToken */,
-      undefined /* emitOnlyDtsFiles */,
-      transformers,
-    );
-
-    onAfterEmit?.(sourceFile);
-
-    return { content, dependencies: [], errors, warnings, hmrUpdateCode };
+    return { errors, warnings, hmrUpdateCode, hmrEligible };
   };
 }
 
