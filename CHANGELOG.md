@@ -1,3 +1,9 @@
+## [1.16.1-beta.2](https://github.com/analogjs/analog/compare/v1.16.1-beta.1...v1.16.1-beta.2) (2025-05-09)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** optimize memory usage for large workspaces ([#1719](https://github.com/analogjs/analog/issues/1719)) ([6364190](https://github.com/analogjs/analog/commit/6364190da3212d1d29fded36fe9d2deea1fa7be5))
+
 ## [1.16.1-beta.1](https://github.com/analogjs/analog/compare/v1.16.0...v1.16.1-beta.1) (2025-04-30)
 
 ### Bug Fixes
