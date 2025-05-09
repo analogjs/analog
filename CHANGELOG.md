@@ -1,3 +1,9 @@
+## [1.16.1-beta.4](https://github.com/analogjs/analog/compare/v1.16.1-beta.3...v1.16.1-beta.4) (2025-05-09)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** defer initial compilation in Vitest VSCode extension ([#1721](https://github.com/analogjs/analog/issues/1721)) ([fc89624](https://github.com/analogjs/analog/commit/fc896241683cc1c74fdb21b5565cf82e0549d522))
+
 ## [1.16.1-beta.3](https://github.com/analogjs/analog/compare/v1.16.1-beta.2...v1.16.1-beta.3) (2025-05-09)
 
 ### Bug Fixes
