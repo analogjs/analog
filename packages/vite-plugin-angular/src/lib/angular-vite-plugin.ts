@@ -161,7 +161,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   const templateUrlsResolver = new TemplateUrlsResolver();
   const outputFiles = new Map<string, EmitFileResult>();
   const fileEmitter = (file: string) => {
-    return outputFiles.get(file);
+    return outputFiles.get(normalizePath(file));
   };
 
   function angularPlugin(): Plugin {
@@ -592,7 +592,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
-          const typescriptResult = outputFiles.get(id);
+          const typescriptResult = fileEmitter(id);
 
           if (
             typescriptResult?.warnings &&
@@ -647,7 +647,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             fileEmitter
           ) {
             sourceFileCache.invalidate([`${id}.ts`]);
-            const ngFileResult = await fileEmitter!(`${id}.ts`);
+            const ngFileResult = fileEmitter(`${id}.ts`);
             data = ngFileResult?.content || '';
 
             if (id.includes('.agx')) {
@@ -892,13 +892,15 @@ export function angular(options?: PluginOptions): Plugin[] {
         return;
       }
 
-      const filename = sourceFiles[0].fileName;
+      const filename = normalizePath(sourceFiles[0].fileName);
 
-      if (filename.includes('ngtypecheck.ts')) {
+      if (filename.includes('ngtypecheck.ts') || filename.includes('.d.')) {
         return;
       }
 
-      const metadata = fileMetadata(filename, sourceFileCache.get(filename));
+      const metadata = watchMode
+        ? fileMetadata(filename, sourceFileCache.get(filename))
+        : {};
 
       outputFiles.set(filename, {
         content,
@@ -939,9 +941,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       }
     } else {
       if (ids && ids.length > 0) {
-        ids.forEach((id) => {
-          writeOutputFile(id);
-        });
+        ids.forEach((id) => writeOutputFile(id));
       } else {
         // TypeScript will loop until there are no more affected files in the program
         while (
