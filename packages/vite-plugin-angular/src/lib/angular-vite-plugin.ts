@@ -1,5 +1,6 @@
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
-import { dirname, relative, resolve } from 'node:path';
+import { basename, dirname, isAbsolute, relative, resolve } from 'node:path';
+import { mkdirSync, writeFileSync } from 'node:fs';
 
 import * as compilerCli from '@angular/compiler-cli';
 import * as ts from 'typescript';
@@ -102,17 +103,19 @@ const TS_EXT_REGEX = /\.[cm]?(ts|analog|ag)[^x]?\??/;
 const ANGULAR_COMPONENT_PREFIX = '/@ng/component';
 const classNames = new Map();
 
+interface DeclarationFile {
+  declarationFileDir: string;
+  declarationPath: string;
+  data: string;
+}
+
 export function angular(options?: PluginOptions): Plugin[] {
   /**
    * Normalize plugin options so defaults
    * are used for values not provided.
    */
   const pluginOptions = {
-    tsconfig:
-      options?.tsconfig ??
-      (process.env['NODE_ENV'] === 'test'
-        ? './tsconfig.spec.json'
-        : './tsconfig.app.json'),
+    tsconfig: options?.tsconfig || '',
     workspaceRoot: options?.workspaceRoot ?? process.cwd(),
     inlineStylesExtension: options?.inlineStylesExtension ?? 'css',
     advanced: {
@@ -165,6 +168,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     return outputFiles.get(normalizePath(file));
   };
   let initialCompilation = false;
+  const declarationFiles: DeclarationFile[] = [];
 
   function angularPlugin(): Plugin {
     let isProd = false;
@@ -180,14 +184,13 @@ export function angular(options?: PluginOptions): Plugin[] {
         isProd =
           config.mode === 'production' ||
           process.env['NODE_ENV'] === 'production';
-        pluginOptions.tsconfig =
-          options?.tsconfig ??
-          resolve(
-            config.root || '.',
-            process.env['NODE_ENV'] === 'test'
-              ? './tsconfig.spec.json'
-              : './tsconfig.app.json',
-          );
+        pluginOptions.tsconfig = getTsConfigPath(
+          config.root || '.',
+          pluginOptions,
+          isProd,
+          isTest,
+          !!config?.build?.lib,
+        );
 
         return {
           esbuild: config.esbuild ?? false,
@@ -672,6 +675,14 @@ export function angular(options?: PluginOptions): Plugin[] {
 
         return undefined;
       },
+      closeBundle() {
+        declarationFiles.forEach(
+          ({ declarationFileDir, declarationPath, data }) => {
+            mkdirSync(declarationFileDir, { recursive: true });
+            writeFileSync(declarationPath, data, 'utf-8');
+          },
+        );
+      },
     };
   }
 
@@ -743,6 +754,36 @@ export function angular(options?: PluginOptions): Plugin[] {
     });
   }
 
+  function getTsConfigPath(
+    root: string,
+    options: PluginOptions,
+    isProd: boolean,
+    isTest: boolean,
+    isLib: boolean,
+  ) {
+    if (options.tsconfig && isAbsolute(options.tsconfig)) {
+      return options.tsconfig;
+    }
+
+    let tsconfigFilePath = './tsconfig.app.json';
+
+    if (isLib) {
+      tsconfigFilePath = isProd
+        ? './tsconfig.lib.prod.json'
+        : './tsconfig.lib.json';
+    }
+
+    if (isTest) {
+      tsconfigFilePath = './tsconfig.spec.json';
+    }
+
+    if (options.tsconfig) {
+      tsconfigFilePath = options.tsconfig;
+    }
+
+    return resolve(root, tsconfigFilePath);
+  }
+
   async function performCompilation(config: ResolvedConfig, ids?: string[]) {
     const isProd = config.mode === 'production';
     const analogFiles = findAnalogFiles(config);
@@ -786,6 +827,12 @@ export function angular(options?: PluginOptions): Plugin[] {
       // These options can't be false in partial mode
       tsCompilerOptions['supportTestBed'] = true;
       tsCompilerOptions['supportJitMode'] = true;
+    }
+
+    if (!isTest && config.build?.lib) {
+      tsCompilerOptions['declaration'] = true;
+      tsCompilerOptions['declarationMap'] = watchMode;
+      tsCompilerOptions['inlineSources'] = true;
     }
 
     rootNames = rootNames.concat(analogFiles, includeFiles);
@@ -928,6 +975,30 @@ export function angular(options?: PluginOptions): Plugin[] {
         (filename, data) => {
           if (/\.[cm]?js$/.test(filename)) {
             content = data;
+          }
+
+          if (
+            !watchMode &&
+            !isTest &&
+            /\.d\.ts/.test(filename) &&
+            !filename.includes('.ngtypecheck.')
+          ) {
+            const declarationPath = resolve(
+              config.root,
+              config.build.outDir,
+              relative(config.root, filename),
+            );
+
+            const declarationFileDir = declarationPath.replace(
+              basename(filename),
+              '',
+            );
+
+            declarationFiles.push({
+              declarationFileDir,
+              declarationPath,
+              data,
+            });
           }
         },
         undefined /* cancellationToken */,

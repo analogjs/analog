@@ -56,6 +56,7 @@
         "packages/vite-plugin-nitro/src/index.ts"
       ],
       "libs/card": ["libs/card/src/index.ts"],
+      "my-package": ["./dist/libs/my-package", "libs/my-package/src/index.ts"],
       "shared/feature": ["libs/shared/feature/src/index.ts"],
       "vitest-angular": [
         "./node_modules/@analogjs/vitest-angular",
