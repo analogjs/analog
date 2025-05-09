@@ -23,6 +23,7 @@ body:
         - platform
         - trpc
         - astro-angular
+        - storybook-angular
         - Docs
         - Don't know / other
     validations:
