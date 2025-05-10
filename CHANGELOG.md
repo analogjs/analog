@@ -1,3 +1,9 @@
+## [1.16.1-beta.6](https://github.com/analogjs/analog/compare/v1.16.1-beta.5...v1.16.1-beta.6) (2025-05-10)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** improve support for building Angular libraries ([#1724](https://github.com/analogjs/analog/issues/1724)) ([a2d9141](https://github.com/analogjs/analog/commit/a2d9141c72cd56575138dcfe9f54e36768b33b30))
+
 ## [1.16.1-beta.5](https://github.com/analogjs/analog/compare/v1.16.1-beta.4...v1.16.1-beta.5) (2025-05-10)
 
 ### Bug Fixes
