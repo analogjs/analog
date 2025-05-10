@@ -1,3 +1,9 @@
+## [1.16.1-beta.5](https://github.com/analogjs/analog/compare/v1.16.1-beta.4...v1.16.1-beta.5) (2025-05-10)
+
+### Bug Fixes
+
+- **storybook-angular:** include preset as ESM for Windows support ([#1725](https://github.com/analogjs/analog/issues/1725)) ([c8bace5](https://github.com/analogjs/analog/commit/c8bace5c221e90fcab97c5c25eca8ec92fa6981f))
+
 ## [1.16.1-beta.4](https://github.com/analogjs/analog/compare/v1.16.1-beta.3...v1.16.1-beta.4) (2025-05-09)
 
 ### Bug Fixes
