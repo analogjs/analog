@@ -27,7 +27,7 @@
       "import": "./src/index.js",
       "require": "./src/index.js"
     },
-    "./preset": "./src/preset.js",
+    "./preset": "./preset.mjs",
     "./package.json": "./package.json",
     "./*": "./src/*"
   },
