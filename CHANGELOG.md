@@ -1,3 +1,9 @@
+## [1.16.1-beta.7](https://github.com/analogjs/analog/compare/v1.16.1-beta.6...v1.16.1-beta.7) (2025-05-12)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** adjust output path for library dts files ([#1728](https://github.com/analogjs/analog/issues/1728)) ([54390e0](https://github.com/analogjs/analog/commit/54390e019a0841ad3d538275197b71b8bbc3f60f))
+
 ## [1.16.1-beta.6](https://github.com/analogjs/analog/compare/v1.16.1-beta.5...v1.16.1-beta.6) (2025-05-10)
 
 ### Bug Fixes
