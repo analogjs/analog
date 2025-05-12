@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/storybook-angular",
-  "version": "1.16.0",
+  "version": "1.16.1-beta.8",
   "description": "Storybook Integration for Angular & Vite",
   "keywords": [
     "storybook",
@@ -27,7 +27,7 @@
       "import": "./src/index.js",
       "require": "./src/index.js"
     },
-    "./preset": "./src/preset.js",
+    "./preset": "./preset.mjs",
     "./package.json": "./package.json",
     "./*": "./src/*"
   },

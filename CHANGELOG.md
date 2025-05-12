@@ -1,3 +1,51 @@
+## [1.16.1-beta.8](https://github.com/analogjs/analog/compare/v1.16.1-beta.7...v1.16.1-beta.8) (2025-05-12)
+
+### Bug Fixes
+
+- **platform:** add support for Nx 21 release ([#1727](https://github.com/analogjs/analog/issues/1727)) ([ef442a7](https://github.com/analogjs/analog/commit/ef442a7ae2a1292535ea9e22d65998d56f45a4b9))
+
+## [1.16.1-beta.7](https://github.com/analogjs/analog/compare/v1.16.1-beta.6...v1.16.1-beta.7) (2025-05-12)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** adjust output path for library dts files ([#1728](https://github.com/analogjs/analog/issues/1728)) ([54390e0](https://github.com/analogjs/analog/commit/54390e019a0841ad3d538275197b71b8bbc3f60f))
+
+## [1.16.1-beta.6](https://github.com/analogjs/analog/compare/v1.16.1-beta.5...v1.16.1-beta.6) (2025-05-10)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** improve support for building Angular libraries ([#1724](https://github.com/analogjs/analog/issues/1724)) ([a2d9141](https://github.com/analogjs/analog/commit/a2d9141c72cd56575138dcfe9f54e36768b33b30))
+
+## [1.16.1-beta.5](https://github.com/analogjs/analog/compare/v1.16.1-beta.4...v1.16.1-beta.5) (2025-05-10)
+
+### Bug Fixes
+
+- **storybook-angular:** include preset as ESM for Windows support ([#1725](https://github.com/analogjs/analog/issues/1725)) ([c8bace5](https://github.com/analogjs/analog/commit/c8bace5c221e90fcab97c5c25eca8ec92fa6981f))
+
+## [1.16.1-beta.4](https://github.com/analogjs/analog/compare/v1.16.1-beta.3...v1.16.1-beta.4) (2025-05-09)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** defer initial compilation in Vitest VSCode extension ([#1721](https://github.com/analogjs/analog/issues/1721)) ([fc89624](https://github.com/analogjs/analog/commit/fc896241683cc1c74fdb21b5565cf82e0549d522))
+
+## [1.16.1-beta.3](https://github.com/analogjs/analog/compare/v1.16.1-beta.2...v1.16.1-beta.3) (2025-05-09)
+
+### Bug Fixes
+
+- **nx-plugin:** update Angular v19 template files ([#1720](https://github.com/analogjs/analog/issues/1720)) ([9b1e065](https://github.com/analogjs/analog/commit/9b1e06576c491093d18ac03622e12b57cf5aa9d1))
+
+## [1.16.1-beta.2](https://github.com/analogjs/analog/compare/v1.16.1-beta.1...v1.16.1-beta.2) (2025-05-09)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** optimize memory usage for large workspaces ([#1719](https://github.com/analogjs/analog/issues/1719)) ([6364190](https://github.com/analogjs/analog/commit/6364190da3212d1d29fded36fe9d2deea1fa7be5))
+
+## [1.16.1-beta.1](https://github.com/analogjs/analog/compare/v1.16.0...v1.16.1-beta.1) (2025-04-30)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** check for custom apiPrefix with api directory ([#1715](https://github.com/analogjs/analog/issues/1715)) ([11c4f36](https://github.com/analogjs/analog/commit/11c4f36bb76e74dda2cffa08a6b17dd6cea069c4))
+
 # [1.16.0](https://github.com/analogjs/analog/compare/v1.15.1...v1.16.0) (2025-04-29)
 
 ### Bug Fixes

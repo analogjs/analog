@@ -1,0 +1,22 @@
+{
+  "name": "@analogjs/my-package",
+  "type": "module",
+  "private": true,
+  "peerDependencies": {
+    "@angular/core": "^19.0.0"
+  },
+  "dependencies": {
+    "tslib": "^2.0.0"
+  },
+  "exports": {
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./fesm2022/my-package.js",
+      "require": "./fesm2022/my-package.js",
+      "default": "./fesm2022/my-package.js"
+    }
+  }
+}
