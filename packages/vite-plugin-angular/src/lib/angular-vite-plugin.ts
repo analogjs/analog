@@ -983,16 +983,16 @@ export function angular(options?: PluginOptions): Plugin[] {
             /\.d\.ts/.test(filename) &&
             !filename.includes('.ngtypecheck.')
           ) {
+            // output to library root instead /src
             const declarationPath = resolve(
               config.root,
               config.build.outDir,
               relative(config.root, filename),
-            );
+            ).replace('/src/', '/');
 
-            const declarationFileDir = declarationPath.replace(
-              basename(filename),
-              '',
-            );
+            const declarationFileDir = declarationPath
+              .replace(basename(filename), '')
+              .replace('/src/', '/');
 
             declarationFiles.push({
               declarationFileDir,
