@@ -1,3 +1,9 @@
+## [1.16.1-beta.8](https://github.com/analogjs/analog/compare/v1.16.1-beta.7...v1.16.1-beta.8) (2025-05-12)
+
+### Bug Fixes
+
+- **platform:** add support for Nx 21 release ([#1727](https://github.com/analogjs/analog/issues/1727)) ([ef442a7](https://github.com/analogjs/analog/commit/ef442a7ae2a1292535ea9e22d65998d56f45a4b9))
+
 ## [1.16.1-beta.7](https://github.com/analogjs/analog/compare/v1.16.1-beta.6...v1.16.1-beta.7) (2025-05-12)
 
 ### Bug Fixes
