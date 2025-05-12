@@ -187,6 +187,11 @@ const sidebars = {
         },
         {
           type: 'doc',
+          id: 'guides/libraries',
+          label: 'Building an Angular library',
+        },
+        {
+          type: 'doc',
           id: 'guides/compatibility',
           label: 'Version Compatibilty',
         },

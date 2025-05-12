@@ -13,11 +13,6 @@ export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
     cacheDir: `<%= offsetFromRoot %>node_modules/.vite`,
-    <% if (addTRPC) { %>
-    ssr: {
-      noExternal: ['@analogjs/trpc','@trpc/server'],
-    },
-    <% } %>
     build: {
       outDir: '<%= offsetFromRoot %>dist/<%= projectRoot %>/client',
       reportCompressedSize: true,
@@ -34,12 +29,8 @@ export default defineConfig(({ mode }) => {
       <% } %>
       <% if (addTRPC) { %>
       analog({
-        nitro: {
-          routeRules: {
-            '/': {
-              prerender: false,
-            }
-          }
+        prerender: {
+          routes: []
         }
       }),
       <% } else { %>

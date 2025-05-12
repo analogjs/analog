@@ -44,7 +44,7 @@ export default defineConfig(({ mode, isSsrBuild }) => {
             supportAnalogFormat: true,
           },
         },
-        liveReload: true,
+        liveReload: false,
         nitro: {
           routeRules: {
             '/cart/**': {

@@ -1,17 +1,11 @@
 import { dirname, join } from 'node:path';
-
-import { Options, PresetProperty } from 'storybook/internal/types';
+import { createRequire } from 'node:module';
 import { core as PresetCore } from '@storybook/angular/dist/preset.js';
-
-import { StandaloneOptions } from './lib/utils/standalone-options';
-import { StorybookConfig } from './types';
-
-const getAbsolutePath = <I extends string>(input: I): I =>
-  dirname(require.resolve(join(input, 'package.json'))) as any;
-
-export const core: PresetProperty<'core'> = async (config, options) => {
-  const presetCore = (PresetCore as any)(config, options);
-
+const require = createRequire(import.meta.url);
+const getAbsolutePath = (input) =>
+  dirname(require.resolve(join(input, 'package.json')));
+export const core = async (config, options) => {
+  const presetCore = PresetCore(config, options);
   return {
     ...presetCore,
     builder: {
@@ -20,18 +14,12 @@ export const core: PresetProperty<'core'> = async (config, options) => {
     },
   };
 };
-
-export const viteFinal: NonNullable<StorybookConfig['viteFinal']> = async (
-  config,
-  options: Options & StandaloneOptions,
-) => {
+export const viteFinal = async (config, options) => {
   // Merge custom configuration into the default config
   const { mergeConfig } = await import('vite');
   const { default: angular } = await import('@analogjs/vite-plugin-angular');
-
   // @ts-ignore
-  const framework = await options.presets.apply<any>('framework');
-
+  const framework = await options.presets.apply('framework');
   return mergeConfig(config, {
     // Add dependencies to pre-optimization
     optimizeDeps: {
@@ -67,5 +55,5 @@ export const viteFinal: NonNullable<StorybookConfig['viteFinal']> = async (
     },
   });
 };
-
 export { addons, previewAnnotations } from '@storybook/angular/dist/preset.js';
+//# sourceMappingURL=preset.js.map
