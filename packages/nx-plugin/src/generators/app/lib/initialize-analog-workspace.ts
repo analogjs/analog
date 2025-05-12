@@ -78,7 +78,7 @@ const initWithNxNamespace = async (
       '@nx/angular': versions['@nx/angular'],
       '@nx/devkit': versions['@nx/devkit'],
       '@nx/eslint': versions['@nx/eslint'],
-      typescript: '~5.5.0',
+      typescript: '~5.7.0',
     },
   );
 
