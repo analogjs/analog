@@ -1,3 +1,9 @@
+## [1.16.2-beta.1](https://github.com/analogjs/analog/compare/v1.16.1...v1.16.2-beta.1) (2025-05-14)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** normalize version string for pending tasks replacement ([#1731](https://github.com/analogjs/analog/issues/1731)) ([624696c](https://github.com/analogjs/analog/commit/624696c6ce1061951373dc0a94b29710d8997eaa))
+
 ## [1.16.1](https://github.com/analogjs/analog/compare/v1.16.0...v1.16.1) (2025-05-12)
 
 ### Bug Fixes
