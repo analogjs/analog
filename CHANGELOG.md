@@ -1,3 +1,9 @@
+## [1.16.2-beta.2](https://github.com/analogjs/analog/compare/v1.16.2-beta.1...v1.16.2-beta.2) (2025-05-17)
+
+### Bug Fixes
+
+- **create-analog:** use latest version of marked w/shiki, fix tailwind support ([#1736](https://github.com/analogjs/analog/issues/1736)) ([3bebec9](https://github.com/analogjs/analog/commit/3bebec99b08fb653eebc2a66c28fe9727d6f2283))
+
 ## [1.16.2-beta.1](https://github.com/analogjs/analog/compare/v1.16.1...v1.16.2-beta.1) (2025-05-14)
 
 ### Bug Fixes
