@@ -7,11 +7,11 @@ import TabItem from '@theme/TabItem';
 
 # Nx
 
+Analog provides integration with Nx monorepos and workspaces through a workspace preset and an application generator. An Analog application can be created as a standalone project or added to an existing Nx workspace.
+
 ## Overview
 
 [Nx](https://nx.dev) is a smart, fast, extensible build system with first class monorepo support and powerful integrations.
-
-Analog provides integration with Nx monorepos and workspaces through a workspace preset and an application generator. An Analog application can be created as a standalone project or added to an existing Nx workspace.
 
 ## Creating a Standalone Nx project
 

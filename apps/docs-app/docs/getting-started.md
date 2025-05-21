@@ -7,6 +7,8 @@ import TabItem from '@theme/TabItem';
 
 # Getting Started
 
+Creating an Analog project can be done with minimal steps.
+
 ## System Requirements
 
 Analog requires the following Node and Angular versions:
