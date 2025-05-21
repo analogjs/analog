@@ -4,6 +4,8 @@ sidebar_position: 1
 
 # Analog SFCs
 
+Analog SFCs are a new file format for Single File Components (SFCs) that aims to simplify the authoring experience and provide Angular-compatible components and directives.
+
 > **Note:**
 >
 > This file format and API is experimental, is a community-driven initiative, and is not an officially proposed change to Angular. Use it at your own risk.
