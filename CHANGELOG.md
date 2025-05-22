@@ -1,3 +1,9 @@
+## [1.16.2-beta.3](https://github.com/analogjs/analog/compare/v1.16.2-beta.2...v1.16.2-beta.3) (2025-05-22)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fix live reload and move to separate plugin ([#1739](https://github.com/analogjs/analog/issues/1739)) ([0204e30](https://github.com/analogjs/analog/commit/0204e304b2d71d72c1c3cafe5222a3734dc920d2))
+
 ## [1.16.2-beta.2](https://github.com/analogjs/analog/compare/v1.16.2-beta.1...v1.16.2-beta.2) (2025-05-17)
 
 ### Bug Fixes
