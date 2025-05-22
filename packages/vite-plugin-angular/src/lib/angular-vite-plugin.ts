@@ -5,7 +5,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import * as compilerCli from '@angular/compiler-cli';
 import * as ts from 'typescript';
 import { createRequire } from 'node:module';
-import { ServerResponse } from 'node:http';
+
 import {
   ModuleNode,
   normalizePath,
@@ -13,7 +13,6 @@ import {
   ViteDevServer,
   preprocessCSS,
   ResolvedConfig,
-  Connect,
 } from 'vite';
 import * as ngCompiler from '@angular/compiler';
 
@@ -48,7 +47,8 @@ import {
 } from './authoring/markdown-transform.js';
 import { routerPlugin } from './router-plugin.js';
 import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
-import { analyzeFileUpdates } from './utils/hmr-candidates.js';
+import { EmitFileResult } from './models.js';
+import { liveReloadPlugin } from './live-reload-plugin.js';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -83,24 +83,12 @@ export interface PluginOptions {
   disableTypeChecking?: boolean;
 }
 
-interface EmitFileResult {
-  content?: string;
-  map?: string;
-  dependencies: readonly string[];
-  hash?: Uint8Array;
-  errors?: (string | ts.DiagnosticMessageChain)[];
-  warnings?: (string | ts.DiagnosticMessageChain)[];
-  hmrUpdateCode?: string | null;
-  hmrEligible?: boolean;
-}
-
 /**
  * TypeScript file extension regex
  * Match .(c or m)ts, .ts extensions with an optional ? for query params
  * Ignore .tsx extensions
  */
 const TS_EXT_REGEX = /\.[cm]?(ts|analog|ag)[^x]?\??/;
-const ANGULAR_COMPONENT_PREFIX = '/@ng/component';
 const classNames = new Map();
 
 interface DeclarationFile {
@@ -246,55 +234,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         server.watcher.on('unlink', async () => {
           await performCompilation(resolvedConfig);
         });
-
-        if (pluginOptions.liveReload) {
-          const angularComponentMiddleware: Connect.HandleFunction = async (
-            req: Connect.IncomingMessage,
-            res: ServerResponse<Connect.IncomingMessage>,
-            next: Connect.NextFunction,
-          ) => {
-            if (req.url === undefined || res.writableEnded) {
-              return;
-            }
-
-            if (!req.url.includes(ANGULAR_COMPONENT_PREFIX)) {
-              next();
-
-              return;
-            }
-
-            const requestUrl = new URL(req.url, 'http://localhost');
-            const componentId = requestUrl.searchParams.get('c');
-
-            if (!componentId) {
-              res.statusCode = 400;
-              res.end();
-
-              return;
-            }
-
-            const [fileId] = decodeURIComponent(componentId).split('@');
-            const resolvedId = resolve(process.cwd(), fileId);
-            const invalidated =
-              !!server.moduleGraph.getModuleById(resolvedId)
-                ?.lastInvalidationTimestamp && classNames.get(resolvedId);
-
-            // don't send an HMR update until the file has been invalidated
-            if (!invalidated) {
-              res.setHeader('Content-Type', 'text/javascript');
-              res.setHeader('Cache-Control', 'no-cache');
-              res.end('');
-              return;
-            }
-
-            const result = fileEmitter(resolvedId);
-            res.setHeader('Content-Type', 'text/javascript');
-            res.setHeader('Cache-Control', 'no-cache');
-            res.end(`${result?.hmrUpdateCode || ''}`);
-          };
-
-          viteServer.middlewares.use(angularComponentMiddleware);
-        }
       },
       async buildStart() {
         // Defer the first compilation in test mode
@@ -319,14 +258,13 @@ export function angular(options?: PluginOptions): Plugin[] {
             fileId += '.ts';
           }
 
-          sourceFileCache.invalidate([fileId]);
           await performCompilation(resolvedConfig, [fileId]);
 
           const result = fileEmitter(fileId);
 
           if (
             pluginOptions.liveReload &&
-            !!result?.hmrEligible &&
+            result?.hmrEligible &&
             classNames.get(fileId)
           ) {
             const relativeFileId = `${relative(
@@ -440,7 +378,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         classNames.clear();
         return ctx.modules;
       },
-      resolveId(id, importer, options) {
+      resolveId(id, importer) {
         if (id.startsWith('angular:jit:')) {
           const path = id.split(';')[1];
           return `${normalizePath(
@@ -458,21 +396,9 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
         }
 
-        if (options?.ssr && id.includes(ANGULAR_COMPONENT_PREFIX)) {
-          const requestUrl = new URL(id.slice(1), 'http://localhost');
-          const componentId = requestUrl.searchParams.get('c');
-
-          const res = resolve(
-            process.cwd(),
-            decodeURIComponent(componentId as string).split('@')[0],
-          );
-
-          return res;
-        }
-
         return undefined;
       },
-      async load(id, options) {
+      async load(id) {
         // Map angular inline styles to the source text
         if (isComponentStyleSheet(id)) {
           const componentStyles = inlineComponentStyles?.get(
@@ -481,28 +407,6 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (componentStyles) {
             return componentStyles;
           }
-        }
-
-        if (
-          pluginOptions.liveReload &&
-          options?.ssr &&
-          id.includes(ANGULAR_COMPONENT_PREFIX)
-        ) {
-          const requestUrl = new URL(id.slice(1), 'http://localhost');
-          const componentId = requestUrl.searchParams.get('c');
-
-          if (!componentId) {
-            return;
-          }
-
-          const result = fileEmitter(
-            resolve(
-              process.cwd(),
-              decodeURIComponent(componentId).split('@')[0],
-            ),
-          );
-
-          return result?.hmrUpdateCode || '';
         }
 
         return;
@@ -688,6 +592,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   return [
     angularPlugin(),
+    pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
     ...(isTest && !isStackBlitz ? angularVitestPlugins() : []),
     (jit &&
       jitPlugin({
@@ -949,9 +854,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         return;
       }
 
-      const metadata = watchMode
-        ? fileMetadata(filename, sourceFileCache.get(filename))
-        : {};
+      const metadata = watchMode ? fileMetadata(filename) : {};
 
       outputFiles.set(filename, {
         content,
@@ -1054,16 +957,11 @@ export function getFileMetadata(
   disableTypeChecking?: boolean,
 ) {
   const ts = require('typescript');
-  return (file: string, stale?: ts.SourceFile) => {
+  return (file: string) => {
     const sourceFile = program.getSourceFile(file);
     if (!sourceFile) {
       return {};
     }
-
-    const hmrEligible =
-      liveReload && stale
-        ? !!analyzeFileUpdates(stale, sourceFile, angularCompiler!)
-        : false;
 
     const diagnostics = getDiagnosticsForSourceFile(
       sourceFile,
@@ -1086,11 +984,15 @@ export function getFileMetadata(
 
     let hmrUpdateCode: string | null | undefined = undefined;
 
+    let hmrEligible = false;
     if (liveReload) {
       for (const node of sourceFile.statements) {
         if (ts.isClassDeclaration(node) && (node as any).name != null) {
           hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node as any);
-          !!hmrUpdateCode && classNames.set(file, (node as any).name.getText());
+          if (!!hmrUpdateCode) {
+            classNames.set(file, (node as any).name.getText());
+            hmrEligible = true;
+          }
         }
       }
     }
