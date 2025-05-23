@@ -1,3 +1,11 @@
+# [2.0.0-alpha.11](https://github.com/analogjs/analog/compare/v2.0.0-alpha.10...v2.0.0-alpha.11) (2025-05-23)
+
+### Bug Fixes
+
+- **create-analog:** use latest version of marked w/shiki, fix tailwind support ([#1736](https://github.com/analogjs/analog/issues/1736)) ([3bebec9](https://github.com/analogjs/analog/commit/3bebec99b08fb653eebc2a66c28fe9727d6f2283))
+- **vite-plugin-angular:** fix live reload and move to separate plugin ([#1739](https://github.com/analogjs/analog/issues/1739)) ([0204e30](https://github.com/analogjs/analog/commit/0204e304b2d71d72c1c3cafe5222a3734dc920d2))
+- **vite-plugin-angular:** normalize version string for pending tasks replacement ([#1731](https://github.com/analogjs/analog/issues/1731)) ([624696c](https://github.com/analogjs/analog/commit/624696c6ce1061951373dc0a94b29710d8997eaa))
+
 # [2.0.0-alpha.10](https://github.com/analogjs/analog/compare/v2.0.0-alpha.9...v2.0.0-alpha.10) (2025-05-12)
 
 ### Bug Fixes
