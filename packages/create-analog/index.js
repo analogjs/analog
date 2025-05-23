@@ -42,7 +42,7 @@ const HIGHLIGHTERS = {
     highlighter: 'withPrismHighlighter',
     entryPoint: 'prism-highlighter',
     dependencies: {
-      'marked-highlight': '^2.0.1',
+      'marked-highlight': '^2.2.1',
       prismjs: '^1.29.0',
     },
   },
@@ -50,7 +50,7 @@ const HIGHLIGHTERS = {
     highlighter: 'withShikiHighlighter',
     entryPoint: 'shiki-highlighter',
     dependencies: {
-      marked: '^7.0.0',
+      marked: '^15.0.7',
       'marked-shiki': '^1.1.0',
       shiki: '^1.6.1',
     },
@@ -214,6 +214,13 @@ async function init() {
     addTailwindDirectives(write, filesDir);
   }
 
+  replacePlaceholders(root, 'vite.config.ts', {
+    __TAILWIND_IMPORT__: !skipTailwind
+      ? `\nimport tailwindcss from '@tailwindcss/vite';`
+      : '',
+    __TAILWIND_PLUGIN__: !skipTailwind ? '\n    tailwindcss()' : '',
+  });
+
   const pkgInfo = pkgFromUserAgent(process.env.npm_config_user_agent);
   const pkgManager = pkgInfo ? pkgInfo.name : 'npm';
   const pkg = JSON.parse(
@@ -376,11 +383,11 @@ function addTailwindDependencies(pkg) {
 
 function addYarnDevDependencies(pkg, template) {
   // v18
-  if (template === 'latest' || template === 'blog') {
-    pkg.devDependencies['@nx/angular'] = '^19.1.0';
-    pkg.devDependencies['@nx/devkit'] = '^19.1.0';
-    pkg.devDependencies['@nx/vite'] = '^19.1.0';
-    pkg.devDependencies['nx'] = '^19.1.0';
+  if (template === 'latest' || template === 'blog' || template === 'minimal') {
+    pkg.devDependencies['@nx/angular'] = '^21.0.0';
+    pkg.devDependencies['@nx/devkit'] = '^21.0.0';
+    pkg.devDependencies['@nx/vite'] = '^21.0.0';
+    pkg.devDependencies['nx'] = '^21.0.0';
   } else if (template === 'angular-v17') {
     pkg.devDependencies['@angular-devkit/build-angular'] = '^17.2.0';
   }

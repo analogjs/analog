@@ -144,17 +144,18 @@ To load shared CSS paths, configure them using `loadPaths` css option in the `vi
 
 ```ts
 import path from 'node:path';
+import { UserConfig, mergeConfig } from 'vite';
 
-async viteFinal() {
-  return {
+export async function viteFinal(config: UserConfig) {
+  return mergeConfig(config, {
     css: {
       preprocessorOptions: {
         scss: {
-          loadPaths: `${path.resolve(__dirname, '../src/lib/styles')}`
-        }
-      }
-    }
-  };
+          loadPaths: `${path.resolve(__dirname, '../src/lib/styles')}`,
+        },
+      },
+    },
+  });
 }
 ```
 
@@ -192,32 +193,64 @@ pnpm install -w vite-tsconfig-paths --save-dev
   </TabItem>
 </Tabs>
 
-Next, add the plugin to the `plugins` array.
+Next, add the plugin to the `plugins` array in the `.storybook/main.ts`.
 
 ```ts
 import viteTsConfigPaths from 'vite-tsconfig-paths';
+import { UserConfig, mergeConfig } from 'vite';
 
-async viteFinal() {
-  return {
-    plugins: [
-      viteTsConfigPaths()
-    ],
-  };
+export async function viteFinal(config: UserConfig) {
+  return mergeConfig(config, {
+    plugins: [viteTsConfigPaths()],
+  });
 }
 ```
 
 ### With Nx
 
-For Nx workspaces, import and use the `nxViteTsPaths` plugin from the `@nx/vite` package.
+For Nx workspaces, import and use the `nxViteTsPaths` plugin from the `@nx/vite` package. Add the plugin to the `plugins` array in the `.storybook/main.ts`.
 
 ```ts
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import { UserConfig, mergeConfig } from 'vite';
 
-async viteFinal(config: UserConfig) {
-  return {
+export async function viteFinal(config: UserConfig) {
+  return mergeConfig(config, {
+    plugins: [nxViteTsPaths()],
+  });
+}
+```
+
+## Using File Replacements
+
+You can also use the `replaceFiles()` plugin from Nx to replace files during your build.
+
+Import the plugin and set it up:
+
+```ts
+import { replaceFiles } from '@nx/vite/plugins/rollup-replace-files.plugin';
+import { UserConfig, mergeConfig } from 'vite';
+
+export async function viteFinal(config: UserConfig) {
+  return mergeConfig(config, {
     plugins: [
-      nxViteTsPaths()
+      replaceFiles([
+        {
+          replace: './src/one.ts',
+          with: './src/two.ts',
+        },
+      ]),
     ],
-  };
+  });
+}
+```
+
+Adding the replacement files to `files` array in the `tsconfig.app.json` may also be necessary.
+
+```json
+{
+  "extends": "./tsconfig.json",
+  // other config
+  "files": ["src/main.ts", "src/main.server.ts", "src/two.ts"]
 }
 ```
