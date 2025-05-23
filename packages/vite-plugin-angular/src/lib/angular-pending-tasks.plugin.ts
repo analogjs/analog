@@ -13,8 +13,12 @@ export function pendingTasksPlugin(): Plugin {
   return {
     name: 'analogjs-pending-tasks-plugin',
     transform(code, id) {
+      const padVersion = (version: number) => String(version).padStart(2, '0');
+
       if (
-        Number(`${angularMajor}${angularMinor}${angularPatch}`) < 1904 &&
+        Number(
+          `${angularMajor}${padVersion(angularMinor)}${padVersion(angularPatch)}`,
+        ) < 190004 &&
         id.includes('analogjs-content.mjs')
       ) {
         return {
