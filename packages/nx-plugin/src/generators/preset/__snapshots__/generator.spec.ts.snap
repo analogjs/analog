@@ -1,0 +1,320 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`preset generator > should match package.json 1`] = `
+"{
+  "name": "@proj/source",
+  "dependencies": {
+    "@analogjs/content": "^1.16.2",
+    "@analogjs/router": "^1.16.2",
+    "@angular/common": "~19.2.0",
+    "@angular/compiler": "~19.2.0",
+    "@angular/core": "~19.2.0",
+    "@angular/forms": "~19.2.0",
+    "@angular/platform-browser": "~19.2.0",
+    "@angular/platform-browser-dynamic": "~19.2.0",
+    "@angular/platform-server": "19.2.0",
+    "@angular/router": "~19.2.0",
+    "@nx/angular": "^21.0.0",
+    "@tailwindcss/vite": "^4.1.4",
+    "front-matter": "^4.0.2",
+    "marked": "^15.0.7",
+    "marked-gfm-heading-id": "^4.1.1",
+    "marked-highlight": "^2.2.1",
+    "marked-mangle": "^1.1.10",
+    "mermaid": "^10.2.4",
+    "nx": "21.0.0",
+    "postcss": "^8.5.3",
+    "prismjs": "^1.29.0",
+    "rxjs": "~7.8.0",
+    "tailwindcss": "^4.1.4",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@analogjs/platform": "^1.16.2",
+    "@analogjs/vite-plugin-angular": "^1.16.2",
+    "@analogjs/vitest-angular": "^1.16.2",
+    "@angular-devkit/build-angular": "~19.2.0",
+    "@angular-devkit/core": "~19.2.0",
+    "@angular-devkit/schematics": "~19.2.0",
+    "@angular/cli": "~19.2.0",
+    "@angular/compiler-cli": "~19.2.0",
+    "@angular/language-service": "~19.2.0",
+    "@nx/devkit": "21.0.3",
+    "@nx/js": "21.0.3",
+    "@nx/playwright": "21.0.3",
+    "@nx/vite": "21.0.3",
+    "@nx/web": "21.0.3",
+    "@playwright/test": "^1.36.0",
+    "@schematics/angular": "~19.2.0",
+    "@swc-node/register": "~1.9.1",
+    "@swc/core": "~1.5.7",
+    "@swc/helpers": "~0.5.11",
+    "@types/node": "18.16.9",
+    "@vitest/coverage-v8": "^3.0.5",
+    "@vitest/ui": "^3.0.0",
+    "jiti": "2.4.2",
+    "jsdom": "~22.1.0",
+    "prettier": "^2.6.2",
+    "typescript": "~5.7.2",
+    "vite": "^6.0.0",
+    "vite-tsconfig-paths": "^4.2.0",
+    "vitest": "^3.0.0"
+  }
+}
+"
+`;
+
+exports[`preset generator > should match project.json 1`] = `
+"{
+  "name": "my-app",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "my-app/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@analogjs/platform:vite",
+      "options": {
+        "configFile": "my-app/vite.config.ts",
+        "main": "my-app/src/main.ts",
+        "outputPath": "dist/my-app/client",
+        "tsConfig": "my-app/tsconfig.app.json"
+      },
+      "defaultConfiguration": "production",
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "sourcemap": false,
+          "mode": "production"
+        }
+      },
+      "outputs": ["{workspaceRoot}/dist/apps/my-app"]
+    },
+    "serve": {
+      "executor": "@analogjs/platform:vite-dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "my-app:build",
+        "port": 4200
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "my-app:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "my-app:build:production"
+        }
+      }
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "buildTarget": "my-app:build"
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "../coverage/my-app"
+      }
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "my-app:build",
+        "port": 4200,
+        "staticFilePath": "dist/my-app/browser",
+        "spa": true
+      }
+    }
+  }
+}
+"
+`;
+
+exports[`preset generator > should match project.json 2`] = `
+"{
+  "name": "my-app",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "my-app/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@analogjs/platform:vite",
+      "options": {
+        "configFile": "my-app/vite.config.ts",
+        "main": "my-app/src/main.ts",
+        "outputPath": "dist/my-app/client",
+        "tsConfig": "my-app/tsconfig.app.json"
+      },
+      "defaultConfiguration": "production",
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "sourcemap": false,
+          "mode": "production"
+        }
+      },
+      "outputs": ["{workspaceRoot}/dist/apps/my-app"]
+    },
+    "serve": {
+      "executor": "@analogjs/platform:vite-dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "my-app:build",
+        "port": 4200
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "my-app:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "my-app:build:production"
+        }
+      }
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "buildTarget": "my-app:build"
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "../coverage/my-app"
+      }
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "my-app:build",
+        "port": 4200,
+        "staticFilePath": "dist/my-app/browser",
+        "spa": true
+      }
+    }
+  }
+}
+"
+`;
+
+exports[`preset generator > should match vite.config.ts 1`] = `
+"/// <reference types="vitest" />
+
+import analog from '@analogjs/platform';
+import { defineConfig } from 'vite';
+import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+
+// @ts-expect-error @tailwindcss/vite currently uses mts. TypeScript is complaining this, but it works as expected.
+import tailwindcss from '@tailwindcss/vite';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => {
+  return {
+    root: __dirname,
+    cacheDir: \`../node_modules/.vite\`,
+    build: {
+      outDir: '../dist/./my-app/client',
+      reportCompressedSize: true,
+      target: ['es2020'],
+    },
+    server: {
+      fs: {
+        allow: ['.'],
+      },
+    },
+    plugins: [tailwindcss(), analog(), nxViteTsPaths()],
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: ['src/test-setup.ts'],
+      include: ['**/*.spec.ts'],
+      reporters: ['default'],
+    },
+    define: {
+      'import.meta.vitest': mode !== 'production',
+    },
+  };
+});
+"
+`;
+
+exports[`preset generator > should run successfully with latest 1`] = `
+"{
+  "name": "@proj/source",
+  "dependencies": {
+    "@analogjs/content": "^1.16.2",
+    "@analogjs/router": "^1.16.2",
+    "@angular/common": "~19.2.0",
+    "@angular/compiler": "~19.2.0",
+    "@angular/core": "~19.2.0",
+    "@angular/forms": "~19.2.0",
+    "@angular/platform-browser": "~19.2.0",
+    "@angular/platform-browser-dynamic": "~19.2.0",
+    "@angular/platform-server": "19.2.0",
+    "@angular/router": "~19.2.0",
+    "@nx/angular": "^21.0.0",
+    "@tailwindcss/vite": "^4.1.4",
+    "front-matter": "^4.0.2",
+    "marked": "^15.0.7",
+    "marked-gfm-heading-id": "^4.1.1",
+    "marked-highlight": "^2.2.1",
+    "marked-mangle": "^1.1.10",
+    "mermaid": "^10.2.4",
+    "nx": "21.0.0",
+    "postcss": "^8.5.3",
+    "prismjs": "^1.29.0",
+    "rxjs": "~7.8.0",
+    "tailwindcss": "^4.1.4",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@analogjs/platform": "^1.16.2",
+    "@analogjs/vite-plugin-angular": "^1.16.2",
+    "@analogjs/vitest-angular": "^1.16.2",
+    "@angular-devkit/build-angular": "~19.2.0",
+    "@angular-devkit/core": "~19.2.0",
+    "@angular-devkit/schematics": "~19.2.0",
+    "@angular/cli": "~19.2.0",
+    "@angular/compiler-cli": "~19.2.0",
+    "@angular/language-service": "~19.2.0",
+    "@nx/devkit": "21.0.3",
+    "@nx/js": "21.0.3",
+    "@nx/playwright": "21.0.3",
+    "@nx/vite": "21.0.3",
+    "@nx/web": "21.0.3",
+    "@playwright/test": "^1.36.0",
+    "@schematics/angular": "~19.2.0",
+    "@swc-node/register": "~1.9.1",
+    "@swc/core": "~1.5.7",
+    "@swc/helpers": "~0.5.11",
+    "@types/node": "18.16.9",
+    "@vitest/coverage-v8": "^3.0.5",
+    "@vitest/ui": "^3.0.0",
+    "jiti": "2.4.2",
+    "jsdom": "~22.1.0",
+    "prettier": "^2.6.2",
+    "typescript": "~5.7.2",
+    "vite": "^6.0.0",
+    "vite-tsconfig-paths": "^4.2.0",
+    "vitest": "^3.0.0"
+  }
+}
+"
+`;

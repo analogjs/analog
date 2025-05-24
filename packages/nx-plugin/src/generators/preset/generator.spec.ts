@@ -10,9 +10,9 @@ import { AnalogNxApplicationGeneratorOptions } from '../app/schema';
 describe('preset generator', () => {
   const setup = async (
     options: AnalogNxApplicationGeneratorOptions,
-    nxVersion = '17.0.0',
+    nxVersion = '21.0.0',
   ) => {
-    const tree = createTreeWithEmptyWorkspace({ layout: 'apps-libs' });
+    const tree = createTreeWithEmptyWorkspace();
     addDependenciesToPackageJson(tree, { nx: nxVersion }, {});
     await generator(tree, options);
     const config = readProjectConfiguration(tree, options.analogAppName);
@@ -22,13 +22,21 @@ describe('preset generator', () => {
     };
   };
 
-  it('should run successfully with latest', async () => {
-    const { config } = await setup({ analogAppName: 'analog' });
-    expect(config).toBeDefined();
+  it('should match package.json', async () => {
+    const { tree } = await setup({ analogAppName: 'my-app' });
+
+    expect(tree.read('/package.json').toString()).toMatchSnapshot();
   });
 
-  it('should run successfully with Nx 16.x', async () => {
-    const { config } = await setup({ analogAppName: 'analog' }, '16.10.0');
-    expect(config).toBeDefined();
+  it('should match project.json', async () => {
+    const { tree } = await setup({ analogAppName: 'my-app' });
+
+    expect(tree.read('/my-app/project.json').toString()).toMatchSnapshot();
+  });
+
+  it('should match vite.config.ts', async () => {
+    const { tree } = await setup({ analogAppName: 'my-app' });
+
+    expect(tree.read('/my-app/vite.config.ts').toString()).toMatchSnapshot();
   });
 });
