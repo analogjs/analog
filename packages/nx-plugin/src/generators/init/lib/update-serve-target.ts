@@ -54,6 +54,9 @@ export function updateServeTarget(
       executor: '@analogjs/platform:vite-dev-server',
       ...commonConfig,
     };
+    projectConfig.targets.build.outputs = [
+      `{workspaceRoot}/dist/apps/${projectConfig.name}`,
+    ];
 
     updateProjectConfiguration(tree, schema.project, projectConfig);
   }
