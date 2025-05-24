@@ -1,3 +1,9 @@
+# [1.17.0-beta.2](https://github.com/analogjs/analog/compare/v1.17.0-beta.1...v1.17.0-beta.2) (2025-05-24)
+
+### Bug Fixes
+
+- **nx-plugin:** install @nx/angular package for preset ([#1746](https://github.com/analogjs/analog/issues/1746)) ([3369b75](https://github.com/analogjs/analog/commit/3369b7534bd61a869b41105fce3a0219f93c420d))
+
 # [1.17.0-beta.1](https://github.com/analogjs/analog/compare/v1.16.2...v1.17.0-beta.1) (2025-05-24)
 
 ### Features
