@@ -1,3 +1,9 @@
+# [1.17.0-beta.1](https://github.com/analogjs/analog/compare/v1.16.2...v1.17.0-beta.1) (2025-05-24)
+
+### Features
+
+- **nx-plugin:** use Angular app generator for new apps ([#1745](https://github.com/analogjs/analog/issues/1745)) ([a2dcbbf](https://github.com/analogjs/analog/commit/a2dcbbf23b40033c1628e6ca4106033141a44b8e))
+
 ## [1.16.2](https://github.com/analogjs/analog/compare/v1.16.1...v1.16.2) (2025-05-23)
 
 ### Bug Fixes
