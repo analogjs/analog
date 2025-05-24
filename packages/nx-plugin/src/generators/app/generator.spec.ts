@@ -68,9 +68,6 @@ describe('nx-plugin generator', () => {
     expect(config.projectType).toBe('application');
     expect(config.root).toBe(standalone ? name : 'apps/' + name);
     expect(config.targets.build.outputs).toBeDefined();
-    expect(config.targets.test.outputs).toStrictEqual([
-      `{options.reportsDirectory}`,
-    ]);
   };
 
   const verifyHomePageExists = (

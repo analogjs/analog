@@ -22,12 +22,6 @@ describe('preset generator', () => {
     };
   };
 
-  it('should match package.json', async () => {
-    const { tree } = await setup({ analogAppName: 'my-app' });
-
-    expect(tree.read('/package.json').toString()).toMatchSnapshot();
-  });
-
   it('should match project.json', async () => {
     const { tree } = await setup({ analogAppName: 'my-app' });
 

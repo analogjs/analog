@@ -61,8 +61,8 @@ export async function setupAnalogGenerator(
   updateServeTarget(tree, options);
 
   if (options.vitest) {
-    // updateTestTarget(tree, options);
-    // updateTestTsConfig(tree, options);
+    updateTestTarget(tree, options);
+    updateTestTsConfig(tree, options);
   }
 
   updateAppTsConfig(tree, options);
