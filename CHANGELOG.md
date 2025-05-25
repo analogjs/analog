@@ -1,3 +1,9 @@
+# [1.17.0-beta.3](https://github.com/analogjs/analog/compare/v1.17.0-beta.2...v1.17.0-beta.3) (2025-05-25)
+
+### Bug Fixes
+
+- **nx-plugin:** improve application template for Angular CLI workspaces ([#1747](https://github.com/analogjs/analog/issues/1747)) ([f9b6033](https://github.com/analogjs/analog/commit/f9b60330c2fa8e53bf73a28b9a83c2687cc1dc88))
+
 # [1.17.0-beta.2](https://github.com/analogjs/analog/compare/v1.17.0-beta.1...v1.17.0-beta.2) (2025-05-24)
 
 ### Bug Fixes
