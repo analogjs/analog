@@ -7,8 +7,13 @@ export function cleanupFiles(tree: Tree, options: NormalizedOptions): void {
     'src/app/app.component.html',
     'src/app/app.routes.ts',
     'src/app/nx-welcome.component.ts',
+    'src/index.html',
     'vite.config.mts',
   ];
+
+  if (!options.isNx) {
+    files.push('project.json');
+  }
 
   files.forEach((file) => {
     const filePath = `${options.projectRoot}/${file}`;

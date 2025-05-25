@@ -35,7 +35,8 @@ export function updateServeTarget(
       tree,
       angularJsonPath,
       (json) => {
-        json.projects[schema.project].root = '.';
+        json.projects[schema.project].root =
+          json.projects[schema.project].root ?? '.';
         json.projects[schema.project].architect.serve = {
           builder: '@analogjs/platform:vite-dev-server',
           ...commonConfig,

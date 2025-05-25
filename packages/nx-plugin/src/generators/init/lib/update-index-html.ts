@@ -13,7 +13,7 @@ export function updateIndex(tree: Tree, schema: SetupAnalogGeneratorSchema) {
     const indexContents = tree.read(indexPath, 'utf-8');
     let updatedIndex = indexContents.replace(
       '</body>',
-      '<script type="module" src="/src/main.ts"></script></body>',
+      `<script type="module" src="${projectConfig.root !== '.' ? `/${projectConfig.root}` : ''}/src/main.ts"></script></body>`,
     );
     updatedIndex = updatedIndex.replace(`"favicon.ico"`, `"/favicon.ico"`);
     tree.write(indexPath, updatedIndex);

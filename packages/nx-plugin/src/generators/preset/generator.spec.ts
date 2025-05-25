@@ -33,4 +33,10 @@ describe('preset generator', () => {
 
     expect(tree.read('/my-app/vite.config.ts').toString()).toMatchSnapshot();
   });
+
+  it('should match index.html', async () => {
+    const { tree } = await setup({ analogAppName: 'my-app' });
+
+    expect(tree.read('/my-app/index.html').toString()).toMatchSnapshot();
+  });
 });

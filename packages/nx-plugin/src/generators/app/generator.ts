@@ -8,6 +8,7 @@ import {
   Tree,
   addDependenciesToPackageJson,
 } from '@nx/devkit';
+import { wrapAngularDevkitSchematic } from '@nx/devkit/ngcli-adapter';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
 import { major, coerce } from 'semver';
 import { getInstalledPackageVersion } from '../../utils/version-utils';
@@ -22,6 +23,7 @@ import { addFiles } from './lib/add-files';
 import { addTailwindConfig } from './lib/add-tailwind-config';
 import { addTrpc } from './lib/add-trpc';
 import { cleanupFiles } from './lib/cleanup-files';
+import { addAnalogProjectConfig } from './lib/add-analog-project-config';
 
 export interface NormalizedOptions
   extends AnalogNxApplicationGeneratorOptions,
@@ -33,12 +35,12 @@ export interface NormalizedOptions
   offsetFromRoot: string;
   appsDir: string;
   nxPackageNamespace: string;
+  isNx: boolean;
 }
 
 function normalizeOptions(
   tree: Tree,
   options: AnalogNxApplicationGeneratorOptions,
-  nxVersion: string,
 ): NormalizedOptions {
   const isNx = tree.exists('/nx.json');
   const appsDir = isNx ? getWorkspaceLayout(tree).appsDir : 'projects';
@@ -50,7 +52,7 @@ function normalizeOptions(
     ? options.tags.split(',').map((s) => s.trim())
     : [];
   const offsetFromRoot = determineOffsetFromRoot(projectRoot);
-  const nxPackageNamespace = major(nxVersion) >= 16 ? '@nx' : '@nrwl';
+  const nxPackageNamespace = '@nx';
   const addTailwind = options.addTailwind ?? true;
   const addTRPC = options.addTRPC ?? false;
 
@@ -66,6 +68,7 @@ function normalizeOptions(
     nxPackageNamespace,
     addTailwind,
     addTRPC,
+    isNx,
   };
 }
 
@@ -81,23 +84,48 @@ export async function appGenerator(
     );
   }
 
-  if (belowMinimumSupportedNxtRPCVersion(nxVersion) && options.addTRPC) {
+  if (
+    nxVersion &&
+    belowMinimumSupportedNxtRPCVersion(nxVersion) &&
+    options.addTRPC
+  ) {
     console.warn(
       'Nx v16.1.0 or newer is required to use tRPC with Analog. Skipping installation.',
     );
     options.addTRPC = false;
   }
 
-  const normalizedOptions = normalizeOptions(tree, options, nxVersion);
-  await addAngularApp(tree, normalizedOptions);
+  const normalizedOptions = normalizeOptions(tree, options);
 
-  const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
-  const majorAngularVersion = major(coerce(angularVersion));
+  if (nxVersion) {
+    await addAngularApp(tree, normalizedOptions);
+  } else {
+    const angularAppSchematic = wrapAngularDevkitSchematic(
+      '@schematics/angular',
+      'application',
+    );
+    await angularAppSchematic(tree, {
+      projectRoot: normalizedOptions.projectRoot,
+      name: normalizedOptions.analogAppName,
+    });
+    addAnalogProjectConfig(
+      tree,
+      normalizedOptions.projectRoot,
+      normalizedOptions.projectName,
+      [],
+      normalizedOptions.name,
+      normalizedOptions.appsDir,
+      normalizedOptions.nxPackageNamespace,
+    );
+  }
+
   await setupAnalogGenerator(tree, {
     project: normalizedOptions.analogAppName,
     vitest: true,
   });
 
+  const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
+  const majorAngularVersion = major(coerce(angularVersion));
   addFiles(tree, normalizedOptions, majorAngularVersion);
   addDependenciesToPackageJson(
     tree,
