@@ -1,3 +1,9 @@
+# [1.17.0-beta.4](https://github.com/analogjs/analog/compare/v1.17.0-beta.3...v1.17.0-beta.4) (2025-05-26)
+
+### Bug Fixes
+
+- **nx-plugin:** update Angular migration command and scripts ([#1748](https://github.com/analogjs/analog/issues/1748)) ([8a1c12b](https://github.com/analogjs/analog/commit/8a1c12b8bf412dfa9b8b273b30458ba5b6238a22))
+
 # [1.17.0-beta.3](https://github.com/analogjs/analog/compare/v1.17.0-beta.2...v1.17.0-beta.3) (2025-05-25)
 
 ### Bug Fixes
