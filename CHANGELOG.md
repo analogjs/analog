@@ -1,3 +1,9 @@
+# [1.17.0-beta.5](https://github.com/analogjs/analog/compare/v1.17.0-beta.4...v1.17.0-beta.5) (2025-05-26)
+
+### Bug Fixes
+
+- **nx-plugin:** keep dependencies after migration ([#1749](https://github.com/analogjs/analog/issues/1749)) ([2dc8a0d](https://github.com/analogjs/analog/commit/2dc8a0d6f803706050220b166f87b7902b47bb83))
+
 # [1.17.0-beta.4](https://github.com/analogjs/analog/compare/v1.17.0-beta.3...v1.17.0-beta.4) (2025-05-26)
 
 ### Bug Fixes
