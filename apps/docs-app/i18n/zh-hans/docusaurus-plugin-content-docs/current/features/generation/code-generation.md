@@ -17,7 +17,7 @@ NX 的 Analog 插件提供了一系列生成器帮助在 NX 的工作区里自�
 使用应用生成器在 NX 工作区里创建一个新的 Analog 应用：
 
 ```shell
-npx nx generate @analogjs/platform:app my-app
+npx nx generate @analogjs/platform:application my-app
 ```
 
 ### 生成页面
@@ -51,7 +51,7 @@ Analog 提供了一系列原理图帮助在 Angular CLI 工作区自动化一些
 要在 Angular CLI 工作区生成一个新的 Analog 应用程序，使用 application 原理图：
 
 ```shell
-npx ng generate @analogjs/platform:app my-app
+npx ng generate @analogjs/platform:application my-app
 ```
 
 ### 生成页面

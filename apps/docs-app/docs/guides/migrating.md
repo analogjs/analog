@@ -40,13 +40,13 @@ pnpm install -w @analogjs/platform
 Next, run the command to set up the Vite config, update the build/serve targets in the project configuration, move necessary files, and optionally set up Vitest for unit testing.
 
 ```shell
-npx ng generate @analogjs/platform:init --project [your-project-name]
+npx ng generate @analogjs/platform:migrate --project [your-project-name]
 ```
 
 For Nx projects:
 
 ```shell
-npx nx generate @analogjs/platform:init --project [your-project-name]
+npx nx generate @analogjs/platform:migrate --project [your-project-name]
 ```
 
 ## Updating Global Styles and Scripts

@@ -29,7 +29,7 @@ describe.skip('nx-plugin e2e', () => {
   it('should create hello-world', async () => {
     const project = uniq('app');
     await runNxCommandAsync(
-      `generate @analogjs/platform:app ${project} --addTailwind=true --addTRPC=true`,
+      `generate @analogjs/platform:application ${project} --addTailwind=true --addTRPC=true`,
     );
     copyNodeModules(['@analogjs']);
 
