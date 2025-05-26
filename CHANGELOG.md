@@ -1,3 +1,9 @@
+# [1.17.0-beta.6](https://github.com/analogjs/analog/compare/v1.17.0-beta.5...v1.17.0-beta.6) (2025-05-26)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** resolve SSR entry point in subdirectory ([#1750](https://github.com/analogjs/analog/issues/1750)) ([b59d21c](https://github.com/analogjs/analog/commit/b59d21c3f0dec258966d91d92a429a2fbbd9a5b2))
+
 # [1.17.0-beta.5](https://github.com/analogjs/analog/compare/v1.17.0-beta.4...v1.17.0-beta.5) (2025-05-26)
 
 ### Bug Fixes
