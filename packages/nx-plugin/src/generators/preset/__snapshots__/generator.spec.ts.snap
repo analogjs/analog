@@ -91,6 +91,22 @@ exports[`preset generator > should match project.json 1`] = `
 "
 `;
 
+exports[`preset generator > should match src/test-setup.ts 1`] = `
+"import '@analogjs/vitest-angular/setup-zone';
+
+import {
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting,
+} from '@angular/platform-browser-dynamic/testing';
+import { getTestBed } from '@angular/core/testing';
+
+getTestBed().initTestEnvironment(
+  BrowserDynamicTestingModule,
+  platformBrowserDynamicTesting(),
+);
+"
+`;
+
 exports[`preset generator > should match vite.config.ts 1`] = `
 "/// <reference types="vitest" />
 

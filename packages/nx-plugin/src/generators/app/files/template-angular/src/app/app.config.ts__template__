@@ -11,7 +11,7 @@ import { provideTrpcClient } from '../trpc-client';
 <% } %>
 
 export const appConfig: ApplicationConfig = {
-  providers: [
+  providers: [<% if (majorAngularVersion) { %>provideBrowserGlobalErrorListeners(),<% } %>
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideFileRouter(),
     provideClientHydration(),

@@ -6,7 +6,6 @@ import PostAttributes from '../../post-attributes';
 
 @Component({
   selector: 'app-blog-post',
-  standalone: true,
   imports: [AsyncPipe, MarkdownComponent],
   template: `
     @if (post$ | async; as post) {

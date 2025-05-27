@@ -441,10 +441,10 @@ function setComponentFormat(root, filesDir, write, template, useAnalogSFC) {
     __APP_COMPONENT__: useAnalogSFC ? 'App' : 'AppComponent',
     __APP_COMPONENT_IMPORT__: useAnalogSFC
       ? "import App from './app/app-root.ag';"
-      : "import { AppComponent } from './app/app.component';",
+      : "import { AppComponent } from './app/app';",
   });
 
-  const cmpForDelete = useAnalogSFC ? 'app.component' : 'app-root';
+  const cmpForDelete = useAnalogSFC ? 'app' : 'app-root';
   const deleteExt = useAnalogSFC ? 'ts' : 'ag';
   deleteFiles(root, [
     useAnalogSFC ? `src/app/${cmpForDelete}.ts` : `src/app/${cmpForDelete}.ag`,
