@@ -3,6 +3,7 @@ import { Tree, getProjects, joinPathFragments, updateJson } from '@nx/devkit';
 import { SetupAnalogGeneratorSchema } from '../schema';
 
 interface TsConfig {
+  files: string[];
   include: string[];
 }
 
@@ -24,6 +25,8 @@ export function updateAppTsConfig(
       tree,
       tsconfigPath,
       (json) => {
+        json.files = [...json.files, 'src/main.server.ts'];
+
         json.include = [
           ...json.include,
           'src/app/pages/**/*.page.ts',

@@ -13,14 +13,24 @@ export function updatePackageJson(
   schema: SetupAnalogGeneratorSchema,
 ) {
   const angularJsonPath = '/angular.json';
-  const packageJsonPath = '/package.json';
 
   if (tree.exists(angularJsonPath)) {
-    updateJson(tree, packageJsonPath, (json) => {
-      json.type = 'module';
+    const projects = getProjects(tree);
+    const projectConfig = projects.get(schema.project);
+    const packageJsonPath = joinPathFragments(
+      projectConfig.root || '.',
+      'package.json',
+    );
 
-      return json;
-    });
+    if (tree.exists(packageJsonPath)) {
+      updateJson(tree, packageJsonPath, (json) => {
+        json.type = 'module';
+
+        return json;
+      });
+    } else {
+      writeJson(tree, packageJsonPath, { type: 'module' });
+    }
   } else {
     const projects = getProjects(tree);
     const projectConfig = projects.get(schema.project);

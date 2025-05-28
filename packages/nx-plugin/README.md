@@ -9,7 +9,7 @@ Official plugin to add Analog to your Nx monorepo.
 Creates a preconfigured Analog application.
 
 ```sh
-nx g @analogjs/platform:app analog-app
+nx g @analogjs/platform:application analog-app
 ```
 
 ## Development

@@ -87,5 +87,5 @@ pnpm install @analogjs/platform --save-dev
 Luego, usa el generador de aplicaciones para crear una nueva aplicación:
 
 ```shell
-npx nx g @analogjs/platform:app analog-app
+npx nx g @analogjs/platform:application analog-app
 ```

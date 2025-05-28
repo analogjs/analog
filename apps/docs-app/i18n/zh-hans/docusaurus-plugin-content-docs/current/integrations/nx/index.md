@@ -87,5 +87,5 @@ pnpm install @analogjs/platform --save-dev
 然后，使用应用生成器搭建一个新的应用：
 
 ```shell
-npx nx g @analogjs/platform:app analog-app
+npx nx g @analogjs/platform:application analog-app
 ```

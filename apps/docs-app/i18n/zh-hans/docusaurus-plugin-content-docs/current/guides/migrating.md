@@ -44,13 +44,13 @@ pnpm install -w @analogjs/platform
 下一步，执行一下命令来配置 Vite，更新项目配置的构建/伺服的目标，移动必须的文件并且设置 Vitest 进行单元测试（可选）
 
 ```shell
-npx ng generate @analogjs/platform:init --project [your-project-name]
+npx ng generate @analogjs/platform:migrate --project [your-project-name]
 ```
 
 Nx 项目:
 
 ```shell
-npx nx generate @analogjs/platform:init --project [your-project-name]
+npx nx generate @analogjs/platform:migrate --project [your-project-name]
 ```
 
 ## 更新全局样式和脚本

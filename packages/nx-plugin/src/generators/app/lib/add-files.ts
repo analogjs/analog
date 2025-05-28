@@ -16,7 +16,7 @@ export function addFiles(
   };
   generateFiles(
     tree,
-    join(__dirname, '..', 'files', 'template-angular-v' + majorAngularVersion),
+    join(__dirname, '..', 'files', 'template-angular'),
     options.projectRoot,
     templateOptions,
   );

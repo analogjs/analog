@@ -4,7 +4,7 @@ import satori from 'satori';
 import { html as toReactElement } from 'satori-html';
 import sharp from 'sharp';
 
-import { ImageResponseOptions } from './options.js';
+import { ImageResponseOptions } from './options';
 
 export const generateImage = async (
   element: string,

@@ -23,6 +23,10 @@
     "message": "Renderizado del lado del Servidor (SSR)",
     "description": "The label for category Server Side Rendering in sidebar docsSidebar"
   },
+  "sidebar.docsSidebar.doc.Form Actions": {
+    "message": "Acciones del Servidor para Formularios",
+    "description": "The label for category Form Actions in sidebar docsSidebar"
+  },
   "sidebar.docsSidebar.category.Code Generation": {
     "message": "Generación de Código",
     "description": "The label for category Code Generation in sidebar docsSidebar"
