@@ -1,3 +1,18 @@
+<% if (majorAngularVersion > 19) { %>
+import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-zone';
+
+import {
+  BrowserTestingModule,
+  platformBrowserTesting,
+} from '@angular/platform-browser/testing';
+import { getTestBed } from '@angular/core/testing';
+
+getTestBed().initTestEnvironment(
+  BrowserTestingModule,
+  platformBrowserTesting()
+);
+<% } else { %>
 import '@analogjs/vitest-angular/setup-zone';
 
 import {
@@ -10,3 +25,4 @@ getTestBed().initTestEnvironment(
   BrowserDynamicTestingModule,
   platformBrowserDynamicTesting()
 );
+<% } %>

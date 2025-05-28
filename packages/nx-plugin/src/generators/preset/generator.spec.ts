@@ -39,4 +39,10 @@ describe('preset generator', () => {
 
     expect(tree.read('/my-app/index.html').toString()).toMatchSnapshot();
   });
+
+  it('should match src/test-setup.ts', async () => {
+    const { tree } = await setup({ analogAppName: 'my-app' });
+
+    expect(tree.read('/my-app/src/test-setup.ts').toString()).toMatchSnapshot();
+  });
 });
