@@ -1,3 +1,9 @@
+# [1.17.0-beta.7](https://github.com/analogjs/analog/compare/v1.17.0-beta.6...v1.17.0-beta.7) (2025-05-28)
+
+### Features
+
+- add support for Angular v20 ([#1751](https://github.com/analogjs/analog/issues/1751)) ([6d69e06](https://github.com/analogjs/analog/commit/6d69e0621fae2363ba43454fbcc90806b36bc6b7))
+
 # [1.17.0-beta.6](https://github.com/analogjs/analog/compare/v1.17.0-beta.5...v1.17.0-beta.6) (2025-05-26)
 
 ### Bug Fixes
