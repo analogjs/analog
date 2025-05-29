@@ -1,3 +1,15 @@
+## [1.17.1-beta.2](https://github.com/analogjs/analog/compare/v1.17.1-beta.1...v1.17.1-beta.2) (2025-05-29)
+
+### Bug Fixes
+
+- **create-analog:** add angular-v19 template to output files ([#1756](https://github.com/analogjs/analog/issues/1756)) ([6b7380d](https://github.com/analogjs/analog/commit/6b7380dd2e2a955fa45b57fa565081a0a6c08291))
+
+## [1.17.1-beta.1](https://github.com/analogjs/analog/compare/v1.17.0...v1.17.1-beta.1) (2025-05-29)
+
+### Bug Fixes
+
+- **vitest-angular:** update `@angular-devkit/architect` dep range to include v20 ([#1754](https://github.com/analogjs/analog/issues/1754)) ([1d0f038](https://github.com/analogjs/analog/commit/1d0f038bea33ebb15881251c1a57bf36b407f4db))
+
 # [1.17.0](https://github.com/analogjs/analog/compare/v1.16.2...v1.17.0) (2025-05-28)
 
 ### Bug Fixes

@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "1.17.0",
+  "version": "1.17.1-beta.2",
   "license": "MIT",
   "type": "module",
   "scripts": {

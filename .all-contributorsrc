@@ -1305,6 +1305,15 @@
       "contributions": [
         "infra"
       ]
+    },
+    {
+      "login": "leosvelperez",
+      "name": "Leosvel Pérez Espinosa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12051310?v=4",
+      "profile": "https://leosvel.dev",
+      "contributions": [
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
