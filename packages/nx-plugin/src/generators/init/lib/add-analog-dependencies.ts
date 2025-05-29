@@ -7,5 +7,12 @@ export function addAnalogDependencies(tree: Tree, angularVersion: string) {
   const devDependencies = getAnalogDevDependencies(angularVersion);
   const dependencies = getAnalogDependencies(angularVersion);
 
-  addDependenciesToPackageJson(tree, dependencies, devDependencies);
+  addDependenciesToPackageJson(
+    tree,
+    {
+      ...dependencies,
+      '@angular/platform-server': angularVersion,
+    },
+    devDependencies,
+  );
 }

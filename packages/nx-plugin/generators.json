@@ -3,10 +3,11 @@
   "name": "nx-plugin",
   "version": "0.0.1",
   "generators": {
-    "app": {
+    "application": {
       "factory": "./src/generators/app/generator",
       "schema": "./src/generators/app/schema.json",
-      "description": "Generates an Analog application"
+      "description": "Generates an Analog application",
+      "aliases": ["app"]
     },
     "preset": {
       "factory": "./src/generators/preset/generator",
@@ -29,14 +30,16 @@
     "init": {
       "factory": "./src/generators/init/generator",
       "schema": "./src/generators/init/schema.json",
-      "description": "Setup the Analog configuration."
+      "description": "Migrate and configure an Angular SPA to use Analog.",
+      "aliases": ["migrate"]
     }
   },
   "schematics": {
-    "app": {
+    "application": {
       "factory": "./src/generators/app/compat",
       "schema": "./src/generators/app/schema.json",
-      "description": "Generates an Analog application"
+      "description": "Generates an Analog application",
+      "aliases": ["app"]
     },
     "page": {
       "factory": "./src/generators/page/generator#analogPageGeneratorSchematic",
@@ -52,7 +55,8 @@
     "init": {
       "factory": "./src/generators/init/compat",
       "schema": "./src/generators/init/schema.json",
-      "description": "Setup the Analog configuration."
+      "description": "Migrate and configure an Angular SPA to use Analog.",
+      "aliases": ["migrate"]
     }
   }
 }

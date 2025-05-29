@@ -6,7 +6,6 @@ import PostAttributes from '../../post-attributes';
 
 @Component({
   selector: 'app-blog',
-  standalone: true,
   imports: [RouterLink],
   template: `
     <h1>Blog Archive</h1>

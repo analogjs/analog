@@ -1,8 +1,11 @@
 name: Release Test
 
+permissions:
+  contents: read
+
 on:
   release:
-    types: [released, prereleased]
+    types: [published]
   workflow_dispatch:
     inputs:
       analog_build_tag:
@@ -80,7 +83,13 @@ jobs:
         run: |
           cd my-angular-app
           npm install @analogjs/platform@${{ inputs.analog_build_tag }} --save-dev
-          npx ng g @analogjs/platform:init --project my-angular-app --vitest=true
+          npx ng g @analogjs/platform:migrate --project my-angular-app --vitest=true
           npm run build
           npm run test
           cat ./dist/analog/public/index.html
+      - name: Generate New Project
+        run: |
+          npx ng g @analogjs/platform:application my-test-app
+          npx ng build my-test-app
+          npx ng test my-test-app
+          cat ./dist/projects/my-test-app/analog/public/index.html

@@ -17,7 +17,7 @@ Das Analog-Plugin für Nx bietet eine Reihe von Generatoren, die dabei helfen, e
 Um eine neue analoge Anwendung innerhalb eines Nx-Arbeitsbereichs zu erstellen, verwenden Sie den Anwendungsgenerator:
 
 ```shell
-npx nx generate @analogjs/platform:app --analogAppName=analog-app
+npx nx generate @analogjs/platform:application --analogAppName=analog-app
 ```
 
 ### Generierung von Seiten
@@ -51,7 +51,7 @@ Analog stellt eine Reihe von Schemata zur Verfügung, die dabei helfen, einige h
 Um eine neue Analog-Anwendung innerhalb eines Angular CLI-Arbeitsbereichs zu erstellen, verwende das `app`-schema:
 
 ```shell
-npx ng generate @analogjs/platform:app my-app
+npx ng generate @analogjs/platform:application my-app
 ```
 
 ### Generierung von Seiten

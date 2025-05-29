@@ -5,6 +5,7 @@ import {
   installPackagesTask,
   Tree,
 } from '@nx/devkit';
+import { major, coerce } from 'semver';
 import { join } from 'node:path';
 
 import { getInstalledPackageVersion } from '../../utils/version-utils';
@@ -20,7 +21,11 @@ import { updateMain } from './lib/update-main';
 import { updateAppTsConfig } from './lib/update-app-tsconfig';
 import { updateGitIgnore } from './lib/update-git-ignore';
 
-function addFiles(tree: Tree, options: SetupAnalogGeneratorSchema) {
+function addFiles(
+  tree: Tree,
+  options: SetupAnalogGeneratorSchema,
+  majorAngularVersion: number,
+) {
   const isNx = tree.read('/nx.json');
   const projects = getProjects(tree);
   const projectConfig = projects.get(options.project);
@@ -30,6 +35,7 @@ function addFiles(tree: Tree, options: SetupAnalogGeneratorSchema) {
     offsetFromRoot: isNx ? '../../' : './',
     projectRoot: projectConfig.root,
     template: '',
+    majorAngularVersion,
     isNx,
   };
 
@@ -55,7 +61,7 @@ export async function setupAnalogGenerator(
   options: SetupAnalogGeneratorSchema,
 ) {
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
-
+  const majorAngularVersion = major(coerce(angularVersion));
   addAnalogDependencies(tree, angularVersion);
   updateBuildTarget(tree, options);
   updateServeTarget(tree, options);
@@ -71,7 +77,7 @@ export async function setupAnalogGenerator(
   updateMain(tree, options);
   updateGitIgnore(tree);
 
-  addFiles(tree, options);
+  addFiles(tree, options, majorAngularVersion);
 
   await formatFiles(tree);
 

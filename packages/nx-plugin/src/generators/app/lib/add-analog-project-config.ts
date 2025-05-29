@@ -1,5 +1,5 @@
 import type { ProjectConfiguration, Tree } from '@nx/devkit';
-import { addProjectConfiguration, updateJson } from '@nx/devkit';
+import { addProjectConfiguration, getProjects, updateJson } from '@nx/devkit';
 
 export function addAnalogProjectConfig(
   tree: Tree,
@@ -16,7 +16,7 @@ export function addAnalogProjectConfig(
   const targets = isNx ? 'targets' : 'architect';
   const builders = isNx ? 'executor' : 'builder';
 
-  const projectConfiguration: ProjectConfiguration = {
+  let projectConfiguration: ProjectConfiguration = {
     root: projectRoot,
     projectType: 'application',
     [targets]: {
@@ -70,18 +70,22 @@ export function addAnalogProjectConfig(
       tsConfig: `${workspaceAppsDir}${projectName}/tsconfig.app.json`,
     };
     projectConfiguration[targets]['test'].outputs = [`{projectRoot}/coverage`];
-
+    projectConfiguration[targets]['extract-i18n'] = undefined;
+    projectConfiguration[targets]['serve-static'] = undefined;
     projectConfiguration.tags = parsedTags;
     projectConfiguration.sourceRoot = `${projectRoot}/src`;
   } else {
-    projectConfiguration[targets]['build'].options = {
-      main: `projects/${projectName}/src/main.ts`,
-      configFile: `projects/${projectName}/vite.config.ts`,
-      outputPath: `dist/projects/${projectName}/client`,
-      tsConfig: `projects/${projectName}/tsconfig.app.json`,
-    };
+    const projects = getProjects(tree);
 
-    projectConfiguration.sourceRoot = `src`;
+    projectConfiguration = projects.get(projectName);
+    projectConfiguration[targets] = projectConfiguration.targets;
+    projectConfiguration[targets]['extract-i18n'] = undefined;
+    projectConfiguration[targets]['serve-static'] = undefined;
+    delete projectConfiguration['$schema'];
+    delete projectConfiguration['name'];
+    delete projectConfiguration['generators'];
+    delete projectConfiguration['targets'];
+    delete projectConfiguration[targets]['extract-i18n'];
   }
 
   if (isNx) {
