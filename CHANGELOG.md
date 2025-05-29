@@ -1,3 +1,18 @@
+# [2.0.0-alpha.12](https://github.com/analogjs/analog/compare/v2.0.0-alpha.11...v2.0.0-alpha.12) (2025-05-29)
+
+### Bug Fixes
+
+- **nx-plugin:** improve application template for Angular CLI workspaces ([#1747](https://github.com/analogjs/analog/issues/1747)) ([f9b6033](https://github.com/analogjs/analog/commit/f9b60330c2fa8e53bf73a28b9a83c2687cc1dc88))
+- **nx-plugin:** install @nx/angular package for preset ([#1746](https://github.com/analogjs/analog/issues/1746)) ([3369b75](https://github.com/analogjs/analog/commit/3369b7534bd61a869b41105fce3a0219f93c420d))
+- **nx-plugin:** keep dependencies after migration ([#1749](https://github.com/analogjs/analog/issues/1749)) ([2dc8a0d](https://github.com/analogjs/analog/commit/2dc8a0d6f803706050220b166f87b7902b47bb83))
+- **nx-plugin:** update Angular migration command and scripts ([#1748](https://github.com/analogjs/analog/issues/1748)) ([8a1c12b](https://github.com/analogjs/analog/commit/8a1c12b8bf412dfa9b8b273b30458ba5b6238a22))
+- **vite-plugin-nitro:** resolve SSR entry point in subdirectory ([#1750](https://github.com/analogjs/analog/issues/1750)) ([b59d21c](https://github.com/analogjs/analog/commit/b59d21c3f0dec258966d91d92a429a2fbbd9a5b2))
+
+### Features
+
+- add support for Angular v20 ([#1751](https://github.com/analogjs/analog/issues/1751)) ([6d69e06](https://github.com/analogjs/analog/commit/6d69e0621fae2363ba43454fbcc90806b36bc6b7))
+- **nx-plugin:** use Angular app generator for new apps ([#1745](https://github.com/analogjs/analog/issues/1745)) ([a2dcbbf](https://github.com/analogjs/analog/commit/a2dcbbf23b40033c1628e6ca4106033141a44b8e))
+
 # [2.0.0-alpha.11](https://github.com/analogjs/analog/compare/v2.0.0-alpha.10...v2.0.0-alpha.11) (2025-05-23)
 
 ### Bug Fixes
