@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
-import { defineConfig, Plugin, splitVendorChunkPlugin } from 'vite';
+import { defineConfig, Plugin } from 'vite';
 import tsConfigPaths from 'vite-tsconfig-paths';
 
 // https://vitejs.dev/config/
@@ -52,7 +52,6 @@ export default defineConfig(({ mode }) => {
       tsConfigPaths({
         root: '<%= offsetFromRoot %>',
       }),
-      splitVendorChunkPlugin(),
     ],
     test: {
       globals: true,
