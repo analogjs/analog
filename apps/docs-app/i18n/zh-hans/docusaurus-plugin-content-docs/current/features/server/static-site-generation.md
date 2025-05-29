@@ -181,7 +181,7 @@ export default defineConfig(() => {
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
-import { defineConfig, splitVendorChunkPlugin } from 'vite';
+import { defineConfig } from 'vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { PrerenderRoute } from 'nitropack';
 
