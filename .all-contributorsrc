@@ -1314,6 +1314,15 @@
       "contributions": [
         "infra"
       ]
+    },
+    {
+      "login": "pmpak",
+      "name": "Panagiotis Bakatselos",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21110003?v=4",
+      "profile": "https://github.com/pmpak",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
