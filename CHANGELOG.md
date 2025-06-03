@@ -1,3 +1,9 @@
+## [1.17.1-beta.3](https://github.com/analogjs/analog/compare/v1.17.1-beta.2...v1.17.1-beta.3) (2025-06-03)
+
+### Bug Fixes
+
+- **nx-plugin:** ensure that tags option is used on app generation ([#1764](https://github.com/analogjs/analog/issues/1764)) ([df001b0](https://github.com/analogjs/analog/commit/df001b0bed89fb44baa6dc932b9c7e43c2e83eb8))
+
 ## [1.17.1-beta.2](https://github.com/analogjs/analog/compare/v1.17.1-beta.1...v1.17.1-beta.2) (2025-05-29)
 
 ### Bug Fixes
