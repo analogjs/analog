@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-139-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-140-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -290,6 +290,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/vsternbach"><img src="https://avatars.githubusercontent.com/u/3830668?v=4?s=100" width="100px;" alt="Vlad Sternbach"/><br /><sub><b>Vlad Sternbach</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=vsternbach" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/meeroslav"><img src="https://avatars.githubusercontent.com/u/881612?v=4?s=100" width="100px;" alt="Miroslav Jonaš"/><br /><sub><b>Miroslav Jonaš</b></sub></a><br /><a href="#infra-meeroslav" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://leosvel.dev"><img src="https://avatars.githubusercontent.com/u/12051310?v=4?s=100" width="100px;" alt="Leosvel Pérez Espinosa"/><br /><sub><b>Leosvel Pérez Espinosa</b></sub></a><br /><a href="#infra-leosvelperez" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/pmpak"><img src="https://avatars.githubusercontent.com/u/21110003?v=4?s=100" width="100px;" alt="Panagiotis Bakatselos"/><br /><sub><b>Panagiotis Bakatselos</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=pmpak" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
