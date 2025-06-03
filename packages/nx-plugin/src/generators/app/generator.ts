@@ -112,7 +112,7 @@ export async function appGenerator(
       tree,
       normalizedOptions.projectRoot,
       normalizedOptions.projectName,
-      [],
+      normalizedOptions.parsedTags,
       normalizedOptions.name,
       normalizedOptions.appsDir,
       normalizedOptions.nxPackageNamespace,

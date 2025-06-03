@@ -23,7 +23,10 @@ describe('preset generator', () => {
   };
 
   it('should match project.json', async () => {
-    const { tree } = await setup({ analogAppName: 'my-app' });
+    const { tree } = await setup({
+      analogAppName: 'my-app',
+      tags: 'tag1,tag2, type:app',
+    });
 
     expect(tree.read('/my-app/project.json').toString()).toMatchSnapshot();
   });
