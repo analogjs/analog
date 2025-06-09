@@ -1,3 +1,10 @@
+## [1.17.2-beta.1](https://github.com/analogjs/analog/compare/v1.17.1...v1.17.2-beta.1) (2025-06-09)
+
+### Bug Fixes
+
+- **create-analog:** update template dependencies to Angular v20 ([#1768](https://github.com/analogjs/analog/issues/1768)) ([8e1fae5](https://github.com/analogjs/analog/commit/8e1fae5ed9565286dcc4bb5eff8908e8600e1bea))
+- **nx-plugin:** ensure that tags option is used on app generation ([#1764](https://github.com/analogjs/analog/issues/1764)) ([df001b0](https://github.com/analogjs/analog/commit/df001b0bed89fb44baa6dc932b9c7e43c2e83eb8))
+
 ## [1.17.1-beta.3](https://github.com/analogjs/analog/compare/v1.17.1-beta.2...v1.17.1-beta.3) (2025-06-03)
 
 ### Bug Fixes
