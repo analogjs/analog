@@ -33,7 +33,17 @@ export default defineConfig(({ mode, isSsrBuild }) => {
         additionalPagesDirs: ['/libs/shared/feature'],
         additionalAPIDirs: ['/libs/shared/feature/src/api'],
         prerender: {
-          routes: ['/', '/cart', '/shipping', '/client', '/404.html'],
+          routes: [
+            '/',
+            '/cart',
+            '/shipping',
+            '/client',
+            '/404.html',
+            {
+              route: '/newsletter',
+              staticData: true,
+            },
+          ],
           sitemap: {
             host: base,
           },

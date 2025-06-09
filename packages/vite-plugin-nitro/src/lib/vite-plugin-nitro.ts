@@ -282,6 +282,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   }
 
                   prev.push(current.route);
+
+                  // Add the server-side data fetching endpoint URL
+                  if ('staticData' in current) {
+                    prev.push(`${apiPrefix}/_analog/pages/${current.route}`);
+                  }
+
                   return prev;
                 }
 
@@ -304,6 +310,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                     }
 
                     prev.push(result);
+
+                    // Add the server-side data fetching endpoint URL
+                    if ('staticData' in current) {
+                      prev.push(`${apiPrefix}/_analog/pages/${result}`);
+                    }
                   }
                 });
 
