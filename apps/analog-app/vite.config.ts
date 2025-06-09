@@ -58,7 +58,6 @@ export default defineConfig(({ mode, isSsrBuild }) => {
       }),
       nxViteTsPaths(),
       visualizer() as Plugin,
-      // splitVendorChunkPlugin(),
       !isSsrBuild &&
         inspect({
           build: true,
