@@ -1,3 +1,9 @@
+# [1.18.0-beta.1](https://github.com/analogjs/analog/compare/v1.17.2-beta.1...v1.18.0-beta.1) (2025-06-13)
+
+### Features
+
+- **vite-plugin-nitro:** support static server side data fetching during prerendering ([#1771](https://github.com/analogjs/analog/issues/1771)) ([377cdd2](https://github.com/analogjs/analog/commit/377cdd227e005a0f73c01ad026a584834a49c044))
+
 ## [1.17.2-beta.1](https://github.com/analogjs/analog/compare/v1.17.1...v1.17.2-beta.1) (2025-06-09)
 
 ### Bug Fixes
