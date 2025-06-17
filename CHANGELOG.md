@@ -1,3 +1,9 @@
+# [1.18.0-beta.2](https://github.com/analogjs/analog/compare/v1.18.0-beta.1...v1.18.0-beta.2) (2025-06-17)
+
+### Bug Fixes
+
+- **create-analog:** fix template and styles for SFCs ([#1778](https://github.com/analogjs/analog/issues/1778)) ([902fe23](https://github.com/analogjs/analog/commit/902fe23e56b4ba542bc0da0583921aad5054d0f5))
+
 # [1.18.0-beta.1](https://github.com/analogjs/analog/compare/v1.17.2-beta.1...v1.18.0-beta.1) (2025-06-13)
 
 ### Features
