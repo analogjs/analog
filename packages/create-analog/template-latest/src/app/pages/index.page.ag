@@ -1,7 +1,11 @@
 <script lang="ts">
-  import AnalogWelcome from './analog-welcome' with { analog: 'imports '};
+  import { AnalogWelcome } from './analog-welcome';
+
+  defineMetadata({
+    imports: [AnalogWelcome]
+  });
 </script>
 
 <template>
-  <AnalogWelcome />
+  <app-analog-welcome />
 </template>
