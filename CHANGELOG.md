@@ -1,3 +1,9 @@
+# [1.18.0-beta.3](https://github.com/analogjs/analog/compare/v1.18.0-beta.2...v1.18.0-beta.3) (2025-06-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** trigger compilation from external templates/styles ([#1779](https://github.com/analogjs/analog/issues/1779)) ([e3a1f27](https://github.com/analogjs/analog/commit/e3a1f278b6e39bca4e1b14a4555e977b32ba341c))
+
 # [1.18.0-beta.2](https://github.com/analogjs/analog/compare/v1.18.0-beta.1...v1.18.0-beta.2) (2025-06-17)
 
 ### Bug Fixes
