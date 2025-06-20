@@ -1,9 +1,39 @@
-## [1.17.1](https://github.com/analogjs/analog/compare/v1.17.0...v1.17.1) (2025-05-29)
+# [1.18.0-beta.4](https://github.com/analogjs/analog/compare/v1.18.0-beta.3...v1.18.0-beta.4) (2025-06-20)
 
 ### Bug Fixes
 
-- **create-analog:** add angular-v19 template to output files ([#1756](https://github.com/analogjs/analog/issues/1756)) ([6b7380d](https://github.com/analogjs/analog/commit/6b7380dd2e2a955fa45b57fa565081a0a6c08291))
-- **vitest-angular:** update `@angular-devkit/architect` dep range to include v20 ([#1754](https://github.com/analogjs/analog/issues/1754)) ([1d0f038](https://github.com/analogjs/analog/commit/1d0f038bea33ebb15881251c1a57bf36b407f4db))
+- **nx-plugin:** add fallback for json.files property in preset ([6e2241a](https://github.com/analogjs/analog/commit/6e2241a63ca5e921570341e38c46abb6441467f1))
+
+# [1.18.0-beta.3](https://github.com/analogjs/analog/compare/v1.18.0-beta.2...v1.18.0-beta.3) (2025-06-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** trigger compilation from external templates/styles ([#1779](https://github.com/analogjs/analog/issues/1779)) ([e3a1f27](https://github.com/analogjs/analog/commit/e3a1f278b6e39bca4e1b14a4555e977b32ba341c))
+
+# [1.18.0-beta.2](https://github.com/analogjs/analog/compare/v1.18.0-beta.1...v1.18.0-beta.2) (2025-06-17)
+
+### Bug Fixes
+
+- **create-analog:** fix template and styles for SFCs ([#1778](https://github.com/analogjs/analog/issues/1778)) ([902fe23](https://github.com/analogjs/analog/commit/902fe23e56b4ba542bc0da0583921aad5054d0f5))
+
+# [1.18.0-beta.1](https://github.com/analogjs/analog/compare/v1.17.2-beta.1...v1.18.0-beta.1) (2025-06-13)
+
+### Features
+
+- **vite-plugin-nitro:** support static server side data fetching during prerendering ([#1771](https://github.com/analogjs/analog/issues/1771)) ([377cdd2](https://github.com/analogjs/analog/commit/377cdd227e005a0f73c01ad026a584834a49c044))
+
+## [1.17.2-beta.1](https://github.com/analogjs/analog/compare/v1.17.1...v1.17.2-beta.1) (2025-06-09)
+
+### Bug Fixes
+
+- **create-analog:** update template dependencies to Angular v20 ([#1768](https://github.com/analogjs/analog/issues/1768)) ([8e1fae5](https://github.com/analogjs/analog/commit/8e1fae5ed9565286dcc4bb5eff8908e8600e1bea))
+- **nx-plugin:** ensure that tags option is used on app generation ([#1764](https://github.com/analogjs/analog/issues/1764)) ([df001b0](https://github.com/analogjs/analog/commit/df001b0bed89fb44baa6dc932b9c7e43c2e83eb8))
+
+## [1.17.1-beta.3](https://github.com/analogjs/analog/compare/v1.17.1-beta.2...v1.17.1-beta.3) (2025-06-03)
+
+### Bug Fixes
+
+- **nx-plugin:** ensure that tags option is used on app generation ([#1764](https://github.com/analogjs/analog/issues/1764)) ([df001b0](https://github.com/analogjs/analog/commit/df001b0bed89fb44baa6dc932b9c7e43c2e83eb8))
 
 ## [1.17.1-beta.2](https://github.com/analogjs/analog/compare/v1.17.1-beta.1...v1.17.1-beta.2) (2025-05-29)
 

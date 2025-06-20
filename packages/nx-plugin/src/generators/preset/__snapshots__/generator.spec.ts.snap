@@ -25,7 +25,7 @@ exports[`preset generator > should match project.json 1`] = `
   "projectType": "application",
   "prefix": "app",
   "sourceRoot": "my-app/src",
-  "tags": [],
+  "tags": ["tag1", "tag2", "type:app"],
   "targets": {
     "build": {
       "executor": "@analogjs/platform:vite",
@@ -65,7 +65,7 @@ exports[`preset generator > should match project.json 1`] = `
       }
     },
     "extract-i18n": {
-      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "executor": "@angular/build:extract-i18n",
       "options": {
         "buildTarget": "my-app:build"
       }
@@ -92,17 +92,18 @@ exports[`preset generator > should match project.json 1`] = `
 `;
 
 exports[`preset generator > should match src/test-setup.ts 1`] = `
-"import '@analogjs/vitest-angular/setup-zone';
+"import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-zone';
 
 import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+  BrowserTestingModule,
+  platformBrowserTesting,
+} from '@angular/platform-browser/testing';
 import { getTestBed } from '@angular/core/testing';
 
 getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting(),
+  BrowserTestingModule,
+  platformBrowserTesting(),
 );
 "
 `;

@@ -43,7 +43,7 @@ export function getPageHandlers({
 
     return {
       handler: endpointFile,
-      route: `${hasAPIDir ? '/api' : ''}/_analog${route}`,
+      route: `${hasAPIDir ? '/api' : ''}/_analog${route}.json`,
       lazy: true,
     };
   });

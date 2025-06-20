@@ -31,14 +31,14 @@ export default defineConfig(({ mode }) => ({
 
 ### From Content Directory
 
-You might want to prerender all routes that are the result of a rendered content directory.
-For example if you have a blog and all your articles are places as Markdown files in the `contents` directory.
+You might want to prerender all routes that are the result of a rendered content directory. For example if you have a blog and all your articles are places as Markdown files in the `contents` directory.
+
 For such scenarios, you can add an object to the `routes` config to render everything within a directory.
-Keep in mind, that your directory structure may not be reflected 1:1 in your apps path.
-Therefore, you have to pass a `transform` function which maps the file paths to the URLs.
-The returning string should be the URL path in your app.
-Using `transform` allows you also filter out some routes by returning `false`.
-This does not include them in the prerender process, such as files marked as `draft` in the frontmatter.
+
+The directory structure may not be reflected 1:1 in your apps path. Therefore, you have to pass a `transform` function which maps the file paths to the URLs. The returning string should be the URL path in your app.
+
+Using `transform` allows you also filter out some routes by returning `false`. This does not include them in the prerender process, such as files marked as `draft` in the frontmatter.
+
 The `contentDir` value of that object can be a glob pattern or just a specific path.
 
 ```ts
@@ -72,9 +72,9 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-### Only static pages
+## Only Prerendering Static Pages
 
-To only prerender the static pages, use the `static: true` flag.
+To only prerender the static pages without building the server, use the `static: true` flag.
 
 > The `ssr` flag must still be set to `true` for prerendering static pages.
 
@@ -109,7 +109,36 @@ export default defineConfig(({ mode }) => ({
 
 The static pages can be deployed from the `dist/analog/public` directory.
 
-### Sitemap Generation
+## Prerendering Server-Side Data
+
+When using [Server-Side Data Fetching](/docs/features/data-fetching/server-side-data-fetching), the data is cached and reused using transfer state _only_ on the first request. To prerender the server-side data fetched along with the route, set the `staticData` flag to `true` in the config object for the prerendered route.
+
+For example, a route defined as `src/app/pages/shipping.page.ts` with an associated `src/app/pages/shipping.server.ts` has the route and server data prerendered to be completely static.
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      static: true,
+      prerender: {
+        routes: async () => [
+          '/',
+          {
+            route: '/shipping',
+            staticData: true,
+          },
+        ],
+      },
+    }),
+  ],
+}));
+```
+
+## Sitemap Generation
 
 Analog also supports automatic sitemap generation. Analog generates a sitemap in the `dist/analog/public` directory when running a build if a sitemap configuration is provided.
 
@@ -124,7 +153,7 @@ export default defineConfig(({ mode }) => ({
       prerender: {
         routes: async () => ['/', '/blog'],
         sitemap: {
-          host: 'https://analogjs.org/',
+          host: 'https://analogjs.org',
         },
       },
     }),
@@ -145,7 +174,7 @@ export default defineConfig(({ mode }) => ({
     analog({
       prerender: {
         sitemap: {
-          host: 'https://analogjs.org/',
+          host: 'https://analogjs.org',
         },
         routes: async () => [
           '/',
@@ -198,7 +227,7 @@ mapping of the pages' `<loc>`, `<lastmod>`, `<changefreq>`, and `<priority>` pro
 </urlset...>
 ```
 
-### Post-rendering Hooks
+## Post-rendering Hooks
 
 Analog supports the post-rendering hooks during the prerendering process. The use case for post-rendering hooks can be inlining critical CSS, adding/removing scripts in HTML files, etc.
 

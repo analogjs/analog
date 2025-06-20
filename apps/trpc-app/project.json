@@ -67,7 +67,8 @@
     },
     "test": {
       "executor": "@nx/vite:test",
-      "outputs": ["{projectRoot}/coverage"]
+      "outputs": ["{projectRoot}/coverage"],
+      "dependsOn": ["^build"]
     }
   }
 }

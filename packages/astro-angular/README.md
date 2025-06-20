@@ -294,7 +294,7 @@ interface Todo {
 })
 export class TodosComponent implements OnInit {
   static clientProviders = [provideHttpClient()];
-  static renderProviders = [];
+  static renderProviders = [TodosComponent.clientProviders];
 
   http = inject(HttpClient);
   todos: Todo[] = [];

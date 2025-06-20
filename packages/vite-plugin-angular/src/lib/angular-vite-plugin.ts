@@ -350,7 +350,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
           });
 
-          await performCompilation(resolvedConfig, updates);
+          await performCompilation(resolvedConfig, [
+            ...mods.map((mod) => mod.id as string),
+            ...updates,
+          ]);
 
           if (updates.length > 0) {
             updates.forEach((updateId) => {
