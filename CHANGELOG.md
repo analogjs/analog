@@ -1,3 +1,17 @@
+# [1.18.0](https://github.com/analogjs/analog/compare/v1.17.1...v1.18.0) (2025-06-20)
+
+### Bug Fixes
+
+- **create-analog:** fix template and styles for SFCs ([#1778](https://github.com/analogjs/analog/issues/1778)) ([902fe23](https://github.com/analogjs/analog/commit/902fe23e56b4ba542bc0da0583921aad5054d0f5))
+- **create-analog:** update template dependencies to Angular v20 ([#1768](https://github.com/analogjs/analog/issues/1768)) ([8e1fae5](https://github.com/analogjs/analog/commit/8e1fae5ed9565286dcc4bb5eff8908e8600e1bea))
+- **nx-plugin:** add fallback for json.files property in preset ([6e2241a](https://github.com/analogjs/analog/commit/6e2241a63ca5e921570341e38c46abb6441467f1))
+- **nx-plugin:** ensure that tags option is used on app generation ([#1764](https://github.com/analogjs/analog/issues/1764)) ([df001b0](https://github.com/analogjs/analog/commit/df001b0bed89fb44baa6dc932b9c7e43c2e83eb8))
+- **vite-plugin-angular:** trigger compilation from external templates/styles ([#1779](https://github.com/analogjs/analog/issues/1779)) ([e3a1f27](https://github.com/analogjs/analog/commit/e3a1f278b6e39bca4e1b14a4555e977b32ba341c))
+
+### Features
+
+- **vite-plugin-nitro:** support static server side data fetching during prerendering ([#1771](https://github.com/analogjs/analog/issues/1771)) ([377cdd2](https://github.com/analogjs/analog/commit/377cdd227e005a0f73c01ad026a584834a49c044))
+
 # [1.18.0-beta.4](https://github.com/analogjs/analog/compare/v1.18.0-beta.3...v1.18.0-beta.4) (2025-06-20)
 
 ### Bug Fixes
