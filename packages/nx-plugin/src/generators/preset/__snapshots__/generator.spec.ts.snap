@@ -18,65 +18,6 @@ exports[`preset generator > should match index.html 1`] = `
 "
 `;
 
-exports[`preset generator > should match index.html 2`] = `
-"/// <reference types="vitest" />
-
-import analog from '@analogjs/platform';
-import { defineConfig } from 'vite';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-
-// @ts-expect-error @tailwindcss/vite currently uses mts. TypeScript is complaining this, but it works as expected.
-import tailwindcss from '@tailwindcss/vite';
-
-// https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
-  return {
-    root: __dirname,
-    cacheDir: \`../node_modules/.vite\`,
-    build: {
-      outDir: '../dist/./my-app/client',
-      reportCompressedSize: true,
-      target: ['es2020'],
-    },
-    server: {
-      fs: {
-        allow: ['.'],
-      },
-    },
-    plugins: [tailwindcss(), analog(), nxViteTsPaths()],
-    test: {
-      globals: true,
-      environment: 'jsdom',
-      setupFiles: ['src/test-setup.ts'],
-      include: ['**/*.spec.ts'],
-      reporters: ['default'],
-    },
-    define: {
-      'import.meta.vitest': mode !== 'production',
-    },
-  };
-});
-"
-`;
-
-exports[`preset generator > should match index.html 3`] = `
-"<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>my-app</title>
-    <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-  </head>
-  <body>
-    <app-root></app-root>
-    <script type="module" src="/my-app/src/main.ts"></script>
-  </body>
-</html>
-"
-`;
-
 exports[`preset generator > should match project.json 1`] = `
 "{
   "name": "my-app",
@@ -124,7 +65,7 @@ exports[`preset generator > should match project.json 1`] = `
       }
     },
     "extract-i18n": {
-      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "executor": "@angular/build:extract-i18n",
       "options": {
         "buildTarget": "my-app:build"
       }
@@ -151,63 +92,23 @@ exports[`preset generator > should match project.json 1`] = `
 `;
 
 exports[`preset generator > should match src/test-setup.ts 1`] = `
-"import '@analogjs/vitest-angular/setup-zone';
+"import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-zone';
 
 import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+  BrowserTestingModule,
+  platformBrowserTesting,
+} from '@angular/platform-browser/testing';
 import { getTestBed } from '@angular/core/testing';
 
 getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting(),
+  BrowserTestingModule,
+  platformBrowserTesting(),
 );
 "
 `;
 
 exports[`preset generator > should match vite.config.ts 1`] = `
-"/// <reference types="vitest" />
-
-import analog from '@analogjs/platform';
-import { defineConfig } from 'vite';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-
-// @ts-expect-error @tailwindcss/vite currently uses mts. TypeScript is complaining this, but it works as expected.
-import tailwindcss from '@tailwindcss/vite';
-
-// https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
-  return {
-    root: __dirname,
-    cacheDir: \`../node_modules/.vite\`,
-    build: {
-      outDir: '../dist/./my-app/client',
-      reportCompressedSize: true,
-      target: ['es2020'],
-    },
-    server: {
-      fs: {
-        allow: ['.'],
-      },
-    },
-    plugins: [tailwindcss(), analog(), nxViteTsPaths()],
-    test: {
-      globals: true,
-      environment: 'jsdom',
-      setupFiles: ['src/test-setup.ts'],
-      include: ['**/*.spec.ts'],
-      reporters: ['default'],
-    },
-    define: {
-      'import.meta.vitest': mode !== 'production',
-    },
-  };
-});
-"
-`;
-
-exports[`preset generator > should match vite.config.ts 2`] = `
 "/// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
