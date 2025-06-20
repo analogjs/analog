@@ -1,3 +1,9 @@
+# [1.18.0-beta.4](https://github.com/analogjs/analog/compare/v1.18.0-beta.3...v1.18.0-beta.4) (2025-06-20)
+
+### Bug Fixes
+
+- **nx-plugin:** add fallback for json.files property in preset ([6e2241a](https://github.com/analogjs/analog/commit/6e2241a63ca5e921570341e38c46abb6441467f1))
+
 # [1.18.0-beta.3](https://github.com/analogjs/analog/compare/v1.18.0-beta.2...v1.18.0-beta.3) (2025-06-19)
 
 ### Bug Fixes
