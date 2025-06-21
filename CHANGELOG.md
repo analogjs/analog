@@ -1,3 +1,9 @@
+## [1.18.1-beta.1](https://github.com/analogjs/analog/compare/v1.18.0...v1.18.1-beta.1) (2025-06-21)
+
+### Bug Fixes
+
+- **nx-plugin:** support migration for Angular v20 app component ([#1785](https://github.com/analogjs/analog/issues/1785)) ([7f2a240](https://github.com/analogjs/analog/commit/7f2a240195faf89da7063df1feb1371fd229407a))
+
 # [1.18.0](https://github.com/analogjs/analog/compare/v1.17.1...v1.18.0) (2025-06-20)
 
 ### Bug Fixes
