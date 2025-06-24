@@ -401,6 +401,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         return {
           environments: {
+            client: {
+              build: {
+                outDir:
+                  config?.build?.outDir ||
+                  resolve(workspaceRoot, 'dist', rootDir, 'client'),
+              },
+            },
             ssr: {
               build: {
                 ssr: true,
