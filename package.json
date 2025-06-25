@@ -9,7 +9,7 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "git config core.hookspath .githooks",
     "start": "nx serve",
-    "build": "nx run-many --target build --all --parallel=1 --exclude=astro-app,docs-app",
+    "build": "nx run-many --target build --all --parallel=1 --exclude=astro-app",
     "build:release": "nx run-many --target build --projects=tag:type:release",
     "e2e": "nx run-many --target e2e --projects create-analog-e2e,analog-app-e2e-cypress --parallel=1 --exclude analog-app-e2e-playwright",
     "test": "nx run-many --target test",
