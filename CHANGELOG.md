@@ -1,3 +1,9 @@
+# [1.19.0-beta.1](https://github.com/analogjs/analog/compare/v1.18.1-beta.2...v1.19.0-beta.1) (2025-06-25)
+
+### Features
+
+- add support for Vite 7.0 ([#1787](https://github.com/analogjs/analog/issues/1787)) ([5c1ec4a](https://github.com/analogjs/analog/commit/5c1ec4a5fccd39ef13501f64945fded7f4138a5c))
+
 ## [1.18.1-beta.2](https://github.com/analogjs/analog/compare/v1.18.1-beta.1...v1.18.1-beta.2) (2025-06-25)
 
 ### Bug Fixes
