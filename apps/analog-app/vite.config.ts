@@ -68,11 +68,11 @@ export default defineConfig(({ mode, isSsrBuild }) => {
       }),
       nxViteTsPaths(),
       visualizer() as Plugin,
-      !isSsrBuild &&
-        inspect({
-          build: true,
-          outputDir: '../../.vite-inspect/analog-app',
-        }),
+      // !isSsrBuild &&
+      //   inspect({
+      //     build: true,
+      //     outputDir: '../../.vite-inspect/analog-app',
+      //   }),
     ],
     test: {
       reporters: ['default'],
