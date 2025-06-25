@@ -1,3 +1,9 @@
+## [1.18.1-beta.2](https://github.com/analogjs/analog/compare/v1.18.1-beta.1...v1.18.1-beta.2) (2025-06-25)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** fix page handler URLs ([#1788](https://github.com/analogjs/analog/issues/1788)) ([5fdcf7f](https://github.com/analogjs/analog/commit/5fdcf7f4dadaaa48acd722983b1f9afb1273679f))
+
 ## [1.18.1-beta.1](https://github.com/analogjs/analog/compare/v1.18.0...v1.18.1-beta.1) (2025-06-21)
 
 ### Bug Fixes
