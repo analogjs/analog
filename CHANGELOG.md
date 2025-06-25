@@ -1,3 +1,9 @@
+# [1.19.0-beta.2](https://github.com/analogjs/analog/compare/v1.19.0-beta.1...v1.19.0-beta.2) (2025-06-25)
+
+### Bug Fixes
+
+- **create-analog:** add overrides for Vite 7 to templates ([07f0a88](https://github.com/analogjs/analog/commit/07f0a88b9bdb789d96c0823025bb6dee12d008b4))
+
 # [1.19.0-beta.1](https://github.com/analogjs/analog/compare/v1.18.1-beta.2...v1.19.0-beta.1) (2025-06-25)
 
 ### Features
