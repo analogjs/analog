@@ -1,3 +1,9 @@
+# [1.19.0-beta.5](https://github.com/analogjs/analog/compare/v1.19.0-beta.4...v1.19.0-beta.5) (2025-06-26)
+
+### Bug Fixes
+
+- **nx-plugin:** add caret to platform-server package for preset ([a97ad4b](https://github.com/analogjs/analog/commit/a97ad4bae8e8adfc54440321291794c4245b284b))
+
 # [1.19.0-beta.4](https://github.com/analogjs/analog/compare/v1.19.0-beta.3...v1.19.0-beta.4) (2025-06-26)
 
 ### Bug Fixes
