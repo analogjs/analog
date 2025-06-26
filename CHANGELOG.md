@@ -1,3 +1,9 @@
+# [1.19.0-beta.4](https://github.com/analogjs/analog/compare/v1.19.0-beta.3...v1.19.0-beta.4) (2025-06-26)
+
+### Bug Fixes
+
+- **create-analog:** remove extra comma from minimal template ([906998d](https://github.com/analogjs/analog/commit/906998d4f8ed2a5196b0baa563312c8b23252888))
+
 # [1.19.0-beta.3](https://github.com/analogjs/analog/compare/v1.19.0-beta.2...v1.19.0-beta.3) (2025-06-26)
 
 ### Bug Fixes
