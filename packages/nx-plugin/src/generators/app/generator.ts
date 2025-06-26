@@ -130,7 +130,7 @@ export async function appGenerator(
   addDependenciesToPackageJson(
     tree,
     {
-      '@angular/platform-server': angularVersion,
+      '@angular/platform-server': `~${angularVersion}`,
       'front-matter': '^4.0.2',
       marked: '^15.0.7',
       mermaid: '^10.2.4',
