@@ -1,3 +1,9 @@
+# [1.19.0-beta.3](https://github.com/analogjs/analog/compare/v1.19.0-beta.2...v1.19.0-beta.3) (2025-06-26)
+
+### Bug Fixes
+
+- **create-analog:** update template package.json deps ([#1789](https://github.com/analogjs/analog/issues/1789)) ([abb9900](https://github.com/analogjs/analog/commit/abb990046486bf08880813bed2a5caa5954d4976))
+
 # [1.19.0-beta.2](https://github.com/analogjs/analog/compare/v1.19.0-beta.1...v1.19.0-beta.2) (2025-06-25)
 
 ### Bug Fixes
