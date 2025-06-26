@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/storybook-angular",
-  "version": "1.18.0",
+  "version": "1.19.0-beta.5",
   "description": "Storybook Integration for Angular & Vite",
   "keywords": [
     "storybook",
@@ -39,7 +39,7 @@
     "@storybook/angular": ">=8.6.0 || next",
     "@analogjs/vite-plugin-angular": ">=1.12.0 < 2.0.0 || beta",
     "storybook": ">=8.6.0 || next",
-    "vite": "^5.0.0 || ^6.0.0"
+    "vite": "^5.0.0 || ^6.0.0 || ^7.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
