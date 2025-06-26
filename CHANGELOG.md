@@ -1,3 +1,18 @@
+# [1.19.0](https://github.com/analogjs/analog/compare/v1.18.0...v1.19.0) (2025-06-26)
+
+### Bug Fixes
+
+- **create-analog:** add overrides for Vite 7 to templates ([07f0a88](https://github.com/analogjs/analog/commit/07f0a88b9bdb789d96c0823025bb6dee12d008b4))
+- **create-analog:** remove extra comma from minimal template ([906998d](https://github.com/analogjs/analog/commit/906998d4f8ed2a5196b0baa563312c8b23252888))
+- **create-analog:** update template package.json deps ([#1789](https://github.com/analogjs/analog/issues/1789)) ([abb9900](https://github.com/analogjs/analog/commit/abb990046486bf08880813bed2a5caa5954d4976))
+- **nx-plugin:** add caret to platform-server package for preset ([a97ad4b](https://github.com/analogjs/analog/commit/a97ad4bae8e8adfc54440321291794c4245b284b))
+- **nx-plugin:** support migration for Angular v20 app component ([#1785](https://github.com/analogjs/analog/issues/1785)) ([7f2a240](https://github.com/analogjs/analog/commit/7f2a240195faf89da7063df1feb1371fd229407a))
+- **vite-plugin-nitro:** fix page handler URLs ([#1788](https://github.com/analogjs/analog/issues/1788)) ([5fdcf7f](https://github.com/analogjs/analog/commit/5fdcf7f4dadaaa48acd722983b1f9afb1273679f))
+
+### Features
+
+- add support for Vite 7.0 ([#1787](https://github.com/analogjs/analog/issues/1787)) ([5c1ec4a](https://github.com/analogjs/analog/commit/5c1ec4a5fccd39ef13501f64945fded7f4138a5c))
+
 # [1.19.0-beta.5](https://github.com/analogjs/analog/compare/v1.19.0-beta.4...v1.19.0-beta.5) (2025-06-26)
 
 ### Bug Fixes
