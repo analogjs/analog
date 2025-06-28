@@ -548,7 +548,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           if (jit) {
             return {
-              code: data,
+              code: data || code,
               map: null,
             };
           }
@@ -575,7 +575,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
 
           return {
-            code: data,
+            code: data || code,
             map: null,
           };
         }
