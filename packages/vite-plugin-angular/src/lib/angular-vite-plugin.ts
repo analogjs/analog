@@ -49,6 +49,7 @@ import { routerPlugin } from './router-plugin.js';
 import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
 import { EmitFileResult } from './models.js';
 import { liveReloadPlugin } from './live-reload-plugin.js';
+import { nxFolderPlugin } from './nx-folder-plugin.js';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -292,7 +293,11 @@ export function angular(options?: PluginOptions): Plugin[] {
           const isDirect = ctx.modules.find(
             (mod) => ctx.file === mod.file && mod.id?.includes('?direct'),
           );
-          if (isDirect) {
+          const isInline = ctx.modules.find(
+            (mod) => ctx.file === mod.file && mod.id?.includes('?inline'),
+          );
+
+          if (isDirect || isInline) {
             if (pluginOptions.liveReload && isDirect?.id && isDirect.file) {
               const isComponentStyle =
                 isDirect.type === 'css' && isComponentStyleSheet(isDirect.id);
@@ -608,6 +613,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     (isStorybook && angularStorybookPlugin()) as Plugin,
     routerPlugin(),
     pendingTasksPlugin(),
+    nxFolderPlugin(),
   ].filter(Boolean) as Plugin[];
 
   function findAnalogFiles(config: ResolvedConfig) {
