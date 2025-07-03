@@ -1,3 +1,9 @@
+## [1.19.1-beta.2](https://github.com/analogjs/analog/compare/v1.19.1-beta.1...v1.19.1-beta.2) (2025-07-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** skip compilation for inline assets, .nx for HMR ([#1795](https://github.com/analogjs/analog/issues/1795)) ([0f4413a](https://github.com/analogjs/analog/commit/0f4413a6ecabbe41dbec3ad1249e3ef41691b6c6))
+
 ## [1.19.1-beta.1](https://github.com/analogjs/analog/compare/v1.19.0...v1.19.1-beta.1) (2025-07-03)
 
 ### Bug Fixes
