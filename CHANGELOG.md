@@ -1,3 +1,9 @@
+## [1.19.1-beta.1](https://github.com/analogjs/analog/compare/v1.19.0...v1.19.1-beta.1) (2025-07-03)
+
+### Bug Fixes
+
+- **storybook-angular:** prevent duplicate loading of analogjs plugins ([#1794](https://github.com/analogjs/analog/issues/1794)) ([6aeed12](https://github.com/analogjs/analog/commit/6aeed127caf31cc60fe11c1f5447afb6f6062a33))
+
 # [1.19.0](https://github.com/analogjs/analog/compare/v1.18.0...v1.19.0) (2025-06-26)
 
 ### Bug Fixes
