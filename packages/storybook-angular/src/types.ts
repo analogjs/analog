@@ -11,6 +11,7 @@ export type FrameworkOptions = {
   builder?: BuilderOptions;
   jit?: boolean;
   liveReload?: boolean;
+  inlineStylesExtension?: string;
 };
 
 type StorybookConfigFramework = {
