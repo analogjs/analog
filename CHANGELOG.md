@@ -1,3 +1,12 @@
+## [1.19.1](https://github.com/analogjs/analog/compare/v1.19.0...v1.19.1) (2025-07-08)
+
+### Bug Fixes
+
+- **nx-plugin:** add css for tailwind, fix global import reference ([#1796](https://github.com/analogjs/analog/issues/1796)) ([28b9558](https://github.com/analogjs/analog/commit/28b955826ab3a00f998f7262fd68152475b920fe))
+- **nx-plugin:** fix platform server dep for new app ([#1797](https://github.com/analogjs/analog/issues/1797)) ([c3d9660](https://github.com/analogjs/analog/commit/c3d966055e0174658c3f3c961106d70dc79c4309))
+- **storybook-angular:** prevent duplicate loading of analogjs plugins ([#1794](https://github.com/analogjs/analog/issues/1794)) ([6aeed12](https://github.com/analogjs/analog/commit/6aeed127caf31cc60fe11c1f5447afb6f6062a33))
+- **vite-plugin-angular:** skip compilation for inline assets, .nx for HMR ([#1795](https://github.com/analogjs/analog/issues/1795)) ([0f4413a](https://github.com/analogjs/analog/commit/0f4413a6ecabbe41dbec3ad1249e3ef41691b6c6))
+
 ## [1.19.1-beta.4](https://github.com/analogjs/analog/compare/v1.19.1-beta.3...v1.19.1-beta.4) (2025-07-08)
 
 ### Bug Fixes
