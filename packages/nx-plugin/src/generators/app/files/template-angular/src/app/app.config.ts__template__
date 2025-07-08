@@ -1,4 +1,8 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import {
+  ApplicationConfig,
+  provideZoneChangeDetection<% if (majorAngularVersion > 19) { %>,
+  provideBrowserGlobalErrorListeners<% } %>
+} from '@angular/core';
 import {
   provideHttpClient,
   withFetch,
@@ -11,7 +15,7 @@ import { provideTrpcClient } from '../trpc-client';
 <% } %>
 
 export const appConfig: ApplicationConfig = {
-  providers: [<% if (majorAngularVersion) { %>provideBrowserGlobalErrorListeners(),<% } %>
+  providers: [<% if (majorAngularVersion > 19) { %>provideBrowserGlobalErrorListeners(),<% } %>
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideFileRouter(),
     provideClientHydration(),

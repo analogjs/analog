@@ -7,6 +7,7 @@ import {
   stripIndents,
   Tree,
   addDependenciesToPackageJson,
+  updateJson,
 } from '@nx/devkit';
 import { wrapAngularDevkitSchematic } from '@nx/devkit/ngcli-adapter';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
@@ -24,6 +25,7 @@ import { addTailwindConfig } from './lib/add-tailwind-config';
 import { addTrpc } from './lib/add-trpc';
 import { cleanupFiles } from './lib/cleanup-files';
 import { addAnalogProjectConfig } from './lib/add-analog-project-config';
+import { updateIndex } from './lib/update-index-html';
 
 export interface NormalizedOptions
   extends AnalogNxApplicationGeneratorOptions,
@@ -130,7 +132,6 @@ export async function appGenerator(
   addDependenciesToPackageJson(
     tree,
     {
-      '@angular/platform-server': `~${angularVersion}`,
       'front-matter': '^4.0.2',
       marked: '^15.0.7',
       mermaid: '^10.2.4',
@@ -138,6 +139,14 @@ export async function appGenerator(
     },
     {},
   );
+
+  updateJson<{ dependencies: object }>(tree, '/package.json', (json) => {
+    json.dependencies['@angular/platform-server'] = `~${angularVersion}`;
+
+    return json;
+  });
+
+  updateIndex(tree, normalizedOptions.analogAppName);
 
   if (normalizedOptions.addTailwind) {
     await addTailwindConfig(tree, normalizedOptions.projectName);
