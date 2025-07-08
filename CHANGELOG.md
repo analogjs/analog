@@ -1,3 +1,9 @@
+## [1.19.1-beta.4](https://github.com/analogjs/analog/compare/v1.19.1-beta.3...v1.19.1-beta.4) (2025-07-08)
+
+### Bug Fixes
+
+- **nx-plugin:** fix platform server dep for new app ([#1797](https://github.com/analogjs/analog/issues/1797)) ([c3d9660](https://github.com/analogjs/analog/commit/c3d966055e0174658c3f3c961106d70dc79c4309))
+
 ## [1.19.1-beta.3](https://github.com/analogjs/analog/compare/v1.19.1-beta.2...v1.19.1-beta.3) (2025-07-08)
 
 ### Bug Fixes
