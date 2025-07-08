@@ -1,3 +1,9 @@
+## [1.19.1-beta.3](https://github.com/analogjs/analog/compare/v1.19.1-beta.2...v1.19.1-beta.3) (2025-07-08)
+
+### Bug Fixes
+
+- **nx-plugin:** add css for tailwind, fix global import reference ([#1796](https://github.com/analogjs/analog/issues/1796)) ([28b9558](https://github.com/analogjs/analog/commit/28b955826ab3a00f998f7262fd68152475b920fe))
+
 ## [1.19.1-beta.2](https://github.com/analogjs/analog/compare/v1.19.1-beta.1...v1.19.1-beta.2) (2025-07-03)
 
 ### Bug Fixes
