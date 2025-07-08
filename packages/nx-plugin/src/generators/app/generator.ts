@@ -7,6 +7,7 @@ import {
   stripIndents,
   Tree,
   addDependenciesToPackageJson,
+  updateJson,
 } from '@nx/devkit';
 import { wrapAngularDevkitSchematic } from '@nx/devkit/ngcli-adapter';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
@@ -131,7 +132,6 @@ export async function appGenerator(
   addDependenciesToPackageJson(
     tree,
     {
-      '@angular/platform-server': `~${angularVersion}`,
       'front-matter': '^4.0.2',
       marked: '^15.0.7',
       mermaid: '^10.2.4',
@@ -139,6 +139,12 @@ export async function appGenerator(
     },
     {},
   );
+
+  updateJson<{ dependencies: object }>(tree, '/package.json', (json) => {
+    json.dependencies['@angular/platform-server'] = `~${angularVersion}`;
+
+    return json;
+  });
 
   updateIndex(tree, normalizedOptions.analogAppName);
 
