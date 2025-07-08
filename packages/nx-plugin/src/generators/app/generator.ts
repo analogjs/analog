@@ -24,6 +24,7 @@ import { addTailwindConfig } from './lib/add-tailwind-config';
 import { addTrpc } from './lib/add-trpc';
 import { cleanupFiles } from './lib/cleanup-files';
 import { addAnalogProjectConfig } from './lib/add-analog-project-config';
+import { updateIndex } from './lib/update-index-html';
 
 export interface NormalizedOptions
   extends AnalogNxApplicationGeneratorOptions,
@@ -138,6 +139,8 @@ export async function appGenerator(
     },
     {},
   );
+
+  updateIndex(tree, normalizedOptions.analogAppName);
 
   if (normalizedOptions.addTailwind) {
     await addTailwindConfig(tree, normalizedOptions.projectName);
