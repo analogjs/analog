@@ -152,8 +152,10 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   const styleUrlsResolver = new StyleUrlsResolver();
   const templateUrlsResolver = new TemplateUrlsResolver();
+  let outputFile: ((file: string) => void) | undefined;
   const outputFiles = new Map<string, EmitFileResult>();
   const fileEmitter = (file: string) => {
+    outputFile?.(file);
     return outputFiles.get(normalizePath(file));
   };
   let initialCompilation = false;
@@ -239,7 +241,17 @@ export function angular(options?: PluginOptions): Plugin[] {
       async buildStart() {
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
-          const { host } = await performCompilation(resolvedConfig);
+          const { host, writeOutputFile } =
+            await performCompilation(resolvedConfig);
+
+          /**
+           * Perf: Output files on demand so the dev server
+           * isn't blocked when emitting files.
+           */
+          if (!isTest) {
+            outputFile = writeOutputFile;
+          }
+
           initialCompilation = true;
 
           // Only store cache if in watch mode
@@ -921,32 +933,37 @@ export function angular(options?: PluginOptions): Plugin[] {
       writeFileCallback(id, content, false, undefined, [sourceFile]);
     };
 
-    if (!watchMode) {
-      for (const sf of builder.getSourceFiles()) {
-        const id = sf!.fileName;
-        writeOutputFile(id);
-      }
-    } else {
+    if (watchMode) {
       if (ids && ids.length > 0) {
         ids.forEach((id) => writeOutputFile(id));
       } else {
-        // TypeScript will loop until there are no more affected files in the program
-        while (
-          (
-            builder as ts.EmitAndSemanticDiagnosticsBuilderProgram
-          ).emitNextAffectedFile(
-            writeFileCallback,
-            undefined,
-            undefined,
-            transformers,
-          )
-        ) {
-          /* empty */
+        /**
+         * Only block the server from starting up
+         * during testing.
+         */
+        if (isTest) {
+          // TypeScript will loop until there are no more affected files in the program
+          while (
+            (
+              builder as ts.EmitAndSemanticDiagnosticsBuilderProgram
+            ).emitNextAffectedFile(
+              writeFileCallback,
+              undefined,
+              undefined,
+              transformers,
+            )
+          ) {
+            /* empty */
+          }
         }
       }
     }
 
-    return { host };
+    if (isTest) {
+      return { host };
+    }
+
+    return { host, writeOutputFile };
   }
 }
 

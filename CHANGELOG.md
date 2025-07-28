@@ -1,3 +1,9 @@
+## [1.19.2-beta.1](https://github.com/analogjs/analog/compare/v1.19.1...v1.19.2-beta.1) (2025-07-28)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** decrease dev server startup time by emitting files on demand ([#1807](https://github.com/analogjs/analog/issues/1807)) ([f829652](https://github.com/analogjs/analog/commit/f82965247d8ddfa938952af9e0a866b9534b9a05))
+
 ## [1.19.1](https://github.com/analogjs/analog/compare/v1.19.0...v1.19.1) (2025-07-08)
 
 ### Bug Fixes
