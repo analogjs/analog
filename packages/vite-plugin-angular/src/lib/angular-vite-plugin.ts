@@ -46,6 +46,8 @@ import {
   MarkdownTemplateTransform,
 } from './authoring/markdown-transform.js';
 import { routerPlugin } from './router-plugin.js';
+import { routeTreePlugin } from './route-tree-plugin.js';
+import { jsonLdSSRPlugin } from './json-ld-ssr-plugin.js';
 import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
 import { EmitFileResult } from './models.js';
 import { liveReloadPlugin } from './live-reload-plugin.js';
@@ -72,6 +74,25 @@ export interface PluginOptions {
           include: string[];
         };
     markdownTemplateTransforms?: MarkdownTemplateTransform[];
+    /**
+     * Enable experimental route tree generation (TanStack Router style)
+     */
+    routeTree?:
+      | boolean
+      | {
+          /** Directory containing page files */
+          pagesDirectory?: string;
+          /** Output file for the generated route tree */
+          generatedRouteTree?: string;
+          /** Additional page directories to scan */
+          additionalPagesDirs?: string[];
+          /** Quote style for generated code */
+          quoteStyle?: 'single' | 'double';
+          /** Whether to use semicolons */
+          semicolons?: boolean;
+          /** Whether to disable logging */
+          disableLogging?: boolean;
+        };
   };
   supportedBrowsers?: string[];
   transformFilter?: (code: string, id: string) => boolean;
@@ -126,6 +147,14 @@ export function angular(options?: PluginOptions): Plugin[] {
     additionalContentDirs: options?.additionalContentDirs ?? [],
     liveReload: options?.liveReload ?? false,
     disableTypeChecking: options?.disableTypeChecking ?? true,
+    experimental: {
+      supportAnalogFormat: options?.experimental?.supportAnalogFormat ?? false,
+      markdownTemplateTransforms: options?.experimental
+        ?.markdownTemplateTransforms?.length
+        ? options.experimental.markdownTemplateTransforms
+        : defaultMarkdownTemplateTransforms,
+      routeTree: options?.experimental?.routeTree ?? false,
+    },
   };
 
   let resolvedConfig: ResolvedConfig;
@@ -615,6 +644,47 @@ export function angular(options?: PluginOptions): Plugin[] {
     }),
     (isStorybook && angularStorybookPlugin()) as Plugin,
     routerPlugin(),
+    (pluginOptions.experimental?.routeTree &&
+      routeTreePlugin({
+        workspaceRoot: pluginOptions.workspaceRoot,
+        pagesDirectory:
+          typeof pluginOptions.experimental.routeTree === 'object'
+            ? (pluginOptions.experimental.routeTree.pagesDirectory ??
+              'src/app/pages')
+            : 'src/app/pages',
+        generatedRouteTree:
+          typeof pluginOptions.experimental.routeTree === 'object'
+            ? (pluginOptions.experimental.routeTree.generatedRouteTree ??
+              'src/app/routeTree.gen.ts')
+            : 'src/app/routeTree.gen.ts',
+        additionalPagesDirs:
+          typeof pluginOptions.experimental.routeTree === 'object'
+            ? (pluginOptions.experimental.routeTree.additionalPagesDirs ?? [])
+            : [],
+        quoteStyle:
+          typeof pluginOptions.experimental.routeTree === 'object'
+            ? (pluginOptions.experimental.routeTree.quoteStyle ?? 'single')
+            : 'single',
+        semicolons:
+          typeof pluginOptions.experimental.routeTree === 'object'
+            ? (pluginOptions.experimental.routeTree.semicolons ?? false)
+            : false,
+        disableLogging:
+          typeof pluginOptions.experimental.routeTree === 'object'
+            ? (pluginOptions.experimental.routeTree.disableLogging ?? false)
+            : false,
+      })) as Plugin,
+    // Add JSON-LD SSR plugin when route tree is enabled
+    // TODO: Fix json-ld-ssr plugin - temporarily disabled due to middleware conflict
+    (pluginOptions.experimental?.routeTree &&
+      jsonLdSSRPlugin({
+        routeTreePath:
+          typeof pluginOptions.experimental.routeTree === 'object'
+            ? (pluginOptions.experimental.routeTree.generatedRouteTree ??
+              'src/app/routeTree.gen.ts')
+            : 'src/app/routeTree.gen.ts',
+        workspaceRoot: pluginOptions.workspaceRoot,
+      })) as Plugin,
     pendingTasksPlugin(),
     nxFolderPlugin(),
   ].filter(Boolean) as Plugin[];
