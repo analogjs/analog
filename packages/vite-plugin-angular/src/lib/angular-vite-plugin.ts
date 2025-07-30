@@ -241,16 +241,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       async buildStart() {
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
-          const { host, writeOutputFile } =
-            await performCompilation(resolvedConfig);
-
-          /**
-           * Perf: Output files on demand so the dev server
-           * isn't blocked when emitting files.
-           */
-          if (!isTest) {
-            outputFile = writeOutputFile;
-          }
+          const { host } = await performCompilation(resolvedConfig);
 
           initialCompilation = true;
 
@@ -959,11 +950,15 @@ export function angular(options?: PluginOptions): Plugin[] {
       }
     }
 
-    if (isTest) {
-      return { host };
+    if (!isTest) {
+      /**
+       * Perf: Output files on demand so the dev server
+       * isn't blocked when emitting files.
+       */
+      outputFile = writeOutputFile;
     }
 
-    return { host, writeOutputFile };
+    return { host };
   }
 }
 
