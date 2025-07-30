@@ -52,6 +52,7 @@ export default defineConfig(({ mode, isSsrBuild }) => {
           inlineStylesExtension: 'scss',
           experimental: {
             supportAnalogFormat: true,
+            routeTree: true,
           },
         },
         liveReload: true,
