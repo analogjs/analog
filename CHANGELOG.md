@@ -1,3 +1,9 @@
+## [1.19.3](https://github.com/analogjs/analog/compare/v1.19.2...v1.19.3) (2025-08-01)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** update file emitter after compilation ([#1812](https://github.com/analogjs/analog/issues/1812)) ([474b6cc](https://github.com/analogjs/analog/commit/474b6cc2f2713100781032016973ed9bb05e9825))
+
 ## [1.19.3-beta.1](https://github.com/analogjs/analog/compare/v1.19.2...v1.19.3-beta.1) (2025-07-30)
 
 ### Bug Fixes
