@@ -3,8 +3,8 @@ import type { $Fetch } from 'nitropack';
 
 export type PageServerLoad = {
   params: H3EventContext['params'];
-  req: H3Event['node']['req'];
-  res: H3Event['node']['res'];
+  req: H3Event['req'];
+  res?: H3Event['_res'];
   fetch: $Fetch;
   event: H3Event;
 };

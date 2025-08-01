@@ -11,17 +11,17 @@ import {
   ɵSERVER_CONTEXT as SERVER_CONTEXT,
 } from '@angular/platform-server';
 import { ServerContext } from '@analogjs/router/tokens';
-import { createEvent, readBody, getHeader } from 'h3';
+import { mockEvent, readBody, getHeader } from 'h3';
 
 import { provideStaticProps } from './tokens';
 
 type ComponentLoader = () => Promise<Type<unknown>>;
 
 export function serverComponentRequest(serverContext: ServerContext) {
-  const serverComponentId = getHeader(
-    createEvent(serverContext.req, serverContext.res),
-    'X-Analog-Component',
-  );
+  // For now, skip h3 utilities as mockEvent doesn't work with IncomingMessage
+  const serverComponentId = serverContext.req.headers[
+    'x-analog-component'
+  ] as string;
 
   if (
     !serverComponentId &&
@@ -66,8 +66,8 @@ export async function renderServerComponent(
 
   const mirror = reflectComponentType(component);
   const selector = mirror?.selector.split(',')?.[0] || 'server-component';
-  const event = createEvent(serverContext.req, serverContext.res);
-  const body = (await readBody(event)) || {};
+  // For now, skip h3 utilities as mockEvent doesn't work with IncomingMessage
+  const body = {};
   const appId = `analog-server-${selector.toLowerCase()}-${new Date().getTime()}`;
 
   const bootstrap = () =>

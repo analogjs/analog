@@ -10,7 +10,7 @@ import {
 } from 'vite';
 import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { createEvent, sendWebResponse } from 'h3';
+import { mockEvent, sendWebResponse } from 'h3';
 import { createRouter as createRadixRouter, toRouteMatcher } from 'radix3';
 import { defu } from 'defu';
 import { NitroRouteRules } from 'nitropack';
@@ -88,7 +88,12 @@ export function devServerPlugin(options: ServerOptions): Plugin {
             }
 
             if (result instanceof Response) {
-              sendWebResponse(createEvent(req, res), result);
+              // Convert Response to Node.js response
+              res.statusCode = result.status;
+              result.headers.forEach((value, key) => {
+                res.setHeader(key, value);
+              });
+              res.end(await result.text());
               return;
             }
             res.setHeader('Content-Type', 'text/html');

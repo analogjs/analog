@@ -1,13 +1,16 @@
-import { eventHandler, sendRedirect, setHeaders } from 'h3';
+import { eventHandler, redirect, setHeaders } from 'h3';
 
 export default eventHandler((event) => {
-  if (event.node.req.originalUrl === '/checkout') {
-    console.log('event url', event.node.req.originalUrl);
+  if (event.req.url === '/checkout') {
+    console.log('event url', event.req.url);
 
     setHeaders(event, {
       'x-analog-test': 'true',
     });
 
-    sendRedirect(event, '/cart');
+    return redirect(event, '/cart');
   }
+
+  // Return undefined for other paths
+  return undefined;
 });

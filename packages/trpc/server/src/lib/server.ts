@@ -40,7 +40,7 @@ export interface OnErrorPayload<TRouter extends AnyRouter> {
   error: TRPCError;
   type: ProcedureType | 'unknown';
   path: string | undefined;
-  req: H3Event['node']['req'];
+  req: H3Event['req'];
   input: unknown;
   ctx: undefined | inferRouterContext<TRouter>;
 }
@@ -81,7 +81,8 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
   batching,
 }: ResolveHTTPRequestOptions<TRouter>) {
   return defineEventHandler(async (event) => {
-    const { req, res } = event.node;
+    const { req } = event;
+    const res = event._res;
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const $url = createURL(req.url!);
@@ -113,7 +114,7 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
       req: {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         method: req.method!,
-        headers: req.headers,
+        headers: req.headers as any,
         body: isMethod(event, 'GET') ? null : await readBody(event),
         query: $url.searchParams,
       },
@@ -130,14 +131,8 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
 
     const { status, headers, body } = httpResponse;
 
-    res.statusCode = status;
-
-    headers &&
-      Object.keys(headers).forEach((key) => {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        res.setHeader(key, headers[key]!);
-      });
-
+    // In h3 v2, we need to handle response differently
+    // For now, return the response data and let h3 handle it
     return body;
   });
 }

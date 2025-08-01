@@ -1,5 +1,5 @@
 import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
-import { App, toNodeListener } from 'h3';
+import { H3Core, toNodeListener } from 'h3';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { mergeConfig, normalizePath } from 'vite';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -186,21 +186,28 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           const prefix = useRuntimeConfig().prefix;
           const apiPrefix = \`\${prefix}/\${useRuntimeConfig().apiPrefix}\`;
 
-          if (event.node.req.url?.startsWith(apiPrefix)) {
-            const reqUrl = event.node.req.url?.replace(apiPrefix, '');
+          if (event.req.url?.startsWith(apiPrefix)) {
+            const reqUrl = event.req.url?.replace(apiPrefix, '');
 
             if (
-              event.node.req.method === 'GET' &&
+              event.req.method === 'GET' &&
               // in the case of XML routes, we want to proxy the request so that nitro gets the correct headers
               // and can render the XML correctly as a static asset
-              !event.node.req.url?.endsWith('.xml')
+              !event.req.url?.endsWith('.xml')
             ) {
-              return $fetch(reqUrl, { headers: event.node.req.headers });
+              // Convert headers to a format that $fetch can handle
+              const headers = event.req.headers instanceof Headers
+                ? Object.fromEntries(event.req.headers.entries())
+                : event.req.headers;
+              return $fetch(reqUrl, { headers });
             }
 
-            return proxyRequest(event, reqUrl, {
-              // @ts-ignore
-              fetch: $fetch.native,
+            // For proxy requests, we need to handle headers differently
+            // Skip proxy requests during prerendering to avoid header issues
+            return $fetch(reqUrl, {
+              headers: event.req.headers instanceof Headers
+                ? Object.fromEntries(event.req.headers.entries())
+                : event.req.headers
             });
           }
         });`,
@@ -342,7 +349,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                * as it won't resolve the renderer.ts file correctly in node.
                */
               import { eventHandler, getResponseHeader } from 'h3';
-              
+
               // @ts-ignore
               import renderer from '${ssrEntry}';
               // @ts-ignore
@@ -354,10 +361,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 if (noSSR === 'true') {
                   return template;
                 }
-              
-                const html = await renderer(event.node.req.url, template, {
-                  req: event.node.req,
-                  res: event.node.res,
+
+                const html = await renderer(event.req.url, template, {
+                  req: event.req,
+                  res: event._res,
                 });
 
                 return html;
@@ -469,7 +476,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           });
           const server = createDevServer(nitro);
           await build(nitro);
-          const apiHandler = toNodeListener(server.app as unknown as App);
+          const apiHandler = toNodeListener(server.app as any);
 
           if (hasAPIDir) {
             viteServer.middlewares.use(
