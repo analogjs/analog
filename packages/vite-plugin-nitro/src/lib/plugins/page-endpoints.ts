@@ -21,14 +21,14 @@ export function pageEndpointsPlugin() {
 
         let fileExports: string[] = [];
 
-        for (let key in compiled.metafile?.outputs) {
+        for (const key in compiled.metafile?.outputs) {
           if (compiled.metafile?.outputs[key].entryPoint) {
             fileExports = compiled.metafile?.outputs[key].exports;
           }
         }
 
         const code = `
-            import { defineEventHandler } from 'h3';
+            import { defineHandler } from 'h3';
 
             ${
               fileExports.includes('load')
@@ -46,37 +46,37 @@ export function pageEndpointsPlugin() {
                 : `
                 export const action = () => {
                   return {};
-                }              
+                }
               `
             }
 
-            export default defineEventHandler(async(event) => {
-              if (event.method === 'GET') {
+            export default defineHandler(async(event) => {
+              if (event.req.method === 'GET') {
                 try {
                   return await load({
                     params: event.context.params,
-                    req: event.node.req,
-                    res: event.node.res,
+                    req: event.req,
+                    res: event._res,
                     fetch: $fetch,
                     event
                   });
                 } catch(e) {
-                  console.error(\` An error occurred: \$\{e\}\`)
+                  console.error(\` An error occurred: $\{e}\`)
                   throw e;
                 }
               } else {
                 try {
                   return await action({
                     params: event.context.params,
-                    req: event.node.req,
-                    res: event.node.res,
+                    req: event.req,
+                    res: event._res,
                     fetch: $fetch,
                     event
                   });
                 } catch(e) {
-                  console.error(\` An error occurred: \$\{e\}\`)
+                  console.error(\` An error occurred: $\{e}\`)
                   throw e;
-                }               
+                }
               }
             });
           `;

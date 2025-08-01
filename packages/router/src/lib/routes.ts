@@ -9,12 +9,12 @@ import { ANALOG_META_KEY } from './endpoints';
 /**
  * This variable reference is replaced with a glob of all page routes.
  */
-export let ANALOG_ROUTE_FILES = {};
+export const ANALOG_ROUTE_FILES = {};
 
 /**
  * This variable reference is replaced with a glob of all content routes.
  */
-export let ANALOG_CONTENT_ROUTE_FILES = {};
+export const ANALOG_CONTENT_ROUTE_FILES = {};
 
 export type Files = Record<string, () => Promise<RouteExport | string>>;
 

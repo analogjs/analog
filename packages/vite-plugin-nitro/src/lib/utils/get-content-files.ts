@@ -12,9 +12,8 @@ export function getMatchingContentFilesWithFrontMatter(
   rootDir: string,
   glob: string,
 ): PrerenderContentFile[] {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const fg = require('fast-glob');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+
   const fm = require('front-matter');
   const root = normalizePath(resolve(workspaceRoot, rootDir));
 

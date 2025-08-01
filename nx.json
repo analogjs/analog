@@ -29,7 +29,11 @@
       "cache": false
     },
     "@nx/eslint:lint": {
-      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
+      "inputs": [
+        "default",
+        "{workspaceRoot}/.eslintrc.json",
+        "{workspaceRoot}/eslint.config.mjs"
+      ],
       "cache": true
     },
     "@angular-devkit/build-angular:application": {
@@ -66,7 +70,8 @@
       "!{projectRoot}/.eslintrc.json",
       "!{projectRoot}/src/test-setup.[jt]s",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
-      "!{projectRoot}/tsconfig.spec.json"
+      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/eslint.config.mjs"
     ],
     "projectSpecificFiles": []
   },

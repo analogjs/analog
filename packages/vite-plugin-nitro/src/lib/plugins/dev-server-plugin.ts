@@ -10,7 +10,6 @@ import {
 } from 'vite';
 import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { mockEvent, sendWebResponse } from 'h3';
 import { createRouter as createRadixRouter, toRouteMatcher } from 'radix3';
 import { defu } from 'defu';
 import { NitroRouteRules } from 'nitropack';
@@ -99,7 +98,7 @@ export function devServerPlugin(options: ServerOptions): Plugin {
             res.setHeader('Content-Type', 'text/html');
             res.end(result);
           } catch (e) {
-            viteServer && viteServer.ssrFixStacktrace(e as Error);
+            viteServer?.ssrFixStacktrace(e as Error);
             res.statusCode = 500;
             res.end(`
               <!DOCTYPE html>
@@ -137,8 +136,9 @@ function remove_html_middlewares(server: ViteDevServer['middlewares']) {
     'viteSpaFallbackMiddleware',
   ];
   for (let i = server.stack.length - 1; i > 0; i--) {
-    // @ts-ignore
-    if (html_middlewares.includes(server.stack[i].handle.name)) {
+    const handle = server.stack[i].handle;
+    const handleName = typeof handle === 'function' ? handle.name : undefined;
+    if (handleName && html_middlewares.includes(handleName)) {
       server.stack.splice(i, 1);
     }
   }

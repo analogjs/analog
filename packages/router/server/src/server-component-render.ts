@@ -11,7 +11,7 @@ import {
   ɵSERVER_CONTEXT as SERVER_CONTEXT,
 } from '@angular/platform-server';
 import { ServerContext } from '@analogjs/router/tokens';
-import { mockEvent, readBody, getHeader } from 'h3';
+import { mockEvent, readBody } from 'h3';
 
 import { provideStaticProps } from './tokens';
 
@@ -94,8 +94,8 @@ export async function renderServerComponent(
         provide: Console,
         useFactory() {
           return {
-            warn: () => {},
-            log: () => {},
+            warn: () => undefined,
+            log: () => undefined,
           };
         },
       },
@@ -119,7 +119,7 @@ function getComponentLoader(componentReqId: string): {
   componentLoader: ComponentLoader | undefined;
   componentId: string;
 } {
-  let _componentId = `/src/server/components/${componentReqId.toLowerCase()}`;
+  const _componentId = `/src/server/components/${componentReqId.toLowerCase()}`;
   let componentLoader: ComponentLoader | undefined = undefined;
   let componentId = _componentId;
 
@@ -142,7 +142,7 @@ function retrieveTransferredState(
   appId: string,
 ): Record<string, unknown | undefined> {
   const regex = new RegExp(
-    `<script id="${appId}-state" type="application/json">(.*?)<\/script>`,
+    `<script id="${appId}-state" type="application/json">(.*?)</script>`,
   );
   const match = html.match(regex);
 

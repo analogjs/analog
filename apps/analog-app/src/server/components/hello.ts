@@ -11,7 +11,7 @@ import {
 } from '@analogjs/router/server';
 
 @Component({
-  selector: 'app-hello',
+  selector: 'analogjs-hello',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h3>Hello From the Server</h3>

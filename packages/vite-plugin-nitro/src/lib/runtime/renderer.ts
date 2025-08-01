@@ -1,16 +1,14 @@
-import { eventHandler, getResponseHeader } from 'h3';
-// @ts-ignore
+import { eventHandler } from 'h3';
 import renderer from '#analog/ssr';
-// @ts-ignore
 import template from '#analog/index';
 
 export default eventHandler(async (event) => {
   // Try to get the noSSR header, but handle cases where event structure might be different
   let noSSR;
   try {
-    noSSR = getResponseHeader(event, 'x-analog-no-ssr');
+    noSSR = event.res.headers.get('x-analog-no-ssr');
   } catch (error) {
-    // If getResponseHeader fails, assume no SSR is not set
+    // If event.res.headers.get fails, assume no SSR is not set
     noSSR = undefined;
   }
 

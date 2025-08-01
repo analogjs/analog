@@ -34,7 +34,7 @@ type ServerOutputs = Record<string, any>;
  * Status: experimental
  */
 @Component({
-  selector: 'server-only,ServerOnly,Server',
+  selector: 'analogjs-server-only,ServerOnly,Server',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: ` <div [innerHTML]="content()"></div> `,
 })

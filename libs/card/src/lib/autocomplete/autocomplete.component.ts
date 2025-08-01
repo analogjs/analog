@@ -10,7 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 
 @Component({
   standalone: true,
-  selector: 'app-autocomplete',
+  selector: 'lib-autocomplete',
   templateUrl: './autocomplete.component.html',
   styleUrl: './autocomplete.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

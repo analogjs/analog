@@ -67,7 +67,10 @@ export function routerPlugin(options?: Options): Plugin[] {
               `${root}/src/app/pages/**/*.page.ts`,
               `${root}/src/app/pages/**/*.page.analog`,
               `${root}/src/app/pages/**/*.page.ag`,
-              ...(options?.additionalPagesDirs || [])?.map(
+              ...(options && options.additionalPagesDirs
+                ? options.additionalPagesDirs
+                : []
+              ).map(
                 (glob) => `${workspaceRoot}${glob}/**/*.page.{ts,analog,ag}`,
               ),
             ],
@@ -79,9 +82,10 @@ export function routerPlugin(options?: Options): Plugin[] {
               `${root}/src/app/routes/**/*.md`,
               `${root}/src/app/pages/**/*.md`,
               `${root}/src/content/**/*.md`,
-              ...(options?.additionalContentDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`,
-              ),
+              ...(options && options.additionalContentDirs
+                ? options.additionalContentDirs
+                : []
+              ).map((glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`),
             ],
             { dot: true },
           );
@@ -125,9 +129,10 @@ export function routerPlugin(options?: Options): Plugin[] {
           const endpointFiles: string[] = fg.sync(
             [
               `${root}/src/app/pages/**/*.server.ts`,
-              ...(options?.additionalPagesDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.server.ts`,
-              ),
+              ...(options && options.additionalPagesDirs
+                ? options.additionalPagesDirs
+                : []
+              ).map((glob) => `${workspaceRoot}${glob}/**/*.server.ts`),
             ],
             { dot: true },
           );

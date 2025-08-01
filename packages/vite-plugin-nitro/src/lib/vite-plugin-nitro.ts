@@ -1,5 +1,5 @@
 import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
-import { H3Core, toNodeListener } from 'h3';
+import { toNodeHandler } from 'h3';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { mergeConfig, normalizePath } from 'vite';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -49,7 +49,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let nitroConfig: NitroConfig;
   let environmentBuild = false;
   let hasAPIDir = false;
-  let routeSitemaps: Record<
+  const routeSitemaps: Record<
     string,
     PrerenderSitemapConfig | (() => PrerenderSitemapConfig)
   > = {};
@@ -348,7 +348,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                * This file is shipped as ESM for Windows support,
                * as it won't resolve the renderer.ts file correctly in node.
                */
-              import { eventHandler, getResponseHeader } from 'h3';
+              import { eventHandler } from 'h3';
 
               // @ts-ignore
               import renderer from '${ssrEntry}';
@@ -356,7 +356,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               const template = \`${indexContents}\`;
 
               export default eventHandler(async (event) => {
-                const noSSR = getResponseHeader(event, 'x-analog-no-ssr');
+                const noSSR = event.res.headers.get('x-analog-no-ssr');
 
                 if (noSSR === 'true') {
                   return template;
@@ -456,7 +456,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   config,
                   options.prerender.sitemap,
                   nitroConfig.prerender.routes,
-                  nitroConfig.output?.publicDir!,
+                  nitroConfig.output?.publicDir ?? '',
                   routeSitemaps,
                 );
               }
@@ -476,11 +476,15 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           });
           const server = createDevServer(nitro);
           await build(nitro);
-          const apiHandler = toNodeListener(server.app as any);
+          const apiHandler = toNodeHandler(server.app as any);
 
           if (hasAPIDir) {
             viteServer.middlewares.use(
-              (req: IncomingMessage, res: ServerResponse, next: Function) => {
+              (
+                req: IncomingMessage,
+                res: ServerResponse,
+                next: (err?: any) => void,
+              ) => {
                 if (req.url?.startsWith(`${prefix}${apiPrefix}`)) {
                   apiHandler(req, res);
                   return;
