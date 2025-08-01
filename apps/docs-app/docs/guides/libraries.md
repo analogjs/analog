@@ -165,7 +165,7 @@ import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...
-  plugins: [angular(), nxCopyAssetsPlugin(['*.md', 'package.json'])],
+  plugins: [analog(), nxCopyAssetsPlugin(['*.md', 'package.json'])],
 }));
 ```
 
