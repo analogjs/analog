@@ -43,7 +43,7 @@ describe('update-markdown-version migration', () => {
             marked: '^5.0.2',
             'marked-mangle': '^1.1.7',
             'marked-highlight': '^2.0.1',
-            'marked-gfm-heading-id': '^3.1.0',
+            'marked-gfm-heading-id': '^4.1.1',
           },
         },
         null,

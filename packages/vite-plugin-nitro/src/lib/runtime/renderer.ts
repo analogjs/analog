@@ -17,10 +17,22 @@ export default eventHandler(async (event) => {
     return template;
   }
 
-  const html = await renderer(event.req.url, template, {
-    req: event.req,
-    res: event._res,
-  });
+  try {
+    const html = await renderer(event.req.url, template, {
+      req: event.req,
+      res: event._res,
+    });
 
-  return html;
+    // Ensure we return a string, not a Promise
+    if (typeof html === 'string') {
+      return html;
+    } else if (html instanceof Promise) {
+      return await html;
+    } else {
+      return String(html);
+    }
+  } catch (error) {
+    console.error('Renderer error:', error);
+    return template;
+  }
 });

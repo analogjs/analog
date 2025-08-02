@@ -103,7 +103,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           normalizePath(
             join(
               __dirname,
-              `runtime/renderer${!options?.ssr ? '-client' : ''}${
+              `runtime/renderer${!options?.ssr && !options?.prerender?.routes ? '-client' : ''}${
                 filePrefix ? '.mjs' : ''
               }`,
             ),
