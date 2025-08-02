@@ -2,6 +2,9 @@
   "mcpServers": {
     "nx-mcp": {
       "url": "http://localhost:9376/mcp"
+    },
+    "angular-mcp": {
+      "url": "http://localhost:4200/mcp"
     }
   }
 }
