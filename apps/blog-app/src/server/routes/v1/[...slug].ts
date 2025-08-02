@@ -1,8 +1,8 @@
-import { defineEventHandler, getQuery, getRequestURL } from 'h3';
+import { eventHandler, getQuery, getRequestURL } from 'h3';
 
 import { ImageResponse } from '@analogjs/content/og';
 
-export default defineEventHandler(async (event) => {
+export default eventHandler(async (event) => {
   const fontFile = await fetch(
     'https://og-playground.vercel.app/inter-latin-ext-700-normal.woff',
   );
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
             <span>${query['title'] ? `${query['title']}` : 'Hello World'}</span>
           </h2>
         </div>
-      </div>    
+      </div>
   `;
 
   return new ImageResponse(template, {

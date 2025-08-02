@@ -225,7 +225,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           // - vitest watch mode detected from the command line
           testWatchMode =
             !(config.server.watch === null) ||
-            config.test?.watch === true ||
+            (config as any).test?.watch === true ||
             testWatchMode;
         }
       },
@@ -706,7 +706,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     const analogFiles = findAnalogFiles(config);
     const includeFiles = findIncludes();
 
-    let { options: tsCompilerOptions, rootNames } =
+    const { options: tsCompilerOptions, rootNames: tsRootNames } =
       compilerCli.readConfiguration(pluginOptions.tsconfig, {
         suppressOutputPathCheck: true,
         outDir: undefined,
@@ -752,7 +752,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['inlineSources'] = true;
     }
 
-    rootNames = rootNames.concat(analogFiles, includeFiles);
+    const rootNames = tsRootNames.concat(analogFiles, includeFiles);
     const ts = require('typescript');
     const host = ts.createIncrementalCompilerHost(tsCompilerOptions);
 
@@ -1010,7 +1010,7 @@ export function getFileMetadata(
       for (const node of sourceFile.statements) {
         if (ts.isClassDeclaration(node) && (node as any).name != null) {
           hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node as any);
-          if (!!hmrUpdateCode) {
+          if (hmrUpdateCode) {
             classNames.set(file, (node as any).name.getText());
             hmrEligible = true;
           }

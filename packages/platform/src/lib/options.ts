@@ -1,5 +1,5 @@
 import type { PluginOptions } from '@analogjs/vite-plugin-angular';
-import type { NitroConfig, PrerenderRoute } from 'nitropack';
+import type { NitroConfig, PrerenderRoute } from 'nitro/types';
 import type {
   SitemapConfig,
   PrerenderContentDir,
@@ -9,7 +9,7 @@ import type {
 
 import { ContentPluginOptions } from './content-plugin.js';
 
-declare module 'nitropack' {
+declare module 'nitro/types' {
   interface NitroRouteConfig {
     ssr?: boolean;
   }

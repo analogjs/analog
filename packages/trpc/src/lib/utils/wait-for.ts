@@ -13,9 +13,13 @@ export async function waitFor<T>(prom: Promise<T> | Observable<T>): Promise<T> {
 
   const macroTask = Zone.current.scheduleMacroTask(
     `AnalogContentResolve-${Math.random()}`,
-    () => {},
+    () => {
+      /* no-op */
+    },
     {},
-    () => {},
+    () => {
+      /* no-op */
+    },
   );
   return prom.then((p: T) => {
     macroTask.invoke();

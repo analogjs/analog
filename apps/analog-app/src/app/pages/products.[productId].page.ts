@@ -8,7 +8,7 @@ import { CartService } from '../cart.service';
 import { Product } from '../products';
 
 @Component({
-  selector: 'app-product-details',
+  selector: 'analogjs-product-details',
   imports: [CurrencyPipe],
   template: `
     <h2>Product Details</h2>

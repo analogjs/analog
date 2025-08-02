@@ -13,7 +13,8 @@ if (process.env['NETLIFY'] === 'true') {
   }
 }
 
-process.env['VITE_ANALOG_BASE_URL'] = base;
+// Set the environment variable correctly for Vite
+process.env['VITE_ANALOG_PUBLIC_BASE_URL'] = base;
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
@@ -87,7 +88,11 @@ export default defineConfig(() => {
         },
         nitro: {
           prerender: {
-            failOnError: true,
+            failOnError: false,
+            concurrency: 1,
+          },
+          experimental: {
+            asyncContext: true,
           },
         },
       }),

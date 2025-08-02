@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import fg from 'fast-glob';
 
-import { NitroEventHandler } from 'nitropack';
+import type { NitroEventHandler } from 'nitro/types';
 import { normalizePath } from 'vite';
 
 type GetHandlersArgs = {

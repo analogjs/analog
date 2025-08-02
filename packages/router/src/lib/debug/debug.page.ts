@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 import { injectDebugRoutes, DebugRoute } from './routes';
 
@@ -109,7 +109,7 @@ type CollectedRoute = {
     }
   `,
 })
-export default class DebugRoutesComponent {
+export default class DebugRoutesComponent implements OnInit {
   collectedRoutes: CollectedRoute[] = [];
   debugRoutes = injectDebugRoutes();
 

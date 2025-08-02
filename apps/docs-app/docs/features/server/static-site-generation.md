@@ -236,7 +236,7 @@ The sample code below shows how to use `postRenderingHooks` in your code:
 ```ts
 import analog from '@analogjs/platform';
 import { defineConfig } from 'vite';
-import { PrerenderRoute } from 'nitropack';
+import { PrerenderRoute } from 'nitro/types';
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
@@ -270,7 +270,7 @@ Below is a small example where we can append a script to include Google Analytic
 import analog from '@analogjs/platform';
 import { defineConfig } from 'vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import { PrerenderRoute } from 'nitropack';
+import { PrerenderRoute } from 'nitro/types';
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {

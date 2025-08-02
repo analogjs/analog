@@ -4,7 +4,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { injectRouteEndpointURL } from './inject-route-endpoint-url';
 
 @Directive({
-  selector: 'form[action],form[method]',
+  selector: 'form[analogjsAction],form[analogjsMethod]',
   host: {
     '(submit)': `submitted($event)`,
   },
@@ -12,8 +12,8 @@ import { injectRouteEndpointURL } from './inject-route-endpoint-url';
 })
 export class FormAction {
   action = input<string>('');
-  onSuccess = output<unknown>();
-  onError = output<unknown>();
+  whenSuccess = output<unknown>();
+  whenError = output<unknown>();
   state = output<
     'submitting' | 'error' | 'redirect' | 'success' | 'navigate'
   >();
@@ -36,7 +36,9 @@ export class FormAction {
 
   private _handleGet(body: FormData, path: string) {
     const params: Params = {};
-    body.forEach((formVal, formKey) => (params[formKey] = formVal));
+    body.forEach((formVal, formKey) => {
+      params[formKey] = formVal;
+    });
 
     this.state.emit('navigate');
     const url = path.split('?')[0];
@@ -63,19 +65,19 @@ export class FormAction {
             this.router.navigate([redirectUrl]);
           } else if (this._isJSON(res.headers.get('Content-type'))) {
             res.json().then((result) => {
-              this.onSuccess.emit(result);
+              this.whenSuccess.emit(result);
               this.state.emit('success');
             });
           } else {
             res.text().then((result) => {
-              this.onSuccess.emit(result);
+              this.whenSuccess.emit(result);
               this.state.emit('success');
             });
           }
         } else {
           if (res.headers.get('X-Analog-Errors')) {
             res.json().then((errors: unknown) => {
-              this.onError.emit(errors);
+              this.whenError.emit(errors);
               this.state.emit('error');
             });
           } else {

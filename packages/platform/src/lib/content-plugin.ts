@@ -112,7 +112,11 @@ export function contentPlugin(
 
             const loadLanguages = await import('prismjs/components/index.js');
 
-            (loadLanguages as unknown as { default: Function }).default(langs);
+            (
+              loadLanguages as unknown as {
+                default: (languages: string[]) => void;
+              }
+            ).default(langs);
           }
         }
 
@@ -156,7 +160,7 @@ export function contentPlugin(
             [
               `${root}/src/content/**/*.md`,
               `${root}/src/content/**/*.agx`,
-              ...(options?.additionalContentDirs || [])?.map(
+              ...(options?.additionalContentDirs ?? []).map(
                 (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`,
               ),
             ],
@@ -184,7 +188,7 @@ export function contentPlugin(
           const agxFiles: string[] = fg.sync(
             [
               `${root}/src/content/**/*.agx`,
-              ...(options?.additionalContentDirs || [])?.map(
+              ...(options?.additionalContentDirs ?? []).map(
                 (glob) => `${workspaceRoot}${glob}/**/*.agx`,
               ),
             ],

@@ -11,7 +11,7 @@ export const routeMeta: RouteMeta = {
 };
 
 @Component({
-  selector: 'app-product-list',
+  selector: 'analogjs-product-list',
   imports: [ProductAlertsComponent, RouterLinkWithHref],
   template: `
     <h2>Products</h2>
