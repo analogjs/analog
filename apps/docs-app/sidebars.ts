@@ -258,6 +258,76 @@ const sidebars: SidebarsConfig = {
             },
           ],
         },
+        {
+          type: 'doc',
+          id: 'guides/forms',
+          label: 'Form Actions',
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Packages',
+      items: [
+        // {
+        //   type: 'category',
+        //   label: 'Content',
+        //   items: [
+        //     {
+        //       type: 'doc',
+        //       id: 'packages/content/overview',
+        //       label: 'Overview',
+        //     },
+        //     {
+        //       type: 'doc',
+        //       id: 'packages/content/shiki-highlighter',
+        //       label: 'Shiki Highlighter',
+        //     },
+        //     {
+        //       type: 'doc',
+        //       id: 'packages/content/prism-highlighter',
+        //       label: 'Prism Highlighter',
+        //     },
+        //   ],
+        // },
+        {
+          type: 'category',
+          label: 'Router',
+          items: [
+            {
+              type: 'doc',
+              id: 'packages/router/overview',
+              label: 'Overview',
+            },
+            // {
+            //   type: 'doc',
+            //   id: 'packages/router/api-reference',
+            //   label: 'API Reference',
+            // },
+          ],
+        },
+        // {
+        //   type: 'category',
+        //   label: 'Testing',
+        //   items: [
+        //     {
+        //       type: 'doc',
+        //       id: 'packages/vitest-angular/overview',
+        //       label: 'Vitest Angular',
+        //     },
+        //   ],
+        // },
+        // {
+        //   type: 'category',
+        //   label: 'Platform',
+        //   items: [
+        //     {
+        //       type: 'doc',
+        //       id: 'packages/platform/overview',
+        //       label: 'Overview',
+        //     },
+        //   ],
+        // },
       ],
     },
     {
