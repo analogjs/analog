@@ -337,6 +337,9 @@ importers:
       fs-extra:
         specifier: ^11.1.1
         version: 11.1.1
+      get-port-please:
+        specifier: ^3.2.0
+        version: 3.2.0
       h3:
         specifier: 2.0.0-beta.2
         version: 2.0.0-beta.2(crossws@0.4.1(srvx@0.8.3))
@@ -5723,9 +5726,6 @@ packages:
   '@types/jsdom@20.0.1':
     resolution: {integrity: sha512-d0r18sZPmMQr1eG35u12FZfhIXNrnsPU/g5wvRKCUf/tOGilKKwYMYGqh33BNR6ba+2gkHw1EUiHoN3mn7E5IQ==}
 
-  '@types/json-schema@7.0.11':
-    resolution: {integrity: sha512-wOuvG1SN4Us4rez+tylwwwCV1psiNVOkJeM3AUWUNWg/jDQY2+HE/444y5gc+jBmRqASOm2Oeh5c1axHobwRKQ==}
-
   '@types/json-schema@7.0.12':
     resolution: {integrity: sha512-Hr5Jfhc9eYOQNPYO5WLDq/n4jqijdHNlDXjuAQkkt+mWdQR+XJToOHrsD4cPaMXpn6KO7y2+wM8AZEs8VpBLVA==}
 
@@ -9077,8 +9077,8 @@ packages:
     engines: {node: '>=6.9.0'}
     hasBin: true
 
-  get-port-please@3.1.2:
-    resolution: {integrity: sha512-Gxc29eLs1fbn6LQ4jSU4vXjlwyZhF5HsGuMAa7gqBP4Rw4yxxltyDUuF5MBclFzDTXO+ACchGQoeela4DSfzdQ==}
+  get-port-please@3.2.0:
+    resolution: {integrity: sha512-I9QVvBw5U/hw3RmWpYKRumUeaDgxTPd401x364rLmWBJcOQ753eov1eTgzDqRG9bqFIfDc7gfzcQEWrUri3o1A==}
 
   get-proto@1.0.1:
     resolution: {integrity: sha512-sTSfBjoXBp89JvIKIefqw7U2CCebsc74kiY6awiGogKtoSGbgjYE/G/+l9sF3MWFPNc9IcoOC4ODfKHfxFmp0g==}
@@ -23274,7 +23274,7 @@ snapshots:
   '@types/eslint@8.37.0':
     dependencies:
       '@types/estree': 1.0.6
-      '@types/json-schema': 7.0.11
+      '@types/json-schema': 7.0.12
 
   '@types/estree-jsx@1.0.1':
     dependencies:
@@ -23350,8 +23350,6 @@ snapshots:
       '@types/node': 22.14.0
       '@types/tough-cookie': 4.0.2
       parse5: 7.1.2
-
-  '@types/json-schema@7.0.11': {}
 
   '@types/json-schema@7.0.12': {}
 
@@ -27415,7 +27413,7 @@ snapshots:
       through2: 2.0.5
       yargs: 16.2.0
 
-  get-port-please@3.1.2: {}
+  get-port-please@3.2.0: {}
 
   get-proto@1.0.1:
     dependencies:
@@ -29260,7 +29258,7 @@ snapshots:
       consola: 3.4.2
       crossws: 0.3.5
       defu: 6.1.4
-      get-port-please: 3.1.2
+      get-port-please: 3.2.0
       h3: 2.0.0-beta.2(crossws@0.3.5)
       http-shutdown: 1.2.2
       jiti: 2.4.2

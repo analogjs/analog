@@ -37,10 +37,16 @@ async function vitestBuilder(
     update,
     ...extraArgs,
   };
-
-  const server = await startVitest('test', options.testFiles ?? [], config, {
+  const viteOverrides: any = {
     test: { watch },
-  } as any);
+  };
+
+  const server = await startVitest(
+    'test',
+    options.testFiles ?? [],
+    config,
+    viteOverrides,
+  );
 
   let hasErrors = false;
 
