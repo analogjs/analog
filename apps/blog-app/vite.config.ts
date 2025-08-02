@@ -87,7 +87,11 @@ export default defineConfig(() => {
         },
         nitro: {
           prerender: {
-            failOnError: true,
+            failOnError: false,
+            concurrency: 1,
+          },
+          experimental: {
+            asyncContext: true,
           },
         },
       }),

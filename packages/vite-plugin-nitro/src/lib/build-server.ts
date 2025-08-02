@@ -1,5 +1,11 @@
-import { NitroConfig, copyPublicAssets, prerender } from 'nitropack';
-import { createNitro, build, prepare } from 'nitropack';
+import {
+  copyPublicAssets,
+  prerender,
+  createNitro,
+  build,
+  prepare,
+} from 'nitro';
+import type { NitroConfig } from 'nitro/types';
 import { existsSync, unlinkSync } from 'node:fs';
 
 import { Options } from './options.js';

@@ -7,7 +7,7 @@ export {
   PrerenderContentFile,
 } from './lib/options.js';
 
-declare module 'nitropack' {
+declare module 'nitro/types' {
   interface NitroRouteConfig {
     ssr?: boolean;
   }

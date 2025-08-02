@@ -12,7 +12,7 @@ import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { createRouter as createRadixRouter, toRouteMatcher } from 'radix3';
 import { defu } from 'defu';
-import { NitroRouteRules } from 'nitropack';
+import type { NitroRouteRules } from 'nitro/types';
 
 import { registerDevServerMiddleware } from '../utils/register-dev-middleware.js';
 import { Options } from '../options.js';

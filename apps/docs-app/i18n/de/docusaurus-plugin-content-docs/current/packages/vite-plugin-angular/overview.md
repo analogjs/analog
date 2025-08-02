@@ -73,7 +73,7 @@ Erstelle eine `tsconfig.app.json` im Stammverzeichnis des Projekts.
     "declaration": false,
     "downlevelIteration": true,
     "experimentalDecorators": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "importHelpers": true,
     "noEmit": false,
     "target": "es2020",

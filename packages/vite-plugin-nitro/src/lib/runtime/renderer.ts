@@ -1,3 +1,4 @@
+/* eslint-disable @nx/enforce-module-boundaries */
 import { eventHandler } from 'h3';
 import renderer from '#analog/ssr';
 import template from '#analog/index';

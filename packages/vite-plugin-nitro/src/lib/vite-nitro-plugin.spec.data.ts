@@ -1,4 +1,4 @@
-import { NitroConfig } from 'nitropack';
+import type { NitroConfig } from 'nitro/types';
 import { ConfigEnv, UserConfig, Plugin } from 'vite';
 import { vi } from 'vitest';
 import { resolve } from 'node:path';

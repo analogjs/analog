@@ -153,7 +153,7 @@
     "fd-package-json": "^1.2.0",
     "find-up": "^5.0.0",
     "fs-extra": "^11.1.1",
-    "h3": "2.0.0-beta.3",
+    "h3": "2.0.0-beta.2",
     "happy-dom": "^12.10.3",
     "jest": "29.7.0",
     "jest-environment-jsdom": "29.7.0",
@@ -166,7 +166,7 @@
     "marked-shiki": "^1.1.0",
     "minimist": "^1.2.7",
     "ng-packagr": "^20.0.0",
-    "nitropack": "^2.12.4",
+    "nitro": "npm:nitro-nightly@latest",
     "nx": "21.2.1",
     "playwright": "^1.49.1",
     "postcss": "^8.4.21",
@@ -204,6 +204,10 @@
     "xmlbuilder2": "^3.0.2"
   },
   "pnpm": {
+    "overrides": {
+      "h3": "2.0.0-beta.2",
+      "nitro": "npm:nitro-nightly@latest"
+    },
     "ignoredBuiltDependencies": [
       "cypress"
     ],

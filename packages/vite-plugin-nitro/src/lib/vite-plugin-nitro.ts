@@ -1,4 +1,5 @@
-import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
+import { build, createDevServer, createNitro } from 'nitro';
+import type { NitroConfig } from 'nitro/types';
 import { toNodeHandler } from 'h3';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { mergeConfig, normalizePath } from 'vite';
@@ -138,6 +139,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             apiPrefix: apiPrefix.substring(1),
             prefix,
           },
+          // Fix for h3App._fetch is not a function error in newer h3/nitro versions
+          experimental: {
+            asyncContext: true,
+            typescriptBundlerResolution: true,
+            // Use native fetch during prerendering
+            wasm: true,
+          },
           // Fixes support for Rolldown
           imports: {
             autoImport: false,
@@ -175,10 +183,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                     proxy: { to: '/**' },
                   },
                 },
-          virtual: hasAPIDir
-            ? undefined
-            : {
-                '#ANALOG_API_MIDDLEWARE': `
+          virtual: {
+            ...(hasAPIDir
+              ? {}
+              : {
+                  '#ANALOG_API_MIDDLEWARE': `
         import { eventHandler, proxyRequest } from 'h3';
         import { useRuntimeConfig } from '#imports';
 
@@ -199,19 +208,20 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               const headers = event.req.headers instanceof Headers
                 ? Object.fromEntries(event.req.headers.entries())
                 : event.req.headers;
-              return $fetch(reqUrl, { headers });
+              return globalThis.$fetch(reqUrl, { headers });
             }
 
             // For proxy requests, we need to handle headers differently
             // Skip proxy requests during prerendering to avoid header issues
-            return $fetch(reqUrl, {
+            return globalThis.$fetch(reqUrl, {
               headers: event.req.headers instanceof Headers
                 ? Object.fromEntries(event.req.headers.entries())
                 : event.req.headers
             });
           }
         });`,
-              },
+                }),
+          },
         };
 
         if (isVercelPreset(buildPreset)) {
@@ -249,12 +259,18 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           nitroConfig.renderer = rendererEntry;
 
           if (isEmptyPrerenderRoutes(options)) {
-            nitroConfig.prerender = {};
-            nitroConfig.prerender.routes = ['/'];
+            nitroConfig.prerender = {
+              concurrency: 1,
+              failOnError: false,
+              routes: ['/'],
+            };
           }
 
           if (options?.prerender) {
-            nitroConfig.prerender = nitroConfig.prerender ?? {};
+            nitroConfig.prerender = nitroConfig.prerender ?? {
+              concurrency: 1,
+              failOnError: false,
+            };
             nitroConfig.prerender.crawlLinks = options?.prerender?.discover;
 
             let routes: (
@@ -476,7 +492,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           });
           const server = createDevServer(nitro);
           await build(nitro);
-          const apiHandler = toNodeHandler(server.app as any);
+          const apiHandler = server as any;
 
           if (hasAPIDir) {
             viteServer.middlewares.use(

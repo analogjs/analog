@@ -35,7 +35,7 @@ afterEach(async () => {
   await page.close();
 });
 
-describe.skip('tRPC Demo App', () => {
+describe('tRPC Demo App', () => {
   test(`Given the user has navigated to the home page
     Then the app title is visible`, async () => {
     await expect(

@@ -28,7 +28,7 @@ export function pageEndpointsPlugin() {
         }
 
         const code = `
-            import { defineHandler } from 'h3';
+            import { eventHandler } from 'h3';
 
             ${
               fileExports.includes('load')
@@ -50,13 +50,13 @@ export function pageEndpointsPlugin() {
               `
             }
 
-            export default defineHandler(async(event) => {
-              if (event.req.method === 'GET') {
+            export default eventHandler(async(event) => {
+              if (event.method === 'GET') {
                 try {
                   return await load({
                     params: event.context.params,
-                    req: event.req,
-                    res: event._res,
+                    req: event.node.req,
+                    res: event.node.res,
                     fetch: $fetch,
                     event
                   });
@@ -68,8 +68,8 @@ export function pageEndpointsPlugin() {
                 try {
                   return await action({
                     params: event.context.params,
-                    req: event.req,
-                    res: event._res,
+                    req: event.node.req,
+                    res: event.node.res,
                     fetch: $fetch,
                     event
                   });

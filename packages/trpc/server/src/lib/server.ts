@@ -15,7 +15,7 @@ import type {
 import { TRPCError } from '@trpc/server';
 import { createURL } from 'ufo';
 import type { H3Event } from 'h3';
-import { HTTPError, defineHandler, isMethod, readBody } from 'h3';
+import { HTTPError, eventHandler, isMethod, readBody } from 'h3';
 import type { TRPCResponse } from '@trpc/server/rpc';
 
 type MaybePromise<T> = T | Promise<T>;
@@ -79,8 +79,8 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
   responseMeta,
   onError,
   batching,
-}: ResolveHTTPRequestOptions<TRouter>): ReturnType<typeof defineHandler> {
-  return defineHandler(async (event) => {
+}: ResolveHTTPRequestOptions<TRouter>): ReturnType<typeof eventHandler> {
+  return eventHandler(async (event) => {
     const { req } = event;
     const res = event._res;
 

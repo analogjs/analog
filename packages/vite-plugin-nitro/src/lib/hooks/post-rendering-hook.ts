@@ -1,4 +1,4 @@
-import { Nitro, PrerenderRoute } from 'nitropack';
+import type { Nitro, PrerenderRoute } from 'nitro/types';
 
 export function addPostRenderingHooks(
   nitro: Nitro,

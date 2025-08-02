@@ -1,5 +1,5 @@
 import type { H3Event, H3EventContext } from 'h3';
-import type { $Fetch } from 'nitropack';
+import type { $Fetch } from 'nitro/types';
 
 export type PageServerAction = {
   params: H3EventContext['params'];
