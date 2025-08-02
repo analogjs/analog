@@ -1,0 +1,19 @@
+---
+description: CI/CD commands specific to @analogjs/vite-plugin-angular
+---
+
+# @analogjs/vite-plugin-angular CI/CD
+
+## Commands
+- Build: `nx build vite-plugin-angular`
+- Test: `nx test vite-plugin-angular`
+
+## Release Build
+- Tagged as `type:release`
+- Core Vite plugin for Angular
+- Part of release build process
+
+## Testing
+- Uses Vitest runner
+- Test coverage enabled
+- Critical for framework stability

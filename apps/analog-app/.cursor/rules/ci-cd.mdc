@@ -1,0 +1,22 @@
+---
+description: CI/CD commands specific to analog-app
+---
+
+# analog-app CI/CD
+
+## Commands
+- Build: `nx build analog-app`
+- Serve: `nx serve analog-app`
+- Test: `nx test analog-app`
+- Lint: `nx lint analog-app`
+- E2E: `nx e2e analog-app-e2e-cypress` or `nx e2e analog-app-e2e-playwright`
+
+## Build Details
+- SSR/SSG support with Nitro
+- Output to `dist/apps/analog-app`
+- Uses @analogjs/vite-plugin-angular
+
+## Development
+- Dev server: `nx serve analog-app`
+- Port: 4200 (default)
+- Hot module replacement enabled

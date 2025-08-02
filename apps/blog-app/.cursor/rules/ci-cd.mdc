@@ -1,0 +1,19 @@
+---
+description: CI/CD commands specific to blog-app
+---
+
+# blog-app CI/CD
+
+## Commands
+- Build: `nx build blog-app`
+- Serve: `nx serve blog-app`
+- E2E: `nx e2e blog-app-e2e-cypress`
+
+## Build Details
+- Blog template with markdown support
+- Uses @analogjs/content
+- Static site generation capable
+
+## Development
+- Dev server: `nx serve blog-app`
+- Content in `src/content` directory

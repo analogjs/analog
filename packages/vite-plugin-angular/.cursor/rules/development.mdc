@@ -1,0 +1,193 @@
+---
+description: Development rules and best practices for @analogjs/vite-plugin-angular package
+globs:
+  - "packages/vite-plugin-angular/src/**/*.ts"
+  - "packages/vite-plugin-angular/*.ts"
+  - "packages/vite-plugin-angular/*.js"
+  - "packages/vite-plugin-angular/*.json"
+alwaysApply: false
+---
+
+# @analogjs/vite-plugin-angular Package Development Rules
+
+## Overview
+This package is the core Vite plugin that enables Angular applications to run with Vite, providing fast HMR, optimized builds, and modern development experience for Angular projects.
+
+## Package Purpose & Goals
+- **Primary Goal**: Enable Angular development and building with Vite
+- **Target Users**: Angular developers seeking faster development experience
+- **Key Features**:
+  - Angular component compilation with Vite
+  - Hot Module Replacement (HMR) support
+  - TypeScript and template transformation
+  - Style processing (CSS, SCSS, LESS)
+  - Angular DevKit integration option
+  - Zone.js and Zoneless support
+
+## Development Best Practices
+
+### 1. Plugin Architecture
+- Maintain clean separation between:
+  - Compilation logic
+  - Transform pipelines
+  - Build optimization
+  - Dev server integration
+- Support both JIT and AOT compilation modes
+- Handle both development and production builds
+
+### 2. Code Organization
+```
+src/lib/
+├── angular-plugin.ts        # Main plugin entry
+├── compiler/                # Angular compilation logic
+├── transforms/              # File transformations
+├── utils/                   # Helper utilities
+├── dev-server/             # Dev server integration
+└── build/                  # Build optimizations
+```
+
+### 3. Transform Pipeline
+- **File Types to Handle**:
+  - TypeScript (.ts)
+  - Templates (.html)
+  - Styles (.css, .scss, .sass, .less)
+  - Angular specific (.analog)
+- Maintain source maps throughout pipeline
+- Support inline styles and templates
+
+### 4. Compilation Strategy
+- Use Angular compiler APIs directly
+- Support both `@angular/compiler-cli` and `@angular/build`
+- Handle NgModule and standalone components
+- Manage Angular compiler options
+- Support experimental features
+
+### 5. Performance Optimization
+- Implement effective caching strategies
+- Minimize AST parsing overhead
+- Use worker threads for heavy operations
+- Optimize transform pipeline
+- Support incremental compilation
+
+## Quality Rules
+
+### 1. Angular Version Support
+- Support Angular v15-20 simultaneously
+- Handle API differences between versions
+- Test with each major Angular version
+- Maintain compatibility matrix
+- Document version-specific features
+
+### 2. Build Tool Integration
+- **@angular-devkit/build-angular**: Optional integration
+- **@angular/build**: New build system support
+- Respect Angular workspace configurations
+- Support custom webpack configs migration
+- Handle Angular CLI builders
+
+### 3. Error Handling
+- Provide clear compilation errors
+- Map errors to source locations
+- Handle template errors gracefully
+- Show helpful error overlays
+- Support error recovery in dev mode
+
+### 4. Testing Requirements
+- Unit tests for transformations
+- Integration tests with real Angular apps
+- Performance benchmarks
+- HMR functionality tests
+- Build output validation
+- Multi-version test matrix
+
+### 5. Development Experience
+- Fast initial compilation
+- Instant HMR updates
+- Preserve component state
+- Clear console output
+- Helpful warning messages
+
+## Advanced Features
+
+### 1. Style Handling
+- Process component styles
+- Support CSS modules
+- Handle SCSS/SASS/LESS
+- Inline styles optimization
+- Style encapsulation
+
+### 2. Template Processing
+- AOT template compilation
+- Template type checking
+- i18n support
+- SVG optimization
+- Template syntax validation
+
+### 3. TypeScript Integration
+- Use `ts-morph` for AST manipulation
+- Support path mappings
+- Handle decorators properly
+- Manage type checking
+- Support latest TS features
+
+### 4. HMR Implementation
+- Component state preservation
+- Style-only updates
+- Template hot reload
+- Service injection updates
+- Router state maintenance
+
+### 5. Build Optimization
+- Tree shaking support
+- Code splitting
+- Lazy loading modules
+- Bundle size optimization
+- Production minification
+
+## Compatibility Guidelines
+
+### 1. Vite Compatibility
+- Support Vite 5.x, 6.x, 7.x
+- Follow Vite plugin conventions
+- Use Vite's module graph
+- Integrate with Vite's HMR API
+- Respect Vite configuration
+
+### 2. Angular Ecosystem
+- Work with Angular Universal
+- Support Angular Elements
+- Handle Angular libraries
+- Integrate with Angular DevTools
+- Support Ivy renderer
+
+### 3. Tool Integration
+- ESBuild for fast transforms
+- Support various test runners
+- Work with Storybook
+- IDE compatibility
+- Linting tools support
+
+## Security Considerations
+- Validate file paths
+- Sanitize dynamic imports
+- Secure source map handling
+- Prevent code injection
+- Safe error messages
+
+## Documentation Standards
+- Plugin configuration options
+- Migration from Webpack
+- Performance tuning guide
+- Troubleshooting section
+- Example configurations
+- API reference
+
+## Release Process
+- [ ] Test with all supported Angular versions
+- [ ] Verify HMR functionality
+- [ ] Performance benchmarks pass
+- [ ] Build outputs validated
+- [ ] Documentation updated
+- [ ] Migration guide prepared
+- [ ] Changelog updated
+- [ ] Type definitions complete

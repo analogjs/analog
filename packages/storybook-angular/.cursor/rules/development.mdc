@@ -1,0 +1,243 @@
+---
+description: Development rules and best practices for @analogjs/storybook-angular package
+globs:
+  - "packages/storybook-angular/src/**/*.ts"
+  - "packages/storybook-angular/src/**/*.js"
+  - "packages/storybook-angular/*.json"
+  - "packages/storybook-angular/preset/**/*"
+alwaysApply: false
+---
+
+# @analogjs/storybook-angular Package Development Rules
+
+## Overview
+This package provides Storybook integration for Angular applications using Vite, offering fast story development and testing with modern tooling.
+
+## Package Purpose & Goals
+- **Primary Goal**: Enable Storybook development for Angular with Vite's speed
+- **Target Users**: Angular developers building component libraries and design systems
+- **Key Features**:
+  - Vite-based Storybook builder
+  - Angular component support
+  - Fast HMR for stories
+  - Full Storybook ecosystem compatibility
+  - Angular builder integration
+
+## Development Best Practices
+
+### 1. Integration Architecture
+- Act as bridge between Storybook and Angular
+- Leverage @analogjs/vite-plugin-angular
+- Maintain Storybook addon compatibility
+- Support latest Storybook features
+- Enable fast development cycles
+
+### 2. Code Organization
+```
+src/
+├── index.js           # Main exports
+├── preset.mjs         # Storybook preset
+├── lib/
+│   ├── builders.json  # Angular builders
+│   └── utils/         # Helper utilities
+└── preset/
+    └── preview.ts     # Preview configuration
+```
+
+### 3. Preset Configuration
+- Configure Vite for Storybook
+- Setup Angular compilation
+- Handle story loading
+- Configure addons
+- Manage preview settings
+
+### 4. Builder Implementation
+- Angular DevKit builder interface
+- Storybook CLI integration
+- Configuration merging
+- Port management
+- Process handling
+
+### 5. Performance Focus
+- Fast story compilation
+- Instant HMR updates
+- Optimized bundle size
+- Efficient story loading
+- Minimal overhead
+
+## Quality Rules
+
+### 1. Version Compatibility
+- Support Storybook v8.6+
+- Angular v16-20 compatibility
+- Vite v5-7 support
+- Maintain version matrix
+- Test combinations
+
+### 2. Story Support
+- Component stories
+- Directive stories
+- Pipe stories
+- Service stories (mocked)
+- Full Args API
+
+### 3. Angular Features
+- Standalone components
+- NgModule components
+- Dependency injection
+- Change detection
+- Template syntax
+
+### 4. Storybook Features
+- Controls addon
+- Actions addon
+- Docs addon
+- Viewport addon
+- Custom decorators
+
+### 5. Testing Standards
+- Unit tests for utilities
+- Integration tests
+- Story rendering tests
+- HMR functionality
+- Build verification
+
+## Integration Guidelines
+
+### 1. Vite Configuration
+```javascript
+// Storybook main.js
+export default {
+  framework: {
+    name: '@storybook/angular',
+    options: {
+      builder: {
+        viteConfigPath: 'path/to/vite.config.ts'
+      }
+    }
+  }
+}
+```
+
+### 2. Angular Setup
+- Component compilation
+- Module resolution
+- Provider injection
+- Zone.js handling
+- Platform setup
+
+### 3. Story Format
+- Component Story Format (CSF)
+- MDX stories support
+- Args/ArgTypes
+- Decorators
+- Parameters
+
+### 4. Development Server
+- Vite dev server
+- Story hot reload
+- Asset handling
+- Proxy support
+- CORS configuration
+
+## Advanced Features
+
+### 1. Addon Support
+- Essential addons
+- Community addons
+- Custom addons
+- Addon interactions
+- Configuration
+
+### 2. Documentation
+- Auto-generated docs
+- Props tables
+- Story source
+- Description blocks
+- MDX support
+
+### 3. Testing Integration
+- Interaction testing
+- Visual regression
+- Accessibility testing
+- Unit test exports
+- CI/CD integration
+
+### 4. Build Optimization
+- Production builds
+- Static story export
+- Bundle analysis
+- Tree shaking
+- Code splitting
+
+### 5. Custom Builders
+- Build executor
+- Serve executor
+- Test executor
+- Static build
+- CI mode
+
+## Developer Experience
+
+### 1. Setup Process
+- Simple installation
+- Auto-configuration
+- Migration tools
+- Starter stories
+- Documentation
+
+### 2. Error Handling
+- Clear error messages
+- Story compilation errors
+- Runtime errors
+- Build failures
+- Configuration issues
+
+### 3. Performance Monitoring
+- Build times
+- HMR speed
+- Bundle sizes
+- Memory usage
+- CPU utilization
+
+### 4. Debugging Support
+- Source maps
+- Console output
+- Network inspection
+- Component state
+- Story context
+
+## Migration Support
+
+### 1. From Webpack
+- Configuration mapping
+- Performance comparison
+- Feature parity
+- Migration guide
+- Common issues
+
+### 2. Version Upgrades
+- Storybook migrations
+- Angular updates
+- Breaking changes
+- Deprecations
+- Automation
+
+## Documentation Requirements
+- Getting started guide
+- Configuration reference
+- Story examples
+- Best practices
+- Troubleshooting
+- Performance tips
+- Integration guides
+
+## Release Criteria
+- [ ] Storybook compatibility verified
+- [ ] Angular versions tested
+- [ ] Vite integration working
+- [ ] HMR functionality confirmed
+- [ ] Build process validated
+- [ ] Documentation complete
+- [ ] Migration guide ready
+- [ ] Performance benchmarks met

@@ -1,0 +1,149 @@
+---
+description: Development rules and best practices for @analogjs/content package
+globs:
+  - "packages/content/src/**/*.ts"
+  - "packages/content/*.json"
+  - "packages/content/og/**/*"
+  - "packages/content/prism-highlighter/**/*"
+  - "packages/content/shiki-highlighter/**/*"
+alwaysApply: false
+---
+
+# @analogjs/content Package Development Rules
+
+## Overview
+This package provides content rendering capabilities for Analog, enabling markdown and custom content file support with frontmatter parsing, syntax highlighting, and dynamic content injection.
+
+## Package Purpose & Goals
+- **Primary Goal**: Enable static and dynamic content rendering in Angular applications
+- **Target Users**: Developers building content-driven Angular sites (blogs, documentation, marketing sites)
+- **Key Features**:
+  - Markdown content rendering with frontmatter support
+  - Code syntax highlighting (Prism.js/Shiki)
+  - Content file discovery and injection
+  - OG image generation support
+  - Mermaid diagram support
+
+## Development Best Practices
+
+### 1. Content Processing Pipeline
+- Parse frontmatter attributes consistently using `front-matter`
+- Support both `.md` and `.agx` file extensions
+- Maintain backward compatibility with content file formats
+- Use streaming/async processing for large content files
+
+### 2. Architecture Principles
+```
+src/lib/
+├── content.ts                    # Main content injection API
+├── content-file.ts              # Content file interface
+├── markdown-content-renderer.service.ts  # Markdown rendering
+├── inject-content-files.ts      # Content discovery
+├── parse-raw-content-file.ts   # File parsing utilities
+└── provide-content.ts           # DI providers
+```
+
+### 3. API Design Guidelines
+- **injectContent()**: Simple, intuitive API for content retrieval
+- Support multiple content discovery strategies:
+  - Route parameter based (`slug`)
+  - Custom filename
+  - Subdirectory organization
+- Provide filtering capabilities for content collections
+
+### 4. Rendering Features
+- **Markdown Renderer Options**:
+  - Syntax highlighting (Prism.js/Shiki)
+  - GitHub Flavored Markdown extensions
+  - Heading IDs for anchor links
+  - Mangle email addresses
+- **Advanced Features**:
+  - Table of Contents generation
+  - Mermaid diagram rendering
+  - Custom component rendering in markdown
+
+### 5. Performance Optimization
+- Lazy load heavy dependencies (Shiki, Prism.js)
+- Cache parsed content when possible
+- Use RenderTaskService for SSR coordination
+- Optimize bundle size with optional peer dependencies
+
+## Quality Rules
+
+### 1. Content Handling
+- Validate frontmatter schema
+- Handle missing content files gracefully
+- Provide meaningful fallback content
+- Support TypeScript generics for typed attributes
+
+### 2. Dependency Management
+- Keep rendering libraries as optional peer dependencies
+- Support multiple Angular versions (15-20)
+- Coordinate with marked.js ecosystem plugins
+- Minimize required dependencies
+
+### 3. Testing Requirements
+- Test content parsing with various frontmatter formats
+- Verify markdown rendering features
+- Test SSR/CSR content consistency
+- Validate content file discovery logic
+- Test with different zone.js configurations
+
+### 4. Error Handling
+- Clear error messages for:
+  - Missing content files
+  - Invalid frontmatter
+  - Rendering failures
+  - Missing optional dependencies
+- Provide development-time warnings
+
+### 5. Type Safety
+- Strong typing for content attributes
+- Generic support for custom frontmatter
+- Type-safe content file interfaces
+- Proper RxJS observable typing
+
+## Integration Points
+
+### 1. Router Integration
+- Seamless integration with @analogjs/router
+- Support for content-based routes
+- Dynamic route parameter handling
+- Markdown route components
+
+### 2. Platform Integration
+- Work with Vite's module system
+- Support HMR for content files
+- Integrate with build pipeline
+- Handle SSR/SSG scenarios
+
+### 3. Extensibility
+- Plugin architecture for renderers
+- Custom highlighter support
+- Extensible frontmatter processing
+- Component rendering in markdown
+
+## Security Considerations
+- Sanitize rendered HTML
+- Validate file paths to prevent directory traversal
+- Secure handling of user-provided content
+- XSS prevention in rendered output
+
+## Documentation Standards
+- Provide examples for:
+  - Basic content injection
+  - Custom content directories
+  - Typed frontmatter
+  - Syntax highlighting setup
+  - OG image generation
+- API reference with all options
+- Migration guides for breaking changes
+
+## Release Criteria
+- [ ] All markdown features tested
+- [ ] SSR/CSR rendering parity
+- [ ] Performance benchmarks met
+- [ ] Documentation complete
+- [ ] Type definitions accurate
+- [ ] Optional dependencies properly configured
+- [ ] Migration notes updated

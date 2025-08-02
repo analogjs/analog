@@ -1,0 +1,227 @@
+---
+description: Development rules and best practices for @analogjs/trpc package
+globs:
+  - "packages/trpc/src/**/*.ts"
+  - "packages/trpc/*.json"
+  - "packages/trpc/server/**/*"
+alwaysApply: false
+---
+
+# @analogjs/trpc Package Development Rules
+
+## Overview
+This package provides tRPC integration for Angular applications, enabling type-safe client-server communication with end-to-end type inference between Angular frontend and Nitro backend.
+
+## Package Purpose & Goals
+- **Primary Goal**: Enable type-safe RPC calls between Angular client and server
+- **Target Users**: Angular developers building fullstack applications with type safety
+- **Key Features**:
+  - tRPC client for Angular with RxJS
+  - Server-side tRPC router integration
+  - Type inference across client/server
+  - Transfer state support for SSR
+  - Isomorphic fetch handling
+
+## Development Best Practices
+
+### 1. Client Architecture
+- Use RxJS observables instead of promises
+- Implement custom proxy client for Angular
+- Support dependency injection patterns
+- Handle SSR transfer state
+- Manage HTTP headers reactively
+
+### 2. Code Organization
+```
+src/
+├── lib/
+│   ├── client/
+│   │   ├── client.ts           # Main client factory
+│   │   ├── trpc-rxjs-proxy.ts # RxJS proxy implementation
+│   │   ├── cache-state.ts      # SSR cache management
+│   │   └── links/              # tRPC links
+│   ├── server/
+│   │   └── router.ts           # Server router setup
+│   └── utils/
+│       └── wait-for.ts         # Observable/Promise utils
+```
+
+### 3. Type Safety Principles
+- Maintain end-to-end type inference
+- No manual type definitions needed
+- Support generic router types
+- Preserve procedure types
+- Handle transformer types
+
+### 4. RxJS Integration
+- Convert tRPC observables to RxJS
+- Support operators and pipe chains
+- Handle subscriptions properly
+- Implement proper teardown
+- Cache management with observables
+
+### 5. SSR Considerations
+- Transfer state between server/client
+- Deduplication of requests
+- Cache key generation
+- State hydration
+- Request batching
+
+## Quality Rules
+
+### 1. Angular Integration
+- Use Angular DI system
+- Support standalone components
+- Work with Angular HTTP client
+- Integrate with Angular zones
+- Support Angular v16-20
+
+### 2. tRPC Compatibility
+- Support tRPC v10+
+- Work with all tRPC features:
+  - Queries
+  - Mutations
+  - Batching
+  - Error handling
+- Maintain API compatibility
+
+### 3. Type Safety Standards
+- Zero runtime type errors
+- Full IntelliSense support
+- Proper error type inference
+- Input/output type validation
+- Middleware type preservation
+
+### 4. Performance Requirements
+- Minimal bundle size impact
+- Efficient request batching
+- Smart caching strategies
+- Tree-shakeable code
+- Lazy loading support
+
+### 5. Error Handling
+- Typed error responses
+- Network error handling
+- Timeout management
+- Retry strategies
+- Error transformation
+
+## Client Implementation
+
+### 1. Client Creation
+```typescript
+const { TrpcClient, provideTrpcClient, TrpcHeaders } =
+  createTrpcClient<AppRouter>({
+    url: '/api/trpc',
+    options: { transformer: superjson }
+  });
+```
+
+### 2. Provider Setup
+- Injectable client token
+- HTTP interceptors
+- Header management
+- Cache providers
+- Transfer state setup
+
+### 3. Usage Patterns
+- Query operations
+- Mutation operations
+- Subscription alternatives
+- Error handling
+- Loading states
+
+### 4. Headers Management
+- Dynamic header updates
+- Authentication tokens
+- Request context
+- CORS handling
+- Custom headers
+
+## Server Integration
+
+### 1. Router Setup
+- Nitro server integration
+- Context creation
+- Middleware setup
+- Error formatting
+- Response handling
+
+### 2. API Endpoints
+- Route configuration
+- Request parsing
+- Response serialization
+- Error boundaries
+- Performance monitoring
+
+### 3. Security Features
+- Input validation
+- Auth middleware
+- Rate limiting
+- CORS configuration
+- Request sanitization
+
+## Advanced Features
+
+### 1. Transfer State
+- SSR optimization
+- Cache deduplication
+- State serialization
+- Hydration strategies
+- Key generation
+
+### 2. Custom Links
+- Transfer state link
+- Auth link
+- Error link
+- Retry link
+- Logging link
+
+### 3. Transformers
+- SuperJSON support
+- Custom transformers
+- Date handling
+- BigInt support
+- Binary data
+
+### 4. Testing Support
+- Mock client creation
+- Test utilities
+- Type testing
+- Integration testing
+- E2E testing
+
+## Migration Guidelines
+
+### 1. From REST APIs
+- Gradual migration path
+- Type generation
+- Endpoint mapping
+- Error handling
+- Response transformation
+
+### 2. Version Updates
+- tRPC version migrations
+- Angular version updates
+- Breaking change handling
+- Deprecation notices
+- Upgrade automation
+
+## Documentation Requirements
+- Getting started guide
+- Client setup tutorial
+- Server configuration
+- Authentication guide
+- Testing strategies
+- Performance tips
+- Troubleshooting
+
+## Release Criteria
+- [ ] Type inference verified
+- [ ] RxJS integration tested
+- [ ] SSR functionality confirmed
+- [ ] Bundle size acceptable
+- [ ] Performance benchmarks met
+- [ ] Documentation complete
+- [ ] Migration guide ready
+- [ ] Example app working

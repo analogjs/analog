@@ -1,0 +1,20 @@
+---
+description: CI/CD commands specific to @analogjs/platform
+---
+
+# @analogjs/platform CI/CD
+
+## Commands
+- Build: `nx build platform`
+- Test: `nx test platform`
+- Lint: `nx lint platform`
+
+## Release Build
+- Tagged as `type:release`
+- Core Analog platform package
+- Part of release build process
+
+## Build Details
+- Uses esbuild executor
+- Multiple entry points for different features
+- Output format: CommonJS

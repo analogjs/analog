@@ -1,0 +1,250 @@
+---
+description: Development rules and best practices for @analogjs/vite-plugin-nitro package
+globs:
+  - "packages/vite-plugin-nitro/src/**/*.ts"
+  - "packages/vite-plugin-nitro/src/**/*.js"
+  - "packages/vite-plugin-nitro/*.json"
+  - "packages/vite-plugin-nitro/test-data/**/*"
+alwaysApply: false
+---
+
+# @analogjs/vite-plugin-nitro Package Development Rules
+
+## Overview
+This package provides Nitro server integration for Vite, enabling API routes, server-side rendering, and fullstack capabilities for any Vite-based application (not limited to Angular).
+
+## Package Purpose & Goals
+- **Primary Goal**: Add backend capabilities to Vite applications via Nitro
+- **Target Users**: Developers building fullstack applications with Vite
+- **Key Features**:
+  - File-based API routes
+  - SSR support
+  - Middleware system
+  - Multiple deployment targets
+  - Framework agnostic
+
+## Development Best Practices
+
+### 1. Plugin Architecture
+- Keep framework agnostic design
+- Support multiple Vite frameworks:
+  - Angular
+  - React
+  - Solid
+  - Vue
+  - Vanilla
+- Clean plugin interface
+- Minimal configuration
+
+### 2. Code Organization
+```
+src/lib/
+├── vite-nitro-plugin.ts    # Main plugin entry
+├── runtime/
+│   ├── renderer.ts         # SSR renderer
+│   └── middleware.ts       # Server middleware
+├── utils/
+│   ├── config.ts          # Config helpers
+│   └── routes.ts          # Route utilities
+└── build/
+    └── adapters.ts        # Deployment adapters
+```
+
+### 3. Nitro Integration
+- Use latest Nitro APIs
+- Support all Nitro features:
+  - API routes
+  - Middleware
+  - Storage
+  - Cache
+  - WebSocket
+- Handle Nitro lifecycle
+
+### 4. Route Management
+- File-based API routing
+- Dynamic route parameters
+- Route middleware
+- Error handling
+- Response utilities
+
+### 5. SSR Implementation
+- Framework-agnostic SSR
+- HTML transformation
+- Asset injection
+- State serialization
+- Error boundaries
+
+## Quality Rules
+
+### 1. Framework Compatibility
+- Test with multiple frameworks
+- No framework-specific code in core
+- Adapter pattern for frameworks
+- Clear integration points
+- Example projects
+
+### 2. Performance Standards
+- Fast server startup
+- Efficient route matching
+- Minimal overhead
+- Optimized builds
+- Hot reload speed
+
+### 3. Configuration Design
+- Zero-config defaults
+- Progressive disclosure
+- Type-safe config
+- Environment handling
+- Override capabilities
+
+### 4. Error Handling
+- Development error overlay
+- Production error pages
+- API error responses
+- Build error messages
+- Config validation
+
+### 5. Testing Strategy
+- Unit tests for utilities
+- Integration tests
+- Framework-specific tests
+- Build output validation
+- Performance tests
+
+## Core Features
+
+### 1. API Routes
+```typescript
+// server/api/hello.ts
+export default defineEventHandler(() => {
+  return { message: 'Hello API' }
+})
+```
+- HTTP method handling
+- Request/response helpers
+- Async support
+- Error handling
+- Type safety
+
+### 2. Middleware System
+- Global middleware
+- Route middleware
+- Error middleware
+- CORS handling
+- Authentication
+
+### 3. SSR Support
+- Page rendering
+- Asset injection
+- Meta tag handling
+- Hydration support
+- Error fallbacks
+
+### 4. Build System
+- Production builds
+- Development server
+- Preview server
+- Static generation
+- API-only mode
+
+### 5. Deployment
+- Node.js adapter
+- Edge adapters
+- Static hosting
+- Serverless functions
+- Container support
+
+## Integration Guidelines
+
+### 1. Vite Integration
+- Plugin ordering
+- Config merging
+- Build hooks
+- Dev server setup
+- HMR coordination
+
+### 2. Nitro Configuration
+- Server options
+- Route rules
+- Storage config
+- Caching setup
+- Security headers
+
+### 3. Development Experience
+- Clear console output
+- Helpful error messages
+- Route listing
+- Performance metrics
+- Debug mode
+
+## Advanced Features
+
+### 1. WebSocket Support
+- WS route handling
+- Connection management
+- Broadcasting
+- Room support
+- Error handling
+
+### 2. Storage Layer
+- File storage
+- KV storage
+- Database adapters
+- Cache strategies
+- Session storage
+
+### 3. Rendering Modes
+- SSR (Server-Side Rendering)
+- SSG (Static Site Generation)
+- ISR (Incremental Static Regeneration)
+- SPA (Single Page Application)
+- API-only mode
+
+### 4. Security Features
+- CSRF protection
+- Rate limiting
+- Input validation
+- Security headers
+- CORS configuration
+
+## Deployment Support
+
+### 1. Platform Adapters
+- Vercel
+- Netlify
+- Cloudflare Workers
+- AWS Lambda
+- Azure Functions
+
+### 2. Build Optimization
+- Code splitting
+- Tree shaking
+- Minification
+- Compression
+- Asset optimization
+
+### 3. Runtime Configuration
+- Environment variables
+- Runtime config
+- Feature flags
+- A/B testing
+- Gradual rollouts
+
+## Documentation Standards
+- Installation guide
+- API route examples
+- Deployment guides
+- Configuration reference
+- Troubleshooting
+- Migration guide
+- Framework guides
+
+## Release Criteria
+- [ ] All frameworks tested
+- [ ] Nitro features working
+- [ ] Build outputs verified
+- [ ] Performance benchmarks met
+- [ ] Documentation complete
+- [ ] Deployment adapters tested
+- [ ] Migration guide updated
+- [ ] Security review passed

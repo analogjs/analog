@@ -1,0 +1,19 @@
+---
+description: CI/CD commands specific to @analogjs/content
+---
+
+# @analogjs/content CI/CD
+
+## Commands
+- Build: `nx build content`
+- Test: `nx test content`
+- Lint: `nx lint content`
+
+## Release Build
+- Tagged as `type:release`
+- Angular package with ng-packagr
+- Part of release build process
+
+## Build Details
+- Uses `@nx/angular:package` executor
+- Output to `dist/packages/content`

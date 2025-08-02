@@ -1,0 +1,117 @@
+---
+description: Development rules and best practices for @analogjs/astro-angular package
+globs:
+  - "packages/astro-angular/**/*.ts"
+  - "packages/astro-angular/**/*.js"
+  - "packages/astro-angular/**/*.mts"
+  - "packages/astro-angular/**/*.json"
+alwaysApply: false
+---
+
+# @analogjs/astro-angular Package Development Rules
+
+## Overview
+This package enables Angular components to be rendered as islands within Astro applications, bridging the gap between Astro's static site generation and Angular's component framework.
+
+## Package Purpose & Goals
+- **Primary Goal**: Enable seamless integration of Angular components in Astro projects
+- **Target Users**: Developers building content-focused sites with Astro who need Angular components for interactive features
+- **Key Features**:
+  - Angular component hydration as Astro islands
+  - Support for Angular v16+ standalone components
+  - SSR and client-side hydration capabilities
+  - Component output event forwarding
+
+## Development Best Practices
+
+### 1. Component Requirements
+- **ONLY** support standalone Angular components (v14.2+)
+- Ensure components are self-contained with their imports
+- Maintain compatibility with Angular v16-20 as per peer dependencies
+- Test hydration strategies (client:load, client:visible, etc.)
+
+### 2. Integration Guidelines
+- Use `@analogjs/vite-plugin-angular` as the underlying build tool
+- Provide clear configuration options for Vite plugin customization
+- Support file filtering via `transformFilter` for better plugin compatibility
+- Handle SSR transformations for Angular libraries via `ssr.noExternal`
+
+### 3. Code Organization
+```
+src/
+├── index.js          # Main integration entry
+├── utils.js          # Utility functions
+├── client.js         # Client-side hydration logic
+├── server.js         # Server-side rendering logic
+└── *.mts             # ESM-specific modules
+```
+
+### 4. API Design Principles
+- Keep the API surface minimal and focused
+- Provide sensible defaults that work out-of-the-box
+- Support both static rendering and dynamic hydration
+- Enable component communication via data attributes and events
+
+### 5. Testing Requirements
+- Test with multiple Angular versions (16, 17, 18, 19)
+- Verify all Astro client directives work correctly
+- Test component input/output bindings
+- Ensure proper cleanup of event listeners
+- Test MDX integration scenarios
+
+## Quality Rules
+
+### 1. Version Compatibility
+- Maintain compatibility matrix for Angular/Astro versions
+- Update peer dependencies conservatively
+- Test against minimum and latest supported versions
+- Document breaking changes clearly in migrations
+
+### 2. Performance Standards
+- Minimize bundle size impact
+- Lazy load Angular runtime only when needed
+- Optimize hydration performance
+- Avoid memory leaks in event handling
+
+### 3. Error Handling
+- Provide clear error messages for:
+  - Non-standalone components
+  - Missing dependencies
+  - Configuration issues
+  - Hydration failures
+- Gracefully fallback when components fail to render
+
+### 4. Documentation Requirements
+- Include working examples for:
+  - Basic component usage
+  - Component with inputs/outputs
+  - MDX integration
+  - Provider configuration
+- Document all configuration options
+- Maintain troubleshooting guide
+
+### 5. Security Considerations
+- Never embed remote images in Mermaid diagrams
+- Sanitize component inputs
+- Validate event payloads
+- Follow Astro's security best practices
+
+## Migration & Upgrade Strategy
+- Use `ng-update` migrations for breaking changes
+- Coordinate updates with other @analogjs packages
+- Provide automated migration schematics where possible
+- Document manual migration steps clearly
+
+## Dependencies Management
+- Keep dependencies minimal
+- Align with @analogjs/vite-plugin-angular versions
+- Update Angular peer dependencies in sync with ecosystem
+- Test with both npm and pnpm workspaces
+
+## Release Checklist
+- [ ] All tests pass with supported Angular versions
+- [ ] README examples are tested and working
+- [ ] Migration guide updated if needed
+- [ ] Peer dependencies updated appropriately
+- [ ] Integration tested with latest Astro version
+- [ ] Performance benchmarks within acceptable range

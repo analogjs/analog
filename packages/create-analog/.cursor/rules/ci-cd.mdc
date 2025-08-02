@@ -1,0 +1,19 @@
+---
+description: CI/CD commands specific to create-analog
+---
+
+# create-analog CI/CD
+
+## Commands
+- Build: `nx build create-analog`
+- Test: `nx test create-analog`
+- E2E Test: `nx e2e create-analog-e2e`
+
+## Release Build
+- Tagged as `type:release`
+- CLI package for scaffolding Analog apps
+- Part of release build process
+
+## Testing
+- Unit tests with Jest
+- E2E tests validate template generation

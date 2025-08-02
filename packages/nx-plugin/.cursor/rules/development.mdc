@@ -1,0 +1,238 @@
+---
+description: Development rules and best practices for @analogjs/nx-plugin package
+globs:
+  - "packages/nx-plugin/src/**/*.ts"
+  - "packages/nx-plugin/*.json"
+  - "packages/nx-plugin/executors.json"
+  - "packages/nx-plugin/generators.json"
+alwaysApply: false
+---
+
+# @analogjs/nx-plugin Package Development Rules
+
+## Overview
+This package provides Nx workspace integration for Analog, including generators for creating applications and pages, and executors for building and serving Analog projects within Nx monorepos.
+
+## Package Purpose & Goals
+- **Primary Goal**: Enable seamless Analog development within Nx workspaces
+- **Target Users**: Teams using Nx for monorepo management with Angular
+- **Key Features**:
+  - Application generator
+  - Page generator
+  - Preset generator
+  - Build/serve executors
+  - Workspace integration
+
+## Development Best Practices
+
+### 1. Generator Architecture
+- Follow Nx generator conventions
+- Use @nx/devkit APIs properly
+- Support dry-run mode
+- Provide interactive prompts
+- Generate valid file structures
+
+### 2. Code Organization
+```
+src/
+├── generators/
+│   ├── app/              # Application generator
+│   ├── page/             # Page generator
+│   ├── preset/           # Workspace preset
+│   └── init/             # Setup generator
+├── executors/
+│   ├── build/            # Build executor
+│   └── serve/            # Serve executor
+└── utils/
+    └── version-utils.ts  # Version helpers
+```
+
+### 3. Generator Design Principles
+- Idempotent operations
+- Atomic changes
+- Rollback support
+- Clear prompts
+- Sensible defaults
+
+### 4. Nx Integration Standards
+- Respect workspace structure
+- Update workspace.json/project.json
+- Handle dependencies correctly
+- Support Nx caching
+- Integrate with Nx graph
+
+### 5. Version Management
+- Support Nx v16-21
+- Handle Angular v15-20
+- Coordinate package versions
+- Test version matrices
+- Graceful degradation
+
+## Quality Rules
+
+### 1. Generator Requirements
+- **App Generator**:
+  - Create valid Angular app
+  - Setup Analog configuration
+  - Configure testing
+  - Add dependencies
+  - Update workspace config
+
+- **Page Generator**:
+  - Handle route patterns
+  - Support metadata
+  - Create components
+  - Update route tree
+  - Handle special names
+
+- **Preset Generator**:
+  - Full workspace setup
+  - Example application
+  - Configuration files
+  - Dependencies setup
+  - Git initialization
+
+### 2. Executor Standards
+- Fast execution
+- Proper error handling
+- Nx cache integration
+- Console output
+- Exit codes
+
+### 3. Testing Strategy
+- Unit tests for utilities
+- Integration tests for generators
+- E2E tests for executors
+- Version compatibility tests
+- Workspace structure tests
+
+### 4. Error Handling
+- Validate inputs
+- Check prerequisites
+- Rollback on failure
+- Clear error messages
+- Recovery suggestions
+
+### 5. Performance
+- Minimal file I/O
+- Efficient tree operations
+- Parallel execution
+- Caching support
+- Fast startup
+
+## Generator Implementation
+
+### 1. App Generator Flow
+```typescript
+1. Normalize options
+2. Check Nx/Angular versions
+3. Generate Angular app
+4. Setup Analog
+5. Configure Vitest
+6. Add Tailwind (optional)
+7. Add tRPC (optional)
+8. Update configs
+9. Format files
+```
+
+### 2. Page Generator Features
+- Dynamic route support: `[id]`
+- Pathless routes: `(group)`
+- Catch-all routes: `[...slug]`
+- Nested routes: `blog/post`
+- Index routes: `index`
+- Metadata generation
+- Redirect pages
+
+### 3. Schema Design
+- JSON Schema validation
+- Type generation
+- Default values
+- Prompts configuration
+- Validation rules
+
+### 4. File Generation
+- Use templates effectively
+- Variable substitution
+- Path normalization
+- File formatting
+- Git-friendly output
+
+## Nx Workspace Integration
+
+### 1. Project Configuration
+- Target configuration
+- Executor options
+- Implicit dependencies
+- Build outputs
+- Cache settings
+
+### 2. Dependency Management
+- Package.json updates
+- Version alignment
+- Peer dependencies
+- Dev dependencies
+- Optional packages
+
+### 3. Task Pipeline
+- Build dependencies
+- Serve configuration
+- Test setup
+- Lint integration
+- Format rules
+
+### 4. Graph Integration
+- Project dependencies
+- Task dependencies
+- Affected commands
+- Cache inputs
+- Build order
+
+## Advanced Features
+
+### 1. Custom Schematics
+- Composable generators
+- Utility functions
+- Shared templates
+- Migration support
+- Update scripts
+
+### 2. Workspace Presets
+- Minimal setup
+- Full-featured setup
+- Enterprise patterns
+- Best practices
+- Example code
+
+### 3. Migration Support
+- Version migrations
+- Breaking changes
+- Automated updates
+- Migration testing
+- Rollback support
+
+### 4. CLI Integration
+- Nx Console support
+- Command aliases
+- Help documentation
+- Progress indicators
+- Interactive mode
+
+## Documentation Standards
+- Generator documentation
+- Executor documentation
+- Migration guides
+- Troubleshooting
+- Examples
+- API reference
+- Video tutorials
+
+## Release Criteria
+- [ ] All generators tested
+- [ ] Executors validated
+- [ ] Nx versions tested
+- [ ] Angular versions tested
+- [ ] Documentation complete
+- [ ] Migration scripts ready
+- [ ] Schema validation passing
+- [ ] Integration tests green

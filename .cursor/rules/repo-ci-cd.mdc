@@ -1,0 +1,41 @@
+---
+description: Global CI/CD and testing rules for Analog workspace
+alwaysApply: true
+---
+
+# CI/CD Best Practices
+
+## Testing
+- Run affected tests only: `nx affected:test`
+- Skip cache for CI builds: add `--skip-nx-cache`
+- Run tests in parallel unless specified otherwise
+- E2E tests should use `--parallel=1` to avoid conflicts
+
+## Building
+- Build affected projects: `nx affected:build`
+- Release builds: `nx run-many --target build --projects=tag:type:release`
+- Use `--parallel=1` for production builds to ensure stability
+- Always build dependencies first with `dependsOn: ["^build"]`
+
+## Linting
+- Lint affected code: `nx affected:lint`
+- Ensure code formatting with prettier before commits
+- All projects should have lint targets configured
+
+## CI Workflow
+1. Check formatting: `pnpm run prettier:check`
+2. Lint affected: `nx affected:lint`
+3. Test affected: `nx affected:test --skip-nx-cache`
+4. Build affected: `nx affected:build`
+5. E2E tests: `nx affected:e2e --parallel=1`
+
+## NX Cloud
+- CI builds use NX Cloud for caching
+- Access token stored in `NX_CLOUD_ACCESS_TOKEN` env var
+- Enable verbose logging with `NX_VERBOSE_LOGGING`
+
+## Common Commands
+- `nx run-many --target <target> --all` - Run target on all projects
+- `nx affected --target <target>` - Run only on affected projects
+- `nx graph` - Visualize project dependencies
+- `nx list` - Show available plugins and generators

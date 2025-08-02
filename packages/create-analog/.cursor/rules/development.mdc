@@ -1,0 +1,212 @@
+---
+description: Development rules and best practices for create-analog package
+globs:
+  - "packages/create-analog/**/*.js"
+  - "packages/create-analog/**/*.ts"
+  - "packages/create-analog/template-*/**/*"
+  - "packages/create-analog/*.json"
+alwaysApply: false
+---
+
+# create-analog Package Development Rules
+
+## Overview
+This package provides the CLI tool for scaffolding new Analog projects, offering various templates and configuration options to quickly bootstrap Angular applications with Analog's features.
+
+## Package Purpose & Goals
+- **Primary Goal**: Enable developers to quickly create new Analog projects with best practices
+- **Target Users**: Developers starting new Angular projects who want modern tooling
+- **Key Features**:
+  - Interactive project scaffolding
+  - Multiple template options
+  - Angular version selection
+  - Minimal and blog templates
+  - TypeScript configuration
+
+## Development Best Practices
+
+### 1. Template Management
+- Maintain templates for multiple Angular versions (v16-v19)
+- Keep templates minimal but functional
+- Ensure each template demonstrates core features
+- Update templates with each Angular release
+- Test templates regularly
+
+### 2. Template Structure
+```
+template-angular-v[XX]/
+├── src/
+│   ├── app/
+│   ├── content/        # For blog template
+│   └── main.ts
+├── index.html
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+└── README.md
+
+Special Templates:
+├── template-latest/    # Current Angular version
+├── template-minimal/   # Bare minimum setup
+└── template-blog/      # Blog starter
+```
+
+### 3. CLI Design Principles
+- Fast execution time
+- Clear, helpful prompts
+- Sensible defaults
+- Minimal dependencies
+- Cross-platform compatibility
+
+### 4. Project Initialization Flow
+1. Prompt for project name
+2. Select Angular version
+3. Choose template type
+4. Create project structure
+5. Copy template files
+6. Update package.json
+7. Initialize git (optional)
+8. Display next steps
+
+### 5. Template Requirements
+- Each template must:
+  - Build successfully out of the box
+  - Include basic routing setup
+  - Have proper TypeScript config
+  - Include example components
+  - Provide clear README
+  - Work with `npm/yarn/pnpm`
+
+## Quality Rules
+
+### 1. Version Management
+- Support latest 4 Angular major versions
+- Update templates within 2 weeks of Angular releases
+- Test with multiple Node.js versions
+- Maintain compatibility matrix
+- Document version requirements
+
+### 2. Error Handling
+- Validate project names
+- Check for existing directories
+- Handle filesystem errors gracefully
+- Provide helpful error messages
+- Support recovery options
+
+### 3. Performance Standards
+- Scaffold project in < 10 seconds
+- Minimal network requests
+- Efficient file copying
+- Small package size
+- Fast npm installation
+
+### 4. Testing Strategy
+- Test each template scaffolding
+- Verify generated projects build
+- Test with different package managers
+- Cross-platform testing (Windows/Mac/Linux)
+- Integration tests for CLI flow
+
+### 5. User Experience
+- Intuitive prompts
+- Clear progress indicators
+- Helpful success messages
+- Next steps guidance
+- Support --help flag
+
+## Template Guidelines
+
+### 1. Minimal Template
+- Absolute minimum setup
+- Single component
+- Basic routing
+- Essential configs only
+- Under 10 files
+
+### 2. Blog Template
+- Content directory structure
+- Markdown examples
+- Blog layout
+- Navigation component
+- RSS feed setup
+
+### 3. Latest Template
+- Showcase new features
+- Modern patterns
+- Best practices
+- Performance optimizations
+- Full feature demo
+
+### 4. Version-Specific Templates
+- Match Angular conventions
+- Use version-appropriate APIs
+- Include migration notes
+- Test with exact versions
+- Update dependencies
+
+## CLI Features
+
+### 1. Command Options
+```bash
+npm create analog@latest [project-name] [options]
+Options:
+  --template <name>    Template to use
+  --ng-version <ver>   Angular version
+  --skip-git          Skip git init
+  --package-manager    npm/yarn/pnpm
+```
+
+### 2. Interactive Mode
+- Project name validation
+- Template selection menu
+- Version selection
+- Confirmation prompts
+- Success instructions
+
+### 3. Non-Interactive Mode
+- Support all options via flags
+- Enable CI/CD usage
+- Scriptable interface
+- Silent mode option
+- JSON output format
+
+## Maintenance Tasks
+
+### 1. Template Updates
+- Dependency updates
+- Security patches
+- Angular migrations
+- Feature additions
+- Bug fixes
+
+### 2. Version Support
+- Add new Angular versions
+- Deprecate old versions
+- Update documentation
+- Test compatibility
+- Migration guides
+
+### 3. Package Distribution
+- NPM publishing
+- Version tagging
+- Changelog updates
+- Download analytics
+- Issue tracking
+
+## Documentation Requirements
+- README with clear instructions
+- Template documentation
+- Troubleshooting guide
+- Contributing guide
+- Version compatibility table
+- Example usage
+
+## Release Checklist
+- [ ] All templates tested
+- [ ] CLI flow validated
+- [ ] Cross-platform testing done
+- [ ] Documentation updated
+- [ ] Changelog prepared
+- [ ] Version bumped appropriately
+- [ ] NPM package built
+- [ ] Templates build successfully

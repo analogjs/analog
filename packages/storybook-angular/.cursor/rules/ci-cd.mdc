@@ -1,0 +1,18 @@
+---
+description: CI/CD commands specific to @analogjs/storybook-angular
+---
+
+# @analogjs/storybook-angular CI/CD
+
+## Commands
+- Build: `nx build storybook-angular`
+
+## Release Build
+- Tagged as `type:release`
+- Storybook preset for Angular
+- Part of release build process
+
+## Build Details
+- Uses TypeScript compilation
+- Preset files included in output
+- No test target configured

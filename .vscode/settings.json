@@ -1,4 +1,46 @@
 {
   "eslint.validate": ["json"],
-  "nxConsole.generateAiAgentRules": true
+  "nxConsole.generateAiAgentRules": true,
+  "terminal.integrated.enablePersistentSessions": false,
+  "task.slowProviderWarning": 15000,
+  "terminal.integrated.defaultProfile.osx": "Nushell",
+  "terminal.integrated.automationProfile.osx": {
+    "path": "nu"
+  },
+  "terminal.integrated.shellIntegration.history": 1000,
+  "window.commandCenter": true,
+  "git.blame.editorDecoration.enabled": true,
+  "terminal.integrated.defaultProfile.linux": "Nushell",
+  "terminal.integrated.profiles.linux": {
+    "bash": {
+      "path": "bash",
+      "icon": "terminal-bash"
+    },
+    "zsh": {
+      "path": "zsh"
+    },
+    "fish": {
+      "path": "fish"
+    },
+    "Nushell": {
+      "path": "nu",
+      "args": ["--login"]
+    }
+  },
+  "window.newWindowProfile": null,
+  "terminal.integrated.fontWeightBold": "bold",
+  "terminal.integrated.shellIntegration.enabled": false,
+  "terminal.integrated.env.linux": {
+    "SHELL": "/usr/bin/nu"
+  },
+  "terminal.integrated.suggest.enabled": true,
+  "terminal.integrated.automationProfile.linux": {
+    "path": "nu"
+  },
+  "terminal.integrated.profiles.osx": {
+    "Nushell": {
+      "path": "nu",
+      "args": ["--login"]
+    }
+  }
 }

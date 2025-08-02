@@ -1,0 +1,18 @@
+---
+description: CI/CD commands specific to @analogjs/vitest-angular
+---
+
+# @analogjs/vitest-angular CI/CD
+
+## Commands
+- Build: `nx build vitest-angular`
+
+## Release Build
+- Tagged as `type:release`
+- Vitest builders for Angular
+- Part of release build process
+
+## Build Details
+- TypeScript compilation project
+- Provides test builders for Angular
+- No test target (meta-testing package)
