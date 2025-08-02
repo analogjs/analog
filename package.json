@@ -99,6 +99,7 @@
     "@astrojs/markdown-component": "^1.0.5",
     "@commitlint/cli": "^17.8.1",
     "@commitlint/config-conventional": "^17.8.1",
+    "@compodoc/compodoc": "^1.1.26",
     "@netlify/functions": "^2.8.2",
     "@nx/cypress": "21.3.11",
     "@nx/eslint": "21.3.11",
@@ -115,6 +116,8 @@
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/exec": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
+    "@storybook/addon-docs": "9.0.18",
+    "@storybook/addon-links": "9.0.18",
     "@storybook/angular": "9.0.18",
     "@storybook/builder-vite": "9.0.18",
     "@swc-node/register": "1.10.10",
@@ -155,6 +158,7 @@
     "happy-dom": "^18.0.1",
     "jest": "30.0.5",
     "jest-environment-jsdom": "30.0.5",
+    "jest-util": "~30.0.5",
     "jiti": "2.5.1",
     "jsdom": "26.1.0",
     "jsonc-eslint-parser": "^2.4.0",
@@ -198,14 +202,14 @@
     "vitefu": "^1.1.1",
     "vitest": "^3.2.4",
     "webpack-bundle-analyzer": "^4.7.0",
-    "xmlbuilder2": "^3.0.2",
-    "jest-util": "~30.0.5"
+    "xmlbuilder2": "^3.0.2"
   },
   "pnpm": {
     "ignoredBuiltDependencies": [
       "cypress"
     ],
     "onlyBuiltDependencies": [
+      "@compodoc/compodoc",
       "@swc/core",
       "core-js",
       "core-js-pure",
