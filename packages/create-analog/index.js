@@ -136,11 +136,6 @@ async function init() {
           initial: 1,
         },
         {
-          type: useAnalogSFC === undefined ? 'confirm' : null,
-          name: 'analogSFC',
-          message: 'Would you like to use Analog SFCs?',
-        },
-        {
           type: skipTailwind === undefined ? 'confirm' : null,
           name: 'tailwind',
           message: 'Would you like to add Tailwind to your project?',

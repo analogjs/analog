@@ -67,8 +67,15 @@ Add the `zone.js` import to the top of your `.storybook/preview.ts` file.
 
 ```ts
 import 'zone.js';
+
 import { applicationConfig, type Preview } from '@analogjs/storybook-angular';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+
+// compodoc configuration
+import { setCompodocJson } from '@storybook/addon-docs/angular';
+import docJson from '../documentation.json';
+
+setCompodocJson(docJson);
 
 const preview: Preview = {
   decorators: [
@@ -103,8 +110,6 @@ const config: StorybookConfig = {
 };
 ```
 
-If you have any global styles, import them directly in the `.storybook/preview.ts` file.
-
 Remove the existing `webpackFinal` config function if present.
 
 Next, update the Storybook targets in the `angular.json` or `project.json`
@@ -121,6 +126,44 @@ Next, update the Storybook targets in the `angular.json` or `project.json`
 Remove any `webpack` specific options and remove the `browserTarget` option.
 
 Add the `/storybook-static` folder to the `.gitignore` file.
+
+## Setting up CSS
+
+To register global styles, import them directly in the `.storybook/preview.ts` file.
+
+```ts
+import 'zone.js';
+
+import { applicationConfig, type Preview } from '@analogjs/storybook-angular';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+
+// compodoc configuration
+import { setCompodocJson } from '@storybook/addon-docs/angular';
+import docJson from '../documentation.json';
+
+// global styles
+import '../src/styles.css';
+
+setCompodocJson(docJson);
+
+const preview: Preview = {
+  decorators: [
+    applicationConfig({
+      providers: [provideNoopAnimations()],
+    }),
+  ],
+  parameters: {
+    controls: {
+      matchers: {
+        color: /(background|color)$/i,
+        date: /Date$/i,
+      },
+    },
+  },
+};
+
+export default preview;
+```
 
 ## Running Storybook
 

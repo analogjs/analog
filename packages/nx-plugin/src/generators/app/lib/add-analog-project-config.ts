@@ -81,6 +81,7 @@ export function addAnalogProjectConfig(
     projectConfiguration[targets] = projectConfiguration.targets;
     projectConfiguration[targets]['extract-i18n'] = undefined;
     projectConfiguration[targets]['serve-static'] = undefined;
+    projectConfiguration.tags = parsedTags;
     delete projectConfiguration['$schema'];
     delete projectConfiguration['name'];
     delete projectConfiguration['generators'];

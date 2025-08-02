@@ -122,4 +122,8 @@ export interface PrerenderRouteConfig {
    * https://www.sitemaps.org/protocol.html#xmlTagDefinitions
    */
   sitemap?: PrerenderSitemapConfig | (() => PrerenderSitemapConfig);
+  /**
+   * Prerender static data for the prerendered route
+   */
+  staticData?: boolean;
 }

@@ -157,6 +157,14 @@ describe('nx-plugin generator', () => {
     expect(injectsTrpcClient).toBeTruthy();
   };
 
+  const verifyTagsArePopulated = (
+    config: ProjectConfiguration,
+    tags: string[],
+  ) => {
+    expect(config.tags).toBeDefined();
+    expect(config.tags).toEqual(tags);
+  };
+
   describe('Nx, Angular', () => {
     it('creates a default analogjs app in the source directory', async () => {
       const analogAppName = 'analog';
@@ -214,6 +222,22 @@ describe('nx-plugin generator', () => {
 
       verifyHomePageExists(tree, analogAppName);
       verifyTrpcIsSetUp(tree, dependencies);
+    });
+
+    it('creates an analogjs app in the source directory with tags populated', async () => {
+      const analogAppName = 'tags-app';
+      const { config, tree } = await setup({
+        analogAppName,
+        tags: 'tag1,tag2, type:app ',
+      });
+      const { dependencies, devDependencies } = readJson(tree, 'package.json');
+
+      verifyCoreDependenciesNx_Angular(dependencies, devDependencies);
+
+      verifyConfig(config, analogAppName);
+
+      verifyHomePageExists(tree, analogAppName);
+      verifyTagsArePopulated(config, ['tag1', 'tag2', 'type:app']);
     });
   });
 });

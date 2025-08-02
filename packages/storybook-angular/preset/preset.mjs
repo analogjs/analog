@@ -15,6 +15,11 @@ export const core = async (config, options) => {
   };
 };
 export const viteFinal = async (config, options) => {
+  // Remove any loaded analogjs plugins from a vite.config.(m)ts file
+  config.plugins = config.plugins
+    .flat()
+    .filter((plugin) => !plugin.name.includes('analogjs'));
+
   // Merge custom configuration into the default config
   const { mergeConfig } = await import('vite');
   const { default: angular } = await import('@analogjs/vite-plugin-angular');
@@ -28,8 +33,6 @@ export const viteFinal = async (config, options) => {
         '@analogjs/storybook-angular',
         '@angular/compiler',
         '@angular/platform-browser/animations',
-        '@storybook/addon-docs/angular',
-        'react/jsx-dev-runtime',
         'tslib',
         'zone.js',
       ],
@@ -45,6 +48,10 @@ export const viteFinal = async (config, options) => {
             ? framework.options?.liveReload
             : false,
         tsconfig: options?.tsConfig ?? './.storybook/tsconfig.json',
+        inlineStylesExtension:
+          typeof framework.options?.inlineStylesExtension !== 'undefined'
+            ? framework.options?.inlineStylesExtension
+            : 'css',
       }),
     ],
     define: {

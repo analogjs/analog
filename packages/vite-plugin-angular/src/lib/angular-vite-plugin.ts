@@ -49,6 +49,7 @@ import { routerPlugin } from './router-plugin.js';
 import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
 import { EmitFileResult } from './models.js';
 import { liveReloadPlugin } from './live-reload-plugin.js';
+import { nxFolderPlugin } from './nx-folder-plugin.js';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -151,8 +152,10 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   const styleUrlsResolver = new StyleUrlsResolver();
   const templateUrlsResolver = new TemplateUrlsResolver();
+  let outputFile: ((file: string) => void) | undefined;
   const outputFiles = new Map<string, EmitFileResult>();
   const fileEmitter = (file: string) => {
+    outputFile?.(file);
     return outputFiles.get(normalizePath(file));
   };
   let initialCompilation = false;
@@ -239,6 +242,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
           const { host } = await performCompilation(resolvedConfig);
+
           initialCompilation = true;
 
           // Only store cache if in watch mode
@@ -292,7 +296,11 @@ export function angular(options?: PluginOptions): Plugin[] {
           const isDirect = ctx.modules.find(
             (mod) => ctx.file === mod.file && mod.id?.includes('?direct'),
           );
-          if (isDirect) {
+          const isInline = ctx.modules.find(
+            (mod) => ctx.file === mod.file && mod.id?.includes('?inline'),
+          );
+
+          if (isDirect || isInline) {
             if (pluginOptions.liveReload && isDirect?.id && isDirect.file) {
               const isComponentStyle =
                 isDirect.type === 'css' && isComponentStyleSheet(isDirect.id);
@@ -350,7 +358,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
           });
 
-          await performCompilation(resolvedConfig, updates);
+          await performCompilation(resolvedConfig, [
+            ...mods.map((mod) => mod.id as string),
+            ...updates,
+          ]);
 
           if (updates.length > 0) {
             updates.forEach((updateId) => {
@@ -605,6 +616,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     (isStorybook && angularStorybookPlugin()) as Plugin,
     routerPlugin(),
     pendingTasksPlugin(),
+    nxFolderPlugin(),
   ].filter(Boolean) as Plugin[];
 
   function findAnalogFiles(config: ResolvedConfig) {
@@ -912,29 +924,38 @@ export function angular(options?: PluginOptions): Plugin[] {
       writeFileCallback(id, content, false, undefined, [sourceFile]);
     };
 
-    if (!watchMode) {
-      for (const sf of builder.getSourceFiles()) {
-        const id = sf!.fileName;
-        writeOutputFile(id);
-      }
-    } else {
+    if (watchMode) {
       if (ids && ids.length > 0) {
         ids.forEach((id) => writeOutputFile(id));
       } else {
-        // TypeScript will loop until there are no more affected files in the program
-        while (
-          (
-            builder as ts.EmitAndSemanticDiagnosticsBuilderProgram
-          ).emitNextAffectedFile(
-            writeFileCallback,
-            undefined,
-            undefined,
-            transformers,
-          )
-        ) {
-          /* empty */
+        /**
+         * Only block the server from starting up
+         * during testing.
+         */
+        if (isTest) {
+          // TypeScript will loop until there are no more affected files in the program
+          while (
+            (
+              builder as ts.EmitAndSemanticDiagnosticsBuilderProgram
+            ).emitNextAffectedFile(
+              writeFileCallback,
+              undefined,
+              undefined,
+              transformers,
+            )
+          ) {
+            /* empty */
+          }
         }
       }
+    }
+
+    if (!isTest) {
+      /**
+       * Perf: Output files on demand so the dev server
+       * isn't blocked when emitting files.
+       */
+      outputFile = writeOutputFile;
     }
 
     return { host };

@@ -2,8 +2,166 @@
 
 ### Bug Fixes
 
-- **create-analog:** add angular-v19 template to output files ([#1756](https://github.com/analogjs/analog/issues/1756)) ([6b7380d](https://github.com/analogjs/analog/commit/6b7380dd2e2a955fa45b57fa565081a0a6c08291))
-- **vitest-angular:** update `@angular-devkit/architect` dep range to include v20 ([#1754](https://github.com/analogjs/analog/issues/1754)) ([1d0f038](https://github.com/analogjs/analog/commit/1d0f038bea33ebb15881251c1a57bf36b407f4db))
+- **vite-plugin-angular:** update file emitter after compilation ([#1812](https://github.com/analogjs/analog/issues/1812)) ([474b6cc](https://github.com/analogjs/analog/commit/474b6cc2f2713100781032016973ed9bb05e9825))
+
+## [1.19.3-beta.1](https://github.com/analogjs/analog/compare/v1.19.2...v1.19.3-beta.1) (2025-07-30)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** update file emitter after compilation ([#1812](https://github.com/analogjs/analog/issues/1812)) ([474b6cc](https://github.com/analogjs/analog/commit/474b6cc2f2713100781032016973ed9bb05e9825))
+
+## [1.19.2](https://github.com/analogjs/analog/compare/v1.19.1...v1.19.2) (2025-07-28)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** decrease dev server startup time by emitting files on demand ([#1807](https://github.com/analogjs/analog/issues/1807)) ([f829652](https://github.com/analogjs/analog/commit/f82965247d8ddfa938952af9e0a866b9534b9a05))
+
+## [1.19.2-beta.1](https://github.com/analogjs/analog/compare/v1.19.1...v1.19.2-beta.1) (2025-07-28)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** decrease dev server startup time by emitting files on demand ([#1807](https://github.com/analogjs/analog/issues/1807)) ([f829652](https://github.com/analogjs/analog/commit/f82965247d8ddfa938952af9e0a866b9534b9a05))
+
+## [1.19.1](https://github.com/analogjs/analog/compare/v1.19.0...v1.19.1) (2025-07-08)
+
+### Bug Fixes
+
+- **nx-plugin:** add css for tailwind, fix global import reference ([#1796](https://github.com/analogjs/analog/issues/1796)) ([28b9558](https://github.com/analogjs/analog/commit/28b955826ab3a00f998f7262fd68152475b920fe))
+- **nx-plugin:** fix platform server dep for new app ([#1797](https://github.com/analogjs/analog/issues/1797)) ([c3d9660](https://github.com/analogjs/analog/commit/c3d966055e0174658c3f3c961106d70dc79c4309))
+- **storybook-angular:** prevent duplicate loading of analogjs plugins ([#1794](https://github.com/analogjs/analog/issues/1794)) ([6aeed12](https://github.com/analogjs/analog/commit/6aeed127caf31cc60fe11c1f5447afb6f6062a33))
+- **vite-plugin-angular:** skip compilation for inline assets, .nx for HMR ([#1795](https://github.com/analogjs/analog/issues/1795)) ([0f4413a](https://github.com/analogjs/analog/commit/0f4413a6ecabbe41dbec3ad1249e3ef41691b6c6))
+
+## [1.19.1-beta.4](https://github.com/analogjs/analog/compare/v1.19.1-beta.3...v1.19.1-beta.4) (2025-07-08)
+
+### Bug Fixes
+
+- **nx-plugin:** fix platform server dep for new app ([#1797](https://github.com/analogjs/analog/issues/1797)) ([c3d9660](https://github.com/analogjs/analog/commit/c3d966055e0174658c3f3c961106d70dc79c4309))
+
+## [1.19.1-beta.3](https://github.com/analogjs/analog/compare/v1.19.1-beta.2...v1.19.1-beta.3) (2025-07-08)
+
+### Bug Fixes
+
+- **nx-plugin:** add css for tailwind, fix global import reference ([#1796](https://github.com/analogjs/analog/issues/1796)) ([28b9558](https://github.com/analogjs/analog/commit/28b955826ab3a00f998f7262fd68152475b920fe))
+
+## [1.19.1-beta.2](https://github.com/analogjs/analog/compare/v1.19.1-beta.1...v1.19.1-beta.2) (2025-07-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** skip compilation for inline assets, .nx for HMR ([#1795](https://github.com/analogjs/analog/issues/1795)) ([0f4413a](https://github.com/analogjs/analog/commit/0f4413a6ecabbe41dbec3ad1249e3ef41691b6c6))
+
+## [1.19.1-beta.1](https://github.com/analogjs/analog/compare/v1.19.0...v1.19.1-beta.1) (2025-07-03)
+
+### Bug Fixes
+
+- **storybook-angular:** prevent duplicate loading of analogjs plugins ([#1794](https://github.com/analogjs/analog/issues/1794)) ([6aeed12](https://github.com/analogjs/analog/commit/6aeed127caf31cc60fe11c1f5447afb6f6062a33))
+
+# [1.19.0](https://github.com/analogjs/analog/compare/v1.18.0...v1.19.0) (2025-06-26)
+
+### Bug Fixes
+
+- **create-analog:** add overrides for Vite 7 to templates ([07f0a88](https://github.com/analogjs/analog/commit/07f0a88b9bdb789d96c0823025bb6dee12d008b4))
+- **create-analog:** remove extra comma from minimal template ([906998d](https://github.com/analogjs/analog/commit/906998d4f8ed2a5196b0baa563312c8b23252888))
+- **create-analog:** update template package.json deps ([#1789](https://github.com/analogjs/analog/issues/1789)) ([abb9900](https://github.com/analogjs/analog/commit/abb990046486bf08880813bed2a5caa5954d4976))
+- **nx-plugin:** add caret to platform-server package for preset ([a97ad4b](https://github.com/analogjs/analog/commit/a97ad4bae8e8adfc54440321291794c4245b284b))
+- **nx-plugin:** support migration for Angular v20 app component ([#1785](https://github.com/analogjs/analog/issues/1785)) ([7f2a240](https://github.com/analogjs/analog/commit/7f2a240195faf89da7063df1feb1371fd229407a))
+- **vite-plugin-nitro:** fix page handler URLs ([#1788](https://github.com/analogjs/analog/issues/1788)) ([5fdcf7f](https://github.com/analogjs/analog/commit/5fdcf7f4dadaaa48acd722983b1f9afb1273679f))
+
+### Features
+
+- add support for Vite 7.0 ([#1787](https://github.com/analogjs/analog/issues/1787)) ([5c1ec4a](https://github.com/analogjs/analog/commit/5c1ec4a5fccd39ef13501f64945fded7f4138a5c))
+
+# [1.19.0-beta.5](https://github.com/analogjs/analog/compare/v1.19.0-beta.4...v1.19.0-beta.5) (2025-06-26)
+
+### Bug Fixes
+
+- **nx-plugin:** add caret to platform-server package for preset ([a97ad4b](https://github.com/analogjs/analog/commit/a97ad4bae8e8adfc54440321291794c4245b284b))
+
+# [1.19.0-beta.4](https://github.com/analogjs/analog/compare/v1.19.0-beta.3...v1.19.0-beta.4) (2025-06-26)
+
+### Bug Fixes
+
+- **create-analog:** remove extra comma from minimal template ([906998d](https://github.com/analogjs/analog/commit/906998d4f8ed2a5196b0baa563312c8b23252888))
+
+# [1.19.0-beta.3](https://github.com/analogjs/analog/compare/v1.19.0-beta.2...v1.19.0-beta.3) (2025-06-26)
+
+### Bug Fixes
+
+- **create-analog:** update template package.json deps ([#1789](https://github.com/analogjs/analog/issues/1789)) ([abb9900](https://github.com/analogjs/analog/commit/abb990046486bf08880813bed2a5caa5954d4976))
+
+# [1.19.0-beta.2](https://github.com/analogjs/analog/compare/v1.19.0-beta.1...v1.19.0-beta.2) (2025-06-25)
+
+### Bug Fixes
+
+- **create-analog:** add overrides for Vite 7 to templates ([07f0a88](https://github.com/analogjs/analog/commit/07f0a88b9bdb789d96c0823025bb6dee12d008b4))
+
+# [1.19.0-beta.1](https://github.com/analogjs/analog/compare/v1.18.1-beta.2...v1.19.0-beta.1) (2025-06-25)
+
+### Features
+
+- add support for Vite 7.0 ([#1787](https://github.com/analogjs/analog/issues/1787)) ([5c1ec4a](https://github.com/analogjs/analog/commit/5c1ec4a5fccd39ef13501f64945fded7f4138a5c))
+
+## [1.18.1-beta.2](https://github.com/analogjs/analog/compare/v1.18.1-beta.1...v1.18.1-beta.2) (2025-06-25)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** fix page handler URLs ([#1788](https://github.com/analogjs/analog/issues/1788)) ([5fdcf7f](https://github.com/analogjs/analog/commit/5fdcf7f4dadaaa48acd722983b1f9afb1273679f))
+
+## [1.18.1-beta.1](https://github.com/analogjs/analog/compare/v1.18.0...v1.18.1-beta.1) (2025-06-21)
+
+### Bug Fixes
+
+- **nx-plugin:** support migration for Angular v20 app component ([#1785](https://github.com/analogjs/analog/issues/1785)) ([7f2a240](https://github.com/analogjs/analog/commit/7f2a240195faf89da7063df1feb1371fd229407a))
+
+# [1.18.0](https://github.com/analogjs/analog/compare/v1.17.1...v1.18.0) (2025-06-20)
+
+### Bug Fixes
+
+- **create-analog:** fix template and styles for SFCs ([#1778](https://github.com/analogjs/analog/issues/1778)) ([902fe23](https://github.com/analogjs/analog/commit/902fe23e56b4ba542bc0da0583921aad5054d0f5))
+- **create-analog:** update template dependencies to Angular v20 ([#1768](https://github.com/analogjs/analog/issues/1768)) ([8e1fae5](https://github.com/analogjs/analog/commit/8e1fae5ed9565286dcc4bb5eff8908e8600e1bea))
+- **nx-plugin:** add fallback for json.files property in preset ([6e2241a](https://github.com/analogjs/analog/commit/6e2241a63ca5e921570341e38c46abb6441467f1))
+- **nx-plugin:** ensure that tags option is used on app generation ([#1764](https://github.com/analogjs/analog/issues/1764)) ([df001b0](https://github.com/analogjs/analog/commit/df001b0bed89fb44baa6dc932b9c7e43c2e83eb8))
+- **vite-plugin-angular:** trigger compilation from external templates/styles ([#1779](https://github.com/analogjs/analog/issues/1779)) ([e3a1f27](https://github.com/analogjs/analog/commit/e3a1f278b6e39bca4e1b14a4555e977b32ba341c))
+
+### Features
+
+- **vite-plugin-nitro:** support static server side data fetching during prerendering ([#1771](https://github.com/analogjs/analog/issues/1771)) ([377cdd2](https://github.com/analogjs/analog/commit/377cdd227e005a0f73c01ad026a584834a49c044))
+
+# [1.18.0-beta.4](https://github.com/analogjs/analog/compare/v1.18.0-beta.3...v1.18.0-beta.4) (2025-06-20)
+
+### Bug Fixes
+
+- **nx-plugin:** add fallback for json.files property in preset ([6e2241a](https://github.com/analogjs/analog/commit/6e2241a63ca5e921570341e38c46abb6441467f1))
+
+# [1.18.0-beta.3](https://github.com/analogjs/analog/compare/v1.18.0-beta.2...v1.18.0-beta.3) (2025-06-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** trigger compilation from external templates/styles ([#1779](https://github.com/analogjs/analog/issues/1779)) ([e3a1f27](https://github.com/analogjs/analog/commit/e3a1f278b6e39bca4e1b14a4555e977b32ba341c))
+
+# [1.18.0-beta.2](https://github.com/analogjs/analog/compare/v1.18.0-beta.1...v1.18.0-beta.2) (2025-06-17)
+
+### Bug Fixes
+
+- **create-analog:** fix template and styles for SFCs ([#1778](https://github.com/analogjs/analog/issues/1778)) ([902fe23](https://github.com/analogjs/analog/commit/902fe23e56b4ba542bc0da0583921aad5054d0f5))
+
+# [1.18.0-beta.1](https://github.com/analogjs/analog/compare/v1.17.2-beta.1...v1.18.0-beta.1) (2025-06-13)
+
+### Features
+
+- **vite-plugin-nitro:** support static server side data fetching during prerendering ([#1771](https://github.com/analogjs/analog/issues/1771)) ([377cdd2](https://github.com/analogjs/analog/commit/377cdd227e005a0f73c01ad026a584834a49c044))
+
+## [1.17.2-beta.1](https://github.com/analogjs/analog/compare/v1.17.1...v1.17.2-beta.1) (2025-06-09)
+
+### Bug Fixes
+
+- **create-analog:** update template dependencies to Angular v20 ([#1768](https://github.com/analogjs/analog/issues/1768)) ([8e1fae5](https://github.com/analogjs/analog/commit/8e1fae5ed9565286dcc4bb5eff8908e8600e1bea))
+- **nx-plugin:** ensure that tags option is used on app generation ([#1764](https://github.com/analogjs/analog/issues/1764)) ([df001b0](https://github.com/analogjs/analog/commit/df001b0bed89fb44baa6dc932b9c7e43c2e83eb8))
+
+## [1.17.1-beta.3](https://github.com/analogjs/analog/compare/v1.17.1-beta.2...v1.17.1-beta.3) (2025-06-03)
+
+### Bug Fixes
+
+- **nx-plugin:** ensure that tags option is used on app generation ([#1764](https://github.com/analogjs/analog/issues/1764)) ([df001b0](https://github.com/analogjs/analog/commit/df001b0bed89fb44baa6dc932b9c7e43c2e83eb8))
 
 # [2.0.0-alpha.12](https://github.com/analogjs/analog/compare/v2.0.0-alpha.11...v2.0.0-alpha.12) (2025-05-29)
 
