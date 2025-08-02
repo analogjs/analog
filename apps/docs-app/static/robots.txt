@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://analogjs.org/sitemap.xml
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /private/
+Disallow: /api/
+
+# Allow all documentation
+Allow: /docs/
+Allow: /blog/
+
+# Crawl delay (optional)
+Crawl-delay: 1
