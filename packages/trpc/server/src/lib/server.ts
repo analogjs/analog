@@ -5,7 +5,7 @@
  * **/
 
 import type { ResponseMeta } from '@trpc/server/http';
-import { resolveHTTPResponse } from '@trpc/server/http';
+import { resolveResponse } from '@trpc/server/http';
 import type {
   AnyRouter,
   inferRouterContext,
@@ -89,38 +89,32 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
     const path = getPath(event);
 
     if (path === null) {
-      const error = router.getErrorShape({
-        error: new TRPCError({
+      throw createError({
+        statusCode: 500,
+        statusMessage: JSON.stringify({
           message:
             'Param "trpc" not found - is the file named `[trpc]`.ts or `[...trpc].ts`?',
           code: 'INTERNAL_SERVER_ERROR',
         }),
-        type: 'unknown',
-        ctx: undefined,
-        path: undefined,
-        input: undefined,
-      });
-
-      throw createError({
-        statusCode: 500,
-        statusMessage: JSON.stringify(error),
       });
     }
 
-    const httpResponse = await resolveHTTPResponse({
+    const body = isMethod(event, 'GET') ? null : await readBody(event);
+    const request = new Request($url, {
+      method: req.method!,
+      headers: req.headers as HeadersInit,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    const httpResponse = await resolveResponse({
       batching,
       router,
-      req: {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        method: req.method!,
-        headers: req.headers,
-        body: isMethod(event, 'GET') ? null : await readBody(event),
-        query: $url.searchParams,
-      },
+      req: request,
       path,
+      error: null,
       createContext: async () => await createContext?.(event),
-      responseMeta,
-      onError: (o) => {
+      responseMeta: responseMeta as any,
+      onError: (o: any) => {
         onError?.({
           ...o,
           req,
@@ -128,16 +122,16 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
       },
     });
 
-    const { status, headers, body } = httpResponse;
+    const { status, headers, body: responseBody } = httpResponse;
 
     res.statusCode = status;
 
-    headers &&
-      Object.keys(headers).forEach((key) => {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        res.setHeader(key, headers[key]!);
+    if (headers) {
+      headers.forEach((value, key) => {
+        res.setHeader(key, value);
       });
+    }
 
-    return body;
+    return responseBody;
   });
 }
