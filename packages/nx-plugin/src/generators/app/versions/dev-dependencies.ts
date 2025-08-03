@@ -1,14 +1,4 @@
 import { lt } from 'semver';
-import {
-  V15_X_ANALOG_JS_PLATFORM,
-  V15_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
-  V15_X_JSDOM,
-  V15_X_NRWL_VITE,
-  V15_X_NX_VITE,
-  V15_X_VITE,
-  V15_X_VITE_TSCONFIG_PATHS,
-  V15_X_VITEST,
-} from './nx_15_X/versions';
 import { stripIndents } from '@nx/devkit';
 import {
   V17_X_NX_VITE,
@@ -64,19 +54,6 @@ const getViteDependency = (escapedNxVersion: string) => {
       stripIndents`Nx v17.0.0 or newer is required to install Analog`,
     );
   }
-  // install 15.8 deps for versions 15.8.0 =< 16.0.0
-  if (lt(escapedNxVersion, '16.0.0')) {
-    return {
-      '@nrwl/vite': V15_X_NRWL_VITE,
-    };
-  }
-
-  // install 15.x deps for versions <17.0.0
-  if (lt(escapedNxVersion, '17.0.0')) {
-    return {
-      '@nx/vite': V15_X_NX_VITE,
-    };
-  }
 
   // install 17.0 deps for versions =< 18.0.0
   if (lt(escapedNxVersion, '18.0.0')) {
@@ -97,18 +74,6 @@ const getDevDependencies = (escapedNxVersion: string) => {
     throw new Error(
       stripIndents`Nx v17.0.0 or newer is required to install Analog`,
     );
-  }
-
-  // install 15.x deps for versions <17.0.0
-  if (lt(escapedNxVersion, '17.0.0')) {
-    return {
-      '@analogjs/platform': V15_X_ANALOG_JS_PLATFORM,
-      '@analogjs/vite-plugin-angular': V15_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
-      jsdom: V15_X_JSDOM,
-      vite: V15_X_VITE,
-      'vite-tsconfig-paths': V15_X_VITE_TSCONFIG_PATHS,
-      vitest: V15_X_VITEST,
-    };
   }
 
   // install 17.x deps for versions <18.0.0

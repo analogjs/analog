@@ -1,12 +1,4 @@
 import { lt, clean } from 'semver';
-import {
-  V15_X_ANALOG_JS_TRPC,
-  V15_X_ISOMORPHIC_FETCH,
-  V15_X_SUPERJSON,
-  V15_X_TRPC_CLIENT,
-  V15_X_TRPC_SERVER,
-  V15_X_ZOD,
-} from './nx_15_X/versions';
 import { stripIndents } from '@nx/devkit';
 import {
   V17_X_ANALOG_JS_TRPC,
@@ -40,23 +32,11 @@ export const getTrpcDependencies = (
 ): Record<TrpcDependency, string> => {
   const escapedNxVersion = clean(nxVersion);
 
-  // fail out for versions <15.2.0
-  if (lt(escapedNxVersion, '15.2.0')) {
-    throw new Error(
-      stripIndents`Nx v15.2.0 or newer is required to install Analog`,
-    );
-  }
-
-  // install 15.x deps for versions <17.0.0
+  // fail out for versions <17.0.0
   if (lt(escapedNxVersion, '17.0.0')) {
-    return {
-      '@analogjs/trpc': V15_X_ANALOG_JS_TRPC,
-      '@trpc/client': V15_X_TRPC_CLIENT,
-      '@trpc/server': V15_X_TRPC_SERVER,
-      superjson: V15_X_SUPERJSON,
-      'isomorphic-fetch': V15_X_ISOMORPHIC_FETCH,
-      zod: V15_X_ZOD,
-    };
+    throw new Error(
+      stripIndents`Nx 17.0.0 or newer is required to install Analog`,
+    );
   }
 
   // install 17.x deps for versions <18.0.0

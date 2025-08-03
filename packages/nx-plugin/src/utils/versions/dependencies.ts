@@ -11,16 +11,6 @@ import {
   V17_X_PRISMJS,
 } from './ng_17_X/versions';
 import {
-  V15_X_ANALOG_JS_CONTENT,
-  V15_X_ANALOG_JS_ROUTER,
-  V15_X_MARKED,
-  V15_X_MARKED_GFM_HEADING_ID,
-  V15_X_MARKED_HIGHLIGHT,
-  V15_X_MARKED_MANGLE,
-  V15_X_NX_ANGULAR,
-  V15_X_PRISMJS,
-} from './ng_15_X/versions';
-import {
   V18_X_ANALOG_JS_CONTENT,
   V18_X_ANALOG_JS_ROUTER,
   V18_X_MARKED,
@@ -66,20 +56,6 @@ const getDependencies = (escapedAngularVersion: string) => {
   // fail out for versions <17.0.0
   if (lt(escapedAngularVersion, '17.0.0')) {
     throw new Error(stripIndents`Angular v17.0.0 or newer is required.`);
-  }
-
-  // install 15.x deps for versions <17.0.0
-  if (lt(escapedAngularVersion, '17.0.0')) {
-    return {
-      '@analogjs/content': V15_X_ANALOG_JS_CONTENT,
-      '@analogjs/router': V15_X_ANALOG_JS_ROUTER,
-      '@nx/angular': V15_X_NX_ANGULAR,
-      marked: V15_X_MARKED,
-      'marked-gfm-heading-id': V15_X_MARKED_GFM_HEADING_ID,
-      'marked-highlight': V15_X_MARKED_HIGHLIGHT,
-      'marked-mangle': V15_X_MARKED_MANGLE,
-      prismjs: V15_X_PRISMJS,
-    };
   }
 
   // install 17.x deps for versions <18.0.0

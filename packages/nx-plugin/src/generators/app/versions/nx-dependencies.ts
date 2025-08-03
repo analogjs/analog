@@ -1,14 +1,6 @@
 import { clean, lt } from 'semver';
 import { stripIndents } from '@nx/devkit';
 import {
-  V15_X_NRWL_DEVKIT,
-  V15_X_NX_DEVKIT,
-  V15_X_NRWL_ANGULAR,
-  V15_X_NX_ANGULAR,
-  V15_X_NX_LINTER,
-  V15_X_NRWL_LINTER,
-} from './nx_15_X/versions';
-import {
   V17_X_NX_ANGULAR,
   V17_X_NX_DEVKIT,
   V17_X_NX_LINTER,
@@ -36,16 +28,6 @@ export const getNrwlDependencies = (
       stripIndents`Nx v17.0.0 or newer is required to install Analog`,
     );
   }
-
-  // install 15.8 deps for versions 15.8.0 =< 17.0.0
-  if (lt(escapedNxVersion, '17.0.0')) {
-    return {
-      '@nrwl/angular': V15_X_NRWL_ANGULAR,
-      '@nrwl/devkit': V15_X_NRWL_DEVKIT,
-      '@nrwl/linter': V15_X_NRWL_LINTER,
-    };
-  }
-
   // error for @nrwl to @nx namespace change for Nx >= 17
   throw new Error(
     stripIndents`As of Nx 17.0.0 the @nrwl scope has been replaced with the @nx scope. Please use @nx scope to install version ${nxVersion}`,
@@ -64,15 +46,6 @@ export const getNxDependencies = (
     throw new Error(
       stripIndents`The @nx scope is only supported in Nx 17.0.0 and newer. Please use @nrwl scope to install version ${nxVersion}`,
     );
-  }
-
-  // install 15.x deps for versions <17.0.0
-  if (lt(escapedNxVersion, '17.0.0')) {
-    return {
-      '@nx/angular': V15_X_NX_ANGULAR,
-      '@nx/devkit': V15_X_NX_DEVKIT,
-      '@nx/eslint': V15_X_NX_LINTER,
-    };
   }
 
   // install 17.0 deps for versions =< 18.0.0
