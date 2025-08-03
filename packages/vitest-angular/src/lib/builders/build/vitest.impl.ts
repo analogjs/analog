@@ -3,6 +3,7 @@ import * as path from 'path';
 import type { Vitest } from 'vitest/node';
 import type { Plugin, UserConfig } from 'vite';
 import type { UserConfig as VitestConfig } from 'vitest/node';
+import { globSync } from 'tinyglobby';
 
 import { VitestSchema } from './schema';
 import { createAngularMemoryPlugin } from './plugins/angular-memory-plugin';
@@ -176,6 +177,11 @@ function findIncludes(options: {
     dot: true,
     ignore: options.exclude,
   });
+  // return globSync(globs, {
+  //   dot: true,
+  //   absolute: true,
+  //   ignore: options.exclude,
+  // });
 }
 
 function generateEntryPoints({

@@ -1,6 +1,7 @@
 import { Plugin, UserConfig, normalizePath } from 'vite';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { globSync } from 'tinyglobby';
 import fg from 'fast-glob';
 
 import type { WithShikiHighlighterOptions } from './content/shiki/options.js';
@@ -153,6 +154,7 @@ export function contentPlugin(
           code.includes('ANALOG_AGX_FILES')
         ) {
           const contentFilesList: string[] = fg.sync(
+            //const contentFilesList: string[] = globSync(
             [
               `${root}/src/content/**/*.md`,
               `${root}/src/content/**/*.agx`,
@@ -161,6 +163,7 @@ export function contentPlugin(
               ),
             ],
             { dot: true },
+            //{ dot: true, absolute: true },
           );
 
           const eagerImports: string[] = [];
@@ -182,6 +185,7 @@ export function contentPlugin(
           );
 
           const agxFiles: string[] = fg.sync(
+            // const agxFiles: string[] = globSync(
             [
               `${root}/src/content/**/*.agx`,
               ...(options?.additionalContentDirs || [])?.map(
@@ -190,6 +194,7 @@ export function contentPlugin(
             ],
             {
               dot: true,
+              // absolute: true,
             },
           );
 

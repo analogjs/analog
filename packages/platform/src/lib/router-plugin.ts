@@ -1,6 +1,7 @@
 import { normalizePath, Plugin, UserConfig } from 'vite';
-import fg from 'fast-glob';
+import { globSync } from 'tinyglobby';
 import { resolve } from 'node:path';
+import fg from 'fast-glob';
 
 import { Options } from './options.js';
 
@@ -61,6 +62,7 @@ export function routerPlugin(options?: Options): Plugin[] {
           code.includes('ANALOG_CONTENT_ROUTE_FILES')
         ) {
           const routeFiles: string[] = fg.sync(
+            //const routeFiles: string[] = globSync(
             [
               `${root}/app/routes/**/*.ts`,
               `${root}/src/app/routes/**/*.ts`,
@@ -72,9 +74,11 @@ export function routerPlugin(options?: Options): Plugin[] {
               ),
             ],
             { dot: true },
+            // { dot: true, absolute: true },
           );
 
           const contentRouteFiles: string[] = fg.sync(
+            // const contentRouteFiles: string[] = globSync(
             [
               `${root}/src/app/routes/**/*.md`,
               `${root}/src/app/pages/**/*.md`,
@@ -84,6 +88,7 @@ export function routerPlugin(options?: Options): Plugin[] {
               ),
             ],
             { dot: true },
+            // { dot: true, absolute: true },
           );
 
           let result = code.replace(
@@ -123,6 +128,7 @@ export function routerPlugin(options?: Options): Plugin[] {
       transform(code) {
         if (code.includes('ANALOG_PAGE_ENDPOINTS')) {
           const endpointFiles: string[] = fg.sync(
+            // const endpointFiles: string[] = globSync(
             [
               `${root}/src/app/pages/**/*.server.ts`,
               ...(options?.additionalPagesDirs || [])?.map(
@@ -130,6 +136,7 @@ export function routerPlugin(options?: Options): Plugin[] {
               ),
             ],
             { dot: true },
+            // { dot: true, absolute: true },
           );
 
           const result = code.replace(

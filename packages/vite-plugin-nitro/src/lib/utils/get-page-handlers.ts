@@ -1,4 +1,5 @@
-import { resolve } from 'node:path';
+import { resolve, relative } from 'node:path';
+import { globSync } from 'tinyglobby';
 import fg from 'fast-glob';
 
 import { NitroEventHandler } from 'nitropack';
@@ -30,6 +31,15 @@ export function getPageHandlers({
     ],
     { dot: true },
   );
+  // const endpointFiles: string[] = globSync(
+  //   [
+  //     `${root}/${sourceRoot}/app/pages/**/*.server.ts`,
+  //     ...(additionalPagesDirs || []).map(
+  //       (dir) => `${workspaceRoot}${dir}/**/*.server.ts`,
+  //     ),
+  //   ],
+  //   { dot: true, absolute: true },
+  // );
 
   const handlers: NitroEventHandler[] = endpointFiles.map((endpointFile) => {
     const route = endpointFile
@@ -41,11 +51,21 @@ export function getPageHandlers({
       .replace(/\[(\w+)\]/g, ':$1')
       .replace(/\./g, '/');
 
+    // // Make the handler path relative to the workspace root
+    // const relativeHandler = normalizePath(
+    //   relative(workspaceRoot, endpointFile),
+    // );
+
     return {
       handler: endpointFile,
       route: `${hasAPIDir ? '/api' : ''}/_analog${route}`,
       lazy: true,
     };
+    // return {
+    //   handler: relativeHandler,
+    //   route: `${hasAPIDir ? '/api' : ''}/_analog${route}`,
+    //   lazy: true,
+    // };
   });
 
   return handlers;

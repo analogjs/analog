@@ -1,5 +1,6 @@
 import { ViteDevServer } from 'vite';
 import { EventHandler, createEvent } from 'h3';
+import { globSync } from 'tinyglobby';
 import fg from 'fast-glob';
 
 export async function registerDevServerMiddleware(
@@ -10,6 +11,13 @@ export async function registerDevServerMiddleware(
   const middlewareFiles = fg.sync([
     `${root}/${sourceRoot}/server/middleware/**/*.ts`,
   ]);
+  // const middlewareFiles = globSync(
+  //   [`${root}/${sourceRoot}/server/middleware/**/*.ts`],
+  //   {
+  //     dot: true,
+  //     absolute: true,
+  //   },
+  // );
 
   middlewareFiles.forEach((file) => {
     viteServer.middlewares.use(async (req, res, next) => {

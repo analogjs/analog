@@ -5,6 +5,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import * as compilerCli from '@angular/compiler-cli';
 import * as ts from 'typescript';
 import { createRequire } from 'node:module';
+import { globSync } from 'tinyglobby';
 
 import {
   ModuleNode,
@@ -655,11 +656,14 @@ export function angular(options?: PluginOptions): Plugin[] {
         dot: true,
       })
       .map((file: string) => `${file}.ts`);
+    // return globSync(globs, {
+    //   dot: true,
+    //   absolute: true,
+    // }).map((file: string) => `${file}.ts`);
   }
 
   function findIncludes() {
     const fg = require('fast-glob');
-
     const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));
 
     const globs = [
@@ -669,6 +673,10 @@ export function angular(options?: PluginOptions): Plugin[] {
     return fg.sync(globs, {
       dot: true,
     });
+    // return globSync(globs, {
+    //   dot: true,
+    //   absolute: true,
+    // });
   }
 
   function getTsConfigPath(

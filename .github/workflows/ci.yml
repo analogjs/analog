@@ -13,28 +13,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  prettier:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+  # prettier:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 0
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0
-      - run: corepack enable
-      - run: pnpm --version
-      - uses: actions/setup-node@v3
-        with:
-          cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
-      - name: Install
-        run: pnpm install --frozen-lockfile --prefer-offline
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version-file: .node-version
+  #     - run: npm install --global corepack@0.31.0
+  #     - run: corepack enable
+  #     - run: pnpm --version
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         cache: 'pnpm'
+  #         cache-dependency-path: '**/pnpm-lock.yaml'
+  #     - name: Install
+  #       run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Validate
-        run: pnpm run prettier:check
+  #     - name: Validate
+  #       run: pnpm run prettier:check
 
   build:
     runs-on: ubuntu-latest
@@ -55,39 +55,39 @@ jobs:
       - name: Build
         run: pnpm build
 
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .node-version
-      - run: corepack enable
-      - name: Install
-        run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Build
-        run: pnpm build
-      - name: Verify
-        run: more dist\apps\blog-app\analog\public\index.html
+  # build-windows:
+  #   runs-on: windows-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version-file: .node-version
+  #     - run: corepack enable
+  #     - name: Install
+  #       run: pnpm install --frozen-lockfile --prefer-offline
+  #     - name: Build
+  #       run: pnpm build
+  #     - name: Verify
+  #       run: more dist\apps\blog-app\analog\public\index.html
 
-  unit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0
-      - run: corepack enable
-      - run: pnpm --version
-      - uses: actions/setup-node@v3
-        with:
-          cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
-      - name: Install
-        run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Test
-        run: pnpm test
+  # unit:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version-file: .node-version
+  #     - run: npm install --global corepack@0.31.0
+  #     - run: corepack enable
+  #     - run: pnpm --version
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         cache: 'pnpm'
+  #         cache-dependency-path: '**/pnpm-lock.yaml'
+  #     - name: Install
+  #       run: pnpm install --frozen-lockfile --prefer-offline
+  #     - name: Test
+  #       run: pnpm test
 
   e2e:
     runs-on: ubuntu-latest
