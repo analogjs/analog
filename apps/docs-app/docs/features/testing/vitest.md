@@ -1,3 +1,27 @@
+---
+title: Adding Vitest to Angular Projects - Complete Testing Setup Guide
+description: Learn how to add Vitest to any Angular project using automated schematics or manual installation. Set up unit testing with Vitest for better performance and developer experience.
+keywords:
+  [
+    'Vitest',
+    'Angular testing',
+    'unit tests',
+    'test setup',
+    'jsdom',
+    'test configuration',
+    'Angular CLI',
+    'Nx',
+  ]
+image: https://analogjs.org/img/analog-banner.png
+url: https://analogjs.org/docs/features/testing/vitest
+type: documentation
+author: Analog Team
+publishedTime: '2022-01-01T00:00:00.000Z'
+modifiedTime: '2024-01-01T00:00:00.000Z'
+section: Testing
+tags: ['vitest', 'testing', 'angular', 'unit-tests']
+---
+
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 

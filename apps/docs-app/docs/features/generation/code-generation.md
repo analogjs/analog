@@ -1,3 +1,25 @@
+---
+title: Code Generation in Analog - Nx Generators and Angular Schematics
+description: Learn how to use code generation in Analog with Nx Generators and Angular Schematics. Automate application and page creation for faster development.
+keywords:
+  [
+    'code generation',
+    'Nx generators',
+    'Angular schematics',
+    'CLI tools',
+    'automation',
+    'project scaffolding',
+  ]
+image: https://analogjs.org/img/analog-banner.png
+url: https://analogjs.org/docs/features/generation/code-generation
+type: documentation
+author: Analog Team
+publishedTime: '2022-01-01T00:00:00.000Z'
+modifiedTime: '2024-01-01T00:00:00.000Z'
+section: Code Generation
+tags: ['code-generation', 'generators', 'schematics', 'automation']
+---
+
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 

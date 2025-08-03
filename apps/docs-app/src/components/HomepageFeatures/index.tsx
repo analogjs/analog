@@ -2,6 +2,9 @@ import clsx from 'clsx';
 import React from 'react';
 import styles from './styles.module.css';
 import Translate, { translate } from '@docusaurus/Translate';
+import ViteLogoSvg from '@site/static/img/logos/vite-logo.svg';
+import AngularLogoSvg from '@site/static/img/logos/angular-logo.svg';
+import AnalogLogoSvg from '@site/static/img/logos/analog-logo.svg';
 
 type FeatureItem = {
   title: string;
@@ -17,7 +20,7 @@ const FeatureList: FeatureItem[] = [
       id: 'features.title.vitePowered',
       description: 'The title of the feature "Vite-powered"',
     }),
-    Svg: require('@site/static/img/logos/vite-logo.svg').default,
+    Svg: ViteLogoSvg,
     description: (
       <>
         <Translate
@@ -36,7 +39,7 @@ const FeatureList: FeatureItem[] = [
       id: 'features.title.hybridSSR',
       description: 'The title of the feature "Hybrid SSR/SSG support"',
     }),
-    Svg: require('@site/static/img/logos/angular-logo.svg').default,
+    Svg: AngularLogoSvg,
     png: '/img/logos/angular-gradient.png',
     description: (
       <>
@@ -57,7 +60,7 @@ const FeatureList: FeatureItem[] = [
       description:
         'The title of the feature "File-based routing and API routes"',
     }),
-    Svg: require('@site/static/img/logos/analog-logo.svg').default,
+    Svg: AnalogLogoSvg,
     description: (
       <>
         <Translate

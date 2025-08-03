@@ -73,8 +73,8 @@
     "marked-highlight": "^2.2.2",
     "mermaid": "^10.9.3",
     "radix3": "^1.1.2",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "rxjs": "7.8.2",
     "semver": "^7.5.1",
     "superjson": "^2.2.1",
@@ -122,16 +122,16 @@
     "@storybook/builder-vite": "9.0.18",
     "@swc-node/register": "1.10.10",
     "@swc/cli": "0.7.8",
-    "@swc/core": "1.5.29",
+    "@swc/core": "1.13.3",
     "@swc/helpers": "0.5.17",
     "@types/babel__core": "^7.20.0",
     "@types/hast": "^3.0.4",
     "@types/jest": "30.0.0",
     "@types/marked": "^5.0.2",
-    "@types/node": "22.17.0",
+    "@types/node": "24.1.0",
     "@types/prismjs": "^1.26.5",
-    "@types/react": "^18.3.23",
-    "@types/react-dom": "^18.3.7",
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
     "@typescript-eslint/eslint-plugin": "7.18.0",
     "@typescript-eslint/parser": "7.18.0",
     "@typescript-eslint/utils": "^8.13.0",
@@ -205,6 +205,9 @@
     "xmlbuilder2": "^3.0.2"
   },
   "pnpm": {
+    "overrides": {
+      "p-map": "7.0.0"
+    },
     "ignoredBuiltDependencies": [
       "cypress"
     ],

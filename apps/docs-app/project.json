@@ -12,8 +12,8 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "apps/docs-app",
-        "command": "docusaurus build  --out-dir={args.out-dir}",
-        "out-dir": "../../dist/apps/docs-app"
+        "command": "docusaurus build && rm -rf ../../dist/apps/docs-app && mv build ../../dist/apps/docs-app",
+        "out-dir": "build"
       },
       "outputs": ["{workspaceRoot}/dist/apps/docs-app"]
     },
@@ -30,7 +30,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "apps/docs-app",
-        "command": "docusaurus serve --config apps/docs-app/docusaurus.config.js --dir dist/apps/docs-app"
+        "command": "docusaurus serve --config apps/docs-app/docusaurus.config.ts --dir dist/apps/docs-app"
       },
       "dependsOn": ["build"]
     },

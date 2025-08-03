@@ -1,3 +1,27 @@
+---
+title: Content Routes and Markdown in Analog - Complete Guide
+description: Learn how to use markdown content as routes in Analog. Create documentation, blogs, and content-rich pages with frontmatter, syntax highlighting, and MDX support.
+keywords:
+  [
+    'content routes',
+    'markdown',
+    'MDX',
+    'frontmatter',
+    'syntax highlighting',
+    'PrismJS',
+    'Shiki',
+    'documentation',
+  ]
+image: https://analogjs.org/img/analog-banner.png
+url: https://analogjs.org/docs/features/routing/content
+type: documentation
+author: Analog Team
+publishedTime: '2022-01-01T00:00:00.000Z'
+modifiedTime: '2024-01-01T00:00:00.000Z'
+section: Routing
+tags: ['content', 'markdown', 'mdx', 'documentation']
+---
+
 # Content Routes
 
 Analog also supports using markdown content as routes, and rendering markdown content in components.
@@ -295,7 +319,71 @@ export default class BlogPostComponent {
 }
 ```
 
-### Using A Resolver For Metatags
+### MDX Support
+
+Analog supports MDX (Markdown with JSX) out of the box, allowing you to embed Angular components directly in your Markdown content. This enables interactive documentation and rich content experiences.
+
+### Using Components in Markdown
+
+You can include Angular components directly in your Markdown files:
+
+```md title="example.md - Using components in Markdown"
+---
+title: Interactive Example
+---
+
+# My Interactive Page
+
+Here's a regular paragraph.
+
+<my-custom-component [data]="someData">
+This content will be passed to the component
+</my-custom-component>
+
+And here's more markdown content.
+```
+
+### Registering Components
+
+To use components in your Markdown files, register them with the content provider:
+
+```ts
+import { ApplicationConfig } from '@angular/core';
+import { provideContent, withMarkdownRenderer } from '@analogjs/content';
+import { MyCustomComponent } from './components/my-custom.component';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideContent(
+      withMarkdownRenderer({
+        components: {
+          'my-custom-component': MyCustomComponent,
+        },
+      }),
+    ),
+  ],
+};
+```
+
+### Component Inputs and Outputs
+
+Components used in Markdown support inputs and outputs just like regular Angular components:
+
+```md
+<!-- Pass data to component inputs -->
+
+<alert-box type="warning" [dismissible]="true">
+This is a warning message that can be dismissed.
+</alert-box>
+
+<!-- Components can emit events -->
+
+<interactive-demo (valueChanged)="onValueChange($event)">
+Interactive content here
+</interactive-demo>
+```
+
+## Using A Resolver For Metatags
 
 In your route configuration, you can use the `RouteMeta` object to resolve meta tags for a route. This is done by assigning the `postMetaResolver` function to the `meta` property.
 
@@ -434,3 +522,118 @@ readonly post$ = injectContent<ProjectAttributes>({
   customFilename: 'path/to/custom/file',
 });
 ```
+
+## Content Collections
+
+Content collections allow you to organize and query content files programmatically. This is particularly useful for building blogs, documentation sites, or any content-driven application where you need to work with multiple related content files.
+
+### Defining Content Collections
+
+Collections are defined by organizing content files in structured directories within your `src/content` folder:
+
+```treeview
+src/
+└── content/
+    ├── blog/
+    │   ├── post-1.md
+    │   ├── post-2.md
+    │   └── post-3.md
+    ├── docs/
+    │   ├── getting-started.md
+    │   ├── routing.md
+    │   └── deployment.md
+    └── projects/
+        ├── project-a.md
+        └── project-b.md
+```
+
+### Querying Collections
+
+Use the `injectContentFiles()` function to get all files from a specific collection:
+
+```ts
+import { Component } from '@angular/core';
+import { injectContentFiles } from '@analogjs/content';
+
+export interface BlogPostAttributes {
+  title: string;
+  description: string;
+  publishDate: string;
+  tags: string[];
+}
+
+@Component({
+  standalone: true,
+  template: `
+    <div class="blog-posts">
+      @for (post of blogPosts; track post.filename) {
+        <article>
+          <h2>{{ post.attributes.title }}</h2>
+          <p>{{ post.attributes.description }}</p>
+          <time>{{ post.attributes.publishDate }}</time>
+        </article>
+      }
+    </div>
+  `,
+})
+export default class BlogListComponent {
+  readonly blogPosts = injectContentFiles<BlogPostAttributes>((contentFile) =>
+    contentFile.filename.includes('/src/content/blog/'),
+  );
+}
+```
+
+### Filtering and Sorting Collections
+
+You can filter and sort collections based on frontmatter attributes:
+
+```ts
+import { Component, computed } from '@angular/core';
+import { injectContentFiles } from '@analogjs/content';
+
+@Component({
+  template: `
+    <div class="featured-posts">
+      @for (post of featuredPosts(); track post.filename) {
+        <article class="featured-post">
+          <h2>{{ post.attributes.title }}</h2>
+          <p>{{ post.attributes.description }}</p>
+        </article>
+      }
+    </div>
+  `,
+})
+export default class FeaturedPostsComponent {
+  private readonly allPosts = injectContentFiles<BlogPostAttributes>(
+    (contentFile) => contentFile.filename.includes('/src/content/blog/'),
+  );
+
+  readonly featuredPosts = computed(() =>
+    this.allPosts()
+      .filter((post) => post.attributes.featured)
+      .sort(
+        (a, b) =>
+          new Date(b.attributes.publishDate).getTime() -
+          new Date(a.attributes.publishDate).getTime(),
+      ),
+  );
+}
+```
+
+### Collection Metadata
+
+Each content file in a collection includes metadata about the file:
+
+```ts
+interface ContentFile<T = Record<string, any>> {
+  filename: string;
+  slug: string;
+  attributes: T;
+  content: string;
+}
+```
+
+- **`filename`**: Full path to the content file
+- **`slug`**: URL-friendly identifier derived from the filename
+- **`attributes`**: Frontmatter data parsed as an object
+- **`content`**: Raw markdown content

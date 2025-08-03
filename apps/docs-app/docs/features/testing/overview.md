@@ -1,3 +1,26 @@
+---
+title: Testing in Analog - Unit Testing with Vitest
+description: Learn how to run unit tests in Analog using Vitest. Understand testing features, Jest compatibility, and best practices for testing Angular applications.
+keywords:
+  [
+    'testing',
+    'unit tests',
+    'Vitest',
+    'Jest',
+    'Angular testing',
+    'test runner',
+    'jsdom',
+  ]
+image: https://analogjs.org/img/analog-banner.png
+url: https://analogjs.org/docs/features/testing/overview
+type: documentation
+author: Analog Team
+publishedTime: '2022-01-01T00:00:00.000Z'
+modifiedTime: '2024-01-01T00:00:00.000Z'
+section: Testing
+tags: ['testing', 'vitest', 'unit-tests']
+---
+
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 

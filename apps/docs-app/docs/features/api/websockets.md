@@ -1,3 +1,27 @@
+---
+title: WebSockets and Server-Sent Events in Analog - Real-time Communication
+description: Learn how to implement WebSockets and Server-Sent Events in Analog using Nitro. Enable real-time communication, chat applications, and live data streaming.
+keywords:
+  [
+    'WebSockets',
+    'Server-Sent Events',
+    'real-time',
+    'communication',
+    'chat',
+    'live data',
+    'Nitro',
+    'h3',
+  ]
+image: https://analogjs.org/img/analog-banner.png
+url: https://analogjs.org/docs/features/api/websockets
+type: documentation
+author: Analog Team
+publishedTime: '2022-01-01T00:00:00.000Z'
+modifiedTime: '2024-01-01T00:00:00.000Z'
+section: API Routes
+tags: ['websockets', 'sse', 'real-time', 'communication']
+---
+
 # WebSocket
 
 Analog also supports `WebSockets` and `Server-Sent Events` through Nitro.

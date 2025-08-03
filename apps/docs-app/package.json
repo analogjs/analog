@@ -4,26 +4,37 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
+    "start": "docusaurus start",
+    "build": "docusaurus build && rm -rf ../../dist/apps/docs-app && mv build ../../dist/apps/docs-app",
     "swizzle": "docusaurus swizzle",
+    "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
+    "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "build:analyze": "RSDOCTOR=true docusaurus build && mv build ../../dist/apps/docs-app"
   },
   "dependencies": {
-    "@docusaurus/core": "3.5.2",
-    "@docusaurus/preset-classic": "3.5.2",
+    "@docusaurus/core": "3.8.1",
+    "@docusaurus/plugin-sitemap": "^3.8.1",
+    "@docusaurus/preset-classic": "3.8.1",
+    "@docusaurus/theme-mermaid": "^3.8.1",
+    "@docusaurus/plugin-content-docs": "^3.8.1",
     "@mdx-js/react": "^3.1.0",
     "clsx": "^2.1.1",
-    "prism-react-renderer": "^2.4.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "prism-react-renderer": "^2.4.1",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "3.5.2",
-    "@docusaurus/tsconfig": "3.5.2",
-    "@docusaurus/types": "3.5.2",
-    "typescript": "~5.5.4"
+    "@docusaurus/faster": "^3.8.1",
+    "@docusaurus/module-type-aliases": "3.8.1",
+    "@docusaurus/plugin-rsdoctor": "^3.8.1",
+    "@docusaurus/tsconfig": "3.8.1",
+    "@docusaurus/types": "3.8.1",
+    "typescript": "~5.9.2",
+    "p-map": "^7.0.3"
   },
   "browserslist": {
     "production": [

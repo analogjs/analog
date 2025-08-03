@@ -4,6 +4,7 @@ import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import StackblitzButton from '@site/src/components/StackblitzButton';
 import Translate, { translate } from '@docusaurus/Translate';
 import Layout from '@theme/Layout';
+import SEO from '@site/src/components/SEO';
 import clsx from 'clsx';
 import React from 'react';
 
@@ -168,6 +169,25 @@ export default function Home(): JSX.Element {
         description: 'The description of the homepage',
       })}
     >
+      <SEO
+        title="Analog - The Fullstack Angular Meta-Framework"
+        description="Analog is a powerful fullstack meta-framework for building applications and websites with Angular. Modern tooling, file-based routing, SSR/SSG, API routes, and more."
+        keywords={[
+          'Analog',
+          'Angular',
+          'meta-framework',
+          'fullstack',
+          'SSR',
+          'SSG',
+          'file-based routing',
+          'Vite',
+          'TypeScript',
+          'modern development',
+        ]}
+        url="https://analogjs.org"
+        type="website"
+        image="https://analogjs.org/img/analog-banner.png"
+      />
       <HomepageHeader />
       <main>
         <HomepageFeatures />

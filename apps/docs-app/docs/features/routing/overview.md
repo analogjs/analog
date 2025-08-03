@@ -1,3 +1,26 @@
+---
+title: File-Based Routing in Analog - Complete Guide
+description: Learn about Analog's powerful file-based routing system. Understand static routes, dynamic routes, layout routes, and how to build complex navigation structures.
+keywords:
+  [
+    'routing',
+    'file-based routing',
+    'Angular router',
+    'dynamic routes',
+    'layout routes',
+    'static routes',
+    'route groups',
+  ]
+image: https://analogjs.org/img/analog-banner.png
+url: https://analogjs.org/docs/features/routing/overview
+type: documentation
+author: Analog Team
+publishedTime: '2022-01-01T00:00:00.000Z'
+modifiedTime: '2024-01-01T00:00:00.000Z'
+section: Routing
+tags: ['routing', 'navigation', 'file-structure']
+---
+
 # Routing
 
 Analog supports filesystem-based routing on top of the Angular Router.
@@ -14,18 +37,6 @@ Route components **must** be defined as the default export and all route compone
 
 There are 5 primary types of routes:
 
-- [Routing](#routing)
-  - [Defining Routes](#defining-routes)
-  - [Index Routes](#index-routes)
-  - [Static Routes](#static-routes)
-    - [Route Groups](#route-groups)
-  - [Dynamic Routes](#dynamic-routes)
-    - [Using Route Component Input Bindings](#using-route-component-input-bindings)
-  - [Layout Routes](#layout-routes)
-    - [Pathless Layout Routes](#pathless-layout-routes)
-  - [Catch-all Routes](#catch-all-routes)
-  - [Putting It All Together](#putting-it-all-together)
-
 These routes can be combined in different ways to build URLs for navigation.
 
 :::note
@@ -40,7 +51,7 @@ Index routes are defined by using the filename as the route path enclosed in par
 
 The example route below in `src/app/pages/(home).page.ts` defines an `/` route.
 
-```ts
+```ts title="(home).page.ts - Index route example"
 import { Component } from '@angular/core';
 
 @Component({
@@ -62,7 +73,7 @@ Static routes are defined by using the filename as the route path.
 
 The example route below in `src/app/pages/about.page.ts` defines an `/about` route.
 
-```ts
+```ts title="about.page.ts - Static route example"
 import { Component } from '@angular/core';
 
 @Component({

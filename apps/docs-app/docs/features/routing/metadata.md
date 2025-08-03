@@ -1,3 +1,27 @@
+---
+title: Route Metadata and SEO in Analog - Complete Guide
+description: Learn how to configure route metadata, SEO tags, redirects, and page-specific configurations in Analog. Master route guards, resolvers, and meta tag management.
+keywords:
+  [
+    'route metadata',
+    'SEO',
+    'meta tags',
+    'redirects',
+    'route guards',
+    'resolvers',
+    'page title',
+    'Open Graph',
+  ]
+image: https://analogjs.org/img/analog-banner.png
+url: https://analogjs.org/docs/features/routing/metadata
+type: documentation
+author: Analog Team
+publishedTime: '2022-01-01T00:00:00.000Z'
+modifiedTime: '2024-01-01T00:00:00.000Z'
+section: Routing
+tags: ['metadata', 'seo', 'redirects', 'guards']
+---
+
 # Route Metadata
 
 Additional metadata to add to the generated route config for each route can be done using the `RouteMeta` type. This is where you can define the page title, any necessary guards, resolvers, providers, and more.

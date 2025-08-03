@@ -72,3 +72,63 @@
     height: 100%;
   }
 }
+
+/* Quick Links Grid */
+.quick-links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.quick-link-card {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.quick-link-card:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
+.card-content {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.2s;
+  height: 100%;
+}
+
+.card-content:hover {
+  border-color: var(--ifm-color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Community Links */
+.community-links {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 2rem 0;
+}
+
+.community-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s;
+}
+
+.community-link:hover {
+  border-color: var(--ifm-color-primary);
+  background-color: var(--ifm-color-primary);
+  color: white;
+  text-decoration: none;
+}
