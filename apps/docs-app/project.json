@@ -12,7 +12,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "apps/docs-app",
-        "command": "docusaurus build && rm -rf ../../dist/apps/docs-app && mv build ../../dist/apps/docs-app"
+        "command": "docusaurus build && pnpx rimraf ../../dist/apps/docs-app && pnpx make-dir-cli ../../dist/apps && mv build ../../dist/apps/docs-app"
       },
       "outputs": ["{workspaceRoot}/dist/apps/docs-app"]
     },
