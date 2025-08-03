@@ -92,7 +92,7 @@ export const createTrpcClient = <AppRouter extends AnyRouter>({
             },
             fetch: customFetch as any,
             url: url ?? '',
-            ...(transformer && { transformer }),
+            // Remove this line: ...(transformer && { transformer }),
           } as HTTPBatchLinkOptions<AppRouter['_def']['_config']['$types']>),
         ];
 

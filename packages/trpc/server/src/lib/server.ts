@@ -13,9 +13,14 @@ import type {
   ProcedureType,
 } from '@trpc/server';
 import { TRPCError } from '@trpc/server';
-import { createURL } from 'ufo';
 import type { H3Event } from 'h3';
-import { createError, defineEventHandler, isMethod, readBody } from 'h3';
+import {
+  createError,
+  defineEventHandler,
+  isMethod,
+  readBody,
+  getRequestURL,
+} from 'h3';
 import type { TRPCResponse } from '@trpc/server/rpc';
 
 type MaybePromise<T> = T | Promise<T>;
@@ -83,8 +88,8 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
   return defineEventHandler(async (event) => {
     const { req, res } = event.node;
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const $url = createURL(req.url!);
+    // Get the full URL using h3's getRequestURL
+    const fullUrl = getRequestURL(event);
 
     const path = getPath(event);
 
@@ -100,7 +105,7 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
     }
 
     const body = isMethod(event, 'GET') ? null : await readBody(event);
-    const request = new Request($url, {
+    const request = new Request(fullUrl, {
       method: req.method!,
       headers: req.headers as HeadersInit,
       body: body ? JSON.stringify(body) : undefined,

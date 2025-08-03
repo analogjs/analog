@@ -5,15 +5,27 @@ import { observable } from '@trpc/server/observable';
 export function transformerLink<TRouter extends AnyRouter>(
   transformer: any,
 ): TRPCLink<TRouter> {
+  const inputSerializer = transformer.input?.serialize ?? transformer.serialize;
+  const outputDeserializer =
+    transformer.output?.deserialize ?? transformer.deserialize;
+
+  if (
+    typeof inputSerializer !== 'function' ||
+    typeof outputDeserializer !== 'function'
+  ) {
+    throw new Error(
+      'Invalid transformer provided; must have serialize and deserialize methods.',
+    );
+  }
+
   return () => {
     return ({ op, next }) => {
       return observable((observer) => {
         // Serialize input
         const serializedOp = {
           ...op,
-          input: transformer.input.serialize(op.input),
+          input: inputSerializer(op.input),
         };
-
         const subscription = next(serializedOp).subscribe({
           next(result) {
             if (
@@ -25,7 +37,7 @@ export function transformerLink<TRouter extends AnyRouter>(
                 ...result,
                 result: {
                   ...result.result,
-                  data: transformer.output.deserialize(result.result.data),
+                  data: outputDeserializer(result.result.data),
                 },
               });
             } else {
@@ -35,7 +47,6 @@ export function transformerLink<TRouter extends AnyRouter>(
           error: observer.error,
           complete: observer.complete,
         });
-
         return subscription;
       });
     };
