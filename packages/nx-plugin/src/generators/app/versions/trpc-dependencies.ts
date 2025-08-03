@@ -1,13 +1,5 @@
 import { lt, clean } from 'semver';
 import {
-  V16_X_ANALOG_JS_TRPC,
-  V16_X_ISOMORPHIC_FETCH,
-  V16_X_SUPERJSON,
-  V16_X_TRPC_CLIENT,
-  V16_X_TRPC_SERVER,
-  V16_X_ZOD,
-} from './nx_16_X/versions';
-import {
   V15_X_ANALOG_JS_TRPC,
   V15_X_ISOMORPHIC_FETCH,
   V15_X_SUPERJSON,
@@ -55,8 +47,8 @@ export const getTrpcDependencies = (
     );
   }
 
-  // install 15.8 deps for versions 15.8.0 =< 16.1.0
-  if (lt(escapedNxVersion, '16.1.0')) {
+  // install 15.x deps for versions <17.0.0
+  if (lt(escapedNxVersion, '17.0.0')) {
     return {
       '@analogjs/trpc': V15_X_ANALOG_JS_TRPC,
       '@trpc/client': V15_X_TRPC_CLIENT,
@@ -64,18 +56,6 @@ export const getTrpcDependencies = (
       superjson: V15_X_SUPERJSON,
       'isomorphic-fetch': V15_X_ISOMORPHIC_FETCH,
       zod: V15_X_ZOD,
-    };
-  }
-
-  // install 16.x deps for versions <17.0.0
-  if (lt(escapedNxVersion, '17.0.0')) {
-    return {
-      '@analogjs/trpc': V16_X_ANALOG_JS_TRPC,
-      '@trpc/client': V16_X_TRPC_CLIENT,
-      '@trpc/server': V16_X_TRPC_SERVER,
-      superjson: V16_X_SUPERJSON,
-      'isomorphic-fetch': V16_X_ISOMORPHIC_FETCH,
-      zod: V16_X_ZOD,
     };
   }
 

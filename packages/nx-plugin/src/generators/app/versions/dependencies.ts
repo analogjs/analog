@@ -1,20 +1,12 @@
 import { lt } from 'semver';
 import {
-  V16_X_ANALOG_JS_CONTENT,
-  V16_X_ANALOG_JS_ROUTER,
-  V16_X_FRONT_MATTER,
-  V16_X_MARKED,
-  V16_X_MARKED_GFM_HEADING_ID,
-  V16_X_MARKED_HIGHLIGHT,
-  V16_X_MARKED_MANGLE,
-  V16_X_MERMAID,
-  V16_X_PRISMJS,
-} from './nx_16_X/versions';
-import {
   V15_X_ANALOG_JS_CONTENT,
   V15_X_ANALOG_JS_ROUTER,
   V15_X_FRONT_MATTER,
   V15_X_MARKED,
+  V15_X_MARKED_GFM_HEADING_ID,
+  V15_X_MARKED_HIGHLIGHT,
+  V15_X_MARKED_MANGLE,
   V15_X_MERMAID,
   V15_X_PRISMJS,
 } from './nx_15_X/versions';
@@ -42,31 +34,22 @@ import {
   V18_X_PRISMJS,
 } from './nx_18_X/versions';
 
-const dependencyKeys15 = [
+const dependencyKeys = [
   '@analogjs/content',
   '@analogjs/router',
   '@angular/platform-server',
   'front-matter',
   'marked',
-  'mermaid',
-  'prismjs',
-] as const;
-
-const dependencyKeys16 = [
   'marked-gfm-heading-id',
   'marked-highlight',
   'marked-mangle',
   'mermaid',
+  'prismjs',
 ] as const;
 
-export type AnalogDependency15 = (typeof dependencyKeys15)[number];
-export type AnalogDependency16 = (typeof dependencyKeys16)[number];
+export type AnalogDependency = (typeof dependencyKeys)[number];
 
-type AnalogDependency15Record = Record<AnalogDependency15, string>;
-type AnalogDependency16Record = Partial<Record<AnalogDependency16, string>>;
-
-export type ExtendedDependenciesRecord = AnalogDependency15Record &
-  AnalogDependency16Record;
+export type ExtendedDependenciesRecord = Record<AnalogDependency, string>;
 
 export const getAnalogDependencies = (
   nxVersion: string,
@@ -81,32 +64,19 @@ export const getAnalogDependencies = (
     );
   }
 
-  // install 15.X deps for versions 15.8.0 =< 16.1.0
-  if (lt(escapedNxVersion, '16.1.0')) {
+  // install 15.X deps for versions <17.0.0
+  if (lt(escapedNxVersion, '17.0.0')) {
     return {
       '@angular/platform-server': `^${angularVersion}`,
       '@analogjs/content': V15_X_ANALOG_JS_CONTENT,
       '@analogjs/router': V15_X_ANALOG_JS_ROUTER,
       'front-matter': V15_X_FRONT_MATTER,
       marked: V15_X_MARKED,
+      'marked-gfm-heading-id': V15_X_MARKED_GFM_HEADING_ID,
+      'marked-highlight': V15_X_MARKED_HIGHLIGHT,
+      'marked-mangle': V15_X_MARKED_MANGLE,
       mermaid: V15_X_MERMAID,
       prismjs: V15_X_PRISMJS,
-    };
-  }
-
-  // install 16.X deps for versions 16.1.0 =< 16.10.0
-  if (lt(escapedNxVersion, '17.0.0')) {
-    return {
-      '@angular/platform-server': `^${angularVersion}`,
-      '@analogjs/content': V16_X_ANALOG_JS_CONTENT,
-      '@analogjs/router': V16_X_ANALOG_JS_ROUTER,
-      'front-matter': V16_X_FRONT_MATTER,
-      marked: V16_X_MARKED,
-      'marked-gfm-heading-id': V16_X_MARKED_GFM_HEADING_ID,
-      'marked-highlight': V16_X_MARKED_HIGHLIGHT,
-      'marked-mangle': V16_X_MARKED_MANGLE,
-      mermaid: V16_X_MERMAID,
-      prismjs: V16_X_PRISMJS,
     };
   }
 

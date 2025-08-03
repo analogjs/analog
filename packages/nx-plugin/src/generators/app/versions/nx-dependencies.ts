@@ -1,11 +1,6 @@
 import { clean, lt } from 'semver';
 import { stripIndents } from '@nx/devkit';
 import {
-  V16_X_NX_DEVKIT,
-  V16_X_NX_ANGULAR,
-  V16_X_NX_LINTER,
-} from './nx_16_X/versions';
-import {
   V15_X_NRWL_DEVKIT,
   V15_X_NX_DEVKIT,
   V15_X_NRWL_ANGULAR,
@@ -35,15 +30,15 @@ export const getNrwlDependencies = (
 ): Record<NrwlDependency, string> => {
   const escapedNxVersion = clean(nxVersion);
 
-  // fail out for versions <15.2.0
-  if (lt(escapedNxVersion, '15.2.0')) {
+  // fail out for versions <17.0.0
+  if (lt(escapedNxVersion, '17.0.0')) {
     throw new Error(
-      stripIndents`Nx v15.2.0 or newer is required to install Analog`,
+      stripIndents`Nx v17.0.0 or newer is required to install Analog`,
     );
   }
 
-  // install 15.8 deps for versions 15.8.0 =< 16.0.0
-  if (lt(escapedNxVersion, '16.0.0')) {
+  // install 15.8 deps for versions 15.8.0 =< 17.0.0
+  if (lt(escapedNxVersion, '17.0.0')) {
     return {
       '@nrwl/angular': V15_X_NRWL_ANGULAR,
       '@nrwl/devkit': V15_X_NRWL_DEVKIT,
@@ -51,9 +46,9 @@ export const getNrwlDependencies = (
     };
   }
 
-  // error for @nrwl to @nx namespace change for Nx >= 16
+  // error for @nrwl to @nx namespace change for Nx >= 17
   throw new Error(
-    stripIndents`As of Nx 16.0.0 the @nrwl scope has been replaced with the @nx scope. Please use @nx scope to install version ${nxVersion}`,
+    stripIndents`As of Nx 17.0.0 the @nrwl scope has been replaced with the @nx scope. Please use @nx scope to install version ${nxVersion}`,
   );
 };
 
@@ -64,28 +59,19 @@ export const getNxDependencies = (
 ): Record<NxDependency, string> => {
   const escapedNxVersion = clean(nxVersion);
 
-  // error for @nrwl to @nx namespace changes for Nx < 16
-  if (lt(escapedNxVersion, '16.0.0')) {
+  // error for @nrwl to @nx namespace changes for Nx < 17
+  if (lt(escapedNxVersion, '17.0.0')) {
     throw new Error(
-      stripIndents`The @nx scope is only supported in Nx 16.0.0 and newer. Please use @nrwl scope to install version ${nxVersion}`,
+      stripIndents`The @nx scope is only supported in Nx 17.0.0 and newer. Please use @nrwl scope to install version ${nxVersion}`,
     );
   }
 
-  // install 16.0 deps for versions 16.0.0 =< 16.1.0
-  if (lt(escapedNxVersion, '16.1.0')) {
+  // install 15.x deps for versions <17.0.0
+  if (lt(escapedNxVersion, '17.0.0')) {
     return {
       '@nx/angular': V15_X_NX_ANGULAR,
       '@nx/devkit': V15_X_NX_DEVKIT,
       '@nx/eslint': V15_X_NX_LINTER,
-    };
-  }
-
-  // install 16.0 deps for versions =< 17.0.0
-  if (lt(escapedNxVersion, '17.0.0')) {
-    return {
-      '@nx/angular': V16_X_NX_ANGULAR,
-      '@nx/devkit': V16_X_NX_DEVKIT,
-      '@nx/eslint': V16_X_NX_LINTER,
     };
   }
 
