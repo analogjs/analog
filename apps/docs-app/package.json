@@ -13,7 +13,7 @@
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc",
-    "build:analyze": "RSDOCTOR=true docusaurus build && mv build ../../dist/apps/docs-app"
+    "build:analyze": "RSDOCTOR=true docusaurus build && rm -rf ../../dist/apps/docs-app && mv build ../../dist/apps/docs-app"
   },
   "dependencies": {
     "@docusaurus/core": "3.8.1",
