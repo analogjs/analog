@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  p-map: 7.0.0
-
 importers:
 
   .:
@@ -536,8 +533,8 @@ importers:
         specifier: 3.8.1
         version: 3.8.1(@swc/core@1.13.3(@swc/helpers@0.5.17))(acorn@8.14.1)(esbuild@0.25.8)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       p-map:
-        specifier: 7.0.0
-        version: 7.0.0
+        specifier: ^7.0.3
+        version: 7.0.3
       typescript:
         specifier: ~5.9.2
         version: 5.9.2
@@ -6206,6 +6203,10 @@ packages:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
 
+  aggregate-error@4.0.1:
+    resolution: {integrity: sha512-0poP0T7el6Vq3rstR8Mn4V/IQrpBLO6POkUSrN7RhyY+GF/InCFShQzsQ39T25gkHhLgSLByyAz+Kjb+c2L98w==}
+    engines: {node: '>=12'}
+
   aggregate-error@5.0.0:
     resolution: {integrity: sha512-gOsf2YwSlleG6IjRYG2A7k0HmBMEo6qVNk9Bp/EaLgAJT5ngH6PXbqa4ItvnEwCm/velL5jAnQgsHsWnjhGmvw==}
     engines: {node: '>=18'}
@@ -6936,6 +6937,10 @@ packages:
   clean-stack@2.2.0:
     resolution: {integrity: sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==}
     engines: {node: '>=6'}
+
+  clean-stack@4.2.0:
+    resolution: {integrity: sha512-LYv6XPxoyODi36Dp976riBtSY27VmFo+MKqEU9QCCWyTrdEPDog+RWA7xQWHi6Vbp61j5c4cdzzX1NidnwtUWg==}
+    engines: {node: '>=12'}
 
   clean-stack@5.2.0:
     resolution: {integrity: sha512-TyUIUJgdFnCISzG5zu3291TAsE77ddchd0bepon1VVQrKLGKFED4iXFEDQ24mIPdPBbyE16PK3F8MYE1CmcBEQ==}
@@ -11923,8 +11928,20 @@ packages:
     resolution: {integrity: sha512-wPrq66Llhl7/4AGC6I+cqxT07LhXvWL08LNXz1fENOw0Ap4sRZZ/gZpTTJ5jpurzzzfS2W/Ge9BY3LgLjCShcw==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  p-map@7.0.0:
-    resolution: {integrity: sha512-EZl03dLKv3RypkrjlevZoNwQMSy4bAblWcR18zhonktnN4fUs3asFQKSe0awn982omGxamvbejqQKQYDJYHCEg==}
+  p-map@4.0.0:
+    resolution: {integrity: sha512-/bjOqmgETBYB5BoEeGVea8dmvHb2m9GLy1E9W43yeyfP6QQCZGFNa+XRceJEuDB6zqr+gKpIAmlLebMpykw/MQ==}
+    engines: {node: '>=10'}
+
+  p-map@5.5.0:
+    resolution: {integrity: sha512-VFqfGDHlx87K66yZrNdI4YGtD70IRyd+zSvgks6mzHPRNkoKy+9EKP4SFC77/vTTQYmRmti7dvqC+m5jBrBAcg==}
+    engines: {node: '>=12'}
+
+  p-map@6.0.0:
+    resolution: {integrity: sha512-T8BatKGY+k5rU+Q/GTYgrEf2r4xRMevAN5mtXc2aPc4rS1j3s+vWTaO2Wag94neXuCAUAs8cxBL9EeB5EA6diw==}
+    engines: {node: '>=16'}
+
+  p-map@7.0.3:
+    resolution: {integrity: sha512-VkndIv2fIB99swvQoA65bm+fsmt6UNdGeIB0oxBs+WhAhdh08QA04JXpI7rbB9r08/nkbysKoya9rtDERYOYMA==}
     engines: {node: '>=18'}
 
   p-queue@6.6.2:
@@ -19798,7 +19815,7 @@ snapshots:
       leven: 3.1.0
       lodash: 4.17.21
       open: 8.4.2
-      p-map: 7.0.0
+      p-map: 4.0.0
       prompts: 2.4.2
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
@@ -24825,6 +24842,11 @@ snapshots:
       clean-stack: 2.2.0
       indent-string: 4.0.0
 
+  aggregate-error@4.0.1:
+    dependencies:
+      clean-stack: 4.2.0
+      indent-string: 5.0.0
+
   aggregate-error@5.0.0:
     dependencies:
       clean-stack: 5.2.0
@@ -25589,7 +25611,7 @@ snapshots:
       minipass-collect: 1.0.2
       minipass-flush: 1.0.5
       minipass-pipeline: 1.2.4
-      p-map: 7.0.0
+      p-map: 4.0.0
       ssri: 10.0.0
       tar: 6.2.0
       unique-filename: 3.0.0
@@ -25604,7 +25626,7 @@ snapshots:
       minipass-collect: 2.0.1
       minipass-flush: 1.0.5
       minipass-pipeline: 1.2.4
-      p-map: 7.0.0
+      p-map: 7.0.3
       ssri: 12.0.0
       tar: 7.4.3
       unique-filename: 4.0.0
@@ -25809,6 +25831,10 @@ snapshots:
       source-map: 0.6.1
 
   clean-stack@2.2.0: {}
+
+  clean-stack@4.2.0:
+    dependencies:
+      escape-string-regexp: 5.0.0
 
   clean-stack@5.2.0:
     dependencies:
@@ -26323,7 +26349,7 @@ snapshots:
       micromatch: 4.0.8
       nested-error-stacks: 2.1.1
       p-filter: 3.0.0
-      p-map: 7.0.0
+      p-map: 6.0.0
 
   crc-32@1.2.2: {}
 
@@ -30181,7 +30207,7 @@ snapshots:
       cli-truncate: 2.1.0
       colorette: 2.0.20
       log-update: 4.0.0
-      p-map: 7.0.0
+      p-map: 4.0.0
       rfdc: 1.4.1
       rxjs: 7.8.2
       through: 2.3.8
@@ -32084,11 +32110,11 @@ snapshots:
 
   p-filter@3.0.0:
     dependencies:
-      p-map: 7.0.0
+      p-map: 5.5.0
 
   p-filter@4.1.0:
     dependencies:
-      p-map: 7.0.0
+      p-map: 7.0.3
 
   p-finally@1.0.0: {}
 
@@ -32130,7 +32156,17 @@ snapshots:
     dependencies:
       p-limit: 4.0.0
 
-  p-map@7.0.0: {}
+  p-map@4.0.0:
+    dependencies:
+      aggregate-error: 3.1.0
+
+  p-map@5.5.0:
+    dependencies:
+      aggregate-error: 4.0.1
+
+  p-map@6.0.0: {}
+
+  p-map@7.0.3: {}
 
   p-queue@6.6.2:
     dependencies:

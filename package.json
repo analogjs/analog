@@ -205,9 +205,6 @@
     "xmlbuilder2": "^3.0.2"
   },
   "pnpm": {
-    "overrides": {
-      "p-map": "7.0.0"
-    },
     "ignoredBuiltDependencies": [
       "cypress"
     ],
