@@ -32,6 +32,7 @@ export const viteFinal = async (config, options) => {
         '@storybook/angular/dist/client/index.js',
         '@analogjs/storybook-angular',
         '@angular/compiler',
+        '@angular/platform-browser',
         '@angular/platform-browser/animations',
         'tslib',
         'zone.js',

@@ -13,5 +13,10 @@
     "src/server/components/**/*.ts",
     "src/server/middleware/**/*.ts"
   ],
-  "exclude": ["**/*.test.ts", "**/*.spec.ts"]
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.stories.ts",
+    "**/*.stories.js"
+  ]
 }
