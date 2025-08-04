@@ -132,7 +132,41 @@ function fixtureVitestSerializer(fixture: any) {
     'text/html',
   );
 
-  return doc.body.childNodes[0];
+  const result = doc.body.childNodes[0];
+
+  // Strip ng-reflect-* and ng-version attributes from the serialized output
+  stripAngularAttributes(result);
+
+  return result;
+}
+
+/**
+ * Recursively strip ng-reflect-* and ng-version attributes from DOM elements
+ * @param element The DOM element to process
+ */
+function stripAngularAttributes(element: any) {
+  if (!element || !element.attributes) {
+    return;
+  }
+
+  // Get all attribute names to avoid live collection issues
+  const attributeNames = Array.from(element.attributes).map(
+    (attr: any) => attr.name,
+  );
+
+  // Remove ng-reflect-* and ng-version attributes
+  attributeNames.forEach((attrName: string) => {
+    if (attrName.startsWith('ng-reflect-') || attrName === 'ng-version') {
+      element.removeAttribute(attrName);
+    }
+  });
+
+  // Recursively process child elements
+  if (element.children) {
+    Array.from(element.children).forEach((child: any) => {
+      stripAngularAttributes(child);
+    });
+  }
 }
 
 ['expect'].forEach((methodName) => {
