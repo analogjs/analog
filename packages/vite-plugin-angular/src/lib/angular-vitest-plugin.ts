@@ -21,7 +21,7 @@ export function angularVitestPlugin(): Plugin {
           noExternal: [/cdk\/fesm2022/, /fesm2022(.*?)testing/, /fesm2015/],
         },
         test: {
-          pool: userConfig.test?.pool ?? 'vmThreads',
+          pool: (userConfig as any).test?.pool ?? 'vmThreads',
         },
       };
     },
