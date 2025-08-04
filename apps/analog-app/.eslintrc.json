@@ -3,7 +3,8 @@
   "ignorePatterns": [
     "!**/*",
     "**/vite.config.*.timestamp*",
-    "**/vitest.config.*.timestamp*"
+    "**/vitest.config.*.timestamp*",
+    "storybook-static"
   ],
   "overrides": [
     {
