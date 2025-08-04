@@ -1,4 +1,4 @@
-import { BehaviorSubject, first, timer } from 'rxjs';
+import { BehaviorSubject, first, timer, switchMap } from 'rxjs';
 import {
   APP_BOOTSTRAP_LISTENER,
   ApplicationRef,
@@ -25,12 +25,14 @@ export const provideTrpcCacheStateStatusManager = () => ({
     return () => {
       // Wait for app to be stable, then add a small delay to ensure
       // all initial tRPC queries have completed before deactivating cache
-      appRef.isStable.pipe(first((isStable) => isStable)).subscribe(() => {
-        // Add a small delay to ensure all initial queries complete
-        timer(100).subscribe(() => {
+      appRef.isStable
+        .pipe(
+          first((isStable) => isStable),
+          switchMap(() => timer(100)),
+        )
+        .subscribe(() => {
           cacheState.isCacheActive.next(false);
         });
-      });
     };
   },
   deps: [ApplicationRef, tRPC_CACHE_STATE],
