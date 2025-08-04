@@ -1,13 +1,4 @@
 import { lt } from 'semver';
-import {
-  V16_X_ANALOG_JS_PLATFORM,
-  V16_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
-  V16_X_ANALOG_JS_VITEST_ANGULAR,
-  V16_X_JSDOM,
-  V16_X_NX_VITE,
-  V16_X_VITE_TSCONFIG_PATHS,
-  V16_X_VITEST,
-} from './ng_16_X/versions';
 import { stripIndents } from '@nx/devkit';
 import {
   V17_X_ANALOG_JS_PLATFORM,
@@ -18,15 +9,6 @@ import {
   V17_X_VITE_TSCONFIG_PATHS,
   V17_X_VITEST,
 } from './ng_17_X/versions';
-import {
-  V15_X_ANALOG_JS_PLATFORM,
-  V15_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
-  V15_X_NX_VITE,
-  V15_X_JSDOM,
-  V15_X_VITE_TSCONFIG_PATHS,
-  V15_X_VITEST,
-  V15_X_ANALOG_JS_VITEST_ANGULAR,
-} from './ng_15_X/versions';
 import {
   V18_X_ANALOG_JS_PLATFORM,
   V18_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
@@ -79,37 +61,9 @@ const getDevDependencies = (
   escapedAngularVersion: string,
   escapedNxVersion: string | null,
 ) => {
-  // fail out for versions <15.0.0
-  if (lt(escapedAngularVersion, '15.0.0')) {
-    throw new Error(stripIndents`Angular v15.0.0 or newer is required.`);
-  }
-
-  // install 15.x deps for versions <16.0.0
-  if (lt(escapedAngularVersion, '16.0.0')) {
-    return {
-      '@analogjs/platform': V15_X_ANALOG_JS_PLATFORM,
-      '@analogjs/vite-plugin-angular': V15_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
-      '@analogjs/vitest-angular': V15_X_ANALOG_JS_VITEST_ANGULAR,
-      '@nx/vite': V15_X_NX_VITE,
-      jsdom: V15_X_JSDOM,
-      'vite-tsconfig-paths': V15_X_VITE_TSCONFIG_PATHS,
-      vite: V19_X_VITE,
-      vitest: V15_X_VITEST,
-    };
-  }
-
-  // install 16.x deps for versions <17.0.0
+  // fail out for versions <17.0.0
   if (lt(escapedAngularVersion, '17.0.0')) {
-    return {
-      '@analogjs/platform': V16_X_ANALOG_JS_PLATFORM,
-      '@analogjs/vite-plugin-angular': V16_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
-      '@analogjs/vitest-angular': V16_X_ANALOG_JS_VITEST_ANGULAR,
-      '@nx/vite': V16_X_NX_VITE,
-      jsdom: V16_X_JSDOM,
-      'vite-tsconfig-paths': V16_X_VITE_TSCONFIG_PATHS,
-      vite: V19_X_VITE,
-      vitest: V16_X_VITEST,
-    };
+    throw new Error(stripIndents`Angular v17.0.0 or newer is required.`);
   }
 
   // install 17.x deps for versions <18.0.0
