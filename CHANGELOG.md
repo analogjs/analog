@@ -1,3 +1,9 @@
+# [2.0.0-alpha.15](https://github.com/analogjs/analog/compare/v2.0.0-alpha.14...v2.0.0-alpha.15) (2025-08-05)
+
+### Bug Fixes
+
+- **storybook-angular:** add platform-browser to optimized dependencies ([#1817](https://github.com/analogjs/analog/issues/1817)) ([170b56c](https://github.com/analogjs/analog/commit/170b56c4453e1948958d8bfc22694d6cb64c9c51))
+
 # [2.0.0-alpha.14](https://github.com/analogjs/analog/compare/v2.0.0-alpha.13...v2.0.0-alpha.14) (2025-08-02)
 
 ### Bug Fixes
