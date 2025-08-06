@@ -5,6 +5,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import * as compilerCli from '@angular/compiler-cli';
 import * as ts from 'typescript';
 import { createRequire } from 'node:module';
+import { globSync } from 'tinyglobby';
 
 import {
   ModuleNode,
@@ -619,6 +620,44 @@ export function angular(options?: PluginOptions): Plugin[] {
     nxFolderPlugin(),
   ].filter(Boolean) as Plugin[];
 
+  /**
+   * Discovers Analog format files (.analog, .agx, .ag) for compilation.
+   *
+   * This function:
+   * 1. Discovers all Analog format files in the app root and additional directories
+   * 2. Supports multiple file extensions: .analog, .agx, .ag
+   * 3. Handles custom include patterns and additional content directories
+   * 4. Returns TypeScript file paths for virtual compilation
+   *
+   * @param config The Vite resolved configuration
+   * @returns Array of TypeScript file paths for virtual compilation
+   *
+   * Example usage:
+   * const analogFiles = findAnalogFiles(config);
+   *
+   * Sample discovered file paths:
+   * - /workspace/apps/analog-app/src/app/pages/goodbye.page.analog
+   * - /workspace/apps/ng-app/src/app/pages/about.page.ag
+   * - /workspace/libs/shared/feature/src/content/test.agx
+   * - /workspace/apps/ng-app/src/content/post.agx
+   *
+   * tinyglobby vs fast-glob comparison:
+   * - Both support the same glob patterns for file discovery
+   * - Both are efficient for finding Analog format files
+   * - tinyglobby is now used instead of fast-glob
+   * - tinyglobby provides similar functionality with smaller bundle size
+   * - tinyglobby's globSync returns absolute paths when absolute: true is set
+   *
+   * Glob patterns explained:
+   * - Finds all Analog files in app root and additional directories
+   * - Supports custom include patterns and content directories
+   * - Converts include patterns from .ts to .analog extensions
+   *
+   * File format examples:
+   * - .analog: Single File Components with Angular syntax
+   * - .agx: Content files with front matter (similar to MDX)
+   * - .ag: Alternative Angular component format
+   */
   function findAnalogFiles(config: ResolvedConfig) {
     const analogConfig = pluginOptions.supportAnalogFormat;
     if (!analogConfig) {
@@ -633,41 +672,72 @@ export function angular(options?: PluginOptions): Plugin[] {
       }
     }
 
-    const fg = require('fast-glob');
     const appRoot = normalizePath(
       resolve(pluginOptions.workspaceRoot, config.root || '.'),
     );
     const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));
 
+    // Construct glob patterns for discovering Analog format files
     const globs = [
-      `${appRoot}/**/*.{analog,agx,ag}`,
-      ...extraGlobs.map((glob) => `${workspaceRoot}${glob}.{analog,agx,ag}`),
+      `${appRoot}/**/*.{analog,agx,ag}`, // Find all Analog files in app root
+      ...extraGlobs.map((glob) => `${workspaceRoot}${glob}.{analog,agx,ag}`), // Custom include patterns
       ...(pluginOptions.additionalContentDirs || []).map(
-        (glob) => `${workspaceRoot}${glob}/**/*.agx`,
+        (glob) => `${workspaceRoot}${glob}/**/*.agx`, // Additional content directories
       ),
-      ...pluginOptions.include.map((glob) =>
-        `${workspaceRoot}${glob}`.replace(/\.ts$/, '.analog'),
+      ...pluginOptions.include.map(
+        (glob) => `${workspaceRoot}${glob}`.replace(/\.ts$/, '.analog'), // Include patterns converted to .analog
       ),
     ];
 
-    return fg
-      .sync(globs, {
-        dot: true,
-      })
-      .map((file: string) => `${file}.ts`);
+    // Discover files and convert to TypeScript paths for virtual compilation
+    return globSync(globs, {
+      dot: true,
+      absolute: true,
+    }).map((file: string) => `${file}.ts`); // Append .ts for virtual compilation
   }
 
+  /**
+   * Discovers additional TypeScript files to include in compilation.
+   *
+   * This function:
+   * 1. Discovers all TypeScript files specified in pluginOptions.include
+   * 2. Maps include patterns to workspace-relative paths
+   * 3. Returns absolute file paths for TypeScript compilation
+   *
+   * @returns Array of absolute TypeScript file paths for compilation
+   *
+   * Example usage:
+   * const includeFiles = findIncludes();
+   *
+   * Sample discovered file paths:
+   * - /workspace/apps/analog-app/src/app/shared/utils.ts
+   * - /workspace/libs/shared/feature/src/lib/feature.ts
+   * - /workspace/apps/ng-app/src/app/services/api.ts
+   *
+   * tinyglobby vs fast-glob comparison:
+   * - Both support the same glob patterns for file discovery
+   * - Both are efficient for finding TypeScript files
+   * - tinyglobby is now used instead of fast-glob
+   * - tinyglobby provides similar functionality with smaller bundle size
+   * - tinyglobby's globSync returns absolute paths when absolute: true is set
+   *
+   * Include pattern processing:
+   * - Maps relative include patterns to absolute workspace paths
+   * - Supports glob patterns for flexible file discovery
+   * - Returns absolute paths for TypeScript compiler
+   */
   function findIncludes() {
-    const fg = require('fast-glob');
-
     const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));
 
+    // Map include patterns to absolute workspace paths
     const globs = [
       ...pluginOptions.include.map((glob) => `${workspaceRoot}${glob}`),
     ];
 
-    return fg.sync(globs, {
+    // Discover TypeScript files using tinyglobby
+    return globSync(globs, {
       dot: true,
+      absolute: true,
     });
   }
 
