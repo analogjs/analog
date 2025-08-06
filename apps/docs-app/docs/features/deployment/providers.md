@@ -1,3 +1,29 @@
+---
+title: Deployment Providers for Analog - Complete Hosting Guide
+description: Learn how to deploy Analog applications to various hosting providers including Zerops, Vercel, Netlify, and more. Configure deployment for SSR and SSG applications.
+keywords:
+  [
+    'deployment',
+    'hosting',
+    'providers',
+    'Zerops',
+    'Vercel',
+    'Netlify',
+    'Nitro',
+    'SSR',
+    'SSG',
+    'CI/CD',
+  ]
+image: https://analogjs.org/img/analog-banner.png
+url: https://analogjs.org/docs/features/deployment/providers
+type: documentation
+author: Analog Team
+publishedTime: '2022-01-01T00:00:00.000Z'
+modifiedTime: '2024-01-01T00:00:00.000Z'
+section: Deployment
+tags: ['deployment', 'hosting', 'providers', 'ci-cd']
+---
+
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -96,7 +122,7 @@ zerops:
       start: node dist/analog/server/index.mjs
 ```
 
-#### 3. [Trigger the build & deploy pipeline](#build-deploy-your-code)
+#### 3. [Trigger the build & deploy pipeline](#build--deploy-your-code)
 
 ---
 

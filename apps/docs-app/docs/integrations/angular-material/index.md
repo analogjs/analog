@@ -16,7 +16,7 @@ To begin, you need to install the `@angular/cdk` and `@angular/material` package
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
-```shell
+```shell title="Install Angular Material with npm"
 npm install @angular/cdk @angular/material
 ```
 
@@ -24,7 +24,7 @@ npm install @angular/cdk @angular/material
 
   <TabItem label="yarn" value="yarn">
 
-```shell
+```shell title="Install Angular Material with Yarn"
 yarn add @angular/cdk @angular/material
 ```
 
@@ -32,7 +32,7 @@ yarn add @angular/cdk @angular/material
 
   <TabItem value="pnpm">
 
-```shell
+```shell title="Install Angular Material with pnpm"
 pnpm install @angular/cdk @angular/material
 ```
 
@@ -45,7 +45,7 @@ pnpm install @angular/cdk @angular/material
 2. If you're using `zone.js`, configure the `scss` preprocessorOptions to use the `legacy` api.
 3. Set the `inlineStylesExtension` property to `'scss'` in the `vite.config.ts` file:
 
-```ts
+```ts title="vite.config.ts - SCSS configuration for Angular Material"
 export default defineConfig(({ mode }) => {
   return {
     css: {
@@ -68,7 +68,7 @@ export default defineConfig(({ mode }) => {
 
 4. Update the `index.html` file to reference the SCSS file:
 
-```html
+```html title="index.html - Angular Material setup"
 <head>
   <!-- other headers -->
   <link rel="stylesheet" href="/src/styles.scss" />
@@ -87,9 +87,11 @@ export default defineConfig(({ mode }) => {
 </body>
 ```
 
+````
+
 5. Update the `styles.scss` file to import the Angular Material styles and define your custom theme:
 
-```scss
+```scss title="styles.scss - Angular Material theme configuration"
 @use '@angular/material' as mat;
 
 html {
@@ -113,7 +115,7 @@ body {
 html {
   height: 100%;
 }
-```
+````
 
 ## Optional Step: Configuring Animations
 

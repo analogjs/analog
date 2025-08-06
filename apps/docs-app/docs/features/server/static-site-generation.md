@@ -1,3 +1,26 @@
+---
+title: Static Site Generation (SSG) in Analog - Build Fast Static Sites
+description: Learn how to use Static Site Generation in Analog to build fast, SEO-optimized static sites. Configure prerendering, content-based routes, and deployment strategies.
+keywords:
+  [
+    'SSG',
+    'static site generation',
+    'prerendering',
+    'static sites',
+    'build time',
+    'content routes',
+    'deployment',
+  ]
+image: https://analogjs.org/img/analog-banner.png
+url: https://analogjs.org/docs/features/server/static-site-generation
+type: documentation
+author: Analog Team
+publishedTime: '2022-01-01T00:00:00.000Z'
+modifiedTime: '2024-01-01T00:00:00.000Z'
+section: Rendering
+tags: ['ssg', 'static-sites', 'prerendering', 'build']
+---
+
 # Building Static Sites
 
 Analog supports Static Site Generation when building for deployment. This includes prerendering provided routes to static HTML files along with the client-side application.

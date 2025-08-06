@@ -1,5 +1,25 @@
 ---
 sidebar_position: 1
+title: Analog SFCs - Single File Components for Angular
+description: Learn about Analog SFCs, an experimental Single File Component format for Angular. Simplify component authoring with colocated template, script, and style tags.
+keywords:
+  [
+    'Analog SFCs',
+    'Single File Components',
+    'Angular components',
+    'experimental',
+    'Vite plugin',
+    'IDE support',
+    'signal APIs',
+  ]
+image: https://analogjs.org/img/analog-banner.png
+url: https://analogjs.org/docs/experimental/sfc
+type: documentation
+author: Analog Team
+publishedTime: '2022-01-01T00:00:00.000Z'
+modifiedTime: '2024-01-01T00:00:00.000Z'
+section: Experimental
+tags: ['sfc', 'single-file-components', 'experimental', 'angular']
 ---
 
 # Analog SFCs
