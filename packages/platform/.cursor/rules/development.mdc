@@ -1,0 +1,197 @@
+---
+description: Development rules and best practices for @analogjs/platform package
+globs:
+  - "packages/platform/src/**/*.ts"
+  - "packages/platform/src/**/*.js"
+  - "packages/platform/*.json"
+  - "packages/platform/migrations/**/*"
+alwaysApply: false
+---
+
+# @analogjs/platform Package Development Rules
+
+## Overview
+This package serves as the fullstack meta-framework for Angular, orchestrating the integration of various Analog packages and providing the core development experience with Vite and Nitro.
+
+## Package Purpose & Goals
+- **Primary Goal**: Provide a complete fullstack Angular development platform
+- **Target Users**: Angular developers building modern fullstack applications
+- **Key Features**:
+  - Unified development experience
+  - SSR/SSG/SPA support
+  - API routes via Nitro
+  - File-based routing
+  - Build orchestration
+  - Nx workspace integration
+
+## Development Best Practices
+
+### 1. Package Orchestration
+- Act as the central coordinator for:
+  - `@analogjs/vite-plugin-angular`
+  - `@analogjs/vite-plugin-nitro`
+  - `@analogjs/router`
+  - `@analogjs/content`
+- Maintain consistent APIs across integrations
+- Handle configuration merging gracefully
+
+### 2. Architecture Principles
+```
+src/
+├── index.js               # Main exports
+├── lib/
+│   ├── build/            # Build configurations
+│   ├── dev-server/       # Development server setup
+│   ├── nx-plugin/        # Nx generators and executors
+│   └── config/           # Configuration helpers
+```
+
+### 3. Configuration Management
+- Provide sensible defaults
+- Support configuration extension
+- Merge Vite and Nitro configs properly
+- Handle environment variables
+- Support multiple build targets
+
+### 4. Nx Integration
+- **Generators**: App, page, preset
+- **Executors**: Build, serve, test
+- Support Nx workspace conventions
+- Integrate with Nx cache
+- Handle monorepo structures
+
+### 5. Build Pipeline
+- Coordinate Vite and Nitro builds
+- Support multiple rendering modes:
+  - Client-side only (SPA)
+  - Server-side rendering (SSR)
+  - Static site generation (SSG)
+  - Hybrid rendering
+- Optimize bundle sizes
+- Handle asset processing
+
+## Quality Rules
+
+### 1. Dependency Coordination
+- Manage version compatibility between sub-packages
+- Use consistent versioning strategy
+- Test integration scenarios
+- Handle peer dependency conflicts
+- Provide clear upgrade paths
+
+### 2. Developer Experience
+- Fast startup times
+- Clear error messages
+- Intuitive CLI commands
+- Helpful console output
+- Smart defaults
+
+### 3. Performance Standards
+- Optimize cold start time
+- Minimize memory usage
+- Efficient file watching
+- Fast rebuild times
+- Optimal production bundles
+
+### 4. Testing Strategy
+- Integration tests across packages
+- E2E tests for full workflows
+- Performance benchmarks
+- Nx workspace tests
+- Multi-configuration tests
+
+### 5. Configuration Validation
+- Validate config at startup
+- Provide helpful error messages
+- Support config migration
+- Type-safe configurations
+- Environment validation
+
+## Platform Features
+
+### 1. Rendering Modes
+- **SPA Mode**: Client-only rendering
+- **SSR Mode**: Full server rendering
+- **SSG Mode**: Build-time generation
+- **ISR Mode**: Incremental regeneration
+- **Hybrid**: Mix of modes per route
+
+### 2. Development Server
+- Vite dev server integration
+- Nitro server for API routes
+- HMR for all file types
+- API route hot reload
+- Proxy configuration
+
+### 3. Production Build
+- Optimized client bundles
+- Server bundle generation
+- Static asset handling
+- Prerendering support
+- Deployment adapters
+
+### 4. API Layer
+- File-based API routes
+- Middleware support
+- Request handling
+- Response utilities
+- Database integration helpers
+
+### 5. Deployment
+- Multiple deployment targets:
+  - Node.js
+  - Vercel
+  - Netlify
+  - Cloudflare
+  - AWS Lambda
+- Adapter system
+- Environment configuration
+
+## Integration Requirements
+
+### 1. Framework Integration
+- Angular v16-20 support
+- Nx v16-21 compatibility
+- Vite v5-7 support
+- Nitro latest versions
+- Node.js v18+
+
+### 2. Tool Ecosystem
+- TypeScript configuration
+- ESLint/Prettier setup
+- Testing framework integration
+- CI/CD templates
+- Docker support
+
+### 3. Plugin System
+- Extensible architecture
+- Plugin hooks
+- Configuration plugins
+- Build plugins
+- Runtime plugins
+
+## Security Guidelines
+- Secure defaults
+- Environment variable handling
+- CORS configuration
+- CSP headers support
+- Security headers
+
+## Documentation Standards
+- Getting started guide
+- Configuration reference
+- Deployment guides
+- Migration guides
+- Troubleshooting
+- Best practices
+- Example applications
+
+## Release Criteria
+- [ ] All sub-packages compatible
+- [ ] Integration tests passing
+- [ ] Performance benchmarks met
+- [ ] Nx generators working
+- [ ] Documentation complete
+- [ ] Migration guide updated
+- [ ] Example apps updated
+- [ ] Deployment adapters tested

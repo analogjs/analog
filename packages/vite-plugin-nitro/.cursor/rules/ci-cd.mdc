@@ -1,0 +1,20 @@
+---
+description: CI/CD commands specific to @analogjs/vite-plugin-nitro
+---
+
+# @analogjs/vite-plugin-nitro CI/CD
+
+## Commands
+- Build: `nx build vite-plugin-nitro`
+- Test: `nx test vite-plugin-nitro`
+- Lint: `nx lint vite-plugin-nitro`
+
+## Release Build
+- Tagged as `type:release`
+- Nitro server integration
+- Part of release build process
+
+## Build Details
+- Uses TypeScript compilation
+- Generate typings enabled
+- Uses swc for fast builds

@@ -60,6 +60,10 @@ Follow the prompts to scaffold the project and start the development server.
 
 [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://analogjs.org/new)
 
+## Development
+
+For enhanced AI assistance during development, this workspace is configured with MCP (Model Context Protocol) servers for both Nx and Angular. See [MCP Setup Documentation](apps/docs-app/docs/guides/mcp-setup.md) for detailed configuration instructions.
+
 ### Partners
 
 <a href="https://zerops.io?utm_source=analog&utm_medium=github&utm_campaign=partnership" target="_blank">

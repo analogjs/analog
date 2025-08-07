@@ -1,0 +1,18 @@
+---
+description: CI/CD commands specific to @analogjs/astro-angular
+---
+
+# @analogjs/astro-angular CI/CD
+
+## Commands
+- Build: `nx build astro-angular`
+- Test: `nx test astro-angular`  
+- Lint: `nx lint astro-angular`
+
+## Release Build
+- Tagged as `type:release`
+- Part of release build process: `nx run-many --target build --projects=tag:type:release`
+
+## Dependencies
+- Builds after dependencies with `dependsOn: ["^build"]`
+- Uses Vitest for testing

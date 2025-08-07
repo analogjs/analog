@@ -1,0 +1,176 @@
+---
+description: Development rules and best practices for @analogjs/router package
+globs:
+  - "packages/router/src/**/*.ts"
+  - "packages/router/*.json"
+  - "packages/router/server/**/*"
+  - "packages/router/tokens/**/*"
+alwaysApply: false
+---
+
+# @analogjs/router Package Development Rules
+
+## Overview
+This package provides filesystem-based routing for Angular applications, enabling automatic route generation from file structure with support for dynamic routes, layouts, and route metadata.
+
+## Package Purpose & Goals
+- **Primary Goal**: Enable intuitive file-based routing in Angular apps
+- **Target Users**: Angular developers seeking Next.js/Nuxt-like routing experience
+- **Key Features**:
+  - Automatic route generation from file structure
+  - Dynamic route parameters
+  - Nested layouts support
+  - Route metadata and guards
+  - Server-side data loading
+  - API route integration
+
+## Development Best Practices
+
+### 1. File-Based Routing Conventions
+- **Route File Patterns**:
+  - `index.page.ts` → `/`
+  - `about.page.ts` → `/about`
+  - `[id].page.ts` → `/:id` (dynamic)
+  - `(auth).page.ts` → `/auth` (pathless)
+  - `[...not-found].page.ts` → catch-all
+- Support both `.page.ts` and `.page.analog` extensions
+- Handle nested route structures properly
+
+### 2. Architecture Design
+```
+src/lib/
+├── routes.ts              # Route generation logic
+├── provide-file-router.ts # Router setup and providers
+├── route-config.ts        # Route configuration helpers
+├── meta-tags.ts          # Meta tag management
+├── endpoints.ts          # API endpoint handling
+└── form-action.directive.ts # Form handling
+```
+
+### 3. Route Generation Algorithm
+- Parse file paths to route segments
+- Handle special characters and patterns
+- Sort routes by specificity
+- Support route grouping and layouts
+- Generate proper route tree structure
+
+### 4. API Design Principles
+- **provideFileRouter()**: Main setup function
+- **defineRouteMeta()**: Type-safe route metadata
+- **injectActivatedRoute()**: Route injection helper
+- Support standard Angular router features
+- Extend with file-based conventions
+
+### 5. Server Integration
+- Support server-side data loading
+- Handle API route endpoints
+- Manage request context
+- Cookie handling and forwarding
+- Form action directives
+
+## Quality Rules
+
+### 1. Route Discovery
+- Validate file naming conventions
+- Handle edge cases (special characters, spaces)
+- Provide clear error messages for invalid routes
+- Support Windows and Unix path separators
+- Maintain stable route ordering
+
+### 2. Performance Standards
+- Optimize route tree generation
+- Minimize runtime overhead
+- Lazy load route components
+- Efficient route matching algorithm
+- Tree-shake unused routes
+
+### 3. Compatibility Requirements
+- Work with Angular Router v15-20
+- Maintain RouterFeatures compatibility
+- Support Angular Universal/SSR
+- Integrate with existing route guards
+- Handle route resolvers properly
+
+### 4. Testing Guidelines
+- Test all routing patterns
+- Verify dynamic route matching
+- Test nested layouts
+- Validate metadata handling
+- Test SSR/CSR consistency
+- Edge case coverage (empty dirs, special chars)
+
+### 5. Type Safety
+- Strongly typed route parameters
+- Type-safe route metadata
+- Proper guard typing
+- Resolver type inference
+- Form action type safety
+
+## Advanced Features
+
+### 1. Route Metadata
+- Title and meta tags
+- OpenGraph support
+- Dynamic metadata resolution
+- Structured data support
+- Canonical URL handling
+
+### 2. Layout System
+- Nested layouts support
+- Layout inheritance
+- Pathless route groups
+- Shared layout components
+- Layout-specific providers
+
+### 3. API Routes
+- File-based API endpoints
+- HTTP method handling
+- Request/response helpers
+- Middleware support
+- Error handling
+
+### 4. Debug Mode
+- Route visualization
+- File mapping display
+- Route conflict detection
+- Performance metrics
+- Development helpers
+
+## Security Considerations
+- Validate route parameters
+- Sanitize dynamic segments
+- Secure API route handling
+- CSRF protection for forms
+- Path traversal prevention
+
+## Integration Guidelines
+
+### 1. Content Integration
+- Work with @analogjs/content routes
+- Support markdown pages
+- Handle content metadata
+- Enable hybrid routing
+
+### 2. Platform Integration
+- Vite dev server integration
+- Build-time route generation
+- HMR support for routes
+- SSG/SSR compatibility
+
+## Documentation Requirements
+- Comprehensive routing guide
+- Pattern examples and use cases
+- Migration from Angular Router
+- Advanced patterns (guards, resolvers)
+- Troubleshooting guide
+- API reference
+
+## Release Checklist
+- [ ] All route patterns tested
+- [ ] SSR/CSR behavior verified
+- [ ] Performance benchmarks met
+- [ ] Type definitions complete
+- [ ] Documentation updated
+- [ ] Migration guide ready
+- [ ] Breaking changes documented
+- [ ] Debug tools functional

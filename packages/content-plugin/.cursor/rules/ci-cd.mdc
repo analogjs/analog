@@ -1,0 +1,16 @@
+---
+description: CI/CD commands specific to @analogjs/content-plugin
+---
+
+# @analogjs/content-plugin CI/CD
+
+## Commands
+- Build: `nx build content-plugin`
+- Test: `nx test content-plugin`
+- Lint: `nx lint content-plugin`
+
+## Build Details
+- Uses esbuild executor
+- Main entry: `src/index.ts`
+- Output format: ESM
+- No release tag (internal plugin)

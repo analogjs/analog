@@ -1,0 +1,142 @@
+---
+description: Development rules and best practices for content-plugin package
+globs:
+  - "packages/content-plugin/src/**/*.js"
+  - "packages/content-plugin/src/**/*.ts"
+  - "packages/content-plugin/*.json"
+alwaysApply: false
+---
+
+# content-plugin Package Development Rules
+
+## Overview
+This package appears to be an internal plugin for content processing within the Analog ecosystem, providing shared functionality for content handling across the framework.
+
+## Package Purpose & Goals
+- **Primary Goal**: Provide core content processing functionality as a plugin
+- **Target Users**: Internal use by other Analog packages
+- **Key Features**:
+  - Content transformation utilities
+  - Shared content processing logic
+  - Plugin infrastructure
+  - Internal API for content handling
+
+## Development Best Practices
+
+### 1. Internal API Design
+- Keep the API minimal and focused
+- Maintain backward compatibility for internal consumers
+- Use clear, descriptive function names
+- Document internal interfaces thoroughly
+- Version changes carefully
+
+### 2. Code Organization
+```
+src/
+├── index.js         # Main exports
+├── lib/
+│   ├── processors/  # Content processors
+│   ├── utils/       # Utility functions
+│   └── types/       # Type definitions
+```
+
+### 3. Plugin Architecture
+- Follow consistent plugin patterns
+- Support extensibility
+- Maintain clean interfaces
+- Handle errors gracefully
+- Provide lifecycle hooks
+
+### 4. Performance Focus
+- Optimize for build-time performance
+- Minimize runtime overhead
+- Use efficient algorithms
+- Cache when appropriate
+- Profile regularly
+
+### 5. Testing Standards
+- High test coverage (>90%)
+- Unit tests for all utilities
+- Integration tests with consumers
+- Performance benchmarks
+- Edge case coverage
+
+## Quality Rules
+
+### 1. Code Quality
+- No external dependencies unless critical
+- Clean, readable code
+- Comprehensive JSDoc comments
+- Type definitions included
+- Follow ESLint rules
+
+### 2. Compatibility
+- CommonJS module format
+- Node.js version support
+- Cross-platform compatibility
+- Build tool agnostic
+- Framework independent
+
+### 3. Error Handling
+- Never throw in production
+- Return error objects
+- Provide context in errors
+- Log warnings appropriately
+- Graceful degradation
+
+### 4. Security
+- Input validation
+- Path sanitization
+- No eval() usage
+- Safe regex patterns
+- Dependency auditing
+
+### 5. Maintenance
+- Keep it simple
+- Document changes
+- Semantic versioning
+- Changelog maintenance
+- Deprecation notices
+
+## Integration Guidelines
+
+### 1. Consumer Packages
+- Used by @analogjs/content
+- Potentially other packages
+- Clear integration points
+- Stable interfaces
+- Version coordination
+
+### 2. Build Integration
+- Build-time processing
+- Bundler agnostic
+- Source map support
+- Watch mode compatibility
+- Cache invalidation
+
+### 3. Development Workflow
+- Local linking for testing
+- Integration test suite
+- Example usage
+- Debug logging
+- Performance profiling
+
+## Documentation Standards
+- API documentation
+- Integration examples
+- Troubleshooting guide
+- Performance tips
+- Migration notes
+
+## Release Criteria
+- [ ] All tests passing
+- [ ] No breaking changes without major version
+- [ ] Documentation updated
+- [ ] Integration tests verified
+- [ ] Performance benchmarks met
+- [ ] Security audit passed
+- [ ] Changelog updated
+- [ ] Version bumped appropriately
+
+## Notes
+Since this is an internal package with minimal public information, these rules focus on general best practices for internal plugin development. The actual implementation details should be discovered through code analysis and updated accordingly.

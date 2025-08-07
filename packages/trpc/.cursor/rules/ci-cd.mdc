@@ -1,0 +1,15 @@
+---
+description: CI/CD commands specific to @analogjs/trpc
+---
+
+# @analogjs/trpc CI/CD
+
+## Commands
+- Build: `nx build trpc`
+- Lint: `nx lint trpc`
+
+## Build Details
+- Uses `@nx/angular:package` executor
+- Server exports included
+- No test target configured
+- Not tagged for release

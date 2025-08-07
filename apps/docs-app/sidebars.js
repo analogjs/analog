@@ -195,6 +195,11 @@ const sidebars = {
           id: 'guides/compatibility',
           label: 'Version Compatibilty',
         },
+        {
+          type: 'doc',
+          id: 'guides/mcp-setup',
+          label: 'MCP Setup',
+        },
       ],
     },
     {
