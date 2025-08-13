@@ -61,13 +61,6 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     analog({
       ...(mode === 'production' ? {apiPrefix: 'basehref'} : {apiPrefix: 'basehref/api'}),
-      nitro: {
-        routeRules: {
-          '/': {
-            prerender: false,
-          },
-        },
-      },
       prerender: {
         routes: async () => {
           return [];
