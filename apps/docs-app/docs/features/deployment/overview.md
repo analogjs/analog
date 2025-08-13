@@ -122,5 +122,5 @@ NITRO_APP_BASE_URL="/basehref/"
 6. Preview locally:
 
 ```bash
-npx vite build --mode production && NITRO_APP_BASE_URL='/basehref/' node dist/analog/server/index.mjs
+npx vite build && NITRO_APP_BASE_URL='/basehref/' node dist/analog/server/index.mjs
 ```
