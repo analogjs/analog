@@ -103,7 +103,7 @@ If `VITE_ANALOG_PUBLIC_BASE_URL` is present during build, ssr data will be refet
   # if using nx:
   npx nx run appname:build:production
   # if using angular build directly:
-  npx vite build --mode production && NITRO_APP_BASE_URL='/basehref/' node dist/analog/server/index.mjs
+  npx vite build && NITRO_APP_BASE_URL='/basehref/' node dist/analog/server/index.mjs
 ```
 
 5. In production containers specify the env flag `NITRO_APP_BASE_URL`.
@@ -115,5 +115,5 @@ NITRO_APP_BASE_URL="/basehref/"
 6. Preview locally:
 
 ```bash
-npx vite build --mode production && NITRO_APP_BASE_URL='/basehref/' node dist/analog/server/index.mjs
+npx vite build && NITRO_APP_BASE_URL='/basehref/' node dist/analog/server/index.mjs
 ```
