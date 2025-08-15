@@ -73,6 +73,7 @@
     ],
     "projectSpecificFiles": []
   },
+  "parallel": 5,
   "nxCloudAccessToken": "NDRkYzdkYmMtNDI3NS00MDI0LWFkMGQtMmI0Zjc2MTY2YzU0fHJlYWQtb25seQ==",
   "defaultBase": "beta",
   "plugins": [

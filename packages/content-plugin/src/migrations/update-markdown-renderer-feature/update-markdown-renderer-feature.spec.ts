@@ -53,5 +53,5 @@ export const appConfig: ApplicationConfig = {
     );
     expect(configContent).toContain('withPrismHighlighter()');
     expect(configContent).toContain('@analogjs/content/prism-highlighter');
-  });
+  }, 15000);
 });

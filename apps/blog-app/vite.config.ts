@@ -3,7 +3,8 @@
 import analog, { type PrerenderContentFile } from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
-import fs from 'node:fs';
+// import fs from 'node:fs';
+// import path from 'node:path';
 
 // Only run in Netlify CI
 let base = process.env['URL'] || 'http://localhost:3000';
