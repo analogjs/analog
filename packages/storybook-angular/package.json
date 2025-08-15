@@ -29,7 +29,12 @@
     },
     "./preset": "./preset.mjs",
     "./package.json": "./package.json",
-    "./*": "./src/*"
+    "./*": "./src/*",
+    "./testing": {
+      "types": "./src/lib/testing.d.ts",
+      "import": "./src/lib/testing.js",
+      "require": "./src/lib/testing.js"
+    }
   },
   "main": "src/index.js",
   "dependencies": {
