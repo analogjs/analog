@@ -1,0 +1,8 @@
+# Cursor ignore file
+# Excludes files from cursor processing
+
+# Auto-generated Nx rules file
+.cursor/rules/nx-rules.mdc
+
+# Other auto-generated files can be added here
+# .cursor/rules/auto-generated-*.mdc

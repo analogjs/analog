@@ -1,0 +1,119 @@
+---
+description: "Enforces systematic debugging methodology for complex issues through baseline establishment, documentation-first development, incremental implementation, and comprehensive verification. Ensures consistent problem-solving approach across the codebase."
+globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.js"
+  - "**/*.jsx"
+  - "**/*.mjs"
+  - "**/*.cjs"
+  - "packages/**/*"
+  - "apps/**/*"
+  - "libs/**/*"
+  - "tools/**/*"
+alwaysApply: false
+---
+# Development Process for Debugging Complex Issues
+
+## Systematic Debugging Approach
+
+### 1. Establish Baseline
+Before making any changes:
+- Run clean build to capture current state
+- Document existing behavior and outputs
+- Identify and record sample paths/patterns
+- Save baseline metrics for comparison
+
+### 2. Investigation Phase
+```bash
+# Discover actual file structure
+find . -name "*.extension" -type f
+grep_search for patterns
+list_dir for structure exploration
+```
+
+Document findings:
+- Current implementation patterns
+- Expected vs actual behavior
+- File paths and structures
+- Dependencies and interactions
+
+### 3. Documentation-First Changes
+
+#### Add Comprehensive Documentation Before Code Changes
+```typescript
+/**
+ * [Purpose] - What this does and why
+ *
+ * Process:
+ * 1. [Step description]
+ * 2. [Step description]
+ *
+ * @param [name] [description]
+ * @returns [description]
+ *
+ * Example: [Real usage from codebase]
+ *
+ * Sample paths:
+ * - /actual/path/from/workspace
+ * - /another/real/example
+ */
+```
+
+### 4. Incremental Implementation
+
+#### Step-by-Step Process
+1. **Document First**: Add JSDoc and inline comments
+2. **Minimal Change**: Make smallest possible modification
+3. **Test Immediately**: Verify no regressions
+4. **Update Docs**: Keep documentation current
+5. **Repeat**: Continue incrementally
+
+### 5. Verification Strategy
+
+#### After Each Change
+- Run build and check for errors
+- Compare output with baseline
+- Verify expected functionality
+- Check for unintended side effects
+
+#### Final Validation
+```bash
+pnpm build
+# Compare build artifacts
+# Test all affected functionality
+# Verify no regressions
+```
+
+### 6. Common Patterns
+
+#### Path Discovery Issues
+- Use absolute paths for consistency
+- Normalize paths for cross-platform support
+- Document all glob patterns used
+- Include real workspace examples
+
+#### Library Migrations
+- Document current and new implementations
+- Compare functionality side-by-side
+- Test with actual file paths
+- Verify output consistency
+
+### 7. Error Resolution
+
+#### Systematic Approach
+1. Identify exact error location
+2. Understand root cause
+3. Fix incrementally
+4. Test each fix
+5. Document solution
+
+### 8. Quality Checklist
+
+Before finalizing:
+- [ ] Documentation is complete and accurate
+- [ ] All tests pass
+- [ ] No regressions introduced
+- [ ] Code follows established patterns
+- [ ] Examples use real paths/data
+

@@ -1,0 +1,572 @@
+---
+description: "Enforces consistent Cursor rules structure, metadata requirements, and documentation standards across manually created .mdc files in the repository. Excludes auto-generated files like nx-rules.mdc. Ensures proper glob patterns, descriptions, and content organization for maintainable and effective Cursor rules."
+globs:
+  - "**/*.mdc"                    # All Cursor rule files
+  - ".cursor/rules/**/*"          # All files in cursor rules directory
+  - "!.cursor/rules/nx-rules.mdc" # Exclude auto-generated Nx rules
+alwaysApply: true
+---
+
+# Cursor Rule Standards and Best Practices
+
+## Overview and Purpose
+
+This rule file establishes comprehensive standards for creating and maintaining Cursor rules (`.mdc` files) across the repository. It ensures consistent structure, proper metadata, and high-quality documentation that makes rules effective and maintainable.
+
+### Purpose
+- **Enforces Consistency**: Ensures all `.mdc` files follow the same high-quality standards
+- **Improves Maintainability**: Provides clear patterns and templates for rule creation
+- **Enhances Effectiveness**: Guides developers to create comprehensive, well-documented rules
+- **Prevents Common Issues**: Documents error patterns and solutions specific to Cursor rules
+
+### Scope
+This rule applies to all `.mdc` files in the repository, including:
+- `.cursor/rules/**/*.mdc` - All Cursor rule files (except auto-generated files)
+- `**/*.mdc` - Any other markdown files that serve as Cursor rules
+
+**Note**: Auto-generated files like `nx-rules.mdc` (created by Nx Console) are excluded from these standards as they follow their own generation patterns.
+
+## Standards and Requirements
+
+### 1. File Header
+Every `.mdc` file must start with a properly formatted metadata block, followed by a clear, descriptive title:
+
+```markdown
+---
+description: [Clear, concise description of what this rule covers and when it should be applied]
+globs: [Array of glob patterns that define when this rule applies]
+alwaysApply: [true/false]
+---
+
+# [Descriptive Title]
+## [Main Section]
+```
+
+### 2. Required Metadata Section
+Every .mdc file must begin with a metadata section formatted as YAML frontmatter. This section must contain:
+
+```markdown
+---
+description: [Clear, concise description of what this rule covers and when it should be applied]
+globs: [Array of glob patterns that define when this rule applies]
+alwaysApply: [true/false - whether this rule should always be applied]
+---
+```
+
+#### Realistic Metadata Examples
+```markdown
+# Example 1: File Discovery Rule
+---
+description: "Enforces consistent JSDoc documentation patterns for file discovery functions, including comprehensive parameter documentation, sample file paths, and library comparison information. Applies to functions that use glob patterns or file system operations."
+globs:
+  - "**/*.ts"
+  - "packages/**/*.ts"
+  - "apps/**/*.ts"
+alwaysApply: false
+---
+
+# Example 2: Library Migration Rule
+---
+description: "Guides systematic migration from fast-glob to tinyglobby, including import changes, function call updates, and documentation modifications. Ensures consistent migration patterns across the codebase."
+globs:
+  - "**/*.ts"
+  - "packages/**/*.ts"
+alwaysApply: false
+---
+
+# Example 3: Global Best Practices Rule
+---
+description: "Enforces consistent Cursor rules structure, metadata requirements, and documentation standards across manually created .mdc files in the repository. Excludes auto-generated files like nx-rules.mdc. Ensures proper glob patterns, descriptions, and content organization for maintainable and effective Cursor rules."
+globs:
+  - "**/*.mdc"                    # All Cursor rule files
+  - ".cursor/rules/**/*"          # All files in cursor rules directory
+  - "!.cursor/rules/nx-rules.mdc" # Exclude auto-generated Nx rules
+alwaysApply: true
+---
+```
+
+### 3. Global Pattern Requirements
+
+#### Always Include These Patterns
+When writing rules that apply to specific file types or directories, always include comprehensive glob patterns:
+
+```markdown
+---
+description: [Description of the rule's purpose and scope]
+globs:
+  - "**/*.ts"                    # All TypeScript files
+  - "**/*.tsx"                   # All TypeScript React files
+  - "**/*.js"                    # All JavaScript files
+  - "**/*.jsx"                   # All JavaScript React files
+  - "**/*.mjs"                   # All ES modules
+  - "**/*.cjs"                   # All CommonJS files
+  - "packages/**/*"              # All package files
+  - "apps/**/*"                  # All application files
+  - "libs/**/*"                  # All library files
+  - "tools/**/*"                 # All tool files
+alwaysApply: false
+---
+```
+
+#### Sample File Paths for Testing
+When documenting glob patterns, include realistic sample file paths from the actual workspace:
+
+```markdown
+# Sample discovered file paths:
+- /workspace/packages/vite-plugin-angular/src/lib/angular-vite-plugin.ts
+- /workspace/packages/platform/src/lib/router-plugin.ts
+- /workspace/apps/analog-app/src/app/pages/goodbye.page.analog
+- /workspace/apps/ng-app/src/app/pages/about.page.ag
+- /workspace/libs/shared/feature/src/content/test.agx
+- /workspace/tools/scripts/build.mjs
+```
+
+#### Specific File Type Patterns
+For rules targeting specific file types, include both the specific and related patterns:
+
+```markdown
+---
+description: [Description for specific file type rules]
+globs:
+  - "**/*.analog"                # Analog format files
+  - "**/*.ag"                    # Alternative Angular files
+  - "**/*.agx"                   # Analog content files
+  - "packages/**/*.ts"           # Package TypeScript files
+  - "apps/**/*.ts"               # App TypeScript files
+  - "libs/**/*.ts"               # Library TypeScript files
+alwaysApply: false
+---
+```
+
+### 4. Description Requirements
+
+#### Description Format
+Descriptions must be clear, concise, and actionable:
+
+```markdown
+---
+description: "Enforces consistent JSDoc documentation patterns for file discovery functions, including comprehensive parameter documentation, sample file paths, and library comparison information. Applies to functions that use glob patterns or file system operations."
+---
+```
+
+#### Description Guidelines
+- **Be Specific**: Clearly state what the rule does and when it applies
+- **Include Scope**: Mention which file types or functions are affected
+- **State Purpose**: Explain why this rule is important
+- **Use Action Words**: Start with verbs like "Enforces", "Ensures", "Applies", "Guides"
+
+### 5. Content Structure Standards
+
+#### Section Headers
+Use consistent header hierarchy:
+
+```markdown
+# Main Title (H1)
+## Section Title (H2)
+### Subsection Title (H3)
+#### Detail Title (H4)
+```
+
+#### Code Block Standards
+Always specify language for code blocks:
+
+```markdown
+```typescript
+// TypeScript code
+```
+
+```bash
+# Shell commands
+```
+
+```json
+{
+  "json": "content"
+}
+```
+```
+
+#### List Formatting
+Use consistent list formatting:
+
+```markdown
+- [ ] Checkbox for tasks
+- Item for regular lists
+1. Numbered lists for steps
+```
+
+### 6. Documentation Patterns
+
+#### JSDoc Template
+Include comprehensive JSDoc templates:
+
+```markdown
+#### Standard JSDoc Structure
+```typescript
+/**
+ * [Function Purpose] - Clear description of what the function does
+ *
+ * This function:
+ * 1. [Step 1 description]
+ * 2. [Step 2 description]
+ * 3. [Step 3 description]
+ * 4. [Step 4 description]
+ *
+ * @param [paramName] [Parameter description]
+ * @returns [Return value description]
+ *
+ * Example usage:
+ * [Realistic usage example with actual parameters]
+ *
+ * Sample discovered file paths:
+ * - [Real path from actual workspace]
+ * - [Real path from actual workspace]
+ * - [Real path from actual workspace]
+ *
+ * [Library] vs [Alternative] comparison:
+ * - Both support the same glob patterns for file discovery
+ * - Both are efficient for finding [file type] files
+ * - [Current library] is [currently used/now used instead of alternative]
+ * - [Current library] provides similar functionality with [benefits]
+ * - [Current library]'s [function] returns [path type] when [option] is set
+ *
+ * [Process/Pattern] explained:
+ * - [Detailed explanation of how the process works]
+ * - [Additional details about the implementation]
+ */
+```
+```
+
+#### Inline Comment Standards
+Define inline comment patterns:
+
+```markdown
+#### Inline Comment Patterns
+```typescript
+// [Section purpose] - Brief description
+const result = someFunction(
+  // [Parameter explanation]
+  param1,
+  // [Parameter explanation with example]
+  param2
+);
+```
+```
+
+### 7. Migration and Transition Patterns
+
+#### Before/After Examples
+Always include before/after examples for migrations:
+
+```markdown
+#### Before (Old Pattern)
+```typescript
+// Old code pattern
+const oldPattern = 'example';
+```
+
+#### After (New Pattern)
+```typescript
+// New code pattern
+const newPattern = 'improved example';
+```
+```
+
+#### Checklist Format
+Use consistent checklist formatting:
+
+```markdown
+#### Migration Checklist
+- [ ] [Task description]
+- [ ] [Task description]
+- [ ] [Task description]
+```
+
+### 8. Testing and Validation Patterns
+
+#### Cursor Rules Validation
+Include validation patterns specific to Cursor rules:
+
+```markdown
+#### Cursor Rules Validation
+```bash
+# Validate YAML frontmatter syntax
+yamllint .cursor/rules/*.mdc
+
+# Check for proper metadata sections
+grep -r "description:" .cursor/rules/
+grep -r "globs:" .cursor/rules/
+grep -r "alwaysApply:" .cursor/rules/
+
+# Verify glob patterns are valid
+# Test glob patterns against actual files
+find . -path "**/*.ts" | head -5
+find . -path "packages/**/*.ts" | head -5
+```
+```
+
+#### Testing Patterns for Cursor Rules
+Define testing patterns for Cursor rules:
+
+```markdown
+#### Testing Patterns for Cursor Rules
+```typescript
+// Test metadata section completeness
+const requiredFields = ['description', 'globs', 'alwaysApply'];
+const metadataSection = extractMetadata(fileContent);
+
+requiredFields.forEach(field => {
+  expect(metadataSection).toHaveProperty(field);
+});
+
+// Test glob pattern validity
+const globPatterns = metadataSection.globs;
+globPatterns.forEach(pattern => {
+  expect(isValidGlobPattern(pattern)).toBe(true);
+});
+
+// Test description quality
+const description = metadataSection.description;
+expect(description).toMatch(/^[A-Z]/); // Starts with capital letter
+expect(description).toContain('Enforces') || description.toContain('Guides') || description.toContain('Ensures');
+```
+```
+
+#### Build Commands
+Include standard build verification commands:
+
+```markdown
+#### Build Verification
+```bash
+# Run build to ensure no regressions
+pnpm build
+
+# Check for specific file types
+find . -name "*.analog" -type f
+find . -name "*.agx" -o -name "*.ag" -type f
+```
+```
+
+### 9. Error Handling Patterns
+
+#### Common Cursor Rules Issues
+Document common issues and solutions specific to Cursor rules:
+
+```markdown
+#### Common Issues and Solutions
+
+##### Issue: Missing or Invalid Metadata Section
+```markdown
+# Problem: Missing metadata section
+# File ends without proper YAML frontmatter
+
+# Solution: Add proper metadata section
+---
+description: "Clear description of rule purpose and scope"
+globs:
+  - "**/*.ts"
+alwaysApply: false
+---
+```
+
+##### Issue: Invalid Glob Patterns
+```markdown
+# Problem: Incorrect glob syntax
+globs:
+  - "*.ts"                    # Missing **/ prefix
+  - "**/*.ts"                 # Correct pattern
+
+# Solution: Use proper glob patterns
+globs:
+  - "**/*.ts"                 # All TypeScript files
+  - "packages/**/*.ts"        # Package TypeScript files
+```
+
+##### Issue: Missing Description
+```markdown
+# Problem: Vague or missing description
+description: "Rule for TypeScript files"
+
+# Solution: Clear, actionable description
+description: "Enforces consistent JSDoc documentation patterns for file discovery functions, including comprehensive parameter documentation, sample file paths, and library comparison information. Applies to functions that use glob patterns or file system operations."
+```
+
+##### Issue: Inconsistent Header Structure
+```markdown
+# Problem: Inconsistent header hierarchy
+# Main Title
+### Subsection (skipping H2)
+
+# Solution: Proper header hierarchy
+# Main Title (H1)
+## Section Title (H2)
+### Subsection Title (H3)
+#### Detail Title (H4)
+```
+```
+
+#### Linter Error Resolution
+Include linter error patterns specific to Cursor rules:
+
+```markdown
+#### Linter Error Resolution for Cursor Rules
+- Fix unsafe optional chaining by removing extra `?`
+- Resolve import/export issues
+- Address TypeScript type errors
+- Ensure consistent code formatting
+- Fix YAML frontmatter syntax errors
+- Validate glob pattern syntax
+- Ensure proper markdown formatting
+```
+
+### 10. Quality Assurance Standards
+
+#### Cursor Rules Review Checklist
+Include comprehensive review checklists specific to Cursor rules:
+
+```markdown
+#### Cursor Rules Review Checklist
+- [ ] File has clear, descriptive title (H1)
+- [ ] Proper header hierarchy (H1 → H2 → H3 → H4)
+- [ ] Metadata section is present and complete
+- [ ] Description is clear, specific, and actionable
+- [ ] Glob patterns are comprehensive and correct
+- [ ] alwaysApply setting is appropriate
+- [ ] Code blocks specify language
+- [ ] Examples are realistic and from actual workspace
+- [ ] Error handling patterns are documented
+- [ ] No broken links or invalid syntax
+- [ ] Content follows logical organization
+- [ ] Lists use consistent formatting
+- [ ] JSDoc templates are comprehensive
+- [ ] Migration patterns include before/after examples
+- [ ] Testing patterns are practical
+```
+
+#### Before Committing Cursor Rules
+Define pre-commit requirements for Cursor rules:
+
+```markdown
+#### Before Committing Cursor Rules
+- [ ] Metadata section is properly formatted
+- [ ] Description follows guidelines (specific, actionable, includes scope)
+- [ ] Glob patterns are tested and validated
+- [ ] Sample file paths reflect actual workspace structure
+- [ ] All code examples are syntactically correct
+- [ ] Header structure follows hierarchy standards
+- [ ] Content organization follows logical flow
+- [ ] Error handling covers common issues
+- [ ] Quality assurance checklists are comprehensive
+- [ ] File naming follows conventions
+- [ ] No placeholder text remains
+- [ ] Examples are realistic and helpful
+```
+
+### 11. File Organization Standards
+
+#### Rule File Naming
+Use descriptive, consistent naming:
+
+```markdown
+# File Naming Convention
+- development-process.mdc          # General development processes
+- file-discovery-patterns.mdc      # File discovery specific patterns
+- library-migration.mdc            # Library migration patterns
+- cursor-best-practices.mdc        # This file - always applies
+```
+
+#### Content Organization
+Organize content logically:
+
+```markdown
+# Content Organization
+1. Overview and Purpose
+2. Standards and Requirements
+3. Patterns and Examples
+4. Migration and Transition
+5. Testing and Validation
+6. Error Handling
+7. Quality Assurance
+8. Best Practices
+```
+
+### 12. Best Practices for Cursor Rules
+
+#### Content Organization Best Practices
+Follow logical content organization:
+
+```markdown
+# Content Organization Best Practices
+1. Overview and Purpose - Explain what the rule does and why it's important
+2. Standards and Requirements - Define clear standards and requirements
+3. Patterns and Examples - Provide comprehensive patterns and realistic examples
+4. Migration and Transition - Include before/after examples for changes
+5. Testing and Validation - Define testing patterns and validation approaches
+6. Error Handling - Document common issues and solutions
+7. Quality Assurance - Include comprehensive checklists
+8. Best Practices - Summarize key best practices
+```
+
+#### Writing Effective Descriptions
+Follow these guidelines for writing effective rule descriptions:
+
+```markdown
+# Description Writing Guidelines
+- Start with action verbs: "Enforces", "Guides", "Ensures", "Applies"
+- Be specific about what the rule does
+- Include scope information (which files/functions are affected)
+- Explain the purpose and benefits
+- Keep descriptions concise but comprehensive
+- Use consistent terminology
+```
+
+#### Glob Pattern Best Practices
+Follow these guidelines for effective glob patterns:
+
+```markdown
+# Glob Pattern Best Practices
+- Use `**/*.extension` for recursive file matching
+- Include both specific and general patterns
+- Add comments explaining each pattern
+- Test patterns against actual workspace structure
+- Use consistent naming conventions
+- Include related file types when appropriate
+```
+
+### 13. Always Apply Requirements
+
+#### Global Application
+This file should always apply to all `.mdc` files:
+
+```markdown
+---
+description: "Enforces consistent Cursor rules structure, metadata requirements, and documentation standards across manually created .mdc files in the repository. Excludes auto-generated files like nx-rules.mdc. Ensures proper glob patterns, descriptions, and content organization for maintainable and effective Cursor rules."
+globs:
+  - "**/*.mdc"                    # All Cursor rule files
+  - ".cursor/rules/**/*"          # All files in cursor rules directory
+  - "!.cursor/rules/nx-rules.mdc" # Exclude auto-generated Nx rules
+alwaysApply: true
+---
+```
+
+This ensures that all Cursor rules follow consistent patterns, have proper metadata, and maintain high quality standards across the repository.
+
+## Summary
+
+This Cursor rules best practices file establishes comprehensive standards for creating and maintaining effective `.mdc` files. By following these guidelines, developers can create consistent, well-documented, and maintainable Cursor rules that enhance the development experience across the repository.
+
+### Key Benefits
+- **Consistency**: All rules follow the same high-quality standards
+- **Maintainability**: Clear patterns make rules easy to maintain and update
+- **Effectiveness**: Comprehensive documentation makes rules more useful
+- **Quality**: Systematic approach ensures high-quality rule creation
+- **Usability**: Realistic examples and clear patterns improve rule adoption
+
+---
+description: "Enforces consistent Cursor rules structure, metadata requirements, and documentation standards across manually created .mdc files in the repository. Excludes auto-generated files like nx-rules.mdc. Ensures proper glob patterns, descriptions, and content organization for maintainable and effective Cursor rules."
+globs:
+  - "**/*.mdc"                    # All Cursor rule files
+  - ".cursor/rules/**/*"          # All files in cursor rules directory
+  - "!.cursor/rules/nx-rules.mdc" # Exclude auto-generated Nx rules
+alwaysApply: true
+---
