@@ -23,7 +23,7 @@ import {
   ResolvedConfig,
   ViteDevServer,
 } from 'vite';
-
+import { globSync } from 'tinyglobby';
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
 import { jitPlugin } from './angular-jit-plugin.js';
 import { createCompilerPlugin } from './compiler-plugin.js';
@@ -614,16 +614,17 @@ export function angular(options?: PluginOptions): Plugin[] {
   ].filter(Boolean) as Plugin[];
 
   function findIncludes() {
-    const fg = require('fast-glob');
-
     const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));
 
+    // Map include patterns to absolute workspace paths
     const globs = [
       ...pluginOptions.include.map((glob) => `${workspaceRoot}${glob}`),
     ];
 
-    return fg.sync(globs, {
+    // Discover TypeScript files using tinyglobby
+    return globSync(globs, {
       dot: true,
+      absolute: true,
     });
   }
 
