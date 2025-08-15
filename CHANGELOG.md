@@ -1,3 +1,9 @@
+# [1.20.0-beta.1](https://github.com/analogjs/analog/compare/v1.19.4...v1.20.0-beta.1) (2025-08-15)
+
+### Features
+
+- **storybook-angular:** add support for Vitest addon ([#1833](https://github.com/analogjs/analog/issues/1833)) ([4890fdc](https://github.com/analogjs/analog/commit/4890fdc188f5530798629d88fac5b330dd8de302))
+
 ## [1.19.4](https://github.com/analogjs/analog/compare/v1.19.3...v1.19.4) (2025-08-04)
 
 ### Bug Fixes
