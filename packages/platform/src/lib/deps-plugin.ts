@@ -28,6 +28,7 @@ export function depsPlugin(options?: Options): Plugin[] {
             include: [
               '@angular/common',
               '@angular/common/http',
+              '@angular/compiler',
               ...(Number(VERSION.major) > 15
                 ? ['@angular/core/rxjs-interop']
                 : []),
