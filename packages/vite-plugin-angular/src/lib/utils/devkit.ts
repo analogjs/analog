@@ -12,21 +12,9 @@ let sourceFileCache: any;
 let cjt: Function;
 let jt: any;
 
-if (angularMajor < 15) {
-  throw new Error('AnalogJS is not compatible with Angular v14 and lower');
-} else if (angularMajor >= 15 && angularMajor < 16) {
-  const cp = require('@angular-devkit/build-angular/src/builders/browser-esbuild/compiler-plugin.js');
-  const {
-    createJitResourceTransformer,
-  } = require('@angular-devkit/build-angular/src/builders/browser-esbuild/angular/jit-resource-transformer.js');
-  const {
-    JavaScriptTransformer,
-  } = require('@angular-devkit/build-angular/src/builders/browser-esbuild/javascript-transformer.js');
-
-  sourceFileCache = cp.SourceFileCache;
-  cjt = createJitResourceTransformer;
-  jt = JavaScriptTransformer;
-} else if (angularMajor >= 16 && angularMajor < 18) {
+if (angularMajor < 17) {
+  throw new Error('AnalogJS is not compatible with Angular v16 and lower');
+} else if (angularMajor >= 17 && angularMajor < 18) {
   const cp = require('@angular-devkit/build-angular/src/tools/esbuild/angular/compiler-plugin.js');
   const {
     createJitResourceTransformer,
