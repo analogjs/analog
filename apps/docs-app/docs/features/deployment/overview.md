@@ -53,7 +53,24 @@ export default defineConfig({
 
 If you are deploying with a custom URL prefix, such as https://domain.com/ `basehref` you must do these steps for [server-side-data-fetching](https://analogjs.org/docs/features/data-fetching/server-side-data-fetching), [html markup and assets](https://angular.io/api/common/APP_BASE_HREF), and [dynamic api routes](https://analogjs.org/docs/features/api/overview) to work correctly on the specified `basehref`.
 
-1. Update the `app.config.ts` file.
+1. Update your `vite.config.ts` file.
+
+```ts
+export default defineConfig(({ mode }) => ({
+  base: '/basehref',
+  plugins: [
+    analog({
+      ...(mode === 'production' ? {apiPrefix: 'basehref'} : {apiPrefix: 'basehref/api'}),
+      prerender: {
+        routes: async () => {
+          return [];
+        }
+      }
+    }),
+  ],
+```
+
+2. Update the `app.config.ts` file.
 
 This instructs Angular on how recognize and generate URLs.
 
@@ -69,42 +86,34 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-2. In CI production build
+3. HttpClient use `injectAPIPrefix()`.
 
-```bash
-  # sets the base url for server-side data fetching
-  export VITE_ANALOG_PUBLIC_BASE_URL="https://domain.com/basehref"
-  # Prefixes all assets and html with /basehref/
-  # if using nx:
-  npx nx run appname:build:production --baseHref='/basehref/'
-  # if using angular build directly:
-  npx ng build --baseHref="/basehref/"
+```ts
+const response = await firstValueFrom(
+  this.httpClient.get<{ client: string }>(`${injectAPIPrefix()}/v1/hello`),
+);
 ```
 
-3. In production containers specify the env flag `NITRO_APP_BASE_URL`.
+4. In CI production build
+
+**Do not** set `VITE_ANALOG_PUBLIC_BASE_URL` it should use what is in `vite.config.ts`.
+If `VITE_ANALOG_PUBLIC_BASE_URL` is present during build, ssr data will be refetched on server and client.
+
+```bash
+  # if using nx:
+  npx nx run appname:build:production
+  # if using angular build directly:
+  npx vite build && NITRO_APP_BASE_URL='/basehref/' node dist/analog/server/index.mjs
+```
+
+5. In production containers specify the env flag `NITRO_APP_BASE_URL`.
 
 ```bash
 NITRO_APP_BASE_URL="/basehref/"
 ```
 
-Given a `vite.config.ts` file similar to this:
+6. Preview locally:
 
-```ts
-    plugins: [
-      analog({
-        apiPrefix: 'api',
-        nitro: {
-          routeRules: {
-            '/': {
-              prerender: false,
-            },
-          },
-        },
-        prerender: {
-          routes: async () => {
-            return ['/'];
-          }
-        }
+```bash
+npx vite build && NITRO_APP_BASE_URL='/basehref/' node dist/analog/server/index.mjs
 ```
-
-Nitro prefixes all API routes with `/basehref/api`.
