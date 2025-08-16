@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "1.19.4-beta.1",
+  "version": "1.20.0-beta.2",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -118,6 +118,7 @@
     "@semantic-release/git": "^10.0.1",
     "@storybook/addon-docs": "9.0.18",
     "@storybook/addon-links": "9.0.18",
+    "@storybook/addon-vitest": "9.0.18",
     "@storybook/angular": "9.0.18",
     "@storybook/builder-vite": "9.0.18",
     "@swc-node/register": "1.10.10",
