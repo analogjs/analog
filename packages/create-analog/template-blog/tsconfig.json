@@ -24,10 +24,6 @@
     "useDefineForClassFields": false,
     "skipLibCheck": true,
     "noUncheckedIndexedAccess": true,
-
-    // Some stricter flags (disabled by default)
-    "noUnusedLocals": false,
-    "noUnusedParameters": false
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
