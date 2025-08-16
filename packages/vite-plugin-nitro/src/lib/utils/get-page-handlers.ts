@@ -104,11 +104,6 @@ export function getPageHandlers({
       route: `${hasAPIDir ? '/api' : ''}/_analog${route}`,
       lazy: true,
     };
-    // return {
-    //   handler: relativeHandler,
-    //   route: `${hasAPIDir ? '/api' : ''}/_analog${route}`,
-    //   lazy: true,
-    // };
   });
 
   return handlers;
