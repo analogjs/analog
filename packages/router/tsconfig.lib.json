@@ -8,8 +8,10 @@
     "types": ["node", "vite/client"],
     "target": "ES2022",
     "useDefineForClassFields": false,
+    "baseUrl": ".",
     "paths": {
-      "@analogjs/content": ["./node_modules/@analogjs/content"]
+      "@analogjs/content": ["./node_modules/@analogjs/content"],
+      "@analogjs/router/tokens": ["./tokens/src/index.ts"]
     }
   },
   "exclude": ["vite.config.ts", "**/*.test.ts", "**/*.spec.ts"],

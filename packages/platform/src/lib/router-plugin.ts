@@ -1,16 +1,26 @@
 import { normalizePath, Plugin, UserConfig } from 'vite';
-import fg from 'fast-glob';
+import { globSync } from 'tinyglobby';
 import { resolve } from 'node:path';
 
 import { Options } from './options.js';
 
 /**
- * This plugin invalidates the files for routes when new files
- * are added/deleted.
+ * Router plugin that handles route file discovery and hot module replacement.
  *
- * Workaround for: https://github.com/vitejs/vite/issues/10616
+ * This plugin provides three main functionalities:
+ * 1. Route invalidation when files are added/deleted (HMR workaround)
+ * 2. Dynamic route file discovery and import generation
+ * 3. Content route file discovery for markdown and Analog content
  *
- * @returns
+ * @param options Configuration options for the router plugin
+ * @returns Array of Vite plugins for route handling
+ *
+ * IMPORTANT: This plugin uses tinyglobby for file discovery.
+ * Key behavior with { dot: true, absolute: true }:
+ * - Returns absolute paths for ALL discovered files
+ * - Path normalization is required to match expected output format
+ * - Files within project root must use relative paths in object keys
+ * - Files outside project root keep absolute paths in object keys
  */
 export function routerPlugin(options?: Options): Plugin[] {
   const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
@@ -21,6 +31,12 @@ export function routerPlugin(options?: Options): Plugin[] {
     {
       name: 'analogjs-router-invalidate-routes',
       configureServer(server) {
+        /**
+         * Invalidates route modules when files are added or deleted.
+         * This is a workaround for Vite's HMR limitations with dynamic imports.
+         *
+         * @param path The file path that was added or deleted
+         */
         function invalidateRoutes(path: string) {
           if (
             path.includes(`routes`) ||
@@ -55,57 +71,71 @@ export function routerPlugin(options?: Options): Plugin[] {
         config = _config;
         root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
       },
+      /**
+       * Transforms code to replace ANALOG_ROUTE_FILES and ANALOG_CONTENT_ROUTE_FILES
+       * placeholders with actual dynamic imports of discovered route and content files.
+       *
+       * @param code The source code to transform
+       * @returns Transformed code with dynamic imports or undefined if no transformation needed
+       */
       transform(code) {
         if (
           code.includes('ANALOG_ROUTE_FILES') ||
           code.includes('ANALOG_CONTENT_ROUTE_FILES')
         ) {
-          const routeFiles: string[] = fg.sync(
+          // Discover route files using tinyglobby
+          // NOTE: { absolute: true } returns absolute paths for ALL files
+          const routeFiles: string[] = globSync(
             [
               `${root}/app/routes/**/*.ts`,
               `${root}/src/app/routes/**/*.ts`,
               `${root}/src/app/pages/**/*.page.ts`,
               `${root}/src/app/pages/**/*.page.analog`,
               `${root}/src/app/pages/**/*.page.ag`,
-              ...(options?.additionalPagesDirs || [])?.map(
+              ...(options?.additionalPagesDirs || []).map(
                 (glob) => `${workspaceRoot}${glob}/**/*.page.{ts,analog,ag}`,
               ),
             ],
-            { dot: true },
+            { dot: true, absolute: true },
           );
 
-          const contentRouteFiles: string[] = fg.sync(
+          // Discover content files using tinyglobby
+          const contentRouteFiles: string[] = globSync(
             [
               `${root}/src/app/routes/**/*.md`,
               `${root}/src/app/pages/**/*.md`,
               `${root}/src/content/**/*.md`,
-              ...(options?.additionalContentDirs || [])?.map(
+              ...(options?.additionalContentDirs || []).map(
                 (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`,
               ),
             ],
-            { dot: true },
+            { dot: true, absolute: true },
           );
 
           let result = code.replace(
             'ANALOG_ROUTE_FILES = {};',
             `
-            ANALOG_ROUTE_FILES = {${routeFiles.map(
-              (module) =>
-                `"${module.replace(root, '')}": () => import('${module}')`,
-            )}};
+            ANALOG_ROUTE_FILES = {${routeFiles.map((module) => {
+              // CRITICAL: tinyglobby returns absolute paths, but we need relative paths for project files
+              // to match expected output format. Library files keep absolute paths.
+              const key = module.startsWith(root)
+                ? module.replace(root, '')
+                : module;
+              return `"${key}": () => import('${module}')`;
+            })}};
           `,
           );
 
           result = result.replace(
             'ANALOG_CONTENT_ROUTE_FILES = {};',
             `
-          ANALOG_CONTENT_ROUTE_FILES = {${contentRouteFiles.map(
-            (module) =>
-              `"${module.replace(
-                root,
-                '',
-              )}": () => import('${module}?analog-content-file=true').then(m => m.default)`,
-          )}};
+          ANALOG_CONTENT_ROUTE_FILES = {${contentRouteFiles.map((module) => {
+            // Same path normalization as route files
+            const key = module.startsWith(root)
+              ? module.replace(root, '')
+              : module;
+            return `"${key}": () => import('${module}?analog-content-file=true').then(m => m.default)`;
+          })}};
           `,
           );
 
@@ -120,25 +150,36 @@ export function routerPlugin(options?: Options): Plugin[] {
     },
     {
       name: 'analog-glob-endpoints',
+      /**
+       * Transforms code to replace ANALOG_PAGE_ENDPOINTS placeholder
+       * with actual dynamic imports of discovered server endpoint files.
+       *
+       * @param code The source code to transform
+       * @returns Transformed code with dynamic imports or undefined if no transformation needed
+       */
       transform(code) {
         if (code.includes('ANALOG_PAGE_ENDPOINTS')) {
-          const endpointFiles: string[] = fg.sync(
+          // Discover server endpoint files using tinyglobby
+          const endpointFiles: string[] = globSync(
             [
               `${root}/src/app/pages/**/*.server.ts`,
-              ...(options?.additionalPagesDirs || [])?.map(
+              ...(options?.additionalPagesDirs || []).map(
                 (glob) => `${workspaceRoot}${glob}/**/*.server.ts`,
               ),
             ],
-            { dot: true },
+            { dot: true, absolute: true },
           );
 
           const result = code.replace(
             'ANALOG_PAGE_ENDPOINTS = {};',
             `
-            ANALOG_PAGE_ENDPOINTS = {${endpointFiles.map(
-              (module) =>
-                `"${module.replace(root, '')}": () => import('${module}')`,
-            )}};
+            ANALOG_PAGE_ENDPOINTS = {${endpointFiles.map((module) => {
+              // Same path normalization for consistency
+              const key = module.startsWith(root)
+                ? module.replace(root, '')
+                : module;
+              return `"${key}": () => import('${module}')`;
+            })}};
           `,
           );
 

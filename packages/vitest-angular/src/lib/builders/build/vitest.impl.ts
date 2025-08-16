@@ -3,6 +3,7 @@ import * as path from 'path';
 import type { Vitest } from 'vitest/node';
 import type { Plugin, UserConfig } from 'vite';
 import type { UserConfig as VitestConfig } from 'vitest/node';
+import { globSync } from 'tinyglobby';
 
 import { VitestSchema } from './schema';
 import { createAngularMemoryPlugin } from './plugins/angular-memory-plugin';
@@ -158,23 +159,59 @@ export async function getExtraArgs(
   return extraArgs;
 }
 
+/**
+ * Finds test files to include in the Vitest run using tinyglobby pattern matching.
+ *
+ * This function:
+ * 1. Normalizes the project root path to ensure consistent path separators
+ * 2. Constructs glob patterns by prepending the project root to each include pattern
+ * 3. Uses globSync from tinyglobby to find all files matching the patterns while respecting exclusions
+ *
+ * @param options Configuration object containing workspace and project paths, include/exclude patterns
+ * @returns Array of absolute file paths that match the include patterns
+ *
+ * Sample output paths:
+ * - /workspace/apps/my-app/src/app/app.component.spec.ts
+ * - /workspace/apps/my-app/src/app/services/data.service.spec.ts
+ * - /workspace/apps/my-app/src/app/components/header/header.component.test.ts
+ * - /workspace/apps/my-app/src/app/utils/helpers.spec.ts
+ *
+ * tinyglobby vs fast-glob comparison:
+ * - Both support the same glob patterns and ignore functionality
+ * - Both are fast and efficient for file matching
+ * - tinyglobby is a lighter alternative with similar API
+ * - tinyglobby's globSync returns absolute paths by default when absolute: true is set
+ * - tinyglobby has fewer dependencies and smaller bundle size
+ *
+ * globSync options explained:
+ * - dot: true - Includes files/directories that start with a dot (e.g., .env.test)
+ * - absolute: true - Returns absolute file paths instead of relative paths
+ * - ignore: options.exclude - Excludes files matching the exclude patterns
+ */
 function findIncludes(options: {
   workspaceRoot: string;
   projectRoot: string;
   include: string[];
   exclude: string[];
 }) {
-  const fg = require('fast-glob');
   const { normalizePath } = require('vite');
 
+  // Normalize project root path to ensure consistent path separators across platforms
   const projectRoot = normalizePath(
     path.resolve(options.workspaceRoot, options.projectRoot),
   );
+
+  // Construct glob patterns by prepending project root to each include pattern
+  // Example: if include=['**/*.spec.ts'] and projectRoot='/workspace/apps/my-app'
+  // Result: ['/workspace/apps/my-app/**/*.spec.ts']
   const globs = [...options.include.map((glob) => `${projectRoot}/${glob}`)];
 
-  return fg.sync(globs, {
-    dot: true,
-    ignore: options.exclude,
+  // Use globSync from tinyglobby to find all files matching the patterns
+  // Returns absolute file paths that match the include patterns while respecting exclusions
+  return globSync(globs, {
+    dot: true, // Include files/directories starting with dot (e.g., .env.test)
+    absolute: true, // Return absolute file paths
+    ignore: options.exclude, // Exclude files matching these patterns
   });
 }
 
