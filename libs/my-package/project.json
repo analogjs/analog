@@ -5,6 +5,7 @@
   "prefix": "lib",
   "projectType": "library",
   "tags": [],
+  "implicitDependencies": ["platform"],
   "targets": {
     "build": {
       "executor": "@nx/vite:build",

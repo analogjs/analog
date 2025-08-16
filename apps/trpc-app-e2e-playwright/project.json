@@ -6,6 +6,9 @@
   "tags": [],
   "implicitDependencies": ["trpc-app"],
   "targets": {
+    "build": {
+      "executor": "nx:noop"
+    },
     "vitest": {
       "executor": "@nx/vite:test"
     },

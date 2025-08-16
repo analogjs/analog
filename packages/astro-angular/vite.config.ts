@@ -6,7 +6,7 @@ import { defineConfig } from 'vite';
 export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
-    esbuild: false,
+    oxc: false,
     resolve: {
       mainFields: ['module'],
     },

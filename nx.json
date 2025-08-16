@@ -23,7 +23,8 @@
       "dependsOn": ["^build"]
     },
     "build-package": {
-      "cache": false
+      "cache": false,
+      "dependsOn": ["^build"]
     },
     "@nx/js:tsc": {
       "cache": false
@@ -75,6 +76,10 @@
   },
   "nxCloudAccessToken": "NDRkYzdkYmMtNDI3NS00MDI0LWFkMGQtMmI0Zjc2MTY2YzU0fHJlYWQtb25seQ==",
   "defaultBase": "beta",
+  "tui": {
+    "autoExit": true,
+    "enabled": true
+  },
   "plugins": [
     {
       "plugin": "@nx/playwright/plugin",

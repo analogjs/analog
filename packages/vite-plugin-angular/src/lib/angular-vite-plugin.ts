@@ -184,11 +184,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         );
 
         return {
-          esbuild: config.esbuild ?? false,
+          oxc: config.oxc ?? false,
           optimizeDeps: {
             include: ['rxjs/operators', 'rxjs'],
             exclude: ['@angular/platform-server'],
-            esbuildOptions: {
+            rolldownOptions: {
               plugins: [
                 createCompilerPlugin(
                   {

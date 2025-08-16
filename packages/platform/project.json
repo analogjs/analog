@@ -8,6 +8,7 @@
   "targets": {
     "build-package": {
       "executor": "@nx/js:tsc",
+      "dependsOn": ["^build"],
       "options": {
         "outputPath": "node_modules/@analogjs/platform",
         "main": "packages/platform/src/index.ts",

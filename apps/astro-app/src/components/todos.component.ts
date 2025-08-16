@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, type OnInit, inject } from '@angular/core';
 import { NgFor } from '@angular/common';
 import { provideHttpClient, HttpClient } from '@angular/common/http';
 
@@ -31,6 +31,8 @@ export class TodosComponent implements OnInit {
   ngOnInit() {
     this.http
       .get<Todo[]>('https://jsonplaceholder.typicode.com/todos')
-      .subscribe((todos) => (this.todos = todos));
+      .subscribe((todos) => {
+        this.todos = todos;
+      });
   }
 }

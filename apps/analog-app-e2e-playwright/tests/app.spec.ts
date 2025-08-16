@@ -31,8 +31,17 @@ afterEach(async () => {
 describe('My Store', () => {
   test(`Given the user has navigated to the home page
     Then the app title is visible`, async () => {
-    await expect(
-      page.locator('role=heading[level=1] >> text=My Store'),
-    ).toContain(/My Store/i);
+    // Wait for the page to be fully loaded and Angular to be ready
+    await page.waitForLoadState('networkidle');
+
+    // Wait for the Angular app to be fully rendered
+    await page.waitForSelector('analogjs-root');
+
+    // Wait for the top bar component to be rendered
+    await page.waitForSelector('analogjs-top-bar');
+
+    // Now check for the heading - use a simpler selector that should work
+    const heading = page.locator('h1:has-text("My Store")');
+    await expect(await heading.textContent()).toContain('My Store');
   });
 });
