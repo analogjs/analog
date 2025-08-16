@@ -12,7 +12,7 @@ export function depsPlugin(options?: Options): Plugin[] {
       name: 'analogjs-deps-plugin',
       config() {
         return {
-          esbuild: { exclude: ['**/*.ts', '**/*.js'] },
+          rolldown: { exclude: ['**/*.ts', '**/*.js'] },
           ssr: {
             noExternal: [
               '@analogjs/**',
@@ -28,6 +28,7 @@ export function depsPlugin(options?: Options): Plugin[] {
             include: [
               '@angular/common',
               '@angular/common/http',
+              '@angular/compiler',
               ...(Number(VERSION.major) > 15
                 ? ['@angular/core/rxjs-interop']
                 : []),

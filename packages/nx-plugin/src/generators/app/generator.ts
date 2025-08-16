@@ -26,6 +26,7 @@ import { addTrpc } from './lib/add-trpc';
 import { cleanupFiles } from './lib/cleanup-files';
 import { addAnalogProjectConfig } from './lib/add-analog-project-config';
 import { updateIndex } from './lib/update-index-html';
+import { addAnalogDependencies } from './lib/add-analog-dependencies';
 
 export interface NormalizedOptions
   extends AnalogNxApplicationGeneratorOptions,
@@ -128,6 +129,11 @@ export async function appGenerator(
 
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
   const majorAngularVersion = major(coerce(angularVersion));
+
+  if (nxVersion) {
+    await addAnalogDependencies(tree, nxVersion, angularVersion);
+  }
+
   addFiles(tree, normalizedOptions, majorAngularVersion);
   addDependenciesToPackageJson(
     tree,

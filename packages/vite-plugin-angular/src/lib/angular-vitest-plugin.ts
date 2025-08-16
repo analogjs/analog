@@ -60,7 +60,7 @@ export function angularVitestEsbuildPlugin(): Plugin {
     enforce: 'pre',
     config(userConfig: UserConfig) {
       return {
-        esbuild: userConfig.esbuild ?? false,
+        oxc: userConfig.oxc ?? false,
       };
     },
   };

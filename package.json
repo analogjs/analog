@@ -195,7 +195,7 @@
     "ts-node": "10.9.2",
     "typescript": "~5.8.3",
     "vfile": "^6.0.3",
-    "vite": "7.0.0",
+    "vite": "npm:rolldown-vite@7.1.2",
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-inspect": "11.3.2",
     "vite-tsconfig-paths": "4.2.0",
@@ -208,6 +208,9 @@
     "ignoredBuiltDependencies": [
       "cypress"
     ],
+    "overrides": {
+      "vite": "npm:rolldown-vite@7.1.2"
+    },
     "onlyBuiltDependencies": [
       "@compodoc/compodoc",
       "@swc/core",
