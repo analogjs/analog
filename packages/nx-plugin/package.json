@@ -2,6 +2,9 @@
   "name": "@analogjs/nx",
   "version": "0.0.1",
   "main": "src/index.js",
+  "dependencies": {
+    "semver": "^7.7.2"
+  },
   "devDependencies": {
     "@types/semver": "^7.7.0"
   }
