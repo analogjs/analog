@@ -1,0 +1,29 @@
+{
+  "git.autofetch": true,
+  "scm.diffDecorations": "gutter",
+  "terminal.integrated.shellArgs.osx": ["--login"],
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.git": true,
+    "**/coverage": true,
+    "**/.nx": true
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.nx": true
+  },
+  "typescript.suggest.autoImports": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "javascript.preferences.importModuleSpecifier": "relative",
+  "cursor.chat.enabled": true,
+  "cursor.chat.autoComplete": true,
+  "cursor.chat.contextLines": 50,
+  "npm.enableScriptExplorer": true
+}

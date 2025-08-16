@@ -1,0 +1,214 @@
+---
+description: Development rules and best practices for @analogjs/vitest-angular package
+globs:
+  - "packages/vitest-angular/src/**/*.ts"
+  - "packages/vitest-angular/src/**/*.js"
+  - "packages/vitest-angular/*.json"
+  - "packages/vitest-angular/builders.json"
+alwaysApply: false
+---
+
+# @analogjs/vitest-angular Package Development Rules
+
+## Overview
+This package provides a Vitest builder for Angular, enabling fast unit testing with Vitest while maintaining compatibility with Angular's testing utilities and patterns.
+
+## Package Purpose & Goals
+- **Primary Goal**: Enable fast, modern testing for Angular applications using Vitest
+- **Target Users**: Angular developers seeking faster test execution than Karma/Jasmine
+- **Key Features**:
+  - Angular TestBed integration
+  - Component testing support
+  - Snapshot testing
+  - Fast test execution
+  - Angular builder integration
+  - Zone.js and Zoneless support
+
+## Development Best Practices
+
+### 1. Builder Architecture
+- Implement Angular DevKit builder interface
+- Support Angular workspace configurations
+- Handle test file discovery
+- Manage Vitest configuration
+- Integrate with Angular CLI
+
+### 2. Code Organization
+```
+src/lib/
+├── builders/
+│   ├── test/           # Test builder implementation
+│   └── utils/          # Builder utilities
+├── setup/              # Test setup files
+├── config/             # Vitest config helpers
+└── index.ts            # Public API
+```
+
+### 3. Test Environment Setup
+- Configure JSDOM for browser APIs
+- Setup Angular testing module
+- Initialize Zone.js properly
+- Handle platform initialization
+- Support global test utilities
+
+### 4. Angular Integration
+- Full TestBed compatibility
+- Component fixture support
+- Service injection testing
+- HTTP testing utilities
+- Router testing support
+- Form testing helpers
+
+### 5. Performance Optimization
+- Parallel test execution
+- Efficient module compilation
+- Smart test file detection
+- Minimal setup overhead
+- Cached transformations
+
+## Quality Rules
+
+### 1. Angular Compatibility
+- Support Angular v15-20
+- Work with all testing utilities
+- Maintain API compatibility
+- Support Angular patterns
+- Handle version differences
+
+### 2. Vitest Integration
+- Support Vitest v1.3.1+
+- Use native Vitest features
+- Leverage Vitest's speed
+- Support watch mode
+- Enable coverage reports
+
+### 3. Testing Features
+- **Snapshot Testing**: Component snapshots
+- **Mocking**: Service and dependency mocking
+- **Assertions**: Full expect API
+- **Coverage**: Istanbul integration
+- **Watch Mode**: Intelligent re-runs
+
+### 4. Configuration Support
+- Respect Angular workspace config
+- Support custom Vitest config
+- Handle TypeScript paths
+- Environment variables
+- Test pattern matching
+
+### 5. Error Handling
+- Clear test failure messages
+- Helpful setup errors
+- Component compilation errors
+- Module resolution issues
+- Configuration problems
+
+## Test Setup Guidelines
+
+### 1. Zone.js Configuration
+```typescript
+// With Zone.js
+import '@analogjs/vitest-angular/setup-zone';
+
+// Zoneless
+import '@analogjs/vitest-angular/setup-snapshots';
+```
+
+### 2. TestBed Setup
+- Initialize testing module
+- Configure providers
+- Setup common imports
+- Handle async operations
+- Clean up after tests
+
+### 3. Builder Configuration
+```json
+{
+  "test": {
+    "builder": "@analogjs/vitest-angular:test",
+    "options": {
+      "configFile": "vite.config.ts",
+      "include": ["**/*.spec.ts"]
+    }
+  }
+}
+```
+
+### 4. Vitest Config
+- Angular plugin setup
+- Test environment config
+- Setup files registration
+- Reporter configuration
+- Coverage settings
+
+## Advanced Features
+
+### 1. Snapshot Testing
+- Component DOM snapshots
+- Serializer configuration
+- Snapshot updates
+- Custom matchers
+- Inline snapshots
+
+### 2. Performance Testing
+- Test execution metrics
+- Memory leak detection
+- Bundle size testing
+- Render performance
+- Change detection cycles
+
+### 3. Debugging Support
+- Source map support
+- Debugger integration
+- Console output
+- Error stack traces
+- Test isolation
+
+### 4. CI/CD Integration
+- Headless execution
+- Reporter formats
+- Failure artifacts
+- Parallel execution
+- Result caching
+
+## Migration Support
+
+### 1. From Karma/Jasmine
+- API compatibility layer
+- Migration utilities
+- Configuration mapping
+- Common patterns guide
+- Gradual migration path
+
+### 2. Test Pattern Updates
+- beforeEach → beforeEach
+- it → it/test
+- describe → describe
+- expect → expect (Vitest)
+- Spy → vi.fn()
+
+### 3. Configuration Migration
+- karma.conf.js → vite.config.ts
+- Test file patterns
+- Reporter mapping
+- Coverage config
+- Browser config
+
+## Documentation Standards
+- Setup guide
+- Migration guide
+- API reference
+- Common patterns
+- Troubleshooting
+- Performance tips
+- CI/CD setup
+
+## Release Criteria
+- [ ] Angular version compatibility verified
+- [ ] Vitest integration tested
+- [ ] TestBed functionality confirmed
+- [ ] Snapshot testing working
+- [ ] Performance benchmarks met
+- [ ] Documentation complete
+- [ ] Migration guide updated
+- [ ] Example tests provided

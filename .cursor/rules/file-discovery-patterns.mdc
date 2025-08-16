@@ -1,0 +1,133 @@
+---
+description: "Enforces glob pattern best practices for efficient file discovery through structured patterns, proper path resolution, and comprehensive testing strategies. Ensures consistent and maintainable file discovery across all projects."
+globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.js"
+  - "**/*.jsx"
+  - "**/*.mjs"
+  - "**/*.cjs"
+  - "**/*.analog"
+  - "**/*.ag"
+  - "**/*.agx"
+  - "**/*.md"
+  - "packages/**/*"
+  - "apps/**/*"
+  - "libs/**/*"
+  - "tools/**/*"
+alwaysApply: false
+---
+# File Discovery Patterns
+
+## Core Principles
+
+### 1. Glob Pattern Structure
+```typescript
+// Specific and clear
+`${root}/src/app/pages/**/*.page.{ts,analog,ag}`
+`${root}/src/content/**/*.{md,agx}`
+
+// Avoid overly broad patterns
+`${root}/**/*` // Too generic
+```
+
+### 2. Common Patterns
+
+#### By Component Type
+```typescript
+// Pages
+`**/*.page.{ts,analog,ag}`
+
+// Server handlers
+`**/*.server.ts`
+
+// API routes
+`**/routes/**/*.ts`
+
+// Content files
+`**/*.{md,agx}`
+```
+
+#### By Location
+```typescript
+// Application code
+`${root}/src/app/**/*.{ts,analog}`
+
+// Library code
+`${root}/libs/**/*.ts`
+
+// Content
+`${root}/src/content/**/*.{md,agx}`
+```
+
+### 3. Path Resolution
+
+```typescript
+// Normalize for cross-platform
+const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
+const root = normalizePath(resolve(workspaceRoot, config.root || '.'));
+
+// Build patterns
+const globs = [
+  `${root}/src/**/*.page.{ts,analog,ag}`,
+  ...(additionalDirs || []).map(dir => `${root}/${dir}/**/*.{ts,analog}`)
+];
+```
+
+### 4. Discovery Function Pattern
+
+```typescript
+/**
+ * Discovers files matching patterns.
+ *
+ * Sample paths discovered:
+ * - /workspace/apps/app/src/pages/index.page.ts
+ * - /workspace/libs/shared/content/about.agx
+ */
+function discoverFiles(config: Config): string[] {
+  const root = normalizePath(resolve(workspaceRoot, config.root || '.'));
+
+  const patterns = [
+    // Document each pattern's purpose
+    `${root}/src/**/*.page.{ts,analog}`, // Page components
+    `${root}/src/**/*.server.ts`,        // Server endpoints
+  ];
+
+  return globSync(patterns, {
+    dot: true,      // Include hidden files
+    absolute: true, // Return absolute paths
+  });
+}
+```
+
+### 5. Testing Discovery
+
+```bash
+# Verify patterns work
+find . -name "*.analog" -type f
+find . -path "**/pages/*.page.ts"
+
+# Test after changes
+pnpm build
+```
+
+### 6. Performance Tips
+
+- Use specific patterns over wildcards
+- Limit depth when possible
+- Cache results in watch mode
+- Group similar patterns with brace expansion
+
+### 7. Error Prevention
+
+```typescript
+// Safe optional chaining
+...(options?.dirs || []).map(...)
+
+// Validate before use
+if (!config || !config.patterns) {
+  return [];
+}
+```
+
+

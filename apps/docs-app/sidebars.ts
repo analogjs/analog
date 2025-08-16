@@ -190,6 +190,11 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
+          id: 'guides/mcp-setup',
+          label: 'MCP Setup',
+        },
+        {
+          type: 'doc',
           id: 'guides/forms',
           label: 'Form Actions',
         },

@@ -1,0 +1,16 @@
+---
+description: CI/CD commands specific to @analogjs/nx-plugin
+---
+
+# @analogjs/nx-plugin CI/CD
+
+## Commands
+- Build: `nx build nx-plugin`
+- Test: `nx test nx-plugin`
+- Lint: `nx lint nx-plugin`
+- E2E Test: `nx e2e nx-plugin-e2e`
+
+## Build Details
+- TypeScript compilation with swc
+- Generators and executors for Nx workspace
+- Not tagged for release (published separately)

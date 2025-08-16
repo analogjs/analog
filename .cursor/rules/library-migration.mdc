@@ -1,0 +1,152 @@
+---
+description: "Provides generic library migration strategies emphasizing documentation-first approach, incremental changes, comprehensive testing, and rollback planning for safe transitions."
+globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.js"
+  - "**/*.jsx"
+  - "**/*.mjs"
+  - "**/*.cjs"
+  - "packages/**/*"
+  - "apps/**/*"
+  - "libs/**/*"
+  - "tools/**/*"
+alwaysApply: false
+---
+# Library Migration Strategy
+
+## Generic Migration Process
+
+### 1. Pre-Migration Assessment
+
+#### Establish Baseline
+- [ ] Run full build and save output
+- [ ] Document current behavior
+- [ ] Identify all usage locations
+- [ ] Note configuration differences
+- [ ] Create test scenarios
+
+#### Research Phase
+- [ ] Compare library APIs
+- [ ] Identify breaking changes
+- [ ] Check compatibility requirements
+- [ ] Evaluate migration complexity
+
+### 2. Documentation-First Approach
+
+```typescript
+/**
+ * Document BEFORE changing code:
+ * - Current implementation details
+ * - Why migration is needed
+ * - Expected behavior after migration
+ * - Real workspace examples
+ */
+```
+
+### 3. Incremental Migration Pattern
+
+#### Step-by-Step Process
+1. **Single Function**: Start with one isolated function
+2. **Add Documentation**: Comprehensive JSDoc first
+3. **Minimal Change**: Update imports and function calls
+4. **Test Immediately**: Verify no regressions
+5. **Update Docs**: Keep documentation current
+6. **Repeat**: Move to next function
+
+### 4. Common Migration Patterns
+
+#### Import Updates
+```typescript
+// Old library
+const lib = require('old-library');
+import lib from 'old-library';
+
+// New library
+import { specificFunction } from 'new-library';
+```
+
+#### API Adjustments
+```typescript
+// Identify API differences
+oldLib.method(args, { option1: true });
+newLib.method(args, { option1: true, newOption: value });
+```
+
+#### Configuration Changes
+- Document all option differences
+- Test with actual workspace data
+- Verify output consistency
+
+### 5. Error Resolution Strategy
+
+#### Common Issues
+1. **Missing imports**: Update all import statements
+2. **API differences**: Adjust function calls and options
+3. **Path handling**: Ensure consistent path resolution
+4. **Type mismatches**: Update TypeScript definitions
+
+#### Debugging Approach
+```bash
+# Isolate issues
+pnpm build 2>&1 | grep -A5 -B5 "error"
+
+# Test specific components
+pnpm test path/to/specific/test
+```
+
+### 6. Verification Process
+
+#### After Each Change
+- Build project
+- Compare outputs with baseline
+- Run affected tests
+- Check for side effects
+
+#### Final Validation
+```bash
+# Full system test
+pnpm build
+pnpm test
+
+# Compare build artifacts
+diff -r dist-old/ dist-new/
+```
+
+### 7. Rollback Planning
+
+#### Safe Migration
+```typescript
+// Keep old code commented during transition
+// const result = oldLib.method(args);
+const result = newLib.method(args, { absolute: true });
+```
+
+#### Quick Rollback
+- Git commits after each successful step
+- Document any workarounds needed
+- Keep migration notes in code
+
+### 8. Best Practices
+
+#### Do's
+- ✅ Document before changing
+- ✅ Test incrementally
+- ✅ Use real workspace data
+- ✅ Commit working states
+- ✅ Keep rollback options
+
+#### Don'ts
+- ❌ Big bang migrations
+- ❌ Skip documentation
+- ❌ Ignore edge cases
+- ❌ Remove old code immediately
+
+### 9. Post-Migration
+
+- Remove old library from dependencies
+- Clean up migration comments
+- Update documentation
+- Share learnings with team
+
+

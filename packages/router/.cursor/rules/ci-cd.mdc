@@ -1,0 +1,20 @@
+---
+description: CI/CD commands specific to @analogjs/router
+---
+
+# @analogjs/router CI/CD
+
+## Commands
+- Build: `nx build router`
+- Test: `nx test router`
+- Lint: `nx lint router`
+
+## Release Build
+- Tagged as `type:release`
+- Angular routing package
+- Part of release build process
+
+## Build Details
+- Uses `@nx/angular:package` executor
+- Includes server and token exports
+- Output to `dist/packages/router`
