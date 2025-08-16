@@ -1,0 +1,18 @@
+---
+description: Thoughtfully maintain the docs-app project.
+globs:
+  - "apps/docs-app/**"
+alwaysApply: true
+---
+
+# Maintain Thoughtfully
+
+## Overview
+
+This rule is designed to help maintain the docs-app project thoughtfully.
+
+## Rules
+
+- Always use the latest version of the docs-app project.
+- Always use existing components and design patterns to maintain consistency.
+- Ensure you reference the actual functionality in the rest of the workspace when writing documentation.

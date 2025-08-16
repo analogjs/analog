@@ -1,5 +1,26 @@
 ---
 sidebar_position: 5
+title: Support - Get Help with Analog
+description: Get support for Analog through Discord, GitHub, or dedicated support options. Find community help, report bugs, request features, and access enterprise support.
+keywords:
+  [
+    'support',
+    'help',
+    'discord',
+    'github',
+    'community',
+    'enterprise support',
+    'bug reports',
+    'feature requests',
+  ]
+image: https://analogjs.org/img/analog-banner.png
+url: https://analogjs.org/docs/support
+type: documentation
+author: Analog Team
+publishedTime: '2022-01-01T00:00:00.000Z'
+modifiedTime: '2024-01-01T00:00:00.000Z'
+section: Support
+tags: ['support', 'help', 'community']
 ---
 
 # Support

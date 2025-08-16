@@ -1,3 +1,27 @@
+---
+title: Deploying Analog Applications - Complete Deployment Guide
+description: Learn how to deploy your Analog applications to various platforms. Understand deployment presets, environment variables, and production optimization strategies.
+keywords:
+  [
+    'deployment',
+    'production',
+    'hosting',
+    'Node.js',
+    'Vercel',
+    'Netlify',
+    'Docker',
+    'CI/CD',
+  ]
+image: https://analogjs.org/img/analog-banner.png
+url: https://analogjs.org/docs/features/deployment/overview
+type: documentation
+author: Analog Team
+publishedTime: '2022-01-01T00:00:00.000Z'
+modifiedTime: '2024-01-01T00:00:00.000Z'
+section: Deployment
+tags: ['deployment', 'production', 'hosting']
+---
+
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 

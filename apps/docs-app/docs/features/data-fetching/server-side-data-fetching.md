@@ -1,3 +1,25 @@
+---
+title: Server-Side Data Fetching in Analog - Pre-load Data for Better Performance
+description: Learn how to implement server-side data fetching in Analog using load functions. Pre-fetch data on the server for improved performance and SEO.
+keywords:
+  [
+    'server-side data fetching',
+    'load functions',
+    'route resolvers',
+    'component input binding',
+    'pre-fetching',
+    'performance',
+  ]
+image: https://analogjs.org/img/analog-banner.png
+url: https://analogjs.org/docs/features/data-fetching/server-side-data-fetching
+type: documentation
+author: Analog Team
+publishedTime: '2022-01-01T00:00:00.000Z'
+modifiedTime: '2024-01-01T00:00:00.000Z'
+section: Data Fetching
+tags: ['server-side', 'data-fetching', 'load-functions', 'performance']
+---
+
 # Server-Side Data Fetching
 
 Analog supports fetching data from the server before loading a page. This can be achieved by defining an async `load` function in `.server.ts` file of the page.

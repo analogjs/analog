@@ -1,5 +1,25 @@
 ---
 sidebar_position: 2
+title: Nx Integration with Analog - Monorepo Development Guide
+description: Learn how to integrate Analog with Nx monorepos and workspaces. Create standalone Nx projects, add Analog to existing workspaces, and leverage Nx's powerful build system.
+keywords:
+  [
+    'Nx',
+    'monorepo',
+    'workspace',
+    'build system',
+    'generators',
+    'presets',
+    'analog platform',
+  ]
+image: https://analogjs.org/img/analog-banner.png
+url: https://analogjs.org/docs/integrations/nx
+type: documentation
+author: Analog Team
+publishedTime: '2022-01-01T00:00:00.000Z'
+modifiedTime: '2024-01-01T00:00:00.000Z'
+section: Integrations
+tags: ['nx', 'monorepo', 'workspace', 'build']
 ---
 
 import Tabs from '@theme/Tabs';
@@ -19,7 +39,7 @@ To scaffold a standalone Nx project, use the `create-nx-workspace` command with 
 
 Create a new Nx workspace with a preconfigured Analog application:
 
-```shell
+```shell title="Create Nx workspace with Analog preset"
 npx create-nx-workspace@latest --preset=@analogjs/platform
 ```
 
@@ -32,7 +52,7 @@ and any necessary configurations is added.
 
 To start the development server for your application, run the `nx serve` command.
 
-```shell
+```shell title="Serve Analog application in Nx workspace"
 npx nx serve analog-app
 ```
 
@@ -42,7 +62,7 @@ Navigate to `http://localhost:4200` in your browser to see the application runni
 
 To build the application for deployment run:
 
-```shell
+```shell title="Build Analog application in Nx workspace"
 npx nx build analog-app
 ```
 
@@ -62,7 +82,7 @@ First, install the `@analogjs/platform` package:
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
-```shell
+```shell title="Install Analog platform package with npm"
 npm install @analogjs/platform --save-dev
 ```
 
@@ -70,7 +90,7 @@ npm install @analogjs/platform --save-dev
 
   <TabItem label="Yarn" value="yarn">
 
-```shell
+```shell title="Install Analog platform package with Yarn"
 yarn add @analogjs/platform --dev
 ```
 
@@ -78,7 +98,7 @@ yarn add @analogjs/platform --dev
 
   <TabItem value="pnpm">
 
-```shell
+```shell title="Install Analog platform package with pnpm"
 pnpm install @analogjs/platform --save-dev
 ```
 

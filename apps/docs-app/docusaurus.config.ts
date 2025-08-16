@@ -65,7 +65,9 @@ const config: Config = {
   },
   favicon: 'img/favicon.ico',
   onBrokenLinks: 'throw',
+  onBrokenAnchors: 'warn',
   onBrokenMarkdownLinks: 'throw',
+  onDuplicateRoutes: 'throw',
   organizationName,
   plugins: [
     // Rsdoctor plugin for build analysis (enabled via RSDOCTOR=true environment variable)

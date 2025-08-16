@@ -1,3 +1,27 @@
+---
+title: Open Graph Image Generation in Analog - Dynamic Social Media Previews
+description: Learn how to generate dynamic Open Graph images in Analog using API routes and Satori. Create custom social media previews for Twitter, LinkedIn, and Facebook.
+keywords:
+  [
+    'Open Graph',
+    'OG images',
+    'social media',
+    'previews',
+    'Satori',
+    'ImageResponse',
+    'meta tags',
+    'Twitter cards',
+  ]
+image: https://analogjs.org/img/analog-banner.png
+url: https://analogjs.org/docs/features/api/og-image-generation
+type: documentation
+author: Analog Team
+publishedTime: '2022-01-01T00:00:00.000Z'
+modifiedTime: '2024-01-01T00:00:00.000Z'
+section: API Routes
+tags: ['og-images', 'social-media', 'previews', 'satori']
+---
+
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
