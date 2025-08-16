@@ -91,7 +91,7 @@ export function updateApplicationStyles(
 
   const stylesEntryPointContent = tree.read(stylesEntryPoint, 'utf-8');
 
-  if (tailwindInstalledVersion < '4') {
+  if (tailwindInstalledVersion && tailwindInstalledVersion < '4') {
     tree.write(
       stylesEntryPoint,
       stripIndents`@tailwind base;
@@ -117,7 +117,7 @@ export function updateApplicationStyles(
   }
 }
 
-function isStyleEntryPointCss(stylesEntryPoint) {
+function isStyleEntryPointCss(stylesEntryPoint: string) {
   return stylesEntryPoint.endsWith('.css');
 }
 
@@ -227,7 +227,7 @@ export function addTailwindConfigFile(
       joinPathFragments(__dirname, '..', 'files', 'tailwind/v2'),
       project.root,
       {
-        relativeSourceRoot: relative(project.root, project.sourceRoot),
+        relativeSourceRoot: relative(project.root, project.sourceRoot || 'src'),
         template: '',
       },
     );
@@ -239,7 +239,7 @@ export function addTailwindConfigFile(
       joinPathFragments(__dirname, '..', 'files', 'tailwind/v3'),
       project.root,
       {
-        relativeSourceRoot: relative(project.root, project.sourceRoot),
+        relativeSourceRoot: relative(project.root, project.sourceRoot || 'src'),
         template: '',
       },
     );

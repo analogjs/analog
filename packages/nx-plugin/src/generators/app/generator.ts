@@ -127,7 +127,18 @@ export async function appGenerator(
   });
 
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
-  const majorAngularVersion = major(coerce(angularVersion));
+
+  if (!angularVersion) {
+    throw new Error('@angular/core version not found in package.json');
+  }
+
+  const coercedAngularVersion = coerce(angularVersion);
+
+  if (!coercedAngularVersion) {
+    throw new Error(`Invalid Angular version: ${angularVersion}`);
+  }
+
+  const majorAngularVersion = major(coercedAngularVersion);
   addFiles(tree, normalizedOptions, majorAngularVersion);
   addDependenciesToPackageJson(
     tree,
@@ -140,11 +151,15 @@ export async function appGenerator(
     {},
   );
 
-  updateJson<{ dependencies: object }>(tree, '/package.json', (json) => {
-    json.dependencies['@angular/platform-server'] = `~${angularVersion}`;
+  updateJson<{ dependencies: Record<string, string> }>(
+    tree,
+    '/package.json',
+    (json) => {
+      json.dependencies['@angular/platform-server'] = `~${angularVersion}`;
 
-    return json;
-  });
+      return json;
+    },
+  );
 
   updateIndex(tree, normalizedOptions.analogAppName);
 
@@ -152,7 +167,7 @@ export async function appGenerator(
     await addTailwindConfig(tree, normalizedOptions.projectName);
   }
 
-  if (normalizedOptions.addTRPC) {
+  if (normalizedOptions.addTRPC && nxVersion) {
     await addTrpc(
       tree,
       normalizedOptions.projectRoot,

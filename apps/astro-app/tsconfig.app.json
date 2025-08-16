@@ -18,7 +18,6 @@
     "importHelpers": true,
     "noEmit": false,
     "target": "es2020",
-    "module": "es2020",
     "lib": ["es2020", "dom"],
     "skipLibCheck": true,
     "ignoreDeprecations": "5.0"

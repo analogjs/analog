@@ -38,6 +38,10 @@ export function updateBuildTarget(
 
     const projectConfig = projects.get(schema.project);
 
+    if (!projectConfig) {
+      throw new Error(`Project ${schema.project} not found`);
+    }
+
     updateJson(tree, angularJsonPath, (json) => {
       json.projects[schema.project].root = projectConfig.root;
       json.projects[schema.project].sourceRoot = projectConfig.sourceRoot;
@@ -64,6 +68,14 @@ export function updateBuildTarget(
     const projects = getProjects(tree);
 
     const projectConfig = projects.get(schema.project);
+
+    if (!projectConfig) {
+      throw new Error(`Project ${schema.project} not found`);
+    }
+
+    if (!projectConfig.targets) {
+      projectConfig.targets = {};
+    }
 
     projectConfig.targets.build = {
       executor: '@analogjs/platform:vite',

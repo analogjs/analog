@@ -32,6 +32,10 @@ export const getTrpcDependencies = (
 ): Record<TrpcDependency, string> => {
   const escapedNxVersion = clean(nxVersion);
 
+  if (!escapedNxVersion) {
+    throw new Error(`Invalid Nx version: ${nxVersion}`);
+  }
+
   // fail out for versions <17.0.0
   if (lt(escapedNxVersion, '17.0.0')) {
     throw new Error(

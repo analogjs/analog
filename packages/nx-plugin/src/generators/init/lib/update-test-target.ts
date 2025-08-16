@@ -37,6 +37,14 @@ export function updateTestTarget(
 
     const projectConfig = projects.get(schema.project);
 
+    if (!projectConfig) {
+      throw new Error(`Project ${schema.project} not found`);
+    }
+
+    if (!projectConfig.targets) {
+      projectConfig.targets = {};
+    }
+
     projectConfig.targets.test = {
       executor: '@analogjs/vitest-angular:test',
       ...commonConfig,

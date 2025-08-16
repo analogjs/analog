@@ -17,6 +17,11 @@ export function updatePackageJson(
   if (tree.exists(angularJsonPath)) {
     const projects = getProjects(tree);
     const projectConfig = projects.get(schema.project);
+
+    if (!projectConfig) {
+      throw new Error(`Project ${schema.project} not found`);
+    }
+
     const packageJsonPath = joinPathFragments(
       projectConfig.root || '.',
       'package.json',
@@ -34,6 +39,10 @@ export function updatePackageJson(
   } else {
     const projects = getProjects(tree);
     const projectConfig = projects.get(schema.project);
+
+    if (!projectConfig) {
+      throw new Error(`Project ${schema.project} not found`);
+    }
 
     const packageJsonPath = joinPathFragments(
       projectConfig.root,

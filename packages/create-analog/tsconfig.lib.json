@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "commonjs",
     "outDir": "../../dist/out-tsc",
     "inlineSourceMap": true,
     "sourceMap": false,

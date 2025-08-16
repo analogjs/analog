@@ -1,7 +1,16 @@
 import viteAngular, { PluginOptions } from '@analogjs/vite-plugin-angular';
 import { enableProdMode } from '@angular/core';
 import type { AstroIntegration, AstroRenderer, ViteUserConfig } from 'astro';
-import type { DeepPartial } from 'astro/dist/type-utils';
+
+// Define DeepPartial locally using Astro's implementation instead of importing from astro/dist/type-utils
+// Source: https://raw.githubusercontent.com/withastro/astro/92881331d1138ae146bbc4b0bfb9c675ca3f3d55/packages/astro/src/type-utils.ts
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends (infer U)[]
+    ? DeepPartial<U>[]
+    : T[P] extends object | undefined
+      ? DeepPartial<T[P]>
+      : T[P];
+};
 
 interface AngularOptions {
   vite?: PluginOptions;

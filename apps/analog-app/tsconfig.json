@@ -17,14 +17,8 @@
     }
   ],
   "compilerOptions": {
-    "target": "es2020",
     "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "resolveJsonModule": true
+    "noImplicitReturns": true
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

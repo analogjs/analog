@@ -6,7 +6,7 @@ export function updateGitIgnore(tree: Tree) {
   if (tree.exists(gitIgnorePath)) {
     const gitIgnoreContents = tree.read(gitIgnorePath, 'utf-8');
 
-    if (!gitIgnoreContents.includes('.nx/cache')) {
+    if (gitIgnoreContents && !gitIgnoreContents.includes('.nx/cache')) {
       let updatedGitIgnore = `${gitIgnoreContents}\n
 .nx/cache
 .nx/workspace-data`;
