@@ -4,8 +4,8 @@
   "projectType": "application",
   "sourceRoot": "apps/analog-app/src",
   "prefix": "analogjs",
-  "implicitDependencies": ["vitest-angular", "storybook-angular"],
   "tags": [],
+  "implicitDependencies": ["vitest-angular", "storybook-angular"],
   "targets": {
     "build": {
       "executor": "@nx/vite:build",
