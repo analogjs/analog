@@ -11,7 +11,7 @@ export function angularVitestPlugin(): Plugin {
     name: '@analogjs/vitest-angular-esm-plugin',
     apply: 'serve',
     enforce: 'post',
-    config(userConfig) {
+    config(userConfig: UserConfig) {
       return {
         optimizeDeps: {
           include: ['tslib', '@angular/cdk/testing/testbed'],

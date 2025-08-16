@@ -7,13 +7,17 @@
   "implicitDependencies": ["trpc-app"],
   "targets": {
     "vitest": {
-      "executor": "@nx/vite:test"
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/trpc-app-e2e-playwright",
+        "command": "vitest run"
+      }
     },
     "e2e": {
       "executor": "nx:run-commands",
       "options": {
         "cwd": "",
-        "command": "start-server-and-test 'nx serve-nitro trpc-app' http://localhost:4205/api/health 'nx run trpc-app-e2e-playwright:vitest'"
+        "command": "start-server-and-test 'nx serve-nitro trpc-app' http://localhost:4205/health 'nx run trpc-app-e2e-playwright:vitest'"
       }
     },
     "lint": {

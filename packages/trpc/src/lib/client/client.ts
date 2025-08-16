@@ -39,6 +39,27 @@ function customFetch(
   input: RequestInfo | URL,
   init?: RequestInit & { method: 'GET' },
 ) {
+  // Handle relative URLs during SSR
+  if (typeof window === 'undefined') {
+    const host =
+      process.env['NITRO_HOST'] ?? process.env['ANALOG_HOST'] ?? 'localhost';
+    const port =
+      process.env['NITRO_PORT'] ?? process.env['ANALOG_PORT'] ?? 4205;
+    const base = `http://${host}:${port}`;
+
+    // Convert relative URLs to absolute URLs
+    const inputStr = input.toString();
+    if (inputStr.startsWith('/')) {
+      input = new URL(inputStr, base).toString();
+    } else if (input instanceof Request && input.url.startsWith('/')) {
+      input = new Request(new URL(input.url, base).toString(), input);
+    }
+
+    // Use native fetch for SSR
+    return fetch(input, init);
+  }
+
+  // Client-side: use $fetch if available
   if ((globalThis as any).$fetch) {
     return (globalThis as any).$fetch
       .raw(input.toString(), init)
@@ -52,20 +73,7 @@ function customFetch(
       }));
   }
 
-  // dev server trpc for analog & nitro
-  if (typeof window === 'undefined') {
-    const host =
-      process.env['NITRO_HOST'] ?? process.env['ANALOG_HOST'] ?? 'localhost';
-    const port =
-      process.env['NITRO_PORT'] ?? process.env['ANALOG_PORT'] ?? 4205;
-    const base = `http://${host}:${port}`;
-    if (input instanceof Request) {
-      input = new Request(base, input);
-    } else {
-      input = new URL(input, base);
-    }
-  }
-
+  // Fallback to native fetch
   return fetch(input, init);
 }
 

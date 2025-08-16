@@ -9,7 +9,7 @@ export class RenderTaskService {
     return this.#pendingTasks.add();
   }
 
-  clearRenderTask(clear: number | Function) {
+  clearRenderTask(clear: number | (() => void)): void {
     if (typeof clear === 'function') {
       clear();
     } else if (typeof (this.#pendingTasks as any).remove === 'function') {

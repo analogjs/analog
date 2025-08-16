@@ -6,7 +6,7 @@
  * @returns
  */
 export const getContentFilesList = () => {
-  let ANALOG_CONTENT_FILE_LIST = {};
+  const ANALOG_CONTENT_FILE_LIST = {};
 
   return ANALOG_CONTENT_FILE_LIST as Record<string, Record<string, any>>;
 };
@@ -17,13 +17,13 @@ export const getContentFilesList = () => {
  * @returns
  */
 export const getContentFiles = () => {
-  let ANALOG_CONTENT_ROUTE_FILES = {};
+  const ANALOG_CONTENT_ROUTE_FILES = {};
 
   return ANALOG_CONTENT_ROUTE_FILES;
 };
 
 export const getAgxFiles = () => {
-  let ANALOG_AGX_FILES = {};
+  const ANALOG_AGX_FILES = {};
 
   return ANALOG_AGX_FILES;
 };

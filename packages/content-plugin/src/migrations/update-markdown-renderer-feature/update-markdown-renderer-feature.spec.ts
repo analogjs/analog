@@ -3,12 +3,10 @@ import { addDependenciesToPackageJson, Tree } from '@nx/devkit';
 import { nxVersion } from '@nx/vite';
 
 import update from './update-markdown-renderer-feature';
-import appGenerator from '../../../../nx-plugin/src/generators/app/generator';
+import { appGenerator } from '@analogjs/nx';
 
 describe('update-markdown-renderer-feature migration', () => {
   let tree: Tree;
-
-  beforeEach(() => {});
 
   async function setup() {
     tree = createTreeWithEmptyWorkspace({ layout: 'apps-libs' });

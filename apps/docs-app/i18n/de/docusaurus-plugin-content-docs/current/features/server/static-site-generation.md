@@ -151,7 +151,7 @@ Das folgende Codebeispiel zeigt, wie `postRenderingHooks` im Code verwendet werd
 ```ts
 import analog from '@analogjs/platform';
 import { defineConfig } from 'vite';
-import { PrerenderRoute } from 'nitropack';
+import { PrerenderRoute } from 'nitro/types';
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
@@ -185,7 +185,7 @@ Nachfolgend ein kleines Beispiel, in dem ein Skript angehängt wird, um Google A
 import analog from '@analogjs/platform';
 import { defineConfig } from 'vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import { PrerenderRoute } from 'nitropack';
+import { PrerenderRoute } from 'nitro/types';
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {

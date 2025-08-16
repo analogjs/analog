@@ -1,4 +1,4 @@
-import { PrerenderRoute } from 'nitropack';
+import { PrerenderRoute } from 'nitro/types';
 
 export interface Options {
   ssr?: boolean;

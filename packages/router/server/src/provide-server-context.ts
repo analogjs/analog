@@ -32,13 +32,13 @@ export function provideServerContext({
 
 export function getBaseUrl(req: ServerRequest) {
   const protocol = getRequestProtocol(req);
-  const { originalUrl, headers } = req;
+  const { originalUrl = '', headers } = req;
   const parsedUrl = new URL(
     '',
     `${protocol}://${headers.host}${
-      originalUrl.endsWith('/')
+      originalUrl && originalUrl.endsWith('/')
         ? originalUrl.substring(0, originalUrl.length - 1)
-        : originalUrl
+        : originalUrl || ''
     }`,
   );
   const baseUrl = parsedUrl.origin;

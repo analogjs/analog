@@ -30,7 +30,7 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "dependencies": {
-    "nitropack": "^2.11.0",
+    "nitro": "npm:nitro-nightly@latest",
     "xmlbuilder2": "^3.0.2",
     "esbuild": "^0.25.0",
     "radix3": "^1.1.1",

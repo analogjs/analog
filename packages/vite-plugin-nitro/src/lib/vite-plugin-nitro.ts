@@ -1,5 +1,5 @@
-import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
-import { App, toNodeListener } from 'h3';
+import { build, createDevServer, createNitro } from 'nitro';
+import type { NitroConfig } from 'nitro/types';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { mergeConfig, normalizePath } from 'vite';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -49,7 +49,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let nitroConfig: NitroConfig;
   let environmentBuild = false;
   let hasAPIDir = false;
-  let routeSitemaps: Record<
+  const routeSitemaps: Record<
     string,
     PrerenderSitemapConfig | (() => PrerenderSitemapConfig)
   > = {};
@@ -102,7 +102,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           normalizePath(
             join(
               __dirname,
-              `runtime/renderer${!options?.ssr ? '-client' : ''}${
+              `runtime/renderer${!options?.ssr && !options?.prerender?.routes ? '-client' : ''}${
                 filePrefix ? '.mjs' : ''
               }`,
             ),
@@ -137,6 +137,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           runtimeConfig: {
             apiPrefix: apiPrefix.substring(1),
             prefix,
+          },
+          // Fix for h3App._fetch is not a function error in newer h3/nitro versions
+          experimental: {
+            asyncContext: true,
+            typescriptBundlerResolution: true,
+            // Use native fetch during prerendering
+            wasm: true,
           },
           // Fixes support for Rolldown
           imports: {
@@ -175,10 +182,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                     proxy: { to: '/**' },
                   },
                 },
-          virtual: hasAPIDir
-            ? undefined
-            : {
-                '#ANALOG_API_MIDDLEWARE': `
+          virtual: {
+            ...(hasAPIDir
+              ? {}
+              : {
+                  '#ANALOG_API_MIDDLEWARE': `
         import { eventHandler, proxyRequest } from 'h3';
         import { useRuntimeConfig } from '#imports';
 
@@ -186,25 +194,58 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           const prefix = useRuntimeConfig().prefix;
           const apiPrefix = \`\${prefix}/\${useRuntimeConfig().apiPrefix}\`;
 
-          if (event.node.req.url?.startsWith(apiPrefix)) {
-            const reqUrl = event.node.req.url?.replace(apiPrefix, '');
+          console.log('[API Middleware] Request URL:', event.req.url);
+          console.log('[API Middleware] API Prefix:', apiPrefix);
+          console.log('[API Middleware] Starts with API prefix:', event.req.url?.startsWith(apiPrefix));
+
+          if (event.req.url?.startsWith(apiPrefix)) {
+            const reqUrl = event.req.url?.replace(apiPrefix, '');
+            console.log('[API Middleware] Proxying to:', reqUrl);
 
             if (
-              event.node.req.method === 'GET' &&
+              event.req.method === 'GET' &&
               // in the case of XML routes, we want to proxy the request so that nitro gets the correct headers
               // and can render the XML correctly as a static asset
-              !event.node.req.url?.endsWith('.xml')
+              !event.req.url?.endsWith('.xml')
             ) {
-              return $fetch(reqUrl, { headers: event.node.req.headers });
+              // Convert headers to a format that $fetch can handle
+              const headers = event.req.headers instanceof Headers
+                ? (() => {
+                    const headerObj: Record<string, string> = {};
+                    event.req.headers.forEach((value, key) => {
+                      headerObj[key] = value;
+                    });
+                    return headerObj;
+                  })()
+                : event.req.headers;
+              console.log('[API Middleware] Fetching with headers:', headers);
+              const response = await globalThis.$fetch(reqUrl, { headers });
+              console.log('[API Middleware] Response type:', typeof response);
+              console.log('[API Middleware] Response:', JSON.stringify(response, null, 2));
+              return response;
             }
 
-            return proxyRequest(event, reqUrl, {
-              // @ts-ignore
-              fetch: $fetch.native,
+            // For proxy requests, we need to handle headers differently
+            // Skip proxy requests during prerendering to avoid header issues
+            console.log('[API Middleware] Proxy request to:', reqUrl);
+            const response = await globalThis.$fetch(reqUrl, {
+              headers: event.req.headers instanceof Headers
+                ? (() => {
+                    const headerObj: Record<string, string> = {};
+                    event.req.headers.forEach((value, key) => {
+                      headerObj[key] = value;
+                    });
+                    return headerObj;
+                  })()
+                : event.req.headers
             });
+            console.log('[API Middleware] Proxy response type:', typeof response);
+            console.log('[API Middleware] Proxy response:', JSON.stringify(response, null, 2));
+            return response;
           }
         });`,
-              },
+                }),
+          },
         };
 
         if (isVercelPreset(buildPreset)) {
@@ -242,12 +283,18 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           nitroConfig.renderer = rendererEntry;
 
           if (isEmptyPrerenderRoutes(options)) {
-            nitroConfig.prerender = {};
-            nitroConfig.prerender.routes = ['/'];
+            nitroConfig.prerender = {
+              concurrency: 1,
+              failOnError: false,
+              routes: ['/'],
+            };
           }
 
           if (options?.prerender) {
-            nitroConfig.prerender = nitroConfig.prerender ?? {};
+            nitroConfig.prerender = nitroConfig.prerender ?? {
+              concurrency: 1,
+              failOnError: false,
+            };
             nitroConfig.prerender.crawlLinks = options?.prerender?.discover;
 
             let routes: (
@@ -341,23 +388,23 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                * This file is shipped as ESM for Windows support,
                * as it won't resolve the renderer.ts file correctly in node.
                */
-              import { eventHandler, getResponseHeader } from 'h3';
-              
+              import { eventHandler } from 'h3';
+
               // @ts-ignore
               import renderer from '${ssrEntry}';
               // @ts-ignore
               const template = \`${indexContents}\`;
 
               export default eventHandler(async (event) => {
-                const noSSR = getResponseHeader(event, 'x-analog-no-ssr');
+                const noSSR = event.res.headers.get('x-analog-no-ssr');
 
                 if (noSSR === 'true') {
                   return template;
                 }
-              
-                const html = await renderer(event.node.req.url, template, {
-                  req: event.node.req,
-                  res: event.node.res,
+
+                const html = await renderer(event.req.url, template, {
+                  req: event.req,
+                  res: event._res,
                 });
 
                 return html;
@@ -449,7 +496,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   config,
                   options.prerender.sitemap,
                   nitroConfig.prerender.routes,
-                  nitroConfig.output?.publicDir!,
+                  nitroConfig.output?.publicDir ?? '',
                   routeSitemaps,
                 );
               }
@@ -469,11 +516,73 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           });
           const server = createDevServer(nitro);
           await build(nitro);
-          const apiHandler = toNodeListener(server.app as unknown as App);
+          const apiHandler = async (
+            req: IncomingMessage,
+            res: ServerResponse,
+          ) => {
+            // Convert Node.js request to Web Request
+            const url = `http://${req.headers.host || 'localhost'}${req.url}`;
+            const headers = new Headers();
+            for (const [key, value] of Object.entries(req.headers)) {
+              if (value) {
+                headers.set(
+                  key,
+                  Array.isArray(value) ? value.join(', ') : value,
+                );
+              }
+            }
+
+            const request = new Request(url, {
+              method: req.method,
+              headers,
+              // Note: body handling would be needed for POST/PUT requests
+            });
+
+            try {
+              console.log('[Dev Server API Handler] Fetching:', url);
+              const response = await server.fetch(request);
+              console.log(
+                '[Dev Server API Handler] Response status:',
+                response.status,
+              );
+
+              // Collect headers in a safe way
+              const responseHeaders: Record<string, string> = {};
+              response.headers.forEach((value, key) => {
+                responseHeaders[key] = value;
+              });
+              console.log(
+                '[Dev Server API Handler] Response headers:',
+                responseHeaders,
+              );
+
+              // Set status code
+              res.statusCode = response.status;
+
+              // Set headers
+              response.headers.forEach((value, key) => {
+                res.setHeader(key, value);
+              });
+
+              // Send body
+              const body = await response.arrayBuffer();
+              const bodyText = new TextDecoder().decode(body);
+              console.log('[Dev Server API Handler] Response body:', bodyText);
+              res.end(Buffer.from(body));
+            } catch (error) {
+              console.error('Error in apiHandler:', error);
+              res.statusCode = 500;
+              res.end('Internal Server Error');
+            }
+          };
 
           if (hasAPIDir) {
             viteServer.middlewares.use(
-              (req: IncomingMessage, res: ServerResponse, next: Function) => {
+              (
+                req: IncomingMessage,
+                res: ServerResponse,
+                next: (err?: any) => void,
+              ) => {
                 if (req.url?.startsWith(`${prefix}${apiPrefix}`)) {
                   apiHandler(req, res);
                   return;
@@ -494,7 +603,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           });
 
           // handle upgrades if websockets are enabled
-          if (nitroOptions?.experimental?.websocket) {
+          if (nitroOptions?.experimental?.websocket && server.upgrade) {
             viteServer.httpServer?.on('upgrade', server.upgrade);
           }
 

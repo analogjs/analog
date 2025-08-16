@@ -5,4 +5,4 @@ export const ANALOG_META_KEY = Symbol(
 /**
  * This variable reference is replaced with a glob of all route endpoints.
  */
-export let ANALOG_PAGE_ENDPOINTS: any = {};
+export const ANALOG_PAGE_ENDPOINTS: any = {};

@@ -8,14 +8,31 @@ import { PostAttributes } from './models';
 function injectActivePostAttributes(
   route: ActivatedRouteSnapshot,
 ): PostAttributes {
-  const file = injectContentFiles<PostAttributes>().find((contentFile) => {
+  const slug = route.params['slug'];
+  const contentFiles = injectContentFiles<PostAttributes>();
+
+  // Debug logging
+  console.log('Looking for slug:', slug);
+  console.log(
+    'Available files:',
+    contentFiles.map((f) => ({
+      filename: f.filename,
+      slug: f.slug,
+    })),
+  );
+
+  const file = contentFiles.find((contentFile) => {
     return (
-      contentFile.filename === `/src/content/${route.params['slug']}.md` ||
-      contentFile.slug === route.params['slug']
+      contentFile.filename === `/src/content/${slug}.md` ||
+      contentFile.slug === slug
     );
   });
 
-  return file!.attributes;
+  if (!file) {
+    throw new Error(`Post not found for slug: ${slug}`);
+  }
+
+  return file.attributes;
 }
 
 export const postTitleResolver: ResolveFn<string> = (route) =>

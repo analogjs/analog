@@ -14,7 +14,7 @@ export function updateMain(tree: Tree, schema: SetupAnalogGeneratorSchema) {
 
   if (tree.exists(mainPath)) {
     const mainContents = tree.read(mainPath, 'utf-8');
-    let updatedMain = `import 'zone.js';\n${mainContents}`;
+    const updatedMain = `import 'zone.js';\n${mainContents}`;
 
     tree.write(mainPath, updatedMain);
   }

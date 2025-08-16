@@ -1,4 +1,4 @@
-import { Nitro } from 'nitropack';
+import type { Nitro } from 'nitro/types';
 import { vi } from 'vitest';
 
 import { addPostRenderingHooks } from './post-rendering-hook';

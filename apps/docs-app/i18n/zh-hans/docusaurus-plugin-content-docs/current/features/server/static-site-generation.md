@@ -149,7 +149,7 @@ Ananlog 支持预渲染处理过程中的 post-rendering 钩子。通过 post-re
 ```ts
 import analog from '@analogjs/platform';
 import { defineConfig } from 'vite';
-import { PrerenderRoute } from 'nitropack';
+import { PrerenderRoute } from 'nitro/types';
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
@@ -183,7 +183,7 @@ export default defineConfig(() => {
 import analog from '@analogjs/platform';
 import { defineConfig } from 'vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import { PrerenderRoute } from 'nitropack';
+import { PrerenderRoute } from 'nitro/types';
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
