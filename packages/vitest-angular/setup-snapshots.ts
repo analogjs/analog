@@ -132,7 +132,48 @@ function fixtureVitestSerializer(fixture: any) {
     'text/html',
   );
 
-  return doc.body.childNodes[0];
+  const result = doc.body.childNodes[0];
+
+  // Strip ng-reflect-* and ng-version attributes from the serialized output
+  const strippedResult = stripAngularAttributes(result);
+
+  return strippedResult;
+}
+
+/**
+ * Recursively strip ng-reflect-* and ng-version attributes from DOM elements
+ * @param element The DOM element to process
+ * @returns A new element with Angular attributes stripped
+ */
+function stripAngularAttributes(element: any): any {
+  if (!element || !element.attributes) {
+    return element;
+  }
+
+  // Clone the element to avoid mutating the original
+  const clonedElement = element.cloneNode(true);
+
+  // Get all attribute names to avoid live collection issues
+  const attributeNames = Array.from(clonedElement.attributes).map(
+    (attr: any) => attr.name,
+  );
+
+  // Remove ng-reflect-* and ng-version attributes
+  attributeNames.forEach((attrName: string) => {
+    if (attrName.startsWith('ng-reflect-') || attrName === 'ng-version') {
+      clonedElement.removeAttribute(attrName);
+    }
+  });
+
+  // Recursively process child elements
+  if (clonedElement.children) {
+    Array.from(clonedElement.children).forEach((child: any, index: number) => {
+      const strippedChild = stripAngularAttributes(child);
+      clonedElement.replaceChild(strippedChild, clonedElement.children[index]);
+    });
+  }
+
+  return clonedElement;
 }
 
 ['expect'].forEach((methodName) => {

@@ -128,6 +128,7 @@ export async function appGenerator(
 
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
   const majorAngularVersion = major(coerce(angularVersion));
+
   addFiles(tree, normalizedOptions, majorAngularVersion);
   addDependenciesToPackageJson(
     tree,
