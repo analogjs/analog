@@ -41,12 +41,14 @@ const btnTw =
     <form class="py-2 flex items-center" #f="ngForm" (ngSubmit)="addPost(f)">
       <label class="sr-only" for="newNote"> Note </label>
       <input
+        id="newNote"
         required
         autocomplete="off"
         data-testid="newNoteInput"
         class="${inputTw}"
         name="newNote"
         [(ngModel)]="newNote"
+        placeholder="Enter a note..."
       />
       <button data-testid="addNoteBtn" class="ml-2 ${btnTw}">+</button>
     </form>
@@ -134,16 +136,18 @@ export default class HomeComponent {
   };
 
   public addPost(form: NgForm) {
-    if (!form.valid) {
+    if (!form.valid || !this.newNote?.trim()) {
       form.form.markAllAsTouched();
       return;
     }
     this._trpc.note.create
-      .mutate({ title: this.newNote })
+      .mutate({ title: this.newNote.trim() })
       .pipe(take(1))
-      .subscribe(() => this.triggerRefresh$.next());
-    this.newNote = '';
-    form.form.reset();
+      .subscribe(() => {
+        this.triggerRefresh$.next();
+        this.newNote = '';
+        form.form.reset();
+      });
   }
 
   public removePost(id: number) {

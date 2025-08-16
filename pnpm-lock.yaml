@@ -63,11 +63,11 @@ importers:
         specifier: 21.3.11
         version: 21.3.11(nx@21.3.11(@swc-node/register@1.10.10(@swc/core@1.5.29(@swc/helpers@0.5.17))(@swc/types@0.1.23)(typescript@5.8.3))(@swc/core@1.5.29(@swc/helpers@0.5.17)))
       '@trpc/client':
-        specifier: ^10.45.2
-        version: 10.45.2(@trpc/server@10.45.2)
+        specifier: ^11.0.0
+        version: 11.4.3(@trpc/server@11.4.3(typescript@5.8.3))(typescript@5.8.3)
       '@trpc/server':
-        specifier: ^10.45.2
-        version: 10.45.2
+        specifier: ^11.0.0
+        version: 11.4.3(typescript@5.8.3)
       ajv-formats:
         specifier: ^3.0.1
         version: 3.0.1(ajv@8.17.1)
@@ -5604,13 +5604,16 @@ packages:
   '@tokenizer/token@0.3.0':
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
 
-  '@trpc/client@10.45.2':
-    resolution: {integrity: sha512-ykALM5kYWTLn1zYuUOZ2cPWlVfrXhc18HzBDyRhoPYN0jey4iQHEFSEowfnhg1RvYnrAVjNBgHNeSAXjrDbGwg==}
+  '@trpc/client@11.4.3':
+    resolution: {integrity: sha512-i2suttUCfColktXT8bqex5kHW5jpT15nwUh0hGSDiW1keN621kSUQKcLJ095blqQAUgB+lsmgSqSMmB4L9shQQ==}
     peerDependencies:
-      '@trpc/server': 10.45.2
+      '@trpc/server': 11.4.3
+      typescript: '>=5.7.2'
 
-  '@trpc/server@10.45.2':
-    resolution: {integrity: sha512-wOrSThNNE4HUnuhJG6PfDRp4L2009KDVxsd+2VYH8ro6o/7/jwYZ8Uu5j+VaW+mOmc8EHerHzGcdbGNQSAUPgg==}
+  '@trpc/server@11.4.3':
+    resolution: {integrity: sha512-wnWq3wiLlMOlYkaIZz+qbuYA5udPTLS4GVVRyFkr6aT83xpdCHyVtURT+u4hSoIrOXQM9OPCNXSXsAujWZDdaw==}
+    peerDependencies:
+      typescript: '>=5.7.2'
 
   '@trysound/sax@0.2.0':
     resolution: {integrity: sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==}
@@ -24397,11 +24400,14 @@ snapshots:
 
   '@tokenizer/token@0.3.0': {}
 
-  '@trpc/client@10.45.2(@trpc/server@10.45.2)':
+  '@trpc/client@11.4.3(@trpc/server@11.4.3(typescript@5.8.3))(typescript@5.8.3)':
     dependencies:
-      '@trpc/server': 10.45.2
+      '@trpc/server': 11.4.3(typescript@5.8.3)
+      typescript: 5.8.3
 
-  '@trpc/server@10.45.2': {}
+  '@trpc/server@11.4.3(typescript@5.8.3)':
+    dependencies:
+      typescript: 5.8.3
 
   '@trysound/sax@0.2.0': {}
 

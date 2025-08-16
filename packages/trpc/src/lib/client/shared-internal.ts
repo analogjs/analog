@@ -1,10 +1,4 @@
-import {
-  AnyRouter,
-  ClientDataTransformerOptions,
-  CombinedDataTransformer,
-  DataTransformerOptions,
-  DefaultDataTransformer,
-} from '@trpc/server';
+import type { AnyRouter, CombinedDataTransformer } from '@trpc/server';
 import {
   Operation,
   TRPCLink,
@@ -73,42 +67,6 @@ export function createChain<
   });
 }
 
-export type CreateTRPCClientOptions<TRouter extends AnyRouter> =
-  CreateTRPCClientBaseOptions<TRouter> & {
-    links: TRPCLink<TRouter>[];
-  };
-
-export type CreateTRPCClientBaseOptions<TRouter extends AnyRouter> =
-  TRouter['_def']['_config']['transformer'] extends DefaultDataTransformer
-    ? {
-        /**
-         * Data transformer
-         *
-         * You must use the same transformer on the backend and frontend
-         * @link https://trpc.io/docs/data-transformers
-         **/
-        transformer?: 'You must set a transformer on the backend router';
-      }
-    : TRouter['_def']['_config']['transformer'] extends DataTransformerOptions
-      ? {
-          /**
-           * Data transformer
-           *
-           * You must use the same transformer on the backend and frontend
-           * @link https://trpc.io/docs/data-transformers
-           **/
-          transformer: TRouter['_def']['_config']['transformer'] extends CombinedDataTransformer
-            ? DataTransformerOptions
-            : TRouter['_def']['_config']['transformer'];
-        }
-      : {
-          /**
-           * Data transformer
-           *
-           * You must use the same transformer on the backend and frontend
-           * @link https://trpc.io/docs/data-transformers
-           **/
-          transformer?:
-            | /** @deprecated **/ ClientDataTransformerOptions
-            | CombinedDataTransformer;
-        };
+export type CreateTRPCClientOptions<TRouter extends AnyRouter> = {
+  links: TRPCLink<TRouter>[];
+};
