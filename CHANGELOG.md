@@ -1,3 +1,13 @@
+# [2.0.0-alpha.16](https://github.com/analogjs/analog/compare/v2.0.0-alpha.15...v2.0.0-alpha.16) (2025-08-16)
+
+### Bug Fixes
+
+- remove Angular v16 from release config ([6afc4fa](https://github.com/analogjs/analog/commit/6afc4fa6fc7139620d18068667dc14f4d525572d))
+
+### Features
+
+- drop support for Angular <=16 ([#1825](https://github.com/analogjs/analog/issues/1825)) ([9d7176a](https://github.com/analogjs/analog/commit/9d7176a1e692b1e3c18c0746e1bf23e3f1c7bcaf))
+
 # [2.0.0-alpha.15](https://github.com/analogjs/analog/compare/v2.0.0-alpha.14...v2.0.0-alpha.15) (2025-08-05)
 
 ### Bug Fixes
