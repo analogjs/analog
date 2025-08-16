@@ -1,3 +1,21 @@
+# [1.20.0-beta.2](https://github.com/analogjs/analog/compare/v1.20.0-beta.1...v1.20.0-beta.2) (2025-08-16)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** detect ESM import for storybook transform ([#1835](https://github.com/analogjs/analog/issues/1835)) ([f9cdeaf](https://github.com/analogjs/analog/commit/f9cdeaff0545f37ad93c4d33f1a9f8acf9ff225b))
+
+# [1.20.0-beta.1](https://github.com/analogjs/analog/compare/v1.19.4...v1.20.0-beta.1) (2025-08-15)
+
+### Features
+
+- **storybook-angular:** add support for Vitest addon ([#1833](https://github.com/analogjs/analog/issues/1833)) ([4890fdc](https://github.com/analogjs/analog/commit/4890fdc188f5530798629d88fac5b330dd8de302))
+
+## [1.19.4](https://github.com/analogjs/analog/compare/v1.19.3...v1.19.4) (2025-08-04)
+
+### Bug Fixes
+
+- **storybook-angular:** add platform-browser to optimized dependencies ([#1817](https://github.com/analogjs/analog/issues/1817)) ([170b56c](https://github.com/analogjs/analog/commit/170b56c4453e1948958d8bfc22694d6cb64c9c51))
+
 ## [1.19.4-beta.1](https://github.com/analogjs/analog/compare/v1.19.3...v1.19.4-beta.1) (2025-08-02)
 
 ### Bug Fixes
