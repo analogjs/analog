@@ -36,6 +36,9 @@
     }
   },
   "dependencies": {
+    "arktype": "^2.0.0",
+    "tinyglobby": "^0.2.14",
+    "schema-dts": "^1.1.2",
     "ts-morph": "^21.0.0",
     "vfile": "^6.0.3"
   },

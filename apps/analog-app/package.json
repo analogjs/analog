@@ -6,6 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "dependencies": {
+    "schema-dts": "^1.1.5"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

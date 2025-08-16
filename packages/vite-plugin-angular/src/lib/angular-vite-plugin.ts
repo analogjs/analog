@@ -46,6 +46,8 @@ import {
   MarkdownTemplateTransform,
 } from './authoring/markdown-transform.js';
 import { routerPlugin } from './router-plugin.js';
+import { routeTreePlugin } from './route-tree-plugin.js';
+import { jsonLdSSRPlugin } from './json-ld-ssr-plugin.js';
 import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
 import { EmitFileResult } from './models.js';
 import { liveReloadPlugin } from './live-reload-plugin.js';
@@ -72,6 +74,25 @@ export interface PluginOptions {
           include: string[];
         };
     markdownTemplateTransforms?: MarkdownTemplateTransform[];
+    /**
+     * Enable experimental route tree generation (TanStack Router style)
+     */
+    routeTree?:
+      | boolean
+      | {
+          /** Directory containing page files */
+          pagesDirectory?: string;
+          /** Output file for the generated route tree */
+          generatedRouteTree?: string;
+          /** Additional page directories to scan */
+          additionalPagesDirs?: string[];
+          /** Quote style for generated code */
+          quoteStyle?: 'single' | 'double';
+          /** Whether to use semicolons */
+          semicolons?: boolean;
+          /** Whether to disable logging */
+          disableLogging?: boolean;
+        };
   };
   supportedBrowsers?: string[];
   transformFilter?: (code: string, id: string) => boolean;
@@ -126,6 +147,14 @@ export function angular(options?: PluginOptions): Plugin[] {
     additionalContentDirs: options?.additionalContentDirs ?? [],
     liveReload: options?.liveReload ?? false,
     disableTypeChecking: options?.disableTypeChecking ?? true,
+    experimental: {
+      supportAnalogFormat: options?.experimental?.supportAnalogFormat ?? false,
+      markdownTemplateTransforms: options?.experimental
+        ?.markdownTemplateTransforms?.length
+        ? options.experimental.markdownTemplateTransforms
+        : defaultMarkdownTemplateTransforms,
+      routeTree: options?.experimental?.routeTree ?? false,
+    },
   };
 
   let resolvedConfig: ResolvedConfig;
@@ -614,6 +643,21 @@ export function angular(options?: PluginOptions): Plugin[] {
       jit,
     }),
     (isStorybook && angularStorybookPlugin()) as Plugin,
+    (pluginOptions.experimental?.routeTree &&
+      routeTreePlugin({
+        workspaceRoot: pluginOptions.workspaceRoot,
+        ...(typeof pluginOptions.experimental.routeTree === 'object'
+          ? pluginOptions.experimental.routeTree
+          : {}),
+      })) as Plugin,
+    (pluginOptions.experimental?.routeTree &&
+      jsonLdSSRPlugin({
+        workspaceRoot: pluginOptions.workspaceRoot,
+        routeTreePath:
+          typeof pluginOptions.experimental.routeTree === 'object'
+            ? pluginOptions.experimental.routeTree.generatedRouteTree
+            : undefined,
+      })) as Plugin,
     routerPlugin(),
     pendingTasksPlugin(),
     nxFolderPlugin(),
