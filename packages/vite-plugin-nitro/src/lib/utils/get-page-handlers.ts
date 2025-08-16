@@ -98,11 +98,6 @@ export function getPageHandlers({
       .replace(/\[(\w+)\]/g, ':$1') // Convert [param] to :param (dynamic routes)
       .replace(/\./g, '/'); // Convert dots to forward slashes
 
-    // // Make the handler path relative to the workspace root
-    // const relativeHandler = normalizePath(
-    //   relative(workspaceRoot, endpointFile),
-    // );
-
     // Return Nitro event handler with absolute handler path and transformed route
     return {
       handler: endpointFile,
