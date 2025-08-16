@@ -1,7 +1,12 @@
-import { Operation, TRPCLink } from '@trpc/client';
+import type { Operation, TRPCLink } from '@trpc/client';
 import { observable } from '@trpc/server/observable';
-import { inject, makeStateKey, StateKey, TransferState } from '@angular/core';
-import { AnyRouter } from '@trpc/server';
+import {
+  inject,
+  makeStateKey,
+  type StateKey,
+  TransferState,
+} from '@angular/core';
+import type { AnyRouter } from '@trpc/server';
 import { tRPC_CACHE_STATE } from '../cache-state';
 import superjson from 'superjson';
 
@@ -42,33 +47,38 @@ export const transferStateLink =
     const { isCacheActive } = inject(tRPC_CACHE_STATE);
     const transferState = inject(TransferState);
     const isBrowser = typeof window === 'object';
-    // here we just got initialized in the app - this happens once per app
-    // useful for storing cache for instance
-    return ({ next, op }) => {
-      const shouldUseCache =
-        (op.type === 'query' && !isBrowser) || // always fetch new values on the server
-        isCacheActive.getValue(); // or when initializing the client app --> same behavior as HttpClient
 
-      if (!shouldUseCache) {
+    return ({ next, op }) => {
+      // Only process queries
+      if (op.type !== 'query') {
         return next(op);
       }
 
       const storeKey = makeCacheKey(op);
       const storeValue = transferState.get(storeKey, null);
 
-      if (storeValue && isBrowser) {
-        // on the server we don't care about the value we will always fetch a new one
-        // use superjson to parse our superjson string and retrieve our
-        // data return it instead of calling next trpc link
-        return observable((observer) =>
-          observer.next(superjson.parse(storeValue)),
-        );
+      // Client-side: Check for cached data first to prevent double fetching
+      if (isBrowser && storeValue) {
+        // Use cached data from server and remove it from transfer state
+        transferState.remove(storeKey);
+        return observable((observer) => {
+          observer.next(superjson.parse(storeValue));
+          observer.complete();
+        });
+      }
+
+      // Server-side: Always cache queries
+      // Client-side: Only cache during initial hydration (when isCacheActive is true)
+      const shouldCache = !isBrowser || isCacheActive.getValue();
+
+      if (!shouldCache) {
+        return next(op);
       }
 
       return observable((observer) => {
         return next(op).subscribe({
           next(value) {
-            // store returned value from trpc call stringified with superjson in TransferState
+            // Store returned value in TransferState for future use
             transferState.set(storeKey, superjson.stringify(value));
             observer.next(value);
           },
