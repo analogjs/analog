@@ -614,7 +614,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       supportedBrowsers: pluginOptions.supportedBrowsers,
       jit,
     }),
-    (isStorybook && angularStorybookPlugin()) as Plugin,
+    (isStorybook &&
+      angularStorybookPlugin(pluginOptions.workspaceRoot)) as Plugin,
     routerPlugin(),
     pendingTasksPlugin(),
     nxFolderPlugin(),

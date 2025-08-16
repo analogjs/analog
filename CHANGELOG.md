@@ -1,3 +1,9 @@
+# [1.20.0-beta.2](https://github.com/analogjs/analog/compare/v1.20.0-beta.1...v1.20.0-beta.2) (2025-08-16)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** detect ESM import for storybook transform ([#1835](https://github.com/analogjs/analog/issues/1835)) ([f9cdeaf](https://github.com/analogjs/analog/commit/f9cdeaff0545f37ad93c4d33f1a9f8acf9ff225b))
+
 # [1.20.0-beta.1](https://github.com/analogjs/analog/compare/v1.19.4...v1.20.0-beta.1) (2025-08-15)
 
 ### Features
