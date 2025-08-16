@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "module": "es2020",
+    "moduleResolution": "bundler",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitOverride": true,

@@ -150,7 +150,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             autoImport: false,
           },
           rollupConfig: {
-            onwarn(warning) {
+            onwarn(warning: any) {
               if (
                 warning.message.includes('empty chunk') &&
                 warning.message.endsWith('.server')
@@ -209,15 +209,16 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               !event.req.url?.endsWith('.xml')
             ) {
               // Convert headers to a format that $fetch can handle
-              const headers = event.req.headers instanceof Headers
-                ? (() => {
-                    const headerObj: Record<string, string> = {};
-                    event.req.headers.forEach((value, key) => {
-                      headerObj[key] = value;
-                    });
-                    return headerObj;
-                  })()
-                : event.req.headers;
+              let headers;
+              if (event.req.headers instanceof Headers) {
+                const headerObj = {};
+                event.req.headers.forEach((value, key) => {
+                  headerObj[key] = value;
+                });
+                headers = headerObj;
+              } else {
+                headers = event.req.headers;
+              }
               console.log('[API Middleware] Fetching with headers:', headers);
               const response = await globalThis.$fetch(reqUrl, { headers });
               console.log('[API Middleware] Response type:', typeof response);
@@ -228,16 +229,18 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             // For proxy requests, we need to handle headers differently
             // Skip proxy requests during prerendering to avoid header issues
             console.log('[API Middleware] Proxy request to:', reqUrl);
+            let proxyHeaders;
+            if (event.req.headers instanceof Headers) {
+              const headerObj = {};
+              event.req.headers.forEach((value, key) => {
+                headerObj[key] = value;
+              });
+              proxyHeaders = headerObj;
+            } else {
+              proxyHeaders = event.req.headers;
+            }
             const response = await globalThis.$fetch(reqUrl, {
-              headers: event.req.headers instanceof Headers
-                ? (() => {
-                    const headerObj: Record<string, string> = {};
-                    event.req.headers.forEach((value, key) => {
-                      headerObj[key] = value;
-                    });
-                    return headerObj;
-                  })()
-                : event.req.headers
+              headers: proxyHeaders
             });
             console.log('[API Middleware] Proxy response type:', typeof response);
             console.log('[API Middleware] Proxy response:', JSON.stringify(response, null, 2));
@@ -548,7 +551,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
               // Collect headers in a safe way
               const responseHeaders: Record<string, string> = {};
-              response.headers.forEach((value, key) => {
+              response.headers.forEach((value: any, key: any) => {
                 responseHeaders[key] = value;
               });
               console.log(
@@ -560,7 +563,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               res.statusCode = response.status;
 
               // Set headers
-              response.headers.forEach((value, key) => {
+              response.headers.forEach((value: any, key: any) => {
                 res.setHeader(key, value);
               });
 

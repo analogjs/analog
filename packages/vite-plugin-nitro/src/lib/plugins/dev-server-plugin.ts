@@ -89,7 +89,7 @@ export function devServerPlugin(options: ServerOptions): Plugin {
             if (result instanceof Response) {
               // Convert Response to Node.js response
               res.statusCode = result.status;
-              result.headers.forEach((value, key) => {
+              result.headers.forEach((value: any, key: any) => {
                 res.setHeader(key, value);
               });
               res.end(await result.text());

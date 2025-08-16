@@ -356,7 +356,7 @@ importers:
         specifier: 30.0.5
         version: 30.0.5
       jest-util:
-        specifier: ~30.0.0
+        specifier: ~30.0.5
         version: 30.0.5
       jiti:
         specifier: 2.5.1
