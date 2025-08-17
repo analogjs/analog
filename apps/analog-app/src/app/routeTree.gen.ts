@@ -15,7 +15,7 @@ import type { WithContext, Thing } from 'schema-dts'
 const IndexRoute: Route = {
   path: '',
   loadComponent: () => import('./pages/(home).page').then(m => m.default),
-  ...await import('./pages/(home).page').then(m => m.routeMeta || {})
+  data: { hasRouteMeta: true, routePath: './pages/(home).page' }
 }
 const CatchAllRoute: Route = {
   path: '/**',
@@ -24,7 +24,7 @@ const CatchAllRoute: Route = {
 const ArticleRoute: Route = {
   path: '/article',
   loadComponent: () => import('./pages/article.page').then(m => m.default),
-  ...await import('./pages/article.page').then(m => m.routeMeta || {})
+  data: { hasRouteMeta: true, routePath: './pages/article.page' }
 }
 const AuthRoute: Route = {
   path: '/auth',
@@ -61,7 +61,7 @@ const SearchRoute: Route = {
 const TestMetaRoute: Route = {
   path: '/test-meta',
   loadComponent: () => import('./pages/test-meta.page').then(m => m.default),
-  ...await import('./pages/test-meta.page').then(m => m.routeMeta || {})
+  data: { hasRouteMeta: true, routePath: './pages/test-meta.page' }
 }
 const AuthSignUpRoute: Route = {
   path: '/(auth)/sign-up',
@@ -78,7 +78,7 @@ const ProductsProductIdRoute: Route = {
 const ServerServerRoute: Route = {
   path: '/server/(server)',
   loadComponent: () => import('./pages/server/(server).page').then(m => m.default),
-  ...await import('./pages/server/(server).page').then(m => m.routeMeta || {})
+  data: { hasRouteMeta: true, routePath: './pages/server/(server).page' }
 }
 const ShippingCatchAllRoute: Route = {
   path: '/shipping/**',

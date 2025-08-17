@@ -16,8 +16,11 @@ export interface JsonLdSSRPluginOptions {
  */
 export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
   const routeTreePath = options.routeTreePath ?? 'src/app/routeTree.gen.ts';
-  let routeJsonLdMap: Map<string, any> | null = null;
+  let routeJsonLdMap: Map<string, unknown> | null = null;
   let projectRoot: string;
+  let pluginDisabled = false;
+
+  console.log('[analog-json-ld-ssr-DEBUG] Plugin initialized');
 
   return {
     name: 'analog-json-ld-ssr',
@@ -25,41 +28,79 @@ export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
 
     configResolved(config) {
       projectRoot = config.root;
+      console.log(
+        '[analog-json-ld-ssr-DEBUG] configResolved - projectRoot:',
+        projectRoot,
+      );
     },
 
     configureServer(server) {
+      console.log(
+        '[analog-json-ld-ssr-DEBUG] configureServer called - setting up middleware',
+      );
       // Hook into the middleware to inject JSON-LD
-      server.middlewares.use(async (req, res, next) => {
+      // Use 'pre' order to ensure this runs before other middleware
+      server.middlewares.use((req, res, next) => {
+        // Skip processing for static assets and API routes
+        if (req.url?.includes('.') || req.url?.startsWith('/api/')) {
+          return next();
+        }
+
         // Store the original end method
         const originalEnd = res.end;
 
         // Override the end method to inject JSON-LD
-        res.end = function (chunk?: any, encoding?: any) {
+        (res as any).end = function (chunk?: any, encoding?: any) {
           // Check if this is an HTML response
           const contentType = res.getHeader('content-type');
-          if (contentType && contentType.toString().includes('text/html')) {
+          if (contentType?.toString().includes('text/html')) {
             let html = '';
             if (chunk) {
               html = typeof chunk === 'string' ? chunk : chunk.toString();
             }
 
-            // Only process if it contains HTML structure
-            if (html && html.includes('</head>')) {
+            // Only process if it contains HTML structure and we haven't disabled the plugin
+            if (html?.includes('</head>') && !pluginDisabled) {
               // Load route JSON-LD map if not already loaded
               if (!routeJsonLdMap) {
                 try {
                   const routeTreeFullPath = resolve(projectRoot, routeTreePath);
                   if (existsSync(routeTreeFullPath)) {
-                    // Clear the require cache to get fresh data
-                    delete require.cache[require.resolve(routeTreeFullPath)];
-                    const routeTree = require(routeTreeFullPath);
-                    routeJsonLdMap = routeTree.routeJsonLdMap || new Map();
+                    // Use a safer require approach that doesn't interfere with module resolution
+                    try {
+                      console.log(
+                        '[analog-json-ld-ssr-DEBUG] Attempting to require route tree:',
+                        routeTreeFullPath,
+                      );
+                      // Don't clear cache to avoid interference with other requires
+                      const routeTree = require(routeTreeFullPath);
+                      console.log(
+                        '[analog-json-ld-ssr-DEBUG] Successfully required route tree',
+                      );
+                      routeJsonLdMap = routeTree.routeJsonLdMap || new Map();
+
+                      // If the map is empty, disable the plugin for future requests
+                      if (routeJsonLdMap?.size === 0) {
+                        pluginDisabled = true;
+                      }
+                    } catch (requireError) {
+                      console.log(
+                        '[analog-json-ld-ssr-DEBUG] Failed to require route tree:',
+                        requireError,
+                      );
+                      // If require fails, initialize with empty map and disable
+                      routeJsonLdMap = new Map();
+                      pluginDisabled = true;
+                    }
                   } else {
                     routeJsonLdMap = new Map();
+                    pluginDisabled = true;
                   }
-                } catch (error) {
+                } catch {
                   // Route tree might not exist or might not have routeJsonLdMap export
+                  // Silently fallback to empty map to avoid disrupting SSR
                   routeJsonLdMap = new Map();
+                  pluginDisabled = true;
                 }
               }
 
@@ -91,6 +132,11 @@ export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
     transformIndexHtml: {
       order: 'post',
       async handler(html, ctx) {
+        // Skip if plugin is disabled
+        if (pluginDisabled) {
+          return html;
+        }
+
         // Only process during SSR
         if (!ctx.server) {
           return html;

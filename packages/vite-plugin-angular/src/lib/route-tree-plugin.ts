@@ -43,6 +43,8 @@ export interface RouteTreePluginOptions {
   lazyLoading?: boolean;
   /** Generate Angular Router compatible routes */
   angularRoutes?: boolean;
+  /** DEBUG: Extra verbose logging for debugging */
+  debugVerbose?: boolean;
 }
 
 interface AnalogRoute {
@@ -75,6 +77,7 @@ export function routeTreePlugin(options: RouteTreePluginOptions = {}): Plugin {
   const disableLogging = options.disableLogging ?? false;
   const lazyLoading = options.lazyLoading ?? true; // Default to lazy loading
   const angularRoutes = options.angularRoutes ?? false;
+  const debugVerbose = options.debugVerbose ?? false;
 
   const quote = quoteStyle === 'single' ? "'" : '"';
   const semi = semicolons ? ';' : '';
@@ -85,6 +88,12 @@ export function routeTreePlugin(options: RouteTreePluginOptions = {}): Plugin {
   function log(message: string) {
     if (!disableLogging) {
       console.log(`[analog-route-tree] ${message}`);
+    }
+  }
+
+  function debugLog(message: string) {
+    if (debugVerbose && !disableLogging) {
+      console.log(`[analog-route-tree-DEBUG] ${message}`);
     }
   }
 
@@ -341,7 +350,7 @@ export function routeTreePlugin(options: RouteTreePluginOptions = {}): Plugin {
   loadComponent: () => import(${quote}./${cleanImportPath}${quote}).then(m => m.default)${
     route.hasRouteMeta
       ? `,
-  ...await import(${quote}./${cleanImportPath}${quote}).then(m => m.routeMeta || {})`
+  data: { hasRouteMeta: true, routePath: ${quote}./${cleanImportPath}${quote} }`
       : ''
   }
 }${semi}`,
@@ -683,12 +692,14 @@ export function getRouteWithParams<T extends AnalogRoute>(
   return {
     name: 'analog-route-tree',
     buildStart() {
+      debugLog('buildStart() called');
       // Generate initial route tree
       writeRouteTree();
     },
     configResolved(config) {
       isBuilding = config.command === 'build';
       viteRoot = normalizePath(config.root);
+      debugLog(`configResolved() called - isBuilding: ${isBuilding}`);
       log(`Vite root: ${viteRoot}`);
     },
     handleHotUpdate({ file, server }) {

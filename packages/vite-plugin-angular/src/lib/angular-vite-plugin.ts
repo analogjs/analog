@@ -92,6 +92,14 @@ export interface PluginOptions {
           semicolons?: boolean;
           /** Whether to disable logging */
           disableLogging?: boolean;
+          /** Generate lazy loading routes instead of eager imports */
+          lazyLoading?: boolean;
+          /** Generate Angular Router compatible routes */
+          angularRoutes?: boolean;
+          /** DEBUG: Disable route tree generation but keep other features */
+          debugDisableRouteTreeGeneration?: boolean;
+          /** DEBUG: Disable JSON-LD SSR plugin */
+          debugDisableJsonLdSSR?: boolean;
         };
   };
   supportedBrowsers?: string[];
@@ -644,6 +652,10 @@ export function angular(options?: PluginOptions): Plugin[] {
     }),
     (isStorybook && angularStorybookPlugin()) as Plugin,
     (pluginOptions.experimental?.routeTree &&
+      !(
+        typeof pluginOptions.experimental.routeTree === 'object' &&
+        pluginOptions.experimental.routeTree.debugDisableRouteTreeGeneration
+      ) &&
       routeTreePlugin({
         workspaceRoot: pluginOptions.workspaceRoot,
         ...(typeof pluginOptions.experimental.routeTree === 'object'
@@ -651,6 +663,10 @@ export function angular(options?: PluginOptions): Plugin[] {
           : {}),
       })) as Plugin,
     (pluginOptions.experimental?.routeTree &&
+      !(
+        typeof pluginOptions.experimental.routeTree === 'object' &&
+        pluginOptions.experimental.routeTree.debugDisableJsonLdSSR
+      ) &&
       jsonLdSSRPlugin({
         workspaceRoot: pluginOptions.workspaceRoot,
         routeTreePath:

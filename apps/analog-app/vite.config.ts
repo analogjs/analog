@@ -55,11 +55,13 @@ export default defineConfig(({ mode }) => {
           inlineStylesExtension: 'scss',
           experimental: {
             supportAnalogFormat: true,
-            // routeTree: {
-            //   lazyLoading: true,
-            //   angularRoutes: true,
-            //   disableLogging: false,
-            // },
+            routeTree: {
+              lazyLoading: true,
+              angularRoutes: true,
+              disableLogging: false,
+              debugDisableRouteTreeGeneration: true,
+              debugDisableJsonLdSSR: true,
+            },
           },
         },
         liveReload: true,
