@@ -11,6 +11,13 @@ import { Routes } from '@angular/router'
 import type { Route } from '@angular/router'
 import type { WithContext, Thing } from 'schema-dts'
 
+import { routeMeta as IndexRouteMeta } from './pages/(home).page'
+import { routeMeta as ArticleRouteMeta } from './pages/article.page'
+import { routeJsonLd as ArticleJsonLd } from './pages/article.page'
+import { routeJsonLd as EventJsonLd } from './pages/event.page'
+import { routeJsonLd as ProductJsonLd } from './pages/product.page'
+import { routeMeta as TestMetaRouteMeta } from './pages/test-meta.page'
+import { routeMeta as ServerServerRouteMeta } from './pages/server/(server).page'
 
 const IndexRoute: Route = {
   path: '',

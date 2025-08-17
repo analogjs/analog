@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import type { WithContext, Event } from 'schema-dts';
 
-// Export JSON-LD for the route tree
 export const routeJsonLd: WithContext<Event> = {
   '@context': 'https://schema.org',
   '@type': 'Event',

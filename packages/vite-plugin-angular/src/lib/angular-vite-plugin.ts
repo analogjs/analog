@@ -77,6 +77,47 @@ export interface PluginOptions {
     /**
      * Enable experimental route tree generation (TanStack Router style)
      */
+    /**
+     * Route Tree Generator Configuration
+     *
+     * Enables automatic generation of type-safe route trees from file-based routing.
+     * This feature provides TypeScript definitions, JSON-LD structured data injection,
+     * and navigation utilities for AnalogJS applications.
+     *
+     * ## Basic Usage
+     * ```typescript
+     * experimental: {
+     *   routeTree: true  // Enable with defaults
+     * }
+     * ```
+     *
+     * ## Advanced Configuration
+     * ```typescript
+     * experimental: {
+     *   routeTree: {
+     *     lazyLoading: true,
+     *     angularRoutes: true,
+     *     disableLogging: false,
+     *     // Debug flags for troubleshooting
+     *     debugDisableRouteTreeGeneration: false,
+     *     debugDisableJsonLdSSR: false,
+     *     debugVerbose: true
+     *   }
+     * }
+     * ```
+     *
+     * ## Troubleshooting SSR Issues
+     *
+     * If you encounter "No default export found" errors or middleware loading issues:
+     *
+     * 1. **Test Route Tree Generation**: Set `debugDisableRouteTreeGeneration: true`
+     * 2. **Test JSON-LD Plugin**: Set `debugDisableJsonLdSSR: true`
+     * 3. **Enable Debug Logs**: Set `debugVerbose: true`
+     *
+     * These flags help isolate which component is causing SSR conflicts.
+     *
+     * @see {@link https://analogjs.org/docs/features/routing/route-tree} Route Tree Documentation
+     */
     routeTree?:
       | boolean
       | {
@@ -96,10 +137,34 @@ export interface PluginOptions {
           lazyLoading?: boolean;
           /** Generate Angular Router compatible routes */
           angularRoutes?: boolean;
-          /** DEBUG: Disable route tree generation but keep other features */
+          /**
+           * DEBUG: Disable route tree generation but keep other features
+           *
+           * Use this flag to isolate SSR conflicts. When set to true,
+           * the route tree plugin will not generate any files, allowing
+           * you to test if route tree generation is causing SSR issues.
+           *
+           * @default false
+           */
           debugDisableRouteTreeGeneration?: boolean;
-          /** DEBUG: Disable JSON-LD SSR plugin */
+          /**
+           * DEBUG: Disable JSON-LD SSR plugin
+           *
+           * Use this flag to isolate JSON-LD SSR injection issues.
+           * When set to true, the JSON-LD SSR plugin will not be loaded.
+           *
+           * @default false
+           */
           debugDisableJsonLdSSR?: boolean;
+          /**
+           * DEBUG: Enable verbose logging for debugging
+           *
+           * Enables detailed debug logs from the route tree plugin
+           * to help troubleshoot generation and SSR conflicts.
+           *
+           * @default false
+           */
+          debugVerbose?: boolean;
         };
   };
   supportedBrowsers?: string[];
