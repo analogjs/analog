@@ -4,13 +4,11 @@
     "rootDir": ".",
     "sourceMap": true,
     "declaration": false,
-
     "lib": ["ES2022", "DOM"],
     "target": "ES2022",
     "module": "Preserve",
     "moduleDetection": "force",
     "allowJs": true,
-
     "moduleResolution": "bundler",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -18,14 +16,12 @@
     "importHelpers": true,
     "strict": true,
     "skipLibCheck": true,
-
     "noFallthroughCasesInSwitch": false,
     "noUncheckedIndexedAccess": false,
     "noImplicitOverride": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
-
     "baseUrl": ".",
     "paths": {
       "@analogjs/astro-angular": ["packages/astro-angular/src/index.ts"],

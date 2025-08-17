@@ -1,24 +1,21 @@
 // SSR dev server, middleware and error page source modified from
 // https://github.com/solidjs/solid-start/blob/main/packages/start/dev/server.js
 
-import {
-  Connect,
-  Plugin,
-  UserConfig,
-  ViteDevServer,
-  normalizePath,
-} from 'vite';
+import type { Connect, Plugin, UserConfig, ViteDevServer } from 'vite';
+import { normalizePath } from 'vite';
 import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { createEvent, sendWebResponse } from 'h3';
 import { createRouter as createRadixRouter, toRouteMatcher } from 'radix3';
 import { defu } from 'defu';
-import { NitroRouteRules } from 'nitropack';
+import type { NitroRouteRules } from 'nitropack';
 
 import { registerDevServerMiddleware } from '../utils/register-dev-middleware.js';
-import { Options } from '../options.js';
+import type { Options } from '../options.js';
 
-type ServerOptions = Options & { routeRules?: Record<string, any> | undefined };
+type ServerOptions = Options & {
+  routeRules?: Record<string, unknown> | undefined;
+};
 
 export function devServerPlugin(options: ServerOptions): Plugin {
   const workspaceRoot = options?.workspaceRoot || process.cwd();
@@ -34,11 +31,14 @@ export function devServerPlugin(options: ServerOptions): Plugin {
       config = userConfig;
       root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
       isTest = isTest ? isTest : mode === 'test';
+
+      const entryServerPath =
+        options.entryServer || `${root}/${sourceRoot}/main.server.ts`;
+
       return {
         resolve: {
           alias: {
-            '~analog/entry-server':
-              options.entryServer || `${root}/${sourceRoot}/main.server.ts`,
+            '~analog/entry-server': entryServerPath,
           },
         },
       };
@@ -74,10 +74,12 @@ export function devServerPlugin(options: ServerOptions): Plugin {
 
           try {
             let result: string | Response;
+
             // Check for route rules explicitly disabling SSR
             if (_getRouteRules(req.originalUrl as string).ssr === false) {
               result = template;
             } else {
+              // Simple upstream pattern - our main.server.ts now exports a direct function
               const entryServer = (
                 await viteServer.ssrLoadModule('~analog/entry-server')
               )['default'];
@@ -87,14 +89,20 @@ export function devServerPlugin(options: ServerOptions): Plugin {
               });
             }
 
-            if (result instanceof Response) {
-              sendWebResponse(createEvent(req, res), result);
+            if (
+              typeof result === 'object' &&
+              result &&
+              'status' in result &&
+              'headers' in result
+            ) {
+              sendWebResponse(createEvent(req, res), result as Response);
               return;
             }
+
             res.setHeader('Content-Type', 'text/html');
             res.end(result);
           } catch (e) {
-            viteServer && viteServer.ssrFixStacktrace(e as Error);
+            viteServer?.ssrFixStacktrace(e as Error);
             res.statusCode = 500;
             res.end(`
               <!DOCTYPE html>

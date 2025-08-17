@@ -4,7 +4,6 @@ import analog from '@analogjs/platform';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, Plugin } from 'vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import inspect from 'vite-plugin-inspect';
 
 // Only run in Netlify CI
 let base = process.env['URL'] || 'http://localhost:3000';
@@ -15,10 +14,14 @@ if (process.env['NETLIFY'] === 'true') {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode, isSsrBuild }) => {
+export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
     publicDir: 'src/public',
+    resolve: {
+      // Ensure proper module resolution for SSR
+      mainFields: ['module', 'jsnext:main', 'jsnext', 'main'],
+    },
     build: {
       outDir: '../../dist/apps/analog-app/client',
       reportCompressedSize: true,
@@ -52,6 +55,11 @@ export default defineConfig(({ mode, isSsrBuild }) => {
           inlineStylesExtension: 'scss',
           experimental: {
             supportAnalogFormat: true,
+            // routeTree: {
+            //   lazyLoading: true,
+            //   angularRoutes: true,
+            //   disableLogging: false,
+            // },
           },
         },
         liveReload: true,

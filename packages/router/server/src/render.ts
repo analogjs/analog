@@ -32,15 +32,24 @@ export function render(
   config: ApplicationConfig,
   platformProviders: Provider[] = [],
 ) {
+  console.debug(
+    '[analogjs/router/server] render() called, creating render function',
+  );
+
   function bootstrap() {
     return bootstrapApplication(rootComponent, config);
   }
 
-  return async function render(
+  const renderFunction = async function render(
     url: string,
     document: string,
     serverContext: ServerContext,
   ) {
+    console.debug(
+      '[analogjs/router/server] render function called for URL:',
+      url,
+    );
+
     if (serverComponentRequest(serverContext)) {
       return await renderServerComponent(url, serverContext);
     }
@@ -56,4 +65,10 @@ export function render(
 
     return html;
   };
+
+  console.debug(
+    '[analogjs/router/server] returning render function, type:',
+    typeof renderFunction,
+  );
+  return renderFunction;
 }
