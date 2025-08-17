@@ -7,6 +7,8 @@ export interface JsonLdSSRPluginOptions {
   routeTreePath?: string;
   /** The workspace root directory */
   workspaceRoot?: string;
+  /** Enable verbose logging for debugging */
+  debugVerbose?: boolean;
 }
 
 /**
@@ -125,11 +127,24 @@ export interface JsonLdSSRPluginOptions {
  */
 export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
   const routeTreePath = options.routeTreePath ?? 'src/app/routeTree.gen.ts';
+  const debugVerbose = options.debugVerbose ?? false;
   let routeJsonLdMap: Map<string, unknown> | null = null;
   let projectRoot: string;
   let pluginDisabled = false;
 
-  console.log('[analog-json-ld-ssr-DEBUG] Plugin initialized');
+  // Helper functions for conditional logging
+  const log = (message: string, ...args: any[]) => {
+    if (debugVerbose) {
+      console.log(`[analog-json-ld-ssr] ${message}`, ...args);
+    }
+  };
+
+  const errorLog = (message: string, ...args: any[]) => {
+    // Always log errors regardless of verbose settings
+    console.error(`[analog-json-ld-ssr-ERROR] ${message}`, ...args);
+  };
+
+  log('Plugin initialized');
 
   return {
     name: 'analog-json-ld-ssr',
@@ -137,16 +152,11 @@ export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
 
     configResolved(config) {
       projectRoot = config.root;
-      console.log(
-        '[analog-json-ld-ssr-DEBUG] configResolved - projectRoot:',
-        projectRoot,
-      );
+      log('configResolved - projectRoot:', projectRoot);
     },
 
     configureServer(server) {
-      console.log(
-        '[analog-json-ld-ssr-DEBUG] configureServer called - setting up middleware',
-      );
+      log('configureServer called - setting up middleware');
 
       // Store the Vite dev server for SSR module loading
       const viteServer = server;
@@ -154,10 +164,7 @@ export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
       // Hook into the middleware to inject JSON-LD
       // Use 'pre' order to ensure this runs before other middleware
       server.middlewares.use(async (req, res, next) => {
-        console.log(
-          '[analog-json-ld-ssr-DEBUG] Middleware called for URL:',
-          req.url,
-        );
+        log('Middleware called for URL:', req.url);
 
         /**
          * ROUTE TRACKING MECHANISM
@@ -184,18 +191,12 @@ export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
           !req.url.startsWith('/api/')
         ) {
           (req as any).__analogOriginalRoute = req.url.split('?')[0];
-          console.log(
-            '[analog-json-ld-ssr-DEBUG] Stored original route:',
-            (req as any).__analogOriginalRoute,
-          );
+          log('Stored original route:', (req as any).__analogOriginalRoute);
         }
 
         // Skip processing for static assets and API routes
         if (req.url?.includes('.') || req.url?.startsWith('/api/')) {
-          console.log(
-            '[analog-json-ld-ssr-DEBUG] Skipping static/API route:',
-            req.url,
-          );
+          log('Skipping static/API route:', req.url);
           return next();
         }
 
@@ -204,14 +205,11 @@ export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
 
         // Override the end method to inject JSON-LD
         (res as any).end = async function (chunk?: any, encoding?: any) {
-          console.log(
-            '[analog-json-ld-ssr-DEBUG] res.end called for URL:',
-            req.url,
-          );
+          log('res.end called for URL:', req.url);
 
           // Check if this is an HTML response
           const contentType = res.getHeader('content-type');
-          console.log('[analog-json-ld-ssr-DEBUG] Content-Type:', contentType);
+          log('Content-Type:', contentType);
 
           if (contentType?.toString().includes('text/html')) {
             let html = '';
@@ -219,18 +217,9 @@ export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
               html = typeof chunk === 'string' ? chunk : chunk.toString();
             }
 
-            console.log(
-              '[analog-json-ld-ssr-DEBUG] HTML chunk length:',
-              html.length,
-            );
-            console.log(
-              '[analog-json-ld-ssr-DEBUG] Contains </head>:',
-              html?.includes('</head>'),
-            );
-            console.log(
-              '[analog-json-ld-ssr-DEBUG] Plugin disabled:',
-              pluginDisabled,
-            );
+            log('HTML chunk length:', html.length);
+            log('Contains </head>:', html?.includes('</head>'));
+            log('Plugin disabled:', pluginDisabled);
 
             // Only process if it contains HTML structure and we haven't disabled the plugin
             if (html?.includes('</head>') && !pluginDisabled) {
@@ -238,14 +227,8 @@ export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
               if (!routeJsonLdMap) {
                 try {
                   const routeTreeFullPath = resolve(projectRoot, routeTreePath);
-                  console.log(
-                    '[analog-json-ld-ssr-DEBUG] Route tree path:',
-                    routeTreeFullPath,
-                  );
-                  console.log(
-                    '[analog-json-ld-ssr-DEBUG] File exists:',
-                    existsSync(routeTreeFullPath),
-                  );
+                  log('Route tree path:', routeTreeFullPath);
+                  log('File exists:', existsSync(routeTreeFullPath));
 
                   if (existsSync(routeTreeFullPath)) {
                     // RACE CONDITION FIX: Clear Vite's module cache first
@@ -257,22 +240,17 @@ export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
                       const module =
                         moduleGraph?.getModuleById(routeTreeFullPath);
                       if (module) {
-                        console.log(
-                          '[analog-json-ld-ssr-DEBUG] Invalidating cached module',
-                        );
+                        log('Invalidating cached module');
                         moduleGraph.invalidateModule(module);
                       }
                     } catch (cacheError) {
-                      console.log(
-                        '[analog-json-ld-ssr-DEBUG] Could not clear module cache:',
-                        cacheError,
-                      );
+                      log('Could not clear module cache:', cacheError);
                     }
 
                     // Use Vite's SSR module loading instead of Node.js require()
                     try {
-                      console.log(
-                        '[analog-json-ld-ssr-DEBUG] Attempting to load route tree via Vite SSR:',
+                      log(
+                        'Attempting to load route tree via Vite SSR:',
                         routeTreeFullPath,
                       );
 
@@ -282,20 +260,17 @@ export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
                         routeTreeFullPath,
                         'utf-8',
                       );
-                      console.log(
-                        '[analog-json-ld-ssr-DEBUG] Route tree file size:',
-                        fileContent.length,
-                      );
-                      console.log(
-                        '[analog-json-ld-ssr-DEBUG] File contains routeJsonLdMap:',
+                      log('Route tree file size:', fileContent.length);
+                      log(
+                        'File contains routeJsonLdMap:',
                         fileContent.includes('routeJsonLdMap'),
                       );
 
                       // Use Vite's SSR module loading for proper TypeScript/ESM support
                       let routeTree =
                         await viteServer.ssrLoadModule(routeTreeFullPath);
-                      console.log(
-                        '[analog-json-ld-ssr-DEBUG] First SSR load attempt - exports:',
+                      log(
+                        'First SSR load attempt - exports:',
                         Object.keys(routeTree),
                       );
 
@@ -316,8 +291,8 @@ export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
                        * the JSON-LD plugin can function correctly on first load.
                        */
                       if (Object.keys(routeTree).length === 0) {
-                        console.log(
-                          '[analog-json-ld-ssr-DEBUG] Empty exports detected, triggering route tree generation',
+                        log(
+                          'Empty exports detected, triggering route tree generation',
                         );
 
                         // Force route tree generation by touching a known page file to trigger hot reload
@@ -345,8 +320,8 @@ export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
                           }
 
                           if (pageFileToTouch) {
-                            console.log(
-                              '[analog-json-ld-ssr-DEBUG] Triggering hot reload by touching:',
+                            log(
+                              'Triggering hot reload by touching:',
                               pageFileToTouch,
                             );
 
@@ -372,52 +347,44 @@ export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
                             // Try loading again
                             routeTree =
                               await viteServer.ssrLoadModule(routeTreeFullPath);
-                            console.log(
-                              '[analog-json-ld-ssr-DEBUG] After route tree generation - exports:',
+                            log(
+                              'After route tree generation - exports:',
                               Object.keys(routeTree),
                             );
                           } else {
-                            console.log(
-                              '[analog-json-ld-ssr-DEBUG] No known page files found to trigger route tree generation',
+                            log(
+                              'No known page files found to trigger route tree generation',
                             );
                           }
                         } catch (generationError) {
-                          console.log(
-                            '[analog-json-ld-ssr-DEBUG] Route tree generation failed:',
-                            generationError,
-                          );
+                          log('Route tree generation failed:', generationError);
                         }
                       }
 
-                      console.log(
-                        '[analog-json-ld-ssr-DEBUG] Final route tree exports:',
-                        Object.keys(routeTree),
-                      );
-                      console.log(
-                        '[analog-json-ld-ssr-DEBUG] routeJsonLdMap exists in module:',
+                      log('Final route tree exports:', Object.keys(routeTree));
+                      log(
+                        'routeJsonLdMap exists in module:',
                         'routeJsonLdMap' in routeTree,
                       );
 
                       routeJsonLdMap = routeTree.routeJsonLdMap || new Map();
-                      console.log(
-                        '[analog-json-ld-ssr-DEBUG] Loaded routeJsonLdMap with size:',
+                      log(
+                        'Loaded routeJsonLdMap with size:',
                         routeJsonLdMap?.size,
                       );
-                      console.log(
-                        '[analog-json-ld-ssr-DEBUG] routeJsonLdMap entries:',
+                      log(
+                        'routeJsonLdMap entries:',
                         Array.from(routeJsonLdMap?.entries() || []),
                       );
 
                       // If the map is empty, disable the plugin for future requests
                       if (routeJsonLdMap?.size === 0) {
-                        console.log(
-                          '[analog-json-ld-ssr-DEBUG] Empty routeJsonLdMap, disabling plugin',
-                        );
+                        log('Empty routeJsonLdMap, disabling plugin');
                         pluginDisabled = true;
                       }
                     } catch (ssrLoadError) {
-                      console.log(
-                        '[analog-json-ld-ssr-DEBUG] Failed to load route tree via Vite SSR:',
+                      log(
+                        'Failed to load route tree via Vite SSR:',
                         ssrLoadError,
                       );
                       // If SSR loading fails, initialize with empty map and disable
@@ -425,18 +392,12 @@ export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
                       pluginDisabled = true;
                     }
                   } else {
-                    console.log(
-                      '[analog-json-ld-ssr-DEBUG] Route tree file does not exist:',
-                      routeTreeFullPath,
-                    );
+                    log('Route tree file does not exist:', routeTreeFullPath);
                     routeJsonLdMap = new Map();
                     pluginDisabled = true;
                   }
                 } catch (error) {
-                  console.log(
-                    '[analog-json-ld-ssr-DEBUG] Error in route tree loading logic:',
-                    error,
-                  );
+                  log('Error in route tree loading logic:', error);
                   // Route tree might not exist or might not have routeJsonLdMap export
                   // Silently fallback to empty map to avoid disrupting SSR
                   routeJsonLdMap = new Map();
@@ -461,29 +422,18 @@ export function jsonLdSSRPlugin(options: JsonLdSSRPluginOptions = {}): Plugin {
                 path = path.replace('/index.html', '') || '/';
               }
 
-              console.log('[analog-json-ld-ssr-DEBUG] Original URL:', req.url);
-              console.log(
-                '[analog-json-ld-ssr-DEBUG] Stored original route:',
-                (req as any).__analogOriginalRoute,
-              );
-              console.log('[analog-json-ld-ssr-DEBUG] Normalized path:', path);
-              console.log(
-                '[analog-json-ld-ssr-DEBUG] routeJsonLdMap size:',
-                routeJsonLdMap?.size,
-              );
-              console.log(
-                '[analog-json-ld-ssr-DEBUG] routeJsonLdMap keys:',
+              log('Original URL:', req.url);
+              log('Stored original route:', (req as any).__analogOriginalRoute);
+              log('Normalized path:', path);
+              log('routeJsonLdMap size:', routeJsonLdMap?.size);
+              log(
+                'routeJsonLdMap keys:',
                 Array.from(routeJsonLdMap?.keys() || []),
               );
 
               // Get JSON-LD for this route
               const jsonLd = routeJsonLdMap?.get(path);
-              console.log(
-                '[analog-json-ld-ssr-DEBUG] Found JSON-LD for path:',
-                path,
-                ':',
-                !!jsonLd,
-              );
+              log('Found JSON-LD for path:', path, ':', !!jsonLd);
 
               if (jsonLd) {
                 // Create the JSON-LD script tag

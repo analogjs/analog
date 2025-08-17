@@ -11,13 +11,34 @@ import { Routes } from '@angular/router'
 import type { Route } from '@angular/router'
 import type { WithContext, Thing } from 'schema-dts'
 
-import { routeMeta as IndexRouteMeta } from './pages/(home).page'
-import { routeMeta as ArticleRouteMeta } from './pages/article.page'
+// Root route type for module declaration
+declare const rootRoute: any
+
+import type IndexComponent from './pages/(home).page'
+import type { routeMeta as IndexRouteMeta } from './pages/(home).page'
+import type CatchAllComponent from './pages/[...slug].page'
+import type ArticleComponent from './pages/article.page'
+import type { routeMeta as ArticleRouteMeta } from './pages/article.page'
 import { routeJsonLd as ArticleJsonLd } from './pages/article.page'
+import type AuthComponent from './pages/(auth).page'
+import type CartComponent from './pages/cart.page'
+import type EventComponent from './pages/event.page'
 import { routeJsonLd as EventJsonLd } from './pages/event.page'
+import type GoodbyeComponent from './pages/goodbye.page'
+import type NewsletterComponent from './pages/newsletter.page'
+import type PackageComponent from './pages/package.page'
+import type ProductComponent from './pages/product.page'
 import { routeJsonLd as ProductJsonLd } from './pages/product.page'
-import { routeMeta as TestMetaRouteMeta } from './pages/test-meta.page'
-import { routeMeta as ServerServerRouteMeta } from './pages/server/(server).page'
+import type SearchComponent from './pages/search.page'
+import type TestMetaComponent from './pages/test-meta.page'
+import type { routeMeta as TestMetaRouteMeta } from './pages/test-meta.page'
+import type AuthSignUpComponent from './pages/(auth)/sign-up.page'
+import type ClientClientComponent from './pages/client/(client).page'
+import type ProductsProductIdComponent from './pages/products.[productId].page'
+import type ServerServerComponent from './pages/server/(server).page'
+import type { routeMeta as ServerServerRouteMeta } from './pages/server/(server).page'
+import type ShippingCatchAllComponent from './pages/shipping/[...slug].page'
+import type ShippingIndexComponent from './pages/shipping/index.page'
 
 const IndexRoute: Route = {
   path: '',

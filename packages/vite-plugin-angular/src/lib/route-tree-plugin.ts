@@ -170,8 +170,6 @@ export interface RouteTreePluginOptions {
   quoteStyle?: 'single' | 'double';
   /** Whether to use semicolons */
   semicolons?: boolean;
-  /** Whether to disable logging */
-  disableLogging?: boolean;
   /** Generate lazy loading routes instead of eager imports */
   lazyLoading?: boolean;
   /** Generate Angular Router compatible routes */
@@ -252,7 +250,6 @@ export function routeTreePlugin(options: RouteTreePluginOptions = {}): Plugin {
   const additionalPagesDirs = options.additionalPagesDirs ?? [];
   const quoteStyle = options.quoteStyle ?? 'single';
   const semicolons = options.semicolons ?? false;
-  const disableLogging = options.disableLogging ?? false;
   const lazyLoading = options.lazyLoading ?? true; // Default to lazy loading
   const angularRoutes = options.angularRoutes ?? false;
   const debugVerbose = options.debugVerbose ?? false;
@@ -264,14 +261,8 @@ export function routeTreePlugin(options: RouteTreePluginOptions = {}): Plugin {
   let viteRoot = '';
 
   function log(message: string) {
-    if (!disableLogging) {
+    if (debugVerbose) {
       console.log(`[analog-route-tree] ${message}`);
-    }
-  }
-
-  function debugLog(message: string) {
-    if (debugVerbose && !disableLogging) {
-      console.log(`[analog-route-tree-DEBUG] ${message}`);
     }
   }
 
@@ -390,7 +381,7 @@ export function routeTreePlugin(options: RouteTreePluginOptions = {}): Plugin {
     let hasJsonLd = false;
 
     try {
-      debugLog(`Reading file: ${filePath}`);
+      log(`Reading file: ${filePath}`);
       const fileContent = readFileSync(filePath, 'utf-8');
       hasRouteMeta = /export\s+const\s+routeMeta\s*(:.*?)?\s*=/.test(
         fileContent,
@@ -398,11 +389,11 @@ export function routeTreePlugin(options: RouteTreePluginOptions = {}): Plugin {
       hasJsonLd = /export\s+const\s+routeJsonLd\s*(:.*?)?\s*=/.test(
         fileContent,
       );
-      debugLog(
+      log(
         `File analysis - hasRouteMeta: ${hasRouteMeta}, hasJsonLd: ${hasJsonLd}`,
       );
 
-      if (hasRouteMeta && !options.disableLogging) {
+      if (hasRouteMeta && debugVerbose) {
         // Extract and validate routeMeta using arktype
         try {
           // This is a simple validation check - in production, you'd want to actually parse the AST
@@ -495,9 +486,14 @@ export function routeTreePlugin(options: RouteTreePluginOptions = {}): Plugin {
     imports.push(`import type { WithContext, Thing } from 'schema-dts'${semi}`);
     imports.push('');
 
+    // Add root route type for module declaration
+    imports.push(`// Root route type for module declaration`);
+    imports.push(`declare const rootRoute: any${semi}`);
+    imports.push('');
+
     if (lazyLoading) {
-      // For lazy loading, we don't import components eagerly
-      // But we still need to import JSON-LD and routeMeta for the route tree
+      // For lazy loading, we don't import components eagerly for runtime use
+      // But we still need to import components as types for the module declaration
       routes.forEach((route) => {
         const routeName = getRouteImportName(route);
         const importPath = relative(outputDir, route.filePath).replace(
@@ -509,14 +505,19 @@ export function routeTreePlugin(options: RouteTreePluginOptions = {}): Plugin {
           .replace(/\.analog$/, '')
           .replace(/\.ag$/, '');
 
-        // Import routeMeta if it exists
+        // Import component as type for module declaration
+        imports.push(
+          `import type ${routeName}Component from ${quote}./${cleanImportPath}${quote}${semi}`,
+        );
+
+        // Import routeMeta if it exists (as type since only used in module declaration)
         if (route.hasRouteMeta) {
           imports.push(
-            `import { routeMeta as ${routeName}RouteMeta } from ${quote}./${cleanImportPath}${quote}${semi}`,
+            `import type { routeMeta as ${routeName}RouteMeta } from ${quote}./${cleanImportPath}${quote}${semi}`,
           );
         }
 
-        // Import routeJsonLd if it exists
+        // Import routeJsonLd if it exists (runtime value needed for routeJsonLdMap)
         if (route.hasJsonLd) {
           imports.push(
             `import { routeJsonLd as ${routeName}JsonLd } from ${quote}./${cleanImportPath}${quote}${semi}`,
@@ -541,10 +542,10 @@ export function routeTreePlugin(options: RouteTreePluginOptions = {}): Plugin {
         imports.push(
           `import ${routeName}Component from ${quote}./${cleanImportPath}${quote}${semi}`,
         );
-        // Import routeMeta if it exists
+        // Import routeMeta if it exists (as type since only used in module declaration)
         if (route.hasRouteMeta) {
           imports.push(
-            `import { routeMeta as ${routeName}RouteMeta } from ${quote}./${cleanImportPath}${quote}${semi}`,
+            `import type { routeMeta as ${routeName}RouteMeta } from ${quote}./${cleanImportPath}${quote}${semi}`,
           );
           // Add validation warning comments if routeMeta has errors
           if (!route.routeMetaValid && route.routeMetaErrors?.length) {
@@ -993,13 +994,13 @@ export function getRouteWithParams<T extends AnalogRoute>(
    */
   async function writeRouteTree(isHotReload = false) {
     try {
-      debugLog('writeRouteTree() called - starting route scanning');
+      log('writeRouteTree() called - starting route scanning');
       const routes = scanRouteFiles();
-      debugLog(`scanRouteFiles() completed - found ${routes.length} routes`);
+      log(`scanRouteFiles() completed - found ${routes.length} routes`);
 
-      debugLog('generateRouteTree() starting');
+      log('generateRouteTree() starting');
       const content = generateRouteTree(routes);
-      debugLog('generateRouteTree() completed');
+      log('generateRouteTree() completed');
 
       const baseDir = viteRoot || workspaceRoot;
       const outputPath = resolve(baseDir, generatedRouteTree);
@@ -1025,16 +1026,16 @@ export function getRouteWithParams<T extends AnalogRoute>(
       const fileExists = existsSync(outputPath);
 
       if (isBuilding || isHotReload) {
-        debugLog(
+        log(
           `Writing route tree to: ${outputPath} (build: ${isBuilding}, exists: ${fileExists}, hotReload: ${isHotReload})`,
         );
         await fs.writeFile(outputPath, content, 'utf-8');
-        debugLog('Route tree file written successfully');
+        log('Route tree file written successfully');
         log(
           `Generated route tree at ${outputPath} with ${routes.length} routes`,
         );
       } else {
-        debugLog(
+        log(
           'Skipping file write during dev server startup to avoid SSR conflicts',
         );
         log(
@@ -1064,13 +1065,13 @@ export function getRouteWithParams<T extends AnalogRoute>(
      * to avoid race conditions with SSR setup.
      */
     buildStart() {
-      debugLog('buildStart() called');
+      log('buildStart() called');
       // Only generate during build, not dev server startup
       if (isBuilding) {
-        debugLog('Build mode - generating route tree immediately');
+        log('Build mode - generating route tree immediately');
         writeRouteTree();
       } else {
-        debugLog(
+        log(
           'Dev mode - deferring route tree generation to avoid SSR conflicts',
         );
       }
@@ -1083,7 +1084,7 @@ export function getRouteWithParams<T extends AnalogRoute>(
     configResolved(config) {
       isBuilding = config.command === 'build';
       viteRoot = normalizePath(config.root);
-      debugLog(`configResolved() called - isBuilding: ${isBuilding}`);
+      log(`configResolved() called - isBuilding: ${isBuilding}`);
       log(`Vite root: ${viteRoot}`);
     },
     /**
@@ -1108,11 +1109,11 @@ export function getRouteWithParams<T extends AnalogRoute>(
     configureServer(server) {
       // Generate route tree after server is configured in dev mode
       if (!isBuilding) {
-        debugLog(
+        log(
           'configureServer() called - deferring route tree generation to after middleware setup',
         );
         return async () => {
-          debugLog(
+          log(
             'configureServer async callback - generating route tree with conditional file writing',
           );
           await writeRouteTree();

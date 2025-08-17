@@ -58,9 +58,9 @@ export default defineConfig(({ mode }) => {
             routeTree: {
               lazyLoading: true,
               angularRoutes: true,
-              disableLogging: false,
               debugDisableRouteTreeGeneration: false,
               debugDisableJsonLdSSR: false,
+              debugVerbose: true,
             },
           },
         },

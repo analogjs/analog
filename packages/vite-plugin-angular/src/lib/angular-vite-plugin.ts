@@ -97,7 +97,6 @@ export interface PluginOptions {
      *   routeTree: {
      *     lazyLoading: true,
      *     angularRoutes: true,
-     *     disableLogging: false,
      *     // Debug flags for troubleshooting
      *     debugDisableRouteTreeGeneration: false,
      *     debugDisableJsonLdSSR: false,
@@ -131,8 +130,7 @@ export interface PluginOptions {
           quoteStyle?: 'single' | 'double';
           /** Whether to use semicolons */
           semicolons?: boolean;
-          /** Whether to disable logging */
-          disableLogging?: boolean;
+
           /** Generate lazy loading routes instead of eager imports */
           lazyLoading?: boolean;
           /** Generate Angular Router compatible routes */
@@ -159,8 +157,9 @@ export interface PluginOptions {
           /**
            * DEBUG: Enable verbose logging for debugging
            *
-           * Enables detailed debug logs from the route tree plugin
-           * to help troubleshoot generation and SSR conflicts.
+           * Enables detailed debug logs from both the route tree plugin
+           * and JSON-LD SSR plugin to help troubleshoot generation and
+           * SSR conflicts. When disabled, plugins run silently.
            *
            * @default false
            */
@@ -738,6 +737,10 @@ export function angular(options?: PluginOptions): Plugin[] {
           typeof pluginOptions.experimental.routeTree === 'object'
             ? pluginOptions.experimental.routeTree.generatedRouteTree
             : undefined,
+        debugVerbose:
+          typeof pluginOptions.experimental.routeTree === 'object'
+            ? pluginOptions.experimental.routeTree.debugVerbose
+            : false,
       })) as Plugin,
     routerPlugin(),
     pendingTasksPlugin(),
