@@ -3,10 +3,9 @@ import clsx from 'clsx';
 import React from 'react';
 import styles from './styles.module.css';
 import Translate from '@docusaurus/Translate';
-import StackblitzLogoSvg from '@site/static/img/logos/stackblitz-logo.svg';
 
 const StackblitzLogo: React.ComponentType<React.ComponentProps<'svg'>> =
-  StackblitzLogoSvg;
+  require('@site/static/img/logos/stackblitz-logo.svg').default;
 
 export default function StackblitzButton(): JSX.Element {
   return (
