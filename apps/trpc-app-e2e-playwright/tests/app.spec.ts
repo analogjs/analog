@@ -35,12 +35,18 @@ afterEach(async () => {
   await page.close();
 });
 
-describe.skip('tRPC Demo App', () => {
+describe('tRPC Demo App', () => {
   test(`Given the user has navigated to the home page
     Then the app title is visible`, async () => {
-    await expect(
-      page.locator('role=heading[level=1] >> text=Analog + tRPC'),
-    ).toContain(/Analog + tRPC/i);
+    // Wait for the page to be fully loaded and Angular to be ready
+    await page.waitForLoadState('networkidle');
+
+    // Wait for the Angular app to be fully rendered
+    await page.waitForSelector('trpc-app-home');
+
+    // Now check for the heading - use a simpler selector that should work
+    const heading = page.locator('h1:has-text("Analog + tRPC")');
+    await expect(await heading.textContent()).toContain('Analog + tRPC');
   });
 
   test<TRPCTestContext>(`

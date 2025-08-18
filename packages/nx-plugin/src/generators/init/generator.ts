@@ -30,6 +30,10 @@ function addFiles(
   const projects = getProjects(tree);
   const projectConfig = projects.get(options.project);
 
+  if (!projectConfig) {
+    throw new Error(`Project ${options.project} not found`);
+  }
+
   const templateOptions = {
     ...options,
     offsetFromRoot: isNx ? '../../' : './',
@@ -61,7 +65,17 @@ export async function setupAnalogGenerator(
   options: SetupAnalogGeneratorSchema,
 ) {
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
-  const majorAngularVersion = major(coerce(angularVersion));
+
+  if (!angularVersion) {
+    throw new Error('Angular version not found in package.json');
+  }
+
+  const coercedVersion = coerce(angularVersion);
+  if (!coercedVersion) {
+    throw new Error(`Invalid Angular version: ${angularVersion}`);
+  }
+
+  const majorAngularVersion = major(coercedVersion);
   addAnalogDependencies(tree, angularVersion);
   updateBuildTarget(tree, options);
   updateServeTarget(tree, options);

@@ -14,7 +14,13 @@ import {
   tRPC_CACHE_STATE,
 } from './cache-state';
 import { createTRPCRxJSProxyClient } from './trpc-rxjs-proxy';
-import { FetchEsque } from '@trpc/client/dist/internals/types';
+
+// Type definition for fetch function used by tRPC
+// https://raw.githubusercontent.com/trpc/trpc/7c93a1f6ef298bd2997d8bcf2698843e6537f125/packages/client/src/internals/types.ts
+export type FetchEsque = (
+  input: RequestInfo | URL | string,
+  init?: RequestInit,
+) => Promise<Response>;
 
 export type TrpcOptions<T extends AnyRouter> = {
   url: string;

@@ -144,6 +144,7 @@ describe('setup-vitest generator', () => {
       dependencies: {
         '@angular/core': '19.0.0',
         '@nx/angular': '20.5.0',
+        nx: '20.5.0',
       },
       devDependencies: {},
     });

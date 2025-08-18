@@ -22,6 +22,10 @@ export const getNrwlDependencies = (
 ): Record<NrwlDependency, string> => {
   const escapedNxVersion = clean(nxVersion);
 
+  if (!escapedNxVersion) {
+    throw new Error(`Invalid Nx version: ${nxVersion}`);
+  }
+
   // fail out for versions <17.0.0
   if (lt(escapedNxVersion, '17.0.0')) {
     throw new Error(
@@ -40,6 +44,10 @@ export const getNxDependencies = (
   nxVersion: string,
 ): Record<NxDependency, string> => {
   const escapedNxVersion = clean(nxVersion);
+
+  if (!escapedNxVersion) {
+    throw new Error(`Invalid Nx version: ${nxVersion}`);
+  }
 
   // error for @nrwl to @nx namespace changes for Nx < 17
   if (lt(escapedNxVersion, '17.0.0')) {

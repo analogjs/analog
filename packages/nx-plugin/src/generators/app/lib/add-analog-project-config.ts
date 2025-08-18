@@ -57,36 +57,45 @@ export function addAnalogProjectConfig(
   };
 
   if (isNx) {
+    if (!projectConfiguration.targets) {
+      projectConfiguration.targets = {};
+    }
     projectConfiguration.targets['build'].outputs = [
       '{options.outputPath}',
       `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/.nitro`,
       `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/ssr`,
       `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/analog`,
     ];
-    projectConfiguration[targets]['build'].options = {
+    (projectConfiguration as any)[targets]['build'].options = {
       main: `${workspaceAppsDir}${projectName}/src/main.ts`,
       configFile: `${workspaceAppsDir}${projectName}/vite.config.ts`,
       outputPath: `dist/${workspaceAppsDir}${projectName}/client`,
       tsConfig: `${workspaceAppsDir}${projectName}/tsconfig.app.json`,
     };
-    projectConfiguration[targets]['test'].outputs = [`{projectRoot}/coverage`];
-    projectConfiguration[targets]['extract-i18n'] = undefined;
-    projectConfiguration[targets]['serve-static'] = undefined;
+    (projectConfiguration as any)[targets]['test'].outputs = [
+      `{projectRoot}/coverage`,
+    ];
+    (projectConfiguration as any)[targets]['extract-i18n'] = undefined;
+    (projectConfiguration as any)[targets]['serve-static'] = undefined;
     projectConfiguration.tags = parsedTags;
     projectConfiguration.sourceRoot = `${projectRoot}/src`;
   } else {
     const projects = getProjects(tree);
 
-    projectConfiguration = projects.get(projectName);
-    projectConfiguration[targets] = projectConfiguration.targets;
-    projectConfiguration[targets]['extract-i18n'] = undefined;
-    projectConfiguration[targets]['serve-static'] = undefined;
+    const existingProjectConfiguration = projects.get(projectName);
+    if (!existingProjectConfiguration) {
+      throw new Error(`Project ${projectName} not found`);
+    }
+    projectConfiguration = existingProjectConfiguration;
+    (projectConfiguration as any)[targets] = projectConfiguration.targets;
+    (projectConfiguration as any)[targets]['extract-i18n'] = undefined;
+    (projectConfiguration as any)[targets]['serve-static'] = undefined;
     projectConfiguration.tags = parsedTags;
-    delete projectConfiguration['$schema'];
-    delete projectConfiguration['name'];
-    delete projectConfiguration['generators'];
-    delete projectConfiguration['targets'];
-    delete projectConfiguration[targets]['extract-i18n'];
+    delete (projectConfiguration as any)['$schema'];
+    delete (projectConfiguration as any)['name'];
+    delete (projectConfiguration as any)['generators'];
+    delete (projectConfiguration as any)['targets'];
+    delete (projectConfiguration as any)[targets]['extract-i18n'];
   }
 
   if (isNx) {

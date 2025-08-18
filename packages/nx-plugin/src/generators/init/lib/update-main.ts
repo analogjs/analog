@@ -6,6 +6,10 @@ export function updateMain(tree: Tree, schema: SetupAnalogGeneratorSchema) {
   const projects = getProjects(tree);
   const projectConfig = projects.get(schema.project);
 
+  if (!projectConfig) {
+    throw new Error(`Project ${schema.project} not found`);
+  }
+
   const mainPath = joinPathFragments(projectConfig.root, 'src/main.ts');
 
   if (tree.exists(mainPath)) {

@@ -19,9 +19,12 @@
     "importHelpers": true,
     "target": "ES2022",
     "module": "ES2022",
+    "moduleDetection": "force",
+    "allowJs": true,
     "lib": ["ES2022", "dom"],
     "useDefineForClassFields": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true,
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

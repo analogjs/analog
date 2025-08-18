@@ -51,6 +51,14 @@ export function updateServeTarget(
 
     const projectConfig = projects.get(schema.project);
 
+    if (!projectConfig) {
+      throw new Error(`Project ${schema.project} not found`);
+    }
+
+    if (!projectConfig.targets) {
+      projectConfig.targets = {};
+    }
+
     projectConfig.targets.serve = {
       executor: '@analogjs/platform:vite-dev-server',
       ...commonConfig,

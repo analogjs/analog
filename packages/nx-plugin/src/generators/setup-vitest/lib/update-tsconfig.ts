@@ -16,6 +16,10 @@ export function updateTsConfig(tree: Tree, schema: SetupVitestGeneratorSchema) {
 
   const projectConfig = projects.get(schema.project);
 
+  if (!projectConfig) {
+    throw new Error(`Project ${schema.project} not found`);
+  }
+
   const tsconfigPath = joinPathFragments(
     projectConfig.root,
     'tsconfig.spec.json',
