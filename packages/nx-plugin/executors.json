@@ -1,12 +1,12 @@
 {
   "builders": {
     "vite-dev-server": {
-      "implementation": "./src/executors/vite-dev-server/compat",
+      "implementation": "./src/executors/vite-dev-server/dev-server.impl",
       "schema": "./src/executors/vite-dev-server/schema.json",
       "description": "Vite dev server."
     },
     "vite": {
-      "implementation": "./src/executors/vite/compat",
+      "implementation": "./src/executors/vite/vite-build.impl",
       "schema": "./src/executors/vite/schema.json",
       "description": "Build with Vite."
     },
