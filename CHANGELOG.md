@@ -1,3 +1,9 @@
+# [1.20.0-beta.5](https://github.com/analogjs/analog/compare/v1.20.0-beta.4...v1.20.0-beta.5) (2025-08-21)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** pass full set of rootNames to Angular compilations ([#1848](https://github.com/analogjs/analog/issues/1848)) ([85264f0](https://github.com/analogjs/analog/commit/85264f022eafb964e93d8c637519e1786287c956))
+
 # [1.20.0-beta.4](https://github.com/analogjs/analog/compare/v1.20.0-beta.3...v1.20.0-beta.4) (2025-08-21)
 
 ### Bug Fixes
