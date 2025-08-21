@@ -51,6 +51,15 @@
     }
   },
   "peerDependenciesMeta": {
+    "@nx/angular": {
+      "optional": true
+    },
+    "@nx/devkit": {
+      "optional": true
+    },
+    "@nx/vite": {
+      "optional": true
+    },
     "shiki": {
       "optional": true
     },

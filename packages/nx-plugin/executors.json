@@ -1,20 +1,8 @@
 {
   "builders": {
-    "vite-dev-server": {
-      "implementation": "./src/executors/vite-dev-server/compat",
-      "schema": "./src/executors/vite-dev-server/schema.json",
-      "description": "Vite dev server."
-    },
-    "vite": {
-      "implementation": "./src/executors/vite/compat",
-      "schema": "./src/executors/vite/schema.json",
-      "description": "Build with Vite."
-    },
-    "vitest": {
-      "implementation": "./src/executors/vitest/compat",
-      "schema": "./src/executors/vitest/schema.json",
-      "description": "Test with Vitest"
-    }
+    "vite-dev-server": "@analogjs/vite-plugin-angular:vite-dev-server",
+    "vite": "@analogjs/vite-plugin-angular:vite",
+    "vitest": "@analogjs/vitest-angular:test"
   },
   "executors": {
     "vite-dev-server": {

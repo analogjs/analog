@@ -5,7 +5,7 @@
   "projectType": "library",
   "tags": ["type:release"],
   "targets": {
-    "build": {
+    "build-package": {
       "executor": "@nx/js:tsc",
 
       "options": {
@@ -23,6 +23,18 @@
         ],
         "generateExportsField": false
       }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/vite-plugin-angular"],
+      "options": {
+        "commands": [
+          "nx build-package vite-plugin-angular",
+          "nx build vite-plugin-angular-tools"
+        ],
+        "parallel": false
+      },
+      "dependsOn": ["^build"]
     },
     "test": {
       "executor": "@nx/vite:test"
