@@ -1,3 +1,9 @@
+# [1.20.0-beta.4](https://github.com/analogjs/analog/compare/v1.20.0-beta.3...v1.20.0-beta.4) (2025-08-21)
+
+### Bug Fixes
+
+- **content:** make @nx/devkit package optional ([b56b0eb](https://github.com/analogjs/analog/commit/b56b0eb6379639e4986460ac5b6d566e6846b8cc))
+
 # [1.20.0-beta.3](https://github.com/analogjs/analog/compare/v1.20.0-beta.2...v1.20.0-beta.3) (2025-08-21)
 
 ### Features
