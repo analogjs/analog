@@ -790,7 +790,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     if (!jit) {
       // Create the Angular specific program that contains the Angular compiler
       const angularProgram: NgtscProgram = new compilerCli.NgtscProgram(
-        ids && ids.length > 0 ? ids : rootNames,
+        rootNames,
         tsCompilerOptions,
         host as CompilerHost,
         nextProgram as any,
