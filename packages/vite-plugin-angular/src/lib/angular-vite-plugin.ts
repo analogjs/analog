@@ -613,7 +613,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       supportedBrowsers: pluginOptions.supportedBrowsers,
       jit,
     }),
-    (isStorybook && angularStorybookPlugin()) as Plugin,
+    (isStorybook &&
+      angularStorybookPlugin(pluginOptions.workspaceRoot)) as Plugin,
     routerPlugin(),
     pendingTasksPlugin(),
     nxFolderPlugin(),
@@ -789,7 +790,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     if (!jit) {
       // Create the Angular specific program that contains the Angular compiler
       const angularProgram: NgtscProgram = new compilerCli.NgtscProgram(
-        ids && ids.length > 0 ? ids : rootNames,
+        rootNames,
         tsCompilerOptions,
         host as CompilerHost,
         nextProgram as any,
