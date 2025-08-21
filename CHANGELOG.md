@@ -1,3 +1,9 @@
+# [1.20.0-beta.3](https://github.com/analogjs/analog/compare/v1.20.0-beta.2...v1.20.0-beta.3) (2025-08-21)
+
+### Features
+
+- **vite-plugin-angular:** add Angular builders for Vite ([#1846](https://github.com/analogjs/analog/issues/1846)) ([d63da78](https://github.com/analogjs/analog/commit/d63da782cf9369ad6ed9dad99fb6407d094a7016))
+
 # [1.20.0-beta.2](https://github.com/analogjs/analog/compare/v1.20.0-beta.1...v1.20.0-beta.2) (2025-08-16)
 
 ### Bug Fixes

@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/storybook-angular",
-  "version": "1.20.0-beta.2",
+  "version": "1.20.0-beta.3",
   "description": "Storybook Integration for Angular & Vite",
   "keywords": [
     "storybook",
