@@ -1,0 +1,48 @@
+{
+  "name": "vite-plugin-angular-tools",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/vite-plugin-angular-tools/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "outputPath": "node_modules/@analogjs/vite-plugin-angular/src/lib/tools",
+        "main": "packages/vite-plugin-angular-tools/src/index.ts",
+        "tsConfig": "packages/vite-plugin-angular-tools/tsconfig.lib.json",
+        "clean": true,
+        "assets": [
+          "packages/vite-plugin-angular-tools/*.md",
+          {
+            "input": "./packages/vite-plugin-angular-tools/src",
+            "glob": "**/!(*.ts)",
+            "output": "./src"
+          },
+          {
+            "input": "./packages/vite-plugin-angular-tools/src",
+            "glob": "**/*.d.ts",
+            "output": "./src"
+          },
+          {
+            "input": "./packages/vite-plugin-angular-tools",
+            "glob": "generators.json",
+            "output": "."
+          },
+          {
+            "input": "./packages/vite-plugin-angular-tools",
+            "glob": "builders.json",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/vite:test"
+    }
+  }
+}
