@@ -1,3 +1,17 @@
+# [2.0.0-alpha.17](https://github.com/analogjs/analog/compare/v2.0.0-alpha.16...v2.0.0-alpha.17) (2025-08-22)
+
+### Bug Fixes
+
+- **content:** make @nx/devkit package optional ([b56b0eb](https://github.com/analogjs/analog/commit/b56b0eb6379639e4986460ac5b6d566e6846b8cc))
+- update lockfile ([3adfd16](https://github.com/analogjs/analog/commit/3adfd16250ae527f6fd4efece87446372ee30b7e))
+- **vite-plugin-angular:** detect ESM import for storybook transform ([#1835](https://github.com/analogjs/analog/issues/1835)) ([f9cdeaf](https://github.com/analogjs/analog/commit/f9cdeaff0545f37ad93c4d33f1a9f8acf9ff225b))
+- **vite-plugin-angular:** pass full set of rootNames to Angular compilations ([#1848](https://github.com/analogjs/analog/issues/1848)) ([85264f0](https://github.com/analogjs/analog/commit/85264f022eafb964e93d8c637519e1786287c956))
+
+### Features
+
+- **storybook-angular:** add support for Vitest addon ([#1833](https://github.com/analogjs/analog/issues/1833)) ([4890fdc](https://github.com/analogjs/analog/commit/4890fdc188f5530798629d88fac5b330dd8de302))
+- **vite-plugin-angular:** add Angular builders for Vite ([#1846](https://github.com/analogjs/analog/issues/1846)) ([d63da78](https://github.com/analogjs/analog/commit/d63da782cf9369ad6ed9dad99fb6407d094a7016))
+
 # [2.0.0-alpha.16](https://github.com/analogjs/analog/compare/v2.0.0-alpha.15...v2.0.0-alpha.16) (2025-08-16)
 
 ### Bug Fixes
