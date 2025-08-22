@@ -1,3 +1,9 @@
+# [2.0.0-alpha.18](https://github.com/analogjs/analog/compare/v2.0.0-alpha.17...v2.0.0-alpha.18) (2025-08-22)
+
+### Bug Fixes
+
+- **storybook-angular:** update support for CSS and preprocessor options ([#1850](https://github.com/analogjs/analog/issues/1850)) ([c5a9fa6](https://github.com/analogjs/analog/commit/c5a9fa696eeab1aa76902a85fc603d48deb0a86f))
+
 # [2.0.0-alpha.17](https://github.com/analogjs/analog/compare/v2.0.0-alpha.16...v2.0.0-alpha.17) (2025-08-22)
 
 ### Bug Fixes
