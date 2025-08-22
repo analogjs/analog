@@ -76,7 +76,11 @@
         "configDir": "apps/analog-app/.storybook",
         "compodoc": false,
         "compodocArgs": ["-e", "json", "-d", "."],
-        "port": 6006
+        "port": 6006,
+        "styles": ["apps/analog-app/src/styles.css"],
+        "stylePreprocessorOptions": {
+          "loadPaths": []
+        }
       }
     },
     "build-storybook": {
@@ -85,7 +89,11 @@
         "configDir": "apps/analog-app/.storybook",
         "compodoc": false,
         "compodocArgs": ["-e", "json", "-d", "."],
-        "outputDir": "dist/apps/storybook-static"
+        "outputDir": "dist/apps/storybook-static",
+        "styles": ["apps/analog-app/src/styles.css"],
+        "stylePreprocessorOptions": {
+          "loadPaths": []
+        }
       }
     }
   }

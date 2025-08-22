@@ -1,4 +1,4 @@
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { core as PresetCore } from '@storybook/angular/dist/preset.js';
 const require = createRequire(import.meta.url);
@@ -21,7 +21,7 @@ export const viteFinal = async (config, options) => {
     .filter((plugin) => !plugin.name.includes('analogjs'));
 
   // Merge custom configuration into the default config
-  const { mergeConfig } = await import('vite');
+  const { mergeConfig, normalizePath } = await import('vite');
   const { default: angular } = await import('@analogjs/vite-plugin-angular');
   // @ts-ignore
   const framework = await options.presets.apply('framework');
@@ -35,7 +35,7 @@ export const viteFinal = async (config, options) => {
         '@angular/platform-browser',
         '@angular/platform-browser/animations',
         'tslib',
-        'zone.js',
+        ...(options?.angularBuilderOptions?.experimentalZoneless ? [] : ['zone.js']),
       ],
     },
     plugins: [
@@ -54,6 +54,7 @@ export const viteFinal = async (config, options) => {
             ? framework.options?.inlineStylesExtension
             : 'css',
       }),
+      angularOptionsPlugin(options, { normalizePath }),
     ],
     define: {
       STORYBOOK_ANGULAR_OPTIONS: JSON.stringify({
@@ -63,5 +64,63 @@ export const viteFinal = async (config, options) => {
     },
   });
 };
+
+function angularOptionsPlugin(options, { normalizePath }) {
+  return {
+    name: 'analogjs-storybook-options-plugin',
+    config() {
+      const loadPaths =
+        options?.angularBuilderOptions?.stylePreprocessorOptions?.loadPaths;
+
+      if (Array.isArray(loadPaths)) {
+        return {
+          css: {
+            preprocessorOptions: {
+              scss: {
+                loadPaths: loadPaths.map(
+                  (loadPath) => `${resolve(options.angularBuilderContext.workspaceRoot, loadPath)}`,
+                ),
+              },
+            },
+          },
+        };
+      }
+
+      return;
+    },
+    transform(code, id) {
+      if (
+        normalizePath(id).endsWith(
+          normalizePath(`${options.configDir}/preview.ts`),
+        )
+      ) {
+        const imports = [];
+        const styles = options?.angularBuilderOptions?.styles;
+
+        if (Array.isArray(styles)) {
+          styles.forEach((style) => {
+            imports.push(style);
+          });
+        }
+
+        const zoneless = options?.angularBuilderOptions?.experimentalZoneless;
+
+        if (!zoneless) {
+          imports.push('zone.js');
+        }
+
+        return {
+          code: `
+            ${imports.map((extraImport) => `import '${extraImport}';`).join('\n')}
+            ${code}
+          `,
+        };
+      }
+
+      return;
+    },
+  };
+}
+
 export { addons, previewAnnotations } from '@storybook/angular/dist/preset.js';
 //# sourceMappingURL=preset.js.map

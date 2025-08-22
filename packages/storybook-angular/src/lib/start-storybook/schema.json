@@ -105,6 +105,28 @@
       "type": "boolean",
       "description": "Experimental: Use zoneless change detection.",
       "default": false
+    },
+    "styles": {
+      "type": "array",
+      "description": "Global styles to be included in the build.",
+      "default": [],
+      "items": {
+        "type": "string"
+      }
+    },
+    "stylePreprocessorOptions": {
+      "description": "Options to pass to style preprocessors.",
+      "type": "object",
+      "properties": {
+        "loadPaths": {
+          "description": "Paths to include.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

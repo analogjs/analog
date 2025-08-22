@@ -1,5 +1,3 @@
-import 'zone.js';
-
 import { applicationConfig, type Preview } from '@analogjs/storybook-angular';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
