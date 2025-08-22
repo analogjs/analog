@@ -35,7 +35,9 @@ export const viteFinal = async (config, options) => {
         '@angular/platform-browser',
         '@angular/platform-browser/animations',
         'tslib',
-        ...(options?.angularBuilderOptions?.experimentalZoneless ? [] : ['zone.js']),
+        ...(options?.angularBuilderOptions?.experimentalZoneless
+          ? []
+          : ['zone.js']),
       ],
     },
     plugins: [
@@ -78,7 +80,8 @@ function angularOptionsPlugin(options, { normalizePath }) {
             preprocessorOptions: {
               scss: {
                 loadPaths: loadPaths.map(
-                  (loadPath) => `${resolve(options.angularBuilderContext.workspaceRoot, loadPath)}`,
+                  (loadPath) =>
+                    `${resolve(options.angularBuilderContext.workspaceRoot, loadPath)}`,
                 ),
               },
             },
