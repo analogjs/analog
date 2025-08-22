@@ -39,6 +39,7 @@
     "ts-morph": "^21.0.0",
     "vfile": "^6.0.3"
   },
+  "builders": "./src/lib/tools/builders.json",
   "ng-update": {
     "packageGroup": [
       "@analogjs/platform",

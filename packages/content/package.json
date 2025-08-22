@@ -40,6 +40,9 @@
     "sharp": "^0.33.5"
   },
   "peerDependenciesMeta": {
+    "@nx/devkit": {
+      "optional": true
+    },
     "satori": {
       "optional": true
     },
