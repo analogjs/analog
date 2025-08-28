@@ -196,8 +196,6 @@ export function augmentHostWithResources(
     }
 
     return { content: stylesheetResult?.code || '' };
-
-    return null;
   };
 
   resourceHost.resourceNameToFileName = function (
@@ -213,9 +211,7 @@ export function augmentHostWithResources(
 
     // For external stylesheets, create a unique identifier and store the mapping
     let externalId = options.externalComponentStyles.get(resolvedPath);
-    if (externalId === undefined) {
-      externalId = createHash('sha256').update(resolvedPath).digest('hex');
-    }
+    externalId ??= createHash('sha256').update(resolvedPath).digest('hex');
 
     const filename = externalId + path.extname(resolvedPath);
 
@@ -232,9 +228,7 @@ export function augmentProgramWithVersioning(program: ts.Program): void {
       baseGetSourceFiles(...parameters);
 
     for (const file of files) {
-      if (file.version === undefined) {
-        file.version = createHash('sha256').update(file.text).digest('hex');
-      }
+      file.version ??= createHash('sha256').update(file.text).digest('hex');
     }
 
     return files;
@@ -305,7 +299,7 @@ function hasStyleExtension(file: string): boolean {
     case '.css':
     case '.scss':
       return true;
+    default:
+      return false;
   }
-
-  return false;
 }
