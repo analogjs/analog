@@ -1,3 +1,9 @@
+## [1.20.2-beta.1](https://github.com/analogjs/analog/compare/v1.20.1...v1.20.2-beta.1) (2025-08-29)
+
+### Bug Fixes
+
+- **storybook-angular:** fix package.json, sass schema, and add static assets example ([#1858](https://github.com/analogjs/analog/issues/1858)) ([422906f](https://github.com/analogjs/analog/commit/422906f42dbd63b9fb2af20a6be40ca16c2ec451))
+
 ## [1.20.1](https://github.com/analogjs/analog/compare/v1.20.0...v1.20.1) (2025-08-22)
 
 ### Bug Fixes
