@@ -73,12 +73,14 @@ function angularOptionsPlugin(options, { normalizePath }) {
     config() {
       const loadPaths =
         options?.angularBuilderOptions?.stylePreprocessorOptions?.loadPaths;
+      const sassOptions = options?.angularBuilderOptions?.stylePreprocessorOptions?.sass;
 
       if (Array.isArray(loadPaths)) {
         return {
           css: {
             preprocessorOptions: {
               scss: {
+                ...sassOptions,
                 loadPaths: loadPaths.map(
                   (loadPath) =>
                     `${resolve(options.angularBuilderContext.workspaceRoot, loadPath)}`,
