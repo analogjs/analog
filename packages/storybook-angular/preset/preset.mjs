@@ -73,7 +73,8 @@ function angularOptionsPlugin(options, { normalizePath }) {
     config() {
       const loadPaths =
         options?.angularBuilderOptions?.stylePreprocessorOptions?.loadPaths;
-      const sassOptions = options?.angularBuilderOptions?.stylePreprocessorOptions?.sass;
+      const sassOptions =
+        options?.angularBuilderOptions?.stylePreprocessorOptions?.sass;
 
       if (Array.isArray(loadPaths)) {
         return {
