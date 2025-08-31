@@ -1,3 +1,9 @@
+## [1.20.2-beta.2](https://github.com/analogjs/analog/compare/v1.20.2-beta.1...v1.20.2-beta.2) (2025-08-31)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add back defaults for `resolve.conditions` ([#1862](https://github.com/analogjs/analog/issues/1862)) ([64eb034](https://github.com/analogjs/analog/commit/64eb03461375a8332554176f56b4a3067fabe4c1))
+
 ## [1.20.2-beta.1](https://github.com/analogjs/analog/compare/v1.20.1...v1.20.2-beta.1) (2025-08-29)
 
 ### Bug Fixes
