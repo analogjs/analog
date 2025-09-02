@@ -1,3 +1,11 @@
+## [1.20.2](https://github.com/analogjs/analog/compare/v1.20.1...v1.20.2) (2025-09-02)
+
+### Bug Fixes
+
+- **storybook-angular:** fix package.json, sass schema, and add static assets example ([#1858](https://github.com/analogjs/analog/issues/1858)) ([422906f](https://github.com/analogjs/analog/commit/422906f42dbd63b9fb2af20a6be40ca16c2ec451))
+- **storybook-angular:** flatten array of provided project annotations ([#1865](https://github.com/analogjs/analog/issues/1865)) ([0dee49e](https://github.com/analogjs/analog/commit/0dee49edf9e5e73d0202403c5340bd9cef130d4f))
+- **vite-plugin-angular:** add back defaults for `resolve.conditions` ([#1862](https://github.com/analogjs/analog/issues/1862)) ([64eb034](https://github.com/analogjs/analog/commit/64eb03461375a8332554176f56b4a3067fabe4c1))
+
 ## [1.20.2-beta.3](https://github.com/analogjs/analog/compare/v1.20.2-beta.2...v1.20.2-beta.3) (2025-09-02)
 
 ### Bug Fixes
