@@ -29,6 +29,8 @@ export function setProjectAnnotations(
 ): NormalizedProjectAnnotations<AngularRenderer> {
   return originalSetProjectAnnotations([
     renderAnnotations,
-    projectAnnotations,
+    ...(Array.isArray(projectAnnotations)
+      ? projectAnnotations
+      : [projectAnnotations]),
   ]) as NormalizedProjectAnnotations<AngularRenderer>;
 }
