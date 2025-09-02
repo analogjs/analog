@@ -1,3 +1,9 @@
+## [1.20.2-beta.3](https://github.com/analogjs/analog/compare/v1.20.2-beta.2...v1.20.2-beta.3) (2025-09-02)
+
+### Bug Fixes
+
+- **storybook-angular:** flatten array of provided project annotations ([#1865](https://github.com/analogjs/analog/issues/1865)) ([0dee49e](https://github.com/analogjs/analog/commit/0dee49edf9e5e73d0202403c5340bd9cef130d4f))
+
 ## [1.20.2-beta.2](https://github.com/analogjs/analog/compare/v1.20.2-beta.1...v1.20.2-beta.2) (2025-08-31)
 
 ### Bug Fixes
