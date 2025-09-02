@@ -110,14 +110,14 @@ Si estás usando `Zone.js` para la detección de cambios, importa el script `set
 import '@analogjs/vitest-angular/setup-zone';
 
 import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+  BrowserTestingModule,
+  platformBrowserTesting,
+} from '@angular/platform-browser/testing';
 import { getTestBed } from '@angular/core/testing';
 
 getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting(),
+  BrowserTestingModule,
+  platformBrowserTesting(),
 );
 ```
 
@@ -133,9 +133,9 @@ import {
   NgModule,
 } from '@angular/core';
 import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+  BrowserTestingModule,
+  platformBrowserTesting,
+} from '@angular/platform-browser/testing';
 import { getTestBed } from '@angular/core/testing';
 
 @NgModule({
@@ -144,8 +144,8 @@ import { getTestBed } from '@angular/core/testing';
 export class ZonelessTestModule {}
 
 getTestBed().initTestEnvironment(
-  [BrowserDynamicTestingModule, ZonelessTestModule],
-  platformBrowserDynamicTesting(),
+  [BrowserTestingModule, ZonelessTestModule],
+  platformDynamicTesting(),
 );
 ```
 
@@ -265,14 +265,14 @@ import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-zone';
 
 import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+  BrowserTestingModule,
+  platformBrowserTesting,
+} from '@angular/platform-browser/testing';
 import { getTestBed } from '@angular/core/testing';
 
 getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting(),
+  BrowserTestingModule,
+  platformBrowserTesting(),
 );
 ```
 

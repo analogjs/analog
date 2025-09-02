@@ -130,6 +130,29 @@ To register global styles, add them to the `@analogjs/storybook-angular` builder
     }
 ```
 
+## Setting up Static Assets
+
+Static assets are configured in the `.storybook/main.ts` file using the `staticDirs` array.
+
+The example below shows how to add the `public` directory from `src/public` relative to the `.storybook/main.ts` file.
+
+```ts
+import { StorybookConfig } from '@analogjs/storybook-angular';
+
+const config: StorybookConfig = {
+  // other config, addons, etc.
+  framework: {
+    name: '@analogjs/storybook-angular',
+    options: {},
+  },
+  staticDirs: ['../public'],
+};
+
+export default config;
+```
+
+See the [Storybook docs on images and assets](https://storybook.js.org/docs/configure/integration/images-and-assets) for more information.
+
 ## Running Storybook
 
 Run the command for starting the development server.
