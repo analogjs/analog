@@ -41,11 +41,6 @@ import { angularStorybookPlugin } from './angular-storybook-plugin.js';
 
 const require = createRequire(import.meta.url);
 
-import { getFrontmatterMetadata } from './authoring/frontmatter.js';
-import {
-  defaultMarkdownTemplateTransforms,
-  MarkdownTemplateTransform,
-} from './authoring/markdown-transform.js';
 import { routerPlugin } from './router-plugin.js';
 import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
 import { EmitFileResult } from './models.js';
@@ -62,17 +57,6 @@ export interface PluginOptions {
      * Custom TypeScript transformers that are run before Angular compilation
      */
     tsTransformers?: ts.CustomTransformers;
-  };
-  experimental?: {
-    /**
-     * Enable experimental support for Analog file extension
-     */
-    supportAnalogFormat?:
-      | boolean
-      | {
-          include: string[];
-        };
-    markdownTemplateTransforms?: MarkdownTemplateTransform[];
   };
   supportedBrowsers?: string[];
   transformFilter?: (code: string, id: string) => boolean;
@@ -117,12 +101,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
     },
     supportedBrowsers: options?.supportedBrowsers ?? ['safari 15'],
-    jit: options?.experimental?.supportAnalogFormat ? false : options?.jit,
-    supportAnalogFormat: options?.experimental?.supportAnalogFormat ?? false,
-    markdownTemplateTransforms: options?.experimental
-      ?.markdownTemplateTransforms?.length
-      ? options.experimental.markdownTemplateTransforms
-      : defaultMarkdownTemplateTransforms,
+    jit: options?.jit,
     include: options?.include ?? [],
     additionalContentDirs: options?.additionalContentDirs ?? [],
     liveReload: options?.liveReload ?? false,
@@ -255,13 +234,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       async handleHotUpdate(ctx) {
         if (TS_EXT_REGEX.test(ctx.file)) {
           let [fileId] = ctx.file.split('?');
-
-          if (
-            pluginOptions.supportAnalogFormat &&
-            ['ag', 'analog', 'agx'].some((ext) => fileId.endsWith(ext))
-          ) {
-            fileId += '.ts';
-          }
 
           await performCompilation(resolvedConfig, [fileId]);
 
@@ -555,34 +527,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
           }
 
-          if (jit) {
-            return {
-              code: data,
-              map: null,
-            };
-          }
-
-          if (
-            (id.endsWith('.analog') ||
-              id.endsWith('.agx') ||
-              id.endsWith('.ag')) &&
-            pluginOptions.supportAnalogFormat &&
-            fileEmitter
-          ) {
-            sourceFileCache.invalidate([`${id}.ts`]);
-            const ngFileResult = fileEmitter(`${id}.ts`);
-            data = ngFileResult?.content || '';
-
-            if (id.includes('.agx')) {
-              const metadata = await getFrontmatterMetadata(
-                code,
-                id,
-                pluginOptions.markdownTemplateTransforms || [],
-              );
-              data += metadata;
-            }
-          }
-
           return {
             code: data,
             map: null,
@@ -620,44 +564,6 @@ export function angular(options?: PluginOptions): Plugin[] {
     pendingTasksPlugin(),
     nxFolderPlugin(),
   ].filter(Boolean) as Plugin[];
-
-  function findAnalogFiles(config: ResolvedConfig) {
-    const analogConfig = pluginOptions.supportAnalogFormat;
-    if (!analogConfig) {
-      return [];
-    }
-
-    let extraGlobs: string[] = [];
-
-    if (typeof analogConfig === 'object') {
-      if (analogConfig.include) {
-        extraGlobs = analogConfig.include;
-      }
-    }
-
-    const fg = require('fast-glob');
-    const appRoot = normalizePath(
-      resolve(pluginOptions.workspaceRoot, config.root || '.'),
-    );
-    const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));
-
-    const globs = [
-      `${appRoot}/**/*.{analog,agx,ag}`,
-      ...extraGlobs.map((glob) => `${workspaceRoot}${glob}.{analog,agx,ag}`),
-      ...(pluginOptions.additionalContentDirs || []).map(
-        (glob) => `${workspaceRoot}${glob}/**/*.agx`,
-      ),
-      ...pluginOptions.include.map((glob) =>
-        `${workspaceRoot}${glob}`.replace(/\.ts$/, '.analog'),
-      ),
-    ];
-
-    return fg
-      .sync(globs, {
-        dot: true,
-      })
-      .map((file: string) => `${file}.ts`);
-  }
 
   function findIncludes() {
     const fg = require('fast-glob');
@@ -705,7 +611,6 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   async function performCompilation(config: ResolvedConfig, ids?: string[]) {
     const isProd = config.mode === 'production';
-    const analogFiles = findAnalogFiles(config);
     const includeFiles = findIncludes();
 
     let { options: tsCompilerOptions, rootNames } =
@@ -727,13 +632,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         supportJitMode: false,
       });
 
-    if (pluginOptions.supportAnalogFormat) {
-      // Experimental Local Compilation is necessary
-      // for the Angular compiler to work with
-      // AOT and virtually compiled .analog files.
-      tsCompilerOptions.compilationMode = 'experimental-local';
-    }
-
     if (pluginOptions.liveReload && watchMode) {
       tsCompilerOptions['_enableHmr'] = true;
       tsCompilerOptions['externalRuntimeStyles'] = true;
@@ -754,7 +652,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['inlineSources'] = true;
     }
 
-    rootNames = rootNames.concat(analogFiles, includeFiles);
+    rootNames = rootNames.concat(includeFiles);
     const ts = require('typescript');
     const host = ts.createIncrementalCompilerHost(tsCompilerOptions);
 
@@ -769,9 +667,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         : undefined;
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
-        supportAnalogFormat: pluginOptions.supportAnalogFormat,
         isProd,
-        markdownTemplateTransforms: pluginOptions.markdownTemplateTransforms,
         inlineComponentStyles,
         externalComponentStyles,
       });

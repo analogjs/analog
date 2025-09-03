@@ -79,14 +79,7 @@ test('asks to overwrite non-empty current directory', () => {
 
 test('successfully scaffolds a project based on angular starter template', () => {
   const { stdout } = run(
-    [
-      projectName,
-      '--template',
-      'latest',
-      '--skipTailwind',
-      '--analogSFC',
-      'false',
-    ],
+    [projectName, '--template', 'latest', '--skipTailwind', 'false'],
     { cwd: __dirname },
   );
   const generatedFiles = readdirSync(genPath).sort();
@@ -98,7 +91,7 @@ test('successfully scaffolds a project based on angular starter template', () =>
 
 test('works with the -t alias', () => {
   const { stdout } = run(
-    [projectName, '-t', 'latest', '--skipTailwind', '--analogSFC', 'false'],
+    [projectName, '-t', 'latest', '--skipTailwind', 'false'],
     { cwd: __dirname },
   );
   const generatedFiles = readdirSync(genPath).sort();
