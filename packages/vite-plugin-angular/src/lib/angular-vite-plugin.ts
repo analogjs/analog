@@ -13,6 +13,7 @@ import {
   ViteDevServer,
   preprocessCSS,
   ResolvedConfig,
+  defaultClientConditions,
 } from 'vite';
 import * as ngCompiler from '@angular/compiler';
 
@@ -210,7 +211,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             },
           },
           resolve: {
-            conditions: ['style'],
+            conditions: ['style', ...defaultClientConditions],
           },
         };
       },

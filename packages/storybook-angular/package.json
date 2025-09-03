@@ -38,12 +38,12 @@
   },
   "main": "src/index.js",
   "dependencies": {
-    "@storybook/builder-vite": ">=8.6.0 || ^9.0.0 || next"
+    "@storybook/builder-vite": ">=8.6.0 || ^9.0.0"
   },
   "peerDependencies": {
-    "@storybook/angular": ">=8.6.0 || ^9.0.0 || next",
+    "@storybook/angular": ">=8.6.0 || ^9.0.0",
     "@analogjs/vite-plugin-angular": "*",
-    "storybook": ">=8.6.0 || ^9.0.0 || next",
+    "storybook": ">=8.6.0 || ^9.0.0",
     "vite": "^5.0.0 || ^6.0.0 || ^7.0.0"
   },
   "engines": {

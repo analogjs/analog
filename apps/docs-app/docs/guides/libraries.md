@@ -159,7 +159,7 @@ Import the plugin and set it up:
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
-import analog from '@analogjs/vite-plugin';
+import analog from '@analogjs/vite-plugin-angular';
 import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 
 // https://vitejs.dev/config/
