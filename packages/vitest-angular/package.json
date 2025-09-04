@@ -2,7 +2,7 @@
   "name": "@analogjs/vitest-angular",
   "version": "2.0.0-alpha.22",
   "description": "Vitest Builder for Angular",
-  "type": "commonjs",
+  "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
     ".": "./src/index.js",

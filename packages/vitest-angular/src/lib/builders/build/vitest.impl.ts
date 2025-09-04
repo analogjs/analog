@@ -147,10 +147,10 @@ export async function getExtraArgs(
   options: VitestSchema,
 ): Promise<Record<string, any>> {
   // support passing extra args to Vitest CLI
-  const schema = await import('./schema.json');
+  const schema = await import('./schema.json', { with: { type: 'json' } });
   const extraArgs: Record<string, any> = {};
   for (const key of Object.keys(options)) {
-    if (!(schema as any).properties[key]) {
+    if (!(schema as any).default.properties[key]) {
       extraArgs[key] = (options as any)[key];
     }
   }
