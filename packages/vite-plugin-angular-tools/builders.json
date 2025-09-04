@@ -1,12 +1,12 @@
 {
   "builders": {
     "vite-dev-server": {
-      "implementation": "./src/builders/vite-dev-server/dev-server.impl",
+      "implementation": "./src/builders/vite-dev-server/dev-server.impl.js",
       "schema": "./src/builders/vite-dev-server/schema.json",
       "description": "Vite dev server."
     },
     "vite": {
-      "implementation": "./src/builders/vite/vite-build.impl",
+      "implementation": "./src/builders/vite/vite-build.impl.js",
       "schema": "./src/builders/vite/schema.json",
       "description": "Build with Vite."
     },
