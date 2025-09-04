@@ -6,14 +6,17 @@
   "tags": [],
   "implicitDependencies": ["analog-app"],
   "targets": {
-    "vitest": {
-      "executor": "@nx/vite:test"
+    "playwright": {
+      "executor": "@nx/playwright:playwright",
+      "options": {
+        "config": "apps/analog-app-e2e-playwright/playwright.config.ts"
+      }
     },
     "e2e": {
       "executor": "nx:run-commands",
       "options": {
         "cwd": "",
-        "command": "start-server-and-test 'nx serve-nitro analog-app' http://localhost:3000 'nx run analog-app-e2e-playwright:vitest'"
+        "command": "start-server-and-test 'nx serve-nitro analog-app' http://localhost:3000 'nx run analog-app-e2e-playwright:playwright'"
       }
     },
     "lint": {

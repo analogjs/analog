@@ -1,13 +1,5 @@
 import { chromium, Browser, Page } from 'playwright';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  expect,
-  test,
-  describe,
-} from 'vitest';
+
 import { phones } from './fixtures/phones';
 import { ProductDetailPage } from './fixtures/products-details.po';
 import { ProductsListPage } from './fixtures/products-list.po';

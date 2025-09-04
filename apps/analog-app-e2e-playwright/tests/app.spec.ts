@@ -1,14 +1,5 @@
 import { chromium, Browser, Page } from 'playwright';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  expect,
-  test,
-  describe,
-} from 'vitest';
-
+import { test } from '@playwright/test';
 let browser: Browser;
 let page: Page;
 

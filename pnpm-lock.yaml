@@ -351,6 +351,9 @@ importers:
       jest-environment-jsdom:
         specifier: 30.0.5
         version: 30.0.5
+      jest-preset-angular:
+        specifier: ~15.0.0
+        version: 15.0.0(06f54c478b6e620ffbd69ed9f099d683)
       jest-util:
         specifier: ~30.0.5
         version: 30.0.5
@@ -10418,6 +10421,18 @@ packages:
     peerDependenciesMeta:
       jest-resolve:
         optional: true
+
+  jest-preset-angular@15.0.0:
+    resolution: {integrity: sha512-sNf5tGwnPALDEI4R3Z10WXbh3jjyHnw5UtQPz306oStCvwy9rCB148nmIEkdll4MltWB+fQccVLHQeX/f0Zy9A==}
+    engines: {node: ^18.19.1 || ^20.11.1 || >=22.0.0}
+    peerDependencies:
+      '@angular/compiler-cli': '>=18.0.0 <21.0.0'
+      '@angular/core': '>=18.0.0 <21.0.0'
+      '@angular/platform-browser-dynamic': '>=18.0.0 <21.0.0'
+      jest: ^30.0.0
+      jest-environment-jsdom: ^30.0.0
+      jsdom: '>=26.0.0'
+      typescript: '>=5.5'
 
   jest-regex-util@30.0.1:
     resolution: {integrity: sha512-jHEQgBXAgc+Gh4g0p3bCevgRCVRkB4VB70zhoAE48gxeSr1hfUOsM/C2WoJgVL7Eyg//hudYENbm3Ne+/dRVVA==}
@@ -30305,6 +30320,30 @@ snapshots:
   jest-pnp-resolver@1.2.3(jest-resolve@30.0.5):
     optionalDependencies:
       jest-resolve: 30.0.5
+
+  jest-preset-angular@15.0.0(06f54c478b6e620ffbd69ed9f099d683):
+    dependencies:
+      '@angular/compiler-cli': 20.1.4(@angular/compiler@20.1.4)(typescript@5.8.3)
+      '@angular/core': 20.1.4(@angular/compiler@20.1.4)(rxjs@7.8.2)(zone.js@0.15.0)
+      '@angular/platform-browser-dynamic': 20.1.4(@angular/common@20.1.4(@angular/core@20.1.4(@angular/compiler@20.1.4)(rxjs@7.8.2)(zone.js@0.15.0))(rxjs@7.8.2))(@angular/compiler@20.1.4)(@angular/core@20.1.4(@angular/compiler@20.1.4)(rxjs@7.8.2)(zone.js@0.15.0))(@angular/platform-browser@20.1.4(@angular/animations@20.1.4(@angular/common@20.1.4(@angular/core@20.1.4(@angular/compiler@20.1.4)(rxjs@7.8.2)(zone.js@0.15.0))(rxjs@7.8.2))(@angular/core@20.1.4(@angular/compiler@20.1.4)(rxjs@7.8.2)(zone.js@0.15.0)))(@angular/common@20.1.4(@angular/core@20.1.4(@angular/compiler@20.1.4)(rxjs@7.8.2)(zone.js@0.15.0))(rxjs@7.8.2))(@angular/core@20.1.4(@angular/compiler@20.1.4)(rxjs@7.8.2)(zone.js@0.15.0)))
+      '@jest/environment-jsdom-abstract': 30.0.5(jsdom@26.1.0)
+      bs-logger: 0.2.6
+      esbuild-wasm: 0.25.5
+      jest: 30.0.5(@types/node@22.17.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.25.8))(ts-node@10.9.2(@swc/core@1.5.29(@swc/helpers@0.5.17))(@types/node@22.17.0)(typescript@5.8.3))
+      jest-environment-jsdom: 30.0.5
+      jest-util: 30.0.5
+      jsdom: 26.1.0
+      pretty-format: 30.0.5
+      ts-jest: 29.4.0(@babel/core@7.28.0)(@jest/transform@30.0.5)(@jest/types@30.0.5)(babel-jest@30.0.5(@babel/core@7.28.0))(esbuild@0.25.8)(jest-util@30.0.5)(jest@30.0.5(@types/node@22.17.0)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.25.8))(ts-node@10.9.2(@swc/core@1.5.29(@swc/helpers@0.5.17))(@types/node@22.17.0)(typescript@5.8.3)))(typescript@5.8.3)
+      typescript: 5.8.3
+    optionalDependencies:
+      esbuild: 0.25.8
+    transitivePeerDependencies:
+      - '@babel/core'
+      - '@jest/transform'
+      - '@jest/types'
+      - babel-jest
+      - canvas
 
   jest-regex-util@30.0.1: {}
 
