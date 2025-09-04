@@ -1,6 +1,6 @@
 import { InjectionToken, inject } from '@angular/core';
 
-import { getAgxFiles, getContentFiles } from './get-content-files';
+import { getContentFiles } from './get-content-files';
 import { CONTENT_FILES_LIST_TOKEN } from './content-files-list-token';
 
 export const CONTENT_FILES_TOKEN = new InjectionToken<
@@ -9,8 +9,7 @@ export const CONTENT_FILES_TOKEN = new InjectionToken<
   providedIn: 'root',
   factory() {
     const contentFiles = getContentFiles();
-    const agxFiles = getAgxFiles();
-    const allFiles = { ...contentFiles, ...agxFiles };
+    const allFiles = { ...contentFiles };
     const contentFilesList = inject(CONTENT_FILES_LIST_TOKEN);
 
     const lookup: Record<string, string> = {};

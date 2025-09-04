@@ -1,20 +1,10 @@
 import { CompilerHost } from '@angular/compiler-cli';
 import { normalizePath } from 'vite';
 
-import { readFileSync, statSync } from 'node:fs';
 import * as ts from 'typescript';
-import { compileAnalogFile } from './authoring/analog.js';
-import {
-  FRONTMATTER_REGEX,
-  TEMPLATE_TAG_REGEX,
-} from './authoring/constants.js';
-import { MarkdownTemplateTransform } from './authoring/markdown-transform.js';
 
-import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-
-const require = createRequire(import.meta.url);
 
 export function augmentHostWithResources(
   host: ts.CompilerHost,
@@ -25,107 +15,12 @@ export function augmentHostWithResources(
   ) => ReturnType<any> | null,
   options: {
     inlineStylesExtension: string;
-    supportAnalogFormat?:
-      | boolean
-      | {
-          include: string[];
-        };
-
     isProd?: boolean;
-    markdownTemplateTransforms?: MarkdownTemplateTransform[];
     inlineComponentStyles?: Map<string, string>;
     externalComponentStyles?: Map<string, string>;
   },
 ) {
-  const ts = require('typescript');
   const resourceHost = host as CompilerHost;
-  const resourceCache = new Map<string, { content: string; mtime: number }>();
-
-  const baseGetSourceFile = (
-    resourceHost as ts.CompilerHost
-  ).getSourceFile.bind(resourceHost);
-
-  if (options.supportAnalogFormat) {
-    (resourceHost as ts.CompilerHost).getSourceFile = (
-      fileName,
-      languageVersionOrOptions,
-      onError,
-      ...parameters
-    ) => {
-      if (
-        fileName.endsWith('.analog.ts') ||
-        fileName.endsWith('.agx.ts') ||
-        fileName.endsWith('.ag.ts')
-      ) {
-        const contents = readFileSync(
-          fileName
-            .replace('.analog.ts', '.analog')
-            .replace('.agx.ts', '.agx')
-            .replace('.ag.ts', '.ag'),
-          'utf-8',
-        );
-        const source = compileAnalogFile(fileName, contents, options.isProd);
-
-        return ts.createSourceFile(
-          fileName,
-          source,
-          languageVersionOrOptions,
-          onError as any,
-          ...(parameters as any),
-        );
-      }
-
-      return baseGetSourceFile.call(
-        resourceHost,
-        fileName,
-        languageVersionOrOptions,
-        onError,
-        ...parameters,
-      );
-    };
-
-    const baseReadFile = (resourceHost as ts.CompilerHost).readFile;
-
-    (resourceHost as ts.CompilerHost).readFile = function (fileName: string) {
-      if (fileName.includes('virtual-analog:')) {
-        const filePath = fileName.split('virtual-analog:')[1];
-        const fileContent =
-          baseReadFile.call(resourceHost, filePath) ||
-          'No Analog Markdown Content Found';
-
-        // eslint-disable-next-line prefer-const
-        const templateContent =
-          TEMPLATE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '';
-
-        const frontmatterContent = FRONTMATTER_REGEX.exec(fileContent)
-          ?.pop()
-          ?.trim();
-
-        if (frontmatterContent) {
-          return frontmatterContent + '\n\n' + templateContent;
-        }
-
-        return templateContent;
-      }
-
-      return baseReadFile.call(resourceHost, fileName);
-    };
-
-    const fileExists = (resourceHost as ts.CompilerHost).fileExists;
-
-    (resourceHost as ts.CompilerHost).fileExists = function (fileName: string) {
-      if (
-        fileName.includes('virtual-analog:') &&
-        !fileName.endsWith('analog.d') &&
-        !fileName.endsWith('agx.d') &&
-        !fileName.endsWith('ag.d')
-      ) {
-        return true;
-      }
-
-      return fileExists.call(resourceHost, fileName);
-    };
-  }
 
   resourceHost.readResource = async function (fileName: string) {
     const filePath = normalizePath(fileName);
@@ -134,21 +29,6 @@ export function augmentHostWithResources(
 
     if (content === undefined) {
       throw new Error('Unable to locate component resource: ' + fileName);
-    }
-
-    if (fileName.includes('virtual-analog:')) {
-      const agxFilePath = fileName.split('virtual-analog:')[1];
-      const { mtimeMs } = statSync(agxFilePath);
-      const cached = resourceCache.get(agxFilePath);
-      if (cached && cached.mtime === mtimeMs) {
-        return cached.content;
-      }
-
-      for (const transform of options.markdownTemplateTransforms || []) {
-        content = String(await transform(content, fileName));
-      }
-
-      resourceCache.set(agxFilePath, { content, mtime: mtimeMs });
     }
 
     return content;
@@ -175,17 +55,10 @@ export function augmentHostWithResources(
     // Resource file only exists for external stylesheets
     const filename =
       context.resourceFile ??
-      `${context.containingFile.replace(/(\.analog|\.ag)?\.ts$/, (...args) => {
-        // NOTE: if the original file name contains `.analog`, we turn that into `-analog.css`
-        if (
-          args.includes('.analog') ||
-          args.includes('.ag') ||
-          args.includes('.agx')
-        ) {
-          return `-analog.${options?.inlineStylesExtension}`;
-        }
-        return `.${options?.inlineStylesExtension}`;
-      })}`;
+      context.containingFile.replace(
+        '.ts',
+        `.${options?.inlineStylesExtension}`,
+      );
 
     let stylesheetResult;
 

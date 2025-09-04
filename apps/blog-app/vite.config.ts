@@ -31,11 +31,6 @@ export default defineConfig(() => {
     plugins: [
       analog({
         liveReload: true,
-        vite: {
-          experimental: {
-            supportAnalogFormat: true,
-          },
-        },
         additionalPagesDirs: ['/libs/shared/feature'],
         additionalContentDirs: ['/libs/shared/feature/src/content'],
         content: {

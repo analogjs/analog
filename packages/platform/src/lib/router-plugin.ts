@@ -65,10 +65,8 @@ export function routerPlugin(options?: Options): Plugin[] {
               `${root}/app/routes/**/*.ts`,
               `${root}/src/app/routes/**/*.ts`,
               `${root}/src/app/pages/**/*.page.ts`,
-              `${root}/src/app/pages/**/*.page.analog`,
-              `${root}/src/app/pages/**/*.page.ag`,
               ...(options?.additionalPagesDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.page.{ts,analog,ag}`,
+                (glob) => `${workspaceRoot}${glob}/**/*.page.ts`,
               ),
             ],
             { dot: true },
@@ -80,7 +78,7 @@ export function routerPlugin(options?: Options): Plugin[] {
               `${root}/src/app/pages/**/*.md`,
               `${root}/src/content/**/*.md`,
               ...(options?.additionalContentDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`,
+                (glob) => `${workspaceRoot}${glob}/**/*.md`,
               ),
             ],
             { dot: true },
