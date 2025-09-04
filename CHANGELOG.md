@@ -1,3 +1,9 @@
+# [2.0.0-alpha.21](https://github.com/analogjs/analog/compare/v2.0.0-alpha.20...v2.0.0-alpha.21) (2025-09-04)
+
+### Features
+
+- update Angular builders to compile to ESM ([#1868](https://github.com/analogjs/analog/issues/1868)) ([68d37a7](https://github.com/analogjs/analog/commit/68d37a714ba65c941d680d13d1c7a985ea4f190b))
+
 # [2.0.0-alpha.20](https://github.com/analogjs/analog/compare/v2.0.0-alpha.19...v2.0.0-alpha.20) (2025-09-04)
 
 ### Bug Fixes
