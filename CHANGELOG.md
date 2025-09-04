@@ -1,3 +1,9 @@
+# [2.0.0-alpha.22](https://github.com/analogjs/analog/compare/v2.0.0-alpha.21...v2.0.0-alpha.22) (2025-09-04)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** more agx cleanup ([91e0262](https://github.com/analogjs/analog/commit/91e0262ad40aaf8c49ee76c28060b4efc6c19a57))
+
 # [2.0.0-alpha.21](https://github.com/analogjs/analog/compare/v2.0.0-alpha.20...v2.0.0-alpha.21) (2025-09-04)
 
 ### Features
