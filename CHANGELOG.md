@@ -1,3 +1,9 @@
+# [2.0.0-alpha.23](https://github.com/analogjs/analog/compare/v2.0.0-alpha.22...v2.0.0-alpha.23) (2025-09-04)
+
+### Bug Fixes
+
+- **vitest-angular:** add import attribute for json schema ([5c745ef](https://github.com/analogjs/analog/commit/5c745ef742d79a8461f4989badd82d90abcd69ee))
+
 # [2.0.0-alpha.22](https://github.com/analogjs/analog/compare/v2.0.0-alpha.21...v2.0.0-alpha.22) (2025-09-04)
 
 ### Bug Fixes
