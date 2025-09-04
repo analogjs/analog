@@ -9,9 +9,9 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": [
-    "src/generators/app/files/**/*",
     "src/**/*.spec.ts",
     "src/**/*.test.ts",
+    "src/test-setup.ts",
     "**/template/**"
   ]
 }
