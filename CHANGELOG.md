@@ -1,3 +1,9 @@
+# [2.0.0-alpha.20](https://github.com/analogjs/analog/compare/v2.0.0-alpha.19...v2.0.0-alpha.20) (2025-09-04)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** remove support for Analog SFCs ([#1867](https://github.com/analogjs/analog/issues/1867)) ([52817cc](https://github.com/analogjs/analog/commit/52817ccf50412da2455ac40bd83c7aa29c2b52fe))
+
 # [2.0.0-alpha.19](https://github.com/analogjs/analog/compare/v2.0.0-alpha.18...v2.0.0-alpha.19) (2025-09-03)
 
 ### Bug Fixes
