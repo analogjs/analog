@@ -148,10 +148,7 @@ export function contentPlugin(
         root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
       },
       transform(code) {
-        if (
-          code.includes('ANALOG_CONTENT_FILE_LIST') &&
-          code.includes('ANALOG_AGX_FILES')
-        ) {
+        if (code.includes('ANALOG_CONTENT_FILE_LIST')) {
           const contentFilesList: string[] = fg.sync(
             [
               `${root}/src/content/**/*.md`,
