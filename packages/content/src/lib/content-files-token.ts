@@ -1,4 +1,4 @@
-import { InjectionToken, inject } from '@angular/core';
+import { InjectionToken, Signal, inject, signal } from '@angular/core';
 
 import { getAgxFiles, getContentFiles } from './get-content-files';
 import { CONTENT_FILES_LIST_TOKEN } from './content-files-list-token';
@@ -40,5 +40,14 @@ export const CONTENT_FILES_TOKEN = new InjectionToken<
     });
 
     return objectUsingSlugAttribute;
+  },
+});
+
+export const CONTENT_FILES_MAP_TOKEN = new InjectionToken<
+  Signal<Record<string, () => Promise<string>>>
+>('@analogjs/content Content Files', {
+  providedIn: 'root',
+  factory() {
+    return signal(inject(CONTENT_FILES_TOKEN));
   },
 });
