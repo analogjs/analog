@@ -107,6 +107,7 @@ Next, define a `src/test-setup.ts` file to setup the `TestBed`:
 If you are using `Zone.js` for change detection, import the `setup-zone` script. This script automatically includes support for setting up snapshot tests.
 
 ```ts
+import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-zone';
 
 import {
@@ -126,6 +127,7 @@ getTestBed().initTestEnvironment(
 If you are using `Zoneless` change detection, use the following setup:
 
 ```ts
+import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-snapshots';
 
 import { provideZonelessChangeDetection, NgModule } from '@angular/core';
@@ -171,14 +173,14 @@ Next, update the `test` target in the `angular.json` to use the `@analogjs/vites
 
 > You can also add a new target and name it `vitest` to run alongside your `test` target.
 
-Lastly, add the `src/test-setup.ts` to `files` array in the `tsconfig.spec.json` in the root of your project, set the `target` to `es2016`, and update the `types`.
+Lastly, add the `src/test-setup.ts` to `files` array in the `tsconfig.spec.json` in the root of your project, set the `target` to `es2022`, and update the `types`.
 
 ```json
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
-    "target": "es2016",
+    "target": "es2022",
     "types": ["vitest/globals", "node"]
   },
   "files": ["src/test-setup.ts"],
@@ -253,24 +255,6 @@ export default defineConfig(({ mode }) => ({
     'import.meta.vitest': mode !== 'production',
   },
 }));
-```
-
-Next, add the `@angular/compiler` import to the `src/test-setup.ts` file.
-
-```ts
-import '@angular/compiler';
-import '@analogjs/vitest-angular/setup-zone';
-
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
-
-getTestBed().initTestEnvironment(
-  BrowserTestingModule,
-  platformBrowserTesting(),
-);
 ```
 
 ## Running Tests
