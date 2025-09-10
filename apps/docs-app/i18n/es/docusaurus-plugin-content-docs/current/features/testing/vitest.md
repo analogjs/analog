@@ -181,7 +181,7 @@ Por último, añade `src/test-setup.ts` al arreglo `files` en el archivo `tsconf
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
-    "target": "es2016",
+    "target": "es2022",
     "types": ["vitest/globals", "node"]
   },
   "files": ["src/test-setup.ts"],
