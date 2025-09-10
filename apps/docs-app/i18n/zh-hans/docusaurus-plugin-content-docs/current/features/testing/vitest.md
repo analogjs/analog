@@ -178,14 +178,14 @@ getTestBed().initTestEnvironment(
 
 > 你也可以添加一个新的目标并命名为 `vitest` 以与 `test` 目标一起运行。
 
-最后，将 `src/test-setup.ts` 添加到项目根目录的 `tsconfig.spec.json` 的 `files` 数组中，将 `target` 设置为 `es2016`，并更新 `types`。
+最后，将 `src/test-setup.ts` 添加到项目根目录的 `tsconfig.spec.json` 的 `files` 数组中，将 `target` 设置为 `es2022`，并更新 `types`。
 
 ```json
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
-    "target": "es2016",
+    "target": "es2022",
     "types": ["vitest/globals", "node"]
   },
   "files": ["src/test-setup.ts"],

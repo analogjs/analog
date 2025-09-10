@@ -85,6 +85,7 @@ export default defineConfig(({ mode }) => ({
 Next, define a `src/test-setup.ts` file to setup the `TestBed`:
 
 ```ts
+import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-zone';
 
 import {
@@ -102,6 +103,7 @@ getTestBed().initTestEnvironment(
 If you are using `Zoneless` change detection, use the following setup:
 
 ```ts
+import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-snapshots';
 
 import { provideZonelessChangeDetection, NgModule } from '@angular/core';
@@ -142,14 +144,14 @@ Next, update the `test` target in the `angular.json` to use the `@analogjs/vites
 }
 ```
 
-Lastly, add the `src/test-setup.ts` to `files` array in the `tsconfig.spec.json` in the root of your project, set the `target` to `es2016`, and update the `types`.
+Lastly, add the `src/test-setup.ts` to `files` array in the `tsconfig.spec.json` in the root of your project, set the `target` to `es2022`, and update the `types`.
 
 ```json
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
-    "target": "es2016",
+    "target": "es2022",
     "types": ["vitest/globals", "node"]
   },
   "files": ["src/test-setup.ts"],
@@ -275,3 +277,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [angular(), nxViteTsPaths()],
 }));
 ```
+
+## IDE Support
+
+Tests can also be run directly from your IDE using the Vitest [IDE integrations](https://vitest.dev/guide/ide) for VS Code or JetBrains IDEs.
