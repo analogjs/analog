@@ -1,3 +1,13 @@
+# [1.21.0-beta.1](https://github.com/analogjs/analog/compare/v1.20.2...v1.21.0-beta.1) (2025-09-10)
+
+### Bug Fixes
+
+- **create-analog:** remove template overrides ([#1870](https://github.com/analogjs/analog/issues/1870)) ([f2033d8](https://github.com/analogjs/analog/commit/f2033d87e9c4ca9001fffdfcc29602b09239a64e))
+
+### Features
+
+- **nx-plugin:** default to es2022 when setting up Vitest ([#1873](https://github.com/analogjs/analog/issues/1873)) ([ff2f4ca](https://github.com/analogjs/analog/commit/ff2f4ca081a8a983070dbf705cd677c13d6b6bfd))
+
 ## [1.20.2](https://github.com/analogjs/analog/compare/v1.20.1...v1.20.2) (2025-09-02)
 
 ### Bug Fixes
