@@ -1,3 +1,9 @@
+# [1.21.0-beta.2](https://github.com/analogjs/analog/compare/v1.21.0-beta.1...v1.21.0-beta.2) (2025-09-10)
+
+### Features
+
+- **content:** introduce content resources and loaders ([#1874](https://github.com/analogjs/analog/issues/1874)) ([4b2b846](https://github.com/analogjs/analog/commit/4b2b846158fbd0682f941126b54147f609dfff30))
+
 # [1.21.0-beta.1](https://github.com/analogjs/analog/compare/v1.20.2...v1.21.0-beta.1) (2025-09-10)
 
 ### Bug Fixes
