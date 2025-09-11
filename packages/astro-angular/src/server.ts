@@ -16,7 +16,10 @@ import {
   renderApplication,
   ɵSERVER_CONTEXT,
 } from '@angular/platform-server';
-import { bootstrapApplication } from '@angular/platform-browser';
+import {
+  bootstrapApplication,
+  type BootstrapContext,
+} from '@angular/platform-browser';
 
 const ANALOG_ASTRO_STATIC_PROPS = new InjectionToken<{
   props: Record<string, unknown>;
@@ -84,19 +87,23 @@ async function renderToStaticMarkup(
   const appId =
     mirror?.selector.split(',')[0] || Component.name.toString().toLowerCase();
   const document = `<${appId}></${appId}>`;
-  const bootstrap = () =>
-    bootstrapApplication(Component, {
-      providers: [
-        {
-          provide: ANALOG_ASTRO_STATIC_PROPS,
-          useValue: { props, mirror },
-        },
-        STATIC_PROPS_HOOK_PROVIDER,
-        provideServerRendering(),
-        { provide: ɵSERVER_CONTEXT, useValue: 'analog' },
-        ...(Component.renderProviders || []),
-      ],
-    });
+  const bootstrap = (context?: BootstrapContext) =>
+    bootstrapApplication(
+      Component,
+      {
+        providers: [
+          {
+            provide: ANALOG_ASTRO_STATIC_PROPS,
+            useValue: { props, mirror },
+          },
+          STATIC_PROPS_HOOK_PROVIDER,
+          provideServerRendering(),
+          { provide: ɵSERVER_CONTEXT, useValue: 'analog' },
+          ...(Component.renderProviders || []),
+        ],
+      },
+      context,
+    );
 
   const html = await renderApplication(bootstrap, {
     document,

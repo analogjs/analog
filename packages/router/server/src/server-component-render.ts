@@ -1,5 +1,8 @@
 import { ApplicationConfig, Type } from '@angular/core';
-import { bootstrapApplication } from '@angular/platform-browser';
+import {
+  bootstrapApplication,
+  type BootstrapContext,
+} from '@angular/platform-browser';
 import {
   reflectComponentType,
   ɵConsole as Console,
@@ -70,21 +73,25 @@ export async function renderServerComponent(
   const body = (await readBody(event)) || {};
   const appId = `analog-server-${selector.toLowerCase()}-${new Date().getTime()}`;
 
-  const bootstrap = () =>
-    bootstrapApplication(component, {
-      providers: [
-        provideServerRendering(),
-        provideStaticProps(body),
-        { provide: SERVER_CONTEXT, useValue: 'analog-server-component' },
-        {
-          provide: APP_ID,
-          useFactory() {
-            return appId;
+  const bootstrap = (context?: BootstrapContext) =>
+    bootstrapApplication(
+      component,
+      {
+        providers: [
+          provideServerRendering(),
+          provideStaticProps(body),
+          { provide: SERVER_CONTEXT, useValue: 'analog-server-component' },
+          {
+            provide: APP_ID,
+            useFactory() {
+              return appId;
+            },
           },
-        },
-        ...(config?.providers || []),
-      ],
-    });
+          ...(config?.providers || []),
+        ],
+      },
+      context,
+    );
 
   const html = await renderApplication(bootstrap, {
     url,

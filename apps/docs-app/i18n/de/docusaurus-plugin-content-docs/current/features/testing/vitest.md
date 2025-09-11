@@ -142,14 +142,14 @@ Als Nächstes aktualisiere das Ziel `test` in der Datei `angular.json`, um den B
 
 > Du kannst auch ein neues Ziel hinzufügen und es `vitest` nennen, um es neben deinem `test`-Ziel auszuführen.
 
-Schließlich füge die Datei `src/test-setup.ts` zum Array `files` in der Datei `tsconfig.spec.json` im Stammverzeichnis des Projekts hinzu, setze das `target` auf `es2016` und aktualisiere die `types`.
+Schließlich füge die Datei `src/test-setup.ts` zum Array `files` in der Datei `tsconfig.spec.json` im Stammverzeichnis des Projekts hinzu, setze das `target` auf `es2022` und aktualisiere die `types`.
 
 ```json
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
-    "target": "es2016",
+    "target": "es2022",
     "types": ["vitest/globals", "node"]
   },
   "files": ["src/test-setup.ts"],

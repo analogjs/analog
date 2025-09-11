@@ -107,6 +107,7 @@ Next, define a `src/test-setup.ts` file to setup the `TestBed`:
 If you are using `Zone.js` for change detection, import the `setup-zone` script. This script automatically includes support for setting up snapshot tests.
 
 ```ts
+import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-zone';
 
 import {
@@ -126,6 +127,7 @@ getTestBed().initTestEnvironment(
 If you are using `Zoneless` change detection, use the following setup:
 
 ```ts
+import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-snapshots';
 
 import { provideZonelessChangeDetection, NgModule } from '@angular/core';
@@ -253,24 +255,6 @@ export default defineConfig(({ mode }) => ({
     'import.meta.vitest': mode !== 'production',
   },
 }));
-```
-
-Next, add the `@angular/compiler` import to the `src/test-setup.ts` file.
-
-```ts
-import '@angular/compiler';
-import '@analogjs/vitest-angular/setup-zone';
-
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
-
-getTestBed().initTestEnvironment(
-  BrowserTestingModule,
-  platformBrowserTesting(),
-);
 ```
 
 ## Running Tests

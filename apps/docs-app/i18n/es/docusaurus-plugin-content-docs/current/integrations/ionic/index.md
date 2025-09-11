@@ -171,9 +171,7 @@ pnpm install ionicons
      return {
        plugins: [
          analog({
-           vite: {
-             inlineStylesExtension: 'scss',
-           },
+           inlineStylesExtension: 'scss',
          }),
        ],
      };

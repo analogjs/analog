@@ -28,7 +28,7 @@ export function updateTsConfig(tree: Tree, schema: SetupVitestGeneratorSchema) {
       (json) => {
         json.compilerOptions ??= {};
         json.compilerOptions.module = undefined;
-        json.compilerOptions.target ??= 'es2016';
+        json.compilerOptions.target ??= 'es2022';
         json.files = ['src/test-setup.ts'];
         json.compilerOptions.types = (json.compilerOptions.types ?? ['node'])
           .filter((type) => type !== 'jest')
