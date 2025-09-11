@@ -50,6 +50,10 @@ pnpm run test
 
 You can also [add Vitest](/docs/features/testing/vitest) to your existing project.
 
+## IDE Support
+
+Tests can also be run directly from your IDE using the Vitest [IDE integrations](https://vitest.dev/guide/ide) for VS Code or JetBrains IDEs.
+
 ## Known limitations
 
 - Only globals are patched with Zone.js. This means, that if you import `it`, `describe` etc from `vitest` directly, you won't be able to run `fakeAsync`. Instead, use the functions (`it`, `describe` etc. the way you used to do in Jest/Jasmine – without any imports of these functions in the test file).

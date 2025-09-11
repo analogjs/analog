@@ -54,7 +54,10 @@ export interface Options {
   index?: string;
   workspaceRoot?: string;
   content?: ContentPluginOptions;
-
+  /**
+   * Extension applied for inline styles
+   */
+  inlineStylesExtension?: string;
   /**
    * Enables Angular's HMR during development
    */
@@ -86,6 +89,10 @@ export interface Options {
    * Disable type checking diagnostics by the Angular compiler
    */
   disableTypeChecking?: boolean;
+  /**
+   * File replacements
+   */
+  fileReplacements?: PluginOptions['fileReplacements'];
 }
 
 export { PrerenderContentDir, PrerenderContentFile };

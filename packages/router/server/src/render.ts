@@ -4,7 +4,10 @@ import {
   Type,
   enableProdMode,
 } from '@angular/core';
-import { bootstrapApplication } from '@angular/platform-browser';
+import {
+  bootstrapApplication,
+  type BootstrapContext,
+} from '@angular/platform-browser';
 import { renderApplication } from '@angular/platform-server';
 import type { ServerContext } from '@analogjs/router/tokens';
 
@@ -32,8 +35,8 @@ export function render(
   config: ApplicationConfig,
   platformProviders: Provider[] = [],
 ) {
-  function bootstrap() {
-    return bootstrapApplication(rootComponent, config);
+  function bootstrap(context?: BootstrapContext) {
+    return bootstrapApplication(rootComponent, config, context);
   }
 
   return async function render(

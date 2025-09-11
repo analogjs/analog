@@ -133,7 +133,7 @@ describe('setup-vitest generator', () => {
 
     // Check all modifications made by updateTsConfig
     expect(tsconfig.compilerOptions.module).toBeUndefined();
-    expect(tsconfig.compilerOptions.target).toBe('es2016');
+    expect(tsconfig.compilerOptions.target).toBe('es2022');
     expect(tsconfig.compilerOptions.types).toEqual(['node', 'vitest/globals']);
     expect(tsconfig.files).toEqual(['src/test-setup.ts']);
   });

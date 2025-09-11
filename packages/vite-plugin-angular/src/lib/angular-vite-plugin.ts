@@ -1,5 +1,12 @@
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
-import { basename, dirname, isAbsolute, relative, resolve } from 'node:path';
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  join,
+  relative,
+  resolve,
+} from 'node:path';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 import * as compilerCli from '@angular/compiler-cli';
@@ -46,6 +53,12 @@ import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
 import { EmitFileResult } from './models.js';
 import { liveReloadPlugin } from './live-reload-plugin.js';
 import { nxFolderPlugin } from './nx-folder-plugin.js';
+import {
+  FileReplacement,
+  FileReplacementSSR,
+  FileReplacementWith,
+  replaceFiles,
+} from './plugins/file-replacements.plugin.js';
 
 export interface PluginOptions {
   tsconfig?: string;
@@ -67,6 +80,7 @@ export interface PluginOptions {
   additionalContentDirs?: string[];
   liveReload?: boolean;
   disableTypeChecking?: boolean;
+  fileReplacements?: FileReplacement[];
 }
 
 /**
@@ -106,6 +120,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     additionalContentDirs: options?.additionalContentDirs ?? [],
     liveReload: options?.liveReload ?? false,
     disableTypeChecking: options?.disableTypeChecking ?? true,
+    fileReplacements: options?.fileReplacements ?? [],
   };
 
   let resolvedConfig: ResolvedConfig;
@@ -547,6 +562,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   }
 
   return [
+    replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
     angularPlugin(),
     pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
     ...(isTest && !isStackBlitz ? angularVitestPlugins() : []),
@@ -652,7 +668,13 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['inlineSources'] = true;
     }
 
-    rootNames = rootNames.concat(includeFiles);
+    const replacements: string[] = pluginOptions.fileReplacements.map((rp) =>
+      join(
+        pluginOptions.workspaceRoot,
+        (rp as FileReplacementSSR).ssr || (rp as FileReplacementWith).with,
+      ),
+    );
+    rootNames = rootNames.concat(includeFiles, replacements);
     const ts = require('typescript');
     const host = ts.createIncrementalCompilerHost(tsCompilerOptions);
 

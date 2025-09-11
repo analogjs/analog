@@ -15,7 +15,28 @@ if (process.env['NETLIFY'] === 'true') {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode, isSsrBuild }) => {
+export default defineConfig(({ mode }) => {
+  const fileReplacements =
+    mode === 'production'
+      ? [
+          {
+            replace: 'apps/analog-app/src/environments/environment.ts',
+            with: 'apps/analog-app/src/environments/environment.prod.ts',
+          },
+          {
+            replace:
+              'apps/analog-app/src/app/pages/shipping/shipping-service.ts',
+            ssr: 'apps/analog-app/src/app/pages/shipping/shipping-service-server.ts',
+          },
+        ]
+      : [
+          {
+            replace:
+              'apps/analog-app/src/app/pages/shipping/shipping-service.ts',
+            ssr: 'apps/analog-app/src/app/pages/shipping/shipping-service-server.ts',
+          },
+        ];
+
   return {
     root: __dirname,
     publicDir: 'src/public',
@@ -32,6 +53,7 @@ export default defineConfig(({ mode, isSsrBuild }) => {
         apiPrefix: 'api',
         additionalPagesDirs: ['/libs/shared/feature'],
         additionalAPIDirs: ['/libs/shared/feature/src/api'],
+        fileReplacements,
         prerender: {
           routes: [
             '/',
