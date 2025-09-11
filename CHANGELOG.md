@@ -1,3 +1,17 @@
+# [1.21.0](https://github.com/analogjs/analog/compare/v1.20.2...v1.21.0) (2025-09-11)
+
+### Bug Fixes
+
+- **create-analog:** remove template overrides ([#1870](https://github.com/analogjs/analog/issues/1870)) ([f2033d8](https://github.com/analogjs/analog/commit/f2033d87e9c4ca9001fffdfcc29602b09239a64e))
+- **platform:** add inlineStylesExtension to plugin API ([#1876](https://github.com/analogjs/analog/issues/1876)) ([0535788](https://github.com/analogjs/analog/commit/0535788db7fe941d98878ed87e4e36a9f8b7d0a3))
+
+### Features
+
+- add support for Angular v20.3.x ([#1875](https://github.com/analogjs/analog/issues/1875)) ([34e493a](https://github.com/analogjs/analog/commit/34e493a9deb0ff36ab5e12f879518030e2bb3909))
+- **content:** introduce content resources and loaders ([#1874](https://github.com/analogjs/analog/issues/1874)) ([4b2b846](https://github.com/analogjs/analog/commit/4b2b846158fbd0682f941126b54147f609dfff30))
+- **nx-plugin:** default to es2022 when setting up Vitest ([#1873](https://github.com/analogjs/analog/issues/1873)) ([ff2f4ca](https://github.com/analogjs/analog/commit/ff2f4ca081a8a983070dbf705cd677c13d6b6bfd))
+- **vite-plugin-angular:** add support for file replacements per environment ([#1871](https://github.com/analogjs/analog/issues/1871)) ([62f9a2d](https://github.com/analogjs/analog/commit/62f9a2d9fb71df725bccae3efc0e4ea67dd39b9e))
+
 # [1.21.0-beta.5](https://github.com/analogjs/analog/compare/v1.21.0-beta.4...v1.21.0-beta.5) (2025-09-11)
 
 ### Features
