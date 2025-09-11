@@ -1,3 +1,9 @@
+# [1.21.0-beta.3](https://github.com/analogjs/analog/compare/v1.21.0-beta.2...v1.21.0-beta.3) (2025-09-11)
+
+### Features
+
+- add support for Angular v20.3.x ([#1875](https://github.com/analogjs/analog/issues/1875)) ([34e493a](https://github.com/analogjs/analog/commit/34e493a9deb0ff36ab5e12f879518030e2bb3909))
+
 # [1.21.0-beta.2](https://github.com/analogjs/analog/compare/v1.21.0-beta.1...v1.21.0-beta.2) (2025-09-10)
 
 ### Features
