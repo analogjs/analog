@@ -89,6 +89,10 @@ export interface Options {
    * Disable type checking diagnostics by the Angular compiler
    */
   disableTypeChecking?: boolean;
+  /**
+   * File replacements
+   */
+  fileReplacements?: PluginOptions['fileReplacements'];
 }
 
 export { PrerenderContentDir, PrerenderContentFile };
