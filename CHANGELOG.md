@@ -1,3 +1,9 @@
+# [1.21.0-beta.5](https://github.com/analogjs/analog/compare/v1.21.0-beta.4...v1.21.0-beta.5) (2025-09-11)
+
+### Features
+
+- **vite-plugin-angular:** add support for file replacements per environment ([#1871](https://github.com/analogjs/analog/issues/1871)) ([62f9a2d](https://github.com/analogjs/analog/commit/62f9a2d9fb71df725bccae3efc0e4ea67dd39b9e))
+
 # [1.21.0-beta.4](https://github.com/analogjs/analog/compare/v1.21.0-beta.3...v1.21.0-beta.4) (2025-09-11)
 
 ### Bug Fixes
