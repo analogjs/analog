@@ -1,3 +1,9 @@
+# [1.21.0-beta.4](https://github.com/analogjs/analog/compare/v1.21.0-beta.3...v1.21.0-beta.4) (2025-09-11)
+
+### Bug Fixes
+
+- **platform:** add inlineStylesExtension to plugin API ([#1876](https://github.com/analogjs/analog/issues/1876)) ([0535788](https://github.com/analogjs/analog/commit/0535788db7fe941d98878ed87e4e36a9f8b7d0a3))
+
 # [1.21.0-beta.3](https://github.com/analogjs/analog/compare/v1.21.0-beta.2...v1.21.0-beta.3) (2025-09-11)
 
 ### Features
