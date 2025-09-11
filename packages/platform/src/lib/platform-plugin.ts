@@ -60,6 +60,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
       ],
       additionalContentDirs: platformOptions.additionalContentDirs,
       liveReload: platformOptions.liveReload,
+      inlineStylesExtension: platformOptions.inlineStylesExtension,
       ...(opts?.vite ?? {}),
     }),
     serverModePlugin(),

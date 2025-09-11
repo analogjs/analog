@@ -54,7 +54,10 @@ export interface Options {
   index?: string;
   workspaceRoot?: string;
   content?: ContentPluginOptions;
-
+  /**
+   * Extension applied for inline styles
+   */
+  inlineStylesExtension?: string;
   /**
    * Enables Angular's HMR during development
    */
