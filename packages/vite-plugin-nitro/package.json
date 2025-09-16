@@ -51,5 +51,9 @@
   "imports": {
     "#analog/ssr": "./src/index.js",
     "#analog/index": "./src/index.js"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

@@ -60,5 +60,9 @@
       "@analogjs/vitest-angular"
     ],
     "migrations": "./migrations/migration.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }
