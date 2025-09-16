@@ -1,3 +1,9 @@
+## [1.21.1-beta.1](https://github.com/analogjs/analog/compare/v1.21.0...v1.21.1-beta.1) (2025-09-16)
+
+### Bug Fixes
+
+- add provenance to package publishing steps ([c2c1534](https://github.com/analogjs/analog/commit/c2c1534c64259afbe18a8c2b56217a0c232782ab))
+
 # [1.21.0](https://github.com/analogjs/analog/compare/v1.20.2...v1.21.0) (2025-09-11)
 
 ### Bug Fixes
