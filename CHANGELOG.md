@@ -1,3 +1,10 @@
+## [1.21.1](https://github.com/analogjs/analog/compare/v1.21.0...v1.21.1) (2025-09-18)
+
+### Bug Fixes
+
+- add provenance to package publishing steps ([c2c1534](https://github.com/analogjs/analog/commit/c2c1534c64259afbe18a8c2b56217a0c232782ab))
+- **vite-plugin-angular:** use configured resolve conditions then defaults ([#1882](https://github.com/analogjs/analog/issues/1882)) ([b79ab7b](https://github.com/analogjs/analog/commit/b79ab7ba647f7a9e7cc7a13cc4deaf7c01f51643))
+
 ## [1.21.1-beta.2](https://github.com/analogjs/analog/compare/v1.21.1-beta.1...v1.21.1-beta.2) (2025-09-18)
 
 ### Bug Fixes
