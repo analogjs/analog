@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/storybook-angular",
-  "version": "1.21.0",
+  "version": "1.21.1-beta.2",
   "description": "Storybook Integration for Angular & Vite",
   "keywords": [
     "storybook",
@@ -63,5 +63,9 @@
       "@analogjs/vite-plugin-nitro",
       "@analogjs/vitest-angular"
     ]
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }
