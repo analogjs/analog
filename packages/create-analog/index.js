@@ -65,7 +65,6 @@ async function init() {
   let targetDir = formatTargetDir(argv._[0]);
   let template = argv.template || argv.t;
   let skipTailwind = fromBoolArg(argv.skipTailwind);
-  let useAnalogSFC = fromBoolArg(argv.analogSFC);
 
   const defaultTargetDir = 'analog-project';
   const getProjectName = () =>
@@ -158,7 +157,6 @@ async function init() {
     overwrite,
     packageName,
     variant,
-    analogSFC,
     tailwind,
     syntaxHighlighter,
   } = result;
@@ -176,7 +174,6 @@ async function init() {
   // determine syntax highlighter
   let highlighter = syntaxHighlighter ?? (template === 'blog' ? 'prism' : null);
   skipTailwind = skipTailwind ?? !tailwind;
-  useAnalogSFC = useAnalogSFC ?? analogSFC;
 
   console.log(`\nScaffolding project in ${root}...`);
 
@@ -243,7 +240,6 @@ async function init() {
   write('package.json', JSON.stringify(pkg, null, 2));
 
   setProjectTitle(root, getProjectName());
-  setComponentFormat(root, filesDir, write, template, useAnalogSFC);
 
   console.log(`\nInitializing git repository:`);
   execSync(`git init ${targetDir} && cd ${targetDir} && git add .`);
@@ -419,47 +415,6 @@ function setProjectTitle(root, title) {
   });
 }
 
-function setComponentFormat(root, filesDir, write, template, useAnalogSFC) {
-  const getSFCConfig = () => {
-    const sfcConfigOption =
-      'vite: { experimental: { supportAnalogFormat: true } }';
-
-    return template === 'latest'
-      ? `{ ${sfcConfigOption} }`
-      : `\n      ${sfcConfigOption},`;
-  };
-
-  replacePlaceholders(root, 'vite.config.ts', {
-    __ANALOG_SFC_CONFIG__: useAnalogSFC ? getSFCConfig() : '',
-  });
-  replacePlaceholders(root, ['src/main.ts', 'src/main.server.ts'], {
-    __APP_COMPONENT__: useAnalogSFC ? 'App' : 'AppComponent',
-    __APP_COMPONENT_IMPORT__: useAnalogSFC
-      ? "import App from './app/app-root.ag';"
-      : "import { AppComponent } from './app/app';",
-  });
-
-  const cmpForDelete = useAnalogSFC ? 'app' : 'app-root';
-  const deleteExt = useAnalogSFC ? 'ts' : 'ag';
-  deleteFiles(root, [
-    useAnalogSFC ? `src/app/${cmpForDelete}.ts` : `src/app/${cmpForDelete}.ag`,
-    template === 'blog'
-      ? [
-          `src/app/pages/blog/index.page.${deleteExt}`,
-          `src/app/pages/blog/[slug].page.${deleteExt}`,
-        ]
-      : `src/app/pages/index.page.${deleteExt}`,
-    template !== 'minimal' && `src/app/${cmpForDelete}.spec.ts`,
-  ]);
-
-  if (useAnalogSFC) {
-    write(
-      'src/analog-env.d.ts',
-      fs.readFileSync(path.join(filesDir, 'analog-env.d.ts'), 'utf-8'),
-    );
-  }
-}
-
 function replacePlaceholders(root, files, config) {
   for (const file of toFlatArray(files)) {
     const filePath = path.join(root, file);
@@ -470,12 +425,6 @@ function replacePlaceholders(root, files, config) {
       fileContent,
     );
     fs.writeFileSync(filePath, newFileContent);
-  }
-}
-
-function deleteFiles(root, files) {
-  for (const file of toFlatArray(files)) {
-    fs.unlinkSync(path.join(root, file));
   }
 }
 

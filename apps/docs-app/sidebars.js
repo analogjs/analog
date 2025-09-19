@@ -239,17 +239,6 @@ const sidebars = {
       ],
     },
     {
-      type: 'category',
-      label: 'Experimental',
-      items: [
-        {
-          type: 'doc',
-          id: 'experimental/sfc/index',
-          label: 'Analog SFCs',
-        },
-      ],
-    },
-    {
       type: 'doc',
       id: 'contributors',
       label: 'Contributors',

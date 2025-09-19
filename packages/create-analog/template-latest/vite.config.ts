@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => ({
     mainFields: ['module'],
   },
   plugins: [
-    analog(__ANALOG_SFC_CONFIG__),__TAILWIND_PLUGIN__
+    analog(),__TAILWIND_PLUGIN__
   ],
   test: {
     globals: true,

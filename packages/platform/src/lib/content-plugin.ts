@@ -148,16 +148,12 @@ export function contentPlugin(
         root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
       },
       transform(code) {
-        if (
-          code.includes('ANALOG_CONTENT_FILE_LIST') &&
-          code.includes('ANALOG_AGX_FILES')
-        ) {
+        if (code.includes('ANALOG_CONTENT_FILE_LIST')) {
           const contentFilesList: string[] = fg.sync(
             [
               `${root}/src/content/**/*.md`,
-              `${root}/src/content/**/*.agx`,
               ...(options?.additionalContentDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`,
+                (glob) => `${workspaceRoot}${glob}/**/*.md`,
               ),
             ],
             { dot: true },
@@ -178,28 +174,6 @@ export function contentPlugin(
               (module, index) =>
                 `"${module.replace(root, '')}": analog_module_${index}`,
             )}};
-          `,
-          );
-
-          const agxFiles: string[] = fg.sync(
-            [
-              `${root}/src/content/**/*.agx`,
-              ...(options?.additionalContentDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.agx`,
-              ),
-            ],
-            {
-              dot: true,
-            },
-          );
-
-          result = result.replace(
-            'let ANALOG_AGX_FILES = {};',
-            `
-          let ANALOG_AGX_FILES = {${agxFiles.map(
-            (module) =>
-              `"${module.replace(root, '')}": () => import('${module}')`,
-          )}};
           `,
           );
 

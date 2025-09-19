@@ -42,7 +42,7 @@ jobs:
       - run: corepack enable
       - run: npm --version
       - name: Create Analog Application
-        run: npm create analog@${{ inputs.analog_build_tag }} analog-app -- --skipTailwind --analogSFC=false --template latest
+        run: npm create analog@${{ inputs.analog_build_tag }} analog-app -- --skipTailwind --template latest
       - name: Build, Test, and Validate
         run: |
           cd analog-app

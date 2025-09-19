@@ -4,14 +4,13 @@ export async function getBuildApplicationFunction() {
   )() as Promise<{ VERSION: { major: string; minor: string } }>);
 
   const angularVersion = Number(VERSION.major);
-  const angularMinor = Number(VERSION.minor);
   let buildApplicationInternal: Function;
 
-  if (angularVersion < 16 || (angularVersion === 16 && angularMinor <= 2)) {
+  if (angularVersion < 17) {
     throw new Error(
-      'This builder is not supported with versions earlier than Angular v16.2',
+      'This builder is not supported with versions earlier than Angular v17',
     );
-  } else if (angularVersion >= 16 && angularVersion < 18) {
+  } else if (angularVersion >= 17 && angularVersion < 18) {
     const {
       buildApplicationInternal: buildApplicationInternalFn,
     } = require('@angular-devkit/build-angular/src/builders/application');

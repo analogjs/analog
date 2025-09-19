@@ -21,9 +21,3 @@ export const getContentFiles = () => {
 
   return ANALOG_CONTENT_ROUTE_FILES;
 };
-
-export const getAgxFiles = () => {
-  let ANALOG_AGX_FILES = {};
-
-  return ANALOG_AGX_FILES;
-};
