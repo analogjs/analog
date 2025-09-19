@@ -1,3 +1,9 @@
+# [2.0.0-alpha.26](https://github.com/analogjs/analog/compare/v2.0.0-alpha.25...v2.0.0-alpha.26) (2025-09-19)
+
+### Bug Fixes
+
+- **router:** adjust peer deps for Angular v20 ([f6612fe](https://github.com/analogjs/analog/commit/f6612fe721d4295ed9824fac44aeae7d6c44fe37))
+
 # [2.0.0-alpha.25](https://github.com/analogjs/analog/compare/v2.0.0-alpha.24...v2.0.0-alpha.25) (2025-09-19)
 
 ### Bug Fixes
