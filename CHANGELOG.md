@@ -1,3 +1,9 @@
+# [2.0.0-alpha.27](https://github.com/analogjs/analog/compare/v2.0.0-alpha.26...v2.0.0-alpha.27) (2025-09-19)
+
+### Bug Fixes
+
+- **content-plugin:** remove old migrations ([1953f86](https://github.com/analogjs/analog/commit/1953f86fa2e9cf8dd62cf5a468c916c8c88de989))
+
 # [2.0.0-alpha.26](https://github.com/analogjs/analog/compare/v2.0.0-alpha.25...v2.0.0-alpha.26) (2025-09-19)
 
 ### Bug Fixes
