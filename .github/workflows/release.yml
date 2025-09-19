@@ -5,6 +5,7 @@ on:
     branches:
       - beta
       - main
+      - 1.x
 
 permissions:
   contents: read # for checkout
