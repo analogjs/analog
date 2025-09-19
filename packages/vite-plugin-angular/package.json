@@ -62,5 +62,9 @@
     },
     "./esbuild": "./esbuild.js",
     "./setup-vitest": "./setup-vitest.js"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

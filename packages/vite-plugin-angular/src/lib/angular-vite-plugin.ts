@@ -205,7 +205,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             },
           },
           resolve: {
-            conditions: ['style', ...defaultClientConditions],
+            conditions: [
+              'style',
+              ...(config.resolve?.conditions || defaultClientConditions),
+            ],
           },
         };
       },
