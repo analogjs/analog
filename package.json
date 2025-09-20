@@ -195,7 +195,6 @@
     "ts-morph": "^26.0.0",
     "ts-node": "10.9.2",
     "typescript": "~5.8.3",
-    "vfile": "^6.0.3",
     "vite": "7.0.0",
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-inspect": "11.3.2",
