@@ -1,3 +1,10 @@
+# [2.0.0-beta.2](https://github.com/analogjs/analog/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2025-09-20)
+
+### Bug Fixes
+
+- **create-analog:** fix app component in templates ([9ab109a](https://github.com/analogjs/analog/commit/9ab109af67a78b08488e1e1595a135c08ff91266))
+- **vite-plugin-angular:** remove vfile dependency ([63e8dd8](https://github.com/analogjs/analog/commit/63e8dd8c429dd1f839e6dde85064d0265fbf5baf))
+
 # [2.0.0-beta.1](https://github.com/analogjs/analog/compare/v1.21.1...v2.0.0-beta.1) (2025-09-19)
 
 ### Bug Fixes
