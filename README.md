@@ -6,7 +6,9 @@
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
-[![Discord server](https://dcbadge.vercel.app/api/server/mKC2Ec48U5?style=flat-square)](https://chat.analogjs.org/) [![Twitter](https://img.shields.io/twitter/follow/analogjs)](https://twitter.com/analogjs)
+![NPM Downloads](https://img.shields.io/npm/dw/%40analogjs%2Fvite-plugin-angular)
+[![Static Badge](https://img.shields.io/badge/Analog-Discord-blue)](https://chat.analogjs.org)
+[![Twitter](https://img.shields.io/twitter/follow/analogjs)](https://twitter.com/analogjs)
 
 Analog is the meta-framework for building applications and websites with [Angular](https://angular.dev).
 
