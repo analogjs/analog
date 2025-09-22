@@ -1,3 +1,9 @@
+# [2.0.0-beta.4](https://github.com/analogjs/analog/compare/v2.0.0-beta.3...v2.0.0-beta.4) (2025-09-22)
+
+### Bug Fixes
+
+- **platform:** update nitropack/vitefu deps ([5d87039](https://github.com/analogjs/analog/commit/5d8703957691205001fd410579bdf7ca6a76789e))
+
 # [2.0.0-beta.3](https://github.com/analogjs/analog/compare/v2.0.0-beta.2...v2.0.0-beta.3) (2025-09-22)
 
 ### Bug Fixes
