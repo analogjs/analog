@@ -1,3 +1,9 @@
+# [2.0.0-beta.3](https://github.com/analogjs/analog/compare/v2.0.0-beta.2...v2.0.0-beta.3) (2025-09-22)
+
+### Bug Fixes
+
+- **content:** fix server-side rendering with content resources ([#1884](https://github.com/analogjs/analog/issues/1884)) ([4e11f21](https://github.com/analogjs/analog/commit/4e11f21c295ee5e3881ba46f4cc101857b1d9d7d))
+
 # [2.0.0-beta.2](https://github.com/analogjs/analog/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2025-09-20)
 
 ### Bug Fixes
