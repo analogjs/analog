@@ -57,6 +57,7 @@ export const viteFinal = async (config, options) => {
             : 'css',
       }),
       angularOptionsPlugin(options, { normalizePath }),
+      storybookEsbuildPlugin(),
     ],
     define: {
       STORYBOOK_ANGULAR_OPTIONS: JSON.stringify({
@@ -124,6 +125,22 @@ function angularOptionsPlugin(options, { normalizePath }) {
       }
 
       return;
+    },
+  };
+}
+
+function storybookEsbuildPlugin() {
+  return {
+    name: 'analogjs-storybook-esbuild-config',
+    apply: 'build',
+    config() {
+      return {
+        esbuild: {
+          // Don't mangle class names during the build
+          // This fixes display of compodoc argtypes
+          keepNames: true,
+        },
+      };
     },
   };
 }
