@@ -1,3 +1,9 @@
+# [2.0.0-beta.6](https://github.com/analogjs/analog/compare/v2.0.0-beta.5...v2.0.0-beta.6) (2025-10-03)
+
+### Features
+
+- **storybook-angular:** add test-storybook builder as alias ([4384988](https://github.com/analogjs/analog/commit/4384988a07fcc515acc5b044cc5ed609d7073c4d))
+
 # [2.0.0-beta.5](https://github.com/analogjs/analog/compare/v2.0.0-beta.4...v2.0.0-beta.5) (2025-10-03)
 
 ### Bug Fixes
