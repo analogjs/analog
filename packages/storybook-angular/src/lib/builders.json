@@ -9,6 +9,7 @@
       "implementation": "./start-storybook/start-storybook.js",
       "schema": "./start-storybook/schema.json",
       "description": "Start storybook"
-    }
+    },
+    "test-storybook": "@analogjs/vitest-angular:test"
   }
 }
