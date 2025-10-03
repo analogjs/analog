@@ -1,3 +1,9 @@
+# [2.0.0-beta.5](https://github.com/analogjs/analog/compare/v2.0.0-beta.4...v2.0.0-beta.5) (2025-10-03)
+
+### Bug Fixes
+
+- **storybook-angular:** don't mangle class names during the build ([7a140df](https://github.com/analogjs/analog/commit/7a140dffe736ba15cd534bc9c1be404cc9d983d4))
+
 # [2.0.0-beta.4](https://github.com/analogjs/analog/compare/v2.0.0-beta.3...v2.0.0-beta.4) (2025-09-22)
 
 ### Bug Fixes
