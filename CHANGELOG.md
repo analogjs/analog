@@ -1,3 +1,9 @@
+## [1.21.2](https://github.com/analogjs/analog/compare/v1.21.1...v1.21.2) (2025-10-03)
+
+### Bug Fixes
+
+- **storybook-angular:** don't mangle class names during the build ([00d74d1](https://github.com/analogjs/analog/commit/00d74d180fda959aa7e4581cb98b99e29795d913))
+
 ## [1.21.1](https://github.com/analogjs/analog/compare/v1.21.0...v1.21.1) (2025-09-18)
 
 ### Bug Fixes
