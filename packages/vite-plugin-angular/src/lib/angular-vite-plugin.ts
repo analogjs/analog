@@ -1,4 +1,5 @@
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import {
   basename,
   dirname,
@@ -7,23 +8,24 @@ import {
   relative,
   resolve,
 } from 'node:path';
-import { mkdirSync, writeFileSync } from 'node:fs';
 
 import * as compilerCli from '@angular/compiler-cli';
-import * as ts from 'typescript';
 import { createRequire } from 'node:module';
+import * as ts from 'typescript';
 
+import * as ngCompiler from '@angular/compiler';
 import {
+  defaultClientConditions,
   ModuleNode,
   normalizePath,
   Plugin,
-  ViteDevServer,
   preprocessCSS,
   ResolvedConfig,
-  defaultClientConditions,
+  ViteDevServer,
 } from 'vite';
-import * as ngCompiler from '@angular/compiler';
 
+import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
+import { jitPlugin } from './angular-jit-plugin.js';
 import { createCompilerPlugin } from './compiler-plugin.js';
 import {
   StyleUrlsResolver,
@@ -35,23 +37,20 @@ import {
   augmentProgramWithVersioning,
   mergeTransformers,
 } from './host.js';
-import { jitPlugin } from './angular-jit-plugin.js';
-import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
 
+import { angularStorybookPlugin } from './angular-storybook-plugin.js';
+import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {
+  angularMajor,
   createJitResourceTransformer,
   SourceFileCache,
-  angularMajor,
 } from './utils/devkit.js';
-import { angularVitestPlugins } from './angular-vitest-plugin.js';
-import { angularStorybookPlugin } from './angular-storybook-plugin.js';
 
 const require = createRequire(import.meta.url);
 
-import { routerPlugin } from './router-plugin.js';
 import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
-import { EmitFileResult } from './models.js';
 import { liveReloadPlugin } from './live-reload-plugin.js';
+import { EmitFileResult } from './models.js';
 import { nxFolderPlugin } from './nx-folder-plugin.js';
 import {
   FileReplacement,
@@ -59,9 +58,10 @@ import {
   FileReplacementWith,
   replaceFiles,
 } from './plugins/file-replacements.plugin.js';
+import { routerPlugin } from './router-plugin.js';
 
 export interface PluginOptions {
-  tsconfig?: string;
+  tsconfig?: string | (() => string);
   workspaceRoot?: string;
   inlineStylesExtension?: string;
   jit?: boolean;
@@ -103,7 +103,7 @@ export function angular(options?: PluginOptions): Plugin[] {
    * are used for values not provided.
    */
   const pluginOptions = {
-    tsconfig: options?.tsconfig || '',
+    tsconfigGetter: createTsConfigGetter(options?.tsconfig),
     workspaceRoot: options?.workspaceRoot ?? process.cwd(),
     inlineStylesExtension: options?.inlineStylesExtension ?? 'css',
     advanced: {
@@ -124,6 +124,14 @@ export function angular(options?: PluginOptions): Plugin[] {
   };
 
   let resolvedConfig: ResolvedConfig;
+  let resolvedTsConfigPath: string = '';
+  // Store config context needed for getTsConfigPath resolution
+  let tsConfigResolutionContext: {
+    root: string;
+    isProd: boolean;
+    isLib: boolean;
+  } | null = null;
+
   let nextProgram: NgtscProgram | undefined | ts.Program;
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode = false;
@@ -170,12 +178,21 @@ export function angular(options?: PluginOptions): Plugin[] {
         isProd =
           config.mode === 'production' ||
           process.env['NODE_ENV'] === 'production';
-        pluginOptions.tsconfig = getTsConfigPath(
-          config.root || '.',
-          pluginOptions,
+
+        // Store the config context for later resolution in configResolved
+        tsConfigResolutionContext = {
+          root: config.root || '.',
           isProd,
+          isLib: !!config?.build?.lib,
+        };
+
+        // Do a preliminary resolution for esbuild plugin (before configResolved)
+        const preliminaryTsConfigPath = getTsConfigPath(
+          tsConfigResolutionContext.root,
+          pluginOptions.tsconfigGetter(),
+          tsConfigResolutionContext.isProd,
           isTest,
-          !!config?.build?.lib,
+          tsConfigResolutionContext.isLib,
         );
 
         return {
@@ -187,7 +204,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               plugins: [
                 createCompilerPlugin(
                   {
-                    tsconfig: pluginOptions.tsconfig,
+                    tsconfig: preliminaryTsConfigPath,
                     sourcemap: !isProd,
                     advancedOptimizations: isProd,
                     jit,
@@ -214,6 +231,18 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configResolved(config) {
         resolvedConfig = config;
+
+        // resolve the tsconfig path after config is fully resolved
+        if (tsConfigResolutionContext) {
+          const tsconfigValue = pluginOptions.tsconfigGetter();
+          resolvedTsConfigPath = getTsConfigPath(
+            tsConfigResolutionContext.root,
+            tsconfigValue,
+            tsConfigResolutionContext.isProd,
+            isTest,
+            tsConfigResolutionContext.isLib,
+          );
+        }
 
         if (isTest) {
           // set test watch mode
@@ -598,15 +627,23 @@ export function angular(options?: PluginOptions): Plugin[] {
     });
   }
 
+  function createTsConfigGetter(tsconfigOrGetter?: string | (() => string)) {
+    if (typeof tsconfigOrGetter === 'function') {
+      return tsconfigOrGetter;
+    }
+
+    return () => tsconfigOrGetter || '';
+  }
+
   function getTsConfigPath(
     root: string,
-    options: PluginOptions,
+    tsconfig: string,
     isProd: boolean,
     isTest: boolean,
     isLib: boolean,
   ) {
-    if (options.tsconfig && isAbsolute(options.tsconfig)) {
-      return options.tsconfig;
+    if (tsconfig && isAbsolute(tsconfig)) {
+      return tsconfig;
     }
 
     let tsconfigFilePath = './tsconfig.app.json';
@@ -621,8 +658,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsconfigFilePath = './tsconfig.spec.json';
     }
 
-    if (options.tsconfig) {
-      tsconfigFilePath = options.tsconfig;
+    if (tsconfig) {
+      tsconfigFilePath = tsconfig;
     }
 
     return resolve(root, tsconfigFilePath);
@@ -633,7 +670,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     const includeFiles = findIncludes();
 
     let { options: tsCompilerOptions, rootNames } =
-      compilerCli.readConfiguration(pluginOptions.tsconfig, {
+      compilerCli.readConfiguration(resolvedTsConfigPath, {
         suppressOutputPathCheck: true,
         outDir: undefined,
         sourceMap: false,
