@@ -1,3 +1,9 @@
+# [2.0.0-beta.7](https://github.com/analogjs/analog/compare/v2.0.0-beta.6...v2.0.0-beta.7) (2025-10-11)
+
+### Features
+
+- **vite-plugin-angular:** add support for tsconfig as getter function ([#1892](https://github.com/analogjs/analog/issues/1892)) ([6411a7c](https://github.com/analogjs/analog/commit/6411a7c1995f1536a826161f0371a03e742d8b77))
+
 # [2.0.0-beta.6](https://github.com/analogjs/analog/compare/v2.0.0-beta.5...v2.0.0-beta.6) (2025-10-03)
 
 ### Features
