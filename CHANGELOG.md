@@ -1,3 +1,9 @@
+# [2.0.0-beta.8](https://github.com/analogjs/analog/compare/v2.0.0-beta.7...v2.0.0-beta.8) (2025-10-15)
+
+### Bug Fixes
+
+- **nx-plugin:** remove tRPC from application generator ([#1898](https://github.com/analogjs/analog/issues/1898)) ([0b5afbb](https://github.com/analogjs/analog/commit/0b5afbb5482b5f66464ca17833d3460370c1a357))
+
 # [2.0.0-beta.7](https://github.com/analogjs/analog/compare/v2.0.0-beta.6...v2.0.0-beta.7) (2025-10-11)
 
 ### Features
