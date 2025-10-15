@@ -24,7 +24,7 @@ npx create-nx-workspace@latest --preset=@analogjs/platform
 ```
 
 Analog 预设会提示你提供应用程序的名称。在此示例中，我们就用 `analog-app`。
-此外，还会询问你是否要在新项目中包含 [TailwindCSS](https://tailwindcss.com) 和 [tRPC](https://trpc.io) 。
+此外，还会询问你是否要在新项目中包含 [TailwindCSS](https://tailwindcss.com)
 如果你选择包含其中任何一个，则会自动安装所有必须的依赖项，并添加所需的配置。
 
 ### 启动应用

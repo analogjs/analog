@@ -60,7 +60,7 @@ jobs:
       - run: npm --version
       - name: Create Nx Workspace
         run: |
-          npx create-nx-workspace@${{ inputs.nx_build_tag }} analog-nx-workspace --preset @analogjs/platform@${{ inputs.analog_build_tag }} --analogAppName my-analog-app --addTailwind=false --addTRPC=false --ci skip
+          npx create-nx-workspace@${{ inputs.nx_build_tag }} analog-nx-workspace --preset @analogjs/platform@${{ inputs.analog_build_tag }} --analogAppName my-analog-app --addTailwind=false --ci skip
       - name: Build, Test, and Validate
         run: |
           cd analog-nx-workspace

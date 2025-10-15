@@ -24,8 +24,8 @@ npx create-nx-workspace@latest --preset=@analogjs/platform
 ```
 
 The Analog preset prompts you to provide the name of your application. In this example, we simply use `analog-app`.
-Additionally, asks whether you would like to include [TailwindCSS](https://tailwindcss.com) and [tRPC](https://trpc.io) in your new project.
-If you choose to include either of them, all the required dependencies are installed automatically,
+Additionally, asks whether you would like to include [TailwindCSS](https://tailwindcss.com) in your new project.
+If you choose to include it, all the required dependencies are installed automatically,
 and any necessary configurations is added.
 
 ### Serving the application
