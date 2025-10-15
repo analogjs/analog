@@ -27,15 +27,7 @@ export default defineConfig(({ mode }) => {
       <% if (addTailwind) { %>
       tailwindcss(),
       <% } %>
-      <% if (addTRPC) { %>
-      analog({
-        prerender: {
-          routes: []
-        }
-      }),
-      <% } else { %>
       analog(),
-      <% } %>
       nxViteTsPaths(),
     ],
     test: {

@@ -21,7 +21,6 @@ body:
         - router
         - content
         - platform
-        - trpc
         - astro-angular
         - storybook-angular
         - Docs

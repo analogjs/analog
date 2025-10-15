@@ -24,7 +24,7 @@ npx create-nx-workspace@latest --preset=@analogjs/platform
 ```
 
 El preajuste de Analog te pide que proporciones el nombre de tu aplicación. En este ejemplo, simplemente usamos `analog-app`.
-Adicionalmente, pregunta si te gustaría incluir [TailwindCSS](https://tailwindcss.com) y [tRPC](https://trpc.io)en tu nuevo proyecto.
+Adicionalmente, pregunta si te gustaría incluir [TailwindCSS](https://tailwindcss.com) en tu nuevo proyecto.
 Si eliges incluir cualquiera de ellos, todas las dependencias requeridas se instalan automáticamente, y se agregan las configuraciones necesarias.
 
 ### Ejecutando la aplicación

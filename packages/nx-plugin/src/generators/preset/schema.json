@@ -16,12 +16,6 @@
       "x-prompt": "Add TailwindCSS for styling?",
       "default": true
     },
-    "addTRPC": {
-      "type": "boolean",
-      "description": "Adds tRPC if set to true.",
-      "x-prompt": "Add tRPC for typesafe client/server interaction?",
-      "default": false
-    },
     "tags": {
       "type": "string",
       "description": "Add tags to the project (used for linting)",
