@@ -7,7 +7,7 @@ import {
   relative,
   resolve,
 } from 'node:path';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 
 import * as compilerCli from '@angular/compiler-cli';
 import * as ts from 'typescript';
@@ -700,6 +700,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     isLib: boolean,
   ) {
     if (options.tsconfig && isAbsolute(options.tsconfig)) {
+      if (!existsSync(options.tsconfig)) {
+        console.error(
+          `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${options.tsconfig}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
+        );
+      }
+
       return options.tsconfig;
     }
 
@@ -719,7 +725,15 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsconfigFilePath = options.tsconfig;
     }
 
-    return resolve(root, tsconfigFilePath);
+    const resolvedPath = resolve(root, tsconfigFilePath);
+
+    if (!existsSync(resolvedPath)) {
+      console.error(
+        `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${resolvedPath}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
+      );
+    }
+
+    return resolvedPath;
   }
 
   async function performCompilation(config: ResolvedConfig, ids?: string[]) {
