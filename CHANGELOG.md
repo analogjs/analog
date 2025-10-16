@@ -1,3 +1,9 @@
+# [2.0.0-beta.9](https://github.com/analogjs/analog/compare/v2.0.0-beta.8...v2.0.0-beta.9) (2025-10-16)
+
+### Features
+
+- **astro-angular:** use zoneless change detection by default ([#1899](https://github.com/analogjs/analog/issues/1899)) ([75149b6](https://github.com/analogjs/analog/commit/75149b697cc91226b7f13ba5fdd5568781f228ae))
+
 # [2.0.0-beta.8](https://github.com/analogjs/analog/compare/v2.0.0-beta.7...v2.0.0-beta.8) (2025-10-15)
 
 ### Bug Fixes
