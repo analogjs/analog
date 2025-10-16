@@ -1,3 +1,9 @@
+## [1.21.3](https://github.com/analogjs/analog/compare/v1.21.2...v1.21.3) (2025-10-16)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** log warning when configured tsconfig path doesn't exist ([19a58ba](https://github.com/analogjs/analog/commit/19a58ba91394654090b2b60479ac0ebcaa876d4c))
+
 ## [1.21.2](https://github.com/analogjs/analog/compare/v1.21.1...v1.21.2) (2025-10-03)
 
 ### Bug Fixes
