@@ -1,4 +1,3 @@
-import 'zone.js/node';
 import type {
   ComponentMirror,
   EnvironmentProviders,
@@ -9,6 +8,7 @@ import {
   ApplicationRef,
   InjectionToken,
   reflectComponentType,
+  provideZonelessChangeDetection,
 } from '@angular/core';
 import {
   BEFORE_APP_SERIALIZED,
@@ -99,6 +99,7 @@ async function renderToStaticMarkup(
           STATIC_PROPS_HOOK_PROVIDER,
           provideServerRendering(),
           { provide: ɵSERVER_CONTEXT, useValue: 'analog' },
+          provideZonelessChangeDetection(),
           ...(Component.renderProviders || []),
         ],
       },
