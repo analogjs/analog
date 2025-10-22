@@ -28,7 +28,7 @@
       "import": "./src/index.js",
       "require": "./src/index.js"
     },
-    "./preset": "./preset.mjs",
+    "./preset": "./src/lib/preset.js",
     "./package.json": "./package.json",
     "./*": "./src/*",
     "./testing": {
@@ -39,16 +39,16 @@
   },
   "main": "src/index.js",
   "dependencies": {
-    "@storybook/builder-vite": ">=8.6.0 || ^9.0.0"
+    "@storybook/builder-vite": "^10.0.0-rc.0"
   },
   "peerDependencies": {
-    "@storybook/angular": ">=8.6.0 || ^9.0.0",
+    "@storybook/angular": "^10.0.0-rc.0",
     "@analogjs/vite-plugin-angular": "*",
-    "storybook": ">=8.6.0 || ^9.0.0",
+    "storybook": "^10.0.0-rc.0",
     "vite": "^5.0.0 || ^6.0.0 || ^7.0.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "builders": "src/lib/builders.json",
   "ng-add": {

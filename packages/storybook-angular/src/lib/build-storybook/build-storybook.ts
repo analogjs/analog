@@ -1,3 +1,3 @@
-import BuildStorybookBuilder from '@storybook/angular/dist/builders/build-storybook/index.js';
+import BuildStorybookBuilder from '@storybook/angular/builders/build-storybook';
 
 export default BuildStorybookBuilder;

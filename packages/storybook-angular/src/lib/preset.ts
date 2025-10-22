@@ -1,15 +1,37 @@
-import { dirname, join, resolve } from 'node:path';
-import { createRequire } from 'node:module';
-import { core as PresetCore } from '@storybook/angular/dist/preset.js';
-const require = createRequire(import.meta.url);
-const getAbsolutePath = (input) =>
-  dirname(require.resolve(join(input, 'package.json')));
+import { resolve } from 'node:path';
+import { core as PresetCore } from '@storybook/angular/preset';
+import { fileURLToPath } from 'node:url';
+
+export const previewAnnotations = async (entries = [], options) => {
+  const config = fileURLToPath(
+    import.meta.resolve('@storybook/angular/client/config'),
+  );
+  const annotations = [...entries, config];
+
+  if (options.enableProdMode) {
+    const previewProdPath = fileURLToPath(
+      import.meta.resolve('@storybook/angular/client/preview-prod'),
+    );
+    annotations.unshift(previewProdPath);
+  }
+
+  const docsConfig = await options.presets.apply('docs', {}, options);
+  const docsEnabled = Object.keys(docsConfig).length > 0;
+  if (docsEnabled) {
+    const docsConfigPath = fileURLToPath(
+      import.meta.resolve('@storybook/angular/client/docs/config'),
+    );
+    annotations.push(docsConfigPath);
+  }
+  return annotations;
+};
+
 export const core = async (config, options) => {
   const presetCore = PresetCore(config, options);
   return {
     ...presetCore,
     builder: {
-      name: getAbsolutePath('@storybook/builder-vite'),
+      name: import.meta.resolve('@storybook/builder-vite'),
       options: { ...presetCore.options },
     },
   };
@@ -29,7 +51,7 @@ export const viteFinal = async (config, options) => {
     // Add dependencies to pre-optimization
     optimizeDeps: {
       include: [
-        '@storybook/angular/dist/client/index.js',
+        '@storybook/angular/client',
         '@analogjs/storybook-angular',
         '@angular/compiler',
         '@angular/platform-browser',
@@ -145,5 +167,5 @@ function storybookEsbuildPlugin() {
   };
 }
 
-export { addons, previewAnnotations } from '@storybook/angular/dist/preset.js';
+export { addons } from '@storybook/angular/preset';
 //# sourceMappingURL=preset.js.map
