@@ -1,3 +1,9 @@
+# [1.22.0](https://github.com/analogjs/analog/compare/v1.21.3...v1.22.0) (2025-10-22)
+
+### Features
+
+- add support for Vitest 4 ([4e9ff62](https://github.com/analogjs/analog/commit/4e9ff622018331953ae7fa84d7da9a48a4914aa1))
+
 ## [1.21.3](https://github.com/analogjs/analog/compare/v1.21.2...v1.21.3) (2025-10-16)
 
 ### Bug Fixes
