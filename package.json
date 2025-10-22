@@ -201,7 +201,7 @@
     "vite-plugin-inspect": "11.3.2",
     "vite-tsconfig-paths": "4.2.0",
     "vitefu": "^1.1.1",
-    "vitest": "^3.2.4",
+    "vitest": "^4.0.0",
     "webpack-bundle-analyzer": "^4.7.0",
     "xmlbuilder2": "^3.0.2"
   },

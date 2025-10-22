@@ -244,7 +244,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           // - vitest watch mode detected from the command line
           testWatchMode =
             !(config.server.watch === null) ||
-            config.test?.watch === true ||
+            (config as any).test?.watch === true ||
             testWatchMode;
         }
       },

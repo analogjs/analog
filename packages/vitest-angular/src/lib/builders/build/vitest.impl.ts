@@ -2,7 +2,7 @@ import { createBuilder } from '@angular-devkit/architect';
 import * as path from 'path';
 import type { Vitest } from 'vitest/node';
 import type { Plugin, UserConfig } from 'vite';
-import type { UserConfig as VitestConfig } from 'vitest/node';
+import type { TestUserConfig as VitestConfig } from 'vitest/node';
 
 import { VitestSchema } from './schema';
 import { createAngularMemoryPlugin } from './plugins/angular-memory-plugin';
