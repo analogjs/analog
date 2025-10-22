@@ -1,3 +1,9 @@
+# [2.0.0-beta.11](https://github.com/analogjs/analog/compare/v2.0.0-beta.10...v2.0.0-beta.11) (2025-10-22)
+
+### Features
+
+- **storybook-angular:** add support for Storybook 10 ([#1903](https://github.com/analogjs/analog/issues/1903)) ([8715bea](https://github.com/analogjs/analog/commit/8715bea76fc1da573224fc446390d75779718dca))
+
 # [2.0.0-beta.10](https://github.com/analogjs/analog/compare/v2.0.0-beta.9...v2.0.0-beta.10) (2025-10-22)
 
 ### Bug Fixes
