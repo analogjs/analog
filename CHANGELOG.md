@@ -1,3 +1,14 @@
+# [2.0.0-beta.10](https://github.com/analogjs/analog/compare/v2.0.0-beta.9...v2.0.0-beta.10) (2025-10-22)
+
+### Bug Fixes
+
+- **storybook-angular:** don't mangle class names during the build ([00d74d1](https://github.com/analogjs/analog/commit/00d74d180fda959aa7e4581cb98b99e29795d913))
+- **vite-plugin-angular:** log warning when configured tsconfig path doesn't exist ([19a58ba](https://github.com/analogjs/analog/commit/19a58ba91394654090b2b60479ac0ebcaa876d4c))
+
+### Features
+
+- add support for Vitest 4 ([4e9ff62](https://github.com/analogjs/analog/commit/4e9ff622018331953ae7fa84d7da9a48a4914aa1))
+
 # [2.0.0-beta.9](https://github.com/analogjs/analog/compare/v2.0.0-beta.8...v2.0.0-beta.9) (2025-10-16)
 
 ### Features
