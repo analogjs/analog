@@ -1,11 +1,12 @@
+import '@angular/compiler';
 import type { AngularRenderer } from '@storybook/angular';
-import { setProjectAnnotations as originalSetProjectAnnotations } from '@storybook/angular/dist/client/index.mjs';
+import { setProjectAnnotations as originalSetProjectAnnotations } from '@storybook/angular/client';
 import {
   NamedOrDefaultProjectAnnotations,
   NormalizedProjectAnnotations,
   RenderContext,
 } from 'storybook/internal/types';
-import * as configAnnotations from '@storybook/angular/dist/client/config.mjs';
+import * as configAnnotations from '@storybook/angular/client/config';
 
 export const render = configAnnotations.render;
 

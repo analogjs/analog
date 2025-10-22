@@ -1,2 +1,2 @@
 export * from './types';
-export * from '@storybook/angular/dist/client/index.js';
+export * from '@storybook/angular/client';
