@@ -23,6 +23,11 @@
             "input": "./packages/storybook-angular/src",
             "glob": "**/*.d.ts",
             "output": "./src"
+          },
+          {
+            "input": "./packages/storybook-angular/preset",
+            "glob": "**/(*.*)",
+            "output": "./"
           }
         ]
       }
