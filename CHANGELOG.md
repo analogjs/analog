@@ -1,3 +1,9 @@
+# [2.0.0-beta.12](https://github.com/analogjs/analog/compare/v2.0.0-beta.11...v2.0.0-beta.12) (2025-10-23)
+
+### Bug Fixes
+
+- **storybook-angular:** use preset.mjs for Windows support ([#1907](https://github.com/analogjs/analog/issues/1907)) ([c97dc8d](https://github.com/analogjs/analog/commit/c97dc8dc5b4aeaed37c902d5aecb2b39a5840a5c))
+
 # [2.0.0-beta.11](https://github.com/analogjs/analog/compare/v2.0.0-beta.10...v2.0.0-beta.11) (2025-10-22)
 
 ### Features
