@@ -1,3 +1,9 @@
+## [1.22.1](https://github.com/analogjs/analog/compare/v1.22.0...v1.22.1) (2025-10-23)
+
+### Bug Fixes
+
+- **create-analog:** add overrides for Vitest 4 and .env gitignore ([837de30](https://github.com/analogjs/analog/commit/837de308094024174df73dd7403a3aa5ee217561))
+
 # [1.22.0](https://github.com/analogjs/analog/compare/v1.21.3...v1.22.0) (2025-10-22)
 
 ### Features
