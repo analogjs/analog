@@ -1,3 +1,9 @@
+# [2.0.0-beta.14](https://github.com/analogjs/analog/compare/v2.0.0-beta.13...v2.0.0-beta.14) (2025-10-25)
+
+### Bug Fixes
+
+- **storybook-angular:** export preset.js from root ([9b70f86](https://github.com/analogjs/analog/commit/9b70f86b54d207f238758ae23dd18b5a30ca9ce1))
+
 # [2.0.0-beta.13](https://github.com/analogjs/analog/compare/v2.0.0-beta.12...v2.0.0-beta.13) (2025-10-25)
 
 ### Bug Fixes
