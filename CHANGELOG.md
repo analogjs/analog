@@ -1,3 +1,13 @@
+# [2.0.0-beta.13](https://github.com/analogjs/analog/compare/v2.0.0-beta.12...v2.0.0-beta.13) (2025-10-25)
+
+### Bug Fixes
+
+- **storybook-angular:** set exports to use defaults ([7c66c04](https://github.com/analogjs/analog/commit/7c66c04706640b73221c46f5d68a4091017ae310))
+
+### Reverts
+
+- "fix(storybook-angular): use preset.mjs for Windows support ([#1907](https://github.com/analogjs/analog/issues/1907))" ([165955f](https://github.com/analogjs/analog/commit/165955fb12377403964a36fa10c04d2cc7f0d0a1))
+
 # [2.0.0-beta.12](https://github.com/analogjs/analog/compare/v2.0.0-beta.11...v2.0.0-beta.12) (2025-10-23)
 
 ### Bug Fixes
