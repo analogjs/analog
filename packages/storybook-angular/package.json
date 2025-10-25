@@ -27,10 +27,7 @@
       "types": "./src/index.d.ts",
       "default": "./src/index.js"
     },
-    "./preset": {
-      "types": "./src/lib/preset.d.ts",
-      "default": "./src/lib/preset.js"
-    },
+    "./preset": "./preset.js",
     "./package.json": "./package.json",
     "./testing": {
       "types": "./src/lib/testing.d.ts",
