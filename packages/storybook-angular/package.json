@@ -25,16 +25,16 @@
   "exports": {
     ".": {
       "types": "./src/index.d.ts",
-      "import": "./src/index.js",
-      "require": "./src/index.js"
+      "default": "./src/index.js"
     },
-    "./preset": "./src/lib/preset.js",
+    "./preset": {
+      "types": "./src/lib/preset.d.ts",
+      "default": "./src/lib/preset.js"
+    },
     "./package.json": "./package.json",
-    "./*": "./src/*",
     "./testing": {
       "types": "./src/lib/testing.d.ts",
-      "import": "./src/lib/testing.js",
-      "require": "./src/lib/testing.js"
+      "default": "./src/lib/testing.js"
     }
   },
   "main": "src/index.js",
