@@ -1,3 +1,9 @@
+## [1.22.2](https://github.com/analogjs/analog/compare/v1.22.1...v1.22.2) (2025-10-27)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** allow `TestBed.overrideXXX()` APIs in AOT mode ([#1909](https://github.com/analogjs/analog/issues/1909)) ([a8fd510](https://github.com/analogjs/analog/commit/a8fd5106497f3dcae6ca8302a14bfffb2d91efd2))
+
 ## [1.22.1](https://github.com/analogjs/analog/compare/v1.22.0...v1.22.1) (2025-10-23)
 
 ### Bug Fixes
