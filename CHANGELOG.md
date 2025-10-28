@@ -1,3 +1,10 @@
+# [2.0.0-beta.15](https://github.com/analogjs/analog/compare/v2.0.0-beta.14...v2.0.0-beta.15) (2025-10-28)
+
+### Bug Fixes
+
+- **create-analog:** add overrides for Vitest 4 and .env gitignore ([837de30](https://github.com/analogjs/analog/commit/837de308094024174df73dd7403a3aa5ee217561))
+- **vite-plugin-angular:** allow `TestBed.overrideXXX()` APIs in AOT mode ([#1909](https://github.com/analogjs/analog/issues/1909)) ([a8fd510](https://github.com/analogjs/analog/commit/a8fd5106497f3dcae6ca8302a14bfffb2d91efd2))
+
 # [2.0.0-beta.14](https://github.com/analogjs/analog/compare/v2.0.0-beta.13...v2.0.0-beta.14) (2025-10-25)
 
 ### Bug Fixes
