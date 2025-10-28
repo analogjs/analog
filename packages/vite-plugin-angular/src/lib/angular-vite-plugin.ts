@@ -722,6 +722,11 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['inlineSources'] = true;
     }
 
+    if (isTest) {
+      // Allow `TestBed.overrideXXX()` APIs.
+      tsCompilerOptions['supportTestBed'] = true;
+    }
+
     const replacements: string[] = pluginOptions.fileReplacements.map((rp) =>
       join(
         pluginOptions.workspaceRoot,

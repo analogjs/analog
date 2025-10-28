@@ -1,1 +1,1 @@
-export * from './lib/my-package/my-package.component';
+export * from './lib/my-package/my-package';

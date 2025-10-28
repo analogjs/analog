@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/libs/my-package',
   plugins: [
-    angular(),
+    angular({ jit: false }),
     nxViteTsPaths(),
     nxCopyAssetsPlugin(['*.md', 'package.json']),
   ],
