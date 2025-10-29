@@ -1,3 +1,9 @@
+## [1.22.4](https://github.com/analogjs/analog/compare/v1.22.3...v1.22.4) (2025-10-29)
+
+### Bug Fixes
+
+- **storybook-angular:** adjust package ranges for 1.x ([386c98d](https://github.com/analogjs/analog/commit/386c98d59ba14266b51d14c3c24922364a1bb29a))
+
 ## [1.22.3](https://github.com/analogjs/analog/compare/v1.22.2...v1.22.3) (2025-10-29)
 
 ### Bug Fixes
