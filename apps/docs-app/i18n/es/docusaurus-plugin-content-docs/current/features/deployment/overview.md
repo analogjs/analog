@@ -51,60 +51,70 @@ export default defineConfig({
 
 ## Desplegando con un Prefijo de URL Personalizado
 
-Si estás desplegando con un prefijo de URL personalizado, como https://domain.com/ `basehref`, debes realizar estos pasos para que [server-side-data-fetching](https://analogjs.org/docs/features/data-fetching/server-side-data-fetching), [marcado HTML y activos](https://angular.io/api/common/APP_BASE_HREF), y [rutas API dinámicas](https://analogjs.org/docs/features/api/overview) funcionen correctamente en el `basehref` especificado.
+Si estás desplegando con un prefijo de URL personalizado, como por ejemplo https://domain.com/ `basehref`, debe realizar los siguientes pasos para que [la obtención de datos en el lado del servidor](https://analogjs.org/docs/es/features/data-fetching/server-side-data-fetching), [HTML y recursos](https://angular.io/api/common/APP_BASE_HREF) y [las rutas de API dinámicas](https://analogjs.org/docs/es/features/api/overview) funcionen correctamente en el prefijo de URL especificado.
 
 1. Actualiza el archivo `app.config.ts`.
 
-   Esto instruye a Angular sobre cómo reconocer y generar URLs.
-
-   ```ts
-   import { ApplicationConfig } from '@angular/core';
-   import { APP_BASE_HREF } from '@angular/common';
-
-   export const appConfig: ApplicationConfig = {
-     providers: [
-       [{ provide: APP_BASE_HREF, useValue: import.meta.env.BASE_URL || '/' }],
-       ...
-     ],
-   };
-   ```
-
-2. En la compilación de producción de CI
-
-   ```bash
-     # establece la URL base para la obtención de datos del lado del servidor
-     export VITE_ANALOG_PUBLIC_BASE_URL="https://domain.com/basehref"
-     # Prefija todos los activos y HTML con /basehref/
-     # si usas nx:
-     npx nx run appname:build:production --baseHref='/basehref/'
-     # si usas la compilación directa de Angular:
-     npx ng build --baseHref="/basehref/"
-   ```
-
-3. En contenedores de producción, especifica la bandera de entorno `NITRO_APP_BASE_URL`.
-
-   ```bash
-   NITRO_APP_BASE_URL="/basehref/"
-   ```
-
-Dado un archivo `vite.config.ts` similar a este:
-
 ```ts
-    plugins: [
-      analog({
-        apiPrefix: 'api',
-        nitro: {
-          routeRules: {
-            '/': {
-              prerender: false,
-            },
-          },
-        },
-        prerender: {
-          routes: async () => {
-            return ['/'];
-          }
+export default defineConfig(({ mode }) => ({
+  base: '/basehref',
+  plugins: [
+    analog({
+      ...(mode === 'production' ? {apiPrefix: 'basehref'} : {apiPrefix: 'basehref/api'}),
+      prerender: {
+        routes: async () => {
+          return [];
         }
+      }
+    }),
+  ],
 ```
 
-Nitro prefija todas las rutas API con `/basehref/api`.
+2. Actualiza el archivo `app.config.ts`.
+
+Esto instruye a Angular como debe reconocer y generar las URLs.
+
+```ts
+import { ApplicationConfig } from '@angular/core';
+import { APP_BASE_HREF } from '@angular/common';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    [{ provide: APP_BASE_HREF, useValue: import.meta.env.BASE_URL || '/' }],
+    ...
+  ],
+};
+```
+
+3. HttpClient usar `injectAPIPrefix()`.
+
+```ts
+const response = await firstValueFrom(
+  this.httpClient.get<{ client: string }>(`${injectAPIPrefix()}/v1/hello`),
+);
+```
+
+4. Build a producción en CI
+
+**No establecer** `VITE_ANALOG_PUBLIC_BASE_URL`, deber a utilizar lo que esté en `vite.config.ts`.
+Si `VITE_ANALOG_PUBLIC_BASE_URL` está presente durante la construcción, los datos de SSR se obtienen en el servidor y en el cliente.
+
+```bash
+  # Si usa nx:
+  npx nx run appname:build:production
+  # Si usa directamente angular build:
+  npx vite build && NITRO_APP_BASE_URL='/basehref/' node dist/analog/server/index.mjs
+```
+
+5. En contenedores de producción especificar la bandera `NITRO_APP_BASE_URL` en el archivo .env.
+
+```bash
+NITRO_APP_BASE_URL="/basehref/"
+```
+
+6. Previsualizando en local:
+
+```bash
+npx vite build && NITRO_APP_BASE_URL='/basehref/' node dist/analog/server/index.mjs
+```
+
