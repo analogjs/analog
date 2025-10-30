@@ -18,6 +18,27 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
+Next, enable the content package in the `vite.config.ts`
+
+```ts
+/// <reference types="vitest" />
+
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      // enable content/highlighter
+      content: {
+        highlighter: 'prism',
+      },
+    }),
+  ],
+}));
+```
+
 ## Defining Content Routes
 
 Content routes include support for frontmatter, metatags, and syntax highlighting with PrismJS.
@@ -80,6 +101,7 @@ export default defineConfig({
   plugins: [
     analog({
       content: {
+        highlighter: 'prism',
         prismOptions: {
           additionalLangs: ['prism-diff'],
         },

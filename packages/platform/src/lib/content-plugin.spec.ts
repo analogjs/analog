@@ -6,7 +6,7 @@ vi.mock('fs');
 import { contentPlugin } from './content-plugin';
 
 describe('content plugin', () => {
-  const [plugin] = contentPlugin();
+  const [plugin] = contentPlugin({ highlighter: 'prism' });
   const transform = (code: string, id: string): any => {
     // Use `any` because not of the signatures are callable and it also expects
     // to pass a valid `this` type.

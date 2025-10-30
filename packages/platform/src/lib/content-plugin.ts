@@ -27,10 +27,7 @@ export function contentPlugin(
     markedOptions,
     shikiOptions,
     prismOptions,
-  }: ContentPluginOptions = {
-    highlighter: 'prism',
-    markedOptions: { mangle: true },
-  },
+  }: ContentPluginOptions = {},
   options?: Options,
 ): Plugin[] {
   const cache = new Map<string, Content>();
@@ -39,6 +36,23 @@ export function contentPlugin(
   const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
   let config: UserConfig;
   let root: string;
+
+  if (!highlighter) {
+    return [
+      {
+        name: 'analogjs-external-content',
+        config() {
+          return {
+            build: {
+              rollupOptions: {
+                external: ['@analogjs/content'],
+              },
+            },
+          };
+        },
+      },
+    ];
+  }
 
   return [
     {
@@ -129,7 +143,7 @@ export function contentPlugin(
           './content/marked/marked-setup.service.js'
         );
         const markedSetupService = new MarkedSetupService(
-          markedOptions,
+          { mangle: true, ...(markedOptions || {}) },
           markedHighlighter,
         );
         const mdContent = (await markedSetupService
