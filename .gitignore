@@ -69,4 +69,3 @@ tmpanalogapp*
 vite.config.*.timestamp*
 .vite-inspect
 vitest.config.*.timestamp*
-gradle.properties

@@ -11,4 +11,3 @@ pnpm-lock.yaml
 /packages/create-analog/template-*
 .vite-inspect
 .all-contributorsrc
-.cursor/rules/nx-rules.mdc

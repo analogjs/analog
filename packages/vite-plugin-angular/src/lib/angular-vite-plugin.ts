@@ -88,7 +88,7 @@ export interface PluginOptions {
  * Match .(c or m)ts, .ts extensions with an optional ? for query params
  * Ignore .tsx extensions
  */
-const TS_EXT_REGEX = /\.[cm]?(ts|analog|ag)[^x]?\??/;
+const TS_EXT_REGEX = /\.[cm]?(ts)[^x]?\??/;
 const classNames = new Map();
 
 interface DeclarationFile {
