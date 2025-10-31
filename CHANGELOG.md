@@ -1,3 +1,9 @@
+# [2.0.0-beta.20](https://github.com/analogjs/analog/compare/v2.0.0-beta.19...v2.0.0-beta.20) (2025-10-31)
+
+### Bug Fixes
+
+- **storybook-angular:** update type exports ([f35c8f9](https://github.com/analogjs/analog/commit/f35c8f97b51187453f19102c85e6733fbfb85990))
+
 # [2.0.0-beta.19](https://github.com/analogjs/analog/compare/v2.0.0-beta.18...v2.0.0-beta.19) (2025-10-31)
 
 ### Bug Fixes
