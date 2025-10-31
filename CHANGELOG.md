@@ -1,3 +1,9 @@
+# [2.0.0-beta.19](https://github.com/analogjs/analog/compare/v2.0.0-beta.18...v2.0.0-beta.19) (2025-10-31)
+
+### Bug Fixes
+
+- **storybook-angular:** bump Storybook deps to ^10.0.0 ([c96d2af](https://github.com/analogjs/analog/commit/c96d2af242a8000ff23d93cf719493abb42a4a7e))
+
 # [2.0.0-beta.18](https://github.com/analogjs/analog/compare/v2.0.0-beta.17...v2.0.0-beta.18) (2025-10-31)
 
 ### Features
