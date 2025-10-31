@@ -60,14 +60,17 @@ export default defineConfig(({ mode }) => ({
   base: '/basehref',
   plugins: [
     analog({
-      ...(mode === 'production' ? {apiPrefix: 'basehref'} : {apiPrefix: 'basehref/api'}),
+      ...(mode === 'production'
+        ? { apiPrefix: 'basehref' }
+        : { apiPrefix: 'basehref/api' }),
       prerender: {
         routes: async () => {
           return [];
-        }
-      }
+        },
+      },
     }),
   ],
+}));
 ```
 
 2. Actualiza el archivo `app.config.ts`.
@@ -117,4 +120,3 @@ NITRO_APP_BASE_URL="/basehref/"
 ```bash
 npx vite build && NITRO_APP_BASE_URL='/basehref/' node dist/analog/server/index.mjs
 ```
-
