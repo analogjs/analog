@@ -473,7 +473,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         /**
          * Skip transforming content files
          */
-        if (id.includes('analog-content-')) {
+        if (id.includes('?') && id.includes('analog-content-')) {
           return;
         }
 
