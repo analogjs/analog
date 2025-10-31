@@ -1,3 +1,9 @@
+# [2.0.0-beta.18](https://github.com/analogjs/analog/compare/v2.0.0-beta.17...v2.0.0-beta.18) (2025-10-31)
+
+### Features
+
+- migrate from fast-glob to tinyglobby for improved performance ([#1923](https://github.com/analogjs/analog/issues/1923)) ([036290a](https://github.com/analogjs/analog/commit/036290a66cc4baae9369653a19c4e0e29c855864))
+
 # [2.0.0-beta.17](https://github.com/analogjs/analog/compare/v2.0.0-beta.16...v2.0.0-beta.17) (2025-10-31)
 
 ### Bug Fixes
