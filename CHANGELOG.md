@@ -1,3 +1,9 @@
+# [2.0.0-beta.17](https://github.com/analogjs/analog/compare/v2.0.0-beta.16...v2.0.0-beta.17) (2025-10-31)
+
+### Bug Fixes
+
+- **platform:** externalize @analogjs/content package until configured ([#1921](https://github.com/analogjs/analog/issues/1921)) ([119e2b9](https://github.com/analogjs/analog/commit/119e2b9a304dd52532bef9eb788b0b47cdb87d72))
+
 # [2.0.0-beta.16](https://github.com/analogjs/analog/compare/v2.0.0-beta.15...v2.0.0-beta.16) (2025-10-29)
 
 ### Bug Fixes
