@@ -202,7 +202,7 @@ Then, install the necessary packages for running tests in the browser:
   <TabItem value="npm">
 
 ```shell
-npm install @vitest/browser playwright --save-dev
+npm install @vitest/browser-playwright playwright --save-dev
 ```
 
   </TabItem>
@@ -210,7 +210,7 @@ npm install @vitest/browser playwright --save-dev
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @vitest/browser playwright --dev
+yarn add @vitest/browser-playwright playwright --dev
 ```
 
   </TabItem>
@@ -218,7 +218,7 @@ yarn add @vitest/browser playwright --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @vitest/browser playwright
+pnpm install -w @vitest/browser-playwright playwright
 ```
 
   </TabItem>
@@ -234,6 +234,7 @@ Update the `test` object in the `vite.config.ts`.
 import { defineConfig } from 'vite';
 
 import angular from '@analogjs/vite-plugin-angular';
+import { playwright } from '@vitest/browser-playwright';
 
 export default defineConfig(({ mode }) => ({
   plugins: [angular()],
@@ -246,9 +247,9 @@ export default defineConfig(({ mode }) => ({
     // Vitest browser config
     browser: {
       enabled: true,
-      name: 'chromium',
       headless: false, // set to true in CI
-      provider: 'playwright',
+      provider: playwright(),
+      instances: [{ browser: 'chromium' }],
     },
   },
   define: {
