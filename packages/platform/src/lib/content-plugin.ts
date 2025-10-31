@@ -1,10 +1,11 @@
-import { Plugin, UserConfig, normalizePath } from 'vite';
+import type { Plugin, UserConfig } from 'vite';
+import { normalizePath } from 'vite';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import fg from 'fast-glob';
+import { globSync } from 'tinyglobby';
 
 import type { WithShikiHighlighterOptions } from './content/shiki/options.js';
-import { MarkedContentHighlighter } from './content/marked/marked-content-highlighter.js';
+import type { MarkedContentHighlighter } from './content/marked/marked-content-highlighter.js';
 import type { WithPrismHighlighterOptions } from './content/prism/options.js';
 import type { WithMarkedOptions } from './content/marked/index.js';
 import type { Options } from './options.js';
@@ -21,6 +22,16 @@ export type ContentPluginOptions = {
   prismOptions?: WithPrismHighlighterOptions;
 };
 
+/**
+ * Content plugin that provides markdown and content file processing for Analog.
+ *
+ * IMPORTANT: This plugin uses tinyglobby for file discovery.
+ * Key pitfall with { dot: true }:
+ * - Returns relative paths from cwd (e.g., "apps/blog-app/src/content/...")
+ * - These paths CANNOT be used directly in ES module imports
+ * - Relative paths without ./ or ../ are treated as package names
+ * - Must convert to absolute paths for imports to work correctly
+ */
 export function contentPlugin(
   {
     highlighter,
@@ -163,7 +174,7 @@ export function contentPlugin(
       },
       transform(code) {
         if (code.includes('ANALOG_CONTENT_FILE_LIST')) {
-          const contentFilesList: string[] = fg.sync(
+          const contentFilesList: string[] = globSync(
             [
               `${root}/src/content/**/*.md`,
               ...(options?.additionalContentDirs || [])?.map(
@@ -176,8 +187,14 @@ export function contentPlugin(
           const eagerImports: string[] = [];
 
           contentFilesList.forEach((module, index) => {
+            // CRITICAL: tinyglobby returns relative paths like "apps/blog-app/src/content/file.md"
+            // These MUST be converted to absolute paths for ES module imports
+            // Otherwise Node.js treats "apps" as a package name and throws "Cannot find package 'apps'"
+            const absolutePath = module.startsWith('/')
+              ? module
+              : `${workspaceRoot}/${module}`;
             eagerImports.push(
-              `import { default as analog_module_${index} } from "${module}?analog-content-list=true";`,
+              `import { default as analog_module_${index} } from "${absolutePath}?analog-content-list=true";`,
             );
           });
 
