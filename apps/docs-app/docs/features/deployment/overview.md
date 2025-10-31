@@ -60,14 +60,17 @@ export default defineConfig(({ mode }) => ({
   base: '/basehref',
   plugins: [
     analog({
-      ...(mode === 'production' ? {apiPrefix: 'basehref'} : {apiPrefix: 'basehref/api'}),
+      ...(mode === 'production'
+        ? { apiPrefix: 'basehref' }
+        : { apiPrefix: 'basehref/api' }),
       prerender: {
         routes: async () => {
           return [];
-        }
-      }
+        },
+      },
     }),
   ],
+}));
 ```
 
 2. Update the `app.config.ts` file.
