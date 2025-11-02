@@ -1,3 +1,9 @@
+# [2.0.0-beta.21](https://github.com/analogjs/analog/compare/v2.0.0-beta.20...v2.0.0-beta.21) (2025-11-02)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** expand optimization for Angular packages ([43395f0](https://github.com/analogjs/analog/commit/43395f06256c069c57b448e310030a43132e9879))
+
 # [2.0.0-beta.20](https://github.com/analogjs/analog/compare/v2.0.0-beta.19...v2.0.0-beta.20) (2025-10-31)
 
 ### Bug Fixes
