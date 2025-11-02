@@ -1,3 +1,9 @@
+## [1.22.5](https://github.com/analogjs/analog/compare/v1.22.4...v1.22.5) (2025-11-02)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** expand optimization for Angular packages ([484553c](https://github.com/analogjs/analog/commit/484553c1a62ad527d431f588e5314db0b3fbf0dd))
+
 ## [1.22.4](https://github.com/analogjs/analog/compare/v1.22.3...v1.22.4) (2025-10-29)
 
 ### Bug Fixes
