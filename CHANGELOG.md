@@ -1,3 +1,9 @@
+# [2.0.0-beta.23](https://github.com/analogjs/analog/compare/v2.0.0-beta.22...v2.0.0-beta.23) (2025-11-03)
+
+### Bug Fixes
+
+- **nx-plugin:** bump Nx deps to 22.x ([21e31bd](https://github.com/analogjs/analog/commit/21e31bd6151e315e94a50b4f37f823814b271318))
+
 # [2.0.0-beta.22](https://github.com/analogjs/analog/compare/v2.0.0-beta.21...v2.0.0-beta.22) (2025-11-03)
 
 ### Bug Fixes
