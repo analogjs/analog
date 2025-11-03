@@ -1,7 +1,8 @@
 {
   "name": "@analogjs/storybook-angular",
-  "version": "1.22.5",
+  "version": "2.0.0-beta.23",
   "description": "Storybook Integration for Angular & Vite",
+  "type": "module",
   "keywords": [
     "storybook",
     "angular",
@@ -24,30 +25,27 @@
   "exports": {
     ".": {
       "types": "./src/index.d.ts",
-      "import": "./src/index.js",
-      "require": "./src/index.js"
+      "default": "./src/index.js"
     },
-    "./preset": "./preset.mjs",
+    "./preset": "./preset.js",
     "./package.json": "./package.json",
-    "./*": "./src/*",
     "./testing": {
       "types": "./src/lib/testing.d.ts",
-      "import": "./src/lib/testing.js",
-      "require": "./src/lib/testing.js"
+      "default": "./src/lib/testing.js"
     }
   },
   "main": "src/index.js",
   "dependencies": {
-    "@storybook/builder-vite": "^8.6.0 || ^9.0.0"
+    "@storybook/builder-vite": "^10.0.0"
   },
   "peerDependencies": {
-    "@storybook/angular": "^8.6.0 || ^9.0.0",
+    "@storybook/angular": "^10.0.0",
     "@analogjs/vite-plugin-angular": "*",
-    "storybook": "^8.6.0 || ^9.0.0",
+    "storybook": "^10.0.0",
     "vite": "^5.0.0 || ^6.0.0 || ^7.0.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "builders": "src/lib/builders.json",
   "ng-add": {

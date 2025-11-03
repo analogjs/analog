@@ -3,7 +3,6 @@
 import analog, { type PrerenderContentFile } from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
-import fs from 'node:fs';
 
 // Only run in Netlify CI
 let base = process.env['URL'] || 'http://localhost:3000';
@@ -31,11 +30,6 @@ export default defineConfig(() => {
     plugins: [
       analog({
         liveReload: true,
-        vite: {
-          experimental: {
-            supportAnalogFormat: true,
-          },
-        },
         additionalPagesDirs: ['/libs/shared/feature'],
         additionalContentDirs: ['/libs/shared/feature/src/content'],
         content: {

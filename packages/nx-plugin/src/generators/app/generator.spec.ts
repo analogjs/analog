@@ -133,30 +133,6 @@ describe('nx-plugin generator', () => {
     }
   };
 
-  const verifyTrpcIsSetUp = (
-    tree: Tree,
-    dependencies: Record<string, string>,
-  ) => {
-    expect(dependencies['@analogjs/trpc']).toBeDefined();
-    const hasTrpcClientFile = tree.exists('apps/trpc-app/src/trpc-client.ts');
-    const hasNoteFile = tree.exists('apps/trpc-app/src/note.ts');
-    const hasTrpcServerRoute = tree.exists(
-      'apps/trpc-app/src/server/routes/api/trpc/[trpc].ts',
-    );
-    expect(hasTrpcClientFile).toBeTruthy();
-    expect(hasNoteFile).toBeTruthy();
-    expect(hasTrpcServerRoute).toBeTruthy();
-
-    const providesTrpcClient = tree
-      .read('apps/trpc-app/src/app/app.config.ts')
-      .includes('provideTrpcClient');
-    const injectsTrpcClient = tree
-      .read('apps/trpc-app/src/app/pages/analog-welcome.component.ts')
-      .includes('injectTrpcClient');
-    expect(providesTrpcClient).toBeTruthy();
-    expect(injectsTrpcClient).toBeTruthy();
-  };
-
   const verifyTagsArePopulated = (
     config: ProjectConfiguration,
     tags: string[],
@@ -209,19 +185,6 @@ describe('nx-plugin generator', () => {
       verifyHomePageExists(tree, analogAppName);
 
       verifyTailwindIsSetUp(tree, dependencies);
-    });
-
-    it('creates an analogjs app in the source directory with trpc set up', async () => {
-      const analogAppName = 'trpc-app';
-      const { config, tree } = await setup({ analogAppName, addTRPC: true });
-      const { dependencies, devDependencies } = readJson(tree, 'package.json');
-
-      verifyCoreDependenciesNx_Angular(dependencies, devDependencies);
-
-      verifyConfig(config, analogAppName);
-
-      verifyHomePageExists(tree, analogAppName);
-      verifyTrpcIsSetUp(tree, dependencies);
     });
 
     it('creates an analogjs app in the source directory with tags populated', async () => {

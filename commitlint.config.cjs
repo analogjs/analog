@@ -16,6 +16,7 @@ module.exports = {
         'storybook-angular',
         'platform',
         'content',
+        'content-plugin',
         'nx-plugin',
         'trpc',
       ],

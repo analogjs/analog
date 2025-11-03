@@ -1,10 +1,11 @@
-import { Plugin, UserConfig, normalizePath } from 'vite';
+import type { Plugin, UserConfig } from 'vite';
+import { normalizePath } from 'vite';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import fg from 'fast-glob';
+import { globSync } from 'tinyglobby';
 
 import type { WithShikiHighlighterOptions } from './content/shiki/options.js';
-import { MarkedContentHighlighter } from './content/marked/marked-content-highlighter.js';
+import type { MarkedContentHighlighter } from './content/marked/marked-content-highlighter.js';
 import type { WithPrismHighlighterOptions } from './content/prism/options.js';
 import type { WithMarkedOptions } from './content/marked/index.js';
 import type { Options } from './options.js';
@@ -21,16 +22,23 @@ export type ContentPluginOptions = {
   prismOptions?: WithPrismHighlighterOptions;
 };
 
+/**
+ * Content plugin that provides markdown and content file processing for Analog.
+ *
+ * IMPORTANT: This plugin uses tinyglobby for file discovery.
+ * Key pitfall with { dot: true }:
+ * - Returns relative paths from cwd (e.g., "apps/blog-app/src/content/...")
+ * - These paths CANNOT be used directly in ES module imports
+ * - Relative paths without ./ or ../ are treated as package names
+ * - Must convert to absolute paths for imports to work correctly
+ */
 export function contentPlugin(
   {
     highlighter,
     markedOptions,
     shikiOptions,
     prismOptions,
-  }: ContentPluginOptions = {
-    highlighter: 'prism',
-    markedOptions: { mangle: true },
-  },
+  }: ContentPluginOptions = {},
   options?: Options,
 ): Plugin[] {
   const cache = new Map<string, Content>();
@@ -39,6 +47,23 @@ export function contentPlugin(
   const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
   let config: UserConfig;
   let root: string;
+
+  if (!highlighter) {
+    return [
+      {
+        name: 'analogjs-external-content',
+        config() {
+          return {
+            build: {
+              rollupOptions: {
+                external: ['@analogjs/content'],
+              },
+            },
+          };
+        },
+      },
+    ];
+  }
 
   return [
     {
@@ -129,7 +154,7 @@ export function contentPlugin(
           './content/marked/marked-setup.service.js'
         );
         const markedSetupService = new MarkedSetupService(
-          markedOptions,
+          { mangle: true, ...(markedOptions || {}) },
           markedHighlighter,
         );
         const mdContent = (await markedSetupService
@@ -148,16 +173,12 @@ export function contentPlugin(
         root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
       },
       transform(code) {
-        if (
-          code.includes('ANALOG_CONTENT_FILE_LIST') &&
-          code.includes('ANALOG_AGX_FILES')
-        ) {
-          const contentFilesList: string[] = fg.sync(
+        if (code.includes('ANALOG_CONTENT_FILE_LIST')) {
+          const contentFilesList: string[] = globSync(
             [
               `${root}/src/content/**/*.md`,
-              `${root}/src/content/**/*.agx`,
               ...(options?.additionalContentDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.{md,agx}`,
+                (glob) => `${workspaceRoot}${glob}/**/*.md`,
               ),
             ],
             { dot: true },
@@ -166,8 +187,14 @@ export function contentPlugin(
           const eagerImports: string[] = [];
 
           contentFilesList.forEach((module, index) => {
+            // CRITICAL: tinyglobby returns relative paths like "apps/blog-app/src/content/file.md"
+            // These MUST be converted to absolute paths for ES module imports
+            // Otherwise Node.js treats "apps" as a package name and throws "Cannot find package 'apps'"
+            const absolutePath = module.startsWith('/')
+              ? module
+              : `${workspaceRoot}/${module}`;
             eagerImports.push(
-              `import { default as analog_module_${index} } from "${module}?analog-content-list=true";`,
+              `import { default as analog_module_${index} } from "${absolutePath}?analog-content-list=true";`,
             );
           });
 
@@ -178,28 +205,6 @@ export function contentPlugin(
               (module, index) =>
                 `"${module.replace(root, '')}": analog_module_${index}`,
             )}};
-          `,
-          );
-
-          const agxFiles: string[] = fg.sync(
-            [
-              `${root}/src/content/**/*.agx`,
-              ...(options?.additionalContentDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.agx`,
-              ),
-            ],
-            {
-              dot: true,
-            },
-          );
-
-          result = result.replace(
-            'let ANALOG_AGX_FILES = {};',
-            `
-          let ANALOG_AGX_FILES = {${agxFiles.map(
-            (module) =>
-              `"${module.replace(root, '')}": () => import('${module}')`,
-          )}};
           `,
           );
 

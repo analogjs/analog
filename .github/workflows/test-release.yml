@@ -42,7 +42,7 @@ jobs:
       - run: corepack enable
       - run: npm --version
       - name: Create Analog Application
-        run: npm create analog@${{ inputs.analog_build_tag }} analog-app -- --skipTailwind --analogSFC=false --template latest
+        run: npm create analog@${{ inputs.analog_build_tag }} analog-app -- --skipTailwind --template latest
       - name: Build, Test, and Validate
         run: |
           cd analog-app
@@ -60,7 +60,7 @@ jobs:
       - run: npm --version
       - name: Create Nx Workspace
         run: |
-          npx create-nx-workspace@${{ inputs.nx_build_tag }} analog-nx-workspace --preset @analogjs/platform@${{ inputs.analog_build_tag }} --analogAppName my-analog-app --addTailwind=false --addTRPC=false --ci skip
+          npx create-nx-workspace@${{ inputs.nx_build_tag }} analog-nx-workspace --preset @analogjs/platform@${{ inputs.analog_build_tag }} --analogAppName my-analog-app --addTailwind=false --ci skip --ai-agents
       - name: Build, Test, and Validate
         run: |
           cd analog-nx-workspace
@@ -82,7 +82,7 @@ jobs:
       - name: Migrate, Build, Test, and Validate
         run: |
           cd my-angular-app
-          npm install @analogjs/platform@${{ inputs.analog_build_tag }} --save-dev
+          npm install @analogjs/platform@${{ inputs.analog_build_tag }} @nx/devkit --save-dev
           npx ng g @analogjs/platform:migrate --project my-angular-app --vitest=true
           npm run build
           npm run test

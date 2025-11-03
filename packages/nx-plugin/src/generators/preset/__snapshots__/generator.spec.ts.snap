@@ -50,6 +50,7 @@ exports[`preset generator > should match project.json 1`] = `
     },
     "serve": {
       "executor": "@analogjs/platform:vite-dev-server",
+      "continuous": true,
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "my-app:build",

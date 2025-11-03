@@ -21,9 +21,6 @@ export function addHomePage(
   );
 
   let pageDirectory = options.addTailwind ? 'tailwind' : 'css';
-  if (options.addTRPC) {
-    pageDirectory += '-trpc';
-  }
 
   generateFiles(
     tree,

@@ -1,4 +1,5 @@
 import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import {
   basename,
   dirname,
@@ -7,23 +8,24 @@ import {
   relative,
   resolve,
 } from 'node:path';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 
 import * as compilerCli from '@angular/compiler-cli';
-import * as ts from 'typescript';
 import { createRequire } from 'node:module';
+import * as ts from 'typescript';
 
+import * as ngCompiler from '@angular/compiler';
 import {
+  defaultClientConditions,
   ModuleNode,
   normalizePath,
   Plugin,
-  ViteDevServer,
   preprocessCSS,
   ResolvedConfig,
-  defaultClientConditions,
+  ViteDevServer,
 } from 'vite';
-import * as ngCompiler from '@angular/compiler';
-
+import { globSync } from 'tinyglobby';
+import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
+import { jitPlugin } from './angular-jit-plugin.js';
 import { createCompilerPlugin } from './compiler-plugin.js';
 import {
   StyleUrlsResolver,
@@ -35,28 +37,20 @@ import {
   augmentProgramWithVersioning,
   mergeTransformers,
 } from './host.js';
-import { jitPlugin } from './angular-jit-plugin.js';
-import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
 
+import { angularStorybookPlugin } from './angular-storybook-plugin.js';
+import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {
+  angularMajor,
   createJitResourceTransformer,
   SourceFileCache,
-  angularMajor,
 } from './utils/devkit.js';
-import { angularVitestPlugins } from './angular-vitest-plugin.js';
-import { angularStorybookPlugin } from './angular-storybook-plugin.js';
 
 const require = createRequire(import.meta.url);
 
-import { getFrontmatterMetadata } from './authoring/frontmatter.js';
-import {
-  defaultMarkdownTemplateTransforms,
-  MarkdownTemplateTransform,
-} from './authoring/markdown-transform.js';
-import { routerPlugin } from './router-plugin.js';
 import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
-import { EmitFileResult } from './models.js';
 import { liveReloadPlugin } from './live-reload-plugin.js';
+import { EmitFileResult } from './models.js';
 import { nxFolderPlugin } from './nx-folder-plugin.js';
 import {
   FileReplacement,
@@ -64,9 +58,10 @@ import {
   FileReplacementWith,
   replaceFiles,
 } from './plugins/file-replacements.plugin.js';
+import { routerPlugin } from './router-plugin.js';
 
 export interface PluginOptions {
-  tsconfig?: string;
+  tsconfig?: string | (() => string);
   workspaceRoot?: string;
   inlineStylesExtension?: string;
   jit?: boolean;
@@ -75,17 +70,6 @@ export interface PluginOptions {
      * Custom TypeScript transformers that are run before Angular compilation
      */
     tsTransformers?: ts.CustomTransformers;
-  };
-  experimental?: {
-    /**
-     * Enable experimental support for Analog file extension
-     */
-    supportAnalogFormat?:
-      | boolean
-      | {
-          include: string[];
-        };
-    markdownTemplateTransforms?: MarkdownTemplateTransform[];
   };
   supportedBrowsers?: string[];
   transformFilter?: (code: string, id: string) => boolean;
@@ -104,7 +88,7 @@ export interface PluginOptions {
  * Match .(c or m)ts, .ts extensions with an optional ? for query params
  * Ignore .tsx extensions
  */
-const TS_EXT_REGEX = /\.[cm]?(ts|analog|ag)[^x]?\??/;
+const TS_EXT_REGEX = /\.[cm]?(ts)[^x]?\??/;
 const classNames = new Map();
 
 interface DeclarationFile {
@@ -119,7 +103,7 @@ export function angular(options?: PluginOptions): Plugin[] {
    * are used for values not provided.
    */
   const pluginOptions = {
-    tsconfig: options?.tsconfig || '',
+    tsconfigGetter: createTsConfigGetter(options?.tsconfig),
     workspaceRoot: options?.workspaceRoot ?? process.cwd(),
     inlineStylesExtension: options?.inlineStylesExtension ?? 'css',
     advanced: {
@@ -131,12 +115,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
     },
     supportedBrowsers: options?.supportedBrowsers ?? ['safari 15'],
-    jit: options?.experimental?.supportAnalogFormat ? false : options?.jit,
-    supportAnalogFormat: options?.experimental?.supportAnalogFormat ?? false,
-    markdownTemplateTransforms: options?.experimental
-      ?.markdownTemplateTransforms?.length
-      ? options.experimental.markdownTemplateTransforms
-      : defaultMarkdownTemplateTransforms,
+    jit: options?.jit,
     include: options?.include ?? [],
     additionalContentDirs: options?.additionalContentDirs ?? [],
     liveReload: options?.liveReload ?? false,
@@ -145,6 +124,14 @@ export function angular(options?: PluginOptions): Plugin[] {
   };
 
   let resolvedConfig: ResolvedConfig;
+  let resolvedTsConfigPath: string = '';
+  // Store config context needed for getTsConfigPath resolution
+  let tsConfigResolutionContext: {
+    root: string;
+    isProd: boolean;
+    isLib: boolean;
+  } | null = null;
+
   let nextProgram: NgtscProgram | undefined | ts.Program;
   let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let watchMode = false;
@@ -191,12 +178,21 @@ export function angular(options?: PluginOptions): Plugin[] {
         isProd =
           config.mode === 'production' ||
           process.env['NODE_ENV'] === 'production';
-        pluginOptions.tsconfig = getTsConfigPath(
-          config.root || '.',
-          pluginOptions,
+
+        // Store the config context for later resolution in configResolved
+        tsConfigResolutionContext = {
+          root: config.root || '.',
           isProd,
+          isLib: !!config?.build?.lib,
+        };
+
+        // Do a preliminary resolution for esbuild plugin (before configResolved)
+        const preliminaryTsConfigPath = getTsConfigPath(
+          tsConfigResolutionContext.root,
+          pluginOptions.tsconfigGetter(),
+          tsConfigResolutionContext.isProd,
           isTest,
-          !!config?.build?.lib,
+          tsConfigResolutionContext.isLib,
         );
 
         return {
@@ -208,7 +204,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               plugins: [
                 createCompilerPlugin(
                   {
-                    tsconfig: pluginOptions.tsconfig,
+                    tsconfig: preliminaryTsConfigPath,
                     sourcemap: !isProd,
                     advancedOptimizations: isProd,
                     jit,
@@ -235,6 +231,18 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configResolved(config) {
         resolvedConfig = config;
+
+        // resolve the tsconfig path after config is fully resolved
+        if (tsConfigResolutionContext) {
+          const tsconfigValue = pluginOptions.tsconfigGetter();
+          resolvedTsConfigPath = getTsConfigPath(
+            tsConfigResolutionContext.root,
+            tsconfigValue,
+            tsConfigResolutionContext.isProd,
+            isTest,
+            tsConfigResolutionContext.isLib,
+          );
+        }
 
         if (isTest) {
           // set test watch mode
@@ -273,13 +281,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       async handleHotUpdate(ctx) {
         if (TS_EXT_REGEX.test(ctx.file)) {
           let [fileId] = ctx.file.split('?');
-
-          if (
-            pluginOptions.supportAnalogFormat &&
-            ['ag', 'analog', 'agx'].some((ext) => fileId.endsWith(ext))
-          ) {
-            fileId += '.ts';
-          }
 
           await performCompilation(resolvedConfig, [fileId]);
 
@@ -472,7 +473,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         /**
          * Skip transforming content files
          */
-        if (id.includes('analog-content-')) {
+        if (id.includes('?') && id.includes('analog-content-')) {
           return;
         }
 
@@ -573,34 +574,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
           }
 
-          if (jit) {
-            return {
-              code: data,
-              map: null,
-            };
-          }
-
-          if (
-            (id.endsWith('.analog') ||
-              id.endsWith('.agx') ||
-              id.endsWith('.ag')) &&
-            pluginOptions.supportAnalogFormat &&
-            fileEmitter
-          ) {
-            sourceFileCache.invalidate([`${id}.ts`]);
-            const ngFileResult = fileEmitter(`${id}.ts`);
-            data = ngFileResult?.content || '';
-
-            if (id.includes('.agx')) {
-              const metadata = await getFrontmatterMetadata(
-                code,
-                id,
-                pluginOptions.markdownTemplateTransforms || [],
-              );
-              data += metadata;
-            }
-          }
-
           return {
             code: data,
             map: null,
@@ -640,73 +613,44 @@ export function angular(options?: PluginOptions): Plugin[] {
     nxFolderPlugin(),
   ].filter(Boolean) as Plugin[];
 
-  function findAnalogFiles(config: ResolvedConfig) {
-    const analogConfig = pluginOptions.supportAnalogFormat;
-    if (!analogConfig) {
-      return [];
-    }
-
-    let extraGlobs: string[] = [];
-
-    if (typeof analogConfig === 'object') {
-      if (analogConfig.include) {
-        extraGlobs = analogConfig.include;
-      }
-    }
-
-    const fg = require('fast-glob');
-    const appRoot = normalizePath(
-      resolve(pluginOptions.workspaceRoot, config.root || '.'),
-    );
-    const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));
-
-    const globs = [
-      `${appRoot}/**/*.{analog,agx,ag}`,
-      ...extraGlobs.map((glob) => `${workspaceRoot}${glob}.{analog,agx,ag}`),
-      ...(pluginOptions.additionalContentDirs || []).map(
-        (glob) => `${workspaceRoot}${glob}/**/*.agx`,
-      ),
-      ...pluginOptions.include.map((glob) =>
-        `${workspaceRoot}${glob}`.replace(/\.ts$/, '.analog'),
-      ),
-    ];
-
-    return fg
-      .sync(globs, {
-        dot: true,
-      })
-      .map((file: string) => `${file}.ts`);
-  }
-
   function findIncludes() {
-    const fg = require('fast-glob');
-
     const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));
 
+    // Map include patterns to absolute workspace paths
     const globs = [
       ...pluginOptions.include.map((glob) => `${workspaceRoot}${glob}`),
     ];
 
-    return fg.sync(globs, {
+    // Discover TypeScript files using tinyglobby
+    return globSync(globs, {
       dot: true,
+      absolute: true,
     });
+  }
+
+  function createTsConfigGetter(tsconfigOrGetter?: string | (() => string)) {
+    if (typeof tsconfigOrGetter === 'function') {
+      return tsconfigOrGetter;
+    }
+
+    return () => tsconfigOrGetter || '';
   }
 
   function getTsConfigPath(
     root: string,
-    options: PluginOptions,
+    tsconfig: string,
     isProd: boolean,
     isTest: boolean,
     isLib: boolean,
   ) {
-    if (options.tsconfig && isAbsolute(options.tsconfig)) {
-      if (!existsSync(options.tsconfig)) {
+    if (tsconfig && isAbsolute(tsconfig)) {
+      if (!existsSync(tsconfig)) {
         console.error(
-          `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${options.tsconfig}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
+          `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${tsconfig}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
         );
       }
 
-      return options.tsconfig;
+      return tsconfig;
     }
 
     let tsconfigFilePath = './tsconfig.app.json';
@@ -721,8 +665,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsconfigFilePath = './tsconfig.spec.json';
     }
 
-    if (options.tsconfig) {
-      tsconfigFilePath = options.tsconfig;
+    if (tsconfig) {
+      tsconfigFilePath = tsconfig;
     }
 
     const resolvedPath = resolve(root, tsconfigFilePath);
@@ -738,11 +682,10 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   async function performCompilation(config: ResolvedConfig, ids?: string[]) {
     const isProd = config.mode === 'production';
-    const analogFiles = findAnalogFiles(config);
     const includeFiles = findIncludes();
 
     let { options: tsCompilerOptions, rootNames } =
-      compilerCli.readConfiguration(pluginOptions.tsconfig, {
+      compilerCli.readConfiguration(resolvedTsConfigPath, {
         suppressOutputPathCheck: true,
         outDir: undefined,
         sourceMap: false,
@@ -759,13 +702,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         supportTestBed: false,
         supportJitMode: false,
       });
-
-    if (pluginOptions.supportAnalogFormat) {
-      // Experimental Local Compilation is necessary
-      // for the Angular compiler to work with
-      // AOT and virtually compiled .analog files.
-      tsCompilerOptions.compilationMode = 'experimental-local';
-    }
 
     if (pluginOptions.liveReload && watchMode) {
       tsCompilerOptions['_enableHmr'] = true;
@@ -798,7 +734,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         (rp as FileReplacementSSR).ssr || (rp as FileReplacementWith).with,
       ),
     );
-    rootNames = rootNames.concat(analogFiles, includeFiles, replacements);
+    rootNames = rootNames.concat(includeFiles, replacements);
     const ts = require('typescript');
     const host = ts.createIncrementalCompilerHost(tsCompilerOptions);
 
@@ -813,9 +749,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         : undefined;
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
-        supportAnalogFormat: pluginOptions.supportAnalogFormat,
         isProd,
-        markdownTemplateTransforms: pluginOptions.markdownTemplateTransforms,
         inlineComponentStyles,
         externalComponentStyles,
       });

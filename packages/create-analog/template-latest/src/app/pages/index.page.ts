@@ -9,5 +9,4 @@ import { AnalogWelcome } from './analog-welcome';
      <app-analog-welcome/>
   `,
 })
-export default class HomeComponent {
-}
+export default class Home {}

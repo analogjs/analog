@@ -133,12 +133,6 @@ function getComponentLoader(componentReqId: string): {
   if (components[`${_componentId}.ts`]) {
     componentId = `${_componentId}.ts`;
     componentLoader = components[componentId] as ComponentLoader;
-  } else if (components[`${componentId}.analog`]) {
-    componentId = `${_componentId}.analog`;
-    componentLoader = components[componentId] as ComponentLoader;
-  } else if (components[`${componentId}.ag`]) {
-    componentId = `${_componentId}.ag`;
-    componentLoader = components[componentId] as ComponentLoader;
   }
 
   return { componentLoader, componentId };

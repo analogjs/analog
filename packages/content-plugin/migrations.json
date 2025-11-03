@@ -1,28 +1,6 @@
 {
-  "generators": {
-    "update-markdown-renderer-feature": {
-      "version": "1.5.0-beta.1",
-      "description": "Update withMarkdownRenderer feature with withPrismHighlighter",
-      "implementation": "./src/migrations/update-markdown-renderer-feature/update-markdown-renderer-feature"
-    },
-    "update-marked-version": {
-      "version": "1.15.0-beta.3",
-      "description": "Update marked version to 15.0.7",
-      "implementation": "./src/migrations/update-markdown-version/update-markdown-version"
-    }
-  },
-  "schematics": {
-    "update-markdown-renderer-feature": {
-      "version": "1.5.0-beta.1",
-      "description": "Update withMarkdownRenderer feature with withPrismHighlighter",
-      "factory": "./src/migrations/update-markdown-renderer-feature/compat"
-    },
-    "update-marked-version": {
-      "version": "1.15.0-beta.3",
-      "description": "Update marked version to 15.0.7",
-      "factory": "./src/migrations/update-markdown-version/compat"
-    }
-  },
+  "generators": {},
+  "schematics": {},
   "packageJsonUpdates": {
     "0.2.0-beta.23": {
       "version": "0.2.0-beta.19",

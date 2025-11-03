@@ -257,6 +257,7 @@ import { Component } from '@angular/core';
 })
 export class AnalogWelcome {
   count = 0;
+
   increment() {
     this.count++;
   }

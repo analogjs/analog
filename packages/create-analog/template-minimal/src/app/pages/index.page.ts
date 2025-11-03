@@ -34,4 +34,4 @@ import { Component } from '@angular/core';
     }
   `,
 })
-export default class HomeComponent {}
+export default class Home {}

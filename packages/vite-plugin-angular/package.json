@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vite-plugin-angular",
-  "version": "1.22.5",
+  "version": "2.0.0-beta.23",
   "description": "Vite Plugin for Angular",
   "type": "module",
   "keywords": [
@@ -36,8 +36,7 @@
     }
   },
   "dependencies": {
-    "ts-morph": "^21.0.0",
-    "vfile": "^6.0.3"
+    "ts-morph": "^21.0.0"
   },
   "builders": "./src/lib/tools/builders.json",
   "ng-update": {

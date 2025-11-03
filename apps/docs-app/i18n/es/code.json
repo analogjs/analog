@@ -4,11 +4,11 @@
     "description": "The alt text for the GitHub Accelerator logo"
   },
   "theme.ErrorPageContent.title": {
-    "message": "This page crashed.",
+    "message": "Esta página se ha roto.",
     "description": "The title of the fallback page when the page crashed"
   },
   "theme.ErrorPageContent.tryAgain": {
-    "message": "Try again",
+    "message": "Inténtalo de nuevo",
     "description": "The label of the button to try again when the page crashed"
   },
   "theme.NotFound.title": {
@@ -92,7 +92,7 @@
     "description": "The label of the link targeting the tag list page"
   },
   "theme.colorToggle.ariaLabel": {
-    "message": "Switch between dark and light mode (currently {mode})",
+    "message": "Cambiar tema entre modo oscuro y claro (actualmente {mode})",
     "description": "The ARIA label for the navbar color mode toggle"
   },
   "theme.colorToggle.ariaLabel.mode.dark": {

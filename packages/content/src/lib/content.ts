@@ -21,8 +21,7 @@ function getContentFile<
   renderTaskService: RenderTaskService,
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   const filePath = `/src/content/${prefix}${slug}`;
-  const contentFile =
-    contentFiles[`${filePath}.md`] ?? contentFiles[`${filePath}.agx`];
+  const contentFile = contentFiles[`${filePath}.md`];
   if (!contentFile) {
     return of({
       filename: filePath,

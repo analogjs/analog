@@ -18,6 +18,33 @@ Vitest supports many features:
 - In-source testing.
 - And more ...
 
+You can also [add Vitest](/docs/features/testing/vitest) to your existing project.
+
+## Angular support for Vitest
+
+In Angular v21, stable support for Vitest directly through the Angular CLI was introduced for new Angular projects. While both Analog and Angular support running tests with Vitest, there are some similarities and key differences.
+
+The table below shows the features available across both choices.
+
+| Vitest               | Analog    | Angular      |
+| -------------------- | --------- | ------------ |
+| Angular Versions     | v17+      | v21+         |
+| Support              | Community | Angular Team |
+| Builders             | ✅        | ✅           |
+| Schematics           | ✅        | ✅           |
+| Migrations           | ✅        | ✅           |
+| Fully Configurable   | ✅        | ⚠️           |
+| Vitest CLI           | ✅        | ❌           |
+| Vitest Workpsaces    | ✅        | ❌           |
+| Custom Environments  | ✅        | ❌           |
+| Custom Providers     | ✅        | ❌           |
+| IDE extensions       | ✅        | ❌           |
+| Buildable Libs       | ✅        | ❌           |
+| Module Mocking/Graph | ✅        | ❌           |
+| Plugins/Types        | ✅        | ❌           |
+
+The table above is not to compare the two solutions, but to provide the information on what features are supported by each implementation. Choose the solution that best fits your needs and priorities.
+
 ## Running Unit Tests
 
 To run unit tests, use the `test` command:
@@ -47,8 +74,6 @@ pnpm run test
 
   </TabItem>
 </Tabs>
-
-You can also [add Vitest](/docs/features/testing/vitest) to your existing project.
 
 ## IDE Support
 

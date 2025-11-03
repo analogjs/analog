@@ -17,16 +17,16 @@ export default defineEventHandler(() => ({ message: 'Hello World' }));
 Para crear un feed RSS para su sitio, establezca el `content-type` en `text/xml` y Analog sirve el tipo de contenido correcto para la ruta.
 
 ```ts
-//server/routes/rss.xml.ts
+//server/routes/api/rss.xml.ts
 
-import { defineEventHandler } from 'h3';
+import { defineEventHandler, setHeader } from 'h3';
 export default defineEventHandler((event) => {
   const feedString = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
 </rss>
   `;
-  event.node.res.setHeader('content-type', 'text/xml');
-  event.node.res.end(feedString);
+  setHeader(event, 'content-type', 'text/xml');
+  return feedString;
 });
 ```
 
@@ -52,26 +52,6 @@ prerender: {
 
 El XML está disponible como un documento XML estático en `/dist/analog/public/api/rss.xml`
 
-## Prefijo de API personalizado
-
-El prefijo bajo el cual se exponen las rutas de API se puede configurar con el parámetro `apiPrefix` que se pasa al plugin vite de `analog`.
-
-```ts
-export default defineConfig(({ mode }) => {
-  return {
-    plugins: [
-      analog({
-        apiPrefix: 'services',
-      }),
-    ],
-  };
-});
-```
-
-Con esta configuración, Analog expone las rutas de API bajo el prefijo `/services`.
-
-Una ruta definida en `src/server/routes/api/v1/hello.ts` ahora se puede acceder en `/services/v1/hello`.
-
 ## Rutas API dinámicas
 
 Las rutas API dinámicas se definen usando el nombre de fichero como la ruta de la ruta encerrada entre corchetes. Los parámetros se pueden acceder a través de `event.context.params`.
@@ -81,7 +61,7 @@ Las rutas API dinámicas se definen usando el nombre de fichero como la ruta de 
 import { defineEventHandler } from 'h3';
 
 export default defineEventHandler(
-  (event: H3Event) => `Hello ${event.context.params?.['name']}!`,
+  (event) => `Hello ${event.context.params?.['name']}!`,
 );
 ```
 
@@ -134,7 +114,7 @@ export default defineEventHandler(async (event) => {
 Solicitud de ejemplo `/api/v1/query?param1=Analog&param2=Angular`
 
 ```ts
-// routes/v1/query.ts
+// routes/api/v1/query.ts
 import { defineEventHandler, getQuery } from 'h3';
 
 export default defineEventHandler((event) => {
@@ -148,7 +128,7 @@ export default defineEventHandler((event) => {
 Las rutas Atrapa-todo (Catch-all) son útiles para el manejo de rutas de fallback.
 
 ```ts
-// routes/[...].ts
+// routes/api/[...].ts
 export default defineEventHandler((event) => `Default page`);
 ```
 
@@ -158,7 +138,7 @@ Si ningun error es lanzado, un código de estado 200 OK será retornado. Cualqui
 Para retornar otros códigos de error, lance una excepción con `createError`
 
 ```ts
-// routes/v1/[id].ts
+// routes/api/v1/[id].ts
 import { defineEventHandler, getRouterParam, createError } from 'h3';
 
 export default defineEventHandler((event) => {
@@ -172,6 +152,47 @@ export default defineEventHandler((event) => {
   }
   return `ID is ${id}`;
 });
+```
+
+## Accediendo a las Cookies
+
+Analog permite establecer y leer cookies en las llamadas del lado del servidor.
+
+### Establecer cookies
+
+```ts
+//(home).server.ts
+import { setCookie } from 'h3';
+import { PageServerLoad } from '@analogjs/router';
+
+import { Product } from '../products';
+
+export const load = async ({ fetch, event }: PageServerLoad) => {
+  setCookie(event, 'products', 'loaded'); // setting the cookie
+  const products = await fetch<Product[]>('/api/v1/products');
+
+  return {
+    products: products,
+  };
+};
+```
+
+### Leer cookies
+
+```ts
+//index.server.ts
+import { parseCookies } from 'h3';
+import { PageServerLoad } from '@analogjs/router';
+
+export const load = async ({ event }: PageServerLoad) => {
+  const cookies = parseCookies(event);
+
+  console.log('products cookie', cookies['products']);
+
+  return {
+    shipping: true,
+  };
+};
 ```
 
 ## Más información
