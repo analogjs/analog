@@ -11,7 +11,7 @@ export function addAnalogDependencies(tree: Tree, angularVersion: string) {
     tree,
     {
       ...dependencies,
-      '@angular/platform-server': angularVersion,
+      '@angular/platform-server': `^${angularVersion}`,
     },
     devDependencies,
   );
