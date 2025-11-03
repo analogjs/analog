@@ -1,3 +1,56 @@
+# [2.0.0](https://github.com/analogjs/analog/compare/v1.22.5...v2.0.0) (2025-11-03)
+
+### Bug Fixes
+
+- add support for Nx 22.x ([7a571d4](https://github.com/analogjs/analog/commit/7a571d4fb38bd36f97481a6adcb7941568129ecb))
+- analyze files for HMR updates ([a1fad0a](https://github.com/analogjs/analog/commit/a1fad0a96ffa4960ecd0beb907164e2538999daa))
+- **content-plugin:** remove old migrations ([1953f86](https://github.com/analogjs/analog/commit/1953f86fa2e9cf8dd62cf5a468c916c8c88de989))
+- **content:** fix server-side rendering with content resources ([#1884](https://github.com/analogjs/analog/issues/1884)) ([4e11f21](https://github.com/analogjs/analog/commit/4e11f21c295ee5e3881ba46f4cc101857b1d9d7d))
+- **create-analog:** fix app component in templates ([9ab109a](https://github.com/analogjs/analog/commit/9ab109af67a78b08488e1e1595a135c08ff91266))
+- **create-analog:** update Angular template versions ([791a8ab](https://github.com/analogjs/analog/commit/791a8ab813a891b18a706ee45071d678a48bb2ee))
+- **nx-plugin:** bump Nx deps to 22.x ([21e31bd](https://github.com/analogjs/analog/commit/21e31bd6151e315e94a50b4f37f823814b271318))
+- **nx-plugin:** remove tRPC from application generator ([#1898](https://github.com/analogjs/analog/issues/1898)) ([0b5afbb](https://github.com/analogjs/analog/commit/0b5afbb5482b5f66464ca17833d3460370c1a357))
+- **platform:** externalize @analogjs/content package until configured ([#1921](https://github.com/analogjs/analog/issues/1921)) ([119e2b9](https://github.com/analogjs/analog/commit/119e2b9a304dd52532bef9eb788b0b47cdb87d72))
+- **platform:** update nitropack/vitefu deps ([5d87039](https://github.com/analogjs/analog/commit/5d8703957691205001fd410579bdf7ca6a76789e))
+- remove Angular v16 from release config ([6afc4fa](https://github.com/analogjs/analog/commit/6afc4fa6fc7139620d18068667dc14f4d525572d))
+- **router:** adjust peer deps for Angular v20 ([f6612fe](https://github.com/analogjs/analog/commit/f6612fe721d4295ed9824fac44aeae7d6c44fe37))
+- **storybook-angular:** bump Storybook deps to ^10.0.0 ([c96d2af](https://github.com/analogjs/analog/commit/c96d2af242a8000ff23d93cf719493abb42a4a7e))
+- **storybook-angular:** don't mangle class names during the build ([7a140df](https://github.com/analogjs/analog/commit/7a140dffe736ba15cd534bc9c1be404cc9d983d4))
+- **storybook-angular:** export preset.js from root ([9b70f86](https://github.com/analogjs/analog/commit/9b70f86b54d207f238758ae23dd18b5a30ca9ce1))
+- **storybook-angular:** set exports to use defaults ([7c66c04](https://github.com/analogjs/analog/commit/7c66c04706640b73221c46f5d68a4091017ae310))
+- **storybook-angular:** update type exports ([f35c8f9](https://github.com/analogjs/analog/commit/f35c8f97b51187453f19102c85e6733fbfb85990))
+- update lockfile ([3adfd16](https://github.com/analogjs/analog/commit/3adfd16250ae527f6fd4efece87446372ee30b7e))
+- update to support Nx 22.0.2 ([#1913](https://github.com/analogjs/analog/issues/1913)) ([d38fa61](https://github.com/analogjs/analog/commit/d38fa61747ce9028105fe379133ae41ac3bb1e8b))
+- **vite-plugin-angular:** expand optimization for Angular packages ([43395f0](https://github.com/analogjs/analog/commit/43395f06256c069c57b448e310030a43132e9879))
+- **vite-plugin-angular:** more agx cleanup ([91e0262](https://github.com/analogjs/analog/commit/91e0262ad40aaf8c49ee76c28060b4efc6c19a57))
+- **vite-plugin-angular:** remove support for Analog SFCs ([#1867](https://github.com/analogjs/analog/issues/1867)) ([52817cc](https://github.com/analogjs/analog/commit/52817ccf50412da2455ac40bd83c7aa29c2b52fe))
+- **vite-plugin-angular:** remove vfile dependency ([63e8dd8](https://github.com/analogjs/analog/commit/63e8dd8c429dd1f839e6dde85064d0265fbf5baf))
+- **vitest-angular:** add import attribute for json schema ([5c745ef](https://github.com/analogjs/analog/commit/5c745ef742d79a8461f4989badd82d90abcd69ee))
+
+### Features
+
+- **astro-angular:** use zoneless change detection by default ([#1899](https://github.com/analogjs/analog/issues/1899)) ([75149b6](https://github.com/analogjs/analog/commit/75149b697cc91226b7f13ba5fdd5568781f228ae))
+- drop support for Angular <=16 ([#1825](https://github.com/analogjs/analog/issues/1825)) ([9d7176a](https://github.com/analogjs/analog/commit/9d7176a1e692b1e3c18c0746e1bf23e3f1c7bcaf))
+- migrate from fast-glob to tinyglobby for improved performance ([#1923](https://github.com/analogjs/analog/issues/1923)) ([036290a](https://github.com/analogjs/analog/commit/036290a66cc4baae9369653a19c4e0e29c855864))
+- **storybook-angular:** add support for Storybook 10 ([#1903](https://github.com/analogjs/analog/issues/1903)) ([8715bea](https://github.com/analogjs/analog/commit/8715bea76fc1da573224fc446390d75779718dca))
+- **storybook-angular:** add test-storybook builder as alias ([4384988](https://github.com/analogjs/analog/commit/4384988a07fcc515acc5b044cc5ed609d7073c4d))
+- update Angular builders to compile to ESM ([#1868](https://github.com/analogjs/analog/issues/1868)) ([68d37a7](https://github.com/analogjs/analog/commit/68d37a714ba65c941d680d13d1c7a985ea4f190b))
+- upgrade to Vite 6.x ([5ce9829](https://github.com/analogjs/analog/commit/5ce9829a87b586a178a29d041f2a9221661f72f8))
+- **vite-plugin-angular:** add support for tsconfig as getter function ([#1892](https://github.com/analogjs/analog/issues/1892)) ([6411a7c](https://github.com/analogjs/analog/commit/6411a7c1995f1536a826161f0371a03e742d8b77))
+- **vite-plugin-angular:** introduce support for Angular v19 HMR/live reload ([3820dc4](https://github.com/analogjs/analog/commit/3820dc4e000c216216d881e7ee4e3fad4fb13d3c))
+
+### BREAKING CHANGES
+
+- The base version of Vite is updated.
+
+BEFORE:
+
+Vite 5.x is the base version.
+
+AFTER:
+
+Vite 6.x is the base version.
+
 # [2.0.0-beta.23](https://github.com/analogjs/analog/compare/v2.0.0-beta.22...v2.0.0-beta.23) (2025-11-03)
 
 ### Bug Fixes
