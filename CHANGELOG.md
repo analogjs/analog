@@ -1,3 +1,9 @@
+## [2.0.2-beta.1](https://github.com/analogjs/analog/compare/v2.0.1...v2.0.2-beta.1) (2025-11-03)
+
+### Bug Fixes
+
+- **docs:** add `netlify init` configuration steps for Netlify ([#1929](https://github.com/analogjs/analog/issues/1929)) ([144712c](https://github.com/analogjs/analog/commit/144712c3f67e0652c61c74999229fca9c0350873))
+
 ## [2.0.1](https://github.com/analogjs/analog/compare/v2.0.0...v2.0.1) (2025-11-03)
 
 ### Bug Fixes
