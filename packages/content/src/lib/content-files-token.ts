@@ -14,10 +14,14 @@ export const CONTENT_FILES_TOKEN = new InjectionToken<
 
     const lookup: Record<string, string> = {};
     contentFilesList.forEach((item) => {
-      const fileParts = item.filename.split('/');
+      const contentFilename = item.filename.replace(
+        /(.*?)\/content/,
+        '/src/content',
+      );
+      const fileParts = contentFilename.split('/');
       const filePath = fileParts.slice(0, fileParts.length - 1).join('/');
       const fileNameParts = fileParts[fileParts.length - 1].split('.');
-      lookup[item.filename] = `${filePath}/${item.slug}.${
+      lookup[contentFilename] = `${filePath}/${item.slug}.${
         fileNameParts[fileNameParts.length - 1]
       }`;
     });
