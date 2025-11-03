@@ -1,3 +1,9 @@
+# [2.0.0-beta.22](https://github.com/analogjs/analog/compare/v2.0.0-beta.21...v2.0.0-beta.22) (2025-11-03)
+
+### Bug Fixes
+
+- add support for Nx 22.x ([7a571d4](https://github.com/analogjs/analog/commit/7a571d4fb38bd36f97481a6adcb7941568129ecb))
+
 # [2.0.0-beta.21](https://github.com/analogjs/analog/compare/v2.0.0-beta.20...v2.0.0-beta.21) (2025-11-02)
 
 ### Bug Fixes
