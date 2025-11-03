@@ -1,3 +1,9 @@
+## [2.0.1-beta.1](https://github.com/analogjs/analog/compare/v2.0.0...v2.0.1-beta.1) (2025-11-03)
+
+### Bug Fixes
+
+- **content:** fix normalization for content filenames ([#1927](https://github.com/analogjs/analog/issues/1927)) ([6033634](https://github.com/analogjs/analog/commit/6033634bbab8da8baf1637f527737b7c8c5a5861))
+
 # [2.0.0](https://github.com/analogjs/analog/compare/v1.22.5...v2.0.0) (2025-11-03)
 
 ### Bug Fixes
