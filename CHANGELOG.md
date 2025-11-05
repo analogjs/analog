@@ -1,3 +1,9 @@
+## [2.0.2-beta.2](https://github.com/analogjs/analog/compare/v2.0.2-beta.1...v2.0.2-beta.2) (2025-11-05)
+
+### Bug Fixes
+
+- **nx-plugin:** install Vitest 3 in Nx workspaces ([#1931](https://github.com/analogjs/analog/issues/1931)) ([dc39b8a](https://github.com/analogjs/analog/commit/dc39b8a8d5651e7daef8b1eca9fe1312d233f77e))
+
 ## [2.0.2-beta.1](https://github.com/analogjs/analog/compare/v2.0.1...v2.0.2-beta.1) (2025-11-03)
 
 ### Bug Fixes
