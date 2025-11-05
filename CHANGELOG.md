@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/analogjs/analog/compare/v2.0.1...v2.0.2) (2025-11-05)
+
+### Bug Fixes
+
+- **docs:** add `netlify init` configuration steps for Netlify ([#1929](https://github.com/analogjs/analog/issues/1929)) ([144712c](https://github.com/analogjs/analog/commit/144712c3f67e0652c61c74999229fca9c0350873))
+- **nx-plugin:** install Vitest 3 in Nx workspaces ([#1931](https://github.com/analogjs/analog/issues/1931)) ([dc39b8a](https://github.com/analogjs/analog/commit/dc39b8a8d5651e7daef8b1eca9fe1312d233f77e))
+
 ## [2.0.2-beta.2](https://github.com/analogjs/analog/compare/v2.0.2-beta.1...v2.0.2-beta.2) (2025-11-05)
 
 ### Bug Fixes
