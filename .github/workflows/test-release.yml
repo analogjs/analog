@@ -5,7 +5,7 @@ permissions:
 
 on:
   schedule:
-    - cron: "5 6 * * */2"
+    - cron: '5 6 * * */2'
   workflow_dispatch:
     inputs:
       analog_build_tag:
