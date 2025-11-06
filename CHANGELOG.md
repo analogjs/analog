@@ -1,3 +1,9 @@
+## [2.0.3](https://github.com/analogjs/analog/compare/v2.0.2...v2.0.3) (2025-11-06)
+
+### Performance Improvements
+
+- **platform:** use singleton instances for marked and highlighters for content ([#1935](https://github.com/analogjs/analog/issues/1935)) ([9c63726](https://github.com/analogjs/analog/commit/9c637265eb1e4403b825656beb03c83139ab9d4a))
+
 ## [2.0.3-beta.1](https://github.com/analogjs/analog/compare/v2.0.2...v2.0.3-beta.1) (2025-11-06)
 
 ### Performance Improvements
