@@ -150,10 +150,8 @@ export function contentPlugin(
         const { body, frontmatter } = frontmatterFn(fileContents);
 
         // parse markdown and highlight
-        const { MarkedSetupService } = await import(
-          './content/marked/marked-setup.service.js'
-        );
-        const markedSetupService = new MarkedSetupService(
+        const { getMarkedSetup } = await import('./content/marked/index.js');
+        const markedSetupService = getMarkedSetup(
           { mangle: true, ...(markedOptions || {}) },
           markedHighlighter,
         );
