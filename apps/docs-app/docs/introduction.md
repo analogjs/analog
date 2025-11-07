@@ -4,27 +4,27 @@ sidebar_position: 1
 slug: /
 ---
 
-# Introduction
+# Giriş
 
-Analog is a fullstack meta-framework for building applications and websites with [Angular](https://angular.dev).
+Analog, [Angular](https://angular.dev) kullanarak uygulamalar ve web siteleri geliştirmek için oluşturulmuş tam kapsamlı (fullstack) bir meta framework’tür.
 
-Similar to other meta-frameworks such as Next.JS, Nuxt, SvelteKit, Qwik City, and others, Analog provides a similar experience, building on top of Angular.
+Next.JS, Nuxt, SvelteKit, Qwik City gibi diğer meta framework’lere benzer şekilde Analog, Angular üzerine inşa edilerek benzer bir deneyim sunar.
 
-## Features
+## Özellikler
 
-- Supports Vite/Vitest/Playwright
-- Server and deployment integrations powered by [Nitro](https://nitro.unjs.io)
-- [File-based routing](/docs/features/routing/overview)
-- [Server-side data fetching](/docs/features/data-fetching/server-side-data-fetching)
-- [Support for using Markdown as content routes](/docs/features/routing/content)
-- [API/server routes](/docs/features/api/overview)
-- Hybrid [SSR](/docs/features/server/server-side-rendering)/[SSG support](/docs/features/server/static-site-generation)
-- Supports Angular CLI/[Nx workspaces](/docs/integrations/nx)
-- Supports [Angular components](/docs/packages/astro-angular/overview) with Astro
+- Vite/Vitest/Playwright desteği
+- [Nitro](https://nitro.unjs.io) tarafından desteklenen sunucu ve dağıtım entegrasyonları
+- [Dosya tabanlı yönlendirme](/docs/features/routing/overview)
+- [Sunucu taraflı veri çekme](/docs/features/data-fetching/server-side-data-fetching)
+- [Markdown içeriğini yönlendirme olarak kullanma desteği](/docs/features/routing/content)
+- [API/sunucu yönlendirmeleri](/docs/features/api/overview)
+- Hibrit [SSR](/docs/features/server/server-side-rendering)/[SSG desteği](/docs/features/server/static-site-generation)
+- Angular CLI/[Nx çalışma alanları](/docs/integrations/nx) desteği
+- Astro ile [Angular bileşenleri](/docs/packages/astro-angular/overview) desteği
 
-## Support Us
+## Bize Destek Ol
 
-- Visit and Star the [GitHub Repo](https://github.com/analogjs/analog)
-- Join the [Discord](https://chat.analogjs.org)
-- Follow us on [Twitter](https://twitter.com/analogjs)
-- Become a [Sponsor](/docs/sponsoring)
+- [GitHub deposunu](https://github.com/analogjs/analog) ziyaret et ve yıldız ver ⭐
+- [Discord topluluğuna](https://chat.analogjs.org) katıl
+- Bizi [Twitter’da](https://twitter.com/analogjs) takip et
+- [Sponsor](/docs/sponsoring) ol
