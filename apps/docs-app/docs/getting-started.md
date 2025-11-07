@@ -1,144 +1,154 @@
 ---
-sidebar_position: 2
----
+
+## sidebar_position: 2
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Getting Started
+# Başlarken
 
-Creating an Analog project can be done with minimal steps.
+Bir Analog projesi oluşturmak yalnızca birkaç basit adım gerektirir.
 
-## System Requirements
+## Sistem Gereksinimleri
 
-Analog requires the following Node and Angular versions:
+Analog aşağıdaki Node ve Angular sürümlerini gerektirir:
 
-- Node v18.13.0 and higher is recommended
-- Angular v15 or higher
+* Node v18.13.0 veya üzeri önerilir
+* Angular v15 veya üzeri
 
-## Creating a New Application
+## Yeni Bir Uygulama Oluşturma
 
-To create a new Analog project, you can use the `create-analog` package with your package manager of choice:
+Yeni bir Analog projesi oluşturmak için, tercih ettiğiniz paket yöneticisiyle `create-analog` paketini kullanabilirsiniz:
 
 <Tabs groupId="package-manager">
-  <TabItem value="npm">
+
+<TabItem value="npm">
 
 ```shell
 npm create analog@latest
 ```
 
-  </TabItem>
+</TabItem>
 
-  <TabItem label="Yarn" value="yarn">
+<TabItem value="yarn" label="Yarn">
 
 ```shell
 yarn create analog
 ```
 
-  </TabItem>
+</TabItem>
 
-  <TabItem value="pnpm">
+<TabItem value="pnpm">
 
 ```shell
 pnpm create analog
 ```
 
-  </TabItem>
-  <TabItem value="bun">
+</TabItem>
+
+<TabItem value="bun">
 
 ```shell
 bun create analog
 ```
 
-  </TabItem>
+</TabItem>
+
 </Tabs>
 
-You can also [scaffold a new project with Nx](/docs/integrations/nx).
+Ayrıca [Nx ile yeni bir proje iskeleti oluşturabilirsiniz](/docs/integrations/nx).
 
-### Serving the application
+### Uygulamayı Çalıştırma
 
-To start the development server for the application, run the `start` command.
+Uygulama için geliştirme sunucusunu başlatmak üzere `start` komutunu çalıştırın.
 
 <Tabs groupId="package-manager">
-  <TabItem value="npm">
+
+<TabItem value="npm">
 
 ```shell
 npm run start
 ```
 
-  </TabItem>
+</TabItem>
 
-  <TabItem label="Yarn" value="yarn">
+<TabItem value="yarn" label="Yarn">
 
 ```shell
 yarn start
 ```
 
-  </TabItem>
+</TabItem>
 
-  <TabItem value="pnpm">
+<TabItem value="pnpm">
 
 ```shell
 pnpm start
 ```
 
-  </TabItem>
-  <TabItem value="bun">
+</TabItem>
+
+<TabItem value="bun">
 
 ```shell
 bun start
 ```
 
-  </TabItem>
+</TabItem>
+
 </Tabs>
 
-Visit [http://localhost:5173](http://localhost:5173) in your browser to view the running application.
+Uygulamayı görmek için tarayıcınızda [http://localhost:5173](http://localhost:5173) adresini ziyaret edin.
 
-Next, you can [define additional routes using components](/docs/features/routing/overview) for navigation.
+Sonraki adımda, gezinme için [bileşenler kullanarak ek yönlendirmeler tanımlayabilirsiniz](/docs/features/routing/overview).
 
-### Building the Application
+### Uygulamayı Derleme
 
-To build the application for deployment
+Uygulamayı dağıtım için derlemek üzere:
 
 <Tabs groupId="package-manager">
-  <TabItem value="npm">
+
+<TabItem value="npm">
 
 ```shell
 npm run build
 ```
 
-  </TabItem>
+</TabItem>
 
-  <TabItem label="Yarn" value="yarn">
+<TabItem value="yarn" label="Yarn">
 
 ```shell
 yarn build
 ```
 
-  </TabItem>
+</TabItem>
 
-  <TabItem value="pnpm">
+<TabItem value="pnpm">
 
 ```shell
 pnpm run build
 ```
 
-  </TabItem>
-  <TabItem value="bun">
+</TabItem>
+
+<TabItem value="bun">
 
 ```shell
 bun run build
 ```
 
-  </TabItem>
+</TabItem>
+
 </Tabs>
 
-### Build Artifacts
+### Derleme Çıktıları (Build Artifacts)
 
-By default, Analog comes with [Server-Side Rendering](/docs/features/server/server-side-rendering) enabled.
-Client artifacts are located in the `dist/analog/public` directory.
-The server for the API/SSR build artifacts is located in the `dist/analog/server` directory.
+Varsayılan olarak Analog, [Sunucu Taraflı Rendering (SSR)](/docs/features/server/server-side-rendering) özelliği etkin şekilde gelir.
+İstemci (client) çıktıları `dist/analog/public` dizininde bulunur.
+API/SSR derleme çıktılarının sunucusu ise `dist/analog/server` dizininde yer alır.
 
-## Migrating an Existing Application
+## Mevcut Bir Uygulamayı Taşımak
 
-You can also migrate an existing Angular application to Analog. See the [migration guide](/docs/guides/migrating) for migration steps.
+Ayrıca mevcut bir Angular uygulamasını Analog’a taşıyabilirsiniz.
+Taşıma adımları için [taşıma rehberine](/docs/guides/migrating) bakın.
