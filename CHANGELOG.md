@@ -1,3 +1,9 @@
+## [2.0.4-beta.1](https://github.com/analogjs/analog/compare/v2.0.3...v2.0.4-beta.1) (2025-11-09)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** remove Storybook ESM workaround plugin ([#1943](https://github.com/analogjs/analog/issues/1943)) ([52a3501](https://github.com/analogjs/analog/commit/52a350143005f669fe8e16db6ef8949ddcdf4b31))
+
 ## [2.0.3](https://github.com/analogjs/analog/compare/v2.0.2...v2.0.3) (2025-11-06)
 
 ### Performance Improvements
