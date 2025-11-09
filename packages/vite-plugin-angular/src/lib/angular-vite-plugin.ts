@@ -38,7 +38,6 @@ import {
   mergeTransformers,
 } from './host.js';
 
-import { angularStorybookPlugin } from './angular-storybook-plugin.js';
 import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {
   angularMajor,
@@ -143,11 +142,6 @@ export function angular(options?: PluginOptions): Plugin[] {
   const isVitestVscode = !!process.env['VITEST_VSCODE'];
   const isStackBlitz = !!process.versions['webcontainer'];
   const isAstroIntegration = process.env['ANALOG_ASTRO'] === 'true';
-  const isStorybook =
-    process.env['npm_lifecycle_script']?.includes('storybook') ||
-    process.env['_']?.includes('storybook') ||
-    process.env['NX_TASK_TARGET_TARGET']?.includes('storybook') ||
-    process.env['ANALOG_STORYBOOK'] === 'true';
 
   const jit =
     typeof pluginOptions?.jit !== 'undefined' ? pluginOptions.jit : isTest;
@@ -606,8 +600,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       supportedBrowsers: pluginOptions.supportedBrowsers,
       jit,
     }),
-    (isStorybook &&
-      angularStorybookPlugin(pluginOptions.workspaceRoot)) as Plugin,
     routerPlugin(),
     pendingTasksPlugin(),
     nxFolderPlugin(),
