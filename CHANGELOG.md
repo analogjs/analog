@@ -1,3 +1,9 @@
+## [2.0.4-beta.3](https://github.com/analogjs/analog/compare/v2.0.4-beta.2...v2.0.4-beta.3) (2025-11-11)
+
+### Bug Fixes
+
+- **nx-plugin:** add Vitest 4 ui/browser deps ([#1947](https://github.com/analogjs/analog/issues/1947)) ([527addf](https://github.com/analogjs/analog/commit/527addf86043d6226147894653e138e7fbfc88b9))
+
 ## [2.0.4-beta.2](https://github.com/analogjs/analog/compare/v2.0.4-beta.1...v2.0.4-beta.2) (2025-11-11)
 
 ### Bug Fixes
