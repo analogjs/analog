@@ -1,3 +1,9 @@
+## [2.0.4-beta.2](https://github.com/analogjs/analog/compare/v2.0.4-beta.1...v2.0.4-beta.2) (2025-11-11)
+
+### Bug Fixes
+
+- **nx-plugin:** bump Nx app generator to Vitest 4.x ([#1946](https://github.com/analogjs/analog/issues/1946)) ([97aad59](https://github.com/analogjs/analog/commit/97aad59fd40452e1d4452149b136689beb93e138))
+
 ## [2.0.4-beta.1](https://github.com/analogjs/analog/compare/v2.0.3...v2.0.4-beta.1) (2025-11-09)
 
 ### Bug Fixes
