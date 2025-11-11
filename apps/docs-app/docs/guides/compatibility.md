@@ -25,6 +25,7 @@ The table shows the minimum version of Nx, the supported Angular version, and th
 
 | Nx Version _(min)_ | Angular Version | Analog Version | Vite Version |
 | ------------------ | --------------- | -------------- | ------------ |
+| 22.x.x             | ^20.x.x         | **latest**     | ^7.0.0       |
 | 21.x.x             | ^20.x.x         | **latest**     | ^7.0.0       |
 | 20.4.0             | ^19.1.0         | **latest**     | ^6.0.0       |
 | 18.0.0             | ^17.0.0         | **latest**     | ^5.0.0       |

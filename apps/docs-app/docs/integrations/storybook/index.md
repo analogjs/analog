@@ -16,6 +16,16 @@ This guides you through the process of switching to building and serving your St
 > This is a community integration not maintained by the Storybook team. If you have issues,
 > file an issue in our [GitHub repo](https://github.com/analogjs/analog/issues).
 
+## Compatibility Guide
+
+The AnalogJS Storybook integration for using Angular and Vite supports multiple versions of Storybook. See the table below for which version to install based on the project dependencies.
+
+| Storybook Version | Analog Version |
+| ----------------- | -------------- |
+| ^10.0.0           | ^2.0.0         |
+| ^9.0.0            | ^1.22.0        |
+| ^8.6.0            | ^1.22.0        |
+
 ## Setting up Storybook
 
 If you don't have Storybook setup already, run the following command to initialize Storybook for your project:

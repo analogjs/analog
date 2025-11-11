@@ -39,6 +39,8 @@ const devDependencyKeys = [
   'vitest',
   '@nx/vite',
   'vite',
+  '@vitest/coverage-v8',
+  '@vitest/ui',
 ] as const;
 export type AnalogDevDependency = (typeof devDependencyKeys)[number];
 
@@ -77,6 +79,8 @@ const getDevDependencies = (
       'vite-tsconfig-paths': V17_X_VITE_TSCONFIG_PATHS,
       vite: V19_X_VITE,
       vitest: V17_X_VITEST,
+      '@vitest/coverage-v8': V17_X_VITEST,
+      '@vitest/ui': V17_X_VITEST,
     };
   }
 
@@ -91,6 +95,8 @@ const getDevDependencies = (
       'vite-tsconfig-paths': V18_X_VITE_TSCONFIG_PATHS,
       vite: V19_X_VITE,
       vitest: V18_X_VITEST,
+      '@vitest/coverage-v8': V18_X_VITEST,
+      '@vitest/ui': V17_X_VITEST,
     };
   }
 
@@ -107,6 +113,14 @@ const getDevDependencies = (
         ? V19_X_VITE
         : NX_X_LATEST_VITE,
     vitest:
+      escapedNxVersion && lt(escapedNxVersion, '20.5.0')
+        ? V19_X_VITEST
+        : NX_X_LATEST_VITEST,
+    '@vitest/coverage-v8':
+      escapedNxVersion && lt(escapedNxVersion, '20.5.0')
+        ? V19_X_VITEST
+        : NX_X_LATEST_VITEST,
+    '@vitest/ui':
       escapedNxVersion && lt(escapedNxVersion, '20.5.0')
         ? V19_X_VITEST
         : NX_X_LATEST_VITEST,

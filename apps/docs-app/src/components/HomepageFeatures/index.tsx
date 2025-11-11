@@ -24,8 +24,8 @@ const FeatureList: FeatureItem[] = [
           id="features.vite"
           description="The description of the feature 'Vite-powered'"
         >
-          Analog uses Vite for serving and building as well as Vitest for
-          testing.
+          Analog is powered by Vite and Vitest, and enables its full ecosystem
+          of plugins, integrations, and tools.
         </Translate>
       </>
     ),
@@ -44,7 +44,7 @@ const FeatureList: FeatureItem[] = [
           id="features.hybridSSR"
           description="The description of the feature 'Hybrid SSR/SSG support'"
         >
-          Analog supports both Server-Side Rendering (SSR) and Static Site
+          Analog integrates Hybrid Server-Side Rendering (SSR) and Static Site
           Generation (SSG) of Angular applications.
         </Translate>
       </>
@@ -64,8 +64,8 @@ const FeatureList: FeatureItem[] = [
           id="features.fileBasedRouting"
           description="The description of the feature 'File-based routing and API routes'"
         >
-          Analog uses file-based routing and supports API (server) routes for
-          Angular applications.
+          Analog uses file-based routing, API routes, server-side data-fetching,
+          and provides a seamless developer experience with Angular.
         </Translate>
       </>
     ),

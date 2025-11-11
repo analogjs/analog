@@ -1,3 +1,27 @@
+## [2.0.4-beta.4](https://github.com/analogjs/analog/compare/v2.0.4-beta.3...v2.0.4-beta.4) (2025-11-11)
+
+### Bug Fixes
+
+- **nx-plugin:** pin to Vitest 3.x for Nx/Angular ([c0d5b10](https://github.com/analogjs/analog/commit/c0d5b10f0f40f2e5c4d718594ae3ea369a1e2284))
+
+## [2.0.4-beta.3](https://github.com/analogjs/analog/compare/v2.0.4-beta.2...v2.0.4-beta.3) (2025-11-11)
+
+### Bug Fixes
+
+- **nx-plugin:** add Vitest 4 ui/browser deps ([#1947](https://github.com/analogjs/analog/issues/1947)) ([527addf](https://github.com/analogjs/analog/commit/527addf86043d6226147894653e138e7fbfc88b9))
+
+## [2.0.4-beta.2](https://github.com/analogjs/analog/compare/v2.0.4-beta.1...v2.0.4-beta.2) (2025-11-11)
+
+### Bug Fixes
+
+- **nx-plugin:** bump Nx app generator to Vitest 4.x ([#1946](https://github.com/analogjs/analog/issues/1946)) ([97aad59](https://github.com/analogjs/analog/commit/97aad59fd40452e1d4452149b136689beb93e138))
+
+## [2.0.4-beta.1](https://github.com/analogjs/analog/compare/v2.0.3...v2.0.4-beta.1) (2025-11-09)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** remove Storybook ESM workaround plugin ([#1943](https://github.com/analogjs/analog/issues/1943)) ([52a3501](https://github.com/analogjs/analog/commit/52a350143005f669fe8e16db6ef8949ddcdf4b31))
+
 ## [2.0.3](https://github.com/analogjs/analog/compare/v2.0.2...v2.0.3) (2025-11-06)
 
 ### Performance Improvements
