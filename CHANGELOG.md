@@ -1,3 +1,9 @@
+## [2.0.4-beta.4](https://github.com/analogjs/analog/compare/v2.0.4-beta.3...v2.0.4-beta.4) (2025-11-11)
+
+### Bug Fixes
+
+- **nx-plugin:** pin to Vitest 3.x for Nx/Angular ([c0d5b10](https://github.com/analogjs/analog/commit/c0d5b10f0f40f2e5c4d718594ae3ea369a1e2284))
+
 ## [2.0.4-beta.3](https://github.com/analogjs/analog/compare/v2.0.4-beta.2...v2.0.4-beta.3) (2025-11-11)
 
 ### Bug Fixes
