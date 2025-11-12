@@ -7,6 +7,7 @@
  */
 
 import type { DepOptimizationConfig } from 'vite';
+import type { PluginBuild } from 'esbuild';
 
 import {
   CompilerPluginOptions,
@@ -28,7 +29,7 @@ export function createCompilerPlugin(
 
   return {
     name: 'analogjs-angular-esbuild-deps-optimizer-plugin',
-    async setup(build) {
+    async setup(build: PluginBuild) {
       if (!isTest) {
         build.onLoad({ filter: /\.[cm]?js$/ }, async (args) => {
           const contents = await javascriptTransformer.transformFile(args.path);

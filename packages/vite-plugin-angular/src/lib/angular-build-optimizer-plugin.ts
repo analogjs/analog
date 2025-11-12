@@ -1,4 +1,4 @@
-import { Plugin } from 'vite';
+import type { Plugin, UserConfig } from 'vite';
 
 import { JavaScriptTransformer } from './utils/devkit.js';
 
@@ -46,7 +46,7 @@ export function buildOptimizerPlugin({
               }
             : undefined,
         },
-      };
+      } as UserConfig;
     },
     async transform(code, id) {
       if (/\.[cm]?js$/.test(id)) {
