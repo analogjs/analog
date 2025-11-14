@@ -57,7 +57,7 @@ export function addTailwindRequiredPackages(tree: Tree): GeneratorCallback {
     {
       postcss: pkgVersions.postcss,
       tailwindcss: pkgVersions.tailwindcss,
-      '@tailwindcss/vite': pkgVersions['@tailwindcss/vite'],
+      '@tailwindcss/postcss': pkgVersions['@tailwindcss/postcss'],
     },
     {},
   );
@@ -237,6 +237,19 @@ export function addTailwindConfigFile(
     generateFiles(
       tree,
       joinPathFragments(__dirname, '..', 'files', 'tailwind/v3'),
+      project.root,
+      {
+        relativeSourceRoot: relative(project.root, project.sourceRoot),
+        template: '',
+      },
+    );
+    return;
+  }
+
+  if (tailwindInstalledVersion === '4') {
+    generateFiles(
+      tree,
+      joinPathFragments(__dirname, '..', 'files', 'tailwind/v4'),
       project.root,
       {
         relativeSourceRoot: relative(project.root, project.sourceRoot),

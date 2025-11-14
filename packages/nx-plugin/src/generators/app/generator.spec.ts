@@ -116,20 +116,17 @@ describe('nx-plugin generator', () => {
       expect(hasTailwindConfigFile).toBeTruthy();
       expect(hasPostCSSConfigFile).toBeTruthy();
     } else {
-      expect(dependencies['@tailwindcss/vite']).toBeDefined();
+      expect(dependencies['@tailwindcss/postcss']).toBeDefined();
 
+      const hasPostCSSConfigFile = tree.exists(
+        'apps/tailwind-app/.postcssrc.json',
+      );
       const hasCorrectCssImplementation = tree
         .read('apps/tailwind-app/src/styles.css')
         .includes(`@import 'tailwindcss';`);
 
-      const regex = /plugins: \[.*\btailwindcss\(\)/s;
-
-      const viteConfig = tree
-        .read('apps/tailwind-app/vite.config.ts')
-        .toString();
-
-      expect(regex.test(viteConfig)).toBeTruthy();
       expect(hasCorrectCssImplementation).toBeTruthy();
+      expect(hasPostCSSConfigFile).toBeTruthy();
     }
   };
 
