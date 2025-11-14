@@ -7,7 +7,7 @@ import {
 const tailwindDependencyKeys = [
   'postcss',
   'tailwindcss',
-  '@tailwindcss/vite',
+  '@tailwindcss/postcss',
 ] as const;
 
 export type TailwindDependency = (typeof tailwindDependencyKeys)[number];
@@ -19,6 +19,6 @@ export const getTailwindDependencies = (): Record<
   return {
     postcss: V18_X_POSTCSS,
     tailwindcss: V18_X_TAILWINDCSS,
-    '@tailwindcss/vite': V18_X_TAILWINDCSS_VITE,
+    '@tailwindcss/postcss': V18_X_TAILWINDCSS_VITE,
   };
 };
