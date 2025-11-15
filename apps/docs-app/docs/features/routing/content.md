@@ -295,7 +295,7 @@ The `injectContent()` function uses the `slug` route parameter by default to get
 ```ts
 // /src/app/pages/blog/posts.[slug].page.ts
 import { injectContent, MarkdownComponent } from '@analogjs/content';
-import { AsyncPipe, NgIf } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { Component } from '@angular/core';
 
 export interface PostAttributes {
@@ -307,12 +307,12 @@ export interface PostAttributes {
 
 @Component({
   standalone: true,
-  imports: [MarkdownComponent, AsyncPipe, NgIf],
+  imports: [MarkdownComponent],
   template: `
-    <ng-container *ngIf="post$ | async as post">
+    @if (post$ | async; as post) {
       <h1>{{ post.attributes.title }}</h1>
       <analog-markdown [content]="post.content"></analog-markdown>
-    </ng-container>
+    }
   `,
 })
 export default class BlogPostComponent {
@@ -432,12 +432,12 @@ export interface ProjectAttributes {
 
 @Component({
   standalone: true,
-  imports: [MarkdownComponent, AsyncPipe, NgIf],
+  imports: [MarkdownComponent],
   template: `
-    <ng-container *ngIf="project$ | async as project">
+    @if (project$ | async; as project) {
       <h1>{{ project.attributes.title }}</h1>
       <analog-markdown [content]="project.content"></analog-markdown>
-    </ng-container>
+    }
   `,
 })
 export default class ProjectComponent {
