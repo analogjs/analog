@@ -254,7 +254,6 @@ To get a list using the list of content files in the `src/content` folder, use t
 import { Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { injectContentFiles } from '@analogjs/content';
-import { NgFor } from '@angular/common';
 
 export interface PostAttributes {
   title: string;
@@ -265,14 +264,18 @@ export interface PostAttributes {
 
 @Component({
   standalone: true,
-  imports: [RouterOutlet, RouterLink, NgFor],
+  imports: [RouterOutlet, RouterLink],
   template: `
     <ul>
-      <li *ngFor="let post of posts">
-        <a [routerLink]="['/blog', 'posts', post.slug]">{{
-          post.attributes.title
-        }}</a>
-      </li>
+      @for (post of posts; track post.slug) {
+        <li>
+          <a [routerLink]="['/blog', 'posts', post.slug]">
+            {{ post.attributes.title }}
+          </a>
+        </li>
+      } @empty {
+        <li>No posts yet.</li>
+      }
     </ul>
   `,
 })
