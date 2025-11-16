@@ -307,7 +307,7 @@ export interface PostAttributes {
 
 @Component({
   standalone: true,
-  imports: [MarkdownComponent],
+  imports: [MarkdownComponent, AsyncPipe],
   template: `
     @if (post$ | async; as post) {
       <h1>{{ post.attributes.title }}</h1>
@@ -432,7 +432,7 @@ export interface ProjectAttributes {
 
 @Component({
   standalone: true,
-  imports: [MarkdownComponent],
+  imports: [MarkdownComponent, AsyncPipe],
   template: `
     @if (project$ | async; as project) {
       <h1>{{ project.attributes.title }}</h1>
