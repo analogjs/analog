@@ -1,3 +1,15 @@
+## [2.0.5-beta.2](https://github.com/analogjs/analog/compare/v2.0.5-beta.1...v2.0.5-beta.2) (2025-11-14)
+
+### Bug Fixes
+
+- **nx-plugin:** generate postcss configuration for Tailwind ([#1951](https://github.com/analogjs/analog/issues/1951)) ([2bc2395](https://github.com/analogjs/analog/commit/2bc2395344e45723365dba5448912fd6c9174047))
+
+## [2.0.5-beta.1](https://github.com/analogjs/analog/compare/v2.0.4...v2.0.5-beta.1) (2025-11-12)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fix build errors for rolldown-vite integration ([#1949](https://github.com/analogjs/analog/issues/1949)) ([6f62a1d](https://github.com/analogjs/analog/commit/6f62a1d61ee3f263924aab7790cb06c3ae7a026a))
+
 ## [2.0.4](https://github.com/analogjs/analog/compare/v2.0.3...v2.0.4) (2025-11-11)
 
 ### Bug Fixes
