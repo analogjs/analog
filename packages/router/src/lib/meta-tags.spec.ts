@@ -1,8 +1,14 @@
 import { Component, ENVIRONMENT_INITIALIZER } from '@angular/core';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DOCUMENT } from '@angular/common';
-import { Route, Router, RouterOutlet } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import {
+  provideRouter,
+  Route,
+  Router,
+  RouterOutlet,
+  ROUTES,
+} from '@angular/router';
+import { provideLocationMocks } from '@angular/common/testing';
 import { map, timer } from 'rxjs';
 import {
   MetaTag,
@@ -97,8 +103,9 @@ describe('updateMetaTagsOnRouteChange', () => {
     ];
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes(routes)],
       providers: [
+        provideRouter(routes),
+        provideLocationMocks(),
         {
           provide: ENVIRONMENT_INITIALIZER,
           multi: true,
@@ -139,13 +146,13 @@ describe('updateMetaTagsOnRouteChange', () => {
     return { router, getMetaElements, parentMetaTagValues, childMetaTagValues };
   }
 
-  it('adds meta tags on initial navigation', fakeAsync(() => {
+  it('adds meta tags on initial navigation', async () => {
     const { router, getMetaElements, parentMetaTagValues } = setup();
 
-    router.navigateByUrl('/');
-    tick();
+    await router.navigateByUrl('/');
 
     const metaElements = getMetaElements();
+
     expect(metaElements.charset.getAttribute('charset')).toBe(
       parentMetaTagValues.charset,
     );
@@ -158,15 +165,13 @@ describe('updateMetaTagsOnRouteChange', () => {
     expect(metaElements.keywords.content).toBe(parentMetaTagValues.keywords);
     expect(metaElements.ogTitle.content).toBe(parentMetaTagValues.ogTitle);
     expect(metaElements.ogImage.content).toBe(parentMetaTagValues.ogImage);
-  }));
+  });
 
-  it('merges parent and child meta tags on child route navigation', fakeAsync(() => {
+  it('merges parent and child meta tags on child route navigation', async () => {
     const { router, getMetaElements, parentMetaTagValues, childMetaTagValues } =
       setup();
 
-    router.navigateByUrl('/child');
-    // child meta tags are resolved after 1s
-    tick(1000);
+    await router.navigateByUrl('/child');
 
     const metaElements = getMetaElements();
     expect(metaElements.charset.getAttribute('charset')).toBe(
@@ -189,17 +194,15 @@ describe('updateMetaTagsOnRouteChange', () => {
     // meta tags inherited from parent route
     expect(metaElements.keywords.content).toBe(parentMetaTagValues.keywords);
     expect(metaElements.ogImage.content).toBe(parentMetaTagValues.ogImage);
-  }));
+  });
 
-  it('lefts over meta tags from the previous route that are not changed', fakeAsync(() => {
+  it('lefts over meta tags from the previous route that are not changed', async () => {
     const { router, getMetaElements, parentMetaTagValues, childMetaTagValues } =
       setup();
 
-    router.navigateByUrl('/child');
-    tick(1000);
+    await router.navigateByUrl('/child');
 
-    router.navigateByUrl('/');
-    tick();
+    await router.navigateByUrl('/');
 
     const metaElements = getMetaElements();
     expect(metaElements.charset.getAttribute('charset')).toBe(
@@ -222,5 +225,5 @@ describe('updateMetaTagsOnRouteChange', () => {
     expect(metaElements.ogDescription.content).toBe(
       childMetaTagValues.ogDescription,
     );
-  }));
+  });
 });
