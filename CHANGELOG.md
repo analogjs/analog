@@ -1,3 +1,9 @@
+# [2.1.0-beta.3](https://github.com/analogjs/analog/compare/v2.1.0-beta.2...v2.1.0-beta.3) (2025-11-18)
+
+### Bug Fixes
+
+- **content:** stripped filename to match filename also for additionalContentDirs ([#1962](https://github.com/analogjs/analog/issues/1962)) ([cdacae0](https://github.com/analogjs/analog/commit/cdacae056d0de3cadec8e85bffe0812a6067230f))
+
 # [2.1.0-beta.2](https://github.com/analogjs/analog/compare/v2.1.0-beta.1...v2.1.0-beta.2) (2025-11-18)
 
 ### Bug Fixes
