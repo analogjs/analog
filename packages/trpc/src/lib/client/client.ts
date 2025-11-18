@@ -14,6 +14,7 @@ import {
   tRPC_CACHE_STATE,
 } from './cache-state';
 import { createTRPCRxJSProxyClient } from './trpc-rxjs-proxy';
+// @ts-ignore
 import { FetchEsque } from '@trpc/client/dist/internals/types';
 
 export type TrpcOptions<T extends AnyRouter> = {

@@ -8,6 +8,7 @@
     "types": ["node", "vite/client"],
     "target": "ES2022",
     "useDefineForClassFields": false,
+    "moduleResolution": "bundler",
     "paths": {
       "@analogjs/content": ["./node_modules/@analogjs/content"]
     }

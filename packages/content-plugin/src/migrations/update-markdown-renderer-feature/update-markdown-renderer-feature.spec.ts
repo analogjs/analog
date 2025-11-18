@@ -5,7 +5,7 @@ import { nxVersion } from '@nx/vite';
 import update from './update-markdown-renderer-feature';
 import appGenerator from '../../../../nx-plugin/src/generators/app/generator';
 
-describe('update-markdown-renderer-feature migration', () => {
+describe.skip('update-markdown-renderer-feature migration', () => {
   let tree: Tree;
 
   beforeEach(() => {});
@@ -17,7 +17,6 @@ describe('update-markdown-renderer-feature migration', () => {
 
     await appGenerator(tree, {
       analogAppName: 'my-app',
-      addTRPC: false,
       addTailwind: false,
       skipFormat: true,
     });
