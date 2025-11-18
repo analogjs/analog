@@ -1,3 +1,9 @@
+# [2.1.0-beta.2](https://github.com/analogjs/analog/compare/v2.1.0-beta.1...v2.1.0-beta.2) (2025-11-18)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** resolve tsconfig dynamically at the correct place ([#1959](https://github.com/analogjs/analog/issues/1959)) ([04dd8f3](https://github.com/analogjs/analog/commit/04dd8f3bbc5f24204eb6f73c1b3db6ea27ac6537))
+
 # [2.1.0-beta.1](https://github.com/analogjs/analog/compare/v2.0.5...v2.1.0-beta.1) (2025-11-18)
 
 ### Features
