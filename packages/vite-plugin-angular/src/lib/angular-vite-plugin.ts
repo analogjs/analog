@@ -14,6 +14,7 @@ import { createRequire } from 'node:module';
 import * as ts from 'typescript';
 
 import * as ngCompiler from '@angular/compiler';
+import { globSync } from 'tinyglobby';
 import {
   defaultClientConditions,
   ModuleNode,
@@ -23,7 +24,6 @@ import {
   ResolvedConfig,
   ViteDevServer,
 } from 'vite';
-import { globSync } from 'tinyglobby';
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
 import { jitPlugin } from './angular-jit-plugin.js';
 import { createCompilerPlugin } from './compiler-plugin.js';
@@ -123,7 +123,6 @@ export function angular(options?: PluginOptions): Plugin[] {
   };
 
   let resolvedConfig: ResolvedConfig;
-  let resolvedTsConfigPath: string = '';
   // Store config context needed for getTsConfigPath resolution
   let tsConfigResolutionContext: {
     root: string;
@@ -181,13 +180,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         };
 
         // Do a preliminary resolution for esbuild plugin (before configResolved)
-        const preliminaryTsConfigPath = getTsConfigPath(
-          tsConfigResolutionContext.root,
-          pluginOptions.tsconfigGetter(),
-          tsConfigResolutionContext.isProd,
-          isTest,
-          tsConfigResolutionContext.isLib,
-        );
+        const preliminaryTsConfigPath = resolveTsConfigPath();
 
         return {
           esbuild: config.esbuild ?? false,
@@ -225,18 +218,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configResolved(config) {
         resolvedConfig = config;
-
-        // resolve the tsconfig path after config is fully resolved
-        if (tsConfigResolutionContext) {
-          const tsconfigValue = pluginOptions.tsconfigGetter();
-          resolvedTsConfigPath = getTsConfigPath(
-            tsConfigResolutionContext.root,
-            tsconfigValue,
-            tsConfigResolutionContext.isProd,
-            isTest,
-            tsConfigResolutionContext.isLib,
-          );
-        }
 
         if (isTest) {
           // set test watch mode
@@ -672,9 +653,23 @@ export function angular(options?: PluginOptions): Plugin[] {
     return resolvedPath;
   }
 
+  function resolveTsConfigPath() {
+    const tsconfigValue = pluginOptions.tsconfigGetter();
+
+    return getTsConfigPath(
+      tsConfigResolutionContext!.root,
+      tsconfigValue,
+      tsConfigResolutionContext!.isProd,
+      isTest,
+      tsConfigResolutionContext!.isLib,
+    );
+  }
+
   async function performCompilation(config: ResolvedConfig, ids?: string[]) {
     const isProd = config.mode === 'production';
     const includeFiles = findIncludes();
+
+    const resolvedTsConfigPath = resolveTsConfigPath();
 
     let { options: tsCompilerOptions, rootNames } =
       compilerCli.readConfiguration(resolvedTsConfigPath, {
