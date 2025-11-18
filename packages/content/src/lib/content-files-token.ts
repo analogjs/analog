@@ -30,8 +30,12 @@ export const CONTENT_FILES_TOKEN = new InjectionToken<
     Object.entries(allFiles).forEach((entry) => {
       const filename = entry[0];
       const value = entry[1];
+      const strippedFilename = filename.replace(
+        /^\/(.*?)\/content/,
+        '/src/content',
+      );
 
-      const newFilename = lookup[filename];
+      const newFilename = lookup[strippedFilename];
       if (newFilename !== undefined) {
         const objectFilename = newFilename.replace(
           /^\/(.*?)\/content/,
