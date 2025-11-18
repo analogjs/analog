@@ -1,3 +1,9 @@
+# [2.1.0-beta.1](https://github.com/analogjs/analog/compare/v2.0.5...v2.1.0-beta.1) (2025-11-18)
+
+### Features
+
+- add support for Angular v21 RCs ([#1956](https://github.com/analogjs/analog/issues/1956)) ([4b9dcc5](https://github.com/analogjs/analog/commit/4b9dcc5c066ac5d843de51a0e2626675b66356a5))
+
 ## [2.0.5](https://github.com/analogjs/analog/compare/v2.0.4...v2.0.5) (2025-11-17)
 
 ### Bug Fixes
