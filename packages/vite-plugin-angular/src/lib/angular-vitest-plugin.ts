@@ -14,11 +14,15 @@ export function angularVitestPlugin(): Plugin {
     config(userConfig) {
       return {
         optimizeDeps: {
-          include: ['tslib', '@angular/cdk/testing/testbed'],
-          exclude: ['@angular/cdk/testing'],
+          include: ['tslib'],
         },
         ssr: {
-          noExternal: [/cdk\/fesm2022/, /fesm2022(.*?)testing/, /fesm2015/],
+          noExternal: [
+            '@analogjs/vitest-angular/setup-testbed',
+            /cdk\/fesm2022/,
+            /fesm2022(.*?)testing/,
+            /fesm2015/,
+          ],
         },
         test: {
           pool: (userConfig as any).test?.pool ?? 'vmThreads',

@@ -76,52 +76,37 @@ export default defineConfig(({ mode }) => ({
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
   },
-  define: {
-    'import.meta.vitest': mode !== 'production',
-  },
 }));
 ```
 
 Next, define a `src/test-setup.ts` file to setup the `TestBed`:
 
-```ts
-import '@angular/compiler';
-import '@analogjs/vitest-angular/setup-zone';
+### Zoneless setup
 
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
+As of Angular v21, `Zoneless` change detection is the default for new projects.
 
-getTestBed().initTestEnvironment(
-  BrowserTestingModule,
-  platformBrowserTesting(),
-);
-```
-
-If you are using `Zoneless` change detection, use the following setup:
+Use the following setup:
 
 ```ts
 import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-snapshots';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import { provideZonelessChangeDetection, NgModule } from '@angular/core';
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
+setupTestBed();
+```
 
-@NgModule({
-  providers: [provideZonelessChangeDetection()],
-})
-export class ZonelessTestModule {}
+### Zone.js setup
 
-getTestBed().initTestEnvironment(
-  [BrowserTestingModule, ZonelessTestModule],
-  platformBrowserTesting(),
-);
+If you are using `Zone.js` for change detection, import the `setup-zone` script. This script automatically includes support for setting up snapshot tests.
+
+```ts
+import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-zone';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+setupTestBed({
+  zoneless: false,
+});
 ```
 
 Next, update the `test` target in the `angular.json` to use the `@analogjs/vitest-angular:test` builder:

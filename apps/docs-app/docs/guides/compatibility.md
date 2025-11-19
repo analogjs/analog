@@ -10,6 +10,7 @@ Below is a reference table that matches compatible versions of Angular with the 
 
 | Angular Version | Analog Version | Vite Version |
 | --------------- | -------------- | ------------ |
+| ^21.0.0         | **latest**     | ^7.0.0       |
 | ^20.0.0         | **latest**     | ^7.0.0       |
 | ^19.1.0         | **latest**     | ^6.0.0       |
 | ^18.0.0         | **latest**     | ^5.0.0       |
