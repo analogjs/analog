@@ -172,7 +172,6 @@ export function angular(options?: PluginOptions): Plugin[] {
   };
   let initialCompilation = false;
   const declarationFiles: DeclarationFile[] = [];
-  let compilation: Awaited<ReturnType<typeof createAngularCompilationType>>;
 
   function angularPlugin(): Plugin {
     let isProd = false;
@@ -481,9 +480,10 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         if (pluginOptions.useAngularCompilationAPI) {
-          const isAngular = /(Component|Directive|Pipe|Injectable)\(/.test(
-            code,
-          );
+          const isAngular =
+            /@angular\/core|(Component|Directive|Pipe|Injectable|NgModule)\(/.test(
+              code,
+            );
 
           if (!isAngular) {
             return;
@@ -723,7 +723,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   }
 
   async function performAngularCompilation(config: ResolvedConfig) {
-    compilation = await (
+    const compilation = await (
       createAngularCompilation as typeof createAngularCompilationType
     )(!!pluginOptions.jit, false);
 
@@ -823,6 +823,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         warnings: warnings.map((warning) => warning.text || ''),
       });
     }
+    compilation.close?.();
   }
 
   async function performCompilation(config: ResolvedConfig, ids?: string[]) {
