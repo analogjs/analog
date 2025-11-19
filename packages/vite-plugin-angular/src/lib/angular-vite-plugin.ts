@@ -196,7 +196,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         );
       }
 
-      if (pluginOptions.fileReplacements) {
+      if (pluginOptions.fileReplacements.length) {
         pluginOptions.fileReplacements = [];
         console.warn(
           '[@analogjs-vite-plugin-angular]: File replacements are currently not compatible with the Angular Compilation API option',
@@ -223,7 +223,9 @@ export function angular(options?: PluginOptions): Plugin[] {
         const preliminaryTsConfigPath = resolveTsConfigPath();
 
         return {
-          esbuild: config.esbuild ?? false,
+          esbuild: pluginOptions.useAngularCompilationAPI
+            ? undefined
+            : (config.esbuild ?? false),
           optimizeDeps: {
             include: ['rxjs/operators', 'rxjs'],
             exclude: ['@angular/platform-server'],
