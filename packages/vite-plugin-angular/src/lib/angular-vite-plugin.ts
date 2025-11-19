@@ -8,6 +8,7 @@ import {
   relative,
   resolve,
 } from 'node:path';
+import * as vite from 'vite';
 
 import * as compilerCli from '@angular/compiler-cli';
 import { createRequire } from 'node:module';
@@ -27,7 +28,10 @@ import {
 } from 'vite';
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
 import { jitPlugin } from './angular-jit-plugin.js';
-import { createCompilerPlugin } from './compiler-plugin.js';
+import {
+  createCompilerPlugin,
+  createRolldownCompilerPlugin,
+} from './compiler-plugin.js';
 import {
   StyleUrlsResolver,
   TemplateUrlsResolver,
@@ -221,33 +225,57 @@ export function angular(options?: PluginOptions): Plugin[] {
         // Do a preliminary resolution for esbuild plugin (before configResolved)
         const preliminaryTsConfigPath = resolveTsConfigPath();
 
+        const esbuild = pluginOptions.useAngularCompilationAPI
+          ? undefined
+          : (config.esbuild ?? false);
+        const oxc = pluginOptions.useAngularCompilationAPI
+          ? undefined
+          : (config.oxc ?? false);
+
+        const defineOptions = {
+          ngJitMode: 'false',
+          ngI18nClosureMode: 'false',
+          ...(watchMode ? {} : { ngDevMode: 'false' }),
+        };
+
+        const rolldownOptions: vite.DepOptimizationOptions['rolldownOptions'] =
+          {
+            plugins: [
+              createRolldownCompilerPlugin({
+                tsconfig: preliminaryTsConfigPath,
+                sourcemap: !isProd,
+                advancedOptimizations: isProd,
+                jit,
+                incremental: watchMode,
+              }),
+            ],
+          };
+
+        const esbuildOptions: vite.DepOptimizationOptions['esbuildOptions'] = {
+          plugins: [
+            createCompilerPlugin(
+              {
+                tsconfig: preliminaryTsConfigPath,
+                sourcemap: !isProd,
+                advancedOptimizations: isProd,
+                jit,
+                incremental: watchMode,
+              },
+              isTest,
+              !isAstroIntegration,
+            ),
+          ],
+          define: defineOptions,
+        };
+
         return {
-          esbuild: pluginOptions.useAngularCompilationAPI
-            ? undefined
-            : (config.esbuild ?? false),
+          ...(vite.rolldownVersion ? { oxc } : { esbuild }),
           optimizeDeps: {
             include: ['rxjs/operators', 'rxjs'],
             exclude: ['@angular/platform-server'],
-            esbuildOptions: {
-              plugins: [
-                createCompilerPlugin(
-                  {
-                    tsconfig: preliminaryTsConfigPath,
-                    sourcemap: !isProd,
-                    advancedOptimizations: isProd,
-                    jit,
-                    incremental: watchMode,
-                  },
-                  isTest,
-                  !isAstroIntegration,
-                ),
-              ],
-              define: {
-                ngJitMode: 'false',
-                ngI18nClosureMode: 'false',
-                ...(watchMode ? {} : { ngDevMode: 'false' }),
-              },
-            },
+            ...(vite.rolldownVersion
+              ? { rolldownOptions }
+              : { esbuildOptions }),
           },
           resolve: {
             conditions: [
