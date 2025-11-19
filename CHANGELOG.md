@@ -1,3 +1,9 @@
+# [2.1.0-beta.6](https://github.com/analogjs/analog/compare/v2.1.0-beta.5...v2.1.0-beta.6) (2025-11-19)
+
+### Bug Fixes
+
+- **create-analog:** bump TypeScript to 5.9.x ([7a94868](https://github.com/analogjs/analog/commit/7a9486896e4ab5b120d0f42f6896da94518347ae))
+
 # [2.1.0-beta.5](https://github.com/analogjs/analog/compare/v2.1.0-beta.4...v2.1.0-beta.5) (2025-11-19)
 
 ### Features
