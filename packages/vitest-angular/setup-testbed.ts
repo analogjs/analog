@@ -1,0 +1,42 @@
+import { NgModule, provideZonelessChangeDetection, Type } from '@angular/core';
+import {
+  getTestBed,
+  ɵgetCleanupHook as getCleanupHook,
+} from '@angular/core/testing';
+import {
+  BrowserTestingModule,
+  platformBrowserTesting,
+} from '@angular/platform-browser/testing';
+import { afterEach, beforeEach } from 'vitest';
+
+beforeEach(getCleanupHook(false));
+afterEach(getCleanupHook(true));
+
+const ANGULAR_TESTBED_SETUP = Symbol.for('testbed-setup');
+
+type TestBedSetupOptions = {
+  zoneless?: boolean;
+  providers?: Type<any>[];
+};
+
+export function setupTestBed(
+  options: TestBedSetupOptions = { zoneless: true, providers: [] },
+) {
+  if (!(globalThis as any)[ANGULAR_TESTBED_SETUP]) {
+    (globalThis as any)[ANGULAR_TESTBED_SETUP] = true;
+
+    @NgModule({
+      providers: options?.zoneless ? [provideZonelessChangeDetection()] : [],
+    })
+    class ZonelessTestModule {}
+
+    getTestBed().initTestEnvironment(
+      [
+        BrowserTestingModule,
+        ...(options?.zoneless ? [ZonelessTestModule] : []),
+        ...((options?.providers || []) as Type<any>[]),
+      ],
+      platformBrowserTesting(),
+    );
+  }
+}

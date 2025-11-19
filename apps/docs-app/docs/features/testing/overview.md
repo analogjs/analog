@@ -33,6 +33,7 @@ The table below shows the features available across both choices.
 | Builders             | ✅        | ✅           |
 | Schematics           | ✅        | ✅           |
 | Migrations           | ✅        | ✅           |
+| Browser Mode         | ✅        | ✅           |
 | Fully Configurable   | ✅        | ⚠️           |
 | Vitest CLI           | ✅        | ❌           |
 | Vitest Workpsaces    | ✅        | ❌           |
@@ -41,7 +42,7 @@ The table below shows the features available across both choices.
 | IDE extensions       | ✅        | ❌           |
 | Buildable Libs       | ✅        | ❌           |
 | Module Mocking/Graph | ✅        | ❌           |
-| Plugins/Types        | ✅        | ❌           |
+| Types                | ✅        | ❌           |
 
 The table above is not to compare the two solutions, but to provide the information on what features are supported by each implementation. Choose the solution that best fits your needs and priorities.
 
