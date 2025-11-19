@@ -1,3 +1,9 @@
+# [2.1.0-beta.9](https://github.com/analogjs/analog/compare/v2.1.0-beta.8...v2.1.0-beta.9) (2025-11-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** loosen checks on angular compilation ([e183cd2](https://github.com/analogjs/analog/commit/e183cd29e5a8e7d5b98d76c6fe898d6d8e820402))
+
 # [2.1.0-beta.8](https://github.com/analogjs/analog/compare/v2.1.0-beta.7...v2.1.0-beta.8) (2025-11-19)
 
 ### Bug Fixes
