@@ -1,3 +1,9 @@
+# [2.1.0-beta.7](https://github.com/analogjs/analog/compare/v2.1.0-beta.6...v2.1.0-beta.7) (2025-11-19)
+
+### Bug Fixes
+
+- **platform:** enable esbuild with Angular Compilation API ([e91752e](https://github.com/analogjs/analog/commit/e91752e57286be5eee83b7ef067e69aaf16e14c6))
+
 # [2.1.0-beta.6](https://github.com/analogjs/analog/compare/v2.1.0-beta.5...v2.1.0-beta.6) (2025-11-19)
 
 ### Bug Fixes
