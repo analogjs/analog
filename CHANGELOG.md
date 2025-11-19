@@ -1,3 +1,9 @@
+# [2.1.0-beta.4](https://github.com/analogjs/analog/compare/v2.1.0-beta.3...v2.1.0-beta.4) (2025-11-19)
+
+### Features
+
+- **vite-plugin-angular:** introduce support for Angular Compilation API ([#1957](https://github.com/analogjs/analog/issues/1957)) ([51cf433](https://github.com/analogjs/analog/commit/51cf433524ee0dff7354bdb35ac6d0abc7429921))
+
 # [2.1.0-beta.3](https://github.com/analogjs/analog/compare/v2.1.0-beta.2...v2.1.0-beta.3) (2025-11-18)
 
 ### Bug Fixes
