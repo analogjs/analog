@@ -481,9 +481,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
         if (pluginOptions.useAngularCompilationAPI) {
           const isAngular =
-            /@angular\/core|(Component|Directive|Pipe|Injectable|NgModule)\(/.test(
-              code,
-            );
+            /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
 
           if (!isAngular) {
             return;
