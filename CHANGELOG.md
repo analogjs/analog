@@ -1,3 +1,13 @@
+# [2.1.0-beta.8](https://github.com/analogjs/analog/compare/v2.1.0-beta.7...v2.1.0-beta.8) (2025-11-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** close compilation after each completion ([39b17e9](https://github.com/analogjs/analog/commit/39b17e9f15a04e0595302e9f8fc9e10cdc6a0d68))
+
+### Performance Improvements
+
+- **platform:** skip deps auto-discovery when running tests ([5c79ac6](https://github.com/analogjs/analog/commit/5c79ac6c18de06fe97aca6266cd85f680017a43c))
+
 # [2.1.0-beta.7](https://github.com/analogjs/analog/compare/v2.1.0-beta.6...v2.1.0-beta.7) (2025-11-19)
 
 ### Bug Fixes
