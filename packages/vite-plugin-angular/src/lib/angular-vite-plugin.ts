@@ -480,6 +480,16 @@ export function angular(options?: PluginOptions): Plugin[] {
           return;
         }
 
+        if (pluginOptions.useAngularCompilationAPI) {
+          const isAngular = /(Component|Directive|Pipe|Injectable)\(/.test(
+            code,
+          );
+
+          if (!isAngular) {
+            return;
+          }
+        }
+
         /**
          * Check for .ts extenstions for inline script files being
          * transformed (Astro).

@@ -12,7 +12,9 @@ export function depsPlugin(options?: Options): Plugin[] {
       name: 'analogjs-deps-plugin',
       config() {
         return {
-          esbuild: { exclude: ['**/*.ts', '**/*.js'] },
+          ...(options?.vite?.experimental?.useAngularCompilationAPI
+            ? {}
+            : { esbuild: { exclude: ['**/*.ts', '**/*.js'] } }),
           ssr: {
             noExternal: [
               '@analogjs/**',
