@@ -1,7 +1,7 @@
 import { injectActivatedRoute } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { catchError, of } from 'rxjs';
 
 import { CartService } from '../cart.service';
@@ -13,7 +13,7 @@ import { Product } from '../products';
   template: `
     <h2>Product Details</h2>
 
-    @if (product) {
+    @if (product(); as product) {
       <div>
         <h3>{{ product.name }}</h3>
         <h4>{{ product.price | currency }}</h4>
@@ -28,7 +28,7 @@ export default class ProductDetailsComponent implements OnInit {
   private readonly cartService = inject(CartService);
   private readonly http = inject(HttpClient);
 
-  product: Product | undefined;
+  product = signal<Product | undefined>(undefined);
 
   ngOnInit() {
     // First get the product id from the current route.
@@ -40,9 +40,11 @@ export default class ProductDetailsComponent implements OnInit {
       .pipe(catchError(() => of([])))
       .subscribe((products) => {
         // Find the product that correspond with the id provided in route.
-        this.product = products.find(
+        const product = products.find(
           (product) => product.id === productIdFromRoute,
         );
+
+        this.product.set(product);
       });
   }
 

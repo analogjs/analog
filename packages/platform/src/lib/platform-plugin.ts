@@ -13,6 +13,7 @@ import { injectHTMLPlugin } from './ssr/inject-html-plugin.js';
 import { serverModePlugin } from '../server-mode-plugin.js';
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
+  const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const { ...platformOptions } = {
     ssr: true,
     ...opts,
@@ -45,7 +46,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   return [
     ...viteNitroPlugin(platformOptions, nitroOptions),
     ...(platformOptions.ssr ? [ssrBuildPlugin(), ...injectHTMLPlugin()] : []),
-    ...depsPlugin(),
+    ...(!isTest ? depsPlugin(platformOptions) : []),
     ...routerPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),
     ...angular({

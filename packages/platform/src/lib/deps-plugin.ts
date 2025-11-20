@@ -1,5 +1,6 @@
 import { VERSION } from '@angular/compiler-cli';
-import { Plugin } from 'vite';
+import type { Plugin } from 'vite';
+import * as vite from 'vite';
 import { crawlFrameworkPkgs } from 'vitefu';
 
 import { Options } from './options.js';
@@ -11,8 +12,16 @@ export function depsPlugin(options?: Options): Plugin[] {
     {
       name: 'analogjs-deps-plugin',
       config() {
+        const esbuild = options?.vite?.experimental?.useAngularCompilationAPI
+          ? {}
+          : { exclude: ['**/*.ts', '**/*.js'] };
+
+        const oxc = options?.vite?.experimental?.useAngularCompilationAPI
+          ? {}
+          : { exclude: ['**/*.ts', '**/*.js'] };
+
         return {
-          esbuild: { exclude: ['**/*.ts', '**/*.js'] },
+          ...(vite.rolldownVersion ? { oxc } : { esbuild }),
           ssr: {
             noExternal: [
               '@analogjs/**',

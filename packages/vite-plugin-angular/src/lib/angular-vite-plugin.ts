@@ -8,12 +8,15 @@ import {
   relative,
   resolve,
 } from 'node:path';
+import * as vite from 'vite';
 
 import * as compilerCli from '@angular/compiler-cli';
 import { createRequire } from 'node:module';
 import * as ts from 'typescript';
+import { type createAngularCompilation as createAngularCompilationType } from '@angular/build/private';
 
 import * as ngCompiler from '@angular/compiler';
+import { globSync } from 'tinyglobby';
 import {
   defaultClientConditions,
   ModuleNode,
@@ -23,10 +26,12 @@ import {
   ResolvedConfig,
   ViteDevServer,
 } from 'vite';
-import { globSync } from 'tinyglobby';
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
 import { jitPlugin } from './angular-jit-plugin.js';
-import { createCompilerPlugin } from './compiler-plugin.js';
+import {
+  createCompilerPlugin,
+  createRolldownCompilerPlugin,
+} from './compiler-plugin.js';
 import {
   StyleUrlsResolver,
   TemplateUrlsResolver,
@@ -40,9 +45,10 @@ import {
 
 import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {
-  angularMajor,
+  createAngularCompilation,
   createJitResourceTransformer,
   SourceFileCache,
+  angularFullVersion,
 } from './utils/devkit.js';
 
 const require = createRequire(import.meta.url);
@@ -58,6 +64,15 @@ import {
   replaceFiles,
 } from './plugins/file-replacements.plugin.js';
 import { routerPlugin } from './router-plugin.js';
+import { createHash } from 'node:crypto';
+
+export enum DiagnosticModes {
+  None = 0,
+  Option = 1 << 0,
+  Syntactic = 1 << 1,
+  Semantic = 1 << 2,
+  All = Option | Syntactic | Semantic,
+}
 
 export interface PluginOptions {
   tsconfig?: string | (() => string);
@@ -80,6 +95,9 @@ export interface PluginOptions {
   liveReload?: boolean;
   disableTypeChecking?: boolean;
   fileReplacements?: FileReplacement[];
+  experimental?: {
+    useAngularCompilationAPI?: boolean;
+  };
 }
 
 /**
@@ -120,10 +138,11 @@ export function angular(options?: PluginOptions): Plugin[] {
     liveReload: options?.liveReload ?? false,
     disableTypeChecking: options?.disableTypeChecking ?? true,
     fileReplacements: options?.fileReplacements ?? [],
+    useAngularCompilationAPI:
+      options?.experimental?.useAngularCompilationAPI ?? false,
   };
 
   let resolvedConfig: ResolvedConfig;
-  let resolvedTsConfigPath: string = '';
   // Store config context needed for getTsConfigPath resolution
   let tsConfigResolutionContext: {
     root: string;
@@ -161,8 +180,31 @@ export function angular(options?: PluginOptions): Plugin[] {
   function angularPlugin(): Plugin {
     let isProd = false;
 
-    if (angularMajor < 19 || isTest) {
+    if (angularFullVersion < 190000 || isTest) {
       pluginOptions.liveReload = false;
+    }
+
+    if (pluginOptions.useAngularCompilationAPI) {
+      if (angularFullVersion < 200100) {
+        pluginOptions.useAngularCompilationAPI = false;
+        console.warn(
+          '[@analogjs/vite-plugin-angular]: The Angular Compilation API is only available with Angular v20.1 and later',
+        );
+      }
+
+      if (pluginOptions.liveReload) {
+        pluginOptions.liveReload = false;
+        console.warn(
+          '[@analogjs-vite-plugin-angular]: Live reload is currently not compatible with the Angular Compilation API option',
+        );
+      }
+
+      if (pluginOptions.fileReplacements.length) {
+        pluginOptions.fileReplacements = [];
+        console.warn(
+          '[@analogjs-vite-plugin-angular]: File replacements are currently not compatible with the Angular Compilation API option',
+        );
+      }
     }
 
     return {
@@ -181,39 +223,59 @@ export function angular(options?: PluginOptions): Plugin[] {
         };
 
         // Do a preliminary resolution for esbuild plugin (before configResolved)
-        const preliminaryTsConfigPath = getTsConfigPath(
-          tsConfigResolutionContext.root,
-          pluginOptions.tsconfigGetter(),
-          tsConfigResolutionContext.isProd,
-          isTest,
-          tsConfigResolutionContext.isLib,
-        );
+        const preliminaryTsConfigPath = resolveTsConfigPath();
+
+        const esbuild = pluginOptions.useAngularCompilationAPI
+          ? undefined
+          : (config.esbuild ?? false);
+        const oxc = pluginOptions.useAngularCompilationAPI
+          ? undefined
+          : (config.oxc ?? false);
+
+        const defineOptions = {
+          ngJitMode: 'false',
+          ngI18nClosureMode: 'false',
+          ...(watchMode ? {} : { ngDevMode: 'false' }),
+        };
+
+        const rolldownOptions: vite.DepOptimizationOptions['rolldownOptions'] =
+          {
+            plugins: [
+              createRolldownCompilerPlugin({
+                tsconfig: preliminaryTsConfigPath,
+                sourcemap: !isProd,
+                advancedOptimizations: isProd,
+                jit,
+                incremental: watchMode,
+              }),
+            ],
+          };
+
+        const esbuildOptions: vite.DepOptimizationOptions['esbuildOptions'] = {
+          plugins: [
+            createCompilerPlugin(
+              {
+                tsconfig: preliminaryTsConfigPath,
+                sourcemap: !isProd,
+                advancedOptimizations: isProd,
+                jit,
+                incremental: watchMode,
+              },
+              isTest,
+              !isAstroIntegration,
+            ),
+          ],
+          define: defineOptions,
+        };
 
         return {
-          esbuild: config.esbuild ?? false,
+          ...(vite.rolldownVersion ? { oxc } : { esbuild }),
           optimizeDeps: {
             include: ['rxjs/operators', 'rxjs'],
             exclude: ['@angular/platform-server'],
-            esbuildOptions: {
-              plugins: [
-                createCompilerPlugin(
-                  {
-                    tsconfig: preliminaryTsConfigPath,
-                    sourcemap: !isProd,
-                    advancedOptimizations: isProd,
-                    jit,
-                    incremental: watchMode,
-                  },
-                  isTest,
-                  !isAstroIntegration,
-                ),
-              ],
-              define: {
-                ngJitMode: 'false',
-                ngI18nClosureMode: 'false',
-                ...(watchMode ? {} : { ngDevMode: 'false' }),
-              },
-            },
+            ...(vite.rolldownVersion
+              ? { rolldownOptions }
+              : { esbuildOptions }),
           },
           resolve: {
             conditions: [
@@ -226,16 +288,9 @@ export function angular(options?: PluginOptions): Plugin[] {
       configResolved(config) {
         resolvedConfig = config;
 
-        // resolve the tsconfig path after config is fully resolved
-        if (tsConfigResolutionContext) {
-          const tsconfigValue = pluginOptions.tsconfigGetter();
-          resolvedTsConfigPath = getTsConfigPath(
-            tsConfigResolutionContext.root,
-            tsconfigValue,
-            tsConfigResolutionContext.isProd,
-            isTest,
-            tsConfigResolutionContext.isLib,
-          );
+        if (pluginOptions.useAngularCompilationAPI) {
+          externalComponentStyles = new Map();
+          inlineComponentStyles = new Map();
         }
 
         if (isTest) {
@@ -450,6 +505,15 @@ export function angular(options?: PluginOptions): Plugin[] {
           !(options?.transformFilter(code, id) ?? true)
         ) {
           return;
+        }
+
+        if (pluginOptions.useAngularCompilationAPI) {
+          const isAngular =
+            /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
+
+          if (!isAngular) {
+            return;
+          }
         }
 
         /**
@@ -672,9 +736,132 @@ export function angular(options?: PluginOptions): Plugin[] {
     return resolvedPath;
   }
 
+  function resolveTsConfigPath() {
+    const tsconfigValue = pluginOptions.tsconfigGetter();
+
+    return getTsConfigPath(
+      tsConfigResolutionContext!.root,
+      tsconfigValue,
+      tsConfigResolutionContext!.isProd,
+      isTest,
+      tsConfigResolutionContext!.isLib,
+    );
+  }
+
+  async function performAngularCompilation(config: ResolvedConfig) {
+    const compilation = await (
+      createAngularCompilation as typeof createAngularCompilationType
+    )(!!pluginOptions.jit, false);
+
+    const resolvedTsConfigPath = resolveTsConfigPath();
+    const compilationResult = await compilation.initialize(
+      resolvedTsConfigPath,
+      {
+        async transformStylesheet(
+          data,
+          containingFile,
+          resourceFile,
+          order,
+          className,
+        ) {
+          if (pluginOptions.liveReload) {
+            const id = createHash('sha256')
+              .update(containingFile)
+              .update(className as string)
+              .update(String(order))
+              .update(data)
+              .digest('hex');
+            const filename = id + '.' + pluginOptions.inlineStylesExtension;
+            inlineComponentStyles!.set(filename, data);
+            return filename;
+          }
+
+          const filename =
+            resourceFile ??
+            containingFile.replace('.ts', `.${options?.inlineStylesExtension}`);
+
+          let stylesheetResult;
+
+          try {
+            stylesheetResult = await preprocessCSS(
+              data,
+              `${filename}?direct`,
+              resolvedConfig,
+            );
+          } catch (e) {
+            console.error(`${e}`);
+          }
+
+          return stylesheetResult?.code || '';
+        },
+        processWebWorker(workerFile, containingFile) {
+          return '';
+        },
+      },
+      (tsCompilerOptions) => {
+        if (pluginOptions.liveReload && watchMode) {
+          tsCompilerOptions['_enableHmr'] = true;
+          tsCompilerOptions['externalRuntimeStyles'] = true;
+          // Workaround for https://github.com/angular/angular/issues/59310
+          // Force extra instructions to be generated for HMR w/defer
+          tsCompilerOptions['supportTestBed'] = true;
+        }
+
+        if (tsCompilerOptions.compilationMode === 'partial') {
+          // These options can't be false in partial mode
+          tsCompilerOptions['supportTestBed'] = true;
+          tsCompilerOptions['supportJitMode'] = true;
+        }
+
+        if (!isTest && config.build?.lib) {
+          tsCompilerOptions['declaration'] = true;
+          tsCompilerOptions['declarationMap'] = watchMode;
+          tsCompilerOptions['inlineSources'] = true;
+        }
+
+        if (isTest) {
+          // Allow `TestBed.overrideXXX()` APIs.
+          tsCompilerOptions['supportTestBed'] = true;
+        }
+
+        return tsCompilerOptions;
+      },
+    );
+
+    compilationResult.externalStylesheets?.forEach((value, key) => {
+      externalComponentStyles?.set(`${value}.css`, key);
+    });
+
+    const diagnostics = await compilation.diagnoseFiles(
+      pluginOptions.disableTypeChecking
+        ? DiagnosticModes.All & ~DiagnosticModes.Semantic
+        : DiagnosticModes.All,
+    );
+
+    const errors = diagnostics.errors?.length ? diagnostics.errors : [];
+    const warnings = diagnostics.warnings?.length ? diagnostics.warnings : [];
+
+    for (const file of await compilation.emitAffectedFiles()) {
+      outputFiles.set(file.filename, {
+        content: file.contents,
+        dependencies: [],
+        errors: errors.map((error) => error.text || ''),
+        warnings: warnings.map((warning) => warning.text || ''),
+      });
+    }
+    compilation.close?.();
+  }
+
   async function performCompilation(config: ResolvedConfig, ids?: string[]) {
+    if (pluginOptions.useAngularCompilationAPI) {
+      await performAngularCompilation(config);
+      return { host: {} };
+    }
+
     const isProd = config.mode === 'production';
     const includeFiles = findIncludes();
+
+    const resolvedTsConfigPath = resolveTsConfigPath();
 
     let { options: tsCompilerOptions, rootNames } =
       compilerCli.readConfiguration(resolvedTsConfigPath, {

@@ -8,9 +8,14 @@ const require = createRequire(import.meta.url);
 const angularMajor = Number(VERSION.major);
 const angularMinor = Number(VERSION.minor);
 const angularPatch = Number(VERSION.patch);
+const padVersion = (version: number) => String(version).padStart(2, '0');
+const angularFullVersion = Number(
+  `${angularMajor}${padVersion(angularMinor)}${padVersion(angularPatch)}`,
+);
 let sourceFileCache: any;
 let cjt: Function;
 let jt: any;
+let createAngularCompilation: Function;
 
 if (angularMajor < 17) {
   throw new Error('AnalogJS is not compatible with Angular v16 and lower');
@@ -39,11 +44,13 @@ if (angularMajor < 17) {
     createJitResourceTransformer,
     JavaScriptTransformer,
     SourceFileCache,
+    createAngularCompilation: createAngularCompilationFn,
   } = require('@angular/build/private');
 
   sourceFileCache = SourceFileCache;
   cjt = createJitResourceTransformer;
   jt = JavaScriptTransformer;
+  createAngularCompilation = createAngularCompilationFn;
 }
 
 export {
@@ -54,4 +61,6 @@ export {
   angularMajor,
   angularMinor,
   angularPatch,
+  createAngularCompilation,
+  angularFullVersion,
 };

@@ -28,7 +28,4 @@ export default defineConfig(({ mode }) => ({
     include: ['**/*.spec.ts'],
     reporters: ['default'],
   },
-  define: {
-    'import.meta.vitest': mode !== 'production',
-  },
 }));

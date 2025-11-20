@@ -21,7 +21,7 @@ export class FormAction {
   private route = inject(ActivatedRoute);
   private path = this._getPath();
 
-  submitted($event: { target: HTMLFormElement } & Event) {
+  submitted($event: any) {
     $event.preventDefault();
 
     this.state.emit('submitting');

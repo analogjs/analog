@@ -94,13 +94,24 @@ export default defineConfig(({ mode }) => ({
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
   },
-  define: {
-    'import.meta.vitest': mode !== 'production',
-  },
 }));
 ```
 
 Next, define a `src/test-setup.ts` file to setup the `TestBed`:
+
+### Zoneless setup
+
+As of Angular v21, `Zoneless` change detection is the default for new projects.
+
+Use the following setup:
+
+```ts
+import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-snapshots';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+setupTestBed();
+```
 
 ### Zone.js setup
 
@@ -109,43 +120,11 @@ If you are using `Zone.js` for change detection, import the `setup-zone` script.
 ```ts
 import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-zone';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
-
-getTestBed().initTestEnvironment(
-  BrowserTestingModule,
-  platformBrowserTesting(),
-);
-```
-
-### Zoneless setup
-
-If you are using `Zoneless` change detection, use the following setup:
-
-```ts
-import '@angular/compiler';
-import '@analogjs/vitest-angular/setup-snapshots';
-
-import { provideZonelessChangeDetection, NgModule } from '@angular/core';
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
-
-@NgModule({
-  providers: [provideZonelessChangeDetection()],
-})
-export class ZonelessTestModule {}
-
-getTestBed().initTestEnvironment(
-  [BrowserTestingModule, ZonelessTestModule],
-  platformBrowserTesting(),
-);
+setupTestBed({
+  zoneless: false,
+});
 ```
 
 Next, update the `test` target in the `angular.json` to use the `@analogjs/vitest-angular:test` builder:
@@ -251,9 +230,6 @@ export default defineConfig(({ mode }) => ({
       provider: playwright(),
       instances: [{ browser: 'chromium' }],
     },
-  },
-  define: {
-    'import.meta.vitest': mode !== 'production',
   },
 }));
 ```

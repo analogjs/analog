@@ -1,5 +1,5 @@
 import type { Plugin, UserConfig } from 'vite';
-
+import * as vite from 'vite';
 import { JavaScriptTransformer } from './utils/devkit.js';
 
 export function buildOptimizerPlugin({
@@ -36,7 +36,7 @@ export function buildOptimizerPlugin({
               ngServerMode: `${!!userConfig.build?.ssr}`,
             }
           : {},
-        esbuild: {
+        [vite.rolldownVersion ? 'oxc' : 'esbuild']: {
           define: isProd
             ? {
                 ngDevMode: 'false',

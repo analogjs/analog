@@ -11,7 +11,8 @@
     "sourceMap": false,
     "inlineSourceMap": true,
     "inlineSources": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "moduleResolution": "bundler"
   },
   "files": [],
   "include": [],
