@@ -1,3 +1,25 @@
+# [2.1.0](https://github.com/analogjs/analog/compare/v2.0.5...v2.1.0) (2025-11-20)
+
+### Bug Fixes
+
+- **content:** stripped filename to match filename also for additionalContentDirs ([#1962](https://github.com/analogjs/analog/issues/1962)) ([cdacae0](https://github.com/analogjs/analog/commit/cdacae056d0de3cadec8e85bffe0812a6067230f))
+- **create-analog:** bump TypeScript to 5.9.x ([7a94868](https://github.com/analogjs/analog/commit/7a9486896e4ab5b120d0f42f6896da94518347ae))
+- **platform:** enable esbuild with Angular Compilation API ([e91752e](https://github.com/analogjs/analog/commit/e91752e57286be5eee83b7ef067e69aaf16e14c6))
+- **vite-plugin-angular:** close compilation after each completion ([39b17e9](https://github.com/analogjs/analog/commit/39b17e9f15a04e0595302e9f8fc9e10cdc6a0d68))
+- **vite-plugin-angular:** loosen checks on angular compilation ([e183cd2](https://github.com/analogjs/analog/commit/e183cd29e5a8e7d5b98d76c6fe898d6d8e820402))
+- **vite-plugin-angular:** resolve tsconfig dynamically at the correct place ([#1959](https://github.com/analogjs/analog/issues/1959)) ([04dd8f3](https://github.com/analogjs/analog/commit/04dd8f3bbc5f24204eb6f73c1b3db6ea27ac6537))
+
+### Features
+
+- add support for Angular v21 RCs ([#1956](https://github.com/analogjs/analog/issues/1956)) ([4b9dcc5](https://github.com/analogjs/analog/commit/4b9dcc5c066ac5d843de51a0e2626675b66356a5))
+- add support for Angular v21 release ([#1963](https://github.com/analogjs/analog/issues/1963)) ([755dac2](https://github.com/analogjs/analog/commit/755dac2be40130ea8dbeccaeca098271bf673b46))
+- **vite-plugin-angular:** add support for rolldown-vite plugins ([#1964](https://github.com/analogjs/analog/issues/1964)) ([729d76e](https://github.com/analogjs/analog/commit/729d76eb7db2599b9ef6e31aa8d2ad876c3cbedc))
+- **vite-plugin-angular:** introduce support for Angular Compilation API ([#1957](https://github.com/analogjs/analog/issues/1957)) ([51cf433](https://github.com/analogjs/analog/commit/51cf433524ee0dff7354bdb35ac6d0abc7429921))
+
+### Performance Improvements
+
+- **platform:** skip deps auto-discovery when running tests ([5c79ac6](https://github.com/analogjs/analog/commit/5c79ac6c18de06fe97aca6266cd85f680017a43c))
+
 # [2.1.0-beta.10](https://github.com/analogjs/analog/compare/v2.1.0-beta.9...v2.1.0-beta.10) (2025-11-20)
 
 ### Features
