@@ -1,3 +1,9 @@
+## [2.1.1-beta.1](https://github.com/analogjs/analog/compare/v2.1.0...v2.1.1-beta.1) (2025-11-20)
+
+### Bug Fixes
+
+- **nx-plugin:** adjust migrations to Analog for Angular v21 ([#1968](https://github.com/analogjs/analog/issues/1968)) ([eb96db6](https://github.com/analogjs/analog/commit/eb96db6d124c896edf92717b3639c6e5993029cb))
+
 # [2.1.0](https://github.com/analogjs/analog/compare/v2.0.5...v2.1.0) (2025-11-20)
 
 ### Bug Fixes
