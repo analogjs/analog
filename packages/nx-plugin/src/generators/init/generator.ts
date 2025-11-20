@@ -74,7 +74,11 @@ export async function setupAnalogGenerator(
   updateAppTsConfig(tree, options);
   updatePackageJson(tree, options);
   updateIndex(tree, options);
-  updateMain(tree, options);
+
+  if (majorAngularVersion < 21) {
+    updateMain(tree, options);
+  }
+
   updateGitIgnore(tree);
 
   addFiles(tree, options, majorAngularVersion);
