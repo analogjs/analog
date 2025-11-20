@@ -1,3 +1,9 @@
+# [2.1.0-beta.10](https://github.com/analogjs/analog/compare/v2.1.0-beta.9...v2.1.0-beta.10) (2025-11-20)
+
+### Features
+
+- **vite-plugin-angular:** add support for rolldown-vite plugins ([#1964](https://github.com/analogjs/analog/issues/1964)) ([729d76e](https://github.com/analogjs/analog/commit/729d76eb7db2599b9ef6e31aa8d2ad876c3cbedc))
+
 # [2.1.0-beta.9](https://github.com/analogjs/analog/compare/v2.1.0-beta.8...v2.1.0-beta.9) (2025-11-19)
 
 ### Bug Fixes
