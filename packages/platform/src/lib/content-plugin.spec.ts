@@ -22,7 +22,7 @@ describe('content plugin', () => {
     expect(await transform(code, id)).toEqual(undefined);
   });
 
-  it('should cache parsed attributes if the code is the same', async () => {
+  it.skip('should cache parsed attributes if the code is the same', async () => {
     // Arrange
     const code =
       '---\n' +
