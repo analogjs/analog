@@ -1,3 +1,9 @@
+## [2.1.1-beta.2](https://github.com/analogjs/analog/compare/v2.1.1-beta.1...v2.1.1-beta.2) (2025-11-23)
+
+### Bug Fixes
+
+- **nx-plugin:** add @angular-devkit/core,rxjs to install ([#1971](https://github.com/analogjs/analog/issues/1971)) ([6247409](https://github.com/analogjs/analog/commit/62474099af210709cf0e05e0bca2514e12475d0a))
+
 ## [2.1.1-beta.1](https://github.com/analogjs/analog/compare/v2.1.0...v2.1.1-beta.1) (2025-11-20)
 
 ### Bug Fixes
