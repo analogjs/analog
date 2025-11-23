@@ -1,6 +1,6 @@
 import {
   ApplicationConfig,
-  <% if (majorAngularVersion < 21) { %>provideZoneChangeDetection,<% } %>
+  <% if (majorAngularVersion < 21) { %>provideZonelessChangeDetection,<% } %>
   <% if (majorAngularVersion > 19) { %>provideBrowserGlobalErrorListeners,<% } %>
 } from '@angular/core';
 import {
@@ -13,7 +13,7 @@ import { provideFileRouter, requestContextInterceptor } from '@analogjs/router';
 
 export const appConfig: ApplicationConfig = {
   providers: [<% if (majorAngularVersion > 19) { %>provideBrowserGlobalErrorListeners(),<% } %>
-    <% if (majorAngularVersion < 21) { %>provideZoneChangeDetection({ eventCoalescing: true }),<% } %>
+    <% if (majorAngularVersion < 21) { %>provideZonelessChangeDetection(),<% } %>
     provideFileRouter(),
     provideClientHydration(),
     provideHttpClient(
