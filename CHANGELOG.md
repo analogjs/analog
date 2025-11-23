@@ -1,3 +1,9 @@
+## [2.1.1-beta.3](https://github.com/analogjs/analog/compare/v2.1.1-beta.2...v2.1.1-beta.3) (2025-11-23)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** use virtual files for SSR/client renderers ([#1972](https://github.com/analogjs/analog/issues/1972)) ([2065eea](https://github.com/analogjs/analog/commit/2065eeaa9adc63143ae3636df80851f46e417257))
+
 ## [2.1.1-beta.2](https://github.com/analogjs/analog/compare/v2.1.1-beta.1...v2.1.1-beta.2) (2025-11-23)
 
 ### Bug Fixes
