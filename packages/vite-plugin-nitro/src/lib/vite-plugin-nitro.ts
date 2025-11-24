@@ -26,7 +26,7 @@ import {
   ssrRenderer,
   clientRenderer,
   apiMiddleware,
-} from './runtime/renderers.js';
+} from './utils/renderers.js';
 
 const isWindows = platform() === 'win32';
 const filePrefix = isWindows ? 'file:///' : '';
@@ -195,7 +195,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         const indexEntry = normalizePath(
           resolve(clientOutputPath, 'index.html'),
         );
-
         nitroConfig.alias = {
           '#analog/index': indexEntry,
         };
@@ -361,6 +360,24 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               if (options?.ssr || nitroConfig.prerender?.routes?.length) {
                 builds.push(builder.build(builder.environments['ssr']));
               }
+
+              let ssrEntryPath = resolve(
+                options?.ssrBuildDir ||
+                  resolve(workspaceRoot, 'dist', rootDir, `ssr`),
+                `main.server${filePrefix ? '.js' : ''}`,
+              );
+
+              // add check for main.server.mjs fallback on Windows
+              if (filePrefix && !existsSync(ssrEntryPath)) {
+                ssrEntryPath = ssrEntryPath.replace('.js', '.mjs');
+              }
+
+              const ssrEntry = normalizePath(filePrefix + ssrEntryPath);
+
+              nitroConfig.alias = {
+                ...nitroConfig.alias,
+                '#analog/ssr': ssrEntry,
+              };
 
               await Promise.all(builds);
               await buildServer(options, nitroConfig);
