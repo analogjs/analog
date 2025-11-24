@@ -1,3 +1,9 @@
+## [2.1.1-beta.4](https://github.com/analogjs/analog/compare/v2.1.1-beta.3...v2.1.1-beta.4) (2025-11-24)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** add SSR renderer alias to env API builds ([#1974](https://github.com/analogjs/analog/issues/1974)) ([5d6577c](https://github.com/analogjs/analog/commit/5d6577c37eb3ddf43092d51453eccd4ebdbdba29))
+
 ## [2.1.1-beta.3](https://github.com/analogjs/analog/compare/v2.1.1-beta.2...v2.1.1-beta.3) (2025-11-23)
 
 ### Bug Fixes
