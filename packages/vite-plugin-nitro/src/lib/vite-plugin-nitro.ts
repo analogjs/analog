@@ -179,6 +179,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           nitroConfig = withCloudflareOutput(nitroConfig);
         }
 
+        if (
+          isNetlifyPreset(buildPreset) &&
+          rootDir === '.' &&
+          !existsSync(resolve(workspaceRoot, 'netlify.toml'))
+        ) {
+          nitroConfig = withNetlifyOutputAPI(nitroConfig, workspaceRoot);
+        }
+
         if (isFirebaseAppHosting()) {
           nitroConfig = withAppHostingOutput(nitroConfig);
         }
@@ -594,3 +602,18 @@ const withAppHostingOutput = (nitroConfig: NitroConfig) => {
     },
   };
 };
+
+const isNetlifyPreset = (buildPreset: string | undefined) =>
+  process.env['NETLIFY'] ||
+  (buildPreset && buildPreset.toLowerCase().includes('netlify'));
+
+const withNetlifyOutputAPI = (
+  nitroConfig: NitroConfig | undefined,
+  workspaceRoot: string,
+) => ({
+  ...nitroConfig,
+  output: {
+    ...nitroConfig?.output,
+    dir: normalizePath(resolve(workspaceRoot, 'netlify/functions')),
+  },
+});
