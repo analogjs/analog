@@ -54,6 +54,7 @@ stats.html
 
 # Nitro
 .nitro
+.output
 /migrations.json
 
 /.env
@@ -69,3 +70,4 @@ tmpanalogapp*
 vite.config.*.timestamp*
 .vite-inspect
 vitest.config.*.timestamp*
+.analog

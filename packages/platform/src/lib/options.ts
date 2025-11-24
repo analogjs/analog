@@ -93,6 +93,10 @@ export interface Options {
    * File replacements
    */
   fileReplacements?: PluginOptions['fileReplacements'];
+  /**
+   * Output final build artifacts to the Nitro default .output directory
+   */
+  useNitroOutputDir?: boolean;
 }
 
 export { PrerenderContentDir, PrerenderContentFile };

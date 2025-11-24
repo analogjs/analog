@@ -2,7 +2,7 @@ import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
 import { App, toNodeListener } from 'h3';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { mergeConfig, normalizePath } from 'vite';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { existsSync } from 'node:fs';
@@ -109,16 +109,23 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               normalizePath(`${workspaceRoot}${dir}`),
             ),
           ],
-          output: {
-            dir: normalizePath(
-              resolve(workspaceRoot, 'dist', rootDir, 'analog'),
-            ),
-            publicDir: normalizePath(
-              resolve(workspaceRoot, 'dist', rootDir, 'analog/public'),
-            ),
-          },
+          output: options?.useNitroOutputDir
+            ? undefined
+            : {
+                dir: normalizePath(
+                  resolve(workspaceRoot, 'dist', rootDir, 'analog'),
+                ),
+                publicDir: normalizePath(
+                  resolve(workspaceRoot, 'dist', rootDir, 'analog/public'),
+                ),
+              },
           buildDir: normalizePath(
-            resolve(workspaceRoot, 'dist', rootDir, '.nitro'),
+            resolve(
+              workspaceRoot,
+              options?.useNitroOutputDir ? '.analog' : 'dist',
+              rootDir,
+              '.nitro',
+            ),
           ),
           typescript: {
             generateTsConfig: false,
@@ -171,11 +178,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           },
         };
 
-        if (isVercelPreset(buildPreset)) {
+        if (!options?.useNitroOutputDir && isVercelPreset(buildPreset)) {
           nitroConfig = withVercelOutputAPI(nitroConfig, workspaceRoot);
         }
 
-        if (isCloudflarePreset(buildPreset)) {
+        if (!options?.useNitroOutputDir && isCloudflarePreset(buildPreset)) {
           nitroConfig = withCloudflareOutput(nitroConfig);
         }
 
@@ -187,8 +194,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           // store the client output path for the SSR build config
           clientOutputPath = resolve(
             workspaceRoot,
+            options?.useNitroOutputDir ? '.analog' : 'dist',
             rootDir,
-            config.build?.outDir || 'dist/client',
+            config.build?.outDir || 'client',
           );
         }
 
@@ -330,7 +338,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               build: {
                 outDir:
                   config?.build?.outDir ||
-                  resolve(workspaceRoot, 'dist', rootDir, 'client'),
+                  resolve(
+                    workspaceRoot,
+                    options?.useNitroOutputDir ? '.analog' : 'dist',
+                    rootDir,
+                    'client',
+                  ),
               },
             },
             ssr: {
@@ -347,7 +360,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 },
                 outDir:
                   options?.ssrBuildDir ||
-                  resolve(workspaceRoot, 'dist', rootDir, 'ssr'),
+                  resolve(
+                    workspaceRoot,
+                    options?.useNitroOutputDir ? '.analog' : 'dist',
+                    rootDir,
+                    'ssr',
+                  ),
               },
             },
           },
@@ -363,7 +381,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
               let ssrEntryPath = resolve(
                 options?.ssrBuildDir ||
-                  resolve(workspaceRoot, 'dist', rootDir, `ssr`),
+                  resolve(
+                    workspaceRoot,
+                    options?.useNitroOutputDir ? '.analog' : 'dist',
+                    rootDir,
+                    `ssr`,
+                  ),
                 `main.server${filePrefix ? '.js' : ''}`,
               );
 
@@ -480,7 +503,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
           let ssrEntryPath = resolve(
             options?.ssrBuildDir ||
-              resolve(workspaceRoot, 'dist', rootDir, `ssr`),
+              resolve(
+                workspaceRoot,
+                options?.useNitroOutputDir ? '.analog' : 'dist',
+                rootDir,
+                `ssr`,
+              ),
             `main.server${filePrefix ? '.js' : ''}`,
           );
 

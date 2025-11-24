@@ -54,6 +54,7 @@ export default defineConfig(({ mode }) => {
         additionalPagesDirs: ['/libs/shared/feature'],
         additionalAPIDirs: ['/libs/shared/feature/src/api'],
         fileReplacements,
+        useNitroOutputDir: false,
         prerender: {
           routes: [
             '/',

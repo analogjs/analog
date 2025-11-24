@@ -17,7 +17,13 @@ export async function buildSSRApp(config: UserConfig, options?: Options) {
           resolve(workspaceRoot, rootDir, `${sourceRoot}/main.server.ts`),
       },
       outDir:
-        options?.ssrBuildDir || resolve(workspaceRoot, 'dist', rootDir, 'ssr'),
+        options?.ssrBuildDir ||
+        resolve(
+          workspaceRoot,
+          options?.useNitroOutputDir ? '.analog' : 'dist',
+          rootDir,
+          'ssr',
+        ),
     },
   });
 

@@ -38,6 +38,10 @@ export interface Options {
    * for API routes.
    */
   useAPIMiddleware?: boolean;
+  /**
+   * Output final build artifacts to the Nitro default .output directory
+   */
+  useNitroOutputDir?: boolean;
 }
 
 export interface PrerenderOptions {
