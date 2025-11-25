@@ -1,3 +1,15 @@
+## [2.1.1](https://github.com/analogjs/analog/compare/v2.1.0...v2.1.1) (2025-11-25)
+
+### Bug Fixes
+
+- **create-analog:** update blog template to zoneless ([#1977](https://github.com/analogjs/analog/issues/1977)) ([a15835f](https://github.com/analogjs/analog/commit/a15835fd3327fc4676a09347cf1d6d711d5619c7))
+- **nx-plugin:** add @angular-devkit/core,rxjs to install ([#1971](https://github.com/analogjs/analog/issues/1971)) ([6247409](https://github.com/analogjs/analog/commit/62474099af210709cf0e05e0bca2514e12475d0a))
+- **nx-plugin:** adjust migrations to Analog for Angular v21 ([#1968](https://github.com/analogjs/analog/issues/1968)) ([eb96db6](https://github.com/analogjs/analog/commit/eb96db6d124c896edf92717b3639c6e5993029cb))
+- **vite-plugin-angular:** allow opt-in for Angular CDK transforms ([#1978](https://github.com/analogjs/analog/issues/1978)) ([72abf2e](https://github.com/analogjs/analog/commit/72abf2e6b3933839d31f464f790468db39376300))
+- **vite-plugin-nitro:** add SSR renderer alias to env API builds ([#1974](https://github.com/analogjs/analog/issues/1974)) ([5d6577c](https://github.com/analogjs/analog/commit/5d6577c37eb3ddf43092d51453eccd4ebdbdba29))
+- **vite-plugin-nitro:** configure default Netlify functions output directory ([#1975](https://github.com/analogjs/analog/issues/1975)) ([5600b77](https://github.com/analogjs/analog/commit/5600b77d9424c34988acc96f66a4e71f7b1dd143))
+- **vite-plugin-nitro:** use virtual files for SSR/client renderers ([#1972](https://github.com/analogjs/analog/issues/1972)) ([2065eea](https://github.com/analogjs/analog/commit/2065eeaa9adc63143ae3636df80851f46e417257))
+
 ## [2.1.1-beta.7](https://github.com/analogjs/analog/compare/v2.1.1-beta.6...v2.1.1-beta.7) (2025-11-25)
 
 ### Bug Fixes
