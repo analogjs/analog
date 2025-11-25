@@ -8,6 +8,13 @@ export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
     plugins: [angular()],
+    optimizeDeps: {
+      include: ['@angular/cdk/testing/testbed'],
+      exclude: ['@angular/cdk/testing'],
+    },
+    ssr: {
+      noExternal: [/cdk\/fesm/],
+    },
     test: {
       reporters: ['default'],
       globals: true,

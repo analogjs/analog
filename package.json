@@ -172,6 +172,7 @@
     "ng-packagr": "21.0.0",
     "nitropack": "^2.11.0",
     "nx": "22.0.2",
+    "@oxc-project/runtime": "^0.99.0",
     "playwright": "^1.49.1",
     "postcss": "^8.4.21",
     "postcss-import": "~16.1.1",
