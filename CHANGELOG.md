@@ -1,3 +1,9 @@
+## [2.1.1-beta.5](https://github.com/analogjs/analog/compare/v2.1.1-beta.4...v2.1.1-beta.5) (2025-11-25)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** configure default Netlify functions output directory ([#1975](https://github.com/analogjs/analog/issues/1975)) ([5600b77](https://github.com/analogjs/analog/commit/5600b77d9424c34988acc96f66a4e71f7b1dd143))
+
 ## [2.1.1-beta.4](https://github.com/analogjs/analog/compare/v2.1.1-beta.3...v2.1.1-beta.4) (2025-11-24)
 
 ### Bug Fixes
