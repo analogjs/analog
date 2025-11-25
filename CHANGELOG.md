@@ -1,3 +1,9 @@
+## [2.1.1-beta.6](https://github.com/analogjs/analog/compare/v2.1.1-beta.5...v2.1.1-beta.6) (2025-11-25)
+
+### Bug Fixes
+
+- **create-analog:** update blog template to zoneless ([#1977](https://github.com/analogjs/analog/issues/1977)) ([a15835f](https://github.com/analogjs/analog/commit/a15835fd3327fc4676a09347cf1d6d711d5619c7))
+
 ## [2.1.1-beta.5](https://github.com/analogjs/analog/compare/v2.1.1-beta.4...v2.1.1-beta.5) (2025-11-25)
 
 ### Bug Fixes
