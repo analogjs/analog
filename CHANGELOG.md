@@ -1,3 +1,9 @@
+## [2.1.1-beta.7](https://github.com/analogjs/analog/compare/v2.1.1-beta.6...v2.1.1-beta.7) (2025-11-25)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** allow opt-in for Angular CDK transforms ([#1978](https://github.com/analogjs/analog/issues/1978)) ([72abf2e](https://github.com/analogjs/analog/commit/72abf2e6b3933839d31f464f790468db39376300))
+
 ## [2.1.1-beta.6](https://github.com/analogjs/analog/compare/v2.1.1-beta.5...v2.1.1-beta.6) (2025-11-25)
 
 ### Bug Fixes
