@@ -5,7 +5,7 @@ import { mergeConfig, normalizePath } from 'vite';
 import { dirname, join, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 
 import { buildServer } from './build-server.js';
 import { buildSSRApp } from './build-ssr.js';
@@ -22,6 +22,11 @@ import { buildSitemap } from './build-sitemap.js';
 import { devServerPlugin } from './plugins/dev-server-plugin.js';
 import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-files.js';
 import { IncomingMessage, ServerResponse } from 'node:http';
+import {
+  ssrRenderer,
+  clientRenderer,
+  apiMiddleware,
+} from './utils/renderers.js';
 
 const isWindows = platform() === 'win32';
 const filePrefix = isWindows ? 'file:///' : '';
@@ -53,6 +58,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
     string,
     PrerenderSitemapConfig | (() => PrerenderSitemapConfig)
   > = {};
+  let rootDir = workspaceRoot;
 
   return [
     (options?.ssr
@@ -71,7 +77,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         config = userConfig;
         isTest = isTest ? isTest : mode === 'test';
 
-        const rootDir = relative(workspaceRoot, config.root || '.') || '.';
+        rootDir = relative(workspaceRoot, config.root || '.') || '.';
         hasAPIDir = existsSync(
           resolve(
             workspaceRoot,
@@ -90,23 +96,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           additionalPagesDirs: options?.additionalPagesDirs,
           hasAPIDir,
         });
-
-        const ssrEntryPath = resolve(
-          options?.ssrBuildDir ||
-            resolve(workspaceRoot, 'dist', rootDir, `ssr`),
-          `main.server${filePrefix ? '.js' : ''}`,
-        );
-        const ssrEntry = normalizePath(filePrefix + ssrEntryPath);
-        const rendererEntry =
-          filePrefix +
-          normalizePath(
-            join(
-              __dirname,
-              `runtime/renderer${!options?.ssr ? '-client' : ''}${
-                filePrefix ? '.mjs' : ''
-              }`,
-            ),
-          );
 
         nitroConfig = {
           rootDir,
@@ -175,36 +164,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                     proxy: { to: '/**' },
                   },
                 },
-          virtual: hasAPIDir
-            ? undefined
-            : {
-                '#ANALOG_API_MIDDLEWARE': `
-        import { eventHandler, proxyRequest } from 'h3';
-        import { useRuntimeConfig } from '#imports';
-
-        export default eventHandler(async (event) => {
-          const prefix = useRuntimeConfig().prefix;
-          const apiPrefix = \`\${prefix}/\${useRuntimeConfig().apiPrefix}\`;
-
-          if (event.node.req.url?.startsWith(apiPrefix)) {
-            const reqUrl = event.node.req.url?.replace(apiPrefix, '');
-
-            if (
-              event.node.req.method === 'GET' &&
-              // in the case of XML routes, we want to proxy the request so that nitro gets the correct headers
-              // and can render the XML correctly as a static asset
-              !event.node.req.url?.endsWith('.xml')
-            ) {
-              return $fetch(reqUrl, { headers: event.node.req.headers });
-            }
-
-            return proxyRequest(event, reqUrl, {
-              // @ts-ignore
-              fetch: $fetch.native,
-            });
-          }
-        });`,
-              },
+          virtual: {
+            '#ANALOG_SSR_RENDERER': ssrRenderer,
+            '#ANALOG_CLIENT_RENDERER': clientRenderer,
+            ...(hasAPIDir ? {} : { '#ANALOG_API_MIDDLEWARE': apiMiddleware }),
+          },
         };
 
         if (isVercelPreset(buildPreset)) {
@@ -213,6 +177,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         if (isCloudflarePreset(buildPreset)) {
           nitroConfig = withCloudflareOutput(nitroConfig);
+        }
+
+        if (
+          isNetlifyPreset(buildPreset) &&
+          rootDir === '.' &&
+          !existsSync(resolve(workspaceRoot, 'netlify.toml'))
+        ) {
+          nitroConfig = withNetlifyOutputAPI(nitroConfig, workspaceRoot);
         }
 
         if (isFirebaseAppHosting()) {
@@ -231,15 +203,15 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         const indexEntry = normalizePath(
           resolve(clientOutputPath, 'index.html'),
         );
-
         nitroConfig.alias = {
-          '#analog/ssr': ssrEntry,
           '#analog/index': indexEntry,
         };
 
         if (isBuild) {
           nitroConfig.publicAssets = [{ dir: clientOutputPath }];
-          nitroConfig.renderer = rendererEntry;
+          nitroConfig.renderer = options?.ssr
+            ? '#ANALOG_SSR_RENDERER'
+            : '#ANALOG_CLIENT_RENDERER';
 
           if (isEmptyPrerenderRoutes(options)) {
             nitroConfig.prerender = {};
@@ -326,45 +298,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
           if (ssrBuild) {
             if (isWindows) {
-              const indexContents = readFileSync(
-                normalizePath(join(clientOutputPath, 'index.html')),
-                'utf-8',
-              );
-
-              // Write out the renderer manually because
-              // Windows doesn't resolve the aliases
-              // correctly in its native environment
-              writeFileSync(
-                normalizePath(rendererEntry.replace(filePrefix, '')),
-                `
-              /**
-               * This file is shipped as ESM for Windows support,
-               * as it won't resolve the renderer.ts file correctly in node.
-               */
-              import { eventHandler, getResponseHeader } from 'h3';
-              
-              // @ts-ignore
-              import renderer from '${ssrEntry}';
-              // @ts-ignore
-              const template = \`${indexContents}\`;
-
-              export default eventHandler(async (event) => {
-                const noSSR = getResponseHeader(event, 'x-analog-no-ssr');
-
-                if (noSSR === 'true') {
-                  return template;
-                }
-              
-                const html = await renderer(event.node.req.url, template, {
-                  req: event.node.req,
-                  res: event.node.res,
-                });
-
-                return html;
-              });
-              `,
-              );
-
               nitroConfig.externals = {
                 inline: ['std-env'],
               };
@@ -435,6 +368,24 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               if (options?.ssr || nitroConfig.prerender?.routes?.length) {
                 builds.push(builder.build(builder.environments['ssr']));
               }
+
+              let ssrEntryPath = resolve(
+                options?.ssrBuildDir ||
+                  resolve(workspaceRoot, 'dist', rootDir, `ssr`),
+                `main.server${filePrefix ? '.js' : ''}`,
+              );
+
+              // add check for main.server.mjs fallback on Windows
+              if (filePrefix && !existsSync(ssrEntryPath)) {
+                ssrEntryPath = ssrEntryPath.replace('.js', '.mjs');
+              }
+
+              const ssrEntry = normalizePath(filePrefix + ssrEntryPath);
+
+              nitroConfig.alias = {
+                ...nitroConfig.alias,
+                '#analog/ssr': ssrEntry,
+              };
 
               await Promise.all(builds);
               await buildServer(options, nitroConfig);
@@ -535,6 +486,24 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             );
           }
 
+          let ssrEntryPath = resolve(
+            options?.ssrBuildDir ||
+              resolve(workspaceRoot, 'dist', rootDir, `ssr`),
+            `main.server${filePrefix ? '.js' : ''}`,
+          );
+
+          // add check for main.server.mjs fallback on Windows
+          if (filePrefix && !existsSync(ssrEntryPath)) {
+            ssrEntryPath = ssrEntryPath.replace('.js', '.mjs');
+          }
+
+          const ssrEntry = normalizePath(filePrefix + ssrEntryPath);
+
+          nitroConfig.alias = {
+            ...nitroConfig.alias,
+            '#analog/ssr': ssrEntry,
+          };
+
           await buildServer(options, nitroConfig);
 
           console.log(
@@ -633,3 +602,18 @@ const withAppHostingOutput = (nitroConfig: NitroConfig) => {
     },
   };
 };
+
+const isNetlifyPreset = (buildPreset: string | undefined) =>
+  process.env['NETLIFY'] ||
+  (buildPreset && buildPreset.toLowerCase().includes('netlify'));
+
+const withNetlifyOutputAPI = (
+  nitroConfig: NitroConfig | undefined,
+  workspaceRoot: string,
+) => ({
+  ...nitroConfig,
+  output: {
+    ...nitroConfig?.output,
+    dir: normalizePath(resolve(workspaceRoot, 'netlify/functions')),
+  },
+});

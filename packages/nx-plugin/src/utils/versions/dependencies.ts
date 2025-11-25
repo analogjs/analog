@@ -23,7 +23,6 @@ import {
 import {
   V19_X_ANALOG_JS_CONTENT,
   V19_X_ANALOG_JS_ROUTER,
-  V19_X_NX_ANGULAR,
   V19_X_MARKED,
   V19_X_MARKED_GFM_HEADING_ID,
   V19_X_MARKED_HIGHLIGHT,
@@ -34,7 +33,6 @@ import {
 const dependencyKeys = [
   '@analogjs/content',
   '@analogjs/router',
-  '@nx/angular',
   'marked',
   'marked-gfm-heading-id',
   'marked-highlight',
@@ -90,7 +88,6 @@ const getDependencies = (escapedAngularVersion: string) => {
   return {
     '@analogjs/content': V19_X_ANALOG_JS_CONTENT,
     '@analogjs/router': V19_X_ANALOG_JS_ROUTER,
-    '@nx/angular': V19_X_NX_ANGULAR,
     marked: V19_X_MARKED,
     'marked-gfm-heading-id': V19_X_MARKED_GFM_HEADING_ID,
     'marked-highlight': V19_X_MARKED_HIGHLIGHT,

@@ -46,14 +46,12 @@ describe('nx-plugin generator', () => {
     expect(dependencies['mermaid']).toBe('^10.2.4');
     expect(dependencies['prismjs']).toBe('^1.29.0');
 
-    expect(dependencies['@nx/angular']).toBeDefined();
     // we just check for truthy because @nx/eslint generator
     // will install the correct version based on Nx version
     // expect(devDependencies['@nx/eslint']).toBeTruthy();
     expect(devDependencies['@analogjs/platform']).toBeDefined();
     expect(devDependencies['@analogjs/vite-plugin-angular']).toBeDefined();
     expect(devDependencies['@analogjs/vitest-angular']).toBeDefined();
-    expect(devDependencies['@nx/vite']).toBeDefined();
     expect(devDependencies['jsdom']).toBeDefined();
     expect(devDependencies['vite']).toBeDefined();
     expect(devDependencies['vite-tsconfig-paths']).toBe('^4.2.0');

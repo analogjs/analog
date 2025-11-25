@@ -1,5 +1,6 @@
 import { Plugin, UserConfig } from 'vite';
 import * as vite from 'vite';
+
 /**
  * Sets up test config for Vitest
  * and downlevels any dependencies that use
@@ -19,7 +20,6 @@ export function angularVitestPlugin(): Plugin {
         ssr: {
           noExternal: [
             '@analogjs/vitest-angular/setup-testbed',
-            /cdk\/fesm2022/,
             /fesm2022(.*?)testing/,
             /fesm2015/,
           ],

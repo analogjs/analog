@@ -3,7 +3,8 @@ import { PresetGeneratorSchema } from './schema';
 
 export default async function (tree: Tree, options: PresetGeneratorSchema) {
   ensurePackage('@nx/angular', NX_VERSION);
-  ensurePackage('@angular-devkit/build-angular', 'latest');
+  ensurePackage('@angular-devkit/core', 'latest');
+  ensurePackage('rxjs', 'latest');
 
   return await import('../app/generator').then(({ appGenerator }) =>
     appGenerator(tree, options),
