@@ -73,7 +73,7 @@ export default defineConfig(({ mode }) => {
         vite: {
           inlineStylesExtension: 'scss',
           experimental: {
-            useAngularCompilationAPI: true,
+            useAngularCompilationAPI: false,
           },
         },
         liveReload: true,
