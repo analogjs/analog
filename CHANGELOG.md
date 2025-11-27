@@ -1,3 +1,9 @@
+## [2.1.2-beta.1](https://github.com/analogjs/analog/compare/v2.1.1...v2.1.2-beta.1) (2025-11-27)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** update xmlbuilder2@^4.0.1 ([#1982](https://github.com/analogjs/analog/issues/1982)) ([0bb32a6](https://github.com/analogjs/analog/commit/0bb32a6f5aa0853f14b81810a827d09317211c51))
+
 ## [2.1.1](https://github.com/analogjs/analog/compare/v2.1.0...v2.1.1) (2025-11-25)
 
 ### Bug Fixes
