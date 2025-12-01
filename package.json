@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "2.1.1",
+  "version": "2.1.2-beta.2",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -23,7 +23,7 @@
     "build:test": "nx build ng-app --skip-nx-cache"
   },
   "engines": {
-    "node": "^18.13.0 || ^20.0.0 || ^22.0.0",
+    "node": "^20.0.0 || ^22.0.0",
     "pnpm": "^10.0.0"
   },
   "packageManager": "pnpm@10.4.1",
@@ -204,7 +204,7 @@
     "vitefu": "^1.1.1",
     "vitest": "^4.0.0",
     "webpack-bundle-analyzer": "^4.7.0",
-    "xmlbuilder2": "^3.0.2"
+    "xmlbuilder2": "^4.0.1"
   },
   "pnpm": {
     "ignoredBuiltDependencies": [

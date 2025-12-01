@@ -55,8 +55,6 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/setup-node@v3
-      - run: npm install --global corepack@0.31.0
-      - run: corepack enable
       - run: npm --version
       - name: Create Analog Application
         run: npm create analog@${{ inputs.analog_build_tag }} analog-app -- --skipTailwind --template latest

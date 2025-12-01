@@ -62,6 +62,26 @@ export function contentPlugin(
           };
         },
       },
+      {
+        name: 'analogjs-exclude-content-import',
+        transform(code) {
+          /**
+           * Remove the package so it doesn't get
+           * referenced when building for serverless
+           * functions.
+           */
+          if (code.includes(`import('@analogjs/content')`)) {
+            return {
+              code: code.replace(
+                `import('@analogjs/content')`,
+                'Promise.resolve({})',
+              ),
+            };
+          }
+
+          return;
+        },
+      },
     ];
   }
 
