@@ -1,3 +1,10 @@
+## [2.1.2](https://github.com/analogjs/analog/compare/v2.1.1...v2.1.2) (2025-12-01)
+
+### Bug Fixes
+
+- **platform:** remove @analogjs/content import from bundle when not used ([#1985](https://github.com/analogjs/analog/issues/1985)) ([29e4744](https://github.com/analogjs/analog/commit/29e4744f33be16bdc1c5f337e220ec1c005d0183))
+- **vite-plugin-nitro:** update xmlbuilder2@^4.0.1 ([#1982](https://github.com/analogjs/analog/issues/1982)) ([0bb32a6](https://github.com/analogjs/analog/commit/0bb32a6f5aa0853f14b81810a827d09317211c51))
+
 ## [2.1.2-beta.2](https://github.com/analogjs/analog/compare/v2.1.2-beta.1...v2.1.2-beta.2) (2025-12-01)
 
 ### Bug Fixes
