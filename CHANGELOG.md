@@ -1,3 +1,9 @@
+## [2.1.2-beta.2](https://github.com/analogjs/analog/compare/v2.1.2-beta.1...v2.1.2-beta.2) (2025-12-01)
+
+### Bug Fixes
+
+- **platform:** remove @analogjs/content import from bundle when not used ([#1985](https://github.com/analogjs/analog/issues/1985)) ([29e4744](https://github.com/analogjs/analog/commit/29e4744f33be16bdc1c5f337e220ec1c005d0183))
+
 ## [2.1.2-beta.1](https://github.com/analogjs/analog/compare/v2.1.1...v2.1.2-beta.1) (2025-11-27)
 
 ### Bug Fixes
