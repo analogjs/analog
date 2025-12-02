@@ -1,3 +1,9 @@
+# [2.2.0-beta.1](https://github.com/analogjs/analog/compare/v2.1.2...v2.2.0-beta.1) (2025-12-02)
+
+### Features
+
+- **vite-plugin-angular:** improve dev/build performance with caches and plugin optimizations ([#1987](https://github.com/analogjs/analog/issues/1987)) ([47ed20f](https://github.com/analogjs/analog/commit/47ed20f17bd42502c6d9845361a61556f7fdd2ae))
+
 ## [2.1.2](https://github.com/analogjs/analog/compare/v2.1.1...v2.1.2) (2025-12-01)
 
 ### Bug Fixes
