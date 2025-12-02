@@ -1,4 +1,4 @@
-import { CompilerHost, NgtscProgram } from '@angular/compiler-cli';
+import { NgtscProgram } from '@angular/compiler-cli';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import {
   basename,
@@ -150,8 +150,23 @@ export function angular(options?: PluginOptions): Plugin[] {
     isLib: boolean;
   } | null = null;
 
-  let nextProgram: NgtscProgram | undefined | ts.Program;
-  let builderProgram: ts.EmitAndSemanticDiagnosticsBuilderProgram;
+  let nextProgram: NgtscProgram | undefined;
+  // Caches (always rebuild Angular program per user request)
+  const tsconfigOptionsCache = new Map<
+    string,
+    { options: ts.CompilerOptions; rootNames: string[] }
+  >();
+  let cachedHost: ts.CompilerHost | undefined;
+  let cachedHostKey: string | undefined;
+  let includeCache: string[] = [];
+  function invalidateFsCaches() {
+    includeCache = [];
+  }
+  function invalidateTsconfigCaches() {
+    tsconfigOptionsCache.clear();
+    cachedHost = undefined;
+    cachedHostKey = undefined;
+  }
   let watchMode = false;
   let testWatchMode = isTestWatchMode();
   let inlineComponentStyles: Map<string, string> | undefined;
@@ -176,6 +191,12 @@ export function angular(options?: PluginOptions): Plugin[] {
   };
   let initialCompilation = false;
   const declarationFiles: DeclarationFile[] = [];
+  const fileTransformMap = new Map<string, string>();
+  let styleTransform: (
+    code: string,
+    filename: string,
+  ) => Promise<vite.PreprocessCSSResult>;
+  let pendingCompilation: Promise<void> | null;
 
   function angularPlugin(): Plugin {
     let isProd = false;
@@ -293,6 +314,11 @@ export function angular(options?: PluginOptions): Plugin[] {
           inlineComponentStyles = new Map();
         }
 
+        if (!jit) {
+          styleTransform = (code: string, filename: string) =>
+            preprocessCSS(code, filename, config);
+        }
+
         if (isTest) {
           // set test watch mode
           // - vite override from vitest-angular
@@ -308,32 +334,41 @@ export function angular(options?: PluginOptions): Plugin[] {
       configureServer(server) {
         viteServer = server;
         server.watcher.on('add', async () => {
+          invalidateFsCaches();
           await performCompilation(resolvedConfig);
         });
         server.watcher.on('unlink', async () => {
+          invalidateFsCaches();
           await performCompilation(resolvedConfig);
+        });
+        server.watcher.on('change', (file) => {
+          if (file.includes('tsconfig')) {
+            invalidateTsconfigCaches();
+          }
         });
       },
       async buildStart() {
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
-          const { host } = await performCompilation(resolvedConfig);
+          await performCompilation(resolvedConfig);
+          pendingCompilation = null;
 
           initialCompilation = true;
-
-          // Only store cache if in watch mode
-          if (watchMode) {
-            augmentHostWithCaching(host, sourceFileCache);
-          }
         }
       },
       async handleHotUpdate(ctx) {
         if (TS_EXT_REGEX.test(ctx.file)) {
           let [fileId] = ctx.file.split('?');
 
-          await performCompilation(resolvedConfig, [fileId]);
+          pendingCompilation = performCompilation(resolvedConfig, [fileId]);
 
-          const result = fileEmitter(fileId);
+          let result;
+
+          if (pluginOptions.liveReload) {
+            await pendingCompilation;
+            pendingCompilation = null;
+            result = fileEmitter(fileId);
+          }
 
           if (
             pluginOptions.liveReload &&
@@ -358,6 +393,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         if (/\.(html|htm|css|less|sass|scss)$/.test(ctx.file)) {
+          fileTransformMap.delete(ctx.file.split('?')[0]);
           /**
            * Check to see if this was a direct request
            * for an external resource (styles, html).
@@ -427,12 +463,15 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
           });
 
-          await performCompilation(resolvedConfig, [
+          pendingCompilation = performCompilation(resolvedConfig, [
             ...mods.map((mod) => mod.id as string),
             ...updates,
           ]);
 
           if (updates.length > 0) {
+            await pendingCompilation;
+            pendingCompilation = null;
+
             updates.forEach((updateId) => {
               const impRelativeFileId = `${relative(
                 process.cwd(),
@@ -459,7 +498,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         return ctx.modules;
       },
       resolveId(id, importer) {
-        if (id.startsWith('angular:jit:')) {
+        if (jit && id.startsWith('angular:jit:')) {
           const path = id.split(';')[1];
           return `${normalizePath(
             resolve(dirname(importer as string), path),
@@ -536,6 +575,13 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         /**
+         * Skip HMR URLs
+         */
+        if (id.includes('@ng/component')) {
+          return;
+        }
+
+        /**
          * Encapsulate component stylesheets that use emulated encapsulation
          */
         if (pluginOptions.liveReload && isComponentStyleSheet(id)) {
@@ -556,6 +602,8 @@ export function angular(options?: PluginOptions): Plugin[] {
             id = id.replace(/\?(.*)/, '');
           }
 
+          fileTransformMap.set(id, code);
+
           /**
            * Re-analyze on each transform
            * for test(Vitest)
@@ -563,7 +611,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (isTest) {
             if (isVitestVscode && !initialCompilation) {
               // Do full initial compilation
-              await performCompilation(resolvedConfig);
+              pendingCompilation = performCompilation(resolvedConfig);
               initialCompilation = true;
             }
 
@@ -574,15 +622,20 @@ export function angular(options?: PluginOptions): Plugin[] {
               if (testWatchMode && invalidated) {
                 sourceFileCache.invalidate([id]);
 
-                await performCompilation(resolvedConfig, [id]);
+                pendingCompilation = performCompilation(resolvedConfig, [id]);
               }
             }
           }
 
-          const templateUrls = templateUrlsResolver.resolve(code, id);
-          const styleUrls = styleUrlsResolver.resolve(code, id);
+          const hasComponent = code.includes('@Component');
+          const templateUrls = hasComponent
+            ? templateUrlsResolver.resolve(code, id)
+            : [];
+          const styleUrls = hasComponent
+            ? styleUrlsResolver.resolve(code, id)
+            : [];
 
-          if (watchMode) {
+          if (hasComponent && watchMode) {
             for (const urlSet of [...templateUrls, ...styleUrls]) {
               // `urlSet` is a string where a relative path is joined with an
               // absolute path using the `|` symbol.
@@ -590,6 +643,11 @@ export function angular(options?: PluginOptions): Plugin[] {
               const [, absoluteFileUrl] = urlSet.split('|');
               this.addWatchFile(absoluteFileUrl);
             }
+          }
+
+          if (pendingCompilation) {
+            await pendingCompilation;
+            pendingCompilation = null;
           }
 
           const typescriptResult = fileEmitter(id);
@@ -665,7 +723,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       jit,
     }),
     routerPlugin(),
-    pendingTasksPlugin(),
+    angularFullVersion < 190004 && pendingTasksPlugin(),
     nxFolderPlugin(),
   ].filter(Boolean) as Plugin[];
 
@@ -855,16 +913,34 @@ export function angular(options?: PluginOptions): Plugin[] {
   async function performCompilation(config: ResolvedConfig, ids?: string[]) {
     if (pluginOptions.useAngularCompilationAPI) {
       await performAngularCompilation(config);
-      return { host: {} };
+      return;
     }
 
     const isProd = config.mode === 'production';
-    const includeFiles = findIncludes();
+
+    if (ids?.length) {
+      for (const id of ids || []) {
+        sourceFileCache.invalidate([id]);
+        fileTransformMap.delete(id);
+      }
+    }
+
+    // Cached include discovery (invalidated only on FS events)
+    if (includeCache.length === 0) {
+      includeCache = findIncludes();
+    }
 
     const resolvedTsConfigPath = resolveTsConfigPath();
+    const tsconfigKey = [
+      resolvedTsConfigPath,
+      isProd ? 'prod' : 'dev',
+      isTest ? 'test' : 'app',
+      config.build?.lib ? 'lib' : 'nolib',
+    ].join('|');
+    let cached = tsconfigOptionsCache.get(tsconfigKey);
 
-    let { options: tsCompilerOptions, rootNames } =
-      compilerCli.readConfiguration(resolvedTsConfigPath, {
+    if (!cached) {
+      const read = compilerCli.readConfiguration(resolvedTsConfigPath, {
         suppressOutputPathCheck: true,
         outDir: undefined,
         sourceMap: false,
@@ -881,6 +957,13 @@ export function angular(options?: PluginOptions): Plugin[] {
         supportTestBed: false,
         supportJitMode: false,
       });
+      cached = { options: read.options, rootNames: read.rootNames };
+      tsconfigOptionsCache.set(tsconfigKey, cached);
+    }
+
+    // Clone options before mutation (preserve cache purity)
+    const tsCompilerOptions = { ...cached.options };
+    let rootNames = [...cached.rootNames];
 
     if (pluginOptions.liveReload && watchMode) {
       tsCompilerOptions['_enableHmr'] = true;
@@ -890,7 +973,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['supportTestBed'] = true;
     }
 
-    if (tsCompilerOptions.compilationMode === 'partial') {
+    if (tsCompilerOptions['compilationMode'] === 'partial') {
       // These options can't be false in partial mode
       tsCompilerOptions['supportTestBed'] = true;
       tsCompilerOptions['supportJitMode'] = true;
@@ -907,19 +990,46 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['supportTestBed'] = true;
     }
 
-    const replacements: string[] = pluginOptions.fileReplacements.map((rp) =>
+    const replacements = pluginOptions.fileReplacements.map((rp) =>
       join(
         pluginOptions.workspaceRoot,
         (rp as FileReplacementSSR).ssr || (rp as FileReplacementWith).with,
       ),
     );
-    rootNames = rootNames.concat(includeFiles, replacements);
-    const ts = require('typescript');
-    const host = ts.createIncrementalCompilerHost(tsCompilerOptions);
+    // Merge + dedupe root names
+    rootNames = [...new Set([...rootNames, ...includeCache, ...replacements])];
+    const hostKey = JSON.stringify(tsCompilerOptions);
+    let host: ts.CompilerHost;
+
+    if (cachedHost && cachedHostKey === hostKey) {
+      host = cachedHost;
+    } else {
+      host = ts.createIncrementalCompilerHost(tsCompilerOptions, {
+        ...ts.sys,
+        readFile(path, encoding) {
+          if (fileTransformMap.has(path)) {
+            return fileTransformMap.get(path);
+          }
+
+          const file = ts.sys.readFile.call(null, path, encoding);
+
+          if (file) {
+            fileTransformMap.set(path, file);
+          }
+
+          return file;
+        },
+      });
+      cachedHost = host;
+      cachedHostKey = hostKey;
+
+      // Only store cache if in watch mode
+      if (watchMode) {
+        augmentHostWithCaching(host, sourceFileCache);
+      }
+    }
 
     if (!jit) {
-      const styleTransform = (code: string, filename: string) =>
-        preprocessCSS(code, filename, config);
       inlineComponentStyles = tsCompilerOptions['externalRuntimeStyles']
         ? new Map()
         : undefined;
@@ -944,36 +1054,33 @@ export function angular(options?: PluginOptions): Plugin[] {
       | ts.EmitAndSemanticDiagnosticsBuilderProgram;
     let typeScriptProgram: ts.Program;
     let angularCompiler: NgtscProgram['compiler'];
+    const oldBuilder = ts.readBuilderProgram(tsCompilerOptions, host);
 
     if (!jit) {
       // Create the Angular specific program that contains the Angular compiler
       const angularProgram: NgtscProgram = new compilerCli.NgtscProgram(
         rootNames,
         tsCompilerOptions,
-        host as CompilerHost,
-        nextProgram as any,
+        host,
+        nextProgram,
       );
       angularCompiler = angularProgram.compiler;
-      typeScriptProgram = angularProgram.getTsProgram();
+      typeScriptProgram = angularProgram.compiler.getCurrentProgram();
       augmentProgramWithVersioning(typeScriptProgram);
 
       builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
         typeScriptProgram,
         host,
-        builderProgram,
+        oldBuilder,
       );
 
-      await angularCompiler.analyzeAsync();
-
       nextProgram = angularProgram;
-      builderProgram =
-        builder as unknown as ts.EmitAndSemanticDiagnosticsBuilderProgram;
     } else {
       builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
         rootNames,
         tsCompilerOptions,
         host,
-        nextProgram,
+        oldBuilder,
       );
 
       typeScriptProgram = builder.getProgram();
@@ -982,7 +1089,11 @@ export function angular(options?: PluginOptions): Plugin[] {
     if (!watchMode) {
       // When not in watch mode, the startup cost of the incremental analysis can be avoided by
       // using an abstract builder that only wraps a TypeScript program.
-      builder = ts.createAbstractBuilder(typeScriptProgram, host);
+      builder = ts.createAbstractBuilder(typeScriptProgram, host, oldBuilder);
+    }
+
+    if (angularCompiler!) {
+      await angularCompiler.analyzeAsync();
     }
 
     const beforeTransformers = jit
@@ -1081,6 +1192,10 @@ export function angular(options?: PluginOptions): Plugin[] {
       );
 
       writeFileCallback(id, content, false, undefined, [sourceFile]);
+
+      if (angularCompiler) {
+        angularCompiler.incrementalCompilation.recordSuccessfulEmit(sourceFile);
+      }
     };
 
     if (watchMode) {
@@ -1116,8 +1231,6 @@ export function angular(options?: PluginOptions): Plugin[] {
        */
       outputFile = writeOutputFile;
     }
-
-    return { host };
   }
 }
 

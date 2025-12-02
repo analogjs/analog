@@ -3,10 +3,11 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "tags": ["type:release"],
+  "implicitDependencies": ["vite-plugin-angular"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-
+      "dependsOn": ["^build"],
       "options": {
         "outputPath": "node_modules/@analogjs/storybook-angular",
         "main": "packages/storybook-angular/src/index.ts",

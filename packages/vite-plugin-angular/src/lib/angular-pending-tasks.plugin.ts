@@ -13,7 +13,7 @@ export function pendingTasksPlugin(): Plugin {
   return {
     name: 'analogjs-pending-tasks-plugin',
     transform(code, id) {
-      if (angularFullVersion < 190004 && id.includes('analogjs-content.mjs')) {
+      if (id.includes('analogjs-content.mjs')) {
         return {
           code: code.replace('ɵPendingTasksInternal', 'ɵPendingTasks'),
         };
