@@ -1,3 +1,9 @@
+# [2.2.0-beta.2](https://github.com/analogjs/analog/compare/v2.2.0-beta.1...v2.2.0-beta.2) (2025-12-03)
+
+### Features
+
+- add support for Vite 8.x releases ([#1989](https://github.com/analogjs/analog/issues/1989)) ([fd4031e](https://github.com/analogjs/analog/commit/fd4031e49efb4f12e9cb874055c0cfb4ef012fb9))
+
 # [2.2.0-beta.1](https://github.com/analogjs/analog/compare/v2.1.2...v2.2.0-beta.1) (2025-12-02)
 
 ### Features
