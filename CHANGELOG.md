@@ -1,3 +1,9 @@
+# [2.2.0-beta.3](https://github.com/analogjs/analog/compare/v2.2.0-beta.2...v2.2.0-beta.3) (2025-12-05)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** re-use builder between compilations ([#1990](https://github.com/analogjs/analog/issues/1990)) ([e4ae778](https://github.com/analogjs/analog/commit/e4ae7787ece34443d6cbe8b77050ea94447a97e0))
+
 # [2.2.0-beta.2](https://github.com/analogjs/analog/compare/v2.2.0-beta.1...v2.2.0-beta.2) (2025-12-03)
 
 ### Features
