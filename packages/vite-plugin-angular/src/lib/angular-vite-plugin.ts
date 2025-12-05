@@ -150,6 +150,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     isLib: boolean;
   } | null = null;
 
+  let builder: ts.BuilderProgram | ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let nextProgram: NgtscProgram | undefined;
   // Caches (always rebuild Angular program per user request)
   const tsconfigOptionsCache = new Map<
@@ -926,7 +927,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     }
 
     // Cached include discovery (invalidated only on FS events)
-    if (includeCache.length === 0) {
+    if (pluginOptions.include.length > 0 && includeCache.length === 0) {
       includeCache = findIncludes();
     }
 
@@ -1049,12 +1050,10 @@ export function angular(options?: PluginOptions): Plugin[] {
      * the source files and create a file emitter.
      * This is shared between an initial build and a hot update.
      */
-    let builder:
-      | ts.BuilderProgram
-      | ts.EmitAndSemanticDiagnosticsBuilderProgram;
     let typeScriptProgram: ts.Program;
     let angularCompiler: NgtscProgram['compiler'];
-    const oldBuilder = ts.readBuilderProgram(tsCompilerOptions, host);
+    const oldBuilder =
+      builder ?? ts.readBuilderProgram(tsCompilerOptions, host);
 
     if (!jit) {
       // Create the Angular specific program that contains the Angular compiler
@@ -1071,7 +1070,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
         typeScriptProgram,
         host,
-        oldBuilder,
+        oldBuilder as ts.EmitAndSemanticDiagnosticsBuilderProgram,
       );
 
       nextProgram = angularProgram;
@@ -1080,7 +1079,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         rootNames,
         tsCompilerOptions,
         host,
-        oldBuilder,
+        oldBuilder as ts.EmitAndSemanticDiagnosticsBuilderProgram,
       );
 
       typeScriptProgram = builder.getProgram();
