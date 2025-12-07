@@ -1,3 +1,10 @@
+# [2.2.0-beta.4](https://github.com/analogjs/analog/compare/v2.2.0-beta.3...v2.2.0-beta.4) (2025-12-07)
+
+### Features
+
+- add itemprop meta tag support to MetaTag types ([543b351](https://github.com/analogjs/analog/commit/543b35196da5f07676c2e065a6d6a108b846638c))
+- add itemprop meta tag support to parent and child meta tag values ([830a50f](https://github.com/analogjs/analog/commit/830a50fe72dc3a58eddb6431581fe2169f99a36e))
+
 # [2.2.0-beta.3](https://github.com/analogjs/analog/compare/v2.2.0-beta.2...v2.2.0-beta.3) (2025-12-05)
 
 ### Performance Improvements
