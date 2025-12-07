@@ -9,9 +9,6 @@ import {
 } from '@angular/platform-browser/testing';
 import { afterEach, beforeEach } from 'vitest';
 
-beforeEach(getCleanupHook(false));
-afterEach(getCleanupHook(true));
-
 const ANGULAR_TESTBED_SETUP = Symbol.for('testbed-setup');
 
 type TestBedSetupOptions = {
@@ -22,6 +19,9 @@ type TestBedSetupOptions = {
 export function setupTestBed(
   options: TestBedSetupOptions = { zoneless: true, providers: [] },
 ) {
+  beforeEach(getCleanupHook(false));
+  afterEach(getCleanupHook(true));
+
   if (!(globalThis as any)[ANGULAR_TESTBED_SETUP]) {
     (globalThis as any)[ANGULAR_TESTBED_SETUP] = true;
 
