@@ -38,7 +38,7 @@ export const core = async (config, options) => {
 };
 export const viteFinal = async (config, options) => {
   // Remove any loaded analogjs plugins from a vite.config.(m)ts file
-  config.plugins = config.plugins
+  config.plugins = (config.plugins ?? [])
     .flat()
     .filter((plugin) => !plugin.name.includes('analogjs'));
 
