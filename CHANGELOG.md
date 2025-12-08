@@ -1,3 +1,9 @@
+## [2.1.3](https://github.com/analogjs/analog/compare/v2.1.2...v2.1.3) (2025-12-08)
+
+### Bug Fixes
+
+- **vitest-angular:** reset TestBed between tests ([a8d9be0](https://github.com/analogjs/analog/commit/a8d9be0996574d074a9f144f1e1436dc3a2b571f)), closes [#1994](https://github.com/analogjs/analog/issues/1994)
+
 ## [2.1.2](https://github.com/analogjs/analog/compare/v2.1.1...v2.1.2) (2025-12-01)
 
 ### Bug Fixes
