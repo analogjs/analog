@@ -1,3 +1,9 @@
+# [2.2.0-beta.6](https://github.com/analogjs/analog/compare/v2.2.0-beta.5...v2.2.0-beta.6) (2025-12-08)
+
+### Bug Fixes
+
+- **storybook-angular:** creates config.plugin array when undefined ([#1998](https://github.com/analogjs/analog/issues/1998)) ([0dd147c](https://github.com/analogjs/analog/commit/0dd147c4f764dbaa2c82a04e887b3ecad91d1e1a))
+
 # [2.2.0-beta.5](https://github.com/analogjs/analog/compare/v2.2.0-beta.4...v2.2.0-beta.5) (2025-12-08)
 
 ### Bug Fixes
