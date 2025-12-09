@@ -1,3 +1,9 @@
+# [2.2.0-beta.7](https://github.com/analogjs/analog/compare/v2.2.0-beta.6...v2.2.0-beta.7) (2025-12-09)
+
+### Bug Fixes
+
+- **nx-plugin:** adjust Vitest version for Angular v20 ([c4b2ea7](https://github.com/analogjs/analog/commit/c4b2ea77c757ebd1aa6c17ff5e3aaab96d239fb3))
+
 # [2.2.0-beta.6](https://github.com/analogjs/analog/compare/v2.2.0-beta.5...v2.2.0-beta.6) (2025-12-08)
 
 ### Bug Fixes
