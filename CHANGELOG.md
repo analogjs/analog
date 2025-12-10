@@ -1,3 +1,9 @@
+# [2.2.0-beta.8](https://github.com/analogjs/analog/compare/v2.2.0-beta.7...v2.2.0-beta.8) (2025-12-10)
+
+### Bug Fixes
+
+- **nx-plugin:** pass Nx version for package version detection ([42a9630](https://github.com/analogjs/analog/commit/42a963025bd31cc6279e9d135d7cd7cce894e00c))
+
 # [2.2.0-beta.7](https://github.com/analogjs/analog/compare/v2.2.0-beta.6...v2.2.0-beta.7) (2025-12-09)
 
 ### Bug Fixes
