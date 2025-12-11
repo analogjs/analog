@@ -1,3 +1,9 @@
+# [2.2.0-beta.9](https://github.com/analogjs/analog/compare/v2.2.0-beta.8...v2.2.0-beta.9) (2025-12-11)
+
+### Features
+
+- **storybook-angular:** allows setting tsconfig via framework options ([#1999](https://github.com/analogjs/analog/issues/1999)) ([cbd358d](https://github.com/analogjs/analog/commit/cbd358dd7c28d5f9c1212c428af77f44a2bd5498))
+
 # [2.2.0-beta.8](https://github.com/analogjs/analog/compare/v2.2.0-beta.7...v2.2.0-beta.8) (2025-12-10)
 
 ### Bug Fixes
