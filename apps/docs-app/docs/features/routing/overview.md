@@ -349,7 +349,7 @@ import { provideFileRouter, withExtraRoutes } from '@analogjs/router';
 
 const customRoutes: Routes = [
   {
-    path: '/custom',
+    path: 'custom',
     loadComponent: () =>
       import('./custom-component').then((m) => m.CustomComponent),
   },
