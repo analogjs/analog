@@ -72,7 +72,10 @@ export const viteFinal = async (config, options) => {
           typeof framework.options?.liveReload !== 'undefined'
             ? framework.options?.liveReload
             : false,
-        tsconfig: options?.tsConfig ?? './.storybook/tsconfig.json',
+        tsconfig:
+          typeof framework.options?.tsconfig !== 'undefined'
+            ? framework.options?.tsconfig
+            : (options?.tsConfig ?? './.storybook/tsconfig.json'),
         inlineStylesExtension:
           typeof framework.options?.inlineStylesExtension !== 'undefined'
             ? framework.options?.inlineStylesExtension

@@ -12,6 +12,7 @@ export type FrameworkOptions = {
   jit?: boolean;
   liveReload?: boolean;
   inlineStylesExtension?: string;
+  tsconfig?: string;
 };
 
 type StorybookConfigFramework = {
