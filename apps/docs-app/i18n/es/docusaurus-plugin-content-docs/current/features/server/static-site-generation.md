@@ -31,7 +31,15 @@ export default defineConfig(({ mode }) => ({
 
 ### Desde el Directorio de Contenido
 
-Es posible que desees prerenderizar todas las rutas que son el resultado de un directorio de contenido renderizado. Por ejemplo, si tienes un blog y todos tus artículos están ubicados como archivos Markdown en el directorio `contents`. Para tales escenarios, puedes añadir un objeto a la configuración de `routes` para renderizar todo dentro de un directorio. Ten en cuenta que la estructura de tu directorio puede no reflejarse 1:1 en la ruta de tu aplicación. Por lo tanto, debes pasar una función `transform` que mapee las rutas de los archivos a las URLs. La cadena retornada debe ser la ruta URL en tu aplicación. Usar `transform` también te permite filtrar algunas rutas retornando `false`. Esto no las incluye en el proceso de prerenderización, como archivos marcados como `draft` en el frontmatter. El valor de `contentDir` de ese objeto puede ser un patrón glob o simplemente una ruta específica.
+Es posible que desees prerenderizar todas las rutas que son el resultado de un directorio de contenido renderizado. Por ejemplo, si tienes un blog y todos tus artículos están ubicados como archivos Markdown en el directorio `contents`.
+
+Para tales escenarios, puedes añadir un objeto a la configuración de `routes` para renderizar todo dentro de un directorio.
+
+Ten en cuenta que la estructura de tu directorio puede no reflejarse 1:1 en la ruta de tu aplicación. Por lo tanto, debes pasar una función `transform` que mapee las rutas de los archivos a las URLs. La cadena retornada debe ser la ruta URL en tu aplicación.
+
+Usar `transform` también te permite filtrar algunas rutas retornando `false`. Esto no las incluye en el proceso de prerenderización, como archivos marcados como `draft` en el frontmatter.
+
+El valor de `contentDir` de ese objeto puede ser un patrón glob o simplemente una ruta específica.
 
 ```ts
 import { defineConfig } from 'vite';
@@ -83,7 +91,14 @@ export default defineConfig(({ mode }) => ({
           '/about',
           '/blog',
           '/blog/posts/2023-02-01-my-first-post',
+          // Prerenderizar pagina 404.html para SPAs
+          '/404.html',
         ],
+      },
+      nitro: {
+        routeRules: {
+          '/404.html': { ssr: false },
+        },
       },
     }),
   ],
@@ -91,6 +106,35 @@ export default defineConfig(({ mode }) => ({
 ```
 
 Las páginas estáticas pueden ser desplegadas desde el directorio `dist/analog/public`.
+
+## Prerenderizando datos del lado del servidor
+
+Al utilizar [la recuperación de datos del lado del servidor](/docs/features/data-fetching/server-side-data-fetching), los datos se cachean y se reutilizan utilizando el estado de transferencia _solo_ en la primera solicitud. Para prerenderizar los datos del lado del servidor recuperados junto con la ruta, establezca la bandera `staticData` en `true` en el objeto de configuración para la ruta prerenderizada.
+
+Por ejemplo, una ruta definida como `src/app/pages/shipping.page.ts` con un archivo asociado `src/app/pages/shipping.server.ts` tiene la ruta y los datos del lado del servidor prerenderizados para ser completamente estáticos.
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      static: true,
+      prerender: {
+        routes: async () => [
+          '/',
+          {
+            route: '/shipping',
+            staticData: true,
+          },
+        ],
+      },
+    }),
+  ],
+}));
+```
 
 ### Generación de Sitemap
 
@@ -107,7 +151,7 @@ export default defineConfig(({ mode }) => ({
       prerender: {
         routes: async () => ['/', '/blog'],
         sitemap: {
-          host: 'https://analogjs.org/',
+          host: 'https://analogjs.org',
         },
       },
     }),
@@ -115,19 +159,67 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-Mientras las rutas estén proporcionadas, Analog genera un archivo `sitemap.xml` que contiene un mapeo de las propiedades `<loc>` y `<lastmod>` de las páginas.
+Para personalizar la definición del sitemap, utilice la función de callback `sitemap` para personalizar los campos `lastmod`, `changefreq` y `priority`.
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+import fs from 'node:fs';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      prerender: {
+        sitemap: {
+          host: 'https://analogjs.org',
+        },
+        routes: async () => [
+          '/',
+          '/blog',
+          {
+            route: '/blog/2022-12-27-my-first-post',
+            sitemap: {
+              lastmod: '2022-12-27',
+            },
+          },
+          {
+            contentDir: '/src/content/archived',
+            transform: (file: PrerenderContentFile) => {
+              return `/archived/${file.attributes.slug || file.name}`;
+            },
+            sitemap: (file: PrerenderContentFile) => {
+              return {
+                lastmod: 'read last modified date for content file',
+                changefreq: 'never',
+              };
+            },
+          },
+        ],
+      },
+    }),
+  ],
+}));
+```
+
+Siempre que se proporcionen rutas de prerrenderizado, Analog generará un archivo `sitemap.xml` que contiene un mapeo de las propiedades `<loc>`, `<lastmod>`, `<changefreq>` y `<priority>` de las páginas.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset...>
-    <!--Este archivo fue generado automáticamente por Analog.-->
+    <!--This file was automatically generated by Analog.-->
     <url>
         <loc>https://analogjs.org/</loc>
         <lastmod>2023-07-01</lastmod>
     </url>
     <url>
-        <loc>https://analogjs.org/blog</loc>
-        <lastmod>2023-07-01</lastmod>
+        <loc>https://analogjs.org/blog/2022-12-27-my-first-post</loc>
+        <lastmod>2022-12-27</lastmod>
+    </url>
+    <url>
+        <loc>https://analogjs.org/blog/archived/hello-world</loc>
+        <lastmod>2022-12-01</lastmod>
+        <changefreq>never</changefreq>
     </url>
 </urlset...>
 ```
@@ -196,7 +288,7 @@ export default defineConfig(() => {
                 (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
                 m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
                 })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-  
+
                 ga('create', 'UA-xxxxxx-1', 'auto');
                 ga('send', 'pageview');
               </script>`;
