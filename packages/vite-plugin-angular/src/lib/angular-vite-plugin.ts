@@ -50,6 +50,7 @@ import {
   SourceFileCache,
   angularFullVersion,
 } from './utils/devkit.js';
+import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
 
 const require = createRequire(import.meta.url);
 
@@ -172,7 +173,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let testWatchMode = isTestWatchMode();
   let inlineComponentStyles: Map<string, string> | undefined;
   let externalComponentStyles: Map<string, string> | undefined;
-  const sourceFileCache = new SourceFileCache();
+  const sourceFileCache: SourceFileCacheType = new SourceFileCache();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isVitestVscode = !!process.env['VITEST_VSCODE'];
   const isStackBlitz = !!process.versions['webcontainer'];
@@ -453,7 +454,6 @@ export function angular(options?: PluginOptions): Plugin[] {
           const updates: string[] = [];
           ctx.modules.forEach((mod) => {
             mod.importers.forEach((imp) => {
-              sourceFileCache.invalidate([imp.id]);
               ctx.server.moduleGraph.invalidateModule(imp);
 
               if (pluginOptions.liveReload && classNames.get(imp.id)) {
@@ -621,8 +621,6 @@ export function angular(options?: PluginOptions): Plugin[] {
               const invalidated = tsMod.lastInvalidationTimestamp;
 
               if (testWatchMode && invalidated) {
-                sourceFileCache.invalidate([id]);
-
                 pendingCompilation = performCompilation(resolvedConfig, [id]);
               }
             }
@@ -918,10 +916,11 @@ export function angular(options?: PluginOptions): Plugin[] {
     }
 
     const isProd = config.mode === 'production';
+    const modifiedFiles = new Set<string>(ids ?? []);
+    sourceFileCache.invalidate(modifiedFiles);
 
     if (ids?.length) {
       for (const id of ids || []) {
-        sourceFileCache.invalidate([id]);
         fileTransformMap.delete(id);
       }
     }
@@ -1042,6 +1041,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         isProd,
         inlineComponentStyles,
         externalComponentStyles,
+        sourceFileCache,
       });
     }
 

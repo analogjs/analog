@@ -1,10 +1,11 @@
-import { CompilerHost } from '@angular/compiler-cli';
+import type { CompilerHost } from '@angular/compiler-cli';
 import { normalizePath } from 'vite';
 
 import * as ts from 'typescript';
 
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import type { SourceFileCache } from './utils/source-file-cache.js';
 
 export function augmentHostWithResources(
   host: ts.CompilerHost,
@@ -18,6 +19,7 @@ export function augmentHostWithResources(
     isProd?: boolean;
     inlineComponentStyles?: Map<string, string>;
     externalComponentStyles?: Map<string, string>;
+    sourceFileCache?: SourceFileCache;
   },
 ) {
   const resourceHost = host as CompilerHost;
@@ -32,6 +34,10 @@ export function augmentHostWithResources(
     }
 
     return content;
+  };
+
+  resourceHost.getModifiedResourceFiles = function () {
+    return options?.sourceFileCache?.modifiedFiles;
   };
 
   resourceHost.transformResource = async function (data, context) {
