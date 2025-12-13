@@ -1,3 +1,9 @@
+# [2.2.0-beta.10](https://github.com/analogjs/analog/compare/v2.2.0-beta.9...v2.2.0-beta.10) (2025-12-13)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** pass modified files for incremental compilation ([#2010](https://github.com/analogjs/analog/issues/2010)) ([7cb7970](https://github.com/analogjs/analog/commit/7cb797067f2df37b7f884cac6f6b211e88d2e662))
+
 # [2.2.0-beta.9](https://github.com/analogjs/analog/compare/v2.2.0-beta.8...v2.2.0-beta.9) (2025-12-11)
 
 ### Features
