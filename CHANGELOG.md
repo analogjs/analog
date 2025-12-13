@@ -1,3 +1,9 @@
+# [2.2.0-beta.12](https://github.com/analogjs/analog/compare/v2.2.0-beta.11...v2.2.0-beta.12) (2025-12-13)
+
+### Bug Fixes
+
+- **create-analog:** remove angular-devkit/build-angular from devDependencies ([ada2ecc](https://github.com/analogjs/analog/commit/ada2ecc7fddf8247472b30439d15ba014eb4df30))
+
 # [2.2.0-beta.11](https://github.com/analogjs/analog/compare/v2.2.0-beta.10...v2.2.0-beta.11) (2025-12-13)
 
 ### Performance Improvements
