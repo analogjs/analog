@@ -1,3 +1,9 @@
+# [2.2.0-beta.11](https://github.com/analogjs/analog/compare/v2.2.0-beta.10...v2.2.0-beta.11) (2025-12-13)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** apply transform filter to plugins ([#2011](https://github.com/analogjs/analog/issues/2011)) ([0bfe92d](https://github.com/analogjs/analog/commit/0bfe92d4ec2a5422b9decec09c54f045fac8c135))
+
 # [2.2.0-beta.10](https://github.com/analogjs/analog/compare/v2.2.0-beta.9...v2.2.0-beta.10) (2025-12-13)
 
 ### Performance Improvements
