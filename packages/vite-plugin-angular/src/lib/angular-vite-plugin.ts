@@ -531,72 +531,58 @@ export function angular(options?: PluginOptions): Plugin[] {
 
         return;
       },
-      async transform(code, id) {
-        // Skip transforming node_modules
-        if (id.includes('node_modules')) {
-          return;
-        }
-
-        /**
-         * Check for options.transformFilter
-         */
-        if (
-          options?.transformFilter &&
-          !(options?.transformFilter(code, id) ?? true)
-        ) {
-          return;
-        }
-
-        if (pluginOptions.useAngularCompilationAPI) {
-          const isAngular =
-            /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
-
-          if (!isAngular) {
+      transform: {
+        filter: {
+          id: {
+            include: [TS_EXT_REGEX],
+            exclude: [/node_modules/, 'type=script', '@ng/component'],
+          },
+        },
+        async handler(code, id) {
+          /**
+           * Check for options.transformFilter
+           */
+          if (
+            options?.transformFilter &&
+            !(options?.transformFilter(code, id) ?? true)
+          ) {
             return;
           }
-        }
 
-        /**
-         * Check for .ts extenstions for inline script files being
-         * transformed (Astro).
-         *
-         * Example ID:
-         *
-         * /src/pages/index.astro?astro&type=script&index=0&lang.ts
-         */
-        if (id.includes('type=script')) {
-          return;
-        }
+          if (pluginOptions.useAngularCompilationAPI) {
+            const isAngular =
+              /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
 
-        /**
-         * Skip transforming content files
-         */
-        if (id.includes('?') && id.includes('analog-content-')) {
-          return;
-        }
-
-        /**
-         * Skip HMR URLs
-         */
-        if (id.includes('@ng/component')) {
-          return;
-        }
-
-        /**
-         * Encapsulate component stylesheets that use emulated encapsulation
-         */
-        if (pluginOptions.liveReload && isComponentStyleSheet(id)) {
-          const { encapsulation, componentId } = getComponentStyleSheetMeta(id);
-          if (encapsulation === 'emulated' && componentId) {
-            const encapsulated = ngCompiler.encapsulateStyle(code, componentId);
-            return {
-              code: encapsulated,
-              map: null,
-            };
+            if (!isAngular) {
+              return;
+            }
           }
-        }
 
-        if (TS_EXT_REGEX.test(id)) {
+          /**
+           * Skip transforming content files
+           */
+          if (id.includes('?') && id.includes('analog-content-')) {
+            return;
+          }
+
+          /**
+           * Encapsulate component stylesheets that use emulated encapsulation
+           */
+          if (pluginOptions.liveReload && isComponentStyleSheet(id)) {
+            const { encapsulation, componentId } =
+              getComponentStyleSheetMeta(id);
+            if (encapsulation === 'emulated' && componentId) {
+              const encapsulated = ngCompiler.encapsulateStyle(
+                code,
+                componentId,
+              );
+              return {
+                code: encapsulated,
+                map: null,
+              };
+            }
+          }
+
           if (id.includes('.ts?')) {
             // Strip the query string off the ID
             // in case of a dynamically loaded file
@@ -693,9 +679,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             code: data,
             map: null,
           };
-        }
-
-        return undefined;
+        },
       },
       closeBundle() {
         declarationFiles.forEach(
