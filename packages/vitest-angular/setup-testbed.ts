@@ -1,7 +1,7 @@
 import { NgModule, provideZonelessChangeDetection, Type } from '@angular/core';
 import {
-  getTestBed,
   ɵgetCleanupHook as getCleanupHook,
+  getTestBed,
 } from '@angular/core/testing';
 import {
   BrowserTestingModule,
@@ -14,6 +14,7 @@ const ANGULAR_TESTBED_SETUP = Symbol.for('testbed-setup');
 type TestBedSetupOptions = {
   zoneless?: boolean;
   providers?: Type<any>[];
+  browserMode?: boolean;
 };
 
 export function setupTestBed(
@@ -37,6 +38,9 @@ export function setupTestBed(
         ...((options?.providers || []) as Type<any>[]),
       ],
       platformBrowserTesting(),
+      options?.browserMode
+        ? { teardown: { destroyAfterEach: false } }
+        : undefined,
     );
   }
 }

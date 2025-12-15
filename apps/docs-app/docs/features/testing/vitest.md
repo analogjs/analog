@@ -127,6 +127,24 @@ setupTestBed({
 });
 ```
 
+### Configuration Options
+
+The `setupTestBed()` function accepts an optional configuration object with the following properties:
+
+- `zoneless` (boolean): Whether to use zoneless change detection (default: `true`)
+- `providers` (`Type<any>[]`): Additional providers to include in the test environment (default: `[]`)
+- `browserMode` (boolean): Enables visual test preview in Vitest browser mode by keeping the component rendered, allowing you to inspect its final state (default: `false`)
+
+**Example with options:**
+
+```ts
+setupTestBed({
+  zoneless: true,
+  providers: [],
+  browserMode: false,
+});
+```
+
 Next, update the `test` target in the `angular.json` to use the `@analogjs/vitest-angular:test` builder:
 
 ```json
@@ -233,6 +251,20 @@ export default defineConfig(({ mode }) => ({
   },
 }));
 ```
+
+When running tests in the browser, you may want to update your `src/test-setup.ts` to enable `browserMode`:
+
+```ts
+import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-snapshots';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+setupTestBed({
+  browserMode: true, // Enables visual test preview
+});
+```
+
+This keeps the component rendered after tests complete, allowing you to visually inspect the final state in the browser preview.
 
 ## Running Tests
 
