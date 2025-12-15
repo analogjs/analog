@@ -18,6 +18,34 @@ Vitest soporta muchas características:
 - Pruebas en el mismo archivo (in-source testing).
 - Y más ...
 
+También puedes [agregar Vitest](/docs/features/testing/vitest) a un proyecto existente.
+
+## Soporte de Angular para Vitest
+
+En Angular v21, se introdujo soporte estable para Vitest directamente a través de la CLI de Angular para nuevos proyectos de Angular. Mientras tanto Analog como Angular soportan la ejecución de pruebas con Vitest, hay algunas similitudes y diferencias clave.
+
+La tabla a continuación muestra las características disponibles en ambas opciones.
+
+| Vitest               | Analog    | Angular      |
+| -------------------- | --------- | ------------ |
+| Angular Versions     | v17+      | v21+         |
+| Support              | Community | Angular Team |
+| Builders             | ✅        | ✅           |
+| Schematics           | ✅        | ✅           |
+| Migrations           | ✅        | ✅           |
+| Browser Mode         | ✅        | ✅           |
+| Fully Configurable   | ✅        | ⚠️           |
+| Vitest CLI           | ✅        | ❌           |
+| Vitest Workpsaces    | ✅        | ❌           |
+| Custom Environments  | ✅        | ❌           |
+| Custom Providers     | ✅        | ❌           |
+| IDE extensions       | ✅        | ❌           |
+| Buildable Libs       | ✅        | ❌           |
+| Module Mocking/Graph | ✅        | ❌           |
+| Types                | ✅        | ❌           |
+
+La tabla anterior no tiene como objetivo comparar las dos soluciones, sino proporcionar la información sobre qué características están soportadas por cada implementación. Elija la solución que mejor se adapte a sus necesidades y prioridades.
+
 ## Ejecutando Pruebas Unitarias
 
 Para ejecutar pruebas unitarias, usa el comando `test`:
@@ -48,7 +76,9 @@ pnpm run test
   </TabItem>
 </Tabs>
 
-También puedes [añadir Vitest](/docs/features/testing/vitest) a tu proyecto existente.
+## Soporte para IDE
+
+Las pruebas también se pueden ejecutar directamente desde tu IDE utilizando las integraciones de Vitest para IDEs ([integraciones de IDE](https://vitest.dev/guide/ide)) para VS Code o JetBrains IDEs.
 
 ## Limitaciones Conocidas
 
