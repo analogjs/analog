@@ -76,6 +76,8 @@ export default defineConfig(({ mode }) => ({
 
 Para prerenderizar únicamente las páginas estáticas, usa la bandera `static: true`.
 
+> La bandera `ssr` tiene que estar establecida en `true` para prerenderizar páginas estáticas.
+
 ```ts
 import { defineConfig } from 'vite';
 import analog from '@analogjs/platform';
