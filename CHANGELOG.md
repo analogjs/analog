@@ -1,3 +1,9 @@
+# [2.2.0-beta.14](https://github.com/analogjs/analog/compare/v2.2.0-beta.13...v2.2.0-beta.14) (2025-12-15)
+
+### Bug Fixes
+
+- support canary Nx releases ([664b1a2](https://github.com/analogjs/analog/commit/664b1a27d86acbc53c71d4ab2fedbf0e1a12040f))
+
 # [2.2.0-beta.13](https://github.com/analogjs/analog/compare/v2.2.0-beta.12...v2.2.0-beta.13) (2025-12-15)
 
 ### Features
