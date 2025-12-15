@@ -5,10 +5,6 @@ import TabItem from '@theme/TabItem';
 
 Analog soporta la generación de código automatizada usando Nx Generators y Angular Schematics.
 
-## Generar una Página
-
-Este comando genera una página dentro de nuestro directorio `pages` con una configuración mínima.
-
 <Tabs groupId="project-type">
   <TabItem value="Nx">
 
@@ -16,11 +12,21 @@ Este comando genera una página dentro de nuestro directorio `pages` con una con
 
 El plugin de Analog para Nx provee una serie de generadores que ayudan a automatizar algunas de las tareas frecuentes dentro de un proyecto Analog, como generar una **Página**. Para usar estos generadores, la extensión **Nx Console** puede ser instalada o pueden ser invocados manualmente usando:
 
+### Generando una aplicación
+
+Para generar una nueva aplicación Analog con el espacio de trabajo de Nx, usar el generador de aplicación:
+
 ```shell
 npx nx generate @analogjs/platform:page --pathname=index --project=analog-app
 ```
 
-También funciona con los nombres específicos de Analog, **Nota: estos nombres deben estar rodeados por comillas simples** ej:
+### Generando páginas
+
+```shell
+npx nx generate @analogjs/platform:page --pathname=index --project=analog-app
+```
+
+También funciona con los nombres específicos de Analog, **Nota: estos nombres deben estar rodeados por comillas simples** ejemplo:
 
 ```shell
 npx nx generate @analogjs/platform:page --pathname='(blog)' --project=analog-app
@@ -38,22 +44,32 @@ npx nx generate @analogjs/platform:page --pathname='products/[products]' --proje
 
 ### Angular Schematics
 
-Analog provee una serie de schematics que ayudan a automatizar algunas de las tareas frecuentes dentro de un proyecto Analog, como generar una **Página**. Para usar estos schematics, use el comando generate:
+Analog provee una serie de esquemas que ayudan a automatizar algunas tareas frecuentes en el espacio de trabajo de Angular CLI, como generar una **applicación** o una **página**. Para usar estos esquemnas, utilizar el comando generate:
+
+### Generando una aplicación
+
+Para generar una nueva aplicación Analog con un espacio de trabrabajo Angular CLI, usar el esquema de application:
 
 ```shell
-ng g @analogjs/platform:page --pathname=index --project=/
+npx ng generate @analogjs/platform:application my-app
 ```
 
-it also works with the Analog specific filenames, **Note: this names needs to be surrounded by single quotes** ex:
+### Generando páginas
 
 ```shell
-ng g @analogjs/platform:page --pathname='(blog)' --project=/
+npx ng g @analogjs/platform:page --pathname=index --project=/
 ```
 
-The schematic as well accepts subfolders to structure our project properly.
+También funciona con nombres de archivos especificos , **Nota: estos nombres tienen que ser rodeados con comillas simples** por ejemplo:
 
 ```shell
-ng g @analogjs/platform:page --pathname='products/[products]' --project=/
+npx ng g @analogjs/platform:page --pathname='(blog)' --project=/
+```
+
+El esquema también acepta sub directorios para estructurar tu proyecto adecuadamente.
+
+```shell
+npx ng g @analogjs/platform:page --pathname='products/[products]' --project=/
 ```
 
   </TabItem>
