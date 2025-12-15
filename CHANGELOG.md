@@ -1,3 +1,9 @@
+# [2.2.0-beta.13](https://github.com/analogjs/analog/compare/v2.2.0-beta.12...v2.2.0-beta.13) (2025-12-15)
+
+### Features
+
+- **vitest-angular:** added support for browser mode preview ([#2012](https://github.com/analogjs/analog/issues/2012)) ([dc27af2](https://github.com/analogjs/analog/commit/dc27af22c5f251d2bb583476fcb953c7fe9cc5e4))
+
 # [2.2.0-beta.12](https://github.com/analogjs/analog/compare/v2.2.0-beta.11...v2.2.0-beta.12) (2025-12-13)
 
 ### Bug Fixes
