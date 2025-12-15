@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Rutas de Contenido
 
 Analog también soporta el uso de contenido en markdown como rutas y la renderización de contenido en componentes.
@@ -19,6 +16,27 @@ export const appConfig: ApplicationConfig = {
     provideContent(withMarkdownRenderer()),
   ],
 };
+```
+
+Luego, habilitar el paquete contenido en el archivo `vite.config.ts`
+
+```ts
+/// <reference types="vitest" />
+
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      // enable content/highlighter
+      content: {
+        highlighter: 'prism',
+      },
+    }),
+  ],
+}));
 ```
 
 ## Definiendo Rutas de Contenido
@@ -83,6 +101,7 @@ export default defineConfig({
   plugins: [
     analog({
       content: {
+        highlighter: 'prism',
         prismOptions: {
           additionalLangs: ['prism-diff'],
         },
@@ -234,7 +253,6 @@ Para obtener una lista usando los archivos de contenido en la carpeta `src/conte
 import { Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { injectContentFiles } from '@analogjs/content';
-import { NgFor } from '@angular/common';
 
 export interface PostAttributes {
   title: string;
@@ -245,14 +263,18 @@ export interface PostAttributes {
 
 @Component({
   standalone: true,
-  imports: [RouterOutlet, RouterLink, NgFor],
+  imports: [RouterOutlet, RouterLink],
   template: `
     <ul>
-      <li *ngFor="let post of posts">
-        <a [routerLink]="['/blog', 'posts', post.slug]">{{
-          post.attributes.title
-        }}</a>
-      </li>
+      @for (post of posts; track post.slug) {
+        <li>
+          <a [routerLink]="['/blog', 'posts', post.slug]">
+            {{ post.attributes.title }}
+          </a>
+        </li>
+      } @empty {
+        <li>No posts yet.</li>
+      }
     </ul>
   `,
 })
@@ -409,12 +431,12 @@ export interface ProjectAttributes {
 
 @Component({
   standalone: true,
-  imports: [MarkdownComponent, AsyncPipe, NgIf],
+  imports: [MarkdownComponent, AsyncPipe],
   template: `
-    <ng-container *ngIf="project$ | async as project">
+    @if (project$ | async; as project) {
       <h1>{{ project.attributes.title }}</h1>
       <analog-markdown [content]="project.content"></analog-markdown>
-    </ng-container>
+    }
   `,
 })
 export default class ProjectComponent {
