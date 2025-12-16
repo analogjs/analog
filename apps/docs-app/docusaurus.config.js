@@ -214,11 +214,11 @@ const config = {
               },
               {
                 label: 'llms.txt',
-                href: '/llms.txt',
+                href: 'https://analogjs.org/llms.txt',
               },
               {
                 label: 'llms-full.txt',
-                href: '/llms-full.txt',
+                href: 'https://analogjs.org/llms-full.txt',
               },
             ],
           },
