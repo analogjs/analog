@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/platform",
-  "version": "2.1.3",
+  "version": "2.2.0-beta.14",
   "description": "The fullstack meta-framework for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -29,21 +29,21 @@
   },
   "dependencies": {
     "nitropack": "^2.11.0",
-    "@analogjs/vite-plugin-angular": "^2.1.3",
-    "@analogjs/vite-plugin-nitro": "^2.1.3",
+    "@analogjs/vite-plugin-angular": "^2.2.0-beta.14",
+    "@analogjs/vite-plugin-nitro": "^2.2.0-beta.14",
     "vitefu": "^1.0.0"
   },
   "peerDependencies": {
-    "@nx/angular": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0",
-    "@nx/devkit": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0",
-    "@nx/vite": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@nx/angular": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22",
+    "@nx/devkit": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22",
+    "@nx/vite": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22",
     "marked": "^15.0.7",
     "marked-gfm-heading-id": "^4.1.1",
     "marked-highlight": "^2.2.1",
     "marked-mangle": "^1.1.10",
     "marked-shiki": "^1.1.0",
     "shiki": "^1.6.1",
-    "vite": "^5.0.0 || ^6.0.0 || ^7.0.0"
+    "vite": "^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-beta.0"
   },
   "overrides": {
     "@nx/vite": {

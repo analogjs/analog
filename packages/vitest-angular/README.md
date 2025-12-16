@@ -109,6 +109,24 @@ setupTestBed({
 });
 ```
 
+### Configuration Options
+
+The `setupTestBed()` function accepts an optional configuration object with the following properties:
+
+- `zoneless` (boolean): Whether to use zoneless change detection (default: `true`)
+- `providers` (`Type<any>[]`): Additional providers to include in the test environment (default: `[]`)
+- `browserMode` (boolean): Enables visual test preview in Vitest browser mode by keeping the component rendered, allowing you to inspect its final state (default: `false`)
+
+**Example with options:**
+
+```ts
+setupTestBed({
+  zoneless: true,
+  providers: [],
+  browserMode: false,
+});
+```
+
 Next, update the `test` target in the `angular.json` to use the `@analogjs/vitest-angular:test` builder:
 
 ```json

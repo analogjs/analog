@@ -48,8 +48,11 @@ export function buildOptimizerPlugin({
         },
       } as UserConfig;
     },
-    async transform(code, id) {
-      if (/\.[cm]?js$/.test(id)) {
+    transform: {
+      filter: {
+        id: /\.[cm]?js$/,
+      },
+      async handler(code, id) {
         const angularPackage = /fesm20/.test(id);
 
         if (!angularPackage) {
@@ -75,9 +78,7 @@ export function buildOptimizerPlugin({
         return {
           code: Buffer.from(result).toString(),
         };
-      }
-
-      return;
+      },
     },
   };
 }

@@ -13,8 +13,7 @@ By default, Angular and Storybook uses Webpack to build and serve the Storybook 
 
 This guides you through the process of switching to building and serving your Storybook with Angular using Vite using the AnalogJS Storybook integration. This package can be applied to _any_ Angular project using Storybook.
 
-> This is a community integration not maintained by the Storybook team. If you have issues,
-> file an issue in our [GitHub repo](https://github.com/analogjs/analog/issues).
+> This is a community integration not maintained by the Storybook team. If you have issues, file an issue in our [GitHub repo](https://github.com/analogjs/analog/issues).
 
 ## Compatibility Guide
 

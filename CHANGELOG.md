@@ -1,3 +1,88 @@
+# [2.2.0-beta.14](https://github.com/analogjs/analog/compare/v2.2.0-beta.13...v2.2.0-beta.14) (2025-12-15)
+
+### Bug Fixes
+
+- support canary Nx releases ([664b1a2](https://github.com/analogjs/analog/commit/664b1a27d86acbc53c71d4ab2fedbf0e1a12040f))
+
+# [2.2.0-beta.13](https://github.com/analogjs/analog/compare/v2.2.0-beta.12...v2.2.0-beta.13) (2025-12-15)
+
+### Features
+
+- **vitest-angular:** added support for browser mode preview ([#2012](https://github.com/analogjs/analog/issues/2012)) ([dc27af2](https://github.com/analogjs/analog/commit/dc27af22c5f251d2bb583476fcb953c7fe9cc5e4))
+
+# [2.2.0-beta.12](https://github.com/analogjs/analog/compare/v2.2.0-beta.11...v2.2.0-beta.12) (2025-12-13)
+
+### Bug Fixes
+
+- **create-analog:** remove angular-devkit/build-angular from devDependencies ([ada2ecc](https://github.com/analogjs/analog/commit/ada2ecc7fddf8247472b30439d15ba014eb4df30))
+
+# [2.2.0-beta.11](https://github.com/analogjs/analog/compare/v2.2.0-beta.10...v2.2.0-beta.11) (2025-12-13)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** apply transform filter to plugins ([#2011](https://github.com/analogjs/analog/issues/2011)) ([0bfe92d](https://github.com/analogjs/analog/commit/0bfe92d4ec2a5422b9decec09c54f045fac8c135))
+
+# [2.2.0-beta.10](https://github.com/analogjs/analog/compare/v2.2.0-beta.9...v2.2.0-beta.10) (2025-12-13)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** pass modified files for incremental compilation ([#2010](https://github.com/analogjs/analog/issues/2010)) ([7cb7970](https://github.com/analogjs/analog/commit/7cb797067f2df37b7f884cac6f6b211e88d2e662))
+
+# [2.2.0-beta.9](https://github.com/analogjs/analog/compare/v2.2.0-beta.8...v2.2.0-beta.9) (2025-12-11)
+
+### Features
+
+- **storybook-angular:** allows setting tsconfig via framework options ([#1999](https://github.com/analogjs/analog/issues/1999)) ([cbd358d](https://github.com/analogjs/analog/commit/cbd358dd7c28d5f9c1212c428af77f44a2bd5498))
+
+# [2.2.0-beta.8](https://github.com/analogjs/analog/compare/v2.2.0-beta.7...v2.2.0-beta.8) (2025-12-10)
+
+### Bug Fixes
+
+- **nx-plugin:** pass Nx version for package version detection ([42a9630](https://github.com/analogjs/analog/commit/42a963025bd31cc6279e9d135d7cd7cce894e00c))
+
+# [2.2.0-beta.7](https://github.com/analogjs/analog/compare/v2.2.0-beta.6...v2.2.0-beta.7) (2025-12-09)
+
+### Bug Fixes
+
+- **nx-plugin:** adjust Vitest version for Angular v20 ([c4b2ea7](https://github.com/analogjs/analog/commit/c4b2ea77c757ebd1aa6c17ff5e3aaab96d239fb3))
+
+# [2.2.0-beta.6](https://github.com/analogjs/analog/compare/v2.2.0-beta.5...v2.2.0-beta.6) (2025-12-08)
+
+### Bug Fixes
+
+- **storybook-angular:** creates config.plugin array when undefined ([#1998](https://github.com/analogjs/analog/issues/1998)) ([0dd147c](https://github.com/analogjs/analog/commit/0dd147c4f764dbaa2c82a04e887b3ecad91d1e1a))
+
+# [2.2.0-beta.5](https://github.com/analogjs/analog/compare/v2.2.0-beta.4...v2.2.0-beta.5) (2025-12-08)
+
+### Bug Fixes
+
+- **vitest-angular:** reset TestBed between tests ([6f704b0](https://github.com/analogjs/analog/commit/6f704b0146303f6804ca0be1e4af959b1b70e0e4)), closes [#1994](https://github.com/analogjs/analog/issues/1994)
+
+# [2.2.0-beta.4](https://github.com/analogjs/analog/compare/v2.2.0-beta.3...v2.2.0-beta.4) (2025-12-07)
+
+### Features
+
+- add itemprop meta tag support to MetaTag types ([543b351](https://github.com/analogjs/analog/commit/543b35196da5f07676c2e065a6d6a108b846638c))
+- add itemprop meta tag support to parent and child meta tag values ([830a50f](https://github.com/analogjs/analog/commit/830a50fe72dc3a58eddb6431581fe2169f99a36e))
+
+# [2.2.0-beta.3](https://github.com/analogjs/analog/compare/v2.2.0-beta.2...v2.2.0-beta.3) (2025-12-05)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** re-use builder between compilations ([#1990](https://github.com/analogjs/analog/issues/1990)) ([e4ae778](https://github.com/analogjs/analog/commit/e4ae7787ece34443d6cbe8b77050ea94447a97e0))
+
+# [2.2.0-beta.2](https://github.com/analogjs/analog/compare/v2.2.0-beta.1...v2.2.0-beta.2) (2025-12-03)
+
+### Features
+
+- add support for Vite 8.x releases ([#1989](https://github.com/analogjs/analog/issues/1989)) ([fd4031e](https://github.com/analogjs/analog/commit/fd4031e49efb4f12e9cb874055c0cfb4ef012fb9))
+
+# [2.2.0-beta.1](https://github.com/analogjs/analog/compare/v2.1.2...v2.2.0-beta.1) (2025-12-02)
+
+### Features
+
+- **vite-plugin-angular:** improve dev/build performance with caches and plugin optimizations ([#1987](https://github.com/analogjs/analog/issues/1987)) ([47ed20f](https://github.com/analogjs/analog/commit/47ed20f17bd42502c6d9845361a61556f7fdd2ae))
+
 ## [2.1.3](https://github.com/analogjs/analog/compare/v2.1.2...v2.1.3) (2025-12-08)
 
 ### Bug Fixes

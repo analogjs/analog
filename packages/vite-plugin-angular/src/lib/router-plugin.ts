@@ -1,6 +1,7 @@
+import type { Plugin } from 'vite';
 import { JavaScriptTransformer } from './utils/devkit.js';
 
-export function routerPlugin() {
+export function routerPlugin(): Plugin {
   const javascriptTransformer = new JavaScriptTransformer({ jit: true }, 1);
 
   /**
@@ -9,17 +10,19 @@ export function routerPlugin() {
   return {
     name: 'analogjs-router-optimization',
     enforce: 'pre',
-    async transform(_code: string, id: string) {
-      if (id.includes('fesm') && id.includes('.mjs')) {
+    apply: 'serve',
+    transform: {
+      filter: {
+        id: /fesm(.*?)\.mjs/,
+      },
+      async handler(_code: string, id: string) {
         const path = id.split('?')[0];
         const contents = await javascriptTransformer.transformFile(path);
 
         return {
           code: Buffer.from(contents).toString('utf-8'),
         };
-      }
-
-      return;
+      },
     },
   };
 }

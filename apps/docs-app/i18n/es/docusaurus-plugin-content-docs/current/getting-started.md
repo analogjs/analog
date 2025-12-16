@@ -7,6 +7,8 @@ import TabItem from '@theme/TabItem';
 
 # Comenzando
 
+Crear un projecto en Analog puede ser hecho en una mínima cantidad de pasos.
+
 ## Requisitos del sistema
 
 Analog requiere las siguientes versiones de Node y Angular:
@@ -42,6 +44,13 @@ pnpm create analog
 ```
 
   </TabItem>
+  <TabItem value="bun">
+
+```shell
+bun create analog
+```
+
+  </TabItem>
 </Tabs>
 
 También puedes [estructurar un nuevo proyecto con Nx](/docs/integrations/nx).
@@ -54,7 +63,7 @@ Para iniciar el servidor de desarrollo para la aplicación, ejecuta el comando `
   <TabItem value="npm">
 
 ```shell
-npm start
+npm run start
 ```
 
   </TabItem>
@@ -74,9 +83,17 @@ pnpm start
 ```
 
   </TabItem>
+  <TabItem value="bun">
+
+```shell
+bun start
+```
+
+  </TabItem>
 </Tabs>
 
 Visita [http://localhost:5173](http://localhost:5173) en tu navegador para ver aplicación corriendo
+
 A continuación, puedes [definir rutas adicionales usando componentes](/docs/features/routing/overview) para la navegación.
 
 ### Compilando la Aplicación
@@ -107,6 +124,13 @@ pnpm run build
 ```
 
   </TabItem>
+  <TabItem value="bun">
+
+```shell
+bun run build
+```
+
+  </TabItem>
 </Tabs>
 
 ### Compilando Artefactos
@@ -117,4 +141,4 @@ El servidor para los artefactos de compilación API/SSR está localizado en el d
 
 ## Migrando una Aplicación Existente
 
-También puedes migrar una aplicación desarrollada con Angular hacia Analog. Puedes serguir la [guía de migración](/docs/guides/migrating) pasa saber los pasos a seguir.
+También puedes migrar una aplicación desarrollada con Angular hacia Analog. Puedes seguir la [guía de migración](/docs/guides/migrating) pasa saber los pasos a seguir.

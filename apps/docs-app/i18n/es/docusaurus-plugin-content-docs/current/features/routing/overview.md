@@ -14,11 +14,17 @@ Los componentes de ruta **deben** estar definidos como la exportación predeterm
 
 Hay 5 tipos principales de rutas:
 
-- [Rutas de Índice](#index-routes)
-- [Rutas Estáticas](#static-routes)
-- [Rutas Dinámicas](#dynamic-routes)
-- [Rutas de Layout](#layout-routes)
-- [Rutas Catch-all](#catch-all-routes)
+- [Enrutamiento](#routing)
+  - [Definiendo rutas](#defining-routes)
+  - [Rutas de índice](#index-routes)
+  - [Rutas estáticas](#static-routes)
+    - [Rutas agrupadas](#route-groups)
+  - [Rutas dinámicas](#dynamic-routes)
+    - [Usando Enlaces de Entrada de Componentes de Ruta](#using-route-component-input-bindings)
+  - [Rutas de Layout](#layout-routes)
+    - [Rutas de Layout sin Ruta](#pathless-layout-routes)
+  - [Rutas Catch-all](#catch-all-routes)
+  - [Poniendo todo junto](#putting-it-all-together)
 
 Estas rutas pueden combinarse de diferentes maneras para construir URLs para la navegación.
 
@@ -263,6 +269,22 @@ El ejemplo de ruta a continuación en `src/app/pages/[...page-not-found].page.ts
 ```ts
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { injectResponse } from '@analogjs/router/tokens';
+import { RouteMeta } from '@analogjs/router';
+
+export const routeMeta: RouteMeta = {
+  title: 'Page Not Found',
+  canActivate: [
+    () => {
+      const response = injectResponse();
+      if (import.meta.env.SSR && response) {
+        response.statusCode = 404;
+        response.end();
+      }
+      return true;
+    },
+  ],
+};
 
 @Component({
   standalone: true,
@@ -304,7 +326,7 @@ src/
 
 El enrutador basado en el sistema de archivos generará las siguientes rutas:
 
-| Ruta               | Página                                                           |
+| Path               | Page                                                             |
 | ------------------ | ---------------------------------------------------------------- |
 | `/`                | `(home).page.ts`                                                 |
 | `/about`           | `(marketing)/about.md`                                           |
@@ -315,3 +337,44 @@ El enrutador basado en el sistema de archivos generará las siguientes rutas:
 | `/products/1`      | `products/[productId].page.ts` (layout: `products.page.ts`)      |
 | `/products/1/edit` | `products/[productId].edit.page.ts` (layout: `products.page.ts`) |
 | `/unknown-url`     | `[...not-found].md`                                              |
+
+## Proporcionando rutas adicionales
+
+Las rutas se pueden agregar manualmente en adición a las rutas descubiertas a través del sistema de archivos. Utiliza `withExtraRoutes` con un array de rutas para agregar al principio del array de rutas descubiertas. Todas las rutas se fusionan en un array único.
+
+```ts
+import { ApplicationConfig } from '@angular/core';
+import { Routes } from '@angular/router';
+import { provideFileRouter, withExtraRoutes } from '@analogjs/router';
+
+const customRoutes: Routes = [
+  {
+    path: 'custom',
+    loadComponent: () =>
+      import('./custom-component').then((m) => m.CustomComponent),
+  },
+];
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideFileRouter(withExtraRoutes(customRoutes))],
+};
+```
+
+## Visualizando y depurando rutas
+
+Cuando estás construyendo las páginas de tu aplicación, puede ser útil ver las rutas basadas en la estructura del sistema de archivos de manera visual. Puedes utilizar la función `withDebugRoutes()` para proporcionar una ruta de depuración que muestre las páginas y layouts de tu aplicación.
+
+Utiliza la función `withDebugRoutes` en el archivo `app.config.ts`:
+
+```ts
+import { ApplicationConfig } from '@angular/core';
+import { provideFileRouter, withDebugRoutes } from '@analogjs/router';
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideFileRouter(withDebugRoutes())],
+};
+```
+
+Navigar en el navegador a la URL `__analog/routes` para ver la tabla de rutas.
+
+![Página de rutas de depuración](/img/debug-routes.png)

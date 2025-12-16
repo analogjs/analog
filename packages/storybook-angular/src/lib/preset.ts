@@ -38,7 +38,7 @@ export const core = async (config, options) => {
 };
 export const viteFinal = async (config, options) => {
   // Remove any loaded analogjs plugins from a vite.config.(m)ts file
-  config.plugins = config.plugins
+  config.plugins = (config.plugins ?? [])
     .flat()
     .filter((plugin) => !plugin.name.includes('analogjs'));
 
@@ -72,7 +72,10 @@ export const viteFinal = async (config, options) => {
           typeof framework.options?.liveReload !== 'undefined'
             ? framework.options?.liveReload
             : false,
-        tsconfig: options?.tsConfig ?? './.storybook/tsconfig.json',
+        tsconfig:
+          typeof framework.options?.tsconfig !== 'undefined'
+            ? framework.options?.tsconfig
+            : (options?.tsConfig ?? './.storybook/tsconfig.json'),
         inlineStylesExtension:
           typeof framework.options?.inlineStylesExtension !== 'undefined'
             ? framework.options?.inlineStylesExtension

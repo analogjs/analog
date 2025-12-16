@@ -36,11 +36,9 @@ export function angularVitestPlugin(): Plugin {
       ) {
         if (vite.rolldownVersion) {
           const { code, map } = await vite.transformWithOxc(_code, id, {
-            loader: 'js',
-            format: 'esm',
+            lang: 'js',
             target: 'es2016',
             sourcemap: true,
-            sourcefile: id,
           });
 
           return {
@@ -113,7 +111,7 @@ export function angularVitestSourcemapPlugin(): Plugin {
 
       if (vite.rolldownVersion) {
         const result = await vite.transformWithOxc(code, id, {
-          loader: 'js',
+          lang: 'js',
         });
 
         return result as unknown as vite.TransformResult;

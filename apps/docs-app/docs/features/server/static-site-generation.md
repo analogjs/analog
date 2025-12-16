@@ -204,8 +204,7 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-As long as prerender routes are provided, Analog generates a `sitemap.xml` file containing a
-mapping of the pages' `<loc>`, `<lastmod>`, `<changefreq>`, and `<priority>` properties.
+As long as prerender routes are provided, Analog generates a `sitemap.xml` file containing a mapping of the pages' `<loc>`, `<lastmod>`, `<changefreq>`, and `<priority>` properties.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>

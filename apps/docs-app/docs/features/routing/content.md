@@ -117,8 +117,7 @@ Add the `diff-highlight` plugin import to the `app.config.ts`:
 import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
 ```
 
-Use the `diff` language tag to highlight them or
-`diff-<language>` to highlight the diff changes in a specific language.
+Use the `diff` language tag to highlight them or `diff-<language>` to highlight the diff changes in a specific language.
 
 ````md
 ```diff

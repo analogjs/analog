@@ -57,17 +57,18 @@ export function createRolldownCompilerPlugin(
   );
   return {
     name: 'analogjs-rolldown-deps-optimizer-plugin',
-    async load(id) {
-      if (/\.[cm]?js$/.test(id)) {
+    load: {
+      filter: {
+        id: /\.[cm]?js$/,
+      },
+      async handler(id) {
         const contents = await javascriptTransformer.transformFile(id);
 
         return {
           code: Buffer.from(contents).toString('utf-8'),
           loader: 'js',
         } as any;
-      }
-
-      return;
+      },
     },
   };
 }
