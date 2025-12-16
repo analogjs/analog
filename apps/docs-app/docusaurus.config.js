@@ -212,6 +212,14 @@ const config = {
                 label: 'Getting Started',
                 to: 'docs/getting-started',
               },
+              {
+                label: 'llms.txt',
+                href: '/llms.txt',
+              },
+              {
+                label: 'llms-full.txt',
+                href: '/llms-full.txt',
+              },
             ],
           },
           {
