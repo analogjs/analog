@@ -17,9 +17,11 @@ type TestBedSetupOptions = {
   browserMode?: boolean;
 };
 
-export function setupTestBed(
-  options: TestBedSetupOptions = { zoneless: true, providers: [] },
-) {
+export function setupTestBed({
+  zoneless = true,
+  providers = [],
+  browserMode = false,
+}: TestBedSetupOptions = {}) {
   beforeEach(getCleanupHook(false));
   afterEach(getCleanupHook(true));
 
@@ -27,20 +29,18 @@ export function setupTestBed(
     (globalThis as any)[ANGULAR_TESTBED_SETUP] = true;
 
     @NgModule({
-      providers: options?.zoneless ? [provideZonelessChangeDetection()] : [],
+      providers: zoneless ? [provideZonelessChangeDetection()] : [],
     })
     class ZonelessTestModule {}
 
     getTestBed().initTestEnvironment(
       [
         BrowserTestingModule,
-        ...(options?.zoneless ? [ZonelessTestModule] : []),
-        ...((options?.providers || []) as Type<any>[]),
+        ...(zoneless ? [ZonelessTestModule] : []),
+        ...((providers || []) as Type<any>[]),
       ],
       platformBrowserTesting(),
-      options?.browserMode
-        ? { teardown: { destroyAfterEach: false } }
-        : undefined,
+      browserMode ? { teardown: { destroyAfterEach: false } } : undefined,
     );
   }
 }
