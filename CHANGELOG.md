@@ -1,3 +1,9 @@
+## [2.2.1-beta.2](https://github.com/analogjs/analog/compare/v2.2.1-beta.1...v2.2.1-beta.2) (2025-12-18)
+
+### Bug Fixes
+
+- **nx-plugin:** add @nx/vite to preset packages ([0aca507](https://github.com/analogjs/analog/commit/0aca507648fb28e1d77a2902ab10299856270e11))
+
 ## [2.2.1-beta.1](https://github.com/analogjs/analog/compare/v2.2.0...v2.2.1-beta.1) (2025-12-18)
 
 ### Bug Fixes
