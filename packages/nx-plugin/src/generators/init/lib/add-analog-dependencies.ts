@@ -12,6 +12,10 @@ export function addAnalogDependencies(
   const devDependencies = getAnalogDevDependencies(angularVersion, nxVersion);
   const dependencies = getAnalogDependencies(angularVersion);
 
+  if (!nxVersion) {
+    delete devDependencies['@nx/vite'];
+  }
+
   if (!vitest) {
     delete devDependencies['vitest'];
     delete devDependencies['@vitest/coverage-v8'];
