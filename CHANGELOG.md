@@ -1,3 +1,9 @@
+## [2.2.1-beta.3](https://github.com/analogjs/analog/compare/v2.2.1-beta.2...v2.2.1-beta.3) (2025-12-18)
+
+### Bug Fixes
+
+- **nx-plugin:** add @nx/vite for Nx workspaces ([08ba372](https://github.com/analogjs/analog/commit/08ba372257044890aa2f90bff8898c293b15dba5))
+
 ## [2.2.1-beta.2](https://github.com/analogjs/analog/compare/v2.2.1-beta.1...v2.2.1-beta.2) (2025-12-18)
 
 ### Bug Fixes
