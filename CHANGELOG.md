@@ -1,3 +1,9 @@
+## [2.2.1-beta.1](https://github.com/analogjs/analog/compare/v2.2.0...v2.2.1-beta.1) (2025-12-18)
+
+### Bug Fixes
+
+- **nx-plugin:** skip installing Vitest packages when skipped during migration ([#2017](https://github.com/analogjs/analog/issues/2017)) ([a573684](https://github.com/analogjs/analog/commit/a57368484ca8632f325d966964dae07055e43dcb))
+
 # [2.2.0](https://github.com/analogjs/analog/compare/v2.1.3...v2.2.0) (2025-12-16)
 
 ### Bug Fixes
