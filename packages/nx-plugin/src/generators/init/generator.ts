@@ -63,7 +63,7 @@ export async function setupAnalogGenerator(
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
   const nxVersion = getInstalledPackageVersion(tree, 'nx');
   const majorAngularVersion = major(coerce(angularVersion));
-  addAnalogDependencies(tree, angularVersion, nxVersion);
+  addAnalogDependencies(tree, angularVersion, options.vitest, nxVersion);
   updateBuildTarget(tree, options);
   updateServeTarget(tree, options);
 
