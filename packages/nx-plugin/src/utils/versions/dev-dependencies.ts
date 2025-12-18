@@ -111,15 +111,18 @@ const getDevDependencies = (
         ? V19_X_VITE
         : NX_X_LATEST_VITE,
     vitest:
-      escapedNxVersion && lt(escapedNxVersion, '22.3.0')
+      lt(escapedAngularVersion, '21.0.0') ||
+      (escapedNxVersion && lt(escapedNxVersion, '22.3.0'))
         ? V19_X_VITEST
         : NX_X_LATEST_VITEST,
     '@vitest/coverage-v8':
-      escapedNxVersion && lt(escapedNxVersion, '22.3.0')
+      lt(escapedAngularVersion, '21.0.0') ||
+      (escapedNxVersion && lt(escapedNxVersion, '22.3.0'))
         ? V19_X_VITEST
         : NX_X_LATEST_VITEST,
     '@vitest/ui':
-      escapedNxVersion && lt(escapedNxVersion, '22.3.0')
+      lt(escapedAngularVersion, '21.0.0') ||
+      (escapedNxVersion && lt(escapedNxVersion, '22.3.0'))
         ? V19_X_VITEST
         : NX_X_LATEST_VITEST,
   };
