@@ -1,3 +1,10 @@
+## [2.2.1-beta.4](https://github.com/analogjs/analog/compare/v2.2.1-beta.3...v2.2.1-beta.4) (2025-12-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** improve compatibility with older TypeScript versions ([#2021](https://github.com/analogjs/analog/issues/2021)) ([aab2f2a](https://github.com/analogjs/analog/commit/aab2f2a4e7297bc1c86b7f185efe204c4592a828))
+- **vitest-angular:** ensure setupTestBed defaults merge ([#2019](https://github.com/analogjs/analog/issues/2019)) ([f36339f](https://github.com/analogjs/analog/commit/f36339ff9835b04f6137b1a235ec2f35157293d7))
+
 ## [2.2.1-beta.3](https://github.com/analogjs/analog/compare/v2.2.1-beta.2...v2.2.1-beta.3) (2025-12-18)
 
 ### Bug Fixes
