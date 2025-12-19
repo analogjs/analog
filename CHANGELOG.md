@@ -1,3 +1,9 @@
+## [2.2.1-beta.5](https://github.com/analogjs/analog/compare/v2.2.1-beta.4...v2.2.1-beta.5) (2025-12-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** process styles in jit mode instead of returning raw output ([#2024](https://github.com/analogjs/analog/issues/2024)) ([bcb6da9](https://github.com/analogjs/analog/commit/bcb6da9f6d112fe174e90a390235eb5adf14982e))
+
 ## [2.2.1-beta.4](https://github.com/analogjs/analog/compare/v2.2.1-beta.3...v2.2.1-beta.4) (2025-12-19)
 
 ### Bug Fixes
