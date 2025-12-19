@@ -504,7 +504,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           const path = id.split(';')[1];
           return `${normalizePath(
             resolve(dirname(importer as string), path),
-          )}?raw`;
+          )}??${id.includes(':style') ? 'inline' : 'raw'}`;
         }
 
         // Map angular external styleUrls to the source file
