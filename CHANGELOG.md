@@ -1,3 +1,9 @@
+## [2.2.1-beta.6](https://github.com/analogjs/analog/compare/v2.2.1-beta.5...v2.2.1-beta.6) (2025-12-19)
+
+### Bug Fixes
+
+- **storybook-angular:** resolve relative styles from project root ([#2025](https://github.com/analogjs/analog/issues/2025)) ([33e7b6c](https://github.com/analogjs/analog/commit/33e7b6cf19a51b49774b7405cec1abed494d46f7))
+
 ## [2.2.1-beta.5](https://github.com/analogjs/analog/compare/v2.2.1-beta.4...v2.2.1-beta.5) (2025-12-19)
 
 ### Bug Fixes
