@@ -88,6 +88,7 @@ export default defineConfig(({ mode }) => {
 5. Update the `styles.scss` file to import the Angular Material styles and define your custom theme:
 
 ```scss
+@use 'tailwindcss';
 @use '@angular/material' as mat;
 
 html {
@@ -110,6 +111,24 @@ body {
 
 html {
   height: 100%;
+}
+```
+
+> Note: Use `@use 'tailwindcss';` instead of the deprecated `@import 'tailwindcss';`.
+
+6. Install the Tailwind PostCSS plugin:
+
+```shell
+npm install @tailwindcss/postcss
+```
+
+7. Create a `.postcssrc.json`:
+
+```json
+{
+  "plugins": {
+    "@tailwindcss/postcss": {}
+  }
 }
 ```
 
