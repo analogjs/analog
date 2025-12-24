@@ -114,24 +114,6 @@ html {
 }
 ```
 
-> Note: Use `@use 'tailwindcss';` instead of the deprecated `@import 'tailwindcss';`.
-
-6. Install the Tailwind PostCSS plugin:
-
-```shell
-npm install @tailwindcss/postcss
-```
-
-7. Create a `.postcssrc.json`:
-
-```json
-{
-  "plugins": {
-    "@tailwindcss/postcss": {}
-  }
-}
-```
-
 ## Optional Step: Configuring Animations
 
 If you want to activate or deactivate animations where needed, follow the correspondent steps:
@@ -153,6 +135,28 @@ providers: [
   provideNoopAnimations(),
 ],
 ```
+
+## Optional Step: Configuring Tailwind CSS
+
+If you use Tailwind CSS, set up PostCSS to make it work correctly with Angular Material:
+
+1. **Install the Tailwind PostCSS plugin:**
+
+```shell
+npm install @tailwindcss/postcss
+```
+
+2. **Create a `.postcssrc.json` file:**
+
+```json
+{
+  "plugins": {
+    "@tailwindcss/postcss": {}
+  }
+}
+```
+
+> **Note:** Use `@use 'tailwindcss';` instead of the deprecated `@import 'tailwindcss';`.
 
 With these steps, you have configured animations to be enabled on the client and disabled on the server in your Analog application.
 
