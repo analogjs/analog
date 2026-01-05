@@ -1,0 +1,2693 @@
+<!doctype html>
+<html
+  lang="en"
+  dir="ltr"
+  data-theme="dark"
+  data-has-toc
+  data-has-sidebar
+  class="astro-km5vhrng"
+>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Routing | Analog</title>
+    <link
+      rel="canonical"
+      href="https://analogjs.org/features/routing/overview/"
+    />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="generator" content="Astro v5.16.6" />
+    <meta name="generator" content="Starlight v0.31.1" />
+    <meta property="og:title" content="Routing" />
+    <meta property="og:type" content="article" />
+    <meta
+      property="og:url"
+      content="https://analogjs.org/features/routing/overview/"
+    />
+    <meta property="og:locale" content="en" />
+    <meta property="og:description" />
+    <meta property="og:site_name" content="Analog" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      property="og:image"
+      content="https://analogjs.org/img/analog-banner.png"
+    />
+    <meta
+      name="twitter:image"
+      content="https://analogjs.org/img/analog-banner.png"
+    />
+    <script>
+      window.StarlightThemeProvider = (() => {
+        const storedTheme =
+          typeof localStorage !== 'undefined' &&
+          localStorage.getItem('starlight-theme');
+        const theme =
+          storedTheme ||
+          (window.matchMedia('(prefers-color-scheme: light)').matches
+            ? 'light'
+            : 'dark');
+        document.documentElement.dataset.theme =
+          theme === 'light' ? 'light' : 'dark';
+        return {
+          updatePickers(theme = storedTheme || 'auto') {
+            document
+              .querySelectorAll('starlight-theme-select')
+              .forEach((picker) => {
+                const select = picker.querySelector('select');
+                if (select) select.value = theme;
+                /** @type {HTMLTemplateElement | null} */
+                const tmpl = document.querySelector(`#theme-icons`);
+                const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+                if (newIcon) {
+                  const oldIcon = picker.querySelector('svg.label-icon');
+                  if (oldIcon) {
+                    oldIcon.replaceChildren(
+                      ...newIcon.cloneNode(true).childNodes,
+                    );
+                  }
+                }
+              });
+          },
+        };
+      })();
+    </script>
+    <template id="theme-icons"
+      ><svg
+        aria-hidden="true"
+        class="light astro-agpekvsx"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        style="--sl-icon-size: 1em"
+      >
+        <path
+          d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"
+        />
+      </svg>
+      <svg
+        aria-hidden="true"
+        class="dark astro-agpekvsx"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        style="--sl-icon-size: 1em"
+      >
+        <path
+          d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"
+        />
+      </svg>
+      <svg
+        aria-hidden="true"
+        class="auto astro-agpekvsx"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        style="--sl-icon-size: 1em"
+      >
+        <path
+          d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"
+        />
+      </svg>
+    </template>
+    <link rel="stylesheet" href="/_astro/print.BJ0teN4y.css" media="print" />
+    <link rel="stylesheet" href="/_astro/index.Dk-SYIKR.css" />
+    <style>
+      :root {
+        --sl-badge-default-border: var(--sl-color-accent);
+        --sl-badge-default-bg: var(--sl-color-accent-low);
+        --sl-badge-default-text: #fff;
+        --sl-badge-note-border: var(--sl-color-blue);
+        --sl-badge-note-bg: var(--sl-color-blue-low);
+        --sl-badge-note-text: #fff;
+        --sl-badge-danger-border: var(--sl-color-red);
+        --sl-badge-danger-bg: var(--sl-color-red-low);
+        --sl-badge-danger-text: #fff;
+        --sl-badge-success-border: var(--sl-color-green);
+        --sl-badge-success-bg: var(--sl-color-green-low);
+        --sl-badge-success-text: #fff;
+        --sl-badge-caution-border: var(--sl-color-orange);
+        --sl-badge-caution-bg: var(--sl-color-orange-low);
+        --sl-badge-caution-text: #fff;
+        --sl-badge-tip-border: var(--sl-color-purple);
+        --sl-badge-tip-bg: var(--sl-color-purple-low);
+        --sl-badge-tip-text: #fff;
+      }
+      [data-theme='light']:root {
+        --sl-badge-default-bg: var(--sl-color-accent-high);
+        --sl-badge-note-bg: var(--sl-color-blue-high);
+        --sl-badge-danger-bg: var(--sl-color-red-high);
+        --sl-badge-success-bg: var(--sl-color-green-high);
+        --sl-badge-caution-bg: var(--sl-color-orange-high);
+        --sl-badge-tip-bg: var(--sl-color-purple-high);
+      }
+      .sl-badge:where(.astro-alsvzfyf) {
+        display: inline-block;
+        border: 1px solid var(--sl-color-border-badge);
+        border-radius: 0.25rem;
+        font-family: var(--sl-font-system-mono);
+        line-height: normal;
+        color: var(--sl-color-text-badge);
+        background-color: var(--sl-color-bg-badge);
+        overflow-wrap: anywhere;
+      }
+      .sidebar-content .sl-badge:where(.astro-alsvzfyf) {
+        line-height: 1;
+        font-size: var(--sl-text-xs);
+        padding: 0.125rem 0.375rem;
+      }
+      .sidebar-content
+        a[aria-current='page']
+        > .sl-badge:where(.astro-alsvzfyf) {
+        --sl-color-bg-badge: transparent;
+        --sl-color-border-badge: currentColor;
+        color: inherit;
+      }
+      .default:where(.astro-alsvzfyf) {
+        --sl-color-bg-badge: var(--sl-badge-default-bg);
+        --sl-color-border-badge: var(--sl-badge-default-border);
+        --sl-color-text-badge: var(--sl-badge-default-text);
+      }
+      .note:where(.astro-alsvzfyf) {
+        --sl-color-bg-badge: var(--sl-badge-note-bg);
+        --sl-color-border-badge: var(--sl-badge-note-border);
+        --sl-color-text-badge: var(--sl-badge-note-text);
+      }
+      .danger:where(.astro-alsvzfyf) {
+        --sl-color-bg-badge: var(--sl-badge-danger-bg);
+        --sl-color-border-badge: var(--sl-badge-danger-border);
+        --sl-color-text-badge: var(--sl-badge-danger-text);
+      }
+      .success:where(.astro-alsvzfyf) {
+        --sl-color-bg-badge: var(--sl-badge-success-bg);
+        --sl-color-border-badge: var(--sl-badge-success-border);
+        --sl-color-text-badge: var(--sl-badge-success-text);
+      }
+      .tip:where(.astro-alsvzfyf) {
+        --sl-color-bg-badge: var(--sl-badge-tip-bg);
+        --sl-color-border-badge: var(--sl-badge-tip-border);
+        --sl-color-text-badge: var(--sl-badge-tip-text);
+      }
+      .caution:where(.astro-alsvzfyf) {
+        --sl-color-bg-badge: var(--sl-badge-caution-bg);
+        --sl-color-border-badge: var(--sl-badge-caution-border);
+        --sl-color-text-badge: var(--sl-badge-caution-text);
+      }
+      .small:where(.astro-alsvzfyf) {
+        font-size: var(--sl-text-xs);
+        padding: 0.125rem 0.25rem;
+      }
+      .medium:where(.astro-alsvzfyf) {
+        font-size: var(--sl-text-sm);
+        padding: 0.175rem 0.35rem;
+      }
+      .large:where(.astro-alsvzfyf) {
+        font-size: var(--sl-text-base);
+        padding: 0.225rem 0.45rem;
+      }
+      .sl-markdown-content
+        :is(h1, h2, h3, h4, h5, h6)
+        .sl-badge:where(.astro-alsvzfyf) {
+        vertical-align: middle;
+      }
+      .card-grid:where(.astro-hnbunlbb) {
+        display: grid;
+        grid-template-columns: 100%;
+        gap: 1rem;
+      }
+      .card-grid:where(.astro-hnbunlbb) > * {
+        margin-top: 0 !important;
+      }
+      @media (min-width: 50rem) {
+        .card-grid:where(.astro-hnbunlbb) {
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
+        .stagger:where(.astro-hnbunlbb) {
+          --stagger-height: 5rem;
+          padding-bottom: var(--stagger-height);
+        }
+        .stagger:where(.astro-hnbunlbb) > *:nth-child(2n) {
+          transform: translateY(var(--stagger-height));
+        }
+      }
+      .card:where(.astro-tghj66ja) {
+        --sl-card-border: var(--sl-color-purple);
+        --sl-card-bg: var(--sl-color-purple-low);
+        border: 1px solid var(--sl-color-gray-5);
+        background-color: var(--sl-color-black);
+        padding: clamp(1rem, calc(0.125rem + 3vw), 2.5rem);
+        flex-direction: column;
+        gap: clamp(0.5rem, calc(0.125rem + 1vw), 1rem);
+      }
+      .card:where(.astro-tghj66ja):nth-child(4n + 1) {
+        --sl-card-border: var(--sl-color-orange);
+        --sl-card-bg: var(--sl-color-orange-low);
+      }
+      .card:where(.astro-tghj66ja):nth-child(4n + 3) {
+        --sl-card-border: var(--sl-color-green);
+        --sl-card-bg: var(--sl-color-green-low);
+      }
+      .card:where(.astro-tghj66ja):nth-child(4n + 4) {
+        --sl-card-border: var(--sl-color-red);
+        --sl-card-bg: var(--sl-color-red-low);
+      }
+      .card:where(.astro-tghj66ja):nth-child(4n + 5) {
+        --sl-card-border: var(--sl-color-blue);
+        --sl-card-bg: var(--sl-color-blue-low);
+      }
+      .title:where(.astro-tghj66ja) {
+        font-weight: 600;
+        font-size: var(--sl-text-h4);
+        color: var(--sl-color-white);
+        line-height: var(--sl-line-height-headings);
+        gap: 1rem;
+        align-items: center;
+      }
+      .card:where(.astro-tghj66ja) .icon:where(.astro-tghj66ja) {
+        border: 1px solid var(--sl-card-border);
+        background-color: var(--sl-card-bg);
+        padding: 0.2em;
+        border-radius: 0.25rem;
+      }
+      .card:where(.astro-tghj66ja) .body:where(.astro-tghj66ja) {
+        margin: 0;
+        font-size: clamp(
+          var(--sl-text-sm),
+          calc(0.5rem + 1vw),
+          var(--sl-text-body)
+        );
+      }
+      svg:where(.astro-agpekvsx) {
+        color: var(--sl-icon-color);
+        font-size: var(--sl-icon-size, 1em);
+        width: 1em;
+        height: 1em;
+      }
+      starlight-tabs:where(.astro-acp7vujg) {
+        display: block;
+      }
+      .tablist-wrapper:where(.astro-acp7vujg) {
+        overflow-x: auto;
+      }
+      :where(.astro-acp7vujg)[role='tablist'] {
+        display: flex;
+        list-style: none;
+        border-bottom: 2px solid var(--sl-color-gray-5);
+        padding: 0;
+      }
+      .tab:where(.astro-acp7vujg) {
+        margin-bottom: -2px;
+      }
+      .tab:where(.astro-acp7vujg) > :where(.astro-acp7vujg)[role='tab'] {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0 1.25rem;
+        text-decoration: none;
+        border-bottom: 2px solid var(--sl-color-gray-5);
+        color: var(--sl-color-gray-3);
+        outline-offset: var(--sl-outline-offset-inside);
+        overflow-wrap: initial;
+      }
+      .tab:where(.astro-acp7vujg)
+        :where(.astro-acp7vujg)[role='tab'][aria-selected='true'] {
+        color: var(--sl-color-white);
+        border-color: var(--sl-color-text-accent);
+        font-weight: 600;
+      }
+      .tablist-wrapper:where(.astro-acp7vujg) ~ [role='tabpanel'] {
+        margin-top: 1rem;
+      }
+      .sl-steps {
+        --bullet-size: calc(var(--sl-line-height) * 1rem);
+        --bullet-margin: 0.375rem;
+        list-style: none;
+        counter-reset: steps-counter var(--sl-steps-start, 0);
+        padding-inline-start: 0;
+      }
+      .sl-steps > li {
+        counter-increment: steps-counter;
+        position: relative;
+        padding-inline-start: calc(var(--bullet-size) + 1rem);
+        padding-bottom: 1px;
+        min-height: calc(var(--bullet-size) + var(--bullet-margin));
+      }
+      .sl-steps > li + li {
+        margin-top: 0;
+      }
+      .sl-steps > li:before {
+        content: counter(steps-counter);
+        position: absolute;
+        top: 0;
+        inset-inline-start: 0;
+        width: var(--bullet-size);
+        height: var(--bullet-size);
+        line-height: var(--bullet-size);
+        font-size: var(--sl-text-xs);
+        font-weight: 600;
+        text-align: center;
+        color: var(--sl-color-white);
+        background-color: var(--sl-color-gray-6);
+        border-radius: 99rem;
+        box-shadow: inset 0 0 0 1px var(--sl-color-gray-5);
+      }
+      .sl-steps > li:after {
+        --guide-width: 1px;
+        content: '';
+        position: absolute;
+        top: calc(var(--bullet-size) + var(--bullet-margin));
+        bottom: var(--bullet-margin);
+        inset-inline-start: calc((var(--bullet-size) - var(--guide-width)) / 2);
+        width: var(--guide-width);
+        background-color: var(--sl-color-hairline-light);
+      }
+      .sl-steps > li > :first-child {
+        --lh: calc(1em * var(--sl-line-height));
+        --shift-y: calc(0.5 * (var(--bullet-size) - var(--lh)));
+        transform: translateY(var(--shift-y));
+        margin-bottom: var(--shift-y);
+      }
+      .sl-steps > li > :first-child:where(h1, h2, h3, h4, h5, h6) {
+        --lh: calc(1em * var(--sl-line-height-headings));
+      }
+      @supports (--prop: 1lh) {
+        .sl-steps > li > :first-child {
+          --lh: 1lh;
+        }
+      }
+      .sl-link-button:where(.astro-2lypzhau) {
+        align-items: center;
+        border: 1px solid transparent;
+        border-radius: 999rem;
+        display: inline-flex;
+        font-size: var(--sl-text-sm);
+        gap: 0.5em;
+        line-height: 1.1875;
+        outline-offset: 0.25rem;
+        padding: 0.4375rem 1.125rem;
+        text-decoration: none;
+      }
+      .sl-link-button:where(.astro-2lypzhau).primary {
+        background: var(--sl-color-text-accent);
+        border-color: var(--sl-color-text-accent);
+        color: var(--sl-color-black);
+      }
+      .sl-link-button:where(.astro-2lypzhau).primary:hover {
+        color: var(--sl-color-black);
+      }
+      .sl-link-button:where(.astro-2lypzhau).secondary {
+        border-color: inherit;
+        color: var(--sl-color-white);
+      }
+      .sl-link-button:where(.astro-2lypzhau).minimal {
+        color: var(--sl-color-white);
+        padding-inline: 0;
+      }
+      .sl-link-button:where(.astro-2lypzhau) svg {
+        flex-shrink: 0;
+      }
+      @media (min-width: 50rem) {
+        .sl-link-button:where(.astro-2lypzhau) {
+          font-size: var(--sl-text-base);
+          padding: 0.9375rem 1.25rem;
+        }
+      }
+      .sl-markdown-content .sl-link-button:where(.astro-2lypzhau) {
+        margin-inline-end: 1rem;
+      }
+      .sl-markdown-content
+        .sl-link-button:where(.astro-2lypzhau):not(:where(p *)) {
+        margin-block: 1rem;
+      }
+    </style>
+    <script type="module" src="/_astro/page.B1D-nYk3.js"></script>
+  </head>
+  <body class="astro-km5vhrng">
+    <a href="#_top" class="astro-cty3avvq">Skip to content</a>
+    <div class="page sl-flex astro-zn7vttou">
+      <header class="header astro-zn7vttou">
+        <div class="header sl-flex astro-ul5awab3">
+          <div class="title-wrapper sl-flex astro-ul5awab3">
+            <a href="/" class="site-title sl-flex astro-26sz6rar">
+              <img
+                class="astro-26sz6rar"
+                alt
+                src="/_astro/analog-logo.BEUEY48N.svg"
+                width="362"
+                height="257"
+              />
+              <span class="astro-26sz6rar" translate="no"> Analog </span>
+            </a>
+          </div>
+          <div class="sl-flex print:hidden astro-ul5awab3">
+            <site-search
+              class="astro-ul5awab3 astro-ukk7cnky"
+              data-translations="{&#34;placeholder&#34;:&#34;Search&#34;}"
+            >
+              <button
+                data-open-modal
+                disabled
+                aria-label="Search"
+                aria-keyshortcuts="Control+K"
+                class="astro-ukk7cnky"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="astro-ukk7cnky astro-agpekvsx"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style="--sl-icon-size: 1em"
+                >
+                  <path
+                    d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"
+                  />
+                </svg>
+                <span
+                  class="sl-hidden md:sl-block astro-ukk7cnky"
+                  aria-hidden="true"
+                  >Search</span
+                >
+                <kbd
+                  class="sl-hidden md:sl-flex astro-ukk7cnky"
+                  style="display: none"
+                >
+                  <kbd class="astro-ukk7cnky">Ctrl</kbd
+                  ><kbd class="astro-ukk7cnky">K</kbd>
+                </kbd>
+              </button>
+              <dialog
+                style="padding: 0"
+                aria-label="Search"
+                class="astro-ukk7cnky"
+              >
+                <div class="dialog-frame sl-flex astro-ukk7cnky">
+                  <button
+                    data-close-modal
+                    class="sl-flex md:sl-hidden astro-ukk7cnky"
+                  >
+                    Cancel
+                  </button>
+                  <div class="search-container astro-ukk7cnky">
+                    <div id="starlight__search" class="astro-ukk7cnky"></div>
+                  </div>
+                </div>
+              </dialog>
+            </site-search>
+            <script>
+              (() => {
+                const openBtn = document.querySelector(
+                  'button[data-open-modal]',
+                );
+                const shortcut = openBtn?.querySelector('kbd');
+                if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+                const platformKey = shortcut.querySelector('kbd');
+                if (
+                  platformKey &&
+                  /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)
+                ) {
+                  platformKey.textContent = '⌘';
+                  openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+                }
+                shortcut.style.display = '';
+              })();
+            </script>
+            <script
+              type="module"
+              src="/_astro/Search.astro_astro_type_script_index_0_lang.cjYDvRdi.js"
+            ></script>
+          </div>
+          <div
+            class="sl-hidden md:sl-flex print:hidden right-group astro-ul5awab3"
+          >
+            <div class="sl-flex social-icons astro-ul5awab3">
+              <a
+                href="https://github.com/analogjs/analog"
+                rel="me"
+                class="sl-flex astro-awqzqbu2"
+                ><span class="sr-only astro-awqzqbu2">GitHub</span
+                ><svg
+                  aria-hidden="true"
+                  class="astro-awqzqbu2 astro-agpekvsx"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style="--sl-icon-size: 1em"
+                >
+                  <path
+                    d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"
+                  />
+                </svg> </a
+              ><a
+                href="https://chat.analogjs.org/"
+                rel="me"
+                class="sl-flex astro-awqzqbu2"
+                ><span class="sr-only astro-awqzqbu2">Discord</span
+                ><svg
+                  aria-hidden="true"
+                  class="astro-awqzqbu2 astro-agpekvsx"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style="--sl-icon-size: 1em"
+                >
+                  <path
+                    d="M20.32 4.37a19.8 19.8 0 0 0-4.93-1.51 13.78 13.78 0 0 0-.64 1.28 18.27 18.27 0 0 0-5.5 0 12.64 12.64 0 0 0-.64-1.28h-.05A19.74 19.74 0 0 0 3.64 4.4 20.26 20.26 0 0 0 .11 18.09l.02.02a19.9 19.9 0 0 0 6.04 3.03l.04-.02a14.24 14.24 0 0 0 1.23-2.03.08.08 0 0 0-.05-.07 13.1 13.1 0 0 1-1.9-.92.08.08 0 0 1 .02-.1 10.2 10.2 0 0 0 .41-.31h.04a14.2 14.2 0 0 0 12.1 0l.04.01a9.63 9.63 0 0 0 .4.32.08.08 0 0 1-.03.1 12.29 12.29 0 0 1-1.9.91.08.08 0 0 0-.02.1 15.97 15.97 0 0 0 1.27 2.01h.04a19.84 19.84 0 0 0 6.03-3.05v-.03a20.12 20.12 0 0 0-3.57-13.69ZM8.02 15.33c-1.18 0-2.16-1.08-2.16-2.42 0-1.33.96-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.34-.96 2.42-2.16 2.42Zm7.97 0c-1.18 0-2.15-1.08-2.15-2.42 0-1.33.95-2.42 2.15-2.42 1.22 0 2.18 1.1 2.16 2.42 0 1.34-.94 2.42-2.16 2.42Z"
+                  />
+                </svg>
+              </a>
+            </div>
+            <starlight-theme-select>
+              <label style="--sl-select-width: 6.25em" class="astro-26wi4w2a">
+                <span class="sr-only astro-26wi4w2a">Select theme</span>
+                <svg
+                  aria-hidden="true"
+                  class="icon label-icon astro-26wi4w2a astro-agpekvsx"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style="--sl-icon-size: 1em"
+                >
+                  <path
+                    d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"
+                  />
+                </svg>
+                <select value="auto" autocomplete="off" class="astro-26wi4w2a">
+                  <option value="dark" class="astro-26wi4w2a">Dark</option>
+                  <option value="light" class="astro-26wi4w2a">Light</option>
+                  <option value="auto" selected class="astro-26wi4w2a">
+                    Auto
+                  </option>
+                </select>
+                <svg
+                  aria-hidden="true"
+                  class="icon caret astro-26wi4w2a astro-agpekvsx"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style="--sl-icon-size: 1em"
+                >
+                  <path
+                    d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"
+                  />
+                </svg>
+              </label>
+            </starlight-theme-select>
+            <script>
+              StarlightThemeProvider.updatePickers();
+            </script>
+            <script type="module">
+              const r = 'starlight-theme',
+                o = (e) =>
+                  e === 'auto' || e === 'dark' || e === 'light' ? e : 'auto',
+                c = () =>
+                  o(typeof localStorage < 'u' && localStorage.getItem(r));
+              function n(e) {
+                typeof localStorage < 'u' &&
+                  localStorage.setItem(
+                    r,
+                    e === 'light' || e === 'dark' ? e : '',
+                  );
+              }
+              const l = () =>
+                matchMedia('(prefers-color-scheme: light)').matches
+                  ? 'light'
+                  : 'dark';
+              function t(e) {
+                StarlightThemeProvider.updatePickers(e),
+                  (document.documentElement.dataset.theme =
+                    e === 'auto' ? l() : e),
+                  n(e);
+              }
+              matchMedia('(prefers-color-scheme: light)').addEventListener(
+                'change',
+                () => {
+                  c() === 'auto' && t('auto');
+                },
+              );
+              class s extends HTMLElement {
+                constructor() {
+                  super(),
+                    t(c()),
+                    this.querySelector('select')?.addEventListener(
+                      'change',
+                      (a) => {
+                        a.currentTarget instanceof HTMLSelectElement &&
+                          t(o(a.currentTarget.value));
+                      },
+                    );
+                }
+              }
+              customElements.define('starlight-theme-select', s);
+            </script>
+            <script type="module">
+              class s extends HTMLElement {
+                constructor() {
+                  super();
+                  const e = this.querySelector('select');
+                  e &&
+                    (e.addEventListener('change', (t) => {
+                      t.currentTarget instanceof HTMLSelectElement &&
+                        (window.location.pathname = t.currentTarget.value);
+                    }),
+                    window.addEventListener('pageshow', (t) => {
+                      if (!t.persisted) return;
+                      const n = e.querySelector('option[selected]')?.index;
+                      n !== e.selectedIndex && (e.selectedIndex = n ?? 0);
+                    }));
+                }
+              }
+              customElements.define('starlight-lang-select', s);
+            </script>
+          </div>
+        </div>
+      </header>
+      <nav class="sidebar print:hidden astro-zn7vttou" aria-label="Main">
+        <starlight-menu-button class="print:hidden astro-z2ckz35n">
+          <button
+            aria-expanded="false"
+            aria-label="Menu"
+            aria-controls="starlight__sidebar"
+            class="sl-flex md:sl-hidden astro-z2ckz35n"
+          >
+            <svg
+              aria-hidden="true"
+              class="astro-z2ckz35n astro-agpekvsx"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              style="--sl-icon-size: 1em"
+            >
+              <path
+                d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"
+              />
+            </svg>
+          </button>
+        </starlight-menu-button>
+        <script type="module">
+          class s extends HTMLElement {
+            constructor() {
+              super(),
+                (this.btn = this.querySelector('button')),
+                this.btn.addEventListener('click', () => this.toggleExpanded());
+              const t = this.closest('nav');
+              t && t.addEventListener('keyup', (e) => this.closeOnEscape(e));
+            }
+            setExpanded(t) {
+              this.setAttribute('aria-expanded', String(t)),
+                document.body.toggleAttribute('data-mobile-menu-expanded', t);
+            }
+            toggleExpanded() {
+              this.setExpanded(this.getAttribute('aria-expanded') !== 'true');
+            }
+            closeOnEscape(t) {
+              t.code === 'Escape' && (this.setExpanded(!1), this.btn.focus());
+            }
+          }
+          customElements.define('starlight-menu-button', s);
+        </script>
+        <div id="starlight__sidebar" class="sidebar-pane astro-zn7vttou">
+          <div class="sidebar-content sl-flex astro-zn7vttou">
+            <sl-sidebar-state-persist
+              data-hash="0nfqoov"
+              class="astro-7gxeco5y"
+            >
+              <script aria-hidden="true">
+                (() => {
+                  try {
+                    if (!matchMedia('(min-width: 50em)').matches) return;
+                    /** @type {HTMLElement | null} */
+                    const target = document.querySelector(
+                      'sl-sidebar-state-persist',
+                    );
+                    const state = JSON.parse(
+                      sessionStorage.getItem('sl-sidebar-state') || '0',
+                    );
+                    if (!target || !state || target.dataset.hash !== state.hash)
+                      return;
+                    window._starlightScrollRestore = state.scroll;
+                    customElements.define(
+                      'sl-sidebar-restore',
+                      class SidebarRestore extends HTMLElement {
+                        connectedCallback() {
+                          try {
+                            const idx = parseInt(this.dataset.index || '');
+                            const details = this.closest('details');
+                            if (details && typeof state.open[idx] === 'boolean')
+                              details.open = state.open[idx];
+                          } catch {}
+                        }
+                      },
+                    );
+                  } catch {}
+                })();
+              </script>
+              <ul class="top-level astro-73y46fma">
+                <li class="astro-73y46fma">
+                  <a
+                    href="/introduction/"
+                    aria-current="false"
+                    class="large astro-73y46fma"
+                  >
+                    <span class="astro-73y46fma">Introduction</span>
+                  </a>
+                </li>
+                <li class="astro-73y46fma">
+                  <a
+                    href="/getting-started/"
+                    aria-current="false"
+                    class="large astro-73y46fma"
+                  >
+                    <span class="astro-73y46fma">Getting Started</span>
+                  </a>
+                </li>
+                <li class="astro-73y46fma">
+                  <details open class="astro-73y46fma">
+                    <sl-sidebar-restore data-index="0"></sl-sidebar-restore>
+                    <summary class="astro-73y46fma">
+                      <div class="group-label astro-73y46fma">
+                        <span class="large astro-73y46fma">Core Concepts</span>
+                      </div>
+                      <svg
+                        aria-hidden="true"
+                        class="caret astro-73y46fma astro-agpekvsx"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        style="--sl-icon-size: 1.25rem"
+                      >
+                        <path
+                          d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                        />
+                      </svg>
+                    </summary>
+                    <ul class="astro-73y46fma">
+                      <li class="astro-73y46fma">
+                        <details open class="astro-73y46fma">
+                          <sl-sidebar-restore
+                            data-index="1"
+                          ></sl-sidebar-restore>
+                          <summary class="astro-73y46fma">
+                            <div class="group-label astro-73y46fma">
+                              <span class="large astro-73y46fma">Routing</span>
+                            </div>
+                            <svg
+                              aria-hidden="true"
+                              class="caret astro-73y46fma astro-agpekvsx"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              style="--sl-icon-size: 1.25rem"
+                            >
+                              <path
+                                d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                              />
+                            </svg>
+                          </summary>
+                          <ul class="astro-73y46fma">
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/routing/overview/"
+                                aria-current="page"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Overview</span>
+                              </a>
+                            </li>
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/routing/metadata/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma"
+                                  >Route Metadata</span
+                                >
+                              </a>
+                            </li>
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/routing/content/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma"
+                                  >Content Routes</span
+                                >
+                              </a>
+                            </li>
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/routing/middleware/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Middleware</span>
+                              </a>
+                            </li>
+                          </ul>
+                        </details>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <details open class="astro-73y46fma">
+                          <sl-sidebar-restore
+                            data-index="2"
+                          ></sl-sidebar-restore>
+                          <summary class="astro-73y46fma">
+                            <div class="group-label astro-73y46fma">
+                              <span class="large astro-73y46fma"
+                                >API Routes</span
+                              >
+                            </div>
+                            <svg
+                              aria-hidden="true"
+                              class="caret astro-73y46fma astro-agpekvsx"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              style="--sl-icon-size: 1.25rem"
+                            >
+                              <path
+                                d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                              />
+                            </svg>
+                          </summary>
+                          <ul class="astro-73y46fma">
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/api/overview/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Overview</span>
+                              </a>
+                            </li>
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/api/websockets/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Websockets</span>
+                              </a>
+                            </li>
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/api/og-image-generation/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma"
+                                  >OG Image Generation</span
+                                >
+                              </a>
+                            </li>
+                          </ul>
+                        </details>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <details open class="astro-73y46fma">
+                          <sl-sidebar-restore
+                            data-index="3"
+                          ></sl-sidebar-restore>
+                          <summary class="astro-73y46fma">
+                            <div class="group-label astro-73y46fma">
+                              <span class="large astro-73y46fma"
+                                >Data Fetching</span
+                              >
+                            </div>
+                            <svg
+                              aria-hidden="true"
+                              class="caret astro-73y46fma astro-agpekvsx"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              style="--sl-icon-size: 1.25rem"
+                            >
+                              <path
+                                d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                              />
+                            </svg>
+                          </summary>
+                          <ul class="astro-73y46fma">
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/data-fetching/overview/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Overview</span>
+                              </a>
+                            </li>
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/data-fetching/server-side-data-fetching/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma"
+                                  >Server-Side Data Fetching</span
+                                >
+                              </a>
+                            </li>
+                          </ul>
+                        </details>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <details open class="astro-73y46fma">
+                          <sl-sidebar-restore
+                            data-index="4"
+                          ></sl-sidebar-restore>
+                          <summary class="astro-73y46fma">
+                            <div class="group-label astro-73y46fma">
+                              <span class="large astro-73y46fma"
+                                >Static Site Generation</span
+                              >
+                            </div>
+                            <svg
+                              aria-hidden="true"
+                              class="caret astro-73y46fma astro-agpekvsx"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              style="--sl-icon-size: 1.25rem"
+                            >
+                              <path
+                                d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                              />
+                            </svg>
+                          </summary>
+                          <ul class="astro-73y46fma">
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/server/static-site-generation/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Overview</span>
+                              </a>
+                            </li>
+                          </ul>
+                        </details>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <details open class="astro-73y46fma">
+                          <sl-sidebar-restore
+                            data-index="5"
+                          ></sl-sidebar-restore>
+                          <summary class="astro-73y46fma">
+                            <div class="group-label astro-73y46fma">
+                              <span class="large astro-73y46fma"
+                                >Server Side Rendering</span
+                              >
+                            </div>
+                            <svg
+                              aria-hidden="true"
+                              class="caret astro-73y46fma astro-agpekvsx"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              style="--sl-icon-size: 1.25rem"
+                            >
+                              <path
+                                d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                              />
+                            </svg>
+                          </summary>
+                          <ul class="astro-73y46fma">
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/server/server-side-rendering/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Overview</span>
+                              </a>
+                            </li>
+                          </ul>
+                        </details>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/guides/forms/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Form Actions</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <details open class="astro-73y46fma">
+                          <sl-sidebar-restore
+                            data-index="6"
+                          ></sl-sidebar-restore>
+                          <summary class="astro-73y46fma">
+                            <div class="group-label astro-73y46fma">
+                              <span class="large astro-73y46fma"
+                                >Code Generation</span
+                              >
+                            </div>
+                            <svg
+                              aria-hidden="true"
+                              class="caret astro-73y46fma astro-agpekvsx"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              style="--sl-icon-size: 1.25rem"
+                            >
+                              <path
+                                d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                              />
+                            </svg>
+                          </summary>
+                          <ul class="astro-73y46fma">
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/generation/code-generation/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Overview</span>
+                              </a>
+                            </li>
+                          </ul>
+                        </details>
+                      </li>
+                    </ul>
+                  </details>
+                </li>
+                <li class="astro-73y46fma">
+                  <details open class="astro-73y46fma">
+                    <sl-sidebar-restore data-index="7"></sl-sidebar-restore>
+                    <summary class="astro-73y46fma">
+                      <div class="group-label astro-73y46fma">
+                        <span class="large astro-73y46fma">Deployment</span>
+                      </div>
+                      <svg
+                        aria-hidden="true"
+                        class="caret astro-73y46fma astro-agpekvsx"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        style="--sl-icon-size: 1.25rem"
+                      >
+                        <path
+                          d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                        />
+                      </svg>
+                    </summary>
+                    <ul class="astro-73y46fma">
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/features/deployment/overview/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Overview</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/features/deployment/providers/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Providers</span>
+                        </a>
+                      </li>
+                    </ul>
+                  </details>
+                </li>
+                <li class="astro-73y46fma">
+                  <details open class="astro-73y46fma">
+                    <sl-sidebar-restore data-index="8"></sl-sidebar-restore>
+                    <summary class="astro-73y46fma">
+                      <div class="group-label astro-73y46fma">
+                        <span class="large astro-73y46fma">Testing</span>
+                      </div>
+                      <svg
+                        aria-hidden="true"
+                        class="caret astro-73y46fma astro-agpekvsx"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        style="--sl-icon-size: 1.25rem"
+                      >
+                        <path
+                          d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                        />
+                      </svg>
+                    </summary>
+                    <ul class="astro-73y46fma">
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/features/testing/overview/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Overview</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/features/testing/vitest/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Adding Vitest</span>
+                        </a>
+                      </li>
+                    </ul>
+                  </details>
+                </li>
+                <li class="astro-73y46fma">
+                  <details open class="astro-73y46fma">
+                    <sl-sidebar-restore data-index="9"></sl-sidebar-restore>
+                    <summary class="astro-73y46fma">
+                      <div class="group-label astro-73y46fma">
+                        <span class="large astro-73y46fma">Updating</span>
+                      </div>
+                      <svg
+                        aria-hidden="true"
+                        class="caret astro-73y46fma astro-agpekvsx"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        style="--sl-icon-size: 1.25rem"
+                      >
+                        <path
+                          d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                        />
+                      </svg>
+                    </summary>
+                    <ul class="astro-73y46fma">
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/features/updating/overview/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Overview</span>
+                        </a>
+                      </li>
+                    </ul>
+                  </details>
+                </li>
+                <li class="astro-73y46fma">
+                  <details open class="astro-73y46fma">
+                    <sl-sidebar-restore data-index="10"></sl-sidebar-restore>
+                    <summary class="astro-73y46fma">
+                      <div class="group-label astro-73y46fma">
+                        <span class="large astro-73y46fma">Guides</span>
+                      </div>
+                      <svg
+                        aria-hidden="true"
+                        class="caret astro-73y46fma astro-agpekvsx"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        style="--sl-icon-size: 1.25rem"
+                      >
+                        <path
+                          d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                        />
+                      </svg>
+                    </summary>
+                    <ul class="astro-73y46fma">
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/guides/migrating/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma"
+                            >Migrating an Angular app to Analog</span
+                          >
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/guides/libraries/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma"
+                            >Building an Angular library</span
+                          >
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/guides/compatibility/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma"
+                            >Version Compatibility</span
+                          >
+                        </a>
+                      </li>
+                    </ul>
+                  </details>
+                </li>
+                <li class="astro-73y46fma">
+                  <details open class="astro-73y46fma">
+                    <sl-sidebar-restore data-index="11"></sl-sidebar-restore>
+                    <summary class="astro-73y46fma">
+                      <div class="group-label astro-73y46fma">
+                        <span class="large astro-73y46fma">Integrations</span>
+                      </div>
+                      <svg
+                        aria-hidden="true"
+                        class="caret astro-73y46fma astro-agpekvsx"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        style="--sl-icon-size: 1.25rem"
+                      >
+                        <path
+                          d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                        />
+                      </svg>
+                    </summary>
+                    <ul class="astro-73y46fma">
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/integrations/nx/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Nx</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/packages/astro-angular/overview/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Astro</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/packages/vite-plugin-angular/overview/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Vite</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/packages/vite-plugin-nitro/overview/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Nitro</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/integrations/angular-material/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Angular Material</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/integrations/ionic/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Ionic Framework</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/integrations/storybook/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Storybook</span>
+                        </a>
+                      </li>
+                    </ul>
+                  </details>
+                </li>
+                <li class="astro-73y46fma">
+                  <a
+                    href="/contributors/"
+                    aria-current="false"
+                    class="large astro-73y46fma"
+                  >
+                    <span class="astro-73y46fma">Contributors</span>
+                  </a>
+                </li>
+                <li class="astro-73y46fma">
+                  <a
+                    href="/support/"
+                    aria-current="false"
+                    class="large astro-73y46fma"
+                  >
+                    <span class="astro-73y46fma">Support</span>
+                  </a>
+                </li>
+              </ul>
+              <script aria-hidden="true">
+                (() => {
+                  const scroller =
+                    document.getElementById('starlight__sidebar');
+                  if (!window._starlightScrollRestore || !scroller) return;
+                  scroller.scrollTop = window._starlightScrollRestore;
+                  delete window._starlightScrollRestore;
+                })();
+              </script>
+            </sl-sidebar-state-persist>
+            <div class="md:sl-hidden">
+              <div class="mobile-preferences sl-flex astro-7q4kd47j">
+                <div class="sl-flex social-icons astro-7q4kd47j">
+                  <a
+                    href="https://github.com/analogjs/analog"
+                    rel="me"
+                    class="sl-flex astro-awqzqbu2"
+                    ><span class="sr-only astro-awqzqbu2">GitHub</span
+                    ><svg
+                      aria-hidden="true"
+                      class="astro-awqzqbu2 astro-agpekvsx"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      style="--sl-icon-size: 1em"
+                    >
+                      <path
+                        d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"
+                      />
+                    </svg> </a
+                  ><a
+                    href="https://chat.analogjs.org/"
+                    rel="me"
+                    class="sl-flex astro-awqzqbu2"
+                    ><span class="sr-only astro-awqzqbu2">Discord</span
+                    ><svg
+                      aria-hidden="true"
+                      class="astro-awqzqbu2 astro-agpekvsx"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      style="--sl-icon-size: 1em"
+                    >
+                      <path
+                        d="M20.32 4.37a19.8 19.8 0 0 0-4.93-1.51 13.78 13.78 0 0 0-.64 1.28 18.27 18.27 0 0 0-5.5 0 12.64 12.64 0 0 0-.64-1.28h-.05A19.74 19.74 0 0 0 3.64 4.4 20.26 20.26 0 0 0 .11 18.09l.02.02a19.9 19.9 0 0 0 6.04 3.03l.04-.02a14.24 14.24 0 0 0 1.23-2.03.08.08 0 0 0-.05-.07 13.1 13.1 0 0 1-1.9-.92.08.08 0 0 1 .02-.1 10.2 10.2 0 0 0 .41-.31h.04a14.2 14.2 0 0 0 12.1 0l.04.01a9.63 9.63 0 0 0 .4.32.08.08 0 0 1-.03.1 12.29 12.29 0 0 1-1.9.91.08.08 0 0 0-.02.1 15.97 15.97 0 0 0 1.27 2.01h.04a19.84 19.84 0 0 0 6.03-3.05v-.03a20.12 20.12 0 0 0-3.57-13.69ZM8.02 15.33c-1.18 0-2.16-1.08-2.16-2.42 0-1.33.96-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.34-.96 2.42-2.16 2.42Zm7.97 0c-1.18 0-2.15-1.08-2.15-2.42 0-1.33.95-2.42 2.15-2.42 1.22 0 2.18 1.1 2.16 2.42 0 1.34-.94 2.42-2.16 2.42Z"
+                      />
+                    </svg>
+                  </a>
+                </div>
+                <starlight-theme-select>
+                  <label
+                    style="--sl-select-width: 6.25em"
+                    class="astro-26wi4w2a"
+                  >
+                    <span class="sr-only astro-26wi4w2a">Select theme</span>
+                    <svg
+                      aria-hidden="true"
+                      class="icon label-icon astro-26wi4w2a astro-agpekvsx"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      style="--sl-icon-size: 1em"
+                    >
+                      <path
+                        d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"
+                      />
+                    </svg>
+                    <select
+                      value="auto"
+                      autocomplete="off"
+                      class="astro-26wi4w2a"
+                    >
+                      <option value="dark" class="astro-26wi4w2a">Dark</option>
+                      <option value="light" class="astro-26wi4w2a">
+                        Light
+                      </option>
+                      <option value="auto" selected class="astro-26wi4w2a">
+                        Auto
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="icon caret astro-26wi4w2a astro-agpekvsx"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      style="--sl-icon-size: 1em"
+                    >
+                      <path
+                        d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"
+                      />
+                    </svg>
+                  </label>
+                </starlight-theme-select>
+                <script>
+                  StarlightThemeProvider.updatePickers();
+                </script>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <div class="main-frame astro-zn7vttou">
+        <script type="module">
+          const a = document.getElementById('starlight__sidebar'),
+            n = a?.querySelector('sl-sidebar-state-persist'),
+            o = 'sl-sidebar-state',
+            i = () => {
+              let t = [];
+              const e = n?.dataset.hash || '';
+              try {
+                const s = sessionStorage.getItem(o),
+                  r = JSON.parse(s || '{}');
+                Array.isArray(r.open) && r.hash === e && (t = r.open);
+              } catch {}
+              return { hash: e, open: t, scroll: a?.scrollTop || 0 };
+            },
+            c = (t) => {
+              try {
+                sessionStorage.setItem(o, JSON.stringify(t));
+              } catch {}
+            },
+            d = () => c(i()),
+            l = (t, e) => {
+              const s = i();
+              (s.open[e] = t), c(s);
+            };
+          n?.addEventListener('click', (t) => {
+            if (!(t.target instanceof Element)) return;
+            const e = t.target.closest('summary')?.closest('details');
+            if (!e) return;
+            const s = e.querySelector('sl-sidebar-restore'),
+              r = parseInt(s?.dataset.index || '');
+            isNaN(r) || l(!e.open, r);
+          });
+          addEventListener('visibilitychange', () => {
+            document.visibilityState === 'hidden' && d();
+          });
+          addEventListener('pageHide', d);
+        </script>
+        <div class="lg:sl-flex astro-qhuo7ifg">
+          <aside class="right-sidebar-container print:hidden astro-qhuo7ifg">
+            <div class="right-sidebar astro-qhuo7ifg">
+              <div class="lg:sl-hidden astro-6jxjw5ih">
+                <mobile-starlight-toc
+                  data-min-h="2"
+                  data-max-h="3"
+                  class="astro-i7lhz33o"
+                  ><nav
+                    aria-labelledby="starlight__on-this-page--mobile"
+                    class="astro-i7lhz33o"
+                  >
+                    <details id="starlight__mobile-toc" class="astro-i7lhz33o">
+                      <summary
+                        id="starlight__on-this-page--mobile"
+                        class="sl-flex astro-i7lhz33o"
+                      >
+                        <div class="toggle sl-flex astro-i7lhz33o">
+                          On this page<svg
+                            aria-hidden="true"
+                            class="caret astro-i7lhz33o astro-agpekvsx"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            style="--sl-icon-size: 1rem"
+                          >
+                            <path
+                              d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                            />
+                          </svg>
+                        </div>
+                        <span class="display-current astro-i7lhz33o"></span>
+                      </summary>
+                      <div class="dropdown astro-i7lhz33o">
+                        <ul class="isMobile astro-iyyuqq66" style="--depth: 0">
+                          <li class="astro-iyyuqq66" style="--depth: 0">
+                            <a
+                              href="#_top"
+                              class="astro-iyyuqq66"
+                              style="--depth: 0"
+                            >
+                              <span class="astro-iyyuqq66" style="--depth: 0"
+                                >Overview</span
+                              >
+                            </a>
+                          </li>
+                          <li class="astro-iyyuqq66" style="--depth: 0">
+                            <a
+                              href="#defining-routes"
+                              class="astro-iyyuqq66"
+                              style="--depth: 0"
+                            >
+                              <span class="astro-iyyuqq66" style="--depth: 0"
+                                >Defining Routes</span
+                              >
+                            </a>
+                          </li>
+                          <li class="astro-iyyuqq66" style="--depth: 0">
+                            <a
+                              href="#index-routes"
+                              class="astro-iyyuqq66"
+                              style="--depth: 0"
+                            >
+                              <span class="astro-iyyuqq66" style="--depth: 0"
+                                >Index Routes</span
+                              >
+                            </a>
+                          </li>
+                          <li class="astro-iyyuqq66" style="--depth: 0">
+                            <a
+                              href="#static-routes"
+                              class="astro-iyyuqq66"
+                              style="--depth: 0"
+                            >
+                              <span class="astro-iyyuqq66" style="--depth: 0"
+                                >Static Routes</span
+                              >
+                            </a>
+                            <ul
+                              class="isMobile astro-iyyuqq66"
+                              style="--depth: 1"
+                            >
+                              <li class="astro-iyyuqq66" style="--depth: 1">
+                                <a
+                                  href="#route-groups"
+                                  class="astro-iyyuqq66"
+                                  style="--depth: 1"
+                                >
+                                  <span
+                                    class="astro-iyyuqq66"
+                                    style="--depth: 1"
+                                    >Route Groups</span
+                                  >
+                                </a>
+                              </li>
+                            </ul>
+                          </li>
+                          <li class="astro-iyyuqq66" style="--depth: 0">
+                            <a
+                              href="#dynamic-routes"
+                              class="astro-iyyuqq66"
+                              style="--depth: 0"
+                            >
+                              <span class="astro-iyyuqq66" style="--depth: 0"
+                                >Dynamic Routes</span
+                              >
+                            </a>
+                            <ul
+                              class="isMobile astro-iyyuqq66"
+                              style="--depth: 1"
+                            >
+                              <li class="astro-iyyuqq66" style="--depth: 1">
+                                <a
+                                  href="#using-route-component-input-bindings"
+                                  class="astro-iyyuqq66"
+                                  style="--depth: 1"
+                                >
+                                  <span
+                                    class="astro-iyyuqq66"
+                                    style="--depth: 1"
+                                    >Using Route Component Input Bindings</span
+                                  >
+                                </a>
+                              </li>
+                            </ul>
+                          </li>
+                          <li class="astro-iyyuqq66" style="--depth: 0">
+                            <a
+                              href="#layout-routes"
+                              class="astro-iyyuqq66"
+                              style="--depth: 0"
+                            >
+                              <span class="astro-iyyuqq66" style="--depth: 0"
+                                >Layout Routes</span
+                              >
+                            </a>
+                            <ul
+                              class="isMobile astro-iyyuqq66"
+                              style="--depth: 1"
+                            >
+                              <li class="astro-iyyuqq66" style="--depth: 1">
+                                <a
+                                  href="#pathless-layout-routes"
+                                  class="astro-iyyuqq66"
+                                  style="--depth: 1"
+                                >
+                                  <span
+                                    class="astro-iyyuqq66"
+                                    style="--depth: 1"
+                                    >Pathless Layout Routes</span
+                                  >
+                                </a>
+                              </li>
+                            </ul>
+                          </li>
+                          <li class="astro-iyyuqq66" style="--depth: 0">
+                            <a
+                              href="#catch-all-routes"
+                              class="astro-iyyuqq66"
+                              style="--depth: 0"
+                            >
+                              <span class="astro-iyyuqq66" style="--depth: 0"
+                                >Catch-all Routes</span
+                              >
+                            </a>
+                          </li>
+                          <li class="astro-iyyuqq66" style="--depth: 0">
+                            <a
+                              href="#putting-it-all-together"
+                              class="astro-iyyuqq66"
+                              style="--depth: 0"
+                            >
+                              <span class="astro-iyyuqq66" style="--depth: 0"
+                                >Putting It All Together</span
+                              >
+                            </a>
+                          </li>
+                          <li class="astro-iyyuqq66" style="--depth: 0">
+                            <a
+                              href="#providing-extra-routes"
+                              class="astro-iyyuqq66"
+                              style="--depth: 0"
+                            >
+                              <span class="astro-iyyuqq66" style="--depth: 0"
+                                >Providing Extra Routes</span
+                              >
+                            </a>
+                          </li>
+                          <li class="astro-iyyuqq66" style="--depth: 0">
+                            <a
+                              href="#visualizing-and-debugging-routes"
+                              class="astro-iyyuqq66"
+                              style="--depth: 0"
+                            >
+                              <span class="astro-iyyuqq66" style="--depth: 0"
+                                >Visualizing and Debugging Routes</span
+                              >
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
+                    </details>
+                  </nav></mobile-starlight-toc
+                >
+                <script
+                  type="module"
+                  src="/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.C181hMzK.js"
+                ></script>
+              </div>
+              <div
+                class="right-sidebar-panel sl-hidden lg:sl-block astro-6jxjw5ih"
+              >
+                <div class="sl-container astro-6jxjw5ih">
+                  <starlight-toc data-min-h="2" data-max-h="3"
+                    ><nav aria-labelledby="starlight__on-this-page">
+                      <h2 id="starlight__on-this-page">On this page</h2>
+                      <ul class="astro-iyyuqq66" style="--depth: 0">
+                        <li class="astro-iyyuqq66" style="--depth: 0">
+                          <a
+                            href="#_top"
+                            class="astro-iyyuqq66"
+                            style="--depth: 0"
+                          >
+                            <span class="astro-iyyuqq66" style="--depth: 0"
+                              >Overview</span
+                            >
+                          </a>
+                        </li>
+                        <li class="astro-iyyuqq66" style="--depth: 0">
+                          <a
+                            href="#defining-routes"
+                            class="astro-iyyuqq66"
+                            style="--depth: 0"
+                          >
+                            <span class="astro-iyyuqq66" style="--depth: 0"
+                              >Defining Routes</span
+                            >
+                          </a>
+                        </li>
+                        <li class="astro-iyyuqq66" style="--depth: 0">
+                          <a
+                            href="#index-routes"
+                            class="astro-iyyuqq66"
+                            style="--depth: 0"
+                          >
+                            <span class="astro-iyyuqq66" style="--depth: 0"
+                              >Index Routes</span
+                            >
+                          </a>
+                        </li>
+                        <li class="astro-iyyuqq66" style="--depth: 0">
+                          <a
+                            href="#static-routes"
+                            class="astro-iyyuqq66"
+                            style="--depth: 0"
+                          >
+                            <span class="astro-iyyuqq66" style="--depth: 0"
+                              >Static Routes</span
+                            >
+                          </a>
+                          <ul class="astro-iyyuqq66" style="--depth: 1">
+                            <li class="astro-iyyuqq66" style="--depth: 1">
+                              <a
+                                href="#route-groups"
+                                class="astro-iyyuqq66"
+                                style="--depth: 1"
+                              >
+                                <span class="astro-iyyuqq66" style="--depth: 1"
+                                  >Route Groups</span
+                                >
+                              </a>
+                            </li>
+                          </ul>
+                        </li>
+                        <li class="astro-iyyuqq66" style="--depth: 0">
+                          <a
+                            href="#dynamic-routes"
+                            class="astro-iyyuqq66"
+                            style="--depth: 0"
+                          >
+                            <span class="astro-iyyuqq66" style="--depth: 0"
+                              >Dynamic Routes</span
+                            >
+                          </a>
+                          <ul class="astro-iyyuqq66" style="--depth: 1">
+                            <li class="astro-iyyuqq66" style="--depth: 1">
+                              <a
+                                href="#using-route-component-input-bindings"
+                                class="astro-iyyuqq66"
+                                style="--depth: 1"
+                              >
+                                <span class="astro-iyyuqq66" style="--depth: 1"
+                                  >Using Route Component Input Bindings</span
+                                >
+                              </a>
+                            </li>
+                          </ul>
+                        </li>
+                        <li class="astro-iyyuqq66" style="--depth: 0">
+                          <a
+                            href="#layout-routes"
+                            class="astro-iyyuqq66"
+                            style="--depth: 0"
+                          >
+                            <span class="astro-iyyuqq66" style="--depth: 0"
+                              >Layout Routes</span
+                            >
+                          </a>
+                          <ul class="astro-iyyuqq66" style="--depth: 1">
+                            <li class="astro-iyyuqq66" style="--depth: 1">
+                              <a
+                                href="#pathless-layout-routes"
+                                class="astro-iyyuqq66"
+                                style="--depth: 1"
+                              >
+                                <span class="astro-iyyuqq66" style="--depth: 1"
+                                  >Pathless Layout Routes</span
+                                >
+                              </a>
+                            </li>
+                          </ul>
+                        </li>
+                        <li class="astro-iyyuqq66" style="--depth: 0">
+                          <a
+                            href="#catch-all-routes"
+                            class="astro-iyyuqq66"
+                            style="--depth: 0"
+                          >
+                            <span class="astro-iyyuqq66" style="--depth: 0"
+                              >Catch-all Routes</span
+                            >
+                          </a>
+                        </li>
+                        <li class="astro-iyyuqq66" style="--depth: 0">
+                          <a
+                            href="#putting-it-all-together"
+                            class="astro-iyyuqq66"
+                            style="--depth: 0"
+                          >
+                            <span class="astro-iyyuqq66" style="--depth: 0"
+                              >Putting It All Together</span
+                            >
+                          </a>
+                        </li>
+                        <li class="astro-iyyuqq66" style="--depth: 0">
+                          <a
+                            href="#providing-extra-routes"
+                            class="astro-iyyuqq66"
+                            style="--depth: 0"
+                          >
+                            <span class="astro-iyyuqq66" style="--depth: 0"
+                              >Providing Extra Routes</span
+                            >
+                          </a>
+                        </li>
+                        <li class="astro-iyyuqq66" style="--depth: 0">
+                          <a
+                            href="#visualizing-and-debugging-routes"
+                            class="astro-iyyuqq66"
+                            style="--depth: 0"
+                          >
+                            <span class="astro-iyyuqq66" style="--depth: 0"
+                              >Visualizing and Debugging Routes</span
+                            >
+                          </a>
+                        </li>
+                      </ul>
+                    </nav></starlight-toc
+                  >
+                  <script
+                    type="module"
+                    src="/_astro/TableOfContents.astro_astro_type_script_index_0_lang.CKWWgpjV.js"
+                  ></script>
+                </div>
+              </div>
+            </div>
+          </aside>
+          <div class="main-pane astro-qhuo7ifg">
+            <main data-pagefind-body class="astro-km5vhrng" lang="en" dir="ltr">
+              <div class="content-panel astro-7hvxwfsp">
+                <div class="sl-container astro-7hvxwfsp">
+                  <h1 id="_top" class="astro-sbygkukd">Routing</h1>
+                </div>
+              </div>
+              <div class="content-panel astro-7hvxwfsp">
+                <div class="sl-container astro-7hvxwfsp">
+                  <div class="sl-markdown-content">
+                    <h1 id="routing">Routing</h1>
+                    <p>
+                      Analog supports filesystem-based routing on top of the
+                      Angular Router.
+                    </p>
+                    <h2 id="defining-routes">Defining Routes</h2>
+                    <p>
+                      Routes are defined using folders and files in the
+                      <code dir="auto">src/app/pages</code> folder. Only files
+                      ending with <code dir="auto">.page.ts</code> are collected
+                      and used to build the set of routes.
+                    </p>
+                    <aside
+                      aria-label="Note"
+                      class="starlight-aside starlight-aside--note"
+                    >
+                      <p class="starlight-aside__title" aria-hidden="true">
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          class="starlight-aside__icon"
+                        >
+                          <path
+                            d="M12 11C11.7348 11 11.4804 11.1054 11.2929 11.2929C11.1054 11.4804 11 11.7348 11 12V16C11 16.2652 11.1054 16.5196 11.2929 16.7071C11.4804 16.8946 11.7348 17 12 17C12.2652 17 12.5196 16.8946 12.7071 16.7071C12.8946 16.5196 13 16.2652 13 16V12C13 11.7348 12.8946 11.4804 12.7071 11.2929C12.5196 11.1054 12.2652 11 12 11ZM12.38 7.08C12.1365 6.97998 11.8635 6.97998 11.62 7.08C11.4973 7.12759 11.3851 7.19896 11.29 7.29C11.2017 7.3872 11.1306 7.49882 11.08 7.62C11.024 7.73868 10.9966 7.86882 11 8C10.9992 8.13161 11.0245 8.26207 11.0742 8.38391C11.124 8.50574 11.1973 8.61656 11.29 8.71C11.3872 8.79833 11.4988 8.86936 11.62 8.92C11.7715 8.98224 11.936 9.00632 12.099 8.99011C12.2619 8.97391 12.4184 8.91792 12.5547 8.82707C12.691 8.73622 12.8029 8.61328 12.8805 8.46907C12.9582 8.32486 12.9992 8.16378 13 8C12.9963 7.73523 12.8927 7.48163 12.71 7.29C12.6149 7.19896 12.5028 7.12759 12.38 7.08ZM12 2C10.0222 2 8.08879 2.58649 6.4443 3.6853C4.79981 4.78412 3.51809 6.3459 2.76121 8.17317C2.00433 10.0004 1.8063 12.0111 2.19215 13.9509C2.578 15.8907 3.53041 17.6725 4.92894 19.0711C6.32746 20.4696 8.10929 21.422 10.0491 21.8079C11.9889 22.1937 13.9996 21.9957 15.8268 21.2388C17.6541 20.4819 19.2159 19.2002 20.3147 17.5557C21.4135 15.9112 22 13.9778 22 12C22 10.6868 21.7413 9.38642 21.2388 8.17317C20.7363 6.95991 19.9997 5.85752 19.0711 4.92893C18.1425 4.00035 17.0401 3.26375 15.8268 2.7612C14.6136 2.25866 13.3132 2 12 2ZM12 20C10.4178 20 8.87104 19.5308 7.55544 18.6518C6.23985 17.7727 5.21447 16.5233 4.60897 15.0615C4.00347 13.5997 3.84504 11.9911 4.15372 10.4393C4.4624 8.88743 5.22433 7.46197 6.34315 6.34315C7.46197 5.22433 8.88743 4.4624 10.4393 4.15372C11.9911 3.84504 13.5997 4.00346 15.0615 4.60896C16.5233 5.21447 17.7727 6.23984 18.6518 7.55544C19.5308 8.87103 20 10.4177 20 12C20 14.1217 19.1572 16.1566 17.6569 17.6569C16.1566 19.1571 14.1217 20 12 20Z"
+                          ></path></svg
+                        >Note
+                      </p>
+                      <div class="starlight-aside__content">
+                        <p>
+                          Route components <strong>must</strong> be defined as
+                          the default export and all route components are
+                          <strong>lazy-loaded</strong>.
+                        </p>
+                      </div>
+                    </aside>
+                    <p>There are 5 primary types of routes:</p>
+                    <ul>
+                      <li>
+                        <a href="#routing">Routing</a>
+                        <ul>
+                          <li>
+                            <a href="#defining-routes">Defining Routes</a>
+                          </li>
+                          <li><a href="#index-routes">Index Routes</a></li>
+                          <li>
+                            <a href="#static-routes">Static Routes</a>
+                            <ul>
+                              <li><a href="#route-groups">Route Groups</a></li>
+                            </ul>
+                          </li>
+                          <li>
+                            <a href="#dynamic-routes">Dynamic Routes</a>
+                            <ul>
+                              <li>
+                                <a href="#using-route-component-input-bindings"
+                                  >Using Route Component Input Bindings</a
+                                >
+                              </li>
+                            </ul>
+                          </li>
+                          <li>
+                            <a href="#layout-routes">Layout Routes</a>
+                            <ul>
+                              <li>
+                                <a href="#pathless-layout-routes"
+                                  >Pathless Layout Routes</a
+                                >
+                              </li>
+                            </ul>
+                          </li>
+                          <li>
+                            <a href="#catch-all-routes">Catch-all Routes</a>
+                          </li>
+                          <li>
+                            <a href="#putting-it-all-together"
+                              >Putting It All Together</a
+                            >
+                          </li>
+                        </ul>
+                      </li>
+                    </ul>
+                    <p>
+                      These routes can be combined in different ways to build
+                      URLs for navigation.
+                    </p>
+                    <aside
+                      aria-label="Note"
+                      class="starlight-aside starlight-aside--note"
+                    >
+                      <p class="starlight-aside__title" aria-hidden="true">
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          class="starlight-aside__icon"
+                        >
+                          <path
+                            d="M12 11C11.7348 11 11.4804 11.1054 11.2929 11.2929C11.1054 11.4804 11 11.7348 11 12V16C11 16.2652 11.1054 16.5196 11.2929 16.7071C11.4804 16.8946 11.7348 17 12 17C12.2652 17 12.5196 16.8946 12.7071 16.7071C12.8946 16.5196 13 16.2652 13 16V12C13 11.7348 12.8946 11.4804 12.7071 11.2929C12.5196 11.1054 12.2652 11 12 11ZM12.38 7.08C12.1365 6.97998 11.8635 6.97998 11.62 7.08C11.4973 7.12759 11.3851 7.19896 11.29 7.29C11.2017 7.3872 11.1306 7.49882 11.08 7.62C11.024 7.73868 10.9966 7.86882 11 8C10.9992 8.13161 11.0245 8.26207 11.0742 8.38391C11.124 8.50574 11.1973 8.61656 11.29 8.71C11.3872 8.79833 11.4988 8.86936 11.62 8.92C11.7715 8.98224 11.936 9.00632 12.099 8.99011C12.2619 8.97391 12.4184 8.91792 12.5547 8.82707C12.691 8.73622 12.8029 8.61328 12.8805 8.46907C12.9582 8.32486 12.9992 8.16378 13 8C12.9963 7.73523 12.8927 7.48163 12.71 7.29C12.6149 7.19896 12.5028 7.12759 12.38 7.08ZM12 2C10.0222 2 8.08879 2.58649 6.4443 3.6853C4.79981 4.78412 3.51809 6.3459 2.76121 8.17317C2.00433 10.0004 1.8063 12.0111 2.19215 13.9509C2.578 15.8907 3.53041 17.6725 4.92894 19.0711C6.32746 20.4696 8.10929 21.422 10.0491 21.8079C11.9889 22.1937 13.9996 21.9957 15.8268 21.2388C17.6541 20.4819 19.2159 19.2002 20.3147 17.5557C21.4135 15.9112 22 13.9778 22 12C22 10.6868 21.7413 9.38642 21.2388 8.17317C20.7363 6.95991 19.9997 5.85752 19.0711 4.92893C18.1425 4.00035 17.0401 3.26375 15.8268 2.7612C14.6136 2.25866 13.3132 2 12 2ZM12 20C10.4178 20 8.87104 19.5308 7.55544 18.6518C6.23985 17.7727 5.21447 16.5233 4.60897 15.0615C4.00347 13.5997 3.84504 11.9911 4.15372 10.4393C4.4624 8.88743 5.22433 7.46197 6.34315 6.34315C7.46197 5.22433 8.88743 4.4624 10.4393 4.15372C11.9911 3.84504 13.5997 4.00346 15.0615 4.60896C16.5233 5.21447 17.7727 6.23984 18.6518 7.55544C19.5308 8.87103 20 10.4177 20 12C20 14.1217 19.1572 16.1566 17.6569 17.6569C16.1566 19.1571 14.1217 20 12 20Z"
+                          ></path></svg
+                        >Note
+                      </p>
+                      <div class="starlight-aside__content">
+                        <p>
+                          In addition to the 5 primary types of routes, Analog
+                          also supports
+                          <a href="/features/routing/metadata#redirect-routes"
+                            >Redirect Routes</a
+                          >
+                          and
+                          <a href="/features/routing/content">Content Routes</a
+                          >.
+                        </p>
+                      </div>
+                    </aside>
+                    <h2 id="index-routes">Index Routes</h2>
+                    <p>
+                      Index routes are defined by using the filename as the
+                      route path enclosed in parenthesis.
+                    </p>
+                    <p>
+                      The example route below in
+                      <code dir="auto">src/app/pages/(home).page.ts</code>
+                      defines an <code dir="auto">/</code> route.
+                    </p>
+                    <div class="expressive-code">
+                      <link rel="stylesheet" href="/_astro/ec.tm3va.css" />
+                      <script type="module" src="/_astro/ec.8zarh.js"></script>
+                      <figure class="frame not-content">
+                        <figcaption class="header"></figcaption>
+                        <pre
+                          data-language="ts"
+                        ><code><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { Component } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/core</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">@Component</span><span style="--0:#D6DEEB;--1:#403F53">({</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">standalone: </span><span style="--0:#FF6A83;--1:#A24848">true</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">template: </span><span style="--0:#D6DEEB;--1:#403F53">`</span><span style="--0:#ECC48D;--1:#3B61B0"> &#x3C;h2>Welcome&#x3C;/h2> </span><span style="--0:#D6DEEB;--1:#403F53">`</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">})</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">export</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">default</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">class</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#FFCB8B;--1:#111111">HomePageComponent</span><span style="--0:#D6DEEB;--1:#403F53"> {}</span></div></div></code></pre>
+                        <div class="copy">
+                          <button
+                            title="Copy to clipboard"
+                            data-copied="Copied!"
+                            data-code="import { Component } from &#x27;@angular/core&#x27;;@Component({  standalone: true,  template: &#x60; <h2>Welcome</h2> &#x60;,})export default class HomePageComponent {}"
+                          >
+                            <div></div>
+                          </button>
+                        </div>
+                      </figure>
+                    </div>
+                    <aside
+                      aria-label="Tip"
+                      class="starlight-aside starlight-aside--tip"
+                    >
+                      <p class="starlight-aside__title" aria-hidden="true">
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          class="starlight-aside__icon"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            clip-rule="evenodd"
+                            d="M1.43909 8.85483L1.44039 8.85354L4.96668 5.33815C5.30653 4.99386 5.7685 4.79662 6.2524 4.78972L6.26553 4.78963L12.9014 4.78962L13.8479 3.84308C16.9187 0.772319 20.0546 0.770617 21.4678 0.975145C21.8617 1.02914 22.2271 1.21053 22.5083 1.4917C22.7894 1.77284 22.9708 2.13821 23.0248 2.53199C23.2294 3.94517 23.2278 7.08119 20.1569 10.1521L19.2107 11.0983V17.7338L19.2106 17.7469C19.2037 18.2308 19.0067 18.6933 18.6624 19.0331L15.1456 22.5608C14.9095 22.7966 14.6137 22.964 14.29 23.0449C13.9663 23.1259 13.6267 23.1174 13.3074 23.0204C12.9881 22.9235 12.7011 22.7417 12.4771 22.4944C12.2533 22.2473 12.1006 21.9441 12.0355 21.6171L11.1783 17.3417L6.65869 12.822L4.34847 12.3589L2.38351 11.965C2.05664 11.8998 1.75272 11.747 1.50564 11.5232C1.25835 11.2992 1.07653 11.0122 0.979561 10.6929C0.882595 10.3736 0.874125 10.034 0.955057 9.7103C1.03599 9.38659 1.20328 9.09092 1.43909 8.85483ZM6.8186 10.8724L2.94619 10.096L6.32006 6.73268H10.9583L6.8186 10.8724ZM15.2219 5.21703C17.681 2.75787 20.0783 2.75376 21.1124 2.8876C21.2462 3.92172 21.2421 6.31895 18.783 8.77812L12.0728 15.4883L8.51172 11.9272L15.2219 5.21703ZM13.9042 21.0538L13.1279 17.1811L17.2676 13.0414V17.68L13.9042 21.0538Z"
+                          ></path>
+                          <path
+                            d="M9.31827 18.3446C9.45046 17.8529 9.17864 17.3369 8.68945 17.1724C8.56178 17.1294 8.43145 17.1145 8.30512 17.1243C8.10513 17.1398 7.91519 17.2172 7.76181 17.3434C7.62613 17.455 7.51905 17.6048 7.45893 17.7835C6.97634 19.2186 5.77062 19.9878 4.52406 20.4029C4.08525 20.549 3.6605 20.644 3.29471 20.7053C3.35607 20.3395 3.45098 19.9148 3.59711 19.476C4.01221 18.2294 4.78141 17.0237 6.21648 16.5411C6.39528 16.481 6.54504 16.3739 6.65665 16.2382C6.85126 16.0016 6.92988 15.678 6.84417 15.3647C6.83922 15.3466 6.83373 15.3286 6.82767 15.3106C6.74106 15.053 6.55701 14.8557 6.33037 14.7459C6.10949 14.6389 5.84816 14.615 5.59715 14.6994C5.47743 14.7397 5.36103 14.7831 5.24786 14.8294C3.22626 15.6569 2.2347 17.4173 1.75357 18.8621C1.49662 19.6337 1.36993 20.3554 1.30679 20.8818C1.27505 21.1464 1.25893 21.3654 1.25072 21.5213C1.24662 21.5993 1.24448 21.6618 1.24337 21.7066L1.243 21.7226L1.24235 21.7605L1.2422 21.7771L1.24217 21.7827L1.24217 21.7856C1.24217 22.3221 1.67703 22.7579 2.2137 22.7579L2.2155 22.7579L2.22337 22.7578L2.23956 22.7577C2.25293 22.7575 2.27096 22.7572 2.29338 22.7567C2.33821 22.7555 2.40073 22.7534 2.47876 22.7493C2.63466 22.7411 2.85361 22.725 3.11822 22.6932C3.64462 22.6301 4.36636 22.5034 5.13797 22.2464C6.58274 21.7653 8.3431 20.7738 9.17063 18.7522C9.21696 18.639 9.26037 18.5226 9.30064 18.4029C9.30716 18.3835 9.31304 18.364 9.31827 18.3446Z"
+                          ></path></svg
+                        >Tip
+                      </p>
+                      <div class="starlight-aside__content">
+                        <p>
+                          Index routes can also be defined by using
+                          <code dir="auto">index.page.ts</code> as the route
+                          filename.
+                        </p>
+                      </div>
+                    </aside>
+                    <h2 id="static-routes">Static Routes</h2>
+                    <p>
+                      Static routes are defined by using the filename as the
+                      route path.
+                    </p>
+                    <p>
+                      The example route below in
+                      <code dir="auto">src/app/pages/about.page.ts</code>
+                      defines an <code dir="auto">/about</code> route.
+                    </p>
+                    <div class="expressive-code">
+                      <figure class="frame not-content">
+                        <figcaption class="header"></figcaption>
+                        <pre
+                          data-language="ts"
+                        ><code><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { Component } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/core</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">@Component</span><span style="--0:#D6DEEB;--1:#403F53">({</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">standalone: </span><span style="--0:#FF6A83;--1:#A24848">true</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">template: </span><span style="--0:#D6DEEB;--1:#403F53">`</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ECC48D;--1:#3B61B0">    </span></span><span style="--0:#ECC48D;--1:#3B61B0">&#x3C;h2>Hello Analog&#x3C;/h2></span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ECC48D;--1:#3B61B0">    </span></span><span style="--0:#ECC48D;--1:#3B61B0">Analog is a meta-framework on top of Angular.</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#D6DEEB;--1:#403F53">`</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">})</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">export</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">default</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">class</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#FFCB8B;--1:#111111">AboutPageComponent</span><span style="--0:#D6DEEB;--1:#403F53"> {}</span></div></div></code></pre>
+                        <div class="copy">
+                          <button
+                            title="Copy to clipboard"
+                            data-copied="Copied!"
+                            data-code="import { Component } from &#x27;@angular/core&#x27;;@Component({  standalone: true,  template: &#x60;    <h2>Hello Analog</h2>    Analog is a meta-framework on top of Angular.  &#x60;,})export default class AboutPageComponent {}"
+                          >
+                            <div></div>
+                          </button>
+                        </div>
+                      </figure>
+                    </div>
+                    <p>
+                      It’s also possible to define nested static routes in two
+                      different ways:
+                    </p>
+                    <ol>
+                      <li>
+                        By nesting the route files in folders -
+                        <code dir="auto">src/app/pages/about/team.page.ts</code>
+                        defines an <code dir="auto">/about/team</code> route.
+                      </li>
+                      <li>
+                        By using the dot notation in the filename -
+                        <code dir="auto">src/app/pages/about.team.page.ts</code>
+                        also defines an
+                        <code dir="auto">/about/team</code> route.
+                      </li>
+                    </ol>
+                    <h3 id="route-groups">Route Groups</h3>
+                    <p>
+                      Routes can be grouped together in the same folder without
+                      adding a route path segment by wrapping a folder name in
+                      parenthesis.
+                    </p>
+                    <div class="expressive-code">
+                      <figure class="frame not-content">
+                        <figcaption class="header"></figcaption>
+                        <pre
+                          data-language="treeview"
+                        ><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">src/</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">└── app/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">    </span></span><span style="--0:#d6deeb;--1:#403f53">└── pages/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">└── (auth)/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">            </span></span><span style="--0:#d6deeb;--1:#403f53">├── login.page.ts</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">            </span></span><span style="--0:#d6deeb;--1:#403f53">└── signup.page.ts</span></div></div></code></pre>
+                        <div class="copy">
+                          <button
+                            title="Copy to clipboard"
+                            data-copied="Copied!"
+                            data-code="src/└── app/    └── pages/        └── (auth)/            ├── login.page.ts            └── signup.page.ts"
+                          >
+                            <div></div>
+                          </button>
+                        </div>
+                      </figure>
+                    </div>
+                    <p>
+                      The above example defines
+                      <code dir="auto">/login</code> and
+                      <code dir="auto">/signup</code> routes.
+                    </p>
+                    <h2 id="dynamic-routes">Dynamic Routes</h2>
+                    <p>
+                      Dynamic routes are defined by using the filename as the
+                      route path enclosed in square brackets. The parameter for
+                      the route is extracted from the route path.
+                    </p>
+                    <p>
+                      The example route below in
+                      <code dir="auto"
+                        >src/app/pages/products/[productId].page.ts</code
+                      >
+                      defines a
+                      <code dir="auto">/products/:productId</code> route.
+                    </p>
+                    <div class="expressive-code">
+                      <figure class="frame not-content">
+                        <figcaption class="header"></figcaption>
+                        <pre
+                          data-language="ts"
+                        ><code><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { Component, inject } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/core</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { AsyncPipe } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/common</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { ActivatedRoute } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/router</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { map } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">rxjs</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">@Component</span><span style="--0:#D6DEEB;--1:#403F53">({</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">standalone: </span><span style="--0:#FF6A83;--1:#A24848">true</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">imports: [AsyncPipe],</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">template: </span><span style="--0:#D6DEEB;--1:#403F53">`</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ECC48D;--1:#3B61B0">    </span></span><span style="--0:#ECC48D;--1:#3B61B0">&#x3C;h2>Product Details&#x3C;/h2></span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ECC48D;--1:#3B61B0">    </span></span><span style="--0:#ECC48D;--1:#3B61B0">ID: {{ productId$ | async }}</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#D6DEEB;--1:#403F53">`</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">})</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">export</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">default</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">class</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#FFCB8B;--1:#111111">ProductDetailsPageComponent</span><span style="--0:#D6DEEB;--1:#403F53"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#C792EA;--1:#8844AE">private</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">readonly</span><span style="--0:#D6DEEB;--1:#403F53"> route </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#82AAFF;--1:#3B61B0">inject</span><span style="--0:#D6DEEB;--1:#403F53">(ActivatedRoute);</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#C792EA;--1:#8844AE">readonly</span><span style="--0:#D6DEEB;--1:#403F53"> productId$ </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#7FDBCA;--1:#096E72">this</span><span style="--0:#C792EA;--1:#8844AE">.</span><span style="--0:#FAF39F;--1:#111111">route</span><span style="--0:#C792EA;--1:#8844AE">.</span><span style="--0:#FAF39F;--1:#111111">paramMap</span><span style="--0:#C792EA;--1:#8844AE">.</span><span style="--0:#82AAFF;--1:#3B61B0">pipe</span><span style="--0:#D6DEEB;--1:#403F53">(</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#82AAFF;--1:#3B61B0">map</span><span style="--0:#D6DEEB;--1:#403F53">(</span><span style="--0:#D9F5DD;--1:#111111">(</span><span style="--0:#D7DBE0;--1:#403F53">params</span><span style="--0:#D9F5DD;--1:#111111">)</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">=></span><span style="--0:#D6DEEB;--1:#403F53"> params</span><span style="--0:#C792EA;--1:#8844AE">.</span><span style="--0:#82AAFF;--1:#3B61B0">get</span><span style="--0:#D6DEEB;--1:#403F53">(</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">productId</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">)),</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">);</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">}</span></div></div></code></pre>
+                        <div class="copy">
+                          <button
+                            title="Copy to clipboard"
+                            data-copied="Copied!"
+                            data-code="import { Component, inject } from &#x27;@angular/core&#x27;;import { AsyncPipe } from &#x27;@angular/common&#x27;;import { ActivatedRoute } from &#x27;@angular/router&#x27;;import { map } from &#x27;rxjs&#x27;;@Component({  standalone: true,  imports: [AsyncPipe],  template: &#x60;    <h2>Product Details</h2>    ID: {{ productId$ | async }}  &#x60;,})export default class ProductDetailsPageComponent {  private readonly route = inject(ActivatedRoute);  readonly productId$ = this.route.paramMap.pipe(    map((params) => params.get(&#x27;productId&#x27;)),  );}"
+                          >
+                            <div></div>
+                          </button>
+                        </div>
+                      </figure>
+                    </div>
+                    <p>
+                      Dynamic routes can also be defined using the dot notation
+                      in the filename -
+                      <code dir="auto"
+                        >src/app/pages/products.[productId].page.ts</code
+                      >
+                      defines a
+                      <code dir="auto">/products/:productId</code> route.
+                    </p>
+                    <h3 id="using-route-component-input-bindings">
+                      Using Route Component Input Bindings
+                    </h3>
+                    <p>
+                      If you are using the
+                      <code dir="auto">withComponentInputBinding()</code>
+                      feature with the Angular Router, you can use the
+                      <strong>Input</strong> decorator, along with the same
+                      <strong>parameter name</strong> to get the route
+                      parameter.
+                    </p>
+                    <p>
+                      First, add the
+                      <code dir="auto">withComponentInputBinding()</code> to the
+                      arguments for the
+                      <code dir="auto">provideFileRouter()</code> function.
+                    </p>
+                    <div class="expressive-code">
+                      <figure class="frame has-title not-content">
+                        <figcaption class="header">
+                          <span class="title">src/app/app.config.ts</span>
+                        </figcaption>
+                        <pre
+                          data-language="ts"
+                        ><code><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { ApplicationConfig } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/core</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { provideFileRouter } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@analogjs/router</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { withComponentInputBinding } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/router</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">export const </span><span style="--0:#82AAFF;--1:#3B61B0">appConfig</span><span style="--0:#7FDBCA;--1:#096E72">:</span><span style="--0:#C792EA;--1:#8844AE"> </span><span style="--0:#FFCB8B;--1:#111111">ApplicationConfig</span><span style="--0:#C792EA;--1:#8844AE"> = {</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#C792EA;--1:#8844AE">  </span></span><span style="--0:#C792EA;--1:#8844AE">providers:</span><span style="--0:#D6DEEB;--1:#403F53"> [</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#82AAFF;--1:#3B61B0">provideFileRouter</span><span style="--0:#D6DEEB;--1:#403F53">(</span><span style="--0:#82AAFF;--1:#3B61B0">withComponentInputBinding</span><span style="--0:#D6DEEB;--1:#403F53">()),</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#919F9F;--1:#5D6376">// other providers</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">]</span><span style="--0:#C792EA;--1:#8844AE">,</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">}</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div></code></pre>
+                        <div class="copy">
+                          <button
+                            title="Copy to clipboard"
+                            data-copied="Copied!"
+                            data-code="import { ApplicationConfig } from &#x27;@angular/core&#x27;;import { provideFileRouter } from &#x27;@analogjs/router&#x27;;import { withComponentInputBinding } from &#x27;@angular/router&#x27;;export const appConfig: ApplicationConfig = {  providers: [    provideFileRouter(withComponentInputBinding()),    // other providers  ],};"
+                          >
+                            <div></div>
+                          </button>
+                        </div>
+                      </figure>
+                    </div>
+                    <p>Next, use the route parameter as an input.</p>
+                    <div class="expressive-code">
+                      <figure class="frame has-title not-content">
+                        <figcaption class="header">
+                          <span class="title"
+                            >src/app/pages/products/[productId].page.ts</span
+                          >
+                        </figcaption>
+                        <pre
+                          data-language="ts"
+                        ><code><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { Component, Input } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/core</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">@Component</span><span style="--0:#D6DEEB;--1:#403F53">({</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">standalone: </span><span style="--0:#FF6A83;--1:#A24848">true</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">template: </span><span style="--0:#D6DEEB;--1:#403F53">`</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ECC48D;--1:#3B61B0">    </span></span><span style="--0:#ECC48D;--1:#3B61B0">&#x3C;h2>Product Details&#x3C;/h2></span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ECC48D;--1:#3B61B0">    </span></span><span style="--0:#ECC48D;--1:#3B61B0">ID: {{ productId }}</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#D6DEEB;--1:#403F53">`</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">})</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">export</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">default</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">class</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#FFCB8B;--1:#111111">ProductDetailsPageComponent</span><span style="--0:#D6DEEB;--1:#403F53"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">@Input</span><span style="--0:#D6DEEB;--1:#403F53">() productId</span><span style="--0:#7FDBCA;--1:#096E72">:</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C5E478;--1:#3B61B0">string</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">}</span></div></div></code></pre>
+                        <div class="copy">
+                          <button
+                            title="Copy to clipboard"
+                            data-copied="Copied!"
+                            data-code="import { Component, Input } from &#x27;@angular/core&#x27;;@Component({  standalone: true,  template: &#x60;    <h2>Product Details</h2>    ID: {{ productId }}  &#x60;,})export default class ProductDetailsPageComponent {  @Input() productId: string;}"
+                          >
+                            <div></div>
+                          </button>
+                        </div>
+                      </figure>
+                    </div>
+                    <h2 id="layout-routes">Layout Routes</h2>
+                    <p>
+                      Layout routes are defined by using a parent file and child
+                      folder with the same name.
+                    </p>
+                    <p>
+                      The following structure below represents a layout route.
+                    </p>
+                    <div class="expressive-code">
+                      <figure class="frame not-content">
+                        <figcaption class="header"></figcaption>
+                        <pre
+                          data-language="treeview"
+                        ><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">src/</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">└── app/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">    </span></span><span style="--0:#d6deeb;--1:#403f53">└── pages/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">├── products/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">│   ├── [productId].page.ts</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">│   └── (products-list).page.ts</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">└── products.page.ts</span></div></div></code></pre>
+                        <div class="copy">
+                          <button
+                            title="Copy to clipboard"
+                            data-copied="Copied!"
+                            data-code="src/└── app/    └── pages/        ├── products/        │   ├── [productId].page.ts        │   └── (products-list).page.ts        └── products.page.ts"
+                          >
+                            <div></div>
+                          </button>
+                        </div>
+                      </figure>
+                    </div>
+                    <p>This defines two routes with a shared layout:</p>
+                    <ul>
+                      <li><code dir="auto">/products</code></li>
+                      <li><code dir="auto">/products/:productId</code></li>
+                    </ul>
+                    <p>
+                      The parent
+                      <code dir="auto">src/app/pages/products.page.ts</code>
+                      file contains the parent page with a router outlet.
+                    </p>
+                    <div class="expressive-code">
+                      <figure class="frame not-content">
+                        <figcaption class="header"></figcaption>
+                        <pre
+                          data-language="ts"
+                        ><code><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { Component } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/core</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { RouterOutlet } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/router</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">@Component</span><span style="--0:#D6DEEB;--1:#403F53">({</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">standalone: </span><span style="--0:#FF6A83;--1:#A24848">true</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">imports: [RouterOutlet],</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">template: </span><span style="--0:#D6DEEB;--1:#403F53">`</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ECC48D;--1:#3B61B0">    </span></span><span style="--0:#ECC48D;--1:#3B61B0">&#x3C;h2>Products&#x3C;/h2></span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ECC48D;--1:#3B61B0">    </span></span><span style="--0:#ECC48D;--1:#3B61B0">&#x3C;router-outlet>&#x3C;/router-outlet></span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#D6DEEB;--1:#403F53">`</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">})</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">export</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">default</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">class</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#FFCB8B;--1:#111111">ProductsComponent</span><span style="--0:#D6DEEB;--1:#403F53"> {}</span></div></div></code></pre>
+                        <div class="copy">
+                          <button
+                            title="Copy to clipboard"
+                            data-copied="Copied!"
+                            data-code="import { Component } from &#x27;@angular/core&#x27;;import { RouterOutlet } from &#x27;@angular/router&#x27;;@Component({  standalone: true,  imports: [RouterOutlet],  template: &#x60;    <h2>Products</h2>    <router-outlet></router-outlet>  &#x60;,})export default class ProductsComponent {}"
+                          >
+                            <div></div>
+                          </button>
+                        </div>
+                      </figure>
+                    </div>
+                    <p>
+                      The nested
+                      <code dir="auto"
+                        >src/app/pages/products/(products-list).page.ts</code
+                      >
+                      file contains the <code dir="auto">/products</code> list
+                      page.
+                    </p>
+                    <div class="expressive-code">
+                      <figure class="frame not-content">
+                        <figcaption class="header"></figcaption>
+                        <pre
+                          data-language="ts"
+                        ><code><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { Component } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/core</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">@Component</span><span style="--0:#D6DEEB;--1:#403F53">({</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">standalone: </span><span style="--0:#FF6A83;--1:#A24848">true</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">template: </span><span style="--0:#D6DEEB;--1:#403F53">`</span><span style="--0:#ECC48D;--1:#3B61B0"> &#x3C;h2>Products List&#x3C;/h2> </span><span style="--0:#D6DEEB;--1:#403F53">`</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">})</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">export</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">default</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">class</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#FFCB8B;--1:#111111">ProductsListComponent</span><span style="--0:#D6DEEB;--1:#403F53"> {}</span></div></div></code></pre>
+                        <div class="copy">
+                          <button
+                            title="Copy to clipboard"
+                            data-copied="Copied!"
+                            data-code="import { Component } from &#x27;@angular/core&#x27;;@Component({  standalone: true,  template: &#x60; <h2>Products List</h2> &#x60;,})export default class ProductsListComponent {}"
+                          >
+                            <div></div>
+                          </button>
+                        </div>
+                      </figure>
+                    </div>
+                    <p>
+                      The nested
+                      <code dir="auto"
+                        >src/app/pages/products/[productId].page.ts</code
+                      >
+                      file contains the
+                      <code dir="auto">/products/:productId</code> details page.
+                    </p>
+                    <div class="expressive-code">
+                      <figure class="frame not-content">
+                        <figcaption class="header"></figcaption>
+                        <pre
+                          data-language="ts"
+                        ><code><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { Component, inject } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/core</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { AsyncPipe, JsonPipe } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/common</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { ActivatedRoute } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/router</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { map } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">rxjs</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">@Component</span><span style="--0:#D6DEEB;--1:#403F53">({</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">standalone: </span><span style="--0:#FF6A83;--1:#A24848">true</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">imports: [AsyncPipe, JsonPipe],</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">template: </span><span style="--0:#D6DEEB;--1:#403F53">`</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ECC48D;--1:#3B61B0">    </span></span><span style="--0:#ECC48D;--1:#3B61B0">&#x3C;h2>Product Details&#x3C;/h2></span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ECC48D;--1:#3B61B0">    </span></span><span style="--0:#ECC48D;--1:#3B61B0">ID: {{ productId$ | async }}</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#D6DEEB;--1:#403F53">`</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">})</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">export</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">default</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">class</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#FFCB8B;--1:#111111">ProductDetailsPageComponent</span><span style="--0:#D6DEEB;--1:#403F53"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#C792EA;--1:#8844AE">private</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">readonly</span><span style="--0:#D6DEEB;--1:#403F53"> route </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#82AAFF;--1:#3B61B0">inject</span><span style="--0:#D6DEEB;--1:#403F53">(ActivatedRoute);</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#C792EA;--1:#8844AE">readonly</span><span style="--0:#D6DEEB;--1:#403F53"> productId$ </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#7FDBCA;--1:#096E72">this</span><span style="--0:#C792EA;--1:#8844AE">.</span><span style="--0:#FAF39F;--1:#111111">route</span><span style="--0:#C792EA;--1:#8844AE">.</span><span style="--0:#FAF39F;--1:#111111">paramMap</span><span style="--0:#C792EA;--1:#8844AE">.</span><span style="--0:#82AAFF;--1:#3B61B0">pipe</span><span style="--0:#D6DEEB;--1:#403F53">(</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#82AAFF;--1:#3B61B0">map</span><span style="--0:#D6DEEB;--1:#403F53">(</span><span style="--0:#D9F5DD;--1:#111111">(</span><span style="--0:#D7DBE0;--1:#403F53">params</span><span style="--0:#D9F5DD;--1:#111111">)</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">=></span><span style="--0:#D6DEEB;--1:#403F53"> params</span><span style="--0:#C792EA;--1:#8844AE">.</span><span style="--0:#82AAFF;--1:#3B61B0">get</span><span style="--0:#D6DEEB;--1:#403F53">(</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">productId</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">)),</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">);</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">}</span></div></div></code></pre>
+                        <div class="copy">
+                          <button
+                            title="Copy to clipboard"
+                            data-copied="Copied!"
+                            data-code="import { Component, inject } from &#x27;@angular/core&#x27;;import { AsyncPipe, JsonPipe } from &#x27;@angular/common&#x27;;import { ActivatedRoute } from &#x27;@angular/router&#x27;;import { map } from &#x27;rxjs&#x27;;@Component({  standalone: true,  imports: [AsyncPipe, JsonPipe],  template: &#x60;    <h2>Product Details</h2>    ID: {{ productId$ | async }}  &#x60;,})export default class ProductDetailsPageComponent {  private readonly route = inject(ActivatedRoute);  readonly productId$ = this.route.paramMap.pipe(    map((params) => params.get(&#x27;productId&#x27;)),  );}"
+                          >
+                            <div></div>
+                          </button>
+                        </div>
+                      </figure>
+                    </div>
+                    <h3 id="pathless-layout-routes">Pathless Layout Routes</h3>
+                    <p>
+                      Layout routes can also be defined without adding a route
+                      path segment.
+                    </p>
+                    <div class="expressive-code">
+                      <figure class="frame not-content">
+                        <figcaption class="header"></figcaption>
+                        <pre
+                          data-language="treeview"
+                        ><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">src/</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">└── app/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">    </span></span><span style="--0:#d6deeb;--1:#403f53">└── pages/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">├── (auth)/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">│   ├── login.page.ts</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">│   └── signup.page.ts</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">└── (auth).page.ts</span></div></div></code></pre>
+                        <div class="copy">
+                          <button
+                            title="Copy to clipboard"
+                            data-copied="Copied!"
+                            data-code="src/└── app/    └── pages/        ├── (auth)/        │   ├── login.page.ts        │   └── signup.page.ts        └── (auth).page.ts"
+                          >
+                            <div></div>
+                          </button>
+                        </div>
+                      </figure>
+                    </div>
+                    <p>
+                      The above example defines
+                      <code dir="auto">/login</code> and
+                      <code dir="auto">/signup</code> routes with a shared
+                      layout. The parent
+                      <code dir="auto">src/app/pages/(auth).page.ts</code> file
+                      contains the parent page with a router outlet.
+                    </p>
+                    <h2 id="catch-all-routes">Catch-all Routes</h2>
+                    <p>
+                      Catch-all routes are defined by using the filename as the
+                      route path prefixed with 3 periods enclosed in square
+                      brackets.
+                    </p>
+                    <p>
+                      The example route below in
+                      <code dir="auto"
+                        >src/app/pages/[...page-not-found].page.ts</code
+                      >
+                      defines a wildcard <code dir="auto">**</code> route. This
+                      route is usually for 404 pages.
+                    </p>
+                    <div class="expressive-code">
+                      <figure class="frame not-content">
+                        <figcaption class="header"></figcaption>
+                        <pre
+                          data-language="ts"
+                        ><code><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { Component } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/core</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { RouterLink } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/router</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { injectResponse } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@analogjs/router/tokens</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { RouteMeta } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@analogjs/router</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">export const </span><span style="--0:#82AAFF;--1:#3B61B0">routeMeta</span><span style="--0:#7FDBCA;--1:#096E72">:</span><span style="--0:#C792EA;--1:#8844AE"> </span><span style="--0:#FFCB8B;--1:#111111">RouteMeta</span><span style="--0:#C792EA;--1:#8844AE"> = {</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#C792EA;--1:#8844AE">  </span></span><span style="--0:#C792EA;--1:#8844AE">title: </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">Page Not Found</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#C792EA;--1:#8844AE">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#C792EA;--1:#8844AE">  </span></span><span style="--0:#C792EA;--1:#8844AE">canActivate:</span><span style="--0:#D6DEEB;--1:#403F53"> [</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#D9F5DD;--1:#111111">()</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">=></span><span style="--0:#D6DEEB;--1:#403F53"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#C792EA;--1:#8844AE">const </span><span style="--0:#82AAFF;--1:#3B61B0">response</span><span style="--0:#C792EA;--1:#8844AE"> = </span><span style="--0:#82AAFF;--1:#3B61B0">injectResponse</span><span style="--0:#D6DEEB;--1:#403F53">();</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#C792EA;--1:#8844AE">if</span><span style="--0:#D6DEEB;--1:#403F53"> (</span><span style="--0:#C792EA;--1:#8844AE">import.</span><span style="--0:#7FDBCA;--1:#096E72">meta</span><span style="--0:#C792EA;--1:#8844AE">.</span><span style="--0:#FAF39F;--1:#111111">env</span><span style="--0:#C792EA;--1:#8844AE">.</span><span style="--0:#82AAFF;--1:#3B61B0">SSR</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">&#x26;&#x26;</span><span style="--0:#D6DEEB;--1:#403F53"> response) {</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">        </span></span><span style="--0:#D6DEEB;--1:#403F53">response</span><span style="--0:#C792EA;--1:#8844AE">.</span><span style="--0:#7FDBCA;--1:#096E72">statusCode</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">404</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">        </span></span><span style="--0:#D6DEEB;--1:#403F53">response</span><span style="--0:#C792EA;--1:#8844AE">.</span><span style="--0:#82AAFF;--1:#3B61B0">end</span><span style="--0:#D6DEEB;--1:#403F53">();</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">      </span></span><span style="--0:#D6DEEB;--1:#403F53">}</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#C792EA;--1:#8844AE">return</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#FF6A83;--1:#A24848">true</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">    </span></span><span style="--0:#D6DEEB;--1:#403F53">},</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">]</span><span style="--0:#C792EA;--1:#8844AE">,</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">}</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">@Component</span><span style="--0:#D6DEEB;--1:#403F53">({</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">standalone: </span><span style="--0:#FF6A83;--1:#A24848">true</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">imports: [RouterLink],</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">template: </span><span style="--0:#D6DEEB;--1:#403F53">`</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ECC48D;--1:#3B61B0">    </span></span><span style="--0:#ECC48D;--1:#3B61B0">&#x3C;h2>Page Not Found&#x3C;/h2></span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ECC48D;--1:#3B61B0">    </span></span><span style="--0:#ECC48D;--1:#3B61B0">&#x3C;a routerLink="/">Go Back Home&#x3C;/a></span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#D6DEEB;--1:#403F53">`</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">})</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">export</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">default</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">class</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#FFCB8B;--1:#111111">PageNotFoundComponent</span><span style="--0:#D6DEEB;--1:#403F53"> {}</span></div></div></code></pre>
+                        <div class="copy">
+                          <button
+                            title="Copy to clipboard"
+                            data-copied="Copied!"
+                            data-code="import { Component } from &#x27;@angular/core&#x27;;import { RouterLink } from &#x27;@angular/router&#x27;;import { injectResponse } from &#x27;@analogjs/router/tokens&#x27;;import { RouteMeta } from &#x27;@analogjs/router&#x27;;export const routeMeta: RouteMeta = {  title: &#x27;Page Not Found&#x27;,  canActivate: [    () => {      const response = injectResponse();      if (import.meta.env.SSR &#x26;&#x26; response) {        response.statusCode = 404;        response.end();      }      return true;    },  ],};@Component({  standalone: true,  imports: [RouterLink],  template: &#x60;    <h2>Page Not Found</h2>    <a routerLink=&#x22;/&#x22;>Go Back Home</a>  &#x60;,})export default class PageNotFoundComponent {}"
+                          >
+                            <div></div>
+                          </button>
+                        </div>
+                      </figure>
+                    </div>
+                    <p>
+                      Catch-all routes can also be defined as nested child
+                      routes.
+                    </p>
+                    <h2 id="putting-it-all-together">
+                      Putting It All Together
+                    </h2>
+                    <p>For the following file structure:</p>
+                    <div class="expressive-code">
+                      <figure class="frame not-content">
+                        <figcaption class="header"></figcaption>
+                        <pre
+                          data-language="treeview"
+                        ><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">src/</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">└── app/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">    </span></span><span style="--0:#d6deeb;--1:#403f53">└── pages/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">├── (auth)/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">│   ├── login.page.ts</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">│   └── signup.page.ts</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">├── (marketing)/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">│   ├── about.md</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">│   └── contact.md</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">├── products/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">│   ├── (product-list).page.ts</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">│   ├── [productId].edit.page.ts</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">│   └── [productId].page.ts</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">├── (auth).page.ts</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">├── (home).page.ts</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">├── [...not-found].md</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">        </span></span><span style="--0:#d6deeb;--1:#403f53">└── products.page.ts</span></div></div></code></pre>
+                        <div class="copy">
+                          <button
+                            title="Copy to clipboard"
+                            data-copied="Copied!"
+                            data-code="src/└── app/    └── pages/        ├── (auth)/        │   ├── login.page.ts        │   └── signup.page.ts        ├── (marketing)/        │   ├── about.md        │   └── contact.md        ├── products/        │   ├── (product-list).page.ts        │   ├── [productId].edit.page.ts        │   └── [productId].page.ts        ├── (auth).page.ts        ├── (home).page.ts        ├── [...not-found].md        └── products.page.ts"
+                          >
+                            <div></div>
+                          </button>
+                        </div>
+                      </figure>
+                    </div>
+                    <p>
+                      The filesystem-based router will generate the following
+                      routes:
+                    </p>
+
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Path</th>
+                          <th>Page</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><code dir="auto">/</code></td>
+                          <td><code dir="auto">(home).page.ts</code></td>
+                        </tr>
+                        <tr>
+                          <td><code dir="auto">/about</code></td>
+                          <td><code dir="auto">(marketing)/about.md</code></td>
+                        </tr>
+                        <tr>
+                          <td><code dir="auto">/contact</code></td>
+                          <td>
+                            <code dir="auto">(marketing)/contact.md</code>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td><code dir="auto">/login</code></td>
+                          <td>
+                            <code dir="auto">(auth)/login.page.ts</code>
+                            (layout: <code dir="auto">(auth).page.ts</code>)
+                          </td>
+                        </tr>
+                        <tr>
+                          <td><code dir="auto">/signup</code></td>
+                          <td>
+                            <code dir="auto">(auth)/signup.page.ts</code>
+                            (layout: <code dir="auto">(auth).page.ts</code>)
+                          </td>
+                        </tr>
+                        <tr>
+                          <td><code dir="auto">/products</code></td>
+                          <td>
+                            <code dir="auto"
+                              >products/(product-list).page.ts</code
+                            >
+                            (layout: <code dir="auto">products.page.ts</code>)
+                          </td>
+                        </tr>
+                        <tr>
+                          <td><code dir="auto">/products/1</code></td>
+                          <td>
+                            <code dir="auto">products/[productId].page.ts</code>
+                            (layout: <code dir="auto">products.page.ts</code>)
+                          </td>
+                        </tr>
+                        <tr>
+                          <td><code dir="auto">/products/1/edit</code></td>
+                          <td>
+                            <code dir="auto"
+                              >products/[productId].edit.page.ts</code
+                            >
+                            (layout: <code dir="auto">products.page.ts</code>)
+                          </td>
+                        </tr>
+                        <tr>
+                          <td><code dir="auto">/unknown-url</code></td>
+                          <td><code dir="auto">[...not-found].md</code></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <h2 id="providing-extra-routes">Providing Extra Routes</h2>
+                    <p>
+                      Routes can be added manually in addition to the routes
+                      discovered through the filesystem. Use the
+                      <code dir="auto">withExtraRoutes</code> with an array of
+                      routes to be prepended to the discovered routes array. All
+                      the routes are merged into a single array.
+                    </p>
+                    <div class="expressive-code">
+                      <figure class="frame not-content">
+                        <figcaption class="header"></figcaption>
+                        <pre
+                          data-language="ts"
+                        ><code><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { ApplicationConfig } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/core</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { Routes } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/router</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { provideFileRouter, withExtraRoutes } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@analogjs/router</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">const </span><span style="--0:#82AAFF;--1:#3B61B0">customRoutes</span><span style="--0:#7FDBCA;--1:#096E72">:</span><span style="--0:#C792EA;--1:#8844AE"> </span><span style="--0:#FFCB8B;--1:#111111">Routes</span><span style="--0:#C792EA;--1:#8844AE"> =</span><span style="--0:#D6DEEB;--1:#403F53"> [</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">{</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">    </span></span><span style="--0:#D6DEEB;--1:#403F53">path: </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">custom</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#82AAFF;--1:#3B61B0">loadComponent</span><span style="--0:#D6DEEB;--1:#403F53">: </span><span style="--0:#D9F5DD;--1:#111111">()</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">=></span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#7FDBCA;--1:#096E72">import</span><span style="--0:#D6DEEB;--1:#403F53">(</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">./custom-component</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">)</span><span style="--0:#C792EA;--1:#8844AE">.</span><span style="--0:#82AAFF;--1:#3B61B0">then</span><span style="--0:#D6DEEB;--1:#403F53">(</span><span style="--0:#D9F5DD;--1:#111111">(</span><span style="--0:#D7DBE0;--1:#403F53">m</span><span style="--0:#D9F5DD;--1:#111111">)</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C792EA;--1:#8844AE">=></span><span style="--0:#D6DEEB;--1:#403F53"> m</span><span style="--0:#C792EA;--1:#8844AE">.</span><span style="--0:#7FDBCA;--1:#096E72">CustomComponent</span><span style="--0:#D6DEEB;--1:#403F53">),</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">},</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">];</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">export const </span><span style="--0:#82AAFF;--1:#3B61B0">appConfig</span><span style="--0:#7FDBCA;--1:#096E72">:</span><span style="--0:#C792EA;--1:#8844AE"> </span><span style="--0:#FFCB8B;--1:#111111">ApplicationConfig</span><span style="--0:#C792EA;--1:#8844AE"> = {</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#C792EA;--1:#8844AE">  </span></span><span style="--0:#C792EA;--1:#8844AE">providers:</span><span style="--0:#D6DEEB;--1:#403F53"> [</span><span style="--0:#82AAFF;--1:#3B61B0">provideFileRouter</span><span style="--0:#D6DEEB;--1:#403F53">(</span><span style="--0:#82AAFF;--1:#3B61B0">withExtraRoutes</span><span style="--0:#D6DEEB;--1:#403F53">(customRoutes))]</span><span style="--0:#C792EA;--1:#8844AE">,</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">}</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div></code></pre>
+                        <div class="copy">
+                          <button
+                            title="Copy to clipboard"
+                            data-copied="Copied!"
+                            data-code="import { ApplicationConfig } from &#x27;@angular/core&#x27;;import { Routes } from &#x27;@angular/router&#x27;;import { provideFileRouter, withExtraRoutes } from &#x27;@analogjs/router&#x27;;const customRoutes: Routes = [  {    path: &#x27;custom&#x27;,    loadComponent: () =>      import(&#x27;./custom-component&#x27;).then((m) => m.CustomComponent),  },];export const appConfig: ApplicationConfig = {  providers: [provideFileRouter(withExtraRoutes(customRoutes))],};"
+                          >
+                            <div></div>
+                          </button>
+                        </div>
+                      </figure>
+                    </div>
+                    <h2 id="visualizing-and-debugging-routes">
+                      Visualizing and Debugging Routes
+                    </h2>
+                    <p>
+                      When you are building the pages for your application, it
+                      can help to visually see the routes based on the
+                      filesystem structure. You can use the
+                      <code dir="auto">withDebugRoutes()</code> function to
+                      provide a debug route that displays the pages and layouts
+                      for your application.
+                    </p>
+                    <p>
+                      Use the <code dir="auto">withDebugRoutes</code> function
+                      in the <code dir="auto">app.config.ts</code>:
+                    </p>
+                    <div class="expressive-code">
+                      <figure class="frame not-content">
+                        <figcaption class="header"></figcaption>
+                        <pre
+                          data-language="ts"
+                        ><code><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { ApplicationConfig } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@angular/core</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { provideFileRouter, withDebugRoutes } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@analogjs/router</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">export const </span><span style="--0:#82AAFF;--1:#3B61B0">appConfig</span><span style="--0:#7FDBCA;--1:#096E72">:</span><span style="--0:#C792EA;--1:#8844AE"> </span><span style="--0:#FFCB8B;--1:#111111">ApplicationConfig</span><span style="--0:#C792EA;--1:#8844AE"> = {</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#C792EA;--1:#8844AE">  </span></span><span style="--0:#C792EA;--1:#8844AE">providers:</span><span style="--0:#D6DEEB;--1:#403F53"> [</span><span style="--0:#82AAFF;--1:#3B61B0">provideFileRouter</span><span style="--0:#D6DEEB;--1:#403F53">(</span><span style="--0:#82AAFF;--1:#3B61B0">withDebugRoutes</span><span style="--0:#D6DEEB;--1:#403F53">())]</span><span style="--0:#C792EA;--1:#8844AE">,</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">}</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div></code></pre>
+                        <div class="copy">
+                          <button
+                            title="Copy to clipboard"
+                            data-copied="Copied!"
+                            data-code="import { ApplicationConfig } from &#x27;@angular/core&#x27;;import { provideFileRouter, withDebugRoutes } from &#x27;@analogjs/router&#x27;;export const appConfig: ApplicationConfig = {  providers: [provideFileRouter(withDebugRoutes())],};"
+                          >
+                            <div></div>
+                          </button>
+                        </div>
+                      </figure>
+                    </div>
+                    <p>
+                      Navigate the <code dir="auto">__analog/routes</code> URL
+                      in the browser to see the routes table.
+                    </p>
+                    <p>
+                      <img
+                        src="/img/debug-routes.png"
+                        alt="debug routes page"
+                      />
+                    </p>
+                  </div>
+                  <footer class="sl-flex astro-vjwbbqpe">
+                    <div class="meta sl-flex astro-vjwbbqpe">
+                      <a
+                        href="https://github.com/analogjs/analog/edit/main/apps/docs-app-starlight/src/content/docs/features/routing/overview.md"
+                        class="sl-flex print:hidden astro-y44re3fj"
+                        ><svg
+                          aria-hidden="true"
+                          class="astro-y44re3fj astro-agpekvsx"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          style="--sl-icon-size: 1.2em"
+                        >
+                          <path
+                            d="M22 7.24a1 1 0 0 0-.29-.71l-4.24-4.24a1 1 0 0 0-1.1-.22 1 1 0 0 0-.32.22l-2.83 2.83L2.29 16.05a1 1 0 0 0-.29.71V21a1 1 0 0 0 1 1h4.24a1 1 0 0 0 .76-.29l10.87-10.93L21.71 8c.1-.1.17-.2.22-.33a1 1 0 0 0 0-.24v-.14l.07-.05ZM6.83 20H4v-2.83l9.93-9.93 2.83 2.83L6.83 20ZM18.17 8.66l-2.83-2.83 1.42-1.41 2.82 2.82-1.41 1.42Z"
+                          />
+                        </svg>
+                        Edit page</a
+                      >
+                    </div>
+                    <div
+                      class="pagination-links print:hidden astro-pqynl3jn"
+                      dir="ltr"
+                    >
+                      <a
+                        href="/getting-started/"
+                        rel="prev"
+                        class="astro-pqynl3jn"
+                      >
+                        <svg
+                          aria-hidden="true"
+                          class="astro-pqynl3jn astro-agpekvsx"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          style="--sl-icon-size: 1.5rem"
+                        >
+                          <path
+                            d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"
+                          />
+                        </svg>
+                        <span class="astro-pqynl3jn">
+                          Previous <br class="astro-pqynl3jn" />
+                          <span class="link-title astro-pqynl3jn"
+                            >Getting Started</span
+                          >
+                        </span>
+                      </a>
+                      <a
+                        href="/features/routing/metadata/"
+                        rel="next"
+                        class="astro-pqynl3jn"
+                      >
+                        <svg
+                          aria-hidden="true"
+                          class="astro-pqynl3jn astro-agpekvsx"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          style="--sl-icon-size: 1.5rem"
+                        >
+                          <path
+                            d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"
+                          />
+                        </svg>
+                        <span class="astro-pqynl3jn">
+                          Next <br class="astro-pqynl3jn" />
+                          <span class="link-title astro-pqynl3jn"
+                            >Route Metadata</span
+                          >
+                        </span>
+                      </a>
+                    </div>
+                  </footer>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

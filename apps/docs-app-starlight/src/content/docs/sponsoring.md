@@ -1,0 +1,37 @@
+---
+title: Sponsorships and Partnerships
+sidebar:
+  order: 101
+---
+
+Analog is an MIT-licensed open-source project and completely free to use. The continual effort needed to maintain this project is supported by the financial backing of our partners and sponsors.
+
+You can [support Analog on GitHub Sponsors](https://github.com/sponsors/brandonroberts).
+
+## Partnerships
+
+Partnerships are above and beyond sponsorships where we work closely with you to build out a strategy that is beneficial to all parties involved, with marketing and lead-gen campaigns.
+
+Available Partnerships:
+
+- ✅ Hosting Platforms
+- ⬜ Consulting, Courses, Training
+- ⬜ Content Management Systems
+- ⬜ Observability/Reporting/Feedback
+- ⬜ Something else!
+
+Schedule a [Meeting](https://calendly.com/brandontroberts/session) or [Contact Us](mailto:partnerships@analogjs.org?subject=Partnerships) directly to discuss partnership opportunities!
+
+### Business/Corporate Sponsorships
+
+Supporting OSS improves your brand's reputation, which is an important asset for any company that interacts with developers.
+
+If you are using Analog to build a revenue-generating product, sponsoring its development also helps your interests. It ensures the projects that your product relies on stay healthy and actively maintained. It also provides your brand with a positive position in the community and makes it easier to find and recruit Angular developers. The sponsorship also builds brand recognition and improves conversion.
+
+### Sponsoring as an Individual
+
+If you are an individual user and have enjoyed the productivity of using Analog, consider sponsoring me as a sign of appreciation - like buying me coffee once in a while. If you are not comfortable with a monthly-recurring sponsorship, GitHub also supports one-time donations!
+
+You can also try to convince your employer to sponsor Analog as a business. This may not be easy, but business sponsorships typically make a much larger impact on the sustainability of OSS projects than individual donations, so you will help us much more if you succeed.
+
+If you have any questions regarding sponsorships, please contact us at sponsor@analogjs.org.

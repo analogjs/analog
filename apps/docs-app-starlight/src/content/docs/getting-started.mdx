@@ -1,0 +1,145 @@
+---
+title: Getting Started
+sidebar:
+  order: 2
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+# Getting Started
+
+Creating an Analog project can be done with minimal steps.
+
+## System Requirements
+
+Analog requires the following Node and Angular versions:
+
+- Node v18.13.0 and higher is recommended
+- Angular v15 or higher
+
+## Creating a New Application
+
+To create a new Analog project, you can use the `create-analog` package with your package manager of choice:
+
+<Tabs>
+  <TabItem label="npm">
+
+```shell
+npm create analog@latest
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn">
+
+```shell
+yarn create analog
+```
+
+  </TabItem>
+
+  <TabItem label="pnpm">
+
+```shell
+pnpm create analog
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```shell
+bun create analog
+```
+
+  </TabItem>
+</Tabs>
+
+You can also [scaffold a new project with Nx](/integrations/nx).
+
+### Serving the application
+
+To start the development server for the application, run the `start` command.
+
+<Tabs>
+  <TabItem label="npm">
+
+```shell
+npm run start
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn">
+
+```shell
+yarn start
+```
+
+  </TabItem>
+
+  <TabItem label="pnpm">
+
+```shell
+pnpm start
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```shell
+bun start
+```
+
+  </TabItem>
+</Tabs>
+
+Visit [http://localhost:5173](http://localhost:5173) in your browser to view the running application.
+
+Next, you can [define additional routes using components](/features/routing/overview) for navigation.
+
+### Building the Application
+
+To build the application for deployment
+
+<Tabs>
+  <TabItem label="npm">
+
+```shell
+npm run build
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn">
+
+```shell
+yarn build
+```
+
+  </TabItem>
+
+  <TabItem label="pnpm">
+
+```shell
+pnpm run build
+```
+
+  </TabItem>
+  <TabItem label="bun">
+
+```shell
+bun run build
+```
+
+  </TabItem>
+</Tabs>
+
+### Build Artifacts
+
+By default, Analog comes with [Server-Side Rendering](/features/server/server-side-rendering) enabled.
+Client artifacts are located in the `dist/analog/public` directory.
+The server for the API/SSR build artifacts is located in the `dist/analog/server` directory.
+
+## Migrating an Existing Application
+
+You can also migrate an existing Angular application to Analog. See the [migration guide](/guides/migrating) for migration steps.

@@ -1,0 +1,35 @@
+/* Analog brand colors */
+:root {
+  --sl-color-accent-low: #3d0a13;
+  --sl-color-accent: #c30f2e;
+  --sl-color-accent-high: #f5c6cd;
+  --sl-color-white: #fefefe;
+  --sl-color-gray-1: #e8e8e8;
+  --sl-color-gray-2: #c2c2c2;
+  --sl-color-gray-3: #8b8b8b;
+  --sl-color-gray-4: #585858;
+  --sl-color-gray-5: #383838;
+  --sl-color-gray-6: #272727;
+  --sl-color-black: #111f3b;
+}
+
+:root[data-theme='dark'] {
+  --sl-color-accent-low: #3d0a13;
+  --sl-color-accent: #fc2753;
+  --sl-color-accent-high: #ffd6de;
+  --sl-color-white: #fefefe;
+  --sl-color-gray-1: #e8e8e8;
+  --sl-color-gray-2: #c2c2c2;
+  --sl-color-gray-3: #8b8b8b;
+  --sl-color-gray-4: #585858;
+  --sl-color-gray-5: #383838;
+  --sl-color-gray-6: #1a2a4a;
+  --sl-color-black: #0a1429;
+}
+
+/* Dark theme background */
+:root[data-theme='dark'] {
+  --sl-color-bg: #0a1429;
+  --sl-color-bg-nav: #0a1429;
+  --sl-color-bg-sidebar: #0a1429;
+}

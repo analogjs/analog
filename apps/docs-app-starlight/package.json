@@ -1,0 +1,17 @@
+{
+  "name": "docs-app-starlight",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.31.1",
+    "astro": "^5.1.1",
+    "sharp": "^0.33.5"
+  },
+  "nx": {}
+}

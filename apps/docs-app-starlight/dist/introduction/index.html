@@ -1,0 +1,1794 @@
+<!doctype html>
+<html
+  lang="en"
+  dir="ltr"
+  data-theme="dark"
+  data-has-toc
+  data-has-sidebar
+  class="astro-km5vhrng"
+>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Introduction | Analog</title>
+    <link rel="canonical" href="https://analogjs.org/introduction/" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="generator" content="Astro v5.16.6" />
+    <meta name="generator" content="Starlight v0.31.1" />
+    <meta property="og:title" content="Introduction" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://analogjs.org/introduction/" />
+    <meta property="og:locale" content="en" />
+    <meta property="og:description" />
+    <meta property="og:site_name" content="Analog" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      property="og:image"
+      content="https://analogjs.org/img/analog-banner.png"
+    />
+    <meta
+      name="twitter:image"
+      content="https://analogjs.org/img/analog-banner.png"
+    />
+    <script>
+      window.StarlightThemeProvider = (() => {
+        const storedTheme =
+          typeof localStorage !== 'undefined' &&
+          localStorage.getItem('starlight-theme');
+        const theme =
+          storedTheme ||
+          (window.matchMedia('(prefers-color-scheme: light)').matches
+            ? 'light'
+            : 'dark');
+        document.documentElement.dataset.theme =
+          theme === 'light' ? 'light' : 'dark';
+        return {
+          updatePickers(theme = storedTheme || 'auto') {
+            document
+              .querySelectorAll('starlight-theme-select')
+              .forEach((picker) => {
+                const select = picker.querySelector('select');
+                if (select) select.value = theme;
+                /** @type {HTMLTemplateElement | null} */
+                const tmpl = document.querySelector(`#theme-icons`);
+                const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+                if (newIcon) {
+                  const oldIcon = picker.querySelector('svg.label-icon');
+                  if (oldIcon) {
+                    oldIcon.replaceChildren(
+                      ...newIcon.cloneNode(true).childNodes,
+                    );
+                  }
+                }
+              });
+          },
+        };
+      })();
+    </script>
+    <template id="theme-icons"
+      ><svg
+        aria-hidden="true"
+        class="light astro-agpekvsx"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        style="--sl-icon-size: 1em"
+      >
+        <path
+          d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"
+        />
+      </svg>
+      <svg
+        aria-hidden="true"
+        class="dark astro-agpekvsx"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        style="--sl-icon-size: 1em"
+      >
+        <path
+          d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"
+        />
+      </svg>
+      <svg
+        aria-hidden="true"
+        class="auto astro-agpekvsx"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        style="--sl-icon-size: 1em"
+      >
+        <path
+          d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"
+        />
+      </svg>
+    </template>
+    <link rel="stylesheet" href="/_astro/print.BJ0teN4y.css" media="print" />
+    <link rel="stylesheet" href="/_astro/index.Dk-SYIKR.css" />
+    <style>
+      :root {
+        --sl-badge-default-border: var(--sl-color-accent);
+        --sl-badge-default-bg: var(--sl-color-accent-low);
+        --sl-badge-default-text: #fff;
+        --sl-badge-note-border: var(--sl-color-blue);
+        --sl-badge-note-bg: var(--sl-color-blue-low);
+        --sl-badge-note-text: #fff;
+        --sl-badge-danger-border: var(--sl-color-red);
+        --sl-badge-danger-bg: var(--sl-color-red-low);
+        --sl-badge-danger-text: #fff;
+        --sl-badge-success-border: var(--sl-color-green);
+        --sl-badge-success-bg: var(--sl-color-green-low);
+        --sl-badge-success-text: #fff;
+        --sl-badge-caution-border: var(--sl-color-orange);
+        --sl-badge-caution-bg: var(--sl-color-orange-low);
+        --sl-badge-caution-text: #fff;
+        --sl-badge-tip-border: var(--sl-color-purple);
+        --sl-badge-tip-bg: var(--sl-color-purple-low);
+        --sl-badge-tip-text: #fff;
+      }
+      [data-theme='light']:root {
+        --sl-badge-default-bg: var(--sl-color-accent-high);
+        --sl-badge-note-bg: var(--sl-color-blue-high);
+        --sl-badge-danger-bg: var(--sl-color-red-high);
+        --sl-badge-success-bg: var(--sl-color-green-high);
+        --sl-badge-caution-bg: var(--sl-color-orange-high);
+        --sl-badge-tip-bg: var(--sl-color-purple-high);
+      }
+      .sl-badge:where(.astro-alsvzfyf) {
+        display: inline-block;
+        border: 1px solid var(--sl-color-border-badge);
+        border-radius: 0.25rem;
+        font-family: var(--sl-font-system-mono);
+        line-height: normal;
+        color: var(--sl-color-text-badge);
+        background-color: var(--sl-color-bg-badge);
+        overflow-wrap: anywhere;
+      }
+      .sidebar-content .sl-badge:where(.astro-alsvzfyf) {
+        line-height: 1;
+        font-size: var(--sl-text-xs);
+        padding: 0.125rem 0.375rem;
+      }
+      .sidebar-content
+        a[aria-current='page']
+        > .sl-badge:where(.astro-alsvzfyf) {
+        --sl-color-bg-badge: transparent;
+        --sl-color-border-badge: currentColor;
+        color: inherit;
+      }
+      .default:where(.astro-alsvzfyf) {
+        --sl-color-bg-badge: var(--sl-badge-default-bg);
+        --sl-color-border-badge: var(--sl-badge-default-border);
+        --sl-color-text-badge: var(--sl-badge-default-text);
+      }
+      .note:where(.astro-alsvzfyf) {
+        --sl-color-bg-badge: var(--sl-badge-note-bg);
+        --sl-color-border-badge: var(--sl-badge-note-border);
+        --sl-color-text-badge: var(--sl-badge-note-text);
+      }
+      .danger:where(.astro-alsvzfyf) {
+        --sl-color-bg-badge: var(--sl-badge-danger-bg);
+        --sl-color-border-badge: var(--sl-badge-danger-border);
+        --sl-color-text-badge: var(--sl-badge-danger-text);
+      }
+      .success:where(.astro-alsvzfyf) {
+        --sl-color-bg-badge: var(--sl-badge-success-bg);
+        --sl-color-border-badge: var(--sl-badge-success-border);
+        --sl-color-text-badge: var(--sl-badge-success-text);
+      }
+      .tip:where(.astro-alsvzfyf) {
+        --sl-color-bg-badge: var(--sl-badge-tip-bg);
+        --sl-color-border-badge: var(--sl-badge-tip-border);
+        --sl-color-text-badge: var(--sl-badge-tip-text);
+      }
+      .caution:where(.astro-alsvzfyf) {
+        --sl-color-bg-badge: var(--sl-badge-caution-bg);
+        --sl-color-border-badge: var(--sl-badge-caution-border);
+        --sl-color-text-badge: var(--sl-badge-caution-text);
+      }
+      .small:where(.astro-alsvzfyf) {
+        font-size: var(--sl-text-xs);
+        padding: 0.125rem 0.25rem;
+      }
+      .medium:where(.astro-alsvzfyf) {
+        font-size: var(--sl-text-sm);
+        padding: 0.175rem 0.35rem;
+      }
+      .large:where(.astro-alsvzfyf) {
+        font-size: var(--sl-text-base);
+        padding: 0.225rem 0.45rem;
+      }
+      .sl-markdown-content
+        :is(h1, h2, h3, h4, h5, h6)
+        .sl-badge:where(.astro-alsvzfyf) {
+        vertical-align: middle;
+      }
+      .card-grid:where(.astro-hnbunlbb) {
+        display: grid;
+        grid-template-columns: 100%;
+        gap: 1rem;
+      }
+      .card-grid:where(.astro-hnbunlbb) > * {
+        margin-top: 0 !important;
+      }
+      @media (min-width: 50rem) {
+        .card-grid:where(.astro-hnbunlbb) {
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
+        .stagger:where(.astro-hnbunlbb) {
+          --stagger-height: 5rem;
+          padding-bottom: var(--stagger-height);
+        }
+        .stagger:where(.astro-hnbunlbb) > *:nth-child(2n) {
+          transform: translateY(var(--stagger-height));
+        }
+      }
+      .card:where(.astro-tghj66ja) {
+        --sl-card-border: var(--sl-color-purple);
+        --sl-card-bg: var(--sl-color-purple-low);
+        border: 1px solid var(--sl-color-gray-5);
+        background-color: var(--sl-color-black);
+        padding: clamp(1rem, calc(0.125rem + 3vw), 2.5rem);
+        flex-direction: column;
+        gap: clamp(0.5rem, calc(0.125rem + 1vw), 1rem);
+      }
+      .card:where(.astro-tghj66ja):nth-child(4n + 1) {
+        --sl-card-border: var(--sl-color-orange);
+        --sl-card-bg: var(--sl-color-orange-low);
+      }
+      .card:where(.astro-tghj66ja):nth-child(4n + 3) {
+        --sl-card-border: var(--sl-color-green);
+        --sl-card-bg: var(--sl-color-green-low);
+      }
+      .card:where(.astro-tghj66ja):nth-child(4n + 4) {
+        --sl-card-border: var(--sl-color-red);
+        --sl-card-bg: var(--sl-color-red-low);
+      }
+      .card:where(.astro-tghj66ja):nth-child(4n + 5) {
+        --sl-card-border: var(--sl-color-blue);
+        --sl-card-bg: var(--sl-color-blue-low);
+      }
+      .title:where(.astro-tghj66ja) {
+        font-weight: 600;
+        font-size: var(--sl-text-h4);
+        color: var(--sl-color-white);
+        line-height: var(--sl-line-height-headings);
+        gap: 1rem;
+        align-items: center;
+      }
+      .card:where(.astro-tghj66ja) .icon:where(.astro-tghj66ja) {
+        border: 1px solid var(--sl-card-border);
+        background-color: var(--sl-card-bg);
+        padding: 0.2em;
+        border-radius: 0.25rem;
+      }
+      .card:where(.astro-tghj66ja) .body:where(.astro-tghj66ja) {
+        margin: 0;
+        font-size: clamp(
+          var(--sl-text-sm),
+          calc(0.5rem + 1vw),
+          var(--sl-text-body)
+        );
+      }
+      svg:where(.astro-agpekvsx) {
+        color: var(--sl-icon-color);
+        font-size: var(--sl-icon-size, 1em);
+        width: 1em;
+        height: 1em;
+      }
+      starlight-tabs:where(.astro-acp7vujg) {
+        display: block;
+      }
+      .tablist-wrapper:where(.astro-acp7vujg) {
+        overflow-x: auto;
+      }
+      :where(.astro-acp7vujg)[role='tablist'] {
+        display: flex;
+        list-style: none;
+        border-bottom: 2px solid var(--sl-color-gray-5);
+        padding: 0;
+      }
+      .tab:where(.astro-acp7vujg) {
+        margin-bottom: -2px;
+      }
+      .tab:where(.astro-acp7vujg) > :where(.astro-acp7vujg)[role='tab'] {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0 1.25rem;
+        text-decoration: none;
+        border-bottom: 2px solid var(--sl-color-gray-5);
+        color: var(--sl-color-gray-3);
+        outline-offset: var(--sl-outline-offset-inside);
+        overflow-wrap: initial;
+      }
+      .tab:where(.astro-acp7vujg)
+        :where(.astro-acp7vujg)[role='tab'][aria-selected='true'] {
+        color: var(--sl-color-white);
+        border-color: var(--sl-color-text-accent);
+        font-weight: 600;
+      }
+      .tablist-wrapper:where(.astro-acp7vujg) ~ [role='tabpanel'] {
+        margin-top: 1rem;
+      }
+      .sl-steps {
+        --bullet-size: calc(var(--sl-line-height) * 1rem);
+        --bullet-margin: 0.375rem;
+        list-style: none;
+        counter-reset: steps-counter var(--sl-steps-start, 0);
+        padding-inline-start: 0;
+      }
+      .sl-steps > li {
+        counter-increment: steps-counter;
+        position: relative;
+        padding-inline-start: calc(var(--bullet-size) + 1rem);
+        padding-bottom: 1px;
+        min-height: calc(var(--bullet-size) + var(--bullet-margin));
+      }
+      .sl-steps > li + li {
+        margin-top: 0;
+      }
+      .sl-steps > li:before {
+        content: counter(steps-counter);
+        position: absolute;
+        top: 0;
+        inset-inline-start: 0;
+        width: var(--bullet-size);
+        height: var(--bullet-size);
+        line-height: var(--bullet-size);
+        font-size: var(--sl-text-xs);
+        font-weight: 600;
+        text-align: center;
+        color: var(--sl-color-white);
+        background-color: var(--sl-color-gray-6);
+        border-radius: 99rem;
+        box-shadow: inset 0 0 0 1px var(--sl-color-gray-5);
+      }
+      .sl-steps > li:after {
+        --guide-width: 1px;
+        content: '';
+        position: absolute;
+        top: calc(var(--bullet-size) + var(--bullet-margin));
+        bottom: var(--bullet-margin);
+        inset-inline-start: calc((var(--bullet-size) - var(--guide-width)) / 2);
+        width: var(--guide-width);
+        background-color: var(--sl-color-hairline-light);
+      }
+      .sl-steps > li > :first-child {
+        --lh: calc(1em * var(--sl-line-height));
+        --shift-y: calc(0.5 * (var(--bullet-size) - var(--lh)));
+        transform: translateY(var(--shift-y));
+        margin-bottom: var(--shift-y);
+      }
+      .sl-steps > li > :first-child:where(h1, h2, h3, h4, h5, h6) {
+        --lh: calc(1em * var(--sl-line-height-headings));
+      }
+      @supports (--prop: 1lh) {
+        .sl-steps > li > :first-child {
+          --lh: 1lh;
+        }
+      }
+      .sl-link-button:where(.astro-2lypzhau) {
+        align-items: center;
+        border: 1px solid transparent;
+        border-radius: 999rem;
+        display: inline-flex;
+        font-size: var(--sl-text-sm);
+        gap: 0.5em;
+        line-height: 1.1875;
+        outline-offset: 0.25rem;
+        padding: 0.4375rem 1.125rem;
+        text-decoration: none;
+      }
+      .sl-link-button:where(.astro-2lypzhau).primary {
+        background: var(--sl-color-text-accent);
+        border-color: var(--sl-color-text-accent);
+        color: var(--sl-color-black);
+      }
+      .sl-link-button:where(.astro-2lypzhau).primary:hover {
+        color: var(--sl-color-black);
+      }
+      .sl-link-button:where(.astro-2lypzhau).secondary {
+        border-color: inherit;
+        color: var(--sl-color-white);
+      }
+      .sl-link-button:where(.astro-2lypzhau).minimal {
+        color: var(--sl-color-white);
+        padding-inline: 0;
+      }
+      .sl-link-button:where(.astro-2lypzhau) svg {
+        flex-shrink: 0;
+      }
+      @media (min-width: 50rem) {
+        .sl-link-button:where(.astro-2lypzhau) {
+          font-size: var(--sl-text-base);
+          padding: 0.9375rem 1.25rem;
+        }
+      }
+      .sl-markdown-content .sl-link-button:where(.astro-2lypzhau) {
+        margin-inline-end: 1rem;
+      }
+      .sl-markdown-content
+        .sl-link-button:where(.astro-2lypzhau):not(:where(p *)) {
+        margin-block: 1rem;
+      }
+    </style>
+    <script type="module" src="/_astro/page.B1D-nYk3.js"></script>
+  </head>
+  <body class="astro-km5vhrng">
+    <a href="#_top" class="astro-cty3avvq">Skip to content</a>
+    <div class="page sl-flex astro-zn7vttou">
+      <header class="header astro-zn7vttou">
+        <div class="header sl-flex astro-ul5awab3">
+          <div class="title-wrapper sl-flex astro-ul5awab3">
+            <a href="/" class="site-title sl-flex astro-26sz6rar">
+              <img
+                class="astro-26sz6rar"
+                alt
+                src="/_astro/analog-logo.BEUEY48N.svg"
+                width="362"
+                height="257"
+              />
+              <span class="astro-26sz6rar" translate="no"> Analog </span>
+            </a>
+          </div>
+          <div class="sl-flex print:hidden astro-ul5awab3">
+            <site-search
+              class="astro-ul5awab3 astro-ukk7cnky"
+              data-translations="{&#34;placeholder&#34;:&#34;Search&#34;}"
+            >
+              <button
+                data-open-modal
+                disabled
+                aria-label="Search"
+                aria-keyshortcuts="Control+K"
+                class="astro-ukk7cnky"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="astro-ukk7cnky astro-agpekvsx"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style="--sl-icon-size: 1em"
+                >
+                  <path
+                    d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"
+                  />
+                </svg>
+                <span
+                  class="sl-hidden md:sl-block astro-ukk7cnky"
+                  aria-hidden="true"
+                  >Search</span
+                >
+                <kbd
+                  class="sl-hidden md:sl-flex astro-ukk7cnky"
+                  style="display: none"
+                >
+                  <kbd class="astro-ukk7cnky">Ctrl</kbd
+                  ><kbd class="astro-ukk7cnky">K</kbd>
+                </kbd>
+              </button>
+              <dialog
+                style="padding: 0"
+                aria-label="Search"
+                class="astro-ukk7cnky"
+              >
+                <div class="dialog-frame sl-flex astro-ukk7cnky">
+                  <button
+                    data-close-modal
+                    class="sl-flex md:sl-hidden astro-ukk7cnky"
+                  >
+                    Cancel
+                  </button>
+                  <div class="search-container astro-ukk7cnky">
+                    <div id="starlight__search" class="astro-ukk7cnky"></div>
+                  </div>
+                </div>
+              </dialog>
+            </site-search>
+            <script>
+              (() => {
+                const openBtn = document.querySelector(
+                  'button[data-open-modal]',
+                );
+                const shortcut = openBtn?.querySelector('kbd');
+                if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+                const platformKey = shortcut.querySelector('kbd');
+                if (
+                  platformKey &&
+                  /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)
+                ) {
+                  platformKey.textContent = '⌘';
+                  openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+                }
+                shortcut.style.display = '';
+              })();
+            </script>
+            <script
+              type="module"
+              src="/_astro/Search.astro_astro_type_script_index_0_lang.cjYDvRdi.js"
+            ></script>
+          </div>
+          <div
+            class="sl-hidden md:sl-flex print:hidden right-group astro-ul5awab3"
+          >
+            <div class="sl-flex social-icons astro-ul5awab3">
+              <a
+                href="https://github.com/analogjs/analog"
+                rel="me"
+                class="sl-flex astro-awqzqbu2"
+                ><span class="sr-only astro-awqzqbu2">GitHub</span
+                ><svg
+                  aria-hidden="true"
+                  class="astro-awqzqbu2 astro-agpekvsx"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style="--sl-icon-size: 1em"
+                >
+                  <path
+                    d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"
+                  />
+                </svg> </a
+              ><a
+                href="https://chat.analogjs.org/"
+                rel="me"
+                class="sl-flex astro-awqzqbu2"
+                ><span class="sr-only astro-awqzqbu2">Discord</span
+                ><svg
+                  aria-hidden="true"
+                  class="astro-awqzqbu2 astro-agpekvsx"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style="--sl-icon-size: 1em"
+                >
+                  <path
+                    d="M20.32 4.37a19.8 19.8 0 0 0-4.93-1.51 13.78 13.78 0 0 0-.64 1.28 18.27 18.27 0 0 0-5.5 0 12.64 12.64 0 0 0-.64-1.28h-.05A19.74 19.74 0 0 0 3.64 4.4 20.26 20.26 0 0 0 .11 18.09l.02.02a19.9 19.9 0 0 0 6.04 3.03l.04-.02a14.24 14.24 0 0 0 1.23-2.03.08.08 0 0 0-.05-.07 13.1 13.1 0 0 1-1.9-.92.08.08 0 0 1 .02-.1 10.2 10.2 0 0 0 .41-.31h.04a14.2 14.2 0 0 0 12.1 0l.04.01a9.63 9.63 0 0 0 .4.32.08.08 0 0 1-.03.1 12.29 12.29 0 0 1-1.9.91.08.08 0 0 0-.02.1 15.97 15.97 0 0 0 1.27 2.01h.04a19.84 19.84 0 0 0 6.03-3.05v-.03a20.12 20.12 0 0 0-3.57-13.69ZM8.02 15.33c-1.18 0-2.16-1.08-2.16-2.42 0-1.33.96-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.34-.96 2.42-2.16 2.42Zm7.97 0c-1.18 0-2.15-1.08-2.15-2.42 0-1.33.95-2.42 2.15-2.42 1.22 0 2.18 1.1 2.16 2.42 0 1.34-.94 2.42-2.16 2.42Z"
+                  />
+                </svg>
+              </a>
+            </div>
+            <starlight-theme-select>
+              <label style="--sl-select-width: 6.25em" class="astro-26wi4w2a">
+                <span class="sr-only astro-26wi4w2a">Select theme</span>
+                <svg
+                  aria-hidden="true"
+                  class="icon label-icon astro-26wi4w2a astro-agpekvsx"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style="--sl-icon-size: 1em"
+                >
+                  <path
+                    d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"
+                  />
+                </svg>
+                <select value="auto" autocomplete="off" class="astro-26wi4w2a">
+                  <option value="dark" class="astro-26wi4w2a">Dark</option>
+                  <option value="light" class="astro-26wi4w2a">Light</option>
+                  <option value="auto" selected class="astro-26wi4w2a">
+                    Auto
+                  </option>
+                </select>
+                <svg
+                  aria-hidden="true"
+                  class="icon caret astro-26wi4w2a astro-agpekvsx"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style="--sl-icon-size: 1em"
+                >
+                  <path
+                    d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"
+                  />
+                </svg>
+              </label>
+            </starlight-theme-select>
+            <script>
+              StarlightThemeProvider.updatePickers();
+            </script>
+            <script type="module">
+              const r = 'starlight-theme',
+                o = (e) =>
+                  e === 'auto' || e === 'dark' || e === 'light' ? e : 'auto',
+                c = () =>
+                  o(typeof localStorage < 'u' && localStorage.getItem(r));
+              function n(e) {
+                typeof localStorage < 'u' &&
+                  localStorage.setItem(
+                    r,
+                    e === 'light' || e === 'dark' ? e : '',
+                  );
+              }
+              const l = () =>
+                matchMedia('(prefers-color-scheme: light)').matches
+                  ? 'light'
+                  : 'dark';
+              function t(e) {
+                StarlightThemeProvider.updatePickers(e),
+                  (document.documentElement.dataset.theme =
+                    e === 'auto' ? l() : e),
+                  n(e);
+              }
+              matchMedia('(prefers-color-scheme: light)').addEventListener(
+                'change',
+                () => {
+                  c() === 'auto' && t('auto');
+                },
+              );
+              class s extends HTMLElement {
+                constructor() {
+                  super(),
+                    t(c()),
+                    this.querySelector('select')?.addEventListener(
+                      'change',
+                      (a) => {
+                        a.currentTarget instanceof HTMLSelectElement &&
+                          t(o(a.currentTarget.value));
+                      },
+                    );
+                }
+              }
+              customElements.define('starlight-theme-select', s);
+            </script>
+            <script type="module">
+              class s extends HTMLElement {
+                constructor() {
+                  super();
+                  const e = this.querySelector('select');
+                  e &&
+                    (e.addEventListener('change', (t) => {
+                      t.currentTarget instanceof HTMLSelectElement &&
+                        (window.location.pathname = t.currentTarget.value);
+                    }),
+                    window.addEventListener('pageshow', (t) => {
+                      if (!t.persisted) return;
+                      const n = e.querySelector('option[selected]')?.index;
+                      n !== e.selectedIndex && (e.selectedIndex = n ?? 0);
+                    }));
+                }
+              }
+              customElements.define('starlight-lang-select', s);
+            </script>
+          </div>
+        </div>
+      </header>
+      <nav class="sidebar print:hidden astro-zn7vttou" aria-label="Main">
+        <starlight-menu-button class="print:hidden astro-z2ckz35n">
+          <button
+            aria-expanded="false"
+            aria-label="Menu"
+            aria-controls="starlight__sidebar"
+            class="sl-flex md:sl-hidden astro-z2ckz35n"
+          >
+            <svg
+              aria-hidden="true"
+              class="astro-z2ckz35n astro-agpekvsx"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              style="--sl-icon-size: 1em"
+            >
+              <path
+                d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"
+              />
+            </svg>
+          </button>
+        </starlight-menu-button>
+        <script type="module">
+          class s extends HTMLElement {
+            constructor() {
+              super(),
+                (this.btn = this.querySelector('button')),
+                this.btn.addEventListener('click', () => this.toggleExpanded());
+              const t = this.closest('nav');
+              t && t.addEventListener('keyup', (e) => this.closeOnEscape(e));
+            }
+            setExpanded(t) {
+              this.setAttribute('aria-expanded', String(t)),
+                document.body.toggleAttribute('data-mobile-menu-expanded', t);
+            }
+            toggleExpanded() {
+              this.setExpanded(this.getAttribute('aria-expanded') !== 'true');
+            }
+            closeOnEscape(t) {
+              t.code === 'Escape' && (this.setExpanded(!1), this.btn.focus());
+            }
+          }
+          customElements.define('starlight-menu-button', s);
+        </script>
+        <div id="starlight__sidebar" class="sidebar-pane astro-zn7vttou">
+          <div class="sidebar-content sl-flex astro-zn7vttou">
+            <sl-sidebar-state-persist
+              data-hash="0nfqoov"
+              class="astro-7gxeco5y"
+            >
+              <script aria-hidden="true">
+                (() => {
+                  try {
+                    if (!matchMedia('(min-width: 50em)').matches) return;
+                    /** @type {HTMLElement | null} */
+                    const target = document.querySelector(
+                      'sl-sidebar-state-persist',
+                    );
+                    const state = JSON.parse(
+                      sessionStorage.getItem('sl-sidebar-state') || '0',
+                    );
+                    if (!target || !state || target.dataset.hash !== state.hash)
+                      return;
+                    window._starlightScrollRestore = state.scroll;
+                    customElements.define(
+                      'sl-sidebar-restore',
+                      class SidebarRestore extends HTMLElement {
+                        connectedCallback() {
+                          try {
+                            const idx = parseInt(this.dataset.index || '');
+                            const details = this.closest('details');
+                            if (details && typeof state.open[idx] === 'boolean')
+                              details.open = state.open[idx];
+                          } catch {}
+                        }
+                      },
+                    );
+                  } catch {}
+                })();
+              </script>
+              <ul class="top-level astro-73y46fma">
+                <li class="astro-73y46fma">
+                  <a
+                    href="/introduction/"
+                    aria-current="page"
+                    class="large astro-73y46fma"
+                  >
+                    <span class="astro-73y46fma">Introduction</span>
+                  </a>
+                </li>
+                <li class="astro-73y46fma">
+                  <a
+                    href="/getting-started/"
+                    aria-current="false"
+                    class="large astro-73y46fma"
+                  >
+                    <span class="astro-73y46fma">Getting Started</span>
+                  </a>
+                </li>
+                <li class="astro-73y46fma">
+                  <details open class="astro-73y46fma">
+                    <sl-sidebar-restore data-index="0"></sl-sidebar-restore>
+                    <summary class="astro-73y46fma">
+                      <div class="group-label astro-73y46fma">
+                        <span class="large astro-73y46fma">Core Concepts</span>
+                      </div>
+                      <svg
+                        aria-hidden="true"
+                        class="caret astro-73y46fma astro-agpekvsx"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        style="--sl-icon-size: 1.25rem"
+                      >
+                        <path
+                          d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                        />
+                      </svg>
+                    </summary>
+                    <ul class="astro-73y46fma">
+                      <li class="astro-73y46fma">
+                        <details open class="astro-73y46fma">
+                          <sl-sidebar-restore
+                            data-index="1"
+                          ></sl-sidebar-restore>
+                          <summary class="astro-73y46fma">
+                            <div class="group-label astro-73y46fma">
+                              <span class="large astro-73y46fma">Routing</span>
+                            </div>
+                            <svg
+                              aria-hidden="true"
+                              class="caret astro-73y46fma astro-agpekvsx"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              style="--sl-icon-size: 1.25rem"
+                            >
+                              <path
+                                d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                              />
+                            </svg>
+                          </summary>
+                          <ul class="astro-73y46fma">
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/routing/overview/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Overview</span>
+                              </a>
+                            </li>
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/routing/metadata/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma"
+                                  >Route Metadata</span
+                                >
+                              </a>
+                            </li>
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/routing/content/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma"
+                                  >Content Routes</span
+                                >
+                              </a>
+                            </li>
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/routing/middleware/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Middleware</span>
+                              </a>
+                            </li>
+                          </ul>
+                        </details>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <details open class="astro-73y46fma">
+                          <sl-sidebar-restore
+                            data-index="2"
+                          ></sl-sidebar-restore>
+                          <summary class="astro-73y46fma">
+                            <div class="group-label astro-73y46fma">
+                              <span class="large astro-73y46fma"
+                                >API Routes</span
+                              >
+                            </div>
+                            <svg
+                              aria-hidden="true"
+                              class="caret astro-73y46fma astro-agpekvsx"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              style="--sl-icon-size: 1.25rem"
+                            >
+                              <path
+                                d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                              />
+                            </svg>
+                          </summary>
+                          <ul class="astro-73y46fma">
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/api/overview/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Overview</span>
+                              </a>
+                            </li>
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/api/websockets/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Websockets</span>
+                              </a>
+                            </li>
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/api/og-image-generation/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma"
+                                  >OG Image Generation</span
+                                >
+                              </a>
+                            </li>
+                          </ul>
+                        </details>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <details open class="astro-73y46fma">
+                          <sl-sidebar-restore
+                            data-index="3"
+                          ></sl-sidebar-restore>
+                          <summary class="astro-73y46fma">
+                            <div class="group-label astro-73y46fma">
+                              <span class="large astro-73y46fma"
+                                >Data Fetching</span
+                              >
+                            </div>
+                            <svg
+                              aria-hidden="true"
+                              class="caret astro-73y46fma astro-agpekvsx"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              style="--sl-icon-size: 1.25rem"
+                            >
+                              <path
+                                d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                              />
+                            </svg>
+                          </summary>
+                          <ul class="astro-73y46fma">
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/data-fetching/overview/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Overview</span>
+                              </a>
+                            </li>
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/data-fetching/server-side-data-fetching/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma"
+                                  >Server-Side Data Fetching</span
+                                >
+                              </a>
+                            </li>
+                          </ul>
+                        </details>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <details open class="astro-73y46fma">
+                          <sl-sidebar-restore
+                            data-index="4"
+                          ></sl-sidebar-restore>
+                          <summary class="astro-73y46fma">
+                            <div class="group-label astro-73y46fma">
+                              <span class="large astro-73y46fma"
+                                >Static Site Generation</span
+                              >
+                            </div>
+                            <svg
+                              aria-hidden="true"
+                              class="caret astro-73y46fma astro-agpekvsx"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              style="--sl-icon-size: 1.25rem"
+                            >
+                              <path
+                                d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                              />
+                            </svg>
+                          </summary>
+                          <ul class="astro-73y46fma">
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/server/static-site-generation/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Overview</span>
+                              </a>
+                            </li>
+                          </ul>
+                        </details>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <details open class="astro-73y46fma">
+                          <sl-sidebar-restore
+                            data-index="5"
+                          ></sl-sidebar-restore>
+                          <summary class="astro-73y46fma">
+                            <div class="group-label astro-73y46fma">
+                              <span class="large astro-73y46fma"
+                                >Server Side Rendering</span
+                              >
+                            </div>
+                            <svg
+                              aria-hidden="true"
+                              class="caret astro-73y46fma astro-agpekvsx"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              style="--sl-icon-size: 1.25rem"
+                            >
+                              <path
+                                d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                              />
+                            </svg>
+                          </summary>
+                          <ul class="astro-73y46fma">
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/server/server-side-rendering/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Overview</span>
+                              </a>
+                            </li>
+                          </ul>
+                        </details>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/guides/forms/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Form Actions</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <details open class="astro-73y46fma">
+                          <sl-sidebar-restore
+                            data-index="6"
+                          ></sl-sidebar-restore>
+                          <summary class="astro-73y46fma">
+                            <div class="group-label astro-73y46fma">
+                              <span class="large astro-73y46fma"
+                                >Code Generation</span
+                              >
+                            </div>
+                            <svg
+                              aria-hidden="true"
+                              class="caret astro-73y46fma astro-agpekvsx"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              style="--sl-icon-size: 1.25rem"
+                            >
+                              <path
+                                d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                              />
+                            </svg>
+                          </summary>
+                          <ul class="astro-73y46fma">
+                            <li class="astro-73y46fma">
+                              <a
+                                href="/features/generation/code-generation/"
+                                aria-current="false"
+                                class="astro-73y46fma"
+                              >
+                                <span class="astro-73y46fma">Overview</span>
+                              </a>
+                            </li>
+                          </ul>
+                        </details>
+                      </li>
+                    </ul>
+                  </details>
+                </li>
+                <li class="astro-73y46fma">
+                  <details open class="astro-73y46fma">
+                    <sl-sidebar-restore data-index="7"></sl-sidebar-restore>
+                    <summary class="astro-73y46fma">
+                      <div class="group-label astro-73y46fma">
+                        <span class="large astro-73y46fma">Deployment</span>
+                      </div>
+                      <svg
+                        aria-hidden="true"
+                        class="caret astro-73y46fma astro-agpekvsx"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        style="--sl-icon-size: 1.25rem"
+                      >
+                        <path
+                          d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                        />
+                      </svg>
+                    </summary>
+                    <ul class="astro-73y46fma">
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/features/deployment/overview/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Overview</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/features/deployment/providers/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Providers</span>
+                        </a>
+                      </li>
+                    </ul>
+                  </details>
+                </li>
+                <li class="astro-73y46fma">
+                  <details open class="astro-73y46fma">
+                    <sl-sidebar-restore data-index="8"></sl-sidebar-restore>
+                    <summary class="astro-73y46fma">
+                      <div class="group-label astro-73y46fma">
+                        <span class="large astro-73y46fma">Testing</span>
+                      </div>
+                      <svg
+                        aria-hidden="true"
+                        class="caret astro-73y46fma astro-agpekvsx"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        style="--sl-icon-size: 1.25rem"
+                      >
+                        <path
+                          d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                        />
+                      </svg>
+                    </summary>
+                    <ul class="astro-73y46fma">
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/features/testing/overview/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Overview</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/features/testing/vitest/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Adding Vitest</span>
+                        </a>
+                      </li>
+                    </ul>
+                  </details>
+                </li>
+                <li class="astro-73y46fma">
+                  <details open class="astro-73y46fma">
+                    <sl-sidebar-restore data-index="9"></sl-sidebar-restore>
+                    <summary class="astro-73y46fma">
+                      <div class="group-label astro-73y46fma">
+                        <span class="large astro-73y46fma">Updating</span>
+                      </div>
+                      <svg
+                        aria-hidden="true"
+                        class="caret astro-73y46fma astro-agpekvsx"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        style="--sl-icon-size: 1.25rem"
+                      >
+                        <path
+                          d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                        />
+                      </svg>
+                    </summary>
+                    <ul class="astro-73y46fma">
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/features/updating/overview/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Overview</span>
+                        </a>
+                      </li>
+                    </ul>
+                  </details>
+                </li>
+                <li class="astro-73y46fma">
+                  <details open class="astro-73y46fma">
+                    <sl-sidebar-restore data-index="10"></sl-sidebar-restore>
+                    <summary class="astro-73y46fma">
+                      <div class="group-label astro-73y46fma">
+                        <span class="large astro-73y46fma">Guides</span>
+                      </div>
+                      <svg
+                        aria-hidden="true"
+                        class="caret astro-73y46fma astro-agpekvsx"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        style="--sl-icon-size: 1.25rem"
+                      >
+                        <path
+                          d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                        />
+                      </svg>
+                    </summary>
+                    <ul class="astro-73y46fma">
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/guides/migrating/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma"
+                            >Migrating an Angular app to Analog</span
+                          >
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/guides/libraries/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma"
+                            >Building an Angular library</span
+                          >
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/guides/compatibility/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma"
+                            >Version Compatibility</span
+                          >
+                        </a>
+                      </li>
+                    </ul>
+                  </details>
+                </li>
+                <li class="astro-73y46fma">
+                  <details open class="astro-73y46fma">
+                    <sl-sidebar-restore data-index="11"></sl-sidebar-restore>
+                    <summary class="astro-73y46fma">
+                      <div class="group-label astro-73y46fma">
+                        <span class="large astro-73y46fma">Integrations</span>
+                      </div>
+                      <svg
+                        aria-hidden="true"
+                        class="caret astro-73y46fma astro-agpekvsx"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        style="--sl-icon-size: 1.25rem"
+                      >
+                        <path
+                          d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                        />
+                      </svg>
+                    </summary>
+                    <ul class="astro-73y46fma">
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/integrations/nx/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Nx</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/packages/astro-angular/overview/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Astro</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/packages/vite-plugin-angular/overview/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Vite</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/packages/vite-plugin-nitro/overview/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Nitro</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/integrations/angular-material/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Angular Material</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/integrations/ionic/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Ionic Framework</span>
+                        </a>
+                      </li>
+                      <li class="astro-73y46fma">
+                        <a
+                          href="/integrations/storybook/"
+                          aria-current="false"
+                          class="astro-73y46fma"
+                        >
+                          <span class="astro-73y46fma">Storybook</span>
+                        </a>
+                      </li>
+                    </ul>
+                  </details>
+                </li>
+                <li class="astro-73y46fma">
+                  <a
+                    href="/contributors/"
+                    aria-current="false"
+                    class="large astro-73y46fma"
+                  >
+                    <span class="astro-73y46fma">Contributors</span>
+                  </a>
+                </li>
+                <li class="astro-73y46fma">
+                  <a
+                    href="/support/"
+                    aria-current="false"
+                    class="large astro-73y46fma"
+                  >
+                    <span class="astro-73y46fma">Support</span>
+                  </a>
+                </li>
+              </ul>
+              <script aria-hidden="true">
+                (() => {
+                  const scroller =
+                    document.getElementById('starlight__sidebar');
+                  if (!window._starlightScrollRestore || !scroller) return;
+                  scroller.scrollTop = window._starlightScrollRestore;
+                  delete window._starlightScrollRestore;
+                })();
+              </script>
+            </sl-sidebar-state-persist>
+            <div class="md:sl-hidden">
+              <div class="mobile-preferences sl-flex astro-7q4kd47j">
+                <div class="sl-flex social-icons astro-7q4kd47j">
+                  <a
+                    href="https://github.com/analogjs/analog"
+                    rel="me"
+                    class="sl-flex astro-awqzqbu2"
+                    ><span class="sr-only astro-awqzqbu2">GitHub</span
+                    ><svg
+                      aria-hidden="true"
+                      class="astro-awqzqbu2 astro-agpekvsx"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      style="--sl-icon-size: 1em"
+                    >
+                      <path
+                        d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"
+                      />
+                    </svg> </a
+                  ><a
+                    href="https://chat.analogjs.org/"
+                    rel="me"
+                    class="sl-flex astro-awqzqbu2"
+                    ><span class="sr-only astro-awqzqbu2">Discord</span
+                    ><svg
+                      aria-hidden="true"
+                      class="astro-awqzqbu2 astro-agpekvsx"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      style="--sl-icon-size: 1em"
+                    >
+                      <path
+                        d="M20.32 4.37a19.8 19.8 0 0 0-4.93-1.51 13.78 13.78 0 0 0-.64 1.28 18.27 18.27 0 0 0-5.5 0 12.64 12.64 0 0 0-.64-1.28h-.05A19.74 19.74 0 0 0 3.64 4.4 20.26 20.26 0 0 0 .11 18.09l.02.02a19.9 19.9 0 0 0 6.04 3.03l.04-.02a14.24 14.24 0 0 0 1.23-2.03.08.08 0 0 0-.05-.07 13.1 13.1 0 0 1-1.9-.92.08.08 0 0 1 .02-.1 10.2 10.2 0 0 0 .41-.31h.04a14.2 14.2 0 0 0 12.1 0l.04.01a9.63 9.63 0 0 0 .4.32.08.08 0 0 1-.03.1 12.29 12.29 0 0 1-1.9.91.08.08 0 0 0-.02.1 15.97 15.97 0 0 0 1.27 2.01h.04a19.84 19.84 0 0 0 6.03-3.05v-.03a20.12 20.12 0 0 0-3.57-13.69ZM8.02 15.33c-1.18 0-2.16-1.08-2.16-2.42 0-1.33.96-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.34-.96 2.42-2.16 2.42Zm7.97 0c-1.18 0-2.15-1.08-2.15-2.42 0-1.33.95-2.42 2.15-2.42 1.22 0 2.18 1.1 2.16 2.42 0 1.34-.94 2.42-2.16 2.42Z"
+                      />
+                    </svg>
+                  </a>
+                </div>
+                <starlight-theme-select>
+                  <label
+                    style="--sl-select-width: 6.25em"
+                    class="astro-26wi4w2a"
+                  >
+                    <span class="sr-only astro-26wi4w2a">Select theme</span>
+                    <svg
+                      aria-hidden="true"
+                      class="icon label-icon astro-26wi4w2a astro-agpekvsx"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      style="--sl-icon-size: 1em"
+                    >
+                      <path
+                        d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"
+                      />
+                    </svg>
+                    <select
+                      value="auto"
+                      autocomplete="off"
+                      class="astro-26wi4w2a"
+                    >
+                      <option value="dark" class="astro-26wi4w2a">Dark</option>
+                      <option value="light" class="astro-26wi4w2a">
+                        Light
+                      </option>
+                      <option value="auto" selected class="astro-26wi4w2a">
+                        Auto
+                      </option>
+                    </select>
+                    <svg
+                      aria-hidden="true"
+                      class="icon caret astro-26wi4w2a astro-agpekvsx"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      style="--sl-icon-size: 1em"
+                    >
+                      <path
+                        d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"
+                      />
+                    </svg>
+                  </label>
+                </starlight-theme-select>
+                <script>
+                  StarlightThemeProvider.updatePickers();
+                </script>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <div class="main-frame astro-zn7vttou">
+        <script type="module">
+          const a = document.getElementById('starlight__sidebar'),
+            n = a?.querySelector('sl-sidebar-state-persist'),
+            o = 'sl-sidebar-state',
+            i = () => {
+              let t = [];
+              const e = n?.dataset.hash || '';
+              try {
+                const s = sessionStorage.getItem(o),
+                  r = JSON.parse(s || '{}');
+                Array.isArray(r.open) && r.hash === e && (t = r.open);
+              } catch {}
+              return { hash: e, open: t, scroll: a?.scrollTop || 0 };
+            },
+            c = (t) => {
+              try {
+                sessionStorage.setItem(o, JSON.stringify(t));
+              } catch {}
+            },
+            d = () => c(i()),
+            l = (t, e) => {
+              const s = i();
+              (s.open[e] = t), c(s);
+            };
+          n?.addEventListener('click', (t) => {
+            if (!(t.target instanceof Element)) return;
+            const e = t.target.closest('summary')?.closest('details');
+            if (!e) return;
+            const s = e.querySelector('sl-sidebar-restore'),
+              r = parseInt(s?.dataset.index || '');
+            isNaN(r) || l(!e.open, r);
+          });
+          addEventListener('visibilitychange', () => {
+            document.visibilityState === 'hidden' && d();
+          });
+          addEventListener('pageHide', d);
+        </script>
+        <div class="lg:sl-flex astro-qhuo7ifg">
+          <aside class="right-sidebar-container print:hidden astro-qhuo7ifg">
+            <div class="right-sidebar astro-qhuo7ifg">
+              <div class="lg:sl-hidden astro-6jxjw5ih">
+                <mobile-starlight-toc
+                  data-min-h="2"
+                  data-max-h="3"
+                  class="astro-i7lhz33o"
+                  ><nav
+                    aria-labelledby="starlight__on-this-page--mobile"
+                    class="astro-i7lhz33o"
+                  >
+                    <details id="starlight__mobile-toc" class="astro-i7lhz33o">
+                      <summary
+                        id="starlight__on-this-page--mobile"
+                        class="sl-flex astro-i7lhz33o"
+                      >
+                        <div class="toggle sl-flex astro-i7lhz33o">
+                          On this page<svg
+                            aria-hidden="true"
+                            class="caret astro-i7lhz33o astro-agpekvsx"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            style="--sl-icon-size: 1rem"
+                          >
+                            <path
+                              d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"
+                            />
+                          </svg>
+                        </div>
+                        <span class="display-current astro-i7lhz33o"></span>
+                      </summary>
+                      <div class="dropdown astro-i7lhz33o">
+                        <ul class="isMobile astro-iyyuqq66" style="--depth: 0">
+                          <li class="astro-iyyuqq66" style="--depth: 0">
+                            <a
+                              href="#_top"
+                              class="astro-iyyuqq66"
+                              style="--depth: 0"
+                            >
+                              <span class="astro-iyyuqq66" style="--depth: 0"
+                                >Overview</span
+                              >
+                            </a>
+                          </li>
+                          <li class="astro-iyyuqq66" style="--depth: 0">
+                            <a
+                              href="#features"
+                              class="astro-iyyuqq66"
+                              style="--depth: 0"
+                            >
+                              <span class="astro-iyyuqq66" style="--depth: 0"
+                                >Features</span
+                              >
+                            </a>
+                          </li>
+                          <li class="astro-iyyuqq66" style="--depth: 0">
+                            <a
+                              href="#support-us"
+                              class="astro-iyyuqq66"
+                              style="--depth: 0"
+                            >
+                              <span class="astro-iyyuqq66" style="--depth: 0"
+                                >Support Us</span
+                              >
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
+                    </details>
+                  </nav></mobile-starlight-toc
+                >
+                <script
+                  type="module"
+                  src="/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.C181hMzK.js"
+                ></script>
+              </div>
+              <div
+                class="right-sidebar-panel sl-hidden lg:sl-block astro-6jxjw5ih"
+              >
+                <div class="sl-container astro-6jxjw5ih">
+                  <starlight-toc data-min-h="2" data-max-h="3"
+                    ><nav aria-labelledby="starlight__on-this-page">
+                      <h2 id="starlight__on-this-page">On this page</h2>
+                      <ul class="astro-iyyuqq66" style="--depth: 0">
+                        <li class="astro-iyyuqq66" style="--depth: 0">
+                          <a
+                            href="#_top"
+                            class="astro-iyyuqq66"
+                            style="--depth: 0"
+                          >
+                            <span class="astro-iyyuqq66" style="--depth: 0"
+                              >Overview</span
+                            >
+                          </a>
+                        </li>
+                        <li class="astro-iyyuqq66" style="--depth: 0">
+                          <a
+                            href="#features"
+                            class="astro-iyyuqq66"
+                            style="--depth: 0"
+                          >
+                            <span class="astro-iyyuqq66" style="--depth: 0"
+                              >Features</span
+                            >
+                          </a>
+                        </li>
+                        <li class="astro-iyyuqq66" style="--depth: 0">
+                          <a
+                            href="#support-us"
+                            class="astro-iyyuqq66"
+                            style="--depth: 0"
+                          >
+                            <span class="astro-iyyuqq66" style="--depth: 0"
+                              >Support Us</span
+                            >
+                          </a>
+                        </li>
+                      </ul>
+                    </nav></starlight-toc
+                  >
+                  <script
+                    type="module"
+                    src="/_astro/TableOfContents.astro_astro_type_script_index_0_lang.CKWWgpjV.js"
+                  ></script>
+                </div>
+              </div>
+            </div>
+          </aside>
+          <div class="main-pane astro-qhuo7ifg">
+            <main data-pagefind-body class="astro-km5vhrng" lang="en" dir="ltr">
+              <div class="content-panel astro-7hvxwfsp">
+                <div class="sl-container astro-7hvxwfsp">
+                  <h1 id="_top" class="astro-sbygkukd">Introduction</h1>
+                </div>
+              </div>
+              <div class="content-panel astro-7hvxwfsp">
+                <div class="sl-container astro-7hvxwfsp">
+                  <div class="sl-markdown-content">
+                    <p>
+                      Analog is a fullstack meta-framework for building
+                      applications and websites with
+                      <a href="https://angular.dev">Angular</a>.
+                    </p>
+                    <p>
+                      Similar to other meta-frameworks such as Next.JS, Nuxt,
+                      SvelteKit, Qwik City, and others, Analog provides a
+                      similar experience, building on top of Angular.
+                    </p>
+                    <h2 id="features">Features</h2>
+                    <ul>
+                      <li>Supports Vite/Vitest/Playwright</li>
+                      <li>
+                        Server and deployment integrations powered by
+                        <a href="https://nitro.unjs.io">Nitro</a>
+                      </li>
+                      <li>
+                        <a href="/features/routing/overview"
+                          >File-based routing</a
+                        >
+                      </li>
+                      <li>
+                        <a
+                          href="/features/data-fetching/server-side-data-fetching"
+                          >Server-side data fetching</a
+                        >
+                      </li>
+                      <li>
+                        <a href="/features/routing/content"
+                          >Support for using Markdown as content routes</a
+                        >
+                      </li>
+                      <li>
+                        <a href="/features/api/overview">API/server routes</a>
+                      </li>
+                      <li>
+                        Hybrid
+                        <a href="/features/server/server-side-rendering">SSR</a
+                        >/<a href="/features/server/static-site-generation"
+                          >SSG support</a
+                        >
+                      </li>
+                      <li>
+                        Supports Angular CLI/<a href="/integrations/nx"
+                          >Nx workspaces</a
+                        >
+                      </li>
+                      <li>
+                        Supports
+                        <a href="/packages/astro-angular/overview"
+                          >Angular components</a
+                        >
+                        with Astro
+                      </li>
+                    </ul>
+                    <h2 id="support-us">Support Us</h2>
+                    <ul>
+                      <li>
+                        Visit and Star the
+                        <a href="https://github.com/analogjs/analog"
+                          >GitHub Repo</a
+                        >
+                      </li>
+                      <li>
+                        Join the <a href="https://chat.analogjs.org">Discord</a>
+                      </li>
+                      <li>
+                        Follow us on
+                        <a href="https://twitter.com/analogjs">Twitter</a>
+                      </li>
+                      <li>Become a <a href="/sponsoring">Sponsor</a></li>
+                    </ul>
+                  </div>
+                  <footer class="sl-flex astro-vjwbbqpe">
+                    <div class="meta sl-flex astro-vjwbbqpe">
+                      <a
+                        href="https://github.com/analogjs/analog/edit/main/apps/docs-app-starlight/src/content/docs/introduction.md"
+                        class="sl-flex print:hidden astro-y44re3fj"
+                        ><svg
+                          aria-hidden="true"
+                          class="astro-y44re3fj astro-agpekvsx"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          style="--sl-icon-size: 1.2em"
+                        >
+                          <path
+                            d="M22 7.24a1 1 0 0 0-.29-.71l-4.24-4.24a1 1 0 0 0-1.1-.22 1 1 0 0 0-.32.22l-2.83 2.83L2.29 16.05a1 1 0 0 0-.29.71V21a1 1 0 0 0 1 1h4.24a1 1 0 0 0 .76-.29l10.87-10.93L21.71 8c.1-.1.17-.2.22-.33a1 1 0 0 0 0-.24v-.14l.07-.05ZM6.83 20H4v-2.83l9.93-9.93 2.83 2.83L6.83 20ZM18.17 8.66l-2.83-2.83 1.42-1.41 2.82 2.82-1.41 1.42Z"
+                          />
+                        </svg>
+                        Edit page</a
+                      >
+                    </div>
+                    <div
+                      class="pagination-links print:hidden astro-pqynl3jn"
+                      dir="ltr"
+                    >
+                      <a
+                        href="/getting-started/"
+                        rel="next"
+                        class="astro-pqynl3jn"
+                      >
+                        <svg
+                          aria-hidden="true"
+                          class="astro-pqynl3jn astro-agpekvsx"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          style="--sl-icon-size: 1.5rem"
+                        >
+                          <path
+                            d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"
+                          />
+                        </svg>
+                        <span class="astro-pqynl3jn">
+                          Next <br class="astro-pqynl3jn" />
+                          <span class="link-title astro-pqynl3jn"
+                            >Getting Started</span
+                          >
+                        </span>
+                      </a>
+                    </div>
+                  </footer>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

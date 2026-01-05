@@ -1,0 +1,125 @@
+---
+title: Deployment
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+# Deployment
+
+Node.js deployment is the default Analog output preset for production builds.
+
+When running `npm run build` with the default preset, the result will be an entry point that launches a ready-to-run Node server.
+
+To start up the standalone server, run:
+
+```bash
+$ node dist/analog/server/index.mjs
+Listening on http://localhost:3000
+```
+
+### Environment Variables
+
+You can customize server behavior using following environment variables:
+
+- `NITRO_PORT` or `PORT` (defaults to `3000`)
+- `NITRO_HOST` or `HOST`
+
+## Built-in Presets
+
+Analog can generate different output formats suitable for different [hosting providers](/features/deployment/providers) from the same code base, you can change the deploy preset using an environment variable or `vite.config.ts`.
+
+Using environment variable is recommended for deployments depending on CI/CD.
+
+**Example:** Using `BUILD_PRESET`
+
+```bash
+BUILD_PRESET=node-server
+```
+
+**Example:** Using `vite.config.ts`
+
+```ts
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  plugins: [
+    analog({
+      nitro: {
+        preset: 'node-server',
+      },
+    }),
+  ],
+});
+```
+
+## Deploying with a Custom URL Prefix
+
+If you are deploying with a custom URL prefix, such as https://domain.com/ `basehref` you must do these steps for [server-side-data-fetching](https://analogjs.org/docs/features/data-fetching/server-side-data-fetching), [html markup and assets](https://angular.io/api/common/APP_BASE_HREF), and [dynamic api routes](https://analogjs.org/docs/features/api/overview) to work correctly on the specified `basehref`.
+
+1. Update your `vite.config.ts` file.
+
+```ts
+export default defineConfig(({ mode }) => ({
+  base: '/basehref',
+  plugins: [
+    analog({
+      ...(mode === 'production'
+        ? { apiPrefix: 'basehref' }
+        : { apiPrefix: 'basehref/api' }),
+      prerender: {
+        routes: async () => {
+          return [];
+        },
+      },
+    }),
+  ],
+}));
+```
+
+2. Update the `app.config.ts` file.
+
+This instructs Angular on how recognize and generate URLs.
+
+```ts
+import { ApplicationConfig } from '@angular/core';
+import { APP_BASE_HREF } from '@angular/common';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    [{ provide: APP_BASE_HREF, useValue: import.meta.env.BASE_URL || '/' }],
+    ...
+  ],
+};
+```
+
+3. HttpClient use `injectAPIPrefix()`.
+
+```ts
+const response = await firstValueFrom(
+  this.httpClient.get<{ client: string }>(`${injectAPIPrefix()}/v1/hello`),
+);
+```
+
+4. In CI production build
+
+**Do not** set `VITE_ANALOG_PUBLIC_BASE_URL` it should use what is in `vite.config.ts`.
+If `VITE_ANALOG_PUBLIC_BASE_URL` is present during build, ssr data will be refetched on server and client.
+
+```bash
+  # if using nx:
+  npx nx run appname:build:production
+  # if using angular build directly:
+  npx vite build && NITRO_APP_BASE_URL='/basehref/' node dist/analog/server/index.mjs
+```
+
+5. In production containers specify the env flag `NITRO_APP_BASE_URL`.
+
+```bash
+NITRO_APP_BASE_URL="/basehref/"
+```
+
+6. Preview locally:
+
+```bash
+npx vite build && NITRO_APP_BASE_URL='/basehref/' node dist/analog/server/index.mjs
+```

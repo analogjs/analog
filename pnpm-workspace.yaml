@@ -1,2 +1,3 @@
 packages:
   - 'apps/docs-app'
+  - 'apps/docs-app-starlight'

@@ -1,0 +1,19 @@
+
+export default new Map([
+["src/content/docs/getting-started.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fgetting-started.mdx&astroContentModuleFlag=true")],
+["src/content/docs/index.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Findex.mdx&astroContentModuleFlag=true")],
+["src/content/docs/guides/libraries.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fguides%2Flibraries.mdx&astroContentModuleFlag=true")],
+["src/content/docs/features/api/og-image-generation.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Ffeatures%2Fapi%2Fog-image-generation.mdx&astroContentModuleFlag=true")],
+["src/content/docs/guides/migrating.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fguides%2Fmigrating.mdx&astroContentModuleFlag=true")],
+["src/content/docs/features/generation/code-generation.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Ffeatures%2Fgeneration%2Fcode-generation.mdx&astroContentModuleFlag=true")],
+["src/content/docs/features/testing/overview.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Ffeatures%2Ftesting%2Foverview.mdx&astroContentModuleFlag=true")],
+["src/content/docs/features/testing/vitest.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Ffeatures%2Ftesting%2Fvitest.mdx&astroContentModuleFlag=true")],
+["src/content/docs/integrations/angular-material/index.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fintegrations%2Fangular-material%2Findex.mdx&astroContentModuleFlag=true")],
+["src/content/docs/integrations/ionic/index.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fintegrations%2Fionic%2Findex.mdx&astroContentModuleFlag=true")],
+["src/content/docs/integrations/storybook/index.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fintegrations%2Fstorybook%2Findex.mdx&astroContentModuleFlag=true")],
+["src/content/docs/features/updating/overview.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Ffeatures%2Fupdating%2Foverview.mdx&astroContentModuleFlag=true")],
+["src/content/docs/features/deployment/overview.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Ffeatures%2Fdeployment%2Foverview.mdx&astroContentModuleFlag=true")],
+["src/content/docs/integrations/nx/index.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fintegrations%2Fnx%2Findex.mdx&astroContentModuleFlag=true")],
+["src/content/docs/packages/create-analog/overview.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fpackages%2Fcreate-analog%2Foverview.mdx&astroContentModuleFlag=true")],
+["src/content/docs/features/deployment/providers.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Ffeatures%2Fdeployment%2Fproviders.mdx&astroContentModuleFlag=true")]]);
+		
