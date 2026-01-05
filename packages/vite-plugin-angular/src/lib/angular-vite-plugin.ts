@@ -151,6 +151,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     isLib: boolean;
   } | null = null;
 
+  const ts = require('typescript');
   let builder: ts.BuilderProgram | ts.EmitAndSemanticDiagnosticsBuilderProgram;
   let nextProgram: NgtscProgram | undefined;
   // Caches (always rebuild Angular program per user request)
@@ -503,7 +504,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           const path = id.split(';')[1];
           return `${normalizePath(
             resolve(dirname(importer as string), path),
-          )}?raw`;
+          )}??${id.includes(':style') ? 'inline' : 'raw'}`;
         }
 
         // Map angular external styleUrls to the source file
@@ -990,7 +991,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     } else {
       host = ts.createIncrementalCompilerHost(tsCompilerOptions, {
         ...ts.sys,
-        readFile(path, encoding) {
+        readFile(path: string, encoding: string) {
           if (fileTransformMap.has(path)) {
             return fileTransformMap.get(path);
           }

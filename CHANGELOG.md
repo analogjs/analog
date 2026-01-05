@@ -1,3 +1,40 @@
+## [2.2.1-beta.6](https://github.com/analogjs/analog/compare/v2.2.1-beta.5...v2.2.1-beta.6) (2025-12-19)
+
+### Bug Fixes
+
+- **storybook-angular:** resolve relative styles from project root ([#2025](https://github.com/analogjs/analog/issues/2025)) ([33e7b6c](https://github.com/analogjs/analog/commit/33e7b6cf19a51b49774b7405cec1abed494d46f7))
+
+## [2.2.1-beta.5](https://github.com/analogjs/analog/compare/v2.2.1-beta.4...v2.2.1-beta.5) (2025-12-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** process styles in jit mode instead of returning raw output ([#2024](https://github.com/analogjs/analog/issues/2024)) ([bcb6da9](https://github.com/analogjs/analog/commit/bcb6da9f6d112fe174e90a390235eb5adf14982e))
+
+## [2.2.1-beta.4](https://github.com/analogjs/analog/compare/v2.2.1-beta.3...v2.2.1-beta.4) (2025-12-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** improve compatibility with older TypeScript versions ([#2021](https://github.com/analogjs/analog/issues/2021)) ([aab2f2a](https://github.com/analogjs/analog/commit/aab2f2a4e7297bc1c86b7f185efe204c4592a828))
+- **vitest-angular:** ensure setupTestBed defaults merge ([#2019](https://github.com/analogjs/analog/issues/2019)) ([f36339f](https://github.com/analogjs/analog/commit/f36339ff9835b04f6137b1a235ec2f35157293d7))
+
+## [2.2.1-beta.3](https://github.com/analogjs/analog/compare/v2.2.1-beta.2...v2.2.1-beta.3) (2025-12-18)
+
+### Bug Fixes
+
+- **nx-plugin:** add @nx/vite for Nx workspaces ([08ba372](https://github.com/analogjs/analog/commit/08ba372257044890aa2f90bff8898c293b15dba5))
+
+## [2.2.1-beta.2](https://github.com/analogjs/analog/compare/v2.2.1-beta.1...v2.2.1-beta.2) (2025-12-18)
+
+### Bug Fixes
+
+- **nx-plugin:** add @nx/vite to preset packages ([0aca507](https://github.com/analogjs/analog/commit/0aca507648fb28e1d77a2902ab10299856270e11))
+
+## [2.2.1-beta.1](https://github.com/analogjs/analog/compare/v2.2.0...v2.2.1-beta.1) (2025-12-18)
+
+### Bug Fixes
+
+- **nx-plugin:** skip installing Vitest packages when skipped during migration ([#2017](https://github.com/analogjs/analog/issues/2017)) ([a573684](https://github.com/analogjs/analog/commit/a57368484ca8632f325d966964dae07055e43dcb))
+
 # [2.2.0](https://github.com/analogjs/analog/compare/v2.1.3...v2.2.0) (2025-12-16)
 
 ### Bug Fixes

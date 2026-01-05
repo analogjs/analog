@@ -120,7 +120,7 @@ function angularOptionsPlugin(options, { normalizePath }) {
 
       return;
     },
-    transform(code, id) {
+    async transform(code, id) {
       if (
         normalizePath(id).endsWith(
           normalizePath(`${options.configDir}/preview.ts`),
@@ -141,9 +141,27 @@ function angularOptionsPlugin(options, { normalizePath }) {
           imports.push('zone.js');
         }
 
+        const projectConfig =
+          await options.angularBuilderContext.getProjectMetadata(
+            options.angularBuilderContext.target.project,
+          );
+
         return {
           code: `
-            ${imports.map((extraImport) => `import '${extraImport}';`).join('\n')}
+            ${imports
+              .map((extraImport) => {
+                if (
+                  extraImport.startsWith('.') ||
+                  extraImport.startsWith('src')
+                ) {
+                  // relative to root
+                  return `import '${resolve(options.angularBuilderContext.workspaceRoot, projectConfig.root, extraImport)}';`;
+                }
+
+                // absolute import
+                return `import '${extraImport}';`;
+              })
+              .join('\n')}
             ${code}
           `,
         };
