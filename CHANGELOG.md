@@ -1,8 +1,14 @@
-## [2.2.1-beta.7](https://github.com/analogjs/analog/compare/v2.2.1-beta.6...v2.2.1-beta.7) (2026-01-08)
+## [2.2.1](https://github.com/analogjs/analog/compare/v2.2.0...v2.2.1) (2026-01-05)
 
 ### Bug Fixes
 
-- **storybook-angular:** use vite config root when angularBuilderContext unavailable ([#2033](https://github.com/analogjs/analog/issues/2033)) ([76cfb94](https://github.com/analogjs/analog/commit/76cfb948c2571bf21522d185d4dc43fa4e4c121e))
+- **nx-plugin:** add @nx/vite for Nx workspaces ([08ba372](https://github.com/analogjs/analog/commit/08ba372257044890aa2f90bff8898c293b15dba5))
+- **nx-plugin:** add @nx/vite to preset packages ([0aca507](https://github.com/analogjs/analog/commit/0aca507648fb28e1d77a2902ab10299856270e11))
+- **nx-plugin:** skip installing Vitest packages when skipped during migration ([#2017](https://github.com/analogjs/analog/issues/2017)) ([a573684](https://github.com/analogjs/analog/commit/a57368484ca8632f325d966964dae07055e43dcb))
+- **storybook-angular:** resolve relative styles from project root ([#2025](https://github.com/analogjs/analog/issues/2025)) ([33e7b6c](https://github.com/analogjs/analog/commit/33e7b6cf19a51b49774b7405cec1abed494d46f7))
+- **vite-plugin-angular:** improve compatibility with older TypeScript versions ([#2021](https://github.com/analogjs/analog/issues/2021)) ([aab2f2a](https://github.com/analogjs/analog/commit/aab2f2a4e7297bc1c86b7f185efe204c4592a828))
+- **vite-plugin-angular:** process styles in jit mode instead of returning raw output ([#2024](https://github.com/analogjs/analog/issues/2024)) ([bcb6da9](https://github.com/analogjs/analog/commit/bcb6da9f6d112fe174e90a390235eb5adf14982e))
+- **vitest-angular:** ensure setupTestBed defaults merge ([#2019](https://github.com/analogjs/analog/issues/2019)) ([f36339f](https://github.com/analogjs/analog/commit/f36339ff9835b04f6137b1a235ec2f35157293d7))
 
 ## [2.2.1-beta.6](https://github.com/analogjs/analog/compare/v2.2.1-beta.5...v2.2.1-beta.6) (2025-12-19)
 
