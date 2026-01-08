@@ -94,23 +94,28 @@ export const viteFinal = async (config, options) => {
 };
 
 function angularOptionsPlugin(options, { normalizePath }) {
+  let resolvedConfig;
   return {
     name: 'analogjs-storybook-options-plugin',
-    config() {
+    config(userConfig) {
+      resolvedConfig = userConfig;
       const loadPaths =
         options?.angularBuilderOptions?.stylePreprocessorOptions?.loadPaths;
       const sassOptions =
         options?.angularBuilderOptions?.stylePreprocessorOptions?.sass;
 
       if (Array.isArray(loadPaths)) {
+        const workspaceRoot =
+          options.angularBuilderContext?.workspaceRoot ??
+          userConfig?.root ??
+          process.cwd();
         return {
           css: {
             preprocessorOptions: {
               scss: {
                 ...sassOptions,
                 loadPaths: loadPaths.map(
-                  (loadPath) =>
-                    `${resolve(options.angularBuilderContext.workspaceRoot, loadPath)}`,
+                  (loadPath) => `${resolve(workspaceRoot, loadPath)}`,
                 ),
               },
             },
@@ -141,10 +146,9 @@ function angularOptionsPlugin(options, { normalizePath }) {
           imports.push('zone.js');
         }
 
-        const projectConfig =
-          await options.angularBuilderContext.getProjectMetadata(
-            options.angularBuilderContext.target.project,
-          );
+        // Use vite config root when angularBuilderContext is not available
+        // (e.g., when running via Vitest instead of Angular builders)
+        const projectRoot = resolvedConfig?.root ?? process.cwd();
 
         return {
           code: `
@@ -155,7 +159,7 @@ function angularOptionsPlugin(options, { normalizePath }) {
                   extraImport.startsWith('src')
                 ) {
                   // relative to root
-                  return `import '${resolve(options.angularBuilderContext.workspaceRoot, projectConfig.root, extraImport)}';`;
+                  return `import '${resolve(projectRoot, extraImport)}';`;
                 }
 
                 // absolute import
