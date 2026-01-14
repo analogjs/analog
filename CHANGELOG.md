@@ -1,3 +1,9 @@
+## [2.2.2-beta.1](https://github.com/analogjs/analog/compare/v2.2.1...v2.2.2-beta.1) (2026-01-08)
+
+### Bug Fixes
+
+- **storybook-angular:** use vite config root when angularBuilderContext unavailable ([#2033](https://github.com/analogjs/analog/issues/2033)) ([76cfb94](https://github.com/analogjs/analog/commit/76cfb948c2571bf21522d185d4dc43fa4e4c121e))
+
 ## [2.2.1](https://github.com/analogjs/analog/compare/v2.2.0...v2.2.1) (2026-01-05)
 
 ### Bug Fixes

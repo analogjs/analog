@@ -317,3 +317,147 @@ Adding the replacement files to `files` array in the `tsconfig.app.json` may als
   "files": ["src/main.ts", "src/main.server.ts", "src/two.ts"]
 }
 ```
+
+## Setting up Vitest for Interaction Testing
+
+Storybook also supports using Vitest for testing component interactions.
+
+### Installing Packages
+
+Install the Vitest addon and dependencies:
+
+```sh
+npm install @analogjs/vitest-angular @storybook/addon-vitest vitest @vitest/browser-playwright --save-dev
+```
+
+### Add Vitest Add-on
+
+Add the addon to your `.storybook/main.ts`:
+
+```ts
+import { StorybookConfig } from '@analogjs/storybook-angular';
+
+const config: StorybookConfig = {
+  stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
+  addons: [
+    '@storybook/addon-essentials',
+    '@storybook/addon-interactions',
+    '@storybook/addon-vitest',
+  ],
+  framework: {
+    name: '@analogjs/storybook-angular',
+    options: {},
+  },
+};
+
+export default config;
+```
+
+### Setup Vitest Configuration
+
+Create a `.storybook/vitest.setup.ts` file:
+
+```ts
+import '@angular/compiler';
+import { setProjectAnnotations } from '@analogjs/storybook-angular/testing';
+import { beforeAll } from 'vitest';
+import * as projectAnnotations from './preview';
+
+const project = setProjectAnnotations([projectAnnotations]);
+
+beforeAll(project.beforeAll);
+```
+
+Update `.storybook/tsconfig.json` to include the setup file:
+
+```json
+{
+  "extends": "../tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true
+  },
+  "exclude": ["../src/test.ts", "../src/**/*.spec.ts"],
+  "include": ["../src/**/*.stories.*", "./preview.ts", "./vitest.setup.ts"],
+  "files": ["./typings.d.ts"]
+}
+```
+
+Create a `vitest.config.ts` file in your project root, or add a `storybook` project to your existing `vite.config.ts`:
+
+```ts
+/// <reference types="vitest/config" />
+import { defineConfig } from 'vite';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
+import { playwright } from '@vitest/browser-playwright';
+
+const dirname =
+  typeof __dirname !== 'undefined'
+    ? __dirname
+    : path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig({
+  test: {
+    projects: [
+      {
+        extends: true,
+        plugins: [
+          storybookTest({
+            configDir: path.join(dirname, '.storybook'),
+          }),
+        ],
+        test: {
+          name: 'storybook',
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright(),
+            instances: [{ browser: 'chromium' }],
+          },
+          setupFiles: ['.storybook/vitest.setup.ts'],
+        },
+      },
+    ],
+  },
+});
+```
+
+### Installing Playwright
+
+Install Playwright browser binaries:
+
+```sh
+npx playwright install chromium
+```
+
+### Running Component Tests
+
+Add the `test-storybook` target to your `angular.json`:
+
+```json
+"test-storybook": {
+  "builder": "@analogjs/vitest-angular:test",
+  "options": {
+    "configFile": "vitest.config.ts"
+  }
+}
+```
+
+Add a test script to your `package.json`:
+
+```json
+"scripts": {
+  "test-storybook": "ng run your-app:test-storybook"
+}
+```
+
+Run your interaction tests with:
+
+```sh
+npm run test-storybook
+```
+
+You can also run tests directly in the Storybook UI. Start Storybook and use the "Run Tests" button in the sidebar, or navigate to a story to see interaction tests run automatically in the Interactions panel.
