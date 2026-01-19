@@ -1,5 +1,6 @@
 ---
-title: Deep Nested Path
+title: 'Deep Nested Path'
+description: 'Deep Nest Path Example'
 ---
 
 # Deep Nested Path

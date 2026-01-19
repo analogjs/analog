@@ -1,5 +1,6 @@
 ---
-title: Intro
+title: 'Intro'
+description: 'An Intro Page'
 ---
 
 # Intro
