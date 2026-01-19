@@ -201,7 +201,7 @@ The generated file is updated automatically when page files are added or deleted
 
 To add type-safe routes to an existing Analog project:
 
-### 1. Enable the Feature
+### Enable the Feature
 
 Update your `vite.config.ts`:
 
@@ -217,7 +217,7 @@ export default defineConfig({
 });
 ```
 
-### 2. Generate Types
+### Generate Types
 
 Run the development server or build to generate the types:
 
@@ -227,7 +227,7 @@ npm run dev
 
 This creates `src/app/pages/routes.d.ts`.
 
-### 3. Commit the Generated File
+### Commit the Generated File
 
 Add the generated types file to version control:
 
@@ -236,7 +236,7 @@ git add src/app/pages/routes.d.ts
 git commit -m "chore: add generated route types"
 ```
 
-### 4. Update Navigation Code
+### Update Navigation Code
 
 Replace string-based navigation with type-safe functions:
 
@@ -263,7 +263,7 @@ productRoute = route('/products/[productId]', { productId: '123' });
 navigate('/products/[productId]', { productId });
 ```
 
-### 5. Update Parameter Consumption
+### Update Parameter Consumption
 
 Replace `ActivatedRoute` usage with `injectParams()`:
 
