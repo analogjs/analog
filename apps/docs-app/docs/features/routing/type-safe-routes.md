@@ -91,9 +91,7 @@ export default class NavComponent {
 }
 ```
 
-## Programmatic Navigation
-
-### navigate()
+## navigate()
 
 The `navigate()` function is a type-safe wrapper around Angular's `Router.navigate()`. It injects the router automatically, validates route paths at compile time, and substitutes parameters into dynamic segments before navigating:
 
@@ -122,7 +120,7 @@ export default class ProductComponent {
 
 The third argument accepts all standard Angular `NavigationExtras` options like `queryParams`, `fragment`, `replaceUrl`, and `state`.
 
-### navigateByUrl()
+## navigateByUrl()
 
 The `navigateByUrl()` function is a type-safe wrapper around Angular's `Router.navigateByUrl()`. It builds a complete URL string from the route path and parameters, then navigates to it:
 
