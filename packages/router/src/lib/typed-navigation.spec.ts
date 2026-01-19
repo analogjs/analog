@@ -4,6 +4,13 @@ import { provideRouter, Router, RouterOutlet } from '@angular/router';
 import { provideLocationMocks } from '@angular/common/testing';
 import { describe, expect, it, vi } from 'vitest';
 import { navigate, navigateByUrl } from './typed-navigation';
+import { TypedRoute } from './route-builder';
+
+/**
+ * These tests verify the runtime behavior of the typed navigation functions.
+ * We use type assertions to TypedRoute to bypass TypeScript's type checking
+ * because the actual type constraints require routes.d.ts to be generated.
+ */
 
 describe('typed-navigation', () => {
   @Component({
@@ -37,7 +44,9 @@ describe('typed-navigation', () => {
       const { router } = setup();
       const navigateSpy = vi.spyOn(router, 'navigate');
 
-      await TestBed.runInInjectionContext(() => navigate('/about'));
+      await TestBed.runInInjectionContext(() =>
+        navigate('/about' as TypedRoute),
+      );
 
       expect(navigateSpy).toHaveBeenCalledWith(['/about'], undefined);
     });
@@ -47,7 +56,7 @@ describe('typed-navigation', () => {
       const navigateSpy = vi.spyOn(router, 'navigate');
 
       await TestBed.runInInjectionContext(() =>
-        navigate('/products/[productId]', { productId: '123' }),
+        navigate('/products/[productId]' as TypedRoute, { productId: '123' }),
       );
 
       expect(navigateSpy).toHaveBeenCalledWith(['/products/123'], undefined);
@@ -58,10 +67,13 @@ describe('typed-navigation', () => {
       const navigateSpy = vi.spyOn(router, 'navigate');
 
       await TestBed.runInInjectionContext(() =>
-        navigate('/categories/[categoryId]/products/[productId]', {
-          categoryId: 'electronics',
-          productId: '456',
-        }),
+        navigate(
+          '/categories/[categoryId]/products/[productId]' as TypedRoute,
+          {
+            categoryId: 'electronics',
+            productId: '456',
+          },
+        ),
       );
 
       expect(navigateSpy).toHaveBeenCalledWith(
@@ -75,7 +87,7 @@ describe('typed-navigation', () => {
       const navigateSpy = vi.spyOn(router, 'navigate');
 
       await TestBed.runInInjectionContext(() =>
-        navigate('/about', undefined, {
+        navigate('/about' as TypedRoute, undefined, {
           replaceUrl: true,
           queryParams: { ref: 'home' },
         }),
@@ -93,7 +105,7 @@ describe('typed-navigation', () => {
 
       await TestBed.runInInjectionContext(() =>
         navigate(
-          '/products/[productId]',
+          '/products/[productId]' as TypedRoute,
           { productId: '123' },
           { fragment: 'details' },
         ),
@@ -108,7 +120,7 @@ describe('typed-navigation', () => {
       setup();
 
       const result = await TestBed.runInInjectionContext(() =>
-        navigate('/about'),
+        navigate('/about' as TypedRoute),
       );
 
       expect(typeof result).toBe('boolean');
@@ -120,7 +132,9 @@ describe('typed-navigation', () => {
       const { router } = setup();
       const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
 
-      await TestBed.runInInjectionContext(() => navigateByUrl('/about'));
+      await TestBed.runInInjectionContext(() =>
+        navigateByUrl('/about' as TypedRoute),
+      );
 
       expect(navigateByUrlSpy).toHaveBeenCalledWith('/about', undefined);
     });
@@ -130,7 +144,9 @@ describe('typed-navigation', () => {
       const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
 
       await TestBed.runInInjectionContext(() =>
-        navigateByUrl('/products/[productId]', { productId: '123' }),
+        navigateByUrl('/products/[productId]' as TypedRoute, {
+          productId: '123',
+        }),
       );
 
       expect(navigateByUrlSpy).toHaveBeenCalledWith('/products/123', undefined);
@@ -141,10 +157,13 @@ describe('typed-navigation', () => {
       const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
 
       await TestBed.runInInjectionContext(() =>
-        navigateByUrl('/categories/[categoryId]/products/[productId]', {
-          categoryId: 'electronics',
-          productId: '456',
-        }),
+        navigateByUrl(
+          '/categories/[categoryId]/products/[productId]' as TypedRoute,
+          {
+            categoryId: 'electronics',
+            productId: '456',
+          },
+        ),
       );
 
       expect(navigateByUrlSpy).toHaveBeenCalledWith(
@@ -158,7 +177,7 @@ describe('typed-navigation', () => {
       const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
 
       await TestBed.runInInjectionContext(() =>
-        navigateByUrl('/about', undefined, { replaceUrl: true }),
+        navigateByUrl('/about' as TypedRoute, undefined, { replaceUrl: true }),
       );
 
       expect(navigateByUrlSpy).toHaveBeenCalledWith('/about', {
@@ -172,7 +191,7 @@ describe('typed-navigation', () => {
 
       await TestBed.runInInjectionContext(() =>
         navigateByUrl(
-          '/products/[productId]',
+          '/products/[productId]' as TypedRoute,
           { productId: '123' },
           { skipLocationChange: true },
         ),
@@ -187,7 +206,7 @@ describe('typed-navigation', () => {
       setup();
 
       const result = await TestBed.runInInjectionContext(() =>
-        navigateByUrl('/about'),
+        navigateByUrl('/about' as TypedRoute),
       );
 
       expect(typeof result).toBe('boolean');

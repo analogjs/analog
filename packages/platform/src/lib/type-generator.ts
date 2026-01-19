@@ -78,6 +78,12 @@ ${resolvedRouteParamsContent}
   /** All valid application routes */
   export type TypedRoutes = StaticRoutes | DynamicRoutes;
 
+  /**
+   * Override the base TypedRoute to allow valid routes.
+   * The base package uses 'never' to force generation of this file.
+   */
+  export type TypedRoute = TypedRoutes;
+
   /** Extract parameter type for building a route */
   export type RouteParams<T extends DynamicRoutes> = DynamicRouteParams[T];
 

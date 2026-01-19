@@ -8,12 +8,22 @@ import { inject, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
+import { TypedRoute } from './route-builder';
+
+/**
+ * Placeholder type for resolved route parameters.
+ * This type requires routes.d.ts to be generated for actual type safety.
+ */
+export type TypedParams = Record<string, string>;
 
 /**
  * Injects typed route parameters as a Signal.
  *
  * Use the route path as a type parameter to get fully typed parameters.
  * The returned Signal updates reactively when route parameters change.
+ *
+ * **Important**: This function requires `routes.d.ts` to be generated for
+ * type safety. Run `npm run dev` or `npm run build` to generate it.
  *
  * @example
  * // In a page component: /products/[productId].page.ts
@@ -40,9 +50,7 @@ import { map } from 'rxjs';
  *
  * @returns Signal containing the typed route parameters
  */
-export function injectParams<
-  T extends Record<string, string> = Record<string, string>,
->(): Signal<T> {
+export function injectParams<T extends TypedRoute>(): Signal<TypedParams> {
   const activatedRoute = inject(ActivatedRoute);
 
   return toSignal(
@@ -52,7 +60,7 @@ export function injectParams<
         for (const key of paramMap.keys) {
           params[key] = paramMap.get(key) ?? '';
         }
-        return params as T;
+        return params;
       }),
     ),
     { requireSync: true },

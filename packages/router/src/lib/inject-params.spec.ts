@@ -12,6 +12,16 @@ import { provideLocationMocks } from '@angular/common/testing';
 import { BehaviorSubject } from 'rxjs';
 import { describe, expect, it } from 'vitest';
 import { injectParams } from './inject-params';
+import { TypedRoute } from './route-builder';
+
+/**
+ * These tests verify the runtime behavior of injectParams.
+ * We use type assertions to TypedRoute to bypass TypeScript's type checking
+ * because the actual type constraints require routes.d.ts to be generated.
+ */
+
+// Type alias to make tests compile - at runtime the type parameter is unused
+type TestRoute = TypedRoute;
 
 describe('inject-params', () => {
   describe('injectParams', () => {
@@ -31,7 +41,9 @@ describe('inject-params', () => {
         ],
       });
 
-      const params = TestBed.runInInjectionContext(() => injectParams());
+      const params = TestBed.runInInjectionContext(() =>
+        injectParams<TestRoute>(),
+      );
 
       expect(params()).toEqual({ productId: '123' });
     });
@@ -52,7 +64,9 @@ describe('inject-params', () => {
         ],
       });
 
-      const params = TestBed.runInInjectionContext(() => injectParams());
+      const params = TestBed.runInInjectionContext(() =>
+        injectParams<TestRoute>(),
+      );
 
       expect(params()).toEqual({ userId: 'alice', postId: '42' });
     });
@@ -73,7 +87,9 @@ describe('inject-params', () => {
         ],
       });
 
-      const params = TestBed.runInInjectionContext(() => injectParams());
+      const params = TestBed.runInInjectionContext(() =>
+        injectParams<TestRoute>(),
+      );
 
       expect(params()).toEqual({});
     });
@@ -94,7 +110,9 @@ describe('inject-params', () => {
         ],
       });
 
-      const params = TestBed.runInInjectionContext(() => injectParams());
+      const params = TestBed.runInInjectionContext(() =>
+        injectParams<TestRoute>(),
+      );
 
       expect(params()).toEqual({ productId: '123' });
 
@@ -120,7 +138,9 @@ describe('inject-params', () => {
         ],
       });
 
-      const params = TestBed.runInInjectionContext(() => injectParams());
+      const params = TestBed.runInInjectionContext(() =>
+        injectParams<TestRoute>(),
+      );
 
       expect(params()).toEqual({
         slug: 'hello-world',
@@ -144,7 +164,9 @@ describe('inject-params', () => {
         ],
       });
 
-      const params = TestBed.runInInjectionContext(() => injectParams());
+      const params = TestBed.runInInjectionContext(() =>
+        injectParams<TestRoute>(),
+      );
 
       // Verify it's a signal (callable function that returns the value)
       expect(typeof params).toBe('function');

@@ -10,13 +10,16 @@ import {
   NavigationExtras,
   NavigationBehaviorOptions,
 } from '@angular/router';
-import { route } from './route-builder';
+import { route, TypedRoute } from './route-builder';
 
 /**
  * Type-safe wrapper for Router.navigate().
  *
  * For static routes, only accepts navigation extras.
  * For dynamic routes, requires params and optionally accepts extras.
+ *
+ * **Important**: This function requires `routes.d.ts` to be generated for
+ * type safety. Run `npm run dev` or `npm run build` to generate it.
  *
  * @example
  * // Static route
@@ -32,13 +35,13 @@ import { route } from './route-builder';
  * @param extras - Navigation extras
  * @returns Promise that resolves to true if navigation succeeds
  */
-export function navigate(
-  path: string,
+export function navigate<T extends TypedRoute>(
+  path: T,
   params?: Record<string, string | number>,
   extras?: NavigationExtras,
 ): Promise<boolean> {
   const router = inject(Router);
-  const resolvedPath = params ? route(path, params) : path;
+  const resolvedPath = params ? route(path, params) : (path as string);
   return router.navigate([resolvedPath], extras);
 }
 
@@ -47,6 +50,9 @@ export function navigate(
  *
  * For static routes, only accepts behavior options.
  * For dynamic routes, requires params and optionally accepts options.
+ *
+ * **Important**: This function requires `routes.d.ts` to be generated for
+ * type safety. Run `npm run dev` or `npm run build` to generate it.
  *
  * @example
  * // Static route
@@ -62,12 +68,12 @@ export function navigate(
  * @param extras - Navigation behavior options
  * @returns Promise that resolves to true if navigation succeeds
  */
-export function navigateByUrl(
-  path: string,
+export function navigateByUrl<T extends TypedRoute>(
+  path: T,
   params?: Record<string, string | number>,
   extras?: NavigationBehaviorOptions,
 ): Promise<boolean> {
   const router = inject(Router);
-  const resolvedPath = params ? route(path, params) : path;
+  const resolvedPath = params ? route(path, params) : (path as string);
   return router.navigateByUrl(resolvedPath, extras);
 }
