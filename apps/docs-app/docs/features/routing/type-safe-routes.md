@@ -95,7 +95,7 @@ export default class NavComponent {
 
 ### navigate()
 
-Use `navigate()` for type-safe programmatic navigation:
+The `navigate()` function is a type-safe wrapper around Angular's `Router.navigate()`. It injects the router automatically, validates route paths at compile time, and substitutes parameters into dynamic segments before navigating:
 
 ```ts
 import { Component } from '@angular/core';
@@ -120,9 +120,11 @@ export default class ProductComponent {
 }
 ```
 
+The third argument accepts all standard Angular `NavigationExtras` options like `queryParams`, `fragment`, `replaceUrl`, and `state`.
+
 ### navigateByUrl()
 
-Use `navigateByUrl()` for URL-based navigation:
+The `navigateByUrl()` function is a type-safe wrapper around Angular's `Router.navigateByUrl()`. It builds a complete URL string from the route path and parameters, then navigates to it:
 
 ```ts
 import { navigateByUrl } from '@analogjs/router';
@@ -133,6 +135,8 @@ navigateByUrl('/about');
 // Navigate to dynamic route
 navigateByUrl('/products/[productId]', { productId: '123' });
 ```
+
+Use `navigateByUrl()` when you need to navigate using an absolute URL string rather than a commands array. This is useful when working with URLs from external sources or when you need the full URL representation.
 
 :::tip
 
