@@ -203,7 +203,7 @@ Adding type-safe routes to an existing Analog project is straightforward and can
 
 ### Enable the Feature
 
-Update your `vite.config.ts`:
+Enable type generation by adding the `typedRoutes` option to your Analog plugin configuration:
 
 ```ts
 import analog from '@analogjs/platform';
@@ -211,7 +211,7 @@ import analog from '@analogjs/platform';
 export default defineConfig({
   plugins: [
     analog({
-      typedRoutes: true, // Add this option
+      typedRoutes: true,
     }),
   ],
 });
@@ -219,17 +219,17 @@ export default defineConfig({
 
 ### Generate Types
 
-Run the development server or build to generate the types:
+Start the development server or run a build to trigger the initial type generation. The plugin scans your `src/app/pages` directory and creates TypeScript declarations for all discovered routes:
 
 ```shell
 npm run dev
 ```
 
-This creates `src/app/pages/routes.d.ts`.
+This creates `src/app/pages/routes.d.ts`. During development, the plugin watches for file changes and regenerates types automatically when pages are added or removed.
 
 ### Commit the Generated File
 
-Add the generated types file to version control:
+The generated types file should be committed to version control so that type checking works in CI environments and for other developers on your team:
 
 ```shell
 git add src/app/pages/routes.d.ts
@@ -238,7 +238,7 @@ git commit -m "chore: add generated route types"
 
 ### Update Navigation Code
 
-Replace string-based navigation with type-safe functions:
+Replace hardcoded route strings with the type-safe `route()` function. This ensures that route paths are validated at compile time and parameters are correctly substituted:
 
 **Before:**
 
@@ -265,7 +265,7 @@ navigate('/products/[productId]', { productId });
 
 ### Update Parameter Consumption
 
-Replace `ActivatedRoute` usage with `injectParams()`:
+Replace `ActivatedRoute` and RxJS-based parameter access with the `injectParams()` function. This provides a typed Signal that automatically updates when route parameters change:
 
 **Before:**
 
