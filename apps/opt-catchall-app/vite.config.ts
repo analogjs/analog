@@ -19,6 +19,9 @@ export default defineConfig(() => {
     plugins: [
       analog({
         liveReload: true,
+        content: {
+          highlighter: 'shiki',
+        },
       }),
       nxViteTsPaths(),
     ],
