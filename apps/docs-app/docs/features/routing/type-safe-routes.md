@@ -91,6 +91,36 @@ export default class NavComponent {
 }
 ```
 
+For routes with parameters, include the params when building the route:
+
+```ts
+import { Component, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { route } from '@analogjs/router';
+
+@Component({
+  imports: [RouterLink],
+  template: `
+    <ul>
+      @for (product of products(); track product.id) {
+        <li>
+          <a [routerLink]="getProductRoute(product.id)">
+            {{ product.name }}
+          </a>
+        </li>
+      }
+    </ul>
+  `,
+})
+export default class ProductListComponent {
+  products = input<{ id: string; name: string }[]>([]);
+
+  getProductRoute(productId: string) {
+    return route('/products/[productId]', { productId });
+  }
+}
+```
+
 ## navigate()
 
 The `navigate()` function is a type-safe wrapper around Angular's `Router.navigate()`. It injects the router automatically, validates route paths at compile time, and substitutes parameters into dynamic segments before navigating:
