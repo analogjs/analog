@@ -41,6 +41,11 @@ const sidebars = {
             },
             {
               type: 'doc',
+              id: 'features/routing/type-safe-routes',
+              label: 'Type-Safe Routes',
+            },
+            {
+              type: 'doc',
               id: 'features/routing/metadata',
               label: 'Route Metadata',
             },

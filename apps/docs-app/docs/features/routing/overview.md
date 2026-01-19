@@ -1,6 +1,6 @@
 # Routing
 
-Analog supports filesystem-based routing on top of the Angular Router.
+Analog supports filesystem-based routing on top of the Angular Router, with [type-safe route generation](/docs/features/routing/type-safe-routes) for compile-time checking of paths and parameters.
 
 ## Defining Routes
 
@@ -14,17 +14,11 @@ Route components **must** be defined as the default export and all route compone
 
 There are 5 primary types of routes:
 
-- [Routing](#routing)
-  - [Defining Routes](#defining-routes)
-  - [Index Routes](#index-routes)
-  - [Static Routes](#static-routes)
-    - [Route Groups](#route-groups)
-  - [Dynamic Routes](#dynamic-routes)
-    - [Using Route Component Input Bindings](#using-route-component-input-bindings)
-  - [Layout Routes](#layout-routes)
-    - [Pathless Layout Routes](#pathless-layout-routes)
-  - [Catch-all Routes](#catch-all-routes)
-  - [Putting It All Together](#putting-it-all-together)
+- [Index Routes](#index-routes)
+- [Static Routes](#static-routes)
+- [Dynamic Routes](#dynamic-routes)
+- [Layout Routes](#layout-routes)
+- [Catch-all Routes](#catch-all-routes)
 
 These routes can be combined in different ways to build URLs for navigation.
 
@@ -103,26 +97,19 @@ Dynamic routes are defined by using the filename as the route path enclosed in s
 The example route below in `src/app/pages/products/[productId].page.ts` defines a `/products/:productId` route.
 
 ```ts
-import { Component, inject } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs';
+import { Component } from '@angular/core';
+import { injectParams } from '@analogjs/router';
 
 @Component({
   standalone: true,
-  imports: [AsyncPipe],
   template: `
     <h2>Product Details</h2>
 
-    ID: {{ productId$ | async }}
+    ID: {{ params().productId }}
   `,
 })
 export default class ProductDetailsPageComponent {
-  private readonly route = inject(ActivatedRoute);
-
-  readonly productId$ = this.route.paramMap.pipe(
-    map((params) => params.get('productId')),
-  );
+  params = injectParams<'/products/[productId]'>();
 }
 ```
 
@@ -130,7 +117,7 @@ Dynamic routes can also be defined using the dot notation in the filename - `src
 
 ### Using Route Component Input Bindings
 
-If you are using the `withComponentInputBinding()` feature with the Angular Router, you can use the **Input** decorator, along with the same **parameter name** to get the route parameter.
+If you are using the `withComponentInputBinding()` feature with the Angular Router, you can use the `input()` function along with the same **parameter name** to get the route parameter.
 
 First, add the `withComponentInputBinding()` to the arguments for the `provideFileRouter()` function.
 
@@ -148,22 +135,22 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-Next, use the route parameter as an input.
+Next, use the route parameter as a signal input.
 
 ```ts
 // src/app/pages/products/[productId].page.ts
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 @Component({
   standalone: true,
   template: `
     <h2>Product Details</h2>
 
-    ID: {{ productId }}
+    ID: {{ productId() }}
   `,
 })
 export default class ProductDetailsPageComponent {
-  @Input() productId: string;
+  productId = input.required<string>();
 }
 ```
 
@@ -221,26 +208,19 @@ export default class ProductsListComponent {}
 The nested `src/app/pages/products/[productId].page.ts` file contains the `/products/:productId` details page.
 
 ```ts
-import { Component, inject } from '@angular/core';
-import { AsyncPipe, JsonPipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs';
+import { Component } from '@angular/core';
+import { injectParams } from '@analogjs/router';
 
 @Component({
   standalone: true,
-  imports: [AsyncPipe, JsonPipe],
   template: `
     <h2>Product Details</h2>
 
-    ID: {{ productId$ | async }}
+    ID: {{ params().productId }}
   `,
 })
 export default class ProductDetailsPageComponent {
-  private readonly route = inject(ActivatedRoute);
-
-  readonly productId$ = this.route.paramMap.pipe(
-    map((params) => params.get('productId')),
-  );
+  params = injectParams<'/products/[productId]'>();
 }
 ```
 
@@ -270,7 +250,7 @@ The example route below in `src/app/pages/[...page-not-found].page.ts` defines a
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { injectResponse } from '@analogjs/router/tokens';
-import { RouteMeta } from '@analogjs/router';
+import { RouteMeta, route } from '@analogjs/router';
 
 export const routeMeta: RouteMeta = {
   title: 'Page Not Found',
@@ -292,10 +272,12 @@ export const routeMeta: RouteMeta = {
   template: `
     <h2>Page Not Found</h2>
 
-    <a routerLink="/">Go Back Home</a>
+    <a [routerLink]="homeRoute">Go Back Home</a>
   `,
 })
-export default class PageNotFoundComponent {}
+export default class PageNotFoundComponent {
+  homeRoute = route('/');
+}
 ```
 
 Catch-all routes can also be defined as nested child routes.
