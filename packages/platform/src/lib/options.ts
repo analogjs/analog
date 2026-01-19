@@ -93,6 +93,12 @@ export interface Options {
    * File replacements
    */
   fileReplacements?: PluginOptions['fileReplacements'];
+  /**
+   * Enable type-safe routing.
+   * Generates TypeScript types at src/app/pages/routes.d.ts
+   * @default false
+   */
+  typedRoutes?: boolean;
 }
 
 export { PrerenderContentDir, PrerenderContentFile };
