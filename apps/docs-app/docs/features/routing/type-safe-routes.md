@@ -91,10 +91,10 @@ export default class NavComponent {
 }
 ```
 
-For routes with parameters, include the params when building the route:
+For routes with parameters, use a computed signal to derive the routes from your data:
 
 ```ts
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { route } from '@analogjs/router';
 
@@ -102,9 +102,9 @@ import { route } from '@analogjs/router';
   imports: [RouterLink],
   template: `
     <ul>
-      @for (product of products(); track product.id) {
+      @for (product of productLinks(); track product.id) {
         <li>
-          <a [routerLink]="getProductRoute(product.id)">
+          <a [routerLink]="product.route">
             {{ product.name }}
           </a>
         </li>
@@ -115,9 +115,12 @@ import { route } from '@analogjs/router';
 export default class ProductListComponent {
   products = input<{ id: string; name: string }[]>([]);
 
-  getProductRoute(productId: string) {
-    return route('/products/[productId]', { productId });
-  }
+  productLinks = computed(() =>
+    this.products().map((product) => ({
+      ...product,
+      route: route('/products/[productId]', { productId: product.id }),
+    })),
+  );
 }
 ```
 
