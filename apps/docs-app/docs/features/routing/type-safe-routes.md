@@ -27,19 +27,33 @@ When enabled, Analog generates a `routes.d.ts` file at `src/app/pages/routes.d.t
 
 ## Building Route Paths
 
-Use the `route()` function to build type-safe paths for `routerLink`:
+The `route()` function builds type-safe path strings from route definitions. It validates paths at compile time and substitutes parameters into dynamic segments.
+
+### Static Routes
+
+For routes without parameters, pass only the path. The function validates that the path exists in your application:
 
 ```ts
 import { route } from '@analogjs/router';
 
-// Static routes
+route('/'); // Returns: '/'
 route('/about'); // Returns: '/about'
+```
 
-// Dynamic routes
+### Dynamic Routes
+
+For routes with parameters, pass the path and a params object. TypeScript enforces that all required parameters are provided:
+
+```ts
+import { route } from '@analogjs/router';
+
 route('/products/[productId]', { productId: '123' }); // Returns: '/products/123'
+route('/blog/[...slug]', { slug: 'posts/my-article' }); // Returns: '/blog/posts/my-article'
 ```
 
 ### Using with routerLink
+
+Pre-compute routes as class properties to use with Angular's `routerLink` directive:
 
 ```ts
 import { Component } from '@angular/core';
@@ -63,35 +77,7 @@ export default class NavComponent {
 
 ### Iterating Over Routes
 
-For navigation menus with multiple links, create an array of route objects:
-
-```ts
-import { Component } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { route } from '@analogjs/router';
-
-@Component({
-  imports: [RouterLink, RouterLinkActive],
-  template: `
-    <nav>
-      @for (item of navItems; track item.label) {
-        <a [routerLink]="item.route" routerLinkActive="active">
-          {{ item.label }}
-        </a>
-      }
-    </nav>
-  `,
-})
-export default class NavComponent {
-  navItems = [
-    { label: 'Home', route: route('/') },
-    { label: 'About', route: route('/about') },
-    { label: 'Products', route: route('/products') },
-  ];
-}
-```
-
-For routes with parameters, use a computed signal to derive the routes from your data:
+For dynamic lists of links, use a computed signal to derive routes from your data. This avoids function calls in templates and ensures routes are recalculated when the data changes:
 
 ```ts
 import { Component, computed, input } from '@angular/core';
@@ -196,30 +182,6 @@ export default class ProductDetailsPage {
 ```
 
 The generic type parameter matches the route path, and TypeScript infers the correct parameter types.
-
-## Generated Types
-
-When you run `npm run dev` or `npm run build`, Analog generates types at `src/app/pages/routes.d.ts`:
-
-```ts
-declare module '@analogjs/router' {
-  export type StaticRoutes = '/' | '/about' | '/products';
-
-  export interface DynamicRouteParams {
-    '/products/[productId]': { productId: string | number };
-  }
-
-  export type TypedRoutes = StaticRoutes | keyof DynamicRouteParams;
-
-  // Function overloads for type safety...
-}
-```
-
-:::note
-
-The generated file is updated automatically when page files are added or deleted during development.
-
-:::
 
 ## Supported Route Types
 
