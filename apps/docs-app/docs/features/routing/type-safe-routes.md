@@ -1,10 +1,16 @@
 # Type-Safe Routes
 
-Analog can generate TypeScript types for your file-based routes, enabling compile-time type checking for route paths and parameters.
+Analog automatically generates TypeScript types for your file-based routes, enabling compile-time type checking for route paths and parameters.
 
-## Enabling Type-Safe Routes
+:::info
 
-Enable type generation in your `vite.config.ts`:
+Analog generates a `routes.d.ts` file at `src/app/pages/routes.d.ts`. This file should be committed to version control.
+
+:::
+
+## Disabling Type-Safe Routes
+
+Type-safe routing is enabled by default. To disable it, set `typedRoutes` to `false` in your `vite.config.ts`:
 
 ```ts
 // vite.config.ts
@@ -13,17 +19,11 @@ import analog from '@analogjs/platform';
 export default defineConfig({
   plugins: [
     analog({
-      typedRoutes: true,
+      typedRoutes: false,
     }),
   ],
 });
 ```
-
-:::info
-
-When enabled, Analog generates a `routes.d.ts` file at `src/app/pages/routes.d.ts`. This file should be committed to version control.
-
-:::
 
 ## Building Route Paths
 
@@ -195,22 +195,6 @@ The generic type parameter matches the route path, and TypeScript infers the cor
 ## Migrating an Existing Project
 
 Adding type-safe routes to an existing Analog project is straightforward and can be done incrementally. The type-safe functions work alongside existing Angular Router usage, so you can migrate one component at a time without breaking existing functionality.
-
-### Enable the Feature
-
-Enable type generation by adding the `typedRoutes` option to your Analog plugin configuration:
-
-```ts
-import analog from '@analogjs/platform';
-
-export default defineConfig({
-  plugins: [
-    analog({
-      typedRoutes: true,
-    }),
-  ],
-});
-```
 
 ### Generate Types
 

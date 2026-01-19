@@ -17,7 +17,7 @@ import { generateRouteTypes } from './type-generator.js';
  * When enabled, scans the pages directory and generates TypeScript types.
  */
 export function typedRoutesPlugin(options: Options): Plugin[] {
-  if (!options.typedRoutes) {
+  if (options.typedRoutes === false) {
     return [];
   }
 

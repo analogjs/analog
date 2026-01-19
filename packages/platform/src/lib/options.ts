@@ -96,7 +96,7 @@ export interface Options {
   /**
    * Enable type-safe routing.
    * Generates TypeScript types at src/app/pages/routes.d.ts
-   * @default false
+   * @default true
    */
   typedRoutes?: boolean;
 }
