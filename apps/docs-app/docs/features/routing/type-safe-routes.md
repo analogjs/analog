@@ -50,15 +50,15 @@ import { route } from '@analogjs/router';
   standalone: true,
   imports: [RouterLink],
   template: `
-    <a [routerLink]="route('/about')">About</a>
-    <a [routerLink]="route('/products/[productId]', { productId: product.id })">
-      {{ product.name }}
-    </a>
+    <a [routerLink]="aboutRoute">About</a>
+    <a [routerLink]="productRoute">{{ product.name }}</a>
   `,
 })
 export default class NavComponent {
-  route = route;
   product = { id: '123', name: 'Widget' };
+
+  aboutRoute = route('/about');
+  productRoute = route('/products/[productId]', { productId: this.product.id });
 }
 ```
 
@@ -223,10 +223,13 @@ this.router.navigate(['/products', productId]);
 **After:**
 
 ```ts
-// Template
-<a [routerLink]="route('/products/[productId]', { productId: '123' })">Product</a>
-
 // Component
+productRoute = route('/products/[productId]', { productId: '123' });
+
+// Template
+<a [routerLink]="productRoute">Product</a>
+
+// Programmatic navigation
 navigate('/products/[productId]', { productId });
 ```
 
