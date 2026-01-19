@@ -199,7 +199,7 @@ The generated file is updated automatically when page files are added or deleted
 
 ## Migrating an Existing Project
 
-To add type-safe routes to an existing Analog project:
+Adding type-safe routes to an existing Analog project is straightforward and can be done incrementally. The type-safe functions work alongside existing Angular Router usage, so you can migrate one component at a time without breaking existing functionality.
 
 ### Enable the Feature
 
