@@ -22,4 +22,13 @@ export { ServerOnly } from './lib/server.component';
 // Type-safe routing
 export { route, TypedRoute } from './lib/route-builder';
 export { navigate, navigateByUrl } from './lib/typed-navigation';
-export { injectParams, TypedParams } from './lib/inject-params';
+export {
+  injectParams,
+  TypedParams,
+  TypeConstructor,
+  InferConstructor,
+  ParamSchema,
+  SchemaLike,
+  InferSchemaOutput,
+  InferredParams,
+} from './lib/inject-params';

@@ -11,7 +11,7 @@ import {
 import { provideLocationMocks } from '@angular/common/testing';
 import { BehaviorSubject } from 'rxjs';
 import { describe, expect, it } from 'vitest';
-import { injectParams } from './inject-params';
+import { injectParams, SchemaLike } from './inject-params';
 import { TypedRoute } from './route-builder';
 
 /**
@@ -171,6 +171,89 @@ describe('inject-params', () => {
       // Verify it's a signal (callable function that returns the value)
       expect(typeof params).toBe('function');
       expect(params()).toEqual({ id: '1' });
+    });
+
+    it('should accept schema parameter with type constructors', () => {
+      const paramMapSubject = new BehaviorSubject<ParamMap>(
+        convertToParamMap({ productId: '123' }),
+      );
+
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: ActivatedRoute,
+            useValue: {
+              paramMap: paramMapSubject.asObservable(),
+            },
+          },
+        ],
+      });
+
+      // Schema is purely for type inference, runtime behavior is unchanged
+      // Use 'as any' to bypass type constraints that require generated routes.d.ts
+      const params = TestBed.runInInjectionContext(() =>
+        injectParams<TestRoute>({ productId: Number } as any),
+      );
+
+      // Runtime values are still strings
+      expect(params()).toEqual({ productId: '123' });
+    });
+
+    it('should accept StandardSchema-compatible schema for type inference', () => {
+      const paramMapSubject = new BehaviorSubject<ParamMap>(
+        convertToParamMap({ productId: '789' }),
+      );
+
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: ActivatedRoute,
+            useValue: {
+              paramMap: paramMapSubject.asObservable(),
+            },
+          },
+        ],
+      });
+
+      // Simulate a StandardSchema v1 compatible schema
+      const standardSchema: SchemaLike<{ productId: number }> = {
+        '~standard': {
+          types: { output: { productId: 0 } },
+        },
+      };
+
+      // Use 'as any' to bypass type constraints that require generated routes.d.ts
+      const params = TestBed.runInInjectionContext(() =>
+        injectParams<TestRoute>(standardSchema as any),
+      );
+
+      // Runtime values are still strings, schema only affects types
+      expect(params()).toEqual({ productId: '789' });
+    });
+
+    it('should accept schema with multiple type constructors', () => {
+      const paramMapSubject = new BehaviorSubject<ParamMap>(
+        convertToParamMap({ userId: '42', active: 'true' }),
+      );
+
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: ActivatedRoute,
+            useValue: {
+              paramMap: paramMapSubject.asObservable(),
+            },
+          },
+        ],
+      });
+
+      // Use 'as any' to bypass type constraints that require generated routes.d.ts
+      const params = TestBed.runInInjectionContext(() =>
+        injectParams<TestRoute>({ userId: Number, active: Boolean } as any),
+      );
+
+      // Runtime values are still strings
+      expect(params()).toEqual({ userId: '42', active: 'true' });
     });
   });
 });

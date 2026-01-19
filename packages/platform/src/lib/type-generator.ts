@@ -56,6 +56,7 @@ export function generateRouteTypes(routes: ParsedRoute[]): string {
 
 import type { Signal } from '@angular/core';
 import type { NavigationExtras, NavigationBehaviorOptions } from '@angular/router';
+import type { TypeConstructor, InferConstructor, SchemaLike, InferSchemaOutput } from '@analogjs/router';
 
 declare module '@analogjs/router' {
   /** Static routes (no parameters required) */
@@ -123,6 +124,24 @@ ${resolvedRouteParamsContent}
 
   /** Inject typed route params as a Signal */
   export function injectParams<T extends DynamicRoutes>(): Signal<ResolvedRouteParams[T]>;
+
+  /** Inject typed route params with schema override */
+  export function injectParams<
+    T extends DynamicRoutes,
+    S extends { [K in keyof ResolvedRouteParams[T]]?: TypeConstructor } | SchemaLike<unknown>
+  >(
+    schema: S
+  ): Signal<
+    S extends SchemaLike<unknown>
+      ? InferSchemaOutput<S>
+      : {
+          [K in keyof ResolvedRouteParams[T]]: K extends keyof S
+            ? S[K] extends TypeConstructor
+              ? InferConstructor<S[K]>
+              : string
+            : string;
+        }
+  >;
 }
 `;
 }

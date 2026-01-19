@@ -183,6 +183,55 @@ export default class ProductDetailsPage {
 
 The generic type parameter matches the route path, and TypeScript infers the correct parameter types.
 
+### Overriding Parameter Types
+
+By default, all route parameters are typed as `string` since that's what Angular's router provides at runtime. You can override these types using a schema when you know a parameter represents a different type.
+
+#### Using Type Constructors
+
+Pass an object with type constructors to override parameter types:
+
+```ts
+import { Component, computed } from '@angular/core';
+import { injectParams } from '@analogjs/router';
+
+@Component({...})
+export default class ProductPage {
+  // Override productId to be typed as number
+  params = injectParams<'/products/[productId]'>({ productId: Number });
+
+  // TypeScript sees: Signal<{ productId: number }>
+  // Runtime value is still a string - convert when needed:
+  productId = computed(() => Number(this.params().productId));
+}
+```
+
+#### Using Zod Schemas
+
+For more complex validation and transformation, you can use [Zod](https://zod.dev/) schemas. The schema's output type is used for type inference:
+
+```ts
+import { Component } from '@angular/core';
+import { injectParams } from '@analogjs/router';
+import { z } from 'zod';
+
+const paramsSchema = z.object({
+  productId: z.coerce.number(),
+});
+
+@Component({...})
+export default class ProductPage {
+  params = injectParams<'/products/[productId]'>(paramsSchema);
+  // TypeScript sees: Signal<{ productId: number }>
+}
+```
+
+:::warning
+
+Schema overrides only affect TypeScript types - no runtime validation or transformation occurs. The actual values from Angular's router are always strings. Use `z.coerce.number()` or `Number()` to convert values at runtime when needed.
+
+:::
+
 ## Supported Route Types
 
 | File Path                      | Typed Path              | Parameters        |
