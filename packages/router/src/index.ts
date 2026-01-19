@@ -18,3 +18,8 @@ export { FormAction } from './lib/form-action.directive';
 export { injectDebugRoutes } from './lib/debug/routes';
 export { withDebugRoutes } from './lib/debug';
 export { ServerOnly } from './lib/server.component';
+
+// Type-safe routing
+export { route } from './lib/route-builder';
+export { navigate, navigateByUrl } from './lib/typed-navigation';
+export { injectParams } from './lib/inject-params';
