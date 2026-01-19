@@ -1,5 +1,5 @@
-import { RouteMeta, injectLoad } from '@analogjs/router';
-import { Component } from '@angular/core';
+import { RouteMeta, injectLoad, route } from '@analogjs/router';
+import { Component, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLinkWithHref } from '@angular/router';
 
@@ -16,13 +16,10 @@ export const routeMeta: RouteMeta = {
   template: `
     <h2>Products</h2>
 
-    @for (product of data().products; track product.id) {
+    @for (product of productLinks(); track product.id) {
       <div>
         <h3>
-          <a
-            [title]="product.name + ' details'"
-            [routerLink]="['/products', product.id]"
-          >
+          <a [title]="product.name + ' details'" [routerLink]="product.route">
             {{ product.name }}
           </a>
         </h3>
@@ -50,6 +47,13 @@ export const routeMeta: RouteMeta = {
 })
 export default class ProductListComponent {
   data = toSignal(injectLoad<typeof load>(), { requireSync: true });
+
+  productLinks = computed(() =>
+    this.data().products.map((product) => ({
+      ...product,
+      route: route('/products/[productId]', { productId: product.id }),
+    })),
+  );
 
   share() {
     window.alert('The product has been shared!');

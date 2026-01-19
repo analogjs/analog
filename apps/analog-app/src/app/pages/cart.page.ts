@@ -1,3 +1,4 @@
+import { route } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -12,7 +13,7 @@ import { CartService } from '../cart.service';
     <h3>Cart</h3>
 
     <p>
-      <a routerLink="/shipping">Shipping Prices</a>
+      <a [routerLink]="shippingRoute">Shipping Prices</a>
     </p>
 
     @for (item of items; track $index) {
@@ -42,6 +43,7 @@ export default class CartComponent {
   private readonly formBuilder = inject(FormBuilder);
 
   items = this.cartService.getItems();
+  shippingRoute = route('/shipping');
 
   checkoutForm = this.formBuilder.group({
     name: '',

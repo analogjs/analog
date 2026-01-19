@@ -1,4 +1,4 @@
-import { injectActivatedRoute } from '@analogjs/router';
+import { injectParams } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, OnInit, signal } from '@angular/core';
@@ -24,7 +24,7 @@ import { Product } from '../products';
   `,
 })
 export default class ProductDetailsComponent implements OnInit {
-  private readonly route = injectActivatedRoute();
+  private readonly params = injectParams<'/products/[productId]'>();
   private readonly cartService = inject(CartService);
   private readonly http = inject(HttpClient);
 
@@ -32,8 +32,7 @@ export default class ProductDetailsComponent implements OnInit {
 
   ngOnInit() {
     // First get the product id from the current route.
-    const routeParams = this.route.parent!.snapshot!.paramMap;
-    const productIdFromRoute = Number(routeParams.get('productId'));
+    const productIdFromRoute = Number(this.params().productId);
 
     this.http
       .get<Product[]>('/api/v1/products')
