@@ -62,6 +62,37 @@ export default class NavComponent {
 }
 ```
 
+### Iterating Over Routes
+
+For navigation menus with multiple links, create an array of route objects:
+
+```ts
+import { Component } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { route } from '@analogjs/router';
+
+@Component({
+  standalone: true,
+  imports: [RouterLink, RouterLinkActive],
+  template: `
+    <nav>
+      @for (item of navItems; track item.label) {
+        <a [routerLink]="item.route" routerLinkActive="active">
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+  `,
+})
+export default class NavComponent {
+  navItems = [
+    { label: 'Home', route: route('/') },
+    { label: 'About', route: route('/about') },
+    { label: 'Products', route: route('/products') },
+  ];
+}
+```
+
 ## Programmatic Navigation
 
 ### navigate()
