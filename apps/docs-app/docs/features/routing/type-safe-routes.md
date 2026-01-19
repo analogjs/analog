@@ -47,7 +47,6 @@ import { RouterLink } from '@angular/router';
 import { route } from '@analogjs/router';
 
 @Component({
-  standalone: true,
   imports: [RouterLink],
   template: `
     <a [routerLink]="aboutRoute">About</a>
@@ -72,7 +71,6 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { route } from '@analogjs/router';
 
 @Component({
-  standalone: true,
   imports: [RouterLink, RouterLinkActive],
   template: `
     <nav>
@@ -152,7 +150,6 @@ import { Component } from '@angular/core';
 import { injectParams } from '@analogjs/router';
 
 @Component({
-  standalone: true,
   template: `
     <h2>Product Details</h2>
     <p>ID: {{ params().productId }}</p>
