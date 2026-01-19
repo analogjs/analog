@@ -46,13 +46,14 @@
         }
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint"
-    },
-    "test": {
-      "executor": "@nx/vite:test",
-      "outputs": ["{projectRoot}/coverage"],
-      "dependsOn": ["^build"]
+    "serve-nitro": {
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "opt-catchall-app:build",
+        "parallel": true,
+        "port": 3001,
+        "staticFilePath": "dist/apps/opt-catchall-app/analog/public"
+      }
     }
   }
 }
