@@ -139,7 +139,7 @@ describe('type-generator', () => {
         'export function route<T extends StaticRoutes>(path: T): T;',
       );
       expect(result).toContain(
-        'export function route<T extends DynamicRoutes>',
+        'export function route<T extends keyof DynamicRouteParams>',
       );
     });
 
@@ -160,7 +160,7 @@ describe('type-generator', () => {
         'export function navigate<T extends StaticRoutes>',
       );
       expect(result).toContain(
-        'export function navigate<T extends DynamicRoutes>',
+        'export function navigate<T extends keyof DynamicRouteParams>',
       );
       expect(result).toContain('NavigationExtras');
     });
@@ -182,12 +182,12 @@ describe('type-generator', () => {
         'export function navigateByUrl<T extends StaticRoutes>',
       );
       expect(result).toContain(
-        'export function navigateByUrl<T extends DynamicRoutes>',
+        'export function navigateByUrl<T extends keyof DynamicRouteParams>',
       );
       expect(result).toContain('NavigationBehaviorOptions');
     });
 
-    it('should generate injectParams() function', () => {
+    it('should generate ResolvedRouteParams for injectParams to use', () => {
       const routes: ParsedRoute[] = [
         {
           filePath: '/src/app/pages/products/[productId].page.ts',
@@ -200,9 +200,12 @@ describe('type-generator', () => {
 
       const result = generateRouteTypes(routes);
 
+      // ResolvedRouteParams is augmented for injectParams to use
+      expect(result).toContain('export interface ResolvedRouteParams');
       expect(result).toContain(
-        'export function injectParams<T extends DynamicRoutes>(): Signal<ResolvedRouteParams[T]>',
+        "'/products/[productId]': { 'productId': string };",
       );
+      // Note: injectParams overloads are now in the base package, not generated
     });
 
     it('should generate ResolvedRouteParams with string types only', () => {

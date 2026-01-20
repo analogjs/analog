@@ -10,7 +10,7 @@ import {
   NavigationExtras,
   NavigationBehaviorOptions,
 } from '@angular/router';
-import { route, TypedRoute } from './route-builder';
+import { route } from './route-builder';
 
 /**
  * Type-safe wrapper for Router.navigate().
@@ -35,7 +35,7 @@ import { route, TypedRoute } from './route-builder';
  * @param extras - Navigation extras
  * @returns Promise that resolves to true if navigation succeeds
  */
-export function navigate<T extends TypedRoute>(
+export function navigate<T extends string = string>(
   path: T,
   params?: Record<string, string | number>,
   extras?: NavigationExtras,
@@ -68,7 +68,7 @@ export function navigate<T extends TypedRoute>(
  * @param extras - Navigation behavior options
  * @returns Promise that resolves to true if navigation succeeds
  */
-export function navigateByUrl<T extends TypedRoute>(
+export function navigateByUrl<T extends string = string>(
   path: T,
   params?: Record<string, string | number>,
   extras?: NavigationBehaviorOptions,

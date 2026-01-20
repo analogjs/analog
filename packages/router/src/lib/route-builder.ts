@@ -1,10 +1,9 @@
 /**
  * Base type for typed routes.
- * This is a branded string type that requires routes.d.ts to be generated
- * for actual type safety. Without the generated types, only the base
- * '__brand' string can satisfy this type, effectively blocking usage.
+ * This type is overridden by routes.d.ts when generated.
+ * The generated file provides the actual route union type.
  */
-export type TypedRoute = string & { readonly __brand: 'TypedRoute' };
+export type TypedRoute = string;
 
 /**
  * Type-safe route builder function.
@@ -35,7 +34,7 @@ export type TypedRoute = string & { readonly __brand: 'TypedRoute' };
  * @param params - Parameters for dynamic routes
  * @returns The resolved path string
  */
-export function route<T extends TypedRoute>(
+export function route<T extends string = string>(
   path: T,
   params?: Record<string, string | number>,
 ): string {

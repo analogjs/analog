@@ -24,7 +24,9 @@ import { Product } from '../products';
   `,
 })
 export default class ProductDetailsComponent implements OnInit {
-  private readonly params = injectParams<'/products/[productId]'>();
+  private readonly params = injectParams('/products/[productId]', {
+    productId: Number,
+  });
   private readonly cartService = inject(CartService);
   private readonly http = inject(HttpClient);
 
@@ -32,7 +34,8 @@ export default class ProductDetailsComponent implements OnInit {
 
   ngOnInit() {
     // First get the product id from the current route.
-    const productIdFromRoute = Number(this.params().productId);
+    // Note: productId is already typed as number due to schema transform
+    const productIdFromRoute = this.params().productId;
 
     this.http
       .get<Product[]>('/api/v1/products')

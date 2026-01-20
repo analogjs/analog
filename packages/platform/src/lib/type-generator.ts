@@ -54,9 +54,7 @@ export function generateRouteTypes(routes: ParsedRoute[]): string {
  * DO NOT EDIT MANUALLY
  */
 
-import type { Signal } from '@angular/core';
 import type { NavigationExtras, NavigationBehaviorOptions } from '@angular/router';
-import type { TypeConstructor, InferConstructor, SchemaLike, InferSchemaOutput } from '@analogjs/router';
 
 declare module '@analogjs/router' {
   /** Static routes (no parameters required) */
@@ -68,32 +66,30 @@ ${staticRoutesType};
 ${dynamicRouteParamsContent}
   }
 
-  /** Resolved parameter types (runtime values are strings) */
+  /**
+   * Augment ResolvedRouteParams with application routes.
+   * This interface is merged with the empty base interface from @analogjs/router.
+   * The base package's injectParams function uses this to provide type-safe params.
+   */
   export interface ResolvedRouteParams {
 ${resolvedRouteParamsContent}
   }
 
-  /** Dynamic routes (parameters required) */
-  export type DynamicRoutes = keyof DynamicRouteParams;
-
   /** All valid application routes */
-  export type TypedRoutes = StaticRoutes | DynamicRoutes;
+  export type TypedRoutes = StaticRoutes | keyof DynamicRouteParams;
 
-  /**
-   * Override the base TypedRoute to allow valid routes.
-   * The base package uses 'never' to force generation of this file.
-   */
+  /** Override the base TypedRoute to allow valid routes */
   export type TypedRoute = TypedRoutes;
 
   /** Extract parameter type for building a route */
-  export type RouteParams<T extends DynamicRoutes> = DynamicRouteParams[T];
+  export type RouteParams<T extends keyof DynamicRouteParams> = DynamicRouteParams[T];
 
   /** Extract resolved parameter type for consuming route params */
-  export type ResolvedParams<T extends DynamicRoutes> = ResolvedRouteParams[T];
+  export type ResolvedParams<T extends keyof ResolvedRouteParams> = ResolvedRouteParams[T];
 
   /** Build a typed route path */
   export function route<T extends StaticRoutes>(path: T): T;
-  export function route<T extends DynamicRoutes>(
+  export function route<T extends keyof DynamicRouteParams>(
     path: T,
     params: DynamicRouteParams[T]
   ): string;
@@ -104,7 +100,7 @@ ${resolvedRouteParamsContent}
     params?: undefined,
     extras?: NavigationExtras
   ): Promise<boolean>;
-  export function navigate<T extends DynamicRoutes>(
+  export function navigate<T extends keyof DynamicRouteParams>(
     path: T,
     params: DynamicRouteParams[T],
     extras?: NavigationExtras
@@ -116,32 +112,11 @@ ${resolvedRouteParamsContent}
     params?: undefined,
     extras?: NavigationBehaviorOptions
   ): Promise<boolean>;
-  export function navigateByUrl<T extends DynamicRoutes>(
+  export function navigateByUrl<T extends keyof DynamicRouteParams>(
     path: T,
     params: DynamicRouteParams[T],
     extras?: NavigationBehaviorOptions
   ): Promise<boolean>;
-
-  /** Inject typed route params as a Signal */
-  export function injectParams<T extends DynamicRoutes>(): Signal<ResolvedRouteParams[T]>;
-
-  /** Inject typed route params with schema override */
-  export function injectParams<
-    T extends DynamicRoutes,
-    S extends { [K in keyof ResolvedRouteParams[T]]?: TypeConstructor } | SchemaLike<unknown>
-  >(
-    schema: S
-  ): Signal<
-    S extends SchemaLike<unknown>
-      ? InferSchemaOutput<S>
-      : {
-          [K in keyof ResolvedRouteParams[T]]: K extends keyof S
-            ? S[K] extends TypeConstructor
-              ? InferConstructor<S[K]>
-              : string
-            : string;
-        }
-  >;
 }
 `;
 }

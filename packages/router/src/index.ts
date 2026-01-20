@@ -31,4 +31,9 @@ export {
   SchemaLike,
   InferSchemaOutput,
   InferredParams,
+  ResolvedRouteParams,
+  DynamicRoutes,
+  GetRouteParams,
+  ApplySchema,
+  InjectParamsReturn,
 } from './lib/inject-params';
