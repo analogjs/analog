@@ -15,7 +15,7 @@
 - [x] Inject params (`packages/router/src/lib/inject-params.ts`)
 - [x] All unit tests (87 router + 39 platform)
 - [x] analog-app updated to use type-safe routing
-- [x] Documentation (`apps/docs-app/docs/features/routing/type-safe-routes.md`)
+- [x] Documentation (`apps/docs-app/docs/features/routing/type-safe-routing.md`)
 
 ## Overview
 

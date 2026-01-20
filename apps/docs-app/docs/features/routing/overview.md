@@ -1,6 +1,6 @@
 # Routing
 
-Analog supports filesystem-based routing on top of the Angular Router, with [type-safe route generation](/docs/features/routing/type-safe-routes) for compile-time checking of paths and parameters.
+Analog supports filesystem-based routing on top of the Angular Router, with [type-safe routing](/docs/features/routing/type-safe-routing) for compile-time checking of paths and parameters.
 
 ## Defining Routes
 

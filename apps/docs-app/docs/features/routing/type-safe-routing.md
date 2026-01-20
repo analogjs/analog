@@ -1,4 +1,4 @@
-# Type-Safe Routes
+# Type-Safe Routing
 
 Analog automatically generates TypeScript types for your file-based routes, enabling compile-time type checking for route paths and parameters.
 

@@ -41,8 +41,8 @@ const sidebars = {
             },
             {
               type: 'doc',
-              id: 'features/routing/type-safe-routes',
-              label: 'Type-Safe Routes',
+              id: 'features/routing/type-safe-routing',
+              label: 'Type-Safe Routing',
             },
             {
               type: 'doc',
