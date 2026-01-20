@@ -235,7 +235,7 @@ Schema overrides only affect TypeScript types - no runtime validation occurs. Th
 
 ## Migrating an Existing Project
 
-Adding type-safe routes to an existing Analog project is straightforward and can be done incrementally. The type-safe functions work alongside existing Angular Router usage, so you can migrate one component at a time without breaking existing functionality.
+Adding type-safe routing to an existing Analog project is straightforward and can be done incrementally. The type-safe functions work alongside existing Angular Router usage, so you can migrate one component at a time without breaking existing functionality.
 
 ### Generate Types
 
