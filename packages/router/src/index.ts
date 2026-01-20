@@ -29,6 +29,7 @@ export {
   InferConstructor,
   ParamSchema,
   SchemaLike,
+  StandardSchemaV1,
   InferSchemaOutput,
   InferredParams,
   ResolvedRouteParams,

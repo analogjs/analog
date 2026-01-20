@@ -67,6 +67,40 @@ export type SchemaLike<T> = {
   };
 };
 
+/**
+ * Full StandardSchema v1 interface with validate function for runtime transformation.
+ * @see https://standardschema.dev
+ */
+export interface StandardSchemaV1<Input = unknown, Output = Input> {
+  readonly '~standard': {
+    readonly version: 1;
+    readonly vendor: string;
+    readonly types?: { readonly input: Input; readonly output: Output };
+    readonly validate: (
+      value: unknown,
+    ) =>
+      | StandardSchemaV1.SuccessResult<Output>
+      | StandardSchemaV1.FailureResult
+      | Promise<
+          | StandardSchemaV1.SuccessResult<Output>
+          | StandardSchemaV1.FailureResult
+        >;
+  };
+}
+
+export declare namespace StandardSchemaV1 {
+  /** The result interface if validation succeeds. */
+  export interface SuccessResult<Output> {
+    readonly value: Output;
+    readonly issues?: undefined;
+  }
+
+  /** The result interface if validation fails. */
+  export interface FailureResult {
+    readonly issues: ReadonlyArray<{ readonly message: string }>;
+  }
+}
+
 /** Infer the output type from a StandardSchema */
 export type InferSchemaOutput<S> = S extends {
   readonly '~standard': { readonly types?: { readonly output: infer T } };
@@ -124,20 +158,126 @@ export type ApplySchema<
  */
 export type InjectParamsReturn<T, S> = ApplySchema<GetRouteParams<T>, S>;
 
+// ============================================================================
+// Schema Detection and Transformation Helpers
+// ============================================================================
+
 /**
- * Injects typed route parameters as a Signal.
+ * Type guard to check if a schema is a StandardSchema v1 with validate function.
+ */
+function isStandardSchema(schema: unknown): schema is StandardSchemaV1 {
+  return (
+    typeof schema === 'object' &&
+    schema !== null &&
+    '~standard' in schema &&
+    typeof (schema as StandardSchemaV1)['~standard']?.validate === 'function'
+  );
+}
+
+/**
+ * Type guard to check if a schema is a constructor-based schema.
+ */
+function isConstructorSchema(
+  schema: unknown,
+): schema is Record<string, TypeConstructor> {
+  if (typeof schema !== 'object' || schema === null) return false;
+  if ('~standard' in schema) return false; // It's a StandardSchema
+  return Object.values(schema).every(
+    (v) => v === String || v === Number || v === Boolean,
+  );
+}
+
+/**
+ * Coerces a string value to a boolean using lenient rules.
+ * - 'false', '0', '' → false
+ * - All other non-empty strings → true
+ */
+function coerceBoolean(value: string): boolean {
+  return value !== '' && value !== '0' && value.toLowerCase() !== 'false';
+}
+
+/**
+ * Transforms params using a constructor-based schema.
+ * Applies Number(), Boolean (lenient), or String() constructors to each param.
+ */
+function transformWithConstructors(
+  params: Record<string, string>,
+  schema: Record<string, TypeConstructor>,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...params };
+
+  for (const [key, constructor] of Object.entries(schema)) {
+    if (!(key in params)) continue;
+    const value = params[key];
+
+    if (constructor === Number) {
+      result[key] = Number(value); // Returns NaN for invalid input
+    } else if (constructor === Boolean) {
+      result[key] = coerceBoolean(value);
+    } else if (constructor === String) {
+      result[key] = value; // Already a string
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Transforms params using a StandardSchema v1 schema.
+ * Calls the schema's validate function and returns the transformed value.
+ * On validation failure or async validation, logs a warning and returns raw params.
+ */
+function transformWithStandardSchema<T>(
+  params: Record<string, string>,
+  schema: StandardSchemaV1<unknown, T>,
+): T | Record<string, string> {
+  const result = schema['~standard'].validate(params);
+
+  // Handle async - signals must be synchronous
+  if (result instanceof Promise) {
+    console.warn(
+      '[Analog] injectParams: async schema validation is not supported, returning raw params',
+    );
+    return params;
+  }
+
+  // Handle validation failure - return raw params
+  if (result.issues) {
+    const messages = result.issues.map((i) => i.message).join(', ');
+    console.warn(
+      `[Analog] injectParams: schema validation failed: ${messages}`,
+    );
+    return params;
+  }
+
+  return result.value;
+}
+
+/**
+ * Injects typed route parameters as a Signal with optional runtime transformation.
  *
  * Pass the route path as the first argument to get fully typed parameters.
  * The returned Signal updates reactively when route parameters change.
+ *
+ * When a schema is provided, parameter values are coerced/transformed at runtime:
+ * - **Constructor schema**: `{ productId: Number }` coerces `'123'` → `123`
+ * - **StandardSchema v1**: Zod 4+, Valibot, ArkType schemas validate and transform
  *
  * **Important**: This function requires `routes.d.ts` to be generated for
  * full type safety. Run `npm run dev` or `npm run build` to generate it.
  *
  * @param _route - The route path (used for type inference, ignored at runtime)
- * @param schema - Optional schema to override parameter types. Can be:
- *   - An object with type constructors: `{ productId: Number }`
- *   - A Zod schema: `z.object({ productId: z.number() })`
- *   - Any StandardSchema-compatible schema (Valibot, ArkType, etc.)
+ * @param schema - Optional schema to transform parameter values at runtime. Can be:
+ *   - An object with type constructors: `{ productId: Number, active: Boolean }`
+ *   - A StandardSchema v1 compatible schema (Zod 4+, Valibot, ArkType, etc.)
+ *
+ * **Boolean coercion (lenient):**
+ * - `'false'`, `'0'`, `''` → `false`
+ * - All other non-empty strings → `true`
+ *
+ * **Number coercion:**
+ * - Valid number strings → number
+ * - Invalid strings → `NaN`
  *
  * @example
  * // In a page component: /products/[productId].page.ts
@@ -147,29 +287,29 @@ export type InjectParamsReturn<T, S> = ApplySchema<GetRouteParams<T>, S>;
  * export default class ProductPage {
  *   // Without schema - params are strings
  *   params = injectParams('/products/[productId]');
- *   // Type: Signal<{ productId: string }>
+ *   // Type: Signal<{ productId: string }>, Runtime: { productId: '123' }
  * }
  *
  * @example
- * // Override parameter types with constructors
+ * // Transform parameter values with constructors
  * @Component({...})
  * export default class ProductPage {
  *   params = injectParams('/products/[productId]', { productId: Number });
- *   // Type: Signal<{ productId: number }>
+ *   // Type: Signal<{ productId: number }>, Runtime: { productId: 123 }
  * }
  *
  * @example
- * // Override with Zod schema (works with Zod 3.x and 4+)
+ * // Transform with Zod schema (StandardSchema v1)
  * import { z } from 'zod';
  * @Component({...})
  * export default class ProductPage {
  *   params = injectParams('/products/[productId]',
  *     z.object({ productId: z.coerce.number() })
  *   );
- *   // Type: Signal<{ productId: number }>
+ *   // Type: Signal<{ productId: number }>, Runtime: { productId: 123 }
  * }
  *
- * @returns Signal containing the typed route parameters
+ * @returns Signal containing the typed (and optionally transformed) route parameters
  */
 // Overload 1: With constructor schema
 export function injectParams<
@@ -195,17 +335,38 @@ export function injectParams<T extends string>(route?: T): Signal<TypedParams>;
 export function injectParams<
   T extends string,
   S extends Record<string, TypeConstructor> | SchemaLike<unknown> | undefined,
->(_route?: T, _schema?: S): Signal<InjectParamsReturn<T, S> | TypedParams> {
+>(_route?: T, schema?: S): Signal<InjectParamsReturn<T, S> | TypedParams> {
   const activatedRoute = inject(ActivatedRoute);
 
   return toSignal(
     activatedRoute.paramMap.pipe(
       map((paramMap) => {
-        const params: Record<string, string> = {};
+        // Build raw params from route
+        const rawParams: Record<string, string> = {};
         for (const key of paramMap.keys) {
-          params[key] = paramMap.get(key) ?? '';
+          rawParams[key] = paramMap.get(key) ?? '';
         }
-        return params;
+
+        // No schema provided - return raw string params
+        if (!schema) {
+          return rawParams;
+        }
+
+        // StandardSchema v1 (Zod 4+, Valibot, ArkType, etc.)
+        if (isStandardSchema(schema)) {
+          return transformWithStandardSchema(rawParams, schema);
+        }
+
+        // Constructor schema ({ id: Number, active: Boolean })
+        if (isConstructorSchema(schema)) {
+          return transformWithConstructors(rawParams, schema);
+        }
+
+        // Unknown schema type - warn and return raw params
+        console.warn(
+          '[Analog] injectParams: unknown schema type provided, returning raw params',
+        );
+        return rawParams;
       }),
     ),
     { requireSync: true },
