@@ -8,23 +8,6 @@ Analog generates a `routes.d.ts` file at `src/app/pages/routes.d.ts`. This file 
 
 :::
 
-## Disabling Type-Safe Routes
-
-Type-safe routing is enabled by default. To disable it, set `typedRoutes` to `false` in your `vite.config.ts`:
-
-```ts
-// vite.config.ts
-import analog from '@analogjs/platform';
-
-export default defineConfig({
-  plugins: [
-    analog({
-      typedRoutes: false,
-    }),
-  ],
-});
-```
-
 ## Building Route Paths
 
 The `route()` function builds type-safe path strings from route definitions. It validates paths at compile time and substitutes parameters into dynamic segments.
@@ -201,8 +184,7 @@ export default class ProductPage {
   params = injectParams<'/products/[productId]'>({ productId: Number });
 
   // TypeScript sees: Signal<{ productId: number }>
-  // Runtime value is still a string - convert when needed:
-  productId = computed(() => Number(this.params().productId));
+  productId = computed(() => this.params().productId);
 }
 ```
 
@@ -228,7 +210,7 @@ export default class ProductPage {
 
 :::warning
 
-Schema overrides only affect TypeScript types - no runtime validation or transformation occurs. The actual values from Angular's router are always strings. Use `z.coerce.number()` or `Number()` to convert values at runtime when needed.
+Schema overrides only affect TypeScript types - no runtime validation occurs. The actual values from Angular's router are always strings. Use `z.coerce.number()` or `Number()` to convert values at runtime when needed.
 
 :::
 
@@ -329,3 +311,20 @@ export default class ProductPage {
 You can migrate incrementally. The type-safe functions work alongside existing Angular Router usage.
 
 :::
+
+## Disabling Type-Safe Route Generation
+
+Type-safe routing is enabled by default. To disable it, set `typedRoutes` to `false` in your `vite.config.ts`:
+
+```ts
+// vite.config.ts
+import analog from '@analogjs/platform';
+
+export default defineConfig({
+  plugins: [
+    analog({
+      typedRoutes: false,
+    }),
+  ],
+});
+```
