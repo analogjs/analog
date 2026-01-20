@@ -94,29 +94,17 @@ ${resolvedRouteParamsContent}
     params: DynamicRouteParams[T]
   ): string;
 
-  /** Type-safe navigation (wrapper for Router.navigate) */
-  export function navigate<T extends StaticRoutes>(
-    path: T,
-    params?: undefined,
-    extras?: NavigationExtras
-  ): Promise<boolean>;
-  export function navigate<T extends keyof DynamicRouteParams>(
-    path: T,
-    params: DynamicRouteParams[T],
-    extras?: NavigationExtras
-  ): Promise<boolean>;
+  /** Type-safe navigation injection (returns typed navigate function) */
+  export function injectNavigate(): {
+    <T extends StaticRoutes>(path: T, params?: undefined, extras?: NavigationExtras): Promise<boolean>;
+    <T extends keyof DynamicRouteParams>(path: T, params: DynamicRouteParams[T], extras?: NavigationExtras): Promise<boolean>;
+  };
 
-  /** Type-safe URL navigation (wrapper for Router.navigateByUrl) */
-  export function navigateByUrl<T extends StaticRoutes>(
-    path: T,
-    params?: undefined,
-    extras?: NavigationBehaviorOptions
-  ): Promise<boolean>;
-  export function navigateByUrl<T extends keyof DynamicRouteParams>(
-    path: T,
-    params: DynamicRouteParams[T],
-    extras?: NavigationBehaviorOptions
-  ): Promise<boolean>;
+  /** Type-safe URL navigation injection (returns typed navigateByUrl function) */
+  export function injectNavigateByUrl(): {
+    <T extends StaticRoutes>(path: T, params?: undefined, extras?: NavigationBehaviorOptions): Promise<boolean>;
+    <T extends keyof DynamicRouteParams>(path: T, params: DynamicRouteParams[T], extras?: NavigationBehaviorOptions): Promise<boolean>;
+  };
 }
 `;
 }

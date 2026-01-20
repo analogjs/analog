@@ -4,7 +4,7 @@
  * Provides type-safe alternatives to Router.navigate() and Router.navigateByUrl().
  */
 
-import { inject } from '@angular/core';
+import { assertInInjectionContext, inject } from '@angular/core';
 import {
   Router,
   NavigationExtras,
@@ -13,67 +13,108 @@ import {
 import { route } from './route-builder';
 
 /**
- * Type-safe wrapper for Router.navigate().
- *
- * For static routes, only accepts navigation extras.
- * For dynamic routes, requires params and optionally accepts extras.
- *
- * **Important**: This function requires `routes.d.ts` to be generated for
- * type safety. Run `npm run dev` or `npm run build` to generate it.
- *
- * @example
- * // Static route
- * navigate('/about');
- * navigate('/about', undefined, { replaceUrl: true });
- *
- * // Dynamic route
- * navigate('/products/[productId]', { productId: '123' });
- * navigate('/products/[productId]', { productId: '123' }, { replaceUrl: true });
- *
- * @param path - The route path
- * @param params - Route parameters (required for dynamic routes, undefined for static)
- * @param extras - Navigation extras
- * @returns Promise that resolves to true if navigation succeeds
+ * Type for the navigate function returned by injectNavigate().
  */
-export function navigate<T extends string = string>(
+export type NavigateFn = <T extends string = string>(
   path: T,
   params?: Record<string, string | number>,
   extras?: NavigationExtras,
-): Promise<boolean> {
-  const router = inject(Router);
-  const resolvedPath = params ? route(path, params) : (path as string);
-  return router.navigate([resolvedPath], extras);
-}
+) => Promise<boolean>;
 
 /**
- * Type-safe wrapper for Router.navigateByUrl().
+ * Type for the navigateByUrl function returned by injectNavigateByUrl().
+ */
+export type NavigateByUrlFn = <T extends string = string>(
+  path: T,
+  params?: Record<string, string | number>,
+  extras?: NavigationBehaviorOptions,
+) => Promise<boolean>;
+
+/**
+ * Injects a type-safe navigate function.
  *
- * For static routes, only accepts behavior options.
- * For dynamic routes, requires params and optionally accepts options.
+ * Must be called within an injection context (component constructor, field initializer, etc.).
+ * Returns a function that can be called anywhere, including event handlers and callbacks.
  *
  * **Important**: This function requires `routes.d.ts` to be generated for
  * type safety. Run `npm run dev` or `npm run build` to generate it.
  *
  * @example
- * // Static route
- * navigateByUrl('/about');
- * navigateByUrl('/about', undefined, { replaceUrl: true });
+ * @Component({...})
+ * export default class ProductComponent {
+ *   private navigate = injectNavigate();
  *
- * // Dynamic route
- * navigateByUrl('/products/[productId]', { productId: '123' });
- * navigateByUrl('/products/[productId]', { productId: '123' }, { replaceUrl: true });
+ *   goToProduct(productId: string) {
+ *     this.navigate('/products/[productId]', { productId });
+ *   }
  *
- * @param path - The route path
- * @param params - Route parameters (required for dynamic routes, undefined for static)
- * @param extras - Navigation behavior options
- * @returns Promise that resolves to true if navigation succeeds
+ *   goToAbout() {
+ *     this.navigate('/about');
+ *   }
+ *
+ *   goWithExtras() {
+ *     this.navigate('/products/[productId]', { productId: '123' }, {
+ *       queryParams: { ref: 'home' },
+ *       replaceUrl: true,
+ *     });
+ *   }
+ * }
+ *
+ * @returns A type-safe navigate function
  */
-export function navigateByUrl<T extends string = string>(
-  path: T,
-  params?: Record<string, string | number>,
-  extras?: NavigationBehaviorOptions,
-): Promise<boolean> {
+export function injectNavigate(): NavigateFn {
+  assertInInjectionContext(injectNavigate);
   const router = inject(Router);
-  const resolvedPath = params ? route(path, params) : (path as string);
-  return router.navigateByUrl(resolvedPath, extras);
+  return <T extends string = string>(
+    path: T,
+    params?: Record<string, string | number>,
+    extras?: NavigationExtras,
+  ): Promise<boolean> => {
+    const resolvedPath = params ? route(path, params) : (path as string);
+    return router.navigate([resolvedPath], extras);
+  };
+}
+
+/**
+ * Injects a type-safe navigateByUrl function.
+ *
+ * Must be called within an injection context (component constructor, field initializer, etc.).
+ * Returns a function that can be called anywhere, including event handlers and callbacks.
+ *
+ * **Important**: This function requires `routes.d.ts` to be generated for
+ * type safety. Run `npm run dev` or `npm run build` to generate it.
+ *
+ * @example
+ * @Component({...})
+ * export default class ProductComponent {
+ *   private navigateByUrl = injectNavigateByUrl();
+ *
+ *   goToAbout() {
+ *     this.navigateByUrl('/about');
+ *   }
+ *
+ *   goToProduct() {
+ *     this.navigateByUrl('/products/[productId]', { productId: '123' });
+ *   }
+ *
+ *   goWithExtras() {
+ *     this.navigateByUrl('/products/[productId]', { productId: '123' }, {
+ *       replaceUrl: true,
+ *     });
+ *   }
+ * }
+ *
+ * @returns A type-safe navigateByUrl function
+ */
+export function injectNavigateByUrl(): NavigateByUrlFn {
+  assertInInjectionContext(injectNavigateByUrl);
+  const router = inject(Router);
+  return <T extends string = string>(
+    path: T,
+    params?: Record<string, string | number>,
+    extras?: NavigationBehaviorOptions,
+  ): Promise<boolean> => {
+    const resolvedPath = params ? route(path, params) : (path as string);
+    return router.navigateByUrl(resolvedPath, extras);
+  };
 }

@@ -93,26 +93,28 @@ export default class ProductListComponent {
 }
 ```
 
-## navigate()
+## injectNavigate()
 
-The `navigate()` function is a type-safe wrapper around Angular's `Router.navigate()`. It injects the router automatically, validates route paths at compile time, and substitutes parameters into dynamic segments before navigating:
+The `injectNavigate()` function returns a type-safe navigation function. Call it in an injection context (component constructor, field initializer, etc.) to get a navigate function that can be used anywhere:
 
 ```ts
 import { Component } from '@angular/core';
-import { navigate } from '@analogjs/router';
+import { injectNavigate } from '@analogjs/router';
 
 @Component({...})
 export default class ProductComponent {
+  private navigate = injectNavigate();
+
   goToProduct(productId: string) {
-    navigate('/products/[productId]', { productId });
+    this.navigate('/products/[productId]', { productId });
   }
 
   goToAbout() {
-    navigate('/about');
+    this.navigate('/about');
   }
 
   goWithExtras() {
-    navigate('/products/[productId]', { productId: '123' }, {
+    this.navigate('/products/[productId]', { productId: '123' }, {
       queryParams: { ref: 'home' },
       replaceUrl: true,
     });
@@ -122,25 +124,33 @@ export default class ProductComponent {
 
 The third argument accepts all standard Angular `NavigationExtras` options like `queryParams`, `fragment`, `replaceUrl`, and `state`.
 
-## navigateByUrl()
+## injectNavigateByUrl()
 
-The `navigateByUrl()` function is a type-safe wrapper around Angular's `Router.navigateByUrl()`. It builds a complete URL string from the route path and parameters, then navigates to it:
+The `injectNavigateByUrl()` function returns a type-safe URL navigation function. It builds a complete URL string from the route path and parameters, then navigates to it:
 
 ```ts
-import { navigateByUrl } from '@analogjs/router';
+import { Component } from '@angular/core';
+import { injectNavigateByUrl } from '@analogjs/router';
 
-// Navigate to static route
-navigateByUrl('/about');
+@Component({...})
+export default class ProductComponent {
+  private navigateByUrl = injectNavigateByUrl();
 
-// Navigate to dynamic route
-navigateByUrl('/products/[productId]', { productId: '123' });
+  goToAbout() {
+    this.navigateByUrl('/about');
+  }
+
+  goToProduct() {
+    this.navigateByUrl('/products/[productId]', { productId: '123' });
+  }
+}
 ```
 
-Use `navigateByUrl()` when you need to navigate using an absolute URL string rather than a commands array. This is useful when working with URLs from external sources or when you need the full URL representation.
+Use `injectNavigateByUrl()` when you need to navigate using an absolute URL string rather than a commands array. This is useful when working with URLs from external sources or when you need the full URL representation.
 
 :::tip
 
-Both `navigate()` and `navigateByUrl()` must be called in an injection context (component constructor, field initializer, or `inject()` callback).
+Both `injectNavigate()` and `injectNavigateByUrl()` must be called in an injection context (component constructor, field initializer, or `inject()` callback). The returned functions can then be called anywhere, including event handlers and callbacks.
 
 :::
 
@@ -270,7 +280,8 @@ productRoute = route('/products/[productId]', { productId: '123' });
 <a [routerLink]="productRoute">Product</a>
 
 // Programmatic navigation
-navigate('/products/[productId]', { productId });
+private navigate = injectNavigate();
+this.navigate('/products/[productId]', { productId });
 ```
 
 ### Update Parameter Consumption

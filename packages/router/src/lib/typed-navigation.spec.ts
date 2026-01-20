@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, RouterOutlet } from '@angular/router';
 import { provideLocationMocks } from '@angular/common/testing';
 import { describe, expect, it, vi } from 'vitest';
-import { navigate, navigateByUrl } from './typed-navigation';
+import { injectNavigate, injectNavigateByUrl } from './typed-navigation';
 import { TypedRoute } from './route-builder';
 
 /**
@@ -39,14 +39,21 @@ describe('typed-navigation', () => {
     return { router };
   }
 
-  describe('navigate', () => {
+  describe('injectNavigate', () => {
+    it('should return a navigate function', () => {
+      setup();
+
+      const navigate = TestBed.runInInjectionContext(() => injectNavigate());
+
+      expect(typeof navigate).toBe('function');
+    });
+
     it('should navigate to a static route', async () => {
       const { router } = setup();
       const navigateSpy = vi.spyOn(router, 'navigate');
 
-      await TestBed.runInInjectionContext(() =>
-        navigate('/about' as TypedRoute),
-      );
+      const navigate = TestBed.runInInjectionContext(() => injectNavigate());
+      await navigate('/about' as TypedRoute);
 
       expect(navigateSpy).toHaveBeenCalledWith(['/about'], undefined);
     });
@@ -55,9 +62,10 @@ describe('typed-navigation', () => {
       const { router } = setup();
       const navigateSpy = vi.spyOn(router, 'navigate');
 
-      await TestBed.runInInjectionContext(() =>
-        navigate('/products/[productId]' as TypedRoute, { productId: '123' }),
-      );
+      const navigate = TestBed.runInInjectionContext(() => injectNavigate());
+      await navigate('/products/[productId]' as TypedRoute, {
+        productId: '123',
+      });
 
       expect(navigateSpy).toHaveBeenCalledWith(['/products/123'], undefined);
     });
@@ -66,14 +74,13 @@ describe('typed-navigation', () => {
       const { router } = setup();
       const navigateSpy = vi.spyOn(router, 'navigate');
 
-      await TestBed.runInInjectionContext(() =>
-        navigate(
-          '/categories/[categoryId]/products/[productId]' as TypedRoute,
-          {
-            categoryId: 'electronics',
-            productId: '456',
-          },
-        ),
+      const navigate = TestBed.runInInjectionContext(() => injectNavigate());
+      await navigate(
+        '/categories/[categoryId]/products/[productId]' as TypedRoute,
+        {
+          categoryId: 'electronics',
+          productId: '456',
+        },
       );
 
       expect(navigateSpy).toHaveBeenCalledWith(
@@ -86,12 +93,11 @@ describe('typed-navigation', () => {
       const { router } = setup();
       const navigateSpy = vi.spyOn(router, 'navigate');
 
-      await TestBed.runInInjectionContext(() =>
-        navigate('/about' as TypedRoute, undefined, {
-          replaceUrl: true,
-          queryParams: { ref: 'home' },
-        }),
-      );
+      const navigate = TestBed.runInInjectionContext(() => injectNavigate());
+      await navigate('/about' as TypedRoute, undefined, {
+        replaceUrl: true,
+        queryParams: { ref: 'home' },
+      });
 
       expect(navigateSpy).toHaveBeenCalledWith(['/about'], {
         replaceUrl: true,
@@ -103,12 +109,11 @@ describe('typed-navigation', () => {
       const { router } = setup();
       const navigateSpy = vi.spyOn(router, 'navigate');
 
-      await TestBed.runInInjectionContext(() =>
-        navigate(
-          '/products/[productId]' as TypedRoute,
-          { productId: '123' },
-          { fragment: 'details' },
-        ),
+      const navigate = TestBed.runInInjectionContext(() => injectNavigate());
+      await navigate(
+        '/products/[productId]' as TypedRoute,
+        { productId: '123' },
+        { fragment: 'details' },
       );
 
       expect(navigateSpy).toHaveBeenCalledWith(['/products/123'], {
@@ -119,22 +124,47 @@ describe('typed-navigation', () => {
     it('should return a promise from router.navigate', async () => {
       setup();
 
-      const result = await TestBed.runInInjectionContext(() =>
-        navigate('/about' as TypedRoute),
-      );
+      const navigate = TestBed.runInInjectionContext(() => injectNavigate());
+      const result = await navigate('/about' as TypedRoute);
 
       expect(typeof result).toBe('boolean');
     });
+
+    it('should work outside injection context after being injected', async () => {
+      const { router } = setup();
+      const navigateSpy = vi.spyOn(router, 'navigate');
+
+      // Inject the navigate function within injection context
+      const navigate = TestBed.runInInjectionContext(() => injectNavigate());
+
+      // Call it outside injection context (simulating event handler)
+      await navigate('/products/[productId]' as TypedRoute, {
+        productId: '789',
+      });
+
+      expect(navigateSpy).toHaveBeenCalledWith(['/products/789'], undefined);
+    });
   });
 
-  describe('navigateByUrl', () => {
+  describe('injectNavigateByUrl', () => {
+    it('should return a navigateByUrl function', () => {
+      setup();
+
+      const navigateByUrl = TestBed.runInInjectionContext(() =>
+        injectNavigateByUrl(),
+      );
+
+      expect(typeof navigateByUrl).toBe('function');
+    });
+
     it('should navigate to a static route', async () => {
       const { router } = setup();
       const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
 
-      await TestBed.runInInjectionContext(() =>
-        navigateByUrl('/about' as TypedRoute),
+      const navigateByUrl = TestBed.runInInjectionContext(() =>
+        injectNavigateByUrl(),
       );
+      await navigateByUrl('/about' as TypedRoute);
 
       expect(navigateByUrlSpy).toHaveBeenCalledWith('/about', undefined);
     });
@@ -143,11 +173,12 @@ describe('typed-navigation', () => {
       const { router } = setup();
       const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
 
-      await TestBed.runInInjectionContext(() =>
-        navigateByUrl('/products/[productId]' as TypedRoute, {
-          productId: '123',
-        }),
+      const navigateByUrl = TestBed.runInInjectionContext(() =>
+        injectNavigateByUrl(),
       );
+      await navigateByUrl('/products/[productId]' as TypedRoute, {
+        productId: '123',
+      });
 
       expect(navigateByUrlSpy).toHaveBeenCalledWith('/products/123', undefined);
     });
@@ -156,14 +187,15 @@ describe('typed-navigation', () => {
       const { router } = setup();
       const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
 
-      await TestBed.runInInjectionContext(() =>
-        navigateByUrl(
-          '/categories/[categoryId]/products/[productId]' as TypedRoute,
-          {
-            categoryId: 'electronics',
-            productId: '456',
-          },
-        ),
+      const navigateByUrl = TestBed.runInInjectionContext(() =>
+        injectNavigateByUrl(),
+      );
+      await navigateByUrl(
+        '/categories/[categoryId]/products/[productId]' as TypedRoute,
+        {
+          categoryId: 'electronics',
+          productId: '456',
+        },
       );
 
       expect(navigateByUrlSpy).toHaveBeenCalledWith(
@@ -176,9 +208,12 @@ describe('typed-navigation', () => {
       const { router } = setup();
       const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
 
-      await TestBed.runInInjectionContext(() =>
-        navigateByUrl('/about' as TypedRoute, undefined, { replaceUrl: true }),
+      const navigateByUrl = TestBed.runInInjectionContext(() =>
+        injectNavigateByUrl(),
       );
+      await navigateByUrl('/about' as TypedRoute, undefined, {
+        replaceUrl: true,
+      });
 
       expect(navigateByUrlSpy).toHaveBeenCalledWith('/about', {
         replaceUrl: true,
@@ -189,12 +224,13 @@ describe('typed-navigation', () => {
       const { router } = setup();
       const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
 
-      await TestBed.runInInjectionContext(() =>
-        navigateByUrl(
-          '/products/[productId]' as TypedRoute,
-          { productId: '123' },
-          { skipLocationChange: true },
-        ),
+      const navigateByUrl = TestBed.runInInjectionContext(() =>
+        injectNavigateByUrl(),
+      );
+      await navigateByUrl(
+        '/products/[productId]' as TypedRoute,
+        { productId: '123' },
+        { skipLocationChange: true },
       );
 
       expect(navigateByUrlSpy).toHaveBeenCalledWith('/products/123', {
@@ -205,11 +241,29 @@ describe('typed-navigation', () => {
     it('should return a promise from router.navigateByUrl', async () => {
       setup();
 
-      const result = await TestBed.runInInjectionContext(() =>
-        navigateByUrl('/about' as TypedRoute),
+      const navigateByUrl = TestBed.runInInjectionContext(() =>
+        injectNavigateByUrl(),
       );
+      const result = await navigateByUrl('/about' as TypedRoute);
 
       expect(typeof result).toBe('boolean');
+    });
+
+    it('should work outside injection context after being injected', async () => {
+      const { router } = setup();
+      const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
+
+      // Inject the navigateByUrl function within injection context
+      const navigateByUrl = TestBed.runInInjectionContext(() =>
+        injectNavigateByUrl(),
+      );
+
+      // Call it outside injection context (simulating event handler)
+      await navigateByUrl('/products/[productId]' as TypedRoute, {
+        productId: '789',
+      });
+
+      expect(navigateByUrlSpy).toHaveBeenCalledWith('/products/789', undefined);
     });
   });
 });

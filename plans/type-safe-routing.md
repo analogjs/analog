@@ -23,12 +23,12 @@ Add build-time type generation for Analog's file-based routes, enabling type-saf
 
 ## API Surface
 
-| Function            | Purpose                            | Example                                                 |
-| ------------------- | ---------------------------------- | ------------------------------------------------------- |
-| `route()`           | Build path string for `routerLink` | `route('/products/[productId]', { productId: 123 })`    |
-| `navigate()`        | Programmatic navigation            | `navigate('/products/[productId]', { productId: 123 })` |
-| `navigateByUrl()`   | Navigate by full URL               | `navigateByUrl('/about')`                               |
-| `injectParams<T>()` | Consume route params as Signal     | `injectParams<'/products/[productId]'>()`               |
+| Function                | Purpose                            | Example                                                 |
+| ----------------------- | ---------------------------------- | ------------------------------------------------------- |
+| `route()`               | Build path string for `routerLink` | `route('/products/[productId]', { productId: 123 })`    |
+| `injectNavigate()`      | Inject programmatic navigation fn  | `const navigate = injectNavigate(); navigate('/about')` |
+| `injectNavigateByUrl()` | Inject URL navigation fn           | `const nav = injectNavigateByUrl(); nav('/about')`      |
+| `injectParams<T>()`     | Consume route params as Signal     | `injectParams<'/products/[productId]'>()`               |
 
 ## Configuration
 
@@ -98,29 +98,33 @@ declare module '@analogjs/router' {
     params: DynamicRouteParams[T],
   ): string;
 
-  /** Type-safe navigation */
-  export function navigate<T extends StaticRoutes>(
-    path: T,
-    params?: undefined,
-    extras?: NavigationExtras,
-  ): Promise<boolean>;
-  export function navigate<T extends DynamicRoutes>(
-    path: T,
-    params: DynamicRouteParams[T],
-    extras?: NavigationExtras,
-  ): Promise<boolean>;
+  /** Type-safe navigation injection */
+  export function injectNavigate(): {
+    <T extends StaticRoutes>(
+      path: T,
+      params?: undefined,
+      extras?: NavigationExtras,
+    ): Promise<boolean>;
+    <T extends DynamicRoutes>(
+      path: T,
+      params: DynamicRouteParams[T],
+      extras?: NavigationExtras,
+    ): Promise<boolean>;
+  };
 
-  /** Type-safe URL navigation */
-  export function navigateByUrl<T extends StaticRoutes>(
-    path: T,
-    params?: undefined,
-    extras?: NavigationBehaviorOptions,
-  ): Promise<boolean>;
-  export function navigateByUrl<T extends DynamicRoutes>(
-    path: T,
-    params: DynamicRouteParams[T],
-    extras?: NavigationBehaviorOptions,
-  ): Promise<boolean>;
+  /** Type-safe URL navigation injection */
+  export function injectNavigateByUrl(): {
+    <T extends StaticRoutes>(
+      path: T,
+      params?: undefined,
+      extras?: NavigationBehaviorOptions,
+    ): Promise<boolean>;
+    <T extends DynamicRoutes>(
+      path: T,
+      params: DynamicRouteParams[T],
+      extras?: NavigationBehaviorOptions,
+    ): Promise<boolean>;
+  };
 
   /** Inject typed route params as a Signal */
   export function injectParams<T extends DynamicRoutes>(): Signal<
@@ -223,35 +227,47 @@ import {
 import { route } from './route-builder';
 
 /**
- * Type-safe wrapper for Router.navigate().
- *
- * For static routes, pass undefined for params.
- * For dynamic routes, pass the required params object.
+ * Type for the navigate function returned by injectNavigate().
  */
-export function navigate(
-  path: string,
+export type NavigateFn = <T extends string = string>(
+  path: T,
   params?: Record<string, string | number>,
   extras?: NavigationExtras,
-): Promise<boolean> {
+) => Promise<boolean>;
+
+/**
+ * Type for the navigateByUrl function returned by injectNavigateByUrl().
+ */
+export type NavigateByUrlFn = <T extends string = string>(
+  path: T,
+  params?: Record<string, string | number>,
+  extras?: NavigationBehaviorOptions,
+) => Promise<boolean>;
+
+/**
+ * Injects a type-safe navigate function.
+ * Must be called within an injection context.
+ * Returns a function that can be called anywhere.
+ */
+export function injectNavigate(): NavigateFn {
   const router = inject(Router);
-  const resolvedPath = params ? route(path, params) : path;
-  return router.navigate([resolvedPath], extras);
+  return (path, params, extras) => {
+    const resolvedPath = params ? route(path, params) : path;
+    return router.navigate([resolvedPath], extras);
+  };
 }
 
 /**
- * Type-safe wrapper for Router.navigateByUrl().
- *
- * For static routes, pass undefined for params.
- * For dynamic routes, pass the required params object.
+ * Injects a type-safe navigateByUrl function.
+ * Must be called within an injection context.
+ * Returns a function that can be called anywhere.
  */
-export function navigateByUrl(
-  path: string,
-  params?: Record<string, string | number>,
-  extras?: NavigationBehaviorOptions,
-): Promise<boolean> {
+export function injectNavigateByUrl(): NavigateByUrlFn {
   const router = inject(Router);
-  const resolvedPath = params ? route(path, params) : path;
-  return router.navigateByUrl(resolvedPath, extras);
+  return (path, params, extras) => {
+    const resolvedPath = params ? route(path, params) : path;
+    return router.navigateByUrl(resolvedPath, extras);
+  };
 }
 ```
 
@@ -324,7 +340,12 @@ Export new functions:
 
 ```typescript
 export { route } from './lib/route-builder';
-export { navigate, navigateByUrl } from './lib/typed-navigation';
+export {
+  injectNavigate,
+  injectNavigateByUrl,
+  NavigateFn,
+  NavigateByUrlFn,
+} from './lib/typed-navigation';
 export { injectParams } from './lib/inject-params';
 ```
 
@@ -361,14 +382,19 @@ packages/
 **Programmatic navigation:**
 
 ```typescript
+// Inject navigation functions (in injection context)
+private navigate = injectNavigate();
+private navigateByUrl = injectNavigateByUrl();
+
+// Use anywhere (event handlers, callbacks, etc.)
 // Static route
-navigateByUrl('/about');
+this.navigateByUrl('/about');
 
 // Dynamic route
-navigate('/products/[productId]', { productId: '123' });
+this.navigate('/products/[productId]', { productId: '123' });
 
 // With extras
-navigate(
+this.navigate(
   '/products/[productId]',
   { productId: '123' },
   {
@@ -390,12 +416,12 @@ export default class ProductPage {
 
 ## Key Decisions
 
-| Decision          | Choice                                          |
-| ----------------- | ----------------------------------------------- |
-| Output location   | `src/app/pages/routes.d.ts`                     |
-| Version control   | Committed                                       |
-| File scope        | `.page.ts` only (no Analog SFCs)                |
-| Catch-all routes  | Included                                        |
-| File watching     | Immediate regeneration (no debounce)            |
-| Param consumption | Signal-based (`injectParams<T>()`)              |
-| Navigation API    | Wrapper functions (`navigate`, `navigateByUrl`) |
+| Decision          | Choice                                                        |
+| ----------------- | ------------------------------------------------------------- |
+| Output location   | `src/app/pages/routes.d.ts`                                   |
+| Version control   | Committed                                                     |
+| File scope        | `.page.ts` only (no Analog SFCs)                              |
+| Catch-all routes  | Included                                                      |
+| File watching     | Immediate regeneration (no debounce)                          |
+| Param consumption | Signal-based (`injectParams<T>()`)                            |
+| Navigation API    | Injection functions (`injectNavigate`, `injectNavigateByUrl`) |

@@ -143,7 +143,7 @@ describe('type-generator', () => {
       );
     });
 
-    it('should generate navigate() function overloads', () => {
+    it('should generate injectNavigate() function declaration', () => {
       const routes: ParsedRoute[] = [
         {
           filePath: '/src/app/pages/about.page.ts',
@@ -156,16 +156,13 @@ describe('type-generator', () => {
 
       const result = generateRouteTypes(routes);
 
-      expect(result).toContain(
-        'export function navigate<T extends StaticRoutes>',
-      );
-      expect(result).toContain(
-        'export function navigate<T extends keyof DynamicRouteParams>',
-      );
+      expect(result).toContain('export function injectNavigate()');
+      expect(result).toContain('<T extends StaticRoutes>');
+      expect(result).toContain('<T extends keyof DynamicRouteParams>');
       expect(result).toContain('NavigationExtras');
     });
 
-    it('should generate navigateByUrl() function overloads', () => {
+    it('should generate injectNavigateByUrl() function declaration', () => {
       const routes: ParsedRoute[] = [
         {
           filePath: '/src/app/pages/about.page.ts',
@@ -178,12 +175,9 @@ describe('type-generator', () => {
 
       const result = generateRouteTypes(routes);
 
-      expect(result).toContain(
-        'export function navigateByUrl<T extends StaticRoutes>',
-      );
-      expect(result).toContain(
-        'export function navigateByUrl<T extends keyof DynamicRouteParams>',
-      );
+      expect(result).toContain('export function injectNavigateByUrl()');
+      expect(result).toContain('<T extends StaticRoutes>');
+      expect(result).toContain('<T extends keyof DynamicRouteParams>');
       expect(result).toContain('NavigationBehaviorOptions');
     });
 

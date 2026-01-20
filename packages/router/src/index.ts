@@ -21,7 +21,12 @@ export { ServerOnly } from './lib/server.component';
 
 // Type-safe routing
 export { route, TypedRoute } from './lib/route-builder';
-export { navigate, navigateByUrl } from './lib/typed-navigation';
+export {
+  injectNavigate,
+  injectNavigateByUrl,
+  NavigateFn,
+  NavigateByUrlFn,
+} from './lib/typed-navigation';
 export {
   injectParams,
   TypedParams,
