@@ -7,7 +7,7 @@
   "tags": [],
   "targets": {
     "tests": {
-      "executor": "@nx/vite:test"
+      "executor": "@nx/vitest:test"
     },
     "lint": {
       "executor": "@nx/eslint:lint",

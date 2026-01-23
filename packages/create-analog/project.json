@@ -13,7 +13,7 @@
       }
     },
     "test": {
-      "executor": "@nx/vite:test"
+      "executor": "@nx/vitest:test"
     },
     "version": {
       "executor": "@jscutlery/semver:version",

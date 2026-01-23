@@ -3,7 +3,8 @@
   "compilerOptions": {
     "types": ["webpack-env", "node"],
     "typeRoots": ["../../node_modules/@types", "node_modules/@types"],
-    "allowJs": true
+    "allowJs": true,
+    "isolatedModules": true
   },
   "include": ["**/*.test.ts", "**/*.d.ts"]
 }
