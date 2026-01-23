@@ -7,7 +7,7 @@
   "implicitDependencies": ["trpc-app"],
   "targets": {
     "vitest": {
-      "executor": "@nx/vite:test"
+      "executor": "@nx/vitest:test"
     },
     "e2e": {
       "executor": "nx:run-commands",

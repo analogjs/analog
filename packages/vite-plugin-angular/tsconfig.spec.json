@@ -2,8 +2,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "module": "commonjs",
-    "types": ["node", "vitest/globals"]
+    "module": "preserve",
+    "types": ["node", "vitest/globals"],
+    "moduleResolution": "bundler",
+    "isolatedModules": true
   },
   "include": ["**/*.test.ts", "**/*.spec.ts", "**/*.d.ts"]
 }

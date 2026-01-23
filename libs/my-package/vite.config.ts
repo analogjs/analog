@@ -53,6 +53,7 @@ export default defineConfig(({ mode }) => ({
       provider: playwright(),
       instances: [{ browser: 'chromium' }],
     },
+    watch: false,
   },
   define: {
     'import.meta.vitest': mode !== 'production',
