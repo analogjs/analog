@@ -1,3 +1,9 @@
+## [2.2.3-beta.1](https://github.com/analogjs/analog/compare/v2.2.2...v2.2.3-beta.1) (2026-01-25)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** trigger environment builds before server build ([#2048](https://github.com/analogjs/analog/issues/2048)) ([3dd3755](https://github.com/analogjs/analog/commit/3dd375532d4f830ab5e04e970b4c1f869f99abcc))
+
 ## [2.2.2](https://github.com/analogjs/analog/compare/v2.2.1...v2.2.2) (2026-01-14)
 
 ### Bug Fixes
