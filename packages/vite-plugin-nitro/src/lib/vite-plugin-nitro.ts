@@ -369,6 +369,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 builds.push(builder.build(builder.environments['ssr']));
               }
 
+              await Promise.all(builds);
+
               let ssrEntryPath = resolve(
                 options?.ssrBuildDir ||
                   resolve(workspaceRoot, 'dist', rootDir, `ssr`),
@@ -376,7 +378,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               );
 
               // add check for main.server.mjs fallback on Windows
-              if (filePrefix && !existsSync(ssrEntryPath)) {
+              if (isWindows && !existsSync(ssrEntryPath)) {
                 ssrEntryPath = ssrEntryPath.replace('.js', '.mjs');
               }
 
@@ -387,7 +389,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 '#analog/ssr': ssrEntry,
               };
 
-              await Promise.all(builds);
               await buildServer(options, nitroConfig);
 
               if (
@@ -493,7 +494,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           );
 
           // add check for main.server.mjs fallback on Windows
-          if (filePrefix && !existsSync(ssrEntryPath)) {
+          if (isWindows && !existsSync(ssrEntryPath)) {
             ssrEntryPath = ssrEntryPath.replace('.js', '.mjs');
           }
 
