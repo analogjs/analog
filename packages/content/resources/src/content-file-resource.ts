@@ -25,8 +25,7 @@ async function getContentFile<
   fallback: string,
 ): Promise<ContentFile<Attributes | Record<string, never>>> {
   const filePath = `/src/content/${slug}`;
-  const contentFile =
-    contentFiles[`${filePath}.md`] ?? contentFiles[`${filePath}.agx`];
+  const contentFile = contentFiles[`${filePath}.md`] ?? contentFiles[`${slug}`];
 
   if (!contentFile) {
     return {
