@@ -1,3 +1,9 @@
+## [2.2.3-beta.3](https://github.com/analogjs/analog/compare/v2.2.3-beta.2...v2.2.3-beta.3) (2026-01-27)
+
+### Bug Fixes
+
+- **content:** allow retrieving content file resource by slug ([#2051](https://github.com/analogjs/analog/issues/2051)) ([5ac1013](https://github.com/analogjs/analog/commit/5ac101396c73856e52a1fb888c55eacd54abd62a))
+
 ## [2.2.3-beta.2](https://github.com/analogjs/analog/compare/v2.2.3-beta.1...v2.2.3-beta.2) (2026-01-27)
 
 ### Bug Fixes
