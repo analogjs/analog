@@ -1,3 +1,11 @@
+## [2.2.3](https://github.com/analogjs/analog/compare/v2.2.2...v2.2.3) (2026-01-29)
+
+### Bug Fixes
+
+- **content:** allow retrieving content file resource by slug ([#2051](https://github.com/analogjs/analog/issues/2051)) ([5ac1013](https://github.com/analogjs/analog/commit/5ac101396c73856e52a1fb888c55eacd54abd62a))
+- **content:** export content loader tokens for custom content list/file ([#2050](https://github.com/analogjs/analog/issues/2050)) ([e45f189](https://github.com/analogjs/analog/commit/e45f1894cb8ba204481df7bd1d17d133639370c4))
+- **vite-plugin-nitro:** trigger environment builds before server build ([#2048](https://github.com/analogjs/analog/issues/2048)) ([3dd3755](https://github.com/analogjs/analog/commit/3dd375532d4f830ab5e04e970b4c1f869f99abcc))
+
 ## [2.2.3-beta.3](https://github.com/analogjs/analog/compare/v2.2.3-beta.2...v2.2.3-beta.3) (2026-01-27)
 
 ### Bug Fixes
