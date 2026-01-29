@@ -25,5 +25,8 @@ export async function addAngularApp(tree: Tree, options: NormalizedOptions) {
       // @ts-ignore
       '@nx/angular/generators'
     )
-  ).applicationGenerator(tree, appOptions);
+  ).applicationGenerator(tree, {
+    ...appOptions,
+    directory: `${appsDir}/${options.analogAppName}`,
+  });
 }

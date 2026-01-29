@@ -35,7 +35,7 @@
     },
     "tests": {
       "dependsOn": ["^build"],
-      "executor": "@nx/vite:test",
+      "executor": "@nx/vitest:test",
       "options": {
         "passWithNoTests": true
       }
