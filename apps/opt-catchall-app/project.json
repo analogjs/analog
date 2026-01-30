@@ -1,0 +1,59 @@
+{
+  "name": "opt-catchall-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/opt-catchall-app/src",
+  "prefix": "analogjs",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "outputs": [
+        "{options.outputPath}",
+        "{workspaceRoot}/dist/apps/opt-catchall-app/.nitro",
+        "{workspaceRoot}/dist/apps/opt-catchall-app/ssr",
+        "{workspaceRoot}/dist/apps/opt-catchall-app/analog"
+      ],
+      "options": {
+        "configFile": "apps/opt-catchall-app/vite.config.ts",
+        "outputPath": "dist/apps/opt-catchall-app/client"
+      },
+      "defaultConfiguration": "production",
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "sourcemap": false,
+          "mode": "production"
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/vite:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "opt-catchall-app:build",
+        "port": 3001
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "opt-catchall-app:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "opt-catchall-app:build:production"
+        }
+      }
+    },
+    "serve-nitro": {
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "opt-catchall-app:build",
+        "parallel": true,
+        "port": 3001,
+        "staticFilePath": "dist/apps/opt-catchall-app/analog/public"
+      }
+    }
+  }
+}
