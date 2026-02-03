@@ -649,8 +649,22 @@ export function angular(options?: PluginOptions): Plugin[] {
             this.error(`${typescriptResult.errors.join('\n')}`);
           }
 
-          // return fileEmitter
-          let data = typescriptResult?.content ?? '';
+          if (!typescriptResult) {
+            if (vite.rolldownVersion) {
+              return vite.transformWithOxc(code, id, {
+                lang: 'ts',
+                sourcemap: true,
+              });
+            } else {
+              return vite.transformWithEsbuild(code, id, {
+                loader: 'ts',
+                sourcemap: true,
+                sourcefile: id,
+              });
+            }
+          }
+
+          let data = typescriptResult.content ?? '';
 
           if (jit && data.includes('angular:jit:')) {
             data = data.replace(
