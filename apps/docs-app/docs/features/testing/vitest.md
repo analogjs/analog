@@ -133,7 +133,7 @@ The `setupTestBed()` function accepts an optional configuration object with the 
 
 - `zoneless` (boolean): Whether to use zoneless change detection (default: `true`)
 - `providers` (`Type<any>[]`): Additional providers to include in the test environment (default: `[]`)
-- `browserMode` (boolean): Enables visual test preview in Vitest browser mode by keeping the component rendered, allowing you to inspect its final state (default: `false`)
+- `teardown.destroyAfterEach` (boolean): Whether to destroy the test environment after each test. Set to `false` to keep the component rendered, allowing you to inspect its final state. (default: `true`)
 
 **Example with options:**
 
@@ -141,7 +141,7 @@ The `setupTestBed()` function accepts an optional configuration object with the 
 setupTestBed({
   zoneless: true,
   providers: [],
-  browserMode: false,
+  teardown: { destroyAfterEach: false },
 });
 ```
 
@@ -252,7 +252,7 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-When running tests in the browser, you may want to update your `src/test-setup.ts` to enable `browserMode`:
+When running tests with headed browser mode, you may want to update your `src/test-setup.ts` to keep the component rendered:
 
 ```ts
 import '@angular/compiler';
@@ -260,7 +260,7 @@ import '@analogjs/vitest-angular/setup-snapshots';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 setupTestBed({
-  browserMode: true, // Enables visual test preview
+  teardown: { destroyAfterEach: false }, // Enables visual test preview
 });
 ```
 
