@@ -16,6 +16,7 @@ import {
   getWorkspace,
   getProject,
   addDevDependencies,
+  isNxWorkspace,
 } from '../utils';
 import { Schema } from './schema';
 
@@ -45,7 +46,9 @@ function updateTsConfigSpec(tree: Tree, projectRoot: string): void {
 
   // Update types: remove jest, add vitest/globals
   const types: string[] = tsConfig.compilerOptions.types || ['node'];
-  const filteredTypes = types.filter((t: string) => t !== 'jest');
+  const filteredTypes = types.filter(
+    (t: string) => t !== 'jest' && t !== 'jasmine',
+  );
   if (!filteredTypes.includes('vitest/globals')) {
     filteredTypes.push('vitest/globals');
   }
@@ -72,11 +75,16 @@ function updateAngularJson(tree: Tree, projectName: string): void {
   tree.overwrite('angular.json', JSON.stringify(workspace, null, 2) + '\n');
 }
 
-function generateFiles(projectRoot: string, majorAngularVersion: number): Rule {
+function generateFiles(
+  projectRoot: string,
+  majorAngularVersion: number,
+  isNx: boolean,
+): Rule {
   return mergeWith(
     apply(url('./files'), [
       applyTemplates({
         majorAngularVersion,
+        isNx,
       }),
       move(projectRoot),
     ]),
@@ -91,6 +99,7 @@ export function setupSchematic(options: Schema): Rule {
     const workspace = getWorkspace(tree);
     const project = getProject(workspace, options.project);
     const projectRoot = project.root || '';
+    const isNx = isNxWorkspace(tree);
 
     // Add devDependencies
     addDevDependencies(tree, angularVersion);
@@ -105,6 +114,6 @@ export function setupSchematic(options: Schema): Rule {
     context.addTask(new NodePackageInstallTask());
 
     // Generate files
-    return chain([generateFiles(projectRoot, majorAngularVersion)]);
+    return chain([generateFiles(projectRoot, majorAngularVersion, isNx)]);
   };
 }

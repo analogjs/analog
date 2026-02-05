@@ -1,5 +1,9 @@
 import { Tree, SchematicsException } from '@angular-devkit/schematics';
 
+export function isNxWorkspace(tree: Tree): boolean {
+  return tree.exists('/nx.json');
+}
+
 export interface WorkspaceProject {
   root: string;
   sourceRoot?: string;

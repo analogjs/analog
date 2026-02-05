@@ -109,7 +109,7 @@ describe('setup schematic', () => {
     });
   });
 
-  it('should create vite.config.mts', async () => {
+  it('should create vite.config.mts with vite-tsconfig-paths for non-Nx', async () => {
     const resultTree = await runner.runSchematic(
       'setup',
       { project: 'test-app' },
@@ -125,6 +125,29 @@ describe('setup schematic', () => {
       "import viteTsConfigPaths from 'vite-tsconfig-paths'",
     );
     expect(viteConfig).toContain('plugins: [angular(), viteTsConfigPaths()]');
+    expect(viteConfig).not.toContain('nxViteTsPaths');
+  });
+
+  it('should create vite.config.mts with nxViteTsPaths for Nx workspace', async () => {
+    // Create nx.json to simulate Nx workspace
+    tree.create('/nx.json', JSON.stringify({ version: 2 }));
+
+    const resultTree = await runner.runSchematic(
+      'setup',
+      { project: 'test-app' },
+      tree,
+    );
+
+    expect(resultTree.exists('/vite.config.mts')).toBeTruthy();
+    const viteConfig = resultTree.readContent('/vite.config.mts');
+    expect(viteConfig).toContain(
+      "import angular from '@analogjs/vite-plugin-angular'",
+    );
+    expect(viteConfig).toContain(
+      "import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin'",
+    );
+    expect(viteConfig).toContain('plugins: [angular(), nxViteTsPaths()]');
+    expect(viteConfig).not.toContain('viteTsConfigPaths');
   });
 
   it('should create test-setup.ts with BrowserTestingModule for Angular 20', async () => {
