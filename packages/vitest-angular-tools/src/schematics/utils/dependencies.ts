@@ -3,14 +3,21 @@ import { lt } from 'semver';
 import {
   ANALOG_JS_VITE_PLUGIN_ANGULAR,
   JSDOM,
+  PLAYWRIGHT,
   VITE,
   VITE_TSCONFIG_PATHS,
+  VITEST_BROWSER_PLAYWRIGHT,
   VITEST_V3,
   VITEST_V4,
 } from './versions';
 
+export interface DependencyOptions {
+  browserMode?: boolean;
+}
+
 export function getDevDependencies(
   angularVersion: string,
+  options: DependencyOptions = {},
 ): Record<string, string> {
   const escapedVersion = angularVersion.replace(/[~^]/, '');
 
@@ -20,16 +27,28 @@ export function getDevDependencies(
 
   const vitestVersion = lt(escapedVersion, '21.0.0') ? VITEST_V3 : VITEST_V4;
 
-  return {
+  const deps: Record<string, string> = {
     '@analogjs/vite-plugin-angular': ANALOG_JS_VITE_PLUGIN_ANGULAR,
-    jsdom: JSDOM,
     vite: VITE,
     vitest: vitestVersion,
-    'vite-tsconfig-paths': VITE_TSCONFIG_PATHS,
   };
+
+  if (options.browserMode) {
+    deps['@vitest/browser-playwright'] = VITEST_BROWSER_PLAYWRIGHT;
+    deps['playwright'] = PLAYWRIGHT;
+  } else {
+    deps['jsdom'] = JSDOM;
+    deps['vite-tsconfig-paths'] = VITE_TSCONFIG_PATHS;
+  }
+
+  return deps;
 }
 
-export function addDevDependencies(tree: Tree, angularVersion: string): void {
+export function addDevDependencies(
+  tree: Tree,
+  angularVersion: string,
+  options: DependencyOptions = {},
+): void {
   const packageJsonPath = 'package.json';
   const packageJson = tree.read(packageJsonPath);
   if (!packageJson) {
@@ -37,7 +56,7 @@ export function addDevDependencies(tree: Tree, angularVersion: string): void {
   }
 
   const pkg = JSON.parse(packageJson.toString('utf-8'));
-  const devDeps = getDevDependencies(angularVersion);
+  const devDeps = getDevDependencies(angularVersion, options);
 
   pkg.devDependencies = pkg.devDependencies || {};
   Object.entries(devDeps).forEach(([name, version]) => {

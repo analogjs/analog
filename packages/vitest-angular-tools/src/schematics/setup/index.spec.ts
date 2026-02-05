@@ -287,4 +287,97 @@ describe('setup schematic', () => {
       resultTree.exists('/projects/my-app/src/test-setup.ts'),
     ).toBeTruthy();
   });
+
+  describe('browser mode', () => {
+    it('should add playwright dependencies when browserMode is true', async () => {
+      const resultTree = await runner.runSchematic(
+        'setup',
+        { project: 'test-app', browserMode: true },
+        tree,
+      );
+
+      const packageJson = JSON.parse(resultTree.readContent('/package.json'));
+      expect(packageJson.devDependencies).toMatchObject({
+        '@vitest/browser-playwright': '^4.0.0',
+        playwright: '^1.54.0',
+      });
+      expect(packageJson.devDependencies.jsdom).toBeUndefined();
+    });
+
+    it('should create vite.config.mts with browser config when browserMode is true', async () => {
+      const resultTree = await runner.runSchematic(
+        'setup',
+        { project: 'test-app', browserMode: true },
+        tree,
+      );
+
+      const viteConfig = resultTree.readContent('/vite.config.mts');
+      expect(viteConfig).toContain(
+        "import playwright from '@vitest/browser-playwright'",
+      );
+      expect(viteConfig).toContain('browser: {');
+      expect(viteConfig).toContain('enabled: true');
+      expect(viteConfig).toContain('provider: playwright');
+      expect(viteConfig).toContain("instances: [{ browser: 'chromium' }]");
+      expect(viteConfig).not.toContain("environment: 'jsdom'");
+    });
+
+    it('should create vite.config.mts with jsdom when browserMode is false', async () => {
+      const resultTree = await runner.runSchematic(
+        'setup',
+        { project: 'test-app', browserMode: false },
+        tree,
+      );
+
+      const viteConfig = resultTree.readContent('/vite.config.mts');
+      expect(viteConfig).toContain("environment: 'jsdom'");
+      expect(viteConfig).not.toContain('@vitest/browser-playwright');
+      expect(viteConfig).not.toContain('browser: {');
+    });
+
+    it('should create test-setup.ts with browserMode option for Angular 21+', async () => {
+      // Update to Angular 21
+      tree.overwrite(
+        '/package.json',
+        JSON.stringify({
+          dependencies: {
+            '@angular/core': '^21.0.0',
+          },
+          devDependencies: {},
+        }),
+      );
+
+      const resultTree = await runner.runSchematic(
+        'setup',
+        { project: 'test-app', browserMode: true },
+        tree,
+      );
+
+      const setupContent = resultTree.readContent('/src/test-setup.ts');
+      expect(setupContent).toContain('setupTestBed({ browserMode: true })');
+    });
+
+    it('should create test-setup.ts without browserMode option when false', async () => {
+      // Update to Angular 21
+      tree.overwrite(
+        '/package.json',
+        JSON.stringify({
+          dependencies: {
+            '@angular/core': '^21.0.0',
+          },
+          devDependencies: {},
+        }),
+      );
+
+      const resultTree = await runner.runSchematic(
+        'setup',
+        { project: 'test-app', browserMode: false },
+        tree,
+      );
+
+      const setupContent = resultTree.readContent('/src/test-setup.ts');
+      expect(setupContent).toContain('setupTestBed()');
+      expect(setupContent).not.toContain('browserMode');
+    });
+  });
 });

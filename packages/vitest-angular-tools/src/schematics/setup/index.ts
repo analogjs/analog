@@ -84,12 +84,14 @@ function generateFiles(
   projectRoot: string,
   majorAngularVersion: number,
   isNx: boolean,
+  browserMode: boolean,
 ): Rule {
   return mergeWith(
     apply(url('./files'), [
       applyTemplates({
         majorAngularVersion,
         isNx,
+        browserMode,
       }),
       move(projectRoot),
     ]),
@@ -106,8 +108,10 @@ export function setupSchematic(options: Schema): Rule {
     const projectRoot = project.root || '';
     const isNx = isNxWorkspace(tree);
 
+    const browserMode = options.browserMode ?? false;
+
     // Add devDependencies
-    addDevDependencies(tree, angularVersion);
+    addDevDependencies(tree, angularVersion, { browserMode });
 
     // Update tsconfig.spec.json (if exists)
     updateTsConfigSpec(tree, projectRoot);
@@ -119,6 +123,8 @@ export function setupSchematic(options: Schema): Rule {
     context.addTask(new NodePackageInstallTask());
 
     // Generate files
-    return chain([generateFiles(projectRoot, majorAngularVersion, isNx)]);
+    return chain([
+      generateFiles(projectRoot, majorAngularVersion, isNx, browserMode),
+    ]);
   };
 }

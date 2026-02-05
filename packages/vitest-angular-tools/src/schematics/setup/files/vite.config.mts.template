@@ -6,6 +6,9 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 <% } else { %>
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 <% } %>
+<% if (browserMode) { %>
+import playwright from '@vitest/browser-playwright';
+<% } %>
 import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
@@ -17,7 +20,15 @@ export default defineConfig(({ mode }) => ({
 <% } %>
   test: {
     globals: true,
+<% if (browserMode) { %>
+    browser: {
+      enabled: true,
+      provider: playwright,
+      instances: [{ browser: 'chromium' }],
+    },
+<% } else { %>
     environment: 'jsdom',
+<% } %>
     setupFiles: ['src/test-setup.ts'],
     include: ['**/*.spec.ts'],
     reporters: ['default'],
