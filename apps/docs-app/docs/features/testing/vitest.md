@@ -9,13 +9,13 @@ import TabItem from '@theme/TabItem';
 
 Vitest can be installed and setup using a schematic/generator for Angular CLI or Nx workspaces.
 
-First, install the `@analogjs/platform` package:
+First, install the `@analogjs/vitest-angular` package:
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/platform --save-dev
+npm install @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -23,7 +23,7 @@ npm install @analogjs/platform --save-dev
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/platform --dev
+yarn add @analogjs/vitest-angular --dev
 ```
 
   </TabItem>
@@ -31,7 +31,7 @@ yarn add @analogjs/platform --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/platform --save-dev
+pnpm install -w @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -40,7 +40,7 @@ pnpm install -w @analogjs/platform --save-dev
 Next, run the schematic to set up the Vite config, test configuration files, and update the test configuration.
 
 ```shell
-ng g @analogjs/platform:setup-vitest --project [your-project-name]
+ng g @analogjs/vitest-angular:setup --project [your-project-name]
 ```
 
 Next, go to [running tests](#running-tests)
