@@ -10,6 +10,7 @@ import {
   SchematicContext,
 } from '@angular-devkit/schematics';
 import { NodePackageInstallTask } from '@angular-devkit/schematics/tasks';
+import { parse } from 'jsonc-parser';
 import {
   getAngularVersion,
   getMajorAngularVersion,
@@ -34,7 +35,11 @@ function updateTsConfigSpec(tree: Tree, projectRoot: string): void {
     return;
   }
 
-  const tsConfig = JSON.parse(tsConfigContent.toString('utf-8'));
+  const tsConfig = parse(tsConfigContent.toString('utf-8')) as Record<
+    string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    any
+  >;
 
   tsConfig.compilerOptions = tsConfig.compilerOptions || {};
 

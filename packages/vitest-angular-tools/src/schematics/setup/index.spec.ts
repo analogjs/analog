@@ -212,6 +212,32 @@ describe('setup schematic', () => {
     expect(tsconfig.files).toEqual(['src/test-setup.ts']);
   });
 
+  it('should handle tsconfig.spec.json with comments', async () => {
+    // Create tsconfig.spec.json with comments (JSONC format)
+    tree.overwrite(
+      '/tsconfig.spec.json',
+      `{
+  // This is a comment
+  "compilerOptions": {
+    "types": ["node", "jest"], // inline comment
+    "module": "commonjs"
+  }
+  /* block comment */
+}`,
+    );
+
+    const resultTree = await runner.runSchematic(
+      'setup',
+      { project: 'test-app' },
+      tree,
+    );
+
+    const tsconfig = JSON.parse(resultTree.readContent('/tsconfig.spec.json'));
+    expect(tsconfig.compilerOptions.target).toBe('es2022');
+    expect(tsconfig.compilerOptions.types).toContain('vitest/globals');
+    expect(tsconfig.compilerOptions.types).not.toContain('jest');
+  });
+
   it('should skip tsconfig.spec.json if not present', async () => {
     tree.delete('/tsconfig.spec.json');
 
