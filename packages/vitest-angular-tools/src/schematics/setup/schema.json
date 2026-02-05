@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "AnalogVitestInit",
+  "title": "Initialize Vitest for Angular",
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "The name of the project to configure",
+      "$default": {
+        "$source": "projectName"
+      },
+      "x-prompt": "Which project would you like to configure Vitest for?"
+    }
+  },
+  "required": ["project"]
+}

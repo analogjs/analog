@@ -1,0 +1,241 @@
+import {
+  SchematicTestRunner,
+  UnitTestTree,
+} from '@angular-devkit/schematics/testing';
+import { Tree } from '@angular-devkit/schematics';
+import * as path from 'path';
+
+// Use the built collection from node_modules
+const collectionPath = path.join(
+  __dirname,
+  '../../../../../node_modules/@analogjs/vitest-angular/src/lib/tools/collection.json',
+);
+
+describe('setup schematic', () => {
+  let runner: SchematicTestRunner;
+  let tree: UnitTestTree;
+
+  beforeEach(() => {
+    runner = new SchematicTestRunner('schematics', collectionPath);
+    tree = new UnitTestTree(Tree.empty());
+
+    // Create angular.json with a test project
+    tree.create(
+      '/angular.json',
+      JSON.stringify({
+        version: 1,
+        projects: {
+          'test-app': {
+            root: '',
+            sourceRoot: 'src',
+            architect: {},
+          },
+        },
+      }),
+    );
+
+    // Create package.json with Angular 20
+    tree.create(
+      '/package.json',
+      JSON.stringify({
+        dependencies: {
+          '@angular/core': '^20.0.0',
+        },
+        devDependencies: {},
+      }),
+    );
+
+    // Create tsconfig.spec.json
+    tree.create(
+      '/tsconfig.spec.json',
+      JSON.stringify({
+        compilerOptions: {
+          types: ['node', 'jest'],
+          module: 'commonjs',
+        },
+      }),
+    );
+  });
+
+  it('should add the correct dev dependencies for Angular 20', async () => {
+    const resultTree = await runner.runSchematic(
+      'setup',
+      { project: 'test-app' },
+      tree,
+    );
+
+    const packageJson = JSON.parse(resultTree.readContent('/package.json'));
+    expect(packageJson.devDependencies).toMatchObject({
+      '@analogjs/vite-plugin-angular': '^2.2.3',
+      jsdom: '^22.0.0',
+      vite: '^7.0.0',
+      vitest: '^3.0.0',
+      'vite-tsconfig-paths': '^4.2.0',
+    });
+  });
+
+  it('should add vitest v4 for Angular 21+', async () => {
+    // Update to Angular 21
+    tree.overwrite(
+      '/package.json',
+      JSON.stringify({
+        dependencies: {
+          '@angular/core': '^21.0.0',
+        },
+        devDependencies: {},
+      }),
+    );
+
+    const resultTree = await runner.runSchematic(
+      'setup',
+      { project: 'test-app' },
+      tree,
+    );
+
+    const packageJson = JSON.parse(resultTree.readContent('/package.json'));
+    expect(packageJson.devDependencies.vitest).toBe('^4.0.0');
+  });
+
+  it('should update angular.json test target', async () => {
+    const resultTree = await runner.runSchematic(
+      'setup',
+      { project: 'test-app' },
+      tree,
+    );
+
+    const angularJson = JSON.parse(resultTree.readContent('/angular.json'));
+    expect(angularJson.projects['test-app'].architect.test).toEqual({
+      builder: '@analogjs/vitest-angular:test',
+    });
+  });
+
+  it('should create vite.config.mts', async () => {
+    const resultTree = await runner.runSchematic(
+      'setup',
+      { project: 'test-app' },
+      tree,
+    );
+
+    expect(resultTree.exists('/vite.config.mts')).toBeTruthy();
+    const viteConfig = resultTree.readContent('/vite.config.mts');
+    expect(viteConfig).toContain(
+      "import angular from '@analogjs/vite-plugin-angular'",
+    );
+    expect(viteConfig).toContain(
+      "import viteTsConfigPaths from 'vite-tsconfig-paths'",
+    );
+    expect(viteConfig).toContain('plugins: [angular(), viteTsConfigPaths()]');
+  });
+
+  it('should create test-setup.ts with BrowserTestingModule for Angular 20', async () => {
+    const resultTree = await runner.runSchematic(
+      'setup',
+      { project: 'test-app' },
+      tree,
+    );
+
+    expect(resultTree.exists('/src/test-setup.ts')).toBeTruthy();
+    const setupContent = resultTree.readContent('/src/test-setup.ts');
+    expect(setupContent).toContain("import '@angular/compiler'");
+    expect(setupContent).toContain(
+      "import '@analogjs/vitest-angular/setup-zone'",
+    );
+    expect(setupContent).toContain('BrowserTestingModule');
+    expect(setupContent).toContain('platformBrowserTesting');
+  });
+
+  it('should create test-setup.ts with setupTestBed for Angular 21+', async () => {
+    // Update to Angular 21
+    tree.overwrite(
+      '/package.json',
+      JSON.stringify({
+        dependencies: {
+          '@angular/core': '^21.0.0',
+        },
+        devDependencies: {},
+      }),
+    );
+
+    const resultTree = await runner.runSchematic(
+      'setup',
+      { project: 'test-app' },
+      tree,
+    );
+
+    expect(resultTree.exists('/src/test-setup.ts')).toBeTruthy();
+    const setupContent = resultTree.readContent('/src/test-setup.ts');
+    expect(setupContent).toContain("import '@angular/compiler'");
+    expect(setupContent).toContain(
+      "import '@analogjs/vitest-angular/setup-snapshots'",
+    );
+    expect(setupContent).toContain(
+      "import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed'",
+    );
+    expect(setupContent).toContain('setupTestBed()');
+  });
+
+  it('should update tsconfig.spec.json', async () => {
+    const resultTree = await runner.runSchematic(
+      'setup',
+      { project: 'test-app' },
+      tree,
+    );
+
+    const tsconfig = JSON.parse(resultTree.readContent('/tsconfig.spec.json'));
+    expect(tsconfig.compilerOptions.module).toBeUndefined();
+    expect(tsconfig.compilerOptions.target).toBe('es2022');
+    expect(tsconfig.compilerOptions.types).toContain('vitest/globals');
+    expect(tsconfig.compilerOptions.types).not.toContain('jest');
+    expect(tsconfig.files).toEqual(['src/test-setup.ts']);
+  });
+
+  it('should skip tsconfig.spec.json if not present', async () => {
+    tree.delete('/tsconfig.spec.json');
+
+    const resultTree = await runner.runSchematic(
+      'setup',
+      { project: 'test-app' },
+      tree,
+    );
+
+    expect(resultTree.exists('/tsconfig.spec.json')).toBeFalsy();
+    // Should still complete successfully
+    expect(resultTree.exists('/vite.config.mts')).toBeTruthy();
+  });
+
+  it('should work with project in subdirectory', async () => {
+    tree.overwrite(
+      '/angular.json',
+      JSON.stringify({
+        version: 1,
+        projects: {
+          'my-app': {
+            root: 'projects/my-app',
+            sourceRoot: 'projects/my-app/src',
+            architect: {},
+          },
+        },
+      }),
+    );
+
+    tree.create(
+      '/projects/my-app/tsconfig.spec.json',
+      JSON.stringify({
+        compilerOptions: {
+          types: ['node'],
+        },
+      }),
+    );
+
+    const resultTree = await runner.runSchematic(
+      'setup',
+      { project: 'my-app' },
+      tree,
+    );
+
+    expect(resultTree.exists('/projects/my-app/vite.config.mts')).toBeTruthy();
+    expect(
+      resultTree.exists('/projects/my-app/src/test-setup.ts'),
+    ).toBeTruthy();
+  });
+});
