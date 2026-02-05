@@ -313,11 +313,11 @@ describe('setup schematic', () => {
 
       const viteConfig = resultTree.readContent('/vite.config.mts');
       expect(viteConfig).toContain(
-        "import playwright from '@vitest/browser-playwright'",
+        "import { playwright } from '@vitest/browser-playwright'",
       );
       expect(viteConfig).toContain('browser: {');
       expect(viteConfig).toContain('enabled: true');
-      expect(viteConfig).toContain('provider: playwright');
+      expect(viteConfig).toContain('provider: playwright()');
       expect(viteConfig).toContain("instances: [{ browser: 'chromium' }]");
       expect(viteConfig).not.toContain("environment: 'jsdom'");
     });

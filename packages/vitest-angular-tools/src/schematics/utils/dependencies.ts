@@ -31,6 +31,7 @@ export function getDevDependencies(
     '@analogjs/vite-plugin-angular': ANALOG_JS_VITE_PLUGIN_ANGULAR,
     vite: VITE,
     vitest: vitestVersion,
+    'vite-tsconfig-paths': VITE_TSCONFIG_PATHS,
   };
 
   if (options.browserMode) {
@@ -38,7 +39,6 @@ export function getDevDependencies(
     deps['playwright'] = PLAYWRIGHT;
   } else {
     deps['jsdom'] = JSDOM;
-    deps['vite-tsconfig-paths'] = VITE_TSCONFIG_PATHS;
   }
 
   return deps;
