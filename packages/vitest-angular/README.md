@@ -41,13 +41,7 @@ yarn install @analogjs/vitest-angular vitest --dev
 
 A schematic can be used to setup Vitest in an existing Angular project:
 
-Install the `@analogjs/vitest-angular` package:
-
-```sh
-npm i @analogjs/vitest-angular --save-dev
-```
-
-Next, run the schematic to set up the Vite config, test configuration files, and update the test configuration.
+Run the schematic to set up the Vite config, test configuration files, and update the test configuration.
 
 ```sh
 npx ng generate @analogjs/vitest-angular:setup --project [your-project-name]
@@ -67,6 +61,8 @@ ng g @analogjs/vitest-angular:setup --project [your-project-name] --browserMode
 ```
 
 This automatically installs Playwright dependencies and configures Vitest for browser testing. See [Setup for Running Tests in the Browser](#setup-for-running-tests-in-the-browser) for more details.
+
+If using browser mode, run `npx playwright install` after the schematic to ensure playwright is installed and configured.
 
 ## Manual Setup
 

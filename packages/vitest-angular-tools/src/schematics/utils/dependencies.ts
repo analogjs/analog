@@ -7,7 +7,6 @@ import {
   VITE,
   VITE_TSCONFIG_PATHS,
   VITEST_BROWSER_PLAYWRIGHT,
-  VITEST_V3,
   VITEST_V4,
 } from './versions';
 
@@ -25,12 +24,10 @@ export function getDevDependencies(
     throw new SchematicsException('Angular v17.0.0 or newer is required.');
   }
 
-  const vitestVersion = lt(escapedVersion, '21.0.0') ? VITEST_V3 : VITEST_V4;
-
   const deps: Record<string, string> = {
     '@analogjs/vite-plugin-angular': ANALOG_JS_VITE_PLUGIN_ANGULAR,
     vite: VITE,
-    vitest: vitestVersion,
+    vitest: VITEST_V4,
     'vite-tsconfig-paths': VITE_TSCONFIG_PATHS,
   };
 

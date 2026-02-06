@@ -69,7 +69,7 @@ describe('setup schematic', () => {
       '@analogjs/vite-plugin-angular': '^2.2.3',
       jsdom: '^22.0.0',
       vite: '^7.0.0',
-      vitest: '^3.0.0',
+      vitest: '^4.0.0',
       'vite-tsconfig-paths': '^4.2.0',
     });
   });

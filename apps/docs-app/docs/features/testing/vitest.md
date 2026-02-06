@@ -58,6 +58,8 @@ ng g @analogjs/vitest-angular:setup --project [your-project-name] --browserMode
 
 This automatically installs Playwright dependencies and configures Vitest for browser testing. See [Setup for Running Tests in the Browser](#setup-for-running-tests-in-the-browser) for more details.
 
+If using browser mode, run `npx playwright install` after the schematic to ensure playwright is installed and configured.
+
 Next, go to [running tests](#running-tests)
 
 ## Manual Installation
