@@ -1,3 +1,9 @@
+# [2.3.0-beta.1](https://github.com/analogjs/analog/compare/v2.2.3...v2.3.0-beta.1) (2026-02-07)
+
+### Features
+
+- **vitest-angular:** add setup schematic and ng-add support ([#2056](https://github.com/analogjs/analog/issues/2056)) ([cc26771](https://github.com/analogjs/analog/commit/cc26771aa72cb2a38c2fb7ca070840eccf1e7951))
+
 ## [2.2.3](https://github.com/analogjs/analog/compare/v2.2.2...v2.2.3) (2026-01-29)
 
 ### Bug Fixes
