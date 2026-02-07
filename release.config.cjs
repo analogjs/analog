@@ -171,6 +171,7 @@ module.exports = {
             files: [
               'packages/nx-plugin/src/generators/app/versions/nx_18_X/versions.ts',
               'packages/nx-plugin/src/utils/versions/ng_19_X/versions.ts',
+              'packages/vitest-angular-tools/src/schematics/utils/versions.ts',
             ],
             from: "ANALOG_JS_VITE_PLUGIN_ANGULAR = '.*'",
             to: "ANALOG_JS_VITE_PLUGIN_ANGULAR = '^${nextRelease.version}'",
@@ -216,6 +217,7 @@ module.exports = {
           'packages/vitest-angular/package.json',
           'packages/nx-plugin/src/generators/app/versions/nx_18_X/versions.ts',
           'packages/nx-plugin/src/utils/versions/ng_19_X/versions.ts',
+          'packages/vitest-angular-tools/src/schematics/utils/versions.ts',
         ],
         message: 'chore: release ${nextRelease.version} [skip ci]',
       },

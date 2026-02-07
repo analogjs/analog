@@ -1,0 +1,44 @@
+{
+  "name": "vitest-angular-tools",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/vitest-angular-tools/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "outputPath": "node_modules/@analogjs/vitest-angular/src/lib/tools",
+        "main": "packages/vitest-angular-tools/src/index.ts",
+        "tsConfig": "packages/vitest-angular-tools/tsconfig.lib.json",
+        "clean": true,
+        "assets": [
+          "packages/vitest-angular-tools/*.md",
+          {
+            "input": "./packages/vitest-angular-tools/src",
+            "glob": "**/!(*.ts)",
+            "output": "./src"
+          },
+          {
+            "input": "./packages/vitest-angular-tools/src",
+            "glob": "**/*.d.ts",
+            "output": "./src"
+          },
+          {
+            "input": "./packages/vitest-angular-tools",
+            "glob": "collection.json",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["build"]
+    }
+  }
+}
