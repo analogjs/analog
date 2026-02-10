@@ -36,6 +36,30 @@ export const core = async (config, options) => {
     },
   };
 };
+
+async function resolveExperimentalZoneless(
+  frameworkOptions,
+  angularBuilderOptions,
+) {
+  // 1. Explicit framework option (user's .storybook/main.ts)
+  if (typeof frameworkOptions?.experimentalZoneless === 'boolean') {
+    return frameworkOptions.experimentalZoneless;
+  }
+
+  // 2. Angular builder options (set by start-storybook/build-storybook)
+  if (typeof angularBuilderOptions?.experimentalZoneless === 'boolean') {
+    return angularBuilderOptions.experimentalZoneless;
+  }
+
+  // 3. Auto-detect Angular 21+ (matches @storybook/angular builder behavior)
+  try {
+    const { VERSION } = await import('@angular/core');
+    return !!(VERSION.major && Number(VERSION.major) >= 21);
+  } catch {
+    return false;
+  }
+}
+
 export const viteFinal = async (config, options) => {
   // Remove any loaded analogjs plugins from a vite.config.(m)ts file
   config.plugins = (config.plugins ?? [])
@@ -47,6 +71,10 @@ export const viteFinal = async (config, options) => {
   const { default: angular } = await import('@analogjs/vite-plugin-angular');
   // @ts-ignore
   const framework = await options.presets.apply('framework');
+  const experimentalZoneless = await resolveExperimentalZoneless(
+    framework.options,
+    options?.angularBuilderOptions,
+  );
   return mergeConfig(config, {
     // Add dependencies to pre-optimization
     optimizeDeps: {
@@ -57,9 +85,7 @@ export const viteFinal = async (config, options) => {
         '@angular/platform-browser',
         '@angular/platform-browser/animations',
         'tslib',
-        ...(options?.angularBuilderOptions?.experimentalZoneless
-          ? []
-          : ['zone.js']),
+        ...(experimentalZoneless ? [] : ['zone.js']),
       ],
     },
     plugins: [
@@ -81,19 +107,21 @@ export const viteFinal = async (config, options) => {
             ? framework.options?.inlineStylesExtension
             : 'css',
       }),
-      angularOptionsPlugin(options, { normalizePath }),
+      angularOptionsPlugin(options, { normalizePath, experimentalZoneless }),
       storybookEsbuildPlugin(),
     ],
     define: {
       STORYBOOK_ANGULAR_OPTIONS: JSON.stringify({
-        experimentalZoneless:
-          !!options?.angularBuilderOptions?.experimentalZoneless,
+        experimentalZoneless: !!experimentalZoneless,
       }),
     },
   });
 };
 
-function angularOptionsPlugin(options, { normalizePath }) {
+function angularOptionsPlugin(
+  options,
+  { normalizePath, experimentalZoneless },
+) {
   let resolvedConfig;
   return {
     name: 'analogjs-storybook-options-plugin',
@@ -140,9 +168,7 @@ function angularOptionsPlugin(options, { normalizePath }) {
           });
         }
 
-        const zoneless = options?.angularBuilderOptions?.experimentalZoneless;
-
-        if (!zoneless) {
+        if (!experimentalZoneless) {
           imports.push('zone.js');
         }
 

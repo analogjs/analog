@@ -13,6 +13,7 @@ export type FrameworkOptions = {
   liveReload?: boolean;
   inlineStylesExtension?: string;
   tsconfig?: string;
+  experimentalZoneless?: boolean;
 };
 
 type StorybookConfigFramework = {
