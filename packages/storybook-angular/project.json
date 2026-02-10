@@ -33,12 +33,9 @@
         ]
       }
     },
-    "tests": {
+    "test": {
       "dependsOn": ["^build"],
-      "executor": "@nx/vitest:test",
-      "options": {
-        "passWithNoTests": true
-      }
+      "executor": "@nx/vitest:test"
     }
   }
 }

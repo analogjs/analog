@@ -4,6 +4,7 @@
   "sourceRoot": "packages/astro-angular/src",
   "projectType": "library",
   "tags": ["type:release"],
+  "implicitDependencies": ["vite-plugin-angular"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
