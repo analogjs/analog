@@ -1,3 +1,9 @@
+# [2.3.0-beta.3](https://github.com/analogjs/analog/compare/v2.3.0-beta.2...v2.3.0-beta.3) (2026-02-10)
+
+### Bug Fixes
+
+- update implicit dependencies for build ([cfb0abc](https://github.com/analogjs/analog/commit/cfb0abc5b0be91dc498f443778e5fa1bef95a2c3))
+
 # [2.3.0-beta.2](https://github.com/analogjs/analog/compare/v2.3.0-beta.1...v2.3.0-beta.2) (2026-02-10)
 
 ### Bug Fixes
