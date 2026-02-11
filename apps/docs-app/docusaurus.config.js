@@ -176,6 +176,10 @@ const config = {
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
+        gtag: {
+          trackingID: 'G-8S6ZF9V3Q6',
+          anonymizeIP: true,
+        },
       }),
     ],
   ],
@@ -303,10 +307,6 @@ const config = {
         appId: '8W3CAMYOQF',
         apiKey: '650d723674c8cd38658add35fb9433e3',
         indexName: 'analogjs',
-      },
-      gtag: {
-        trackingID: 'G-8S6ZF9V3Q6',
-        anonymizeIP: true,
       },
     }),
   title,
