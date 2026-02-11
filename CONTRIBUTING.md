@@ -154,7 +154,7 @@ Must be one of the following:
 
 ### Scope
 
-The scope should be the name of the npm package affected (as perceived by the person reading the changelog generated from commit messages.
+The scope should be the name of the npm package affected (as perceived by the person reading the changelog generated from commit messages).
 
 The following is the list of currently supported scopes:
 
@@ -165,6 +165,7 @@ The following is the list of currently supported scopes:
 - **nx-plugin**
 - **platform**
 - **router**
+- **storybook-angular**
 - **trpc**
 - **vite-plugin-angular**
 - **vite-plugin-nitro**

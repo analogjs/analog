@@ -91,7 +91,7 @@ To register global styles, add them to the `@analogjs/storybook-angular` builder
 
 ## Enabling Zoneless Change Detection
 
-To use zoneless change detection for the Storybook, add the `experimentalZoneless` flag to the `@analogjs/storybook-angular` builder options in the `angular.json` or `project.json`.
+To use zoneless change detection for the Storybook, add the `experimentalZoneless` flag to the `@analogjs/storybook-angular` builder options in the `angular.json`.
 
 ```json
     "storybook": {
@@ -106,6 +106,29 @@ To use zoneless change detection for the Storybook, add the `experimentalZoneles
       "options": {
         // ... other options
         "experimentalZoneless": true
+      }
+    }
+```
+
+For `project.json`
+
+```json
+    "storybook": {
+      "executor": "@analogjs/storybook-angular:start-storybook",
+      "options": {
+        // ... other options
+        "configDir": "path/to/.storybook",
+        "experimentalZoneless": true,
+        "compodoc": false
+      }
+    },
+    "build-storybook": {
+      "executor": "@analogjs/storybook-angular:build-storybook",
+      "options": {
+        // ... other options
+        "configDir": "path/to/.storybook",
+        "experimentalZoneless": true,
+        "compodoc": false
       }
     }
 ```
