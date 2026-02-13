@@ -51,11 +51,31 @@ export default defineConfig({
 
 ## 部署时自定义 URL 前缀
 
-如果你部署是需要指定一个自定义的 URL 前缀，例如 https://domain.com/ `basehref`/ 你必须确保 [服务端数据获取](https://analogjs.org/docs/features/data-fetching/server-side-data-fetching)，[HTML 标记和资源](https://angular.io/api/common/APP_BASE_HREF) 和 [动态 API 路由](https://analogjs.org/docs/features/api/overview) 能在 `basehref` 下正常工作。
+如果你部署时需要指定一个自定义的 URL 前缀，例如 https://domain.com/ `basehref`/ 你必须确保 [服务端数据获取](https://analogjs.org/docs/features/data-fetching/server-side-data-fetching)，[HTML 标记和资源](https://angular.io/api/common/APP_BASE_HREF) 和 [动态 API 路由](https://analogjs.org/docs/features/api/overview) 能在 `basehref` 下正常工作。
 
-1. 更新文件 `app.config.env.ts`。
+1. 更新你的 `vite.config.ts` 文件。
 
-这里告知 Angular 如何识别并生成对应的 URL
+```ts
+export default defineConfig(({ mode }) => ({
+  base: '/basehref',
+  plugins: [
+    analog({
+      ...(mode === 'production'
+        ? { apiPrefix: 'basehref' }
+        : { apiPrefix: 'basehref/api' }),
+      prerender: {
+        routes: async () => {
+          return [];
+        },
+      },
+    }),
+  ],
+}));
+```
+
+2. 更新 `app.config.ts` 文件。
+
+这里告知 Angular 如何识别并生成对应的 URL。
 
 ```ts
 import { ApplicationConfig } from '@angular/core';
@@ -69,42 +89,34 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-2. 在 CI 生产环境构建
+3. HttpClient 使用 `injectAPIPrefix()`。
 
-```bash
-  # sets the base url for server-side data fetching
-  export VITE_ANALOG_PUBLIC_BASE_URL="https://domain.com/basehref"
-  # Prefixes all assets and html with /basehref/
-  # if using nx:
-  npx nx run appname:build:production --baseHref='/basehref/'
-  # if using angular build directly:
-  npx ng build --baseHref="/basehref/"
+```ts
+const response = await firstValueFrom(
+  this.httpClient.get<{ client: string }>(`${injectAPIPrefix()}/v1/hello`),
+);
 ```
 
-3. 在生产环境的镜像指定环境变量 `NITRO_APP_BASE_URL`。
+4. 在 CI 生产环境构建
+
+**不要**设置 `VITE_ANALOG_PUBLIC_BASE_URL`，它应该使用 `vite.config.ts` 中的设置。
+如果构建期间存在 `VITE_ANALOG_PUBLIC_BASE_URL`，ssr 数据将在服务器和客户端上重新获取。
+
+```bash
+  # if using nx:
+  npx nx run appname:build:production
+  # if using angular build directly:
+  npx vite build && NITRO_APP_BASE_URL='/basehref/' node dist/analog/server/index.mjs
+```
+
+5. 在生产环境的镜像指定环境变量 `NITRO_APP_BASE_URL`。
 
 ```bash
 NITRO_APP_BASE_URL="/basehref/"
 ```
 
-`vite.config.ts` 文件类似的配置：
+6. 本地预览：
 
-```ts
-    plugins: [
-      analog({
-        apiPrefix: 'api',
-        nitro: {
-          routeRules: {
-            '/': {
-              prerender: false,
-            },
-          },
-        },
-        prerender: {
-          routes: async () => {
-            return ['/'];
-          }
-        }
+```bash
+npx vite build && NITRO_APP_BASE_URL='/basehref/' node dist/analog/server/index.mjs
 ```
-
-Nitro 所有的 API 路由将基于 `/basehref/api` 。

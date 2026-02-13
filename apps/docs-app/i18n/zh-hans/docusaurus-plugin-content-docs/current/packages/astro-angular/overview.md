@@ -4,36 +4,45 @@ title: 'Astro'
 
 # @analogjs/astro-angular
 
-[Astro](https://astro.build) 是一款现代化的 web 框架，旨在构建快速、以内容为中心的网站，与所有主要前端框架兼容。虽然它主要是一个静态站点生成 (SSG) 工具，但它也可以集成称为“岛”的动态组件，支持部分水合。
+[Astro](https://astro.build) 是一个现代 Web 框架，专为构建快速、内容为中心的网站而设计，兼容所有主流前端框架。虽然它主要是一个静态站点生成 (SSG) 工具，但它也可以集成称为 "islands" 的动态组件，这些组件支持部分 hydration。
 
-这个软件包允许将 [Angular](https://angular.dev) 渲染为 Astro 中的岛
+此包允许在 Astro 中将 [Angular](https://angular.dev) 组件作为 islands 渲染。
 
-## 安装
+## 设置
 
 ### 使用 Astro CLI
 
 使用 `astro add` 命令安装集成
 
+使用 npm:
+
 ```sh
-# Using NPM
 npx astro add @analogjs/astro-angular
-# Using Yarn
-yarn astro add @analogjs/astro-angular
-# Using PNPM
+```
+
+使用 pnpm:
+
+```sh
 pnpm astro add @analogjs/astro-angular
 ```
 
-这个命令将：
+使用 yarn:
+
+```sh
+yarn astro add @analogjs/astro-angular
+```
+
+此命令将：
 
 - 安装 `@analogjs/astro-angular` 包。
-- 添加 `@analogjs/astro-angular` 集成到 `astro.config.mjs` 文件。
-- 安装在服务端和客户端上呈现 Angular 组件所需的依赖项，以及常见的 Angular 依赖项，例如 `@angular/common`。
+- 将 `@analogjs/astro-angular` 集成添加到 `astro.config.mjs` 文件中。
+- 安装在服务端和客户端渲染 Angular 组件所需的依赖项，以及常见的 Angular 依赖项，例如 `@angular/common`。
 
 ### 设置 TypeScript 配置
 
-这个集成需要在根目录添加一个 `tsconfig.app.json` 文件用于编译。
+该集成需要在项目根目录下有一个 `tsconfig.app.json` 用于编译。
 
-在你项目的根目录添加一个 `tsconfig.app.json`。
+在项目根目录下创建一个 `tsconfig.app.json`。
 
 ```json
 {
@@ -72,11 +81,11 @@ pnpm astro add @analogjs/astro-angular
 }
 ```
 
-前往 [定义一个组件](#定义一个组件) 来添加用于 Astro 组件中的 Angular 组件
+前往 [定义组件](#defining-a-component) 以设置要在 Astro 组件中使用的 Angular 组件。
 
 ## 手动安装
 
-这个集成也可以通过手动的方式安装
+也可以手动安装该集成
 
 ### 安装 Astro 集成
 
@@ -84,13 +93,13 @@ pnpm astro add @analogjs/astro-angular
 yarn add @analogjs/astro-angular
 ```
 
-### 安装所需的 Angular 依赖
+### 安装必要的 Angular 依赖项
 
 ```sh
-yarn add @angular-devkit/build-angular @angular/{animations,common,compiler-cli,compiler,core,language-service,forms,platform-browser,platform-browser-dynamic,platform-server} rxjs zone.js tslib
+npm install @angular/build @angular/{animations,common,compiler-cli,compiler,core,language-service,forms,platform-browser,platform-server} rxjs tslib --save
 ```
 
-### 添加这个集成
+### 添加集成
 
 将集成添加到 `astro.config.mjs`
 
@@ -103,13 +112,13 @@ export default defineConfig({
 });
 ```
 
-前往 [定义一个组件](#定义一个组件)
+前往 [定义组件](#defining-a-component)
 
 ## 配置
 
 ### 配置 Vite Angular 插件
 
-添加一个选项对象为该插件提供支持的 `@analogjs/vite-plugin-angular`。
+提供一个选项对象来配置驱动此插件的 `@analogjs/vite-plugin-angular`。
 
 ```js
 import { defineConfig } from 'astro/config';
@@ -128,7 +137,7 @@ export default defineConfig({
 
 ### 过滤文件转换
 
-为了更好地与其他插件（如 [Starlight](https://starlight.astro.build)）集成，将 Angular 组件放在特定文件夹中，并使用 `transformFilter` 回调函数仅转换这些文件。
+为了在与其他插件（如 [Starlight](https://starlight.astro.build)）集成时获得更好的兼容性，请将 Angular 组件放在特定文件夹中，并使用 `transformFilter` 回调函数仅转换这些文件。
 
 ```js
 import { defineConfig } from 'astro/config';
@@ -147,9 +156,9 @@ export default defineConfig({
 });
 ```
 
-### 转换包以实现 SSR 兼容性
+### 为 SSR 兼容性转换包
 
-为了确保 Angular 库在 Astro 的 SSR 过程中进行转换，请将他们添加到 Vite 配置中的 `ssr.noExternal` 列表里。
+为确保 Angular 库在 Astro 的 SSR 过程中被转换，请将它们添加到 Vite 配置中的 `ssr.noExternal` 数组中。
 
 ```js
 import { defineConfig } from 'astro/config';
@@ -167,38 +176,37 @@ export default defineConfig({
 });
 ```
 
-## 定义一个组件
+## 定义组件
 
-Astro Angular 集成**仅**支持渲染独立组件：
+Astro Angular 集成 **仅** 支持渲染 standalone components：
 
 ```ts
-import { NgIf } from '@angular/common';
 import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-hello',
-  standalone: true,
-  imports: [NgIf],
   template: `
     <p>Hello from Angular!!</p>
 
-    <p *ngIf="show">{{ helpText }}</p>
+    @if (show()) {
+      <p>{{ helpText() }}</p>
+    }
 
     <button (click)="toggle()">Toggle</button>
   `,
 })
 export class HelloComponent {
-  @Input() helpText = 'help';
+  helpText = input('help');
 
-  show = false;
+  show = signal(false);
 
   toggle() {
-    this.show = !this.show;
+    this.show.update((show) => !show);
   }
 }
 ```
 
-将 Angular 组件添加到 Astro 组件模板里。这仅呈现来自 Angular 组件的 HTML。
+将 Angular 组件添加到 Astro 组件模板中。这仅渲染 Angular 组件的 HTML。
 
 ```tsx
 ---
@@ -212,7 +220,7 @@ const helpText = "Helping binding";
 <HelloComponent helpText={helpText} />
 ```
 
-要在客户端水合组件，使用 Astro [客户端指令](https://docs.astro.build/en/reference/directives-reference/#client-directives) 中的一种：
+要在客户端 hydrate 组件，请使用 Astro [client directives](https://docs.astro.build/en/reference/directives-reference/#client-directives) 之一：
 
 ```tsx
 ---
@@ -222,12 +230,12 @@ import { HelloComponent } from '../components/hello.component';
 <HelloComponent client:visible />
 ```
 
-在 Astro 文档里查看更多关于 [客户端指令](https://docs.astro.build/en/reference/directives-reference/#client-directives) 的信息。
+在 Astro 文档中查找有关 [Client Directives](https://docs.astro.build/en/reference/directives-reference/#client-directives) 的更多信息。
 
-### 监听组件的输出
+### 监听组件 Output
 
-Angular 组件的 Outputs 可以被转发到 Astro 岛的 HTML 时间。
-要启用这个功能，在每一个 Angular 组件上添加一个客户端指令和一个唯一的 `[data-analog-id]` 属性。
+Angular 组件发出的 Output 会作为 HTML 事件转发给 Astro island。
+要启用此功能，请向每个 Angular 组件添加一个 client directive 和唯一的 `[data-analog-id]` 属性：
 
 ```tsx
 ---
@@ -237,7 +245,7 @@ import { HelloComponent } from '../components/hello.component';
 <HelloComponent client:visible data-analog-id="hello-component-1" />
 ```
 
-然后，在 Astro 组件上用 `addOutputListener` 函数监听事件：
+然后，使用 `addOutputListener` 函数在 Astro 组件中监听该事件：
 
 ```tsx
 ---
@@ -255,15 +263,14 @@ import { HelloComponent } from '../components/hello.component';
 </script>
 ```
 
-## 添加组件的依赖提供者
+## 添加组件 Providers
 
-可以将附加依赖提供者添加到组件，以进行静态渲染和客户端水合。
+可以向组件添加额外的 providers 以用于静态渲染和客户端 hydration。
 
-他们分别是 `renderProviders` 和 `clientProviders`。这些提供者在组件类上被定义为静态数组，并且在组件渲染时注册，并在客户端上进行水合。
+它们分别是 `renderProviders` 和 `clientProviders`。这些 providers 被定义为组件类上的静态数组，并在组件渲染和在客户端 hydrate 时注册。
 
 ```ts
 import { Component, OnInit, inject } from '@angular/core';
-import { NgFor } from '@angular/common';
 import { provideHttpClient, HttpClient } from '@angular/common/http';
 
 interface Todo {
@@ -274,38 +281,36 @@ interface Todo {
 
 @Component({
   selector: 'app-todos',
-  standalone: true,
-  imports: [NgFor],
   template: `
     <h2>Todos</h2>
 
     <ul>
-      <li *ngFor="let todo of todos">
-        {{ todo.title }}
-      </li>
+      @for (todo of todos(); track todo.id) {
+        <li>
+          {{ todo.title }}
+        </li>
+      }
     </ul>
   `,
 })
 export class TodosComponent implements OnInit {
   static clientProviders = [provideHttpClient()];
-  static renderProviders = [];
+  static renderProviders = [TodosComponent.clientProviders];
 
   http = inject(HttpClient);
-  todos: Todo[] = [];
+  todos = signal<Todo[]>([]);
 
   ngOnInit() {
     this.http
       .get<Todo[]>('https://jsonplaceholder.typicode.com/todos')
-      .subscribe((todos) => (this.todos = todos));
+      .subscribe((todos) => this.todos.set(todos));
   }
 }
 ```
 
-## 在 MDX 页面上使用组件
+## 在 MDX 页面中使用组件
 
-要在 MDX 页面上使用组件，您必须按照 [@astrojs/mdx](https://docs.astro.build/en/guides/integrations-guide/mdx/) 的 Astro 集成安装和配置 MDX 支持。你的 `astro.config.mjs` 现在应该包含 `@astrojs/mdx` 集成。
-
-> 注意：Shiki 是 MDX 插件的默认语法高亮插件但是当前还不支持。 `astro-angular` 会用 `prism` 覆盖默认的配置，但是你应该在配置里显示指定以阻止警告或者错误。
+要在 MDX 页面中使用组件，必须按照 [@astrojs/mdx](https://docs.astro.build/en/guides/integrations-guide/mdx/) 的 Astro 集成指南安装和配置 MDX 支持。你的 `astro.config.mjs` 现在应该包含 `@astrojs/mdx` 集成。
 
 ```js
 import { defineConfig } from 'astro/config';
@@ -313,11 +318,11 @@ import mdx from '@astrojs/mdx';
 import angular from '@analogjs/astro-angular';
 
 export default defineConfig({
-  integrations: [mdx({ syntaxHighlight: 'prism' }), angular()],
+  integrations: [mdx(), angular()],
 });
 ```
 
-在 `src/pages` 目录创建一个 `.mdx` 文件然后按照下面的格式导入一个 Angular 组件。
+在 `src/pages` 目录中创建一个 `.mdx` 文件，并在 frontmatter 下方添加 Angular 组件导入。
 
 ```md
 ---
@@ -333,7 +338,7 @@ import { HelloComponent } from "../../components/hello.component.ts";
 <HelloComponent helpText="Helping" />
 ```
 
-要在客户端水合组件，使用 Astro [客户端指令](https://docs.astro.build/en/reference/directives-reference/#client-directives)的一种：
+要在客户端 hydrate 组件，请使用 Astro [client directives](https://docs.astro.build/en/reference/directives-reference/#client-directives) 之一：
 
 ```md
 ---
@@ -349,8 +354,9 @@ import { HelloComponent } from "../../components/hello.component.ts";
 <HelloComponent client:visible helpText="Helping" />
 ```
 
-> 重要：在 `.mdx` 文件里导入组件必须以 `.ts` 后缀结尾。否则导入组件会失败并且不会被水合。
+> 重要提示：在 `.mdx` 文件中，组件导入必须以 `.ts` 后缀结尾。否则，组件的动态导入将失败，组件将不会被 hydrate。
 
-## 当前的限制
+## 当前限制
 
-- 只支持 v14.2+ 以上版本的独立 Angular 组件
+- 仅支持 v14.2+ 版本的 standalone Angular 组件
+- 不支持向 island 组件进行内容投影 (Content projection)
