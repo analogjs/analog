@@ -11,7 +11,7 @@ import TabItem from '@theme/TabItem';
 
 默认情况下，Angular 和 Storybook 使用 Webpack 构建和提供 Storybook 应用。
 
-本指南将带你了解使用 AnalogJS Storybook 集成将 Storybook 切换为使用 Angular 和 Vite 进行构建和服务的流程。该包可应用于_任何_使用 Storybook 的 Angular 项目。
+本指南将带你了解使用 AnalogJS Storybook 集成将 Storybook 切换为使用 Angular 和 Vite 进行构建和服务的流程。该包可应用于*任何*使用 Storybook 的 Angular 项目。
 
 > 这是一个社区集成，并非由 Storybook 团队维护。如果你遇到问题，请在我们的 [GitHub 仓库](https://github.com/analogjs/analog/issues)中提交 issue。
 
@@ -20,10 +20,10 @@ import TabItem from '@theme/TabItem';
 用于 Angular 和 Vite 的 AnalogJS Storybook 集成支持多个版本的 Storybook。请参阅下表，根据项目依赖项安装相应的版本。
 
 | Storybook 版本 | Analog 版本 |
-| ----------------- | -------------- |
-| ^10.0.0           | ^2.0.0         |
-| ^9.0.0            | ^1.22.0        |
-| ^8.6.0            | ^1.22.0        |
+| -------------- | ----------- |
+| ^10.0.0        | ^2.0.0      |
+| ^9.0.0         | ^1.22.0     |
+| ^8.6.0         | ^1.22.0     |
 
 ## 设置 Storybook
 
