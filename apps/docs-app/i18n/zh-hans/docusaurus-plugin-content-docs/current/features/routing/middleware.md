@@ -50,3 +50,25 @@ export default defineEventHandler(async (event) => {
   }
 });
 ```
+
+## 访问环境变量
+
+使用 `process.env` 全局变量在中间件函数中访问环境变量。在 `.env` 文件中定义的仅服务器和可公开访问的环境变量都可以从中读取。
+
+```ts
+import { defineEventHandler, getRequestURL } from 'h3';
+
+export default defineEventHandler((event) => {
+  console.log('Path:', getRequestURL(event).pathname);
+  console.log(
+    'Server Only Environment Variable:',
+    process.env['SERVER_ONLY_VARIABLE'],
+  );
+  console.log(
+    'Public Environment Variable:',
+    process.env['VITE_EXAMPLE_VARIABLE'],
+  );
+});
+```
+
+在 Vite 文档中了解更多关于 [环境变量](https://vite.dev/guide/env-and-mode.html#env-variables) 的信息。
