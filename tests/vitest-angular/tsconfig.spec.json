@@ -19,6 +19,7 @@
   ],
   "files": [
     "src/aot/test-setup.ts",
+    "src/providers/test-setup.ts",
     "src/reset-test-bed-between-tests/test-setup.ts"
   ]
 }
