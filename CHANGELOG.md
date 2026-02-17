@@ -1,3 +1,9 @@
+# [2.3.0-beta.10](https://github.com/analogjs/analog/compare/v2.3.0-beta.9...v2.3.0-beta.10) (2026-02-17)
+
+### Bug Fixes
+
+- publish from workflow ([390dd74](https://github.com/analogjs/analog/commit/390dd747f2d2e341260ac20d57f2b7d4057e371c))
+
 # [2.3.0-beta.9](https://github.com/analogjs/analog/compare/v2.3.0-beta.8...v2.3.0-beta.9) (2026-02-17)
 
 ### Bug Fixes
