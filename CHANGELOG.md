@@ -1,3 +1,9 @@
+# [2.3.0-beta.8](https://github.com/analogjs/analog/compare/v2.3.0-beta.7...v2.3.0-beta.8) (2026-02-17)
+
+### Bug Fixes
+
+- remove npm token publishing ([1c490ad](https://github.com/analogjs/analog/commit/1c490ad360733095e56abd9be97f59f81322714a))
+
 # [2.3.0-beta.7](https://github.com/analogjs/analog/compare/v2.3.0-beta.6...v2.3.0-beta.7) (2026-02-17)
 
 ### Bug Fixes
