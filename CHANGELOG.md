@@ -1,3 +1,9 @@
+# [2.3.0-beta.9](https://github.com/analogjs/analog/compare/v2.3.0-beta.8...v2.3.0-beta.9) (2026-02-17)
+
+### Bug Fixes
+
+- remove npm token from semantic release ([ba42f16](https://github.com/analogjs/analog/commit/ba42f16842772315e61e7ea29608c9df42504c97))
+
 # [2.3.0-beta.8](https://github.com/analogjs/analog/compare/v2.3.0-beta.7...v2.3.0-beta.8) (2026-02-17)
 
 ### Bug Fixes
