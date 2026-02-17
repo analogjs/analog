@@ -1,3 +1,9 @@
+# [2.3.0-beta.6](https://github.com/analogjs/analog/compare/v2.3.0-beta.5...v2.3.0-beta.6) (2026-02-17)
+
+### Bug Fixes
+
+- **vitest-angular:** fix setupTestBed's providers option ([#2072](https://github.com/analogjs/analog/issues/2072)) ([2e7a02f](https://github.com/analogjs/analog/commit/2e7a02f4f541b8c5a02a0f5e9f7f0b7ad354f087))
+
 # [2.3.0-beta.5](https://github.com/analogjs/analog/compare/v2.3.0-beta.4...v2.3.0-beta.5) (2026-02-10)
 
 ### Bug Fixes
