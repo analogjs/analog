@@ -1,3 +1,9 @@
+# [2.3.0-beta.11](https://github.com/analogjs/analog/compare/v2.3.0-beta.10...v2.3.0-beta.11) (2026-02-17)
+
+### Bug Fixes
+
+- build before publish ([432ffa6](https://github.com/analogjs/analog/commit/432ffa6a987c679bb7eea45f5c6fa7eb235dc286))
+
 # [2.3.0-beta.10](https://github.com/analogjs/analog/compare/v2.3.0-beta.9...v2.3.0-beta.10) (2026-02-17)
 
 ### Bug Fixes
