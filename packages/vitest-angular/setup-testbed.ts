@@ -1,25 +1,20 @@
-import {
-  EnvironmentProviders,
-  NgModule,
-  Provider,
-  provideZonelessChangeDetection,
-} from '@angular/core';
+import { NgModule, provideZonelessChangeDetection } from "@angular/core";
 import {
   ɵgetCleanupHook as getCleanupHook,
   getTestBed,
-} from '@angular/core/testing';
+} from "@angular/core/testing";
 import {
   BrowserTestingModule,
   platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { afterEach, beforeEach } from 'vitest';
+} from "@angular/platform-browser/testing";
+import { afterEach, beforeEach } from "vitest";
 
-const ANGULAR_TESTBED_SETUP = Symbol.for('testbed-setup');
+const ANGULAR_TESTBED_SETUP = Symbol.for("testbed-setup");
 
 type TestBedSetupOptions = {
   zoneless?: boolean;
-  imports?: NgModule[];
-  providers?: (Provider | EnvironmentProviders)[];
+  imports?: NgModule["imports"];
+  providers?: NgModule["providers"];
   browserMode?: boolean;
 };
 
@@ -40,12 +35,12 @@ export function setupTestBed({
         ...(zoneless ? [provideZonelessChangeDetection()] : []),
         ...providers,
       ],
-      imports: (imports || [])
+      imports: imports || [],
     })
     class TestModule extends BrowserTestingModule {}
 
     getTestBed().initTestEnvironment(
-      [ TestModule ],
+      [TestModule],
       platformBrowserTesting(),
       browserMode ? { teardown: { destroyAfterEach: false } } : undefined,
     );
