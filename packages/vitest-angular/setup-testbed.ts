@@ -40,11 +40,12 @@ export function setupTestBed({
         ...(zoneless ? [provideZonelessChangeDetection()] : []),
         ...providers,
       ],
+      imports: (imports || [])
     })
     class TestModule extends BrowserTestingModule {}
 
     getTestBed().initTestEnvironment(
-      [ TestModule, ...(imports || []) ],
+      [ TestModule ],
       platformBrowserTesting(),
       browserMode ? { teardown: { destroyAfterEach: false } } : undefined,
     );
