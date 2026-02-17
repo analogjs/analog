@@ -1,16 +1,15 @@
 import angular from '@analogjs/vite-plugin-angular';
+import { basename, dirname } from 'path';
 import type { Plugin, TestProjectInlineConfiguration } from 'vitest/config';
+
+const name = basename(dirname(__filename));
 
 export default {
   extends: true,
-  plugins: [
-    angular({
-      jit: false,
-      tsconfig: './tsconfig.spec.json',
-    }) as unknown as Plugin,
-  ],
+  plugins: [angular({ jit: false }) as unknown as Plugin],
   test: {
-    name: 'aot',
-    setupFiles: ['src/aot/test-setup.ts'],
+    name,
+    include: [`src/${name}/**/*.spec.ts`],
+    setupFiles: [`src/${name}/test-setup.ts`],
   },
 } satisfies TestProjectInlineConfiguration;

@@ -1,16 +1,16 @@
-import type { TestProjectConfiguration, Plugin } from 'vitest/config';
 import angular from '@analogjs/vite-plugin-angular';
+import { basename, dirname } from 'path';
+import type { Plugin, TestProjectConfiguration } from 'vitest/config';
+
+const name = basename(dirname(__filename));
 
 export default {
   extends: true,
-  plugins: [
-    angular({
-      tsconfig: './tsconfig.spec.json',
-    }) as unknown as Plugin,
-  ],
+  plugins: [angular() as unknown as Plugin],
   test: {
-    name: 'reset-test-bed-between-tests',
-    setupFiles: ['src/reset-test-bed-between-tests/test-setup.ts'],
+    name,
+    include: [`src/${name}/**/*.spec.ts`],
+    setupFiles: [`src/${name}/test-setup.ts`],
     /**
      * Make sure that all tests are running in the same worker,
      * so that we can test the reset of the TestBed between tests
