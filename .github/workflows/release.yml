@@ -44,6 +44,7 @@ jobs:
         run: |
           TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
           RELEASE_TAG=$TAG npx semantic-release
+          pnpm build:release
           npm publish node_modules/@analogjs/astro-angular --tag $TAG
           npm publish node_modules/@analogjs/content --tag $TAG
           npm publish node_modules/@analogjs/platform --tag $TAG
