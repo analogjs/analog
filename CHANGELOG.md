@@ -1,3 +1,27 @@
+# [2.3.0-beta.9](https://github.com/analogjs/analog/compare/v2.3.0-beta.8...v2.3.0-beta.9) (2026-02-17)
+
+### Bug Fixes
+
+- remove npm token from semantic release ([ba42f16](https://github.com/analogjs/analog/commit/ba42f16842772315e61e7ea29608c9df42504c97))
+
+# [2.3.0-beta.8](https://github.com/analogjs/analog/compare/v2.3.0-beta.7...v2.3.0-beta.8) (2026-02-17)
+
+### Bug Fixes
+
+- remove npm token publishing ([1c490ad](https://github.com/analogjs/analog/commit/1c490ad360733095e56abd9be97f59f81322714a))
+
+# [2.3.0-beta.7](https://github.com/analogjs/analog/compare/v2.3.0-beta.6...v2.3.0-beta.7) (2026-02-17)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add missing tinyglobby dependency ([#2069](https://github.com/analogjs/analog/issues/2069)) ([8661cb6](https://github.com/analogjs/analog/commit/8661cb6ab3754c05ed3b38a268570cd92dfd7147))
+
+# [2.3.0-beta.6](https://github.com/analogjs/analog/compare/v2.3.0-beta.5...v2.3.0-beta.6) (2026-02-17)
+
+### Bug Fixes
+
+- **vitest-angular:** fix setupTestBed's providers option ([#2072](https://github.com/analogjs/analog/issues/2072)) ([2e7a02f](https://github.com/analogjs/analog/commit/2e7a02f4f541b8c5a02a0f5e9f7f0b7ad354f087))
+
 # [2.3.0-beta.5](https://github.com/analogjs/analog/compare/v2.3.0-beta.4...v2.3.0-beta.5) (2026-02-10)
 
 ### Bug Fixes
