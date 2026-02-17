@@ -13,12 +13,14 @@ const ANGULAR_TESTBED_SETUP = Symbol.for('testbed-setup');
 
 type TestBedSetupOptions = {
   zoneless?: boolean;
-  providers?: Type<any>[];
+  imports?: NgModule[];
+  providers?: (Provider | EnvironmentProviders)[];
   browserMode?: boolean;
 };
 
 export function setupTestBed({
   zoneless = true,
+  imports = [],
   providers = [],
   browserMode = false,
 }: TestBedSetupOptions = {}) {
@@ -33,11 +35,14 @@ export function setupTestBed({
     })
     class ZonelessTestModule {}
 
+    @NgModule({ providers })
+    class CustomTestModule extends BrowserTestingModule {}
+
     getTestBed().initTestEnvironment(
       [
-        BrowserTestingModule,
+        CustomTestModule,
         ...(zoneless ? [ZonelessTestModule] : []),
-        ...((providers || []) as Type<any>[]),
+        ...(imports || []),
       ],
       platformBrowserTesting(),
       browserMode ? { teardown: { destroyAfterEach: false } } : undefined,
