@@ -1,4 +1,4 @@
-import { NgModule, provideZonelessChangeDetection, Type } from '@angular/core';
+import { EnvironmentProviders, NgModule, Provider, provideZonelessChangeDetection, Type } from '@angular/core';
 import {
   ɵgetCleanupHook as getCleanupHook,
   getTestBed,
