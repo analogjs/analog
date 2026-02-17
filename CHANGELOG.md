@@ -1,3 +1,9 @@
+# [2.3.0-beta.7](https://github.com/analogjs/analog/compare/v2.3.0-beta.6...v2.3.0-beta.7) (2026-02-17)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add missing tinyglobby dependency ([#2069](https://github.com/analogjs/analog/issues/2069)) ([8661cb6](https://github.com/analogjs/analog/commit/8661cb6ab3754c05ed3b38a268570cd92dfd7147))
+
 # [2.3.0-beta.6](https://github.com/analogjs/analog/compare/v2.3.0-beta.5...v2.3.0-beta.6) (2026-02-17)
 
 ### Bug Fixes
