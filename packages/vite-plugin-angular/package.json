@@ -36,6 +36,7 @@
     }
   },
   "dependencies": {
+    "tinyglobby": "^0.2.14",
     "ts-morph": "^21.0.0"
   },
   "builders": "./src/lib/tools/builders.json",
