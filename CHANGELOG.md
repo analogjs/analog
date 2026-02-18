@@ -1,3 +1,11 @@
+# [2.3.0-beta.12](https://github.com/analogjs/analog/compare/v2.3.0-beta.11...v2.3.0-beta.12) (2026-02-18)
+
+### Bug Fixes
+
+- revert back to semantic release ([ea10b1b](https://github.com/analogjs/analog/commit/ea10b1b7caa573ef65b7796ab81796073fc6183b))
+- update node setup in release workflow ([5bd0923](https://github.com/analogjs/analog/commit/5bd0923d965dcea4fda160cdde8aab9b61601a76))
+- update node version ([4aaa6bd](https://github.com/analogjs/analog/commit/4aaa6bdb79e1909b1b8671a6cda7312a190e9082))
+
 # [2.3.0-beta.11](https://github.com/analogjs/analog/compare/v2.3.0-beta.10...v2.3.0-beta.11) (2026-02-17)
 
 ### Bug Fixes
