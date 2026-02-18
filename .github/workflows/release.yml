@@ -45,14 +45,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
-          # RELEASE_TAG=$TAG npx semantic-release
-          pnpm build:release
-          npm publish node_modules/@analogjs/astro-angular --tag $TAG
-          npm publish node_modules/@analogjs/content --tag $TAG
-          npm publish node_modules/@analogjs/platform --tag $TAG
-          npm publish node_modules/@analogjs/router --tag $TAG
-          npm publish node_modules/@analogjs/storybook-angular --tag $TAG
-          npm publish node_modules/@analogjs/vite-plugin-angular --tag $TAG
-          npm publish node_modules/@analogjs/vite-plugin-nitro --tag $TAG
-          npm publish node_modules/@analogjs/vitest-angular --tag $TAG
-          npm publish dist/packages/create-analog --tag $TAG
+          RELEASE_TAG=$TAG npx semantic-release

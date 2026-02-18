@@ -187,12 +187,12 @@ module.exports = {
         ],
       },
     ],
-    // [
-    //   '@semantic-release/exec',
-    //   {
-    //     publishCmd: `pnpm build:release && RELEASE_TAG=${tag} ./tools/publish.sh`,
-    //   },
-    // ],
+    [
+      '@semantic-release/exec',
+      {
+        publishCmd: `pnpm build:release && RELEASE_TAG=${tag} ./tools/publish.sh`,
+      },
+    ],
     [
       '@semantic-release/git',
       {
