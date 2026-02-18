@@ -1,3 +1,9 @@
+# [2.3.0-beta.13](https://github.com/analogjs/analog/compare/v2.3.0-beta.12...v2.3.0-beta.13) (2026-02-18)
+
+### Bug Fixes
+
+- **vitest-angular:** add missing zone.js optional peer dependency ([#2071](https://github.com/analogjs/analog/issues/2071)) ([88a1a55](https://github.com/analogjs/analog/commit/88a1a55825e715842e28d810894fa86986c1b1e4))
+
 # [2.3.0-beta.12](https://github.com/analogjs/analog/compare/v2.3.0-beta.11...v2.3.0-beta.12) (2026-02-18)
 
 ### Bug Fixes
