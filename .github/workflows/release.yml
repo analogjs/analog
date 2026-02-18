@@ -31,8 +31,9 @@ jobs:
       - run: npm install --global corepack@0.31.0
       - run: corepack enable
       - run: pnpm --version
+      - run: npm --version
       - name: Install dependencies
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
@@ -43,7 +44,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
-          RELEASE_TAG=$TAG npx semantic-release
+          # RELEASE_TAG=$TAG npx semantic-release
           pnpm build:release
           npm publish node_modules/@analogjs/astro-angular --tag $TAG
           npm publish node_modules/@analogjs/content --tag $TAG
