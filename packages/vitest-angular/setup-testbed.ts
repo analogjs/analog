@@ -1,4 +1,11 @@
-import { EnvironmentProviders, inject, NgModule, Provider, provideZonelessChangeDetection, Type } from '@angular/core';
+import {
+  EnvironmentProviders,
+  inject,
+  NgModule,
+  Provider,
+  provideZonelessChangeDetection,
+  Type,
+} from '@angular/core';
 import {
   ɵgetCleanupHook as getCleanupHook,
   getTestBed,
@@ -13,7 +20,7 @@ const ANGULAR_TESTBED_SETUP = Symbol.for('testbed-setup');
 
 type TestBedSetupOptions = {
   zoneless?: boolean;
-  imports?: Type<any> | Type<any>[];
+  imports?: Type<any>[];
   providers?: (Provider | EnvironmentProviders)[];
   browserMode?: boolean;
 };
