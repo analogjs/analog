@@ -111,6 +111,7 @@ export function getMatchingContentFilesWithFrontMatter(
       extension,
       path: resolvedDir,
       attributes: raw.attributes as { attributes: Record<string, any> },
+      content: fileContents,
     };
   });
 
