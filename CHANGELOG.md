@@ -1,3 +1,9 @@
+# [2.3.0-beta.14](https://github.com/analogjs/analog/compare/v2.3.0-beta.13...v2.3.0-beta.14) (2026-02-22)
+
+### Bug Fixes
+
+- **storybook-angular:** add missing await to storybook-angular preset core ([#2081](https://github.com/analogjs/analog/issues/2081)) ([352870a](https://github.com/analogjs/analog/commit/352870a86ca8dd08446b8538e04487e64398d0f4))
+
 # [2.3.0-beta.13](https://github.com/analogjs/analog/compare/v2.3.0-beta.12...v2.3.0-beta.13) (2026-02-18)
 
 ### Bug Fixes
