@@ -8,7 +8,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Stub out heavy dependencies so the module can be imported
 vi.mock('@storybook/angular/preset', () => ({
-  core: () => ({ options: {} }),
+  core: async () => ({
+    options: {},
+    channelOptions: { wsToken: 'mock-token' },
+  }),
   addons: [],
 }));
 
@@ -29,11 +32,14 @@ vi.mock('@analogjs/vite-plugin-angular', () => ({
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let viteFinal: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let core: any;
 
 beforeEach(async () => {
   vi.resetModules();
   const mod = await import('./preset');
   viteFinal = mod.viteFinal;
+  core = mod.core;
 });
 
 /**
@@ -43,7 +49,10 @@ beforeEach(async () => {
  */
 const registerDependencyMocks = () => {
   vi.doMock('@storybook/angular/preset', () => ({
-    core: () => ({ options: {} }),
+    core: async () => ({
+      options: {},
+      channelOptions: { wsToken: 'mock-token' },
+    }),
     addons: [],
   }));
   vi.doMock('storybook/internal/types', () => ({}));
@@ -71,6 +80,21 @@ const importWithAngularVersion = async (major: string) => {
   const mod = await import('./preset');
   return mod.viteFinal;
 };
+
+describe('core', () => {
+  it('should await PresetCore and include channelOptions from resolved config', async () => {
+    const result = await core({}, {});
+
+    expect(result.channelOptions?.wsToken).toBe('mock-token');
+  });
+
+  it('should override builder with @storybook/builder-vite', async () => {
+    const result = await core({}, {});
+
+    expect(result.builder).toBeDefined();
+    expect(result.builder.name).toBeDefined();
+  });
+});
 
 describe('viteFinal', () => {
   const createMockOptions = (overrides = {}) => ({
