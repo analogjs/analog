@@ -8,7 +8,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Stub out heavy dependencies so the module can be imported
 vi.mock('@storybook/angular/preset', () => ({
-  core: async () => ({ options: {}, channelOptions: { wsToken: 'mock-token' } }),
+  core: async () => ({
+    options: {},
+    channelOptions: { wsToken: 'mock-token' },
+  }),
   addons: [],
 }));
 
@@ -46,7 +49,10 @@ beforeEach(async () => {
  */
 const registerDependencyMocks = () => {
   vi.doMock('@storybook/angular/preset', () => ({
-    core: async () => ({ options: {}, channelOptions: { wsToken: 'mock-token' } }),
+    core: async () => ({
+      options: {},
+      channelOptions: { wsToken: 'mock-token' },
+    }),
     addons: [],
   }));
   vi.doMock('storybook/internal/types', () => ({}));
