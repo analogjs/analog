@@ -5,7 +5,7 @@ import { mergeConfig, normalizePath } from 'vite';
 import { dirname, join, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import { buildServer } from './build-server.js';
 import { buildSSRApp } from './build-ssr.js';
@@ -58,6 +58,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
     string,
     PrerenderSitemapConfig | (() => PrerenderSitemapConfig)
   > = {};
+  const routeSourceFiles: Record<string, string> = {};
   let rootDir = workspaceRoot;
 
   return [
@@ -253,6 +254,18 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                     routeSitemaps[current.route] = current.sitemap;
                   }
 
+                  if (current.outputSourceFile) {
+                    const sourcePath = resolve(
+                      workspaceRoot,
+                      rootDir,
+                      current.outputSourceFile,
+                    );
+                    routeSourceFiles[current.route] = readFileSync(
+                      sourcePath,
+                      'utf8',
+                    );
+                  }
+
                   prev.push(current.route);
 
                   // Add the server-side data fetching endpoint URL
@@ -279,6 +292,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                         current.sitemap && typeof current.sitemap === 'function'
                           ? current.sitemap?.(f)
                           : current.sitemap;
+                    }
+
+                    if (current.outputSourceFile) {
+                      const sourceContent = current.outputSourceFile(f);
+                      if (sourceContent) {
+                        routeSourceFiles[result] = sourceContent;
+                      }
                     }
 
                     prev.push(result);
@@ -389,7 +409,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 '#analog/ssr': ssrEntry,
               };
 
-              await buildServer(options, nitroConfig);
+              await buildServer(options, nitroConfig, routeSourceFiles);
 
               if (
                 nitroConfig.prerender?.routes?.length &&
@@ -505,7 +525,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             '#analog/ssr': ssrEntry,
           };
 
-          await buildServer(options, nitroConfig);
+          await buildServer(options, nitroConfig, routeSourceFiles);
 
           console.log(
             `\n\nThe '@analogjs/platform' server has been successfully built.`,
