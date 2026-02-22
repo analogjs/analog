@@ -27,7 +27,7 @@ export const previewAnnotations = async (entries = [], options) => {
 };
 
 export const core = async (config, options) => {
-  const presetCore = PresetCore(config, options);
+  const presetCore = await PresetCore(config, options);
   return {
     ...presetCore,
     builder: {
