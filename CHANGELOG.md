@@ -1,3 +1,9 @@
+# [2.3.0-beta.15](https://github.com/analogjs/analog/compare/v2.3.0-beta.14...v2.3.0-beta.15) (2026-02-22)
+
+### Features
+
+- **vite-plugin-nitro:** add option for markdown source output alongside prerendered routes ([#2082](https://github.com/analogjs/analog/issues/2082)) ([c15d20b](https://github.com/analogjs/analog/commit/c15d20b9887008fda7714437280dbfc1bb66b336))
+
 # [2.3.0-beta.14](https://github.com/analogjs/analog/compare/v2.3.0-beta.13...v2.3.0-beta.14) (2026-02-22)
 
 ### Bug Fixes
