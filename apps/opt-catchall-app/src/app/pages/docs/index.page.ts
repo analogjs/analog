@@ -13,6 +13,9 @@ import { AsyncPipe } from '@angular/common';
       <li><a routerLink="/docs">Docs (base)</a></li>
       <li><a routerLink="/docs/intro">Docs /intro</a></li>
       <li>
+        <a routerLink="/docs/guide/">Docs /guide</a>
+      </li>
+      <li>
         <a routerLink="/docs/guide/getting-started"
           >Docs /guide/getting-started</a
         >

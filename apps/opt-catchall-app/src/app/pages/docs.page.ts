@@ -11,6 +11,7 @@ import { RouterLink, RouterOutlet } from '@angular/router';
       <a routerLink="/">Home</a>
       <a routerLink="/docs">Docs</a>
       <a routerLink="/docs/intro">Docs: Intro</a>
+      <a routerLink="/docs/guide">Docs: Guides</a>
       <a routerLink="/docs/guide/getting-started">Docs: Getting Started</a>
       <a routerLink="/docs/reference/api/nested/path">Docs: Nested Path</a>
     </nav>

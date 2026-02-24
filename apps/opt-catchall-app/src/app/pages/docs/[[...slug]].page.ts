@@ -1,9 +1,9 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { contentFileResource } from '@analogjs/content/resources';
 import { JsonPipe } from '@angular/common';
-import { MarkdownComponent } from '@analogjs/content';
+import { MarkdownComponent, injectContentFileLoader } from '@analogjs/content';
 
 @Component({
   selector: 'app-docs-optional-catchall-page',
@@ -29,5 +29,18 @@ export default class DocsOptionalCatchAllPageComponent {
 
   readonly slug = computed(() => this.paramMap().get('slug') ?? '');
   readonly filePath = computed(() => 'docs/' + this.slug());
+  // readonly filePath = computed(() => 'docs/' + (this.slug() || 'index'));
   readonly source = contentFileResource(this.filePath);
+  constructor() {
+    effect(() => {
+      console.log('slug from route params', this.slug());
+    });
+    const load = injectContentFileLoader();
+    load().then((files) => {
+      console.log(
+        'Analog content available keys:',
+        Object.keys(files).slice(0, 50),
+      );
+    });
+  }
 }
