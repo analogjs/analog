@@ -1,3 +1,9 @@
+# [2.3.0-beta.16](https://github.com/analogjs/analog/compare/v2.3.0-beta.15...v2.3.0-beta.16) (2026-02-24)
+
+### Features
+
+- **router:** support optional catch all routes ([#2043](https://github.com/analogjs/analog/issues/2043)) ([ba9fc09](https://github.com/analogjs/analog/commit/ba9fc09fdd293d338299d949cadbfdc8137677e8))
+
 # [2.3.0-beta.15](https://github.com/analogjs/analog/compare/v2.3.0-beta.14...v2.3.0-beta.15) (2026-02-22)
 
 ### Features
