@@ -1,3 +1,9 @@
+# [2.3.0-beta.17](https://github.com/analogjs/analog/compare/v2.3.0-beta.16...v2.3.0-beta.17) (2026-02-24)
+
+### Bug Fixes
+
+- **storybook-angular:** add missing applyDecorators to render annotaions ([#2086](https://github.com/analogjs/analog/issues/2086)) ([9a14163](https://github.com/analogjs/analog/commit/9a141638ad674e4b5356ed6a0120f41d8ac90f18))
+
 # [2.3.0-beta.16](https://github.com/analogjs/analog/compare/v2.3.0-beta.15...v2.3.0-beta.16) (2026-02-24)
 
 ### Features
