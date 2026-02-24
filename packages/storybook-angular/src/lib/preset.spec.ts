@@ -1,5 +1,100 @@
-import { describe, it, expect, vi } from 'vitest';
-import { viteFinal } from './preset';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+/**
+ * The preset module uses top-level imports that are hard to mock in isolation.
+ * Instead, we test `resolveExperimentalZoneless` indirectly through `viteFinal`
+ * by providing mock options objects that exercise each resolution tier.
+ */
+
+// Stub out heavy dependencies so the module can be imported
+vi.mock('@storybook/angular/preset', () => ({
+  core: async () => ({
+    options: {},
+    channelOptions: { wsToken: 'mock-token' },
+  }),
+  addons: [],
+}));
+
+vi.mock('storybook/internal/types', () => ({}));
+
+vi.mock('@storybook/angular', () => ({}));
+
+vi.mock('@storybook/builder-vite', () => ({}));
+
+vi.mock('vite', () => ({
+  mergeConfig: (_base: unknown, override: unknown) => override,
+  normalizePath: (p: string) => p,
+}));
+
+vi.mock('@analogjs/vite-plugin-angular', () => ({
+  default: () => ({ name: 'angular-mock' }),
+}));
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let viteFinal: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let core: any;
+
+beforeEach(async () => {
+  vi.resetModules();
+  const mod = await import('./preset');
+  viteFinal = mod.viteFinal;
+  core = mod.core;
+});
+
+/**
+ * Re-registers all dependency mocks via `vi.doMock` after a `vi.resetModules()`
+ * call. Required when a test needs a fresh module graph (e.g. to change the
+ * `@angular/core` VERSION mock).
+ */
+const registerDependencyMocks = () => {
+  vi.doMock('@storybook/angular/preset', () => ({
+    core: async () => ({
+      options: {},
+      channelOptions: { wsToken: 'mock-token' },
+    }),
+    addons: [],
+  }));
+  vi.doMock('storybook/internal/types', () => ({}));
+  vi.doMock('@storybook/angular', () => ({}));
+  vi.doMock('@storybook/builder-vite', () => ({}));
+  vi.doMock('vite', () => ({
+    mergeConfig: (_base: unknown, override: unknown) => override,
+    normalizePath: (p: string) => p,
+  }));
+  vi.doMock('@analogjs/vite-plugin-angular', () => ({
+    default: () => ({ name: 'angular-mock' }),
+  }));
+};
+
+/**
+ * Imports a fresh preset module with a specific `@angular/core` VERSION mock.
+ * Returns the `viteFinal` function from the fresh module.
+ */
+const importWithAngularVersion = async (major: string) => {
+  vi.resetModules();
+  vi.doMock('@angular/core', () => ({
+    VERSION: { major },
+  }));
+  registerDependencyMocks();
+  const mod = await import('./preset');
+  return mod.viteFinal;
+};
+
+describe('core', () => {
+  it('should await PresetCore and include channelOptions from resolved config', async () => {
+    const result = await core({}, {});
+
+    expect(result.channelOptions?.wsToken).toBe('mock-token');
+  });
+
+  it('should override builder with @storybook/builder-vite', async () => {
+    const result = await core({}, {});
+
+    expect(result.builder).toBeDefined();
+    expect(result.builder.name).toBeDefined();
+  });
+});
 
 describe('viteFinal', () => {
   const createMockOptions = (overrides = {}) => ({
@@ -9,6 +104,153 @@ describe('viteFinal', () => {
     },
     angularBuilderOptions: {},
     ...overrides,
+  });
+
+  const makeOptions = (
+    frameworkOptions?: Record<string, unknown>,
+    angularBuilderOptions?: Record<string, unknown>,
+  ) => ({
+    presets: {
+      apply: vi.fn().mockResolvedValue({
+        options: frameworkOptions,
+      }),
+    },
+    ...(angularBuilderOptions !== undefined && { angularBuilderOptions }),
+    configDir: '/mock/.storybook',
+  });
+
+  const baseConfig = {
+    plugins: [],
+  };
+
+  describe('experimentalZoneless resolution', () => {
+    describe('tier 1: framework options', () => {
+      it('should skip zone.js when experimentalZoneless is true', async () => {
+        const options = makeOptions({ experimentalZoneless: true });
+        const result = await viteFinal(baseConfig, options);
+
+        expect(result.optimizeDeps.include).not.toContain('zone.js');
+      });
+
+      it('should include zone.js when experimentalZoneless is false', async () => {
+        const options = makeOptions({ experimentalZoneless: false });
+        const result = await viteFinal(baseConfig, options);
+
+        expect(result.optimizeDeps.include).toContain('zone.js');
+      });
+
+      it('should take priority over angularBuilderOptions (framework true, builder false)', async () => {
+        const options = makeOptions(
+          { experimentalZoneless: true },
+          { experimentalZoneless: false },
+        );
+        const result = await viteFinal(baseConfig, options);
+
+        expect(result.optimizeDeps.include).not.toContain('zone.js');
+      });
+
+      it('should take priority over angularBuilderOptions (framework false, builder true)', async () => {
+        const options = makeOptions(
+          { experimentalZoneless: false },
+          { experimentalZoneless: true },
+        );
+        const result = await viteFinal(baseConfig, options);
+
+        expect(result.optimizeDeps.include).toContain('zone.js');
+      });
+    });
+
+    describe('tier 2: angularBuilderOptions', () => {
+      it('should skip zone.js when experimentalZoneless is true', async () => {
+        const options = makeOptions({}, { experimentalZoneless: true });
+        const result = await viteFinal(baseConfig, options);
+
+        expect(result.optimizeDeps.include).not.toContain('zone.js');
+      });
+
+      it('should include zone.js when experimentalZoneless is false', async () => {
+        const options = makeOptions({}, { experimentalZoneless: false });
+        const result = await viteFinal(baseConfig, options);
+
+        expect(result.optimizeDeps.include).toContain('zone.js');
+      });
+    });
+
+    describe('tier 3: auto-detect Angular version', () => {
+      it('should include zone.js when Angular < 21', async () => {
+        const freshViteFinal = await importWithAngularVersion('19');
+        const options = makeOptions({}, {});
+        const result = await freshViteFinal(baseConfig, options);
+
+        expect(result.optimizeDeps.include).toContain('zone.js');
+      });
+
+      it('should skip zone.js when Angular >= 21', async () => {
+        const freshViteFinal = await importWithAngularVersion('21');
+        const options = makeOptions({}, {});
+        const result = await freshViteFinal(baseConfig, options);
+
+        expect(result.optimizeDeps.include).not.toContain('zone.js');
+      });
+
+      it('should include zone.js when @angular/core import fails', async () => {
+        vi.resetModules();
+        vi.doMock('@angular/core', () => {
+          throw new Error('Module not found');
+        });
+        registerDependencyMocks();
+        const mod = await import('./preset');
+
+        const options = makeOptions({}, {});
+        const result = await mod.viteFinal(baseConfig, options);
+
+        expect(result.optimizeDeps.include).toContain('zone.js');
+      });
+    });
+
+    describe('STORYBOOK_ANGULAR_OPTIONS define', () => {
+      it('should set experimentalZoneless to true when zoneless', async () => {
+        const options = makeOptions({ experimentalZoneless: true });
+        const result = await viteFinal(baseConfig, options);
+        const parsed = JSON.parse(result.define.STORYBOOK_ANGULAR_OPTIONS);
+
+        expect(parsed.experimentalZoneless).toBe(true);
+      });
+
+      it('should set experimentalZoneless to false when not zoneless', async () => {
+        const options = makeOptions({ experimentalZoneless: false });
+        const result = await viteFinal(baseConfig, options);
+        const parsed = JSON.parse(result.define.STORYBOOK_ANGULAR_OPTIONS);
+
+        expect(parsed.experimentalZoneless).toBe(false);
+      });
+    });
+
+    describe('edge cases', () => {
+      it('should not throw when framework.options is undefined', async () => {
+        const options = makeOptions(undefined);
+        const result = await viteFinal(baseConfig, options);
+
+        expect(result.optimizeDeps.include).toContain('zone.js');
+      });
+
+      it('should not throw when angularBuilderOptions is absent', async () => {
+        const options = makeOptions({});
+        const result = await viteFinal(baseConfig, options);
+
+        expect(result.optimizeDeps.include).toContain('zone.js');
+      });
+
+      it('should ignore non-boolean truthy values and fall through to auto-detect', async () => {
+        const freshViteFinal = await importWithAngularVersion('19');
+        // @ts-expect-error testing non-boolean values
+        const options = makeOptions({ experimentalZoneless: 1 });
+        const result = await freshViteFinal(baseConfig, options);
+
+        // Non-boolean skips tiers 1 & 2, auto-detect Angular 19 → zone.js included
+        expect(result.optimizeDeps.include).toContain('zone.js');
+      });
+    });
   });
 
   describe('when angularBuilderContext is undefined', () => {

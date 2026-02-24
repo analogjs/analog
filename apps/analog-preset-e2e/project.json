@@ -7,7 +7,7 @@
   "implicitDependencies": ["platform"],
   "targets": {
     "e2e": {
-      "executor": "@nx/vite:test"
+      "executor": "@nx/vitest:test"
     }
   }
 }

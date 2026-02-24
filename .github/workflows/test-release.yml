@@ -64,7 +64,7 @@ jobs:
           npm install
           npm run build
           npm run test
-          more dist\analog-app\public\index.html
+          more dist\analog\public\index.html
 
   create-nx-workspace:
     runs-on: ubuntu-latest

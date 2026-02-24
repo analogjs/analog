@@ -74,3 +74,132 @@ npx nx generate @analogjs/platform:migrate --project [your-project-name]
   </body>
 </html>
 ```
+
+## 设置环境
+
+在 Angular 应用程序中，`fileReplacements` 是在 `angular.json` 中针对不同环境进行配置的。
+
+### 使用环境变量
+
+在 Analog 中，你可以设置并使用环境变量。这是**推荐**的方法。
+
+在应用程序的根目录添加一个 `.env` 文件，并为任何**公共**环境变量加上 `VITE_` 前缀。**不要**将此文件提交到你的源代码仓库中。
+
+```sh
+VITE_MY_API_KEY=development-key
+
+# 仅在服务器构建中可用
+MY_SERVER_API_KEY=development-server-key
+```
+
+在你的代码中导入并使用环境变量。
+
+```ts
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class AuthService {
+  private readonly apiKey = import.meta.env['VITE_MY_API_KEY'];
+
+  constructor(private http: HttpClient) {}
+}
+```
+
+部署时，将环境变量设置为生产环境对应的值。
+
+```sh
+VITE_MY_API_KEY=production-key
+
+# 仅在服务器构建中可用
+MY_SERVER_API_KEY=production-server-key
+```
+
+阅读[这里](https://vitejs.dev/guide/env-and-mode.html)了解更多关于环境变量的信息。
+
+### 使用文件替换
+
+你也可以使用 `fileReplacements` 选项来替换文件。
+
+```ts
+/// <reference types="vitest" />
+
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  build: {
+    target: ['es2020'],
+  },
+  resolve: {
+    mainFields: ['module'],
+  },
+  plugins: [
+    analog({
+      fileReplacements:
+        mode === 'production'
+          ? [
+              {
+                replace: 'src/environments/environment.ts',
+                with: 'src/environments/environment.prod.ts',
+              },
+            ]
+          : [],
+    }),
+  ],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['src/test-setup.ts'],
+    include: ['**/*.spec.ts'],
+    reporters: ['default'],
+  },
+  define: {
+    'import.meta.vitest': mode !== 'production',
+  },
+}));
+```
+
+## 复制资产
+
+默认情况下，`public` 目录中的静态资产会复制到构建输出目录。如果要复制该目录之外的其他资产，请使用 `nxCopyAssetsPlugin` Vite 插件。
+
+导入插件并进行设置：
+
+```ts
+/// <reference types="vitest" />
+
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  // ...
+  plugins: [analog(), nxCopyAssetsPlugin(['*.md'])],
+}));
+```
+
+## 启用 HMR
+
+Angular 支持 HMR/Live reload，在大多数情况下，无需重新加载页面即可更新组件。要在 Analog 中启用它，请使用 `liveReload: true` 选项。
+
+```ts
+/// <reference types="vitest" />
+
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  // .. 其他配置
+  plugins: [
+    analog({
+      liveReload: true,
+    }),
+  ],
+}));
+```

@@ -42,17 +42,12 @@ export default defineConfig(({ mode }) => ({
     include: ['**/*.spec.ts'],
     cacheDir: '../../node_modules/.vitest',
     isolate: false,
-    /**
-     * Make sure that all tests are running in the same worker,
-     * so that we can test the reset of the TestBed between tests
-     * @see src/lib/my-package/reset-test-bed-between-tests/README.md
-     */
-    maxWorkers: 1,
     browser: {
       enabled: true,
       provider: playwright(),
       instances: [{ browser: 'chromium' }],
     },
+    watch: false,
   },
   define: {
     'import.meta.vitest': mode !== 'production',

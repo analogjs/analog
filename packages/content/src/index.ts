@@ -24,8 +24,10 @@ export { injectContentFilesMap } from './lib/inject-content-files';
 export {
   injectContentListLoader,
   withContentListLoader,
+  CONTENT_LIST_LOADER,
 } from './lib/content-list-loader';
 export {
   injectContentFileLoader,
   withContentFileLoader,
+  CONTENT_FILE_LOADER,
 } from './lib/content-file-loader';

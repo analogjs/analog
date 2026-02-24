@@ -72,6 +72,74 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
+### Outputting Source Markdown Files
+
+To make prerendered pages more accessible to LLMs or other tools that prefer raw markdown, you can output the source markdown file alongside each prerendered route. The source file will be accessible at the route path with a `.md` extension (e.g., `/blog/my-post` would also be available at `/blog/my-post.md`).
+
+For individual routes, specify the path to the source file:
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      prerender: {
+        routes: async () => [
+          '/',
+          {
+            route: '/overview',
+            outputSourceFile: 'src/content/overview.md',
+          },
+        ],
+      },
+    }),
+  ],
+}));
+```
+
+For content directories, use a function that receives the file information and returns the content to output:
+
+```ts
+import { defineConfig } from 'vite';
+import analog, { type PrerenderContentFile } from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      prerender: {
+        routes: async () => [
+          '/',
+          {
+            contentDir: 'src/content/blog',
+            transform: (file: PrerenderContentFile) => {
+              const slug = file.attributes.slug || file.name;
+              return `/blog/${slug}`;
+            },
+            outputSourceFile: (file: PrerenderContentFile) => file.content,
+          },
+        ],
+      },
+    }),
+  ],
+}));
+```
+
+You can also conditionally skip outputting the source file by returning `false`:
+
+```ts
+outputSourceFile: (file: PrerenderContentFile) => {
+  // Don't output source for draft posts
+  if (file.attributes.draft) {
+    return false;
+  }
+  return file.content;
+},
+```
+
 ## Only Prerendering Static Pages
 
 To only prerender the static pages without building the server, use the `static: true` flag.

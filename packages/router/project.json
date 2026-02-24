@@ -26,7 +26,7 @@
       "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@nx/vite:test",
+      "executor": "@nx/vitest:test",
       "dependsOn": ["^build"]
     },
     "version": {

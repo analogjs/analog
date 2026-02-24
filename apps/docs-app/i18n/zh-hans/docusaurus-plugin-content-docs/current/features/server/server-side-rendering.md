@@ -16,16 +16,46 @@ import analog from '@analogjs/platform';
 export default defineConfig(({ mode }) => ({
   ssr: {
     noExternal: [
-      'apollo-angular', // npm package import
-      'apollo-angular/**', // npm package import along with sub-packages
-      '@spartan-ng/**', // libs under the npmScope inside an Nx workspace
+      'apollo-angular', // npm 包导入
+      'apollo-angular/**', // npm 包及其子包导入
+      '@spartan-ng/**', // Nx 工作空间下 npmScope 的库
     ],
   },
-  // ...other config
+  // ...其他配置
 }));
 ```
 
-要了解更多关于 SSR 的外部依赖，请移步[Vite 文档](https://vitejs.dev/guide/ssr.html#ssr-externals)。
+关于 SSR 的外部依赖项更多信息，请参阅 [Vite 文档](https://vitejs.dev/guide/ssr.html#ssr-externals)。
+
+## 混合渲染与仅客户端路由
+
+SSR 默认是启用的。对于混合方法，你可以指定一些路由仅在客户端渲染，而不进行服务端渲染。这是通过 `routeRules` 配置对象指定 `ssr` 选项来完成的。
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  // ...其他配置
+  plugins: [
+    analog({
+      prerender: {
+        routes: ['/', '/404.html'],
+      },
+      nitro: {
+        routeRules: {
+          // 所有 admin URL 仅在客户端渲染
+          '/admin/**': { ssr: false },
+
+          // 渲染 404 页面作为后备页面
+          '/404.html': { ssr: false },
+        },
+      },
+    }),
+  ],
+}));
+```
 
 ## 禁用 SSR
 
@@ -37,8 +67,15 @@ import analog from '@analogjs/platform';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // ...other config
-  plugins: [analog({ ssr: false })],
+  // ...其他配置
+  plugins: [
+    analog({
+      ssr: false,
+      prerender: {
+        routes: [],
+      },
+    }),
+  ],
 }));
 ```
 
@@ -53,7 +90,7 @@ import { defineConfig } from 'vite';
 import analog from '@analogjs/platform';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // ...other config
+  // ...其他配置
   plugins: [
     analog({
       prerender: {
@@ -71,17 +108,10 @@ import { defineConfig } from 'vite';
 import analog from '@analogjs/platform';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // ...other config
+  // ...其他配置
   plugins: [
     analog({
       ssr: true,
-      nitro: {
-        routeRules: {
-          '/': {
-            prerender: false,
-          },
-        },
-      },
       prerender: {
         routes: async () => {
           return [];

@@ -66,18 +66,6 @@ exports[`preset generator > should match project.json 1`] = `
         }
       }
     },
-    "extract-i18n": {
-      "executor": "@angular/build:extract-i18n",
-      "options": {
-        "buildTarget": "my-app:build"
-      }
-    },
-    "test": {
-      "executor": "@analogjs/vitest-angular:test",
-      "options": {
-        "config": "vite.config.ts"
-      }
-    },
     "serve-static": {
       "continuous": true,
       "executor": "@nx/web:file-server",
@@ -87,6 +75,12 @@ exports[`preset generator > should match project.json 1`] = `
         "staticFilePath": "dist/my-app/browser",
         "spa": true
       }
+    },
+    "test": {
+      "executor": "@analogjs/vitest-angular:test",
+      "options": {
+        "config": "vite.config.ts"
+      }
     }
   }
 }
@@ -95,18 +89,10 @@ exports[`preset generator > should match project.json 1`] = `
 
 exports[`preset generator > should match src/test-setup.ts 1`] = `
 "import '@angular/compiler';
-import '@analogjs/vitest-angular/setup-zone';
+import '@analogjs/vitest-angular/setup-snapshots';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
-
-getTestBed().initTestEnvironment(
-  BrowserTestingModule,
-  platformBrowserTesting(),
-);
+setupTestBed();
 "
 `;
 

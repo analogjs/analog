@@ -72,6 +72,7 @@ export default defineConfig(() => {
                     changefreq: 'never',
                   };
                 },
+                outputSourceFile: (file: PrerenderContentFile) => file.content,
               },
             ];
           },

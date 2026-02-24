@@ -7,7 +7,7 @@ import angular from '@analogjs/vite-plugin-angular';
 export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
-    plugins: [angular({ experimental: { useAngularCompilationAPI: true } })],
+    plugins: [angular()],
     test: {
       reporters: ['default'],
       globals: true,
