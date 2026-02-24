@@ -1,4 +1,6 @@
+import { UrlSegment } from '@angular/router';
 import type { Route } from '@angular/router';
+import type { UrlMatcher } from '@angular/router';
 
 import type { RouteExport, RouteMeta } from './models';
 import { toRouteConfig } from './route-config';
@@ -117,14 +119,18 @@ export function createRoutes(files: Files, debug = false): Route[] {
 }
 
 function toRawPath(filename: string): string {
-  return filename
-    .replace(
-      // convert to relative path and remove file extension
-      /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)[\\/]))|(\.page\.(js|ts|analog|ag)$)|(\.(ts|md|analog|ag)$)/g,
-      '',
-    )
-    .replace(/\[\.{3}.+\]/, '**') // [...not-found] => **
-    .replace(/\[([^\]]+)\]/g, ':$1'); // [id] => :id
+  return (
+    filename
+      .replace(
+        // convert to relative path and remove file extension
+        /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)[\\/]))|(\.page\.(js|ts|analog|ag)$)|(\.(ts|md|analog|ag)$)/g,
+        '',
+      )
+      // [[...slug]] => placeholder (named empty) which is stripped by toSegment
+      .replace(/\[\[\.\.\.([^\]]+)\]\]/g, '(opt-$1)')
+      .replace(/\[\.{3}.+\]/, '**') // [...not-found] => **
+      .replace(/\[([^\]]+)\]/g, ':$1')
+  ); // [id] => :id
 }
 
 function toSegment(rawSegment: string): string {
@@ -132,6 +138,19 @@ function toSegment(rawSegment: string): string {
     .replace(/index|\(.*?\)/g, '') // replace named empty segments
     .replace(/\.|\/+/g, '/') // replace dots with slashes and remove redundant slashes
     .replace(/^\/+|\/+$/g, ''); // remove trailing slashes
+}
+
+function createOptionalCatchAllMatcher(paramName: string): UrlMatcher {
+  return (segments) => {
+    if (segments.length === 0) {
+      return null;
+    }
+    const joined = segments.map((s) => s.path).join('/');
+    return {
+      consumed: segments,
+      posParams: { [paramName]: new UrlSegment(joined, {}) },
+    };
+  };
 }
 
 function toRoutes(rawRoutes: RawRoute[], files: Files, debug = false): Route[] {
@@ -163,6 +182,7 @@ function toRoutes(rawRoutes: RawRoute[], files: Files, debug = false): Route[] {
       // get endpoint path
       const rawEndpoint = rawRoute.filename
         .replace(/\.page\.(ts|analog|ag)$/, '')
+        .replace(/\[\[\.\.\..+\]\]/, '**')
         .replace(/\[\.{3}.+\]/, '**') // [...not-found] => **
         .replace(/^(.*?)\/pages/, '/pages');
 
@@ -176,6 +196,10 @@ function toRoutes(rawRoutes: RawRoute[], files: Files, debug = false): Route[] {
         endpointKey,
       };
     }
+
+    // Detect Next.js-style optional catch-all at this node: [[...param]]
+    const optCatchAllMatch = rawRoute.filename?.match(/\[\[\.\.\.([^\]]+)\]\]/);
+    const optCatchAllParam = optCatchAllMatch ? optCatchAllMatch[1] : null;
 
     type DebugRoute = Route & {
       filename?: string | null | undefined;
@@ -198,14 +222,30 @@ function toRoutes(rawRoutes: RawRoute[], files: Files, debug = false): Route[] {
                 }
               }
 
+              const baseChild = {
+                path: '',
+                component: m.default,
+                ...toRouteConfig(m.routeMeta as RouteMeta | undefined),
+                children,
+                [ANALOG_META_KEY]: analogMeta,
+              };
+
+              // Base route first so static matches win, then optional catch-all matcher
               return [
                 {
-                  path: '',
-                  component: m.default,
-                  ...toRouteConfig(m.routeMeta as RouteMeta | undefined),
-                  children,
-                  [ANALOG_META_KEY]: analogMeta,
+                  ...baseChild,
                 },
+                ...(optCatchAllParam
+                  ? [
+                      {
+                        matcher:
+                          createOptionalCatchAllMatcher(optCatchAllParam),
+                        component: m.default,
+                        ...toRouteConfig(m.routeMeta as RouteMeta | undefined),
+                        [ANALOG_META_KEY]: analogMeta,
+                      },
+                    ]
+                  : []),
               ];
             }),
         }

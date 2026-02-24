@@ -8,6 +8,8 @@ vi.mock('./get-content-files', () => {
       '/path/to/test.md': { title: 'Test' },
       '\\path\\to\\test.md': { title: 'Test' },
       '/path/to/test with spaces.md': { title: 'Test' },
+      '/path/to/index.md': { title: 'Index' },
+      '/path/to/[[...slug]].md': { title: 'Test' },
     }),
   };
 });
@@ -40,6 +42,20 @@ describe('CONTENT_FILES_LIST_TOKEN', () => {
     const firstParsedFile = CONTENT_FILES_LIST_TOKEN[3];
     expect(CONTENT_FILES_LIST_TOKEN).toBeTruthy();
     expect(firstParsedFile.slug).toEqual('test%20with%20spaces');
+  });
+
+  it('should extract the slug for optional catch-all', () => {
+    const { CONTENT_FILES_LIST_TOKEN } = setup();
+    const parsedFile = CONTENT_FILES_LIST_TOKEN[5];
+    expect(CONTENT_FILES_LIST_TOKEN).toBeTruthy();
+    expect(parsedFile.slug).toEqual('%5B%5B...slug%5D%5D');
+  });
+
+  it('should treat index.md as index route (empty slug)', () => {
+    const { CONTENT_FILES_LIST_TOKEN } = setup();
+    const parsedFile = CONTENT_FILES_LIST_TOKEN[4];
+    expect(CONTENT_FILES_LIST_TOKEN).toBeTruthy();
+    expect(parsedFile.slug).toEqual('');
   });
 
   function setup() {
