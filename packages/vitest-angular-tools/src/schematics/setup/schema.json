@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "AnalogVitestSetup",
+  "title": "Setup Vitest for Angular",
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "The name of the project to configure",
+      "$default": {
+        "$source": "projectName"
+      },
+      "x-prompt": "Which project would you like to configure Vitest for?"
+    },
+    "browserMode": {
+      "type": "boolean",
+      "description": "Configure Vitest to run tests in a browser using Playwright",
+      "default": false,
+      "x-prompt": "Do you want to enable browser mode for testing with Playwright?"
+    }
+  },
+  "required": ["project"]
+}

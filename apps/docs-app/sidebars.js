@@ -151,7 +151,7 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: 'Testing',
+      label: 'Testing w/Vitest',
       items: [
         {
           type: 'doc',
@@ -161,7 +161,7 @@ const sidebars = {
         {
           type: 'doc',
           id: 'features/testing/vitest',
-          label: 'Adding Vitest',
+          label: 'Setting Up Vitest',
         },
       ],
     },

@@ -9,13 +9,13 @@ import TabItem from '@theme/TabItem';
 
 Vitest can be installed and setup using a schematic/generator for Angular CLI or Nx workspaces.
 
-First, install the `@analogjs/platform` package:
+First, install the `@analogjs/vitest-angular` package:
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/platform --save-dev
+npm install @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -23,7 +23,7 @@ npm install @analogjs/platform --save-dev
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/platform --dev
+yarn add @analogjs/vitest-angular --dev
 ```
 
   </TabItem>
@@ -31,7 +31,7 @@ yarn add @analogjs/platform --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/platform --save-dev
+pnpm install -w @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -40,8 +40,25 @@ pnpm install -w @analogjs/platform --save-dev
 Next, run the schematic to set up the Vite config, test configuration files, and update the test configuration.
 
 ```shell
-ng g @analogjs/platform:setup-vitest --project [your-project-name]
+ng g @analogjs/vitest-angular:setup --project [your-project-name]
 ```
+
+### Schematic Options
+
+| Option        | Type    | Default | Description                                                 |
+| ------------- | ------- | ------- | ----------------------------------------------------------- |
+| `project`     | string  | -       | The name of the project to configure (required)             |
+| `browserMode` | boolean | `false` | Configure Vitest to run tests in a browser using Playwright |
+
+To enable browser mode during setup:
+
+```shell
+ng g @analogjs/vitest-angular:setup --project [your-project-name] --browserMode
+```
+
+This automatically installs Playwright dependencies and configures Vitest for browser testing. See [Setup for Running Tests in the Browser](#setup-for-running-tests-in-the-browser) for more details.
+
+If using browser mode, run `npx playwright install` after the schematic to ensure playwright is installed and configured.
 
 Next, go to [running tests](#running-tests)
 
@@ -297,6 +314,10 @@ pnpm test
 </Tabs>
 
 > The `npx vitest` command can also be used directly.
+
+<strong>Hungry for more? Check out Younes Jaaidi's [video course](https://courses.marmicode.io/courses/pragmatic-angular-testing?ref=ec72c7) on Angular testing.</strong>
+
+[![Angular Testing Course](/img/pragmatic-angular-testing-banner-2.jpg)](https://courses.marmicode.io/courses/pragmatic-angular-testing?ref=ec72c7)
 
 ## Snapshot Testing
 

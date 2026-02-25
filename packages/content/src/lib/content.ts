@@ -20,11 +20,30 @@ function getContentFile<
   fallback: string,
   renderTaskService: RenderTaskService,
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
-  const filePath = `/src/content/${prefix}${slug}`;
-  const contentFile = contentFiles[`${filePath}.md`];
+  // Normalize file keys so both "/src/content/..." and "/<project>/src/content/..." resolve.
+  const normalizedFiles: Record<string, () => Promise<string>> = {};
+  for (const [key, resolver] of Object.entries(contentFiles)) {
+    const normalizedKey = key
+      .replace(/^(?:.*)\/content/, '/src/content')
+      .replace(/\/{2,}/g, '/');
+    normalizedFiles[normalizedKey] = resolver as () => Promise<string>;
+  }
+
+  const base = `/src/content/${prefix}${slug}`.replace(/\/{2,}/g, '/');
+  const candidates = [
+    `${base}.md`,
+    `${base}.agx`,
+    `${base}/index.md`,
+    `${base}/index.agx`,
+  ];
+
+  const matchKey = candidates.find((k) => k in normalizedFiles);
+  const contentFile = matchKey ? normalizedFiles[matchKey] : undefined;
+  const resolvedBase = (matchKey || `${base}.md`).replace(/\.(md|agx)$/, '');
+
   if (!contentFile) {
     return of({
-      filename: filePath,
+      filename: resolvedBase,
       attributes: {},
       slug: '',
       content: fallback,
@@ -57,14 +76,14 @@ function getContentFile<
           parseRawContentFile<Attributes>(contentFile);
 
         return {
-          filename: filePath,
+          filename: resolvedBase,
           slug,
           attributes,
           content,
         };
       }
       return {
-        filename: filePath,
+        filename: resolvedBase,
         slug,
         attributes: contentFile.metadata,
         content: contentFile.default,

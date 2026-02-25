@@ -1,4 +1,4 @@
-import { Route } from '@angular/router';
+import { Route, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import { expect, vi } from 'vitest';
 import { RouteExport, RouteMeta } from './models';
@@ -498,6 +498,78 @@ describe('routes', () => {
 
       expect(innerRoute.path).toBe('');
       expect(innerRoute.component).toBe(RouteComponent);
+    });
+  });
+
+  describe('an optional catchall route (root)', () => {
+    const files: Files = {
+      '/app/routes/[[...slug]].ts': () =>
+        Promise.resolve({
+          default: RouteComponent,
+        }),
+    };
+
+    const routes = createRoutes(files);
+    const route = routes[0];
+
+    it('should have a root path', () => {
+      expect(route.path).toBe('');
+    });
+
+    it('should return base and matcher routes from loadChildren', async () => {
+      const innerRoutes = (await route.loadChildren()) as Route[];
+      expect(innerRoutes.length).toBe(2);
+
+      const base = innerRoutes[0];
+      expect(base.path).toBe('');
+      expect(base.component).toBe(RouteComponent);
+
+      const opt = innerRoutes[1] as unknown as { matcher: any; component: any };
+      expect(opt.matcher).toBeDefined();
+      expect(typeof opt.matcher).toBe('function');
+      expect(opt.component).toBe(RouteComponent);
+
+      // matcher returns null for empty remainder and consumes segments otherwise
+      expect(opt.matcher([])).toBeNull();
+      const match = opt.matcher([
+        new UrlSegment('a', {}),
+        new UrlSegment('b', {}),
+      ]);
+      expect(match).toBeTruthy();
+      expect(match.consumed.length).toBe(2);
+      expect(match.posParams.slug.path).toBe('a/b');
+    });
+  });
+
+  describe('an optional catchall route (nested)', () => {
+    const files: Files = {
+      '/src/app/pages/docs/[[...slug]].page.ts': () =>
+        Promise.resolve({
+          default: RouteComponent,
+        }),
+    };
+
+    const routes = createRoutes(files);
+    const parent = routes[0];
+
+    it('should have a parent path', () => {
+      expect(parent.path).toBe('docs');
+    });
+
+    it('should return base and matcher routes from nested loadChildren', async () => {
+      const page = parent.children![0];
+      const leaf = (await page.loadChildren!()) as Route[];
+
+      expect(leaf.length).toBe(2);
+
+      const base = leaf[0];
+      expect(base.path).toBe('');
+      expect(base.component).toBe(RouteComponent);
+
+      const opt = leaf[1] as unknown as { matcher: any; component: any };
+      expect(opt.matcher).toBeDefined();
+      expect(typeof opt.matcher).toBe('function');
+      expect(opt.component).toBe(RouteComponent);
     });
   });
 
