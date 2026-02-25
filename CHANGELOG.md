@@ -1,3 +1,31 @@
+# [2.3.0](https://github.com/analogjs/analog/compare/v2.2.3...v2.3.0) (2026-02-25)
+
+### Bug Fixes
+
+- add dependsOn to astro-angular build ([1a6182d](https://github.com/analogjs/analog/commit/1a6182d311e6235a6b1d3ae2e6a3dfa37697ee46))
+- build before publish ([432ffa6](https://github.com/analogjs/analog/commit/432ffa6a987c679bb7eea45f5c6fa7eb235dc286))
+- bump build ([1c61fbc](https://github.com/analogjs/analog/commit/1c61fbc289a079a2ef5e3ce65dce9c7e9f2a7fed))
+- publish from workflow ([390dd74](https://github.com/analogjs/analog/commit/390dd747f2d2e341260ac20d57f2b7d4057e371c))
+- remove npm token from semantic release ([ba42f16](https://github.com/analogjs/analog/commit/ba42f16842772315e61e7ea29608c9df42504c97))
+- remove npm token publishing ([1c490ad](https://github.com/analogjs/analog/commit/1c490ad360733095e56abd9be97f59f81322714a))
+- revert back to semantic release ([ea10b1b](https://github.com/analogjs/analog/commit/ea10b1b7caa573ef65b7796ab81796073fc6183b))
+- **storybook-angular): revert "fix(storybook-angular:** add missing applyDecorators to render annotaions" ([#2088](https://github.com/analogjs/analog/issues/2088)) ([86e2a6a](https://github.com/analogjs/analog/commit/86e2a6a4c30aa7ab2d469bd18db32b0ec7daca44))
+- **storybook-angular:** add missing applyDecorators to render annotaions ([#2086](https://github.com/analogjs/analog/issues/2086)) ([9a14163](https://github.com/analogjs/analog/commit/9a141638ad674e4b5356ed6a0120f41d8ac90f18))
+- **storybook-angular:** add missing await to storybook-angular preset core ([#2081](https://github.com/analogjs/analog/issues/2081)) ([352870a](https://github.com/analogjs/analog/commit/352870a86ca8dd08446b8538e04487e64398d0f4))
+- **storybook-angular:** resolve experimentalZoneless in Vitest path ([#2059](https://github.com/analogjs/analog/issues/2059)) ([447dad2](https://github.com/analogjs/analog/commit/447dad2129f8840bb279d1e1eda6e838bca0d8da))
+- update implicit dependencies for build ([cfb0abc](https://github.com/analogjs/analog/commit/cfb0abc5b0be91dc498f443778e5fa1bef95a2c3))
+- update node setup in release workflow ([5bd0923](https://github.com/analogjs/analog/commit/5bd0923d965dcea4fda160cdde8aab9b61601a76))
+- update node version ([4aaa6bd](https://github.com/analogjs/analog/commit/4aaa6bdb79e1909b1b8671a6cda7312a190e9082))
+- **vite-plugin-angular:** add missing tinyglobby dependency ([#2069](https://github.com/analogjs/analog/issues/2069)) ([8661cb6](https://github.com/analogjs/analog/commit/8661cb6ab3754c05ed3b38a268570cd92dfd7147))
+- **vitest-angular:** add missing zone.js optional peer dependency ([#2071](https://github.com/analogjs/analog/issues/2071)) ([88a1a55](https://github.com/analogjs/analog/commit/88a1a55825e715842e28d810894fa86986c1b1e4))
+- **vitest-angular:** fix setupTestBed's providers option ([#2072](https://github.com/analogjs/analog/issues/2072)) ([2e7a02f](https://github.com/analogjs/analog/commit/2e7a02f4f541b8c5a02a0f5e9f7f0b7ad354f087))
+
+### Features
+
+- **router:** support optional catch all routes ([#2043](https://github.com/analogjs/analog/issues/2043)) ([ba9fc09](https://github.com/analogjs/analog/commit/ba9fc09fdd293d338299d949cadbfdc8137677e8))
+- **vite-plugin-nitro:** add option for markdown source output alongside prerendered routes ([#2082](https://github.com/analogjs/analog/issues/2082)) ([c15d20b](https://github.com/analogjs/analog/commit/c15d20b9887008fda7714437280dbfc1bb66b336))
+- **vitest-angular:** add setup schematic and ng-add support ([#2056](https://github.com/analogjs/analog/issues/2056)) ([cc26771](https://github.com/analogjs/analog/commit/cc26771aa72cb2a38c2fb7ca070840eccf1e7951))
+
 # [2.3.0-beta.18](https://github.com/analogjs/analog/compare/v2.3.0-beta.17...v2.3.0-beta.18) (2026-02-25)
 
 ### Bug Fixes
