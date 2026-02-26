@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Plugin, ResolvedConfig, preprocessCSS } from 'vite';
 
 export function jitPlugin({
@@ -22,6 +23,11 @@ export function jitPlugin({
     async load(id: string) {
       if (id.includes('virtual:angular:jit:style:inline;')) {
         const styleId = id.split('style:inline;')[1];
+        // styleId may exceed 255 bytes of base64-encoded content, limit to 16
+        const styleIdHash = createHash('sha256')
+          .update(styleId)
+          .digest('hex')
+          .slice(0, 16);
 
         const decodedStyles = Buffer.from(
           decodeURIComponent(styleId),
@@ -33,7 +39,7 @@ export function jitPlugin({
         try {
           const compiled = await preprocessCSS(
             decodedStyles,
-            `${styleId}.${inlineStylesExtension}?direct`,
+            `${styleIdHash}.${inlineStylesExtension}?direct`,
             config,
           );
           styles = compiled?.code;
