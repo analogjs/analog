@@ -1,3 +1,9 @@
+## [2.3.1-beta.1](https://github.com/analogjs/analog/compare/v2.3.0...v2.3.1-beta.1) (2026-02-27)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** hash styleId to prevent filename exceeding max length ([#2090](https://github.com/analogjs/analog/issues/2090)) ([2aa2114](https://github.com/analogjs/analog/commit/2aa211479e16cc106f957d5e373ea3a1386abfc6))
+
 # [2.3.0](https://github.com/analogjs/analog/compare/v2.2.3...v2.3.0) (2026-02-25)
 
 ### Bug Fixes
