@@ -63,4 +63,14 @@ Lorem ipsum 2....
       '<pre class="language-typescript"><code class="language-typescript">',
     );
   });
+
+  it('should expose getContentHeadings for backward compatibility', () => {
+    const { service } = setup();
+    const toc = service.getContentHeadings(`# Hello\n## World`);
+
+    expect(toc).toEqual([
+      { id: 'hello', level: 1, text: 'Hello' },
+      { id: 'world', level: 2, text: 'World' },
+    ]);
+  });
 });
