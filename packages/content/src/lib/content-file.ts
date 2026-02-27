@@ -1,3 +1,5 @@
+import { TableOfContentItem } from './content-renderer';
+
 export interface ContentFile<
   Attributes extends Record<string, any> = Record<string, any>,
 > {
@@ -5,4 +7,5 @@ export interface ContentFile<
   slug: string;
   content?: string | object;
   attributes: Attributes;
+  toc?: TableOfContentItem[];
 }

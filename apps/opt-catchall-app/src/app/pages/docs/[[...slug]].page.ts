@@ -3,8 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { contentFileResource } from '@analogjs/content/resources';
 import { JsonPipe } from '@angular/common';
-import { MarkdownComponent, injectContentFileLoader } from '@analogjs/content';
-
+import { MarkdownComponent } from '@analogjs/content';
+import { map } from 'rxjs';
 @Component({
   selector: 'app-docs-optional-catchall-page',
   standalone: true,
@@ -12,35 +12,29 @@ import { MarkdownComponent, injectContentFileLoader } from '@analogjs/content';
   template: `
     <h2>Page template</h2>
     <p>Segments: {{ slug() }}</p>
-    <p>Filepath: {{ filePath() }}</p>
     @let page = source.value();
     @if (page) {
       <pre>{{ page | json }}</pre>
+      <ul>
+        @for (item of page.toc; track item) {
+          <li>
+            <a href="#{{ item.id }}">{{ item.text }}</a>
+          </li>
+        }
+      </ul>
       <analog-markdown [content]="page.content"></analog-markdown>
     }
   `,
   imports: [MarkdownComponent, JsonPipe],
 })
 export default class DocsOptionalCatchAllPageComponent {
-  private readonly route = inject(ActivatedRoute);
-  private paramMap = toSignal(this.route.paramMap, {
-    initialValue: this.route.snapshot.paramMap,
-  });
+  slug = toSignal(
+    inject(ActivatedRoute).paramMap.pipe(
+      map((params) => params.get('slug') as string),
+    ),
+    { requireSync: true },
+  );
 
-  readonly slug = computed(() => this.paramMap().get('slug') ?? '');
-  readonly filePath = computed(() => 'docs/' + this.slug());
-  // readonly filePath = computed(() => 'docs/' + (this.slug() || 'index'));
-  readonly source = contentFileResource(this.filePath);
-  constructor() {
-    effect(() => {
-      console.log('slug from route params', this.slug());
-    });
-    const load = injectContentFileLoader();
-    load().then((files) => {
-      console.log(
-        'Analog content available keys:',
-        Object.keys(files).slice(0, 50),
-      );
-    });
-  }
+  params = computed(() => ({ customFilename: `docs/${this.slug()}` }));
+  readonly source = contentFileResource(this.params);
 }

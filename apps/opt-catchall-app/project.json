@@ -34,7 +34,7 @@
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "opt-catchall-app:build",
-        "port": 3001
+        "port": 3000
       },
       "configurations": {
         "development": {

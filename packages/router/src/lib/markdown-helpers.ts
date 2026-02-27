@@ -2,6 +2,10 @@ import { inject } from '@angular/core';
 import { RouteExport } from './models';
 
 declare const Zone: any;
+type RenderResult = string | { content: string };
+type ContentRendererLike = {
+  render: (content: string) => Promise<RenderResult>;
+};
 
 // The Zone is currently enabled by default, so we wouldn't need this check.
 // However, leaving this open space will be useful if zone.js becomes optional
@@ -39,8 +43,13 @@ export function toMarkdownModule(
         meta,
         resolve: {
           renderedAnalogContent: async () => {
-            const contentRenderer = inject(ContentRenderer);
-            return contentRenderer.render(content);
+            const contentRenderer = inject<any>(
+              ContentRenderer as any,
+            ) as ContentRendererLike;
+            const rendered = await contentRenderer.render(content);
+            return typeof rendered === 'string'
+              ? rendered
+              : (rendered as any).content;
           },
         },
       },

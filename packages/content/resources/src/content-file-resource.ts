@@ -1,6 +1,7 @@
 import { computed, inject, resource, Signal } from '@angular/core';
 import {
   ContentFile,
+  ContentRenderer,
   parseRawContentFile,
   injectContentFileLoader,
 } from '@analogjs/content';
@@ -94,6 +95,7 @@ export function contentFileResource<
   Attributes extends Record<string, any> = Record<string, any>,
 >(params?: ContentFileParams, fallback = 'No Content Found') {
   const loaderPromise = injectContentFileLoader();
+  const contentRenderer = inject(ContentRenderer);
   const contentFilesMap = toSignal(from(loaderPromise()));
   const input =
     params ||
@@ -111,7 +113,24 @@ export function contentFileResource<
 
       if (typeof param === 'string') {
         if (param) {
-          return getContentFile<Attributes>(files!, param, fallback);
+          const file = await getContentFile<Attributes>(
+            files!,
+            param,
+            fallback,
+          );
+          if (typeof file.content === 'string') {
+            const rendered = (await contentRenderer.render(file.content)) as {
+              toc?: Array<{ id: string; level: number; text: string }>;
+            };
+            return {
+              ...file,
+              toc: rendered.toc ?? [],
+            };
+          }
+          return {
+            ...file,
+            toc: [],
+          };
         }
 
         return {
@@ -119,13 +138,27 @@ export function contentFileResource<
           slug: '',
           attributes: {},
           content: fallback,
+          toc: [],
         } as ContentFile<Attributes | Record<string, never>>;
       } else {
-        return getContentFile<Attributes>(
+        const file = await getContentFile<Attributes>(
           files!,
           param.customFilename,
           fallback,
         );
+        if (typeof file.content === 'string') {
+          const rendered = (await contentRenderer.render(file.content)) as {
+            toc?: Array<{ id: string; level: number; text: string }>;
+          };
+          return {
+            ...file,
+            toc: rendered.toc ?? [],
+          };
+        }
+        return {
+          ...file,
+          toc: [],
+        };
       }
     },
   });
