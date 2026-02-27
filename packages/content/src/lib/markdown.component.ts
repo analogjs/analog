@@ -72,7 +72,8 @@ export default class AnalogMarkdownComponent implements AfterViewChecked {
   }
 
   async renderContent(content: string): Promise<string> {
-    return this.contentRenderer.render(content);
+    const rendered = await this.contentRenderer.render(content);
+    return rendered.content;
   }
 
   ngAfterViewChecked() {

@@ -14,7 +14,7 @@ describe('MarkdownContentRendererService', () => {
   it('render should transform raw markdown input into the appropriate html', async () => {
     const { service } = setup();
     const result = await service.render('# Hello World');
-    expect(result).toMatch('<h1 id="hello-world">Hello World</h1>\n');
+    expect(result.content).toMatch('<h1 id="hello-world">Hello World</h1>\n');
   });
 
   it('should transform markdown and return a TOC', async () => {
@@ -33,9 +33,9 @@ Lorem ipsum 2....
     `;
 
     const result = await service.render(content);
-    expect(result).toMatch('<h1 id="level-1">Level 1</h1>');
+    expect(result.content).toMatch('<h1 id="level-1">Level 1</h1>');
 
-    const toc = service.getContentHeadings();
+    const toc = result.toc;
     expect(toc.length).toBe(5);
     expect(toc[0].id).toBe('level-1');
     expect(toc[0].text).toBe('Level 1');
@@ -44,7 +44,7 @@ Lorem ipsum 2....
     expect(toc[4].level).toBe(3);
 
     expect(toc[4].id).toBe('level-3--complex-test--');
-    expect(result).toMatch('id="level-3--complex-test--"');
+    expect(result.content).toMatch('id="level-3--complex-test--"');
   });
 
   it('render should correctly highlight code blocks', async () => {
@@ -52,14 +52,14 @@ Lorem ipsum 2....
     let testCode = "```javascript\nconsole.log('Hello, world!');\n```";
     let result = await service.render(testCode);
 
-    expect(result).toContain(
+    expect(result.content).toContain(
       '<pre class="language-javascript"><code class="language-javascript">',
     );
 
     testCode = "```typescript\nconsole.log('Hello, world!');\n```";
     result = await service.render(testCode);
 
-    expect(result).toContain(
+    expect(result.content).toContain(
       '<pre class="language-typescript"><code class="language-typescript">',
     );
   });
