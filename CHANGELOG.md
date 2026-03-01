@@ -1,3 +1,9 @@
+## [2.3.1](https://github.com/analogjs/analog/compare/v2.3.0...v2.3.1) (2026-03-01)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use single ? for JIT style resolve suffix ([#2096](https://github.com/analogjs/analog/issues/2096)) ([7693930](https://github.com/analogjs/analog/commit/76939300492d60a6e4253499e85fa75dad6649d0))
+
 # [2.3.0](https://github.com/analogjs/analog/compare/v2.2.3...v2.3.0) (2026-02-25)
 
 ### Bug Fixes
