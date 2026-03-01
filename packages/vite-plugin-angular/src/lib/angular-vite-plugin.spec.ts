@@ -50,3 +50,45 @@ describe('isTestWatchMode', () => {
     expect(result).toBeFalsy();
   });
 });
+
+describe('JIT resolveId', () => {
+  it('should resolve style files with ?inline suffix (single ?)', () => {
+    const plugins = angular({ jit: true });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+    expect(mainPlugin).toBeDefined();
+
+    const resolveId = (mainPlugin as any).resolveId;
+    expect(resolveId).toBeDefined();
+
+    const result = resolveId(
+      'angular:jit:style:file;./my-component.scss',
+      '/project/src/app/my-component.ts',
+    );
+
+    expect(result).toBeDefined();
+    expect(result).toContain('?inline');
+    expect(result).not.toContain('??inline');
+  });
+
+  it('should resolve template files with ?raw suffix (single ?)', () => {
+    const plugins = angular({ jit: true });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+    expect(mainPlugin).toBeDefined();
+
+    const resolveId = (mainPlugin as any).resolveId;
+    expect(resolveId).toBeDefined();
+
+    const result = resolveId(
+      'angular:jit:template:file;./my-component.html',
+      '/project/src/app/my-component.ts',
+    );
+
+    expect(result).toBeDefined();
+    expect(result).toContain('?raw');
+    expect(result).not.toContain('??raw');
+  });
+});
