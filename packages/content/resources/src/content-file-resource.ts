@@ -30,8 +30,9 @@ async function getContentFile<
   const normalizedFiles: Record<string, () => Promise<string>> = {};
   for (const [key, resolver] of Object.entries(contentFiles)) {
     const normalizedKey = key
-      // replace any prefix up to /content with /src/content
-      .replace(/^(?:.*)\/content/, '/src/content')
+      // replace any prefix up to the content directory with /src/content
+      // use a non-greedy match so nested paths containing "/content" are preserved
+      .replace(/^(?:.*?)\/content(?=\/)/, '/src/content')
       // normalize duplicate slashes
       .replace(/\/{2,}/g, '/');
     normalizedFiles[normalizedKey] = resolver;
