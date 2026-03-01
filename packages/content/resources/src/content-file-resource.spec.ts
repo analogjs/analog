@@ -123,6 +123,31 @@ slug: 'docs'
       toc: [{ id: 'docs-heading', level: 1, text: 'Docs Heading' }],
     });
   });
+
+  it('resolves nested paths that include a content segment name', async () => {
+    const contentFiles = {
+      '/src/content/docs/reference/api/nested/content.md': () =>
+        Promise.resolve(`---
+slug: 'docs/reference/api/nested/content'
+---
+# Nested Content`),
+    };
+    setup({
+      routeParams: { slug: 'docs/reference/api/nested/content' },
+      contentFiles,
+    });
+
+    const result = TestBed.inject(TEST_RESOURCE_TOKEN);
+    await settleResource(result);
+
+    expect(result.value()).toEqual({
+      filename: '/src/content/docs/reference/api/nested/content',
+      slug: 'docs/reference/api/nested/content',
+      attributes: { slug: 'docs/reference/api/nested/content' },
+      content: '# Nested Content',
+      toc: [{ id: 'nested-content', level: 1, text: 'Nested Content' }],
+    });
+  });
 });
 
 function setup(args: {

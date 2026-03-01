@@ -501,6 +501,25 @@ describe('routes', () => {
     });
   });
 
+  describe('a nested content route', () => {
+    const files: Files = {
+      '/src/content/a/b/content.md': () =>
+        Promise.resolve(`# Content Route
+
+Testing nested markdown routes.
+`),
+    };
+
+    const routes = createRoutes(files);
+    const route = routes[0];
+
+    it('should have a nested path matching content file segments', () => {
+      expect(route.path).toBe('a');
+      expect(route.children[0].path).toBe('b');
+      expect(route.children[0].children[0].path).toBe('content');
+    });
+  });
+
   describe('an optional catchall route (root)', () => {
     const files: Files = {
       '/app/routes/[[...slug]].ts': () =>
