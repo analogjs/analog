@@ -1,3 +1,9 @@
+# [2.4.0-beta.2](https://github.com/analogjs/analog/compare/v2.4.0-beta.1...v2.4.0-beta.2) (2026-03-01)
+
+### Bug Fixes
+
+- **router:** use non-greedy regex for path normalization ([#2093](https://github.com/analogjs/analog/issues/2093)) ([fa5dd9b](https://github.com/analogjs/analog/commit/fa5dd9b7e6f9e245f5c6379f2f35ee35c7be75e3))
+
 # [2.4.0-beta.1](https://github.com/analogjs/analog/compare/v2.3.1-beta.1...v2.4.0-beta.1) (2026-02-27)
 
 ### Features
