@@ -135,6 +135,28 @@ providers: [
 ],
 ```
 
+## Paso Opcional: Configuración de Tailwind CSS
+
+Si utilizas Tailwind CSS, configura PostCSS para que funcione correctamente con Angular Material:
+
+1. **Instala el plugin PostCSS de Tailwind:**
+
+```shell
+npm install @tailwindcss/postcss
+```
+
+2. **Crea un archivo `.postcssrc.json`:**
+
+```json
+{
+  "plugins": {
+    "@tailwindcss/postcss": {}
+  }
+}
+```
+
+> **Nota:** Utiliza `@use 'tailwindcss';` en lugar del deprecated `@import 'tailwindcss';`.
+
 Con estos pasos, has configurado las animaciones para que estén habilitadas en el cliente y deshabilitadas en el servidor en tu aplicación de Analog.
 
 ¡Eso es todo! Has instalado y configurado con éxito la biblioteca Angular Material para tu aplicación de Analog. Ahora puedes comenzar a utilizar los componentes y estilos de Angular Material en tu proyecto.
