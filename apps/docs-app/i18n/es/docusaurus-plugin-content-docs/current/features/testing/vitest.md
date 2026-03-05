@@ -9,13 +9,13 @@ import TabItem from '@theme/TabItem';
 
 Vitest puede ser instalado y configurado usando un schematic/generator para Angular CLI o espacios de trabajo Nx.
 
-Primero, instala el paquete `@analogjs/platform`:
+Primero, instala el paquete `@analogjs/vitest-angular`:
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/platform --save-dev
+npm install @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -23,7 +23,7 @@ npm install @analogjs/platform --save-dev
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/platform --dev
+yarn add @analogjs/vitest-angular --dev
 ```
 
   </TabItem>
@@ -31,7 +31,7 @@ yarn add @analogjs/platform --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/platform --save-dev
+pnpm install -w @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -40,8 +40,25 @@ pnpm install -w @analogjs/platform --save-dev
 A continuación, ejecuta el schematic para configurar la configuración de Vite, archivos de configuración de pruebas y actualizar la configuración de pruebas.
 
 ```shell
-ng g @analogjs/platform:setup-vitest --project [your-project-name]
+ng g @analogjs/vitest-angular:setup-vitest --project [your-project-name]
 ```
+
+### Opciones del Schematic
+
+| Opción        | Tipo    | Predeterminado | Descripción                                                               |
+| ------------- | ------- | -------------- | ------------------------------------------------------------------------- |
+| `project`     | string  | -              | El nombre del proyecto a configurar (requerido)                           |
+| `browserMode` | boolean | `false`        | Configurar Vitest para ejecutar pruebas en un navegador usando Playwright |
+
+Para habilitar el modo navegador durante la configuración:
+
+```shell
+ng g @analogjs/vitest-angular:setup --project [nombre-de-tu-proyecto] --browserMode
+```
+
+Esto instala automáticamente las dependencias de Playwright y configura Vitest para pruebas en navegador. Consulta [Configuración para Ejecutar las Pruebas en el Navegador](#setup-for-running-tests-in-the-browser) para más detalles.
+
+Si usas el modo navegador, ejecuta `npx playwright install` después del schematic para asegurar que playwright está instalado y configurado.
 
 Luego, ve a [ejecutando pruebas](#running-tests)
 
