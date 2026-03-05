@@ -1,3 +1,9 @@
+# [2.4.0-beta.4](https://github.com/analogjs/analog/compare/v2.4.0-beta.3...v2.4.0-beta.4) (2026-03-05)
+
+### Bug Fixes
+
+- **platform:** allow using custom vite plugins for Angular compilation ([#2102](https://github.com/analogjs/analog/issues/2102)) ([8bb4fb4](https://github.com/analogjs/analog/commit/8bb4fb44c4ccb1a0d9c51dcd6fe8c9ab840f0e4e))
+
 # [2.4.0-beta.3](https://github.com/analogjs/analog/compare/v2.4.0-beta.2...v2.4.0-beta.3) (2026-03-01)
 
 ### Bug Fixes
