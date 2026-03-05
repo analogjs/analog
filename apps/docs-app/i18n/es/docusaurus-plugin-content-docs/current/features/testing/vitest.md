@@ -315,6 +315,10 @@ pnpm test
 
 > El comando `npx vitest` también puede ser usado directamente.
 
+<strong>¿Quieres aprender más? Consulta el [curso en video](https://courses.marmicode.io/courses/pragmatic-angular-testing?ref=ec72c7) de Younes Jaaidi sobre testing en Angular.</strong>
+
+[![Curso de testing en Angular](/img/pragmatic-angular-testing-banner-2.jpg)](https://courses.marmicode.io/courses/pragmatic-angular-testing?ref=ec72c7)
+
 ## Pruebas de Snapshots
 
 Para pruebas de snapshots puedes usar `toMatchSnapshot` de la API `expect`.
