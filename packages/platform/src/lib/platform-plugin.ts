@@ -49,22 +49,24 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ...(!isTest ? depsPlugin(platformOptions) : []),
     ...routerPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),
-    ...angular({
-      jit: platformOptions.jit,
-      workspaceRoot: platformOptions.workspaceRoot,
-      disableTypeChecking: platformOptions.disableTypeChecking ?? false,
-      include: [
-        ...(platformOptions.include ?? []),
-        ...(platformOptions.additionalPagesDirs ?? []).map(
-          (pageDir) => `${pageDir}/**/*.page.ts`,
-        ),
-      ],
-      additionalContentDirs: platformOptions.additionalContentDirs,
-      liveReload: platformOptions.liveReload,
-      inlineStylesExtension: platformOptions.inlineStylesExtension,
-      fileReplacements: platformOptions.fileReplacements,
-      ...(opts?.vite ?? {}),
-    }),
+    ...(opts?.vite === false
+      ? []
+      : angular({
+          jit: platformOptions.jit,
+          workspaceRoot: platformOptions.workspaceRoot,
+          disableTypeChecking: platformOptions.disableTypeChecking ?? false,
+          include: [
+            ...(platformOptions.include ?? []),
+            ...(platformOptions.additionalPagesDirs ?? []).map(
+              (pageDir) => `${pageDir}/**/*.page.ts`,
+            ),
+          ],
+          additionalContentDirs: platformOptions.additionalContentDirs,
+          liveReload: platformOptions.liveReload,
+          inlineStylesExtension: platformOptions.inlineStylesExtension,
+          fileReplacements: platformOptions.fileReplacements,
+          ...(opts?.vite ?? {}),
+        })),
     serverModePlugin(),
     ssrXhrBuildPlugin(),
     clearClientPageEndpointsPlugin(),
