@@ -143,6 +143,9 @@ Para registrar estilos globales, agregarlos en la opcion del constructor `@analo
 
 Para utilizar la detección de cambios Zoneless en Storybook, agregar la bandera `experimentalZoneless` al builder `@analogjs/storybook-angular` en el archivo `angular.json` o `project.json`.
 
+<Tabs groupId="zoneless-change-detection">
+  <TabItem value="angular.json">
+
 ```json
     "storybook": {
       "builder": "@analogjs/storybook-angular:start-storybook",
@@ -159,6 +162,33 @@ Para utilizar la detección de cambios Zoneless en Storybook, agregar la bandera
       }
     }
 ```
+
+  </TabItem>
+  <TabItem value="project.json">
+
+```json
+    "storybook": {
+      "executor": "@analogjs/storybook-angular:start-storybook",
+      "options": {
+        // ... other options
+        "configDir": "path/to/.storybook",
+        "experimentalZoneless": true,
+        "compodoc": false
+      }
+    },
+    "build-storybook": {
+      "executor": "@analogjs/storybook-angular:build-storybook",
+      "options": {
+        // ... other options
+        "configDir": "path/to/.storybook",
+        "experimentalZoneless": true,
+        "compodoc": false
+      }
+    }
+```
+
+  </TabItem>
+</Tabs>
 
 > La detección de cambios Zoneless es la opción por defecto en proyectos nuevos de Angular v21.
 
