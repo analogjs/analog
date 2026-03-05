@@ -72,6 +72,74 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
+### Exportando Archivos Fuente Markdown
+
+Para hacer las páginas prerrenderizadas más accesibles a LLMs u otras herramientas que prefieren markdown crudo, puedes exportar el archivo markdown fuente junto a cada ruta prerrenderizada. El archivo fuente será accesible en la ruta con una extensión `.md` (p. ej., `/blog/my-post` también estará disponible en `/blog/my-post.md`).
+
+Para rutas individuales, especifica la ruta al archivo fuente:
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      prerender: {
+        routes: async () => [
+          '/',
+          {
+            route: '/overview',
+            outputSourceFile: 'src/content/overview.md',
+          },
+        ],
+      },
+    }),
+  ],
+}));
+```
+
+Para directorios de contenido, usa una función que reciba la información del archivo y devuelva el contenido a exportar:
+
+```ts
+import { defineConfig } from 'vite';
+import analog, { type PrerenderContentFile } from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      prerender: {
+        routes: async () => [
+          '/',
+          {
+            contentDir: 'src/content/blog',
+            transform: (file: PrerenderContentFile) => {
+              const slug = file.attributes.slug || file.name;
+              return `/blog/${slug}`;
+            },
+            outputSourceFile: (file: PrerenderContentFile) => file.content,
+          },
+        ],
+      },
+    }),
+  ],
+}));
+```
+
+También puedes omitir condicionalmente la exportación del archivo fuente devolviendo `false`:
+
+```ts
+outputSourceFile: (file: PrerenderContentFile) => {
+  // No exportar archivos markdown para posts en borrador
+  if (file.attributes.draft) {
+    return false;
+  }
+  return file.content;
+},
+```
+
 ### Solo páginas estáticas
 
 Para prerenderizar únicamente las páginas estáticas, usa la bandera `static: true`.
