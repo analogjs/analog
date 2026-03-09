@@ -89,6 +89,52 @@ To register global styles, add them to the `@analogjs/storybook-angular` builder
     }
 ```
 
+## Enabling Zoneless Change Detection
+
+To use zoneless change detection for the Storybook, add the `experimentalZoneless` flag to the `@analogjs/storybook-angular` builder options in the `angular.json`.
+
+```json
+    "storybook": {
+      "builder": "@analogjs/storybook-angular:start-storybook",
+      "options": {
+        // ... other options
+        "experimentalZoneless": true
+      }
+    },
+    "build-storybook": {
+      "builder": "@analogjs/storybook-angular:build-storybook",
+      "options": {
+        // ... other options
+        "experimentalZoneless": true
+      }
+    }
+```
+
+For `project.json`
+
+```json
+    "storybook": {
+      "executor": "@analogjs/storybook-angular:start-storybook",
+      "options": {
+        // ... other options
+        "configDir": "path/to/.storybook",
+        "experimentalZoneless": true,
+        "compodoc": false
+      }
+    },
+    "build-storybook": {
+      "executor": "@analogjs/storybook-angular:build-storybook",
+      "options": {
+        // ... other options
+        "configDir": "path/to/.storybook",
+        "experimentalZoneless": true,
+        "compodoc": false
+      }
+    }
+```
+
+> Zoneless change detection is the default for new projects starting Angular v21.
+
 ## Setting up Static Assets
 
 Static assets are configured in the `.storybook/main.ts` file using the `staticDirs` array.

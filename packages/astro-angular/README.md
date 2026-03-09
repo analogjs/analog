@@ -93,7 +93,7 @@ yarn add @analogjs/astro-angular
 ### Install the necessary Angular dependencies
 
 ```sh
-yarn add @angular-devkit/build-angular @angular/{animations,common,compiler-cli,compiler,core,language-service,forms,platform-browser,platform-browser-dynamic,platform-server} rxjs zone.js tslib
+npm install @angular/build @angular/{animations,common,compiler-cli,compiler,core,language-service,forms,platform-browser,platform-server} rxjs tslib --save
 ```
 
 ### Adding the integration
@@ -178,28 +178,27 @@ export default defineConfig({
 The Astro Angular integration **only** supports rendering standalone components:
 
 ```ts
-import { NgIf } from '@angular/common';
 import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-hello',
-  standalone: true,
-  imports: [NgIf],
   template: `
     <p>Hello from Angular!!</p>
 
-    <p *ngIf="show">{{ helpText }}</p>
+    @if (show()) {
+      <p>{{ helpText() }}</p>
+    }
 
     <button (click)="toggle()">Toggle</button>
   `,
 })
 export class HelloComponent {
-  @Input() helpText = 'help';
+  helpText = input('help');
 
-  show = false;
+  show = signal(false);
 
   toggle() {
-    this.show = !this.show;
+    this.show.update((show) => !show);
   }
 }
 ```
@@ -269,7 +268,6 @@ These are `renderProviders` and `clientProviders` respectively. These providers 
 
 ```ts
 import { Component, OnInit, inject } from '@angular/core';
-import { NgFor } from '@angular/common';
 import { provideHttpClient, HttpClient } from '@angular/common/http';
 
 interface Todo {
@@ -280,15 +278,15 @@ interface Todo {
 
 @Component({
   selector: 'app-todos',
-  standalone: true,
-  imports: [NgFor],
   template: `
     <h2>Todos</h2>
 
     <ul>
-      <li *ngFor="let todo of todos">
-        {{ todo.title }}
-      </li>
+      @for (todo of todos(); track todo.id) {
+        <li>
+          {{ todo.title }}
+        </li>
+      }
     </ul>
   `,
 })
@@ -297,12 +295,12 @@ export class TodosComponent implements OnInit {
   static renderProviders = [TodosComponent.clientProviders];
 
   http = inject(HttpClient);
-  todos: Todo[] = [];
+  todos = signal<Todo[]>([]);
 
   ngOnInit() {
     this.http
       .get<Todo[]>('https://jsonplaceholder.typicode.com/todos')
-      .subscribe((todos) => (this.todos = todos));
+      .subscribe((todos) => this.todos.set(todos));
   }
 }
 ```
@@ -311,15 +309,13 @@ export class TodosComponent implements OnInit {
 
 To use components with MDX pages, you must install and configure MDX support by following the Astro integration of [@astrojs/mdx](https://docs.astro.build/en/guides/integrations-guide/mdx/). Your `astro.config.mjs` should now include the `@astrojs/mdx` integration.
 
-> Note: Shiki is the default syntax highlighter for the MDX plugin and is currently unsupported. `astro-angular` will override this with `prism` but you should specify it in the config to prevent warnings or issues.
-
 ```js
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import angular from '@analogjs/astro-angular';
 
 export default defineConfig({
-  integrations: [mdx({ syntaxHighlight: 'prism' }), angular()],
+  integrations: [mdx(), angular()],
 });
 ```
 
@@ -360,3 +356,4 @@ import { HelloComponent } from "../../components/hello.component.ts";
 ## Current Limitations
 
 - Only standalone Angular components in version v14.2+ are supported
+- Content projection to island components is not supported

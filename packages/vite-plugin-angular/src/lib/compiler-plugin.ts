@@ -6,7 +6,8 @@
  * found in the LICENSE file at https://angular.dev/license
  */
 
-import type { DepOptimizationConfig } from 'vite';
+import type { DepOptimizationConfig, Rolldown } from 'vite';
+import type { PluginBuild } from 'esbuild';
 
 import {
   CompilerPluginOptions,
@@ -28,7 +29,7 @@ export function createCompilerPlugin(
 
   return {
     name: 'analogjs-angular-esbuild-deps-optimizer-plugin',
-    async setup(build) {
+    async setup(build: PluginBuild) {
       if (!isTest) {
         build.onLoad({ filter: /\.[cm]?js$/ }, async (args) => {
           const contents = await javascriptTransformer.transformFile(args.path);
@@ -43,6 +44,31 @@ export function createCompilerPlugin(
       if (closeTransformer) {
         build.onEnd(() => javascriptTransformer.close());
       }
+    },
+  };
+}
+
+export function createRolldownCompilerPlugin(
+  pluginOptions: CompilerPluginOptions,
+): Rolldown.Plugin {
+  const javascriptTransformer = new JavaScriptTransformer(
+    { ...pluginOptions, jit: true },
+    1,
+  );
+  return {
+    name: 'analogjs-rolldown-deps-optimizer-plugin',
+    load: {
+      filter: {
+        id: /\.[cm]?js$/,
+      },
+      async handler(id) {
+        const contents = await javascriptTransformer.transformFile(id);
+
+        return {
+          code: Buffer.from(contents).toString('utf-8'),
+          loader: 'js',
+        } as any;
+      },
     },
   };
 }

@@ -234,6 +234,10 @@ async function init() {
     addYarnDevDependencies(pkg, template);
   }
 
+  if (pkgManager === 'pnpm') {
+    addPnpmDependencies(pkg, template);
+  }
+
   pkg.dependencies = sortObjectKeys(pkg.dependencies);
   pkg.devDependencies = sortObjectKeys(pkg.devDependencies);
 
@@ -375,12 +379,13 @@ function addTailwindDependencies(pkg) {
 function addYarnDevDependencies(pkg, template) {
   // v18
   if (template === 'latest' || template === 'blog' || template === 'minimal') {
-    pkg.devDependencies['@nx/angular'] = '^21.0.0';
-    pkg.devDependencies['@nx/devkit'] = '^21.0.0';
-    pkg.devDependencies['@nx/vite'] = '^21.0.0';
-    pkg.devDependencies['nx'] = '^21.0.0';
-  } else if (template === 'angular-v17') {
-    pkg.devDependencies['@angular-devkit/build-angular'] = '^17.2.0';
+    pkg.devDependencies['h3'] = '^1.13.0';
+  }
+}
+
+function addPnpmDependencies(pkg, template) {
+  if (template === 'latest' || template === 'blog' || template === 'minimal') {
+    pkg.dependencies['h3'] = '^1.13.0';
   }
 }
 

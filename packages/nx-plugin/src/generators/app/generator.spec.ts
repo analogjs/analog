@@ -46,14 +46,12 @@ describe('nx-plugin generator', () => {
     expect(dependencies['mermaid']).toBe('^10.2.4');
     expect(dependencies['prismjs']).toBe('^1.29.0');
 
-    expect(dependencies['@nx/angular']).toBeDefined();
     // we just check for truthy because @nx/eslint generator
     // will install the correct version based on Nx version
     // expect(devDependencies['@nx/eslint']).toBeTruthy();
     expect(devDependencies['@analogjs/platform']).toBeDefined();
     expect(devDependencies['@analogjs/vite-plugin-angular']).toBeDefined();
     expect(devDependencies['@analogjs/vitest-angular']).toBeDefined();
-    expect(devDependencies['@nx/vite']).toBeDefined();
     expect(devDependencies['jsdom']).toBeDefined();
     expect(devDependencies['vite']).toBeDefined();
     expect(devDependencies['vite-tsconfig-paths']).toBe('^4.2.0');
@@ -116,45 +114,18 @@ describe('nx-plugin generator', () => {
       expect(hasTailwindConfigFile).toBeTruthy();
       expect(hasPostCSSConfigFile).toBeTruthy();
     } else {
-      expect(dependencies['@tailwindcss/vite']).toBeDefined();
+      expect(dependencies['@tailwindcss/postcss']).toBeDefined();
 
+      const hasPostCSSConfigFile = tree.exists(
+        'apps/tailwind-app/.postcssrc.json',
+      );
       const hasCorrectCssImplementation = tree
         .read('apps/tailwind-app/src/styles.css')
         .includes(`@import 'tailwindcss';`);
 
-      const regex = /plugins: \[.*\btailwindcss\(\)/s;
-
-      const viteConfig = tree
-        .read('apps/tailwind-app/vite.config.ts')
-        .toString();
-
-      expect(regex.test(viteConfig)).toBeTruthy();
       expect(hasCorrectCssImplementation).toBeTruthy();
+      expect(hasPostCSSConfigFile).toBeTruthy();
     }
-  };
-
-  const verifyTrpcIsSetUp = (
-    tree: Tree,
-    dependencies: Record<string, string>,
-  ) => {
-    expect(dependencies['@analogjs/trpc']).toBeDefined();
-    const hasTrpcClientFile = tree.exists('apps/trpc-app/src/trpc-client.ts');
-    const hasNoteFile = tree.exists('apps/trpc-app/src/note.ts');
-    const hasTrpcServerRoute = tree.exists(
-      'apps/trpc-app/src/server/routes/api/trpc/[trpc].ts',
-    );
-    expect(hasTrpcClientFile).toBeTruthy();
-    expect(hasNoteFile).toBeTruthy();
-    expect(hasTrpcServerRoute).toBeTruthy();
-
-    const providesTrpcClient = tree
-      .read('apps/trpc-app/src/app/app.config.ts')
-      .includes('provideTrpcClient');
-    const injectsTrpcClient = tree
-      .read('apps/trpc-app/src/app/pages/analog-welcome.component.ts')
-      .includes('injectTrpcClient');
-    expect(providesTrpcClient).toBeTruthy();
-    expect(injectsTrpcClient).toBeTruthy();
   };
 
   const verifyTagsArePopulated = (
@@ -209,19 +180,6 @@ describe('nx-plugin generator', () => {
       verifyHomePageExists(tree, analogAppName);
 
       verifyTailwindIsSetUp(tree, dependencies);
-    });
-
-    it('creates an analogjs app in the source directory with trpc set up', async () => {
-      const analogAppName = 'trpc-app';
-      const { config, tree } = await setup({ analogAppName, addTRPC: true });
-      const { dependencies, devDependencies } = readJson(tree, 'package.json');
-
-      verifyCoreDependenciesNx_Angular(dependencies, devDependencies);
-
-      verifyConfig(config, analogAppName);
-
-      verifyHomePageExists(tree, analogAppName);
-      verifyTrpcIsSetUp(tree, dependencies);
     });
 
     it('creates an analogjs app in the source directory with tags populated', async () => {

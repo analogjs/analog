@@ -138,14 +138,34 @@ You can also check out [Github Integration](https://docs.zerops.io/references/gi
 
 ## Netlify
 
-Analog supports deploying on [Netlify](https://netlify.com/) with minimal configuration.
+Analog supports deploying on [Netlify](https://netlify.com/) with no additional configuration.
 
-### Deploying the Project
+### Deploying the project
 
 <Tabs groupId="porject-type">
   <TabItem label="Create analog" value="create-analog">
-In the build settings of your Netlify project, set the [publish directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `dist/analog/public` to deploy the static assets and the [functions directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `dist/analog` to deploy the server.
-  </TabItem>
+Configuration is easiest when using [Netlify CLI](https://developers.netlify.com/cli/).
+    
+1. Start by running this command:
+
+```bash
+npx netlify init
+```
+
+If this is a new Netlify project, you'll be prompted to initialize it; build settings will be automatically configured in a `netlify.toml` file.
+
+2. Deploy your app:
+
+```bash
+npx netlify deploy
+```
+
+#### Manual configuration
+
+Alternatively, you can configure your project's build settings in the Netlify app.
+
+Set the [publish directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `dist/analog/public` to deploy the static assets and the [functions directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `netlify/functions` to deploy the server.
+</TabItem>
 
   <TabItem label="Nx" value="nx">
 In the build settings of your Netlify project on the web UI, do the following.

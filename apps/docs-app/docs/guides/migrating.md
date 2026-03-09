@@ -178,3 +178,24 @@ export default defineConfig(({ mode }) => ({
   plugins: [analog(), nxCopyAssetsPlugin(['*.md'])],
 }));
 ```
+
+## Enabling HMR
+
+Angular supports HMR/Live reload where in most cases components can be updated without a page reload. To enable it in Analog, use the `liveReload: true` option.
+
+```ts
+/// <reference types="vitest" />
+
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  // .. other configuration
+  plugins: [
+    analog({
+      liveReload: true,
+    }),
+  ],
+}));
+```

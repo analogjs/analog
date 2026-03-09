@@ -9,13 +9,13 @@ import TabItem from '@theme/TabItem';
 
 Vitest can be installed and setup using a schematic/generator for Angular CLI or Nx workspaces.
 
-First, install the `@analogjs/platform` package:
+First, install the `@analogjs/vitest-angular` package:
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/platform --save-dev
+npm install @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -23,7 +23,7 @@ npm install @analogjs/platform --save-dev
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/platform --dev
+yarn add @analogjs/vitest-angular --dev
 ```
 
   </TabItem>
@@ -31,7 +31,7 @@ yarn add @analogjs/platform --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/platform --save-dev
+pnpm install -w @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -40,8 +40,25 @@ pnpm install -w @analogjs/platform --save-dev
 Next, run the schematic to set up the Vite config, test configuration files, and update the test configuration.
 
 ```shell
-ng g @analogjs/platform:setup-vitest --project [your-project-name]
+ng g @analogjs/vitest-angular:setup --project [your-project-name]
 ```
+
+### Schematic Options
+
+| Option        | Type    | Default | Description                                                 |
+| ------------- | ------- | ------- | ----------------------------------------------------------- |
+| `project`     | string  | -       | The name of the project to configure (required)             |
+| `browserMode` | boolean | `false` | Configure Vitest to run tests in a browser using Playwright |
+
+To enable browser mode during setup:
+
+```shell
+ng g @analogjs/vitest-angular:setup --project [your-project-name] --browserMode
+```
+
+This automatically installs Playwright dependencies and configures Vitest for browser testing. See [Setup for Running Tests in the Browser](#setup-for-running-tests-in-the-browser) for more details.
+
+If using browser mode, run `npx playwright install` after the schematic to ensure playwright is installed and configured.
 
 Next, go to [running tests](#running-tests)
 
@@ -94,13 +111,24 @@ export default defineConfig(({ mode }) => ({
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
   },
-  define: {
-    'import.meta.vitest': mode !== 'production',
-  },
 }));
 ```
 
 Next, define a `src/test-setup.ts` file to setup the `TestBed`:
+
+### Zoneless setup
+
+As of Angular v21, `Zoneless` change detection is the default for new projects.
+
+Use the following setup:
+
+```ts
+import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-snapshots';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+setupTestBed();
+```
 
 ### Zone.js setup
 
@@ -109,43 +137,29 @@ If you are using `Zone.js` for change detection, import the `setup-zone` script.
 ```ts
 import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-zone';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
-
-getTestBed().initTestEnvironment(
-  BrowserTestingModule,
-  platformBrowserTesting(),
-);
+setupTestBed({
+  zoneless: false,
+});
 ```
 
-### Zoneless setup
+### Configuration Options
 
-If you are using `Zoneless` change detection, use the following setup:
+The `setupTestBed()` function accepts an optional configuration object with the following properties:
+
+- `zoneless` (boolean): Whether to use zoneless change detection (default: `true`)
+- `providers` (`Type<any>[]`): Additional providers to include in the test environment (default: `[]`)
+- `browserMode` (boolean): Enables visual test preview in Vitest browser mode by keeping the component rendered, allowing you to inspect its final state (default: `false`)
+
+**Example with options:**
 
 ```ts
-import '@angular/compiler';
-import '@analogjs/vitest-angular/setup-snapshots';
-
-import { provideZonelessChangeDetection, NgModule } from '@angular/core';
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
-
-@NgModule({
-  providers: [provideZonelessChangeDetection()],
-})
-export class ZonelessTestModule {}
-
-getTestBed().initTestEnvironment(
-  [BrowserTestingModule, ZonelessTestModule],
-  platformBrowserTesting(),
-);
+setupTestBed({
+  zoneless: true,
+  providers: [],
+  browserMode: false,
+});
 ```
 
 Next, update the `test` target in the `angular.json` to use the `@analogjs/vitest-angular:test` builder:
@@ -202,7 +216,7 @@ Then, install the necessary packages for running tests in the browser:
   <TabItem value="npm">
 
 ```shell
-npm install @vitest/browser playwright --save-dev
+npm install @vitest/browser-playwright playwright --save-dev
 ```
 
   </TabItem>
@@ -210,7 +224,7 @@ npm install @vitest/browser playwright --save-dev
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @vitest/browser playwright --dev
+yarn add @vitest/browser-playwright playwright --dev
 ```
 
   </TabItem>
@@ -218,7 +232,7 @@ yarn add @vitest/browser playwright --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @vitest/browser playwright
+pnpm install -w @vitest/browser-playwright playwright
 ```
 
   </TabItem>
@@ -234,6 +248,7 @@ Update the `test` object in the `vite.config.ts`.
 import { defineConfig } from 'vite';
 
 import angular from '@analogjs/vite-plugin-angular';
+import { playwright } from '@vitest/browser-playwright';
 
 export default defineConfig(({ mode }) => ({
   plugins: [angular()],
@@ -246,16 +261,27 @@ export default defineConfig(({ mode }) => ({
     // Vitest browser config
     browser: {
       enabled: true,
-      name: 'chromium',
       headless: false, // set to true in CI
-      provider: 'playwright',
+      provider: playwright(),
+      instances: [{ browser: 'chromium' }],
     },
-  },
-  define: {
-    'import.meta.vitest': mode !== 'production',
   },
 }));
 ```
+
+When running tests in the browser, you may want to update your `src/test-setup.ts` to enable `browserMode`:
+
+```ts
+import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-snapshots';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+setupTestBed({
+  browserMode: true, // Enables visual test preview
+});
+```
+
+This keeps the component rendered after tests complete, allowing you to visually inspect the final state in the browser preview.
 
 ## Running Tests
 
@@ -288,6 +314,10 @@ pnpm test
 </Tabs>
 
 > The `npx vitest` command can also be used directly.
+
+<strong>Hungry for more? Check out Younes Jaaidi's [video course](https://courses.marmicode.io/courses/pragmatic-angular-testing?ref=ec72c7) on Angular testing.</strong>
+
+[![Angular Testing Course](/img/pragmatic-angular-testing-banner-2.jpg)](https://courses.marmicode.io/courses/pragmatic-angular-testing?ref=ec72c7)
 
 ## Snapshot Testing
 

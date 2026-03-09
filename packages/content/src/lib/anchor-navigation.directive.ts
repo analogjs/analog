@@ -12,7 +12,7 @@ export class AnchorNavigationDirective {
   private readonly router = inject(Router);
 
   @HostListener('click', ['$event.target'])
-  handleNavigation(element: HTMLElement): boolean {
+  handleNavigation(element: EventTarget | null): boolean {
     if (
       element instanceof HTMLAnchorElement &&
       isInternalUrl(element, this.document) &&

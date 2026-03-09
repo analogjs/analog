@@ -98,7 +98,7 @@ export const appConfig: ApplicationConfig = {
 
 ## Making Requests
 
-In your component/service, use `HttpClient` along with [/docs/features/api/overview](API routes) with providing a full URL.
+In your component/service, use `HttpClient` along with [API routes](/docs/features/api/overview) with providing a full URL.
 
 An example API route that fetches todos.
 

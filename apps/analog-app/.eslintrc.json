@@ -1,5 +1,5 @@
 {
-  "extends": ["../../.eslintrc.json"],
+  "extends": ["../../.eslintrc.json", "plugin:storybook/recommended"],
   "ignorePatterns": [
     "!**/*",
     "**/vite.config.*.timestamp*",

@@ -13,8 +13,17 @@ By default, Angular and Storybook uses Webpack to build and serve the Storybook 
 
 This guides you through the process of switching to building and serving your Storybook with Angular using Vite using the AnalogJS Storybook integration. This package can be applied to _any_ Angular project using Storybook.
 
-> This is a community integration not maintained by the Storybook team. If you have issues,
-> file an issue in our [GitHub repo](https://github.com/analogjs/analog/issues).
+> This is a community integration not maintained by the Storybook team. If you have issues, file an issue in our [GitHub repo](https://github.com/analogjs/analog/issues).
+
+## Compatibility Guide
+
+The AnalogJS Storybook integration for using Angular and Vite supports multiple versions of Storybook. See the table below for which version to install based on the project dependencies.
+
+| Storybook Version | Analog Version |
+| ----------------- | -------------- |
+| ^10.0.0           | ^2.0.0         |
+| ^9.0.0            | ^1.22.0        |
+| ^8.6.0            | ^1.22.0        |
 
 ## Setting up Storybook
 
@@ -129,6 +138,59 @@ To register global styles, add them to the `@analogjs/storybook-angular` builder
       }
     }
 ```
+
+## Enabling Zoneless Change Detection
+
+To use zoneless change detection for the Storybook, add the `experimentalZoneless` flag to the `@analogjs/storybook-angular` builder options in the `angular.json` or `project.json`.
+
+<Tabs groupId="zoneless-change-detection">
+  <TabItem value="angular.json">
+
+```json
+    "storybook": {
+      "builder": "@analogjs/storybook-angular:start-storybook",
+      "options": {
+        // ... other options
+        "experimentalZoneless": true
+      }
+    },
+    "build-storybook": {
+      "builder": "@analogjs/storybook-angular:build-storybook",
+      "options": {
+        // ... other options
+        "experimentalZoneless": true
+      }
+    }
+```
+
+  </TabItem>
+  <TabItem value="project.json">
+
+```json
+    "storybook": {
+      "executor": "@analogjs/storybook-angular:start-storybook",
+      "options": {
+        // ... other options
+        "configDir": "path/to/.storybook",
+        "experimentalZoneless": true,
+        "compodoc": false
+      }
+    },
+    "build-storybook": {
+      "executor": "@analogjs/storybook-angular:build-storybook",
+      "options": {
+        // ... other options
+        "configDir": "path/to/.storybook",
+        "experimentalZoneless": true,
+        "compodoc": false
+      }
+    }
+```
+
+  </TabItem>
+</Tabs>
+
+> Zoneless change detection is the default for new projects starting Angular v21.
 
 ## Setting up Static Assets
 
@@ -285,3 +347,147 @@ Adding the replacement files to `files` array in the `tsconfig.app.json` may als
   "files": ["src/main.ts", "src/main.server.ts", "src/two.ts"]
 }
 ```
+
+## Setting up Vitest for Interaction Testing
+
+Storybook also supports using Vitest for testing component interactions.
+
+### Installing Packages
+
+Install the Vitest addon and dependencies:
+
+```sh
+npm install @analogjs/vitest-angular @storybook/addon-vitest vitest @vitest/browser-playwright --save-dev
+```
+
+### Add Vitest Add-on
+
+Add the addon to your `.storybook/main.ts`:
+
+```ts
+import { StorybookConfig } from '@analogjs/storybook-angular';
+
+const config: StorybookConfig = {
+  stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
+  addons: [
+    '@storybook/addon-essentials',
+    '@storybook/addon-interactions',
+    '@storybook/addon-vitest',
+  ],
+  framework: {
+    name: '@analogjs/storybook-angular',
+    options: {},
+  },
+};
+
+export default config;
+```
+
+### Setup Vitest Configuration
+
+Create a `.storybook/vitest.setup.ts` file:
+
+```ts
+import '@angular/compiler';
+import { setProjectAnnotations } from '@analogjs/storybook-angular/testing';
+import { beforeAll } from 'vitest';
+import * as projectAnnotations from './preview';
+
+const project = setProjectAnnotations([projectAnnotations]);
+
+beforeAll(project.beforeAll);
+```
+
+Update `.storybook/tsconfig.json` to include the setup file:
+
+```json
+{
+  "extends": "../tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true
+  },
+  "exclude": ["../src/test.ts", "../src/**/*.spec.ts"],
+  "include": ["../src/**/*.stories.*", "./preview.ts", "./vitest.setup.ts"],
+  "files": ["./typings.d.ts"]
+}
+```
+
+Create a `vitest.config.ts` file in your project root, or add a `storybook` project to your existing `vite.config.ts`:
+
+```ts
+/// <reference types="vitest/config" />
+import { defineConfig } from 'vite';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
+import { playwright } from '@vitest/browser-playwright';
+
+const dirname =
+  typeof __dirname !== 'undefined'
+    ? __dirname
+    : path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig({
+  test: {
+    projects: [
+      {
+        extends: true,
+        plugins: [
+          storybookTest({
+            configDir: path.join(dirname, '.storybook'),
+          }),
+        ],
+        test: {
+          name: 'storybook',
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright(),
+            instances: [{ browser: 'chromium' }],
+          },
+          setupFiles: ['.storybook/vitest.setup.ts'],
+        },
+      },
+    ],
+  },
+});
+```
+
+### Installing Playwright
+
+Install Playwright browser binaries:
+
+```sh
+npx playwright install chromium
+```
+
+### Running Component Tests
+
+Add the `test-storybook` target to your `angular.json`:
+
+```json
+"test-storybook": {
+  "builder": "@analogjs/vitest-angular:test",
+  "options": {
+    "configFile": "vitest.config.ts"
+  }
+}
+```
+
+Add a test script to your `package.json`:
+
+```json
+"scripts": {
+  "test-storybook": "ng run your-app:test-storybook"
+}
+```
+
+Run your interaction tests with:
+
+```sh
+npm run test-storybook
+```
+
+You can also run tests directly in the Storybook UI. Start Storybook and use the "Run Tests" button in the sidebar, or navigate to a story to see interaction tests run automatically in the Interactions panel.

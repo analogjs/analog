@@ -42,11 +42,19 @@ pnpm install @angular/cdk @angular/material
 ## Paso 2: Configuración de la biblioteca Angular Material
 
 1. Renombra el fichero `styles.css` a `styles.scss`.
-2. Establece la propiedad `inlineStylesExtension` a `'scss'` ien el fichero `vite.config.ts`:
+2. Si estas usando `zone.js`, configure la opción `scss` de `preprocessorOptions` y api en `legacy`.
+3. Establece la propiedad `inlineStylesExtension` a `'scss'` ien el fichero `vite.config.ts`:
 
 ```ts
 export default defineConfig(({ mode }) => {
   return {
+    css: {
+      preprocessorOptions: {
+        scss: {
+          api: 'legacy',
+        },
+      },
+    },
     plugins: [
       analog({
         inlineStylesExtension: 'scss',
@@ -56,11 +64,11 @@ export default defineConfig(({ mode }) => {
 });
 ```
 
-3. Actualiza el `index.html` para referenciar el nuevo fichero SCSS:
+4. Actualiza el `index.html` para referenciar el nuevo fichero SCSS:
 
 ```html
 <head>
-  <!-- other headers -->
+  <!-- otras cabeceras -->
   <link rel="stylesheet" href="/src/styles.scss" />
   <link rel="preconnect" href="https://fonts.gstatic.com" />
   <link
@@ -77,26 +85,32 @@ export default defineConfig(({ mode }) => {
 </body>
 ```
 
-4. Actualiza el fichero `styles.scss` para importar los estilos de Angular Material y definir tu tema visual personalizado:
+5. Actualiza el fichero `styles.scss` para importar los estilos de Angular Material y definir tu tema visual personalizado:
 
 ```scss
 @use '@angular/material' as mat;
-@include mat.core();
 
-$analog-primary: mat.define-palette(mat.$indigo-palette);
-$analog-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
-$analog-warn: mat.define-palette(mat.$red-palette);
-$analog-theme: mat.define-light-theme(
-  (
-    color: (
-      primary: $analog-primary,
-      accent: $analog-accent,
-      warn: $analog-warn,
-    ),
-  )
-);
+html {
+  color-scheme: light dark;
+  @include mat.theme(
+    (
+      color: mat.$violet-palette,
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
 
-@include mat.all-component-themes($analog-theme);
+body {
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  margin: 0;
+  padding: 30px;
+  height: 100%;
+}
+
+html {
+  height: 100%;
+}
 ```
 
 ## Paso Opcional: Configuración de Animaciones

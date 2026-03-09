@@ -26,8 +26,7 @@ export const load = async ({
 ## Injecting the Data
 
 Accessing the data fetched on the server can be done using the `injectLoad` function provided by `@analogjs/router`.
-The `load` function is resolved using Angular route resolvers, so setting `requireSync: false` and `initialValue: {}`
-offers no advantage, as load is fetched before the component is instantiated.
+The `load` function is resolved using Angular route resolvers, so setting `requireSync: false` and `initialValue: {}` offers no advantage, as load is fetched before the component is instantiated.
 
 ```ts
 // src/app/pages/index.page.ts

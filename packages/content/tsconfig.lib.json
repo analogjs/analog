@@ -8,6 +8,6 @@
     "types": [],
     "allowJs": true
   },
-  "exclude": ["jest.config.ts", "**/*.test.ts", "**/*.spec.ts"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts"],
   "include": ["**/*.ts"]
 }

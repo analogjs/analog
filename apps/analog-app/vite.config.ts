@@ -72,6 +72,9 @@ export default defineConfig(({ mode }) => {
         },
         vite: {
           inlineStylesExtension: 'scss',
+          experimental: {
+            useAngularCompilationAPI: false,
+          },
         },
         liveReload: true,
         nitro: {

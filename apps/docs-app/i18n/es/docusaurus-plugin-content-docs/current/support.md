@@ -6,7 +6,15 @@ sidebar_position: 5
 
 Ya seas un desarrollador independiente o una gran empresa, ¡tenemos diferentes opciones disponibles para ti!
 
-## Discord
+## Soporte pago
+
+La consultoría privada, incluyendo anticipo y servicios de soporte empresarial, está disponible para empresas y proyectos de cualquier tamaño, directamente desde el equipo principal de AnalogJS.
+
+- [Contáctanos](mailto:brandon@analogjs.org?subject=Paid+Support) directamente para discutir oportunidades de soporte pago.
+
+## Soporte de la Comunidad
+
+### Discord
 
 Hay un [Servidor Discord](https://chat.analogjs.org) disponible para:
 
@@ -14,7 +22,7 @@ Hay un [Servidor Discord](https://chat.analogjs.org) disponible para:
 - Preguntas y respuestas
 - Chat general
 
-## GitHub
+### GitHub
 
 El [código fuente](https://github.com/analogjs/analog) de Analog tiene licencia MIT, es gratuito y de código abierto. Puedes solicitar soporte general de las siguientes maneras:
 
@@ -22,14 +30,3 @@ El [código fuente](https://github.com/analogjs/analog) de Analog tiene licencia
 - Solicitudes de nuevas funcionalidades
 - Pull Requests
 - [Contribuciones](/docs/contributing) Generales
-
-## Soporte dedicado
-
-Ofrecemos soporte dedicado a través de:
-
-- Consultoría de arquitectura
-- Contratos de soporte empresarial
-- Servicios de retención
-- Workshops
-
-- Agenda una [reunión](https://calendly.com/brandontroberts/session) o [Contáctanos](mailto:support@analogjs.org?subject=Dedicated+Support) directamente para hablar sobre las opciones de soporte dedicado.

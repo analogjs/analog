@@ -53,6 +53,7 @@ export function updateServeTarget(
 
     projectConfig.targets.serve = {
       executor: '@analogjs/platform:vite-dev-server',
+      continuous: true,
       ...commonConfig,
     };
     projectConfig.targets.build.outputs = [

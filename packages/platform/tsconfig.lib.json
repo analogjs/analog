@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "es2020",
+    "module": "preserve",
     "outDir": "../../dist/out-tsc",
     "inlineSourceMap": true,
     "sourceMap": false,
@@ -16,7 +16,8 @@
       "@analogjs/vite-plugin-nitro": [
         "./node_modules/@analogjs/vite-plugin-nitro"
       ]
-    }
+    },
+    "moduleResolution": "bundler"
   },
   "include": ["**/*.ts"],
   "exclude": [

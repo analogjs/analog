@@ -9,6 +9,7 @@
     "src/**/*.ts",
     "setup-zone.ts",
     "setup-snapshots.ts",
+    "setup-testbed.ts",
     "plugin.ts"
   ],
   "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"]

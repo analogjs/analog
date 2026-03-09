@@ -94,59 +94,55 @@ export default defineConfig(({ mode }) => ({
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
   },
-  define: {
-    'import.meta.vitest': mode !== 'production',
-  },
 }));
 ```
 
 Luego, crea un archivo `src/test-setup.ts` para configurar el `TestBed`:
+
+### Soporte Zoneless
+
+Como desde Angular v21, `Zoneless` es la opción por defecto para la detección de cambios en proyectos nuevos.
+
+Utilice la siguiente configuración:
+
+```ts
+import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-snapshots';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+setupTestBed();
+```
 
 ### Configuración de Zone.js
 
 Si estás usando `Zone.js` para la detección de cambios, importa el script `setup-zone`. Este script incluye automáticamente soporte para configurar pruebas de snapshots.
 
 ```ts
+import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-zone';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
-
-getTestBed().initTestEnvironment(
-  BrowserTestingModule,
-  platformBrowserTesting(),
-);
+setupTestBed({
+  zoneless: false,
+});
 ```
 
-### Configuración Sin Zone
+### Opciones de Configuración
 
-Si estás usando detección de cambios `Zoneless`, usa la siguiente configuración:
+La función `setupTestBed()` acepta un objecto de configuración opcional con las siguientes propiedades:
+
+- `zoneless` (boolean): Si se debe utilizar la detección de cambios zoneless (predeterminado: `true`)
+- `providers` (`Type<any>[]`): Proveedores adicionales para incluir en el entorno de prueba (predeterminado: `[]`)
+- `browserMode` (boolean): Habilita la vista previa de pruebas en el modo de navegador de Vitest, manteniendo el componente renderizado, lo que te permite inspeccionar su estado final (predeterminado: `false`)
+
+**Ejemplo con opciones:**
 
 ```ts
-import '@analogjs/vitest-angular/setup-snapshots';
-
-import {
-  provideExperimentalZonelessChangeDetection,
-  NgModule,
-} from '@angular/core';
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
-
-@NgModule({
-  providers: [provideExperimentalZonelessChangeDetection()],
-})
-export class ZonelessTestModule {}
-
-getTestBed().initTestEnvironment(
-  [BrowserTestingModule, ZonelessTestModule],
-  platformDynamicTesting(),
-);
+setupTestBed({
+  zoneless: true,
+  providers: [],
+  browserMode: false,
+});
 ```
 
 A continuación, actualiza la propiedad `test` en el archivo `angular.json` para usar el constructor `@analogjs/vitest-angular:test`:
@@ -203,7 +199,7 @@ Luego, instala los paquetes necesarios para ejecutar pruebas en el navegador:
   <TabItem value="npm">
 
 ```shell
-npm install @vitest/browser playwright --save-dev
+npm install @vitest/browser-playwright playwright --save-dev
 ```
 
   </TabItem>
@@ -211,7 +207,7 @@ npm install @vitest/browser playwright --save-dev
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @vitest/browser playwright --dev
+yarn add @vitest/browser-playwright playwright --dev
 ```
 
   </TabItem>
@@ -219,7 +215,7 @@ yarn add @vitest/browser playwright --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @vitest/browser playwright
+pnpm install -w @vitest/browser-playwright playwright
 ```
 
   </TabItem>
@@ -235,6 +231,7 @@ Actualiza el objeto `test` en el archivo `vite.config.ts`.
 import { defineConfig } from 'vite';
 
 import angular from '@analogjs/vite-plugin-angular';
+import { playwright } from '@vitest/browser-playwright';
 
 export default defineConfig(({ mode }) => ({
   plugins: [angular()],
@@ -244,37 +241,30 @@ export default defineConfig(({ mode }) => ({
     // environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
-    // Configuración de Vitest para navegador
+    // Vitest browser config
     browser: {
       enabled: true,
-      name: 'chromium',
-      headless: false, // establecer en true en CI
-      provider: 'playwright',
+      headless: false, // set to true in CI
+      provider: playwright(),
+      instances: [{ browser: 'chromium' }],
     },
-  },
-  define: {
-    'import.meta.vitest': mode !== 'production',
   },
 }));
 ```
 
-Luego, añade la importación de `@angular/compiler` al archivo `src/test-setup.ts`.
+Cuando se corren las pruebas en el navegador, probablemente quieras activar en `src/test-setup.ts` el `browserMode`:
 
 ```ts
 import '@angular/compiler';
-import '@analogjs/vitest-angular/setup-zone';
+import '@analogjs/vitest-angular/setup-snapshots';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
-
-getTestBed().initTestEnvironment(
-  BrowserTestingModule,
-  platformBrowserTesting(),
-);
+setupTestBed({
+  browserMode: true, // Enables visual test preview
+});
 ```
+
+Esto mantiene el componente dibujado luego que la prueba se complate, permitiendote inspeccionar visualmente el estado final en el navegador.
 
 ## Ejecutando las Pruebas
 

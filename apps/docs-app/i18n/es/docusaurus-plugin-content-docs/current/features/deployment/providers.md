@@ -5,6 +5,137 @@ import TabItem from '@theme/TabItem';
 
 Analog soporta el despliegue en muchos proveedores con poca o ninguna configuración adicional usando [Nitro](https://nitro.unjs.io) como su motor de servidor subyacente. Puedes encontrar más proveedores en la [documentación de despliegue de Nitro](https://nitro.unjs.io/deploy).
 
+## Zerops
+
+:::info
+[Zerops](https://zerops.io) es el socio **oficial** para despliegues para AnalogJS.
+:::
+
+Analog soporta el despliegue de aplicaciones estáticas y renderizadas del lado del servidor en [Zerops](https://zerops.io) con un archivo de configuración sencillo.
+
+> Un proyecto de Zerops puede contener múltiples proyectos de Analog. Consulta repositorios de ejemplo para aplicaciones Analog [estáticas](https://github.com/zeropsio/recipe-analog-static) y [renderizadas del lado del servidor](https://github.com/zeropsio/recipe-analog-nodejs) para empezar rápidamente.
+
+### Aplicación Analog Estática (SSG)
+
+Si tu proyecto no está listo para SSG, configura tu proyecto para la [Generación de Sitio Estático](/docs/features/server/static-site-generation).
+
+#### 1. Crea un proyecto en Zerops
+
+Los proyectos y servicios pueden ser añadidos ya sea a través de un asistente de [Agregar Proyecto](https://app.zerops.io/dashboard/project-add) o importados usando una estructura YAML:
+
+```yml
+project:
+  name: recipe-analog
+services:
+  - hostname: app
+    type: static
+```
+
+Esto crea un proyecto llamado `recipe-analog` con un servicio estático de Zerops llamado `app`.
+
+#### 2. Añadir la configuración de zerops.yml
+
+Para indicarle a Zerops cómo construir y ejecutar tu sitio, añade un archivo `zerops.yml` a tu repositorio:
+
+```yml
+zerops:
+  - setup: app
+    build:
+      base: nodejs@20
+      buildCommands:
+        - pnpm i
+        - pnpm build
+      deployFiles:
+        - public
+        - dist/analog/public/~
+    run:
+      base: static
+```
+
+#### 3. [Iniciar la tubería de compilación y despliegue](#build-deploy-your-code)
+
+### Aplicación Analog Renderizada del Lado del Servidor (SSR)
+
+Si tu proyecto no está listo para SSR, configura tu proyecto para la [Renderización del Lado del Servidor](/docs/features/server/server-side-rendering).
+
+#### 1. Crea un proyecto en Zerops
+
+Los proyectos y servicios pueden ser añadidos ya sea a través de un asistente de [Agregar Proyecto](https://app.zerops.io/dashboard/project-add) o importados usando una estructura YAML:
+
+```yml
+project:
+  name: recipe-analog
+services:
+  - hostname: app
+    type: nodejs@20
+```
+
+Esto crea un proyecto llamado `recipe-analog` con un servicio de Node.js de Zerops llamado `app`.
+
+#### 2. Añadir la configuración de zerops.yml
+
+Para indicarle a Zerops cómo construir y ejecutar tu sitio, añade un archivo `zerops.yml` a tu repositorio:
+
+```yml
+zerops:
+  - setup: app
+    build:
+      base: nodejs@20
+      buildCommands:
+        - pnpm i
+        - pnpm build
+      deployFiles:
+        - public
+        - node_modules
+        - dist
+    run:
+      base: nodejs@20
+      ports:
+        - port: 3000
+          httpSupport: true
+      start: node dist/analog/server/index.mjs
+```
+
+#### 3. [Iniciar la tubería de compilación y despliegue](#build-deploy-your-code)
+
+---
+
+### Compilar y desplegar tu código
+
+#### Iniciar la tubería conectando el servicio con tu repositorio de GitHub / GitLab
+
+Tu código puede ser desplegado automáticamente en cada commit o una nueva etiqueta conectando el servicio con tu repositorio de GitHub / GitLab. Esta conexión puede ser configurada en el detalle del servicio.
+
+#### Iniciar la tubería usando Zerops CLI (zcli)
+
+También puedes iniciar la tubería manualmente desde tu terminal o tu CI/CD existente usando Zerops CLI.
+
+1. Instala la CLI de Zerops.
+
+```bash
+# Para descargar el binario de zcli directamente,
+# usa https://github.com/zeropsio/zcli/releases
+npm i -g @zerops/zcli
+```
+
+2. Abre [Settings > Access Token Management](https://app.zerops.io/settings/token-management) en la aplicación Zerops y genera un nuevo token de acceso.
+
+3. Inicia sesión usando tu token de acceso con el siguiente comando:
+
+```bash
+zcli login <token>
+```
+
+4. Navega a la raíz de tu aplicación (donde se encuentra `zerops.yml`) y ejecuta el siguiente comando para iniciar el despliegue:
+
+```bash
+zcli push
+```
+
+#### Iniciar la tubería usando GitHub / Gitlab
+
+También puedes consultar [Integración con GitHub](https://docs.zerops.io/references/github-integration) / [Integración con Gitlab](https://docs.zerops.io/references/gitlab-integration) en [Documentación de Zerops](https://docs.zerops.io/) para la integración con git.
+
 ## Netlify
 
 Analog soporta el despliegue en [Netlify](https://netlify.com/) con configuración mínima.
@@ -13,8 +144,28 @@ Analog soporta el despliegue en [Netlify](https://netlify.com/) con configuraci�
 
 <Tabs groupId="porject-type">
   <TabItem label="Create analog" value="create-analog">
-En la configuración de compilación de tu proyecto de Netlify, establece el [directorio de publicación](https://docs.netlify.com/configure-builds/overview/#definitions) en `dist/analog/public` para desplegar los activos estáticos y el [directorio de funciones](https://docs.netlify.com/configure-builds/overview/#definitions) en `dist/analog` para desplegar el servidor.
-  </TabItem>
+La configuración es más fácil cuando se usa [Netlify CLI](https://developers.netlify.com/cli/).
+    
+1. Comenzar ejecutando este comando:
+
+```bash
+npx netlify init
+```
+
+Si es un proyecto nuevo en Netlify, verás un mensaje para iniciarlo; la configuración se establecerá automáticamente en el archivo `netlify.toml`.
+
+2. Desplegar la aplicación:
+
+```bash
+npx netlify deploy
+```
+
+#### Configuración manual
+
+Alternativamente, puedes configurar tu proyecto en la aplicación de Netlify.
+
+Establecer el [directorio público](https://docs.netlify.com/configure-builds/overview/#definitions) a `dist/analog/public` para desplegar todos los archivos estáticos y el [directorio de funciones](https://docs.netlify.com/configure-builds/overview/#definitions) a `netlify/functions` para desplegar el servidor.
+</TabItem>
 
   <TabItem label="Nx" value="nx">
 En la configuración de compilación de tu proyecto de Netlify en la interfaz web, haz lo siguiente.
@@ -161,9 +312,17 @@ BUILD_PRESET=cloudflare-pages npm run build
 npx wrangler pages dev ./dist/analog/public
 ```
 
-## Firebase
+## Firebase App Hosting
 
-Analog soporta [Firebase Hosting](https://firebase.google.com/docs/hosting) con Cloud Functions de forma predeterminada.
+Analog soporta [Firebase App Hosting](https://firebase.google.com/docs/hosting) sin ninguna configuración adicional.
+
+**Nota**: Necesitas tener el **plan Blaze** para desplegar aplicaciones Analog with Firebase App Hosting.
+
+Sigue las [instrucciones para comenzar](https://firebase.google.com/docs/app-hosting/get-started#step-1:) y conectar tu repositorio GitHub con Firebase App Hosting.
+
+## Firebase Hosting
+
+Analog soporta por defecto [Firebase Hosting](https://firebase.google.com/docs/hosting) con Cloud Functions y [Firebase App Hosting](https://firebase.google.com/docs/app-hosting).
 
 Consulta un [Repositorio de Ejemplo](https://github.com/brandonroberts/analog-angular-firebase-example) con Firebase configurado.
 
@@ -434,7 +593,8 @@ env:
   TARGET_DIR: dist/analog/public
 
 jobs:
-  build:
+  # armar el proyecto y empujarlo a la rama gh-pages
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -460,134 +620,35 @@ jobs:
           CNAME_OPTION: --cname=yourdomain.dev # omitir si no estás ejecutándolo en un dominio personalizado
         run: |
           echo "DRY_RUN_OPTION=$DRY_RUN_OPTION"
-          npx angular-cli-ghpages --no-silent --dir="${{env.TARGET_DIR}}" $CNAME_OPTION $DRY_RUN_OPTION
+          npx angular-cli-ghpages --no-silent --dir="${{env.TARGET_DIR}}" \
+            --name="github-actions[bot]" \
+            --email="github-actions[bot]@users.noreply.github.com" \
+            --branch="gh-pages" \
+            --message="Deploy: $(git log -1 --pretty=%B)" \
+            $DRY_RUN_OPTION
+
+  # deploy from gh-pages branch
+  deploy-pages:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 ```
-
-## Zerops
-
-Analog soporta el despliegue de aplicaciones estáticas y renderizadas del lado del servidor en [Zerops](https://zerops.io) con un archivo de configuración sencillo.
-
-:::info
-Un proyecto de Zerops puede contener múltiples proyectos de Analog. Consulta repositorios de ejemplo para aplicaciones Analog [estáticas](https://github.com/zeropsio/recipe-analog-static) y [renderizadas del lado del servidor](https://github.com/zeropsio/recipe-analog-nodejs) para empezar rápidamente.
-:::
-
-### Aplicación Analog Estática (SSG)
-
-Si tu proyecto no está listo para SSG, configura tu proyecto para la [Generación de Sitio Estático](/docs/features/server/static-site-generation).
-
-#### 1. Crea un proyecto en Zerops
-
-Los proyectos y servicios pueden ser añadidos ya sea a través de un asistente de [Agregar Proyecto](https://app.zerops.io/dashboard/project-add) o importados usando una estructura YAML:
-
-```yml
-project:
-  name: recipe-analog
-services:
-  - hostname: app
-    type: static
-```
-
-Esto crea un proyecto llamado `recipe-analog` con un servicio estático de Zerops llamado `app`.
-
-#### 2. Añadir la configuración de zerops.yml
-
-Para indicarle a Zerops cómo construir y ejecutar tu sitio, añade un archivo `zerops.yml` a tu repositorio:
-
-```yml
-zerops:
-  - setup: app
-    build:
-      base: nodejs@20
-      buildCommands:
-        - pnpm i
-        - pnpm build
-      deployFiles:
-        - public
-        - dist/analog/public/~
-    run:
-      base: static
-```
-
-#### 3. [Iniciar la tubería de compilación y despliegue](#build-deploy-your-code)
-
-### Aplicación Analog Renderizada del Lado del Servidor (SSR)
-
-Si tu proyecto no está listo para SSR, configura tu proyecto para la [Renderización del Lado del Servidor](/docs/features/server/server-side-rendering).
-
-#### 1. Crea un proyecto en Zerops
-
-Los proyectos y servicios pueden ser añadidos ya sea a través de un asistente de [Agregar Proyecto](https://app.zerops.io/dashboard/project-add) o importados usando una estructura YAML:
-
-```yml
-project:
-  name: recipe-analog
-services:
-  - hostname: app
-    type: nodejs@20
-```
-
-Esto crea un proyecto llamado `recipe-analog` con un servicio de Node.js de Zerops llamado `app`.
-
-#### 2. Añadir la configuración de zerops.yml
-
-Para indicarle a Zerops cómo construir y ejecutar tu sitio, añade un archivo `zerops.yml` a tu repositorio:
-
-```yml
-zerops:
-  - setup: app
-    build:
-      base: nodejs@20
-      buildCommands:
-        - pnpm i
-        - pnpm build
-      deployFiles:
-        - public
-        - node_modules
-        - dist
-    run:
-      base: nodejs@20
-      ports:
-        - port: 3000
-          httpSupport: true
-      start: node dist/analog/server/index.mjs
-```
-
-#### 3. [Iniciar la tubería de compilación y despliegue](#build-deploy-your-code)
-
----
-
-### Compilar y desplegar tu código
-
-#### Iniciar la tubería conectando el servicio con tu repositorio de GitHub / GitLab
-
-Tu código puede ser desplegado automáticamente en cada commit o una nueva etiqueta conectando el servicio con tu repositorio de GitHub / GitLab. Esta conexión puede ser configurada en el detalle del servicio.
-
-#### Iniciar la tubería usando Zerops CLI (zcli)
-
-También puedes iniciar la tubería manualmente desde tu terminal o tu CI/CD existente usando Zerops CLI.
-
-1. Instala la CLI de Zerops.
-
-```bash
-# Para descargar el binario de zcli directamente,
-# usa https://github.com/zeropsio/zcli/releases
-npm i -g @zerops/zcli
-```
-
-2. Abre [Settings > Access Token Management](https://app.zerops.io/settings/token-management) en la aplicación Zerops y genera un nuevo token de acceso.
-
-3. Inicia sesión usando tu token de acceso con el siguiente comando:
-
-```bash
-zcli login <token>
-```
-
-4. Navega a la raíz de tu aplicación (donde se encuentra `zerops.yml`) y ejecuta el siguiente comando para iniciar el despliegue:
-
-```bash
-zcli push
-```
-
-#### Iniciar la tubería usando GitHub / Gitlab
-
-También puedes consultar [Integración con GitHub](https://docs.zerops.io/references/github-integration) / [Integración con Gitlab](https://docs.zerops.io/references/gitlab-integration) en [Documentación de Zerops](https://docs.zerops.io/) para la integración con git.

@@ -1,4 +1,5 @@
-import { Plugin, transformWithEsbuild, UserConfig } from 'vite';
+import { Plugin, UserConfig } from 'vite';
+import * as vite from 'vite';
 
 /**
  * Sets up test config for Vitest
@@ -14,11 +15,14 @@ export function angularVitestPlugin(): Plugin {
     config(userConfig) {
       return {
         optimizeDeps: {
-          include: ['tslib', '@angular/cdk/testing/testbed'],
-          exclude: ['@angular/cdk/testing'],
+          include: ['tslib'],
         },
         ssr: {
-          noExternal: [/cdk\/fesm2022/, /fesm2022(.*?)testing/, /fesm2015/],
+          noExternal: [
+            '@analogjs/vitest-angular/setup-testbed',
+            /fesm2022(.*?)testing/,
+            /fesm2015/,
+          ],
         },
         test: {
           pool: (userConfig as any).test?.pool ?? 'vmThreads',
@@ -30,18 +34,31 @@ export function angularVitestPlugin(): Plugin {
         (/fesm2022/.test(id) && _code.includes('async ')) ||
         _code.includes('@angular/cdk')
       ) {
-        const { code, map } = await transformWithEsbuild(_code, id, {
-          loader: 'js',
-          format: 'esm',
-          target: 'es2016',
-          sourcemap: true,
-          sourcefile: id,
-        });
+        if (vite.rolldownVersion) {
+          const { code, map } = await vite.transformWithOxc(_code, id, {
+            lang: 'js',
+            target: 'es2016',
+            sourcemap: true,
+          });
 
-        return {
-          code,
-          map,
-        };
+          return {
+            code,
+            map,
+          };
+        } else {
+          const { code, map } = await vite.transformWithEsbuild(_code, id, {
+            loader: 'js',
+            format: 'esm',
+            target: 'es2016',
+            sourcemap: true,
+            sourcefile: id,
+          });
+
+          return {
+            code,
+            map,
+          };
+        }
       }
 
       return undefined;
@@ -56,9 +73,15 @@ export function angularVitestPlugin(): Plugin {
  */
 export function angularVitestEsbuildPlugin(): Plugin {
   return {
-    name: '@analogjs/vitest-angular-esbuild-plugin',
+    name: '@analogjs/vitest-angular-esbuild-oxc-plugin',
     enforce: 'pre',
     config(userConfig: UserConfig) {
+      if (vite.rolldownVersion) {
+        return {
+          oxc: userConfig.oxc ?? false,
+        };
+      }
+
       return {
         esbuild: userConfig.esbuild ?? false,
       };
@@ -86,11 +109,19 @@ export function angularVitestSourcemapPlugin(): Plugin {
         return;
       }
 
-      const result = await transformWithEsbuild(code, id, {
-        loader: 'js',
-      });
+      if (vite.rolldownVersion) {
+        const result = await vite.transformWithOxc(code, id, {
+          lang: 'js',
+        });
 
-      return result;
+        return result as unknown as vite.TransformResult;
+      } else {
+        const result = await vite.transformWithEsbuild(code, id, {
+          loader: 'js',
+        });
+
+        return result;
+      }
     },
   };
 }

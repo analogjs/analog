@@ -16,6 +16,7 @@ export function liveReloadPlugin({
 }): Plugin {
   return {
     name: 'analogjs-live-reload-plugin',
+    apply: 'serve',
     configureServer(server: ViteDevServer) {
       const angularComponentMiddleware: Connect.HandleFunction = async (
         req: Connect.IncomingMessage,

@@ -176,6 +176,10 @@ const config = {
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
+        gtag: {
+          trackingID: 'G-8S6ZF9V3Q6',
+          anonymizeIP: true,
+        },
       }),
     ],
   ],
@@ -211,6 +215,14 @@ const config = {
               {
                 label: 'Getting Started',
                 to: 'docs/getting-started',
+              },
+              {
+                label: 'llms.txt',
+                href: 'https://analogjs.org/llms.txt',
+              },
+              {
+                label: 'llms-full.txt',
+                href: 'https://analogjs.org/llms-full.txt',
               },
             ],
           },

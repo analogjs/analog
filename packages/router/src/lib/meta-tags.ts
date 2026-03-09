@@ -14,23 +14,27 @@ const HTTP_EQUIV_SELECTOR_KEY = 'http-equiv';
 const NAME_KEY = 'name';
 const PROPERTY_KEY = 'property';
 const CONTENT_KEY = 'content';
+const ITEMPROP_KEY = 'itemprop';
 
 export type MetaTag =
   | (CharsetMetaTag & ExcludeRestMetaTagKeys<typeof CHARSET_KEY>)
   | (HttpEquivMetaTag & ExcludeRestMetaTagKeys<typeof HTTP_EQUIV_KEY>)
   | (NameMetaTag & ExcludeRestMetaTagKeys<typeof NAME_KEY>)
-  | (PropertyMetaTag & ExcludeRestMetaTagKeys<typeof PROPERTY_KEY>);
+  | (PropertyMetaTag & ExcludeRestMetaTagKeys<typeof PROPERTY_KEY>)
+  | (ItempropMetaTag & ExcludeRestMetaTagKeys<typeof ITEMPROP_KEY>);
 
 type CharsetMetaTag = { [CHARSET_KEY]: string };
 type HttpEquivMetaTag = { [HTTP_EQUIV_KEY]: string; [CONTENT_KEY]: string };
 type NameMetaTag = { [NAME_KEY]: string; [CONTENT_KEY]: string };
 type PropertyMetaTag = { [PROPERTY_KEY]: string; [CONTENT_KEY]: string };
+type ItempropMetaTag = { [ITEMPROP_KEY]: string; [CONTENT_KEY]: string };
 
 type MetaTagKey =
   | typeof CHARSET_KEY
   | typeof HTTP_EQUIV_KEY
   | typeof NAME_KEY
-  | typeof PROPERTY_KEY;
+  | typeof PROPERTY_KEY
+  | typeof ITEMPROP_KEY;
 type ExcludeRestMetaTagKeys<Key extends MetaTagKey> = {
   [K in Exclude<MetaTagKey, Key>]?: never;
 };
@@ -40,7 +44,8 @@ type MetaTagSelector =
   | `${
       | typeof HTTP_EQUIV_SELECTOR_KEY
       | typeof NAME_KEY
-      | typeof PROPERTY_KEY}="${string}"`;
+      | typeof PROPERTY_KEY
+      | typeof ITEMPROP_KEY}="${string}"`;
 type MetaTagMap = Record<MetaTagSelector, MetaTag>;
 
 export function updateMetaTagsOnRouteChange(): void {
@@ -88,6 +93,10 @@ function getMetaTagSelector(metaTag: MetaTag): MetaTagSelector {
 
   if (metaTag.httpEquiv) {
     return `${HTTP_EQUIV_SELECTOR_KEY}="${metaTag.httpEquiv}"`;
+  }
+
+  if (metaTag.itemprop) {
+    return `${ITEMPROP_KEY}="${metaTag.itemprop}"`;
   }
 
   return CHARSET_KEY;

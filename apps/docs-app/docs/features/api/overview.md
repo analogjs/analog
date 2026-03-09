@@ -4,8 +4,7 @@ Analog supports defining API routes that can be used to serve data to the applic
 
 ## Defining an API Route
 
-API routes are defined in the `src/server/routes/api` folder. API routes are also filesystem based,
-and are exposed under the default `/api` prefix.
+API routes are defined in the `src/server/routes/api` folder. API routes are also filesystem based, and are exposed under the default `/api` prefix.
 
 ```ts
 import { defineEventHandler } from 'h3';

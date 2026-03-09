@@ -18,6 +18,27 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
+Next, enable the content package in the `vite.config.ts`
+
+```ts
+/// <reference types="vitest" />
+
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      // enable content/highlighter
+      content: {
+        highlighter: 'prism',
+      },
+    }),
+  ],
+}));
+```
+
 ## Defining Content Routes
 
 Content routes include support for frontmatter, metatags, and syntax highlighting with PrismJS.
@@ -80,6 +101,7 @@ export default defineConfig({
   plugins: [
     analog({
       content: {
+        highlighter: 'prism',
         prismOptions: {
           additionalLangs: ['prism-diff'],
         },
@@ -95,8 +117,7 @@ Add the `diff-highlight` plugin import to the `app.config.ts`:
 import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
 ```
 
-Use the `diff` language tag to highlight them or
-`diff-<language>` to highlight the diff changes in a specific language.
+Use the `diff` language tag to highlight them or `diff-<language>` to highlight the diff changes in a specific language.
 
 ````md
 ```diff
@@ -232,7 +253,6 @@ To get a list using the list of content files in the `src/content` folder, use t
 import { Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { injectContentFiles } from '@analogjs/content';
-import { NgFor } from '@angular/common';
 
 export interface PostAttributes {
   title: string;
@@ -243,14 +263,18 @@ export interface PostAttributes {
 
 @Component({
   standalone: true,
-  imports: [RouterOutlet, RouterLink, NgFor],
+  imports: [RouterOutlet, RouterLink],
   template: `
     <ul>
-      <li *ngFor="let post of posts">
-        <a [routerLink]="['/blog', 'posts', post.slug]">{{
-          post.attributes.title
-        }}</a>
-      </li>
+      @for (post of posts; track post.slug) {
+        <li>
+          <a [routerLink]="['/blog', 'posts', post.slug]">
+            {{ post.attributes.title }}
+          </a>
+        </li>
+      } @empty {
+        <li>No posts yet.</li>
+      }
     </ul>
   `,
 })
@@ -270,7 +294,7 @@ The `injectContent()` function uses the `slug` route parameter by default to get
 ```ts
 // /src/app/pages/blog/posts.[slug].page.ts
 import { injectContent, MarkdownComponent } from '@analogjs/content';
-import { AsyncPipe, NgIf } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { Component } from '@angular/core';
 
 export interface PostAttributes {
@@ -282,12 +306,12 @@ export interface PostAttributes {
 
 @Component({
   standalone: true,
-  imports: [MarkdownComponent, AsyncPipe, NgIf],
+  imports: [MarkdownComponent, AsyncPipe],
   template: `
-    <ng-container *ngIf="post$ | async as post">
+    @if (post$ | async; as post) {
       <h1>{{ post.attributes.title }}</h1>
       <analog-markdown [content]="post.content"></analog-markdown>
-    </ng-container>
+    }
   `,
 })
 export default class BlogPostComponent {
@@ -407,12 +431,12 @@ export interface ProjectAttributes {
 
 @Component({
   standalone: true,
-  imports: [MarkdownComponent, AsyncPipe, NgIf],
+  imports: [MarkdownComponent, AsyncPipe],
   template: `
-    <ng-container *ngIf="project$ | async as project">
+    @if (project$ | async; as project) {
       <h1>{{ project.attributes.title }}</h1>
       <analog-markdown [content]="project.content"></analog-markdown>
-    </ng-container>
+    }
   `,
 })
 export default class ProjectComponent {

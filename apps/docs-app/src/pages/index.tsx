@@ -142,13 +142,13 @@ function SponsorSection() {
               'button button--secondary button--lg',
               styles.sponsorButton,
             )}
-            href="https://github.com/sponsors/brandonroberts"
+            href="/docs/sponsoring#partnerships"
           >
             <Translate
               id="homepage.sponsorSection.sponsorButton"
-              description="The label of the button to sponsor Analog"
+              description="The label of the button to partner with Analog"
             >
-              Sponsor Analog
+              Partner with Analog
             </Translate>
           </Link>
         </div>

@@ -42,6 +42,7 @@ type FormErrors =
   imports: [FormAction],
   template: `
     <h3>Newsletter Signup</h3>
+
     @if (!signedUp()) {
       <form
         method="post"
@@ -53,8 +54,10 @@ type FormErrors =
           <label for="email"> Email </label>
           <input type="email" name="email" />
         </div>
+
         <button class="button" type="submit">Submit</button>
       </form>
+
       @if (errors()?.email) {
         <p>{{ errors()?.email }}</p>
       }
@@ -165,13 +168,16 @@ import type { load } from './search.server';
   imports: [FormAction],
   template: `
     <h3>Search</h3>
+
     <form method="get">
       <div>
         <label for="search"> Search </label>
         <input type="text" name="search" [value]="searchTerm()" />
       </div>
+
       <button class="button" type="submit">Submit</button>
     </form>
+
     @if (searchTerm()) {
       <p>Search Term: {{ searchTerm() }}</p>
     }
@@ -200,5 +206,3 @@ export async function load({ event }: PageServerLoad) {
   };
 }
 ```
-
-Footer

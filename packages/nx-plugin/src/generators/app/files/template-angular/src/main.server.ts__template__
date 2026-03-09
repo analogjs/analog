@@ -1,4 +1,3 @@
-import 'zone.js/node';
 import '@angular/platform-server/init';
 import { render } from '@analogjs/router/server';
 

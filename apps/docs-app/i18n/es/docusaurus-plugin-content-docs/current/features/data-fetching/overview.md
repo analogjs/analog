@@ -98,7 +98,7 @@ export const appConfig: ApplicationConfig = {
 
 ## Realizando Solicitudes
 
-En tu componente/servicio, usa `HttpClient` junto con [/docs/features/api/overview](API routes) proporcionando una URL completa.
+En tu componente/servicio, usa `HttpClient` junto con [API routes](/docs/features/api/overview) proporcionando una URL completa.
 
 Un ejemplo de ruta API que obtiene todos los todos.
 

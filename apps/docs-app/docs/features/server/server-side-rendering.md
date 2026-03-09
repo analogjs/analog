@@ -68,7 +68,14 @@ import analog from '@analogjs/platform';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...other config
-  plugins: [analog({ ssr: false })],
+  plugins: [
+    analog({
+      ssr: false,
+      prerender: {
+        routes: [],
+      },
+    }),
+  ],
 }));
 ```
 

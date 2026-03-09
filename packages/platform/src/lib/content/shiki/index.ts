@@ -7,11 +7,17 @@ import {
 
 export { ShikiHighlighter };
 
+let highlighterInstance: ShikiHighlighter;
+
 export function getShikiHighlighter({
   highlighter = {},
   highlight = {},
   container = '%s',
 }: WithShikiHighlighterOptions = {}): ShikiHighlighter {
+  if (highlighterInstance) {
+    return highlighterInstance;
+  }
+
   if (!highlighter.themes) {
     if (highlight.theme) {
       highlighter.themes = [highlight.theme];
@@ -31,10 +37,12 @@ export function getShikiHighlighter({
     delete highlighter.additionalLangs;
   }
 
-  return new ShikiHighlighter(
+  highlighterInstance = new ShikiHighlighter(
     highlighter as ShikiHighlighterOptions,
     highlight,
     container,
     !!highlighter.langs.includes('mermaid'),
   );
+
+  return highlighterInstance;
 }

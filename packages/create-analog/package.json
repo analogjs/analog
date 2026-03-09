@@ -1,6 +1,6 @@
 {
   "name": "create-analog",
-  "version": "2.0.0-alpha.27",
+  "version": "2.3.1",
   "type": "module",
   "license": "MIT",
   "author": "Brandon Roberts",
@@ -13,6 +13,7 @@
     "template-angular-v17",
     "template-angular-v18",
     "template-angular-v19",
+    "template-angular-v20",
     "template-blog",
     "template-latest",
     "template-minimal",

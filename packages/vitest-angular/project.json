@@ -5,7 +5,7 @@
   "projectType": "library",
   "tags": ["type:release"],
   "targets": {
-    "build": {
+    "build-package": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
@@ -19,10 +19,23 @@
         "updateBuildableProjectDepsInPackageJson": false,
         "additionalEntryPoints": [
           "packages/vitest-angular/setup-zone.ts",
-          "packages/vitest-angular/setup-snapshots.ts"
+          "packages/vitest-angular/setup-snapshots.ts",
+          "packages/vitest-angular/setup-testbed.ts"
         ],
         "generateExportsField": true
       }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/vitest-angular"],
+      "options": {
+        "commands": [
+          "nx build-package vitest-angular",
+          "nx build vitest-angular-tools"
+        ],
+        "parallel": false
+      },
+      "dependsOn": ["^build"]
     }
   }
 }

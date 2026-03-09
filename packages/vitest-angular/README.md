@@ -41,17 +41,28 @@ yarn install @analogjs/vitest-angular vitest --dev
 
 A schematic can be used to setup Vitest in an existing Angular project:
 
-Install the `@analogjs/platform` package:
+Run the schematic to set up the Vite config, test configuration files, and update the test configuration.
 
 ```sh
-npm i @analogjs/platform --save-dev
+npx ng generate @analogjs/vitest-angular:setup --project [your-project-name]
 ```
 
-Run the schematic to install Vitest, and update the `test` builder:
+### Schematic Options
 
-```sh
-npx ng generate @analogjs/platform:setup-vitest --project [your-project-name]
+| Option        | Type    | Default | Description                                                 |
+| ------------- | ------- | ------- | ----------------------------------------------------------- |
+| `project`     | string  | -       | The name of the project to configure (required)             |
+| `browserMode` | boolean | `false` | Configure Vitest to run tests in a browser using Playwright |
+
+To enable browser mode during setup:
+
+```shell
+ng g @analogjs/vitest-angular:setup --project [your-project-name] --browserMode
 ```
+
+This automatically installs Playwright dependencies and configures Vitest for browser testing. See [Setup for Running Tests in the Browser](#setup-for-running-tests-in-the-browser) for more details.
+
+If using browser mode, run `npx playwright install` after the schematic to ensure playwright is installed and configured.
 
 ## Manual Setup
 
@@ -76,52 +87,55 @@ export default defineConfig(({ mode }) => ({
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
   },
-  define: {
-    'import.meta.vitest': mode !== 'production',
-  },
 }));
 ```
 
 Next, define a `src/test-setup.ts` file to setup the `TestBed`:
 
-```ts
-import '@angular/compiler';
-import '@analogjs/vitest-angular/setup-zone';
+### Zoneless setup
 
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
+As of Angular v21, `Zoneless` change detection is the default for new projects.
 
-getTestBed().initTestEnvironment(
-  BrowserTestingModule,
-  platformBrowserTesting(),
-);
-```
-
-If you are using `Zoneless` change detection, use the following setup:
+Use the following setup:
 
 ```ts
 import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-snapshots';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import { provideZonelessChangeDetection, NgModule } from '@angular/core';
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
+setupTestBed();
+```
 
-@NgModule({
-  providers: [provideZonelessChangeDetection()],
-})
-export class ZonelessTestModule {}
+### Zone.js setup
 
-getTestBed().initTestEnvironment(
-  [BrowserTestingModule, ZonelessTestModule],
-  platformBrowserTesting(),
-);
+If you are using `Zone.js` for change detection, import the `setup-zone` script. This script automatically includes support for setting up snapshot tests.
+
+```ts
+import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-zone';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+setupTestBed({
+  zoneless: false,
+});
+```
+
+### Configuration Options
+
+The `setupTestBed()` function accepts an optional configuration object with the following properties:
+
+- `zoneless` (boolean): Whether to use zoneless change detection (default: `true`)
+- `providers` (`Type<any>[]`): Additional providers to include in the test environment (default: `[]`)
+- `browserMode` (boolean): Enables visual test preview in Vitest browser mode by keeping the component rendered, allowing you to inspect its final state (default: `false`)
+
+**Example with options:**
+
+```ts
+setupTestBed({
+  zoneless: true,
+  providers: [],
+  browserMode: false,
+});
 ```
 
 Next, update the `test` target in the `angular.json` to use the `@analogjs/vitest-angular:test` builder:

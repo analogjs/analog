@@ -3,12 +3,13 @@ import angular from '@analogjs/vite-plugin-angular';
 import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
+import { playwright } from '@vitest/browser-playwright';
 
 export default defineConfig(({ mode }) => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/libs/my-package',
   plugins: [
-    angular(),
+    angular({ jit: false }),
     nxViteTsPaths(),
     nxCopyAssetsPlugin(['*.md', 'package.json']),
   ],
@@ -40,6 +41,13 @@ export default defineConfig(({ mode }) => ({
     setupFiles: ['src/test-setup.ts'],
     include: ['**/*.spec.ts'],
     cacheDir: '../../node_modules/.vitest',
+    isolate: false,
+    browser: {
+      enabled: true,
+      provider: playwright(),
+      instances: [{ browser: 'chromium' }],
+    },
+    watch: false,
   },
   define: {
     'import.meta.vitest': mode !== 'production',
