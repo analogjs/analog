@@ -583,7 +583,8 @@ import { createFetch } from 'ofetch';
 
 const serverFetch = createFetch({
   fetch: (resource, init) => {
-    const url = resource instanceof Request ? resource.url : resource.toString();
+    const url =
+      resource instanceof Request ? resource.url : resource.toString();
     return fetchWithEvent(event, url, init);
   },
 });

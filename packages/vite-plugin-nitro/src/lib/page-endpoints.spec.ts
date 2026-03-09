@@ -11,7 +11,9 @@ describe('pageEndpointsPlugin', () => {
     );
 
     expect(result).toBeDefined();
-    expect(result?.code).toContain('export default defineHandler(async(event) => {');
+    expect(result?.code).toContain(
+      'export default defineHandler(async(event) => {',
+    );
     expect(result?.code).toContain(`import { createFetch } from 'ofetch';`);
     expect(result?.code).toContain('fetchWithEvent');
     expect(result?.code).toContain('const serverFetch = createFetch');
