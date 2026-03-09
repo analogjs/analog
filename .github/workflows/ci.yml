@@ -122,7 +122,9 @@ jobs:
         run: |
           set -euxo pipefail
 
-          pnpm nx serve-nitro analog-app > nitro.log 2>&1 &
+          pnpm nx build analog-app --skip-nx-cache
+
+          PORT=3000 node dist/apps/analog-app/analog/server/index.mjs > nitro.log 2>&1 &
           nitro_pid=$!
 
           cleanup() {
@@ -152,8 +154,9 @@ jobs:
           done
 
           curl -fsSI http://localhost:3000
+          cd apps/analog-app-e2e-cypress
           pnpm exec cypress run \
-            --config-file apps/analog-app-e2e-cypress/cypress.config.ts \
+            --config-file cypress.config.ts \
             --config baseUrl=http://localhost:3000
       - name: Probe Nx Cypress devServerTarget
         env:
