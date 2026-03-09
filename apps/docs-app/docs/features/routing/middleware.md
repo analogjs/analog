@@ -49,22 +49,12 @@ export default defineHandler((event) => {
 Middleware can only be applied to specific routes using filtering.
 
 ```ts
-import { defineHandler, redirect } from 'h3';
+import { defineHandler, getCookie, redirect } from 'h3';
 
 export default defineHandler(async (event) => {
   // Only execute for /admin routes
   if (event.path.startsWith('/admin')) {
-    const cookies = Object.fromEntries(
-      (event.req.headers.get('cookie') ?? '')
-        .split(';')
-        .map((cookie) => cookie.trim())
-        .filter(Boolean)
-        .map((cookie) => {
-          const [name, ...value] = cookie.split('=');
-          return [name, value.join('=')];
-        }),
-    );
-    const isLoggedIn = cookies['authToken'];
+    const isLoggedIn = getCookie(event, 'authToken');
 
     // check auth and redirect
     if (!isLoggedIn) {

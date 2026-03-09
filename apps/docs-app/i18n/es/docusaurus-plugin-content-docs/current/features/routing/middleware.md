@@ -47,27 +47,12 @@ export default defineHandler((event) => {
 El middleware solo puede aplicarse a rutas específicas utilizando filtrado.
 
 ```ts
-import { defineHandler, redirect } from 'h3';
-
-function getCookieValue(cookieHeader: string | null, name: string) {
-  if (!cookieHeader) {
-    return undefined;
-  }
-
-  return cookieHeader
-    .split(';')
-    .map((part) => part.trim())
-    .find((part) => part.startsWith(`${name}=`))
-    ?.slice(name.length + 1);
-}
+import { defineHandler, getCookie, redirect } from 'h3';
 
 export default defineHandler(async (event) => {
   // Solo se ejecuta para rutas /admin
   if (event.url.pathname.startsWith('/admin')) {
-    const authToken = getCookieValue(
-      event.req.headers.get('cookie'),
-      'authToken',
-    );
+    const authToken = getCookie(event, 'authToken');
 
     // verificar autenticación y redirigir
     if (!authToken) {

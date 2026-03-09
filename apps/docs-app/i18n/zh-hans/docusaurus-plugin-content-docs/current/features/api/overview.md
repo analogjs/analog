@@ -185,11 +185,14 @@ Analog 支持在服务端调用的时候设置和读取 cookies。
 ```ts
 //(home).server.ts
 import { PageServerLoad } from '@analogjs/router';
+import { setCookie } from 'h3';
 
 import { Product } from '../products';
 
 export const load = async ({ fetch, event }: PageServerLoad) => {
-  event.res.headers.append('set-cookie', 'products=loaded; Path=/');
+  setCookie(event, 'products', 'loaded', {
+    path: '/',
+  });
   const products = await fetch<Product[]>('/api/v1/products');
 
   return {
@@ -203,24 +206,10 @@ export const load = async ({ fetch, event }: PageServerLoad) => {
 ```ts
 //index.server.ts
 import { PageServerLoad } from '@analogjs/router';
-
-function getCookieValue(cookieHeader: string | null, name: string) {
-  if (!cookieHeader) {
-    return undefined;
-  }
-
-  return cookieHeader
-    .split(';')
-    .map((part) => part.trim())
-    .find((part) => part.startsWith(`${name}=`))
-    ?.slice(name.length + 1);
-}
+import { getCookie } from 'h3';
 
 export const load = async ({ event }: PageServerLoad) => {
-  const productsCookie = getCookieValue(
-    event.req.headers.get('cookie'),
-    'products',
-  );
+  const productsCookie = getCookie(event, 'products');
 
   console.log('products cookie', productsCookie);
 

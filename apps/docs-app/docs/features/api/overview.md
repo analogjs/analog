@@ -169,11 +169,14 @@ Analog allows setting and reading cookies in your server-side calls.
 ```ts
 //(home).server.ts
 import { PageServerLoad } from '@analogjs/router';
+import { setCookie } from 'h3';
 
 import { Product } from '../products';
 
 export const load = async ({ fetch, event }: PageServerLoad) => {
-  event.res.headers.append('set-cookie', 'products=loaded; Path=/');
+  setCookie(event, 'products', 'loaded', {
+    path: '/',
+  });
   const products = await fetch<Product[]>('/api/v1/products');
 
   return {
@@ -187,20 +190,12 @@ export const load = async ({ fetch, event }: PageServerLoad) => {
 ```ts
 //index.server.ts
 import { PageServerLoad } from '@analogjs/router';
+import { getCookie } from 'h3';
 
 export const load = async ({ event }: PageServerLoad) => {
-  const cookies = Object.fromEntries(
-    (event.req.headers.get('cookie') ?? '')
-      .split(';')
-      .map((cookie) => cookie.trim())
-      .filter(Boolean)
-      .map((cookie) => {
-        const [name, ...value] = cookie.split('=');
-        return [name, value.join('=')];
-      }),
-  );
+  const productsCookie = getCookie(event, 'products');
 
-  console.log('products cookie', cookies['products']);
+  console.log('products cookie', productsCookie);
 
   return {
     shipping: true,

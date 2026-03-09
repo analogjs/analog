@@ -841,19 +841,19 @@ return defineHandler(async (event) => {
 
 Every file using h3 functions needs updates. Here's the complete mapping:
 
-| h3 v1 Function                   | h3 v2 Replacement                                                      | Files Using It                                                                                                                           |
-| -------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `defineEventHandler(fn)`         | `defineHandler(fn)`                                                    | blog-app/routes/rss.xml.ts, blog-app/routes/v1/[...slug].ts, analog-app/middleware/redirect.ts, trpc-app/routes/health.ts, docs examples |
-| `eventHandler(fn)`               | `defineHandler(fn)`                                                    | analog-app/routes/api/v1/products.ts, libs/shared/feature/src/api/routes/api/ping.ts                                                     |
-| `getQuery(event)`                | `event.req.url` + `URLSearchParams` or keep (check if still available) | blog-app/routes/v1/[...slug].ts, analog-app/pages/search.server.ts                                                                       |
-| `getRequestURL(event)`           | `new URL(event.url)` or `event.req.url`                                | blog-app/routes/v1/[...slug].ts                                                                                                          |
-| `sendRedirect(event, loc, code)` | `return redirect(loc, code)`                                           | analog-app/middleware/redirect.ts                                                                                                        |
-| `setHeaders(event, headers)`     | Loop: `event.res.headers.set(k, v)`                                    | analog-app/middleware/redirect.ts                                                                                                        |
-| `setCookie(event, name, value)`  | Check h3 v2 cookie API                                                 | analog-app/pages/(home).server.ts                                                                                                        |
-| `parseCookies(event)`            | Check h3 v2 cookie API                                                 | analog-app/pages/shipping/index.server.ts                                                                                                |
-| `readFormData(event)`            | `await event.req.formData()`                                           | analog-app/pages/newsletter.server.ts                                                                                                    |
-| `getRequestHeader(event, name)`  | `event.req.headers.get(name)`                                          | trpc-app/trpc/context.ts                                                                                                                 |
-| `createError(opts)`              | `new HTTPError(status, opts)`                                          | trpc-app via trpc server                                                                                                                 |
+| h3 v1 Function                   | h3 v2 Replacement                                                                                                    | Files Using It                                                                                                                           |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `defineEventHandler(fn)`         | `defineHandler(fn)`                                                                                                  | blog-app/routes/rss.xml.ts, blog-app/routes/v1/[...slug].ts, analog-app/middleware/redirect.ts, trpc-app/routes/health.ts, docs examples |
+| `eventHandler(fn)`               | `defineHandler(fn)`                                                                                                  | analog-app/routes/api/v1/products.ts, libs/shared/feature/src/api/routes/api/ping.ts                                                     |
+| `getQuery(event)`                | `event.req.url` + `URLSearchParams` or keep (check if still available)                                               | blog-app/routes/v1/[...slug].ts, analog-app/pages/search.server.ts                                                                       |
+| `getRequestURL(event)`           | `new URL(event.url)` or `event.req.url`                                                                              | blog-app/routes/v1/[...slug].ts                                                                                                          |
+| `sendRedirect(event, loc, code)` | `return redirect(loc, code)`                                                                                         | analog-app/middleware/redirect.ts                                                                                                        |
+| `setHeaders(event, headers)`     | Loop: `event.res.headers.set(k, v)`                                                                                  | analog-app/middleware/redirect.ts                                                                                                        |
+| `setCookie(event, name, value)`  | Keep `setCookie` from `h3`; avoid manual `Set-Cookie` header parsing                                                 | analog-app/pages/(home).server.ts                                                                                                        |
+| `parseCookies(event)`            | Prefer `getCookie(event, name)` for single-cookie reads; keep `parseCookies(event)` only when all cookies are needed | analog-app/pages/shipping/index.server.ts                                                                                                |
+| `readFormData(event)`            | `await event.req.formData()`                                                                                         | analog-app/pages/newsletter.server.ts                                                                                                    |
+| `getRequestHeader(event, name)`  | `event.req.headers.get(name)`                                                                                        | trpc-app/trpc/context.ts                                                                                                                 |
+| `createError(opts)`              | `new HTTPError(status, opts)`                                                                                        | trpc-app via trpc server                                                                                                                 |
 
 ### 5.2 File-by-File Changes
 
@@ -894,8 +894,8 @@ import { defineHandler, redirect } from 'h3';
 // BEFORE
 import { setCookie } from 'h3';
 // AFTER
-// setCookie may still exist in h3 v2 as a utility - verify
-// Alternative: event.res.headers.append('Set-Cookie', ...)
+import { setCookie } from 'h3';
+// Keep the helper instead of manually appending Set-Cookie headers.
 ```
 
 **`apps/analog-app/src/app/pages/shipping/index.server.ts`:**
@@ -904,8 +904,8 @@ import { setCookie } from 'h3';
 // BEFORE
 import { parseCookies } from 'h3';
 // AFTER
-// parseCookies may still exist in h3 v2 - verify
-// Alternative: parse from event.req.headers.get('cookie')
+import { getCookie } from 'h3';
+// Prefer getCookie(event, name) for single-cookie reads instead of manual header parsing.
 ```
 
 **`apps/analog-app/src/app/pages/newsletter.server.ts`:**
@@ -1055,8 +1055,8 @@ Check each template's `package.json` for `nitropack` or `h3` dependencies and up
 | `setHeader(event, name, value)`              | `event.res.headers.set(name, value)`                       |
 | `sendRedirect(event, loc, code)`             | `return redirect(loc, code)`                               |
 | `createError({statusCode, message})`         | `throw new HTTPError(statusCode, {message})`               |
-| `setCookie(event, ...)`                      | Verify h3 v2 cookie utilities                              |
-| `parseCookies(event)`                        | Verify h3 v2 cookie utilities                              |
+| `setCookie(event, ...)`                      | Keep `setCookie` from `h3` for cookie writes               |
+| `parseCookies(event)`                        | Use `getCookie(event, name)` for single-cookie reads       |
 
 ---
 
@@ -1147,7 +1147,7 @@ Recommended default:
 
 ### Decision 4: h3 Utility Function Availability
 
-Some h3 v1 utilities may still exist in h3 v2 as compatibility shims, including `getQuery`, `getRouterParam`, `setCookie`, and `parseCookies`.
+Some h3 v1 utilities may still exist in h3 v2 as compatibility shims, including `getQuery`, `getRouterParam`, `setCookie`, and `parseCookies`. Cookie handling should continue to use H3 helpers such as `setCookie` and `getCookie` instead of manual header parsing when examples only need to write or read specific cookies.
 
 Before doing manual replacements:
 
@@ -1156,7 +1156,7 @@ Before doing manual replacements:
 3. Only replace functions that are truly removed, renamed, or behaviorally changed.
 4. Validate helpers with real request/body/cookie flows, not only type resolution.
 
-**Quality gate:** No mass helper replacement should occur until compatibility helpers are verified or explicitly ruled out.
+**Quality gate:** No mass helper replacement should occur until compatibility helpers are verified or explicitly ruled out. Once verified, prefer the helper-based API over ad hoc header parsing so cookie decoding and edge-case behavior stay aligned with H3.
 
 ---
 

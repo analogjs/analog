@@ -34,27 +34,12 @@ export default defineHandler((event) => {
 中间件可以通过筛选器只处理特定的路由。
 
 ```ts
-import { defineHandler, redirect } from 'h3';
-
-function getCookieValue(cookieHeader: string | null, name: string) {
-  if (!cookieHeader) {
-    return undefined;
-  }
-
-  return cookieHeader
-    .split(';')
-    .map((part) => part.trim())
-    .find((part) => part.startsWith(`${name}=`))
-    ?.slice(name.length + 1);
-}
+import { defineHandler, getCookie, redirect } from 'h3';
 
 export default defineHandler(async (event) => {
   // Only execute for /admin routes
   if (event.url.pathname.startsWith('/admin')) {
-    const authToken = getCookieValue(
-      event.req.headers.get('cookie'),
-      'authToken',
-    );
+    const authToken = getCookie(event, 'authToken');
 
     // check auth and redirect
     if (!authToken) {
