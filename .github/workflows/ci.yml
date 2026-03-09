@@ -113,5 +113,41 @@ jobs:
         run: npx playwright install --with-deps
       - name: Install Cypress
         run: npx cypress install
-      - name: End-to-end test
-        run: pnpm e2e
+      - name: create-analog e2e
+        run: pnpm nx run create-analog-e2e:e2e --skip-nx-cache
+      - name: analog-app Cypress e2e
+        env:
+          NODE_OPTIONS: ''
+          DEBUG: 'cypress:server:*,cypress:launcher:*'
+        run: |
+          set -euxo pipefail
+
+          pnpm nx serve-nitro analog-app > nitro.log 2>&1 &
+          nitro_pid=$!
+
+          cleanup() {
+            status=$?
+            echo "=== ps ==="
+            ps aux || true
+            echo "=== port 3000 ==="
+            ss -ltnp | grep 3000 || true
+            echo "=== nitro log ==="
+            cat nitro.log || true
+            if kill -0 "$nitro_pid" 2>/dev/null; then
+              kill "$nitro_pid" || true
+              wait "$nitro_pid" || true
+            fi
+            exit $status
+          }
+
+          trap cleanup EXIT
+
+          for i in {1..60}; do
+            if curl -fsS http://localhost:3000 > /dev/null; then
+              break
+            fi
+            sleep 2
+          done
+
+          curl -fsSI http://localhost:3000
+          pnpm nx run analog-app-e2e-cypress:e2e --skip-nx-cache
