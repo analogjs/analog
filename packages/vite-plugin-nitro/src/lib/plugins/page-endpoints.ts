@@ -31,11 +31,21 @@ export function pageEndpointsPlugin() {
         // (which uses the fetch-based pipeline, not Node.js http). We use
         // optional chaining so that page endpoints work in both Node.js
         // server and fetch-based prerender contexts.
-        // Import $fetch explicitly since Nitro auto-imports are disabled.
-        // In Nitro v3, $fetch comes from 'nitro/deps/ofetch'.
+        // Nitro v3 no longer guarantees the private `nitro/deps/ofetch`
+        // subpath that older codegen relied on. The runtime-supported surface
+        // is Nitro's global `$fetch`, so the generated module resolves it from
+        // `globalThis` instead of baking in another private Nitro import.
+        //
+        // This keeps the generated page endpoint code aligned with Nitro's
+        // supported runtime contract and avoids hard-coding a package export
+        // that can disappear across pre-release updates.
         const code = `
             import { defineHandler } from 'h3';
-            import { $fetch } from 'nitro/deps/ofetch';
+            const serverFetch = (globalThis as typeof globalThis & { $fetch?: typeof fetch }).$fetch;
+
+            if (!serverFetch) {
+              throw new Error('Nitro runtime $fetch is not available for page endpoints.');
+            }
 
             ${
               fileExports.includes('load')
@@ -64,7 +74,7 @@ export function pageEndpointsPlugin() {
                     params: event.context.params,
                     req: event.node?.req,
                     res: event.node?.res,
-                    fetch: $fetch,
+                    fetch: serverFetch,
                     event
                   });
                 } catch(e) {
@@ -77,7 +87,7 @@ export function pageEndpointsPlugin() {
                     params: event.context.params,
                     req: event.node?.req,
                     res: event.node?.res,
-                    fetch: $fetch,
+                    fetch: serverFetch,
                     event
                   });
                 } catch(e) {

@@ -571,6 +571,50 @@ export default defineHandler(async(event) => {
   // event.node.req / event.node.res - still available on Node.js in h3 v2
 ```
 
+Also update the generated fetch helper source:
+
+```typescript
+// BEFORE
+import { $fetch } from 'nitro/deps/ofetch';
+
+// AFTER
+const serverFetch = (
+  globalThis as typeof globalThis & { $fetch?: typeof fetch }
+).$fetch;
+```
+
+Why this changed:
+
+- `nitro/deps/ofetch` was a private Nitro subpath and is not a stable migration target.
+- In the failing alpha combination used here, Nitro prerendering no longer exports that subpath, so generated page-endpoint modules fail to resolve before build completion.
+- Nitro's supported runtime contract is the global `$fetch`, so the page-endpoint codegen should bind to that runtime surface instead of another private package path.
+
+### 2.9.1 Temporary Nitro alpha workaround for `output.codeSplitting`
+
+The migration also needed a temporary workaround in `src/lib/vite-plugin-nitro.ts`:
+
+- Add a `rollup:before` Nitro hook that deletes `output.codeSplitting` from Nitro's final server bundler config.
+
+Why this is a Nitro bug and not an Analog config mistake:
+
+- Analog app configs in this repo do not set Nitro `rollupConfig.output.codeSplitting`.
+- The warning appeared during Nitro's prerender/server bundling phase, not the normal Vite app build:
+  - `Warning: Invalid output options (1 issue found)`
+  - `For the "codeSplitting". Invalid key: Expected never but received "codeSplitting".`
+- The issue comes from the Nitro `3.0.1-alpha.2` bundler handoff under Vite 8 / Rolldown, where a Rolldown-only output field can survive into the internal server bundler config that rejects it.
+
+Why the workaround is safe:
+
+- The hook removes only one invalid field at the last possible point before Nitro builds.
+- Analog is not depending on Nitro-side `output.codeSplitting` for behavior.
+- Removing the field restores the underlying bundler's default behavior instead of introducing a custom chunking policy.
+- The workaround is isolated to Nitro's internal build path and does not change Analog's normal Vite client/SSR environment config.
+
+Removal criteria:
+
+- Delete the workaround once the Nitro version used by the repo no longer emits the warning during prerender/server builds with Vite 8 / Rolldown.
+- Keep the regression test that asserts the invalid field is stripped until that dependency-level fix is verified in CI.
+
 ### 2.10 Test Files
 
 **`src/lib/vite-nitro-plugin.spec.data.ts`:**

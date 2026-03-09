@@ -1,5 +1,6 @@
-import type { NitroConfig, NitroEventHandler } from 'nitro/types';
+import type { NitroConfig, NitroEventHandler, RollupConfig } from 'nitro/types';
 import { build, createDevServer, createNitro } from 'nitro/builder';
+import * as vite from 'vite';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { mergeConfig, normalizePath } from 'vite';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -87,6 +88,40 @@ function appendNoExternals(
   return Array.isArray(noExternals)
     ? [...noExternals, ...entries]
     : noExternals;
+}
+
+function removeInvalidRollupCodeSplitting(
+  _nitro: unknown,
+  bundlerConfig: RollupConfig,
+) {
+  // Workaround for a Nitro v3 alpha bundler bug:
+  //
+  // Analog does not add `output.codeSplitting` to Nitro's Rollup config, but
+  // Nitro 3.0.1-alpha.2 builds an internal server bundler config that can
+  // still contain that key while running under Vite 8 / Rolldown. At runtime
+  // this surfaces as:
+  //
+  //   Warning: Invalid output options (1 issue found)
+  //   - For the "codeSplitting". Invalid key: Expected never but received "codeSplitting".
+  //
+  // That warning comes from Nitro's own bundler handoff, not from user config
+  // in Analog apps. We remove only the invalid `output.codeSplitting` field
+  // right before Nitro starts prerender/server builds.
+  //
+  // Why this is safe:
+  // - Analog is not relying on Nitro-side `output.codeSplitting`.
+  // - The warning path only rejects the option; removing it restores the
+  //   default Nitro/Rollup behavior instead of changing any Analog semantics.
+  // - The hook is narrowly scoped to the final Nitro bundler config, so it
+  //   does not affect the normal Vite client/SSR environment build config.
+  const output = bundlerConfig['output'];
+  if (!output || Array.isArray(output) || typeof output !== 'object') {
+    return;
+  }
+
+  if ('codeSplitting' in output) {
+    delete (output as Record<string, unknown>)['codeSplitting'];
+  }
 }
 
 function resolveClientOutputPath(
@@ -213,6 +248,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           // Fixes support for Rolldown
           imports: {
             autoImport: false,
+          },
+          // Temporary Nitro alpha workaround. Remove once Nitro no longer
+          // passes Rolldown-only output options into the server bundler path.
+          hooks: {
+            'rollup:before': removeInvalidRollupCodeSplitting,
           },
           rollupConfig: {
             onwarn(warning) {
@@ -449,7 +489,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             ssr: {
               build: {
                 ssr: true,
-                rollupOptions: {
+                [vite.rolldownVersion ? 'rolldownOptions' : 'rollupOptions']: {
                   input:
                     options?.entryServer ||
                     resolve(

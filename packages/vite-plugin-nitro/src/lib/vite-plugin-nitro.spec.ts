@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import * as vite from 'vite';
 
 import { PrerenderContentFile } from './options';
 import {
@@ -32,6 +33,59 @@ describe('nitro', () => {
     // Assert
     expect(spy).toHaveBeenCalledTimes(0);
     expect(spy).not.toHaveBeenCalledWith('/api', expect.anything());
+  });
+
+  it('should use the active Vite SSR bundler config key', async () => {
+    const plugin = nitro({});
+    const result = await (plugin[1].config as any)(
+      {},
+      { command: 'build', mode: 'production' },
+    );
+    const ssrBuild = result.environments.ssr.build;
+    const activeKey = vite.rolldownVersion
+      ? 'rolldownOptions'
+      : 'rollupOptions';
+    const inactiveKey = vite.rolldownVersion
+      ? 'rollupOptions'
+      : 'rolldownOptions';
+
+    expect(ssrBuild).toHaveProperty(activeKey);
+    expect(ssrBuild[activeKey]).toEqual(
+      expect.objectContaining({
+        input: expect.stringContaining('src/main.server.ts'),
+      }),
+    );
+    expect(ssrBuild).not.toHaveProperty(inactiveKey);
+  });
+
+  it('should strip Rolldown-only codeSplitting from Nitro rollup builds', async () => {
+    const { buildServerImportSpy } = await mockBuildFunctions();
+    const plugin = nitro({});
+    const result = await (plugin[1].config as any)(
+      {},
+      { command: 'build', mode: 'production' },
+    );
+    await result.builder.buildApp({
+      build: vi.fn().mockResolvedValue(undefined),
+      environments: {
+        client: {},
+        ssr: {},
+      },
+    });
+
+    const nitroConfig = buildServerImportSpy.mock.calls[0][1];
+    const bundlerConfig = {
+      output: {
+        codeSplitting: { groups: [{ test: /node_modules/, name: 'vendor' }] },
+        entryFileNames: 'index.mjs',
+      },
+    };
+
+    await nitroConfig.hooks['rollup:before']({}, bundlerConfig);
+
+    expect(bundlerConfig.output).toEqual({
+      entryFileNames: 'index.mjs',
+    });
   });
 
   describe.skip('when prerendering is configured...', () => {
