@@ -31,6 +31,6 @@ export const appConfig: ApplicationConfig = {
       withFetch(),
       withInterceptors([requestContextInterceptor]),
     ),
-    provideClientHydration(withEventReplay()),
+    ...(import.meta.env.SSR ? [] : [provideClientHydration(withEventReplay())]),
   ],
 };
