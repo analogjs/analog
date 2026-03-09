@@ -3,8 +3,10 @@ import { ɵSERVER_CONTEXT as SERVER_CONTEXT } from '@angular/platform-server';
 
 import {
   BASE_URL,
+  INTERNAL_FETCH,
   REQUEST,
   RESPONSE,
+  ServerInternalFetch,
   ServerRequest,
   ServerResponse,
 } from '@analogjs/router/tokens';
@@ -18,9 +20,11 @@ function getHeaderValue(
 export function provideServerContext({
   req,
   res,
+  fetch,
 }: {
   req: ServerRequest;
   res: ServerResponse;
+  fetch?: ServerInternalFetch;
 }): StaticProvider[] {
   const baseUrl = getBaseUrl(req);
 
@@ -33,6 +37,7 @@ export function provideServerContext({
     { provide: REQUEST, useValue: req },
     { provide: RESPONSE, useValue: res },
     { provide: BASE_URL, useValue: baseUrl },
+    { provide: INTERNAL_FETCH, useValue: fetch },
   ];
 }
 

@@ -8,7 +8,11 @@ import {
 
 import { from, of } from 'rxjs';
 
-import { injectBaseURL, injectAPIPrefix } from '@analogjs/router/tokens';
+import {
+  injectBaseURL,
+  injectAPIPrefix,
+  injectInternalServerFetch,
+} from '@analogjs/router/tokens';
 
 import { makeCacheKey } from './cache-key';
 
@@ -30,10 +34,12 @@ export function requestContextInterceptor(
   const baseUrl = injectBaseURL();
   const transferState = inject(TransferState);
   const nitroGlobal = globalThis as typeof globalThis & { $fetch?: any };
+  const internalFetch = injectInternalServerFetch();
+  const serverFetch = internalFetch ?? nitroGlobal.$fetch;
 
   // during prerendering with Nitro
   if (
-    nitroGlobal.$fetch &&
+    serverFetch &&
     baseUrl &&
     (req.url.startsWith('/') ||
       req.url.startsWith(baseUrl) ||
@@ -48,7 +54,7 @@ export function requestContextInterceptor(
       req.responseType === 'arraybuffer' ? 'arrayBuffer' : req.responseType;
 
     return from<Promise<HttpResponse<unknown>>>(
-      nitroGlobal.$fetch
+      serverFetch
         .raw(fetchUrl, {
           method: req.method as any,
           body: req.body ? req.body : undefined,

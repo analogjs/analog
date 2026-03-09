@@ -578,16 +578,24 @@ Also update the generated fetch helper source:
 import { $fetch } from 'nitro/deps/ofetch';
 
 // AFTER
-const serverFetch = (
-  globalThis as typeof globalThis & { $fetch?: typeof fetch }
-).$fetch;
+import { fetchWithEvent } from 'h3';
+import { createFetch } from 'ofetch';
+
+const serverFetch = createFetch({
+  fetch: (resource, init) => {
+    const url = resource instanceof Request ? resource.url : resource.toString();
+    return fetchWithEvent(event, url, init);
+  },
+});
 ```
 
 Why this changed:
 
 - `nitro/deps/ofetch` was a private Nitro subpath and is not a stable migration target.
 - In the failing alpha combination used here, Nitro prerendering no longer exports that subpath, so generated page-endpoint modules fail to resolve before build completion.
-- Nitro's supported runtime contract is the global `$fetch`, so the page-endpoint codegen should bind to that runtime surface instead of another private package path.
+- Page loaders still need `$fetch` semantics for relative internal URLs during prerender.
+- A direct global Nitro `$fetch` lookup is not reliable enough for prerendered route modules, because those modules can be evaluated without a ready global `$fetch`.
+- Building a request-local `$fetch` with `createFetch(...)` plus `fetchWithEvent(...)` preserves `$fetch` behavior while routing relative URLs through the current Nitro event using public APIs.
 
 ### 2.9.1 Temporary Nitro alpha workaround for `output.codeSplitting`
 

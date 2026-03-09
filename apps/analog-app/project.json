@@ -50,8 +50,8 @@
     "serve-nitro": {
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "",
-        "command": "PORT=3000 node dist/apps/analog-app/analog/server/index.mjs"
+        "cwd": "dist/apps/analog-app/analog",
+        "command": "PORT=3000 node ./server/index.mjs"
       },
       "dependsOn": ["build"]
     },

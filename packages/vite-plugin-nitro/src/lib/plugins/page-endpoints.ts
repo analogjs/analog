@@ -32,20 +32,19 @@ export function pageEndpointsPlugin() {
         // optional chaining so that page endpoints work in both Node.js
         // server and fetch-based prerender contexts.
         // Nitro v3 no longer guarantees the private `nitro/deps/ofetch`
-        // subpath that older codegen relied on. The runtime-supported surface
-        // is Nitro's global `$fetch`, so the generated module resolves it from
-        // `globalThis` instead of baking in another private Nitro import.
+        // subpath that older codegen relied on.
         //
-        // This keeps the generated page endpoint code aligned with Nitro's
-        // supported runtime contract and avoids hard-coding a package export
-        // that can disappear across pre-release updates.
+        // Page loaders expect Nitro-style `$fetch` semantics (parsed data plus
+        // internal relative-route support), so construct a request-local fetch
+        // using public APIs:
+        // - `createFetch` from `ofetch` for `$fetch` behavior
+        // - `fetchWithEvent` from `h3` for internal Nitro request routing
+        //
+        // This avoids both unstable private Nitro imports and assumptions about
+        // a global runtime `$fetch` being available during prerender.
         const code = `
-            import { defineHandler } from 'h3';
-            const serverFetch = (globalThis as typeof globalThis & { $fetch?: typeof fetch }).$fetch;
-
-            if (!serverFetch) {
-              throw new Error('Nitro runtime $fetch is not available for page endpoints.');
-            }
+            import { defineHandler, fetchWithEvent } from 'h3';
+            import { createFetch } from 'ofetch';
 
             ${
               fileExports.includes('load')
@@ -68,6 +67,13 @@ export function pageEndpointsPlugin() {
             }
 
             export default defineHandler(async(event) => {
+              const serverFetch = createFetch({
+                fetch: (resource, init) => {
+                  const url = resource instanceof Request ? resource.url : resource.toString();
+                  return fetchWithEvent(event, url, init);
+                }
+              });
+
               if (event.method === 'GET') {
                 try {
                   return await load({

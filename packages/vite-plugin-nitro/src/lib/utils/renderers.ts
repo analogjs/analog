@@ -15,7 +15,8 @@
 export function ssrRenderer(templatePath: string) {
   return `
 import { readFileSync } from 'node:fs';
-import { defineHandler } from 'h3';
+import { createFetch } from 'ofetch';
+import { defineHandler, fetchWithEvent } from 'h3';
 // @ts-ignore
 import renderer from '#analog/ssr';
 
@@ -42,8 +43,14 @@ export default defineHandler(async (event) => {
     connection: {},
   };
   const res = event.node?.res;
+  const fetch = createFetch({
+    fetch: (resource, init) => {
+      const url = resource instanceof Request ? resource.url : resource.toString();
+      return fetchWithEvent(event, url, init);
+    }
+  });
 
-  const html = await renderer(event.path, template, { req, res });
+  const html = await renderer(event.path, template, { req, res, fetch });
 
   return html;
 });`;
