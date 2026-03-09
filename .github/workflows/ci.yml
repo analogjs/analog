@@ -127,15 +127,17 @@ jobs:
 
           cleanup() {
             status=$?
-            echo "=== ps ==="
-            ps aux || true
-            echo "=== port 3000 ==="
-            ss -ltnp | grep 3000 || true
-            echo "=== nitro log ==="
-            cat nitro.log || true
             if kill -0 "$nitro_pid" 2>/dev/null; then
               kill "$nitro_pid" || true
               wait "$nitro_pid" || true
+            fi
+            if [ "$status" -ne 0 ]; then
+              echo "=== ps ==="
+              ps aux || true
+              echo "=== port 3000 ==="
+              ss -ltnp | grep 3000 || true
+              echo "=== nitro log ==="
+              cat nitro.log || true
             fi
             exit $status
           }
@@ -150,4 +152,27 @@ jobs:
           done
 
           curl -fsSI http://localhost:3000
-          pnpm nx run analog-app-e2e-cypress:e2e --skip-nx-cache
+          pnpm exec cypress run \
+            --config-file apps/analog-app-e2e-cypress/cypress.config.ts \
+            --config baseUrl=http://localhost:3000
+      - name: Probe Nx Cypress devServerTarget
+        env:
+          NODE_OPTIONS: ''
+          DEBUG: 'cypress:server:*,cypress:launcher:*'
+        run: |
+          set -euxo pipefail
+
+          cleanup() {
+            status=$?
+            if [ "$status" -ne 0 ]; then
+              echo "=== ps ==="
+              ps aux || true
+              echo "=== port 3000 ==="
+              ss -ltnp | grep 3000 || true
+            fi
+            exit $status
+          }
+
+          trap cleanup EXIT
+
+          timeout 180s pnpm nx run analog-app-e2e-cypress:e2e --skip-nx-cache
