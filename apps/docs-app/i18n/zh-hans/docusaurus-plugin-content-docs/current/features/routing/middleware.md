@@ -13,23 +13,20 @@ src/
         └── auth.ts
 ```
 
-中间件通过 `defineEventHandler` 函数来定义。
+中间件通过 `defineHandler` 函数来定义。
 
 ```ts
-import { defineEventHandler, sendRedirect, setHeaders } from 'h3';
+import { defineHandler, redirect } from 'h3';
 
-export default defineEventHandler((event) => {
-  if (event.node.req.originalUrl === '/checkout') {
-    console.log('event url', event.node.req.originalUrl);
-
-    setHeaders(event, {
-      'x-analog-checkout': 'true',
-    });
+export default defineHandler((event) => {
+  if (event.path === '/checkout') {
+    event.res.headers.set('x-analog-checkout', 'true');
+    return redirect('/cart', 302);
   }
 });
 ```
 
-- 中间件应该只修改请求并且没有任何返回值！
+- 中间件可以修改请求或响应上下文，也可以返回一个响应来提前结束处理流程。
 - 中间件按照文件名的顺序执行。如果要自定义顺序，建议给文件名上加上数字前缀来实现。
 
 ## 中间件的筛选器
@@ -37,15 +34,31 @@ export default defineEventHandler((event) => {
 中间件可以通过筛选器只处理特定的路由。
 
 ```ts
-export default defineEventHandler(async (event) => {
+import { defineHandler, redirect } from 'h3';
+
+function getCookieValue(cookieHeader: string | null, name: string) {
+  if (!cookieHeader) {
+    return undefined;
+  }
+
+  return cookieHeader
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${name}=`))
+    ?.slice(name.length + 1);
+}
+
+export default defineHandler(async (event) => {
   // Only execute for /admin routes
-  if (getRequestURL(event).pathname.startsWith('/admin')) {
-    const cookies = parseCookies(event);
-    const isLoggedIn = cookies['authToken'];
+  if (event.url.pathname.startsWith('/admin')) {
+    const authToken = getCookieValue(
+      event.req.headers.get('cookie'),
+      'authToken',
+    );
 
     // check auth and redirect
-    if (!isLoggedIn) {
-      sendRedirect(event, '/login', 401);
+    if (!authToken) {
+      return redirect('/login', 401);
     }
   }
 });
@@ -56,10 +69,10 @@ export default defineEventHandler(async (event) => {
 使用 `process.env` 全局变量在中间件函数中访问环境变量。在 `.env` 文件中定义的仅服务器和可公开访问的环境变量都可以从中读取。
 
 ```ts
-import { defineEventHandler, getRequestURL } from 'h3';
+import { defineHandler } from 'h3';
 
-export default defineEventHandler((event) => {
-  console.log('Path:', getRequestURL(event).pathname);
+export default defineHandler((event) => {
+  console.log('Path:', event.url.pathname);
   console.log(
     'Server Only Environment Variable:',
     process.env['SERVER_ONLY_VARIABLE'],

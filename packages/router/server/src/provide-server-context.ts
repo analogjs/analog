@@ -9,6 +9,12 @@ import {
   ServerResponse,
 } from '@analogjs/router/tokens';
 
+function getHeaderValue(
+  value: string | string[] | undefined,
+): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export function provideServerContext({
   req,
   res,
@@ -32,10 +38,14 @@ export function provideServerContext({
 
 export function getBaseUrl(req: ServerRequest) {
   const protocol = getRequestProtocol(req);
-  const { originalUrl, headers } = req;
+  const host =
+    getHeaderValue(req.headers['x-forwarded-host']) ??
+    getHeaderValue(req.headers.host) ??
+    'localhost';
+  const originalUrl = req.originalUrl || req.url || '/';
   const parsedUrl = new URL(
     '',
-    `${protocol}://${headers.host}${
+    `${protocol}://${host}${
       originalUrl.endsWith('/')
         ? originalUrl.substring(0, originalUrl.length - 1)
         : originalUrl
@@ -50,10 +60,11 @@ export function getRequestProtocol(
   req: ServerRequest,
   opts: { xForwardedProto?: boolean } = {},
 ) {
-  if (
-    opts.xForwardedProto !== false &&
-    req.headers['x-forwarded-proto'] === 'https'
-  ) {
+  const forwardedProto = getHeaderValue(req.headers['x-forwarded-proto'])
+    ?.split(',')[0]
+    ?.trim();
+
+  if (opts.xForwardedProto !== false && forwardedProto === 'https') {
     return 'https';
   }
 

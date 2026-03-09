@@ -35,12 +35,15 @@ afterEach(async () => {
   await page.close();
 });
 
-describe.skip('tRPC Demo App', () => {
+describe('tRPC Demo App', () => {
   test(`Given the user has navigated to the home page
     Then the app title is visible`, async () => {
-    await expect(
-      page.locator('role=heading[level=1] >> text=Analog + tRPC'),
-    ).toContain(/Analog + tRPC/i);
+    const heading = page.getByRole('heading', {
+      level: 1,
+      name: /Analog \+ tRPC/i,
+    });
+    await heading.waitFor();
+    expect(await heading.isVisible()).toBe(true);
   });
 
   test<TRPCTestContext>(`
@@ -53,19 +56,25 @@ describe.skip('tRPC Demo App', () => {
     await ctx.notesPage.typeNote(notes.first.note);
 
     await ctx.notesPage.addNote();
-    expect(await ctx.notesPage.notes().elementHandles()).toHaveLength(1);
+    await ctx.notesPage.waitForNoteCount(1);
+    expect(await ctx.notesPage.notes().count()).toBe(1);
 
     await ctx.notesPage.page.reload();
-    expect(await ctx.notesPage.notes().elementHandles()).toHaveLength(1);
+    await ctx.notesPage.waitForNoteCount(1);
+    expect(await ctx.notesPage.notes().count()).toBe(1);
 
     await ctx.notesPage.removeNote(0);
-    expect(await ctx.notesPage.notes().elementHandles()).toHaveLength(1);
+    await ctx.notesPage.waitForNoteCount(1);
+    await ctx.notesPage.waitForDeleteErrorCount(1);
+    expect(await ctx.notesPage.notes().count()).toBe(1);
     expect(await ctx.notesPage.getDeleteErrorCount()).toBe(1);
 
     await ctx.notesPage.toggleLogin();
     await ctx.notesPage.removeNote(0);
     await page.waitForSelector('.no-notes');
-    expect(await ctx.notesPage.notes().elementHandles()).toHaveLength(0);
+    await ctx.notesPage.waitForNoteCount(0);
+    await ctx.notesPage.waitForDeleteErrorCount(0);
+    expect(await ctx.notesPage.notes().count()).toBe(0);
     expect(await ctx.notesPage.getDeleteErrorCount()).toBe(0);
-  });
+  }, 20000);
 });

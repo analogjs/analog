@@ -1,6 +1,6 @@
-import { eventHandler } from 'h3';
+import { defineHandler } from 'h3';
 
-export default eventHandler(() => [
+export default defineHandler(() => [
   {
     id: 1,
     name: 'Phone XL',

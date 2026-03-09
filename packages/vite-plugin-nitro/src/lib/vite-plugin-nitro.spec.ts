@@ -54,9 +54,10 @@ describe('nitro', () => {
           ...mockNitroConfig,
           alias: expect.anything(),
           prerender: { routes: ['/'] },
-          renderer: expect.anything(),
           rollupConfig: expect.anything(),
-          handlers: expect.anything(),
+          handlers: expect.arrayContaining([
+            expect.objectContaining({ route: '/**', lazy: true }),
+          ]),
           publicAssets: expect.anything(),
           serverAssets: expect.anything(),
         },
@@ -83,8 +84,9 @@ describe('nitro', () => {
           prerender: { routes: ['/'] },
           alias: expect.anything(),
           rollupConfig: expect.anything(),
-          renderer: expect.anything(),
-          handlers: expect.anything(),
+          handlers: expect.arrayContaining([
+            expect.objectContaining({ route: '/**', lazy: true }),
+          ]),
           publicAssets: expect.anything(),
           serverAssets: expect.anything(),
         },
@@ -116,8 +118,9 @@ describe('nitro', () => {
           ...mockNitroConfig,
           alias: expect.anything(),
           rollupConfig: expect.anything(),
-          renderer: expect.anything(),
-          handlers: expect.anything(),
+          handlers: expect.arrayContaining([
+            expect.objectContaining({ route: '/**', lazy: true }),
+          ]),
           preset: undefined,
           prerender: {
             ...mockNitroConfig.prerender,
@@ -158,8 +161,9 @@ describe('nitro', () => {
           },
           alias: expect.anything(),
           rollupConfig: expect.anything(),
-          renderer: expect.anything(),
-          handlers: expect.anything(),
+          handlers: expect.arrayContaining([
+            expect.objectContaining({ route: '/**', lazy: true }),
+          ]),
           publicAssets: expect.anything(),
           serverAssets: expect.anything(),
         },
@@ -221,8 +225,9 @@ describe('nitro', () => {
               alias: expect.anything(),
               publicAssets: expect.anything(),
               rollupConfig: expect.anything(),
-              renderer: expect.anything(),
-              handlers: expect.anything(),
+              handlers: expect.arrayContaining([
+                expect.objectContaining({ route: '/**', lazy: true }),
+              ]),
               serverAssets: expect.anything(),
             },
           );

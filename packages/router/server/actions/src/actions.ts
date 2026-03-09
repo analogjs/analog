@@ -1,10 +1,14 @@
 import type { H3Event, H3EventContext } from 'h3';
-import type { $Fetch } from 'nitropack';
+import type { $Fetch } from 'nitro/types';
+
+// Preserve the existing Node req/res public contract while accommodating h3
+// v2's nullable `event.node` typing.
+type NodeContext = NonNullable<H3Event['node']>;
 
 export type PageServerAction = {
   params: H3EventContext['params'];
-  req: H3Event['node']['req'];
-  res: H3Event['node']['res'];
+  req: NodeContext['req'];
+  res: NonNullable<NodeContext['res']>;
   fetch: $Fetch;
   event: H3Event;
 };

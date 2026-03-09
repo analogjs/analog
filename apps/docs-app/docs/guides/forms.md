@@ -86,7 +86,7 @@ The `FormAction` directive submits the form data to the server, which is process
 
 To handle the form action, define the `.server.ts` alongside the `.page.ts` file that contains the async `action` function to process the form submission.
 
-In the server action, you can use access environment variables, read cookies, and perform other server-side only operations.
+In the server action, you can access environment variables, read cookies, and perform other server-side only operations.
 
 ```ts
 // src/app/pages/newsletter.server.ts
@@ -96,10 +96,9 @@ import {
   json,
   fail,
 } from '@analogjs/router/server/actions';
-import { readFormData } from 'h3';
 
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const email = body.get('email') as string;
 
   if (!email) {
@@ -139,7 +138,7 @@ In the server action, use the `action` value.
 
 ```ts
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const action = body.get('action') as string;
 
   if (action === 'register') {
@@ -189,20 +188,19 @@ export default class NewsletterComponent {
 }
 ```
 
-The query parameter can be accessed through the server form action.
+The query parameter can be accessed through the server load function.
 
 ```ts
 // src/app/pages/search.server.ts
 import type { PageServerLoad } from '@analogjs/router';
-import { getQuery } from 'h3';
 
 export async function load({ event }: PageServerLoad) {
-  const query = getQuery(event);
-  console.log('loaded search', query['search']);
+  const searchTerm = event.url.searchParams.get('search') ?? '';
+  console.log('loaded search', searchTerm);
 
   return {
     loaded: true,
-    searchTerm: `${query['search']}`,
+    searchTerm,
   };
 }
 ```

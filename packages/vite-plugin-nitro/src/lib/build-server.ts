@@ -1,5 +1,11 @@
-import { NitroConfig, copyPublicAssets, prerender } from 'nitropack';
-import { createNitro, build, prepare } from 'nitropack';
+import type { NitroConfig } from 'nitro/types';
+import {
+  build,
+  copyPublicAssets,
+  createNitro,
+  prepare,
+  prerender,
+} from 'nitro/builder';
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 

@@ -14,21 +14,24 @@ import {
   ɵSERVER_CONTEXT as SERVER_CONTEXT,
 } from '@angular/platform-server';
 import { ServerContext } from '@analogjs/router/tokens';
-import { createEvent, readBody, getHeader } from 'h3';
+import { json as readJsonStream } from 'node:stream/consumers';
 
 import { provideStaticProps } from './tokens';
 
 type ComponentLoader = () => Promise<Type<unknown>>;
 
 export function serverComponentRequest(serverContext: ServerContext) {
-  const serverComponentId = getHeader(
-    createEvent(serverContext.req, serverContext.res),
-    'X-Analog-Component',
-  );
+  // `ServerContext` is still backed by raw Node req/res, so read the header
+  // directly instead of reconstructing an H3Event just for lookup.
+  // In h3 v2 / Nitro v3, req may be undefined during fetch-based prerendering
+  // (where event.node is not populated), so guard with optional chaining.
+  const serverComponentId = serverContext.req?.headers?.[
+    'x-analog-component'
+  ] as string | undefined;
 
   if (
     !serverComponentId &&
-    serverContext.req.url &&
+    serverContext.req?.url &&
     serverContext.req.url.startsWith('/_analog/components')
   ) {
     const componentId = serverContext.req.url.split('/')?.[3];
@@ -69,8 +72,10 @@ export async function renderServerComponent(
 
   const mirror = reflectComponentType(component);
   const selector = mirror?.selector.split(',')?.[0] || 'server-component';
-  const event = createEvent(serverContext.req, serverContext.res);
-  const body = (await readBody(event)) || {};
+  // Server component requests POST JSON props from the client bridge, so parse
+  // the Node request body directly instead of rebuilding an H3Event wrapper.
+  const body =
+    (await readJsonStream(serverContext.req).catch(() => ({}))) || {};
   const appId = `analog-server-${selector.toLowerCase()}-${new Date().getTime()}`;
 
   const bootstrap = (context?: BootstrapContext) =>

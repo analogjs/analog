@@ -4,7 +4,6 @@ import {
   json,
   fail,
 } from '@analogjs/router/server/actions';
-import { readFormData } from 'h3';
 
 export type NewsletterSubmitResponse = {
   type: 'success';
@@ -18,7 +17,7 @@ export function load() {
 }
 
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const email = body.get('email') as string;
 
   if (!email) {

@@ -1,7 +1,7 @@
 import { resolve, relative } from 'node:path';
 import { globSync } from 'tinyglobby';
 
-import { NitroEventHandler } from 'nitropack';
+import type { NitroEventHandler } from 'nitro/types';
 import { normalizePath } from 'vite';
 
 type GetHandlersArgs = {

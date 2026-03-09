@@ -15,7 +15,7 @@ import type {
 import { TRPCError } from '@trpc/server';
 import { createURL } from 'ufo';
 import type { H3Event } from 'h3';
-import { createError, defineEventHandler, isMethod, readBody } from 'h3';
+import { HTTPError, defineHandler } from 'h3';
 import type { TRPCResponse } from '@trpc/server/rpc';
 
 type MaybePromise<T> = T | Promise<T>;
@@ -36,11 +36,16 @@ export type ResponseMetaFn<TRouter extends AnyRouter> = (
   opts: ResponseMetaFnPayload<TRouter>,
 ) => ResponseMeta;
 
+// In h3 v2, event.node is typed as optional since it's only available in
+// Node.js contexts. NonNullable unwraps the optional to keep the public type
+// compatible with existing consumers.
+type NodeContext = NonNullable<H3Event['node']>;
+
 export interface OnErrorPayload<TRouter extends AnyRouter> {
   error: TRPCError;
   type: ProcedureType | 'unknown';
   path: string | undefined;
-  req: H3Event['node']['req'];
+  req: NodeContext['req'];
   input: unknown;
   ctx: undefined | inferRouterContext<TRouter>;
 }
@@ -57,6 +62,47 @@ export interface ResolveHTTPRequestOptions<TRouter extends AnyRouter> {
   batching?: {
     enabled: boolean;
   };
+}
+
+function getNodeRequestResponse(event: H3Event) {
+  const req = event.node?.req;
+  const res = event.node?.res;
+
+  if (!req || !res) {
+    throw new HTTPError({
+      status: 500,
+      statusText:
+        'createTrpcNitroHandler requires a Node.js request/response context.',
+    });
+  }
+
+  return { req, res };
+}
+
+async function readRequestBody(event: H3Event) {
+  if (event.method === 'GET' || event.method === 'HEAD') {
+    return null;
+  }
+
+  if (event.req.headers.get('content-length') === '0') {
+    return undefined;
+  }
+
+  const contentType = event.req.headers.get('content-type') ?? '';
+
+  if (contentType.includes('application/json')) {
+    try {
+      return await event.req.json();
+    } catch {
+      throw new HTTPError({
+        status: 400,
+        statusText: 'Invalid JSON request body.',
+      });
+    }
+  }
+
+  const text = await event.req.text();
+  return text === '' ? undefined : text;
 }
 
 function getPath(event: H3Event): string | null {
@@ -80,11 +126,9 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
   onError,
   batching,
 }: ResolveHTTPRequestOptions<TRouter>) {
-  return defineEventHandler(async (event) => {
-    const { req, res } = event.node;
-
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const $url = createURL(req.url!);
+  return defineHandler(async (event) => {
+    const { req, res } = getNodeRequestResponse(event);
+    const $url = createURL(event.path || req.url || event.url.toString());
 
     const path = getPath(event);
 
@@ -101,9 +145,9 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
         input: undefined,
       });
 
-      throw createError({
-        statusCode: 500,
-        statusMessage: JSON.stringify(error),
+      throw new HTTPError({
+        status: 500,
+        statusText: JSON.stringify(error),
       });
     }
 
@@ -111,10 +155,9 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
       batching,
       router,
       req: {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        method: req.method!,
+        method: event.method,
         headers: req.headers,
-        body: isMethod(event, 'GET') ? null : await readBody(event),
+        body: await readRequestBody(event),
         query: $url.searchParams,
       },
       path,
@@ -134,7 +177,6 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
 
     headers &&
       Object.keys(headers).forEach((key) => {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         res.setHeader(key, headers[key]!);
       });
 

@@ -10,12 +10,12 @@ import {
 } from 'vite';
 import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { createEvent, sendWebResponse } from 'h3';
 import { createRouter as createRadixRouter, toRouteMatcher } from 'radix3';
 import { defu } from 'defu';
-import { NitroRouteRules } from 'nitropack';
+import type { NitroRouteRules } from 'nitro/types';
 
 import { registerDevServerMiddleware } from '../utils/register-dev-middleware.js';
+import { writeWebResponseToNode } from '../utils/node-web-bridge.js';
 import { Options } from '../options.js';
 
 type ServerOptions = Options & { routeRules?: Record<string, any> | undefined };
@@ -88,7 +88,7 @@ export function devServerPlugin(options: ServerOptions): Plugin {
             }
 
             if (result instanceof Response) {
-              sendWebResponse(createEvent(req, res), result);
+              await writeWebResponseToNode(res, result);
               return;
             }
             res.setHeader('Content-Type', 'text/html');

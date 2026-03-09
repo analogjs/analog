@@ -1,4 +1,4 @@
-import { NitroConfig } from 'nitropack';
+import type { NitroConfig } from 'nitro/types';
 import { ConfigEnv, UserConfig, Plugin } from 'vite';
 import { Mock, vi } from 'vitest';
 import { resolve } from 'node:path';
@@ -22,7 +22,7 @@ export const mockNitroConfig: NitroConfig = {
   },
   rootDir: '.',
   scanDirs: ['src/server'],
-  srcDir: 'src/server',
+  serverDir: 'src/server',
   prerender: {
     crawlLinks: undefined,
   },

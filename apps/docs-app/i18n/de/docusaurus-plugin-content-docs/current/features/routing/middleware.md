@@ -13,23 +13,20 @@ src/
         └── auth.ts
 ```
 
-Eine Middleware wird mit der Funktion `defineEventHandler` definiert.
+Eine Middleware wird mit der Funktion `defineHandler` definiert.
 
 ```ts
-import { defineEventHandler, sendRedirect, setHeaders } from 'h3';
+import { defineHandler, redirect } from 'h3';
 
-export default eventHandler((event) => {
-  if (event.node.req.originalUrl === '/checkout') {
-    console.log('event url', event.node.req.originalUrl);
-
-    setHeaders(event, {
-      'x-analog-checkout': 'true',
-    });
+export default defineHandler((event) => {
+  if (event.path === '/checkout') {
+    event.res.headers.set('x-analog-checkout', 'true');
+    return redirect('/cart', 302);
   }
 });
 ```
 
-- Eine Middleware sollte nur Anfragen ändern und nichts zurückgeben!
+- Eine Middleware kann den Anfrage- oder Antwortkontext anpassen oder eine Antwort zurückgeben, um die Verarbeitung fruehzeitig zu beenden.
 - Eine Middleware wird in der Reihenfolge der definierten Dateinamen ausgeführt. Setze den Dateinamen eine Zahl voran, um eine bestimmte Reihenfolge zu erzwingen.
 
 ## Filterung in Middleware
@@ -37,15 +34,31 @@ export default eventHandler((event) => {
 Eine Middleware kann durch Filterung nur auf bestimmte Routen angewendet werden.
 
 ```ts
-export default defineEventHandler(async (event) => {
+import { defineHandler, redirect } from 'h3';
+
+function getCookieValue(cookieHeader: string | null, name: string) {
+  if (!cookieHeader) {
+    return undefined;
+  }
+
+  return cookieHeader
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${name}=`))
+    ?.slice(name.length + 1);
+}
+
+export default defineHandler(async (event) => {
   // Only execute for /admin routes
-  if (getRequestURL(event).pathname.startsWith('/admin')) {
-    const cookies = parseCookies(event);
-    const isLoggedIn = cookies['authToken'];
+  if (event.url.pathname.startsWith('/admin')) {
+    const authToken = getCookieValue(
+      event.req.headers.get('cookie'),
+      'authToken',
+    );
 
     // check auth and redirect
-    if (!isLoggedIn) {
-      sendRedirect(event, '/login', 401);
+    if (!authToken) {
+      return redirect('/login', 401);
     }
   }
 });

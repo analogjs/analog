@@ -27,8 +27,15 @@ export function pageEndpointsPlugin() {
           }
         }
 
+        // In h3 v2 / Nitro v3, event.node is undefined during prerendering
+        // (which uses the fetch-based pipeline, not Node.js http). We use
+        // optional chaining so that page endpoints work in both Node.js
+        // server and fetch-based prerender contexts.
+        // Import $fetch explicitly since Nitro auto-imports are disabled.
+        // In Nitro v3, $fetch comes from 'nitro/deps/ofetch'.
         const code = `
-            import { defineEventHandler } from 'h3';
+            import { defineHandler } from 'h3';
+            import { $fetch } from 'nitro/deps/ofetch';
 
             ${
               fileExports.includes('load')
@@ -46,17 +53,17 @@ export function pageEndpointsPlugin() {
                 : `
                 export const action = () => {
                   return {};
-                }              
+                }
               `
             }
 
-            export default defineEventHandler(async(event) => {
+            export default defineHandler(async(event) => {
               if (event.method === 'GET') {
                 try {
                   return await load({
                     params: event.context.params,
-                    req: event.node.req,
-                    res: event.node.res,
+                    req: event.node?.req,
+                    res: event.node?.res,
                     fetch: $fetch,
                     event
                   });
@@ -68,15 +75,15 @@ export function pageEndpointsPlugin() {
                 try {
                   return await action({
                     params: event.context.params,
-                    req: event.node.req,
-                    res: event.node.res,
+                    req: event.node?.req,
+                    res: event.node?.res,
                     fetch: $fetch,
                     event
                   });
                 } catch(e) {
                   console.error(\` An error occurred: \$\{e\}\`)
                   throw e;
-                }               
+                }
               }
             });
           `;

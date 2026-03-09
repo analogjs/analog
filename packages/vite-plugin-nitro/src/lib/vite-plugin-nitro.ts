@@ -1,11 +1,12 @@
-import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
-import { App, toNodeListener } from 'h3';
+import type { NitroConfig, NitroEventHandler } from 'nitro/types';
+import { build, createDevServer, createNitro } from 'nitro/builder';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { mergeConfig, normalizePath } from 'vite';
 import { dirname, join, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { existsSync, readFileSync } from 'node:fs';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import { buildServer } from './build-server.js';
 import { buildSSRApp } from './build-ssr.js';
@@ -20,8 +21,11 @@ import { pageEndpointsPlugin } from './plugins/page-endpoints.js';
 import { getPageHandlers } from './utils/get-page-handlers.js';
 import { buildSitemap } from './build-sitemap.js';
 import { devServerPlugin } from './plugins/dev-server-plugin.js';
+import {
+  toWebRequest,
+  writeWebResponseToNode,
+} from './utils/node-web-bridge.js';
 import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-files.js';
-import { IncomingMessage, ServerResponse } from 'node:http';
 import {
   ssrRenderer,
   clientRenderer,
@@ -34,6 +38,75 @@ let clientOutputPath = '';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+function createNitroMiddlewareHandler(handler: string): NitroEventHandler {
+  return {
+    route: '/**',
+    handler,
+    middleware: true,
+  };
+}
+
+function appendRollupExternal(
+  nitroConfig: NitroConfig,
+  ...entries: string[]
+): NitroConfig['rollupConfig'] {
+  const external = nitroConfig.rollupConfig?.external;
+
+  if (!external) {
+    return {
+      ...nitroConfig.rollupConfig,
+      external: entries,
+    };
+  }
+
+  if (typeof external === 'function') {
+    return {
+      ...nitroConfig.rollupConfig,
+      external: (source, importer, isResolved) =>
+        external(source, importer, isResolved) || entries.includes(source),
+    };
+  }
+
+  return {
+    ...nitroConfig.rollupConfig,
+    external: Array.isArray(external)
+      ? [...external, ...entries]
+      : [external, ...entries],
+  };
+}
+
+function appendNoExternals(
+  noExternals: NitroConfig['noExternals'],
+  ...entries: string[]
+): NitroConfig['noExternals'] {
+  if (!noExternals) {
+    return entries;
+  }
+
+  return Array.isArray(noExternals)
+    ? [...noExternals, ...entries]
+    : noExternals;
+}
+
+function resolveClientOutputPath(
+  workspaceRoot: string,
+  rootDir: string,
+  configuredOutDir: string | undefined,
+  ssrBuild: boolean,
+) {
+  if (clientOutputPath) {
+    return clientOutputPath;
+  }
+
+  if (!ssrBuild) {
+    return resolve(workspaceRoot, rootDir, configuredOutDir || 'dist/client');
+  }
+
+  // SSR builds write server assets to dist/<app>/ssr, but the renderer template
+  // still needs the client index.html emitted to dist/<app>/client.
+  return resolve(workspaceRoot, 'dist', rootDir, 'client');
+}
 
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
@@ -97,13 +170,22 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           additionalPagesDirs: options?.additionalPagesDirs,
           hasAPIDir,
         });
+        const resolvedClientOutputPath = resolveClientOutputPath(
+          workspaceRoot,
+          rootDir,
+          config.build?.outDir,
+          ssrBuild,
+        );
+        const indexEntry = normalizePath(
+          resolve(resolvedClientOutputPath, 'index.html'),
+        );
 
         nitroConfig = {
           rootDir,
           preset: buildPreset,
           compatibilityDate: '2024-11-19',
           logLevel: nitroOptions?.logLevel || 0,
-          srcDir: normalizePath(`${sourceRoot}/server`),
+          serverDir: normalizePath(`${sourceRoot}/server`),
           scanDirs: [
             normalizePath(`${rootDir}/${sourceRoot}/server`),
             ...(options?.additionalAPIDirs || []).map((dir) =>
@@ -147,12 +229,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             ...(hasAPIDir
               ? []
               : useAPIMiddleware
-                ? [
-                    {
-                      handler: '#ANALOG_API_MIDDLEWARE',
-                      middleware: true,
-                    },
-                  ]
+                ? [createNitroMiddlewareHandler('#ANALOG_API_MIDDLEWARE')]
                 : []),
             ...pageHandlers,
           ],
@@ -166,8 +243,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   },
                 },
           virtual: {
-            '#ANALOG_SSR_RENDERER': ssrRenderer,
-            '#ANALOG_CLIENT_RENDERER': clientRenderer,
+            '#ANALOG_SSR_RENDERER': ssrRenderer(indexEntry),
+            '#ANALOG_CLIENT_RENDERER': clientRenderer(indexEntry),
             ...(hasAPIDir ? {} : { '#ANALOG_API_MIDDLEWARE': apiMiddleware }),
           },
         };
@@ -194,25 +271,30 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         if (!ssrBuild && !isTest) {
           // store the client output path for the SSR build config
-          clientOutputPath = resolve(
-            workspaceRoot,
-            rootDir,
-            config.build?.outDir || 'dist/client',
-          );
+          clientOutputPath = resolvedClientOutputPath;
         }
 
-        const indexEntry = normalizePath(
-          resolve(clientOutputPath, 'index.html'),
-        );
-        nitroConfig.alias = {
-          '#analog/index': indexEntry,
-        };
-
         if (isBuild) {
-          nitroConfig.publicAssets = [{ dir: clientOutputPath }];
-          nitroConfig.renderer = options?.ssr
+          nitroConfig.publicAssets = [{ dir: clientOutputPath, maxAge: 0 }];
+
+          // In Nitro v3, renderer.entry is resolved via resolveModulePath()
+          // during options normalization, which requires a real filesystem path.
+          // Virtual modules (prefixed with #) can't survive this resolution.
+          // Instead, we add the renderer as a catch-all handler directly —
+          // this is functionally equivalent to what Nitro does internally
+          // (it converts renderer.entry into a { route: '/**', lazy: true }
+          // handler), but avoids the filesystem resolution step.
+          const rendererHandler = options?.ssr
             ? '#ANALOG_SSR_RENDERER'
             : '#ANALOG_CLIENT_RENDERER';
+          nitroConfig.handlers = [
+            ...(nitroConfig.handlers || []),
+            {
+              handler: rendererHandler,
+              route: '/**',
+              lazy: true,
+            },
+          ];
 
           if (isEmptyPrerenderRoutes(options)) {
             nitroConfig.prerender = {};
@@ -318,30 +400,33 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
           if (ssrBuild) {
             if (isWindows) {
-              nitroConfig.externals = {
-                inline: ['std-env'],
-              };
+              nitroConfig.noExternals = appendNoExternals(
+                nitroConfig.noExternals,
+                'std-env',
+              );
             }
 
             nitroConfig = {
               ...nitroConfig,
-              externals: {
-                ...nitroConfig.externals,
-                external: ['rxjs', 'node-fetch-native/dist/polyfill'],
-              },
+              rollupConfig: appendRollupExternal(
+                nitroConfig,
+                'rxjs',
+                'node-fetch-native/dist/polyfill',
+              ),
               moduleSideEffects: ['zone.js/node', 'zone.js/fesm2015/zone-node'],
               handlers: [
                 ...(hasAPIDir
                   ? []
                   : useAPIMiddleware
-                    ? [
-                        {
-                          handler: '#ANALOG_API_MIDDLEWARE',
-                          middleware: true,
-                        },
-                      ]
+                    ? [createNitroMiddlewareHandler('#ANALOG_API_MIDDLEWARE')]
                     : []),
                 ...pageHandlers,
+                // Preserve the renderer catch-all handler added above
+                {
+                  handler: rendererHandler,
+                  route: '/**',
+                  lazy: true,
+                },
               ],
             };
           }
@@ -391,15 +476,18 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
               await Promise.all(builds);
 
-              let ssrEntryPath = resolve(
+              const ssrOutDir =
                 options?.ssrBuildDir ||
-                  resolve(workspaceRoot, 'dist', rootDir, `ssr`),
-                `main.server${filePrefix ? '.js' : ''}`,
-              );
+                resolve(workspaceRoot, 'dist', rootDir, `ssr`);
 
-              // add check for main.server.mjs fallback on Windows
-              if (isWindows && !existsSync(ssrEntryPath)) {
-                ssrEntryPath = ssrEntryPath.replace('.js', '.mjs');
+              // Resolve the SSR entry path, checking for .mjs (Vite v8+
+              // default ESM extension), then .js, then extensionless.
+              let ssrEntryPath = resolve(ssrOutDir, 'main.server.mjs');
+              if (!existsSync(ssrEntryPath)) {
+                ssrEntryPath = resolve(ssrOutDir, 'main.server.js');
+              }
+              if (!existsSync(ssrEntryPath)) {
+                ssrEntryPath = resolve(ssrOutDir, 'main.server');
               }
 
               const ssrEntry = normalizePath(filePrefix + ssrEntryPath);
@@ -441,13 +529,22 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           });
           const server = createDevServer(nitro);
           await build(nitro);
-          const apiHandler = toNodeListener(server.app as unknown as App);
+
+          const apiHandler = async (
+            req: IncomingMessage,
+            res: ServerResponse,
+          ) => {
+            // Nitro v3's dev server is fetch-first, so adapt Vite's Node
+            // request once and let Nitro respond with a standard Web Response.
+            const response = await server.fetch(toWebRequest(req));
+            await writeWebResponseToNode(res, response);
+          };
 
           if (hasAPIDir) {
             viteServer.middlewares.use(
               (req: IncomingMessage, res: ServerResponse, next: Function) => {
                 if (req.url?.startsWith(`${prefix}${apiPrefix}`)) {
-                  apiHandler(req, res);
+                  void apiHandler(req, res).catch((error) => next(error));
                   return;
                 }
 
@@ -455,7 +552,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               },
             );
           } else {
-            viteServer.middlewares.use(apiPrefix, apiHandler);
+            viteServer.middlewares.use(
+              apiPrefix,
+              (req: IncomingMessage, res: ServerResponse, next: Function) => {
+                void apiHandler(req, res).catch((error) => next(error));
+              },
+            );
           }
 
           viteServer.httpServer?.once('listening', () => {
@@ -507,15 +609,18 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             );
           }
 
-          let ssrEntryPath = resolve(
+          const closeBundleSsrOutDir =
             options?.ssrBuildDir ||
-              resolve(workspaceRoot, 'dist', rootDir, `ssr`),
-            `main.server${filePrefix ? '.js' : ''}`,
-          );
+            resolve(workspaceRoot, 'dist', rootDir, `ssr`);
 
-          // add check for main.server.mjs fallback on Windows
-          if (isWindows && !existsSync(ssrEntryPath)) {
-            ssrEntryPath = ssrEntryPath.replace('.js', '.mjs');
+          // Resolve the SSR entry path, checking for .mjs (Vite v8+
+          // default ESM extension), then .js, then extensionless.
+          let ssrEntryPath = resolve(closeBundleSsrOutDir, 'main.server.mjs');
+          if (!existsSync(ssrEntryPath)) {
+            ssrEntryPath = resolve(closeBundleSsrOutDir, 'main.server.js');
+          }
+          if (!existsSync(ssrEntryPath)) {
+            ssrEntryPath = resolve(closeBundleSsrOutDir, 'main.server');
           }
 
           const ssrEntry = normalizePath(filePrefix + ssrEntryPath);

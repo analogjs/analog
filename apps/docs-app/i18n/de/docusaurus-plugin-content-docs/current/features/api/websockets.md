@@ -94,9 +94,9 @@ Server-Sent Event Handler können mit der Funktion `createEventStream` im Event-
 
 ```typescript
 // src/server/routes/sse.ts
-import { defineEventHandler, createEventStream } from 'h3';
+import { defineHandler, createEventStream } from 'h3';
 
-export default defineEventHandler(async (event) => {
+export default defineHandler(async (event) => {
   const eventStream = createEventStream(event);
 
   const interval = setInterval(async () => {
