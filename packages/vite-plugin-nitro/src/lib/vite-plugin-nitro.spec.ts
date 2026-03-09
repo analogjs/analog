@@ -360,10 +360,17 @@ describe('nitro', () => {
       expect(buildServerImportSpy).toHaveBeenCalledWith(
         {},
         expect.objectContaining({
+          preset: 'vercel',
           output: {
             dir: '/custom-root-directory/.vercel/output',
             publicDir: '/custom-root-directory/.vercel/output/static',
           },
+          vercel: expect.objectContaining({
+            entryFormat: 'node',
+            functions: expect.objectContaining({
+              runtime: 'nodejs22.x',
+            }),
+          }),
         }),
       );
     });
@@ -383,6 +390,7 @@ describe('nitro', () => {
       expect(buildServerImportSpy).toHaveBeenCalledWith(
         {},
         expect.objectContaining({
+          preset: 'vercel-edge',
           output: {
             dir: '/custom-root-directory/.vercel/output',
             publicDir: '/custom-root-directory/.vercel/output/static',
@@ -407,10 +415,17 @@ describe('nitro', () => {
       expect(buildServerImportSpy).toHaveBeenCalledWith(
         {},
         expect.objectContaining({
+          preset: 'vercel',
           output: {
             dir: '/custom-root-directory/.vercel/output',
             publicDir: '/custom-root-directory/.vercel/output/static',
           },
+          vercel: expect.objectContaining({
+            entryFormat: 'node',
+            functions: expect.objectContaining({
+              runtime: 'nodejs22.x',
+            }),
+          }),
         }),
       );
     });

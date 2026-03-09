@@ -196,7 +196,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         );
         const buildPreset =
           process.env['BUILD_PRESET'] ??
-          (nitroOptions?.preset as string | undefined);
+          (nitroOptions?.preset as string | undefined) ??
+          (process.env['VERCEL'] ? 'vercel' : undefined);
 
         const pageHandlers = getPageHandlers({
           workspaceRoot,
@@ -290,7 +291,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         };
 
         if (isVercelPreset(buildPreset)) {
-          nitroConfig = withVercelOutputAPI(nitroConfig, workspaceRoot);
+          nitroConfig = withVercelOutputAPI(
+            nitroConfig,
+            workspaceRoot,
+            buildPreset,
+          );
         }
 
         if (isCloudflarePreset(buildPreset)) {
@@ -709,8 +714,26 @@ const isVercelPreset = (buildPreset: string | undefined) =>
 const withVercelOutputAPI = (
   nitroConfig: NitroConfig | undefined,
   workspaceRoot: string,
+  buildPreset: string | undefined,
 ) => ({
   ...nitroConfig,
+  preset:
+    nitroConfig?.preset ??
+    (buildPreset?.toLowerCase().includes('vercel-edge')
+      ? 'vercel-edge'
+      : 'vercel'),
+  vercel: {
+    ...nitroConfig?.vercel,
+    ...(buildPreset?.toLowerCase().includes('vercel-edge')
+      ? {}
+      : {
+          entryFormat: nitroConfig?.vercel?.entryFormat ?? 'node',
+          functions: {
+            runtime: nitroConfig?.vercel?.functions?.runtime ?? 'nodejs22.x',
+            ...nitroConfig?.vercel?.functions,
+          },
+        }),
+  },
   output: {
     ...nitroConfig?.output,
     dir: normalizePath(resolve(workspaceRoot, '.vercel', 'output')),
