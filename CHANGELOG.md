@@ -1,3 +1,9 @@
+# [2.4.0-beta.5](https://github.com/analogjs/analog/compare/v2.4.0-beta.4...v2.4.0-beta.5) (2026-03-10)
+
+### Bug Fixes
+
+- update dependencies and package manager versions across projects ([#2106](https://github.com/analogjs/analog/issues/2106)) ([429536c](https://github.com/analogjs/analog/commit/429536c7e5f479aa06eb61a3df51cf4223e30e14)), closes [#2040](https://github.com/analogjs/analog/issues/2040)
+
 # [2.4.0-beta.4](https://github.com/analogjs/analog/compare/v2.4.0-beta.3...v2.4.0-beta.4) (2026-03-05)
 
 ### Bug Fixes
