@@ -1464,6 +1464,153 @@ When a check fails, do not continue broad rollout. Use this loop:
 - the relevant workstream prescription
 - the verification matrix or checklist if the required proof changes
 
+## Debugging Post-Migration Regressions
+
+Use this section when a Nitro v3 + h3 v2 migration change appears to "mostly work" but introduces a runtime regression in dev serve, SSR, prerender, or internal fetch behavior.
+
+### Debugging goals
+
+The purpose is to answer four questions quickly:
+
+1. Is the regression app-specific or framework-level?
+2. Did it exist before the migration but become easier to trigger?
+3. Did the migration change the request shape, response bridge, or routing contract?
+4. What is the smallest safe fix that restores parity without masking the underlying cause?
+
+### Recommended debugging workflow
+
+1. Reproduce on one representative app path first.
+
+   - Prefer `apps/analog-app` for SSR/dev regressions.
+   - Capture the exact request URL, method, and whether the failure happens in:
+     - Vite dev middleware
+     - Nitro dev server bridge
+     - Angular SSR/router rendering
+     - built Nitro server output
+
+2. Compare against a known pre-migration baseline.
+
+   - Use `git diff --name-status <baseline>..HEAD` to see whether the surface changed at all.
+   - Use `git log --oneline <baseline>..HEAD -- <relevant-paths>` to identify the migration commit window.
+   - For this migration, comparing `HEAD` against `1583826d2c4dd47eaeda939f835e252babe39480` was useful for confirming that the relevant regression window clustered around `c643bc05` (`feat: migrate to Nitro v3 and h3 v2`).
+
+3. Trace the request through the exact middleware boundary where ownership changes.
+
+   - In this repo, dev HTML requests are primarily owned by:
+     - `packages/vite-plugin-nitro/src/lib/plugins/dev-server-plugin.ts`
+   - Dev API requests are primarily owned by:
+     - `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts`
+   - Built runtime behavior is primarily owned by:
+     - `packages/vite-plugin-nitro/src/lib/build-server.ts`
+     - `packages/vite-plugin-nitro/src/lib/utils/renderers.ts`
+
+4. Verify whether the regression is caused by literal URL/path handoff.
+
+   - Do not assume Vite, Nitro, and the app router normalize URLs the same way.
+   - Check whether paths like `/`, `/index.html`, `/404.html`, `/api/...`, and catch-all routes are being passed through unchanged.
+   - If the dev middleware removes Vite's stock HTML handlers, confirm whether it also needs to normalize document requests before handing them to SSR.
+
+5. Separate bridge-level failures from route-level failures.
+
+   - Bridge-level failures usually show up as:
+     - response-writing errors
+     - missing builder/runtime packages
+     - fetch/Request/Response adapter mismatches
+     - middleware never reaching the app
+   - Route-level failures usually show up as:
+     - app router 404s
+     - route rules not matching
+     - catch-all pages resolving unexpectedly
+     - internal server fetches using the wrong URL
+
+6. Prefer the narrowest fix at the ownership boundary that first mishandles the request.
+   - If a dev HTML request is malformed before SSR sees it, fix the dev HTML middleware.
+   - If an API request is correctly routed but incorrectly bridged between Node and Nitro, fix the fetch/response bridge.
+   - Do not patch app config first when the shared framework middleware is the first point of divergence.
+
+### Example: `/index.html` dev 404 after migration
+
+Observed failure:
+
+- `analog-app:serve:development` started successfully
+- Vite reported `http://localhost:3000/`
+- the app then surfaced:
+  - `{ "status": 404, "message": "Cannot find any route matching [GET] http://localhost:3000/index.html" }`
+
+What the investigation showed:
+
+- `apps/analog-app/vite.config.ts` did not define any special `/index.html` handling.
+- `packages/vite-plugin-nitro/src/lib/plugins/dev-server-plugin.ts` removes Vite's built-in HTML middlewares and takes over document requests.
+- That middleware passed `req.originalUrl` directly into:
+  - `viteServer.transformIndexHtml(...)`
+  - route-rule matching
+  - `entryServer(...)`
+- So a browser request for `/index.html` was treated as an actual app route rather than being normalized to `/`.
+
+Why the historical diff mattered:
+
+- Comparing `HEAD` against `1583826d2c4dd47eaeda939f835e252babe39480` showed that:
+  - `dev-server-plugin.ts` changed only in response-bridging details
+  - `vite-plugin-nitro.ts` changed substantially during the Nitro v3 migration
+- That suggests the missing `/index.html` normalization was likely latent, but the Nitro v3 migration changed the surrounding request flow enough to expose it more consistently.
+
+Recommended fix shape:
+
+- Normalize HTML entry requests at the dev SSR middleware boundary.
+- Rewrite `/index.html` to `/`, preserving query/hash.
+- Use the normalized URL consistently for:
+  - `transformIndexHtml`
+  - route-rule lookup
+  - SSR entry rendering
+
+Why this is the right level:
+
+- The app config is not the first place the request diverges.
+- The regression is in the shared ownership layer that replaced Vite's normal HTML handling.
+- Fixing it there restores parity for all apps that use the shared dev SSR plugin.
+
+### Example: Nitro dev builder incompatibility after migration
+
+Observed failure:
+
+- Nitro v3 rejected the previous dev path with:
+  - `Nitro dev CLI does not supports vite. Please use \`vite dev\` instead.`
+
+What this means:
+
+- The migration preserved Analog's previous dev integration shape, but Nitro v3 changed the expectation around its Vite builder in dev mode.
+- When debugging this kind of issue, determine whether the failing call site is:
+  - invoking Nitro's builder in dev mode
+  - invoking Nitro's fetch-first dev server correctly but bridging it incorrectly
+
+Practical debugging lesson:
+
+- Check Nitro's installed runtime code and actual exported builder APIs before assuming a migration guide is sufficient.
+- If a dev bridge still depends on builder-driven reload hooks, document that explicitly and verify the required builder package is installed and supported in that code path.
+
+### Triage checklist for future regressions
+
+- Confirm whether the failure reproduces in dev only, build only, or both.
+- Compare the affected files against a known pre-migration baseline commit.
+- Identify the first middleware or bridge that "owns" the failing request.
+- Confirm whether the URL/method/headers/body are identical before and after that boundary.
+- Check whether the regression is caused by:
+  - request normalization
+  - response writing
+  - Node-to-web bridge logic
+  - internal server fetch behavior
+  - Nitro builder/runtime contract changes
+- Add a narrow regression test at the ownership boundary once the fix is identified.
+
+### Documentation rule for solved regressions
+
+Whenever a migration regression is solved:
+
+- add the root cause to this document
+- note whether it was pre-existing but exposed by the migration, or newly introduced
+- record the exact ownership boundary where the fix belongs
+- add or update a targeted regression test before treating the issue as closed
+
 ## Risk Assessment And Rollback Criteria
 
 | Risk                                       | Severity   | Mitigation                                                                                                 | Rollback / stop trigger                                                                                            |
