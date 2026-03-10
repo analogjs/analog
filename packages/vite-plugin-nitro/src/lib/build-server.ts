@@ -21,6 +21,12 @@ export async function buildServer(
     dev: false,
     preset: process.env['BUILD_PRESET'],
     ...nitroConfig,
+    // Nitro v3 alpha prefers `rolldown` when available, but its resolver can
+    // fail rebundling the generated SSR entry under `dist/.../main.server.js`
+    // with Vite 8 / Rolldown-specific "Tsconfig not found" resolve errors.
+    // Default production server builds back to Nitro's Rollup builder unless
+    // the caller explicitly opts into a different builder.
+    builder: nitroConfig?.builder ?? 'rollup',
   });
 
   if (options?.prerender?.postRenderingHooks) {
