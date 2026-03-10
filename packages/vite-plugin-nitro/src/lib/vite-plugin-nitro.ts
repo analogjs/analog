@@ -43,32 +43,30 @@ function createNitroMiddlewareHandler(handler: string): NitroEventHandler {
   };
 }
 
-function appendRollupExternal(
-  nitroConfig: NitroConfig,
-  ...entries: string[]
-): NitroConfig['rollupConfig'] {
-  const external = nitroConfig.rollupConfig?.external;
+function createRollupBeforeHook(externalEntries: string[]) {
+  return (_nitro: unknown, bundlerConfig: RollupConfig) => {
+    removeInvalidRollupCodeSplitting(_nitro, bundlerConfig);
 
-  if (!external) {
-    return {
-      ...nitroConfig.rollupConfig,
-      external: entries,
-    };
-  }
+    if (externalEntries.length === 0) {
+      return;
+    }
 
-  if (typeof external === 'function') {
-    return {
-      ...nitroConfig.rollupConfig,
-      external: (source, importer, isResolved) =>
-        external(source, importer, isResolved) || entries.includes(source),
-    };
-  }
-
-  return {
-    ...nitroConfig.rollupConfig,
-    external: Array.isArray(external)
-      ? [...external, ...entries]
-      : [external, ...entries],
+    const existing = bundlerConfig.external;
+    if (!existing) {
+      bundlerConfig.external = externalEntries;
+    } else if (typeof existing === 'function') {
+      bundlerConfig.external = (
+        source: string,
+        importer: string | undefined,
+        isResolved: boolean,
+      ) =>
+        existing(source, importer, isResolved) ||
+        externalEntries.includes(source);
+    } else if (Array.isArray(existing)) {
+      bundlerConfig.external = [...existing, ...externalEntries];
+    } else {
+      bundlerConfig.external = [existing as string, ...externalEntries];
+    }
   };
 }
 
@@ -196,6 +194,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let nitroConfig: NitroConfig;
   let environmentBuild = false;
   let hasAPIDir = false;
+  const rollupExternalEntries: string[] = [];
   const routeSitemaps: Record<
     string,
     PrerenderSitemapConfig | (() => PrerenderSitemapConfig)
@@ -286,10 +285,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           imports: {
             autoImport: false,
           },
-          // Temporary Nitro alpha workaround. Remove once Nitro no longer
-          // passes Rolldown-only output options into the server bundler path.
           hooks: {
-            'rollup:before': removeInvalidRollupCodeSplitting,
+            'rollup:before': createRollupBeforeHook(rollupExternalEntries),
           },
           rollupConfig: {
             onwarn(warning) {
@@ -489,13 +486,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               );
             }
 
+            rollupExternalEntries.push(
+              'rxjs',
+              'node-fetch-native/dist/polyfill',
+            );
+
             nitroConfig = {
               ...nitroConfig,
-              rollupConfig: appendRollupExternal(
-                nitroConfig,
-                'rxjs',
-                'node-fetch-native/dist/polyfill',
-              ),
               moduleSideEffects: ['zone.js/node', 'zone.js/fesm2015/zone-node'],
               handlers: [
                 ...(hasAPIDir

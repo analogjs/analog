@@ -17,6 +17,30 @@ function getHeaderValue(
   return Array.isArray(value) ? value[0] : value;
 }
 
+function getRequestHeader(
+  req: ServerRequest,
+  name: string,
+): string | undefined {
+  const headers = (req as { headers?: unknown }).headers;
+
+  if (!headers) {
+    return undefined;
+  }
+
+  if (
+    typeof headers === 'object' &&
+    headers !== null &&
+    'get' in headers &&
+    typeof headers.get === 'function'
+  ) {
+    return headers.get(name) ?? undefined;
+  }
+
+  return getHeaderValue(
+    (headers as Record<string, string | string[] | undefined>)[name],
+  );
+}
+
 export function provideServerContext({
   req,
   res,
@@ -44,8 +68,8 @@ export function provideServerContext({
 export function getBaseUrl(req: ServerRequest) {
   const protocol = getRequestProtocol(req);
   const host =
-    getHeaderValue(req.headers['x-forwarded-host']) ??
-    getHeaderValue(req.headers.host) ??
+    getRequestHeader(req, 'x-forwarded-host') ??
+    getRequestHeader(req, 'host') ??
     'localhost';
   const originalUrl = req.originalUrl || req.url || '/';
   const parsedUrl = new URL(
@@ -65,7 +89,7 @@ export function getRequestProtocol(
   req: ServerRequest,
   opts: { xForwardedProto?: boolean } = {},
 ) {
-  const forwardedProto = getHeaderValue(req.headers['x-forwarded-proto'])
+  const forwardedProto = getRequestHeader(req, 'x-forwarded-proto')
     ?.split(',')[0]
     ?.trim();
 
