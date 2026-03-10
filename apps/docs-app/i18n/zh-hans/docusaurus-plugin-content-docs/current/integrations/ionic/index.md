@@ -226,7 +226,6 @@ export default defineConfig(({ mode }) => {
 Ionic 框架 [尚不支持 Angular 新的客户端水合](https://github.com/ionic-team/ionic-framework/issues/28625#issuecomment-1843919548), 因为 Angular [不支持带有 web components 的 SSR](https://github.com/angular/angular/issues/52275), 并且当它们受支持时，必须对 Stencil 组件进行一些工作才能启用它。因此目前有三个选项可以解决这个问题:
 
 1. 从 `app.config.ts` 依赖提供者里移除 `provideClientHydration()`。
-
    - 下面的代码移除 Angular 新的客户端水合机制并改为上一个版本，新的版本会导致客户端重渲染时的闪屏现象。
 
    ```ts
@@ -248,7 +247,6 @@ Ionic 框架 [尚不支持 Angular 新的客户端水合](https://github.com/ion
    ```
 
 2. 在 `ion-app` 标签上添加 `ngSkipHydration` 属性。
-
    - 这将在 `ion-app` 元素及其子元素上禁用客户端水合机制，但将继续对其他元素使用客户端水合。这还会导致 Ionic 组件的页面闪，而且对其他元素/组件没有太大帮助，因为对于 Ionic 应用，您的所有 Ionic 组件都存在于 `ion-app` 标签内。
 
      ```ts
@@ -269,7 +267,6 @@ Ionic 框架 [尚不支持 Angular 新的客户端水合](https://github.com/ion
      ```
 
 3. 完全禁用 SSR
-
    - 在 `vite.config.ts` 里禁用 SSR。这将 **消除闪烁** 但是你将失去 SSR 带来的任何好处。
 
      ```ts
