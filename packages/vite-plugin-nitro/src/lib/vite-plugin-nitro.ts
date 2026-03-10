@@ -117,6 +117,15 @@ function removeInvalidRollupCodeSplitting(
   if ('codeSplitting' in output) {
     delete (output as Record<string, unknown>)['codeSplitting'];
   }
+
+  // Nitro's default server bundler config currently enables manual chunking for
+  // node_modules. Under Nitro v3 alpha + Rollup 4.59 this can crash during the
+  // prerender rebundle with "Cannot read properties of undefined (reading
+  // 'included')" while generating chunks. A single server bundle is acceptable
+  // here, so strip manualChunks until the upstream bug is fixed.
+  if ('manualChunks' in output) {
+    delete (output as Record<string, unknown>)['manualChunks'];
+  }
 }
 
 function resolveClientOutputPath(
