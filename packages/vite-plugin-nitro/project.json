@@ -47,7 +47,7 @@
       "outputs": ["{workspaceRoot}/coverage/packages/vite-plugin-nitro"],
       "options": {
         "passWithNoTests": true,
-        "reportsDirectory": "../../coverage/packages/vite-plugin-nitro"
+        "reportsDirectory": "{projectRoot}/../../coverage/packages/vite-plugin-nitro"
       }
     }
   }

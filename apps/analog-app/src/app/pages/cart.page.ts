@@ -6,7 +6,7 @@ import { RouterLinkWithHref } from '@angular/router';
 import { CartService } from '../cart.service';
 
 @Component({
-  selector: 'app-cart',
+  selector: 'analogjs-cart',
   imports: [RouterLinkWithHref, CurrencyPipe, ReactiveFormsModule],
   template: `
     <h3>Cart</h3>

@@ -1,3 +1,5 @@
 {{ title }}
 <button mat-button color="primary" (click)="render = true">Render card2</button>
-<mat-card *ngIf="render"> Some card </mat-card>
+@if (render) {
+  <mat-card> Some card </mat-card>
+}

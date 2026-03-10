@@ -1,4 +1,4 @@
-import { PageServerLoad } from '@analogjs/router';
+import type { PageServerLoad } from '@analogjs/router';
 
 export const load = async ({ params, fetch }: PageServerLoad) => {
   return {
