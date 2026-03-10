@@ -1,4 +1,4 @@
-import { ContentRenderer, MarkdownComponent } from '@analogjs/content';
+import { MarkdownComponent } from '@analogjs/content';
 import { contentFileResource } from '@analogjs/content/resources';
 import { RouteMeta } from '@analogjs/router';
 import { Component, computed, inject } from '@angular/core';
@@ -48,9 +48,5 @@ export default class ArchivedPostComponent {
   readonly postResource = contentFileResource<ArchivedPostAttributes>(
     this.params,
   );
-  readonly renderer = inject(ContentRenderer);
-  readonly toc = computed(() => {
-    const post = this.postResource.value();
-    return post && this.renderer.getContentHeadings();
-  });
+  readonly toc = computed(() => this.postResource.value()?.toc);
 }

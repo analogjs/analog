@@ -51,7 +51,12 @@ export async function buildServer(
   }
 
   if (routeSourceFiles && Object.keys(routeSourceFiles).length > 0) {
-    const publicDir = nitroConfig?.output?.publicDir!;
+    const publicDir = nitroConfig?.output?.publicDir;
+    if (!publicDir) {
+      throw new Error(
+        'Nitro public output directory is required to write route source files.',
+      );
+    }
 
     for (const [route, content] of Object.entries(routeSourceFiles)) {
       const outputPath = join(publicDir, `${route}.md`);

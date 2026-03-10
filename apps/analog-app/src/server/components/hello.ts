@@ -1,9 +1,5 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  OnInit,
-} from '@angular/core';
+import type { OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
 
 import {
   injectStaticOutputs,
@@ -11,7 +7,7 @@ import {
 } from '@analogjs/router/server';
 
 @Component({
-  selector: 'app-hello',
+  selector: 'analogjs-hello',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h3>Hello From the Server</h3>

@@ -1,7 +1,7 @@
-import { ContentRenderer, MarkdownComponent } from '@analogjs/content';
+import { MarkdownComponent } from '@analogjs/content';
 import { contentFileResource } from '@analogjs/content/resources';
 import { RouteMeta } from '@analogjs/router';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed } from '@angular/core';
 
 import { PostAttributes } from './models';
 import { postMetaResolver, postTitleResolver } from './resolvers';
@@ -38,10 +38,6 @@ export const routeMeta: RouteMeta = {
   `,
 })
 export default class BlogPostComponent {
-  readonly renderer = inject(ContentRenderer);
   readonly postResource = contentFileResource<PostAttributes>();
-  readonly toc = computed(() => {
-    const post = this.postResource.value();
-    return post && this.renderer.getContentHeadings();
-  });
+  readonly toc = computed(() => this.postResource.value()?.toc);
 }

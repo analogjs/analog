@@ -1,4 +1,4 @@
-import { PageServerLoad } from '@analogjs/router';
+import type { PageServerLoad } from '@analogjs/router';
 
 export function load({ params }: PageServerLoad) {
   console.log('params', params);

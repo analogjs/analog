@@ -35,8 +35,8 @@
     "message": "Despliegue",
     "description": "The label for category Deployment in sidebar docsSidebar"
   },
-  "sidebar.docsSidebar.category.Testing": {
-    "message": "Pruebas",
+  "sidebar.docsSidebar.category.Testing w/Vitest": {
+    "message": "Pruebas con Vitest",
     "description": "The label for category Testing in sidebar docsSidebar"
   },
   "sidebar.docsSidebar.category.Updating": {
@@ -67,8 +67,8 @@
     "message": "Proveedores",
     "description": "The label for the doc item Providers in sidebar docsSidebar, linking to the doc features/deployment/providers"
   },
-  "sidebar.docsSidebar.doc.Adding Vitest": {
-    "message": "Incorporando Vitest",
+  "sidebar.docsSidebar.doc.Setting Up Vitest": {
+    "message": "Configurando Vitest",
     "description": "The label for the doc item Adding Vitest in sidebar docsSidebar, linking to the doc features/testing/vitest"
   },
   "sidebar.docsSidebar.doc.Nx": {

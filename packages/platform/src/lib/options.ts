@@ -47,7 +47,11 @@ export interface Options {
   static?: boolean;
   prerender?: PrerenderOptions;
   entryServer?: string;
-  vite?: PluginOptions;
+  /**
+   * Pass configuration options to the internal `@analogjs/vite-plugin-angular`
+   * plugin. Set to false to disable the internal vite plugin.
+   */
+  vite?: PluginOptions | false;
   nitro?: NitroConfig;
   apiPrefix?: string;
   jit?: boolean;

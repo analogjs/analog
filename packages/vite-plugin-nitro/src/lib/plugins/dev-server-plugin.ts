@@ -94,7 +94,7 @@ export function devServerPlugin(options: ServerOptions): Plugin {
             res.setHeader('Content-Type', 'text/html');
             res.end(result);
           } catch (e) {
-            viteServer && viteServer.ssrFixStacktrace(e as Error);
+            viteServer.ssrFixStacktrace(e as Error);
             res.statusCode = 500;
             res.end(`
               <!DOCTYPE html>
@@ -132,8 +132,10 @@ function remove_html_middlewares(server: ViteDevServer['middlewares']) {
     'viteSpaFallbackMiddleware',
   ];
   for (let i = server.stack.length - 1; i > 0; i--) {
-    // @ts-ignore
-    if (html_middlewares.includes(server.stack[i].handle.name)) {
+    const handler = server.stack[i]?.handle;
+    const handlerName =
+      typeof handler === 'function' ? handler.name : undefined;
+    if (handlerName && html_middlewares.includes(handlerName)) {
       server.stack.splice(i, 1);
     }
   }

@@ -38,6 +38,7 @@ const sidebars = {
               type: 'doc',
               id: 'features/routing/overview',
               label: 'Overview',
+              key: 'routing-overview',
             },
             {
               type: 'doc',
@@ -64,6 +65,7 @@ const sidebars = {
               type: 'doc',
               id: 'features/api/overview',
               label: 'Overview',
+              key: 'api-overview',
             },
             {
               type: 'doc',
@@ -85,6 +87,7 @@ const sidebars = {
               type: 'doc',
               id: 'features/data-fetching/overview',
               label: 'Overview',
+              key: 'data-fetching-overview',
             },
             {
               type: 'doc',
@@ -101,6 +104,7 @@ const sidebars = {
               type: 'doc',
               id: 'features/server/static-site-generation',
               label: 'Overview',
+              key: 'static-site-generation-overview',
             },
           ],
         },
@@ -112,6 +116,7 @@ const sidebars = {
               type: 'doc',
               id: 'features/server/server-side-rendering',
               label: 'Overview',
+              key: 'server-side-rendering-overview',
             },
           ],
         },
@@ -128,6 +133,7 @@ const sidebars = {
               type: 'doc',
               id: 'features/generation/code-generation',
               label: 'Overview',
+              key: 'code-generation-overview',
             },
           ],
         },
@@ -141,6 +147,7 @@ const sidebars = {
           type: 'doc',
           id: 'features/deployment/overview',
           label: 'Overview',
+          key: 'deployment-overview',
         },
         {
           type: 'doc',
@@ -157,6 +164,7 @@ const sidebars = {
           type: 'doc',
           id: 'features/testing/overview',
           label: 'Overview',
+          key: 'testing-overview',
         },
         {
           type: 'doc',
@@ -173,6 +181,7 @@ const sidebars = {
           type: 'doc',
           id: 'features/updating/overview',
           label: 'Overview',
+          key: 'updating-overview',
         },
       ],
     },

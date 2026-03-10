@@ -1,6 +1,7 @@
 import { computed, inject, resource, Signal } from '@angular/core';
 import {
   ContentFile,
+  ContentRenderer,
   parseRawContentFile,
   injectContentFileLoader,
 } from '@analogjs/content';
@@ -29,8 +30,9 @@ async function getContentFile<
   const normalizedFiles: Record<string, () => Promise<string>> = {};
   for (const [key, resolver] of Object.entries(contentFiles)) {
     const normalizedKey = key
-      // replace any prefix up to /content with /src/content
-      .replace(/^(?:.*)\/content/, '/src/content')
+      // replace any prefix up to the content directory with /src/content
+      // use a non-greedy match so nested paths containing "/content" are preserved
+      .replace(/^(?:.*?)\/content(?=\/)/, '/src/content')
       // normalize duplicate slashes
       .replace(/\/{2,}/g, '/');
     normalizedFiles[normalizedKey] = resolver;
@@ -94,6 +96,7 @@ export function contentFileResource<
   Attributes extends Record<string, any> = Record<string, any>,
 >(params?: ContentFileParams, fallback = 'No Content Found') {
   const loaderPromise = injectContentFileLoader();
+  const contentRenderer = inject(ContentRenderer);
   const contentFilesMap = toSignal(from(loaderPromise()));
   const input =
     params ||
@@ -111,7 +114,24 @@ export function contentFileResource<
 
       if (typeof param === 'string') {
         if (param) {
-          return getContentFile<Attributes>(files!, param, fallback);
+          const file = await getContentFile<Attributes>(
+            files!,
+            param,
+            fallback,
+          );
+          if (typeof file.content === 'string') {
+            const rendered = (await contentRenderer.render(file.content)) as {
+              toc?: Array<{ id: string; level: number; text: string }>;
+            };
+            return {
+              ...file,
+              toc: rendered.toc ?? [],
+            };
+          }
+          return {
+            ...file,
+            toc: [],
+          };
         }
 
         return {
@@ -119,13 +139,27 @@ export function contentFileResource<
           slug: '',
           attributes: {},
           content: fallback,
+          toc: [],
         } as ContentFile<Attributes | Record<string, never>>;
       } else {
-        return getContentFile<Attributes>(
+        const file = await getContentFile<Attributes>(
           files!,
           param.customFilename,
           fallback,
         );
+        if (typeof file.content === 'string') {
+          const rendered = (await contentRenderer.render(file.content)) as {
+            toc?: Array<{ id: string; level: number; text: string }>;
+          };
+          return {
+            ...file,
+            toc: rendered.toc ?? [],
+          };
+        }
+        return {
+          ...file,
+          toc: [],
+        };
       }
     },
   });

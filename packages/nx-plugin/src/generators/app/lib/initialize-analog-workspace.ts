@@ -114,7 +114,6 @@ const initWithNrwlNamespace = async (
       '@nrwl/angular/generators'
     )
   ).angularInitGenerator(tree, {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     skipInstall: true,
     skipFormat: skipFormat,
   });

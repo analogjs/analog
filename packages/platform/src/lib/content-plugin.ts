@@ -129,14 +129,12 @@ export function contentPlugin(
 
         if (!markedHighlighter) {
           if (highlighter === 'shiki') {
-            const { getShikiHighlighter } = await import(
-              './content/shiki/index.js'
-            );
+            const { getShikiHighlighter } =
+              await import('./content/shiki/index.js');
             markedHighlighter = getShikiHighlighter(shikiOptions);
           } else {
-            const { getPrismHighlighter } = await import(
-              './content/prism/index.js'
-            );
+            const { getPrismHighlighter } =
+              await import('./content/prism/index.js');
             markedHighlighter = getPrismHighlighter();
 
             const langs = [
