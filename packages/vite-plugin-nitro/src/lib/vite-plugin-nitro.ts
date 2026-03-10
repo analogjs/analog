@@ -242,7 +242,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         );
 
         nitroConfig = {
-          rootDir,
+          rootDir: normalizePath(rootDir),
           preset: buildPreset,
           compatibilityDate: '2024-11-19',
           logLevel: nitroOptions?.logLevel || 0,
@@ -345,7 +345,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         }
 
         if (isBuild) {
-          nitroConfig.publicAssets = [{ dir: clientOutputPath, maxAge: 0 }];
+          nitroConfig.publicAssets = [
+            { dir: normalizePath(clientOutputPath), maxAge: 0 },
+          ];
 
           // In Nitro v3, renderer.entry is resolved via resolveModulePath()
           // during options normalization, which requires a real filesystem path.

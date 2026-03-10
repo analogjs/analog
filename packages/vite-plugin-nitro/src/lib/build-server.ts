@@ -46,7 +46,10 @@ export async function buildServer(
 
     indexFileExts.forEach((fileExt) => {
       // Remove the root index.html(.br|.gz) files
-      const indexFilePath = `${nitroConfig?.output?.publicDir}/index.html${fileExt ? `${fileExt}` : ''}`;
+      const indexFilePath = join(
+        nitroConfig?.output?.publicDir ?? '',
+        `index.html${fileExt}`,
+      );
 
       if (existsSync(indexFilePath)) {
         unlinkSync(indexFilePath);
