@@ -614,7 +614,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           } else {
             viteServer.middlewares.use(
               apiPrefix,
-              (req: IncomingMessage, res: ServerResponse, next: Function) => {
+              (
+                req: IncomingMessage,
+                res: ServerResponse,
+                next: (error?: unknown) => void,
+              ) => {
                 void apiHandler(req, res).catch((error) => next(error));
               },
             );
