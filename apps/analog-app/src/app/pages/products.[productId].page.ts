@@ -1,14 +1,15 @@
 import { injectActivatedRoute } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import type { OnInit } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { catchError, of } from 'rxjs';
 
 import { CartService } from '../cart.service';
-import { Product } from '../products';
+import type { Product } from '../products';
 
 @Component({
-  selector: 'app-product-details',
+  selector: 'analogjs-product-details',
   imports: [CurrencyPipe],
   template: `
     <h2>Product Details</h2>

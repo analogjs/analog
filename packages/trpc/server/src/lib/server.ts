@@ -175,10 +175,11 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
 
     res.statusCode = status;
 
-    headers &&
+    if (headers) {
       Object.keys(headers).forEach((key) => {
         res.setHeader(key, headers[key]!);
       });
+    }
 
     return body;
   });

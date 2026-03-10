@@ -36,6 +36,25 @@ jobs:
       - name: Validate
         run: pnpm run prettier:check
 
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .node-version
+      - run: npm install --global corepack@0.31.0
+      - run: corepack enable
+      - run: pnpm --version
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - name: Install
+        run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Lint
+        run: pnpm exec nx run-many --target lint --all --exclude=content,platform,router
+
   build:
     runs-on: ubuntu-latest
     steps:

@@ -21,7 +21,7 @@ export function pageEndpointsPlugin() {
 
         let fileExports: string[] = [];
 
-        for (let key in compiled.metafile?.outputs) {
+        for (const key in compiled.metafile?.outputs) {
           if (compiled.metafile?.outputs[key].entryPoint) {
             fileExports = compiled.metafile?.outputs[key].exports;
           }
@@ -84,7 +84,7 @@ export function pageEndpointsPlugin() {
                     event
                   });
                 } catch(e) {
-                  console.error(\` An error occurred: \$\{e\}\`)
+                  console.error(\` An error occurred: \${e}\`)
                   throw e;
                 }
               } else {
@@ -97,7 +97,7 @@ export function pageEndpointsPlugin() {
                     event
                   });
                 } catch(e) {
-                  console.error(\` An error occurred: \$\{e\}\`)
+                  console.error(\` An error occurred: \${e}\`)
                   throw e;
                 }
               }

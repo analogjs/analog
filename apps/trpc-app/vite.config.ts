@@ -2,7 +2,7 @@
 
 import analog from '@analogjs/platform';
 import { visualizer } from 'rollup-plugin-visualizer';
-import { defineConfig, Plugin } from 'vite';
+import { defineConfig, PluginOption } from 'vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 
 // https://vitejs.dev/config/
@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => {
         },
       }),
       nxViteTsPaths(),
-      visualizer() as Plugin,
+      visualizer() as PluginOption,
     ],
     test: {
       reporters: ['default'],

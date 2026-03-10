@@ -3,7 +3,7 @@ import {
   withFetch,
   withInterceptors,
 } from '@angular/common/http';
-import { ApplicationConfig } from '@angular/core';
+import type { ApplicationConfig } from '@angular/core';
 import {
   provideClientHydration,
   withEventReplay,

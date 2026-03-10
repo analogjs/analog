@@ -161,7 +161,7 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-## Copiando arhicos estáticos
+## Copiando archivos estáticos
 
 Los archivos estáticos en la carpeta `public` son copiados al directorio de salida del build por defecto. Si deseas copiar archivos adicionales fuera de ese directorio, utiliza el plugin de Vite `nxCopyAssetsPlugin`.
 
@@ -178,5 +178,26 @@ import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 export default defineConfig(({ mode }) => ({
   // ...
   plugins: [analog(), nxCopyAssetsPlugin(['*.md'])],
+}));
+```
+
+## Habilitando HMR
+
+Angular soporta HMR/Live reload donde en la mayoría de los casos los componentes pueden actualizarse sin recargar la página. Para habilitarlo en Analog, utiliza la opción `liveReload: true`.
+
+```ts
+/// <reference types="vitest" />
+
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  // .. otra configuración
+  plugins: [
+    analog({
+      liveReload: true,
+    }),
+  ],
 }));
 ```

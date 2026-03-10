@@ -162,7 +162,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let nitroConfig: NitroConfig;
   let environmentBuild = false;
   let hasAPIDir = false;
-  let routeSitemaps: Record<
+  const routeSitemaps: Record<
     string,
     PrerenderSitemapConfig | (() => PrerenderSitemapConfig)
   > = {};
@@ -548,13 +548,20 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 nitroConfig.prerender?.routes?.length &&
                 options?.prerender?.sitemap
               ) {
+                const publicDir = nitroConfig.output?.publicDir;
+                if (!publicDir) {
+                  throw new Error(
+                    'Nitro public output directory is required to build the sitemap.',
+                  );
+                }
+
                 console.log('Building Sitemap...');
                 // sitemap needs to be built after all directories are built
                 await buildSitemap(
                   config,
                   options.prerender.sitemap,
                   nitroConfig.prerender.routes,
-                  nitroConfig.output?.publicDir!,
+                  publicDir,
                   routeSitemaps,
                 );
               }
@@ -591,7 +598,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
           if (hasAPIDir) {
             viteServer.middlewares.use(
-              (req: IncomingMessage, res: ServerResponse, next: Function) => {
+              (
+                req: IncomingMessage,
+                res: ServerResponse,
+                next: (error?: unknown) => void,
+              ) => {
                 if (req.url?.startsWith(`${prefix}${apiPrefix}`)) {
                   void apiHandler(req, res).catch((error) => next(error));
                   return;

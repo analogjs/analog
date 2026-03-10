@@ -2,5 +2,21 @@
   "name": "content-plugin",
   "version": "0.0.1",
   "main": "./src/index.js",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "ts-morph": "^27.0.0",
+    "tslib": "^2.8.1"
+  },
+  "peerDependencies": {
+    "@nx/devkit": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22",
+    "vite": "^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-beta.0"
+  },
+  "peerDependenciesMeta": {
+    "@nx/devkit": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    }
+  }
 }

@@ -48,31 +48,26 @@ Known residual noise after completion:
 These rules are mandatory for every workstream in this migration.
 
 1. **Check real package signatures before changing code.**
-
    - Do not rely on memory, migration-guide summaries, or old examples alone.
    - Confirm actual exports, callable signatures, and type locations from the installed `nitro` and `h3` packages before codemodding a pattern across the repo.
    - Record the result in the decision log when a signature check changes the migration strategy.
 
 2. **Prefer the new idiomatic API when it is actually supported.**
-
    - For h3 v2, prefer `defineHandler`, `event.url`, `event.path`, `event.req`, `event.res`, and explicit returned responses over compat-era aliases in new or migrated examples.
    - For Nitro v3, prefer fetch-first request/response flow and standard web `Request` / `Response` handling where the integration surface supports it.
    - Do not keep compat helpers in examples or templates just because they still exist, unless backward-compatibility for a public API explicitly requires it.
 
 3. **Do not invent shims until the native adapter path has been ruled out.**
-
    - Before introducing custom bridge code, verify whether Nitro or h3 already provides the needed adapter or handler shape.
    - Prefer built-in adapters and standard primitives over custom event reconstruction, custom stream pumping, or ad hoc response translation.
    - If a custom bridge is still required, document why the native path was insufficient.
 
 4. **Treat samples and inline documentation as part of the migration, not follow-up work.**
-
    - Whenever a migration decision changes how code should be written, update the inline comments, package docs, app samples, and migration notes in the same pass.
    - Do not modernize core code while leaving docs or examples teaching a compat-only pattern.
    - Do not remove useful inline explanation from tricky migration code paths unless it is replaced with a shorter but equally clear explanation.
 
 5. **Validate behavior, not just types.**
-
    - A passing import or type check is not enough.
    - Confirm runtime behavior for redirects, cookies, headers, body parsing, middleware fallthrough, SSR, prerendering, and preset output on representative app paths.
    - If a signature is valid but the behavior is non-idiomatic or lossy, keep iterating.
@@ -1480,7 +1475,6 @@ The purpose is to answer four questions quickly:
 ### Recommended debugging workflow
 
 1. Reproduce on one representative app path first.
-
    - Prefer `apps/analog-app` for SSR/dev regressions.
    - Capture the exact request URL, method, and whether the failure happens in:
      - Vite dev middleware
@@ -1489,13 +1483,11 @@ The purpose is to answer four questions quickly:
      - built Nitro server output
 
 2. Compare against a known pre-migration baseline.
-
    - Use `git diff --name-status <baseline>..HEAD` to see whether the surface changed at all.
    - Use `git log --oneline <baseline>..HEAD -- <relevant-paths>` to identify the migration commit window.
    - For this migration, comparing `HEAD` against `1583826d2c4dd47eaeda939f835e252babe39480` was useful for confirming that the relevant regression window clustered around `c643bc05` (`feat: migrate to Nitro v3 and h3 v2`).
 
 3. Trace the request through the exact middleware boundary where ownership changes.
-
    - In this repo, dev HTML requests are primarily owned by:
      - `packages/vite-plugin-nitro/src/lib/plugins/dev-server-plugin.ts`
    - Dev API requests are primarily owned by:
@@ -1505,13 +1497,11 @@ The purpose is to answer four questions quickly:
      - `packages/vite-plugin-nitro/src/lib/utils/renderers.ts`
 
 4. Verify whether the regression is caused by literal URL/path handoff.
-
    - Do not assume Vite, Nitro, and the app router normalize URLs the same way.
    - Check whether paths like `/`, `/index.html`, `/404.html`, `/api/...`, and catch-all routes are being passed through unchanged.
    - If the dev middleware removes Vite's stock HTML handlers, confirm whether it also needs to normalize document requests before handing them to SSR.
 
 5. Separate bridge-level failures from route-level failures.
-
    - Bridge-level failures usually show up as:
      - response-writing errors
      - missing builder/runtime packages
