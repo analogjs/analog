@@ -570,6 +570,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         if (isServe && !isTest) {
           const nitro = await createNitro({
             dev: true,
+            // Nitro's Vite builder now rejects `build()` in dev mode, but Analog's
+            // dev integration still relies on the builder-driven reload hooks.
+            // Force the server worker onto Rollup for this dev-only path.
+            builder: 'rollup',
             ...nitroConfig,
           });
           const server = createDevServer(nitro);
