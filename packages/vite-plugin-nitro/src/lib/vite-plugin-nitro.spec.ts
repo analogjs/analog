@@ -56,7 +56,7 @@ describe('nitro', () => {
     expect(ssrBuild).toHaveProperty(activeKey);
     expect(ssrBuild[activeKey]).toEqual(
       expect.objectContaining({
-        input: expect.stringContaining('src/main.server.ts'),
+        input: expect.stringMatching(/src[\\/]+main\.server\.ts$/),
       }),
     );
     expect(ssrBuild).not.toHaveProperty(inactiveKey);
@@ -153,6 +153,47 @@ describe('nitro', () => {
       );
       expect(nitroConfig.virtual?.['#ANALOG_SSR_RENDERER']).toContain(
         "import renderer from '#analog/ssr';",
+      );
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('should use the workspace root for Nitro while scanning the app server dir', async () => {
+    const { buildServerImportSpy } = await mockBuildFunctions();
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
+    const appRoot = join(workspaceRoot, 'apps', 'demo');
+    const serverRoutesDir = join(appRoot, 'src', 'server', 'routes');
+    const ssrBuildDir = resolve(workspaceRoot, 'dist', 'apps', 'demo', 'ssr');
+    const builtSsrEntry = resolve(ssrBuildDir, 'main.server.js');
+
+    mkdirSync(serverRoutesDir, { recursive: true });
+    mkdirSync(ssrBuildDir, { recursive: true });
+    writeFileSync(builtSsrEntry, 'export default async function renderer() {}');
+
+    try {
+      const plugin = nitro({
+        ssr: true,
+        workspaceRoot,
+        ssrBuildDir,
+      });
+      await (plugin[1].config as any)(
+        {
+          root: appRoot,
+        },
+        { command: 'build', mode: 'production' },
+      );
+
+      await (plugin[1].closeBundle as any)();
+
+      const nitroConfig = buildServerImportSpy.mock.calls[0][1];
+
+      expect(nitroConfig.rootDir).toBe(vite.normalizePath(workspaceRoot));
+      expect(nitroConfig.serverDir).toBe(
+        vite.normalizePath(join(appRoot, 'src', 'server')),
+      );
+      expect(nitroConfig.scanDirs).toContain(
+        vite.normalizePath(join(appRoot, 'src', 'server')),
       );
     } finally {
       rmSync(workspaceRoot, { recursive: true, force: true });

@@ -168,6 +168,14 @@ function resolveBuiltSsrEntryPath(ssrOutDir: string) {
   return ssrEntryPath;
 }
 
+function resolveWorkspacePath(workspaceRoot: string, path: string) {
+  if (!path) {
+    return workspaceRoot;
+  }
+
+  return resolve(workspaceRoot, path.startsWith('/') ? `.${path}` : path);
+}
+
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
   const sourceRoot = options?.sourceRoot ?? 'src';
@@ -219,6 +227,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             `${sourceRoot}/server/routes/${options?.apiPrefix || 'api'}`,
           ),
         );
+        const nitroRootDir = normalizePath(workspaceRoot);
+        const nitroServerDir = normalizePath(
+          resolve(workspaceRoot, rootDir, `${sourceRoot}/server`),
+        );
         const buildPreset =
           process.env['BUILD_PRESET'] ??
           (nitroOptions?.preset as string | undefined) ??
@@ -242,15 +254,15 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         );
 
         nitroConfig = {
-          rootDir,
+          rootDir: nitroRootDir,
           preset: buildPreset,
           compatibilityDate: '2024-11-19',
           logLevel: nitroOptions?.logLevel || 0,
-          serverDir: normalizePath(`${sourceRoot}/server`),
+          serverDir: nitroServerDir,
           scanDirs: [
-            normalizePath(`${rootDir}/${sourceRoot}/server`),
+            nitroServerDir,
             ...(options?.additionalAPIDirs || []).map((dir) =>
-              normalizePath(`${workspaceRoot}${dir}`),
+              normalizePath(resolveWorkspacePath(workspaceRoot, dir)),
             ),
           ],
           output: {
