@@ -1,4 +1,4 @@
-import type { SatoriOptions } from 'satori/wasm';
+import type { SatoriOptions } from 'satori';
 
 export interface ImageResponseOptions {
   width?: number;

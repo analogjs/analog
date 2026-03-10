@@ -24,8 +24,10 @@ type OmittedRouteProps =
 
 export type RouteConfig = Omit<Route, OmittedRouteProps>;
 
-export interface DefaultRouteMeta
-  extends Omit<Route, OmittedRouteProps | keyof RedirectRouteMeta> {
+export interface DefaultRouteMeta extends Omit<
+  Route,
+  OmittedRouteProps | keyof RedirectRouteMeta
+> {
   canActivate?: CanActivateFn[] | DeprecatedGuard[];
   canActivateChild?: CanActivateChildFn[];
   canDeactivate?: CanDeactivateFn<unknown>[];
