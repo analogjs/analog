@@ -11,7 +11,14 @@ describe('renderers virtual modules', () => {
     expect(moduleSource).toContain(
       "event.res.headers.set('content-type', 'text/html; charset=utf-8');",
     );
-    expect(moduleSource).toContain('const req = event.node?.req ?? {');
+    expect(moduleSource).toContain(
+      'const requestPath = normalizeHtmlRequestUrl(event.path);',
+    );
+    expect(moduleSource).toContain('const req = event.node?.req');
+    expect(moduleSource).toContain(
+      'const html = await renderer(requestPath, template, { req, res, fetch });',
+    );
+    expect(moduleSource).toContain("import renderer from '#analog/ssr';");
   });
 
   it('emits a client renderer that serves HTML responses', () => {

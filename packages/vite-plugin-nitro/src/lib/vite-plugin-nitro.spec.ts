@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as vite from 'vite';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+import { join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 
 import { PrerenderContentFile } from './options';
 import {
@@ -60,32 +64,99 @@ describe('nitro', () => {
 
   it('should strip Rolldown-only codeSplitting from Nitro rollup builds', async () => {
     const { buildServerImportSpy } = await mockBuildFunctions();
-    const plugin = nitro({});
-    const result = await (plugin[1].config as any)(
-      {},
-      { command: 'build', mode: 'production' },
-    );
-    await result.builder.buildApp({
-      build: vi.fn().mockResolvedValue(undefined),
-      environments: {
-        client: {},
-        ssr: {},
-      },
-    });
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
 
-    const nitroConfig = buildServerImportSpy.mock.calls[0][1];
-    const bundlerConfig = {
-      output: {
-        codeSplitting: { groups: [{ test: /node_modules/, name: 'vendor' }] },
+    try {
+      const ssrBuildDir = resolve(workspaceRoot, 'dist', 'ssr');
+      const builtSsrEntry = resolve(ssrBuildDir, 'main.server.js');
+      mkdirSync(ssrBuildDir, { recursive: true });
+      writeFileSync(
+        builtSsrEntry,
+        'export default async function renderer() {}',
+      );
+
+      const plugin = nitro({
+        workspaceRoot,
+        ssrBuildDir,
+      });
+      const result = await (plugin[1].config as any)(
+        {},
+        { command: 'build', mode: 'production' },
+      );
+      await result.builder.buildApp({
+        build: vi.fn().mockResolvedValue(undefined),
+        environments: {
+          client: {},
+          ssr: {},
+        },
+      });
+
+      const nitroConfig = buildServerImportSpy.mock.calls[0][1];
+      const bundlerConfig = {
+        output: {
+          codeSplitting: { groups: [{ test: /node_modules/, name: 'vendor' }] },
+          entryFileNames: 'index.mjs',
+        },
+      };
+
+      await nitroConfig.hooks['rollup:before']({}, bundlerConfig);
+
+      expect(bundlerConfig.output).toEqual({
         entryFileNames: 'index.mjs',
-      },
-    };
+      });
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
 
-    await nitroConfig.hooks['rollup:before']({}, bundlerConfig);
+  it('should alias the built SSR entry for Nitro server builds', async () => {
+    const { buildServerImportSpy } = await mockBuildFunctions();
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
 
-    expect(bundlerConfig.output).toEqual({
-      entryFileNames: 'index.mjs',
-    });
+    try {
+      const ssrBuildDir = resolve(workspaceRoot, 'dist', 'demo', 'ssr');
+      const builtSsrEntry = resolve(ssrBuildDir, 'main.server.js');
+      mkdirSync(ssrBuildDir, { recursive: true });
+      writeFileSync(
+        builtSsrEntry,
+        'export default async function renderer() {}',
+      );
+
+      const plugin = nitro({
+        ssr: true,
+        workspaceRoot,
+        ssrBuildDir,
+      });
+      const result = await (plugin[1].config as any)(
+        {},
+        { command: 'build', mode: 'production' },
+      );
+
+      await result.builder.buildApp({
+        build: vi.fn().mockResolvedValue(undefined),
+        environments: {
+          client: {},
+          ssr: {},
+        },
+      });
+
+      const nitroConfig = buildServerImportSpy.mock.calls[0][1];
+      const expectedAlias =
+        process.platform === 'win32'
+          ? pathToFileURL(builtSsrEntry).href
+          : vite.normalizePath(builtSsrEntry);
+
+      expect(nitroConfig.alias).toEqual(
+        expect.objectContaining({
+          '#analog/ssr': expectedAlias,
+        }),
+      );
+      expect(nitroConfig.virtual?.['#ANALOG_SSR_RENDERER']).toContain(
+        "import renderer from '#analog/ssr';",
+      );
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
   });
 
   describe.skip('when prerendering is configured...', () => {

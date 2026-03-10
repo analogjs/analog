@@ -33,6 +33,7 @@ import {
 } from './utils/renderers.js';
 
 let clientOutputPath = '';
+let rendererIndexEntry = '';
 
 function createNitroMiddlewareHandler(handler: string): NitroEventHandler {
   return {
@@ -137,12 +138,34 @@ function resolveClientOutputPath(
   return resolve(workspaceRoot, 'dist', rootDir, 'client');
 }
 
-function toNitroSsrAliasEntry(ssrEntryPath: string) {
+function toNitroSsrEntrypointSpecifier(ssrEntryPath: string) {
   // Nitro rebundles the generated SSR entry. On Windows, a file URL preserves
   // the importer location so relative "./assets/*" imports resolve correctly.
   return process.platform === 'win32'
     ? pathToFileURL(ssrEntryPath).href
     : normalizePath(ssrEntryPath);
+}
+
+function resolveBuiltSsrEntryPath(ssrOutDir: string) {
+  const candidatePaths = [
+    resolve(ssrOutDir, 'main.server.mjs'),
+    resolve(ssrOutDir, 'main.server.js'),
+    resolve(ssrOutDir, 'main.server'),
+  ];
+
+  const ssrEntryPath = candidatePaths.find((candidatePath) =>
+    existsSync(candidatePath),
+  );
+
+  if (!ssrEntryPath) {
+    throw new Error(
+      `Unable to locate the built SSR entry in "${ssrOutDir}". Expected one of: ${candidatePaths.join(
+        ', ',
+      )}`,
+    );
+  }
+
+  return ssrEntryPath;
 }
 
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
@@ -214,7 +237,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           config.build?.outDir,
           ssrBuild,
         );
-        const indexEntry = normalizePath(
+        rendererIndexEntry = normalizePath(
           resolve(resolvedClientOutputPath, 'index.html'),
         );
 
@@ -286,8 +309,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   },
                 },
           virtual: {
-            '#ANALOG_SSR_RENDERER': ssrRenderer(indexEntry),
-            '#ANALOG_CLIENT_RENDERER': clientRenderer(indexEntry),
+            '#ANALOG_SSR_RENDERER': ssrRenderer(rendererIndexEntry),
+            '#ANALOG_CLIENT_RENDERER': clientRenderer(rendererIndexEntry),
             ...(hasAPIDir ? {} : { '#ANALOG_API_MIDDLEWARE': apiMiddleware }),
           },
         };
@@ -526,23 +549,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               const ssrOutDir =
                 options?.ssrBuildDir ||
                 resolve(workspaceRoot, 'dist', rootDir, `ssr`);
-
-              // Resolve the SSR entry path, checking for .mjs (Vite v8+
-              // default ESM extension), then .js, then extensionless.
-              let ssrEntryPath = resolve(ssrOutDir, 'main.server.mjs');
-              if (!existsSync(ssrEntryPath)) {
-                ssrEntryPath = resolve(ssrOutDir, 'main.server.js');
+              if (options?.ssr || nitroConfig.prerender?.routes?.length) {
+                const ssrEntryPath = resolveBuiltSsrEntryPath(ssrOutDir);
+                const ssrEntry = toNitroSsrEntrypointSpecifier(ssrEntryPath);
+                nitroConfig.alias = {
+                  ...nitroConfig.alias,
+                  '#analog/ssr': ssrEntry,
+                };
               }
-              if (!existsSync(ssrEntryPath)) {
-                ssrEntryPath = resolve(ssrOutDir, 'main.server');
-              }
-
-              const ssrEntry = toNitroSsrAliasEntry(ssrEntryPath);
-
-              nitroConfig.alias = {
-                ...nitroConfig.alias,
-                '#analog/ssr': ssrEntry,
-              };
 
               await buildServer(options, nitroConfig, routeSourceFiles);
 
@@ -678,23 +692,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           const closeBundleSsrOutDir =
             options?.ssrBuildDir ||
             resolve(workspaceRoot, 'dist', rootDir, `ssr`);
-
-          // Resolve the SSR entry path, checking for .mjs (Vite v8+
-          // default ESM extension), then .js, then extensionless.
-          let ssrEntryPath = resolve(closeBundleSsrOutDir, 'main.server.mjs');
-          if (!existsSync(ssrEntryPath)) {
-            ssrEntryPath = resolve(closeBundleSsrOutDir, 'main.server.js');
+          if (options?.ssr || nitroConfig.prerender?.routes?.length) {
+            const ssrEntryPath = resolveBuiltSsrEntryPath(closeBundleSsrOutDir);
+            const ssrEntry = toNitroSsrEntrypointSpecifier(ssrEntryPath);
+            nitroConfig.alias = {
+              ...nitroConfig.alias,
+              '#analog/ssr': ssrEntry,
+            };
           }
-          if (!existsSync(ssrEntryPath)) {
-            ssrEntryPath = resolve(closeBundleSsrOutDir, 'main.server');
-          }
-
-          const ssrEntry = toNitroSsrAliasEntry(ssrEntryPath);
-
-          nitroConfig.alias = {
-            ...nitroConfig.alias,
-            '#analog/ssr': ssrEntry,
-          };
 
           await buildServer(options, nitroConfig, routeSourceFiles);
 

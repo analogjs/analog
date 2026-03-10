@@ -21,10 +21,13 @@ import { defineHandler, fetchWithEvent } from 'h3';
 import renderer from '#analog/ssr';
 
 const template = readFileSync(${JSON.stringify(templatePath)}, 'utf8');
+const normalizeHtmlRequestUrl = (url) =>
+  url.replace(/\\/index\\.html(?=$|[?#])/, '/');
 
 export default defineHandler(async (event) => {
   event.res.headers.set('content-type', 'text/html; charset=utf-8');
   const noSSR = event.res.headers.get('x-analog-no-ssr');
+  const requestPath = normalizeHtmlRequestUrl(event.path);
 
   if (noSSR === 'true') {
     return template;
@@ -36,10 +39,16 @@ export default defineHandler(async (event) => {
   // During prerendering (Nitro v3 fetch-based pipeline), event.node is undefined.
   // The Angular renderer requires a req object with at least { headers, url },
   // so we provide a minimal stub to avoid runtime errors in prerender context.
-  const req = event.node?.req ?? {
+  const req = event.node?.req
+    ? {
+        ...event.node.req,
+        url: requestPath,
+        originalUrl: requestPath,
+      }
+    : {
     headers: { host: 'localhost' },
-    url: event.path,
-    originalUrl: event.path,
+    url: requestPath,
+    originalUrl: requestPath,
     connection: {},
   };
   const res = event.node?.res;
@@ -50,7 +59,7 @@ export default defineHandler(async (event) => {
     }
   });
 
-  const html = await renderer(event.path, template, { req, res, fetch });
+  const html = await renderer(requestPath, template, { req, res, fetch });
 
   return html;
 });`;
