@@ -3,9 +3,8 @@ import { build, createDevServer, createNitro } from 'nitro/builder';
 import * as vite from 'vite';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { mergeConfig, normalizePath } from 'vite';
-import { dirname, join, relative, resolve } from 'node:path';
-import { platform } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { relative, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { existsSync, readFileSync } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
@@ -33,12 +32,7 @@ import {
   apiMiddleware,
 } from './utils/renderers.js';
 
-const isWindows = platform() === 'win32';
-const filePrefix = isWindows ? 'file:///' : '';
 let clientOutputPath = '';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 function createNitroMiddlewareHandler(handler: string): NitroEventHandler {
   return {
@@ -141,6 +135,14 @@ function resolveClientOutputPath(
   // SSR builds write server assets to dist/<app>/ssr, but the renderer template
   // still needs the client index.html emitted to dist/<app>/client.
   return resolve(workspaceRoot, 'dist', rootDir, 'client');
+}
+
+function toNitroSsrAliasEntry(ssrEntryPath: string) {
+  // Nitro rebundles the generated SSR entry. On Windows, a file URL preserves
+  // the importer location so relative "./assets/*" imports resolve correctly.
+  return process.platform === 'win32'
+    ? pathToFileURL(ssrEntryPath).href
+    : normalizePath(ssrEntryPath);
 }
 
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
@@ -444,7 +446,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           }
 
           if (ssrBuild) {
-            if (isWindows) {
+            if (process.platform === 'win32') {
               nitroConfig.noExternals = appendNoExternals(
                 nitroConfig.noExternals,
                 'std-env',
@@ -535,7 +537,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 ssrEntryPath = resolve(ssrOutDir, 'main.server');
               }
 
-              const ssrEntry = normalizePath(filePrefix + ssrEntryPath);
+              const ssrEntry = toNitroSsrAliasEntry(ssrEntryPath);
 
               nitroConfig.alias = {
                 ...nitroConfig.alias,
@@ -687,7 +689,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             ssrEntryPath = resolve(closeBundleSsrOutDir, 'main.server');
           }
 
-          const ssrEntry = normalizePath(filePrefix + ssrEntryPath);
+          const ssrEntry = toNitroSsrAliasEntry(ssrEntryPath);
 
           nitroConfig.alias = {
             ...nitroConfig.alias,
