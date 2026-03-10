@@ -1,6 +1,10 @@
 import { ViteDevServer } from 'vite';
-import { EventHandler, H3, toNodeHandler } from 'h3';
+import { EventHandler, H3 } from 'h3';
 import { globSync } from 'tinyglobby';
+
+import { toWebRequest, writeWebResponseToNode } from './node-web-bridge.js';
+
+const PASSTHROUGH_HEADER = 'x-analog-passthrough';
 
 /**
  * Registers development server middleware by discovering and loading middleware files.
@@ -33,29 +37,29 @@ export async function registerDevServerMiddleware(
         .ssrLoadModule(file)
         .then((m: unknown) => (m as { default: EventHandler }).default);
 
-      // Bridge h3 event handler to Node.js middleware using a temporary H3 app
+      // Bridge h3 event handler using H3.fetch() (web-first API).
+      // A sentinel catch-all is appended so that when the middleware
+      // returns undefined (does not handle the request), h3 does not
+      // emit its default 404 — instead we detect the passthrough
+      // header and let the Connect stack continue.
       const app = new H3();
       app.use(middlewareHandler);
-      const nodeHandler = toNodeHandler(app);
+      app.use(
+        () =>
+          new Response(null, {
+            status: 204,
+            headers: { [PASSTHROUGH_HEADER]: '1' },
+          }),
+      );
 
-      // Connect middleware needs an explicit `next()` call, so detect whether
-      // the bridged h3 handler already finished the response.
-      const originalEnd = res.end.bind(res);
-      let responded = false;
-      res.end = function (
-        ...args: Parameters<typeof res.end>
-      ): ReturnType<typeof res.end> {
-        responded = true;
-        return originalEnd(...args);
-      } as typeof res.end;
+      const response = await app.fetch(toWebRequest(req));
 
-      await nodeHandler(req, res);
-
-      if (!responded) {
-        // Restore original end and continue to next middleware
-        res.end = originalEnd;
+      if (response.headers.get(PASSTHROUGH_HEADER) === '1') {
         next();
+        return;
       }
+
+      await writeWebResponseToNode(res, response);
     });
   });
 }

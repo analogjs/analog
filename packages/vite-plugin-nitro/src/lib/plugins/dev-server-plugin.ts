@@ -35,6 +35,7 @@ export function devServerPlugin(options: ServerOptions): Plugin {
       root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
       isTest = isTest ? isTest : mode === 'test';
       return {
+        appType: 'custom',
         resolve: {
           alias: {
             '~analog/entry-server':
@@ -130,6 +131,7 @@ function remove_html_middlewares(server: ViteDevServer['middlewares']) {
     'viteIndexHtmlMiddleware',
     'vite404Middleware',
     'viteSpaFallbackMiddleware',
+    'viteHtmlFallbackMiddleware',
   ];
   for (let i = server.stack.length - 1; i > 0; i--) {
     // @ts-ignore
