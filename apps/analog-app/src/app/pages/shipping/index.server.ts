@@ -1,5 +1,5 @@
 import { parseCookies } from 'h3';
-import { PageServerLoad } from '@analogjs/router';
+import type { PageServerLoad } from '@analogjs/router';
 
 export const load = async ({ event }: PageServerLoad) => {
   console.log('shipping');

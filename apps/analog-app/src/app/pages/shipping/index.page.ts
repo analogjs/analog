@@ -4,7 +4,7 @@ import { Component, inject } from '@angular/core';
 import { ShippingService } from './shipping-service';
 
 @Component({
-  selector: 'app-shipping',
+  selector: 'analogjs-shipping',
   imports: [CurrencyPipe, AsyncPipe],
   templateUrl: './shipping.html',
   styleUrls: ['./shipping.scss'],

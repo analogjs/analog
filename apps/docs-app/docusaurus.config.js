@@ -88,7 +88,7 @@ const config = {
                 // Convert file path to URL path by:
                 // 1. Removing numeric prefixes (like 100-, 01-, etc.)
                 // 2. Removing the .md extension
-                let urlPath = relativePath
+                const urlPath = relativePath
                   .replace(/^\d+-/, '')
                   .replace(/\/\d+-/g, '/')
                   .replace(/index\.md$/, '')

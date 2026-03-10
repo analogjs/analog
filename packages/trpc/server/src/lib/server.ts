@@ -132,11 +132,12 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
 
     res.statusCode = status;
 
-    headers &&
+    if (headers) {
       Object.keys(headers).forEach((key) => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         res.setHeader(key, headers[key]!);
       });
+    }
 
     return body;
   });

@@ -1,8 +1,8 @@
 import { Component, input, output } from '@angular/core';
-import { Product } from '../products';
+import type { Product } from '../products';
 
 @Component({
-  selector: 'app-product-alerts',
+  selector: 'analogjs-product-alerts',
   template: `
     @if (product() && product()!.price > 700) {
       <p>
