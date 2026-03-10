@@ -12,6 +12,43 @@ import { dirname, join } from 'node:path';
 import { Options } from './options.js';
 import { addPostRenderingHooks } from './hooks/post-rendering-hook.js';
 
+function isVercelPreset(preset: string | undefined) {
+  return !!preset?.toLowerCase().includes('vercel');
+}
+
+function ensureVercelFunctionConfig(
+  nitro: Awaited<ReturnType<typeof createNitro>>,
+) {
+  if (!isVercelPreset(nitro.options.preset)) {
+    return;
+  }
+
+  const serverDir = nitro.options.output.serverDir;
+  const functionConfigPath = join(serverDir, '.vc-config.json');
+
+  if (existsSync(functionConfigPath)) {
+    return;
+  }
+
+  mkdirSync(serverDir, { recursive: true });
+
+  writeFileSync(
+    functionConfigPath,
+    JSON.stringify(
+      {
+        handler: 'index.mjs',
+        launcherType: 'Nodejs',
+        shouldAddHelpers: false,
+        supportsResponseStreaming: true,
+        ...nitro.options.vercel?.functions,
+      },
+      null,
+      2,
+    ),
+    'utf8',
+  );
+}
+
 export async function buildServer(
   options?: Options,
   nitroConfig?: NitroConfig,
@@ -88,6 +125,7 @@ export async function buildServer(
   if (!options?.static) {
     console.log('Building Server...');
     await build(nitro);
+    ensureVercelFunctionConfig(nitro);
   }
 
   await nitro.close();
