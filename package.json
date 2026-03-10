@@ -221,8 +221,5 @@
       "nx",
       "sharp"
     ]
-  },
-  "workspaces": [
-    "apps/docs-app"
-  ]
+  }
 }
