@@ -3,10 +3,10 @@
   "type": "module",
   "private": true,
   "peerDependencies": {
-    "@angular/core": "^19.0.0"
+    "@angular/core": "^21.1.1"
   },
   "dependencies": {
-    "tslib": "^2.0.0"
+    "tslib": "^2.8.1"
   },
   "exports": {
     "./package.json": {
