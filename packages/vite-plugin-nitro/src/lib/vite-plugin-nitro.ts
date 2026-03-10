@@ -280,7 +280,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             apiPrefix: apiPrefix.substring(1),
             prefix,
           },
-          // Fixes support for Rolldown
+          // Analog provides its own renderer handler; prevent Nitro v3 from
+          // auto-detecting index.html in rootDir and adding a conflicting one.
+          renderer: false,
           imports: {
             autoImport: false,
           },
