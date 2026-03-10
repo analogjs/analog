@@ -439,7 +439,7 @@ describe('nitro', () => {
           vercel: expect.objectContaining({
             entryFormat: 'node',
             functions: expect.objectContaining({
-              runtime: 'nodejs22.x',
+              runtime: 'nodejs24.x',
             }),
           }),
         }),
@@ -494,7 +494,7 @@ describe('nitro', () => {
           vercel: expect.objectContaining({
             entryFormat: 'node',
             functions: expect.objectContaining({
-              runtime: 'nodejs22.x',
+              runtime: 'nodejs24.x',
             }),
           }),
         }),

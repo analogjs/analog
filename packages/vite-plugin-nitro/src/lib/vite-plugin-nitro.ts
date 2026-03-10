@@ -765,7 +765,7 @@ const withVercelOutputAPI = (
       : {
           entryFormat: nitroConfig?.vercel?.entryFormat ?? 'node',
           functions: {
-            runtime: nitroConfig?.vercel?.functions?.runtime ?? 'nodejs22.x',
+            runtime: nitroConfig?.vercel?.functions?.runtime ?? 'nodejs24.x',
             ...nitroConfig?.vercel?.functions,
           },
         }),

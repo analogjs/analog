@@ -190,6 +190,8 @@ También puedes configurar esto colocando un archivo `netlify.toml` en la raíz 
 
 Analog soporta el despliegue en [Vercel](https://vercel.com/) sin configuración adicional.
 
+Usa Node.js `24.x` en la configuración del proyecto de Vercel tanto para la compilación como para el runtime del servidor. Analog usa `nodejs24.x` como runtime predeterminado para las funciones de Vercel, a menos que sobrescribas `nitro.vercel.functions.runtime`.
+
 ### Desplegando el Proyecto
 
 <Tabs groupId="porject-type">
@@ -220,7 +222,7 @@ Para que funcione con Nx, necesitamos definir la aplicación específica que que
 ```json [vercel.json]
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "nx build <app>"
+  "buildCommand": "pnpm exec nx build <app> --skip-nx-cache"
 }
 ```
 
@@ -229,14 +231,14 @@ Para que funcione con Nx, necesitamos definir la aplicación específica que que
 ```json [package.json]
 {
   "scripts": {
-    "build": "nx build <app>"
+    "build": "nx build <app> --skip-nx-cache"
   }
 }
 ```
 
 #### Nx y Vercel
 
-Al usar Nx y reutilizar el caché de compilación en la plataforma de compilación de Vercel, existe la posibilidad de que el caché se reutilice si la has compilado localmente. Esto puede llevar a que la salida se coloque en la ubicación incorrecta. Para resolver este problema, puedes usar el preset en el archivo `vite.config.ts` como solución temporal.
+Al usar Nx en la plataforma de compilación de Vercel, configura la versión de Node.js del proyecto en `24.x` y prefiere `--skip-nx-cache` en el comando de compilación. Reutilizar el caché de Nx en Vercel puede hacer que la salida de una compilación local se restaure en la ubicación incorrecta. Si Vercel aún no detecta correctamente el preset, puedes usar el preset en el archivo `vite.config.ts` como solución temporal.
 
   </TabItem>
 </Tabs>
