@@ -1,3 +1,9 @@
+# [2.4.0-alpha.3](https://github.com/analogjs/analog/compare/v2.4.0-alpha.2...v2.4.0-alpha.3) (2026-03-11)
+
+### Features
+
+- bump package.json to 3.0.0-alpha ([19472aa](https://github.com/analogjs/analog/commit/19472aab8ab72e1834e902ae34449ffe402dea25))
+
 # [2.4.0-alpha.2](https://github.com/analogjs/analog/compare/v2.4.0-alpha.1...v2.4.0-alpha.2) (2026-03-11)
 
 ### Features
