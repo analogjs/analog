@@ -1,3 +1,9 @@
+# [2.4.0-beta.6](https://github.com/analogjs/analog/compare/v2.4.0-beta.5...v2.4.0-beta.6) (2026-03-11)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** ensure sequential compilation for client and ssr bundles ([#2109](https://github.com/analogjs/analog/issues/2109)) ([008bd1c](https://github.com/analogjs/analog/commit/008bd1c20daa4c16fe92da036e99219056da4ff3))
+
 # [2.4.0-beta.5](https://github.com/analogjs/analog/compare/v2.4.0-beta.4...v2.4.0-beta.5) (2026-03-10)
 
 ### Bug Fixes
