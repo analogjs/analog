@@ -40,6 +40,8 @@ Das kann auch konfiguriert werden, indem eine `netlify.toml` in das Stammverzeic
 
 Analog unterstützt die Veröffentlichung auf [Vercel] (https://vercel.com/) ohne zusätzliche Konfiguration.
 
+Verwende in den Vercel-Projekteinstellungen Node.js `24.x` sowohl für den Build als auch für die Server-Laufzeit. Analog verwendet für Vercel-Funktionen standardmäßig `nodejs24.x`, sofern `nitro.vercel.functions.runtime` nicht überschrieben wird.
+
 ### Bereitstellung des Projekts
 
 <Tabs groupId="porject-type">
@@ -69,7 +71,7 @@ Damit es mit Nx funktioniert, muss die spezifische Anwendung definiert werden, d
 ```json [vercel.json]
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "nx build <app>"
+  "buildCommand": "pnpm exec nx build <app> --skip-nx-cache"
 }
 ```
 
@@ -78,15 +80,14 @@ Damit es mit Nx funktioniert, muss die spezifische Anwendung definiert werden, d
 ```json [package.json]
 {
   "scripts": {
-    "build": "nx build <app>"
+    "build": "nx build <app> --skip-nx-cache"
   }
 }
 ```
 
 #### Nx und Vercel
 
-When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache is reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can use the preset in the `vite.config.ts` file as a workaround.
-Wenn Nx verwendet wird und den Build-Cache auf der Vercel-Build-Plattform wiederverwendet wird, besteht die Möglichkeit, dass der Cache wiederverwendet wird, wenn er lokal gebaut wurde. Das kann dazu führen, dass die Ausgabe an der falschen Stelle platziert wird. Um dieses Problem zu lösen, kann die Voreinstellung in der Datei `vite.config.ts` als Workaround verwendet werden.
+Wenn Nx auf der Vercel-Build-Plattform verwendet wird, sollte die Node.js-Version des Projekts auf `24.x` gesetzt werden und im Build-Befehl vorzugsweise `--skip-nx-cache` verwendet werden. Die Wiederverwendung des Nx-Caches auf Vercel kann dazu führen, dass Ausgaben eines lokalen Builds an der falschen Stelle wiederhergestellt werden. Wenn Vercel die Voreinstellung weiterhin nicht korrekt erkennt, kann die Voreinstellung in der Datei `vite.config.ts` als Workaround verwendet werden.
 
   </TabItem>
 </Tabs>

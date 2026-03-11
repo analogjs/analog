@@ -6,13 +6,20 @@
   "tags": [],
   "implicitDependencies": ["analog-app"],
   "targets": {
-    "e2e": {
-      "executor": "@nx/cypress:cypress",
+    "cypress": {
+      "executor": "nx:run-commands",
       "options": {
-        "cypressConfig": "apps/analog-app-e2e-cypress/cypress.config.ts",
-        "devServerTarget": "analog-app:serve",
-        "baseUrl": "http://localhost:3000",
-        "testingType": "e2e"
+        "commands": [
+          "sh -c \"pnpm exec cypress verify || pnpm exec cypress install\"",
+          "pnpm exec cypress run --project apps/analog-app-e2e-cypress --config-file cypress.config.ts --config baseUrl=http://localhost:3000"
+        ],
+        "parallel": false
+      }
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "start-server-and-test 'nx run analog-app:serve-nitro' http://localhost:3000 'nx run analog-app-e2e-cypress:cypress'"
       },
       "configurations": {
         "watch": {

@@ -1,3 +1,3 @@
-import { eventHandler } from 'h3';
+import { defineHandler } from 'h3';
 
-export default eventHandler(() => ({ success: true }));
+export default defineHandler(() => ({ success: true }));

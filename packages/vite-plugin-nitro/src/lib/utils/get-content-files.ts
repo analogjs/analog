@@ -92,11 +92,8 @@ export function getMatchingContentFilesWithFrontMatter(
     // Parse front matter from the file content
     const raw = fm(fileContents);
 
-    // Get the relative file path by removing the root directory
-    const filepath = f.replace(root, '');
+    const filepath = normalizePath(f).replace(root, '');
 
-    // Extract file name and extension using regex
-    // Matches: /filename.ext or /filename (with optional extension)
     const match = filepath.match(/\/([^/.]+)(\.([^/.]+))?$/);
     let name = '';
     let extension = '';

@@ -11,7 +11,7 @@
 
 - **content:** extract TOC to be property on contentFile ([#2091](https://github.com/analogjs/analog/issues/2091)) ([4e870cc](https://github.com/analogjs/analog/commit/4e870cc99e74c889743503522ae4c6f3be5d9247))
 
-# [2.4.0-beta.5](https://github.com/analogjs/analog/compare/v2.4.0-beta.4...v2.4.0-beta.5) (2026-03-10)
+# [2.4.0-alpha.1](https://github.com/analogjs/analog/compare/v2.4.0-beta.4...v2.4.0-alpha.1) (2026-03-10)
 
 ### Bug Fixes
 

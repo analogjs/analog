@@ -133,4 +133,6 @@ jobs:
       - name: Install Cypress
         run: npx cypress install
       - name: End-to-end test
+        env:
+          NODE_OPTIONS: ''
         run: pnpm e2e

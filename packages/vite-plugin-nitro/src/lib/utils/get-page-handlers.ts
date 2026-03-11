@@ -1,7 +1,7 @@
 import { resolve, relative } from 'node:path';
 import { globSync } from 'tinyglobby';
 
-import { NitroEventHandler } from 'nitropack';
+import type { NitroEventHandler } from 'nitro/types';
 import { normalizePath } from 'vite';
 
 type GetHandlersArgs = {
@@ -88,9 +88,11 @@ export function getPageHandlers({
 
   // Transform each discovered file into a Nitro event handler
   const handlers: NitroEventHandler[] = endpointFiles.map((endpointFile) => {
-    // Convert file path to route pattern using Angular-style route syntax
-    const route = endpointFile
-      .replace(/^(.*?)\/pages/, '/pages') // Remove everything before /pages
+    // Normalize the endpoint file path for consistent path handling
+    const normalized = normalizePath(endpointFile);
+    // Transform the normalized path into a route pattern
+    const route = normalized
+      .replace(/^(.*?)\/pages/, '/pages')
       .replace(/\.server\.ts$/, '') // Remove .server.ts extension
       .replace(/\[\.{3}(.+)\]/g, '**:$1') // Convert [...param] to **:param (catch-all routes)
       .replace(/\[\.{3}(\w+)\]/g, '**:$1') // Alternative catch-all pattern

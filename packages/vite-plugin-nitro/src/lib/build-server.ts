@@ -1,10 +1,53 @@
-import { NitroConfig, copyPublicAssets, prerender } from 'nitropack';
-import { createNitro, build, prepare } from 'nitropack';
+import type { NitroConfig } from 'nitro/types';
+import {
+  build,
+  copyPublicAssets,
+  createNitro,
+  prepare,
+  prerender,
+} from 'nitro/builder';
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 import { Options } from './options.js';
 import { addPostRenderingHooks } from './hooks/post-rendering-hook.js';
+
+function isVercelPreset(preset: string | undefined) {
+  return !!preset?.toLowerCase().includes('vercel');
+}
+
+function ensureVercelFunctionConfig(
+  nitro: Awaited<ReturnType<typeof createNitro>>,
+) {
+  if (!isVercelPreset(nitro.options.preset)) {
+    return;
+  }
+
+  const serverDir = nitro.options.output.serverDir;
+  const functionConfigPath = join(serverDir, '.vc-config.json');
+
+  if (existsSync(functionConfigPath)) {
+    return;
+  }
+
+  mkdirSync(serverDir, { recursive: true });
+
+  writeFileSync(
+    functionConfigPath,
+    JSON.stringify(
+      {
+        handler: 'index.mjs',
+        launcherType: 'Nodejs',
+        shouldAddHelpers: false,
+        supportsResponseStreaming: true,
+        ...nitro.options.vercel?.functions,
+      },
+      null,
+      2,
+    ),
+    'utf8',
+  );
+}
 
 export async function buildServer(
   options?: Options,
@@ -15,6 +58,12 @@ export async function buildServer(
     dev: false,
     preset: process.env['BUILD_PRESET'],
     ...nitroConfig,
+    // Nitro v3 alpha prefers `rolldown` when available, but its resolver can
+    // fail rebundling the generated SSR entry under `dist/.../main.server.js`
+    // with Vite 8 / Rolldown-specific "Tsconfig not found" resolve errors.
+    // Default production server builds back to Nitro's Rollup builder unless
+    // the caller explicitly opts into a different builder.
+    builder: nitroConfig?.builder ?? 'rollup',
   });
 
   if (options?.prerender?.postRenderingHooks) {
@@ -34,7 +83,10 @@ export async function buildServer(
 
     indexFileExts.forEach((fileExt) => {
       // Remove the root index.html(.br|.gz) files
-      const indexFilePath = `${nitroConfig?.output?.publicDir}/index.html${fileExt ? `${fileExt}` : ''}`;
+      const indexFilePath = join(
+        nitroConfig?.output?.publicDir ?? '',
+        `index.html${fileExt}`,
+      );
 
       if (existsSync(indexFilePath)) {
         unlinkSync(indexFilePath);
@@ -73,6 +125,7 @@ export async function buildServer(
   if (!options?.static) {
     console.log('Building Server...');
     await build(nitro);
+    ensureVercelFunctionConfig(nitro);
   }
 
   await nitro.close();

@@ -1,4 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
+import * as vite from 'vite';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+import { join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 
 import { PrerenderContentFile } from './options';
 import {
@@ -34,6 +39,126 @@ describe('nitro', () => {
     expect(spy).not.toHaveBeenCalledWith('/api', expect.anything());
   });
 
+  it('should use the active Vite SSR bundler config key', async () => {
+    const plugin = nitro({});
+    const result = await (plugin[1].config as any)(
+      {},
+      { command: 'build', mode: 'production' },
+    );
+    const ssrBuild = result.environments.ssr.build;
+    const activeKey = vite.rolldownVersion
+      ? 'rolldownOptions'
+      : 'rollupOptions';
+    const inactiveKey = vite.rolldownVersion
+      ? 'rollupOptions'
+      : 'rolldownOptions';
+
+    expect(ssrBuild).toHaveProperty(activeKey);
+    expect(ssrBuild[activeKey]).toEqual(
+      expect.objectContaining({
+        input: expect.stringMatching(/src[\\/]+main\.server\.ts$/),
+      }),
+    );
+    expect(ssrBuild).not.toHaveProperty(inactiveKey);
+  });
+
+  it('should strip Rolldown-only codeSplitting from Nitro rollup builds', async () => {
+    const { buildServerImportSpy } = await mockBuildFunctions();
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
+
+    try {
+      const ssrBuildDir = resolve(workspaceRoot, 'dist', 'ssr');
+      const builtSsrEntry = resolve(ssrBuildDir, 'main.server.js');
+      mkdirSync(ssrBuildDir, { recursive: true });
+      writeFileSync(
+        builtSsrEntry,
+        'export default async function renderer() {}',
+      );
+
+      const plugin = nitro({
+        workspaceRoot,
+        ssrBuildDir,
+      });
+      const result = await (plugin[1].config as any)(
+        {},
+        { command: 'build', mode: 'production' },
+      );
+      await result.builder.buildApp({
+        build: vi.fn().mockResolvedValue(undefined),
+        environments: {
+          client: {},
+          ssr: {},
+        },
+      });
+
+      const nitroConfig = buildServerImportSpy.mock.calls[0][1];
+      const bundlerConfig = {
+        output: {
+          codeSplitting: { groups: [{ test: /node_modules/, name: 'vendor' }] },
+          entryFileNames: 'index.mjs',
+        },
+      };
+
+      await nitroConfig.hooks['rollup:before']({}, bundlerConfig);
+
+      expect(bundlerConfig.output).toEqual({
+        entryFileNames: 'index.mjs',
+      });
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('should alias the built SSR entry for Nitro server builds', async () => {
+    const { buildServerImportSpy } = await mockBuildFunctions();
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
+
+    try {
+      const ssrBuildDir = resolve(workspaceRoot, 'dist', 'demo', 'ssr');
+      const builtSsrEntry = resolve(ssrBuildDir, 'main.server.js');
+      mkdirSync(ssrBuildDir, { recursive: true });
+      writeFileSync(
+        builtSsrEntry,
+        'export default async function renderer() {}',
+      );
+
+      const plugin = nitro({
+        ssr: true,
+        workspaceRoot,
+        ssrBuildDir,
+      });
+      const result = await (plugin[1].config as any)(
+        {},
+        { command: 'build', mode: 'production' },
+      );
+
+      await result.builder.buildApp({
+        build: vi.fn().mockResolvedValue(undefined),
+        environments: {
+          client: {},
+          ssr: {},
+        },
+      });
+
+      const nitroConfig = buildServerImportSpy.mock.calls[0][1];
+      const expectedAlias =
+        process.platform === 'win32'
+          ? pathToFileURL(builtSsrEntry).href
+          : vite.normalizePath(builtSsrEntry);
+
+      expect(nitroConfig.alias).toEqual(
+        expect.objectContaining({
+          '#analog/ssr': expectedAlias,
+        }),
+      );
+      expect(nitroConfig.virtual?.['#ANALOG_SSR_RENDERER']).toContain(
+        "import renderer from '#analog/ssr';",
+      );
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
   describe.skip('when prerendering is configured...', () => {
     it('should build the server with prerender route "/" if nothing was provided', async () => {
       // Arrange
@@ -54,9 +179,10 @@ describe('nitro', () => {
           ...mockNitroConfig,
           alias: expect.anything(),
           prerender: { routes: ['/'] },
-          renderer: expect.anything(),
           rollupConfig: expect.anything(),
-          handlers: expect.anything(),
+          handlers: expect.arrayContaining([
+            expect.objectContaining({ route: '/**', lazy: true }),
+          ]),
           publicAssets: expect.anything(),
           serverAssets: expect.anything(),
         },
@@ -83,8 +209,9 @@ describe('nitro', () => {
           prerender: { routes: ['/'] },
           alias: expect.anything(),
           rollupConfig: expect.anything(),
-          renderer: expect.anything(),
-          handlers: expect.anything(),
+          handlers: expect.arrayContaining([
+            expect.objectContaining({ route: '/**', lazy: true }),
+          ]),
           publicAssets: expect.anything(),
           serverAssets: expect.anything(),
         },
@@ -116,8 +243,9 @@ describe('nitro', () => {
           ...mockNitroConfig,
           alias: expect.anything(),
           rollupConfig: expect.anything(),
-          renderer: expect.anything(),
-          handlers: expect.anything(),
+          handlers: expect.arrayContaining([
+            expect.objectContaining({ route: '/**', lazy: true }),
+          ]),
           preset: undefined,
           prerender: {
             ...mockNitroConfig.prerender,
@@ -158,8 +286,9 @@ describe('nitro', () => {
           },
           alias: expect.anything(),
           rollupConfig: expect.anything(),
-          renderer: expect.anything(),
-          handlers: expect.anything(),
+          handlers: expect.arrayContaining([
+            expect.objectContaining({ route: '/**', lazy: true }),
+          ]),
           publicAssets: expect.anything(),
           serverAssets: expect.anything(),
         },
@@ -221,8 +350,9 @@ describe('nitro', () => {
               alias: expect.anything(),
               publicAssets: expect.anything(),
               rollupConfig: expect.anything(),
-              renderer: expect.anything(),
-              handlers: expect.anything(),
+              handlers: expect.arrayContaining([
+                expect.objectContaining({ route: '/**', lazy: true }),
+              ]),
               serverAssets: expect.anything(),
             },
           );
@@ -301,10 +431,17 @@ describe('nitro', () => {
       expect(buildServerImportSpy).toHaveBeenCalledWith(
         {},
         expect.objectContaining({
+          preset: 'vercel',
           output: {
             dir: '/custom-root-directory/.vercel/output',
             publicDir: '/custom-root-directory/.vercel/output/static',
           },
+          vercel: expect.objectContaining({
+            entryFormat: 'node',
+            functions: expect.objectContaining({
+              runtime: 'nodejs24.x',
+            }),
+          }),
         }),
       );
     });
@@ -324,6 +461,7 @@ describe('nitro', () => {
       expect(buildServerImportSpy).toHaveBeenCalledWith(
         {},
         expect.objectContaining({
+          preset: 'vercel-edge',
           output: {
             dir: '/custom-root-directory/.vercel/output',
             publicDir: '/custom-root-directory/.vercel/output/static',
@@ -348,10 +486,17 @@ describe('nitro', () => {
       expect(buildServerImportSpy).toHaveBeenCalledWith(
         {},
         expect.objectContaining({
+          preset: 'vercel',
           output: {
             dir: '/custom-root-directory/.vercel/output',
             publicDir: '/custom-root-directory/.vercel/output/static',
           },
+          vercel: expect.objectContaining({
+            entryFormat: 'node',
+            functions: expect.objectContaining({
+              runtime: 'nodejs24.x',
+            }),
+          }),
         }),
       );
     });

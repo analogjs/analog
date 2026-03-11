@@ -1,11 +1,12 @@
-import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
-import { App, toNodeListener } from 'h3';
+import type { NitroConfig, NitroEventHandler, RollupConfig } from 'nitro/types';
+import { build, createDevServer, createNitro } from 'nitro/builder';
+import * as vite from 'vite';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { mergeConfig, normalizePath } from 'vite';
-import { dirname, join, relative, resolve } from 'node:path';
-import { platform } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { relative, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { existsSync, readFileSync } from 'node:fs';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import { buildServer } from './build-server.js';
 import { buildSSRApp } from './build-ssr.js';
@@ -20,20 +21,159 @@ import { pageEndpointsPlugin } from './plugins/page-endpoints.js';
 import { getPageHandlers } from './utils/get-page-handlers.js';
 import { buildSitemap } from './build-sitemap.js';
 import { devServerPlugin } from './plugins/dev-server-plugin.js';
+import {
+  toWebRequest,
+  writeWebResponseToNode,
+} from './utils/node-web-bridge.js';
 import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-files.js';
-import { IncomingMessage, ServerResponse } from 'node:http';
 import {
   ssrRenderer,
   clientRenderer,
   apiMiddleware,
 } from './utils/renderers.js';
 
-const isWindows = platform() === 'win32';
-const filePrefix = isWindows ? 'file:///' : '';
 let clientOutputPath = '';
+let rendererIndexEntry = '';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+function createNitroMiddlewareHandler(handler: string): NitroEventHandler {
+  return {
+    route: '/**',
+    handler,
+    middleware: true,
+  };
+}
+
+function createRollupBeforeHook(externalEntries: string[]) {
+  return (_nitro: unknown, bundlerConfig: RollupConfig) => {
+    removeInvalidRollupCodeSplitting(_nitro, bundlerConfig);
+
+    if (externalEntries.length === 0) {
+      return;
+    }
+
+    const existing = bundlerConfig.external;
+    if (!existing) {
+      bundlerConfig.external = externalEntries;
+    } else if (typeof existing === 'function') {
+      bundlerConfig.external = (
+        source: string,
+        importer: string | undefined,
+        isResolved: boolean,
+      ) =>
+        existing(source, importer, isResolved) ||
+        externalEntries.includes(source);
+    } else if (Array.isArray(existing)) {
+      bundlerConfig.external = [...existing, ...externalEntries];
+    } else {
+      bundlerConfig.external = [existing as string, ...externalEntries];
+    }
+  };
+}
+
+function appendNoExternals(
+  noExternals: NitroConfig['noExternals'],
+  ...entries: string[]
+): NitroConfig['noExternals'] {
+  if (!noExternals) {
+    return entries;
+  }
+
+  return Array.isArray(noExternals)
+    ? [...noExternals, ...entries]
+    : noExternals;
+}
+
+function removeInvalidRollupCodeSplitting(
+  _nitro: unknown,
+  bundlerConfig: RollupConfig,
+) {
+  // Workaround for a Nitro v3 alpha bundler bug:
+  //
+  // Analog does not add `output.codeSplitting` to Nitro's Rollup config, but
+  // Nitro 3.0.1-alpha.2 builds an internal server bundler config that can
+  // still contain that key while running under Vite 8 / Rolldown. At runtime
+  // this surfaces as:
+  //
+  //   Warning: Invalid output options (1 issue found)
+  //   - For the "codeSplitting". Invalid key: Expected never but received "codeSplitting".
+  //
+  // That warning comes from Nitro's own bundler handoff, not from user config
+  // in Analog apps. We remove only the invalid `output.codeSplitting` field
+  // right before Nitro starts prerender/server builds.
+  //
+  // Why this is safe:
+  // - Analog is not relying on Nitro-side `output.codeSplitting`.
+  // - The warning path only rejects the option; removing it restores the
+  //   default Nitro/Rollup behavior instead of changing any Analog semantics.
+  // - The hook is narrowly scoped to the final Nitro bundler config, so it
+  //   does not affect the normal Vite client/SSR environment build config.
+  const output = bundlerConfig['output'];
+  if (!output || Array.isArray(output) || typeof output !== 'object') {
+    return;
+  }
+
+  if ('codeSplitting' in output) {
+    delete (output as Record<string, unknown>)['codeSplitting'];
+  }
+
+  // Nitro's default server bundler config currently enables manual chunking for
+  // node_modules. Under Nitro v3 alpha + Rollup 4.59 this can crash during the
+  // prerender rebundle with "Cannot read properties of undefined (reading
+  // 'included')" while generating chunks. A single server bundle is acceptable
+  // here, so strip manualChunks until the upstream bug is fixed.
+  if ('manualChunks' in output) {
+    delete (output as Record<string, unknown>)['manualChunks'];
+  }
+}
+
+function resolveClientOutputPath(
+  workspaceRoot: string,
+  rootDir: string,
+  configuredOutDir: string | undefined,
+  ssrBuild: boolean,
+) {
+  if (clientOutputPath) {
+    return clientOutputPath;
+  }
+
+  if (!ssrBuild) {
+    return resolve(workspaceRoot, rootDir, configuredOutDir || 'dist/client');
+  }
+
+  // SSR builds write server assets to dist/<app>/ssr, but the renderer template
+  // still needs the client index.html emitted to dist/<app>/client.
+  return resolve(workspaceRoot, 'dist', rootDir, 'client');
+}
+
+function toNitroSsrEntrypointSpecifier(ssrEntryPath: string) {
+  // Nitro rebundles the generated SSR entry. On Windows, a file URL preserves
+  // the importer location so relative "./assets/*" imports resolve correctly.
+  return process.platform === 'win32'
+    ? pathToFileURL(ssrEntryPath).href
+    : normalizePath(ssrEntryPath);
+}
+
+function resolveBuiltSsrEntryPath(ssrOutDir: string) {
+  const candidatePaths = [
+    resolve(ssrOutDir, 'main.server.mjs'),
+    resolve(ssrOutDir, 'main.server.js'),
+    resolve(ssrOutDir, 'main.server'),
+  ];
+
+  const ssrEntryPath = candidatePaths.find((candidatePath) =>
+    existsSync(candidatePath),
+  );
+
+  if (!ssrEntryPath) {
+    throw new Error(
+      `Unable to locate the built SSR entry in "${ssrOutDir}". Expected one of: ${candidatePaths.join(
+        ', ',
+      )}`,
+    );
+  }
+
+  return ssrEntryPath;
+}
 
 export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
@@ -54,6 +194,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let nitroConfig: NitroConfig;
   let environmentBuild = false;
   let hasAPIDir = false;
+  const rollupExternalEntries: string[] = [];
   const routeSitemaps: Record<
     string,
     PrerenderSitemapConfig | (() => PrerenderSitemapConfig)
@@ -88,7 +229,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         );
         const buildPreset =
           process.env['BUILD_PRESET'] ??
-          (nitroOptions?.preset as string | undefined);
+          (nitroOptions?.preset as string | undefined) ??
+          (process.env['VERCEL'] ? 'vercel' : undefined);
 
         const pageHandlers = getPageHandlers({
           workspaceRoot,
@@ -97,13 +239,22 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           additionalPagesDirs: options?.additionalPagesDirs,
           hasAPIDir,
         });
+        const resolvedClientOutputPath = resolveClientOutputPath(
+          workspaceRoot,
+          rootDir,
+          config.build?.outDir,
+          ssrBuild,
+        );
+        rendererIndexEntry = normalizePath(
+          resolve(resolvedClientOutputPath, 'index.html'),
+        );
 
         nitroConfig = {
-          rootDir,
+          rootDir: normalizePath(rootDir),
           preset: buildPreset,
           compatibilityDate: '2024-11-19',
           logLevel: nitroOptions?.logLevel || 0,
-          srcDir: normalizePath(`${sourceRoot}/server`),
+          serverDir: normalizePath(`${sourceRoot}/server`),
           scanDirs: [
             normalizePath(`${rootDir}/${sourceRoot}/server`),
             ...(options?.additionalAPIDirs || []).map((dir) =>
@@ -128,9 +279,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             apiPrefix: apiPrefix.substring(1),
             prefix,
           },
-          // Fixes support for Rolldown
+          // Analog provides its own renderer handler; prevent Nitro v3 from
+          // auto-detecting index.html in rootDir and adding a conflicting one.
+          renderer: false,
           imports: {
             autoImport: false,
+          },
+          hooks: {
+            'rollup:before': createRollupBeforeHook(rollupExternalEntries),
           },
           rollupConfig: {
             onwarn(warning) {
@@ -147,12 +303,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             ...(hasAPIDir
               ? []
               : useAPIMiddleware
-                ? [
-                    {
-                      handler: '#ANALOG_API_MIDDLEWARE',
-                      middleware: true,
-                    },
-                  ]
+                ? [createNitroMiddlewareHandler('#ANALOG_API_MIDDLEWARE')]
                 : []),
             ...pageHandlers,
           ],
@@ -166,14 +317,18 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   },
                 },
           virtual: {
-            '#ANALOG_SSR_RENDERER': ssrRenderer,
-            '#ANALOG_CLIENT_RENDERER': clientRenderer,
+            '#ANALOG_SSR_RENDERER': ssrRenderer(rendererIndexEntry),
+            '#ANALOG_CLIENT_RENDERER': clientRenderer(rendererIndexEntry),
             ...(hasAPIDir ? {} : { '#ANALOG_API_MIDDLEWARE': apiMiddleware }),
           },
         };
 
         if (isVercelPreset(buildPreset)) {
-          nitroConfig = withVercelOutputAPI(nitroConfig, workspaceRoot);
+          nitroConfig = withVercelOutputAPI(
+            nitroConfig,
+            workspaceRoot,
+            buildPreset,
+          );
         }
 
         if (isCloudflarePreset(buildPreset)) {
@@ -194,25 +349,32 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
         if (!ssrBuild && !isTest) {
           // store the client output path for the SSR build config
-          clientOutputPath = resolve(
-            workspaceRoot,
-            rootDir,
-            config.build?.outDir || 'dist/client',
-          );
+          clientOutputPath = resolvedClientOutputPath;
         }
 
-        const indexEntry = normalizePath(
-          resolve(clientOutputPath, 'index.html'),
-        );
-        nitroConfig.alias = {
-          '#analog/index': indexEntry,
-        };
-
         if (isBuild) {
-          nitroConfig.publicAssets = [{ dir: clientOutputPath }];
-          nitroConfig.renderer = options?.ssr
+          nitroConfig.publicAssets = [
+            { dir: normalizePath(clientOutputPath), maxAge: 0 },
+          ];
+
+          // In Nitro v3, renderer.entry is resolved via resolveModulePath()
+          // during options normalization, which requires a real filesystem path.
+          // Virtual modules (prefixed with #) can't survive this resolution.
+          // Instead, we add the renderer as a catch-all handler directly —
+          // this is functionally equivalent to what Nitro does internally
+          // (it converts renderer.entry into a { route: '/**', lazy: true }
+          // handler), but avoids the filesystem resolution step.
+          const rendererHandler = options?.ssr
             ? '#ANALOG_SSR_RENDERER'
             : '#ANALOG_CLIENT_RENDERER';
+          nitroConfig.handlers = [
+            ...(nitroConfig.handlers || []),
+            {
+              handler: rendererHandler,
+              route: '/**',
+              lazy: true,
+            },
+          ];
 
           if (isEmptyPrerenderRoutes(options)) {
             nitroConfig.prerender = {};
@@ -317,31 +479,34 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           }
 
           if (ssrBuild) {
-            if (isWindows) {
-              nitroConfig.externals = {
-                inline: ['std-env'],
-              };
+            if (process.platform === 'win32') {
+              nitroConfig.noExternals = appendNoExternals(
+                nitroConfig.noExternals,
+                'std-env',
+              );
             }
+
+            rollupExternalEntries.push(
+              'rxjs',
+              'node-fetch-native/dist/polyfill',
+            );
 
             nitroConfig = {
               ...nitroConfig,
-              externals: {
-                ...nitroConfig.externals,
-                external: ['rxjs', 'node-fetch-native/dist/polyfill'],
-              },
               moduleSideEffects: ['zone.js/node', 'zone.js/fesm2015/zone-node'],
               handlers: [
                 ...(hasAPIDir
                   ? []
                   : useAPIMiddleware
-                    ? [
-                        {
-                          handler: '#ANALOG_API_MIDDLEWARE',
-                          middleware: true,
-                        },
-                      ]
+                    ? [createNitroMiddlewareHandler('#ANALOG_API_MIDDLEWARE')]
                     : []),
                 ...pageHandlers,
+                // Preserve the renderer catch-all handler added above
+                {
+                  handler: rendererHandler,
+                  route: '/**',
+                  lazy: true,
+                },
               ],
             };
           }
@@ -364,7 +529,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             ssr: {
               build: {
                 ssr: true,
-                rollupOptions: {
+                [vite.rolldownVersion ? 'rolldownOptions' : 'rollupOptions']: {
                   input:
                     options?.entryServer ||
                     resolve(
@@ -391,23 +556,17 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
               await Promise.all(builds);
 
-              let ssrEntryPath = resolve(
+              const ssrOutDir =
                 options?.ssrBuildDir ||
-                  resolve(workspaceRoot, 'dist', rootDir, `ssr`),
-                `main.server${filePrefix ? '.js' : ''}`,
-              );
-
-              // add check for main.server.mjs fallback on Windows
-              if (isWindows && !existsSync(ssrEntryPath)) {
-                ssrEntryPath = ssrEntryPath.replace('.js', '.mjs');
+                resolve(workspaceRoot, 'dist', rootDir, `ssr`);
+              if (options?.ssr || nitroConfig.prerender?.routes?.length) {
+                const ssrEntryPath = resolveBuiltSsrEntryPath(ssrOutDir);
+                const ssrEntry = toNitroSsrEntrypointSpecifier(ssrEntryPath);
+                nitroConfig.alias = {
+                  ...nitroConfig.alias,
+                  '#analog/ssr': ssrEntry,
+                };
               }
-
-              const ssrEntry = normalizePath(filePrefix + ssrEntryPath);
-
-              nitroConfig.alias = {
-                ...nitroConfig.alias,
-                '#analog/ssr': ssrEntry,
-              };
 
               await buildServer(options, nitroConfig, routeSourceFiles);
 
@@ -444,11 +603,24 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         if (isServe && !isTest) {
           const nitro = await createNitro({
             dev: true,
+            // Nitro's Vite builder now rejects `build()` in dev mode, but Analog's
+            // dev integration still relies on the builder-driven reload hooks.
+            // Force the server worker onto Rollup for this dev-only path.
+            builder: 'rollup',
             ...nitroConfig,
           });
           const server = createDevServer(nitro);
           await build(nitro);
-          const apiHandler = toNodeListener(server.app as unknown as App);
+
+          const apiHandler = async (
+            req: IncomingMessage,
+            res: ServerResponse,
+          ) => {
+            // Nitro v3's dev server is fetch-first, so adapt Vite's Node
+            // request once and let Nitro respond with a standard Web Response.
+            const response = await server.fetch(toWebRequest(req));
+            await writeWebResponseToNode(res, response);
+          };
 
           if (hasAPIDir) {
             viteServer.middlewares.use(
@@ -458,7 +630,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 next: (error?: unknown) => void,
               ) => {
                 if (req.url?.startsWith(`${prefix}${apiPrefix}`)) {
-                  apiHandler(req, res);
+                  void apiHandler(req, res).catch((error) => next(error));
                   return;
                 }
 
@@ -466,7 +638,16 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               },
             );
           } else {
-            viteServer.middlewares.use(apiPrefix, apiHandler);
+            viteServer.middlewares.use(
+              apiPrefix,
+              (
+                req: IncomingMessage,
+                res: ServerResponse,
+                next: (error?: unknown) => void,
+              ) => {
+                void apiHandler(req, res).catch((error) => next(error));
+              },
+            );
           }
 
           viteServer.httpServer?.once('listening', () => {
@@ -518,23 +699,17 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             );
           }
 
-          let ssrEntryPath = resolve(
+          const closeBundleSsrOutDir =
             options?.ssrBuildDir ||
-              resolve(workspaceRoot, 'dist', rootDir, `ssr`),
-            `main.server${filePrefix ? '.js' : ''}`,
-          );
-
-          // add check for main.server.mjs fallback on Windows
-          if (isWindows && !existsSync(ssrEntryPath)) {
-            ssrEntryPath = ssrEntryPath.replace('.js', '.mjs');
+            resolve(workspaceRoot, 'dist', rootDir, `ssr`);
+          if (options?.ssr || nitroConfig.prerender?.routes?.length) {
+            const ssrEntryPath = resolveBuiltSsrEntryPath(closeBundleSsrOutDir);
+            const ssrEntry = toNitroSsrEntrypointSpecifier(ssrEntryPath);
+            nitroConfig.alias = {
+              ...nitroConfig.alias,
+              '#analog/ssr': ssrEntry,
+            };
           }
-
-          const ssrEntry = normalizePath(filePrefix + ssrEntryPath);
-
-          nitroConfig.alias = {
-            ...nitroConfig.alias,
-            '#analog/ssr': ssrEntry,
-          };
 
           await buildServer(options, nitroConfig, routeSourceFiles);
 
@@ -575,8 +750,26 @@ const isVercelPreset = (buildPreset: string | undefined) =>
 const withVercelOutputAPI = (
   nitroConfig: NitroConfig | undefined,
   workspaceRoot: string,
+  buildPreset: string | undefined,
 ) => ({
   ...nitroConfig,
+  preset:
+    nitroConfig?.preset ??
+    (buildPreset?.toLowerCase().includes('vercel-edge')
+      ? 'vercel-edge'
+      : 'vercel'),
+  vercel: {
+    ...nitroConfig?.vercel,
+    ...(buildPreset?.toLowerCase().includes('vercel-edge')
+      ? {}
+      : {
+          entryFormat: nitroConfig?.vercel?.entryFormat ?? 'node',
+          functions: {
+            runtime: nitroConfig?.vercel?.functions?.runtime ?? 'nodejs24.x',
+            ...nitroConfig?.vercel?.functions,
+          },
+        }),
+  },
   output: {
     ...nitroConfig?.output,
     dir: normalizePath(resolve(workspaceRoot, '.vercel', 'output')),

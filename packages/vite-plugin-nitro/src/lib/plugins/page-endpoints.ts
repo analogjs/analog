@@ -27,8 +27,24 @@ export function pageEndpointsPlugin() {
           }
         }
 
+        // In h3 v2 / Nitro v3, event.node is undefined during prerendering
+        // (which uses the fetch-based pipeline, not Node.js http). We use
+        // optional chaining so that page endpoints work in both Node.js
+        // server and fetch-based prerender contexts.
+        // Nitro v3 no longer guarantees the private `nitro/deps/ofetch`
+        // subpath that older codegen relied on.
+        //
+        // Page loaders expect Nitro-style `$fetch` semantics (parsed data plus
+        // internal relative-route support), so construct a request-local fetch
+        // using public APIs:
+        // - `createFetch` from `ofetch` for `$fetch` behavior
+        // - `fetchWithEvent` from `h3` for internal Nitro request routing
+        //
+        // This avoids both unstable private Nitro imports and assumptions about
+        // a global runtime `$fetch` being available during prerender.
         const code = `
-            import { defineEventHandler } from 'h3';
+            import { defineHandler, fetchWithEvent } from 'h3';
+            import { createFetch } from 'ofetch';
 
             ${
               fileExports.includes('load')
@@ -46,18 +62,25 @@ export function pageEndpointsPlugin() {
                 : `
                 export const action = () => {
                   return {};
-                }              
+                }
               `
             }
 
-            export default defineEventHandler(async(event) => {
+            export default defineHandler(async(event) => {
+              const serverFetch = createFetch({
+                fetch: (resource, init) => {
+                  const url = resource instanceof Request ? resource.url : resource.toString();
+                  return fetchWithEvent(event, url, init);
+                }
+              });
+
               if (event.method === 'GET') {
                 try {
                   return await load({
                     params: event.context.params,
-                    req: event.node.req,
-                    res: event.node.res,
-                    fetch: $fetch,
+                    req: event.node?.req,
+                    res: event.node?.res,
+                    fetch: serverFetch,
                     event
                   });
                 } catch(e) {
@@ -68,15 +91,15 @@ export function pageEndpointsPlugin() {
                 try {
                   return await action({
                     params: event.context.params,
-                    req: event.node.req,
-                    res: event.node.res,
-                    fetch: $fetch,
+                    req: event.node?.req,
+                    res: event.node?.res,
+                    fetch: serverFetch,
                     event
                   });
                 } catch(e) {
                   console.error(\` An error occurred: \${e}\`)
                   throw e;
-                }               
+                }
               }
             });
           `;

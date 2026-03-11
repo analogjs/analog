@@ -8,7 +8,11 @@ import {
 
 import { from, of } from 'rxjs';
 
-import { injectBaseURL, injectAPIPrefix } from '@analogjs/router/tokens';
+import {
+  injectBaseURL,
+  injectAPIPrefix,
+  injectInternalServerFetch,
+} from '@analogjs/router/tokens';
 
 import { makeCacheKey } from './cache-key';
 
@@ -29,11 +33,13 @@ export function requestContextInterceptor(
   const apiPrefix = injectAPIPrefix();
   const baseUrl = injectBaseURL();
   const transferState = inject(TransferState);
+  const nitroGlobal = globalThis as typeof globalThis & { $fetch?: any };
+  const internalFetch = injectInternalServerFetch();
+  const serverFetch = internalFetch ?? nitroGlobal.$fetch;
 
   // during prerendering with Nitro
   if (
-    typeof global !== 'undefined' &&
-    global.$fetch &&
+    serverFetch &&
     baseUrl &&
     (req.url.startsWith('/') ||
       req.url.startsWith(baseUrl) ||
@@ -47,26 +53,28 @@ export function requestContextInterceptor(
     const responseType =
       req.responseType === 'arraybuffer' ? 'arrayBuffer' : req.responseType;
 
-    return from(
-      global.$fetch
+    return from<Promise<HttpResponse<unknown>>>(
+      serverFetch
         .raw(fetchUrl, {
           method: req.method as any,
           body: req.body ? req.body : undefined,
           params: requestUrl.searchParams,
           responseType,
-          headers: req.headers.keys().reduce((hdrs, current) => {
-            return {
-              ...hdrs,
-              [current]: req.headers.get(current),
-            };
-          }, {}),
+          headers: req.headers
+            .keys()
+            .reduce((hdrs: Record<string, string | null>, current: string) => {
+              return {
+                ...hdrs,
+                [current]: req.headers.get(current),
+              };
+            }, {}),
         })
-        .then((res) => {
+        .then((res: any) => {
           const cacheResponse = {
             body: res._data,
             headers: new HttpHeaders(res.headers),
-            status: 200,
-            statusText: 'OK',
+            status: res.status ?? 200,
+            statusText: res.statusText ?? 'OK',
             url: fetchUrl,
           };
           const transferResponse = new HttpResponse(cacheResponse);

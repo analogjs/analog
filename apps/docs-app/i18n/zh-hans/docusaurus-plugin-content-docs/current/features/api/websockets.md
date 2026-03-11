@@ -91,9 +91,9 @@ WebSocket 路由与 API 路由的路径相同。例如，`src/server/routes/api/
 
 ```typescript
 // src/server/routes/api/sse.ts
-import { defineEventHandler, createEventStream } from 'h3';
+import { defineHandler, createEventStream } from 'h3';
 
-export default defineEventHandler(async (event) => {
+export default defineHandler(async (event) => {
   const eventStream = createEventStream(event);
 
   const interval = setInterval(async () => {
