@@ -1,3 +1,21 @@
+# [3.0.0-alpha.1](https://github.com/analogjs/analog/compare/v2.4.0-alpha.3...v3.0.0-alpha.1) (2026-03-11)
+
+### Features
+
+- release 3.0.0-alpha.1 ([9b02f44](https://github.com/analogjs/analog/commit/9b02f442ee5ce7be92ed326aa038b136a6bf9319))
+
+### BREAKING CHANGES
+
+- Nitro and h2 dependencies have been updated
+
+BEFORE:
+
+Nitro is on v2, h2 is on v1
+
+AFTER:
+
+Nitro is on v3, h2 is on v2
+
 # [2.4.0-alpha.3](https://github.com/analogjs/analog/compare/v2.4.0-alpha.2...v2.4.0-alpha.3) (2026-03-11)
 
 ### Features
