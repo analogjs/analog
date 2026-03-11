@@ -1,3 +1,9 @@
+# [2.4.0-alpha.2](https://github.com/analogjs/analog/compare/v2.4.0-alpha.1...v2.4.0-alpha.2) (2026-03-11)
+
+### Features
+
+- update Nitro to v3 alpha and h3 to v2 alpha ([bac5729](https://github.com/analogjs/analog/commit/bac57297068e978db01e6e8fda4c1173c4b950fe))
+
 # [2.4.0-alpha.1](https://github.com/analogjs/analog/compare/v2.3.1...v2.4.0-alpha.1) (2026-03-10)
 
 ### Bug Fixes
