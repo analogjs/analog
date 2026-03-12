@@ -1,3 +1,9 @@
+# [2.4.0-beta.7](https://github.com/analogjs/analog/compare/v2.4.0-beta.6...v2.4.0-beta.7) (2026-03-12)
+
+### Bug Fixes
+
+- **platform:** separate disabling highlighting from content discovery ([#2110](https://github.com/analogjs/analog/issues/2110)) ([618c42c](https://github.com/analogjs/analog/commit/618c42cf7bc859e552cb1a3b02c6092c18e99e21))
+
 # [2.4.0-beta.6](https://github.com/analogjs/analog/compare/v2.4.0-beta.5...v2.4.0-beta.6) (2026-03-11)
 
 ### Bug Fixes
