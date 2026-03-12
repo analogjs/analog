@@ -48,6 +48,94 @@ export function contentPlugin(
   let config: UserConfig;
   let root: string;
 
+  const contentDiscoveryPlugins: Plugin[] = [
+    {
+      name: 'analog-content-glob-routes',
+      config(_config) {
+        config = _config;
+        root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
+      },
+      transform(code) {
+        if (code.includes('ANALOG_CONTENT_FILE_LIST')) {
+          const contentFilesList: string[] = globSync(
+            [
+              `${root}/src/content/**/*.md`,
+              ...(options?.additionalContentDirs || [])?.map(
+                (glob) => `${workspaceRoot}${glob}/**/*.md`,
+              ),
+            ],
+            { dot: true },
+          );
+
+          const eagerImports: string[] = [];
+
+          contentFilesList.forEach((module, index) => {
+            // CRITICAL: tinyglobby returns relative paths like "apps/blog-app/src/content/file.md"
+            // These MUST be converted to absolute paths for ES module imports
+            // Otherwise Node.js treats "apps" as a package name and throws "Cannot find package 'apps'"
+            const absolutePath = module.startsWith('/')
+              ? module
+              : `${workspaceRoot}/${module}`;
+            eagerImports.push(
+              `import { default as analog_module_${index} } from "${absolutePath}?analog-content-list=true";`,
+            );
+          });
+
+          let result = code.replace(
+            'let ANALOG_CONTENT_FILE_LIST = {};',
+            `
+            let ANALOG_CONTENT_FILE_LIST = {${contentFilesList.map(
+              (module, index) =>
+                `"${module.replace(root, '')}": analog_module_${index}`,
+            )}};
+          `,
+          );
+
+          if (!code.includes('analog_module_')) {
+            result = `${eagerImports.join('\n')}\n${result}`;
+          }
+
+          return {
+            code: result,
+            map: { mappings: '' },
+          };
+        }
+
+        return;
+      },
+    },
+    {
+      name: 'analogjs-invalidate-content-dirs',
+      configureServer(server) {
+        function invalidateContent(path: string) {
+          if (path.includes(normalizePath(`/content/`))) {
+            server.moduleGraph.fileToModulesMap.forEach((mods) => {
+              mods.forEach((mod) => {
+                if (
+                  mod.id?.includes('analogjs') &&
+                  mod.id?.includes('content')
+                ) {
+                  server.moduleGraph.invalidateModule(mod);
+
+                  mod.importers.forEach((imp) => {
+                    server.moduleGraph.invalidateModule(imp);
+                  });
+                }
+              });
+            });
+
+            server.ws.send({
+              type: 'full-reload',
+            });
+          }
+        }
+
+        server.watcher.on('add', invalidateContent);
+        server.watcher.on('unlink', invalidateContent);
+      },
+    },
+  ];
+
   if (!highlighter) {
     return [
       {
@@ -82,6 +170,7 @@ export function contentPlugin(
           return;
         },
       },
+      ...contentDiscoveryPlugins,
     ];
   }
 
@@ -182,90 +271,6 @@ export function contentPlugin(
         )}`;
       },
     },
-    {
-      name: 'analog-content-glob-routes',
-      config(_config) {
-        config = _config;
-        root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
-      },
-      transform(code) {
-        if (code.includes('ANALOG_CONTENT_FILE_LIST')) {
-          const contentFilesList: string[] = globSync(
-            [
-              `${root}/src/content/**/*.md`,
-              ...(options?.additionalContentDirs || [])?.map(
-                (glob) => `${workspaceRoot}${glob}/**/*.md`,
-              ),
-            ],
-            { dot: true },
-          );
-
-          const eagerImports: string[] = [];
-
-          contentFilesList.forEach((module, index) => {
-            // CRITICAL: tinyglobby returns relative paths like "apps/blog-app/src/content/file.md"
-            // These MUST be converted to absolute paths for ES module imports
-            // Otherwise Node.js treats "apps" as a package name and throws "Cannot find package 'apps'"
-            const absolutePath = module.startsWith('/')
-              ? module
-              : `${workspaceRoot}/${module}`;
-            eagerImports.push(
-              `import { default as analog_module_${index} } from "${absolutePath}?analog-content-list=true";`,
-            );
-          });
-
-          let result = code.replace(
-            'let ANALOG_CONTENT_FILE_LIST = {};',
-            `
-            let ANALOG_CONTENT_FILE_LIST = {${contentFilesList.map(
-              (module, index) =>
-                `"${module.replace(root, '')}": analog_module_${index}`,
-            )}};
-          `,
-          );
-
-          if (!code.includes('analog_module_')) {
-            result = `${eagerImports.join('\n')}\n${result}`;
-          }
-
-          return {
-            code: result,
-            map: { mappings: '' },
-          };
-        }
-
-        return;
-      },
-    },
-    {
-      name: 'analogjs-invalidate-content-dirs',
-      configureServer(server) {
-        function invalidateContent(path: string) {
-          if (path.includes(normalizePath(`/content/`))) {
-            server.moduleGraph.fileToModulesMap.forEach((mods) => {
-              mods.forEach((mod) => {
-                if (
-                  mod.id?.includes('analogjs') &&
-                  mod.id?.includes('content')
-                ) {
-                  server.moduleGraph.invalidateModule(mod);
-
-                  mod.importers.forEach((imp) => {
-                    server.moduleGraph.invalidateModule(imp);
-                  });
-                }
-              });
-            });
-
-            server.ws.send({
-              type: 'full-reload',
-            });
-          }
-        }
-
-        server.watcher.on('add', invalidateContent);
-        server.watcher.on('unlink', invalidateContent);
-      },
-    },
+    ...contentDiscoveryPlugins,
   ];
 }
