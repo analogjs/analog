@@ -200,6 +200,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     filename: string,
   ) => Promise<vite.PreprocessCSSResult>;
   let pendingCompilation: Promise<void> | null;
+  let compilationLock = Promise.resolve();
 
   function angularPlugin(): Plugin {
     let isProd = false;
@@ -895,6 +896,24 @@ export function angular(options?: PluginOptions): Plugin[] {
   }
 
   async function performCompilation(config: ResolvedConfig, ids?: string[]) {
+    let resolve: (() => unknown) | undefined;
+    const previousLock = compilationLock;
+    compilationLock = new Promise<void>((r) => {
+      resolve = r;
+    });
+    try {
+      await previousLock;
+      await _doPerformCompilation(config, ids);
+    } finally {
+      resolve!();
+    }
+  }
+
+  /**
+   * This method share mutable state and performs the actual compilation work.
+   * It should not be called concurrently. Use `performCompilation` which wraps this method in a lock to ensure only one compilation runs at a time.
+   */
+  async function _doPerformCompilation(config: ResolvedConfig, ids?: string[]) {
     if (pluginOptions.useAngularCompilationAPI) {
       await performAngularCompilation(config);
       return;
