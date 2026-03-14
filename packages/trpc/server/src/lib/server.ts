@@ -14,8 +14,8 @@ import type {
 } from '@trpc/server';
 import { TRPCError } from '@trpc/server';
 import { createURL } from 'ufo';
-import type { H3Event } from 'h3';
-import { HTTPError, defineHandler } from 'h3';
+import type { H3Event } from 'nitro/h3';
+import { HTTPError, defineHandler } from 'nitro/h3';
 import type { TRPCResponse } from '@trpc/server/rpc';
 
 type MaybePromise<T> = T | Promise<T>;
