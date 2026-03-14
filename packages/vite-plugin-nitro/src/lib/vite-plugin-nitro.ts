@@ -44,6 +44,14 @@ function createNitroMiddlewareHandler(handler: string): NitroEventHandler {
 }
 
 function createRollupBeforeHook(externalEntries: string[]) {
+  // Match both exact entries and subpath imports (e.g. 'rxjs' matches
+  // 'rxjs/operators'). Rollup does this automatically for array entries,
+  // but Rolldown (used by Nitro v3) requires explicit subpath matching.
+  const isExternal = (source: string) =>
+    externalEntries.some(
+      (entry) => source === entry || source.startsWith(entry + '/'),
+    );
+
   return (_nitro: unknown, bundlerConfig: RollupConfig) => {
     sanitizeNitroBundlerConfig(_nitro, bundlerConfig);
 
@@ -59,9 +67,7 @@ function createRollupBeforeHook(externalEntries: string[]) {
         source: string,
         importer: string | undefined,
         isResolved: boolean,
-      ) =>
-        existing(source, importer, isResolved) ||
-        externalEntries.includes(source);
+      ) => existing(source, importer, isResolved) || isExternal(source);
     } else if (Array.isArray(existing)) {
       bundlerConfig.external = [...existing, ...externalEntries];
     } else {
@@ -186,11 +192,14 @@ function resolveClientOutputPath(
 }
 
 function toNitroSsrEntrypointSpecifier(ssrEntryPath: string) {
-  // Nitro rebundles the generated SSR entry. On Windows, a file URL preserves
-  // the importer location so relative "./assets/*" imports resolve correctly.
-  return process.platform === 'win32'
-    ? pathToFileURL(ssrEntryPath).href
-    : normalizePath(ssrEntryPath);
+  // Nitro rebundles the generated SSR entry. The path must be an absolute
+  // filesystem path with forward slashes so the bundler can resolve relative
+  // "./assets/*" imports from the SSR entry's directory.
+  //
+  // Previous versions used pathToFileURL() on Windows, but Nitro v3's
+  // Rolldown bundler cannot determine the importer directory from a file://
+  // URL, causing all relative imports to fail during the prerender build.
+  return normalizePath(ssrEntryPath);
 }
 
 function resolveBuiltSsrEntryPath(ssrOutDir: string) {
@@ -514,7 +523,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             );
           }
 
-          if (ssrBuild) {
+          // With the Vite Environment API, ssrBuild is false because the SSR
+          // config lives in environments.ssr rather than build.ssr. Apply SSR-
+          // specific Nitro config whenever SSR is enabled, regardless of the
+          // build path.
+          if (ssrBuild || options?.ssr) {
             if (process.platform === 'win32') {
               nitroConfig.noExternals = appendNoExternals(
                 nitroConfig.noExternals,

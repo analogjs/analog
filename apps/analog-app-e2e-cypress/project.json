@@ -19,7 +19,7 @@
     "e2e": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "start-server-and-test 'nx run analog-app:serve-nitro' http://localhost:3000 'nx run analog-app-e2e-cypress:cypress'"
+        "command": "WAIT_ON_TIMEOUT=30000 start-server-and-test --expect 200 'nx run analog-app:serve-nitro' http://localhost:3000 'nx run analog-app-e2e-cypress:cypress'"
       },
       "configurations": {
         "watch": {
