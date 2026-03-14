@@ -118,12 +118,14 @@ export async function buildServer(
   // Rollup handles these paths correctly on all platforms.
   //
   // The dev server already uses `builder: 'rollup'` for the same
-  // reason. Force it here too until Rolldown's resolver matures.
+  // reason. Default to Rollup here too until Rolldown's resolver
+  // matures. The caller can still opt in to Rolldown explicitly via
+  // nitroConfig.builder if their platform supports it.
   const nitro = await createNitro({
     dev: false,
-    builder: 'rollup',
     preset: process.env['BUILD_PRESET'],
     ...nitroConfig,
+    builder: nitroConfig?.builder ?? 'rollup',
   });
 
   if (options?.prerender?.postRenderingHooks) {
