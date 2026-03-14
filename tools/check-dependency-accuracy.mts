@@ -22,8 +22,9 @@ interface PackageJson {
   peerDependencies?: Record<string, string>;
 }
 
-// Packages to ignore in missing-dependency checks (framework-injected, build-time-only, etc.)
+// Packages to ignore in dependency checks (framework-injected, build-time-only, etc.)
 const GLOBAL_IGNORED = new Set([
+  // Angular runtime — always provided by the consumer's Angular install
   'tslib',
   'zone.js',
   'rxjs',
@@ -36,11 +37,32 @@ const GLOBAL_IGNORED = new Set([
   '@angular/router',
   '@angular/forms',
   '@angular/animations',
+  // Build infrastructure — expected in consumer's monorepo/project
+  'vite',
+  'vitest',
+  'typescript',
+  'esbuild',
+  '@angular/compiler-cli',
+  '@angular/build',
+  '@angular-devkit/architect',
+  '@angular-devkit/build-angular',
+  '@angular-devkit/schematics',
+  '@nx/devkit',
+  '@nx/angular',
+  '@nx/vite',
 ]);
 
-// Per-package ignored dependencies (matches ESLint config)
+// Per-package ignored dependencies — hoisted monorepo deps not declared as peer deps
 const PACKAGE_IGNORED: Record<string, Set<string>> = {
   'content-plugin': new Set(['ts-morph']),
+  'vitest-angular-tools': new Set(['semver', 'jsonc-parser']),
+  'vitest-angular': new Set(['tinyglobby']),
+  'vite-plugin-nitro': new Set(['tinyglobby', 'front-matter']),
+  router: new Set(['h3', 'nitro']),
+  platform: new Set(['tinyglobby', 'front-matter', 'prismjs']),
+  'nx-plugin': new Set(['semver']),
+  content: new Set(['mermaid']),
+  'astro-angular': new Set(['astro']),
 };
 
 const warnings: string[] = [];
@@ -56,7 +78,7 @@ function extractImports(filePath: string): Set<string> {
   //        require('package')
   //        export ... from 'package'
   const staticRe =
-    /(?:import|export)\s+(?:[\s\S]*?\s+from\s+)?['"]([^'"]+)['"]/g;
+    /(?<!@)(?:import|export)\s+(?:[\s\S]*?\s+from\s+)?['"]([^'"]+)['"]/g;
   const dynamicRe = /(?:import|require)\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
 
   for (const match of content.matchAll(staticRe)) {
@@ -104,8 +126,9 @@ async function checkPackage(pkgDir: string): Promise<void> {
   const srcDir = join(pkgDir, 'src');
   if (!existsSync(srcDir)) return;
 
-  const declaredDeps = new Set<string>([
-    ...Object.keys(pkgJson.dependencies || {}),
+  const regularDeps = new Set<string>(Object.keys(pkgJson.dependencies || {}));
+  const allDeclaredDeps = new Set<string>([
+    ...regularDeps,
     ...Object.keys(pkgJson.peerDependencies || {}),
   ]);
 
@@ -119,6 +142,9 @@ async function checkPackage(pkgDir: string): Promise<void> {
       '**/dist/**',
       '**/*.spec.ts',
       '**/*.test.ts',
+      '**/*.spec.*.ts',
+      '**/*.test.*.ts',
+      '**/*__template__*',
     ],
   })) {
     const imports = extractImports(file);
@@ -130,21 +156,24 @@ async function checkPackage(pkgDir: string): Promise<void> {
     }
   }
 
-  // Check for missing dependencies
+  // Check for missing dependencies (imported but not declared)
   for (const used of usedPackages) {
-    if (!declaredDeps.has(used) && !ignoredForPkg.has(used)) {
+    if (!allDeclaredDeps.has(used) && !ignoredForPkg.has(used)) {
       warnings.push(
         `${pkgJson.name}: "${used}" is imported but not in package.json`,
       );
     }
   }
 
-  // Check for obsolete dependencies
-  for (const declared of declaredDeps) {
+  // Check for obsolete dependencies (declared but not imported).
+  // Only checks regular deps — peer deps are declarations for consumers
+  // and may not be directly imported by the package itself.
+  for (const declared of regularDeps) {
     if (
       !usedPackages.has(declared) &&
       !GLOBAL_IGNORED.has(declared) &&
-      !ignoredForPkg.has(declared)
+      !ignoredForPkg.has(declared) &&
+      !declared.startsWith('@analogjs/')
     ) {
       warnings.push(
         `${pkgJson.name}: "${declared}" is in package.json but not imported in source`,

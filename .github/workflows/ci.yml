@@ -55,7 +55,7 @@ jobs:
       - name: Lint
         run: pnpm lint
       - name: Lint (type-aware)
-        run: pnpm lint:typeaware
+        run: pnpm lint:types
       - name: Lint JSON metadata
         run: pnpm lint:json
       - name: Check module boundaries
@@ -63,7 +63,7 @@ jobs:
       - name: Check dependency accuracy
         run: pnpm lint:deps
       - name: Lint Angular HTML templates
-        run: pnpx eslint
+        run: pnpm exec eslint
 
   build:
     runs-on: ubuntu-latest
