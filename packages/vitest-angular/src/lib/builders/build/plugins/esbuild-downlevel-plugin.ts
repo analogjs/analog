@@ -1,17 +1,14 @@
-export async function esbuildDownlevelPlugin() {
-  const { transformWithEsbuild } = await (Function(
-    'return import("vite")',
-  )() as Promise<typeof import('vite')>);
+import { transformSync } from 'oxc-transform';
+
+export function downlevelPlugin() {
   return {
-    name: 'analogs-vitest-esbuild-downlevel-plugin',
-    async transform(_code: string, id: string) {
+    name: 'analogjs-vitest-oxc-downlevel-plugin',
+    transform(_code: string, id: string) {
       if (_code.includes('async (')) {
-        const { code, map } = await transformWithEsbuild(_code, id, {
-          loader: 'js',
-          format: 'esm',
+        const { code, map } = transformSync(id, _code, {
+          lang: 'js',
           target: 'es2016',
           sourcemap: true,
-          sourcefile: id,
         });
 
         return {
@@ -24,3 +21,6 @@ export async function esbuildDownlevelPlugin() {
     },
   };
 }
+
+/** @deprecated Use {@link downlevelPlugin} instead. */
+export const esbuildDownlevelPlugin = downlevelPlugin;
