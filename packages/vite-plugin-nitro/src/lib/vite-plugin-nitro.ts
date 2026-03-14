@@ -151,10 +151,11 @@ function sanitizeNitroBundlerConfig(
   const VALID_ROLLUP_PLACEHOLDER = /^\[(?:name|hash|format|ext)\]$/;
   const chunkFileNames = (output as Record<string, unknown>)['chunkFileNames'];
   if (typeof chunkFileNames === 'function') {
+    const originalFn = chunkFileNames as (...args: unknown[]) => unknown;
     (output as Record<string, unknown>)['chunkFileNames'] = (
       ...args: unknown[]
     ) => {
-      const result = (chunkFileNames as Function)(...args);
+      const result = originalFn(...args);
       if (typeof result !== 'string') return result;
       return result.replace(/\[[^\]]+\]/g, (match: string) =>
         VALID_ROLLUP_PLACEHOLDER.test(match)
