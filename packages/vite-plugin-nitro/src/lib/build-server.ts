@@ -54,12 +54,25 @@ export async function buildServer(
   nitroConfig?: NitroConfig,
   routeSourceFiles?: Record<string, string>,
 ) {
-  // Let Nitro pick its default builder (Rolldown when available, Rollup
-  // otherwise). Earlier Nitro v3 alphas had Rolldown resolver issues, but
-  // those are resolved in the beta series. The caller can still override
-  // via nitroConfig.builder if needed.
+  // ── Force Rollup as the server bundler ────────────────────────────
+  //
+  // Nitro v3 defaults to Rolldown when available. Rolldown is faster,
+  // but its module resolver cannot resolve relative chunk imports
+  // (e.g. `./assets/core-DTazUigR.js`) from a rebundled SSR entry on
+  // Windows. The prerender build fails with:
+  //
+  //   [RESOLVE_ERROR] Could not resolve './assets/core-DTazUigR.js'
+  //     in ../../dist/apps/blog-app/ssr/main.server.js
+  //
+  // This is a known Rolldown limitation with cross-directory relative
+  // paths on Windows (backslash vs forward-slash normalisation).
+  // Rollup handles these paths correctly on all platforms.
+  //
+  // The dev server already uses `builder: 'rollup'` for the same
+  // reason. Force it here too until Rolldown's resolver matures.
   const nitro = await createNitro({
     dev: false,
+    builder: 'rollup',
     preset: process.env['BUILD_PRESET'],
     ...nitroConfig,
   });

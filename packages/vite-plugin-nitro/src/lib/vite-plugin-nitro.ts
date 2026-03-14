@@ -43,10 +43,30 @@ function createNitroMiddlewareHandler(handler: string): NitroEventHandler {
   };
 }
 
+/**
+ * Creates a `rollup:before` hook that marks specified packages as external
+ * in Nitro's bundler config (applied to both the server build and the
+ * prerender build).
+ *
+ * ## Subpath matching (Rolldown compatibility)
+ *
+ * When `bundlerConfig.external` is an **array**, Rollup automatically
+ * prefix-matches entries — `'rxjs'` in the array will also externalise
+ * `'rxjs/operators'`, `'rxjs/internal/Observable'`, etc.
+ *
+ * Rolldown (the default bundler in Nitro v3) does **not** do this. It
+ * treats array entries as exact strings. To keep behaviour consistent
+ * across both bundlers, the **function** branch already needed explicit
+ * subpath matching. We now use the same `isExternal` helper for all
+ * branches so that `'rxjs'` reliably matches `'rxjs/operators'`
+ * regardless of whether the existing `external` value is a function,
+ * array, or absent.
+ *
+ * Without this, the Nitro prerender build fails on Windows CI with:
+ *
+ *   [RESOLVE_ERROR] Could not resolve 'rxjs/operators'
+ */
 function createRollupBeforeHook(externalEntries: string[]) {
-  // Match both exact entries and subpath imports (e.g. 'rxjs' matches
-  // 'rxjs/operators'). Rollup does this automatically for array entries,
-  // but Rolldown (used by Nitro v3) requires explicit subpath matching.
   const isExternal = (source: string) =>
     externalEntries.some(
       (entry) => source === entry || source.startsWith(entry + '/'),
@@ -191,14 +211,32 @@ function resolveClientOutputPath(
   return resolve(workspaceRoot, 'dist', rootDir, 'client');
 }
 
+/**
+ * Converts the built SSR entry path into a specifier that Nitro's bundler
+ * can resolve, including all relative `./assets/*` chunk imports inside
+ * the entry.
+ *
+ * The returned path **must** be an absolute filesystem path with forward
+ * slashes (e.g. `D:/a/analog/dist/apps/blog-app/ssr/main.server.js`).
+ * This lets Rollup/Rolldown determine the entry's directory and resolve
+ * sibling chunk imports like `./assets/core-DTazUigR.js` correctly.
+ *
+ * ## Why not pathToFileURL() on Windows?
+ *
+ * Earlier versions converted the path to a `file:///D:/a/...` URL on
+ * Windows, which worked with Nitro v2 + Rollup. Nitro v3 switched its
+ * default bundler to Rolldown, and Rolldown does **not** extract the
+ * importer directory from `file://` URLs. This caused every relative
+ * import inside the SSR entry to fail during the prerender build:
+ *
+ *   [RESOLVE_ERROR] Could not resolve './assets/core-DTazUigR.js'
+ *     in ../../dist/apps/blog-app/ssr/main.server.js
+ *
+ * `normalizePath()` (from Vite) simply converts backslashes to forward
+ * slashes, which both Rollup and Rolldown handle correctly on all
+ * platforms.
+ */
 function toNitroSsrEntrypointSpecifier(ssrEntryPath: string) {
-  // Nitro rebundles the generated SSR entry. The path must be an absolute
-  // filesystem path with forward slashes so the bundler can resolve relative
-  // "./assets/*" imports from the SSR entry's directory.
-  //
-  // Previous versions used pathToFileURL() on Windows, but Nitro v3's
-  // Rolldown bundler cannot determine the importer directory from a file://
-  // URL, causing all relative imports to fail during the prerender build.
   return normalizePath(ssrEntryPath);
 }
 
@@ -523,11 +561,43 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             );
           }
 
-          // With the Vite Environment API, ssrBuild is false because the SSR
-          // config lives in environments.ssr rather than build.ssr. Apply SSR-
-          // specific Nitro config whenever SSR is enabled, regardless of the
-          // build path.
-          if (ssrBuild || options?.ssr) {
+          // ── SSR / prerender Nitro config ─────────────────────────────
+          //
+          // This block configures Nitro for builds that rebundle the SSR
+          // entry (main.server.{js,mjs}). That happens in two cases:
+          //
+          //   1. Full SSR apps  — `options.ssr === true`
+          //   2. Prerender-only — no runtime SSR, but the prerender build
+          //      still imports the SSR entry to render static pages.
+          //
+          // The original gate was `if (ssrBuild)`, which checks the Vite
+          // top-level `build.ssr` flag. That worked with the legacy
+          // single-pass build but breaks with two newer code paths:
+          //
+          //   a. **Vite Environment API (Vite 6+)** — SSR config lives in
+          //      `environments.ssr.build.ssr`, not `build.ssr`, so
+          //      `ssrBuild` is always `false`.
+          //   b. **Prerender-only apps** (e.g. blog-app) — `options.ssr`
+          //      is `false`, but prerender routes exist and the prerender
+          //      build still processes the SSR entry.
+          //
+          // Without this block:
+          //   - `rxjs` is never externalised → RESOLVE_ERROR in the
+          //     Nitro prerender build (especially on Windows CI).
+          //   - `moduleSideEffects` for zone.js is never set → zone.js
+          //     side-effects may be tree-shaken.
+          //   - The handlers list is not reassembled with page endpoints
+          //     + the renderer catch-all.
+          //
+          // The widened condition covers all three code paths:
+          //   - `ssrBuild`                           → legacy closeBundle
+          //   - `options?.ssr`                        → Environment API SSR
+          //   - `nitroConfig.prerender?.routes?.length` → prerender-only
+          if (
+            ssrBuild ||
+            options?.ssr ||
+            nitroConfig.prerender?.routes?.length
+          ) {
             if (process.platform === 'win32') {
               nitroConfig.noExternals = appendNoExternals(
                 nitroConfig.noExternals,
