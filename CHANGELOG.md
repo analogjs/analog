@@ -1,3 +1,15 @@
+# [2.4.0-beta.8](https://github.com/analogjs/analog/compare/v2.4.0-beta.7...v2.4.0-beta.8) (2026-03-13)
+
+### Features
+
+- update vite to stable v8.0.0 ([#2111](https://github.com/analogjs/analog/issues/2111)) ([cf35c65](https://github.com/analogjs/analog/commit/cf35c658a3966a514e95aa2c0e4c9c514999c4bd))
+
+# [2.4.0-beta.7](https://github.com/analogjs/analog/compare/v2.4.0-beta.6...v2.4.0-beta.7) (2026-03-12)
+
+### Bug Fixes
+
+- **platform:** separate disabling highlighting from content discovery ([#2110](https://github.com/analogjs/analog/issues/2110)) ([618c42c](https://github.com/analogjs/analog/commit/618c42cf7bc859e552cb1a3b02c6092c18e99e21))
+
 # [2.4.0-beta.6](https://github.com/analogjs/analog/compare/v2.4.0-beta.5...v2.4.0-beta.6) (2026-03-11)
 
 ### Bug Fixes
