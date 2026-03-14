@@ -34,7 +34,7 @@
     "h3": "2.0.1-rc.16",
     "ofetch": "2.0.0-alpha.3",
     "xmlbuilder2": "^4.0.3",
-    "esbuild": "^0.27.3",
+    "oxc-parser": "^0.119.0",
     "radix3": "^1.1.2",
     "defu": "^6.1.4"
   },
