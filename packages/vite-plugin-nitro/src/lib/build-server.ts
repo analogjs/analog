@@ -54,16 +54,14 @@ export async function buildServer(
   nitroConfig?: NitroConfig,
   routeSourceFiles?: Record<string, string>,
 ) {
+  // Let Nitro pick its default builder (Rolldown when available, Rollup
+  // otherwise). Earlier Nitro v3 alphas had Rolldown resolver issues, but
+  // those are resolved in the beta series. The caller can still override
+  // via nitroConfig.builder if needed.
   const nitro = await createNitro({
     dev: false,
     preset: process.env['BUILD_PRESET'],
     ...nitroConfig,
-    // Nitro v3 alpha prefers `rolldown` when available, but its resolver can
-    // fail rebundling the generated SSR entry under `dist/.../main.server.js`
-    // with Vite 8 / Rolldown-specific "Tsconfig not found" resolve errors.
-    // Default production server builds back to Nitro's Rollup builder unless
-    // the caller explicitly opts into a different builder.
-    builder: nitroConfig?.builder ?? 'rollup',
   });
 
   if (options?.prerender?.postRenderingHooks) {

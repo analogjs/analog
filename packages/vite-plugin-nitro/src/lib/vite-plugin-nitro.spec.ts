@@ -446,13 +446,13 @@ describe('nitro', () => {
       );
     });
 
-    it('should use the .vercel output paths when preset is vercel-edge', async () => {
+    it('should use the .vercel output paths when preset is vercel', async () => {
       // Arrange
       vi.mock('process');
       process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
-      const plugin = nitro({}, { preset: 'vercel-edge' });
+      const plugin = nitro({}, { preset: 'vercel' });
 
       // Act
       await runConfigAndCloseBundle(plugin);
@@ -461,7 +461,7 @@ describe('nitro', () => {
       expect(buildServerImportSpy).toHaveBeenCalledWith(
         {},
         expect.objectContaining({
-          preset: 'vercel-edge',
+          preset: 'vercel',
           output: {
             dir: '/custom-root-directory/.vercel/output',
             publicDir: '/custom-root-directory/.vercel/output/static',

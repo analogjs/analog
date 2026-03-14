@@ -64,19 +64,28 @@ export interface ResolveHTTPRequestOptions<TRouter extends AnyRouter> {
   };
 }
 
-function getNodeRequestResponse(event: H3Event) {
+/**
+ * Extracts the Node.js IncomingMessage from the h3 event.
+ *
+ * In h3 v2, `event.node` is only populated in Node.js server contexts (not in
+ * fetch-based prerendering or edge runtimes). The Node request is still
+ * required here because tRPC's `resolveHTTPResponse` expects Node-style
+ * `req.headers` and the `onError` callback exposes `req` to consumers.
+ *
+ * Response writing uses a web-standard `Response` return instead, so
+ * `event.node.res` is no longer needed.
+ */
+function getNodeRequest(event: H3Event) {
   const req = event.node?.req;
-  const res = event.node?.res;
 
-  if (!req || !res) {
+  if (!req) {
     throw new HTTPError({
       status: 500,
-      statusText:
-        'createTrpcNitroHandler requires a Node.js request/response context.',
+      statusText: 'createTrpcNitroHandler requires a Node.js request context.',
     });
   }
 
-  return { req, res };
+  return req;
 }
 
 async function readRequestBody(event: H3Event) {
@@ -127,7 +136,7 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
   batching,
 }: ResolveHTTPRequestOptions<TRouter>) {
   return defineHandler(async (event) => {
-    const { req, res } = getNodeRequestResponse(event);
+    const req = getNodeRequest(event);
     const $url = createURL(event.path || req.url || event.url.toString());
 
     const path = getPath(event);
@@ -173,14 +182,22 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
 
     const { status, headers, body } = httpResponse;
 
-    res.statusCode = status;
-
+    // Return a web-standard Response instead of mutating event.node.res
+    // directly. h3 v2 natively handles Response return values, and this
+    // avoids depending on the Node.js ServerResponse for output.
+    const responseHeaders = new Headers();
     if (headers) {
       Object.keys(headers).forEach((key) => {
-        res.setHeader(key, headers[key]!);
+        const value = headers[key]!;
+        // tRPC headers may be string or string[]; Headers.set() requires
+        // a single string, so join array values with ", " (RFC 7230 §3.2.6).
+        responseHeaders.set(
+          key,
+          Array.isArray(value) ? value.join(', ') : value,
+        );
       });
     }
 
-    return body;
+    return new Response(body ?? null, { status, headers: responseHeaders });
   });
 }

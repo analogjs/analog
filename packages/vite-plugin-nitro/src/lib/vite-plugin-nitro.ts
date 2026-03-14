@@ -45,7 +45,7 @@ function createNitroMiddlewareHandler(handler: string): NitroEventHandler {
 
 function createRollupBeforeHook(externalEntries: string[]) {
   return (_nitro: unknown, bundlerConfig: RollupConfig) => {
-    removeInvalidRollupCodeSplitting(_nitro, bundlerConfig);
+    sanitizeNitroBundlerConfig(_nitro, bundlerConfig);
 
     if (externalEntries.length === 0) {
       return;
@@ -83,46 +83,85 @@ function appendNoExternals(
     : noExternals;
 }
 
-function removeInvalidRollupCodeSplitting(
+/**
+ * Patches Nitro's internal Rollup/Rolldown bundler config to work around
+ * incompatibilities in the Nitro v3 alpha series.
+ *
+ * Called from the `rollup:before` hook, this function runs against the *final*
+ * bundler config that Nitro assembles for its server/prerender builds — it
+ * does NOT touch the normal Vite client or SSR environment configs.
+ *
+ * Each workaround is narrowly scoped and safe to remove once the corresponding
+ * upstream Nitro issue is resolved.
+ */
+function sanitizeNitroBundlerConfig(
   _nitro: unknown,
   bundlerConfig: RollupConfig,
 ) {
-  // Workaround for a Nitro v3 alpha bundler bug:
-  //
-  // Analog does not add `output.codeSplitting` to Nitro's Rollup config, but
-  // Nitro 3.0.1-alpha.2 builds an internal server bundler config that can
-  // still contain that key while running under Vite 8 / Rolldown. At runtime
-  // this surfaces as:
-  //
-  //   Warning: Invalid output options (1 issue found)
-  //   - For the "codeSplitting". Invalid key: Expected never but received "codeSplitting".
-  //
-  // That warning comes from Nitro's own bundler handoff, not from user config
-  // in Analog apps. We remove only the invalid `output.codeSplitting` field
-  // right before Nitro starts prerender/server builds.
-  //
-  // Why this is safe:
-  // - Analog is not relying on Nitro-side `output.codeSplitting`.
-  // - The warning path only rejects the option; removing it restores the
-  //   default Nitro/Rollup behavior instead of changing any Analog semantics.
-  // - The hook is narrowly scoped to the final Nitro bundler config, so it
-  //   does not affect the normal Vite client/SSR environment build config.
   const output = bundlerConfig['output'];
   if (!output || Array.isArray(output) || typeof output !== 'object') {
     return;
   }
 
+  // ── 1. Remove invalid `output.codeSplitting` ────────────────────────
+  //
+  // Nitro 3.0.1-alpha.2 adds `output.codeSplitting` to its internal bundler
+  // config, but Rolldown rejects it as an unknown key:
+  //
+  //   Warning: Invalid output options (1 issue found)
+  //   - For the "codeSplitting". Invalid key: Expected never but received "codeSplitting".
+  //
+  // Analog never sets this option. Removing it restores default bundler
+  // behavior without changing any Analog semantics.
   if ('codeSplitting' in output) {
     delete (output as Record<string, unknown>)['codeSplitting'];
   }
 
-  // Nitro's default server bundler config currently enables manual chunking for
-  // node_modules. Under Nitro v3 alpha + Rollup 4.59 this can crash during the
-  // prerender rebundle with "Cannot read properties of undefined (reading
-  // 'included')" while generating chunks. A single server bundle is acceptable
-  // here, so strip manualChunks until the upstream bug is fixed.
+  // ── 2. Remove invalid `output.manualChunks` ─────────────────────────
+  //
+  // Nitro's default config enables manual chunking for node_modules. Under
+  // Nitro v3 alpha + Rollup 4.59 this crashes during the prerender rebundle:
+  //
+  //   Cannot read properties of undefined (reading 'included')
+  //
+  // A single server bundle is acceptable for Analog's use case, so we strip
+  // `manualChunks` until the upstream bug is fixed.
   if ('manualChunks' in output) {
     delete (output as Record<string, unknown>)['manualChunks'];
+  }
+
+  // ── 3. Escape route params in `output.chunkFileNames` ───────────────
+  //
+  // Nitro's `getChunkName()` derives chunk filenames from route patterns,
+  // using its internal `routeToFsPath()` helper to convert route params
+  // (`:productId` → `[productId]`) and catch-alls (`**` → `[...]`).
+  //
+  // Rollup/Rolldown interprets *any* `[token]` in the string returned by a
+  // `chunkFileNames` function as a placeholder. Only a handful are valid —
+  // `[name]`, `[hash]`, `[format]`, `[ext]` — so route-derived tokens like
+  // `[productId]` or `[...]` trigger a build error:
+  //
+  //   "[productId]" is not a valid placeholder in the "output.chunkFileNames" pattern.
+  //
+  // We wrap the original function to replace non-standard `[token]` patterns
+  // with `_token_`, preserving the intended filename while avoiding the
+  // placeholder validation error.
+  //
+  // Example: `_routes/products/[productId].mjs` → `_routes/products/_productId_.mjs`
+  const VALID_ROLLUP_PLACEHOLDER = /^\[(?:name|hash|format|ext)\]$/;
+  const chunkFileNames = (output as Record<string, unknown>)['chunkFileNames'];
+  if (typeof chunkFileNames === 'function') {
+    (output as Record<string, unknown>)['chunkFileNames'] = (
+      ...args: unknown[]
+    ) => {
+      const result = (chunkFileNames as Function)(...args);
+      if (typeof result !== 'string') return result;
+      return result.replace(/\[[^\]]+\]/g, (match: string) =>
+        VALID_ROLLUP_PLACEHOLDER.test(match)
+          ? match
+          : `_${match.slice(1, -1)}_`,
+      );
+    };
   }
 }
 
@@ -252,7 +291,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         nitroConfig = {
           rootDir: normalizePath(rootDir),
           preset: buildPreset,
-          compatibilityDate: '2024-11-19',
+          compatibilityDate: '2025-11-19',
           logLevel: nitroOptions?.logLevel || 0,
           serverDir: normalizePath(`${sourceRoot}/server`),
           scanDirs: [
@@ -324,11 +363,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         };
 
         if (isVercelPreset(buildPreset)) {
-          nitroConfig = withVercelOutputAPI(
-            nitroConfig,
-            workspaceRoot,
-            buildPreset,
-          );
+          nitroConfig = withVercelOutputAPI(nitroConfig, workspaceRoot);
         }
 
         if (isCloudflarePreset(buildPreset)) {
@@ -747,28 +782,22 @@ const isVercelPreset = (buildPreset: string | undefined) =>
   process.env['VERCEL'] ||
   (buildPreset && buildPreset.toLowerCase().includes('vercel'));
 
+// Nitro v3 consolidates the old `vercel-edge` preset into `vercel` with
+// fluid compute enabled by default, so a single preset covers both
+// serverless and edge deployments.
 const withVercelOutputAPI = (
   nitroConfig: NitroConfig | undefined,
   workspaceRoot: string,
-  buildPreset: string | undefined,
 ) => ({
   ...nitroConfig,
-  preset:
-    nitroConfig?.preset ??
-    (buildPreset?.toLowerCase().includes('vercel-edge')
-      ? 'vercel-edge'
-      : 'vercel'),
+  preset: nitroConfig?.preset ?? 'vercel',
   vercel: {
     ...nitroConfig?.vercel,
-    ...(buildPreset?.toLowerCase().includes('vercel-edge')
-      ? {}
-      : {
-          entryFormat: nitroConfig?.vercel?.entryFormat ?? 'node',
-          functions: {
-            runtime: nitroConfig?.vercel?.functions?.runtime ?? 'nodejs24.x',
-            ...nitroConfig?.vercel?.functions,
-          },
-        }),
+    entryFormat: nitroConfig?.vercel?.entryFormat ?? 'node',
+    functions: {
+      runtime: nitroConfig?.vercel?.functions?.runtime ?? 'nodejs24.x',
+      ...nitroConfig?.vercel?.functions,
+    },
   },
   output: {
     ...nitroConfig?.output,
@@ -779,9 +808,13 @@ const withVercelOutputAPI = (
   },
 });
 
+// Nitro v3 uses underscore-separated preset names (e.g. `cloudflare_pages`),
+// but we accept both hyphen and underscore forms for backwards compatibility.
 const isCloudflarePreset = (buildPreset: string | undefined) =>
   process.env['CF_PAGES'] ||
-  (buildPreset && buildPreset.toLowerCase().includes('cloudflare-pages'));
+  (buildPreset &&
+    (buildPreset.toLowerCase().includes('cloudflare-pages') ||
+      buildPreset.toLowerCase().includes('cloudflare_pages')));
 
 const withCloudflareOutput = (nitroConfig: NitroConfig | undefined) => ({
   ...nitroConfig,
