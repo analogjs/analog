@@ -55,7 +55,8 @@ function extractImports(filePath: string): Set<string> {
   //        import('package')           (dynamic imports)
   //        require('package')
   //        export ... from 'package'
-  const staticRe = /(?:import|export)\s+(?:[\s\S]*?\s+from\s+)?['"]([^'"]+)['"]/g;
+  const staticRe =
+    /(?:import|export)\s+(?:[\s\S]*?\s+from\s+)?['"]([^'"]+)['"]/g;
   const dynamicRe = /(?:import|require)\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
 
   for (const match of content.matchAll(staticRe)) {
