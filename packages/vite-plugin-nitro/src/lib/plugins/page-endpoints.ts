@@ -43,7 +43,7 @@ export function pageEndpointsPlugin() {
         // This avoids both unstable private Nitro imports and assumptions about
         // a global runtime `$fetch` being available during prerender.
         const code = `
-            import { defineHandler, fetchWithEvent } from 'h3';
+            import { defineHandler, fetchWithEvent } from 'nitro/h3';
             import { createFetch } from 'ofetch';
 
             ${
