@@ -143,7 +143,7 @@
     "@vitest/coverage-v8": "4.0.18",
     "@vitest/ui": "4.0.18",
     "all-contributors-cli": "^6.26.1",
-    "astro": "6.0.2",
+    "astro": "6.0.4",
     "autoprefixer": "^10.4.27",
     "conventional-changelog": "^7.2.0",
     "conventional-changelog-cli": "^5.0.0",
