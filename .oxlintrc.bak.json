@@ -1,10 +1,8 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "vitest", "import"],
+  "plugins": ["typescript"],
   "categories": {
-    "correctness": "error",
-    "style": "error",
-    "perf": "error"
+    "correctness": "off"
   },
   "env": {
     "builtin": true,
@@ -14,6 +12,25 @@
   },
   "ignorePatterns": ["**/dist", "**/out-tsc", "**/node_modules"],
   "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+      "rules": {
+        "@nx/enforce-module-boundaries": [
+          "error",
+          {
+            "enforceBuildableLibDependency": true,
+            "allow": [],
+            "depConstraints": [
+              {
+                "sourceTag": "*",
+                "onlyDependOnLibsWithTags": ["*"]
+              }
+            ]
+          }
+        ]
+      },
+      "jsPlugins": ["@nx/eslint-plugin"]
+    },
     {
       "files": [
         "**/*.ts",
@@ -98,29 +115,39 @@
     },
     {
       "files": [
-        "**/*.spec.ts",
-        "**/*.test.ts",
-        "**/*.spec.tsx",
-        "**/*.test.tsx"
+        "**/apps/analog-app/src/**/*.ts",
+        "**/apps/analog-app/src/**/*.tsx"
       ],
       "rules": {
-        "vitest/expect-expect": "error",
-        "vitest/no-conditional-expect": "error",
-        "vitest/no-focused-tests": "error",
-        "vitest/no-identical-title": "error",
-        "vitest/no-import-node-test": "error",
-        "vitest/no-standalone-expect": "error",
-        "vitest/valid-describe-callback": "error",
-        "vitest/valid-expect": "error",
-        "vitest/valid-title": "error",
-        "vitest/no-commented-out-tests": "warn",
-        "vitest/no-disabled-tests": "warn",
-        "vitest/prefer-to-be": "warn",
-        "vitest/prefer-to-contain": "warn",
-        "vitest/prefer-to-have-length": "warn",
-        "vitest/prefer-hooks-in-order": "warn",
-        "vitest/prefer-hooks-on-top": "warn"
-      }
+        "@angular-eslint/component-selector": [
+          "error",
+          {
+            "type": "element",
+            "prefix": ["analogjs", "app", "storybook"],
+            "style": "kebab-case"
+          }
+        ]
+      },
+      "jsPlugins": ["@angular-eslint/eslint-plugin"]
+    },
+    {
+      "files": [
+        "**/apps/analog-app/src/stories/**/*.ts",
+        "**/apps/analog-app/src/stories/**/*.tsx"
+      ],
+      "rules": {
+        "@angular-eslint/template/prefer-control-flow": "error",
+        "@typescript-eslint/consistent-type-imports": [
+          "error",
+          {
+            "disallowTypeAnnotations": false
+          }
+        ]
+      },
+      "jsPlugins": [
+        "@angular-eslint/eslint-plugin",
+        "@angular-eslint/eslint-plugin-template"
+      ]
     }
   ]
 }

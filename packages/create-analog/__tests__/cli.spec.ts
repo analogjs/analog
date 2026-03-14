@@ -32,13 +32,13 @@ templateFiles.push('.git');
 // _gitignore is renamed to .gitignore
 templateFiles = templateFiles
   .map((filePath) => (filePath === '_gitignore' ? '.gitignore' : filePath))
-  .sort();
+  .sort((a, b) => a.localeCompare(b));
 // starter with tailwind
 const templateFilesTailwind = [
   ...templateFiles,
   'tailwind.config.ts',
   'postcss.config.js',
-].sort();
+].sort((a, b) => a.localeCompare(b));
 beforeAll(() => remove(genPath));
 afterEach(() => remove(genPath));
 
