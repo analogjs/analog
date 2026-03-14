@@ -12,9 +12,12 @@ async function viteBuilder(
   context: BuilderContext,
 ): Promise<BuilderOutput> {
   const { createBuilder } = await Function('return import("vite")')();
+  if (!context.target) {
+    throw new Error('Builder must be executed with a target');
+  }
   const projectConfig = await context.getProjectMetadata(context.target);
   const projectName = context.target.project;
-  const configuration = context.target?.configuration || 'production';
+  const configuration = context.target.configuration || 'production';
   const buildTargetSpecifier = `::${configuration}`;
   const buildTarget = targetFromTargetString(
     buildTargetSpecifier,

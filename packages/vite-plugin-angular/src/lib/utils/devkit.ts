@@ -13,9 +13,9 @@ const angularFullVersion = Number(
   `${angularMajor}${padVersion(angularMinor)}${padVersion(angularPatch)}`,
 );
 let sourceFileCache: any;
-let cjt: Function;
+let cjt: (...args: any[]) => any;
 let jt: any;
-let createAngularCompilation: Function;
+let createAngularCompilation: (...args: any[]) => any;
 
 if (angularMajor < 17) {
   throw new Error('AnalogJS is not compatible with Angular v16 and lower');

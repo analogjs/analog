@@ -53,7 +53,17 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Lint
-        run: pnpm exec nx run-many --target lint --all --exclude=content,platform,router
+        run: pnpm lint:check
+      - name: Lint (type-aware)
+        run: pnpm lint:types
+      - name: Lint Angular HTML templates
+        run: pnpm lint:legacy
+      - name: Lint JSON metadata
+        run: pnpm lint:json
+      - name: Check module boundaries
+        run: pnpm lint:boundaries
+      - name: Check dependency accuracy
+        run: pnpm lint:deps
 
   build:
     runs-on: ubuntu-latest

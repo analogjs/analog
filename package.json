@@ -18,6 +18,13 @@
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "contributors:add": "all-contributors add",
     "contributors:generate": "all-contributors generate",
+    "lint": "pnpm run /^lint:/",
+    "lint:check": "oxlint .",
+    "lint:legacy": "pnpm exec eslint",
+    "lint:types": "node --experimental-strip-types tools/toggle-base-url.mts --start && oxlint --type-aware .; EXIT=$?; node --experimental-strip-types tools/toggle-base-url.mts --end; exit $EXIT",
+    "lint:json": "node --experimental-strip-types tools/validate-plugin-json.mts",
+    "lint:boundaries": "node --experimental-strip-types tools/check-module-boundaries.mts",
+    "lint:deps": "node --experimental-strip-types tools/check-dependency-accuracy.mts",
     "prettify": "prettier --write .",
     "prettier:check": "prettier --check .",
     "build:test": "nx build ng-app --skip-nx-cache"
@@ -136,6 +143,7 @@
     "@types/prismjs": "^1.26.6",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
+    "@types/semver": "^7.7.0",
     "@typescript-eslint/eslint-plugin": "8.57.0",
     "@typescript-eslint/parser": "8.57.0",
     "@typescript-eslint/utils": "^8.57.0",
@@ -151,7 +159,6 @@
     "cypress": "15.11.0",
     "esbuild": "0.27.3",
     "eslint": "^10.0.3",
-    "eslint-config-prettier": "10.1.8",
     "eslint-plugin-cypress": "6.1.0",
     "eslint-plugin-playwright": "^2.9.0",
     "eslint-plugin-storybook": "10.2.17",
@@ -174,6 +181,8 @@
     "nitro": "3.0.1-alpha.2",
     "nx": "22.6.0-beta.11",
     "ofetch": "2.0.0-alpha.3",
+    "oxlint": "^1.55.0",
+    "oxlint-tsgolint": "^0.16.0",
     "playwright": "^1.58.2",
     "postcss": "^8.5.8",
     "postcss-import": "~16.1.1",
@@ -198,7 +207,7 @@
     "ts-dedent": "^2.2.0",
     "ts-morph": "^27.0.2",
     "ts-node": "10.9.2",
-    "typescript": "5.9.3",
+    "typescript": "6.0.1-rc",
     "typescript-eslint": "^8.57.0",
     "unstorage": "2.0.0-alpha.6",
     "vite": "^8.0.0-beta.18",
@@ -226,6 +235,7 @@
       "sharp"
     ],
     "overrides": {
+      "typescript": "6.0.1-rc",
       "@typescript-eslint/type-utils": "8.57.0"
     }
   }

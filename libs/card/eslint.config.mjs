@@ -1,3 +1,7 @@
+/**
+ * ESLint config for Angular HTML template linting only.
+ * All JS/TS linting is handled by oxlint (see .oxlintrc.json).
+ */
 import { FlatCompat } from '@eslint/eslintrc';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -10,41 +14,7 @@ const compat = new FlatCompat({
 });
 
 export default [
-  {
-    ignores: ['**/dist', '**/out-tsc'],
-  },
   ...baseConfig,
-  ...compat
-    .config({
-      extends: [
-        'plugin:@nx/angular',
-        'plugin:@angular-eslint/template/process-inline-templates',
-      ],
-    })
-    .map((config) => ({
-      ...config,
-      files: ['**/*.ts'],
-      rules: {
-        ...config.rules,
-        '@angular-eslint/directive-selector': [
-          'error',
-          {
-            type: 'attribute',
-            prefix: 'lib',
-            style: 'camelCase',
-          },
-        ],
-        '@angular-eslint/component-selector': [
-          'error',
-          {
-            type: 'element',
-            prefix: 'lib',
-            style: 'kebab-case',
-          },
-        ],
-        '@angular-eslint/prefer-standalone': 'off',
-      },
-    })),
   ...compat
     .config({
       extends: ['plugin:@nx/angular-template'],
@@ -56,7 +26,4 @@ export default [
         ...config.rules,
       },
     })),
-  {
-    ignores: ['**/vite.config.*.timestamp*', '**/vitest.config.*.timestamp*'],
-  },
 ];

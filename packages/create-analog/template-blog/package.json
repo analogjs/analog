@@ -42,7 +42,7 @@
     "@angular/cli": "^21.0.0",
     "@angular/compiler-cli": "^21.0.0",
     "jsdom": "^22.0.0",
-    "typescript": "~5.9.0",
+    "typescript": "6.0.1-rc",
     "vite": "^8.0.0",
     "vite-tsconfig-paths": "^4.2.0",
     "vitest": "^4.0.0"

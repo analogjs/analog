@@ -10,7 +10,7 @@
     "useDefineForClassFields": false,
     "moduleResolution": "bundler",
     "paths": {
-      "@analogjs/content": ["./node_modules/@analogjs/content"]
+      "@analogjs/content": ["../../node_modules/@analogjs/content"]
     }
   },
   "exclude": ["vite.config.ts", "**/*.test.ts", "**/*.spec.ts"],
