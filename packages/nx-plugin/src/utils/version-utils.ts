@@ -20,11 +20,15 @@ export function getInstalledPackageVersion(
     installedPackageVersion === 'latest' ||
     installedPackageVersion === 'next'
   ) {
-    return clean(defaultVersion) ?? coerce(defaultVersion).version;
+    const cleaned = clean(defaultVersion ?? '');
+    if (cleaned) return cleaned;
+    const coerced = coerce(defaultVersion);
+    if (coerced) return coerced.version;
+    return null;
   }
 
-  return (
-    (raw ? installedPackageVersion : clean(installedPackageVersion)) ??
-    coerce(installedPackageVersion).version
-  );
+  const result = raw ? installedPackageVersion : clean(installedPackageVersion);
+  if (result) return result;
+  const coerced = coerce(installedPackageVersion);
+  return coerced ? coerced.version : null;
 }

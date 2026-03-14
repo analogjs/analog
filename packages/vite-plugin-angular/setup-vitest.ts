@@ -50,8 +50,8 @@ function wrapTestInZone(testBody: string | any[] | undefined) {
     return;
   }
 
-  const wrappedFunc = function wrappedFunc() {
-    return testProxyZone.run(testBody, null, arguments);
+  const wrappedFunc = function wrappedFunc(...args: any[]) {
+    return testProxyZone.run(testBody, null, args);
   };
   try {
     Object.defineProperty(wrappedFunc, 'length', {
@@ -176,7 +176,7 @@ function fixtureVitestSerializer(fixture: any) {
       : fixture.componentRef.componentType
   ) as any;
 
-  let inputsData: string = '';
+  let inputsData = '';
 
   const selector = Reflect.getOwnPropertyDescriptor(
     componentType,

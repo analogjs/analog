@@ -4,6 +4,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { injectRouteEndpointURL } from './inject-route-endpoint-url';
 
 @Directive({
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: 'form[action],form[method]',
   host: {
     '(submit)': `submitted($event)`,

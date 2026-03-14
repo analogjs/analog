@@ -36,6 +36,8 @@ interface ExecutorsJson {
 }
 
 interface MigrationsJson {
+  generators?: Record<string, PluginEntry>;
+  schematics?: Record<string, PluginEntry>;
   packageJsonUpdates?: Record<string, unknown>;
 }
 
@@ -125,12 +127,19 @@ function validateExecutors(filePath: string): void {
 
 function validateMigrations(filePath: string): void {
   const content: MigrationsJson = JSON.parse(readFileSync(filePath, 'utf-8'));
+  const baseDir = dirname(filePath);
   const updates = content.packageJsonUpdates || {};
 
   for (const [version] of Object.entries(updates)) {
     if (!valid(version)) {
       error(filePath, `Migration version "${version}" is not valid semver`);
     }
+  }
+
+  // Validate any migration generators/schematics entries
+  const entries = content.generators || content.schematics || {};
+  if (Object.keys(entries).length > 0) {
+    validateEntries(filePath, baseDir, entries, 'migration');
   }
 
   checkedCount++;

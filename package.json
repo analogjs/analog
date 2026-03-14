@@ -19,6 +19,7 @@
     "contributors:add": "all-contributors add",
     "contributors:generate": "all-contributors generate",
     "lint": "oxlint .",
+    "lint:fix": "oxlint --fix --quiet .",
     "lint:typeaware": "oxlint --type-aware .",
     "lint:json": "node --experimental-strip-types tools/validate-plugin-json.mts",
     "lint:boundaries": "node --experimental-strip-types tools/check-module-boundaries.mts",
@@ -141,6 +142,7 @@
     "@types/prismjs": "^1.26.6",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
+    "@types/semver": "^7.7.0",
     "@typescript-eslint/eslint-plugin": "8.57.0",
     "@typescript-eslint/parser": "8.57.0",
     "@typescript-eslint/utils": "^8.57.0",
@@ -204,7 +206,7 @@
     "ts-dedent": "^2.2.0",
     "ts-morph": "^27.0.2",
     "ts-node": "10.9.2",
-    "typescript": "5.9.3",
+    "typescript": "6.0.1-rc",
     "typescript-eslint": "^8.57.0",
     "unstorage": "2.0.0-alpha.6",
     "vite": "^8.0.0-beta.18",
@@ -232,6 +234,7 @@
       "sharp"
     ],
     "overrides": {
+      "typescript": "6.0.1-rc",
       "@typescript-eslint/type-utils": "8.57.0"
     }
   }

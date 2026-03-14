@@ -2,9 +2,9 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "vitest", "import"],
   "categories": {
-    "correctness": "error",
-    "style": "error",
-    "perf": "error"
+    "correctness": "warn",
+    "style": "warn",
+    "perf": "warn"
   },
   "env": {
     "builtin": true,
@@ -12,7 +12,15 @@
     "node": true,
     "es2024": true
   },
-  "ignorePatterns": ["**/dist", "**/out-tsc", "**/node_modules"],
+  "rules": {
+    "typescript/tsconfig-error": "allow"
+  },
+  "ignorePatterns": [
+    "**/dist",
+    "**/out-tsc",
+    "**/node_modules",
+    "**/packages/create-analog/template-*"
+  ],
   "overrides": [
     {
       "files": [

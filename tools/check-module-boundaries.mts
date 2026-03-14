@@ -33,9 +33,8 @@ async function main(): Promise<void> {
   checkCircularDependencies(graph);
   checkAppImports(graph);
 
-  console.log(
-    `Checked ${Object.keys(graph.nodes).length} projects, ${Object.values(graph.dependencies).flat().length} dependencies.`,
-  );
+  const depCount = Object.values(graph.dependencies).reduce((sum, deps) => sum + deps.length, 0);
+  console.log(`Checked ${Object.keys(graph.nodes).length} projects, ${depCount} dependencies.`);
 
   if (errors.length > 0) {
     console.error(`\n${errors.length} boundary violation(s):\n`);

@@ -12,7 +12,8 @@
  */
 
 import { readFileSync, existsSync } from 'node:fs';
-import { join, dirname, basename, relative } from 'node:path';
+import { join, dirname, basename } from 'node:path';
+import { builtinModules } from 'node:module';
 import { glob } from 'node:fs/promises';
 
 interface PackageJson {
@@ -42,7 +43,6 @@ const PACKAGE_IGNORED: Record<string, Set<string>> = {
   'content-plugin': new Set(['ts-morph']),
 };
 
-const errors: string[] = [];
 const warnings: string[] = [];
 let checkedCount = 0;
 
@@ -50,64 +50,26 @@ function extractImports(filePath: string): Set<string> {
   const content = readFileSync(filePath, 'utf-8');
   const imports = new Set<string>();
 
-  // Match: import ... from 'package'
+  // Match: import ... from 'package'  (including multiline imports)
   //        import 'package'
+  //        import('package')           (dynamic imports)
   //        require('package')
   //        export ... from 'package'
-  const importRe = /(?:import|export)\s+(?:.*?\s+from\s+)?['"]([^'"]+)['"]/g;
-  const requireRe = /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+  const staticRe = /(?:import|export)\s+(?:[\s\S]*?\s+from\s+)?['"]([^'"]+)['"]/g;
+  const dynamicRe = /(?:import|require)\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
 
-  for (const match of content.matchAll(importRe)) {
+  for (const match of content.matchAll(staticRe)) {
     imports.add(match[1]);
   }
-  for (const match of content.matchAll(requireRe)) {
+  for (const match of content.matchAll(dynamicRe)) {
     imports.add(match[1]);
   }
 
   return imports;
 }
 
-// Node.js built-in modules
-const NODE_BUILTINS = new Set([
-  'assert',
-  'buffer',
-  'child_process',
-  'cluster',
-  'console',
-  'constants',
-  'crypto',
-  'dgram',
-  'dns',
-  'domain',
-  'events',
-  'fs',
-  'http',
-  'http2',
-  'https',
-  'module',
-  'net',
-  'os',
-  'path',
-  'perf_hooks',
-  'process',
-  'punycode',
-  'querystring',
-  'readline',
-  'repl',
-  'stream',
-  'string_decoder',
-  'sys',
-  'timers',
-  'tls',
-  'tty',
-  'url',
-  'util',
-  'v8',
-  'vm',
-  'wasi',
-  'worker_threads',
-  'zlib',
-]);
+// Node.js built-in modules (derived from runtime, always up-to-date)
+const NODE_BUILTINS = new Set(builtinModules.filter((m) => !m.startsWith('_')));
 
 function getPackageName(specifier: string): string | null {
   // Skip relative imports, node: protocol builtins, and template literal fragments
@@ -213,23 +175,13 @@ async function main(): Promise<void> {
 
   console.log(`Checked ${checkedCount} packages.`);
 
-  if (errors.length > 0) {
-    console.error(`\n${errors.length} error(s):\n`);
-    for (const err of errors) {
-      console.error(`  ${err}`);
-    }
-  }
-
   if (warnings.length > 0) {
     console.warn(`\n${warnings.length} warning(s):\n`);
     for (const w of warnings) {
       console.warn(`  ${w}`);
     }
-  }
-
-  if (errors.length > 0) {
     process.exit(1);
-  } else if (warnings.length === 0) {
+  } else {
     console.log('All dependency checks passed.');
   }
 }
