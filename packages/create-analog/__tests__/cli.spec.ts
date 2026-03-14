@@ -82,7 +82,9 @@ test('successfully scaffolds a project based on angular starter template', () =>
     [projectName, '--template', 'latest', '--skipTailwind', 'false'],
     { cwd: __dirname },
   );
-  const generatedFiles = readdirSync(genPath).sort();
+  const generatedFiles = readdirSync(genPath).sort((a, b) =>
+    a.localeCompare(b),
+  );
 
   // Assertions
   expect(stdout).toContain(`Scaffolding project in ${genPath}`);
@@ -94,7 +96,9 @@ test('works with the -t alias', () => {
     [projectName, '-t', 'latest', '--skipTailwind', 'false'],
     { cwd: __dirname },
   );
-  const generatedFiles = readdirSync(genPath).sort();
+  const generatedFiles = readdirSync(genPath).sort((a, b) =>
+    a.localeCompare(b),
+  );
 
   // Assertions
   expect(stdout).toContain(`Scaffolding project in ${genPath}`);
