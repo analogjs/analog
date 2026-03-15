@@ -1,7 +1,5 @@
 import { Component, signal } from '@angular/core';
 
-import { FormAction } from '@analogjs/router';
-
 import { type NewsletterSubmitResponse } from './newsletter.server';
 
 type FormErrors =
@@ -13,7 +11,6 @@ type FormErrors =
 @Component({
   selector: 'analogjs-newsletter-page',
   standalone: true,
-  imports: [FormAction],
   template: `
     <h3>Newsletter Signup</h3>
 
@@ -22,12 +19,7 @@ type FormErrors =
         Thanks for signing up, {{ signedUpEmail() }}!
       </div>
     } @else {
-      <form
-        method="post"
-        (onSuccess)="onSuccess($any($event))"
-        (onError)="onError($any($event))"
-        (onStateChange)="errors.set(undefined)"
-      >
+      <form (submit)="submit($event)">
         <div>
           <label for="email"> Email </label>
           <input type="email" name="email" />
@@ -45,6 +37,35 @@ type FormErrors =
 export default class NewsletterComponent {
   signedUpEmail = signal('');
   errors = signal<FormErrors>(undefined);
+
+  async submit(event: SubmitEvent) {
+    event.preventDefault();
+    this.errors.set(undefined);
+
+    const form = event.target as HTMLFormElement;
+    const body = new FormData(form);
+    const response = await fetch(
+      `/api/_analog/pages${window.location.pathname}`,
+      {
+        method: 'POST',
+        body,
+      },
+    );
+
+    if (response.redirected) {
+      window.location.assign(new URL(response.url).pathname);
+      return;
+    }
+
+    if (response.ok) {
+      this.onSuccess((await response.json()) as NewsletterSubmitResponse);
+      return;
+    }
+
+    if (response.headers.get('X-Analog-Errors')) {
+      this.onError((await response.json()) as FormErrors);
+    }
+  }
 
   onSuccess(res: NewsletterSubmitResponse) {
     this.signedUpEmail.set(res.email);
