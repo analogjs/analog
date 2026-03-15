@@ -50,4 +50,6 @@ export {
   generateRouteManifest,
   generateRouteTableDeclaration,
   detectSchemaExports,
+  formatManifestSummary,
 } from './lib/route-manifest';
+export { RouteLinkPipe } from './lib/route-link.pipe';

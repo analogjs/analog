@@ -7,6 +7,7 @@ import {
   generateRouteManifest,
   generateRouteTableDeclaration,
   detectSchemaExports,
+  formatManifestSummary,
 } from '../../../router/src/lib/route-manifest';
 import type { RouteSchemaInfo } from '../../../router/src/lib/route-manifest';
 
@@ -90,6 +91,10 @@ export function routeGenerationPlugin(options?: Options): Plugin {
 
     const manifest = generateRouteManifest(allFiles, detectSchemas);
     const declaration = generateRouteTableDeclaration(manifest);
+
+    if (manifest.routes.length > 0) {
+      console.log(formatManifestSummary(manifest));
+    }
 
     const outDir = join(root, '.analog');
 

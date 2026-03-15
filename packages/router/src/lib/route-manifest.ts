@@ -182,7 +182,51 @@ export function generateRouteManifest(
     return a.path.localeCompare(b.path);
   });
 
+  // Dev diagnostics: warn about schema-shape mismatches
+  for (const route of routes) {
+    if (route.schemas.hasParamsSchema && route.params.length === 0) {
+      console.warn(
+        `[Analog] Route '${route.path}' exports routeParamsSchema` +
+          ` but has no dynamic params in the filename.`,
+      );
+    }
+  }
+
   return { routes };
+}
+
+/**
+ * Produces a human-readable summary of the generated route manifest.
+ * Useful for build output and debugging.
+ */
+export function formatManifestSummary(manifest: RouteManifest): string {
+  const lines: string[] = [];
+  const total = manifest.routes.length;
+  const withSchemas = manifest.routes.filter(
+    (r) => r.schemas.hasParamsSchema || r.schemas.hasQuerySchema,
+  ).length;
+  const staticCount = manifest.routes.filter(
+    (r) => r.params.length === 0,
+  ).length;
+  const dynamicCount = total - staticCount;
+
+  lines.push(`[Analog] Generated typed routes:`);
+  lines.push(
+    `  ${total} routes (${staticCount} static, ${dynamicCount} dynamic)`,
+  );
+  if (withSchemas > 0) {
+    lines.push(`  ${withSchemas} with schema validation`);
+  }
+
+  for (const route of manifest.routes) {
+    const flags: string[] = [];
+    if (route.schemas.hasParamsSchema) flags.push('params-schema');
+    if (route.schemas.hasQuerySchema) flags.push('query-schema');
+    const suffix = flags.length > 0 ? ` [${flags.join(', ')}]` : '';
+    lines.push(`  ${route.path}${suffix}`);
+  }
+
+  return lines.join('\n');
 }
 
 function getRouteWeight(path: string): number {

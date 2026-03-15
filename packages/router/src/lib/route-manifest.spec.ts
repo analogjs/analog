@@ -6,6 +6,7 @@ import {
   generateRouteManifest,
   generateRouteTableDeclaration,
   detectSchemaExports,
+  formatManifestSummary,
 } from './route-manifest';
 
 describe('filenameToRoutePath', () => {
@@ -505,5 +506,77 @@ const routeParamsSchema = v.object({ id: v.string() });
     // Simple regex doesn't filter comments — acceptable for v1
     const result = detectSchemaExports(content);
     expect(result.hasParamsSchema).toBe(true);
+  });
+});
+
+describe('formatManifestSummary', () => {
+  it('should produce a human-readable summary', () => {
+    const manifest = generateRouteManifest(
+      [
+        '/app/routes/index.ts',
+        '/app/routes/about.ts',
+        '/src/app/pages/users/[id].page.ts',
+      ],
+      (filename) => {
+        if (filename.includes('[id]')) {
+          return { hasParamsSchema: true, hasQuerySchema: false };
+        }
+        return { hasParamsSchema: false, hasQuerySchema: false };
+      },
+    );
+
+    const summary = formatManifestSummary(manifest);
+
+    expect(summary).toContain('[Analog] Generated typed routes:');
+    expect(summary).toContain('3 routes (2 static, 1 dynamic)');
+    expect(summary).toContain('1 with schema validation');
+    expect(summary).toContain('/users/[id] [params-schema]');
+    expect(summary).toContain('/about');
+    expect(summary).toContain('/');
+  });
+
+  it('should not show schema count when none present', () => {
+    const manifest = generateRouteManifest(['/app/routes/about.ts']);
+
+    const summary = formatManifestSummary(manifest);
+
+    expect(summary).not.toContain('with schema');
+    expect(summary).toContain('1 routes (1 static, 0 dynamic)');
+  });
+});
+
+describe('dev diagnostics', () => {
+  it('should warn when schema exists on static route', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    generateRouteManifest(['/app/routes/about.ts'], () => ({
+      hasParamsSchema: true,
+      hasQuerySchema: false,
+    }));
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'exports routeParamsSchema but has no dynamic params',
+      ),
+    );
+
+    spy.mockRestore();
+  });
+
+  it('should not warn when schema matches dynamic params', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    generateRouteManifest(['/src/app/pages/users/[id].page.ts'], () => ({
+      hasParamsSchema: true,
+      hasQuerySchema: false,
+    }));
+
+    // Should not have warnings about schema mismatch
+    const schemaCalls = spy.mock.calls.filter((call) =>
+      String(call[0]).includes('routeParamsSchema'),
+    );
+    expect(schemaCalls).toHaveLength(0);
+
+    spy.mockRestore();
   });
 });
