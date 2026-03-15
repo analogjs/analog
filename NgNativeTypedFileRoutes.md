@@ -5,7 +5,7 @@
 | #   | Date       | Focus                                                                                | Status  |
 | --- | ---------- | ------------------------------------------------------------------------------------ | ------- |
 | 1   | 2026-03-15 | Core implementation: route-manifest, route-path, typed-router, Vite plugin, 67 tests | Done    |
-| 2   |            |                                                                                      | Pending |
+| 2   | 2026-03-15 | Schema-aware codegen, definePageLoad, detectSchemaExports, 84 tests total            | Done    |
 | 3   |            |                                                                                      | Pending |
 | 4   |            |                                                                                      | Pending |
 
@@ -1167,12 +1167,98 @@ export {};
 
 #### Remaining Work for Future Iterations
 
+- [x] `routeQuerySchema` and `routeParamsSchema` exports from route files
+- [x] Typed page-load contracts (`definePageLoad`)
+- [x] Schema-aware codegen with `StandardSchemaV1.InferOutput` references
+- [x] Schema detection via `detectSchemaExports()`
 - [ ] Integration test: end-to-end Vite plugin generating `.analog/routes.gen.ts`
 - [ ] TypeScript type tests: compile-time enforcement of required params
-- [ ] `routeQuerySchema` and `routeParamsSchema` exports from route files
-- [ ] Input/output type distinction (InferInput vs InferOutput from Standard Schema)
+- [ ] Input/output type distinction (InferInput vs InferOutput)
 - [ ] Typed `RouterLink` directive or component
-- [ ] Typed page-load contracts (`definePageLoad`)
 - [ ] Dev-mode diagnostics: collision warnings, schema-shape mismatches
 - [ ] Watch-mode regeneration stress testing
 - [ ] Documentation updates for `apps/docs-app`
+
+### Iteration 2 — Schema-Aware Codegen & definePageLoad (2026-03-15)
+
+Extended the typed file routes system with schema integration.
+
+#### Files Created
+
+| File                       | Package            | Purpose                                                      |
+| -------------------------- | ------------------ | ------------------------------------------------------------ |
+| `define-page-load.ts`      | `@analogjs/router` | Typed page load with Standard Schema params/query validation |
+| `define-page-load.spec.ts` | `@analogjs/router` | 7 tests covering validation, typed context, failure paths    |
+
+#### Files Modified
+
+| File                                          | Change                                                                                           |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `route-manifest.ts`                           | Added `RouteSchemaInfo`, `detectSchemaExports()`, schema-aware `generateRouteTableDeclaration()` |
+| `route-manifest.spec.ts`                      | Added 10 new tests for schema detection and schema-aware codegen                                 |
+| `route-generation-plugin.ts`                  | Reads route files and detects schema exports during codegen                                      |
+| `packages/router/src/index.ts`                | Added `RouteSchemaInfo`, `detectSchemaExports` exports                                           |
+| `packages/router/server/actions/src/index.ts` | Added `definePageLoad`, `PageLoadContext`, `DefinePageLoadOptions` exports                       |
+
+#### Schema-Aware Code Generation
+
+When a route file exports `routeParamsSchema` or `routeQuerySchema`, the generated
+`.analog/routes.gen.ts` now imports those schemas and uses `StandardSchemaV1.InferOutput`
+for precise typing instead of filename-derived defaults:
+
+```typescript
+// .analog/routes.gen.ts (auto-generated)
+import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type {
+  routeParamsSchema as _p0,
+  routeQuerySchema as _q0,
+} from '../src/app/pages/products/[id].page';
+
+declare module '@analogjs/router' {
+  interface AnalogRouteTable {
+    '/products/[id]': {
+      params: StandardSchemaV1.InferOutput<typeof _p0>;
+      query: StandardSchemaV1.InferOutput<typeof _q0>;
+    };
+    '/about': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
+  }
+}
+export {};
+```
+
+#### definePageLoad API
+
+Follows the same patterns as `defineAction` and `defineApiRoute`:
+
+```typescript
+// src/app/pages/users/[id].server.ts
+import { definePageLoad } from '@analogjs/router/server/actions';
+import * as v from 'valibot';
+
+export const routeParamsSchema = v.object({
+  id: v.pipe(v.string(), v.regex(/^\d+$/)),
+});
+
+export const routeQuerySchema = v.object({
+  tab: v.optional(v.picklist(['profile', 'settings'])),
+});
+
+export const load = definePageLoad({
+  params: routeParamsSchema,
+  query: routeQuerySchema,
+  handler: async ({ params, query, fetch }) => {
+    // params.id is typed as string (validated)
+    // query.tab is typed as 'profile' | 'settings' | undefined
+    const user = await fetch(`/api/users/${params.id}`);
+    return { user, activeTab: query.tab };
+  },
+});
+```
+
+#### Test Results
+
+- **84 tests passing** (+17 from Iteration 1)
+- **71 existing tests passing** with zero regressions

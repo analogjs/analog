@@ -38,6 +38,7 @@ export { routePath } from './lib/route-path';
 export { injectTypedRouter } from './lib/typed-router';
 export type {
   RouteParamInfo,
+  RouteSchemaInfo,
   RouteEntry,
   RouteManifest,
 } from './lib/route-manifest';
@@ -46,4 +47,5 @@ export {
   extractRouteParams,
   generateRouteManifest,
   generateRouteTableDeclaration,
+  detectSchemaExports,
 } from './lib/route-manifest';

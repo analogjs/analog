@@ -6,7 +6,9 @@ import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
 import {
   generateRouteManifest,
   generateRouteTableDeclaration,
+  detectSchemaExports,
 } from '../../../router/src/lib/route-manifest';
+import type { RouteSchemaInfo } from '../../../router/src/lib/route-manifest';
 
 import type { Options } from './options.js';
 
@@ -64,12 +66,29 @@ export function routeGenerationPlugin(options?: Options): Plugin {
     });
   }
 
+  /**
+   * Reads a route file and detects schema exports.
+   * Only checks `.ts` files (not `.md` content files).
+   */
+  function detectSchemas(relativeFilename: string): RouteSchemaInfo {
+    if (!relativeFilename.endsWith('.ts')) {
+      return { hasParamsSchema: false, hasQuerySchema: false };
+    }
+    try {
+      const absPath = join(root, relativeFilename);
+      const content = readFileSync(absPath, 'utf-8');
+      return detectSchemaExports(content);
+    } catch {
+      return { hasParamsSchema: false, hasQuerySchema: false };
+    }
+  }
+
   function generate(): void {
     const routeFiles = discoverRouteFiles();
     const contentFiles = discoverContentFiles();
     const allFiles = [...routeFiles, ...contentFiles];
 
-    const manifest = generateRouteManifest(allFiles);
+    const manifest = generateRouteManifest(allFiles, detectSchemas);
     const declaration = generateRouteTableDeclaration(manifest);
 
     const outDir = join(root, '.analog');
