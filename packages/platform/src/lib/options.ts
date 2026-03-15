@@ -50,6 +50,9 @@ export interface Options {
   /**
    * Pass configuration options to the internal `@analogjs/vite-plugin-angular`
    * plugin. Set to false to disable the internal vite plugin.
+   *
+   * Use this to configure the embedded Angular integration itself, not as the
+   * primary home for Analog-owned experimental features.
    */
   vite?: PluginOptions | false;
   nitro?: NitroConfig;
@@ -97,6 +100,68 @@ export interface Options {
    * File replacements
    */
   fileReplacements?: PluginOptions['fileReplacements'];
+  /**
+   * Experimental features. These APIs are subject to change.
+   *
+   * `@analogjs/platform` is the default rollout and orchestration surface for
+   * Analog-owned experiments. These flags may delegate to dedicated feature
+   * plugins or forward options into lower-level integrations while preserving
+   * a single Analog-first authoring surface.
+   */
+  experimental?: {
+    /**
+     * Use Angular's experimental compilation API.
+     *
+     * This is forwarded to `@analogjs/vite-plugin-angular`'s
+     * `experimental.useAngularCompilationAPI`.
+     *
+     * Also accepted at `vite.experimental.useAngularCompilationAPI`
+     * for backwards compatibility.
+     */
+    useAngularCompilationAPI?: boolean;
+
+    /**
+     * Enable JSON-LD manifest generation.
+     *
+     * When enabled, `@analogjs/platform` wires up the dedicated
+     * `@analogjs/vite-plugin-routes` plugin to scan route files for JSON-LD
+     * exports and markdown frontmatter, generating a manifest at
+     * `.analog/route-jsonld.gen.ts`.
+     */
+    jsonLdManifest?: boolean;
+
+    /**
+     * Enable typed route table generation for type-safe navigation.
+     *
+     * When enabled, `@analogjs/platform` wires up the dedicated
+     * `@analogjs/vite-plugin-routes` plugin to generate a route declarations
+     * file that augments `AnalogRouteTable` with typed params and query for
+     * each file-based route.
+     *
+     * - `true` — generates `src/routes.gen.ts` (default location)
+     * - `TypedRouterOptions` — customize output path and other settings
+     *
+     * Unlocks type-safe usage of:
+     * - `injectTypedRouter()` — navigate with autocomplete
+     * - `routePath()` — build URLs with typed params
+     * - `injectTypedParams(from)` — typed params signal
+     * - `injectTypedQuery(from)` — typed query signal
+     * - `RouteLinkPipe` — typed route links in templates
+     *
+     * Inspired by TanStack Router's `routeTree.gen.ts` codegen.
+     */
+    typedRouter?: boolean | TypedRouterOptions;
+  };
+}
+
+export interface TypedRouterOptions {
+  /**
+   * Output path for the generated route declarations file,
+   * relative to the app root.
+   *
+   * @default 'src/routes.gen.ts'
+   */
+  outFile?: string;
 }
 
 export { PrerenderContentDir, PrerenderContentFile };

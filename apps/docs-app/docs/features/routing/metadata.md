@@ -151,3 +151,42 @@ export const routeMeta: RouteMeta = {
 ```
 
 This example will allow social apps like Facebook or Twitter to display titles, descriptions, and images optimally.
+
+## JSON-LD Structured Data
+
+Routes can also provide JSON-LD structured data through `routeMeta.jsonLd`:
+
+```ts
+import { Component } from '@angular/core';
+import type { RouteMeta } from '@analogjs/router';
+import type { WithContext, Article } from 'schema-dts';
+
+const articleJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'JSON-LD with Analog',
+} satisfies WithContext<Article>;
+
+export const routeMeta: RouteMeta = {
+  title: 'JSON-LD Example',
+  jsonLd: articleJsonLd,
+};
+
+@Component({
+  standalone: true,
+  template: `<h1>JSON-LD Example</h1>`,
+})
+export default class JsonLdPageComponent {}
+```
+
+You can also return multiple JSON-LD entries:
+
+```ts
+export const routeMeta: RouteMeta = {
+  jsonLd: [articleJsonLd, breadcrumbJsonLd],
+};
+```
+
+For compatibility with earlier experimental work, page modules may also export a top-level `routeJsonLd` value. The preferred API is `routeMeta.jsonLd`.
+
+Analog updates JSON-LD on route changes and includes it in SSR and prerendered HTML. For routes with `ssr: false`, JSON-LD can still be added on the client, but SEO-visible structured data is only guaranteed for SSR or prerendered routes.

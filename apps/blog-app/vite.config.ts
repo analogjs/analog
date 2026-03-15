@@ -30,6 +30,9 @@ export default defineConfig(() => {
     plugins: [
       analog({
         liveReload: true,
+        experimental: {
+          typedRouter: true,
+        },
         additionalPagesDirs: ['/libs/shared/feature'],
         additionalContentDirs: ['/libs/shared/feature/src/content'],
         content: {

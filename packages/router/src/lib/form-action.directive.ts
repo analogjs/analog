@@ -1,12 +1,21 @@
-import { Directive, inject, input, output } from '@angular/core';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { Directive, inject, input, output, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { injectRouteEndpointURL } from './inject-route-endpoint-url';
+
+export type FormActionState =
+  | 'submitting'
+  | 'error'
+  | 'redirect'
+  | 'success'
+  | 'navigate';
 
 @Directive({
   selector: 'form[action],form[method]',
   host: {
     '(submit)': `submitted($event)`,
+    '[attr.data-state]': 'currentState()',
+    '[attr.aria-busy]': 'currentState() === "submitting" ? "true" : null',
   },
   standalone: true,
 })
@@ -14,86 +23,118 @@ export class FormAction {
   action = input<string>('');
   onSuccess = output<unknown>();
   onError = output<unknown>();
-  state = output<
-    'submitting' | 'error' | 'redirect' | 'success' | 'navigate'
-  >();
+  onStateChange = output<FormActionState>();
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private path = this._getPath();
+  protected currentState = signal<FormActionState | 'idle'>('idle');
+  /** Cached during construction (injection context) so inject() works. */
+  private _endpointUrl = this.route
+    ? injectRouteEndpointURL(this.route.snapshot)
+    : undefined;
 
   submitted($event: any) {
     $event.preventDefault();
 
-    this.state.emit('submitting');
-    const body = new FormData($event.target);
+    const form = $event.target as HTMLFormElement;
+    this._emitState('submitting');
+    const body = new FormData(form);
 
-    if ($event.target.method.toUpperCase() === 'GET') {
-      this._handleGet(body, this.router.url);
+    if (form.method.toUpperCase() === 'GET') {
+      this._handleGet(body, this._getGetPath(form));
     } else {
-      this._handlePost(body, this.path, $event);
+      this._handlePost(body, this._getPostPath(form), form.method);
     }
   }
 
   private _handleGet(body: FormData, path: string) {
-    const params: Params = {};
-    body.forEach((formVal, formKey) => (params[formKey] = formVal));
-
-    this.state.emit('navigate');
-    const url = path.split('?')[0];
-    this.router.navigate([url], {
-      queryParams: params,
-      onSameUrlNavigation: 'reload',
+    const url = new URL(path, window.location.href);
+    const params = new URLSearchParams(url.search);
+    body.forEach((value, key) => {
+      params.append(key, value instanceof File ? value.name : value);
     });
+    url.search = params.toString();
+
+    this._emitState('navigate');
+    this._navigateTo(url);
   }
 
-  private _handlePost(
-    body: FormData,
-    path: string,
-    $event: { target: HTMLFormElement } & Event,
-  ) {
+  private _handlePost(body: FormData, path: string, method: string) {
     fetch(path, {
-      method: $event.target.method,
+      method,
       body,
     })
       .then((res) => {
         if (res.ok) {
           if (res.redirected) {
-            const redirectUrl = new URL(res.url).pathname;
-            this.state.emit('redirect');
-            this.router.navigate([redirectUrl]);
+            this._emitState('redirect');
+            this._navigateTo(new URL(res.url, window.location.href));
           } else if (this._isJSON(res.headers.get('Content-type'))) {
             res.json().then((result) => {
               this.onSuccess.emit(result);
-              this.state.emit('success');
+              this._emitState('success');
             });
           } else {
             res.text().then((result) => {
               this.onSuccess.emit(result);
-              this.state.emit('success');
+              this._emitState('success');
             });
           }
         } else {
           if (res.headers.get('X-Analog-Errors')) {
             res.json().then((errors: unknown) => {
               this.onError.emit(errors);
-              this.state.emit('error');
+              this._emitState('error');
             });
           } else {
-            this.state.emit('error');
+            this._emitState('error');
           }
         }
       })
       .catch((_) => {
-        this.state.emit('error');
+        this._emitState('error');
       });
   }
 
-  private _getPath() {
-    if (this.route) {
-      return injectRouteEndpointURL(this.route.snapshot).pathname;
+  private _getExplicitAction(form: HTMLFormElement) {
+    const explicitAction =
+      this.action().trim() || form.getAttribute('action')?.trim();
+    return explicitAction || undefined;
+  }
+
+  private _getGetPath(form: HTMLFormElement) {
+    return this._getExplicitAction(form) ?? this.router.url;
+  }
+
+  private _getPostPath(form: HTMLFormElement) {
+    const explicitAction = this._getExplicitAction(form);
+    if (explicitAction) {
+      return new URL(explicitAction, window.location.href).toString();
+    }
+
+    if (this._endpointUrl) {
+      return this._endpointUrl.pathname;
     }
 
     return `/api/_analog/pages${window.location.pathname}`;
+  }
+
+  private _emitState(state: FormActionState) {
+    this.currentState.set(state);
+    this.onStateChange.emit(state);
+  }
+
+  private _navigateTo(url: URL) {
+    if (url.origin === window.location.origin) {
+      void this.router.navigateByUrl(
+        `${url.pathname}${url.search}${url.hash}`,
+        {
+          onSameUrlNavigation: 'reload',
+        },
+      );
+      return;
+    }
+
+    window.location.assign(url.toString());
   }
 
   private _isJSON(contentType: string | null): boolean {

@@ -8,6 +8,20 @@ import { catchError, of } from 'rxjs';
 import { CartService } from '../cart.service';
 import type { Product } from '../products';
 
+export const routeJsonLd = (route: {
+  parent?: { paramMap: { get(name: string): string | null } };
+}) => {
+  const productId = route.parent?.paramMap.get('productId') ?? 'unknown';
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    identifier: `analog-product-${productId}`,
+    name: `Analog Product ${productId}`,
+    sku: productId,
+  };
+};
+
 @Component({
   selector: 'analogjs-product-details',
   imports: [CurrencyPipe],
@@ -33,8 +47,9 @@ export default class ProductDetailsComponent implements OnInit {
 
   ngOnInit() {
     // First get the product id from the current route.
-    const routeParams = this.route.parent!.snapshot!.paramMap;
-    const productIdFromRoute = Number(routeParams.get('productId'));
+    const productIdFromRoute = Number(
+      this.route.parent?.snapshot.paramMap.get('productId'),
+    );
 
     this.http
       .get<Product[]>('/api/v1/products')

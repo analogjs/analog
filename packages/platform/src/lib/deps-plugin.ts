@@ -7,20 +7,23 @@ import { Options } from './options.js';
 
 export function depsPlugin(options?: Options): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  const viteOptions = options?.vite === false ? undefined : options?.vite;
 
   return [
     {
       name: 'analogjs-deps-plugin',
       config() {
+        const useAngularCompilationAPI =
+          options?.experimental?.useAngularCompilationAPI ??
+          viteOptions?.experimental?.useAngularCompilationAPI;
+
         const esbuild =
-          options?.vite === false ||
-          options?.vite?.experimental?.useAngularCompilationAPI
+          options?.vite === false || useAngularCompilationAPI
             ? {}
             : { exclude: ['**/*.ts', '**/*.js'] };
 
         const oxc =
-          options?.vite === false ||
-          options?.vite?.experimental?.useAngularCompilationAPI
+          options?.vite === false || useAngularCompilationAPI
             ? {}
             : { exclude: ['**/*.ts', '**/*.js'] };
 

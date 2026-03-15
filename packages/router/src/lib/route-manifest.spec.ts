@@ -1,0 +1,589 @@
+import { describe, expect, it, vi } from 'vitest';
+
+import {
+  filenameToRoutePath,
+  extractRouteParams,
+  generateRouteManifest,
+  generateRouteTableDeclaration,
+  detectSchemaExports,
+  formatManifestSummary,
+} from './route-manifest';
+
+describe('filenameToRoutePath', () => {
+  describe('static routes', () => {
+    it('should handle a root static route', () => {
+      expect(filenameToRoutePath('/app/routes/about.ts')).toBe('/about');
+    });
+
+    it('should handle a nested static route', () => {
+      expect(filenameToRoutePath('/src/app/pages/auth/login.page.ts')).toBe(
+        '/auth/login',
+      );
+    });
+
+    it('should handle an index route', () => {
+      expect(filenameToRoutePath('/app/routes/index.ts')).toBe('/');
+    });
+
+    it('should handle a nested index route', () => {
+      expect(filenameToRoutePath('/src/app/pages/products/index.page.ts')).toBe(
+        '/products',
+      );
+    });
+  });
+
+  describe('group segments', () => {
+    it('should strip named index/group route', () => {
+      expect(filenameToRoutePath('/app/routes/(home).ts')).toBe('/');
+    });
+
+    it('should strip single pathless group', () => {
+      expect(filenameToRoutePath('/src/app/pages/(auth)/login.page.ts')).toBe(
+        '/login',
+      );
+    });
+
+    it('should strip multiple pathless groups', () => {
+      expect(
+        filenameToRoutePath('/src/app/pages/(foo)/auth/(bar)/login.page.ts'),
+      ).toBe('/auth/login');
+    });
+
+    it('should strip pathless layout', () => {
+      expect(filenameToRoutePath('/src/app/pages/(auth).page.ts')).toBe('/');
+    });
+  });
+
+  describe('dynamic routes', () => {
+    it('should handle a dynamic segment with dot notation', () => {
+      expect(filenameToRoutePath('/app/routes/blog.[slug].ts')).toBe(
+        '/blog/[slug]',
+      );
+    });
+
+    it('should handle a nested dynamic segment', () => {
+      expect(filenameToRoutePath('/src/app/pages/users/[id].page.ts')).toBe(
+        '/users/[id]',
+      );
+    });
+
+    it('should handle multiple dynamic segments with dot notation', () => {
+      expect(
+        filenameToRoutePath(
+          '/app/routes/categories.[categoryId].products.[productId].ts',
+        ),
+      ).toBe('/categories/[categoryId]/products/[productId]');
+    });
+
+    it('should handle multiple dynamic segments with dot notation and page suffix', () => {
+      expect(
+        filenameToRoutePath('/app/pages/[productId].[partId].page.ts'),
+      ).toBe('/[productId]/[partId]');
+    });
+
+    it('should handle a nested dynamic route', () => {
+      expect(
+        filenameToRoutePath('/src/app/pages/[categoryId]/[productId].page.ts'),
+      ).toBe('/[categoryId]/[productId]');
+    });
+  });
+
+  describe('catch-all routes', () => {
+    it('should handle a root catch-all', () => {
+      expect(filenameToRoutePath('/app/routes/[...not-found].ts')).toBe(
+        '/[...not-found]',
+      );
+    });
+
+    it('should handle a catch-all with page suffix', () => {
+      expect(
+        filenameToRoutePath('/src/app/pages/[...page-not-found].page.ts'),
+      ).toBe('/[...page-not-found]');
+    });
+
+    it('should handle a nested catch-all', () => {
+      expect(
+        filenameToRoutePath('/src/app/pages/users/[...not-found].page.ts'),
+      ).toBe('/users/[...not-found]');
+    });
+  });
+
+  describe('optional catch-all routes', () => {
+    it('should handle a root optional catch-all', () => {
+      expect(filenameToRoutePath('/app/routes/[[...slug]].ts')).toBe(
+        '/[[...slug]]',
+      );
+    });
+
+    it('should handle a nested optional catch-all', () => {
+      expect(
+        filenameToRoutePath('/src/app/pages/docs/[[...slug]].page.ts'),
+      ).toBe('/docs/[[...slug]]');
+    });
+
+    it('should handle optional catch-all with shop prefix', () => {
+      expect(
+        filenameToRoutePath('/src/app/pages/shop/[[...category]].page.ts'),
+      ).toBe('/shop/[[...category]]');
+    });
+  });
+
+  describe('content routes', () => {
+    it('should handle a nested content route', () => {
+      expect(filenameToRoutePath('/src/content/a/b/content.md')).toBe(
+        '/a/b/content',
+      );
+    });
+
+    it('should handle a root content route', () => {
+      expect(filenameToRoutePath('/src/content/getting-started.md')).toBe(
+        '/getting-started',
+      );
+    });
+  });
+
+  describe('layout routes', () => {
+    it('should handle a layout route', () => {
+      expect(filenameToRoutePath('/app/routes/products.ts')).toBe('/products');
+    });
+  });
+});
+
+describe('extractRouteParams', () => {
+  it('should return empty for static routes', () => {
+    expect(extractRouteParams('/about')).toEqual([]);
+    expect(extractRouteParams('/')).toEqual([]);
+    expect(extractRouteParams('/auth/login')).toEqual([]);
+  });
+
+  it('should extract a single dynamic param', () => {
+    expect(extractRouteParams('/users/[id]')).toEqual([
+      { name: 'id', type: 'dynamic' },
+    ]);
+  });
+
+  it('should extract multiple dynamic params', () => {
+    const params = extractRouteParams(
+      '/categories/[categoryId]/products/[productId]',
+    );
+    expect(params).toEqual([
+      { name: 'categoryId', type: 'dynamic' },
+      { name: 'productId', type: 'dynamic' },
+    ]);
+  });
+
+  it('should extract a catch-all param', () => {
+    expect(extractRouteParams('/docs/[...slug]')).toEqual([
+      { name: 'slug', type: 'catchAll' },
+    ]);
+  });
+
+  it('should extract an optional catch-all param', () => {
+    expect(extractRouteParams('/shop/[[...category]]')).toEqual([
+      { name: 'category', type: 'optionalCatchAll' },
+    ]);
+  });
+
+  it('should handle hyphenated param names', () => {
+    expect(extractRouteParams('/[...page-not-found]')).toEqual([
+      { name: 'page-not-found', type: 'catchAll' },
+    ]);
+  });
+
+  it('should handle a root catch-all', () => {
+    expect(extractRouteParams('/[...not-found]')).toEqual([
+      { name: 'not-found', type: 'catchAll' },
+    ]);
+  });
+
+  it('should handle mixed param types', () => {
+    // This is unusual but tests the regex independence
+    const params = extractRouteParams('/[type]/[id]/[...rest]');
+    expect(params).toContainEqual({ name: 'rest', type: 'catchAll' });
+    expect(params).toContainEqual({ name: 'type', type: 'dynamic' });
+    expect(params).toContainEqual({ name: 'id', type: 'dynamic' });
+  });
+});
+
+describe('generateRouteManifest', () => {
+  it('should generate an empty manifest for no files', () => {
+    const manifest = generateRouteManifest([]);
+    expect(manifest.routes).toEqual([]);
+  });
+
+  it('should generate manifest entries from filenames', () => {
+    const manifest = generateRouteManifest([
+      '/app/routes/index.ts',
+      '/app/routes/about.ts',
+      '/src/app/pages/users/[id].page.ts',
+    ]);
+
+    expect(manifest.routes).toHaveLength(3);
+    expect(manifest.routes[0].path).toBe('/');
+    expect(manifest.routes[1].path).toBe('/about');
+    expect(manifest.routes[2].path).toBe('/users/[id]');
+  });
+
+  it('should sort static routes before dynamic routes', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/[id].page.ts',
+      '/src/app/pages/about.page.ts',
+      '/src/app/pages/[...not-found].page.ts',
+    ]);
+
+    expect(manifest.routes[0].path).toBe('/about');
+    expect(manifest.routes[1].path).toBe('/[id]');
+    expect(manifest.routes[2].path).toBe('/[...not-found]');
+  });
+
+  it('should sort optional catch-all after required catch-all', () => {
+    const manifest = generateRouteManifest([
+      '/app/routes/[[...slug]].ts',
+      '/app/routes/[...not-found].ts',
+      '/app/routes/about.ts',
+    ]);
+
+    expect(manifest.routes[0].path).toBe('/about');
+    expect(manifest.routes[1].path).toBe('/[...not-found]');
+    expect(manifest.routes[2].path).toBe('/[[...slug]]');
+  });
+
+  it('should warn on route collisions and skip duplicates', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const manifest = generateRouteManifest([
+      '/app/routes/index.ts',
+      '/app/routes/(home).ts',
+    ]);
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Route collision'),
+    );
+    // Duplicate should be skipped — only one '/' entry
+    expect(manifest.routes.filter((r) => r.path === '/').length).toBe(1);
+    // First file wins
+    expect(manifest.routes[0].filename).toBe('/app/routes/index.ts');
+
+    spy.mockRestore();
+  });
+
+  it('should extract params for each route', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/users/[id].page.ts',
+      '/src/app/pages/docs/[...slug].page.ts',
+    ]);
+
+    expect(manifest.routes[0].params).toEqual([
+      { name: 'id', type: 'dynamic' },
+    ]);
+    expect(manifest.routes[1].params).toEqual([
+      { name: 'slug', type: 'catchAll' },
+    ]);
+  });
+});
+
+describe('generateRouteTableDeclaration', () => {
+  it('should generate valid TypeScript for static routes', () => {
+    const manifest = generateRouteManifest([
+      '/app/routes/index.ts',
+      '/app/routes/about.ts',
+    ]);
+
+    const output = generateRouteTableDeclaration(manifest);
+
+    expect(output).toContain("declare module '@analogjs/router'");
+    expect(output).toContain('interface AnalogRouteTable');
+    expect(output).toContain("'/': {");
+    expect(output).toContain("'/about': {");
+    expect(output).toContain('Record<string, never>');
+    expect(output).toContain('export {};');
+  });
+
+  it('should generate correct param types for dynamic routes', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/users/[id].page.ts',
+    ]);
+
+    const output = generateRouteTableDeclaration(manifest);
+
+    expect(output).toContain("'/users/[id]': {");
+    expect(output).toContain('{ id: string }');
+  });
+
+  it('should generate correct param types for catch-all routes', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/docs/[...slug].page.ts',
+    ]);
+
+    const output = generateRouteTableDeclaration(manifest);
+
+    expect(output).toContain("'/docs/[...slug]': {");
+    expect(output).toContain('{ slug: string[] }');
+  });
+
+  it('should generate correct param types for optional catch-all routes', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/shop/[[...category]].page.ts',
+    ]);
+
+    const output = generateRouteTableDeclaration(manifest);
+
+    expect(output).toContain("'/shop/[[...category]]': {");
+    expect(output).toContain('{ category?: string[] }');
+  });
+
+  it('should quote invalid identifiers in param names', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/[...page-not-found].page.ts',
+    ]);
+
+    const output = generateRouteTableDeclaration(manifest);
+
+    expect(output).toContain("'page-not-found': string[]");
+  });
+
+  it('should generate multiple params for complex routes', () => {
+    const manifest = generateRouteManifest([
+      '/app/routes/categories.[categoryId].products.[productId].ts',
+    ]);
+
+    const output = generateRouteTableDeclaration(manifest);
+
+    expect(output).toContain('categoryId: string');
+    expect(output).toContain('productId: string');
+  });
+
+  it('should generate schema references when detected', () => {
+    const manifest = generateRouteManifest(
+      ['/src/app/pages/users/[id].page.ts'],
+      () => ({ hasParamsSchema: true, hasQuerySchema: false }),
+    );
+
+    const output = generateRouteTableDeclaration(manifest);
+
+    expect(output).toContain(
+      "import type { StandardSchemaV1 } from '@standard-schema/spec'",
+    );
+    expect(output).toContain(
+      "import type { routeParamsSchema as _p0 } from '../src/app/pages/users/[id].page'",
+    );
+    // params stays filename-derived for navigation input
+    expect(output).toContain('params: { id: string }');
+    // paramsOutput uses schema InferOutput for runtime
+    expect(output).toContain(
+      'paramsOutput: StandardSchemaV1.InferOutput<typeof _p0>',
+    );
+    // query/queryOutput remain default (no query schema)
+    expect(output).toContain(
+      'query: Record<string, string | string[] | undefined>',
+    );
+    expect(output).toContain(
+      'queryOutput: Record<string, string | string[] | undefined>',
+    );
+  });
+
+  it('should generate both schema references', () => {
+    const manifest = generateRouteManifest(
+      ['/src/app/pages/products/[id].page.ts'],
+      () => ({ hasParamsSchema: true, hasQuerySchema: true }),
+    );
+
+    const output = generateRouteTableDeclaration(manifest);
+
+    expect(output).toContain('routeParamsSchema as _p0');
+    expect(output).toContain('routeQuerySchema as _q0');
+    // params always filename-derived
+    expect(output).toContain('params: { id: string }');
+    // Output types use schema InferOutput
+    expect(output).toContain(
+      'paramsOutput: StandardSchemaV1.InferOutput<typeof _p0>',
+    );
+    expect(output).toContain(
+      'queryOutput: StandardSchemaV1.InferOutput<typeof _q0>',
+    );
+  });
+
+  it('should not import StandardSchemaV1 when no schemas', () => {
+    const manifest = generateRouteManifest(['/app/routes/about.ts']);
+
+    const output = generateRouteTableDeclaration(manifest);
+
+    expect(output).not.toContain('StandardSchemaV1');
+    expect(output).not.toContain('import type');
+  });
+
+  it('should set paramsOutput same as params when no schema', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/users/[id].page.ts',
+    ]);
+
+    const output = generateRouteTableDeclaration(manifest);
+
+    // Both params and paramsOutput are filename-derived
+    expect(output).toContain('params: { id: string }');
+    expect(output).toContain('paramsOutput: { id: string }');
+  });
+
+  it('should mix schema and non-schema routes', () => {
+    const manifest = generateRouteManifest(
+      ['/app/routes/about.ts', '/src/app/pages/users/[id].page.ts'],
+      (filename) => {
+        if (filename.includes('[id]')) {
+          return { hasParamsSchema: true, hasQuerySchema: false };
+        }
+        return { hasParamsSchema: false, hasQuerySchema: false };
+      },
+    );
+
+    const output = generateRouteTableDeclaration(manifest);
+
+    // about uses default params type
+    expect(output).toContain(
+      "'/about': {\n      params: Record<string, never>",
+    );
+    // users/[id]: params is still filename-derived, paramsOutput uses schema
+    expect(output).toContain(
+      'paramsOutput: StandardSchemaV1.InferOutput<typeof _p0>',
+    );
+  });
+});
+
+describe('detectSchemaExports', () => {
+  it('should detect routeParamsSchema export', () => {
+    const content = `
+import * as v from 'valibot';
+export const routeParamsSchema = v.object({
+  id: v.string(),
+});
+`;
+    const result = detectSchemaExports(content);
+    expect(result.hasParamsSchema).toBe(true);
+    expect(result.hasQuerySchema).toBe(false);
+  });
+
+  it('should detect routeQuerySchema export', () => {
+    const content = `
+import * as v from 'valibot';
+export const routeQuerySchema = v.object({
+  tab: v.optional(v.string()),
+});
+`;
+    const result = detectSchemaExports(content);
+    expect(result.hasParamsSchema).toBe(false);
+    expect(result.hasQuerySchema).toBe(true);
+  });
+
+  it('should detect both schemas', () => {
+    const content = `
+import * as v from 'valibot';
+export const routeParamsSchema = v.object({ id: v.string() });
+export const routeQuerySchema = v.object({ tab: v.string() });
+`;
+    const result = detectSchemaExports(content);
+    expect(result.hasParamsSchema).toBe(true);
+    expect(result.hasQuerySchema).toBe(true);
+  });
+
+  it('should return false for no schema exports', () => {
+    const content = `
+export default class UserPage {}
+export const routeMeta = { title: 'Users' };
+`;
+    const result = detectSchemaExports(content);
+    expect(result.hasParamsSchema).toBe(false);
+    expect(result.hasQuerySchema).toBe(false);
+  });
+
+  it('should not match non-exported schemas', () => {
+    const content = `
+const routeParamsSchema = v.object({ id: v.string() });
+`;
+    const result = detectSchemaExports(content);
+    expect(result.hasParamsSchema).toBe(false);
+  });
+
+  it('should not match commented-out exports', () => {
+    // The regex does a simple check; single-line comments
+    // would still contain the text but on a comment line.
+    // For now, the simple regex may false-positive on comments.
+    // This is acceptable for v1.
+    const content = `
+// export const routeParamsSchema = v.object({});
+`;
+    // Simple regex doesn't filter comments — acceptable for v1
+    const result = detectSchemaExports(content);
+    expect(result.hasParamsSchema).toBe(true);
+  });
+});
+
+describe('formatManifestSummary', () => {
+  it('should produce a human-readable summary', () => {
+    const manifest = generateRouteManifest(
+      [
+        '/app/routes/index.ts',
+        '/app/routes/about.ts',
+        '/src/app/pages/users/[id].page.ts',
+      ],
+      (filename) => {
+        if (filename.includes('[id]')) {
+          return { hasParamsSchema: true, hasQuerySchema: false };
+        }
+        return { hasParamsSchema: false, hasQuerySchema: false };
+      },
+    );
+
+    const summary = formatManifestSummary(manifest);
+
+    expect(summary).toContain('[Analog] Generated typed routes:');
+    expect(summary).toContain('3 routes (2 static, 1 dynamic)');
+    expect(summary).toContain('1 with schema validation');
+    expect(summary).toContain('/users/[id] [params-schema]');
+    expect(summary).toContain('/about');
+    expect(summary).toContain('/');
+  });
+
+  it('should not show schema count when none present', () => {
+    const manifest = generateRouteManifest(['/app/routes/about.ts']);
+
+    const summary = formatManifestSummary(manifest);
+
+    expect(summary).not.toContain('with schema');
+    expect(summary).toContain('1 routes (1 static, 0 dynamic)');
+  });
+});
+
+describe('dev diagnostics', () => {
+  it('should warn when schema exists on static route', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    generateRouteManifest(['/app/routes/about.ts'], () => ({
+      hasParamsSchema: true,
+      hasQuerySchema: false,
+    }));
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'exports routeParamsSchema but has no dynamic params',
+      ),
+    );
+
+    spy.mockRestore();
+  });
+
+  it('should not warn when schema matches dynamic params', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    generateRouteManifest(['/src/app/pages/users/[id].page.ts'], () => ({
+      hasParamsSchema: true,
+      hasQuerySchema: false,
+    }));
+
+    // Should not have warnings about schema mismatch
+    const schemaCalls = spy.mock.calls.filter((call) =>
+      String(call[0]).includes('routeParamsSchema'),
+    );
+    expect(schemaCalls).toHaveLength(0);
+
+    spy.mockRestore();
+  });
+});

@@ -4,7 +4,6 @@ import analog from '@analogjs/platform';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, PluginOption } from 'vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import inspect from 'vite-plugin-inspect';
 
 // Only run in Netlify CI
 let base = process.env['URL'] || 'http://localhost:3000';
@@ -72,13 +71,17 @@ export default defineConfig(({ mode }) => {
         },
         vite: {
           inlineStylesExtension: 'scss',
-          experimental: {
-            useAngularCompilationAPI: false,
-          },
         },
         liveReload: true,
+        experimental: {
+          useAngularCompilationAPI: false,
+          typedRouter: true,
+        },
         nitro: {
           routeRules: {
+            '/client': {
+              ssr: false,
+            },
             '/cart/**': {
               ssr: false,
             },

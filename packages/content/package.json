@@ -34,6 +34,7 @@
     "marked-highlight": "^2.2.1",
     "marked-mangle": "^1.1.10",
     "rxjs": "^6.5.0 || ^7.5.0",
+    "@standard-schema/spec": "^1.0.0",
     "prismjs": "^1.29.0",
     "satori": "^0.10.14",
     "satori-html": "^0.3.2",
@@ -47,6 +48,9 @@
       "optional": true
     },
     "satori-html": {
+      "optional": true
+    },
+    "@standard-schema/spec": {
       "optional": true
     },
     "sharp": {

@@ -45,6 +45,10 @@
         "./node_modules/@analogjs/router/server",
         "packages/router/server/src/index.ts"
       ],
+      "@analogjs/router/manifest": [
+        "./node_modules/@analogjs/router/manifest",
+        "packages/router/manifest/src/index.ts"
+      ],
       "@analogjs/router/tokens": [
         "./node_modules/@analogjs/router/tokens",
         "packages/router/tokens/src/index.ts"
@@ -58,6 +62,10 @@
       "@analogjs/vite-plugin-nitro": [
         "./node_modules/@analogjs/vite-plugin-nitro",
         "packages/vite-plugin-nitro/src/index.ts"
+      ],
+      "@analogjs/vite-plugin-routes": [
+        "./node_modules/@analogjs/vite-plugin-routes",
+        "packages/vite-plugin-routes/src/index.ts"
       ],
       "libs/card": ["libs/card/src/index.ts"],
       "my-package": ["./dist/libs/my-package", "libs/my-package/src/index.ts"],

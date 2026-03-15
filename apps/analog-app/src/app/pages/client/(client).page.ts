@@ -1,5 +1,15 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { ServerOnly } from '@analogjs/router';
+import { ServerOnly, type RouteMeta } from '@analogjs/router';
+
+export const routeMeta: RouteMeta = {
+  title: 'Client Component',
+  jsonLd: {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    identifier: 'analog-client',
+    name: 'Analog Client Only Page',
+  },
+};
 
 @Component({
   imports: [ServerOnly],

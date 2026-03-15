@@ -169,7 +169,10 @@ The following is the list of currently supported scopes:
 - **trpc**
 - **vite-plugin-angular**
 - **vite-plugin-nitro**
+- **vite-plugin-routes**
 - **vitest-angular**
+
+For the current package-to-scope mapping, see the `Packages` table in `AGENTS.md`.
 
 ### Breaking Changes
 

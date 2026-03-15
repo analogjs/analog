@@ -4,7 +4,11 @@
   "sourceRoot": "packages/platform/src",
   "projectType": "library",
   "tags": ["type:release"],
-  "implicitDependencies": ["vite-plugin-angular", "vite-plugin-nitro"],
+  "implicitDependencies": [
+    "vite-plugin-angular",
+    "vite-plugin-nitro",
+    "vite-plugin-routes"
+  ],
   "targets": {
     "build-package": {
       "executor": "@nx/js:tsc",

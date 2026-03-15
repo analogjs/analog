@@ -31,6 +31,7 @@
     "nitro": "3.0.1-alpha.2",
     "@analogjs/vite-plugin-angular": "^3.0.0-alpha.1",
     "@analogjs/vite-plugin-nitro": "^3.0.0-alpha.1",
+    "@analogjs/vite-plugin-routes": "^3.0.0-alpha.1",
     "vitefu": "^1.1.2"
   },
   "peerDependencies": {
@@ -85,6 +86,7 @@
       "@analogjs/storybook-angular",
       "@analogjs/vite-plugin-angular",
       "@analogjs/vite-plugin-nitro",
+      "@analogjs/vite-plugin-routes",
       "@analogjs/vitest-angular"
     ],
     "migrations": "./migrations/migration.json"
