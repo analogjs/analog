@@ -63,6 +63,10 @@
         "./node_modules/@analogjs/vite-plugin-nitro",
         "packages/vite-plugin-nitro/src/index.ts"
       ],
+      "@analogjs/vite-plugin-routes": [
+        "./node_modules/@analogjs/vite-plugin-routes",
+        "packages/vite-plugin-routes/src/index.ts"
+      ],
       "libs/card": ["libs/card/src/index.ts"],
       "my-package": ["./dist/libs/my-package", "libs/my-package/src/index.ts"],
       "shared/feature": ["libs/shared/feature/src/index.ts"],

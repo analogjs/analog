@@ -14,6 +14,10 @@ Typed routes require two opt-ins: a **build-time** flag that generates the route
 
 ### 1. Enable Route Type Generation
 
+The default Analog setup is to enable typed route generation through
+`@analogjs/platform`. This keeps `analog()` as the main authoring surface while
+internally wiring up the dedicated `@analogjs/vite-plugin-routes` package.
+
 In your `vite.config.ts`, enable the `experimental.typedRouter` flag:
 
 ```ts
@@ -44,6 +48,26 @@ experimental: {
   },
 },
 ```
+
+### Advanced: Direct Vite Plugin Composition
+
+If you want explicit plugin composition, you can use
+`@analogjs/vite-plugin-routes` directly:
+
+```ts
+import analog from '@analogjs/platform';
+import { typedRoutes } from '@analogjs/vite-plugin-routes';
+import { defineConfig } from 'vite';
+
+export default defineConfig(() => ({
+  plugins: [typedRoutes(), analog()],
+}));
+```
+
+Use this direct plugin path when you need explicit plugin ordering or want to
+compose typed route generation outside the default platform facade. When using
+`typedRoutes()` directly, omit `experimental.typedRouter` to avoid enabling the
+same generator twice.
 
 ### 2. Enable Typed Router Features
 

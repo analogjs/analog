@@ -1,6 +1,9 @@
 import { describe, expect } from 'vitest';
 import { platformPlugin } from './platform-plugin.js';
 
+vi.mock('@analogjs/vite-plugin-angular', () => ({
+  default: vi.fn(() => []),
+}));
 vi.mock('@analogjs/vite-plugin-nitro');
 vi.mock('./ssr/ssr-build-plugin');
 vi.mock('./ssr/dev-server-plugin');
@@ -47,5 +50,23 @@ describe('platformPlugin', () => {
 
     expect(viteNitroPluginSpy).toHaveBeenCalledWith({ ssr: false }, undefined);
     expect(ssrBuildPluginSpy).not.toHaveBeenCalled();
+  });
+
+  it('should forward experimental.useAngularCompilationAPI to the Angular vite plugin', async () => {
+    const angularPluginImport = await import('@analogjs/vite-plugin-angular');
+
+    platformPlugin({
+      experimental: {
+        useAngularCompilationAPI: true,
+      },
+    });
+
+    expect(angularPluginImport.default).toHaveBeenCalledWith(
+      expect.objectContaining({
+        experimental: {
+          useAngularCompilationAPI: true,
+        },
+      }),
+    );
   });
 });

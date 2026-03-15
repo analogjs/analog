@@ -19,6 +19,9 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ssr: true,
     ...opts,
   };
+  const useAngularCompilationAPI =
+    platformOptions.experimental?.useAngularCompilationAPI ??
+    opts?.vite?.experimental?.useAngularCompilationAPI;
 
   let nitroOptions = platformOptions?.nitro;
 
@@ -68,6 +71,10 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
           inlineStylesExtension: platformOptions.inlineStylesExtension,
           fileReplacements: platformOptions.fileReplacements,
           ...(opts?.vite ?? {}),
+          experimental: {
+            ...(opts?.vite?.experimental ?? {}),
+            useAngularCompilationAPI,
+          },
         })),
     serverModePlugin(),
     ssrXhrBuildPlugin(),
