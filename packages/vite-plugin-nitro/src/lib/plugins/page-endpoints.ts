@@ -1,5 +1,6 @@
 import { buildSync } from 'esbuild';
 import { normalizePath } from 'vite';
+import { SERVER_FETCH_FACTORY_SNIPPET } from '../utils/renderers.js';
 
 export function pageEndpointsPlugin() {
   return {
@@ -70,12 +71,7 @@ export function pageEndpointsPlugin() {
             }
 
             export default defineHandler(async(event) => {
-              const serverFetch = createFetch({
-                fetch: (resource, init) => {
-                  const url = resource instanceof Request ? resource.url : resource.toString();
-                  return fetchWithEvent(event, url, init);
-                }
-              });
+              ${SERVER_FETCH_FACTORY_SNIPPET}
 
               if (event.method === 'GET') {
                 try {

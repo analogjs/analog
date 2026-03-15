@@ -1,4 +1,22 @@
 /**
+ * Code snippet emitted into virtual modules to create a request-scoped
+ * fetch using ofetch's `createFetch` + h3's `fetchWithEvent`.
+ *
+ * Shared between the SSR renderer and page-endpoint virtual modules so
+ * the fetch-wiring logic stays in sync.
+ *
+ * The emitted variable is named `serverFetch` — callers should reference it
+ * by that name.
+ */
+export const SERVER_FETCH_FACTORY_SNIPPET = `
+  const serverFetch = createFetch({
+    fetch: (resource, init) => {
+      const url = resource instanceof Request ? resource.url : resource.toString();
+      return fetchWithEvent(event, url, init);
+    }
+  });`;
+
+/**
  * SSR renderer virtual module content.
  *
  * This code runs inside Nitro's server runtime (Node.js context) where
@@ -52,14 +70,9 @@ export default defineHandler(async (event) => {
     connection: {},
   };
   const res = event.node?.res;
-  const fetch = createFetch({
-    fetch: (resource, init) => {
-      const url = resource instanceof Request ? resource.url : resource.toString();
-      return fetchWithEvent(event, url, init);
-    }
-  });
+${SERVER_FETCH_FACTORY_SNIPPET}
 
-  const html = await renderer(requestPath, template, { req, res, fetch });
+  const html = await renderer(requestPath, template, { req, res, fetch: serverFetch });
 
   return html;
 });`;

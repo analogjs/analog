@@ -6,13 +6,13 @@ import {
   prepare,
   prerender,
 } from 'nitro/builder';
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 import { Options } from './options.js';
 import { addPostRenderingHooks } from './hooks/post-rendering-hook.js';
 
-function isVercelPreset(preset: string | undefined) {
+export function isVercelPreset(preset: string | undefined): boolean {
   return !!preset?.toLowerCase().includes('vercel');
 }
 
@@ -88,9 +88,7 @@ export async function buildServer(
         `index.html${fileExt}`,
       );
 
-      if (existsSync(indexFilePath)) {
-        unlinkSync(indexFilePath);
-      }
+      rmSync(indexFilePath, { force: true });
     });
   }
 
@@ -113,10 +111,7 @@ export async function buildServer(
     for (const [route, content] of Object.entries(routeSourceFiles)) {
       const outputPath = join(publicDir, `${route}.md`);
       const outputDir = dirname(outputPath);
-
-      if (!existsSync(outputDir)) {
-        mkdirSync(outputDir, { recursive: true });
-      }
+      mkdirSync(outputDir, { recursive: true });
 
       writeFileSync(outputPath, content, 'utf8');
     }

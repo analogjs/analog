@@ -8,7 +8,7 @@ import { pathToFileURL } from 'node:url';
 import { existsSync, readFileSync } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
-import { buildServer } from './build-server.js';
+import { buildServer, isVercelPreset } from './build-server.js';
 import { buildSSRApp } from './build-ssr.js';
 import {
   Options,
@@ -31,9 +31,6 @@ import {
   clientRenderer,
   apiMiddleware,
 } from './utils/renderers.js';
-
-let clientOutputPath = '';
-let rendererIndexEntry = '';
 
 function createNitroMiddlewareHandler(handler: string): NitroEventHandler {
   return {
@@ -127,13 +124,14 @@ function removeInvalidRollupCodeSplitting(
 }
 
 function resolveClientOutputPath(
+  cachedPath: string,
   workspaceRoot: string,
   rootDir: string,
   configuredOutDir: string | undefined,
   ssrBuild: boolean,
 ) {
-  if (clientOutputPath) {
-    return clientOutputPath;
+  if (cachedPath) {
+    return cachedPath;
   }
 
   if (!ssrBuild) {
@@ -151,6 +149,24 @@ function toNitroSsrEntrypointSpecifier(ssrEntryPath: string) {
   return process.platform === 'win32'
     ? pathToFileURL(ssrEntryPath).href
     : normalizePath(ssrEntryPath);
+}
+
+function applySsrEntryAlias(
+  nitroConfig: NitroConfig,
+  options: Options | undefined,
+  workspaceRoot: string,
+  rootDir: string,
+): void {
+  const ssrOutDir =
+    options?.ssrBuildDir || resolve(workspaceRoot, 'dist', rootDir, 'ssr');
+  if (options?.ssr || nitroConfig.prerender?.routes?.length) {
+    const ssrEntryPath = resolveBuiltSsrEntryPath(ssrOutDir);
+    const ssrEntry = toNitroSsrEntrypointSpecifier(ssrEntryPath);
+    nitroConfig.alias = {
+      ...nitroConfig.alias,
+      '#analog/ssr': ssrEntry,
+    };
+  }
 }
 
 function resolveBuiltSsrEntryPath(ssrOutDir: string) {
@@ -194,6 +210,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let nitroConfig: NitroConfig;
   let environmentBuild = false;
   let hasAPIDir = false;
+  let clientOutputPath = '';
+  let rendererIndexEntry = '';
   const rollupExternalEntries: string[] = [];
   const routeSitemaps: Record<
     string,
@@ -240,6 +258,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           hasAPIDir,
         });
         const resolvedClientOutputPath = resolveClientOutputPath(
+          clientOutputPath,
           workspaceRoot,
           rootDir,
           config.build?.outDir,
@@ -556,17 +575,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
               await Promise.all(builds);
 
-              const ssrOutDir =
-                options?.ssrBuildDir ||
-                resolve(workspaceRoot, 'dist', rootDir, `ssr`);
-              if (options?.ssr || nitroConfig.prerender?.routes?.length) {
-                const ssrEntryPath = resolveBuiltSsrEntryPath(ssrOutDir);
-                const ssrEntry = toNitroSsrEntrypointSpecifier(ssrEntryPath);
-                nitroConfig.alias = {
-                  ...nitroConfig.alias,
-                  '#analog/ssr': ssrEntry,
-                };
-              }
+              applySsrEntryAlias(nitroConfig, options, workspaceRoot, rootDir);
 
               await buildServer(options, nitroConfig, routeSourceFiles);
 
@@ -699,17 +708,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             );
           }
 
-          const closeBundleSsrOutDir =
-            options?.ssrBuildDir ||
-            resolve(workspaceRoot, 'dist', rootDir, `ssr`);
-          if (options?.ssr || nitroConfig.prerender?.routes?.length) {
-            const ssrEntryPath = resolveBuiltSsrEntryPath(closeBundleSsrOutDir);
-            const ssrEntry = toNitroSsrEntrypointSpecifier(ssrEntryPath);
-            nitroConfig.alias = {
-              ...nitroConfig.alias,
-              '#analog/ssr': ssrEntry,
-            };
-          }
+          applySsrEntryAlias(nitroConfig, options, workspaceRoot, rootDir);
 
           await buildServer(options, nitroConfig, routeSourceFiles);
 
@@ -743,9 +742,12 @@ function isArrayWithElements<T>(arr: unknown): arr is [T, ...T[]] {
   return !!(Array.isArray(arr) && arr.length);
 }
 
-const isVercelPreset = (buildPreset: string | undefined) =>
-  process.env['VERCEL'] ||
-  (buildPreset && buildPreset.toLowerCase().includes('vercel'));
+const VERCEL_PRESET = 'vercel';
+const VERCEL_EDGE_PRESET = 'vercel-edge';
+const DEFAULT_VERCEL_NODE_RUNTIME = 'nodejs24.x';
+
+const isVercelEdgePreset = (preset: string | undefined) =>
+  !!preset?.toLowerCase().includes(VERCEL_EDGE_PRESET);
 
 const withVercelOutputAPI = (
   nitroConfig: NitroConfig | undefined,
@@ -755,17 +757,17 @@ const withVercelOutputAPI = (
   ...nitroConfig,
   preset:
     nitroConfig?.preset ??
-    (buildPreset?.toLowerCase().includes('vercel-edge')
-      ? 'vercel-edge'
-      : 'vercel'),
+    (isVercelEdgePreset(buildPreset) ? VERCEL_EDGE_PRESET : VERCEL_PRESET),
   vercel: {
     ...nitroConfig?.vercel,
-    ...(buildPreset?.toLowerCase().includes('vercel-edge')
+    ...(isVercelEdgePreset(buildPreset)
       ? {}
       : {
           entryFormat: nitroConfig?.vercel?.entryFormat ?? 'node',
           functions: {
-            runtime: nitroConfig?.vercel?.functions?.runtime ?? 'nodejs24.x',
+            runtime:
+              nitroConfig?.vercel?.functions?.runtime ??
+              DEFAULT_VERCEL_NODE_RUNTIME,
             ...nitroConfig?.vercel?.functions,
           },
         }),
