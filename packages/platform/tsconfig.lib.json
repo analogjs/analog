@@ -24,6 +24,7 @@
     "vite.config.ts",
     "**/*.spec.ts",
     "**/*.test.ts",
-    "src/test-setup.ts"
+    "src/test-setup.ts",
+    "oxlint.config.ts"
   ]
 }

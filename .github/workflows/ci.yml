@@ -56,7 +56,7 @@ jobs:
         run: pnpm lint:check
       - name: Lint (type-aware)
         run: pnpm lint:types
-      - name: Lint Angular HTML templates
+      - name: Lint (ESLint via Nx)
         run: pnpm lint:legacy
       - name: Lint JSON metadata
         run: pnpm lint:json

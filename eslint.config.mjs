@@ -21,7 +21,7 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ['**/dist', '**/out-tsc'],
+    ignores: ['**/dist', '**/out-tsc', '**/oxlint.config.ts'],
   },
   { plugins: { '@nx': nxEslintPlugin } },
   {

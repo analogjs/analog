@@ -13,6 +13,11 @@
       "@analogjs/content": ["../../node_modules/@analogjs/content"]
     }
   },
-  "exclude": ["vite.config.ts", "**/*.test.ts", "**/*.spec.ts"],
+  "exclude": [
+    "vite.config.ts",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "oxlint.config.ts"
+  ],
   "include": ["**/*.ts"]
 }

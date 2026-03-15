@@ -20,7 +20,7 @@
     "contributors:generate": "all-contributors generate",
     "lint": "pnpm run /^lint:/",
     "lint:check": "oxlint -c oxlint.config.ts .",
-    "lint:legacy": "pnpm exec eslint",
+    "lint:legacy": "pnpm nx run-many --target lint",
     "lint:types": "node --experimental-strip-types tools/toggle-base-url.mts --start && oxlint -c oxlint.config.ts --type-aware .; EXIT=$?; node --experimental-strip-types tools/toggle-base-url.mts --end; exit $EXIT",
     "lint:json": "node --experimental-strip-types tools/validate-plugin-json.mts",
     "lint:boundaries": "node --experimental-strip-types tools/check-module-boundaries.mts",
