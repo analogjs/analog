@@ -30,6 +30,5 @@ export const V18_X_NX_VITE = '^21.0.0';
 export const V18_X_NX_LINTER = '^21.0.0';
 export const V18_X_JSDOM = '^22.1.0';
 export const V18_X_VITE = '^6.0.0';
-export const V18_X_VITE_TSCONFIG_PATHS = '^4.2.0';
 export const V18_X_VITEST = '^3.0.0';
 export const V18_X_ZOD = '^3.21.4';

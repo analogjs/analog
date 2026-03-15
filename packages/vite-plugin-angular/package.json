@@ -36,6 +36,7 @@
     }
   },
   "dependencies": {
+    "oxc-resolver": "^11.19.0",
     "tinyglobby": "^0.2.14",
     "ts-morph": "^21.0.0"
   },

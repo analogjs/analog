@@ -6,7 +6,6 @@ import {
   V17_X_ANALOG_JS_VITEST_ANGULAR,
   V17_X_JSDOM,
   V17_X_NX_VITE,
-  V17_X_VITE_TSCONFIG_PATHS,
   V17_X_VITEST,
 } from './ng_17_X/versions';
 import {
@@ -14,7 +13,6 @@ import {
   V18_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
   V18_X_NX_VITE,
   V18_X_JSDOM,
-  V18_X_VITE_TSCONFIG_PATHS,
   V18_X_VITEST,
   V18_X_ANALOG_JS_VITEST_ANGULAR,
 } from './ng_18_X/versions';
@@ -24,7 +22,6 @@ import {
   V19_X_ANALOG_JS_VITEST_ANGULAR,
   V19_X_NX_VITE,
   V19_X_JSDOM,
-  V19_X_VITE_TSCONFIG_PATHS,
   V19_X_VITEST,
   V19_X_VITE,
   NX_X_LATEST_VITE,
@@ -35,7 +32,6 @@ const devDependencyKeys = [
   '@analogjs/platform',
   '@analogjs/vite-plugin-angular',
   'jsdom',
-  'vite-tsconfig-paths',
   'vitest',
   'vite',
   '@vitest/coverage-v8',
@@ -75,7 +71,6 @@ const getDevDependencies = (
       '@analogjs/vitest-angular': V17_X_ANALOG_JS_VITEST_ANGULAR,
       '@nx/vite': V17_X_NX_VITE,
       jsdom: V17_X_JSDOM,
-      'vite-tsconfig-paths': V17_X_VITE_TSCONFIG_PATHS,
       vite: V19_X_VITE,
       vitest: V17_X_VITEST,
       '@vitest/coverage-v8': V17_X_VITEST,
@@ -91,7 +86,6 @@ const getDevDependencies = (
       '@analogjs/vitest-angular': V18_X_ANALOG_JS_VITEST_ANGULAR,
       '@nx/vite': V18_X_NX_VITE,
       jsdom: V18_X_JSDOM,
-      'vite-tsconfig-paths': V18_X_VITE_TSCONFIG_PATHS,
       vite: V19_X_VITE,
       vitest: V18_X_VITEST,
       '@vitest/coverage-v8': V18_X_VITEST,
@@ -106,7 +100,6 @@ const getDevDependencies = (
     '@analogjs/vitest-angular': V19_X_ANALOG_JS_VITEST_ANGULAR,
     '@nx/vite': V19_X_NX_VITE,
     jsdom: V19_X_JSDOM,
-    'vite-tsconfig-paths': V19_X_VITE_TSCONFIG_PATHS,
     vite:
       escapedNxVersion && lt(escapedNxVersion, '20.5.0')
         ? V19_X_VITE
