@@ -6,8 +6,7 @@ import { rolldownVersion, transformWithEsbuild, transformWithOxc } from 'vite';
  * `@angular/cdk` from modern async/await to ES2016 so that Zone.js can
  * intercept promises during `fakeAsync` tests.
  *
- * Under Vite 8+ (Rolldown) the OXC transformer is used with
- * `noDocumentAll` and `pureGetters` assumptions enabled for smaller output.
+ * Under Vite 8+ (Rolldown) the OXC transformer is used.
  * Under Vite ≤7, esbuild handles the downlevel.
  */
 export function angularVitestPlugin(): Plugin {
@@ -49,13 +48,6 @@ export function angularVitestPlugin(): Plugin {
               lang: 'js',
               target: 'es2016',
               sourcemap: true,
-              // OXC assumptions for smaller downlevel output:
-              // - noDocumentAll: skip `document.all` compat checks
-              // - pureGetters: assume property access has no side effects
-              assumptions: {
-                noDocumentAll: true,
-                pureGetters: true,
-              },
             });
 
             return {
@@ -120,9 +112,13 @@ export function angularVitestSourcemapPlugin(): Plugin {
     name: '@analogjs/vitest-angular-sourcemap-plugin',
     transform: {
       filter: {
-        // Anchored at end-of-path to avoid matching `.tsx`, `.d.ts`, or
-        // directory names that happen to contain `.ts` (e.g., `.tscache/`).
-        id: /\.ts$/,
+        // Match `.ts` at the end of the path OR before a `?` query string.
+        // Vite/Vitest appends query params for virtual modules (e.g.
+        // `component.ts?inline`), so a plain `$` anchor would reject them
+        // and leave sourcemaps misaligned — causing Angular TestBed teardown
+        // crashes (`_doc` undefined in `removeAllRootElements`).
+        // The negative lookahead `(?!x)` prevents matching `.tsx` or `.d.ts`.
+        id: /\.ts(?:\?|$)/,
       },
       async handler(code: string, id: string) {
         const [, query] = id.split('?');
