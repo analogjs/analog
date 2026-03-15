@@ -15,7 +15,6 @@ export default (element: HTMLElement) => {
       clientProviders?: (Provider | EnvironmentProviders)[];
     },
     props?: Record<string, unknown>,
-    _childHTML?: unknown,
   ) => {
     createApplication({
       providers: [

@@ -71,3 +71,4 @@ vite.config.*.timestamp*
 vitest.config.*.timestamp*
 
 .claude/worktrees
+.vercel/

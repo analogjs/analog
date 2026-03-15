@@ -30,11 +30,7 @@ const ANALOG_ASTRO_STATIC_PROPS = new InjectionToken<{
   },
 });
 
-function check(
-  Component: ComponentType<unknown>,
-  _props: Record<string, unknown>,
-  _children: unknown,
-) {
+function check(Component: ComponentType<unknown>) {
   return !!reflectComponentType(Component);
 }
 
@@ -81,7 +77,6 @@ async function renderToStaticMarkup(
     renderProviders: (Provider | EnvironmentProviders)[];
   },
   props: Record<string, unknown>,
-  _children: unknown,
 ) {
   const mirror = reflectComponentType(Component);
   const appId =

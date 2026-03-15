@@ -24,6 +24,7 @@ vi.mock('@storybook/builder-vite', () => ({}));
 vi.mock('vite', () => ({
   mergeConfig: (_base: unknown, override: unknown) => override,
   normalizePath: (p: string) => p,
+  rolldownVersion: undefined,
 }));
 
 vi.mock('@analogjs/vite-plugin-angular', () => ({
@@ -61,6 +62,7 @@ const registerDependencyMocks = () => {
   vi.doMock('vite', () => ({
     mergeConfig: (_base: unknown, override: unknown) => override,
     normalizePath: (p: string) => p,
+    rolldownVersion: undefined,
   }));
   vi.doMock('@analogjs/vite-plugin-angular', () => ({
     default: () => ({ name: 'angular-mock' }),
@@ -330,6 +332,78 @@ describe('viteFinal', () => {
       expect(
         pluginConfig?.css?.preprocessorOptions?.scss?.loadPaths?.[0],
       ).toContain('/workspace/root');
+    });
+  });
+
+  describe('storybookTransformConfigPlugin', () => {
+    it('should include the transform config plugin', async () => {
+      const options = createMockOptions();
+      const result = await viteFinal(baseConfig, options);
+
+      const transformPlugin = result.plugins
+        .flat()
+        .find((p) => p?.name === 'analogjs-storybook-transform-config');
+      expect(transformPlugin).toBeDefined();
+    });
+
+    it('should use esbuild config key when rolldownVersion is not available', async () => {
+      const options = createMockOptions();
+      const result = await viteFinal(baseConfig, options);
+
+      const transformPlugin = result.plugins
+        .flat()
+        .find((p) => p?.name === 'analogjs-storybook-transform-config');
+      const pluginConfig = transformPlugin.config();
+
+      expect(pluginConfig).toHaveProperty('esbuild');
+      expect(pluginConfig).not.toHaveProperty('oxc');
+      expect(pluginConfig.esbuild.keepNames).toBe(true);
+    });
+
+    it('should use oxc config key when rolldownVersion is available', async () => {
+      vi.resetModules();
+      vi.doMock('@storybook/angular/preset', () => ({
+        core: async () => ({
+          options: {},
+          channelOptions: { wsToken: 'mock-token' },
+        }),
+        addons: [],
+      }));
+      vi.doMock('storybook/internal/types', () => ({}));
+      vi.doMock('@storybook/angular', () => ({}));
+      vi.doMock('@storybook/builder-vite', () => ({}));
+      vi.doMock('vite', () => ({
+        mergeConfig: (_base: unknown, override: unknown) => override,
+        normalizePath: (p: string) => p,
+        rolldownVersion: '1.0.0',
+      }));
+      vi.doMock('@analogjs/vite-plugin-angular', () => ({
+        default: () => ({ name: 'angular-mock' }),
+      }));
+
+      const mod = await import('./preset');
+      const options = createMockOptions();
+      const result = await mod.viteFinal(baseConfig, options);
+
+      const transformPlugin = result.plugins
+        .flat()
+        .find((p) => p?.name === 'analogjs-storybook-transform-config');
+      const pluginConfig = transformPlugin.config();
+
+      expect(pluginConfig).toHaveProperty('oxc');
+      expect(pluginConfig).not.toHaveProperty('esbuild');
+      expect(pluginConfig.oxc.keepNames).toBe(true);
+    });
+
+    it('should only apply during build', async () => {
+      const options = createMockOptions();
+      const result = await viteFinal(baseConfig, options);
+
+      const transformPlugin = result.plugins
+        .flat()
+        .find((p) => p?.name === 'analogjs-storybook-transform-config');
+
+      expect(transformPlugin.apply).toBe('build');
     });
   });
 });
