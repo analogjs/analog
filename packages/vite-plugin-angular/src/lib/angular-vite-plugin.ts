@@ -379,9 +379,8 @@ export function angular(options?: PluginOptions): Plugin[] {
             result?.hmrEligible &&
             classNames.get(fileId)
           ) {
-            const relativeFileId = `${relative(
-              process.cwd(),
-              fileId,
+            const relativeFileId = `${normalizePath(
+              relative(process.cwd(), fileId),
             )}@${classNames.get(fileId)}`;
 
             sendHMRComponentUpdate(ctx.server, relativeFileId);
@@ -476,9 +475,8 @@ export function angular(options?: PluginOptions): Plugin[] {
             pendingCompilation = null;
 
             updates.forEach((updateId) => {
-              const impRelativeFileId = `${relative(
-                process.cwd(),
-                updateId,
+              const impRelativeFileId = `${normalizePath(
+                relative(process.cwd(), updateId),
               )}@${classNames.get(updateId)}`;
 
               sendHMRComponentUpdate(ctx.server, impRelativeFileId);
