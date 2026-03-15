@@ -22,7 +22,7 @@ export async function registerDevServerMiddleware(
   root: string,
   sourceRoot: string,
   viteServer: ViteDevServer,
-) {
+): Promise<void> {
   const middlewareFiles = globSync(
     [`${root}/${sourceRoot}/server/middleware/**/*.ts`],
     {

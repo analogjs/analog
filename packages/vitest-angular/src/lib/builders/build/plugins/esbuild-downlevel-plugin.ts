@@ -1,4 +1,10 @@
-export async function esbuildDownlevelPlugin() {
+export async function esbuildDownlevelPlugin(): Promise<{
+  name: string;
+  transform(
+    _code: string,
+    id: string,
+  ): Promise<{ code: string; map: unknown } | undefined>;
+}> {
   const { transformWithEsbuild } = await (Function(
     'return import("vite")',
   )() as Promise<typeof import('vite')>);

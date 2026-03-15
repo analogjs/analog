@@ -13,7 +13,7 @@ export type PageServerAction = {
   event: H3Event;
 };
 
-export function fail<T = object>(status: number, errors: T) {
+export function fail<T = object>(status: number, errors: T): Response {
   return new Response(JSON.stringify(errors), {
     status,
     headers: {
@@ -22,7 +22,7 @@ export function fail<T = object>(status: number, errors: T) {
   });
 }
 
-export function json<T = object>(data: T, config?: ResponseInit) {
+export function json<T = object>(data: T, config?: ResponseInit): Response {
   return new Response(JSON.stringify(data), {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
@@ -31,7 +31,10 @@ export function json<T = object>(data: T, config?: ResponseInit) {
   });
 }
 
-export function redirect(url: string, config: number | ResponseInit = 302) {
+export function redirect(
+  url: string,
+  config: number | ResponseInit = 302,
+): Response {
   if (typeof config === 'number') {
     return new Response(null, {
       status: config,

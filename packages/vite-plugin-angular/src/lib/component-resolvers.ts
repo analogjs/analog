@@ -57,7 +57,7 @@ function getTextByProperty(name: string, properties: PropertyAssignment[]) {
     .filter((url): url is string => url !== undefined);
 }
 
-export function getStyleUrls(code: string) {
+export function getStyleUrls(code: string): string[] {
   const project = new Project({ useInMemoryFileSystem: true });
   const sourceFile = project.createSourceFile('cmp.ts', code);
   const properties = sourceFile.getDescendantsOfKind(
@@ -74,7 +74,7 @@ export function getStyleUrls(code: string) {
   return [...styleUrls, ...styleUrl];
 }
 
-export function getTemplateUrls(code: string) {
+export function getTemplateUrls(code: string): string[] {
   const project = new Project({ useInMemoryFileSystem: true });
   const sourceFile = project.createSourceFile('cmp.ts', code);
   const properties = sourceFile.getDescendantsOfKind(

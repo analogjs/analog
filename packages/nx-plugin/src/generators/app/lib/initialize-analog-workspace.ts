@@ -17,7 +17,7 @@ export async function initializeAngularWorkspace(
   tree: Tree,
   installedNxVersion: string,
   normalizedOptions: NormalizedOptions,
-) {
+): Promise<string> {
   let angularVersion = getInstalledPackageVersion(tree, '@angular/core');
 
   if (!angularVersion) {

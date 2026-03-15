@@ -53,7 +53,7 @@ export async function buildServer(
   options?: Options,
   nitroConfig?: NitroConfig,
   routeSourceFiles?: Record<string, string>,
-) {
+): Promise<void> {
   const nitro = await createNitro({
     dev: false,
     preset: process.env['BUILD_PRESET'],

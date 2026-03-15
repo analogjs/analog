@@ -11,7 +11,10 @@ interface TsConfig {
   };
 }
 
-export function updateTsConfig(tree: Tree, schema: SetupVitestGeneratorSchema) {
+export function updateTsConfig(
+  tree: Tree,
+  schema: SetupVitestGeneratorSchema,
+): void {
   const projects = getProjects(tree);
 
   const projectConfig = projects.get(schema.project);

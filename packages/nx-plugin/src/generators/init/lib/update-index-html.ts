@@ -2,7 +2,10 @@ import { Tree, getProjects, joinPathFragments } from '@nx/devkit';
 
 import { SetupAnalogGeneratorSchema } from '../schema';
 
-export function updateIndex(tree: Tree, schema: SetupAnalogGeneratorSchema) {
+export function updateIndex(
+  tree: Tree,
+  schema: SetupAnalogGeneratorSchema,
+): void {
   const projects = getProjects(tree);
   const projectConfig = projects.get(schema.project);
 

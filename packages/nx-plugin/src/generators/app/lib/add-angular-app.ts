@@ -1,7 +1,10 @@
 import { getWorkspaceLayout, Tree } from '@nx/devkit';
 import { NormalizedOptions } from '../generator';
 
-export async function addAngularApp(tree: Tree, options: NormalizedOptions) {
+export async function addAngularApp(
+  tree: Tree,
+  options: NormalizedOptions,
+): Promise<void> {
   const isNx = tree.exists('/nx.json');
   const appsDir = isNx ? getWorkspaceLayout(tree).appsDir : 'projects';
 

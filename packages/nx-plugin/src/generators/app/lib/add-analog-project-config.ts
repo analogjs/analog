@@ -9,7 +9,7 @@ export function addAnalogProjectConfig(
   name: string,
   appsDir: string,
   nxPackageNamespace: string,
-) {
+): void {
   const isStandalone = appsDir === '.';
   const isNx = tree.exists('/nx.json');
   const workspaceAppsDir = isStandalone || !isNx ? '' : `${appsDir}/`;

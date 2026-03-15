@@ -65,7 +65,7 @@ export function provideServerContext({
   ];
 }
 
-export function getBaseUrl(req: ServerRequest) {
+export function getBaseUrl(req: ServerRequest): string {
   const protocol = getRequestProtocol(req);
   const host =
     getRequestHeader(req, 'x-forwarded-host') ??
@@ -88,7 +88,7 @@ export function getBaseUrl(req: ServerRequest) {
 export function getRequestProtocol(
   req: ServerRequest,
   opts: { xForwardedProto?: boolean } = {},
-) {
+): string {
   const forwardedProto = getRequestHeader(req, 'x-forwarded-proto')
     ?.split(',')[0]
     ?.trim();

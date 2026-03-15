@@ -4,10 +4,16 @@
     "module": "preserve",
     "outDir": "../../dist/out-tsc",
     "declaration": true,
+    "isolatedDeclarations": true,
     "types": [],
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "bundler"
   },
   "include": ["**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/*.test.ts", "src/test-setup.ts"]
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "src/test-setup.ts",
+    "vite.config.ts"
+  ]
 }

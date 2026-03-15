@@ -42,7 +42,7 @@ function addFiles(
 export async function setupVitestGenerator(
   tree: Tree,
   options: SetupVitestGeneratorSchema,
-) {
+): Promise<() => void> {
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
   const majorAngularVersion = major(coerce(angularVersion));
 

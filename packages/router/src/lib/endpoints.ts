@@ -1,4 +1,4 @@
-export const ANALOG_META_KEY = Symbol(
+export const ANALOG_META_KEY: unique symbol = Symbol(
   '@analogjs/router Analog Route Metadata Key',
 );
 

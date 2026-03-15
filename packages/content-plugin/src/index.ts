@@ -1,1 +1,2 @@
-export default void 0;
+const _default: undefined = void 0;
+export default _default;
