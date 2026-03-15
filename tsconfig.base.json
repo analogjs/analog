@@ -45,6 +45,10 @@
         "./node_modules/@analogjs/router/server",
         "packages/router/server/src/index.ts"
       ],
+      "@analogjs/router/manifest": [
+        "./node_modules/@analogjs/router/manifest",
+        "packages/router/manifest/src/index.ts"
+      ],
       "@analogjs/router/tokens": [
         "./node_modules/@analogjs/router/tokens",
         "packages/router/tokens/src/index.ts"

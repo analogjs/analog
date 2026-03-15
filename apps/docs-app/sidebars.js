@@ -94,6 +94,11 @@ const sidebars = {
               id: 'features/data-fetching/server-side-data-fetching',
               label: 'Server-Side Data Fetching',
             },
+            {
+              type: 'doc',
+              id: 'features/data-fetching/validation',
+              label: 'Schema Validation',
+            },
           ],
         },
         {

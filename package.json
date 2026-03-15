@@ -120,6 +120,7 @@
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/exec": "^7.1.0",
     "@semantic-release/git": "^10.0.1",
+    "@standard-schema/spec": "^1.0.0",
     "@storybook/addon-docs": "^10.2.17",
     "@storybook/addon-links": "^10.2.17",
     "@storybook/addon-vitest": "^10.2.17",
