@@ -3,6 +3,7 @@
     "angular.ng-template",
     "nrwl.angular-console",
     "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
     "oxc.oxc-vscode",
     "ms-playwright.playwright"
   ]

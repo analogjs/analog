@@ -74,7 +74,7 @@ importers:
         version: 10.45.2
       ajv-formats:
         specifier: ^3.0.1
-        version: 3.0.1(ajv@6.12.6)
+        version: 3.0.1(ajv@8.18.0)
       defu:
         specifier: ^6.1.4
         version: 6.1.4
@@ -334,9 +334,15 @@ importers:
       eslint:
         specifier: ^10.0.3
         version: 10.0.3(jiti@2.6.1)
+      eslint-config-prettier:
+        specifier: 10.1.8
+        version: 10.1.8(eslint@10.0.3(jiti@2.6.1))
       eslint-plugin-cypress:
         specifier: 6.1.0
         version: 6.1.0(eslint@10.0.3(jiti@2.6.1))
+      eslint-plugin-oxlint:
+        specifier: 1.55.0
+        version: 1.55.0
       eslint-plugin-playwright:
         specifier: ^2.9.0
         version: 2.9.0(eslint@10.0.3(jiti@2.6.1))
@@ -8918,6 +8924,9 @@ packages:
     resolution: {integrity: sha512-B8sxtNpINDxFkmsu1qKYjg70VsP8SGneEXgLcZMk1bUZcW08S+JyaiMdof1x6dmt02FgOD7YkT4wOaOD5HotJw==}
     peerDependencies:
       eslint: '>=9'
+
+  eslint-plugin-oxlint@1.55.0:
+    resolution: {integrity: sha512-5ng7DOuikSE64e7hX2HBqEWdmql+Q4FWppBoBkxKKflLt1j9LXhab5BN3bYJKyrAihuK1/VH2JvfNefeOZAqpA==}
 
   eslint-plugin-playwright@2.9.0:
     resolution: {integrity: sha512-k3xrG6YzrallWNFMoGUjMNeu3SFFKXN79KJQBD2PkM4PasJegqV2Up+mPY5od2UmPKQGT+MeIhCmWH8r5eYuQQ==}
@@ -24745,10 +24754,6 @@ snapshots:
     optionalDependencies:
       ajv: 8.17.1
 
-  ajv-formats@3.0.1(ajv@6.12.6):
-    optionalDependencies:
-      ajv: 6.12.6
-
   ajv-formats@3.0.1(ajv@8.17.1):
     optionalDependencies:
       ajv: 8.17.1
@@ -27145,12 +27150,15 @@ snapshots:
   eslint-config-prettier@10.1.8(eslint@10.0.3(jiti@2.6.1)):
     dependencies:
       eslint: 10.0.3(jiti@2.6.1)
-    optional: true
 
   eslint-plugin-cypress@6.1.0(eslint@10.0.3(jiti@2.6.1)):
     dependencies:
       eslint: 10.0.3(jiti@2.6.1)
       globals: 17.4.0
+
+  eslint-plugin-oxlint@1.55.0:
+    dependencies:
+      jsonc-parser: 3.3.1
 
   eslint-plugin-playwright@2.9.0(eslint@10.0.3(jiti@2.6.1)):
     dependencies:

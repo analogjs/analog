@@ -2,7 +2,7 @@ import { FlatCompat } from '@eslint/eslintrc';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import js from '@eslint/js';
-import baseConfig from '../../eslint.config.mjs';
+import baseConfig from '../../../eslint.config.mjs';
 
 const compat = new FlatCompat({
   baseDirectory: dirname(fileURLToPath(import.meta.url)),
@@ -14,7 +14,6 @@ export default [
     ignores: ['**/dist', '**/out-tsc'],
   },
   ...baseConfig,
-  ...compat.extends('plugin:storybook/recommended'),
   ...compat
     .config({
       extends: [
@@ -31,7 +30,7 @@ export default [
           'error',
           {
             type: 'attribute',
-            prefix: 'analogjs',
+            prefix: 'lib',
             style: 'camelCase',
           },
         ],
@@ -39,7 +38,7 @@ export default [
           'error',
           {
             type: 'element',
-            prefix: 'analogjs',
+            prefix: 'lib',
             style: 'kebab-case',
           },
         ],
@@ -57,11 +56,4 @@ export default [
         ...config.rules,
       },
     })),
-  {
-    ignores: [
-      '**/vite.config.*.timestamp*',
-      '**/vitest.config.*.timestamp*',
-      'storybook-static',
-    ],
-  },
 ];

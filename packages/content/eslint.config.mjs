@@ -14,7 +14,6 @@ export default [
     ignores: ['**/dist', '**/out-tsc'],
   },
   ...baseConfig,
-  ...compat.extends('plugin:storybook/recommended'),
   ...compat
     .config({
       extends: [
@@ -31,7 +30,7 @@ export default [
           'error',
           {
             type: 'attribute',
-            prefix: 'analogjs',
+            prefix: 'analog',
             style: 'camelCase',
           },
         ],
@@ -39,7 +38,7 @@ export default [
           'error',
           {
             type: 'element',
-            prefix: 'analogjs',
+            prefix: 'analog',
             style: 'kebab-case',
           },
         ],
@@ -58,10 +57,6 @@ export default [
       },
     })),
   {
-    ignores: [
-      '**/vite.config.*.timestamp*',
-      '**/vitest.config.*.timestamp*',
-      'storybook-static',
-    ],
+    ignores: ['**/vite.config.*.timestamp*', '**/vitest.config.*.timestamp*'],
   },
 ];

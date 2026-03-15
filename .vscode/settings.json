@@ -1,4 +1,5 @@
 {
+  "eslint.validate": ["json"],
   "nxConsole.generateAiAgentRules": true,
   "editor.codeActionsOnSave": {
     "source.fixAll.oxc": "always"
