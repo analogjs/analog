@@ -23,6 +23,13 @@ export default [
   {
     ignores: ['**/dist', '**/out-tsc', '**/oxlint.config.ts'],
   },
+  {
+    linterOptions: {
+      // eslint-disable comments are still used by oxlint, so ESLint
+      // should not warn about directives it considers unused.
+      reportUnusedDisableDirectives: 'off',
+    },
+  },
   { plugins: { '@nx': nxEslintPlugin } },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
