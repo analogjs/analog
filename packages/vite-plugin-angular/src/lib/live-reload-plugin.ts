@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 import { ServerResponse } from 'node:http';
-import { Connect, Plugin, ViteDevServer } from 'vite';
+import { Connect, normalizePath, Plugin, ViteDevServer } from 'vite';
 
 import { EmitFileResult } from './models.js';
 
@@ -44,7 +44,7 @@ export function liveReloadPlugin({
         }
 
         const [fileId] = decodeURIComponent(componentId).split('@');
-        const resolvedId = resolve(process.cwd(), fileId);
+        const resolvedId = normalizePath(resolve(process.cwd(), fileId));
         const invalidated =
           !!server.moduleGraph.getModuleById(resolvedId)
             ?.lastInvalidationTimestamp && classNames.get(resolvedId);
@@ -86,7 +86,12 @@ export function liveReloadPlugin({
         }
 
         const result = fileEmitter(
-          resolve(process.cwd(), decodeURIComponent(componentId).split('@')[0]),
+          normalizePath(
+            resolve(
+              process.cwd(),
+              decodeURIComponent(componentId).split('@')[0],
+            ),
+          ),
         );
 
         return result?.hmrUpdateCode || '';
