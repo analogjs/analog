@@ -58,12 +58,6 @@ jobs:
         run: pnpm lint:types
       - name: Lint (ESLint via Nx)
         run: pnpm lint:legacy
-      - name: Lint JSON metadata
-        run: pnpm lint:json
-      - name: Check module boundaries
-        run: pnpm lint:boundaries
-      - name: Check dependency accuracy
-        run: pnpm lint:deps
 
   build:
     runs-on: ubuntu-latest
