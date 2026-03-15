@@ -197,6 +197,8 @@
     "tinyglobby": "^0.2.15",
     "ts-dedent": "^2.2.0",
     "ts-morph": "^27.0.2",
+    "oxc-parser": "^0.119.0",
+    "rolldown": "1.0.0-rc.9",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
     "typescript-eslint": "^8.57.0",

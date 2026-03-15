@@ -1,5 +1,87 @@
 import type { PrerenderRoute } from 'nitro/types';
 
+/**
+ * Configuration for a single code-splitting group.
+ *
+ * Each group captures modules that match its `test` criterion and bundles them
+ * into a chunk whose name is derived from the `name` field. When multiple groups
+ * match the same module, the one with the highest `priority` wins.
+ *
+ * These fields map 1-to-1 to Rolldown's `CodeSplittingGroup` type so that
+ * user-provided config can be forwarded without transformation.
+ *
+ * @see https://rolldown.rs/configuration/output-options#codesplitting-groups
+ */
+export interface CodeSplittingGroup {
+  /**
+   * Chunk name — either a static string or a function that receives the
+   * module ID and returns a chunk name (or `null` to skip the module).
+   */
+  name: string | ((moduleId: string) => string | null);
+  /**
+   * Filter which modules this group captures. Accepts a string (substring
+   * match), a RegExp, or a predicate function.
+   */
+  test?: string | RegExp | ((moduleId: string) => boolean);
+  /** Higher-priority groups capture modules first.  @default 0 */
+  priority?: number;
+  /** Minimum byte size for the chunk to be emitted.  @default 0 */
+  minSize?: number;
+  /** If the chunk exceeds this size it is split further.  @default Infinity */
+  maxSize?: number;
+  /** Minimum number of entry chunks that must reference a module.  @default 1 */
+  minShareCount?: number;
+  /** Skip modules larger than this byte size.  @default Infinity */
+  maxModuleSize?: number;
+  /** Skip modules smaller than this byte size.  @default 0 */
+  minModuleSize?: number;
+  /**
+   * When `true`, further sub-group modules by which entry chunks actually
+   * import them, producing more granular chunks.
+   * @default false
+   */
+  entriesAware?: boolean;
+  /**
+   * Byte-size threshold below which small `entriesAware` sub-groups are
+   * merged back together to avoid tiny chunks.
+   * @default 0
+   */
+  entriesAwareMergeThreshold?: number;
+}
+
+/**
+ * Top-level code-splitting configuration forwarded to Rolldown's
+ * `output.codeSplitting` option.
+ *
+ * Scalar fields act as **global fallbacks** — they apply to every group that
+ * does not override the same field locally.
+ *
+ * Pass `false` (via the `Options.codeSplitting` field) to disable code
+ * splitting entirely and inline all dynamic imports.
+ *
+ * @see https://rolldown.rs/configuration/output-options#codesplitting
+ */
+export interface CodeSplittingOptions {
+  /** Manual chunk groups.  Evaluated in `priority` order. */
+  groups?: CodeSplittingGroup[];
+  /**
+   * When `true`, each group also pulls in the transitive dependencies of
+   * its captured modules.
+   * @default true
+   */
+  includeDependenciesRecursively?: boolean;
+  /** Global fallback for `CodeSplittingGroup.minSize`. */
+  minSize?: number;
+  /** Global fallback for `CodeSplittingGroup.maxSize`. */
+  maxSize?: number;
+  /** Global fallback for `CodeSplittingGroup.minModuleSize`. */
+  minModuleSize?: number;
+  /** Global fallback for `CodeSplittingGroup.maxModuleSize`. */
+  maxModuleSize?: number;
+  /** Global fallback for `CodeSplittingGroup.minShareCount`. */
+  minShareCount?: number;
+}
+
 export interface Options {
   ssr?: boolean;
   ssrBuildDir?: string;
@@ -38,6 +120,15 @@ export interface Options {
    * for API routes.
    */
   useAPIMiddleware?: boolean;
+  /**
+   * Code splitting configuration forwarded to Rolldown (Vite 8+).
+   *
+   * - `false`  — disable code splitting; all dynamic imports are inlined.
+   * - object   — fine-grained chunk grouping via {@link CodeSplittingOptions}.
+   *
+   * Ignored when the bundler is Rollup (Vite ≤ 7).
+   */
+  codeSplitting?: false | CodeSplittingOptions;
 }
 
 export interface PrerenderOptions {

@@ -12,7 +12,9 @@ describe('platformPlugin', () => {
     viteNitroPluginImport.default = viteNitroPluginSpy;
 
     const ssrBuildPluginImport = await import('./ssr/ssr-build-plugin');
-    const ssrBuildPluginSpy = vi.fn();
+    // ssrBuildPlugin() now returns Plugin[] — the mock must return an array
+    // because platform-plugin spreads the result: `[...ssrBuildPlugin(), ...]`
+    const ssrBuildPluginSpy = vi.fn(() => []);
     ssrBuildPluginImport.ssrBuildPlugin = ssrBuildPluginSpy;
 
     return {

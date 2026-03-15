@@ -45,7 +45,9 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
 
   return [
     ...viteNitroPlugin(platformOptions, nitroOptions),
-    ...(platformOptions.ssr ? [ssrBuildPlugin(), ...injectHTMLPlugin()] : []),
+    ...(platformOptions.ssr
+      ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
+      : []),
     ...(!isTest ? depsPlugin(platformOptions) : []),
     ...routerPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),

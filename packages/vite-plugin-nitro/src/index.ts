@@ -5,6 +5,8 @@ export {
   PrerenderRouteConfig,
   PrerenderContentDir,
   PrerenderContentFile,
+  CodeSplittingGroup,
+  CodeSplittingOptions,
 } from './lib/options.js';
 
 declare module 'nitro/types' {
