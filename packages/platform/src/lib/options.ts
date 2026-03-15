@@ -97,6 +97,41 @@ export interface Options {
    * File replacements
    */
   fileReplacements?: PluginOptions['fileReplacements'];
+  /**
+   * Experimental features. These APIs are subject to change.
+   */
+  experimental?: {
+    /**
+     * Enable typed route table generation for type-safe navigation.
+     *
+     * When enabled, the build generates a route declarations file that
+     * augments `AnalogRouteTable` with typed params and query for each
+     * file-based route.
+     *
+     * - `true` — generates `src/routes.gen.ts` (default location)
+     * - `TypedRouterOptions` — customize output path and other settings
+     *
+     * Unlocks type-safe usage of:
+     * - `injectTypedRouter()` — navigate with autocomplete
+     * - `routePath()` — build URLs with typed params
+     * - `injectTypedParams(from)` — typed params signal
+     * - `injectTypedQuery(from)` — typed query signal
+     * - `RouteLinkPipe` — typed route links in templates
+     *
+     * Inspired by TanStack Router's `routeTree.gen.ts` codegen.
+     */
+    typedRouter?: boolean | TypedRouterOptions;
+  };
+}
+
+export interface TypedRouterOptions {
+  /**
+   * Output path for the generated route declarations file,
+   * relative to the app root.
+   *
+   * @default 'src/routes.gen.ts'
+   */
+  outFile?: string;
 }
 
 export { PrerenderContentDir, PrerenderContentFile };

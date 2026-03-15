@@ -12,7 +12,7 @@
 /**
  * Base interface for the typed route table.
  *
- * This interface is augmented by generated code in `.analog/routes.gen.ts`.
+ * This interface is augmented by generated code in `src/routes.gen.ts`.
  * When no routes are generated, it is empty and `AnalogRoutePath` falls
  * back to `string`.
  */

@@ -33,7 +33,17 @@ export default defineConfig(() => ({
 }));
 ```
 
-When enabled, the build generates a `.analog/routes.gen.ts` file that augments `AnalogRouteTable` with typed params and query for each file-based route. This is similar to TanStack Router's `routeTree.gen.ts` codegen.
+When enabled, the build generates a `src/routes.gen.ts` file that augments `AnalogRouteTable` with typed params and query for each file-based route. This is similar to TanStack Router's `routeTree.gen.ts` codegen.
+
+You can customize the output path by passing an options object instead of `true`:
+
+```ts
+experimental: {
+  typedRouter: {
+    outFile: 'src/generated/routes.gen.ts',
+  },
+},
+```
 
 ### 2. Enable Typed Router Features
 
@@ -307,7 +317,7 @@ The type safety pipeline works as follows:
    └── Export: routeParamsSchema = v.object({ id: v.pipe(v.string(), ...) })
 
 2. Build (experimental.typedRouter: true):
-   └── Generates .analog/routes.gen.ts
+   └── Generates src/routes.gen.ts
        └── Augments AnalogRouteTable with:
            '/users/[id]': {
              params: { id: string }
@@ -328,7 +338,7 @@ When no route table is generated (i.e., `experimental.typedRouter` is not enable
 | Concept            | TanStack Router                      | Analog (Experimental)                                                    |
 | ------------------ | ------------------------------------ | ------------------------------------------------------------------------ |
 | Type registration  | `Register` interface augmentation    | `AnalogRouteTable` augmentation                                          |
-| Route codegen      | `routeTree.gen.ts`                   | `.analog/routes.gen.ts`                                                  |
+| Route codegen      | `routeTree.gen.ts`                   | `src/routes.gen.ts`                                                      |
 | Type-safe navigate | `<Link to="/path" params={...}>`     | `router.navigate('/path', { params })`                                   |
 | Typed params       | `useParams({ from: '/path' })`       | `injectTypedParams('/path')`                                             |
 | Typed search       | `useSearch({ from: '/path' })`       | `injectTypedQuery('/path')`                                              |

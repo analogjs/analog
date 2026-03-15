@@ -14,7 +14,11 @@ export {
 } from './lib/provide-content';
 export { default as MarkdownRouteComponent } from './lib/markdown-route.component';
 export { default as MarkdownComponent } from './lib/markdown.component';
-export { parseRawContentFile } from './lib/parse-raw-content-file';
+export {
+  parseRawContentFile,
+  parseRawContentFileAsync,
+  FrontmatterValidationError,
+} from './lib/parse-raw-content-file';
 export { MarkedSetupService } from './lib/marked-setup.service';
 export {
   MarkedContentHighlighter,

@@ -53,3 +53,19 @@ export {
   formatManifestSummary,
 } from './lib/route-manifest';
 export { RouteLinkPipe } from './lib/route-link.pipe';
+
+// Experimental features (TanStack Router-inspired)
+export {
+  withTypedRouter,
+  withRouteContext,
+  withLoaderCaching,
+  EXPERIMENTAL_TYPED_ROUTER,
+  EXPERIMENTAL_ROUTE_CONTEXT,
+  EXPERIMENTAL_LOADER_CACHE,
+} from './lib/experimental';
+export type {
+  TypedRouterOptions,
+  LoaderCacheOptions,
+} from './lib/experimental';
+export { injectTypedParams, injectTypedQuery } from './lib/inject-typed-params';
+export { injectRouteContext } from './lib/inject-route-context';

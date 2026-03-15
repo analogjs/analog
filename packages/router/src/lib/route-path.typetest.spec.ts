@@ -56,7 +56,7 @@ describe('type tests: without augmentation', () => {
 // ─── Simulated augmentation ───
 
 // We test the conditional type logic by simulating what the
-// generated .analog/routes.gen.ts would produce.
+// generated src/routes.gen.ts would produce.
 
 // Simulate augmented route table entries
 interface MockRouteTable {

@@ -13,7 +13,7 @@ import { buildUrl } from './route-path';
  * type-safe navigation helpers.
  *
  * The route path autocomplete and param typing come from the
- * generated `.analog/routes.gen.ts` file which augments the
+ * generated `src/routes.gen.ts` file which augments the
  * `AnalogRouteTable` interface.
  *
  * @example

@@ -1,6 +1,6 @@
 import { normalizePath, Plugin } from 'vite';
 import { globSync } from 'tinyglobby';
-import { resolve, join } from 'node:path';
+import { resolve, join, dirname } from 'node:path';
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
 
 import {
@@ -11,13 +11,32 @@ import {
 } from '@analogjs/router/manifest';
 import type { RouteSchemaInfo } from '@analogjs/router/manifest';
 
-import type { Options } from './options.js';
+import type { Options, TypedRouterOptions } from './options.js';
+
+const DEFAULT_OUT_FILE = 'src/routes.gen.ts';
+
+function resolveTypedRouterOptions(experimental: Options['experimental']): {
+  enabled: boolean;
+  outFile: string;
+} {
+  const typedRouter = experimental?.typedRouter;
+  if (!typedRouter) {
+    return { enabled: false, outFile: DEFAULT_OUT_FILE };
+  }
+  if (typedRouter === true) {
+    return { enabled: true, outFile: DEFAULT_OUT_FILE };
+  }
+  return {
+    enabled: true,
+    outFile: typedRouter.outFile ?? DEFAULT_OUT_FILE,
+  };
+}
 
 /**
  * Vite plugin that generates typed route declarations.
  *
  * Discovers the same route and content files as the main router plugin,
- * then generates `.analog/routes.gen.ts` with module augmentation for
+ * then generates a route declarations file with module augmentation for
  * `@analogjs/router`'s `AnalogRouteTable` interface.
  *
  * The generated file provides:
@@ -27,6 +46,7 @@ import type { Options } from './options.js';
  */
 export function routeGenerationPlugin(options?: Options): Plugin {
   const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
+  const { enabled, outFile } = resolveTypedRouterOptions(options?.experimental);
   let root: string;
 
   function discoverRouteFiles(): string[] {
@@ -92,13 +112,12 @@ export function routeGenerationPlugin(options?: Options): Plugin {
       console.log(formatManifestSummary(manifest));
     }
 
-    const outDir = join(root, '.analog');
+    const outPath = join(root, outFile);
+    const outDir = dirname(outPath);
 
     if (!existsSync(outDir)) {
       mkdirSync(outDir, { recursive: true });
     }
-
-    const outPath = join(outDir, 'routes.gen.ts');
 
     let existing = '';
     try {
@@ -128,9 +147,10 @@ export function routeGenerationPlugin(options?: Options): Plugin {
       root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
     },
     buildStart() {
-      generate();
+      if (enabled) generate();
     },
     configureServer(server) {
+      if (!enabled) return;
       server.watcher.on('add', (path) => {
         if (isRouteFile(path)) generate();
       });
