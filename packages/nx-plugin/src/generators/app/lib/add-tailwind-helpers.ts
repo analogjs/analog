@@ -29,7 +29,7 @@ export function normalizeOptions(
 
 export function detectTailwindInstalledVersion(
   tree: Tree,
-): '2' | '3' | '4' | undefined {
+): '4' | '5' | undefined {
   const { dependencies, devDependencies } = readJson(tree, 'package.json');
   const tailwindVersion =
     dependencies?.tailwindcss ?? devDependencies?.tailwindcss;
@@ -39,15 +39,12 @@ export function detectTailwindInstalledVersion(
   }
 
   const version = checkAndCleanWithSemver('tailwindcss', tailwindVersion);
-  if (lt(version, '2.0.0')) {
+  if (lt(version, '4.0.0')) {
     throw new Error(
-      `The Tailwind CSS version "${tailwindVersion}" is not supported. Please upgrade to v2.0.0 or higher.`,
+      `The Tailwind CSS version "${tailwindVersion}" is not supported. Please upgrade to v4.0.0 or higher.`,
     );
   }
-  if (lt(version, '3.0.0')) {
-    return '2';
-  }
-  return lt(version, '4.0.0') ? '3' : '4';
+  return lt(version, '5.0.0') ? '4' : '5';
 }
 
 export function addTailwindRequiredPackages(tree: Tree): GeneratorCallback {
@@ -68,8 +65,6 @@ export function updateApplicationStyles(
   options: NormalizedGeneratorOptions,
   project: ProjectConfiguration,
 ): void {
-  const tailwindInstalledVersion = detectTailwindInstalledVersion(tree);
-
   let stylesEntryPoint = options.stylesEntryPoint;
 
   if (stylesEntryPoint && !tree.exists(stylesEntryPoint)) {
@@ -89,36 +84,21 @@ export function updateApplicationStyles(
     }
   }
 
-  const stylesEntryPointContent = tree.read(stylesEntryPoint, 'utf-8');
-
-  if (tailwindInstalledVersion < '4') {
-    tree.write(
-      stylesEntryPoint,
-      stripIndents`@tailwind base;
-      @tailwind components;
-      @tailwind utilities;
-
-      ${stylesEntryPointContent}`,
-    );
-  } else {
-    if (!isStyleEntryPointCss(stylesEntryPoint)) {
-      throw new Error(
-        `Tailwind CSS v4 is not compatible with any css preprocessors like sass or less. Please use a css file as the styles entry point.`,
-      );
-    }
-
-    tree.write(
-      stylesEntryPoint,
-      stripIndents`@import "tailwindcss";
-
-
-      ${stylesEntryPointContent}`,
+  if (!stylesEntryPoint.endsWith('.css')) {
+    throw new Error(
+      `Tailwind CSS v4 is not compatible with any css preprocessors like sass or less. Please use a css file as the styles entry point.`,
     );
   }
-}
 
-function isStyleEntryPointCss(stylesEntryPoint) {
-  return stylesEntryPoint.endsWith('.css');
+  const stylesEntryPointContent = tree.read(stylesEntryPoint, 'utf-8');
+
+  tree.write(
+    stylesEntryPoint,
+    stripIndents`@import "tailwindcss";
+
+
+    ${stylesEntryPointContent}`,
+  );
 }
 
 function findStylesEntryPoint(
@@ -190,19 +170,10 @@ export function addTailwindConfigPathToProject(
     );
   }
 
-  const tailwindInstalledVersion = detectTailwindInstalledVersion(tree);
-
-  if (tailwindInstalledVersion === '2') {
-    buildTarget.options = {
-      ...buildTarget.options,
-      tailwindConfig: joinPathFragments(project.root, 'tailwind.config.js'),
-    };
-  } else {
-    buildTarget.options = {
-      ...buildTarget.options,
-      tailwindConfig: joinPathFragments(project.root, 'tailwind.config.ts'),
-    };
-  }
+  buildTarget.options = {
+    ...buildTarget.options,
+    tailwindConfig: joinPathFragments(project.root, 'tailwind.config.ts'),
+  };
 
   updateProjectConfiguration(tree, options.project, project);
 }
@@ -212,50 +183,23 @@ export function addTailwindConfigFile(
   options: GeneratorOptions,
   project: ProjectConfiguration,
 ): void {
-  if (tree.exists(joinPathFragments(project.root, 'tailwind.config.js'))) {
+  if (
+    tree.exists(joinPathFragments(project.root, 'tailwind.config.ts')) ||
+    tree.exists(joinPathFragments(project.root, 'tailwind.config.js'))
+  ) {
     throw new Error(
       stripIndents`The "tailwind.config" file already exists in the project "${options.project}". Are you sure this is the right project to set up Tailwind?
       If you are sure, you can remove the existing file and re-run the generator.`,
     );
   }
 
-  const tailwindInstalledVersion = detectTailwindInstalledVersion(tree);
-
-  if (tailwindInstalledVersion === '2') {
-    generateFiles(
-      tree,
-      joinPathFragments(__dirname, '..', 'files', 'tailwind/v2'),
-      project.root,
-      {
-        relativeSourceRoot: relative(project.root, project.sourceRoot),
-        template: '',
-      },
-    );
-    return;
-  }
-  if (tailwindInstalledVersion === '3') {
-    generateFiles(
-      tree,
-      joinPathFragments(__dirname, '..', 'files', 'tailwind/v3'),
-      project.root,
-      {
-        relativeSourceRoot: relative(project.root, project.sourceRoot),
-        template: '',
-      },
-    );
-    return;
-  }
-
-  if (tailwindInstalledVersion === '4') {
-    generateFiles(
-      tree,
-      joinPathFragments(__dirname, '..', 'files', 'tailwind/v4'),
-      project.root,
-      {
-        relativeSourceRoot: relative(project.root, project.sourceRoot),
-        template: '',
-      },
-    );
-    return;
-  }
+  generateFiles(
+    tree,
+    joinPathFragments(__dirname, '..', 'files', 'tailwind/v4'),
+    project.root,
+    {
+      relativeSourceRoot: relative(project.root, project.sourceRoot),
+      template: '',
+    },
+  );
 }
