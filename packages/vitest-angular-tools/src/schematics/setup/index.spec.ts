@@ -144,7 +144,8 @@ describe('setup schematic', () => {
       "import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin'",
     );
     expect(viteConfig).toContain('plugins: [angular(), nxViteTsPaths()]');
-    expect(viteConfig).not.toContain('viteTsConfigPaths');
+    expect(viteConfig).not.toContain('tsconfigPathsPlugin');
+    expect(viteConfig).not.toContain('vite-tsconfig-paths');
   });
 
   it('should create test-setup.ts with BrowserTestingModule for Angular 20', async () => {

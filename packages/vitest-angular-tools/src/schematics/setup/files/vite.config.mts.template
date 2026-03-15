@@ -1,8 +1,9 @@
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
-import angular, { tsconfigPathsPlugin } from '@analogjs/vite-plugin-angular';
-<% if (isNx) { %>import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+<% if (isNx) { %>import angular from '@analogjs/vite-plugin-angular';
+import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+<% } else { %>import angular, { tsconfigPathsPlugin } from '@analogjs/vite-plugin-angular';
 <% } %>
 <% if (browserMode) { %>import { playwright } from '@vitest/browser-playwright';<% } %>
 
