@@ -5,46 +5,82 @@ import {
   Tree,
   visitNotIgnoredFiles,
 } from '@nx/devkit';
-import { CallExpression, Node, Project } from 'ts-morph';
+import MagicString from 'magic-string';
 
 export default async function update(host: Tree) {
-  let project: Project;
+  // oxc-parser is ESM-only; dynamic import for CJS compatibility
+  const { parseSync, Visitor } = await import('oxc-parser');
 
   visitNotIgnoredFiles(host, '/', (file) => {
     if (file.endsWith('.ts')) {
       const content = host.read(file, 'utf-8');
       if (
         content &&
+        content.includes('provideContent') &&
         content.includes('withMarkdownRenderer') &&
         !content.includes('withPrismHighlighter') &&
         !content.includes('withShikiHighlighter')
       ) {
-        if (!project) {
-          project = new Project({
-            useInMemoryFileSystem: true,
-            skipAddingFilesFromTsConfig: true,
-          });
-        }
+        const result = parseSync(file, content, {
+          lang: 'ts',
+          sourceType: 'module',
+        });
 
-        const sourceFile = project.createSourceFile(file, content);
+        if (result.errors.length > 0) return;
 
-        const provideContentNode = sourceFile.getFirstDescendant(
-          (node): node is CallExpression =>
-            Node.isCallExpression(node) &&
-            node.getText().includes('provideContent') &&
-            node.getText().includes('withMarkdownRenderer'),
+        // Find the provideContent(...withMarkdownRenderer...) call
+        let lastArgEnd: number | undefined;
+        let callEnd: number | undefined;
+
+        const visitor = new Visitor({
+          CallExpression(node) {
+            if (
+              node.callee.type === 'Identifier' &&
+              node.callee.name === 'provideContent'
+            ) {
+              const hasRenderer = node.arguments.some(
+                (arg) =>
+                  arg.type === 'CallExpression' &&
+                  arg.callee.type === 'Identifier' &&
+                  arg.callee.name === 'withMarkdownRenderer',
+              );
+              if (hasRenderer) {
+                const last = node.arguments[node.arguments.length - 1];
+                lastArgEnd = last.end;
+                callEnd = node.end - 1;
+              }
+            }
+          },
+        });
+        visitor.visit(result.program);
+
+        if (lastArgEnd === undefined || callEnd === undefined) return;
+
+        const s = new MagicString(content);
+
+        // Insert import after the last existing import statement
+        const lastImport = result.module.staticImports.at(-1);
+        const importInsertPos = lastImport ? lastImport.end : 0;
+        s.appendRight(
+          importInsertPos,
+          `\nimport { withPrismHighlighter } from '@analogjs/content/prism-highlighter';`,
         );
 
-        if (provideContentNode) {
-          sourceFile.addImportDeclaration({
-            moduleSpecifier: '@analogjs/content/prism-highlighter',
-            namedImports: ['withPrismHighlighter'],
-          });
-
-          provideContentNode.addArgument('withPrismHighlighter()');
+        // Append withPrismHighlighter() after the last argument,
+        // accounting for possible trailing comma
+        const between = content.slice(lastArgEnd, callEnd);
+        const commaOffset = between.indexOf(',');
+        if (commaOffset !== -1) {
+          // Insert after the trailing comma
+          s.appendRight(
+            lastArgEnd + commaOffset + 1,
+            ' withPrismHighlighter()',
+          );
+        } else {
+          s.appendLeft(lastArgEnd, ', withPrismHighlighter()');
         }
 
-        host.write(file, sourceFile.getFullText());
+        host.write(file, s.toString());
       }
     }
   });
