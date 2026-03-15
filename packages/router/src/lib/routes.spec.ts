@@ -1,6 +1,7 @@
 import { Route, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import { expect, vi } from 'vitest';
+import { ROUTE_JSON_LD_KEY } from './json-ld';
 import { RouteExport, RouteMeta } from './models';
 import { createRoutes, Files } from './routes';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
@@ -652,6 +653,113 @@ Testing nested markdown routes.
       expect(routeMeta.resolve).not.toBe(resolvedRoute.resolve);
       // routeMeta.data should not be changed
       expect(resolvedRoute.data).toBe(routeMeta.data);
+    });
+  });
+
+  describe('a route with JSON-LD', () => {
+    async function setup(fileExport: RouteExport) {
+      const files: Files = {
+        '/app/routes/index.ts': () => Promise.resolve(fileExport),
+      };
+      const moduleRoute = createRoutes(files)[0];
+      const resolvedRoutes = (await moduleRoute.loadChildren?.()) as Route[];
+
+      return { resolvedRoute: resolvedRoutes[0] };
+    }
+
+    it('should add static JSON-LD to the route data dictionary', async () => {
+      const routeMeta: RouteMeta = {
+        data: { foo: 'bar' },
+        jsonLd: {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: 'Hello Analog',
+        },
+      };
+      const { resolvedRoute } = await setup({
+        default: RouteComponent,
+        routeMeta,
+      });
+
+      expect(resolvedRoute.data).toEqual({
+        ...routeMeta.data,
+        [ROUTE_JSON_LD_KEY]: routeMeta.jsonLd,
+      });
+      expect(routeMeta.data).not.toBe(resolvedRoute.data);
+      expect(resolvedRoute.resolve).toEqual({
+        load: expect.anything(),
+      });
+    });
+
+    it('should add JSON-LD resolvers to the route resolve dictionary', async () => {
+      const routeMeta: RouteMeta = {
+        resolve: { foo: () => of('bar') },
+        jsonLd: () =>
+          of({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: 'AnalogJS Pro',
+          }),
+      };
+      const { resolvedRoute } = await setup({
+        default: RouteComponent,
+        routeMeta,
+      });
+
+      expect(resolvedRoute.resolve).toEqual({
+        ...routeMeta.resolve,
+        [ROUTE_JSON_LD_KEY]: routeMeta.jsonLd,
+        load: expect.anything(),
+      });
+    });
+
+    it('should merge top-level routeJsonLd exports into routeMeta when needed', async () => {
+      const { resolvedRoute } = await setup({
+        default: RouteComponent,
+        routeJsonLd: {
+          '@context': 'https://schema.org',
+          '@type': 'Event',
+          name: 'AnalogConf',
+        },
+      });
+
+      expect(resolvedRoute.data).toEqual({
+        [ROUTE_JSON_LD_KEY]: {
+          '@context': 'https://schema.org',
+          '@type': 'Event',
+          name: 'AnalogConf',
+        },
+      });
+    });
+
+    it('should map markdown frontmatter jsonLd into route data', async () => {
+      const files: Files = {
+        '/src/content/structured-data.md': () =>
+          Promise.resolve(`---
+title: Structured Data Content
+jsonLd:
+  "@context": https://schema.org
+  "@type": Article
+  identifier: analog-content
+---
+
+Hello world
+`),
+      };
+
+      const moduleRoute = createRoutes(files)[0];
+      const resolvedRoutes = (await moduleRoute.loadChildren?.()) as Route[];
+      const resolvedRoute = resolvedRoutes[0];
+
+      expect(resolvedRoute.data).toEqual({
+        _analogContent: expect.stringContaining('Hello world'),
+        [ROUTE_JSON_LD_KEY]: {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          identifier: 'analog-content',
+        },
+      });
+      expect(resolvedRoute.title).toBe('Structured Data Content');
     });
   });
 

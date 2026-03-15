@@ -7,6 +7,7 @@ import { Options } from './options.js';
 
 export function depsPlugin(options?: Options): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  const viteOptions = options?.vite === false ? undefined : options?.vite;
 
   return [
     {
@@ -14,7 +15,7 @@ export function depsPlugin(options?: Options): Plugin[] {
       config() {
         const useAngularCompilationAPI =
           options?.experimental?.useAngularCompilationAPI ??
-          options?.vite?.experimental?.useAngularCompilationAPI;
+          viteOptions?.experimental?.useAngularCompilationAPI;
 
         const esbuild =
           options?.vite === false || useAngularCompilationAPI

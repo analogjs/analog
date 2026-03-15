@@ -158,17 +158,15 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
       generate();
     },
     configureServer(server) {
-      server.watcher.on('add', (path) => {
+      const regenerate = (path: string) => {
         if (isRouteFile(path)) {
           generate();
         }
-      });
+      };
 
-      server.watcher.on('unlink', (path) => {
-        if (isRouteFile(path)) {
-          generate();
-        }
-      });
+      server.watcher.on('add', regenerate);
+      server.watcher.on('change', regenerate);
+      server.watcher.on('unlink', regenerate);
     },
   };
 }

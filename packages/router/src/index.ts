@@ -7,6 +7,7 @@ export {
   injectRouter,
 } from './lib/define-route';
 export { RouteMeta } from './lib/models';
+export type { JsonLd, JsonLdObject } from './lib/json-ld';
 export { provideFileRouter, withExtraRoutes } from './lib/provide-file-router';
 export { MetaTag } from './lib/meta-tags';
 export { PageServerLoad, LoadResult } from './lib/route-types';

@@ -4,6 +4,10 @@ import { platformPlugin } from './platform-plugin.js';
 vi.mock('@analogjs/vite-plugin-angular', () => ({
   default: vi.fn(() => []),
 }));
+vi.mock('@analogjs/vite-plugin-routes', () => ({
+  jsonLdManifest: vi.fn(() => ({ name: 'analog-json-ld-manifest' })),
+  typedRoutes: vi.fn(() => ({ name: 'analog-typed-routes' })),
+}));
 vi.mock('@analogjs/vite-plugin-nitro');
 vi.mock('./ssr/ssr-build-plugin');
 vi.mock('./ssr/dev-server-plugin');

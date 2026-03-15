@@ -20,6 +20,6 @@ export default config;
 // Check https://storybook.js.org/docs/react/builders/vite#configuration
 // and https://nx.dev/recipes/storybook/custom-builder-configs
 
-function getAbsolutePath(value: string): any {
+function getAbsolutePath(value: string): string {
   return dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)));
 }

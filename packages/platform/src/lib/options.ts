@@ -121,6 +121,16 @@ export interface Options {
     useAngularCompilationAPI?: boolean;
 
     /**
+     * Enable JSON-LD manifest generation.
+     *
+     * When enabled, `@analogjs/platform` wires up the dedicated
+     * `@analogjs/vite-plugin-routes` plugin to scan route files for JSON-LD
+     * exports and markdown frontmatter, generating a manifest at
+     * `.analog/route-jsonld.gen.ts`.
+     */
+    jsonLdManifest?: boolean;
+
+    /**
      * Enable typed route table generation for type-safe navigation.
      *
      * When enabled, `@analogjs/platform` wires up the dedicated

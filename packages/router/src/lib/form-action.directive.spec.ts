@@ -2,9 +2,11 @@ import { Component } from '@angular/core';
 import { provideLocationMocks } from '@angular/common/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { API_PREFIX } from '@analogjs/router/tokens';
 
+import { ANALOG_META_KEY } from './endpoints';
 import { FormAction } from './form-action.directive';
 
 function deferred<T>() {
@@ -68,7 +70,28 @@ describe('FormAction', () => {
     originalFetch = globalThis.fetch;
     TestBed.configureTestingModule({
       imports: [PostHostComponent, GetHostComponent],
-      providers: [provideRouter([]), provideLocationMocks()],
+      providers: [
+        provideRouter([]),
+        provideLocationMocks(),
+        { provide: API_PREFIX, useValue: 'api' },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              routeConfig: {
+                [ANALOG_META_KEY]: {
+                  endpoint: '/pages/index',
+                  endpointKey: '/pages/index.server.ts',
+                },
+              },
+              queryParams: {},
+              fragment: null,
+              params: {},
+              parent: null,
+            },
+          },
+        },
+      ],
     });
   });
 
