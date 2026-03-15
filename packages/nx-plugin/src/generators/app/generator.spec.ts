@@ -9,8 +9,8 @@ import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing';
 import { lt } from 'semver';
 
 import generator from './generator';
-import { AnalogNxApplicationGeneratorOptions } from './schema';
 import { checkAndCleanWithSemver } from '@nx/devkit/src/utils/semver';
+import { AnalogNxApplicationGeneratorOptions } from './schema';
 
 describe('nx-plugin generator', () => {
   const setup = async (
@@ -104,28 +104,16 @@ describe('nx-plugin generator', () => {
       dependencies['tailwindcss'],
     );
 
-    if (lt(version, '4.0.0')) {
-      const hasTailwindConfigFile = tree.exists(
-        'apps/tailwind-app/tailwind.config.ts',
-      );
-      const hasPostCSSConfigFile = tree.exists(
-        'apps/tailwind-app/postcss.config.cjs',
-      );
-      expect(hasTailwindConfigFile).toBeTruthy();
-      expect(hasPostCSSConfigFile).toBeTruthy();
-    } else {
-      expect(dependencies['@tailwindcss/postcss']).toBeDefined();
+    expect(lt(version, '4.0.0')).toBeFalsy();
+    expect(dependencies['@tailwindcss/postcss']).toBeDefined();
 
-      const hasPostCSSConfigFile = tree.exists(
-        'apps/tailwind-app/.postcssrc.json',
-      );
-      const hasCorrectCssImplementation = tree
+    expect(tree.exists('apps/tailwind-app/tailwind.config.ts')).toBeTruthy();
+    expect(tree.exists('apps/tailwind-app/.postcssrc.json')).toBeTruthy();
+    expect(
+      tree
         .read('apps/tailwind-app/src/styles.css')
-        .includes(`@import 'tailwindcss';`);
-
-      expect(hasCorrectCssImplementation).toBeTruthy();
-      expect(hasPostCSSConfigFile).toBeTruthy();
-    }
+        .includes(`@import 'tailwindcss';`),
+    ).toBeTruthy();
   };
 
   const verifyTagsArePopulated = (
