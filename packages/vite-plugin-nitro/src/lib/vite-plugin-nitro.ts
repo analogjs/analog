@@ -524,11 +524,26 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 outDir:
                   config?.build?.outDir ||
                   resolve(workspaceRoot, 'dist', rootDir, 'client'),
+                // Forward code-splitting config to Rolldown when running
+                // under Vite 8+.  `false` disables splitting (inlines all
+                // dynamic imports); an object configures chunk groups.
+                // The `!== undefined` check ensures `codeSplitting: false`
+                // is forwarded correctly (a truthy check would swallow it).
+                ...(vite.rolldownVersion && options?.codeSplitting !== undefined
+                  ? {
+                      rolldownOptions: {
+                        output: {
+                          codeSplitting: options.codeSplitting,
+                        },
+                      },
+                    }
+                  : {}),
               },
             },
             ssr: {
               build: {
                 ssr: true,
+                // Vite 8+ (Rolldown) uses `rolldownOptions`; Vite ≤7 uses `rollupOptions`.
                 [vite.rolldownVersion ? 'rolldownOptions' : 'rollupOptions']: {
                   input:
                     options?.entryServer ||

@@ -5,6 +5,8 @@ import type {
   PrerenderContentDir,
   PrerenderContentFile,
   PrerenderRouteConfig,
+  CodeSplittingGroup,
+  CodeSplittingOptions,
 } from '@analogjs/vite-plugin-nitro';
 
 import { ContentPluginOptions } from './content-plugin.js';
@@ -37,6 +39,11 @@ export interface PrerenderOptions {
   /** List of functions that run for each route after pre-rendering is complete. */
   postRenderingHooks?: ((routes: PrerenderRoute) => Promise<void>)[];
 }
+
+// Re-export code-splitting types so consumers of @analogjs/platform can
+// import them without taking a direct dependency on @analogjs/vite-plugin-nitro.
+// The canonical definitions live in vite-plugin-nitro/src/lib/options.ts.
+export type { CodeSplittingGroup, CodeSplittingOptions };
 
 export interface Options {
   ssr?: boolean;
@@ -97,6 +104,15 @@ export interface Options {
    * File replacements
    */
   fileReplacements?: PluginOptions['fileReplacements'];
+  /**
+   * Code splitting configuration forwarded to Rolldown (Vite 8+).
+   *
+   * - `false`  — disable code splitting; all dynamic imports are inlined.
+   * - object   — fine-grained chunk grouping via {@link CodeSplittingOptions}.
+   *
+   * Ignored when the bundler is Rollup (Vite ≤ 7).
+   */
+  codeSplitting?: false | CodeSplittingOptions;
 }
 
 export { PrerenderContentDir, PrerenderContentFile };

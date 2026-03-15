@@ -7,19 +7,28 @@ import { contentPlugin } from './content-plugin';
 
 describe('content plugin', () => {
   const [plugin] = contentPlugin({ highlighter: 'prism' });
+
+  // In Vite 8+ the transform hook uses the filtered-transform shape:
+  //   transform: { filter: { id: RegExp }, handler: Function }
+  // We need to call the handler directly and also inspect the filter to
+  // verify module-ID gating.
+  const transformObj = plugin.transform as {
+    filter: { id: RegExp };
+    handler: (code: string, id: string) => any;
+  };
   const transform = (code: string, id: string): any => {
-    // Use `any` because not of the signatures are callable and it also expects
-    // to pass a valid `this` type.
-    const pluginTransform: any = plugin.transform;
-    return pluginTransform(code, id);
+    return transformObj.handler.call(plugin, code, id);
   };
 
-  it('should skip transforming code if there is no `analog-content-list` at the end', async () => {
-    // Arrange
-    const code = 'Some_code';
-    const id = '/src/content/post.md';
-    // Act & Assert
-    expect(await transform(code, id)).toEqual(undefined);
+  it('should have a filter that only matches analog-content-list modules', () => {
+    // The filter.id regex gates which modules reach the handler.
+    // Modules without `analog-content-list=true` in their ID should not match.
+    expect(transformObj.filter.id.test('/src/content/post.md')).toBe(false);
+    expect(
+      transformObj.filter.id.test(
+        '/src/content/post.md?analog-content-list=true',
+      ),
+    ).toBe(true);
   });
 
   it.skip('should cache parsed attributes if the code is the same', async () => {
@@ -34,8 +43,10 @@ describe('content plugin', () => {
       'Hello World\n';
     const id = '/src/content/post.md?analog-content-list=true';
     const readFileSyncSpy = vi.spyOn(fs, 'readFileSync').mockReturnValue(code);
-    const result =
-      'export default {"title":"My First Post","slug":"2022-12-27-my-first-post","description":"My First Post Description"}';
+    const result = {
+      code: 'export default {"title":"My First Post","slug":"2022-12-27-my-first-post","description":"My First Post Description"}',
+      moduleSideEffects: false,
+    };
     // Act & Assert
     expect(await transform(code, id)).toEqual(result);
     expect(await transform(code, id)).toEqual(result);

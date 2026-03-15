@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { angularVitestPlugin } from './angular-vitest-plugin';
+import {
+  angularVitestPlugin,
+  angularVitestSourcemapPlugin,
+} from './angular-vitest-plugin';
 import { defineConfig, resolveConfig } from 'vite';
 
 describe(angularVitestPlugin.name, () => {
@@ -29,5 +32,37 @@ describe(angularVitestPlugin.name, () => {
       'serve',
     );
     expect(config.test?.pool).toBe('threads');
+  });
+});
+
+describe(angularVitestSourcemapPlugin.name, () => {
+  it('should match queried TypeScript module ids', () => {
+    const plugin = angularVitestSourcemapPlugin();
+    const filter =
+      typeof plugin.transform === 'object'
+        ? plugin.transform.filter
+        : undefined;
+    const idFilter =
+      filter && typeof filter === 'object' && 'id' in filter ? filter.id : null;
+
+    expect(idFilter).toBeInstanceOf(RegExp);
+    expect((idFilter as RegExp).test('/src/app.component.ts')).toBe(true);
+    expect((idFilter as RegExp).test('/src/app.component.ts?inline')).toBe(
+      true,
+    );
+    expect((idFilter as RegExp).test('/src/app.component.tsx')).toBe(false);
+  });
+
+  it('should skip inline virtual modules', async () => {
+    const plugin = angularVitestSourcemapPlugin();
+    const handler =
+      typeof plugin.transform === 'object'
+        ? plugin.transform.handler
+        : undefined;
+
+    expect(handler).toBeTypeOf('function');
+    await expect(
+      handler?.('export const template = ""', '/src/app.component.ts?inline'),
+    ).resolves.toBeUndefined();
   });
 });
