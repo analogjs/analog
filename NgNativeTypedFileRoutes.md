@@ -1,5 +1,14 @@
 # Ng-Native Typed File Routes
 
+## Iteration Log
+
+| #   | Date       | Focus                                                                                | Status  |
+| --- | ---------- | ------------------------------------------------------------------------------------ | ------- |
+| 1   | 2026-03-15 | Core implementation: route-manifest, route-path, typed-router, Vite plugin, 67 tests | Done    |
+| 2   |            |                                                                                      | Pending |
+| 3   |            |                                                                                      | Pending |
+| 4   |            |                                                                                      | Pending |
+
 ## Goal
 
 Implement [#2044](https://github.com/analogjs/analog/issues/2044) in a way that gives Analog:
@@ -1050,3 +1059,120 @@ The most maintainable concrete version of that modular path is:
 The fallback option, if maintainers want to postpone extra package boundaries, is to keep the same architecture conceptually but host the route-generation plugin boundary inside `@analogjs/platform` first.
 
 That is the key conclusion of this document: if Analog modularizes, it should modularize the manifest/codegen and plugin layers, while still keeping the public API Angular-native and router-centered rather than shifting toward a Nitro-first or package-fragmented model.
+
+---
+
+## Implementation Status
+
+### Iteration 1 — Core Infrastructure (2026-03-15)
+
+Implemented the foundational typed file routes system across three packages.
+
+#### Files Created
+
+| File                         | Package              | Purpose                                                       |
+| ---------------------------- | -------------------- | ------------------------------------------------------------- |
+| `route-manifest.ts`          | `@analogjs/router`   | Route manifest generation (pure TS, no Angular deps)          |
+| `route-manifest.spec.ts`     | `@analogjs/router`   | 39 tests covering all filename patterns                       |
+| `route-path.ts`              | `@analogjs/router`   | `routePath()` URL builder + `AnalogRouteTable` base interface |
+| `route-path.spec.ts`         | `@analogjs/router`   | 28 tests covering params, query, hash, edge cases             |
+| `typed-router.ts`            | `@analogjs/router`   | `injectTypedRouter()` Angular helper                          |
+| `route-generation-plugin.ts` | `@analogjs/platform` | Vite plugin for `.analog/routes.gen.ts` codegen               |
+
+#### Files Modified
+
+| File                                           | Change                                 |
+| ---------------------------------------------- | -------------------------------------- |
+| `packages/router/src/index.ts`                 | Added exports for all typed route APIs |
+| `packages/platform/src/index.ts`               | Added `routeGenerationPlugin` export   |
+| `packages/platform/src/lib/platform-plugin.ts` | Added route generation to plugin chain |
+
+#### Public API Surface
+
+```typescript
+// From @analogjs/router
+
+// Types (augmented by generated code)
+interface AnalogRouteTable {}
+type AnalogRoutePath = keyof AnalogRouteTable extends never
+  ? string
+  : Extract<keyof AnalogRouteTable, string>;
+
+// URL builder with type-safe params
+function routePath<P extends AnalogRoutePath>(
+  path: P,
+  ...args: RoutePathArgs<P>
+): string;
+
+// Angular-native typed router
+function injectTypedRouter(): {
+  navigate<P>(path: P, ...args: RoutePathArgs<P>): Promise<boolean>;
+  createUrlTree<P>(path: P, ...args: RoutePathArgs<P>): UrlTree;
+  url<P>(path: P, ...args: RoutePathArgs<P>): string;
+  angularRouter: Router;
+};
+
+// Manifest generation (for build tools / plugins)
+function filenameToRoutePath(filename: string): string;
+function extractRouteParams(routePath: string): RouteParamInfo[];
+function generateRouteManifest(filenames: string[]): RouteManifest;
+function generateRouteTableDeclaration(manifest: RouteManifest): string;
+```
+
+#### Generated Output Format
+
+The Vite plugin generates `.analog/routes.gen.ts` with module augmentation:
+
+```typescript
+// .analog/routes.gen.ts (auto-generated)
+declare module '@analogjs/router' {
+  interface AnalogRouteTable {
+    '/': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
+    '/users/[id]': {
+      params: { id: string };
+      query: Record<string, string | string[] | undefined>;
+    };
+    '/docs/[...slug]': {
+      params: { slug: string[] };
+      query: Record<string, string | string[] | undefined>;
+    };
+    '/shop/[[...category]]': {
+      params: { category?: string[] };
+      query: Record<string, string | string[] | undefined>;
+    };
+  }
+}
+export {};
+```
+
+#### Key Design Decisions
+
+1. **Module augmentation over separate imports** — Generated types augment `@analogjs/router`'s `AnalogRouteTable` interface, so typed helpers work without explicit imports of generated code.
+
+2. **Bracket syntax in route keys** — Route table keys use `[id]`, `[...slug]`, `[[...slug]]` syntax (matching filenames) instead of Angular's `:id`/`**` syntax for clarity and stronger typing.
+
+3. **Rest args for conditional required params** — `routePath('/users/[id]', { params: { id: '42' } })` requires the options arg, while `routePath('/about')` makes it optional.
+
+4. **Dot-safe bracket protection** — Bracket content is protected during dot-to-slash conversion using null-byte placeholders to preserve `[...slug]` syntax.
+
+5. **String fallback** — `AnalogRoutePath` falls back to `string` when no routes are generated, enabling gradual adoption.
+
+#### Test Results
+
+- **67 tests passing** across `route-manifest.spec.ts` (39) and `route-path.spec.ts` (28)
+- **71 existing tests passing** with zero regressions (validate, define-action, define-api-route, parse-raw-content-file)
+
+#### Remaining Work for Future Iterations
+
+- [ ] Integration test: end-to-end Vite plugin generating `.analog/routes.gen.ts`
+- [ ] TypeScript type tests: compile-time enforcement of required params
+- [ ] `routeQuerySchema` and `routeParamsSchema` exports from route files
+- [ ] Input/output type distinction (InferInput vs InferOutput from Standard Schema)
+- [ ] Typed `RouterLink` directive or component
+- [ ] Typed page-load contracts (`definePageLoad`)
+- [ ] Dev-mode diagnostics: collision warnings, schema-shape mismatches
+- [ ] Watch-mode regeneration stress testing
+- [ ] Documentation updates for `apps/docs-app`

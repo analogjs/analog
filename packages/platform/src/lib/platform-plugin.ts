@@ -11,6 +11,7 @@ import { ssrXhrBuildPlugin } from './ssr/ssr-xhr-plugin.js';
 import { depsPlugin } from './deps-plugin.js';
 import { injectHTMLPlugin } from './ssr/inject-html-plugin.js';
 import { serverModePlugin } from '../server-mode-plugin.js';
+import { routeGenerationPlugin } from './route-generation-plugin.js';
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
@@ -48,6 +49,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ...(platformOptions.ssr ? [ssrBuildPlugin(), ...injectHTMLPlugin()] : []),
     ...(!isTest ? depsPlugin(platformOptions) : []),
     ...routerPlugin(platformOptions),
+    routeGenerationPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),
     ...(opts?.vite === false
       ? []

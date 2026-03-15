@@ -15,6 +15,35 @@ export { getLoadResolver } from './lib/get-load-resolver';
 export { requestContextInterceptor } from './lib/request-context';
 export { injectRouteEndpointURL } from './lib/inject-route-endpoint-url';
 export { FormAction } from './lib/form-action.directive';
+export type { FormActionState } from './lib/form-action.directive';
+export {
+  issuesToFieldErrors,
+  issuesToFormErrors,
+  issuePathToFieldName,
+} from './lib/validation-errors';
+export type { ValidationFieldErrors } from './lib/validation-errors';
 export { injectDebugRoutes } from './lib/debug/routes';
 export { withDebugRoutes } from './lib/debug';
 export { ServerOnly } from './lib/server.component';
+
+// Typed file routes
+export type {
+  AnalogRouteTable,
+  AnalogRoutePath,
+  RoutePathOptions,
+  RoutePathArgs,
+  RoutePathOptionsBase,
+} from './lib/route-path';
+export { routePath } from './lib/route-path';
+export { injectTypedRouter } from './lib/typed-router';
+export type {
+  RouteParamInfo,
+  RouteEntry,
+  RouteManifest,
+} from './lib/route-manifest';
+export {
+  filenameToRoutePath,
+  extractRouteParams,
+  generateRouteManifest,
+  generateRouteTableDeclaration,
+} from './lib/route-manifest';
