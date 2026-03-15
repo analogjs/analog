@@ -1,12 +1,13 @@
 import { Component, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { injectLoad } from '@analogjs/router';
+import { injectLoad, FormAction } from '@analogjs/router';
 
 import type { load } from './search.server';
 
 @Component({
   selector: 'analogjs-search-page',
   standalone: true,
+  imports: [FormAction],
   template: `
     <h3>Search</h3>
 

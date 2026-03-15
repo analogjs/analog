@@ -11,6 +11,7 @@
 import { execSync } from 'node:child_process';
 import {
   cpSync,
+  readdirSync,
   mkdirSync,
   readFileSync,
   writeFileSync,
@@ -34,6 +35,30 @@ interface NgPackageJson {
 interface ExportConditions {
   types?: string;
   default: string;
+}
+
+function pruneNonDeclarationFiles(dir: string): void {
+  if (!existsSync(dir)) {
+    return;
+  }
+
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const entryPath: string = resolve(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      pruneNonDeclarationFiles(entryPath);
+
+      if (readdirSync(entryPath).length === 0) {
+        rmSync(entryPath, { recursive: true });
+      }
+
+      continue;
+    }
+
+    if (!entry.name.endsWith('.d.ts')) {
+      rmSync(entryPath);
+    }
+  }
 }
 
 const packageName: string | undefined = process.argv[2];
@@ -93,22 +118,19 @@ execSync(`npx vite build --config packages/${packageName}/vite.config.lib.ts`, {
   stdio: 'inherit',
 });
 
-// Clean up stale declarations emitted by Angular plugin's auto-declaration mode
-// (we generate declarations separately via tsc in the next step)
-const staleDecls: string = resolve(outDir, 'packages');
-if (existsSync(staleDecls)) rmSync(staleDecls, { recursive: true });
-
-// Step 3: Generate declarations with tsc
-console.log('\n  → Generating declarations with tsc...');
+// Step 3: Generate Angular-aware declarations with ngc
+console.log('\n  → Generating declarations with ngc...');
 const tsconfigProd: string = resolve(pkgDir, 'tsconfig.lib.prod.json');
 const tsconfig: string = existsSync(tsconfigProd)
   ? tsconfigProd
   : resolve(pkgDir, 'tsconfig.lib.json');
+const typesOutDir: string = resolve(outDir, 'types');
 
-execSync(
-  `npx tsc -p "${tsconfig}" --emitDeclarationOnly --outDir "${resolve(outDir, 'types')}"`,
-  { cwd: root, stdio: 'inherit' },
-);
+execSync(`ngc -p "${tsconfig}" --outDir "${typesOutDir}"`, {
+  cwd: root,
+  stdio: 'inherit',
+});
+pruneNonDeclarationFiles(typesOutDir);
 
 // Step 4: Copy package.json and inject exports map
 console.log('  → Generating package metadata...');
