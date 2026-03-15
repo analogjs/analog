@@ -359,10 +359,18 @@ describe('generateRouteTableDeclaration', () => {
     expect(output).toContain(
       "import type { routeParamsSchema as _p0 } from '../src/app/pages/users/[id].page'",
     );
-    expect(output).toContain('StandardSchemaV1.InferOutput<typeof _p0>');
-    // Query should remain default (no query schema)
+    // params stays filename-derived for navigation input
+    expect(output).toContain('params: { id: string }');
+    // paramsOutput uses schema InferOutput for runtime
+    expect(output).toContain(
+      'paramsOutput: StandardSchemaV1.InferOutput<typeof _p0>',
+    );
+    // query/queryOutput remain default (no query schema)
     expect(output).toContain(
       'query: Record<string, string | string[] | undefined>',
+    );
+    expect(output).toContain(
+      'queryOutput: Record<string, string | string[] | undefined>',
     );
   });
 
@@ -376,10 +384,15 @@ describe('generateRouteTableDeclaration', () => {
 
     expect(output).toContain('routeParamsSchema as _p0');
     expect(output).toContain('routeQuerySchema as _q0');
+    // params always filename-derived
+    expect(output).toContain('params: { id: string }');
+    // Output types use schema InferOutput
     expect(output).toContain(
-      'params: StandardSchemaV1.InferOutput<typeof _p0>',
+      'paramsOutput: StandardSchemaV1.InferOutput<typeof _p0>',
     );
-    expect(output).toContain('query: StandardSchemaV1.InferOutput<typeof _q0>');
+    expect(output).toContain(
+      'queryOutput: StandardSchemaV1.InferOutput<typeof _q0>',
+    );
   });
 
   it('should not import StandardSchemaV1 when no schemas', () => {
@@ -389,6 +402,18 @@ describe('generateRouteTableDeclaration', () => {
 
     expect(output).not.toContain('StandardSchemaV1');
     expect(output).not.toContain('import type');
+  });
+
+  it('should set paramsOutput same as params when no schema', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/users/[id].page.ts',
+    ]);
+
+    const output = generateRouteTableDeclaration(manifest);
+
+    // Both params and paramsOutput are filename-derived
+    expect(output).toContain('params: { id: string }');
+    expect(output).toContain('paramsOutput: { id: string }');
   });
 
   it('should mix schema and non-schema routes', () => {
@@ -408,8 +433,10 @@ describe('generateRouteTableDeclaration', () => {
     expect(output).toContain(
       "'/about': {\n      params: Record<string, never>",
     );
-    // users/[id] uses schema reference
-    expect(output).toContain('StandardSchemaV1.InferOutput<typeof _p0>');
+    // users/[id]: params is still filename-derived, paramsOutput uses schema
+    expect(output).toContain(
+      'paramsOutput: StandardSchemaV1.InferOutput<typeof _p0>',
+    );
   });
 });
 

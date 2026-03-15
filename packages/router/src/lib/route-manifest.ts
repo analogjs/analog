@@ -255,17 +255,24 @@ export function generateRouteTableDeclaration(manifest: RouteManifest): string {
     const paramsAlias = schemaImports.get(`${route.path}:params`);
     const queryAlias = schemaImports.get(`${route.path}:query`);
 
-    const paramsType = paramsAlias
-      ? `StandardSchemaV1.InferOutput<typeof ${paramsAlias}>`
-      : generateParamsType(route.params);
+    // params/query are ALWAYS filename-derived (strings) — used for navigation input.
+    // paramsOutput/queryOutput use schema InferOutput — used after runtime validation.
+    const paramsType = generateParamsType(route.params);
+    const queryType = 'Record<string, string | string[] | undefined>';
 
-    const queryType = queryAlias
+    const paramsOutputType = paramsAlias
+      ? `StandardSchemaV1.InferOutput<typeof ${paramsAlias}>`
+      : paramsType;
+
+    const queryOutputType = queryAlias
       ? `StandardSchemaV1.InferOutput<typeof ${queryAlias}>`
-      : 'Record<string, string | string[] | undefined>';
+      : queryType;
 
     lines.push(`    '${route.path}': {`);
     lines.push(`      params: ${paramsType};`);
+    lines.push(`      paramsOutput: ${paramsOutputType};`);
     lines.push(`      query: ${queryType};`);
+    lines.push(`      queryOutput: ${queryOutputType};`);
     lines.push(`    };`);
   }
 

@@ -6,7 +6,7 @@
 | --- | ---------- | ------------------------------------------------------------------------------------ | ------- |
 | 1   | 2026-03-15 | Core implementation: route-manifest, route-path, typed-router, Vite plugin, 67 tests | Done    |
 | 2   | 2026-03-15 | Schema-aware codegen, definePageLoad, detectSchemaExports, 84 tests total            | Done    |
-| 3   |            |                                                                                      | Pending |
+| 3   | 2026-03-15 | Input/Output type distinction, integration test, RouteParamsOutput/RouteQueryOutput  | Done    |
 | 4   |            |                                                                                      | Pending |
 
 ## Goal
@@ -1261,4 +1261,76 @@ export const load = definePageLoad({
 #### Test Results
 
 - **84 tests passing** (+17 from Iteration 1)
+- **71 existing tests passing** with zero regressions
+
+### Iteration 3 — Input/Output Type Distinction & Integration Test (2026-03-15)
+
+Fixed a critical design issue and added comprehensive integration testing.
+
+#### Critical Fix: Input/Output Type Separation
+
+Iteration 2 incorrectly replaced navigation `params` with `InferOutput<schema>` when schemas exist.
+This is wrong because navigation always uses strings (URLs are text), while runtime consumption
+uses validated/coerced types. For example, a schema with `v.pipe(v.string(), v.transform(Number))`
+has `input: string` but `output: number` — you can't put a number in a URL.
+
+**Before (broken):**
+
+```typescript
+'/users/[id]': {
+  params: InferOutput<typeof schema>;  // number — wrong for navigation!
+}
+```
+
+**After (correct):**
+
+```typescript
+'/users/[id]': {
+  params: { id: string };              // filename-derived — for navigation
+  paramsOutput: InferOutput<typeof schema>;  // schema output — for runtime
+  query: Record<string, ...>;          // default — for navigation
+  queryOutput: InferOutput<typeof schema>;   // schema output — for runtime
+}
+```
+
+This matches the TanStack Router pattern of `fullSearchSchemaInput` (navigation) vs
+`fullSearchSchema` (runtime) and the design doc's recommendation for input/output distinction.
+
+#### Files Created
+
+| File                                   | Purpose                                     |
+| -------------------------------------- | ------------------------------------------- |
+| `route-generation.integration.spec.ts` | 7 end-to-end tests simulating full pipeline |
+
+#### Files Modified
+
+| File                           | Change                                                                 |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| `route-manifest.ts`            | Codegen now emits `params`+`paramsOutput` and `query`+`queryOutput`    |
+| `route-manifest.spec.ts`       | Updated schema tests for input/output split, added `paramsOutput` test |
+| `route-path.ts`                | Added `RouteParamsOutput<P>` and `RouteQueryOutput<P>` utility types   |
+| `packages/router/src/index.ts` | Added `RouteParamsOutput`, `RouteQueryOutput` exports                  |
+
+#### New Type Utilities
+
+```typescript
+// Extract validated output type for a route's params
+type RouteParamsOutput<P extends AnalogRoutePath> = ...
+
+// Extract validated output type for a route's query
+type RouteQueryOutput<P extends AnalogRoutePath> = ...
+```
+
+These let components consume validated types without importing schemas:
+
+```typescript
+// In a component
+type UserParams = RouteParamsOutput<'/users/[id]'>;
+// → { id: number } when schema uses v.transform(Number)
+// → { id: string } when no schema
+```
+
+#### Test Results
+
+- **91 tests passing** (+7 from Iteration 2)
 - **71 existing tests passing** with zero regressions

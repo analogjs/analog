@@ -39,6 +39,32 @@ export interface RoutePathOptionsBase {
 }
 
 /**
+ * Extracts the validated output type for route params.
+ *
+ * When a route exports `routeParamsSchema`, this resolves to the schema's
+ * output type (e.g., `{ id: number }` after coercion).
+ * When no schema exists, this is the same as the navigation param type.
+ */
+export type RouteParamsOutput<P extends string> =
+  P extends keyof AnalogRouteTable
+    ? AnalogRouteTable[P] extends { paramsOutput: infer O }
+      ? O
+      : AnalogRouteTable[P] extends { params: infer Params }
+        ? Params
+        : Record<string, unknown>
+    : Record<string, unknown>;
+
+/**
+ * Extracts the validated output type for route query params.
+ */
+export type RouteQueryOutput<P extends string> =
+  P extends keyof AnalogRouteTable
+    ? AnalogRouteTable[P] extends { queryOutput: infer O }
+      ? O
+      : Record<string, string | string[] | undefined>
+    : Record<string, string | string[] | undefined>;
+
+/**
  * Typed options that infer params from the route table when available.
  */
 export type RoutePathOptions<P extends string = string> =

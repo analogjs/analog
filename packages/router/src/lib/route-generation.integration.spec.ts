@@ -1,0 +1,231 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  filenameToRoutePath,
+  extractRouteParams,
+  generateRouteManifest,
+  generateRouteTableDeclaration,
+  detectSchemaExports,
+} from './route-manifest';
+import { buildUrl } from './route-path';
+
+/**
+ * Integration test: simulates the full pipeline from
+ * file discovery → manifest generation → TypeScript codegen → URL building.
+ */
+describe('Route generation integration', () => {
+  // Simulate a realistic set of route files
+  const routeFiles = [
+    '/src/app/pages/index.page.ts',
+    '/src/app/pages/about.page.ts',
+    '/src/app/pages/(auth)/login.page.ts',
+    '/src/app/pages/(auth)/register.page.ts',
+    '/src/app/pages/users/[id].page.ts',
+    '/src/app/pages/users/[id]/settings.page.ts',
+    '/src/app/pages/docs/[[...slug]].page.ts',
+    '/src/app/pages/blog.[slug].page.ts',
+    '/src/app/pages/categories.[categoryId].products.[productId].page.ts',
+    '/src/app/pages/[...not-found].page.ts',
+  ];
+
+  const contentFiles = [
+    '/src/content/getting-started.md',
+    '/src/content/guides/deployment.md',
+  ];
+
+  // Simulate schema detection
+  const schemaDetector = (filename: string) => {
+    if (filename.includes('users/[id].page')) {
+      return { hasParamsSchema: true, hasQuerySchema: true };
+    }
+    if (filename.includes('blog.')) {
+      return { hasParamsSchema: true, hasQuerySchema: false };
+    }
+    return { hasParamsSchema: false, hasQuerySchema: false };
+  };
+
+  it('should produce correct route paths for all files', () => {
+    const paths = [...routeFiles, ...contentFiles].map(filenameToRoutePath);
+
+    expect(paths).toEqual([
+      '/',
+      '/about',
+      '/login',
+      '/register',
+      '/users/[id]',
+      '/users/[id]/settings',
+      '/docs/[[...slug]]',
+      '/blog/[slug]',
+      '/categories/[categoryId]/products/[productId]',
+      '/[...not-found]',
+      '/getting-started',
+      '/guides/deployment',
+    ]);
+  });
+
+  it('should generate a complete manifest', () => {
+    const manifest = generateRouteManifest(
+      [...routeFiles, ...contentFiles],
+      schemaDetector,
+    );
+
+    // Static routes first, then dynamic, then catch-all
+    const paths = manifest.routes.map((r) => r.path);
+
+    // All static routes should come before dynamic ones
+    const firstDynamic = paths.findIndex((p) => p.includes('['));
+    const lastStatic = paths
+      .map((p, i) => (!p.includes('[') ? i : -1))
+      .filter((i) => i >= 0)
+      .pop()!;
+
+    expect(lastStatic).toBeLessThan(firstDynamic);
+
+    // Schema info should be attached
+    const usersRoute = manifest.routes.find((r) => r.path === '/users/[id]')!;
+    expect(usersRoute.schemas.hasParamsSchema).toBe(true);
+    expect(usersRoute.schemas.hasQuerySchema).toBe(true);
+
+    const aboutRoute = manifest.routes.find((r) => r.path === '/about')!;
+    expect(aboutRoute.schemas.hasParamsSchema).toBe(false);
+  });
+
+  it('should generate valid TypeScript declarations', () => {
+    const manifest = generateRouteManifest(
+      [...routeFiles, ...contentFiles],
+      schemaDetector,
+    );
+
+    const ts = generateRouteTableDeclaration(manifest);
+
+    // Basic structure
+    expect(ts).toContain("declare module '@analogjs/router'");
+    expect(ts).toContain('interface AnalogRouteTable');
+    expect(ts).toContain('export {};');
+
+    // Schema imports present
+    expect(ts).toContain(
+      "import type { StandardSchemaV1 } from '@standard-schema/spec'",
+    );
+    // blog sorts before users, so blog gets _p0 and users gets _p1/_q1
+    expect(ts).toContain('routeParamsSchema as _p0');
+    expect(ts).toContain('routeParamsSchema as _p1');
+    expect(ts).toContain('routeQuerySchema as _q1');
+
+    // Static routes have no params
+    expect(ts).toContain("'/about': {\n      params: Record<string, never>");
+
+    // Dynamic routes have string params (for navigation)
+    expect(ts).toContain("'/users/[id]': {");
+    expect(ts).toContain('params: { id: string }');
+
+    // Schema routes have InferOutput for validated output
+    expect(ts).toContain(
+      'paramsOutput: StandardSchemaV1.InferOutput<typeof _p1>',
+    );
+
+    // Catch-all has array params
+    expect(ts).toContain("'not-found': string[]");
+
+    // Optional catch-all has optional array
+    expect(ts).toContain('slug?: string[]');
+
+    // Content routes are static
+    expect(ts).toContain("'/getting-started': {");
+    expect(ts).toContain("'/guides/deployment': {");
+  });
+
+  it('should build correct URLs from route paths', () => {
+    // Static
+    expect(buildUrl('/about')).toBe('/about');
+
+    // Dynamic
+    expect(buildUrl('/users/[id]', { params: { id: '42' } })).toBe('/users/42');
+
+    // Nested dynamic
+    expect(buildUrl('/users/[id]/settings', { params: { id: '42' } })).toBe(
+      '/users/42/settings',
+    );
+
+    // Multi-param
+    expect(
+      buildUrl('/categories/[categoryId]/products/[productId]', {
+        params: { categoryId: 'shoes', productId: 'nike' },
+      }),
+    ).toBe('/categories/shoes/products/nike');
+
+    // Optional catch-all (with value)
+    expect(
+      buildUrl('/docs/[[...slug]]', {
+        params: { slug: ['api', 'auth'] },
+      }),
+    ).toBe('/docs/api/auth');
+
+    // Optional catch-all (without value)
+    expect(buildUrl('/docs/[[...slug]]')).toBe('/docs');
+
+    // With query and hash
+    expect(
+      buildUrl('/users/[id]', {
+        params: { id: '42' },
+        query: { tab: 'profile' },
+        hash: 'bio',
+      }),
+    ).toBe('/users/42?tab=profile#bio');
+  });
+
+  it('should detect schemas from file content', () => {
+    const pageWithSchemas = `
+import * as v from 'valibot';
+
+export const routeParamsSchema = v.object({
+  id: v.pipe(v.string(), v.regex(/^\\d+$/)),
+});
+
+export const routeQuerySchema = v.object({
+  tab: v.optional(v.picklist(['profile', 'settings'])),
+});
+
+export default class UserPage {}
+`;
+
+    const pageWithoutSchemas = `
+export default class AboutPage {}
+export const routeMeta = { title: 'About' };
+`;
+
+    expect(detectSchemaExports(pageWithSchemas)).toEqual({
+      hasParamsSchema: true,
+      hasQuerySchema: true,
+    });
+
+    expect(detectSchemaExports(pageWithoutSchemas)).toEqual({
+      hasParamsSchema: false,
+      hasQuerySchema: false,
+    });
+  });
+
+  it('should produce input/output type distinction', () => {
+    // Single route — alias is _p0/_q0
+    const manifest = generateRouteManifest(
+      ['/src/app/pages/users/[id].page.ts'],
+      () => ({ hasParamsSchema: true, hasQuerySchema: true }),
+    );
+
+    const ts = generateRouteTableDeclaration(manifest);
+
+    // Navigation input: always filename-derived strings
+    expect(ts).toContain('params: { id: string }');
+    expect(ts).toContain(
+      'query: Record<string, string | string[] | undefined>',
+    );
+
+    // Runtime output: schema InferOutput
+    expect(ts).toContain(
+      'paramsOutput: StandardSchemaV1.InferOutput<typeof _p0>',
+    );
+    expect(ts).toContain(
+      'queryOutput: StandardSchemaV1.InferOutput<typeof _q0>',
+    );
+  });
+});

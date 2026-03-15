@@ -33,6 +33,8 @@ export type {
   RoutePathOptions,
   RoutePathArgs,
   RoutePathOptionsBase,
+  RouteParamsOutput,
+  RouteQueryOutput,
 } from './lib/route-path';
 export { routePath } from './lib/route-path';
 export { injectTypedRouter } from './lib/typed-router';
