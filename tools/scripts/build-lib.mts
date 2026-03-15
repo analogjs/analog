@@ -88,10 +88,10 @@ if (existsSync(outDir)) {
 
 // Step 2: Build FESM bundles with Vite
 console.log('  → Building FESM bundles with Vite + Rolldown...');
-execSync(
-  `npx vite build --config packages/${packageName}/vite.config.lib.ts`,
-  { cwd: root, stdio: 'inherit' },
-);
+execSync(`npx vite build --config packages/${packageName}/vite.config.lib.ts`, {
+  cwd: root,
+  stdio: 'inherit',
+});
 
 // Clean up stale declarations emitted by Angular plugin's auto-declaration mode
 // (we generate declarations separately via tsc in the next step)
