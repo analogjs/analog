@@ -166,6 +166,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     includeCache = [];
   }
   function invalidateTsconfigCaches() {
+    // `readConfiguration` caches the root file list, so hot-added pages can be
+    // missing from Angular's compilation program until we clear this state.
     tsconfigOptionsCache.clear();
     cachedHost = undefined;
     cachedHostKey = undefined;
@@ -337,14 +339,16 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configureServer(server) {
         viteServer = server;
-        server.watcher.on('add', async () => {
-          invalidateFsCaches();
-          await performCompilation(resolvedConfig);
-        });
-        server.watcher.on('unlink', async () => {
-          invalidateFsCaches();
-          await performCompilation(resolvedConfig);
-        });
+        // Add/unlink changes the TypeScript program shape, not just file
+        // contents, so we need to invalidate both include discovery and the
+        // cached tsconfig root names before recompiling.
+        const invalidateCompilationOnFsChange = createFsWatcherCacheInvalidator(
+          invalidateFsCaches,
+          invalidateTsconfigCaches,
+          () => performCompilation(resolvedConfig),
+        );
+        server.watcher.on('add', invalidateCompilationOnFsChange);
+        server.watcher.on('unlink', invalidateCompilationOnFsChange);
         server.watcher.on('change', (file) => {
           if (file.includes('tsconfig')) {
             invalidateTsconfigCaches();
@@ -1233,6 +1237,18 @@ export function angular(options?: PluginOptions): Plugin[] {
       outputFile = writeOutputFile;
     }
   }
+}
+
+export function createFsWatcherCacheInvalidator(
+  invalidateFsCaches: () => void,
+  invalidateTsconfigCaches: () => void,
+  performCompilation: () => Promise<void>,
+) {
+  return async () => {
+    invalidateFsCaches();
+    invalidateTsconfigCaches();
+    await performCompilation();
+  };
 }
 
 function sendHMRComponentUpdate(server: ViteDevServer, id: string) {

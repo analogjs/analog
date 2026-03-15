@@ -1,5 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { angular, isTestWatchMode } from './angular-vite-plugin';
+import { describe, it, expect, vi } from 'vitest';
+import {
+  angular,
+  createFsWatcherCacheInvalidator,
+  isTestWatchMode,
+} from './angular-vite-plugin';
 
 describe('angularVitePlugin', () => {
   it('should work', () => {
@@ -90,5 +94,24 @@ describe('JIT resolveId', () => {
     expect(result).toBeDefined();
     expect(result).toContain('?raw');
     expect(result).not.toContain('??raw');
+  });
+});
+
+describe('createFsWatcherCacheInvalidator', () => {
+  it('clears fs and tsconfig caches before recompiling', async () => {
+    const invalidateFsCaches = vi.fn();
+    const invalidateTsconfigCaches = vi.fn();
+    const performCompilation = vi.fn().mockResolvedValue(undefined);
+    const invalidate = createFsWatcherCacheInvalidator(
+      invalidateFsCaches,
+      invalidateTsconfigCaches,
+      performCompilation,
+    );
+
+    await invalidate();
+
+    expect(invalidateFsCaches).toHaveBeenCalledOnce();
+    expect(invalidateTsconfigCaches).toHaveBeenCalledOnce();
+    expect(performCompilation).toHaveBeenCalledOnce();
   });
 });
