@@ -1,4 +1,5 @@
 import { Plugin } from 'vite';
+// eslint-disable-next-line @nx/enforce-module-boundaries -- spec uses dynamic import() for vi.mock(), not lazy-loading
 import viteNitroPlugin from '@analogjs/vite-plugin-nitro';
 import angular from '@analogjs/vite-plugin-angular';
 

@@ -137,7 +137,7 @@ describe('nx-plugin generator', () => {
   };
 
   describe('Nx, Angular', () => {
-    // eslint-disable-next-line vitest/expect-expect
+    // oxlint-disable-next-line vitest/expect-expect
     it('creates a default analogjs app in the source directory', async () => {
       const analogAppName = 'analog';
       const { config, tree } = await setup({ analogAppName });
@@ -152,7 +152,7 @@ describe('nx-plugin generator', () => {
       // verifyEslint(tree, config, devDependencies);
     });
 
-    // eslint-disable-next-line vitest/expect-expect
+    // oxlint-disable-next-line vitest/expect-expect
     it('creates a default standalone analogjs app in the source directory', async () => {
       const analogAppName = 'analog';
       const { config, tree } = await setup({ analogAppName }, '18.0.0', true);
@@ -167,7 +167,7 @@ describe('nx-plugin generator', () => {
       // verifyEslint(tree, config, devDependencies);
     });
 
-    // eslint-disable-next-line vitest/expect-expect
+    // oxlint-disable-next-line vitest/expect-expect
     it('creates an analogjs app in the source directory with tailwind set up', async () => {
       const analogAppName = 'tailwind-app';
       const { config, tree } = await setup({
@@ -185,7 +185,7 @@ describe('nx-plugin generator', () => {
       verifyTailwindIsSetUp(tree, dependencies);
     });
 
-    // eslint-disable-next-line vitest/expect-expect
+    // oxlint-disable-next-line vitest/expect-expect
     it('creates an analogjs app in the source directory with tags populated', async () => {
       const analogAppName = 'tags-app';
       const { config, tree } = await setup({
