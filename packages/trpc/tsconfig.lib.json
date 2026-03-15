@@ -3,11 +3,14 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "declaration": true,
+    "isolatedDeclarations": true,
     "declarationMap": true,
     "inlineSources": true,
     "types": ["node"],
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "rootDir": ".",
+    "baseUrl": "."
   },
-  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
-  "include": ["src/**/*.ts"]
+  "exclude": ["**/*.spec.ts", "**/*.test.ts", "vite.config.lib.ts"],
+  "include": ["src/**/*.ts", "server/src/**/*.ts"]
 }

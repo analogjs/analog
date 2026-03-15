@@ -14,7 +14,7 @@ interface TsConfig {
 export function updateTestTsConfig(
   tree: Tree,
   schema: SetupAnalogGeneratorSchema,
-) {
+): void {
   const projects = getProjects(tree);
 
   const projectConfig = projects.get(schema.project);

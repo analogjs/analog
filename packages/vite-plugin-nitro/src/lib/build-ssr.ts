@@ -4,7 +4,10 @@ import { relative, resolve } from 'node:path';
 
 import { Options } from './options.js';
 
-export async function buildSSRApp(config: UserConfig, options?: Options) {
+export async function buildSSRApp(
+  config: UserConfig,
+  options?: Options,
+): Promise<void> {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
   const sourceRoot = options?.sourceRoot ?? 'src';
   const rootDir = relative(workspaceRoot, config.root || '.') || '.';

@@ -1,6 +1,6 @@
 import { Tree, getProjects, joinPathFragments } from '@nx/devkit';
 
-export function updateIndex(tree: Tree, projectName: string) {
+export function updateIndex(tree: Tree, projectName: string): void {
   const projects = getProjects(tree);
   const projectConfig = projects.get(projectName);
 

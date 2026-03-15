@@ -1,4 +1,11 @@
-import { Directive, inject, input, output } from '@angular/core';
+import {
+  Directive,
+  inject,
+  input,
+  InputSignal,
+  output,
+  OutputEmitterRef,
+} from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 
 import { injectRouteEndpointURL } from './inject-route-endpoint-url';
@@ -11,17 +18,17 @@ import { injectRouteEndpointURL } from './inject-route-endpoint-url';
   standalone: true,
 })
 export class FormAction {
-  action = input<string>('');
-  onSuccess = output<unknown>();
-  onError = output<unknown>();
-  state = output<
+  action: InputSignal<string> = input<string>('');
+  onSuccess: OutputEmitterRef<unknown> = output<unknown>();
+  onError: OutputEmitterRef<unknown> = output<unknown>();
+  state: OutputEmitterRef<
     'submitting' | 'error' | 'redirect' | 'success' | 'navigate'
-  >();
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private path = this._getPath();
+  > = output<'submitting' | 'error' | 'redirect' | 'success' | 'navigate'>();
+  private router: Router = inject(Router);
+  private route: ActivatedRoute = inject(ActivatedRoute);
+  private path: string = this._getPath();
 
-  submitted($event: any) {
+  submitted($event: any): void {
     $event.preventDefault();
 
     this.state.emit('submitting');

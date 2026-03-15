@@ -3,16 +3,29 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "declaration": true,
+    "isolatedDeclarations": true,
     "declarationMap": true,
     "inlineSources": true,
     "types": ["node", "vite/client"],
     "target": "ES2022",
     "useDefineForClassFields": false,
     "moduleResolution": "bundler",
+    "rootDir": ".",
+    "baseUrl": ".",
     "paths": {
-      "@analogjs/content": ["./node_modules/@analogjs/content"]
+      "@analogjs/content": ["./node_modules/@analogjs/content"],
+      "@analogjs/router": ["./src/index.ts"],
+      "@analogjs/router/*": ["./*"],
+      "@analogjs/router/tokens": ["./tokens/src/index.ts"],
+      "@analogjs/router/server": ["./server/src/index.ts"],
+      "@analogjs/router/server/actions": ["./server/actions/src/index.ts"]
     }
   },
-  "exclude": ["vite.config.ts", "**/*.test.ts", "**/*.spec.ts"],
+  "exclude": [
+    "vite.config.ts",
+    "vite.config.lib.ts",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
   "include": ["**/*.ts"]
 }

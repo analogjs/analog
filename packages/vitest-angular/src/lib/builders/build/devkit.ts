@@ -1,4 +1,7 @@
-export async function getBuildApplicationFunction() {
+export async function getBuildApplicationFunction(): Promise<{
+  buildApplicationInternal: Function;
+  angularVersion: number;
+}> {
   const { VERSION } = await (Function(
     'return import("@angular/compiler-cli")',
   )() as Promise<{ VERSION: { major: string; minor: string } }>);

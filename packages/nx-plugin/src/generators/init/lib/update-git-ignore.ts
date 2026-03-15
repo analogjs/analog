@@ -1,6 +1,6 @@
 import { Tree } from '@nx/devkit';
 
-export function updateGitIgnore(tree: Tree) {
+export function updateGitIgnore(tree: Tree): void {
   const gitIgnorePath = '/.gitignore';
 
   if (tree.exists(gitIgnorePath)) {

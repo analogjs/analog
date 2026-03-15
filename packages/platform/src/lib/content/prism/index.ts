@@ -4,7 +4,7 @@ export { PrismHighlighter };
 
 let highlighterInstance: PrismHighlighter;
 
-export function getPrismHighlighter() {
+export function getPrismHighlighter(): PrismHighlighter {
   highlighterInstance ??= new PrismHighlighter();
   return highlighterInstance;
 }

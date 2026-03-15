@@ -10,7 +10,7 @@ import { SetupAnalogGeneratorSchema } from '../schema';
 export function updateServeTarget(
   tree: Tree,
   schema: SetupAnalogGeneratorSchema,
-) {
+): void {
   const angularJsonPath = '/angular.json';
 
   const commonConfig = {

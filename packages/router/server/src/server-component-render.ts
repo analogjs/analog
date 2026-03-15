@@ -20,7 +20,9 @@ import { provideStaticProps } from './tokens';
 
 type ComponentLoader = () => Promise<Type<unknown>>;
 
-export function serverComponentRequest(serverContext: ServerContext) {
+export function serverComponentRequest(
+  serverContext: ServerContext,
+): string | undefined {
   // `ServerContext` is still backed by raw Node req/res, so read the header
   // directly instead of reconstructing an H3Event just for lookup.
   // In h3 v2 / Nitro v3, req may be undefined during fetch-based prerendering
@@ -50,7 +52,7 @@ export async function renderServerComponent(
   url: string,
   serverContext: ServerContext,
   config?: ApplicationConfig,
-) {
+): Promise<Response> {
   const componentReqId = serverComponentRequest(serverContext) as string;
   const { componentLoader, componentId } = getComponentLoader(componentReqId);
 

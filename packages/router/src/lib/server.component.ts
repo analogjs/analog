@@ -10,10 +10,13 @@ import {
   effect,
   inject,
   input,
+  InputSignal,
   makeStateKey,
   output,
+  OutputEmitterRef,
   signal,
   TransferState,
+  WritableSignal,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -39,14 +42,16 @@ type ServerOutputs = Record<string, any>;
   template: ` <div [innerHTML]="content()"></div> `,
 })
 export class ServerOnly {
-  component = input.required<string>();
-  props = input<ServerProps>();
-  outputs = output<ServerOutputs>();
-  private http = inject(HttpClient);
-  private sanitizer = inject(DomSanitizer);
-  protected content = signal<SafeHtml>('');
-  private route = inject(ActivatedRoute, { optional: true });
-  private baseURL = injectBaseURL();
+  component: InputSignal<string> = input.required<string>();
+  props: InputSignal<ServerProps | undefined> = input<ServerProps>();
+  outputs: OutputEmitterRef<ServerOutputs> = output<ServerOutputs>();
+  private http: HttpClient = inject(HttpClient);
+  private sanitizer: DomSanitizer = inject(DomSanitizer);
+  protected content: WritableSignal<SafeHtml> = signal<SafeHtml>('');
+  private route: ActivatedRoute | null = inject(ActivatedRoute, {
+    optional: true,
+  });
+  private baseURL: string | null = injectBaseURL();
   private transferState = inject(TransferState);
 
   constructor() {
@@ -118,7 +123,7 @@ export class ServerOnly {
     });
   }
 
-  updateContent(content: { html: string; outputs: ServerOutputs }) {
+  updateContent(content: { html: string; outputs: ServerOutputs }): void {
     this.content.set(this.sanitizer.bypassSecurityTrustHtml(content.html));
     this.outputs.emit(content.outputs);
   }

@@ -10,7 +10,7 @@ import { SetupVitestGeneratorSchema } from '../schema';
 export function updateTestTarget(
   tree: Tree,
   schema: SetupVitestGeneratorSchema,
-) {
+): void {
   const angularJsonPath = '/angular.json';
 
   if (tree.exists(angularJsonPath)) {

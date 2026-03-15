@@ -1,14 +1,20 @@
 import { isPlatformServer } from '@angular/common';
-import { HttpHandlerFn, HttpHeaders, HttpRequest } from '@angular/common/http';
+import {
+  HttpHandlerFn,
+  HttpHeaders,
+  HttpRequest,
+  HttpEvent,
+} from '@angular/common/http';
 import { PLATFORM_ID, inject } from '@angular/core';
-import { injectRequest } from '@analogjs/router/tokens';
+import { Observable } from 'rxjs';
+import { injectRequest, ServerRequest } from '@analogjs/router/tokens';
 
 export function cookieInterceptor(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
-  location = inject(PLATFORM_ID),
-  serverRequest = injectRequest(),
-) {
+  location: Object = inject(PLATFORM_ID),
+  serverRequest: ServerRequest | null = injectRequest(),
+): Observable<HttpEvent<unknown>> {
   if (isPlatformServer(location) && req.url.includes('/_analog/')) {
     let headers = new HttpHeaders();
     const cookies = serverRequest?.headers.cookie;

@@ -25,7 +25,7 @@ export abstract class ContentRenderer {
   }
 
   // eslint-disable-next-line
-  enhance() {}
+  enhance(): void {}
 }
 
 export class NoopContentRenderer implements ContentRenderer {
@@ -63,7 +63,7 @@ export class NoopContentRenderer implements ContentRenderer {
       toc: this.transferState.get(key, toc),
     };
   }
-  enhance() {}
+  enhance(): void {}
 
   getContentHeadings(content: string): TableOfContentItem[] {
     return this.extractHeadings(content);
