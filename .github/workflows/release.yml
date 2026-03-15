@@ -45,4 +45,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
-          RELEASE_TAG=$TAG npx semantic-release
+          RELEASE_TAG=$TAG pnpx semantic-release
