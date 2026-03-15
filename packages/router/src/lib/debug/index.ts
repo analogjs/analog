@@ -1,4 +1,4 @@
-import { Provider } from '@angular/core';
+import { EnvironmentProviders, Provider } from '@angular/core';
 import { ROUTES } from '@angular/router';
 
 /**
@@ -8,7 +8,7 @@ import { ROUTES } from '@angular/router';
  */
 export function withDebugRoutes(): {
   ɵkind: number;
-  ɵproviders: readonly Provider[];
+  ɵproviders: (Provider | EnvironmentProviders)[];
 } {
   const routes = [
     {
@@ -19,6 +19,6 @@ export function withDebugRoutes(): {
 
   return {
     ɵkind: 101 as number,
-    ɵproviders: [{ provide: ROUTES, useValue: routes, multi: true }] as const,
+    ɵproviders: [{ provide: ROUTES, useValue: routes, multi: true }],
   };
 }
