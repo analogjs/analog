@@ -32,12 +32,7 @@ export default [
   {
     files: ['**/*.json'],
     rules: {
-      '@nx/dependency-checks': [
-        'error',
-        {
-          ignoredDependencies: ['ts-morph'],
-        },
-      ],
+      '@nx/dependency-checks': 'error',
     },
     languageOptions: {
       parser: await import('jsonc-eslint-parser'),
