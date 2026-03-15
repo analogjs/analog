@@ -48,12 +48,12 @@ describe('astro-angular plugin', () => {
         enableProdMode: vi.fn(),
       }));
       const mod = await import('./index');
-      var plugin = mod.default();
+      const plugin = mod.default();
 
-      var viteConfig;
-      var mockSetup = {
+      let viteConfig: any;
+      const mockSetup = {
         addRenderer: vi.fn(),
-        updateConfig: vi.fn(function (config) {
+        updateConfig: vi.fn(function (config: any) {
           viteConfig = config.vite;
         }),
       };
@@ -76,12 +76,12 @@ describe('astro-angular plugin', () => {
         enableProdMode: vi.fn(),
       }));
       const mod = await import('./index');
-      var plugin = mod.default();
+      const plugin = mod.default();
 
-      var viteConfig;
-      var mockSetup = {
+      let viteConfig: any;
+      const mockSetup = {
         addRenderer: vi.fn(),
-        updateConfig: vi.fn(function (config) {
+        updateConfig: vi.fn(function (config: any) {
           viteConfig = config.vite;
         }),
       };
