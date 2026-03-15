@@ -1,3 +1,9 @@
+# [2.4.0-beta.9](https://github.com/analogjs/analog/compare/v2.4.0-beta.8...v2.4.0-beta.9) (2026-03-15)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** normalize paths across plugin & live reload ([#2126](https://github.com/analogjs/analog/issues/2126)) ([cc98bf7](https://github.com/analogjs/analog/commit/cc98bf727b181077c87a536f29d7128414d8904d))
+
 # [2.4.0-beta.8](https://github.com/analogjs/analog/compare/v2.4.0-beta.7...v2.4.0-beta.8) (2026-03-13)
 
 ### Features
