@@ -1,4 +1,4 @@
-import { computed, inject, resource, Signal } from '@angular/core';
+import { computed, inject, resource, ResourceRef, Signal } from '@angular/core';
 import {
   ContentFile,
   ContentRenderer,
@@ -94,7 +94,10 @@ async function getContentFile<
  */
 export function contentFileResource<
   Attributes extends Record<string, any> = Record<string, any>,
->(params?: ContentFileParams, fallback = 'No Content Found') {
+>(
+  params?: ContentFileParams,
+  fallback = 'No Content Found',
+): ResourceRef<ContentFile<Attributes | Record<string, never>> | undefined> {
   const loaderPromise = injectContentFileLoader();
   const contentRenderer = inject(ContentRenderer);
   const contentFilesMap = toSignal(from(loaderPromise()));

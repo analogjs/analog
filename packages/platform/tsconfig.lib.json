@@ -7,7 +7,7 @@
     "sourceMap": false,
     "declaration": true,
     "types": [],
-    "allowJs": true,
+    "isolatedDeclarations": true,
     "allowSyntheticDefaultImports": true,
     "paths": {
       "@analogjs/vite-plugin-angular": [

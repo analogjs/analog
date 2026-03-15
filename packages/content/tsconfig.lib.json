@@ -6,8 +6,8 @@
     "declarationMap": true,
     "inlineSources": true,
     "types": [],
-    "allowJs": true
+    "isolatedDeclarations": true
   },
-  "exclude": ["**/*.test.ts", "**/*.spec.ts"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "vite.config.ts"],
   "include": ["**/*.ts"]
 }
