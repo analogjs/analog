@@ -1,15 +1,14 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
 
-import viteTsConfigPaths from 'vite-tsconfig-paths';
+import { tsconfigPathsPlugin } from '@analogjs/vite-plugin-angular';
 
 export default defineConfig(() => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/vite-plugin-nitro',
   plugins: [
-    viteTsConfigPaths({
+    tsconfigPathsPlugin({
       root: '../../',
-      projects: [],
     }),
   ],
   test: {

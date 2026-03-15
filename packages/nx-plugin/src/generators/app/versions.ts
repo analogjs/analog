@@ -36,6 +36,5 @@ export const V15_NRWL_VITE = '^15.7.0';
 export const V15_JSDOM = '^20.0.0';
 export const V15_TYPESCRIPT = '~4.8.4';
 export const V15_VITE = '^4.0.3';
-export const V15_VITE_TSCONFIG_PATHS = '^4.0.2';
 export const V15_VITEST = '^0.31.0';
 export const V15_ZOD = '^3.21.4';

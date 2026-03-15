@@ -54,7 +54,7 @@ describe('nx-plugin generator', () => {
     expect(devDependencies['@analogjs/vitest-angular']).toBeDefined();
     expect(devDependencies['jsdom']).toBeDefined();
     expect(devDependencies['vite']).toBeDefined();
-    expect(devDependencies['vite-tsconfig-paths']).toBe('^4.2.0');
+    expect(devDependencies['vite-tsconfig-paths']).toBeUndefined();
     expect(devDependencies['vitest']).toBeDefined();
   };
 

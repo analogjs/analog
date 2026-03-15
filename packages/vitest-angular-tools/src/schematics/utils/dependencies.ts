@@ -5,7 +5,6 @@ import {
   JSDOM,
   PLAYWRIGHT,
   VITE,
-  VITE_TSCONFIG_PATHS,
   VITEST_BROWSER_PLAYWRIGHT,
   VITEST_V4,
 } from './versions';
@@ -28,7 +27,6 @@ export function getDevDependencies(
     '@analogjs/vite-plugin-angular': ANALOG_JS_VITE_PLUGIN_ANGULAR,
     vite: VITE,
     vitest: VITEST_V4,
-    'vite-tsconfig-paths': VITE_TSCONFIG_PATHS,
   };
 
   if (options.browserMode) {
