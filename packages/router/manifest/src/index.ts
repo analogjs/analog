@@ -136,8 +136,9 @@ export function generateRouteManifest(
     if (seen.has(path)) {
       console.warn(
         `[Analog] Route collision: '${path}' is defined by both ` +
-          `'${seen.get(path)}' and '${filename}'`,
+          `'${seen.get(path)}' and '${filename}'. Skipping duplicate.`,
       );
+      continue;
     }
     seen.set(path, filename);
 

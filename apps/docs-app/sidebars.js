@@ -55,6 +55,11 @@ const sidebars = {
               id: 'features/routing/middleware',
               label: 'Middleware',
             },
+            {
+              type: 'doc',
+              id: 'features/routing/typed-routes',
+              label: 'Typed Routes (Experimental)',
+            },
           ],
         },
         {

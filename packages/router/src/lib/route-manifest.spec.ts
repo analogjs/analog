@@ -248,14 +248,21 @@ describe('generateRouteManifest', () => {
     expect(manifest.routes[2].path).toBe('/[[...slug]]');
   });
 
-  it('should warn on route collisions', () => {
+  it('should warn on route collisions and skip duplicates', () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    generateRouteManifest(['/app/routes/index.ts', '/app/routes/(home).ts']);
+    const manifest = generateRouteManifest([
+      '/app/routes/index.ts',
+      '/app/routes/(home).ts',
+    ]);
 
     expect(spy).toHaveBeenCalledWith(
       expect.stringContaining('Route collision'),
     );
+    // Duplicate should be skipped — only one '/' entry
+    expect(manifest.routes.filter((r) => r.path === '/').length).toBe(1);
+    // First file wins
+    expect(manifest.routes[0].filename).toBe('/app/routes/index.ts');
 
     spy.mockRestore();
   });

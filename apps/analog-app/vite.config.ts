@@ -77,6 +77,9 @@ export default defineConfig(({ mode }) => {
           },
         },
         liveReload: true,
+        experimental: {
+          typedRouter: true,
+        },
         nitro: {
           routeRules: {
             '/cart/**': {
