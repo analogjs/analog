@@ -5,5 +5,13 @@
   },
   "angularCompilerOptions": {
     "compilationMode": "partial"
-  }
+  },
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/test-setup.ts",
+    "vite.config.ts",
+    "vite.config.lib.ts"
+  ],
+  "include": ["**/*.ts"]
 }

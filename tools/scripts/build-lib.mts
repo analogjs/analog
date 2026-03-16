@@ -126,11 +126,22 @@ const tsconfig: string = existsSync(tsconfigProd)
   : resolve(pkgDir, 'tsconfig.lib.json');
 const typesOutDir: string = resolve(outDir, 'types');
 
-execSync(`ngc -p "${tsconfig}" --outDir "${typesOutDir}"`, {
+execSync(`npx ngc -p "${tsconfig}" --outDir "${typesOutDir}"`, {
   cwd: root,
   stdio: 'inherit',
 });
 pruneNonDeclarationFiles(typesOutDir);
+
+// Clean up duplicate `packages/` tree emitted by ngc due to rootDir resolution.
+// Only the `types/` directory is referenced by the exports map.
+for (const dir of [
+  resolve(typesOutDir, 'packages'),
+  resolve(outDir, 'packages'),
+]) {
+  if (existsSync(dir)) {
+    rmSync(dir, { recursive: true });
+  }
+}
 
 // Step 4: Copy package.json and inject exports map
 console.log('  → Generating package metadata...');
@@ -227,7 +238,15 @@ for (const file of ['README.md', 'LICENSE']) {
   }
 }
 
-// Step 6: Generate sub-entry package.json files (for legacy resolution)
+// Step 6: Generate .npmignore
+writeFileSync(
+  resolve(outDir, '.npmignore'),
+  ['# Source maps', '**/*.map', '', '# Dev files', '**/*.tsbuildinfo', ''].join(
+    '\n',
+  ),
+);
+
+// Step 7: Generate sub-entry package.json files (for legacy resolution)
 for (const entry of subEntries) {
   const subDir: string = resolve(outDir, entry.path);
   mkdirSync(subDir, { recursive: true });

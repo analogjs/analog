@@ -33,7 +33,8 @@ export default defineConfig({
         'superjson',
         'isomorphic-fetch',
         'h3',
-        'nitro/runtime',
+        /^nitro\//,
+        'ufo',
       ],
       output: {
         chunkFileNames: 'fesm2022/[name].mjs',
