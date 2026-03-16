@@ -362,7 +362,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       async handleHotUpdate(ctx) {
         if (TS_EXT_REGEX.test(ctx.file)) {
-          let [fileId] = ctx.file.split('?');
+          const [fileId] = ctx.file.split('?');
 
           pendingCompilation = performCompilation(resolvedConfig, [fileId]);
 
@@ -1292,7 +1292,7 @@ export function getFileMetadata(
       for (const node of sourceFile.statements) {
         if (ts.isClassDeclaration(node) && (node as any).name != null) {
           hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node as any);
-          if (!!hmrUpdateCode) {
+          if (hmrUpdateCode) {
             classNames.set(file, (node as any).name.getText());
             hmrEligible = true;
           }

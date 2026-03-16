@@ -446,7 +446,7 @@ describe('nitro', () => {
       );
     });
 
-    it('should use the .vercel output paths when preset is vercel', async () => {
+    it('should use the .vercel output paths without runtime config when preset is vercel', async () => {
       // Arrange
       vi.mock('process');
       process.cwd = vi.fn().mockReturnValue('/custom-root-directory');

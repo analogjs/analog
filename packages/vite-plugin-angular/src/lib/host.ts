@@ -27,7 +27,7 @@ export function augmentHostWithResources(
   resourceHost.readResource = async function (fileName: string) {
     const filePath = normalizePath(fileName);
 
-    let content = (this as any).readFile(filePath);
+    const content = (this as any).readFile(filePath);
 
     if (content === undefined) {
       throw new Error('Unable to locate component resource: ' + fileName);

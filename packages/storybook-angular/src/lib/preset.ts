@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 import { core as PresetCore } from '@storybook/angular/preset';
 import { fileURLToPath } from 'node:url';
+import type { Plugin, UserConfig } from 'vite';
 
 export const previewAnnotations = async (
   entries: string[] = [],
@@ -41,8 +42,8 @@ export const core = async (config: any, options: any): Promise<any> => {
 };
 
 async function resolveExperimentalZoneless(
-  frameworkOptions,
-  angularBuilderOptions,
+  frameworkOptions: any,
+  angularBuilderOptions: any,
 ) {
   // 1. Explicit framework option (user's .storybook/main.ts)
   if (typeof frameworkOptions?.experimentalZoneless === 'boolean') {
@@ -67,12 +68,11 @@ export const viteFinal = async (config: any, options: any): Promise<any> => {
   // Remove any loaded analogjs plugins from a vite.config.(m)ts file
   config.plugins = (config.plugins ?? [])
     .flat()
-    .filter((plugin) => !plugin.name.includes('analogjs'));
+    .filter((plugin: any) => !plugin.name.includes('analogjs'));
 
   // Merge custom configuration into the default config
   const { mergeConfig, normalizePath } = await import('vite');
   const { default: angular } = await import('@analogjs/vite-plugin-angular');
-  // @ts-ignore
   const framework = await options.presets.apply('framework');
   const experimentalZoneless = await resolveExperimentalZoneless(
     framework.options,
@@ -122,13 +122,16 @@ export const viteFinal = async (config: any, options: any): Promise<any> => {
 };
 
 function angularOptionsPlugin(
-  options,
-  { normalizePath, experimentalZoneless },
-) {
-  let resolvedConfig;
+  options: any,
+  {
+    normalizePath,
+    experimentalZoneless,
+  }: { normalizePath: (path: string) => string; experimentalZoneless: boolean },
+): Plugin {
+  let resolvedConfig: UserConfig | undefined;
   return {
     name: 'analogjs-storybook-options-plugin',
-    config(userConfig) {
+    config(userConfig: UserConfig) {
       resolvedConfig = userConfig;
       const loadPaths =
         options?.angularBuilderOptions?.stylePreprocessorOptions?.loadPaths;
@@ -156,7 +159,7 @@ function angularOptionsPlugin(
 
       return;
     },
-    async transform(code, id) {
+    async transform(code: string, id: string) {
       if (
         normalizePath(id).endsWith(
           normalizePath(`${options.configDir}/preview.ts`),
@@ -205,7 +208,7 @@ function angularOptionsPlugin(
   };
 }
 
-function storybookEsbuildPlugin() {
+function storybookEsbuildPlugin(): Plugin {
   return {
     name: 'analogjs-storybook-esbuild-config',
     apply: 'build',

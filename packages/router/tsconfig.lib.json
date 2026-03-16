@@ -22,11 +22,12 @@
     }
   },
   "exclude": [
-    "vite.config.ts",
-    "vite.config.lib.ts",
-    "**/*.test.ts",
     "**/*.spec.ts",
-    "**/test-setup.ts"
+    "**/*.test.ts",
+    "**/test-setup.ts",
+    "oxlint.config.ts",
+    "vite.config.lib.ts",
+    "vite.config.ts"
   ],
   "include": ["**/*.ts"]
 }

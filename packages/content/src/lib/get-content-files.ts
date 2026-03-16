@@ -6,7 +6,7 @@
  * @returns
  */
 export const getContentFilesList = () => {
-  let ANALOG_CONTENT_FILE_LIST = {};
+  const ANALOG_CONTENT_FILE_LIST = {};
 
   return ANALOG_CONTENT_FILE_LIST as Record<string, Record<string, any>>;
 };

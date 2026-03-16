@@ -7,7 +7,7 @@ export async function getBuildApplicationFunction(): Promise<{
   )() as Promise<{ VERSION: { major: string; minor: string } }>);
 
   const angularVersion = Number(VERSION.major);
-  let buildApplicationInternal: Function;
+  let buildApplicationInternal: (...args: any[]) => any;
 
   if (angularVersion < 17) {
     throw new Error(

@@ -109,7 +109,11 @@ export async function appGenerator(
   });
 
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
-  const majorAngularVersion = major(coerce(angularVersion));
+  const coercedAngularVersion = coerce(angularVersion ?? '');
+  if (!coercedAngularVersion) {
+    throw new Error('Could not determine installed Angular version.');
+  }
+  const majorAngularVersion = major(coercedAngularVersion);
   addFiles(tree, normalizedOptions, majorAngularVersion);
   addDependenciesToPackageJson(
     tree,
@@ -122,11 +126,15 @@ export async function appGenerator(
     {},
   );
 
-  updateJson<{ dependencies: object }>(tree, '/package.json', (json) => {
-    json.dependencies['@angular/platform-server'] = `~${angularVersion}`;
+  updateJson<{ dependencies: Record<string, string> }>(
+    tree,
+    '/package.json',
+    (json) => {
+      json.dependencies['@angular/platform-server'] = `~${angularVersion}`;
 
-    return json;
-  });
+      return json;
+    },
+  );
 
   updateIndex(tree, normalizedOptions.analogAppName);
 

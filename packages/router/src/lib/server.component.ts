@@ -37,6 +37,7 @@ type ServerOutputs = Record<string, any>;
  * Status: experimental
  */
 @Component({
+  // eslint-disable-next-line @angular-eslint/component-selector
   selector: 'server-only,ServerOnly,Server',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: ` <div [innerHTML]="content()"></div> `,
