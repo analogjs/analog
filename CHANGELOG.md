@@ -1,3 +1,9 @@
+# [3.0.0-alpha.3](https://github.com/analogjs/analog/compare/v3.0.0-alpha.2...v3.0.0-alpha.3) (2026-03-16)
+
+### Bug Fixes
+
+- add CLAUDE.md to reference AGENTS.md ([715ec17](https://github.com/analogjs/analog/commit/715ec17b69b8947a37a7d7761ff559533c510671))
+
 # [3.0.0-alpha.2](https://github.com/analogjs/analog/compare/v3.0.0-alpha.1...v3.0.0-alpha.2) (2026-03-16)
 
 ### Bug Fixes
