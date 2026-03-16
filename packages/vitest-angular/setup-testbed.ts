@@ -54,7 +54,7 @@ export function setupTestBed({
       platformBrowserTesting(),
       {
         teardown: {
-          ...{ destroyAfterEach: browserMode },
+          ...{ destroyAfterEach: !browserMode },
           ...teardown,
         },
       },
