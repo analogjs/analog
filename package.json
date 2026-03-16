@@ -132,7 +132,7 @@
     "@types/babel__core": "^7.20.5",
     "@types/hast": "^3.0.4",
     "@types/marked": "^5.0.2",
-    "@types/node": "22.19.15",
+    "@types/node": "^24.12.0",
     "@types/prismjs": "^1.26.6",
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
@@ -141,7 +141,7 @@
     "@typescript-eslint/utils": "^8.57.0",
     "@vitest/browser-playwright": "4.0.18",
     "@vitest/coverage-v8": "4.0.18",
-    "@vitest/ui": "4.0.18",
+    "@vitest/ui": "4.1.0",
     "all-contributors-cli": "^6.26.1",
     "astro": "6.0.2",
     "autoprefixer": "^10.4.27",
@@ -201,13 +201,12 @@
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
     "typescript-eslint": "^8.57.0",
-    "unstorage": "2.0.0-alpha.6",
     "vite": "^8.0.0",
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-inspect": "11.3.3",
     "vite-tsconfig-paths": "6.1.1",
     "vitefu": "^1.1.2",
-    "vitest": "4.0.18",
+    "vitest": "4.1.0",
     "webpack-bundle-analyzer": "^5.2.0",
     "xmlbuilder2": "^4.0.3"
   },
@@ -230,6 +229,7 @@
     "overrides": {
       "vite": "^8.0.0",
       "esbuild": "$esbuild",
+      "@types/node": "$@types/node",
       "jiti": "2.6.1",
       "@typescript-eslint/type-utils": "8.57.0"
     }
