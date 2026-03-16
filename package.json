@@ -214,15 +214,7 @@
       "cypress"
     ],
     "onlyBuiltDependencies": [
-      "@compodoc/compodoc",
-      "@swc/core",
-      "core-js",
-      "core-js-pure",
-      "esbuild",
-      "lmdb",
-      "msgpackr-extract",
-      "nx",
-      "sharp",
+      "@parcel/watcher",
       "vite-tsconfig-paths"
     ],
     "overrides": {
