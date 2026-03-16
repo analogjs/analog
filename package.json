@@ -227,6 +227,7 @@
       "sharp"
     ],
     "overrides": {
+      "vite": "^8.0.0",
       "@typescript-eslint/type-utils": "8.57.0"
     }
   }
