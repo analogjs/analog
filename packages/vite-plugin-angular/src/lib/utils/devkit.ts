@@ -5,17 +5,17 @@ import * as sfc from './source-file-cache.js';
 
 const require = createRequire(import.meta.url);
 
-const angularMajor = Number(VERSION.major);
-const angularMinor = Number(VERSION.minor);
-const angularPatch = Number(VERSION.patch);
+const angularMajor: number = Number(VERSION.major);
+const angularMinor: number = Number(VERSION.minor);
+const angularPatch: number = Number(VERSION.patch);
 const padVersion = (version: number) => String(version).padStart(2, '0');
-const angularFullVersion = Number(
+const angularFullVersion: number = Number(
   `${angularMajor}${padVersion(angularMinor)}${padVersion(angularPatch)}`,
 );
 let sourceFileCache: any;
-let cjt: Function;
+let cjt: (...args: any[]) => any;
 let jt: any;
-let createAngularCompilation: Function;
+let createAngularCompilation: (...args: any[]) => any;
 
 if (angularMajor < 17) {
   throw new Error('AnalogJS is not compatible with Angular v16 and lower');

@@ -30,6 +30,6 @@ export type InjectContentFilesFilterFunction<T extends Record<string, any>> = (
   array: ContentFile<T>[],
 ) => boolean;
 
-export function injectContentFilesMap() {
+export function injectContentFilesMap(): Record<string, () => Promise<string>> {
   return inject(CONTENT_FILES_TOKEN);
 }

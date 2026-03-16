@@ -33,13 +33,13 @@ export function withMarkdownRenderer(
   ];
 }
 
-export function provideContent(...features: Provider[]) {
+export function provideContent(...features: Provider[]): Provider[] {
   return [
     { provide: RenderTaskService, useClass: RenderTaskService },
     ...features,
   ];
 }
 
-export const MERMAID_IMPORT_TOKEN = new InjectionToken<
+export const MERMAID_IMPORT_TOKEN: InjectionToken<
   Promise<typeof import('mermaid')>
->('mermaid_import');
+> = new InjectionToken<Promise<typeof import('mermaid')>>('mermaid_import');

@@ -9,14 +9,22 @@ import { ApplicationRef, createComponent } from '@angular/core';
 import { createApplication } from '@angular/platform-browser';
 import { Observable, Subject, takeUntil } from 'rxjs';
 
-export default (element: HTMLElement) => {
+export default (
+  element: HTMLElement,
+): ((
+  Component: ComponentType<unknown> & {
+    clientProviders?: (Provider | EnvironmentProviders)[];
+  },
+  props?: Record<string, unknown>,
+  _childHTML?: unknown,
+) => void) => {
   return (
     Component: ComponentType<unknown> & {
       clientProviders?: (Provider | EnvironmentProviders)[];
     },
     props?: Record<string, unknown>,
     _childHTML?: unknown,
-  ) => {
+  ): void => {
     createApplication({
       providers: [
         provideZonelessChangeDetection(),
