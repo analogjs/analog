@@ -1,3 +1,9 @@
+# [2.4.0-beta.10](https://github.com/analogjs/analog/compare/v2.4.0-beta.9...v2.4.0-beta.10) (2026-03-16)
+
+### Bug Fixes
+
+- **vitest-angular:** support environment providers ([#2129](https://github.com/analogjs/analog/issues/2129)) ([a90aa12](https://github.com/analogjs/analog/commit/a90aa1272ed64d626386283ae7b9a09775a07287))
+
 # [2.4.0-beta.9](https://github.com/analogjs/analog/compare/v2.4.0-beta.8...v2.4.0-beta.9) (2026-03-15)
 
 ### Bug Fixes
