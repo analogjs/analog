@@ -1,4 +1,4 @@
-import { defineHandler } from 'h3';
+import { defineHandler } from 'nitro/h3';
 
 export default defineHandler((event) => {
   const feedString = `<?xml version="1.0" encoding="UTF-8"?>

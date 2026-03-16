@@ -1,5 +1,5 @@
 import { PageServerLoad } from '@analogjs/router';
-import { getCookie } from 'h3';
+import { getCookie } from 'nitro/h3';
 
 export const load = async ({ event }: PageServerLoad) => {
   console.log('shipping');
