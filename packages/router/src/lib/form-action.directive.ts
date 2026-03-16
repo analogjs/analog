@@ -20,7 +20,9 @@ import { injectRouteEndpointURL } from './inject-route-endpoint-url';
 })
 export class FormAction {
   action: InputSignal<string> = input<string>('');
+  // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   onSuccess: OutputEmitterRef<unknown> = output<unknown>();
+  // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   onError: OutputEmitterRef<unknown> = output<unknown>();
   state: OutputEmitterRef<
     'submitting' | 'error' | 'redirect' | 'success' | 'navigate'
