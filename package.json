@@ -204,6 +204,7 @@
     "vite": "^8.0.0",
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-inspect": "11.3.3",
+    "@typescript-eslint/type-utils": "8.57.0",
     "vite-tsconfig-paths": "6.1.1",
     "vitefu": "^1.1.2",
     "vitest": "4.1.0",
@@ -227,11 +228,20 @@
       "sharp"
     ],
     "overrides": {
-      "vite": "^8.0.0",
+      "vite": "$vite",
       "esbuild": "$esbuild",
       "@types/node": "$@types/node",
-      "jiti": "2.6.1",
-      "@typescript-eslint/type-utils": "8.57.0"
+      "jiti": "$jiti",
+      "@typescript-eslint/type-utils": "$@typescript-eslint/type-utils",
+      "@angular/core": "$@angular/core",
+      "@angular/common": "$@angular/common",
+      "@angular/compiler": "$@angular/compiler",
+      "@angular/platform-browser": "$@angular/platform-browser",
+      "@angular/platform-browser-dynamic": "$@angular/platform-browser-dynamic",
+      "@angular/router": "$@angular/router",
+      "@angular/animations": "$@angular/animations",
+      "@angular/platform-server": "$@angular/platform-server",
+      "zone.js": "$zone.js"
     }
   }
 }
