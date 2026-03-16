@@ -8,8 +8,7 @@
     "inlineSources": true,
     "types": ["node"],
     "moduleResolution": "bundler",
-    "rootDir": ".",
-    "baseUrl": "."
+    "rootDir": "."
   },
   "exclude": [
     "**/*.spec.ts",

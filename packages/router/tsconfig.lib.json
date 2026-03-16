@@ -11,7 +11,6 @@
     "useDefineForClassFields": false,
     "moduleResolution": "bundler",
     "rootDir": ".",
-    "baseUrl": ".",
     "paths": {
       "@analogjs/content": ["./node_modules/@analogjs/content"],
       "@analogjs/router": ["./src/index.ts"],

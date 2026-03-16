@@ -8,7 +8,6 @@
     "types": [],
     "isolatedDeclarations": true,
     "rootDir": ".",
-    "baseUrl": ".",
     "paths": {
       "@analogjs/content": ["./src/index.ts"],
       "@analogjs/content/*": ["./*"]
