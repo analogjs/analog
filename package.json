@@ -229,6 +229,7 @@
     ],
     "overrides": {
       "vite": "^8.0.0",
+      "jiti": "2.6.1",
       "@typescript-eslint/type-utils": "8.57.0"
     }
   }
