@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       viteTsConfigPaths({
         root: '../../',
-        projects: [],
+        projects: ['tsconfig.base.json'],
       }),
     ],
     test: {
