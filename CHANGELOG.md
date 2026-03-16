@@ -1,3 +1,9 @@
+# [2.4.0-beta.13](https://github.com/analogjs/analog/compare/v2.4.0-beta.12...v2.4.0-beta.13) (2026-03-16)
+
+### Features
+
+- **vitest-angular:** add `teardown.destroyAfterEach` option and deprecate `browserMode` option ([#2054](https://github.com/analogjs/analog/issues/2054)) ([2fe2e1c](https://github.com/analogjs/analog/commit/2fe2e1c9304a933b0070fb2e28c8e92def68f077))
+
 # [2.4.0-beta.12](https://github.com/analogjs/analog/compare/v2.4.0-beta.11...v2.4.0-beta.12) (2026-03-16)
 
 ### Features
