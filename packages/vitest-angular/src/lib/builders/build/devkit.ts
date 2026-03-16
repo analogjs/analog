@@ -1,5 +1,5 @@
 export async function getBuildApplicationFunction(): Promise<{
-  buildApplicationInternal: (...args: unknown[]) => unknown;
+  buildApplicationInternal: (...args: any[]) => any;
   angularVersion: number;
 }> {
   const { VERSION } = await (Function(
