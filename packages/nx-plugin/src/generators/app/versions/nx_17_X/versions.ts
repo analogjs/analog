@@ -29,5 +29,6 @@ export const V17_X_NX_VITE = '^17.0.0';
 export const V17_X_NX_LINTER = '^17.0.0';
 export const V17_X_JSDOM = '^22.0.0';
 export const V17_X_VITE = '^4.4.8';
+export const V17_X_VITE_TSCONFIG_PATHS = '^4.2.0';
 export const V17_X_VITEST = '^0.32.2';
 export const V17_X_ZOD = '^3.21.4';

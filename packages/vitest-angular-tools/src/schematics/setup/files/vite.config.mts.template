@@ -1,10 +1,9 @@
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
-<% if (isNx) { %>import angular from '@analogjs/vite-plugin-angular';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-<% } else { %>import angular, { tsconfigPathsPlugin } from '@analogjs/vite-plugin-angular';
-<% } %>
+import angular from '@analogjs/vite-plugin-angular';
+<% if (isNx) { %>import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+<% } else { %>import viteTsConfigPaths from 'vite-tsconfig-paths';<% } %>
 <% if (browserMode) { %>import { playwright } from '@vitest/browser-playwright';<% } %>
 
 // https://vitejs.dev/config/
@@ -12,7 +11,7 @@ export default defineConfig(({ mode }) => ({
 <% if (isNx) { %>
   plugins: [angular(), nxViteTsPaths()],
 <% } else { %>
-  plugins: [angular(), tsconfigPathsPlugin()],
+  plugins: [angular(), viteTsConfigPaths()],
 <% } %>
   test: {
     globals: true,

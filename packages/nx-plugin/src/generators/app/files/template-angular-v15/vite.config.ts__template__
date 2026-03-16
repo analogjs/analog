@@ -2,7 +2,7 @@
 
 import analog from '@analogjs/platform';
 import { defineConfig, Plugin } from 'vite';
-import { tsconfigPathsPlugin } from '@analogjs/vite-plugin-angular';
+import tsConfigPaths from 'vite-tsconfig-paths';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -49,7 +49,7 @@ export default defineConfig(({ mode }) => {
           routes: ['/'],
         },
       }),
-      tsconfigPathsPlugin({
+      tsConfigPaths({
         root: '<%= offsetFromRoot %>',
       }),
     ],

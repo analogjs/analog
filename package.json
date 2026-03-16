@@ -173,7 +173,6 @@
     "nitro": "3.0.260311-beta",
     "nx": "22.6.0-beta.11",
     "ofetch": "2.0.0-alpha.3",
-    "oxc-resolver": "^11.19.1",
     "playwright": "^1.58.2",
     "postcss": "^8.5.8",
     "postcss-import": "~16.1.1",
@@ -204,6 +203,7 @@
     "vite": "^8.0.0",
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-inspect": "11.3.3",
+    "vite-tsconfig-paths": "github:benpsnyder/vite-tsconfig-paths#feat/oxc-upgrade",
     "vitefu": "^1.1.2",
     "vitest": "4.0.18",
     "webpack-bundle-analyzer": "^5.2.0",
@@ -222,7 +222,8 @@
       "lmdb",
       "msgpackr-extract",
       "nx",
-      "sharp"
+      "sharp",
+      "vite-tsconfig-paths"
     ],
     "overrides": {
       "@typescript-eslint/type-utils": "8.57.0"
