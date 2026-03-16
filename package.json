@@ -149,7 +149,7 @@
     "conventional-changelog-cli": "^5.0.0",
     "cpy-cli": "^7.0.0",
     "cypress": "15.11.0",
-    "esbuild": "0.27.3",
+    "esbuild": "0.27.4",
     "eslint": "^10.0.3",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-cypress": "6.1.0",
@@ -229,6 +229,7 @@
     ],
     "overrides": {
       "vite": "^8.0.0",
+      "esbuild": "$esbuild",
       "jiti": "2.6.1",
       "@typescript-eslint/type-utils": "8.57.0"
     }

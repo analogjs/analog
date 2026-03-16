@@ -43,9 +43,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     };
   }
 
-  // Cast needed: pnpm resolves multiple vite instances with different
-  // @types/node versions, producing structurally identical but nominally
-  // incompatible Plugin types due to private property declarations.
   return [
     ...viteNitroPlugin(platformOptions, nitroOptions),
     ...(platformOptions.ssr ? [ssrBuildPlugin(), ...injectHTMLPlugin()] : []),
@@ -73,5 +70,5 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     serverModePlugin(),
     ssrXhrBuildPlugin(),
     clearClientPageEndpointsPlugin(),
-  ] as Plugin[];
+  ];
 }
