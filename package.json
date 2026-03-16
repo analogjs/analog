@@ -213,6 +213,7 @@
     "vite": "^8.0.0",
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-inspect": "11.3.3",
+    "vite-tsconfig-paths": "github:benpsnyder/vite-tsconfig-paths#feat/oxc-upgrade",
     "vitefu": "^1.1.2",
     "vitest": "4.0.18",
     "webpack-bundle-analyzer": "^5.2.0",
@@ -223,15 +224,8 @@
       "cypress"
     ],
     "onlyBuiltDependencies": [
-      "@compodoc/compodoc",
-      "@swc/core",
-      "core-js",
-      "core-js-pure",
-      "esbuild",
-      "lmdb",
-      "msgpackr-extract",
-      "nx",
-      "sharp"
+      "@parcel/watcher",
+      "vite-tsconfig-paths"
     ],
     "overrides": {
       "typescript": "6.0.1-rc",

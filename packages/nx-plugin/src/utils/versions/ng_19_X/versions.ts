@@ -14,6 +14,7 @@ export const V19_X_ANALOG_JS_VITEST_ANGULAR = '^3.0.0-alpha.2';
 export const V19_X_NX_ANGULAR = '^22.0.0';
 export const V19_X_NX_VITE = '^22.0.0';
 export const V19_X_JSDOM = '^22.0.0';
+export const V19_X_VITE_TSCONFIG_PATHS = '^4.2.0';
 export const V19_X_VITEST = '^3.0.0';
 export const V19_X_VITE = '^5.0.0';
 export const NX_X_LATEST_VITE = '^7.0.0';

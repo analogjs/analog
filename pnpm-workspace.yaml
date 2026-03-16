@@ -1,2 +1,4 @@
 packages:
   - 'apps/docs-app'
+onlyBuiltDependencies:
+  - vite-tsconfig-paths

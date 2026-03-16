@@ -6,6 +6,7 @@ import {
   V17_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
   V17_X_JSDOM,
   V17_X_VITE,
+  V17_X_VITE_TSCONFIG_PATHS,
   V17_X_VITEST,
   V17_X_ANGULAR_DEVKIT_BUILD_ANGULAR,
 } from './nx_17_X/versions';
@@ -15,6 +16,7 @@ import {
   V18_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
   V18_X_JSDOM,
   V18_X_VITE,
+  V18_X_VITE_TSCONFIG_PATHS,
   V18_X_VITEST,
   V18_X_ANGULAR_DEVKIT_BUILD_ANGULAR,
   V18_X_ANALOG_JS_VITEST_ANGULAR,
@@ -29,6 +31,7 @@ const devDependencyKeys = [
   '@analogjs/vite-plugin-angular',
   'jsdom',
   'vite',
+  'vite-tsconfig-paths',
   'vitest',
 ] as const;
 export type AnalogDevDependency = (typeof devDependencyKeys)[number];
@@ -81,6 +84,7 @@ const getDevDependencies = (escapedNxVersion: string) => {
       '@angular-devkit/build-angular': V17_X_ANGULAR_DEVKIT_BUILD_ANGULAR,
       jsdom: V17_X_JSDOM,
       vite: V17_X_VITE,
+      'vite-tsconfig-paths': V17_X_VITE_TSCONFIG_PATHS,
       vitest: V17_X_VITEST,
     };
   }
@@ -93,6 +97,7 @@ const getDevDependencies = (escapedNxVersion: string) => {
     '@angular-devkit/build-angular': V18_X_ANGULAR_DEVKIT_BUILD_ANGULAR,
     jsdom: V18_X_JSDOM,
     vite: V18_X_VITE,
+    'vite-tsconfig-paths': V18_X_VITE_TSCONFIG_PATHS,
     vitest: V18_X_VITEST,
   };
 };

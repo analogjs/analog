@@ -5,6 +5,7 @@ import {
   V19_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
   V19_X_ANALOG_JS_VITEST_ANGULAR,
   V19_X_JSDOM,
+  V19_X_VITE_TSCONFIG_PATHS,
   V19_X_VITEST,
   V19_X_VITE,
   NX_X_LATEST_VITE,
@@ -56,6 +57,7 @@ describe('setup-vitest generator', () => {
       vitest: V19_X_VITEST,
       jsdom: V19_X_JSDOM,
       vite: V19_X_VITE,
+      'vite-tsconfig-paths': V19_X_VITE_TSCONFIG_PATHS,
     });
   });
 
