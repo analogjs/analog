@@ -1,4 +1,9 @@
-import { NgModule, provideZonelessChangeDetection, Type } from '@angular/core';
+import {
+  EnvironmentProviders,
+  NgModule,
+  Provider,
+  provideZonelessChangeDetection,
+} from '@angular/core';
 import {
   ɵgetCleanupHook as getCleanupHook,
   getTestBed,
@@ -13,11 +18,11 @@ const ANGULAR_TESTBED_SETUP = Symbol.for('testbed-setup');
 
 type TestBedSetupOptions = {
   zoneless?: boolean;
-  providers?: Type<any>[];
+  providers?: (Provider | EnvironmentProviders)[];
   /**
    * @deprecated Use `teardown.destroyAfterEach` instead.
    * @sunset 3.0.0
-   */
+   */  
   browserMode?: boolean;
   teardown?: {
     destroyAfterEach: boolean;
@@ -37,16 +42,15 @@ export function setupTestBed({
     (globalThis as any)[ANGULAR_TESTBED_SETUP] = true;
 
     @NgModule({
-      providers: zoneless ? [provideZonelessChangeDetection()] : [],
+      providers: [
+        ...(zoneless ? [provideZonelessChangeDetection()] : []),
+        ...providers,
+      ],
     })
-    class ZonelessTestModule {}
+    class TestModule {}
 
     getTestBed().initTestEnvironment(
-      [
-        BrowserTestingModule,
-        ...(zoneless ? [ZonelessTestModule] : []),
-        ...((providers || []) as Type<any>[]),
-      ],
+      [BrowserTestingModule, TestModule],
       platformBrowserTesting(),
       {
         teardown: {

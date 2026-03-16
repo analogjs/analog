@@ -1,0 +1,34 @@
+/// <reference types="vitest" />
+
+import { defineConfig } from 'vite';
+import angular from '@analogjs/vite-plugin-angular';
+<% if (isNx) { %>import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+<% } else { %>import viteTsConfigPaths from 'vite-tsconfig-paths';<% } %>
+<% if (browserMode) { %>import { playwright } from '@vitest/browser-playwright';<% } %>
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+<% if (isNx) { %>
+  plugins: [angular(), nxViteTsPaths()],
+<% } else { %>
+  plugins: [angular(), viteTsConfigPaths()],
+<% } %>
+  test: {
+    globals: true,
+<% if (browserMode) { %>
+    browser: {
+      enabled: true,
+      provider: playwright(),
+      instances: [{ browser: 'chromium' }],
+    },
+<% } else { %>
+    environment: 'jsdom',
+<% } %>
+    setupFiles: ['src/test-setup.ts'],
+    include: ['**/*.spec.ts'],
+    reporters: ['default'],
+  },
+  define: {
+    'import.meta.vitest': mode !== 'production',
+  },
+}));

@@ -11,7 +11,7 @@ type FormErrors =
   | undefined;
 
 @Component({
-  selector: 'app-newsletter-page',
+  selector: 'analogjs-newsletter-page',
   standalone: true,
   imports: [FormAction],
   template: `

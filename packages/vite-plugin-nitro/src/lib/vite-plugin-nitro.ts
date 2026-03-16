@@ -5,7 +5,7 @@ import { mergeConfig, normalizePath } from 'vite';
 import { dirname, join, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import { buildServer } from './build-server.js';
 import { buildSSRApp } from './build-ssr.js';
@@ -54,10 +54,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let nitroConfig: NitroConfig;
   let environmentBuild = false;
   let hasAPIDir = false;
-  let routeSitemaps: Record<
+  const routeSitemaps: Record<
     string,
     PrerenderSitemapConfig | (() => PrerenderSitemapConfig)
   > = {};
+  const routeSourceFiles: Record<string, string> = {};
   let rootDir = workspaceRoot;
 
   return [
@@ -253,6 +254,18 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                     routeSitemaps[current.route] = current.sitemap;
                   }
 
+                  if (current.outputSourceFile) {
+                    const sourcePath = resolve(
+                      workspaceRoot,
+                      rootDir,
+                      current.outputSourceFile,
+                    );
+                    routeSourceFiles[current.route] = readFileSync(
+                      sourcePath,
+                      'utf8',
+                    );
+                  }
+
                   prev.push(current.route);
 
                   // Add the server-side data fetching endpoint URL
@@ -279,6 +292,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                         current.sitemap && typeof current.sitemap === 'function'
                           ? current.sitemap?.(f)
                           : current.sitemap;
+                    }
+
+                    if (current.outputSourceFile) {
+                      const sourceContent = current.outputSourceFile(f);
+                      if (sourceContent) {
+                        routeSourceFiles[result] = sourceContent;
+                      }
                     }
 
                     prev.push(result);
@@ -389,19 +409,26 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 '#analog/ssr': ssrEntry,
               };
 
-              await buildServer(options, nitroConfig);
+              await buildServer(options, nitroConfig, routeSourceFiles);
 
               if (
                 nitroConfig.prerender?.routes?.length &&
                 options?.prerender?.sitemap
               ) {
+                const publicDir = nitroConfig.output?.publicDir;
+                if (!publicDir) {
+                  throw new Error(
+                    'Nitro public output directory is required to build the sitemap.',
+                  );
+                }
+
                 console.log('Building Sitemap...');
                 // sitemap needs to be built after all directories are built
                 await buildSitemap(
                   config,
                   options.prerender.sitemap,
                   nitroConfig.prerender.routes,
-                  nitroConfig.output?.publicDir!,
+                  publicDir,
                   routeSitemaps,
                 );
               }
@@ -425,7 +452,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
           if (hasAPIDir) {
             viteServer.middlewares.use(
-              (req: IncomingMessage, res: ServerResponse, next: Function) => {
+              (
+                req: IncomingMessage,
+                res: ServerResponse,
+                next: (error?: unknown) => void,
+              ) => {
                 if (req.url?.startsWith(`${prefix}${apiPrefix}`)) {
                   apiHandler(req, res);
                   return;
@@ -505,7 +536,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             '#analog/ssr': ssrEntry,
           };
 
-          await buildServer(options, nitroConfig);
+          await buildServer(options, nitroConfig, routeSourceFiles);
 
           console.log(
             `\n\nThe '@analogjs/platform' server has been successfully built.`,

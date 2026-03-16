@@ -11,6 +11,7 @@ import { Observable, of } from 'rxjs';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
 import { injectContent } from './content';
 import { ContentFile } from './content-file';
+import { ContentRenderer, NoopContentRenderer } from './content-renderer';
 import { RenderTaskService } from './render-task.service';
 
 describe('injectContent', () => {
@@ -71,6 +72,7 @@ Test Content`),
       expect(c.attributes).toEqual({ slug: 'test' });
       expect(c.filename).toEqual('/src/content/test');
       expect(c.slug).toEqual('test');
+      expect(c.toc).toEqual([]);
     });
     flushMicrotasks();
     flush();
@@ -168,7 +170,7 @@ Test Content`),
     flush();
   }));
 
-  it('should finish the stream when content is resolved', fakeAsync(() => {
+  it('should finish the stream when content is resolved', async () => {
     const routeParams = {};
     const contentFiles = {
       '/src/content/test.md': () =>
@@ -189,17 +191,18 @@ Test Content`),
     let content: ContentFile<TestAttributes | Record<string, never>> | null =
       null;
 
-    injectContent().subscribe({
-      next: (c) => {
-        content = c;
-      },
-      complete: () => {
-        completed = true;
-      },
+    await new Promise<void>((resolve, reject) => {
+      injectContent().subscribe({
+        next: (c) => {
+          content = c;
+        },
+        error: reject,
+        complete: () => {
+          completed = true;
+          resolve();
+        },
+      });
     });
-
-    flushMicrotasks();
-    flush();
 
     expect(completed).toBe(true);
     expect(content).toEqual({
@@ -207,7 +210,36 @@ Test Content`),
       attributes: { slug: 'test' },
       filename: '/src/content/test',
       slug: 'test',
+      toc: [],
     });
+  });
+
+  it('should include toc entries when markdown headings are present', fakeAsync(() => {
+    const routeParams = { slug: 'with-headings' };
+    const contentFiles = {
+      '/src/content/with-headings.md': () =>
+        Promise.resolve(`---
+slug: 'with-headings'
+---
+# Heading One
+## Heading Two
+Body content`),
+    };
+    const { injectContent } = setup({
+      routeParams,
+      contentFiles,
+    });
+
+    injectContent().subscribe((c) => {
+      expect(c.content).toMatch('# Heading One');
+      expect(c.toc).toEqual([
+        { id: 'heading-one', level: 1, text: 'Heading One' },
+        { id: 'heading-two', level: 2, text: 'Heading Two' },
+      ]);
+    });
+
+    flushMicrotasks();
+    flush();
   }));
 
   function setup(
@@ -227,6 +259,10 @@ Test Content`),
     TestBed.configureTestingModule({
       providers: [
         RenderTaskService,
+        {
+          provide: ContentRenderer,
+          useClass: NoopContentRenderer,
+        },
         {
           provide: ActivatedRoute,
           useValue: {

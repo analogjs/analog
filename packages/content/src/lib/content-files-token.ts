@@ -21,9 +21,17 @@ export const CONTENT_FILES_TOKEN = new InjectionToken<
       const fileParts = contentFilename.split('/');
       const filePath = fileParts.slice(0, fileParts.length - 1).join('/');
       const fileNameParts = fileParts[fileParts.length - 1].split('.');
-      lookup[contentFilename] = `${filePath}/${item.slug}.${
-        fileNameParts[fileNameParts.length - 1]
-      }`;
+      const ext = fileNameParts[fileNameParts.length - 1];
+      let slug = (item.slug ?? '') as string;
+      // Default empty slug to 'index'
+      if (slug === '') {
+        slug = 'index';
+      }
+      // If slug contains path separators, treat it as root-relative to /src/content
+      const newBase = slug.includes('/')
+        ? `/src/content/${slug}`
+        : `${filePath}/${slug}`;
+      lookup[contentFilename] = `${newBase}.${ext}`.replace(/\/{2,}/g, '/');
     });
 
     const objectUsingSlugAttribute: Record<string, () => Promise<string>> = {};

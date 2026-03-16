@@ -1,6 +1,7 @@
 import { NitroConfig, copyPublicAssets, prerender } from 'nitropack';
 import { createNitro, build, prepare } from 'nitropack';
-import { existsSync, unlinkSync } from 'node:fs';
+import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 
 import { Options } from './options.js';
 import { addPostRenderingHooks } from './hooks/post-rendering-hook.js';
@@ -8,6 +9,7 @@ import { addPostRenderingHooks } from './hooks/post-rendering-hook.js';
 export async function buildServer(
   options?: Options,
   nitroConfig?: NitroConfig,
+  routeSourceFiles?: Record<string, string>,
 ) {
   const nitro = await createNitro({
     dev: false,
@@ -46,6 +48,26 @@ export async function buildServer(
   ) {
     console.log(`Prerendering static pages...`);
     await prerender(nitro);
+  }
+
+  if (routeSourceFiles && Object.keys(routeSourceFiles).length > 0) {
+    const publicDir = nitroConfig?.output?.publicDir;
+    if (!publicDir) {
+      throw new Error(
+        'Nitro public output directory is required to write route source files.',
+      );
+    }
+
+    for (const [route, content] of Object.entries(routeSourceFiles)) {
+      const outputPath = join(publicDir, `${route}.md`);
+      const outputDir = dirname(outputPath);
+
+      if (!existsSync(outputDir)) {
+        mkdirSync(outputDir, { recursive: true });
+      }
+
+      writeFileSync(outputPath, content, 'utf8');
+    }
   }
 
   if (!options?.static) {

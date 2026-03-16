@@ -12,13 +12,17 @@ export function depsPlugin(options?: Options): Plugin[] {
     {
       name: 'analogjs-deps-plugin',
       config() {
-        const esbuild = options?.vite?.experimental?.useAngularCompilationAPI
-          ? {}
-          : { exclude: ['**/*.ts', '**/*.js'] };
+        const esbuild =
+          options?.vite === false ||
+          options?.vite?.experimental?.useAngularCompilationAPI
+            ? {}
+            : { exclude: ['**/*.ts', '**/*.js'] };
 
-        const oxc = options?.vite?.experimental?.useAngularCompilationAPI
-          ? {}
-          : { exclude: ['**/*.ts', '**/*.js'] };
+        const oxc =
+          options?.vite === false ||
+          options?.vite?.experimental?.useAngularCompilationAPI
+            ? {}
+            : { exclude: ['**/*.ts', '**/*.js'] };
 
         return {
           ...(vite.rolldownVersion ? { oxc } : { esbuild }),

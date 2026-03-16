@@ -88,7 +88,7 @@ const config = {
                 // Convert file path to URL path by:
                 // 1. Removing numeric prefixes (like 100-, 01-, etc.)
                 // 2. Removing the .md extension
-                let urlPath = relativePath
+                const urlPath = relativePath
                   .replace(/^\d+-/, '')
                   .replace(/\/\d+-/g, '/')
                   .replace(/index\.md$/, '')
@@ -175,6 +175,10 @@ const config = {
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
+        },
+        gtag: {
+          trackingID: 'G-8S6ZF9V3Q6',
+          anonymizeIP: true,
         },
       }),
     ],

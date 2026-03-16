@@ -5,7 +5,7 @@ import { ButtonComponent } from './button.component';
 import type { User } from './user';
 
 @Component({
-  selector: 'storybook-header',
+  selector: 'analogjs-storybook-header',
   standalone: true,
   imports: [CommonModule, ButtonComponent],
   template: `<header>
@@ -35,35 +35,35 @@ import type { User } from './user';
         <h1>Acme</h1>
       </div>
       <div>
-        <div *ngIf="user">
-          <span class="welcome">
-            Welcome, <b>{{ user.name }}</b
-            >!
-          </span>
-          <storybook-button
-            *ngIf="user"
-            size="small"
-            (onClick)="onLogout.emit($event)"
-            label="Log out"
-          ></storybook-button>
-        </div>
-        <div *ngIf="!user">
-          <storybook-button
-            *ngIf="!user"
-            size="small"
-            class="margin-left"
-            (onClick)="onLogin.emit($event)"
-            label="Log in"
-          ></storybook-button>
-          <storybook-button
-            *ngIf="!user"
-            size="small"
-            [primary]="true"
-            class="margin-left"
-            (onClick)="onCreateAccount.emit($event)"
-            label="Sign up"
-          ></storybook-button>
-        </div>
+        @if (user) {
+          <div>
+            <span class="welcome">
+              Welcome, <b>{{ user.name }}</b
+              >!
+            </span>
+            <analogjs-storybook-button
+              size="small"
+              (clicked)="logout.emit($event)"
+              label="Log out"
+            ></analogjs-storybook-button>
+          </div>
+        } @else {
+          <div>
+            <analogjs-storybook-button
+              size="small"
+              class="margin-left"
+              (clicked)="login.emit($event)"
+              label="Log in"
+            ></analogjs-storybook-button>
+            <analogjs-storybook-button
+              size="small"
+              [primary]="true"
+              class="margin-left"
+              (clicked)="createAccount.emit($event)"
+              label="Sign up"
+            ></analogjs-storybook-button>
+          </div>
+        }
       </div>
     </div>
   </header>`,
@@ -74,11 +74,11 @@ export class HeaderComponent {
   user: User | null = null;
 
   @Output()
-  onLogin = new EventEmitter<Event>();
+  login = new EventEmitter<Event>();
 
   @Output()
-  onLogout = new EventEmitter<Event>();
+  logout = new EventEmitter<Event>();
 
   @Output()
-  onCreateAccount = new EventEmitter<Event>();
+  createAccount = new EventEmitter<Event>();
 }

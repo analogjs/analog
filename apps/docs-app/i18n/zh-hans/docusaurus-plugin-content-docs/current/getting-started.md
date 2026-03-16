@@ -42,6 +42,13 @@ pnpm create analog
 ```
 
   </TabItem>
+  <TabItem value="bun">
+
+```shell
+bun create analog
+```
+
+  </TabItem>
 </Tabs>
 
 你也可以[用 Nx 搭建新的项目](/docs/integrations/nx).
@@ -71,6 +78,13 @@ yarn start
 
 ```shell
 pnpm start
+```
+
+  </TabItem>
+  <TabItem value="bun">
+
+```shell
+bun start
 ```
 
   </TabItem>
@@ -105,6 +119,13 @@ yarn build
 
 ```shell
 pnpm run build
+```
+
+  </TabItem>
+  <TabItem value="bun">
+
+```shell
+bun run build
 ```
 
   </TabItem>

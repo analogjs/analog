@@ -6,6 +6,7 @@
   "tags": ["type:release"],
   "targets": {
     "build": {
+      "dependsOn": ["^build"],
       "executor": "@nx/js:tsc",
       "options": {
         "outputPath": "node_modules/@analogjs/astro-angular",

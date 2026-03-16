@@ -24,8 +24,7 @@ import { addAnalogProjectConfig } from './lib/add-analog-project-config';
 import { updateIndex } from './lib/update-index-html';
 
 export interface NormalizedOptions
-  extends AnalogNxApplicationGeneratorOptions,
-    ReturnType<typeof names> {
+  extends AnalogNxApplicationGeneratorOptions, ReturnType<typeof names> {
   projectName: string;
   projectRoot: string;
   projectDirectory: string;

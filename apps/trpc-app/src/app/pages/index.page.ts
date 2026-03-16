@@ -5,7 +5,7 @@ import {
   signal,
 } from '@angular/core';
 import { injectTrpcClient, TrpcHeaders } from '../../trpc-client';
-import { AsyncPipe, DatePipe, JsonPipe, NgFor, NgIf } from '@angular/common';
+import { AsyncPipe, DatePipe, JsonPipe } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Note } from '../../note';
 import { catchError, of, shareReplay, Subject, switchMap, take } from 'rxjs';
@@ -22,7 +22,7 @@ const btnTw =
   selector: 'trpc-app-home',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AsyncPipe, FormsModule, NgFor, DatePipe, NgIf, JsonPipe],
+  imports: [AsyncPipe, FormsModule, DatePipe, JsonPipe],
   host: {
     class: 'block h-full p-4',
   },
@@ -50,33 +50,36 @@ const btnTw =
       />
       <button data-testid="addNoteBtn" class="ml-2 ${btnTw}">+</button>
     </form>
-    <div class="mt-4" *ngIf="notes$ | async as notes; else loading">
-      <div
-        class="note mb-4 p-4 font-normal border border-zinc-500/40 rounded-md"
-        *ngFor="let note of notes; trackBy: noteTrackBy; let i = index"
-      >
-        <div class="flex items-center justify-between">
-          <p class="text-sm text-zinc-400">{{ note.createdAt | date }}</p>
-          <button
-            [attr.data-testid]="'removeNoteAtIndexBtn' + i"
-            class="!text-xs h-6 !bg-opacity-10 hover:!bg-opacity-50 !text-zinc-50 ${btnTw}"
-            (click)="removePost(note.id)"
+    @if (notes$ | async; as notes) {
+      <div class="mt-4">
+        @for (note of notes; track note.id; let i = $index) {
+          <div
+            class="note mb-4 p-4 font-normal border border-zinc-500/40 rounded-md"
           >
-            x
-          </button>
-        </div>
-        <p class="mb-4">{{ note.note }}</p>
-      </div>
+            <div class="flex items-center justify-between">
+              <p class="text-sm text-zinc-400">{{ note.createdAt | date }}</p>
+              <button
+                [attr.data-testid]="'removeNoteAtIndexBtn' + i"
+                class="!text-xs h-6 !bg-opacity-10 hover:!bg-opacity-50 !text-zinc-50 ${btnTw}"
+                (click)="removePost(note.id)"
+              >
+                x
+              </button>
+            </div>
+            <p class="mb-4">{{ note.note }}</p>
+          </div>
+        }
 
-      <div
-        class="no-notes text-center rounded-xl p-20 bg-zinc-950/40"
-        *ngIf="notes.length === 0"
-      >
-        <h3 class="text-xl font-medium">No notes yet!</h3>
-        <p class="text-zinc-400">Add a new one and see them appear here...</p>
+        @if (notes.length === 0) {
+          <div class="no-notes text-center rounded-xl p-20 bg-zinc-950/40">
+            <h3 class="text-xl font-medium">No notes yet!</h3>
+            <p class="text-zinc-400">
+              Add a new one and see them appear here...
+            </p>
+          </div>
+        }
       </div>
-    </div>
-    <ng-template #loading>
+    } @else {
       <div class="flex items-center justify-center mt-4">
         <div role="status">
           <svg
@@ -98,10 +101,12 @@ const btnTw =
           <span class="sr-only">Loading...</span>
         </div>
       </div>
-    </ng-template>
-    <p data-testid="deleteError" *ngIf="error()?.message">
-      {{ error()?.message }}
-    </p>
+    }
+    @if (error()?.message) {
+      <p data-testid="deleteError">
+        {{ error()?.message }}
+      </p>
+    }
   `,
 })
 export default class HomeComponent {
