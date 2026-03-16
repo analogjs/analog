@@ -30,13 +30,6 @@ const TSCONFIG_FILES = [
   'apps/docs-app/tsconfig.json',
 ];
 
-// Matches a "baseUrl" line with optional trailing comma and newline.
-// Captures leading whitespace to handle any indentation.
-const STRIP_RE = /^[ \t]*"baseUrl"\s*:\s*"[^"]*",?\s*\n/gm;
-
-// Matches a commented-out baseUrl marker left by --start.
-const RESTORE_RE = /^([ \t]*)\/\/ __baseUrl__: (".*")(,?)\s*\n/gm;
-
 const flag = process.argv[2];
 
 if (flag !== '--start' && flag !== '--end') {
