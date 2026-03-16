@@ -32,13 +32,13 @@ templateFiles.push('.git');
 // _gitignore is renamed to .gitignore
 templateFiles = templateFiles
   .map((filePath) => (filePath === '_gitignore' ? '.gitignore' : filePath))
-  .sort();
+  .sort((a, b) => a.localeCompare(b));
 // starter with tailwind
 const templateFilesTailwind = [
   ...templateFiles,
   'tailwind.config.ts',
   'postcss.config.js',
-].sort();
+].sort((a, b) => a.localeCompare(b));
 beforeAll(() => remove(genPath));
 afterEach(() => remove(genPath));
 
@@ -82,7 +82,9 @@ test('successfully scaffolds a project based on angular starter template', () =>
     [projectName, '--template', 'latest', '--skipTailwind', 'false'],
     { cwd: __dirname },
   );
-  const generatedFiles = readdirSync(genPath).sort();
+  const generatedFiles = readdirSync(genPath).sort((a, b) =>
+    a.localeCompare(b),
+  );
 
   // Assertions
   expect(stdout).toContain(`Scaffolding project in ${genPath}`);
@@ -94,7 +96,9 @@ test('works with the -t alias', () => {
     [projectName, '-t', 'latest', '--skipTailwind', 'false'],
     { cwd: __dirname },
   );
-  const generatedFiles = readdirSync(genPath).sort();
+  const generatedFiles = readdirSync(genPath).sort((a, b) =>
+    a.localeCompare(b),
+  );
 
   // Assertions
   expect(stdout).toContain(`Scaffolding project in ${genPath}`);

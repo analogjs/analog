@@ -17,7 +17,7 @@ export async function initializeAngularWorkspace(
   tree: Tree,
   installedNxVersion: string,
   normalizedOptions: NormalizedOptions,
-) {
+): Promise<string> {
   let angularVersion = getInstalledPackageVersion(tree, '@angular/core');
 
   if (!angularVersion) {
@@ -38,6 +38,10 @@ export async function initializeAngularWorkspace(
         normalizedOptions.skipFormat,
       );
     }
+  }
+
+  if (!angularVersion) {
+    throw new Error('Could not determine installed Angular version.');
   }
 
   if (belowMinimumSupportedAngularVersion(angularVersion)) {
@@ -82,7 +86,7 @@ const initWithNxNamespace = async (
     },
   );
 
-  return getInstalledPackageVersion(tree, '@angular/core', null, true);
+  return getInstalledPackageVersion(tree, '@angular/core', undefined, true);
 };
 
 const initWithNrwlNamespace = async (
@@ -117,5 +121,5 @@ const initWithNrwlNamespace = async (
     skipInstall: true,
     skipFormat: skipFormat,
   });
-  return getInstalledPackageVersion(tree, '@angular/core', null, true);
+  return getInstalledPackageVersion(tree, '@angular/core', undefined, true);
 };

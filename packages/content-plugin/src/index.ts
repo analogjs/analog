@@ -1,1 +1,3 @@
-export default void 0;
+// eslint-disable-next-line @typescript-eslint/no-inferrable-types
+const _default: undefined = void 0;
+export default _default;

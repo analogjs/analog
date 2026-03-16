@@ -70,7 +70,7 @@ export function getPageHandlers({
   rootDir,
   additionalPagesDirs,
   hasAPIDir,
-}: GetHandlersArgs) {
+}: GetHandlersArgs): NitroEventHandler[] {
   // Normalize the project root path for consistent path handling
   const root = normalizePath(resolve(workspaceRoot, rootDir));
 

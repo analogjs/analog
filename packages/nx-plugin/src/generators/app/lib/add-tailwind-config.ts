@@ -13,7 +13,10 @@ import {
   updateApplicationStyles,
 } from './add-tailwind-helpers';
 
-export async function addTailwindConfig(tree: Tree, projectName: string) {
+export async function addTailwindConfig(
+  tree: Tree,
+  projectName: string,
+): Promise<void> {
   await setupTailwindGenerator(tree, {
     project: projectName,
   });

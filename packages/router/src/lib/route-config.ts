@@ -14,7 +14,7 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
     return routeMeta;
   }
 
-  let { meta, ...routeConfig } = routeMeta ?? {};
+  const { meta, ...routeConfig } = routeMeta ?? {};
 
   if (Array.isArray(meta)) {
     routeConfig.data = { ...routeConfig.data, [ROUTE_META_TAGS_KEY]: meta };
@@ -23,10 +23,6 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
       ...routeConfig.resolve,
       [ROUTE_META_TAGS_KEY]: meta,
     };
-  }
-
-  if (!routeConfig) {
-    routeConfig = {};
   }
 
   routeConfig.runGuardsAndResolvers =

@@ -20,7 +20,9 @@ import { provideStaticProps } from './tokens';
 
 type ComponentLoader = () => Promise<Type<unknown>>;
 
-export function serverComponentRequest(serverContext: ServerContext) {
+export function serverComponentRequest(
+  serverContext: ServerContext,
+): string | undefined {
   // `ServerContext` is still backed by raw Node req/res, so read the header
   // directly instead of reconstructing an H3Event just for lookup.
   // In h3 v2 / Nitro v3, req may be undefined during fetch-based prerendering
@@ -50,7 +52,7 @@ export async function renderServerComponent(
   url: string,
   serverContext: ServerContext,
   config?: ApplicationConfig,
-) {
+): Promise<Response> {
   const componentReqId = serverComponentRequest(serverContext) as string;
   const { componentLoader, componentId } = getComponentLoader(componentReqId);
 
@@ -106,8 +108,12 @@ export async function renderServerComponent(
         provide: Console,
         useFactory() {
           return {
-            warn: () => {},
-            log: () => {},
+            warn: () => {
+              /* noop */
+            },
+            log: () => {
+              /* noop */
+            },
           };
         },
       },
@@ -131,7 +137,7 @@ function getComponentLoader(componentReqId: string): {
   componentLoader: ComponentLoader | undefined;
   componentId: string;
 } {
-  let _componentId = `/src/server/components/${componentReqId.toLowerCase()}`;
+  const _componentId = `/src/server/components/${componentReqId.toLowerCase()}`;
   let componentLoader: ComponentLoader | undefined = undefined;
   let componentId = _componentId;
 
@@ -148,7 +154,7 @@ function retrieveTransferredState(
   appId: string,
 ): Record<string, unknown | undefined> {
   const regex = new RegExp(
-    `<script id="${appId}-state" type="application/json">(.*?)<\/script>`,
+    `<script id="${appId}-state" type="application/json">(.*?)</script>`,
   );
   const match = html.match(regex);
 

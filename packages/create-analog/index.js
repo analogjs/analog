@@ -172,7 +172,8 @@ async function init() {
   // determine template
   template = variant || framework || template;
   // determine syntax highlighter
-  let highlighter = syntaxHighlighter ?? (template === 'blog' ? 'prism' : null);
+  const highlighter =
+    syntaxHighlighter ?? (template === 'blog' ? 'prism' : null);
   skipTailwind = skipTailwind ?? !tailwind;
 
   console.log(`\nScaffolding project in ${root}...`);
@@ -252,7 +253,9 @@ async function init() {
   // Can fail when user does not have global git credentials
   try {
     execSync(`cd ${targetDir} && git commit -m "initial commit"`);
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 
   console.log(`\nDone. Now run:\n`);
   if (root !== cwd) {
