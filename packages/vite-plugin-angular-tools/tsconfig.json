@@ -1,7 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "module": "es2022"
+    "baseUrl": ".",
+    "module": "es2022",
+    "strictNullChecks": true
   },
   "files": [],
   "include": [],

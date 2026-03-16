@@ -40,6 +40,10 @@ export async function initializeAngularWorkspace(
     }
   }
 
+  if (!angularVersion) {
+    throw new Error('Could not determine installed Angular version.');
+  }
+
   if (belowMinimumSupportedAngularVersion(angularVersion)) {
     throw new Error(
       stripIndents`Analog only supports an Angular version of 15 and higher`,
@@ -82,7 +86,7 @@ const initWithNxNamespace = async (
     },
   );
 
-  return getInstalledPackageVersion(tree, '@angular/core', null, true);
+  return getInstalledPackageVersion(tree, '@angular/core', undefined, true);
 };
 
 const initWithNrwlNamespace = async (
@@ -117,5 +121,5 @@ const initWithNrwlNamespace = async (
     skipInstall: true,
     skipFormat: skipFormat,
   });
-  return getInstalledPackageVersion(tree, '@angular/core', null, true);
+  return getInstalledPackageVersion(tree, '@angular/core', undefined, true);
 };
