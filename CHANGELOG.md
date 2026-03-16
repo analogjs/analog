@@ -1,3 +1,9 @@
+# [2.4.0-beta.11](https://github.com/analogjs/analog/compare/v2.4.0-beta.10...v2.4.0-beta.11) (2026-03-16)
+
+### Bug Fixes
+
+- **router:** fix and add unit tests for route module invalidation on file changes ([b9325af](https://github.com/analogjs/analog/commit/b9325af0f0748c7a69610de5782e1fe12461164e))
+
 # [2.4.0-beta.10](https://github.com/analogjs/analog/compare/v2.4.0-beta.9...v2.4.0-beta.10) (2026-03-16)
 
 ### Bug Fixes
