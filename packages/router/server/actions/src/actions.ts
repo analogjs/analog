@@ -1,9 +1,6 @@
-import type { H3Event, H3EventContext } from 'h3';
+import type { H3Event, H3EventContext } from 'nitro/h3';
 import type { $Fetch } from 'nitro/types';
-
-// Preserve the existing Node req/res public contract while accommodating h3
-// v2's nullable `event.node` typing.
-type NodeContext = NonNullable<H3Event['node']>;
+import type { NodeContext } from '../../../src/lib/route-types.js';
 
 export type PageServerAction = {
   params: H3EventContext['params'];
@@ -13,7 +10,7 @@ export type PageServerAction = {
   event: H3Event;
 };
 
-export function fail<T = object>(status: number, errors: T) {
+export function fail<T = object>(status: number, errors: T): Response {
   return new Response(JSON.stringify(errors), {
     status,
     headers: {
@@ -22,7 +19,7 @@ export function fail<T = object>(status: number, errors: T) {
   });
 }
 
-export function json<T = object>(data: T, config?: ResponseInit) {
+export function json<T = object>(data: T, config?: ResponseInit): Response {
   return new Response(JSON.stringify(data), {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
@@ -31,7 +28,10 @@ export function json<T = object>(data: T, config?: ResponseInit) {
   });
 }
 
-export function redirect(url: string, config: number | ResponseInit = 302) {
+export function redirect(
+  url: string,
+  config: number | ResponseInit = 302,
+): Response {
   if (typeof config === 'number') {
     return new Response(null, {
       status: config,

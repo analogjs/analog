@@ -7,9 +7,8 @@ import {
   createRoutes,
 } from '../routes';
 
-export const DEBUG_ROUTES = new InjectionToken(
-  '@analogjs/router debug routes',
-  {
+export const DEBUG_ROUTES: InjectionToken<(Route & DebugRoute)[]> =
+  new InjectionToken<(Route & DebugRoute)[]>('@analogjs/router debug routes', {
     providedIn: 'root',
     factory() {
       const debugRoutes = createRoutes(
@@ -22,8 +21,7 @@ export const DEBUG_ROUTES = new InjectionToken(
 
       return debugRoutes as (Route & DebugRoute)[];
     },
-  },
-);
+  });
 
 export type DebugRoute = {
   path: string;
@@ -32,6 +30,6 @@ export type DebugRoute = {
   children?: DebugRoute[];
 };
 
-export function injectDebugRoutes() {
+export function injectDebugRoutes(): (Route & DebugRoute)[] {
   return inject(DEBUG_ROUTES);
 }

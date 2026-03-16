@@ -59,7 +59,7 @@ function addFiles(tree: Tree, options: NormalizedSchema) {
 export async function analogPageGenerator(
   tree: Tree,
   options: AnalogPageGeneratorSchema,
-) {
+): Promise<void> {
   const normalizedOptions = normalizeOptions(tree, options);
   if (options.redirectPage && !options.redirectPath) {
     throw new Error(
@@ -71,7 +71,10 @@ export async function analogPageGenerator(
   await formatFiles(tree);
 }
 
-export const analogPageGeneratorSchematic =
-  convertNxGenerator(analogPageGenerator);
+export const analogPageGeneratorSchematic: ReturnType<
+  typeof convertNxGenerator
+> = convertNxGenerator(analogPageGenerator) as ReturnType<
+  typeof convertNxGenerator
+>;
 
 export default analogPageGenerator;

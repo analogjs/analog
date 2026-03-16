@@ -11,10 +11,17 @@ interface TsConfig {
   };
 }
 
-export function updateTsConfig(tree: Tree, schema: SetupVitestGeneratorSchema) {
+export function updateTsConfig(
+  tree: Tree,
+  schema: SetupVitestGeneratorSchema,
+): void {
   const projects = getProjects(tree);
 
   const projectConfig = projects.get(schema.project);
+
+  if (!projectConfig) {
+    throw new Error(`Project "${schema.project}" not found.`);
+  }
 
   const tsconfigPath = joinPathFragments(
     projectConfig.root,

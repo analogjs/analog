@@ -21,13 +21,13 @@ export function augmentHostWithResources(
     externalComponentStyles?: Map<string, string>;
     sourceFileCache?: SourceFileCache;
   },
-) {
+): void {
   const resourceHost = host as CompilerHost;
 
   resourceHost.readResource = async function (fileName: string) {
     const filePath = normalizePath(fileName);
 
-    let content = (this as any).readFile(filePath);
+    const content = (this as any).readFile(filePath);
 
     if (content === undefined) {
       throw new Error('Unable to locate component resource: ' + fileName);

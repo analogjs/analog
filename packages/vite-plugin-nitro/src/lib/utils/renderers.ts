@@ -1,4 +1,22 @@
 /**
+ * Code snippet emitted into virtual modules to create a request-scoped
+ * fetch using ofetch's `createFetch` + h3's `fetchWithEvent`.
+ *
+ * Shared between the SSR renderer and page-endpoint virtual modules so
+ * the fetch-wiring logic stays in sync.
+ *
+ * The emitted variable is named `serverFetch` — callers should reference it
+ * by that name.
+ */
+export const SERVER_FETCH_FACTORY_SNIPPET = `
+  const serverFetch = createFetch({
+    fetch: (resource, init) => {
+      const url = resource instanceof Request ? resource.url : resource.toString();
+      return fetchWithEvent(event, url, init);
+    }
+  });`;
+
+/**
  * SSR renderer virtual module content.
  *
  * This code runs inside Nitro's server runtime (Node.js context) where
@@ -16,7 +34,7 @@ export function ssrRenderer(templatePath: string) {
   return `
 import { readFileSync } from 'node:fs';
 import { createFetch } from 'ofetch';
-import { defineHandler, fetchWithEvent } from 'h3';
+import { defineHandler, fetchWithEvent } from 'nitro/h3';
 // @ts-ignore
 import renderer from '#analog/ssr';
 
@@ -52,14 +70,9 @@ export default defineHandler(async (event) => {
     connection: {},
   };
   const res = event.node?.res;
-  const fetch = createFetch({
-    fetch: (resource, init) => {
-      const url = resource instanceof Request ? resource.url : resource.toString();
-      return fetchWithEvent(event, url, init);
-    }
-  });
+${SERVER_FETCH_FACTORY_SNIPPET}
 
-  const html = await renderer(requestPath, template, { req, res, fetch });
+  const html = await renderer(requestPath, template, { req, res, fetch: serverFetch });
 
   return html;
 });`;
@@ -74,7 +87,7 @@ export default defineHandler(async (event) => {
 export function clientRenderer(templatePath: string) {
   return `
 import { readFileSync } from 'node:fs';
-import { defineHandler } from 'h3';
+import { defineHandler } from 'nitro/h3';
 
 const template = readFileSync(${JSON.stringify(templatePath)}, 'utf8');
 
@@ -105,7 +118,7 @@ export default defineHandler(async (event) => {
  * SSR code makes relative API requests.
  */
 export const apiMiddleware = `
-import { defineHandler, fetchWithEvent, proxyRequest } from 'h3';
+import { defineHandler, fetchWithEvent, proxyRequest } from 'nitro/h3';
 import { useRuntimeConfig } from 'nitro/runtime-config';
 
 export default defineHandler(async (event) => {

@@ -127,7 +127,7 @@ function createTRPCRxJSClientProxy<TRouter extends AnyRouter>(
 
 export function createTRPCRxJSProxyClient<TRouter extends AnyRouter>(
   opts: CreateTRPCClientOptions<TRouter>,
-) {
+): CreateTrpcProxyClient<TRouter> {
   const client = new TRPCClient<TRouter>(opts);
   const proxy = createTRPCRxJSClientProxy(client as TRPCClient<TRouter>);
   return proxy;

@@ -6,7 +6,8 @@ import { defineConfig } from 'vite';
 export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
-    esbuild: process.env['VITEST'] ? {} : false,
+    cacheDir: '../../node_modules/.vite/astro-angular',
+    esbuild: false,
     resolve: {
       mainFields: ['module'],
     },
@@ -16,9 +17,6 @@ export default defineConfig(({ mode }) => {
       globals: true,
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
-      cache: {
-        dir: `../../node_modules/.vitest`,
-      },
     },
     define: {
       'import.meta.vitest': mode !== 'production',
