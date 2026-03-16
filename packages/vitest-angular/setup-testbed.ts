@@ -1,4 +1,5 @@
 import {
+  EnvironmentProviders,
   NgModule,
   Provider,
   provideZonelessChangeDetection,
@@ -17,7 +18,7 @@ const ANGULAR_TESTBED_SETUP = Symbol.for('testbed-setup');
 
 type TestBedSetupOptions = {
   zoneless?: boolean;
-  providers?: Provider[];
+  providers?: (Provider | EnvironmentProviders)[];
   browserMode?: boolean;
 };
 
@@ -35,7 +36,7 @@ export function setupTestBed({
     @NgModule({
       providers: [
         ...(zoneless ? [provideZonelessChangeDetection()] : []),
-        providers,
+        ...providers,
       ],
     })
     class TestModule {}
