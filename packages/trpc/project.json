@@ -7,20 +7,11 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@angular-devkit/build-angular:ng-packagr",
+      "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/trpc"],
       "options": {
-        "project": "packages/trpc/ng-package.json"
-      },
-      "configurations": {
-        "production": {
-          "tsConfig": "packages/trpc/tsconfig.lib.prod.json"
-        },
-        "development": {
-          "tsConfig": "packages/trpc/tsconfig.lib.json"
-        }
-      },
-      "defaultConfiguration": "production"
+        "command": "node tools/scripts/build-lib.mts trpc"
+      }
     },
     "lint": {
       "executor": "@nx/eslint:lint",

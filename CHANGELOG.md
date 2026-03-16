@@ -1,3 +1,20 @@
+# [3.0.0-alpha.3](https://github.com/analogjs/analog/compare/v3.0.0-alpha.2...v3.0.0-alpha.3) (2026-03-16)
+
+### Bug Fixes
+
+- add CLAUDE.md to reference AGENTS.md ([715ec17](https://github.com/analogjs/analog/commit/715ec17b69b8947a37a7d7761ff559533c510671))
+
+# [3.0.0-alpha.2](https://github.com/analogjs/analog/compare/v3.0.0-alpha.1...v3.0.0-alpha.2) (2026-03-16)
+
+### Bug Fixes
+
+- **platform:** separate disabling highlighting from content discovery ([#2110](https://github.com/analogjs/analog/issues/2110)) ([618c42c](https://github.com/analogjs/analog/commit/618c42cf7bc859e552cb1a3b02c6092c18e99e21))
+- **vite-plugin-angular:** ensure sequential compilation for client and ssr bundles ([#2109](https://github.com/analogjs/analog/issues/2109)) ([008bd1c](https://github.com/analogjs/analog/commit/008bd1c20daa4c16fe92da036e99219056da4ff3))
+
+### Features
+
+- update vite to stable v8.0.0 ([#2111](https://github.com/analogjs/analog/issues/2111)) ([cf35c65](https://github.com/analogjs/analog/commit/cf35c658a3966a514e95aa2c0e4c9c514999c4bd))
+
 # [3.0.0-alpha.1](https://github.com/analogjs/analog/compare/v2.4.0-alpha.3...v3.0.0-alpha.1) (2026-03-11)
 
 ### Features

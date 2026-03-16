@@ -53,7 +53,11 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Lint
-        run: pnpm exec nx run-many --target lint --all --exclude=content,platform,router
+        run: pnpm lint:check
+      - name: Lint (type-aware)
+        run: pnpm lint:types
+      - name: Lint (ESLint via Nx)
+        run: pnpm lint:legacy
 
   build:
     runs-on: ubuntu-latest

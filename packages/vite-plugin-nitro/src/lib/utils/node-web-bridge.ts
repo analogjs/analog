@@ -16,7 +16,7 @@ function toWebHeaders(headers: IncomingHttpHeaders) {
   }, new Headers());
 }
 
-export function toWebRequest(req: IncomingMessage) {
+export function toWebRequest(req: IncomingMessage): Request {
   const protocol = 'http';
   const host = req.headers.host || 'localhost';
   const url = new URL(req.url || '/', `${protocol}://${host}`);
@@ -37,7 +37,7 @@ export function toWebRequest(req: IncomingMessage) {
 export async function writeWebResponseToNode(
   res: ServerResponse,
   response: Response,
-) {
+): Promise<void> {
   res.statusCode = response.status;
   res.statusMessage = response.statusText;
 

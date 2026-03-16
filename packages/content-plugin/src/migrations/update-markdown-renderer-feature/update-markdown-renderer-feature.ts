@@ -7,7 +7,9 @@ import {
 } from '@nx/devkit';
 import { CallExpression, Node, Project } from 'ts-morph';
 
-export default async function update(host: Tree) {
+export default async function update(
+  host: Tree,
+): Promise<(() => void) | undefined> {
   let project: Project;
 
   visitNotIgnoredFiles(host, '/', (file) => {

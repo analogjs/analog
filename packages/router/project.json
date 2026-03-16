@@ -7,20 +7,11 @@
   "tags": ["type:release"],
   "targets": {
     "build": {
-      "executor": "@angular-devkit/build-angular:ng-packagr",
+      "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/router"],
       "options": {
-        "project": "packages/router/ng-package.json"
-      },
-      "configurations": {
-        "production": {
-          "tsConfig": "packages/router/tsconfig.lib.prod.json"
-        },
-        "development": {
-          "tsConfig": "packages/router/tsconfig.lib.json"
-        }
-      },
-      "defaultConfiguration": "production"
+        "command": "node tools/scripts/build-lib.mts router"
+      }
     },
     "lint": {
       "executor": "@nx/eslint:lint"

@@ -1,4 +1,4 @@
-import { defineHandler, redirect } from 'h3';
+import { defineHandler, redirect } from 'nitro/h3';
 
 export default defineHandler((event) => {
   if (event.path === '/checkout') {

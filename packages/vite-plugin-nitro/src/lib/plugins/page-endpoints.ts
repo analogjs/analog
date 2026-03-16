@@ -1,10 +1,14 @@
 import { buildSync } from 'esbuild';
 import { normalizePath } from 'vite';
+import { SERVER_FETCH_FACTORY_SNIPPET } from '../utils/renderers.js';
 
 export function pageEndpointsPlugin() {
   return {
     name: 'analogjs-vite-plugin-nitro-rollup-page-endpoint',
-    async transform(_code: string, id: string) {
+    async transform(
+      _code: string,
+      id: string,
+    ): Promise<{ code: string; map: null } | undefined> {
       if (normalizePath(id).includes('/pages/') && id.endsWith('.server.ts')) {
         const compiled = buildSync({
           stdin: {
@@ -43,7 +47,7 @@ export function pageEndpointsPlugin() {
         // This avoids both unstable private Nitro imports and assumptions about
         // a global runtime `$fetch` being available during prerender.
         const code = `
-            import { defineHandler, fetchWithEvent } from 'h3';
+            import { defineHandler, fetchWithEvent } from 'nitro/h3';
             import { createFetch } from 'ofetch';
 
             ${
@@ -67,12 +71,7 @@ export function pageEndpointsPlugin() {
             }
 
             export default defineHandler(async(event) => {
-              const serverFetch = createFetch({
-                fetch: (resource, init) => {
-                  const url = resource instanceof Request ? resource.url : resource.toString();
-                  return fetchWithEvent(event, url, init);
-                }
-              });
+              ${SERVER_FETCH_FACTORY_SNIPPET}
 
               if (event.method === 'GET') {
                 try {

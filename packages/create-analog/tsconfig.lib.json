@@ -6,6 +6,7 @@
     "inlineSourceMap": true,
     "sourceMap": false,
     "declaration": true,
+    "isolatedDeclarations": true,
     "types": [],
     "moduleResolution": "bundler"
   },

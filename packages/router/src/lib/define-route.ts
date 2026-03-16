@@ -39,7 +39,7 @@ type RestrictedRoute = Omit<NgRoute, RouteOmitted>;
  * @param route
  * @returns
  */
-export const defineRouteMeta = (route: RestrictedRoute) => {
+export const defineRouteMeta = (route: RestrictedRoute): RestrictedRoute => {
   return route;
 };
 
@@ -48,7 +48,7 @@ export const defineRouteMeta = (route: RestrictedRoute) => {
  *
  * @returns The router
  */
-export const injectRouter = () => {
+export const injectRouter = (): Router => {
   return inject(Router);
 };
 
@@ -57,6 +57,6 @@ export const injectRouter = () => {
  *
  * @returns The activated route
  */
-export const injectActivatedRoute = () => {
+export const injectActivatedRoute = (): ActivatedRoute => {
   return inject(ActivatedRoute);
 };
