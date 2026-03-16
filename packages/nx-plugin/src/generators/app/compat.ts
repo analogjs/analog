@@ -1,6 +1,5 @@
 import { convertNxGenerator } from '@nx/devkit';
 import generator from './generator';
 
-const compat: ReturnType<typeof convertNxGenerator> =
-  convertNxGenerator(generator);
+const compat = convertNxGenerator(generator);
 export default compat;

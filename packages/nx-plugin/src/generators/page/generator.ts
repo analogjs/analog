@@ -71,8 +71,7 @@ export async function analogPageGenerator(
   await formatFiles(tree);
 }
 
-export const analogPageGeneratorSchematic: ReturnType<
-  typeof convertNxGenerator
-> = convertNxGenerator(analogPageGenerator);
+export const analogPageGeneratorSchematic =
+  convertNxGenerator(analogPageGenerator);
 
 export default analogPageGenerator;
