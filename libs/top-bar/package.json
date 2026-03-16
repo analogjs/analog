@@ -2,8 +2,5 @@
   "name": "@analogjs/top-bar",
   "private": true,
   "type": "module",
-  "version": "0.0.0",
-  "devDependencies": {
-    "@analogjs/vite-plugin-angular": "workspace:*"
-  }
+  "version": "0.0.0"
 }
