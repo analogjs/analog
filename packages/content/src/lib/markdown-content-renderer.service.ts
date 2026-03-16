@@ -35,5 +35,5 @@ export class MarkdownContentRendererService implements ContentRenderer {
   }
 
   // eslint-disable-next-line
-  enhance() {}
+  enhance(): void {}
 }

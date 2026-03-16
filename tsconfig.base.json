@@ -13,60 +13,66 @@
     "module": "esnext",
     "lib": ["es2021", "dom"],
     "skipLibCheck": true,
+    "ignoreDeprecations": "6.0",
     "skipDefaultLibCheck": true,
-    "baseUrl": ".",
     "paths": {
-      "@analogjs/astro-angular": ["packages/astro-angular/src/index.ts"],
+      "@analogjs/astro-angular": ["./packages/astro-angular/src/index.ts"],
       "@analogjs/content": [
         "./node_modules/@analogjs/content",
-        "packages/content/src/index.ts"
+        "./packages/content/src/index.ts"
       ],
-      "@analogjs/content-plugin": ["packages/content-plugin/src/index.ts"],
+      "@analogjs/content-plugin": ["./packages/content-plugin/src/index.ts"],
       "@analogjs/content/prism-highlighter": [
-        "packages/content/prism-highlighter/src/index.ts"
+        "./packages/content/prism-highlighter/src/index.ts"
       ],
       "@analogjs/content/resources": [
         "./node_modules/@analogjs/content/resources",
-        "packages/content/resources/src/index.ts"
+        "./packages/content/resources/src/index.ts"
       ],
       "@analogjs/content/shiki-highlighter": [
-        "packages/content/shiki-highlighter/src/index.ts"
+        "./packages/content/shiki-highlighter/src/index.ts"
       ],
-      "@analogjs/nx": ["packages/nx-plugin/src/index.ts"],
+      "@analogjs/nx": ["./packages/nx-plugin/src/index.ts"],
       "@analogjs/platform": [
         "./node_modules/@analogjs/platform",
-        "packages/platform/src/index.ts"
+        "./packages/platform/src/index.ts"
       ],
       "@analogjs/router": [
         "./node_modules/@analogjs/router",
-        "packages/router/src/index.ts"
+        "./packages/router/src/index.ts"
       ],
       "@analogjs/router/server": [
         "./node_modules/@analogjs/router/server",
-        "packages/router/server/src/index.ts"
+        "./packages/router/server/src/index.ts"
       ],
       "@analogjs/router/tokens": [
         "./node_modules/@analogjs/router/tokens",
-        "packages/router/tokens/src/index.ts"
+        "./packages/router/tokens/src/index.ts"
       ],
-      "@analogjs/top-bar": ["libs/top-bar/src/index.ts"],
-      "@analogjs/trpc": ["packages/trpc/src/index.ts"],
+      "@analogjs/top-bar": ["./libs/top-bar/src/index.ts"],
+      "@analogjs/trpc": ["./packages/trpc/src/index.ts"],
       "@analogjs/vite-plugin-angular": [
         "./node_modules/@analogjs/vite-plugin-angular",
-        "packages/vite-plugin-angular/src/index.ts"
+        "./packages/vite-plugin-angular/src/index.ts"
       ],
       "@analogjs/vite-plugin-nitro": [
         "./node_modules/@analogjs/vite-plugin-nitro",
-        "packages/vite-plugin-nitro/src/index.ts"
+        "./packages/vite-plugin-nitro/src/index.ts"
       ],
-      "libs/card": ["libs/card/src/index.ts"],
-      "my-package": ["./dist/libs/my-package", "libs/my-package/src/index.ts"],
-      "shared/feature": ["libs/shared/feature/src/index.ts"],
+      "libs/card": ["./libs/card/src/index.ts"],
+      "my-package": [
+        "./dist/libs/my-package",
+        "./libs/my-package/src/index.ts"
+      ],
+      "shared/feature": ["./libs/shared/feature/src/index.ts"],
       "vitest-angular": [
         "./node_modules/@analogjs/vitest-angular",
-        "packages/vitest-angular/src/index.ts"
+        "./packages/vitest-angular/src/index.ts"
       ]
     }
   },
-  "exclude": ["node_modules", "tmp"]
+  "exclude": ["node_modules", "tmp"],
+  "angularCompilerOptions": {
+    "disableTypeScriptVersionCheck": true
+  }
 }

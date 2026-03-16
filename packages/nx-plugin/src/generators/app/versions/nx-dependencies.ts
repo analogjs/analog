@@ -20,7 +20,7 @@ export type NrwlDependency = (typeof nrwlDependencyKeys)[number];
 export const getNrwlDependencies = (
   nxVersion: string,
 ): Record<NrwlDependency, string> => {
-  const escapedNxVersion = clean(nxVersion);
+  const escapedNxVersion: string = clean(nxVersion) ?? nxVersion;
 
   // fail out for versions <17.0.0
   if (lt(escapedNxVersion, '17.0.0')) {
@@ -39,7 +39,7 @@ export type NxDependency = (typeof nxDependencyKeys)[number];
 export const getNxDependencies = (
   nxVersion: string,
 ): Record<NxDependency, string> => {
-  const escapedNxVersion = clean(nxVersion);
+  const escapedNxVersion: string = clean(nxVersion) ?? nxVersion;
 
   // error for @nrwl to @nx namespace changes for Nx < 17
   if (lt(escapedNxVersion, '17.0.0')) {

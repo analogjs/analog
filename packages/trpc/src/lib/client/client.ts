@@ -1,4 +1,10 @@
-import { InjectionToken, Provider, signal, TransferState } from '@angular/core';
+import {
+  InjectionToken,
+  Provider,
+  signal,
+  TransferState,
+  WritableSignal,
+} from '@angular/core';
 import 'isomorphic-fetch';
 import {
   httpBatchLink,
@@ -68,7 +74,17 @@ export const createTrpcClient = <AppRouter extends AnyRouter>({
   url,
   options,
   batchLinkOptions,
-}: TrpcOptions<AppRouter>) => {
+}: TrpcOptions<AppRouter>): {
+  TrpcClient: InjectionToken<TrpcClient<AppRouter>>;
+  provideTrpcClient: () => Provider[];
+  TrpcHeaders: WritableSignal<HTTPHeaders>;
+  /** @deprecated use TrpcClient instead */
+  tRPCClient: InjectionToken<TrpcClient<AppRouter>>;
+  /** @deprecated use provideTrpcClient instead */
+  provideTRPCClient: () => Provider[];
+  /** @deprecated use TrpcHeaders instead */
+  tRPCHeaders: WritableSignal<HTTPHeaders>;
+} => {
   const TrpcHeaders = signal<HTTPHeaders>({});
   const provideTrpcClient = (): Provider[] => [
     provideTrpcCacheState(),
@@ -101,9 +117,9 @@ export const createTrpcClient = <AppRouter extends AnyRouter>({
     TrpcClient<AppRouter>
   >;
   return {
-    TrpcClient,
-    provideTrpcClient,
-    TrpcHeaders,
+    TrpcClient: TrpcClient,
+    provideTrpcClient: provideTrpcClient,
+    TrpcHeaders: TrpcHeaders,
     /** @deprecated use TrpcClient instead */
     tRPCClient: TrpcClient,
     /** @deprecated use provideTrpcClient instead */

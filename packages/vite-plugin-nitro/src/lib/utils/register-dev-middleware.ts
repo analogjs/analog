@@ -1,5 +1,5 @@
 import { ViteDevServer } from 'vite';
-import { EventHandler, H3 } from 'h3';
+import { EventHandler, H3 } from 'nitro/h3';
 import { globSync } from 'tinyglobby';
 
 import { toWebRequest, writeWebResponseToNode } from './node-web-bridge.js';
@@ -22,7 +22,7 @@ export async function registerDevServerMiddleware(
   root: string,
   sourceRoot: string,
   viteServer: ViteDevServer,
-) {
+): Promise<void> {
   const middlewareFiles = globSync(
     [`${root}/${sourceRoot}/server/middleware/**/*.ts`],
     {
@@ -32,26 +32,28 @@ export async function registerDevServerMiddleware(
   );
 
   middlewareFiles.forEach((file) => {
-    viteServer.middlewares.use(async (req, res, next) => {
-      const middlewareHandler: EventHandler = await viteServer
+    // Create the H3 app once per middleware file (not per request).
+    // The dynamic handler inside still loads the module fresh each request
+    // via ssrLoadModule, preserving HMR.
+    const app = new H3();
+    app.use(async (event) => {
+      const handler: EventHandler = await viteServer
         .ssrLoadModule(file)
         .then((m: unknown) => (m as { default: EventHandler }).default);
+      return handler(event);
+    });
+    // Sentinel catch-all: when the middleware returns undefined (does not
+    // handle the request), h3 does not emit its default 404 — instead we
+    // detect the passthrough header and let the Connect stack continue.
+    app.use(
+      () =>
+        new Response(null, {
+          status: 204,
+          headers: { [PASSTHROUGH_HEADER]: '1' },
+        }),
+    );
 
-      // Bridge h3 event handler using H3.fetch() (web-first API).
-      // A sentinel catch-all is appended so that when the middleware
-      // returns undefined (does not handle the request), h3 does not
-      // emit its default 404 — instead we detect the passthrough
-      // header and let the Connect stack continue.
-      const app = new H3();
-      app.use(middlewareHandler);
-      app.use(
-        () =>
-          new Response(null, {
-            status: 204,
-            headers: { [PASSTHROUGH_HEADER]: '1' },
-          }),
-      );
-
+    viteServer.middlewares.use(async (req, res, next) => {
       const response = await app.fetch(toWebRequest(req));
 
       if (response.headers.get(PASSTHROUGH_HEADER) === '1') {

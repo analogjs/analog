@@ -5,9 +5,11 @@
   "sourceRoot": "libs/top-bar/src",
   "prefix": "analogjs",
   "tags": [],
+  "implicitDependencies": ["vite-plugin-angular"],
   "targets": {
     "test": {
-      "executor": "@nx/vitest:test"
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["^build"]
     },
     "lint": {
       "executor": "@nx/eslint:lint",

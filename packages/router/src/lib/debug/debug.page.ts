@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
+import { Route } from '@angular/router';
 import { injectDebugRoutes, DebugRoute } from './routes';
 
 type CollectedRoute = {
@@ -109,15 +110,16 @@ type CollectedRoute = {
     }
   `,
 })
-export default class DebugRoutesComponent {
+export default class DebugRoutesComponent implements OnInit {
   collectedRoutes: CollectedRoute[] = [];
-  debugRoutes = injectDebugRoutes();
+  debugRoutes: (import('@angular/router').Route & DebugRoute)[] =
+    injectDebugRoutes();
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.traverseRoutes(this.debugRoutes);
   }
 
-  traverseRoutes(routes: DebugRoute[], parent?: string) {
+  traverseRoutes(routes: DebugRoute[], parent?: string): void {
     routes.forEach((route) => {
       this.collectedRoutes.push({
         path: route.isLayout

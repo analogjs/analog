@@ -126,7 +126,7 @@ export function angularVitestSourcemapPlugin(): Plugin {
   };
 }
 
-export function angularVitestPlugins() {
+export function angularVitestPlugins(): Plugin[] {
   return [
     angularVitestPlugin(),
     angularVitestEsbuildPlugin(),

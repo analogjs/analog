@@ -6,6 +6,7 @@
     "moduleResolution": "bundler",
     "outDir": "../../dist/out-tsc",
     "declaration": true,
+    "isolatedDeclarations": true,
     "types": ["node"]
   },
   "include": ["src/**/*.ts"],

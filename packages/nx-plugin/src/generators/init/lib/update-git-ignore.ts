@@ -1,12 +1,12 @@
 import { Tree } from '@nx/devkit';
 
-export function updateGitIgnore(tree: Tree) {
+export function updateGitIgnore(tree: Tree): void {
   const gitIgnorePath = '/.gitignore';
 
   if (tree.exists(gitIgnorePath)) {
     const gitIgnoreContents = tree.read(gitIgnorePath, 'utf-8');
 
-    if (!gitIgnoreContents.includes('.nx/cache')) {
+    if (gitIgnoreContents && !gitIgnoreContents.includes('.nx/cache')) {
       const updatedGitIgnore = `${gitIgnoreContents}\n
 .nx/cache
 .nx/workspace-data`;
