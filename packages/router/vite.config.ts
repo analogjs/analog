@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
-import { tsconfigPathsPlugin } from '@analogjs/vite-plugin-angular';
+import viteTsConfigPaths from 'vite-tsconfig-paths';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -9,8 +9,9 @@ export default defineConfig(({ mode }) => {
     root: __dirname,
     cacheDir: `../../node_modules/.vitest`,
     plugins: [
-      tsconfigPathsPlugin({
+      viteTsConfigPaths({
         root: '../../',
+        projects: [],
       }),
     ],
     test: {
