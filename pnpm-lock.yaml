@@ -5,20 +5,20 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  vite: ^8.0.0
-  esbuild: 0.27.4
-  '@types/node': ^24.12.0
-  jiti: 2.6.1
-  typescript: 6.0.1-rc
-  '@typescript-eslint/type-utils': 8.57.0
-  '@angular/core': 21.1.1
+  '@angular/animations': 21.1.1
   '@angular/common': 21.1.1
   '@angular/compiler': 21.1.1
-  '@angular/platform-browser': 21.1.1
+  '@angular/core': 21.1.1
   '@angular/platform-browser-dynamic': 21.1.1
-  '@angular/router': 21.1.1
-  '@angular/animations': 21.1.1
+  '@angular/platform-browser': 21.1.1
   '@angular/platform-server': 21.1.1
+  '@angular/router': 21.1.1
+  '@types/node': ^24.12.0
+  '@typescript-eslint/type-utils': 8.57.0
+  esbuild: 0.27.4
+  jiti: 2.6.1
+  typescript: 6.0.1-rc
+  vite: ^8.0.0
   zone.js: ^0.16.1
 
 importers:
