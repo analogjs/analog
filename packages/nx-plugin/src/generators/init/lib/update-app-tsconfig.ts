@@ -10,7 +10,7 @@ interface TsConfig {
 export function updateAppTsConfig(
   tree: Tree,
   schema: SetupAnalogGeneratorSchema,
-) {
+): void {
   const projects = getProjects(tree);
 
   const projectConfig = projects.get(schema.project);

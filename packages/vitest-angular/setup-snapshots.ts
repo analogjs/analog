@@ -7,7 +7,10 @@ const env = globalThis as any;
  *
  * @returns customSnapshotSerializer for Angular Fixture Component
  */
-const customSnapshotSerializer = () => {
+const customSnapshotSerializer = (): {
+  serialize: (...args: any[]) => string;
+  test: (val: any) => boolean;
+} => {
   function serialize(
     val: any,
     config: any,
@@ -30,8 +33,8 @@ const customSnapshotSerializer = () => {
     return val && isAngularFixture(val);
   }
   return {
-    serialize,
-    test,
+    serialize: serialize,
+    test: test,
   };
 };
 
@@ -99,7 +102,7 @@ function isAngularFixture(val: any): boolean {
  * @param fixture Angular Fixture Component
  * @returns HTML Child Node
  */
-function fixtureVitestSerializer(fixture: any) {
+function fixtureVitestSerializer(fixture: any): ChildNode {
   // * Get Component meta data
   const componentType = (
     fixture && fixture.componentType

@@ -11,7 +11,7 @@ import { SetupAnalogGeneratorSchema } from '../schema';
 export function updatePackageJson(
   tree: Tree,
   schema: SetupAnalogGeneratorSchema,
-) {
+): void {
   const angularJsonPath = '/angular.json';
 
   if (tree.exists(angularJsonPath)) {

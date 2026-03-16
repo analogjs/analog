@@ -70,7 +70,7 @@ function normalizeOptions(
 export async function appGenerator(
   tree: Tree,
   options: AnalogNxApplicationGeneratorOptions,
-) {
+): Promise<() => void> {
   const nxVersion = getInstalledPackageVersion(tree, 'nx');
 
   if (nxVersion && belowMinimumSupportedNxVersion(nxVersion)) {

@@ -21,7 +21,7 @@ export function augmentHostWithResources(
     externalComponentStyles?: Map<string, string>;
     sourceFileCache?: SourceFileCache;
   },
-) {
+): void {
   const resourceHost = host as CompilerHost;
 
   resourceHost.readResource = async function (fileName: string) {

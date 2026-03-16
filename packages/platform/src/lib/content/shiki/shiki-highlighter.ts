@@ -19,7 +19,10 @@ export type ShikiHighlightOptions = Partial<
   Partial<CodeOptionsSingleTheme<BundledTheme>> &
   Partial<CodeOptionsMultipleThemes<BundledTheme>>;
 
-export const defaultHighlighterOptions = {
+export const defaultHighlighterOptions: {
+  langs: string[];
+  themes: string[];
+} = {
   langs: [
     'json',
     'ts',
@@ -45,7 +48,7 @@ export class ShikiHighlighter extends MarkedContentHighlighter {
   ) {
     super();
   }
-  getHighlightExtension() {
+  getHighlightExtension(): import('marked').MarkedExtension {
     return markedShiki({
       container: this.container,
       highlight: async (code, lang, props) => {

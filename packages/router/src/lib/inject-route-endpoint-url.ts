@@ -3,7 +3,7 @@ import { injectBaseURL, injectAPIPrefix } from '@analogjs/router/tokens';
 
 import { ANALOG_META_KEY } from './endpoints';
 
-export function injectRouteEndpointURL(route: ActivatedRouteSnapshot) {
+export function injectRouteEndpointURL(route: ActivatedRouteSnapshot): URL {
   const routeConfig = route.routeConfig as Route & {
     [ANALOG_META_KEY]: { endpoint: string; endpointKey: string };
   };

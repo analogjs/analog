@@ -5,11 +5,11 @@ import { ɵPendingTasksInternal as ɵPendingTasks } from '@angular/core';
 export class RenderTaskService {
   #pendingTasks = inject(ɵPendingTasks);
 
-  addRenderTask() {
+  addRenderTask(): number {
     return this.#pendingTasks.add();
   }
 
-  clearRenderTask(clear: number | (() => void)) {
+  clearRenderTask(clear: number | (() => void)): void {
     if (typeof clear === 'function') {
       clear();
     } else if (typeof (this.#pendingTasks as any).remove === 'function') {

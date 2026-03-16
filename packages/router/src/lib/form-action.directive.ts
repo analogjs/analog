@@ -1,4 +1,11 @@
-import { Directive, inject, input, output } from '@angular/core';
+import {
+  Directive,
+  inject,
+  input,
+  InputSignal,
+  output,
+  OutputEmitterRef,
+} from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 
 import { injectRouteEndpointURL } from './inject-route-endpoint-url';
@@ -12,19 +19,19 @@ import { injectRouteEndpointURL } from './inject-route-endpoint-url';
   standalone: true,
 })
 export class FormAction {
-  action = input<string>('');
+  action: InputSignal<string> = input<string>('');
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix
-  onSuccess = output<unknown>();
+  onSuccess: OutputEmitterRef<unknown> = output<unknown>();
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix
-  onError = output<unknown>();
-  state = output<
+  onError: OutputEmitterRef<unknown> = output<unknown>();
+  state: OutputEmitterRef<
     'submitting' | 'error' | 'redirect' | 'success' | 'navigate'
-  >();
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private path = this._getPath();
+  > = output<'submitting' | 'error' | 'redirect' | 'success' | 'navigate'>();
+  private router: Router = inject(Router);
+  private route: ActivatedRoute = inject(ActivatedRoute);
+  private path: string = this._getPath();
 
-  submitted($event: any) {
+  submitted($event: any): void {
     $event.preventDefault();
 
     this.state.emit('submitting');

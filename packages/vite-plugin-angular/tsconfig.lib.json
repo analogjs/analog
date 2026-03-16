@@ -4,6 +4,7 @@
     "module": "preserve",
     "outDir": "../../dist/out-tsc",
     "declaration": true,
+    "isolatedDeclarations": true,
     "types": [],
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "bundler"
@@ -13,6 +14,7 @@
     "**/*.spec.ts",
     "**/*.test.ts",
     "src/test-setup.ts",
+    "vite.config.ts",
     "oxlint.config.ts"
   ]
 }

@@ -106,6 +106,13 @@ export default defineConfig({
       },
     },
     {
+      // isolatedDeclarations requires explicit type annotations that conflict with no-inferrable-types
+      files: ['packages/vite-plugin-angular/src/lib/utils/devkit.ts'],
+      rules: {
+        '@typescript-eslint/no-inferrable-types': 'allow',
+      },
+    },
+    {
       files: ['**/*.spec.ts', '**/*.test.ts', '**/*.spec.tsx', '**/*.test.tsx'],
       rules: {
         'vitest/expect-expect': 'error',

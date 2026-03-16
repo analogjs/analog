@@ -1,5 +1,4 @@
 import { Component, signal } from '@angular/core';
-
 import { FormAction } from '@analogjs/router';
 
 import { type NewsletterSubmitResponse } from './newsletter.server';

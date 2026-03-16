@@ -25,7 +25,7 @@ export function setupTestBed({
   zoneless = true,
   providers = [],
   browserMode = false,
-}: TestBedSetupOptions = {}) {
+}: TestBedSetupOptions = {}): void {
   beforeEach(getCleanupHook(false));
   afterEach(getCleanupHook(true));
 

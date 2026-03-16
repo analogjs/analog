@@ -134,7 +134,7 @@ export function createTrpcNitroHandler<TRouter extends AnyRouter>({
   responseMeta,
   onError,
   batching,
-}: ResolveHTTPRequestOptions<TRouter>) {
+}: ResolveHTTPRequestOptions<TRouter>): ReturnType<typeof defineHandler> {
   return defineHandler(async (event) => {
     const req = getNodeRequest(event);
     const $url = createURL(event.path || req.url || event.url.toString());

@@ -63,7 +63,7 @@ function addFiles(
 export async function setupAnalogGenerator(
   tree: Tree,
   options: SetupAnalogGeneratorSchema,
-) {
+): Promise<() => void> {
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
   const nxVersion = getInstalledPackageVersion(tree, 'nx');
 

@@ -6,7 +6,7 @@ import {
   prepare,
   prerender,
 } from 'nitro/builder';
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 import { Options } from './options.js';
@@ -55,7 +55,7 @@ function ensureSsrTsconfig(nitroConfig: NitroConfig | undefined) {
   );
 }
 
-function isVercelPreset(preset: string | undefined) {
+export function isVercelPreset(preset: string | undefined): boolean {
   return !!preset?.toLowerCase().includes('vercel');
 }
 
@@ -96,7 +96,7 @@ export async function buildServer(
   options?: Options,
   nitroConfig?: NitroConfig,
   routeSourceFiles?: Record<string, string>,
-) {
+): Promise<void> {
   // ── Ensure the SSR output has a tsconfig for OXC ─────────────────
   //
   // Must run before createNitro() so the tsconfig is on disk when the
@@ -150,9 +150,7 @@ export async function buildServer(
         `index.html${fileExt}`,
       );
 
-      if (existsSync(indexFilePath)) {
-        unlinkSync(indexFilePath);
-      }
+      rmSync(indexFilePath, { force: true });
     });
   }
 
@@ -175,10 +173,7 @@ export async function buildServer(
     for (const [route, content] of Object.entries(routeSourceFiles)) {
       const outputPath = join(publicDir, `${route}.md`);
       const outputDir = dirname(outputPath);
-
-      if (!existsSync(outputDir)) {
-        mkdirSync(outputDir, { recursive: true });
-      }
+      mkdirSync(outputDir, { recursive: true });
 
       writeFileSync(outputPath, content, 'utf8');
     }

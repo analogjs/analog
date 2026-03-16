@@ -3,7 +3,10 @@ import { core as PresetCore } from '@storybook/angular/preset';
 import { fileURLToPath } from 'node:url';
 import type { Plugin, UserConfig } from 'vite';
 
-export const previewAnnotations = async (entries: any[] = [], options: any) => {
+export const previewAnnotations = async (
+  entries: string[] = [],
+  options: any,
+): Promise<string[]> => {
   const config = fileURLToPath(
     import.meta.resolve('@storybook/angular/client/config'),
   );
@@ -27,7 +30,7 @@ export const previewAnnotations = async (entries: any[] = [], options: any) => {
   return annotations;
 };
 
-export const core = async (config: any, options: any) => {
+export const core = async (config: any, options: any): Promise<any> => {
   const presetCore = await PresetCore(config, options);
   return {
     ...presetCore,
@@ -61,7 +64,7 @@ async function resolveExperimentalZoneless(
   }
 }
 
-export const viteFinal = async (config: any, options: any) => {
+export const viteFinal = async (config: any, options: any): Promise<any> => {
   // Remove any loaded analogjs plugins from a vite.config.(m)ts file
   config.plugins = (config.plugins ?? [])
     .flat()

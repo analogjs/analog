@@ -11,7 +11,7 @@ import { SetupAnalogGeneratorSchema } from '../schema';
 export function updateBuildTarget(
   tree: Tree,
   schema: SetupAnalogGeneratorSchema,
-) {
+): void {
   const angularJsonPath = '/angular.json';
 
   const commonConfig = {

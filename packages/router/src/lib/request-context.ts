@@ -1,12 +1,13 @@
 import { TransferState, inject, makeStateKey } from '@angular/core';
 import {
+  HttpEvent,
   HttpHandlerFn,
   HttpHeaders,
   HttpRequest,
   HttpResponse,
 } from '@angular/common/http';
 
-import { from, of } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 
 import {
   injectBaseURL,
@@ -29,7 +30,7 @@ import { makeCacheKey } from './cache-key';
 export function requestContextInterceptor(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
-) {
+): Observable<HttpEvent<unknown>> {
   const apiPrefix = injectAPIPrefix();
   const baseUrl = injectBaseURL();
   const transferState = inject(TransferState);

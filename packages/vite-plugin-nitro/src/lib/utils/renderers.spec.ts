@@ -16,7 +16,7 @@ describe('renderers virtual modules', () => {
     );
     expect(moduleSource).toContain('const req = event.node?.req');
     expect(moduleSource).toContain(
-      'const html = await renderer(requestPath, template, { req, res, fetch });',
+      'const html = await renderer(requestPath, template, { req, res, fetch: serverFetch });',
     );
     expect(moduleSource).toContain("import renderer from '#analog/ssr';");
   });
