@@ -33,7 +33,7 @@ describe('renderers virtual modules', () => {
 
   it('uses event-bound forwarding for API middleware', () => {
     expect(apiMiddleware).toContain(
-      "import { defineHandler, fetchWithEvent, proxyRequest } from 'h3';",
+      "import { defineHandler, fetchWithEvent, proxyRequest } from 'nitro/h3';",
     );
     expect(apiMiddleware).toContain('return fetchWithEvent(event, reqUrl');
     expect(apiMiddleware).toContain('return proxyRequest(event, reqUrl);');

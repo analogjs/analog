@@ -1,5 +1,5 @@
 import { PageServerLoad } from '@analogjs/router';
-import { setCookie } from 'h3';
+import { setCookie } from 'nitro/h3';
 
 import type { Product } from '../products';
 

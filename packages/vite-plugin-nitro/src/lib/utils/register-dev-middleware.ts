@@ -1,5 +1,5 @@
 import { ViteDevServer } from 'vite';
-import { EventHandler, H3 } from 'h3';
+import { EventHandler, H3 } from 'nitro/h3';
 import { globSync } from 'tinyglobby';
 
 import { toWebRequest, writeWebResponseToNode } from './node-web-bridge.js';

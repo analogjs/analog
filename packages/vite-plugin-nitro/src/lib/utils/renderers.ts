@@ -34,7 +34,7 @@ export function ssrRenderer(templatePath: string) {
   return `
 import { readFileSync } from 'node:fs';
 import { createFetch } from 'ofetch';
-import { defineHandler, fetchWithEvent } from 'h3';
+import { defineHandler, fetchWithEvent } from 'nitro/h3';
 // @ts-ignore
 import renderer from '#analog/ssr';
 
@@ -87,7 +87,7 @@ ${SERVER_FETCH_FACTORY_SNIPPET}
 export function clientRenderer(templatePath: string) {
   return `
 import { readFileSync } from 'node:fs';
-import { defineHandler } from 'h3';
+import { defineHandler } from 'nitro/h3';
 
 const template = readFileSync(${JSON.stringify(templatePath)}, 'utf8');
 
@@ -118,7 +118,7 @@ export default defineHandler(async (event) => {
  * SSR code makes relative API requests.
  */
 export const apiMiddleware = `
-import { defineHandler, fetchWithEvent, proxyRequest } from 'h3';
+import { defineHandler, fetchWithEvent, proxyRequest } from 'nitro/h3';
 import { useRuntimeConfig } from 'nitro/runtime-config';
 
 export default defineHandler(async (event) => {

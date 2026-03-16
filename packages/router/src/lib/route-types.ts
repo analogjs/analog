@@ -1,4 +1,4 @@
-import type { H3Event, H3EventContext } from 'h3';
+import type { H3Event, H3EventContext } from 'nitro/h3';
 import type { $Fetch } from 'nitro/types';
 
 // Preserve the existing Node req/res public contract while accommodating h3

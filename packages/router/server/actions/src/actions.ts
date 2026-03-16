@@ -1,4 +1,4 @@
-import type { H3Event, H3EventContext } from 'h3';
+import type { H3Event, H3EventContext } from 'nitro/h3';
 import type { $Fetch } from 'nitro/types';
 import type { NodeContext } from '../../../src/lib/route-types.js';
 
