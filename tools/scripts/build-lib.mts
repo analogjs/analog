@@ -153,7 +153,7 @@ const srcPkg: Record<string, unknown> = JSON.parse(
 const ngPkg: NgPackageJson = JSON.parse(
   readFileSync(resolve(pkgDir, 'ng-package.json'), 'utf-8'),
 );
-const prefix: string = `analogjs-${packageName}`;
+const prefix = `analogjs-${packageName}`;
 
 // Discover sub-entries from ng-package.json files in subdirectories
 const subEntries: SubEntry[] = [];

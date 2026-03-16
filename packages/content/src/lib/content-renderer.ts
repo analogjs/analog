@@ -63,6 +63,7 @@ export class NoopContentRenderer implements ContentRenderer {
       toc: this.transferState.get(key, toc),
     };
   }
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   enhance(): void {}
 
   getContentHeadings(content: string): TableOfContentItem[] {

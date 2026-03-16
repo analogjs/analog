@@ -12,7 +12,7 @@ import { injectRequest, ServerRequest } from '@analogjs/router/tokens';
 export function cookieInterceptor(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
-  location: Object = inject(PLATFORM_ID),
+  location: object = inject(PLATFORM_ID),
   serverRequest: ServerRequest | null = injectRequest(),
 ): Observable<HttpEvent<unknown>> {
   if (isPlatformServer(location) && req.url.includes('/_analog/')) {
