@@ -5,5 +5,13 @@
   },
   "angularCompilerOptions": {
     "compilationMode": "partial"
-  }
+  },
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/test-setup.ts",
+    "vite.config.lib.ts",
+    "oxlint.config.ts"
+  ],
+  "include": ["src/**/*.ts", "server/src/**/*.ts"]
 }

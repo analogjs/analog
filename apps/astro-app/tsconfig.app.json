@@ -21,7 +21,8 @@
     "module": "es2020",
     "lib": ["es2020", "dom"],
     "skipLibCheck": true,
-    "ignoreDeprecations": "5.0"
+    "ignoreDeprecations": "5.0",
+    "rootDir": "./src/components"
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

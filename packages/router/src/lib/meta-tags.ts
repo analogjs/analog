@@ -3,7 +3,7 @@ import { Meta, MetaDefinition as NgMetaTag } from '@angular/platform-browser';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
-export const ROUTE_META_TAGS_KEY = Symbol(
+export const ROUTE_META_TAGS_KEY: unique symbol = Symbol(
   '@analogjs/router Route Meta Tags Key',
 );
 

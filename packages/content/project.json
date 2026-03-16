@@ -11,29 +11,12 @@
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/content"],
       "options": {
         "commands": [
-          "nx build-package content",
-          "nx build content-plugin",
-          "pnpx rimraf node_modules/@analogjs/content/.npmignore"
+          "node tools/scripts/build-lib.mts content",
+          "nx build content-plugin"
         ],
         "parallel": false
       },
       "dependsOn": ["^build"]
-    },
-    "build-package": {
-      "executor": "@angular-devkit/build-angular:ng-packagr",
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content"],
-      "options": {
-        "project": "packages/content/ng-package.json"
-      },
-      "configurations": {
-        "production": {
-          "tsConfig": "packages/content/tsconfig.lib.prod.json"
-        },
-        "development": {
-          "tsConfig": "packages/content/tsconfig.lib.json"
-        }
-      },
-      "defaultConfiguration": "production"
     },
     "lint": {
       "executor": "@nx/eslint:lint",

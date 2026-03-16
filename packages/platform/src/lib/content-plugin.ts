@@ -60,7 +60,7 @@ export function contentPlugin(
           const contentFilesList: string[] = globSync(
             [
               `${root}/src/content/**/*.md`,
-              ...(options?.additionalContentDirs || [])?.map(
+              ...(options?.additionalContentDirs || []).map(
                 (glob) => `${workspaceRoot}${glob}/**/*.md`,
               ),
             ],
@@ -244,7 +244,9 @@ export function contentPlugin(
 
             const loadLanguages = await import('prismjs/components/index.js');
 
-            (loadLanguages as unknown as { default: Function }).default(langs);
+            (
+              loadLanguages as unknown as { default: (...args: any[]) => any }
+            ).default(langs);
           }
         }
 

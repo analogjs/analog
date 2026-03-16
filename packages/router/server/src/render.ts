@@ -43,7 +43,7 @@ export function render(
     url: string,
     document: string,
     serverContext: ServerContext,
-  ) {
+  ): Promise<string | Response> {
     if (serverComponentRequest(serverContext)) {
       return await renderServerComponent(url, serverContext);
     }

@@ -7,14 +7,14 @@
     "sourceMap": false,
     "declaration": true,
     "types": [],
-    "allowJs": true,
+    "isolatedDeclarations": true,
     "allowSyntheticDefaultImports": true,
     "paths": {
       "@analogjs/vite-plugin-angular": [
-        "./node_modules/@analogjs/vite-plugin-angular"
+        "../../node_modules/@analogjs/vite-plugin-angular"
       ],
       "@analogjs/vite-plugin-nitro": [
-        "./node_modules/@analogjs/vite-plugin-nitro"
+        "../../node_modules/@analogjs/vite-plugin-nitro"
       ]
     },
     "moduleResolution": "bundler"
@@ -24,6 +24,7 @@
     "vite.config.ts",
     "**/*.spec.ts",
     "**/*.test.ts",
-    "src/test-setup.ts"
+    "src/test-setup.ts",
+    "oxlint.config.ts"
   ]
 }

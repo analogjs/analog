@@ -4,6 +4,7 @@ import {
   json,
   fail,
 } from '@analogjs/router/server/actions';
+import { readFormData } from 'nitro/h3';
 
 export type NewsletterSubmitResponse = {
   type: 'success';
@@ -17,7 +18,7 @@ export function load() {
 }
 
 export async function action({ event }: PageServerAction) {
-  const body = await event.req.formData();
+  const body = await readFormData(event);
   const email = body.get('email') as string;
 
   if (!email) {
