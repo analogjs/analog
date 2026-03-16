@@ -22,7 +22,7 @@ type TestBedSetupOptions = {
   /**
    * @deprecated Use `teardown.destroyAfterEach` instead.
    * @sunset 3.0.0
-   */  
+   */
   browserMode?: boolean;
   teardown?: {
     destroyAfterEach: boolean;
