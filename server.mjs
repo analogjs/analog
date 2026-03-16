@@ -46,7 +46,6 @@ async function createServer() {
       res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
     } catch (e) {
       res.end('Error');
-      // console.error(e);
     }
   });
 

@@ -9,6 +9,7 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
+    cacheDir: '../../node_modules/.vite/trpc-app',
     publicDir: 'src/public',
     optimizeDeps: {
       include: ['@angular/common', '@angular/forms', 'isomorphic-fetch'],
@@ -44,9 +45,6 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
-      cache: {
-        dir: `../../node_modules/.vitest`,
-      },
     },
     define: {
       'import.meta.vitest': mode !== 'production',

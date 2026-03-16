@@ -8,6 +8,6 @@
     "types": [],
     "allowJs": true
   },
-  "exclude": ["**/*.test.ts", "**/*.spec.ts"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "oxlint.config.ts"],
   "include": ["**/*.ts"]
 }

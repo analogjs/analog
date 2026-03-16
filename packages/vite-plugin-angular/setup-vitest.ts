@@ -8,7 +8,7 @@ import 'zone.js/testing';
  * always runs in a testZone (ProxyZone).
  */
 /* global Zone */
-const Zone = (globalThis as any)['Zone'];
+const { Zone } = globalThis as any;
 
 if (Zone === undefined) {
   throw new Error('Missing: Zone (zone.js)');
@@ -19,8 +19,8 @@ if ((globalThis as any)['__vitest_zone_patch__'] === true) {
 }
 
 (globalThis as any)['__vitest_zone_patch__'] = true;
-const SyncTestZoneSpec = Zone['SyncTestZoneSpec'];
-const ProxyZoneSpec = Zone['ProxyZoneSpec'];
+const { SyncTestZoneSpec } = Zone;
+const { ProxyZoneSpec } = Zone;
 
 if (SyncTestZoneSpec === undefined) {
   throw new Error('Missing: SyncTestZoneSpec (zone.js/plugins/sync-test)');
@@ -33,8 +33,8 @@ const env = globalThis as any;
 const ambientZone = Zone.current;
 
 // Create a synchronous-only zone in which to run `describe` blocks in order to
-// raise an error if any asynchronous operations are attempted
-// inside of a `describe` but outside of a `beforeEach` or `it`.
+// Raise an error if any asynchronous operations are attempted
+// Inside of a `describe` but outside of a `beforeEach` or `it`.
 const syncZone = ambientZone.fork(new SyncTestZoneSpec('vitest.describe'));
 function wrapDescribeInZone(describeBody: any) {
   return function (...args: any) {
@@ -43,21 +43,21 @@ function wrapDescribeInZone(describeBody: any) {
 }
 
 // Create a proxy zone in which to run `test` blocks so that the tests function
-// can retroactively install different zones.
+// Can retroactively install different zones.
 const testProxyZone = ambientZone.fork(new ProxyZoneSpec());
 function wrapTestInZone(testBody: string | any[] | undefined) {
   if (testBody === undefined) {
     return;
   }
 
-  const wrappedFunc = function () {
-    return testProxyZone.run(testBody, null, arguments);
+  const wrappedFunc = function wrappedFunc(...args: any[]) {
+    return testProxyZone.run(testBody, null, args);
   };
   try {
     Object.defineProperty(wrappedFunc, 'length', {
       configurable: true,
-      writable: true,
       enumerable: false,
+      writable: true,
     });
     wrappedFunc.length = testBody.length;
   } catch (e) {
@@ -176,7 +176,7 @@ function fixtureVitestSerializer(fixture: any) {
       : fixture.componentRef.componentType
   ) as any;
 
-  let inputsData: string = '';
+  let inputsData = '';
 
   const selector = Reflect.getOwnPropertyDescriptor(
     componentType,
@@ -205,7 +205,7 @@ function fixtureVitestSerializer(fixture: any) {
 }
 
 /**
- * bind describe method to wrap describe.each function
+ * Bind describe method to wrap describe.each function
  */
 const bindDescribe = (
   self: any,
@@ -220,17 +220,16 @@ const bindDescribe = (
     };
   },
 ) =>
-  function (...eachArgs: any) {
-    return function (...args: any[]) {
+  function bindDescribe(...eachArgs: any) {
+    return function bindDescribe(...args: any[]) {
       args[1] = wrapDescribeInZone(args[1]);
 
-      // @ts-ignore
       return originalVitestFn.apply(self, eachArgs).apply(self, args);
     };
   };
 
 /**
- * bind test method to wrap test.each function
+ * Bind test method to wrap test.each function
  */
 const bindTest = (
   self: any,
@@ -245,11 +244,10 @@ const bindTest = (
     };
   },
 ) =>
-  function (...eachArgs: any) {
-    return function (...args: any[]) {
+  function bindTest(...eachArgs: any) {
+    return function bindTest(...args: any[]) {
       args[1] = wrapTestInZone(args[1]);
 
-      // @ts-ignore
       return originalVitestFn.apply(self, eachArgs).apply(self, args);
     };
   };
@@ -286,7 +284,7 @@ const bindTest = (
   env[methodName].skip = bindTest(originalvitestFn, originalvitestFn.skip);
 
   if (methodName === 'test' || methodName === 'it') {
-    env[methodName].todo = function (...args: any) {
+    env[methodName].todo = function todo(...args: any) {
       return originalvitestFn.todo.apply(this, args);
     };
   }
