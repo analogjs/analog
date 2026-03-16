@@ -488,7 +488,7 @@ importers:
         version: 11.3.3(vite@8.0.0(@types/node@22.19.15)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))
       vite-tsconfig-paths:
         specifier: github:benpsnyder/vite-tsconfig-paths#feat/oxc-upgrade
-        version: https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/3297a722c1ae1240dd5019c0c700a23cbf9b0b50(typescript@5.9.3)(vite@8.0.0(@types/node@22.19.15)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))
+        version: https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/bd0373859a120802a93dd95e33008f20382ed847(typescript@5.9.3)(vite@8.0.0(@types/node@22.19.15)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))
       vitefu:
         specifier: ^1.1.2
         version: 1.1.2(vite@8.0.0(@types/node@22.19.15)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))
@@ -15101,8 +15101,8 @@ packages:
       '@nuxt/kit':
         optional: true
 
-  vite-tsconfig-paths@https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/3297a722c1ae1240dd5019c0c700a23cbf9b0b50:
-    resolution: {tarball: https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/3297a722c1ae1240dd5019c0c700a23cbf9b0b50}
+  vite-tsconfig-paths@https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/bd0373859a120802a93dd95e33008f20382ed847:
+    resolution: {tarball: https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/bd0373859a120802a93dd95e33008f20382ed847}
     version: 7.0.0-alpha.1
     engines: {node: '>=18'}
     peerDependencies:
@@ -34950,7 +34950,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  vite-tsconfig-paths@https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/3297a722c1ae1240dd5019c0c700a23cbf9b0b50(typescript@5.9.3)(vite@8.0.0(@types/node@22.19.15)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2)):
+  vite-tsconfig-paths@https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/bd0373859a120802a93dd95e33008f20382ed847(typescript@5.9.3)(vite@8.0.0(@types/node@22.19.15)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2)):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       oxc-resolver: 11.19.1
