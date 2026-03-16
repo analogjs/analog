@@ -1,3 +1,9 @@
+# [2.4.0-beta.12](https://github.com/analogjs/analog/compare/v2.4.0-beta.11...v2.4.0-beta.12) (2026-03-16)
+
+### Features
+
+- **vite-plugin-angular:** working fileReplacements and liveReload for Angular Compilation API ([7adf8c1](https://github.com/analogjs/analog/commit/7adf8c18b7786047dc6156eb6c2eaeff0961e5f4))
+
 # [2.4.0-beta.11](https://github.com/analogjs/analog/compare/v2.4.0-beta.10...v2.4.0-beta.11) (2026-03-16)
 
 ### Bug Fixes
