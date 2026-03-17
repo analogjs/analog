@@ -16,7 +16,7 @@
  * When no routes are generated, it is empty and `AnalogRoutePath` falls
  * back to `string`.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface, no-empty-object-type
 export interface AnalogRouteTable {}
 
 /**

@@ -23,7 +23,9 @@ function createEvent(
     params,
     req: {} as any,
     res: {} as any,
-    fetch: (() => {}) as any,
+    fetch: (() => {
+      /* noop */
+    }) as any,
     event: {
       request: { url },
       context: { params },

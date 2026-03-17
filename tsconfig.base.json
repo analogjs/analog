@@ -63,8 +63,8 @@
         "./node_modules/@analogjs/vite-plugin-angular"
       ],
       "@analogjs/vite-plugin-angular/setup-vitest": [
-        "./node_modules/@analogjs/vite-plugin-angular/setup-vitest.js",
-        "./packages/vite-plugin-angular/setup-vitest.ts"
+        "./packages/vite-plugin-angular/setup-vitest.ts",
+        "./node_modules/@analogjs/vite-plugin-angular/setup-vitest.js"
       ],
       "@analogjs/vite-plugin-nitro": [
         "./packages/vite-plugin-nitro/src/index.ts",

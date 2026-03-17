@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "allowJs": true,
     "esModuleInterop": true,
     "jsx": "react",

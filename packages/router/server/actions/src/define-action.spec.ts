@@ -21,7 +21,9 @@ function createMockContext(body: unknown, contentType = 'application/json') {
     params: { id: '1' },
     req: {} as any,
     res: {} as any,
-    fetch: (() => {}) as any,
+    fetch: (() => {
+      /* noop */
+    }) as any,
     event: {
       headers: new Headers({ 'content-type': contentType }),
       request: new Request('http://localhost/test', {
@@ -86,7 +88,9 @@ describe('defineAction', () => {
       params: {},
       req: {} as any,
       res: {} as any,
-      fetch: (() => {}) as any,
+      fetch: (() => {
+        /* noop */
+      }) as any,
       event: {
         headers: new Headers({
           'content-type': 'application/x-www-form-urlencoded',
@@ -123,7 +127,9 @@ describe('defineAction', () => {
       params: {},
       req: {} as any,
       res: {} as any,
-      fetch: (() => {}) as any,
+      fetch: (() => {
+        /* noop */
+      }) as any,
       event: {
         headers: new Headers({
           'content-type': 'application/x-www-form-urlencoded',
@@ -213,7 +219,9 @@ describe('defineAction', () => {
       params: {},
       req: {} as any,
       res: {} as any,
-      fetch: (() => {}) as any,
+      fetch: (() => {
+        /* noop */
+      }) as any,
       event: {
         headers: new Headers({ 'content-type': 'text/plain' }),
         request: new Request('http://localhost/test', {
@@ -241,7 +249,9 @@ describe('defineAction', () => {
       params: {},
       req: {} as any,
       res: {} as any,
-      fetch: (() => {}) as any,
+      fetch: (() => {
+        /* noop */
+      }) as any,
       event: {
         headers: new Headers({
           'content-type': 'application/json; charset=utf-8',

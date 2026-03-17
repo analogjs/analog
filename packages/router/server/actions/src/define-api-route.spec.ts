@@ -260,7 +260,9 @@ describe('defineApiRoute', () => {
       issues: [{ message: 'Missing id field', path: ['id'] }],
     }));
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
 
     const handler = vi.fn(() => ({ name: 'Alice' }));
 
@@ -300,7 +302,9 @@ describe('defineApiRoute', () => {
     const output = createMockSchema(() => ({
       issues: [{ message: 'Should not validate raw responses' }],
     }));
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
 
     const route = defineApiRoute({
       output,
@@ -324,7 +328,9 @@ describe('defineApiRoute', () => {
       issues: [{ message: 'Should not fire' }],
     }));
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
 
     const handler = vi.fn(() => ({ name: 'Alice' }));
 
@@ -463,7 +469,9 @@ describe('defineApiRoute', () => {
       issues: [{ message: 'Invalid type', path: ['user', { key: 'name' }] }],
     }));
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
 
     const route = defineApiRoute({ output, handler: () => ({}) });
     await route(createMockEvent('GET'));

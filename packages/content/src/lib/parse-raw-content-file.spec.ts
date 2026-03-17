@@ -6,6 +6,16 @@ import {
   FrontmatterValidationError,
 } from './parse-raw-content-file';
 
+function catchError(fn: () => void): FrontmatterValidationError {
+  let caught: unknown;
+  try {
+    fn();
+  } catch (e) {
+    caught = e;
+  }
+  return caught as FrontmatterValidationError;
+}
+
 function createMockSchema<T>(
   validator: (value: unknown) => StandardSchemaV1.Result<T>,
 ): StandardSchemaV1<unknown, T> {
@@ -125,16 +135,14 @@ describe('parseRawContentFile', () => {
         FrontmatterValidationError,
       );
 
-      try {
-        parseRawContentFile(invalidMarkdown, schema);
-      } catch (e) {
-        const err = e as FrontmatterValidationError;
-        expect(err.issues).toHaveLength(1);
-        expect(err.issues[0].message).toBe('Required');
-        expect(err.issues[0].path).toEqual(['date']);
-        expect(err.message).toContain('rontmatter validation failed');
-        expect(err.message).toContain('Required');
-      }
+      const err = catchError(() =>
+        parseRawContentFile(invalidMarkdown, schema),
+      );
+      expect(err.issues).toHaveLength(1);
+      expect(err.issues[0].message).toBe('Required');
+      expect(err.issues[0].path).toEqual(['date']);
+      expect(err.message).toContain('rontmatter validation failed');
+      expect(err.message).toContain('Required');
     });
 
     it('should include filename in sync validation errors when provided', () => {
@@ -146,13 +154,11 @@ describe('parseRawContentFile', () => {
         parseRawContentFile(invalidMarkdown, schema, 'blog/my-post.md'),
       ).toThrow(FrontmatterValidationError);
 
-      try {
-        parseRawContentFile(invalidMarkdown, schema, 'blog/my-post.md');
-      } catch (e) {
-        const err = e as FrontmatterValidationError;
-        expect(err.filename).toBe('blog/my-post.md');
-        expect(err.message).toContain('"blog/my-post.md"');
-      }
+      const err = catchError(() =>
+        parseRawContentFile(invalidMarkdown, schema, 'blog/my-post.md'),
+      );
+      expect(err.filename).toBe('blog/my-post.md');
+      expect(err.message).toContain('"blog/my-post.md"');
     });
 
     it('should throw on async schema in sync parseRawContentFile', () => {
@@ -228,15 +234,13 @@ describe('parseRawContentFile', () => {
         ],
       }));
 
-      try {
-        parseRawContentFile(emptyFrontmatter, schema);
-      } catch (e) {
-        const err = e as FrontmatterValidationError;
-        expect(err.issues).toHaveLength(3);
-        expect(err.message).toContain('Title required');
-        expect(err.message).toContain('Date required');
-        expect(err.message).toContain('Tags required');
-      }
+      const err = catchError(() =>
+        parseRawContentFile(emptyFrontmatter, schema),
+      );
+      expect(err.issues).toHaveLength(3);
+      expect(err.message).toContain('Title required');
+      expect(err.message).toContain('Date required');
+      expect(err.message).toContain('Tags required');
     });
 
     it('should handle nested path segments in error messages', () => {
@@ -249,12 +253,8 @@ describe('parseRawContentFile', () => {
         ],
       }));
 
-      try {
-        parseRawContentFile(sampleMarkdown, schema);
-      } catch (e) {
-        const err = e as FrontmatterValidationError;
-        expect(err.message).toContain('meta.og:image');
-      }
+      const err = catchError(() => parseRawContentFile(sampleMarkdown, schema));
+      expect(err.message).toContain('meta.og:image');
     });
   });
 

@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "module": "preserve",
     "outDir": "../../dist/out-tsc",
     "inlineSourceMap": true,
@@ -12,9 +11,11 @@
     "allowSyntheticDefaultImports": true,
     "paths": {
       "@analogjs/vite-plugin-angular": [
+        "../../packages/vite-plugin-angular/src/index.ts",
         "../../node_modules/@analogjs/vite-plugin-angular"
       ],
       "@analogjs/vite-plugin-nitro": [
+        "../../packages/vite-plugin-nitro/src/index.ts",
         "../../node_modules/@analogjs/vite-plugin-nitro"
       ]
     },

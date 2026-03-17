@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "moduleResolution": "bundler",

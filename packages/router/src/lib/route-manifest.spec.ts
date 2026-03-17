@@ -271,7 +271,9 @@ describe('generateRouteManifest', () => {
   });
 
   it('should warn on route collisions and skip duplicates', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
 
     const manifest = generateRouteManifest([
       '/app/routes/index.ts',
@@ -747,7 +749,9 @@ describe('formatManifestSummary', () => {
 
 describe('dev diagnostics', () => {
   it('should warn when schema exists on static route', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
 
     generateRouteManifest(['/app/routes/about.ts'], () => ({
       hasParamsSchema: true,
@@ -764,7 +768,9 @@ describe('dev diagnostics', () => {
   });
 
   it('should not warn when schema matches dynamic params', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
 
     generateRouteManifest(['/src/app/pages/users/[id].page.ts'], () => ({
       hasParamsSchema: true,

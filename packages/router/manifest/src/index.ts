@@ -86,9 +86,11 @@ export function filenameToRoutePath(filename: string): string {
   const brackets: string[] = [];
   path = path.replace(/\[\[?\.{0,3}[^\]]*\]?\]/g, (match) => {
     brackets.push(match);
+    // eslint-disable-next-line no-control-regex
     return `\0B${brackets.length - 1}\0`;
   });
   path = path.replace(/\./g, '/');
+  // eslint-disable-next-line no-control-regex
   path = path.replace(/\0B(\d+)\0/g, (_, idx) => brackets[Number(idx)]);
 
   const segments = path.split('/').filter(Boolean);
@@ -122,9 +124,11 @@ export function filenameToRouteId(filename: string): string {
   const brackets: string[] = [];
   path = path.replace(/\[\[?\.{0,3}[^\]]*\]?\]/g, (match) => {
     brackets.push(match);
+    // eslint-disable-next-line no-control-regex
     return `\0B${brackets.length - 1}\0`;
   });
   path = path.replace(/\./g, '/');
+  // eslint-disable-next-line no-control-regex
   path = path.replace(/\0B(\d+)\0/g, (_, idx) => brackets[Number(idx)]);
 
   const segments = path.split('/').filter(Boolean);

@@ -9,6 +9,7 @@
     "types": [],
     "paths": {
       "@analogjs/vite-plugin-angular": [
+        "../../packages/vite-plugin-angular/src/index.ts",
         "../../node_modules/@analogjs/vite-plugin-angular"
       ]
     }
