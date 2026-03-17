@@ -1,3 +1,9 @@
+# [3.0.0-alpha.5](https://github.com/analogjs/analog/compare/v3.0.0-alpha.4...v3.0.0-alpha.5) (2026-03-17)
+
+### Features
+
+- add Vite 8 OXC config support to storybook and astro packages ([#2121](https://github.com/analogjs/analog/issues/2121)) ([62987d3](https://github.com/analogjs/analog/commit/62987d3b63cbf9d38d0106ca9a4f4fe4d004aec1))
+
 # [3.0.0-alpha.4](https://github.com/analogjs/analog/compare/v3.0.0-alpha.3...v3.0.0-alpha.4) (2026-03-17)
 
 ### Bug Fixes
