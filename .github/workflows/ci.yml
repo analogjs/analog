@@ -34,7 +34,7 @@ jobs:
         run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Validate
-        run: nx format:check
+        run: pnpx nx format:check
 
   lint:
     runs-on: ubuntu-latest

@@ -13,16 +13,16 @@ Closes #
 
 ## Recommended merge strategy for maintainer [optional]
 
-<!-- This is a recommendation for maintainers, not a requirement. -->
-<!-- Prefer rebase merge when this PR intentionally preserves multiple related commits. -->
+<!-- Squash merge is the default expectation. -->
+<!-- Recommend a non-squash merge only if you can justify why the PR should bypass focused changes per package. -->
 
+- [x] Squash merge
 - [ ] Rebase merge
-- [ ] Squash merge
-- [ ] No preference
+- [ ] Other
 
 ## Commit preservation note [optional]
 
-<!-- If you recommend rebase merge, briefly explain why the commit boundaries matter. -->
+<!-- If you recommend a non-squash merge, briefly explain why the commit boundaries matter and why this PR should bypass focused changes per package. -->
 
 ## What is the new behavior?
 

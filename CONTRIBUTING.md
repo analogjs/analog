@@ -123,7 +123,7 @@ pnpm nx serve-static docs-app
 - Make reference to possible [issues](https://github.com/analogjs/analog/issues) on PR comment.
 - PRs may include multiple commits. However, please keep content of all commits related. Raise separate PRs for disjoint changes.
 - Use the PR template to capture the affected scope, your test plan, and any maintainer-facing merge recommendation.
-- If you recommend `rebase merge`, add a brief note explaining why the commit boundaries matter.
+- `Squash merge` is the default expectation. If you recommend a non-squash merge, add a brief note explaining why the commit boundaries matter and why the PR should bypass focused changes per package.
 
 ### Pull Request title guidelines
 
