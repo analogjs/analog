@@ -181,6 +181,7 @@
     "nitro": "3.0.260311-beta",
     "nx": "22.6.0-beta.11",
     "ofetch": "2.0.0-alpha.3",
+    "oxc-parser": "^0.119.0",
     "oxc-resolver": "^11.19.1",
     "oxlint": "^1.55.0",
     "oxlint-tsgolint": "^0.16.0",
@@ -235,6 +236,7 @@
       "lmdb",
       "msgpackr-extract",
       "nx",
+      "oxc-parser",
       "sharp",
       "vite-tsconfig-paths"
     ],
