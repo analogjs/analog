@@ -1,3 +1,9 @@
+# [2.4.0-beta.15](https://github.com/analogjs/analog/compare/v2.4.0-beta.14...v2.4.0-beta.15) (2026-03-17)
+
+### Bug Fixes
+
+- **astro-angular:** support astro v6 using vite environment api ([#2133](https://github.com/analogjs/analog/issues/2133)) ([e9fd9c6](https://github.com/analogjs/analog/commit/e9fd9c6134fa33aa0283bda7efb3c8f54cef15ab))
+
 # [2.4.0-beta.14](https://github.com/analogjs/analog/compare/v2.4.0-beta.13...v2.4.0-beta.14) (2026-03-17)
 
 ### Bug Fixes
