@@ -11,7 +11,7 @@
         "outputPath": "node_modules/@analogjs/vite-plugin-angular/src/lib/tools",
         "main": "packages/vite-plugin-angular-tools/src/index.ts",
         "tsConfig": "packages/vite-plugin-angular-tools/tsconfig.lib.json",
-        "clean": true,
+        "clean": false,
         "assets": [
           "packages/vite-plugin-angular-tools/*.md",
           {
