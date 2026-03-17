@@ -158,8 +158,6 @@ Must be one of the following:
 
 The scope should be the name of the npm package affected (as perceived by the person reading the changelog generated from commit messages).
 
-PR titles are validated in GitHub using the supported types and scopes below.
-
 The following is the list of currently supported scopes:
 
 - **astro-angular**
