@@ -6,7 +6,13 @@ import {
   prepare,
   prerender,
 } from 'nitro/builder';
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, join } from 'node:path';
 
 import { Options } from './options.js';
@@ -57,6 +63,47 @@ function ensureSsrTsconfig(nitroConfig: NitroConfig | undefined) {
 
 export function isVercelPreset(preset: string | undefined): boolean {
   return !!preset?.toLowerCase().includes('vercel');
+}
+
+function getVercelBuildConfigPath(
+  nitro: Awaited<ReturnType<typeof createNitro>>,
+) {
+  return join(nitro.options.output.dir, 'config.json');
+}
+
+function assertValidVercelBuildConfig(
+  nitro: Awaited<ReturnType<typeof createNitro>>,
+) {
+  if (!isVercelPreset(nitro.options.preset)) {
+    return;
+  }
+
+  const buildConfigPath = getVercelBuildConfigPath(nitro);
+  if (!existsSync(buildConfigPath)) {
+    throw new Error(
+      `Nitro did not generate the expected Vercel build output config at "${buildConfigPath}".`,
+    );
+  }
+
+  const buildConfig = readFileSync(buildConfigPath, 'utf8').trim();
+  if (!buildConfig) {
+    throw new Error(
+      `Nitro generated an empty Vercel build output config at "${buildConfigPath}".`,
+    );
+  }
+
+  try {
+    JSON.parse(buildConfig);
+  } catch (error) {
+    const symptomError = new Error(
+      `Nitro generated an invalid Vercel build output config at "${buildConfigPath}": ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+
+    (symptomError as Error & { cause?: unknown }).cause = error;
+    throw symptomError;
+  }
 }
 
 function ensureVercelFunctionConfig(
@@ -186,4 +233,5 @@ export async function buildServer(
   }
 
   await nitro.close();
+  assertValidVercelBuildConfig(nitro);
 }
