@@ -1,0 +1,92 @@
+name: pr-title
+
+on:
+  pull_request_target:
+    types: [opened, reopened, edited, synchronize]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - name: Validate pull request title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          node <<'EOF'
+          const config = require('./commitlint.config.cjs');
+
+          const allowedTypes = new Set([
+            'build',
+            'ci',
+            'docs',
+            'feat',
+            'fix',
+            'perf',
+            'refactor',
+            'style',
+            'test',
+          ]);
+          const optionalScopeTypes = new Set([
+            'build',
+            'ci',
+            'docs',
+            'refactor',
+            'style',
+            'test',
+          ]);
+          const scopes = new Set(config.rules['scope-enum']?.[2] ?? []);
+          const title = (process.env.PR_TITLE ?? '').trim();
+
+          const match = title.match(
+            /^(build|ci|docs|feat|fix|perf|refactor|style|test)(?:\(([a-z0-9-]+)\))?(!)?: (.+)$/
+          );
+
+          if (!match) {
+            console.error(
+              'Pull request titles must use Conventional Commit style, for example `feat(router): add route metadata support`.'
+            );
+            process.exit(1);
+          }
+
+          const [, type, scope, , subject] = match;
+
+          if (!allowedTypes.has(type)) {
+            console.error(`Unsupported PR title type: ${type}`);
+            process.exit(1);
+          }
+
+          if (!subject.trim()) {
+            console.error('Pull request titles must include a subject after `: `.');
+            process.exit(1);
+          }
+
+          if (scope && !scopes.has(scope)) {
+            console.error(
+              `Unsupported PR title scope: ${scope}. Allowed scopes: ${[
+                ...scopes,
+              ].join(', ')}`
+            );
+            process.exit(1);
+          }
+
+          if (!scope && !optionalScopeTypes.has(type)) {
+            console.error(
+              `Pull request titles for \`${type}\` changes should include a package scope, for example \`${type}(router): ...\`.`
+            );
+            process.exit(1);
+          }
+
+          console.log(`Validated PR title: ${title}`);
+          EOF

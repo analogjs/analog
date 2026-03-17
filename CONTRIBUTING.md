@@ -122,6 +122,8 @@ pnpm nx serve-static docs-app
 - If you've added new functionality, **please** include tests which validate its behavior.
 - Make reference to possible [issues](https://github.com/analogjs/analog/issues) on PR comment.
 - PRs may include multiple commits. However, please keep content of all commits related. Raise separate PRs for disjoint changes.
+- Use the PR template to capture the affected scope, your test plan, and any maintainer-facing merge recommendation.
+- If you recommend `rebase merge`, explain why the commit boundaries should be preserved.
 
 ### Pull Request title guidelines
 
@@ -155,6 +157,8 @@ Must be one of the following:
 ### Scope
 
 The scope should be the name of the npm package affected (as perceived by the person reading the changelog generated from commit messages).
+
+PR titles are validated in GitHub using the supported types and scopes below.
 
 The following is the list of currently supported scopes:
 
