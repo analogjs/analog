@@ -52,6 +52,20 @@ function getViteConfiguration(pluginOptions?: PluginOptions) {
           return;
         },
       },
+      {
+        name: 'analogjs-astro-client-ngservermode',
+        configEnvironment(name: string) {
+          if (name === 'client') {
+            return {
+              define: {
+                ngServerMode: 'false',
+              },
+            };
+          }
+
+          return undefined;
+        },
+      },
     ],
     ssr: {
       noExternal: ['@angular/**', '@analogjs/**'],
