@@ -1,0 +1,25 @@
+---
+description: Standardize Rolldown compatibility checks in Vite config code
+alwaysApply: true
+---
+
+# Rolldown Checks
+
+- Do not inline `vite.rolldownVersion` inside config objects when the branch only selects a config key.
+- Use a package-local helper for `isRolldown()`, `getJsTransformConfigKey()`, or `getBundleOptionsKey()`.
+- Keep the branch inline when Rolldown changes behavior, implementation path, or API usage beyond key selection.
+- Share Rolldown helpers across plugins within the same package, not through a repo-wide shared lib.
+- Prefer helpers in the package's existing `utils/` area instead of adding a new cross-package shared package.
+
+```ts
+// Preferred for config-key selection
+const jsTransformConfigKey = getJsTransformConfigKey();
+return {
+  [jsTransformConfigKey]: jsTransformConfigValue,
+};
+
+// Keep inline for behavior differences
+if (isRolldown()) {
+  return vite.transformWithOxc(code, id, options);
+}
+```

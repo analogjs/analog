@@ -2,6 +2,7 @@ import type { Plugin, TransformResult, UserConfig } from 'vite';
 // Use the namespace import so these runtime helpers still resolve on Vite 6,
 // which does not expose them as named exports.
 import * as vite from 'vite';
+import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
 
 /**
  * Sets up test config for Vitest and downlevels Angular FESM bundles and
@@ -45,7 +46,7 @@ export function angularVitestPlugin(): Plugin {
           (/fesm2022/.test(id) && _code.includes('async ')) ||
           _code.includes('@angular/cdk')
         ) {
-          if (vite.rolldownVersion) {
+          if (isRolldown()) {
             const { code, map } = await vite.transformWithOxc(_code, id, {
               lang: 'js',
               target: 'es2016',
@@ -89,14 +90,13 @@ export function angularVitestEsbuildPlugin(): Plugin {
     name: '@analogjs/vitest-angular-esbuild-oxc-plugin',
     enforce: 'pre',
     config(userConfig: UserConfig) {
-      if (vite.rolldownVersion) {
-        return {
-          oxc: userConfig.oxc ?? false,
-        };
-      }
+      const jsTransformConfigKey = getJsTransformConfigKey();
 
       return {
-        esbuild: userConfig.esbuild ?? false,
+        [jsTransformConfigKey]:
+          jsTransformConfigKey === 'oxc'
+            ? (userConfig.oxc ?? false)
+            : (userConfig.esbuild ?? false),
       };
     },
   };
@@ -129,7 +129,7 @@ export function angularVitestSourcemapPlugin(): Plugin {
           return;
         }
 
-        if (vite.rolldownVersion) {
+        if (isRolldown()) {
           const result = await vite.transformWithOxc(code, id, {
             lang: 'js',
           });

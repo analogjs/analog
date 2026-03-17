@@ -31,6 +31,7 @@ import {
   clientRenderer,
   apiMiddleware,
 } from './utils/renderers.js';
+import { getBundleOptionsKey, isRolldown } from './utils/rolldown.js';
 
 function createNitroMiddlewareHandler(handler: string): NitroEventHandler {
   return {
@@ -676,7 +677,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 // dynamic imports); an object configures chunk groups.
                 // The `!== undefined` check ensures `codeSplitting: false`
                 // is forwarded correctly (a truthy check would swallow it).
-                ...(vite.rolldownVersion && codeSplitting !== undefined
+                ...(isRolldown() && codeSplitting !== undefined
                   ? {
                       rolldownOptions: {
                         output: {
@@ -693,8 +694,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             ssr: {
               build: {
                 ssr: true,
-                // Vite 8+ (Rolldown) uses `rolldownOptions`; Vite ≤7 uses `rollupOptions`.
-                [vite.rolldownVersion ? 'rolldownOptions' : 'rollupOptions']: {
+                [getBundleOptionsKey()]: {
                   input:
                     options?.entryServer ||
                     resolve(

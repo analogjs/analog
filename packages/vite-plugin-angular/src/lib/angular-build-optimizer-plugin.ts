@@ -1,6 +1,6 @@
 import type { Plugin, UserConfig } from 'vite';
-import * as vite from 'vite';
 import { JavaScriptTransformer } from './utils/devkit.js';
+import { getJsTransformConfigKey } from './utils/rolldown.js';
 
 export function buildOptimizerPlugin({
   jit,
@@ -26,6 +26,7 @@ export function buildOptimizerPlugin({
       isProd =
         userConfig.mode === 'production' ||
         process.env['NODE_ENV'] === 'production';
+      const jsTransformConfigKey = getJsTransformConfigKey();
 
       return {
         define: isProd
@@ -36,7 +37,7 @@ export function buildOptimizerPlugin({
               ngServerMode: `${!!userConfig.build?.ssr}`,
             }
           : {},
-        [vite.rolldownVersion ? 'oxc' : 'esbuild']: {
+        [jsTransformConfigKey]: {
           define: isProd
             ? {
                 ngDevMode: 'false',

@@ -1,6 +1,3 @@
-// Namespace import is required to access `vite.rolldownVersion` which is only
-// present in Vite 8+ (backed by Rolldown).  Used to branch between
-// `rolldownOptions` and `rollupOptions` at build-config time.
 import * as vite from 'vite';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -11,6 +8,7 @@ import type { MarkedContentHighlighter } from './content/marked/marked-content-h
 import type { WithPrismHighlighterOptions } from './content/prism/options.js';
 import type { WithMarkedOptions } from './content/marked/index.js';
 import type { Options } from './options.js';
+import { getBundleOptionsKey } from './utils/rolldown.js';
 
 interface Content {
   code: string;
@@ -157,10 +155,10 @@ export function contentPlugin(
       {
         name: 'analogjs-external-content',
         config() {
+          const bundleOptionsKey = getBundleOptionsKey();
           return {
             build: {
-              // Vite 8+ (Rolldown) uses `rolldownOptions`; Vite ≤7 uses `rollupOptions`.
-              [vite.rolldownVersion ? 'rolldownOptions' : 'rollupOptions']: {
+              [bundleOptionsKey]: {
                 external: ['@analogjs/content'],
               },
             },
