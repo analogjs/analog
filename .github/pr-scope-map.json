@@ -1,0 +1,152 @@
+{
+  "areas": [
+    {
+      "scope": "astro-angular",
+      "label": "scope:astro-angular",
+      "kind": "package",
+      "color": "0e8a16",
+      "description": "Changes in @analogjs/astro-angular",
+      "prefixes": ["packages/astro-angular/"]
+    },
+    {
+      "scope": "content",
+      "label": "scope:content",
+      "kind": "package",
+      "color": "0e8a16",
+      "description": "Changes in @analogjs/content",
+      "prefixes": ["packages/content/"]
+    },
+    {
+      "scope": "content-plugin",
+      "label": "scope:content-plugin",
+      "kind": "package",
+      "color": "0e8a16",
+      "description": "Changes in @analogjs/content-plugin",
+      "prefixes": ["packages/content-plugin/"]
+    },
+    {
+      "scope": "create-analog",
+      "label": "scope:create-analog",
+      "kind": "package",
+      "color": "0e8a16",
+      "description": "Changes in create-analog",
+      "prefixes": ["packages/create-analog/"]
+    },
+    {
+      "scope": "nx-plugin",
+      "label": "scope:nx-plugin",
+      "kind": "package",
+      "color": "0e8a16",
+      "description": "Changes in @analogjs/nx-plugin",
+      "prefixes": ["packages/nx-plugin/", "apps/nx-plugin-e2e/"]
+    },
+    {
+      "scope": "platform",
+      "label": "scope:platform",
+      "kind": "package",
+      "color": "0e8a16",
+      "description": "Changes in @analogjs/platform",
+      "prefixes": ["packages/platform/"]
+    },
+    {
+      "scope": "router",
+      "label": "scope:router",
+      "kind": "package",
+      "color": "0e8a16",
+      "description": "Changes in @analogjs/router",
+      "prefixes": ["packages/router/"]
+    },
+    {
+      "scope": "storybook-angular",
+      "label": "scope:storybook-angular",
+      "kind": "package",
+      "color": "0e8a16",
+      "description": "Changes in @analogjs/storybook-angular",
+      "prefixes": ["packages/storybook-angular/"]
+    },
+    {
+      "scope": "trpc",
+      "label": "scope:trpc",
+      "kind": "package",
+      "color": "0e8a16",
+      "description": "Changes in @analogjs/trpc",
+      "prefixes": [
+        "packages/trpc/",
+        "apps/trpc-app/",
+        "apps/trpc-app-e2e-playwright/"
+      ]
+    },
+    {
+      "scope": "vite-plugin-angular",
+      "label": "scope:vite-plugin-angular",
+      "kind": "package",
+      "color": "0e8a16",
+      "description": "Changes in @analogjs/vite-plugin-angular",
+      "prefixes": ["packages/vite-plugin-angular/"]
+    },
+    {
+      "scope": "vite-plugin-nitro",
+      "label": "scope:vite-plugin-nitro",
+      "kind": "package",
+      "color": "0e8a16",
+      "description": "Changes in @analogjs/vite-plugin-nitro",
+      "prefixes": ["packages/vite-plugin-nitro/"]
+    },
+    {
+      "scope": "vitest-angular",
+      "label": "scope:vitest-angular",
+      "kind": "package",
+      "color": "0e8a16",
+      "description": "Changes in @analogjs/vitest-angular",
+      "prefixes": [
+        "packages/vitest-angular/",
+        "packages/vitest-angular-tools/",
+        "tests/vitest-angular/"
+      ]
+    },
+    {
+      "scope": "docs",
+      "label": "scope:docs",
+      "kind": "auxiliary",
+      "color": "fbca04",
+      "description": "Documentation changes",
+      "prefixes": ["apps/docs-app/"],
+      "files": [
+        "README.md",
+        "CONTRIBUTING.md",
+        "CHANGELOG.md",
+        "CODE_OF_CONDUCT.md",
+        "MAINTAINER.md"
+      ]
+    },
+    {
+      "scope": "ci",
+      "label": "scope:ci",
+      "kind": "auxiliary",
+      "color": "5319e7",
+      "description": "GitHub workflow changes",
+      "prefixes": [".github/workflows/"]
+    },
+    {
+      "scope": "repo",
+      "label": "scope:repo",
+      "kind": "auxiliary",
+      "color": "6e7781",
+      "description": "Repository metadata and tooling",
+      "prefixes": [".githooks/"],
+      "files": [
+        ".github/CODEOWNERS",
+        ".github/PULL_REQUEST_TEMPLATE.md",
+        ".github/pr-scope-map.json",
+        "AGENTS.md",
+        "commitlint.config.cjs",
+        "nx.json",
+        "package.json",
+        "pnpm-workspace.yaml",
+        "release.config.cjs",
+        "server.mjs",
+        "tsconfig.base.json"
+      ]
+    }
+  ]
+}
