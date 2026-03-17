@@ -20,9 +20,9 @@ Closes #
 - [ ] Squash merge
 - [ ] No preference
 
-## Why preserve commits? [optional]
+## Commit preservation note [optional]
 
-<!-- If you recommend rebase merge, explain the commit boundaries maintainers should preserve. -->
+<!-- If you recommend rebase merge, briefly explain why the commit boundaries matter. -->
 
 ## What is the new behavior?
 
@@ -30,7 +30,7 @@ Closes #
 
 <!-- List the commands you ran and any manual verification you performed. -->
 
-- [ ] `pnpm prettier:check`
+- [ ] `nx format:check`
 - [ ] Relevant `nx build <project>`
 - [ ] Relevant `nx test <project>`
 - [ ] Manual verification

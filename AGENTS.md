@@ -26,8 +26,9 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - **Build all projects:** `pnpm build` (uses Nx)
 - **Serve main app:** `pnpm dev` or `pnpm start` (runs `nx serve`)
 - **Test all projects:** `pnpm test` (runs Vitest via Nx)
+- **Format workspace:** `nx format`
 - **Lint:** `nx lint <project>`
-- **Check formatting:** `pnpm prettier:check`
+- **Check formatting:** `nx format:check`
 - **Storybook:** `nx storybook <project>`
 - **Docs site:** `pnpm nx serve docs-app` (Docusaurus)
 - **E2E:** `nx e2e <project>` (Cypress/Playwright)
@@ -37,7 +38,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - `nx test <package-name>` (unit tests via Vitest)
 - `nx build <package-name>` to verify build
 - For E2E: `nx e2e create-analog-e2e` or `nx e2e analog-app-e2e-cypress`
-- Run `pnpm prettier:check` to verify formatting
+- Run `nx format:check` to verify formatting
 
 ## Project Structure & Conventions
 
@@ -77,7 +78,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - Prefer regrouping by affected package or primary package scope using the directory mapping above.
 - Before changing GitHub metadata, ask whether the user wants the PR title and description updated. If no PR exists for the branch, ask whether they want one created.
 - When a PR intentionally preserves multiple related commits across distinct areas, note in the PR description that the author recommends `rebase merge` so maintainers can preserve commit boundaries.
-- When recommending `rebase merge`, include a short explanation of which commit boundaries should be preserved.
+- When recommending `rebase merge`, include a brief note about why the commit boundaries matter.
 - If history is rewritten, remind the user that they can run `git push --force`, but do not do it on their behalf unless they explicitly ask.
 
 ## Nx Usage
