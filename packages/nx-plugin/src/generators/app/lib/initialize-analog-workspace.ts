@@ -17,7 +17,7 @@ export async function initializeAngularWorkspace(
   tree: Tree,
   installedNxVersion: string,
   normalizedOptions: NormalizedOptions,
-): Promise<string> {
+) {
   let angularVersion = getInstalledPackageVersion(tree, '@angular/core');
 
   if (!angularVersion) {
@@ -40,10 +40,6 @@ export async function initializeAngularWorkspace(
     }
   }
 
-  if (!angularVersion) {
-    throw new Error('Could not determine installed Angular version.');
-  }
-
   if (belowMinimumSupportedAngularVersion(angularVersion)) {
     throw new Error(
       stripIndents`Analog only supports an Angular version of 15 and higher`,
@@ -63,30 +59,29 @@ const initWithNxNamespace = async (
   addDependenciesToPackageJson(
     tree,
     {
-      '@angular/animations': '^19.0.0',
-      '@angular/common': '^19.0.0',
-      '@angular/compiler': '^19.0.0',
-      '@angular/core': '^19.0.0',
-      '@angular/forms': '^19.0.0',
-      '@angular/platform-browser': '^19.0.0',
-      '@angular/platform-browser-dynamic': '^19.0.0',
-      '@angular/platform-server': '^19.0.0',
-      '@angular/router': '^19.0.0',
+      '@angular/animations': '^21.0.0',
+      '@angular/common': '^21.0.0',
+      '@angular/compiler': '^21.0.0',
+      '@angular/core': '^21.0.0',
+      '@angular/forms': '^21.0.0',
+      '@angular/platform-browser': '^21.0.0',
+      '@angular/platform-browser-dynamic': '^21.0.0',
+      '@angular/platform-server': '^21.0.0',
+      '@angular/router': '^21.0.0',
       rxjs: '~7.8.0',
       tslib: '^2.4.0',
-      'zone.js': '~0.15.0',
     },
     {
-      '@angular-devkit/build-angular': '^19.0.0',
-      '@angular/compiler-cli': '^19.0.0',
+      '@angular-devkit/build-angular': '^21.0.0',
+      '@angular/compiler-cli': '^21.0.0',
       '@nx/angular': versions['@nx/angular'],
       '@nx/devkit': versions['@nx/devkit'],
       '@nx/eslint': versions['@nx/eslint'],
-      typescript: '~5.7.0',
+      typescript: '~5.9.0',
     },
   );
 
-  return getInstalledPackageVersion(tree, '@angular/core', undefined, true);
+  return getInstalledPackageVersion(tree, '@angular/core', null, true);
 };
 
 const initWithNrwlNamespace = async (
@@ -121,5 +116,5 @@ const initWithNrwlNamespace = async (
     skipInstall: true,
     skipFormat: skipFormat,
   });
-  return getInstalledPackageVersion(tree, '@angular/core', undefined, true);
+  return getInstalledPackageVersion(tree, '@angular/core', null, true);
 };

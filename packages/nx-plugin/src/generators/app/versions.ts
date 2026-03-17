@@ -6,11 +6,6 @@ export const V17_NX_DEVKIT = '~18.0.0';
 export const V17_NX_ANGULAR = '~18.0.0';
 export const V17_ANALOG_JS_CONTENT = '0.2.0';
 export const V17_ANALOG_JS_ROUTER = '0.2.0';
-export const V17_ANALOG_JS_TRPC = '0.2.0';
-export const V17_TRPC_CLIENT = '^10.25.0';
-export const V17_TRPC_SERVER = '^10.25.0';
-export const V17_ISOMORPHIC_FETCH = '^3.0.0';
-export const V17_SUPERJSON = '^2.2.1';
 
 // V15
 // dependencies
@@ -19,11 +14,6 @@ export const V15_NRWL_DEVKIT = '15.9.2';
 export const V15_NRWL_ANGULAR = '15.9.2';
 export const V15_ANALOG_JS_CONTENT = '0.2.0-beta.15';
 export const V15_ANALOG_JS_ROUTER = '0.2.0-beta.15';
-export const V15_ANALOG_JS_TRPC = '0.2.0-beta.15';
-export const V15_TRPC_CLIENT = '^10.25.0';
-export const V15_TRPC_SERVER = '^10.25.0';
-export const V15_ISOMORPHIC_FETCH = '^3.0.0';
-export const V15_SUPERJSON = '^2.2.1';
 export const V15_ANGULAR_PLATFORM_SERVER = '^15.0.0';
 export const V15_FRONT_MATTER = '^4.0.2';
 export const V15_MARKED = '^5.0.2';
