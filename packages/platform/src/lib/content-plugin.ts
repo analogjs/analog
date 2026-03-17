@@ -1,8 +1,7 @@
-import type { Plugin, UserConfig } from 'vite';
 // Namespace import is required to access `vite.rolldownVersion` which is only
 // present in Vite 8+ (backed by Rolldown).  Used to branch between
 // `rolldownOptions` and `rollupOptions` at build-config time.
-import { normalizePath, rolldownVersion } from 'vite';
+import * as vite from 'vite';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { globSync } from 'tinyglobby';
@@ -43,20 +42,24 @@ export function contentPlugin(
     prismOptions,
   }: ContentPluginOptions = {},
   options?: Options,
-): Plugin[] {
+): vite.Plugin[] {
   const cache = new Map<string, Content>();
 
   let markedHighlighter: MarkedContentHighlighter;
-  const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
-  let config: UserConfig;
+  const workspaceRoot = vite.normalizePath(
+    options?.workspaceRoot ?? process.cwd(),
+  );
+  let config: vite.UserConfig;
   let root: string;
 
-  const contentDiscoveryPlugins: Plugin[] = [
+  const contentDiscoveryPlugins: vite.Plugin[] = [
     {
       name: 'analog-content-glob-routes',
       config(_config) {
         config = _config;
-        root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
+        root = vite.normalizePath(
+          resolve(workspaceRoot, config.root || '.') || '.',
+        );
       },
       // Vite 8 / Rolldown "filtered transform" — the `filter.code` string
       // tells the bundler to skip this handler entirely for modules whose
@@ -121,7 +124,7 @@ export function contentPlugin(
       name: 'analogjs-invalidate-content-dirs',
       configureServer(server) {
         function invalidateContent(path: string) {
-          if (path.includes(normalizePath(`/content/`))) {
+          if (path.includes(vite.normalizePath(`/content/`))) {
             server.moduleGraph.fileToModulesMap.forEach((mods) => {
               mods.forEach((mod) => {
                 if (
@@ -157,7 +160,7 @@ export function contentPlugin(
           return {
             build: {
               // Vite 8+ (Rolldown) uses `rolldownOptions`; Vite ≤7 uses `rollupOptions`.
-              [rolldownVersion ? 'rolldownOptions' : 'rollupOptions']: {
+              [vite.rolldownVersion ? 'rolldownOptions' : 'rollupOptions']: {
                 external: ['@analogjs/content'],
               },
             },

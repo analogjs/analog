@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module';
-import { normalizePath, Plugin, rolldownVersion } from 'vite';
+import * as vite from 'vite';
 
 /**
  * SSR build patches for Angular platform-server, Zone.js, and Domino.
@@ -17,8 +17,8 @@ import { normalizePath, Plugin, rolldownVersion } from 'vite';
  * - xhr2: strips Node-specific `os`/`process` references for SSR bundling.
  * - domino/sloppy.js: replaces `with()` statements that are illegal in ESM.
  */
-export function ssrBuildPlugin(): Plugin[] {
-  const plugins: Plugin[] = [
+export function ssrBuildPlugin(): vite.Plugin[] {
+  const plugins: vite.Plugin[] = [
     {
       name: 'analogjs-ssr-build-plugin',
       apply: 'build',
@@ -54,7 +54,7 @@ export function ssrBuildPlugin(): Plugin[] {
             // platform-server by `withFilter`).  For Vite ≤7 we fall back
             // to text-based replaceAll — imprecise but sufficient for the
             // known occurrences in @angular/platform-server bundles.
-            if (!rolldownVersion) {
+            if (!vite.rolldownVersion) {
               result = result
                 .replaceAll('global.', 'globalThis.')
                 .replaceAll('global,', 'globalThis,')
@@ -64,7 +64,7 @@ export function ssrBuildPlugin(): Plugin[] {
             return { code: result };
           }
 
-          if (id.includes(normalizePath('xhr2.js'))) {
+          if (id.includes(vite.normalizePath('xhr2.js'))) {
             return {
               code: code
                 .replace('os.type()', `''`)
@@ -74,7 +74,7 @@ export function ssrBuildPlugin(): Plugin[] {
             };
           }
 
-          if (id.includes(normalizePath('domino/lib/sloppy.js'))) {
+          if (id.includes(vite.normalizePath('domino/lib/sloppy.js'))) {
             return {
               code: code.replace(/with\(/gi, 'if('),
             };
@@ -91,8 +91,8 @@ export function ssrBuildPlugin(): Plugin[] {
   //
   // `createRequire` is used instead of dynamic `import()` because this code
   // runs synchronously during plugin construction (not inside an async hook).
-  // Rolldown is guaranteed to be installed when `rolldownVersion` is truthy.
-  if (rolldownVersion) {
+  // Rolldown is guaranteed to be installed when `vite.rolldownVersion` is truthy.
+  if (vite.rolldownVersion) {
     const require = createRequire(import.meta.url);
     const { replacePlugin } =
       require('rolldown/plugins') as typeof import('rolldown/plugins');
@@ -106,7 +106,7 @@ export function ssrBuildPlugin(): Plugin[] {
           { preventAssignment: true, objectGuards: true },
         ),
         { transform: { id: /platform-server/ } },
-      ) as unknown as Plugin,
+      ) as unknown as vite.Plugin,
     );
   }
 
