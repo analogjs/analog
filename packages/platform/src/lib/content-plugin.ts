@@ -1,5 +1,8 @@
 import type { Plugin, UserConfig } from 'vite';
-import { normalizePath } from 'vite';
+// Namespace import is required to access `vite.rolldownVersion` which is only
+// present in Vite 8+ (backed by Rolldown).  Used to branch between
+// `rolldownOptions` and `rollupOptions` at build-config time.
+import { normalizePath, rolldownVersion } from 'vite';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { globSync } from 'tinyglobby';
@@ -55,53 +58,63 @@ export function contentPlugin(
         config = _config;
         root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
       },
-      transform(code) {
-        if (code.includes('ANALOG_CONTENT_FILE_LIST')) {
-          const contentFilesList: string[] = globSync(
-            [
-              `${root}/src/content/**/*.md`,
-              ...(options?.additionalContentDirs || []).map(
-                (glob) => `${workspaceRoot}${glob}/**/*.md`,
-              ),
-            ],
-            { dot: true },
-          );
-
-          const eagerImports: string[] = [];
-
-          contentFilesList.forEach((module, index) => {
-            // CRITICAL: tinyglobby returns relative paths like "apps/blog-app/src/content/file.md"
-            // These MUST be converted to absolute paths for ES module imports
-            // Otherwise Node.js treats "apps" as a package name and throws "Cannot find package 'apps'"
-            const absolutePath = module.startsWith('/')
-              ? module
-              : `${workspaceRoot}/${module}`;
-            eagerImports.push(
-              `import { default as analog_module_${index} } from "${absolutePath}?analog-content-list=true";`,
+      // Vite 8 / Rolldown "filtered transform" — the `filter.code` string
+      // tells the bundler to skip this handler entirely for modules whose
+      // source does not contain the substring, avoiding unnecessary JS→Rust
+      // round-trips.  The inner `code.includes()` guard is kept for Vite 7
+      // compat where filters are not evaluated by the bundler.
+      transform: {
+        filter: {
+          code: 'ANALOG_CONTENT_FILE_LIST',
+        },
+        handler(code) {
+          if (code.includes('ANALOG_CONTENT_FILE_LIST')) {
+            const contentFilesList: string[] = globSync(
+              [
+                `${root}/src/content/**/*.md`,
+                ...(options?.additionalContentDirs || []).map(
+                  (glob) => `${workspaceRoot}${glob}/**/*.md`,
+                ),
+              ],
+              { dot: true },
             );
-          });
 
-          let result = code.replace(
-            'let ANALOG_CONTENT_FILE_LIST = {};',
-            `
-            let ANALOG_CONTENT_FILE_LIST = {${contentFilesList.map(
-              (module, index) =>
-                `"${module.replace(root, '')}": analog_module_${index}`,
-            )}};
-          `,
-          );
+            const eagerImports: string[] = [];
 
-          if (!code.includes('analog_module_')) {
-            result = `${eagerImports.join('\n')}\n${result}`;
+            contentFilesList.forEach((module, index) => {
+              // CRITICAL: tinyglobby returns relative paths like "apps/blog-app/src/content/file.md"
+              // These MUST be converted to absolute paths for ES module imports
+              // Otherwise Node.js treats "apps" as a package name and throws "Cannot find package 'apps'"
+              const absolutePath = module.startsWith('/')
+                ? module
+                : `${workspaceRoot}/${module}`;
+              eagerImports.push(
+                `import { default as analog_module_${index} } from "${absolutePath}?analog-content-list=true";`,
+              );
+            });
+
+            let result = code.replace(
+              'let ANALOG_CONTENT_FILE_LIST = {};',
+              `
+              let ANALOG_CONTENT_FILE_LIST = {${contentFilesList.map(
+                (module, index) =>
+                  `"${module.replace(root, '')}": analog_module_${index}`,
+              )}};
+            `,
+            );
+
+            if (!code.includes('analog_module_')) {
+              result = `${eagerImports.join('\n')}\n${result}`;
+            }
+
+            return {
+              code: result,
+              map: { mappings: '' },
+            };
           }
 
-          return {
-            code: result,
-            map: { mappings: '' },
-          };
-        }
-
-        return;
+          return;
+        },
       },
     },
     {
@@ -143,7 +156,8 @@ export function contentPlugin(
         config() {
           return {
             build: {
-              rollupOptions: {
+              // Vite 8+ (Rolldown) uses `rolldownOptions`; Vite ≤7 uses `rollupOptions`.
+              [rolldownVersion ? 'rolldownOptions' : 'rollupOptions']: {
                 external: ['@analogjs/content'],
               },
             },
@@ -152,22 +166,27 @@ export function contentPlugin(
       },
       {
         name: 'analogjs-exclude-content-import',
-        transform(code) {
-          /**
-           * Remove the package so it doesn't get
-           * referenced when building for serverless
-           * functions.
-           */
-          if (code.includes(`import('@analogjs/content')`)) {
-            return {
-              code: code.replace(
-                `import('@analogjs/content')`,
-                'Promise.resolve({})',
-              ),
-            };
-          }
+        transform: {
+          filter: {
+            code: '@analogjs/content',
+          },
+          handler(code) {
+            /**
+             * Remove the package so it doesn't get
+             * referenced when building for serverless
+             * functions.
+             */
+            if (code.includes(`import('@analogjs/content')`)) {
+              return {
+                code: code.replace(
+                  `import('@analogjs/content')`,
+                  'Promise.resolve({})',
+                ),
+              };
+            }
 
-          return;
+            return;
+          },
         },
       },
       ...contentDiscoveryPlugins,
@@ -177,35 +196,44 @@ export function contentPlugin(
   return [
     {
       name: 'analogjs-content-frontmatter',
-      async transform(code, id) {
-        // Transform only the frontmatter into a JSON object for lists
-        if (!id.includes('analog-content-list=true')) {
-          return;
-        }
+      // Filter by module ID so only `?analog-content-list=true` virtual
+      // imports enter the handler.  Returns `moduleSideEffects: false` so
+      // Rolldown can tree-shake unused content list entries.
+      transform: {
+        filter: {
+          id: /analog-content-list=true/,
+        },
+        async handler(code, id) {
+          const cachedContent = cache.get(id);
+          // There's no reason to run `readFileSync` and frontmatter parsing if the
+          // `transform` hook is called with the same code. In such cases, we can simply
+          // return the cached attributes, which is faster than repeatedly reading files
+          // synchronously during the build process.
+          if (cachedContent?.code === code) {
+            return {
+              code: `export default ${cachedContent.attributes}`,
+              moduleSideEffects: false,
+            };
+          }
 
-        const cachedContent = cache.get(id);
-        // There's no reason to run `readFileSync` and frontmatter parsing if the
-        // `transform` hook is called with the same code. In such cases, we can simply
-        // return the cached attributes, which is faster than repeatedly reading files
-        // synchronously during the build process.
-        if (cachedContent?.code === code) {
-          return `export default ${cachedContent.attributes}`;
-        }
+          const fm: any = await import('front-matter');
+          // The `default` property will be available in CommonJS environment, for instance,
+          // when running unit tests. It's safe to retrieve `default` first, since we still
+          // fallback to the original implementation.
+          const frontmatter = fm.default || fm;
+          const fileContents = readFileSync(id.split('?')[0], 'utf8');
+          const { attributes } = frontmatter(fileContents);
+          const content = {
+            code,
+            attributes: JSON.stringify(attributes),
+          };
+          cache.set(id, content);
 
-        const fm: any = await import('front-matter');
-        // The `default` property will be available in CommonJS environment, for instance,
-        // when running unit tests. It's safe to retrieve `default` first, since we still
-        // fallback to the original implementation.
-        const frontmatter = fm.default || fm;
-        const fileContents = readFileSync(id.split('?')[0], 'utf8');
-        const { attributes } = frontmatter(fileContents);
-        const content = {
-          code,
-          attributes: JSON.stringify(attributes),
-        };
-        cache.set(id, content);
-
-        return `export default ${content.attributes}`;
+          return {
+            code: `export default ${content.attributes}`,
+            moduleSideEffects: false,
+          };
+        },
       },
     },
     {
