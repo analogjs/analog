@@ -2,6 +2,7 @@ import { resolve } from 'node:path';
 import { core as PresetCore } from '@storybook/angular/preset';
 import { fileURLToPath } from 'node:url';
 import type { Plugin, UserConfig } from 'vite';
+import * as vite from 'vite';
 
 export const previewAnnotations = async (
   entries: string[] = [],
@@ -208,7 +209,7 @@ function angularOptionsPlugin(
   };
 }
 
-function storybookEsbuildPlugin(): Plugin {
+function storybookTransformConfigPlugin(): Plugin {
   return {
     name: 'analogjs-storybook-transform-config',
     apply: 'build',

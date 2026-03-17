@@ -12,21 +12,25 @@ vi.mock('vite', () => ({
   rolldownVersion: undefined,
 }));
 
+function registerMocks(rolldownVersion?: string) {
+  vi.doMock('@analogjs/vite-plugin-angular', () => ({
+    default: () => ({ name: 'angular-mock' }),
+  }));
+  vi.doMock('@angular/core', () => ({
+    enableProdMode: vi.fn(),
+  }));
+  vi.doMock('vite', () => ({
+    rolldownVersion,
+  }));
+}
+
 describe('astro-angular plugin', () => {
   beforeEach(() => {
     vi.resetModules();
   });
 
   it('should return astro configurations', async () => {
-    vi.doMock('@analogjs/vite-plugin-angular', () => ({
-      default: () => ({ name: 'angular-mock' }),
-    }));
-    vi.doMock('@angular/core', () => ({
-      enableProdMode: vi.fn(),
-    }));
-    vi.doMock('vite', () => ({
-      rolldownVersion: undefined,
-    }));
+    registerMocks();
     const mod = await import('./index');
 
     expect(mod.default().name).toEqual('@analogjs/astro-angular');
@@ -38,15 +42,7 @@ describe('astro-angular plugin', () => {
 
   describe('vite configuration', () => {
     it('should use esbuild config key when rolldownVersion is not available', async () => {
-      vi.doMock('vite', () => ({
-        rolldownVersion: undefined,
-      }));
-      vi.doMock('@analogjs/vite-plugin-angular', () => ({
-        default: () => ({ name: 'angular-mock' }),
-      }));
-      vi.doMock('@angular/core', () => ({
-        enableProdMode: vi.fn(),
-      }));
+      registerMocks();
       const mod = await import('./index');
       const plugin = mod.default();
 
@@ -66,15 +62,7 @@ describe('astro-angular plugin', () => {
     });
 
     it('should use oxc config key when rolldownVersion is available', async () => {
-      vi.doMock('vite', () => ({
-        rolldownVersion: '1.0.0',
-      }));
-      vi.doMock('@analogjs/vite-plugin-angular', () => ({
-        default: () => ({ name: 'angular-mock' }),
-      }));
-      vi.doMock('@angular/core', () => ({
-        enableProdMode: vi.fn(),
-      }));
+      registerMocks('1.0.0');
       const mod = await import('./index');
       const plugin = mod.default();
 
