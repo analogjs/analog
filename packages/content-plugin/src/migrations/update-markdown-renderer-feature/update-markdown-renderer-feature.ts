@@ -7,7 +7,9 @@ import {
 } from '@nx/devkit';
 import MagicString from 'magic-string';
 
-export default async function update(host: Tree) {
+export default async function update(
+  host: Tree,
+): Promise<(() => void) | undefined> {
   // oxc-parser is ESM-only; dynamic import for CJS compatibility
   const { parseSync, Visitor } = await import('oxc-parser');
 
@@ -59,7 +61,8 @@ export default async function update(host: Tree) {
         const s = new MagicString(content);
 
         // Insert import after the last existing import statement
-        const lastImport = result.module.staticImports.at(-1);
+        const imports = result.module.staticImports;
+        const lastImport = imports[imports.length - 1];
         const importInsertPos = lastImport ? lastImport.end : 0;
         s.appendRight(
           importInsertPos,
