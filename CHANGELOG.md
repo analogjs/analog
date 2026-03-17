@@ -1,3 +1,9 @@
+# [2.4.0-beta.14](https://github.com/analogjs/analog/compare/v2.4.0-beta.13...v2.4.0-beta.14) (2026-03-17)
+
+### Bug Fixes
+
+- fix build and unit tests ([dc6842c](https://github.com/analogjs/analog/commit/dc6842cd9ef79cc1274d92b908f25ec80bbca9d3))
+
 # [2.4.0-beta.13](https://github.com/analogjs/analog/compare/v2.4.0-beta.12...v2.4.0-beta.13) (2026-03-16)
 
 ### Features
