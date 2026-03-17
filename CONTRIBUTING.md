@@ -122,6 +122,8 @@ pnpm nx serve-static docs-app
 - If you've added new functionality, **please** include tests which validate its behavior.
 - Make reference to possible [issues](https://github.com/analogjs/analog/issues) on PR comment.
 - PRs may include multiple commits. However, please keep content of all commits related. Raise separate PRs for disjoint changes.
+- Use the PR template to capture the affected scope, your test plan, and any maintainer-facing merge recommendation.
+- `Squash merge` is highly preferred. If you recommend a non-squash merge, add a brief note explaining why the commit boundaries matter and why the PR should bypass focused changes per package.
 
 ### Pull Request title guidelines
 

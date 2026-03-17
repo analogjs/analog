@@ -26,8 +26,9 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - **Build all projects:** `pnpm build` (uses Nx)
 - **Serve main app:** `pnpm dev` or `pnpm start` (runs `nx serve`)
 - **Test all projects:** `pnpm test` (runs Vitest via Nx)
+- **Format workspace:** `nx format`
 - **Lint:** `nx lint <project>`
-- **Check formatting:** `pnpm prettier:check`
+- **Check formatting:** `nx format:check`
 - **Storybook:** `nx storybook <project>`
 - **Docs site:** `pnpm nx serve docs-app` (Docusaurus)
 - **E2E:** `nx e2e <project>` (Cypress/Playwright)
@@ -37,8 +38,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - `nx test <package-name>` (unit tests via Vitest)
 - `nx build <package-name>` to verify build
 - For E2E: `nx e2e create-analog-e2e` or `nx e2e analog-app-e2e-cypress`
-- Run `pnpm prettier:check` to verify formatting
-- Always validate existing tests and builds pass before submitting changes
+- Run `nx format:check` to verify formatting
 
 ## Project Structure & Conventions
 
@@ -65,12 +65,21 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 | `packages/trpc`                | `@analogjs/trpc`                | `trpc`                |
 | `packages/astro-angular`       | `@analogjs/astro-angular`       | `astro-angular`       |
 
-## Branch Strategy
+## Contribution Policy
 
-- Base branch: `beta`
-- PRs should be rebased against `beta`
-- Conventional Commits required for PR titles (e.g., `feat(platform): add new feature`)
-- Commit types: `feat`, `fix`, `docs`, `build`, `ci`, `perf`, `refactor`, `style`, `test`
+- Use `CONTRIBUTING.md` as the source of truth for base branch, PR requirements, title and commit conventions, supported types/scopes, breaking change notes, and submission expectations.
+- Use `.github/PULL_REQUEST_TEMPLATE.md` for PR body structure, including affected scope, test plan, and maintainer-facing merge-strategy recommendations.
+
+## Commit Review Workflow
+
+- Before reviewing branch history, run `git fetch --all`.
+- Treat `https://github.com/analogjs/analog.git` as the upstream source of truth and compare the current branch against the relevant `analogjs/*` remote branch.
+- If the branch mixes multiple packages or concerns, recommend `git reset --soft <base-commit>` and re-commit the staged changes into smaller, policy-aligned groups.
+- Prefer regrouping by affected package or primary package scope using the directory mapping above.
+- Before changing GitHub metadata, ask whether the user wants the PR title and description updated. If no PR exists for the branch, ask whether they want one created.
+- Treat `Squash merge` as the highly preferred maintainer recommendation.
+- Recommend a non-squash merge only when the PR intentionally preserves important commit boundaries, and include a brief note about why those boundaries matter and why the PR should bypass focused changes per package.
+- If history is rewritten, remind the user that they can run `git push --force`, but do not do it on their behalf unless they explicitly ask.
 
 ## Nx Usage
 
@@ -83,7 +92,6 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
 - Keep changes minimal and targeted.
 - Backward compatibility is critical for new features, allowing progressive adoption.
-- Only make changes to one package/app at a time unless absolutely necessary.
 - Keep code concise with emphasis on readability, avoid clever solutions and abstractions.
 - Always scan existing codebase for examples and patterns for implementation.
 - Prefer using existing Angular APIs, with wrappers where needed.
@@ -97,9 +105,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
 - Add Angular SFC references to features or docs
 - Create new abstractions for one-time operations
-- Modify multiple packages in a single PR unless necessary
 - Add verbose comments, docstrings, or type annotations to code you didn't change
-- Skip running existing tests before submitting changes
 - Add error handling or validation for scenarios that can't happen
 - Design for hypothetical future requirements
 
