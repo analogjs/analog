@@ -1,3 +1,18 @@
+# [3.0.0-alpha.6](https://github.com/analogjs/analog/compare/v3.0.0-alpha.5...v3.0.0-alpha.6) (2026-03-17)
+
+### Bug Fixes
+
+- **astro-angular:** support astro v6 using vite environment api ([#2133](https://github.com/analogjs/analog/issues/2133)) ([e9fd9c6](https://github.com/analogjs/analog/commit/e9fd9c6134fa33aa0283bda7efb3c8f54cef15ab))
+- fix build and unit tests ([dc6842c](https://github.com/analogjs/analog/commit/dc6842cd9ef79cc1274d92b908f25ec80bbca9d3))
+- **router:** fix and add unit tests for route module invalidation on file changes ([b9325af](https://github.com/analogjs/analog/commit/b9325af0f0748c7a69610de5782e1fe12461164e))
+- **vite-plugin-angular:** normalize paths across plugin & live reload ([#2126](https://github.com/analogjs/analog/issues/2126)) ([cc98bf7](https://github.com/analogjs/analog/commit/cc98bf727b181077c87a536f29d7128414d8904d))
+- **vitest-angular:** support environment providers ([#2129](https://github.com/analogjs/analog/issues/2129)) ([a90aa12](https://github.com/analogjs/analog/commit/a90aa1272ed64d626386283ae7b9a09775a07287))
+
+### Features
+
+- **vite-plugin-angular:** working fileReplacements and liveReload for Angular Compilation API ([7adf8c1](https://github.com/analogjs/analog/commit/7adf8c18b7786047dc6156eb6c2eaeff0961e5f4))
+- **vitest-angular:** add `teardown.destroyAfterEach` option and deprecate `browserMode` option ([#2054](https://github.com/analogjs/analog/issues/2054)) ([2fe2e1c](https://github.com/analogjs/analog/commit/2fe2e1c9304a933b0070fb2e28c8e92def68f077))
+
 # [3.0.0-alpha.5](https://github.com/analogjs/analog/compare/v3.0.0-alpha.4...v3.0.0-alpha.5) (2026-03-17)
 
 ### Features
