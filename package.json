@@ -14,7 +14,7 @@
     "e2e": "nx run-many --target e2e --projects create-analog-e2e,analog-app-e2e-cypress --exclude analog-app-e2e-playwright",
     "lint:check": "oxlint -c oxlint.config.ts .",
     "lint:legacy": "pnpm nx run-many --target lint",
-    "lint:types": "node --experimental-strip-types tools/toggle-base-url.mts --start && oxlint -c oxlint.config.ts --type-aware .; EXIT=$?; node --experimental-strip-types tools/toggle-base-url.mts --end; exit $EXIT",
+    "lint:types": "oxlint -c oxlint.config.ts --type-aware .",
     "lint": "pnpm run /^lint:/",
     "ng": "nx",
     "preinstall": "npx only-allow pnpm",

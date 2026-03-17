@@ -50,15 +50,14 @@
         "./node_modules/@analogjs/router/server/actions"
       ],
       "@analogjs/router/manifest": [
-        "./node_modules/@analogjs/router/manifest",
-        "packages/router/manifest/src/index.ts"
+        "./packages/router/manifest/src/index.ts",
+        "./node_modules/@analogjs/router/manifest"
       ],
       "@analogjs/router/tokens": [
         "./packages/router/tokens/src/index.ts",
         "./node_modules/@analogjs/router/tokens"
       ],
       "@analogjs/top-bar": ["./libs/top-bar/src/index.ts"],
-      "@analogjs/trpc": ["./packages/trpc/src/index.ts"],
       "@analogjs/vite-plugin-angular": [
         "./packages/vite-plugin-angular/src/index.ts",
         "./node_modules/@analogjs/vite-plugin-angular"
@@ -72,12 +71,12 @@
         "./node_modules/@analogjs/vite-plugin-nitro"
       ],
       "@analogjs/vite-plugin-routes": [
-        "./node_modules/@analogjs/vite-plugin-routes",
-        "packages/vite-plugin-routes/src/index.ts"
+        "./packages/vite-plugin-routes/src/index.ts",
+        "./node_modules/@analogjs/vite-plugin-routes"
       ],
-      "libs/card": ["libs/card/src/index.ts"],
-      "my-package": ["./dist/libs/my-package", "libs/my-package/src/index.ts"],
-      "shared/feature": ["libs/shared/feature/src/index.ts"],
+      "libs/card": ["./libs/card/src/index.ts"],
+      "my-package": ["./libs/my-package/src/index.ts"],
+      "shared/feature": ["./libs/shared/feature/src/index.ts"],
       "vitest-angular": [
         "./packages/vitest-angular/src/index.ts",
         "./node_modules/@analogjs/vitest-angular"

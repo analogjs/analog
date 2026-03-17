@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "allowJs": true,
     "esModuleInterop": true,
     "jsx": "react",
@@ -12,7 +13,6 @@
       "@docusaurus/module-type-aliases",
       "@docusaurus/theme-classic"
     ],
-    "baseUrl": ".",
     "paths": {
       "@site/*": ["./*"]
     }
