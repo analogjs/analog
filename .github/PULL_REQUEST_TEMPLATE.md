@@ -31,8 +31,8 @@ Closes #
 <!-- List the commands you ran and any manual verification you performed. -->
 
 - [ ] `nx format:check`
-- [ ] Relevant `nx build <project>`
-- [ ] Relevant `nx test <project>`
+- [ ] `pnpm build`
+- [ ] `pnpm test`
 - [ ] Manual verification
 
 ## Does this PR introduce a breaking change?
