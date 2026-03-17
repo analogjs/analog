@@ -4,7 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/nx-plugin-e2e/src",
   "tags": [],
-  "implicitDependencies": ["platform", "trpc", "content"],
+  "implicitDependencies": ["platform", "content"],
   "targets": {
     "e2e": {
       "executor": "@nx/vitest:test"

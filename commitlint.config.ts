@@ -19,7 +19,6 @@ export default {
         'content',
         'content-plugin',
         'nx-plugin',
-        'trpc',
       ],
     ],
   },
