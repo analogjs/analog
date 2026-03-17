@@ -31,8 +31,8 @@ afterEach(async () => {
 describe('My Store', () => {
   test(`Given the user has navigated to the home page
     Then the app title is visible`, async () => {
-    await expect(
-      page.locator('role=heading[level=1] >> text=My Store'),
-    ).toContain(/My Store/i);
+    expect(await page.locator('h2').first().textContent()).toContain(
+      'Products',
+    );
   });
 });

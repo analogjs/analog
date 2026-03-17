@@ -43,6 +43,8 @@ export default defineConfig(({ mode }) => ({
 
 Content routes include support for frontmatter, metatags, and syntax highlighting with PrismJS.
 
+If you want runtime validation for frontmatter attributes, use `contentFileResource({ schema })` or `parseRawContentFile()` with a Standard Schema-compatible library. See [Schema Validation](../data-fetching/validation#validating-content-frontmatter).
+
 The example route below in `src/app/pages/about.md` defines an `/about` route.
 
 ```md

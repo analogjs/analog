@@ -126,6 +126,33 @@ export default defineHandler((event) => {
 });
 ```
 
+## Validated API Routes
+
+For route handlers that need runtime validation and typed inputs, use `defineApiRoute()` from `@analogjs/router/server/actions`. It can validate route `params`, query strings, request bodies, and response payloads with any Standard Schema-compatible library.
+
+```ts
+// src/server/routes/api/v1/users/[id].put.ts
+import { defineApiRoute } from '@analogjs/router/server/actions';
+import * as v from 'valibot';
+
+export default defineApiRoute({
+  params: v.object({
+    id: v.pipe(
+      v.string(),
+      v.transform((value) => Number(value)),
+    ),
+  }),
+  body: v.object({
+    name: v.pipe(v.string(), v.minLength(1)),
+  }),
+  handler: async ({ params, body }) => {
+    return updateUser(params.id, body.name);
+  },
+});
+```
+
+For the full validation guide, including server actions, content frontmatter, and Standard Schema examples, see [Schema Validation](../data-fetching/validation).
+
 ## Catch-all Routes
 
 Catch-all routes are helpful for fallback route handling.

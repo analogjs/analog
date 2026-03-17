@@ -1,0 +1,46 @@
+{
+  "name": "vite-plugin-routes",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/vite-plugin-routes/src",
+  "projectType": "library",
+  "tags": ["type:release"],
+  "targets": {
+    "build-package": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "outputPath": "node_modules/@analogjs/vite-plugin-routes",
+        "main": "packages/vite-plugin-routes/src/index.ts",
+        "tsConfig": "packages/vite-plugin-routes/tsconfig.lib.json",
+        "assets": ["packages/vite-plugin-routes/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/vite-plugin-routes"],
+      "options": {
+        "commands": ["nx build-package vite-plugin-routes"],
+        "parallel": false
+      },
+      "dependsOn": ["^build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["build", "^build"],
+      "options": {
+        "passWithNoTests": true
+      }
+    },
+    "version": {
+      "executor": "@jscutlery/semver:version",
+      "options": {
+        "preset": "conventional",
+        "tagPrefix": "vite-plugin-routes@"
+      }
+    }
+  }
+}

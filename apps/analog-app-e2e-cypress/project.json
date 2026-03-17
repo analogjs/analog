@@ -18,8 +18,9 @@
     },
     "e2e": {
       "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
       "options": {
-        "command": "start-server-and-test --expect 200 'nx run analog-app:serve-nitro' http://localhost:3000 'nx run analog-app-e2e-cypress:cypress'"
+        "command": "start-server-and-test 'node dist/apps/analog-app/analog/server/index.mjs' http://localhost:3000 'nx run analog-app-e2e-cypress:cypress'"
       },
       "configurations": {
         "watch": {

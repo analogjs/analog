@@ -1,0 +1,116 @@
+import { DOCUMENT } from '@angular/common';
+import { inject } from '@angular/core';
+import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs/operators';
+
+import type { Graph, Thing, WithContext } from 'schema-dts';
+
+// Re-export from manifest so there is a single canonical implementation.
+export { normalizeJsonLd, isJsonLdObject } from '@analogjs/router/manifest';
+export type { JsonLdObject } from '@analogjs/router/manifest';
+
+// Local imports for use within this file.
+import { normalizeJsonLd, type JsonLdObject } from '@analogjs/router/manifest';
+
+export type JsonLd = JsonLdObject | JsonLdObject[];
+
+/**
+ * Typed JSON-LD document based on `schema-dts`.
+ *
+ * Accepts single Schema.org nodes (`WithContext<Thing>`),
+ * `@graph`-based documents (`Graph`), or arrays of nodes.
+ *
+ * This is the canonical JSON-LD type for route authoring surfaces
+ * (`routeMeta.jsonLd`, `routeJsonLd`, generated manifest).
+ *
+ * @example
+ * ```ts
+ * import type { WebPage, WithContext } from 'schema-dts';
+ *
+ * export const routeMeta = {
+ *   jsonLd: {
+ *     '@context': 'https://schema.org',
+ *     '@type': 'WebPage',
+ *     name: 'Products',
+ *   } satisfies WithContext<WebPage>,
+ * };
+ * ```
+ */
+export type AnalogJsonLdDocument =
+  | WithContext<Thing>
+  | Graph
+  | Array<WithContext<Thing>>;
+
+export const ROUTE_JSON_LD_KEY = Symbol('@analogjs/router Route JSON-LD Key');
+const JSON_LD_SCRIPT_SELECTOR = 'script[data-analog-json-ld]';
+
+export function updateJsonLdOnRouteChange(): void {
+  const router = inject(Router);
+  const document = inject(DOCUMENT);
+
+  router.events
+    .pipe(filter((event) => event instanceof NavigationEnd))
+    .subscribe(() => {
+      applyJsonLdToDocument(
+        document,
+        getJsonLdEntries(router.routerState.snapshot.root),
+      );
+    });
+}
+
+export function serializeJsonLd(entry: JsonLdObject): string | null {
+  try {
+    return JSON.stringify(entry)
+      .replace(/</g, '\\u003c')
+      .replace(/>/g, '\\u003e')
+      .replace(/&/g, '\\u0026')
+      .replace(/\u2028/g, '\\u2028')
+      .replace(/\u2029/g, '\\u2029');
+  } catch {
+    return null;
+  }
+}
+
+function getJsonLdEntries(route: ActivatedRouteSnapshot): JsonLdObject[] {
+  const entries: JsonLdObject[] = [];
+  let currentRoute: ActivatedRouteSnapshot | null = route;
+
+  while (currentRoute) {
+    entries.push(...normalizeJsonLd(currentRoute.data[ROUTE_JSON_LD_KEY]));
+    currentRoute = currentRoute.firstChild;
+  }
+
+  return entries;
+}
+
+function applyJsonLdToDocument(
+  document: Document,
+  entries: JsonLdObject[],
+): void {
+  document.querySelectorAll(JSON_LD_SCRIPT_SELECTOR).forEach((element) => {
+    element.remove();
+  });
+
+  if (entries.length === 0) {
+    return;
+  }
+
+  const head = document.head || document.getElementsByTagName('head')[0];
+  if (!head) {
+    return;
+  }
+
+  entries.forEach((entry, index) => {
+    const serialized = serializeJsonLd(entry);
+    if (!serialized) {
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.setAttribute('data-analog-json-ld', 'true');
+    script.setAttribute('data-analog-json-ld-index', String(index));
+    script.textContent = serialized;
+    head.appendChild(script);
+  });
+}

@@ -1,0 +1,265 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  detectJsonLdModuleExports,
+  extractMarkdownJsonLd,
+  generateJsonLdManifestSource,
+  type JsonLdManifestEntry,
+} from './json-ld-manifest-plugin.js';
+
+describe('json-ld-manifest-plugin helpers', () => {
+  it('detects JSON-LD exports in route modules', () => {
+    expect(
+      detectJsonLdModuleExports(`
+        export const routeJsonLd = {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+        };
+      `),
+    ).toBe(true);
+
+    expect(
+      detectJsonLdModuleExports(`
+        export const routeMeta = {
+          title: 'About',
+          jsonLd: {
+            '@context': 'https://schema.org',
+            '@type': 'WebPage',
+          },
+        };
+      `),
+    ).toBe(true);
+
+    expect(
+      detectJsonLdModuleExports(`
+        export const routeMeta = {
+          title: 'About',
+        };
+      `),
+    ).toBe(false);
+  });
+
+  it('extracts JSON-LD from markdown frontmatter', () => {
+    const markdown = `---
+title: Hello
+jsonLd:
+  "@context": https://schema.org
+  "@type": Article
+  headline: Hello Analog
+---
+
+Hello world
+`;
+
+    expect(extractMarkdownJsonLd(markdown)).toEqual([
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: 'Hello Analog',
+      },
+    ]);
+  });
+
+  it('generates source for module and content manifest entries', () => {
+    const source = generateJsonLdManifestSource(
+      [
+        {
+          kind: 'module',
+          routePath: '/article',
+          sourceFile: '/src/app/pages/article.page.ts',
+          importAlias: 'routeModule0',
+        },
+        {
+          kind: 'content',
+          routePath: '/guides/intro',
+          sourceFile: '/src/content/guides/intro.md',
+          jsonLd: [
+            {
+              '@context': 'https://schema.org',
+              '@type': 'Article',
+              headline: 'Intro',
+            },
+          ],
+        },
+      ],
+      '.analog/route-jsonld.gen.ts',
+    );
+
+    expect(source).toContain(
+      "import * as routeModule0 from '../src/app/pages/article.page'",
+    );
+    expect(source).toContain("['/article'");
+    expect(source).toContain('resolveModuleJsonLd(routeModule0)');
+    expect(source).toContain("['/guides/intro'");
+    expect(source).toContain('"headline":"Intro"');
+    expect(source).toContain(
+      "import type { Graph, Thing, WithContext } from 'schema-dts'",
+    );
+    expect(source).toContain('AnalogJsonLdDocument');
+  });
+
+  it('does not detect non-exported routeJsonLd', () => {
+    expect(
+      detectJsonLdModuleExports(`
+        const routeJsonLd = {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+        };
+      `),
+    ).toBe(false);
+  });
+
+  it('does not detect routeMeta without jsonLd property', () => {
+    expect(
+      detectJsonLdModuleExports(`
+        export const routeMeta = {
+          title: 'About',
+          meta: [{ name: 'description', content: 'test' }],
+        };
+      `),
+    ).toBe(false);
+  });
+
+  it('detects routeJsonLd as a function export', () => {
+    expect(
+      detectJsonLdModuleExports(`
+        export const routeJsonLd = (route) => ({
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: route.params.name,
+        });
+      `),
+    ).toBe(true);
+  });
+
+  it('extracts JSON-LD array from markdown frontmatter', () => {
+    const markdown = `---
+title: Multi
+jsonLd:
+  - "@context": https://schema.org
+    "@type": WebSite
+    name: Site
+  - "@context": https://schema.org
+    "@type": Organization
+    name: Org
+---
+
+Content
+`;
+
+    const result = extractMarkdownJsonLd(markdown);
+    expect(result).toHaveLength(2);
+    expect(result[0]['@type']).toBe('WebSite');
+    expect(result[1]['@type']).toBe('Organization');
+  });
+
+  it('returns empty array for markdown with no jsonLd in frontmatter', () => {
+    expect(
+      extractMarkdownJsonLd(`---
+title: Hello
+---
+
+No JSON-LD here.
+`),
+    ).toEqual([]);
+  });
+
+  it('returns empty array for markdown with malformed frontmatter', () => {
+    expect(extractMarkdownJsonLd('not valid yaml ---')).toEqual([]);
+  });
+
+  it('returns empty array when jsonLd frontmatter is a scalar', () => {
+    expect(
+      extractMarkdownJsonLd(`---
+jsonLd: just a string
+---
+
+Hello
+`),
+    ).toEqual([]);
+  });
+
+  it('codegen resolveModuleJsonLd prefers routeMeta.jsonLd over routeJsonLd', () => {
+    const source = generateJsonLdManifestSource(
+      [
+        {
+          kind: 'module',
+          routePath: '/test',
+          sourceFile: '/src/app/pages/test.page.ts',
+          importAlias: 'routeModule0',
+        },
+      ],
+      'src/routeTree.gen.ts',
+    );
+
+    // The generated resolveModuleJsonLd should check routeMeta.jsonLd first
+    expect(source).toContain(
+      'typedRouteModule.routeMeta?.jsonLd ?? typedRouteModule.routeJsonLd',
+    );
+    // And NOT the inverted order
+    expect(source).not.toContain(
+      'typedRouteModule.routeJsonLd ?? typedRouteModule.routeMeta?.jsonLd',
+    );
+  });
+
+  it('generates correct import paths from nested outFile', () => {
+    const source = generateJsonLdManifestSource(
+      [
+        {
+          kind: 'module',
+          routePath: '/deep',
+          sourceFile: '/src/app/pages/deep/nested.page.ts',
+          importAlias: 'routeModule0',
+        },
+      ],
+      'src/generated/routes/routeTree.gen.ts',
+    );
+
+    // outFile is at src/generated/routes/, source at /src/app/pages/deep/nested.page.ts
+    // relative from src/generated/routes/ to src/app/pages/deep/nested.page
+    expect(source).toContain(
+      "import * as routeModule0 from '../../app/pages/deep/nested.page'",
+    );
+  });
+
+  it('generates valid output when entries array is empty', () => {
+    const source = generateJsonLdManifestSource(
+      [],
+      '.analog/route-jsonld.gen.ts',
+    );
+
+    expect(source).toContain('export const routeJsonLdManifest = new Map');
+    expect(source).toContain(']);');
+    // No import * as routeModuleN lines
+    expect(source).not.toMatch(/import \* as routeModule/);
+  });
+
+  it('includes AnalogJsonLdDocument type even with only content entries', () => {
+    const source = generateJsonLdManifestSource(
+      [
+        {
+          kind: 'content',
+          routePath: '/blog/hello',
+          sourceFile: '/src/content/blog/hello.md',
+          jsonLd: [
+            {
+              '@context': 'https://schema.org',
+              '@type': 'BlogPosting',
+              headline: 'Hello',
+            },
+          ],
+        },
+      ],
+      '.analog/route-jsonld.gen.ts',
+    );
+
+    expect(source).toContain(
+      "import type { Graph, Thing, WithContext } from 'schema-dts'",
+    );
+    expect(source).toContain(
+      'export type AnalogJsonLdDocument = WithContext<Thing> | Graph | Array<WithContext<Thing>>',
+    );
+    expect(source).toContain("['/blog/hello'");
+    expect(source).toContain('"headline":"Hello"');
+  });
+});

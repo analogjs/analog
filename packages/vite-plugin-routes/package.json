@@ -1,0 +1,56 @@
+{
+  "name": "@analogjs/vite-plugin-routes",
+  "version": "3.0.0-alpha.3",
+  "description": "Vite plugin for generating typed Analog route declarations",
+  "type": "module",
+  "author": "Brandon Roberts <robertsbt@gmail.com>",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "keywords": [
+    "angular",
+    "vite",
+    "vite-plugin",
+    "typed-routes",
+    "filesystem-routing"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/analogjs/analog/issues"
+  },
+  "homepage": "https://analogjs.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/analogjs/analog.git"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/brandonroberts"
+  },
+  "dependencies": {
+    "@analogjs/router": "workspace:^",
+    "front-matter": "^4.0.2",
+    "schema-dts": "^1.0.0",
+    "tinyglobby": "^0.2.15"
+  },
+  "peerDependencies": {
+    "vite": "^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0"
+  },
+  "ng-update": {
+    "packageGroup": [
+      "@analogjs/platform",
+      "@analogjs/content",
+      "@analogjs/router",
+      "@analogjs/storybook-angular",
+      "@analogjs/vite-plugin-angular",
+      "@analogjs/vite-plugin-nitro",
+      "@analogjs/vite-plugin-routes",
+      "@analogjs/vitest-angular"
+    ]
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

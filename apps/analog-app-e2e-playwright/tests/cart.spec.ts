@@ -135,6 +135,9 @@ describe('Cart', () => {
       /your order has been submitted/i,
     );
     expect(await message[1].evaluate((p) => p)).toEqual({ name, address });
-    expect(await cartPage.cartItems().elementHandles()).toHaveLength(0);
+    await page.waitForFunction(() => {
+      return document.querySelectorAll('.cart-item').length === 0;
+    });
+    expect(await cartPage.cartItems().count()).toBe(0);
   });
 });

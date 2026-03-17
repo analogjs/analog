@@ -9,6 +9,21 @@ import type { load } from './(home).server';
 
 export const routeMeta: RouteMeta = {
   title: 'Product List',
+  jsonLd: [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      identifier: 'analog-home',
+      name: 'Analog Store',
+      url: 'https://analogjs.org/store',
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      identifier: 'analog-home-catalog',
+      name: 'Analog Store Product List',
+    },
+  ],
 };
 
 @Component({
