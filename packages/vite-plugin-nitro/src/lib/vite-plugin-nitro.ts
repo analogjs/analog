@@ -289,6 +289,15 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
     typeof options?.useAPIMiddleware !== 'undefined'
       ? options?.useAPIMiddleware
       : true;
+  const viteRolldownOutput = options?.vite?.build?.rolldownOptions?.output;
+  // Vite's native build typing allows `output` to be either a single object or
+  // an array. Analog only forwards `codeSplitting` into the client environment
+  // when there is a single output object to merge into.
+  const viteRolldownOutputConfig =
+    viteRolldownOutput && !Array.isArray(viteRolldownOutput)
+      ? viteRolldownOutput
+      : undefined;
+  const codeSplitting = viteRolldownOutputConfig?.codeSplitting;
 
   let isBuild = false;
   let isServe = false;
@@ -662,11 +671,29 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 outDir:
                   config?.build?.outDir ||
                   resolve(workspaceRoot, 'dist', rootDir, 'client'),
+                // Forward code-splitting config to Rolldown when running
+                // under Vite 8+.  `false` disables splitting (inlines all
+                // dynamic imports); an object configures chunk groups.
+                // The `!== undefined` check ensures `codeSplitting: false`
+                // is forwarded correctly (a truthy check would swallow it).
+                ...(vite.rolldownVersion && codeSplitting !== undefined
+                  ? {
+                      rolldownOptions: {
+                        output: {
+                          // Preserve any sibling Rolldown output options while
+                          // overriding just `codeSplitting` for the client build.
+                          ...viteRolldownOutputConfig,
+                          codeSplitting,
+                        },
+                      },
+                    }
+                  : {}),
               },
             },
             ssr: {
               build: {
                 ssr: true,
+                // Vite 8+ (Rolldown) uses `rolldownOptions`; Vite ≤7 uses `rollupOptions`.
                 [vite.rolldownVersion ? 'rolldownOptions' : 'rollupOptions']: {
                   input:
                     options?.entryServer ||
