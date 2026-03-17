@@ -10,33 +10,14 @@
     "vite-plugin-routes"
   ],
   "targets": {
-    "build-package": {
-      "executor": "@nx/js:tsc",
-      "options": {
-        "outputPath": "node_modules/@analogjs/platform",
-        "main": "packages/platform/src/index.ts",
-        "tsConfig": "packages/platform/tsconfig.lib.json",
-        "assets": [
-          "packages/platform/*.md",
-          "packages/platform/migrations/migration.json"
-        ],
-        "updateBuildableProjectDepsInPackageJson": false
-      },
-      "configurations": {
-        "production": {
-          "tsConfig": "packages/platform/tsconfig.lib.prod.json"
-        },
-        "development": {
-          "tsConfig": "packages/platform/tsconfig.lib.json"
-        }
-      },
-      "defaultConfiguration": "production"
-    },
     "build": {
       "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/platform"],
       "options": {
-        "commands": ["nx build-package platform", "nx build nx-plugin"],
+        "commands": [
+          "vite build -c packages/platform/vite.config.lib.ts",
+          "nx build nx-plugin"
+        ],
         "parallel": false
       },
       "dependsOn": ["^build"]

@@ -6,40 +6,10 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content-plugin"],
       "options": {
-        "outputPath": "node_modules/@analogjs/content/plugin",
-        "main": "packages/content-plugin/src/index.ts",
-        "tsConfig": "packages/content-plugin/tsconfig.lib.json",
-        "assets": [
-          "packages/content-plugin/*.md",
-          {
-            "input": "./packages/content-plugin/src",
-            "glob": "**/!(*.ts)",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/content-plugin/src",
-            "glob": "**/*.d.ts",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/content-plugin",
-            "glob": "generators.json",
-            "output": "."
-          },
-          {
-            "input": "./packages/content-plugin",
-            "glob": "executors.json",
-            "output": "."
-          },
-          {
-            "input": "./packages/content-plugin",
-            "glob": "migrations.json",
-            "output": "."
-          }
-        ]
+        "command": "vite build -c packages/content-plugin/vite.config.lib.ts"
       }
     },
     "lint": {

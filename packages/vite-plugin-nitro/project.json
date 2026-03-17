@@ -6,29 +6,10 @@
   "tags": ["type:release"],
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/vite-plugin-nitro"],
       "options": {
-        "outputPath": "node_modules/@analogjs/vite-plugin-nitro",
-        "main": "packages/vite-plugin-nitro/src/index.ts",
-        "tsConfig": "packages/vite-plugin-nitro/tsconfig.lib.json",
-        "assets": [
-          {
-            "input": "packages/vite-plugin-nitro/",
-            "glob": "*.md",
-            "output": "/"
-          },
-          {
-            "input": "packages/vite-plugin-nitro/src/lib/runtime/",
-            "glob": "*.*",
-            "output": "/src/lib/runtime/"
-          },
-          {
-            "input": "packages/vite-plugin-nitro/migrations/",
-            "glob": "migration.json",
-            "output": "/migrations/"
-          }
-        ],
-        "updateBuildableProjectDepsInPackageJson": false
+        "command": "vite build -c packages/vite-plugin-nitro/vite.config.lib.ts"
       }
     },
     "publish": {

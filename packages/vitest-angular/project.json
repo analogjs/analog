@@ -6,23 +6,14 @@
   "tags": ["type:release"],
   "targets": {
     "build-package": {
-      "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/vitest-angular"],
       "options": {
-        "outputPath": "node_modules/@analogjs/vitest-angular",
-        "main": "packages/vitest-angular/src/index.ts",
-        "tsConfig": "packages/vitest-angular/tsconfig.lib.json",
-        "assets": [
-          "packages/vitest-angular/*.md",
-          "packages/vitest-angular/builders.json"
+        "commands": [
+          "vite build --config packages/vitest-angular/vite.config.lib.ts",
+          "tsc -p packages/vitest-angular/tsconfig.lib.json --declaration --emitDeclarationOnly --declarationDir node_modules/@analogjs/vitest-angular --rootDir packages/vitest-angular"
         ],
-        "updateBuildableProjectDepsInPackageJson": false,
-        "additionalEntryPoints": [
-          "packages/vitest-angular/setup-zone.ts",
-          "packages/vitest-angular/setup-snapshots.ts",
-          "packages/vitest-angular/setup-testbed.ts"
-        ],
-        "generateExportsField": true
+        "parallel": false
       }
     },
     "build": {

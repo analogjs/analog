@@ -6,20 +6,14 @@
   "tags": ["type:release"],
   "targets": {
     "build-package": {
-      "executor": "@nx/js:tsc",
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/vite-plugin-angular"],
       "options": {
-        "outputPath": "node_modules/@analogjs/vite-plugin-angular",
-        "main": "packages/vite-plugin-angular/src/index.ts",
-        "tsConfig": "packages/vite-plugin-angular/tsconfig.lib.json",
-        "assets": [
-          "packages/vite-plugin-angular/*.md",
-          "packages/vite-plugin-angular/migrations/migration.json"
+        "commands": [
+          "vite build --config packages/vite-plugin-angular/vite.config.lib.ts",
+          "tsc -p packages/vite-plugin-angular/tsconfig.lib.json --declaration --emitDeclarationOnly --declarationDir node_modules/@analogjs/vite-plugin-angular --rootDir packages/vite-plugin-angular"
         ],
-        "updateBuildableProjectDepsInPackageJson": false,
-        "additionalEntryPoints": [
-          "packages/vite-plugin-angular/setup-vitest.ts"
-        ],
-        "generateExportsField": false
+        "parallel": false
       }
     },
     "build": {

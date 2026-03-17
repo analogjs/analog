@@ -7,7 +7,7 @@ import type {
   PrerenderRouteConfig,
 } from '@analogjs/vite-plugin-nitro';
 
-import { ContentPluginOptions } from './content-plugin.js';
+import type { ContentPluginOptions } from './content-plugin.js';
 
 declare module 'nitro/types' {
   interface NitroRouteConfig {
@@ -170,4 +170,4 @@ export interface TypedRouterOptions {
   jsonLdManifest?: boolean;
 }
 
-export { PrerenderContentDir, PrerenderContentFile };
+export type { PrerenderContentDir, PrerenderContentFile };

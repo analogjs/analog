@@ -6,35 +6,12 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
+      "executor": "nx:run-commands",
+      "outputs": [
+        "{workspaceRoot}/node_modules/@analogjs/vite-plugin-angular-tools"
+      ],
       "options": {
-        "outputPath": "node_modules/@analogjs/vite-plugin-angular/src/lib/tools",
-        "main": "packages/vite-plugin-angular-tools/src/index.ts",
-        "tsConfig": "packages/vite-plugin-angular-tools/tsconfig.lib.json",
-        "clean": false,
-        "assets": [
-          "packages/vite-plugin-angular-tools/*.md",
-          {
-            "input": "./packages/vite-plugin-angular-tools/src",
-            "glob": "**/!(*.ts)",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/vite-plugin-angular-tools/src",
-            "glob": "**/*.d.ts",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/vite-plugin-angular-tools",
-            "glob": "generators.json",
-            "output": "."
-          },
-          {
-            "input": "./packages/vite-plugin-angular-tools",
-            "glob": "builders.json",
-            "output": "."
-          }
-        ]
+        "command": "vite build -c packages/vite-plugin-angular-tools/vite.config.lib.ts"
       }
     },
     "lint": {

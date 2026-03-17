@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "module": "preserve",
     "outDir": "../../dist/out-tsc",
     "inlineSourceMap": true,

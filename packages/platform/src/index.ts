@@ -1,6 +1,6 @@
 import { platformPlugin } from './lib/platform-plugin.js';
 
-export {
+export type {
   Options,
   TypedRouterOptions,
   PrerenderContentFile,
