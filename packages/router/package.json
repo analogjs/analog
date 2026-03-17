@@ -17,6 +17,10 @@
       "import": "./server/actions/src/index.js",
       "default": "./server/actions/src/index.js"
     },
+    "./manifest": {
+      "import": "./manifest/src/index.js",
+      "default": "./manifest/src/index.js"
+    },
     "./tokens": {
       "import": "./tokens/src/index.js",
       "default": "./tokens/src/index.js"

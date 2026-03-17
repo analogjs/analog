@@ -71,19 +71,17 @@ export interface LoaderCacheOptions {
 // ---------------------------------------------------------------------------
 
 /** @experimental */
-export const EXPERIMENTAL_TYPED_ROUTER = new InjectionToken<TypedRouterOptions>(
-  'EXPERIMENTAL_TYPED_ROUTER',
-);
+export const EXPERIMENTAL_TYPED_ROUTER: InjectionToken<TypedRouterOptions> =
+  new InjectionToken<TypedRouterOptions>('EXPERIMENTAL_TYPED_ROUTER');
 
 /** @experimental */
-export const EXPERIMENTAL_ROUTE_CONTEXT = new InjectionToken<
+export const EXPERIMENTAL_ROUTE_CONTEXT: InjectionToken<
   Record<string, unknown>
->('EXPERIMENTAL_ROUTE_CONTEXT');
+> = new InjectionToken<Record<string, unknown>>('EXPERIMENTAL_ROUTE_CONTEXT');
 
 /** @experimental */
-export const EXPERIMENTAL_LOADER_CACHE = new InjectionToken<LoaderCacheOptions>(
-  'EXPERIMENTAL_LOADER_CACHE',
-);
+export const EXPERIMENTAL_LOADER_CACHE: InjectionToken<LoaderCacheOptions> =
+  new InjectionToken<LoaderCacheOptions>('EXPERIMENTAL_LOADER_CACHE');
 
 // ---------------------------------------------------------------------------
 // Provider feature functions (passed to provideFileRouter)

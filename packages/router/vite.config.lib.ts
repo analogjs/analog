@@ -28,6 +28,10 @@ export default defineConfig({
           import.meta.dirname,
           'tokens/src/index.ts',
         ),
+        'analogjs-router-manifest': resolve(
+          import.meta.dirname,
+          'manifest/src/index.ts',
+        ),
       },
       formats: ['es'],
     },

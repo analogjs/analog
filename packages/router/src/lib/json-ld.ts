@@ -41,7 +41,9 @@ export type AnalogJsonLdDocument =
   | Graph
   | Array<WithContext<Thing>>;
 
-export const ROUTE_JSON_LD_KEY = Symbol('@analogjs/router Route JSON-LD Key');
+export const ROUTE_JSON_LD_KEY: unique symbol = Symbol(
+  '@analogjs/router Route JSON-LD Key',
+);
 const JSON_LD_SCRIPT_SELECTOR = 'script[data-analog-json-ld]';
 
 export function updateJsonLdOnRouteChange(): void {

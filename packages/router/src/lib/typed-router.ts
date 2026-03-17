@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, type UrlTree } from '@angular/router';
 
 import type {
   AnalogRoutePath,
@@ -50,7 +50,7 @@ export function injectTypedRouter() {
     createUrlTree<P extends AnalogRoutePath>(
       path: P,
       ...args: RoutePathArgs<P>
-    ) {
+    ): UrlTree {
       const url = buildUrl(
         path as string,
         args[0] as RoutePathOptionsBase | undefined,

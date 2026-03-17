@@ -71,7 +71,15 @@ export interface DefinePageLoadOptions<
 export function definePageLoad<
   TParamsSchema extends OptionalSchema = undefined,
   TQuerySchema extends OptionalSchema = undefined,
->(options: DefinePageLoadOptions<TParamsSchema, TQuerySchema>) {
+>(
+  options: DefinePageLoadOptions<TParamsSchema, TQuerySchema>,
+): (ctx: {
+  params: H3EventContext['params'];
+  req: NodeContext['req'];
+  res: NonNullable<NodeContext['res']>;
+  fetch: $Fetch;
+  event: H3Event;
+}) => Promise<unknown> {
   type Params = InferSchema<TParamsSchema, H3EventContext['params']>;
   type Query = InferSchema<
     TQuerySchema,

@@ -1,4 +1,5 @@
-export { PageServerAction, json, redirect, fail } from './actions';
+export type { PageServerAction } from './actions';
+export { json, redirect, fail } from './actions';
 export { defineAction } from './define-action';
 export type { DefineActionContext, DefineActionOptions } from './define-action';
 export { defineApiRoute } from './define-api-route';

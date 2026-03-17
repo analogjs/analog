@@ -60,7 +60,9 @@ function isFormContentType(contentType: string): boolean {
   );
 }
 
-export function parseSearchParams(searchParams: URLSearchParams) {
+export function parseSearchParams(
+  searchParams: URLSearchParams,
+): Record<string, ParsedRequestValue> {
   const result: Record<string, ParsedRequestValue> = {};
   searchParams.forEach((value, key) => {
     appendEntry(result, key, value);
@@ -68,7 +70,9 @@ export function parseSearchParams(searchParams: URLSearchParams) {
   return result;
 }
 
-export function parseFormData(formData: FormData) {
+export function parseFormData(
+  formData: FormData,
+): Record<string, ParsedRequestValue> {
   const result: Record<string, ParsedRequestValue> = {};
   formData.forEach((value, key) => {
     appendEntry(result, key, value as RequestEntryValue);

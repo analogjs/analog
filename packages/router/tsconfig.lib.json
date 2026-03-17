@@ -15,6 +15,7 @@
       "@analogjs/content": ["./node_modules/@analogjs/content"],
       "@analogjs/router": ["./src/index.ts"],
       "@analogjs/router/*": ["./*"],
+      "@analogjs/router/manifest": ["./manifest/src/index.ts"],
       "@analogjs/router/tokens": ["./tokens/src/index.ts"],
       "@analogjs/router/server": ["./server/src/index.ts"],
       "@analogjs/router/server/actions": ["./server/actions/src/index.ts"]

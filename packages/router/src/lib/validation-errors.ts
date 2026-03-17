@@ -12,7 +12,7 @@ export function issuePathToFieldName(
   path: ReadonlyArray<
     string | number | symbol | { key: string | number | symbol }
   >,
-) {
+): string {
   return path.map((segment) => String(getPathSegmentKey(segment))).join('.');
 }
 
@@ -33,7 +33,7 @@ export function issuesToFieldErrors(
 
 export function issuesToFormErrors(
   issues: ReadonlyArray<StandardSchemaV1.Issue>,
-) {
+): string[] {
   return issues
     .filter((issue) => !issue.path?.length)
     .map((issue) => issue.message);

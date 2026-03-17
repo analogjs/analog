@@ -50,6 +50,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       analog({
         apiPrefix: 'api',
+        include: ['/libs/my-package/src/**/*.ts'],
         additionalPagesDirs: ['/libs/shared/feature'],
         additionalAPIDirs: ['/libs/shared/feature/src/api'],
         fileReplacements,

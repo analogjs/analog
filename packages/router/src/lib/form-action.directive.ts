@@ -1,4 +1,13 @@
-import { Directive, inject, input, output, signal } from '@angular/core';
+import {
+  Directive,
+  inject,
+  input,
+  output,
+  signal,
+  type InputSignal,
+  type OutputEmitterRef,
+  type WritableSignal,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { injectRouteEndpointURL } from './inject-route-endpoint-url';
@@ -21,13 +30,18 @@ export type FormActionState =
   standalone: true,
 })
 export class FormAction {
-  action = input<string>('');
-  onSuccess = output<unknown>();
-  onError = output<unknown>();
-  onStateChange = output<FormActionState>();
+  action: InputSignal<string> = input<string>('');
+  // eslint-disable-next-line @angular-eslint/no-output-on-prefix
+  onSuccess: OutputEmitterRef<unknown> = output<unknown>();
+  // eslint-disable-next-line @angular-eslint/no-output-on-prefix
+  onError: OutputEmitterRef<unknown> = output<unknown>();
+  // eslint-disable-next-line @angular-eslint/no-output-on-prefix
+  onStateChange: OutputEmitterRef<FormActionState> = output<FormActionState>();
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  protected currentState = signal<FormActionState | 'idle'>('idle');
+  protected currentState: WritableSignal<FormActionState | 'idle'> = signal<
+    FormActionState | 'idle'
+  >('idle');
   /** Cached during construction (injection context) so inject() works. */
   private _endpointUrl = this.route
     ? injectRouteEndpointURL(this.route.snapshot)

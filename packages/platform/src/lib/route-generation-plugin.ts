@@ -46,5 +46,7 @@ export function routeGenerationPlugin(options?: Options): Plugin {
 
   // `@analogjs/platform` remains the default opt-in surface, but the actual
   // route generation work now lives in the dedicated public routes plugin.
-  return typedRoutes(pluginOptions);
+  // Cast needed: pnpm may resolve two structurally identical `Plugin` types
+  // from different vite installations.
+  return typedRoutes(pluginOptions) as Plugin;
 }
