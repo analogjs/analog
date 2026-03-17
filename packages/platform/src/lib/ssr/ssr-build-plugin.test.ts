@@ -1,9 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ssrBuildPlugin } from './ssr-build-plugin.js';
 
-let mockRolldownVersion: string | undefined;
+let mockRolldownVersion: string | undefined = undefined;
 
-vi.mock('vite', async () => {
-  const actual = await vi.importActual<typeof import('vite')>('vite');
+vi.mock(import('vite'), async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
     get rolldownVersion() {
@@ -12,9 +12,17 @@ vi.mock('vite', async () => {
   };
 });
 
-import { ssrBuildPlugin } from './ssr-build-plugin.js';
+type TransformResult = { code: string } | undefined;
+type TransformHandler = (code: string, id: string) => TransformResult;
 
-describe('ssrBuildPlugin', () => {
+const getTransformHandler = (): TransformHandler => {
+  const [{ transform }] = ssrBuildPlugin();
+  const { handler } = transform as { handler: TransformHandler };
+
+  return handler;
+};
+
+describe('SSR build plugin patches', () => {
   beforeEach(() => {
     mockRolldownVersion = undefined;
   });
@@ -30,23 +38,24 @@ describe('ssrBuildPlugin', () => {
   });
 
   it('filters only the patched SSR dependency modules', () => {
-    const [plugin] = ssrBuildPlugin();
-    const filter = (plugin.transform as { filter: { id: RegExp } }).filter.id;
+    const [{ transform }] = ssrBuildPlugin();
+    const { filter } = transform as { filter: { id: RegExp } };
 
-    expect(filter.test('/node_modules/zone-node/fesm2015/zone-node.js')).toBe(
-      true,
-    );
     expect(
-      filter.test('/node_modules/@angular/platform-server/fesm2022/server.mjs'),
-    ).toBe(true);
-    expect(filter.test('/node_modules/xhr2/lib/xhr2.js')).toBe(true);
-    expect(filter.test('/node_modules/domino/lib/sloppy.js')).toBe(true);
-    expect(filter.test('/src/app/app.component.ts')).toBe(false);
+      filter.id.test('/node_modules/zone-node/fesm2015/zone-node.js'),
+    ).toBeTruthy();
+    expect(
+      filter.id.test(
+        '/node_modules/@angular/platform-server/fesm2022/server.mjs',
+      ),
+    ).toBeTruthy();
+    expect(filter.id.test('/node_modules/xhr2/lib/xhr2.js')).toBeTruthy();
+    expect(filter.id.test('/node_modules/domino/lib/sloppy.js')).toBeTruthy();
+    expect(filter.id.test('/src/app/app.component.ts')).toBeFalsy();
   });
 
   it('removes the zone-node global alias', () => {
-    const [plugin] = ssrBuildPlugin();
-    const handler = (plugin.transform as { handler: Function }).handler;
+    const handler = getTransformHandler();
 
     const result = handler(
       'const global = globalThis;\nconst zone = true;',
@@ -59,8 +68,7 @@ describe('ssrBuildPlugin', () => {
   });
 
   it('rewrites platform-server xhr2 and global references without Rolldown', () => {
-    const [plugin] = ssrBuildPlugin();
-    const handler = (plugin.transform as { handler: Function }).handler;
+    const handler = getTransformHandler();
 
     const result = handler(
       [
@@ -83,8 +91,7 @@ describe('ssrBuildPlugin', () => {
   });
 
   it('patches xhr2 node-specific process and os accesses', () => {
-    const [plugin] = ssrBuildPlugin();
-    const handler = (plugin.transform as { handler: Function }).handler;
+    const handler = getTransformHandler();
 
     const result = handler(
       [
@@ -107,8 +114,7 @@ describe('ssrBuildPlugin', () => {
   });
 
   it('replaces domino with() statements so the module stays ESM-safe', () => {
-    const [plugin] = ssrBuildPlugin();
-    const handler = (plugin.transform as { handler: Function }).handler;
+    const handler = getTransformHandler();
 
     const result = handler(
       'with(window) { return document; }\nWITH(scope) { return location; }',

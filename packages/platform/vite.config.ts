@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: 'node',
       setupFiles: ['src/test-setup.ts'],
-      include: ['**/*.spec.ts'],
+      include: ['**/*.spec.ts', '**/*.test.ts'],
     },
     define: {
       'import.meta.vitest': mode !== 'production',
