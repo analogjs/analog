@@ -32,6 +32,9 @@
   "ng-add": {
     "save": "devDependencies"
   },
+  "dependencies": {
+    "oxc-transform": "^0.119.0"
+  },
   "peerDependencies": {
     "@analogjs/vite-plugin-angular": "*",
     "@angular-devkit/architect": ">=0.1500.0 < 0.2200.0",
