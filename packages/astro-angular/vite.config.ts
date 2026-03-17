@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
       reporters: ['default'],
       passWithNoTests: true,
       globals: true,
-      setupFiles: ['src/test-setup.ts'],
+      setupFiles: [],
       include: ['**/*.spec.ts'],
     },
     define: {
