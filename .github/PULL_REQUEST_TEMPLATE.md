@@ -13,7 +13,7 @@ Closes #
 
 ## Recommended merge strategy for maintainer [optional]
 
-<!-- Squash merge is the default expectation. -->
+<!-- Squash merge is highly preferred. -->
 <!-- Recommend a non-squash merge only if you can justify why the PR should bypass focused changes per package. -->
 
 - [x] Squash merge

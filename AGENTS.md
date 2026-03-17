@@ -77,7 +77,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - If the branch mixes multiple packages or concerns, recommend `git reset --soft <base-commit>` and re-commit the staged changes into smaller, policy-aligned groups.
 - Prefer regrouping by affected package or primary package scope using the directory mapping above.
 - Before changing GitHub metadata, ask whether the user wants the PR title and description updated. If no PR exists for the branch, ask whether they want one created.
-- Treat `Squash merge` as the default maintainer recommendation.
+- Treat `Squash merge` as the highly preferred maintainer recommendation.
 - Recommend a non-squash merge only when the PR intentionally preserves important commit boundaries, and include a brief note about why those boundaries matter and why the PR should bypass focused changes per package.
 - If history is rewritten, remind the user that they can run `git push --force`, but do not do it on their behalf unless they explicitly ask.
 

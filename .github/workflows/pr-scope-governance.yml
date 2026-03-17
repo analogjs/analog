@@ -155,7 +155,7 @@ jobs:
                 marker,
                 `This PR touches multiple package scopes: ${scopes}.`,
                 '',
-                'Please confirm the changes are closely related. `Squash merge` is the default expectation. If you recommend a non-squash merge, add a brief note explaining why the commit boundaries matter and why this PR should bypass focused changes per package.',
+                'Please confirm the changes are closely related. `Squash merge` is highly preferred. If you recommend a non-squash merge, add a brief note explaining why the commit boundaries matter and why this PR should bypass focused changes per package.',
               ].join('\n');
 
               if (existingComment) {
