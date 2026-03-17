@@ -41,7 +41,9 @@ describe('OXC conditional paths', () => {
     it('calls transformWithOxc for fesm2022 files with async when rolldownVersion is set', async () => {
       mockRolldownVersion = '1.0.0';
       const plugin = angularVitestPlugin();
-      const result = await (plugin.transform as any)(
+      const result = await (
+        (plugin.transform as any).handler ?? plugin.transform
+      )(
         'async function foo() {}',
         '/node_modules/@angular/core/fesm2022/core.mjs',
       );
@@ -64,10 +66,9 @@ describe('OXC conditional paths', () => {
       mockRolldownVersion = undefined;
       const plugin = angularVitestPlugin();
       const id = '/node_modules/@angular/core/fesm2022/core.mjs';
-      const result = await (plugin.transform as any)(
-        'async function foo() {}',
-        id,
-      );
+      const result = await (
+        (plugin.transform as any).handler ?? plugin.transform
+      )('async function foo() {}', id);
 
       expect(mockTransformWithEsbuild).toHaveBeenCalledWith(
         'async function foo() {}',
@@ -87,10 +88,9 @@ describe('OXC conditional paths', () => {
     it('transforms files containing @angular/cdk via OXC', async () => {
       mockRolldownVersion = '1.0.0';
       const plugin = angularVitestPlugin();
-      const result = await (plugin.transform as any)(
-        'import "@angular/cdk";',
-        '/src/app/dialog.ts',
-      );
+      const result = await (
+        (plugin.transform as any).handler ?? plugin.transform
+      )('import "@angular/cdk";', '/src/app/dialog.ts');
 
       expect(mockTransformWithOxc).toHaveBeenCalled();
       expect(mockTransformWithEsbuild).not.toHaveBeenCalled();
@@ -100,10 +100,9 @@ describe('OXC conditional paths', () => {
     it('transforms files containing @angular/cdk via esbuild', async () => {
       mockRolldownVersion = undefined;
       const plugin = angularVitestPlugin();
-      const result = await (plugin.transform as any)(
-        'import "@angular/cdk";',
-        '/src/app/dialog.ts',
-      );
+      const result = await (
+        (plugin.transform as any).handler ?? plugin.transform
+      )('import "@angular/cdk";', '/src/app/dialog.ts');
 
       expect(mockTransformWithEsbuild).toHaveBeenCalled();
       expect(mockTransformWithOxc).not.toHaveBeenCalled();
@@ -112,10 +111,9 @@ describe('OXC conditional paths', () => {
 
     it('skips fesm2022 files without async keyword', async () => {
       const plugin = angularVitestPlugin();
-      const result = await (plugin.transform as any)(
-        'function foo() {}',
-        '/node_modules/@angular/core/fesm2022/core.mjs',
-      );
+      const result = await (
+        (plugin.transform as any).handler ?? plugin.transform
+      )('function foo() {}', '/node_modules/@angular/core/fesm2022/core.mjs');
 
       expect(result).toBeUndefined();
       expect(mockTransformWithOxc).not.toHaveBeenCalled();
@@ -124,10 +122,9 @@ describe('OXC conditional paths', () => {
 
     it('skips non-matching files', async () => {
       const plugin = angularVitestPlugin();
-      const result = await (plugin.transform as any)(
-        'const x = 1;',
-        '/src/app/app.component.ts',
-      );
+      const result = await (
+        (plugin.transform as any).handler ?? plugin.transform
+      )('const x = 1;', '/src/app/app.component.ts');
 
       expect(result).toBeUndefined();
     });
@@ -175,7 +172,10 @@ describe('OXC conditional paths', () => {
     it('calls transformWithOxc for .ts files when rolldownVersion is set', async () => {
       mockRolldownVersion = '1.0.0';
       const plugin = angularVitestSourcemapPlugin();
-      await (plugin.transform as any)('const x = 1;', '/src/app/app.ts');
+      await ((plugin.transform as any).handler ?? plugin.transform)(
+        'const x = 1;',
+        '/src/app/app.ts',
+      );
 
       expect(mockTransformWithOxc).toHaveBeenCalledWith(
         'const x = 1;',
@@ -188,7 +188,10 @@ describe('OXC conditional paths', () => {
     it('calls transformWithEsbuild for .ts files when rolldownVersion is not set', async () => {
       mockRolldownVersion = undefined;
       const plugin = angularVitestSourcemapPlugin();
-      await (plugin.transform as any)('const x = 1;', '/src/app/app.ts');
+      await ((plugin.transform as any).handler ?? plugin.transform)(
+        'const x = 1;',
+        '/src/app/app.ts',
+      );
 
       expect(mockTransformWithEsbuild).toHaveBeenCalledWith(
         'const x = 1;',
@@ -198,24 +201,19 @@ describe('OXC conditional paths', () => {
       expect(mockTransformWithOxc).not.toHaveBeenCalled();
     });
 
-    it('skips non-.ts files', async () => {
+    it('skips non-.ts files via filter', () => {
       const plugin = angularVitestSourcemapPlugin();
-      const result = await (plugin.transform as any)(
-        'const x = 1;',
-        '/src/app/util.js',
-      );
+      const filter = (plugin.transform as any).filter.id as RegExp;
 
-      expect(result).toBeUndefined();
-      expect(mockTransformWithOxc).not.toHaveBeenCalled();
-      expect(mockTransformWithEsbuild).not.toHaveBeenCalled();
+      expect(filter.test('/src/app/util.js')).toBe(false);
+      expect(filter.test('/src/app/app.ts')).toBe(true);
     });
 
     it('skips .ts files with ?inline query', async () => {
       const plugin = angularVitestSourcemapPlugin();
-      const result = await (plugin.transform as any)(
-        'const x = 1;',
-        '/src/app/styles.ts?inline',
-      );
+      const result = await (
+        (plugin.transform as any).handler ?? plugin.transform
+      )('const x = 1;', '/src/app/styles.ts?inline');
 
       expect(result).toBeUndefined();
     });
@@ -225,7 +223,10 @@ describe('OXC conditional paths', () => {
     it('transforms .tsx files (regex /\\.ts/ matches .tsx substring)', async () => {
       mockRolldownVersion = '1.0.0';
       const plugin = angularVitestSourcemapPlugin();
-      await (plugin.transform as any)('const x = 1;', '/src/app/component.tsx');
+      await ((plugin.transform as any).handler ?? plugin.transform)(
+        'const x = 1;',
+        '/src/app/component.tsx',
+      );
 
       expect(mockTransformWithOxc).toHaveBeenCalled();
     });
@@ -233,7 +234,10 @@ describe('OXC conditional paths', () => {
     it('transforms .ts files with non-inline query', async () => {
       mockRolldownVersion = '1.0.0';
       const plugin = angularVitestSourcemapPlugin();
-      await (plugin.transform as any)('const x = 1;', '/src/app/app.ts?raw');
+      await ((plugin.transform as any).handler ?? plugin.transform)(
+        'const x = 1;',
+        '/src/app/app.ts?raw',
+      );
 
       expect(mockTransformWithOxc).toHaveBeenCalled();
     });
