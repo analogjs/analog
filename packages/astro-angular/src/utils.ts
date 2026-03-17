@@ -1,7 +1,7 @@
 export function addOutputListener(
   analogId: string,
   outputName: string,
-  callback: (...args: any[]) => unknown,
+  callback: (...args: unknown[]) => unknown,
   eventListenerOptions: EventListenerOptions = {},
 ): () => void {
   const observer = new MutationObserver((mutations) => {

@@ -7,7 +7,6 @@ export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
     cacheDir: '../../node_modules/.vite/astro-angular',
-    esbuild: false,
     resolve: {
       mainFields: ['module'],
     },
@@ -15,7 +14,7 @@ export default defineConfig(({ mode }) => {
       reporters: ['default'],
       passWithNoTests: true,
       globals: true,
-      setupFiles: ['src/test-setup.ts'],
+      setupFiles: [],
       include: ['**/*.spec.ts'],
     },
     define: {

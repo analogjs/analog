@@ -41,14 +41,13 @@ export async function setupTailwindGenerator(
   const options = normalizeOptions(rawOptions);
   const project = readProjectConfiguration(tree, options.project);
 
-  const tailwindInstalledVersion = detectTailwindInstalledVersion(tree);
+  // TODO: use return value for v5+ branching when needed
+  detectTailwindInstalledVersion(tree);
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   let installTask: GeneratorCallback = () => {};
   if (!options.skipPackageJson) {
-    if (tailwindInstalledVersion === undefined) {
-      installTask = addTailwindRequiredPackages(tree);
-    }
+    installTask = addTailwindRequiredPackages(tree);
   }
 
   addTailwindConfigFile(tree, options, project);

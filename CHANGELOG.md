@@ -1,3 +1,19 @@
+# [3.0.0-alpha.5](https://github.com/analogjs/analog/compare/v3.0.0-alpha.4...v3.0.0-alpha.5) (2026-03-17)
+
+### Features
+
+- add Vite 8 OXC config support to storybook and astro packages ([#2121](https://github.com/analogjs/analog/issues/2121)) ([62987d3](https://github.com/analogjs/analog/commit/62987d3b63cbf9d38d0106ca9a4f4fe4d004aec1))
+
+# [3.0.0-alpha.4](https://github.com/analogjs/analog/compare/v3.0.0-alpha.3...v3.0.0-alpha.4) (2026-03-17)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** fail on invalid Vercel build output ([73dd7dd](https://github.com/analogjs/analog/commit/73dd7dd5929fbc0e36dc1bea66fadf6ef85e522c))
+
+### Features
+
+- **nx-plugin:** drop Tailwind v2/v3 support, require v4+ ([d9e607e](https://github.com/analogjs/analog/commit/d9e607eaf3cbeb7789298e059dc2e52667ba37dd))
+
 # [3.0.0-alpha.3](https://github.com/analogjs/analog/compare/v3.0.0-alpha.2...v3.0.0-alpha.3) (2026-03-16)
 
 ### Bug Fixes
