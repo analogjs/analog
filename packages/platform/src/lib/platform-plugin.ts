@@ -49,7 +49,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ...(!isTest ? depsPlugin(platformOptions) : []),
     ...routerPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),
-    ...(opts?.vite === false
+    ...((opts?.vite === false
       ? []
       : angular({
           jit: platformOptions.jit,
@@ -66,9 +66,9 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
           inlineStylesExtension: platformOptions.inlineStylesExtension,
           fileReplacements: platformOptions.fileReplacements,
           ...(opts?.vite ?? {}),
-        })),
+        })) as any),
     serverModePlugin(),
-    ssrXhrBuildPlugin(),
-    clearClientPageEndpointsPlugin(),
+    ssrXhrBuildPlugin() as Plugin,
+    clearClientPageEndpointsPlugin() as Plugin,
   ];
 }

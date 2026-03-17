@@ -205,9 +205,7 @@ describe('mapTemplateUpdatesToFiles', () => {
     );
 
     expect(
-      updates.get(
-        '/Volumes/SnyderDev/@benpsnyder/analog-bak/apps/demo/src/app/demo.component.ts',
-      ),
+      updates.get(`${process.cwd()}/apps/demo/src/app/demo.component.ts`),
     ).toEqual({
       className: 'DemoComponent',
       code: 'export const hmr = true;',
