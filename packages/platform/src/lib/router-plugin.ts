@@ -89,6 +89,10 @@ export function routerPlugin(options?: Options): Plugin[] {
     },
     {
       name: 'analog-glob-routes',
+      // enforce: 'post' ensures this transform runs AFTER the Angular compiler
+      // plugin, which replaces module content with its own compiled output.
+      // Without this, the Angular plugin would overwrite the route replacements.
+      enforce: 'post',
       config(_config) {
         config = _config;
         root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
@@ -170,6 +174,10 @@ export function routerPlugin(options?: Options): Plugin[] {
     },
     {
       name: 'analog-glob-endpoints',
+      // enforce: 'post' ensures this transform runs AFTER the Angular compiler
+      // plugin, which replaces module content with its own compiled output.
+      // Without this, the Angular plugin would overwrite the endpoint replacements.
+      enforce: 'post',
       /**
        * Transforms code to replace ANALOG_PAGE_ENDPOINTS placeholder
        * with actual dynamic imports of discovered server endpoint files.
