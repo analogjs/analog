@@ -1,3 +1,9 @@
+# [3.0.0-alpha.7](https://github.com/analogjs/analog/compare/v3.0.0-alpha.6...v3.0.0-alpha.7) (2026-03-17)
+
+### Features
+
+- OXC test downlevel, router exports, platform plugin ordering, build improvements ([#2117](https://github.com/analogjs/analog/issues/2117)) ([2044f7b](https://github.com/analogjs/analog/commit/2044f7bd4a784e86c7dbb2efc243ef03b3f82f26))
+
 # [3.0.0-alpha.6](https://github.com/analogjs/analog/compare/v3.0.0-alpha.5...v3.0.0-alpha.6) (2026-03-17)
 
 ### Bug Fixes

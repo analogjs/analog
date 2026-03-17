@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vitest-angular",
-  "version": "3.0.0-alpha.6",
+  "version": "3.0.0-alpha.7",
   "description": "Vitest Builder for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -31,6 +31,9 @@
   "schematics": "./src/lib/tools/collection.json",
   "ng-add": {
     "save": "devDependencies"
+  },
+  "dependencies": {
+    "oxc-transform": "^0.119.0"
   },
   "peerDependencies": {
     "@analogjs/vite-plugin-angular": "*",

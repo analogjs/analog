@@ -34,6 +34,7 @@ interface NgPackageJson {
 
 interface ExportConditions {
   types?: string;
+  import?: string;
   default: string;
 }
 
@@ -82,26 +83,9 @@ console.log(`\nBuilding @analogjs/${packageName}...\n`);
 if (existsSync(outDir)) {
   // For content package, preserve the plugin/ directory (built separately)
   if (packageName === 'content' && existsSync(resolve(outDir, 'plugin'))) {
-    // Remove everything except plugin/
-    const entries: string[] = [
-      'fesm2022',
-      'types',
-      'packages',
-      'package.json',
-      'README.md',
-      '.npmignore',
-      'server',
-      'tokens',
-      'og',
-      'prism-highlighter',
-      'shiki-highlighter',
-      'resources',
-      'migrations',
-      'LICENSE',
-    ];
-    for (const entry of entries) {
-      const p: string = resolve(outDir, entry);
-      if (existsSync(p)) rmSync(p, { recursive: true });
+    for (const entry of readdirSync(outDir)) {
+      if (entry === 'plugin') continue;
+      rmSync(resolve(outDir, entry), { recursive: true });
     }
   } else {
     rmSync(outDir, { recursive: true });
@@ -155,31 +139,27 @@ const ngPkg: NgPackageJson = JSON.parse(
 );
 const prefix = `analogjs-${packageName}`;
 
-// Discover sub-entries from ng-package.json files in subdirectories
+// Discover sub-entries by scanning for ng-package.json files in subdirectories
 const subEntries: SubEntry[] = [];
-const subDirs: string[] = [
-  'server',
-  'server/actions',
-  'tokens',
-  'og',
-  'prism-highlighter',
-  'shiki-highlighter',
-  'resources',
-];
-for (const sub of subDirs) {
-  const ngPkgPath: string = resolve(pkgDir, sub, 'ng-package.json');
-  if (existsSync(ngPkgPath)) {
-    const subNgPkg: NgPackageJson = JSON.parse(
-      readFileSync(ngPkgPath, 'utf-8'),
-    );
-    const entryFile: string = subNgPkg.lib?.entryFile || 'src/index.ts';
-    subEntries.push({
-      path: `./${sub}`,
-      name: `${prefix}-${sub.replace(/\//g, '-')}`,
-      typesPath: `${sub}/${entryFile}`.replace('.ts', '.d.ts'),
-    });
-  }
+for (const entry of readdirSync(pkgDir, {
+  withFileTypes: true,
+  recursive: true,
+})) {
+  if (entry.name !== 'ng-package.json' || !entry.parentPath) continue;
+  const sub: string = entry.parentPath.slice(pkgDir.length + 1);
+  if (!sub) continue; // skip root ng-package.json
+
+  const subNgPkg: NgPackageJson = JSON.parse(
+    readFileSync(resolve(entry.parentPath, entry.name), 'utf-8'),
+  );
+  const entryFile: string = subNgPkg.lib?.entryFile || 'src/index.ts';
+  subEntries.push({
+    path: `./${sub}`,
+    name: `${prefix}-${sub.replace(/\//g, '-')}`,
+    typesPath: `${sub}/${entryFile}`.replace('.ts', '.d.ts'),
+  });
 }
+subEntries.sort((a, b) => a.path.localeCompare(b.path));
 
 // Build exports map — types point to tsc's per-file output, JS to FESM bundles
 const mainEntryFile: string = ngPkg.lib?.entryFile || 'src/index.ts';
@@ -187,6 +167,7 @@ const exportsMap: Record<string, ExportConditions> = {
   './package.json': { default: './package.json' },
   '.': {
     types: `./types/${mainEntryFile.replace('.ts', '.d.ts')}`,
+    import: `./fesm2022/${prefix}.mjs`,
     default: `./fesm2022/${prefix}.mjs`,
   },
 };
@@ -194,6 +175,7 @@ const exportsMap: Record<string, ExportConditions> = {
 for (const entry of subEntries) {
   exportsMap[entry.path] = {
     types: `./types/${entry.typesPath}`,
+    import: `./fesm2022/${entry.name}.mjs`,
     default: `./fesm2022/${entry.name}.mjs`,
   };
 }

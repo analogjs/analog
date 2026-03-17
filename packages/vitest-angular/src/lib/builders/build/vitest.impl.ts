@@ -7,7 +7,7 @@ import { globSync } from 'tinyglobby';
 
 import { VitestSchema } from './schema';
 import { createAngularMemoryPlugin } from './plugins/angular-memory-plugin';
-import { esbuildDownlevelPlugin } from './plugins/esbuild-downlevel-plugin';
+import { downlevelPlugin } from './plugins/downlevel-plugin';
 import { getBuildApplicationFunction } from './devkit';
 
 export enum ResultKind {
@@ -79,7 +79,7 @@ async function* vitestApplicationBuilder(
         workspaceRoot,
         outputFiles,
       })) as Plugin,
-      await esbuildDownlevelPlugin(),
+      downlevelPlugin(),
     ],
   };
 

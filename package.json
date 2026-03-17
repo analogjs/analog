@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "3.0.0-alpha.6",
+  "version": "3.0.0-alpha.7",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -181,6 +181,7 @@
     "nitro": "3.0.260311-beta",
     "nx": "22.6.0-beta.11",
     "ofetch": "2.0.0-alpha.3",
+    "oxc-transform": "^0.119.0",
     "oxc-parser": "^0.119.0",
     "oxc-resolver": "^11.19.1",
     "oxlint": "^1.55.0",
@@ -228,7 +229,6 @@
     "onlyBuiltDependencies": [
       "@compodoc/compodoc",
       "@parcel/watcher",
-      "@parcel/watcher",
       "@swc/core",
       "core-js-pure",
       "core-js",
@@ -236,6 +236,7 @@
       "lmdb",
       "msgpackr-extract",
       "nx",
+      "oxc-transform",
       "oxc-parser",
       "sharp",
       "vite-tsconfig-paths"
