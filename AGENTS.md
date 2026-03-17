@@ -15,7 +15,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - `tsconfig.base.json` - TypeScript path aliases for all packages
 - `nx.json` - Nx workspace configuration
 - `pnpm-workspace.yaml` - pnpm workspace definition
-- `release.config.cjs` - semantic-release configuration
+- `release.config.ts` - semantic-release configuration
 - `.github/workflows/` - CI/CD workflows
 - `.githooks/` - git hooks (commit-msg, pre-commit)
 - `CONTRIBUTING.md` - full contribution guidelines
@@ -46,7 +46,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - **Libraries:** in `packages/` (shared code, features, platform, plugins)
 - **TypeScript path aliases:** defined in `tsconfig.base.json`
 - **Vite config:** each app has its own `vite.config.ts` (see `apps/analog-app/vite.config.ts` for advanced AnalogJS/Vite usage)
-- **Release:** Automated with semantic-release through CI, see `release.config.cjs` and `tools/publish.sh`
+- **Release:** Automated with semantic-release through CI, see `release.config.ts` and `tools/publish.sh`
 
 ## Packages → Commit Scopes
 

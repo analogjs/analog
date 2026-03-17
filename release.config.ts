@@ -1,8 +1,6 @@
-/**
- * @type {import('semantic-release').GlobalConfig}
- */
+import type { GlobalConfig } from 'semantic-release';
 
-const tag = process.env.RELEASE_TAG;
+const tag = process.env['RELEASE_TAG'];
 
 const replacementFiles = [
   'packages/astro-angular/package.json',
@@ -17,7 +15,7 @@ const replacementFiles = [
   'packages/router/package.json',
 ];
 
-module.exports = {
+export default {
   branches: [
     'main',
     { name: 'beta', prerelease: true },
@@ -224,4 +222,4 @@ module.exports = {
     ],
   ],
   preset: 'angular',
-};
+} satisfies GlobalConfig;
