@@ -39,11 +39,9 @@ The most influential ideas borrowed from [TanStack Router](https://tanstack.com/
 
 - **Input vs output type distinction** — TanStack separates navigation input types (`fullSearchSchemaInput`) from runtime output types (`fullSearchSchema`). Analog mirrors this with `params` / `paramsOutput` and `query` / `queryOutput` in the generated route table, ensuring navigation always uses strings while runtime consumption can use coerced/validated types.
 
-- **`useParams({ from })` and `useSearch({ from })`** — The `from` parameter pattern for constraining return types by route path inspired `injectTypedParams('/path')` and `injectTypedQuery('/path')`.
+- **`useParams({ from })` and `useSearch({ from })`** — The `from` parameter pattern for constraining return types by route path inspired `injectParams('/path')` and `injectQuery('/path')`.
 
 - **Root route context** — `createRootRouteWithContext<T>()` inspired `withRouteContext()` and `injectRouteContext()`, adapted to Angular's DI model.
-
-- **Loader caching semantics** — `defaultStaleTime`, `defaultGcTime`, and `defaultPendingMs` from `createRouter()` options inspired `withLoaderCaching()`.
 
 - **Route identity model** — The distinction between `id`, `path`, `fullPath`, and `to` was borrowed and adapted for the generated route tree metadata.
 
@@ -62,7 +60,7 @@ Key references studied:
 
 - **Build-integrated type generation** — Nuxt generates route typings automatically during dev/build and wires them into the TypeScript program. Analog follows the same pattern with Vite plugin watch integration.
 
-- **Broad propagation of typed routing** — Nuxt proved that generated types should flow into all major route entrypoints, not just a single helper. Analog propagates types through `routePath()`, `injectTypedRouter()`, `injectTypedParams()`, `injectTypedQuery()`, `RouteLinkPipe`, and `definePageLoad()`.
+- **Broad propagation of typed routing** — Nuxt proved that generated types should flow into all major route entrypoints, not just a single helper. Analog propagates types through `routePath()`, `injectNavigate()` / `injectNavigateByUrl()`, `injectParams()`, `injectQuery()`, and `definePageLoad()`.
 
 Key references studied:
 
@@ -77,7 +75,7 @@ Key references studied:
 
 - **Manifest discipline** — Astro's careful route-manifest generation, route collision handling, and watch/rebuild robustness influenced the design of `generateRouteManifest()` with collision warnings and deterministic sorting.
 
-- **Internal diagnostics** — Astro's approach to build-time diagnostics inspired `formatManifestSummary()` and the schema-mismatch warnings.
+- **Internal diagnostics** — Astro's approach to build-time diagnostics inspired `formatManifestSummary()`.
 
 ### Angular Router
 
@@ -107,20 +105,9 @@ Key references studied:
 
 ```
 ┌──────────────────────────────────┐
-│  @analogjs/platform              │  Orchestration: wires up route generation
-│  route-generation-plugin.ts      │  via experimental.typedRouter flag
-└──────────┬───────────────────────┘
-           │ delegates to
-           ▼
-┌──────────────────────────────────┐
-│  @analogjs/vite-plugin-routes    │  Dedicated Vite plugin for codegen
+│  @analogjs/platform              │  Route generation, codegen, and manifest
 │  typed-routes-plugin.ts          │  Generates src/routeTree.gen.ts
-│  json-ld-manifest-plugin.ts      │  JSON-LD manifest colocation
-└──────────┬───────────────────────┘
-           │ imports from
-           ▼
-┌──────────────────────────────────┐
-│  @analogjs/router/manifest       │  Shared manifest engine (no Angular deps)
+│  route-generation-plugin.ts      │  Wired via experimental.typedRouter
 │  filenameToRoutePath()           │  Route normalization
 │  filenameToRouteId()             │  Structural identity
 │  generateRouteManifest()         │  Manifest from filenames
@@ -132,15 +119,11 @@ Key references studied:
 
 ┌──────────────────────────────────┐
 │  @analogjs/router                │  Public Angular-facing runtime API
-│  routePath()                     │  Type-safe URL builder
-│  injectTypedRouter()             │  Angular DI typed router wrapper
-│  injectTypedParams()             │  Typed params signal
-│  injectTypedQuery()              │  Typed query signal
-│  RouteLinkPipe                   │  Template pipe for typed links
-│  withTypedRouter()               │  Router feature provider
-│  withRouteContext()              │  Root context provider
-│  withLoaderCaching()             │  Loader cache configuration
-│  injectRouteContext()            │  Context consumer
+│  routePath()                     │  Type-safe route object (path + routerLinkOptions)
+│  injectNavigate()                │  Type-safe wrapper around Router.navigate()
+│  injectNavigateByUrl()           │  Type-safe wrapper around Router.navigateByUrl()
+│  injectParams()                  │  Typed params signal
+│  injectQuery()                   │  Typed query signal
 │  RouteParamsOutput<P>            │  Validated params type utility
 │  RouteQueryOutput<P>             │  Validated query type utility
 └──────────────────────────────────┘
@@ -155,7 +138,7 @@ Key references studied:
 
 ### Generated Output
 
-The Vite plugin generates a single canonical file at `src/routeTree.gen.ts` containing up to three composed layers:
+The platform plugin generates a single canonical file at `src/routeTree.gen.ts` containing two layers:
 
 **Layer 1 — Typed Navigation Table** (always present)
 
@@ -193,7 +176,6 @@ export interface AnalogGeneratedRouteRecord<
   kind: 'page' | 'content';
   hasParamsSchema: boolean;
   hasQuerySchema: boolean;
-  hasJsonLd: boolean;
   isIndex: boolean;
   isGroup: boolean;
   isCatchAll: boolean;
@@ -223,26 +205,6 @@ export const analogRouteTree = {
 } as const;
 ```
 
-**Layer 3 — Typed JSON-LD Manifest** (opt-out via `jsonLdManifest: false`)
-
-```ts
-import type { Graph, Thing, WithContext } from 'schema-dts';
-
-export type AnalogJsonLdDocument = WithContext<Thing> | Graph | Array<WithContext<Thing>>;
-export type GeneratedJsonLdManifestEntry = {
-  routePath: string;
-  sourceFile: string;
-  kind: 'module' | 'content';
-  resolveJsonLd: () => AnalogJsonLdDocument[];
-};
-
-export const routeJsonLdManifest = new Map<string, GeneratedJsonLdManifestEntry>([
-  ['/', { routePath: '/', sourceFile: '...', kind: 'module', resolveJsonLd: () => ... }],
-]);
-```
-
-The manifest uses [`schema-dts`](https://github.com/google/schema-dts) types instead of generic `Record<string, unknown>`, providing typed `WithContext<Thing>` and `Graph` contracts for route-authored structured data.
-
 ### Route Identity Model
 
 > _Borrowed from TanStack Router's distinction between route identity concepts._
@@ -260,22 +222,17 @@ The manifest uses [`schema-dts`](https://github.com/google/schema-dts) types ins
 
 ### `@analogjs/router` — Runtime
 
-| Export                        | Kind      | Purpose                                      |
-| ----------------------------- | --------- | -------------------------------------------- |
-| `routePath(path, options?)`   | function  | Type-safe URL builder                        |
-| `injectTypedRouter()`         | function  | Angular DI typed router wrapper              |
-| `injectTypedParams(from)`     | function  | Typed params signal (experimental)           |
-| `injectTypedQuery(from)`      | function  | Typed query signal (experimental)            |
-| `injectRouteContext()`        | function  | Access root route context (experimental)     |
-| `RouteLinkPipe`               | pipe      | Template-friendly typed route URL building   |
-| `withTypedRouter(options?)`   | feature   | Enable typed router in `provideFileRouter()` |
-| `withRouteContext(ctx)`       | feature   | Provide root context (experimental)          |
-| `withLoaderCaching(options?)` | feature   | Loader caching config (experimental)         |
-| `RouteParamsOutput<P>`        | type      | Validated params type for a route            |
-| `RouteQueryOutput<P>`         | type      | Validated query type for a route             |
-| `AnalogRouteTable`            | interface | Augmented by generated code                  |
-| `AnalogRoutePath`             | type      | Union of valid route paths                   |
-| `AnalogJsonLdDocument`        | type      | Typed JSON-LD document (`schema-dts`)        |
+| Export                      | Kind      | Purpose                                           |
+| --------------------------- | --------- | ------------------------------------------------- |
+| `routePath(path, options?)` | function  | Returns `{ path, ...routerLinkOptions }`          |
+| `injectNavigate()`          | function  | Type-safe wrapper around `Router.navigate()`      |
+| `injectNavigateByUrl()`     | function  | Type-safe wrapper around `Router.navigateByUrl()` |
+| `injectParams(from)`        | function  | Typed params signal (experimental)                |
+| `injectQuery(from)`         | function  | Typed query signal (experimental)                 |
+| `RouteParamsOutput<P>`      | type      | Validated params type for a route                 |
+| `RouteQueryOutput<P>`       | type      | Validated query type for a route                  |
+| `AnalogRouteTable`          | interface | Augmented by generated code                       |
+| `AnalogRoutePath`           | type      | Union of valid route paths                        |
 
 ### `@analogjs/router/server/actions` — Server
 
@@ -285,31 +242,20 @@ The manifest uses [`schema-dts`](https://github.com/google/schema-dts) types ins
 | `defineAction(options)`   | function | Server action with validation          |
 | `defineApiRoute(options)` | function | API route with validation              |
 
-### `@analogjs/router/manifest` — Build Tools
+### `@analogjs/platform` — Build & Codegen
 
-| Export                                             | Kind     | Purpose                           |
-| -------------------------------------------------- | -------- | --------------------------------- |
-| `filenameToRoutePath(filename)`                    | function | Convert filename to route path    |
-| `filenameToRouteId(filename)`                      | function | Convert filename to structural id |
-| `extractRouteParams(path)`                         | function | Extract param metadata from path  |
-| `generateRouteManifest(files, detector?)`          | function | Build manifest from files         |
-| `generateRouteTableDeclaration(manifest)`          | function | Generate TS route table           |
-| `generateRouteTreeDeclaration(manifest, options?)` | function | Generate TS route tree module     |
-| `detectSchemaExports(content)`                     | function | Detect schema exports in file     |
-| `formatManifestSummary(manifest)`                  | function | Human-readable build summary      |
-
-### `@analogjs/vite-plugin-routes` — Vite Plugin
-
-| Export                     | Kind     | Purpose                                 |
-| -------------------------- | -------- | --------------------------------------- |
-| `typedRoutes(options?)`    | function | Vite plugin for `src/routeTree.gen.ts`  |
-| `jsonLdManifest(options?)` | function | Standalone JSON-LD manifest Vite plugin |
-
-### `@analogjs/platform` — Orchestration
-
-| Export                            | Kind     | Purpose                                              |
-| --------------------------------- | -------- | ---------------------------------------------------- |
-| `routeGenerationPlugin(options?)` | function | Wires `typedRoutes()` via `experimental.typedRouter` |
+| Export                                             | Kind     | Purpose                                                    |
+| -------------------------------------------------- | -------- | ---------------------------------------------------------- |
+| `typedRoutesPlugin(options?)`                      | function | Vite plugin that generates `src/routeTree.gen.ts`          |
+| `routeGenerationPlugin(options?)`                  | function | Wires `typedRoutesPlugin()` via `experimental.typedRouter` |
+| `filenameToRoutePath(filename)`                    | function | Convert filename to route path                             |
+| `filenameToRouteId(filename)`                      | function | Convert filename to structural id                          |
+| `extractRouteParams(path)`                         | function | Extract param metadata from path                           |
+| `generateRouteManifest(files, detector?)`          | function | Build manifest from files                                  |
+| `generateRouteTableDeclaration(manifest)`          | function | Generate TS route table                                    |
+| `generateRouteTreeDeclaration(manifest, options?)` | function | Generate TS route tree module                              |
+| `detectSchemaExports(content)`                     | function | Detect schema exports in file                              |
+| `formatManifestSummary(manifest)`                  | function | Human-readable build summary                               |
 
 ---
 
@@ -342,10 +288,12 @@ These rules are tested and enforced across the manifest engine, codegen, and URL
            }
 
 3. Runtime:
-   ├── routePath('/users/[id]', { params: { id: '42' } })     ✅ typed
-   ├── router.navigate('/users/[id]', { params: { id: 42 } }) ❌ type error
-   ├── injectTypedParams('/users/[id]')  → Signal<{ id: string }>
-   └── '/users/[id]' | routeLink:{ params: { id: userId } }   ✅ typed
+   ├── routePath('/users/[id]', { params: { id: '42' } })
+   │     → { path: '/users/42', queryParams, fragment, ... }    ✅ typed route object w/ routerLinkOptions
+   ├── navigate('/users/[id]', { params: { id: 42 } })          ❌ type error
+   ├── navigate('/users/[id]', { params: { id: '42' } })        ✅ typed (via injectNavigate())
+   ├── injectParams('/users/[id]')  → Signal<{ id: string }>
+   └── template: [routerLink]="usersRoute.path"                 ✅ typed (from routePath)
 ```
 
 > The input/output distinction is one of the most important ideas borrowed from TanStack Router. Navigation always uses strings (URLs are text). Runtime consumption uses validated/coerced types. A schema with `v.transform(Number)` has `input: string` but `output: number` — you can't put a number in a URL.
@@ -375,24 +323,11 @@ export default defineConfig(() => ({
 ```ts
 // src/app/app.config.ts
 import { ApplicationConfig } from '@angular/core';
-import { provideFileRouter, withTypedRouter } from '@analogjs/router';
+import { provideFileRouter } from '@analogjs/router';
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideFileRouter(withTypedRouter())],
+  providers: [provideFileRouter()],
 };
-```
-
-### Direct Plugin Composition
-
-```ts
-// vite.config.ts
-import analog from '@analogjs/platform';
-import { typedRoutes } from '@analogjs/vite-plugin-routes';
-import { defineConfig } from 'vite';
-
-export default defineConfig(() => ({
-  plugins: [typedRoutes(), analog()],
-}));
 ```
 
 ### Configuration Options
@@ -400,7 +335,6 @@ export default defineConfig(() => ({
 | Option                  | Default                  | Description                            |
 | ----------------------- | ------------------------ | -------------------------------------- |
 | `outFile`               | `'src/routeTree.gen.ts'` | Output path for generated declarations |
-| `jsonLdManifest`        | `true`                   | Include JSON-LD manifest in output     |
 | `additionalPagesDirs`   | `[]`                     | Extra page directories to scan         |
 | `additionalContentDirs` | `[]`                     | Extra content directories to scan      |
 | `workspaceRoot`         | `process.cwd()`          | Workspace root for path resolution     |
@@ -409,7 +343,7 @@ export default defineConfig(() => ({
 
 ## Rendering Modes
 
-Typed routes and JSON-LD work across all Analog rendering modes. The route type generation is rendering-mode agnostic — all routes are typed regardless of how they render.
+Typed routes work across all Analog rendering modes. The route type generation is rendering-mode agnostic — all routes are typed regardless of how they render.
 
 ### SSR (Server-Side Rendering)
 
@@ -420,7 +354,6 @@ The default mode. Routes render on the server at request time.
 - `routeTree.gen.ts` is generated at build time; types are available during compilation regardless of SSR
 - `definePageLoad()` handlers execute on the server with access to `fetch`, `event`, `request`, and `response`
 - Schema-validated params (`routeParamsSchema`) are coerced on the server before reaching `handler`
-- JSON-LD from `routeMeta.jsonLd` is serialized into `<script type="application/ld+json">` tags in the SSR HTML output with XSS-safe escaping
 
 ```ts
 // src/app/pages/products.[productId].server.ts
@@ -439,13 +372,6 @@ export const load = definePageLoad({
   },
 });
 ```
-
-**JSON-LD in SSR:**
-
-- Route metadata including `jsonLd` is resolved during Angular's server render
-- `serializeJsonLd()` escapes `<`, `>`, `&`, and Unicode line separators to prevent XSS
-- Script tags include `data-analog-json-ld` markers for client-side hydration replacement
-- Hierarchical: parent + child route JSON-LD are collected and serialized
 
 ### SSG (Static Site Generation / Prerendering)
 
@@ -470,7 +396,6 @@ analog({
 
 - Identical to SSR from the type-safety perspective — same generated types, same schemas
 - `definePageLoad()` handlers execute once during prerender; output is baked into static HTML
-- JSON-LD is serialized into the prerendered HTML files (e.g., `dist/.../index.html`)
 - The `analogRouteTree` metadata can be used at build time to programmatically discover prerenderable routes:
 
 ```ts
@@ -510,23 +435,6 @@ analog({
 
 - Type generation and route table augmentation still happen at build time — client-only routes are fully typed
 - `definePageLoad()` handlers for client-only routes execute client-side, fetching data via the Nitro API layer
-- JSON-LD for client-only routes is **not** in the initial HTML; it is injected dynamically after Angular bootstraps via `updateJsonLdOnRouteChange()`
-- SEO-visible structured data requires SSR or prerendering — client-only JSON-LD is only visible to JavaScript-capable crawlers
-
-```ts
-// src/app/pages/client/(client).page.ts
-import type { RouteMeta } from '@analogjs/router';
-import type { WebPage, WithContext } from 'schema-dts';
-
-export const routeMeta: RouteMeta = {
-  title: 'Client Dashboard',
-  jsonLd: {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: 'Dashboard',
-  } satisfies WithContext<WebPage>,
-};
-```
 
 ### Content Routes (Markdown)
 
@@ -535,35 +443,16 @@ Markdown files in `src/content/` are discovered and typed alongside page routes.
 **How typed routes interact:**
 
 - Content routes are marked `kind: 'content'` in the generated route tree
-- JSON-LD can be authored in YAML frontmatter:
-
-```markdown
----
-title: Getting Started
-jsonLd:
-  '@context': https://schema.org
-  '@type': Article
-  headline: Getting Started with Analog
----
-
-# Getting Started
-```
-
-- Content route JSON-LD is inlined directly in the generated manifest (no module import needed)
-- Frontmatter JSON-LD is extracted at build time by `extractMarkdownJsonLd()` and serialized into the manifest as static data
 
 ### Rendering Mode Summary
 
-| Concern                | SSR                       | SSG / Prerender            | Client-Only (`ssr: false`)     |
-| ---------------------- | ------------------------- | -------------------------- | ------------------------------ |
-| Type safety            | Full (build-time)         | Full (build-time)          | Full (build-time)              |
-| `routeTree.gen.ts`     | Generated at build        | Generated at build         | Generated at build             |
-| `definePageLoad()`     | Executes on server        | Executes once at build     | Executes client-side via fetch |
-| Schema validation      | Server-side at request    | Server-side at build       | Client-side at runtime         |
-| JSON-LD in HTML        | Yes (SSR output)          | Yes (static HTML)          | No (injected client-side)      |
-| JSON-LD SEO visibility | Guaranteed                | Guaranteed                 | JS-dependent crawlers only     |
-| Route tree metadata    | Available server + client | Available in static output | Available client-side          |
-| `hasJsonLd` flag       | Accurate                  | Accurate                   | Accurate                       |
+| Concern             | SSR                       | SSG / Prerender            | Client-Only (`ssr: false`)     |
+| ------------------- | ------------------------- | -------------------------- | ------------------------------ |
+| Type safety         | Full (build-time)         | Full (build-time)          | Full (build-time)              |
+| `routeTree.gen.ts`  | Generated at build        | Generated at build         | Generated at build             |
+| `definePageLoad()`  | Executes on server        | Executes once at build     | Executes client-side via fetch |
+| Schema validation   | Server-side at request    | Server-side at build       | Client-side at runtime         |
+| Route tree metadata | Available server + client | Available in static output | Available client-side          |
 
 ---
 
@@ -571,15 +460,14 @@ jsonLd:
 
 ### Iteration Log
 
-| #   | Date       | Focus                                                                                      | Status |
-| --- | ---------- | ------------------------------------------------------------------------------------------ | ------ |
-| 1   | 2026-03-15 | Core implementation: route-manifest, route-path, typed-router, Vite plugin, 67 tests       | Done   |
-| 2   | 2026-03-15 | Schema-aware codegen, definePageLoad, detectSchemaExports, 84 tests total                  | Done   |
-| 3   | 2026-03-15 | Input/Output type distinction, integration test, RouteParamsOutput/RouteQueryOutput        | Done   |
-| 4   | 2026-03-15 | Type tests, RouteLinkPipe, dev diagnostics, formatManifestSummary, 112 tests total         | Done   |
-| 5   | 2026-03-15 | Package split: `@analogjs/router/manifest` + `@analogjs/vite-plugin-routes`, JSON-LD       | Done   |
-| 6   | 2026-03-15 | Route tree metadata: `filenameToRouteId`, `AnalogGeneratedRouteRecord`, `analogRouteTree`  | Done   |
-| 7   | 2026-03-15 | `schema-dts` integration: `AnalogJsonLdDocument`, typed manifest, route authoring surfaces | Done   |
+| #   | Date       | Focus                                                                                     | Status |
+| --- | ---------- | ----------------------------------------------------------------------------------------- | ------ |
+| 1   | 2026-03-15 | Core implementation: route-manifest, route-path, typed-router, Vite plugin, 67 tests      | Done   |
+| 2   | 2026-03-15 | Schema-aware codegen, definePageLoad, detectSchemaExports, 84 tests total                 | Done   |
+| 3   | 2026-03-15 | Input/Output type distinction, integration test, RouteParamsOutput/RouteQueryOutput       | Done   |
+| 4   | 2026-03-15 | Type tests, dev diagnostics, formatManifestSummary, 112 tests total                       | Done   |
+| 5   | 2026-03-15 | Platform plugin consolidation, codegen primitives                                         | Done   |
+| 6   | 2026-03-15 | Route tree metadata: `filenameToRouteId`, `AnalogGeneratedRouteRecord`, `analogRouteTree` | Done   |
 
 ### Test Coverage
 
@@ -589,22 +477,18 @@ jsonLd:
 | `route-path.spec.ts`                         | 25      |
 | `route-path.typetest.spec.ts`                | 17      |
 | `route-generation.integration.spec.ts`       | 7       |
-| `json-ld.spec.ts`                            | 4       |
-| `json-ld-manifest-plugin.spec.ts`            | 4       |
 | `route-generation-plugin.spec.ts` (platform) | 4       |
 | `typed-routes-plugin.spec.ts`                | 3       |
-| **Typed routes total**                       | **131** |
+| **Typed routes total**                       | **116** |
 
-All existing tests (define-action, define-api-route, parse-raw-content-file, validate, routes, render, meta-tags, etc.) pass with zero regressions. Full router test suite: **250 tests**, vite-plugin-routes: **7 tests**, platform: **9 tests**, e2e (Playwright): **12 tests** — all green.
+All existing tests (define-action, define-api-route, parse-raw-content-file, validate, routes, render, meta-tags, etc.) pass with zero regressions. Full router test suite: **250 tests**, platform: **9 tests**, e2e (Playwright): **12 tests** — all green.
 
 ### Files Changed (vs `alpha`)
 
 98 files changed, ~10,000 lines added across:
 
-- `packages/router/manifest/` — New secondary entry point for shared manifest engine
+- `packages/platform/src/lib/` — Route generation plugin, codegen, and manifest primitives
 - `packages/router/src/lib/` — Runtime APIs and types
-- `packages/vite-plugin-routes/` — New dedicated Vite plugin package
-- `packages/platform/src/lib/` — Route generation orchestration
 - `packages/router/server/actions/` — `definePageLoad` and validation
 - `apps/analog-app/src/routeTree.gen.ts` — Live generated output
 - `apps/docs-app/docs/features/routing/typed-routes.md` — User-facing docs
@@ -615,21 +499,21 @@ All existing tests (define-action, define-api-route, parse-raw-content-file, val
 
 2. **Bracket syntax in route keys** — Route table keys use `[id]`, `[...slug]`, `[[...slug]]` syntax matching filenames instead of Angular's `:id` / `**` syntax, for clarity and stronger typing.
 
-3. **Rest args for conditional required params** — `routePath('/users/[id]', { params: { id: '42' } })` requires the options arg, while `routePath('/about')` makes it optional.
+3. **`routePath()` returns a route object** — `routePath('/users/[id]', { params: { id: '42' } })` returns an object with the resolved `path` plus `routerLinkOptions` (`queryParams`, `fragment`, `queryParamsHandling`, etc.). The options arg is required when the route has params, optional for static routes like `routePath('/about')`.
 
 4. **String fallback** — `AnalogRoutePath` falls back to `string` when no routes are generated, enabling gradual adoption.
 
-5. **Shared manifest engine** — `@analogjs/router/manifest` is a dependency-free secondary entry point consumed by both runtime and build packages.
+5. **Codegen in platform** — All manifest and codegen primitives live in `@analogjs/platform`, keeping the router package focused on runtime.
 
-6. **Single combined output file** — The Vite plugin composes route table, route tree metadata, and JSON-LD manifest into one `routeTree.gen.ts` with deduped imports.
+6. **Single combined output file** — The platform plugin composes route table and route tree metadata into one `routeTree.gen.ts` with deduped imports.
 
-7. **`@analogjs/vite-plugin-routes` as a dedicated package** — Route generation is a real Vite plugin package, wired into `@analogjs/platform` via `experimental.typedRouter` but usable standalone.
+7. **Plugin lives in `@analogjs/platform`** — Route generation is part of the platform package, wired via `experimental.typedRouter`. No separate plugin package.
 
 ---
 
 ## Forward Roadmap
 
-### Completed: Route Tree Enrichment & `schema-dts`
+### Completed: Route Tree Enrichment
 
 The route tree pattern has been fully implemented and verified:
 
@@ -637,11 +521,6 @@ The route tree pattern has been fully implemented and verified:
 - [x] `AnalogFileRoutesById`, `AnalogFileRoutesByFullPath`, `AnalogFileRoutesByTo` typed interfaces
 - [x] `AnalogRouteTreeId`, `AnalogRouteTreeFullPath`, `AnalogRouteTreeTo` union types
 - [x] `analogRouteTree` runtime constant with `byId`, `byFullPath`, `byTo` lookups
-- [x] `hasJsonLd` awareness in route tree metadata
-- [x] `schema-dts` integration: `AnalogJsonLdDocument` type alias (`WithContext<Thing> | Graph | Array<WithContext<Thing>>`)
-- [x] Generated manifest uses typed `AnalogJsonLdDocument[]` instead of `Record<string, unknown>`
-- [x] Route authoring surfaces (`RouteMeta.jsonLd`, `RouteExport.routeJsonLd`, `defineRouteMeta`) accept `AnalogJsonLdDocument`
-- [x] `schema-dts` as optional peer dependency of `@analogjs/router`, dependency of `@analogjs/vite-plugin-routes`
 - [x] App build, unit tests, and e2e tests all passing
 
 ### Remaining Work
@@ -651,11 +530,6 @@ The route tree pattern has been fully implemented and verified:
 - [ ] Broader build validation across all workspace apps
 
 ### Future Milestones
-
-**Typed page contracts:**
-
-- Typed page-load contracts (`definePageLoad` with full schema integration)
-- Loader dependency model (Angular-native `loaderDeps` inspired by TanStack)
 
 **Devtools & diagnostics:**
 
@@ -681,8 +555,10 @@ The route tree pattern has been fully implemented and verified:
 - **Not requiring schemas for all routes.** Schemas are opt-in refinements.
 - **Not defaulting to runtime validation on every navigation.** Compile-time carries the safety burden.
 - **Not importing TanStack's hook-centric route module model.** Angular uses DI and signals.
+- **Not building loaders or caching.** Data loading and cache semantics are separate concerns.
 - **Not exposing Nitro page transport URLs** (`/_analog/pages/*`) in the public contract.
 - **Not creating a separate typed-router package.** The runtime API lives in `@analogjs/router`.
+- **Not including JSON-LD.** Structured data is out of scope for typed routes.
 
 ---
 
@@ -690,12 +566,12 @@ The route tree pattern has been fully implemented and verified:
 
 > No breaking changes. Existing Analog apps continue to work unchanged.
 
-| Step | Action                                                            |
-| ---- | ----------------------------------------------------------------- |
-| 1    | Enable `experimental.typedRouter: true`                           |
-| 2    | Adopt `routePath()` or `injectTypedRouter()`                      |
-| 3    | Optionally add `routeParamsSchema` / `routeQuerySchema` to routes |
-| 4    | Optionally reuse those schemas in actions, APIs, and loads        |
+| Step | Action                                                              |
+| ---- | ------------------------------------------------------------------- |
+| 1    | Enable `experimental.typedRouter: true`                             |
+| 2    | Adopt `routePath()` or `injectNavigate()` / `injectNavigateByUrl()` |
+| 3    | Optionally add `routeParamsSchema` / `routeQuerySchema` to routes   |
+| 4    | Optionally reuse those schemas in actions, APIs, and loads          |
 
 When no route table is generated, all path types fall back to `string` and params are untyped. Existing code continues to work without changes.
 
@@ -703,15 +579,14 @@ When no route table is generated, all path types fall back to `string` and param
 
 ## Comparison with TanStack Router
 
-| Concept            | TanStack Router                      | Analog                                                                              |
-| ------------------ | ------------------------------------ | ----------------------------------------------------------------------------------- |
-| Type registration  | `Register` interface augmentation    | `AnalogRouteTable` augmentation                                                     |
-| Route codegen      | `routeTree.gen.ts`                   | `src/routeTree.gen.ts`                                                              |
-| Type-safe navigate | `<Link to="/path" params={...}>`     | `router.navigate('/path', { params })`                                              |
-| Typed params       | `useParams({ from: '/path' })`       | `injectTypedParams('/path')`                                                        |
-| Typed search       | `useSearch({ from: '/path' })`       | `injectTypedQuery('/path')`                                                         |
-| Root context       | `createRootRouteWithContext<T>()`    | `withRouteContext(ctx)`                                                             |
-| Loader caching     | `defaultStaleTime` / `defaultGcTime` | `withLoaderCaching(options)`                                                        |
-| Strict mode        | `useParams({ strict: true })`        | `withTypedRouter({ strictRouteParams: true })`                                      |
-| Schema validation  | Validator adapters (Zod, Valibot)    | [Standard Schema](https://github.com/standard-schema/standard-schema) (any library) |
-| Route tree         | Runtime route instances              | Metadata-only `analogRouteTree` (no runtime registration)                           |
+| Concept            | TanStack Router                   | Analog                                                                              |
+| ------------------ | --------------------------------- | ----------------------------------------------------------------------------------- |
+| Type registration  | `Register` interface augmentation | `AnalogRouteTable` augmentation                                                     |
+| Route codegen      | `routeTree.gen.ts`                | `src/routeTree.gen.ts`                                                              |
+| Type-safe navigate | `<Link to="/path" params={...}>`  | `injectNavigate()` / `injectNavigateByUrl()`                                        |
+| Typed params       | `useParams({ from: '/path' })`    | `injectParams('/path')`                                                             |
+| Typed search       | `useSearch({ from: '/path' })`    | `injectQuery('/path')`                                                              |
+| Root context       | `createRootRouteWithContext<T>()` | `withRouteContext(ctx)`                                                             |
+| Strict mode        | `useParams({ strict: true })`     | Built into `injectParams()` type constraints                                        |
+| Schema validation  | Validator adapters (Zod, Valibot) | [Standard Schema](https://github.com/standard-schema/standard-schema) (any library) |
+| Route tree         | Runtime route instances           | Metadata-only `analogRouteTree` (no runtime registration)                           |
