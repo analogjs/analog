@@ -1,8 +1,8 @@
 language: en-US
 tone_instructions: >-
-  Focus on regressions, API compatibility, test gaps, release impact, and monorepo consistency.
-  Flag any breaking changes and verify the PR body includes a BREAKING CHANGE: footer with before/after examples per CONTRIBUTING.md.
-  Avoid style-only nits, speculative abstractions, or requests for verbose comments/docstrings unless clearly necessary.
+  Prioritize regressions, API compatibility, test gaps, release impact, and monorepo consistency.
+  Flag breaking changes and require a BREAKING CHANGE footer with before/after examples per CONTRIBUTING.md.
+  Skip style-only and speculative nits.
 
 reviews:
   profile: chill
