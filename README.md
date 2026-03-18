@@ -65,25 +65,25 @@ Follow the prompts to scaffold the project and start the development server.
 ### Partners
 
 <a href="https://zerops.io?utm_source=analog&utm_medium=github&utm_campaign=partnership" target="_blank">
-  <img src="https://github.com/analogjs/analog/blob/beta/apps/docs-app/static/img/logos/zerops-logo.svg" width="100px" height="100px" alt="Zerops" />
+  <img src="./apps/docs-app/static/img/logos/zerops-logo.svg" width="100px" height="100px" alt="Zerops" />
 </a>
 
 ### Sponsors
 
 <a href="https://nx.dev" target="_blank">
-  <img src="https://github.com/analogjs/analog/blob/beta/apps/docs-app/static/img/logos/nx-logo.dark.svg" width="100px" height="100px" alt="NxDevTools" />
+  <img src="./apps/docs-app/static/img/logos/nx-logo.dark.svg" width="100px" height="100px" alt="NxDevTools" />
 </a>
 
 <a href="https://houseofangular.io" target="_blank">
-  <img src="https://github.com/analogjs/analog/blob/beta/apps/docs-app/static/img/logos/house-of-angular.png" width="100px" height="100px" alt="House of Angular" />
+  <img src="./apps/docs-app/static/img/logos/house-of-angular.png" width="100px" height="100px" alt="House of Angular" />
 </a>
 
 <a href="https://snyder.tech/" target="_blank">
-  <img src="https://github.com/analogjs/analog/blob/beta/apps/docs-app/static/img/logos/snyder-logo.light.svg" width="100px" height="100px" alt="Snyder Tech" />
+  <img src="./apps/docs-app/static/img/logos/snyder-logo.light.svg" width="250px" height="100px" alt="Snyder Tech" />
 </a>
 
 <a href="https://coderabbit.link/analogjs" target="_blank">
-  <img src="https://github.com/analogjs/analog/blob/beta/apps/docs-app/static/img/logos/coderabbit.svg" width="150px" height="100px" alt="CodeRabbit" />
+  <img src="./apps/docs-app/static/img/logos/coderabbit.svg" width="250px" height="100px" alt="CodeRabbit" />
 </a>
 
 ## Supporting Analog
