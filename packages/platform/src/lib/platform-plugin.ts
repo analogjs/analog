@@ -22,16 +22,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ssr: true,
     ...opts,
   };
-  const viteOptions =
-    platformOptions.vite === false ? undefined : platformOptions.vite;
-  // Keep Vite's native build config on the Nitro path and forward the rest of
-  // the platform `vite` block to `@analogjs/vite-plugin-angular`.
-  const { build: viteBuildOptions, ...angularViteOptions } = viteOptions ?? {};
-  const nitroPluginOptions = {
-    ...platformOptions,
-    vite: viteBuildOptions ? { build: viteBuildOptions } : undefined,
-  } as Parameters<typeof viteNitroPlugin>[0];
-
   let nitroOptions = platformOptions?.nitro;
 
   if (nitroOptions?.routeRules) {
@@ -57,7 +47,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   }
 
   return [
-    ...externalPlugins(viteNitroPlugin(nitroPluginOptions, nitroOptions)),
+    ...externalPlugins(viteNitroPlugin(platformOptions as any, nitroOptions)),
     ...(platformOptions.ssr
       ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
       : []),
@@ -81,7 +71,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
             liveReload: platformOptions.liveReload,
             inlineStylesExtension: platformOptions.inlineStylesExtension,
             fileReplacements: platformOptions.fileReplacements,
-            ...angularViteOptions,
+            ...(opts?.vite ?? {}),
           }),
         )),
     ...serverModePlugin(),

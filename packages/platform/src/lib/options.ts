@@ -1,6 +1,5 @@
 import type { PluginOptions } from '@analogjs/vite-plugin-angular';
 import type { NitroConfig, PrerenderRoute } from 'nitro/types';
-import type { UserConfig } from 'vite';
 import type {
   SitemapConfig,
   PrerenderContentDir,
@@ -39,12 +38,6 @@ export interface PrerenderOptions {
   postRenderingHooks?: ((routes: PrerenderRoute) => Promise<void>)[];
 }
 
-type PlatformViteOptions = PluginOptions & {
-  // Keep the platform API aligned with Vite's native build config instead of
-  // mirroring a Rolldown-only subset here.
-  build?: UserConfig['build'];
-};
-
 export interface Options {
   ssr?: boolean;
   ssrBuildDir?: string;
@@ -62,7 +55,7 @@ export interface Options {
    * internal Nitro/Vite build pipeline, while the remaining fields are passed
    * to `@analogjs/vite-plugin-angular`.
    */
-  vite?: PlatformViteOptions | false;
+  vite?: PluginOptions | false;
   nitro?: NitroConfig;
   apiPrefix?: string;
   jit?: boolean;

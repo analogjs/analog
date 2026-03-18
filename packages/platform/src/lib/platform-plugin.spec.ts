@@ -43,43 +43,4 @@ describe('platformPlugin', () => {
     expect(viteNitroPluginSpy).toHaveBeenCalledWith({ ssr: false }, undefined);
     expect(ssrBuildPluginSpy).not.toHaveBeenCalled();
   });
-
-  it('should pass nested vite build options to nitro but not angular', () => {
-    platformPlugin({
-      vite: {
-        tsconfig: 'tsconfig.app.json',
-        build: {
-          rolldownOptions: {
-            output: {
-              codeSplitting: false,
-            },
-          },
-        },
-      },
-    });
-
-    expect(viteNitroPluginSpy).toHaveBeenCalledWith(
-      {
-        ssr: true,
-        vite: {
-          build: {
-            rolldownOptions: {
-              output: {
-                codeSplitting: false,
-              },
-            },
-          },
-        },
-      },
-      undefined,
-    );
-
-    const angularOptions = angularSpy.mock.calls[0][0];
-    expect(angularOptions).toEqual(
-      expect.objectContaining({
-        tsconfig: 'tsconfig.app.json',
-      }),
-    );
-    expect(angularOptions).not.toHaveProperty('build');
-  });
 });
