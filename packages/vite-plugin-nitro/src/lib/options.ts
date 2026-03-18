@@ -1,4 +1,5 @@
 import type { PrerenderRoute } from 'nitro/types';
+import type { UserConfig } from 'vite';
 
 export interface Options {
   ssr?: boolean;
@@ -38,6 +39,13 @@ export interface Options {
    * for API routes.
    */
   useAPIMiddleware?: boolean;
+  /**
+   * Vite-native build passthrough. Rolldown-only options such as
+   * `build.rolldownOptions.output.codeSplitting` are forwarded when present.
+   */
+  vite?: {
+    build?: UserConfig['build'];
+  };
 }
 
 export interface PrerenderOptions {

@@ -50,6 +50,10 @@ export interface Options {
   /**
    * Pass configuration options to the internal `@analogjs/vite-plugin-angular`
    * plugin. Set to false to disable the internal vite plugin.
+   *
+   * `vite.build` uses Vite's native config shape and is forwarded to the
+   * internal Nitro/Vite build pipeline, while the remaining fields are passed
+   * to `@analogjs/vite-plugin-angular`.
    */
   vite?: PluginOptions | false;
   nitro?: NitroConfig;

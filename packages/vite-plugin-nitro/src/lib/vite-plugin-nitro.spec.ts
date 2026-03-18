@@ -62,6 +62,89 @@ describe('nitro', () => {
     expect(ssrBuild).not.toHaveProperty(inactiveKey);
   });
 
+  it.runIf(vite.rolldownVersion)(
+    'should forward nested vite rolldown codeSplitting config to the client build (Rolldown)',
+    async () => {
+      const codeSplitting = {
+        groups: [{ test: /node_modules/, name: 'vendor' }],
+      };
+      const plugin = nitro({
+        vite: {
+          build: {
+            rolldownOptions: {
+              output: {
+                codeSplitting,
+                entryFileNames: 'assets/[name].js',
+              } as any,
+            },
+          },
+        },
+      });
+      const result = await (plugin[1].config as any)(
+        {},
+        { command: 'build', mode: 'production' },
+      );
+      const clientBuild = result.environments.client.build;
+
+      expect(clientBuild.rolldownOptions.output).toEqual(
+        expect.objectContaining({
+          codeSplitting,
+          entryFileNames: 'assets/[name].js',
+        }),
+      );
+    },
+  );
+
+  it.runIf(!vite.rolldownVersion)(
+    'should not have rolldownOptions when not using Rolldown',
+    async () => {
+      const codeSplitting = {
+        groups: [{ test: /node_modules/, name: 'vendor' }],
+      };
+      const plugin = nitro({
+        vite: {
+          build: {
+            rolldownOptions: {
+              output: {
+                codeSplitting,
+                entryFileNames: 'assets/[name].js',
+              } as any,
+            },
+          },
+        },
+      });
+      const result = await (plugin[1].config as any)(
+        {},
+        { command: 'build', mode: 'production' },
+      );
+      const clientBuild = result.environments.client.build;
+
+      expect(clientBuild).not.toHaveProperty('rolldownOptions');
+    },
+  );
+
+  it.runIf(vite.rolldownVersion)(
+    'should ignore codeSplitting forwarding when rolldown output is an array',
+    async () => {
+      const plugin = nitro({
+        vite: {
+          build: {
+            rolldownOptions: {
+              output: [{ entryFileNames: 'assets/[name].js' }] as any,
+            },
+          },
+        },
+      });
+      const result = await (plugin[1].config as any)(
+        {},
+        { command: 'build', mode: 'production' },
+      );
+      const clientBuild = result.environments.client.build;
+
+      expect(clientBuild.rolldownOptions).toBeUndefined();
+    },
+  );
+
   it('should strip Rolldown-only codeSplitting from Nitro rollup builds', async () => {
     const { buildServerImportSpy } = await mockBuildFunctions();
     const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));

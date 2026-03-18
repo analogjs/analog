@@ -1,5 +1,4 @@
 import { Plugin } from 'vite';
-// eslint-disable-next-line @nx/enforce-module-boundaries -- spec uses dynamic import() for vi.mock(), not lazy-loading
 import viteNitroPlugin from '@analogjs/vite-plugin-nitro';
 import angular from '@analogjs/vite-plugin-angular';
 
@@ -8,10 +7,14 @@ import { routerPlugin } from './router-plugin.js';
 import { ssrBuildPlugin } from './ssr/ssr-build-plugin.js';
 import { contentPlugin } from './content-plugin.js';
 import { clearClientPageEndpointsPlugin } from './clear-client-page-endpoint.js';
-import { ssrXhrBuildPlugin } from './ssr/ssr-xhr-plugin.js';
 import { depsPlugin } from './deps-plugin.js';
 import { injectHTMLPlugin } from './ssr/inject-html-plugin.js';
 import { serverModePlugin } from '../server-mode-plugin.js';
+
+// Bridge Plugin types from external @analogjs packages that resolve a different vite instance
+function externalPlugins(plugins: unknown): Plugin[] {
+  return plugins as Plugin[];
+}
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
@@ -19,7 +22,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ssr: true,
     ...opts,
   };
-
   let nitroOptions = platformOptions?.nitro;
 
   if (nitroOptions?.routeRules) {
@@ -45,31 +47,34 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   }
 
   return [
-    ...viteNitroPlugin(platformOptions, nitroOptions),
-    ...(platformOptions.ssr ? [ssrBuildPlugin(), ...injectHTMLPlugin()] : []),
+    ...externalPlugins(viteNitroPlugin(platformOptions as any, nitroOptions)),
+    ...(platformOptions.ssr
+      ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
+      : []),
     ...(!isTest ? depsPlugin(platformOptions) : []),
     ...routerPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),
-    ...((opts?.vite === false
+    ...(opts?.vite === false
       ? []
-      : angular({
-          jit: platformOptions.jit,
-          workspaceRoot: platformOptions.workspaceRoot,
-          disableTypeChecking: platformOptions.disableTypeChecking ?? false,
-          include: [
-            ...(platformOptions.include ?? []),
-            ...(platformOptions.additionalPagesDirs ?? []).map(
-              (pageDir) => `${pageDir}/**/*.page.ts`,
-            ),
-          ],
-          additionalContentDirs: platformOptions.additionalContentDirs,
-          liveReload: platformOptions.liveReload,
-          inlineStylesExtension: platformOptions.inlineStylesExtension,
-          fileReplacements: platformOptions.fileReplacements,
-          ...(opts?.vite ?? {}),
-        })) as any),
-    serverModePlugin(),
-    ssrXhrBuildPlugin() as Plugin,
-    clearClientPageEndpointsPlugin() as Plugin,
+      : externalPlugins(
+          angular({
+            jit: platformOptions.jit,
+            workspaceRoot: platformOptions.workspaceRoot,
+            disableTypeChecking: platformOptions.disableTypeChecking ?? false,
+            include: [
+              ...(platformOptions.include ?? []),
+              ...(platformOptions.additionalPagesDirs ?? []).map(
+                (pageDir) => `${pageDir}/**/*.page.ts`,
+              ),
+            ],
+            additionalContentDirs: platformOptions.additionalContentDirs,
+            liveReload: platformOptions.liveReload,
+            inlineStylesExtension: platformOptions.inlineStylesExtension,
+            fileReplacements: platformOptions.fileReplacements,
+            ...(opts?.vite ?? {}),
+          }),
+        )),
+    ...serverModePlugin(),
+    ...clearClientPageEndpointsPlugin(),
   ];
 }

@@ -72,3 +72,5 @@ vitest.config.*.timestamp*
 
 .claude/worktrees
 .vercel/
+.cursor
+.claude

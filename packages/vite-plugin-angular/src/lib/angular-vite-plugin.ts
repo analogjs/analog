@@ -50,6 +50,7 @@ import {
   SourceFileCache,
   angularFullVersion,
 } from './utils/devkit.js';
+import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
 
 const require = createRequire(import.meta.url);
@@ -265,6 +266,10 @@ export function angular(options?: PluginOptions): Plugin[] {
           ngI18nClosureMode: 'false',
           ...(watchMode ? {} : { ngDevMode: 'false' }),
         };
+        const useRolldown = isRolldown();
+        const jsTransformConfigKey = getJsTransformConfigKey();
+        const jsTransformConfigValue =
+          jsTransformConfigKey === 'oxc' ? oxc : esbuild;
 
         const rolldownOptions: vite.DepOptimizationOptions['rolldownOptions'] =
           {
@@ -297,13 +302,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         };
 
         return {
-          ...(vite.rolldownVersion ? { oxc } : { esbuild }),
+          [jsTransformConfigKey]: jsTransformConfigValue,
           optimizeDeps: {
             include: ['rxjs/operators', 'rxjs'],
             exclude: ['@angular/platform-server'],
-            ...(vite.rolldownVersion
-              ? { rolldownOptions }
-              : { esbuildOptions }),
+            ...(useRolldown ? { rolldownOptions } : { esbuildOptions }),
           },
           resolve: {
             conditions: [

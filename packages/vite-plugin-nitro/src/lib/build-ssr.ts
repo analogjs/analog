@@ -1,8 +1,8 @@
 import { build, mergeConfig, UserConfig } from 'vite';
-import * as vite from 'vite';
 import { relative, resolve } from 'node:path';
 
 import { Options } from './options.js';
+import { getBundleOptionsKey } from './utils/rolldown.js';
 
 export async function buildSSRApp(
   config: UserConfig,
@@ -11,10 +11,11 @@ export async function buildSSRApp(
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
   const sourceRoot = options?.sourceRoot ?? 'src';
   const rootDir = relative(workspaceRoot, config.root || '.') || '.';
+  const bundleOptionsKey = getBundleOptionsKey();
   const ssrBuildConfig = mergeConfig(config, <UserConfig>{
     build: {
       ssr: true,
-      [vite.rolldownVersion ? 'rolldownOptions' : 'rollupOptions']: {
+      [bundleOptionsKey]: {
         input:
           options?.entryServer ||
           resolve(workspaceRoot, rootDir, `${sourceRoot}/main.server.ts`),

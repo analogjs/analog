@@ -101,6 +101,58 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
+## Advanced Code Splitting (Vite 8+ / Rolldown)
+
+When using Vite 8+ with Rolldown as the bundler, you can control how client-side chunks are created by passing `codeSplitting` through the `vite.build.rolldownOptions.output` config path. This is useful for further optimizing bundle sizes by grouping vendor or shared modules into separate chunks.
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  // ...other config
+  plugins: [analog()],
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          minSize: 10000,
+          groups: [
+            {
+              name: 'vendor',
+              test: /node_modules/,
+              priority: 10,
+            },
+          ],
+        },
+      },
+    },
+  },
+}));
+```
+
+### Code Splitting Options
+
+| Option    | Type     | Description                                  |
+| --------- | -------- | -------------------------------------------- |
+| `groups`  | `array`  | Define custom chunk groups                   |
+| `minSize` | `number` | Minimum chunk size in bytes before splitting |
+| `maxSize` | `number` | Maximum chunk size in bytes                  |
+
+### Code Splitting Group Options
+
+| Option          | Type                           | Description                                                 |
+| --------------- | ------------------------------ | ----------------------------------------------------------- |
+| `name`          | `string \| function`           | Chunk name or function returning a chunk name               |
+| `test`          | `RegExp \| string \| function` | Pattern or predicate used to match module IDs for the group |
+| `priority`      | `number`                       | Priority when a module matches multiple groups              |
+| `minSize`       | `number`                       | Minimum size for this group's chunks                        |
+| `maxSize`       | `number`                       | Maximum size for this group's chunks                        |
+| `minShareCount` | `number`                       | Minimum number of chunks sharing a module before splitting  |
+
+> This option only applies when using Rolldown as the bundler (Vite 8+). It has no effect with Rollup-based builds.
+
 You can opt-out of prerendering altogether by passing an empty array of routes.
 
 ```js

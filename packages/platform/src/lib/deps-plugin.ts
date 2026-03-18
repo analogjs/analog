@@ -4,6 +4,7 @@ import * as vite from 'vite';
 import { crawlFrameworkPkgs } from 'vitefu';
 
 import { Options } from './options.js';
+import { getJsTransformConfigKey } from './utils/rolldown.js';
 
 export function depsPlugin(options?: Options): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
@@ -12,20 +13,14 @@ export function depsPlugin(options?: Options): Plugin[] {
     {
       name: 'analogjs-deps-plugin',
       config() {
-        const esbuild =
-          options?.vite === false ||
-          options?.vite?.experimental?.useAngularCompilationAPI
-            ? {}
-            : { exclude: ['**/*.ts', '**/*.js'] };
-
-        const oxc =
+        const transformConfig =
           options?.vite === false ||
           options?.vite?.experimental?.useAngularCompilationAPI
             ? {}
             : { exclude: ['**/*.ts', '**/*.js'] };
 
         return {
-          ...(vite.rolldownVersion ? { oxc } : { esbuild }),
+          [getJsTransformConfigKey()]: transformConfig,
           ssr: {
             noExternal: [
               '@analogjs/**',
