@@ -60,7 +60,7 @@ Key references studied:
 
 - **Build-integrated type generation** — Nuxt generates route typings automatically during dev/build and wires them into the TypeScript program. Analog follows the same pattern with Vite plugin watch integration.
 
-- **Broad propagation of typed routing** — Nuxt proved that generated types should flow into all major route entrypoints, not just a single helper. Analog propagates types through `routePath()`, `injectNavigate()` / `injectNavigateByUrl()`, `injectParams()`, `injectQuery()`, and `definePageLoad()`.
+- **Broad propagation of typed routing** — Nuxt proved that generated types should flow into all major route entrypoints, not just a single helper. Analog propagates types through `routePath()`, `injectNavigate()` / `injectNavigateByUrl()`, `injectParams()`, and `injectQuery()`.
 
 Key references studied:
 
@@ -128,12 +128,6 @@ Key references studied:
 │  RouteQueryOutput<P>             │  Validated query type utility
 └──────────────────────────────────┘
 
-┌──────────────────────────────────┐
-│  @analogjs/router/server/actions │  Server-side runtime
-│  definePageLoad()                │  Typed page load with validation
-│  defineAction()                  │  Server actions with validation
-│  defineApiRoute()                │  API routes with validation
-└──────────────────────────────────┘
 ```
 
 ### Generated Output
@@ -233,14 +227,6 @@ export const analogRouteTree = {
 | `RouteQueryOutput<P>`       | type      | Validated query type for a route                  |
 | `AnalogRouteTable`          | interface | Augmented by generated code                       |
 | `AnalogRoutePath`           | type      | Union of valid route paths                        |
-
-### `@analogjs/router/server/actions` — Server
-
-| Export                    | Kind     | Purpose                                |
-| ------------------------- | -------- | -------------------------------------- |
-| `definePageLoad(options)` | function | Typed page load with schema validation |
-| `defineAction(options)`   | function | Server action with validation          |
-| `defineApiRoute(options)` | function | API route with validation              |
 
 ### `@analogjs/platform` — Build & Codegen
 
@@ -352,24 +338,14 @@ The default mode. Routes render on the server at request time.
 **How typed routes interact:**
 
 - `routeTree.gen.ts` is generated at build time; types are available during compilation regardless of SSR
-- `definePageLoad()` handlers execute on the server with access to `fetch`, `event`, `request`, and `response`
-- Schema-validated params (`routeParamsSchema`) are coerced on the server before reaching `handler`
+- Schema-validated params (`routeParamsSchema`) are coerced before reaching handlers
 
 ```ts
-// src/app/pages/products.[productId].server.ts
-import { definePageLoad } from '@analogjs/router/server/actions';
+// src/app/pages/products.[productId].page.ts
 import * as v from 'valibot';
 
 export const routeParamsSchema = v.object({
   productId: v.pipe(v.string(), v.regex(/^\d+$/)),
-});
-
-export const load = definePageLoad({
-  params: routeParamsSchema,
-  handler: async ({ params, fetch }) => {
-    // params.productId is validated and typed
-    return fetch(`/api/products/${params.productId}`);
-  },
 });
 ```
 
@@ -395,7 +371,6 @@ analog({
 **How typed routes interact:**
 
 - Identical to SSR from the type-safety perspective — same generated types, same schemas
-- `definePageLoad()` handlers execute once during prerender; output is baked into static HTML
 - The `analogRouteTree` metadata can be used at build time to programmatically discover prerenderable routes:
 
 ```ts
@@ -434,7 +409,6 @@ analog({
 **How typed routes interact:**
 
 - Type generation and route table augmentation still happen at build time — client-only routes are fully typed
-- `definePageLoad()` handlers for client-only routes execute client-side, fetching data via the Nitro API layer
 
 ### Content Routes (Markdown)
 
@@ -446,13 +420,12 @@ Markdown files in `src/content/` are discovered and typed alongside page routes.
 
 ### Rendering Mode Summary
 
-| Concern             | SSR                       | SSG / Prerender            | Client-Only (`ssr: false`)     |
-| ------------------- | ------------------------- | -------------------------- | ------------------------------ |
-| Type safety         | Full (build-time)         | Full (build-time)          | Full (build-time)              |
-| `routeTree.gen.ts`  | Generated at build        | Generated at build         | Generated at build             |
-| `definePageLoad()`  | Executes on server        | Executes once at build     | Executes client-side via fetch |
-| Schema validation   | Server-side at request    | Server-side at build       | Client-side at runtime         |
-| Route tree metadata | Available server + client | Available in static output | Available client-side          |
+| Concern             | SSR                       | SSG / Prerender            | Client-Only (`ssr: false`) |
+| ------------------- | ------------------------- | -------------------------- | -------------------------- |
+| Type safety         | Full (build-time)         | Full (build-time)          | Full (build-time)          |
+| `routeTree.gen.ts`  | Generated at build        | Generated at build         | Generated at build         |
+| Schema validation   | Server-side at request    | Server-side at build       | Client-side at runtime     |
+| Route tree metadata | Available server + client | Available in static output | Available client-side      |
 
 ---
 
@@ -463,7 +436,7 @@ Markdown files in `src/content/` are discovered and typed alongside page routes.
 | #   | Date       | Focus                                                                                     | Status |
 | --- | ---------- | ----------------------------------------------------------------------------------------- | ------ |
 | 1   | 2026-03-15 | Core implementation: route-manifest, route-path, typed-router, Vite plugin, 67 tests      | Done   |
-| 2   | 2026-03-15 | Schema-aware codegen, definePageLoad, detectSchemaExports, 84 tests total                 | Done   |
+| 2   | 2026-03-15 | Schema-aware codegen, detectSchemaExports, 84 tests total                                 | Done   |
 | 3   | 2026-03-15 | Input/Output type distinction, integration test, RouteParamsOutput/RouteQueryOutput       | Done   |
 | 4   | 2026-03-15 | Type tests, dev diagnostics, formatManifestSummary, 112 tests total                       | Done   |
 | 5   | 2026-03-15 | Platform plugin consolidation, codegen primitives                                         | Done   |
@@ -489,7 +462,6 @@ All existing tests (define-action, define-api-route, parse-raw-content-file, val
 
 - `packages/platform/src/lib/` — Route generation plugin, codegen, and manifest primitives
 - `packages/router/src/lib/` — Runtime APIs and types
-- `packages/router/server/actions/` — `definePageLoad` and validation
 - `apps/analog-app/src/routeTree.gen.ts` — Live generated output
 - `apps/docs-app/docs/features/routing/typed-routes.md` — User-facing docs
 
@@ -559,6 +531,7 @@ The route tree pattern has been fully implemented and verified:
 - **Not exposing Nitro page transport URLs** (`/_analog/pages/*`) in the public contract.
 - **Not creating a separate typed-router package.** The runtime API lives in `@analogjs/router`.
 - **Not including JSON-LD.** Structured data is out of scope for typed routes.
+- **Not including server-side runtime.** `definePageLoad`, `defineAction`, `defineApiRoute` are separate concerns.
 
 ---
 
