@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "3.0.0-alpha.7",
+  "version": "3.0.0-alpha.8",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -210,7 +210,6 @@
     "tinyglobby": "^0.2.15",
     "ts-dedent": "^2.2.0",
     "ts-morph": "^27.0.2",
-    "oxc-parser": "^0.119.0",
     "rolldown": "1.0.0-rc.9",
     "ts-node": "10.9.2",
     "typescript-eslint": "^8.57.0",

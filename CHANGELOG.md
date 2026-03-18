@@ -1,3 +1,9 @@
+# [3.0.0-alpha.8](https://github.com/analogjs/analog/compare/v3.0.0-alpha.7...v3.0.0-alpha.8) (2026-03-18)
+
+### Features
+
+- **platform:** align Vite 8 / Rolldown integration with native Vite APIs ([#2124](https://github.com/analogjs/analog/issues/2124)) ([cd6df36](https://github.com/analogjs/analog/commit/cd6df36ecf3c49847aad247dae750662ab8760de))
+
 # [3.0.0-alpha.7](https://github.com/analogjs/analog/compare/v3.0.0-alpha.6...v3.0.0-alpha.7) (2026-03-17)
 
 ### Features
