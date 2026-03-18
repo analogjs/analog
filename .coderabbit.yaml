@@ -1,6 +1,7 @@
 language: en-US
 tone_instructions: >-
   Focus on regressions, API compatibility, test gaps, release impact, and monorepo consistency.
+  Flag any breaking changes and verify the PR body includes a BREAKING CHANGE: footer with before/after examples per CONTRIBUTING.md.
   Avoid style-only nits, speculative abstractions, or requests for verbose comments/docstrings unless clearly necessary.
 
 reviews:
@@ -73,7 +74,11 @@ reviews:
     - path: 'packages/vite-plugin-angular/**'
       instructions: >-
         Review as the vite-plugin-angular package scope. Prioritize Angular and Vite integration behavior,
-        build compatibility, and targeted coverage for regressions.
+        build compatibility, backward compatibility, stability, and targeted coverage for regressions.
+    - path: 'packages/vite-plugin-angular-tools/**'
+      instructions: >-
+        Treat changes here as part of the vite-plugin-angular scope and review them together with test fixtures
+        and downstream tooling expectations.
     - path: 'packages/vite-plugin-nitro/**'
       instructions: >-
         Review as the vite-plugin-nitro package scope. Focus on Nitro integration, SSR behavior,
@@ -114,7 +119,7 @@ reviews:
         Treat this test app as part of the trpc scope. Prioritize reliability and whether the tests validate the intended behavior change.
     - path: 'packages/nx-plugin/**'
       instructions: >-
-        Review as the nx-plugin package scope. Pay special attention to generators, schemas, migrations,
+        Treat as part of the platform package scope. Pay special attention to generators, schemas, migrations,
         and template files because changes can affect downstream generated workspaces.
     - path: 'apps/nx-plugin-e2e/**'
       instructions: >-
@@ -177,7 +182,6 @@ reviews:
     base_branches:
       - '^beta$'
       - '^alpha$'
-      - '^main$'
   finishing_touches:
     docstrings:
       enabled: false
@@ -197,6 +201,9 @@ reviews:
         For repo, docs, or CI-only changes, concise unscoped titles like docs: or ci: are acceptable.
     description:
       mode: warning
+      requirements: >-
+        If the PR includes breaking changes, the description must contain a BREAKING CHANGE: footer
+        with a clear explanation, BEFORE example, and AFTER example as specified in CONTRIBUTING.md.
     issue_assessment:
       mode: warning
   tools:
