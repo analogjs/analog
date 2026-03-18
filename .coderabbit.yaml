@@ -201,9 +201,6 @@ reviews:
         For repo, docs, or CI-only changes, concise unscoped titles like docs: or ci: are acceptable.
     description:
       mode: warning
-      requirements: >-
-        If the PR includes breaking changes, the description must contain a BREAKING CHANGE: footer
-        with a clear explanation, BEFORE example, and AFTER example as specified in CONTRIBUTING.md.
     issue_assessment:
       mode: warning
   tools:
