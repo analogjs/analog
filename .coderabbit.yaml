@@ -1,0 +1,247 @@
+language: en-US
+tone_instructions: >-
+  Prioritize regressions, API compatibility, test gaps, release impact, and monorepo consistency.
+  Flag breaking changes and require a BREAKING CHANGE footer with before/after examples per CONTRIBUTING.md.
+  Skip style-only and speculative nits.
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_in_walkthrough: true
+  review_status: true
+  review_details: false
+  commit_status: true
+  fail_commit_status: false
+  collapse_walkthrough: true
+  changed_files_summary: true
+  sequence_diagrams: false
+  estimate_code_review_effort: true
+  assess_linked_issues: true
+  related_issues: false
+  related_prs: false
+  suggested_labels: false
+  auto_apply_labels: false
+  suggested_reviewers: false
+  auto_assign_reviewers: false
+  in_progress_fortune: false
+  poem: false
+  enable_prompt_for_ai_agents: true
+  abort_on_close: true
+  path_filters:
+    - 'apps/**'
+    - 'packages/**'
+    - 'libs/**'
+    - 'tests/**'
+    - 'tools/**'
+    - '.github/workflows/**'
+    - '.github/instructions/**'
+    - '.githooks/**'
+    - '.github/pr-scope-map.json'
+    - '.github/PULL_REQUEST_TEMPLATE.md'
+    - 'AGENTS.md'
+    - 'CONTRIBUTING.md'
+    - 'package.json'
+    - 'nx.json'
+    - 'pnpm-workspace.yaml'
+    - 'tsconfig.base.json'
+    - 'release.config.cjs'
+    - 'commitlint.config.cjs'
+    - 'eslint.config.mjs'
+    - 'server.mjs'
+    - '.node-version'
+    - '!**/dist/**'
+    - '!**/coverage/**'
+    - '!**/node_modules/**'
+    - '!**/.astro/**'
+  path_instructions:
+    - path: 'packages/platform/**'
+      instructions: >-
+        Review as the platform package scope. Prioritize API compatibility, SSR/build behavior,
+        and targeted coverage for behavior changes.
+    - path: 'packages/router/**'
+      instructions: >-
+        Review as the router package scope. Focus on routing behavior, backward compatibility,
+        and edge cases that affect generated or file-based routes.
+    - path: 'packages/content/**'
+      instructions: >-
+        Review as the content package scope. Prioritize markdown/content rendering behavior,
+        compatibility, and targeted tests for parsing or rendering changes.
+    - path: 'packages/content-plugin/**'
+      instructions: >-
+        Review as the content-plugin package scope. Focus on integration behavior, Vite build impact,
+        and compatibility with existing content workflows.
+    - path: 'packages/vite-plugin-angular/**'
+      instructions: >-
+        Review as the vite-plugin-angular package scope. Prioritize Angular and Vite integration behavior,
+        build compatibility, backward compatibility, stability, and targeted coverage for regressions.
+    - path: 'packages/vite-plugin-angular-tools/**'
+      instructions: >-
+        Treat changes here as part of the vite-plugin-angular scope and review them together with test fixtures
+        and downstream tooling expectations.
+    - path: 'packages/vite-plugin-nitro/**'
+      instructions: >-
+        Review as the vite-plugin-nitro package scope. Focus on Nitro integration, SSR behavior,
+        and release impact for build/runtime changes.
+    - path: 'packages/vitest-angular/**'
+      instructions: >-
+        Review as the vitest-angular package scope. Focus on testing integration behavior,
+        compatibility, and whether fixture changes validate the intended behavior.
+    - path: 'packages/vitest-angular-tools/**'
+      instructions: >-
+        Treat changes here as part of the vitest-angular scope and review them together with test fixtures
+        and downstream tooling expectations.
+    - path: 'tests/vitest-angular/**'
+      instructions: >-
+        Treat changes here as part of the vitest-angular scope. Prioritize deterministic fixtures,
+        reliability, and whether tests prove the integration behavior change.
+    - path: 'packages/create-analog/**'
+      instructions: >-
+        Review as the create-analog package scope. Treat template changes as scaffolding behavior,
+        not isolated files, and watch for drift across template variants and downstream create flow regressions.
+    - path: 'packages/astro-angular/**'
+      instructions: >-
+        Review as the astro-angular package scope. Focus on framework integration behavior and compatibility,
+        not style-only feedback.
+    - path: 'packages/storybook-angular/**'
+      instructions: >-
+        Review as the storybook-angular package scope. Prioritize integration correctness,
+        example validity, and compatibility with Storybook and Angular tooling.
+    - path: 'packages/trpc/**'
+      instructions: >-
+        Review as the trpc package scope. Focus on runtime integration, API compatibility,
+        and targeted verification for behavior changes.
+    - path: 'apps/trpc-app/**'
+      instructions: >-
+        Treat this app as part of the trpc scope and review changes with the package behavior they validate.
+    - path: 'apps/trpc-app-e2e-playwright/**'
+      instructions: >-
+        Treat this test app as part of the trpc scope. Prioritize reliability and whether the tests validate the intended behavior change.
+    - path: 'packages/nx-plugin/**'
+      instructions: >-
+        Treat as part of the platform package scope. Pay special attention to generators, schemas, migrations,
+        and template files because changes can affect downstream generated workspaces.
+    - path: 'apps/nx-plugin-e2e/**'
+      instructions: >-
+        Treat this app as part of the nx-plugin scope and check whether generator or executor behavior is covered end to end.
+    - path: 'apps/docs-app/**'
+      instructions: >-
+        Review as docs scope. Bias feedback toward documentation accuracy, command correctness,
+        broken links/examples, and Docusaurus build impact rather than package-release strictness.
+    - path: '.github/workflows/**'
+      instructions: >-
+        Review as ci scope. Focus on workflow safety, branch behavior, cache correctness,
+        and whether CI coverage still matches repository expectations.
+    - path: '.githooks/**'
+      instructions: >-
+        Review as repo scope. Focus on contributor workflow impact and avoid speculative process changes.
+    - path: '.github/PULL_REQUEST_TEMPLATE.md'
+      instructions: >-
+        Review as repo scope. Keep PR guidance aligned with CONTRIBUTING.md and the repository's preferred squash-merge workflow.
+    - path: '.github/pr-scope-map.json'
+      instructions: >-
+        Review as repo scope. Keep scope mappings aligned with the actual package and auxiliary areas in the monorepo.
+    - path: 'AGENTS.md'
+      instructions: >-
+        Review as repo scope. Preserve the repository's guidance for minimal, targeted, backward-compatible changes.
+    - path: 'CONTRIBUTING.md'
+      instructions: >-
+        Review as repo/docs guidance. Keep contributor instructions aligned with current branch, PR, and testing expectations.
+    - path: 'package.json'
+      instructions: >-
+        Review as repo scope. Focus on workspace-wide tooling impact, scripts, dependency changes,
+        and release or CI implications.
+    - path: 'nx.json'
+      instructions: >-
+        Review as repo scope. Focus on Nx workspace behavior, target defaults, cache implications,
+        and the beta-centered base branch setup.
+    - path: 'pnpm-workspace.yaml'
+      instructions: >-
+        Review as repo scope. Focus on workspace layout and package inclusion changes.
+    - path: 'tsconfig.base.json'
+      instructions: >-
+        Review as repo scope. Focus on path alias correctness and downstream workspace impact.
+    - path: 'release.config.cjs'
+      instructions: >-
+        Review as repo scope. Prioritize release automation correctness, channel behavior, and semantic-release impact.
+    - path: 'commitlint.config.cjs'
+      instructions: >-
+        Review as repo scope. Keep supported scopes aligned with the repository's published packages and PR expectations.
+    - path: 'tests/**'
+      instructions: >-
+        Prefer reliability-focused feedback: fixture correctness, determinism, and whether tests validate the intended behavior change.
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 3
+    drafts: false
+    ignore_title_keywords:
+      - 'WIP'
+      - 'DO NOT REVIEW'
+      - 'RFC'
+    base_branches:
+      - '^beta$'
+      - '^alpha$'
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+    simplify:
+      enabled: false
+  pre_merge_checks:
+    docstrings:
+      mode: off
+    title:
+      mode: warning
+      requirements: >-
+        Prefer Conventional Commit style PR titles. Use type(scope): summary when a supported package scope applies.
+        Supported package scopes are vite-plugin-angular, vite-plugin-nitro, vitest-angular, create-analog,
+        astro-angular, router, storybook-angular, platform, content, content-plugin, nx-plugin, and trpc.
+        For repo, docs, or CI-only changes, concise unscoped titles like docs: or ci: are acceptable.
+    description:
+      mode: warning
+    issue_assessment:
+      mode: warning
+  tools:
+    github-checks:
+      enabled: true
+      timeout_ms: 180000
+    eslint:
+      enabled: true
+    markdownlint:
+      enabled: true
+    actionlint:
+      enabled: true
+    yamllint:
+      enabled: true
+    shellcheck:
+      enabled: true
+    gitleaks:
+      enabled: true
+
+chat:
+  art: false
+  auto_reply: true
+  allow_non_org_members: true
+  integrations:
+    jira:
+      usage: disabled
+    linear:
+      usage: disabled
+
+knowledge_base:
+  web_search:
+    enabled: true
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - 'AGENTS.md'
+      - 'CONTRIBUTING.md'
+      - '.github/instructions/*.instructions.md'
+  learnings:
+    scope: local
+  issues:
+    scope: local
+  pull_requests:
+    scope: local
