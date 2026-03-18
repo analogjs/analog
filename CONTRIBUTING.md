@@ -82,7 +82,7 @@ or alternatively run this command from the root folder:
 pnpm nx serve docs-app
 ```
 
-Once the development server is up and running, you can preview the docs and website by visiting [http://localhost:3000](http://localhost:3000).
+Once the development server is up and running, you can preview the docs and website by visiting [http://localhost:43020](http://localhost:43020).
 
 ### Build
 

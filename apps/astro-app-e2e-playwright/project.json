@@ -13,7 +13,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "",
-        "command": "start-server-and-test 'nx serve astro-app' http://localhost:4321 'nx run astro-app-e2e-playwright:vitest'"
+        "command": "start-server-and-test 'nx serve astro-app' http://localhost:43030 'nx run astro-app-e2e-playwright:vitest'"
       }
     },
     "lint": {

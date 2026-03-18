@@ -13,7 +13,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "",
-        "command": "start-server-and-test 'nx serve-nitro analog-app' http://localhost:3000 'nx run analog-app-e2e-playwright:vitest'"
+        "command": "start-server-and-test 'nx serve-nitro analog-app' http://localhost:43000 'nx run analog-app-e2e-playwright:vitest'"
       }
     },
     "lint": {

@@ -5,7 +5,7 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
 
 // Only run in Netlify CI
-let base = process.env['URL'] || 'http://localhost:3000';
+let base = process.env['URL'] || 'http://localhost:43010';
 if (process.env['NETLIFY'] === 'true') {
   if (process.env['CONTEXT'] === 'deploy-preview') {
     base = `${process.env['DEPLOY_PRIME_URL']}/`;

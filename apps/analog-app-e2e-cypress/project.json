@@ -11,7 +11,7 @@
       "options": {
         "commands": [
           "sh -c \"pnpm exec cypress verify || pnpm exec cypress install\"",
-          "pnpm exec cypress run --project apps/analog-app-e2e-cypress --config-file cypress.config.ts --config baseUrl=http://localhost:3000"
+          "pnpm exec cypress run --project apps/analog-app-e2e-cypress --config-file cypress.config.ts --config baseUrl=http://localhost:43000"
         ],
         "parallel": false
       }
@@ -20,7 +20,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["^build"],
       "options": {
-        "command": "start-server-and-test 'node dist/apps/analog-app/analog/server/index.mjs' http://localhost:3000 'nx run analog-app-e2e-cypress:cypress'"
+        "command": "start-server-and-test 'PORT=43000 node dist/apps/analog-app/analog/server/index.mjs' http://localhost:43000 'nx run analog-app-e2e-cypress:cypress'"
       },
       "configurations": {
         "watch": {

@@ -1,7 +1,7 @@
 /**
  * Integration tests for the Angular Compilation API path.
  *
- * These tests run against the live dev server (http://localhost:3000) which
+ * These tests run against the live dev server (http://localhost:43000) which
  * is started with `useAngularCompilationAPI: true` in the analog-app config.
  *
  * They verify:
@@ -30,6 +30,7 @@ const HOT_PAGE_PATH = join(
 
 let browser: Browser;
 let page: Page;
+const baseURL = 'http://localhost:43000';
 
 beforeAll(async () => {
   browser = await chromium.launch();
@@ -44,7 +45,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   page = await browser.newPage({
-    baseURL: 'http://localhost:3000',
+    baseURL,
   });
 });
 

@@ -14,6 +14,7 @@ import { ProductsListPage } from './fixtures/products-list.po';
 
 let browser: Browser;
 let page: Page;
+const baseURL = 'http://localhost:43000';
 
 interface ProductsTestContext {
   productsListPage: ProductsListPage;
@@ -28,7 +29,7 @@ afterAll(async () => {
 });
 beforeEach<ProductsTestContext>(async (ctx) => {
   page = await browser.newPage({
-    baseURL: 'http://localhost:3000',
+    baseURL,
   });
   await page.goto('/');
   ctx.productsListPage = new ProductsListPage(page);

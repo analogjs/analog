@@ -13,6 +13,7 @@ import {
 
 let browser: Browser;
 let page: Page;
+const baseURL = 'http://localhost:43000';
 
 beforeAll(async () => {
   browser = await chromium.launch();
@@ -24,7 +25,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   page = await browser.newPage({
-    baseURL: 'http://localhost:3000',
+    baseURL,
   });
 });
 
@@ -41,9 +42,7 @@ describe('JSON-LD', () => {
   });
 
   test('includes JSON-LD in the initial HTML for SSR/prerendered routes', async () => {
-    const html = await fetch('http://localhost:3000/').then((response) =>
-      response.text(),
-    );
+    const html = await fetch(`${baseURL}/`).then((response) => response.text());
 
     expect(html).toContain('application/ld+json');
     expect(html).toContain('analog-home');
@@ -68,8 +67,8 @@ describe('JSON-LD', () => {
   });
 
   test('only injects JSON-LD client-side for no-SSR routes', async () => {
-    const rawHtml = await fetch('http://localhost:3000/client').then(
-      (response) => response.text(),
+    const rawHtml = await fetch(`${baseURL}/client`).then((response) =>
+      response.text(),
     );
 
     expect(rawHtml).not.toContain('analog-client');
@@ -110,8 +109,8 @@ describe('JSON-LD', () => {
   });
 
   test('includes JSON-LD in initial SSR HTML for dynamic product route (deep-link)', async () => {
-    const html = await fetch('http://localhost:3000/products/1').then(
-      (response) => response.text(),
+    const html = await fetch(`${baseURL}/products/1`).then((response) =>
+      response.text(),
     );
 
     expect(html).toContain('application/ld+json');

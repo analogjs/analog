@@ -36,7 +36,7 @@
       "options": {
         "buildTarget": "analog-app:build",
         "buildLibsFromSource": true,
-        "port": 3000
+        "port": 43000
       },
       "configurations": {
         "development": {
@@ -52,7 +52,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "dist/apps/analog-app/analog",
-        "command": "PORT=3000 node --unhandled-rejections=throw ./server/index.mjs"
+        "command": "PORT=43000 node --unhandled-rejections=throw ./server/index.mjs"
       },
       "dependsOn": ["build"]
     },
@@ -77,7 +77,7 @@
         "configDir": "apps/analog-app/.storybook",
         "compodoc": false,
         "compodocArgs": ["-e", "json", "-d", "."],
-        "port": 6006,
+        "port": 43050,
         "styles": ["apps/analog-app/src/styles.css"],
         "stylePreprocessorOptions": {
           "loadPaths": []
