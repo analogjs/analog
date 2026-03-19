@@ -6,12 +6,7 @@
     "isolatedDeclarations": true,
     "declarationMap": true,
     "inlineSources": true,
-    "types": [],
-    "paths": {
-      "@analogjs/vite-plugin-angular": [
-        "../../node_modules/@analogjs/vite-plugin-angular"
-      ]
-    }
+    "types": []
   },
   "include": ["**/*.ts"],
   "exclude": [
