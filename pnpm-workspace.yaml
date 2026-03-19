@@ -1,6 +1,19 @@
 packages:
-  - 'apps/docs-app'
-onlyBuiltDependencies:
-  - vite-tsconfig-paths
-  - 'libs/*'
+  # The root package is always included by pnpm. These globs describe the
+  # additional workspace members that Nx builds and tests within this repo.
+
+  # Apps live one directory below apps/ and some of them have package.json
+  # stubs so pnpm can treat them as real workspace packages.
+  - 'apps/*'
+
+  # Published Analog packages live directly under packages/. Keep this shallow
+  # so create-analog template package.json files remain fixture data, not
+  # workspace members.
   - 'packages/*'
+
+  # Some real workspace libs are nested (for example libs/shared/feature),
+  # so use a recursive glob for all lib package manifests.
+  - 'libs/**'
+
+# Build-script allowlists belong in the root package.json under pnpm.* config.
+# Keep this file focused on workspace membership so package selection is clear.

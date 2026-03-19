@@ -2,23 +2,27 @@
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "workspaceLayout": { "libsDir": "packages" },
   "cli": { "packageManager": "pnpm" },
+  "parallel": 8,
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["production", "^production"]
+      "inputs": ["production", "^production"],
+      "cache": true
     },
-    "test": { "dependsOn": ["^build"], "cache": true },
-    "e2e": { "dependsOn": ["^build"], "cache": true },
+    "test": {
+      "cache": true
+    },
+    "e2e": {
+      "cache": true
+    },
     "serve": { "dependsOn": ["^build"] },
-    "build-package": { "cache": false },
-    "@nx/js:tsc": { "cache": false },
     "@nx/eslint:lint": {
       "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
+      "options": { "quiet": true },
       "cache": true
     },
     "@angular-devkit/build-angular:application": {
       "cache": true,
-      "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
     },
     "@nx/vitest:test": { "cache": true, "inputs": ["default", "^production"] }
@@ -39,7 +43,7 @@
   "defaultProject": "analog-app",
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals", "projectSpecificFiles"],
-    "sharedGlobals": [],
+    "sharedGlobals": ["{workspaceRoot}/pnpm-lock.yaml"],
     "production": [
       "default",
       "!{projectRoot}/src/test-setup.[jt]s",
