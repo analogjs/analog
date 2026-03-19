@@ -168,7 +168,6 @@ The following is the list of currently supported scopes:
 - **platform**
 - **router**
 - **storybook-angular**
-- **trpc**
 - **vite-plugin-angular**
 - **vite-plugin-nitro**
 - **vitest-angular**

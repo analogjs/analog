@@ -6,7 +6,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
 - **Monorepo** managed by [Nx](https://nx.dev) and [pnpm](https://pnpm.io/)
 - Main framework: **AnalogJS** (meta-framework for Angular, powered by Vite)
-- Contains multiple apps (Angular, Astro, blog, docs, trpc, etc.) and libraries (shared, card, top-bar, etc.)
+- Contains multiple apps (Angular, Astro, blog, docs, etc.) and libraries (shared, card, top-bar, etc.)
 - Key packages: `@analogjs/platform`, `@analogjs/vite-plugin-angular`, `@analogjs/vitest-angular`, `@analogjs/vite-plugin-nitro`, `@analogjs/router`, etc.
 - Node engines: `^20.0.0 || ^22.0.0`, pnpm `^10.0.0`
 
@@ -62,7 +62,6 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 | `packages/nx-plugin`           | `@analogjs/nx-plugin`           | `nx-plugin`           |
 | `packages/create-analog`       | `create-analog`                 | `create-analog`       |
 | `packages/storybook-angular`   | `@analogjs/storybook-angular`   | `storybook-angular`   |
-| `packages/trpc`                | `@analogjs/trpc`                | `trpc`                |
 | `packages/astro-angular`       | `@analogjs/astro-angular`       | `astro-angular`       |
 
 ## Contribution Policy
@@ -87,6 +86,18 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - Use `nx run-many --target <target> --all` for bulk operations.
 - Project-specific config in `apps/*/project.json` and `libs/*/project.json`.
 - Nx plugins and generators are in `packages/nx-plugin`.
+
+## Caching
+
+Nx task caching is **enabled by default** for all targets. Disable it selectively with `"cache": false` in a target's `project.json` only when the output location makes caching unreliable (e.g., outputs inside `node_modules/`). Prefer outputting to `dist/` so Nx can reliably cache and restore build artifacts.
+
+When adding a new build target that writes into `node_modules/`, set `"cache": false` to avoid stale cache hits in CI (Dagger mounts a persistent Nx cache volume while `node_modules/` is rebuilt each run).
+
+Projects with caching explicitly disabled (`"cache": false` on their build target):
+
+- `router` — outputs to `node_modules/@analogjs/router`
+- `content` — outputs to `node_modules/@analogjs/content`
+- `my-package` — explicitly opted out of build caching
 
 ## Contribution Patterns & Best Practices
 
