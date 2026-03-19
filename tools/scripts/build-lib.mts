@@ -5,7 +5,7 @@
  * Replaces ng-packagr with Vite (FESM bundles) + tsc (declarations).
  *
  * Usage: node tools/scripts/build-lib.mts <package-name>
- * Example: node tools/scripts/build-lib.mts trpc
+ * Example: node tools/scripts/build-lib.mts router
  */
 
 import { execSync } from 'node:child_process';
@@ -79,6 +79,11 @@ if (!existsSync(pkgDir)) {
 
 console.log(`\nBuilding @analogjs/${packageName}...\n`);
 
+const tsconfigProd: string = resolve(pkgDir, 'tsconfig.lib.prod.json');
+const tsconfig: string = existsSync(tsconfigProd)
+  ? tsconfigProd
+  : resolve(pkgDir, 'tsconfig.lib.json');
+
 // Step 1: Clean output directory (preserve plugin/ for content)
 if (existsSync(outDir)) {
   // For content package, preserve the plugin/ directory (built separately)
@@ -97,20 +102,26 @@ if (existsSync(outDir)) {
 
 // Step 2: Build FESM bundles with Vite
 console.log('  → Building FESM bundles with Vite + Rolldown...');
-execSync(`npx vite build --config packages/${packageName}/vite.config.lib.ts`, {
-  cwd: root,
-  stdio: 'inherit',
-});
+// Use the workspace Vite binary so config imports resolve from the repo on
+// Windows. `pnpx vite` runs from a temporary dlx directory, which can break
+// bare workspace package imports while loading the config.
+execSync(
+  `pnpm exec vite build --config packages/${packageName}/vite.config.lib.ts --configLoader runner`,
+  {
+    cwd: root,
+    env: {
+      ...process.env,
+      ANALOG_BUILD_LIB_TSCONFIG: tsconfig,
+    },
+    stdio: 'inherit',
+  },
+);
 
 // Step 3: Generate Angular-aware declarations with ngc
 console.log('\n  → Generating declarations with ngc...');
-const tsconfigProd: string = resolve(pkgDir, 'tsconfig.lib.prod.json');
-const tsconfig: string = existsSync(tsconfigProd)
-  ? tsconfigProd
-  : resolve(pkgDir, 'tsconfig.lib.json');
 const typesOutDir: string = resolve(outDir, 'types');
 
-execSync(`npx ngc -p "${tsconfig}" --outDir "${typesOutDir}"`, {
+execSync(`pnpm exec ngc -p "${tsconfig}" --outDir "${typesOutDir}"`, {
   cwd: root,
   stdio: 'inherit',
 });
