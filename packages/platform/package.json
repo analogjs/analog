@@ -46,11 +46,6 @@
     "shiki": "^1.29.2",
     "vite": "^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0"
   },
-  "overrides": {
-    "@nx/vite": {
-      "vite": "$vite"
-    }
-  },
   "peerDependenciesMeta": {
     "@nx/angular": {
       "optional": true

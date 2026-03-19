@@ -4,46 +4,29 @@
   "sourceRoot": "packages/platform/src",
   "projectType": "library",
   "tags": ["type:release"],
-  "implicitDependencies": ["vite-plugin-angular"],
   "targets": {
-    "build-package": {
-      "executor": "@nx/js:tsc",
-      "options": {
-        "outputPath": "node_modules/@analogjs/platform",
-        "main": "packages/platform/src/index.ts",
-        "tsConfig": "packages/platform/tsconfig.lib.json",
-        "assets": [
-          "packages/platform/*.md",
-          "packages/platform/migrations/migration.json"
-        ],
-        "updateBuildableProjectDepsInPackageJson": false
-      },
-      "configurations": {
-        "production": {
-          "tsConfig": "packages/platform/tsconfig.lib.prod.json"
-        },
-        "development": {
-          "tsConfig": "packages/platform/tsconfig.lib.json"
-        }
-      },
-      "defaultConfiguration": "production"
-    },
     "build": {
       "executor": "nx:run-commands",
+      "cache": false,
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/platform"],
+      "dependsOn": ["vite-plugin-angular:build", "vite-plugin-nitro:build"],
       "options": {
-        "commands": ["nx build-package platform", "nx build nx-plugin"],
+        "commands": [
+          "vite build packages/platform",
+          "tsc --project packages/platform/tsconfig.lib.prod.json --emitDeclarationOnly --rootDir packages/platform --outDir node_modules/@analogjs/platform",
+          "node tools/scripts/copy-src-assets.mts packages/platform node_modules/@analogjs/platform --assets package.json --dirs migrations",
+          "nx build nx-plugin"
+        ],
         "parallel": false
-      },
-      "dependsOn": ["^build"]
+      }
     },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
     },
     "test": {
-      "dependsOn": ["^build"],
-      "executor": "@nx/vitest:test"
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["vite-plugin-angular:build", "vite-plugin-nitro:build"]
     },
     "version": {
       "executor": "@jscutlery/semver:version",
