@@ -1,11 +1,18 @@
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
+// Keep the npm-scope import so Nx can enforce project boundaries on this
+// build-time dependency; `build-lib.mts` runs Vite from the workspace so the
+// package still resolves correctly on Windows.
 import angular from '@analogjs/vite-plugin-angular';
+
+const tsconfig =
+  process.env['ANALOG_BUILD_LIB_TSCONFIG'] ??
+  resolve(import.meta.dirname, 'tsconfig.lib.prod.json');
 
 export default defineConfig({
   plugins: [
     angular({
-      tsconfig: resolve(import.meta.dirname, 'tsconfig.lib.prod.json'),
+      tsconfig,
     }),
   ],
   build: {
