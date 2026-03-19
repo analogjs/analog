@@ -7,136 +7,60 @@ env:
   NODE_OPTIONS: --max-old-space-size=16384
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
   NX_VERBOSE_LOGGING: ${{ vars.NX_VERBOSE_LOGGING }}
+  NX_ISOLATE_PLUGINS: 'false'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
-  prettier:
+  ci-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - name: Prettier + Lint + Build + Test
+        uses: dagger/dagger-for-github@v8.4.0
+        with:
+          version: '0.20.1'
+          verb: call
+          args: ci-checks --source=. --nx-cloud-token=env:NX_CLOUD_ACCESS_TOKEN
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+  e2e-linux:
+    needs: [ci-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: E2E tests
+        uses: dagger/dagger-for-github@v8.4.0
+        with:
+          version: '0.20.1'
+          verb: call
+          args: end-to-end --source=. --nx-cloud-token=env:NX_CLOUD_ACCESS_TOKEN
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+  build-native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0
       - run: corepack enable
-      - run: pnpm --version
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
-      - name: Install
-        run: pnpm install --frozen-lockfile --prefer-offline
-
-      - name: Validate
-        run: pnpx nx format:check
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0
-      - run: corepack enable
-      - run: pnpm --version
-      - uses: actions/setup-node@v3
-        with:
-          cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
-      - name: Install
-        run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Lint
-        run: pnpm lint:check
-      - name: Lint (type-aware)
-        run: pnpm lint:types
-      - name: Lint (ESLint via Nx)
-        run: pnpm lint:legacy
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0
-      - run: corepack enable
-      - run: pnpm --version
-      - uses: actions/setup-node@v3
-        with:
-          cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
-      - name: Install
-        run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Build
-        run: pnpm build
-
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .node-version
-      - run: corepack enable
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Build
         run: pnpm build
       - name: Verify
+        if: runner.os == 'Windows'
         run: more dist\apps\blog-app\analog\public\index.html
-
-  unit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0
-      - run: corepack enable
-      - run: pnpm --version
-      - uses: actions/setup-node@v3
-        with:
-          cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
-      - name: Install
-        run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Install Playwright
-        run: pnpm playwright install --with-deps chromium --only-shell
-      - name: Test
-        run: pnpm test
-
-  e2e:
-    runs-on: ubuntu-latest
-    needs:
-      - build
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0
-      - run: corepack enable
-      - run: pnpm --version
-      - uses: actions/setup-node@v3
-        with:
-          cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
-      - name: Install
-        run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Install Playwright
-        run: npx playwright install --with-deps
-      - name: Install Cypress
-        run: npx cypress install
-      - name: End-to-end test
-        env:
-          NODE_OPTIONS: ''
-        run: pnpm e2e
