@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+.nx
+.angular
+.nitro
+.vite-inspect
+.dagger/sdk
+**/coverage
+**/test-results
+**/playwright-report
+**/playwright/.cache
+*.timestamp*
+tmp
+out-tsc
