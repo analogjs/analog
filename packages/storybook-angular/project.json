@@ -3,39 +3,24 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "tags": ["type:release"],
-  "implicitDependencies": ["vite-plugin-angular"],
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
-      "dependsOn": ["^build"],
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["vite-plugin-angular:build"],
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/storybook-angular"],
       "options": {
-        "outputPath": "node_modules/@analogjs/storybook-angular",
-        "main": "packages/storybook-angular/src/index.ts",
-        "tsConfig": "packages/storybook-angular/tsconfig.lib.json",
-        "clean": true,
-        "assets": [
-          "packages/storybook-angular/*.md",
-          {
-            "input": "./packages/storybook-angular/src",
-            "glob": "**/!(*.ts)",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/storybook-angular/src",
-            "glob": "**/*.d.ts",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/storybook-angular",
-            "glob": "preset.js",
-            "output": "./"
-          }
-        ]
+        "commands": [
+          "vite build packages/storybook-angular",
+          "tsc --project packages/storybook-angular/tsconfig.lib.json --emitDeclarationOnly --rootDir packages/storybook-angular --outDir node_modules/@analogjs/storybook-angular",
+          "node tools/scripts/copy-src-assets.mts packages/storybook-angular node_modules/@analogjs/storybook-angular --assets package.json preset.js --src"
+        ],
+        "parallel": false
       }
     },
     "test": {
-      "dependsOn": ["^build"],
-      "executor": "@nx/vitest:test"
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["vite-plugin-angular:build"]
     }
   }
 }
