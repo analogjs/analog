@@ -8,14 +8,6 @@ import tsConfigPaths from 'vite-tsconfig-paths';
 export default defineConfig(({ mode }) => {
   return {
     publicDir: 'src/public',
-    <% if (addTRPC) { %>
-    server: {
-      host: '127.0.0.1'
-    },
-    ssr: {
-      noExternal: '@analogjs/trpc/**',
-    },
-    <% } %>
     optimizeDeps: {
       include: ['@angular/common', '@angular/forms'],
     },
