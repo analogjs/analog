@@ -5,37 +5,20 @@
   "projectType": "library",
   "tags": ["type:release"],
   "targets": {
-    "build-package": {
-      "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "outputPath": "node_modules/@analogjs/vitest-angular",
-        "main": "packages/vitest-angular/src/index.ts",
-        "tsConfig": "packages/vitest-angular/tsconfig.lib.json",
-        "assets": [
-          "packages/vitest-angular/*.md",
-          "packages/vitest-angular/builders.json"
-        ],
-        "updateBuildableProjectDepsInPackageJson": false,
-        "additionalEntryPoints": [
-          "packages/vitest-angular/setup-zone.ts",
-          "packages/vitest-angular/setup-snapshots.ts",
-          "packages/vitest-angular/setup-testbed.ts"
-        ],
-        "generateExportsField": true
-      }
-    },
     "build": {
       "executor": "nx:run-commands",
+      "cache": false,
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/vitest-angular"],
       "options": {
         "commands": [
-          "nx build-package vitest-angular",
-          "nx build vitest-angular-tools"
+          "vite build packages/vitest-angular",
+          "tsc --project packages/vitest-angular/tsconfig.lib.json --emitDeclarationOnly --rootDir packages/vitest-angular --outDir node_modules/@analogjs/vitest-angular",
+          "node tools/scripts/copy-src-assets.mts packages/vitest-angular node_modules/@analogjs/vitest-angular --assets package.json builders.json",
+          "nx build vitest-angular-tools",
+          "node tools/scripts/copy-build-output.mts dist/packages/vitest-angular-tools node_modules/@analogjs/vitest-angular/src/lib/tools"
         ],
         "parallel": false
-      },
-      "dependsOn": ["^build"]
+      }
     }
   }
 }

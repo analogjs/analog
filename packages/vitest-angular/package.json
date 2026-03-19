@@ -6,6 +6,9 @@
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
     ".": "./src/index.js",
+    "./setup-zone": "./setup-zone.js",
+    "./setup-snapshots": "./setup-snapshots.js",
+    "./setup-testbed": "./setup-testbed.js",
     "./package.json": "./package.json"
   },
   "keywords": [

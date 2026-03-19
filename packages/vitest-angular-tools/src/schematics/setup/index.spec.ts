@@ -5,10 +5,11 @@ import {
 import { Tree } from '@angular-devkit/schematics';
 import * as path from 'path';
 
-// Use the built collection from node_modules
+// Must use the built collection.json because the schematic runner resolves
+// the compiled CommonJS output rather than the TypeScript sources.
 const collectionPath = path.join(
   __dirname,
-  '../../../../../node_modules/@analogjs/vitest-angular/src/lib/tools/collection.json',
+  '../../../../../dist/packages/vitest-angular-tools/collection.json',
 );
 
 describe('setup schematic', () => {

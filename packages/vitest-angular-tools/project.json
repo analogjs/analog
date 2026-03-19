@@ -6,30 +6,15 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/packages/vitest-angular-tools"],
       "options": {
-        "outputPath": "node_modules/@analogjs/vitest-angular/src/lib/tools",
-        "main": "packages/vitest-angular-tools/src/index.ts",
-        "tsConfig": "packages/vitest-angular-tools/tsconfig.lib.json",
-        "clean": true,
-        "assets": [
-          "packages/vitest-angular-tools/*.md",
-          {
-            "input": "./packages/vitest-angular-tools/src",
-            "glob": "**/!(*.ts)",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/vitest-angular-tools/src",
-            "glob": "**/*.d.ts",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/vitest-angular-tools",
-            "glob": "collection.json",
-            "output": "."
-          }
-        ]
+        "commands": [
+          "vite build packages/vitest-angular-tools",
+          "tsc --project packages/vitest-angular-tools/tsconfig.lib.json --emitDeclarationOnly --rootDir packages/vitest-angular-tools --outDir dist/packages/vitest-angular-tools",
+          "node tools/scripts/copy-src-assets.mts packages/vitest-angular-tools dist/packages/vitest-angular-tools --assets package.json collection.json --src"
+        ],
+        "parallel": false
       }
     },
     "lint": {

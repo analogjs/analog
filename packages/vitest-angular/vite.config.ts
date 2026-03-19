@@ -7,19 +7,21 @@ import { defineConfig, normalizePath } from 'vite';
 export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
-    cacheDir: '../../node_modules/.vite/vitest-angular-tools',
+    cacheDir: '../../node_modules/.vite/vitest-angular',
     build: {
       target: 'esnext',
-      outDir: '../../dist/packages/vitest-angular-tools',
+      outDir: '../../node_modules/@analogjs/vitest-angular',
       emptyOutDir: true,
       sourcemap: true,
       minify: false,
       lib: {
-        // Use an object entry so the key ('src/index') becomes the chunk [name].
-        // This ensures the output path matches package.json exports
-        // across all platforms with preserveModules.
-        entry: { 'src/index': 'src/index.ts' },
-        formats: ['cjs' as const],
+        entry: {
+          'src/index': 'src/index.ts',
+          'setup-zone': 'setup-zone.ts',
+          'setup-snapshots': 'setup-snapshots.ts',
+          'setup-testbed': 'setup-testbed.ts',
+        },
+        formats: ['es' as const],
       },
       rollupOptions: {
         // Externalize bare specifiers (e.g. 'typescript', '@angular/compiler-cli')
@@ -36,15 +38,6 @@ export default defineConfig(({ mode }) => {
           entryFileNames: '[name].js',
         },
       },
-    },
-    test: {
-      reporters: ['default'],
-      globals: true,
-      globalSetup: 'src/test-global-setup.ts',
-      include: ['**/*.spec.ts'],
-      exclude: ['**/files/**/*.spec.ts'],
-      cacheDir: '../../node_modules/.vitest',
-      testTimeout: 10000,
     },
     define: {
       'import.meta.vitest': mode !== 'production',
