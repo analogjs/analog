@@ -1,9 +1,9 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
+import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, PluginOption } from 'vite';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import inspect from 'vite-plugin-inspect';
 
 // Only run in Netlify CI

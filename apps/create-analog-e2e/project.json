@@ -4,10 +4,10 @@
   "projectType": "application",
   "sourceRoot": "apps/create-analog-e2e/src",
   "tags": [],
-  "implicitDependencies": ["create-analog"],
   "targets": {
     "e2e": {
-      "executor": "@nx/vitest:test"
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["create-analog:build"]
     }
   }
 }

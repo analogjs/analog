@@ -5,11 +5,14 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
 import { playwright } from '@vitest/browser-playwright';
 
+const tsconfig =
+  process.env['ANALOG_BUILD_LIB_TSCONFIG'] ?? `${__dirname}/tsconfig.lib.json`;
+
 export default defineConfig(({ mode }) => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/libs/my-package',
   plugins: [
-    angular({ jit: false }),
+    angular({ jit: false, tsconfig }),
     nxViteTsPaths(),
     nxCopyAssetsPlugin(['*.md', 'package.json']),
   ],

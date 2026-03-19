@@ -4,13 +4,13 @@
   "sourceRoot": "apps/analog-app-e2e-playwright/src",
   "projectType": "application",
   "tags": [],
-  "implicitDependencies": ["analog-app"],
   "targets": {
     "vitest": {
       "executor": "@nx/vitest:test"
     },
     "e2e": {
       "executor": "nx:run-commands",
+      "dependsOn": ["analog-app:build"],
       "options": {
         "cwd": "",
         "command": "start-server-and-test 'nx serve-nitro analog-app' http://localhost:3000 'nx run analog-app-e2e-playwright:vitest'"

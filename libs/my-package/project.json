@@ -7,8 +7,16 @@
   "tags": [],
   "implicitDependencies": ["vite-plugin-angular"],
   "targets": {
+    "assert-deps": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/scripts/assert-project-dependency.mts my-package vite-plugin-angular"
+      }
+    },
     "build": {
       "executor": "@nx/vite:build",
+      "cache": false,
+      "dependsOn": ["assert-deps", "vite-plugin-angular:build"],
       "outputs": ["{options.outputPath}"],
       "options": {
         "configFile": "libs/my-package/vite.config.ts",
@@ -27,6 +35,7 @@
     },
     "test": {
       "command": "vitest",
+      "dependsOn": ["vite-plugin-angular:build"],
       "options": {
         "cwd": "libs/my-package"
       }

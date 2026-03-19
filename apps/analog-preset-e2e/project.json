@@ -4,10 +4,10 @@
   "projectType": "application",
   "sourceRoot": "apps/analog-preset-e2e/src",
   "tags": [],
-  "implicitDependencies": ["platform"],
   "targets": {
     "e2e": {
-      "executor": "@nx/vitest:test"
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["platform:build"]
     }
   }
 }
