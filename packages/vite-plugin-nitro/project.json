@@ -6,29 +6,16 @@
   "tags": ["type:release"],
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
+      "executor": "nx:run-commands",
+      "cache": false,
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/vite-plugin-nitro"],
       "options": {
-        "outputPath": "node_modules/@analogjs/vite-plugin-nitro",
-        "main": "packages/vite-plugin-nitro/src/index.ts",
-        "tsConfig": "packages/vite-plugin-nitro/tsconfig.lib.json",
-        "assets": [
-          {
-            "input": "packages/vite-plugin-nitro/",
-            "glob": "*.md",
-            "output": "/"
-          },
-          {
-            "input": "packages/vite-plugin-nitro/src/lib/runtime/",
-            "glob": "*.*",
-            "output": "/src/lib/runtime/"
-          },
-          {
-            "input": "packages/vite-plugin-nitro/migrations/",
-            "glob": "migration.json",
-            "output": "/migrations/"
-          }
+        "commands": [
+          "vite build packages/vite-plugin-nitro",
+          "tsc --project packages/vite-plugin-nitro/tsconfig.lib.json --emitDeclarationOnly --rootDir packages/vite-plugin-nitro --outDir node_modules/@analogjs/vite-plugin-nitro",
+          "node tools/scripts/copy-src-assets.mts packages/vite-plugin-nitro node_modules/@analogjs/vite-plugin-nitro --assets package.json --dirs migrations"
         ],
-        "updateBuildableProjectDepsInPackageJson": false
+        "parallel": false
       }
     },
     "publish": {
