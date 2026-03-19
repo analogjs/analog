@@ -1310,7 +1310,7 @@ export function createFsWatcherCacheInvalidator(
   invalidateFsCaches: () => void,
   invalidateTsconfigCaches: () => void,
   performCompilation: () => Promise<void>,
-) {
+): () => Promise<void> {
   return async (): Promise<void> => {
     invalidateFsCaches();
     invalidateTsconfigCaches();

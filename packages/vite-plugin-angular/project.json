@@ -5,34 +5,19 @@
   "projectType": "library",
   "tags": ["type:release"],
   "targets": {
-    "build-package": {
-      "executor": "@nx/js:tsc",
-      "options": {
-        "outputPath": "node_modules/@analogjs/vite-plugin-angular",
-        "main": "packages/vite-plugin-angular/src/index.ts",
-        "tsConfig": "packages/vite-plugin-angular/tsconfig.lib.json",
-        "assets": [
-          "packages/vite-plugin-angular/*.md",
-          "packages/vite-plugin-angular/migrations/migration.json"
-        ],
-        "updateBuildableProjectDepsInPackageJson": false,
-        "additionalEntryPoints": [
-          "packages/vite-plugin-angular/setup-vitest.ts"
-        ],
-        "generateExportsField": false
-      }
-    },
     "build": {
       "executor": "nx:run-commands",
+      "cache": false,
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/vite-plugin-angular"],
       "options": {
         "commands": [
-          "nx build-package vite-plugin-angular",
+          "vite build packages/vite-plugin-angular",
+          "tsc --project packages/vite-plugin-angular/tsconfig.lib.json --emitDeclarationOnly --rootDir packages/vite-plugin-angular --outDir node_modules/@analogjs/vite-plugin-angular",
+          "node tools/scripts/copy-src-assets.mts packages/vite-plugin-angular node_modules/@analogjs/vite-plugin-angular --assets package.json --dirs migrations",
           "nx build vite-plugin-angular-tools"
         ],
         "parallel": false
-      },
-      "dependsOn": ["^build"]
+      }
     },
     "test": {
       "executor": "@nx/vitest:test"
