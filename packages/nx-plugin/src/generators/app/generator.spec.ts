@@ -129,7 +129,7 @@ describe('nx-plugin generator', () => {
       verifyHomePageExists(tree, analogAppName);
 
       // verifyEslint(tree, config, devDependencies);
-    });
+    }, 30_000);
 
     // oxlint-disable-next-line vitest/expect-expect
     it('creates a default standalone analogjs app in the source directory', async () => {

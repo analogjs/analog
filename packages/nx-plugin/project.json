@@ -6,35 +6,17 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
+      "executor": "nx:run-commands",
+      "outputs": [
+        "{workspaceRoot}/node_modules/@analogjs/platform/src/lib/nx-plugin"
+      ],
       "options": {
-        "outputPath": "node_modules/@analogjs/platform/src/lib/nx-plugin",
-        "main": "packages/nx-plugin/src/index.ts",
-        "tsConfig": "packages/nx-plugin/tsconfig.lib.json",
-        "clean": true,
-        "assets": [
-          "packages/nx-plugin/*.md",
-          {
-            "input": "./packages/nx-plugin/src",
-            "glob": "**/!(*.ts)",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/nx-plugin/src",
-            "glob": "**/*.d.ts",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/nx-plugin",
-            "glob": "generators.json",
-            "output": "."
-          },
-          {
-            "input": "./packages/nx-plugin",
-            "glob": "executors.json",
-            "output": "."
-          }
-        ]
+        "commands": [
+          "vite build packages/nx-plugin",
+          "tsc --project packages/nx-plugin/tsconfig.lib.json --emitDeclarationOnly --rootDir packages/nx-plugin --outDir node_modules/@analogjs/platform/src/lib/nx-plugin",
+          "node tools/scripts/copy-src-assets.mts packages/nx-plugin node_modules/@analogjs/platform/src/lib/nx-plugin --assets package.json generators.json executors.json --src"
+        ],
+        "parallel": false
       }
     },
     "lint": {
