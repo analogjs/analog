@@ -14,7 +14,8 @@ describe('update-markdown-version migration', () => {
 
     await update(tree);
 
-    const pkg = JSON.parse(tree.read('package.json', 'utf-8')!);
+    const content = tree.read('package.json', 'utf-8');
+    const pkg = JSON.parse(content ?? '{}');
     expect(pkg.dependencies).toEqual({});
   });
 

@@ -56,6 +56,9 @@
   "dependencies": {
     "tslib": "^2.3.0"
   },
+  "devDependencies": {
+    "@analogjs/vite-plugin-angular": "workspace:^"
+  },
   "ng-update": {
     "packageGroup": [
       "@analogjs/platform",

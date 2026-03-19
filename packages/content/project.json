@@ -3,11 +3,20 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "packages/content/src",
+  "implicitDependencies": ["vite-plugin-angular"],
   "prefix": "analogjs",
   "tags": ["type:release"],
   "targets": {
+    "assert-deps": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/scripts/assert-project-dependency.mts content vite-plugin-angular"
+      }
+    },
     "build": {
       "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["assert-deps", "vite-plugin-angular:build"],
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/content"],
       "options": {
         "commands": [
@@ -15,16 +24,15 @@
           "nx build content-plugin"
         ],
         "parallel": false
-      },
-      "dependsOn": ["^build"]
+      }
     },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
     },
     "test": {
-      "dependsOn": ["^build"],
-      "executor": "@nx/vitest:test"
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["build"]
     },
     "version": {
       "executor": "@jscutlery/semver:version",
