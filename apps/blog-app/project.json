@@ -8,6 +8,7 @@
   "targets": {
     "build": {
       "executor": "@nx/vite:build",
+      "dependsOn": ["platform:build", "router:build", "content:build"],
       "outputs": [
         "{options.outputPath}",
         "{workspaceRoot}/dist/apps/blog-app/.nitro",
@@ -31,6 +32,7 @@
     },
     "serve": {
       "executor": "@nx/vite:dev-server",
+      "dependsOn": ["platform:build", "router:build", "content:build"],
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "blog-app:build",

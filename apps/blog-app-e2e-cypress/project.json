@@ -4,10 +4,10 @@
   "sourceRoot": "apps/blog-app-e2e-cypress/src",
   "projectType": "application",
   "tags": [],
-  "implicitDependencies": ["blog-app"],
   "targets": {
     "e2e": {
       "executor": "@nx/cypress:cypress",
+      "dependsOn": ["blog-app:build"],
       "options": {
         "cypressConfig": "apps/blog-app-e2e-cypress/cypress.config.ts",
         "devServerTarget": "blog-app:serve-nitro",

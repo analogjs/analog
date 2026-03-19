@@ -5,10 +5,10 @@
   "sourceRoot": "apps/analog-app/src",
   "prefix": "analogjs",
   "tags": [],
-  "implicitDependencies": ["vitest-angular", "storybook-angular"],
   "targets": {
     "build": {
       "executor": "@nx/vite:build",
+      "dependsOn": ["platform:build", "router:build"],
       "outputs": [
         "{options.outputPath}",
         "{workspaceRoot}/dist/apps/analog-app/.nitro",
@@ -32,6 +32,7 @@
     },
     "serve": {
       "executor": "@nx/vite:dev-server",
+      "dependsOn": ["platform:build", "router:build"],
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "analog-app:build",
@@ -52,7 +53,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "dist/apps/analog-app/analog",
-        "command": "PORT=3000 node --unhandled-rejections=throw ./server/index.mjs"
+        "command": "PORT=${PORT:-3000} node --unhandled-rejections=throw ./server/index.mjs"
       },
       "dependsOn": ["build"]
     },
@@ -67,8 +68,8 @@
     },
     "test": {
       "executor": "@nx/vitest:test",
-      "outputs": ["{projectRoot}/coverage"],
-      "dependsOn": ["^build"]
+      "dependsOn": ["platform:build", "router:build"],
+      "outputs": ["{projectRoot}/coverage"]
     },
     "storybook": {
       "executor": "@analogjs/storybook-angular:start-storybook",
