@@ -4,7 +4,12 @@ import type { Route } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { injectInternalServerFetch } from '@analogjs/router/tokens';
 
-import { RedirectRouteMeta, RouteConfig, RouteMeta } from './models';
+import {
+  DefaultRouteMeta,
+  RedirectRouteMeta,
+  RouteConfig,
+  RouteMeta,
+} from './models';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
 import { ANALOG_PAGE_ENDPOINTS, ANALOG_META_KEY } from './endpoints';
 import { injectRouteEndpointURL } from './inject-route-endpoint-url';
@@ -14,7 +19,8 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
     return routeMeta;
   }
 
-  const { meta, ...routeConfig } = routeMeta ?? {};
+  const defaultMeta: DefaultRouteMeta = (routeMeta ?? {}) as DefaultRouteMeta;
+  const { meta, ...routeConfig } = defaultMeta;
 
   if (Array.isArray(meta)) {
     routeConfig.data = { ...routeConfig.data, [ROUTE_META_TAGS_KEY]: meta };

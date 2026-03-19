@@ -12,7 +12,6 @@
     "moduleResolution": "bundler",
     "rootDir": ".",
     "paths": {
-      "@analogjs/content": ["./node_modules/@analogjs/content"],
       "@analogjs/router": ["./src/index.ts"],
       "@analogjs/router/*": ["./*"],
       "@analogjs/router/tokens": ["./tokens/src/index.ts"],
