@@ -37,7 +37,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
 - `nx test <package-name>` (unit tests via Vitest)
 - `nx build <package-name>` to verify build
-- For E2E: `nx e2e create-analog-e2e` or `nx e2e analog-app-e2e-cypress`
+- For E2E: `pnpm e2e`
 - Run `nx format:check` to verify formatting
 
 ## Project Structure & Conventions
