@@ -1,6 +1,6 @@
 import { normalizePath, Plugin, UserConfig, ViteDevServer } from 'vite';
 import { globSync } from 'tinyglobby';
-import { resolve } from 'node:path';
+import { isAbsolute, relative, resolve } from 'node:path';
 
 import { Options } from './options.js';
 
@@ -26,24 +26,48 @@ export function routerPlugin(options?: Options): Plugin[] {
   const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
   let config: UserConfig;
   let root: string;
+  // Watcher events may arrive with trailing slashes, workspace-relative paths,
+  // or absolute paths. Normalize everything into one comparable directory form
+  // before we decide whether a file should invalidate route discovery.
+  const normalizeWatchedDir = (dir: string) => {
+    const normalizedDir = normalizePath(resolve(workspaceRoot, dir));
+    return normalizedDir.endsWith('/')
+      ? normalizedDir.slice(0, -1)
+      : normalizedDir;
+  };
+  const getAdditionalPagesDirs = () =>
+    (options?.additionalPagesDirs || []).map((dir) => normalizeWatchedDir(dir));
+  const getAdditionalContentDirs = () =>
+    (options?.additionalContentDirs || []).map((dir) =>
+      normalizeWatchedDir(dir),
+    );
+  const getRouteLikeDirs = () => [
+    normalizeWatchedDir(`${root}/app/routes`),
+    normalizeWatchedDir(`${root}/src/app/routes`),
+    normalizeWatchedDir(`${root}/src/app/pages`),
+    normalizeWatchedDir(`${root}/src/content`),
+    ...getAdditionalPagesDirs(),
+    ...getAdditionalContentDirs(),
+  ];
   // These lists are used repeatedly by transform hooks during serve. Keeping
   // them warm avoids a full glob on every route/content invalidation.
   let routeFilesCache: string[] | undefined;
   let contentRouteFilesCache: string[] | undefined;
   let endpointFilesCache: string[] | undefined;
-  const isRouteLikeFile = (path: string) =>
-    path.includes('/routes/') ||
-    path.includes('/pages/') ||
-    path.includes('/content/');
+  const isRouteLikeFile = (path: string) => {
+    const normalizedPath = normalizeWatchedDir(path);
+
+    return getRouteLikeDirs().some(
+      (dir) => normalizedPath === dir || normalizedPath.startsWith(`${dir}/`),
+    );
+  };
   const discoverRouteFiles = () => {
     routeFilesCache ??= globSync(
       [
         `${root}/app/routes/**/*.ts`,
         `${root}/src/app/routes/**/*.ts`,
         `${root}/src/app/pages/**/*.page.ts`,
-        ...(options?.additionalPagesDirs || []).map(
-          (glob) => `${workspaceRoot}${glob}/**/*.page.ts`,
-        ),
+        ...getAdditionalPagesDirs().map((dir) => `${dir}/**/*.page.ts`),
       ],
       { dot: true, absolute: true },
     );
@@ -56,9 +80,7 @@ export function routerPlugin(options?: Options): Plugin[] {
         `${root}/src/app/routes/**/*.md`,
         `${root}/src/app/pages/**/*.md`,
         `${root}/src/content/**/*.md`,
-        ...(options?.additionalContentDirs || []).map(
-          (glob) => `${workspaceRoot}${glob}/**/*.md`,
-        ),
+        ...getAdditionalContentDirs().map((dir) => `${dir}/**/*.md`),
       ],
       { dot: true, absolute: true },
     );
@@ -69,9 +91,7 @@ export function routerPlugin(options?: Options): Plugin[] {
     endpointFilesCache ??= globSync(
       [
         `${root}/src/app/pages/**/*.server.ts`,
-        ...(options?.additionalPagesDirs || []).map(
-          (glob) => `${workspaceRoot}${glob}/**/*.server.ts`,
-        ),
+        ...getAdditionalPagesDirs().map((dir) => `${dir}/**/*.server.ts`),
       ],
       { dot: true, absolute: true },
     );
@@ -82,6 +102,18 @@ export function routerPlugin(options?: Options): Plugin[] {
     routeFilesCache = undefined;
     contentRouteFilesCache = undefined;
     endpointFilesCache = undefined;
+  };
+  const getModuleKey = (module: string) => {
+    const relToRoot = normalizePath(relative(root, module));
+    // Use true path containment instead of a raw prefix check so siblings like
+    // `/apps/my-app-tools/...` are not mistaken for files inside `/apps/my-app`.
+    const isInRoot = !relToRoot.startsWith('..') && !isAbsolute(relToRoot);
+
+    if (isInRoot) {
+      return `/${relToRoot}`;
+    }
+
+    return `/${normalizePath(relative(workspaceRoot, module))}`;
   };
   const invalidateFileModules = (server: ViteDevServer, path: string) => {
     const normalizedPath = normalizePath(path);
@@ -199,9 +231,7 @@ export function routerPlugin(options?: Options): Plugin[] {
                 // Keys are app-root-relative for in-app files,
                 // workspace-relative for library files (additionalPagesDirs).
                 // import() keeps absolute paths for Vite's module resolution.
-                const key = module.startsWith(root)
-                  ? module.replace(root, '')
-                  : module.replace(workspaceRoot, '');
+                const key = getModuleKey(module);
                 return `"${key}": () => import('${module}')`;
               })}};
             `,
@@ -211,9 +241,7 @@ export function routerPlugin(options?: Options): Plugin[] {
               'ANALOG_CONTENT_ROUTE_FILES = {};',
               `
             ANALOG_CONTENT_ROUTE_FILES = {${contentRouteFiles.map((module) => {
-              const key = module.startsWith(root)
-                ? module.replace(root, '')
-                : module.replace(workspaceRoot, '');
+              const key = getModuleKey(module);
               return `"${key}": () => import('${module}?analog-content-file=true').then(m => m.default)`;
             })}};
             `,
@@ -255,9 +283,7 @@ export function routerPlugin(options?: Options): Plugin[] {
               'ANALOG_PAGE_ENDPOINTS = {};',
               `
               ANALOG_PAGE_ENDPOINTS = {${endpointFiles.map((module) => {
-                const key = module.startsWith(root)
-                  ? module.replace(root, '')
-                  : module.replace(workspaceRoot, '');
+                const key = getModuleKey(module);
                 return `"${key}": () => import('${module}')`;
               })}};
             `,

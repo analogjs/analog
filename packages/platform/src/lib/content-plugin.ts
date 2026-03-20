@@ -1,6 +1,6 @@
 import * as vite from 'vite';
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { relative, resolve } from 'node:path';
 import { globSync } from 'tinyglobby';
 
 import type { WithShikiHighlighterOptions } from './content/shiki/options.js';
@@ -52,14 +52,18 @@ export function contentPlugin(
   );
   let config: vite.UserConfig;
   let root: string;
+  // Keep discovery and invalidation aligned by deriving both from the same
+  // normalized content roots. That way external content dirs participate in
+  // cache busting exactly the same way they participate in glob discovery.
+  const getContentRootDirs = () => [
+    vite.normalizePath(`${root}/src/content`),
+    ...(options?.additionalContentDirs || []).map((dir) =>
+      vite.normalizePath(`${workspaceRoot}${dir}`),
+    ),
+  ];
   const discoverContentFilesList = () => {
     contentFilesListCache ??= globSync(
-      [
-        `${root}/src/content/**/*.md`,
-        ...(options?.additionalContentDirs || []).map(
-          (glob) => `${workspaceRoot}${glob}/**/*.md`,
-        ),
-      ],
+      getContentRootDirs().map((dir) => `${dir}/**/*.md`),
       { dot: true },
     );
 
@@ -71,10 +75,16 @@ export function contentPlugin(
     );
   const getContentModuleKey = (module: string) => {
     const absolutePath = resolveContentModulePath(module);
+    const relativeToRoot = vite.normalizePath(relative(root, absolutePath));
+    // `startsWith(root)` is not safe here because sibling directories such as
+    // `/apps/my-app-tools` also start with `/apps/my-app`. A relative path only
+    // represents in-app content when it stays within `root`.
+    const isInApp =
+      !relativeToRoot.startsWith('..') && !relativeToRoot.startsWith('/');
 
-    return absolutePath.startsWith(root)
-      ? absolutePath.replace(root, '')
-      : absolutePath.replace(workspaceRoot, '');
+    return isInApp
+      ? `/${relativeToRoot}`
+      : vite.normalizePath(relative(workspaceRoot, absolutePath));
   };
 
   const contentDiscoveryPlugins: vite.Plugin[] = [
@@ -139,7 +149,14 @@ export function contentPlugin(
       name: 'analogjs-invalidate-content-dirs',
       configureServer(server) {
         function invalidateContent(path: string) {
-          if (path.includes(vite.normalizePath(`/content/`))) {
+          const normalizedPath = vite.normalizePath(path);
+          const contentRootDirs = getContentRootDirs();
+          const isContentPath = contentRootDirs.some(
+            (dir) =>
+              normalizedPath === dir || normalizedPath.startsWith(`${dir}/`),
+          );
+
+          if (isContentPath) {
             // The file set only changes on add/remove because this watcher is
             // intentionally scoped to those events. Clear the list cache so the
             // next transform sees the updated directory contents.

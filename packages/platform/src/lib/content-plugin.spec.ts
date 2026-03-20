@@ -185,5 +185,91 @@ describe('content plugin', () => {
         expect(invalidateModule).not.toHaveBeenCalled();
       },
     );
+
+    it('invalidates cached discovery results for additional content dirs', () => {
+      const on = vi.fn();
+      const send = vi.fn();
+      const server = {
+        moduleGraph: {
+          fileToModulesMap: new Map(),
+          invalidateModule: vi.fn(),
+        },
+        watcher: { on },
+        ws: { send },
+      };
+
+      const { transform, configureServer } = getDiscoveryPlugins();
+      configureServer(server);
+
+      vi.mocked(globSync).mockReturnValueOnce([
+        'libs/shared/feature/src/content/first.md',
+      ]);
+
+      const firstResult = transform.handler(
+        'const ANALOG_CONTENT_FILE_LIST = {};',
+      );
+      expect(extractKeys(firstResult.code)).toEqual([
+        '/libs/shared/feature/src/content/first.md',
+      ]);
+      expect(globSync).toHaveBeenCalledTimes(1);
+
+      vi.mocked(globSync).mockReturnValueOnce([
+        'libs/shared/feature/src/content/second.md',
+      ]);
+
+      on.mock.calls.find(([registeredEvent]) => registeredEvent === 'add')?.[1](
+        `${workspaceRoot}/libs/shared/feature/src/content/second.md`,
+      );
+
+      const secondResult = transform.handler(
+        'const ANALOG_CONTENT_FILE_LIST = {};',
+      );
+      expect(extractKeys(secondResult.code)).toEqual([
+        '/libs/shared/feature/src/content/second.md',
+      ]);
+      expect(globSync).toHaveBeenCalledTimes(2);
+      expect(send).toHaveBeenCalledWith({ type: 'full-reload' });
+    });
+
+    it('does not invalidate cached discovery results for unrelated paths', () => {
+      const on = vi.fn();
+      const send = vi.fn();
+      const server = {
+        moduleGraph: {
+          fileToModulesMap: new Map(),
+          invalidateModule: vi.fn(),
+        },
+        watcher: { on },
+        ws: { send },
+      };
+
+      const { transform, configureServer } = getDiscoveryPlugins();
+      configureServer(server);
+
+      vi.mocked(globSync).mockReturnValueOnce([
+        `${appRoot}/src/content/first.md`,
+      ]);
+
+      const firstResult = transform.handler(
+        'const ANALOG_CONTENT_FILE_LIST = {};',
+      );
+      expect(extractKeys(firstResult.code)).toEqual(['/src/content/first.md']);
+      expect(globSync).toHaveBeenCalledTimes(1);
+
+      vi.mocked(globSync).mockReturnValueOnce([
+        `${appRoot}/src/content/second.md`,
+      ]);
+
+      on.mock.calls.find(([registeredEvent]) => registeredEvent === 'add')?.[1](
+        `${appRoot}/src/app/pages/index.page.ts`,
+      );
+
+      const secondResult = transform.handler(
+        'const ANALOG_CONTENT_FILE_LIST = {};',
+      );
+      expect(extractKeys(secondResult.code)).toEqual(['/src/content/first.md']);
+      expect(globSync).toHaveBeenCalledTimes(1);
+      expect(send).not.toHaveBeenCalled();
+    });
   });
 });

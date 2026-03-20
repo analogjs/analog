@@ -13,7 +13,7 @@ describe('routerPlugin', () => {
     vi.mocked(globSync).mockReturnValue([]);
   });
 
-  const configureServer = () => {
+  const configureServer = (options?: Parameters<typeof routerPlugin>[0]) => {
     const importer = { id: '/src/main.ts' };
     const pageImporter = { id: '/src/app/routes.ts' };
     const analogModule = {
@@ -52,7 +52,7 @@ describe('routerPlugin', () => {
       },
     };
 
-    const [plugin] = routerPlugin();
+    const [plugin] = routerPlugin(options);
     const configureServer = plugin.configureServer as (server: unknown) => void;
 
     configureServer(server);
@@ -129,6 +129,44 @@ describe('routerPlugin', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it('invalidates additional page directories on add', () => {
+    const workspaceRoot = '/home/user/workspace';
+    const { invalidateModule, send, on } = configureServer({
+      workspaceRoot,
+      additionalPagesDirs: ['/libs/shared/feature/src/pages'],
+    });
+
+    const addHandler = on.mock.calls.find(
+      ([eventName]) => eventName === 'add',
+    )?.[1];
+
+    expect(addHandler).toBeTypeOf('function');
+
+    addHandler(`${workspaceRoot}/libs/shared/feature/src/pages/extra.page.ts`);
+
+    expect(invalidateModule).toHaveBeenCalled();
+    expect(send).toHaveBeenCalledWith({ type: 'full-reload' });
+  });
+
+  it('invalidates additional content directories on unlink', () => {
+    const workspaceRoot = '/home/user/workspace';
+    const { invalidateModule, send, on } = configureServer({
+      workspaceRoot,
+      additionalContentDirs: ['/libs/shared/feature/src/content/'],
+    });
+
+    const unlinkHandler = on.mock.calls.find(
+      ([eventName]) => eventName === 'unlink',
+    )?.[1];
+
+    expect(unlinkHandler).toBeTypeOf('function');
+
+    unlinkHandler(`${workspaceRoot}/libs/shared/feature/src/content/post.md`);
+
+    expect(invalidateModule).toHaveBeenCalled();
+    expect(send).toHaveBeenCalledWith({ type: 'full-reload' });
+  });
+
   describe('transform - key normalization', () => {
     const workspaceRoot = '/home/user/workspace';
     const appRoot = `${workspaceRoot}/apps/my-app`;
@@ -136,6 +174,8 @@ describe('routerPlugin', () => {
     function getTransformPlugin(pluginName: string) {
       const plugins = routerPlugin({
         workspaceRoot,
+        additionalPagesDirs: ['/libs/shared/feature/src/pages'],
+        additionalContentDirs: ['/libs/shared/feature/src/content'],
       });
       const plugin = plugins.find((p) => p.name === pluginName)!;
       (plugin as any).config?.({ root: 'apps/my-app' });
@@ -187,6 +227,23 @@ describe('routerPlugin', () => {
       keys.forEach((key) => {
         expect(key).not.toContain(workspaceRoot);
       });
+    });
+
+    it('does not treat sibling app paths as inside the app root', () => {
+      vi.mocked(globSync)
+        .mockReturnValueOnce([
+          `${workspaceRoot}/apps/my-app-tools/src/app/pages/test.page.ts`,
+        ])
+        .mockReturnValueOnce([]);
+
+      const transform = getTransformPlugin('analog-glob-routes');
+      const result = transform.handler(
+        'export let ANALOG_ROUTE_FILES = {}; export let ANALOG_CONTENT_ROUTE_FILES = {};',
+      );
+
+      const keys = extractKeys(result.code);
+      expect(keys).toContain('/apps/my-app-tools/src/app/pages/test.page.ts');
+      expect(keys).not.toContain('/-tools/src/app/pages/test.page.ts');
     });
 
     it('normalizes content route file keys outside app root', () => {
