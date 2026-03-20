@@ -5,6 +5,14 @@
   "sourceRoot": "apps/analog-app/src",
   "prefix": "analogjs",
   "tags": [],
+  "implicitDependencies": [
+    "vitest-angular",
+    "storybook-angular",
+    "platform",
+    "router",
+    "content",
+    "my-package"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/vite:build",

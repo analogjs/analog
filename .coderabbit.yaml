@@ -121,9 +121,6 @@ reviews:
       instructions: >-
         Treat as part of the platform package scope. Pay special attention to generators, schemas, migrations,
         and template files because changes can affect downstream generated workspaces.
-    - path: 'apps/nx-plugin-e2e/**'
-      instructions: >-
-        Treat this app as part of the nx-plugin scope and check whether generator or executor behavior is covered end to end.
     - path: 'apps/docs-app/**'
       instructions: >-
         Review as docs scope. Bias feedback toward documentation accuracy, command correctness,
