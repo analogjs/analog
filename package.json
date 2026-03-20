@@ -243,7 +243,9 @@
     "esbuild": "$esbuild",
     "jiti": "$jiti",
     "less": "$less",
-    "nitropack>vite": "$vite",
+    "nitropack": {
+      "vite": "$vite"
+    },
     "rolldown": "$rolldown",
     "sass-embedded": "$sass-embedded",
     "sass": "$sass",
