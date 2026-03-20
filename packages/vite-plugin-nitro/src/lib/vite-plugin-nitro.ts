@@ -334,7 +334,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         config = userConfig;
         isTest = isTest ? isTest : mode === 'test';
 
-        rootDir = relative(workspaceRoot, config.root || '.') || '.';
+        const resolvedConfigRoot = config.root
+          ? resolve(workspaceRoot, config.root)
+          : workspaceRoot;
+        rootDir = relative(workspaceRoot, resolvedConfigRoot) || '.';
         hasAPIDir = existsSync(
           resolve(
             workspaceRoot,
@@ -722,6 +725,25 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               await Promise.all(builds);
 
               applySsrEntryAlias(nitroConfig, options, workspaceRoot, rootDir);
+
+              const resolvedClientOutputPath = resolveClientOutputPath(
+                clientOutputPath,
+                workspaceRoot,
+                rootDir,
+                config.build?.outDir,
+                ssrBuild,
+              );
+
+              // Inline the client index.html as a virtual module so the server
+              // bundle never contains an absolute filesystem path to the template.
+              const indexHtml = readFileSync(
+                resolve(resolvedClientOutputPath, 'index.html'),
+                'utf8',
+              );
+              nitroConfig.virtual = {
+                ...nitroConfig.virtual,
+                '#analog/index': `export default ${JSON.stringify(indexHtml)};`,
+              };
 
               await buildServer(options, nitroConfig, routeSourceFiles);
 

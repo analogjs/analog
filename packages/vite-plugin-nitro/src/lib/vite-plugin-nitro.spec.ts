@@ -14,6 +14,15 @@ import {
 } from './vite-nitro-plugin.spec.data';
 import { nitro } from './vite-plugin-nitro';
 
+function writeBuiltClientIndexHtml(
+  workspaceRoot: string,
+  html = '<html></html>',
+) {
+  const clientBuildDir = resolve(workspaceRoot, 'dist', 'client');
+  mkdirSync(clientBuildDir, { recursive: true });
+  writeFileSync(resolve(clientBuildDir, 'index.html'), html);
+}
+
 describe('nitro', () => {
   vi.mock('./build-ssr');
   vi.mock('./build-server');
@@ -157,6 +166,7 @@ describe('nitro', () => {
         builtSsrEntry,
         'export default async function renderer() {}',
       );
+      writeBuiltClientIndexHtml(workspaceRoot, '<html>rollup build</html>');
 
       const plugin = nitro({
         workspaceRoot,
@@ -187,6 +197,9 @@ describe('nitro', () => {
       expect(bundlerConfig.output).toEqual({
         entryFileNames: 'index.mjs',
       });
+      expect(nitroConfig.virtual?.['#analog/index']).toBe(
+        'export default "<html>rollup build</html>";',
+      );
     } finally {
       rmSync(workspaceRoot, { recursive: true, force: true });
     }
@@ -204,6 +217,7 @@ describe('nitro', () => {
         builtSsrEntry,
         'export default async function renderer() {}',
       );
+      writeBuiltClientIndexHtml(workspaceRoot, '<html>ssr alias</html>');
 
       const plugin = nitro({
         ssr: true,
@@ -236,6 +250,9 @@ describe('nitro', () => {
       );
       expect(nitroConfig.virtual?.['#ANALOG_SSR_RENDERER']).toContain(
         "import renderer from '#analog/ssr';",
+      );
+      expect(nitroConfig.virtual?.['#analog/index']).toBe(
+        'export default "<html>ssr alias</html>";',
       );
     } finally {
       rmSync(workspaceRoot, { recursive: true, force: true });
