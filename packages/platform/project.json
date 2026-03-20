@@ -15,7 +15,8 @@
           "vite build packages/platform",
           "tsc --project packages/platform/tsconfig.lib.prod.json --emitDeclarationOnly --rootDir packages/platform --outDir node_modules/@analogjs/platform",
           "node tools/scripts/copy-src-assets.mts packages/platform node_modules/@analogjs/platform --assets package.json --dirs migrations",
-          "nx build nx-plugin"
+          "nx build nx-plugin",
+          "node tools/scripts/verify-package-artifacts.mts platform"
         ],
         "parallel": false
       }

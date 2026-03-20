@@ -328,7 +328,8 @@ export class AnalogCi {
 
   /**
    * Pre-e2e checks: prettier, lint, and build+test in parallel.
-   * Used by GitHub Actions ci-linux job.
+   * Builds the base container once and forks into independent branches —
+   * the Dagger engine runs them concurrently automatically.
    */
   @func()
   async ciChecks(
@@ -354,10 +355,51 @@ export class AnalogCi {
     source: Directory,
     nxCloudToken?: Secret,
   ): Promise<string> {
+    const ctr = this.base(source);
+
+    let buildCtr = ctr.withExec([
+      'pnpm',
+      'exec',
+      'playwright',
+      'install',
+      '--with-deps',
+      'chromium',
+    ]);
+
+    if (nxCloudToken) {
+      buildCtr = buildCtr.withSecretVariable(
+        'NX_CLOUD_ACCESS_TOKEN',
+        nxCloudToken,
+      );
+    }
+
+    // Independent branches off shared base — Dagger runs them in parallel.
     await Promise.all([
-      this.prettier(source),
-      this.lint(source),
-      this.buildAndTest(source, nxCloudToken),
+      ctr.withExec(['pnpm', 'run', 'prettier:check']).stdout(),
+      ctr.withExec(['pnpm', 'run', 'lint']).stdout(),
+      buildCtr
+        .withExec([
+          'pnpm',
+          'exec',
+          'nx',
+          'run-many',
+          '--target',
+          'build',
+          '--all',
+          '--exclude=astro-app',
+        ])
+        .withExec([
+          'pnpm',
+          'exec',
+          'nx',
+          'run-many',
+          '--target',
+          'test',
+          // Exclude my-package: its Playwright browser-mode test requires
+          // a full desktop Chromium that the container doesn't provide.
+          '--exclude=my-package',
+        ])
+        .stdout(),
     ]);
 
     return 'All checks passed.';
@@ -365,6 +407,7 @@ export class AnalogCi {
 
   /**
    * Full CI pipeline: ciChecks + e2e.
+   * Pre-installs Cypress in parallel with checks so e2e starts faster.
    * For local use via `pnpm ghci`.
    */
   @func()
@@ -391,8 +434,80 @@ export class AnalogCi {
     source: Directory,
     nxCloudToken?: Secret,
   ): Promise<string> {
-    await this.ciChecks(source, nxCloudToken);
-    await this.endToEnd(source, nxCloudToken);
+    const ctr = this.base(source);
+
+    let buildCtr = ctr.withExec([
+      'pnpm',
+      'exec',
+      'playwright',
+      'install',
+      '--with-deps',
+      'chromium',
+    ]);
+
+    if (nxCloudToken) {
+      buildCtr = buildCtr.withSecretVariable(
+        'NX_CLOUD_ACCESS_TOKEN',
+        nxCloudToken,
+      );
+    }
+
+    // Phase 1: four independent branches run in parallel.
+    // Cypress/Playwright install warms browser cache volumes for phase 2.
+    await Promise.all([
+      ctr.withExec(['pnpm', 'run', 'prettier:check']).stdout(),
+      ctr.withExec(['pnpm', 'run', 'lint']).stdout(),
+      buildCtr
+        .withExec([
+          'pnpm',
+          'exec',
+          'nx',
+          'run-many',
+          '--target',
+          'build',
+          '--all',
+          '--exclude=astro-app',
+        ])
+        .withExec([
+          'pnpm',
+          'exec',
+          'nx',
+          'run-many',
+          '--target',
+          'test',
+          '--exclude=my-package',
+        ])
+        .stdout(),
+      ctr
+        .withExec(['pnpm', 'exec', 'playwright', 'install', '--with-deps'])
+        .withExec(['pnpm', 'exec', 'cypress', 'install'])
+        .stdout(),
+    ]);
+
+    // Phase 2: e2e. Browser and Nx build cache volumes are warm.
+    let e2eCtr = ctr
+      .withExec(['pnpm', 'exec', 'playwright', 'install', '--with-deps'])
+      .withExec(['pnpm', 'exec', 'cypress', 'install'])
+      .withEnvVariable('NODE_OPTIONS', '');
+
+    if (nxCloudToken) {
+      e2eCtr = e2eCtr.withSecretVariable('NX_CLOUD_ACCESS_TOKEN', nxCloudToken);
+    }
+
+    await e2eCtr
+      .withExec([
+        'pnpm',
+        'exec',
+        'nx',
+        'run-many',
+        '--target',
+        'e2e',
+        '--projects',
+        'create-analog-e2e,analog-app-e2e-cypress',
+        '--exclude',
+        'analog-app-e2e-playwright',
+      ])
+      .stdout();
 
     return 'All CI checks passed.';
   }

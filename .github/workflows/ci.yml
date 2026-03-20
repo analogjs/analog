@@ -19,26 +19,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Prettier + Lint + Build + Test
+      - name: Prettier + Lint + Build + Test + E2E
         uses: dagger/dagger-for-github@v8.4.0
         with:
           version: '0.20.1'
           verb: call
-          args: ci-checks --source=. --nx-cloud-token=env:NX_CLOUD_ACCESS_TOKEN
-          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-
-  e2e-linux:
-    needs: [ci-linux]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: E2E tests
-        uses: dagger/dagger-for-github@v8.4.0
-        with:
-          version: '0.20.1'
-          verb: call
-          args: end-to-end --source=. --nx-cloud-token=env:NX_CLOUD_ACCESS_TOKEN
+          args: ci --source=. --nx-cloud-token=env:NX_CLOUD_ACCESS_TOKEN
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
 
   build-native:
@@ -52,7 +38,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-      - run: corepack enable
+      - run: corepack enable && corepack install
       - uses: actions/setup-node@v4
         with:
           cache: 'pnpm'

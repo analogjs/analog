@@ -7,6 +7,7 @@
   "targets": {
     "build": {
       "executor": "nx:run-commands",
+      "cache": false,
       "outputs": [
         "{workspaceRoot}/node_modules/@analogjs/platform/src/lib/nx-plugin"
       ],

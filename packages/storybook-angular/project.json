@@ -13,7 +13,8 @@
         "commands": [
           "vite build packages/storybook-angular",
           "tsc --project packages/storybook-angular/tsconfig.lib.json --emitDeclarationOnly --rootDir packages/storybook-angular --outDir node_modules/@analogjs/storybook-angular",
-          "node tools/scripts/copy-src-assets.mts packages/storybook-angular node_modules/@analogjs/storybook-angular --assets package.json preset.js --src"
+          "node tools/scripts/copy-src-assets.mts packages/storybook-angular node_modules/@analogjs/storybook-angular --assets package.json preset.js --src",
+          "node tools/scripts/verify-package-artifacts.mts storybook-angular"
         ],
         "parallel": false
       }

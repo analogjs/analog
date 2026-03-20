@@ -14,7 +14,8 @@
           "vite build packages/vite-plugin-angular",
           "tsc --project packages/vite-plugin-angular/tsconfig.lib.json --emitDeclarationOnly --rootDir packages/vite-plugin-angular --outDir node_modules/@analogjs/vite-plugin-angular",
           "node tools/scripts/copy-src-assets.mts packages/vite-plugin-angular node_modules/@analogjs/vite-plugin-angular --assets package.json --dirs migrations",
-          "nx build vite-plugin-angular-tools"
+          "nx build vite-plugin-angular-tools",
+          "node tools/scripts/verify-package-artifacts.mts vite-plugin-angular"
         ],
         "parallel": false
       }

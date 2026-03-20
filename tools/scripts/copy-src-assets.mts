@@ -15,59 +15,161 @@
  */
 import { copyFileSync, cpSync, mkdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { Effect, Schema } from 'effect';
 
-const args: string[] = process.argv.slice(2);
-const pkgDir: string = args[0];
-const destDir: string = args[1];
-const flags: string[] = args.slice(2);
+const CopySrcAssetsConfigSchema = Schema.Struct({
+  pkgDir: Schema.String,
+  destDir: Schema.String,
+  assets: Schema.Array(Schema.String),
+  dirs: Schema.Array(Schema.String),
+  copySrc: Schema.Boolean,
+});
 
-let i = 0;
-const assets: string[] = [];
-const dirs: string[] = [];
-let copySrc = false;
+type CopySrcAssetsConfig = Schema.Schema.Type<typeof CopySrcAssetsConfigSchema>;
 
-while (i < flags.length) {
-  if (flags[i] === '--assets') {
-    i++;
-    while (i < flags.length && !flags[i].startsWith('--')) {
-      assets.push(flags[i]);
-      i++;
-    }
-  } else if (flags[i] === '--dirs') {
-    i++;
-    while (i < flags.length && !flags[i].startsWith('--')) {
-      dirs.push(flags[i]);
-      i++;
-    }
-  } else if (flags[i] === '--src') {
-    copySrc = true;
-    i++;
-  } else {
-    i++;
+function formatError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function parseArgs(
+  argv: ReadonlyArray<string>,
+): Effect.Effect<CopySrcAssetsConfig, Error> {
+  const positionalArgs = argv.slice(2);
+  const pkgDir = positionalArgs[0];
+  const destDir = positionalArgs[1];
+
+  if (!pkgDir || !destDir) {
+    return Effect.fail(
+      new Error(
+        'Usage: node --experimental-strip-types tools/scripts/copy-src-assets.mts <pkgDir> <destDir> [options]',
+      ),
+    );
   }
-}
 
-// Copy flat files
-for (const file of assets) {
-  mkdirSync(destDir, { recursive: true });
-  copyFileSync(join(pkgDir, file), join(destDir, file));
-}
+  const flags = positionalArgs.slice(2);
+  let index = 0;
+  const assets: string[] = [];
+  const dirs: string[] = [];
+  let copySrc = false;
 
-// Copy directories recursively
-for (const dir of dirs) {
-  cpSync(join(pkgDir, dir), join(destDir, dir), { recursive: true });
-}
+  while (index < flags.length) {
+    const flag = flags[index];
 
-// Copy non-TS source assets (all files except .ts, plus .d.ts)
-if (copySrc) {
-  const srcDir: string = join(pkgDir, 'src');
-  const srcDestDir: string = join(destDir, 'src');
-  cpSync(srcDir, srcDestDir, {
-    recursive: true,
-    filter: (src: string): boolean => {
-      if (statSync(src).isDirectory()) return true;
-      if (src.endsWith('.ts') && !src.endsWith('.d.ts')) return false;
-      return true;
-    },
+    if (flag === '--assets') {
+      index++;
+      while (index < flags.length && !flags[index].startsWith('--')) {
+        assets.push(flags[index]);
+        index++;
+      }
+      continue;
+    }
+
+    if (flag === '--dirs') {
+      index++;
+      while (index < flags.length && !flags[index].startsWith('--')) {
+        dirs.push(flags[index]);
+        index++;
+      }
+      continue;
+    }
+
+    if (flag === '--src') {
+      copySrc = true;
+    }
+
+    index++;
+  }
+
+  return Effect.try({
+    try: () =>
+      Schema.decodeUnknownSync(CopySrcAssetsConfigSchema)({
+        pkgDir,
+        destDir,
+        assets,
+        dirs,
+        copySrc,
+      }),
+    catch: (cause) =>
+      new Error(`Invalid copy-src-assets arguments: ${formatError(cause)}`),
   });
 }
+
+function copyAsset(
+  pkgDir: string,
+  destDir: string,
+  file: string,
+): Effect.Effect<void, Error> {
+  return Effect.try({
+    try: () => {
+      mkdirSync(destDir, { recursive: true });
+      copyFileSync(join(pkgDir, file), join(destDir, file));
+    },
+    catch: (cause) =>
+      new Error(`Failed to copy asset "${file}": ${formatError(cause)}`),
+  });
+}
+
+function copyDirectory(
+  pkgDir: string,
+  destDir: string,
+  dir: string,
+): Effect.Effect<void, Error> {
+  return Effect.try({
+    try: () => {
+      cpSync(join(pkgDir, dir), join(destDir, dir), { recursive: true });
+    },
+    catch: (cause) =>
+      new Error(`Failed to copy directory "${dir}": ${formatError(cause)}`),
+  });
+}
+
+function copySourceAssets(
+  pkgDir: string,
+  destDir: string,
+): Effect.Effect<void, Error> {
+  return Effect.try({
+    try: () => {
+      cpSync(join(pkgDir, 'src'), join(destDir, 'src'), {
+        recursive: true,
+        filter: (src: string): boolean => {
+          if (statSync(src).isDirectory()) {
+            return true;
+          }
+
+          return !src.endsWith('.ts') || src.endsWith('.d.ts');
+        },
+      });
+    },
+    catch: (cause) =>
+      new Error(`Failed to copy source assets: ${formatError(cause)}`),
+  });
+}
+
+const program = Effect.gen(function* () {
+  const config = yield* parseArgs(process.argv);
+
+  yield* Effect.forEach(
+    config.assets,
+    (file) => copyAsset(config.pkgDir, config.destDir, file),
+    {
+      discard: true,
+    },
+  );
+
+  yield* Effect.forEach(
+    config.dirs,
+    (dir) => copyDirectory(config.pkgDir, config.destDir, dir),
+    {
+      discard: true,
+    },
+  );
+
+  if (config.copySrc) {
+    yield* copySourceAssets(config.pkgDir, config.destDir);
+  }
+});
+
+await Effect.runPromise(program).catch((error: unknown) => {
+  console.error(formatError(error));
+  process.exit(1);
+});
