@@ -2,6 +2,19 @@ import type { GlobalConfig } from 'semantic-release';
 
 const tag = process.env['RELEASE_TAG'];
 
+const versionFiles = [
+  'package.json',
+  'packages/astro-angular/package.json',
+  'packages/content/package.json',
+  'packages/create-analog/package.json',
+  'packages/platform/package.json',
+  'packages/router/package.json',
+  'packages/storybook-angular/package.json',
+  'packages/vite-plugin-angular/package.json',
+  'packages/vite-plugin-nitro/package.json',
+  'packages/vitest-angular/package.json',
+];
+
 const replacementFiles = [
   'packages/astro-angular/package.json',
   'packages/create-analog/template-angular-v17/package.json',
@@ -32,72 +45,16 @@ export default {
       },
     ],
     [
-      '@semantic-release/npm',
+      'semantic-release-replace-plugin',
       {
-        npmPublish: false,
-      },
-    ],
-    [
-      '@semantic-release/npm',
-      {
-        npmPublish: false,
-        pkgRoot: './packages/astro-angular/',
-      },
-    ],
-    [
-      '@semantic-release/npm',
-      {
-        npmPublish: false,
-        pkgRoot: './packages/content/',
-      },
-    ],
-    [
-      '@semantic-release/npm',
-      {
-        npmPublish: false,
-        pkgRoot: './packages/create-analog/',
-      },
-    ],
-    [
-      '@semantic-release/npm',
-      {
-        npmPublish: false,
-        pkgRoot: './packages/platform/',
-      },
-    ],
-    [
-      '@semantic-release/npm',
-      {
-        npmPublish: false,
-        pkgRoot: './packages/router/',
-      },
-    ],
-    [
-      '@semantic-release/npm',
-      {
-        npmPublish: false,
-        pkgRoot: './packages/storybook-angular/',
-      },
-    ],
-    [
-      '@semantic-release/npm',
-      {
-        npmPublish: false,
-        pkgRoot: './packages/vite-plugin-angular/',
-      },
-    ],
-    [
-      '@semantic-release/npm',
-      {
-        npmPublish: false,
-        pkgRoot: './packages/vite-plugin-nitro/',
-      },
-    ],
-    [
-      '@semantic-release/npm',
-      {
-        npmPublish: false,
-        pkgRoot: './packages/vitest-angular/',
+        replacements: [
+          {
+            files: versionFiles,
+            from: '"version": ".*"',
+            to: '"version": "${nextRelease.version}"',
+            countMatches: true,
+          },
+        ],
       },
     ],
     [
