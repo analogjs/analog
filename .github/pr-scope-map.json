@@ -38,7 +38,7 @@
       "kind": "package",
       "color": "0e8a16",
       "description": "Changes in @analogjs/nx-plugin",
-      "prefixes": ["packages/nx-plugin/", "apps/nx-plugin-e2e/"]
+      "prefixes": ["packages/nx-plugin/"]
     },
     {
       "scope": "platform",
