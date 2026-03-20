@@ -95,7 +95,7 @@ export function contentPlugin(
             });
 
             let result = code.replace(
-              'let ANALOG_CONTENT_FILE_LIST = {};',
+              'const ANALOG_CONTENT_FILE_LIST = {};',
               `
               let ANALOG_CONTENT_FILE_LIST = {${contentFilesList.map(
                 (module, index) =>

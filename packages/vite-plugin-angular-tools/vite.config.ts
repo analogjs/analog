@@ -1,9 +1,22 @@
 /// <reference types="vitest" />
 
 import path from 'node:path';
+import { globSync } from 'tinyglobby';
 import { defineConfig, normalizePath } from 'vite';
 
 // https://vitejs.dev/config/
+const entries = Object.fromEntries(
+  globSync(['src/**/*.ts', '!src/**/*.d.ts', '!src/**/*.spec.ts'], {
+    cwd: __dirname,
+    onlyFiles: true,
+  })
+    .sort()
+    .map((file) => {
+      const normalizedFile = normalizePath(file);
+      return [normalizedFile.replace(/\.ts$/, ''), normalizedFile];
+    }),
+);
+
 export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
@@ -15,10 +28,8 @@ export default defineConfig(({ mode }) => {
       sourcemap: true,
       minify: false,
       lib: {
-        // Use an object entry so the key ('src/index') becomes the chunk [name].
-        // This ensures the output path matches package.json exports
-        // across all platforms with preserveModules.
-        entry: { 'src/index': 'src/index.ts' },
+        // Emit builder implementations so builders.json resolves to built JS.
+        entry: entries,
         formats: ['es' as const],
       },
       rollupOptions: {

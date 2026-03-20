@@ -14,7 +14,8 @@
         "commands": [
           "vite build packages/astro-angular",
           "tsc --project packages/astro-angular/tsconfig.lib.json --emitDeclarationOnly --rootDir packages/astro-angular --outDir node_modules/@analogjs/astro-angular",
-          "node tools/scripts/copy-src-assets.mts packages/astro-angular node_modules/@analogjs/astro-angular --assets package.json --dirs migrations"
+          "node tools/scripts/copy-src-assets.mts packages/astro-angular node_modules/@analogjs/astro-angular --assets package.json --dirs migrations",
+          "node tools/scripts/verify-package-artifacts.mts astro-angular"
         ],
         "parallel": false
       }
