@@ -1,11 +1,27 @@
-import { describe, expect } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fs from 'node:fs';
 
-vi.mock('fs');
+vi.mock('node:fs');
+vi.mock('front-matter', () => ({
+  default: vi.fn((fileContents: string) => ({
+    attributes: {
+      title: 'My First Post',
+      slug: '2022-12-27-my-first-post',
+      description: 'My First Post Description',
+    },
+    body: fileContents,
+    frontmatter:
+      'title: My First Post\nslug: 2022-12-27-my-first-post\ndescription: My First Post Description',
+  })),
+}));
 
 import { contentPlugin } from './content-plugin';
 
 describe('content plugin', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   const [plugin] = contentPlugin({ highlighter: 'prism' });
 
   // In Vite 8+ the transform hook uses the filtered-transform shape:
@@ -31,7 +47,7 @@ describe('content plugin', () => {
     ).toBe(true);
   });
 
-  it.skip('should cache parsed attributes if the code is the same', async () => {
+  it('should cache parsed attributes if the code is the same', async () => {
     // Arrange
     const code =
       '---\n' +
@@ -42,7 +58,9 @@ describe('content plugin', () => {
       '\n' +
       'Hello World\n';
     const id = '/src/content/post.md?analog-content-list=true';
-    const readFileSyncSpy = vi.spyOn(fs, 'readFileSync').mockReturnValue(code);
+    const readFileSyncSpy = vi
+      .spyOn(fs, 'readFileSync')
+      .mockReturnValue(code as any);
     const result = {
       code: 'export default {"title":"My First Post","slug":"2022-12-27-my-first-post","description":"My First Post Description"}',
       moduleSideEffects: false,
