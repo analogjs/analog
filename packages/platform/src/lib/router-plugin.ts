@@ -26,10 +26,63 @@ export function routerPlugin(options?: Options): Plugin[] {
   const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
   let config: UserConfig;
   let root: string;
+  // These lists are used repeatedly by transform hooks during serve. Keeping
+  // them warm avoids a full glob on every route/content invalidation.
+  let routeFilesCache: string[] | undefined;
+  let contentRouteFilesCache: string[] | undefined;
+  let endpointFilesCache: string[] | undefined;
   const isRouteLikeFile = (path: string) =>
-    path.includes(`routes`) ||
-    path.includes(`pages`) ||
-    path.includes('content');
+    path.includes('/routes/') ||
+    path.includes('/pages/') ||
+    path.includes('/content/');
+  const discoverRouteFiles = () => {
+    routeFilesCache ??= globSync(
+      [
+        `${root}/app/routes/**/*.ts`,
+        `${root}/src/app/routes/**/*.ts`,
+        `${root}/src/app/pages/**/*.page.ts`,
+        ...(options?.additionalPagesDirs || []).map(
+          (glob) => `${workspaceRoot}${glob}/**/*.page.ts`,
+        ),
+      ],
+      { dot: true, absolute: true },
+    );
+
+    return routeFilesCache;
+  };
+  const discoverContentRouteFiles = () => {
+    contentRouteFilesCache ??= globSync(
+      [
+        `${root}/src/app/routes/**/*.md`,
+        `${root}/src/app/pages/**/*.md`,
+        `${root}/src/content/**/*.md`,
+        ...(options?.additionalContentDirs || []).map(
+          (glob) => `${workspaceRoot}${glob}/**/*.md`,
+        ),
+      ],
+      { dot: true, absolute: true },
+    );
+
+    return contentRouteFilesCache;
+  };
+  const discoverEndpointFiles = () => {
+    endpointFilesCache ??= globSync(
+      [
+        `${root}/src/app/pages/**/*.server.ts`,
+        ...(options?.additionalPagesDirs || []).map(
+          (glob) => `${workspaceRoot}${glob}/**/*.server.ts`,
+        ),
+      ],
+      { dot: true, absolute: true },
+    );
+
+    return endpointFilesCache;
+  };
+  const invalidateDiscoveryCaches = () => {
+    routeFilesCache = undefined;
+    contentRouteFilesCache = undefined;
+    endpointFilesCache = undefined;
+  };
   const invalidateFileModules = (server: ViteDevServer, path: string) => {
     const normalizedPath = normalizePath(path);
     // A newly added page can be discovered before its final contents settle.
@@ -58,12 +111,27 @@ export function routerPlugin(options?: Options): Plugin[] {
          *
          * @param path The file path that was added or deleted
          */
-        function invalidateRoutes(path: string) {
+        function invalidateRoutes(
+          path: string,
+          event: 'add' | 'change' | 'unlink',
+        ) {
           if (!isRouteLikeFile(path)) {
             return;
           }
 
+          // Add/remove changes the route graph shape, so the discovery caches
+          // must be rebuilt. Plain edits can keep using the current file set.
+          if (event !== 'change') {
+            invalidateDiscoveryCaches();
+          }
+
           invalidateFileModules(server, path);
+
+          // For an in-place edit we only need module invalidation. Keeping the
+          // app alive here lets Angular/Vite attempt the narrower HMR path.
+          if (event === 'change') {
+            return;
+          }
 
           server.moduleGraph.fileToModulesMap.forEach((mods) => {
             mods.forEach((mod) => {
@@ -82,9 +150,9 @@ export function routerPlugin(options?: Options): Plugin[] {
           });
         }
 
-        server.watcher.on('add', invalidateRoutes);
-        server.watcher.on('change', invalidateRoutes);
-        server.watcher.on('unlink', invalidateRoutes);
+        server.watcher.on('add', (path) => invalidateRoutes(path, 'add'));
+        server.watcher.on('change', (path) => invalidateRoutes(path, 'change'));
+        server.watcher.on('unlink', (path) => invalidateRoutes(path, 'unlink'));
       },
     },
     {
@@ -119,40 +187,21 @@ export function routerPlugin(options?: Options): Plugin[] {
           ) {
             // Discover route files using tinyglobby
             // NOTE: { absolute: true } returns absolute paths for ALL files
-            const routeFiles: string[] = globSync(
-              [
-                `${root}/app/routes/**/*.ts`,
-                `${root}/src/app/routes/**/*.ts`,
-                `${root}/src/app/pages/**/*.page.ts`,
-                ...(options?.additionalPagesDirs || []).map(
-                  (glob) => `${workspaceRoot}${glob}/**/*.page.ts`,
-                ),
-              ],
-              { dot: true, absolute: true },
-            );
+            const routeFiles = discoverRouteFiles();
 
             // Discover content files using tinyglobby
-            const contentRouteFiles: string[] = globSync(
-              [
-                `${root}/src/app/routes/**/*.md`,
-                `${root}/src/app/pages/**/*.md`,
-                `${root}/src/content/**/*.md`,
-                ...(options?.additionalContentDirs || []).map(
-                  (glob) => `${workspaceRoot}${glob}/**/*.md`,
-                ),
-              ],
-              { dot: true, absolute: true },
-            );
+            const contentRouteFiles = discoverContentRouteFiles();
 
             let result = code.replace(
               'ANALOG_ROUTE_FILES = {};',
               `
               ANALOG_ROUTE_FILES = {${routeFiles.map((module) => {
-                // CRITICAL: tinyglobby returns absolute paths, but we need relative paths for project files
-                // to match expected output format. Library files keep absolute paths.
+                // Keys are app-root-relative for in-app files,
+                // workspace-relative for library files (additionalPagesDirs).
+                // import() keeps absolute paths for Vite's module resolution.
                 const key = module.startsWith(root)
                   ? module.replace(root, '')
-                  : module;
+                  : module.replace(workspaceRoot, '');
                 return `"${key}": () => import('${module}')`;
               })}};
             `,
@@ -162,10 +211,9 @@ export function routerPlugin(options?: Options): Plugin[] {
               'ANALOG_CONTENT_ROUTE_FILES = {};',
               `
             ANALOG_CONTENT_ROUTE_FILES = {${contentRouteFiles.map((module) => {
-              // Same path normalization as route files
               const key = module.startsWith(root)
                 ? module.replace(root, '')
-                : module;
+                : module.replace(workspaceRoot, '');
               return `"${key}": () => import('${module}?analog-content-file=true').then(m => m.default)`;
             })}};
             `,
@@ -201,24 +249,15 @@ export function routerPlugin(options?: Options): Plugin[] {
         handler(code) {
           if (code.includes('ANALOG_PAGE_ENDPOINTS')) {
             // Discover server endpoint files using tinyglobby
-            const endpointFiles: string[] = globSync(
-              [
-                `${root}/src/app/pages/**/*.server.ts`,
-                ...(options?.additionalPagesDirs || []).map(
-                  (glob) => `${workspaceRoot}${glob}/**/*.server.ts`,
-                ),
-              ],
-              { dot: true, absolute: true },
-            );
+            const endpointFiles = discoverEndpointFiles();
 
             const result = code.replace(
               'ANALOG_PAGE_ENDPOINTS = {};',
               `
               ANALOG_PAGE_ENDPOINTS = {${endpointFiles.map((module) => {
-                // Same path normalization for consistency
                 const key = module.startsWith(root)
                   ? module.replace(root, '')
-                  : module;
+                  : module.replace(workspaceRoot, '');
                 return `"${key}": () => import('${module}')`;
               })}};
             `,

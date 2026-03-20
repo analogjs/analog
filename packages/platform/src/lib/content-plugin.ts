@@ -42,6 +42,9 @@ export function contentPlugin(
   options?: Options,
 ): vite.Plugin[] {
   const cache = new Map<string, Content>();
+  // The content list placeholder can be transformed several times during serve.
+  // Caching the discovered markdown paths keeps those repeat passes cheap.
+  let contentFilesListCache: string[] | undefined;
 
   let markedHighlighter: MarkedContentHighlighter;
   const workspaceRoot = vite.normalizePath(
@@ -49,6 +52,30 @@ export function contentPlugin(
   );
   let config: vite.UserConfig;
   let root: string;
+  const discoverContentFilesList = () => {
+    contentFilesListCache ??= globSync(
+      [
+        `${root}/src/content/**/*.md`,
+        ...(options?.additionalContentDirs || []).map(
+          (glob) => `${workspaceRoot}${glob}/**/*.md`,
+        ),
+      ],
+      { dot: true },
+    );
+
+    return contentFilesListCache;
+  };
+  const resolveContentModulePath = (module: string) =>
+    vite.normalizePath(
+      module.startsWith('/') ? module : `${workspaceRoot}/${module}`,
+    );
+  const getContentModuleKey = (module: string) => {
+    const absolutePath = resolveContentModulePath(module);
+
+    return absolutePath.startsWith(root)
+      ? absolutePath.replace(root, '')
+      : absolutePath.replace(workspaceRoot, '');
+  };
 
   const contentDiscoveryPlugins: vite.Plugin[] = [
     {
@@ -70,15 +97,7 @@ export function contentPlugin(
         },
         handler(code) {
           if (code.includes('ANALOG_CONTENT_FILE_LIST')) {
-            const contentFilesList: string[] = globSync(
-              [
-                `${root}/src/content/**/*.md`,
-                ...(options?.additionalContentDirs || []).map(
-                  (glob) => `${workspaceRoot}${glob}/**/*.md`,
-                ),
-              ],
-              { dot: true },
-            );
+            const contentFilesList = discoverContentFilesList();
 
             const eagerImports: string[] = [];
 
@@ -86,9 +105,7 @@ export function contentPlugin(
               // CRITICAL: tinyglobby returns relative paths like "apps/blog-app/src/content/file.md"
               // These MUST be converted to absolute paths for ES module imports
               // Otherwise Node.js treats "apps" as a package name and throws "Cannot find package 'apps'"
-              const absolutePath = module.startsWith('/')
-                ? module
-                : `${workspaceRoot}/${module}`;
+              const absolutePath = resolveContentModulePath(module);
               eagerImports.push(
                 `import { default as analog_module_${index} } from "${absolutePath}?analog-content-list=true";`,
               );
@@ -99,7 +116,7 @@ export function contentPlugin(
               `
               let ANALOG_CONTENT_FILE_LIST = {${contentFilesList.map(
                 (module, index) =>
-                  `"${module.replace(root, '')}": analog_module_${index}`,
+                  `"${getContentModuleKey(module)}": analog_module_${index}`,
               )}};
             `,
             );
@@ -123,6 +140,10 @@ export function contentPlugin(
       configureServer(server) {
         function invalidateContent(path: string) {
           if (path.includes(vite.normalizePath(`/content/`))) {
+            // The file set only changes on add/remove because this watcher is
+            // intentionally scoped to those events. Clear the list cache so the
+            // next transform sees the updated directory contents.
+            contentFilesListCache = undefined;
             server.moduleGraph.fileToModulesMap.forEach((mods) => {
               mods.forEach((mod) => {
                 if (

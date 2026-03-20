@@ -1,8 +1,18 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('tinyglobby', () => ({
+  globSync: vi.fn(() => []),
+}));
+
+import { globSync } from 'tinyglobby';
 import { routerPlugin } from './router-plugin.js';
 
 describe('routerPlugin', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(globSync).mockReturnValue([]);
+  });
+
   const configureServer = () => {
     const importer = { id: '/src/main.ts' };
     const pageImporter = { id: '/src/app/routes.ts' };
@@ -59,7 +69,7 @@ describe('routerPlugin', () => {
     };
   };
 
-  it('invalidates route modules when a route file changes', () => {
+  it('invalidates route modules without a full reload when a route file changes', () => {
     const {
       analogModule,
       changedRouteModule,
@@ -84,6 +94,23 @@ describe('routerPlugin', () => {
     );
     expect(invalidateModule).toHaveBeenCalledWith(changedRouteModule);
     expect(invalidateModule).toHaveBeenCalledWith(pageImporter);
+    expect(invalidateModule).not.toHaveBeenCalledWith(analogModule);
+    expect(invalidateModule).not.toHaveBeenCalledWith(importer);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('keeps full reloads for hot-added route files', () => {
+    const { analogModule, importer, invalidateModule, send, on } =
+      configureServer();
+
+    const addHandler = on.mock.calls.find(
+      ([eventName]) => eventName === 'add',
+    )?.[1];
+
+    expect(addHandler).toBeTypeOf('function');
+
+    addHandler('/src/app/pages/hot-added.page.ts');
+
     expect(invalidateModule).toHaveBeenCalledWith(analogModule);
     expect(invalidateModule).toHaveBeenCalledWith(importer);
     expect(send).toHaveBeenCalledWith({ type: 'full-reload' });
@@ -100,5 +127,191 @@ describe('routerPlugin', () => {
 
     expect(invalidateModule).not.toHaveBeenCalled();
     expect(send).not.toHaveBeenCalled();
+  });
+
+  describe('transform - key normalization', () => {
+    const workspaceRoot = '/home/user/workspace';
+    const appRoot = `${workspaceRoot}/apps/my-app`;
+
+    function getTransformPlugin(pluginName: string) {
+      const plugins = routerPlugin({
+        workspaceRoot,
+      });
+      const plugin = plugins.find((p) => p.name === pluginName)!;
+      (plugin as any).config?.({ root: 'apps/my-app' });
+      return (plugin as any).transform as {
+        handler: (code: string) => { code: string };
+      };
+    }
+
+    function extractKeys(code: string): string[] {
+      const matches = code.matchAll(/"([^"]+)":\s*\(\)\s*=>/g);
+      return [...matches].map((match) => match[1]);
+    }
+
+    it('normalizes route file keys within app root to root-relative paths', () => {
+      vi.mocked(globSync)
+        .mockReturnValueOnce([
+          `${appRoot}/src/app/pages/home.page.ts`,
+          `${appRoot}/src/app/routes/about.ts`,
+        ])
+        .mockReturnValueOnce([]);
+
+      const transform = getTransformPlugin('analog-glob-routes');
+      const result = transform.handler(
+        'export let ANALOG_ROUTE_FILES = {}; export let ANALOG_CONTENT_ROUTE_FILES = {};',
+      );
+
+      const keys = extractKeys(result.code);
+      expect(keys).toContain('/src/app/pages/home.page.ts');
+      expect(keys).toContain('/src/app/routes/about.ts');
+      keys.forEach((key) => {
+        expect(key).not.toContain(workspaceRoot);
+      });
+    });
+
+    it('normalizes route file keys outside app root to workspace-relative paths', () => {
+      vi.mocked(globSync)
+        .mockReturnValueOnce([
+          `${workspaceRoot}/libs/shared/feature/src/pages/test.page.ts`,
+        ])
+        .mockReturnValueOnce([]);
+
+      const transform = getTransformPlugin('analog-glob-routes');
+      const result = transform.handler(
+        'export let ANALOG_ROUTE_FILES = {}; export let ANALOG_CONTENT_ROUTE_FILES = {};',
+      );
+
+      const keys = extractKeys(result.code);
+      expect(keys).toContain('/libs/shared/feature/src/pages/test.page.ts');
+      keys.forEach((key) => {
+        expect(key).not.toContain(workspaceRoot);
+      });
+    });
+
+    it('normalizes content route file keys outside app root', () => {
+      vi.mocked(globSync)
+        .mockReturnValueOnce([])
+        .mockReturnValueOnce([
+          `${workspaceRoot}/libs/shared/feature/src/content/post.md`,
+        ]);
+
+      const transform = getTransformPlugin('analog-glob-routes');
+      const result = transform.handler(
+        'export let ANALOG_ROUTE_FILES = {}; export let ANALOG_CONTENT_ROUTE_FILES = {};',
+      );
+
+      const keys = extractKeys(result.code);
+      expect(keys).toContain('/libs/shared/feature/src/content/post.md');
+      keys.forEach((key) => {
+        expect(key).not.toContain(workspaceRoot);
+      });
+    });
+
+    it('normalizes endpoint file keys outside app root', () => {
+      vi.mocked(globSync).mockReturnValue([
+        `${workspaceRoot}/libs/shared/feature/src/pages/test.server.ts`,
+      ]);
+
+      const transform = getTransformPlugin('analog-glob-endpoints');
+      const result = transform.handler(
+        'export let ANALOG_PAGE_ENDPOINTS = {};',
+      );
+
+      const keys = extractKeys(result.code);
+      expect(keys).toContain('/libs/shared/feature/src/pages/test.server.ts');
+      keys.forEach((key) => {
+        expect(key).not.toContain(workspaceRoot);
+      });
+    });
+
+    it('preserves absolute paths in import() specifiers for Vite resolution', () => {
+      const absolutePath = `${workspaceRoot}/libs/shared/feature/src/pages/test.page.ts`;
+      vi.mocked(globSync)
+        .mockReturnValueOnce([absolutePath])
+        .mockReturnValueOnce([]);
+
+      const transform = getTransformPlugin('analog-glob-routes');
+      const result = transform.handler(
+        'export let ANALOG_ROUTE_FILES = {}; export let ANALOG_CONTENT_ROUTE_FILES = {};',
+      );
+
+      expect(result.code).toContain(`import('${absolutePath}')`);
+    });
+
+    it('reuses cached discovery results on change and invalidates them on add', () => {
+      const plugins = routerPlugin({
+        workspaceRoot,
+      });
+      const invalidatePlugin = plugins.find(
+        (p) => p.name === 'analogjs-router-invalidate-routes',
+      )!;
+      const transformPlugin = plugins.find(
+        (p) => p.name === 'analog-glob-routes',
+      )!;
+      (transformPlugin as any).config?.({ root: 'apps/my-app' });
+
+      const on = vi.fn();
+      const invalidateModule = vi.fn();
+      const send = vi.fn();
+      const server = {
+        moduleGraph: {
+          fileToModulesMap: new Map(),
+          getModulesByFile: vi.fn(() => undefined),
+          invalidateModule,
+        },
+        watcher: { on },
+        ws: { send },
+      };
+
+      (invalidatePlugin.configureServer as (server: unknown) => void)(server);
+
+      vi.mocked(globSync)
+        .mockReturnValueOnce([`${appRoot}/src/app/pages/first.page.ts`])
+        .mockReturnValueOnce([]);
+
+      const transform = (transformPlugin as any).transform as {
+        handler: (code: string) => { code: string };
+      };
+
+      const firstResult = transform.handler(
+        'export let ANALOG_ROUTE_FILES = {}; export let ANALOG_CONTENT_ROUTE_FILES = {};',
+      );
+      expect(extractKeys(firstResult.code)).toContain(
+        '/src/app/pages/first.page.ts',
+      );
+      expect(globSync).toHaveBeenCalledTimes(2);
+
+      vi.mocked(globSync)
+        .mockReturnValueOnce([`${appRoot}/src/app/pages/second.page.ts`])
+        .mockReturnValueOnce([]);
+
+      const changeHandler = on.mock.calls.find(
+        ([eventName]) => eventName === 'change',
+      )?.[1];
+      changeHandler('/src/app/pages/first.page.ts');
+
+      const secondResult = transform.handler(
+        'export let ANALOG_ROUTE_FILES = {}; export let ANALOG_CONTENT_ROUTE_FILES = {};',
+      );
+      expect(extractKeys(secondResult.code)).toContain(
+        '/src/app/pages/first.page.ts',
+      );
+      expect(globSync).toHaveBeenCalledTimes(2);
+      expect(send).not.toHaveBeenCalled();
+
+      const addHandler = on.mock.calls.find(
+        ([eventName]) => eventName === 'add',
+      )?.[1];
+      addHandler('/src/app/pages/second.page.ts');
+
+      const thirdResult = transform.handler(
+        'export let ANALOG_ROUTE_FILES = {}; export let ANALOG_CONTENT_ROUTE_FILES = {};',
+      );
+      expect(extractKeys(thirdResult.code)).toContain(
+        '/src/app/pages/second.page.ts',
+      );
+      expect(globSync).toHaveBeenCalledTimes(4);
+    });
   });
 });
