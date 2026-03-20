@@ -210,6 +210,20 @@ function resolveClientOutputPath(
   return resolve(workspaceRoot, 'dist', rootDir, 'client');
 }
 
+function registerIndexHtmlVirtual(
+  nitroConfig: NitroConfig,
+  clientOutputPath: string,
+) {
+  const indexHtml = readFileSync(
+    resolve(clientOutputPath, 'index.html'),
+    'utf8',
+  );
+  nitroConfig.virtual = {
+    ...nitroConfig.virtual,
+    '#analog/index': `export default ${JSON.stringify(indexHtml)};`,
+  };
+}
+
 /**
  * Converts the built SSR entry path into a specifier that Nitro's bundler
  * can resolve, including all relative `./assets/*` chunk imports inside
@@ -308,7 +322,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let environmentBuild = false;
   let hasAPIDir = false;
   let clientOutputPath = '';
-  let rendererIndexEntry = '';
   const rollupExternalEntries: string[] = [];
   const routeSitemaps: Record<
     string,
@@ -363,9 +376,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           rootDir,
           config.build?.outDir,
           ssrBuild,
-        );
-        rendererIndexEntry = normalizePath(
-          resolve(resolvedClientOutputPath, 'index.html'),
         );
 
         nitroConfig = {
@@ -436,8 +446,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   },
                 },
           virtual: {
-            '#ANALOG_SSR_RENDERER': ssrRenderer(rendererIndexEntry),
-            '#ANALOG_CLIENT_RENDERER': clientRenderer(rendererIndexEntry),
+            '#ANALOG_SSR_RENDERER': ssrRenderer(),
+            '#ANALOG_CLIENT_RENDERER': clientRenderer(),
             ...(hasAPIDir ? {} : { '#ANALOG_API_MIDDLEWARE': apiMiddleware }),
           },
         };
@@ -736,14 +746,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
               // Inline the client index.html as a virtual module so the server
               // bundle never contains an absolute filesystem path to the template.
-              const indexHtml = readFileSync(
-                resolve(resolvedClientOutputPath, 'index.html'),
-                'utf8',
-              );
-              nitroConfig.virtual = {
-                ...nitroConfig.virtual,
-                '#analog/index': `export default ${JSON.stringify(indexHtml)};`,
-              };
+              registerIndexHtmlVirtual(nitroConfig, resolvedClientOutputPath);
 
               await buildServer(options, nitroConfig, routeSourceFiles);
 
@@ -877,6 +880,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           }
 
           applySsrEntryAlias(nitroConfig, options, workspaceRoot, rootDir);
+          const resolvedClientOutputPath = resolveClientOutputPath(
+            clientOutputPath,
+            workspaceRoot,
+            rootDir,
+            config.build?.outDir,
+            ssrBuild,
+          );
+          registerIndexHtmlVirtual(nitroConfig, resolvedClientOutputPath);
 
           await buildServer(options, nitroConfig, routeSourceFiles);
 
