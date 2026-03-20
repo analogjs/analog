@@ -26,28 +26,47 @@ export function routerPlugin(options?: Options): Plugin[] {
   const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
   let config: UserConfig;
   let root: string;
-  // Watcher events may arrive with trailing slashes, workspace-relative paths,
-  // or absolute paths. Normalize everything into one comparable directory form
-  // before we decide whether a file should invalidate route discovery.
+  // Option dirs are workspace-relative, often written with a leading `/`.
+  // Normalize them once into absolute workspace paths so watcher events,
+  // glob patterns, and key generation all compare against the same shape.
   const normalizeWatchedDir = (dir: string) => {
-    const normalizedDir = normalizePath(resolve(workspaceRoot, dir));
+    const normalizedDir = normalizePath(
+      dir.startsWith('/')
+        ? `${workspaceRoot}${dir}`
+        : resolve(workspaceRoot, dir),
+    );
     return normalizedDir.endsWith('/')
       ? normalizedDir.slice(0, -1)
       : normalizedDir;
   };
-  const getAdditionalPagesDirs = () =>
-    (options?.additionalPagesDirs || []).map((dir) => normalizeWatchedDir(dir));
-  const getAdditionalContentDirs = () =>
-    (options?.additionalContentDirs || []).map((dir) =>
-      normalizeWatchedDir(dir),
-    );
+  // Computed eagerly — these depend only on `options` and `workspaceRoot`,
+  // both of which are fixed at construction time.
+  const additionalPagesDirs = (options?.additionalPagesDirs || []).map((dir) =>
+    normalizeWatchedDir(dir),
+  );
+  const additionalContentDirs = (options?.additionalContentDirs || []).map(
+    (dir) => normalizeWatchedDir(dir),
+  );
+  // Returns every directory that can contain route-like files. The root-
+  // relative entries are only available after the Vite `config` hook sets
+  // `root`. The short-form fallbacks (`/app/routes`, etc.) let watcher
+  // events match before `config` runs — they cover the common convention
+  // where paths start with these prefixes.
   const getRouteLikeDirs = () => [
-    normalizeWatchedDir(`${root}/app/routes`),
-    normalizeWatchedDir(`${root}/src/app/routes`),
-    normalizeWatchedDir(`${root}/src/app/pages`),
-    normalizeWatchedDir(`${root}/src/content`),
-    ...getAdditionalPagesDirs(),
-    ...getAdditionalContentDirs(),
+    ...(root
+      ? [
+          normalizeWatchedDir(`${root}/app/routes`),
+          normalizeWatchedDir(`${root}/src/app/routes`),
+          normalizeWatchedDir(`${root}/src/app/pages`),
+          normalizeWatchedDir(`${root}/src/content`),
+        ]
+      : []),
+    '/app/routes',
+    '/src/app/routes',
+    '/src/app/pages',
+    '/src/content',
+    ...additionalPagesDirs,
+    ...additionalContentDirs,
   ];
   // These lists are used repeatedly by transform hooks during serve. Keeping
   // them warm avoids a full glob on every route/content invalidation.
@@ -55,7 +74,9 @@ export function routerPlugin(options?: Options): Plugin[] {
   let contentRouteFilesCache: string[] | undefined;
   let endpointFilesCache: string[] | undefined;
   const isRouteLikeFile = (path: string) => {
-    const normalizedPath = normalizeWatchedDir(path);
+    // Watcher paths from chokidar are already absolute — `normalizePath`
+    // (forward-slash only) is sufficient; `resolve()` would be a no-op.
+    const normalizedPath = normalizePath(path);
 
     return getRouteLikeDirs().some(
       (dir) => normalizedPath === dir || normalizedPath.startsWith(`${dir}/`),
@@ -67,7 +88,7 @@ export function routerPlugin(options?: Options): Plugin[] {
         `${root}/app/routes/**/*.ts`,
         `${root}/src/app/routes/**/*.ts`,
         `${root}/src/app/pages/**/*.page.ts`,
-        ...getAdditionalPagesDirs().map((dir) => `${dir}/**/*.page.ts`),
+        ...additionalPagesDirs.map((dir) => `${dir}/**/*.page.ts`),
       ],
       { dot: true, absolute: true },
     );
@@ -80,7 +101,7 @@ export function routerPlugin(options?: Options): Plugin[] {
         `${root}/src/app/routes/**/*.md`,
         `${root}/src/app/pages/**/*.md`,
         `${root}/src/content/**/*.md`,
-        ...getAdditionalContentDirs().map((dir) => `${dir}/**/*.md`),
+        ...additionalContentDirs.map((dir) => `${dir}/**/*.md`),
       ],
       { dot: true, absolute: true },
     );
@@ -91,7 +112,7 @@ export function routerPlugin(options?: Options): Plugin[] {
     endpointFilesCache ??= globSync(
       [
         `${root}/src/app/pages/**/*.server.ts`,
-        ...getAdditionalPagesDirs().map((dir) => `${dir}/**/*.server.ts`),
+        ...additionalPagesDirs.map((dir) => `${dir}/**/*.server.ts`),
       ],
       { dot: true, absolute: true },
     );
@@ -104,6 +125,11 @@ export function routerPlugin(options?: Options): Plugin[] {
     endpointFilesCache = undefined;
   };
   const getModuleKey = (module: string) => {
+    // Before config sets `root`, fall back to workspace-relative keys.
+    if (!root) {
+      return `/${normalizePath(relative(workspaceRoot, module))}`;
+    }
+
     const relToRoot = normalizePath(relative(root, module));
     // Use true path containment instead of a raw prefix check so siblings like
     // `/apps/my-app-tools/...` are not mistaken for files inside `/apps/my-app`.

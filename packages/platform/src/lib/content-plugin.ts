@@ -55,15 +55,20 @@ export function contentPlugin(
   // Keep discovery and invalidation aligned by deriving both from the same
   // normalized content roots. That way external content dirs participate in
   // cache busting exactly the same way they participate in glob discovery.
-  const getContentRootDirs = () => [
-    vite.normalizePath(`${root}/src/content`),
-    ...(options?.additionalContentDirs || []).map((dir) =>
-      vite.normalizePath(`${workspaceRoot}${dir}`),
-    ),
-  ];
+  // Initialized once in the `config` hook after `root` is resolved — all
+  // inputs (`root`, `workspaceRoot`, `options`) are stable after that point.
+  let contentRootDirs: string[];
+  const initContentRootDirs = () => {
+    contentRootDirs = [
+      vite.normalizePath(`${root}/src/content`),
+      ...(options?.additionalContentDirs || []).map((dir) =>
+        vite.normalizePath(`${workspaceRoot}${dir}`),
+      ),
+    ];
+  };
   const discoverContentFilesList = () => {
     contentFilesListCache ??= globSync(
-      getContentRootDirs().map((dir) => `${dir}/**/*.md`),
+      contentRootDirs.map((dir) => `${dir}/**/*.md`),
       { dot: true },
     );
 
@@ -82,9 +87,13 @@ export function contentPlugin(
     const isInApp =
       !relativeToRoot.startsWith('..') && !relativeToRoot.startsWith('/');
 
+    // Both branches prepend `/` so generated keys are always absolute-
+    // looking (`/src/content/...` for in-app, `/libs/shared/...` for
+    // workspace-external). Downstream consumers like content-files-token
+    // rely on the leading `/` for slug extraction regexes.
     return isInApp
       ? `/${relativeToRoot}`
-      : vite.normalizePath(relative(workspaceRoot, absolutePath));
+      : `/${vite.normalizePath(relative(workspaceRoot, absolutePath))}`;
   };
 
   const contentDiscoveryPlugins: vite.Plugin[] = [
@@ -95,6 +104,7 @@ export function contentPlugin(
         root = vite.normalizePath(
           resolve(workspaceRoot, config.root || '.') || '.',
         );
+        initContentRootDirs();
       },
       // Vite 8 / Rolldown "filtered transform" — the `filter.code` string
       // tells the bundler to skip this handler entirely for modules whose
@@ -150,7 +160,6 @@ export function contentPlugin(
       configureServer(server) {
         function invalidateContent(path: string) {
           const normalizedPath = vite.normalizePath(path);
-          const contentRootDirs = getContentRootDirs();
           const isContentPath = contentRootDirs.some(
             (dir) =>
               normalizedPath === dir || normalizedPath.startsWith(`${dir}/`),
