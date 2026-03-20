@@ -1,3 +1,19 @@
+# [3.0.0-alpha.9](https://github.com/analogjs/analog/compare/v3.0.0-alpha.8...v3.0.0-alpha.9) (2026-03-20)
+
+### Bug Fixes
+
+- **astro-angular:** make Astro Angular builds work on Windows CI ([e45fb72](https://github.com/analogjs/analog/commit/e45fb72c3afe63cb6449df2ac50d7021507b86e3))
+- **content:** make content packages build on Windows CI ([ea57af6](https://github.com/analogjs/analog/commit/ea57af69e81094e8f7df8fd069aaeda177a8a35b))
+- fix overrides for nitropack ([0eb4274](https://github.com/analogjs/analog/commit/0eb42742857696c6c0843102af8eaeb1a930d64d))
+- **nx-plugin:** make generator and build configs work on Windows CI ([c9102ae](https://github.com/analogjs/analog/commit/c9102aeb6a75729099e9fabddadf4616aea60d9a))
+- **platform:** make platform builds work on Windows CI ([5a42fb8](https://github.com/analogjs/analog/commit/5a42fb8616f67e6ed11c6a23e02fb8d74c5e1273))
+- replace @semantic-release/npm with replace-plugin for version bumps ([9c3e4f2](https://github.com/analogjs/analog/commit/9c3e4f2d55c294f5ac6560db118e64004d0654fe))
+- **router:** make router builds work on Windows CI ([6576c6a](https://github.com/analogjs/analog/commit/6576c6ad0550b090ca2eaa896b5cd54d0c8a4fda))
+- **storybook-angular:** make Storybook builds work on Windows CI ([5f46f59](https://github.com/analogjs/analog/commit/5f46f596e41c85360c72986bf64031664ee8e4d6))
+- **vite-plugin-angular:** make Angular Vite packages load configs cross-platform ([4afab61](https://github.com/analogjs/analog/commit/4afab617588238d0fa1c36838bd44b466fb25885))
+- **vite-plugin-nitro:** make Nitro plugin builds work on Windows CI ([8c6ff82](https://github.com/analogjs/analog/commit/8c6ff82376a1d0c2a89ad0577928df360c7a43c9))
+- **vitest-angular:** make Vitest Angular packages work on Windows CI ([eb871bd](https://github.com/analogjs/analog/commit/eb871bd2a378a8bb0240e3ec1195bd7674e60efd))
+
 # [3.0.0-alpha.8](https://github.com/analogjs/analog/compare/v3.0.0-alpha.7...v3.0.0-alpha.8) (2026-03-18)
 
 ### Features
