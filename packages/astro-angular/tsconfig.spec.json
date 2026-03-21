@@ -8,5 +8,11 @@
     "isolatedModules": true
   },
   "files": ["src/test-setup.ts"],
-  "include": ["**/*.test.ts", "**/*.spec.ts", "**/*.d.ts"]
+  "include": [
+    "**/*.test.ts",
+    "**/*.test.mts",
+    "**/*.spec.ts",
+    "**/*.spec.mts",
+    "**/*.d.ts"
+  ]
 }

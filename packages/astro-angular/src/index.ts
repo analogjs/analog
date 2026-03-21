@@ -4,6 +4,13 @@ import type { AstroIntegration, AstroRenderer, ViteUserConfig } from 'astro';
 
 interface AngularOptions {
   vite?: PluginOptions;
+  /**
+   * Enable stricter rendering, which ensures Angular style tags are added to the document head instead of next to the
+   * component in the body.
+   *
+   * Enabling this option disables astro's streaming under SSR.
+   */
+  strictStylePlacement?: boolean;
 }
 
 function getRenderer(): AstroRenderer {
@@ -77,13 +84,19 @@ export default function (options?: AngularOptions): AstroIntegration {
   return {
     name: '@analogjs/astro-angular',
     hooks: {
-      'astro:config:setup': ({ addRenderer, updateConfig }) => {
+      'astro:config:setup': ({ addRenderer, updateConfig, addMiddleware }) => {
         addRenderer(getRenderer());
         updateConfig({
           vite: getViteConfiguration(
             options?.vite,
           ) as unknown as ViteUserConfig,
         });
+        if (options?.strictStylePlacement) {
+          addMiddleware({
+            order: 'pre',
+            entrypoint: '@analogjs/astro-angular/middleware.js',
+          });
+        }
       },
       'astro:config:done': () => {
         if (process.env['NODE_ENV'] === 'production') {
