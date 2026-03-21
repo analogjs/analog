@@ -60,7 +60,7 @@ function addFiles(
   }
 }
 
-export async function setupAnalogGenerator(
+async function setupAnalogGenerator(
   tree: Tree,
   options: SetupAnalogGeneratorSchema,
 ): Promise<() => void> {
