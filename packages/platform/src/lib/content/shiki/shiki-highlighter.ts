@@ -38,7 +38,7 @@ export const defaultHighlighterOptions: {
 };
 
 export class ShikiHighlighter extends MarkedContentHighlighter {
-  private readonly highlighter = getHighlighter(this.highlighterOptions);
+  private readonly highlighter: ReturnType<typeof getHighlighter>;
 
   constructor(
     private highlighterOptions: ShikiHighlighterOptions,
@@ -47,6 +47,7 @@ export class ShikiHighlighter extends MarkedContentHighlighter {
     private hasLoadMermaid = false,
   ) {
     super();
+    this.highlighter = getHighlighter(this.highlighterOptions);
   }
   getHighlightExtension(): import('marked').MarkedExtension {
     return markedShiki({
