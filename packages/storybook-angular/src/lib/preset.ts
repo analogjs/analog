@@ -2,7 +2,6 @@ import { resolve } from 'node:path';
 import { core as PresetCore } from '@storybook/angular/preset';
 import { fileURLToPath } from 'node:url';
 import type { Plugin, UserConfig } from 'vite';
-import * as vite from 'vite';
 
 export const previewAnnotations = async (
   entries: string[] = [],
@@ -215,7 +214,7 @@ function storybookTransformConfigPlugin(): Plugin {
     apply: 'build',
     config() {
       return {
-        [vite.rolldownVersion ? 'oxc' : 'esbuild']: {
+        oxc: {
           // Don't mangle class names during the build
           // This fixes display of compodoc argtypes
           keepNames: true,
