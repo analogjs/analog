@@ -12,7 +12,8 @@
     "**/test-setup.ts",
     "vite.config.ts",
     "vite.config.lib.ts",
-    "oxlint.config.ts"
+    "oxlint.config.ts",
+    "src/lib/devtools/content-devtools-client.ts"
   ],
   "include": ["**/*.ts"]
 }
