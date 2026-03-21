@@ -334,10 +334,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         config = userConfig;
         isTest = isTest ? isTest : mode === 'test';
 
-        const resolvedConfigRoot = config.root
-          ? resolve(workspaceRoot, config.root)
-          : workspaceRoot;
-        rootDir = relative(workspaceRoot, resolvedConfigRoot) || '.';
+        rootDir = relative(workspaceRoot, config.root || '.') || '.';
         hasAPIDir = existsSync(
           resolve(
             workspaceRoot,
@@ -436,8 +433,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   },
                 },
           virtual: {
-            '#ANALOG_SSR_RENDERER': ssrRenderer(),
-            '#ANALOG_CLIENT_RENDERER': clientRenderer(),
+            '#ANALOG_SSR_RENDERER': ssrRenderer(rendererIndexEntry),
+            '#ANALOG_CLIENT_RENDERER': clientRenderer(rendererIndexEntry),
             ...(hasAPIDir ? {} : { '#ANALOG_API_MIDDLEWARE': apiMiddleware }),
           },
         };
@@ -734,25 +731,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
               applySsrEntryAlias(nitroConfig, options, workspaceRoot, rootDir);
 
-              const resolvedClientOutputPath = resolveClientOutputPath(
-                clientOutputPath,
-                workspaceRoot,
-                rootDir,
-                config.build?.outDir,
-                ssrBuild,
-              );
-
-              // Inline the client index.html as a virtual module so the server
-              // bundle never contains an absolute filesystem path to the template.
-              const indexHtml = readFileSync(
-                resolve(resolvedClientOutputPath, 'index.html'),
-                'utf8',
-              );
-              nitroConfig.virtual = {
-                ...nitroConfig.virtual,
-                '#analog/index': `export default ${JSON.stringify(indexHtml)};`,
-              };
-
               await buildServer(options, nitroConfig, routeSourceFiles);
 
               if (
@@ -949,16 +927,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           }
 
           applySsrEntryAlias(nitroConfig, options, workspaceRoot, rootDir);
-
-          // Inline the client index.html as a virtual module (same as buildApp path above).
-          const indexHtml = readFileSync(
-            resolve(clientOutputPath, 'index.html'),
-            'utf8',
-          );
-          nitroConfig.virtual = {
-            ...nitroConfig.virtual,
-            '#analog/index': `export default ${JSON.stringify(indexHtml)};`,
-          };
 
           await buildServer(options, nitroConfig, routeSourceFiles);
 
