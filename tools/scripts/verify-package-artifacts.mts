@@ -92,6 +92,10 @@ const packageConfigs: Record<string, PackageValidationConfig> = {
       'node_modules/@analogjs/storybook-angular/src/lib/start-storybook/start-storybook.js',
     ],
   },
+  'vite-plugin-nitro': {
+    packageJsonPath: 'node_modules/@analogjs/vite-plugin-nitro/package.json',
+    requiredPaths: ['node_modules/@analogjs/vite-plugin-nitro/src/index.js'],
+  },
   'vite-plugin-angular': {
     packageJsonPath: 'node_modules/@analogjs/vite-plugin-angular/package.json',
     manifestFields: ['builders'],
