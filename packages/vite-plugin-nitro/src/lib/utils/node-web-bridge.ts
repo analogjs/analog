@@ -34,6 +34,31 @@ export function toWebRequest(req: IncomingMessage): Request {
   });
 }
 
+function isClosedResponseWriteError(
+  error: unknown,
+  res: ServerResponse,
+): boolean {
+  if (res.destroyed || res.writableEnded) {
+    return true;
+  }
+
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return (
+    ('code' in error &&
+      typeof error.code === 'string' &&
+      [
+        'ERR_STREAM_PREMATURE_CLOSE',
+        'ERR_INVALID_STATE',
+        'ECONNRESET',
+        'EPIPE',
+      ].includes(error.code)) ||
+    /closed or destroyed stream/i.test(error.message)
+  );
+}
+
 export async function writeWebResponseToNode(
   res: ServerResponse,
   response: Response,
@@ -65,10 +90,21 @@ export async function writeWebResponseToNode(
   // The Web ReadableStream and Node.js stream/web ReadableStream types
   // are structurally identical at runtime but TypeScript treats them as
   // distinct nominal types. The double-cast bridges this gap safely.
-  await pipeline(
-    Readable.fromWeb(
-      response.body as unknown as import('node:stream/web').ReadableStream,
-    ),
-    res,
-  );
+  try {
+    await pipeline(
+      Readable.fromWeb(
+        response.body as unknown as import('node:stream/web').ReadableStream,
+      ),
+      res,
+    );
+  } catch (error) {
+    // Long-lived dev responses such as SSE can be interrupted by a browser
+    // refresh or HMR-triggered reconnect. Those closed-stream cases are
+    // expected and should not surface as noisy server errors.
+    if (isClosedResponseWriteError(error, res)) {
+      return;
+    }
+
+    throw error;
+  }
 }

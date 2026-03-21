@@ -334,7 +334,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         config = userConfig;
         isTest = isTest ? isTest : mode === 'test';
 
-        rootDir = relative(workspaceRoot, config.root || '.') || '.';
+        const resolvedConfigRoot = config.root
+          ? resolve(workspaceRoot, config.root)
+          : workspaceRoot;
+        rootDir = relative(workspaceRoot, resolvedConfigRoot) || '.';
         hasAPIDir = existsSync(
           resolve(
             workspaceRoot,
@@ -433,8 +436,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   },
                 },
           virtual: {
-            '#ANALOG_SSR_RENDERER': ssrRenderer(rendererIndexEntry),
-            '#ANALOG_CLIENT_RENDERER': clientRenderer(rendererIndexEntry),
+            '#ANALOG_SSR_RENDERER': ssrRenderer(),
+            '#ANALOG_CLIENT_RENDERER': clientRenderer(),
             ...(hasAPIDir ? {} : { '#ANALOG_API_MIDDLEWARE': apiMiddleware }),
           },
         };
@@ -463,6 +466,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           // store the client output path for the SSR build config
           clientOutputPath = resolvedClientOutputPath;
         }
+
+        // Start with a clean alias map. #analog/index is registered as a Nitro
+        // virtual module after the client build, inlining the HTML template so
+        // the server bundle imports it instead of using readFileSync with an
+        // absolute path.
+        nitroConfig.alias = {};
 
         if (isBuild) {
           nitroConfig.publicAssets = [
@@ -672,6 +681,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 outDir:
                   config?.build?.outDir ||
                   resolve(workspaceRoot, 'dist', rootDir, 'client'),
+                emptyOutDir: true,
                 // Forward code-splitting config to Rolldown when running
                 // under Vite 8+.  `false` disables splitting (inlines all
                 // dynamic imports); an object configures chunk groups.
@@ -706,6 +716,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 outDir:
                   options?.ssrBuildDir ||
                   resolve(workspaceRoot, 'dist', rootDir, 'ssr'),
+                emptyOutDir: true,
               },
             },
           },
@@ -722,6 +733,25 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               await Promise.all(builds);
 
               applySsrEntryAlias(nitroConfig, options, workspaceRoot, rootDir);
+
+              const resolvedClientOutputPath = resolveClientOutputPath(
+                clientOutputPath,
+                workspaceRoot,
+                rootDir,
+                config.build?.outDir,
+                ssrBuild,
+              );
+
+              // Inline the client index.html as a virtual module so the server
+              // bundle never contains an absolute filesystem path to the template.
+              const indexHtml = readFileSync(
+                resolve(resolvedClientOutputPath, 'index.html'),
+                'utf8',
+              );
+              nitroConfig.virtual = {
+                ...nitroConfig.virtual,
+                '#analog/index': `export default ${JSON.stringify(indexHtml)};`,
+              };
 
               await buildServer(options, nitroConfig, routeSourceFiles);
 
@@ -766,6 +796,70 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           });
           const server = createDevServer(nitro);
           await build(nitro);
+          const nitroSourceRoots = [
+            normalizePath(
+              resolve(workspaceRoot, rootDir, `${sourceRoot}/server`),
+            ),
+            ...(options?.additionalAPIDirs || []).map((dir) =>
+              normalizePath(`${workspaceRoot}${dir}`),
+            ),
+          ];
+          const isNitroSourceFile = (path: string) => {
+            const normalizedPath = normalizePath(path);
+            return nitroSourceRoots.some(
+              (root) =>
+                normalizedPath === root ||
+                normalizedPath.startsWith(`${root}/`),
+            );
+          };
+          let nitroRebuildPromise: Promise<void> | undefined;
+          let nitroRebuildPending = false;
+          const rebuildNitroServer = () => {
+            if (nitroRebuildPromise) {
+              // Coalesce rapid file events so a save that touches multiple server
+              // route files results in one follow-up rebuild instead of many.
+              nitroRebuildPending = true;
+              return nitroRebuildPromise;
+            }
+
+            nitroRebuildPromise = (async () => {
+              do {
+                nitroRebuildPending = false;
+                // Nitro API routes are not part of Vite's normal client HMR graph,
+                // so rebuild the Nitro dev server to pick up handler edits.
+                await build(nitro);
+              } while (nitroRebuildPending);
+
+              // Reload the page after the server rebuild completes so the next
+              // request observes the updated API route implementation.
+              viteServer.ws.send({ type: 'full-reload' });
+            })()
+              .catch((error: unknown) => {
+                viteServer.config.logger.error(
+                  `[analog] Failed to rebuild Nitro dev server.\n${error instanceof Error ? error.stack || error.message : String(error)}`,
+                );
+              })
+              .finally(() => {
+                nitroRebuildPromise = undefined;
+              });
+
+            return nitroRebuildPromise;
+          };
+          const onNitroSourceChange = (path: string) => {
+            if (!isNitroSourceFile(path)) {
+              return;
+            }
+
+            void rebuildNitroServer();
+          };
+
+          // Watch the full Nitro source roots instead of only the API route
+          // directory. API handlers often read helper modules, shared data, or
+          // middleware from elsewhere under `src/server`, and those edits should
+          // still rebuild the Nitro dev server and refresh connected browsers.
+          viteServer.watcher.on('add', onNitroSourceChange);
+          viteServer.watcher.on('change', onNitroSourceChange);
+          viteServer.watcher.on('unlink', onNitroSourceChange);
 
           const apiHandler = async (
             req: IncomingMessage,
@@ -855,6 +949,16 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           }
 
           applySsrEntryAlias(nitroConfig, options, workspaceRoot, rootDir);
+
+          // Inline the client index.html as a virtual module (same as buildApp path above).
+          const indexHtml = readFileSync(
+            resolve(clientOutputPath, 'index.html'),
+            'utf8',
+          );
+          nitroConfig.virtual = {
+            ...nitroConfig.virtual,
+            '#analog/index': `export default ${JSON.stringify(indexHtml)};`,
+          };
 
           await buildServer(options, nitroConfig, routeSourceFiles);
 
