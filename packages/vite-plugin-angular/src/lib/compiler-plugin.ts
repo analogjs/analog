@@ -50,6 +50,7 @@ export function createCompilerPlugin(
 
 export function createRolldownCompilerPlugin(
   pluginOptions: CompilerPluginOptions,
+  closeTransformer: boolean,
 ): Rolldown.Plugin {
   const javascriptTransformer = new JavaScriptTransformer(
     { ...pluginOptions, jit: true },
@@ -69,6 +70,11 @@ export function createRolldownCompilerPlugin(
           loader: 'js',
         } as any;
       },
+    },
+    buildEnd() {
+      if (closeTransformer) {
+        javascriptTransformer.close();
+      }
     },
   };
 }

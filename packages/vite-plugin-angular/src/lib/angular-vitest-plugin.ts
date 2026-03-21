@@ -47,9 +47,12 @@ export function angularVitestPlugin(): Plugin {
           _code.includes('@angular/cdk')
         ) {
           if (isRolldown()) {
+            // OXC does not expose a `format` option like esbuild; ESM output
+            // is the default when the source contains import/export statements.
             const { code, map } = await vite.transformWithOxc(_code, id, {
               lang: 'js',
               target: 'es2016',
+              sourceType: 'module',
               sourcemap: true,
             });
 
@@ -131,13 +134,13 @@ export function angularVitestSourcemapPlugin(): Plugin {
 
         if (isRolldown()) {
           const result = await vite.transformWithOxc(code, id, {
-            lang: 'js',
+            lang: 'ts',
           });
 
           return result as unknown as TransformResult;
         } else {
           const result = await vite.transformWithEsbuild(code, id, {
-            loader: 'js',
+            loader: 'ts',
           });
 
           return result;
