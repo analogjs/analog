@@ -200,6 +200,7 @@
     "tinyglobby": "^0.2.15",
     "ts-dedent": "^2.2.0",
     "ts-morph": "^27.0.2",
+    "tsdown": "^0.21.4",
     "typescript": "6.0.1-rc",
     "typescript-eslint": "^8.57.1",
     "vite": "^8.0.0",
