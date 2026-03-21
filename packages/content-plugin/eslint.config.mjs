@@ -23,7 +23,10 @@ export default [
   {
     files: ['**/*.json'],
     rules: {
-      '@nx/dependency-checks': 'error',
+      '@nx/dependency-checks': [
+        'error',
+        { ignoredFiles: ['**/vite.config.lib.ts', '**/tsdown.config.ts'] },
+      ],
     },
     languageOptions: {
       parser: await import('jsonc-eslint-parser'),
