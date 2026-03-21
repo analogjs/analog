@@ -49,6 +49,8 @@ async function createServer() {
     }
   });
 
+  // Port 43000 is used by the Cypress E2E suite (start-server-and-test).
+  // Playwright E2E runs against `nx serve` (Vite dev server, port 3000).
   app.listen(43000, () => {
     console.log('http://localhost:43000');
   });

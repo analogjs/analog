@@ -10,7 +10,11 @@
       "cache": false,
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/vite-plugin-nitro"],
       "options": {
-        "command": "vite build -c packages/vite-plugin-nitro/vite.config.lib.ts"
+        "commands": [
+          "vite build -c packages/vite-plugin-nitro/vite.config.lib.ts",
+          "node tools/scripts/verify-package-artifacts.mts vite-plugin-nitro"
+        ],
+        "parallel": false
       }
     },
     "publish": {

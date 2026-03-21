@@ -9,7 +9,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "sh -c \"pnpm exec cypress verify || pnpm exec cypress install\"",
+          "pnpm exec cypress verify || pnpm exec cypress install",
           "pnpm exec cypress run --project apps/analog-app-e2e-cypress --config-file cypress.config.ts --config baseUrl=http://localhost:43000"
         ],
         "parallel": false

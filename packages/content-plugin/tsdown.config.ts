@@ -2,6 +2,7 @@ import { resolve, join } from 'node:path';
 import { copyFileSync, writeFileSync } from 'node:fs';
 import { defineConfig } from 'tsdown';
 
+// import.meta.dirname requires Node 20.11+; engines field mandates ^20.19.0.
 const pkgDir = import.meta.dirname;
 
 export default defineConfig({
@@ -18,6 +19,8 @@ export default defineConfig({
   },
   format: 'cjs',
   target: 'es2022',
+  // Builds into node_modules so Nx caching and local dev resolve the package
+  // without a separate link step. This is the monorepo-wide convention.
   outDir: resolve(pkgDir, '../../node_modules/@analogjs/content-plugin'),
   sourcemap: true,
   minify: false,
@@ -40,6 +43,8 @@ export default defineConfig({
         join(outDir, 'migrations.json'),
       );
 
+      // Signals CJS format to Node.js (workspace root is "type": "module").
+      // Source package.json with full metadata is copied during publish.
       writeFileSync(
         join(outDir, 'package.json'),
         JSON.stringify({ type: 'commonjs' }, null, 2) + '\n',

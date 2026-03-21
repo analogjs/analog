@@ -73,6 +73,8 @@ export default defineConfig({
     target: 'es2022',
     sourcemap: true,
     minify: false,
+    // false: this builds into a subdirectory of vite-plugin-angular's output;
+    // emptying would delete sibling files from the parent package build.
     emptyOutDir: false,
     lib: {
       entry: {

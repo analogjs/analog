@@ -15,7 +15,7 @@
       },
       "configurations": {
         "watch": {
-          "watch": "true"
+          "watch": true
         }
       }
     },

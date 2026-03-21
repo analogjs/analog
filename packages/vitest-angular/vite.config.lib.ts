@@ -14,6 +14,8 @@ function copyAssetsPlugin(assets: { from: string; to: string }[]): Plugin {
       for (const { from, to } of assets) {
         const src = resolve(pkgDir, from);
         const dest = resolve(outDir, to);
+        // Guard is defensive; missing assets are caught downstream by
+        // verify-package-artifacts.mts during the publish flow.
         if (existsSync(src)) {
           mkdirSync(dirname(dest), { recursive: true });
           cpSync(src, dest, { recursive: true });

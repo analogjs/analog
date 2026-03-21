@@ -35,7 +35,9 @@ export function oxcDtsPlugin(pkgDir: string): Plugin {
             writeFileSync(dtsPath, result.code);
           }
         } catch {
-          // skip files that fail isolated declaration transform
+          // Expected: isolatedDeclarationSync fails on files without explicit
+          // type annotations. This is best-effort — emit .d.ts where possible,
+          // silently skip the rest.
         }
       }
 
@@ -63,7 +65,8 @@ export function oxcDtsPlugin(pkgDir: string): Plugin {
             writeFileSync(dtsOut, result.code);
           }
         } catch {
-          // skip files that fail
+          // Same as above — best-effort for type-only files without full
+          // isolated-declaration-compatible annotations.
         }
       }
     },
