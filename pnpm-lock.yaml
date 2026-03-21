@@ -363,6 +363,9 @@ importers:
       marked-shiki:
         specifier: ^1.2.1
         version: 1.2.1(marked@15.0.12)(shiki@1.29.2)
+      md4x:
+        specifier: ^0.0.25
+        version: 0.0.25
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -638,6 +641,9 @@ importers:
       marked-mangle:
         specifier: ^1.1.10
         version: 1.1.12(marked@15.0.12)
+      md4x:
+        specifier: '>=0.0.20'
+        version: 0.0.25
       prismjs:
         specifier: ^1.29.0
         version: 1.30.0
@@ -11532,6 +11538,10 @@ packages:
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
+
+  md4x@0.0.25:
+    resolution: {integrity: sha512-GrexawUhrKcwl7o2hkgs7Ut0PqI/meOCevmaRB1ueKo2y1Fh2nIl8e6KKawYGm9eXJP3u6BzVs4rzZOc2+w3hA==}
+    hasBin: true
 
   mdast-util-definitions@6.0.0:
     resolution: {integrity: sha512-scTllyX6pnYNZH/AIp/0ePz6s4cZtARxImwoPJ7kS42n+MnVsI4XbnG6d4ibehRIldYMWM2LD7ImQblVhUejVQ==}
@@ -31262,6 +31272,8 @@ snapshots:
       '@arr/every': 1.0.1
 
   math-intrinsics@1.1.0: {}
+
+  md4x@0.0.25: {}
 
   mdast-util-definitions@6.0.0:
     dependencies:
