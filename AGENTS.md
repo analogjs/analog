@@ -90,6 +90,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
 ## Contribution Patterns & Best Practices
 
+- Always open an issue before a pull request for review by the maintainers. This ensures alignment on implementation of features.
 - Keep changes minimal and targeted.
 - Backward compatibility is critical for new features, allowing progressive adoption.
 - Keep code concise with emphasis on readability, avoid clever solutions and abstractions.
@@ -102,6 +103,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - Keep tests lightweight and targeted to critical functionality testing.
 - Add concise documentation with descriptive sections to the appropriate guides in the `docs-app` app.
 - Maintain compatibility with Vite versions 6-8, with progressive fallbacks.
+- Use other projects as inspiration, but do not directly copy their APIs.
 - See `CONTRIBUTING.md` file for more contribution guidelines.
 
 ## Do NOT
