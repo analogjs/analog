@@ -41,7 +41,7 @@ const config: UserConfigExport = defineConfig({
     target: 'es2022',
     sourcemap: true,
     minify: false,
-    emptyOutDir: true,
+    emptyOutDir: false,
     lib: {
       entry: { 'src/index': resolve(pkgDir, 'src/index.ts') },
       formats: ['es' as const],
