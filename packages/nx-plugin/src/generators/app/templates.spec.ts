@@ -33,6 +33,11 @@ describe('generator templates', () => {
       expect(['es2022', 'esnext']).toContain(target);
     });
 
+    it('uses ES2022 or ESNext module', () => {
+      const mod = tsconfig.compilerOptions.module.toLowerCase();
+      expect(['es2022', 'esnext']).toContain(mod);
+    });
+
     it('does not include baseUrl', () => {
       expect(tsconfig.compilerOptions.baseUrl).toBeUndefined();
     });
@@ -51,6 +56,22 @@ describe('generator templates', () => {
 
     it('uses bundler module resolution', () => {
       expect(tsconfig.compilerOptions.moduleResolution).toBe('bundler');
+    });
+
+    it('targets esnext', () => {
+      expect(tsconfig.compilerOptions.target.toLowerCase()).toBe('esnext');
+    });
+
+    it('uses esnext module', () => {
+      expect(tsconfig.compilerOptions.module.toLowerCase()).toBe('esnext');
+    });
+
+    it('includes es2022 and dom in lib', () => {
+      const lib = tsconfig.compilerOptions.lib.map((l: string) =>
+        l.toLowerCase(),
+      );
+      expect(lib).toContain('es2022');
+      expect(lib).toContain('dom');
     });
 
     it('does not include baseUrl', () => {

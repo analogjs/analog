@@ -66,5 +66,5 @@ const initWithNxNamespace = async (
     },
   );
 
-  return getInstalledPackageVersion(tree, '@angular/core', null, true);
+  return getInstalledPackageVersion(tree, '@angular/core', undefined, true);
 };
