@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "rootDir": ".",
     "sourceMap": false,
     "outDir": "../../dist/out-tsc",
     "allowJs": true,

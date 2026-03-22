@@ -6,7 +6,11 @@
   "tags": [],
   "targets": {
     "e2e": {
-      "executor": "@nx/vitest:test",
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/create-analog",
+        "command": "pnpm exec vitest run --config vite.config.ts"
+      },
       "dependsOn": ["create-analog:build"]
     }
   }
