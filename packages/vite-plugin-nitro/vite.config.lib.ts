@@ -1,5 +1,5 @@
 import path, { resolve, join } from 'node:path';
-import { mkdirSync, copyFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { defineConfig, normalizePath, type Plugin } from 'vite';
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import { oxcDtsPlugin } from '../../tools/build/shared-plugins.ts';
@@ -11,16 +11,20 @@ function copyAssetsPlugin(): Plugin {
     name: 'copy-assets',
     async writeBundle(options) {
       const outDir = options.dir!;
+      mkdirSync(outDir, { recursive: true });
 
       // Copy package.json
-      copyFileSync(join(pkgDir, 'package.json'), join(outDir, 'package.json'));
+      writeFileSync(
+        join(outDir, 'package.json'),
+        readFileSync(join(pkgDir, 'package.json')),
+      );
 
       // Copy migrations/migration.json
       const migrationsDir = join(outDir, 'migrations');
       mkdirSync(migrationsDir, { recursive: true });
-      copyFileSync(
-        join(pkgDir, 'migrations/migration.json'),
+      writeFileSync(
         join(migrationsDir, 'migration.json'),
+        readFileSync(join(pkgDir, 'migrations/migration.json')),
       );
     },
   };
@@ -32,7 +36,7 @@ export default defineConfig({
     target: 'es2022',
     sourcemap: true,
     minify: false,
-    emptyOutDir: true,
+    emptyOutDir: false,
     lib: {
       entry: { 'src/index': resolve(pkgDir, 'src/index.ts') },
       formats: ['es' as const],
