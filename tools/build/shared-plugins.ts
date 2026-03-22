@@ -91,6 +91,7 @@ export function* walkTs(dir: string): Generator<string> {
     } else if (
       full.endsWith('.ts') &&
       !full.endsWith('.spec.ts') &&
+      !full.endsWith('.spec.data.ts') &&
       !full.endsWith('.test.ts') &&
       !full.endsWith('.d.ts')
     ) {
