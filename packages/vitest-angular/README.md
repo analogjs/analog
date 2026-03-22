@@ -194,6 +194,7 @@ pnpm test
 ## Snapshot Testing
 
 For snapshot testing you can use `toMatchSnapshot` from `expect` API.
+The provided snapshot setup also removes Angular-specific `_ng*` attributes and `<!--container-->` comments from DOM snapshots, which keeps diffs focused on the actual template output.
 
 Below is a small example of how to write a snapshot test:
 

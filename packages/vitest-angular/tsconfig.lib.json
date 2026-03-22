@@ -7,6 +7,7 @@
   },
   "include": [
     "src/**/*.ts",
+    "snapshot-serializers.ts",
     "setup-zone.ts",
     "setup-snapshots.ts",
     "setup-testbed.ts",

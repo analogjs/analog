@@ -20,6 +20,7 @@
         "additionalEntryPoints": [
           "packages/vitest-angular/setup-zone.ts",
           "packages/vitest-angular/setup-snapshots.ts",
+          "packages/vitest-angular/snapshot-serializers.ts",
           "packages/vitest-angular/setup-testbed.ts"
         ],
         "generateExportsField": true
@@ -36,6 +37,9 @@
         "parallel": false
       },
       "dependsOn": ["^build"]
+    },
+    "test": {
+      "executor": "@nx/vitest:test"
     }
   }
 }
