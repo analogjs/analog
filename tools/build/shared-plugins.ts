@@ -4,6 +4,7 @@ import {
   writeFileSync,
   mkdirSync,
   copyFileSync,
+  existsSync,
   readdirSync,
   statSync,
 } from 'node:fs';
@@ -30,6 +31,17 @@ export function oxcDtsPlugin(pkgDir: string): Plugin {
         const sourceFile = chunk.facadeModuleId;
         if (!sourceFile.endsWith('.ts') || sourceFile.endsWith('.d.ts'))
           continue;
+
+        if (!existsSync(sourceFile)) {
+          this.warn(
+            [
+              `Skipping declaration emit for bundle entry "${fileName}".`,
+              `Source file not found: ${sourceFile}`,
+              'A follow-up source-tree pass will attempt to emit the declaration.',
+            ].join('\n'),
+          );
+          continue;
+        }
 
         try {
           const source = readFileSync(sourceFile, 'utf-8');
