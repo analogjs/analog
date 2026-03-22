@@ -1,5 +1,5 @@
 import path, { resolve, dirname, join } from 'node:path';
-import { mkdirSync, copyFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import {
   defineConfig,
   normalizePath,
@@ -16,16 +16,20 @@ function copyAssetsPlugin(): Plugin {
     name: 'copy-assets',
     async writeBundle(options) {
       const outDir = options.dir!;
+      mkdirSync(outDir, { recursive: true });
 
       // Copy package.json
-      copyFileSync(join(pkgDir, 'package.json'), join(outDir, 'package.json'));
+      writeFileSync(
+        join(outDir, 'package.json'),
+        readFileSync(join(pkgDir, 'package.json')),
+      );
 
       // Copy migrations/migration.json
       const migrationsDir = join(outDir, 'migrations');
       mkdirSync(migrationsDir, { recursive: true });
-      copyFileSync(
-        join(pkgDir, 'migrations/migration.json'),
+      writeFileSync(
         join(migrationsDir, 'migration.json'),
+        readFileSync(join(pkgDir, 'migrations/migration.json')),
       );
     },
   };
