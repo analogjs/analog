@@ -36,7 +36,6 @@ export class AnalogCi {
     const pnpmStore = dag.cacheVolume('pnpm-store');
     const nxCache = dag.cacheVolume('nx-cache');
     const playwrightCache = dag.cacheVolume('playwright-browsers');
-    const cypressCache = dag.cacheVolume('cypress-browsers');
 
     // Short store path keeps git-hosted package prep paths under the
     // 108-char Unix socket limit (tsx IPC pipes in <store>/v10/tmp/).
@@ -50,7 +49,6 @@ export class AnalogCi {
       .withExec(['corepack', 'enable'])
       .withMountedCache('/pnpm', pnpmStore)
       .withMountedCache('/root/.cache/ms-playwright', playwrightCache)
-      .withMountedCache('/root/.cache/Cypress', cypressCache)
       .withDirectory('/app', source)
       .withWorkdir('/app')
       .withMountedCache('/app/.nx/cache', nxCache)
@@ -275,7 +273,7 @@ export class AnalogCi {
       .stdout();
   }
 
-  /** Run e2e tests (Playwright + Cypress). */
+  /** Run e2e tests (Playwright). */
   @func()
   async endToEnd(
     @argument({
@@ -300,11 +298,13 @@ export class AnalogCi {
     source: Directory,
     nxCloudToken?: Secret,
   ): Promise<string> {
-    // Reset NODE_OPTIONS so Cypress child processes don't inherit the oversized heap limit.
-    let ctr = this.base(source)
-      .withExec(['pnpm', 'exec', 'playwright', 'install', '--with-deps'])
-      .withExec(['pnpm', 'exec', 'cypress', 'install'])
-      .withEnvVariable('NODE_OPTIONS', '');
+    let ctr = this.base(source).withExec([
+      'pnpm',
+      'exec',
+      'playwright',
+      'install',
+      '--with-deps',
+    ]);
 
     if (nxCloudToken) {
       ctr = ctr.withSecretVariable('NX_CLOUD_ACCESS_TOKEN', nxCloudToken);
@@ -319,9 +319,7 @@ export class AnalogCi {
         '--target',
         'e2e',
         '--projects',
-        'create-analog-e2e,analog-app-e2e-cypress',
-        '--exclude',
-        'analog-app-e2e-playwright',
+        'analog-app-e2e,blog-app-e2e',
       ])
       .stdout();
   }
@@ -407,7 +405,7 @@ export class AnalogCi {
 
   /**
    * Full CI pipeline: ciChecks + e2e.
-   * Pre-installs Cypress in parallel with checks so e2e starts faster.
+   * Pre-installs Playwright in parallel with checks so e2e starts faster.
    * For local use via `pnpm ghci`.
    */
   @func()
@@ -453,7 +451,7 @@ export class AnalogCi {
     }
 
     // Phase 1: four independent branches run in parallel.
-    // Cypress/Playwright install warms browser cache volumes for phase 2.
+    // Playwright install warms browser cache volumes for phase 2.
     await Promise.all([
       ctr.withExec(['pnpm', 'run', 'prettier:check']).stdout(),
       ctr.withExec(['pnpm', 'run', 'lint']).stdout(),
@@ -480,15 +478,17 @@ export class AnalogCi {
         .stdout(),
       ctr
         .withExec(['pnpm', 'exec', 'playwright', 'install', '--with-deps'])
-        .withExec(['pnpm', 'exec', 'cypress', 'install'])
         .stdout(),
     ]);
 
     // Phase 2: e2e. Browser and Nx build cache volumes are warm.
-    let e2eCtr = ctr
-      .withExec(['pnpm', 'exec', 'playwright', 'install', '--with-deps'])
-      .withExec(['pnpm', 'exec', 'cypress', 'install'])
-      .withEnvVariable('NODE_OPTIONS', '');
+    let e2eCtr = ctr.withExec([
+      'pnpm',
+      'exec',
+      'playwright',
+      'install',
+      '--with-deps',
+    ]);
 
     if (nxCloudToken) {
       e2eCtr = e2eCtr.withSecretVariable('NX_CLOUD_ACCESS_TOKEN', nxCloudToken);
@@ -503,9 +503,7 @@ export class AnalogCi {
         '--target',
         'e2e',
         '--projects',
-        'create-analog-e2e,analog-app-e2e-cypress',
-        '--exclude',
-        'analog-app-e2e-playwright',
+        'analog-app-e2e,blog-app-e2e',
       ])
       .stdout();
 
