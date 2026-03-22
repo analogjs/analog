@@ -9,6 +9,14 @@ import {
 } from 'node:fs';
 import type { Plugin } from 'vite';
 
+function formatDeclarationError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.stack ?? error.message;
+  }
+
+  return String(error);
+}
+
 export function oxcDtsPlugin(pkgDir: string): Plugin {
   return {
     name: 'oxc-dts',
@@ -34,10 +42,14 @@ export function oxcDtsPlugin(pkgDir: string): Plugin {
             mkdirSync(dirname(dtsPath), { recursive: true });
             writeFileSync(dtsPath, result.code);
           }
-        } catch {
-          // Expected: isolatedDeclarationSync fails on files without explicit
-          // type annotations. This is best-effort — emit .d.ts where possible,
-          // silently skip the rest.
+        } catch (error) {
+          this.error(
+            [
+              `Failed to emit declaration for bundle entry "${fileName}".`,
+              `Source file: ${sourceFile}`,
+              formatDeclarationError(error),
+            ].join('\n'),
+          );
         }
       }
 
@@ -64,9 +76,14 @@ export function oxcDtsPlugin(pkgDir: string): Plugin {
             mkdirSync(dirname(dtsOut), { recursive: true });
             writeFileSync(dtsOut, result.code);
           }
-        } catch {
-          // Same as above — best-effort for type-only files without full
-          // isolated-declaration-compatible annotations.
+        } catch (error) {
+          this.error(
+            [
+              `Failed to emit declaration for source file "${tsFile}".`,
+              `Output path: ${dtsOut}`,
+              formatDeclarationError(error),
+            ].join('\n'),
+          );
         }
       }
     },
