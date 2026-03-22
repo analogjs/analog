@@ -168,9 +168,6 @@ importers:
       '@netlify/functions':
         specifier: ^2.8.2
         version: 2.8.2
-      '@nx/cypress':
-        specifier: 22.6.0-beta.11
-        version: 22.6.0-beta.11(@babel/traverse@7.29.0)(@swc-node/register@1.11.1(@swc/core@1.15.18(@swc/helpers@0.5.19))(@swc/types@0.1.25)(typescript@6.0.1-rc))(@swc/core@1.15.18(@swc/helpers@0.5.19))(@zkochan/js-yaml@0.0.7)(cypress@15.11.0)(eslint@10.0.3(jiti@2.6.1))(nx@22.6.0-beta.11(@swc-node/register@1.11.1(@swc/core@1.15.18(@swc/helpers@0.5.19))(@swc/types@0.1.25)(typescript@6.0.1-rc))(@swc/core@1.15.18(@swc/helpers@0.5.19)))(typescript@6.0.1-rc)
       '@nx/eslint':
         specifier: 22.6.0-beta.11
         version: 22.6.0-beta.11(@babel/traverse@7.29.0)(@swc-node/register@1.11.1(@swc/core@1.15.18(@swc/helpers@0.5.19))(@swc/types@0.1.25)(typescript@6.0.1-rc))(@swc/core@1.15.18(@swc/helpers@0.5.19))(@zkochan/js-yaml@0.0.7)(eslint@10.0.3(jiti@2.6.1))(nx@22.6.0-beta.11(@swc-node/register@1.11.1(@swc/core@1.15.18(@swc/helpers@0.5.19))(@swc/types@0.1.25)(typescript@6.0.1-rc))(@swc/core@1.15.18(@swc/helpers@0.5.19)))
@@ -291,9 +288,6 @@ importers:
       cpy-cli:
         specifier: ^7.0.0
         version: 7.0.0
-      cypress:
-        specifier: 15.11.0
-        version: 15.11.0
       effect:
         specifier: 4.0.0-beta.36
         version: 4.0.0-beta.36
@@ -306,9 +300,6 @@ importers:
       eslint-config-prettier:
         specifier: 10.1.8
         version: 10.1.8(eslint@10.0.3(jiti@2.6.1))
-      eslint-plugin-cypress:
-        specifier: 6.1.0
-        version: 6.1.0(eslint@10.0.3(jiti@2.6.1))
       eslint-plugin-oxlint:
         specifier: ^1.56.0
         version: 1.56.0
@@ -497,10 +488,6 @@ importers:
 
   apps/analog-app-e2e: {}
 
-  apps/analog-app-e2e-cypress: {}
-
-  apps/analog-preset-e2e: {}
-
   apps/astro-app: {}
 
   apps/astro-app-e2e-playwright: {}
@@ -508,8 +495,6 @@ importers:
   apps/blog-app: {}
 
   apps/blog-app-e2e: {}
-
-  apps/create-analog-e2e: {}
 
   apps/docs-app:
     dependencies:
@@ -547,8 +532,6 @@ importers:
       typescript:
         specifier: 6.0.1-rc
         version: 6.0.1-rc
-
-  apps/nx-plugin-e2e: {}
 
   apps/opt-catchall-app: {}
 
@@ -9405,11 +9388,6 @@ packages:
     hasBin: true
     peerDependencies:
       eslint: '>=7.0.0'
-
-  eslint-plugin-cypress@6.1.0:
-    resolution: {integrity: sha512-B8sxtNpINDxFkmsu1qKYjg70VsP8SGneEXgLcZMk1bUZcW08S+JyaiMdof1x6dmt02FgOD7YkT4wOaOD5HotJw==}
-    peerDependencies:
-      eslint: '>=9'
 
   eslint-plugin-oxlint@1.56.0:
     resolution: {integrity: sha512-s47/OjE4cfQ+CD4eA38g+5axvwuyswY5H6acCdVGIvowYuLVJ6zrR7N260XfVVLRuyjjPO9L77qNYwSbmRNyuw==}
@@ -20251,6 +20229,7 @@ snapshots:
       tough-cookie: 5.1.2
       tunnel-agent: 0.6.0
       uuid: 8.3.2
+    optional: true
 
   '@cypress/xvfb@1.2.4(supports-color@8.1.1)':
     dependencies:
@@ -20258,6 +20237,7 @@ snapshots:
       lodash.once: 4.1.1
     transitivePeerDependencies:
       - supports-color
+    optional: true
 
   '@discoveryjs/json-ext@0.5.7': {}
 
@@ -25676,9 +25656,11 @@ snapshots:
       '@types/node': 24.12.0
       '@types/send': 0.17.6
 
-  '@types/sinonjs__fake-timers@8.1.1': {}
+  '@types/sinonjs__fake-timers@8.1.1':
+    optional: true
 
-  '@types/sizzle@2.3.10': {}
+  '@types/sizzle@2.3.10':
+    optional: true
 
   '@types/sockjs@0.3.36':
     dependencies:
@@ -25686,7 +25668,8 @@ snapshots:
 
   '@types/stack-utils@2.0.3': {}
 
-  '@types/tmp@0.2.6': {}
+  '@types/tmp@0.2.6':
+    optional: true
 
   '@types/trusted-types@2.0.7':
     optional: true
@@ -26411,7 +26394,8 @@ snapshots:
 
   apache-md5@1.1.8: {}
 
-  arch@2.2.0: {}
+  arch@2.2.0:
+    optional: true
 
   arg@4.1.3:
     optional: true
@@ -26445,6 +26429,7 @@ snapshots:
   asn1@0.2.6:
     dependencies:
       safer-buffer: 2.1.2
+    optional: true
 
   asn1js@3.0.7:
     dependencies:
@@ -26452,7 +26437,8 @@ snapshots:
       pvutils: 1.1.5
       tslib: 2.8.1
 
-  assert-plus@1.0.0: {}
+  assert-plus@1.0.0:
+    optional: true
 
   assertion-error@2.0.1: {}
 
@@ -26472,7 +26458,8 @@ snapshots:
       estree-walker: 3.0.3
       js-tokens: 10.0.0
 
-  astral-regex@2.0.0: {}
+  astral-regex@2.0.0:
+    optional: true
 
   astring@1.8.6: {}
 
@@ -26594,9 +26581,11 @@ snapshots:
       postcss: 8.5.8
       postcss-value-parser: 4.2.0
 
-  aws-sign2@0.7.0: {}
+  aws-sign2@0.7.0:
+    optional: true
 
-  aws4@1.13.2: {}
+  aws4@1.13.2:
+    optional: true
 
   axios@1.13.6(debug@4.4.3):
     dependencies:
@@ -26831,6 +26820,7 @@ snapshots:
   bcrypt-pbkdf@1.0.2:
     dependencies:
       tweetnacl: 0.14.5
+    optional: true
 
   bcryptjs@2.4.3: {}
 
@@ -26865,7 +26855,8 @@ snapshots:
       inherits: 2.0.4
       readable-stream: 3.6.2
 
-  blob-util@2.0.2: {}
+  blob-util@2.0.2:
+    optional: true
 
   bluebird@3.7.2: {}
 
@@ -26968,7 +26959,8 @@ snapshots:
 
   btoa@1.2.1: {}
 
-  buffer-crc32@0.2.13: {}
+  buffer-crc32@0.2.13:
+    optional: true
 
   buffer-from@1.1.2: {}
 
@@ -27015,7 +27007,8 @@ snapshots:
       normalize-url: 8.0.0
       responselike: 3.0.0
 
-  cachedir@2.4.0: {}
+  cachedir@2.4.0:
+    optional: true
 
   call-bind-apply-helpers@1.0.2:
     dependencies:
@@ -27067,7 +27060,8 @@ snapshots:
 
   case-sensitive-paths-webpack-plugin@2.4.0: {}
 
-  caseless@0.12.0: {}
+  caseless@0.12.0:
+    optional: true
 
   ccount@2.0.1: {}
 
@@ -27220,6 +27214,7 @@ snapshots:
       string-width: 4.2.3
     optionalDependencies:
       colors: 1.4.0
+    optional: true
 
   cli-table3@0.6.3:
     dependencies:
@@ -27237,6 +27232,7 @@ snapshots:
     dependencies:
       slice-ansi: 3.0.0
       string-width: 4.2.3
+    optional: true
 
   cli-truncate@5.2.0:
     dependencies:
@@ -27350,7 +27346,8 @@ snapshots:
 
   commander@5.1.0: {}
 
-  commander@6.2.1: {}
+  commander@6.2.1:
+    optional: true
 
   commander@7.2.0: {}
 
@@ -27360,7 +27357,8 @@ snapshots:
 
   common-path-prefix@3.0.0: {}
 
-  common-tags@1.8.2: {}
+  common-tags@1.8.2:
+    optional: true
 
   compare-func@2.0.0:
     dependencies:
@@ -27608,7 +27606,8 @@ snapshots:
 
   core-js@3.37.1: {}
 
-  core-util-is@1.0.2: {}
+  core-util-is@1.0.2:
+    optional: true
 
   core-util-is@1.0.3: {}
 
@@ -28046,6 +28045,7 @@ snapshots:
       tslib: 1.14.1
       untildify: 4.0.0
       yauzl: 2.10.0
+    optional: true
 
   cytoscape-cose-bilkent@4.1.0(cytoscape@3.33.1):
     dependencies:
@@ -28229,6 +28229,7 @@ snapshots:
   dashdash@1.14.1:
     dependencies:
       assert-plus: 1.0.0
+    optional: true
 
   data-urls@7.0.0:
     dependencies:
@@ -28254,6 +28255,7 @@ snapshots:
       ms: 2.1.3
     optionalDependencies:
       supports-color: 8.1.1
+    optional: true
 
   debug@4.4.3(supports-color@8.1.1):
     dependencies:
@@ -28484,6 +28486,7 @@ snapshots:
     dependencies:
       jsbn: 0.1.1
       safer-buffer: 2.1.2
+    optional: true
 
   ee-first@1.1.1: {}
 
@@ -28558,6 +28561,7 @@ snapshots:
     dependencies:
       ansi-colors: 4.1.3
       strip-ansi: 6.0.1
+    optional: true
 
   entities@2.2.0: {}
 
@@ -28725,11 +28729,6 @@ snapshots:
   eslint-config-prettier@10.1.8(eslint@10.0.3(jiti@2.6.1)):
     dependencies:
       eslint: 10.0.3(jiti@2.6.1)
-
-  eslint-plugin-cypress@6.1.0(eslint@10.0.3(jiti@2.6.1)):
-    dependencies:
-      eslint: 10.0.3(jiti@2.6.1)
-      globals: 17.4.0
 
   eslint-plugin-oxlint@1.56.0:
     dependencies:
@@ -28907,7 +28906,8 @@ snapshots:
       stream-combiner: 0.2.2
       through: 2.3.8
 
-  eventemitter2@6.4.7: {}
+  eventemitter2@6.4.7:
+    optional: true
 
   eventemitter3@4.0.7: {}
 
@@ -28975,6 +28975,7 @@ snapshots:
   executable@4.1.1:
     dependencies:
       pify: 2.3.0
+    optional: true
 
   exit-x@0.2.2: {}
 
@@ -29089,8 +29090,10 @@ snapshots:
       '@types/yauzl': 2.10.3
     transitivePeerDependencies:
       - supports-color
+    optional: true
 
-  extsprintf@1.3.0: {}
+  extsprintf@1.3.0:
+    optional: true
 
   fancy-log@2.0.0:
     dependencies:
@@ -29141,6 +29144,7 @@ snapshots:
   fd-slicer@1.1.0:
     dependencies:
       pend: 1.2.0
+    optional: true
 
   fdir@6.5.0(picomatch@4.0.3):
     optionalDependencies:
@@ -29309,7 +29313,8 @@ snapshots:
       cross-spawn: 7.0.6
       signal-exit: 4.1.0
 
-  forever-agent@0.6.1: {}
+  forever-agent@0.6.1:
+    optional: true
 
   fork-ts-checker-webpack-plugin@7.2.13(typescript@6.0.1-rc)(webpack@5.105.4(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.4)):
     dependencies:
@@ -29471,6 +29476,7 @@ snapshots:
   getpass@0.1.7:
     dependencies:
       assert-plus: 1.0.0
+    optional: true
 
   git-log-parser@1.2.1:
     dependencies:
@@ -29705,6 +29711,7 @@ snapshots:
     dependencies:
       is-stream: 2.0.1
       type-fest: 0.8.1
+    optional: true
 
   hasown@2.0.2:
     dependencies:
@@ -30089,6 +30096,7 @@ snapshots:
       assert-plus: 1.0.0
       jsprim: 2.0.2
       sshpk: 1.18.0
+    optional: true
 
   http2-wrapper@2.2.1:
     dependencies:
@@ -30386,7 +30394,8 @@ snapshots:
     dependencies:
       ws: 8.18.0
 
-  isstream@0.1.2: {}
+  isstream@0.1.2:
+    optional: true
 
   issue-parser@7.0.1:
     dependencies:
@@ -30778,7 +30787,8 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  jsbn@0.1.1: {}
+  jsbn@0.1.1:
+    optional: true
 
   jsdom@28.1.0:
     dependencies:
@@ -30831,11 +30841,13 @@ snapshots:
 
   json-schema-typed@8.0.2: {}
 
-  json-schema@0.4.0: {}
+  json-schema@0.4.0:
+    optional: true
 
   json-stable-stringify-without-jsonify@1.0.1: {}
 
-  json-stringify-safe@5.0.1: {}
+  json-stringify-safe@5.0.1:
+    optional: true
 
   json-with-bigint@3.5.7: {}
 
@@ -30876,6 +30888,7 @@ snapshots:
       extsprintf: 1.3.0
       json-schema: 0.4.0
       verror: 1.10.0
+    optional: true
 
   junk@4.0.1: {}
 
@@ -31088,6 +31101,7 @@ snapshots:
       wrap-ansi: 7.0.0
     optionalDependencies:
       enquirer: 2.4.1
+    optional: true
 
   listr2@9.0.5:
     dependencies:
@@ -31175,7 +31189,8 @@ snapshots:
 
   lodash.mergewith@4.6.2: {}
 
-  lodash.once@4.1.1: {}
+  lodash.once@4.1.1:
+    optional: true
 
   lodash.snakecase@4.1.1: {}
 
@@ -31207,6 +31222,7 @@ snapshots:
       cli-cursor: 3.1.0
       slice-ansi: 4.0.0
       wrap-ansi: 6.2.0
+    optional: true
 
   log-update@6.1.0:
     dependencies:
@@ -33087,7 +33103,8 @@ snapshots:
 
   os-tmpdir@1.0.2: {}
 
-  ospath@1.2.2: {}
+  ospath@1.2.2:
+    optional: true
 
   oxc-parser@0.119.0:
     dependencies:
@@ -33486,11 +33503,13 @@ snapshots:
 
   pegjs@0.10.0: {}
 
-  pend@1.2.0: {}
+  pend@1.2.0:
+    optional: true
 
   perfect-debounce@2.1.0: {}
 
-  performance-now@2.1.0: {}
+  performance-now@2.1.0:
+    optional: true
 
   piccolore@0.1.3: {}
 
@@ -34237,7 +34256,8 @@ snapshots:
 
   prettier@3.8.1: {}
 
-  pretty-bytes@5.6.0: {}
+  pretty-bytes@5.6.0:
+    optional: true
 
   pretty-error@4.0.0:
     dependencies:
@@ -34280,7 +34300,8 @@ snapshots:
 
   process-nextick-args@2.0.1: {}
 
-  process@0.11.10: {}
+  process@0.11.10:
+    optional: true
 
   promise-retry@2.0.1:
     dependencies:
@@ -34309,7 +34330,8 @@ snapshots:
       forwarded: 0.2.0
       ipaddr.js: 1.9.1
 
-  proxy-from-env@1.0.0: {}
+  proxy-from-env@1.0.0:
+    optional: true
 
   proxy-from-env@1.1.0: {}
 
@@ -34750,6 +34772,7 @@ snapshots:
   request-progress@3.0.0:
     dependencies:
       throttleit: 1.0.1
+    optional: true
 
   require-directory@2.1.1: {}
 
@@ -35562,12 +35585,14 @@ snapshots:
       ansi-styles: 4.3.0
       astral-regex: 2.0.0
       is-fullwidth-code-point: 3.0.0
+    optional: true
 
   slice-ansi@4.0.0:
     dependencies:
       ansi-styles: 4.3.0
       astral-regex: 2.0.0
       is-fullwidth-code-point: 3.0.0
+    optional: true
 
   slice-ansi@7.1.2:
     dependencies:
@@ -35719,6 +35744,7 @@ snapshots:
       jsbn: 0.1.1
       safer-buffer: 2.1.2
       tweetnacl: 0.14.5
+    optional: true
 
   ssri@13.0.1:
     dependencies:
@@ -36010,7 +36036,8 @@ snapshots:
     dependencies:
       '@pkgr/core': 0.2.9
 
-  systeminformation@5.31.4: {}
+  systeminformation@5.31.4:
+    optional: true
 
   tablesort@5.7.0: {}
 
@@ -36147,7 +36174,8 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  throttleit@1.0.1: {}
+  throttleit@1.0.1:
+    optional: true
 
   through2@2.0.5:
     dependencies:
@@ -36187,13 +36215,15 @@ snapshots:
 
   tinyspy@4.0.4: {}
 
-  tldts-core@6.1.86: {}
+  tldts-core@6.1.86:
+    optional: true
 
   tldts-core@7.0.26: {}
 
   tldts@6.1.86:
     dependencies:
       tldts-core: 6.1.86
+    optional: true
 
   tldts@7.0.26:
     dependencies:
@@ -36220,6 +36250,7 @@ snapshots:
   tough-cookie@5.1.2:
     dependencies:
       tldts: 6.1.86
+    optional: true
 
   tough-cookie@6.0.1:
     dependencies:
@@ -36400,10 +36431,12 @@ snapshots:
   tunnel-agent@0.6.0:
     dependencies:
       safe-buffer: 5.2.1
+    optional: true
 
   tunnel@0.0.6: {}
 
-  tweetnacl@0.14.5: {}
+  tweetnacl@0.14.5:
+    optional: true
 
   type-check@0.4.0:
     dependencies:
@@ -36413,7 +36446,8 @@ snapshots:
 
   type-fest@0.21.3: {}
 
-  type-fest@0.8.1: {}
+  type-fest@0.8.1:
+    optional: true
 
   type-fest@1.4.0: {}
 
@@ -36676,7 +36710,8 @@ snapshots:
       lru-cache: 11.2.7
       ofetch: 2.0.0-alpha.3
 
-  untildify@4.0.0: {}
+  untildify@4.0.0:
+    optional: true
 
   upath@2.0.1: {}
 
@@ -36776,6 +36811,7 @@ snapshots:
       assert-plus: 1.0.0
       core-util-is: 1.0.2
       extsprintf: 1.3.0
+    optional: true
 
   vfile-location@5.0.3:
     dependencies:
@@ -37626,6 +37662,7 @@ snapshots:
     dependencies:
       buffer-crc32: 0.2.13
       fd-slicer: 1.1.0
+    optional: true
 
   yn@3.1.1:
     optional: true

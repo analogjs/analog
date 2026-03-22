@@ -304,6 +304,7 @@ export class AnalogCi {
       'playwright',
       'install',
       '--with-deps',
+      'chromium',
     ]);
 
     if (nxCloudToken) {
@@ -477,7 +478,14 @@ export class AnalogCi {
         ])
         .stdout(),
       ctr
-        .withExec(['pnpm', 'exec', 'playwright', 'install', '--with-deps'])
+        .withExec([
+          'pnpm',
+          'exec',
+          'playwright',
+          'install',
+          '--with-deps',
+          'chromium',
+        ])
         .stdout(),
     ]);
 
@@ -488,6 +496,7 @@ export class AnalogCi {
       'playwright',
       'install',
       '--with-deps',
+      'chromium',
     ]);
 
     if (nxCloudToken) {
