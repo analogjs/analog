@@ -652,17 +652,17 @@ importers:
         specifier: ^4.0.2
         version: 4.0.2
       marked:
-        specifier: ^15.0.7
-        version: 15.0.12
+        specifier: ^17.0.5
+        version: 17.0.5
       marked-gfm-heading-id:
         specifier: ^4.1.1
-        version: 4.1.3(marked@15.0.12)
+        version: 4.1.3(marked@17.0.5)
       marked-highlight:
         specifier: ^2.2.1
-        version: 2.2.3(marked@15.0.12)
+        version: 2.2.3(marked@17.0.5)
       marked-mangle:
         specifier: ^1.1.10
-        version: 1.1.12(marked@15.0.12)
+        version: 1.1.12(marked@17.0.5)
       md4x:
         specifier: '>=0.0.20'
         version: 0.0.25
@@ -28631,27 +28631,14 @@ snapshots:
 
   markdown-table@3.0.4: {}
 
-  marked-gfm-heading-id@4.1.3(marked@15.0.12):
-    dependencies:
-      github-slugger: 2.0.0
-      marked: 15.0.12
-
   marked-gfm-heading-id@4.1.3(marked@17.0.5):
     dependencies:
       github-slugger: 2.0.0
       marked: 17.0.5
 
-  marked-highlight@2.2.3(marked@15.0.12):
-    dependencies:
-      marked: 15.0.12
-
   marked-highlight@2.2.3(marked@17.0.5):
     dependencies:
       marked: 17.0.5
-
-  marked-mangle@1.1.12(marked@15.0.12):
-    dependencies:
-      marked: 15.0.12
 
   marked-mangle@1.1.12(marked@17.0.5):
     dependencies:
