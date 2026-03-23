@@ -2,6 +2,11 @@
 
 Analog supports server-side handling of form submissions and validation.
 
+`FormAction` is a good fit when you want progressive-enhancement-style form
+submissions that post directly to a page action. If you need client-managed
+mutation state, cache invalidation, or optimistic updates, use TanStack Query
+mutations against an Analog server route instead.
+
 <div className="video-container">
   <div className="video-responsive-wrapper">
     <iframe
@@ -202,5 +207,56 @@ export async function load({ event }: PageServerLoad) {
     loaded: true,
     searchTerm,
   };
+}
+```
+
+## TanStack Query Mutations
+
+When a form submission needs to invalidate cached queries or participate in a
+broader client-side server-state flow, use `injectMutation` with an Analog
+server route.
+
+```ts
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Component, inject, signal } from '@angular/core';
+import { lastValueFrom } from 'rxjs';
+import { QueryClient, injectMutation } from '@analogjs/router/query';
+
+@Component({
+  standalone: true,
+  template: `
+    <button type="button" (click)="save()">Save</button>
+    @if (error()) {
+      <p>{{ error() }}</p>
+    }
+  `,
+})
+export default class MutationExampleComponent {
+  private readonly http = inject(HttpClient);
+  private readonly queryClient = inject(QueryClient);
+
+  readonly error = signal('');
+
+  readonly mutation = injectMutation(() => ({
+    mutationFn: () =>
+      lastValueFrom(
+        this.http.post('/api/v1/query-todos', {
+          scope: 'docs',
+          title: 'Write docs',
+        }),
+      ),
+    onSuccess: () =>
+      this.queryClient.invalidateQueries({
+        queryKey: ['analog-query-todos', 'docs'],
+      }),
+    onError: (err: HttpErrorResponse) => {
+      this.error.set(err.message);
+    },
+  }));
+
+  save() {
+    this.error.set('');
+    this.mutation.mutate();
+  }
 }
 ```

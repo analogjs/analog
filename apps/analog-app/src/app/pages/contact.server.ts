@@ -6,20 +6,13 @@ const ContactSchema = v.object({
   email: v.pipe(v.string(), v.nonEmpty('email is required')),
 });
 
-type ContactInput = v.InferOutput<typeof ContactSchema>;
-
 export type ContactActionSuccess = {
   received: true;
   name: string;
   email: string;
 };
 
-type SchemaIssue = {
-  message: string;
-  path?: ReadonlyArray<PropertyKey | { key: PropertyKey }>;
-};
-
-export type ContactActionError = readonly SchemaIssue[];
+export type ContactActionError = readonly v.InferIssue<typeof ContactSchema>[];
 
 export const action = defineAction({
   schema: ContactSchema,

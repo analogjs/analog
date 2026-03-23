@@ -1,12 +1,13 @@
-import { Component, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { injectLoad } from '@analogjs/router';
+import { injectLoadData } from '@analogjs/router';
 
 import type { load } from './greet.[name].server';
 
 @Component({
   selector: 'analogjs-greet-page',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h3 id="greeting">{{ greeting() }}</h3>
     <p id="greet-name">{{ name() }}</p>
@@ -14,21 +15,11 @@ import type { load } from './greet.[name].server';
   `,
 })
 export default class GreetComponent {
-  private readonly loadResult = toSignal(injectLoad<typeof load>(), {
+  private readonly data = toSignal(injectLoadData<typeof load>(), {
     requireSync: true,
   });
 
-  private readonly data = computed(() => {
-    const result = this.loadResult();
-
-    if (result instanceof Response) {
-      throw new Error('Expected page load data but received a response.');
-    }
-
-    return result;
-  });
-
-  greeting = computed(() => this.data().greeting);
-  name = computed(() => this.data().name);
-  shout = computed(() => String(this.data().shout));
+  readonly greeting = computed(() => this.data().greeting);
+  readonly name = computed(() => this.data().name);
+  readonly shout = computed(() => String(this.data().shout));
 }

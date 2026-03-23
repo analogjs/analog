@@ -2,6 +2,17 @@
 
 Analog supports fetching data from the server before loading a page. This can be achieved by defining an async `load` function in `.server.ts` file of the page.
 
+## Choosing the Right Primitive
+
+Use route `load` functions when data should be resolved before the page
+component is created and the result is naturally tied to navigation.
+
+If you need client-managed server state such as query-key caching, invalidation,
+retries, or background refetching, prefer TanStack Query through
+`@analogjs/router/query`. TanStack Query's Angular integration is designed for
+exactly that style of data management, while route loads stay focused on
+route-coupled SSR and blocking page data.
+
 ## Fetching the Data
 
 To fetch the data from the server, create a `.server.ts` file that contains the async `load` function alongside the `.page.ts` file.
@@ -124,3 +135,71 @@ VITE_ANALOG_PUBLIC_BASE_URL="http://localhost:5173"
 ```
 
 The environment variable must also be set when building for deployment.
+
+## Using TanStack Query with Analog
+
+Analog provides a query-native integration surface alongside `injectLoad`.
+
+```ts
+import {
+  provideHttpClient,
+  withFetch,
+  withInterceptors,
+} from '@angular/common/http';
+import type { ApplicationConfig } from '@angular/core';
+import { requestContextInterceptor } from '@analogjs/router';
+import { QueryClient, provideAnalogQuery } from '@analogjs/router/query';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([requestContextInterceptor]),
+    ),
+    provideAnalogQuery(new QueryClient()),
+  ],
+};
+```
+
+For SSR, add the server provider so prefetched query state is transferred during
+hydration.
+
+```ts
+import { mergeApplicationConfig } from '@angular/core';
+import { provideServerRendering } from '@angular/platform-server';
+import { provideServerAnalogQuery } from '@analogjs/router/query';
+
+export const serverConfig = mergeApplicationConfig(appConfig, {
+  providers: [provideServerRendering(), provideServerAnalogQuery()],
+});
+```
+
+Then use `injectQuery` and `injectMutation` against Analog server routes in your
+components:
+
+```ts
+import { HttpClient } from '@angular/common/http';
+import { Component, inject } from '@angular/core';
+import { lastValueFrom } from 'rxjs';
+import { injectQuery } from '@analogjs/router/query';
+
+@Component({
+  standalone: true,
+  template: `
+    @if (query.isPending()) {
+      Loading...
+    } @else if (query.data(); as data) {
+      <p>{{ data.message }}</p>
+    }
+  `,
+})
+export default class QueryPageComponent {
+  private readonly http = inject(HttpClient);
+
+  readonly query = injectQuery(() => ({
+    queryKey: ['echo'],
+    queryFn: () =>
+      lastValueFrom(this.http.get<{ message: string }>('/api/v1/echo')),
+  }));
+}
+```

@@ -14,6 +14,7 @@ import {
   withDebugRoutes,
   requestContextInterceptor,
 } from '@analogjs/router';
+import { provideAnalogQuery, QueryClient } from '@analogjs/router/query';
 import { withNavigationErrorHandler } from '@angular/router';
 
 const fallbackRoutes = [
@@ -31,6 +32,7 @@ export const appConfig: ApplicationConfig = {
       withFetch(),
       withInterceptors([requestContextInterceptor]),
     ),
+    provideAnalogQuery(new QueryClient()),
     ...(import.meta.env.SSR ? [] : [provideClientHydration(withEventReplay())]),
   ],
 };

@@ -1,4 +1,9 @@
-import { Component, computed, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  signal,
+} from '@angular/core';
 import { FormAction } from '@analogjs/router';
 
 import type {
@@ -35,6 +40,7 @@ function isContactActionError(value: unknown): value is ContactActionError {
   selector: 'analogjs-contact-page',
   standalone: true,
   imports: [FormAction],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h3>Contact Form</h3>
 
@@ -45,8 +51,8 @@ function isContactActionError(value: unknown): value is ContactActionError {
     } @else {
       <form
         method="post"
-        (onSuccess)="onSuccess($event)"
-        (onError)="onError($event)"
+        (onSuccess)="handleSuccess($event)"
+        (onError)="handleError($event)"
       >
         <div>
           <label for="name">Name</label>
@@ -59,9 +65,9 @@ function isContactActionError(value: unknown): value is ContactActionError {
         <button class="button" type="submit">Send</button>
       </form>
 
-      @if (errorList().length) {
+      @if (hasErrors()) {
         <div id="contact-errors">
-          @for (err of errorList(); track err) {
+          @for (err of errorMessages(); track err) {
             <p>{{ err }}</p>
           }
         </div>
@@ -70,12 +76,15 @@ function isContactActionError(value: unknown): value is ContactActionError {
   `,
 })
 export default class ContactComponent {
-  submitted = signal(false);
-  contactName = signal('');
-  errors = signal<ContactActionError>([]);
-  errorList = computed(() => this.errors().map((issue) => issue.message));
+  readonly submitted = signal(false);
+  readonly contactName = signal('');
+  readonly errors = signal<ContactActionError>([]);
+  readonly errorMessages = computed(() =>
+    this.errors().map((issue) => issue.message),
+  );
+  readonly hasErrors = computed(() => this.errorMessages().length > 0);
 
-  onSuccess(result: unknown) {
+  handleSuccess(result: unknown) {
     if (!isContactActionSuccess(result)) {
       return;
     }
@@ -85,7 +94,7 @@ export default class ContactComponent {
     this.submitted.set(true);
   }
 
-  onError(result: unknown) {
+  handleError(result: unknown) {
     this.errors.set(isContactActionError(result) ? result : []);
   }
 }

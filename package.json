@@ -64,6 +64,8 @@
     "@mdx-js/react": "3.1.1",
     "@nx/angular": "22.6.0",
     "@nx/devkit": "22.6.0",
+    "@tanstack/angular-query-experimental": "^5.95.0",
+    "@tanstack/query-core": "^5.95.0",
     "ajv-formats": "^3.0.1",
     "defu": "^6.1.4",
     "destr": "^2.0.5",
