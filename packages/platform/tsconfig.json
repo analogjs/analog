@@ -10,7 +10,6 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "moduleResolution": "bundler",
-    "baseUrl": ".",
     "lib": ["dom", "es2022"]
   },
   "files": [],
