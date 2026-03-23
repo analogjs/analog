@@ -1,5 +1,4 @@
 import {
-  convertNxGenerator,
   formatFiles,
   generateFiles,
   getWorkspaceLayout,
@@ -56,7 +55,7 @@ function addFiles(tree: Tree, options: NormalizedSchema) {
   generateFiles(tree, join(__dirname, 'files'), pageDir, templateOptions);
 }
 
-export async function analogPageGenerator(
+async function analogPageGenerator(
   tree: Tree,
   options: AnalogPageGeneratorSchema,
 ): Promise<void> {
@@ -70,11 +69,5 @@ export async function analogPageGenerator(
 
   await formatFiles(tree);
 }
-
-export const analogPageGeneratorSchematic: ReturnType<
-  typeof convertNxGenerator
-> = convertNxGenerator(analogPageGenerator) as ReturnType<
-  typeof convertNxGenerator
->;
 
 export default analogPageGenerator;

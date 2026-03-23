@@ -43,7 +43,7 @@ function addFiles(
   );
 }
 
-export async function setupVitestGenerator(
+async function setupVitestGenerator(
   tree: Tree,
   options: SetupVitestGeneratorSchema,
 ): Promise<() => void> {
