@@ -11,6 +11,8 @@ import { createAngularMemoryPlugin } from './plugins/angular-memory-plugin';
 import { downlevelPlugin } from './plugins/downlevel-plugin';
 import { getBuildApplicationFunction } from './devkit';
 
+const _require = createRequire(import.meta.url);
+
 export enum ResultKind {
   Failure,
   Full,
@@ -195,7 +197,6 @@ function findIncludes(options: {
   include: string[];
   exclude: string[];
 }) {
-  const _require = createRequire(import.meta.url);
   const { normalizePath } = _require('vite');
 
   // Normalize project root path to ensure consistent path separators across platforms
