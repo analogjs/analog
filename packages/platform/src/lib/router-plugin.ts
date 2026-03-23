@@ -31,9 +31,11 @@ export function routerPlugin(options?: Options): Plugin[] {
   // glob patterns, and key generation all compare against the same shape.
   const normalizeWatchedDir = (dir: string) => {
     const normalizedDir = normalizePath(
-      dir.startsWith('/')
-        ? `${workspaceRoot}${dir}`
-        : resolve(workspaceRoot, dir),
+      dir.startsWith(`${workspaceRoot}/`) || dir === workspaceRoot
+        ? dir
+        : dir.startsWith('/')
+          ? `${workspaceRoot}${dir}`
+          : resolve(workspaceRoot, dir),
     );
     return normalizedDir.endsWith('/')
       ? normalizedDir.slice(0, -1)
