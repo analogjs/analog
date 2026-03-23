@@ -37,8 +37,8 @@ jobs:
   create-analog:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-node@v3
-      - run: npm install --global corepack@0.31.0
+      - uses: actions/setup-node@v4
+      - run: npm install --global corepack@0.34.6
       - run: corepack enable
       - run: npm --version
       - name: Create Analog Application
@@ -54,7 +54,7 @@ jobs:
   create-analog-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
       - run: npm --version
       - name: Create Analog Application
         run: npm create analog@${{ inputs.analog_build_tag }} analog-app -- --skipTailwind --template latest
@@ -69,8 +69,8 @@ jobs:
   create-nx-workspace:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-node@v3
-      - run: npm install --global corepack@0.31.0
+      - uses: actions/setup-node@v4
+      - run: npm install --global corepack@0.34.6
       - run: corepack enable
       - run: npm --version
       - name: Create Nx Workspace
@@ -87,8 +87,8 @@ jobs:
   migrate-angular-app:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-node@v3
-      - run: npm install --global corepack@0.31.0
+      - uses: actions/setup-node@v4
+      - run: npm install --global corepack@0.34.6
       - run: corepack enable
       - run: npm --version
       - name: Create Angular App
