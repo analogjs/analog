@@ -59,10 +59,12 @@ async function vitestBuilder(
     }
   };
 
+  // .once() prevents listener stacking across repeated Nx executor runs
+  // that share the same host process (avoids MaxListenersExceededWarning).
   if (options.watch) {
-    process.on('SIGINT', processExit);
-    process.on('SIGTERM', processExit);
-    process.on('exit', processExit);
+    process.once('SIGINT', processExit);
+    process.once('SIGTERM', processExit);
+    process.once('exit', processExit);
   }
 
   // vitest sets the exitCode = 1 when code coverage isn't met
