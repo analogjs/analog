@@ -1,5 +1,10 @@
 {
   "name": "tanstack-query-app",
   "private": true,
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.2",
+    "daisyui": "^5.5.19",
+    "tailwindcss": "^4.2.2"
+  }
 }

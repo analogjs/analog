@@ -26,6 +26,7 @@ export const appConfig: ApplicationConfig = {
       withFetch(),
       withInterceptors([requestContextInterceptor]),
     ),
+    provideClientHydration(withEventReplay()),
     provideTanStackQuery(new QueryClient()),
     {
       provide: ENVIRONMENT_INITIALIZER,
@@ -48,6 +49,5 @@ export const appConfig: ApplicationConfig = {
         }
       },
     },
-    ...(import.meta.env.SSR ? [] : [provideClientHydration(withEventReplay())]),
   ],
 };

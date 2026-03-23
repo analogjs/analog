@@ -45,39 +45,143 @@ function getIssueMessage(error: unknown): string {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <h3>Optimistic Updates Demo</h3>
+    <div class="space-y-6">
+      <section
+        class="rounded-box border border-base-300 bg-base-100 p-6 shadow-lg"
+      >
+        <div
+          class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+        >
+          <div class="space-y-3">
+            <div class="badge badge-success badge-outline">
+              Optimistic update demo
+            </div>
+            <div class="space-y-2">
+              <h1 class="text-3xl font-black tracking-tight">
+                Instant UI feedback with rollback support
+              </h1>
+              <p class="max-w-2xl text-base-content/70">
+                Apply the optimistic comment locally, then either reconcile it
+                with the server response or roll it back when validation fails.
+              </p>
+            </div>
+          </div>
 
-    @if (commentsQuery.isPending()) {
-      <p id="comments-loading">Loading comments...</p>
-    } @else if (commentsQuery.error()) {
-      <p id="comments-error">Unable to load comments.</p>
-    } @else {
-      <p id="comments-fetch-count">{{ fetchCount() }}</p>
+          <div class="stats border border-base-300 bg-base-200 shadow-sm">
+            <div class="stat">
+              <div class="stat-title">Fetch count</div>
+              <div id="comments-fetch-count" class="stat-value text-primary">
+                {{ fetchCount() }}
+              </div>
+            </div>
+            <div class="stat">
+              <div class="stat-title">Scope</div>
+              <div class="stat-value text-lg capitalize">{{ scope() }}</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <ul id="comments-list">
-        @for (comment of comments(); track comment.id) {
-          <li [attr.data-optimistic]="comment.optimistic ?? null">
-            {{ comment.text }}
-          </li>
-        }
-      </ul>
-    }
+      <div class="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <section
+          class="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm"
+        >
+          <div class="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-semibold">Comment feed</h2>
+              <p class="text-sm text-base-content/70">
+                Optimistic items are tagged until the server settles.
+              </p>
+            </div>
+            <div class="badge badge-outline">cache-first UX</div>
+          </div>
 
-    <button id="add-comment" type="button" (click)="addComment('Great post!')">
-      Add Comment
-    </button>
-    <button id="add-bad-comment" type="button" (click)="addComment('')">
-      Add Bad Comment
-    </button>
+          @if (commentsQuery.isPending()) {
+            <div id="comments-loading" class="alert alert-info">
+              <span>Loading comments...</span>
+            </div>
+          } @else if (commentsQuery.error()) {
+            <div id="comments-error" class="alert alert-error">
+              <span>Unable to load comments.</span>
+            </div>
+          } @else {
+            <ul
+              id="comments-list"
+              class="menu gap-2 rounded-box bg-base-200 p-3"
+            >
+              @for (comment of comments(); track comment.id) {
+                <li [attr.data-optimistic]="comment.optimistic ?? null">
+                  <div
+                    class="flex items-center justify-between gap-3 rounded-lg bg-base-100 px-4 py-3 shadow-sm"
+                  >
+                    <span>{{ comment.text }}</span>
+                    @if (comment.optimistic) {
+                      <span class="badge badge-warning badge-outline">
+                        optimistic
+                      </span>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </section>
 
-    @if (mutationError()) {
-      <p id="mutation-error">{{ mutationError() }}</p>
-    }
+        <aside class="space-y-4">
+          <section
+            class="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm"
+          >
+            <h2 class="text-xl font-semibold">Try the mutation</h2>
+            <p class="mt-2 text-sm text-base-content/70">
+              Submit a valid comment to keep the optimistic item, or trigger a
+              validation failure to watch the rollback state update.
+            </p>
 
-    <p id="rolled-back" [hidden]="!rolledBack()">rolled-back</p>
-    <p id="optimistic-applied" [hidden]="!optimisticApplied()">
-      optimistic-applied
-    </p>
+            <div class="mt-5 flex flex-col gap-3 sm:flex-row lg:flex-col">
+              <button
+                id="add-comment"
+                type="button"
+                class="btn btn-primary"
+                (click)="addComment('Great post!')"
+              >
+                Add Comment
+              </button>
+              <button
+                id="add-bad-comment"
+                type="button"
+                class="btn btn-outline btn-error"
+                (click)="addComment('')"
+              >
+                Add Bad Comment
+              </button>
+            </div>
+          </section>
+
+          @if (mutationError()) {
+            <div id="mutation-error" class="alert alert-error shadow-sm">
+              <span>{{ mutationError() }}</span>
+            </div>
+          }
+
+          <div class="flex flex-wrap gap-2">
+            <p
+              id="rolled-back"
+              class="badge badge-error"
+              [hidden]="!rolledBack()"
+            >
+              rolled-back
+            </p>
+            <p
+              id="optimistic-applied"
+              class="badge badge-warning"
+              [hidden]="!optimisticApplied()"
+            >
+              optimistic-applied
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
   `,
 })
 export default class TanStackQueryOptimisticPageComponent {

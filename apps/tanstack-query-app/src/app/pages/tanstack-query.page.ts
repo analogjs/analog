@@ -42,38 +42,130 @@ function getIssueMessage(error: unknown): string {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <h3>TanStack Query</h3>
+    <div class="space-y-6">
+      <section
+        class="rounded-box border border-base-300 bg-base-100 p-6 shadow-lg"
+      >
+        <div
+          class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
+        >
+          <div class="space-y-3">
+            <div class="badge badge-primary badge-outline">Basic demo</div>
+            <div class="space-y-2">
+              <h1 class="text-3xl font-black tracking-tight">
+                Query hydration and mutation invalidation
+              </h1>
+              <p class="max-w-2xl text-base-content/70">
+                This route renders todos on the server, hydrates them on the
+                client, then invalidates the query after a successful mutation.
+              </p>
+            </div>
+          </div>
 
-    <p id="todo-scope">{{ scope() }}</p>
+          <div
+            class="stats stats-vertical border border-base-300 bg-base-200 shadow-sm sm:stats-horizontal"
+          >
+            <div class="stat">
+              <div class="stat-title">Scope</div>
+              <div id="todo-scope" class="stat-value text-lg capitalize">
+                {{ scope() }}
+              </div>
+              <div class="stat-desc">Isolates request state per test run</div>
+            </div>
+            <div class="stat">
+              <div class="stat-title">Fetch count</div>
+              <div id="todo-fetch-count" class="stat-value text-primary">
+                {{ fetchCount() }}
+              </div>
+              <div class="stat-desc">Should stay hydrated on first paint</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    @if (todosQuery.isPending()) {
-      <p id="todo-loading">Loading todos...</p>
-    } @else if (todosQuery.error()) {
-      <p id="todo-query-error">Unable to load todos.</p>
-    } @else {
-      <p id="todo-fetch-count">{{ fetchCount() }}</p>
+      <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <section
+          class="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm"
+        >
+          <div class="mb-4 flex items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-semibold">Todos</h2>
+              <p class="text-sm text-base-content/70">
+                Server data stays visible while mutations update the cache.
+              </p>
+            </div>
+            <div class="badge badge-neutral badge-outline">SSR + mutation</div>
+          </div>
 
-      <ul id="todo-list">
-        @for (todo of todos(); track todo.id) {
-          <li>{{ todo.title }}</li>
-        }
-      </ul>
-    }
+          @if (todosQuery.isPending()) {
+            <div id="todo-loading" class="alert alert-info">
+              <span>Loading todos...</span>
+            </div>
+          } @else if (todosQuery.error()) {
+            <div id="todo-query-error" class="alert alert-error">
+              <span>Unable to load todos.</span>
+            </div>
+          } @else {
+            <ul id="todo-list" class="menu gap-2 rounded-box bg-base-200 p-3">
+              @for (todo of todos(); track todo.id) {
+                <li>
+                  <div
+                    class="flex items-center justify-between rounded-lg bg-base-100 px-4 py-3 shadow-sm"
+                  >
+                    <span>{{ todo.title }}</span>
+                    <span class="badge badge-ghost">cached</span>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </section>
 
-    <button
-      id="add-todo"
-      type="button"
-      (click)="createTodo('Ship query support')"
-    >
-      Add Todo
-    </button>
-    <button id="add-empty-todo" type="button" (click)="createTodo('')">
-      Add Empty Todo
-    </button>
+        <aside class="space-y-4">
+          <section
+            class="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm"
+          >
+            <h2 class="text-xl font-semibold">Mutation actions</h2>
+            <p class="mt-2 text-sm text-base-content/70">
+              Add a valid todo to trigger an invalidation or submit an empty
+              title to surface server validation feedback.
+            </p>
 
-    @if (mutationError()) {
-      <p id="todo-mutation-error">{{ mutationError() }}</p>
-    }
+            <div class="mt-5 flex flex-col gap-3 sm:flex-row lg:flex-col">
+              <button
+                id="add-todo"
+                type="button"
+                class="btn btn-primary"
+                (click)="createTodo('Ship query support')"
+              >
+                Add Todo
+              </button>
+              <button
+                id="add-empty-todo"
+                type="button"
+                class="btn btn-outline btn-error"
+                (click)="createTodo('')"
+              >
+                Add Empty Todo
+              </button>
+            </div>
+          </section>
+
+          @if (mutationError()) {
+            <div id="todo-mutation-error" class="alert alert-error shadow-sm">
+              <span>{{ mutationError() }}</span>
+            </div>
+          }
+
+          <section
+            class="rounded-box border border-dashed border-base-300 bg-base-100 p-6 text-sm text-base-content/70"
+          >
+            The UI keeps the network state visible for demos and e2e tests: the
+            list, fetch count, and mutation errors all use stable IDs.
+          </section>
+        </aside>
+      </div>
+    </div>
   `,
 })
 export default class TanStackQueryPageComponent {

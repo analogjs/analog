@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
+import tailwindcss from '@tailwindcss/vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
 
@@ -18,6 +19,7 @@ export default defineConfig(({ mode }) => {
       include: ['@angular/forms'],
     },
     plugins: [
+      tailwindcss(),
       analog({
         apiPrefix: 'api',
       }),
