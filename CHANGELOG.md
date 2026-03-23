@@ -1,3 +1,9 @@
+# [3.0.0-alpha.12](https://github.com/analogjs/analog/compare/v3.0.0-alpha.11...v3.0.0-alpha.12) (2026-03-23)
+
+### Bug Fixes
+
+- **content:** align md4x and content tests with local renderer APIs ([eff74be](https://github.com/analogjs/analog/commit/eff74be679b0e62410c1da362d2bc6be3867cf7d))
+
 # [3.0.0-alpha.11](https://github.com/analogjs/analog/compare/v3.0.0-alpha.10...v3.0.0-alpha.11) (2026-03-23)
 
 ### Features
