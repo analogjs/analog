@@ -1,5 +1,6 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import type { H3Event } from 'nitro/h3';
+import { getRequestURL } from 'nitro/h3';
 import { fail, json } from './actions';
 import { parseRequestData, parseSearchParams } from './parse-request-data';
 import { validateWithSchema } from './validate';
@@ -81,8 +82,12 @@ function warnOnOutputIssues(issues: ReadonlyArray<StandardSchemaV1.Issue>) {
   );
 }
 
-function getRequestUrl(event: H3Event) {
-  return (event as H3Event & { request: Request }).request.url;
+function getRequestUrl(event: H3Event): string {
+  try {
+    return getRequestURL(event).href;
+  } catch {
+    return (event as H3Event & { request: Request }).request.url;
+  }
 }
 
 /**

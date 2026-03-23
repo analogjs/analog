@@ -1,5 +1,6 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import type { H3Event, H3EventContext } from 'nitro/h3';
+import { getRequestURL } from 'nitro/h3';
 import type { $Fetch } from 'nitro/types';
 import { fail } from './actions';
 import { parseSearchParams } from './parse-request-data';
@@ -32,12 +33,13 @@ export interface PageLoadContext<
 export interface DefinePageLoadOptions<
   TParamsSchema extends OptionalSchema = undefined,
   TQuerySchema extends OptionalSchema = undefined,
+  TResult = unknown,
 > {
   params?: TParamsSchema;
   query?: TQuerySchema;
   handler: (
     context: PageLoadContext<TParamsSchema, TQuerySchema>,
-  ) => Promise<unknown>;
+  ) => Promise<TResult> | TResult;
 }
 
 /**
@@ -71,15 +73,16 @@ export interface DefinePageLoadOptions<
 export function definePageLoad<
   TParamsSchema extends OptionalSchema = undefined,
   TQuerySchema extends OptionalSchema = undefined,
+  TResult = unknown,
 >(
-  options: DefinePageLoadOptions<TParamsSchema, TQuerySchema>,
+  options: DefinePageLoadOptions<TParamsSchema, TQuerySchema, TResult>,
 ): (ctx: {
   params: H3EventContext['params'];
   req: NodeContext['req'];
   res: NonNullable<NodeContext['res']>;
   fetch: $Fetch;
   event: H3Event;
-}) => Promise<unknown> {
+}) => Promise<TResult | Response> {
   type Params = InferSchema<TParamsSchema, H3EventContext['params']>;
   type Query = InferSchema<
     TQuerySchema,
@@ -95,10 +98,13 @@ export function definePageLoad<
   }) => {
     let params: unknown = ctx.params ?? {};
 
-    const url = new URL(
-      (ctx.event as H3Event & { request: Request }).request.url,
-      'http://localhost',
-    );
+    let requestUrl: string;
+    try {
+      requestUrl = getRequestURL(ctx.event).href;
+    } catch {
+      requestUrl = (ctx.event as H3Event & { request: Request }).request.url;
+    }
+    const url = new URL(requestUrl, 'http://localhost');
     let query: unknown = parseSearchParams(url.searchParams);
 
     // Validate params

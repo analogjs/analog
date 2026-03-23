@@ -1,3 +1,5 @@
+import { readBody, readFormData, toRequest as h3ToRequest } from 'nitro/h3';
+
 type RequestEntryValue = string | File;
 type ParsedRequestValue = RequestEntryValue | RequestEntryValue[];
 
@@ -21,20 +23,12 @@ function appendEntry(
   target[key] = [existingValue, value];
 }
 
-function toRecord(
-  entries: Iterable<[string, RequestEntryValue]>,
-): Record<string, ParsedRequestValue> {
-  const result: Record<string, ParsedRequestValue> = {};
-
-  for (const [key, value] of entries) {
-    appendEntry(result, key, value);
+function getRequest(event: { method: string; headers: Headers }): Request {
+  const maybeRequest = (event as unknown as { request?: Request }).request;
+  if (maybeRequest) {
+    return maybeRequest;
   }
-
-  return result;
-}
-
-function getRequest(event: { method: string; headers: Headers }) {
-  return (event as unknown as { request: Request }).request;
+  return h3ToRequest(event as Parameters<typeof h3ToRequest>[0]);
 }
 
 function getContentType(event: { method: string; headers: Headers }): string {
@@ -85,6 +79,8 @@ export async function parseRequestData(event: {
   headers: Headers;
 }): Promise<unknown> {
   const request = getRequest(event);
+  const httpEvent = event as unknown as Parameters<typeof readBody>[0];
+  const h3Event = event as unknown as Parameters<typeof readFormData>[0];
   const method = event.method.toUpperCase();
 
   if (method === 'GET' || method === 'HEAD') {
@@ -96,19 +92,35 @@ export async function parseRequestData(event: {
 
   if (isJsonContentType(contentType)) {
     try {
-      return await request.json();
+      return (await readBody(httpEvent)) ?? {};
     } catch {
-      return {};
+      try {
+        return await request.json();
+      } catch {
+        return {};
+      }
     }
   }
 
   if (isFormContentType(contentType)) {
-    return parseFormData(await request.formData());
+    try {
+      return parseFormData(await readFormData(h3Event));
+    } catch {
+      if (typeof request.formData === 'function') {
+        return parseFormData(await request.formData());
+      }
+
+      return {};
+    }
   }
 
   try {
-    return await request.json();
+    return (await readBody(httpEvent)) ?? {};
   } catch {
-    return {};
+    try {
+      return await request.json();
+    } catch {
+      return {};
+    }
   }
 }
