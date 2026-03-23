@@ -45,7 +45,7 @@ export interface DefinePageLoadOptions<
  * Standard Schema validation for route params and query.
  *
  * Follows the same validation patterns as `defineAction` and
- * `defineApiRoute`: validates before invoking the handler,
+ * `defineServerRoute`: validates before invoking the handler,
  * returns `fail(422, issues)` on validation failure.
  *
  * @example

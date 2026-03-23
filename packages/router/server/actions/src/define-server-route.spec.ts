@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
-import { defineApiRoute } from './define-api-route';
+import { defineServerRoute } from './define-server-route';
 
 function createMockSchema<T>(
   validator: (value: unknown) => StandardSchemaV1.Result<T>,
@@ -49,7 +49,7 @@ function createMockEvent(
   } as any;
 }
 
-describe('defineApiRoute', () => {
+describe('defineServerRoute', () => {
   it('should validate POST body and pass typed data to handler', async () => {
     const input = createMockSchema<{ name: string }>((value) => ({
       value: value as { name: string },
@@ -57,7 +57,7 @@ describe('defineApiRoute', () => {
 
     const handler = vi.fn(({ data }) => ({ id: '1', name: data.name }));
 
-    const route = defineApiRoute({ input, handler });
+    const route = defineServerRoute({ input, handler });
     const event = createMockEvent('POST', { name: 'Alice' });
     const response = await route(event);
 
@@ -76,7 +76,7 @@ describe('defineApiRoute', () => {
 
     const handler = vi.fn(() => ({}));
 
-    const route = defineApiRoute({ input, handler });
+    const route = defineServerRoute({ input, handler });
     const event = createMockEvent('POST', {});
     const response = await route(event);
 
@@ -95,7 +95,7 @@ describe('defineApiRoute', () => {
       query: data.search,
     }));
 
-    const route = defineApiRoute({ input, handler });
+    const route = defineServerRoute({ input, handler });
     const event = createMockEvent(
       'GET',
       undefined,
@@ -115,7 +115,7 @@ describe('defineApiRoute', () => {
     });
     const handler = vi.fn(({ params }) => ({ id: params.id }));
 
-    const route = defineApiRoute({ params, handler });
+    const route = defineServerRoute({ params, handler });
     const response = await route(
       createMockEvent(
         'GET',
@@ -137,7 +137,7 @@ describe('defineApiRoute', () => {
     }));
     const handler = vi.fn(() => ({}));
 
-    const route = defineApiRoute({ params, handler });
+    const route = defineServerRoute({ params, handler });
     const response = await route(
       createMockEvent(
         'GET',
@@ -165,7 +165,7 @@ describe('defineApiRoute', () => {
       queryPage: query.page,
     }));
 
-    const route = defineApiRoute({ query, handler });
+    const route = defineServerRoute({ query, handler });
     const response = await route(
       createMockEvent(
         'GET',
@@ -191,7 +191,7 @@ describe('defineApiRoute', () => {
     }));
     const formBody = new URLSearchParams({ published: 'true' });
 
-    const route = defineApiRoute({ body, handler });
+    const route = defineServerRoute({ body, handler });
     const response = await route(
       createMockEvent('POST', formBody, 'application/x-www-form-urlencoded'),
     );
@@ -218,7 +218,7 @@ describe('defineApiRoute', () => {
       body,
     }));
 
-    const route = defineApiRoute({ query, body, handler });
+    const route = defineServerRoute({ query, body, handler });
     const response = await route(
       createMockEvent(
         'POST',
@@ -243,7 +243,7 @@ describe('defineApiRoute', () => {
       method: event.method,
     }));
 
-    const route = defineApiRoute({ handler });
+    const route = defineServerRoute({ handler });
     const event = createMockEvent('GET');
     const response = await route(event);
 
@@ -266,7 +266,7 @@ describe('defineApiRoute', () => {
 
     const handler = vi.fn(() => ({ name: 'Alice' }));
 
-    const route = defineApiRoute({ output, handler });
+    const route = defineServerRoute({ output, handler });
     const event = createMockEvent('GET');
     await route(event);
 
@@ -286,7 +286,7 @@ describe('defineApiRoute', () => {
     });
     const handler = vi.fn(() => routeResponse);
 
-    const route = defineApiRoute({ handler });
+    const route = defineServerRoute({ handler });
     const response = await route(createMockEvent('POST', { name: 'Alice' }));
 
     expect(response).toBe(routeResponse);
@@ -306,7 +306,7 @@ describe('defineApiRoute', () => {
       /* noop */
     });
 
-    const route = defineApiRoute({
+    const route = defineServerRoute({
       output,
       handler: () => new Response('ok', { status: 202 }),
     });
@@ -334,7 +334,7 @@ describe('defineApiRoute', () => {
 
     const handler = vi.fn(() => ({ name: 'Alice' }));
 
-    const route = defineApiRoute({ output, handler });
+    const route = defineServerRoute({ output, handler });
     const event = createMockEvent('GET');
     await route(event);
 
@@ -351,7 +351,7 @@ describe('defineApiRoute', () => {
 
     const handler = vi.fn(({ data }) => ({ updated: true, name: data.name }));
 
-    const route = defineApiRoute({ input, handler });
+    const route = defineServerRoute({ input, handler });
     const event = createMockEvent('PUT', { name: 'Updated' });
     const response = await route(event);
 
@@ -367,7 +367,7 @@ describe('defineApiRoute', () => {
 
     const handler = vi.fn(({ data }) => ({ patched: true, ...data }));
 
-    const route = defineApiRoute({ input, handler });
+    const route = defineServerRoute({ input, handler });
     const event = createMockEvent('PATCH', { status: 'active' });
     await route(event);
 
@@ -377,7 +377,7 @@ describe('defineApiRoute', () => {
   it('should handle DELETE with no input schema', async () => {
     const handler = vi.fn(() => ({ deleted: true }));
 
-    const route = defineApiRoute({ handler });
+    const route = defineServerRoute({ handler });
     const event = createMockEvent('DELETE');
     const response = await route(event);
 
@@ -393,7 +393,7 @@ describe('defineApiRoute', () => {
 
     const handler = vi.fn(({ data }) => data);
 
-    const route = defineApiRoute({ input, handler });
+    const route = defineServerRoute({ input, handler });
     const event = createMockEvent(
       'GET',
       undefined,
@@ -412,7 +412,7 @@ describe('defineApiRoute', () => {
 
     const handler = vi.fn(({ data }) => data);
 
-    const route = defineApiRoute({ input, handler });
+    const route = defineServerRoute({ input, handler });
     const event = createMockEvent(
       'GET',
       undefined,
@@ -430,7 +430,7 @@ describe('defineApiRoute', () => {
     }));
 
     const handler = vi.fn(({ data }) => data);
-    const route = defineApiRoute({ input, handler });
+    const route = defineServerRoute({ input, handler });
 
     await route(
       createMockEvent(
@@ -454,7 +454,7 @@ describe('defineApiRoute', () => {
 
     const handler = vi.fn(({ data }) => data);
 
-    const route = defineApiRoute({ input, handler });
+    const route = defineServerRoute({ input, handler });
     const event = createMockEvent('POST', { id: '123' });
     await route(event);
 
@@ -473,7 +473,7 @@ describe('defineApiRoute', () => {
       /* noop */
     });
 
-    const route = defineApiRoute({ output, handler: () => ({}) });
+    const route = defineServerRoute({ output, handler: () => ({}) });
     await route(createMockEvent('GET'));
 
     expect(warnSpy.mock.calls[0][0]).toContain('user.name');
@@ -489,7 +489,7 @@ describe('defineApiRoute', () => {
 
     const handler = vi.fn(({ data }) => data);
 
-    const route = defineApiRoute({ input, handler });
+    const route = defineServerRoute({ input, handler });
     const event = {
       method: 'POST',
       headers: new Headers({ 'content-type': 'text/plain' }),
@@ -514,7 +514,7 @@ describe('defineApiRoute', () => {
     formBody.append('role', 'admin');
     formBody.append('role', 'editor');
 
-    const route = defineApiRoute({ input, handler });
+    const route = defineServerRoute({ input, handler });
     await route(
       createMockEvent('POST', formBody, 'application/x-www-form-urlencoded'),
     );
@@ -549,7 +549,7 @@ describe('defineApiRoute', () => {
       request,
     } as any;
 
-    const route = defineApiRoute({ input, handler });
+    const route = defineServerRoute({ input, handler });
     await route(event);
 
     expect(handler.mock.calls[0][0].data.files).toHaveLength(2);
@@ -561,7 +561,7 @@ describe('defineApiRoute', () => {
   it('should pass event object to handler', async () => {
     const handler = vi.fn(({ event }) => ({ method: event.method }));
 
-    const route = defineApiRoute({ handler });
+    const route = defineServerRoute({ handler });
     const event = createMockEvent('POST', { test: true });
     await route(event);
 
@@ -575,7 +575,7 @@ describe('defineApiRoute', () => {
 
     const handler = vi.fn(({ data }) => data);
 
-    const route = defineApiRoute({ input, handler });
+    const route = defineServerRoute({ input, handler });
     const event = createMockEvent(
       'HEAD',
       undefined,

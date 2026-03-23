@@ -4,7 +4,7 @@ import { fail, json } from './actions';
 import { parseRequestData, parseSearchParams } from './parse-request-data';
 import { validateWithSchema } from './validate';
 
-export type DefineApiRouteResult = Response | unknown;
+export type DefineServerRouteResult = Response | unknown;
 type OptionalSchema = StandardSchemaV1 | undefined;
 type InferSchema<
   TSchema extends OptionalSchema,
@@ -28,7 +28,7 @@ type ResolveDataSchema<
       ? StandardSchemaV1.InferOutput<TBody>
       : unknown;
 
-export interface DefineApiRouteContext<
+export interface DefineServerRouteContext<
   TInput extends StandardSchemaV1 | undefined = undefined,
   TQuery extends StandardSchemaV1 | undefined = undefined,
   TBody extends StandardSchemaV1 | undefined = undefined,
@@ -41,13 +41,13 @@ export interface DefineApiRouteContext<
   event: H3Event;
 }
 
-export interface DefineApiRouteOptions<
+export interface DefineServerRouteOptions<
   TInput extends StandardSchemaV1 | undefined = undefined,
   TOutput extends StandardSchemaV1 | undefined = undefined,
   TQuery extends StandardSchemaV1 | undefined = undefined,
   TBody extends StandardSchemaV1 | undefined = undefined,
   TParams extends StandardSchemaV1 | undefined = undefined,
-  TResult extends DefineApiRouteResult = DefineApiRouteResult,
+  TResult extends DefineServerRouteResult = DefineServerRouteResult,
 > {
   input?: TInput;
   query?: TQuery;
@@ -55,7 +55,7 @@ export interface DefineApiRouteOptions<
   params?: TParams;
   output?: TOutput;
   handler: (
-    context: DefineApiRouteContext<TInput, TQuery, TBody, TParams>,
+    context: DefineServerRouteContext<TInput, TQuery, TBody, TParams>,
   ) => Promise<TResult> | TResult;
 }
 
@@ -69,7 +69,7 @@ function isDevEnvironment() {
 
 function warnOnOutputIssues(issues: ReadonlyArray<StandardSchemaV1.Issue>) {
   console.warn(
-    `[analog] API route output validation failed:\n` +
+    `[analog] Server route output validation failed:\n` +
       issues
         .map((i) => {
           const path = i.path
@@ -97,7 +97,7 @@ function getRequestUrl(event: H3Event) {
  *
  * @example
  * ```typescript
- * import { defineApiRoute } from '@analogjs/router/server/actions';
+ * import { defineServerRoute } from '@analogjs/router/server/actions';
  * import * as v from 'valibot';
  *
  * const Input = v.object({
@@ -109,7 +109,7 @@ function getRequestUrl(event: H3Event) {
  *   name: v.string(),
  * });
  *
- * export default defineApiRoute({
+ * export default defineServerRoute({
  *   input: Input,
  *   output: Output,
  *   handler: async ({ data }) => {
@@ -119,15 +119,15 @@ function getRequestUrl(event: H3Event) {
  * });
  * ```
  */
-export function defineApiRoute<
+export function defineServerRoute<
   TInput extends StandardSchemaV1 | undefined = undefined,
   TOutput extends StandardSchemaV1 | undefined = undefined,
   TQuery extends StandardSchemaV1 | undefined = undefined,
   TBody extends StandardSchemaV1 | undefined = undefined,
   TParams extends StandardSchemaV1 | undefined = undefined,
-  TResult extends DefineApiRouteResult = DefineApiRouteResult,
+  TResult extends DefineServerRouteResult = DefineServerRouteResult,
 >(
-  options: DefineApiRouteOptions<
+  options: DefineServerRouteOptions<
     TInput,
     TOutput,
     TQuery,
