@@ -34,18 +34,7 @@ export function angularVitestPlugin(): Plugin {
         (/fesm2022/.test(id) && _code.includes('async ')) ||
         _code.includes('@angular/cdk')
       ) {
-        if (vite.rolldownVersion) {
-          const { code, map } = await vite.transformWithOxc(_code, id, {
-            lang: 'js',
-            target: 'es2016',
-            sourcemap: true,
-          });
-
-          return {
-            code,
-            map,
-          };
-        } else {
+        if (!vite.rolldownVersion) {
           const { code, map } = await vite.transformWithEsbuild(_code, id, {
             loader: 'js',
             format: 'esm',
