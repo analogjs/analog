@@ -1,6 +1,6 @@
 import * as vite from 'vite';
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { relative, resolve } from 'node:path';
 import { globSync } from 'tinyglobby';
 
 import type { WithShikiHighlighterOptions } from './content/shiki/options.js';
@@ -42,6 +42,9 @@ export function contentPlugin(
   options?: Options,
 ): vite.Plugin[] {
   const cache = new Map<string, Content>();
+  // The content list placeholder can be transformed several times during serve.
+  // Caching the discovered markdown paths keeps those repeat passes cheap.
+  let contentFilesListCache: string[] | undefined;
 
   let markedHighlighter: MarkedContentHighlighter;
   const workspaceRoot = vite.normalizePath(
@@ -49,6 +52,55 @@ export function contentPlugin(
   );
   let config: vite.UserConfig;
   let root: string;
+  // Keep discovery and invalidation aligned by deriving both from the same
+  // normalized content roots. That way external content dirs participate in
+  // cache busting exactly the same way they participate in glob discovery.
+  // Initialized once in the `config` hook after `root` is resolved — all
+  // inputs (`root`, `workspaceRoot`, `options`) are stable after that point.
+  let contentRootDirs: string[];
+  const normalizeContentDir = (dir: string) => {
+    const normalized = vite.normalizePath(
+      dir.startsWith('/')
+        ? `${workspaceRoot}${dir}`
+        : resolve(workspaceRoot, dir),
+    );
+    return normalized.endsWith('/') ? normalized.slice(0, -1) : normalized;
+  };
+  const initContentRootDirs = () => {
+    contentRootDirs = [
+      vite.normalizePath(`${root}/src/content`),
+      ...(options?.additionalContentDirs || []).map(normalizeContentDir),
+    ];
+  };
+  const discoverContentFilesList = () => {
+    contentFilesListCache ??= globSync(
+      contentRootDirs.map((dir) => `${dir}/**/*.md`),
+      { dot: true },
+    );
+
+    return contentFilesListCache;
+  };
+  const resolveContentModulePath = (module: string) =>
+    vite.normalizePath(
+      module.startsWith('/') ? module : `${workspaceRoot}/${module}`,
+    );
+  const getContentModuleKey = (module: string) => {
+    const absolutePath = resolveContentModulePath(module);
+    const relativeToRoot = vite.normalizePath(relative(root, absolutePath));
+    // `startsWith(root)` is not safe here because sibling directories such as
+    // `/apps/my-app-tools` also start with `/apps/my-app`. A relative path only
+    // represents in-app content when it stays within `root`.
+    const isInApp =
+      !relativeToRoot.startsWith('..') && !relativeToRoot.startsWith('/');
+
+    // Both branches prepend `/` so generated keys are always absolute-
+    // looking (`/src/content/...` for in-app, `/libs/shared/...` for
+    // workspace-external). Downstream consumers like content-files-token
+    // rely on the leading `/` for slug extraction regexes.
+    return isInApp
+      ? `/${relativeToRoot}`
+      : `/${vite.normalizePath(relative(workspaceRoot, absolutePath))}`;
+  };
 
   const contentDiscoveryPlugins: vite.Plugin[] = [
     {
@@ -58,6 +110,7 @@ export function contentPlugin(
         root = vite.normalizePath(
           resolve(workspaceRoot, config.root || '.') || '.',
         );
+        initContentRootDirs();
       },
       // Vite 8 / Rolldown "filtered transform" — the `filter.code` string
       // tells the bundler to skip this handler entirely for modules whose
@@ -70,15 +123,7 @@ export function contentPlugin(
         },
         handler(code) {
           if (code.includes('ANALOG_CONTENT_FILE_LIST')) {
-            const contentFilesList: string[] = globSync(
-              [
-                `${root}/src/content/**/*.md`,
-                ...(options?.additionalContentDirs || []).map(
-                  (glob) => `${workspaceRoot}${glob}/**/*.md`,
-                ),
-              ],
-              { dot: true },
-            );
+            const contentFilesList = discoverContentFilesList();
 
             const eagerImports: string[] = [];
 
@@ -86,9 +131,7 @@ export function contentPlugin(
               // CRITICAL: tinyglobby returns relative paths like "apps/blog-app/src/content/file.md"
               // These MUST be converted to absolute paths for ES module imports
               // Otherwise Node.js treats "apps" as a package name and throws "Cannot find package 'apps'"
-              const absolutePath = module.startsWith('/')
-                ? module
-                : `${workspaceRoot}/${module}`;
+              const absolutePath = resolveContentModulePath(module);
               eagerImports.push(
                 `import { default as analog_module_${index} } from "${absolutePath}?analog-content-list=true";`,
               );
@@ -99,7 +142,7 @@ export function contentPlugin(
               `
               let ANALOG_CONTENT_FILE_LIST = {${contentFilesList.map(
                 (module, index) =>
-                  `"${module.replace(root, '')}": analog_module_${index}`,
+                  `"${getContentModuleKey(module)}": analog_module_${index}`,
               )}};
             `,
             );
@@ -122,7 +165,17 @@ export function contentPlugin(
       name: 'analogjs-invalidate-content-dirs',
       configureServer(server) {
         function invalidateContent(path: string) {
-          if (path.includes(vite.normalizePath(`/content/`))) {
+          const normalizedPath = vite.normalizePath(path);
+          const isContentPath = contentRootDirs.some(
+            (dir) =>
+              normalizedPath === dir || normalizedPath.startsWith(`${dir}/`),
+          );
+
+          if (isContentPath) {
+            // The file set only changes on add/remove because this watcher is
+            // intentionally scoped to those events. Clear the list cache so the
+            // next transform sees the updated directory contents.
+            contentFilesListCache = undefined;
             server.moduleGraph.fileToModulesMap.forEach((mods) => {
               mods.forEach((mod) => {
                 if (
