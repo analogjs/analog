@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "module": "preserve",
     "moduleResolution": "bundler",
     "lib": ["dom", "es2022"]
