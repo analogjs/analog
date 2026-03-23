@@ -180,7 +180,7 @@ describe('OXC conditional paths', () => {
       expect(mockTransformWithOxc).toHaveBeenCalledWith(
         'const x = 1;',
         '/src/app/app.ts',
-        expect.objectContaining({ lang: 'js' }),
+        expect.objectContaining({ lang: 'ts' }),
       );
       expect(mockTransformWithEsbuild).not.toHaveBeenCalled();
     });
@@ -196,7 +196,7 @@ describe('OXC conditional paths', () => {
       expect(mockTransformWithEsbuild).toHaveBeenCalledWith(
         'const x = 1;',
         '/src/app/app.ts',
-        expect.objectContaining({ loader: 'js' }),
+        expect.objectContaining({ loader: 'ts' }),
       );
       expect(mockTransformWithOxc).not.toHaveBeenCalled();
     });
