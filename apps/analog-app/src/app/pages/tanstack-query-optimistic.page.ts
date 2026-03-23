@@ -119,45 +119,47 @@ export default class TanStackQueryOptimisticPageComponent {
           this.rolledBack.set(false);
           this.optimisticApplied.set(true);
 
-          await this.queryClient.cancelQueries({ queryKey: this.queryKey() });
+          const pinnedKey = this.queryKey();
 
-          const snapshot = this.queryClient.getQueryData<CommentsData>(
-            this.queryKey(),
-          );
+          await this.queryClient.cancelQueries({ queryKey: pinnedKey });
 
-          this.queryClient.setQueryData<CommentsData>(
-            this.queryKey(),
-            (old) => {
-              if (!old) return old;
-              return {
-                ...old,
-                items: [
-                  ...old.items,
-                  {
-                    id: `optimistic-${Date.now()}`,
-                    text: variables.text,
-                    optimistic: true,
-                  },
-                ],
-              };
-            },
-          );
+          const snapshot =
+            this.queryClient.getQueryData<CommentsData>(pinnedKey);
 
-          return { snapshot };
+          this.queryClient.setQueryData<CommentsData>(pinnedKey, (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              items: [
+                ...old.items,
+                {
+                  id: `optimistic-${Date.now()}`,
+                  text: variables.text,
+                  optimistic: true,
+                },
+              ],
+            };
+          });
+
+          return { snapshot, pinnedKey };
         },
         onError: (error, _variables, context) => {
           const ctx = context as
-            | { snapshot: CommentsData | undefined }
+            | {
+                snapshot: CommentsData | undefined;
+                pinnedKey: readonly string[];
+              }
             | undefined;
           if (ctx?.snapshot) {
-            this.queryClient.setQueryData(this.queryKey(), ctx.snapshot);
+            this.queryClient.setQueryData(ctx.pinnedKey, ctx.snapshot);
           }
           this.mutationError.set(getIssueMessage(error));
           this.rolledBack.set(true);
         },
-        onSettled: () => {
+        onSettled: (_data, _error, _variables, context) => {
+          const ctx = context as { pinnedKey: readonly string[] } | undefined;
           return this.queryClient.invalidateQueries({
-            queryKey: this.queryKey(),
+            queryKey: ctx?.pinnedKey ?? this.queryKey(),
           });
         },
       },
