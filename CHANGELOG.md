@@ -1,3 +1,21 @@
+# [3.0.0-alpha.10](https://github.com/analogjs/analog/compare/v3.0.0-alpha.9...v3.0.0-alpha.10) (2026-03-23)
+
+### Bug Fixes
+
+- **content-plugin:** use type-only Tree import and update eslint config ([#2154](https://github.com/analogjs/analog/issues/2154)) ([aa42f02](https://github.com/analogjs/analog/commit/aa42f024d36c673e8dd9d2e1a268ee67ca038da0))
+- **platform:** normalize route and content map keys to avoid absolute path leaks ([#2139](https://github.com/analogjs/analog/issues/2139)) ([9b06af1](https://github.com/analogjs/analog/commit/9b06af180526bbc3e4d4cf981545639d03b86bf8))
+- **storybook-angular:** update preset for Vite 8 compatibility ([#2153](https://github.com/analogjs/analog/issues/2153)) ([61fbcf0](https://github.com/analogjs/analog/commit/61fbcf0a25be4c245696807d074141ac529bb5f4))
+- **vite-plugin-angular:** forward OXC compilation API and fix transform lang ([#2152](https://github.com/analogjs/analog/issues/2152)) ([db054c9](https://github.com/analogjs/analog/commit/db054c97af813e2aa9333450f75626c7fab687e5))
+- **vite-plugin-nitro:** build-output leak in Nitro renderer artifacts ([#2138](https://github.com/analogjs/analog/issues/2138)) ([464265e](https://github.com/analogjs/analog/commit/464265e339ac5286cb15ade950f23014a4b3ea57))
+- **vite-plugin-nitro:** clean alias map, emptyOutDir, dev-server rebuild watcher, and node-web-bridge error handling ([#2141](https://github.com/analogjs/analog/issues/2141)) ([b95e39d](https://github.com/analogjs/analog/commit/b95e39da4e8e20312b358b37c5140cd41e6acfae))
+- **vitest-angular:** use process.once to prevent listener accumulation ([#2143](https://github.com/analogjs/analog/issues/2143)) ([f434fd6](https://github.com/analogjs/analog/commit/f434fd62c3d85c1fc2dbfae89de65eff1fff3499))
+
+### Features
+
+- **content:** enhance content-file-resource and parse-raw-content-file with schema validation ([#2148](https://github.com/analogjs/analog/issues/2148)) ([94d274a](https://github.com/analogjs/analog/commit/94d274a66b166b93797eb01b19caa6b42259adfa))
+- **platform:** simplify deps-plugin and fix shiki highlighter init ([#2150](https://github.com/analogjs/analog/issues/2150)) ([7cc36db](https://github.com/analogjs/analog/commit/7cc36db15113ecb27237524a5032437259a59326))
+- **router:** add typed server primitives and TanStack Query integration ([#2149](https://github.com/analogjs/analog/issues/2149)) ([79f3e98](https://github.com/analogjs/analog/commit/79f3e98ba409ed96c3c836928db38256e1c7103e))
+
 # [3.0.0-alpha.9](https://github.com/analogjs/analog/compare/v3.0.0-alpha.8...v3.0.0-alpha.9) (2026-03-20)
 
 ### Bug Fixes
