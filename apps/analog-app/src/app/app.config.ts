@@ -14,11 +14,6 @@ import {
   withDebugRoutes,
   requestContextInterceptor,
 } from '@analogjs/router';
-import { provideAnalogQuery } from '@analogjs/router/tanstack-query';
-import {
-  QueryClient,
-  provideTanStackQuery,
-} from '@tanstack/angular-query-experimental';
 import { withNavigationErrorHandler } from '@angular/router';
 
 const fallbackRoutes = [
@@ -36,8 +31,6 @@ export const appConfig: ApplicationConfig = {
       withFetch(),
       withInterceptors([requestContextInterceptor]),
     ),
-    provideTanStackQuery(new QueryClient()),
-    provideAnalogQuery(),
     ...(import.meta.env.SSR ? [] : [provideClientHydration(withEventReplay())]),
   ],
 };
