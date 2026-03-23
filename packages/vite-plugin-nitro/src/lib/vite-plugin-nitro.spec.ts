@@ -374,6 +374,67 @@ describe('nitro', () => {
     }
   });
 
+  it('should resolve client output path correctly for nested roots without explicit build.outDir', async () => {
+    const { buildServerImportSpy } = await mockBuildFunctions();
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
+
+    try {
+      const nestedRoot = 'apps/my-app';
+      const ssrBuildDir = resolve(workspaceRoot, 'dist', nestedRoot, 'ssr');
+      const builtSsrEntry = resolve(ssrBuildDir, 'main.server.js');
+      mkdirSync(ssrBuildDir, { recursive: true });
+      writeFileSync(
+        builtSsrEntry,
+        'export default async function renderer() {}',
+      );
+
+      // The client build emits to <workspace>/dist/<root>/client when no
+      // explicit build.outDir is set — write index.html there.
+      const clientBuildDir = resolve(
+        workspaceRoot,
+        'dist',
+        nestedRoot,
+        'client',
+      );
+      mkdirSync(clientBuildDir, { recursive: true });
+      writeFileSync(
+        resolve(clientBuildDir, 'index.html'),
+        '<html>nested root</html>',
+      );
+
+      // Create the nested app source directory so the plugin can resolve it.
+      mkdirSync(resolve(workspaceRoot, nestedRoot, 'src/server'), {
+        recursive: true,
+      });
+
+      const plugin = nitro({
+        workspaceRoot,
+        ssrBuildDir,
+      });
+      const result = await (plugin[1].config as any)(
+        { root: nestedRoot },
+        { command: 'build', mode: 'production' },
+      );
+      await result.builder.buildApp({
+        build: vi.fn().mockResolvedValue(undefined),
+        environments: {
+          client: {},
+          ssr: {},
+        },
+      });
+
+      const nitroConfig = buildServerImportSpy.mock.calls[0][1];
+
+      // registerIndexHtmlVirtual must read index.html from
+      // <workspace>/dist/<root>/client — not <workspace>/<root>/dist/client.
+      expect(nitroConfig.virtual?.['#analog/index']).toBe(
+        'export default "<html>nested root</html>";',
+      );
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
   describe.skip('when prerendering is configured...', () => {
     it('should build the server with prerender route "/" if nothing was provided', async () => {
       // Arrange

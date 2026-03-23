@@ -195,18 +195,19 @@ function resolveClientOutputPath(
   workspaceRoot: string,
   rootDir: string,
   configuredOutDir: string | undefined,
-  ssrBuild: boolean,
 ) {
   if (cachedPath) {
     return cachedPath;
   }
 
-  if (!ssrBuild) {
-    return resolve(workspaceRoot, rootDir, configuredOutDir || 'dist/client');
+  if (configuredOutDir) {
+    return resolve(workspaceRoot, rootDir, configuredOutDir);
   }
 
-  // SSR builds write server assets to dist/<app>/ssr, but the renderer template
-  // still needs the client index.html emitted to dist/<app>/client.
+  // When no explicit build.outDir is set, the environment build config defaults
+  // to `<workspace>/dist/<root>/client` for the client build. The non-SSR
+  // (client) and SSR paths must agree on this so that registerIndexHtmlVirtual()
+  // and publicAssets read from the directory the client build actually wrote to.
   return resolve(workspaceRoot, 'dist', rootDir, 'client');
 }
 
@@ -375,7 +376,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           workspaceRoot,
           rootDir,
           config.build?.outDir,
-          ssrBuild,
         );
 
         nitroConfig = {
@@ -749,7 +749,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 workspaceRoot,
                 rootDir,
                 config.build?.outDir,
-                ssrBuild,
               );
 
               // Inline the client index.html as a virtual module so the server
@@ -957,7 +956,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             workspaceRoot,
             rootDir,
             config.build?.outDir,
-            ssrBuild,
           );
           registerIndexHtmlVirtual(nitroConfig, resolvedClientOutputPath);
 
