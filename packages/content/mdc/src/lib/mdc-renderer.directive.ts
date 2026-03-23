@@ -42,10 +42,12 @@ export class MdcRendererDirective {
   private readonly renderer = inject(Renderer2);
   private readonly el = inject(ElementRef);
   private readonly components = inject(MDC_COMPONENTS, { optional: true });
+  private renderId = 0;
 
   constructor() {
     effect(() => {
       const ast = this.ast();
+      const currentRenderId = ++this.renderId;
 
       this.viewContainer.clear();
       const host = this.el.nativeElement as HTMLElement;
@@ -55,23 +57,28 @@ export class MdcRendererDirective {
 
       // Fire-and-forget: Angular doesn't await effects, so we schedule
       // the async rendering and let it complete in the background.
-      void this.renderNodes(ast.nodes, host);
+      void this.renderNodes(ast.nodes, host, currentRenderId);
     });
   }
 
   private async renderNodes(
     nodes: ComarkNode[],
     parent: HTMLElement,
+    renderId: number,
   ): Promise<void> {
     for (const node of nodes) {
-      await this.renderNode(node, parent);
+      if (this.renderId !== renderId) return;
+      await this.renderNode(node, parent, renderId);
     }
   }
 
   private async renderNode(
     node: ComarkNode,
     parent: HTMLElement,
+    renderId: number,
   ): Promise<void> {
+    if (this.renderId !== renderId) return;
+
     if (typeof node === 'string') {
       const text = this.renderer.createText(node);
       this.renderer.appendChild(parent, text);
@@ -82,7 +89,8 @@ export class MdcRendererDirective {
 
     if (!tag) {
       for (const child of children) {
-        await this.renderNode(child, parent);
+        if (this.renderId !== renderId) return;
+        await this.renderNode(child, parent, renderId);
       }
       return;
     }
@@ -90,21 +98,34 @@ export class MdcRendererDirective {
     // Check if this tag is a registered MDC component
     const componentLoader = this.components?.get(tag);
     if (componentLoader) {
-      const componentType = await componentLoader();
-      const componentRef = this.viewContainer.createComponent(componentType);
+      try {
+        const componentType = await componentLoader();
+        if (this.renderId !== renderId) return;
 
-      // Bind MDC attributes as component inputs
-      for (const [key, value] of Object.entries(props)) {
-        componentRef.setInput(key, value);
+        const tempContainer = this.renderer.createElement('div');
+        for (const child of children) {
+          if (this.renderId !== renderId) return;
+          await this.renderNode(child, tempContainer, renderId);
+        }
+        if (this.renderId !== renderId) return;
+
+        const projectableNodes = [
+          Array.from((tempContainer as HTMLElement).childNodes),
+        ];
+        const componentRef = this.viewContainer.createComponent(componentType, {
+          projectableNodes,
+        });
+
+        // Bind MDC attributes as component inputs
+        for (const [key, value] of Object.entries(props)) {
+          componentRef.setInput(key, value);
+        }
+
+        const componentEl = componentRef.location.nativeElement as HTMLElement;
+        this.renderer.appendChild(parent, componentEl);
+      } catch (e) {
+        console.error(`[MdcRenderer] Failed to load component "${tag}":`, e);
       }
-
-      // Render children into the component's host element
-      const componentEl = componentRef.location.nativeElement as HTMLElement;
-      for (const child of children) {
-        await this.renderNode(child, componentEl);
-      }
-
-      this.renderer.appendChild(parent, componentEl);
       return;
     }
 
@@ -114,7 +135,8 @@ export class MdcRendererDirective {
       this.renderer.setAttribute(el, key, String(value));
     }
     for (const child of children) {
-      await this.renderNode(child, el);
+      if (this.renderId !== renderId) return;
+      await this.renderNode(child, el, renderId);
     }
     this.renderer.appendChild(parent, el);
   }
