@@ -13,7 +13,7 @@
       "import": "./query/src/index.js",
       "default": "./query/src/index.js"
     },
-    "./query/provide-server-analog-query": {
+    "./tanstack-query/server": {
       "import": "./query/src/provide-server-analog-query.js",
       "default": "./query/src/provide-server-analog-query.js"
     },
