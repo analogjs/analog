@@ -9,7 +9,7 @@ import * as path from 'path';
 // the compiled CommonJS output rather than the TypeScript sources.
 const collectionPath = path.join(
   __dirname,
-  '../../../../../dist/packages/vitest-angular-tools/collection.json',
+  '../../../../../node_modules/@analogjs/vitest-angular/src/lib/tools/collection.json',
 );
 
 describe('setup schematic', () => {

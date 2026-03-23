@@ -12,12 +12,7 @@
         "{workspaceRoot}/node_modules/@analogjs/vite-plugin-angular/src/lib/tools"
       ],
       "options": {
-        "commands": [
-          "vite build packages/vite-plugin-angular-tools",
-          "tsc --project packages/vite-plugin-angular-tools/tsconfig.lib.json --emitDeclarationOnly --rootDir packages/vite-plugin-angular-tools --outDir node_modules/@analogjs/vite-plugin-angular/src/lib/tools",
-          "node tools/scripts/copy-src-assets.mts packages/vite-plugin-angular-tools node_modules/@analogjs/vite-plugin-angular/src/lib/tools --assets package.json builders.json --src"
-        ],
-        "parallel": false
+        "command": "vite build -c packages/vite-plugin-angular-tools/vite.config.lib.ts"
       }
     },
     "lint": {

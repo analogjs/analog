@@ -7,14 +7,11 @@
   "targets": {
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist/packages/vitest-angular-tools"],
+      "outputs": [
+        "{workspaceRoot}/node_modules/@analogjs/vitest-angular/src/lib/tools"
+      ],
       "options": {
-        "commands": [
-          "vite build packages/vitest-angular-tools",
-          "tsc --project packages/vitest-angular-tools/tsconfig.lib.json --emitDeclarationOnly --rootDir packages/vitest-angular-tools --outDir dist/packages/vitest-angular-tools",
-          "node tools/scripts/copy-src-assets.mts packages/vitest-angular-tools dist/packages/vitest-angular-tools --assets package.json collection.json --src"
-        ],
-        "parallel": false
+        "command": "vite build -c packages/vitest-angular-tools/vite.config.lib.ts"
       }
     },
     "lint": {
@@ -23,7 +20,7 @@
     },
     "test": {
       "executor": "@nx/vitest:test",
-      "dependsOn": ["build"]
+      "dependsOn": ["vitest-angular:build"]
     }
   }
 }
