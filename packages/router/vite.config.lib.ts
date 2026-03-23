@@ -23,7 +23,7 @@ export default defineConfig({
     lib: {
       entry: {
         'analogjs-router': resolve(import.meta.dirname, 'src/index.ts'),
-        'analogjs-router-query': resolve(
+        'analogjs-router-tanstack-query': resolve(
           import.meta.dirname,
           'query/src/index.ts',
         ),
