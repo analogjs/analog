@@ -1,21 +1,17 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  ENVIRONMENT_INITIALIZER,
-  TransferState,
-  inject,
-  makeStateKey,
-} from '@angular/core';
+import { TransferState, makeStateKey } from '@angular/core';
 import { BEFORE_APP_SERIALIZED } from '@angular/platform-server';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   QueryClient,
   dehydrate,
-  hydrate,
   provideTanStackQuery,
 } from '@tanstack/angular-query-experimental';
-import type { DehydratedState } from '@tanstack/angular-query-experimental';
 
-import { ANALOG_QUERY_STATE_KEY } from './provide-analog-query';
+import {
+  ANALOG_QUERY_STATE_KEY,
+  provideAnalogQuery,
+} from './provide-analog-query';
 import { provideServerAnalogQuery } from './provide-server-analog-query';
 
 describe('TanStack Query SSR integration', () => {
@@ -39,23 +35,7 @@ describe('TanStack Query SSR integration', () => {
       providers: [
         { provide: TransferState, useValue: transferState },
         provideTanStackQuery(queryClient),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue() {
-            const ts = inject(TransferState);
-            const client = inject(QueryClient);
-            const dehydratedState = ts.get<DehydratedState | null>(
-              ANALOG_QUERY_STATE_KEY,
-              null,
-            );
-
-            if (dehydratedState) {
-              hydrate(client, dehydratedState);
-              ts.remove(ANALOG_QUERY_STATE_KEY);
-            }
-          },
-        },
+        provideAnalogQuery(),
       ],
     });
 
