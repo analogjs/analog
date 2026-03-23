@@ -5,6 +5,10 @@ export { injectContent } from './lib/content';
 // directly against source.
 export type { ContentFile } from './lib/content-file';
 export { ContentRenderer, NoopContentRenderer } from './lib/content-renderer';
+export type {
+  RenderedContent,
+  TableOfContentItem,
+} from './lib/content-renderer';
 export { injectContentFiles } from './lib/inject-content-files';
 export type { InjectContentFilesFilterFunction } from './lib/inject-content-files';
 export { MarkdownContentRendererService } from './lib/markdown-content-renderer.service';

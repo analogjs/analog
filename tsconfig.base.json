@@ -25,6 +25,8 @@
       "@analogjs/content/resources": [
         "./packages/content/resources/src/index.ts"
       ],
+      "@analogjs/content/md4x": ["./packages/content/md4x/src/index.ts"],
+      "@analogjs/content/mdc": ["./packages/content/mdc/src/index.ts"],
       "@analogjs/content/shiki-highlighter": [
         "./packages/content/shiki-highlighter/src/index.ts"
       ],

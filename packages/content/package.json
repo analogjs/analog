@@ -38,10 +38,14 @@
     "prismjs": "^1.29.0",
     "satori": "^0.10.14",
     "satori-html": "^0.3.2",
-    "sharp": "^0.33.5"
+    "sharp": "^0.33.5",
+    "md4x": ">=0.0.20"
   },
   "peerDependenciesMeta": {
     "@nx/devkit": {
+      "optional": true
+    },
+    "md4x": {
       "optional": true
     },
     "satori": {

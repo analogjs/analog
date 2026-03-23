@@ -314,31 +314,61 @@ function discoverSubEntries(
   return Effect.try({
     try: () => {
       const subEntries: Array<SubEntry> = [];
+      const seen = new Set<string>();
 
       for (const entry of readdirSync(context.pkgDir, {
         withFileTypes: true,
         recursive: true,
       })) {
-        if (entry.name !== 'ng-package.json' || !entry.parentPath) {
+        if (!entry.parentPath) {
           continue;
         }
 
-        const sub = entry.parentPath.slice(context.pkgDir.length + 1);
-        if (!sub) {
+        const relPath = entry.parentPath.slice(context.pkgDir.length + 1);
+        if (relPath.includes('node_modules')) {
           continue;
         }
 
-        const subNgPkg = Schema.decodeUnknownSync(NgPackageJsonSchema)(
-          JSON.parse(
-            readFileSync(resolve(entry.parentPath, entry.name), 'utf-8'),
-          ),
-        );
-        const entryFile = subNgPkg.lib?.entryFile ?? 'src/index.ts';
-        subEntries.push({
-          path: `./${sub}`,
-          name: `${context.prefix}-${sub.replace(/\//g, '-')}`,
-          typesPath: `${sub}/${entryFile}`.replace('.ts', '.d.ts'),
-        });
+        // Discover via ng-package.json (legacy convention)
+        if (entry.name === 'ng-package.json') {
+          const sub = relPath;
+          if (!sub) {
+            continue;
+          }
+
+          const subNgPkg = Schema.decodeUnknownSync(NgPackageJsonSchema)(
+            JSON.parse(
+              readFileSync(resolve(entry.parentPath, entry.name), 'utf-8'),
+            ),
+          );
+          const entryFile = subNgPkg.lib?.entryFile ?? 'src/index.ts';
+          subEntries.push({
+            path: `./${sub}`,
+            name: `${context.prefix}-${sub.replace(/\//g, '-')}`,
+            typesPath: `${sub}/${entryFile}`.replace('.ts', '.d.ts'),
+          });
+          seen.add(sub);
+          continue;
+        }
+
+        // Discover via src/index.ts convention (no ng-package.json required)
+        if (entry.name === 'index.ts') {
+          if (!relPath.endsWith('/src')) {
+            continue;
+          }
+          const sub = relPath.slice(0, -'/src'.length);
+          if (!sub || seen.has(sub)) {
+            continue;
+          }
+
+          const entryFile = 'src/index.ts';
+          subEntries.push({
+            path: `./${sub}`,
+            name: `${context.prefix}-${sub.replace(/\//g, '-')}`,
+            typesPath: `${sub}/${entryFile}`.replace('.ts', '.d.ts'),
+          });
+          seen.add(sub);
+        }
       }
 
       return subEntries.sort((a, b) => a.path.localeCompare(b.path));
