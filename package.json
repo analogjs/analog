@@ -12,7 +12,7 @@
     "contributors:add": "all-contributors add",
     "contributors:generate": "all-contributors generate",
     "dev": "nx serve",
-    "e2e": "nx run-many --target e2e --projects=analog-app-e2e,blog-app-e2e",
+    "e2e": "nx run-many --target e2e --projects=analog-app-e2e,blog-app-e2e,tanstack-query-app-e2e",
     "ghci": "dagger call --progress=plain ci --source .",
     "lint:check": "oxlint -c oxlint.config.ts --quiet .",
     "lint:legacy": "pnpm nx run-many --target lint",
