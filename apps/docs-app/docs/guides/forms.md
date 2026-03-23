@@ -220,7 +220,10 @@ server route.
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
-import { QueryClient, injectMutation } from '@analogjs/router/query';
+import {
+  QueryClient,
+  injectMutation,
+} from '@tanstack/angular-query-experimental';
 
 @Component({
   standalone: true,

@@ -1,7 +1,7 @@
 import type { ApplicationConfig } from '@angular/core';
 import { mergeApplicationConfig } from '@angular/core';
 import { provideServerRendering } from '@angular/platform-server';
-import { provideServerAnalogQuery } from '@analogjs/router/query/provide-server-analog-query';
+import { provideServerAnalogQuery } from '@analogjs/router/tanstack-query/server';
 
 import { appConfig } from './app.config';
 

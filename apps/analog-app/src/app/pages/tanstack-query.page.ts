@@ -12,9 +12,11 @@ import {
   QueryClient,
   injectMutation,
   injectQuery,
+} from '@tanstack/angular-query-experimental';
+import {
   serverQueryOptions,
   serverMutationOptions,
-} from '@analogjs/router/query';
+} from '@analogjs/router/tanstack-query';
 
 import type { route as todosQueryRoute } from '../../server/routes/api/v1/query-todos.get';
 import type { route as todosMutationRoute } from '../../server/routes/api/v1/query-todos.post';

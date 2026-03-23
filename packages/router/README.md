@@ -14,13 +14,39 @@ server-side form handling.
 ## TanStack Query
 
 Analog also exposes a first-class TanStack Query integration through
-`@analogjs/router/query`.
+`@analogjs/router/tanstack-query`.
 
 ```ts
-import { QueryClient, provideAnalogQuery } from '@analogjs/router/query';
+import { ENVIRONMENT_INITIALIZER, TransferState, inject } from '@angular/core';
+import { ANALOG_QUERY_STATE_KEY } from '@analogjs/router/tanstack-query';
+import {
+  QueryClient,
+  provideTanStackQuery,
+  hydrate,
+} from '@tanstack/angular-query-experimental';
+import type { DehydratedState } from '@tanstack/angular-query-experimental';
 
 export const appConfig = {
-  providers: [provideAnalogQuery(new QueryClient())],
+  providers: [
+    provideTanStackQuery(new QueryClient()),
+    {
+      provide: ENVIRONMENT_INITIALIZER,
+      multi: true,
+      useValue() {
+        if (import.meta.env.SSR) return;
+        const transferState = inject(TransferState);
+        const client = inject(QueryClient);
+        const state = transferState.get<DehydratedState | null>(
+          ANALOG_QUERY_STATE_KEY,
+          null,
+        );
+        if (state) {
+          hydrate(client, state);
+          transferState.remove(ANALOG_QUERY_STATE_KEY);
+        }
+      },
+    },
+  ],
 };
 ```
 
@@ -28,7 +54,7 @@ For SSR, add `provideServerAnalogQuery()` to the server application config so
 prefetched query state is transferred to the client during hydration.
 
 ```ts
-import { provideServerAnalogQuery } from '@analogjs/router/query';
+import { provideServerAnalogQuery } from '@analogjs/router/tanstack-query/server';
 
 export const serverConfig = {
   providers: [provideServerAnalogQuery()],

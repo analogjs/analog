@@ -1,41 +1,68 @@
 import { TestBed } from '@angular/core/testing';
-import { TransferState, makeStateKey } from '@angular/core';
+import {
+  ENVIRONMENT_INITIALIZER,
+  TransferState,
+  inject,
+  makeStateKey,
+} from '@angular/core';
 import { BEFORE_APP_SERIALIZED } from '@angular/platform-server';
 import { afterEach, describe, expect, it } from 'vitest';
-import { QueryClient, dehydrate } from '@tanstack/angular-query-experimental';
+import {
+  QueryClient,
+  dehydrate,
+  hydrate,
+  provideTanStackQuery,
+} from '@tanstack/angular-query-experimental';
+import type { DehydratedState } from '@tanstack/angular-query-experimental';
 
-import { provideAnalogQuery } from './provide-analog-query';
+import { ANALOG_QUERY_STATE_KEY } from './provide-analog-query';
 import { provideServerAnalogQuery } from './provide-server-analog-query';
 
-describe('provideAnalogQuery', () => {
+describe('TanStack Query SSR integration', () => {
   afterEach(() => {
     TestBed.resetTestingModule();
   });
 
-  it('hydrates the provided QueryClient from TransferState', async () => {
+  it('hydrates the QueryClient from TransferState using the shared state key', async () => {
     const transferState = new TransferState();
-    const seedClient = new QueryClient();
     const queryClient = new QueryClient();
-    const stateKey = makeStateKey<any>('analog_query_state');
+    const seedClient = new QueryClient();
 
     await seedClient.prefetchQuery({
       queryKey: ['todos'],
       queryFn: async () => ['analog'],
     });
 
-    transferState.set(stateKey, dehydrate(seedClient));
+    transferState.set(ANALOG_QUERY_STATE_KEY, dehydrate(seedClient));
 
     TestBed.configureTestingModule({
       providers: [
         { provide: TransferState, useValue: transferState },
-        provideAnalogQuery(queryClient),
+        provideTanStackQuery(queryClient),
+        {
+          provide: ENVIRONMENT_INITIALIZER,
+          multi: true,
+          useValue() {
+            const ts = inject(TransferState);
+            const client = inject(QueryClient);
+            const dehydratedState = ts.get<DehydratedState | null>(
+              ANALOG_QUERY_STATE_KEY,
+              null,
+            );
+
+            if (dehydratedState) {
+              hydrate(client, dehydratedState);
+              ts.remove(ANALOG_QUERY_STATE_KEY);
+            }
+          },
+        },
       ],
     });
 
     const hydratedClient = TestBed.inject(QueryClient);
 
     expect(hydratedClient.getQueryData(['todos'])).toEqual(['analog']);
-    expect(transferState.hasKey(stateKey)).toBe(false);
+    expect(transferState.hasKey(ANALOG_QUERY_STATE_KEY)).toBe(false);
   });
 
   it('serializes the QueryClient into TransferState on the server hook', async () => {
@@ -51,7 +78,7 @@ describe('provideAnalogQuery', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: TransferState, useValue: transferState },
-        provideAnalogQuery(queryClient),
+        provideTanStackQuery(queryClient),
         provideServerAnalogQuery(),
       ],
     });

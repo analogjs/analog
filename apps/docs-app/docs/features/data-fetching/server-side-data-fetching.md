@@ -9,7 +9,7 @@ component is created and the result is naturally tied to navigation.
 
 If you need client-managed server state such as query-key caching, invalidation,
 retries, or background refetching, prefer TanStack Query through
-`@analogjs/router/query`. TanStack Query's Angular integration is designed for
+`@analogjs/router/tanstack-query`. TanStack Query's Angular integration is designed for
 exactly that style of data management, while route loads stay focused on
 route-coupled SSR and blocking page data.
 
@@ -146,9 +146,16 @@ import {
   withFetch,
   withInterceptors,
 } from '@angular/common/http';
+import { ENVIRONMENT_INITIALIZER, TransferState, inject } from '@angular/core';
 import type { ApplicationConfig } from '@angular/core';
 import { requestContextInterceptor } from '@analogjs/router';
-import { QueryClient, provideAnalogQuery } from '@analogjs/router/query';
+import { ANALOG_QUERY_STATE_KEY } from '@analogjs/router/tanstack-query';
+import {
+  QueryClient,
+  provideTanStackQuery,
+  hydrate,
+} from '@tanstack/angular-query-experimental';
+import type { DehydratedState } from '@tanstack/angular-query-experimental';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -156,7 +163,24 @@ export const appConfig: ApplicationConfig = {
       withFetch(),
       withInterceptors([requestContextInterceptor]),
     ),
-    provideAnalogQuery(new QueryClient()),
+    provideTanStackQuery(new QueryClient()),
+    {
+      provide: ENVIRONMENT_INITIALIZER,
+      multi: true,
+      useValue() {
+        if (import.meta.env.SSR) return;
+        const transferState = inject(TransferState);
+        const client = inject(QueryClient);
+        const state = transferState.get<DehydratedState | null>(
+          ANALOG_QUERY_STATE_KEY,
+          null,
+        );
+        if (state) {
+          hydrate(client, state);
+          transferState.remove(ANALOG_QUERY_STATE_KEY);
+        }
+      },
+    },
   ],
 };
 ```
@@ -167,7 +191,7 @@ hydration.
 ```ts
 import { mergeApplicationConfig } from '@angular/core';
 import { provideServerRendering } from '@angular/platform-server';
-import { provideServerAnalogQuery } from '@analogjs/router/query';
+import { provideServerAnalogQuery } from '@analogjs/router/tanstack-query/server';
 
 export const serverConfig = mergeApplicationConfig(appConfig, {
   providers: [provideServerRendering(), provideServerAnalogQuery()],
@@ -181,7 +205,7 @@ components:
 import { HttpClient } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
-import { injectQuery } from '@analogjs/router/query';
+import { injectQuery } from '@tanstack/angular-query-experimental';
 
 @Component({
   standalone: true,

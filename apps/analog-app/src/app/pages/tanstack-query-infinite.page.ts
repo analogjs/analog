@@ -7,10 +7,8 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import {
-  injectInfiniteQuery,
-  serverInfiniteQueryOptions,
-} from '@analogjs/router/query';
+import { injectInfiniteQuery } from '@tanstack/angular-query-experimental';
+import { serverInfiniteQueryOptions } from '@analogjs/router/tanstack-query';
 
 import type { route } from '../../server/routes/api/v1/query-comments.get';
 
