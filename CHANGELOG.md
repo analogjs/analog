@@ -1,3 +1,9 @@
+# [2.4.0-beta.19](https://github.com/analogjs/analog/compare/v2.4.0-beta.18...v2.4.0-beta.19) (2026-03-23)
+
+### Bug Fixes
+
+- **create-analog:** bump to Vitest 4.1, update CI workflow versions ([54b5112](https://github.com/analogjs/analog/commit/54b51125130e897faf787db2b918d5ae16e4802f))
+
 # [2.4.0-beta.18](https://github.com/analogjs/analog/compare/v2.4.0-beta.17...v2.4.0-beta.18) (2026-03-23)
 
 ### Bug Fixes
