@@ -5,6 +5,10 @@ export { injectContent } from './lib/content';
 // directly against source.
 export type { ContentFile } from './lib/content-file';
 export { ContentRenderer, NoopContentRenderer } from './lib/content-renderer';
+export type {
+  RenderedContent,
+  TableOfContentItem,
+} from './lib/content-renderer';
 export { injectContentFiles } from './lib/inject-content-files';
 export type { InjectContentFilesFilterFunction } from './lib/inject-content-files';
 export { MarkdownContentRendererService } from './lib/markdown-content-renderer.service';
@@ -13,14 +17,6 @@ export {
   withMarkdownRenderer,
   MERMAID_IMPORT_TOKEN,
 } from './lib/provide-content';
-export { withMd4xRenderer, withMd4xWasmRenderer } from './lib/provide-md4x';
-export {
-  Md4xContentRendererService,
-  MD4X_RENDERER_OPTIONS,
-} from './lib/md4x-content-renderer.service';
-export type { Md4xRendererOptions } from './lib/md4x-content-renderer.service';
-export { Md4xWasmContentRendererService } from './lib/md4x-wasm-content-renderer.service';
-export { streamMarkdown } from './lib/streaming-markdown-renderer';
 export { default as MarkdownRouteComponent } from './lib/markdown-route.component';
 export { default as MarkdownComponent } from './lib/markdown.component';
 export {

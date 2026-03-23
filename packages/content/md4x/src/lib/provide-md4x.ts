@@ -1,14 +1,16 @@
 import { Provider } from '@angular/core';
 
-import { ContentRenderer } from './content-renderer';
+import {
+  ContentRenderer,
+  withContentFileLoader,
+  withContentListLoader,
+} from '@analogjs/content';
 import {
   Md4xContentRendererService,
   MD4X_RENDERER_OPTIONS,
 } from './md4x-content-renderer.service';
 import { Md4xWasmContentRendererService } from './md4x-wasm-content-renderer.service';
 import type { Md4xRendererOptions } from './md4x-content-renderer.service';
-import { withContentFileLoader } from './content-file-loader';
-import { withContentListLoader } from './content-list-loader';
 
 /**
  * Provides the experimental md4x-based content renderer (NAPI, server/build-time).

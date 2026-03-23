@@ -32,6 +32,14 @@ export default defineConfig({
           import.meta.dirname,
           'shiki-highlighter/src/index.ts',
         ),
+        'analogjs-content-mdc': resolve(
+          import.meta.dirname,
+          'mdc/src/index.ts',
+        ),
+        'analogjs-content-md4x': resolve(
+          import.meta.dirname,
+          'md4x/src/index.ts',
+        ),
         'analogjs-content-resources': resolve(
           import.meta.dirname,
           'resources/src/index.ts',
@@ -52,6 +60,7 @@ export default defineConfig({
         /^marked/,
         /^satori/,
         /^rxjs/,
+        /^md4x/,
         'front-matter',
         'sharp',
         'tslib',

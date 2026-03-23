@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, it, expect } from 'vitest';
 
-import { ContentRenderer } from './content-renderer';
+import { ContentRenderer } from '@analogjs/content';
 import { MD4X_RENDERER_OPTIONS } from './md4x-content-renderer.service';
 import { Md4xWasmContentRendererService } from './md4x-wasm-content-renderer.service';
 

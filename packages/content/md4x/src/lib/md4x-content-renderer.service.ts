@@ -1,14 +1,29 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, InjectionToken } from '@angular/core';
 
 import {
   ContentRenderer,
   RenderedContent,
   TableOfContentItem,
-} from './content-renderer';
-import {
-  MD4X_RENDERER_OPTIONS,
-  Md4xRendererOptions,
-} from './md4x-content-renderer.service';
+} from '@analogjs/content';
+
+/**
+ * Options for the experimental md4x-based content renderer.
+ *
+ * @experimental md4x integration is experimental and may change in future releases.
+ */
+export interface Md4xRendererOptions {
+  /** Heal incomplete markdown (useful for streaming/LLM content). */
+  heal?: boolean;
+  /** Custom code block highlighter. Receives raw code and block metadata,
+   *  returns highlighted HTML or undefined to keep default rendering. */
+  highlighter?: (
+    code: string,
+    block: { lang: string; filename?: string; highlights?: number[] },
+  ) => string | undefined;
+}
+
+export const MD4X_RENDERER_OPTIONS: InjectionToken<Md4xRendererOptions> =
+  new InjectionToken<Md4xRendererOptions>('md4x_renderer_options');
 
 function makeSlug(text: string, slugCounts: Map<string, number>): string {
   const baseSlug = text
@@ -41,28 +56,22 @@ function injectHeadingIds(html: string, toc: TableOfContentItem[]): string {
 }
 
 /**
- * Content renderer backed by md4x/wasm for client-side (browser) rendering.
- * ~100KB gzip, 3-6x faster than marked in the browser.
+ * Content renderer backed by md4x (C-based CommonMark parser compiled with Zig).
+ * 50-70x faster than marked for complex documents.
  *
  * @experimental md4x integration is experimental and may change in future releases.
  */
 @Injectable()
-export class Md4xWasmContentRendererService extends ContentRenderer {
+export class Md4xContentRendererService extends ContentRenderer {
   private options = inject(MD4X_RENDERER_OPTIONS, { optional: true });
-  private initPromise: Promise<void> | null = null;
 
   override async render(content: string): Promise<RenderedContent> {
-    const wasm = await import('md4x/wasm');
-    if (!this.initPromise) {
-      this.initPromise = wasm.init();
-    }
-    await this.initPromise;
-
-    const html = wasm.renderToHtml(content, {
+    const { renderToHtml, parseMeta } = await import('md4x/napi');
+    const html = renderToHtml(content, {
       heal: this.options?.heal,
       highlighter: this.options?.highlighter,
     });
-    const meta = wasm.parseMeta(content);
+    const meta = parseMeta(content);
     const toc = headingsToToc(meta.headings);
     return {
       content: injectHeadingIds(html, toc),
@@ -71,6 +80,8 @@ export class Md4xWasmContentRendererService extends ContentRenderer {
   }
 
   override getContentHeadings(content: string): TableOfContentItem[] {
+    // Synchronous fallback — md4x is async-imported so we use regex extraction
+    // matching NoopContentRenderer's algorithm for consistency.
     const lines = content.split('\n');
     const toc: TableOfContentItem[] = [];
     const slugCounts = new Map<string, number>();
