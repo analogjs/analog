@@ -32,7 +32,8 @@ export async function streamMarkdown(
 
         if (done) {
           if (buffer) {
-            controller.enqueue(renderToHtml(buffer));
+            const source = options?.heal ? heal(buffer) : buffer;
+            controller.enqueue(renderToHtml(source));
           }
           controller.close();
           return;
