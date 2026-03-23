@@ -6,15 +6,12 @@
   "tags": ["type:release"],
   "targets": {
     "build": {
+      "dependsOn": ["^build"],
       "executor": "nx:run-commands",
-      "cache": false,
-      "dependsOn": ["vite-plugin-angular:build"],
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/astro-angular"],
       "options": {
         "commands": [
-          "vite build packages/astro-angular",
-          "tsc --project packages/astro-angular/tsconfig.lib.json --emitDeclarationOnly --rootDir packages/astro-angular --outDir node_modules/@analogjs/astro-angular",
-          "node tools/scripts/copy-src-assets.mts packages/astro-angular node_modules/@analogjs/astro-angular --assets package.json --dirs migrations",
+          "vite build -c packages/astro-angular/vite.config.lib.ts",
           "node tools/scripts/verify-package-artifacts.mts astro-angular"
         ],
         "parallel": false

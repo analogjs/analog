@@ -5,7 +5,6 @@
   "sourceRoot": "apps/blog-app/src",
   "prefix": "blog",
   "tags": [],
-  "implicitDependencies": ["platform", "router", "content"],
   "targets": {
     "build": {
       "executor": "@nx/vite:build",
@@ -37,7 +36,7 @@
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "blog-app:build",
-        "port": 3000
+        "port": 43010
       },
       "configurations": {
         "development": {
@@ -54,7 +53,7 @@
       "options": {
         "buildTarget": "blog-app:build",
         "parallel": true,
-        "port": 3000,
+        "port": 43010,
         "staticFilePath": "dist/apps/blog-app/analog/public"
       }
     }
