@@ -28,16 +28,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0
-      - run: corepack enable
-      - run: pnpm --version
-      - run: npm --version
-      - name: Install dependencies
+      - name: Install Corepack
+        run: npm install --global --force corepack@latest
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
+      - run: pnpm --version
+      - run: npm --version
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Release

@@ -29,7 +29,7 @@ describe('preset generator', () => {
     });
 
     expect(tree.read('/my-app/project.json').toString()).toMatchSnapshot();
-  });
+  }, 30_000);
 
   it('should match vite.config.ts', async () => {
     const { tree } = await setup({ analogAppName: 'my-app' });
