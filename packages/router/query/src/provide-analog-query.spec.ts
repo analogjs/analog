@@ -4,10 +4,8 @@ import { BEFORE_APP_SERIALIZED } from '@angular/platform-server';
 import { afterEach, describe, expect, it } from 'vitest';
 import { QueryClient, dehydrate } from '@tanstack/angular-query-experimental';
 
-import {
-  provideAnalogQuery,
-  provideServerAnalogQuery,
-} from './provide-analog-query';
+import { provideAnalogQuery } from './provide-analog-query';
+import { provideServerAnalogQuery } from './provide-server-analog-query';
 
 describe('provideAnalogQuery', () => {
   afterEach(() => {

@@ -121,7 +121,7 @@ describe('FormAction', () => {
     const stateChanges: string[] = [];
     const successes: unknown[] = [];
 
-    directive.onStateChange.subscribe((state) => stateChanges.push(state));
+    directive.state.subscribe((state) => stateChanges.push(state));
     directive.onSuccess.subscribe((result) => successes.push(result));
 
     directive.submitted({

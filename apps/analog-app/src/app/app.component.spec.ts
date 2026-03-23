@@ -1,18 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AppComponent } from './app.component';
-import { TopBarComponent } from '@analogjs/top-bar';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        RouterTestingModule,
-        AppComponent,
-        TopBarComponent,
-        RouterTestingModule.withRoutes([]),
-      ],
-      declarations: [],
+      imports: [RouterTestingModule.withRoutes([]), AppComponent],
     }).compileComponents();
   });
 
@@ -26,6 +19,6 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('My Store');
+    expect(compiled.textContent).toContain('Analog App');
   });
 });
