@@ -35,12 +35,24 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-      - run: corepack enable && corepack install
-      - uses: actions/setup-node@v4
+      - name: Clear hosted tool-cache for corepack
+        if: runner.os == 'Windows'
+        run: Remove-Item -Recurse -Force (Get-Command corepack.cmd).Path
+        shell: pwsh
+      - name: Install Corepack
+        run: npm install --global --force corepack@latest
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          pnpm --version
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
+          node-version-file: .node-version
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
       - name: Install
