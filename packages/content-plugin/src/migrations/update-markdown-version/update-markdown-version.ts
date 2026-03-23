@@ -1,6 +1,6 @@
 import {
   addDependenciesToPackageJson,
-  Tree,
+  type Tree,
   formatFiles,
   installPackagesTask,
 } from '@nx/devkit';
