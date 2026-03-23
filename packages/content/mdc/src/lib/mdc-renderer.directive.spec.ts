@@ -23,6 +23,14 @@ class TestHostComponent {
   ast: { nodes: unknown[] } | null = null;
 }
 
+async function flushRendering(fixture: ComponentFixture<unknown>) {
+  fixture.detectChanges();
+  await fixture.whenStable();
+  // The directive's effect fires a void async render — flush microtasks.
+  await new Promise((r) => setTimeout(r));
+  fixture.detectChanges();
+}
+
 describe('MdcRendererDirective', () => {
   let fixture: ComponentFixture<TestHostComponent>;
   let host: TestHostComponent;
@@ -48,8 +56,7 @@ describe('MdcRendererDirective', () => {
     host.ast = {
       nodes: [['p', {}, 'Hello world']],
     };
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await flushRendering(fixture);
 
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('p')?.textContent).toBe('Hello world');
@@ -59,8 +66,7 @@ describe('MdcRendererDirective', () => {
     host.ast = {
       nodes: ['Just text'],
     };
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await flushRendering(fixture);
 
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('Just text');
@@ -70,8 +76,7 @@ describe('MdcRendererDirective', () => {
     host.ast = {
       nodes: [['div', { class: 'wrapper' }, ['strong', {}, 'Bold text']]],
     };
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await flushRendering(fixture);
 
     const el = fixture.nativeElement as HTMLElement;
     const div = el.querySelector('div.wrapper');
@@ -83,13 +88,9 @@ describe('MdcRendererDirective', () => {
     host.ast = {
       nodes: [['alert', { type: 'warning' }, 'Watch out!']],
     };
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await flushRendering(fixture);
 
     const el = fixture.nativeElement as HTMLElement;
-    // The component is instantiated and rendered
     const alertHost = el.querySelector('analog-test-alert');
     expect(alertHost).toBeTruthy();
   });
@@ -98,8 +99,7 @@ describe('MdcRendererDirective', () => {
     host.ast = {
       nodes: [['custom-unknown', { id: 'test' }, 'Content']],
     };
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await flushRendering(fixture);
 
     const el = fixture.nativeElement as HTMLElement;
     const custom = el.querySelector('custom-unknown');
@@ -110,8 +110,7 @@ describe('MdcRendererDirective', () => {
 
   it('handles null AST', async () => {
     host.ast = null;
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await flushRendering(fixture);
 
     const el = fixture.nativeElement as HTMLElement;
     const container = el.querySelector('[mdcAst]');
@@ -120,8 +119,7 @@ describe('MdcRendererDirective', () => {
 
   it('handles empty nodes array', async () => {
     host.ast = { nodes: [] };
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await flushRendering(fixture);
 
     const el = fixture.nativeElement as HTMLElement;
     const container = el.querySelector('[mdcAst]');
@@ -132,8 +130,7 @@ describe('MdcRendererDirective', () => {
     host.ast = {
       nodes: [[null, {}, 'Unwrapped text']],
     };
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await flushRendering(fixture);
 
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('Unwrapped text');
@@ -145,8 +142,7 @@ describe('MdcRendererDirective', () => {
         ['a', { href: 'https://analogjs.org', target: '_blank' }, 'Analog'],
       ],
     };
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await flushRendering(fixture);
 
     const link = (fixture.nativeElement as HTMLElement).querySelector('a');
     expect(link?.getAttribute('href')).toBe('https://analogjs.org');
@@ -156,8 +152,7 @@ describe('MdcRendererDirective', () => {
 
   it('clears host innerHTML on AST change', async () => {
     host.ast = { nodes: [['p', {}, 'First']] };
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await flushRendering(fixture);
 
     // Trigger a change — the synchronous part of the effect clears innerHTML
     host.ast = { nodes: [] };
@@ -177,8 +172,7 @@ describe('MdcRendererDirective', () => {
     f.componentInstance.ast = {
       nodes: [['div', {}, 'No registry']],
     };
-    f.detectChanges();
-    await f.whenStable();
+    await flushRendering(f);
 
     const el = f.nativeElement as HTMLElement;
     expect(el.querySelector('div')?.textContent).toBe('No registry');

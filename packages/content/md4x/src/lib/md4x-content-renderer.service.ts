@@ -4,7 +4,7 @@ import {
   ContentRenderer,
   RenderedContent,
   TableOfContentItem,
-} from '@analogjs/content';
+} from '../../../src/lib/content-renderer';
 
 /**
  * Options for the experimental md4x-based content renderer.
