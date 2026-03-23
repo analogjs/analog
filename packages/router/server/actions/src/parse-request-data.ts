@@ -95,7 +95,11 @@ export async function parseRequestData(event: {
   const contentType = getContentType(event);
 
   if (isJsonContentType(contentType)) {
-    return request.json();
+    try {
+      return await request.json();
+    } catch {
+      return {};
+    }
   }
 
   if (isFormContentType(contentType)) {
