@@ -22,7 +22,7 @@
       "options": {
         "cwd": "apps/docs-app",
         "command": "docusaurus start --port={args.port}",
-        "port": 3000
+        "port": 43020
       },
       "dependsOn": []
     },
