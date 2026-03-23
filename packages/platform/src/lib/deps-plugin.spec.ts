@@ -33,4 +33,13 @@ describe('depsPlugin oxc config', () => {
 
     expect(result.oxc).toEqual({});
   });
+
+  it('uses empty config when top-level experimental useAngularCompilationAPI is enabled', () => {
+    const plugins = depsPlugin({
+      experimental: { useAngularCompilationAPI: true },
+    } as any);
+    const result = (plugins[0].config as any)();
+
+    expect(result.oxc).toEqual({});
+  });
 });
