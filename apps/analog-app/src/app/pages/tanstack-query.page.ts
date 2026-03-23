@@ -107,9 +107,9 @@ export default class TanStackQueryPageComponent {
         onMutate: () => {
           this.mutationError.set('');
         },
-        onSuccess: () => {
+        onSuccess: (_data, variables) => {
           return this.queryClient.invalidateQueries({
-            queryKey: ['analog-query-todos', this.scope()],
+            queryKey: ['analog-query-todos', variables?.scope ?? this.scope()],
           });
         },
         onError: (error) => {
