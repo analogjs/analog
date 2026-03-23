@@ -9,7 +9,7 @@
       "import": "./src/index.js",
       "default": "./src/index.js"
     },
-    "./query": {
+    "./tanstack-query": {
       "import": "./query/src/index.js",
       "default": "./query/src/index.js"
     },
