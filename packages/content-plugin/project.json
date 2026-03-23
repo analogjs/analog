@@ -7,15 +7,9 @@
   "targets": {
     "build": {
       "executor": "nx:run-commands",
-      "cache": false,
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content/plugin"],
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content-plugin"],
       "options": {
-        "commands": [
-          "vite build packages/content-plugin",
-          "tsc --project packages/content-plugin/tsconfig.lib.json --emitDeclarationOnly --rootDir packages/content-plugin --outDir node_modules/@analogjs/content/plugin",
-          "node tools/scripts/copy-src-assets.mts packages/content-plugin node_modules/@analogjs/content/plugin --assets package.json migrations.json"
-        ],
-        "parallel": false
+        "command": "tsdown -c packages/content-plugin/tsdown.config.ts --config-loader unrun"
       }
     },
     "lint": {

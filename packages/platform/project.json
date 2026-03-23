@@ -4,6 +4,7 @@
   "sourceRoot": "packages/platform/src",
   "projectType": "library",
   "tags": ["type:release"],
+  "implicitDependencies": ["vite-plugin-angular", "vite-plugin-nitro"],
   "targets": {
     "build": {
       "executor": "nx:run-commands",
@@ -12,9 +13,7 @@
       "dependsOn": ["vite-plugin-angular:build", "vite-plugin-nitro:build"],
       "options": {
         "commands": [
-          "vite build packages/platform",
-          "tsc --project packages/platform/tsconfig.lib.prod.json --emitDeclarationOnly --rootDir packages/platform --outDir node_modules/@analogjs/platform",
-          "node tools/scripts/copy-src-assets.mts packages/platform node_modules/@analogjs/platform --assets package.json --dirs migrations",
+          "vite build -c packages/platform/vite.config.lib.ts",
           "nx build nx-plugin",
           "node tools/scripts/verify-package-artifacts.mts platform"
         ],

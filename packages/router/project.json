@@ -27,7 +27,7 @@
     },
     "test": {
       "executor": "@nx/vitest:test",
-      "dependsOn": ["build"]
+      "dependsOn": ["build", "^build"]
     },
     "version": {
       "executor": "@jscutlery/semver:version",
