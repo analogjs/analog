@@ -1,3 +1,9 @@
+# [2.4.0-beta.20](https://github.com/analogjs/analog/compare/v2.4.0-beta.19...v2.4.0-beta.20) (2026-03-23)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** skip esm transform with Rolldown for Vitest ([#2169](https://github.com/analogjs/analog/issues/2169)) ([20c720b](https://github.com/analogjs/analog/commit/20c720bc8178174041002f400ed4d694dabb30c1))
+
 # [2.4.0-beta.19](https://github.com/analogjs/analog/compare/v2.4.0-beta.18...v2.4.0-beta.19) (2026-03-23)
 
 ### Bug Fixes
