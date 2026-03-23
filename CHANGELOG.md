@@ -1,3 +1,10 @@
+# [3.0.0-alpha.11](https://github.com/analogjs/analog/compare/v3.0.0-alpha.10...v3.0.0-alpha.11) (2026-03-23)
+
+### Features
+
+- **content:** add experimental content DevTools browser panel ([#2157](https://github.com/analogjs/analog/issues/2157)) ([d06a07a](https://github.com/analogjs/analog/commit/d06a07ae500dba4f5234865841906684af716331))
+- **content:** add experimental md4x content rendering pipeline ([#2156](https://github.com/analogjs/analog/issues/2156)) ([da1d372](https://github.com/analogjs/analog/commit/da1d3728273fe1fb24c185c33ee418dd6876f312))
+
 # [3.0.0-alpha.10](https://github.com/analogjs/analog/compare/v3.0.0-alpha.9...v3.0.0-alpha.10) (2026-03-23)
 
 ### Bug Fixes
