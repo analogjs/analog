@@ -1,22 +1,7 @@
-<section class="card card-border bg-base-100 shadow-xl">
-  <div class="card-body gap-6">
-    <div class="space-y-3">
-      <div class="badge badge-info badge-outline">Shipping</div>
-      <h1 class="card-title text-3xl">Shipping prices</h1>
-    </div>
-
-    <ul class="list bg-base-200 rounded-box">
-      @for (shipping of shippingCosts | async; track $index) {
-      <li class="list-row">
-        <div class="list-col-grow">
-          <div class="font-semibold">{{ shipping.type }}</div>
-          <div class="text-sm text-base-content/60">Delivery option</div>
-        </div>
-        <div class="badge badge-info badge-outline">
-          {{ shipping.price | currency }}
-        </div>
-      </li>
-      }
-    </ul>
-  </div>
-</section>
+<h3>Shipping Prices</h3>
+@for (shipping of shippingCosts | async; track $index) {
+<div class="shipping-item">
+  <span>{{ shipping.type }}</span>
+  <span>{{ shipping.price | currency }}</span>
+</div>
+}

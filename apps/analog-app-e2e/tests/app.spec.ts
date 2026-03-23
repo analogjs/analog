@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test';
 
 test('should display the app title', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('link', { name: /analog app/i })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /my store/i, level: 1 }),
+  ).toBeVisible();
 });
 
 test('should display 404 page', async ({ page }) => {

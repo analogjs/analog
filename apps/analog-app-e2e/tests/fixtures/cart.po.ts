@@ -4,25 +4,32 @@ export class CartPage {
   constructor(readonly page: Page) {}
 
   async navigateTo() {
-    await this.page.getByRole('link', { name: /cart/i }).click();
+    await this.page.getByRole('link', { name: /checkout/i }).click();
   }
 
   getItems() {
-    return this.page.locator('.list-row');
+    return this.page.locator('.cart-item');
   }
 
   getPriceByName(name: RegExp) {
     return this.page
-      .locator('.list-row', { hasText: name })
-      .locator('.badge-primary');
+      .locator('.cart-item', { hasText: name })
+      .locator('span')
+      .filter({ hasText: /^\$\d+\.\d{2}/ });
   }
 
   async typeName(name: string) {
-    await this.page.locator('#name').fill(name);
+    const nameInput = this.page.locator(
+      `#${await this.page.locator('label', { hasText: /name/i }).getAttribute('for')}`,
+    );
+    await nameInput.fill(name);
   }
 
   async typeAddress(address: string) {
-    await this.page.locator('#address').fill(address);
+    const addressInput = this.page.locator(
+      `#${await this.page.locator('label', { hasText: /address/i }).getAttribute('for')}`,
+    );
+    await addressInput.fill(address);
   }
 
   async purchaseOrder() {

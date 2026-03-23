@@ -547,6 +547,10 @@ importers:
 
   apps/opt-catchall-app: {}
 
+  apps/tanstack-query-app: {}
+
+  apps/tanstack-query-app-e2e: {}
+
   libs/card: {}
 
   libs/my-package:

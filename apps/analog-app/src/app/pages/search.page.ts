@@ -9,37 +9,20 @@ import type { load } from './search.server';
   standalone: true,
   imports: [FormAction],
   template: `
-    <section class="card card-border bg-base-100 shadow-xl">
-      <div class="card-body gap-6">
-        <div class="space-y-3">
-          <div class="badge badge-info badge-outline">Search</div>
-          <h1 class="card-title text-3xl">Query a route with URL params</h1>
-        </div>
+    <h3>Search</h3>
 
-        <form
-          class="join join-vertical w-full gap-4 lg:join-horizontal"
-          method="get"
-        >
-          <input
-            class="input join-item w-full lg:max-w-md"
-            id="search"
-            type="text"
-            name="search"
-            [value]="searchTerm()"
-            placeholder="Search term"
-          />
-          <button class="btn btn-primary join-item" type="submit">
-            Submit
-          </button>
-        </form>
-
-        @if (searchTerm()) {
-          <div role="status" class="alert alert-info alert-soft">
-            <span>Search Term: {{ searchTerm() }}</span>
-          </div>
-        }
+    <form method="get">
+      <div>
+        <label for="search"> Search </label>
+        <input type="text" name="search" [value]="searchTerm()" />
       </div>
-    </section>
+
+      <button class="button" type="submit">Submit</button>
+    </form>
+
+    @if (searchTerm()) {
+      <p>Search Term: {{ searchTerm() }}</p>
+    }
   `,
 })
 export default class NewsletterComponent {

@@ -12,50 +12,16 @@ import type { Product } from '../products';
   selector: 'analogjs-product-details',
   imports: [CurrencyPipe],
   template: `
-    <section class="card card-border bg-base-100 shadow-xl">
-      <div class="card-body gap-6">
-        <div class="space-y-3">
-          <div class="badge badge-accent badge-outline">Product details</div>
-          <h1 class="card-title text-3xl">Product details</h1>
-        </div>
+    <h2>Product Details</h2>
 
-        @if (product(); as product) {
-          <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-            <div class="space-y-4">
-              <h2 class="text-3xl font-bold">{{ product.name }}</h2>
-              <p class="text-base leading-7 text-base-content/70">
-                {{ product.description }}
-              </p>
-            </div>
-
-            <div class="card bg-base-200 shadow-sm">
-              <div class="card-body gap-4">
-                <div class="badge badge-primary badge-lg">
-                  {{ product.price | currency }}
-                </div>
-                <p class="text-sm text-base-content/70">
-                  Add this item to the cart to continue through the client-side
-                  purchase flow.
-                </p>
-                <div class="card-actions justify-start">
-                  <button
-                    type="button"
-                    class="btn btn-primary"
-                    (click)="addToCart(product)"
-                  >
-                    Buy
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        } @else {
-          <div role="alert" class="alert alert-warning alert-soft">
-            <span>We could not find that product.</span>
-          </div>
-        }
+    @if (product(); as product) {
+      <div>
+        <h3>{{ product.name }}</h3>
+        <h4>{{ product.price | currency }}</h4>
+        <p>{{ product.description }}</p>
+        <button type="button" (click)="addToCart(product)">Buy</button>
       </div>
-    </section>
+    }
   `,
 })
 export default class ProductDetailsComponent implements OnInit {
