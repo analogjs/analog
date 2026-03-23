@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "module": "es2020",
     "forceConsistentCasingInFileNames": true,
     "strict": true,

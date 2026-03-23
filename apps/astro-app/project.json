@@ -6,15 +6,14 @@
   "tags": [],
   "targets": {
     "serve": {
-      "command": "astro dev --root apps/astro-app",
-      "dependsOn": ["astro-angular:build"]
+      "command": "astro dev --root apps/astro-app --port 43030"
     },
     "build": {
       "command": "astro build --root apps/astro-app",
       "dependsOn": ["astro-angular:build"]
     },
     "preview": {
-      "command": "astro preview --root apps/astro-app"
+      "command": "astro preview --root apps/astro-app --port 43030"
     }
   }
 }
