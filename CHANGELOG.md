@@ -1,3 +1,9 @@
+# [2.4.0-beta.17](https://github.com/analogjs/analog/compare/v2.4.0-beta.16...v2.4.0-beta.17) (2026-03-23)
+
+### Bug Fixes
+
+- **nx-plugin:** restore schematics configuration ([#2167](https://github.com/analogjs/analog/issues/2167)) ([e74fa68](https://github.com/analogjs/analog/commit/e74fa6829c340976403ba46ca933bd72be2dde2d))
+
 # [2.4.0-beta.16](https://github.com/analogjs/analog/compare/v2.4.0-beta.15...v2.4.0-beta.16) (2026-03-23)
 
 ### Bug Fixes
