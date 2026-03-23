@@ -1,4 +1,4 @@
-import { Injectable, Optional, Inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 
 import {
   ContentRenderer,
@@ -48,17 +48,8 @@ function injectHeadingIds(html: string, toc: TableOfContentItem[]): string {
  */
 @Injectable()
 export class Md4xWasmContentRendererService extends ContentRenderer {
-  private options: Md4xRendererOptions | null;
+  private options = inject(MD4X_RENDERER_OPTIONS, { optional: true });
   private initPromise: Promise<void> | null = null;
-
-  constructor(
-    @Optional()
-    @Inject(MD4X_RENDERER_OPTIONS)
-    options: Md4xRendererOptions | null,
-  ) {
-    super();
-    this.options = options;
-  }
 
   override async render(content: string): Promise<RenderedContent> {
     const wasm = await import('md4x/wasm');

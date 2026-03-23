@@ -1,4 +1,4 @@
-import { Injectable, Optional, Inject, InjectionToken } from '@angular/core';
+import { Injectable, inject, InjectionToken } from '@angular/core';
 
 import {
   ContentRenderer,
@@ -63,16 +63,7 @@ function injectHeadingIds(html: string, toc: TableOfContentItem[]): string {
  */
 @Injectable()
 export class Md4xContentRendererService extends ContentRenderer {
-  private options: Md4xRendererOptions | null;
-
-  constructor(
-    @Optional()
-    @Inject(MD4X_RENDERER_OPTIONS)
-    options: Md4xRendererOptions | null,
-  ) {
-    super();
-    this.options = options;
-  }
+  private options = inject(MD4X_RENDERER_OPTIONS, { optional: true });
 
   override async render(content: string): Promise<RenderedContent> {
     const { renderToHtml, parseMeta } = await import('md4x/napi');

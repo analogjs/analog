@@ -7,9 +7,8 @@ import {
   MD4X_RENDERER_OPTIONS,
 } from './md4x-content-renderer.service';
 import { Md4xWasmContentRendererService } from './md4x-wasm-content-renderer.service';
-import { MDC_COMPONENTS } from './mdc-component-registry';
+import { MDC_COMPONENTS, withMdcComponents } from '@analogjs/content/mdc';
 import { withMd4xRenderer, withMd4xWasmRenderer } from './provide-md4x';
-import { withMdcComponents } from './mdc-component-registry';
 import { CONTENT_FILE_LOADER } from './content-file-loader';
 import { CONTENT_LIST_LOADER } from './content-list-loader';
 import { provideContent } from './provide-content';

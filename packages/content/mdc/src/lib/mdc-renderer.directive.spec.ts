@@ -6,7 +6,7 @@ import { MdcRendererDirective } from './mdc-renderer.directive';
 import { MDC_COMPONENTS } from './mdc-component-registry';
 
 @Component({
-  selector: 'test-alert',
+  selector: 'analog-test-alert',
   standalone: true,
   template: '<div class="alert" [attr.data-type]="type()"><ng-content /></div>',
 })
@@ -90,7 +90,7 @@ describe('MdcRendererDirective', () => {
 
     const el = fixture.nativeElement as HTMLElement;
     // The component is instantiated and rendered
-    const alertHost = el.querySelector('test-alert');
+    const alertHost = el.querySelector('analog-test-alert');
     expect(alertHost).toBeTruthy();
   });
 
@@ -159,7 +159,7 @@ describe('MdcRendererDirective', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Trigger a change — the synchronous part of ngOnChanges clears innerHTML
+    // Trigger a change — the synchronous part of the effect clears innerHTML
     host.ast = { nodes: [] };
     fixture.detectChanges();
 

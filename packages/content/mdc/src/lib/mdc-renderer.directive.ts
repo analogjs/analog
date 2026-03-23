@@ -1,12 +1,10 @@
 import {
   Directive,
   ElementRef,
+  effect,
   inject,
-  Input,
-  OnChanges,
-  Optional,
+  input,
   Renderer2,
-  SimpleChanges,
   ViewContainerRef,
 } from '@angular/core';
 
@@ -35,24 +33,30 @@ type ComarkNode =
   selector: '[mdcAst]',
   standalone: true,
 })
-export class MdcRendererDirective implements OnChanges {
-  @Input('mdcAst') ast: { nodes: ComarkNode[] } | null = null;
+export class MdcRendererDirective {
+  readonly ast = input<{ nodes: ComarkNode[] } | null>(null, {
+    alias: 'mdcAst',
+  });
 
   private readonly viewContainer = inject(ViewContainerRef);
   private readonly renderer = inject(Renderer2);
   private readonly el = inject(ElementRef);
   private readonly components = inject(MDC_COMPONENTS, { optional: true });
 
-  ngOnChanges(_changes: SimpleChanges): void {
-    this.viewContainer.clear();
-    const host = this.el.nativeElement as HTMLElement;
-    host.innerHTML = '';
+  constructor() {
+    effect(() => {
+      const ast = this.ast();
 
-    if (!this.ast?.nodes) return;
+      this.viewContainer.clear();
+      const host = this.el.nativeElement as HTMLElement;
+      host.innerHTML = '';
 
-    // Fire-and-forget: Angular doesn't await ngOnChanges, so we schedule
-    // the async rendering and let it complete in the background.
-    void this.renderNodes(this.ast.nodes, host);
+      if (!ast?.nodes) return;
+
+      // Fire-and-forget: Angular doesn't await effects, so we schedule
+      // the async rendering and let it complete in the background.
+      void this.renderNodes(ast.nodes, host);
+    });
   }
 
   private async renderNodes(

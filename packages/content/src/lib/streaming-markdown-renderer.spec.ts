@@ -189,8 +189,9 @@ describe('streamMarkdown', () => {
     const output = await streamMarkdown(input);
     const chunks = await collectStream(output);
 
-    const lastChunk = chunks[chunks.length - 1];
-    expect(lastChunk).toContain('Hello');
-    expect(lastChunk).not.toContain('title: Test');
+    const joined = chunks.join('');
+    expect(joined).toContain('Hello');
+    expect(joined).not.toContain('title: Test');
+    expect(chunks.every((c) => !c.includes('title: Test'))).toBe(true);
   });
 });

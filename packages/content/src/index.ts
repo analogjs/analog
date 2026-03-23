@@ -19,11 +19,6 @@ export {
 } from './lib/md4x-content-renderer.service';
 export type { Md4xRendererOptions } from './lib/md4x-content-renderer.service';
 export { Md4xWasmContentRendererService } from './lib/md4x-wasm-content-renderer.service';
-export { MdcRendererDirective } from './lib/mdc-renderer.directive';
-export {
-  MDC_COMPONENTS,
-  withMdcComponents,
-} from './lib/mdc-component-registry';
 export { streamMarkdown } from './lib/streaming-markdown-renderer';
 export { default as MarkdownRouteComponent } from './lib/markdown-route.component';
 export { default as MarkdownComponent } from './lib/markdown.component';
