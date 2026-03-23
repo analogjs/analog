@@ -15,10 +15,10 @@ type InferSchema<
   : TFallback;
 
 export interface DefineActionContext<
-  TSchema extends StandardSchemaV1,
+  TSchema extends OptionalSchema = undefined,
   TParamsSchema extends OptionalSchema = undefined,
 > {
-  data: StandardSchemaV1.InferOutput<TSchema>;
+  data: InferSchema<TSchema, Record<string, unknown>>;
   params: InferSchema<TParamsSchema, H3EventContext['params']>;
   req: NodeContext['req'];
   res: NonNullable<NodeContext['res']>;
@@ -27,10 +27,10 @@ export interface DefineActionContext<
 }
 
 export interface DefineActionOptions<
-  TSchema extends StandardSchemaV1,
+  TSchema extends OptionalSchema = undefined,
   TParamsSchema extends OptionalSchema = undefined,
 > {
-  schema: TSchema;
+  schema?: TSchema;
   params?: TParamsSchema;
   handler: (
     context: DefineActionContext<TSchema, TParamsSchema>,
@@ -65,7 +65,7 @@ export interface DefineActionOptions<
  * ```
  */
 export function defineAction<
-  TSchema extends StandardSchemaV1,
+  TSchema extends OptionalSchema = undefined,
   TParamsSchema extends OptionalSchema = undefined,
 >(options: DefineActionOptions<TSchema, TParamsSchema>) {
   type Params = InferSchema<TParamsSchema, H3EventContext['params']>;
@@ -98,7 +98,7 @@ export function defineAction<
 }
 
 async function handleValidatedRequest<
-  TSchema extends StandardSchemaV1,
+  TSchema extends OptionalSchema = undefined,
   TParamsSchema extends OptionalSchema = undefined,
 >(
   ctx: {
@@ -111,16 +111,21 @@ async function handleValidatedRequest<
   options: DefineActionOptions<TSchema, TParamsSchema>,
   params: InferSchema<TParamsSchema, H3EventContext['params']>,
 ) {
+  type Data = InferSchema<TSchema, Record<string, unknown>>;
   const body = await parseRequestData(ctx.event);
 
-  const result = await validateWithSchema(options.schema, body);
+  let data: unknown = body;
 
-  if (result.issues) {
-    return fail(422, result.issues);
+  if (options.schema) {
+    const result = await validateWithSchema(options.schema, body);
+    if (result.issues) {
+      return fail(422, result.issues);
+    }
+    data = result.value;
   }
 
   return options.handler({
-    data: result.value,
+    data: data as Data,
     params,
     req: ctx.req,
     res: ctx.res,
