@@ -1,3 +1,9 @@
+# [2.4.0-beta.16](https://github.com/analogjs/analog/compare/v2.4.0-beta.15...v2.4.0-beta.16) (2026-03-23)
+
+### Bug Fixes
+
+- **nx-plugin:** remove full path to main.ts for Nx projects ([#2164](https://github.com/analogjs/analog/issues/2164)) ([39f0d7c](https://github.com/analogjs/analog/commit/39f0d7ce411cf4c59b5b446337affaa818a4e48f))
+
 # [2.4.0-beta.15](https://github.com/analogjs/analog/compare/v2.4.0-beta.14...v2.4.0-beta.15) (2026-03-17)
 
 ### Bug Fixes
