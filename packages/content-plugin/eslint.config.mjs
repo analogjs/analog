@@ -25,7 +25,7 @@ export default [
     rules: {
       '@nx/dependency-checks': [
         'error',
-        { ignoredFiles: ['**/vite.config.lib.ts', '**/tsdown.config.ts'] },
+        { ignoredFiles: ['**/vite.config.lib.ts'] },
       ],
     },
     languageOptions: {
