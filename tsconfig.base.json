@@ -55,6 +55,16 @@
       "libs/card": ["./libs/card/src/index.ts"],
       "my-package": ["./libs/my-package/src/index.ts"],
       "shared/feature": ["./libs/shared/feature/src/index.ts"],
+      "@analogjs/vitest-angular": ["./packages/vitest-angular/src/index.ts"],
+      "@analogjs/vitest-angular/setup-snapshots": [
+        "./packages/vitest-angular/setup-snapshots.ts"
+      ],
+      "@analogjs/vitest-angular/setup-testbed": [
+        "./packages/vitest-angular/setup-testbed.ts"
+      ],
+      "@analogjs/vitest-angular/setup-zone": [
+        "./packages/vitest-angular/setup-zone.ts"
+      ],
       "vitest-angular": ["./packages/vitest-angular/src/index.ts"]
     }
   },
