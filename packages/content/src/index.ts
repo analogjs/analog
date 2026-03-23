@@ -40,3 +40,8 @@ export {
   withContentFileLoader,
   CONTENT_FILE_LOADER,
 } from './lib/content-file-loader';
+export {
+  contentDevToolsPlugin,
+  DevToolsContentRenderer,
+  withContentDevTools,
+} from './lib/devtools/index';
