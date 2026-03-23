@@ -4,8 +4,22 @@ import { getScopeState } from './_query-comments-state';
 
 const QuerySchema = v.object({
   scope: v.optional(v.pipe(v.string(), v.nonEmpty()), 'default'),
-  cursor: v.optional(v.pipe(v.string(), v.transform(Number)), '0'),
-  limit: v.optional(v.pipe(v.string(), v.transform(Number)), '3'),
+  cursor: v.optional(
+    v.pipe(
+      v.string(),
+      v.regex(/^\d+$/, 'cursor must be a non-negative integer'),
+      v.transform(Number),
+    ),
+    '0',
+  ),
+  limit: v.optional(
+    v.pipe(
+      v.string(),
+      v.regex(/^[1-9]\d*$/, 'limit must be a positive integer'),
+      v.transform(Number),
+    ),
+    '3',
+  ),
 });
 
 export const route = defineServerRoute({

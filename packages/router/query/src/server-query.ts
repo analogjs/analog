@@ -30,7 +30,8 @@ function buildUrl(base: string, params?: Record<string, unknown>): string {
     }
   }
   if (parts.length === 0) return base;
-  return `${base}?${parts.join('&')}`;
+  const separator = base.includes('?') ? '&' : '?';
+  return `${base}${separator}${parts.join('&')}`;
 }
 
 export function serverQueryOptions<
