@@ -20,8 +20,8 @@ export const MDC_COMPONENTS: InjectionToken<
  * provideContent(
  *   withMd4xRenderer(),
  *   withMdcComponents({
- *     alert: () => import('./components/alert.component'),
- *     card: () => import('./components/card.component'),
+ *     alert: () => import('./components/alert.component').then(m => m.AlertComponent),
+ *     card: () => import('./components/card.component').then(m => m.CardComponent),
  *   }),
  * );
  * ```
