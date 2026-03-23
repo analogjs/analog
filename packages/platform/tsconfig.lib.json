@@ -9,6 +9,14 @@
     "types": [],
     "isolatedDeclarations": true,
     "allowSyntheticDefaultImports": true,
+    "paths": {
+      "@analogjs/vite-plugin-angular": [
+        "../../packages/vite-plugin-angular/src/index.ts"
+      ],
+      "@analogjs/vite-plugin-nitro": [
+        "../../packages/vite-plugin-nitro/src/index.ts"
+      ]
+    },
     "moduleResolution": "bundler"
   },
   "include": ["**/*.ts"],
