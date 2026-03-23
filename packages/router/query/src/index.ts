@@ -1,4 +1,3 @@
-export * from '@tanstack/angular-query-experimental';
 
 export { provideAnalogQuery } from './provide-analog-query.js';
 
