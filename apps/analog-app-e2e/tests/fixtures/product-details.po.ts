@@ -15,6 +15,6 @@ export class ProductDetailsPage {
   }
 
   getPrice() {
-    return this.page.locator('.badge-primary');
+    return this.page.locator('.badge-primary.badge-lg');
   }
 }

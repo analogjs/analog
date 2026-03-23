@@ -17,7 +17,7 @@ test('should open share dialog when Share is clicked', async ({ page }) => {
   });
 
   await productList.getShareButtonByName(phones.mini.name).click();
-  expect(dialogMessage).toMatch(/the product has been shared!/i);
+  expect(dialogMessage).toMatch(/has been shared!/i);
 });
 
 test('should open notify dialog when Notify Me is clicked', async ({
@@ -32,9 +32,7 @@ test('should open notify dialog when Notify Me is clicked', async ({
   });
 
   await productList.getNotifyButtonByName(phones.xl.name).click();
-  expect(dialogMessage).toMatch(
-    /you will be notified when the product goes on sale/i,
-  );
+  expect(dialogMessage).toMatch(/you will be notified when .+ goes on sale/i);
 });
 
 test('should show price on product details', async ({ page }) => {
