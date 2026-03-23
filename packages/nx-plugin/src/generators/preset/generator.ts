@@ -10,7 +10,5 @@ export default async function (
   ensurePackage('@angular-devkit/core', 'latest');
   ensurePackage('rxjs', 'latest');
 
-  return await import('../app/generator').then(({ appGenerator }) =>
-    appGenerator(tree, options),
-  );
+  return await import('../app/generator').then((m) => m.default(tree, options));
 }
