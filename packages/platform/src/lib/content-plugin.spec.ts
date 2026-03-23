@@ -1,25 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fs from 'node:fs';
 
-vi.mock('node:fs');
-vi.mock('front-matter', () => ({
-  default: vi.fn((fileContents: string) => ({
-    attributes: {
-      title: 'My First Post',
-      slug: '2022-12-27-my-first-post',
-      description: 'My First Post Description',
-    },
-    body: fileContents,
-    frontmatter:
-      'title: My First Post\nslug: 2022-12-27-my-first-post\ndescription: My First Post Description',
-  })),
+vi.mock('fs');
+vi.mock('tinyglobby', () => ({
+  globSync: vi.fn(() => []),
 }));
 
+import { globSync } from 'tinyglobby';
 import { contentPlugin } from './content-plugin';
 
 describe('content plugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(globSync).mockReturnValue([]);
   });
 
   const [plugin] = contentPlugin({ highlighter: 'prism' });
@@ -70,5 +63,215 @@ describe('content plugin', () => {
     expect(await transform(code, id)).toEqual(result);
     // Ensure the `readFileSync` has been called only once.
     expect(readFileSyncSpy).toBeCalledTimes(1);
+  });
+
+  describe('content discovery transform', () => {
+    const workspaceRoot = '/home/user/workspace';
+    const appRoot = `${workspaceRoot}/apps/my-app`;
+
+    function getDiscoveryPlugins() {
+      const plugins = contentPlugin({ highlighter: 'prism' }, {
+        workspaceRoot,
+        additionalContentDirs: ['/libs/shared/feature/src/content'],
+      } as any);
+      const transformPlugin = plugins.find(
+        (p) => p.name === 'analog-content-glob-routes',
+      )!;
+      const invalidatePlugin = plugins.find(
+        (p) => p.name === 'analogjs-invalidate-content-dirs',
+      )!;
+      (transformPlugin as any).config?.({ root: 'apps/my-app' });
+
+      return {
+        transform: (transformPlugin as any).transform as {
+          handler: (code: string) => { code: string };
+        },
+        configureServer: invalidatePlugin.configureServer as (
+          server: unknown,
+        ) => void,
+      };
+    }
+
+    function extractKeys(code: string): string[] {
+      const matches = code.matchAll(/"([^"]+)":\s*analog_module_/g);
+      return [...matches].map((match) => match[1]);
+    }
+
+    it('normalizes app content keys to root-relative paths', () => {
+      vi.mocked(globSync).mockReturnValueOnce([
+        `${appRoot}/src/content/post.md`,
+      ]);
+
+      const { transform } = getDiscoveryPlugins();
+      const result = transform.handler('const ANALOG_CONTENT_FILE_LIST = {};');
+
+      expect(extractKeys(result.code)).toEqual(['/src/content/post.md']);
+      expect(result.code).toContain(
+        `from "${appRoot}/src/content/post.md?analog-content-list=true"`,
+      );
+    });
+
+    it('normalizes workspace content keys outside app root', () => {
+      vi.mocked(globSync).mockReturnValueOnce([
+        'libs/shared/feature/src/content/post.md',
+      ]);
+
+      const { transform } = getDiscoveryPlugins();
+      const result = transform.handler('const ANALOG_CONTENT_FILE_LIST = {};');
+
+      expect(extractKeys(result.code)).toEqual([
+        '/libs/shared/feature/src/content/post.md',
+      ]);
+      expect(result.code).toContain(
+        `from "${workspaceRoot}/libs/shared/feature/src/content/post.md?analog-content-list=true"`,
+      );
+    });
+
+    it.each(['add', 'unlink'] as const)(
+      'invalidates cached discovery results on %s events',
+      (eventName) => {
+        const on = vi.fn();
+        const invalidateModule = vi.fn();
+        const send = vi.fn();
+        const server = {
+          moduleGraph: {
+            fileToModulesMap: new Map(),
+            invalidateModule,
+          },
+          watcher: { on },
+          ws: { send },
+        };
+
+        const { transform, configureServer } = getDiscoveryPlugins();
+        configureServer(server);
+
+        vi.mocked(globSync).mockReturnValueOnce([
+          `${appRoot}/src/content/first.md`,
+        ]);
+
+        const firstResult = transform.handler(
+          'const ANALOG_CONTENT_FILE_LIST = {};',
+        );
+        expect(extractKeys(firstResult.code)).toEqual([
+          '/src/content/first.md',
+        ]);
+        expect(globSync).toHaveBeenCalledTimes(1);
+
+        vi.mocked(globSync).mockReturnValueOnce([
+          `${appRoot}/src/content/second.md`,
+        ]);
+
+        const secondResult = transform.handler(
+          'const ANALOG_CONTENT_FILE_LIST = {};',
+        );
+        expect(extractKeys(secondResult.code)).toEqual([
+          '/src/content/first.md',
+        ]);
+        expect(globSync).toHaveBeenCalledTimes(1);
+
+        const handler = on.mock.calls.find(
+          ([registeredEvent]) => registeredEvent === eventName,
+        )?.[1];
+        expect(handler).toBeTypeOf('function');
+
+        handler(`${appRoot}/src/content/second.md`);
+
+        const thirdResult = transform.handler(
+          'const ANALOG_CONTENT_FILE_LIST = {};',
+        );
+        expect(extractKeys(thirdResult.code)).toEqual([
+          '/src/content/second.md',
+        ]);
+        expect(globSync).toHaveBeenCalledTimes(2);
+        expect(send).toHaveBeenCalledWith({ type: 'full-reload' });
+        expect(invalidateModule).not.toHaveBeenCalled();
+      },
+    );
+
+    it('invalidates cached discovery results for additional content dirs', () => {
+      const on = vi.fn();
+      const send = vi.fn();
+      const server = {
+        moduleGraph: {
+          fileToModulesMap: new Map(),
+          invalidateModule: vi.fn(),
+        },
+        watcher: { on },
+        ws: { send },
+      };
+
+      const { transform, configureServer } = getDiscoveryPlugins();
+      configureServer(server);
+
+      vi.mocked(globSync).mockReturnValueOnce([
+        'libs/shared/feature/src/content/first.md',
+      ]);
+
+      const firstResult = transform.handler(
+        'const ANALOG_CONTENT_FILE_LIST = {};',
+      );
+      expect(extractKeys(firstResult.code)).toEqual([
+        '/libs/shared/feature/src/content/first.md',
+      ]);
+      expect(globSync).toHaveBeenCalledTimes(1);
+
+      vi.mocked(globSync).mockReturnValueOnce([
+        'libs/shared/feature/src/content/second.md',
+      ]);
+
+      on.mock.calls.find(([registeredEvent]) => registeredEvent === 'add')?.[1](
+        `${workspaceRoot}/libs/shared/feature/src/content/second.md`,
+      );
+
+      const secondResult = transform.handler(
+        'const ANALOG_CONTENT_FILE_LIST = {};',
+      );
+      expect(extractKeys(secondResult.code)).toEqual([
+        '/libs/shared/feature/src/content/second.md',
+      ]);
+      expect(globSync).toHaveBeenCalledTimes(2);
+      expect(send).toHaveBeenCalledWith({ type: 'full-reload' });
+    });
+
+    it('does not invalidate cached discovery results for unrelated paths', () => {
+      const on = vi.fn();
+      const send = vi.fn();
+      const server = {
+        moduleGraph: {
+          fileToModulesMap: new Map(),
+          invalidateModule: vi.fn(),
+        },
+        watcher: { on },
+        ws: { send },
+      };
+
+      const { transform, configureServer } = getDiscoveryPlugins();
+      configureServer(server);
+
+      vi.mocked(globSync).mockReturnValueOnce([
+        `${appRoot}/src/content/first.md`,
+      ]);
+
+      const firstResult = transform.handler(
+        'const ANALOG_CONTENT_FILE_LIST = {};',
+      );
+      expect(extractKeys(firstResult.code)).toEqual(['/src/content/first.md']);
+      expect(globSync).toHaveBeenCalledTimes(1);
+
+      vi.mocked(globSync).mockReturnValueOnce([
+        `${appRoot}/src/content/second.md`,
+      ]);
+
+      on.mock.calls.find(([registeredEvent]) => registeredEvent === 'add')?.[1](
+        `${appRoot}/src/app/pages/index.page.ts`,
+      );
+
+      const secondResult = transform.handler(
+        'const ANALOG_CONTENT_FILE_LIST = {};',
+      );
+      expect(extractKeys(secondResult.code)).toEqual(['/src/content/first.md']);
+      expect(globSync).toHaveBeenCalledTimes(1);
+      expect(send).not.toHaveBeenCalled();
+    });
   });
 });
