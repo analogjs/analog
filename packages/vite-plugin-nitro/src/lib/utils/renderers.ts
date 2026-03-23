@@ -30,15 +30,14 @@ export const SERVER_FETCH_FACTORY_SNIPPET = `
  * - event.path (replaces event.node.req.url)
  * - getResponseHeader compat shim (still available in h3 v2)
  */
-export function ssrRenderer(templatePath: string) {
+export function ssrRenderer() {
   return `
-import { readFileSync } from 'node:fs';
 import { createFetch } from 'ofetch';
 import { defineHandler, fetchWithEvent } from 'nitro/h3';
 // @ts-ignore
 import renderer from '#analog/ssr';
+import template from '#analog/index';
 
-const template = readFileSync(${JSON.stringify(templatePath)}, 'utf8');
 const normalizeHtmlRequestUrl = (url) =>
   url.replace(/\\/index\\.html(?=$|[?#])/, '/');
 
@@ -84,12 +83,10 @@ ${SERVER_FETCH_FACTORY_SNIPPET}
  * Used when SSR is disabled — simply serves the static index.html template
  * for every route, letting the client-side Angular router handle navigation.
  */
-export function clientRenderer(templatePath: string) {
+export function clientRenderer() {
   return `
-import { readFileSync } from 'node:fs';
 import { defineHandler } from 'nitro/h3';
-
-const template = readFileSync(${JSON.stringify(templatePath)}, 'utf8');
+import template from '#analog/index';
 
 export default defineHandler(async (event) => {
   event.res.headers.set('content-type', 'text/html; charset=utf-8');

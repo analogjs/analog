@@ -71,7 +71,6 @@ exports[`preset generator > should match project.json 1`] = `
       "executor": "@nx/web:file-server",
       "options": {
         "buildTarget": "my-app:build",
-        "port": 4200,
         "staticFilePath": "dist/my-app/browser",
         "spa": true
       }

@@ -16,3 +16,7 @@ export type PageServerLoad = {
 export type LoadResult<
   A extends (pageServerLoad: PageServerLoad) => Promise<any>,
 > = Awaited<ReturnType<A>>;
+
+export type LoadDataResult<
+  A extends (pageServerLoad: PageServerLoad) => Promise<any>,
+> = Exclude<LoadResult<A>, Response>;

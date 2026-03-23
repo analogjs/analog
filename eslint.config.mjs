@@ -21,7 +21,13 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ['**/dist', '**/out-tsc', '**/oxlint.config.ts'],
+    ignores: [
+      '**/dist',
+      '**/out-tsc',
+      '**/oxlint.config.ts',
+      '**/playwright-report',
+      '**/playwright-report/**',
+    ],
   },
   {
     linterOptions: {

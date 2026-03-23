@@ -75,7 +75,7 @@ async function appGenerator(
 
   if (nxVersion && belowMinimumSupportedNxVersion(nxVersion)) {
     throw new Error(
-      stripIndents`Nx v15.2.0 or newer is required to install Analog`,
+      stripIndents`Nx v17.0.0 or newer is required to install Analog`,
     );
   }
 

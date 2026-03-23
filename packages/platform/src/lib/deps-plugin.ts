@@ -1,6 +1,5 @@
 import { VERSION } from '@angular/compiler-cli';
 import type { Plugin } from 'vite';
-import * as vite from 'vite';
 import { crawlFrameworkPkgs } from 'vitefu';
 
 import { Options } from './options.js';
@@ -8,14 +7,18 @@ import { getJsTransformConfigKey } from './utils/rolldown.js';
 
 export function depsPlugin(options?: Options): Plugin[] {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  const viteOptions = options?.vite === false ? undefined : options?.vite;
 
   return [
     {
       name: 'analogjs-deps-plugin',
       config() {
+        const useAngularCompilationAPI =
+          options?.experimental?.useAngularCompilationAPI ??
+          viteOptions?.experimental?.useAngularCompilationAPI;
+
         const transformConfig =
-          options?.vite === false ||
-          options?.vite?.experimental?.useAngularCompilationAPI
+          options?.vite === false || useAngularCompilationAPI
             ? {}
             : { exclude: ['**/*.ts', '**/*.js'] };
 

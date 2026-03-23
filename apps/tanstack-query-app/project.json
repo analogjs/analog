@@ -1,0 +1,69 @@
+{
+  "name": "tanstack-query-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/tanstack-query-app/src",
+  "prefix": "tq",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "dependsOn": ["platform:build", "router:build"],
+      "outputs": [
+        "{options.outputPath}",
+        "{workspaceRoot}/dist/apps/tanstack-query-app/.nitro",
+        "{workspaceRoot}/dist/apps/tanstack-query-app/ssr",
+        "{workspaceRoot}/dist/apps/tanstack-query-app/analog"
+      ],
+      "options": {
+        "configFile": "apps/tanstack-query-app/vite.config.ts",
+        "outputPath": "dist/apps/tanstack-query-app/client"
+      },
+      "defaultConfiguration": "production",
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "sourcemap": false,
+          "mode": "production"
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/vite:dev-server",
+      "dependsOn": ["platform:build", "router:build"],
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "tanstack-query-app:build",
+        "buildLibsFromSource": true,
+        "port": 43020
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "tanstack-query-app:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "tanstack-query-app:build:production"
+        }
+      }
+    },
+    "serve-nitro": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "dist/apps/tanstack-query-app/analog",
+        "command": "PORT=43020 node --unhandled-rejections=throw ./server/index.mjs"
+      },
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["platform:build", "router:build"],
+      "outputs": ["{projectRoot}/coverage"]
+    }
+  }
+}
