@@ -13,6 +13,7 @@ export async function addAngularApp(
       name: options.analogAppName,
       directory: `${appsDir}/${options.analogAppName}`,
       linter: !isNx || process.env['NODE_ENV'] === 'test' ? 'none' : 'eslint',
+      e2eTestRunner: 'none',
       unitTestRunner: 'vitest',
       standalone: true,
       ssr: false,
