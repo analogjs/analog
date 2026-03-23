@@ -1,11 +1,12 @@
 export { AnchorNavigationDirective } from './lib/anchor-navigation.directive';
 export { injectContent } from './lib/content';
-export { ContentFile } from './lib/content-file';
+// These are type-only in source. Exporting them as runtime values worked when
+// consumers hit built output, but breaks once workspace development resolves
+// directly against source.
+export type { ContentFile } from './lib/content-file';
 export { ContentRenderer, NoopContentRenderer } from './lib/content-renderer';
-export {
-  injectContentFiles,
-  InjectContentFilesFilterFunction,
-} from './lib/inject-content-files';
+export { injectContentFiles } from './lib/inject-content-files';
+export type { InjectContentFilesFilterFunction } from './lib/inject-content-files';
 export { MarkdownContentRendererService } from './lib/markdown-content-renderer.service';
 export {
   provideContent,
@@ -14,7 +15,11 @@ export {
 } from './lib/provide-content';
 export { default as MarkdownRouteComponent } from './lib/markdown-route.component';
 export { default as MarkdownComponent } from './lib/markdown.component';
-export { parseRawContentFile } from './lib/parse-raw-content-file';
+export {
+  parseRawContentFile,
+  parseRawContentFileAsync,
+  FrontmatterValidationError,
+} from './lib/parse-raw-content-file';
 export { MarkedSetupService } from './lib/marked-setup.service';
 export {
   MarkedContentHighlighter,
