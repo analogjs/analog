@@ -10,12 +10,12 @@
       "default": "./src/index.js"
     },
     "./tanstack-query": {
-      "import": "./query/src/index.js",
-      "default": "./query/src/index.js"
+      "import": "./tanstack-query/src/index.js",
+      "default": "./tanstack-query/src/index.js"
     },
     "./tanstack-query/server": {
-      "import": "./query/src/provide-server-analog-query.js",
-      "default": "./query/src/provide-server-analog-query.js"
+      "import": "./tanstack-query/src/provide-server-analog-query.js",
+      "default": "./tanstack-query/src/provide-server-analog-query.js"
     },
     "./server": {
       "import": "./server/src/index.js",
