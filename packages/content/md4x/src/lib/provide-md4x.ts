@@ -1,10 +1,8 @@
 import { Provider } from '@angular/core';
 
-import {
-  ContentRenderer,
-  withContentFileLoader,
-  withContentListLoader,
-} from '@analogjs/content';
+import { ContentRenderer } from '../../../src/lib/content-renderer';
+import { withContentFileLoader } from '../../../src/lib/content-file-loader';
+import { withContentListLoader } from '../../../src/lib/content-list-loader';
 import {
   Md4xContentRendererService,
   MD4X_RENDERER_OPTIONS,
