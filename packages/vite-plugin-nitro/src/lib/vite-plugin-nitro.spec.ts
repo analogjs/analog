@@ -94,6 +94,9 @@ describe('nitro', () => {
         stack: [],
         use,
       },
+      watcher: {
+        on: vi.fn(),
+      },
     });
 
     await configureNitro?.();
