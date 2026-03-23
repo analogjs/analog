@@ -1,15 +1,9 @@
 import { defineServerRoute } from '@analogjs/router/server/actions';
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import * as v from 'valibot';
 
 type Post = {
   id: string;
   title: string;
-  author: string;
-};
-
-type QueryInput = {
-  scope: string;
-  postId: string;
   author: string;
 };
 
@@ -21,10 +15,6 @@ type ScopeState = {
 };
 
 const scopes = new Map<string, ScopeState>();
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
 
 const SEED_POSTS: Post[] = [
   { id: '1', title: 'Getting Started with Analog', author: 'Alice' },
@@ -49,32 +39,13 @@ function getScopeState(scope: string): ScopeState {
   return state;
 }
 
-const QuerySchema: StandardSchemaV1<unknown, QueryInput> = {
-  '~standard': {
-    version: 1,
-    vendor: 'analog-e2e',
-    validate: (value) => {
-      if (!isRecord(value)) {
-        return { value: { scope: 'default', postId: '', author: '' } };
-      }
+const QuerySchema = v.object({
+  scope: v.optional(v.pipe(v.string(), v.nonEmpty()), 'default'),
+  postId: v.optional(v.string(), ''),
+  author: v.optional(v.string(), ''),
+});
 
-      const scope = value['scope'];
-      const postId = value['postId'];
-      const author = value['author'];
-
-      return {
-        value: {
-          scope:
-            typeof scope === 'string' && scope.length > 0 ? scope : 'default',
-          postId: typeof postId === 'string' ? postId : '',
-          author: typeof author === 'string' ? author : '',
-        },
-      };
-    },
-  },
-};
-
-export default defineServerRoute({
+export const route = defineServerRoute({
   query: QuerySchema,
   handler: ({ query }) => {
     const state = getScopeState(query.scope);
@@ -106,3 +77,5 @@ export default defineServerRoute({
     };
   },
 });
+
+export default route;

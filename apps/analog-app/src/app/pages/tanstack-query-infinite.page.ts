@@ -7,19 +7,12 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { lastValueFrom } from 'rxjs';
-import { injectInfiniteQuery } from '@analogjs/router/query';
+import {
+  injectInfiniteQuery,
+  serverInfiniteQueryOptions,
+} from '@analogjs/router/query';
 
-type Comment = {
-  id: string;
-  text: string;
-};
-
-type CommentsPageResponse = {
-  fetchCount: number;
-  items: Comment[];
-  nextCursor: number | null;
-};
+import type { route } from '../../server/routes/api/v1/query-comments.get';
 
 @Component({
   selector: 'analogjs-tanstack-query-infinite-page',
@@ -61,27 +54,34 @@ type CommentsPageResponse = {
 })
 export default class TanStackQueryInfinitePageComponent {
   private readonly http = inject(HttpClient);
-  private readonly route = inject(ActivatedRoute);
-  private readonly queryParamMap = toSignal(this.route.queryParamMap, {
-    initialValue: this.route.snapshot.queryParamMap,
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly queryParamMap = toSignal(this.activatedRoute.queryParamMap, {
+    initialValue: this.activatedRoute.snapshot.queryParamMap,
   });
 
   readonly scope = computed(
     () => this.queryParamMap().get('scope') ?? 'default',
   );
 
-  readonly commentsQuery = injectInfiniteQuery(() => ({
-    queryKey: ['comments', this.scope()],
-    queryFn: ({ pageParam }: { pageParam: number }) =>
-      lastValueFrom(
-        this.http.get<CommentsPageResponse>(
-          `/api/v1/query-comments?scope=${encodeURIComponent(this.scope())}&cursor=${pageParam}&limit=3`,
-        ),
-      ),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage: CommentsPageResponse) => lastPage.nextCursor,
-    staleTime: 60_000,
-  }));
+  readonly commentsQuery = injectInfiniteQuery(() =>
+    serverInfiniteQueryOptions<
+      typeof route,
+      unknown,
+      unknown,
+      readonly string[],
+      number
+    >(this.http, '/api/v1/query-comments', {
+      queryKey: ['comments', this.scope()] as const,
+      query: ({ pageParam }) => ({
+        scope: this.scope(),
+        cursor: pageParam,
+        limit: 3,
+      }),
+      initialPageParam: 0,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      staleTime: 60_000,
+    }),
+  );
 
   readonly allComments = computed(
     () => this.commentsQuery.data()?.pages.flatMap((p) => p.items) ?? [],

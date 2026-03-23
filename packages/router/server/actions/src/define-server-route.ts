@@ -6,6 +6,29 @@ import { parseRequestData, parseSearchParams } from './parse-request-data';
 import { validateWithSchema } from './validate';
 
 export type DefineServerRouteResult = Response | unknown;
+
+export interface ServerRouteHandler<
+  TQuery = unknown,
+  TBody = unknown,
+  TResult = unknown,
+> {
+  (event: H3Event): Promise<Response>;
+  readonly _types: {
+    readonly query: TQuery;
+    readonly body: TBody;
+    readonly result: TResult;
+  };
+}
+
+export type InferRouteQuery<T> =
+  T extends ServerRouteHandler<infer Q, any, any> ? Q : never;
+export type InferRouteBody<T> =
+  T extends ServerRouteHandler<any, infer B, any> ? B : never;
+export type InferRouteResult<T> =
+  T extends ServerRouteHandler<any, any, infer R>
+    ? Exclude<R, Response>
+    : never;
+
 type OptionalSchema = StandardSchemaV1 | undefined;
 type InferSchema<
   TSchema extends OptionalSchema,
@@ -140,8 +163,12 @@ export function defineServerRoute<
     TParams,
     TResult
   >,
-) {
-  return async (event: H3Event): Promise<Response> => {
+): ServerRouteHandler<
+  InferSchema<TQuery, undefined>,
+  InferSchema<TBody, undefined>,
+  TResult
+> {
+  return (async (event: H3Event): Promise<Response> => {
     const method = event.method.toUpperCase();
     let data: unknown;
     let query: unknown;
@@ -215,5 +242,9 @@ export function defineServerRoute<
     }
 
     return json(result);
-  };
+  }) as ServerRouteHandler<
+    InferSchema<TQuery, undefined>,
+    InferSchema<TBody, undefined>,
+    TResult
+  >;
 }

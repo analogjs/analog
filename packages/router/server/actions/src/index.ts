@@ -7,6 +7,10 @@ export type {
   DefineServerRouteContext,
   DefineServerRouteOptions,
   DefineServerRouteResult,
+  ServerRouteHandler,
+  InferRouteQuery,
+  InferRouteBody,
+  InferRouteResult,
 } from './define-server-route';
 export { definePageLoad } from './define-page-load';
 export type {

@@ -7,68 +7,9 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { lastValueFrom } from 'rxjs';
-import { injectQuery, queryOptions } from '@analogjs/router/query';
+import { injectQuery, serverQueryOptions } from '@analogjs/router/query';
 
-type Post = {
-  id: string;
-  title: string;
-  author: string;
-};
-
-type PostListResponse = {
-  listFetchCount: number;
-  posts: Post[];
-};
-
-type PostDetailResponse = {
-  detailFetchCount: number;
-  post: Post | null;
-};
-
-type AuthorPostsResponse = {
-  authorFetchCount: number;
-  authorPosts: Post[];
-};
-
-function postsListOptions(http: HttpClient, scope: string) {
-  return queryOptions({
-    queryKey: ['posts-list', scope],
-    queryFn: () =>
-      lastValueFrom(
-        http.get<PostListResponse>(
-          `/api/v1/query-posts?scope=${encodeURIComponent(scope)}`,
-        ),
-      ),
-    staleTime: 60_000,
-  });
-}
-
-function postDetailOptions(http: HttpClient, scope: string, postId: string) {
-  return queryOptions({
-    queryKey: ['post-detail', scope, postId],
-    queryFn: () =>
-      lastValueFrom(
-        http.get<PostDetailResponse>(
-          `/api/v1/query-posts?scope=${encodeURIComponent(scope)}&postId=${encodeURIComponent(postId)}`,
-        ),
-      ),
-    staleTime: 60_000,
-  });
-}
-
-function authorPostsOptions(http: HttpClient, scope: string, author: string) {
-  return queryOptions({
-    queryKey: ['author-posts', scope, author],
-    queryFn: () =>
-      lastValueFrom(
-        http.get<AuthorPostsResponse>(
-          `/api/v1/query-posts?scope=${encodeURIComponent(scope)}&author=${encodeURIComponent(author)}`,
-        ),
-      ),
-    staleTime: 60_000,
-  });
-}
+import type { route } from '../../server/routes/api/v1/query-posts';
 
 @Component({
   selector: 'analogjs-tanstack-query-multi-page',
@@ -116,9 +57,9 @@ function authorPostsOptions(http: HttpClient, scope: string, author: string) {
 })
 export default class TanStackQueryMultiPageComponent {
   private readonly http = inject(HttpClient);
-  private readonly route = inject(ActivatedRoute);
-  private readonly queryParamMap = toSignal(this.route.queryParamMap, {
-    initialValue: this.route.snapshot.queryParamMap,
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly queryParamMap = toSignal(this.activatedRoute.queryParamMap, {
+    initialValue: this.activatedRoute.snapshot.queryParamMap,
   });
 
   readonly scope = computed(
@@ -126,11 +67,19 @@ export default class TanStackQueryMultiPageComponent {
   );
 
   readonly postsQuery = injectQuery(() =>
-    postsListOptions(this.http, this.scope()),
+    serverQueryOptions<typeof route>(this.http, '/api/v1/query-posts', {
+      queryKey: ['posts-list', this.scope()] as const,
+      query: { scope: this.scope(), postId: '', author: '' },
+      staleTime: 60_000,
+    }),
   );
 
   readonly featuredPostQuery = injectQuery(() =>
-    postDetailOptions(this.http, this.scope(), '1'),
+    serverQueryOptions<typeof route>(this.http, '/api/v1/query-posts', {
+      queryKey: ['post-detail', this.scope(), '1'] as const,
+      query: { scope: this.scope(), postId: '1', author: '' },
+      staleTime: 60_000,
+    }),
   );
 
   readonly featuredAuthor = computed(
@@ -140,7 +89,11 @@ export default class TanStackQueryMultiPageComponent {
   readonly authorPostsQuery = injectQuery(() => {
     const author = this.featuredAuthor();
     return {
-      ...authorPostsOptions(this.http, this.scope(), author),
+      ...serverQueryOptions<typeof route>(this.http, '/api/v1/query-posts', {
+        queryKey: ['author-posts', this.scope(), author] as const,
+        query: { scope: this.scope(), postId: '', author },
+        staleTime: 60_000,
+      }),
       enabled: author.length > 0,
     };
   });

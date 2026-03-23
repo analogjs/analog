@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,31 +8,21 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { lastValueFrom } from 'rxjs';
 import {
   QueryClient,
   injectMutation,
   injectQuery,
+  serverQueryOptions,
+  serverMutationOptions,
 } from '@analogjs/router/query';
 
-type Todo = {
-  id: string;
-  title: string;
-};
-
-type TodoListResponse = {
-  fetchCount: number;
-  items: Todo[];
-};
-
-type TodoCreateResponse = {
-  created: true;
-  item: Todo;
-};
+import type { route as todosQueryRoute } from '../../server/routes/api/v1/query-todos.get';
+import type { route as todosMutationRoute } from '../../server/routes/api/v1/query-todos.post';
 
 function getIssueMessage(error: unknown): string {
-  if (error instanceof HttpErrorResponse && Array.isArray(error.error)) {
-    const firstIssue = error.error[0];
+  const err = error as { error?: unknown };
+  if (err.error && Array.isArray(err.error)) {
+    const firstIssue = err.error[0];
     if (
       typeof firstIssue === 'object' &&
       firstIssue !== null &&
@@ -97,42 +87,42 @@ export default class TanStackQueryPageComponent {
   );
   readonly mutationError = signal('');
 
-  readonly todosQuery = injectQuery(() => ({
-    queryKey: ['analog-query-todos', this.scope()],
-    queryFn: () =>
-      lastValueFrom(
-        this.http.get<TodoListResponse>('/api/v1/query-todos', {
-          params: { scope: this.scope() },
-        }),
-      ),
-    staleTime: 60_000,
-  }));
+  readonly todosQuery = injectQuery(() =>
+    serverQueryOptions<typeof todosQueryRoute>(
+      this.http,
+      '/api/v1/query-todos',
+      {
+        queryKey: ['analog-query-todos', this.scope()] as const,
+        query: { scope: this.scope() },
+        staleTime: 60_000,
+      },
+    ),
+  );
 
-  readonly createTodoMutation = injectMutation(() => ({
-    mutationFn: (title: string) =>
-      lastValueFrom(
-        this.http.post<TodoCreateResponse>('/api/v1/query-todos', {
-          scope: this.scope(),
-          title,
-        }),
-      ),
-    onMutate: () => {
-      this.mutationError.set('');
-    },
-    onSuccess: () => {
-      return this.queryClient.invalidateQueries({
-        queryKey: ['analog-query-todos', this.scope()],
-      });
-    },
-    onError: (error: HttpErrorResponse) => {
-      this.mutationError.set(getIssueMessage(error));
-    },
-  }));
+  readonly createTodoMutation = injectMutation(() =>
+    serverMutationOptions<typeof todosMutationRoute>(
+      this.http,
+      '/api/v1/query-todos',
+      {
+        onMutate: () => {
+          this.mutationError.set('');
+        },
+        onSuccess: () => {
+          return this.queryClient.invalidateQueries({
+            queryKey: ['analog-query-todos', this.scope()],
+          });
+        },
+        onError: (error) => {
+          this.mutationError.set(getIssueMessage(error));
+        },
+      },
+    ),
+  );
 
   readonly fetchCount = computed(() => this.todosQuery.data()?.fetchCount ?? 0);
   readonly todos = computed(() => this.todosQuery.data()?.items ?? []);
 
   createTodo(title: string) {
-    this.createTodoMutation.mutate(title);
+    this.createTodoMutation.mutate({ scope: this.scope(), title });
   }
 }

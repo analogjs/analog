@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,33 +8,24 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { lastValueFrom } from 'rxjs';
 import {
   QueryClient,
   injectMutation,
   injectQuery,
+  serverQueryOptions,
+  serverMutationOptions,
 } from '@analogjs/router/query';
 
-type Comment = {
-  id: string;
-  text: string;
-  optimistic?: boolean;
-};
+import type { route as commentsQueryRoute } from '../../server/routes/api/v1/query-comments.get';
+import type { route as commentsMutationRoute } from '../../server/routes/api/v1/query-comments.post';
+import type { InferRouteResult } from '@analogjs/router/server/actions';
 
-type CommentsResponse = {
-  fetchCount: number;
-  items: Comment[];
-  nextCursor: number | null;
-};
-
-type CommentCreateResponse = {
-  created: true;
-  item: Comment;
-};
+type CommentsData = InferRouteResult<typeof commentsQueryRoute>;
 
 function getIssueMessage(error: unknown): string {
-  if (error instanceof HttpErrorResponse && Array.isArray(error.error)) {
-    const firstIssue = error.error[0];
+  const err = error as { error?: unknown };
+  if (err.error && Array.isArray(err.error)) {
+    const firstIssue = err.error[0];
     if (
       typeof firstIssue === 'object' &&
       firstIssue !== null &&
@@ -90,9 +81,9 @@ function getIssueMessage(error: unknown): string {
 export default class TanStackQueryOptimisticPageComponent {
   private readonly http = inject(HttpClient);
   private readonly queryClient = inject(QueryClient);
-  private readonly route = inject(ActivatedRoute);
-  private readonly queryParamMap = toSignal(this.route.queryParamMap, {
-    initialValue: this.route.snapshot.queryParamMap,
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly queryParamMap = toSignal(this.activatedRoute.queryParamMap, {
+    initialValue: this.activatedRoute.snapshot.queryParamMap,
   });
 
   readonly scope = computed(
@@ -106,67 +97,69 @@ export default class TanStackQueryOptimisticPageComponent {
     () => ['optimistic-comments', this.scope()] as const,
   );
 
-  readonly commentsQuery = injectQuery(() => ({
-    queryKey: this.queryKey(),
-    queryFn: () =>
-      lastValueFrom(
-        this.http.get<CommentsResponse>(
-          `/api/v1/query-comments?scope=${encodeURIComponent(this.scope())}&cursor=0&limit=10`,
-        ),
-      ),
-    staleTime: 60_000,
-  }));
+  readonly commentsQuery = injectQuery(() =>
+    serverQueryOptions<typeof commentsQueryRoute>(
+      this.http,
+      '/api/v1/query-comments',
+      {
+        queryKey: this.queryKey(),
+        query: { scope: this.scope(), cursor: 0, limit: 10 },
+        staleTime: 60_000,
+      },
+    ),
+  );
 
-  readonly createCommentMutation = injectMutation(() => ({
-    mutationFn: (text: string) =>
-      lastValueFrom(
-        this.http.post<CommentCreateResponse>('/api/v1/query-comments', {
-          scope: this.scope(),
-          text,
-        }),
-      ),
-    onMutate: async (text: string) => {
-      this.mutationError.set('');
-      this.rolledBack.set(false);
-      this.optimisticApplied.set(true);
+  readonly createCommentMutation = injectMutation(() =>
+    serverMutationOptions<typeof commentsMutationRoute>(
+      this.http,
+      '/api/v1/query-comments',
+      {
+        onMutate: async (variables) => {
+          this.mutationError.set('');
+          this.rolledBack.set(false);
+          this.optimisticApplied.set(true);
 
-      await this.queryClient.cancelQueries({ queryKey: this.queryKey() });
+          await this.queryClient.cancelQueries({ queryKey: this.queryKey() });
 
-      const snapshot = this.queryClient.getQueryData<CommentsResponse>(
-        this.queryKey(),
-      );
+          const snapshot = this.queryClient.getQueryData<CommentsData>(
+            this.queryKey(),
+          );
 
-      this.queryClient.setQueryData<CommentsResponse>(
-        this.queryKey(),
-        (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            items: [
-              ...old.items,
-              { id: `optimistic-${Date.now()}`, text, optimistic: true },
-            ],
-          };
+          this.queryClient.setQueryData<CommentsData>(
+            this.queryKey(),
+            (old) => {
+              if (!old) return old;
+              return {
+                ...old,
+                items: [
+                  ...old.items,
+                  {
+                    id: `optimistic-${Date.now()}`,
+                    text: variables.text,
+                    optimistic: true,
+                  },
+                ],
+              };
+            },
+          );
+
+          return { snapshot };
         },
-      );
-
-      return { snapshot };
-    },
-    onError: (
-      error: HttpErrorResponse,
-      _variables: string,
-      context: { snapshot: CommentsResponse | undefined } | undefined,
-    ) => {
-      if (context?.snapshot) {
-        this.queryClient.setQueryData(this.queryKey(), context.snapshot);
-      }
-      this.mutationError.set(getIssueMessage(error));
-      this.rolledBack.set(true);
-    },
-    onSettled: () => {
-      return this.queryClient.invalidateQueries({ queryKey: this.queryKey() });
-    },
-  }));
+        onError: (error, _variables, context) => {
+          if (context?.snapshot) {
+            this.queryClient.setQueryData(this.queryKey(), context.snapshot);
+          }
+          this.mutationError.set(getIssueMessage(error));
+          this.rolledBack.set(true);
+        },
+        onSettled: () => {
+          return this.queryClient.invalidateQueries({
+            queryKey: this.queryKey(),
+          });
+        },
+      },
+    ),
+  );
 
   readonly fetchCount = computed(
     () => this.commentsQuery.data()?.fetchCount ?? 0,
@@ -175,6 +168,6 @@ export default class TanStackQueryOptimisticPageComponent {
   readonly comments = computed(() => this.commentsQuery.data()?.items ?? []);
 
   addComment(text: string) {
-    this.createCommentMutation.mutate(text);
+    this.createCommentMutation.mutate({ scope: this.scope(), text });
   }
 }
