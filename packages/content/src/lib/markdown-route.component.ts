@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import {
   AfterViewChecked,
   Component,
@@ -15,7 +14,7 @@ import { AnchorNavigationDirective } from './anchor-navigation.directive';
 @Component({
   selector: 'analog-markdown-route',
   standalone: true,
-  imports: [AsyncPipe],
+  imports: [],
   hostDirectives: [AnchorNavigationDirective],
   preserveWhitespaces: true,
   encapsulation: ViewEncapsulation.None,
