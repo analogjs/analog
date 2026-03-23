@@ -26,7 +26,6 @@ export function provideAnalogQuery(
   ...features: QueryFeatures[]
 ): EnvironmentProviders {
   return makeEnvironmentProviders([
-    provideTanStackQuery(queryClient, ...features),
     {
       provide: ENVIRONMENT_INITIALIZER,
       multi: true,
