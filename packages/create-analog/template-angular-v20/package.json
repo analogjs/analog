@@ -27,7 +27,7 @@
     "@angular/platform-server": "^20.0.0",
     "@angular/router": "^20.0.0",
     "front-matter": "^4.0.2",
-    "marked": "^15.0.7",
+    "marked": "^17.0.5",
     "marked-gfm-heading-id": "^4.1.1",
     "marked-highlight": "^2.2.1",
     "marked-mangle": "^1.1.10",
@@ -45,7 +45,7 @@
     "@angular/cli": "^20.0.0",
     "@angular/compiler-cli": "^20.0.0",
     "jsdom": "^22.0.0",
-    "typescript": "6.0.1-rc",
+    "typescript": "6.0.2",
     "vite": "^7.0.0",
     "vite-tsconfig-paths": "^4.2.0",
     "vitest": "^4.0.0"

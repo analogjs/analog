@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';__TAILWIND_IMPORT__
+__TAILWIND_IMPORT__import analog from '@analogjs/platform';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -12,14 +12,14 @@ export default defineConfig(({ mode }) => ({
     mainFields: ['module'],
   },
   plugins: [
-    analog({
+__TAILWIND_PLUGIN__    analog({
       content: {
         highlighter: '__CONTENT_HIGHLIGHTER__',
       },
       prerender: {
         routes: ['/blog', '/blog/2022-12-27-my-first-post'],
       },
-    }),__TAILWIND_PLUGIN__
+    }),
   ],
   test: {
     globals: true,

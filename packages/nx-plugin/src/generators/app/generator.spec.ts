@@ -6,6 +6,7 @@ import {
   Tree,
 } from '@nx/devkit';
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing';
+import { describe, expect, it } from 'vitest';
 
 import generator from './generator';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
@@ -63,7 +64,7 @@ describe('nx-plugin generator', () => {
   ) => {
     expect(config.projectType).toBe('application');
     expect(config.root).toBe(standalone ? name : 'apps/' + name);
-    expect(config.targets.build.outputs).toBeDefined();
+    expect(config.targets?.build?.outputs).toBeDefined();
   };
 
   const verifyHomePageExists = (
@@ -96,15 +97,17 @@ describe('nx-plugin generator', () => {
     dependencies: Record<string, string>,
   ) => {
     expect(dependencies['tailwindcss']).toBeDefined();
-    expect(dependencies['@tailwindcss/postcss']).toBeDefined();
+    expect(dependencies['@tailwindcss/vite']).toBeDefined();
+    const viteConfig = tree.read('apps/tailwind-app/vite.config.ts', 'utf-8');
+    const styles = tree.read('apps/tailwind-app/src/styles.css', 'utf-8');
 
-    expect(tree.exists('apps/tailwind-app/tailwind.config.ts')).toBeTruthy();
-    expect(tree.exists('apps/tailwind-app/.postcssrc.json')).toBeTruthy();
-    expect(
-      tree
-        .read('apps/tailwind-app/src/styles.css')
-        .includes(`@import 'tailwindcss';`),
-    ).toBeTruthy();
+    expect(styles?.includes(`@import 'tailwindcss';`)).toBeTruthy();
+    expect(viteConfig).toContain(
+      `import tailwindcss from '@tailwindcss/vite';`,
+    );
+    expect(viteConfig).toMatch(
+      /plugins:\s*\[[\s\S]*tailwindcss\(\),[\s\S]*analog\(/,
+    );
   };
 
   const verifyTagsArePopulated = (

@@ -13,6 +13,7 @@ export default defineConfig(() => {
     },
     build: {
       outDir: '../../dist/apps/opt-catchall-app/client',
+      emptyOutDir: true,
       reportCompressedSize: true,
       target: ['es2020'],
     },

@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { core as PresetCore } from '@storybook/angular/preset';
 import { fileURLToPath } from 'node:url';
@@ -92,6 +93,11 @@ export const viteFinal = async (config: any, options: any): Promise<any> => {
         ...(experimentalZoneless ? [] : ['zone.js']),
       ],
     },
+    resolve: {
+      alias: {
+        '@storybook/globalThis': '@storybook/global',
+      },
+    },
     plugins: [
       angular({
         jit:
@@ -168,6 +174,8 @@ function angularOptionsPlugin(
       ) {
         const imports = [];
         const styles = options?.angularBuilderOptions?.styles;
+        const workspaceRoot =
+          options?.angularBuilderContext?.workspaceRoot ?? process.cwd();
 
         if (Array.isArray(styles)) {
           styles.forEach((style) => {
@@ -187,12 +195,23 @@ function angularOptionsPlugin(
           code: `
             ${imports
               .map((extraImport) => {
+                const resolvedProjectImport = resolve(projectRoot, extraImport);
+                const resolvedWorkspaceImport = resolve(
+                  workspaceRoot,
+                  extraImport,
+                );
+
                 if (
                   extraImport.startsWith('.') ||
-                  extraImport.startsWith('src')
+                  extraImport.startsWith('src') ||
+                  existsSync(resolvedProjectImport)
                 ) {
                   // relative to root
-                  return `import '${resolve(projectRoot, extraImport)}';`;
+                  return `import '${resolvedProjectImport}';`;
+                }
+
+                if (existsSync(resolvedWorkspaceImport)) {
+                  return `import '${resolvedWorkspaceImport}';`;
                 }
 
                 // absolute import
@@ -228,4 +247,3 @@ function storybookTransformConfigPlugin(): Plugin {
 }
 
 export { addons } from '@storybook/angular/preset';
-//# sourceMappingURL=preset.js.map

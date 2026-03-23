@@ -52,6 +52,7 @@
       "executor": "@nx/web:file-server",
       "options": {
         "buildTarget": "blog-app:build",
+        "ext": "html",
         "parallel": true,
         "port": 43010,
         "staticFilePath": "dist/apps/blog-app/analog/public"

@@ -222,13 +222,22 @@ function toRoutes(rawRoutes: RawRoute[], files: Files, debug = false): Route[] {
                 }
               }
 
-              const baseChild = {
-                path: '',
-                component: m.default,
-                ...toRouteConfig(m.routeMeta as RouteMeta | undefined),
-                children,
-                [ANALOG_META_KEY]: analogMeta,
-              };
+              const routeConfig = toRouteConfig(
+                m.routeMeta as RouteMeta | undefined,
+              );
+              const hasRedirect = 'redirectTo' in routeConfig;
+              const baseChild = hasRedirect
+                ? {
+                    path: '',
+                    ...routeConfig,
+                  }
+                : {
+                    path: '',
+                    component: m.default,
+                    ...routeConfig,
+                    children,
+                    [ANALOG_META_KEY]: analogMeta,
+                  };
 
               // Base route first so static matches win, then optional catch-all matcher
               return [
@@ -240,9 +249,13 @@ function toRoutes(rawRoutes: RawRoute[], files: Files, debug = false): Route[] {
                       {
                         matcher:
                           createOptionalCatchAllMatcher(optCatchAllParam),
-                        component: m.default,
-                        ...toRouteConfig(m.routeMeta as RouteMeta | undefined),
-                        [ANALOG_META_KEY]: analogMeta,
+                        ...(hasRedirect
+                          ? routeConfig
+                          : {
+                              component: m.default,
+                              ...routeConfig,
+                              [ANALOG_META_KEY]: analogMeta,
+                            }),
                       },
                     ]
                   : []),

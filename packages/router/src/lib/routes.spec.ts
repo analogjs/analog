@@ -58,6 +58,35 @@ describe('routes', () => {
     });
   });
 
+  describe('a root redirect route without default export', () => {
+    const files: Files = {
+      '/app/routes/index.ts': () =>
+        Promise.resolve({
+          routeMeta: {
+            redirectTo: '/blog',
+            pathMatch: 'full',
+          },
+        } as unknown as RouteExport),
+    };
+
+    const routes = createRoutes(files);
+    const route = routes[0];
+
+    it('should return a redirect-only child route config', async () => {
+      const routes = (await route.loadChildren?.()) as Route[];
+
+      expect(routes.length).toBe(1);
+
+      const innerRoute = routes.shift();
+
+      expect(innerRoute.path).toBe('');
+      expect(innerRoute.redirectTo).toBe('/blog');
+      expect(innerRoute.pathMatch).toBe('full');
+      expect(innerRoute.component).toBeUndefined();
+      expect(innerRoute.children).toBeUndefined();
+    });
+  });
+
   describe('a nested static route', () => {
     const files: Files = {
       '/src/app/pages/auth/login.page.ts': () =>

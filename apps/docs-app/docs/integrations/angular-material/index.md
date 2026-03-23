@@ -137,25 +137,36 @@ providers: [
 
 ## Optional Step: Configuring Tailwind CSS
 
-If you use Tailwind CSS, set up PostCSS to make it work correctly with Angular Material:
+If you use Tailwind CSS, add the Vite plugin to make it work correctly with Angular Material:
 
-1. **Install the Tailwind PostCSS plugin:**
+1. **Install the Tailwind Vite plugin:**
 
 ```shell
-npm install @tailwindcss/postcss
+npm install @tailwindcss/vite
 ```
 
-2. **Create a `.postcssrc.json` file:**
+2. **Add the plugin to your `vite.config.ts`:**
 
-```json
-{
-  "plugins": {
-    "@tailwindcss/postcss": {}
-  }
-}
+```ts
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+  plugins: [
+    tailwindcss(),
+    // ...other plugins
+  ],
+});
 ```
 
-> **Note:** Use `@use 'tailwindcss';` instead of the deprecated `@import 'tailwindcss';`.
+3. **Add the Tailwind import to your styles entry point:**
+
+```css
+@import 'tailwindcss';
+```
+
+> **Note:** Analog's default Tailwind v4 setup uses `@tailwindcss/vite`. You do not need a `.postcssrc.json` file or a generated `tailwind.config.*` file for the standard Vite-based setup.
+>
+> The scaffolded Tailwind v4 flow also expects a plain CSS entry file such as `src/styles.css`. If your app currently uses Sass or Less for the global entry point, keep your existing setup or migrate that entry file to CSS before adopting the default Tailwind v4 flow.
 
 With these steps, you have configured animations to be enabled on the client and disabled on the server in your Analog application.
 

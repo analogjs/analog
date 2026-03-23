@@ -61,6 +61,7 @@ export default defineConfig({
         /^satori/,
         /^rxjs/,
         /^md4x/,
+        /^vite/,
         'front-matter',
         'sharp',
         'tslib',

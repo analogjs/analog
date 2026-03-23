@@ -1,12 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, it, expect } from 'vitest';
 
-import {
-  ContentRenderer,
-  provideContent,
-  CONTENT_FILE_LOADER,
-  CONTENT_LIST_LOADER,
-} from '@analogjs/content';
+import { ContentRenderer } from '../../../src/lib/content-renderer';
+import { provideContent } from '../../../src/lib/provide-content';
+import { CONTENT_FILE_LOADER } from '../../../src/lib/content-file-loader';
+import { CONTENT_LIST_LOADER } from '../../../src/lib/content-list-loader';
 import { MDC_COMPONENTS, withMdcComponents } from '@analogjs/content/mdc';
 import {
   Md4xContentRendererService,

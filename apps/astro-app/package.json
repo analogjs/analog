@@ -1,5 +1,10 @@
 {
   "name": "@analogjs/astro-app",
   "private": true,
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "dependencies": {
+    "@astrojs/mdx": "^5.0.2",
+    "@astrojs/react": "^5.0.1",
+    "astro": "6.0.8"
+  }
 }

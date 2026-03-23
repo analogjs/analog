@@ -24,6 +24,7 @@ export default defineConfig(() => {
     },
     build: {
       outDir: '../../dist/apps/blog-app/client',
+      emptyOutDir: true,
       reportCompressedSize: true,
       target: ['es2020'],
     },
@@ -82,6 +83,7 @@ export default defineConfig(() => {
         },
         nitro: {
           prerender: {
+            autoSubfolderIndex: false,
             failOnError: true,
           },
         },

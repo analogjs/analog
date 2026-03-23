@@ -2,9 +2,7 @@
 
 import analog from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, PluginOption } from 'vite';
-import inspect from 'vite-plugin-inspect';
 
 // Only run in Netlify CI
 let base = process.env['URL'] || 'http://localhost:3000';
@@ -15,7 +13,7 @@ if (process.env['NETLIFY'] === 'true') {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(async ({ mode }) => {
   const fileReplacements =
     mode === 'production'
       ? [
@@ -42,6 +40,7 @@ export default defineConfig(({ mode }) => {
     publicDir: 'src/public',
     build: {
       outDir: '../../dist/apps/analog-app/client',
+      emptyOutDir: true,
       reportCompressedSize: true,
       target: ['es2020'],
     },
@@ -89,12 +88,11 @@ export default defineConfig(({ mode }) => {
         },
       }),
       nxViteTsPaths(),
-      visualizer() as PluginOption,
-      // !isSsrBuild &&
-      //   inspect({
-      //     build: true,
-      //     outputDir: '../../.vite-inspect/analog-app',
-      //   }),
+      {
+        ...((
+          await import('rollup-plugin-visualizer')
+        ).visualizer() as PluginOption),
+      },
     ],
     test: {
       reporters: ['default'],

@@ -5,8 +5,6 @@ import {
   Tree,
 } from '@nx/devkit';
 import {
-  addTailwindConfigFile,
-  addTailwindConfigPathToProject,
   addTailwindRequiredPackages,
   detectTailwindInstalledVersion,
   normalizeOptions,
@@ -50,12 +48,8 @@ export async function setupTailwindGenerator(
     installTask = addTailwindRequiredPackages(tree);
   }
 
-  addTailwindConfigFile(tree, options, project);
-
   if (project.projectType === 'application') {
     updateApplicationStyles(tree, options, project);
-  } else if (project.projectType === 'library') {
-    addTailwindConfigPathToProject(tree, options, project);
   }
 
   if (!options.skipFormat) {

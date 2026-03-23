@@ -129,7 +129,6 @@ Projects with caching explicitly disabled (`"cache": false` on their build targe
 ## Common Pitfalls
 
 - Always run `pnpm i` before building if `pnpm-lock.yaml` has changed
-- The `astro-app` is excluded from the main build (`--exclude=astro-app`)
 - Git hooks are in `.githooks/` (not `.husky/`), configured via `git config core.hookspath .githooks`
 - The `prepare` script sets up git hooks — runs automatically after `pnpm i`
 
