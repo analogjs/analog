@@ -1,18 +1,16 @@
 {
-  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "allowJs": true,
     "esModuleInterop": true,
-    "jsx": "react",
-    "lib": ["DOM"],
+    "jsx": "preserve",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "moduleResolution": "bundler",
+    "module": "esnext",
     "noEmit": true,
+    "skipLibCheck": true,
     "noImplicitAny": false,
-    "types": [
-      "node",
-      "@docusaurus/module-type-aliases",
-      "@docusaurus/theme-classic"
-    ],
-    "baseUrl": ".",
+    "types": ["node", "@docusaurus/module-type-aliases"],
     "paths": {
       "@site/*": ["./*"]
     }
