@@ -34,7 +34,7 @@ test.describe('TanStack Query integration - /tanstack-query', () => {
       'Read the Analog docs',
     );
 
-    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#todo-fetch-count')).not.toHaveText('0');
     expect(methods).toEqual([]);
   });
 
