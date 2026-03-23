@@ -5,6 +5,7 @@
   "sourceRoot": "apps/blog-app/src",
   "prefix": "blog",
   "tags": [],
+  "implicitDependencies": ["platform", "router", "content"],
   "targets": {
     "build": {
       "executor": "@nx/vite:build",

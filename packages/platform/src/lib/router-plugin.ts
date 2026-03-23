@@ -1,4 +1,4 @@
-import { normalizePath, Plugin, UserConfig } from 'vite';
+import { normalizePath, Plugin, UserConfig, ViteDevServer } from 'vite';
 import { globSync } from 'tinyglobby';
 import { resolve } from 'node:path';
 
@@ -26,6 +26,27 @@ export function routerPlugin(options?: Options): Plugin[] {
   const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
   let config: UserConfig;
   let root: string;
+  const isRouteLikeFile = (path: string) =>
+    path.includes(`routes`) ||
+    path.includes(`pages`) ||
+    path.includes('content');
+  const invalidateFileModules = (server: ViteDevServer, path: string) => {
+    const normalizedPath = normalizePath(path);
+    // A newly added page can be discovered before its final contents settle.
+    // Invalidate the page module itself so later edits don't keep serving the
+    // first incomplete transform from Vite's module graph.
+    const fileModules =
+      server.moduleGraph.getModulesByFile?.(normalizedPath) ??
+      server.moduleGraph.fileToModulesMap.get(normalizedPath);
+
+    fileModules?.forEach((mod) => {
+      server.moduleGraph.invalidateModule(mod);
+
+      mod.importers.forEach((imp) => {
+        server.moduleGraph.invalidateModule(imp);
+      });
+    });
+  };
 
   return [
     {
@@ -38,30 +59,31 @@ export function routerPlugin(options?: Options): Plugin[] {
          * @param path The file path that was added or deleted
          */
         function invalidateRoutes(path: string) {
-          if (
-            path.includes(`routes`) ||
-            path.includes(`pages`) ||
-            path.includes('content')
-          ) {
-            server.moduleGraph.fileToModulesMap.forEach((mods) => {
-              mods.forEach((mod) => {
-                if (mod.id?.includes('analogjs') && mod.id?.includes('fesm')) {
-                  server.moduleGraph.invalidateModule(mod);
-
-                  mod.importers.forEach((imp) => {
-                    server.moduleGraph.invalidateModule(imp);
-                  });
-                }
-              });
-            });
-
-            server.ws.send({
-              type: 'full-reload',
-            });
+          if (!isRouteLikeFile(path)) {
+            return;
           }
+
+          invalidateFileModules(server, path);
+
+          server.moduleGraph.fileToModulesMap.forEach((mods) => {
+            mods.forEach((mod) => {
+              if (mod.id?.includes('analogjs') && mod.id?.includes('fesm')) {
+                server.moduleGraph.invalidateModule(mod);
+
+                mod.importers.forEach((imp) => {
+                  server.moduleGraph.invalidateModule(imp);
+                });
+              }
+            });
+          });
+
+          server.ws.send({
+            type: 'full-reload',
+          });
         }
 
         server.watcher.on('add', invalidateRoutes);
+        server.watcher.on('change', invalidateRoutes);
         server.watcher.on('unlink', invalidateRoutes);
       },
     },

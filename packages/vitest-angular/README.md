@@ -126,7 +126,7 @@ The `setupTestBed()` function accepts an optional configuration object with the 
 
 - `zoneless` (boolean): Whether to use zoneless change detection (default: `true`)
 - `providers` (`Type<any>[]`): Additional providers to include in the test environment (default: `[]`)
-- `browserMode` (boolean): Enables visual test preview in Vitest browser mode by keeping the component rendered, allowing you to inspect its final state (default: `false`)
+- `teardown.destroyAfterEach` (boolean): Whether to destroy the test environment after each test. Set to `false` to keep the component rendered, allowing you to inspect its final state. (default: `true`)
 
 **Example with options:**
 
@@ -134,7 +134,7 @@ The `setupTestBed()` function accepts an optional configuration object with the 
 setupTestBed({
   zoneless: true,
   providers: [],
-  browserMode: false,
+  teardown: { destroyAfterEach: false },
 });
 ```
 

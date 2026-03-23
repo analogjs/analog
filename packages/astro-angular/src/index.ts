@@ -14,7 +14,7 @@ function getRenderer(): AstroRenderer {
   };
 }
 
-function getViteConfiguration(vite?: PluginOptions) {
+function getViteConfiguration(vite?: PluginOptions): ViteUserConfig {
   return {
     esbuild: {
       jsxDev: true,
@@ -48,6 +48,20 @@ function getViteConfiguration(vite?: PluginOptions) {
           }
 
           return;
+        },
+      },
+      {
+        name: 'analogjs-astro-client-ngservermode',
+        configEnvironment(name: string) {
+          if (name === 'client') {
+            return {
+              define: {
+                ngServerMode: 'false',
+              },
+            };
+          }
+
+          return undefined;
         },
       },
     ],
