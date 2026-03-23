@@ -325,6 +325,17 @@ describe('defineAction', () => {
     expect(handler.mock.calls[0][0].data).toEqual({ id: 42 });
   });
 
+  it('should pass raw body as data when no schema is provided', async () => {
+    const handler = vi.fn(({ data }) => json(data));
+
+    const action = defineAction({ handler });
+    const ctx = createMockContext({ name: 'Alice', age: 30 });
+    await action(ctx);
+
+    expect(handler).toHaveBeenCalledOnce();
+    expect(handler.mock.calls[0][0].data).toEqual({ name: 'Alice', age: 30 });
+  });
+
   it('should handle schema that transforms input values', async () => {
     const schema = createMockSchema<{ count: number }>((value) => {
       const v = value as { count: string };

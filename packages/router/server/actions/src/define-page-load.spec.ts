@@ -49,6 +49,22 @@ describe('definePageLoad', () => {
     expect(result).toEqual({ user: { id: '42' } });
   });
 
+  it('should pass real URL query params when no query schema is provided', async () => {
+    const load = definePageLoad({
+      handler: async ({ query }) => {
+        return { query };
+      },
+    });
+
+    const result = await load(
+      createEvent('http://localhost/users?tab=settings&page=2'),
+    );
+
+    expect(result).toEqual({
+      query: { tab: 'settings', page: '2' },
+    });
+  });
+
   it('should validate params and pass typed values', async () => {
     const paramsSchema = createSchema<{ id: string }>((data) => {
       const obj = data as Record<string, unknown>;

@@ -94,7 +94,12 @@ export function definePageLoad<
     event: H3Event;
   }) => {
     let params: unknown = ctx.params ?? {};
-    let query: unknown = {};
+
+    const url = new URL(
+      (ctx.event as H3Event & { request: Request }).request.url,
+      'http://localhost',
+    );
+    let query: unknown = parseSearchParams(url.searchParams);
 
     // Validate params
     if (options.params) {
@@ -107,12 +112,7 @@ export function definePageLoad<
 
     // Validate query
     if (options.query) {
-      const url = new URL(
-        (ctx.event as H3Event & { request: Request }).request.url,
-        'http://localhost',
-      );
-      const rawQuery = parseSearchParams(url.searchParams);
-      const result = await validateWithSchema(options.query, rawQuery);
+      const result = await validateWithSchema(options.query, query);
       if (result.issues) {
         return fail(422, result.issues);
       }
