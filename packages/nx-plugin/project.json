@@ -12,11 +12,7 @@
         "{workspaceRoot}/node_modules/@analogjs/platform/src/lib/nx-plugin"
       ],
       "options": {
-        "commands": [
-          "vite build packages/nx-plugin",
-          "tsc --project packages/nx-plugin/tsconfig.lib.json --emitDeclarationOnly --rootDir packages/nx-plugin --outDir node_modules/@analogjs/platform/src/lib/nx-plugin",
-          "node tools/scripts/copy-src-assets.mts packages/nx-plugin node_modules/@analogjs/platform/src/lib/nx-plugin --assets package.json generators.json executors.json --src"
-        ],
+        "commands": ["vite build -c packages/nx-plugin/vite.config.lib.ts"],
         "parallel": false
       }
     },

@@ -48,16 +48,30 @@ async function viteDevServerBuilder(
 
   try {
     const server = await createServer(serverConfig);
-    await runViteDevServer(server);
+    await server.listen();
+    server.printUrls();
+
     const resolvedUrls = [
       ...server.resolvedUrls.local,
       ...server.resolvedUrls.network,
     ];
 
+    const processOnExit = async () => {
+      await server.close();
+    };
+
+    // Use process.once to avoid listener accumulation when Nx invokes
+    // multiple builders in the same process during a large build graph.
     await new Promise<void>((resolve) => {
-      process.once('SIGINT', () => resolve());
-      process.once('SIGTERM', () => resolve());
-      process.once('exit', () => resolve());
+      const shutdown = () => {
+        processOnExit().then(
+          () => resolve(),
+          () => resolve(),
+        );
+      };
+      process.once('SIGINT', shutdown);
+      process.once('SIGTERM', shutdown);
+      process.once('exit', shutdown);
     });
 
     return {
@@ -71,21 +85,6 @@ async function viteDevServerBuilder(
       baseUrl: '',
     };
   }
-}
-
-// vite ViteDevServer
-async function runViteDevServer(server: Record<string, any>): Promise<void> {
-  await server.listen();
-
-  server.printUrls();
-
-  const processOnExit = async () => {
-    await server.close();
-  };
-
-  process.once('SIGINT', processOnExit);
-  process.once('SIGTERM', processOnExit);
-  process.once('exit', processOnExit);
 }
 
 export default createBuilder(viteDevServerBuilder) as any;
