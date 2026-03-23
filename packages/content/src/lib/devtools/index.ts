@@ -1,4 +1,4 @@
-import { Provider } from '@angular/core';
+import { Provider, Type } from '@angular/core';
 import { ContentRenderer } from '../content-renderer';
 import {
   DevToolsContentRenderer,
@@ -12,28 +12,30 @@ export {
 } from './content-devtools-renderer';
 
 /**
- * Wraps the active ContentRenderer with DevTools instrumentation.
- * Add this after your renderer provider to enable the devtools panel.
+ * Wraps the given ContentRenderer with DevTools instrumentation.
  *
- * The existing renderer is moved to DEVTOOLS_INNER_RENDERER and
+ * The supplied renderer class is provided under DEVTOOLS_INNER_RENDERER and
  * DevToolsContentRenderer becomes the new ContentRenderer, delegating
  * all calls and collecting timing data.
+ *
+ * @param innerRenderer The renderer class to wrap with devtools instrumentation.
  *
  * @experimental Content DevTools is experimental and may change in future releases.
  *
  * @example
  * ```typescript
  * provideContent(
- *   withMd4xRenderer(),
- *   withContentDevTools(), // wraps md4x renderer with timing + metadata
+ *   withContentDevTools(NoopContentRenderer),
  * );
  * ```
  */
-export function withContentDevTools(): Provider {
+export function withContentDevTools(
+  innerRenderer: Type<ContentRenderer>,
+): Provider {
   return [
     {
       provide: DEVTOOLS_INNER_RENDERER,
-      useExisting: ContentRenderer,
+      useClass: innerRenderer,
     },
     {
       provide: ContentRenderer,

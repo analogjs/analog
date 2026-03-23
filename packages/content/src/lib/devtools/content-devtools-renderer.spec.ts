@@ -1,10 +1,13 @@
+import { Injectable } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { ContentRenderer, RenderedContent } from '../content-renderer';
 import { DevToolsContentRenderer } from './content-devtools-renderer';
 import { DEVTOOLS_INNER_RENDERER } from './content-devtools-renderer';
+import { withContentDevTools } from './index';
 
+@Injectable()
 class MockRenderer extends ContentRenderer {
   override async render(content: string): Promise<RenderedContent> {
     return {
@@ -59,7 +62,7 @@ describe('DevToolsContentRenderer', () => {
       contentLength: 6,
       headingCount: 1,
     });
-    expect(event.detail.parseTimeMs).toBeGreaterThanOrEqual(0);
+    expect(event.detail.renderTimeMs).toBeGreaterThanOrEqual(0);
   });
 
   it('includes toc in event detail', async () => {
@@ -82,5 +85,28 @@ describe('DevToolsContentRenderer', () => {
   it('delegates enhance to inner renderer', () => {
     const renderer = setup();
     expect(() => renderer.enhance()).not.toThrow();
+  });
+});
+
+describe('withContentDevTools', () => {
+  it('wires providers so ContentRenderer delegates to the supplied renderer', async () => {
+    TestBed.configureTestingModule({
+      providers: [withContentDevTools(MockRenderer)],
+    });
+
+    const renderer = TestBed.inject(ContentRenderer);
+    expect(renderer).toBeInstanceOf(DevToolsContentRenderer);
+
+    const result = await renderer.render('hello');
+    expect(result.content).toContain('<p>hello</p>');
+  });
+
+  it('provides the inner renderer under DEVTOOLS_INNER_RENDERER', () => {
+    TestBed.configureTestingModule({
+      providers: [withContentDevTools(MockRenderer)],
+    });
+
+    const inner = TestBed.inject(DEVTOOLS_INNER_RENDERER);
+    expect(inner).toBeInstanceOf(MockRenderer);
   });
 });

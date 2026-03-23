@@ -7,7 +7,7 @@
 
 interface DevToolsData {
   renderer: string;
-  parseTimeMs: number;
+  renderTimeMs: number;
   frontmatter: Record<string, unknown>;
   toc: Array<{ id: string; level: number; text: string }>;
   contentLength: number;
@@ -15,6 +15,20 @@ interface DevToolsData {
 }
 
 const STORAGE_KEY = 'analog-content-devtools-open';
+
+// Cache the latest devtools payload at module level so events fired
+// during initial bootstrap (before the panel is created) are not lost.
+let latestDevToolsData: DevToolsData | null = null;
+let panelUpdateCallback: ((data: DevToolsData) => void) | null = null;
+
+window.addEventListener('analog-content-devtools-data', ((
+  e: CustomEvent<DevToolsData>,
+) => {
+  latestDevToolsData = e.detail;
+  if (panelUpdateCallback) {
+    panelUpdateCallback(e.detail);
+  }
+}) as EventListener);
 
 function createPanel(): HTMLElement {
   const root = document.createElement('div');
@@ -45,7 +59,11 @@ function createPanel(): HTMLElement {
 
 function renderOverview(data: DevToolsData): string {
   const speedClass =
-    data.parseTimeMs < 5 ? 'acd-fast' : data.parseTimeMs > 50 ? 'acd-slow' : '';
+    data.renderTimeMs < 5
+      ? 'acd-fast'
+      : data.renderTimeMs > 50
+        ? 'acd-slow'
+        : '';
   return `
     <div class="acd-section">
       <div class="acd-section-title">Renderer</div>
@@ -54,8 +72,8 @@ function renderOverview(data: DevToolsData): string {
         <span class="acd-value"><span class="acd-badge acd-badge-renderer">${data.renderer}</span></span>
       </div>
       <div class="acd-kv">
-        <span class="acd-key">Parse time</span>
-        <span class="acd-value ${speedClass}">${data.parseTimeMs.toFixed(2)}ms</span>
+        <span class="acd-key">Render time</span>
+        <span class="acd-value ${speedClass}">${data.renderTimeMs.toFixed(2)}ms</span>
       </div>
     </div>
     <div class="acd-section">
@@ -89,26 +107,32 @@ function renderFrontmatter(data: DevToolsData): string {
   `;
 }
 
-function renderToc(data: DevToolsData): string {
+function renderToc(data: DevToolsData): HTMLElement {
   if (data.toc.length === 0) {
-    return '<div class="acd-empty">No headings found.</div>';
+    const empty = document.createElement('div');
+    empty.className = 'acd-empty';
+    empty.textContent = 'No headings found.';
+    return empty;
   }
-  const items = data.toc
-    .map(
-      (h) =>
-        `<div class="acd-toc-item" style="padding-left:${(h.level - 1) * 12}px">
-          <a href="#${h.id}">
-            ${'#'.repeat(h.level)} ${escapeHtml(h.text)}
-          </a>
-        </div>`,
-    )
-    .join('');
-  return `
-    <div class="acd-section">
-      <div class="acd-section-title">Table of Contents (${data.toc.length} headings)</div>
-      ${items}
-    </div>
-  `;
+  const section = document.createElement('div');
+  section.className = 'acd-section';
+  const title = document.createElement('div');
+  title.className = 'acd-section-title';
+  title.textContent = `Table of Contents (${data.toc.length} headings)`;
+  section.appendChild(title);
+
+  for (const h of data.toc) {
+    const item = document.createElement('div');
+    item.className = 'acd-toc-item';
+    item.style.paddingLeft = `${(h.level - 1) * 12}px`;
+    const anchor = document.createElement('a');
+    anchor.setAttribute('href', `#${encodeURIComponent(h.id)}`);
+    anchor.textContent = `${'#'.repeat(h.level)} ${h.text}`;
+    item.appendChild(anchor);
+    section.appendChild(item);
+  }
+
+  return section;
 }
 
 function escapeHtml(str: string): string {
@@ -132,7 +156,7 @@ function initDevTools() {
 
   let isOpen = localStorage.getItem(STORAGE_KEY) === 'true';
   let activeTab = 'overview';
-  let currentData: DevToolsData | null = null;
+  let currentData: DevToolsData | null = latestDevToolsData;
 
   function updateVisibility() {
     panelEl.style.display = isOpen ? 'flex' : 'none';
@@ -153,7 +177,7 @@ function initDevTools() {
         body.innerHTML = renderFrontmatter(currentData);
         break;
       case 'toc':
-        body.innerHTML = renderToc(currentData);
+        body.replaceChildren(renderToc(currentData));
         break;
     }
   }
@@ -173,15 +197,14 @@ function initDevTools() {
     });
   });
 
-  // Listen for data from the content pipeline
-  window.addEventListener('analog-content-devtools-data', ((
-    e: CustomEvent<DevToolsData>,
-  ) => {
-    currentData = e.detail;
+  // Wire the module-level listener to update the panel
+  panelUpdateCallback = (data: DevToolsData) => {
+    currentData = data;
     updateBody();
-  }) as EventListener);
+  };
 
   updateVisibility();
+  updateBody();
 }
 
 // Init when DOM is ready

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import type { IndexHtmlTransformContext, ResolvedConfig } from 'vite';
 import { contentDevToolsPlugin } from './content-devtools-plugin';
 
 describe('contentDevToolsPlugin', () => {
@@ -12,13 +13,29 @@ describe('contentDevToolsPlugin', () => {
     expect(plugin.apply).toBe('serve');
   });
 
-  it('has a transformIndexHtml hook', () => {
+  it('injects devtools client into HTML in serve mode', async () => {
     const plugin = contentDevToolsPlugin();
-    expect(plugin.transformIndexHtml).toBeDefined();
-  });
+    const configResolved = plugin.configResolved as (
+      config: ResolvedConfig,
+    ) => void;
+    configResolved({ command: 'serve' } as ResolvedConfig);
 
-  it('has a configResolved hook', () => {
-    const plugin = contentDevToolsPlugin();
-    expect(plugin.configResolved).toBeDefined();
+    const hook = plugin.transformIndexHtml as {
+      handler: (
+        html: string,
+        ctx: IndexHtmlTransformContext,
+      ) => Promise<string>;
+    };
+    const inputHtml =
+      '<html><head></head><body><div id="app"></div></body></html>';
+    const result = await hook.handler(
+      inputHtml,
+      {} as IndexHtmlTransformContext,
+    );
+
+    expect(result).toContain('<style>');
+    expect(result).toContain('<script type="module">');
+    expect(result).toContain('analog-content-devtools');
+    expect(result).toContain('</body>');
   });
 });

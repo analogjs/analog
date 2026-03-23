@@ -1,9 +1,14 @@
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import type { Plugin } from 'vite';
+import { transformWithOxc } from 'vite';
 
 /**
  * Vite plugin that injects the Analog Content DevTools panel in dev mode.
  *
- * Shows parse time, frontmatter data, TOC, and content stats in a floating
+ * Shows render time, frontmatter data, TOC, and content stats in a floating
  * panel. Dev-only — completely stripped from production builds.
  *
  * @experimental Content DevTools is experimental and may change in future releases.
@@ -34,14 +39,8 @@ export function contentDevToolsPlugin(): Plugin {
 
     transformIndexHtml: {
       order: 'post',
-      handler(html) {
+      async handler(html) {
         if (!isDev) return html;
-
-        const { readFileSync } = require('node:fs') as typeof import('node:fs');
-        const { resolve, dirname } =
-          require('node:path') as typeof import('node:path');
-        const { fileURLToPath } =
-          require('node:url') as typeof import('node:url');
 
         const pluginDir = dirname(fileURLToPath(import.meta.url));
         const cssPath = resolve(pluginDir, 'content-devtools.styles.css');
@@ -58,25 +57,15 @@ export function contentDevToolsPlugin(): Plugin {
           return html;
         }
 
-        // Strip TypeScript type annotations for inline injection.
-        // This is a simple removal for the known patterns in the client script.
-        const jsCode = clientCode
-          .replace(/:\s*DevToolsData\b/g, '')
-          .replace(/:\s*Record<string,\s*unknown>/g, '')
-          .replace(/:\s*Array<\{[^}]+\}>/g, '')
-          .replace(/:\s*HTMLElement/g, '')
-          .replace(/:\s*string/g, '')
-          .replace(/:\s*boolean/g, '')
-          .replace(/:\s*number/g, '')
-          .replace(/:\s*null/g, '')
-          .replace(/interface\s+DevToolsData\s*\{[\s\S]*?\}/, '')
-          .replace(/as\s+EventListener/g, '')
-          .replace(/as\s+HTMLElement/g, '')
-          .replace(/\|\s*null/g, '');
+        const transformResult = await transformWithOxc(
+          clientCode,
+          'content-devtools-client.ts',
+          { lang: 'ts' },
+        );
 
         const injection = `
 <style>${css}</style>
-<script type="module">${jsCode}</script>`;
+<script type="module">${transformResult.code}</script>`;
 
         return html.replace('</body>', `${injection}\n</body>`);
       },

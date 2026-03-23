@@ -1,4 +1,4 @@
-import { Injectable, Inject, InjectionToken } from '@angular/core';
+import { Injectable, InjectionToken, inject } from '@angular/core';
 
 import {
   ContentRenderer,
@@ -22,9 +22,7 @@ export const DEVTOOLS_INNER_RENDERER: InjectionToken<ContentRenderer> =
  */
 @Injectable()
 export class DevToolsContentRenderer extends ContentRenderer {
-  constructor(@Inject(DEVTOOLS_INNER_RENDERER) private inner: ContentRenderer) {
-    super();
-  }
+  private readonly inner = inject(DEVTOOLS_INNER_RENDERER);
 
   override async render(content: string): Promise<RenderedContent> {
     const start = performance.now();
@@ -36,7 +34,7 @@ export class DevToolsContentRenderer extends ContentRenderer {
         new CustomEvent('analog-content-devtools-data', {
           detail: {
             renderer: this.inner.constructor.name,
-            parseTimeMs: elapsed,
+            renderTimeMs: elapsed,
             toc: result.toc,
             contentLength: content.length,
             headingCount: result.toc.length,
