@@ -34,28 +34,28 @@ export function toWebRequest(req: IncomingMessage): Request {
   });
 }
 
-function isClosedResponseWriteError(
-  error: unknown,
-  res: ServerResponse,
-): boolean {
-  if (res.destroyed || res.writableEnded) {
-    return true;
-  }
-
+function isClientDisconnectError(error: unknown, res: ServerResponse): boolean {
   if (!(error instanceof Error)) {
     return false;
   }
 
+  const hasDisconnectCode =
+    'code' in error &&
+    typeof error.code === 'string' &&
+    [
+      'ERR_STREAM_PREMATURE_CLOSE',
+      'ERR_INVALID_STATE',
+      'ECONNRESET',
+      'EPIPE',
+    ].includes(error.code);
+
+  const hasDisconnectMessage = /closed or destroyed stream/i.test(
+    error.message,
+  );
+
   return (
-    ('code' in error &&
-      typeof error.code === 'string' &&
-      [
-        'ERR_STREAM_PREMATURE_CLOSE',
-        'ERR_INVALID_STATE',
-        'ECONNRESET',
-        'EPIPE',
-      ].includes(error.code)) ||
-    /closed or destroyed stream/i.test(error.message)
+    (res.destroyed || res.writableEnded) &&
+    (hasDisconnectCode || hasDisconnectMessage)
   );
 }
 
@@ -101,7 +101,7 @@ export async function writeWebResponseToNode(
     // Long-lived dev responses such as SSE can be interrupted by a browser
     // refresh or HMR-triggered reconnect. Those closed-stream cases are
     // expected and should not surface as noisy server errors.
-    if (isClosedResponseWriteError(error, res)) {
+    if (isClientDisconnectError(error, res)) {
       return;
     }
 
