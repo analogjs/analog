@@ -14,31 +14,52 @@ type FormErrors =
   standalone: true,
   imports: [FormAction],
   template: `
-    <h3>Newsletter Signup</h3>
-
-    @if (signedUpEmail()) {
-      <div id="signup-message">
-        Thanks for signing up, {{ signedUpEmail() }}!
-      </div>
-    } @else {
-      <form
-        method="post"
-        (onSuccess)="onSuccess($any($event))"
-        (onError)="onError($any($event))"
-        (onStateChange)="errors.set(undefined)"
-      >
-        <div>
-          <label for="email"> Email </label>
-          <input type="email" name="email" />
+    <section class="card card-border bg-base-100 shadow-xl">
+      <div class="card-body gap-6">
+        <div class="space-y-3">
+          <div class="badge badge-secondary badge-outline">Newsletter</div>
+          <h1 class="card-title text-3xl">Newsletter signup</h1>
         </div>
 
-        <button class="button" type="submit">Submit</button>
-      </form>
+        @if (signedUpEmail()) {
+          <div
+            id="signup-message"
+            role="alert"
+            class="alert alert-success alert-soft"
+          >
+            <span>Thanks for signing up, {{ signedUpEmail() }}!</span>
+          </div>
+        } @else {
+          <form
+            class="space-y-4"
+            method="post"
+            (onSuccess)="onSuccess($any($event))"
+            (onError)="onError($any($event))"
+            (onStateChange)="errors.set(undefined)"
+          >
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Email</legend>
+              <input
+                class="input w-full md:max-w-lg"
+                type="email"
+                name="email"
+                id="email"
+              />
+            </fieldset>
 
-      @if (errors()?.email) {
-        <p>{{ errors()?.email }}</p>
-      }
-    }
+            <div class="card-actions justify-start">
+              <button class="btn btn-primary" type="submit">Submit</button>
+            </div>
+          </form>
+
+          @if (errors()?.email) {
+            <div role="alert" class="alert alert-error alert-soft">
+              <span>{{ errors()?.email }}</span>
+            </div>
+          }
+        }
+      </div>
+    </section>
   `,
 })
 export default class NewsletterComponent {

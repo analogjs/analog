@@ -9,32 +9,84 @@ import { CartService } from '../cart.service';
   selector: 'analogjs-cart',
   imports: [RouterLinkWithHref, CurrencyPipe, ReactiveFormsModule],
   template: `
-    <h3>Cart</h3>
+    <section class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <div class="card card-border bg-base-100 shadow-xl">
+        <div class="card-body gap-5">
+          <div
+            class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+          >
+            <div class="space-y-3">
+              <div class="badge badge-primary badge-outline">Cart</div>
+              <h1 class="card-title text-3xl">Review your items</h1>
+            </div>
+            <a routerLink="/shipping" class="btn btn-outline btn-sm"
+              >Shipping Prices</a
+            >
+          </div>
 
-    <p>
-      <a routerLink="/shipping">Shipping Prices</a>
-    </p>
-
-    @for (item of items; track $index) {
-      <div class="cart-item">
-        <span>{{ item.name }} </span>
-        <span>{{ item.price | currency }}</span>
+          @if (items.length) {
+            <ul class="list bg-base-200 rounded-box">
+              @for (item of items; track $index) {
+                <li class="list-row">
+                  <div class="list-col-grow">
+                    <div class="font-semibold">{{ item.name }}</div>
+                    <div class="text-sm text-base-content/60">
+                      Ready to purchase
+                    </div>
+                  </div>
+                  <div class="badge badge-primary badge-outline">
+                    {{ item.price | currency }}
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <div role="alert" class="alert alert-info alert-soft">
+              <span>Your cart is empty.</span>
+            </div>
+          }
+        </div>
       </div>
-    }
 
-    <form [formGroup]="checkoutForm" (ngSubmit)="onSubmit()">
-      <div>
-        <label for="name"> Name </label>
-        <input id="name" type="text" formControlName="name" />
+      <div class="card card-border bg-base-100 shadow-xl">
+        <div class="card-body gap-5">
+          <div class="space-y-2">
+            <div class="badge badge-secondary badge-outline">Checkout</div>
+            <h2 class="card-title text-2xl">Purchase details</h2>
+          </div>
+
+          <form
+            class="space-y-4"
+            [formGroup]="checkoutForm"
+            (ngSubmit)="onSubmit()"
+          >
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Name</legend>
+              <input
+                class="input w-full"
+                id="name"
+                type="text"
+                formControlName="name"
+              />
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Address</legend>
+              <input
+                class="input w-full"
+                id="address"
+                type="text"
+                formControlName="address"
+              />
+            </fieldset>
+
+            <div class="card-actions justify-start">
+              <button class="btn btn-primary" type="submit">Purchase</button>
+            </div>
+          </form>
+        </div>
       </div>
-
-      <div>
-        <label for="address"> Address </label>
-        <input id="address" type="text" formControlName="address" />
-      </div>
-
-      <button class="button" type="submit">Purchase</button>
-    </form>
+    </section>
   `,
 })
 export default class CartComponent {

@@ -7,7 +7,6 @@ import { ShippingService } from './shipping-service';
   selector: 'analogjs-shipping',
   imports: [CurrencyPipe, AsyncPipe],
   templateUrl: './shipping.html',
-  styleUrls: ['./shipping.scss'],
 })
 export default class ShippingComponent {
   private readonly shippingService = inject(ShippingService);

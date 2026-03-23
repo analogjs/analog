@@ -42,37 +42,73 @@ function isContactActionError(value: unknown): value is ContactActionError {
   imports: [FormAction],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <h3>Contact Form</h3>
-
-    @if (submitted()) {
-      <div id="contact-success">
-        Thanks, {{ contactName() }}! We received your message.
-      </div>
-    } @else {
-      <form
-        method="post"
-        (onSuccess)="handleSuccess($event)"
-        (onError)="handleError($event)"
-      >
-        <div>
-          <label for="name">Name</label>
-          <input type="text" name="name" id="name" />
+    <section class="card card-border bg-base-100 shadow-xl">
+      <div class="card-body gap-6">
+        <div class="space-y-3">
+          <div class="badge badge-success badge-outline">Server Action</div>
+          <h1 class="card-title text-3xl">Contact form</h1>
+          <p class="max-w-2xl text-base-content/70">
+            Submit a progressively enhanced form powered by Analog server
+            actions.
+          </p>
         </div>
-        <div>
-          <label for="email">Email</label>
-          <input type="email" name="email" id="email" />
-        </div>
-        <button class="button" type="submit">Send</button>
-      </form>
 
-      @if (hasErrors()) {
-        <div id="contact-errors">
-          @for (err of errorMessages(); track err) {
-            <p>{{ err }}</p>
+        @if (submitted()) {
+          <div
+            id="contact-success"
+            role="alert"
+            class="alert alert-success alert-soft"
+          >
+            <span>Thanks, {{ contactName() }}! We received your message.</span>
+          </div>
+        } @else {
+          <form
+            class="space-y-4"
+            method="post"
+            (onSuccess)="handleSuccess($event)"
+            (onError)="handleError($event)"
+          >
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Name</legend>
+              <input
+                class="input w-full md:max-w-lg"
+                type="text"
+                name="name"
+                id="name"
+              />
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Email</legend>
+              <input
+                class="input w-full md:max-w-lg"
+                type="email"
+                name="email"
+                id="email"
+              />
+            </fieldset>
+
+            <div class="card-actions justify-start">
+              <button class="btn btn-primary" type="submit">Send</button>
+            </div>
+          </form>
+
+          @if (hasErrors()) {
+            <div
+              id="contact-errors"
+              role="alert"
+              class="alert alert-error alert-soft"
+            >
+              <div class="space-y-1">
+                @for (err of errorMessages(); track err) {
+                  <p>{{ err }}</p>
+                }
+              </div>
+            </div>
           }
-        </div>
-      }
-    }
+        }
+      </div>
+    </section>
   `,
 })
 export default class ContactComponent {

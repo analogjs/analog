@@ -6,7 +6,13 @@ import type { Product } from '../products';
   template: `
     @if (product() && product()!.price > 700) {
       <p>
-        <button type="button" (click)="notify.emit()">Notify Me</button>
+        <button
+          type="button"
+          class="btn btn-secondary btn-outline btn-sm"
+          (click)="notify.emit()"
+        >
+          Notify Me
+        </button>
       </p>
     }
   `,
