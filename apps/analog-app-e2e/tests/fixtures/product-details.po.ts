@@ -6,7 +6,7 @@ export class ProductDetailsPage {
   async navigateToByName(name: RegExp) {
     await this.page.getByRole('link', { name }).click();
     await this.page
-      .getByRole('heading', { name: /product details/i, level: 2 })
+      .getByRole('heading', { name: /product details/i, level: 1 })
       .waitFor();
   }
 
@@ -15,6 +15,6 @@ export class ProductDetailsPage {
   }
 
   getPrice() {
-    return this.page.locator('h4');
+    return this.page.locator('.badge-primary');
   }
 }
