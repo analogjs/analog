@@ -58,12 +58,18 @@ export function contentPlugin(
   // Initialized once in the `config` hook after `root` is resolved — all
   // inputs (`root`, `workspaceRoot`, `options`) are stable after that point.
   let contentRootDirs: string[];
+  const normalizeContentDir = (dir: string) => {
+    const normalized = vite.normalizePath(
+      dir.startsWith('/')
+        ? `${workspaceRoot}${dir}`
+        : resolve(workspaceRoot, dir),
+    );
+    return normalized.endsWith('/') ? normalized.slice(0, -1) : normalized;
+  };
   const initContentRootDirs = () => {
     contentRootDirs = [
       vite.normalizePath(`${root}/src/content`),
-      ...(options?.additionalContentDirs || []).map((dir) =>
-        vite.normalizePath(`${workspaceRoot}${dir}`),
-      ),
+      ...(options?.additionalContentDirs || []).map(normalizeContentDir),
     ];
   };
   const discoverContentFilesList = () => {
