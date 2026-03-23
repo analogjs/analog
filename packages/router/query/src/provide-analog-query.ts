@@ -22,7 +22,6 @@ export const ANALOG_QUERY_STATE_KEY: StateKey<DehydratedState> =
   makeStateKey<DehydratedState>('analog_query_state');
 
 export function provideAnalogQuery(
-  queryClient: QueryClient | InjectionToken<QueryClient>,
   ...features: QueryFeatures[]
 ): EnvironmentProviders {
   return makeEnvironmentProviders([
