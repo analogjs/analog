@@ -38,6 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version      
       - run: npm install --global corepack@0.34.6
       - run: corepack enable
       - run: npm --version
@@ -55,6 +57,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version      
       - run: npm --version
       - name: Create Analog Application
         run: npm create analog@${{ inputs.analog_build_tag }} analog-app -- --skipTailwind --template latest
@@ -70,6 +74,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version      
       - run: npm install --global corepack@0.34.6
       - run: corepack enable
       - run: npm --version
@@ -88,6 +94,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version      
       - run: npm install --global corepack@0.34.6
       - run: corepack enable
       - run: npm --version
