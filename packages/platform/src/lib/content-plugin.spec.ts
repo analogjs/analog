@@ -40,7 +40,7 @@ describe('content plugin', () => {
     ).toBe(true);
   });
 
-  it.skip('should cache parsed attributes if the code is the same', async () => {
+  it('should cache parsed attributes if the code is the same', async () => {
     // Arrange
     const code =
       '---\n' +
@@ -51,7 +51,9 @@ describe('content plugin', () => {
       '\n' +
       'Hello World\n';
     const id = '/src/content/post.md?analog-content-list=true';
-    const readFileSyncSpy = vi.spyOn(fs, 'readFileSync').mockReturnValue(code);
+    const readFileSyncSpy = vi
+      .spyOn(fs, 'readFileSync')
+      .mockReturnValue(code as any);
     const result = {
       code: 'export default {"title":"My First Post","slug":"2022-12-27-my-first-post","description":"My First Post Description"}',
       moduleSideEffects: false,

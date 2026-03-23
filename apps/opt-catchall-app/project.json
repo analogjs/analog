@@ -36,7 +36,7 @@
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "opt-catchall-app:build",
-        "port": 3000
+        "port": 43040
       },
       "configurations": {
         "development": {
@@ -53,7 +53,7 @@
       "options": {
         "buildTarget": "opt-catchall-app:build",
         "parallel": true,
-        "port": 3001,
+        "port": 43041,
         "staticFilePath": "dist/apps/opt-catchall-app/analog/public"
       }
     }
