@@ -8,7 +8,7 @@ export default defineConfig({
   reporter: 'html',
   outputDir: '../../dist/.playwright/apps/blog-app-e2e/output',
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:43010',
     trace: 'on-first-retry',
   },
   projects: [
@@ -19,8 +19,9 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npx nx serve-nitro blog-app',
-    url: 'http://localhost:3000',
+    url: 'http://localhost:43010',
     reuseExistingServer: !process.env['CI'],
+    timeout: 120_000,
     cwd: '../..',
   },
 });
