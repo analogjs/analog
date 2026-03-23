@@ -320,7 +320,7 @@ export class AnalogCi {
         '--target',
         'e2e',
         '--projects',
-        'analog-app-e2e,blog-app-e2e',
+        'analog-app-e2e,blog-app-e2e,tanstack-query-app-e2e',
       ])
       .stdout();
   }
@@ -512,7 +512,7 @@ export class AnalogCi {
         '--target',
         'e2e',
         '--projects',
-        'analog-app-e2e,blog-app-e2e',
+        'analog-app-e2e,blog-app-e2e,tanstack-query-app-e2e',
       ])
       .stdout();
 

@@ -5,6 +5,13 @@ import { pathToFileURL } from 'node:url';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 
+vi.mock('nitro/builder', () => ({
+  build: vi.fn(),
+  createDevServer: vi.fn(),
+  createNitro: vi.fn(),
+}));
+
+import { build, createDevServer, createNitro } from 'nitro/builder';
 import { PrerenderContentFile } from './options';
 import {
   mockBuildFunctions,
@@ -14,6 +21,15 @@ import {
 } from './vite-nitro-plugin.spec.data';
 import { nitro } from './vite-plugin-nitro';
 
+function writeBuiltClientIndexHtml(
+  workspaceRoot: string,
+  html = '<html></html>',
+) {
+  const clientBuildDir = resolve(workspaceRoot, 'dist', 'client');
+  mkdirSync(clientBuildDir, { recursive: true });
+  writeFileSync(resolve(clientBuildDir, 'index.html'), html);
+}
+
 describe('nitro', () => {
   vi.mock('./build-ssr');
   vi.mock('./build-server');
@@ -21,6 +37,7 @@ describe('nitro', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it('should work', () => {
@@ -37,6 +54,72 @@ describe('nitro', () => {
     // Assert
     expect(spy).toHaveBeenCalledTimes(0);
     expect(spy).not.toHaveBeenCalledWith('/api', expect.anything());
+  });
+
+  it('should initialize Nitro dev mode with renderer virtual modules', async () => {
+    const nitroInstance = {} as never;
+    const devServer = {
+      fetch: vi.fn(),
+      upgrade: vi.fn(),
+    } as never;
+    const use = vi.fn();
+    const once = vi.fn();
+    const on = vi.fn();
+
+    vi.mocked(createNitro).mockResolvedValue(nitroInstance);
+    vi.mocked(createDevServer).mockReturnValue(devServer);
+    vi.mocked(build).mockResolvedValue(undefined as never);
+    vi.stubEnv('VITEST', '');
+    vi.stubEnv('NODE_ENV', 'development');
+
+    const plugin = nitro({ ssr: true });
+    await (plugin[1].config as any)(
+      {},
+      { command: 'serve', mode: 'development' },
+    );
+
+    const configureNitro = await (plugin[1].configureServer as any)({
+      config: {
+        root: '/workspace/app',
+        server: {
+          host: '127.0.0.1',
+          port: 4300,
+        },
+      },
+      httpServer: {
+        once,
+        on,
+      },
+      middlewares: {
+        stack: [],
+        use,
+      },
+      watcher: {
+        on: vi.fn(),
+      },
+    });
+
+    await configureNitro?.();
+
+    expect(createNitro).toHaveBeenCalledWith(
+      expect.objectContaining({
+        builder: 'rollup',
+        dev: true,
+        virtual: expect.objectContaining({
+          '#ANALOG_SSR_RENDERER': expect.stringContaining(
+            "import template from '#analog/index';",
+          ),
+          '#ANALOG_CLIENT_RENDERER': expect.stringContaining(
+            "import template from '#analog/index';",
+          ),
+        }),
+      }),
+    );
+    expect(createDevServer).toHaveBeenCalledWith(nitroInstance);
+    expect(build).toHaveBeenCalledWith(nitroInstance);
+    expect(use).toHaveBeenCalled();
+    expect(once).toHaveBeenCalledWith('listening', expect.any(Function));
+    expect(on).not.toHaveBeenCalled();
   });
 
   it('should use the active Vite SSR bundler config key', async () => {
@@ -157,6 +240,7 @@ describe('nitro', () => {
         builtSsrEntry,
         'export default async function renderer() {}',
       );
+      writeBuiltClientIndexHtml(workspaceRoot, '<html>rollup build</html>');
 
       const plugin = nitro({
         workspaceRoot,
@@ -187,6 +271,9 @@ describe('nitro', () => {
       expect(bundlerConfig.output).toEqual({
         entryFileNames: 'index.mjs',
       });
+      expect(nitroConfig.virtual?.['#analog/index']).toBe(
+        'export default "<html>rollup build</html>";',
+      );
     } finally {
       rmSync(workspaceRoot, { recursive: true, force: true });
     }
@@ -204,6 +291,7 @@ describe('nitro', () => {
         builtSsrEntry,
         'export default async function renderer() {}',
       );
+      writeBuiltClientIndexHtml(workspaceRoot, '<html>ssr alias</html>');
 
       const plugin = nitro({
         ssr: true,
@@ -236,6 +324,111 @@ describe('nitro', () => {
       );
       expect(nitroConfig.virtual?.['#ANALOG_SSR_RENDERER']).toContain(
         "import renderer from '#analog/ssr';",
+      );
+      expect(nitroConfig.virtual?.['#analog/index']).toBe(
+        'export default "<html>ssr alias</html>";',
+      );
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('registers the client index virtual module in the legacy closeBundle path', async () => {
+    const { buildServerImportSpy } = await mockBuildFunctions();
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
+
+    try {
+      const ssrBuildDir = resolve(workspaceRoot, 'dist', 'ssr');
+      mkdirSync(ssrBuildDir, { recursive: true });
+      writeFileSync(
+        resolve(ssrBuildDir, 'main.server.js'),
+        'export default async function renderer() {}',
+      );
+      writeBuiltClientIndexHtml(
+        workspaceRoot,
+        '<html>legacy closeBundle</html>',
+      );
+
+      const plugin = nitro({
+        workspaceRoot,
+      });
+      await (plugin[1].config as any)(
+        {},
+        { command: 'build', mode: 'production' },
+      );
+      await plugin[1].closeBundle?.call(plugin[1]);
+
+      const nitroConfig = buildServerImportSpy.mock.calls[0][1];
+
+      expect(nitroConfig.virtual?.['#analog/index']).toBe(
+        'export default "<html>legacy closeBundle</html>";',
+      );
+      expect(nitroConfig.virtual?.['#ANALOG_SSR_RENDERER']).toContain(
+        "import template from '#analog/index';",
+      );
+      expect(nitroConfig.virtual?.['#ANALOG_CLIENT_RENDERER']).toContain(
+        "import template from '#analog/index';",
+      );
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('should resolve client output path correctly for nested roots without explicit build.outDir', async () => {
+    const { buildServerImportSpy } = await mockBuildFunctions();
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
+
+    try {
+      const nestedRoot = 'apps/my-app';
+      const ssrBuildDir = resolve(workspaceRoot, 'dist', nestedRoot, 'ssr');
+      const builtSsrEntry = resolve(ssrBuildDir, 'main.server.js');
+      mkdirSync(ssrBuildDir, { recursive: true });
+      writeFileSync(
+        builtSsrEntry,
+        'export default async function renderer() {}',
+      );
+
+      // The client build emits to <workspace>/dist/<root>/client when no
+      // explicit build.outDir is set — write index.html there.
+      const clientBuildDir = resolve(
+        workspaceRoot,
+        'dist',
+        nestedRoot,
+        'client',
+      );
+      mkdirSync(clientBuildDir, { recursive: true });
+      writeFileSync(
+        resolve(clientBuildDir, 'index.html'),
+        '<html>nested root</html>',
+      );
+
+      // Create the nested app source directory so the plugin can resolve it.
+      mkdirSync(resolve(workspaceRoot, nestedRoot, 'src/server'), {
+        recursive: true,
+      });
+
+      const plugin = nitro({
+        workspaceRoot,
+        ssrBuildDir,
+      });
+      const result = await (plugin[1].config as any)(
+        { root: nestedRoot },
+        { command: 'build', mode: 'production' },
+      );
+      await result.builder.buildApp({
+        build: vi.fn().mockResolvedValue(undefined),
+        environments: {
+          client: {},
+          ssr: {},
+        },
+      });
+
+      const nitroConfig = buildServerImportSpy.mock.calls[0][1];
+
+      // registerIndexHtmlVirtual must read index.html from
+      // <workspace>/dist/<root>/client — not <workspace>/<root>/dist/client.
+      expect(nitroConfig.virtual?.['#analog/index']).toBe(
+        'export default "<html>nested root</html>";',
       );
     } finally {
       rmSync(workspaceRoot, { recursive: true, force: true });

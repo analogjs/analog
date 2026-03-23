@@ -3,14 +3,12 @@ import { existsSync } from 'node:fs';
 import * as path from 'node:path';
 
 const workspaceRoot = path.resolve(__dirname, '../../..');
-const builtCollectionPath = path.join(
+const toolsOutDir = path.join(
   workspaceRoot,
-  'dist/packages/vitest-angular-tools/collection.json',
+  'node_modules/@analogjs/vitest-angular/src/lib/tools',
 );
-const builtSetupPath = path.join(
-  workspaceRoot,
-  'dist/packages/vitest-angular-tools/src/schematics/setup/index.js',
-);
+const builtCollectionPath = path.join(toolsOutDir, 'collection.json');
+const builtSetupPath = path.join(toolsOutDir, 'src/schematics/setup/index.js');
 
 export default function globalSetup(): void {
   if (existsSync(builtCollectionPath) && existsSync(builtSetupPath)) {

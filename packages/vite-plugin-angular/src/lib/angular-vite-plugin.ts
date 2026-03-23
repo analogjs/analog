@@ -274,13 +274,17 @@ export function angular(options?: PluginOptions): Plugin[] {
         const rolldownOptions: vite.DepOptimizationOptions['rolldownOptions'] =
           {
             plugins: [
-              createRolldownCompilerPlugin({
-                tsconfig: preliminaryTsConfigPath,
-                sourcemap: !isProd,
-                advancedOptimizations: isProd,
-                jit,
-                incremental: watchMode,
-              }),
+              createRolldownCompilerPlugin(
+                {
+                  tsconfig: preliminaryTsConfigPath,
+                  sourcemap: !isProd,
+                  advancedOptimizations: isProd,
+                  jit,
+                  incremental: watchMode,
+                },
+                // Astro manages the transformer lifecycle externally.
+                !isAstroIntegration,
+              ),
             ],
           };
 

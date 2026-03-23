@@ -1,8 +1,8 @@
 import { resolve } from 'node:path';
 import { core as PresetCore } from '@storybook/angular/preset';
 import { fileURLToPath } from 'node:url';
-import type { Plugin, UserConfig } from 'vite';
 import * as vite from 'vite';
+import type { Plugin, UserConfig } from 'vite';
 
 export const previewAnnotations = async (
   entries: string[] = [],
@@ -210,12 +210,14 @@ function angularOptionsPlugin(
 }
 
 function storybookTransformConfigPlugin(): Plugin {
+  const configKey = vite.rolldownVersion ? 'oxc' : 'esbuild';
+
   return {
     name: 'analogjs-storybook-transform-config',
     apply: 'build',
     config() {
       return {
-        [vite.rolldownVersion ? 'oxc' : 'esbuild']: {
+        [configKey]: {
           // Don't mangle class names during the build
           // This fixes display of compodoc argtypes
           keepNames: true,

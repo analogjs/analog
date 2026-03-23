@@ -195,19 +195,34 @@ function resolveClientOutputPath(
   workspaceRoot: string,
   rootDir: string,
   configuredOutDir: string | undefined,
-  ssrBuild: boolean,
 ) {
   if (cachedPath) {
     return cachedPath;
   }
 
-  if (!ssrBuild) {
-    return resolve(workspaceRoot, rootDir, configuredOutDir || 'dist/client');
+  if (configuredOutDir) {
+    return resolve(workspaceRoot, rootDir, configuredOutDir);
   }
 
-  // SSR builds write server assets to dist/<app>/ssr, but the renderer template
-  // still needs the client index.html emitted to dist/<app>/client.
+  // When no explicit build.outDir is set, the environment build config defaults
+  // to `<workspace>/dist/<root>/client` for the client build. The non-SSR
+  // (client) and SSR paths must agree on this so that registerIndexHtmlVirtual()
+  // and publicAssets read from the directory the client build actually wrote to.
   return resolve(workspaceRoot, 'dist', rootDir, 'client');
+}
+
+function registerIndexHtmlVirtual(
+  nitroConfig: NitroConfig,
+  clientOutputPath: string,
+) {
+  const indexHtml = readFileSync(
+    resolve(clientOutputPath, 'index.html'),
+    'utf8',
+  );
+  nitroConfig.virtual = {
+    ...nitroConfig.virtual,
+    '#analog/index': `export default ${JSON.stringify(indexHtml)};`,
+  };
 }
 
 /**
@@ -308,7 +323,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let environmentBuild = false;
   let hasAPIDir = false;
   let clientOutputPath = '';
-  let rendererIndexEntry = '';
   const rollupExternalEntries: string[] = [];
   const routeSitemaps: Record<
     string,
@@ -334,7 +348,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         config = userConfig;
         isTest = isTest ? isTest : mode === 'test';
 
-        rootDir = relative(workspaceRoot, config.root || '.') || '.';
+        const resolvedConfigRoot = config.root
+          ? resolve(workspaceRoot, config.root)
+          : workspaceRoot;
+        rootDir = relative(workspaceRoot, resolvedConfigRoot) || '.';
         hasAPIDir = existsSync(
           resolve(
             workspaceRoot,
@@ -359,10 +376,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           workspaceRoot,
           rootDir,
           config.build?.outDir,
-          ssrBuild,
-        );
-        rendererIndexEntry = normalizePath(
-          resolve(resolvedClientOutputPath, 'index.html'),
         );
 
         nitroConfig = {
@@ -433,8 +446,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   },
                 },
           virtual: {
-            '#ANALOG_SSR_RENDERER': ssrRenderer(rendererIndexEntry),
-            '#ANALOG_CLIENT_RENDERER': clientRenderer(rendererIndexEntry),
+            '#ANALOG_SSR_RENDERER': ssrRenderer(),
+            '#ANALOG_CLIENT_RENDERER': clientRenderer(),
             ...(hasAPIDir ? {} : { '#ANALOG_API_MIDDLEWARE': apiMiddleware }),
           },
         };
@@ -731,6 +744,17 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
               applySsrEntryAlias(nitroConfig, options, workspaceRoot, rootDir);
 
+              const resolvedClientOutputPath = resolveClientOutputPath(
+                clientOutputPath,
+                workspaceRoot,
+                rootDir,
+                config.build?.outDir,
+              );
+
+              // Inline the client index.html as a virtual module so the server
+              // bundle never contains an absolute filesystem path to the template.
+              registerIndexHtmlVirtual(nitroConfig, resolvedClientOutputPath);
+
               await buildServer(options, nitroConfig, routeSourceFiles);
 
               if (
@@ -927,6 +951,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           }
 
           applySsrEntryAlias(nitroConfig, options, workspaceRoot, rootDir);
+          const resolvedClientOutputPath = resolveClientOutputPath(
+            clientOutputPath,
+            workspaceRoot,
+            rootDir,
+            config.build?.outDir,
+          );
+          registerIndexHtmlVirtual(nitroConfig, resolvedClientOutputPath);
 
           await buildServer(options, nitroConfig, routeSourceFiles);
 
