@@ -45,5 +45,8 @@ export async function streamMarkdown(
         controller.error(error);
       }
     },
+    cancel() {
+      reader.cancel();
+    },
   });
 }
