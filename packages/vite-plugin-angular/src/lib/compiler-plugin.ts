@@ -50,6 +50,7 @@ export function createCompilerPlugin(
 
 export function createRolldownCompilerPlugin(
   pluginOptions: CompilerPluginOptions,
+  closeTransformer: boolean,
 ): Rolldown.Plugin {
   const javascriptTransformer = new JavaScriptTransformer(
     { ...pluginOptions, jit: true },
@@ -69,6 +70,13 @@ export function createRolldownCompilerPlugin(
           loader: 'js',
         } as any;
       },
+    },
+    // Close the JavaScriptTransformer worker pool when Rolldown finishes to
+    // prevent leaked handles. Skipped for Astro, which owns the lifecycle.
+    buildEnd() {
+      if (closeTransformer) {
+        javascriptTransformer.close();
+      }
     },
   };
 }
