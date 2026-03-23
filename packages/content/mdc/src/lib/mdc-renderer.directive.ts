@@ -4,6 +4,7 @@ import {
   effect,
   inject,
   input,
+  InputSignal,
   Renderer2,
   ViewContainerRef,
 } from '@angular/core';
@@ -34,7 +35,9 @@ type ComarkNode =
   standalone: true,
 })
 export class MdcRendererDirective {
-  readonly ast = input<{ nodes: ComarkNode[] } | null>(null, {
+  readonly ast: InputSignal<{ nodes: ComarkNode[] } | null> = input<{
+    nodes: ComarkNode[];
+  } | null>(null, {
     alias: 'mdcAst',
   });
 
