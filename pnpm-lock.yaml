@@ -751,7 +751,7 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
       '@tanstack/angular-query-experimental':
-        specifier: ^5.95.0
+        specifier: '>=5.95.0'
         version: 5.95.0(@angular/common@21.1.1(@angular/core@21.1.1(@angular/compiler@21.1.1)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2))(@angular/core@21.1.1(@angular/compiler@21.1.1)(rxjs@7.8.2)(zone.js@0.16.1))
       tslib:
         specifier: ^2.0.0
