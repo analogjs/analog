@@ -8,7 +8,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - Main framework: **AnalogJS** (meta-framework for Angular, powered by Vite)
 - Contains multiple apps (Angular, Astro, blog, docs, trpc, etc.) and libraries (shared, card, top-bar, etc.)
 - Key packages: `@analogjs/platform`, `@analogjs/vite-plugin-angular`, `@analogjs/vitest-angular`, `@analogjs/vite-plugin-nitro`, `@analogjs/router`, etc.
-- Node engines: `^20.0.0 || ^22.0.0`, pnpm `^10.0.0`
+- Node engines: `^22.0.0 || ^24.0.0`, pnpm `^10.0.0`
 
 ## Key Files
 
@@ -37,7 +37,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
 - `nx test <package-name>` (unit tests via Vitest)
 - `nx build <package-name>` to verify build
-- For E2E: `nx e2e create-analog-e2e` or `nx e2e analog-app-e2e-cypress`
+- For E2E: `pnpm e2e`
 - Run `nx format:check` to verify formatting
 
 ## Project Structure & Conventions
@@ -90,15 +90,20 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
 ## Contribution Patterns & Best Practices
 
+- Always open an issue before a pull request for review by the maintainers. This ensures alignment on implementation of features.
 - Keep changes minimal and targeted.
 - Backward compatibility is critical for new features, allowing progressive adoption.
 - Keep code concise with emphasis on readability, avoid clever solutions and abstractions.
 - Always scan existing codebase for examples and patterns for implementation.
 - Prefer using existing Angular APIs, with wrappers where needed.
+- Always use modern Angular syntax including dependency injection with inject, control flow, signal APIs, and standalone components.
+- Cross compatibility with Nx is strongly encouraged. Prefer schematics and builders for Analog first-party solutions.
 - Avoid custom code that replicates Angular framework functionality.
 - Don't be overly verbose with comments.
 - Keep tests lightweight and targeted to critical functionality testing.
 - Add concise documentation with descriptive sections to the appropriate guides in the `docs-app` app.
+- Maintain compatibility with Vite versions 6-8, with progressive fallbacks.
+- Use other projects as inspiration, but do not directly copy their APIs.
 - See `CONTRIBUTING.md` file for more contribution guidelines.
 
 ## Do NOT
@@ -108,6 +113,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - Add verbose comments, docstrings, or type annotations to code you didn't change
 - Add error handling or validation for scenarios that can't happen
 - Design for hypothetical future requirements
+- Inline code from npm packages, preserving OSS dependencies
 
 ## Common Pitfalls
 

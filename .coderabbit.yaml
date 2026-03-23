@@ -7,14 +7,14 @@ tone_instructions: >-
 reviews:
   profile: chill
   request_changes_workflow: false
-  high_level_summary: true
-  high_level_summary_in_walkthrough: true
+  high_level_summary: false
+  high_level_summary_in_walkthrough: false
   review_status: true
   review_details: false
   commit_status: true
   fail_commit_status: false
   collapse_walkthrough: true
-  changed_files_summary: true
+  changed_files_summary: false
   sequence_diagrams: false
   estimate_code_review_effort: true
   assess_linked_issues: true
@@ -121,9 +121,6 @@ reviews:
       instructions: >-
         Treat as part of the platform package scope. Pay special attention to generators, schemas, migrations,
         and template files because changes can affect downstream generated workspaces.
-    - path: 'apps/nx-plugin-e2e/**'
-      instructions: >-
-        Treat this app as part of the nx-plugin scope and check whether generator or executor behavior is covered end to end.
     - path: 'apps/docs-app/**'
       instructions: >-
         Review as docs scope. Bias feedback toward documentation accuracy, command correctness,

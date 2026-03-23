@@ -1,3 +1,33 @@
+# [2.4.0-beta.20](https://github.com/analogjs/analog/compare/v2.4.0-beta.19...v2.4.0-beta.20) (2026-03-23)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** skip esm transform with Rolldown for Vitest ([#2169](https://github.com/analogjs/analog/issues/2169)) ([20c720b](https://github.com/analogjs/analog/commit/20c720bc8178174041002f400ed4d694dabb30c1))
+
+# [2.4.0-beta.19](https://github.com/analogjs/analog/compare/v2.4.0-beta.18...v2.4.0-beta.19) (2026-03-23)
+
+### Bug Fixes
+
+- **create-analog:** bump to Vitest 4.1, update CI workflow versions ([54b5112](https://github.com/analogjs/analog/commit/54b51125130e897faf787db2b918d5ae16e4802f))
+
+# [2.4.0-beta.18](https://github.com/analogjs/analog/compare/v2.4.0-beta.17...v2.4.0-beta.18) (2026-03-23)
+
+### Bug Fixes
+
+- **nx-plugin:** restore builders configuration ([1d2e4e8](https://github.com/analogjs/analog/commit/1d2e4e8b115da2fb1b63c67f017f861dac7b2f4c))
+
+# [2.4.0-beta.17](https://github.com/analogjs/analog/compare/v2.4.0-beta.16...v2.4.0-beta.17) (2026-03-23)
+
+### Bug Fixes
+
+- **nx-plugin:** restore schematics configuration ([#2167](https://github.com/analogjs/analog/issues/2167)) ([e74fa68](https://github.com/analogjs/analog/commit/e74fa6829c340976403ba46ca933bd72be2dde2d))
+
+# [2.4.0-beta.16](https://github.com/analogjs/analog/compare/v2.4.0-beta.15...v2.4.0-beta.16) (2026-03-23)
+
+### Bug Fixes
+
+- **nx-plugin:** remove full path to main.ts for Nx projects ([#2164](https://github.com/analogjs/analog/issues/2164)) ([39f0d7c](https://github.com/analogjs/analog/commit/39f0d7ce411cf4c59b5b446337affaa818a4e48f))
+
 # [2.4.0-beta.15](https://github.com/analogjs/analog/compare/v2.4.0-beta.14...v2.4.0-beta.15) (2026-03-17)
 
 ### Bug Fixes
