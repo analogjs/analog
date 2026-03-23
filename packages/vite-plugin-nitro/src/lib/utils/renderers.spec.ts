@@ -4,10 +4,10 @@ import { apiMiddleware, clientRenderer, ssrRenderer } from './renderers';
 
 describe('renderers virtual modules', () => {
   it('emits an SSR renderer that serves HTML responses', () => {
-    const templatePath = '/dist/apps/demo-app/client/index.html';
-    const moduleSource = ssrRenderer(templatePath);
+    const moduleSource = ssrRenderer();
 
-    expect(moduleSource).toContain(JSON.stringify(templatePath));
+    expect(moduleSource).toContain("import template from '#analog/index';");
+    expect(moduleSource).not.toContain('readFileSync(');
     expect(moduleSource).toContain(
       "event.res.headers.set('content-type', 'text/html; charset=utf-8');",
     );
@@ -22,10 +22,10 @@ describe('renderers virtual modules', () => {
   });
 
   it('emits a client renderer that serves HTML responses', () => {
-    const templatePath = '/dist/apps/demo-app/client/index.html';
-    const moduleSource = clientRenderer(templatePath);
+    const moduleSource = clientRenderer();
 
-    expect(moduleSource).toContain(JSON.stringify(templatePath));
+    expect(moduleSource).toContain("import template from '#analog/index';");
+    expect(moduleSource).not.toContain('readFileSync(');
     expect(moduleSource).toContain(
       "event.res.headers.set('content-type', 'text/html; charset=utf-8');",
     );
