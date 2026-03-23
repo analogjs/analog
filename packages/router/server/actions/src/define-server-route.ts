@@ -73,7 +73,7 @@ function warnOnOutputIssues(issues: ReadonlyArray<StandardSchemaV1.Issue>) {
       issues
         .map((i) => {
           const path = i.path
-            ? ` at "${i.path.map((p) => (typeof p === 'object' ? p.key : p)).join('.')}"`
+            ? ` at "${i.path.map((p) => (typeof p === 'object' ? (p as { key: string }).key : p)).join('.')}"`
             : '';
           return `  - ${i.message}${path}`;
         })
