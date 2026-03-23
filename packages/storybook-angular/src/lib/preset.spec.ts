@@ -346,9 +346,33 @@ describe('viteFinal', () => {
       expect(transformPlugin).toBeDefined();
     });
 
-    it('should use oxc config key with keepNames', async () => {
+    it('should use esbuild config key with keepNames on Vite 6-7', async () => {
       const options = createMockOptions();
       const result = await viteFinal(baseConfig, options);
+
+      const transformPlugin = result.plugins
+        .flat()
+        .find((p) => p?.name === 'analogjs-storybook-transform-config');
+      const pluginConfig = transformPlugin.config();
+
+      expect(pluginConfig).toHaveProperty('esbuild');
+      expect(pluginConfig).not.toHaveProperty('oxc');
+      expect(pluginConfig.esbuild.keepNames).toBe(true);
+    });
+
+    it('should use oxc config key with keepNames on Vite 8+ (Rolldown)', async () => {
+      vi.resetModules();
+      registerDependencyMocks();
+      vi.doMock('vite', () => ({
+        mergeConfig: (_base: unknown, override: unknown) => override,
+        normalizePath: (p: string) => p,
+        rolldownVersion: '1.0.0',
+      }));
+      const mod = await import('./preset');
+      const freshViteFinal = mod.viteFinal;
+
+      const options = createMockOptions();
+      const result = await freshViteFinal(baseConfig, options);
 
       const transformPlugin = result.plugins
         .flat()
