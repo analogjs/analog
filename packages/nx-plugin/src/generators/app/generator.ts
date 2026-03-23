@@ -67,7 +67,7 @@ function normalizeOptions(
   };
 }
 
-export async function appGenerator(
+async function appGenerator(
   tree: Tree,
   options: AnalogNxApplicationGeneratorOptions,
 ): Promise<() => void> {
