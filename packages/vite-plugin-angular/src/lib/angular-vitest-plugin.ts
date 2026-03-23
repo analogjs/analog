@@ -133,6 +133,8 @@ export function angularVitestSourcemapPlugin(): Plugin {
         }
 
         if (isRolldown()) {
+          // lang must be 'ts' (not 'js') so OXC parses TypeScript syntax;
+          // using 'js' would cause parse errors on type annotations.
           const result = await vite.transformWithOxc(code, id, {
             lang: 'ts',
           });

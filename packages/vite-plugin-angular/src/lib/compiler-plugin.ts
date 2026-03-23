@@ -71,6 +71,8 @@ export function createRolldownCompilerPlugin(
         } as any;
       },
     },
+    // Close the JavaScriptTransformer worker pool when Rolldown finishes to
+    // prevent leaked handles. Skipped for Astro, which owns the lifecycle.
     buildEnd() {
       if (closeTransformer) {
         javascriptTransformer.close();

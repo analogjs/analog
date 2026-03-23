@@ -282,6 +282,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                   jit,
                   incremental: watchMode,
                 },
+                // Astro manages the transformer lifecycle externally.
                 !isAstroIntegration,
               ),
             ],
