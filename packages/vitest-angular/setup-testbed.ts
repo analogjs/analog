@@ -41,13 +41,13 @@ export function setupTestBed({
   if (!(globalThis as any)[ANGULAR_TESTBED_SETUP]) {
     (globalThis as any)[ANGULAR_TESTBED_SETUP] = true;
 
-    class TestModule {}
-    NgModule({
+    @NgModule({
       providers: [
         ...(zoneless ? [provideZonelessChangeDetection()] : []),
         ...providers,
       ],
-    })(TestModule);
+    })
+    class TestModule {}
 
     getTestBed().initTestEnvironment(
       [BrowserTestingModule, TestModule],
