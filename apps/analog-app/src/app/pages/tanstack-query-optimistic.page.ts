@@ -146,8 +146,11 @@ export default class TanStackQueryOptimisticPageComponent {
           return { snapshot };
         },
         onError: (error, _variables, context) => {
-          if (context?.snapshot) {
-            this.queryClient.setQueryData(this.queryKey(), context.snapshot);
+          const ctx = context as
+            | { snapshot: CommentsData | undefined }
+            | undefined;
+          if (ctx?.snapshot) {
+            this.queryClient.setQueryData(this.queryKey(), ctx.snapshot);
           }
           this.mutationError.set(getIssueMessage(error));
           this.rolledBack.set(true);

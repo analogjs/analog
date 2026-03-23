@@ -32,6 +32,9 @@
       "@analogjs/platform": ["./packages/platform/src/index.ts"],
       "@analogjs/router": ["./packages/router/src/index.ts"],
       "@analogjs/router/query": ["./packages/router/query/src/index.ts"],
+      "@analogjs/router/query/provide-server-analog-query": [
+        "./packages/router/query/src/provide-server-analog-query.ts"
+      ],
       "@analogjs/router/server": ["./packages/router/server/src/index.ts"],
       "@analogjs/router/server/actions": [
         "./packages/router/server/actions/src/index.ts"

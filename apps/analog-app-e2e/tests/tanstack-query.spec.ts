@@ -34,7 +34,7 @@ test.describe('TanStack Query integration - /tanstack-query', () => {
       'Read the Analog docs',
     );
 
-    await page.waitForTimeout(250);
+    await page.waitForLoadState('networkidle');
     expect(methods).toEqual([]);
   });
 

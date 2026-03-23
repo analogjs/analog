@@ -15,21 +15,22 @@ import type {
   InferRouteResult,
 } from '@analogjs/router/server/actions';
 
-function buildUrl(
-  base: string,
-  params?: Record<string, string | number | boolean | null | undefined>,
-): string {
+function buildUrl(base: string, params?: Record<string, unknown>): string {
   if (!params) return base;
-  const entries = Object.entries(params).filter(
-    ([, v]) => v !== undefined && v !== null,
-  );
-  if (entries.length === 0) return base;
-  const qs = entries
-    .map(
-      ([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`,
-    )
-    .join('&');
-  return `${base}?${qs}`;
+  const parts: string[] = [];
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null) continue;
+    const k = encodeURIComponent(key);
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        parts.push(`${k}=${encodeURIComponent(String(item))}`);
+      }
+    } else {
+      parts.push(`${k}=${encodeURIComponent(String(value))}`);
+    }
+  }
+  if (parts.length === 0) return base;
+  return `${base}?${parts.join('&')}`;
 }
 
 export function serverQueryOptions<

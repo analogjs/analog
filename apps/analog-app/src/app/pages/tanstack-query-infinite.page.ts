@@ -66,8 +66,8 @@ export default class TanStackQueryInfinitePageComponent {
   readonly commentsQuery = injectInfiniteQuery(() =>
     serverInfiniteQueryOptions<
       typeof route,
-      unknown,
-      unknown,
+      Error,
+      any,
       readonly string[],
       number
     >(this.http, '/api/v1/query-comments', {
@@ -84,7 +84,7 @@ export default class TanStackQueryInfinitePageComponent {
   );
 
   readonly allComments = computed(
-    () => this.commentsQuery.data()?.pages.flatMap((p) => p.items) ?? [],
+    () => this.commentsQuery.data()?.pages.flatMap((p: any) => p.items) ?? [],
   );
 
   readonly pageCount = computed(

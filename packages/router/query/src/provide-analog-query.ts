@@ -6,8 +6,7 @@ import {
   makeEnvironmentProviders,
   makeStateKey,
 } from '@angular/core';
-import { BEFORE_APP_SERIALIZED } from '@angular/platform-server';
-import type { EnvironmentProviders, Provider } from '@angular/core';
+import type { EnvironmentProviders, StateKey } from '@angular/core';
 import type {
   DehydratedState,
   QueryFeatures,
@@ -19,7 +18,7 @@ import {
   provideTanStackQuery,
 } from '@tanstack/angular-query-experimental';
 
-const ANALOG_QUERY_STATE_KEY =
+export const ANALOG_QUERY_STATE_KEY: StateKey<DehydratedState> =
   makeStateKey<DehydratedState>('analog_query_state');
 
 export function provideAnalogQuery(
@@ -50,19 +49,4 @@ export function provideAnalogQuery(
       },
     },
   ]);
-}
-
-const SERVER_ANALOG_QUERY_PROVIDER: Provider = {
-  provide: BEFORE_APP_SERIALIZED,
-  multi: true,
-  useFactory: (queryClient: QueryClient, transferState: TransferState) => {
-    return () => {
-      transferState.set(ANALOG_QUERY_STATE_KEY, dehydrate(queryClient));
-    };
-  },
-  deps: [QueryClient, TransferState],
-};
-
-export function provideServerAnalogQuery(): EnvironmentProviders {
-  return makeEnvironmentProviders([SERVER_ANALOG_QUERY_PROVIDER]);
 }

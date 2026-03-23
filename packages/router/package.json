@@ -13,6 +13,10 @@
       "import": "./query/src/index.js",
       "default": "./query/src/index.js"
     },
+    "./query/provide-server-analog-query": {
+      "import": "./query/src/provide-server-analog-query.js",
+      "default": "./query/src/provide-server-analog-query.js"
+    },
     "./server": {
       "import": "./server/src/index.js",
       "default": "./server/src/index.js"

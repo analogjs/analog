@@ -24,9 +24,3 @@ export const action = defineAction({
     });
   },
 });
-
-export const schemalessAction = defineAction({
-  handler: async ({ data }) => {
-    return json({ raw: true, data });
-  },
-});

@@ -35,8 +35,7 @@ export class FormAction {
   onSuccess: OutputEmitterRef<unknown> = output<unknown>();
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   onError: OutputEmitterRef<unknown> = output<unknown>();
-  // eslint-disable-next-line @angular-eslint/no-output-on-prefix
-  onStateChange: OutputEmitterRef<FormActionState> = output<FormActionState>();
+  state: OutputEmitterRef<FormActionState> = output<FormActionState>();
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   protected currentState: WritableSignal<FormActionState | 'idle'> = signal<
@@ -135,7 +134,7 @@ export class FormAction {
 
   private _emitState(state: FormActionState) {
     this.currentState.set(state);
-    this.onStateChange.emit(state);
+    this.state.emit(state);
   }
 
   private _navigateTo(url: URL) {
