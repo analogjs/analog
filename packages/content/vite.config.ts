@@ -21,6 +21,9 @@ export default defineConfig(async ({ mode }) => {
   return {
     root: __dirname,
     cacheDir: '../../node_modules/.vite/content',
+    resolve: {
+      tsconfigPaths: true,
+    },
     plugins: [angular()],
     test: {
       reporters: ['default'],

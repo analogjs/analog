@@ -46,7 +46,7 @@
     "@angular/platform-server": ">=20.0.0",
     "rxjs": "^7.8.0",
     "tslib": "^2.4.0",
-    "vite": "^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0"
+    "vite": "^6.0.0 || ^7.0.0 || ^8.0.0"
   },
   "ng-update": {
     "packageGroup": [

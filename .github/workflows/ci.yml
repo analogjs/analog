@@ -59,6 +59,10 @@ jobs:
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Build
         run: pnpm build
+        env:
+          DEBUG: analog:*
+      - name: Verify route freshness
+        run: node tools/scripts/verify-route-freshness.mts
       - name: Verify
         if: runner.os == 'Windows'
         run: more dist\apps\blog-app\analog\public\index.html

@@ -14,6 +14,7 @@
       "options": {
         "commands": [
           "vite build -c packages/platform/vite.config.lib.ts",
+          "node tools/scripts/debug-nx-project-graph.mts nx-plugin",
           "nx build nx-plugin",
           "node tools/scripts/verify-package-artifacts.mts platform"
         ],

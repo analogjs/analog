@@ -1,5 +1,24 @@
 #!/usr/bin/env node
 
+/**
+ * Verifies built package artifacts in `node_modules/@analogjs/*`.
+ *
+ * Usage:
+ *   node tools/scripts/verify-package-artifacts.mts [package-name...]
+ *
+ * Examples from repo build targets:
+ *   node tools/scripts/verify-package-artifacts.mts astro-angular
+ *   node tools/scripts/verify-package-artifacts.mts content
+ *   node tools/scripts/verify-package-artifacts.mts create-analog
+ *   node tools/scripts/verify-package-artifacts.mts platform
+ *   node tools/scripts/verify-package-artifacts.mts router
+ *   node tools/scripts/verify-package-artifacts.mts storybook-angular
+ *   node tools/scripts/verify-package-artifacts.mts vite-plugin-angular
+ *   node tools/scripts/verify-package-artifacts.mts vitest-angular
+ *
+ * When no package names are provided, all configured packages are validated.
+ */
+
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { Console, Effect, Schema } from 'effect';
@@ -55,6 +74,9 @@ const ManifestSchema = Schema.Struct({
   generators: Schema.optionalKey(
     Schema.Record(Schema.String, ManifestValueSchema),
   ),
+  schematics: Schema.optionalKey(
+    Schema.Record(Schema.String, ManifestValueSchema),
+  ),
 });
 
 type PackageJson = Schema.Schema.Type<typeof PackageJsonSchema>;
@@ -62,7 +84,8 @@ type Manifest = Schema.Schema.Type<typeof ManifestSchema>;
 type ManifestEntries =
   | NonNullable<Manifest['executors']>
   | NonNullable<Manifest['builders']>
-  | NonNullable<Manifest['generators']>;
+  | NonNullable<Manifest['generators']>
+  | NonNullable<Manifest['schematics']>;
 
 const packageConfigs: Record<string, PackageValidationConfig> = {
   'astro-angular': {
@@ -73,6 +96,18 @@ const packageConfigs: Record<string, PackageValidationConfig> = {
       'node_modules/@analogjs/astro-angular/src/server.js',
       'node_modules/@analogjs/astro-angular/src/utils.js',
     ],
+  },
+  content: {
+    packageJsonPath: 'node_modules/@analogjs/content/package.json',
+    requiredPaths: [
+      'node_modules/@analogjs/content/fesm2022/analogjs-content.mjs',
+      'node_modules/@analogjs/content/plugin/migrations.json',
+      'node_modules/@analogjs/content/plugin/src/index.js',
+    ],
+  },
+  'create-analog': {
+    packageJsonPath: 'dist/packages/create-analog/package.json',
+    requiredPaths: ['dist/packages/create-analog/index.js'],
   },
   platform: {
     packageJsonPath: 'node_modules/@analogjs/platform/package.json',
@@ -103,6 +138,16 @@ const packageConfigs: Record<string, PackageValidationConfig> = {
       'node_modules/@analogjs/vite-plugin-angular/src/lib/tools',
       'node_modules/@analogjs/vite-plugin-angular/src/lib/tools/src/builders/vite/vite-build.impl.js',
       'node_modules/@analogjs/vite-plugin-angular/src/lib/tools/src/builders/vite-dev-server/dev-server.impl.js',
+    ],
+  },
+  'vitest-angular': {
+    packageJsonPath: 'node_modules/@analogjs/vitest-angular/package.json',
+    manifestFields: ['builders', 'schematics'],
+    requiredPaths: [
+      'node_modules/@analogjs/vitest-angular/src/index.js',
+      'node_modules/@analogjs/vitest-angular/src/lib/tools',
+      'node_modules/@analogjs/vitest-angular/src/lib/builders/test/vitest.impl.js',
+      'node_modules/@analogjs/vitest-angular/src/lib/builders/build/vitest.impl.js',
     ],
   },
 };
@@ -142,7 +187,10 @@ function normalizeRuntimePath(
   relativePath: string,
   _field: 'implementation' | 'factory',
 ): string {
-  const resolved = resolve(dirname(basePath), relativePath);
+  const hashIndex = relativePath.indexOf('#');
+  const filePath =
+    hashIndex >= 0 ? relativePath.slice(0, hashIndex) : relativePath;
+  const resolved = resolve(dirname(basePath), filePath);
   if (
     resolved.endsWith('.js') ||
     resolved.endsWith('.mjs') ||
@@ -276,7 +324,10 @@ function validatePackage(packageName: string) {
 
       const manifest = yield* readJson(manifestPath, ManifestSchema);
       const manifestEntries =
-        manifest.executors ?? manifest.builders ?? manifest.generators;
+        manifest.executors ??
+        manifest.builders ??
+        manifest.generators ??
+        manifest.schematics;
 
       validateManifestReferences(
         manifestPath,
