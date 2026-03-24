@@ -3,6 +3,91 @@ import { argument, dag, func, object } from '@dagger.io/dagger';
 
 @object()
 export class AnalogCi {
+  private withNxCloudToken(ctr: Container, nxCloudToken?: Secret): Container {
+    if (!nxCloudToken) {
+      return ctr;
+    }
+
+    return ctr.withSecretVariable('NX_CLOUD_ACCESS_TOKEN', nxCloudToken);
+  }
+
+  private withPlaywrightChromium(ctr: Container): Container {
+    return ctr.withExec([
+      'pnpm',
+      'exec',
+      'playwright',
+      'install',
+      '--with-deps',
+      'chromium',
+    ]);
+  }
+
+  private withBuildAndVerify(ctr: Container): Container {
+    return ctr
+      .withExec([
+        'pnpm',
+        'exec',
+        'nx',
+        'run-many',
+        '--target',
+        'build',
+        '--all',
+      ])
+      .withExec(['node', 'tools/scripts/verify-route-freshness.mts']);
+  }
+
+  private withTestTargets(ctr: Container): Container {
+    return ctr.withExec([
+      'pnpm',
+      'exec',
+      'nx',
+      'run-many',
+      '--target',
+      'test',
+      // Exclude my-package: its Playwright browser-mode test requires
+      // a full desktop Chromium that the container doesn't provide.
+      '--exclude=my-package',
+    ]);
+  }
+
+  private withE2eTargets(ctr: Container): Container {
+    return ctr.withExec([
+      'pnpm',
+      'exec',
+      'nx',
+      'run-many',
+      '--target',
+      'e2e',
+      '--projects',
+      'analog-app-e2e,blog-app-e2e,tanstack-query-app-e2e',
+    ]);
+  }
+
+  private buildTestBranch(ctr: Container, nxCloudToken?: Secret): Container {
+    return this.withTestTargets(
+      this.withBuildAndVerify(
+        this.withNxCloudToken(this.withPlaywrightChromium(ctr), nxCloudToken),
+      ),
+    );
+  }
+
+  private e2eBranch(ctr: Container, nxCloudToken?: Secret): Container {
+    return this.withE2eTargets(
+      this.withNxCloudToken(this.withPlaywrightChromium(ctr), nxCloudToken),
+    );
+  }
+
+  private ciCheckOutputs(
+    ctr: Container,
+    nxCloudToken?: Secret,
+  ): Promise<string>[] {
+    return [
+      ctr.withExec(['pnpm', 'run', 'prettier:check']).stdout(),
+      ctr.withExec(['pnpm', 'run', 'lint']).stdout(),
+      this.buildTestBranch(ctr, nxCloudToken).stdout(),
+    ];
+  }
+
   /**
    * Base container: Node 24, corepack-managed pnpm, dependencies installed.
    * All CI functions build on this.
@@ -141,24 +226,9 @@ export class AnalogCi {
     source: Directory,
     nxCloudToken?: Secret,
   ): Promise<string> {
-    let ctr = this.base(source);
-
-    if (nxCloudToken) {
-      ctr = ctr.withSecretVariable('NX_CLOUD_ACCESS_TOKEN', nxCloudToken);
-    }
-
-    return ctr
-      .withExec([
-        'pnpm',
-        'exec',
-        'nx',
-        'run-many',
-        '--target',
-        'build',
-        '--all',
-      ])
-      .withExec(['node', 'tools/scripts/verify-route-freshness.mts'])
-      .stdout();
+    return this.withBuildAndVerify(
+      this.withNxCloudToken(this.base(source), nxCloudToken),
+    ).stdout();
   }
 
   /** Run unit tests (installs Playwright chromium for browser tests). */
@@ -185,25 +255,9 @@ export class AnalogCi {
     })
     source: Directory,
   ): Promise<string> {
-    return this.base(source)
-      .withExec([
-        'pnpm',
-        'exec',
-        'playwright',
-        'install',
-        '--with-deps',
-        'chromium',
-      ])
-      .withExec([
-        'pnpm',
-        'exec',
-        'nx',
-        'run-many',
-        '--target',
-        'test',
-        '--exclude=my-package',
-      ])
-      .stdout();
+    return this.withTestTargets(
+      this.withPlaywrightChromium(this.base(source)),
+    ).stdout();
   }
 
   /**
@@ -235,41 +289,14 @@ export class AnalogCi {
     source: Directory,
     nxCloudToken?: Secret,
   ): Promise<string> {
-    let ctr = this.base(source).withExec([
-      'pnpm',
-      'exec',
-      'playwright',
-      'install',
-      '--with-deps',
-      'chromium',
-    ]);
-
-    if (nxCloudToken) {
-      ctr = ctr.withSecretVariable('NX_CLOUD_ACCESS_TOKEN', nxCloudToken);
-    }
-
-    return ctr
-      .withExec([
-        'pnpm',
-        'exec',
-        'nx',
-        'run-many',
-        '--target',
-        'build',
-        '--all',
-      ])
-      .withExec([
-        'pnpm',
-        'exec',
-        'nx',
-        'run-many',
-        '--target',
-        'test',
-        // Exclude my-package: its Playwright browser-mode test requires
-        // a full desktop Chromium that the container doesn't provide.
-        '--exclude=my-package',
-      ])
-      .stdout();
+    return this.withTestTargets(
+      this.withBuildAndVerify(
+        this.withNxCloudToken(
+          this.withPlaywrightChromium(this.base(source)),
+          nxCloudToken,
+        ),
+      ),
+    ).stdout();
   }
 
   /** Run e2e tests (Playwright). */
@@ -297,31 +324,7 @@ export class AnalogCi {
     source: Directory,
     nxCloudToken?: Secret,
   ): Promise<string> {
-    let ctr = this.base(source).withExec([
-      'pnpm',
-      'exec',
-      'playwright',
-      'install',
-      '--with-deps',
-      'chromium',
-    ]);
-
-    if (nxCloudToken) {
-      ctr = ctr.withSecretVariable('NX_CLOUD_ACCESS_TOKEN', nxCloudToken);
-    }
-
-    return ctr
-      .withExec([
-        'pnpm',
-        'exec',
-        'nx',
-        'run-many',
-        '--target',
-        'e2e',
-        '--projects',
-        'analog-app-e2e,blog-app-e2e,tanstack-query-app-e2e',
-      ])
-      .stdout();
+    return this.e2eBranch(this.base(source), nxCloudToken).stdout();
   }
 
   /**
@@ -355,50 +358,8 @@ export class AnalogCi {
   ): Promise<string> {
     const ctr = this.base(source);
 
-    let buildCtr = ctr.withExec([
-      'pnpm',
-      'exec',
-      'playwright',
-      'install',
-      '--with-deps',
-      'chromium',
-    ]);
-
-    if (nxCloudToken) {
-      buildCtr = buildCtr.withSecretVariable(
-        'NX_CLOUD_ACCESS_TOKEN',
-        nxCloudToken,
-      );
-    }
-
     // Independent branches off shared base — Dagger runs them in parallel.
-    await Promise.all([
-      ctr.withExec(['pnpm', 'run', 'prettier:check']).stdout(),
-      ctr.withExec(['pnpm', 'run', 'lint']).stdout(),
-      buildCtr
-        .withExec([
-          'pnpm',
-          'exec',
-          'nx',
-          'run-many',
-          '--target',
-          'build',
-          '--all',
-        ])
-        .withExec(['node', 'tools/scripts/verify-route-freshness.mts'])
-        .withExec([
-          'pnpm',
-          'exec',
-          'nx',
-          'run-many',
-          '--target',
-          'test',
-          // Exclude my-package: its Playwright browser-mode test requires
-          // a full desktop Chromium that the container doesn't provide.
-          '--exclude=my-package',
-        ])
-        .stdout(),
-    ]);
+    await Promise.all(this.ciCheckOutputs(ctr, nxCloudToken));
 
     return 'All checks passed.';
   }
@@ -434,86 +395,15 @@ export class AnalogCi {
   ): Promise<string> {
     const ctr = this.base(source);
 
-    let buildCtr = ctr.withExec([
-      'pnpm',
-      'exec',
-      'playwright',
-      'install',
-      '--with-deps',
-      'chromium',
-    ]);
-
-    if (nxCloudToken) {
-      buildCtr = buildCtr.withSecretVariable(
-        'NX_CLOUD_ACCESS_TOKEN',
-        nxCloudToken,
-      );
-    }
-
     // Phase 1: four independent branches run in parallel.
     // Playwright install warms browser cache volumes for phase 2.
     await Promise.all([
-      ctr.withExec(['pnpm', 'run', 'prettier:check']).stdout(),
-      ctr.withExec(['pnpm', 'run', 'lint']).stdout(),
-      buildCtr
-        .withExec([
-          'pnpm',
-          'exec',
-          'nx',
-          'run-many',
-          '--target',
-          'build',
-          '--all',
-        ])
-        .withExec(['node', 'tools/scripts/verify-route-freshness.mts'])
-        .withExec([
-          'pnpm',
-          'exec',
-          'nx',
-          'run-many',
-          '--target',
-          'test',
-          '--exclude=my-package',
-        ])
-        .stdout(),
-      ctr
-        .withExec([
-          'pnpm',
-          'exec',
-          'playwright',
-          'install',
-          '--with-deps',
-          'chromium',
-        ])
-        .stdout(),
+      ...this.ciCheckOutputs(ctr, nxCloudToken),
+      this.withPlaywrightChromium(ctr).stdout(),
     ]);
 
     // Phase 2: e2e. Browser and Nx build cache volumes are warm.
-    let e2eCtr = ctr.withExec([
-      'pnpm',
-      'exec',
-      'playwright',
-      'install',
-      '--with-deps',
-      'chromium',
-    ]);
-
-    if (nxCloudToken) {
-      e2eCtr = e2eCtr.withSecretVariable('NX_CLOUD_ACCESS_TOKEN', nxCloudToken);
-    }
-
-    await e2eCtr
-      .withExec([
-        'pnpm',
-        'exec',
-        'nx',
-        'run-many',
-        '--target',
-        'e2e',
-        '--projects',
-        'analog-app-e2e,blog-app-e2e,tanstack-query-app-e2e',
-      ])
-      .stdout();
+    await this.e2eBranch(ctr, nxCloudToken).stdout();
 
     return 'All CI checks passed.';
   }
