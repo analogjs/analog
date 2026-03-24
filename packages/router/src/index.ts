@@ -6,15 +6,56 @@ export {
   injectActivatedRoute,
   injectRouter,
 } from './lib/define-route';
-export { RouteMeta } from './lib/models';
+export type { RouteMeta } from './lib/models';
 export { provideFileRouter, withExtraRoutes } from './lib/provide-file-router';
-export { MetaTag } from './lib/meta-tags';
-export { PageServerLoad, LoadResult, LoadDataResult } from './lib/route-types';
+export type { MetaTag } from './lib/meta-tags';
+export type {
+  PageServerLoad,
+  LoadResult,
+  LoadDataResult,
+} from './lib/route-types';
 export { injectLoad, injectLoadData } from './lib/inject-load';
 export { getLoadResolver } from './lib/get-load-resolver';
 export { requestContextInterceptor } from './lib/request-context';
 export { injectRouteEndpointURL } from './lib/inject-route-endpoint-url';
 export { FormAction } from './lib/form-action.directive';
+export type { FormActionState } from './lib/form-action.directive';
 export { injectDebugRoutes } from './lib/debug/routes';
 export { withDebugRoutes } from './lib/debug';
 export { ServerOnly } from './lib/server.component';
+export {
+  issuesToFieldErrors,
+  issuesToFormErrors,
+  issuePathToFieldName,
+} from './lib/validation-errors';
+export type { ValidationFieldErrors } from './lib/validation-errors';
+
+// Typed file routes
+export type {
+  AnalogRouteTable,
+  AnalogRoutePath,
+  RoutePathOptions,
+  RoutePathArgs,
+  RoutePathOptionsBase,
+  RouteParamsOutput,
+  RouteQueryOutput,
+  RouteLinkResult,
+} from './lib/route-path';
+export { routePath } from './lib/route-path';
+export { injectNavigate } from './lib/inject-navigate';
+
+// Experimental features (TanStack Router-inspired)
+export {
+  withTypedRouter,
+  withRouteContext,
+  withLoaderCaching,
+  EXPERIMENTAL_TYPED_ROUTER,
+  EXPERIMENTAL_ROUTE_CONTEXT,
+  EXPERIMENTAL_LOADER_CACHE,
+} from './lib/experimental';
+export type {
+  TypedRouterOptions,
+  LoaderCacheOptions,
+} from './lib/experimental';
+export { injectParams, injectQuery } from './lib/inject-typed-params';
+export { injectRouteContext } from './lib/inject-route-context';
