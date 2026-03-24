@@ -11,6 +11,7 @@ import { defineConfig, type Plugin } from 'vite';
 import { oxcDtsPlugin } from '../../tools/build/shared-plugins.ts';
 
 const pkgDir = resolve(import.meta.dirname);
+const srcDir = resolve(pkgDir, 'src');
 
 function copyAssetsPlugin(): Plugin {
   return {
@@ -18,10 +19,11 @@ function copyAssetsPlugin(): Plugin {
     async writeBundle(options) {
       const outDir = options.dir!;
 
-      // Copy non-TS assets from src (JSON schemas, template files)
-      const srcDir = resolve(pkgDir, 'src');
+      // Copy non-TS assets from src (JSON schemas, template files).
+      // Paths are relative to srcDir (not pkgDir) so the output mirrors
+      // the preserveModulesRoot setting below.
       for (const file of walkNonTs(srcDir)) {
-        const relPath = relative(pkgDir, file);
+        const relPath = relative(srcDir, file);
         const dest = join(outDir, relPath);
         mkdirSync(dirname(dest), { recursive: true });
         copyFileSync(file, dest);
@@ -96,7 +98,9 @@ export default defineConfig({
       ],
       output: {
         preserveModules: true,
-        preserveModulesRoot: pkgDir,
+        // Use srcDir so that `src/` is consistently stripped from output
+        // paths on all platforms (avoids Windows/POSIX separator divergence).
+        preserveModulesRoot: srcDir,
         entryFileNames: '[name].js',
       },
     },

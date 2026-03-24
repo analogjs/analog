@@ -15,9 +15,11 @@ export default function globalSetup(): void {
     return;
   }
 
+  // Avoid spawning a nested `nx build` from inside the Nx Vitest executor.
+  // That path can fail if the child process cannot read a cached project graph.
   execFileSync(
     'pnpm',
-    ['nx', 'build', 'vitest-angular-tools', '--skip-nx-cache'],
+    ['vite', 'build', '-c', 'packages/vitest-angular-tools/vite.config.lib.ts'],
     { cwd: workspaceRoot, stdio: 'inherit' },
   );
 }

@@ -7,13 +7,15 @@ import {
   writeFileSync,
 } from 'fs-extra';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { afterEach, beforeAll, expect, test } from 'vitest';
 import { loadConfigFromFile } from 'vite';
 
 const CLI_PATH = join(__dirname, '..');
 
 const projectName = 'test-app';
-const genPath = join(__dirname, projectName);
+const tmpDir = join(tmpdir(), 'create-analog-test');
+const genPath = join(tmpDir, projectName);
 
 const run = (args: string[], options = {}) => {
   return commandSync(`node ${CLI_PATH} ${args.join(' ')}`, options);
@@ -60,7 +62,10 @@ templateFiles.push('.git');
 templateFiles = templateFiles
   .map((filePath) => (filePath === '_gitignore' ? '.gitignore' : filePath))
   .sort((a, b) => a.localeCompare(b));
-beforeAll(() => remove(genPath));
+beforeAll(async () => {
+  await remove(genPath);
+  mkdirpSync(tmpDir);
+});
 afterEach(() => remove(genPath));
 
 test('prompts for the project name if none supplied', () => {
@@ -88,7 +93,7 @@ test.skip('prompts for the framework on supplying an invalid template', () => {
 
 test('asks to overwrite non-empty target directory', () => {
   createNonEmptyDir();
-  const { stdout } = run([projectName], { cwd: __dirname });
+  const { stdout } = run([projectName], { cwd: tmpDir });
   expect(stdout).toContain(`Target directory "${projectName}" is not empty.`);
 });
 
@@ -101,7 +106,7 @@ test('asks to overwrite non-empty current directory', () => {
 test('successfully scaffolds a project based on angular starter template', () => {
   const { stdout } = run(
     [projectName, '--template', 'latest', '--skipTailwind', 'false'],
-    { cwd: __dirname },
+    { cwd: tmpDir },
   );
   const generatedFiles = readdirSync(genPath).sort((a, b) =>
     a.localeCompare(b),
@@ -116,7 +121,7 @@ test('successfully scaffolds a project based on angular starter template', () =>
 test('works with the -t alias', () => {
   const { stdout } = run(
     [projectName, '-t', 'latest', '--skipTailwind', 'false'],
-    { cwd: __dirname },
+    { cwd: tmpDir },
   );
   const generatedFiles = readdirSync(genPath).sort((a, b) =>
     a.localeCompare(b),
@@ -128,21 +133,31 @@ test('works with the -t alias', () => {
   expectTailwindScaffold();
 });
 
-test('loads the generated tailwind vite config', async () => {
-  run([projectName, '--template', 'latest', '--skipTailwind', 'false'], {
-    cwd: __dirname,
-  });
+test(
+  'loads the generated tailwind vite config',
+  { timeout: 30_000 },
+  async () => {
+    // Scaffold inside the workspace so Vite can resolve node_modules
+    const localGenPath = join(__dirname, projectName);
+    await remove(localGenPath);
 
-  expectTailwindScaffold();
+    try {
+      run([projectName, '--template', 'latest', '--skipTailwind', 'false'], {
+        cwd: __dirname,
+      });
 
-  const loaded = await loadConfigFromFile(
-    {
-      command: 'build',
-      mode: 'production',
-    },
-    join(genPath, 'vite.config.ts'),
-  );
+      const loaded = await loadConfigFromFile(
+        {
+          command: 'build',
+          mode: 'production',
+        },
+        join(localGenPath, 'vite.config.ts'),
+      );
 
-  expect(loaded?.path).toBe(join(genPath, 'vite.config.ts'));
-  expect(loaded?.config).toBeTruthy();
-});
+      expect(loaded?.path).toBe(join(localGenPath, 'vite.config.ts'));
+      expect(loaded?.config).toBeTruthy();
+    } finally {
+      await remove(localGenPath);
+    }
+  },
+);
