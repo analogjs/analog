@@ -1,3 +1,24 @@
+# [3.0.0-alpha.13](https://github.com/analogjs/analog/compare/v3.0.0-alpha.12...v3.0.0-alpha.13) (2026-03-24)
+
+### chore
+
+- latest dependencies, include astro in builds, typescript v6 hygiene ([#2171](https://github.com/analogjs/analog/issues/2171)) ([1d35ba3](https://github.com/analogjs/analog/commit/1d35ba3fbca7f68a67b6b0acb9173d8064273242))
+
+### BREAKING CHANGES
+
+- The `marked` peer dependency in `@analogjs/platform` and `@analogjs/content` has been bumped from `^15.0.x` to `^17.0.5`, skipping the v16 major entirely.
+
+BEFORE:
+
+- Removed the CommonJS build — marked is now ESM-only.
+- Minimum Node.js version raised to Node 20.
+
+AFTER:
+
+- `listItem` renderer signature simplified (child tokens are pre-rendered; the renderer receives a single text string instead of structured sub-tokens).
+- A new `checkbox` token is emitted for task-list items.
+- Loose list text tokens now use the `paragraph` type instead of `text`, which affects custom renderers that match on token type.
+
 # [3.0.0-alpha.12](https://github.com/analogjs/analog/compare/v3.0.0-alpha.11...v3.0.0-alpha.12) (2026-03-23)
 
 ### Bug Fixes
