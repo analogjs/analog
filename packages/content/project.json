@@ -21,7 +21,8 @@
       "options": {
         "commands": [
           "node tools/scripts/build-lib.mts content",
-          "nx build content-plugin"
+          "nx build content-plugin",
+          "node tools/scripts/verify-package-artifacts.mts content"
         ],
         "parallel": false
       }

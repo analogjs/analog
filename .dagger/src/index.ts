@@ -157,6 +157,7 @@ export class AnalogCi {
         'build',
         '--all',
       ])
+      .withExec(['node', 'tools/scripts/verify-route-freshness.mts'])
       .stdout();
   }
 
@@ -384,6 +385,7 @@ export class AnalogCi {
           'build',
           '--all',
         ])
+        .withExec(['node', 'tools/scripts/verify-route-freshness.mts'])
         .withExec([
           'pnpm',
           'exec',
@@ -463,6 +465,7 @@ export class AnalogCi {
           'build',
           '--all',
         ])
+        .withExec(['node', 'tools/scripts/verify-route-freshness.mts'])
         .withExec([
           'pnpm',
           'exec',

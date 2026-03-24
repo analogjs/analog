@@ -48,7 +48,9 @@ beforeEach(async () => {
  * call. Required when a test needs a fresh module graph (e.g. to change the
  * `@angular/core` VERSION mock).
  */
-const registerDependencyMocks = () => {
+const registerDependencyMocks = (
+  viteOverrides: Record<string, unknown> = {},
+) => {
   vi.doMock('@storybook/angular/preset', () => ({
     core: async () => ({
       options: {},
@@ -63,6 +65,7 @@ const registerDependencyMocks = () => {
     mergeConfig: (_base: unknown, override: unknown) => override,
     normalizePath: (p: string) => p,
     rolldownVersion: undefined,
+    ...viteOverrides,
   }));
   vi.doMock('@analogjs/vite-plugin-angular', () => ({
     default: () => ({ name: 'angular-mock' }),
@@ -362,12 +365,7 @@ describe('viteFinal', () => {
 
     it('should use oxc config key with keepNames on Vite 8+ (Rolldown)', async () => {
       vi.resetModules();
-      registerDependencyMocks();
-      vi.doMock('vite', () => ({
-        mergeConfig: (_base: unknown, override: unknown) => override,
-        normalizePath: (p: string) => p,
-        rolldownVersion: '1.0.0',
-      }));
+      registerDependencyMocks({ rolldownVersion: '1.0.0' });
       const mod = await import('./preset');
       const freshViteFinal = mod.viteFinal;
 

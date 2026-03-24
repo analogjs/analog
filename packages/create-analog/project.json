@@ -9,7 +9,11 @@
       "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/dist/packages/create-analog"],
       "options": {
-        "command": "cpy packages/create-analog/* !packages/create-analog/node_modules/ !packages/create-analog/project.json !packages/create-analog/__tests__/ !packages/create-analog/yarn.lock dist/"
+        "commands": [
+          "cpy . !node_modules !project.json !__tests__ !yarn.lock ../../dist/packages/create-analog/ --cwd packages/create-analog",
+          "node tools/scripts/verify-package-artifacts.mts create-analog"
+        ],
+        "parallel": false
       }
     },
     "test": {

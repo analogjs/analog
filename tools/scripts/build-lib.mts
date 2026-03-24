@@ -324,7 +324,10 @@ function discoverSubEntries(
           continue;
         }
 
-        const relPath = entry.parentPath.slice(context.pkgDir.length + 1);
+        // Normalize to POSIX separators — parentPath uses backslashes on Windows
+        const relPath = entry.parentPath
+          .slice(context.pkgDir.length + 1)
+          .replace(/\\/g, '/');
         if (relPath.includes('node_modules')) {
           continue;
         }

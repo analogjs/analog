@@ -82,7 +82,7 @@ or alternatively run this command from the root folder:
 pnpm nx serve docs-app
 ```
 
-Once the development server is up and running, you can preview the docs and website by visiting [http://localhost:3000](http://localhost:3000).
+Once the development server is up and running, you can preview the docs and website by visiting [http://localhost:43020](http://localhost:43020).
 
 ### Build
 
@@ -171,6 +171,8 @@ The following is the list of currently supported scopes:
 - **vite-plugin-angular**
 - **vite-plugin-nitro**
 - **vitest-angular**
+
+For the current package-to-scope mapping, see the `Packages` table in `AGENTS.md`.
 
 ### Breaking Changes
 

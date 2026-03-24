@@ -19,9 +19,10 @@ export default defineConfig({
   },
   format: 'cjs',
   target: 'es2022',
-  // Builds into node_modules so Nx caching and local dev resolve the package
-  // without a separate link step. This is the monorepo-wide convention.
-  outDir: resolve(pkgDir, '../../node_modules/@analogjs/content-plugin'),
+  // Outputs into @analogjs/content/plugin (not @analogjs/content-plugin) so
+  // the published @analogjs/content package can resolve ng-update migrations
+  // via its "migrations": "./plugin/migrations.json" field.
+  outDir: resolve(pkgDir, '../../node_modules/@analogjs/content/plugin'),
   sourcemap: true,
   minify: false,
   clean: false,

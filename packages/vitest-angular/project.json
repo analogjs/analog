@@ -7,11 +7,13 @@
   "targets": {
     "build": {
       "executor": "nx:run-commands",
+      "cache": false,
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/vitest-angular"],
       "options": {
         "commands": [
           "vite build --config packages/vitest-angular/vite.config.lib.ts",
-          "nx build vitest-angular-tools"
+          "vite build -c packages/vitest-angular-tools/vite.config.lib.ts",
+          "node tools/scripts/verify-package-artifacts.mts vitest-angular"
         ],
         "parallel": false
       }

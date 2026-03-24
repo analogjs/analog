@@ -47,10 +47,13 @@ stats.html
 .cache-loader/
 
 # Playwright
-
 **/test-results/
 **/playwright-report/
 **/playwright/.cache/
+
+# Vitest browser screenshots/attachments
+**/__screenshots__/
+**/.vitest-attachments/
 
 # Nitro
 .nitro
