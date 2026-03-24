@@ -3,6 +3,7 @@
 /dist
 /coverage
 .prettierignore
+.astro
 .docusaurus/
 pnpm-lock.yaml
 /.nx/cache

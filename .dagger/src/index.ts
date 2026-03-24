@@ -116,7 +116,7 @@ export class AnalogCi {
     return this.base(source).withExec(['pnpm', 'run', 'lint']).stdout();
   }
 
-  /** Build all packages and apps (excluding astro-app). */
+  /** Build all packages and apps. */
   @func()
   async build(
     @argument({
@@ -156,7 +156,6 @@ export class AnalogCi {
         '--target',
         'build',
         '--all',
-        '--exclude=astro-app',
       ])
       .stdout();
   }
@@ -257,7 +256,6 @@ export class AnalogCi {
         '--target',
         'build',
         '--all',
-        '--exclude=astro-app',
       ])
       .withExec([
         'pnpm',
@@ -385,7 +383,6 @@ export class AnalogCi {
           '--target',
           'build',
           '--all',
-          '--exclude=astro-app',
         ])
         .withExec([
           'pnpm',
@@ -465,7 +462,6 @@ export class AnalogCi {
           '--target',
           'build',
           '--all',
-          '--exclude=astro-app',
         ])
         .withExec([
           'pnpm',

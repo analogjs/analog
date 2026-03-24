@@ -36,9 +36,9 @@
     }
   },
   "dependencies": {
-    "oxc-parser": "^0.119.0",
+    "oxc-parser": "^0.121.0",
     "oxc-resolver": "^11.19.0",
-    "rolldown": "^1.0.0-rc.9",
+    "rolldown": "^1.0.0-rc.11",
     "tinyglobby": "^0.2.14"
   },
   "builders": "./src/lib/tools/builders.json",
