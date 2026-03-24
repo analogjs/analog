@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { contentFilesResource } from '@analogjs/content/resources';
 
 import { PostAttributes } from './models';
@@ -19,10 +20,26 @@ import { PostAttributes } from './models';
     </ul>
   `,
 })
-export default class BlogComponent {
+export default class BlogComponent implements OnInit {
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly router = inject(Router);
   readonly contentFilesResource = contentFilesResource<PostAttributes>(
     (contentFile) => {
       return !contentFile.filename.includes('/archived/');
     },
   );
+
+  ngOnInit() {
+    if (
+      !isPlatformBrowser(this.platformId) ||
+      globalThis.location.pathname !== '/blog/'
+    ) {
+      return;
+    }
+
+    void this.router.navigateByUrl(
+      `/blog${globalThis.location.search}${globalThis.location.hash}`,
+      { replaceUrl: true },
+    );
+  }
 }

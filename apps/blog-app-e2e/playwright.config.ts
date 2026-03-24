@@ -18,7 +18,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx nx serve-nitro blog-app',
+    command: 'pnpm nx serve-nitro blog-app',
     url: 'http://localhost:43010',
     reuseExistingServer: !process.env['CI'],
     timeout: 120_000,

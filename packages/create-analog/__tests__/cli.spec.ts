@@ -1,18 +1,21 @@
-import type { ExecaSyncReturnValue, SyncOptions } from 'execa';
 import { execaCommandSync as commandSync } from 'execa';
-import { mkdirpSync, readdirSync, remove, writeFileSync } from 'fs-extra';
+import {
+  mkdirpSync,
+  readdirSync,
+  readFileSync,
+  remove,
+  writeFileSync,
+} from 'fs-extra';
 import { join } from 'node:path';
 import { afterEach, beforeAll, expect, test } from 'vitest';
+import { loadConfigFromFile } from 'vite';
 
 const CLI_PATH = join(__dirname, '..');
 
 const projectName = 'test-app';
 const genPath = join(__dirname, projectName);
 
-const run = (
-  args: string[],
-  options: SyncOptions<string> = {},
-): ExecaSyncReturnValue<string> => {
+const run = (args: string[], options = {}) => {
   return commandSync(`node ${CLI_PATH} ${args.join(' ')}`, options);
 };
 
@@ -26,6 +29,30 @@ const createNonEmptyDir = () => {
   writeFileSync(pkgJson, '{ "foo": "bar" }');
 };
 
+const readGeneratedPackageJson = () =>
+  JSON.parse(readFileSync(join(genPath, 'package.json'), 'utf-8'));
+
+const readGeneratedViteConfig = () =>
+  readFileSync(join(genPath, 'vite.config.ts'), 'utf-8');
+
+const readGeneratedStyles = () =>
+  readFileSync(join(genPath, 'src/styles.css'), 'utf-8');
+
+const expectTailwindScaffold = () => {
+  const pkg = readGeneratedPackageJson();
+  const viteConfig = readGeneratedViteConfig();
+
+  expect(pkg.devDependencies['tailwindcss']).toBe('^4.2.2');
+  expect(pkg.devDependencies['@tailwindcss/vite']).toBe('^4.2.2');
+  expect(pkg.dependencies['tailwindcss']).toBeUndefined();
+  expect(pkg.dependencies['@tailwindcss/vite']).toBeUndefined();
+  expect(readGeneratedStyles()).toContain(`@import 'tailwindcss';`);
+  expect(viteConfig).toContain(`import tailwindcss from '@tailwindcss/vite';`);
+  expect(viteConfig).toMatch(
+    /plugins:\s*\[[\s\S]*tailwindcss\(\),[\s\S]*analog\(/,
+  );
+};
+
 // Angular v18 starter template
 let templateFiles = readdirSync(join(CLI_PATH, 'template-latest'));
 templateFiles.push('.git');
@@ -33,12 +60,6 @@ templateFiles.push('.git');
 templateFiles = templateFiles
   .map((filePath) => (filePath === '_gitignore' ? '.gitignore' : filePath))
   .sort((a, b) => a.localeCompare(b));
-// starter with tailwind
-const templateFilesTailwind = [
-  ...templateFiles,
-  'tailwind.config.ts',
-  'postcss.config.js',
-].sort((a, b) => a.localeCompare(b));
 beforeAll(() => remove(genPath));
 afterEach(() => remove(genPath));
 
@@ -89,6 +110,7 @@ test('successfully scaffolds a project based on angular starter template', () =>
   // Assertions
   expect(stdout).toContain(`Scaffolding project in ${genPath}`);
   expect(templateFiles).toEqual(generatedFiles);
+  expectTailwindScaffold();
 });
 
 test('works with the -t alias', () => {
@@ -103,4 +125,24 @@ test('works with the -t alias', () => {
   // Assertions
   expect(stdout).toContain(`Scaffolding project in ${genPath}`);
   expect(templateFiles).toEqual(generatedFiles);
+  expectTailwindScaffold();
+});
+
+test('loads the generated tailwind vite config', async () => {
+  run([projectName, '--template', 'latest', '--skipTailwind', 'false'], {
+    cwd: __dirname,
+  });
+
+  expectTailwindScaffold();
+
+  const loaded = await loadConfigFromFile(
+    {
+      command: 'build',
+      mode: 'production',
+    },
+    join(genPath, 'vite.config.ts'),
+  );
+
+  expect(loaded?.path).toBe(join(genPath, 'vite.config.ts'));
+  expect(loaded?.config).toBeTruthy();
 });

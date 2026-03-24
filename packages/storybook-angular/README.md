@@ -89,6 +89,38 @@ To register global styles, add them to the `@analogjs/storybook-angular` builder
     }
 ```
 
+## Using Tailwind CSS
+
+For Vite-based Analog apps, Storybook should register Tailwind using the same `@tailwindcss/vite` plugin used by the app itself.
+
+Keep your global stylesheet in the Storybook `styles` array and add the Tailwind Vite plugin in `.storybook/main.ts` with `viteFinal`:
+
+```ts
+import tailwindcss from '@tailwindcss/vite';
+import { UserConfig, mergeConfig } from 'vite';
+
+import type { StorybookConfig } from '@analogjs/storybook-angular';
+
+const config: StorybookConfig = {
+  // ... other config, addons, etc.
+  async viteFinal(config: UserConfig) {
+    return mergeConfig(config, {
+      plugins: [tailwindcss()],
+    });
+  },
+};
+
+export default config;
+```
+
+In your global stylesheet, import Tailwind with:
+
+```css
+@import 'tailwindcss';
+```
+
+Storybook does not automatically infer the Tailwind plugin from your app's `vite.config.ts`, so add it in `viteFinal` when your stories depend on Tailwind utilities.
+
 ## Enabling Zoneless Change Detection
 
 To use zoneless change detection for the Storybook, add the `experimentalZoneless` flag to the `@analogjs/storybook-angular` builder options in the `angular.json`.

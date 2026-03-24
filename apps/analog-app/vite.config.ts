@@ -40,6 +40,7 @@ export default defineConfig(async ({ mode }) => {
     publicDir: 'src/public',
     build: {
       outDir: '../../dist/apps/analog-app/client',
+      emptyOutDir: true,
       reportCompressedSize: true,
       target: ['es2020'],
     },

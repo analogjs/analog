@@ -22,6 +22,7 @@ export async function buildSSRApp(
       },
       outDir:
         options?.ssrBuildDir || resolve(workspaceRoot, 'dist', rootDir, 'ssr'),
+      emptyOutDir: true,
     },
   });
 

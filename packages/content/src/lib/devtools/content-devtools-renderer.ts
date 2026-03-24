@@ -38,6 +38,7 @@ export class DevToolsContentRenderer extends ContentRenderer {
             toc: result.toc,
             contentLength: content.length,
             headingCount: result.toc.length,
+            frontmatter: {},
           },
         }),
       );

@@ -209,9 +209,9 @@ async function init() {
 
   replacePlaceholders(root, 'vite.config.ts', {
     __TAILWIND_IMPORT__: !skipTailwind
-      ? `\nimport tailwindcss from '@tailwindcss/vite';`
+      ? `import tailwindcss from '@tailwindcss/vite';\n`
       : '',
-    __TAILWIND_PLUGIN__: !skipTailwind ? '\n    tailwindcss()' : '',
+    __TAILWIND_PLUGIN__: !skipTailwind ? '    tailwindcss(),\n' : '',
   });
 
   const pkgInfo = pkgFromUserAgent(process.env.npm_config_user_agent);
@@ -374,9 +374,9 @@ function addTailwindDirectives(write, filesDir) {
 }
 
 function addTailwindDependencies(pkg) {
-  pkg.dependencies['tailwindcss'] = '^4.1.4';
-  pkg.dependencies['postcss'] = '^8.5.3';
-  pkg.dependencies['@tailwindcss/vite'] = '^4.1.4';
+  pkg.devDependencies ||= {};
+  pkg.devDependencies['tailwindcss'] = '^4.2.2';
+  pkg.devDependencies['@tailwindcss/vite'] = '^4.2.2';
 }
 
 function addYarnDevDependencies(pkg, template) {

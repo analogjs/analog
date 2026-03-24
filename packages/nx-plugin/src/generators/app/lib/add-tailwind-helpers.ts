@@ -9,14 +9,11 @@ import {
   ProjectConfiguration,
   joinPathFragments,
   stripIndents,
-  updateProjectConfiguration,
-  generateFiles,
 } from '@nx/devkit';
 import {
   GeneratorOptions,
   NormalizedGeneratorOptions,
 } from './add-tailwind-config';
-import { relative } from 'node:path';
 
 export function normalizeOptions(
   options: GeneratorOptions,
@@ -52,9 +49,8 @@ export function addTailwindRequiredPackages(tree: Tree): GeneratorCallback {
   return addDependenciesToPackageJson(
     tree,
     {
-      postcss: pkgVersions.postcss,
       tailwindcss: pkgVersions.tailwindcss,
-      '@tailwindcss/postcss': pkgVersions['@tailwindcss/postcss'],
+      '@tailwindcss/vite': pkgVersions['@tailwindcss/vite'],
     },
     {},
   );
@@ -143,66 +139,4 @@ function findStylesEntryPoint(
   }
 
   return typeof style === 'string' ? style : style.input;
-}
-
-export function addTailwindConfigPathToProject(
-  tree: Tree,
-  options: NormalizedGeneratorOptions,
-  project: ProjectConfiguration,
-): void {
-  const buildTarget = project.targets?.[options.buildTarget];
-
-  if (!buildTarget) {
-    throw new Error(
-      stripIndents`The target "${options.buildTarget}" was not found for project "${options.project}".
-      If you are using a different build target, please provide it using the "--buildTarget" option.
-      If the project is not a buildable or publishable library, you don't need to setup TailwindCSS for it.`,
-    );
-  }
-
-  if (
-    buildTarget.options?.tailwindConfig &&
-    tree.exists(buildTarget.options.tailwindConfig)
-  ) {
-    throw new Error(
-      stripIndents`The "${buildTarget.options.tailwindConfig}" file is already configured for the project "${options.project}". Are you sure this is the right project to set up Tailwind?
-      If you are sure, you can remove the configuration and re-run the generator.`,
-    );
-  }
-
-  buildTarget.options = {
-    ...buildTarget.options,
-    tailwindConfig: joinPathFragments(project.root, 'tailwind.config.ts'),
-  };
-
-  updateProjectConfiguration(tree, options.project, project);
-}
-
-export function addTailwindConfigFile(
-  tree: Tree,
-  options: GeneratorOptions,
-  project: ProjectConfiguration,
-): void {
-  if (
-    tree.exists(joinPathFragments(project.root, 'tailwind.config.ts')) ||
-    tree.exists(joinPathFragments(project.root, 'tailwind.config.js'))
-  ) {
-    throw new Error(
-      stripIndents`The "tailwind.config" file already exists in the project "${options.project}". Are you sure this is the right project to set up Tailwind?
-      If you are sure, you can remove the existing file and re-run the generator.`,
-    );
-  }
-
-  generateFiles(
-    tree,
-    joinPathFragments(__dirname, '..', 'files', 'tailwind/v4'),
-    project.root,
-    {
-      relativeSourceRoot: relative(
-        project.root,
-        project.sourceRoot ?? project.root,
-      ),
-      template: '',
-    },
-  );
 }

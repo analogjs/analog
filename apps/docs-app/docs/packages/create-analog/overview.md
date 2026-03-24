@@ -45,6 +45,12 @@ pnpm create analog
 | `Full-stack Application` | Default Analog application.                    |
 | `Blog`                   | Default template enhanced with a blog example. |
 
+### Tailwind v4
+
+`create-analog` scaffolds Tailwind v4 with the Vite plugin by default for the current Analog templates. Generated projects use `@tailwindcss/vite`, add `@import 'tailwindcss';` to `src/styles.css`, and do not create a `.postcssrc.json` file or a `tailwind.config.*` file for the standard setup.
+
+If you do not want Tailwind in the generated app, pass `--skipTailwind true`. The default Tailwind v4 flow expects a plain CSS entry file for global styles.
+
 ### Example
 
 To scaffold an Angular application in the `my-angular-app` directory, run:
