@@ -61,6 +61,7 @@ describe('DevToolsContentRenderer', () => {
       renderer: 'MockRenderer',
       contentLength: 6,
       headingCount: 1,
+      frontmatter: {},
     });
     expect(event.detail.renderTimeMs).toBeGreaterThanOrEqual(0);
   });
