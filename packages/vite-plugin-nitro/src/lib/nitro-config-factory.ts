@@ -80,9 +80,10 @@ export function buildNitroConfig(
       apiPrefix: apiPrefix.substring(1),
       prefix,
     },
-    // Analog provides its own renderer handler; prevent Nitro from
-    // auto-detecting index.html and adding a conflicting one.
-    renderer: false,
+    // Analog's NitroModule sets the real renderer handler in setup().
+    // Use an empty object so nitro/vite's `renderer ??= {}` doesn't
+    // try to set properties on a boolean.
+    renderer: {},
     imports: { autoImport: false },
     rollupConfig: {
       onwarn(warning: { message: string }) {

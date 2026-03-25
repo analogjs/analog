@@ -136,7 +136,7 @@ describe('buildNitroConfig', () => {
     });
 
     expect(config.rootDir).toBe('.');
-    expect(config.renderer).toBe(false);
+    expect(config.renderer).toEqual({});
     expect(config.imports?.autoImport).toBe(false);
     expect(config.typescript?.generateTsConfig).toBe(false);
     expect(config.virtual?.['#ANALOG_SSR_RENDERER']).toBeDefined();

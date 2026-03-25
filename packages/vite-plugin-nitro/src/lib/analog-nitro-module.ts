@@ -112,8 +112,9 @@ export function analogNitroModule(
       const rendererHandler = options?.ssr
         ? '#ANALOG_SSR_RENDERER'
         : '#ANALOG_CLIENT_RENDERER';
+      // Set the renderer handler so nitro/vite doesn't auto-detect one.
       nitro.options.renderer = nitro.options.renderer || {};
-      nitro.options.renderer = false;
+      nitro.options.renderer.handler = rendererHandler;
 
       // ── Handlers ──────────────────────────────────────────────
       const pageHandlers = getPageHandlers({
@@ -259,15 +260,24 @@ export function analogNitroModule(
           const existing = bundlerConfig.external;
           if (typeof existing === 'function') {
             const originalFn = existing;
-            bundlerConfig.external = (source: string, ...rest: unknown[]) => {
+            bundlerConfig.external = (
+              source: string,
+              importer: string | undefined,
+              isResolved: boolean,
+            ) => {
               if (isExternal(source)) return true;
-              return (originalFn as Function)(source, ...rest);
+              return (originalFn as Function)(source, importer, isResolved);
             };
           } else if (Array.isArray(existing)) {
             bundlerConfig.external = [
               ...existing,
               ...externalEntries,
             ] as string[];
+          } else if (existing) {
+            bundlerConfig.external = [
+              ...(typeof existing === 'string' ? [existing] : []),
+              ...externalEntries,
+            ];
           } else {
             bundlerConfig.external = externalEntries;
           }
