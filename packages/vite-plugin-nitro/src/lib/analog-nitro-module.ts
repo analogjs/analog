@@ -142,10 +142,15 @@ export function analogNitroModule(
           `${sourceRoot}/server/routes/${options?.apiPrefix || 'api'}`,
         ),
       );
+      const sourceSsrEntry = normalizePath(
+        options?.entryServer ||
+          resolve(workspaceRoot, rootDir, `${sourceRoot}/main.server.ts`),
+      );
 
       // ── Renderer ──────────────────────────────────────────────
       nitro.options.virtual = nitro.options.virtual || {};
-      nitro.options.virtual['#ANALOG_SSR_RENDERER'] = ssrRenderer();
+      nitro.options.virtual['#ANALOG_SSR_RENDERER'] =
+        ssrRenderer(sourceSsrEntry);
       nitro.options.virtual['#ANALOG_CLIENT_RENDERER'] = clientRenderer();
       if (!hasAPIDir) {
         nitro.options.virtual['#ANALOG_API_MIDDLEWARE'] = apiMiddleware;

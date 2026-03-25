@@ -30,12 +30,12 @@ export const SERVER_FETCH_FACTORY_SNIPPET = `
  * - event.path (replaces event.node.req.url)
  * - getResponseHeader compat shim (still available in h3 v2)
  */
-export function ssrRenderer() {
+export function ssrRenderer(rendererImport = '#analog/ssr') {
   return `
 import { createFetch } from 'ofetch';
 import { defineHandler, fetchWithEvent } from 'nitro/h3';
 // @ts-ignore
-import renderer from '#analog/ssr';
+import renderer from ${JSON.stringify(rendererImport)};
 import template from '#analog/index';
 
 const normalizeHtmlRequestUrl = (url) =>

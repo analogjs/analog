@@ -20,6 +20,7 @@ import {
   buildNitroConfig,
   type NitroConfigContext,
 } from './nitro-config-factory.js';
+import { ssrRenderer } from './utils/renderers.js';
 import {
   analogNitroModule,
   createAnalogBuildState,
@@ -75,6 +76,14 @@ export function createAnalogNitroPlugins(
   const buildConfig = (): NitroPluginConfig => {
     const ctx = getContext();
     let config = buildNitroConfig(options, nitroOptions, ctx);
+    const sourceSsrEntry = normalizePath(
+      options?.entryServer ||
+        resolve(workspaceRoot, rootDir, `${sourceRoot}/main.server.ts`),
+    );
+    if (options?.ssr || config.prerender?.routes?.length) {
+      config.virtual = config.virtual || {};
+      config.virtual['#ANALOG_SSR_RENDERER'] = ssrRenderer(sourceSsrEntry);
+    }
     config = mergeConfig(config, nitroOptions as Record<string, any>);
     return config as NitroPluginConfig;
   };
@@ -102,6 +111,10 @@ export function createAnalogNitroPlugins(
             : normalizePath(
                 resolve(workspaceRoot, userConfig.root || '.'),
               ).replace(normalizePath(workspaceRoot) + '/', '');
+        const sourceSsrEntry = normalizePath(
+          options?.entryServer ||
+            resolve(workspaceRoot, rootDir, `${sourceRoot}/main.server.ts`),
+        );
         state.rootDir = rootDir;
         savedConfig = userConfig;
 

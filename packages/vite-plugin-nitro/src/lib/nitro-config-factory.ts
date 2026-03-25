@@ -69,6 +69,10 @@ export function buildNitroConfig(
 ): NitroConfig {
   const { workspaceRoot, rootDir, sourceRoot, apiPrefix, prefix } = ctx;
   const { hasAPIDir, useAPIMiddleware } = ctx;
+  const sourceSsrEntry = normalizePath(
+    options?.entryServer ||
+      resolve(workspaceRoot, rootDir, `${sourceRoot}/main.server.ts`),
+  );
 
   const buildPreset =
     process.env['BUILD_PRESET'] ??
@@ -159,7 +163,10 @@ export function buildNitroConfig(
       '#ANALOG_CLIENT_RENDERER': clientRenderer(),
       ...(hasAPIDir ? {} : { '#ANALOG_API_MIDDLEWARE': apiMiddleware }),
     },
-    alias: {},
+    alias:
+      options?.ssr || nitroOptions?.prerender?.routes?.length
+        ? { '#analog/ssr': sourceSsrEntry }
+        : {},
   };
 
   if (isVercelPreset(buildPreset)) {

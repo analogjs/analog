@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { nitro as nitroVitePlugin } from 'nitro/vite';
 
 import { createAnalogNitroPlugins } from './analog-vite-plugin';
 import {
@@ -30,6 +31,24 @@ describe('createAnalogNitroPlugins', () => {
     expect(modulePlugin).toBeDefined();
     expect((modulePlugin as any).nitro).toBeDefined();
     expect((modulePlugin as any).nitro.name).toBe('analog');
+  });
+
+  it('should point the SSR renderer at the source server entry during serve', () => {
+    const originalNodeEnv = process.env['NODE_ENV'];
+    const originalVitest = process.env['VITEST'];
+    delete process.env['NODE_ENV'];
+    delete process.env['VITEST'];
+
+    createAnalogNitroPlugins({ ssr: true, workspaceRoot: '/app' as any });
+    const calls = vi.mocked(nitroVitePlugin).mock.calls;
+    const nitroConfig = calls[calls.length - 1]?.[0] as any;
+
+    expect(nitroConfig.virtual['#ANALOG_SSR_RENDERER']).toContain(
+      'import renderer from "/app/src/main.server.ts";',
+    );
+
+    process.env['NODE_ENV'] = originalNodeEnv;
+    process.env['VITEST'] = originalVitest;
   });
 
   it('should include the API prefix plugin', () => {
@@ -140,6 +159,22 @@ describe('buildNitroConfig', () => {
     expect(config.imports?.autoImport).toBe(false);
     expect(config.typescript?.generateTsConfig).toBe(false);
     expect(config.virtual?.['#ANALOG_SSR_RENDERER']).toBeDefined();
+  });
+
+  it('should alias #analog/ssr to the source server entry in SSR mode', () => {
+    const config = buildNitroConfig({ ssr: true }, undefined, {
+      workspaceRoot: '/app',
+      rootDir: 'apps/demo',
+      sourceRoot: 'src',
+      apiPrefix: '/api',
+      prefix: '',
+      hasAPIDir: false,
+      useAPIMiddleware: true,
+    });
+
+    expect(config.alias?.['#analog/ssr']).toBe(
+      '/app/apps/demo/src/main.server.ts',
+    );
   });
 
   it('should apply Vercel preset output paths', () => {
