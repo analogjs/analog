@@ -67,8 +67,44 @@ export interface PrerenderOptions {
   postRenderingHooks?: ((routes: PrerenderRoute) => Promise<void>)[];
 }
 
+export type SitemapPriority = number | `${number}`;
+
+export interface SitemapRouteDefinition {
+  route: string;
+  lastmod?: string;
+  changefreq?:
+    | 'always'
+    | 'hourly'
+    | 'daily'
+    | 'weekly'
+    | 'monthly'
+    | 'yearly'
+    | 'never';
+  priority?: SitemapPriority;
+}
+
+export interface SitemapEntry extends SitemapRouteDefinition {
+  loc: string;
+}
+
+export type SitemapRouteInput = string | SitemapRouteDefinition | undefined;
+export type SitemapRouteSource =
+  | SitemapRouteInput[]
+  | (() => Promise<SitemapRouteInput[]>);
+export type SitemapExcludeRule =
+  | string
+  | RegExp
+  | ((entry: SitemapEntry) => boolean | Promise<boolean>);
+export type SitemapTransform = (
+  entry: SitemapEntry,
+) => SitemapRouteDefinition | false | Promise<SitemapRouteDefinition | false>;
+
 export interface SitemapConfig {
   host: string;
+  include?: SitemapRouteSource;
+  exclude?: SitemapExcludeRule[];
+  defaults?: PrerenderSitemapConfig;
+  transform?: SitemapTransform;
 }
 
 export interface PrerenderContentDir {
@@ -129,7 +165,7 @@ export interface PrerenderSitemapConfig {
     | 'monthly'
     | 'yearly'
     | 'never';
-  priority?: string;
+  priority?: SitemapPriority;
 }
 
 export interface PrerenderRouteConfig {
