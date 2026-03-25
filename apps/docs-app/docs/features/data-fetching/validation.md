@@ -81,7 +81,6 @@ interface ValidationIssue {
 }
 
 @Component({
-  standalone: true,
   imports: [FormAction],
   template: `
     <h3>Newsletter Signup</h3>
@@ -297,7 +296,6 @@ import { contentFileResource } from '@analogjs/content/resources';
 import { BlogPostSchema } from '../../../content/blog.schema';
 
 @Component({
-  standalone: true,
   template: `
     @if (post.value(); as post) {
       <h1>{{ post.attributes.title }}</h1>

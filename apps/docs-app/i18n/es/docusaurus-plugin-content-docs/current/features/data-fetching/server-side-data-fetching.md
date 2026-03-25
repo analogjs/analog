@@ -37,7 +37,6 @@ import { injectLoad } from '@analogjs/router';
 import { load } from './index.server'; // no incluido en la compilación del cliente
 
 @Component({
-  standalone: true,
   template: `
     <h2>Inicio</h2>
 
@@ -80,7 +79,6 @@ import { LoadResult } from '@analogjs/router';
 import { load } from './index.server'; // no incluido en la compilación del cliente
 
 @Component({
-  standalone: true,
   template: `
     <h2>Inicio</h2>
     Loaded: {{ data.loaded }}
