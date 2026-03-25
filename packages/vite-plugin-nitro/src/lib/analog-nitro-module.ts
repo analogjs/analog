@@ -632,3 +632,50 @@ function isEmptyPrerenderRoutes(options?: Options): boolean {
 function isArrayWithElements<T>(arr: unknown): arr is [T, ...T[]] {
   return !!(Array.isArray(arr) && arr.length);
 }
+
+/**
+ * Registers rollup:before hooks for bundler config sanitization and
+ * externalization on a Nitro instance. Used by the closeBundle fallback
+ * since the NitroModule's setup() only runs on the nitro/vite instance.
+ */
+export function sanitizeAndExternalize(
+  nitro: any,
+  needsExternals: boolean,
+): void {
+  nitro.hooks.hook(
+    'rollup:before',
+    (_n: unknown, bundlerConfig: RollupConfig) => {
+      sanitizeNitroBundlerConfig(bundlerConfig);
+
+      if (!needsExternals) return;
+
+      const externalEntries = ['rxjs', 'node-fetch-native/dist/polyfill'];
+      const isExternal = (source: string) =>
+        externalEntries.some(
+          (entry) => source === entry || source.startsWith(entry + '/'),
+        );
+
+      const existing = bundlerConfig.external;
+      if (typeof existing === 'function') {
+        const originalFn = existing;
+        bundlerConfig.external = (
+          source: string,
+          importer: string | undefined,
+          isResolved: boolean,
+        ) => {
+          if (isExternal(source)) return true;
+          return (originalFn as Function)(source, importer, isResolved);
+        };
+      } else if (Array.isArray(existing)) {
+        bundlerConfig.external = [...existing, ...externalEntries] as string[];
+      } else if (existing) {
+        bundlerConfig.external = [
+          ...(typeof existing === 'string' ? [existing] : []),
+          ...externalEntries,
+        ];
+      } else {
+        bundlerConfig.external = externalEntries;
+      }
+    },
+  );
+}

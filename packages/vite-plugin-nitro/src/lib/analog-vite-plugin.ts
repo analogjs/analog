@@ -280,12 +280,28 @@ export function createAnalogNitroPlugins(
           { dir: normalizePath(clientOutDir), maxAge: 0 },
         ];
 
+        // Add externals and bundler sanitization
+        if (options?.ssr || (nitroConfig.prerender?.routes?.length ?? 0) > 0) {
+          nitroConfig.moduleSideEffects = [
+            'zone.js/node',
+            'zone.js/fesm2015/zone-node',
+          ];
+        }
+
         console.log('Building Server...');
         const nitro = await createNitro({
           dev: false,
           ...nitroConfig,
           builder: nitroConfig.builder ?? 'rollup',
         });
+
+        // Register hooks that the NitroModule normally handles
+        const { sanitizeAndExternalize } =
+          await import('./analog-nitro-module.js');
+        sanitizeAndExternalize(
+          nitro,
+          !!(options?.ssr || (nitroConfig.prerender?.routes?.length ?? 0) > 0),
+        );
         await prepare(nitro);
         await copyPublicAssets(nitro);
         if (
