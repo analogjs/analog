@@ -246,7 +246,10 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
       );
     }
 
-    if (existing !== output) {
+    // Normalize line endings before comparison so that files checked in
+    // with LF don't appear stale on Windows where readFileSync may return CRLF.
+    const normalizeEndings = (s: string) => s.replace(/\r\n/g, '\n');
+    if (normalizeEndings(existing) !== normalizeEndings(output)) {
       if (resolvedOptions.verify) {
         throw new Error(
           `[analog] Stale route file detected: ${resolvedOptions.outFile}\n` +
