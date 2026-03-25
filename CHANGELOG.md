@@ -1,3 +1,15 @@
+# [3.0.0-alpha.14](https://github.com/analogjs/analog/compare/v3.0.0-alpha.13...v3.0.0-alpha.14) (2026-03-25)
+
+### Features
+
+- demo app integration with typed routes and live data ([69eac8e](https://github.com/analogjs/analog/commit/69eac8e01362a7f0ead0457191e6578fe2a81e95))
+- **platform:** route manifest generation, typed routes plugin, and JSON-LD manifest ([4dcdc85](https://github.com/analogjs/analog/commit/4dcdc8562542ba2c93c8827f8dccb1e7422736dd))
+- **router:** add typed route path utilities and validation error handling ([f4c63da](https://github.com/analogjs/analog/commit/f4c63dafdb3a990c21cb3be8d69a8092ff507e04))
+- **router:** defineApiRoute with Standard Schema validation ([69873d0](https://github.com/analogjs/analog/commit/69873d0c2f77800de9174884a33fc7586b02a430))
+- **router:** support for JSON-LD structured data ([38ff618](https://github.com/analogjs/analog/commit/38ff6180ff910f7a0e82421621c7b8e1af760833))
+- **router:** typed navigation, params injection, and experimental APIs ([f7bc325](https://github.com/analogjs/analog/commit/f7bc32514268720f68d7d9ee9994fe627f796f73))
+- **vite-plugin-nitro:** drop Vite <6, refactor plugin, and enhance sitemap ([76a55ea](https://github.com/analogjs/analog/commit/76a55eaf9182897a7c399b797dafb5cbd836e6ff))
+
 # [3.0.0-alpha.13](https://github.com/analogjs/analog/compare/v3.0.0-alpha.12...v3.0.0-alpha.13) (2026-03-24)
 
 ### chore
