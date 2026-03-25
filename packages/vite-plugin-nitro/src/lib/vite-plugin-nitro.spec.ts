@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as vite from 'vite';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -11,8 +10,17 @@ vi.mock('nitro/builder', () => ({
   createNitro: vi.fn(),
 }));
 
+vi.mock('./build-ssr', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./build-ssr')>();
+  return {
+    ...actual,
+    buildClientApp: vi.fn(),
+    buildSSRApp: vi.fn(),
+  };
+});
+
 import { build, createDevServer, createNitro } from 'nitro/builder';
-import { PrerenderContentFile } from './options';
+import { buildClientApp } from './build-ssr';
 import {
   mockBuildFunctions,
   mockNitroConfig,
@@ -24,14 +32,13 @@ import { nitro } from './vite-plugin-nitro';
 function writeBuiltClientIndexHtml(
   workspaceRoot: string,
   html = '<html></html>',
+  clientBuildDir = resolve(workspaceRoot, 'dist', 'client'),
 ) {
-  const clientBuildDir = resolve(workspaceRoot, 'dist', 'client');
   mkdirSync(clientBuildDir, { recursive: true });
   writeFileSync(resolve(clientBuildDir, 'index.html'), html);
 }
 
 describe('nitro', () => {
-  vi.mock('./build-ssr');
   vi.mock('./build-server');
   vi.mock('./build-sitemap');
 
@@ -142,6 +149,7 @@ describe('nitro', () => {
         input: expect.stringMatching(/src[\\/]+main\.server\.ts$/),
       }),
     );
+    expect(ssrBuild.emptyOutDir).toBe(false);
     expect(ssrBuild).not.toHaveProperty(inactiveKey);
   });
 
@@ -312,10 +320,7 @@ describe('nitro', () => {
       });
 
       const nitroConfig = buildServerImportSpy.mock.calls[0][1];
-      const expectedAlias =
-        process.platform === 'win32'
-          ? pathToFileURL(builtSsrEntry).href
-          : vite.normalizePath(builtSsrEntry);
+      const expectedAlias = vite.normalizePath(builtSsrEntry);
 
       expect(nitroConfig.alias).toEqual(
         expect.objectContaining({
@@ -333,8 +338,8 @@ describe('nitro', () => {
     }
   });
 
-  it('registers the client index virtual module in the legacy closeBundle path', async () => {
-    const { buildServerImportSpy } = await mockBuildFunctions();
+  it('passes only canonical page routes to sitemap generation in builder.buildApp', async () => {
+    const { buildSitemapImportSpy } = await mockBuildFunctions();
     const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
 
     try {
@@ -344,30 +349,46 @@ describe('nitro', () => {
         resolve(ssrBuildDir, 'main.server.js'),
         'export default async function renderer() {}',
       );
-      writeBuiltClientIndexHtml(
-        workspaceRoot,
-        '<html>legacy closeBundle</html>',
-      );
+      writeBuiltClientIndexHtml(workspaceRoot, '<html>sitemap buildApp</html>');
 
       const plugin = nitro({
         workspaceRoot,
+        prerender: {
+          sitemap: { host: 'https://example.com' },
+          routes: [
+            '/about',
+            {
+              route: '/blog',
+              staticData: true,
+              sitemap: {
+                lastmod: '2024-02-10',
+              },
+            },
+          ],
+        },
       });
-      await (plugin[1].config as any)(
+      const result = await (plugin[1].config as any)(
         {},
         { command: 'build', mode: 'production' },
       );
-      await plugin[1].closeBundle?.call(plugin[1]);
 
-      const nitroConfig = buildServerImportSpy.mock.calls[0][1];
+      await result.builder.buildApp({
+        build: vi.fn().mockResolvedValue(undefined),
+        environments: {
+          client: {},
+          ssr: {},
+        },
+      });
 
-      expect(nitroConfig.virtual?.['#analog/index']).toBe(
-        'export default "<html>legacy closeBundle</html>";',
-      );
-      expect(nitroConfig.virtual?.['#ANALOG_SSR_RENDERER']).toContain(
-        "import template from '#analog/index';",
-      );
-      expect(nitroConfig.virtual?.['#ANALOG_CLIENT_RENDERER']).toContain(
-        "import template from '#analog/index';",
+      expect(buildSitemapImportSpy).toHaveBeenCalledWith(
+        {},
+        { host: 'https://example.com' },
+        ['/about', '/blog'],
+        resolve(workspaceRoot, 'dist', 'analog', 'public'),
+        {
+          '/blog': { lastmod: '2024-02-10' },
+        },
+        { apiPrefix: 'api' },
       );
     } finally {
       rmSync(workspaceRoot, { recursive: true, force: true });
@@ -435,213 +456,188 @@ describe('nitro', () => {
     }
   });
 
-  describe.skip('when prerendering is configured...', () => {
-    it('should build the server with prerender route "/" if nothing was provided', async () => {
-      // Arrange
-      const { buildServerImportSpy, buildSitemapImportSpy } =
-        await mockBuildFunctions();
-      const plugin = nitro({
-        ssr: true,
-      });
+  it('uses the finalized client environment outDir during builder.buildApp', async () => {
+    const { buildServerImportSpy } = await mockBuildFunctions();
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
 
-      // Act
-      await runConfigAndCloseBundle(plugin);
-
-      // Assert
-      expect(buildSitemapImportSpy).not.toHaveBeenCalled();
-      expect(buildServerImportSpy).toHaveBeenCalledWith(
-        { ssr: true },
-        {
-          ...mockNitroConfig,
-          alias: expect.anything(),
-          prerender: { routes: ['/'] },
-          rollupConfig: expect.anything(),
-          handlers: expect.arrayContaining([
-            expect.objectContaining({ route: '/**', lazy: true }),
-          ]),
-          publicAssets: expect.anything(),
-          serverAssets: expect.anything(),
-        },
+    try {
+      const nestedRoot = 'apps/my-app';
+      const ssrBuildDir = resolve(workspaceRoot, 'dist', nestedRoot, 'ssr');
+      const builtSsrEntry = resolve(ssrBuildDir, 'main.server.js');
+      const staleClientDir = resolve(
+        workspaceRoot,
+        'dist',
+        nestedRoot,
+        'client',
       );
-    });
-
-    it('should build the server with prerender route "/" even if ssr is false', async () => {
-      // Arrange
-      const { buildServerImportSpy, buildSitemapImportSpy } =
-        await mockBuildFunctions();
-      const plugin = nitro({
-        ssr: false,
-      });
-
-      // Act
-      await runConfigAndCloseBundle(plugin);
-
-      // Assert
-      expect(buildSitemapImportSpy).not.toHaveBeenCalled();
-      expect(buildServerImportSpy).toHaveBeenCalledWith(
-        { ssr: false },
-        {
-          ...mockNitroConfig,
-          prerender: { routes: ['/'] },
-          alias: expect.anything(),
-          rollupConfig: expect.anything(),
-          handlers: expect.arrayContaining([
-            expect.objectContaining({ route: '/**', lazy: true }),
-          ]),
-          publicAssets: expect.anything(),
-          serverAssets: expect.anything(),
-        },
+      const finalClientDir = resolve(
+        workspaceRoot,
+        'dist',
+        nestedRoot,
+        'client-final',
       );
-    });
 
-    it('should build the server without prerender route when an empty array was passed', async () => {
-      // Arrange
-      const { buildServerImportSpy, buildSitemapImportSpy } =
-        await mockBuildFunctions();
-      const prerenderRoutes = {
-        prerender: {
-          routes: [],
-          sitemap: { host: 'example.com' },
-        },
-      };
-      const plugin = nitro({
-        ssr: true,
-        ...prerenderRoutes,
+      mkdirSync(ssrBuildDir, { recursive: true });
+      writeFileSync(
+        builtSsrEntry,
+        'export default async function renderer() {}',
+      );
+      writeBuiltClientIndexHtml(
+        workspaceRoot,
+        '<html>finalized client env</html>',
+        finalClientDir,
+      );
+      mkdirSync(resolve(workspaceRoot, nestedRoot, 'src/server'), {
+        recursive: true,
       });
 
-      // Act
-      await runConfigAndCloseBundle(plugin);
-
-      // Assert
-      expect(buildServerImportSpy).toHaveBeenCalledWith(
-        { ssr: true, ...prerenderRoutes },
+      const plugin = nitro({
+        workspaceRoot,
+        ssrBuildDir,
+      });
+      const result = await (plugin[1].config as any)(
         {
-          ...mockNitroConfig,
-          alias: expect.anything(),
-          rollupConfig: expect.anything(),
-          handlers: expect.arrayContaining([
-            expect.objectContaining({ route: '/**', lazy: true }),
-          ]),
-          preset: undefined,
-          prerender: {
-            ...mockNitroConfig.prerender,
-            routes: [],
+          root: nestedRoot,
+          build: {
+            outDir: '../../dist/apps/my-app/client',
           },
-          publicAssets: expect.anything(),
-          serverAssets: expect.anything(),
         },
-      );
-      expect(buildSitemapImportSpy).not.toHaveBeenCalled();
-    });
-
-    it('should build the server with provided routes', async () => {
-      // Arrange
-      const { buildServerImportSpy, buildSitemapImportSpy } =
-        await mockBuildFunctions();
-      const prerenderRoutes = {
-        prerender: {
-          routes: ['/blog', '/about'],
-          sitemap: { host: 'example.com' },
-        },
-      };
-      const plugin = nitro({
-        ssr: true,
-        ...prerenderRoutes,
-      });
-
-      // Act
-      await runConfigAndCloseBundle(plugin);
-
-      // Assert
-      expect(buildServerImportSpy).toHaveBeenCalledWith(
-        { ssr: true, ...prerenderRoutes },
-        {
-          ...mockNitroConfig,
-          prerender: {
-            routes: prerenderRoutes.prerender.routes,
-          },
-          alias: expect.anything(),
-          rollupConfig: expect.anything(),
-          handlers: expect.arrayContaining([
-            expect.objectContaining({ route: '/**', lazy: true }),
-          ]),
-          publicAssets: expect.anything(),
-          serverAssets: expect.anything(),
-        },
+        { command: 'build', mode: 'production' },
       );
 
-      expect(buildSitemapImportSpy).toHaveBeenCalledWith(
-        {},
-        { host: 'example.com' },
-        prerenderRoutes.prerender.routes,
-        expect.anything(),
-      );
-    });
-
-    describe('should build the server with content dir routes', () => {
-      [
-        '/packages/vite-plugin-nitro/test-data/content',
-        'packages/vite-plugin-nitro/test-data/content',
-      ].forEach((contentDir) => {
-        it(`contentDir: ${contentDir}`, async () => {
-          // Arrange
-          const { buildServerImportSpy, buildSitemapImportSpy } =
-            await mockBuildFunctions();
-          const prerenderRoutes = {
-            prerender: {
-              routes: [
-                '/blog',
-                '/about',
-                {
-                  contentDir,
-                  transform: (file: PrerenderContentFile) => {
-                    if (file.attributes['draft']) {
-                      return false;
-                    }
-                    const slug = file.attributes['slug'] || file.name;
-                    return `/blog/${slug}`;
-                  },
-                },
-              ],
-              sitemap: { host: 'example.com' },
-            },
-          };
-          const plugin = nitro({
-            ssr: true,
-            ...prerenderRoutes,
-          });
-
-          // Act
-          await runConfigAndCloseBundle(plugin);
-
-          // Assert
-          expect(buildServerImportSpy).toHaveBeenCalledWith(
-            { ssr: true, ...prerenderRoutes },
-            {
-              ...mockNitroConfig,
-              prerender: {
-                routes: ['/blog', '/about', '/blog/first', '/blog/02-second'],
-                crawlLinks: undefined,
+      await result.builder.buildApp({
+        build: vi.fn().mockResolvedValue(undefined),
+        environments: {
+          client: {
+            config: {
+              build: {
+                outDir: '../../dist/apps/my-app/client-final',
               },
-              alias: expect.anything(),
-              publicAssets: expect.anything(),
-              rollupConfig: expect.anything(),
-              handlers: expect.arrayContaining([
-                expect.objectContaining({ route: '/**', lazy: true }),
-              ]),
-              serverAssets: expect.anything(),
             },
-          );
-
-          expect(buildSitemapImportSpy).toHaveBeenCalledWith(
-            {},
-            { host: 'example.com' },
-            ['/blog', '/about', '/blog/first', '/blog/02-second'],
-            expect.anything(),
-          );
-        });
+          },
+          ssr: {},
+        },
       });
-    });
+
+      const nitroConfig = buildServerImportSpy.mock.calls[0][1];
+
+      expect(nitroConfig.virtual?.['#analog/index']).toBe(
+        'export default "<html>finalized client env</html>";',
+      );
+      expect(nitroConfig.publicAssets).toEqual([
+        {
+          dir: vite.normalizePath(finalClientDir),
+          maxAge: 0,
+        },
+      ]);
+      expect(nitroConfig.publicAssets).not.toEqual([
+        {
+          dir: vite.normalizePath(staleClientDir),
+          maxAge: 0,
+        },
+      ]);
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('falls back to the captured client index asset during closeBundle', async () => {
+    const { buildServerImportSpy } = await mockBuildFunctions();
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
+
+    try {
+      const ssrBuildDir = resolve(workspaceRoot, 'dist', 'ssr');
+      mkdirSync(ssrBuildDir, { recursive: true });
+      writeFileSync(
+        resolve(ssrBuildDir, 'main.server.js'),
+        'export default async function renderer() {}',
+      );
+
+      const plugin = nitro({
+        workspaceRoot,
+        ssrBuildDir,
+      });
+
+      await (plugin[1].config as any)(
+        {},
+        { command: 'build', mode: 'production' },
+      );
+
+      await (plugin[1].generateBundle as any)(
+        {},
+        {
+          'index.html': {
+            type: 'asset',
+            fileName: 'index.html',
+            source: '<html>captured bundle asset</html>',
+          },
+        },
+      );
+
+      await (plugin[1].closeBundle as any)();
+
+      const nitroConfig = buildServerImportSpy.mock.calls[0][1];
+      expect(nitroConfig.virtual?.['#analog/index']).toBe(
+        'export default "<html>captured bundle asset</html>";',
+      );
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('rebuilds the client output during closeBundle when index.html is missing', async () => {
+    const { buildServerImportSpy } = await mockBuildFunctions();
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
+
+    try {
+      const ssrBuildDir = resolve(workspaceRoot, 'dist', 'ssr');
+      mkdirSync(ssrBuildDir, { recursive: true });
+      writeFileSync(
+        resolve(ssrBuildDir, 'main.server.js'),
+        'export default async function renderer() {}',
+      );
+
+      vi.mocked(buildClientApp).mockImplementation(async () => {
+        writeBuiltClientIndexHtml(
+          workspaceRoot,
+          '<html>rebuilt client output</html>',
+        );
+      });
+
+      const plugin = nitro({
+        workspaceRoot,
+      });
+
+      await (plugin[1].config as any)(
+        {
+          root: '.',
+          build: {
+            outDir: 'dist/client',
+          },
+        },
+        { command: 'build', mode: 'production' },
+      );
+
+      await (plugin[1].closeBundle as any)();
+
+      expect(buildClientApp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          build: expect.objectContaining({
+            outDir: 'dist/client',
+          }),
+        }),
+        expect.objectContaining({
+          workspaceRoot,
+        }),
+      );
+
+      const nitroConfig = buildServerImportSpy.mock.calls[0][1];
+      expect(nitroConfig.virtual?.['#analog/index']).toBe(
+        'export default "<html>rebuilt client output</html>";',
+      );
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
   });
 
   describe.skip('preset output', () => {

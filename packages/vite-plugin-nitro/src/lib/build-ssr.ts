@@ -4,6 +4,25 @@ import { relative, resolve } from 'node:path';
 import { Options } from './options.js';
 import { getBundleOptionsKey } from './utils/rolldown.js';
 
+export async function buildClientApp(
+  config: UserConfig,
+  options?: Options,
+): Promise<void> {
+  const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  const rootDir = relative(workspaceRoot, config.root || '.') || '.';
+  const clientBuildConfig = mergeConfig(config, <UserConfig>{
+    build: {
+      ssr: false,
+      outDir:
+        config.build?.outDir ||
+        resolve(workspaceRoot, 'dist', rootDir, 'client'),
+      emptyOutDir: true,
+    },
+  });
+
+  await build(clientBuildConfig);
+}
+
 export async function buildSSRApp(
   config: UserConfig,
   options?: Options,
@@ -22,7 +41,10 @@ export async function buildSSRApp(
       },
       outDir:
         options?.ssrBuildDir || resolve(workspaceRoot, 'dist', rootDir, 'ssr'),
-      emptyOutDir: true,
+      // Preserve the client build output. The client pass already handled its
+      // own cleanup, and on Windows this nested SSR build can otherwise remove
+      // sibling artifacts that Nitro needs to read immediately afterward.
+      emptyOutDir: false,
     },
   });
 
