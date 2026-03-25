@@ -32,16 +32,11 @@ function getContentFile<
   }
 
   const base = `/src/content/${prefix}${slug}`.replace(/\/{2,}/g, '/');
-  const candidates = [
-    `${base}.md`,
-    `${base}.agx`,
-    `${base}/index.md`,
-    `${base}/index.agx`,
-  ];
+  const candidates = [`${base}.md`, `${base}/index.md`];
 
   const matchKey = candidates.find((k) => k in normalizedFiles);
   const contentFile = matchKey ? normalizedFiles[matchKey] : undefined;
-  const resolvedBase = (matchKey || `${base}.md`).replace(/\.(md|agx)$/, '');
+  const resolvedBase = (matchKey || `${base}.md`).replace(/\.md$/, '');
 
   if (!contentFile) {
     return of({

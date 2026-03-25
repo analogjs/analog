@@ -61,7 +61,7 @@ Body content`),
 
   it('returns empty toc for module/object content', async () => {
     const contentFiles = {
-      '/src/content/object-content.agx': () =>
+      '/src/content/object-content.md': () =>
         Promise.resolve({
           default: '<h1>Heading</h1>',
           metadata: { slug: 'object-content' },
@@ -194,7 +194,7 @@ title: Hello World
 
   it('validates module metadata when a schema is provided', async () => {
     const contentFiles = {
-      '/src/content/guides/intro.agx': () =>
+      '/src/content/guides/intro.md': () =>
         Promise.resolve({
           default: '<h1>Intro</h1>',
           metadata: { title: 'Intro' },
@@ -236,7 +236,7 @@ title: Hello World
 
   it('throws FrontmatterValidationError for invalid module metadata', async () => {
     const contentFiles = {
-      '/src/content/guides/intro.agx': () =>
+      '/src/content/guides/intro.md': () =>
         Promise.resolve({
           default: '<h1>Intro</h1>',
           metadata: {},
@@ -261,7 +261,7 @@ title: Hello World
     const result = TestBed.inject(TEST_RESOURCE_TOKEN);
 
     await expect(settleResource(result)).rejects.toThrow(
-      '"guides/intro.agx" frontmatter validation failed',
+      '"guides/intro.md" frontmatter validation failed',
     );
   });
 });

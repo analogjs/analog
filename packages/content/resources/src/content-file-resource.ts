@@ -73,12 +73,7 @@ async function getContentFile<
 
   // Try direct file first, then directory index variants
   const base = `/src/content/${slug}`.replace(/\/{2,}/g, '/');
-  const candidates = [
-    `${base}.md`,
-    `${base}.agx`,
-    `${base}/index.md`,
-    `${base}/index.agx`,
-  ];
+  const candidates = [`${base}.md`, `${base}/index.md`];
 
   const matchKey = candidates.find((k) => k in normalizedFiles);
   const contentFile = matchKey ? normalizedFiles[matchKey] : undefined;
@@ -92,7 +87,7 @@ async function getContentFile<
     } as ContentFile<Attributes | Record<string, never>>;
   }
 
-  const resolvedBase = matchKey!.replace(/\.(md|agx)$/, '');
+  const resolvedBase = matchKey!.replace(/\.md$/, '');
   const validationFilename = getValidationFilename(matchKey!);
 
   return contentFile().then(

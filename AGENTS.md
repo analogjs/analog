@@ -122,6 +122,7 @@ Projects with caching explicitly disabled (`"cache": false` on their build targe
 ## Do NOT
 
 - Add Angular SFC references to features or docs
+- Reference or recommend `.agx` files — they are a removed experiment and no longer supported
 - Create new abstractions for one-time operations
 - Add verbose comments, docstrings, or type annotations to code you didn't change
 - Add error handling or validation for scenarios that can't happen
