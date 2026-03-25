@@ -145,6 +145,7 @@ export default {
     [
       '@semantic-release/exec',
       {
+        prepareCmd: 'pnpm install --lockfile-only',
         publishCmd: `pnpm build:release && RELEASE_TAG=${tag} ./tools/publish.sh`,
       },
     ],
@@ -154,6 +155,7 @@ export default {
         assets: [
           'CHANGELOG.md',
           'package.json',
+          'pnpm-lock.yaml',
           'packages/astro-angular/package.json',
           'packages/content/package.json',
           'packages/create-analog/package.json',
