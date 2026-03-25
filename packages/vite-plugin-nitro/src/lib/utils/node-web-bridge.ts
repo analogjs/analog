@@ -8,7 +8,7 @@ import { pipeline } from 'node:stream/promises';
 
 function toWebHeaders(headers: IncomingHttpHeaders) {
   return Object.entries(headers).reduce((acc, [key, value]) => {
-    if (value) {
+    if (value && !key.startsWith(':')) {
       acc.set(key, Array.isArray(value) ? value.join(', ') : value);
     }
 
