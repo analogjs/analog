@@ -235,13 +235,7 @@ export function generateRouteManifest(
     return a.fullPath.localeCompare(b.fullPath);
   });
 
-  const routeByFullPath = new Map<string, RouteEntry>();
-  for (const route of routes) {
-    const existing = routeByFullPath.get(route.fullPath);
-    if (!existing || (existing.isGroup && !route.isGroup)) {
-      routeByFullPath.set(route.fullPath, route);
-    }
-  }
+  const routeByFullPath = canonicalRoutesByFullPath(routes);
 
   const routeById = new Map(routes.map((route) => [route.id, route]));
 
