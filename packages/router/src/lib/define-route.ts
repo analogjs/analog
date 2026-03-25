@@ -2,6 +2,9 @@ import { inject } from '@angular/core';
 import { Route as NgRoute, Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 
+import { AnalogJsonLdDocument } from './json-ld';
+import { MetaTag } from './meta-tags';
+
 type RouteOmitted =
   | 'component'
   | 'loadComponent'
@@ -9,7 +12,10 @@ type RouteOmitted =
   | 'path'
   | 'pathMatch';
 
-type RestrictedRoute = Omit<NgRoute, RouteOmitted>;
+type RestrictedRoute = Omit<NgRoute, RouteOmitted> & {
+  meta?: MetaTag[];
+  jsonLd?: AnalogJsonLdDocument;
+};
 
 /**
  * @deprecated Use `RouteMeta` type instead.

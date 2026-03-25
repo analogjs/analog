@@ -786,6 +786,9 @@ importers:
       '@tanstack/angular-query-experimental':
         specifier: '>=5.95.0'
         version: 5.95.2(@angular/common@21.2.5(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2))(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))
+      schema-dts:
+        specifier: ^2.0.0
+        version: 2.0.0(typescript@6.0.2)
       tslib:
         specifier: ^2.0.0
         version: 2.8.1

@@ -33,7 +33,7 @@ export function toMarkdownModule(
       : createLoader());
 
     const { content, attributes } = parseRawContentFile(markdownFile);
-    const { title, meta } = attributes;
+    const { title, meta, jsonLd } = attributes;
 
     return {
       default: MarkdownRouteComponent,
@@ -41,6 +41,7 @@ export function toMarkdownModule(
         data: { _analogContent: content },
         title,
         meta,
+        jsonLd,
         resolve: {
           renderedAnalogContent: async () => {
             const contentRenderer = inject<any>(
