@@ -31,7 +31,7 @@ export default defineConfig({
     oxcDtsPlugin(pkgDir),
     copyAssetsPlugin([
       { from: 'README.md', to: 'README.md' },
-      { from: 'migrations/migration.json', to: 'migrations/migration.json' },
+      { from: 'migrations', to: 'migrations' },
       { from: 'package.json', to: 'package.json' },
     ]),
   ],
@@ -44,7 +44,6 @@ export default defineConfig({
     lib: {
       entry: {
         'src/index': resolve(pkgDir, 'src/index.ts'),
-        'setup-vitest': resolve(pkgDir, 'setup-vitest.ts'),
       },
       formats: ['es' as const],
     },
