@@ -12,7 +12,6 @@ Un ejemplo con `styleUrls`:
 import { Component } from '@angular/core';
 
 @Component({
-  standalone: true,
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
@@ -27,7 +26,6 @@ Un ejemplo de uso de `scss` con `styles` en línea:
 import { Component } from '@angular/core';
 
 @Component({
-  standalone: true,
   templateUrl: './app.component.html',
   styles: [
     `

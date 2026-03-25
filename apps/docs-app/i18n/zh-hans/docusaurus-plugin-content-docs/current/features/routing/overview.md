@@ -44,7 +44,6 @@ Analog 在 Angular 路由之上支持基于文件系统的路由。
 import { Component } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: ` <h2>Welcome</h2> `,
 })
 export default class HomePageComponent {}
@@ -66,7 +65,6 @@ export default class HomePageComponent {}
 import { Component } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: `
     <h2>Hello Analog</h2>
 
@@ -109,7 +107,6 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 @Component({
-  standalone: true,
   imports: [AsyncPipe],
   template: `
     <h2>Product Details</h2>
@@ -155,7 +152,6 @@ export const appConfig: ApplicationConfig = {
 import { Component, Input } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: `
     <h2>Product Details</h2>
 
@@ -195,7 +191,6 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
-  standalone: true,
   imports: [RouterOutlet],
   template: `
     <h2>Products</h2>
@@ -212,7 +207,6 @@ export default class ProductsComponent {}
 import { Component } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: ` <h2>Products List</h2> `,
 })
 export default class ProductsListComponent {}
@@ -227,7 +221,6 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 @Component({
-  standalone: true,
   imports: [AsyncPipe, JsonPipe],
   template: `
     <h2>Product Details</h2>
@@ -287,7 +280,6 @@ export const routeMeta: RouteMeta = {
 };
 
 @Component({
-  standalone: true,
   imports: [RouterLink],
   template: `
     <h2>Page Not Found</h2>
