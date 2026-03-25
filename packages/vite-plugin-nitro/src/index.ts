@@ -1,4 +1,8 @@
-import { nitro } from './lib/vite-plugin-nitro.js';
+import { createAnalogNitroPlugins } from './lib/analog-vite-plugin.js';
+
+export { createAnalogNitroPlugins } from './lib/analog-vite-plugin.js';
+export { analogNitroModule } from './lib/analog-nitro-module.js';
+export { buildNitroConfig } from './lib/nitro-config-factory.js';
 export type {
   Options,
   SitemapConfig,
@@ -25,4 +29,4 @@ declare module 'nitro/types' {
   }
 }
 
-export default nitro;
+export default createAnalogNitroPlugins;

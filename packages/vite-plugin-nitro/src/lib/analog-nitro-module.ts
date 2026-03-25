@@ -1,117 +1,584 @@
 /**
- * Proof-of-concept: Analog as a Nitro Module
+ * Analog NitroModule — configures Angular-specific behavior on a Nitro instance.
  *
- * This module demonstrates how @analogjs/vite-plugin-nitro's core
- * functionality would be expressed as a NitroModule that plugs into
- * Nitro's first-party Vite plugin (`nitro/vite`).
- *
- * Instead of manually creating Nitro instances and orchestrating builds,
- * this module hooks into an existing Nitro instance via `setup()` and
- * configures Angular-specific behavior through Nitro's hook system.
- *
- * Usage with nitro/vite:
+ * This module is designed to be used with Nitro's first-party Vite plugin
+ * (`nitro/vite`) via the `plugin.nitro` pattern:
  *
  * ```ts
  * import { nitro } from 'nitro/vite';
- * import { analogNitroModule } from '@analogjs/vite-plugin-nitro/module';
  *
  * export default defineConfig({
  *   plugins: [
- *     nitro({ preset: 'node-server' }),
+ *     ...nitro(config),
  *     {
  *       name: '@analogjs/nitro',
- *       nitro: analogNitroModule({ ssr: true, prerender: { routes: ['/'] } }),
+ *       nitro: analogNitroModule(options),
  *     },
  *   ],
  * });
  * ```
  */
-import type { NitroEventHandler } from 'nitro/types';
-import { resolve } from 'node:path';
+import type { NitroConfig, RollupConfig } from 'nitro/types';
+import { normalizePath } from 'vite';
+import { dirname, join, resolve } from 'node:path';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 
-import type { Options } from './options.js';
+import type {
+  Options,
+  PrerenderContentDir,
+  PrerenderContentFile,
+  PrerenderRouteConfig,
+  PrerenderSitemapConfig,
+} from './options.js';
 import { getPageHandlers } from './utils/get-page-handlers.js';
-import { ssrRenderer, clientRenderer } from './utils/renderers.js';
+import {
+  ssrRenderer,
+  clientRenderer,
+  apiMiddleware,
+} from './utils/renderers.js';
+import { pageEndpointsPlugin } from './plugins/page-endpoints.js';
+import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-files.js';
+import { buildSitemap } from './build-sitemap.js';
+import { isVercelPreset } from './nitro-config-factory.js';
 
 interface NitroModule {
   name?: string;
   setup: (nitro: any) => void | Promise<void>;
 }
 
-export function analogNitroModule(options: Options = {}): NitroModule {
+/**
+ * Shared state between the NitroModule and the Vite plugin wrapper.
+ * The Vite plugin captures the client index.html during `generateBundle`
+ * and the module reads it during Nitro's server build.
+ */
+export interface AnalogBuildState {
+  clientIndexHtml?: string;
+  sitemapRoutes: string[];
+  routeSitemaps: Record<
+    string,
+    PrerenderSitemapConfig | (() => PrerenderSitemapConfig)
+  >;
+  routeSourceFiles: Record<string, string>;
+}
+
+export function createAnalogBuildState(): AnalogBuildState {
+  return {
+    sitemapRoutes: [],
+    routeSitemaps: {},
+    routeSourceFiles: {},
+  };
+}
+
+export function analogNitroModule(
+  options: Options | undefined,
+  state: AnalogBuildState,
+): NitroModule {
+  const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  const sourceRoot = options?.sourceRoot ?? 'src';
+  const apiPrefix = `/${options?.apiPrefix || 'api'}`;
+  const baseURL = process.env['NITRO_APP_BASE_URL'] || '';
+  const prefix = baseURL ? baseURL.substring(0, baseURL.length - 1) : '';
+  const useAPIMiddleware =
+    typeof options?.useAPIMiddleware !== 'undefined'
+      ? options?.useAPIMiddleware
+      : true;
+
   return {
     name: 'analog',
     async setup(nitro) {
-      const rootDir = options.workspaceRoot || process.cwd();
-      const sourceRoot = options.sourceRoot || 'src';
-
-      // --- Renderer ---
-      // Register SSR or client-only renderer as the catch-all handler.
-      const rendererCode =
-        options.ssr !== false ? ssrRenderer() : clientRenderer();
-
-      nitro.options.virtual = nitro.options.virtual || {};
-      nitro.options.virtual['#analog/renderer'] = rendererCode;
-
-      nitro.options.renderer = nitro.options.renderer || {};
-      (nitro.options.renderer as any).handler = '#analog/renderer';
-
-      // --- Page Endpoint Handlers ---
-      // Discover .server.ts files and register them as Nitro handlers.
-      const pageHandlers = await getPageHandlers(
-        resolve(rootDir, sourceRoot),
-        resolve(rootDir, sourceRoot, 'app/pages'),
-        options.additionalPagesDirs,
+      const rootDir = nitro.options.rootDir || workspaceRoot;
+      const hasAPIDir = existsSync(
+        resolve(
+          workspaceRoot,
+          rootDir,
+          `${sourceRoot}/server/routes/${options?.apiPrefix || 'api'}`,
+        ),
       );
-      nitro.options.handlers = nitro.options.handlers || [];
-      nitro.options.handlers.push(...pageHandlers);
 
-      // --- API Routes ---
-      // Add API route directories to Nitro's scan dirs.
-      const serverDir = resolve(rootDir, sourceRoot, 'server');
-      nitro.options.scanDirs = nitro.options.scanDirs || [];
-      nitro.options.scanDirs.push(serverDir);
-      if (options.additionalAPIDirs) {
-        for (const dir of options.additionalAPIDirs) {
-          nitro.options.scanDirs.push(resolve(rootDir, dir));
-        }
+      // ── Renderer ──────────────────────────────────────────────
+      nitro.options.virtual = nitro.options.virtual || {};
+      nitro.options.virtual['#ANALOG_SSR_RENDERER'] = ssrRenderer();
+      nitro.options.virtual['#ANALOG_CLIENT_RENDERER'] = clientRenderer();
+      if (!hasAPIDir) {
+        nitro.options.virtual['#ANALOG_API_MIDDLEWARE'] = apiMiddleware;
       }
 
-      // --- Prerendering ---
-      if (options.prerender?.routes) {
-        nitro.hooks.hook('prerender:routes', (routes: Set<string>) => {
-          const prerenderRoutes = options.prerender!.routes!;
-          for (const route of prerenderRoutes) {
-            if (typeof route === 'string') {
-              routes.add(route);
-            } else {
-              routes.add(route.route);
-            }
-          }
+      const rendererHandler = options?.ssr
+        ? '#ANALOG_SSR_RENDERER'
+        : '#ANALOG_CLIENT_RENDERER';
+      nitro.options.renderer = nitro.options.renderer || {};
+      nitro.options.renderer = false;
+
+      // ── Handlers ──────────────────────────────────────────────
+      const pageHandlers = getPageHandlers({
+        workspaceRoot,
+        sourceRoot,
+        rootDir,
+        additionalPagesDirs: options?.additionalPagesDirs,
+        hasAPIDir,
+      });
+
+      nitro.options.handlers = nitro.options.handlers || [];
+      if (!hasAPIDir && useAPIMiddleware) {
+        nitro.options.handlers.push({
+          route: '/**',
+          handler: '#ANALOG_API_MIDDLEWARE',
+          middleware: true,
         });
       }
+      nitro.options.handlers.push(...pageHandlers);
+      nitro.options.handlers.push({
+        handler: rendererHandler,
+        route: '/**',
+        lazy: true,
+      });
 
-      // --- Externals for Prerendering ---
-      // Angular packages need to be external during prerendering
-      // to avoid bundling issues with zone.js, rxjs, etc.
-      nitro.hooks.hook('rollup:before', (_n: unknown, config: any) => {
-        const externals = ['rxjs', 'zone.js'];
-        const existing = config.external;
-        if (typeof existing === 'function') {
-          config.external = (source: string) => {
-            if (
-              externals.some((e) => source === e || source.startsWith(e + '/'))
-            ) {
-              return true;
-            }
-            return existing(source);
-          };
-        } else if (Array.isArray(existing)) {
-          config.external = [...existing, ...externals];
-        } else {
-          config.external = externals;
+      // ── Route rules ───────────────────────────────────────────
+      if (!hasAPIDir && !useAPIMiddleware) {
+        nitro.options.routeRules = nitro.options.routeRules || {};
+        nitro.options.routeRules[`${prefix}${apiPrefix}/**`] = {
+          proxy: { to: '/**' },
+        };
+      }
+
+      // ── Scan dirs ─────────────────────────────────────────────
+      nitro.options.scanDirs = nitro.options.scanDirs || [];
+      nitro.options.scanDirs.push(
+        normalizePath(`${rootDir}/${sourceRoot}/server`),
+      );
+      if (options?.additionalAPIDirs) {
+        for (const dir of options.additionalAPIDirs) {
+          nitro.options.scanDirs.push(normalizePath(`${workspaceRoot}${dir}`));
         }
+      }
+
+      // ── Page endpoints Rollup plugin ──────────────────────────
+      nitro.options.rollupConfig = nitro.options.rollupConfig || {};
+      nitro.options.rollupConfig.plugins =
+        nitro.options.rollupConfig.plugins || [];
+      if (Array.isArray(nitro.options.rollupConfig.plugins)) {
+        nitro.options.rollupConfig.plugins.push(pageEndpointsPlugin());
+      }
+
+      // Suppress empty chunk warnings for .server files
+      nitro.options.rollupConfig.onwarn = (warning: { message: string }) => {
+        if (
+          warning.message.includes('empty chunk') &&
+          warning.message.endsWith('.server')
+        ) {
+          return;
+        }
+      };
+
+      // ── Module side effects ───────────────────────────────────
+      if (options?.ssr || nitro.options.prerender?.routes?.length) {
+        nitro.options.moduleSideEffects = [
+          'zone.js/node',
+          'zone.js/fesm2015/zone-node',
+        ];
+
+        if (process.platform === 'win32') {
+          nitro.options.noExternals = appendNoExternals(
+            nitro.options.noExternals,
+            'std-env',
+          );
+        }
+      }
+
+      // ── Lazy virtual module resolution ────────────────────────
+      // These Rollup plugins resolve #analog/index and #analog/ssr
+      // at build time. Since nitro/vite builds client → SSR → nitro
+      // sequentially, the files exist on disk when the nitro
+      // environment builds.
+      nitro.options.rollupConfig.plugins.push({
+        name: 'analog-index-html-virtual',
+        resolveId(id: string) {
+          if (id === '#analog/index') return '\0#analog/index';
+        },
+        load(id: string) {
+          if (id !== '\0#analog/index') return;
+          // Prefer in-memory capture (handles Windows race conditions)
+          if (state.clientIndexHtml) {
+            return `export default ${JSON.stringify(state.clientIndexHtml)};`;
+          }
+          // Fall back to reading from disk
+          const publicDir = nitro.options.output?.publicDir;
+          const clientOutDir = resolve(
+            workspaceRoot,
+            'dist',
+            rootDir,
+            'client',
+          );
+          for (const dir of [publicDir, clientOutDir]) {
+            if (!dir) continue;
+            const indexPath = resolve(dir, 'index.html');
+            if (existsSync(indexPath)) {
+              const html = readFileSync(indexPath, 'utf8');
+              return `export default ${JSON.stringify(html)};`;
+            }
+          }
+          throw new Error(
+            '[analog] Client build output not found. Ensure the client environment build completed successfully.',
+          );
+        },
+      });
+
+      nitro.options.rollupConfig.plugins.push({
+        name: 'analog-ssr-entry-alias',
+        resolveId(id: string) {
+          if (id !== '#analog/ssr') return;
+          if (!options?.ssr && !nitro.options.prerender?.routes?.length) return;
+          const ssrOutDir =
+            options?.ssrBuildDir ||
+            resolve(workspaceRoot, 'dist', rootDir, 'ssr');
+          const ssrEntryPath = resolveBuiltSsrEntryPath(ssrOutDir);
+          return normalizePath(ssrEntryPath);
+        },
+      });
+
+      // ── Externals and bundler config sanitization ─────────────
+      nitro.hooks.hook(
+        'rollup:before',
+        (_n: unknown, bundlerConfig: RollupConfig) => {
+          sanitizeNitroBundlerConfig(bundlerConfig);
+
+          if (!options?.ssr && !nitro.options.prerender?.routes?.length) return;
+
+          const externalEntries = ['rxjs', 'node-fetch-native/dist/polyfill'];
+          const isExternal = (source: string) =>
+            externalEntries.some(
+              (entry) => source === entry || source.startsWith(entry + '/'),
+            );
+
+          const existing = bundlerConfig.external;
+          if (typeof existing === 'function') {
+            const originalFn = existing;
+            bundlerConfig.external = (source: string, ...rest: unknown[]) => {
+              if (isExternal(source)) return true;
+              return (originalFn as Function)(source, ...rest);
+            };
+          } else if (Array.isArray(existing)) {
+            bundlerConfig.external = [
+              ...existing,
+              ...externalEntries,
+            ] as string[];
+          } else {
+            bundlerConfig.external = externalEntries;
+          }
+        },
+      );
+
+      // ── Prerendering ──────────────────────────────────────────
+      await resolveAndRegisterPrerenderRoutes(
+        nitro,
+        options,
+        state,
+        workspaceRoot,
+        rootDir,
+        apiPrefix,
+      );
+
+      // ── Post-rendering hooks ──────────────────────────────────
+      if (options?.prerender?.postRenderingHooks) {
+        for (const hook of options.prerender.postRenderingHooks) {
+          nitro.hooks.hook('prerender:generate', hook);
+        }
+      }
+
+      // ── SSR tsconfig for OXC resolver ─────────────────────────
+      nitro.hooks.hook('build:before', () => {
+        ensureSsrTsconfig(options, workspaceRoot, rootDir);
+      });
+
+      // ── Remove root index.html before prerender ───────────────
+      nitro.hooks.hook('prerender:init', () => {
+        if (
+          options?.ssr &&
+          nitro.options.prerender?.routes &&
+          nitro.options.prerender.routes.find((route: string) => route === '/')
+        ) {
+          const publicDir = nitro.options.output?.publicDir ?? '';
+          for (const ext of ['', '.br', '.gz']) {
+            rmSync(join(publicDir, `index.html${ext}`), { force: true });
+          }
+        }
+      });
+
+      // ── Route source files output ─────────────────────────────
+      nitro.hooks.hook('prerender:done', () => {
+        if (Object.keys(state.routeSourceFiles).length > 0) {
+          const publicDir = nitro.options.output?.publicDir;
+          if (!publicDir) return;
+          for (const [route, content] of Object.entries(
+            state.routeSourceFiles,
+          )) {
+            const outputPath = join(publicDir, `${route}.md`);
+            mkdirSync(dirname(outputPath), { recursive: true });
+            writeFileSync(outputPath, content, 'utf8');
+          }
+        }
+      });
+
+      // ── Vercel function config ────────────────────────────────
+      nitro.hooks.hook('compiled', () => {
+        ensureVercelFunctionConfig(nitro);
+      });
+
+      // ── Sitemap generation ────────────────────────────────────
+      nitro.hooks.hook('close', async () => {
+        if (
+          nitro.options.prerender?.routes?.length &&
+          options?.prerender?.sitemap
+        ) {
+          console.log('Building Sitemap...');
+          const publicDir = nitro.options.output?.publicDir;
+          if (!publicDir) return;
+          await buildSitemap(
+            {},
+            options.prerender.sitemap,
+            state.sitemapRoutes.length
+              ? state.sitemapRoutes
+              : nitro.options.prerender.routes,
+            publicDir,
+            state.routeSitemaps,
+            { apiPrefix: options?.apiPrefix || 'api' },
+          );
+        }
+      });
+
+      // ── Success message ───────────────────────────────────────
+      nitro.hooks.hook('close', () => {
+        console.log(
+          `\n\nThe '@analogjs/platform' server has been successfully built.`,
+        );
       });
     },
   };
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────
+
+async function resolveAndRegisterPrerenderRoutes(
+  nitro: any,
+  options: Options | undefined,
+  state: AnalogBuildState,
+  workspaceRoot: string,
+  rootDir: string,
+  apiPrefix: string,
+) {
+  if (!options?.prerender) {
+    if (isEmptyPrerenderRoutes(options)) {
+      nitro.options.prerender = nitro.options.prerender || {};
+      nitro.options.prerender.routes = ['/'];
+    }
+    return;
+  }
+
+  nitro.options.prerender = nitro.options.prerender || {};
+  nitro.options.prerender.crawlLinks = options.prerender.discover;
+
+  let routes: (
+    | string
+    | PrerenderContentDir
+    | PrerenderRouteConfig
+    | undefined
+  )[] = [];
+
+  const prerenderRoutes = options.prerender.routes;
+  const hasExplicitPrerenderRoutes =
+    typeof prerenderRoutes === 'function' || Array.isArray(prerenderRoutes);
+
+  if (isArrayWithElements<string | PrerenderContentDir>(prerenderRoutes)) {
+    routes = prerenderRoutes;
+  } else if (typeof prerenderRoutes === 'function') {
+    routes = await prerenderRoutes();
+  }
+
+  const resolvedPrerenderRoutes = routes.reduce<string[]>((prev, current) => {
+    if (!current) return prev;
+
+    if (typeof current === 'string') {
+      prev.push(current);
+      state.sitemapRoutes.push(current);
+      return prev;
+    }
+
+    if ('route' in current) {
+      if (current.sitemap) {
+        state.routeSitemaps[current.route] = current.sitemap;
+      }
+      if (current.outputSourceFile) {
+        const sourcePath = resolve(
+          workspaceRoot,
+          rootDir,
+          current.outputSourceFile,
+        );
+        state.routeSourceFiles[current.route] = readFileSync(
+          sourcePath,
+          'utf8',
+        );
+      }
+      prev.push(current.route);
+      state.sitemapRoutes.push(current.route);
+      if ('staticData' in current) {
+        prev.push(`${apiPrefix}/_analog/pages/${current.route}`);
+      }
+      return prev;
+    }
+
+    const affectedFiles: PrerenderContentFile[] =
+      getMatchingContentFilesWithFrontMatter(
+        workspaceRoot,
+        rootDir,
+        current.contentDir,
+      );
+
+    affectedFiles.forEach((f) => {
+      const result = current.transform(f);
+      if (result) {
+        if (current.sitemap) {
+          state.routeSitemaps[result] =
+            typeof current.sitemap === 'function'
+              ? current.sitemap(f)
+              : current.sitemap;
+        }
+        if (current.outputSourceFile) {
+          const sourceContent = current.outputSourceFile(f);
+          if (sourceContent) {
+            state.routeSourceFiles[result] = sourceContent;
+          }
+        }
+        prev.push(result);
+        state.sitemapRoutes.push(result);
+        if ('staticData' in current) {
+          prev.push(`${apiPrefix}/_analog/pages/${result}`);
+        }
+      }
+    });
+
+    return prev;
+  }, []);
+
+  nitro.options.prerender.routes =
+    hasExplicitPrerenderRoutes || resolvedPrerenderRoutes.length
+      ? resolvedPrerenderRoutes
+      : (nitro.options.prerender.routes ?? []);
+}
+
+function resolveBuiltSsrEntryPath(ssrOutDir: string) {
+  const candidates = [
+    resolve(ssrOutDir, 'main.server.mjs'),
+    resolve(ssrOutDir, 'main.server.js'),
+    resolve(ssrOutDir, 'main.server'),
+  ];
+
+  const ssrEntryPath = candidates.find((p) => existsSync(p));
+  if (!ssrEntryPath) {
+    throw new Error(
+      `Unable to locate the built SSR entry in "${ssrOutDir}". Expected one of: ${candidates.join(', ')}`,
+    );
+  }
+  return ssrEntryPath;
+}
+
+function ensureSsrTsconfig(
+  options: Options | undefined,
+  workspaceRoot: string,
+  rootDir: string,
+) {
+  const ssrOutDir =
+    options?.ssrBuildDir || resolve(workspaceRoot, 'dist', rootDir, 'ssr');
+  const tsconfigPath = join(ssrOutDir, 'tsconfig.json');
+
+  if (existsSync(tsconfigPath)) return;
+  if (!existsSync(ssrOutDir)) return;
+
+  writeFileSync(
+    tsconfigPath,
+    JSON.stringify(
+      { compilerOptions: { module: 'ESNext', moduleResolution: 'bundler' } },
+      null,
+      2,
+    ),
+    'utf8',
+  );
+}
+
+function ensureVercelFunctionConfig(nitro: any) {
+  if (!isVercelPreset(nitro.options.preset)) return;
+
+  const serverDir = nitro.options.output.serverDir;
+  const configPath = join(serverDir, '.vc-config.json');
+  if (existsSync(configPath)) return;
+
+  mkdirSync(serverDir, { recursive: true });
+  writeFileSync(
+    configPath,
+    JSON.stringify(
+      {
+        handler: 'index.mjs',
+        launcherType: 'Nodejs',
+        shouldAddHelpers: false,
+        supportsResponseStreaming: true,
+        ...nitro.options.vercel?.functions,
+      },
+      null,
+      2,
+    ),
+    'utf8',
+  );
+}
+
+function sanitizeNitroBundlerConfig(bundlerConfig: RollupConfig) {
+  const output = bundlerConfig['output'];
+  if (!output || Array.isArray(output) || typeof output !== 'object') return;
+
+  if ('codeSplitting' in output) {
+    delete (output as Record<string, unknown>)['codeSplitting'];
+  }
+  if ('manualChunks' in output) {
+    delete (output as Record<string, unknown>)['manualChunks'];
+  }
+
+  const VALID_ROLLUP_PLACEHOLDER = /^\[(?:name|hash|format|ext)\]$/;
+  const chunkFileNames = (output as Record<string, unknown>)['chunkFileNames'];
+  if (typeof chunkFileNames === 'function') {
+    const originalFn = chunkFileNames as (...args: unknown[]) => unknown;
+    (output as Record<string, unknown>)['chunkFileNames'] = (
+      ...args: unknown[]
+    ) => {
+      const result = originalFn(...args);
+      if (typeof result !== 'string') return result;
+      return result.replace(/\[[^\]]+\]/g, (match: string) =>
+        VALID_ROLLUP_PLACEHOLDER.test(match)
+          ? match
+          : `_${match.slice(1, -1)}_`,
+      );
+    };
+  }
+}
+
+function appendNoExternals(
+  noExternals: NitroConfig['noExternals'],
+  ...entries: string[]
+): NitroConfig['noExternals'] {
+  if (!noExternals) return entries;
+  return Array.isArray(noExternals)
+    ? [...noExternals, ...entries]
+    : noExternals;
+}
+
+function isEmptyPrerenderRoutes(options?: Options): boolean {
+  if (!options || isArrayWithElements(options?.prerender?.routes)) return false;
+  return !options.prerender?.routes;
+}
+
+function isArrayWithElements<T>(arr: unknown): arr is [T, ...T[]] {
+  return !!(Array.isArray(arr) && arr.length);
 }
