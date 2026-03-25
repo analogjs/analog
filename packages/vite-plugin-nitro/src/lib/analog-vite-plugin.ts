@@ -30,6 +30,7 @@ import { buildServer } from './build-server.js';
 import { buildClientApp, buildSSRApp } from './build-ssr.js';
 import { buildSitemap } from './build-sitemap.js';
 import { getBundleOptionsKey, isRolldown } from './utils/rolldown.js';
+import { pageEndpointsPlugin } from './plugins/page-endpoints.js';
 
 function assetSourceToString(source: string | Uint8Array) {
   return typeof source === 'string'
@@ -347,7 +348,19 @@ export function createAnalogNitroPlugins(
       },
     },
 
-    // ── Plugin 3: nitro/vite (dev server only) ─────────────────
+    // ── Plugin 3: Page endpoints transform (dev SSR) ───────────
+    // In dev mode, Nitro loads .server.ts page files via Vite's
+    // SSR module loader. The pageEndpointsPlugin wraps them into
+    // proper Nitro handlers (they export `load`/`action`, not a
+    // default defineHandler). Only needed during serve — build
+    // mode uses the Rollup plugin registered in the NitroModule.
+    {
+      ...pageEndpointsPlugin(),
+      name: '@analogjs/vite-plugin-nitro-page-endpoints',
+      apply: 'serve' as const,
+    } as Plugin,
+
+    // ── Plugin 4: nitro/vite (dev server only) ─────────────────
     // Nitro's first-party Vite plugins handle dev server, HMR,
     // and preview. Production builds use the closeBundle fallback
     // since nitro/vite's buildApp conflicts with Nx executor flow
