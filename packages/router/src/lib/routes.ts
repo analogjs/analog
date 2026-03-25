@@ -2,7 +2,7 @@ import { UrlSegment } from '@angular/router';
 import type { Route } from '@angular/router';
 import type { UrlMatcher } from '@angular/router';
 
-import type { RouteExport, RouteMeta } from './models';
+import type { DefaultRouteMeta, RouteExport, RouteMeta } from './models';
 import { toRouteConfig } from './route-config';
 import { toMarkdownModule } from './markdown-helpers';
 import { ENDPOINT_EXTENSION } from './constants';
@@ -222,9 +222,12 @@ function toRoutes(rawRoutes: RawRoute[], files: Files, debug = false): Route[] {
                 }
               }
 
-              const routeConfig = toRouteConfig(
+              const routeMeta = mergeRouteJsonLdIntoRouteMeta(
                 m.routeMeta as RouteMeta | undefined,
+                m.routeJsonLd,
               );
+
+              const routeConfig = toRouteConfig(routeMeta);
               const hasRedirect = 'redirectTo' in routeConfig;
               const baseChild = hasRedirect
                 ? {
@@ -277,6 +280,34 @@ function toRoutes(rawRoutes: RawRoute[], files: Files, debug = false): Route[] {
   }
 
   return routes;
+}
+
+function mergeRouteJsonLdIntoRouteMeta(
+  routeMeta: RouteMeta | undefined,
+  routeJsonLd: RouteExport['routeJsonLd'],
+): RouteMeta | undefined {
+  if (!routeJsonLd) {
+    return routeMeta;
+  }
+
+  if (!routeMeta) {
+    return { jsonLd: routeJsonLd };
+  }
+
+  if (isRedirectRouteMeta(routeMeta) || routeMeta.jsonLd) {
+    return routeMeta;
+  }
+
+  return {
+    ...routeMeta,
+    jsonLd: routeJsonLd,
+  };
+}
+
+function isRedirectRouteMeta(
+  routeMeta: RouteMeta,
+): routeMeta is Exclude<RouteMeta, DefaultRouteMeta> {
+  return 'redirectTo' in routeMeta && !!routeMeta.redirectTo;
 }
 
 function sortRawRoutes(rawRoutes: RawRoute[]): void {

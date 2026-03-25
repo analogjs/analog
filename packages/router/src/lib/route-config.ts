@@ -10,6 +10,7 @@ import {
   RouteConfig,
   RouteMeta,
 } from './models';
+import { ROUTE_JSON_LD_KEY, isJsonLdObject } from './json-ld';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
 import { ANALOG_PAGE_ENDPOINTS, ANALOG_META_KEY } from './endpoints';
 import { injectRouteEndpointURL } from './inject-route-endpoint-url';
@@ -20,7 +21,7 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
   }
 
   const defaultMeta: DefaultRouteMeta = (routeMeta ?? {}) as DefaultRouteMeta;
-  const { meta, ...routeConfig } = defaultMeta;
+  const { meta, jsonLd, ...routeConfig } = defaultMeta;
 
   if (Array.isArray(meta)) {
     routeConfig.data = { ...routeConfig.data, [ROUTE_META_TAGS_KEY]: meta };
@@ -28,6 +29,15 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
     routeConfig.resolve = {
       ...routeConfig.resolve,
       [ROUTE_META_TAGS_KEY]: meta,
+    };
+  }
+
+  if (Array.isArray(jsonLd) || isJsonLdObject(jsonLd)) {
+    routeConfig.data = { ...routeConfig.data, [ROUTE_JSON_LD_KEY]: jsonLd };
+  } else if (typeof jsonLd === 'function') {
+    routeConfig.resolve = {
+      ...routeConfig.resolve,
+      [ROUTE_JSON_LD_KEY]: jsonLd,
     };
   }
 
