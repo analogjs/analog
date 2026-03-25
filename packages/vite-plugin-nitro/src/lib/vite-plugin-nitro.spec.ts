@@ -44,7 +44,7 @@ describe('createAnalogNitroPlugins', () => {
     const nitroConfig = calls[calls.length - 1]?.[0] as any;
 
     expect(nitroConfig.virtual['#ANALOG_SSR_RENDERER']).toContain(
-      'import renderer from "/app/src/main.server.ts";',
+      'await import("/app/src/main.server.ts")',
     );
 
     process.env['NODE_ENV'] = originalNodeEnv;

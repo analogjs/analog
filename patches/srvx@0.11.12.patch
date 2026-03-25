@@ -1,0 +1,22 @@
+diff --git a/dist/adapters/node.mjs b/dist/adapters/node.mjs
+index bf860dbe3f2b2103b252d99cf2cac9685589d24f..845af0b189fc893449620240e16f70648b2c50bb 100644
+--- a/dist/adapters/node.mjs
++++ b/dist/adapters/node.mjs
+@@ -717,7 +717,7 @@ function toNodeHandler(handler) {
+ 			req: nodeReq,
+ 			res: nodeRes
+ 		}));
+-		return res instanceof Promise ? res.then((resolvedRes) => sendNodeResponse(nodeRes, resolvedRes)) : sendNodeResponse(nodeRes, res);
++		return (res && typeof res.then === 'function') ? res.then((resolvedRes) => (resolvedRes && typeof resolvedRes.then === 'function') ? resolvedRes.then((r) => sendNodeResponse(nodeRes, r)) : sendNodeResponse(nodeRes, resolvedRes)) : sendNodeResponse(nodeRes, res);
+ 	}
+ 	convertedNodeHandler.__fetchHandler = handler;
+ 	assignFnName(convertedNodeHandler, handler, " (converted to Node handler)");
+@@ -772,7 +772,7 @@ var NodeServer = class {
+ 			});
+ 			request.waitUntil = this.#wait?.waitUntil;
+ 			const res = fetchHandler(request);
+-			return res instanceof Promise ? res.then((resolvedRes) => sendNodeResponse(nodeRes, resolvedRes)) : sendNodeResponse(nodeRes, res);
++			return (res && typeof res.then === 'function') ? res.then((resolvedRes) => (resolvedRes && typeof resolvedRes.then === 'function') ? resolvedRes.then((r) => sendNodeResponse(nodeRes, r)) : sendNodeResponse(nodeRes, resolvedRes)) : sendNodeResponse(nodeRes, res);
+ 		};
+ 		this.node = {
+ 			handler,

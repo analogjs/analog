@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  srvx@0.11.12:
+    hash: 8bc54aebd275f490bc32eb6670c8d2c5b9aacf459a9a42eae91cdbe9331bc2e3
+    path: patches/srvx@0.11.12.patch
+
 importers:
 
   .:
@@ -25120,9 +25125,9 @@ snapshots:
     dependencies:
       uncrypto: 0.1.3
 
-  crossws@0.4.4(srvx@0.11.12):
+  crossws@0.4.4(srvx@0.11.12(patch_hash=8bc54aebd275f490bc32eb6670c8d2c5b9aacf459a9a42eae91cdbe9331bc2e3)):
     optionalDependencies:
-      srvx: 0.11.12
+      srvx: 0.11.12(patch_hash=8bc54aebd275f490bc32eb6670c8d2c5b9aacf459a9a42eae91cdbe9331bc2e3)
 
   crypto-random-string@4.0.0:
     dependencies:
@@ -25875,9 +25880,9 @@ snapshots:
 
   env-runner@0.1.6:
     dependencies:
-      crossws: 0.4.4(srvx@0.11.12)
+      crossws: 0.4.4(srvx@0.11.12(patch_hash=8bc54aebd275f490bc32eb6670c8d2c5b9aacf459a9a42eae91cdbe9331bc2e3))
       httpxy: 0.3.1
-      srvx: 0.11.12
+      srvx: 0.11.12(patch_hash=8bc54aebd275f490bc32eb6670c8d2c5b9aacf459a9a42eae91cdbe9331bc2e3)
 
   environment@1.1.0: {}
 
@@ -26863,12 +26868,12 @@ snapshots:
       ufo: 1.6.3
       uncrypto: 0.1.3
 
-  h3@2.0.1-rc.18(crossws@0.4.4(srvx@0.11.12)):
+  h3@2.0.1-rc.18(crossws@0.4.4(srvx@0.11.12(patch_hash=8bc54aebd275f490bc32eb6670c8d2c5b9aacf459a9a42eae91cdbe9331bc2e3))):
     dependencies:
       rou3: 0.8.1
-      srvx: 0.11.12
+      srvx: 0.11.12(patch_hash=8bc54aebd275f490bc32eb6670c8d2c5b9aacf459a9a42eae91cdbe9331bc2e3)
     optionalDependencies:
-      crossws: 0.4.4(srvx@0.11.12)
+      crossws: 0.4.4(srvx@0.11.12(patch_hash=8bc54aebd275f490bc32eb6670c8d2c5b9aacf459a9a42eae91cdbe9331bc2e3))
 
   hachure-fill@0.5.2: {}
 
@@ -29276,17 +29281,17 @@ snapshots:
   nitro@3.0.260311-beta(chokidar@5.0.0)(dotenv@16.4.7)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.0)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3)):
     dependencies:
       consola: 3.4.2
-      crossws: 0.4.4(srvx@0.11.12)
+      crossws: 0.4.4(srvx@0.11.12(patch_hash=8bc54aebd275f490bc32eb6670c8d2c5b9aacf459a9a42eae91cdbe9331bc2e3))
       db0: 0.3.4
       env-runner: 0.1.6
-      h3: 2.0.1-rc.18(crossws@0.4.4(srvx@0.11.12))
+      h3: 2.0.1-rc.18(crossws@0.4.4(srvx@0.11.12(patch_hash=8bc54aebd275f490bc32eb6670c8d2c5b9aacf459a9a42eae91cdbe9331bc2e3)))
       hookable: 6.1.0
       nf3: 0.3.13
       ocache: 0.1.4
       ofetch: 2.0.0-alpha.3
       ohash: 2.0.11
       rolldown: 1.0.0-rc.11
-      srvx: 0.11.12
+      srvx: 0.11.12(patch_hash=8bc54aebd275f490bc32eb6670c8d2c5b9aacf459a9a42eae91cdbe9331bc2e3)
       unenv: 2.0.0-rc.24
       unstorage: 2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4)(lru-cache@11.2.7)(ofetch@2.0.0-alpha.3)
     optionalDependencies:
@@ -32254,7 +32259,7 @@ snapshots:
 
   srcset@4.0.0: {}
 
-  srvx@0.11.12: {}
+  srvx@0.11.12(patch_hash=8bc54aebd275f490bc32eb6670c8d2c5b9aacf459a9a42eae91cdbe9331bc2e3): {}
 
   ssri@13.0.1:
     dependencies:

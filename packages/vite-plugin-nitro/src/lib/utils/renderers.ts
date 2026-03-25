@@ -33,22 +33,37 @@ export const SERVER_FETCH_FACTORY_SNIPPET = `
 export function ssrRenderer(rendererImport = '#analog/ssr') {
   return `
 import { createFetch } from 'ofetch';
-import { defineHandler, fetchWithEvent } from 'nitro/h3';
-// @ts-ignore
-import renderer from ${JSON.stringify(rendererImport)};
+import { defineHandler, fetchWithEvent, setResponseHeader, getResponseHeader } from 'nitro/h3';
 import template from '#analog/index';
+
+// Capture the native Promise before zone.js (loaded by the Angular SSR entry)
+// patches globalThis.Promise. V8 async functions return native Promises that
+// fail srvx's instanceof check against the patched ZoneAwarePromise.
+const _NativePromise = globalThis.Promise;
+let _renderer;
+
+async function loadRenderer() {
+  if (!_renderer) {
+    _renderer = (await import(${JSON.stringify(rendererImport)})).default;
+    // Restore native Promise after zone.js patches it
+    globalThis.Promise = _NativePromise;
+  }
+  return _renderer;
+}
 
 const normalizeHtmlRequestUrl = (url) =>
   url.replace(/\\/index\\.html(?=$|[?#])/, '/');
 
 export default defineHandler(async (event) => {
-  event.res.headers.set('content-type', 'text/html; charset=utf-8');
-  const noSSR = event.res.headers.get('x-analog-no-ssr');
+  setResponseHeader(event, 'content-type', 'text/html; charset=utf-8');
+  const noSSR = getResponseHeader(event, 'x-analog-no-ssr');
   const requestPath = normalizeHtmlRequestUrl(event.path);
 
   if (noSSR === 'true') {
     return template;
   }
+
+  const renderer = await loadRenderer();
 
   // event.path is the canonical h3 v2 way to access the request URL.
   // event.node?.req and event.node?.res are needed by the Angular SSR renderer
@@ -85,11 +100,11 @@ ${SERVER_FETCH_FACTORY_SNIPPET}
  */
 export function clientRenderer() {
   return `
-import { defineHandler } from 'nitro/h3';
+import { defineHandler, setResponseHeader } from 'nitro/h3';
 import template from '#analog/index';
 
 export default defineHandler(async (event) => {
-  event.res.headers.set('content-type', 'text/html; charset=utf-8');
+  setResponseHeader(event, 'content-type', 'text/html; charset=utf-8');
   return template;
 });
 `;
@@ -115,7 +130,7 @@ export default defineHandler(async (event) => {
  * SSR code makes relative API requests.
  */
 export const apiMiddleware = `
-import { defineHandler, fetchWithEvent, proxyRequest } from 'nitro/h3';
+import { defineHandler, fetchWithEvent, proxyRequest, getRequestHeaders } from 'nitro/h3';
 import { useRuntimeConfig } from 'nitro/runtime-config';
 
 export default defineHandler(async (event) => {
@@ -132,7 +147,7 @@ export default defineHandler(async (event) => {
       !event.path?.endsWith('.xml')
     ) {
       return fetchWithEvent(event, reqUrl, {
-        headers: Object.fromEntries(event.req.headers.entries()),
+        headers: getRequestHeaders(event),
       });
     }
 
