@@ -207,7 +207,7 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
       contentFiles.filter((filename) => canonicalFiles.has(filename)),
     );
     const routeTree = generateRouteTreeDeclaration(manifest, {
-      jsonLdPaths: jsonLdEntries.map((entry) => entry.routePath),
+      jsonLdFiles: jsonLdEntries.map((entry) => entry.sourceFile),
     });
     const output = combineGeneratedModules(
       declaration,

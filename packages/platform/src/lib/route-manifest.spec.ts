@@ -319,8 +319,14 @@ describe('generateRouteManifest', () => {
     ]);
 
     expect(manifest.routes).toHaveLength(3);
-    expect(manifest.routes.find((r) => r.id === '/(auth)')).toBeDefined();
-    expect(manifest.routes.find((r) => r.id === '/(auth)/login')).toBeDefined();
+
+    const authLayout = manifest.routes.find((r) => r.id === '/(auth)')!;
+    const loginRoute = manifest.routes.find((r) => r.id === '/(auth)/login')!;
+
+    expect(authLayout).toBeDefined();
+    expect(loginRoute).toBeDefined();
+    expect(loginRoute.parentId).toBe('/(auth)');
+    expect(authLayout.children).toEqual(['/(auth)/login']);
   });
 
   it('prefers app-local routes over additional/shared route sources', () => {
@@ -410,7 +416,7 @@ describe('generateRouteManifest', () => {
     expect(settingsRoute.parentId).toBe('/users/[id]');
 
     expect(pricingRoute.id).toBe('/(marketing)/pricing');
-    expect(pricingRoute.isGroup).toBe(true);
+    expect(pricingRoute.isGroup).toBe(false);
     expect(pricingRoute.kind).toBe('page');
   });
 
@@ -769,7 +775,10 @@ describe('generateRouteTreeDeclaration', () => {
     );
 
     const output = generateRouteTreeDeclaration(manifest, {
-      jsonLdPaths: ['/', '/users/[id]'],
+      jsonLdFiles: [
+        '/src/app/pages/(home).page.ts',
+        '/src/app/pages/users/[id].page.ts',
+      ],
     });
 
     expect(output).toContain(
@@ -790,7 +799,7 @@ describe('generateRouteTreeDeclaration', () => {
     expect(output).toContain('hasQuerySchema: true');
   });
 
-  it('should mark routes with hasJsonLd based on jsonLdPaths', () => {
+  it('should mark routes with hasJsonLd based on jsonLdFiles', () => {
     const manifest = generateRouteManifest([
       '/src/app/pages/index.page.ts',
       '/src/app/pages/about.page.ts',
@@ -798,7 +807,7 @@ describe('generateRouteTreeDeclaration', () => {
     ]);
 
     const output = generateRouteTreeDeclaration(manifest, {
-      jsonLdPaths: ['/'],
+      jsonLdFiles: ['/src/app/pages/index.page.ts'],
     });
 
     // Home route should have hasJsonLd: true
@@ -808,7 +817,7 @@ describe('generateRouteTreeDeclaration', () => {
     expect(output).toMatch(/id: "\/users\/\[id\]"[\s\S]*?hasJsonLd: false/);
   });
 
-  it('should set all hasJsonLd to false when jsonLdPaths is empty', () => {
+  it('should set all hasJsonLd to false when jsonLdFiles is empty', () => {
     const manifest = generateRouteManifest([
       '/src/app/pages/index.page.ts',
       '/src/app/pages/about.page.ts',

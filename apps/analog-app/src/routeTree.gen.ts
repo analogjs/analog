@@ -2,8 +2,9 @@
 // Do not edit manually
 
 import type { Graph, Thing, WithContext } from 'schema-dts';
-import * as routeModule0 from './app/pages/client/(client).page';
-import * as routeModule1 from './app/pages/products.[productId].page';
+import * as routeModule0 from './app/pages/(home).page';
+import * as routeModule1 from './app/pages/client/(client).page';
+import * as routeModule2 from './app/pages/products.[productId].page';
 
 declare module '@analogjs/router' {
   interface AnalogRouteTable {
@@ -138,7 +139,8 @@ export interface AnalogGeneratedRouteRecord<
 }
 
 export interface AnalogFileRoutesById {
-  "/(auth)": AnalogGeneratedRouteRecord<"/(auth)", "/", "/", null, readonly []>;
+  "/(auth)": AnalogGeneratedRouteRecord<"/(auth)", "/", "/", null, readonly ["/(auth)/sign-up"]>;
+  "/(home)": AnalogGeneratedRouteRecord<"/(home)", "/", "/", null, readonly []>;
   "/about-me": AnalogGeneratedRouteRecord<"/about-me", "about-me", "/about-me", null, readonly []>;
   "/cart": AnalogGeneratedRouteRecord<"/cart", "cart", "/cart", null, readonly []>;
   "/client/(client)": AnalogGeneratedRouteRecord<"/client/(client)", "client", "/client", null, readonly []>;
@@ -148,7 +150,7 @@ export interface AnalogFileRoutesById {
   "/search": AnalogGeneratedRouteRecord<"/search", "search", "/search", null, readonly []>;
   "/server/(server)": AnalogGeneratedRouteRecord<"/server/(server)", "server", "/server", null, readonly []>;
   "/shipping/index": AnalogGeneratedRouteRecord<"/shipping/index", "shipping", "/shipping", null, readonly ["/shipping/[...slug]"]>;
-  "/(auth)/sign-up": AnalogGeneratedRouteRecord<"/(auth)/sign-up", "sign-up", "/sign-up", null, readonly []>;
+  "/(auth)/sign-up": AnalogGeneratedRouteRecord<"/(auth)/sign-up", "sign-up", "/sign-up", "/(auth)", readonly []>;
   "/test": AnalogGeneratedRouteRecord<"/test", "test", "/test", null, readonly []>;
   "/blog/[slug]": AnalogGeneratedRouteRecord<"/blog/[slug]", "blog/[slug]", "/blog/[slug]", null, readonly []>;
   "/greet/[name]": AnalogGeneratedRouteRecord<"/greet/[name]", "greet/[name]", "/greet/[name]", null, readonly []>;
@@ -187,7 +189,7 @@ export const analogRouteTree = {
       path: "/",
       fullPath: "/",
       parentId: null,
-      children: [] as const,
+      children: ["/(auth)/sign-up"] as const,
       sourceFile: "/src/app/pages/(auth).page.ts",
       kind: "page",
       hasParamsSchema: false,
@@ -198,6 +200,22 @@ export const analogRouteTree = {
       isCatchAll: false,
       isOptionalCatchAll: false,
     } satisfies AnalogFileRoutesById["/(auth)"],
+    "/(home)": {
+      id: "/(home)",
+      path: "/",
+      fullPath: "/",
+      parentId: null,
+      children: [] as const,
+      sourceFile: "/src/app/pages/(home).page.ts",
+      kind: "page",
+      hasParamsSchema: false,
+      hasQuerySchema: false,
+      hasJsonLd: true,
+      isIndex: false,
+      isGroup: true,
+      isCatchAll: false,
+      isOptionalCatchAll: false,
+    } satisfies AnalogFileRoutesById["/(home)"],
     "/about-me": {
       id: "/about-me",
       path: "about-me",
@@ -346,7 +364,7 @@ export const analogRouteTree = {
       id: "/(auth)/sign-up",
       path: "sign-up",
       fullPath: "/sign-up",
-      parentId: null,
+      parentId: "/(auth)",
       children: [] as const,
       sourceFile: "/src/app/pages/(auth)/sign-up.page.ts",
       kind: "page",
@@ -354,7 +372,7 @@ export const analogRouteTree = {
       hasQuerySchema: false,
       hasJsonLd: false,
       isIndex: false,
-      isGroup: true,
+      isGroup: false,
       isCatchAll: false,
       isOptionalCatchAll: false,
     } satisfies AnalogFileRoutesById["/(auth)/sign-up"],
@@ -493,6 +511,7 @@ function resolveModuleJsonLd(routeModule: unknown): AnalogJsonLdDocument[] {
 }
 
 export const routeJsonLdManifest = new Map<string, GeneratedJsonLdManifestEntry>([
-  ['/client', { routePath: '/client', sourceFile: '/src/app/pages/client/(client).page.ts', kind: 'module', resolveJsonLd: () => resolveModuleJsonLd(routeModule0) }],
-  ['/products/[productId]', { routePath: '/products/[productId]', sourceFile: '/src/app/pages/products.[productId].page.ts', kind: 'module', resolveJsonLd: () => resolveModuleJsonLd(routeModule1) }],
+  ['/', { routePath: '/', sourceFile: '/src/app/pages/(home).page.ts', kind: 'module', resolveJsonLd: () => resolveModuleJsonLd(routeModule0) }],
+  ['/client', { routePath: '/client', sourceFile: '/src/app/pages/client/(client).page.ts', kind: 'module', resolveJsonLd: () => resolveModuleJsonLd(routeModule1) }],
+  ['/products/[productId]', { routePath: '/products/[productId]', sourceFile: '/src/app/pages/products.[productId].page.ts', kind: 'module', resolveJsonLd: () => resolveModuleJsonLd(routeModule2) }],
 ]);
