@@ -57,6 +57,7 @@ export function createAnalogNitroPlugins(
   let rootDir = '.';
   let savedConfig: UserConfig | undefined;
   let legacyClientSubBuild = false;
+  let closeBundleRunning = false;
 
   const getContext = (): NitroConfigContext => ({
     workspaceRoot,
@@ -201,138 +202,143 @@ export function createAnalogNitroPlugins(
       // When nitro/vite's buildApp doesn't fire (Nx executors),
       // this drives the SSR → Nitro build pipeline.
       async closeBundle() {
-        if (isTest || legacyClientSubBuild) return;
+        if (isTest || legacyClientSubBuild || closeBundleRunning) return;
 
-        const ssrBuild = (this as any).environment?.name === 'ssr';
-        if (ssrBuild) return;
+        // Only run from the client environment (or no environment).
+        // Vite 8 fires closeBundle per environment — skip SSR, nitro, etc.
+        const envName = (this as any).environment?.name;
+        if (envName && envName !== 'client') return;
 
-        const nitroOutputPath = resolve(
-          workspaceRoot,
-          'dist',
-          rootDir,
-          'analog/server/index.mjs',
-        );
-        if (existsSync(nitroOutputPath)) return;
+        closeBundleRunning = true;
+        try {
+          const nitroOutputPath = resolve(
+            workspaceRoot,
+            'dist',
+            rootDir,
+            'analog/server/index.mjs',
+          );
+          if (existsSync(nitroOutputPath)) return;
 
-        // Resolve client output path
-        const resolvedClientOutputPath = savedConfig?.build?.outDir
-          ? normalizePath(
-              resolve(workspaceRoot, rootDir, savedConfig.build.outDir),
-            )
-          : normalizePath(resolve(workspaceRoot, 'dist', rootDir, 'client'));
+          // Resolve client output path
+          const resolvedClientOutputPath = savedConfig?.build?.outDir
+            ? normalizePath(
+                resolve(workspaceRoot, rootDir, savedConfig.build.outDir),
+              )
+            : normalizePath(resolve(workspaceRoot, 'dist', rootDir, 'client'));
 
-        const indexHtmlPath = resolve(resolvedClientOutputPath, 'index.html');
-        if (
-          !existsSync(indexHtmlPath) &&
-          typeof state.clientIndexHtml !== 'string'
-        ) {
-          legacyClientSubBuild = true;
-          try {
-            await buildClientApp(savedConfig || {}, options);
-          } finally {
-            legacyClientSubBuild = false;
+          const indexHtmlPath = resolve(resolvedClientOutputPath, 'index.html');
+          if (
+            !existsSync(indexHtmlPath) &&
+            typeof state.clientIndexHtml !== 'string'
+          ) {
+            legacyClientSubBuild = true;
+            try {
+              await buildClientApp(savedConfig || {}, options);
+            } finally {
+              legacyClientSubBuild = false;
+            }
           }
-        }
 
-        if (typeof state.clientIndexHtml !== 'string') {
-          const htmlPath = resolve(resolvedClientOutputPath, 'index.html');
-          if (existsSync(htmlPath)) {
-            state.clientIndexHtml = readFileSync(htmlPath, 'utf8');
+          if (typeof state.clientIndexHtml !== 'string') {
+            const htmlPath = resolve(resolvedClientOutputPath, 'index.html');
+            if (existsSync(htmlPath)) {
+              state.clientIndexHtml = readFileSync(htmlPath, 'utf8');
+            }
           }
-        }
 
-        // Resolve prerender routes
-        const { resolveAnalogPrerenderRoutes } =
-          await import('./analog-nitro-module.js');
-        await resolveAnalogPrerenderRoutes(
-          options,
-          state,
-          workspaceRoot,
-          rootDir,
-        );
+          // Resolve prerender routes
+          const { resolveAnalogPrerenderRoutes } =
+            await import('./analog-nitro-module.js');
+          await resolveAnalogPrerenderRoutes(
+            options,
+            state,
+            workspaceRoot,
+            rootDir,
+          );
 
-        // Build Nitro config
-        const ctx = getContext();
-        let nitroConfig = buildNitroConfig(options, nitroOptions, ctx);
-        nitroConfig = mergeConfig(
-          nitroConfig,
-          nitroOptions as Record<string, any>,
-        );
+          // Build Nitro config
+          const ctx = getContext();
+          let nitroConfig = buildNitroConfig(options, nitroOptions, ctx);
+          nitroConfig = mergeConfig(
+            nitroConfig,
+            nitroOptions as Record<string, any>,
+          );
 
-        // Register client HTML virtual module
-        nitroConfig.virtual = nitroConfig.virtual || {};
-        nitroConfig.virtual['#analog/index'] = `export default ${JSON.stringify(
-          state.clientIndexHtml || '',
-        )};`;
+          // Register client HTML virtual module
+          nitroConfig.virtual = nitroConfig.virtual || {};
+          nitroConfig.virtual['#analog/index'] =
+            `export default ${JSON.stringify(state.clientIndexHtml || '')};`;
 
-        // Build SSR
-        if (options?.ssr || state.resolvedPrerenderRoutes.length > 0) {
-          console.log('Building SSR application...');
-          await buildSSRApp(savedConfig || {}, options);
-        }
+          // Build SSR
+          if (options?.ssr || state.resolvedPrerenderRoutes.length > 0) {
+            console.log('Building SSR application...');
+            await buildSSRApp(savedConfig || {}, options);
+          }
 
-        // Set SSR entry alias
-        const ssrOutDir =
-          options?.ssrBuildDir ||
-          resolve(workspaceRoot, 'dist', rootDir, 'ssr');
-        if (options?.ssr || state.resolvedPrerenderRoutes.length > 0) {
-          const candidates = [
-            resolve(ssrOutDir, 'main.server.mjs'),
-            resolve(ssrOutDir, 'main.server.js'),
+          // Set SSR entry alias
+          const ssrOutDir =
+            options?.ssrBuildDir ||
+            resolve(workspaceRoot, 'dist', rootDir, 'ssr');
+          if (options?.ssr || state.resolvedPrerenderRoutes.length > 0) {
+            const candidates = [
+              resolve(ssrOutDir, 'main.server.mjs'),
+              resolve(ssrOutDir, 'main.server.js'),
+            ];
+            const ssrEntry = candidates.find((p) => existsSync(p));
+            if (ssrEntry) {
+              nitroConfig.alias = {
+                ...nitroConfig.alias,
+                '#analog/ssr': normalizePath(ssrEntry),
+              };
+            }
+          }
+
+          // Re-register HTML after SSR build
+          nitroConfig.virtual['#analog/index'] =
+            `export default ${JSON.stringify(state.clientIndexHtml || '')};`;
+
+          nitroConfig.publicAssets = [
+            { dir: normalizePath(resolvedClientOutputPath), maxAge: 0 },
           ];
-          const ssrEntry = candidates.find((p) => existsSync(p));
-          if (ssrEntry) {
-            nitroConfig.alias = {
-              ...nitroConfig.alias,
-              '#analog/ssr': normalizePath(ssrEntry),
-            };
+          if (state.resolvedPrerenderRoutes.length > 0) {
+            nitroConfig.prerender = nitroConfig.prerender || {};
+            nitroConfig.prerender.routes = state.resolvedPrerenderRoutes;
           }
-        }
-
-        // Re-register HTML after SSR build
-        nitroConfig.virtual['#analog/index'] = `export default ${JSON.stringify(
-          state.clientIndexHtml || '',
-        )};`;
-
-        nitroConfig.publicAssets = [
-          { dir: normalizePath(resolvedClientOutputPath), maxAge: 0 },
-        ];
-        if (state.resolvedPrerenderRoutes.length > 0) {
-          nitroConfig.prerender = nitroConfig.prerender || {};
-          nitroConfig.prerender.routes = state.resolvedPrerenderRoutes;
-        }
-        if (options?.ssr || state.resolvedPrerenderRoutes.length > 0) {
-          nitroConfig.moduleSideEffects = [
-            'zone.js/node',
-            'zone.js/fesm2015/zone-node',
-          ];
-        }
-
-        await buildServer(options, nitroConfig, state.routeSourceFiles);
-
-        if (
-          nitroConfig.prerender?.routes?.length &&
-          options?.prerender?.sitemap
-        ) {
-          console.log('Building Sitemap...');
-          const publicDir = nitroConfig.output?.publicDir;
-          if (publicDir) {
-            await buildSitemap(
-              savedConfig || {},
-              options.prerender.sitemap,
-              state.sitemapRoutes.length
-                ? state.sitemapRoutes
-                : nitroConfig.prerender.routes,
-              publicDir,
-              state.routeSitemaps,
-              { apiPrefix: options?.apiPrefix || 'api' },
-            );
+          if (options?.ssr || state.resolvedPrerenderRoutes.length > 0) {
+            nitroConfig.moduleSideEffects = [
+              'zone.js/node',
+              'zone.js/fesm2015/zone-node',
+            ];
           }
-        }
 
-        console.log(
-          `\n\nThe '@analogjs/platform' server has been successfully built.`,
-        );
+          await buildServer(options, nitroConfig, state.routeSourceFiles);
+
+          if (
+            nitroConfig.prerender?.routes?.length &&
+            options?.prerender?.sitemap
+          ) {
+            console.log('Building Sitemap...');
+            const publicDir = nitroConfig.output?.publicDir;
+            if (publicDir) {
+              await buildSitemap(
+                savedConfig || {},
+                options.prerender.sitemap,
+                state.sitemapRoutes.length
+                  ? state.sitemapRoutes
+                  : nitroConfig.prerender.routes,
+                publicDir,
+                state.routeSitemaps,
+                { apiPrefix: options?.apiPrefix || 'api' },
+              );
+            }
+          }
+
+          console.log(
+            `\n\nThe '@analogjs/platform' server has been successfully built.`,
+          );
+        } finally {
+          closeBundleRunning = false;
+        }
       },
     } as Plugin,
 
