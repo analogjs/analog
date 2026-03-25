@@ -12,7 +12,7 @@ import {
   prepare,
   prerender,
 } from 'nitro/builder';
-import { nitro as nitroVitePlugin } from 'nitro/vite';
+import { nitro as nitroVitePlugin, type NitroPluginConfig } from 'nitro/vite';
 import * as vite from 'vite';
 import type { Plugin, UserConfig } from 'vite';
 import { mergeConfig, normalizePath } from 'vite';
@@ -74,11 +74,11 @@ export function createAnalogNitroPlugins(
   });
 
   // Build the Nitro config and merge with user options
-  const buildConfig = () => {
+  const buildConfig = (): NitroPluginConfig => {
     const ctx = getContext();
     let config = buildNitroConfig(options, nitroOptions, ctx);
     config = mergeConfig(config, nitroOptions as Record<string, any>);
-    return config;
+    return config as NitroPluginConfig;
   };
 
   // Rolldown code splitting config from user options
@@ -208,9 +208,16 @@ export function createAnalogNitroPlugins(
         // If the Nitro server output already exists, buildApp ran
         if (existsSync(nitroOutputDir)) return;
 
-        const clientOutDir = options?.ssrBuildDir
-          ? resolve(workspaceRoot, options.ssrBuildDir, '..', 'client')
-          : resolve(workspaceRoot, 'dist', rootDir, 'client');
+        // Locate client build output — check both legacy (client/)
+        // and nitro/vite (analog/public/) output locations
+        const candidateClientDirs = [
+          resolve(workspaceRoot, 'dist', rootDir, 'client'),
+          resolve(workspaceRoot, 'dist', rootDir, 'analog/public'),
+        ];
+        const clientOutDir =
+          candidateClientDirs.find((dir) =>
+            existsSync(resolve(dir, 'index.html')),
+          ) || candidateClientDirs[0];
         const clientIndexPath = resolve(clientOutDir, 'index.html');
 
         // Need client build to exist
@@ -225,7 +232,7 @@ export function createAnalogNitroPlugins(
         const ssrOutDir =
           options?.ssrBuildDir ||
           resolve(workspaceRoot, 'dist', rootDir, 'ssr');
-        if (options?.ssr || state.sitemapRoutes.length > 0) {
+        if (options?.ssr || state.resolvedPrerenderRoutes.length > 0) {
           console.log('Building SSR application...');
           const ssrConfig = mergeConfig(savedConfig || {}, {
             build: {
@@ -260,11 +267,18 @@ export function createAnalogNitroPlugins(
           state.clientIndexHtml,
         )};`;
 
-        // Set SSR entry alias
-        if (options?.ssr || (nitroConfig.prerender?.routes?.length ?? 0) > 0) {
+        // Set SSR entry alias — check both legacy (ssr/) and
+        // nitro/vite (.nitro/vite/services/ssr/) output locations
+        if (options?.ssr || state.resolvedPrerenderRoutes.length > 0) {
           const candidates = [
             resolve(ssrOutDir, 'main.server.mjs'),
             resolve(ssrOutDir, 'main.server.js'),
+            resolve(
+              workspaceRoot,
+              'dist',
+              rootDir,
+              '.nitro/vite/services/ssr/index.mjs',
+            ),
           ];
           const ssrEntry = candidates.find((p) => existsSync(p));
           if (ssrEntry) {
@@ -280,8 +294,14 @@ export function createAnalogNitroPlugins(
           { dir: normalizePath(clientOutDir), maxAge: 0 },
         ];
 
+        // Apply resolved prerender routes from the NitroModule
+        if (state.resolvedPrerenderRoutes.length > 0) {
+          nitroConfig.prerender = nitroConfig.prerender || {};
+          nitroConfig.prerender.routes = state.resolvedPrerenderRoutes;
+        }
+
         // Add externals and bundler sanitization
-        if (options?.ssr || (nitroConfig.prerender?.routes?.length ?? 0) > 0) {
+        if (options?.ssr || state.resolvedPrerenderRoutes.length > 0) {
           nitroConfig.moduleSideEffects = [
             'zone.js/node',
             'zone.js/fesm2015/zone-node',

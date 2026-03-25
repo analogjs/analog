@@ -161,7 +161,9 @@ const isCloudflarePreset = (buildPreset: string | undefined) =>
     (buildPreset.toLowerCase().includes('cloudflare-pages') ||
       buildPreset.toLowerCase().includes('cloudflare_pages')));
 
-export const isNetlifyPreset = (buildPreset: string | undefined) =>
+export const isNetlifyPreset = (
+  buildPreset: string | undefined,
+): string | boolean | undefined =>
   process.env['NETLIFY'] ||
   (buildPreset && buildPreset.toLowerCase().includes('netlify'));
 

@@ -60,6 +60,7 @@ interface NitroModule {
 export interface AnalogBuildState {
   clientIndexHtml?: string;
   rootDir: string;
+  resolvedPrerenderRoutes: string[];
   sitemapRoutes: string[];
   routeSitemaps: Record<
     string,
@@ -71,6 +72,7 @@ export interface AnalogBuildState {
 export function createAnalogBuildState(): AnalogBuildState {
   return {
     rootDir: '.',
+    resolvedPrerenderRoutes: [],
     sitemapRoutes: [],
     routeSitemaps: {},
     routeSourceFiles: {},
@@ -241,6 +243,7 @@ export function analogNitroModule(
         name: 'analog-index-html-virtual',
         resolveId(id: string) {
           if (id === '#analog/index') return '\0#analog/index';
+          return undefined;
         },
         load(id: string) {
           if (id !== '\0#analog/index') return;
@@ -519,6 +522,9 @@ async function resolveAndRegisterPrerenderRoutes(
     hasExplicitPrerenderRoutes || resolvedPrerenderRoutes.length
       ? resolvedPrerenderRoutes
       : (nitro.options.prerender.routes ?? []);
+
+  // Store resolved routes in shared state for the closeBundle fallback
+  state.resolvedPrerenderRoutes = nitro.options.prerender.routes;
 }
 
 function resolveBuiltSsrEntryPath(ssrOutDir: string) {
