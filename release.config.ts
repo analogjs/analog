@@ -145,7 +145,6 @@ export default {
     [
       '@semantic-release/exec',
       {
-        prepareCmd: 'pnpm install --lockfile-only',
         publishCmd: `pnpm build:release && RELEASE_TAG=${tag} ./tools/publish.sh`,
       },
     ],
