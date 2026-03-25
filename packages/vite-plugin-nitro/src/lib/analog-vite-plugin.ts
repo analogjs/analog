@@ -253,6 +253,17 @@ export function createAnalogNitroPlugins(
           await vite.build(ssrConfig);
         }
 
+        // Resolve prerender routes (NitroModule setup doesn't run for
+        // build-only mode since nitro/vite is restricted to serve)
+        const { resolveAnalogPrerenderRoutes } =
+          await import('./analog-nitro-module.js');
+        await resolveAnalogPrerenderRoutes(
+          options,
+          state,
+          workspaceRoot,
+          rootDir,
+        );
+
         // Build Nitro server
         const ctx = getContext();
         let nitroConfig = buildNitroConfig(options, nitroOptions, ctx);
@@ -376,9 +387,17 @@ export function createAnalogNitroPlugins(
       },
     },
 
-    // ── Plugin 3: nitro/vite ─────────────────────────────────────
-    // Spread Nitro's first-party Vite plugins. They handle instance
-    // creation, dev server, build orchestration, HMR, and preview.
-    ...(isTest ? [] : (nitroVitePlugin(buildConfig()) as Plugin[])),
+    // ── Plugin 3: nitro/vite (dev server only) ─────────────────
+    // Spread Nitro's first-party Vite plugins for dev server, HMR,
+    // and preview. Production builds use the closeBundle fallback
+    // to avoid conflicts with Nx executor output management.
+    ...(isTest
+      ? []
+      : (nitroVitePlugin(buildConfig()) as Plugin[]).map((p) => ({
+          ...p,
+          // Skip nitro/vite's build orchestration during production
+          // builds — the closeBundle fallback handles it instead.
+          apply: 'serve' as const,
+        }))),
   ];
 }

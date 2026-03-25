@@ -644,6 +644,113 @@ function isArrayWithElements<T>(arr: unknown): arr is [T, ...T[]] {
 }
 
 /**
+ * Resolves prerender routes into the shared build state.
+ * Used by the closeBundle fallback when the NitroModule's setup()
+ * doesn't run (build-only mode with nitro/vite restricted to serve).
+ */
+export async function resolveAnalogPrerenderRoutes(
+  options: Options | undefined,
+  state: AnalogBuildState,
+  workspaceRoot: string,
+  rootDir: string,
+): Promise<void> {
+  if (state.resolvedPrerenderRoutes.length > 0) return;
+
+  const apiPrefix = `/${options?.apiPrefix || 'api'}`;
+
+  if (!options?.prerender) {
+    if (isEmptyPrerenderRoutes(options)) {
+      state.resolvedPrerenderRoutes = ['/'];
+    }
+    return;
+  }
+
+  let routes: (
+    | string
+    | PrerenderContentDir
+    | PrerenderRouteConfig
+    | undefined
+  )[] = [];
+
+  const prerenderRoutes = options.prerender.routes;
+  const hasExplicitPrerenderRoutes =
+    typeof prerenderRoutes === 'function' || Array.isArray(prerenderRoutes);
+
+  if (isArrayWithElements<string | PrerenderContentDir>(prerenderRoutes)) {
+    routes = prerenderRoutes;
+  } else if (typeof prerenderRoutes === 'function') {
+    routes = await prerenderRoutes();
+  }
+
+  const resolved = routes.reduce<string[]>((prev, current) => {
+    if (!current) return prev;
+
+    if (typeof current === 'string') {
+      prev.push(current);
+      state.sitemapRoutes.push(current);
+      return prev;
+    }
+
+    if ('route' in current) {
+      if (current.sitemap) {
+        state.routeSitemaps[current.route] = current.sitemap;
+      }
+      if (current.outputSourceFile) {
+        const sourcePath = resolve(
+          workspaceRoot,
+          rootDir,
+          current.outputSourceFile,
+        );
+        state.routeSourceFiles[current.route] = readFileSync(
+          sourcePath,
+          'utf8',
+        );
+      }
+      prev.push(current.route);
+      state.sitemapRoutes.push(current.route);
+      if ('staticData' in current) {
+        prev.push(`${apiPrefix}/_analog/pages/${current.route}`);
+      }
+      return prev;
+    }
+
+    const affectedFiles: PrerenderContentFile[] =
+      getMatchingContentFilesWithFrontMatter(
+        workspaceRoot,
+        rootDir,
+        current.contentDir,
+      );
+
+    affectedFiles.forEach((f) => {
+      const result = current.transform(f);
+      if (result) {
+        if (current.sitemap) {
+          state.routeSitemaps[result] =
+            typeof current.sitemap === 'function'
+              ? current.sitemap(f)
+              : current.sitemap;
+        }
+        if (current.outputSourceFile) {
+          const sourceContent = current.outputSourceFile(f);
+          if (sourceContent) {
+            state.routeSourceFiles[result] = sourceContent;
+          }
+        }
+        prev.push(result);
+        state.sitemapRoutes.push(result);
+        if ('staticData' in current) {
+          prev.push(`${apiPrefix}/_analog/pages/${result}`);
+        }
+      }
+    });
+    return prev;
+  }, []);
+
+  state.resolvedPrerenderRoutes =
+    hasExplicitPrerenderRoutes || resolved.length ? resolved : ['/'];
+}
+
+/**
  * Registers rollup:before hooks for bundler config sanitization and
  * externalization on a Nitro instance. Used by the closeBundle fallback
  * since the NitroModule's setup() only runs on the nitro/vite instance.
