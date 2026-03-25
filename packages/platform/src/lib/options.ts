@@ -2,12 +2,20 @@ import type { PluginOptions } from '@analogjs/vite-plugin-angular';
 import type { NitroConfig, PrerenderRoute } from 'nitro/types';
 import type {
   SitemapConfig,
+  SitemapEntry,
+  SitemapExcludeRule,
+  SitemapPriority,
+  SitemapRouteDefinition,
+  SitemapRouteInput,
+  SitemapRouteSource,
+  SitemapTransform,
   PrerenderContentDir,
   PrerenderContentFile,
+  PrerenderSitemapConfig,
   PrerenderRouteConfig,
 } from '@analogjs/vite-plugin-nitro';
 
-import { ContentPluginOptions } from './content-plugin.js';
+import type { ContentPluginOptions } from './content-plugin.js';
 
 declare module 'nitro/types' {
   interface NitroRouteConfig {
@@ -49,11 +57,20 @@ export interface Options {
   entryServer?: string;
   /**
    * Pass configuration options to the internal `@analogjs/vite-plugin-angular`
-   * plugin. Set to false to disable the internal vite plugin.
+   * plugin. Set to `false` to disable the internal vite plugin (e.g. when
+   * using an alternative compiler like `@oxc-angular/vite`).
    *
    * `vite.build` uses Vite's native config shape and is forwarded to the
    * internal Nitro/Vite build pipeline, while the remaining fields are passed
    * to `@analogjs/vite-plugin-angular`.
+   *
+   * When `false`, the following top-level options are ignored because they
+   * are only forwarded to the internal Angular plugin: `jit`,
+   * `disableTypeChecking`, `liveReload`, `inlineStylesExtension`,
+   * `fileReplacements`, and `include`.
+   *
+   * Use this to configure the embedded Angular integration itself, not as the
+   * primary home for Analog-owned experimental features.
    */
   vite?: PluginOptions | false;
   nitro?: NitroConfig;
@@ -101,6 +118,85 @@ export interface Options {
    * File replacements
    */
   fileReplacements?: PluginOptions['fileReplacements'];
+  /**
+   * Experimental features. These APIs are subject to change.
+   *
+   * `@analogjs/platform` is the default rollout and orchestration surface for
+   * Analog-owned experiments. These flags may delegate to dedicated feature
+   * plugins or forward options into lower-level integrations while preserving
+   * a single Analog-first authoring surface.
+   */
+  experimental?: {
+    /**
+     * Use Angular's experimental compilation API.
+     *
+     * This is forwarded to `@analogjs/vite-plugin-angular`'s
+     * `experimental.useAngularCompilationAPI`.
+     *
+     * Also accepted at `vite.experimental.useAngularCompilationAPI`
+     * for backwards compatibility.
+     *
+     * Has no effect when `vite` is set to `false`.
+     */
+    useAngularCompilationAPI?: boolean;
+
+    /**
+     * Enable typed route table generation for type-safe navigation.
+     *
+     * When enabled, `@analogjs/platform` generates a single route module
+     * that augments `AnalogRouteTable` with typed params and query for each
+     * file-based route. JSON-LD manifest generation is configured on the same
+     * object so both codegen features share one generated file.
+     *
+     * - `true` — generates `src/routeTree.gen.ts` with `routeJsonLdManifest`
+     * - `TypedRouterOptions` — customize output path or disable just the
+     *   JSON-LD manifest piece
+     *
+     * Unlocks type-safe usage of:
+     * - `routePath()` — build route link objects for `[routerLink]`
+     * - `injectNavigate()` — typed navigation
+     * - `injectParams(from)` — typed params signal
+     * - `injectQuery(from)` — typed query signal
+     *
+     * Inspired by TanStack Router's `routeTree.gen.ts` codegen.
+     */
+    typedRouter?: boolean | TypedRouterOptions;
+  };
 }
 
-export { PrerenderContentDir, PrerenderContentFile };
+export interface TypedRouterOptions {
+  /**
+   * Output path for the single generated route module,
+   * relative to the app root.
+   *
+   * @default 'src/routeTree.gen.ts'
+   */
+  outFile?: string;
+  /**
+   * Include generated `routeJsonLdManifest` data in the generated route file.
+   *
+   * @default true
+   */
+  jsonLdManifest?: boolean;
+  /**
+   * Fail production builds after regenerating a stale checked-in route file.
+   * Development and watch mode continue to update the file automatically.
+   *
+   * @default true
+   */
+  verifyOnBuild?: boolean;
+}
+
+export type {
+  PrerenderContentDir,
+  PrerenderContentFile,
+  PrerenderSitemapConfig,
+  SitemapConfig,
+  SitemapEntry,
+  SitemapExcludeRule,
+  SitemapPriority,
+  SitemapRouteDefinition,
+  SitemapRouteInput,
+  SitemapRouteSource,
+  SitemapTransform,
+};

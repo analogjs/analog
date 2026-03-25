@@ -10,6 +10,7 @@ import { clearClientPageEndpointsPlugin } from './clear-client-page-endpoint.js'
 import { depsPlugin } from './deps-plugin.js';
 import { injectHTMLPlugin } from './ssr/inject-html-plugin.js';
 import { serverModePlugin } from '../server-mode-plugin.js';
+import { routeGenerationPlugin } from './route-generation-plugin.js';
 
 // Bridge Plugin types from external @analogjs packages that resolve a different vite instance
 function externalPlugins(plugins: unknown): Plugin[] {
@@ -18,10 +19,14 @@ function externalPlugins(plugins: unknown): Plugin[] {
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+  const viteOptions = opts?.vite === false ? undefined : opts?.vite;
   const { ...platformOptions } = {
     ssr: true,
     ...opts,
   };
+  const useAngularCompilationAPI =
+    platformOptions.experimental?.useAngularCompilationAPI ??
+    viteOptions?.experimental?.useAngularCompilationAPI;
   let nitroOptions = platformOptions?.nitro;
 
   if (nitroOptions?.routeRules) {
@@ -53,6 +58,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
       : []),
     ...(!isTest ? depsPlugin(platformOptions) : []),
     ...routerPlugin(platformOptions),
+    routeGenerationPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),
     ...(opts?.vite === false
       ? []
@@ -60,7 +66,9 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
           angular({
             jit: platformOptions.jit,
             workspaceRoot: platformOptions.workspaceRoot,
-            disableTypeChecking: platformOptions.disableTypeChecking ?? false,
+            // Let the Angular plugin keep its own dev-friendly default unless the
+            // app explicitly opts into stricter serve-time diagnostics.
+            disableTypeChecking: platformOptions.disableTypeChecking,
             include: [
               ...(platformOptions.include ?? []),
               ...(platformOptions.additionalPagesDirs ?? []).map(
@@ -71,7 +79,11 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
             liveReload: platformOptions.liveReload,
             inlineStylesExtension: platformOptions.inlineStylesExtension,
             fileReplacements: platformOptions.fileReplacements,
-            ...(opts?.vite ?? {}),
+            ...(viteOptions ?? {}),
+            experimental: {
+              ...(viteOptions?.experimental ?? {}),
+              useAngularCompilationAPI,
+            },
           }),
         )),
     ...serverModePlugin(),
