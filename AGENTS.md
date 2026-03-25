@@ -48,21 +48,23 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - **Vite config:** each app has its own `vite.config.ts` (see `apps/analog-app/vite.config.ts` for advanced AnalogJS/Vite usage)
 - **Release:** Automated with semantic-release through CI, see `release.config.ts` and `tools/publish.sh`
 
-## Packages → Commit Scopes
+## Packages
 
-| Directory                      | npm Package                     | Commit Scope          |
-| ------------------------------ | ------------------------------- | --------------------- |
-| `packages/platform`            | `@analogjs/platform`            | `platform`            |
-| `packages/router`              | `@analogjs/router`              | `router`              |
-| `packages/content`             | `@analogjs/content`             | `content`             |
-| `packages/content-plugin`      | `@analogjs/content-plugin`      | `content-plugin`      |
-| `packages/vite-plugin-angular` | `@analogjs/vite-plugin-angular` | `vite-plugin-angular` |
-| `packages/vite-plugin-nitro`   | `@analogjs/vite-plugin-nitro`   | `vite-plugin-nitro`   |
-| `packages/vitest-angular`      | `@analogjs/vitest-angular`      | `vitest-angular`      |
-| `packages/nx-plugin`           | `@analogjs/nx-plugin`           | `nx-plugin`           |
-| `packages/create-analog`       | `create-analog`                 | `create-analog`       |
-| `packages/storybook-angular`   | `@analogjs/storybook-angular`   | `storybook-angular`   |
-| `packages/astro-angular`       | `@analogjs/astro-angular`       | `astro-angular`       |
+| Directory                            | npm Package                     | Commit Scope          | Purpose                                                                      | Boundary                                                                                                                                     |
+| ------------------------------------ | ------------------------------- | --------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/platform`                  | `@analogjs/platform`            | `platform`            | Main Analog meta-framework and default `analog()` facade.                    | Orchestrates Angular, Nitro, routes, content, experiments, and route-generation internals; should remain the build-time integration surface. |
+| `packages/router`                    | `@analogjs/router`              | `router`              | Angular-facing file router and runtime routing APIs.                         | Owns route runtime behavior, navigation helpers, and route contracts; should not own Vite/build orchestration or codegen internals.          |
+| `packages/content`                   | `@analogjs/content`             | `content`             | Markdown/content rendering, frontmatter, and content resources.              | Owns content-specific behavior and typing; should not become the generic owner of routing or platform concerns.                              |
+| `packages/content-plugin`            | `@analogjs/content-plugin`      | `content-plugin`      | Internal helper package for content-related build integration.               | Keep narrowly focused on content build/plugin plumbing; avoid turning it into a second public content API surface.                           |
+| `packages/vite-plugin-angular`       | `@analogjs/vite-plugin-angular` | `vite-plugin-angular` | Dedicated Angular-on-Vite integration.                                       | Owns Angular compilation/dev-server/build integration for Vite; should not own Analog routing/content/framework policy.                      |
+| `packages/vite-plugin-angular-tools` | n/a                             | n/a                   | Internal helpers for `vite-plugin-angular`.                                  | Keep internal/tooling-scoped; no framework-level authoring APIs here.                                                                        |
+| `packages/vite-plugin-nitro`         | `@analogjs/vite-plugin-nitro`   | `vite-plugin-nitro`   | Dedicated Nitro integration for Analog SSR, prerendering, and server routes. | Owns Nitro-facing build/runtime wiring; should not own the public Angular routing model.                                                     |
+| `packages/vitest-angular`            | `@analogjs/vitest-angular`      | `vitest-angular`      | Angular + Vitest builder/integration package.                                | Owns test runner integration and setup experience; should not own application runtime concerns.                                              |
+| `packages/vitest-angular-tools`      | n/a                             | n/a                   | Internal helpers for `vitest-angular`.                                       | Keep internal and test-tooling-only.                                                                                                         |
+| `packages/nx-plugin`                 | `@analogjs/nx-plugin`           | `nx-plugin`           | Nx generators/executors for Analog workflows.                                | Owns workspace tooling and code generation; should not contain framework runtime behavior.                                                   |
+| `packages/create-analog`             | `create-analog`                 | `create-analog`       | Scaffolding CLI and starter templates.                                       | Owns project creation and templates only; should not own reusable runtime/framework logic.                                                   |
+| `packages/storybook-angular`         | `@analogjs/storybook-angular`   | `storybook-angular`   | Storybook integration for Angular + Vite.                                    | Owns Storybook builder/preset/testing hooks; should not become a general app build layer.                                                    |
+| `packages/astro-angular`             | `@analogjs/astro-angular`       | `astro-angular`       | Astro integration for rendering Angular components inside Astro.             | Owns Astro-specific interop; should stay separate from core Analog platform behavior.                                                        |
 
 ## Contribution Policy
 
@@ -131,6 +133,23 @@ Projects with caching explicitly disabled (`"cache": false` on their build targe
 - Always run `pnpm i` before building if `pnpm-lock.yaml` has changed
 - Git hooks are in `.githooks/` (not `.husky/`), configured via `git config core.hookspath .githooks`
 - The `prepare` script sets up git hooks — runs automatically after `pnpm i`
+
+## CI Failure Debugging
+
+When a PR has failing GitHub Actions checks, use this workflow to diagnose and fix:
+
+1. **Find the failed run** — given a PR URL (e.g., `https://github.com/analogjs/analog/pull/NUMBER`), fetch the PR checks page to identify failing workflow runs and their run IDs:
+   - WebFetch `https://github.com/analogjs/analog/pull/NUMBER/checks` to find run IDs
+   - WebFetch `https://github.com/analogjs/analog/actions/runs/RUN_ID` to list job names and statuses
+   - WebFetch `https://github.com/analogjs/analog/actions/runs/RUN_ID/job/JOB_ID` to get error details from a specific failed job
+
+2. **Reproduce locally** — run the failing target locally to get full error output:
+   - Lint: `pnpm nx run-many -t lint`
+   - Unit tests: `pnpm nx run-many -t test` or `pnpm nx run <project>:test` for a specific project
+   - Build: `pnpm nx run-many -t build`
+   - E2E: `pnpm nx run <project>:e2e`
+
+3. **Fix and verify** — after fixing, re-run the specific failing targets locally before pushing.
 
 ## Integration Points
 

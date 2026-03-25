@@ -18,10 +18,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx nx serve-nitro analog-app',
+    command: 'node dist/apps/analog-app/analog/server/index.mjs',
     url: 'http://localhost:43000',
     reuseExistingServer: !process.env['CI'],
     timeout: 120_000,
     cwd: '../..',
+    env: { PORT: '43000' },
   },
 });
