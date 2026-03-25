@@ -66,7 +66,7 @@ Next, go to [running tests](#running-tests)
 
 To add Vitest manually, install the necessary packages:
 
-If your app uses `analog({ vite: false })` with a replacement Angular compiler, keep using `@analogjs/vitest-angular` for test setup, but follow [Using an Alternative Angular Compiler](../../guides/alternative-angular-compiler.md) for the app's Vite compiler configuration.
+If your app uses `analog({ vite: false })` with a replacement Angular compiler, keep using `@analogjs/vitest-angular` for test setup.
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">

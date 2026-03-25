@@ -211,11 +211,6 @@ const sidebars = {
         },
         {
           type: 'doc',
-          id: 'guides/alternative-angular-compiler',
-          label: 'Using an alternative Angular compiler',
-        },
-        {
-          type: 'doc',
           id: 'guides/compatibility',
           label: 'Version Compatibilty',
         },
