@@ -1,6 +1,9 @@
 import type { Container, Directory, Secret } from '@dagger.io/dagger';
 import { argument, dag, func, object } from '@dagger.io/dagger';
 
+const DEFAULT_E2E_PROJECTS =
+  'analog-app-e2e,blog-app-e2e,tanstack-query-app-e2e';
+
 @object()
 export class AnalogCi {
   private withNxCloudToken(ctr: Container, nxCloudToken?: Secret): Container {
@@ -50,7 +53,10 @@ export class AnalogCi {
     ]);
   }
 
-  private withE2eTargets(ctr: Container): Container {
+  private withE2eTargets(
+    ctr: Container,
+    projects = DEFAULT_E2E_PROJECTS,
+  ): Container {
     return ctr.withExec([
       'pnpm',
       'exec',
@@ -59,7 +65,7 @@ export class AnalogCi {
       '--target',
       'e2e',
       '--projects',
-      'analog-app-e2e,blog-app-e2e,tanstack-query-app-e2e',
+      projects,
     ]);
   }
 
@@ -71,9 +77,14 @@ export class AnalogCi {
     );
   }
 
-  private e2eBranch(ctr: Container, nxCloudToken?: Secret): Container {
+  private e2eBranch(
+    ctr: Container,
+    nxCloudToken?: Secret,
+    projects = DEFAULT_E2E_PROJECTS,
+  ): Container {
     return this.withE2eTargets(
       this.withNxCloudToken(this.withPlaywrightChromium(ctr), nxCloudToken),
+      projects,
     );
   }
 
@@ -323,8 +334,10 @@ export class AnalogCi {
     })
     source: Directory,
     nxCloudToken?: Secret,
+    @argument()
+    projects = DEFAULT_E2E_PROJECTS,
   ): Promise<string> {
-    return this.e2eBranch(this.base(source), nxCloudToken).stdout();
+    return this.e2eBranch(this.base(source), nxCloudToken, projects).stdout();
   }
 
   /**

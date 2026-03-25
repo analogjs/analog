@@ -14,20 +14,71 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ci-linux:
+  prettier-linux:
+    name: Linux / Prettier
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Prettier + Lint + Build + Test + E2E
+      - name: Prettier
         uses: dagger/dagger-for-github@v8.4.0
         with:
           version: '0.20.3'
           verb: call
-          args: ci --source=. --nx-cloud-token=env:NX_CLOUD_ACCESS_TOKEN
+          args: prettier --source=.
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+  lint-linux:
+    name: Linux / Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint
+        uses: dagger/dagger-for-github@v8.4.0
+        with:
+          version: '0.20.3'
+          verb: call
+          args: lint --source=.
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+  build-test-linux:
+    name: Linux / Build + Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build + Test
+        uses: dagger/dagger-for-github@v8.4.0
+        with:
+          version: '0.20.3'
+          verb: call
+          args: build-and-test --source=. --nx-cloud-token=env:NX_CLOUD_ACCESS_TOKEN
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+  e2e-linux:
+    name: Linux / E2E / ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - analog-app-e2e
+          - blog-app-e2e
+          - tanstack-query-app-e2e
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: E2E (${{ matrix.project }})
+        uses: dagger/dagger-for-github@v8.4.0
+        with:
+          version: '0.20.3'
+          verb: call
+          args: end-to-end --source=. --nx-cloud-token=env:NX_CLOUD_ACCESS_TOKEN --projects=${{ matrix.project }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
 
   build-native:
+    name: Native / ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -66,3 +117,34 @@ jobs:
       - name: Verify
         if: runner.os == 'Windows'
         run: more dist\apps\blog-app\analog\public\index.html
+
+  ci-summary:
+    name: CI Summary
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    needs:
+      - prettier-linux
+      - lint-linux
+      - build-test-linux
+      - e2e-linux
+      - build-native
+    steps:
+      - name: Check required job results
+        env:
+          PRETTIER_RESULT: ${{ needs.prettier-linux.result }}
+          LINT_RESULT: ${{ needs.lint-linux.result }}
+          BUILD_TEST_RESULT: ${{ needs.build-test-linux.result }}
+          E2E_RESULT: ${{ needs.e2e-linux.result }}
+          BUILD_NATIVE_RESULT: ${{ needs.build-native.result }}
+        run: |
+          echo "prettier-linux: $PRETTIER_RESULT"
+          echo "lint-linux: $LINT_RESULT"
+          echo "build-test-linux: $BUILD_TEST_RESULT"
+          echo "e2e-linux: $E2E_RESULT"
+          echo "build-native: $BUILD_NATIVE_RESULT"
+
+          test "$PRETTIER_RESULT" = "success"
+          test "$LINT_RESULT" = "success"
+          test "$BUILD_TEST_RESULT" = "success"
+          test "$E2E_RESULT" = "success"
+          test "$BUILD_NATIVE_RESULT" = "success"
