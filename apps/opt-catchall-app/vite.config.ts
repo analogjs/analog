@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 
-import analog from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import analog from '../../packages/platform/src/index.js';
 import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
@@ -20,6 +20,9 @@ export default defineConfig(() => {
     plugins: [
       analog({
         liveReload: true,
+        experimental: {
+          useAngularCompilationAPI: true,
+        },
         content: {
           highlighter: 'shiki',
         },

@@ -18,10 +18,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx nx serve-nitro tanstack-query-app',
+    command: 'node dist/apps/tanstack-query-app/analog/server/index.mjs',
     url: 'http://localhost:43020',
     reuseExistingServer: !process.env['CI'],
     timeout: 120_000,
     cwd: '../..',
+    env: { PORT: '43020' },
   },
 });

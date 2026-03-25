@@ -53,7 +53,8 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "dist/apps/analog-app/analog",
-        "command": "PORT=43000 node --unhandled-rejections=throw ./server/index.mjs"
+        "command": "node --unhandled-rejections=throw ./server/index.mjs",
+        "env": { "PORT": "43000" }
       },
       "dependsOn": ["build"]
     },
