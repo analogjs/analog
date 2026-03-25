@@ -194,17 +194,20 @@ export function generateRouteManifest(
     const params = extractRouteParams(fullPath);
     const schemas = schemaDetector ? schemaDetector(filename) : NO_SCHEMAS;
     const id = filenameToRouteId(filename);
+    const isPathlessLayout = isPathlessLayoutId(id);
 
-    if (seenByFullPath.has(fullPath)) {
-      const winningFilename = seenByFullPath.get(fullPath);
-      console.warn(
-        `[Analog] Route collision: '${fullPath}' is defined by both ` +
-          `'${winningFilename}' and '${filename}'. ` +
-          `Keeping '${winningFilename}' based on route source precedence and skipping duplicate.`,
-      );
-      continue;
+    if (!isPathlessLayout) {
+      if (seenByFullPath.has(fullPath)) {
+        const winningFilename = seenByFullPath.get(fullPath);
+        console.warn(
+          `[Analog] Route collision: '${fullPath}' is defined by both ` +
+            `'${winningFilename}' and '${filename}'. ` +
+            `Keeping '${winningFilename}' based on route source precedence and skipping duplicate.`,
+        );
+        continue;
+      }
+      seenByFullPath.set(fullPath, filename);
     }
-    seenByFullPath.set(fullPath, filename);
 
     routes.push({
       id,
@@ -232,9 +235,13 @@ export function generateRouteManifest(
     return a.fullPath.localeCompare(b.fullPath);
   });
 
-  const routeByFullPath = new Map(
-    routes.map((route) => [route.fullPath, route]),
-  );
+  const routeByFullPath = new Map<string, RouteEntry>();
+  for (const route of routes) {
+    const existing = routeByFullPath.get(route.fullPath);
+    if (!existing || (existing.isGroup && !route.isGroup)) {
+      routeByFullPath.set(route.fullPath, route);
+    }
+  }
 
   for (const route of routes) {
     const parent = findNearestParentRoute(route.fullPath, routeByFullPath);
@@ -279,6 +286,25 @@ export function generateRouteManifest(
   }
 
   return { routes };
+}
+
+function canonicalRoutesByFullPath(
+  routes: RouteEntry[],
+): Map<string, RouteEntry> {
+  const map = new Map<string, RouteEntry>();
+  for (const route of routes) {
+    const existing = map.get(route.fullPath);
+    if (!existing || (existing.isGroup && !route.isGroup)) {
+      map.set(route.fullPath, route);
+    }
+  }
+  return map;
+}
+
+function isPathlessLayoutId(id: string): boolean {
+  const segments = id.split('/').filter(Boolean);
+  if (segments.length === 0) return false;
+  return /^\([^.[\]]*\)$/.test(segments[segments.length - 1]);
 }
 
 function getRouteWeight(path: string): number {
@@ -382,10 +408,12 @@ export function generateRouteTableDeclaration(manifest: RouteManifest): string {
     lines.push('');
   }
 
+  const canonical = canonicalRoutesByFullPath(manifest.routes);
+
   lines.push("declare module '@analogjs/router' {");
   lines.push('  interface AnalogRouteTable {');
 
-  for (const route of manifest.routes) {
+  for (const route of canonical.values()) {
     const paramsAlias = schemaImports.get(`${route.fullPath}:params`);
     const queryAlias = schemaImports.get(`${route.fullPath}:query`);
 
@@ -461,7 +489,8 @@ export function generateRouteTreeDeclaration(
   lines.push('}');
   lines.push('');
   lines.push('export interface AnalogFileRoutesByFullPath {');
-  for (const route of manifest.routes) {
+  const canonicalByFullPath = canonicalRoutesByFullPath(manifest.routes);
+  for (const route of canonicalByFullPath.values()) {
     lines.push(
       `  ${toTsKey(route.fullPath)}: AnalogFileRoutesById[${toTsStringLiteral(route.id)}];`,
     );
@@ -505,7 +534,7 @@ export function generateRouteTreeDeclaration(
   }
   lines.push('  },');
   lines.push('  byFullPath: {');
-  for (const route of manifest.routes) {
+  for (const route of canonicalByFullPath.values()) {
     lines.push(
       `    ${toObjectKey(route.fullPath)}: ${toTsStringLiteral(route.id)},`,
     );

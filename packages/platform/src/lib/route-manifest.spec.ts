@@ -276,20 +276,51 @@ describe('generateRouteManifest', () => {
     });
 
     const manifest = generateRouteManifest([
-      '/app/routes/index.ts',
-      '/app/routes/(home).ts',
+      '/src/app/pages/about.page.ts',
+      '/libs/shared/feature/src/pages/about.page.ts',
     ]);
 
     expect(spy).toHaveBeenCalledWith(
       expect.stringContaining('Route collision'),
     );
-    // Duplicate should be skipped — only one '/' entry
-    expect(manifest.routes.filter((r) => r.fullPath === '/').length).toBe(1);
-    expect(manifest.routes[0].filename).toMatch(
-      /^\/app\/routes\/(index|\(home\))\.ts$/,
+    expect(manifest.routes.filter((r) => r.fullPath === '/about').length).toBe(
+      1,
     );
 
     spy.mockRestore();
+  });
+
+  it('should preserve pathless layouts that share the same fullPath', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
+
+    const manifest = generateRouteManifest([
+      '/src/app/pages/index.page.ts',
+      '/src/app/pages/(auth).page.ts',
+      '/src/app/pages/(home).page.ts',
+    ]);
+
+    expect(spy).not.toHaveBeenCalledWith(
+      expect.stringContaining('Route collision'),
+    );
+    expect(manifest.routes.filter((r) => r.fullPath === '/').length).toBe(3);
+    expect(manifest.routes.find((r) => r.id === '/(auth)')?.isGroup).toBe(true);
+    expect(manifest.routes.find((r) => r.id === '/(home)')?.isGroup).toBe(true);
+
+    spy.mockRestore();
+  });
+
+  it('should preserve pathless layout with its nested children', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/index.page.ts',
+      '/src/app/pages/(auth).page.ts',
+      '/src/app/pages/(auth)/login.page.ts',
+    ]);
+
+    expect(manifest.routes).toHaveLength(3);
+    expect(manifest.routes.find((r) => r.id === '/(auth)')).toBeDefined();
+    expect(manifest.routes.find((r) => r.id === '/(auth)/login')).toBeDefined();
   });
 
   it('prefers app-local routes over additional/shared route sources', () => {
