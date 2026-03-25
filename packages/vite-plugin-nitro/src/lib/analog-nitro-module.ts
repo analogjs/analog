@@ -267,23 +267,51 @@ export function analogNitroModule(
               return `export default ${JSON.stringify(html)};`;
             }
           }
+          // In dev mode, read from the source index.html
+          const sourceIndex = resolve(
+            workspaceRoot,
+            rootDir,
+            options?.index || 'index.html',
+          );
+          if (existsSync(sourceIndex)) {
+            const html = readFileSync(sourceIndex, 'utf8');
+            return `export default ${JSON.stringify(html)};`;
+          }
+          // Return empty template as fallback (dev mode)
+          if (nitro.options.dev) {
+            return 'export default "";';
+          }
           throw new Error(
             '[analog] Client build output not found. Ensure the client environment build completed successfully.',
           );
         },
       });
 
-      nitro.options.rollupConfig.plugins.push({
-        name: 'analog-ssr-entry-alias',
-        resolveId(id: string) {
-          if (id !== '#analog/ssr') return;
-          if (!options?.ssr && !nitro.options.prerender?.routes?.length) return;
-          const ssrOutDir =
-            options?.ssrBuildDir ||
-            resolve(workspaceRoot, 'dist', rootDir, 'ssr');
-          const ssrEntryPath = resolveBuiltSsrEntryPath(ssrOutDir);
-          return normalizePath(ssrEntryPath);
-        },
+      // Set #analog/ssr alias via Nitro config (not Rollup plugin) so it
+      // applies to both server and prerender builds. The alias is resolved
+      // lazily via a build:before hook since the SSR entry doesn't exist
+      // until after the SSR environment build completes.
+      nitro.hooks.hook('build:before', () => {
+        if (!options?.ssr && !nitro.options.prerender?.routes?.length) return;
+        const ssrOutDir =
+          options?.ssrBuildDir ||
+          resolve(workspaceRoot, 'dist', rootDir, 'ssr');
+        const nitroSsrDir = resolve(
+          workspaceRoot,
+          'dist',
+          rootDir,
+          '.nitro/vite/services/ssr',
+        );
+        const candidates = [
+          resolve(ssrOutDir, 'main.server.mjs'),
+          resolve(ssrOutDir, 'main.server.js'),
+          resolve(nitroSsrDir, 'index.mjs'),
+        ];
+        const ssrEntryPath = candidates.find((p) => existsSync(p));
+        if (ssrEntryPath) {
+          nitro.options.alias = nitro.options.alias || {};
+          nitro.options.alias['#analog/ssr'] = normalizePath(ssrEntryPath);
+        }
       });
 
       // ── Externals and bundler config sanitization ─────────────

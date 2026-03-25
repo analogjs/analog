@@ -22,10 +22,10 @@ describe('createAnalogNitroPlugins', () => {
     expect(plugins.length).toBeGreaterThan(0);
   });
 
-  it('should include the analog nitro module carrier plugin', () => {
+  it('should include the analog nitro plugin with NitroModule', () => {
     const plugins = createAnalogNitroPlugins();
     const modulePlugin = plugins.find(
-      (p) => p.name === '@analogjs/nitro-module',
+      (p) => p.name === '@analogjs/vite-plugin-nitro',
     );
     expect(modulePlugin).toBeDefined();
     expect((modulePlugin as any).nitro).toBeDefined();
