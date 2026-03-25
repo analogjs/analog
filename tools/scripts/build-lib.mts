@@ -485,14 +485,7 @@ function writeNpmIgnore(context: BuildContext): Effect.Effect<void, Error> {
     try: () => {
       writeFileSync(
         resolve(context.outDir, '.npmignore'),
-        [
-          '# Source maps',
-          '**/*.map',
-          '',
-          '# Dev files',
-          '**/*.tsbuildinfo',
-          '',
-        ].join('\n'),
+        ['# Dev files', '**/*.tsbuildinfo', ''].join('\n'),
       );
     },
     catch: (cause) =>
