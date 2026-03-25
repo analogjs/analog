@@ -21,19 +21,8 @@ export default defineConfig(async ({ mode }) => {
             replace: 'apps/analog-app/src/environments/environment.ts',
             with: 'apps/analog-app/src/environments/environment.prod.ts',
           },
-          {
-            replace:
-              'apps/analog-app/src/app/pages/shipping/shipping-service.ts',
-            ssr: 'apps/analog-app/src/app/pages/shipping/shipping-service-server.ts',
-          },
         ]
-      : [
-          {
-            replace:
-              'apps/analog-app/src/app/pages/shipping/shipping-service.ts',
-            ssr: 'apps/analog-app/src/app/pages/shipping/shipping-service-server.ts',
-          },
-        ];
+      : [];
 
   return {
     root: __dirname,
