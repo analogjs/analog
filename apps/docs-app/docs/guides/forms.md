@@ -25,7 +25,7 @@ The directive emits after processing the form:
 
 - `onSuccess`: when the form is processing on the server and returns a success response.
 - `onError`: when the form returns an error response.
-- `onStateChange`: when the form is submitted.
+- `onStateChange`: when the form submission state changes.
 
 The example page below submits an email for a newsletter signup.
 
@@ -86,6 +86,8 @@ export default class NewsletterComponent {
 ```
 
 The `FormAction` directive submits the form data to the server, which is processed by its handler.
+
+If your action uses Standard Schema validation with `defineAction()`, the `onError` event receives `StandardSchemaV1.Issue[]`. You can convert that into field errors with `issuesToFieldErrors()` from `@analogjs/router`. See the [Schema Validation](../features/data-fetching/validation) guide for an end-to-end example.
 
 ## Handling the Form Action
 

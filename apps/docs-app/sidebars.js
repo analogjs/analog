@@ -55,6 +55,11 @@ const sidebars = {
               id: 'features/routing/middleware',
               label: 'Middleware',
             },
+            {
+              type: 'doc',
+              id: 'features/routing/typed-routes',
+              label: 'Typed Routes (Experimental)',
+            },
           ],
         },
         {
@@ -93,6 +98,11 @@ const sidebars = {
               type: 'doc',
               id: 'features/data-fetching/server-side-data-fetching',
               label: 'Server-Side Data Fetching',
+            },
+            {
+              type: 'doc',
+              id: 'features/data-fetching/validation',
+              label: 'Schema Validation',
             },
           ],
         },
@@ -198,6 +208,11 @@ const sidebars = {
           type: 'doc',
           id: 'guides/libraries',
           label: 'Building an Angular library',
+        },
+        {
+          type: 'doc',
+          id: 'guides/alternative-angular-compiler',
+          label: 'Using an alternative Angular compiler',
         },
         {
           type: 'doc',

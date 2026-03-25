@@ -76,6 +76,7 @@ vitest.config.*.timestamp*
 .claude/worktrees
 .dagger/sdk
 .vercel/
+gradle.properties
 .cursor
 .claude
 gradle.properties

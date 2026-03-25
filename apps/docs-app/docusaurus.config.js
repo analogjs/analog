@@ -12,6 +12,23 @@ const url = 'https://analogjs.org';
 
 const DOCUSAURUS_BASE_URL = process.env.DOCUSAURUS_BASE_URL ?? '/docs';
 
+/**
+ * @typedef {{ allMdx: string[] }} LlmsTxtContent
+ * @typedef {{ title?: string; description?: string }} DocRecord
+ * @typedef {{
+ *   path: string;
+ *   routes?: DocsRouteConfig[];
+ *   props?: {
+ *     version?: {
+ *       docs: Record<string, DocRecord>;
+ *     };
+ *   };
+ *   plugin?: {
+ *     name?: string;
+ *   };
+ * }} DocsRouteConfig
+ */
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   baseUrl: '/',
@@ -117,7 +134,7 @@ const config = {
           return { allMdx };
         },
         postBuild: async ({ content, routes, outDir }) => {
-          const { allMdx } = content;
+          const { allMdx } = /** @type {LlmsTxtContent} */ (content);
 
           // Write concatenated MDX content
           const concatenatedPath = path.join(outDir, 'llms-full.txt');
@@ -128,12 +145,16 @@ const config = {
 
           // we need to dig down several layers:
           // find PluginRouteConfig marked by plugin.name === "docusaurus-plugin-content-docs"
-          const docsPluginRouteConfig = routes.filter(
-            (route) => route.plugin.name === 'docusaurus-plugin-content-docs',
-          )[0];
+          const docsPluginRouteConfig =
+            /** @type {DocsRouteConfig | undefined} */ (
+              routes.filter(
+                (route) =>
+                  route.plugin.name === 'docusaurus-plugin-content-docs',
+              )[0]
+            );
 
           // docsPluginRouteConfig has a routes property has a record with the path "/" that contains all docs routes.
-          const allDocsRouteConfig = docsPluginRouteConfig.routes?.filter(
+          const allDocsRouteConfig = docsPluginRouteConfig?.routes?.filter(
             (route) => route.path === DOCUSAURUS_BASE_URL,
           )[0];
 

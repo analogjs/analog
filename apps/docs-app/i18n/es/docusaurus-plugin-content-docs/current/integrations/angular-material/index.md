@@ -166,7 +166,7 @@ export default defineConfig({
 
 > **Nota:** La configuración predeterminada de Tailwind v4 en Analog usa `@tailwindcss/vite`. No necesitas un archivo `.postcssrc.json` ni un archivo `tailwind.config.*` generado para la configuración estándar basada en Vite.
 >
-> El flujo de Tailwind v4 generado también espera un archivo CSS plano como punto de entrada global, por ejemplo `src/styles.css`. Si tu aplicación usa Sass o Less para los estilos globales, mantén esa configuración o migra ese punto de entrada a CSS antes de adoptar el flujo predeterminado de Tailwind v4.
+> El flujo de Tailwind v4 generado también espera un archivo CSS plano como punto de entrada global, por ejemplo, `src/styles.css`. Si tu aplicación usa Sass o Less para los estilos globales, mantén esa configuración o migra ese punto de entrada a CSS antes de adoptar el flujo predeterminado de Tailwind v4.
 
 Con estos pasos, has configurado las animaciones para que estén habilitadas en el cliente y deshabilitadas en el servidor en tu aplicación de Analog.
 

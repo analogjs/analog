@@ -118,6 +118,13 @@ const packageConfigs: Record<string, PackageValidationConfig> = {
       'node_modules/@analogjs/platform/src/lib/nx-plugin/src/generators/preset/generator.js',
     ],
   },
+  router: {
+    packageJsonPath: 'node_modules/@analogjs/router/package.json',
+    requiredPaths: [
+      'node_modules/@analogjs/router/fesm2022/analogjs-router.mjs',
+      'node_modules/@analogjs/router/migrations/migration.json',
+    ],
+  },
   'storybook-angular': {
     packageJsonPath: 'node_modules/@analogjs/storybook-angular/package.json',
     manifestFields: ['builders'],

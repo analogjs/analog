@@ -7,6 +7,8 @@ An existing Angular Single Page Application can be configured to use Analog usin
 
 > Analog is compatible with Angular v15 and above.
 
+> If you want to keep Analog but replace the default Angular compiler plugin, see [Using an Alternative Angular Compiler](./alternative-angular-compiler.md).
+
 ## Using a Schematic/Generator
 
 First, install the `@analogjs/platform` package:

@@ -221,7 +221,7 @@ export default defineConfig(({ mode }) => {
 @import '@ionic/angular/css/palettes/dark.system.css';
 ```
 
-### 服务端渲染注意事项
+### 服务端渲染注意事项 {#server-side-rendering-caveat}
 
 Ionic 框架 [尚不支持 Angular 新的客户端水合](https://github.com/ionic-team/ionic-framework/issues/28625#issuecomment-1843919548), 因为 Angular [不支持带有 web components 的 SSR](https://github.com/angular/angular/issues/52275), 并且当它们受支持时，必须对 Stencil 组件进行一些工作才能启用它。因此目前有三个选项可以解决这个问题:
 

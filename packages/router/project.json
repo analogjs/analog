@@ -19,7 +19,11 @@
       "dependsOn": ["assert-deps", "vite-plugin-angular:build"],
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/router"],
       "options": {
-        "command": "node tools/scripts/build-lib.mts router"
+        "commands": [
+          "node tools/scripts/build-lib.mts router",
+          "node tools/scripts/verify-package-artifacts.mts router"
+        ],
+        "parallel": false
       }
     },
     "lint": {
