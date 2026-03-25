@@ -45,7 +45,7 @@ import {
 import { pageEndpointsPlugin } from './plugins/page-endpoints.js';
 import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-files.js';
 import { buildSitemap } from './build-sitemap.js';
-import { isVercelPreset } from './nitro-config-factory.js';
+import { isVercelPreset, isNetlifyPreset } from './nitro-config-factory.js';
 
 interface NitroModule {
   name?: string;
@@ -59,6 +59,7 @@ interface NitroModule {
  */
 export interface AnalogBuildState {
   clientIndexHtml?: string;
+  rootDir: string;
   sitemapRoutes: string[];
   routeSitemaps: Record<
     string,
@@ -69,6 +70,7 @@ export interface AnalogBuildState {
 
 export function createAnalogBuildState(): AnalogBuildState {
   return {
+    rootDir: '.',
     sitemapRoutes: [],
     routeSitemaps: {},
     routeSourceFiles: {},
@@ -92,7 +94,45 @@ export function analogNitroModule(
   return {
     name: 'analog',
     async setup(nitro) {
-      const rootDir = nitro.options.rootDir || workspaceRoot;
+      // rootDir is set by the Vite plugin's config() hook which runs
+      // before nitro:init's config() hook (and thus before this setup).
+      const rootDir = state.rootDir || nitro.options.rootDir || '.';
+
+      // Update output paths now that rootDir is resolved.
+      // The initial NitroConfig was created with rootDir='.' before
+      // the Vite config's `root` was available.
+      nitro.options.rootDir = normalizePath(rootDir);
+      nitro.options.output = nitro.options.output || {};
+      nitro.options.output.dir = normalizePath(
+        resolve(workspaceRoot, 'dist', rootDir, 'analog'),
+      );
+      nitro.options.output.publicDir = normalizePath(
+        resolve(workspaceRoot, 'dist', rootDir, 'analog/public'),
+      );
+      nitro.options.buildDir = normalizePath(
+        resolve(workspaceRoot, 'dist', rootDir, '.nitro'),
+      );
+
+      // Apply preset-specific output path overrides
+      const preset = nitro.options.preset;
+      if (isVercelPreset(preset)) {
+        nitro.options.output.dir = normalizePath(
+          resolve(workspaceRoot, '.vercel', 'output'),
+        );
+        nitro.options.output.publicDir = normalizePath(
+          resolve(workspaceRoot, '.vercel', 'output/static'),
+        );
+      }
+      if (
+        isNetlifyPreset(preset) &&
+        rootDir === '.' &&
+        !existsSync(resolve(workspaceRoot, 'netlify.toml'))
+      ) {
+        nitro.options.output.dir = normalizePath(
+          resolve(workspaceRoot, 'netlify/functions'),
+        );
+      }
+
       const hasAPIDir = existsSync(
         resolve(
           workspaceRoot,
