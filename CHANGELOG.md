@@ -1,3 +1,9 @@
+# [3.0.0-alpha.15](https://github.com/analogjs/analog/compare/v3.0.0-alpha.14...v3.0.0-alpha.15) (2026-03-25)
+
+### Features
+
+- **router:** add typed file routes with codegen and Standard Schema validation with JSON-LD support ([#2125](https://github.com/analogjs/analog/issues/2125)) ([9ed63a6](https://github.com/analogjs/analog/commit/9ed63a6b98185e0e5ebc67a09986b6ba65269dca))
+
 # [3.0.0-alpha.14](https://github.com/analogjs/analog/compare/v3.0.0-alpha.13...v3.0.0-alpha.14) (2026-03-25)
 
 ### Features
