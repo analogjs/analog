@@ -5,13 +5,6 @@
  * This is the default export of `@analogjs/vite-plugin-nitro`.
  */
 import type { NitroConfig } from 'nitro/types';
-import {
-  build as nitroBuild,
-  copyPublicAssets,
-  createNitro,
-  prepare,
-  prerender,
-} from 'nitro/builder';
 import { nitro as nitroVitePlugin, type NitroPluginConfig } from 'nitro/vite';
 import * as vite from 'vite';
 import type { Plugin, UserConfig } from 'vite';
@@ -29,6 +22,9 @@ import {
   createAnalogBuildState,
   type AnalogBuildState,
 } from './analog-nitro-module.js';
+import { buildServer } from './build-server.js';
+import { buildClientApp, buildSSRApp } from './build-ssr.js';
+import { buildSitemap } from './build-sitemap.js';
 import { getBundleOptionsKey, isRolldown } from './utils/rolldown.js';
 
 function assetSourceToString(source: string | Uint8Array) {
@@ -55,6 +51,7 @@ export function createAnalogNitroPlugins(
   const state: AnalogBuildState = createAnalogBuildState();
   let rootDir = '.';
   let savedConfig: UserConfig | undefined;
+  let legacyClientSubBuild = false;
 
   // Build context lazily in the config hook once we have the resolved root
   const getContext = (): NitroConfigContext => ({
@@ -190,71 +187,57 @@ export function createAnalogNitroPlugins(
           state.clientIndexHtml = assetSourceToString(indexHtmlAsset.source);
         }
       },
-      // Fallback for Nx executors and callers that don't trigger
-      // the Environment API buildApp flow. When nitro/vite's buildApp
-      // doesn't fire, we manually run SSR + Nitro builds here.
+
+      // ── closeBundle fallback ────────────────────────────────────
+      // Nx executors (and any caller that runs `vite build` without
+      // the Environment API) never trigger builder.buildApp, so
+      // closeBundle is the only place to drive the SSR + Nitro build.
+      // This mirrors the original vite-plugin-nitro.ts closeBundle.
       async closeBundle() {
-        if (isTest) return;
+        if (isTest || legacyClientSubBuild) return;
 
         const ssrBuild = (this as any).environment?.name === 'ssr';
         if (ssrBuild) return;
 
-        const nitroOutputDir = resolve(
+        // If the Nitro server output already exists, buildApp ran
+        const nitroOutputPath = resolve(
           workspaceRoot,
           'dist',
           rootDir,
           'analog/server/index.mjs',
         );
-        // If the Nitro server output already exists, buildApp ran
-        if (existsSync(nitroOutputDir)) return;
+        if (existsSync(nitroOutputPath)) return;
 
-        // Locate client build output — check both legacy (client/)
-        // and nitro/vite (analog/public/) output locations
-        const candidateClientDirs = [
-          resolve(workspaceRoot, 'dist', rootDir, 'client'),
-          resolve(workspaceRoot, 'dist', rootDir, 'analog/public'),
-        ];
-        const clientOutDir =
-          candidateClientDirs.find((dir) =>
-            existsSync(resolve(dir, 'index.html')),
-          ) || candidateClientDirs[0];
-        const clientIndexPath = resolve(clientOutDir, 'index.html');
+        // Resolve the client output path
+        const resolvedClientOutputPath = savedConfig?.build?.outDir
+          ? normalizePath(
+              resolve(workspaceRoot, rootDir, savedConfig.build.outDir),
+            )
+          : normalizePath(resolve(workspaceRoot, 'dist', rootDir, 'client'));
 
-        // Need client build to exist
-        if (!existsSync(clientIndexPath) && !state.clientIndexHtml) return;
-
-        // Capture client HTML if not already captured
-        if (!state.clientIndexHtml && existsSync(clientIndexPath)) {
-          state.clientIndexHtml = readFileSync(clientIndexPath, 'utf8');
+        const indexHtmlPath = resolve(resolvedClientOutputPath, 'index.html');
+        if (
+          !existsSync(indexHtmlPath) &&
+          typeof state.clientIndexHtml !== 'string'
+        ) {
+          // Rebuild client if missing
+          legacyClientSubBuild = true;
+          try {
+            await buildClientApp(savedConfig || {}, options);
+          } finally {
+            legacyClientSubBuild = false;
+          }
         }
 
-        // Build SSR entry
-        const ssrOutDir =
-          options?.ssrBuildDir ||
-          resolve(workspaceRoot, 'dist', rootDir, 'ssr');
-        if (options?.ssr || state.resolvedPrerenderRoutes.length > 0) {
-          console.log('Building SSR application...');
-          const ssrConfig = mergeConfig(savedConfig || {}, {
-            build: {
-              ssr: true,
-              [getBundleOptionsKey()]: {
-                input:
-                  options?.entryServer ||
-                  resolve(
-                    workspaceRoot,
-                    rootDir,
-                    `${sourceRoot}/main.server.ts`,
-                  ),
-              },
-              outDir: ssrOutDir,
-              emptyOutDir: false,
-            },
-          });
-          await vite.build(ssrConfig);
+        // Capture client HTML before SSR build
+        if (typeof state.clientIndexHtml !== 'string') {
+          const htmlPath = resolve(resolvedClientOutputPath, 'index.html');
+          if (existsSync(htmlPath)) {
+            state.clientIndexHtml = readFileSync(htmlPath, 'utf8');
+          }
         }
 
-        // Resolve prerender routes (NitroModule setup doesn't run for
-        // build-only mode since nitro/vite is restricted to serve)
+        // Resolve prerender routes
         const { resolveAnalogPrerenderRoutes } =
           await import('./analog-nitro-module.js');
         await resolveAnalogPrerenderRoutes(
@@ -264,7 +247,7 @@ export function createAnalogNitroPlugins(
           rootDir,
         );
 
-        // Build Nitro server
+        // Build Nitro config
         const ctx = getContext();
         let nitroConfig = buildNitroConfig(options, nitroOptions, ctx);
         nitroConfig = mergeConfig(
@@ -275,21 +258,23 @@ export function createAnalogNitroPlugins(
         // Register client HTML virtual module
         nitroConfig.virtual = nitroConfig.virtual || {};
         nitroConfig.virtual['#analog/index'] = `export default ${JSON.stringify(
-          state.clientIndexHtml,
+          state.clientIndexHtml || '',
         )};`;
 
-        // Set SSR entry alias — check both legacy (ssr/) and
-        // nitro/vite (.nitro/vite/services/ssr/) output locations
+        // Build SSR entry
+        if (options?.ssr || state.resolvedPrerenderRoutes.length > 0) {
+          console.log('Building SSR application...');
+          await buildSSRApp(savedConfig || {}, options);
+        }
+
+        // Set SSR entry alias
+        const ssrOutDir =
+          options?.ssrBuildDir ||
+          resolve(workspaceRoot, 'dist', rootDir, 'ssr');
         if (options?.ssr || state.resolvedPrerenderRoutes.length > 0) {
           const candidates = [
             resolve(ssrOutDir, 'main.server.mjs'),
             resolve(ssrOutDir, 'main.server.js'),
-            resolve(
-              workspaceRoot,
-              'dist',
-              rootDir,
-              '.nitro/vite/services/ssr/index.mjs',
-            ),
           ];
           const ssrEntry = candidates.find((p) => existsSync(p));
           if (ssrEntry) {
@@ -300,18 +285,20 @@ export function createAnalogNitroPlugins(
           }
         }
 
-        // Set public assets
-        nitroConfig.publicAssets = [
-          { dir: normalizePath(clientOutDir), maxAge: 0 },
-        ];
+        // Re-register client HTML after SSR build (may have been
+        // invalidated on Windows)
+        nitroConfig.virtual['#analog/index'] = `export default ${JSON.stringify(
+          state.clientIndexHtml || '',
+        )};`;
 
-        // Apply resolved prerender routes from the NitroModule
+        // Set public assets and prerender routes
+        nitroConfig.publicAssets = [
+          { dir: normalizePath(resolvedClientOutputPath), maxAge: 0 },
+        ];
         if (state.resolvedPrerenderRoutes.length > 0) {
           nitroConfig.prerender = nitroConfig.prerender || {};
           nitroConfig.prerender.routes = state.resolvedPrerenderRoutes;
         }
-
-        // Add externals and bundler sanitization
         if (options?.ssr || state.resolvedPrerenderRoutes.length > 0) {
           nitroConfig.moduleSideEffects = [
             'zone.js/node',
@@ -319,33 +306,9 @@ export function createAnalogNitroPlugins(
           ];
         }
 
-        console.log('Building Server...');
-        const nitro = await createNitro({
-          dev: false,
-          ...nitroConfig,
-          builder: nitroConfig.builder ?? 'rollup',
-        });
-
-        // Register hooks that the NitroModule normally handles
-        const { sanitizeAndExternalize } =
-          await import('./analog-nitro-module.js');
-        sanitizeAndExternalize(
-          nitro,
-          !!(options?.ssr || (nitroConfig.prerender?.routes?.length ?? 0) > 0),
-        );
-        await prepare(nitro);
-        await copyPublicAssets(nitro);
-        if (
-          nitroConfig.prerender?.routes &&
-          nitroConfig.prerender.routes.length > 0
-        ) {
-          console.log('Prerendering static pages...');
-          await prerender(nitro);
-        }
-        if (!options?.static) {
-          await nitroBuild(nitro);
-        }
-        await nitro.close();
+        // Use buildServer for the full Nitro build orchestration
+        // (prerender, post-render hooks, Vercel config, route source files)
+        await buildServer(options, nitroConfig, state.routeSourceFiles);
 
         // Build sitemap
         if (
@@ -353,11 +316,10 @@ export function createAnalogNitroPlugins(
           options?.prerender?.sitemap
         ) {
           console.log('Building Sitemap...');
-          const { buildSitemap } = await import('./build-sitemap.js');
           const publicDir = nitroConfig.output?.publicDir;
           if (publicDir) {
             await buildSitemap(
-              {},
+              savedConfig || {},
               options.prerender.sitemap,
               state.sitemapRoutes.length
                 ? state.sitemapRoutes
@@ -395,8 +357,6 @@ export function createAnalogNitroPlugins(
       ? []
       : (nitroVitePlugin(buildConfig()) as Plugin[]).map((p) => ({
           ...p,
-          // Skip nitro/vite's build orchestration during production
-          // builds — the closeBundle fallback handles it instead.
           apply: 'serve' as const,
         }))),
   ];
