@@ -13,6 +13,37 @@ import {
   apiMiddleware,
 } from './utils/renderers.js';
 
+/**
+ * Patches Nitro's internal Rollup/Rolldown bundler config to work around
+ * incompatibilities in the Nitro v3 alpha series.
+ */
+function sanitizeNitroBundlerConfig(bundlerConfig: any) {
+  const output = bundlerConfig['output'];
+  if (!output || Array.isArray(output) || typeof output !== 'object') return;
+
+  if ('codeSplitting' in output) {
+    delete output['codeSplitting'];
+  }
+  if ('manualChunks' in output) {
+    delete output['manualChunks'];
+  }
+
+  const VALID_ROLLUP_PLACEHOLDER = /^\[(?:name|hash|format|ext)\]$/;
+  const chunkFileNames = output['chunkFileNames'];
+  if (typeof chunkFileNames === 'function') {
+    const originalFn = chunkFileNames;
+    output['chunkFileNames'] = (...args: unknown[]) => {
+      const result = originalFn(...args);
+      if (typeof result !== 'string') return result;
+      return result.replace(/\[[^\]]+\]/g, (match: string) =>
+        VALID_ROLLUP_PLACEHOLDER.test(match)
+          ? match
+          : `_${match.slice(1, -1)}_`,
+      );
+    };
+  }
+}
+
 export interface NitroConfigContext {
   workspaceRoot: string;
   rootDir: string;
@@ -85,6 +116,11 @@ export function buildNitroConfig(
     // try to set properties on a boolean.
     renderer: {},
     imports: { autoImport: false },
+    hooks: {
+      'rollup:before': (_nitro: unknown, bundlerConfig: any) => {
+        sanitizeNitroBundlerConfig(bundlerConfig);
+      },
+    },
     rollupConfig: {
       onwarn(warning: { message: string }) {
         if (
