@@ -98,6 +98,10 @@ export default defineConfig({
           pkgDir,
           'src/generators/page/generator.ts',
         ),
+        'src/generators/page/compat': resolve(
+          pkgDir,
+          'src/generators/page/compat.ts',
+        ),
         'src/generators/init/generator': resolve(
           pkgDir,
           'src/generators/init/generator.ts',
