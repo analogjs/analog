@@ -1,3 +1,11 @@
+# [3.0.0-alpha.16](https://github.com/analogjs/analog/compare/v3.0.0-alpha.15...v3.0.0-alpha.16) (2026-03-25)
+
+### Bug Fixes
+
+- fix release process ([4c610db](https://github.com/analogjs/analog/commit/4c610db4e1e609cd9b6a13fb0f392b3fc76d305e))
+- **nx-plugin:** restore Angular schematic compatibility with named exports ([#2183](https://github.com/analogjs/analog/issues/2183)) ([a546f7d](https://github.com/analogjs/analog/commit/a546f7d874e7f4f5e17811d7bc9626b0e6980b13))
+- **vite-plugin-nitro:** prevent setting headers with keys starting with ':' ([#2180](https://github.com/analogjs/analog/issues/2180)) ([c53a135](https://github.com/analogjs/analog/commit/c53a135f87bf76fe6211c81b6239ecab0066613a))
+
 # [3.0.0-alpha.15](https://github.com/analogjs/analog/compare/v3.0.0-alpha.14...v3.0.0-alpha.15) (2026-03-25)
 
 ### Features
