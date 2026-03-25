@@ -309,7 +309,11 @@ export function analogNitroModule(
               isResolved: boolean,
             ) => {
               if (isExternal(source)) return true;
-              return (originalFn as Function)(source, importer, isResolved);
+              return (originalFn as (...args: unknown[]) => unknown)(
+                source,
+                importer,
+                isResolved,
+              );
             };
           } else if (Array.isArray(existing)) {
             bundlerConfig.external = [
@@ -670,7 +674,11 @@ export function sanitizeAndExternalize(
           isResolved: boolean,
         ) => {
           if (isExternal(source)) return true;
-          return (originalFn as Function)(source, importer, isResolved);
+          return (originalFn as (...args: unknown[]) => unknown)(
+            source,
+            importer,
+            isResolved,
+          );
         };
       } else if (Array.isArray(existing)) {
         bundlerConfig.external = [...existing, ...externalEntries] as string[];
