@@ -109,6 +109,7 @@ describe('angular liveReload style preprocessing', () => {
   afterEach(() => {
     vi.doUnmock('vite');
     vi.doUnmock('./utils/devkit.js');
+    vi.doUnmock('node:fs');
 
     if (originalNodeEnv === undefined) {
       delete process.env['NODE_ENV'];
@@ -174,6 +175,35 @@ describe('angular liveReload style preprocessing', () => {
     expect(preprocessCSSMock).not.toHaveBeenCalled();
     expect(await plugin.load(`${stylesheetId}?ngcomp=ng-c123&e=0`)).toBe(
       '/* /project/src/app/demo.component.css */\n.demo { display: grid; }',
+    );
+  });
+
+  it('runs tailwindPreprocessor through the liveReload plugin path', async () => {
+    vi.doMock('node:fs', async () => {
+      const actual = await vi.importActual<typeof import('node:fs')>('node:fs');
+      return {
+        ...actual,
+        readFileSync: vi.fn(() => '@import "tailwindcss" prefix(sa);'),
+      };
+    });
+
+    const { tailwindPreprocessor } = await import('./style-preprocessor.js');
+    const { plugin, transformStylesheet } = await setupLiveReloadPlugin(
+      tailwindPreprocessor({
+        tailwindRootCss: '/project/src/styles/tailwind.css',
+      }),
+    );
+    const stylesheetId = await transformStylesheet(
+      '.demo { @apply sa:text-red-500; }',
+      '/project/src/app/demo.component.ts',
+      '/project/src/app/demo.component.css',
+      0,
+      'DemoComponent',
+    );
+
+    expect(preprocessCSSMock).not.toHaveBeenCalled();
+    expect(await plugin.load(`${stylesheetId}?ngcomp=ng-c123&e=0`)).toBe(
+      '@reference "../styles/tailwind.css";\n.demo { @apply sa:text-red-500; }',
     );
   });
 });

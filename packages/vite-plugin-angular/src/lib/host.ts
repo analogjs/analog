@@ -5,6 +5,7 @@ import * as ts from 'typescript';
 
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import type { StylePreprocessor } from './style-preprocessor.js';
 import type { SourceFileCache } from './utils/source-file-cache.js';
 
 export function augmentHostWithResources(
@@ -20,7 +21,7 @@ export function augmentHostWithResources(
     inlineComponentStyles?: Map<string, string>;
     externalComponentStyles?: Map<string, string>;
     sourceFileCache?: SourceFileCache;
-    stylePreprocessor?: (code: string, filename: string) => string;
+    stylePreprocessor?: StylePreprocessor;
   },
 ): void {
   const resourceHost = host as CompilerHost;
