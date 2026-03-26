@@ -20,6 +20,7 @@ export function augmentHostWithResources(
     inlineComponentStyles?: Map<string, string>;
     externalComponentStyles?: Map<string, string>;
     sourceFileCache?: SourceFileCache;
+    stylePreprocessor?: (code: string, filename: string) => string;
   },
 ): void {
   const resourceHost = host as CompilerHost;
@@ -66,10 +67,18 @@ export function augmentHostWithResources(
         `.${options?.inlineStylesExtension}`,
       );
 
+    // Apply user-defined style preprocessor (e.g. Tailwind @reference injection)
+    const preprocessedData = options.stylePreprocessor
+      ? options.stylePreprocessor(data, filename)
+      : data;
+
     let stylesheetResult;
 
     try {
-      stylesheetResult = await transform(data, `${filename}?direct`);
+      stylesheetResult = await transform(
+        preprocessedData,
+        `${filename}?direct`,
+      );
     } catch (e) {
       console.error(`${e}`);
     }
