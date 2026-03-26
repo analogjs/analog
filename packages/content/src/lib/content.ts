@@ -7,7 +7,7 @@ import { map, switchMap, tap } from 'rxjs/operators';
 
 import { ContentFile } from './content-file';
 import { ContentRenderer } from './content-renderer';
-import { CONTENT_LOCALE } from './content-locale';
+import { CONTENT_LOCALE, withLocaleCandidates } from './content-locale';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
 import { parseRawContentFile } from './parse-raw-content-file';
 import { waitFor } from './utils/zone-wait-for';
@@ -41,14 +41,7 @@ function getContentFile<
     `${base}/index.agx`,
   ];
 
-  // Try locale-prefixed paths first, then fall back to unprefixed
-  const localeCandidates = locale
-    ? candidates.map((c) =>
-        c.replace('/src/content/', `/src/content/${locale}/`),
-      )
-    : [];
-  const allCandidates = [...localeCandidates, ...candidates];
-
+  const allCandidates = withLocaleCandidates(candidates, locale);
   const matchKey = allCandidates.find((k) => k in normalizedFiles);
   const contentFile = matchKey ? normalizedFiles[matchKey] : undefined;
   const resolvedBase = (matchKey || `${base}.md`).replace(/\.(md|agx)$/, '');
