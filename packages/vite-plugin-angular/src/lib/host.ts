@@ -69,7 +69,7 @@ export function augmentHostWithResources(
 
     // Apply any user-defined stylesheet preprocessing before Vite transforms it.
     const preprocessedData = options.stylePreprocessor
-      ? options.stylePreprocessor(data, filename)
+      ? (options.stylePreprocessor(data, filename) ?? data)
       : data;
 
     let stylesheetResult;

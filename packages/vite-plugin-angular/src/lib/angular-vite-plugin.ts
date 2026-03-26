@@ -889,7 +889,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           // Apply any user-defined stylesheet preprocessing before Vite transforms it.
           const preprocessedData = pluginOptions.stylePreprocessor
-            ? pluginOptions.stylePreprocessor(data, filename)
+            ? (pluginOptions.stylePreprocessor(data, filename) ?? data)
             : data;
 
           let stylesheetResult;
