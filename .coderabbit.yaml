@@ -1,8 +1,8 @@
 language: en-US
 tone_instructions: >-
-  Prioritize regressions, API compatibility, test gaps, release impact, and monorepo consistency.
-  Flag breaking changes and require a BREAKING CHANGE footer with before/after examples per CONTRIBUTING.md.
-  Skip style-only and speculative nits.
+  Prioritize regressions, API compat, test gaps, and monorepo consistency.
+  Flag breaking changes per CONTRIBUTING.md. Analyze all affected code paths
+  including experimental flags and fallbacks. Skip style nits.
 
 reviews:
   profile: chill
@@ -75,6 +75,9 @@ reviews:
       instructions: >-
         Review as the vite-plugin-angular package scope. Prioritize Angular and Vite integration behavior,
         build compatibility, backward compatibility, stability, and targeted coverage for regressions.
+        Analyze all impacted code paths, including watch and non-watch flows, live reload and full reload behavior,
+        test/build/dev differences, and Analog experimental Vite branches such as `experimental.useAngularCompilationAPI`,
+        covering both enabled and disabled behavior and any fallback code paths.
     - path: 'packages/vite-plugin-angular-tools/**'
       instructions: >-
         Treat changes here as part of the vite-plugin-angular scope and review them together with test fixtures
@@ -140,7 +143,8 @@ reviews:
         Review as repo scope. Keep scope mappings aligned with the actual package and auxiliary areas in the monorepo.
     - path: 'AGENTS.md'
       instructions: >-
-        Review as repo scope. Preserve the repository's guidance for minimal, targeted, backward-compatible changes.
+        Review as repo scope. Preserve the repository's guidance for minimal, targeted, backward-compatible changes,
+        including the requirement to analyze all affected code paths and Analog experimental Vite branches during implementation and review.
     - path: 'CONTRIBUTING.md'
       instructions: >-
         Review as repo/docs guidance. Keep contributor instructions aligned with current branch, PR, and testing expectations.
