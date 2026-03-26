@@ -35,4 +35,6 @@ export {
   CONTENT_LOCALE,
   injectContentLocale,
   withLocale,
+  filterByLocale,
+  withLocaleCandidates,
 } from './lib/content-locale';
