@@ -1,3 +1,15 @@
+# [3.0.0-alpha.18](https://github.com/analogjs/analog/compare/v3.0.0-alpha.17...v3.0.0-alpha.18) (2026-03-26)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** defer liveReload CSS preprocessing to Vite load ([2dcf773](https://github.com/analogjs/analog/commit/2dcf773107db18d3a921c9e44a46804316dcd081))
+- **vite-plugin-angular:** gate liveReload stylesheet ids to watch mode ([5568146](https://github.com/analogjs/analog/commit/55681461eb0e89b809def99612d2d71b8632153e))
+
+### Features
+
+- **platform:** export tailwindPreprocessor for Analog Vite config ([971b2a8](https://github.com/analogjs/analog/commit/971b2a82c9c0c76e0a80483b9483503139c9ec7e))
+- **vite-plugin-angular:** add tailwindCss preprocessing for component styles ([87b49db](https://github.com/analogjs/analog/commit/87b49db4da45fba3360c895bf3df08dd16b2cc75))
+
 # [3.0.0-alpha.17](https://github.com/analogjs/analog/compare/v3.0.0-alpha.16...v3.0.0-alpha.17) (2026-03-26)
 
 ### Features
