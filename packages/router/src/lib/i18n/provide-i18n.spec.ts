@@ -4,6 +4,7 @@ import {
   initI18n,
   detectClientLocale,
   replaceLocaleInPath,
+  resolveI18nConfig,
   I18nConfig,
 } from './provide-i18n';
 
@@ -235,6 +236,58 @@ describe('replaceLocaleInPath', () => {
   it('should preserve nested path segments', () => {
     expect(replaceLocaleInPath('/en/blog/post-1', 'de', locales)).toBe(
       '/de/blog/post-1',
+    );
+  });
+});
+
+describe('resolveI18nConfig', () => {
+  const loader = vi.fn();
+
+  it('should use explicit config values when provided', () => {
+    const resolved = resolveI18nConfig({
+      defaultLocale: 'en',
+      locales: ['en', 'fr'],
+      loader,
+    });
+
+    expect(resolved.defaultLocale).toBe('en');
+    expect(resolved.locales).toEqual(['en', 'fr']);
+    expect(resolved.loader).toBe(loader);
+  });
+
+  it('should fall back to globals when config values are omitted', () => {
+    (globalThis as any).ANALOG_I18N_DEFAULT_LOCALE = 'de';
+    (globalThis as any).ANALOG_I18N_LOCALES = ['de', 'fr'];
+
+    const resolved = resolveI18nConfig({ loader });
+
+    expect(resolved.defaultLocale).toBe('de');
+    expect(resolved.locales).toEqual(['de', 'fr']);
+
+    delete (globalThis as any).ANALOG_I18N_DEFAULT_LOCALE;
+    delete (globalThis as any).ANALOG_I18N_LOCALES;
+  });
+
+  it('should prefer explicit values over globals', () => {
+    (globalThis as any).ANALOG_I18N_DEFAULT_LOCALE = 'de';
+    (globalThis as any).ANALOG_I18N_LOCALES = ['de', 'fr'];
+
+    const resolved = resolveI18nConfig({
+      defaultLocale: 'en',
+      locales: ['en', 'es'],
+      loader,
+    });
+
+    expect(resolved.defaultLocale).toBe('en');
+    expect(resolved.locales).toEqual(['en', 'es']);
+
+    delete (globalThis as any).ANALOG_I18N_DEFAULT_LOCALE;
+    delete (globalThis as any).ANALOG_I18N_LOCALES;
+  });
+
+  it('should throw when neither config nor globals provide values', () => {
+    expect(() => resolveI18nConfig({ loader })).toThrow(
+      'provideI18n() requires defaultLocale and locales',
     );
   });
 });

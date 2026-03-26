@@ -575,6 +575,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         return {
           define: {
             ANALOG_API_PREFIX: `"${baseURL.substring(1)}${apiPrefix.substring(1)}"`,
+            ...(options?.i18n
+              ? {
+                  ANALOG_I18N_DEFAULT_LOCALE: JSON.stringify(
+                    options.i18n.defaultLocale,
+                  ),
+                  ANALOG_I18N_LOCALES: JSON.stringify(options.i18n.locales),
+                }
+              : {}),
           },
         };
       },

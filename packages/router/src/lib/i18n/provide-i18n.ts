@@ -8,19 +8,28 @@ import {
 } from '@angular/core';
 import { LOCALE } from '@analogjs/router/tokens';
 
+declare const ANALOG_I18N_DEFAULT_LOCALE: string;
+declare const ANALOG_I18N_LOCALES: string[];
+
 /**
  * Configuration for runtime i18n support.
+ *
+ * `defaultLocale` and `locales` are optional when the platform plugin
+ * is configured with `i18n` in `vite.config.ts` — the values are
+ * injected as build-time globals automatically.
  */
 export interface I18nConfig {
   /**
    * The default locale to use when no locale is detected.
+   * If omitted, reads from the platform plugin's `i18n.defaultLocale`.
    */
-  defaultLocale: string;
+  defaultLocale?: string;
 
   /**
    * List of supported locale identifiers.
+   * If omitted, reads from the platform plugin's `i18n.locales`.
    */
-  locales: string[];
+  locales?: string[];
 
   /**
    * A function that returns translations for a given locale.
@@ -32,12 +41,44 @@ export interface I18nConfig {
 }
 
 /**
- * Injection token for the i18n configuration.
+ * Fully resolved i18n config with all required fields.
+ */
+export type ResolvedI18nConfig = Required<I18nConfig>;
+
+/**
+ * Injection token for the resolved i18n configuration.
  * Provided by `provideI18n()`.
  */
-export const I18N_CONFIG = new InjectionToken<I18nConfig>(
+export const I18N_CONFIG = new InjectionToken<ResolvedI18nConfig>(
   '@analogjs/router I18n Config',
 );
+
+/**
+ * Resolves the full i18n config by merging explicit values with
+ * build-time globals injected by the platform plugin.
+ */
+export function resolveI18nConfig(config: I18nConfig): Required<I18nConfig> {
+  const defaultLocale =
+    config.defaultLocale ??
+    (typeof ANALOG_I18N_DEFAULT_LOCALE !== 'undefined'
+      ? ANALOG_I18N_DEFAULT_LOCALE
+      : undefined);
+
+  const locales =
+    config.locales ??
+    (typeof ANALOG_I18N_LOCALES !== 'undefined'
+      ? ANALOG_I18N_LOCALES
+      : undefined);
+
+  if (!defaultLocale || !locales) {
+    throw new Error(
+      '[@analogjs/router] provideI18n() requires defaultLocale and locales. ' +
+        'Either pass them explicitly or configure i18n in the analog() plugin in vite.config.ts.',
+    );
+  }
+
+  return { defaultLocale, locales, loader: config.loader };
+}
 
 /**
  * Provides runtime i18n support using Angular's $localize.
@@ -51,20 +92,22 @@ export const I18N_CONFIG = new InjectionToken<I18nConfig>(
  * from `window.location.pathname`. On the server, locale is detected from
  * the request in `provideServerContext()`.
  *
- * Usage:
+ * When the platform plugin is configured with `i18n` in `vite.config.ts`,
+ * `defaultLocale` and `locales` are injected automatically — only
+ * `loader` is required:
+ *
  * ```typescript
  * provideI18n({
- *   defaultLocale: 'en',
- *   locales: ['en', 'fr', 'de'],
  *   loader: (locale) => import(`./i18n/${locale}.json`),
  * })
  * ```
  */
 export function provideI18n(config: I18nConfig): EnvironmentProviders {
-  const detectedLocale = detectClientLocale(config);
+  const resolved = resolveI18nConfig(config);
+  const detectedLocale = detectClientLocale(resolved);
 
   return makeEnvironmentProviders([
-    { provide: I18N_CONFIG, useValue: config },
+    { provide: I18N_CONFIG, useValue: resolved },
     { provide: LOCALE, useValue: detectedLocale },
     {
       provide: ENVIRONMENT_INITIALIZER,
@@ -72,7 +115,7 @@ export function provideI18n(config: I18nConfig): EnvironmentProviders {
       useFactory: () => {
         // Re-read LOCALE in case the server context overrode it
         const locale = inject(LOCALE);
-        return () => initI18n(config, locale);
+        return () => initI18n(resolved, locale);
       },
     },
   ]);
@@ -82,7 +125,7 @@ export function provideI18n(config: I18nConfig): EnvironmentProviders {
  * Detects the locale on the client from the URL path prefix.
  * Returns the default locale on the server or when no match is found.
  */
-export function detectClientLocale(config: I18nConfig): string {
+export function detectClientLocale(config: ResolvedI18nConfig): string {
   if (typeof window === 'undefined') {
     return config.defaultLocale;
   }
@@ -102,7 +145,7 @@ export function detectClientLocale(config: I18nConfig): string {
  * Loads translations for the given locale and registers them with $localize.
  */
 export async function initI18n(
-  config: I18nConfig,
+  config: ResolvedI18nConfig,
   locale?: string,
 ): Promise<void> {
   const activeLocale = locale ?? config.defaultLocale;
