@@ -323,7 +323,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             // Expand routes with locale prefixes when i18n is configured
             if (options?.i18n && nitroConfig.prerender?.routes) {
               nitroConfig.prerender.routes = expandRoutesWithLocales(
-                nitroConfig.prerender.routes,
+                nitroConfig.prerender.routes.filter(Boolean) as string[],
                 options.i18n,
               );
             }

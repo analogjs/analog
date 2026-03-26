@@ -118,6 +118,7 @@ async function extractWithLocalizeTools(
   files: string[],
   basePath: string,
 ): Promise<ExtractedMessage[]> {
+  // @ts-ignore - @angular/localize/tools is an optional dependency
   const localizeTools = await import('@angular/localize/tools');
   const { MessageExtractor, ɵParsedMessage } = localizeTools as any;
 
