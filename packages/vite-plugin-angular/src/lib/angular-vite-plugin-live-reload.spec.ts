@@ -130,7 +130,6 @@ describe('angular liveReload style preprocessing', () => {
 
     const { plugin, transformStylesheet } =
       await setupLiveReloadPlugin(stylePreprocessor);
-    preprocessCSSMock.mockResolvedValue({ code: '.demo{color:red}' });
     const stylesheetId = await transformStylesheet(
       '.demo { color: red; }',
       '/project/src/app/demo.component.ts',
@@ -143,13 +142,11 @@ describe('angular liveReload style preprocessing', () => {
       '.demo { color: red; }',
       '/project/src/app/demo.component.css',
     );
-    expect(preprocessCSSMock).toHaveBeenCalledWith(
-      '/* /project/src/app/demo.component.css */\n.demo { color: red; }',
-      '/project/src/app/demo.component.css?direct',
-      expect.objectContaining({ root: workspaceRoot }),
-    );
+    // preprocessCSS is NOT called during compilation; Vite processes
+    // the CSS at serve time when the load hook returns it.
+    expect(preprocessCSSMock).not.toHaveBeenCalled();
     expect(await plugin.load(`${stylesheetId}?ngcomp=ng-c123&e=0`)).toBe(
-      '.demo{color:red}',
+      '/* /project/src/app/demo.component.css */\n.demo { color: red; }',
     );
   });
 
@@ -160,7 +157,6 @@ describe('angular liveReload style preprocessing', () => {
 
     const { plugin, transformStylesheet } =
       await setupLiveReloadPlugin(stylePreprocessor);
-    preprocessCSSMock.mockResolvedValue({ code: '.demo{display:grid}' });
     const stylesheetId = await transformStylesheet(
       '.demo { display: grid; }',
       '/project/src/app/demo.component.ts',
@@ -173,13 +169,11 @@ describe('angular liveReload style preprocessing', () => {
       '.demo { display: grid; }',
       '/project/src/app/demo.component.css',
     );
-    expect(preprocessCSSMock).toHaveBeenCalledWith(
-      '/* /project/src/app/demo.component.css */\n.demo { display: grid; }',
-      '/project/src/app/demo.component.css?direct',
-      expect.objectContaining({ root: workspaceRoot }),
-    );
+    // preprocessCSS is NOT called during compilation; Vite processes
+    // the CSS at serve time when the load hook returns it.
+    expect(preprocessCSSMock).not.toHaveBeenCalled();
     expect(await plugin.load(`${stylesheetId}?ngcomp=ng-c123&e=0`)).toBe(
-      '.demo{display:grid}',
+      '/* /project/src/app/demo.component.css */\n.demo { display: grid; }',
     );
   });
 });

@@ -884,31 +884,26 @@ export function angular(options?: PluginOptions): Plugin[] {
             : data;
 
           if (pluginOptions.liveReload) {
-            let stylesheetResult;
-
-            try {
-              stylesheetResult = await preprocessCSS(
-                preprocessedData,
-                `${filename}?direct`,
-                resolvedConfig,
-              );
-            } catch (e) {
-              console.error(`${e}`);
-            }
-
-            const transformedStylesheet =
-              stylesheetResult?.code ?? preprocessedData;
+            // Store the preprocessed (but not yet CSS-transformed) data so that
+            // Vite's serve-time pipeline handles PostCSS / Tailwind processing
+            // exactly once when the load hook returns this CSS.  Running
+            // preprocessCSS() here would strip directives like @reference before
+            // the CSS re-enters the transform pipeline, causing plugins such as
+            // @tailwindcss/vite to fail on the second pass.
             const id = createHash('sha256')
               .update(containingFile)
               .update(className as string)
               .update(String(order))
-              .update(transformedStylesheet)
+              .update(preprocessedData)
               .digest('hex');
             const stylesheetId = id + '.' + pluginOptions.inlineStylesExtension;
-            inlineComponentStyles!.set(stylesheetId, transformedStylesheet);
+            inlineComponentStyles!.set(stylesheetId, preprocessedData);
             return stylesheetId;
           }
 
+          // Non-liveReload: the CSS is returned directly to the Angular
+          // compiler and never re-enters Vite's pipeline, so we must run
+          // preprocessCSS() eagerly here.
           let stylesheetResult;
 
           try {

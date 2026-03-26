@@ -57,6 +57,9 @@ export function augmentHostWithResources(
       ? (options.stylePreprocessor(data, filename) ?? data)
       : data;
 
+    // liveReload path: store preprocessed CSS for Vite's serve-time pipeline.
+    // CSS must NOT be transformed here — the load hook returns it into
+    // Vite's transform pipeline where PostCSS / Tailwind process it once.
     if (options.inlineComponentStyles) {
       const id = createHash('sha256')
         .update(context.containingFile)
@@ -69,6 +72,8 @@ export function augmentHostWithResources(
       return { content: stylesheetId };
     }
 
+    // Non-liveReload: CSS is returned directly to the Angular compiler
+    // and never re-enters Vite's pipeline, so transform eagerly.
     let stylesheetResult;
 
     try {
