@@ -5,6 +5,7 @@ export {
   PrerenderRouteConfig,
   PrerenderContentDir,
   PrerenderContentFile,
+  I18nPrerenderOptions,
 } from './lib/options.js';
 
 declare module 'nitropack' {
