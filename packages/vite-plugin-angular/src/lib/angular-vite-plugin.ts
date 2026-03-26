@@ -235,7 +235,10 @@ function buildStylePreprocessor(
         return code;
       }
 
-      const refPath = relative(dirname(filename), rootStylesheet);
+      const refPath = relative(dirname(filename), rootStylesheet).replace(
+        /\\/g,
+        '/',
+      );
       return `@reference "${refPath}";\n${code}`;
     };
   }
