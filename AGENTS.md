@@ -108,6 +108,7 @@ Projects with caching explicitly disabled (`"cache": false` on their build targe
 - Backward compatibility is critical for new features, allowing progressive adoption.
 - Keep code concise with emphasis on readability, avoid clever solutions and abstractions.
 - Always scan existing codebase for examples and patterns for implementation.
+- When writing code, analyze all touched code paths up front, including Analog experimental Vite options, their disabled branches, and compatibility fallbacks. Do not treat experimental features as exempt from behavioral review, regression analysis, or targeted tests.
 - Prefer using existing Angular APIs, with wrappers where needed.
 - Always use modern Angular syntax including control flow, signal APIs, and standalone components.
 - Cross compatibility with Nx is strongly encouraged. Prefer schematics and builders for Analog first-party solutions.
