@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const preprocessCSSMock = vi.fn();
 const createAngularCompilationMock = vi.fn();
-const workspaceRoot = '/Volumes/SnyderDev/@benpsnyder/analog-bak';
+const workspaceRoot = '/workspace/analog';
 const originalNodeEnv = process.env['NODE_ENV'];
 const originalVitestEnv = process.env['VITEST'];
 
