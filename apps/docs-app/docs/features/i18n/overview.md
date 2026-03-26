@@ -270,6 +270,115 @@ Copy this file for each locale and translate the values:
 
 Then reference the translation files in your `provideI18n()` loader.
 
+## Content i18n
+
+Analog's content system supports locale-aware content resolution for blogs, docs, and other markdown content. Add `withLocale()` to your `provideContent()` configuration:
+
+```ts
+// src/app/app.config.ts
+import {
+  provideContent,
+  withMarkdownRenderer,
+  withLocale,
+} from '@analogjs/content';
+import { injectLocale } from '@analogjs/router/tokens';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideFileRouter(),
+    provideI18n({
+      defaultLocale: 'en',
+      locales: ['en', 'fr', 'de'],
+      loader: async (locale) => {
+        const translations = await import(`../i18n/${locale}.json`);
+        return translations.default;
+      },
+    }),
+    provideContent(
+      withMarkdownRenderer(),
+      withLocale({ loadLocale: injectLocale }),
+    ),
+  ],
+};
+```
+
+### Organizing Content by Locale
+
+Use locale subdirectories under `src/content/`:
+
+```
+src/content/
+  en/
+    blog/
+      my-post.md
+      another-post.md
+  fr/
+    blog/
+      my-post.md
+      another-post.md
+  blog/
+    shared-post.md     ← no locale, shown for all locales
+```
+
+With this setup, `injectContentFiles()` and `injectContent()` automatically resolve to the correct locale:
+
+```ts
+// Blog list — returns only posts for the active locale
+const posts = injectContentFiles<PostAttributes>((file) =>
+  file.filename.includes('/blog/'),
+);
+
+// Blog detail — resolves /content/fr/blog/my-post.md when locale is 'fr'
+const post$ = injectContent<PostAttributes>({
+  param: 'slug',
+  subdirectory: 'blog',
+});
+```
+
+No locale-specific code is needed in components — the content APIs handle it internally.
+
+### Frontmatter Locale Attribute
+
+Alternatively, set the locale in frontmatter instead of using subdirectories:
+
+```markdown
+---
+title: Mon article
+locale: fr
+slug: my-post
+---
+```
+
+Files with a `locale` frontmatter attribute are filtered by that value. Files without a `locale` attribute and outside any locale subdirectory are treated as universal content and included for all locales.
+
+### Prerendering Content Routes
+
+Use `PrerenderContentDir` with locale-aware transforms:
+
+```ts
+analog({
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en', 'fr', 'de'],
+  },
+  prerender: {
+    routes: [
+      {
+        contentDir: '/src/content',
+        transform: (file) => {
+          // file.path includes the locale: '/src/content/fr/blog'
+          const segments = file.path.split('/').filter(Boolean);
+          const localeIndex = segments.indexOf('content') + 1;
+          const locale = segments[localeIndex];
+          const rest = segments.slice(localeIndex + 1).join('/');
+          return `/${locale}/${rest}/${file.attributes['slug'] || file.name}`;
+        },
+      },
+    ],
+  },
+});
+```
+
 ## Development
 
 During development, the Analog dev server provides full i18n support:
