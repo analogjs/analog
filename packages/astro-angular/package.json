@@ -5,10 +5,10 @@
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
-    ".": "./src/index.js",
-    "./utils": "./src/utils.js",
-    "./client.js": "./src/client.js",
-    "./server.js": "./src/server.js",
+    ".": "./dist/src/index.js",
+    "./utils": "./dist/src/utils.js",
+    "./client.js": "./dist/src/client.js",
+    "./server.js": "./dist/src/server.js",
     "./package.json": "./package.json"
   },
   "keywords": [

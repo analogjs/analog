@@ -90,10 +90,7 @@ export default defineConfig({
       },
       formats: ['cjs'],
     },
-    outDir: resolve(
-      pkgDir,
-      '../../node_modules/@analogjs/vite-plugin-angular/src/lib/tools',
-    ),
+    outDir: resolve(pkgDir, '../vite-plugin-angular/dist/src/lib/tools'),
     rolldownOptions: {
       external: [
         /^@angular-devkit\//,

@@ -40,6 +40,9 @@
     "minimist": "^1.2.7",
     "prompts": "^2.4.2"
   },
+  "devDependencies": {
+    "@analogjs/platform": "workspace:*"
+  },
   "publishConfig": {
     "access": "public",
     "provenance": true

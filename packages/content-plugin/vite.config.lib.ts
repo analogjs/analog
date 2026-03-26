@@ -60,7 +60,7 @@ export default defineConfig({
       },
       formats: ['cjs'],
     },
-    outDir: resolve(pkgDir, '../../node_modules/@analogjs/content-plugin'),
+    outDir: resolve(pkgDir, 'dist'),
     rolldownOptions: {
       external: [/^@nx\//, /^@angular\//, /^node:/],
       output: {

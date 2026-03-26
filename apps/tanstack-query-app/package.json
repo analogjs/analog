@@ -2,7 +2,11 @@
   "name": "tanstack-query-app",
   "private": true,
   "version": "0.0.0",
+  "dependencies": {
+    "@analogjs/router": "workspace:*"
+  },
   "devDependencies": {
+    "@analogjs/platform": "workspace:*",
     "@tailwindcss/vite": "^4.2.2",
     "daisyui": "^5.5.19",
     "tailwindcss": "^4.2.2"

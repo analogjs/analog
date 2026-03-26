@@ -41,7 +41,7 @@
     "rolldown": "^1.0.0-rc.11",
     "tinyglobby": "^0.2.14"
   },
-  "builders": "./src/lib/tools/builders.json",
+  "builders": "./dist/src/lib/tools/builders.json",
   "ng-update": {
     "packageGroup": [
       "@analogjs/platform",
@@ -57,12 +57,12 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./src/index.d.ts",
-      "import": "./src/index.js",
-      "require": "./src/index.js",
-      "default": "./src/index.js"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js",
+      "require": "./dist/src/index.js",
+      "default": "./dist/src/index.js"
     },
-    "./setup-vitest": "./setup-vitest.js"
+    "./setup-vitest": "./dist/setup-vitest.js"
   },
   "publishConfig": {
     "access": "public",

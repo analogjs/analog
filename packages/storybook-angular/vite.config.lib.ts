@@ -1,8 +1,17 @@
 import { resolve, dirname, join, relative } from 'node:path';
-import { mkdirSync, copyFileSync, readdirSync, statSync } from 'node:fs';
+import {
+  mkdirSync,
+  copyFileSync,
+  readdirSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
 // eslint-disable-next-line @nx/enforce-module-boundaries
-import { oxcDtsPlugin } from '../../tools/build/shared-plugins.ts';
+import {
+  oxcDtsPlugin,
+  readDistPackageJson,
+} from '../../tools/build/shared-plugins.ts';
 
 const pkgDir = resolve(import.meta.dirname);
 
@@ -12,8 +21,8 @@ function copyAssetsPlugin(): Plugin {
     async writeBundle(options) {
       const outDir = options.dir!;
 
-      // Copy package.json
-      copyFileSync(join(pkgDir, 'package.json'), join(outDir, 'package.json'));
+      // Copy package.json with dist-prefix stripping
+      writeFileSync(join(outDir, 'package.json'), readDistPackageJson(pkgDir));
 
       // Copy non-TS assets from src: JSON schemas, builders.json, handwritten .d.ts
       const srcDir = resolve(pkgDir, 'src');
@@ -67,7 +76,7 @@ export default defineConfig({
       },
       formats: ['es'],
     },
-    outDir: resolve(pkgDir, '../../node_modules/@analogjs/storybook-angular'),
+    outDir: resolve(pkgDir, 'dist'),
     rolldownOptions: {
       external: [
         /^@angular\//,

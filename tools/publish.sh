@@ -1,11 +1,11 @@
 #!/bin/bash
 echo "Publishing to $RELEASE_TAG"
-npm publish node_modules/@analogjs/astro-angular --tag $RELEASE_TAG
-npm publish node_modules/@analogjs/content --tag $RELEASE_TAG
-npm publish node_modules/@analogjs/platform --tag $RELEASE_TAG
-npm publish node_modules/@analogjs/router --tag $RELEASE_TAG
-npm publish node_modules/@analogjs/storybook-angular --tag $RELEASE_TAG
-npm publish node_modules/@analogjs/vite-plugin-angular --tag $RELEASE_TAG
-npm publish node_modules/@analogjs/vite-plugin-nitro --tag $RELEASE_TAG
-npm publish node_modules/@analogjs/vitest-angular --tag $RELEASE_TAG
+npm publish packages/astro-angular/dist --tag $RELEASE_TAG
+npm publish packages/content/dist --tag $RELEASE_TAG
+npm publish packages/platform/dist --tag $RELEASE_TAG
+npm publish packages/router/dist --tag $RELEASE_TAG
+npm publish packages/storybook-angular/dist --tag $RELEASE_TAG
+npm publish packages/vite-plugin-angular/dist --tag $RELEASE_TAG
+npm publish packages/vite-plugin-nitro/dist --tag $RELEASE_TAG
+npm publish packages/vitest-angular/dist --tag $RELEASE_TAG
 npm publish dist/packages/create-analog --tag $RELEASE_TAG

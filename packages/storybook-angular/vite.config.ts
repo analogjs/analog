@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
     cacheDir: '../../node_modules/.vite/storybook-angular',
     build: {
       target: 'esnext',
-      outDir: '../../node_modules/@analogjs/storybook-angular',
+      outDir: 'dist',
       emptyOutDir: true,
       sourcemap: true,
       minify: false,

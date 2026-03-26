@@ -152,7 +152,7 @@ function resolveBuildContext(
     try: () => {
       const root = resolve(import.meta.dirname, '../..');
       const pkgDir = resolve(root, 'packages', packageName);
-      const outDir = resolve(root, 'node_modules/@analogjs', packageName);
+      const outDir = resolve(root, 'packages', packageName, 'dist');
       const tsconfigProd = resolve(pkgDir, 'tsconfig.lib.prod.json');
       const tsconfig = existsSync(tsconfigProd)
         ? tsconfigProd

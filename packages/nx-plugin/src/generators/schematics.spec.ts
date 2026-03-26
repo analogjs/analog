@@ -9,7 +9,7 @@ import * as path from 'path';
 // the compiled CommonJS output rather than the TypeScript sources.
 const collectionPath = path.join(
   __dirname,
-  '../../../../node_modules/@analogjs/platform/src/lib/nx-plugin/generators.json',
+  '../../../platform/dist/src/lib/nx-plugin/generators.json',
 );
 
 describe('platform schematics', () => {

@@ -8,9 +8,7 @@
     "build": {
       "executor": "nx:run-commands",
       "cache": false,
-      "outputs": [
-        "{workspaceRoot}/node_modules/@analogjs/platform/src/lib/nx-plugin"
-      ],
+      "outputs": ["{workspaceRoot}/packages/platform/dist/src/lib/nx-plugin"],
       "options": {
         "commands": ["vite build -c packages/nx-plugin/vite.config.lib.ts"],
         "parallel": false

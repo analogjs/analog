@@ -10,8 +10,8 @@
  *   --src                      Copy non-TS source assets (all files except .ts, plus .d.ts)
  *
  * Examples:
- *   node --experimental-strip-types tools/scripts/copy-src-assets.mts packages/nx-plugin node_modules/@analogjs/platform/src/lib/nx-plugin --assets package.json generators.json executors.json --src
- *   node --experimental-strip-types tools/scripts/copy-src-assets.mts packages/vite-plugin-nitro node_modules/@analogjs/vite-plugin-nitro --assets package.json --dirs migrations
+ *   node --experimental-strip-types tools/scripts/copy-src-assets.mts packages/nx-plugin packages/platform/dist/src/lib/nx-plugin --assets package.json generators.json executors.json --src
+ *   node --experimental-strip-types tools/scripts/copy-src-assets.mts packages/vite-plugin-nitro packages/vite-plugin-nitro/dist --assets package.json --dirs migrations
  */
 import { copyFileSync, cpSync, mkdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
