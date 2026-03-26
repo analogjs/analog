@@ -38,6 +38,36 @@ export interface PrerenderOptions {
   postRenderingHooks?: ((routes: PrerenderRoute) => Promise<void>)[];
 }
 
+export interface I18nOptions {
+  /**
+   * The default/source locale for the application.
+   */
+  defaultLocale: string;
+
+  /**
+   * List of supported locale identifiers (e.g. ['en', 'fr', 'de']).
+   */
+  locales: string[];
+
+  /**
+   * Extract i18n messages from the build output.
+   * When enabled, writes a translation source file after the client build.
+   */
+  extract?: {
+    /**
+     * Output format for extracted messages.
+     * @default 'json'
+     */
+    format?: 'json' | 'xliff' | 'xliff2' | 'xmb';
+
+    /**
+     * Output file path for extracted messages, relative to project root.
+     * @default 'src/i18n/messages.{format extension}'
+     */
+    outFile?: string;
+  };
+}
+
 export interface Options {
   ssr?: boolean;
   ssrBuildDir?: string;
@@ -97,6 +127,12 @@ export interface Options {
    * File replacements
    */
   fileReplacements?: PluginOptions['fileReplacements'];
+  /**
+   * Configuration for runtime i18n support.
+   * When set, enables locale detection on SSR and provides
+   * the LOCALE injection token.
+   */
+  i18n?: I18nOptions;
 }
 
 export { PrerenderContentDir, PrerenderContentFile };
