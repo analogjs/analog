@@ -499,7 +499,21 @@ importers:
         specifier: ^4.0.3
         version: 4.0.3
 
-  apps/analog-app: {}
+  apps/analog-app:
+    dependencies:
+      '@analogjs/router':
+        specifier: workspace:*
+        version: link:../../packages/router
+    devDependencies:
+      '@analogjs/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
+      '@analogjs/storybook-angular':
+        specifier: workspace:*
+        version: link:../../packages/storybook-angular
+      '@analogjs/vite-plugin-angular':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-angular
 
   apps/analog-app-e2e: {}
 
@@ -520,7 +534,18 @@ importers:
 
   apps/astro-app-e2e-playwright: {}
 
-  apps/blog-app: {}
+  apps/blog-app:
+    dependencies:
+      '@analogjs/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      '@analogjs/router':
+        specifier: workspace:*
+        version: link:../../packages/router
+    devDependencies:
+      '@analogjs/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
 
   apps/blog-app-e2e: {}
 
@@ -567,7 +592,14 @@ importers:
         specifier: 6.0.2
         version: 6.0.2
 
-  apps/opt-catchall-app: {}
+  apps/opt-catchall-app:
+    dependencies:
+      '@analogjs/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      '@analogjs/router':
+        specifier: workspace:*
+        version: link:../../packages/router
 
   apps/tanstack-query-app:
     dependencies:
@@ -578,6 +610,9 @@ importers:
       '@analogjs/platform':
         specifier: workspace:*
         version: link:../../packages/platform
+      '@analogjs/vitest-angular':
+        specifier: workspace:*
+        version: link:../../packages/vitest-angular
       '@tailwindcss/vite':
         specifier: ^4.2.2
         version: 4.2.2(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))

@@ -1,5 +1,12 @@
 {
   "name": "@analogjs/blog-app",
   "private": true,
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "dependencies": {
+    "@analogjs/content": "workspace:*",
+    "@analogjs/router": "workspace:*"
+  },
+  "devDependencies": {
+    "@analogjs/platform": "workspace:*"
+  }
 }
