@@ -2,6 +2,7 @@
 
 # compiled output
 /dist
+packages/*/dist
 /tmp
 /out-tsc
 

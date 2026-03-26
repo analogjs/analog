@@ -9,7 +9,7 @@
     "build": {
       "executor": "nx:run-commands",
       "cache": false,
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/platform"],
+      "outputs": ["{projectRoot}/dist"],
       "dependsOn": ["vite-plugin-angular:build", "vite-plugin-nitro:build"],
       "options": {
         "commands": [

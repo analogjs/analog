@@ -146,10 +146,7 @@ export default defineConfig({
       },
       formats: ['cjs'],
     },
-    outDir: resolve(
-      pkgDir,
-      '../../node_modules/@analogjs/platform/src/lib/nx-plugin',
-    ),
+    outDir: resolve(pkgDir, '../platform/dist/src/lib/nx-plugin'),
     rolldownOptions: {
       external: [
         /^@angular-devkit\//,

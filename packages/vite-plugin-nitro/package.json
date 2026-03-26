@@ -5,7 +5,7 @@
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
-    ".": "./src/index.js",
+    ".": "./dist/src/index.js",
     "./package.json": "./package.json"
   },
   "keywords": [
@@ -50,8 +50,8 @@
     "migrations": "./migrations/migration.json"
   },
   "imports": {
-    "#analog/ssr": "./src/index.js",
-    "#analog/index": "./src/index.js"
+    "#analog/ssr": "./dist/src/index.js",
+    "#analog/index": "./dist/src/index.js"
   },
   "publishConfig": {
     "access": "public",

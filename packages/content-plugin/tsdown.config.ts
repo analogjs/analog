@@ -22,7 +22,7 @@ export default defineConfig({
   // Outputs into @analogjs/content/plugin (not @analogjs/content-plugin) so
   // the published @analogjs/content package can resolve ng-update migrations
   // via its "migrations": "./plugin/migrations.json" field.
-  outDir: resolve(pkgDir, '../../node_modules/@analogjs/content/plugin'),
+  outDir: resolve(pkgDir, '../content/dist/plugin'),
   sourcemap: true,
   minify: false,
   clean: false,

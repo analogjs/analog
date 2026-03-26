@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
     cacheDir: '../../node_modules/.vite/vitest-angular',
     build: {
       target: 'esnext',
-      outDir: '../../node_modules/@analogjs/vitest-angular',
+      outDir: 'dist',
       emptyOutDir: true,
       sourcemap: true,
       minify: false,

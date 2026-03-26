@@ -61,6 +61,39 @@
       "optional": true
     }
   },
+  "exports": {
+    ".": {
+      "import": "./dist/fesm2022/analogjs-content.mjs",
+      "default": "./dist/fesm2022/analogjs-content.mjs"
+    },
+    "./og": {
+      "import": "./dist/fesm2022/analogjs-content-og.mjs",
+      "default": "./dist/fesm2022/analogjs-content-og.mjs"
+    },
+    "./prism-highlighter": {
+      "import": "./dist/fesm2022/analogjs-content-prism-highlighter.mjs",
+      "default": "./dist/fesm2022/analogjs-content-prism-highlighter.mjs"
+    },
+    "./shiki-highlighter": {
+      "import": "./dist/fesm2022/analogjs-content-shiki-highlighter.mjs",
+      "default": "./dist/fesm2022/analogjs-content-shiki-highlighter.mjs"
+    },
+    "./mdc": {
+      "import": "./dist/fesm2022/analogjs-content-mdc.mjs",
+      "default": "./dist/fesm2022/analogjs-content-mdc.mjs"
+    },
+    "./md4x": {
+      "import": "./dist/fesm2022/analogjs-content-md4x.mjs",
+      "default": "./dist/fesm2022/analogjs-content-md4x.mjs"
+    },
+    "./resources": {
+      "import": "./dist/fesm2022/analogjs-content-resources.mjs",
+      "default": "./dist/fesm2022/analogjs-content-resources.mjs"
+    },
+    "./package.json": {
+      "default": "./package.json"
+    }
+  },
   "dependencies": {
     "tslib": "^2.3.0"
   },

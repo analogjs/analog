@@ -17,7 +17,7 @@
       "executor": "nx:run-commands",
       "cache": false,
       "dependsOn": ["assert-deps", "vite-plugin-angular:build"],
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content"],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
         "commands": [
           "node tools/scripts/build-lib.mts content",

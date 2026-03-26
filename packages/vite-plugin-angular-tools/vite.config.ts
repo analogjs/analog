@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
     cacheDir: '../../node_modules/.vite/vite-plugin-angular-tools',
     build: {
       target: 'esnext',
-      outDir: '../../node_modules/@analogjs/vite-plugin-angular/src/lib/tools',
+      outDir: '../vite-plugin-angular/dist/src/lib/tools',
       emptyOutDir: true,
       sourcemap: true,
       minify: false,

@@ -8,7 +8,7 @@
     "build": {
       "executor": "nx:run-commands",
       "cache": false,
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/vite-plugin-angular"],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
         "commands": [
           "vite build --config packages/vite-plugin-angular/vite.config.lib.ts",

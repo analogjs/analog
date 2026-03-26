@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
     cacheDir: '../../node_modules/.vite/nx-plugin',
     build: {
       target: 'esnext',
-      outDir: '../../node_modules/@analogjs/platform/src/lib/nx-plugin',
+      outDir: '../platform/dist/src/lib/nx-plugin',
       emptyOutDir: true,
       sourcemap: true,
       minify: false,

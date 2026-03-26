@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { defineConfig } from 'vite';
 const angularEntry = resolve(
   import.meta.dirname,
-  '../../node_modules/@analogjs/vite-plugin-angular/src/index.js',
+  '../vite-plugin-angular/dist/src/index.js',
 );
 
 async function loadAngular() {

@@ -5,7 +5,7 @@
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
-    ".": "./src/index.js",
+    ".": "./dist/src/index.js",
     "./package.json": "./package.json"
   },
   "keywords": [
@@ -71,10 +71,10 @@
       "optional": true
     }
   },
-  "builders": "./src/lib/nx-plugin/executors.json",
-  "executors": "./src/lib/nx-plugin/executors.json",
-  "generators": "./src/lib/nx-plugin/generators.json",
-  "schematics": "./src/lib/nx-plugin/generators.json",
+  "builders": "./dist/src/lib/nx-plugin/executors.json",
+  "executors": "./dist/src/lib/nx-plugin/executors.json",
+  "generators": "./dist/src/lib/nx-plugin/generators.json",
+  "schematics": "./dist/src/lib/nx-plugin/generators.json",
   "ng-update": {
     "packageGroup": [
       "@analogjs/platform",
