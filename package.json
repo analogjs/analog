@@ -28,7 +28,7 @@
     "lint": "pnpm run /^lint:/",
     "ng": "nx",
     "preinstall": "npx only-allow pnpm",
-    "prepare": "git config core.hookspath .githooks 2>/dev/null; pnpm run build:release",
+    "prepare": "git config core.hookspath .githooks || true && pnpm run build:release",
     "prettier:check": "prettier --check .",
     "start": "nx serve",
     "test:vite-ci": "nx run-many --target test --exclude card --all --skip-nx-cache",

@@ -955,6 +955,15 @@ importers:
 
   packages/vitest-angular-tools: {}
 
+  tests/vitest-angular:
+    devDependencies:
+      '@analogjs/vite-plugin-angular':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-angular
+      '@analogjs/vitest-angular':
+        specifier: workspace:*
+        version: link:../../packages/vitest-angular
+
 packages:
 
   '@actions/core@3.0.0':
