@@ -124,14 +124,16 @@ describe('angular liveReload style preprocessing', () => {
     }
   });
 
-  it('preprocesses external stylesheets before liveReload transforms them', async () => {
+  it('preprocesses external and inline stylesheets before liveReload transforms them', async () => {
     const stylePreprocessor = vi.fn(
       (code: string, filename: string) => `/* ${filename} */\n${code}`,
     );
 
     const { plugin, transformStylesheet } =
       await setupLiveReloadPlugin(stylePreprocessor);
-    const stylesheetId = await transformStylesheet(
+
+    // External stylesheet (resourceFile provided)
+    const externalId = await transformStylesheet(
       '.demo { color: red; }',
       '/project/src/app/demo.component.ts',
       '/project/src/app/demo.component.css',
@@ -143,22 +145,13 @@ describe('angular liveReload style preprocessing', () => {
       '.demo { color: red; }',
       '/project/src/app/demo.component.css',
     );
-    // preprocessCSS is NOT called during compilation; Vite processes
-    // the CSS at serve time when the load hook returns it.
-    expect(preprocessCSSMock).not.toHaveBeenCalled();
-    expect(await plugin.load(`${stylesheetId}?ngcomp=ng-c123&e=0`)).toBe(
+    expect(await plugin.load(`${externalId}?ngcomp=ng-c123&e=0`)).toBe(
       '/* /project/src/app/demo.component.css */\n.demo { color: red; }',
     );
-  });
 
-  it('preprocesses inline stylesheets before liveReload transforms them', async () => {
-    const stylePreprocessor = vi.fn(
-      (code: string, filename: string) => `/* ${filename} */\n${code}`,
-    );
-
-    const { plugin, transformStylesheet } =
-      await setupLiveReloadPlugin(stylePreprocessor);
-    const stylesheetId = await transformStylesheet(
+    // Inline stylesheet (no resourceFile — filename derived from containingFile)
+    stylePreprocessor.mockClear();
+    const inlineId = await transformStylesheet(
       '.demo { display: grid; }',
       '/project/src/app/demo.component.ts',
       undefined,
@@ -170,29 +163,21 @@ describe('angular liveReload style preprocessing', () => {
       '.demo { display: grid; }',
       '/project/src/app/demo.component.css',
     );
+    expect(await plugin.load(`${inlineId}?ngcomp=ng-c123&e=0`)).toBe(
+      '/* /project/src/app/demo.component.css */\n.demo { display: grid; }',
+    );
+
     // preprocessCSS is NOT called during compilation; Vite processes
     // the CSS at serve time when the load hook returns it.
     expect(preprocessCSSMock).not.toHaveBeenCalled();
-    expect(await plugin.load(`${stylesheetId}?ngcomp=ng-c123&e=0`)).toBe(
-      '/* /project/src/app/demo.component.css */\n.demo { display: grid; }',
-    );
   });
 
-  it('runs tailwindPreprocessor through the liveReload plugin path', async () => {
-    vi.doMock('node:fs', async () => {
-      const actual = await vi.importActual<typeof import('node:fs')>('node:fs');
-      return {
-        ...actual,
-        readFileSync: vi.fn(() => '@import "tailwindcss" prefix(sa);'),
-      };
-    });
+  it('prepends content via stylePreprocessor through the liveReload plugin path', async () => {
+    const prepender = (code: string, _filename: string) =>
+      `@reference "../styles/tailwind.css";\n${code}`;
 
-    const { tailwindPreprocessor } = await import('./style-preprocessor.js');
-    const { plugin, transformStylesheet } = await setupLiveReloadPlugin(
-      tailwindPreprocessor({
-        tailwindRootCss: '/project/src/styles/tailwind.css',
-      }),
-    );
+    const { plugin, transformStylesheet } =
+      await setupLiveReloadPlugin(prepender);
     const stylesheetId = await transformStylesheet(
       '.demo { @apply sa:text-red-500; }',
       '/project/src/app/demo.component.ts',
