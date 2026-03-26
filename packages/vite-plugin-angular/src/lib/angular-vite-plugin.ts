@@ -42,6 +42,7 @@ import {
   augmentProgramWithVersioning,
   mergeTransformers,
 } from './host.js';
+import type { StylePreprocessor } from './style-preprocessor.js';
 
 import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {
@@ -109,7 +110,7 @@ export interface PluginOptions {
    * @param filename - Resolved file path of the stylesheet (or containing .ts file for inline styles)
    * @returns Transformed CSS string, or the original code if no transformation is needed
    */
-  stylePreprocessor?: (code: string, filename: string) => string;
+  stylePreprocessor?: StylePreprocessor;
 }
 
 /**
