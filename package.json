@@ -30,6 +30,9 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "git config core.hookspath .githooks || true && pnpm run build:release",
     "prettier:check": "prettier --check .",
+    "release:pack": "node tools/scripts/release-artifacts.mts pack",
+    "release:smoke": "node tools/scripts/smoke-release-consumers.mts",
+    "release:verify": "node tools/scripts/release-artifacts.mts verify",
     "start": "nx serve",
     "test:vite-ci": "nx run-many --target test --exclude card --all --skip-nx-cache",
     "test": "nx run-many --target test"
