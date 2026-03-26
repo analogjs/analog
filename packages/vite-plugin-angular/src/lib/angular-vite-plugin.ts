@@ -884,13 +884,16 @@ export function angular(options?: PluginOptions): Plugin[] {
             ? (pluginOptions.stylePreprocessor(data, filename) ?? data)
             : data;
 
-          if (pluginOptions.liveReload) {
+          if (pluginOptions.liveReload && watchMode) {
             // Store the preprocessed (but not yet CSS-transformed) data so that
             // Vite's serve-time pipeline handles PostCSS / Tailwind processing
             // exactly once when the load hook returns this CSS.  Running
             // preprocessCSS() here would strip directives like @reference before
             // the CSS re-enters the transform pipeline, causing plugins such as
             // @tailwindcss/vite to fail on the second pass.
+            // Guard must match the externalRuntimeStyles condition (line ~927)
+            // because the Angular compiler only emits external style references
+            // when externalRuntimeStyles is enabled.
             const id = createHash('sha256')
               .update(containingFile)
               .update(className as string)
