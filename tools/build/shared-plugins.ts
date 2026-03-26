@@ -102,13 +102,22 @@ export function oxcDtsPlugin(pkgDir: string): Plugin {
 }
 
 /**
- * Recursively strips the `./dist/` prefix from path-like string values
- * in a package.json object, so the written dist/package.json has correct
- * exports relative to itself (e.g. `./src/index.js` instead of `./dist/src/index.js`).
+ * Recursively strips `dist/` prefixes from path-like string values in a
+ * package.json object, so the written dist/package.json has paths relative to
+ * the dist directory itself (for example, `./src/index.js` instead of either
+ * `./dist/src/index.js` or `dist/src/index.js`).
  */
 function stripDistPrefixes(obj: unknown): unknown {
   if (typeof obj === 'string') {
-    return obj.startsWith('./dist/') ? './' + obj.slice('./dist/'.length) : obj;
+    if (obj.startsWith('./dist/')) {
+      return './' + obj.slice('./dist/'.length);
+    }
+
+    if (obj.startsWith('dist/')) {
+      return './' + obj.slice('dist/'.length);
+    }
+
+    return obj;
   }
   if (Array.isArray(obj)) {
     return obj.map(stripDistPrefixes);
@@ -124,10 +133,10 @@ function stripDistPrefixes(obj: unknown): unknown {
 }
 
 /**
- * Read a package.json from `pkgDir`, strip `./dist/` prefixes from all
- * path-like values, and return the transformed JSON string.
- * Used when copying package.json into the `dist/` build output so that
- * export paths are correct relative to the dist directory.
+ * Read a package.json from `pkgDir`, strip `dist/` prefixes from path-like
+ * values, and return the transformed JSON string. Used when copying
+ * package.json into the `dist/` build output so that export and entry paths are
+ * correct relative to the dist directory.
  */
 export function readDistPackageJson(pkgDir: string): string {
   const pkg = JSON.parse(readFileSync(join(pkgDir, 'package.json'), 'utf-8'));
