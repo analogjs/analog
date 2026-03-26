@@ -67,7 +67,7 @@ export function augmentHostWithResources(
         `.${options?.inlineStylesExtension}`,
       );
 
-    // Apply user-defined style preprocessor (e.g. Tailwind @reference injection)
+    // Apply any user-defined stylesheet preprocessing before Vite transforms it.
     const preprocessedData = options.stylePreprocessor
       ? options.stylePreprocessor(data, filename)
       : data;
