@@ -1,3 +1,9 @@
+# [3.0.0-alpha.17](https://github.com/analogjs/analog/compare/v3.0.0-alpha.16...v3.0.0-alpha.17) (2026-03-26)
+
+### Features
+
+- **vite-plugin-angular:** add stylePreprocessor and Tailwind CSS integration for component styles ([#2190](https://github.com/analogjs/analog/issues/2190)) ([b2e4901](https://github.com/analogjs/analog/commit/b2e49019dccb418cd80552a7889fb0637eb7ffff))
+
 # [3.0.0-alpha.16](https://github.com/analogjs/analog/compare/v3.0.0-alpha.15...v3.0.0-alpha.16) (2026-03-25)
 
 ### Bug Fixes
