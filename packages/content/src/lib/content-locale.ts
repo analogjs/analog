@@ -18,6 +18,20 @@ export function injectContentLocale(): string | null {
   return inject(CONTENT_LOCALE, { optional: true });
 }
 
+export interface ContentLocaleOptions {
+  /**
+   * Function that returns the active locale.
+   * Runs in injection context so `inject()` can be used to read
+   * from other tokens (e.g., a LOCALE token from a router package).
+   *
+   * ```typescript
+   * withLocale({ loadLocale: injectLocale })
+   * withLocale({ loadLocale: () => navigator.language.split('-')[0] })
+   * ```
+   */
+  loadLocale: () => string | null;
+}
+
 /**
  * Content feature that sets the active locale for content resolution.
  *
@@ -27,22 +41,25 @@ export function injectContentLocale(): string | null {
  * - `injectContent()` tries locale-prefixed paths first
  *   (e.g., `content/fr/blog/post.md` before `content/blog/post.md`).
  *
- * Accepts a static string or a factory function for runtime detection:
- *
+ * Usage:
  * ```typescript
- * // Static
- * provideContent(withMarkdownRenderer(), withLocale('fr'))
+ * // With loader — runs in injection context
+ * provideContent(
+ *   withMarkdownRenderer(),
+ *   withLocale({ loadLocale: injectLocale }),
+ * )
  *
- * // Runtime — detect from URL or any other source
- * provideContent(withMarkdownRenderer(), withLocale(() => {
- *   const locale = inject(LOCALE, { optional: true });
- *   return locale ?? 'en';
- * }))
+ * // Static locale
+ * provideContent(
+ *   withMarkdownRenderer(),
+ *   withLocale('fr'),
+ * )
  * ```
  */
-export function withLocale(locale: string | (() => string)): Provider {
-  if (typeof locale === 'function') {
-    return { provide: CONTENT_LOCALE, useFactory: locale };
+export function withLocale(locale: string | ContentLocaleOptions): Provider {
+  if (typeof locale === 'string') {
+    return { provide: CONTENT_LOCALE, useValue: locale };
   }
-  return { provide: CONTENT_LOCALE, useValue: locale };
+
+  return { provide: CONTENT_LOCALE, useFactory: locale.loadLocale };
 }
