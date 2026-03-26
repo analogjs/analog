@@ -1,5 +1,6 @@
 import {
-  createAngularFixtureSnapshotSerializer,
+  createHtmlCommentSnapshotSerializer,
+  createNoNgAttributesSnapshotSerializer,
 } from './snapshot-serializers';
 
 const env = globalThis as any;
@@ -9,7 +10,8 @@ const env = globalThis as any;
   if (!originalVitestFn) {
     return;
   }
+  originalVitestFn.addSnapshotSerializer(createHtmlCommentSnapshotSerializer());
   originalVitestFn.addSnapshotSerializer(
-    createAngularFixtureSnapshotSerializer(),
+    createNoNgAttributesSnapshotSerializer(),
   );
 });
