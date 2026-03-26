@@ -125,6 +125,7 @@ export class AnalogCi {
         '*.timestamp*',
         'tmp',
         'out-tsc',
+        '!.git',
       ],
     })
     source: Directory,
@@ -171,6 +172,7 @@ export class AnalogCi {
         '*.timestamp*',
         'tmp',
         'out-tsc',
+        '!.git',
       ],
     })
     source: Directory,
@@ -205,6 +207,7 @@ export class AnalogCi {
         '*.timestamp*',
         'tmp',
         'out-tsc',
+        '!.git',
       ],
     })
     source: Directory,
@@ -232,6 +235,7 @@ export class AnalogCi {
         '*.timestamp*',
         'tmp',
         'out-tsc',
+        '!.git',
       ],
     })
     source: Directory,
@@ -262,6 +266,7 @@ export class AnalogCi {
         '*.timestamp*',
         'tmp',
         'out-tsc',
+        '!.git',
       ],
     })
     source: Directory,
@@ -295,6 +300,7 @@ export class AnalogCi {
         '*.timestamp*',
         'tmp',
         'out-tsc',
+        '!.git',
       ],
     })
     source: Directory,
@@ -330,6 +336,7 @@ export class AnalogCi {
         '*.timestamp*',
         'tmp',
         'out-tsc',
+        '!.git',
       ],
     })
     source: Directory,
@@ -364,6 +371,7 @@ export class AnalogCi {
         '*.timestamp*',
         'tmp',
         'out-tsc',
+        '!.git',
       ],
     })
     source: Directory,
@@ -401,6 +409,7 @@ export class AnalogCi {
         '*.timestamp*',
         'tmp',
         'out-tsc',
+        '!.git',
       ],
     })
     source: Directory,
