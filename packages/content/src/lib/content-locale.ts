@@ -27,14 +27,22 @@ export function injectContentLocale(): string | null {
  * - `injectContent()` tries locale-prefixed paths first
  *   (e.g., `content/fr/blog/post.md` before `content/blog/post.md`).
  *
- * Usage:
+ * Accepts a static string or a factory function for runtime detection:
+ *
  * ```typescript
- * provideContent(
- *   withMarkdownRenderer(),
- *   withLocale('fr'),
- * )
+ * // Static
+ * provideContent(withMarkdownRenderer(), withLocale('fr'))
+ *
+ * // Runtime — detect from URL or any other source
+ * provideContent(withMarkdownRenderer(), withLocale(() => {
+ *   const locale = inject(LOCALE, { optional: true });
+ *   return locale ?? 'en';
+ * }))
  * ```
  */
-export function withLocale(locale: string): Provider {
+export function withLocale(locale: string | (() => string)): Provider {
+  if (typeof locale === 'function') {
+    return { provide: CONTENT_LOCALE, useFactory: locale };
+  }
   return { provide: CONTENT_LOCALE, useValue: locale };
 }
