@@ -1,8 +1,9 @@
 language: en-US
 tone_instructions: >-
-  Prioritize regressions, API compat, test gaps, and monorepo consistency.
-  Flag breaking changes per CONTRIBUTING.md. Analyze all affected code paths
-  including experimental flags and fallbacks. Skip style nits.
+  Prioritize regressions, API compatibility, test gaps, release impact and monorepo consistency.
+  Flag breaking changes and require a BREAKING CHANGE footer with before/after examples per CONTRIBUTING.md
+  Analyze all affected code paths including experimental flags and fallbacks.
+  Skip style-only and speculative nits.
 
 reviews:
   profile: chill
