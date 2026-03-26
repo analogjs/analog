@@ -871,26 +871,43 @@ export function angular(options?: PluginOptions): Plugin[] {
           order,
           className,
         ) {
-          if (pluginOptions.liveReload) {
-            const id = createHash('sha256')
-              .update(containingFile)
-              .update(className as string)
-              .update(String(order))
-              .update(data)
-              .digest('hex');
-            const filename = id + '.' + pluginOptions.inlineStylesExtension;
-            inlineComponentStyles!.set(filename, data);
-            return filename;
-          }
-
           const filename =
             resourceFile ??
-            containingFile.replace('.ts', `.${options?.inlineStylesExtension}`);
+            containingFile.replace(
+              '.ts',
+              `.${pluginOptions.inlineStylesExtension}`,
+            );
 
           // Apply any user-defined stylesheet preprocessing before Vite transforms it.
           const preprocessedData = pluginOptions.stylePreprocessor
             ? (pluginOptions.stylePreprocessor(data, filename) ?? data)
             : data;
+
+          if (pluginOptions.liveReload) {
+            let stylesheetResult;
+
+            try {
+              stylesheetResult = await preprocessCSS(
+                preprocessedData,
+                `${filename}?direct`,
+                resolvedConfig,
+              );
+            } catch (e) {
+              console.error(`${e}`);
+            }
+
+            const transformedStylesheet =
+              stylesheetResult?.code ?? preprocessedData;
+            const id = createHash('sha256')
+              .update(containingFile)
+              .update(className as string)
+              .update(String(order))
+              .update(transformedStylesheet)
+              .digest('hex');
+            const stylesheetId = id + '.' + pluginOptions.inlineStylesExtension;
+            inlineComponentStyles!.set(stylesheetId, transformedStylesheet);
+            return stylesheetId;
+          }
 
           let stylesheetResult;
 
