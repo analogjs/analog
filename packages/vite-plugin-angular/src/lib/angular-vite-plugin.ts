@@ -100,6 +100,16 @@ export interface PluginOptions {
   experimental?: {
     useAngularCompilationAPI?: boolean;
   };
+  /**
+   * Optional preprocessor that transforms component CSS before it enters Vite's
+   * preprocessCSS pipeline. Runs on every component stylesheet (both external
+   * `.component.css` files and inline `styles: [...]` blocks).
+   *
+   * @param code - Raw CSS content of the component stylesheet
+   * @param filename - Resolved file path of the stylesheet (or containing .ts file for inline styles)
+   * @returns Transformed CSS string, or the original code if no transformation is needed
+   */
+  stylePreprocessor?: (code: string, filename: string) => string;
 }
 
 /**
@@ -142,6 +152,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     fileReplacements: options?.fileReplacements ?? [],
     useAngularCompilationAPI:
       options?.experimental?.useAngularCompilationAPI ?? false,
+    stylePreprocessor: options?.stylePreprocessor,
   };
 
   let resolvedConfig: ResolvedConfig;
@@ -860,27 +871,49 @@ export function angular(options?: PluginOptions): Plugin[] {
           order,
           className,
         ) {
+          const filename =
+            resourceFile ??
+            containingFile.replace(
+              '.ts',
+              `.${pluginOptions.inlineStylesExtension}`,
+            );
+
+          // Apply any user-defined stylesheet preprocessing before Vite transforms it.
+          const preprocessedData = pluginOptions.stylePreprocessor
+            ? (pluginOptions.stylePreprocessor(data, filename) ?? data)
+            : data;
+
           if (pluginOptions.liveReload) {
+            let stylesheetResult;
+
+            try {
+              stylesheetResult = await preprocessCSS(
+                preprocessedData,
+                `${filename}?direct`,
+                resolvedConfig,
+              );
+            } catch (e) {
+              console.error(`${e}`);
+            }
+
+            const transformedStylesheet =
+              stylesheetResult?.code ?? preprocessedData;
             const id = createHash('sha256')
               .update(containingFile)
               .update(className as string)
               .update(String(order))
-              .update(data)
+              .update(transformedStylesheet)
               .digest('hex');
-            const filename = id + '.' + pluginOptions.inlineStylesExtension;
-            inlineComponentStyles!.set(filename, data);
-            return filename;
+            const stylesheetId = id + '.' + pluginOptions.inlineStylesExtension;
+            inlineComponentStyles!.set(stylesheetId, transformedStylesheet);
+            return stylesheetId;
           }
-
-          const filename =
-            resourceFile ??
-            containingFile.replace('.ts', `.${options?.inlineStylesExtension}`);
 
           let stylesheetResult;
 
           try {
             stylesheetResult = await preprocessCSS(
-              data,
+              preprocessedData,
               `${filename}?direct`,
               resolvedConfig,
             );
@@ -1119,6 +1152,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         inlineComponentStyles,
         externalComponentStyles,
         sourceFileCache,
+        stylePreprocessor: pluginOptions.stylePreprocessor,
       });
     }
 

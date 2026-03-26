@@ -20,6 +20,7 @@ export function augmentHostWithResources(
     inlineComponentStyles?: Map<string, string>;
     externalComponentStyles?: Map<string, string>;
     sourceFileCache?: SourceFileCache;
+    stylePreprocessor?: (code: string, filename: string) => string;
   },
 ): void {
   const resourceHost = host as CompilerHost;
@@ -46,30 +47,35 @@ export function augmentHostWithResources(
       return null;
     }
 
-    if (options.inlineComponentStyles) {
-      const id = createHash('sha256')
-        .update(context.containingFile)
-        .update(context.className)
-        .update(String(context.order))
-        .update(data)
-        .digest('hex');
-      const filename = id + '.' + options.inlineStylesExtension;
-      options.inlineComponentStyles.set(filename, data);
-      return { content: filename };
-    }
-
-    // Resource file only exists for external stylesheets
     const filename =
       context.resourceFile ??
       context.containingFile.replace(
         '.ts',
         `.${options?.inlineStylesExtension}`,
       );
+    const preprocessedData = options.stylePreprocessor
+      ? (options.stylePreprocessor(data, filename) ?? data)
+      : data;
+
+    if (options.inlineComponentStyles) {
+      const id = createHash('sha256')
+        .update(context.containingFile)
+        .update(context.className)
+        .update(String(context.order))
+        .update(preprocessedData)
+        .digest('hex');
+      const stylesheetId = id + '.' + options.inlineStylesExtension;
+      options.inlineComponentStyles.set(stylesheetId, preprocessedData);
+      return { content: stylesheetId };
+    }
 
     let stylesheetResult;
 
     try {
-      stylesheetResult = await transform(data, `${filename}?direct`);
+      stylesheetResult = await transform(
+        preprocessedData,
+        `${filename}?direct`,
+      );
     } catch (e) {
       console.error(`${e}`);
     }
