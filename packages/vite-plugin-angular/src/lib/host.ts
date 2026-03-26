@@ -47,30 +47,27 @@ export function augmentHostWithResources(
       return null;
     }
 
-    if (options.inlineComponentStyles) {
-      const id = createHash('sha256')
-        .update(context.containingFile)
-        .update(context.className)
-        .update(String(context.order))
-        .update(data)
-        .digest('hex');
-      const filename = id + '.' + options.inlineStylesExtension;
-      options.inlineComponentStyles.set(filename, data);
-      return { content: filename };
-    }
-
-    // Resource file only exists for external stylesheets
     const filename =
       context.resourceFile ??
       context.containingFile.replace(
         '.ts',
         `.${options?.inlineStylesExtension}`,
       );
-
-    // Apply any user-defined stylesheet preprocessing before Vite transforms it.
     const preprocessedData = options.stylePreprocessor
       ? (options.stylePreprocessor(data, filename) ?? data)
       : data;
+
+    if (options.inlineComponentStyles) {
+      const id = createHash('sha256')
+        .update(context.containingFile)
+        .update(context.className)
+        .update(String(context.order))
+        .update(preprocessedData)
+        .digest('hex');
+      const stylesheetId = id + '.' + options.inlineStylesExtension;
+      options.inlineComponentStyles.set(stylesheetId, preprocessedData);
+      return { content: stylesheetId };
+    }
 
     let stylesheetResult;
 

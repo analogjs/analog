@@ -64,4 +64,38 @@ describe('augmentHostWithResources', () => {
       '/project/src/app/demo.component.css?direct',
     );
   });
+
+  it('preprocesses inline styles stored via inlineComponentStyles', async () => {
+    const host = { readFile: vi.fn() } as unknown as ts.CompilerHost;
+    const transform = vi.fn();
+    const inlineComponentStyles = new Map<string, string>();
+    const stylePreprocessor = vi.fn(
+      (code: string, filename: string) => `/* ${filename} */\n${code}`,
+    );
+
+    augmentHostWithResources(host, transform as any, {
+      inlineStylesExtension: 'css',
+      inlineComponentStyles,
+      stylePreprocessor,
+    });
+
+    const result = await (host as any).transformResource(
+      '.demo { color: red; }',
+      {
+        type: 'style',
+        containingFile: '/project/src/app/demo.component.ts',
+        className: 'DemoComponent',
+        order: 0,
+      },
+    );
+
+    expect(stylePreprocessor).toHaveBeenCalledWith(
+      '.demo { color: red; }',
+      '/project/src/app/demo.component.css',
+    );
+    expect(transform).not.toHaveBeenCalled();
+    expect(inlineComponentStyles.get(result.content)).toBe(
+      '/* /project/src/app/demo.component.css */\n.demo { color: red; }',
+    );
+  });
 });
