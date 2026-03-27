@@ -109,7 +109,7 @@ const packageConfigs: Record<string, PackageValidationConfig> = {
   },
   'create-analog': {
     packageJsonPath: 'dist/packages/create-analog/package.json',
-    requiredPaths: ['dist/packages/create-analog/index.js'],
+    requiredPaths: ['dist/packages/create-analog/index.mjs'],
   },
   platform: {
     packageJsonPath: 'packages/platform/dist/package.json',
