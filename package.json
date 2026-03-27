@@ -184,6 +184,7 @@
     "ng-packagr": "21.2.1",
     "nitro": "catalog:",
     "nx": "22.6.2",
+    "obug": "^2.1.1",
     "ofetch": "catalog:",
     "oxc-parser": "catalog:",
     "oxc-resolver": "catalog:",

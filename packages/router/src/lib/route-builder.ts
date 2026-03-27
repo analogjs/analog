@@ -100,10 +100,20 @@ export function createRoutes<TFile>(
   return toRoutes(rawRoutes, files, resolveModule, debug);
 }
 
+/**
+ * Strips directory prefixes and file extensions from a route filename to
+ * produce the raw path used for route segment construction.
+ *
+ * The regex mirrors `filenameToRoutePath` in route-manifest.ts — changes
+ * here must be kept in sync with that function. The first alternation
+ * strips everything up to and including the first /routes/, /pages/, or
+ * /content/ segment, which handles both app-local and additional directory
+ * paths (e.g. `additionalPagesDirs`, `additionalContentDirs`).
+ */
 function toRawPath(filename: string): string {
   return filename
     .replace(
-      /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts|analog|ag)$)|(\.(ts|md|analog|ag)$)/g,
+      /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages|content)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts|analog|ag)$)|(\.(ts|md|analog|ag)$)/g,
       '',
     )
     .replace(/\[\[\.\.\.([^\]]+)\]\]/g, '(opt-$1)')

@@ -982,7 +982,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         // recursive buildApp invocations — each nesting another client build
         // that re-triggers config, producing an infinite loop of
         // "building client environment... ✓ 1 modules transformed".
-        if (environmentBuild || ssrBuild || isServe || isTest) {
+        //
+        // environmentBuild — already inside a buildApp call (recursion guard)
+        // ssrBuild         — legacy SSR-only sub-build
+        // isServe          — dev server / Vitest test runner (command: 'serve')
+        if (environmentBuild || ssrBuild || isServe) {
           return {};
         }
 

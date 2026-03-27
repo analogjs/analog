@@ -11,6 +11,14 @@ import {
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import net from 'node:net';
+import { createDebug, enable } from 'obug';
+
+if (process.env['SMOKE_VERBOSE'] === 'true') {
+  enable('smoke:*');
+}
+
+const log = createDebug('smoke:run');
+const logTest = createDebug('smoke:test');
 
 interface PackedArtifact {
   packageName: string;
@@ -49,11 +57,51 @@ function run(
   args: string[],
   options: { cwd?: string; env?: NodeJS.ProcessEnv } = {},
 ): void {
-  execFileSync(command, args, {
-    cwd: options.cwd ?? root,
-    env: options.env ?? process.env,
-    stdio: 'inherit',
-  });
+  const cwd = options.cwd ?? root;
+  const label = `${command} ${args.join(' ')}`;
+  log('%s (cwd: %s)', label, cwd);
+
+  try {
+    execFileSync(command, args, {
+      cwd,
+      env: options.env ?? process.env,
+      stdio: 'inherit',
+    });
+  } catch (error: unknown) {
+    const exitCode =
+      error && typeof error === 'object' && 'status' in error
+        ? (error as { status: number | null }).status
+        : null;
+    const signal =
+      error && typeof error === 'object' && 'signal' in error
+        ? (error as { signal: string | null }).signal
+        : null;
+
+    const hints: string[] = [];
+    if (exitCode === 127) {
+      hints.push(
+        'Exit code 127 means the command was not found.',
+        `Verify that "${command}" is installed and available in PATH.`,
+      );
+    } else if (exitCode === 126) {
+      hints.push(
+        'Exit code 126 means the command was found but not executable.',
+      );
+    }
+
+    const details = [
+      `Smoke-test command failed:`,
+      `  command: ${label}`,
+      `  cwd:     ${cwd}`,
+      `  exit:    ${exitCode ?? 'unknown'}`,
+      signal ? `  signal:  ${signal}` : '',
+      ...hints.map((h) => `  hint:    ${h}`),
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    throw new Error(details, { cause: error });
+  }
 }
 
 const npmUserAgent = [
@@ -319,6 +367,7 @@ function runCreateAnalogSmokeTest(
   scratchDir: string,
   registryEnv: NodeJS.ProcessEnv,
 ): void {
+  logTest('create-analog');
   const workdir = resolve(scratchDir, 'create-analog');
   mkdirSync(workdir, { recursive: true });
 
@@ -351,6 +400,7 @@ function runNxPresetSmokeTest(
   scratchDir: string,
   registryEnv: NodeJS.ProcessEnv,
 ): void {
+  logTest('nx-preset');
   const workdir = resolve(scratchDir, 'nx-preset');
   mkdirSync(workdir, { recursive: true });
 
@@ -393,6 +443,7 @@ function runAngularMigrationSmokeTest(
   scratchDir: string,
   registryEnv: NodeJS.ProcessEnv,
 ): void {
+  logTest('angular-migration');
   const workdir = resolve(scratchDir, 'angular-migrate');
   mkdirSync(workdir, { recursive: true });
 
