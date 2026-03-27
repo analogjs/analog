@@ -8,6 +8,7 @@
     "build": {
       "executor": "nx:run-commands",
       "cache": false,
+      "dependsOn": ["vitest-angular:build-self"],
       "outputs": ["{workspaceRoot}/packages/vitest-angular/dist/src/lib/tools"],
       "options": {
         "command": "vite build -c packages/vitest-angular-tools/vite.config.lib.ts"
