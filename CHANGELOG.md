@@ -1,3 +1,9 @@
+# [2.4.0-beta.22](https://github.com/analogjs/analog/compare/v2.4.0-beta.21...v2.4.0-beta.22) (2026-03-27)
+
+### Bug Fixes
+
+- fix vitest build and ci workflows ([a4b129a](https://github.com/analogjs/analog/commit/a4b129a589090043d0b06f6e72bbbc259aa23f9e))
+
 # [2.4.0-beta.21](https://github.com/analogjs/analog/compare/v2.4.0-beta.20...v2.4.0-beta.21) (2026-03-27)
 
 ### Features
