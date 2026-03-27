@@ -83,7 +83,7 @@ function parseCatalogs(workspaceRoot: string): ParsedCatalogs {
 
     if (section === 'named') {
       // Named catalog header: "  peerCompat:" (2-space indent, no value)
-      const headerMatch = line.match(/^  (\w[\w-]*):\s*$/);
+      const headerMatch = line.match(/^ {2}(\w[\w-]*):\s*$/);
       if (headerMatch) {
         currentCatalogName = headerMatch[1];
         namedCatalogs[currentCatalogName] = {};
