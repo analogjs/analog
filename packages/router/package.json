@@ -6,22 +6,32 @@
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
     ".": {
+      "types": "./dist/types/src/index.d.ts",
       "import": "./dist/fesm2022/analogjs-router.mjs",
       "default": "./dist/fesm2022/analogjs-router.mjs"
     },
+    "./content": {
+      "types": "./dist/types/content/src/index.d.ts",
+      "import": "./dist/fesm2022/analogjs-router-content.mjs",
+      "default": "./dist/fesm2022/analogjs-router-content.mjs"
+    },
     "./tanstack-query": {
+      "types": "./dist/types/tanstack-query/src/index.d.ts",
       "import": "./dist/fesm2022/analogjs-router-tanstack-query.mjs",
       "default": "./dist/fesm2022/analogjs-router-tanstack-query.mjs"
     },
     "./server": {
+      "types": "./dist/types/server/src/index.d.ts",
       "import": "./dist/fesm2022/analogjs-router-server.mjs",
       "default": "./dist/fesm2022/analogjs-router-server.mjs"
     },
     "./server/actions": {
+      "types": "./dist/types/server/actions/src/index.d.ts",
       "import": "./dist/fesm2022/analogjs-router-server-actions.mjs",
       "default": "./dist/fesm2022/analogjs-router-server-actions.mjs"
     },
     "./tokens": {
+      "types": "./dist/types/tokens/src/index.d.ts",
       "import": "./dist/fesm2022/analogjs-router-tokens.mjs",
       "default": "./dist/fesm2022/analogjs-router-tokens.mjs"
     },

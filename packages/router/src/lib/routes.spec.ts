@@ -3,7 +3,8 @@ import { of } from 'rxjs';
 import { expect, vi } from 'vitest';
 import { ROUTE_JSON_LD_KEY } from './json-ld';
 import { RouteExport, RouteMeta } from './models';
-import { createRoutes, Files } from './routes';
+import { createRoutes } from './routes';
+import { Files } from './route-files';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
 
 describe('routes', () => {
@@ -531,25 +532,6 @@ describe('routes', () => {
     });
   });
 
-  describe('a nested content route', () => {
-    const files: Files = {
-      '/src/content/a/b/content.md': () =>
-        Promise.resolve(`# Content Route
-
-Testing nested markdown routes.
-`),
-    };
-
-    const routes = createRoutes(files);
-    const route = routes[0];
-
-    it('should have a nested path matching content file segments', () => {
-      expect(route.path).toBe('a');
-      expect(route.children[0].path).toBe('b');
-      expect(route.children[0].children[0].path).toBe('content');
-    });
-  });
-
   describe('an optional catchall route (root)', () => {
     const files: Files = {
       '/app/routes/[[...slug]].ts': () =>
@@ -841,36 +823,6 @@ Testing nested markdown routes.
         [ROUTE_JSON_LD_KEY]: jsonLdResolver,
         load: expect.anything(),
       });
-    });
-
-    it('should map markdown frontmatter jsonLd into route data', async () => {
-      const files: Files = {
-        '/src/content/structured-data.md': () =>
-          Promise.resolve(`---
-title: Structured Data Content
-jsonLd:
-  "@context": https://schema.org
-  "@type": Article
-  identifier: analog-content
----
-
-Hello world
-`),
-      };
-
-      const moduleRoute = createRoutes(files)[0];
-      const resolvedRoutes = (await moduleRoute.loadChildren?.()) as Route[];
-      const resolvedRoute = resolvedRoutes[0];
-
-      expect(resolvedRoute.data).toEqual({
-        _analogContent: expect.stringContaining('Hello world'),
-        [ROUTE_JSON_LD_KEY]: {
-          '@context': 'https://schema.org',
-          '@type': 'Article',
-          identifier: 'analog-content',
-        },
-      });
-      expect(resolvedRoute.title).toBe('Structured Data Content');
     });
   });
 
