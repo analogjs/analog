@@ -16,7 +16,11 @@
     "build": {
       "executor": "nx:run-commands",
       "cache": false,
-      "dependsOn": ["assert-deps", "vite-plugin-angular:build"],
+      "dependsOn": [
+        "assert-deps",
+        "vite-plugin-angular:build",
+        "content:build"
+      ],
       "outputs": ["{projectRoot}/dist"],
       "options": {
         "commands": [
