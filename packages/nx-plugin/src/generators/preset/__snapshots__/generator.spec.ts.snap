@@ -13,7 +13,7 @@ exports[`preset generator > should match index.html 1`] = `
   </head>
   <body>
     <app-root></app-root>
-    <script type="module" src="/my-app/src/main.ts"></script>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
 "

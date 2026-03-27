@@ -74,7 +74,7 @@
       "optional": true
     }
   },
-  "builders": "./dist/src/lib/nx-plugin/executors.json",
+  "builders": "./dist/src/lib/nx-plugin/builders.json",
   "executors": "./dist/src/lib/nx-plugin/executors.json",
   "generators": "./dist/src/lib/nx-plugin/generators.json",
   "schematics": "./dist/src/lib/nx-plugin/generators.json",
