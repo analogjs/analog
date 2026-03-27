@@ -3,6 +3,7 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, Plugin } from 'vitest/config';
 import aotProject from './src/aot/vitest.project';
+import snapshotSerializersProject from './src/snapshot-serializers/vitest.project';
 import providersProject from './src/providers/vitest.project';
 import resetTestBedBetweenTestsProject from './src/reset-test-bed-between-tests/vitest.project';
 
@@ -12,6 +13,7 @@ export default defineConfig({
   plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])] as Plugin[],
   test: {
     watch: false,
+    globals: true,
     reporters: ['default'],
     coverage: {
       reportsDirectory: '../../coverage/tests/vitest-angular',
@@ -24,6 +26,11 @@ export default defineConfig({
       provider: playwright(),
       instances: [{ browser: 'chromium' }],
     },
-    projects: [aotProject, resetTestBedBetweenTestsProject, providersProject],
+    projects: [
+      aotProject,
+      resetTestBedBetweenTestsProject,
+      providersProject,
+      snapshotSerializersProject,
+    ],
   },
 });
