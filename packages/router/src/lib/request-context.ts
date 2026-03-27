@@ -13,6 +13,7 @@ import {
   injectBaseURL,
   injectAPIPrefix,
   injectInternalServerFetch,
+  type ServerInternalFetch,
 } from '@analogjs/router/tokens';
 
 import { makeCacheKey } from './cache-key';
@@ -34,7 +35,9 @@ export function requestContextInterceptor(
   const apiPrefix = injectAPIPrefix();
   const baseUrl = injectBaseURL();
   const transferState = inject(TransferState);
-  const nitroGlobal = globalThis as typeof globalThis & { $fetch?: any };
+  const nitroGlobal = globalThis as typeof globalThis & {
+    $fetch?: ServerInternalFetch;
+  };
   const internalFetch = injectInternalServerFetch();
   const serverFetch = internalFetch ?? nitroGlobal.$fetch;
 
@@ -57,20 +60,24 @@ export function requestContextInterceptor(
     return from<Promise<HttpResponse<unknown>>>(
       serverFetch
         .raw(fetchUrl, {
-          method: req.method as any,
+          method: req.method as
+            | 'GET'
+            | 'HEAD'
+            | 'POST'
+            | 'PUT'
+            | 'DELETE'
+            | 'PATCH',
           body: req.body ? req.body : undefined,
           params: requestUrl.searchParams,
           responseType,
           headers: req.headers
             .keys()
-            .reduce((hdrs: Record<string, string | null>, current: string) => {
-              return {
-                ...hdrs,
-                [current]: req.headers.get(current),
-              };
+            .reduce((hdrs: Record<string, string>, current: string) => {
+              const value = req.headers.get(current);
+              return value != null ? { ...hdrs, [current]: value } : hdrs;
             }, {}),
         })
-        .then((res: any) => {
+        .then((res) => {
           const cacheResponse = {
             body: res._data,
             headers: new HttpHeaders(res.headers),

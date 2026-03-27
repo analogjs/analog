@@ -9,7 +9,7 @@ function sortAndConcatParams(params: HttpParams | URLSearchParams): string {
 }
 
 export function makeCacheKey(
-  request: HttpRequest<any>,
+  request: HttpRequest<unknown>,
   mappedRequestUrl: string,
 ): StateKey<unknown> {
   // make the params encoded same as a url so it's easy to identify

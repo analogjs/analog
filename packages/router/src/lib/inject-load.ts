@@ -9,7 +9,7 @@ function isResponse(value: unknown): value is Response {
 }
 
 export function injectLoad<
-  T extends (pageServerLoad: PageServerLoad) => Promise<any>,
+  T extends (pageServerLoad: PageServerLoad) => Promise<unknown>,
 >(options?: { injector?: Injector }): Observable<Awaited<ReturnType<T>>> {
   const injector = options?.injector ?? inject(Injector);
   const route = injector.get(ActivatedRoute);
@@ -20,7 +20,7 @@ export function injectLoad<
 }
 
 export function injectLoadData<
-  T extends (pageServerLoad: PageServerLoad) => Promise<any>,
+  T extends (pageServerLoad: PageServerLoad) => Promise<unknown>,
 >(options?: { injector?: Injector }): Observable<LoadDataResult<T>> {
   return injectLoad<T>(options).pipe(
     map((result): LoadDataResult<T> => {

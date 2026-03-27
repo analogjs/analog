@@ -143,10 +143,21 @@ describe('FormAction', () => {
       }),
     );
 
-    // The directive chains fetch().then(res => res.json().then(emit)),
-    // which requires more than two microticks. A macrotask flush ensures
-    // the full promise chain has settled before asserting.
-    await new Promise((resolve) => setTimeout(resolve));
+    // The directive's _handlePost chains several async steps, each consuming
+    // a microtask tick before the success output fires:
+    //
+    //   tick 1 — fetch() promise resolves (pendingResponse.resolve above)
+    //   tick 2 — .then(res => ...) callback runs, calls res.json()
+    //   tick 3 — res.json() promise resolves
+    //   tick 4 — .then(result => { onSuccess.emit(result) }) callback runs
+    //
+    // Two ticks are insufficient in containerised CI (Docker / Dagger) where
+    // the microtask queue may not be batched as aggressively as on macOS.
+    // Four ticks cover the full chain deterministically.
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
     fixture.detectChanges();
 
     expect(successes).toEqual([{ ok: true }]);
