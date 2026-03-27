@@ -4,7 +4,8 @@ import {
   provideFileRouter,
   withTypedRouter,
   withLoaderCaching,
-} from '@analogjs/router/content';
+} from '@analogjs/router';
+import { withContentRoutes } from '@analogjs/router/content';
 import { provideHttpClient } from '@angular/common/http';
 import { ApplicationConfig } from '@angular/core';
 import { provideClientHydration } from '@angular/platform-browser';
@@ -24,6 +25,7 @@ export const appConfig: ApplicationConfig = {
       withShikiHighlighter(),
     ),
     provideFileRouter(
+      withContentRoutes(),
       withInMemoryScrolling({ anchorScrolling: 'enabled' }),
       withEnabledBlockingInitialNavigation(),
       // Experimental: TanStack Router-inspired typed routes

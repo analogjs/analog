@@ -330,7 +330,7 @@ The filesystem-based router will generate the following routes:
 | `/products/1/edit` | `products/[productId].edit.page.ts` (layout: `products.page.ts`) |
 | `/unknown-url`     | `[...not-found].md`                                              |
 
-If your app uses markdown content routes like `.md` files in `src/app/pages`, import router APIs from `@analogjs/router/content` instead of `@analogjs/router`.
+If your app uses markdown content routes like `.md` files in `src/app/pages`, add `withContentRoutes()` from `@analogjs/router/content` to your `provideFileRouter()` call.
 
 ## Providing Extra Routes
 

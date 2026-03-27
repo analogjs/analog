@@ -4,17 +4,18 @@ Analog also supports using markdown content as routes, and rendering markdown co
 
 ### Setup
 
-In the `src/app/app.config.ts`, import `provideFileRouter()` from `@analogjs/router/content`, then add the `provideContent()` function along with the `withMarkdownRenderer()` feature to the `providers` array when bootstrapping the application.
+In the `src/app/app.config.ts`, add `withContentRoutes()` from `@analogjs/router/content` to the `provideFileRouter()` call, then add the `provideContent()` function along with the `withMarkdownRenderer()` feature to the `providers` array when bootstrapping the application.
 
 ```ts
 import { ApplicationConfig } from '@angular/core';
 import { provideContent, withMarkdownRenderer } from '@analogjs/content';
-import { provideFileRouter } from '@analogjs/router/content';
+import { provideFileRouter } from '@analogjs/router';
+import { withContentRoutes } from '@analogjs/router/content';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     // ... other providers
-    provideFileRouter(),
+    provideFileRouter(withContentRoutes()),
     provideContent(withMarkdownRenderer()),
   ],
 };

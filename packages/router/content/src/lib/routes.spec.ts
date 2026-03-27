@@ -1,7 +1,7 @@
 import { Route } from '@angular/router';
 
 import { ROUTE_JSON_LD_KEY } from '../../../src/lib/json-ld';
-import { createRoutes, Files } from './routes';
+import { createContentRoutes, Files } from './routes';
 
 describe('content routes', () => {
   describe('a nested content route', () => {
@@ -13,7 +13,7 @@ Testing nested markdown routes.
 `),
     };
 
-    const routes = createRoutes(files);
+    const routes = createContentRoutes(files);
     const route = routes[0];
 
     it('should have a nested path matching content file segments', () => {
@@ -38,7 +38,7 @@ Hello world
 `),
     };
 
-    const moduleRoute = createRoutes(files)[0];
+    const moduleRoute = createContentRoutes(files)[0];
     const resolvedRoutes = (await moduleRoute.loadChildren?.()) as Route[];
     const resolvedRoute = resolvedRoutes[0];
 
