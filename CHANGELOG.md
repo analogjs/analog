@@ -1,3 +1,9 @@
+# [2.4.0-beta.24](https://github.com/analogjs/analog/compare/v2.4.0-beta.23...v2.4.0-beta.24) (2026-03-27)
+
+### Features
+
+- **create-analog:** add snapshot serializers ([3318263](https://github.com/analogjs/analog/commit/33182636a130e4c7b3f213aece7a020cf0981c3e))
+
 # [2.4.0-beta.23](https://github.com/analogjs/analog/compare/v2.4.0-beta.22...v2.4.0-beta.23) (2026-03-27)
 
 ### Bug Fixes
