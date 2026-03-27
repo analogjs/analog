@@ -507,7 +507,7 @@ Analog supports deploying on [Render](https://render.com/) with minimal configur
 
 2. Ensure the 'Node' environment is selected.
 
-3. [Specify your Node version for Render to use](https://render.com/docs/node-version) (v18.13.0 or higher recommended) - Render by default uses Node 14, which fails to correctly build an Analog site
+3. [Specify your Node version for Render to use](https://render.com/docs/node-version) (v22.18.0 or higher recommended) - Render by default uses Node 14, which fails to correctly build an Analog site
 
 4. Depending on your package manager, set the build command to `yarn && yarn build`, `npm install && npm run build`, or `pnpm i --shamefully-hoist && pnpm build`.
 
@@ -573,7 +573,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.18.0'
       - uses: k9n-dev/analog-publish-gh-pages@v1.0.0
         with:
           access-token: ${{ secrets.ACCESS_TOKEN }}
@@ -602,7 +602,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.18.0'
       - name: Set environment variable based on branch
         run: |
           if [[ $GITHUB_REF == refs/heads/main || $GITHUB_REF == refs/heads/master ]]; then

@@ -100,7 +100,7 @@ export class AnalogCi {
   }
 
   /**
-   * Base container: Node 24, corepack-managed pnpm, dependencies installed.
+   * Base container: Node 22.18, corepack-managed pnpm, dependencies installed.
    * All CI functions build on this.
    *
    * Uses .node-version-aligned image. When upgrading Node, update
@@ -138,7 +138,7 @@ export class AnalogCi {
     // 108-char Unix socket limit (tsx IPC pipes in <store>/v10/tmp/).
     return dag
       .container()
-      .from('node:24.14.0')
+      .from('node:22.18.0')
       .withEnvVariable('CI', 'true')
       .withEnvVariable('NODE_OPTIONS', '--max-old-space-size=16384')
       .withEnvVariable('NX_ISOLATE_PLUGINS', 'false')

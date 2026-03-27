@@ -81,6 +81,8 @@ jobs:
         run: pnpm run release:verify
       - name: Smoke release consumer flows
         run: pnpm run release:smoke
+        env:
+          SMOKE_VERBOSE: 'true'
 
   e2e-linux:
     name: Linux / E2E / ${{ matrix.project }}

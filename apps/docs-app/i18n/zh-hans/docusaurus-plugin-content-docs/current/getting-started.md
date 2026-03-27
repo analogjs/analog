@@ -11,7 +11,7 @@ import TabItem from '@theme/TabItem';
 
 Analog 对于 NodeJS 和 Angular 的版本要求如下：
 
-- Node v18.13.0 或更高
+- Node v22.18.0 或更高
 - Angular v15 或更高版本
 
 ## 创建一个新的应用
