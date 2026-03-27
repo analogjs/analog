@@ -5,10 +5,22 @@
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
-    ".": "./dist/src/index.js",
-    "./setup-zone": "./dist/setup-zone.js",
-    "./setup-snapshots": "./dist/setup-snapshots.js",
-    "./setup-testbed": "./dist/setup-testbed.js",
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./setup-zone": {
+      "types": "./dist/setup-zone.d.ts",
+      "default": "./dist/setup-zone.js"
+    },
+    "./setup-snapshots": {
+      "types": "./dist/setup-snapshots.d.ts",
+      "default": "./dist/setup-snapshots.js"
+    },
+    "./setup-testbed": {
+      "types": "./dist/setup-testbed.d.ts",
+      "default": "./dist/setup-testbed.js"
+    },
     "./package.json": "./package.json"
   },
   "keywords": [

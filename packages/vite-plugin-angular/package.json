@@ -62,7 +62,10 @@
       "require": "./dist/src/index.js",
       "default": "./dist/src/index.js"
     },
-    "./setup-vitest": "./dist/setup-vitest.js"
+    "./setup-vitest": {
+      "types": "./dist/setup-vitest.d.ts",
+      "default": "./dist/setup-vitest.js"
+    }
   },
   "publishConfig": {
     "access": "public",
