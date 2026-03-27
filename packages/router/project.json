@@ -3,7 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "packages/router/src",
-  "implicitDependencies": ["vite-plugin-angular"],
+  "implicitDependencies": ["vite-plugin-angular", "content"],
   "prefix": "analogjs",
   "tags": ["type:release"],
   "targets": {

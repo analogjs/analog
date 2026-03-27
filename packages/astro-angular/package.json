@@ -35,18 +35,18 @@
     "@analogjs/vite-plugin-angular": "workspace:*"
   },
   "peerDependencies": {
-    "@angular/build": ">=20.0.0",
-    "@angular/animations": ">=20.0.0",
-    "@angular/common": ">=20.0.0",
-    "@angular/compiler-cli": ">=20.0.0",
-    "@angular/compiler": ">=20.0.0",
-    "@angular/core": ">=20.0.0",
-    "@angular/language-service": ">=20.0.0",
-    "@angular/platform-browser": ">=20.0.0",
-    "@angular/platform-server": ">=20.0.0",
+    "@angular/build": "catalog:peerAngular20Plus",
+    "@angular/animations": "catalog:peerAngular20Plus",
+    "@angular/common": "catalog:peerAngular20Plus",
+    "@angular/compiler-cli": "catalog:peerAngular20Plus",
+    "@angular/compiler": "catalog:peerAngular20Plus",
+    "@angular/core": "catalog:peerAngular20Plus",
+    "@angular/language-service": "catalog:peerAngular20Plus",
+    "@angular/platform-browser": "catalog:peerAngular20Plus",
+    "@angular/platform-server": "catalog:peerAngular20Plus",
     "rxjs": "^7.8.0",
     "tslib": "^2.4.0",
-    "vite": "^6.0.0 || ^7.0.0 || ^8.0.0"
+    "vite": "catalog:peerCompat"
   },
   "ng-update": {
     "packageGroup": [

@@ -36,8 +36,8 @@
   },
   "homepage": "https://github.com/analogjs/analog/tree/main#readme",
   "dependencies": {
-    "kolorist": "^1.6.0",
-    "minimist": "^1.2.7",
+    "kolorist": "^1.8.0",
+    "minimist": "^1.2.8",
     "prompts": "catalog:"
   },
   "devDependencies": {
