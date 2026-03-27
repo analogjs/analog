@@ -1,3 +1,9 @@
+# [2.4.0-beta.23](https://github.com/analogjs/analog/compare/v2.4.0-beta.22...v2.4.0-beta.23) (2026-03-27)
+
+### Bug Fixes
+
+- **content:** resolve content files by bare slug lookup ([#2205](https://github.com/analogjs/analog/issues/2205)) ([7e79d24](https://github.com/analogjs/analog/commit/7e79d24a9cd2a8e70dea5b458db59cd4e5ae31ff))
+
 # [2.4.0-beta.22](https://github.com/analogjs/analog/compare/v2.4.0-beta.21...v2.4.0-beta.22) (2026-03-27)
 
 ### Bug Fixes
