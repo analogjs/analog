@@ -11,6 +11,7 @@
     "setup-zone.ts",
     "setup-snapshots.ts",
     "setup-testbed.ts",
+    "setup-serializers.ts",
     "plugin.ts"
   ],
   "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"]
