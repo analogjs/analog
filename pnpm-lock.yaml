@@ -655,7 +655,7 @@ importers:
   packages/astro-angular:
     dependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: ^3.0.0-alpha.18
+        specifier: ^3.0.0-alpha.0
         version: 3.0.0-alpha.18(@angular-devkit/build-angular@21.2.3(0e669fa03dcf3bc0f2262460e97290aa))(@angular/build@21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2))
       '@angular/animations':
         specifier: '>=20.0.0'
