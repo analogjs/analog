@@ -73,7 +73,7 @@ export const viteFinal = async (config: any, options: any): Promise<any> => {
     .flat()
     .filter((plugin: any) => !plugin.name.includes('analogjs'));
 
-  // @ts-ignore
+  // @ts-expect-error - untyped storybook presets API
   const framework = await options.presets.apply('framework');
   const experimentalZoneless = await resolveExperimentalZoneless(
     framework.options,

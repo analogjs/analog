@@ -330,7 +330,7 @@ function runCreateAnalogSmokeTest(
   run(
     'node',
     [
-      'node_modules/create-analog/index.js',
+      'node_modules/create-analog/index.mjs',
       'analog-app',
       '--skipTailwind',
       '--skipGit',
