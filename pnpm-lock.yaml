@@ -4,6 +4,72 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@astrojs/mdx':
+      specifier: ^5.0.2
+      version: 5.0.2
+    '@astrojs/react':
+      specifier: ^5.0.1
+      version: 5.0.1
+    '@standard-schema/spec':
+      specifier: ^1.1.0
+      version: 1.1.0
+    '@tailwindcss/vite':
+      specifier: ^4.2.2
+      version: 4.2.2
+    astro:
+      specifier: 6.0.8
+      version: 6.0.8
+    defu:
+      specifier: ^6.1.4
+      version: 6.1.4
+    front-matter:
+      specifier: ^4.0.2
+      version: 4.0.2
+    marked:
+      specifier: ^17.0.5
+      version: 17.0.5
+    nitro:
+      specifier: 3.0.260311-beta
+      version: 3.0.260311-beta
+    ofetch:
+      specifier: 2.0.0-alpha.3
+      version: 2.0.0-alpha.3
+    oxc-parser:
+      specifier: ^0.121.0
+      version: 0.121.0
+    oxc-transform:
+      specifier: ^0.121.0
+      version: 0.121.0
+    prompts:
+      specifier: ^2.4.2
+      version: 2.4.2
+    radix3:
+      specifier: ^1.1.2
+      version: 1.1.2
+    react:
+      specifier: ^19.2.4
+      version: 19.2.4
+    react-dom:
+      specifier: ^19.2.4
+      version: 19.2.4
+    schema-dts:
+      specifier: ^2.0.0
+      version: 2.0.0
+    tailwindcss:
+      specifier: ^4.2.2
+      version: 4.2.2
+    tsdown:
+      specifier: ^0.21.4
+      version: 0.21.4
+    typescript:
+      specifier: 6.0.2
+      version: 6.0.2
+    xmlbuilder2:
+      specifier: ^4.0.3
+      version: 4.0.3
+
 importers:
 
   .:
@@ -45,10 +111,10 @@ importers:
         specifier: 21.2.3
         version: 21.2.3(9d1bc4a828cf07b2ca22b9d3d7bda4e9)
       '@astrojs/mdx':
-        specifier: ^5.0.2
+        specifier: 'catalog:'
         version: 5.0.2(astro@6.0.8(@types/node@25.5.0)(db0@0.3.4)(jiti@2.6.1)(less@4.6.4)(lightningcss@1.32.0)(rollup@4.60.0)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(typescript@6.0.2)(yaml@2.8.3))
       '@astrojs/react':
-        specifier: ^5.0.1
+        specifier: 'catalog:'
         version: 5.0.1(@types/node@25.5.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(jiti@2.6.1)(less@4.6.4)(lightningcss@1.32.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3)
       '@mdx-js/react':
         specifier: 3.1.1
@@ -60,7 +126,7 @@ importers:
         specifier: 22.6.1
         version: 22.6.1(nx@22.6.1)
       '@standard-schema/spec':
-        specifier: ^1.1.0
+        specifier: 'catalog:'
         version: 1.1.0
       '@tanstack/angular-query-experimental':
         specifier: ^5.95.2
@@ -72,16 +138,16 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1(ajv@8.18.0)
       defu:
-        specifier: ^6.1.4
+        specifier: 'catalog:'
         version: 6.1.4
       destr:
         specifier: ^2.0.5
         version: 2.0.5
       front-matter:
-        specifier: ^4.0.2
+        specifier: 'catalog:'
         version: 4.0.2
       marked:
-        specifier: ^17.0.5
+        specifier: 'catalog:'
         version: 17.0.5
       marked-gfm-heading-id:
         specifier: ^4.1.3
@@ -93,13 +159,13 @@ importers:
         specifier: ^11.13.0
         version: 11.13.0
       radix3:
-        specifier: ^1.1.2
+        specifier: 'catalog:'
         version: 1.1.2
       react:
-        specifier: ^19.2.4
+        specifier: 'catalog:'
         version: 19.2.4
       react-dom:
-        specifier: ^19.2.4
+        specifier: 'catalog:'
         version: 19.2.4(react@19.2.4)
       rxjs:
         specifier: 7.8.2
@@ -241,7 +307,7 @@ importers:
         specifier: ^10.3.3
         version: 10.3.3(esbuild@0.27.4)(rollup@4.60.0)(storybook@10.3.3(@testing-library/dom@10.4.1)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))(webpack@5.105.4(esbuild@0.27.4))
       '@tailwindcss/vite':
-        specifier: ^4.2.2
+        specifier: 'catalog:'
         version: 4.2.2(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
       '@types/hast':
         specifier: ^3.0.4
@@ -289,7 +355,7 @@ importers:
         specifier: ^6.26.1
         version: 6.26.1(encoding@0.1.13)
       astro:
-        specifier: 6.0.8
+        specifier: 'catalog:'
         version: 6.0.8(@types/node@25.5.0)(db0@0.3.4)(jiti@2.6.1)(less@4.6.4)(lightningcss@1.32.0)(rollup@4.60.0)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(typescript@6.0.2)(yaml@2.8.3)
       conventional-changelog:
         specifier: ^7.2.0
@@ -373,22 +439,22 @@ importers:
         specifier: 21.2.1
         version: 21.2.1(@angular/compiler-cli@21.2.5(@angular/compiler@21.2.5)(typescript@6.0.2))(tailwindcss@4.2.2)(tslib@2.8.1)(typescript@6.0.2)
       nitro:
-        specifier: 3.0.260311-beta
+        specifier: 'catalog:'
         version: 3.0.260311-beta(chokidar@5.0.0)(dotenv@16.4.7)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.0)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
       nx:
         specifier: 22.6.1
         version: 22.6.1
       ofetch:
-        specifier: 2.0.0-alpha.3
+        specifier: 'catalog:'
         version: 2.0.0-alpha.3
       oxc-parser:
-        specifier: ^0.121.0
+        specifier: 'catalog:'
         version: 0.121.0
       oxc-resolver:
         specifier: ^11.19.1
         version: 11.19.1
       oxc-transform:
-        specifier: ^0.121.0
+        specifier: 'catalog:'
         version: 0.121.0
       oxlint:
         specifier: ^1.57.0
@@ -409,7 +475,7 @@ importers:
         specifier: ^1.30.0
         version: 1.30.0
       prompts:
-        specifier: ^2.4.2
+        specifier: 'catalog:'
         version: 2.4.2
       rolldown:
         specifier: 1.0.0-rc.11
@@ -436,7 +502,7 @@ importers:
         specifier: ^0.3.2
         version: 0.3.2
       schema-dts:
-        specifier: ^2.0.0
+        specifier: 'catalog:'
         version: 2.0.0(typescript@6.0.2)
       semantic-release:
         specifier: ^25.0.3
@@ -457,7 +523,7 @@ importers:
         specifier: 10.3.3
         version: 10.3.3(@testing-library/dom@10.4.1)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       tailwindcss:
-        specifier: ^4.2.2
+        specifier: 'catalog:'
         version: 4.2.2
       tinyglobby:
         specifier: ^0.2.15
@@ -469,10 +535,10 @@ importers:
         specifier: ^27.0.2
         version: 27.0.2
       tsdown:
-        specifier: ^0.21.4
+        specifier: 'catalog:'
         version: 0.21.4(oxc-resolver@11.19.1)(synckit@0.11.12)(typescript@6.0.2)
       typescript:
-        specifier: 6.0.2
+        specifier: 'catalog:'
         version: 6.0.2
       typescript-eslint:
         specifier: ^8.57.2
@@ -496,7 +562,7 @@ importers:
         specifier: 4.1.1
         version: 4.1.1(@types/node@25.5.0)(@vitest/browser-playwright@4.1.1)(@vitest/ui@4.1.1)(happy-dom@20.8.7)(jsdom@29.0.1)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
       xmlbuilder2:
-        specifier: ^4.0.3
+        specifier: 'catalog:'
         version: 4.0.3
 
   apps/analog-app:
@@ -523,13 +589,13 @@ importers:
         specifier: workspace:*
         version: link:../../packages/astro-angular
       '@astrojs/mdx':
-        specifier: ^5.0.2
+        specifier: 'catalog:'
         version: 5.0.2(astro@6.0.8(@types/node@25.5.0)(db0@0.3.4)(jiti@2.6.1)(less@4.6.4)(lightningcss@1.32.0)(rollup@4.60.0)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(typescript@5.9.3)(yaml@2.8.3))
       '@astrojs/react':
-        specifier: ^5.0.1
+        specifier: 'catalog:'
         version: 5.0.1(@types/node@25.5.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(jiti@2.6.1)(less@4.6.4)(lightningcss@1.32.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3)
       astro:
-        specifier: 6.0.8
+        specifier: 'catalog:'
         version: 6.0.8(@types/node@25.5.0)(db0@0.3.4)(jiti@2.6.1)(less@4.6.4)(lightningcss@1.32.0)(rollup@4.60.0)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(typescript@5.9.3)(yaml@2.8.3)
 
   apps/astro-app-e2e-playwright: {}
@@ -567,10 +633,10 @@ importers:
         specifier: ^2.4.1
         version: 2.4.1(react@19.2.4)
       react:
-        specifier: ^19.2.4
+        specifier: 'catalog:'
         version: 19.2.4
       react-dom:
-        specifier: ^19.2.4
+        specifier: 'catalog:'
         version: 19.2.4(react@19.2.4)
     devDependencies:
       '@docusaurus/module-type-aliases':
@@ -589,7 +655,7 @@ importers:
         specifier: ^18.3.7
         version: 18.3.7(@types/react@18.3.28)
       typescript:
-        specifier: 6.0.2
+        specifier: 'catalog:'
         version: 6.0.2
 
   apps/opt-catchall-app:
@@ -614,13 +680,13 @@ importers:
         specifier: workspace:*
         version: link:../../packages/vitest-angular
       '@tailwindcss/vite':
-        specifier: ^4.2.2
+        specifier: 'catalog:'
         version: 4.2.2(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
       daisyui:
         specifier: ^5.5.19
         version: 5.5.19
       tailwindcss:
-        specifier: ^4.2.2
+        specifier: 'catalog:'
         version: 4.2.2
 
   apps/tanstack-query-app-e2e: {}
@@ -655,8 +721,8 @@ importers:
   packages/astro-angular:
     dependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: ^3.0.0-alpha.17
-        version: 3.0.0-alpha.17(@angular-devkit/build-angular@21.2.3(0e669fa03dcf3bc0f2262460e97290aa))(@angular/build@21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2))
+        specifier: workspace:*
+        version: link:../vite-plugin-angular
       '@angular/animations':
         specifier: '>=20.0.0'
         version: 21.2.5(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))
@@ -715,10 +781,10 @@ importers:
         specifier: ^1.0.0
         version: 1.1.0
       front-matter:
-        specifier: ^4.0.2
+        specifier: 'catalog:'
         version: 4.0.2
       marked:
-        specifier: ^17.0.5
+        specifier: 'catalog:'
         version: 17.0.5
       marked-gfm-heading-id:
         specifier: ^4.1.1
@@ -752,7 +818,7 @@ importers:
         version: 2.8.1
     devDependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../vite-plugin-angular
 
   packages/content-plugin:
@@ -761,7 +827,7 @@ importers:
         specifier: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
         version: 22.6.1(nx@22.6.1)
       tsdown:
-        specifier: ^0.21.4
+        specifier: 'catalog:'
         version: 0.21.4(oxc-resolver@11.19.1)(synckit@0.11.12)(typescript@5.9.3)
       vite:
         specifier: ^6.0.0 || ^7.0.0 || ^8.0.0
@@ -776,7 +842,7 @@ importers:
         specifier: ^1.2.7
         version: 1.2.8
       prompts:
-        specifier: ^2.4.2
+        specifier: 'catalog:'
         version: 2.4.2
     devDependencies:
       '@analogjs/platform':
@@ -788,11 +854,11 @@ importers:
   packages/platform:
     dependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: ^3.0.0-alpha.17
-        version: 3.0.0-alpha.17(@angular-devkit/build-angular@21.2.3(0e669fa03dcf3bc0f2262460e97290aa))(@angular/build@21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2))
+        specifier: workspace:*
+        version: link:../vite-plugin-angular
       '@analogjs/vite-plugin-nitro':
-        specifier: ^3.0.0-alpha.17
-        version: 3.0.0-alpha.17(chokidar@5.0.0)(dotenv@16.4.7)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.0)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
+        specifier: workspace:*
+        version: link:../vite-plugin-nitro
       '@nx/angular':
         specifier: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
         version: 22.6.1(3d962bc1922fba0fca0cb5e3b6e560fe)
@@ -803,10 +869,10 @@ importers:
         specifier: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
         version: 22.6.1(@babel/traverse@7.29.0)(nx@22.6.1)(typescript@6.0.2)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))(vitest@4.1.1)
       front-matter:
-        specifier: ^4.0.2
+        specifier: 'catalog:'
         version: 4.0.2
       marked:
-        specifier: ^17.0.5
+        specifier: 'catalog:'
         version: 17.0.5
       marked-gfm-heading-id:
         specifier: ^4.1.3
@@ -821,7 +887,7 @@ importers:
         specifier: ^1.2.1
         version: 1.2.1(marked@17.0.5)(shiki@4.0.2)
       nitro:
-        specifier: 3.0.260311-beta
+        specifier: 'catalog:'
         version: 3.0.260311-beta(chokidar@5.0.0)(dotenv@16.4.7)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.0)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
       rolldown:
         specifier: ^1.0.0-rc.11
@@ -842,8 +908,8 @@ importers:
   packages/router:
     dependencies:
       '@analogjs/content':
-        specifier: ^3.0.0-alpha.17
-        version: 3.0.0-alpha.17(6a659000af8ba4ae3a203940aef75a3c)
+        specifier: workspace:*
+        version: link:../content
       '@angular/core':
         specifier: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
         version: 21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1)
@@ -854,21 +920,21 @@ importers:
         specifier: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
         version: 21.2.5(@angular/common@21.2.5(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2))(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))(@angular/platform-browser@21.2.5(@angular/animations@21.2.5(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1)))(@angular/common@21.2.5(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2))(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1)))(rxjs@7.8.2)
       '@standard-schema/spec':
-        specifier: ^1.1.0
+        specifier: 'catalog:'
         version: 1.1.0
       '@tanstack/angular-query-experimental':
         specifier: '>=5.95.0'
         version: 5.95.2(@angular/common@21.2.5(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2))(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))
       schema-dts:
-        specifier: ^2.0.0
+        specifier: 'catalog:'
         version: 2.0.0(typescript@6.0.2)
       tslib:
         specifier: ^2.0.0
         version: 2.8.1
     devDependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: ^3.0.0-alpha.17
-        version: 3.0.0-alpha.17(@angular-devkit/build-angular@21.2.3(0e669fa03dcf3bc0f2262460e97290aa))(@angular/build@21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2))
+        specifier: workspace:*
+        version: link:../vite-plugin-angular
 
   packages/storybook-angular:
     dependencies:
@@ -897,7 +963,7 @@ importers:
         specifier: ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
         version: 21.2.3(9ff027c954af59ce29b2aa08dbe49b87)
       oxc-parser:
-        specifier: ^0.121.0
+        specifier: 'catalog:'
         version: 0.121.0
       oxc-resolver:
         specifier: ^11.19.0
@@ -914,22 +980,22 @@ importers:
   packages/vite-plugin-nitro:
     dependencies:
       defu:
-        specifier: ^6.1.4
+        specifier: 'catalog:'
         version: 6.1.4
       nitro:
-        specifier: 3.0.260311-beta
+        specifier: 'catalog:'
         version: 3.0.260311-beta(chokidar@5.0.0)(dotenv@16.4.7)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.0)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
       ofetch:
-        specifier: 2.0.0-alpha.3
+        specifier: 'catalog:'
         version: 2.0.0-alpha.3
       oxc-parser:
-        specifier: ^0.121.0
+        specifier: 'catalog:'
         version: 0.121.0
       radix3:
-        specifier: ^1.1.2
+        specifier: 'catalog:'
         version: 1.1.2
       xmlbuilder2:
-        specifier: ^4.0.3
+        specifier: 'catalog:'
         version: 4.0.3
 
   packages/vitest-angular:
@@ -944,7 +1010,7 @@ importers:
         specifier: '>=17.0.0'
         version: 21.2.3(chokidar@5.0.0)
       oxc-transform:
-        specifier: ^0.121.0
+        specifier: 'catalog:'
         version: 0.121.0
       vitest:
         specifier: ^1.3.1 || ^2.0.0 || ^3.0.0 || ^4.0.0
@@ -1117,40 +1183,6 @@ packages:
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
 
-  '@analogjs/content@3.0.0-alpha.17':
-    resolution: {integrity: sha512-F8Er3FMFXACZg7ONQmnnAh6ZlZQFYzSptUu60YtiUTNBoeggfVH06IPyqK64RnS1cC5cVqZg7vNRUv+CN/QI0g==}
-    peerDependencies:
-      '@angular/common': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-      '@angular/core': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-      '@angular/platform-browser': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-      '@angular/router': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-      '@nx/devkit': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
-      '@standard-schema/spec': ^1.0.0
-      front-matter: ^4.0.2
-      marked: ^17.0.5
-      marked-gfm-heading-id: ^4.1.1
-      marked-highlight: ^2.2.1
-      marked-mangle: ^1.1.10
-      md4x: '>=0.0.20'
-      prismjs: ^1.29.0
-      rxjs: ^6.5.0 || ^7.5.0
-      satori: ^0.10.14
-      satori-html: ^0.3.2
-      sharp: ^0.33.5
-    peerDependenciesMeta:
-      '@nx/devkit':
-        optional: true
-      '@standard-schema/spec':
-        optional: true
-      md4x:
-        optional: true
-      satori:
-        optional: true
-      satori-html:
-        optional: true
-      sharp:
-        optional: true
-
   '@analogjs/vite-plugin-angular@2.3.1':
     resolution: {integrity: sha512-6ttSrMFBYwvS5JfovagfhkLaje1RjzztIniBWtH5G8wc6vrud77/sRJWVaVC4Ri4XRBTQ2kG5thSDumccX1B7g==}
     peerDependencies:
@@ -1161,20 +1193,6 @@ packages:
         optional: true
       '@angular/build':
         optional: true
-
-  '@analogjs/vite-plugin-angular@3.0.0-alpha.17':
-    resolution: {integrity: sha512-R3aATxhXaV+OV+jss9bOLKoEjHPUoJBUcIcTgqln0+0xMa9Z4hsincrN7zB3lqQKHZ/TGl7asV+voZ8xHzSB0A==}
-    peerDependencies:
-      '@angular-devkit/build-angular': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-      '@angular/build': ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-    peerDependenciesMeta:
-      '@angular-devkit/build-angular':
-        optional: true
-      '@angular/build':
-        optional: true
-
-  '@analogjs/vite-plugin-nitro@3.0.0-alpha.17':
-    resolution: {integrity: sha512-J4qsBBzqR7xq5ZycjGMa3HNI9Vv9oClmvyBe37dp3pAU+DWMTcAFJrilDIu08InExZjspbZIO6c3XZGygtIzvA==}
 
   '@angular-devkit/architect@0.2102.3':
     resolution: {integrity: sha512-G4wSWUbtWp1WCKw5GMRqHH8g4m5RBpIyzt8n8IX5Pm6iYe/rwCBSKL3ktEkk7AYMwjtonkRlDtAK1GScFsf1Sg==}
@@ -15768,28 +15786,6 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@analogjs/content@3.0.0-alpha.17(6a659000af8ba4ae3a203940aef75a3c)':
-    dependencies:
-      '@angular/common': 21.2.5(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2)
-      '@angular/core': 21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1)
-      '@angular/platform-browser': 21.2.5(@angular/animations@21.2.5(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1)))(@angular/common@21.2.5(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2))(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))
-      '@angular/router': 21.2.5(@angular/common@21.2.5(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2))(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))(@angular/platform-browser@21.2.5(@angular/animations@21.2.5(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1)))(@angular/common@21.2.5(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2))(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1)))(rxjs@7.8.2)
-      front-matter: 4.0.2
-      marked: 17.0.5
-      marked-gfm-heading-id: 4.1.3(marked@17.0.5)
-      marked-highlight: 2.2.3(marked@17.0.5)
-      marked-mangle: 1.1.12(marked@17.0.5)
-      prismjs: 1.30.0
-      rxjs: 7.8.2
-      tslib: 2.8.1
-    optionalDependencies:
-      '@nx/devkit': 22.6.1(nx@22.6.1)
-      '@standard-schema/spec': 1.1.0
-      md4x: 0.0.25
-      satori: 0.10.14
-      satori-html: 0.3.2
-      sharp: 0.33.5
-
   '@analogjs/vite-plugin-angular@2.3.1(@angular-devkit/build-angular@21.2.3(0e669fa03dcf3bc0f2262460e97290aa))(@angular/build@21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2))':
     dependencies:
       tinyglobby: 0.2.15
@@ -15797,61 +15793,6 @@ snapshots:
     optionalDependencies:
       '@angular-devkit/build-angular': 21.2.3(0e669fa03dcf3bc0f2262460e97290aa)
       '@angular/build': 21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2)
-
-  '@analogjs/vite-plugin-angular@3.0.0-alpha.17(@angular-devkit/build-angular@21.2.3(0e669fa03dcf3bc0f2262460e97290aa))(@angular/build@21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2))':
-    dependencies:
-      oxc-parser: 0.121.0
-      oxc-resolver: 11.19.1
-      rolldown: 1.0.0-rc.11
-      tinyglobby: 0.2.15
-    optionalDependencies:
-      '@angular-devkit/build-angular': 21.2.3(0e669fa03dcf3bc0f2262460e97290aa)
-      '@angular/build': 21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2)
-
-  '@analogjs/vite-plugin-nitro@3.0.0-alpha.17(chokidar@5.0.0)(dotenv@16.4.7)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.0)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))':
-    dependencies:
-      defu: 6.1.4
-      nitro: 3.0.260311-beta(chokidar@5.0.0)(dotenv@16.4.7)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.0)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
-      ofetch: 2.0.0-alpha.3
-      oxc-parser: 0.121.0
-      radix3: 1.1.2
-      xmlbuilder2: 4.0.3
-    transitivePeerDependencies:
-      - '@azure/app-configuration'
-      - '@azure/cosmos'
-      - '@azure/data-tables'
-      - '@azure/identity'
-      - '@azure/keyvault-secrets'
-      - '@azure/storage-blob'
-      - '@capacitor/preferences'
-      - '@deno/kv'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@netlify/blobs'
-      - '@planetscale/database'
-      - '@upstash/redis'
-      - '@vercel/blob'
-      - '@vercel/functions'
-      - '@vercel/kv'
-      - aws4fetch
-      - better-sqlite3
-      - chokidar
-      - dotenv
-      - drizzle-orm
-      - giget
-      - idb-keyval
-      - ioredis
-      - jiti
-      - lru-cache
-      - miniflare
-      - mongodb
-      - mysql2
-      - rollup
-      - sqlite3
-      - uploadthing
-      - vite
-      - xml2js
-      - zephyr-agent
 
   '@angular-devkit/architect@0.2102.3(chokidar@5.0.0)':
     dependencies:
@@ -16231,7 +16172,7 @@ snapshots:
       ng-packagr: 21.2.1(@angular/compiler-cli@21.2.5(@angular/compiler@21.2.5)(typescript@6.0.2))(tailwindcss@4.2.2)(tslib@2.8.1)(typescript@6.0.2)
       postcss: 8.5.6
       tailwindcss: 4.2.2
-      vitest: 4.1.1(@types/node@25.5.0)(@vitest/browser-playwright@4.1.1)(@vitest/ui@4.1.1)(happy-dom@20.8.7)(jsdom@29.0.1)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.97.3)(terser@5.46.1)(yaml@2.8.3))
+      vitest: 4.1.1(@types/node@25.5.0)(@vitest/browser-playwright@4.1.1)(@vitest/ui@4.1.1)(happy-dom@20.8.7)(jsdom@29.0.1)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
     transitivePeerDependencies:
       - '@types/node'
       - chokidar
@@ -27928,7 +27869,7 @@ snapshots:
       chalk: 4.1.2
       ci-info: 4.4.0
       graceful-fs: 4.2.11
-      picomatch: 4.0.3
+      picomatch: 4.0.4
 
   jest-validate@30.3.0:
     dependencies:
@@ -32833,7 +32774,7 @@ snapshots:
       hookable: 6.1.0
       import-without-cache: 0.2.5
       obug: 2.1.1
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       rolldown: 1.0.0-rc.9
       rolldown-plugin-dts: 0.22.5(oxc-resolver@11.19.1)(rolldown@1.0.0-rc.9)(typescript@5.9.3)
       semver: 7.7.4
@@ -32860,7 +32801,7 @@ snapshots:
       hookable: 6.1.0
       import-without-cache: 0.2.5
       obug: 2.1.1
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       rolldown: 1.0.0-rc.9
       rolldown-plugin-dts: 0.22.5(oxc-resolver@11.19.1)(rolldown@1.0.0-rc.9)(typescript@6.0.2)
       semver: 7.7.4

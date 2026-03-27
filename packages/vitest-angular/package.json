@@ -36,7 +36,7 @@
     "save": "devDependencies"
   },
   "dependencies": {
-    "oxc-transform": "^0.121.0"
+    "oxc-transform": "catalog:"
   },
   "peerDependencies": {
     "@analogjs/vite-plugin-angular": "*",
