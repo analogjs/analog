@@ -4,6 +4,7 @@ import { core as PresetCore } from '@storybook/angular/preset';
 import { fileURLToPath } from 'node:url';
 import * as vite from 'vite';
 import type { Plugin, UserConfig } from 'vite';
+import angular from '@analogjs/vite-plugin-angular';
 
 export const previewAnnotations = async (
   entries: string[] = [],
@@ -72,15 +73,13 @@ export const viteFinal = async (config: any, options: any): Promise<any> => {
     .flat()
     .filter((plugin: any) => !plugin.name.includes('analogjs'));
 
-  // Merge custom configuration into the default config
-  const { mergeConfig, normalizePath } = await import('vite');
-  const { default: angular } = await import('@analogjs/vite-plugin-angular');
+  // @ts-ignore
   const framework = await options.presets.apply('framework');
   const experimentalZoneless = await resolveExperimentalZoneless(
     framework.options,
     options?.angularBuilderOptions,
   );
-  return mergeConfig(config, {
+  return vite.mergeConfig(config, {
     // Add dependencies to pre-optimization
     optimizeDeps: {
       include: [
@@ -117,7 +116,10 @@ export const viteFinal = async (config: any, options: any): Promise<any> => {
             ? framework.options?.inlineStylesExtension
             : 'css',
       }),
-      angularOptionsPlugin(options, { normalizePath, experimentalZoneless }),
+      angularOptionsPlugin(options, {
+        normalizePath: vite.normalizePath,
+        experimentalZoneless,
+      }),
       storybookTransformConfigPlugin(),
     ],
     define: {

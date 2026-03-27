@@ -56,6 +56,27 @@ function run(
   });
 }
 
+const npmUserAgent = [
+  'npm/10.0.0',
+  `node/${process.versions.node}`,
+  `${process.platform} ${process.arch}`,
+].join(' ');
+
+function createNpmChildEnv(
+  overrides: NodeJS.ProcessEnv = {},
+): NodeJS.ProcessEnv {
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([key]) => !/^npm_config_/i.test(key)),
+  ) as NodeJS.ProcessEnv;
+
+  return {
+    ...env,
+    CI: 'true',
+    npm_config_user_agent: npmUserAgent,
+    ...overrides,
+  };
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolvePromise) => setTimeout(resolvePromise, ms));
 }
@@ -146,6 +167,7 @@ async function waitForPort(port: number): Promise<void> {
 
 async function startLocalRegistry(
   scratchDir: string,
+  npmEnv: NodeJS.ProcessEnv,
 ): Promise<{ process: ChildProcess; registryUrl: string; logPath: string }> {
   const port = await getAvailablePort();
   const registryUrl = `http://127.0.0.1:${port}`;
@@ -198,7 +220,7 @@ async function startLocalRegistry(
     ],
     {
       cwd: root,
-      env: process.env,
+      env: npmEnv,
       stdio: ['ignore', 'pipe', 'pipe'],
     },
   );
@@ -311,6 +333,7 @@ function runCreateAnalogSmokeTest(
       'node_modules/create-analog/index.js',
       'analog-app',
       '--skipTailwind',
+      '--skipGit',
       '--template',
       'latest',
     ],
@@ -425,15 +448,15 @@ rmSync(scratchDir, { recursive: true, force: true });
 mkdirSync(scratchDir, { recursive: true });
 
 const { artifacts } = packReleaseArtifacts(scratchDir);
-const registry = await startLocalRegistry(scratchDir);
+const npmEnv = createNpmChildEnv();
+const registry = await startLocalRegistry(scratchDir, npmEnv);
 const npmrcPath = createLocalNpmrc(scratchDir, registry.registryUrl);
-const registryEnv = {
-  ...process.env,
-  CI: 'true',
+const registryEnv = createNpmChildEnv({
   npm_config_registry: registry.registryUrl,
   npm_config_legacy_peer_deps: 'true',
+  npm_config_userconfig: npmrcPath,
   NPM_CONFIG_USERCONFIG: npmrcPath,
-};
+});
 
 try {
   publishArtifactsToLocalRegistry(artifacts, registry.registryUrl, registryEnv);

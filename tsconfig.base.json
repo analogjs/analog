@@ -38,7 +38,7 @@
         "./packages/router/tanstack-query/src/index.ts"
       ],
       "@analogjs/router/tanstack-query/server": [
-        "./packages/router/tanstack-query/src/provide-server-analog-query.ts"
+        "./packages/router/tanstack-query/server/src/index.ts"
       ],
       "@analogjs/router/server": ["./packages/router/server/src/index.ts"],
       "@analogjs/router/server/actions": [

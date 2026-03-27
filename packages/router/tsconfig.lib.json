@@ -12,7 +12,7 @@
     "moduleResolution": "bundler",
     "rootDir": ".",
     "paths": {
-      "@analogjs/content": ["../content/dist/types/src"],
+      "@analogjs/content": ["../content/src/index.ts"],
       "@analogjs/router": ["./src/index.ts"],
       "@analogjs/router/*": ["./*"],
       "@analogjs/router/tokens": ["./tokens/src/index.ts"],

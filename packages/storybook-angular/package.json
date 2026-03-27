@@ -45,7 +45,7 @@
     "vite": "catalog:peerCompat"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.18.0 || >=24.3.0"
   },
   "builders": "./dist/src/lib/builders.json",
   "ng-add": {

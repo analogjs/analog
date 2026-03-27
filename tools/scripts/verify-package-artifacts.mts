@@ -85,12 +85,9 @@ const ManifestSchema = Schema.Struct({
   ),
 });
 
-// @ts-expect-error - using any for Node type-stripping compatibility - using any for Node type-stripping compatibility
-type PackageJson = any;
-// @ts-expect-error - using any for Node type-stripping compatibility
-type Manifest = any;
-// @ts-expect-error - using any for Node type-stripping compatibility
-type ManifestEntries = any;
+type PackageJson = Record<string, any>;
+type Manifest = Record<string, any>;
+type ManifestEntries = Record<string, any>;
 
 const packageConfigs: Record<string, PackageValidationConfig> = {
   'astro-angular': {
@@ -276,12 +273,14 @@ function validateExports(
 
   for (const [subpath, target] of Object.entries(exportsField)) {
     const resolvedTargets =
-      typeof target === 'string' ? [target] : Object.values(target);
+      typeof target === 'string'
+        ? [target]
+        : Object.values(target as Record<string, string>);
 
     for (const outputPath of resolvedTargets) {
       const resolvedPath = resolve(
         dirname(resolve(root, packageJsonPath)),
-        outputPath,
+        String(outputPath),
       );
       if (!existsSync(resolvedPath)) {
         errors.push(`Missing export target for ${subpath}: ${outputPath}`);
