@@ -143,8 +143,10 @@ describe('FormAction', () => {
       }),
     );
 
-    await Promise.resolve();
-    await Promise.resolve();
+    // The directive chains fetch().then(res => res.json().then(emit)),
+    // which requires more than two microticks. A macrotask flush ensures
+    // the full promise chain has settled before asserting.
+    await new Promise((resolve) => setTimeout(resolve));
     fixture.detectChanges();
 
     expect(successes).toEqual([{ ok: true }]);
