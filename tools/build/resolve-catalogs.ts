@@ -9,11 +9,16 @@
  * YAML and substituting every `catalog:` / `catalog:<name>` reference with
  * the resolved version.
  *
+ * Also resolves `workspace:` protocol references (`workspace:*`, `workspace:^`,
+ * `workspace:~`) by reading the target package's version from the workspace.
+ * pnpm normally resolves these during `pnpm publish`, but the smoke test
+ * pipeline uses `npm pack` which does not understand the workspace protocol.
+ *
  * Used by both the library build pipeline (build-lib.mts) and the artifact
  * verification script (verify-package-artifacts.mts).
  */
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 interface CatalogMap {
@@ -107,13 +112,45 @@ function parseCatalogs(workspaceRoot: string): ParsedCatalogs {
 }
 
 /**
- * Resolves `catalog:` and `catalog:<name>` version specifiers in a dependency
- * map. Returns a new object with resolved versions; unresolvable entries are
- * left as-is (the verify step will catch them).
+ * Looks up a workspace package's version by reading its package.json.
+ * Returns undefined if the package directory doesn't exist.
+ */
+function resolveWorkspacePackageVersion(
+  packageName: string,
+  workspaceRoot: string,
+): string | undefined {
+  // Map scoped package names to directory paths:
+  //   @analogjs/router  → packages/router
+  //   create-analog     → packages/create-analog
+  const dirName = packageName.startsWith('@analogjs/')
+    ? packageName.slice('@analogjs/'.length)
+    : packageName;
+
+  const pkgJsonPath = resolve(
+    workspaceRoot,
+    'packages',
+    dirName,
+    'package.json',
+  );
+  if (!existsSync(pkgJsonPath)) {
+    return undefined;
+  }
+
+  const pkg = JSON.parse(readFileSync(pkgJsonPath, 'utf-8')) as {
+    version?: string;
+  };
+  return pkg.version;
+}
+
+/**
+ * Resolves `catalog:`, `catalog:<name>`, and `workspace:` version specifiers
+ * in a dependency map. Returns a new object with resolved versions;
+ * unresolvable entries are left as-is (the verify step will catch them).
  */
 function resolveDependencyMap(
   deps: Record<string, string>,
   catalogs: ParsedCatalogs,
+  workspaceRoot: string,
 ): Record<string, string> {
   const resolved: Record<string, string> = {};
 
@@ -123,6 +160,27 @@ function resolveDependencyMap(
     } else if (version.startsWith('catalog:')) {
       const catalogName = version.slice('catalog:'.length);
       resolved[name] = catalogs.named[catalogName]?.[name] ?? version;
+    } else if (version.startsWith('workspace:')) {
+      // Resolve workspace: protocol the same way pnpm does at publish time:
+      //   workspace:*  → exact version  (e.g. "3.0.0-alpha.18")
+      //   workspace:^  → caret range    (e.g. "^3.0.0-alpha.18")
+      //   workspace:~  → tilde range    (e.g. "~3.0.0-alpha.18")
+      //   workspace:^1.0.0 → "^1.0.0"  (pass-through semver range)
+      const specifier = version.slice('workspace:'.length);
+      const targetVersion = resolveWorkspacePackageVersion(name, workspaceRoot);
+
+      if (specifier === '*' && targetVersion) {
+        resolved[name] = targetVersion;
+      } else if (specifier === '^' && targetVersion) {
+        resolved[name] = `^${targetVersion}`;
+      } else if (specifier === '~' && targetVersion) {
+        resolved[name] = `~${targetVersion}`;
+      } else if (targetVersion) {
+        // workspace:^1.0.0 or workspace:>=1.0.0 — use the specifier as-is
+        resolved[name] = specifier;
+      } else {
+        resolved[name] = version;
+      }
     } else {
       resolved[name] = version;
     }
@@ -155,6 +213,7 @@ export function resolveCatalogReferences(
       result[field] = resolveDependencyMap(
         deps as Record<string, string>,
         catalogs,
+        workspaceRoot,
       );
     }
   }
@@ -163,8 +222,8 @@ export function resolveCatalogReferences(
 }
 
 /**
- * Returns true if any dependency field in the package.json object contains
- * unresolved `catalog:` protocol references.
+ * Returns a list of dependency entries that still contain unresolved `catalog:`
+ * or `workspace:` protocol references after resolution.
  */
 export function hasUnresolvedCatalogReferences(
   pkg: Record<string, unknown>,
@@ -180,7 +239,10 @@ export function hasUnresolvedCatalogReferences(
     for (const [name, version] of Object.entries(
       deps as Record<string, string>,
     )) {
-      if (typeof version === 'string' && version.startsWith('catalog:')) {
+      if (
+        typeof version === 'string' &&
+        (version.startsWith('catalog:') || version.startsWith('workspace:'))
+      ) {
         unresolved.push(`${field}.${name}: ${version}`);
       }
     }
