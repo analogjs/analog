@@ -1,6 +1,4 @@
-import {
-  createAngularFixtureSnapshotSerializer,
-} from './snapshot-serializers';
+import { createAngularFixtureSnapshotSerializer } from './snapshot-serializers';
 
 const env = globalThis as any;
 

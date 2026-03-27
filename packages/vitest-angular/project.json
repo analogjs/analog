@@ -20,6 +20,7 @@
         "additionalEntryPoints": [
           "packages/vitest-angular/setup-zone.ts",
           "packages/vitest-angular/setup-snapshots.ts",
+          "packages/vitest-angular/setup-serializers.ts",
           "packages/vitest-angular/snapshot-serializers.ts",
           "packages/vitest-angular/setup-testbed.ts"
         ],
