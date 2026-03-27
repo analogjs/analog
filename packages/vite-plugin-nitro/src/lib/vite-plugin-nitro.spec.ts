@@ -130,6 +130,8 @@ describe('nitro', () => {
   });
 
   it('should use the active Vite SSR bundler config key', async () => {
+    vi.stubEnv('VITEST', '');
+    vi.stubEnv('NODE_ENV', 'production');
     const plugin = nitro({});
     const result = await (plugin[1].config as any)(
       {},
@@ -156,6 +158,8 @@ describe('nitro', () => {
   it.runIf(vite.rolldownVersion)(
     'should forward nested vite rolldown codeSplitting config to the client build (Rolldown)',
     async () => {
+      vi.stubEnv('VITEST', '');
+      vi.stubEnv('NODE_ENV', 'production');
       const codeSplitting = {
         groups: [{ test: /node_modules/, name: 'vendor' }],
       };
@@ -189,6 +193,8 @@ describe('nitro', () => {
   it.runIf(!vite.rolldownVersion)(
     'should not have rolldownOptions when not using Rolldown',
     async () => {
+      vi.stubEnv('VITEST', '');
+      vi.stubEnv('NODE_ENV', 'production');
       const codeSplitting = {
         groups: [{ test: /node_modules/, name: 'vendor' }],
       };
@@ -217,6 +223,8 @@ describe('nitro', () => {
   it.runIf(vite.rolldownVersion)(
     'should ignore codeSplitting forwarding when rolldown output is an array',
     async () => {
+      vi.stubEnv('VITEST', '');
+      vi.stubEnv('NODE_ENV', 'production');
       const plugin = nitro({
         vite: {
           build: {
@@ -237,6 +245,8 @@ describe('nitro', () => {
   );
 
   it('should strip Rolldown-only codeSplitting from Nitro rollup builds', async () => {
+    vi.stubEnv('VITEST', '');
+    vi.stubEnv('NODE_ENV', 'production');
     const { buildServerImportSpy } = await mockBuildFunctions();
     const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
 
@@ -288,6 +298,8 @@ describe('nitro', () => {
   });
 
   it('should alias the built SSR entry for Nitro server builds', async () => {
+    vi.stubEnv('VITEST', '');
+    vi.stubEnv('NODE_ENV', 'production');
     const { buildServerImportSpy } = await mockBuildFunctions();
     const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
 
@@ -339,6 +351,8 @@ describe('nitro', () => {
   });
 
   it('passes only canonical page routes to sitemap generation in builder.buildApp', async () => {
+    vi.stubEnv('VITEST', '');
+    vi.stubEnv('NODE_ENV', 'production');
     const { buildSitemapImportSpy } = await mockBuildFunctions();
     const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
 
@@ -396,6 +410,8 @@ describe('nitro', () => {
   });
 
   it('should resolve client output path correctly for nested roots without explicit build.outDir', async () => {
+    vi.stubEnv('VITEST', '');
+    vi.stubEnv('NODE_ENV', 'production');
     const { buildServerImportSpy } = await mockBuildFunctions();
     const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
 
@@ -457,6 +473,8 @@ describe('nitro', () => {
   });
 
   it('uses the finalized client environment outDir during builder.buildApp', async () => {
+    vi.stubEnv('VITEST', '');
+    vi.stubEnv('NODE_ENV', 'production');
     const { buildServerImportSpy } = await mockBuildFunctions();
     const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
 
