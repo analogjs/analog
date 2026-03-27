@@ -1,3 +1,9 @@
+# [2.4.0-beta.21](https://github.com/analogjs/analog/compare/v2.4.0-beta.20...v2.4.0-beta.21) (2026-03-27)
+
+### Features
+
+- **vitest-angular:** add reusable snapshot serializers ([#2163](https://github.com/analogjs/analog/issues/2163)) ([9089c8d](https://github.com/analogjs/analog/commit/9089c8d8f315aad4792d6b37b18db62d951301b2))
+
 # [2.4.0-beta.20](https://github.com/analogjs/analog/compare/v2.4.0-beta.19...v2.4.0-beta.20) (2026-03-23)
 
 ### Bug Fixes
