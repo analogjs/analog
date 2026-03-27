@@ -8,7 +8,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - Main framework: **AnalogJS** (meta-framework for Angular, powered by Vite)
 - Contains multiple apps (Angular, Astro, blog, docs, etc.) and libraries (shared, card, top-bar, etc.)
 - Key packages: `@analogjs/platform`, `@analogjs/vite-plugin-angular`, `@analogjs/vitest-angular`, `@analogjs/vite-plugin-nitro`, `@analogjs/router`, etc.
-- Node engines: `^22.0.0 || ^24.0.0`, pnpm `^10.0.0`
+- Node engines: `^24.3.0`, pnpm `^10.0.0`
 
 ## Key Files
 

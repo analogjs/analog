@@ -310,7 +310,7 @@ Analog unterstützt die Bereitstellung auf [Render](https://render.com/) mit min
 
 1. [Erstelle einen neuen Webdienst](https://dashboard.render.com/select-repo?type=web) und wähle das Repository, das den Code enthält.
 2. Vergewisser dich, dass die Umgebung 'Node' ausgewählt ist.
-3. [Gebe die Node-Version an, die Render verwenden soll](https://render.com/docs/node-version) (v22.18.0 oder höher empfohlen) - Render verwendet standardmäßig Node 14, das eine Analog Webseite nicht korrekt erstellen kann
+3. [Gebe die Node-Version an, die Render verwenden soll](https://render.com/docs/node-version) (v24.3.0 oder höher empfohlen) - Render verwendet standardmäßig Node 14, das eine Analog Webseite nicht korrekt erstellen kann
 4. Abhängig von eingesetzten Paketmanager setze den Build-Befehl auf `yarn && yarn build`, `npm install && npm run build`, oder `pnpm i --shamefully-hoist && pnpm build`.
 5. Aktualisiere den Startbefehl auf `node dist/analog/server/index.mjs`
 6. Klicke auf 'Advanced' und füge eine Umgebungsvariable hinzu, in der `BUILD_PRESET` auf `render-com` gesetzt ist.
@@ -369,7 +369,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.18.0'
+          node-version: '24.3.0'
       - uses: k9n-dev/analog-publish-gh-pages@v1.0.0
         with:
           access-token: ${{ secrets.ACCESS_TOKEN }}
@@ -397,7 +397,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.18.0'
+          node-version: '24.3.0'
       - name: Set environment variable based on branch
         run: |
           if [[ $GITHUB_REF == refs/heads/main || $GITHUB_REF == refs/heads/master ]]; then
