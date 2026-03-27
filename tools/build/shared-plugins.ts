@@ -1,3 +1,18 @@
+/**
+ * Shared Vite plugins for non-Angular library builds (Nitro, Astro, Storybook,
+ * Vitest, etc.) that use plain Vite instead of the Angular ngc pipeline.
+ *
+ * Provides three capabilities:
+ *  - oxcDtsPlugin:          Emits .d.ts declarations via OXC isolated-declaration
+ *                           transform, covering both bundled entry chunks and
+ *                           type-only source files that Rolldown tree-shakes away.
+ *  - copyPackageJsonPlugin: Copies the source package.json into dist/ after
+ *                           stripping `dist/` path prefixes and resolving any
+ *                           `catalog:` protocol references to concrete versions.
+ *  - walkTs:                Recursive generator that yields all non-test .ts source
+ *                           files under a directory.
+ */
+
 import { resolve, dirname, join, relative } from 'node:path';
 import {
   readFileSync,
@@ -8,6 +23,7 @@ import {
   statSync,
 } from 'node:fs';
 import type { Plugin } from 'vite';
+import { resolveCatalogReferences } from './resolve-catalogs.ts';
 
 function formatDeclarationError(error: unknown): string {
   if (error instanceof Error) {
@@ -140,7 +156,9 @@ function stripDistPrefixes(obj: unknown): unknown {
  */
 export function readDistPackageJson(pkgDir: string): string {
   const pkg = JSON.parse(readFileSync(join(pkgDir, 'package.json'), 'utf-8'));
-  return JSON.stringify(stripDistPrefixes(pkg), null, 2) + '\n';
+  const workspaceRoot = resolve(pkgDir, '../..');
+  const resolved = resolveCatalogReferences(pkg, workspaceRoot);
+  return JSON.stringify(stripDistPrefixes(resolved), null, 2) + '\n';
 }
 
 export function copyPackageJsonPlugin(pkgDir: string): Plugin {

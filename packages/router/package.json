@@ -67,6 +67,9 @@
     "schema-dts": "catalog:"
   },
   "peerDependenciesMeta": {
+    "@analogjs/content": {
+      "optional": true
+    },
     "@angular/platform-server": {
       "optional": true
     },
