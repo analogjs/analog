@@ -125,7 +125,11 @@ async function renderToStaticMarkup(
     }
   });
 
-  return { html: styleTags + document.body.innerHTML };
+  const correctedHtml = styleTags + document.body.innerHTML;
+
+  platformRef.destroy();
+
+  return { html: correctedHtml };
 }
 
 export default {
