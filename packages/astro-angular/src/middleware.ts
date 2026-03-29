@@ -43,8 +43,11 @@ export const onRequest: MiddlewareHandler = async (_ctx, next) => {
 
     for (const child of top.children) {
       if (child.type === 'element' && child.tagName === 'style') {
-        styleIndexes.push(index);
-        styleTags.push(child);
+        if ('ng-app-id' in child.properties) {
+          styleIndexes.push(index);
+          styleTags.push(child);
+        }
+        // style tags won't have any children to search
       } else {
         stack.push(child);
       }
