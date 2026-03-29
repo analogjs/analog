@@ -32,7 +32,8 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "dependencies": {
-    "@analogjs/vite-plugin-angular": "^2.4.0-beta.24"
+    "@analogjs/vite-plugin-angular": "^2.4.0-beta.24",
+    "rehype": "^13.0.2"
   },
   "peerDependencies": {
     "@angular/build": ">=20.0.0",
