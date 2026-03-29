@@ -507,7 +507,7 @@ Analog supports deploying on [Render](https://render.com/) with minimal configur
 
 2. Ensure the 'Node' environment is selected.
 
-3. [Specify your Node version for Render to use](https://render.com/docs/node-version) (v24.3.0 or higher recommended) - Render by default uses Node 14, which fails to correctly build an Analog site
+3. [Specify your Node version for Render to use](https://render.com/docs/node-version) (v22.0.0 or higher recommended) - Render by default uses Node 14, which fails to correctly build an Analog site
 
 4. Depending on your package manager, set the build command to `yarn && yarn build`, `npm install && npm run build`, or `pnpm i --shamefully-hoist && pnpm build`.
 

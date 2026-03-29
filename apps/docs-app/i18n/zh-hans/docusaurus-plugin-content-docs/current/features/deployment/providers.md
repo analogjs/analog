@@ -487,7 +487,7 @@ Analog 支持通过 [Render](https://render.com/) 进行部署，几乎无需额
 
 2. 确保选择 'Node' 环境。
 
-3. [指定 Render 使用的 Node 版本](https://render.com/docs/node-version)（推荐使用 v24.3.0 或更高版本）- Render 默认使用 Node 14，这会导致 Analog 站点构建失败。
+3. [指定 Render 使用的 Node 版本](https://render.com/docs/node-version)（推荐使用 v22.0.0 或更高版本）- Render 默认使用 Node 14，这会导致 Analog 站点构建失败。
 
 4. 根据您的包管理器，将构建命令设置为 `yarn && yarn build`、`npm install && npm run build` 或 `pnpm i --shamefully-hoist && pnpm build`。
 

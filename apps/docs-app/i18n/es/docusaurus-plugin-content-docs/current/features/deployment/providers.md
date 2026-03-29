@@ -507,7 +507,7 @@ Analog soporta el despliegue en [Render](https://render.com/) con configuración
 
 2. Asegúrate de que esté seleccionado el entorno 'Node'.
 
-3. [Especifica tu versión de Node para que Render la use](https://render.com/docs/node-version) (se recomienda v24.3.0 o superior) - Render usa por defecto Node 14, lo cual falla al construir correctamente un sitio Analog.
+3. [Especifica tu versión de Node para que Render la use](https://render.com/docs/node-version) (se recomienda v22.0.0 o superior) - Render usa por defecto Node 14, lo cual falla al construir correctamente un sitio Analog.
 
 4. Dependiendo de tu gestor de paquetes, establece el comando de compilación en `yarn && yarn build`, `npm install && npm run build`, o `pnpm i --shamefully-hoist && pnpm build`.
 
