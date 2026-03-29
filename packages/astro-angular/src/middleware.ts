@@ -10,7 +10,7 @@ export const onRequest: MiddlewareHandler = async (_ctx, next) => {
     return response;
   }
 
-  // Find all <style> tags in the body and move them to the head
+  // Find all <style ng-app-id="..."> tags in the body and move them to the head
 
   const responseBody = await response.text();
 
@@ -29,6 +29,13 @@ export const onRequest: MiddlewareHandler = async (_ctx, next) => {
       continue;
     }
 
+    if (top.type === 'element' && top.tagName === 'style') {
+      if ('ng-app-id' in top.properties) {
+        styleTags.push(top);
+      }
+      continue;
+    }
+
     if (top.type === 'element' && top.tagName === 'head' && !head) {
       head = top;
       continue;
@@ -38,24 +45,18 @@ export const onRequest: MiddlewareHandler = async (_ctx, next) => {
       continue;
     }
 
-    const styleIndexes: number[] = [];
-    let index = 0;
+    for (let index = top.children.length - 1; index >= 0; index--) {
+      const child = top.children[index];
 
-    for (const child of top.children) {
-      if (child.type === 'element' && child.tagName === 'style') {
-        if ('ng-app-id' in child.properties) {
-          styleIndexes.push(index);
-          styleTags.push(child);
-        }
-        // style tags won't have any children to search
-      } else {
-        stack.push(child);
+      stack.push(child);
+
+      if (
+        child.type === 'element' &&
+        child.tagName === 'style' &&
+        'ng-app-id' in child.properties
+      ) {
+        top.children.splice(index, 1);
       }
-      index++;
-    }
-
-    for (let i = styleIndexes.length - 1; i >= 0; i--) {
-      top.children.splice(styleIndexes[i], 1);
     }
   }
 
