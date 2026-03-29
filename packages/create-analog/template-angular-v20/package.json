@@ -47,7 +47,7 @@
     "jsdom": "^22.0.0",
     "typescript": "6.0.2",
     "vite": "^7.0.0",
-    "vite-tsconfig-paths": "^4.2.0",
+    "vite-tsconfig-paths": "^7.0.0-alpha.1",
     "vitest": "^4.0.0"
   },
   "overrides": {
