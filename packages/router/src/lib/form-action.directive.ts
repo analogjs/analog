@@ -46,7 +46,7 @@ export class FormAction {
     ? injectRouteEndpointURL(this.route.snapshot)
     : undefined;
 
-  submitted($event: any): void {
+  submitted($event: SubmitEvent): void {
     $event.preventDefault();
 
     const form = $event.target as HTMLFormElement;

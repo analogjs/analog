@@ -2,7 +2,10 @@ import { inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import type { Route } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { injectInternalServerFetch } from '@analogjs/router/tokens';
+import {
+  injectInternalServerFetch,
+  type ServerInternalFetch,
+} from '@analogjs/router/tokens';
 
 import {
   DefaultRouteMeta,
@@ -59,11 +62,11 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
           return internalFetch(url.pathname);
         }
 
-        if (
-          !!import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL'] &&
-          (globalThis as any).$fetch
-        ) {
-          return (globalThis as any).$fetch(url.pathname);
+        const globalFetch = (
+          globalThis as unknown as { $fetch?: ServerInternalFetch }
+        ).$fetch;
+        if (!!import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL'] && globalFetch) {
+          return globalFetch(url.pathname);
         }
 
         return firstValueFrom(http.get(`${url.href}`));
