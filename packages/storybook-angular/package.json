@@ -45,7 +45,7 @@
     "vite": "^6.0.0 || ^7.0.0 || ^8.0.0"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "builders": "./dist/src/lib/builders.json",
   "ng-add": {

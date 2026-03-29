@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "type": "module",
   "engines": {
-    "node": ">=20.19.1"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "ng": "ng",
