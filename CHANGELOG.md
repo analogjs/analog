@@ -1,3 +1,9 @@
+# [2.4.0-beta.25](https://github.com/analogjs/analog/compare/v2.4.0-beta.24...v2.4.0-beta.25) (2026-03-29)
+
+### Features
+
+- **astro-angular:** add option to move component styles to document head ([#2162](https://github.com/analogjs/analog/issues/2162)) ([2361afa](https://github.com/analogjs/analog/commit/2361afaa31247e61483517d321f541c7419bc79b))
+
 # [2.4.0-beta.24](https://github.com/analogjs/analog/compare/v2.4.0-beta.23...v2.4.0-beta.24) (2026-03-27)
 
 ### Features
