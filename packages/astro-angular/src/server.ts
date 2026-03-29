@@ -112,24 +112,26 @@ async function renderToStaticMarkup(
       context,
     );
 
-  const html = await renderApplication(bootstrap, {
-    document,
-  });
+  try {
+    const html = await renderApplication(bootstrap, {
+      document,
+    });
 
-  document.documentElement.innerHTML = html;
-  let styleTags = '';
+    document.documentElement.innerHTML = html;
+    let styleTags = '';
 
-  document.head.childNodes.forEach((node) => {
-    if (node.nodeName === 'STYLE') {
-      styleTags += (node as HTMLElement).outerHTML;
-    }
-  });
+    document.head.childNodes.forEach((node) => {
+      if (node.nodeName === 'STYLE') {
+        styleTags += (node as HTMLElement).outerHTML;
+      }
+    });
 
-  const correctedHtml = styleTags + document.body.innerHTML;
+    const correctedHtml = styleTags + document.body.innerHTML;
 
-  platformRef.destroy();
-
-  return { html: correctedHtml };
+    return { html: correctedHtml };
+  } finally {
+    platformRef.destroy();
+  }
 }
 
 export default {

@@ -16,13 +16,16 @@ export const onRequest: MiddlewareHandler = async (_ctx, next) => {
 
   const tree = processor.parse(responseBody);
 
-  const stack: (Root | RootContent)[] = [tree];
+  // Use a FIFO queue to traverse in document order, ensuring styles from
+  // earlier islands appear before styles from later islands in <head>.
+  const queue: (Root | RootContent)[] = [tree];
+  let front = 0;
 
   const styleTags: Element[] = [];
   let head: Element | null = null;
 
-  while (stack.length) {
-    const top = stack.pop()!;
+  while (front < queue.length) {
+    const top = queue[front++];
 
     if (top.type === 'element' && top.tagName === 'template') {
       // Templates create a shadow-root, so styles should not be moved outside.
@@ -49,7 +52,7 @@ export const onRequest: MiddlewareHandler = async (_ctx, next) => {
         }
         // style tags won't have any children to search
       } else {
-        stack.push(child);
+        queue.push(child);
       }
       index++;
     }

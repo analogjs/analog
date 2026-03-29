@@ -145,6 +145,55 @@ describe('angularAstroMiddleware', () => {
     `);
   });
 
+  it('should preserve document order of styles across multiple islands', async () => {
+    const response = new Response(
+      `
+      <!DOCTYPE html>
+      <html>
+        <head>
+        </head>
+        <body>
+          <astro-island>
+            <style ng-app-id="island-a">.a-style{color:red}</style>
+            <div>Island A</div>
+          </astro-island>
+          <astro-island>
+            <style ng-app-id="island-b">.b-style{color:blue}</style>
+            <div>Island B</div>
+          </astro-island>
+        </body>
+      </html>
+    `,
+      {
+        headers: {
+          'Content-Type': 'text/html',
+        },
+      },
+    );
+
+    const transformed = await onRequest(
+      null! as APIContext,
+      vi.fn().mockResolvedValue(response),
+    );
+
+    expect(transformed).toBeInstanceOf(Response);
+
+    const body = await (transformed as Response).text();
+
+    // Island A's style should come before Island B's style in the head
+    const styleAIndex = body.indexOf('ng-app-id="island-a"');
+    const styleBIndex = body.indexOf('ng-app-id="island-b"');
+
+    expect(styleAIndex).toBeGreaterThan(-1);
+    expect(styleBIndex).toBeGreaterThan(-1);
+    expect(styleAIndex).toBeLessThan(styleBIndex);
+
+    // Both styles should be in the <head>
+    const headEnd = body.indexOf('</head>');
+    expect(styleAIndex).toBeLessThan(headEnd);
+    expect(styleBIndex).toBeLessThan(headEnd);
+  });
+
   it('should ignore responses with non-html content', async () => {
     const response = new Response(
       `
