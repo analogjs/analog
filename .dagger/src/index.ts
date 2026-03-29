@@ -36,7 +36,8 @@ export class AnalogCi {
         'build',
         '--all',
       ])
-      .withExec(['node', 'tools/scripts/verify-route-freshness.mts']);
+      .withExec(['node', 'tools/scripts/verify-route-freshness.mts'])
+      .withExec(['pnpm', 'exec', 'nx', 'build-storybook', 'analog-app']);
   }
 
   private withTestTargets(ctr: Container): Container {
