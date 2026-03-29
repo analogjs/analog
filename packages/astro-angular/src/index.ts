@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import viteAngular, { PluginOptions } from '@analogjs/vite-plugin-angular';
 import { enableProdMode } from '@angular/core';
 import type { AstroIntegration, AstroRenderer, ViteUserConfig } from 'astro';
@@ -94,7 +95,7 @@ export default function (options?: AngularOptions): AstroIntegration {
         if (options?.strictStylePlacement) {
           addMiddleware({
             order: 'pre',
-            entrypoint: '@analogjs/astro-angular/middleware.js',
+            entrypoint: fileURLToPath(import.meta.resolve('./middleware.js')),
           });
         }
       },
