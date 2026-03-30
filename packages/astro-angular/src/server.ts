@@ -20,6 +20,7 @@ import {
 } from '@angular/platform-server';
 import {
   bootstrapApplication,
+  provideClientHydration,
   type BootstrapContext,
 } from '@angular/platform-browser';
 
@@ -106,6 +107,7 @@ async function renderToStaticMarkup(
           provideServerRendering(),
           { provide: ɵSERVER_CONTEXT, useValue: 'analog' },
           provideZonelessChangeDetection(),
+          provideClientHydration(),
           ...(Component.renderProviders || []),
         ],
       },

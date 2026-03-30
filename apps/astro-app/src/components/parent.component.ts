@@ -16,7 +16,12 @@ import { CardComponent } from './card.component';
       href="https://angular.dev/"
       title="Angular"
       body="Built with Angular. ❤️"
+      (output)="handleClick($event)"
     />
   `,
 })
-export class ParentComponent {}
+export class ParentComponent {
+  handleClick(value: string): void {
+    console.log(value);
+  }
+}
