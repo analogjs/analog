@@ -108,7 +108,7 @@ npx @astrojs/upgrade
 Then update `@analogjs/astro-angular` to the latest version:
 
 ```bash
-ng update @analogjs/platform@latest
+npm install @analogjs/astro-angular@latest
 ```
 
 ### `strictStylePlacement` Option
