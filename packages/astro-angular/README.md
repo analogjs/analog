@@ -173,6 +173,24 @@ export default defineConfig({
 });
 ```
 
+### Strict Style Placement
+
+Angular components can use style scoped to each component instance. By default, these style tags will be inserted adjacent to the component's HTML by `@analogjs/astro-angular`. While this will typically work for modern browsers, it is technically invalid HTML.
+
+To force these component styles to the document head, enable the `strictStylePlacement` option in the integration config.
+
+**Warning:** enabling this option will disable Astro's [streaming](https://docs.astro.build/en/recipes/streaming-improve-page-performance/) mode under SSR.
+
+```js
+import { defineConfig } from 'astro/config';
+
+import angular from '@analogjs/astro-angular';
+
+export default defineConfig({
+  integrations: [angular({ strictStylePlacement: true })],
+});
+```
+
 ## Defining A Component
 
 The Astro Angular integration **only** supports rendering standalone components:

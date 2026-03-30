@@ -1,0 +1,22 @@
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { CardComponent } from './card.component';
+
+@Component({
+  selector: 'astro-parent',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CardComponent],
+  styles: `
+    p {
+      margin: 8px 0;
+    }
+  `,
+  template: `
+    <p>Verifies that nesting components works properly</p>
+    <astro-card
+      href="https://angular.dev/"
+      title="Angular"
+      body="Built with Angular. ❤️"
+    />
+  `,
+})
+export class ParentComponent {}
