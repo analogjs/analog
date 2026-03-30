@@ -15,5 +15,9 @@ export default defineConfig({
       },
     },
   },
-  integrations: [angular(), react(), mdx({ syntaxHighlight: 'prism' })],
+  integrations: [
+    angular({ strictStylePlacement: true }),
+    react(),
+    mdx({ syntaxHighlight: 'prism' }),
+  ],
 });

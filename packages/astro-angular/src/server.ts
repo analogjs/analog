@@ -9,12 +9,14 @@ import {
   InjectionToken,
   reflectComponentType,
   provideZonelessChangeDetection,
+  DOCUMENT,
 } from '@angular/core';
 import {
   BEFORE_APP_SERIALIZED,
   provideServerRendering,
   renderApplication,
   ɵSERVER_CONTEXT,
+  platformServer,
 } from '@angular/platform-server';
 import {
   bootstrapApplication,
@@ -86,7 +88,11 @@ async function renderToStaticMarkup(
   const mirror = reflectComponentType(Component);
   const appId =
     mirror?.selector.split(',')[0] || Component.name.toString().toLowerCase();
-  const document = `<${appId}></${appId}>`;
+
+  const platformRef = platformServer();
+  const document = platformRef.injector.get(DOCUMENT);
+  document.body.innerHTML = `<${appId}></${appId}>`;
+
   const bootstrap = (context?: BootstrapContext) =>
     bootstrapApplication(
       Component,
@@ -110,7 +116,20 @@ async function renderToStaticMarkup(
     document,
   });
 
-  return { html };
+  document.documentElement.innerHTML = html;
+  let styleTags = '';
+
+  document.head.childNodes.forEach((node) => {
+    if (node.nodeName === 'STYLE') {
+      styleTags += (node as HTMLElement).outerHTML;
+    }
+  });
+
+  const correctedHtml = styleTags + document.body.innerHTML;
+
+  platformRef.destroy();
+
+  return { html: correctedHtml };
 }
 
 export default {

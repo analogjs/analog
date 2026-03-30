@@ -1,3 +1,45 @@
+# [2.4.0-beta.27](https://github.com/analogjs/analog/compare/v2.4.0-beta.26...v2.4.0-beta.27) (2026-03-30)
+
+### Bug Fixes
+
+- **vitest-angular:** fix imports for snapshot serializers ([#2211](https://github.com/analogjs/analog/issues/2211)) ([8e9f73d](https://github.com/analogjs/analog/commit/8e9f73dfde0e03e0943512dd18f432f20307f3f5))
+
+# [2.4.0-beta.26](https://github.com/analogjs/analog/compare/v2.4.0-beta.25...v2.4.0-beta.26) (2026-03-30)
+
+### Bug Fixes
+
+- **astro-angular:** style tag ordering for multiple islands ([#2210](https://github.com/analogjs/analog/issues/2210)) ([b306097](https://github.com/analogjs/analog/commit/b306097442be5f1f38f7b47762c67c09febec628))
+
+# [2.4.0-beta.25](https://github.com/analogjs/analog/compare/v2.4.0-beta.24...v2.4.0-beta.25) (2026-03-29)
+
+### Features
+
+- **astro-angular:** add option to move component styles to document head ([#2162](https://github.com/analogjs/analog/issues/2162)) ([2361afa](https://github.com/analogjs/analog/commit/2361afaa31247e61483517d321f541c7419bc79b))
+
+# [2.4.0-beta.24](https://github.com/analogjs/analog/compare/v2.4.0-beta.23...v2.4.0-beta.24) (2026-03-27)
+
+### Features
+
+- **create-analog:** add snapshot serializers ([3318263](https://github.com/analogjs/analog/commit/33182636a130e4c7b3f213aece7a020cf0981c3e))
+
+# [2.4.0-beta.23](https://github.com/analogjs/analog/compare/v2.4.0-beta.22...v2.4.0-beta.23) (2026-03-27)
+
+### Bug Fixes
+
+- **content:** resolve content files by bare slug lookup ([#2205](https://github.com/analogjs/analog/issues/2205)) ([7e79d24](https://github.com/analogjs/analog/commit/7e79d24a9cd2a8e70dea5b458db59cd4e5ae31ff))
+
+# [2.4.0-beta.22](https://github.com/analogjs/analog/compare/v2.4.0-beta.21...v2.4.0-beta.22) (2026-03-27)
+
+### Bug Fixes
+
+- fix vitest build and ci workflows ([a4b129a](https://github.com/analogjs/analog/commit/a4b129a589090043d0b06f6e72bbbc259aa23f9e))
+
+# [2.4.0-beta.21](https://github.com/analogjs/analog/compare/v2.4.0-beta.20...v2.4.0-beta.21) (2026-03-27)
+
+### Features
+
+- **vitest-angular:** add reusable snapshot serializers ([#2163](https://github.com/analogjs/analog/issues/2163)) ([9089c8d](https://github.com/analogjs/analog/commit/9089c8d8f315aad4792d6b37b18db62d951301b2))
+
 # [2.4.0-beta.20](https://github.com/analogjs/analog/compare/v2.4.0-beta.19...v2.4.0-beta.20) (2026-03-23)
 
 ### Bug Fixes
