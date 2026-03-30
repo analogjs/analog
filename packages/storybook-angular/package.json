@@ -36,16 +36,16 @@
   },
   "main": "dist/src/index.js",
   "dependencies": {
-    "@storybook/builder-vite": "catalog:peerStorybook10"
+    "@storybook/builder-vite": "^10.0.0"
   },
   "peerDependencies": {
-    "@storybook/angular": "catalog:peerStorybook10",
-    "@analogjs/vite-plugin-angular": "catalog:peerVitestAngular",
-    "storybook": "catalog:peerStorybook10",
-    "vite": "catalog:peerCompat"
+    "@storybook/angular": "^10.0.0",
+    "@analogjs/vite-plugin-angular": "*",
+    "storybook": "^10.0.0",
+    "vite": "^6.0.0 || ^7.0.0 || ^8.0.0"
   },
   "engines": {
-    "node": ">=22.18.0 || >=24.3.0"
+    "node": ">=22.0.0"
   },
   "builders": "./dist/src/lib/builders.json",
   "ng-add": {

@@ -9,6 +9,8 @@ import {
 
 import { from, Observable, of } from 'rxjs';
 
+import type { HTTPMethod } from 'nitro/h3';
+
 import {
   injectBaseURL,
   injectAPIPrefix,
@@ -60,13 +62,7 @@ export function requestContextInterceptor(
     return from<Promise<HttpResponse<unknown>>>(
       serverFetch
         .raw(fetchUrl, {
-          method: req.method as
-            | 'GET'
-            | 'HEAD'
-            | 'POST'
-            | 'PUT'
-            | 'DELETE'
-            | 'PATCH',
+          method: req.method as HTTPMethod,
           body: req.body ? req.body : undefined,
           params: requestUrl.searchParams,
           responseType,
