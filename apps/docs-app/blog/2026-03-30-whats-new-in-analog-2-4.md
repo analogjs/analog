@@ -1,5 +1,5 @@
 ---
-title: What's new in Analog 2.4?
+title: "AnalogJS 2.4: Vite 8, Vitest Snapshot Serializers, and Astro v6 Support"
 slug: 2026-03-30-whats-new-in-analog-2-4
 description: Analog 2.4 ships with Vite 8 support, improved testing DX with snapshot serializers and teardown options, and updated Astro Angular integration with Astro v6 support and strict style placement.
 ---
