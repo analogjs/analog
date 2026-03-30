@@ -1,3 +1,9 @@
+# [2.4.0-beta.27](https://github.com/analogjs/analog/compare/v2.4.0-beta.26...v2.4.0-beta.27) (2026-03-30)
+
+### Bug Fixes
+
+- **vitest-angular:** fix imports for snapshot serializers ([#2211](https://github.com/analogjs/analog/issues/2211)) ([8e9f73d](https://github.com/analogjs/analog/commit/8e9f73dfde0e03e0943512dd18f432f20307f3f5))
+
 # [2.4.0-beta.26](https://github.com/analogjs/analog/compare/v2.4.0-beta.25...v2.4.0-beta.26) (2026-03-30)
 
 ### Bug Fixes
