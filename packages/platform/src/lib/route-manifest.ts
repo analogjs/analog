@@ -50,6 +50,8 @@ export interface RouteEntry {
 
 export interface RouteManifest {
   routes: RouteEntry[];
+  /** Canonical route per fullPath — precomputed once to avoid redundant work. */
+  canonicalByFullPath: Map<string, RouteEntry>;
 }
 
 /**
@@ -196,6 +198,10 @@ export function generateRouteManifest(
     const id = filenameToRouteId(filename);
     const isPathlessLayout = isPathlessLayoutId(id);
 
+    // Pathless layouts (e.g. (auth).page.ts) are structural wrappers that
+    // render a <router-outlet> — they coexist with index.page.ts at the same
+    // fullPath without collision. The Angular router handles them as nested
+    // layout routes, not competing page components.
     if (!isPathlessLayout) {
       if (seenByFullPath.has(fullPath)) {
         const winningFilename = seenByFullPath.get(fullPath);
@@ -240,9 +246,13 @@ export function generateRouteManifest(
   const routeById = new Map(routes.map((route) => [route.id, route]));
 
   for (const route of routes) {
-    // Use structural id-based parent lookup only for routes whose id
+    // Use structural id-based parent lookup for any route whose id
     // contains a group segment — this wires group children (e.g.
     // /(auth)/sign-up) to their pathless layout parent (/(auth)).
+    // This also correctly handles nested groups like
+    // /dashboard/(settings)/profile: findNearestParentById walks up
+    // id segments and finds /(settings) if it exists, otherwise falls
+    // through to fullPathParent which resolves to /dashboard.
     // Non-group routes always use the canonical fullPath-based lookup.
     const hasGroupSegment = route.id.includes('/(');
     const structuralParent = hasGroupSegment
@@ -292,7 +302,7 @@ export function generateRouteManifest(
     }
   }
 
-  return { routes };
+  return { routes, canonicalByFullPath: routeByFullPath };
 }
 
 function canonicalRoutesByFullPath(
@@ -301,13 +311,25 @@ function canonicalRoutesByFullPath(
   const map = new Map<string, RouteEntry>();
   for (const route of routes) {
     const existing = map.get(route.fullPath);
-    if (!existing || (existing.isGroup && !route.isGroup)) {
+    if (!existing) {
       map.set(route.fullPath, route);
+    } else if (existing.isGroup && !route.isGroup) {
+      // Non-group routes always take precedence over group layouts.
+      map.set(route.fullPath, route);
+    } else if (existing.isGroup && route.isGroup) {
+      // Both are group layouts — tiebreak by id to ensure stable selection
+      // regardless of filesystem or glob ordering across platforms.
+      if (route.id.localeCompare(existing.id) < 0) {
+        map.set(route.fullPath, route);
+      }
     }
   }
   return map;
 }
 
+// Matches group names like (auth), (home) — intentionally excludes dots and
+// brackets so names like (auth.v2) or ([id]) are NOT treated as pathless
+// layouts. Dot-containing names collide with dynamic-segment syntax.
 function isPathlessLayoutId(id: string): boolean {
   const segments = id.split('/').filter(Boolean);
   if (segments.length === 0) return false;
@@ -415,12 +437,10 @@ export function generateRouteTableDeclaration(manifest: RouteManifest): string {
     lines.push('');
   }
 
-  const canonical = canonicalRoutesByFullPath(manifest.routes);
-
   lines.push("declare module '@analogjs/router' {");
   lines.push('  interface AnalogRouteTable {');
 
-  for (const route of canonical.values()) {
+  for (const route of manifest.canonicalByFullPath.values()) {
     const paramsAlias = schemaImports.get(`${route.fullPath}:params`);
     const queryAlias = schemaImports.get(`${route.fullPath}:query`);
 
@@ -496,8 +516,7 @@ export function generateRouteTreeDeclaration(
   lines.push('}');
   lines.push('');
   lines.push('export interface AnalogFileRoutesByFullPath {');
-  const canonicalByFullPath = canonicalRoutesByFullPath(manifest.routes);
-  for (const route of canonicalByFullPath.values()) {
+  for (const route of manifest.canonicalByFullPath.values()) {
     lines.push(
       `  ${toTsKey(route.fullPath)}: AnalogFileRoutesById[${toTsStringLiteral(route.id)}];`,
     );
@@ -541,7 +560,7 @@ export function generateRouteTreeDeclaration(
   }
   lines.push('  },');
   lines.push('  byFullPath: {');
-  for (const route of canonicalByFullPath.values()) {
+  for (const route of manifest.canonicalByFullPath.values()) {
     lines.push(
       `    ${toObjectKey(route.fullPath)}: ${toTsStringLiteral(route.id)},`,
     );

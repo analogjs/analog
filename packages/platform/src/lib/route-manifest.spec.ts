@@ -312,9 +312,11 @@ describe('generateRouteManifest', () => {
   });
 
   it('should pick a deterministic canonical route when only pathless layouts exist at a fullPath', () => {
+    // Provide filenames in reverse-alphabetical order to verify the
+    // tiebreaker selects by id, not by iteration/input order.
     const manifest = generateRouteManifest([
-      '/src/app/pages/(auth).page.ts',
       '/src/app/pages/(home).page.ts',
+      '/src/app/pages/(auth).page.ts',
     ]);
 
     // Both resolve to fullPath '/' — all are group layouts, no index.page.ts
@@ -322,7 +324,7 @@ describe('generateRouteManifest', () => {
     expect(manifest.routes.every((r) => r.isGroup)).toBe(true);
 
     // The canonical selection (used for AnalogRouteTable / byFullPath) must
-    // pick exactly one. Verify determinism: first in sorted order wins.
+    // pick exactly one. Tiebreaker picks alphabetically-first id: /(auth).
     const tableOutput = generateRouteTableDeclaration(manifest);
     const treeOutput = generateRouteTreeDeclaration(manifest);
 
@@ -330,7 +332,8 @@ describe('generateRouteManifest', () => {
     const tableMatches = tableOutput.match(/'\/':\s*\{/g) ?? [];
     expect(tableMatches).toHaveLength(1);
 
-    // Exactly one entry for '/' in byFullPath
+    // Exactly one entry for '/' in byFullPath — the /(auth) layout wins
+    expect(treeOutput).toContain('"/": "/(auth)"');
     const byFullPathMatches = treeOutput.match(/"\/": "\/\([^"]+\)"/g) ?? [];
     expect(byFullPathMatches).toHaveLength(1);
   });
@@ -351,6 +354,27 @@ describe('generateRouteManifest', () => {
     expect(loginRoute).toBeDefined();
     expect(loginRoute.parentId).toBe('/(auth)');
     expect(authLayout.children).toEqual(['/(auth)/login']);
+  });
+
+  it('should wire nested group children to their group parent, not a fullPath ancestor', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/dashboard.page.ts',
+      '/src/app/pages/dashboard/(settings).page.ts',
+      '/src/app/pages/dashboard/(settings)/profile.page.ts',
+    ]);
+
+    const settings = manifest.routes.find(
+      (r) => r.id === '/dashboard/(settings)',
+    )!;
+    const profile = manifest.routes.find(
+      (r) => r.id === '/dashboard/(settings)/profile',
+    )!;
+
+    expect(settings).toBeDefined();
+    expect(profile).toBeDefined();
+    // profile's parent should be the (settings) group, not /dashboard
+    expect(profile.parentId).toBe('/dashboard/(settings)');
+    expect(settings.children).toContain('/dashboard/(settings)/profile');
   });
 
   it('prefers app-local routes over additional/shared route sources', () => {
