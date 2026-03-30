@@ -6,10 +6,10 @@
   "author": "Brandon Roberts",
   "scripts": {},
   "bin": {
-    "create-analog": "index.js"
+    "create-analog": "index.mjs"
   },
   "files": [
-    "index.js",
+    "index.mjs",
     "template-angular-v17",
     "template-angular-v18",
     "template-angular-v19",
@@ -21,7 +21,7 @@
   ],
   "main": "index.js",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.3.0"
   },
   "repository": {
     "type": "git",
@@ -36,8 +36,8 @@
   },
   "homepage": "https://github.com/analogjs/analog/tree/main#readme",
   "dependencies": {
-    "kolorist": "^1.6.0",
-    "minimist": "^1.2.7",
+    "kolorist": "^1.8.0",
+    "minimist": "^1.2.8",
     "prompts": "^2.4.2"
   },
   "devDependencies": {
