@@ -311,6 +311,30 @@ describe('generateRouteManifest', () => {
     spy.mockRestore();
   });
 
+  it('should pick a deterministic canonical route when only pathless layouts exist at a fullPath', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/(auth).page.ts',
+      '/src/app/pages/(home).page.ts',
+    ]);
+
+    // Both resolve to fullPath '/' — all are group layouts, no index.page.ts
+    expect(manifest.routes).toHaveLength(2);
+    expect(manifest.routes.every((r) => r.isGroup)).toBe(true);
+
+    // The canonical selection (used for AnalogRouteTable / byFullPath) must
+    // pick exactly one. Verify determinism: first in sorted order wins.
+    const tableOutput = generateRouteTableDeclaration(manifest);
+    const treeOutput = generateRouteTreeDeclaration(manifest);
+
+    // Exactly one entry for '/' in AnalogRouteTable
+    const tableMatches = tableOutput.match(/'\/':\s*\{/g) ?? [];
+    expect(tableMatches).toHaveLength(1);
+
+    // Exactly one entry for '/' in byFullPath
+    const byFullPathMatches = treeOutput.match(/"\/": "\/\([^"]+\)"/g) ?? [];
+    expect(byFullPathMatches).toHaveLength(1);
+  });
+
   it('should preserve pathless layout with its nested children', () => {
     const manifest = generateRouteManifest([
       '/src/app/pages/index.page.ts',

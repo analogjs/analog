@@ -240,10 +240,14 @@ export function generateRouteManifest(
   const routeById = new Map(routes.map((route) => [route.id, route]));
 
   for (const route of routes) {
-    // First try structural id-based parent lookup — this correctly wires
-    // group children (e.g. /(auth)/sign-up) to their pathless layout parent
-    // (e.g. /(auth)) even though fullPath-based lookup would miss it.
-    const structuralParent = findNearestParentById(route.id, routeById);
+    // Use structural id-based parent lookup only for routes whose id
+    // contains a group segment — this wires group children (e.g.
+    // /(auth)/sign-up) to their pathless layout parent (/(auth)).
+    // Non-group routes always use the canonical fullPath-based lookup.
+    const hasGroupSegment = route.id.includes('/(');
+    const structuralParent = hasGroupSegment
+      ? findNearestParentById(route.id, routeById)
+      : undefined;
     const fullPathParent = findNearestParentRoute(
       route.fullPath,
       routeByFullPath,
@@ -307,7 +311,7 @@ function canonicalRoutesByFullPath(
 function isPathlessLayoutId(id: string): boolean {
   const segments = id.split('/').filter(Boolean);
   if (segments.length === 0) return false;
-  return /^\([^.[\]]*\)$/.test(segments[segments.length - 1]);
+  return /^\([^.[\]]+\)$/.test(segments[segments.length - 1]);
 }
 
 function getRouteWeight(path: string): number {
