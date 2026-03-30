@@ -5,6 +5,7 @@ import * as ts from 'typescript';
 
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import type { StylePreprocessor } from './style-preprocessor.js';
 import type { SourceFileCache } from './utils/source-file-cache.js';
 
 export function augmentHostWithResources(
@@ -20,6 +21,7 @@ export function augmentHostWithResources(
     inlineComponentStyles?: Map<string, string>;
     externalComponentStyles?: Map<string, string>;
     sourceFileCache?: SourceFileCache;
+    stylePreprocessor?: StylePreprocessor;
   },
 ): void {
   const resourceHost = host as CompilerHost;
@@ -46,30 +48,40 @@ export function augmentHostWithResources(
       return null;
     }
 
-    if (options.inlineComponentStyles) {
-      const id = createHash('sha256')
-        .update(context.containingFile)
-        .update(context.className)
-        .update(String(context.order))
-        .update(data)
-        .digest('hex');
-      const filename = id + '.' + options.inlineStylesExtension;
-      options.inlineComponentStyles.set(filename, data);
-      return { content: filename };
-    }
-
-    // Resource file only exists for external stylesheets
     const filename =
       context.resourceFile ??
       context.containingFile.replace(
         '.ts',
         `.${options?.inlineStylesExtension}`,
       );
+    const preprocessedData = options.stylePreprocessor
+      ? (options.stylePreprocessor(data, filename) ?? data)
+      : data;
 
+    // liveReload path: store preprocessed CSS for Vite's serve-time pipeline.
+    // CSS must NOT be transformed here — the load hook returns it into
+    // Vite's transform pipeline where PostCSS / Tailwind process it once.
+    if (options.inlineComponentStyles) {
+      const id = createHash('sha256')
+        .update(context.containingFile)
+        .update(context.className)
+        .update(String(context.order))
+        .update(preprocessedData)
+        .digest('hex');
+      const stylesheetId = id + '.' + options.inlineStylesExtension;
+      options.inlineComponentStyles.set(stylesheetId, preprocessedData);
+      return { content: stylesheetId };
+    }
+
+    // Non-liveReload: CSS is returned directly to the Angular compiler
+    // and never re-enters Vite's pipeline, so transform eagerly.
     let stylesheetResult;
 
     try {
-      stylesheetResult = await transform(data, `${filename}?direct`);
+      stylesheetResult = await transform(
+        preprocessedData,
+        `${filename}?direct`,
+      );
     } catch (e) {
       console.error(`${e}`);
     }

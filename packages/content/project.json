@@ -13,18 +13,22 @@
         "command": "node tools/scripts/assert-project-dependency.mts content vite-plugin-angular"
       }
     },
-    "build": {
+    "build-self": {
       "executor": "nx:run-commands",
       "cache": false,
       "dependsOn": ["assert-deps", "vite-plugin-angular:build"],
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content"],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
-        "commands": [
-          "node tools/scripts/build-lib.mts content",
-          "nx build content-plugin",
-          "node tools/scripts/verify-package-artifacts.mts content"
-        ],
-        "parallel": false
+        "command": "node tools/scripts/build-lib.mts content"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["build-self", "content-plugin:build"],
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "command": "node tools/scripts/verify-package-artifacts.mts content"
       }
     },
     "lint": {

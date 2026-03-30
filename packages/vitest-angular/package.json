@@ -1,14 +1,14 @@
 {
   "name": "@analogjs/vitest-angular",
-  "version": "3.0.0-alpha.15",
+  "version": "3.0.0-alpha.18",
   "description": "Vitest Builder for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
-    ".": "./src/index.js",
-    "./setup-zone": "./setup-zone.js",
-    "./setup-snapshots": "./setup-snapshots.js",
-    "./setup-testbed": "./setup-testbed.js",
+    ".": "./dist/src/index.js",
+    "./setup-zone": "./dist/setup-zone.js",
+    "./setup-snapshots": "./dist/setup-snapshots.js",
+    "./setup-testbed": "./dist/setup-testbed.js",
     "./package.json": "./package.json"
   },
   "keywords": [
@@ -30,8 +30,8 @@
     "type": "github",
     "url": "https://github.com/sponsors/brandonroberts"
   },
-  "builders": "./builders.json",
-  "schematics": "./src/lib/tools/collection.json",
+  "builders": "./dist/builders.json",
+  "schematics": "./dist/src/lib/tools/collection.json",
   "ng-add": {
     "save": "devDependencies"
   },

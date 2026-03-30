@@ -487,8 +487,8 @@ importers:
         specifier: 12.0.0-beta.1
         version: 12.0.0-beta.1(typescript@6.0.2)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))(ws@8.20.0)
       vite-tsconfig-paths:
-        specifier: github:benpsnyder/vite-tsconfig-paths#feat/oxc-upgrade
-        version: https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/28d26208f2e5c880b0a33ea27b0a24b64e98f0ba(typescript@6.0.2)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
+        specifier: ^7.0.0-alpha.1
+        version: 7.0.0-alpha.1(typescript@6.0.2)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
       vitefu:
         specifier: ^1.1.2
         version: 1.1.2(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
@@ -499,12 +499,29 @@ importers:
         specifier: ^4.0.3
         version: 4.0.3
 
-  apps/analog-app: {}
+  apps/analog-app:
+    dependencies:
+      '@analogjs/router':
+        specifier: workspace:*
+        version: link:../../packages/router
+    devDependencies:
+      '@analogjs/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
+      '@analogjs/storybook-angular':
+        specifier: workspace:*
+        version: link:../../packages/storybook-angular
+      '@analogjs/vite-plugin-angular':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-angular
 
   apps/analog-app-e2e: {}
 
   apps/astro-app:
     dependencies:
+      '@analogjs/astro-angular':
+        specifier: workspace:*
+        version: link:../../packages/astro-angular
       '@astrojs/mdx':
         specifier: ^5.0.2
         version: 5.0.2(astro@6.0.8(@types/node@25.5.0)(db0@0.3.4)(jiti@2.6.1)(less@4.6.4)(lightningcss@1.32.0)(rollup@4.60.0)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(typescript@5.9.3)(yaml@2.8.3))
@@ -517,7 +534,18 @@ importers:
 
   apps/astro-app-e2e-playwright: {}
 
-  apps/blog-app: {}
+  apps/blog-app:
+    dependencies:
+      '@analogjs/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      '@analogjs/router':
+        specifier: workspace:*
+        version: link:../../packages/router
+    devDependencies:
+      '@analogjs/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
 
   apps/blog-app-e2e: {}
 
@@ -564,10 +592,27 @@ importers:
         specifier: 6.0.2
         version: 6.0.2
 
-  apps/opt-catchall-app: {}
+  apps/opt-catchall-app:
+    dependencies:
+      '@analogjs/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      '@analogjs/router':
+        specifier: workspace:*
+        version: link:../../packages/router
 
   apps/tanstack-query-app:
+    dependencies:
+      '@analogjs/router':
+        specifier: workspace:*
+        version: link:../../packages/router
     devDependencies:
+      '@analogjs/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
+      '@analogjs/vitest-angular':
+        specifier: workspace:*
+        version: link:../../packages/vitest-angular
       '@tailwindcss/vite':
         specifier: ^4.2.2
         version: 4.2.2(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
@@ -580,7 +625,11 @@ importers:
 
   apps/tanstack-query-app-e2e: {}
 
-  libs/card: {}
+  libs/card:
+    devDependencies:
+      '@analogjs/vite-plugin-angular':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-angular
 
   libs/my-package:
     dependencies:
@@ -590,16 +639,24 @@ importers:
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
+    devDependencies:
+      '@analogjs/vite-plugin-angular':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-angular
 
   libs/shared/feature: {}
 
-  libs/top-bar: {}
+  libs/top-bar:
+    devDependencies:
+      '@analogjs/vite-plugin-angular':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-angular
 
   packages/astro-angular:
     dependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: ^3.0.0-alpha.15
-        version: 3.0.0-alpha.15(@angular-devkit/build-angular@21.2.3(0e669fa03dcf3bc0f2262460e97290aa))(@angular/build@21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2))
+        specifier: ^3.0.0-alpha.0
+        version: 3.0.0-alpha.18(@angular-devkit/build-angular@21.2.3(0e669fa03dcf3bc0f2262460e97290aa))(@angular/build@21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2))
       '@angular/animations':
         specifier: '>=20.0.0'
         version: 21.2.5(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))
@@ -721,17 +778,21 @@ importers:
       prompts:
         specifier: ^2.4.2
         version: 2.4.2
+    devDependencies:
+      '@analogjs/platform':
+        specifier: workspace:*
+        version: link:../platform
 
   packages/nx-plugin: {}
 
   packages/platform:
     dependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: ^3.0.0-alpha.15
-        version: 3.0.0-alpha.15(@angular-devkit/build-angular@21.2.3(0e669fa03dcf3bc0f2262460e97290aa))(@angular/build@21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2))
+        specifier: ^3.0.0-alpha.18
+        version: 3.0.0-alpha.18(@angular-devkit/build-angular@21.2.3(0e669fa03dcf3bc0f2262460e97290aa))(@angular/build@21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2))
       '@analogjs/vite-plugin-nitro':
-        specifier: ^3.0.0-alpha.15
-        version: 3.0.0-alpha.15(chokidar@5.0.0)(dotenv@16.4.7)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.0)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
+        specifier: ^3.0.0-alpha.18
+        version: 3.0.0-alpha.18(chokidar@5.0.0)(dotenv@16.4.7)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.0)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
       '@nx/angular':
         specifier: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
         version: 22.6.1(3d962bc1922fba0fca0cb5e3b6e560fe)
@@ -781,8 +842,8 @@ importers:
   packages/router:
     dependencies:
       '@analogjs/content':
-        specifier: ^3.0.0-alpha.15
-        version: 3.0.0-alpha.15(6a659000af8ba4ae3a203940aef75a3c)
+        specifier: ^3.0.0-alpha.18
+        version: 3.0.0-alpha.18(6a659000af8ba4ae3a203940aef75a3c)
       '@angular/core':
         specifier: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
         version: 21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1)
@@ -806,8 +867,8 @@ importers:
         version: 2.8.1
     devDependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: ^3.0.0-alpha.15
-        version: 3.0.0-alpha.15(@angular-devkit/build-angular@21.2.3(0e669fa03dcf3bc0f2262460e97290aa))(@angular/build@21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2))
+        specifier: ^3.0.0-alpha.18
+        version: 3.0.0-alpha.18(@angular-devkit/build-angular@21.2.3(0e669fa03dcf3bc0f2262460e97290aa))(@angular/build@21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2))
 
   packages/storybook-angular:
     dependencies:
@@ -893,6 +954,15 @@ importers:
         version: 0.16.1
 
   packages/vitest-angular-tools: {}
+
+  tests/vitest-angular:
+    devDependencies:
+      '@analogjs/vite-plugin-angular':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-angular
+      '@analogjs/vitest-angular':
+        specifier: workspace:*
+        version: link:../../packages/vitest-angular
 
 packages:
 
@@ -1047,8 +1117,8 @@ packages:
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
 
-  '@analogjs/content@3.0.0-alpha.15':
-    resolution: {integrity: sha512-GMRODiBJmjG3+laVJ/PePL6GDXzasLtl1W6Qkcwp2uzG0mplMwhtLsM+xX7A/GmJRmEspP7vZLsdazTko0ZpPw==}
+  '@analogjs/content@3.0.0-alpha.18':
+    resolution: {integrity: sha512-TsmigwZXgI4vdr5+/Bv7zCb1Uu81qiJ75bb8B8PBkQ8tnTpu61UJKQBKlNxS/kpXSmxZ3wfbBoDfpIfMmc1WIQ==}
     peerDependencies:
       '@angular/common': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
       '@angular/core': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
@@ -1092,8 +1162,8 @@ packages:
       '@angular/build':
         optional: true
 
-  '@analogjs/vite-plugin-angular@3.0.0-alpha.15':
-    resolution: {integrity: sha512-//K0jaswIRSkSfnFyVeXqaaSpCAcZZRq/5h7/CB00I0ze/j/97A6bJwRixGlevBWexe3f+hrI39NeWTOQlY8dg==}
+  '@analogjs/vite-plugin-angular@3.0.0-alpha.18':
+    resolution: {integrity: sha512-WVYRQ/cpOPdkAyeRFxgpu0rIzo8yiVV+aJ/dVAw2dOTSo9YcPBIWdtu6yEx3Vy+nA9S3HKErMZ2pvZbknbNySg==}
     peerDependencies:
       '@angular-devkit/build-angular': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
       '@angular/build': ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
@@ -1103,8 +1173,8 @@ packages:
       '@angular/build':
         optional: true
 
-  '@analogjs/vite-plugin-nitro@3.0.0-alpha.15':
-    resolution: {integrity: sha512-hQy10ukLJ/ldGkEaNAvqXq5OWSr2Ebr3h4xilQsO1+osjAAwDB8GKtL27RjglKlwcuZHBAoIXXiXkJSC6XD50g==}
+  '@analogjs/vite-plugin-nitro@3.0.0-alpha.18':
+    resolution: {integrity: sha512-bH2DyGnleUIk6tBRz+oYoHknhKZEJxprsEAiih8eXnQHPtDQbWnqkP9hmp0LRJ2NC+Eedk7hfqBrn5vknMtCuw==}
 
   '@angular-devkit/architect@0.2102.3':
     resolution: {integrity: sha512-G4wSWUbtWp1WCKw5GMRqHH8g4m5RBpIyzt8n8IX5Pm6iYe/rwCBSKL3ktEkk7AYMwjtonkRlDtAK1GScFsf1Sg==}
@@ -14915,9 +14985,8 @@ packages:
       '@nuxt/kit':
         optional: true
 
-  vite-tsconfig-paths@https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/28d26208f2e5c880b0a33ea27b0a24b64e98f0ba:
-    resolution: {tarball: https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/28d26208f2e5c880b0a33ea27b0a24b64e98f0ba}
-    version: 7.0.0-alpha.1
+  vite-tsconfig-paths@7.0.0-alpha.1:
+    resolution: {integrity: sha512-R2xUKqgU3lETsbx66sOoVj6/2hf9J9Aizavs03obMY5TxC99UbF1tM4bSfn1KZ8HxtOEaK3gdm/CEutS3yBvog==}
     engines: {node: '>=18'}
     peerDependencies:
       vite: '>=5.0.0'
@@ -15698,7 +15767,7 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@analogjs/content@3.0.0-alpha.15(6a659000af8ba4ae3a203940aef75a3c)':
+  '@analogjs/content@3.0.0-alpha.18(6a659000af8ba4ae3a203940aef75a3c)':
     dependencies:
       '@angular/common': 21.2.5(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2)
       '@angular/core': 21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1)
@@ -15728,7 +15797,7 @@ snapshots:
       '@angular-devkit/build-angular': 21.2.3(0e669fa03dcf3bc0f2262460e97290aa)
       '@angular/build': 21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2)
 
-  '@analogjs/vite-plugin-angular@3.0.0-alpha.15(@angular-devkit/build-angular@21.2.3(0e669fa03dcf3bc0f2262460e97290aa))(@angular/build@21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2))':
+  '@analogjs/vite-plugin-angular@3.0.0-alpha.18(@angular-devkit/build-angular@21.2.3(0e669fa03dcf3bc0f2262460e97290aa))(@angular/build@21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2))':
     dependencies:
       oxc-parser: 0.121.0
       oxc-resolver: 11.19.1
@@ -15738,7 +15807,7 @@ snapshots:
       '@angular-devkit/build-angular': 21.2.3(0e669fa03dcf3bc0f2262460e97290aa)
       '@angular/build': 21.2.3(2ff5cda3dc109b46b3a06057c3cebdd2)
 
-  '@analogjs/vite-plugin-nitro@3.0.0-alpha.15(chokidar@5.0.0)(dotenv@16.4.7)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.0)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))':
+  '@analogjs/vite-plugin-nitro@3.0.0-alpha.18(chokidar@5.0.0)(dotenv@16.4.7)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.0)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))':
     dependencies:
       defu: 6.1.4
       nitro: 3.0.260311-beta(chokidar@5.0.0)(dotenv@16.4.7)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.0)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
@@ -33209,7 +33278,7 @@ snapshots:
       - typescript
       - ws
 
-  vite-tsconfig-paths@https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/28d26208f2e5c880b0a33ea27b0a24b64e98f0ba(typescript@6.0.2)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3)):
+  vite-tsconfig-paths@7.0.0-alpha.1(typescript@6.0.2)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3)):
     dependencies:
       debug: 4.4.3
       oxc-resolver: 11.19.1

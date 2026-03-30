@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/storybook-angular",
-  "version": "3.0.0-alpha.15",
+  "version": "3.0.0-alpha.18",
   "description": "Storybook Integration for Angular & Vite",
   "type": "module",
   "keywords": [
@@ -24,17 +24,17 @@
   "license": "MIT",
   "exports": {
     ".": {
-      "types": "./src/index.d.ts",
-      "default": "./src/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     },
-    "./preset": "./preset.js",
+    "./preset": "./dist/preset.js",
     "./package.json": "./package.json",
     "./testing": {
-      "types": "./src/lib/testing.d.ts",
-      "default": "./src/lib/testing.js"
+      "types": "./dist/src/lib/testing.d.ts",
+      "default": "./dist/src/lib/testing.js"
     }
   },
-  "main": "src/index.js",
+  "main": "dist/src/index.js",
   "dependencies": {
     "@storybook/builder-vite": "^10.0.0"
   },
@@ -45,9 +45,9 @@
     "vite": "^6.0.0 || ^7.0.0 || ^8.0.0"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
-  "builders": "src/lib/builders.json",
+  "builders": "./dist/src/lib/builders.json",
   "ng-add": {
     "save": "devDependencies"
   },

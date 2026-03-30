@@ -5,17 +5,21 @@
   "projectType": "library",
   "tags": ["type:release"],
   "targets": {
+    "build-self": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "command": "vite build --config packages/vite-plugin-angular/vite.config.lib.ts"
+      }
+    },
     "build": {
       "executor": "nx:run-commands",
       "cache": false,
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/vite-plugin-angular"],
+      "dependsOn": ["build-self", "vite-plugin-angular-tools:build"],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
-        "commands": [
-          "vite build --config packages/vite-plugin-angular/vite.config.lib.ts",
-          "nx build vite-plugin-angular-tools",
-          "node tools/scripts/verify-package-artifacts.mts vite-plugin-angular"
-        ],
-        "parallel": false
+        "command": "node tools/scripts/verify-package-artifacts.mts vite-plugin-angular"
       }
     },
     "test": {

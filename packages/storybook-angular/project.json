@@ -7,7 +7,7 @@
     "build": {
       "executor": "nx:run-commands",
       "dependsOn": ["^build", "vite-plugin-angular:build"],
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/storybook-angular"],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
         "commands": [
           "vite build -c packages/storybook-angular/vite.config.lib.ts",

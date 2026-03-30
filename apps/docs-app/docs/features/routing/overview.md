@@ -44,7 +44,6 @@ The example route below in `src/app/pages/(home).page.ts` defines an `/` route.
 import { Component } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: ` <h2>Welcome</h2> `,
 })
 export default class HomePageComponent {}
@@ -66,7 +65,6 @@ The example route below in `src/app/pages/about.page.ts` defines an `/about` rou
 import { Component } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: `
     <h2>Hello Analog</h2>
 
@@ -109,7 +107,6 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 @Component({
-  standalone: true,
   imports: [AsyncPipe],
   template: `
     <h2>Product Details</h2>
@@ -155,7 +152,6 @@ Next, use the route parameter as an input.
 import { Component, Input } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: `
     <h2>Product Details</h2>
 
@@ -195,7 +191,6 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
-  standalone: true,
   imports: [RouterOutlet],
   template: `
     <h2>Products</h2>
@@ -212,7 +207,6 @@ The nested `src/app/pages/products/(products-list).page.ts` file contains the `/
 import { Component } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: ` <h2>Products List</h2> `,
 })
 export default class ProductsListComponent {}
@@ -227,7 +221,6 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 @Component({
-  standalone: true,
   imports: [AsyncPipe, JsonPipe],
   template: `
     <h2>Product Details</h2>
@@ -287,7 +280,6 @@ export const routeMeta: RouteMeta = {
 };
 
 @Component({
-  standalone: true,
   imports: [RouterLink],
   template: `
     <h2>Page Not Found</h2>

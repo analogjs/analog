@@ -1,14 +1,14 @@
 import path, { resolve, dirname } from 'node:path';
-import { cpSync, existsSync, mkdirSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { defineConfig, normalizePath, type Plugin } from 'vite';
 // eslint-disable-next-line @nx/enforce-module-boundaries
-import { oxcDtsPlugin } from '../../tools/build/shared-plugins.ts';
+import {
+  oxcDtsPlugin,
+  readDistPackageJson,
+} from '../../tools/build/shared-plugins.ts';
 
 const pkgDir = import.meta.dirname;
-const outDir = resolve(
-  pkgDir,
-  '../../node_modules/@analogjs/vite-plugin-angular',
-);
+const outDir = resolve(pkgDir, 'dist');
 
 function copyAssetsPlugin(assets: { from: string; to: string }[]): Plugin {
   return {
@@ -22,6 +22,11 @@ function copyAssetsPlugin(assets: { from: string; to: string }[]): Plugin {
           cpSync(src, dest, { recursive: true });
         }
       }
+      // Copy package.json with dist-prefix stripping
+      writeFileSync(
+        resolve(outDir, 'package.json'),
+        readDistPackageJson(pkgDir),
+      );
     },
   };
 }
@@ -31,7 +36,7 @@ export default defineConfig({
     oxcDtsPlugin(pkgDir),
     copyAssetsPlugin([
       { from: 'README.md', to: 'README.md' },
-      { from: 'migrations', to: 'migrations' },
+      { from: 'migrations/migration.json', to: 'migrations/migration.json' },
       { from: 'package.json', to: 'package.json' },
     ]),
   ],

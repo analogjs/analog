@@ -17,7 +17,6 @@ export const routeMeta: RouteMeta = {
 };
 
 @Component({
-  standalone: true,
   template: `
     <h2>Hello Analog</h2>
 
@@ -105,7 +104,6 @@ export const routeMeta: RouteMeta = {
 };
 
 @Component({
-  standalone: true,
   template: `
     <h2>Hello Analog</h2>
 
@@ -173,7 +171,6 @@ export const routeMeta: RouteMeta = {
 };
 
 @Component({
-  standalone: true,
   template: `<h1>JSON-LD Example</h1>`,
 })
 export default class JsonLdPageComponent {}

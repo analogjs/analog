@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vite-plugin-angular",
-  "version": "3.0.0-alpha.15",
+  "version": "3.0.0-alpha.18",
   "description": "Vite Plugin for Angular",
   "type": "module",
   "keywords": [
@@ -40,7 +40,7 @@
     "rolldown": "^1.0.0-rc.11",
     "tinyglobby": "^0.2.14"
   },
-  "builders": "./src/lib/tools/builders.json",
+  "builders": "./dist/src/lib/tools/builders.json",
   "ng-update": {
     "packageGroup": [
       "@analogjs/platform",
@@ -56,10 +56,10 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./src/index.d.ts",
-      "import": "./src/index.js",
-      "require": "./src/index.js",
-      "default": "./src/index.js"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js",
+      "require": "./dist/src/index.js",
+      "default": "./dist/src/index.js"
     }
   },
   "publishConfig": {

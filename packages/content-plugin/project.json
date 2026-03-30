@@ -8,7 +8,8 @@
     "build": {
       "executor": "nx:run-commands",
       "cache": false,
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content/plugin"],
+      "dependsOn": ["content:build-self"],
+      "outputs": ["{workspaceRoot}/packages/content/dist/plugin"],
       "options": {
         "command": "tsdown -c packages/content-plugin/tsdown.config.ts --config-loader unrun"
       }

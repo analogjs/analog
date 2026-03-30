@@ -976,6 +976,20 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           nitroOptions as Record<string, any>,
         );
 
+        // Only configure Vite 8 environments + builder on the top-level
+        // build invocation. When buildApp's builder.build() calls re-enter
+        // the config hook, returning environments/builder again would create
+        // recursive buildApp invocations — each nesting another client build
+        // that re-triggers config, producing an infinite loop of
+        // "building client environment... ✓ 1 modules transformed".
+        //
+        // environmentBuild — already inside a buildApp call (recursion guard)
+        // ssrBuild         — legacy SSR-only sub-build
+        // isServe          — dev server / Vitest test runner (command: 'serve')
+        if (environmentBuild || ssrBuild || isServe) {
+          return {};
+        }
+
         return {
           environments: {
             client: {

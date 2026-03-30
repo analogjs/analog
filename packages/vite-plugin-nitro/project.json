@@ -8,7 +8,7 @@
     "build": {
       "executor": "nx:run-commands",
       "cache": false,
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/vite-plugin-nitro"],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
         "commands": [
           "vite build -c packages/vite-plugin-nitro/vite.config.lib.ts",

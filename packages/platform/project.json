@@ -6,19 +6,26 @@
   "tags": ["type:release"],
   "implicitDependencies": ["vite-plugin-angular", "vite-plugin-nitro"],
   "targets": {
-    "build": {
+    "build-self": {
       "executor": "nx:run-commands",
       "cache": false,
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/platform"],
       "dependsOn": ["vite-plugin-angular:build", "vite-plugin-nitro:build"],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
         "commands": [
           "vite build -c packages/platform/vite.config.lib.ts",
-          "node tools/scripts/debug-nx-project-graph.mts nx-plugin",
-          "nx build nx-plugin",
-          "node tools/scripts/verify-package-artifacts.mts platform"
+          "node tools/scripts/debug-nx-project-graph.mts nx-plugin"
         ],
         "parallel": false
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["build-self", "nx-plugin:build"],
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "command": "node tools/scripts/verify-package-artifacts.mts platform"
       }
     },
     "lint": {
