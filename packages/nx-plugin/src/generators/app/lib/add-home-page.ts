@@ -20,7 +20,7 @@ export function addHomePage(
     templateOptions,
   );
 
-  let pageDirectory = options.addTailwind ? 'tailwind' : 'css';
+  const pageDirectory = options.addTailwind ? 'tailwind' : 'css';
 
   generateFiles(
     tree,

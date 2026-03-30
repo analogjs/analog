@@ -1,7 +1,7 @@
 import { setCookie } from 'h3';
-import { PageServerLoad } from '@analogjs/router';
+import type { PageServerLoad } from '@analogjs/router';
 
-import { Product } from '../products';
+import type { Product } from '../products';
 
 export const load = async ({ fetch, event }: PageServerLoad) => {
   setCookie(event, 'test', 'test');

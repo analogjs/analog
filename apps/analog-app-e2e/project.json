@@ -1,0 +1,22 @@
+{
+  "name": "analog-app-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/analog-app-e2e/tests",
+  "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["analog-app"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/analog-app-e2e",
+        "command": "playwright test"
+      },
+      "dependsOn": ["build"]
+    }
+  }
+}

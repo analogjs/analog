@@ -237,7 +237,6 @@ pnpm install ionicons
 El Ionic Framework [no soporta la nueva Hidratación del Cliente de Angular](https://github.com/ionic-team/ionic-framework/issues/28625#issuecomment-1843919548), ya que Angular [no soporta SSR con web components](https://github.com/angular/angular/issues/52275), y cuando sean soportados, se deberá trabajar en los componentes de Stencil para habilitarlo. Por lo tanto, actualmente hay tres opciones para manejar esto:
 
 1. Eliminar `provideClientHydration()` de los proveedores en `app.config.ts`.
-
    - Esto elimina el nuevo mecanismo de hidratación del cliente de Angular y vuelve al anterior, lo que causará un parpadeo al re-renderizar el DOM desde el cliente.
 
    ```ts
@@ -259,7 +258,6 @@ El Ionic Framework [no soporta la nueva Hidratación del Cliente de Angular](htt
    ```
 
 2. Agregar el atributo `ngSkipHydration` a la etiqueta `ion-app`.
-
    - Esto deshabilitará el mecanismo de hidratación del cliente para el elemento `ion-app` y sus hijos, pero continuará usando la hidratación del cliente en otros elementos. Esto también causará un parpadeo en la página para los componentes Ionic. No es muy útil para otros elementos/componentes ya que, con aplicaciones Ionic, todos tus componentes Ionic existen dentro de la etiqueta `ion-app`.
 
      ```ts
@@ -280,7 +278,6 @@ El Ionic Framework [no soporta la nueva Hidratación del Cliente de Angular](htt
      ```
 
 3. Deshabilitar SSR completamente
-
    - Deshabilita SSR en el archivo `vite.config.ts`. Esto **eliminará el parpadeo** pero perderás todos los beneficios de tener SSR en tu aplicación.
 
      ```ts

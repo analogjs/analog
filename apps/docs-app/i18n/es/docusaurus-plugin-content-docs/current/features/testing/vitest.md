@@ -9,13 +9,13 @@ import TabItem from '@theme/TabItem';
 
 Vitest puede ser instalado y configurado usando un schematic/generator para Angular CLI o espacios de trabajo Nx.
 
-Primero, instala el paquete `@analogjs/platform`:
+Primero, instala el paquete `@analogjs/vitest-angular`:
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/platform --save-dev
+npm install @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -23,7 +23,7 @@ npm install @analogjs/platform --save-dev
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/platform --dev
+yarn add @analogjs/vitest-angular --dev
 ```
 
   </TabItem>
@@ -31,7 +31,7 @@ yarn add @analogjs/platform --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/platform --save-dev
+pnpm install -w @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -40,8 +40,25 @@ pnpm install -w @analogjs/platform --save-dev
 A continuación, ejecuta el schematic para configurar la configuración de Vite, archivos de configuración de pruebas y actualizar la configuración de pruebas.
 
 ```shell
-ng g @analogjs/platform:setup-vitest --project [your-project-name]
+ng g @analogjs/vitest-angular:setup-vitest --project [your-project-name]
 ```
+
+### Opciones del Schematic
+
+| Opción        | Tipo    | Predeterminado | Descripción                                                               |
+| ------------- | ------- | -------------- | ------------------------------------------------------------------------- |
+| `project`     | string  | -              | El nombre del proyecto a configurar (requerido)                           |
+| `browserMode` | boolean | `false`        | Configurar Vitest para ejecutar pruebas en un navegador usando Playwright |
+
+Para habilitar el modo navegador durante la configuración:
+
+```shell
+ng g @analogjs/vitest-angular:setup --project [nombre-de-tu-proyecto] --browserMode
+```
+
+Esto instala automáticamente las dependencias de Playwright y configura Vitest para pruebas en navegador. Consulta [Configuración para Ejecutar las Pruebas en el Navegador](#setup-for-running-tests-in-the-browser) para más detalles.
+
+Si usas el modo navegador, ejecuta `npx playwright install` después del schematic para asegurar que playwright está instalado y configurado.
 
 Luego, ve a [ejecutando pruebas](#running-tests)
 
@@ -133,7 +150,7 @@ La función `setupTestBed()` acepta un objecto de configuración opcional con la
 
 - `zoneless` (boolean): Si se debe utilizar la detección de cambios zoneless (predeterminado: `true`)
 - `providers` (`Type<any>[]`): Proveedores adicionales para incluir en el entorno de prueba (predeterminado: `[]`)
-- `browserMode` (boolean): Habilita la vista previa de pruebas en el modo de navegador de Vitest, manteniendo el componente renderizado, lo que te permite inspeccionar su estado final (predeterminado: `false`)
+- `teardown.destroyAfterEach` (boolean): Si se debe destruir el entorno de prueba después de cada prueba. Establece a `false` para mantener el componente renderizado, permitiéndote inspeccionar su estado final. (predeterminado: `true`)
 
 **Ejemplo con opciones:**
 
@@ -141,7 +158,7 @@ La función `setupTestBed()` acepta un objecto de configuración opcional con la
 setupTestBed({
   zoneless: true,
   providers: [],
-  browserMode: false,
+  teardown: { destroyAfterEach: false },
 });
 ```
 
@@ -252,7 +269,7 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-Cuando se corren las pruebas en el navegador, probablemente quieras activar en `src/test-setup.ts` el `browserMode`:
+Cuando se ejecutan las pruebas con el modo de navegador con interfaz gráfica, probablemente quieras actualizar tu `src/test-setup.ts` para mantener el componente renderizado:
 
 ```ts
 import '@angular/compiler';
@@ -260,7 +277,7 @@ import '@analogjs/vitest-angular/setup-snapshots';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 setupTestBed({
-  browserMode: true, // Enables visual test preview
+  teardown: { destroyAfterEach: false }, // Enables visual test preview
 });
 ```
 
@@ -297,6 +314,10 @@ pnpm test
 </Tabs>
 
 > El comando `npx vitest` también puede ser usado directamente.
+
+<strong>¿Quieres aprender más? Consulta el [curso en video](https://courses.marmicode.io/courses/pragmatic-angular-testing?ref=ec72c7) de Younes Jaaidi sobre testing en Angular.</strong>
+
+[![Curso de testing en Angular](/img/pragmatic-angular-testing-banner-2.jpg)](https://courses.marmicode.io/courses/pragmatic-angular-testing?ref=ec72c7)
 
 ## Pruebas de Snapshots
 

@@ -5,7 +5,7 @@ import { injectLoad, FormAction } from '@analogjs/router';
 import type { load } from './search.server';
 
 @Component({
-  selector: 'app-search-page',
+  selector: 'analogjs-search-page',
   imports: [FormAction],
   template: `
     <h3>Search</h3>

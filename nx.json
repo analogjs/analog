@@ -1,35 +1,19 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "workspaceLayout": {
-    "libsDir": "packages"
-  },
-  "cli": {
-    "packageManager": "pnpm"
-  },
+  "workspaceLayout": { "libsDir": "packages" },
+  "cli": { "packageManager": "pnpm" },
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
     },
-    "test": {
-      "dependsOn": ["^build"],
-      "cache": true
-    },
-    "e2e": {
-      "dependsOn": ["^build"],
-      "cache": true
-    },
-    "serve": {
-      "dependsOn": ["^build"]
-    },
-    "build-package": {
-      "cache": false
-    },
-    "@nx/js:tsc": {
-      "cache": false
-    },
+    "test": { "dependsOn": ["^build"], "cache": true },
+    "e2e": { "dependsOn": ["^build"], "cache": true },
+    "serve": { "dependsOn": ["^build"] },
+    "build-package": { "cache": false },
+    "@nx/js:tsc": { "cache": false },
     "@nx/eslint:lint": {
-      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
+      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
       "cache": true
     },
     "@angular-devkit/build-angular:application": {
@@ -37,10 +21,7 @@
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
     },
-    "@nx/vitest:test": {
-      "cache": true,
-      "inputs": ["default", "^production"]
-    }
+    "@nx/vitest:test": { "cache": true, "inputs": ["default", "^production"] }
   },
   "generators": {
     "@nx/angular:application": {
@@ -53,9 +34,7 @@
       "linter": "eslint",
       "unitTestRunner": "vitest-analog"
     },
-    "@nx/angular:component": {
-      "style": "css"
-    }
+    "@nx/angular:component": { "style": "css" }
   },
   "defaultProject": "analog-app",
   "namedInputs": {
@@ -63,13 +42,13 @@
     "sharedGlobals": [],
     "production": [
       "default",
-      "!{projectRoot}/.eslintrc.json",
       "!{projectRoot}/src/test-setup.[jt]s",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
       "!{projectRoot}/tsconfig.spec.json",
       "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)",
       "!{projectRoot}/.storybook/**/*",
-      "!{projectRoot}/tsconfig.storybook.json"
+      "!{projectRoot}/tsconfig.storybook.json",
+      "!{projectRoot}/eslint.config.mjs"
     ],
     "projectSpecificFiles": []
   },
@@ -77,16 +56,9 @@
   "defaultBase": "beta",
   "plugins": [
     {
-      "plugin": "@nx/playwright/plugin",
-      "options": {
-        "targetName": "e2e"
-      }
-    },
-    {
       "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "eslint:lint"
-      }
+      "options": { "targetName": "eslint:lint" }
     }
-  ]
+  ],
+  "analytics": false
 }

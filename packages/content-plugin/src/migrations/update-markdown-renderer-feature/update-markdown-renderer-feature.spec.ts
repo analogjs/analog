@@ -1,14 +1,14 @@
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing';
 import { addDependenciesToPackageJson, Tree } from '@nx/devkit';
 import { nxVersion } from '@nx/vite';
+import { describe, expect, it } from 'vitest';
 
 import update from './update-markdown-renderer-feature';
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import appGenerator from '../../../../nx-plugin/src/generators/app/generator';
 
 describe.skip('update-markdown-renderer-feature migration', () => {
   let tree: Tree;
-
-  beforeEach(() => {});
 
   async function setup() {
     tree = createTreeWithEmptyWorkspace({ layout: 'apps-libs' });

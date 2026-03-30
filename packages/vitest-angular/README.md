@@ -101,6 +101,7 @@ Use the following setup:
 ```ts
 import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-snapshots';
+import '@analogjs/vitest-angular/setup-serializers';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 setupTestBed();
@@ -126,7 +127,7 @@ The `setupTestBed()` function accepts an optional configuration object with the 
 
 - `zoneless` (boolean): Whether to use zoneless change detection (default: `true`)
 - `providers` (`Type<any>[]`): Additional providers to include in the test environment (default: `[]`)
-- `browserMode` (boolean): Enables visual test preview in Vitest browser mode by keeping the component rendered, allowing you to inspect its final state (default: `false`)
+- `teardown.destroyAfterEach` (boolean): Whether to destroy the test environment after each test. Set to `false` to keep the component rendered, allowing you to inspect its final state. (default: `true`)
 
 **Example with options:**
 
@@ -134,7 +135,7 @@ The `setupTestBed()` function accepts an optional configuration object with the 
 setupTestBed({
   zoneless: true,
   providers: [],
-  browserMode: false,
+  teardown: { destroyAfterEach: false },
 });
 ```
 
@@ -194,6 +195,12 @@ pnpm test
 ## Snapshot Testing
 
 For snapshot testing you can use `toMatchSnapshot` from `expect` API.
+The provided snapshot setup also removes Angular-specific `_ng*` attributes and `<!--container-->` comments from DOM snapshots, which keeps diffs focused on the actual template output.
+
+The import of `setup-snapshots` and `setup-serializers` are complementary:
+
+- Use `setup-snapshots` to serialize Angular fixtures and component refs so Vitest snapshots print component markup instead of Angular testing internals.
+- Use `setup-serializers` to clean DOM snapshots by removing Angular runtime noise such as `_ngcontent-*`, `_nghost-*`, `ng-reflect-*`, generated ids and classes, and removes comments from DOM snapshots (e.g. `<!--container-->`).
 
 Below is a small example of how to write a snapshot test:
 

@@ -5,15 +5,15 @@ import { HeaderComponent } from './header.component';
 import type { User } from './user';
 
 @Component({
-  selector: 'storybook-page',
+  selector: 'analogjs-storybook-page',
   imports: [CommonModule, HeaderComponent],
   template: `<article>
-    <storybook-header
+    <analogjs-storybook-header
       [user]="user"
-      (onLogout)="doLogout()"
-      (onLogin)="doLogin()"
-      (onCreateAccount)="doCreateAccount()"
-    ></storybook-header>
+      (logout)="doLogout()"
+      (login)="doLogin()"
+      (createAccount)="doCreateAccount()"
+    ></analogjs-storybook-header>
     <section class="storybook-page">
       <h2>Pages in Storybook</h2>
       <p>

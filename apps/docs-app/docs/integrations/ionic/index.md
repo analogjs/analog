@@ -237,7 +237,6 @@ export default defineConfig(({ mode }) => {
 Ionic Framework [doesn't support Angular's new Client Hydration](https://github.com/ionic-team/ionic-framework/issues/28625#issuecomment-1843919548), as Angular [doesn't support SSR with web components](https://github.com/angular/angular/issues/52275), and when they are supported, work has to be done on the Stencil components to enable it. So right now there are three options to handle this:
 
 1. Remove `provideClientHydration()` from `app.config.ts` providers.
-
    - This removes the new client hydration mechanism from Angular and reverts to the previous one, which will cause a flicker when re-rendering the DOM from the client.
 
    ```ts
@@ -259,7 +258,6 @@ Ionic Framework [doesn't support Angular's new Client Hydration](https://github.
    ```
 
 2. Add `ngSkipHydration` attribute to the `ion-app` tag.
-
    - This will disable the client hydration mechanism for the `ion-app` element and children, but will continue to use client hydration on other elements. This will also cause a flicker in the page for the Ionic components. This is not that helpful for other elements/components as, with Ionic apps, all your Ionic components exist inside the `ion-app` tag.
 
      ```ts
@@ -280,7 +278,6 @@ Ionic Framework [doesn't support Angular's new Client Hydration](https://github.
      ```
 
 3. Disable SSR completely
-
    - Disable SSR in the `vite.config.ts` file. This **will eliminate the flickering** but you will lose all the benefits of having SSR in your app.
 
      ```ts

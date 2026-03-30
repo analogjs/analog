@@ -123,7 +123,7 @@ function toRawPath(filename: string): string {
     filename
       .replace(
         // convert to relative path and remove file extension
-        /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)[\\/]))|(\.page\.(js|ts|analog|ag)$)|(\.(ts|md|analog|ag)$)/g,
+        /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts|analog|ag)$)|(\.(ts|md|analog|ag)$)/g,
         '',
       )
       // [[...slug]] => placeholder (named empty) which is stripped by toSegment

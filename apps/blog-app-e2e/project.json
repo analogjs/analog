@@ -1,0 +1,22 @@
+{
+  "name": "blog-app-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/blog-app-e2e/tests",
+  "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["blog-app"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/blog-app-e2e",
+        "command": "playwright test"
+      },
+      "dependsOn": ["build"]
+    }
+  }
+}

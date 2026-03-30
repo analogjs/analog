@@ -2,10 +2,11 @@
 
 import { inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 
 import { ContentFile } from './content-file';
+import { ContentRenderer } from './content-renderer';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
 import { parseRawContentFile } from './parse-raw-content-file';
 import { waitFor } from './utils/zone-wait-for';
@@ -19,6 +20,7 @@ function getContentFile<
   slug: string,
   fallback: string,
   renderTaskService: RenderTaskService,
+  contentRenderer: ContentRenderer,
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   // Normalize file keys so both "/src/content/..." and "/<project>/src/content/..." resolve.
   const normalizedFiles: Record<string, () => Promise<string>> = {};
@@ -47,6 +49,7 @@ function getContentFile<
       attributes: {},
       slug: '',
       content: fallback,
+      toc: [],
     });
   }
 
@@ -70,24 +73,27 @@ function getContentFile<
       }
     },
   ).pipe(
-    map((contentFile) => {
+    switchMap((contentFile) => {
       if (typeof contentFile === 'string') {
         const { content, attributes } =
           parseRawContentFile<Attributes>(contentFile);
-
-        return {
-          filename: resolvedBase,
-          slug,
-          attributes,
-          content,
-        };
+        return from(contentRenderer.render(content)).pipe(
+          map((rendered) => ({
+            filename: resolvedBase,
+            slug,
+            attributes,
+            content,
+            toc: rendered.toc ?? [],
+          })),
+        );
       }
-      return {
+      return of({
         filename: resolvedBase,
         slug,
         attributes: contentFile.metadata,
         content: contentFile.default,
-      };
+        toc: [],
+      });
     }),
   );
 }
@@ -113,6 +119,7 @@ export function injectContent<
   fallback = 'No Content Found',
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   const contentFiles = inject(CONTENT_FILES_TOKEN);
+  const contentRenderer = inject(ContentRenderer);
   const renderTaskService = inject(RenderTaskService);
   const task = renderTaskService.addRenderTask();
 
@@ -130,6 +137,7 @@ export function injectContent<
             slug,
             fallback,
             renderTaskService,
+            contentRenderer,
           );
         }
         return of({
@@ -137,6 +145,7 @@ export function injectContent<
           slug: '',
           attributes: {},
           content: fallback,
+          toc: [],
         });
       }),
       tap(() => renderTaskService.clearRenderTask(task)),
@@ -148,6 +157,7 @@ export function injectContent<
       param.customFilename,
       fallback,
       renderTaskService,
+      contentRenderer,
     ).pipe(tap(() => renderTaskService.clearRenderTask(task)));
   }
 }

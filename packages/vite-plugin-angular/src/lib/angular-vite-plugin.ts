@@ -166,6 +166,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     includeCache = [];
   }
   function invalidateTsconfigCaches() {
+    // `readConfiguration` caches the root file list, so hot-added pages can be
+    // missing from Angular's compilation program until we clear this state.
     tsconfigOptionsCache.clear();
     cachedHost = undefined;
     cachedHostKey = undefined;
@@ -200,6 +202,14 @@ export function angular(options?: PluginOptions): Plugin[] {
     filename: string,
   ) => Promise<vite.PreprocessCSSResult>;
   let pendingCompilation: Promise<void> | null;
+  let compilationLock = Promise.resolve();
+  // Persistent Angular Compilation API instance. Kept alive across rebuilds so
+  // Angular can diff previous state and emit `templateUpdates` for HMR.
+  // Previously the compilation was recreated on every pass, which meant Angular
+  // never had prior state and could never produce HMR payloads.
+  let angularCompilation:
+    | Awaited<ReturnType<typeof createAngularCompilationType>>
+    | undefined;
 
   function angularPlugin(): Plugin {
     let isProd = false;
@@ -208,25 +218,19 @@ export function angular(options?: PluginOptions): Plugin[] {
       pluginOptions.liveReload = false;
     }
 
+    // liveReload and fileReplacements guards were previously here and forced
+    // both options off when useAngularCompilationAPI was enabled. Those guards
+    // have been removed because:
+    //  - liveReload: the persistent compilation instance (above) now gives
+    //    Angular the prior state it needs to emit `templateUpdates` for HMR
+    //  - fileReplacements: Angular's AngularHostOptions already accepts a
+    //    `fileReplacements` record — we now convert and pass it through in
+    //    `performAngularCompilation` via `toAngularCompilationFileReplacements`
     if (pluginOptions.useAngularCompilationAPI) {
       if (angularFullVersion < 200100) {
         pluginOptions.useAngularCompilationAPI = false;
         console.warn(
           '[@analogjs/vite-plugin-angular]: The Angular Compilation API is only available with Angular v20.1 and later',
-        );
-      }
-
-      if (pluginOptions.liveReload) {
-        pluginOptions.liveReload = false;
-        console.warn(
-          '[@analogjs-vite-plugin-angular]: Live reload is currently not compatible with the Angular Compilation API option',
-        );
-      }
-
-      if (pluginOptions.fileReplacements.length) {
-        pluginOptions.fileReplacements = [];
-        console.warn(
-          '[@analogjs-vite-plugin-angular]: File replacements are currently not compatible with the Angular Compilation API option',
         );
       }
     }
@@ -336,14 +340,16 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configureServer(server) {
         viteServer = server;
-        server.watcher.on('add', async () => {
-          invalidateFsCaches();
-          await performCompilation(resolvedConfig);
-        });
-        server.watcher.on('unlink', async () => {
-          invalidateFsCaches();
-          await performCompilation(resolvedConfig);
-        });
+        // Add/unlink changes the TypeScript program shape, not just file
+        // contents, so we need to invalidate both include discovery and the
+        // cached tsconfig root names before recompiling.
+        const invalidateCompilationOnFsChange = createFsWatcherCacheInvalidator(
+          invalidateFsCaches,
+          invalidateTsconfigCaches,
+          () => performCompilation(resolvedConfig),
+        );
+        server.watcher.on('add', invalidateCompilationOnFsChange);
+        server.watcher.on('unlink', invalidateCompilationOnFsChange);
         server.watcher.on('change', (file) => {
           if (file.includes('tsconfig')) {
             invalidateTsconfigCaches();
@@ -378,9 +384,8 @@ export function angular(options?: PluginOptions): Plugin[] {
             result?.hmrEligible &&
             classNames.get(fileId)
           ) {
-            const relativeFileId = `${relative(
-              process.cwd(),
-              fileId,
+            const relativeFileId = `${normalizePath(
+              relative(process.cwd(), fileId),
             )}@${classNames.get(fileId)}`;
 
             sendHMRComponentUpdate(ctx.server, relativeFileId);
@@ -475,9 +480,8 @@ export function angular(options?: PluginOptions): Plugin[] {
             pendingCompilation = null;
 
             updates.forEach((updateId) => {
-              const impRelativeFileId = `${relative(
-                process.cwd(),
-                updateId,
+              const impRelativeFileId = `${normalizePath(
+                relative(process.cwd(), updateId),
               )}@${classNames.get(updateId)}`;
 
               sendHMRComponentUpdate(ctx.server, impRelativeFileId);
@@ -689,6 +693,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             writeFileSync(declarationPath, data, 'utf-8');
           },
         );
+        // Tear down the persistent compilation instance at end of build so it
+        // does not leak memory across unrelated Vite invocations.
+        angularCompilation?.close?.();
+        angularCompilation = undefined;
       },
     };
   }
@@ -790,15 +798,54 @@ export function angular(options?: PluginOptions): Plugin[] {
     );
   }
 
-  async function performAngularCompilation(config: ResolvedConfig) {
-    const compilation = await (
+  /**
+   * Perform compilation using Angular's private Compilation API.
+   *
+   * Key differences from the standard `performCompilation` path:
+   *  1. The compilation instance is reused across rebuilds (nullish-coalescing
+   *     assignment below) so Angular retains prior state and can diff it to
+   *     produce `templateUpdates` for HMR.
+   *  2. `ids` (modified files) are forwarded to both the source-file cache and
+   *     `angularCompilation.update()` so that incremental re-analysis is
+   *     scoped to what actually changed.
+   *  3. `fileReplacements` are converted and passed into Angular's host via
+   *     `toAngularCompilationFileReplacements`.
+   *  4. `templateUpdates` from the compilation result are mapped back to
+   *     file-level HMR metadata (`hmrUpdateCode`, `hmrEligible`, `classNames`).
+   */
+  async function performAngularCompilation(
+    config: ResolvedConfig,
+    ids?: string[],
+  ) {
+    // Reuse the existing instance so Angular can diff against prior state.
+    angularCompilation ??= await (
       createAngularCompilation as typeof createAngularCompilationType
     )(!!pluginOptions.jit, false);
+    const modifiedFiles = ids?.length
+      ? new Set(ids.map((file) => normalizePath(file)))
+      : undefined;
+    if (modifiedFiles?.size) {
+      sourceFileCache.invalidate(modifiedFiles);
+    }
+    // Notify Angular of modified files before re-initialization so it can
+    // scope its incremental analysis.
+    if (modifiedFiles?.size && angularCompilation.update) {
+      await angularCompilation.update(modifiedFiles);
+    }
 
     const resolvedTsConfigPath = resolveTsConfigPath();
-    const compilationResult = await compilation.initialize(
+    const compilationResult = await angularCompilation.initialize(
       resolvedTsConfigPath,
       {
+        // Convert Analog's browser-style `{ replace, with }` entries into the
+        // `Record<string, string>` shape that Angular's AngularHostOptions
+        // expects. SSR-only replacements (`{ replace, ssr }`) are intentionally
+        // excluded — they stay on the Vite runtime side.
+        fileReplacements: toAngularCompilationFileReplacements(
+          pluginOptions.fileReplacements,
+          pluginOptions.workspaceRoot,
+        ),
+        modifiedFiles,
         async transformStylesheet(
           data,
           containingFile,
@@ -874,7 +921,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       externalComponentStyles?.set(`${value}.css`, key);
     });
 
-    const diagnostics = await compilation.diagnoseFiles(
+    const diagnostics = await angularCompilation.diagnoseFiles(
       pluginOptions.disableTypeChecking
         ? DiagnosticModes.All & ~DiagnosticModes.Semantic
         : DiagnosticModes.All,
@@ -882,21 +929,59 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     const errors = diagnostics.errors?.length ? diagnostics.errors : [];
     const warnings = diagnostics.warnings?.length ? diagnostics.warnings : [];
+    // Angular encodes template updates as `encodedFilePath@ClassName` keys.
+    // `mapTemplateUpdatesToFiles` decodes them back to absolute file paths so
+    // we can attach HMR metadata to the correct `EmitFileResult` below.
+    const templateUpdates = mapTemplateUpdatesToFiles(
+      compilationResult.templateUpdates,
+    );
 
-    for (const file of await compilation.emitAffectedFiles()) {
-      outputFiles.set(file.filename, {
+    for (const file of await angularCompilation.emitAffectedFiles()) {
+      const normalizedFilename = normalizePath(file.filename);
+      const templateUpdate = templateUpdates.get(normalizedFilename);
+
+      if (templateUpdate) {
+        classNames.set(normalizedFilename, templateUpdate.className);
+      }
+
+      // Surface Angular's HMR payloads into Analog's existing live-reload
+      // flow via the `hmrUpdateCode` / `hmrEligible` fields.
+      outputFiles.set(normalizedFilename, {
         content: file.contents,
         dependencies: [],
-        errors: errors.map((error) => error.text || ''),
-        warnings: warnings.map((warning) => warning.text || ''),
+        errors: errors.map((error: { text?: string }) => error.text || ''),
+        warnings: warnings.map(
+          (warning: { text?: string }) => warning.text || '',
+        ),
+        hmrUpdateCode: templateUpdate?.code,
+        hmrEligible: !!templateUpdate?.code,
       });
     }
-    compilation.close?.();
   }
 
   async function performCompilation(config: ResolvedConfig, ids?: string[]) {
+    let resolve: (() => unknown) | undefined;
+    const previousLock = compilationLock;
+    compilationLock = new Promise<void>((r) => {
+      resolve = r;
+    });
+    try {
+      await previousLock;
+      await _doPerformCompilation(config, ids);
+    } finally {
+      resolve!();
+    }
+  }
+
+  /**
+   * This method share mutable state and performs the actual compilation work.
+   * It should not be called concurrently. Use `performCompilation` which wraps this method in a lock to ensure only one compilation runs at a time.
+   */
+  async function _doPerformCompilation(config: ResolvedConfig, ids?: string[]) {
+    // Forward `ids` (modified files) so the Compilation API path can do
+    // incremental re-analysis instead of a full recompile on every change.
     if (pluginOptions.useAngularCompilationAPI) {
-      await performAngularCompilation(config);
+      await performAngularCompilation(config, ids);
       return;
     }
 
@@ -1216,6 +1301,86 @@ export function angular(options?: PluginOptions): Plugin[] {
       outputFile = writeOutputFile;
     }
   }
+}
+
+export function createFsWatcherCacheInvalidator(
+  invalidateFsCaches: () => void,
+  invalidateTsconfigCaches: () => void,
+  performCompilation: () => Promise<void>,
+) {
+  return async () => {
+    invalidateFsCaches();
+    invalidateTsconfigCaches();
+    await performCompilation();
+  };
+}
+
+/**
+ * Convert Analog/Angular CLI-style file replacements into the flat record
+ * expected by `AngularHostOptions.fileReplacements`.
+ *
+ * Only browser replacements (`{ replace, with }`) are converted. SSR-only
+ * replacements (`{ replace, ssr }`) are left for the Vite runtime plugin to
+ * handle — they should not be baked into the Angular compilation host because
+ * that would apply them to both browser and server builds.
+ *
+ * Relative paths are resolved against `workspaceRoot` so that the host
+ * receives the same absolute paths it would get from the Angular CLI.
+ */
+export function toAngularCompilationFileReplacements(
+  replacements: FileReplacement[],
+  workspaceRoot: string,
+): Record<string, string> | undefined {
+  const mappedReplacements = replacements.flatMap((replacement) => {
+    // Skip SSR-only entries — they use `ssr` instead of `with`.
+    if (!('with' in replacement)) {
+      return [];
+    }
+
+    return [
+      [
+        isAbsolute(replacement.replace)
+          ? replacement.replace
+          : resolve(workspaceRoot, replacement.replace),
+        isAbsolute(replacement.with)
+          ? replacement.with
+          : resolve(workspaceRoot, replacement.with),
+      ] as const,
+    ];
+  });
+
+  return mappedReplacements.length
+    ? Object.fromEntries(mappedReplacements)
+    : undefined;
+}
+
+/**
+ * Map Angular's `templateUpdates` (keyed by `encodedFilePath@ClassName`)
+ * back to absolute file paths with their associated HMR code and component
+ * class name.
+ *
+ * Angular's private Compilation API emits template update keys in the form
+ * `encodeURIComponent(relativePath + '@' + className)`. We decode and resolve
+ * them so the caller can look up updates by the same normalized absolute path
+ * used elsewhere in the plugin (`outputFiles`, `classNames`, etc.).
+ */
+export function mapTemplateUpdatesToFiles(
+  templateUpdates: ReadonlyMap<string, string> | undefined,
+) {
+  const updatesByFile = new Map<string, { className: string; code: string }>();
+
+  templateUpdates?.forEach((code, encodedUpdateId) => {
+    const [file, className = ''] =
+      decodeURIComponent(encodedUpdateId).split('@');
+    const resolvedFile = normalizePath(resolve(process.cwd(), file));
+
+    updatesByFile.set(resolvedFile, {
+      className,
+      code,
+    });
+  });
+
+  return updatesByFile;
 }
 
 function sendHMRComponentUpdate(server: ViteDevServer, id: string) {
