@@ -99,15 +99,16 @@ This replaces the `browserMode` option, which is now deprecated and will be remo
 
 ### Astro v6 Compatibility
 
-Analog 2.4 adds full support for Astro v6 via the new Vite Environment API. No configuration changes are required — just update your dependencies:
+Analog 2.4 adds full support for Astro v6 via the new Vite Environment API. Use the official Astro upgrade tool to update Astro and its integrations together:
 
-```json
-{
-  "dependencies": {
-    "astro": "^6.0.0",
-    "@analogjs/astro-angular": "^2.4.0"
-  }
-}
+```bash
+npx @astrojs/upgrade
+```
+
+Then update `@analogjs/astro-angular` to the latest version:
+
+```bash
+ng update @analogjs/platform@latest
 ```
 
 ### `strictStylePlacement` Option
