@@ -55,6 +55,57 @@ describe('angularAstroMiddleware', () => {
     `);
   });
 
+  it('should preserve style order of adjacent islands', async () => {
+    const response = new Response(
+      `
+      <!DOCTYPE html>
+      <html>
+        <head>
+        </head>
+        <body>
+          <astro-island>
+            <style ng-app-id="ng">style-1</style>
+          </astro-island>
+          <astro-island>
+            <style ng-app-id="ng">style-2</style>
+            <style ng-app-id="ng">style-3</style>
+          </astro-island>
+        </body>
+      </html>
+    `,
+      {
+        headers: {
+          'Content-Type': 'text/html',
+        },
+      },
+    );
+
+    const transformed = await onRequest(
+      null! as APIContext,
+      vi.fn().mockResolvedValue(response),
+    );
+
+    expect(transformed).toBeInstanceOf(Response);
+
+    const body = await (transformed as Response).text();
+
+    expect(body).toMatchInlineSnapshot(`
+      "<!doctype html><html><head>
+              <style ng-app-id="ng">style-1</style><style ng-app-id="ng">style-2</style><style ng-app-id="ng">style-3</style></head>
+              <body>
+                <astro-island>
+                  
+                </astro-island>
+                <astro-island>
+                  
+                  
+                </astro-island>
+              
+            
+          </body></html>"
+    `);
+  });
+
   it('should create a head if it is missing', async () => {
     const response = new Response(
       `
