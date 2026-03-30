@@ -3,7 +3,6 @@ import {
   readFileSync,
   writeFileSync,
   mkdirSync,
-  copyFileSync,
   existsSync,
   readdirSync,
   statSync,
@@ -102,12 +101,54 @@ export function oxcDtsPlugin(pkgDir: string): Plugin {
   };
 }
 
+/**
+ * Recursively strips `dist/` prefixes from path-like string values in a
+ * package.json object, so the written dist/package.json has paths relative to
+ * the dist directory itself (for example, `./src/index.js` instead of either
+ * `./dist/src/index.js` or `dist/src/index.js`).
+ */
+function stripDistPrefixes(obj: unknown): unknown {
+  if (typeof obj === 'string') {
+    if (obj.startsWith('./dist/')) {
+      return './' + obj.slice('./dist/'.length);
+    }
+
+    if (obj.startsWith('dist/')) {
+      return './' + obj.slice('dist/'.length);
+    }
+
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(stripDistPrefixes);
+  }
+  if (obj && typeof obj === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      result[key] = stripDistPrefixes(value);
+    }
+    return result;
+  }
+  return obj;
+}
+
+/**
+ * Read a package.json from `pkgDir`, strip `dist/` prefixes from path-like
+ * values, and return the transformed JSON string. Used when copying
+ * package.json into the `dist/` build output so that export and entry paths are
+ * correct relative to the dist directory.
+ */
+export function readDistPackageJson(pkgDir: string): string {
+  const pkg = JSON.parse(readFileSync(join(pkgDir, 'package.json'), 'utf-8'));
+  return JSON.stringify(stripDistPrefixes(pkg), null, 2) + '\n';
+}
+
 export function copyPackageJsonPlugin(pkgDir: string): Plugin {
   return {
     name: 'copy-package-json',
     async writeBundle(options) {
       const outDir = options.dir!;
-      copyFileSync(join(pkgDir, 'package.json'), join(outDir, 'package.json'));
+      writeFileSync(join(outDir, 'package.json'), readDistPackageJson(pkgDir));
     },
   };
 }

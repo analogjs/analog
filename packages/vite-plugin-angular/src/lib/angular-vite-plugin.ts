@@ -42,6 +42,7 @@ import {
   augmentProgramWithVersioning,
   mergeTransformers,
 } from './host.js';
+import type { StylePreprocessor } from './style-preprocessor.js';
 
 import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {
@@ -100,6 +101,82 @@ export interface PluginOptions {
   experimental?: {
     useAngularCompilationAPI?: boolean;
   };
+  /**
+   * Optional preprocessor that transforms component CSS before it enters Vite's
+   * preprocessCSS pipeline. Runs on every component stylesheet (both external
+   * `.component.css` files and inline `styles: [...]` blocks).
+   *
+   * @param code - Raw CSS content of the component stylesheet
+   * @param filename - Resolved file path of the stylesheet (or containing .ts file for inline styles)
+   * @returns Transformed CSS string, or the original code if no transformation is needed
+   */
+  stylePreprocessor?: StylePreprocessor;
+  /**
+   * First-class Tailwind CSS v4 integration for Angular component styles.
+   *
+   * Angular's compiler processes component CSS through Vite's `preprocessCSS()`,
+   * which runs `@tailwindcss/vite` — but each component stylesheet is processed
+   * in isolation without access to the root Tailwind configuration (prefix, @theme,
+   * @custom-variant, @plugin definitions). This causes errors like:
+   *
+   *   "Cannot apply utility class `sa:grid` because the `sa` variant does not exist"
+   *
+   * The `tailwindCss` option solves this by auto-injecting a `@reference` directive
+   * into every component CSS file that uses Tailwind utilities, pointing it to the
+   * root Tailwind stylesheet so `@tailwindcss/vite` can resolve the full configuration.
+   *
+   * @example Basic usage — reference a root Tailwind CSS file:
+   * ```ts
+   * import { resolve } from 'node:path';
+   *
+   * angular({
+   *   tailwindCss: {
+   *     rootStylesheet: resolve(__dirname, 'src/styles/tailwind.css'),
+   *   },
+   * })
+   * ```
+   *
+   * @example With prefix detection — only inject for files using specific prefixes:
+   * ```ts
+   * angular({
+   *   tailwindCss: {
+   *     rootStylesheet: resolve(__dirname, 'src/styles/tailwind.css'),
+   *     // Only inject @reference into files that use these prefixed classes
+   *     prefixes: ['sa:', 'tw:'],
+   *   },
+   * })
+   * ```
+   *
+   * @example AnalogJS platform — passed through the `vite` option:
+   * ```ts
+   * analog({
+   *   vite: {
+   *     tailwindCss: {
+   *       rootStylesheet: resolve(__dirname, '../../../libs/meritos/tailwind.config.css'),
+   *     },
+   *   },
+   * })
+   * ```
+   */
+  tailwindCss?: {
+    /**
+     * Absolute path to the root Tailwind CSS file that contains `@import "tailwindcss"`,
+     * `@theme`, `@custom-variant`, and `@plugin` definitions.
+     *
+     * A `@reference` directive pointing to this file will be auto-injected into
+     * component CSS files that use Tailwind utilities.
+     */
+    rootStylesheet: string;
+    /**
+     * Optional list of class prefixes to detect (e.g. `['sa:', 'tw:']`).
+     * When provided, `@reference` is only injected into component CSS files that
+     * contain at least one of these prefixes. When omitted, `@reference` is injected
+     * into all component CSS files that contain `@apply` or `@` directives.
+     *
+     * @default undefined — inject into all component CSS files with `@apply`
+     */
+    prefixes?: string[];
+  };
 }
 
 /**
@@ -114,6 +191,65 @@ interface DeclarationFile {
   declarationFileDir: string;
   declarationPath: string;
   data: string;
+}
+
+/**
+ * Builds a resolved stylePreprocessor function from plugin options.
+ * If `tailwindCss` is provided, creates an auto-reference injector.
+ * If `stylePreprocessor` is also provided, chains them (tailwind first, then user).
+ */
+function buildStylePreprocessor(
+  options?: PluginOptions,
+): ((code: string, filename: string) => string) | undefined {
+  const userPreprocessor = options?.stylePreprocessor;
+  const tw = options?.tailwindCss;
+
+  if (!tw && !userPreprocessor) {
+    return undefined;
+  }
+
+  // Build the Tailwind @reference injector
+  let tailwindPreprocessor:
+    | ((code: string, filename: string) => string)
+    | undefined;
+
+  if (tw) {
+    const rootStylesheet = tw.rootStylesheet;
+    const prefixes = tw.prefixes;
+
+    tailwindPreprocessor = (code: string, filename: string): string => {
+      // Skip if already has @reference or is a root Tailwind file
+      if (
+        code.includes('@reference') ||
+        code.includes('@import "tailwindcss"') ||
+        code.includes("@import 'tailwindcss'")
+      ) {
+        return code;
+      }
+
+      // Check if the file uses Tailwind utilities
+      const needsReference = prefixes
+        ? prefixes.some((prefix) => code.includes(prefix))
+        : code.includes('@apply');
+
+      if (!needsReference) {
+        return code;
+      }
+
+      const refPath = relative(dirname(filename), rootStylesheet);
+      return `@reference "${refPath}";\n${code}`;
+    };
+  }
+
+  // Chain: tailwind preprocessor first, then user preprocessor
+  if (tailwindPreprocessor && userPreprocessor) {
+    return (code: string, filename: string) => {
+      const intermediate = tailwindPreprocessor!(code, filename);
+      return userPreprocessor(intermediate, filename);
+    };
+  }
+
+  return tailwindPreprocessor ?? userPreprocessor;
 }
 
 export function angular(options?: PluginOptions): Plugin[] {
@@ -142,6 +278,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     fileReplacements: options?.fileReplacements ?? [],
     useAngularCompilationAPI:
       options?.experimental?.useAngularCompilationAPI ?? false,
+    stylePreprocessor: buildStylePreprocessor(options),
   };
 
   let resolvedConfig: ResolvedConfig;
@@ -860,27 +997,47 @@ export function angular(options?: PluginOptions): Plugin[] {
           order,
           className,
         ) {
-          if (pluginOptions.liveReload) {
+          const filename =
+            resourceFile ??
+            containingFile.replace(
+              '.ts',
+              `.${pluginOptions.inlineStylesExtension}`,
+            );
+
+          // Apply any user-defined stylesheet preprocessing before Vite transforms it.
+          const preprocessedData = pluginOptions.stylePreprocessor
+            ? (pluginOptions.stylePreprocessor(data, filename) ?? data)
+            : data;
+
+          if (pluginOptions.liveReload && watchMode) {
+            // Store the preprocessed (but not yet CSS-transformed) data so that
+            // Vite's serve-time pipeline handles PostCSS / Tailwind processing
+            // exactly once when the load hook returns this CSS.  Running
+            // preprocessCSS() here would strip directives like @reference before
+            // the CSS re-enters the transform pipeline, causing plugins such as
+            // @tailwindcss/vite to fail on the second pass.
+            // Guard must match the externalRuntimeStyles condition (line ~927)
+            // because the Angular compiler only emits external style references
+            // when externalRuntimeStyles is enabled.
             const id = createHash('sha256')
               .update(containingFile)
               .update(className as string)
               .update(String(order))
-              .update(data)
+              .update(preprocessedData)
               .digest('hex');
-            const filename = id + '.' + pluginOptions.inlineStylesExtension;
-            inlineComponentStyles!.set(filename, data);
-            return filename;
+            const stylesheetId = id + '.' + pluginOptions.inlineStylesExtension;
+            inlineComponentStyles!.set(stylesheetId, preprocessedData);
+            return stylesheetId;
           }
 
-          const filename =
-            resourceFile ??
-            containingFile.replace('.ts', `.${options?.inlineStylesExtension}`);
-
+          // Non-liveReload: the CSS is returned directly to the Angular
+          // compiler and never re-enters Vite's pipeline, so we must run
+          // preprocessCSS() eagerly here.
           let stylesheetResult;
 
           try {
             stylesheetResult = await preprocessCSS(
-              data,
+              preprocessedData,
               `${filename}?direct`,
               resolvedConfig,
             );
@@ -1119,6 +1276,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         inlineComponentStyles,
         externalComponentStyles,
         sourceFileCache,
+        stylePreprocessor: pluginOptions.stylePreprocessor,
       });
     }
 

@@ -264,7 +264,6 @@ export interface PostAttributes {
 }
 
 @Component({
-  standalone: true,
   imports: [RouterOutlet, RouterLink],
   template: `
     <ul>
@@ -307,7 +306,6 @@ export interface PostAttributes {
 }
 
 @Component({
-  standalone: true,
   imports: [MarkdownComponent, AsyncPipe],
   template: `
     @if (post$ | async; as post) {
@@ -432,7 +430,6 @@ export interface ProjectAttributes {
 }
 
 @Component({
-  standalone: true,
   imports: [MarkdownComponent, AsyncPipe],
   template: `
     @if (project$ | async; as project) {

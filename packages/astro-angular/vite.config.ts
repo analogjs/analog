@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       target: 'esnext',
-      outDir: '../../node_modules/@analogjs/astro-angular',
+      outDir: 'dist',
       emptyOutDir: true,
       sourcemap: true,
       minify: false,

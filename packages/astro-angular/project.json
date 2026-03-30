@@ -8,7 +8,7 @@
     "build": {
       "dependsOn": ["^build"],
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/astro-angular"],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
         "commands": [
           "vite build -c packages/astro-angular/vite.config.lib.ts",

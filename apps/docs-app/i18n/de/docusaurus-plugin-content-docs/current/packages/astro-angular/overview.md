@@ -165,7 +165,6 @@ import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-hello',
-  standalone: true,
   imports: [NgIf],
   template: `
     <p>Hello from Angular!!</p>
@@ -262,7 +261,6 @@ interface Todo {
 
 @Component({
   selector: 'app-todos',
-  standalone: true,
   imports: [NgFor],
   template: `
     <h2>Todos</h2>

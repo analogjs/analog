@@ -42,6 +42,8 @@ jobs:
       - run: npm --version
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Verify release artifacts
+        run: pnpm run release:verify
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

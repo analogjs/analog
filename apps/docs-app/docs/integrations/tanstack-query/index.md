@@ -101,7 +101,6 @@ import { lastValueFrom } from 'rxjs';
 import { injectQuery } from '@tanstack/angular-query-experimental';
 
 @Component({
-  standalone: true,
   template: `
     @if (query.isPending()) {
       Loading...
@@ -133,7 +132,6 @@ import { serverQueryOptions } from '@analogjs/router/tanstack-query';
 import type { route } from '../../server/routes/api/v1/todos.get';
 
 @Component({
-  standalone: true,
   template: `
     @if (todosQuery.data(); as todos) {
       @for (todo of todos; track todo.id) {

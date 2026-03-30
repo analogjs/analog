@@ -42,7 +42,7 @@ export default defineConfig({
       },
       formats: ['es'],
     },
-    outDir: resolve(import.meta.dirname, '../../node_modules/@analogjs/router'),
+    outDir: resolve(import.meta.dirname, 'dist'),
     rolldownOptions: {
       external: [
         /^@angular\/.*/,

@@ -43,7 +43,6 @@ type FormErrors =
 
 @Component({
   selector: 'app-newsletter-page',
-  standalone: true,
   imports: [FormAction],
   template: `
     <h3>Newsletter Signup</h3>
@@ -170,7 +169,6 @@ import type { load } from './search.server';
 
 @Component({
   selector: 'app-search-page',
-  standalone: true,
   imports: [FormAction],
   template: `
     <h3>Search</h3>
@@ -228,7 +226,6 @@ import {
 } from '@tanstack/angular-query-experimental';
 
 @Component({
-  standalone: true,
   template: `
     <button type="button" (click)="save()">Save</button>
     @if (error()) {

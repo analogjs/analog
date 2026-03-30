@@ -15,4 +15,9 @@ export type {
   SitemapTransform,
 } from './lib/options.js';
 export { routeGenerationPlugin } from './lib/route-generation-plugin.js';
+export { tailwindPreprocessor } from './lib/tailwind-preprocessor.js';
+export type {
+  TailwindPreprocessorMode,
+  TailwindPreprocessorOptions,
+} from './lib/tailwind-preprocessor.js';
 export default platformPlugin;

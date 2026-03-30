@@ -82,10 +82,7 @@ export default defineConfig({
       entry: resolve(pkgDir, 'src/index.ts'),
       formats: ['cjs'],
     },
-    outDir: resolve(
-      pkgDir,
-      '../../node_modules/@analogjs/vitest-angular/src/lib/tools',
-    ),
+    outDir: resolve(pkgDir, '../vitest-angular/dist/src/lib/tools'),
     rolldownOptions: {
       external: [
         /^@angular-devkit\//,
