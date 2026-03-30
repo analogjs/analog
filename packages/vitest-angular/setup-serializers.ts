@@ -1,7 +1,7 @@
 import {
   createHtmlCommentSnapshotSerializer,
   createNoNgAttributesSnapshotSerializer,
-} from './snapshot-serializers';
+} from './snapshot-serializers.js';
 
 const env = globalThis as any;
 
