@@ -85,7 +85,7 @@ export default (element: HTMLElement) => {
 
     const hostElement = element.querySelector(mirror.selector);
 
-    const ngAppId = hostElement?.getAttribute('data-analog-appid');
+    const ngAppId = hostElement?.getAttribute('data-analog-id');
 
     createApplication({
       providers: [

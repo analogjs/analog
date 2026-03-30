@@ -90,11 +90,12 @@ async function renderToStaticMarkup(
   const mirror = reflectComponentType(Component);
   const appId =
     mirror?.selector.split(',')[0] || Component.name.toString().toLowerCase();
-  const ngAppId = 'ng-' + Math.random().toString().slice(2, 9);
+  const ngAppId =
+    props?.['data-analog-id'] || 'ng-' + Math.random().toString().slice(2, 9);
 
   const platformRef = platformServer();
   const document = platformRef.injector.get(DOCUMENT);
-  document.body.innerHTML = `<${appId} data-analog-appid="${ngAppId}"></${appId}>`;
+  document.body.innerHTML = `<${appId} data-analog-id="${ngAppId}"></${appId}>`;
 
   const bootstrap = (context?: BootstrapContext) =>
     bootstrapApplication(
