@@ -48,9 +48,7 @@ export function toMarkdownModule(
               ContentRenderer as any,
             ) as ContentRendererLike;
             const rendered = await contentRenderer.render(content);
-            return typeof rendered === 'string'
-              ? rendered
-              : (rendered as any).content;
+            return typeof rendered === 'string' ? rendered : rendered.content;
           },
         },
       },

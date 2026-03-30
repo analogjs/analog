@@ -49,7 +49,7 @@ function getContentFile<
   }
 
   const contentTask = renderTaskService.addRenderTask();
-  return new Observable<string | { default: any; metadata: any }>(
+  return new Observable<string | { default: string; metadata: Attributes }>(
     (observer) => {
       const contentResolver = contentFile();
 

@@ -487,8 +487,8 @@ importers:
         specifier: 12.0.0-beta.1
         version: 12.0.0-beta.1(typescript@6.0.2)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))(ws@8.20.0)
       vite-tsconfig-paths:
-        specifier: github:benpsnyder/vite-tsconfig-paths#feat/oxc-upgrade
-        version: https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/28d26208f2e5c880b0a33ea27b0a24b64e98f0ba(typescript@6.0.2)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
+        specifier: ^7.0.0-alpha.1
+        version: 7.0.0-alpha.1(typescript@6.0.2)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
       vitefu:
         specifier: ^1.1.2
         version: 1.1.2(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3))
@@ -14985,9 +14985,8 @@ packages:
       '@nuxt/kit':
         optional: true
 
-  vite-tsconfig-paths@https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/28d26208f2e5c880b0a33ea27b0a24b64e98f0ba:
-    resolution: {tarball: https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/28d26208f2e5c880b0a33ea27b0a24b64e98f0ba}
-    version: 7.0.0-alpha.1
+  vite-tsconfig-paths@7.0.0-alpha.1:
+    resolution: {integrity: sha512-R2xUKqgU3lETsbx66sOoVj6/2hf9J9Aizavs03obMY5TxC99UbF1tM4bSfn1KZ8HxtOEaK3gdm/CEutS3yBvog==}
     engines: {node: '>=18'}
     peerDependencies:
       vite: '>=5.0.0'
@@ -33279,7 +33278,7 @@ snapshots:
       - typescript
       - ws
 
-  vite-tsconfig-paths@https://codeload.github.com/benpsnyder/vite-tsconfig-paths/tar.gz/28d26208f2e5c880b0a33ea27b0a24b64e98f0ba(typescript@6.0.2)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3)):
+  vite-tsconfig-paths@7.0.0-alpha.1(typescript@6.0.2)(vite@8.0.2(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.1)(yaml@2.8.3)):
     dependencies:
       debug: 4.4.3
       oxc-resolver: 11.19.1
