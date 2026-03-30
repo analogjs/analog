@@ -31,14 +31,15 @@ jobs:
         branch:
           - alpha
           - beta
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.branch == 'all' || inputs.branch == matrix.branch }}
     steps:
       - name: Checkout repository
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.branch == 'all' || inputs.branch == matrix.branch }}
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Sync branch from upstream
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.branch == 'all' || inputs.branch == matrix.branch }}
         run: |
           workflow_path=".github/workflows/sync-upstream-branches.yml"
           temp_workflow="$(mktemp)"

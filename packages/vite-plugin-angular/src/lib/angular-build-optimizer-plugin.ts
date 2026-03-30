@@ -48,18 +48,6 @@ export function buildOptimizerPlugin({
         },
       } as UserConfig;
     },
-    // Astro v6 uses a unified Vite builder where `define` globals from the
-    // server build leak into the client environment, causing NG0401 during
-    // hydration. Override `ngServerMode` per-environment so the client bundle
-    // is never compiled with server mode enabled.
-    // https://github.com/analogjs/analog/issues/2112
-    // https://github.com/withastro/astro/issues/15911
-    configEnvironment(name, options) {
-      if (name === 'client' && isProd) {
-        options.define ??= {};
-        options.define['ngServerMode'] = 'false';
-      }
-    },
     transform: {
       filter: {
         id: /\.[cm]?js$/,
