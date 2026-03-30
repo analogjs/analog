@@ -11,7 +11,7 @@ function getVitePlugins(): Plugin[] {
   }) => void;
 
   setup({
-    addRenderer: () => {},
+    addRenderer: () => undefined,
     updateConfig: (cfg) => {
       plugins = cfg.vite.plugins ?? [];
     },
@@ -34,7 +34,11 @@ describe('angularVitePlugin', () => {
       const plugins = getVitePlugins();
       const plugin = plugins.find(
         (p) => (p as Plugin).name === 'analogjs-astro-client-ngservermode',
-      ) as Plugin & { configEnvironment: Function };
+      ) as Plugin & {
+        configEnvironment: (
+          name: string,
+        ) => Record<string, unknown> | undefined;
+      };
 
       expect(plugin).toBeDefined();
 
@@ -49,7 +53,11 @@ describe('angularVitePlugin', () => {
       const plugins = getVitePlugins();
       const plugin = plugins.find(
         (p) => (p as Plugin).name === 'analogjs-astro-client-ngservermode',
-      ) as Plugin & { configEnvironment: Function };
+      ) as Plugin & {
+        configEnvironment: (
+          name: string,
+        ) => Record<string, unknown> | undefined;
+      };
 
       expect(plugin.configEnvironment('server')).toBeUndefined();
       expect(plugin.configEnvironment('ssr')).toBeUndefined();
