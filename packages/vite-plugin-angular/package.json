@@ -5,6 +5,7 @@
   "type": "module",
   "keywords": [
     "vite",
+    "vitest",
     "vite-plugin",
     "angular"
   ],

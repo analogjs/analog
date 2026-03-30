@@ -49,6 +49,10 @@ export default defineConfig({
     lib: {
       entry: {
         'src/index': resolve(pkgDir, 'src/index.ts'),
+        'migrations/migrate-setup-vitest/migrate-setup-vitest': resolve(
+          pkgDir,
+          'migrations/migrate-setup-vitest/migrate-setup-vitest.ts',
+        ),
       },
       formats: ['es' as const],
     },
