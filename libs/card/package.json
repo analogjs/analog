@@ -1,5 +1,8 @@
 {
   "name": "@analogjs/card",
   "private": true,
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "devDependencies": {
+    "@analogjs/vite-plugin-angular": "workspace:*"
+  }
 }

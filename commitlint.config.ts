@@ -3,6 +3,7 @@ export default {
   rules: {
     'body-leading-blank': [2, 'always'],
     'footer-leading-blank': [2, 'always'],
+    'header-max-length': [2, 'always', 150],
     'scope-enum': [
       2,
       'always',

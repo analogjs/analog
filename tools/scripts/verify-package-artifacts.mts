@@ -1,23 +1,11 @@
 #!/usr/bin/env node
 
-/**
- * Verifies built package artifacts in `node_modules/@analogjs/*`.
- *
- * Usage:
- *   node tools/scripts/verify-package-artifacts.mts [package-name...]
- *
- * Examples from repo build targets:
- *   node tools/scripts/verify-package-artifacts.mts astro-angular
- *   node tools/scripts/verify-package-artifacts.mts content
- *   node tools/scripts/verify-package-artifacts.mts create-analog
- *   node tools/scripts/verify-package-artifacts.mts platform
- *   node tools/scripts/verify-package-artifacts.mts router
- *   node tools/scripts/verify-package-artifacts.mts storybook-angular
- *   node tools/scripts/verify-package-artifacts.mts vite-plugin-angular
- *   node tools/scripts/verify-package-artifacts.mts vitest-angular
- *
- * When no package names are provided, all configured packages are validated.
- */
+// Verifies built package artifacts in packages/*/dist.
+//
+// Usage:
+//   node tools/scripts/verify-package-artifacts.mts [package-name...]
+//
+// When no package names are provided, all configured packages are validated.
 
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -32,10 +20,10 @@ interface PackageValidationConfig {
 }
 
 class ValidationError extends Error {
-  readonly packageName: string;
-  readonly errors: ReadonlyArray<string>;
+  packageName;
+  errors;
 
-  constructor(packageName: string, errors: ReadonlyArray<string>) {
+  constructor(packageName: string, errors: string[]) {
     super(`Artifact validation failed for ${packageName}`);
     this.name = 'ValidationError';
     this.packageName = packageName;
@@ -79,30 +67,29 @@ const ManifestSchema = Schema.Struct({
   ),
 });
 
-type PackageJson = Schema.Schema.Type<typeof PackageJsonSchema>;
-type Manifest = Schema.Schema.Type<typeof ManifestSchema>;
-type ManifestEntries =
-  | NonNullable<Manifest['executors']>
-  | NonNullable<Manifest['builders']>
-  | NonNullable<Manifest['generators']>
-  | NonNullable<Manifest['schematics']>;
+// @ts-expect-error - using any for Node type-stripping compatibility - using any for Node type-stripping compatibility
+type PackageJson = any;
+// @ts-expect-error - using any for Node type-stripping compatibility
+type Manifest = any;
+// @ts-expect-error - using any for Node type-stripping compatibility
+type ManifestEntries = any;
 
 const packageConfigs: Record<string, PackageValidationConfig> = {
   'astro-angular': {
-    packageJsonPath: 'node_modules/@analogjs/astro-angular/package.json',
+    packageJsonPath: 'packages/astro-angular/dist/package.json',
     requiredPaths: [
-      'node_modules/@analogjs/astro-angular/src/index.js',
-      'node_modules/@analogjs/astro-angular/src/client.js',
-      'node_modules/@analogjs/astro-angular/src/server.js',
-      'node_modules/@analogjs/astro-angular/src/utils.js',
+      'packages/astro-angular/dist/src/index.js',
+      'packages/astro-angular/dist/src/client.js',
+      'packages/astro-angular/dist/src/server.js',
+      'packages/astro-angular/dist/src/utils.js',
     ],
   },
   content: {
-    packageJsonPath: 'node_modules/@analogjs/content/package.json',
+    packageJsonPath: 'packages/content/dist/package.json',
     requiredPaths: [
-      'node_modules/@analogjs/content/fesm2022/analogjs-content.mjs',
-      'node_modules/@analogjs/content/plugin/migrations.json',
-      'node_modules/@analogjs/content/plugin/src/index.js',
+      'packages/content/dist/fesm2022/analogjs-content.mjs',
+      'packages/content/dist/plugin/migrations.json',
+      'packages/content/dist/plugin/src/index.js',
     ],
   },
   'create-analog': {
@@ -110,51 +97,51 @@ const packageConfigs: Record<string, PackageValidationConfig> = {
     requiredPaths: ['dist/packages/create-analog/index.js'],
   },
   platform: {
-    packageJsonPath: 'node_modules/@analogjs/platform/package.json',
+    packageJsonPath: 'packages/platform/dist/package.json',
     manifestFields: ['builders', 'executors', 'generators', 'schematics'],
     requiredPaths: [
-      'node_modules/@analogjs/platform/src/lib/nx-plugin',
-      'node_modules/@analogjs/platform/src/lib/nx-plugin/src/executors/vite/vite.impl.js',
-      'node_modules/@analogjs/platform/src/lib/nx-plugin/src/generators/preset/generator.js',
+      'packages/platform/dist/src/lib/nx-plugin',
+      'packages/platform/dist/src/lib/nx-plugin/src/executors/vite/vite.impl.js',
+      'packages/platform/dist/src/lib/nx-plugin/src/generators/preset/generator.js',
     ],
   },
   router: {
-    packageJsonPath: 'node_modules/@analogjs/router/package.json',
+    packageJsonPath: 'packages/router/dist/package.json',
     requiredPaths: [
-      'node_modules/@analogjs/router/fesm2022/analogjs-router.mjs',
-      'node_modules/@analogjs/router/migrations/migration.json',
+      'packages/router/dist/fesm2022/analogjs-router.mjs',
+      'packages/router/dist/migrations/migration.json',
     ],
   },
   'storybook-angular': {
-    packageJsonPath: 'node_modules/@analogjs/storybook-angular/package.json',
+    packageJsonPath: 'packages/storybook-angular/dist/package.json',
     manifestFields: ['builders'],
     requiredPaths: [
-      'node_modules/@analogjs/storybook-angular/src/lib/testing.js',
-      'node_modules/@analogjs/storybook-angular/src/lib/build-storybook/build-storybook.js',
-      'node_modules/@analogjs/storybook-angular/src/lib/start-storybook/start-storybook.js',
+      'packages/storybook-angular/dist/src/lib/testing.js',
+      'packages/storybook-angular/dist/src/lib/build-storybook/build-storybook.js',
+      'packages/storybook-angular/dist/src/lib/start-storybook/start-storybook.js',
     ],
   },
   'vite-plugin-nitro': {
-    packageJsonPath: 'node_modules/@analogjs/vite-plugin-nitro/package.json',
-    requiredPaths: ['node_modules/@analogjs/vite-plugin-nitro/src/index.js'],
+    packageJsonPath: 'packages/vite-plugin-nitro/dist/package.json',
+    requiredPaths: ['packages/vite-plugin-nitro/dist/src/index.js'],
   },
   'vite-plugin-angular': {
-    packageJsonPath: 'node_modules/@analogjs/vite-plugin-angular/package.json',
+    packageJsonPath: 'packages/vite-plugin-angular/dist/package.json',
     manifestFields: ['builders'],
     requiredPaths: [
-      'node_modules/@analogjs/vite-plugin-angular/src/lib/tools',
-      'node_modules/@analogjs/vite-plugin-angular/src/lib/tools/src/builders/vite/vite-build.impl.js',
-      'node_modules/@analogjs/vite-plugin-angular/src/lib/tools/src/builders/vite-dev-server/dev-server.impl.js',
+      'packages/vite-plugin-angular/dist/src/lib/tools',
+      'packages/vite-plugin-angular/dist/src/lib/tools/src/builders/vite/vite-build.impl.js',
+      'packages/vite-plugin-angular/dist/src/lib/tools/src/builders/vite-dev-server/dev-server.impl.js',
     ],
   },
   'vitest-angular': {
-    packageJsonPath: 'node_modules/@analogjs/vitest-angular/package.json',
+    packageJsonPath: 'packages/vitest-angular/dist/package.json',
     manifestFields: ['builders', 'schematics'],
     requiredPaths: [
-      'node_modules/@analogjs/vitest-angular/src/index.js',
-      'node_modules/@analogjs/vitest-angular/src/lib/tools',
-      'node_modules/@analogjs/vitest-angular/src/lib/builders/test/vitest.impl.js',
-      'node_modules/@analogjs/vitest-angular/src/lib/builders/build/vitest.impl.js',
+      'packages/vitest-angular/dist/src/index.js',
+      'packages/vitest-angular/dist/src/lib/tools',
+      'packages/vitest-angular/dist/src/lib/builders/test/vitest.impl.js',
+      'packages/vitest-angular/dist/src/lib/builders/build/vitest.impl.js',
     ],
   },
 };
@@ -170,10 +157,7 @@ function toError(cause: unknown, prefix: string): Error {
   return new Error(`${prefix}: ${message}`);
 }
 
-function readJson<S extends Schema.Top & { readonly DecodingServices: never }>(
-  path: string,
-  schema: S,
-): Effect.Effect<S['Type'], Error> {
+function readJson(path: string, schema: any): Effect.Effect<any, Error> {
   return Effect.try({
     try: () =>
       Schema.decodeUnknownSync(schema)(

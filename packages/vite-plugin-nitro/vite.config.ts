@@ -7,7 +7,7 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/vite-plugin-nitro',
   build: {
     target: 'esnext',
-    outDir: '../../node_modules/@analogjs/vite-plugin-nitro',
+    outDir: 'dist',
     emptyOutDir: true,
     sourcemap: true,
     minify: false,

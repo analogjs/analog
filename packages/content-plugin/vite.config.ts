@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
     root: __dirname,
     build: {
       target: 'esnext',
-      outDir: '../../node_modules/@analogjs/content/plugin',
+      outDir: '../content/dist/plugin',
       emptyOutDir: true,
       sourcemap: true,
       minify: false,

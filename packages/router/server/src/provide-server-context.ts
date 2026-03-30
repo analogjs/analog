@@ -97,5 +97,7 @@ export function getRequestProtocol(
     return 'https';
   }
 
-  return (req.connection as any)?.encrypted ? 'https' : 'http';
+  return (req.connection as { encrypted?: boolean })?.encrypted
+    ? 'https'
+    : 'http';
 }

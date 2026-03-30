@@ -16,7 +16,6 @@ const versionFiles = [
 ];
 
 const replacementFiles = [
-  'packages/astro-angular/package.json',
   'packages/create-analog/template-angular-v17/package.json',
   'packages/create-analog/template-angular-v18/package.json',
   'packages/create-analog/template-angular-v19/package.json',
@@ -145,7 +144,6 @@ export default {
     [
       '@semantic-release/exec',
       {
-        prepareCmd: 'pnpm install --lockfile-only',
         publishCmd: `pnpm build:release && RELEASE_TAG=${tag} ./tools/publish.sh`,
       },
     ],

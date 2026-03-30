@@ -62,9 +62,8 @@ export async function renderServerComponent(
     });
   }
 
-  const component = ((await componentLoader()) as any)[
-    'default'
-  ] as Type<unknown>;
+  const component = ((await componentLoader()) as { default?: Type<unknown> })
+    .default;
 
   if (!component) {
     return new Response(`No default export for ${componentId}`, {
@@ -121,7 +120,7 @@ export async function renderServerComponent(
   });
 
   const outputs = retrieveTransferredState(html, appId);
-  const responseData: { html: string; outputs: Record<string, any> } = {
+  const responseData: { html: string; outputs: Record<string, unknown> } = {
     html,
     outputs,
   };

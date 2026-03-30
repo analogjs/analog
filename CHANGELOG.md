@@ -1,3 +1,29 @@
+# [3.0.0-alpha.18](https://github.com/analogjs/analog/compare/v3.0.0-alpha.17...v3.0.0-alpha.18) (2026-03-26)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** defer liveReload CSS preprocessing to Vite load ([2dcf773](https://github.com/analogjs/analog/commit/2dcf773107db18d3a921c9e44a46804316dcd081))
+- **vite-plugin-angular:** gate liveReload stylesheet ids to watch mode ([5568146](https://github.com/analogjs/analog/commit/55681461eb0e89b809def99612d2d71b8632153e))
+
+### Features
+
+- **platform:** export tailwindPreprocessor for Analog Vite config ([971b2a8](https://github.com/analogjs/analog/commit/971b2a82c9c0c76e0a80483b9483503139c9ec7e))
+- **vite-plugin-angular:** add tailwindCss preprocessing for component styles ([87b49db](https://github.com/analogjs/analog/commit/87b49db4da45fba3360c895bf3df08dd16b2cc75))
+
+# [3.0.0-alpha.17](https://github.com/analogjs/analog/compare/v3.0.0-alpha.16...v3.0.0-alpha.17) (2026-03-26)
+
+### Features
+
+- **vite-plugin-angular:** add stylePreprocessor and Tailwind CSS integration for component styles ([#2190](https://github.com/analogjs/analog/issues/2190)) ([b2e4901](https://github.com/analogjs/analog/commit/b2e49019dccb418cd80552a7889fb0637eb7ffff))
+
+# [3.0.0-alpha.16](https://github.com/analogjs/analog/compare/v3.0.0-alpha.15...v3.0.0-alpha.16) (2026-03-25)
+
+### Bug Fixes
+
+- fix release process ([4c610db](https://github.com/analogjs/analog/commit/4c610db4e1e609cd9b6a13fb0f392b3fc76d305e))
+- **nx-plugin:** restore Angular schematic compatibility with named exports ([#2183](https://github.com/analogjs/analog/issues/2183)) ([a546f7d](https://github.com/analogjs/analog/commit/a546f7d874e7f4f5e17811d7bc9626b0e6980b13))
+- **vite-plugin-nitro:** prevent setting headers with keys starting with ':' ([#2180](https://github.com/analogjs/analog/issues/2180)) ([c53a135](https://github.com/analogjs/analog/commit/c53a135f87bf76fe6211c81b6239ecab0066613a))
+
 # [3.0.0-alpha.15](https://github.com/analogjs/analog/compare/v3.0.0-alpha.14...v3.0.0-alpha.15) (2026-03-25)
 
 ### Features

@@ -15,5 +15,8 @@ packages:
   # so use a recursive glob for all lib package manifests.
   - 'libs/**'
 
+  # Integration / E2E test projects that need their own workspace deps.
+  - 'tests/*'
+
 # Build-script allowlists belong in the root package.json under pnpm.* config.
 # Keep this file focused on workspace membership so package selection is clear.

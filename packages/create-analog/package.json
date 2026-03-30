@@ -1,6 +1,6 @@
 {
   "name": "create-analog",
-  "version": "3.0.0-alpha.15",
+  "version": "3.0.0-alpha.18",
   "type": "module",
   "license": "MIT",
   "author": "Brandon Roberts",
@@ -21,7 +21,7 @@
   ],
   "main": "index.js",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "repository": {
     "type": "git",
@@ -39,6 +39,9 @@
     "kolorist": "^1.6.0",
     "minimist": "^1.2.7",
     "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@analogjs/platform": "workspace:*"
   },
   "publishConfig": {
     "access": "public",
