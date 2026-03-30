@@ -127,9 +127,11 @@ describe('migrate-setup-vitest', () => {
     );
   });
 
-  it('should skip non-ts files', () => {
-    const jsContent = `require('@analogjs/vite-plugin-angular/setup-vitest');`;
-    tree.create('/setup.js', jsContent);
+  it('should process .js files', () => {
+    tree.create(
+      '/src/test-setup.js',
+      `import '@analogjs/vite-plugin-angular/setup-vitest';`,
+    );
     tree.create(
       '/package.json',
       JSON.stringify({
@@ -142,7 +144,31 @@ describe('migrate-setup-vitest', () => {
     const rule = migrateSetupVitest();
     rule(tree, context);
 
-    expect(tree.readContent('/setup.js')).toBe(jsContent);
+    expect(tree.readContent('/src/test-setup.js')).toBe(
+      `import '@analogjs/vitest-angular/setup-zone';`,
+    );
+  });
+
+  it('should process .mjs files', () => {
+    tree.create(
+      '/src/test-setup.mjs',
+      `import '@analogjs/vite-plugin-angular/setup-vitest';`,
+    );
+    tree.create(
+      '/package.json',
+      JSON.stringify({
+        devDependencies: {
+          '@analogjs/vite-plugin-angular': '^3.0.0',
+        },
+      }),
+    );
+
+    const rule = migrateSetupVitest();
+    rule(tree, context);
+
+    expect(tree.readContent('/src/test-setup.mjs')).toBe(
+      `import '@analogjs/vitest-angular/setup-zone';`,
+    );
   });
 
   it('should process .mts files', () => {
@@ -165,5 +191,44 @@ describe('migrate-setup-vitest', () => {
     expect(tree.readContent('/src/test-setup.mts')).toBe(
       `import '@analogjs/vitest-angular/setup-zone';`,
     );
+  });
+
+  it('should skip unsupported file types', () => {
+    const jsonContent = `{ "setup": "@analogjs/vite-plugin-angular/setup-vitest" }`;
+    tree.create('/config.json', jsonContent);
+    tree.create(
+      '/package.json',
+      JSON.stringify({
+        devDependencies: {
+          '@analogjs/vite-plugin-angular': '^3.0.0',
+        },
+      }),
+    );
+
+    const rule = migrateSetupVitest();
+    rule(tree, context);
+
+    expect(tree.readContent('/config.json')).toBe(jsonContent);
+  });
+
+  it('should not add dependency when no imports were found', () => {
+    tree.create(
+      '/src/test-setup.ts',
+      `import '@analogjs/vitest-angular/setup-zone';`,
+    );
+    tree.create(
+      '/package.json',
+      JSON.stringify({
+        devDependencies: {
+          '@analogjs/vite-plugin-angular': '^3.0.0',
+        },
+      }),
+    );
+
+    const rule = migrateSetupVitest();
+    rule(tree, context);
+
+    const pkg = JSON.parse(tree.readContent('/package.json'));
+    expect(pkg.devDependencies['@analogjs/vitest-angular']).toBeUndefined();
   });
 });

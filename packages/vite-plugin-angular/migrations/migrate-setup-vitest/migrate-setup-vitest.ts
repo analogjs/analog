@@ -45,7 +45,12 @@ export default function migrateSetupVitest(): Rule {
     const filesToUpdate: string[] = [];
 
     tree.visit((filePath) => {
-      if (!filePath.endsWith('.ts') && !filePath.endsWith('.mts')) {
+      if (
+        !filePath.endsWith('.ts') &&
+        !filePath.endsWith('.mts') &&
+        !filePath.endsWith('.js') &&
+        !filePath.endsWith('.mjs')
+      ) {
         return;
       }
       if (filePath.includes('/node_modules/')) {
@@ -77,7 +82,9 @@ export default function migrateSetupVitest(): Rule {
       }
     }
 
-    addVitestAngularDependency(tree, context);
+    if (filesToUpdate.length > 0) {
+      addVitestAngularDependency(tree, context);
+    }
 
     return tree;
   };
