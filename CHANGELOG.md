@@ -1,3 +1,9 @@
+# [2.4.0-beta.26](https://github.com/analogjs/analog/compare/v2.4.0-beta.25...v2.4.0-beta.26) (2026-03-30)
+
+### Bug Fixes
+
+- **astro-angular:** style tag ordering for multiple islands ([#2210](https://github.com/analogjs/analog/issues/2210)) ([b306097](https://github.com/analogjs/analog/commit/b306097442be5f1f38f7b47762c67c09febec628))
+
 # [2.4.0-beta.25](https://github.com/analogjs/analog/compare/v2.4.0-beta.24...v2.4.0-beta.25) (2026-03-29)
 
 ### Features
