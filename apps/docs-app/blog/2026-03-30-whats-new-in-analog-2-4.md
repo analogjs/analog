@@ -133,7 +133,7 @@ When enabled, Angular component styles are relocated to `<head>` regardless of w
 To upgrade to Analog 2.4, run:
 
 ```bash
-npm install @analogjs/platform@latest @analogjs/vitest-angular@latest
+ng update @analogjs/platform@latest
 ```
 
 For the full list of changes, see the [changelog](https://github.com/analogjs/analog/blob/main/CHANGELOG.md).
