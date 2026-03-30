@@ -7,6 +7,7 @@ import {
   ComponentRef,
   ComponentMirror,
   Type,
+  APP_ID,
 } from '@angular/core';
 import {
   createApplication,
@@ -82,6 +83,10 @@ export default (element: HTMLElement) => {
     // Insert Angular client hydration marker
     document.body.prepend(document.createComment('nghm'));
 
+    const hostElement = element.querySelector(mirror.selector);
+
+    const ngAppId = hostElement?.getAttribute('data-analog-appid');
+
     createApplication({
       providers: [
         provideZonelessChangeDetection(),
@@ -92,10 +97,16 @@ export default (element: HTMLElement) => {
         },
         // Provide client hydration _after_ our listener so we bind the inputs first
         provideClientHydration(),
+        ngAppId
+          ? {
+              provide: APP_ID,
+              useValue: ngAppId,
+            }
+          : [],
         ...(Component.clientProviders || []),
       ],
     }).then((appRef) => {
-      appRef.bootstrap(Component, element.querySelector(mirror.selector));
+      appRef.bootstrap(Component, hostElement);
     });
   };
 };

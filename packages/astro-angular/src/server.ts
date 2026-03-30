@@ -10,6 +10,7 @@ import {
   reflectComponentType,
   provideZonelessChangeDetection,
   DOCUMENT,
+  APP_ID,
 } from '@angular/core';
 import {
   BEFORE_APP_SERIALIZED,
@@ -89,10 +90,11 @@ async function renderToStaticMarkup(
   const mirror = reflectComponentType(Component);
   const appId =
     mirror?.selector.split(',')[0] || Component.name.toString().toLowerCase();
+  const ngAppId = 'ng-' + Math.random().toString().slice(2, 9);
 
   const platformRef = platformServer();
   const document = platformRef.injector.get(DOCUMENT);
-  document.body.innerHTML = `<${appId}></${appId}>`;
+  document.body.innerHTML = `<${appId} data-analog-appid="${ngAppId}"></${appId}>`;
 
   const bootstrap = (context?: BootstrapContext) =>
     bootstrapApplication(
@@ -108,6 +110,10 @@ async function renderToStaticMarkup(
           { provide: ɵSERVER_CONTEXT, useValue: 'analog' },
           provideZonelessChangeDetection(),
           provideClientHydration(),
+          {
+            provide: APP_ID,
+            useValue: ngAppId,
+          },
           ...(Component.renderProviders || []),
         ],
       },
