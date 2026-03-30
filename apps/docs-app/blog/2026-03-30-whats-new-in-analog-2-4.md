@@ -137,3 +137,17 @@ ng update @analogjs/platform@latest
 ```
 
 For the full list of changes, see the [changelog](https://github.com/analogjs/analog/blob/main/CHANGELOG.md).
+
+## Partner with Analog 🤝
+
+Continued development of Analog would not be possible without our partners and community. Thanks to our official deployment partner [Zerops](https://zerops.io) and longtime supporters [Snyder Technologies](https://snyder.tech/), [Nx](https://nx.dev), and [House of Angular](https://houseofangular.io), and many other backers of the project.
+
+Find out more information on our [partnership opportunities](https://analogjs.org/docs/sponsoring#partnerships) or reach out directly to partnerships[at]analogjs.org.
+
+## Join the Community 🥇
+
+- Visit and Star the [GitHub Repo](https://github.com/analogjs/analog)
+- Join the [Discord](https://chat.analogjs.org)
+- Follow us on [Twitter](https://twitter.com/analogjs)
+
+If you enjoyed this post, click the ❤️ so other people will see it. Follow [AnalogJS](https://twitter.com/analogjs) and [Brandon Roberts](https://twitter.com/brandontroberts) on Twitter/X, and subscribe to my [YouTube Channel](https://youtube.com/brandonrobertsdev?sub_confirmation=1) for more content!
