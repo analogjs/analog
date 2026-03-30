@@ -125,6 +125,31 @@ slug: 'docs'
     });
   });
 
+  it('finds a file by bare slug without path prefix', async () => {
+    const contentFiles = {
+      '/src/content/blog/my-post.md': () =>
+        Promise.resolve(`---
+slug: 'my-post'
+---
+# My Post`),
+    };
+    setup({
+      routeParams: { slug: 'my-post' },
+      contentFiles,
+    });
+
+    const result = TestBed.inject(TEST_RESOURCE_TOKEN);
+    await settleResource(result);
+
+    expect(result.value()).toEqual({
+      filename: '/src/content/blog/my-post',
+      slug: 'my-post',
+      attributes: { slug: 'my-post' },
+      content: '# My Post',
+      toc: [{ id: 'my-post', level: 1, text: 'My Post' }],
+    });
+  });
+
   it('resolves nested paths that include a content segment name', async () => {
     const contentFiles = {
       '/src/content/docs/reference/api/nested/content.md': () =>

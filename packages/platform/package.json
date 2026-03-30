@@ -28,12 +28,13 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "dependencies": {
+    "@analogjs/vite-plugin-angular": "^3.0.0-alpha.18",
+    "@analogjs/vite-plugin-nitro": "^3.0.0-alpha.18",
     "front-matter": "^4.0.2",
     "tinyglobby": "^0.2.15",
     "nitro": "3.0.260311-beta",
-    "@analogjs/vite-plugin-angular": "^3.0.0-alpha.18",
-    "@analogjs/vite-plugin-nitro": "^3.0.0-alpha.18",
     "rolldown": "^1.0.0-rc.11",
+    "nitropack": "^2.13.1",
     "vitefu": "^1.1.2"
   },
   "peerDependencies": {

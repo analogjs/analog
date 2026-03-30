@@ -25,7 +25,7 @@ export function updateIndex(
 
     let updatedIndex = indexContents.replace(
       '</body>',
-      `<script type="module" src="${projectConfig.root && projectConfig.root !== '.' ? `/${projectConfig.root}` : ''}/src/main.ts"></script></body>`,
+      `<script type="module" src="/src/main.ts"></script></body>`,
     );
     updatedIndex = updatedIndex.replace(`"favicon.ico"`, `"/favicon.ico"`);
     tree.write(indexPath, updatedIndex);

@@ -61,6 +61,7 @@ async function getContentFile<
   // Normalize file keys so both "/src/content/..." and "/<project>/src/content/..." resolve.
   // This mirrors normalization used elsewhere in the content pipeline.
   const normalizedFiles: Record<string, () => Promise<string>> = {};
+  const stemToKey: Record<string, string> = {};
   for (const [key, resolver] of Object.entries(contentFiles)) {
     const normalizedKey = key
       // replace any prefix up to the content directory with /src/content
@@ -69,13 +70,22 @@ async function getContentFile<
       // normalize duplicate slashes
       .replace(/\/{2,}/g, '/');
     normalizedFiles[normalizedKey] = resolver;
+    // Index by bare filename stem so slug-only lookups work
+    const stem = normalizedKey
+      .split('/')
+      .pop()
+      ?.replace(/\.[^.]+$/, '');
+    if (stem && !stemToKey[stem]) {
+      stemToKey[stem] = normalizedKey;
+    }
   }
 
-  // Try direct file first, then directory index variants
+  // Try direct file first, then directory index variants, then bare slug via stem
   const base = `/src/content/${slug}`.replace(/\/{2,}/g, '/');
   const candidates = [`${base}.md`, `${base}/index.md`];
 
-  const matchKey = candidates.find((k) => k in normalizedFiles);
+  const matchKey =
+    candidates.find((k) => k in normalizedFiles) ?? stemToKey[slug];
   const contentFile = matchKey ? normalizedFiles[matchKey] : undefined;
 
   if (!contentFile) {

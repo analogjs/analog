@@ -48,6 +48,7 @@
     "vitest": "^4.0.0"
   },
   "overrides": {
-    "vite": "$vite"
+    "vite": "$vite",
+    "vitest": "$vitest"
   }
 }
