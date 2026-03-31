@@ -1,5 +1,5 @@
 import type { RouteMeta } from '@analogjs/router';
-import { analogRouteTree } from '@analog-app/routeTree';
+import { analogRouteTree } from '../../routeTree.gen';
 import { injectLoad, routePath } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';

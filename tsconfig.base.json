@@ -17,7 +17,6 @@
     "skipDefaultLibCheck": true,
     "paths": {
       "@analogjs/astro-angular": ["./packages/astro-angular/src/index.ts"],
-      "@analog-app/routeTree": ["./apps/analog-app/src/routeTree.gen.ts"],
       "@analogjs/content": ["./packages/content/src/index.ts"],
       "@analogjs/content-plugin": ["./packages/content-plugin/src/index.ts"],
       "@analogjs/content/prism-highlighter": [
@@ -55,7 +54,6 @@
       "@analogjs/vite-plugin-nitro": [
         "./packages/vite-plugin-nitro/src/index.ts"
       ],
-      "@blog-app/routeTree": ["./apps/blog-app/src/routeTree.gen.ts"],
       "libs/card": ["./libs/card/src/index.ts"],
       "my-package": ["./libs/my-package/src/index.ts"],
       "shared/feature": ["./libs/shared/feature/src/index.ts"],

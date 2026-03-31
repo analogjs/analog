@@ -2,7 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Component, inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { contentFilesResource } from '@analogjs/content/resources';
-import { analogRouteTree } from '@blog-app/routeTree';
+import { analogRouteTree } from '../../../routeTree.gen';
 import { routePath } from '@analogjs/router';
 
 import { PostAttributes } from './models';
