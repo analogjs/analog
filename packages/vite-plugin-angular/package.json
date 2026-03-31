@@ -61,8 +61,7 @@
       "import": "./dist/src/index.js",
       "require": "./dist/src/index.js",
       "default": "./dist/src/index.js"
-    },
-    "./setup-vitest": "./dist/setup-vitest.js"
+    }
   },
   "publishConfig": {
     "access": "public",
