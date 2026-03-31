@@ -317,5 +317,5 @@ function sortRawRoutes(rawRoutes: RawRoute[]): void {
 }
 
 function deprioritizeSegment(segment: string): string {
-  return segment.replace(':', '~~').replace('**', '~~~~');
+  return segment.replaceAll(':', '~~').replaceAll('**', '~~~~');
 }
