@@ -236,11 +236,11 @@ export function routerPlugin(options?: Options): Plugin[] {
        */
       // Vite 8 / Rolldown filtered transform: the `filter.code` substring
       // pre-filter lets the bundler skip modules that don't contain the
-      // marker.  'ANALOG_ROUTE_FILES' also matches 'ANALOG_CONTENT_ROUTE_FILES'
-      // (substring), so a single filter covers both placeholders.
+      // marker.  '_ROUTE_FILES' is a common substring of both
+      // 'ANALOG_ROUTE_FILES' and 'ANALOG_CONTENT_ROUTE_FILES'.
       transform: {
         filter: {
-          code: 'ANALOG_ROUTE_FILES',
+          code: '_ROUTE_FILES',
         },
         handler(code) {
           if (
