@@ -123,7 +123,8 @@ function toRawPath(filename: string): string {
 
 function toSegment(rawSegment: string): string {
   return rawSegment
-    .replace(/index|\(.*?\)/g, '')
+    .replace(/\(.*?\)/g, '')
+    .replace(/(^|[./])index(?=[./]|$)/g, '$1')
     .replace(/\.|\/+/g, '/')
     .replace(/^\/+|\/+$/g, '');
 }
