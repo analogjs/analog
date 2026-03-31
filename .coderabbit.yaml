@@ -7,14 +7,14 @@ tone_instructions: >-
 reviews:
   profile: chill
   request_changes_workflow: false
-  high_level_summary: true
-  high_level_summary_in_walkthrough: true
+  high_level_summary: false
+  high_level_summary_in_walkthrough: false
   review_status: true
   review_details: false
   commit_status: true
   fail_commit_status: false
   collapse_walkthrough: true
-  changed_files_summary: true
+  changed_files_summary: false
   sequence_diagrams: false
   estimate_code_review_effort: true
   assess_linked_issues: true

@@ -46,21 +46,7 @@ export function angularVitestPlugin(): Plugin {
           (/fesm2022/.test(id) && _code.includes('async ')) ||
           _code.includes('@angular/cdk')
         ) {
-          if (isRolldown()) {
-            // OXC does not expose a `format` option like esbuild; ESM output
-            // is the default when the source contains import/export statements.
-            const { code, map } = await vite.transformWithOxc(_code, id, {
-              lang: 'js',
-              target: 'es2016',
-              sourceType: 'module',
-              sourcemap: true,
-            });
-
-            return {
-              code,
-              map,
-            };
-          } else {
+          if (!isRolldown()) {
             const { code, map } = await vite.transformWithEsbuild(_code, id, {
               loader: 'js',
               format: 'esm',
