@@ -782,10 +782,10 @@ importers:
   packages/create-analog:
     dependencies:
       kolorist:
-        specifier: ^1.6.0
+        specifier: ^1.8.0
         version: 1.8.0
       minimist:
-        specifier: ^1.2.7
+        specifier: ^1.2.8
         version: 1.2.8
       prompts:
         specifier: ^2.4.2
