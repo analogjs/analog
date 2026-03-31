@@ -8,13 +8,14 @@ import {
 } from 'fs-extra';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { realpathSync } from 'node:fs';
 import { afterEach, beforeAll, expect, test } from 'vitest';
 import { loadConfigFromFile } from 'vite';
 
 const CLI_PATH = join(__dirname, '..');
 
 const projectName = 'test-app';
-const tmpDir = join(tmpdir(), 'create-analog-test');
+const tmpDir = join(realpathSync(tmpdir()), 'create-analog-test');
 const genPath = join(tmpDir, projectName);
 
 const run = (args: string[], options = {}) => {
