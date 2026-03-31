@@ -46,6 +46,7 @@ export default defineConfig({
       entry: {
         'src/index': resolve(pkgDir, 'src/index.ts'),
         'src/client': resolve(pkgDir, 'src/client.ts'),
+        'src/middleware': resolve(pkgDir, 'src/middleware.ts'),
         'src/server': resolve(pkgDir, 'src/server.ts'),
         'src/utils': resolve(pkgDir, 'src/utils.ts'),
       },
