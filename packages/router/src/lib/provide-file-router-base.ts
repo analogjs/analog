@@ -30,6 +30,24 @@ export function provideFileRouterWithRoutes(
 
   return makeEnvironmentProviders([
     extraRoutesFeature.map((erf) => erf.ɵproviders),
+    // Automatically register the debug route viewer during development.
+    // Navigating to /__analog/routes shows all registered page and content
+    // routes.  The import.meta.env.DEV guard ensures the debug page and its
+    // component are tree-shaken from production builds.
+    ...(import.meta.env.DEV
+      ? [
+          {
+            provide: ROUTES,
+            multi: true,
+            useValue: [
+              {
+                path: '__analog/routes',
+                loadComponent: () => import('./debug/debug.page'),
+              },
+            ],
+          },
+        ]
+      : []),
     provideRouter([], ...routerFeatures),
     {
       provide: ROUTES,

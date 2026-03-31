@@ -354,9 +354,9 @@ export const appConfig: ApplicationConfig = {
 
 ## 可视化和调试路由
 
-在构建应用程序页面时，可视化查看基于文件系统结构的路由会很有帮助。你可以使用 `withDebugRoutes()` 函数提供一个调试路由，显示应用程序的页面和布局。
+在开发过程中，Analog 会自动注册一个调试路由，显示应用程序的页面和布局。在浏览器中导航到 `/__analog/routes` 即可查看路由表。无需任何配置——调试路由在使用 `provideFileRouter()` 的任何应用中自动可用，并会从生产构建中自动移除。
 
-在 `app.config.ts` 中使用 `withDebugRoutes` 函数：
+如果需要显式注册调试路由（例如在自定义设置中），可以使用 `withDebugRoutes()` 函数：
 
 ```ts
 import { ApplicationConfig } from '@angular/core';
@@ -366,8 +366,6 @@ export const appConfig: ApplicationConfig = {
   providers: [provideFileRouter(withDebugRoutes())],
 };
 ```
-
-在浏览器中导航到 `__analog/routes` URL 以查看路由表。
 
 ![debug routes page](/img/debug-routes.png)
 
@@ -395,9 +393,9 @@ export const appConfig: ApplicationConfig = {
 
 ## 可视化和调试路由
 
-在构建应用程序页面时，可视化查看基于文件系统结构的路由会很有帮助。你可以使用 `withDebugRoutes()` 函数提供一个调试路由，显示应用程序的页面和布局。
+在开发过程中，Analog 会自动注册一个调试路由，显示应用程序的页面和布局。在浏览器中导航到 `/__analog/routes` 即可查看路由表。无需任何配置——调试路由在使用 `provideFileRouter()` 的任何应用中自动可用，并会从生产构建中自动移除。
 
-在 `app.config.ts` 中使用 `withDebugRoutes` 函数：
+如果需要显式注册调试路由（例如在自定义设置中），可以使用 `withDebugRoutes()` 函数：
 
 ```ts
 import { ApplicationConfig } from '@angular/core';
@@ -407,7 +405,5 @@ export const appConfig: ApplicationConfig = {
   providers: [provideFileRouter(withDebugRoutes())],
 };
 ```
-
-在浏览器中导航到 `__analog/routes` URL 以查看路由表。
 
 ![debug routes page](/img/debug-routes.png)

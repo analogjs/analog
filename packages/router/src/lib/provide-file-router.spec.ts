@@ -59,12 +59,16 @@ describe('provideFileRouter integration', () => {
   it('should produce empty routes when no extra sources and no page files', () => {
     // ANALOG_ROUTE_FILES is {} in the test environment (not replaced by Vite),
     // so with no extra sources the factory should produce an empty array.
+    // The __analog/routes debug route is auto-injected in dev mode but is
+    // not a file route — filter it out when asserting on file-based routes.
     TestBed.configureTestingModule({
       providers: [provideFileRouter(), provideLocationMocks()],
     });
 
     const allRoutes = TestBed.inject(ROUTES);
-    const flatRoutes = allRoutes.flat();
+    const flatRoutes = allRoutes
+      .flat()
+      .filter((r) => r.path !== '__analog/routes');
 
     expect(flatRoutes).toEqual([]);
   });
@@ -163,10 +167,27 @@ describe('provideFileRouter integration', () => {
     });
 
     const allRoutes = TestBed.inject(ROUTES);
-    const flatRoutes = allRoutes.flat();
+    const flatRoutes = allRoutes
+      .flat()
+      .filter((r) => r.path !== '__analog/routes');
 
     // Both ANALOG_ROUTE_FILES and ANALOG_CONTENT_ROUTE_FILES are {} in tests
     expect(flatRoutes).toEqual([]);
+  });
+
+  it('should auto-inject __analog/routes debug route in dev mode', () => {
+    TestBed.configureTestingModule({
+      providers: [provideFileRouter(), provideLocationMocks()],
+    });
+
+    const allRoutes = TestBed.inject(ROUTES);
+    const flatRoutes = allRoutes.flat();
+    const debugRoute = flatRoutes.find((r) => r.path === '__analog/routes');
+
+    // In dev mode (tests run with import.meta.env.DEV = true), the debug
+    // route is automatically registered without needing withDebugRoutes().
+    expect(debugRoute).toBeDefined();
+    expect(debugRoute!.loadComponent).toBeTypeOf('function');
   });
 
   it('should warn when content files exist but withContentRoutes() is not configured', () => {
