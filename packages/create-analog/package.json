@@ -6,7 +6,7 @@
   "author": "Brandon Roberts",
   "scripts": {},
   "bin": {
-    "create-analog": "index.mjs"
+    "create-analog": "index.js"
   },
   "files": [
     "index.js",
