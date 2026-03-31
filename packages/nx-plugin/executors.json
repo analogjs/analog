@@ -1,4 +1,9 @@
 {
+  "builders": {
+    "vite-dev-server": "@analogjs/vite-plugin-angular:vite-dev-server",
+    "vite": "@analogjs/vite-plugin-angular:vite",
+    "vitest": "@analogjs/vitest-angular:test"
+  },
   "executors": {
     "vite-dev-server": {
       "implementation": "./src/executors/vite-dev-server/vite-dev-server.impl",
