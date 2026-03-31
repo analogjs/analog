@@ -63,12 +63,6 @@ declare module '@analogjs/router' {
       query: Record<string, string | string[] | undefined>;
       queryOutput: Record<string, string | string[] | undefined>;
     };
-    '/libs/shared/featuretest': {
-      params: Record<string, never>;
-      paramsOutput: Record<string, never>;
-      query: Record<string, string | string[] | undefined>;
-      queryOutput: Record<string, string | string[] | undefined>;
-    };
     '/test': {
       params: Record<string, never>;
       paramsOutput: Record<string, never>;
@@ -132,7 +126,6 @@ export interface AnalogFileRoutesById {
   "/archived/2022-01-10-post2-2024": AnalogGeneratedRouteRecord<"/archived/2022-01-10-post2-2024", "2022-01-10-post2-2024", "/archived/2022-01-10-post2-2024", "/archived/index", readonly []>;
   "/blog/index": AnalogGeneratedRouteRecord<"/blog/index", "blog", "/blog", null, readonly ["/blog/[slug]"]>;
   "/contact": AnalogGeneratedRouteRecord<"/contact", "contact", "/contact", null, readonly []>;
-  "/libs/shared/featuretest": AnalogGeneratedRouteRecord<"/libs/shared/featuretest", "libs/shared/featuretest", "/libs/shared/featuretest", null, readonly []>;
   "/test": AnalogGeneratedRouteRecord<"/test", "test", "/test", null, readonly []>;
   "/archived/[slug]": AnalogGeneratedRouteRecord<"/archived/[slug]", "[slug]", "/archived/[slug]", "/archived/index", readonly []>;
   "/blog/[slug]": AnalogGeneratedRouteRecord<"/blog/[slug]", "[slug]", "/blog/[slug]", "/blog/index", readonly []>;
@@ -150,7 +143,6 @@ export interface AnalogFileRoutesByFullPath {
   "/archived/2022-01-10-post2-2024": AnalogFileRoutesById["/archived/2022-01-10-post2-2024"];
   "/blog": AnalogFileRoutesById["/blog/index"];
   "/contact": AnalogFileRoutesById["/contact"];
-  "/libs/shared/featuretest": AnalogFileRoutesById["/libs/shared/featuretest"];
   "/test": AnalogFileRoutesById["/test"];
   "/archived/[slug]": AnalogFileRoutesById["/archived/[slug]"];
   "/blog/[slug]": AnalogFileRoutesById["/blog/[slug]"];
@@ -322,30 +314,14 @@ export const analogRouteTree = {
       isCatchAll: false,
       isOptionalCatchAll: false,
     } satisfies AnalogFileRoutesById["/contact"],
-    "/libs/shared/featuretest": {
-      id: "/libs/shared/featuretest",
-      path: "libs/shared/featuretest",
-      fullPath: "/libs/shared/featuretest",
-      parentId: null,
-      children: [] as const,
-      sourceFile: "/libs/shared/feature/src/content/test.md",
-      kind: "content",
-      hasParamsSchema: false,
-      hasQuerySchema: false,
-      hasJsonLd: false,
-      isIndex: false,
-      isGroup: false,
-      isCatchAll: false,
-      isOptionalCatchAll: false,
-    } satisfies AnalogFileRoutesById["/libs/shared/featuretest"],
     "/test": {
       id: "/test",
       path: "test",
       fullPath: "/test",
       parentId: null,
       children: [] as const,
-      sourceFile: "/libs/shared/feature/src/pages/test.page.ts",
-      kind: "page",
+      sourceFile: "/libs/shared/feature/src/content/test.md",
+      kind: "content",
       hasParamsSchema: false,
       hasQuerySchema: false,
       hasJsonLd: false,
@@ -414,7 +390,6 @@ export const analogRouteTree = {
     "/archived/2022-01-10-post2-2024": "/archived/2022-01-10-post2-2024",
     "/blog": "/blog/index",
     "/contact": "/contact",
-    "/libs/shared/featuretest": "/libs/shared/featuretest",
     "/test": "/test",
     "/archived/[slug]": "/archived/[slug]",
     "/blog/[slug]": "/blog/[slug]",
