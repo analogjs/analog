@@ -20,6 +20,11 @@
       "import": "./dist/fesm2022/analogjs-router-tanstack-query.mjs",
       "default": "./dist/fesm2022/analogjs-router-tanstack-query.mjs"
     },
+    "./tanstack-query/server": {
+      "types": "./dist/types/tanstack-query/server/src/index.d.ts",
+      "import": "./dist/fesm2022/analogjs-router-tanstack-query-server.mjs",
+      "default": "./dist/fesm2022/analogjs-router-tanstack-query-server.mjs"
+    },
     "./server": {
       "types": "./dist/types/server/src/index.d.ts",
       "import": "./dist/fesm2022/analogjs-router-server.mjs",
