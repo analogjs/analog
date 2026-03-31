@@ -238,6 +238,13 @@ export function routerPlugin(options?: Options): Plugin[] {
       // pre-filter lets the bundler skip modules that don't contain the
       // marker.  '_ROUTE_FILES' is a common substring of both
       // 'ANALOG_ROUTE_FILES' and 'ANALOG_CONTENT_ROUTE_FILES'.
+      //
+      // IMPORTANT: Do NOT change this to 'ANALOG_ROUTE_FILES' — that is NOT
+      // a substring of 'ANALOG_CONTENT_ROUTE_FILES' (they diverge at
+      // position 7: 'ANALOG_C...' vs 'ANALOG_R...').  When tsconfig path
+      // aliases resolve @analogjs/router and @analogjs/router/content to
+      // separate source files, each variable lives in its own module and
+      // the filter must match both independently.
       transform: {
         filter: {
           code: '_ROUTE_FILES',

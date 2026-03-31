@@ -53,6 +53,10 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
         [ANALOG_META_KEY]: { endpoint: string; endpointKey: string };
       };
 
+      // Content routes (from .md files in the pages directory) do not have
+      // ANALOG_META_KEY — it is only set on page routes (.page.ts) in
+      // route-builder.ts.  The optional chain avoids a runtime crash when
+      // the router resolves a content route during SSR / prerendering.
       if (ANALOG_PAGE_ENDPOINTS[routeConfig[ANALOG_META_KEY]?.endpointKey]) {
         const http = inject(HttpClient);
         const url = injectRouteEndpointURL(route);
