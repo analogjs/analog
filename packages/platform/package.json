@@ -35,7 +35,6 @@
     "@analogjs/vite-plugin-nitro": "workspace:*",
     "front-matter": "catalog:",
     "nitro": "catalog:",
-    "nitropack": "^2.13.1",
     "rolldown": "catalog:",
     "tinyglobby": "catalog:",
     "vitefu": "catalog:"
