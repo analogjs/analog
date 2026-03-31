@@ -948,6 +948,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             rollupExternalEntries.push(
               'rxjs',
               'node-fetch-native/dist/polyfill',
+              'sharp',
             );
 
             nitroConfig = {

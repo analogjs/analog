@@ -53,7 +53,7 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
         [ANALOG_META_KEY]: { endpoint: string; endpointKey: string };
       };
 
-      if (ANALOG_PAGE_ENDPOINTS[routeConfig[ANALOG_META_KEY].endpointKey]) {
+      if (ANALOG_PAGE_ENDPOINTS[routeConfig[ANALOG_META_KEY]?.endpointKey]) {
         const http = inject(HttpClient);
         const url = injectRouteEndpointURL(route);
         const internalFetch = injectInternalServerFetch();
