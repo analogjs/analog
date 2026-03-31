@@ -6,6 +6,13 @@ const workspaceRoot = '/workspace/analog';
 const originalNodeEnv = process.env['NODE_ENV'];
 const originalVitestEnv = process.env['VITEST'];
 
+// Cache the real module exports once so vi.doMock factories can be
+// synchronous.  Async factories inside vi.doMock can race with
+// vi.resetModules in CI, causing the real createAngularCompilation to
+// leak through and spawn piscina workers that fail on the missing tsconfig.
+let cachedViteActual: typeof import('vite');
+let cachedDevkitActual: typeof import('./utils/devkit.js');
+
 async function setupLiveReloadPlugin(
   stylePreprocessor: (code: string, filename: string) => string,
 ) {
@@ -15,25 +22,22 @@ async function setupLiveReloadPlugin(
   process.env['NODE_ENV'] = 'development';
   delete process.env['VITEST'];
 
-  vi.doMock('vite', async () => {
-    const actual = await vi.importActual<typeof import('vite')>('vite');
-    return {
-      ...actual,
-      preprocessCSS: preprocessCSSMock,
-    };
-  });
+  cachedViteActual ??= await vi.importActual<typeof import('vite')>('vite');
+  cachedDevkitActual ??=
+    await vi.importActual<typeof import('./utils/devkit.js')>(
+      './utils/devkit.js',
+    );
 
-  vi.doMock('./utils/devkit.js', async () => {
-    const actual =
-      await vi.importActual<typeof import('./utils/devkit.js')>(
-        './utils/devkit.js',
-      );
-    return {
-      ...actual,
-      angularFullVersion: 200100,
-      createAngularCompilation: createAngularCompilationMock,
-    };
-  });
+  vi.doMock('vite', () => ({
+    ...cachedViteActual,
+    preprocessCSS: preprocessCSSMock,
+  }));
+
+  vi.doMock('./utils/devkit.js', () => ({
+    ...cachedDevkitActual,
+    angularFullVersion: 200100,
+    createAngularCompilation: createAngularCompilationMock,
+  }));
 
   const initialize = vi.fn();
   createAngularCompilationMock.mockResolvedValue({

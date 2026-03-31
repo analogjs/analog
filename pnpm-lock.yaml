@@ -800,11 +800,11 @@ importers:
   packages/platform:
     dependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: ^3.0.0-alpha.18
-        version: 3.0.0-alpha.18(@angular-devkit/build-angular@21.2.3(95bb02109e5624a4cd642a762ce0095f))(@angular/build@21.2.3(76d06595b6ea358e21879d8902ababea))
+        specifier: ^3.0.0-alpha.19
+        version: 3.0.0-alpha.19(@angular-devkit/build-angular@21.2.3(95bb02109e5624a4cd642a762ce0095f))(@angular/build@21.2.3(76d06595b6ea358e21879d8902ababea))
       '@analogjs/vite-plugin-nitro':
-        specifier: ^3.0.0-alpha.18
-        version: 3.0.0-alpha.18(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))
+        specifier: ^3.0.0-alpha.19
+        version: 3.0.0-alpha.19(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))
       '@nx/angular':
         specifier: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
         version: 22.6.1(602d9c64ab8231233b1daaae1ee9a3a7)
@@ -857,8 +857,8 @@ importers:
   packages/router:
     dependencies:
       '@analogjs/content':
-        specifier: ^3.0.0-alpha.18
-        version: 3.0.0-alpha.18(2d7079291880a7722c1eae26f12d69a3)
+        specifier: ^3.0.0-alpha.19
+        version: 3.0.0-alpha.19(2d7079291880a7722c1eae26f12d69a3)
       '@angular/core':
         specifier: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
         version: 21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1)
@@ -882,8 +882,8 @@ importers:
         version: 2.8.1
     devDependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: ^3.0.0-alpha.18
-        version: 3.0.0-alpha.18(@angular-devkit/build-angular@21.2.3(a74fb3718ec42039921193a0ee48fd99))(@angular/build@21.2.3(76d06595b6ea358e21879d8902ababea))
+        specifier: ^3.0.0-alpha.19
+        version: 3.0.0-alpha.19(@angular-devkit/build-angular@21.2.3(a74fb3718ec42039921193a0ee48fd99))(@angular/build@21.2.3(76d06595b6ea358e21879d8902ababea))
 
   packages/storybook-angular:
     dependencies:
@@ -910,7 +910,7 @@ importers:
         version: 21.2.3(a74fb3718ec42039921193a0ee48fd99)
       '@angular/build':
         specifier: ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-        version: 21.2.3(76d06595b6ea358e21879d8902ababea)
+        version: 21.2.3(95bb3afe8100d28c3cf8a76e48705a4f)
       oxc-parser:
         specifier: ^0.121.0
         version: 0.121.0
@@ -1139,8 +1139,8 @@ packages:
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
 
-  '@analogjs/content@3.0.0-alpha.18':
-    resolution: {integrity: sha512-TsmigwZXgI4vdr5+/Bv7zCb1Uu81qiJ75bb8B8PBkQ8tnTpu61UJKQBKlNxS/kpXSmxZ3wfbBoDfpIfMmc1WIQ==}
+  '@analogjs/content@3.0.0-alpha.19':
+    resolution: {integrity: sha512-LQSnP+HcqdphRSc/zV/D4J88ZK2kCWatWLSVzXQT+1ZGir8ZRntEC64TXr5m+OniKezgb1ctPTl8Obkn+R/xTg==}
     peerDependencies:
       '@angular/common': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
       '@angular/core': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
@@ -1195,8 +1195,19 @@ packages:
       '@angular/build':
         optional: true
 
-  '@analogjs/vite-plugin-nitro@3.0.0-alpha.18':
-    resolution: {integrity: sha512-bH2DyGnleUIk6tBRz+oYoHknhKZEJxprsEAiih8eXnQHPtDQbWnqkP9hmp0LRJ2NC+Eedk7hfqBrn5vknMtCuw==}
+  '@analogjs/vite-plugin-angular@3.0.0-alpha.19':
+    resolution: {integrity: sha512-Sb2rfYElCQzuZ0+dOXZ7QnmyQ2zVQrQX0mFYZjz42Lo3JhOrcva5jPVEARyWPFZJBBv8HZnsBzbhXrLgQhQjUw==}
+    peerDependencies:
+      '@angular-devkit/build-angular': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
+      '@angular/build': ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
+    peerDependenciesMeta:
+      '@angular-devkit/build-angular':
+        optional: true
+      '@angular/build':
+        optional: true
+
+  '@analogjs/vite-plugin-nitro@3.0.0-alpha.19':
+    resolution: {integrity: sha512-/0q5t7bNkWTey+f8CGz4RVw2cSdMqPFEsr87Vq+EWGvMHoQNaEmpJlKYUf0KJHIFrpRXNf0a/+auUc0NwcIbqw==}
 
   '@angular-devkit/architect@0.2102.3':
     resolution: {integrity: sha512-G4wSWUbtWp1WCKw5GMRqHH8g4m5RBpIyzt8n8IX5Pm6iYe/rwCBSKL3ktEkk7AYMwjtonkRlDtAK1GScFsf1Sg==}
@@ -9298,9 +9309,6 @@ packages:
   dayjs@1.11.20:
     resolution: {integrity: sha512-YbwwqR/uYpeoP4pu043q+LTDLFBLApUP6VxRihdfNTqu4ubqMlGDLd6ErXhEgsyvY0K6nCs7nggYumAN+9uEuQ==}
 
-  dayjs@1.11.9:
-    resolution: {integrity: sha512-QvzAURSbQ0pKdIye2txOzNaHmxtUBXerpY0FJsFXUMKbIZeFm5ht1LS/jFsrncjnmtv8HsG0W2g6c0zUjZWmpA==}
-
   db0@0.3.4:
     resolution: {integrity: sha512-RiXXi4WaNzPTHEOu8UPQKMooIbqOEyqA1t7Z6MsdxSCeb8iUC9ko3LcmsLmeUt2SM5bctfArZKkRQggKZz7JNw==}
     peerDependencies:
@@ -10287,10 +10295,6 @@ packages:
   form-data-encoder@2.1.4:
     resolution: {integrity: sha512-yDYSgNMraqvnxiEXO4hi88+YZxaHC6QKzb5N84iRCTDeRO7ZALpir/lVmf/uXUhnwUr2O4HU8s/n6x+yNjQkHw==}
     engines: {node: '>= 14.17'}
-
-  form-data@4.0.4:
-    resolution: {integrity: sha512-KrGhL9Q4zjj0kiUt5OO4Mr/A/jlI2jDYs5eHBpYHPcBEVSiipAvn2Ko2HnPe20rmcuuvMHNdZFp+4IlGTMF0Ow==}
-    engines: {node: '>= 6'}
 
   form-data@4.0.5:
     resolution: {integrity: sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w==}
@@ -17236,7 +17240,7 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.12
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@analogjs/content@3.0.0-alpha.18(2d7079291880a7722c1eae26f12d69a3)':
+  '@analogjs/content@3.0.0-alpha.19(2d7079291880a7722c1eae26f12d69a3)':
     dependencies:
       '@angular/common': 21.2.5(@angular/core@21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2)
       '@angular/core': 21.2.5(@angular/compiler@21.2.5)(rxjs@7.8.2)(zone.js@0.16.1)
@@ -17266,16 +17270,6 @@ snapshots:
       '@angular-devkit/build-angular': 21.2.3(a74fb3718ec42039921193a0ee48fd99)
       '@angular/build': 21.2.3(76d06595b6ea358e21879d8902ababea)
 
-  '@analogjs/vite-plugin-angular@3.0.0-alpha.18(@angular-devkit/build-angular@21.2.3(95bb02109e5624a4cd642a762ce0095f))(@angular/build@21.2.3(76d06595b6ea358e21879d8902ababea))':
-    dependencies:
-      oxc-parser: 0.121.0
-      oxc-resolver: 11.19.1
-      rolldown: 1.0.0-rc.11
-      tinyglobby: 0.2.15
-    optionalDependencies:
-      '@angular-devkit/build-angular': 21.2.3(95bb02109e5624a4cd642a762ce0095f)
-      '@angular/build': 21.2.3(76d06595b6ea358e21879d8902ababea)
-
   '@analogjs/vite-plugin-angular@3.0.0-alpha.18(@angular-devkit/build-angular@21.2.3(a74fb3718ec42039921193a0ee48fd99))(@angular/build@21.2.3(76d06595b6ea358e21879d8902ababea))':
     dependencies:
       oxc-parser: 0.121.0
@@ -17286,7 +17280,27 @@ snapshots:
       '@angular-devkit/build-angular': 21.2.3(a74fb3718ec42039921193a0ee48fd99)
       '@angular/build': 21.2.3(76d06595b6ea358e21879d8902ababea)
 
-  '@analogjs/vite-plugin-nitro@3.0.0-alpha.18(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))':
+  '@analogjs/vite-plugin-angular@3.0.0-alpha.19(@angular-devkit/build-angular@21.2.3(95bb02109e5624a4cd642a762ce0095f))(@angular/build@21.2.3(76d06595b6ea358e21879d8902ababea))':
+    dependencies:
+      oxc-parser: 0.121.0
+      oxc-resolver: 11.19.1
+      rolldown: 1.0.0-rc.11
+      tinyglobby: 0.2.15
+    optionalDependencies:
+      '@angular-devkit/build-angular': 21.2.3(95bb02109e5624a4cd642a762ce0095f)
+      '@angular/build': 21.2.3(76d06595b6ea358e21879d8902ababea)
+
+  '@analogjs/vite-plugin-angular@3.0.0-alpha.19(@angular-devkit/build-angular@21.2.3(a74fb3718ec42039921193a0ee48fd99))(@angular/build@21.2.3(76d06595b6ea358e21879d8902ababea))':
+    dependencies:
+      oxc-parser: 0.121.0
+      oxc-resolver: 11.19.1
+      rolldown: 1.0.0-rc.11
+      tinyglobby: 0.2.15
+    optionalDependencies:
+      '@angular-devkit/build-angular': 21.2.3(a74fb3718ec42039921193a0ee48fd99)
+      '@angular/build': 21.2.3(76d06595b6ea358e21879d8902ababea)
+
+  '@analogjs/vite-plugin-nitro@3.0.0-alpha.19(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))':
     dependencies:
       defu: 6.1.4
       nitro: 3.0.260311-beta(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))
@@ -17343,7 +17357,7 @@ snapshots:
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@angular-devkit/architect': 0.2102.3(chokidar@5.0.0)
-      '@angular-devkit/build-webpack': 0.2102.3(chokidar@5.0.0)(webpack-dev-server@5.2.3(webpack@5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.4)))(webpack@5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.3))
+      '@angular-devkit/build-webpack': 0.2102.3(chokidar@5.0.0)(webpack-dev-server@5.2.3(webpack@5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.3)))(webpack@5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.3))
       '@angular-devkit/core': 21.2.3(chokidar@5.0.0)
       '@angular/build': 21.2.3(95bb3afe8100d28c3cf8a76e48705a4f)
       '@angular/compiler-cli': 21.2.5(@angular/compiler@21.2.5)(typescript@6.0.2)
@@ -17518,12 +17532,12 @@ snapshots:
       - webpack-cli
       - yaml
 
-  '@angular-devkit/build-webpack@0.2102.3(chokidar@5.0.0)(webpack-dev-server@5.2.3(webpack@5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.4)))(webpack@5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.3))':
+  '@angular-devkit/build-webpack@0.2102.3(chokidar@5.0.0)(webpack-dev-server@5.2.3(webpack@5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.3)))(webpack@5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.3))':
     dependencies:
       '@angular-devkit/architect': 0.2102.3(chokidar@5.0.0)
       rxjs: 7.8.2
       webpack: 5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.3)
-      webpack-dev-server: 5.2.3(webpack@5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.4))
+      webpack-dev-server: 5.2.3(webpack@5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.3))
     transitivePeerDependencies:
       - chokidar
     optional: true
@@ -20556,7 +20570,7 @@ snapshots:
       combined-stream: 1.0.8
       extend: 3.0.2
       forever-agent: 0.6.1
-      form-data: 4.0.4
+      form-data: 4.0.5
       http-signature: 1.4.0
       is-typedarray: 1.0.0
       isstream: 0.1.2
@@ -21164,7 +21178,7 @@ snapshots:
 
   '@docusaurus/react-loadable@6.0.0(react@19.2.4)':
     dependencies:
-      '@types/react': 18.3.28
+      '@types/react': 19.2.14
       react: 19.2.4
 
   '@docusaurus/theme-classic@3.9.2(@rspack/core@1.6.8(@swc/helpers@0.5.19))(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/react@18.3.28)(acorn@8.16.0)(esbuild@0.27.4)(lightningcss@1.32.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)':
@@ -24903,7 +24917,7 @@ snapshots:
 
   '@slorber/react-helmet-async@1.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.28.6
       invariant: 2.2.4
       prop-types: 15.8.1
       react: 19.2.4
@@ -25326,7 +25340,7 @@ snapshots:
   '@testing-library/dom@10.4.0':
     dependencies:
       '@babel/code-frame': 7.29.0
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.28.6
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
       chalk: 4.1.2
@@ -28288,12 +28302,12 @@ snapshots:
       buffer: 5.7.1
       cachedir: 2.3.0
       chalk: 4.1.2
-      ci-info: 4.2.0
+      ci-info: 4.4.0
       cli-cursor: 3.1.0
       cli-table3: 0.6.1
       commander: 6.2.1
       common-tags: 1.8.2
-      dayjs: 1.11.9
+      dayjs: 1.11.20
       debug: 4.4.3(supports-color@8.1.1)
       enquirer: 2.3.6
       eventemitter2: 6.4.7
@@ -28523,9 +28537,6 @@ snapshots:
   date-format@4.0.14: {}
 
   dayjs@1.11.20: {}
-
-  dayjs@1.11.9:
-    optional: true
 
   db0@0.3.4: {}
 
@@ -29658,15 +29669,6 @@ snapshots:
       webpack: 5.104.1(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.4)
 
   form-data-encoder@2.1.4: {}
-
-  form-data@4.0.4:
-    dependencies:
-      asynckit: 0.4.0
-      combined-stream: 1.0.8
-      es-set-tostringtag: 2.1.0
-      hasown: 2.0.2
-      mime-types: 2.1.35
-    optional: true
 
   form-data@4.0.5:
     dependencies:

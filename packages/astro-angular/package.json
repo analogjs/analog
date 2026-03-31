@@ -9,6 +9,7 @@
     "./utils": "./dist/src/utils.js",
     "./client.js": "./dist/src/client.js",
     "./server.js": "./dist/src/server.js",
+    "./middleware": "./dist/src/middleware.js",
     "./package.json": "./package.json"
   },
   "keywords": [
