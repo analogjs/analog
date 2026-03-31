@@ -193,6 +193,9 @@ describe('setup schematic', () => {
       "import '@analogjs/vitest-angular/setup-snapshots'",
     );
     expect(setupContent).toContain(
+      "import '@analogjs/vitest-angular/setup-serializers'",
+    );
+    expect(setupContent).toContain(
       "import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed'",
     );
     expect(setupContent).toContain('setupTestBed()');

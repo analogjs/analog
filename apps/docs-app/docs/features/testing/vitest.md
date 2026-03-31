@@ -127,6 +127,7 @@ Use the following setup:
 ```ts
 import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-snapshots';
+import '@analogjs/vitest-angular/setup-serializers';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 setupTestBed();
@@ -276,6 +277,7 @@ When running tests with headed browser mode, you may want to update your `src/te
 ```ts
 import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-snapshots';
+import '@analogjs/vitest-angular/setup-serializers';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 setupTestBed({
@@ -324,6 +326,11 @@ pnpm test
 ## Snapshot Testing
 
 For snapshot testing you can use `toMatchSnapshot` from `expect` API.
+
+The import of `setup-snapshots` and `setup-serializers` are complementary:
+
+- Use `setup-snapshots` to serialize Angular fixtures and component refs so Vitest snapshots print component markup instead of Angular testing internals.
+- Use `setup-serializers` to clean DOM snapshots by removing Angular runtime noise such as `_ngcontent-*`, `_nghost-*`, `ng-reflect-*`, generated ids and classes, and removes comments from DOM snapshots (e.g. `<!--container-->`).
 
 Below is a small example of how to write a snapshot test:
 

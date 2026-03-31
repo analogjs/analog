@@ -1,3 +1,27 @@
+# [3.0.0-alpha.19](https://github.com/analogjs/analog/compare/v3.0.0-alpha.18...v3.0.0-alpha.19) (2026-03-30)
+
+### Bug Fixes
+
+- **astro-angular:** style tag ordering for multiple islands ([#2210](https://github.com/analogjs/analog/issues/2210)) ([b306097](https://github.com/analogjs/analog/commit/b306097442be5f1f38f7b47762c67c09febec628))
+- **content:** resolve content files by bare slug lookup ([#2205](https://github.com/analogjs/analog/issues/2205)) ([7e79d24](https://github.com/analogjs/analog/commit/7e79d24a9cd2a8e70dea5b458db59cd4e5ae31ff))
+- **create-analog:** bump to Vitest 4.1, update CI workflow versions ([54b5112](https://github.com/analogjs/analog/commit/54b51125130e897faf787db2b918d5ae16e4802f))
+- fix vitest build and ci workflows ([a4b129a](https://github.com/analogjs/analog/commit/a4b129a589090043d0b06f6e72bbbc259aa23f9e))
+- **nx-plugin:** remove full path to main.ts for Nx projects ([#2164](https://github.com/analogjs/analog/issues/2164)) ([39f0d7c](https://github.com/analogjs/analog/commit/39f0d7ce411cf4c59b5b446337affaa818a4e48f))
+- **nx-plugin:** restore builders configuration ([1d2e4e8](https://github.com/analogjs/analog/commit/1d2e4e8b115da2fb1b63c67f017f861dac7b2f4c))
+- **nx-plugin:** restore schematics configuration ([#2167](https://github.com/analogjs/analog/issues/2167)) ([e74fa68](https://github.com/analogjs/analog/commit/e74fa6829c340976403ba46ca933bd72be2dde2d))
+- **vite-plugin-angular:** skip esm transform with Rolldown for Vitest ([#2169](https://github.com/analogjs/analog/issues/2169)) ([20c720b](https://github.com/analogjs/analog/commit/20c720bc8178174041002f400ed4d694dabb30c1))
+- **vitest-angular:** fix imports for snapshot serializers ([#2211](https://github.com/analogjs/analog/issues/2211)) ([8e9f73d](https://github.com/analogjs/analog/commit/8e9f73dfde0e03e0943512dd18f432f20307f3f5))
+
+### Features
+
+- **astro-angular:** add option to move component styles to document head ([#2162](https://github.com/analogjs/analog/issues/2162)) ([2361afa](https://github.com/analogjs/analog/commit/2361afaa31247e61483517d321f541c7419bc79b))
+- **create-analog:** add snapshot serializers ([3318263](https://github.com/analogjs/analog/commit/33182636a130e4c7b3f213aece7a020cf0981c3e))
+- **vitest-angular:** add reusable snapshot serializers ([#2163](https://github.com/analogjs/analog/issues/2163)) ([9089c8d](https://github.com/analogjs/analog/commit/9089c8d8f315aad4792d6b37b18db62d951301b2))
+
+### Reverts
+
+- roll back CI configuration temporarily and disable smoke tests ([#2203](https://github.com/analogjs/analog/issues/2203)) ([5a68f5a](https://github.com/analogjs/analog/commit/5a68f5af771793267add17dc354ad693e6f37986))
+
 # [3.0.0-alpha.18](https://github.com/analogjs/analog/compare/v3.0.0-alpha.17...v3.0.0-alpha.18) (2026-03-26)
 
 ### Bug Fixes

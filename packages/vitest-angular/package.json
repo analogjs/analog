@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vitest-angular",
-  "version": "3.0.0-alpha.18",
+  "version": "3.0.0-alpha.19",
   "description": "Vitest Builder for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -8,6 +8,7 @@
     ".": "./dist/src/index.js",
     "./setup-zone": "./dist/setup-zone.js",
     "./setup-snapshots": "./dist/setup-snapshots.js",
+    "./setup-serializers": "./dist/setup-serializers.js",
     "./setup-testbed": "./dist/setup-testbed.js",
     "./package.json": "./package.json"
   },

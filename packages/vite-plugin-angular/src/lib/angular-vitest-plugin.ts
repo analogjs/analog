@@ -9,7 +9,7 @@ import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
  * `@angular/cdk` from modern async/await to ES2016 so that Zone.js can
  * intercept promises during `fakeAsync` tests.
  *
- * Under Vite 8+ (Rolldown) the OXC transformer is used.
+ * Under Vite 8+ (Rolldown) downleveling is not needed.
  * Under Vite ≤7, esbuild handles the downlevel.
  */
 export function angularVitestPlugin(): Plugin {
@@ -47,33 +47,21 @@ export function angularVitestPlugin(): Plugin {
           _code.includes('@angular/cdk')
         ) {
           if (isRolldown()) {
-            // OXC does not expose a `format` option like esbuild; ESM output
-            // is the default when the source contains import/export statements.
-            const { code, map } = await vite.transformWithOxc(_code, id, {
-              lang: 'js',
-              target: 'es2016',
-              sourceType: 'module',
-              sourcemap: true,
-            });
-
-            return {
-              code,
-              map,
-            };
-          } else {
-            const { code, map } = await vite.transformWithEsbuild(_code, id, {
-              loader: 'js',
-              format: 'esm',
-              target: 'es2016',
-              sourcemap: true,
-              sourcefile: id,
-            });
-
-            return {
-              code,
-              map,
-            };
+            return undefined;
           }
+
+          const { code, map } = await vite.transformWithEsbuild(_code, id, {
+            loader: 'js',
+            format: 'esm',
+            target: 'es2016',
+            sourcemap: true,
+            sourcefile: id,
+          });
+
+          return {
+            code,
+            map,
+          };
         }
 
         return undefined;
