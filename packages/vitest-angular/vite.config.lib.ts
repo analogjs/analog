@@ -87,6 +87,7 @@ export default defineConfig({
         'src/index': resolve(pkgDir, 'src/index.ts'),
         'setup-zone': resolve(pkgDir, 'setup-zone.ts'),
         'setup-snapshots': resolve(pkgDir, 'setup-snapshots.ts'),
+        'setup-serializers': resolve(pkgDir, 'setup-serializers.ts'),
         'setup-testbed': resolve(pkgDir, 'setup-testbed.ts'),
       },
       formats: ['es'],

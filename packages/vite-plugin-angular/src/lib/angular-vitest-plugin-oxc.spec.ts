@@ -38,7 +38,7 @@ describe('OXC conditional paths', () => {
   });
 
   describe('angularVitestPlugin transform', () => {
-    it('calls transformWithOxc for fesm2022 files with async when rolldownVersion is set', async () => {
+    it('skips downleveling for fesm2022 files when rolldownVersion is set', async () => {
       mockRolldownVersion = '1.0.0';
       const plugin = angularVitestPlugin();
       const result = await (
@@ -48,18 +48,9 @@ describe('OXC conditional paths', () => {
         '/node_modules/@angular/core/fesm2022/core.mjs',
       );
 
-      expect(mockTransformWithOxc).toHaveBeenCalledWith(
-        'async function foo() {}',
-        '/node_modules/@angular/core/fesm2022/core.mjs',
-        expect.objectContaining({
-          lang: 'js',
-          target: 'es2016',
-          sourcemap: true,
-        }),
-      );
+      expect(result).toBeUndefined();
+      expect(mockTransformWithOxc).not.toHaveBeenCalled();
       expect(mockTransformWithEsbuild).not.toHaveBeenCalled();
-      expect(result.code).toBe('oxc-out');
-      expect(result.map).toEqual({});
     });
 
     it('calls transformWithEsbuild for fesm2022 files with async when rolldownVersion is not set', async () => {
@@ -85,16 +76,16 @@ describe('OXC conditional paths', () => {
       expect(result.code).toBe('esbuild-out');
     });
 
-    it('transforms files containing @angular/cdk via OXC', async () => {
+    it('skips downleveling for @angular/cdk files when rolldownVersion is set', async () => {
       mockRolldownVersion = '1.0.0';
       const plugin = angularVitestPlugin();
       const result = await (
         (plugin.transform as any).handler ?? plugin.transform
       )('import "@angular/cdk";', '/src/app/dialog.ts');
 
-      expect(mockTransformWithOxc).toHaveBeenCalled();
+      expect(result).toBeUndefined();
+      expect(mockTransformWithOxc).not.toHaveBeenCalled();
       expect(mockTransformWithEsbuild).not.toHaveBeenCalled();
-      expect(result.code).toBe('oxc-out');
     });
 
     it('transforms files containing @angular/cdk via esbuild', async () => {

@@ -16,7 +16,6 @@ export default defineConfig(({ mode }) => {
       lib: {
         entry: {
           'src/index': 'src/index.ts',
-          'setup-vitest': 'setup-vitest.ts',
         },
         formats: ['es' as const],
       },

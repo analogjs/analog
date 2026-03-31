@@ -49,9 +49,6 @@
       "@analogjs/vite-plugin-angular": [
         "./packages/vite-plugin-angular/src/index.ts"
       ],
-      "@analogjs/vite-plugin-angular/setup-vitest": [
-        "./packages/vite-plugin-angular/setup-vitest.ts"
-      ],
       "@analogjs/vite-plugin-nitro": [
         "./packages/vite-plugin-nitro/src/index.ts"
       ],

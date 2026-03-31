@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vite-plugin-angular",
-  "version": "3.0.0-alpha.18",
+  "version": "3.0.0-alpha.19",
   "description": "Vite Plugin for Angular",
   "type": "module",
   "keywords": [
@@ -61,10 +61,6 @@
       "import": "./dist/src/index.js",
       "require": "./dist/src/index.js",
       "default": "./dist/src/index.js"
-    },
-    "./setup-vitest": {
-      "types": "./dist/setup-vitest.d.ts",
-      "default": "./dist/setup-vitest.js"
     }
   },
   "publishConfig": {
