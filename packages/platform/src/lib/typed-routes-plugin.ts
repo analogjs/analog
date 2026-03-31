@@ -35,7 +35,7 @@ export interface TypedRoutesPluginOptions {
   /**
    * Workspace root used to resolve additional route/content directories.
    *
-   * @default process.cwd()
+   * @default process.env['NX_WORKSPACE_ROOT'] ?? process.cwd()
    */
   workspaceRoot?: string;
   /**
@@ -75,7 +75,10 @@ function resolvePluginOptions(
 ): Required<TypedRoutesPluginOptions> {
   return {
     outFile: options.outFile ?? DEFAULT_OUT_FILE,
-    workspaceRoot: options.workspaceRoot ?? process.cwd(),
+    workspaceRoot:
+      options.workspaceRoot ??
+      process.env['NX_WORKSPACE_ROOT'] ??
+      process.cwd(),
     additionalPagesDirs: options.additionalPagesDirs ?? [],
     additionalContentDirs: options.additionalContentDirs ?? [],
     jsonLdManifest: options.jsonLdManifest ?? true,

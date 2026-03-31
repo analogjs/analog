@@ -23,7 +23,9 @@ import { Options } from './options.js';
  * - Files outside project root keep absolute paths in object keys
  */
 export function routerPlugin(options?: Options): Plugin[] {
-  const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
+  const workspaceRoot = normalizePath(
+    options?.workspaceRoot ?? process.env['NX_WORKSPACE_ROOT'] ?? process.cwd(),
+  );
   let config: UserConfig;
   let root: string;
   // Option dirs are workspace-relative, often written with a leading `/`.

@@ -6,7 +6,8 @@ import { Options } from './options.js';
 import { getJsTransformConfigKey } from './utils/rolldown.js';
 
 export function depsPlugin(options?: Options): Plugin[] {
-  const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  const workspaceRoot =
+    options?.workspaceRoot ?? process.env['NX_WORKSPACE_ROOT'] ?? process.cwd();
   const viteOptions = options?.vite === false ? undefined : options?.vite;
 
   return [
