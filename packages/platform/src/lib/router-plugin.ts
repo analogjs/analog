@@ -275,6 +275,11 @@ export function routerPlugin(options?: Options): Plugin[] {
             `,
             );
 
+            result = result.replace(
+              'ANALOG_CONTENT_FILE_COUNT = 0',
+              `ANALOG_CONTENT_FILE_COUNT = ${contentRouteFiles.length}`,
+            );
+
             return {
               code: result,
               map: { mappings: '' },

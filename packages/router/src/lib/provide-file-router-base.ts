@@ -15,6 +15,7 @@ import { createRoutes as createBaseRoutes } from './route-builder';
 import {
   ANALOG_ROUTE_FILES,
   ANALOG_EXTRA_ROUTE_FILE_SOURCES,
+  ANALOG_CONTENT_FILE_COUNT,
   type ExtraRouteFileSource,
 } from './route-files';
 import type { RouteExport } from './models';
@@ -36,6 +37,20 @@ export function provideFileRouterWithRoutes(
       useFactory: () => {
         const extraSources =
           inject(ANALOG_EXTRA_ROUTE_FILE_SOURCES, { optional: true }) ?? [];
+
+        if (
+          import.meta.env.DEV &&
+          extraSources.length === 0 &&
+          ANALOG_CONTENT_FILE_COUNT > 0
+        ) {
+          console.warn(
+            `[Analog] ${ANALOG_CONTENT_FILE_COUNT} content route file(s) ` +
+              `discovered but withContentRoutes() is not configured. ` +
+              `Content routes will not be registered.\n\n` +
+              `  import { withContentRoutes } from '@analogjs/router/content';\n` +
+              `  provideFileRouter(withContentRoutes())\n`,
+          );
+        }
 
         if (extraSources.length === 0) {
           return createBaseRoutes(
