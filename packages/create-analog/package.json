@@ -9,7 +9,7 @@
     "create-analog": "index.mjs"
   },
   "files": [
-    "index.mjs",
+    "index.js",
     "template-angular-v17",
     "template-angular-v18",
     "template-angular-v19",
