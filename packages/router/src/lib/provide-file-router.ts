@@ -1,11 +1,7 @@
 import { EnvironmentProviders } from '@angular/core';
 import { RouterFeatures } from '@angular/router';
 
-import {
-  provideFileRouterWithRoutes,
-  withExtraRoutes,
-} from './provide-file-router-base';
-import { routes } from './routes';
+import { provideFileRouterWithRoutes } from './provide-file-router-base';
 
 /**
  * Sets up providers for the Angular router, and registers
@@ -18,7 +14,7 @@ import { routes } from './routes';
 export function provideFileRouter(
   ...features: RouterFeatures[]
 ): EnvironmentProviders {
-  return provideFileRouterWithRoutes(routes, ...features);
+  return provideFileRouterWithRoutes(...features);
 }
 
 export { withExtraRoutes } from './provide-file-router-base';

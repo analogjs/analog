@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideLocationMocks } from '@angular/common/testing';
-import { ROUTES, Router, provideRouter } from '@angular/router';
+import { ROUTES, provideRouter } from '@angular/router';
 import { describe, expect, it } from 'vitest';
 
 import { RouteExport } from './models';
@@ -10,6 +10,7 @@ import {
   ExtraRouteFileSource,
 } from './route-files';
 import { provideFileRouter } from './provide-file-router';
+import { withContentRoutes } from '../../content/src/lib/with-content-routes';
 
 @Component({ standalone: true, template: '' })
 class StubComponent {}
@@ -146,5 +147,25 @@ describe('provideFileRouter integration', () => {
     );
 
     expect(customRoute).toBeDefined();
+  });
+
+  it('should not throw when withContentRoutes() is passed as a feature', () => {
+    // withContentRoutes() provides ANALOG_EXTRA_ROUTE_FILE_SOURCES through
+    // the feature mechanism. In tests, ANALOG_CONTENT_ROUTE_FILES is {} (not
+    // replaced by Vite), so no content routes are produced. This test verifies
+    // the DI wiring doesn't throw — the feature's providers are correctly
+    // registered and the factory can inject them.
+    TestBed.configureTestingModule({
+      providers: [
+        provideFileRouter(withContentRoutes()),
+        provideLocationMocks(),
+      ],
+    });
+
+    const allRoutes = TestBed.inject(ROUTES);
+    const flatRoutes = allRoutes.flat();
+
+    // Both ANALOG_ROUTE_FILES and ANALOG_CONTENT_ROUTE_FILES are {} in tests
+    expect(flatRoutes).toEqual([]);
   });
 });
