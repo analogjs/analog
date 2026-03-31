@@ -13,6 +13,12 @@ declare module '@analogjs/router' {
       query: Record<string, string | string[] | undefined>;
       queryOutput: Record<string, string | string[] | undefined>;
     };
+    '/about-me': {
+      params: Record<string, never>;
+      paramsOutput: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+      queryOutput: Record<string, string | string[] | undefined>;
+    };
     '/cart': {
       params: Record<string, never>;
       paramsOutput: Record<string, never>;
@@ -64,6 +70,18 @@ declare module '@analogjs/router' {
     '/sign-up': {
       params: Record<string, never>;
       paramsOutput: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+      queryOutput: Record<string, string | string[] | undefined>;
+    };
+    '/test': {
+      params: Record<string, never>;
+      paramsOutput: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+      queryOutput: Record<string, string | string[] | undefined>;
+    };
+    '/blog/[slug]': {
+      params: { slug: string };
+      paramsOutput: { slug: string };
       query: Record<string, string | string[] | undefined>;
       queryOutput: Record<string, string | string[] | undefined>;
     };
@@ -121,6 +139,7 @@ export interface AnalogGeneratedRouteRecord<
 
 export interface AnalogFileRoutesById {
   "/(auth)": AnalogGeneratedRouteRecord<"/(auth)", "/", "/", null, readonly []>;
+  "/about-me": AnalogGeneratedRouteRecord<"/about-me", "about-me", "/about-me", null, readonly []>;
   "/cart": AnalogGeneratedRouteRecord<"/cart", "cart", "/cart", null, readonly []>;
   "/client/(client)": AnalogGeneratedRouteRecord<"/client/(client)", "client", "/client", null, readonly []>;
   "/contact": AnalogGeneratedRouteRecord<"/contact", "contact", "/contact", null, readonly []>;
@@ -130,6 +149,8 @@ export interface AnalogFileRoutesById {
   "/server/(server)": AnalogGeneratedRouteRecord<"/server/(server)", "server", "/server", null, readonly []>;
   "/shipping/index": AnalogGeneratedRouteRecord<"/shipping/index", "shipping", "/shipping", null, readonly ["/shipping/[...slug]"]>;
   "/(auth)/sign-up": AnalogGeneratedRouteRecord<"/(auth)/sign-up", "sign-up", "/sign-up", null, readonly []>;
+  "/test": AnalogGeneratedRouteRecord<"/test", "test", "/test", null, readonly []>;
+  "/blog/[slug]": AnalogGeneratedRouteRecord<"/blog/[slug]", "blog/[slug]", "/blog/[slug]", null, readonly []>;
   "/greet/[name]": AnalogGeneratedRouteRecord<"/greet/[name]", "greet/[name]", "/greet/[name]", null, readonly []>;
   "/products/[productId]": AnalogGeneratedRouteRecord<"/products/[productId]", "products/[productId]", "/products/[productId]", null, readonly []>;
   "/[...slug]": AnalogGeneratedRouteRecord<"/[...slug]", "[...slug]", "/[...slug]", null, readonly []>;
@@ -138,6 +159,7 @@ export interface AnalogFileRoutesById {
 
 export interface AnalogFileRoutesByFullPath {
   "/": AnalogFileRoutesById["/(auth)"];
+  "/about-me": AnalogFileRoutesById["/about-me"];
   "/cart": AnalogFileRoutesById["/cart"];
   "/client": AnalogFileRoutesById["/client/(client)"];
   "/contact": AnalogFileRoutesById["/contact"];
@@ -147,6 +169,8 @@ export interface AnalogFileRoutesByFullPath {
   "/server": AnalogFileRoutesById["/server/(server)"];
   "/shipping": AnalogFileRoutesById["/shipping/index"];
   "/sign-up": AnalogFileRoutesById["/(auth)/sign-up"];
+  "/test": AnalogFileRoutesById["/test"];
+  "/blog/[slug]": AnalogFileRoutesById["/blog/[slug]"];
   "/greet/[name]": AnalogFileRoutesById["/greet/[name]"];
   "/products/[productId]": AnalogFileRoutesById["/products/[productId]"];
   "/[...slug]": AnalogFileRoutesById["/[...slug]"];
@@ -174,6 +198,22 @@ export const analogRouteTree = {
       isCatchAll: false,
       isOptionalCatchAll: false,
     } satisfies AnalogFileRoutesById["/(auth)"],
+    "/about-me": {
+      id: "/about-me",
+      path: "about-me",
+      fullPath: "/about-me",
+      parentId: null,
+      children: [] as const,
+      sourceFile: "/libs/shared/feature/src/pages/about-me.page.ts",
+      kind: "page",
+      hasParamsSchema: false,
+      hasQuerySchema: false,
+      hasJsonLd: false,
+      isIndex: false,
+      isGroup: false,
+      isCatchAll: false,
+      isOptionalCatchAll: false,
+    } satisfies AnalogFileRoutesById["/about-me"],
     "/cart": {
       id: "/cart",
       path: "cart",
@@ -318,6 +358,38 @@ export const analogRouteTree = {
       isCatchAll: false,
       isOptionalCatchAll: false,
     } satisfies AnalogFileRoutesById["/(auth)/sign-up"],
+    "/test": {
+      id: "/test",
+      path: "test",
+      fullPath: "/test",
+      parentId: null,
+      children: [] as const,
+      sourceFile: "/libs/shared/feature/src/pages/test.page.ts",
+      kind: "page",
+      hasParamsSchema: false,
+      hasQuerySchema: false,
+      hasJsonLd: false,
+      isIndex: false,
+      isGroup: false,
+      isCatchAll: false,
+      isOptionalCatchAll: false,
+    } satisfies AnalogFileRoutesById["/test"],
+    "/blog/[slug]": {
+      id: "/blog/[slug]",
+      path: "blog/[slug]",
+      fullPath: "/blog/[slug]",
+      parentId: null,
+      children: [] as const,
+      sourceFile: "/libs/shared/feature/src/pages/blog/[slug].page.ts",
+      kind: "page",
+      hasParamsSchema: false,
+      hasQuerySchema: false,
+      hasJsonLd: false,
+      isIndex: false,
+      isGroup: false,
+      isCatchAll: false,
+      isOptionalCatchAll: false,
+    } satisfies AnalogFileRoutesById["/blog/[slug]"],
     "/greet/[name]": {
       id: "/greet/[name]",
       path: "greet/[name]",
@@ -385,6 +457,7 @@ export const analogRouteTree = {
   },
   byFullPath: {
     "/": "/(auth)",
+    "/about-me": "/about-me",
     "/cart": "/cart",
     "/client": "/client/(client)",
     "/contact": "/contact",
@@ -394,6 +467,8 @@ export const analogRouteTree = {
     "/server": "/server/(server)",
     "/shipping": "/shipping/index",
     "/sign-up": "/(auth)/sign-up",
+    "/test": "/test",
+    "/blog/[slug]": "/blog/[slug]",
     "/greet/[name]": "/greet/[name]",
     "/products/[productId]": "/products/[productId]",
     "/[...slug]": "/[...slug]",
