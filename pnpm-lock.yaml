@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  srvx@0.11.13:
+    hash: 12566e1018bec67b6844444c1857232a989b8470cc6b12872dc3ce2900863591
+    path: patches/srvx@0.11.13.patch
+
 importers:
 
   .:
@@ -28009,9 +28014,9 @@ snapshots:
     dependencies:
       uncrypto: 0.1.3
 
-  crossws@0.4.4(srvx@0.11.13):
+  crossws@0.4.4(srvx@0.11.13(patch_hash=12566e1018bec67b6844444c1857232a989b8470cc6b12872dc3ce2900863591)):
     optionalDependencies:
-      srvx: 0.11.13
+      srvx: 0.11.13(patch_hash=12566e1018bec67b6844444c1857232a989b8470cc6b12872dc3ce2900863591)
 
   crypto-random-string@4.0.0:
     dependencies:
@@ -28867,10 +28872,10 @@ snapshots:
 
   env-runner@0.1.7:
     dependencies:
-      crossws: 0.4.4(srvx@0.11.13)
+      crossws: 0.4.4(srvx@0.11.13(patch_hash=12566e1018bec67b6844444c1857232a989b8470cc6b12872dc3ce2900863591))
       exsolve: 1.0.8
       httpxy: 0.5.0
-      srvx: 0.11.13
+      srvx: 0.11.13(patch_hash=12566e1018bec67b6844444c1857232a989b8470cc6b12872dc3ce2900863591)
 
   environment@1.1.0: {}
 
@@ -29984,12 +29989,12 @@ snapshots:
       ufo: 1.6.3
       uncrypto: 0.1.3
 
-  h3@2.0.1-rc.20(crossws@0.4.4(srvx@0.11.13)):
+  h3@2.0.1-rc.20(crossws@0.4.4(srvx@0.11.13(patch_hash=12566e1018bec67b6844444c1857232a989b8470cc6b12872dc3ce2900863591))):
     dependencies:
       rou3: 0.8.1
-      srvx: 0.11.13
+      srvx: 0.11.13(patch_hash=12566e1018bec67b6844444c1857232a989b8470cc6b12872dc3ce2900863591)
     optionalDependencies:
-      crossws: 0.4.4(srvx@0.11.13)
+      crossws: 0.4.4(srvx@0.11.13(patch_hash=12566e1018bec67b6844444c1857232a989b8470cc6b12872dc3ce2900863591))
 
   hachure-fill@0.5.2: {}
 
@@ -32653,17 +32658,17 @@ snapshots:
   nitro@3.0.260311-beta(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2)):
     dependencies:
       consola: 3.4.2
-      crossws: 0.4.4(srvx@0.11.13)
+      crossws: 0.4.4(srvx@0.11.13(patch_hash=12566e1018bec67b6844444c1857232a989b8470cc6b12872dc3ce2900863591))
       db0: 0.3.4
       env-runner: 0.1.7
-      h3: 2.0.1-rc.20(crossws@0.4.4(srvx@0.11.13))
+      h3: 2.0.1-rc.20(crossws@0.4.4(srvx@0.11.13(patch_hash=12566e1018bec67b6844444c1857232a989b8470cc6b12872dc3ce2900863591)))
       hookable: 6.1.0
       nf3: 0.3.14
       ocache: 0.1.4
       ofetch: 2.0.0-alpha.3
       ohash: 2.0.11
       rolldown: 1.0.0-rc.11
-      srvx: 0.11.13
+      srvx: 0.11.13(patch_hash=12566e1018bec67b6844444c1857232a989b8470cc6b12872dc3ce2900863591)
       unenv: 2.0.0-rc.24
       unstorage: 2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4)(ioredis@5.10.0)(lru-cache@11.2.7)(ofetch@2.0.0-alpha.3)
     optionalDependencies:
@@ -35907,7 +35912,7 @@ snapshots:
 
   srcset@4.0.0: {}
 
-  srvx@0.11.13: {}
+  srvx@0.11.13(patch_hash=12566e1018bec67b6844444c1857232a989b8470cc6b12872dc3ce2900863591): {}
 
   sshpk@1.18.0:
     dependencies:
@@ -36252,14 +36257,14 @@ snapshots:
       type-fest: 2.19.0
       unique-string: 3.0.0
 
-  terser-webpack-plugin@5.3.16(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.3)(webpack@5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.4)):
+  terser-webpack-plugin@5.3.16(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.3)(webpack@5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.3)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.3.3
       serialize-javascript: 6.0.2
       terser: 5.44.1
-      webpack: 5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.4)
+      webpack: 5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.3)
     optionalDependencies:
       '@swc/core': 1.15.18(@swc/helpers@0.5.19)
       esbuild: 0.27.3
@@ -37565,7 +37570,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.0
-      terser-webpack-plugin: 5.3.16(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.3)(webpack@5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.4))
+      terser-webpack-plugin: 5.3.16(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.3)(webpack@5.105.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(esbuild@0.27.3))
       watchpack: 2.5.1
       webpack-sources: 3.3.3
     transitivePeerDependencies:

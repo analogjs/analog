@@ -1,5 +1,5 @@
 diff --git a/dist/adapters/node.mjs b/dist/adapters/node.mjs
-index bf860dbe3f2b2103b252d99cf2cac9685589d24f..845af0b189fc893449620240e16f70648b2c50bb 100644
+index bf860db..845af0b 100644
 --- a/dist/adapters/node.mjs
 +++ b/dist/adapters/node.mjs
 @@ -717,7 +717,7 @@ function toNodeHandler(handler) {

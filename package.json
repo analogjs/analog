@@ -243,7 +243,10 @@
       "oxc-parser",
       "sharp",
       "vite-tsconfig-paths"
-    ]
+    ],
+    "patchedDependencies": {
+      "srvx@0.11.13": "patches/srvx@0.11.13.patch"
+    }
   },
   "overrides": {
     "@angular/animations": "$@angular/animations",
