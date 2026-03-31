@@ -8,7 +8,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - Main framework: **AnalogJS** (meta-framework for Angular, powered by Vite)
 - Contains multiple apps (Angular, Astro, blog, docs, etc.) and libraries (shared, card, top-bar, etc.)
 - Key packages: `@analogjs/platform`, `@analogjs/vite-plugin-angular`, `@analogjs/vitest-angular`, `@analogjs/vite-plugin-nitro`, `@analogjs/router`, etc.
-- Node engines: `^24.3.0`, pnpm `^10.0.0`
+- Node engines: `^22.0.0 || ^24.0.0`, pnpm `^10.0.0`
 
 ## Key Files
 
@@ -110,7 +110,7 @@ Projects with caching explicitly disabled (`"cache": false` on their build targe
 - Always scan existing codebase for examples and patterns for implementation.
 - When writing code, analyze all touched code paths up front, including Analog experimental Vite options, their disabled branches, and compatibility fallbacks. Do not treat experimental features as exempt from behavioral review, regression analysis, or targeted tests.
 - Prefer using existing Angular APIs, with wrappers where needed.
-- Always use modern Angular syntax including control flow, signal APIs, and standalone components.
+- Always use modern Angular syntax including dependency injection with inject, control flow, signal APIs, and standalone components.
 - Cross compatibility with Nx is strongly encouraged. Prefer schematics and builders for Analog first-party solutions.
 - Avoid custom code that replicates Angular framework functionality.
 - Don't be overly verbose with comments.
