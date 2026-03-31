@@ -62,7 +62,7 @@ afterEach(async () => {
 
 async function waitFor(
   assertion: () => Promise<void>,
-  timeout = 30_000,
+  timeout = 60_000,
   interval = 250,
 ) {
   // This spec runs against a live dev server, so we retry instead of coupling
