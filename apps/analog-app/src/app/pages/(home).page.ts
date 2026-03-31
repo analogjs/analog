@@ -1,5 +1,6 @@
 import type { RouteMeta } from '@analogjs/router';
-import { injectLoad } from '@analogjs/router';
+import { analogRouteTree } from '@analog-app/routeTree';
+import { injectLoad, routePath } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -11,6 +12,8 @@ import { ProductAlertsComponent } from '../product-alerts/product-alerts.compone
 import { ProductsSseService } from '../products-sse.service';
 import { ServicesSseService } from '../services-sse.service';
 import type { load } from './(home).server';
+
+const productDetailsRoute = analogRouteTree.byId['/products/[productId]'];
 
 export const routeMeta: RouteMeta = {
   title: 'Product List',
@@ -158,13 +161,17 @@ export const routeMeta: RouteMeta = {
     <div class="product-grid">
       @for (product of products(); track product.id) {
         <article class="product-card">
+          @let productLink =
+            routePath(productDetailsRoute.fullPath, {
+              params: { productId: '' + product.id },
+            });
           <div class="product-card-header">
             <div>
               <p class="product-label">Product #{{ product.id }}</p>
               <h3>
                 <a
                   [title]="product.name + ' details'"
-                  [routerLink]="['/products', product.id]"
+                  [routerLink]="productLink.path"
                 >
                   {{ product.name }}
                 </a>
@@ -364,6 +371,8 @@ export const routeMeta: RouteMeta = {
   ],
 })
 export default class ProductListComponent {
+  readonly routePath = routePath;
+  readonly productDetailsRoute = productDetailsRoute;
   private readonly initialData = toSignal(injectLoad<typeof load>(), {
     requireSync: true,
   });
