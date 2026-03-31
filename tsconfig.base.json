@@ -61,6 +61,9 @@
       "@analogjs/vitest-angular/setup-snapshots": [
         "./packages/vitest-angular/setup-snapshots.ts"
       ],
+      "@analogjs/vitest-angular/setup-serializers": [
+        "./packages/vitest-angular/setup-serializers.ts"
+      ],
       "@analogjs/vitest-angular/setup-testbed": [
         "./packages/vitest-angular/setup-testbed.ts"
       ],

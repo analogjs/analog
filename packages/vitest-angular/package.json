@@ -8,6 +8,7 @@
     ".": "./dist/src/index.js",
     "./setup-zone": "./dist/setup-zone.js",
     "./setup-snapshots": "./dist/setup-snapshots.js",
+    "./setup-serializers": "./dist/setup-serializers.js",
     "./setup-testbed": "./dist/setup-testbed.js",
     "./package.json": "./package.json"
   },

@@ -20,7 +20,12 @@ export function angularVitestPlugin(): Plugin {
     config(userConfig) {
       return {
         optimizeDeps: {
-          include: ['tslib'],
+          include: [
+            'tslib',
+            '@angular/core',
+            '@angular/core/testing',
+            '@angular/platform-browser/testing',
+          ],
         },
         ssr: {
           noExternal: [
@@ -46,13 +51,11 @@ export function angularVitestPlugin(): Plugin {
           (/fesm2022/.test(id) && _code.includes('async ')) ||
           _code.includes('@angular/cdk')
         ) {
-          if (!isRolldown()) {
-            const { code, map } = await vite.transformWithEsbuild(_code, id, {
-              loader: 'js',
-              format: 'esm',
+          if (isRolldown()) {
+            const { code, map } = await vite.transformWithOxc(_code, id, {
+              lang: 'js',
               target: 'es2016',
               sourcemap: true,
-              sourcefile: id,
             });
 
             return {
@@ -60,6 +63,19 @@ export function angularVitestPlugin(): Plugin {
               map,
             };
           }
+
+          const { code, map } = await vite.transformWithEsbuild(_code, id, {
+            loader: 'js',
+            format: 'esm',
+            target: 'es2016',
+            sourcemap: true,
+            sourcefile: id,
+          });
+
+          return {
+            code,
+            map,
+          };
         }
 
         return undefined;
