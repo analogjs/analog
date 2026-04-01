@@ -209,12 +209,20 @@ export function compile(
             const selector =
               registryEntry?.selector ?? localSelectors.get(depClassName);
             const kind = registryEntry?.kind === 'pipe' ? 1 : 0;
-            declarations.push({
+            const decl: any = {
               type: dep,
               selector: selector || `_unresolved-${depClassName}`,
               kind,
               ...(kind === 1 ? { name: registryEntry?.pipeName } : {}),
-            });
+            };
+            // Pass inputs/outputs from registry so template bindings resolve
+            if (registryEntry?.inputs) {
+              decl.inputs = registryEntry.inputs;
+            }
+            if (registryEntry?.outputs) {
+              decl.outputs = registryEntry.outputs;
+            }
+            declarations.push(decl);
           }
 
           let templateContent = meta.template || '';

@@ -1,5 +1,13 @@
 import { parseSync } from 'oxc-parser';
 
+export interface RegistryInput {
+  classPropertyName: string;
+  bindingPropertyName: string;
+  isSignal: boolean;
+  required: boolean;
+  transform?: any;
+}
+
 export interface RegistryEntry {
   /** CSS selector for components/directives, pipe name for pipes, class name for NgModules */
   selector: string;
@@ -13,6 +21,10 @@ export interface RegistryEntry {
   fileName: string;
   /** The class name */
   className: string;
+  /** Input bindings (from signal APIs and @Input decorators) */
+  inputs?: Record<string, RegistryInput>;
+  /** Output bindings (from signal APIs and @Output decorators) */
+  outputs?: Record<string, string>;
 }
 
 /** Maps class name → registry entry */
@@ -116,11 +128,95 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
           className,
         });
       } else if (selector) {
+        // Extract inputs/outputs from class members
+        const inputs: Record<string, RegistryInput> = {};
+        const outputs: Record<string, string> = {};
+        const members: any[] = decl.body?.body || [];
+
+        for (const member of members) {
+          if (member.type !== 'PropertyDefinition' || !member.key?.name)
+            continue;
+          const name: string = member.key.name;
+          const init = member.value;
+
+          // Signal APIs: input(), input.required(), model(), output()
+          if (init?.type === 'CallExpression') {
+            const callee = init.callee;
+            let calleeName = '';
+            if (callee?.type === 'Identifier') {
+              calleeName = callee.name;
+            } else if (
+              callee?.type === 'StaticMemberExpression' ||
+              callee?.type === 'MemberExpression'
+            ) {
+              calleeName =
+                (callee.object?.name || '') +
+                '.' +
+                (callee.property?.name || '');
+            }
+
+            if (calleeName === 'input' || calleeName === 'input.required') {
+              inputs[name] = {
+                classPropertyName: name,
+                bindingPropertyName: name,
+                isSignal: true,
+                required: calleeName === 'input.required',
+              };
+            } else if (
+              calleeName === 'model' ||
+              calleeName === 'model.required'
+            ) {
+              inputs[name] = {
+                classPropertyName: name,
+                bindingPropertyName: name,
+                isSignal: true,
+                required: calleeName === 'model.required',
+              };
+              outputs[name + 'Change'] = name + 'Change';
+            } else if (calleeName === 'output') {
+              outputs[name] = name;
+            }
+          }
+
+          // Decorator-based: @Input(), @Output()
+          const memberDecorators: any[] = member.decorators || [];
+          for (const mdec of memberDecorators) {
+            const mexpr = mdec.expression;
+            if (!mexpr) continue;
+            const mdecName =
+              mexpr.type === 'CallExpression'
+                ? mexpr.callee?.name
+                : mexpr.type === 'Identifier'
+                  ? mexpr.name
+                  : undefined;
+            if (mdecName === 'Input') {
+              const alias =
+                mexpr.arguments?.[0]?.type === 'Literal'
+                  ? mexpr.arguments[0].value
+                  : name;
+              inputs[name] = {
+                classPropertyName: name,
+                bindingPropertyName: alias || name,
+                isSignal: false,
+                required: false,
+              };
+            } else if (mdecName === 'Output') {
+              const alias =
+                mexpr.arguments?.[0]?.type === 'Literal'
+                  ? mexpr.arguments[0].value
+                  : name;
+              outputs[name] = alias || name;
+            }
+          }
+        }
+
         entries.push({
           selector: selector.split(',')[0].trim(),
           kind: decoratorName === 'Component' ? 'component' : 'directive',
           fileName,
           className,
+          ...(Object.keys(inputs).length > 0 ? { inputs } : {}),
+          ...(Object.keys(outputs).length > 0 ? { outputs } : {}),
         });
       }
     }
