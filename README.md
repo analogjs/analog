@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-140-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-141-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- prettier-ignore-end -->
 
@@ -248,7 +248,7 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/muhammaduxair"><img src="https://avatars.githubusercontent.com/u/64395440?v=4?s=100" width="100px;" alt="Muhammad Uzair"/><br /><sub><b>Muhammad Uzair</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=muhammaduxair" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://pranavramesh.dev"><img src="https://avatars.githubusercontent.com/u/23617187?v=4?s=100" width="100px;" alt="Pranav Ramesh"/><br /><sub><b>Pranav Ramesh</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=Laphatize" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://snyder.tech"><img src="https://avatars.githubusercontent.com/u/707567?v=4?s=100" width="100px;" alt="Ben Snyder"/><br /><sub><b>Ben Snyder</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=benpsnyder" title="Documentation">📖</a> <a href="#infra-benpsnyder" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://snyder.tech"><img src="https://avatars.githubusercontent.com/u/707567?v=4?s=100" width="100px;" alt="Ben Snyder"/><br /><sub><b>Ben Snyder</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=benpsnyder" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=benpsnyder" title="Documentation">📖</a> <a href="https://github.com/analogjs/analog/commits?author=benpsnyder" title="Tests">⚠️</a> <a href="https://github.com/analogjs/analog/issues?q=author%3Abenpsnyder" title="Bug reports">🐛</a> <a href="#infra-benpsnyder" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-benpsnyder" title="Maintenance">🚧</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://wordman.dev"><img src="https://avatars.githubusercontent.com/u/6104311?v=4?s=100" width="100px;" alt="Jan-Niklas W."/><br /><sub><b>Jan-Niklas W.</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=niklas-wortmann" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/gultyayev"><img src="https://avatars.githubusercontent.com/u/22374911?v=4?s=100" width="100px;" alt="Sergey Gultyayev (Serhii Hultiaiev)"/><br /><sub><b>Sergey Gultyayev (Serhii Hultiaiev)</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=gultyayev" title="Code">💻</a> <a href="https://github.com/analogjs/analog/commits?author=gultyayev" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://andersonmfjr.com"><img src="https://avatars.githubusercontent.com/u/66845464?v=4?s=100" width="100px;" alt="Anderson Feitosa"/><br /><sub><b>Anderson Feitosa</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=andersonmfjr" title="Code">💻</a></td>
@@ -289,6 +289,8 @@ Thanks goes to these wonderful people for contributing to Analog ([emoji key](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/meeroslav"><img src="https://avatars.githubusercontent.com/u/881612?v=4?s=100" width="100px;" alt="Miroslav Jonaš"/><br /><sub><b>Miroslav Jonaš</b></sub></a><br /><a href="#infra-meeroslav" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://leosvel.dev"><img src="https://avatars.githubusercontent.com/u/12051310?v=4?s=100" width="100px;" alt="Leosvel Pérez Espinosa"/><br /><sub><b>Leosvel Pérez Espinosa</b></sub></a><br /><a href="#infra-leosvelperez" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/pmpak"><img src="https://avatars.githubusercontent.com/u/21110003?v=4?s=100" width="100px;" alt="Panagiotis Bakatselos"/><br /><sub><b>Panagiotis Bakatselos</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=pmpak" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/xygon"><img src="https://avatars.githubusercontent.com/u/3472030?v=4?s=100" width="100px;" alt="Will Stewart"/><br /><sub><b>Will Stewart</b></sub></a><br /><a href="https://github.com/analogjs/analog/commits?author=xygon" title="Code">💻</a></td>
     </tr>
   </tbody>
