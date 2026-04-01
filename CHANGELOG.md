@@ -1,3 +1,9 @@
+# [3.0.0-alpha.22](https://github.com/analogjs/analog/compare/v3.0.0-alpha.21...v3.0.0-alpha.22) (2026-04-01)
+
+### Features
+
+- **platform:** auto-discover library route directories and fail build on route collisions ([#2217](https://github.com/analogjs/analog/issues/2217)) ([4569579](https://github.com/analogjs/analog/commit/4569579273da1524dee691559b7799af76e804c5))
+
 # [3.0.0-alpha.21](https://github.com/analogjs/analog/compare/v3.0.0-alpha.20...v3.0.0-alpha.21) (2026-04-01)
 
 ### Bug Fixes
