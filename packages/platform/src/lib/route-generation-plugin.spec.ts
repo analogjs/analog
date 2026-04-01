@@ -12,10 +12,15 @@ describe('routeGenerationPlugin', () => {
     vi.clearAllMocks();
   });
 
-  it('returns a no-op plugin when typed routes are disabled', () => {
+  it('returns the typed routes plugin by default when no options provided', () => {
     const plugin = routeGenerationPlugin();
-    expect(plugin.name).toBe('analog-route-generation-disabled');
-    expect(typedRoutes).not.toHaveBeenCalled();
+    expect(plugin.name).toBe('analog-typed-routes');
+    expect(typedRoutes).toHaveBeenCalledWith({
+      jsonLdManifest: true,
+      workspaceRoot: undefined,
+      additionalPagesDirs: undefined,
+      additionalContentDirs: undefined,
+    });
   });
 
   it('returns the typed routes plugin when enabled with boolean true', () => {
@@ -74,10 +79,15 @@ describe('routeGenerationPlugin', () => {
     });
   });
 
-  it('returns no-op when experimental is undefined', () => {
+  it('returns the typed routes plugin when experimental is undefined', () => {
     const plugin = routeGenerationPlugin({ experimental: undefined });
-    expect(plugin.name).toBe('analog-route-generation-disabled');
-    expect(typedRoutes).not.toHaveBeenCalled();
+    expect(plugin.name).toBe('analog-typed-routes');
+    expect(typedRoutes).toHaveBeenCalledWith({
+      jsonLdManifest: true,
+      workspaceRoot: undefined,
+      additionalPagesDirs: undefined,
+      additionalContentDirs: undefined,
+    });
   });
 
   it('returns no-op when typedRouter is false', () => {

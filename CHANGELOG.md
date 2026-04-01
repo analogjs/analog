@@ -1,3 +1,9 @@
+# [3.0.0-alpha.20](https://github.com/analogjs/analog/compare/v3.0.0-alpha.19...v3.0.0-alpha.20) (2026-04-01)
+
+### Features
+
+- **router:** split content routing into @analogjs/router/content ([#2216](https://github.com/analogjs/analog/issues/2216)) ([d0aa1af](https://github.com/analogjs/analog/commit/d0aa1af58ca0e07b89d9f4e21ee7701cb2ca19c8))
+
 # [3.0.0-alpha.19](https://github.com/analogjs/analog/compare/v3.0.0-alpha.18...v3.0.0-alpha.19) (2026-03-30)
 
 ### Bug Fixes

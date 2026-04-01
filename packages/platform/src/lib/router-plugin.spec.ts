@@ -46,6 +46,7 @@ describe('routerPlugin', () => {
       },
       watcher: {
         on,
+        add: vi.fn(),
       },
       ws: {
         send,
@@ -317,7 +318,7 @@ describe('routerPlugin', () => {
           getModulesByFile: vi.fn(() => undefined),
           invalidateModule,
         },
-        watcher: { on },
+        watcher: { on, add: vi.fn() },
         ws: { send },
       };
 
@@ -369,6 +370,53 @@ describe('routerPlugin', () => {
         '/src/app/pages/second.page.ts',
       );
       expect(globSync).toHaveBeenCalledTimes(4);
+    });
+
+    // Regression: the Rolldown transform filter used 'ANALOG_ROUTE_FILES' as
+    // a substring pre-filter, assuming it matched 'ANALOG_CONTENT_ROUTE_FILES'.
+    // It does not — they diverge at position 7 ('ANALOG_C...' vs 'ANALOG_R...').
+    // When tsconfig path aliases resolve @analogjs/router and
+    // @analogjs/router/content to separate source files, each variable lives
+    // in its own module.  The old filter never matched the content module,
+    // so ANALOG_CONTENT_ROUTE_FILES stayed empty — silently dropping all .md
+    // page routes (/about, /contact, etc.) and causing NG04002 during prerender.
+    it('transforms ANALOG_CONTENT_ROUTE_FILES in an isolated content module (no ANALOG_ROUTE_FILES present)', () => {
+      vi.mocked(globSync)
+        .mockReturnValueOnce([]) // page files — none
+        .mockReturnValueOnce([
+          `${appRoot}/src/app/pages/about.md`,
+          `${appRoot}/src/content/hello.md`,
+        ]); // content files
+
+      const transform = getTransformPlugin('analog-glob-routes');
+
+      // Simulate what happens when tsconfig aliases resolve
+      // @analogjs/router/content to a separate source file that only
+      // contains ANALOG_CONTENT_ROUTE_FILES (no ANALOG_ROUTE_FILES).
+      const contentOnlyModule = 'export const ANALOG_CONTENT_ROUTE_FILES = {};';
+      const result = transform.handler(contentOnlyModule);
+
+      const keys = extractKeys(result.code);
+      expect(keys).toContain('/src/app/pages/about.md');
+      expect(keys).toContain('/src/content/hello.md');
+      // The old filter ('ANALOG_ROUTE_FILES') would have skipped this module
+      // entirely, leaving the empty {} untouched.
+      expect(result.code).not.toContain('ANALOG_CONTENT_ROUTE_FILES = {};');
+    });
+
+    it('transforms ANALOG_ROUTE_FILES in an isolated page module (no ANALOG_CONTENT_ROUTE_FILES present)', () => {
+      vi.mocked(globSync)
+        .mockReturnValueOnce([`${appRoot}/src/app/pages/home.page.ts`])
+        .mockReturnValueOnce([]); // content files — none
+
+      const transform = getTransformPlugin('analog-glob-routes');
+
+      const pageOnlyModule = 'export const ANALOG_ROUTE_FILES = {};';
+      const result = transform.handler(pageOnlyModule);
+
+      const keys = extractKeys(result.code);
+      expect(keys).toContain('/src/app/pages/home.page.ts');
+      expect(result.code).not.toContain('ANALOG_ROUTE_FILES = {};');
     });
   });
 });

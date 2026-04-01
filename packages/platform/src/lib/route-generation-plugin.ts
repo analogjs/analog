@@ -11,10 +11,10 @@ function resolveTypedRouterOptions(experimental: Options['experimental']): {
   options: TypedRouterOptions;
 } {
   const typedRouter = experimental?.typedRouter;
-  if (!typedRouter) {
+  if (typedRouter === false) {
     return { enabled: false, options: {} };
   }
-  if (typedRouter === true) {
+  if (!typedRouter || typedRouter === true) {
     return { enabled: true, options: { jsonLdManifest: true } };
   }
   return {

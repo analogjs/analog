@@ -71,6 +71,14 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - Use `CONTRIBUTING.md` as the source of truth for base branch, PR requirements, title and commit conventions, supported types/scopes, breaking change notes, and submission expectations.
 - Use `.github/PULL_REQUEST_TEMPLATE.md` for PR body structure, including affected scope, test plan, and maintainer-facing merge-strategy recommendations.
 
+## GitHub Markdown Formatting
+
+When writing PR descriptions, PR comments, or issue references, always use the cross-repository `owner/repo#number` format (e.g., `analogjs/analog#2202`) so links render correctly regardless of context. For maximum clarity, use manual Markdown links with descriptive titles:
+
+- **Preferred:** `[Split content routing into @analogjs/router/content analogjs/analog#2202](https://github.com/analogjs/analog/issues/2202)`
+- **Acceptable:** `analogjs/analog#2202`
+- **Avoid:** bare `#2202` — this only resolves within the same repository and is ambiguous in forks, external tools, and copied text
+
 ## Commit Review Workflow
 
 - Before reviewing branch history, run `git fetch --all`.

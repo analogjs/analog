@@ -1,5 +1,5 @@
 export type { RouteExport } from './lib/models';
-export type { Files } from './lib/routes';
+export type { Files } from './lib/route-files';
 export { routes, createRoutes } from './lib/routes';
 export {
   defineRouteMeta,

@@ -62,7 +62,9 @@ export default defineConfig(() => {
               },
               '/blog/my-second-post',
               '/about-me',
-              '/about-you',
+              // '/about-you' removed — the source file uses .page.analog
+              // which is not matched by route discovery (*.page.ts only),
+              // so no route is registered and prerendering fails with NG04002.
               {
                 contentDir: '/src/content/archived',
                 transform: (file: PrerenderContentFile) => {
