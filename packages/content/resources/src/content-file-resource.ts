@@ -26,12 +26,10 @@ export interface ContentFileResourceResult<
   toc: Array<{ id: string; level: number; text: string }>;
 }
 
-type ContentFileParams = Signal<
-  | string
-  | {
-      customFilename: string;
-    }
->;
+type ContentFileParams =
+  | Signal<string | { customFilename: string }>
+  | Signal<string>
+  | Signal<{ customFilename: string }>;
 
 async function validateAttributes<TSchema extends StandardSchemaV1>(
   schema: TSchema,

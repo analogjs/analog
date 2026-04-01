@@ -33,7 +33,7 @@
     "marked-gfm-heading-id": "catalog:",
     "marked-highlight": "catalog:",
     "marked-mangle": "catalog:",
-    "rxjs": "^6.5.0 || ^7.5.0",
+    "rxjs": "catalog:peerCompat",
     "@standard-schema/spec": "catalog:",
     "prismjs": "catalog:",
     "satori": "catalog:peerContentOptional",
@@ -58,6 +58,9 @@
       "optional": true
     },
     "sharp": {
+      "optional": true
+    },
+    "prismjs": {
       "optional": true
     }
   },
@@ -102,7 +105,7 @@
     }
   },
   "dependencies": {
-    "tslib": "^2.3.0"
+    "tslib": "catalog:"
   },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "workspace:*"

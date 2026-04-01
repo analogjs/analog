@@ -87,7 +87,7 @@
   },
   "dependencies": {
     "@standard-schema/spec": "catalog:",
-    "tslib": "^2.0.0"
+    "tslib": "catalog:"
   },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "^3.0.0-alpha.20"

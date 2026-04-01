@@ -18,7 +18,7 @@
  * verification script (verify-package-artifacts.mts).
  */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, globSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 interface CatalogMap {
@@ -111,35 +111,74 @@ function parseCatalogs(workspaceRoot: string): ParsedCatalogs {
   return cached;
 }
 
+let workspaceVersions: Map<string, string> | undefined;
+
 /**
- * Looks up a workspace package's version by reading its package.json.
- * Returns undefined if the package directory doesn't exist.
+ * Builds a name→version map of all workspace packages by reading the
+ * `packages:` globs from pnpm-workspace.yaml and scanning the matching
+ * directories for package.json files.
+ */
+function buildWorkspacePackageMap(workspaceRoot: string): Map<string, string> {
+  if (workspaceVersions) {
+    return workspaceVersions;
+  }
+
+  const yamlPath = resolve(workspaceRoot, 'pnpm-workspace.yaml');
+  const lines = readFileSync(yamlPath, 'utf-8').split('\n');
+
+  // Parse the `packages:` section to get workspace globs.
+  const globs: string[] = [];
+  let inPackages = false;
+  for (const line of lines) {
+    if (line.trim().startsWith('#') || line.trim() === '') continue;
+    if (/^packages:\s*$/.test(line)) {
+      inPackages = true;
+      continue;
+    }
+    if (/^\S/.test(line)) {
+      inPackages = false;
+      continue;
+    }
+    if (inPackages) {
+      const match = line.match(/^\s+-\s+['"]?(.+?)['"]?\s*$/);
+      if (match) {
+        globs.push(match[1]);
+      }
+    }
+  }
+
+  const map = new Map<string, string>();
+  for (const pattern of globs) {
+    const pkgJsonPattern = `${pattern}/package.json`;
+    for (const match of globSync(pkgJsonPattern, { cwd: workspaceRoot })) {
+      const fullPath = resolve(workspaceRoot, match);
+      try {
+        const pkg = JSON.parse(readFileSync(fullPath, 'utf-8')) as {
+          name?: string;
+          version?: string;
+        };
+        if (pkg.name && pkg.version) {
+          map.set(pkg.name, pkg.version);
+        }
+      } catch {
+        // skip unreadable package.json files
+      }
+    }
+  }
+
+  workspaceVersions = map;
+  return map;
+}
+
+/**
+ * Looks up a workspace package's version from the workspace package map.
+ * Returns undefined if the package is not found.
  */
 function resolveWorkspacePackageVersion(
   packageName: string,
   workspaceRoot: string,
 ): string | undefined {
-  // Map scoped package names to directory paths:
-  //   @analogjs/router  → packages/router
-  //   create-analog     → packages/create-analog
-  const dirName = packageName.startsWith('@analogjs/')
-    ? packageName.slice('@analogjs/'.length)
-    : packageName;
-
-  const pkgJsonPath = resolve(
-    workspaceRoot,
-    'packages',
-    dirName,
-    'package.json',
-  );
-  if (!existsSync(pkgJsonPath)) {
-    return undefined;
-  }
-
-  const pkg = JSON.parse(readFileSync(pkgJsonPath, 'utf-8')) as {
-    version?: string;
-  };
-  return pkg.version;
+  return buildWorkspacePackageMap(workspaceRoot).get(packageName);
 }
 
 /**

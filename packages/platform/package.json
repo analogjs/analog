@@ -31,12 +31,12 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "dependencies": {
+    "front-matter": "catalog:",
+    "tinyglobby": "catalog:",
+    "nitro": "catalog:",
     "@analogjs/vite-plugin-angular": "workspace:*",
     "@analogjs/vite-plugin-nitro": "workspace:*",
-    "front-matter": "catalog:",
-    "nitro": "catalog:",
     "rolldown": "catalog:",
-    "tinyglobby": "catalog:",
     "vitefu": "catalog:"
   },
   "peerDependencies": {
