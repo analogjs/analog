@@ -1,10 +1,12 @@
-import { injectActivatedRoute } from '@analogjs/router';
+import { injectActivatedRoute, injectLoad } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { CartService } from '../cart.service';
 import { LiveProductsService } from '../live-products.service';
 import type { Product } from '../products';
+import type { load } from './products.[productId].server';
 
 export const routeJsonLd = (route: {
   parent?: { paramMap: { get(name: string): string | null } };
@@ -125,6 +127,9 @@ export default class ProductDetailsComponent {
   private readonly route = injectActivatedRoute();
   private readonly cartService = inject(CartService);
   private readonly liveProducts = inject(LiveProductsService);
+  private readonly initialData = toSignal(injectLoad<typeof load>(), {
+    requireSync: true,
+  });
   private readonly productIdFromRoute = Number(
     this.route.parent?.snapshot.paramMap.get('productId'),
   );
@@ -136,9 +141,9 @@ export default class ProductDetailsComponent {
   );
 
   constructor() {
-    // Product details can be entered directly, so start the shared polling
-    // store even when there is no loader-provided product list to seed from.
-    this.liveProducts.connect();
+    // Seed the live products store with the SSR loader snapshot so the
+    // product is available immediately during hydration.
+    this.liveProducts.connect(this.initialData().products);
   }
 
   addToCart(product: Product) {

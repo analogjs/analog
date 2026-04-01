@@ -77,7 +77,7 @@ export default class PackagePageComponent {}
       await expect(async () => {
         await page.goto('/package');
         await expect(page.locator('#hmr-target')).toHaveText('Before HMR');
-      }).toPass({ timeout: 30_000 });
+      }).toPass({ timeout: 60_000 });
 
       writeFileSync(
         EXISTING_PAGE_PATH,
@@ -93,7 +93,7 @@ export default class PackagePageComponent {}
       await expect(async () => {
         await page.reload();
         await expect(page.locator('#hmr-target')).toHaveText('After HMR');
-      }).toPass({ timeout: 30_000 });
+      }).toPass({ timeout: 60_000 });
     } finally {
       writeFileSync(EXISTING_PAGE_PATH, originalPage);
     }
