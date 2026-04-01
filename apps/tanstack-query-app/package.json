@@ -8,8 +8,8 @@
   "devDependencies": {
     "@analogjs/platform": "workspace:*",
     "@analogjs/vitest-angular": "workspace:*",
-    "@tailwindcss/vite": "^4.2.2",
+    "@tailwindcss/vite": "catalog:",
     "daisyui": "^5.5.19",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "catalog:"
   }
 }
