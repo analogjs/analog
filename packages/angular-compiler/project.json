@@ -1,0 +1,32 @@
+{
+  "name": "angular-compiler",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/angular-compiler/src",
+  "projectType": "library",
+  "tags": ["type:release"],
+  "targets": {
+    "build-package": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "outputPath": "node_modules/@analogjs/angular-compiler",
+        "main": "packages/angular-compiler/src/index.ts",
+        "tsConfig": "packages/angular-compiler/tsconfig.lib.json",
+        "assets": ["packages/angular-compiler/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false,
+        "generateExportsField": false
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/angular-compiler"],
+      "options": {
+        "commands": ["nx build-package angular-compiler"],
+        "parallel": false
+      },
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "executor": "@nx/vitest:test"
+    }
+  }
+}

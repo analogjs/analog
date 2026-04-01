@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "preserve",
+    "outDir": "../../dist/out-tsc",
+    "declaration": true,
+    "types": ["node"],
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "bundler",
+    "skipLibCheck": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "src/test-setup.ts",
+    "src/lib/__fixtures__",
+    "src/lib/test-helpers.ts"
+  ]
+}
