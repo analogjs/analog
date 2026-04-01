@@ -2,7 +2,7 @@ import { resolve, join } from 'node:path';
 import { copyFileSync, writeFileSync } from 'node:fs';
 import { defineConfig } from 'tsdown';
 
-// import.meta.dirname requires Node 20.11+; engines field mandates ^20.19.0.
+// import.meta.dirname requires Node 20.11+; the workspace baseline is >=22.18.0.
 const pkgDir = import.meta.dirname;
 
 export default defineConfig({

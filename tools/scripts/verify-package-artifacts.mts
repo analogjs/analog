@@ -1,15 +1,33 @@
 #!/usr/bin/env node
 
-// Verifies built package artifacts in packages/*/dist.
-//
-// Usage:
-//   node tools/scripts/verify-package-artifacts.mts [package-name...]
-//
-// When no package names are provided, all configured packages are validated.
+/**
+ * Post-build artifact verification for all publishable packages.
+ *
+ * Runs after each package build to catch packaging mistakes before they reach
+ * npm. For every configured package the script:
+ *   - Resolves any remaining `catalog:` protocol references in the dist
+ *     package.json and writes the resolved version back, so `npm publish`
+ *     never ships unresolvable specifiers.
+ *   - Walks the `exports` map and confirms every declared file exists on disk.
+ *   - Checks that Nx manifest fields (builders, executors, generators,
+ *     schematics) point to real JSON manifests and that each manifest entry's
+ *     implementation, factory, and schema files are present.
+ *   - Validates a set of package-specific required paths (e.g. migration JSON,
+ *     FESM bundles, builder JS files).
+ *
+ * Usage:
+ *   node tools/scripts/verify-package-artifacts.mts [package-name...]
+ *
+ * When no package names are provided, all configured packages are validated.
+ */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { Console, Effect, Schema } from 'effect';
+import {
+  resolveCatalogReferences,
+  hasUnresolvedCatalogReferences,
+} from '../build/resolve-catalogs.ts';
 
 type ManifestField = 'builders' | 'executors' | 'generators' | 'schematics';
 
@@ -67,12 +85,9 @@ const ManifestSchema = Schema.Struct({
   ),
 });
 
-// @ts-expect-error - using any for Node type-stripping compatibility - using any for Node type-stripping compatibility
-type PackageJson = any;
-// @ts-expect-error - using any for Node type-stripping compatibility
-type Manifest = any;
-// @ts-expect-error - using any for Node type-stripping compatibility
-type ManifestEntries = any;
+type PackageJson = Record<string, any>;
+type Manifest = Record<string, any>;
+type ManifestEntries = Record<string, any>;
 
 const packageConfigs: Record<string, PackageValidationConfig> = {
   'astro-angular': {
@@ -258,12 +273,14 @@ function validateExports(
 
   for (const [subpath, target] of Object.entries(exportsField)) {
     const resolvedTargets =
-      typeof target === 'string' ? [target] : Object.values(target);
+      typeof target === 'string'
+        ? [target]
+        : Object.values(target as Record<string, string>);
 
     for (const outputPath of resolvedTargets) {
       const resolvedPath = resolve(
         dirname(resolve(root, packageJsonPath)),
-        outputPath,
+        String(outputPath),
       );
       if (!existsSync(resolvedPath)) {
         errors.push(`Missing export target for ${subpath}: ${outputPath}`);
@@ -282,6 +299,34 @@ function validatePackage(packageName: string) {
     }
 
     const errors: string[] = [];
+    const packageJsonPath = resolve(root, config.packageJsonPath);
+
+    // Resolve any catalog: protocol references in the dist package.json
+    yield* Effect.try({
+      try: () => {
+        const raw = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+        const resolved = resolveCatalogReferences(raw, root);
+        const unresolved = hasUnresolvedCatalogReferences(resolved);
+        if (unresolved.length > 0) {
+          for (const entry of unresolved) {
+            errors.push(`Unresolved catalog reference: ${entry}`);
+          }
+        }
+
+        // Write back the resolved package.json so downstream pack/publish
+        // steps never encounter catalog: protocols
+        writeFileSync(
+          packageJsonPath,
+          JSON.stringify(resolved, null, 2) + '\n',
+        );
+      },
+      catch: (cause) =>
+        toError(
+          cause,
+          `Failed to resolve catalog references in ${config.packageJsonPath}`,
+        ),
+    });
+
     const packageJson = yield* readJson(
       config.packageJsonPath,
       PackageJsonSchema,

@@ -1,8 +1,19 @@
 #!/usr/bin/env node
 
 /**
- * Build script for Angular library packages.
- * Replaces ng-packagr with Vite (FESM bundles) + tsc (declarations).
+ * Build pipeline for Angular library packages (@analogjs/router, @analogjs/content, etc.).
+ *
+ * Replaces ng-packagr with a three-stage pipeline:
+ *   1. FESM bundles — Vite + Rolldown produce ES2022 flat ESM bundles (.mjs)
+ *      per entry point, written to `dist/fesm2022/`.
+ *   2. Declarations  — Angular compiler (ngc) emits .d.ts files in partial
+ *      compilation mode, written to `dist/types/`. Non-declaration artifacts
+ *      are pruned so only .d.ts files remain.
+ *   3. Metadata       — A publish-ready package.json is generated in `dist/`
+ *      with correct `exports`, `module`, and `typings` fields. Sub-entry points
+ *      are auto-discovered from `ng-package.json` markers or `<sub>/src/index.ts`
+ *      convention. Any `catalog:` version references are resolved to concrete
+ *      specifiers so the published package works outside the workspace.
  *
  * Usage: node tools/scripts/build-lib.mts <package-name>
  * Example: node tools/scripts/build-lib.mts router
@@ -20,6 +31,7 @@ import {
 } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { Console, Effect, Schema } from 'effect';
+import { resolveCatalogReferences } from '../build/resolve-catalogs.ts';
 
 interface SubEntry {
   path: string;
@@ -407,8 +419,9 @@ function writePackageMetadata(
         };
       }
 
+      const resolvedPkg = resolveCatalogReferences(srcPkg, context.root);
       const outPkg: Record<string, unknown> = {
-        ...srcPkg,
+        ...resolvedPkg,
         module: `fesm2022/${context.prefix}.mjs`,
         typings: `types/${mainEntryFile.replace('.ts', '.d.ts')}`,
         exports: exportsMap,

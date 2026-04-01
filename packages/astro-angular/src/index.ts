@@ -1,4 +1,5 @@
-import viteAngular, { PluginOptions } from '@analogjs/vite-plugin-angular';
+import viteAngular from '@analogjs/vite-plugin-angular';
+import type { PluginOptions } from '@analogjs/vite-plugin-angular';
 import { enableProdMode } from '@angular/core';
 import type { AstroIntegration, AstroRenderer, ViteUserConfig } from 'astro';
 import * as vite from 'vite';

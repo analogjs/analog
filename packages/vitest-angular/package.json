@@ -5,11 +5,26 @@
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
-    ".": "./dist/src/index.js",
-    "./setup-zone": "./dist/setup-zone.js",
-    "./setup-snapshots": "./dist/setup-snapshots.js",
-    "./setup-serializers": "./dist/setup-serializers.js",
-    "./setup-testbed": "./dist/setup-testbed.js",
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./setup-zone": {
+      "types": "./dist/setup-zone.d.ts",
+      "default": "./dist/setup-zone.js"
+    },
+    "./setup-snapshots": {
+      "types": "./dist/setup-snapshots.d.ts",
+      "default": "./dist/setup-snapshots.js"
+    },
+    "./setup-serializers": {
+      "types": "./dist/setup-serializers.d.ts",
+      "default": "./dist/setup-serializers.js"
+    },
+    "./setup-testbed": {
+      "types": "./dist/setup-testbed.d.ts",
+      "default": "./dist/setup-testbed.js"
+    },
     "./package.json": "./package.json"
   },
   "keywords": [
@@ -37,14 +52,14 @@
     "save": "devDependencies"
   },
   "dependencies": {
-    "oxc-transform": "^0.121.0"
+    "oxc-transform": "catalog:"
   },
   "peerDependencies": {
-    "@analogjs/vite-plugin-angular": "*",
-    "@angular-devkit/architect": ">=0.1500.0 < 0.2200.0",
-    "@angular-devkit/schematics": ">=17.0.0",
-    "vitest": "^1.3.1 || ^2.0.0 || ^3.0.0 || ^4.0.0",
-    "zone.js": ">=0.14.0"
+    "@analogjs/vite-plugin-angular": "catalog:peerVitestAngular",
+    "@angular-devkit/architect": "catalog:peerVitestAngular",
+    "@angular-devkit/schematics": "catalog:peerVitestAngular",
+    "vitest": "catalog:peerVitestAngular",
+    "zone.js": "catalog:peerVitestAngular"
   },
   "peerDependenciesMeta": {
     "zone.js": {
