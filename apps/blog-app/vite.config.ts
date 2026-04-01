@@ -35,8 +35,7 @@ export default defineConfig(() => {
           useAngularCompilationAPI: true,
           typedRouter: true,
         },
-        additionalPagesDirs: ['/libs/shared/feature'],
-        additionalContentDirs: ['/libs/shared/feature/src/content'],
+        discoverRoutes: true,
         content: {
           highlighter: 'shiki',
           shikiOptions: {
