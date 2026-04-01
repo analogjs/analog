@@ -307,6 +307,22 @@ describe('generateRouteManifest', () => {
     spy.mockRestore();
   });
 
+  it('does not record a collision for two group routes at the same path', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
+
+    const manifest = generateRouteManifest([
+      '/src/app/pages/(auth).page.ts',
+      '/src/app/pages/(home).page.ts',
+    ]);
+
+    expect(manifest.collisions).toHaveLength(0);
+    expect(spy).not.toHaveBeenCalled();
+
+    spy.mockRestore();
+  });
+
   it('does not record a collision when the same file appears twice', () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
       /* noop */

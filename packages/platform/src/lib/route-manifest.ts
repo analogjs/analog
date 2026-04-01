@@ -229,6 +229,14 @@ export function generateRouteManifest(
       if (winner.filename === filename) {
         continue;
       }
+      // Group/layout routes (parenthesized names like (auth), (home)) are
+      // pathless wrappers that intentionally share the same URL path.
+      // Skip collision recording when both files are group routes.
+      const isGroupFile = (f: string) =>
+        (f.split('/').pop() ?? '').startsWith('(');
+      if (isGroupFile(winner.filename) && isGroupFile(filename)) {
+        continue;
+      }
       collisions.push({
         fullPath,
         keptFile: winner.filename,
