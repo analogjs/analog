@@ -33,9 +33,9 @@ describe('toRouteConfig', () => {
     const fakeActivatedRoute = { routeConfig: fakeRouteConfig };
 
     // The load resolver must not throw for routes without ANALOG_META_KEY.
-    const result = await (config.resolve as Record<string, Function>)['load'](
-      fakeActivatedRoute,
-    );
+    const result = await (
+      config.resolve as Record<string, (...args: unknown[]) => unknown>
+    )['load'](fakeActivatedRoute);
     expect(result).toEqual({});
   });
 
@@ -53,9 +53,9 @@ describe('toRouteConfig', () => {
 
     // ANALOG_PAGE_ENDPOINTS is {} in tests (not replaced by Vite), so the
     // lookup returns undefined and the resolver falls through to return {}.
-    const result = await (config.resolve as Record<string, Function>)['load'](
-      fakeActivatedRoute,
-    );
+    const result = await (
+      config.resolve as Record<string, (...args: unknown[]) => unknown>
+    )['load'](fakeActivatedRoute);
     expect(result).toEqual({});
   });
 });

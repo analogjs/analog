@@ -30,10 +30,7 @@ type CollectedRoute = {
         <div class="header-cell source-col">Source</div>
       </div>
       <div class="table-body">
-        @for (
-          collectedRoute of collectedRoutes;
-          track collectedRoute.filename
-        ) {
+        @for (collectedRoute of collectedRoutes; track $index) {
           <div class="table-row">
             <div class="table-cell path-col">{{ collectedRoute.path }}</div>
             <div class="table-cell file-col" [title]="collectedRoute.filename">

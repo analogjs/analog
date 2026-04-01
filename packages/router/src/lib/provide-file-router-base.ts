@@ -28,27 +28,27 @@ export function provideFileRouterWithRoutes(
   const extraRoutesFeature = features.filter((feat) => feat.ɵkind >= 100);
   const routerFeatures = features.filter((feat) => feat.ɵkind < 100);
 
+  // Automatically register the debug route viewer during development.
+  // Navigating to /__analog/routes shows all registered page and content
+  // routes.  The import.meta.env.DEV guard ensures the debug page and its
+  // component are tree-shaken from production builds.
+  //
+  // The debug route is passed directly to provideRouter() so it takes
+  // priority over file-based catch-all routes like [...slug].  ROUTES
+  // multi-providers are concatenated after provideRouter's initial routes,
+  // so a catch-all in file routes would shadow an __analog/* ROUTES entry.
+  const debugRoutes: Routes = import.meta.env.DEV
+    ? [
+        {
+          path: '__analog/routes',
+          loadComponent: () => import('./debug/debug.page'),
+        },
+      ]
+    : [];
+
   return makeEnvironmentProviders([
     extraRoutesFeature.map((erf) => erf.ɵproviders),
-    // Automatically register the debug route viewer during development.
-    // Navigating to /__analog/routes shows all registered page and content
-    // routes.  The import.meta.env.DEV guard ensures the debug page and its
-    // component are tree-shaken from production builds.
-    ...(import.meta.env.DEV
-      ? [
-          {
-            provide: ROUTES,
-            multi: true,
-            useValue: [
-              {
-                path: '__analog/routes',
-                loadComponent: () => import('./debug/debug.page'),
-              },
-            ],
-          },
-        ]
-      : []),
-    provideRouter([], ...routerFeatures),
+    provideRouter(debugRoutes, ...routerFeatures),
     {
       provide: ROUTES,
       multi: true,
