@@ -484,15 +484,22 @@ if (import.meta.hot) {
         // Do a preliminary resolution for esbuild plugin (before configResolved)
         const preliminaryTsConfigPath = resolveTsConfigPath();
 
-        const esbuild =
-          pluginOptions.useAngularCompilationAPI ||
-          pluginOptions.useAnalogCompiler
-            ? undefined
+        const esbuild = pluginOptions.useAngularCompilationAPI
+          ? undefined
+          : pluginOptions.useAnalogCompiler
+            ? false
             : (config.esbuild ?? false);
-        const oxc =
-          pluginOptions.useAngularCompilationAPI ||
-          pluginOptions.useAnalogCompiler
-            ? undefined
+        const oxc = pluginOptions.useAngularCompilationAPI
+          ? undefined
+          : pluginOptions.useAnalogCompiler
+            ? ({
+                tsconfig: {
+                  compilerOptions: {
+                    experimentalDecorators: false,
+                    emitDecoratorMetadata: false,
+                  },
+                },
+              } as any)
             : (config.oxc ?? false);
 
         const defineOptions = {
