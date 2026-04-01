@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vite-plugin-nitro",
-  "version": "3.0.0-alpha.19",
+  "version": "3.0.0-alpha.20",
   "description": "A Vite plugin for adding a nitro API server",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -28,6 +28,14 @@
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/brandonroberts"
+  },
+  "peerDependencies": {
+    "sharp": ">=0.32.0"
+  },
+  "peerDependenciesMeta": {
+    "sharp": {
+      "optional": true
+    }
   },
   "dependencies": {
     "defu": "^6.1.4",

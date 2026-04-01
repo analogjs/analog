@@ -61,6 +61,16 @@ export interface RouteManifest {
  * but preserves bracket param syntax instead of converting to
  * Angular's `:param` syntax.
  *
+ * The regex applies four alternations (left to right, all replaced with ''):
+ *   1. `^(.*?)[\\/](?:routes|pages|content)[\\/]` — anchored, strips everything
+ *      up to and including the first /routes/, /pages/, or /content/ segment.
+ *      Handles app-local paths (`/src/app/pages/`) AND additional dirs
+ *      (`/libs/shared/feature/src/content/`) uniformly.
+ *   2. `[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/]` — non-anchored
+ *      fallback for legacy paths where the directory marker appears mid-string.
+ *   3. `\.page\.(js|ts|analog|ag)$` — strips page file extensions.
+ *   4. `\.(ts|md|analog|ag)$` — strips remaining file extensions.
+ *
  * Examples:
  * - '/app/routes/index.ts' -> '/'
  * - '/app/routes/about.ts' -> '/about'
@@ -69,10 +79,11 @@ export interface RouteManifest {
  * - '/src/app/pages/(auth)/login.page.ts' -> '/login'
  * - '/src/app/pages/docs/[...slug].page.ts' -> '/docs/[...slug]'
  * - '/src/app/pages/shop/[[...category]].page.ts' -> '/shop/[[...category]]'
+ * - '/libs/shared/feature/src/content/test.md' -> '/test'
  */
 export function filenameToRoutePath(filename: string): string {
   let path = filename.replace(
-    /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts|analog|ag)$)|(\.(ts|md|analog|ag)$)/g,
+    /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages|content)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts|analog|ag)$)|(\.(ts|md|analog|ag)$)/g,
     '',
   );
 
@@ -107,10 +118,13 @@ export function filenameToRoutePath(filename: string): string {
  * Unlike `filenameToRoutePath`, this preserves route groups and `index`
  * segments so that multiple files resolving to the same URL shape can still
  * have distinct structural identities in the generated route tree metadata.
+ *
+ * Uses the same directory-stripping regex as `filenameToRoutePath` —
+ * changes to the regex must be kept in sync between both functions.
  */
 export function filenameToRouteId(filename: string): string {
   let path = filename.replace(
-    /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts|analog|ag)$)|(\.(ts|md|analog|ag)$)/g,
+    /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages|content)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts|analog|ag)$)|(\.(ts|md|analog|ag)$)/g,
     '',
   );
 

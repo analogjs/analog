@@ -33,11 +33,12 @@
       "@analogjs/nx": ["./packages/nx-plugin/src/index.ts"],
       "@analogjs/platform": ["./packages/platform/src/index.ts"],
       "@analogjs/router": ["./packages/router/src/index.ts"],
+      "@analogjs/router/content": ["./packages/router/content/src/index.ts"],
       "@analogjs/router/tanstack-query": [
         "./packages/router/tanstack-query/src/index.ts"
       ],
       "@analogjs/router/tanstack-query/server": [
-        "./packages/router/tanstack-query/src/provide-server-analog-query.ts"
+        "./packages/router/tanstack-query/server/src/index.ts"
       ],
       "@analogjs/router/server": ["./packages/router/server/src/index.ts"],
       "@analogjs/router/server/actions": [

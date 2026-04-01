@@ -44,6 +44,7 @@ export default [
         'error',
         {
           enforceBuildableLibDependency: true,
+          allowCircularSelfDependency: true,
           allow: [],
           depConstraints: [
             {

@@ -27,7 +27,11 @@ function copyAssetsPlugin(): Plugin {
         copyFileSync(file, dest);
       }
 
-      // Copy generators.json and executors.json
+      // Copy generator and executor metadata for Nx and Angular CLI.
+      copyFileSync(
+        join(pkgDir, 'builders.json'),
+        join(outDir, 'builders.json'),
+      );
       copyFileSync(
         join(pkgDir, 'generators.json'),
         join(outDir, 'generators.json'),

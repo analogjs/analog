@@ -142,6 +142,18 @@ describe('filenameToRoutePath', () => {
         '/getting-started',
       );
     });
+
+    it('should handle content from additional content dirs', () => {
+      expect(
+        filenameToRoutePath('/libs/shared/feature/src/content/test.md'),
+      ).toBe('/test');
+    });
+
+    it('should handle nested content from additional content dirs', () => {
+      expect(
+        filenameToRoutePath('/libs/shared/feature/src/content/docs/guide.md'),
+      ).toBe('/docs/guide');
+    });
   });
 
   describe('layout routes', () => {

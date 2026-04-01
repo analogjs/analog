@@ -10,18 +10,52 @@ These APIs are experimental and subject to change. Enable them explicitly via fe
 
 ## Setup
 
-Typed routes require two opt-ins: a **build-time** flag that generates the route type declarations, and a **runtime** feature that activates the typed navigation APIs.
+Typed routes require a **runtime** feature that activates the typed navigation APIs. The **build-time** route type generation is enabled by default.
 
-### 1. Enable Route Type Generation
+### 1. Route Type Generation (enabled by default)
 
-The default Analog setup is to enable typed route generation through
-`@analogjs/platform`. This keeps `analog()` as the main authoring surface.
+Typed route generation ships as part of `@analogjs/platform` and is **enabled by
+default**. When `experimental.typedRouter` is omitted or set to `true`, the
+build generates a `src/routeTree.gen.ts` file with typed params and query params
+for each file-based route.
+
+:::caution Breaking Change
+
+In previous versions, typed route generation was opt-in and required explicitly
+setting `experimental.typedRouter: true`. It is now enabled by default.
+
+If you do not want typed route generation, opt out explicitly:
+
+```ts
+// vite.config.ts
+import analog from '@analogjs/platform';
+import { defineConfig } from 'vite';
+
+export default defineConfig(() => ({
+  plugins: [
+    analog({
+      experimental: {
+        typedRouter: false,
+      },
+    }),
+  ],
+}));
+```
+
+If you previously had no `typedRouter` configuration, the first build will
+generate `src/routeTree.gen.ts` and inject imports into `src/main.ts` /
+`src/main.server.ts`. Subsequent production builds verify the generated file is
+still fresh — if your routes changed, the build will fail so you can review
+the update and rerun. To avoid this, either opt out or commit the generated
+`routeTree.gen.ts` to your repository.
+
+:::
 
 The previous build-time imports from `@analogjs/vite-plugin-routes` and
 `@analogjs/router/manifest` are no longer supported. Typed route generation now
 ships as part of the `@analogjs/platform` integration only.
 
-In your `vite.config.ts`, enable the `experimental.typedRouter` flag:
+You can also enable it explicitly or pass configuration options:
 
 ```ts
 // vite.config.ts

@@ -948,6 +948,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             rollupExternalEntries.push(
               'rxjs',
               'node-fetch-native/dist/polyfill',
+              // sharp is a native module with platform-specific binaries
+              // (e.g. @img/sharp-darwin-arm64).  pnpm creates symlinks for
+              // ALL optional platform deps but only installs the matching
+              // one — leaving broken symlinks that crash Nitro's bundler
+              // with ENOENT during realpath().  Externalizing sharp avoids
+              // bundling it entirely; it resolves from node_modules at
+              // runtime instead.
+              'sharp',
             );
 
             nitroConfig = {
