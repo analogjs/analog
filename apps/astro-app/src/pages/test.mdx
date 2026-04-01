@@ -1,5 +1,6 @@
 import { CardComponent } from '../components/card.component.ts';
 import { ParentComponent } from '../components/parent.component.ts';
+import { HydrationTestComponent } from '../components/hydration-test.component.ts';
 
 Angular Component in an MDX file
 
@@ -10,3 +11,7 @@ Angular Component in an MDX file
 />
 
 <ParentComponent client:load />
+
+{/* The showInput prop here verifies that the hydration handles input values that change the DOM structure. */}
+
+<HydrationTestComponent client:load showInput={true} />
