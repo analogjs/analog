@@ -3,66 +3,52 @@ import {
   Provider,
   reflectComponentType,
   provideZonelessChangeDetection,
-  APP_BOOTSTRAP_LISTENER,
-  ComponentRef,
   ComponentMirror,
   Type,
   APP_ID,
+  createComponent,
+  Binding,
+  inputBinding,
+  outputBinding,
+  APP_BOOTSTRAP_LISTENER,
 } from '@angular/core';
 import {
   createApplication,
   provideClientHydration,
 } from '@angular/platform-browser';
-import { Observable, Subject, takeUntil } from 'rxjs';
 
-function bindInputsAndOutputs(
+function createBindings(
   element: HTMLElement,
   mirror: ComponentMirror<unknown>,
   props?: Record<string, unknown>,
-): (componentRef: ComponentRef<unknown>) => void {
-  return (componentRef: ComponentRef<unknown>) => {
-    if (props) {
-      for (const [key, value] of Object.entries(props)) {
-        if (
-          mirror.inputs.some(
-            ({ templateName, propName }) =>
-              templateName === key || propName === key,
-          )
-        ) {
-          componentRef.setInput(key, value);
-        }
-      }
-    }
+): Binding[] {
+  if (!props) {
+    return [];
+  }
 
-    if (mirror.outputs.length && props?.['data-analog-id']) {
-      const destroySubject = new Subject<void>();
-      element.setAttribute('data-analog-id', props['data-analog-id'] as string);
+  const inputBindings = Object.entries(props)
+    .filter(([key]) =>
+      mirror.inputs.some(({ templateName }) => templateName === key),
+    )
+    .map(([key, value]) => inputBinding(key, () => value));
 
-      mirror.outputs.forEach(({ templateName, propName }) => {
-        const outputName = templateName || propName;
-        const component = componentRef.instance as Record<
-          string,
-          Observable<unknown>
-        >;
-        component[outputName]
-          .pipe(takeUntil(destroySubject))
-          .subscribe((detail) => {
-            const event = new CustomEvent(outputName, {
-              bubbles: true,
-              cancelable: true,
-              composed: true,
-              detail,
-            });
-            element.dispatchEvent(event);
-          });
+  if (!mirror.outputs.length || !props['data-analog-id']) {
+    return inputBindings;
+  }
+
+  const outputBindings = mirror.outputs.map(({ templateName }) =>
+    outputBinding(templateName, (detail) => {
+      const event = new CustomEvent(templateName, {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        detail,
       });
+      element.dispatchEvent(event);
+    }),
+  );
 
-      componentRef.onDestroy(() => {
-        destroySubject.next();
-        destroySubject.complete();
-      });
-    }
-  };
+  return [...inputBindings, ...outputBindings];
 }
 
 export default (element: HTMLElement) => {
@@ -85,17 +71,17 @@ export default (element: HTMLElement) => {
 
     const hostElement = element.querySelector(mirror.selector);
 
+    if (!hostElement) {
+      throw new Error(
+        'No host element found for hydration! Selector: ' + mirror.selector,
+      );
+    }
+
     const ngAppId = hostElement?.getAttribute('data-analog-id');
 
     createApplication({
       providers: [
         provideZonelessChangeDetection(),
-        {
-          provide: APP_BOOTSTRAP_LISTENER,
-          useFactory: () => bindInputsAndOutputs(element, mirror, props),
-          multi: true,
-        },
-        // Provide client hydration _after_ our listener so we bind the inputs first
         provideClientHydration(),
         ngAppId
           ? {
@@ -106,7 +92,21 @@ export default (element: HTMLElement) => {
         ...(Component.clientProviders || []),
       ],
     }).then((appRef) => {
-      appRef.bootstrap(Component, hostElement);
+      const componentRef = createComponent(Component, {
+        environmentInjector: appRef.injector,
+        hostElement,
+        bindings: createBindings(element, mirror, props),
+      });
+
+      componentRef.onDestroy(() => {
+        appRef.detachView(componentRef.hostView);
+      });
+
+      appRef.attachView(componentRef.hostView);
+
+      appRef.injector
+        .get(APP_BOOTSTRAP_LISTENER, [])
+        .forEach((cb) => cb(componentRef));
     });
   };
 };
