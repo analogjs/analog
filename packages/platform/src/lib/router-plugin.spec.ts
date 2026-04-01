@@ -46,6 +46,7 @@ describe('routerPlugin', () => {
       },
       watcher: {
         on,
+        add: vi.fn(),
       },
       ws: {
         send,
@@ -317,7 +318,7 @@ describe('routerPlugin', () => {
           getModulesByFile: vi.fn(() => undefined),
           invalidateModule,
         },
-        watcher: { on },
+        watcher: { on, add: vi.fn() },
         ws: { send },
       };
 

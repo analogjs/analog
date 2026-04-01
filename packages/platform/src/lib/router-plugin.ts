@@ -215,6 +215,15 @@ export function routerPlugin(options?: Options): Plugin[] {
         server.watcher.on('add', (path) => invalidateRoutes(path, 'add'));
         server.watcher.on('change', (path) => invalidateRoutes(path, 'change'));
         server.watcher.on('unlink', (path) => invalidateRoutes(path, 'unlink'));
+
+        // Vite's watcher only covers the app root by default.
+        // additionalPagesDirs / additionalContentDirs live outside the
+        // root (e.g. libs/shared/feature in a monorepo), so file
+        // add/rename/delete events are never fired for them.  Explicitly
+        // add these directories to chokidar so route invalidation works.
+        for (const dir of [...additionalPagesDirs, ...additionalContentDirs]) {
+          server.watcher.add(dir);
+        }
       },
     },
     {
