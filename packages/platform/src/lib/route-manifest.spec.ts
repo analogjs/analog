@@ -324,6 +324,22 @@ describe('generateRouteManifest', () => {
     spy.mockRestore();
   });
 
+  it('does not record a collision for layout + index pair at the same path', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
+
+    const manifest = generateRouteManifest([
+      '/src/app/pages/docs.page.ts',
+      '/src/app/pages/docs/index.page.ts',
+    ]);
+
+    expect(manifest.collisions).toHaveLength(0);
+    expect(spy).not.toHaveBeenCalled();
+
+    spy.mockRestore();
+  });
+
   it('does not record a collision when the same file appears twice', () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
       /* noop */

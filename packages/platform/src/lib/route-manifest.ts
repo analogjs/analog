@@ -237,6 +237,25 @@ export function generateRouteManifest(
       if (isGroupFile(winner.filename) && isGroupFile(filename)) {
         continue;
       }
+      // A layout file (e.g., docs.page.ts) and its index child
+      // (e.g., docs/index.page.ts) intentionally share the same route
+      // path — the layout wraps the index as a parent-child pair.
+      const isLayoutIndexPair = (a: string, b: string) => {
+        const indexRe = /\/index\.(page\.)?(ts|js|md|analog|ag)$/;
+        const layoutRe = /\.(page\.)?(ts|js|analog|ag)$/;
+        if (indexRe.test(a) && layoutRe.test(b)) {
+          const dir = a.replace(indexRe, '');
+          const layout = b.replace(layoutRe, '');
+          return dir === layout;
+        }
+        return false;
+      };
+      if (
+        isLayoutIndexPair(winner.filename, filename) ||
+        isLayoutIndexPair(filename, winner.filename)
+      ) {
+        continue;
+      }
       collisions.push({
         fullPath,
         keptFile: winner.filename,
