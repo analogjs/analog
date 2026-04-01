@@ -29,6 +29,14 @@
     "type": "github",
     "url": "https://github.com/sponsors/brandonroberts"
   },
+  "peerDependencies": {
+    "sharp": ">=0.32.0"
+  },
+  "peerDependenciesMeta": {
+    "sharp": {
+      "optional": true
+    }
+  },
   "dependencies": {
     "defu": "^6.1.4",
     "nitro": "3.0.260311-beta",

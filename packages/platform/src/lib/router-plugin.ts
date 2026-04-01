@@ -23,7 +23,9 @@ import { Options } from './options.js';
  * - Files outside project root keep absolute paths in object keys
  */
 export function routerPlugin(options?: Options): Plugin[] {
-  const workspaceRoot = normalizePath(options?.workspaceRoot ?? process.cwd());
+  const workspaceRoot = normalizePath(
+    options?.workspaceRoot ?? process.env['NX_WORKSPACE_ROOT'] ?? process.cwd(),
+  );
   let config: UserConfig;
   let root: string;
   // Option dirs are workspace-relative, often written with a leading `/`.
@@ -213,6 +215,15 @@ export function routerPlugin(options?: Options): Plugin[] {
         server.watcher.on('add', (path) => invalidateRoutes(path, 'add'));
         server.watcher.on('change', (path) => invalidateRoutes(path, 'change'));
         server.watcher.on('unlink', (path) => invalidateRoutes(path, 'unlink'));
+
+        // Vite's watcher only covers the app root by default.
+        // additionalPagesDirs / additionalContentDirs live outside the
+        // root (e.g. libs/shared/feature in a monorepo), so file
+        // add/rename/delete events are never fired for them.  Explicitly
+        // add these directories to chokidar so route invalidation works.
+        for (const dir of [...additionalPagesDirs, ...additionalContentDirs]) {
+          server.watcher.add(dir);
+        }
       },
     },
     {
@@ -234,11 +245,18 @@ export function routerPlugin(options?: Options): Plugin[] {
        */
       // Vite 8 / Rolldown filtered transform: the `filter.code` substring
       // pre-filter lets the bundler skip modules that don't contain the
-      // marker.  'ANALOG_ROUTE_FILES' also matches 'ANALOG_CONTENT_ROUTE_FILES'
-      // (substring), so a single filter covers both placeholders.
+      // marker.  '_ROUTE_FILES' is a common substring of both
+      // 'ANALOG_ROUTE_FILES' and 'ANALOG_CONTENT_ROUTE_FILES'.
+      //
+      // IMPORTANT: Do NOT change this to 'ANALOG_ROUTE_FILES' — that is NOT
+      // a substring of 'ANALOG_CONTENT_ROUTE_FILES' (they diverge at
+      // position 7: 'ANALOG_C...' vs 'ANALOG_R...').  When tsconfig path
+      // aliases resolve @analogjs/router and @analogjs/router/content to
+      // separate source files, each variable lives in its own module and
+      // the filter must match both independently.
       transform: {
         filter: {
-          code: 'ANALOG_ROUTE_FILES',
+          code: '_ROUTE_FILES',
         },
         handler(code) {
           if (
@@ -273,6 +291,11 @@ export function routerPlugin(options?: Options): Plugin[] {
               return `"${key}": () => import('${module}?analog-content-file=true').then(m => m.default)`;
             })}};
             `,
+            );
+
+            result = result.replace(
+              'ANALOG_CONTENT_FILE_COUNT = 0',
+              `ANALOG_CONTENT_FILE_COUNT = ${contentRouteFiles.length}`,
             );
 
             return {
