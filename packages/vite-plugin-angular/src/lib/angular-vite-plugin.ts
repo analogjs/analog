@@ -66,6 +66,12 @@ import {
 } from './plugins/file-replacements.plugin.js';
 import { routerPlugin } from './router-plugin.js';
 import { createHash } from 'node:crypto';
+import {
+  compile as analogCompile,
+  scanFile as analogScanFile,
+  jitTransform as analogJitTransform,
+  type ComponentRegistry,
+} from '@analogjs/angular-compiler';
 
 export enum DiagnosticModes {
   None = 0,
@@ -98,6 +104,7 @@ export interface PluginOptions {
   fileReplacements?: FileReplacement[];
   experimental?: {
     useAngularCompilationAPI?: boolean;
+    useAnalogCompiler?: boolean;
   };
 }
 
@@ -141,6 +148,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     fileReplacements: options?.fileReplacements ?? [],
     useAngularCompilationAPI:
       options?.experimental?.useAngularCompilationAPI ?? false,
+    useAnalogCompiler: options?.experimental?.useAnalogCompiler ?? false,
   };
 
   let resolvedConfig: ResolvedConfig;
@@ -211,6 +219,229 @@ export function angular(options?: PluginOptions): Plugin[] {
     | Awaited<ReturnType<typeof createAngularCompilationType>>
     | undefined;
 
+  // Analog compiler state (used when experimental.useAnalogCompiler is true)
+  const analogRegistry: ComponentRegistry = new Map();
+  const analogResourceToSource = new Map<string, string>();
+
+  function initAnalogCompiler() {
+    if (jit) return; // JIT: no registry scan needed
+
+    // Scan all source files to build the registry
+    analogRegistry.clear();
+    const resolvedTsConfigPath = resolveTsConfigPath();
+    const config = compilerCli.readConfiguration(resolvedTsConfigPath);
+
+    for (const file of config.rootNames) {
+      try {
+        const code = require('fs').readFileSync(file, 'utf-8');
+        const entries = analogScanFile(code, file);
+        for (const entry of entries) {
+          analogRegistry.set(entry.className, entry);
+        }
+      } catch {
+        // Skip unreadable files
+      }
+    }
+  }
+
+  function generateAnalogHmrCode(
+    components: Array<{ className: string }>,
+  ): string {
+    const applyFns = components
+      .map(
+        (c) => `
+export function ɵhmr_${c.className}(type, namespaces) {
+  type.ɵcmp = ${c.className}.ɵcmp;
+  type.ɵfac = ${c.className}.ɵfac;
+}`,
+      )
+      .join('\n');
+
+    const replaceBlocks = components
+      .map(
+        (c) => `
+      try {
+        i0.ɵɵreplaceMetadata(
+          ${c.className},
+          newModule.ɵhmr_${c.className},
+          { i0 },
+          [],
+          import.meta,
+          "${c.className}"
+        );
+        replaced = true;
+      } catch(e) {}`,
+      )
+      .join('\n');
+
+    return `\n${applyFns}
+if (import.meta.hot) {
+  import.meta.hot.accept((newModule) => {
+    if (!newModule) return;
+    let replaced = false;${replaceBlocks}
+    if (!replaced) {
+      import.meta.hot.invalidate('Component HMR failed, reloading');
+    }
+  });
+}`;
+  }
+
+  async function handleAnalogCompilerTransform(
+    code: string,
+    id: string,
+  ): Promise<{ code: string; map: any } | undefined> {
+    if (!/(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code)) {
+      return undefined;
+    }
+
+    // JIT mode
+    if (jit) {
+      const result = analogJitTransform(code, id);
+      return { code: result.code, map: result.map };
+    }
+
+    const fs = require('fs');
+    const path = require('path');
+    const dir = path.dirname(id);
+
+    // Inline external templateUrl into the source before compilation.
+    // This ensures both ɵcmp and ɵsetClassMetadata use inline templates,
+    // preventing Angular's SSR runtime from trying to fetch relative URLs.
+    if (code.includes('templateUrl')) {
+      code = code.replace(
+        /templateUrl\s*:\s*['"`]([^'"`]+)['"`]/g,
+        (_match: string, url: string) => {
+          try {
+            const filePath = path.resolve(dir, url);
+            const content = fs.readFileSync(filePath, 'utf-8');
+            return `template: ${JSON.stringify(content)}`;
+          } catch {
+            return _match; // Keep original if file can't be read
+          }
+        },
+      );
+    }
+
+    // Inline external styleUrl/styleUrls into the source before compilation.
+    if (code.includes('styleUrl')) {
+      // styleUrl: './file.scss' → styles: ['compiled css']
+      code = code.replace(
+        /styleUrl\s*:\s*['"`]([^'"`]+)['"`]/g,
+        (_match: string, url: string) => {
+          try {
+            const filePath = path.resolve(dir, url);
+            const content = fs.readFileSync(filePath, 'utf-8');
+            return `styles: [${JSON.stringify(content)}]`;
+          } catch {
+            return _match;
+          }
+        },
+      );
+      // styleUrls: ['./a.scss', './b.css'] → styles: ['css a', 'css b']
+      code = code.replace(
+        /styleUrls\s*:\s*\[([^\]]+)\]/g,
+        (_match: string, inner: string) => {
+          const urls = [...inner.matchAll(/['"`]([^'"`]+)['"`]/g)].map(
+            (m) => m[1],
+          );
+          const contents = urls.map((url) => {
+            try {
+              const filePath = path.resolve(dir, url);
+              return fs.readFileSync(filePath, 'utf-8');
+            } catch {
+              return '';
+            }
+          });
+          return `styles: [${contents.map((c) => JSON.stringify(c)).join(', ')}]`;
+        },
+      );
+    }
+
+    // Pre-resolve styles that need preprocessing (SCSS/Sass/Less)
+    let resolvedStyles: Map<string, string> | undefined;
+    let resolvedInlineStyles: Map<number, string> | undefined;
+
+    if (
+      code.includes('styles') &&
+      pluginOptions.inlineStylesExtension !== 'css'
+    ) {
+      const sf = ts.createSourceFile(id, code, ts.ScriptTarget.Latest, true);
+      const styleStrings: string[] = [];
+
+      function visitNode(node: ts.Node) {
+        if (
+          ts.isPropertyAssignment(node) &&
+          (node as ts.PropertyAssignment).name.getText(sf) === 'styles'
+        ) {
+          const val = (node as ts.PropertyAssignment).initializer;
+          if (ts.isArrayLiteralExpression(val)) {
+            for (const el of (val as ts.ArrayLiteralExpression).elements) {
+              if (
+                ts.isStringLiteral(el) ||
+                ts.isNoSubstitutionTemplateLiteral(el)
+              ) {
+                styleStrings.push((el as ts.StringLiteral).text);
+              }
+            }
+          } else if (
+            ts.isStringLiteral(val) ||
+            ts.isNoSubstitutionTemplateLiteral(val)
+          ) {
+            styleStrings.push((val as ts.StringLiteral).text);
+          }
+        }
+        ts.forEachChild(node, visitNode);
+      }
+      visitNode(sf);
+
+      if (styleStrings.length > 0) {
+        resolvedInlineStyles = new Map();
+        for (let i = 0; i < styleStrings.length; i++) {
+          try {
+            const fakePath = id.replace(
+              /\.ts$/,
+              `.inline-${i}.${pluginOptions.inlineStylesExtension}`,
+            );
+            const processed = await preprocessCSS(
+              styleStrings[i],
+              fakePath,
+              resolvedConfig,
+            );
+            resolvedInlineStyles.set(i, processed.code);
+          } catch {
+            // Skip styles that can't be preprocessed
+          }
+        }
+        if (resolvedInlineStyles.size === 0) resolvedInlineStyles = undefined;
+      }
+    }
+
+    const result = analogCompile(code, id, {
+      registry: analogRegistry,
+      resolvedStyles,
+      resolvedInlineStyles,
+    });
+
+    // Track resource dependencies for HMR
+    for (const dep of result.resourceDependencies) {
+      analogResourceToSource.set(dep, id);
+    }
+
+    let outputCode = result.code;
+
+    // Append HMR code in dev mode
+    if (watchMode && pluginOptions.liveReload) {
+      const components = [...analogRegistry.values()].filter(
+        (e: any) => e.fileName === id && e.kind === 'component',
+      );
+      if (components.length > 0) {
+        outputCode += generateAnalogHmrCode(components);
+      }
+    }
+
+    return { code: outputCode, map: result.map };
+  }
+
   function angularPlugin(): Plugin {
     let isProd = false;
 
@@ -253,12 +484,16 @@ export function angular(options?: PluginOptions): Plugin[] {
         // Do a preliminary resolution for esbuild plugin (before configResolved)
         const preliminaryTsConfigPath = resolveTsConfigPath();
 
-        const esbuild = pluginOptions.useAngularCompilationAPI
-          ? undefined
-          : (config.esbuild ?? false);
-        const oxc = pluginOptions.useAngularCompilationAPI
-          ? undefined
-          : (config.oxc ?? false);
+        const esbuild =
+          pluginOptions.useAngularCompilationAPI ||
+          pluginOptions.useAnalogCompiler
+            ? undefined
+            : (config.esbuild ?? false);
+        const oxc =
+          pluginOptions.useAngularCompilationAPI ||
+          pluginOptions.useAnalogCompiler
+            ? undefined
+            : (config.oxc ?? false);
 
         const defineOptions = {
           ngJitMode: 'false',
@@ -340,6 +575,29 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configureServer(server) {
         viteServer = server;
+
+        if (pluginOptions.useAnalogCompiler) {
+          // Watch for new .ts files and scan them into the registry
+          server.watcher.on('add', (filePath) => {
+            if (
+              filePath.endsWith('.ts') &&
+              !filePath.endsWith('.spec.ts') &&
+              !filePath.endsWith('.d.ts')
+            ) {
+              try {
+                const code = require('fs').readFileSync(filePath, 'utf-8');
+                const entries = analogScanFile(code, filePath);
+                for (const entry of entries) {
+                  analogRegistry.set(entry.className, entry);
+                }
+              } catch {
+                // Skip unreadable files
+              }
+            }
+          });
+          return;
+        }
+
         // Add/unlink changes the TypeScript program shape, not just file
         // contents, so we need to invalidate both include discovery and the
         // cached tsconfig root names before recompiling.
@@ -357,6 +615,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         });
       },
       async buildStart() {
+        if (pluginOptions.useAnalogCompiler) {
+          initAnalogCompiler();
+          return;
+        }
+
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
           await performCompilation(resolvedConfig);
@@ -366,6 +629,41 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
       },
       async handleHotUpdate(ctx) {
+        // Analog compiler HMR path
+        if (pluginOptions.useAnalogCompiler) {
+          // Resource file changes → invalidate parent .ts module
+          if (analogResourceToSource.has(ctx.file)) {
+            const parentSource = analogResourceToSource.get(ctx.file)!;
+            const parentModule =
+              ctx.server.moduleGraph.getModuleById(parentSource);
+            if (parentModule) {
+              return [parentModule];
+            }
+          }
+
+          if (TS_EXT_REGEX.test(ctx.file)) {
+            const [fileId] = ctx.file.split('?');
+            const code = require('fs').readFileSync(fileId, 'utf-8');
+
+            // Remove old entries from this file
+            const oldEntries = [...analogRegistry.entries()]
+              .filter(([_, v]) => v.fileName === fileId)
+              .map(([k]) => k);
+            for (const key of oldEntries) {
+              analogRegistry.delete(key);
+            }
+
+            // Rescan the changed file
+            const newEntries = analogScanFile(code, fileId);
+            for (const entry of newEntries) {
+              analogRegistry.set(entry.className, entry);
+            }
+          }
+
+          // Let Vite handle the rest — the transform hook will recompile
+          return ctx.modules;
+        }
+
         if (TS_EXT_REGEX.test(ctx.file)) {
           let [fileId] = ctx.file.split('?');
 
@@ -552,6 +850,14 @@ export function angular(options?: PluginOptions): Plugin[] {
             !(options?.transformFilter(code, id) ?? true)
           ) {
             return;
+          }
+
+          // Analog compiler transform path
+          if (pluginOptions.useAnalogCompiler) {
+            if (id.includes('.ts?')) {
+              id = id.replace(/\?(.*)/, '');
+            }
+            return handleAnalogCompilerTransform(code, id);
           }
 
           if (pluginOptions.useAngularCompilationAPI) {

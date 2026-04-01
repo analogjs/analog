@@ -14,13 +14,15 @@ export function depsPlugin(options?: Options): Plugin[] {
       config() {
         const esbuild =
           options?.vite === false ||
-          options?.vite?.experimental?.useAngularCompilationAPI
+          options?.vite?.experimental?.useAngularCompilationAPI ||
+          options?.vite?.experimental?.useAnalogCompiler
             ? {}
             : { exclude: ['**/*.ts', '**/*.js'] };
 
         const oxc =
           options?.vite === false ||
-          options?.vite?.experimental?.useAngularCompilationAPI
+          options?.vite?.experimental?.useAngularCompilationAPI ||
+          options?.vite?.experimental?.useAnalogCompiler
             ? {}
             : { exclude: ['**/*.ts', '**/*.js'] };
 
