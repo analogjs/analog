@@ -303,6 +303,7 @@ describe('generateRouteManifest', () => {
     );
     expect(manifest.collisions).toHaveLength(1);
     expect(manifest.collisions[0].fullPath).toBe('/');
+    expect(manifest.collisions[0].samePriority).toBe(true);
 
     spy.mockRestore();
   });
