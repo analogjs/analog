@@ -61,8 +61,8 @@
     "@angular/language-service": "catalog:peerAngular20Plus",
     "@angular/platform-browser": "catalog:peerAngular20Plus",
     "@angular/platform-server": "catalog:peerAngular20Plus",
-    "rxjs": "^7.8.0",
-    "tslib": "^2.4.0",
+    "rxjs": "catalog:peerAngular20Plus",
+    "tslib": "catalog:peerAngular20Plus",
     "vite": "catalog:peerCompat"
   },
   "ng-update": {
