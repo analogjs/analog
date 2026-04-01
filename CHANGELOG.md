@@ -1,3 +1,9 @@
+# [3.0.0-alpha.21](https://github.com/analogjs/analog/compare/v3.0.0-alpha.20...v3.0.0-alpha.21) (2026-04-01)
+
+### Bug Fixes
+
+- **platform:** enhance route manifest generation to handle pathless layouts and prevent collisions ([#2181](https://github.com/analogjs/analog/issues/2181)) ([db2de8a](https://github.com/analogjs/analog/commit/db2de8adbcb6de2e3d5f31a111b55c73e4f76fb4))
+
 # [3.0.0-alpha.20](https://github.com/analogjs/analog/compare/v3.0.0-alpha.19...v3.0.0-alpha.20) (2026-04-01)
 
 ### Features
