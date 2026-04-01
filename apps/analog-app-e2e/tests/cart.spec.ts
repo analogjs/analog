@@ -12,8 +12,11 @@ async function buyPhone(page: import('@playwright/test').Page, phone: Product) {
   await productList.navigateTo();
   await productDetails.navigateToByName(phone.name);
 
-  page.once('dialog', (dialog) => dialog.accept());
-  await productDetails.getBuyButton().click();
+  const [dialog] = await Promise.all([
+    page.waitForEvent('dialog'),
+    productDetails.getBuyButton().click(),
+  ]);
+  await dialog.accept();
 }
 
 test.beforeEach(async ({ page }) => {

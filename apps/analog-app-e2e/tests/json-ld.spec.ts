@@ -45,12 +45,18 @@ test.describe('JSON-LD', () => {
     expect(rawHtml).not.toContain('analog-client');
 
     await page.goto('/client');
-    await expect(page.locator('h2')).toContainText('Client Component');
-    await page.waitForFunction(() => {
-      return !!document.querySelector(
-        'script[type="application/ld+json"][data-analog-json-ld]',
-      );
+    // Client-only route — Angular must bootstrap before content renders.
+    await expect(page.locator('h2')).toContainText('Client Component', {
+      timeout: 15_000,
     });
+    await page.waitForFunction(
+      () => {
+        return !!document.querySelector(
+          'script[type="application/ld+json"][data-analog-json-ld]',
+        );
+      },
+      { timeout: 15_000 },
+    );
 
     expect(await getJsonLdIdentifiers(page)).toEqual(['analog-client']);
   });
