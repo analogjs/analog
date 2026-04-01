@@ -4,6 +4,12 @@ import { phones } from './fixtures/phones';
 test.describe('Live products home page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    // Wait for Angular hydration — polling becomes active after hydration.
+    await expect(
+      page.locator('.service-card').filter({
+        has: page.getByRole('heading', { name: /live products service/i }),
+      }),
+    ).toContainText(/Polling:\s+active/i, { timeout: 15_000 });
   });
 
   test('shows the live products and SSE service dashboards', async ({
@@ -74,6 +80,7 @@ test.describe('Live products home page', () => {
     await page.getByRole('button', { name: /refresh products/i }).click();
     await expect(liveProductsCard).toContainText(
       /Last refresh reason:\s+manual/i,
+      { timeout: 10_000 },
     );
 
     await page.getByRole('button', { name: /reconnect product sse/i }).click();

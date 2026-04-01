@@ -16,7 +16,7 @@ export interface RouteSchemaInfo {
 }
 
 export interface GenerateRouteTreeDeclarationOptions {
-  jsonLdPaths?: Iterable<string>;
+  jsonLdFiles?: Iterable<string>;
 }
 
 export interface RouteEntry {
@@ -50,6 +50,8 @@ export interface RouteEntry {
 
 export interface RouteManifest {
   routes: RouteEntry[];
+  /** Canonical route per fullPath — precomputed once to avoid redundant work. */
+  canonicalByFullPath: Map<string, RouteEntry>;
 }
 
 /**
@@ -208,17 +210,24 @@ export function generateRouteManifest(
     const params = extractRouteParams(fullPath);
     const schemas = schemaDetector ? schemaDetector(filename) : NO_SCHEMAS;
     const id = filenameToRouteId(filename);
+    const isPathlessLayout = isPathlessLayoutId(id);
 
-    if (seenByFullPath.has(fullPath)) {
-      const winningFilename = seenByFullPath.get(fullPath);
-      console.warn(
-        `[Analog] Route collision: '${fullPath}' is defined by both ` +
-          `'${winningFilename}' and '${filename}'. ` +
-          `Keeping '${winningFilename}' based on route source precedence and skipping duplicate.`,
-      );
-      continue;
+    // Pathless layouts (e.g. (auth).page.ts) are structural wrappers that
+    // render a <router-outlet> — they coexist with index.page.ts at the same
+    // fullPath without collision. The Angular router handles them as nested
+    // layout routes, not competing page components.
+    if (!isPathlessLayout) {
+      if (seenByFullPath.has(fullPath)) {
+        const winningFilename = seenByFullPath.get(fullPath);
+        console.warn(
+          `[Analog] Route collision: '${fullPath}' is defined by both ` +
+            `'${winningFilename}' and '${filename}'. ` +
+            `Keeping '${winningFilename}' based on route source precedence and skipping duplicate.`,
+        );
+        continue;
+      }
+      seenByFullPath.set(fullPath, filename);
     }
-    seenByFullPath.set(fullPath, filename);
 
     routes.push({
       id,
@@ -231,7 +240,7 @@ export function generateRouteManifest(
       parentId: null,
       children: [],
       isIndex: id === '/index' || id.endsWith('/index'),
-      isGroup: id.includes('/(') || /^\/*\(/.test(id),
+      isGroup: isPathlessLayout,
       isCatchAll: params.some((param) => param.type === 'catchAll'),
       isOptionalCatchAll: params.some(
         (param) => param.type === 'optionalCatchAll',
@@ -246,17 +255,32 @@ export function generateRouteManifest(
     return a.fullPath.localeCompare(b.fullPath);
   });
 
-  const routeByFullPath = new Map(
-    routes.map((route) => [route.fullPath, route]),
-  );
+  const routeByFullPath = canonicalRoutesByFullPath(routes);
+
+  const routeById = new Map(routes.map((route) => [route.id, route]));
 
   for (const route of routes) {
-    const parent = findNearestParentRoute(route.fullPath, routeByFullPath);
+    // Use structural id-based parent lookup for any route whose id
+    // contains a group segment — this wires group children (e.g.
+    // /(auth)/sign-up) to their pathless layout parent (/(auth)).
+    // This also correctly handles nested groups like
+    // /dashboard/(settings)/profile: findNearestParentById walks up
+    // id segments and finds /(settings) if it exists, otherwise falls
+    // through to fullPathParent which resolves to /dashboard.
+    // Non-group routes always use the canonical fullPath-based lookup.
+    const hasGroupSegment = route.id.includes('/(');
+    const structuralParent = hasGroupSegment
+      ? findNearestParentById(route.id, routeById)
+      : undefined;
+    const fullPathParent = findNearestParentRoute(
+      route.fullPath,
+      routeByFullPath,
+    );
+    const parent = structuralParent ?? fullPathParent;
     route.parentId = parent?.id ?? null;
     route.path = computeLocalPath(route.fullPath, parent?.fullPath ?? null);
   }
 
-  const routeById = new Map(routes.map((route) => [route.id, route]));
   for (const route of routes) {
     if (route.parentId) {
       routeById.get(route.parentId)?.children.push(route.id);
@@ -292,7 +316,38 @@ export function generateRouteManifest(
     }
   }
 
-  return { routes };
+  return { routes, canonicalByFullPath: routeByFullPath };
+}
+
+function canonicalRoutesByFullPath(
+  routes: RouteEntry[],
+): Map<string, RouteEntry> {
+  const map = new Map<string, RouteEntry>();
+  for (const route of routes) {
+    const existing = map.get(route.fullPath);
+    if (!existing) {
+      map.set(route.fullPath, route);
+    } else if (existing.isGroup && !route.isGroup) {
+      // Non-group routes always take precedence over group layouts.
+      map.set(route.fullPath, route);
+    } else if (existing.isGroup && route.isGroup) {
+      // Both are group layouts — tiebreak by id to ensure stable selection
+      // regardless of filesystem or glob ordering across platforms.
+      if (route.id.localeCompare(existing.id) < 0) {
+        map.set(route.fullPath, route);
+      }
+    }
+  }
+  return map;
+}
+
+// Matches group names like (auth), (home) — intentionally excludes dots and
+// brackets so names like (auth.v2) or ([id]) are NOT treated as pathless
+// layouts. Dot-containing names collide with dynamic-segment syntax.
+function isPathlessLayoutId(id: string): boolean {
+  const segments = id.split('/').filter(Boolean);
+  if (segments.length === 0) return false;
+  return /^\([^.[\]]+\)$/.test(segments[segments.length - 1]);
 }
 
 function getRouteWeight(path: string): number {
@@ -399,7 +454,7 @@ export function generateRouteTableDeclaration(manifest: RouteManifest): string {
   lines.push("declare module '@analogjs/router' {");
   lines.push('  interface AnalogRouteTable {');
 
-  for (const route of manifest.routes) {
+  for (const route of manifest.canonicalByFullPath.values()) {
     const paramsAlias = schemaImports.get(`${route.fullPath}:params`);
     const queryAlias = schemaImports.get(`${route.fullPath}:query`);
 
@@ -438,7 +493,7 @@ export function generateRouteTreeDeclaration(
   options: GenerateRouteTreeDeclarationOptions = {},
 ): string {
   const lines: string[] = [];
-  const jsonLdPaths = new Set(options.jsonLdPaths ?? []);
+  const jsonLdFiles = new Set(options.jsonLdFiles ?? []);
 
   lines.push('// This file is auto-generated by @analogjs/platform');
   lines.push('// Do not edit manually');
@@ -475,7 +530,7 @@ export function generateRouteTreeDeclaration(
   lines.push('}');
   lines.push('');
   lines.push('export interface AnalogFileRoutesByFullPath {');
-  for (const route of manifest.routes) {
+  for (const route of manifest.canonicalByFullPath.values()) {
     lines.push(
       `  ${toTsKey(route.fullPath)}: AnalogFileRoutesById[${toTsStringLiteral(route.id)}];`,
     );
@@ -506,7 +561,7 @@ export function generateRouteTreeDeclaration(
     lines.push(
       `      hasQuerySchema: ${String(route.schemas.hasQuerySchema)},`,
     );
-    lines.push(`      hasJsonLd: ${String(jsonLdPaths.has(route.fullPath))},`);
+    lines.push(`      hasJsonLd: ${String(jsonLdFiles.has(route.filename))},`);
     lines.push(`      isIndex: ${String(route.isIndex)},`);
     lines.push(`      isGroup: ${String(route.isGroup)},`);
     lines.push(`      isCatchAll: ${String(route.isCatchAll)},`);
@@ -519,7 +574,7 @@ export function generateRouteTreeDeclaration(
   }
   lines.push('  },');
   lines.push('  byFullPath: {');
-  for (const route of manifest.routes) {
+  for (const route of manifest.canonicalByFullPath.values()) {
     lines.push(
       `    ${toObjectKey(route.fullPath)}: ${toTsStringLiteral(route.id)},`,
     );
@@ -556,6 +611,26 @@ function generateParamsType(params: RouteParamInfo[]): string {
 
 function isValidIdentifier(name: string): boolean {
   return /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(name);
+}
+
+function findNearestParentById(
+  id: string,
+  routesById: Map<string, RouteEntry>,
+): RouteEntry | undefined {
+  if (id === '/') {
+    return undefined;
+  }
+
+  const segments = id.split('/').filter(Boolean);
+  for (let index = segments.length - 1; index > 0; index--) {
+    const candidate = '/' + segments.slice(0, index).join('/');
+    const route = routesById.get(candidate);
+    if (route) {
+      return route;
+    }
+  }
+
+  return undefined;
 }
 
 function findNearestParentRoute(

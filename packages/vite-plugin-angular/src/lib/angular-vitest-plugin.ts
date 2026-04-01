@@ -20,7 +20,12 @@ export function angularVitestPlugin(): Plugin {
     config(userConfig) {
       return {
         optimizeDeps: {
-          include: ['tslib'],
+          include: [
+            'tslib',
+            '@angular/core',
+            '@angular/core/testing',
+            '@angular/platform-browser/testing',
+          ],
         },
         ssr: {
           noExternal: [
