@@ -19,6 +19,12 @@ declare module '@analogjs/router' {
       query: Record<string, string | string[] | undefined>;
       queryOutput: Record<string, string | string[] | undefined>;
     };
+    '/another-test': {
+      params: Record<string, never>;
+      paramsOutput: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+      queryOutput: Record<string, string | string[] | undefined>;
+    };
     '/cart': {
       params: Record<string, never>;
       paramsOutput: Record<string, never>;
@@ -56,6 +62,12 @@ declare module '@analogjs/router' {
       queryOutput: Record<string, string | string[] | undefined>;
     };
     '/server': {
+      params: Record<string, never>;
+      paramsOutput: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+      queryOutput: Record<string, string | string[] | undefined>;
+    };
+    '/shared-test': {
       params: Record<string, never>;
       paramsOutput: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
@@ -140,6 +152,7 @@ export interface AnalogGeneratedRouteRecord<
 export interface AnalogFileRoutesById {
   "/(auth)": AnalogGeneratedRouteRecord<"/(auth)", "/", "/", null, readonly []>;
   "/about-me": AnalogGeneratedRouteRecord<"/about-me", "about-me", "/about-me", null, readonly []>;
+  "/another-test": AnalogGeneratedRouteRecord<"/another-test", "another-test", "/another-test", null, readonly []>;
   "/cart": AnalogGeneratedRouteRecord<"/cart", "cart", "/cart", null, readonly []>;
   "/client/(client)": AnalogGeneratedRouteRecord<"/client/(client)", "client", "/client", null, readonly []>;
   "/contact": AnalogGeneratedRouteRecord<"/contact", "contact", "/contact", null, readonly []>;
@@ -147,6 +160,7 @@ export interface AnalogFileRoutesById {
   "/package": AnalogGeneratedRouteRecord<"/package", "package", "/package", null, readonly []>;
   "/search": AnalogGeneratedRouteRecord<"/search", "search", "/search", null, readonly []>;
   "/server/(server)": AnalogGeneratedRouteRecord<"/server/(server)", "server", "/server", null, readonly []>;
+  "/shared-test": AnalogGeneratedRouteRecord<"/shared-test", "shared-test", "/shared-test", null, readonly []>;
   "/shipping/index": AnalogGeneratedRouteRecord<"/shipping/index", "shipping", "/shipping", null, readonly ["/shipping/[...slug]"]>;
   "/(auth)/sign-up": AnalogGeneratedRouteRecord<"/(auth)/sign-up", "sign-up", "/sign-up", null, readonly []>;
   "/test": AnalogGeneratedRouteRecord<"/test", "test", "/test", null, readonly []>;
@@ -160,6 +174,7 @@ export interface AnalogFileRoutesById {
 export interface AnalogFileRoutesByFullPath {
   "/": AnalogFileRoutesById["/(auth)"];
   "/about-me": AnalogFileRoutesById["/about-me"];
+  "/another-test": AnalogFileRoutesById["/another-test"];
   "/cart": AnalogFileRoutesById["/cart"];
   "/client": AnalogFileRoutesById["/client/(client)"];
   "/contact": AnalogFileRoutesById["/contact"];
@@ -167,6 +182,7 @@ export interface AnalogFileRoutesByFullPath {
   "/package": AnalogFileRoutesById["/package"];
   "/search": AnalogFileRoutesById["/search"];
   "/server": AnalogFileRoutesById["/server/(server)"];
+  "/shared-test": AnalogFileRoutesById["/shared-test"];
   "/shipping": AnalogFileRoutesById["/shipping/index"];
   "/sign-up": AnalogFileRoutesById["/(auth)/sign-up"];
   "/test": AnalogFileRoutesById["/test"];
@@ -214,6 +230,22 @@ export const analogRouteTree = {
       isCatchAll: false,
       isOptionalCatchAll: false,
     } satisfies AnalogFileRoutesById["/about-me"],
+    "/another-test": {
+      id: "/another-test",
+      path: "another-test",
+      fullPath: "/another-test",
+      parentId: null,
+      children: [] as const,
+      sourceFile: "/libs/shared/feature/src/content/another-test.md",
+      kind: "content",
+      hasParamsSchema: false,
+      hasQuerySchema: false,
+      hasJsonLd: false,
+      isIndex: false,
+      isGroup: false,
+      isCatchAll: false,
+      isOptionalCatchAll: false,
+    } satisfies AnalogFileRoutesById["/another-test"],
     "/cart": {
       id: "/cart",
       path: "cart",
@@ -326,6 +358,22 @@ export const analogRouteTree = {
       isCatchAll: false,
       isOptionalCatchAll: false,
     } satisfies AnalogFileRoutesById["/server/(server)"],
+    "/shared-test": {
+      id: "/shared-test",
+      path: "shared-test",
+      fullPath: "/shared-test",
+      parentId: null,
+      children: [] as const,
+      sourceFile: "/libs/shared/feature/src/content/shared-test.md",
+      kind: "content",
+      hasParamsSchema: false,
+      hasQuerySchema: false,
+      hasJsonLd: false,
+      isIndex: false,
+      isGroup: false,
+      isCatchAll: false,
+      isOptionalCatchAll: false,
+    } satisfies AnalogFileRoutesById["/shared-test"],
     "/shipping/index": {
       id: "/shipping/index",
       path: "shipping",
@@ -364,8 +412,8 @@ export const analogRouteTree = {
       fullPath: "/test",
       parentId: null,
       children: [] as const,
-      sourceFile: "/libs/shared/feature/src/content/test.md",
-      kind: "content",
+      sourceFile: "/libs/shared/feature/src/pages/test.page.ts",
+      kind: "page",
       hasParamsSchema: false,
       hasQuerySchema: false,
       hasJsonLd: false,
@@ -458,6 +506,7 @@ export const analogRouteTree = {
   byFullPath: {
     "/": "/(auth)",
     "/about-me": "/about-me",
+    "/another-test": "/another-test",
     "/cart": "/cart",
     "/client": "/client/(client)",
     "/contact": "/contact",
@@ -465,6 +514,7 @@ export const analogRouteTree = {
     "/package": "/package",
     "/search": "/search",
     "/server": "/server/(server)",
+    "/shared-test": "/shared-test",
     "/shipping": "/shipping/index",
     "/sign-up": "/(auth)/sign-up",
     "/test": "/test",
