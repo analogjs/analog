@@ -154,6 +154,11 @@ export function compile(
 
     const ivyCode: string[] = [];
     let targetType: FactoryTarget = FactoryTarget.Injectable;
+    // Store resolved resources per decorator for metadata inlining
+    const resolvedResources = new Map<
+      ts.Decorator,
+      { template?: string; styles?: string[] }
+    >();
 
     const classIdentifier = ts.factory.createIdentifier(className);
     const classRef: o.R3Reference = {
@@ -269,6 +274,12 @@ export function compile(
               }
             }
           }
+
+          // Store resolved resources for metadata inlining
+          resolvedResources.set(dec, {
+            template: templateContent || undefined,
+            styles: meta.styles?.length > 0 ? [...meta.styles] : undefined,
+          });
 
           const parsedTemplate = parseTemplate(templateContent, fileName, {
             preserveWhitespaces: meta.preserveWhitespaces,
@@ -489,7 +500,62 @@ export function compile(
     angularDecorators.forEach((dec) => {
       const call = dec.expression as ts.CallExpression;
       const decName = call.expression.getText(origSourceFile);
-      const decArgsNode = call.arguments[0];
+      let decArgsNode = call.arguments[0];
+
+      // Inline external templateUrl/styleUrl(s) into the metadata so Angular's
+      // runtime doesn't try to fetch relative URLs (which fails during SSR).
+      const resources = resolvedResources.get(dec);
+      if (
+        decArgsNode &&
+        ts.isObjectLiteralExpression(decArgsNode) &&
+        resources
+      ) {
+        let needsTransform = false;
+        const newProperties: ts.ObjectLiteralElementLike[] = [];
+
+        for (const prop of (decArgsNode as ts.ObjectLiteralExpression)
+          .properties) {
+          if (!ts.isPropertyAssignment(prop)) {
+            newProperties.push(prop);
+            continue;
+          }
+          const propName = prop.name?.getText(origSourceFile);
+
+          if (propName === 'templateUrl' && resources.template) {
+            newProperties.push(
+              ts.factory.createPropertyAssignment(
+                'template',
+                ts.factory.createStringLiteral(resources.template),
+              ),
+            );
+            needsTransform = true;
+          } else if (
+            (propName === 'styleUrl' || propName === 'styleUrls') &&
+            resources.styles?.length
+          ) {
+            newProperties.push(
+              ts.factory.createPropertyAssignment(
+                'styles',
+                ts.factory.createArrayLiteralExpression(
+                  resources.styles.map((s) =>
+                    ts.factory.createStringLiteral(s),
+                  ),
+                ),
+              ),
+            );
+            needsTransform = true;
+          } else {
+            newProperties.push(prop);
+          }
+        }
+
+        if (needsTransform) {
+          decArgsNode = ts.factory.createObjectLiteralExpression(
+            newProperties,
+            true,
+          );
+        }
+      }
 
       try {
         const classMetadataExpr = compileClassMetadata({
