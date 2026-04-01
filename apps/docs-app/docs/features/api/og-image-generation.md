@@ -35,6 +35,16 @@ pnpm install -w satori satori-html sharp
   </TabItem>
 </Tabs>
 
+:::info
+
+`sharp` is a native module with platform-specific binaries. Analog automatically
+externalizes it during SSR and prerendering so that it resolves from
+`node_modules` at runtime instead of being bundled. Make sure `sharp` is
+installed as a project dependency (as shown above) when using image processing
+in server routes or prerendered pages.
+
+:::
+
 ## Setting Up An API Route
 
 Next, define an API route in the `src/server/routes/api` directory.

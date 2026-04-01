@@ -48,7 +48,7 @@ export function contentPlugin(
 
   let markedHighlighter: MarkedContentHighlighter;
   const workspaceRoot = vite.normalizePath(
-    options?.workspaceRoot ?? process.cwd(),
+    options?.workspaceRoot ?? process.env['NX_WORKSPACE_ROOT'] ?? process.cwd(),
   );
   let config: vite.UserConfig;
   let root: string;

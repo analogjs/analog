@@ -457,9 +457,6 @@ importers:
       effect:
         specifier: 4.0.0-beta.36
         version: 4.0.0-beta.36
-      esbuild:
-        specifier: 0.27.4
-        version: 0.27.4
       eslint:
         specifier: ^10.1.0
         version: 10.1.0(jiti@2.6.1)
@@ -930,10 +927,10 @@ importers:
   packages/create-analog:
     dependencies:
       kolorist:
-        specifier: ^1.6.0
+        specifier: ^1.8.0
         version: 1.8.0
       minimist:
-        specifier: ^1.2.7
+        specifier: ^1.2.8
         version: 1.2.8
       prompts:
         specifier: ^2.4.2
@@ -1088,6 +1085,9 @@ importers:
       radix3:
         specifier: 'catalog:'
         version: 1.1.2
+      sharp:
+        specifier: '>=0.32.0'
+        version: 0.34.5
       xmlbuilder2:
         specifier: 'catalog:'
         version: 4.0.3

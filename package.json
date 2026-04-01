@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "3.0.0-alpha.19",
+  "version": "3.0.0-alpha.20",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -161,7 +161,6 @@
     "conventional-changelog": "^7.2.0",
     "cpy-cli": "^7.0.0",
     "effect": "4.0.0-beta.36",
-    "esbuild": "0.27.4",
     "eslint": "^10.1.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-oxlint": "^1.57.0",
@@ -235,7 +234,6 @@
       "@parcel/watcher",
       "core-js-pure",
       "core-js",
-      "esbuild",
       "lmdb",
       "msgpackr-extract",
       "nx",
@@ -256,7 +254,6 @@
     "@angular/router": "$@angular/router",
     "@types/node": "$@types/node",
     "@typescript-eslint/type-utils": "$@typescript-eslint/type-utils",
-    "esbuild": "$esbuild",
     "jiti": "$jiti",
     "less": "$less",
     "rolldown": "$rolldown",

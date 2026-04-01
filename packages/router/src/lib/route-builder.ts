@@ -44,6 +44,17 @@ export function createRoutes<TFile>(
     const rawSegment = rawSegments[level];
     const ancestorRawSegments = rawSegments.slice(0, level);
 
+    if (import.meta.env.DEV) {
+      const existing = acc[level]?.[rawPath];
+      if (existing?.filename && existing.filename !== filename) {
+        console.warn(
+          `[Analog] Route files "${existing.filename}" and "${filename}" ` +
+            `resolve to the same route path "${rawPath}". ` +
+            `Only "${filename}" will be used.`,
+        );
+      }
+    }
+
     return {
       ...acc,
       [level]: {
@@ -123,7 +134,8 @@ function toRawPath(filename: string): string {
 
 function toSegment(rawSegment: string): string {
   return rawSegment
-    .replace(/index|\(.*?\)/g, '')
+    .replace(/\(.*?\)/g, '')
+    .replace(/(^|[./])index(?=[./]|$)/g, '$1')
     .replace(/\.|\/+/g, '/')
     .replace(/^\/+|\/+$/g, '');
 }
@@ -162,25 +174,27 @@ function toRoutes<TFile>(
         module = resolveModule(rawRoute.filename, files[rawRoute.filename]);
       }
 
-      const endpointKey = rawRoute.filename.replace(
-        /\.page\.(ts|analog|ag)$/,
-        ENDPOINT_EXTENSION,
-      );
+      if (/\.page\.(ts|analog|ag)$/.test(rawRoute.filename)) {
+        const endpointKey = rawRoute.filename.replace(
+          /\.page\.(ts|analog|ag)$/,
+          ENDPOINT_EXTENSION,
+        );
 
-      const rawEndpoint = rawRoute.filename
-        .replace(/\.page\.(ts|analog|ag)$/, '')
-        .replace(/\[\[\.\.\..+\]\]/, '**')
-        .replace(/\[\.{3}.+\]/, '**')
-        .replace(/^(.*?)\/pages/, '/pages');
+        const rawEndpoint = rawRoute.filename
+          .replace(/\.page\.(ts|analog|ag)$/, '')
+          .replace(/\[\[\.\.\..+\]\]/, '**')
+          .replace(/\[\.{3}.+\]/, '**')
+          .replace(/^(.*?)\/pages/, '/pages');
 
-      const endpoint = (rawEndpoint || '')
-        .replace(/\./g, '/')
-        .replace(/\/\((.*?)\)$/, '/-$1-');
+        const endpoint = (rawEndpoint || '')
+          .replace(/\./g, '/')
+          .replace(/\/\((.*?)\)$/, '/-$1-');
 
-      analogMeta = {
-        endpoint,
-        endpointKey,
-      };
+        analogMeta = {
+          endpoint,
+          endpointKey,
+        };
+      }
     }
 
     const optCatchAllMatch = rawRoute.filename?.match(/\[\[\.\.\.([^\]]+)\]\]/);
@@ -314,5 +328,5 @@ function sortRawRoutes(rawRoutes: RawRoute[]): void {
 }
 
 function deprioritizeSegment(segment: string): string {
-  return segment.replace(':', '~~').replace('**', '~~~~');
+  return segment.replaceAll(':', '~~').replaceAll('**', '~~~~');
 }

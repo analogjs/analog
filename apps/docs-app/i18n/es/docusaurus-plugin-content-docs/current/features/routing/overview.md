@@ -354,9 +354,9 @@ export const appConfig: ApplicationConfig = {
 
 ## Visualizando y depurando rutas
 
-Cuando estás construyendo las páginas de tu aplicación, puede ser útil ver las rutas basadas en la estructura del sistema de archivos de manera visual. Puedes utilizar la función `withDebugRoutes()` para proporcionar una ruta de depuración que muestre las páginas y layouts de tu aplicación.
+Durante el desarrollo, Analog registra automáticamente una ruta de depuración que muestra las páginas y layouts de tu aplicación. Navega a `/__analog/routes` en el navegador para ver la tabla de rutas. No se necesita configuración — la ruta de depuración está disponible en cualquier aplicación que use `provideFileRouter()` y se elimina automáticamente de las compilaciones de producción.
 
-Utiliza la función `withDebugRoutes` en el archivo `app.config.ts`:
+Si necesitas registrar la ruta de depuración explícitamente (por ejemplo, en una configuración personalizada), puedes utilizar la función `withDebugRoutes()`:
 
 ```ts
 import { ApplicationConfig } from '@angular/core';
@@ -366,7 +366,5 @@ export const appConfig: ApplicationConfig = {
   providers: [provideFileRouter(withDebugRoutes())],
 };
 ```
-
-Navigar en el navegador a la URL `__analog/routes` para ver la tabla de rutas.
 
 ![Página de rutas de depuración](/img/debug-routes.png)

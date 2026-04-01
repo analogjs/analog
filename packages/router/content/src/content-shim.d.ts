@@ -14,12 +14,30 @@
 // the published package resolves the real types.
 
 declare module '@analogjs/content' {
+  export type TableOfContentItem = {
+    id: string;
+    level: number;
+    text: string;
+  };
+
+  export type RenderedContent = {
+    content: string;
+    toc: TableOfContentItem[];
+  };
+
   export function parseRawContentFile(raw: string): {
     content: string;
     attributes: Record<string, any>;
   };
+  export function parseRawContentFile<TSchema>(
+    rawContentFile: string,
+    schema: TSchema,
+    filename?: string,
+  ): { content: string; attributes: unknown };
+
   export const MarkdownRouteComponent: import('@angular/core').Type<unknown>;
+
   export abstract class ContentRenderer {
-    render(content: string): Promise<string | { content: string }>;
+    render(content: string): Promise<RenderedContent>;
   }
 }

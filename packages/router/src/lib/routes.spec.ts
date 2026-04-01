@@ -4,6 +4,7 @@ import { expect, vi } from 'vitest';
 import { ROUTE_JSON_LD_KEY } from './json-ld';
 import { RouteExport, RouteMeta } from './models';
 import { createRoutes } from './routes';
+import { createRoutes as createBaseRoutes } from './route-builder';
 import { Files } from './route-files';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
 
@@ -910,6 +911,148 @@ describe('routes', () => {
 
       expect(spy).not.toHaveBeenCalledWith(
         `[Analog] Missing default export at ${fileName}`,
+      );
+    });
+  });
+
+  describe('merged page and content route ordering', () => {
+    class PageComponent {}
+    class ContentComponent {}
+
+    const pageModule = () =>
+      Promise.resolve<RouteExport>({ default: PageComponent });
+    const contentModule = () =>
+      Promise.resolve<RouteExport>({ default: ContentComponent });
+
+    it('should interleave static content routes before dynamic page routes at the same level', () => {
+      // Regression: before the merge fix, content routes were appended after
+      // page routes. With first-match-wins, /blog/:slug would shadow /blog/my-post.
+      const files: Files = {
+        '/src/app/pages/blog/[slug].page.ts': pageModule,
+        '/src/content/blog/my-post.md': contentModule,
+      };
+
+      const routes = createRoutes(files);
+      const blogRoute = routes.find((r) => r.path === 'blog');
+
+      expect(blogRoute).toBeDefined();
+      expect(blogRoute!.children!.length).toBe(2);
+      // Static 'my-post' must sort before dynamic ':slug'
+      expect(blogRoute!.children![0].path).toBe('my-post');
+      expect(blogRoute!.children![1].path).toBe(':slug');
+    });
+
+    it('should sort sibling routes from different sources by segment name', () => {
+      const files: Files = {
+        '/src/app/pages/docs/getting-started.page.ts': pageModule,
+        '/src/content/docs/changelog.md': contentModule,
+        '/src/app/pages/docs/api.page.ts': pageModule,
+      };
+
+      const routes = createRoutes(files);
+      const docsRoute = routes.find((r) => r.path === 'docs');
+
+      expect(docsRoute).toBeDefined();
+      expect(docsRoute!.children!.map((c) => c.path)).toEqual([
+        'api',
+        'changelog',
+        'getting-started',
+      ]);
+    });
+
+    it('should put content catchall routes at the end alongside page catchalls', () => {
+      const files: Files = {
+        '/src/app/pages/[dynamic].page.ts': pageModule,
+        '/src/app/pages/static.page.ts': pageModule,
+        '/src/content/[...not-found].md': contentModule,
+      };
+
+      const routes = createRoutes(files);
+
+      expect(routes[0].path).toBe('static');
+      expect(routes[1].path).toBe(':dynamic');
+      expect(routes[2].path).toBe('**');
+    });
+  });
+
+  describe('merged route resolver dispatch', () => {
+    class PageComponent {}
+
+    it('should dispatch to the correct resolver per filename', async () => {
+      const resolvedPage: RouteExport = { default: PageComponent };
+      const resolvedContent: RouteExport = {
+        default: PageComponent,
+        routeMeta: { data: { _analogContent: '<p>Hello</p>' } },
+      };
+
+      const files: Record<string, () => Promise<unknown>> = {
+        '/src/app/pages/blog/about.page.ts': () =>
+          Promise.resolve(resolvedPage),
+        '/src/content/blog/post.md': () => Promise.resolve('# Hello'),
+      };
+
+      const resolverMap = new Map<string, boolean>();
+      const routes = createBaseRoutes(files, (filename, fileLoader) => {
+        const isContent = filename.endsWith('.md');
+        resolverMap.set(filename, isContent);
+        if (isContent) {
+          // Simulate toMarkdownModule: return a factory that produces a RouteExport
+          return () => Promise.resolve(resolvedContent);
+        }
+        return fileLoader as () => Promise<RouteExport>;
+      });
+
+      // Trigger loadChildren to exercise the resolvers
+      const blogRoute = routes.find((r) => r.path === 'blog');
+      expect(blogRoute).toBeDefined();
+
+      for (const child of blogRoute!.children!) {
+        if (child.loadChildren) {
+          await child.loadChildren();
+        }
+      }
+
+      // Verify each file was dispatched to the correct resolver
+      expect(resolverMap.get('/src/app/pages/blog/about.page.ts')).toBe(false);
+      expect(resolverMap.get('/src/content/blog/post.md')).toBe(true);
+    });
+  });
+
+  describe('route path collision warning', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('should warn when two files resolve to the same route path', () => {
+      const spy = vi.spyOn(console, 'warn');
+
+      // Both files resolve to rawPath 'about' at level 0
+      const files: Files = {
+        '/src/app/pages/about.page.ts': () =>
+          Promise.resolve({ default: class {} }),
+        '/src/content/about.md': () => Promise.resolve({ default: class {} }),
+      };
+
+      createRoutes(files);
+
+      expect(spy).toHaveBeenCalledWith(
+        expect.stringContaining('resolve to the same route path'),
+      );
+    });
+
+    it('should not warn when files resolve to different route paths', () => {
+      const spy = vi.spyOn(console, 'warn');
+
+      const files: Files = {
+        '/src/app/pages/about.page.ts': () =>
+          Promise.resolve({ default: class {} }),
+        '/src/content/blog.md': () => Promise.resolve({ default: class {} }),
+      };
+
+      createRoutes(files);
+
+      expect(spy).not.toHaveBeenCalledWith(
+        expect.stringContaining('resolve to the same route path'),
       );
     });
   });
