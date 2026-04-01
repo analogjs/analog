@@ -427,7 +427,10 @@ if (import.meta.hot) {
       analogResourceToSource.set(dep, id);
     }
 
-    let outputCode = result.code;
+    // Strip TypeScript-only syntax that the analog compiler preserves
+    let outputCode = result.code
+      .replace(/^import type\s+\{[^}]*\}\s+from\s+['"][^'"]+['"];?\s*$/gm, '')
+      .replace(/^import\s+type\s+\w+\s+from\s+['"][^'"]+['"];?\s*$/gm, '');
 
     // Append HMR code in dev mode
     if (watchMode && pluginOptions.liveReload) {
@@ -497,6 +500,7 @@ if (import.meta.hot) {
                   compilerOptions: {
                     experimentalDecorators: false,
                     emitDecoratorMetadata: false,
+                    useDefineForClassFields: true,
                   },
                 },
               } as any)

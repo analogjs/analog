@@ -215,12 +215,16 @@ export function compile(
               kind,
               ...(kind === 1 ? { name: registryEntry?.pipeName } : {}),
             };
-            // Pass inputs/outputs from registry so template bindings resolve
+            // Pass inputs/outputs from registry so template bindings resolve.
+            // R3DirectiveDependencyMetadata expects inputs/outputs as string[]
+            // of binding property names.
             if (registryEntry?.inputs) {
-              decl.inputs = registryEntry.inputs;
+              decl.inputs = Object.values(registryEntry.inputs).map(
+                (i: any) => i.bindingPropertyName,
+              );
             }
             if (registryEntry?.outputs) {
-              decl.outputs = registryEntry.outputs;
+              decl.outputs = Object.values(registryEntry.outputs);
             }
             declarations.push(decl);
           }
@@ -577,17 +581,23 @@ export function compile(
     }
   }
 
-  if (helpers.length > 0 && classResults.length > 0) {
-    // Insert helpers before the first compiled class
-    const firstClassStart = classResults.reduce(
-      (min, cr) =>
-        Math.min(
-          min,
-          cr.decorators[0]?.getStart(origSourceFile) ?? cr.classEnd,
-        ),
-      sourceCode.length,
-    );
-    ms.appendLeft(firstClassStart, helpers.join('\n') + '\n');
+  if (helpers.length > 0) {
+    // Insert helpers after the last import / top-level non-class statement,
+    // well before any class that references them.
+    let insertPos = 0;
+    for (const stmt of origSourceFile.statements) {
+      if (
+        ts.isImportDeclaration(stmt) ||
+        (ts.isVariableStatement(stmt) &&
+          !stmt.getText(origSourceFile).includes('class'))
+      ) {
+        insertPos = stmt.getEnd();
+      } else if (!ts.isExportAssignment(stmt)) {
+        // Stop at the first class or non-import/non-variable statement
+        break;
+      }
+    }
+    ms.appendLeft(insertPos, '\n' + helpers.join('\n') + '\n');
   }
   if (sideEffects.length > 0) {
     ms.append('\n\n' + sideEffects.join('\n'));
