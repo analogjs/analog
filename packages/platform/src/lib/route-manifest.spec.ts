@@ -243,6 +243,7 @@ describe('generateRouteManifest', () => {
   it('should generate an empty manifest for no files', () => {
     const manifest = generateRouteManifest([]);
     expect(manifest.routes).toEqual([]);
+    expect(manifest.collisions).toEqual([]);
   });
 
   it('should generate manifest entries from filenames', () => {
@@ -298,6 +299,58 @@ describe('generateRouteManifest', () => {
     expect(manifest.routes.filter((r) => r.fullPath === '/about').length).toBe(
       1,
     );
+    expect(manifest.collisions).toHaveLength(1);
+    expect(manifest.collisions[0].fullPath).toBe('/about');
+    expect(manifest.collisions[0].samePriority).toBe(false);
+
+    spy.mockRestore();
+  });
+
+  it('does not record a collision for two group routes at the same path', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
+
+    const manifest = generateRouteManifest([
+      '/src/app/pages/(auth).page.ts',
+      '/src/app/pages/(home).page.ts',
+    ]);
+
+    expect(manifest.collisions).toHaveLength(0);
+    expect(spy).not.toHaveBeenCalled();
+
+    spy.mockRestore();
+  });
+
+  it('does not record a collision for layout + index pair at the same path', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
+
+    const manifest = generateRouteManifest([
+      '/src/app/pages/docs.page.ts',
+      '/src/app/pages/docs/index.page.ts',
+    ]);
+
+    expect(manifest.collisions).toHaveLength(0);
+    expect(spy).not.toHaveBeenCalled();
+
+    spy.mockRestore();
+  });
+
+  it('does not record a collision when the same file appears twice', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
+
+    const manifest = generateRouteManifest([
+      '/src/app/pages/about.page.ts',
+      '/src/app/pages/about.page.ts',
+    ]);
+
+    expect(manifest.routes).toHaveLength(1);
+    expect(manifest.collisions).toHaveLength(0);
+    expect(spy).not.toHaveBeenCalled();
 
     spy.mockRestore();
   });

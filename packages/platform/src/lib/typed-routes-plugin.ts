@@ -220,6 +220,18 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
         : '',
     );
 
+    const hardCollisions = manifest.collisions.filter((c) => c.samePriority);
+    if (hardCollisions.length > 0 && command === 'build') {
+      const details = hardCollisions
+        .map((c) => `  '${c.fullPath}': '${c.keptFile}' vs '${c.droppedFile}'`)
+        .join('\n');
+      throw new Error(
+        `[analog] Route collisions detected during build:\n${details}\n\n` +
+          `Each route path must be defined by exactly one source file. ` +
+          `Remove or rename the conflicting files to resolve the collision.`,
+      );
+    }
+
     if (manifest.routes.length > 0) {
       console.log(formatManifestSummary(manifest));
     }

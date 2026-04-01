@@ -744,6 +744,29 @@ title: Hello
     });
   });
 
+  it('fails build when same-priority files collide on the same route path', () => {
+    const root = createFixture();
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    // Both files are app-local (same priority) and resolve to /test
+    writeFixtureFile(
+      root,
+      'src/app/pages/test.page.ts',
+      `export default class TestPage {}\n`,
+    );
+    writeFixtureFile(
+      root,
+      'src/content/test.md',
+      `---\ntitle: Test\n---\nContent\n`,
+    );
+
+    expect(() =>
+      generateRoutesFile(root, {
+        additionalContentDirs: [],
+      }),
+    ).toThrow('Route collisions detected during build');
+  });
+
   it('prefers app-local routes over additional pages dirs and warns on collisions', () => {
     const root = createFixture();
     const warnSpy = vi

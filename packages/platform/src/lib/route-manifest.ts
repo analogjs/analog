@@ -48,8 +48,17 @@ export interface RouteEntry {
   isOptionalCatchAll: boolean;
 }
 
+export interface RouteCollision {
+  fullPath: string;
+  keptFile: string;
+  droppedFile: string;
+  /** True when both files have the same collision priority (hard error). */
+  samePriority: boolean;
+}
+
 export interface RouteManifest {
   routes: RouteEntry[];
+  collisions: RouteCollision[];
   /** Canonical route per fullPath — precomputed once to avoid redundant work. */
   canonicalByFullPath: Map<string, RouteEntry>;
 }
@@ -190,7 +199,11 @@ export function generateRouteManifest(
   collisionPriority?: (filename: string) => number,
 ): RouteManifest {
   const routes: RouteEntry[] = [];
-  const seenByFullPath = new Map<string, string>();
+  const collisions: RouteCollision[] = [];
+  const seenByFullPath = new Map<
+    string,
+    { filename: string; priority: number }
+  >();
   const getPriority = collisionPriority ?? getCollisionPriority;
 
   // Prefer app-local route files over shared/external sources when two files
@@ -212,21 +225,51 @@ export function generateRouteManifest(
     const id = filenameToRouteId(filename);
     const isPathlessLayout = isPathlessLayoutId(id);
 
+    const currentPriority = getPriority(filename);
+
     // Pathless layouts (e.g. (auth).page.ts) are structural wrappers that
     // render a <router-outlet> — they coexist with index.page.ts at the same
     // fullPath without collision. The Angular router handles them as nested
     // layout routes, not competing page components.
     if (!isPathlessLayout) {
       if (seenByFullPath.has(fullPath)) {
-        const winningFilename = seenByFullPath.get(fullPath);
+        const winner = seenByFullPath.get(fullPath)!;
+        if (winner.filename === filename) {
+          continue;
+        }
+        // A layout file (e.g., docs.page.ts) and its index child
+        // (e.g., docs/index.page.ts) intentionally share the same route
+        // path — the layout wraps the index as a parent-child pair.
+        const isLayoutIndexPair = (a: string, b: string) => {
+          const indexRe = /\/index\.(page\.)?(ts|js|md|analog|ag)$/;
+          const layoutRe = /\.(page\.)?(ts|js|analog|ag)$/;
+          if (indexRe.test(a) && layoutRe.test(b)) {
+            const dir = a.replace(indexRe, '');
+            const layout = b.replace(layoutRe, '');
+            return dir === layout;
+          }
+          return false;
+        };
+        if (
+          isLayoutIndexPair(winner.filename, filename) ||
+          isLayoutIndexPair(filename, winner.filename)
+        ) {
+          continue;
+        }
+        collisions.push({
+          fullPath,
+          keptFile: winner.filename,
+          droppedFile: filename,
+          samePriority: winner.priority === currentPriority,
+        });
         console.warn(
           `[Analog] Route collision: '${fullPath}' is defined by both ` +
-            `'${winningFilename}' and '${filename}'. ` +
-            `Keeping '${winningFilename}' based on route source precedence and skipping duplicate.`,
+            `'${winner.filename}' and '${filename}'. ` +
+            `Keeping '${winner.filename}' based on route source precedence and skipping duplicate.`,
         );
         continue;
       }
-      seenByFullPath.set(fullPath, filename);
+      seenByFullPath.set(fullPath, { filename, priority: currentPriority });
     }
 
     routes.push({
@@ -316,7 +359,7 @@ export function generateRouteManifest(
     }
   }
 
-  return { routes, canonicalByFullPath: routeByFullPath };
+  return { routes, collisions, canonicalByFullPath: routeByFullPath };
 }
 
 function canonicalRoutesByFullPath(
