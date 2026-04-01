@@ -559,12 +559,38 @@ export function compile(
     }
   }
 
-  // 3. Append constant pool statements (setClassMetadata, etc.)
-  const constants = constantPool.statements
-    .map((s) => emitAngularStmt(s))
-    .join('\n');
-  if (constants) {
-    ms.append('\n\n' + constants);
+  // 3. Emit constant pool statements.
+  // Split into: helper declarations (const/function) that must appear before
+  // the class (since static property initializers reference them), and
+  // side-effect statements (setClassMetadata IIFEs) that go after.
+  const helpers: string[] = [];
+  const sideEffects: string[] = [];
+  for (const s of constantPool.statements) {
+    const code = emitAngularStmt(s);
+    if (
+      s instanceof o.ExpressionStatement &&
+      s.expr instanceof o.InvokeFunctionExpr
+    ) {
+      sideEffects.push(code);
+    } else {
+      helpers.push(code);
+    }
+  }
+
+  if (helpers.length > 0 && classResults.length > 0) {
+    // Insert helpers before the first compiled class
+    const firstClassStart = classResults.reduce(
+      (min, cr) =>
+        Math.min(
+          min,
+          cr.decorators[0]?.getStart(origSourceFile) ?? cr.classEnd,
+        ),
+      sourceCode.length,
+    );
+    ms.appendLeft(firstClassStart, helpers.join('\n') + '\n');
+  }
+  if (sideEffects.length > 0) {
+    ms.append('\n\n' + sideEffects.join('\n'));
   }
 
   const map = ms.generateMap({
