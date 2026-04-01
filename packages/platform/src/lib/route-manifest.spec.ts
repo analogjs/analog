@@ -307,6 +307,23 @@ describe('generateRouteManifest', () => {
     spy.mockRestore();
   });
 
+  it('does not record a collision when the same file appears twice', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
+
+    const manifest = generateRouteManifest([
+      '/src/app/pages/about.page.ts',
+      '/src/app/pages/about.page.ts',
+    ]);
+
+    expect(manifest.routes).toHaveLength(1);
+    expect(manifest.collisions).toHaveLength(0);
+    expect(spy).not.toHaveBeenCalled();
+
+    spy.mockRestore();
+  });
+
   it('prefers app-local routes over additional/shared route sources', () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
       /* noop */

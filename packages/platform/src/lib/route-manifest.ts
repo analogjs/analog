@@ -226,6 +226,9 @@ export function generateRouteManifest(
 
     if (seenByFullPath.has(fullPath)) {
       const winner = seenByFullPath.get(fullPath)!;
+      if (winner.filename === filename) {
+        continue;
+      }
       collisions.push({
         fullPath,
         keptFile: winner.filename,
