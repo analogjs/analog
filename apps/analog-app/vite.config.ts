@@ -74,6 +74,7 @@ export default defineConfig(({ mode }) => {
           inlineStylesExtension: 'scss',
           experimental: {
             useAngularCompilationAPI: false,
+            useAnalogCompiler: true,
           },
         },
         liveReload: true,
