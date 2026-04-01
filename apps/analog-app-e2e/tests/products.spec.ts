@@ -10,13 +10,14 @@ test.beforeEach(async ({ page }) => {
 test('should open share dialog when Share is clicked', async ({ page }) => {
   const productList = new ProductListPage(page);
 
-  const [dialog] = await Promise.all([
-    page.waitForEvent('dialog'),
-    productList.getShareButtonByName(phones.mini.name).click(),
-  ]);
+  let dialogMessage = '';
+  page.once('dialog', async (dialog) => {
+    dialogMessage = dialog.message();
+    await dialog.accept();
+  });
 
-  expect(dialog.message()).toMatch(/the product has been shared!/i);
-  await dialog.accept();
+  await productList.getShareButtonByName(phones.mini.name).click();
+  expect(dialogMessage).toMatch(/the product has been shared!/i);
 });
 
 test('should open notify dialog when Notify Me is clicked', async ({
@@ -24,15 +25,16 @@ test('should open notify dialog when Notify Me is clicked', async ({
 }) => {
   const productList = new ProductListPage(page);
 
-  const [dialog] = await Promise.all([
-    page.waitForEvent('dialog'),
-    productList.getNotifyButtonByName(phones.xl.name).click(),
-  ]);
+  let dialogMessage = '';
+  page.once('dialog', async (dialog) => {
+    dialogMessage = dialog.message();
+    await dialog.accept();
+  });
 
-  expect(dialog.message()).toMatch(
+  await productList.getNotifyButtonByName(phones.xl.name).click();
+  expect(dialogMessage).toMatch(
     /you will be notified when the product goes on sale/i,
   );
-  await dialog.accept();
 });
 
 test('should show price on product details', async ({ page }) => {
@@ -47,11 +49,12 @@ test('should add product to cart when Buy is clicked', async ({ page }) => {
 
   await productDetails.navigateToByName(phones.mini.name);
 
-  const [dialog] = await Promise.all([
-    page.waitForEvent('dialog'),
-    productDetails.getBuyButton().click(),
-  ]);
+  let dialogMessage = '';
+  page.once('dialog', async (dialog) => {
+    dialogMessage = dialog.message();
+    await dialog.accept();
+  });
 
-  expect(dialog.message()).toMatch(/your product has been added to the cart/i);
-  await dialog.accept();
+  await productDetails.getBuyButton().click();
+  expect(dialogMessage).toMatch(/your product has been added to the cart/i);
 });
