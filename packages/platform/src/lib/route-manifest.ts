@@ -48,8 +48,17 @@ export interface RouteEntry {
   isOptionalCatchAll: boolean;
 }
 
+export interface RouteCollision {
+  fullPath: string;
+  keptFile: string;
+  droppedFile: string;
+  /** True when both files have the same collision priority (hard error). */
+  samePriority: boolean;
+}
+
 export interface RouteManifest {
   routes: RouteEntry[];
+  collisions: RouteCollision[];
 }
 
 /**
@@ -188,7 +197,11 @@ export function generateRouteManifest(
   collisionPriority?: (filename: string) => number,
 ): RouteManifest {
   const routes: RouteEntry[] = [];
-  const seenByFullPath = new Map<string, string>();
+  const collisions: RouteCollision[] = [];
+  const seenByFullPath = new Map<
+    string,
+    { filename: string; priority: number }
+  >();
   const getPriority = collisionPriority ?? getCollisionPriority;
 
   // Prefer app-local route files over shared/external sources when two files
@@ -209,16 +222,24 @@ export function generateRouteManifest(
     const schemas = schemaDetector ? schemaDetector(filename) : NO_SCHEMAS;
     const id = filenameToRouteId(filename);
 
+    const currentPriority = getPriority(filename);
+
     if (seenByFullPath.has(fullPath)) {
-      const winningFilename = seenByFullPath.get(fullPath);
+      const winner = seenByFullPath.get(fullPath)!;
+      collisions.push({
+        fullPath,
+        keptFile: winner.filename,
+        droppedFile: filename,
+        samePriority: winner.priority === currentPriority,
+      });
       console.warn(
         `[Analog] Route collision: '${fullPath}' is defined by both ` +
-          `'${winningFilename}' and '${filename}'. ` +
-          `Keeping '${winningFilename}' based on route source precedence and skipping duplicate.`,
+          `'${winner.filename}' and '${filename}'. ` +
+          `Keeping '${winner.filename}' based on route source precedence and skipping duplicate.`,
       );
       continue;
     }
-    seenByFullPath.set(fullPath, filename);
+    seenByFullPath.set(fullPath, { filename, priority: currentPriority });
 
     routes.push({
       id,
@@ -292,7 +313,7 @@ export function generateRouteManifest(
     }
   }
 
-  return { routes };
+  return { routes, collisions };
 }
 
 function getRouteWeight(path: string): number {

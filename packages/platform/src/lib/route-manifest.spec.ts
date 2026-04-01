@@ -243,6 +243,7 @@ describe('generateRouteManifest', () => {
   it('should generate an empty manifest for no files', () => {
     const manifest = generateRouteManifest([]);
     expect(manifest.routes).toEqual([]);
+    expect(manifest.collisions).toEqual([]);
   });
 
   it('should generate manifest entries from filenames', () => {
@@ -300,6 +301,8 @@ describe('generateRouteManifest', () => {
     expect(manifest.routes[0].filename).toMatch(
       /^\/app\/routes\/(index|\(home\))\.ts$/,
     );
+    expect(manifest.collisions).toHaveLength(1);
+    expect(manifest.collisions[0].fullPath).toBe('/');
 
     spy.mockRestore();
   });
