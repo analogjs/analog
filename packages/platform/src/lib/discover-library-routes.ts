@@ -7,11 +7,11 @@ export interface DiscoveredLibraryRoutes {
   additionalAPIDirs: string[];
 }
 
-const empty: DiscoveredLibraryRoutes = {
-  additionalPagesDirs: [],
-  additionalContentDirs: [],
-  additionalAPIDirs: [],
-};
+const empty: DiscoveredLibraryRoutes = Object.freeze({
+  additionalPagesDirs: Object.freeze([] as string[]),
+  additionalContentDirs: Object.freeze([] as string[]),
+  additionalAPIDirs: Object.freeze([] as string[]),
+});
 
 /**
  * Reads `tsconfig.base.json` (or `tsconfig.json`) path aliases from the

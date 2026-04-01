@@ -175,6 +175,12 @@ describe('platformPlugin', () => {
       }),
       undefined,
     );
+    expect(contentPluginSpy).toHaveBeenCalledWith(
+      undefined,
+      expect.objectContaining({
+        additionalContentDirs: ['/libs/shared/feature/src/content'],
+      }),
+    );
   });
 
   it('deduplicates explicit and discovered dirs', () => {
