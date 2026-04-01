@@ -1,5 +1,5 @@
 import { resolve, dirname } from 'node:path';
-import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import {
@@ -33,8 +33,34 @@ function copyAssetsPlugin(assets: { from: string; to: string }[]): Plugin {
   };
 }
 
+/**
+ * Replaces Vite's built-in emptyOutDir with a retry-aware alternative.
+ *
+ * Vite 8's prepare-out-dir plugin calls rmSync on each directory entry
+ * without retries. On overlay filesystems (Dagger, Docker) this fails
+ * with ENOTEMPTY when the kernel hasn't finished unlinking inodes.
+ * Deleting the entire tree in one rmSync call with maxRetries avoids
+ * the race.
+ */
+function cleanOutDirPlugin(): Plugin {
+  return {
+    name: 'clean-out-dir',
+    buildStart() {
+      if (existsSync(outDir)) {
+        rmSync(outDir, {
+          recursive: true,
+          force: true,
+          maxRetries: 3,
+          retryDelay: 100,
+        });
+      }
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
+    cleanOutDirPlugin(),
     oxcDtsPlugin(pkgDir),
     copyAssetsPlugin([
       { from: 'README.md', to: 'README.md' },
@@ -53,7 +79,8 @@ export default defineConfig({
     target: 'es2022',
     sourcemap: true,
     minify: false,
-    emptyOutDir: true,
+    // Disabled — cleanOutDirPlugin above handles cleanup with retry support.
+    emptyOutDir: false,
     outDir,
     lib: {
       entry: {
