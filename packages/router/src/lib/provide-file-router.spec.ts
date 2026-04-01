@@ -1,15 +1,15 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideLocationMocks } from '@angular/common/testing';
-import { ROUTES, provideRouter } from '@angular/router';
-import { describe, expect, it } from 'vitest';
+import { ROUTES } from '@angular/router';
+import { describe, expect, it, vi } from 'vitest';
 
 import { RouteExport } from './models';
 import {
   ANALOG_EXTRA_ROUTE_FILE_SOURCES,
   ExtraRouteFileSource,
 } from './route-files';
-import { provideFileRouter } from './provide-file-router';
+import { provideFileRouter, withExtraRoutes } from './provide-file-router';
 import { withContentRoutes } from '../../content/src/lib/with-content-routes';
 
 @Component({ standalone: true, template: '' })
@@ -120,18 +120,7 @@ describe('provideFileRouter integration', () => {
     TestBed.configureTestingModule({
       providers: [
         provideFileRouter(
-          // withExtraRoutes is registered before the factory,
-          // so its routes appear first in the ROUTES array
-          {
-            ɵkind: 100 as number,
-            ɵproviders: [
-              {
-                provide: ROUTES,
-                useValue: [{ path: 'custom', component: StubComponent }],
-                multi: true,
-              },
-            ],
-          },
+          withExtraRoutes([{ path: 'custom', component: StubComponent }]),
         ),
         provideLocationMocks(),
         {
@@ -146,9 +135,7 @@ describe('provideFileRouter integration', () => {
     // allRoutes is array-of-arrays from multi-provider
     // withExtraRoutes should appear before file routes
     const firstBatch = allRoutes[0];
-    const customRoute = firstBatch?.find?.(
-      (r: { path: string }) => r.path === 'custom',
-    );
+    const customRoute = firstBatch?.find?.((r) => r.path === 'custom');
 
     expect(customRoute).toBeDefined();
   });

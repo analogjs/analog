@@ -5,10 +5,10 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
 import { playwright } from '@vitest/browser-playwright';
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command }) => {
   const tsconfig =
     process.env['ANALOG_BUILD_LIB_TSCONFIG'] ??
-    (mode === 'production'
+    (command === 'build'
       ? `${__dirname}/tsconfig.lib.json`
       : `${__dirname}/tsconfig.spec.json`);
 
@@ -58,7 +58,7 @@ export default defineConfig(({ mode }) => {
       teardownTimeout: 3000,
     },
     define: {
-      'import.meta.vitest': mode !== 'production',
+      'import.meta.vitest': command !== 'build',
     },
   };
 });
