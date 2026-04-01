@@ -144,13 +144,19 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     );
   }
   visitBinaryOperatorExpr(ast: o.BinaryOperatorExpr) {
-    return (
+    const op = BINARY_OP_STR[ast.operator] || '=';
+    const expr =
       ast.lhs.visitExpression(this, null) +
       ' ' +
-      (BINARY_OP_STR[ast.operator] || '=') +
+      op +
       ' ' +
-      ast.rhs.visitExpression(this, null)
-    );
+      ast.rhs.visitExpression(this, null);
+    // Wrap assignments in parens so they work correctly as ternary conditions:
+    // (tmp = val) ? a : b  vs  tmp = val ? a : b
+    if (ast.operator === o.BinaryOperator.Assign) {
+      return '(' + expr + ')';
+    }
+    return expr;
   }
   visitNotExpr(ast: o.NotExpr) {
     return '!(' + ast.condition.visitExpression(this, null) + ')';
