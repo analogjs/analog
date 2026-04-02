@@ -157,8 +157,8 @@ describe('@Component', () => {
 
       expectCompiles(result);
       expect(result).toContain('clicked: "clicked"');
-      // Event binding generates a listener (domListener in DomOnly mode for standalone without deps)
-      expect(result).toContain('ɵɵdomListener');
+      // Event binding generates a listener instruction
+      expect(result).toContain('ɵɵlistener');
     });
 
     it('detects model() and model.required()', () => {
@@ -813,7 +813,7 @@ describe('@Component', () => {
       // Template content inlined — actual HTML elements compiled
       expect(result).toContain('ɵcmp');
       expect(result).toContain('wrapper');
-      expect(result).toContain('ɵɵdomElementStart');
+      expect(result).toContain('ɵɵelementStart');
     });
 
     it('inlines styleUrls content at compile time', () => {
@@ -990,7 +990,7 @@ describe('@Component', () => {
       expectCompiles(result);
       // Template inlined
       expect(result).toContain('wrapper');
-      expect(result).toContain('ɵɵdomElementStart');
+      expect(result).toContain('ɵɵelementStart');
       // Styles inlined with scoping
       expect(result).toContain('styles:');
       expect(result).toContain('_nghost-%COMP%');

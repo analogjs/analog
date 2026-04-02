@@ -65,7 +65,7 @@ describe('Error Handling', () => {
     // Generated selector for runtime compatibility
     expect(result).toContain('ng-component-mypage');
     // Template still compiles
-    expect(result).toContain('ɵɵdomElementStart');
+    expect(result).toContain('ɵɵelementStart');
   });
 
   it('selectorless component with imports compiles', () => {
