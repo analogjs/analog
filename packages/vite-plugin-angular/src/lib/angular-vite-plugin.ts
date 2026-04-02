@@ -449,13 +449,10 @@ if (import.meta.hot) {
           ? undefined
           : pluginOptions.useAnalogCompiler
             ? ({
-                tsconfig: {
-                  compilerOptions: {
-                    experimentalDecorators: false,
-                    emitDecoratorMetadata: false,
-                    useDefineForClassFields: true,
-                  },
-                },
+                // Override tsconfig's experimentalDecorators — the analog compiler
+                // handles decorator processing, so OXC must not lower them.
+                decorator: { legacy: false, emitDecoratorMetadata: false },
+                typescript: { useDefineForClassFields: true },
               } as any)
             : (config.oxc ?? false);
 

@@ -3,7 +3,7 @@ import { scanFile } from './registry';
 import { compile as rawCompile } from './compile';
 import { compileCode as compile, buildRegistry } from './test-helpers';
 import { inlineResourceUrls, extractInlineStyles } from './resource-inliner';
-import { scanDtsFile } from './dts-reader';
+import { scanDtsFile, collectImportedPackages } from './dts-reader';
 
 describe('Registry input/output extraction', () => {
   it('extracts signal inputs from input()', () => {
@@ -765,6 +765,91 @@ declare class CurrencyPipe {
     expect(entries).toHaveLength(1);
     expect(entries[0].kind).toBe('pipe');
     expect(entries[0].pipeName).toBe('currency');
+  });
+});
+
+describe('Decorator and class field preservation', () => {
+  it('preserves signal field initializers (not moved to constructor)', () => {
+    const result = compile(
+      `
+      import { Component, input, output, model } from '@angular/core';
+      @Component({
+        selector: 'app-child',
+        template: '<p>{{ name() }}</p>'
+      })
+      export class ChildComponent {
+        readonly name = input.required<string>();
+        notify = output();
+        value = model(0);
+      }
+    `,
+      'child.ts',
+    );
+
+    expectCompiles(result);
+    // Signal APIs must stay as class field initializers, not be moved
+    // to the constructor (which would strip .required and generics)
+    expect(result).toContain('input.required');
+    expect(result).toContain('output()');
+    expect(result).toContain('model(');
+    // Ivy inputs should recognize the signal input
+    expect(result).toMatch(/inputs:\s*\{.*name.*\[1/);
+  });
+
+  it('strips @Component decorator from output', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-test',
+        template: '<p>hello</p>'
+      })
+      export class TestComponent {}
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).not.toContain('@Component');
+    expect(result).toContain('ɵɵdefineComponent');
+  });
+});
+
+describe('collectImportedPackages', () => {
+  it('extracts bare-specifier package names, skips relative', () => {
+    const packages = collectImportedPackages(
+      `
+      import { Component } from '@angular/core';
+      import { RouterOutlet } from '@angular/router';
+      import { Observable } from 'rxjs';
+      import { MyService } from './my-service';
+    `,
+      'test.ts',
+    );
+
+    expect(packages.has('@angular/core')).toBe(true);
+    expect(packages.has('@angular/router')).toBe(true);
+    expect(packages.has('rxjs')).toBe(true);
+    // Relative imports should be skipped
+    expect(packages.has('./my-service')).toBe(false);
+    expect(packages.size).toBe(3);
+  });
+
+  it('handles scoped packages correctly', () => {
+    const packages = collectImportedPackages(
+      `
+      import { input } from '@angular/core';
+      import { injectLoad } from '@analogjs/router';
+      import { map } from 'rxjs/operators';
+    `,
+      'test.ts',
+    );
+
+    expect(packages.has('@angular/core')).toBe(true);
+    expect(packages.has('@analogjs/router')).toBe(true);
+    expect(packages.has('rxjs')).toBe(true);
+    // Should not include the subpath
+    expect(packages.has('rxjs/operators')).toBe(false);
   });
 });
 
