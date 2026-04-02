@@ -3,6 +3,7 @@ import { scanFile } from './registry';
 import { compile as rawCompile } from './compile';
 import { compileCode as compile, buildRegistry } from './test-helpers';
 import { inlineResourceUrls, extractInlineStyles } from './resource-inliner';
+import { scanDtsFile } from './dts-reader';
 
 describe('Registry input/output extraction', () => {
   it('extracts signal inputs from input()', () => {
@@ -698,6 +699,72 @@ describe('OXC-based resource inlining', () => {
     expect(styles).toHaveLength(2);
     expect(styles[0]).toBe('h1 { color: red }');
     expect(styles[1]).toBe('p { margin: 0 }');
+  });
+});
+
+describe('Arrow function object literal wrapping', () => {
+  it('wraps object literal return in parens for arrow functions', () => {
+    // Angular emits arrow functions returning object literals in metadata
+    // like: () => ({key: val}). Without parens, () => {key: val} is parsed
+    // as a block with a labeled statement.
+    const result = compile(
+      `
+      import { Component, signal } from '@angular/core';
+      @Component({
+        selector: 'app-test',
+        template: \`
+          @defer (on viewport) {
+            <p>deferred</p>
+          } @placeholder {
+            <p>placeholder</p>
+          }
+        \`
+      })
+      export class TestComponent {}
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // Any arrow returning an object literal should be wrapped: => ({...})
+    // Not: => {...} which would be a block
+    expect(result).not.toMatch(/=> \{[a-zA-Z]+:/);
+  });
+});
+
+describe('.d.ts metadata extraction', () => {
+  it('extracts directive with inputs/outputs from .d.ts', () => {
+    const entries = scanDtsFile(
+      `
+import * as i0 from "@angular/core";
+declare class MyDir {
+    static ɵdir: i0.ɵɵDirectiveDeclaration<MyDir, "[myDir]", never, { "color": { "alias": "color"; "required": false; }; }, { "colorChange": "colorChange"; }, never, never, true, never>;
+}
+`,
+      'my-dir.d.ts',
+    );
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].selector).toBe('[myDir]');
+    expect(entries[0].kind).toBe('directive');
+    expect(entries[0].inputs!['color'].bindingPropertyName).toBe('color');
+    expect(entries[0].outputs!['colorChange']).toBe('colorChange');
+  });
+
+  it('extracts pipe name from .d.ts', () => {
+    const entries = scanDtsFile(
+      `
+import * as i0 from "@angular/core";
+declare class CurrencyPipe {
+    static ɵpipe: i0.ɵɵPipeDeclaration<CurrencyPipe, "currency", true>;
+}
+`,
+      'currency.d.ts',
+    );
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].kind).toBe('pipe');
+    expect(entries[0].pipeName).toBe('currency');
   });
 });
 

@@ -179,9 +179,13 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
         ast.body.map((s: any) => s.visitStatement(this, null)).join(' ') +
         '}'
       );
-    return (
-      params + ' => ' + (ast.body as o.Expression).visitExpression(this, null)
-    );
+    const bodyExpr = (ast.body as o.Expression).visitExpression(this, null);
+    // Wrap object literals in parens so `() => {key: val}` isn't parsed
+    // as a block with a labeled statement.
+    if (ast.body instanceof o.LiteralMapExpr) {
+      return params + ' => (' + bodyExpr + ')';
+    }
+    return params + ' => ' + bodyExpr;
   }
   visitWriteVarExpr(ast: any) {
     return ast.name + ' = ' + ast.value.visitExpression(this, null);
