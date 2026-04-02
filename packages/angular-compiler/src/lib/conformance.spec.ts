@@ -189,6 +189,9 @@ const angularAvailable = fs.existsSync(COMPLIANCE_DIR);
 
 describe.skipIf(!angularAvailable)('Angular Compliance Tests', () => {
   const results = { pass: 0, fail: 0, skip: 0, error: 0 };
+  const MIN_CONFORMANCE_PASS_RATE = Number.parseFloat(
+    process.env.ANGULAR_CONFORMANCE_MIN_PASS_RATE ?? '0.75',
+  );
 
   for (const category of CATEGORIES) {
     const categoryDir = path.join(COMPLIANCE_DIR, category);
@@ -281,18 +284,16 @@ describe.skipIf(!angularAvailable)('Angular Compliance Tests', () => {
 
   it('summary', () => {
     const total = results.pass + results.fail + results.skip + results.error;
-    const passRate =
-      total > 0
-        ? ((results.pass / (results.pass + results.fail)) * 100).toFixed(1)
-        : '0';
+    const compared = results.pass + results.fail;
+    const passRate = compared > 0 ? results.pass / compared : 0;
     console.log('\n=== Angular Compliance Test Results ===');
     console.log(`Pass: ${results.pass}`);
     console.log(`Fail: ${results.fail}`);
     console.log(`Skip: ${results.skip}`);
     console.log(`Error (compile failed): ${results.error}`);
     console.log(`Total: ${total}`);
-    console.log(`Pass rate: ${passRate}%`);
-    // Don't assert — this is informational
-    expect(true).toBe(true);
+    console.log(`Pass rate: ${(passRate * 100).toFixed(1)}%`);
+    expect(compared).toBeGreaterThan(0);
+    expect(passRate).toBeGreaterThanOrEqual(MIN_CONFORMANCE_PASS_RATE);
   });
 });
