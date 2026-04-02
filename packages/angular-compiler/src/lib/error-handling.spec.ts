@@ -106,10 +106,11 @@ describe('Error Handling', () => {
     expect(result).toContain('LazyComponent');
   });
 
-  it('component with invalid template returns empty', () => {
+  it('component with invalid template throws', () => {
     // Unclosed tags should trigger parse errors
-    const result = compile(
-      `
+    expect(() =>
+      compile(
+        `
       import { Component } from '@angular/core';
       @Component({
         selector: 'app-bad',
@@ -117,12 +118,8 @@ describe('Error Handling', () => {
       })
       export class BadComponent {}
     `,
-      'bad.ts',
-    );
-
-    // The compiler logs errors and returns empty string for template errors
-    // (based on the parsedTemplate.errors check in compile.ts)
-    // The component should still have some output even if template fails
-    expect(result).toBeDefined();
+        'bad.ts',
+      ),
+    ).toThrow('[angular-compiler] Template parse error');
   });
 });

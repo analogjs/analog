@@ -169,6 +169,8 @@ export function compile(
       type: new o.WrappedNodeExpr(classIdentifier),
     };
 
+    let classCompileError: Error | null = null;
+
     angularDecorators.forEach((dec) => {
       const decoratorName = (
         dec.expression as ts.CallExpression
@@ -358,9 +360,13 @@ export function compile(
               transformFunction: sigDesc.transform || null,
             };
           }
-          if (parsedTemplate.errors) {
-            console.log(parsedTemplate.errors);
-            return '' as any;
+          const templateErrors = parsedTemplate.errors ?? [];
+          if (templateErrors.length > 0) {
+            const firstError = templateErrors[0];
+            classCompileError = new Error(
+              `[angular-compiler] Template parse error in ${fileName} (${className}): ${firstError.msg}`,
+            );
+            return;
           }
 
           const componentMeta: any = {
@@ -529,6 +535,10 @@ export function compile(
           break;
       }
     });
+
+    if (classCompileError) {
+      throw classCompileError;
+    }
 
     // Generate factory
     const deps = extractConstructorDeps(node, typeOnlyImports);
