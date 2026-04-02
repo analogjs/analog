@@ -69,6 +69,8 @@ import { createHash } from 'node:crypto';
 import {
   compile as analogCompile,
   scanFile as analogScanFile,
+  scanPackageDts as analogScanPackageDts,
+  collectImportedPackages as analogCollectImportedPackages,
   jitTransform as analogJitTransform,
   inlineResourceUrls,
   extractInlineStyles as extractInlineStylesOxc,
@@ -224,13 +226,18 @@ export function angular(options?: PluginOptions): Plugin[] {
   // Analog compiler state (used when experimental.useAnalogCompiler is true)
   const analogRegistry: ComponentRegistry = new Map();
   const analogResourceToSource = new Map<string, string>();
+  /** Tracks which npm packages have already had their .d.ts files scanned. */
+  const scannedDtsPackages = new Set<string>();
+  let analogProjectRoot = '';
 
   function initAnalogCompiler() {
     if (jit) return; // JIT: no registry scan needed
 
     // Scan all source files to build the registry
     analogRegistry.clear();
+    scannedDtsPackages.clear();
     const resolvedTsConfigPath = resolveTsConfigPath();
+    analogProjectRoot = dirname(resolvedTsConfigPath);
     const config = compilerCli.readConfiguration(resolvedTsConfigPath);
 
     for (const file of config.rootNames) {
@@ -242,6 +249,28 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
       } catch {
         // Skip unreadable files
+      }
+    }
+  }
+
+  /**
+   * Lazily scan .d.ts files for external packages imported by the given source.
+   * Each package is scanned at most once and the results are cached in the registry.
+   */
+  function ensureDtsRegistryForSource(code: string, id: string) {
+    for (const pkg of analogCollectImportedPackages(code, id)) {
+      if (scannedDtsPackages.has(pkg)) continue;
+      scannedDtsPackages.add(pkg);
+
+      try {
+        const dtsEntries = analogScanPackageDts(pkg, analogProjectRoot);
+        for (const entry of dtsEntries) {
+          if (!analogRegistry.has(entry.className)) {
+            analogRegistry.set(entry.className, entry);
+          }
+        }
+      } catch {
+        // Package may not have .d.ts files or may not be Angular
       }
     }
   }
@@ -334,6 +363,11 @@ if (import.meta.hot) {
         if (resolvedInlineStyles.size === 0) resolvedInlineStyles = undefined;
       }
     }
+
+    // Lazily scan .d.ts files for any external packages this file imports,
+    // so pre-compiled directives (e.g. RouterLinkActive) are in the registry
+    // before template compilation needs them.
+    ensureDtsRegistryForSource(code, id);
 
     const result = analogCompile(code, id, {
       registry: analogRegistry,

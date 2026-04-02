@@ -12,9 +12,9 @@ Peer dependencies: `@angular/compiler` >=19, `@angular/compiler-cli` >=19, `@ang
 
 ## Entry Point
 
-| Import                       | Exports                                                                                      | Use case                  |
-| ---------------------------- | -------------------------------------------------------------------------------------------- | ------------------------- |
-| `@analogjs/angular-compiler` | `compile()`, `scanFile()`, `jitTransform()`, `inlineResourceUrls()`, `extractInlineStyles()` | Programmatic compiler API |
+| Import                       | Exports                                                                                                                                                        | Use case                  |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `@analogjs/angular-compiler` | `compile()`, `scanFile()`, `scanDtsFile()`, `scanPackageDts()`, `collectImportedPackages()`, `jitTransform()`, `inlineResourceUrls()`, `extractInlineStyles()` | Programmatic compiler API |
 
 The compiler is integrated into `@analogjs/vite-plugin-angular` via the `experimental.useAnalogCompiler` flag — there is no separate Vite plugin entry point.
 
@@ -44,6 +44,9 @@ export default defineConfig({
 import {
   compile,
   scanFile,
+  scanDtsFile,
+  scanPackageDts,
+  collectImportedPackages,
   jitTransform,
   inlineResourceUrls,
   extractInlineStyles,
@@ -55,9 +58,20 @@ const result = compile(sourceCode, fileName, { registry });
 // result.map — V3 source map
 // result.resourceDependencies — external template/style paths read
 
-// Scan a file for Angular metadata (uses OXC Rust parser)
+// Scan a source file for Angular metadata (uses OXC Rust parser)
 const entries = scanFile(code, fileName);
 // entries: [{ selector, kind, className, fileName, inputs, outputs, ... }]
+
+// Scan a .d.ts file for pre-compiled Angular declarations
+const dtsEntries = scanDtsFile(dtsCode, fileName);
+// Reads ɵɵDirectiveDeclaration/ComponentDeclaration/PipeDeclaration type params
+
+// Scan all .d.ts files in an npm package
+const pkgEntries = scanPackageDts('@angular/router', projectRoot);
+
+// Collect bare-specifier package names from imports
+const packages = collectImportedPackages(code, fileName);
+// Set { '@angular/router', 'rxjs', ... }
 
 // Inline templateUrl/styleUrl(s) in source code (OXC AST rewriting)
 const inlined = inlineResourceUrls(sourceCode, fileName);
@@ -77,6 +91,7 @@ Source file (.ts)
   │                                   (selectors, inputs, outputs, pipes, NgModule exports)
   │
   └─ vite-plugin-angular (transform, per request)
+       collectImportedPackages() ──▶ scanPackageDts() ──▶ registry (lazy, once per package)
        inlineResourceUrls() ──▶ OXC AST rewrite (templateUrl → template, styleUrl → styles)
          │
          ▼
@@ -120,6 +135,7 @@ The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.)
 | `js-emitter.ts`       | Angular output AST → JavaScript string emitter (~4x faster than `ts.Printer`)               |
 | `ast-translator.ts`   | Angular output AST → TypeScript AST translator (for complex expressions)                    |
 | `resource-inliner.ts` | OXC-based `templateUrl`/`styleUrl` inlining and inline style extraction                     |
+| `dts-reader.ts`       | OXC-based `.d.ts` scanner for pre-compiled Angular packages (selectors, inputs, outputs)    |
 | `jit-transform.ts`    | JIT mode: decorator metadata arrays + constructor DI + signal downleveling                  |
 | `jit-metadata.ts`     | JIT metadata helpers (constructor parameters, property decorators)                          |
 | `defer.ts`            | `@defer` dependency map builder                                                             |
@@ -228,7 +244,7 @@ The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.)
 | Component imports directive                    | Yes (via registry)                                                |
 | Component imports pipe                         | Yes (via registry)                                                |
 | Component imports NgModule                     | Yes (exports expanded from registry)                              |
-| Library imports (e.g. `RouterOutlet`)          | Yes (added to dependencies, skipped for template matching)        |
+| Library imports (e.g. `RouterOutlet`)          | Yes (lazily scanned from package `.d.ts` via `scanPackageDts()`)  |
 | Same-file imports                              | Yes (file-local selector fallback)                                |
 | Signal input bindings (`[prop]="value"`)       | Yes (registry extracts `input()`, `input.required()`, `@Input()`) |
 | Signal output bindings (`(event)="handler()"`) | Yes (registry extracts `output()`, `model()`, `@Output()`)        |
@@ -396,6 +412,7 @@ This compiler's architecture — single-file transforms using `@angular/compiler
 | File                            | Tests | Coverage                                                                                                                                                                                                                                                                                                                                |
 | ------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `integration.spec.ts`           | 28    | Registry input/output extraction, cross-component binding, constant pool ordering, assignment precedence, templateUrl inlining, content projection, pipe chaining, template refs, two-way binding, computed signals, safe navigation, @defer triggers, @if alias, multi-component files, duplicate i0 prevention, OXC resource inlining |
+| `dts-reader.spec.ts`            | 7     | Directive/component/pipe extraction from `.d.ts`, signal inputs, aliased inputs, multiple classes                                                                                                                                                                                                                                       |
 | `component.spec.ts`             | 48    | All @Component features, signals (including required variants), control flow, defer, pipes, content projection, external resources, resource dependencies, providers, source maps                                                                                                                                                       |
 | `ast-translator.spec.ts`        | 43    | Every AST visitor method (expressions + statements), ngDevMode global                                                                                                                                                                                                                                                                   |
 | `decorator-fields.spec.ts`      | 15    | @Input, @Output, @ViewChild, @ContentChild, @HostBinding, @HostListener field decorators                                                                                                                                                                                                                                                |

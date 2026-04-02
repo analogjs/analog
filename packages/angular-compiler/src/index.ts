@@ -8,6 +8,11 @@ export {
   type RegistryEntry,
   type ComponentRegistry,
 } from './lib/registry.js';
+export {
+  scanDtsFile,
+  scanPackageDts,
+  collectImportedPackages,
+} from './lib/dts-reader.js';
 export { jitTransform, type JitTransformResult } from './lib/jit-transform.js';
 export {
   inlineResourceUrls,

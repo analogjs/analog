@@ -4,5 +4,10 @@ export {
   type RegistryEntry,
   type ComponentRegistry,
 } from './registry.js';
+export {
+  scanDtsFile,
+  scanPackageDts,
+  collectImportedPackages,
+} from './dts-reader.js';
 export { jitTransform, type JitTransformResult } from './jit-transform.js';
 export { inlineResourceUrls, extractInlineStyles } from './resource-inliner.js';
