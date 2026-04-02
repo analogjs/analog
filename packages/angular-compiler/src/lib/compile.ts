@@ -135,6 +135,9 @@ export function compile(
     classEnd: number; // Position of closing } in original source
   }
   const classResults: ClassCompileResult[] = [];
+  // Track synthetic imports needed for NgModule export expansion.
+  // Maps exported class name → import specifier.
+  const syntheticImports = new Map<string, string>();
 
   // ANGULAR_DECORATORS imported from utils
 
@@ -196,16 +199,51 @@ export function compile(
             const registryEntry = registry?.get(depClassName);
 
             if (registryEntry?.kind === 'ngmodule' && registryEntry.exports) {
+              // Find the import specifier for this NgModule so we can
+              // import its exported classes from the same package.
+              let moduleSpecifier: string | undefined;
+              for (const stmt of origSourceFile.statements) {
+                if (
+                  ts.isImportDeclaration(stmt) &&
+                  stmt.importClause?.namedBindings &&
+                  ts.isNamedImports(stmt.importClause.namedBindings)
+                ) {
+                  for (const el of stmt.importClause.namedBindings.elements) {
+                    if (el.name.text === depClassName) {
+                      moduleSpecifier = (
+                        stmt.moduleSpecifier as ts.StringLiteral
+                      ).text;
+                    }
+                  }
+                }
+              }
+
               for (const exportedName of registryEntry.exports) {
                 const exportedEntry = registry?.get(exportedName);
                 if (exportedEntry && exportedEntry.kind !== 'ngmodule') {
                   const kind = exportedEntry.kind === 'pipe' ? 1 : 0;
-                  declarations.push({
-                    type: dep,
+                  // Create a reference to the exported class. If it's not
+                  // already imported, track it for synthetic import injection.
+                  const exportedId = ts.factory.createIdentifier(exportedName);
+                  const exportedRef = new o.WrappedNodeExpr(exportedId);
+                  if (moduleSpecifier) {
+                    syntheticImports.set(exportedName, moduleSpecifier);
+                  }
+                  const decl: any = {
+                    type: exportedRef,
                     selector: exportedEntry.selector,
                     kind,
                     ...(kind === 1 ? { name: exportedEntry.pipeName } : {}),
-                  });
+                  };
+                  if (exportedEntry.inputs) {
+                    decl.inputs = Object.values(exportedEntry.inputs).map(
+                      (i: any) => i.bindingPropertyName,
+                    );
+                  }
+                  if (exportedEntry.outputs) {
+                    decl.outputs = Object.values(exportedEntry.outputs);
+                  }
+                  declarations.push(decl);
                 }
               }
               continue;
@@ -233,6 +271,24 @@ export function compile(
             }
             declarations.push(decl);
           }
+
+          // Add self-reference so recursive components (e.g. tree views)
+          // can use their own selector in their template.
+          const selfInputs = Object.entries(sigs.inputs).map(
+            ([, v]: [string, any]) => v.bindingPropertyName,
+          );
+          const selfOutputs = Object.values({
+            ...meta.outputs,
+            ...fields.outputs,
+            ...sigs.outputs,
+          });
+          declarations.push({
+            type: classRef.value,
+            selector: meta.selector,
+            kind: 0,
+            ...(selfInputs.length > 0 ? { inputs: selfInputs } : {}),
+            ...(selfOutputs.length > 0 ? { outputs: selfOutputs } : {}),
+          });
 
           let templateContent = meta.template || '';
           if (!templateContent && meta.templateUrl) {
@@ -348,7 +404,7 @@ export function compile(
                 localSelectors,
               ).blocks,
             },
-            declarationListEmitMode: 0,
+            declarationListEmitMode: 1,
             relativeContextFilePath: fileName,
             controlCreate: null,
           };
@@ -591,9 +647,35 @@ export function compile(
       }
     });
 
+    // Collect member decorators (@HostListener, @HostBinding, @Input, @Output,
+    // @ViewChild, @ContentChild, etc.) so they are removed from the source.
+    // The metadata has already been extracted by detectFieldDecorators().
+    const memberDecorators: ts.Decorator[] = [];
+    const MEMBER_DECORATOR_NAMES = new Set([
+      'Input',
+      'Output',
+      'HostBinding',
+      'HostListener',
+      'ViewChild',
+      'ViewChildren',
+      'ContentChild',
+      'ContentChildren',
+    ]);
+    for (const member of node.members) {
+      const mDecorators = ts.getDecorators(member as any);
+      if (!mDecorators) continue;
+      for (const dec of mDecorators) {
+        if (!ts.isCallExpression(dec.expression)) continue;
+        const decName = dec.expression.expression.getText(origSourceFile);
+        if (MEMBER_DECORATOR_NAMES.has(decName)) {
+          memberDecorators.push(dec);
+        }
+      }
+    }
+
     classResults.push({
       ivyCode,
-      decorators: angularDecorators,
+      decorators: [...angularDecorators, ...memberDecorators],
       classEnd: node.getEnd(),
     });
   }
@@ -604,6 +686,20 @@ export function compile(
   // 1. Prepend i0 import (skip if already present)
   if (!sourceCode.includes('import * as i0 from')) {
     ms.prepend('import * as i0 from "@angular/core";\n');
+  }
+
+  // 1b. Inject synthetic imports for NgModule-exported classes
+  for (const [name, specifier] of syntheticImports) {
+    const alreadyImported = origSourceFile.statements.some(
+      (s) =>
+        ts.isImportDeclaration(s) &&
+        s.importClause?.namedBindings &&
+        ts.isNamedImports(s.importClause.namedBindings) &&
+        s.importClause.namedBindings.elements.some((e) => e.name.text === name),
+    );
+    if (!alreadyImported) {
+      ms.prepend(`import { ${name} } from "${specifier}";\n`);
+    }
   }
 
   // 2. For each compiled class: remove decorators + insert Ivy definitions

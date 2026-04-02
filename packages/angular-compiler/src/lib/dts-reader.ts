@@ -17,7 +17,8 @@ export function scanDtsFile(code: string, fileName: string): RegistryEntry[] {
   if (
     !code.includes('DirectiveDeclaration') &&
     !code.includes('ComponentDeclaration') &&
-    !code.includes('PipeDeclaration')
+    !code.includes('PipeDeclaration') &&
+    !code.includes('NgModuleDeclaration')
   )
     return [];
 
@@ -39,7 +40,20 @@ export function scanPackageDts(
   packageName: string,
   basePath: string,
 ): RegistryEntry[] {
-  const pkgDir = path.join(basePath, 'node_modules', packageName);
+  // Walk up from basePath to find the nearest node_modules containing the package.
+  // This handles monorepos where node_modules is at the workspace root,
+  // not in the project subdirectory.
+  let pkgDir = '';
+  let searchBase = basePath;
+  while (searchBase !== path.dirname(searchBase)) {
+    const candidate = path.join(searchBase, 'node_modules', packageName);
+    if (fs.existsSync(candidate)) {
+      pkgDir = candidate;
+      break;
+    }
+    searchBase = path.dirname(searchBase);
+  }
+  if (!pkgDir) return [];
 
   // Check for a "types" directory first (Angular packages use this),
   // then fall back to the package root.
@@ -161,6 +175,42 @@ function visitStatements(
           selector: pipeName,
           kind: 'pipe',
           pipeName,
+          fileName,
+          className,
+        });
+      } else if (
+        propName === 'ɵmod' &&
+        typeName.includes('NgModuleDeclaration') &&
+        typeParams &&
+        typeParams.length >= 4
+      ) {
+        // ɵɵNgModuleDeclaration<Module, Declarations, Imports, Exports>
+        // Extract exported class names from the 4th type param (index 3).
+        const exportsParam = typeParams[3];
+        const exportedNames: string[] = [];
+        if (exportsParam?.type === 'TSTupleType' && exportsParam.elementTypes) {
+          for (const el of exportsParam.elementTypes) {
+            if (
+              el.type === 'TSTypeQuery' &&
+              el.exprName?.type === 'Identifier'
+            ) {
+              exportedNames.push(el.exprName.name);
+            } else if (
+              el.type === 'TSTypeQuery' &&
+              el.exprName?.type === 'TSQualifiedName'
+            ) {
+              // e.g. typeof i2.BidiModule → extract "BidiModule"
+              const right = el.exprName.right;
+              if (right?.type === 'Identifier') {
+                exportedNames.push(right.name);
+              }
+            }
+          }
+        }
+        entries.push({
+          selector: className,
+          kind: 'ngmodule',
+          exports: exportedNames,
           fileName,
           className,
         });

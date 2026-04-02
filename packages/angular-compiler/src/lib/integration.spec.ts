@@ -607,7 +607,7 @@ describe('Multiple components in one file', () => {
     expect(result).toContain('"app-icon"');
     expect(result).toContain('"app-badge"');
     // BadgeComponent uses IconComponent as dependency
-    expect(result).toContain('dependencies: [IconComponent]');
+    expect(result).toMatch(/dependencies:.*IconComponent/);
   });
 });
 
@@ -911,6 +911,141 @@ describe('Template-level styles', () => {
 
     expectCompiles(result);
     expect(result).toContain('.host { display: block }');
+  });
+});
+
+describe('NgModule export expansion', () => {
+  it('resolves NgModule exports into individual declarations', () => {
+    const buttonSrc = `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'ui-button', template: '<button><ng-content /></button>' })
+      export class ButtonComponent {}
+    `;
+    const moduleSrc = `
+      import { NgModule } from '@angular/core';
+      @NgModule({ declarations: [ButtonComponent], exports: [ButtonComponent] })
+      export class SharedModule {}
+    `;
+    const appSrc = `
+      import { Component } from '@angular/core';
+      import { SharedModule } from './shared.module';
+      @Component({
+        selector: 'app-root',
+        imports: [SharedModule],
+        template: '<ui-button>Click</ui-button>'
+      })
+      export class AppComponent {}
+    `;
+
+    const registry = buildRegistry({
+      'button.ts': buttonSrc,
+      'shared.module.ts': moduleSrc,
+    });
+    const result = compile(appSrc, 'app.ts', registry);
+
+    expectCompiles(result);
+    // The template should resolve ui-button from the NgModule exports
+    expect(result).toContain('"ui-button"');
+  });
+});
+
+describe('Member decorator removal', () => {
+  it('removes @Input and @Output decorators from compiled output', () => {
+    const result = compile(
+      `
+      import { Component, Input, Output, EventEmitter } from '@angular/core';
+      @Component({
+        selector: 'app-field',
+        template: '<p>{{ label }}</p>'
+      })
+      export class FieldComponent {
+        @Input() label = '';
+        @Output() clicked = new EventEmitter<void>();
+      }
+    `,
+      'field.ts',
+    );
+
+    expectCompiles(result);
+    // Member decorators should be stripped
+    expect(result).not.toMatch(/@Input/);
+    expect(result).not.toMatch(/@Output/);
+    // But the fields themselves remain
+    expect(result).toContain("label = ''");
+    expect(result).toContain('new EventEmitter');
+  });
+
+  it('removes @HostBinding and @HostListener decorators', () => {
+    const result = compile(
+      `
+      import { Component, HostBinding, HostListener } from '@angular/core';
+      @Component({
+        selector: 'app-host',
+        template: '<p>host</p>'
+      })
+      export class HostComponent {
+        @HostBinding('class.active') isActive = false;
+        @HostListener('click') onClick() {}
+      }
+    `,
+      'host.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).not.toMatch(/@HostBinding/);
+    expect(result).not.toMatch(/@HostListener/);
+    expect(result).toContain('isActive');
+    expect(result).toContain('onClick');
+  });
+});
+
+describe('Self-referencing component', () => {
+  it('compiles a recursive component that uses its own selector', () => {
+    const result = compile(
+      `
+      import { Component, input } from '@angular/core';
+      @Component({
+        selector: 'app-tree',
+        imports: [],
+        template: \`
+          <span>{{ node().label }}</span>
+          @for (child of node().children; track child.label) {
+            <app-tree [node]="child" />
+          }
+        \`
+      })
+      export class TreeComponent {
+        node = input.required<{label: string; children: any[]}>();
+      }
+    `,
+      'tree.ts',
+    );
+
+    expectCompiles(result);
+    // Should contain its own selector in the template compilation
+    expect(result).toContain('"app-tree"');
+    // Should have the [node] property binding
+    expect(result).toContain('ɵɵproperty("node"');
+  });
+});
+
+describe('.d.ts NgModule scanning', () => {
+  it('extracts NgModule exports from .d.ts', () => {
+    const entries = scanDtsFile(
+      `
+import * as i0 from "@angular/core";
+import * as i1 from "./button";
+declare class SharedModule {
+    static ɵmod: i0.ɵɵNgModuleDeclaration<SharedModule, [typeof i1.ButtonComponent], never, [typeof i1.ButtonComponent]>;
+}
+`,
+      'shared.d.ts',
+    );
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].kind).toBe('ngmodule');
+    expect(entries[0].className).toBe('SharedModule');
+    expect(entries[0].exports).toContain('ButtonComponent');
   });
 });
 

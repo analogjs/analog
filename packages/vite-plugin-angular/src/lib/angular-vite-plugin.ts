@@ -380,10 +380,16 @@ if (import.meta.hot) {
       analogResourceToSource.set(dep, id);
     }
 
-    // Strip TypeScript-only syntax that the analog compiler preserves
-    let outputCode = result.code
-      .replace(/^import type\s+\{[^}]*\}\s+from\s+['"][^'"]+['"];?\s*$/gm, '')
-      .replace(/^import\s+type\s+\w+\s+from\s+['"][^'"]+['"];?\s*$/gm, '');
+    // Strip TypeScript-only syntax that the analog compiler preserves.
+    // Use OXC to reliably strip all TS syntax (type annotations, generics,
+    // interfaces, etc.) so the output is valid JavaScript for both client
+    // and SSR environments.
+    const stripped = await vite.transformWithOxc(result.code, id, {
+      lang: 'ts',
+      sourcemap: false,
+      decorator: { legacy: false, emitDecoratorMetadata: false },
+    });
+    let outputCode = stripped.code;
 
     // Append HMR code in dev mode
     if (watchMode && pluginOptions.liveReload) {
@@ -424,6 +430,7 @@ if (import.meta.hot) {
 
     return {
       name: '@analogjs/vite-plugin-angular',
+      enforce: 'pre',
       async config(config, { command }) {
         watchMode = command === 'serve';
         isProd =
