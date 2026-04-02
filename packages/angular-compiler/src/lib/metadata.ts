@@ -2,6 +2,25 @@ import * as ts from 'typescript';
 import * as o from '@angular/compiler';
 import { unwrapForwardRef } from './utils.js';
 
+function getCallApi(
+  call: ts.CallExpression,
+): { api: string; required: boolean } | null {
+  const expr = call.expression;
+  if (ts.isIdentifier(expr)) {
+    return { api: expr.text, required: false };
+  }
+
+  if (
+    ts.isPropertyAccessExpression(expr) &&
+    ts.isIdentifier(expr.expression) &&
+    expr.name.text === 'required'
+  ) {
+    return { api: expr.expression.text, required: true };
+  }
+
+  return null;
+}
+
 /**
  * Extract decorator metadata from an Angular decorator AST node.
  * Parses @Component, @Directive, @Pipe, @Injectable, @NgModule arguments.
@@ -146,14 +165,16 @@ export function detectSignals(node: ts.ClassDeclaration) {
       ts.isCallExpression(m.initializer)
     ) {
       const name = m.name.getText();
-      const callExpr = m.initializer.expression.getText();
+      const signalCall = getCallApi(m.initializer);
+      if (!signalCall) return;
+
+      const { api, required } = signalCall;
 
       // 1. SIGNAL INPUTS (Standard & Required)
-      if (callExpr.includes('input')) {
-        const isRequired = callExpr.includes('.required');
+      if (api === 'input') {
         // Extract transform from options: input(val, { transform }) or input.required({ transform })
         let transform: any = null;
-        const optionsArg = isRequired
+        const optionsArg = required
           ? m.initializer.arguments[0]
           : m.initializer.arguments[1];
         if (optionsArg && ts.isObjectLiteralExpression(optionsArg)) {
@@ -170,13 +191,13 @@ export function detectSignals(node: ts.ClassDeclaration) {
           classPropertyName: name,
           bindingPropertyName: name,
           isSignal: true,
-          required: isRequired,
+          required,
           transform,
         };
       }
 
       // 2. MODEL SIGNALS (Writable Inputs)
-      else if (callExpr.includes('model')) {
+      else if (api === 'model') {
         // Models are signals (flag 3) and generate an automatic output
         inputs[name] = {
           classPropertyName: name,
@@ -187,19 +208,23 @@ export function detectSignals(node: ts.ClassDeclaration) {
       }
 
       // 3. SIGNAL QUERIES (viewChild, contentChild)
-      else if (callExpr.includes('Child') || callExpr.includes('Children')) {
-        const isSignalQuery =
-          callExpr.includes('viewChild') ||
-          callExpr.includes('contentChild') ||
-          callExpr.includes('viewChildren') ||
-          callExpr.includes('contentChildren');
+      else if (
+        api === 'viewChild' ||
+        api === 'viewChildren' ||
+        api === 'contentChild' ||
+        api === 'contentChildren'
+      ) {
+        const isSignalQuery = true;
+        const isViewQuery = api === 'viewChild' || api === 'viewChildren';
+        const isChildrenQuery =
+          api === 'viewChildren' || api === 'contentChildren';
 
         const query = {
           propertyName: name,
           predicate: ts.isStringLiteral(m.initializer.arguments[0])
             ? [m.initializer.arguments[0].text]
             : new o.WrappedNodeExpr(m.initializer.arguments[0]),
-          first: !callExpr.includes('ren'), // Children vs Child
+          first: !isChildrenQuery,
           descendants: true,
           read: null,
           static: false,
@@ -207,15 +232,12 @@ export function detectSignals(node: ts.ClassDeclaration) {
           isSignal: isSignalQuery, // Critical for v21 query reactivity
         };
 
-        if (callExpr.includes('view')) viewQueries.push(query);
+        if (isViewQuery) viewQueries.push(query);
         else contentQueries.push(query);
       }
 
       // 4. STANDARD OUTPUTS (output() and outputFromObservable())
-      else if (
-        callExpr.includes('output') ||
-        callExpr.includes('outputFromObservable')
-      ) {
+      else if (api === 'output' || api === 'outputFromObservable') {
         // Extract alias from options: output({alias: 'publicName'})
         let alias = name;
         const optArg = m.initializer.arguments[0];

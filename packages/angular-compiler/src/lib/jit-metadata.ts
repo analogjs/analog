@@ -1,5 +1,24 @@
 import * as ts from 'typescript';
 
+function getCallApi(
+  call: ts.CallExpression,
+): { api: string; required: boolean } | null {
+  const expr = call.expression;
+  if (ts.isIdentifier(expr)) {
+    return { api: expr.text, required: false };
+  }
+
+  if (
+    ts.isPropertyAccessExpression(expr) &&
+    ts.isIdentifier(expr.expression) &&
+    expr.name.text === 'required'
+  ) {
+    return { api: expr.expression.text, required: true };
+  }
+
+  return null;
+}
+
 /**
  * Build ctorParameters for constructor DI in JIT format:
  * [{ type: ServiceA }, { type: ServiceB, decorators: [{type: Optional}] }]
@@ -113,15 +132,17 @@ export function buildPropDecorators(
       member.initializer &&
       ts.isCallExpression(member.initializer)
     ) {
-      const callExpr = member.initializer.expression.getText(sf);
+      const signalCall = getCallApi(member.initializer);
+      if (!signalCall) continue;
+
+      const { api, required } = signalCall;
       const args = member.initializer.arguments;
 
-      if (callExpr.includes('input')) {
+      if (api === 'input') {
         if (!props[memberName]) props[memberName] = [];
-        const isRequired = callExpr.includes('.required');
         // Extract alias from options
         let alias: string | null = null;
-        const optArg = isRequired ? args[0] : args[1];
+        const optArg = required ? args[0] : args[1];
         if (optArg && ts.isObjectLiteralExpression(optArg)) {
           for (const p of optArg.properties) {
             if (
@@ -136,23 +157,20 @@ export function buildPropDecorators(
         const inputArgs: string[] = [];
         if (alias)
           inputArgs.push(
-            `{alias: '${alias}', isSignal: true, required: ${isRequired}}`,
+            `{alias: '${alias}', isSignal: true, required: ${required}}`,
           );
-        else inputArgs.push(`{isSignal: true, required: ${isRequired}}`);
+        else inputArgs.push(`{isSignal: true, required: ${required}}`);
         props[memberName].push(
           `{type: Input, args: [${inputArgs.join(', ')}]}`,
         );
-      } else if (callExpr.includes('model')) {
+      } else if (api === 'model') {
         if (!props[memberName]) props[memberName] = [];
         props[memberName].push(`{type: Input, args: [{isSignal: true}]}`);
         // Model also generates a Change output
         const changeName = memberName + 'Change';
         if (!props[changeName]) props[changeName] = [];
         props[changeName].push(`{type: Output, args: ['${changeName}']}`);
-      } else if (
-        callExpr.includes('output') ||
-        callExpr.includes('outputFromObservable')
-      ) {
+      } else if (api === 'output' || api === 'outputFromObservable') {
         if (!props[memberName]) props[memberName] = [];
         // Extract alias
         let alias: string | null = null;
@@ -173,14 +191,9 @@ export function buildPropDecorators(
         } else {
           props[memberName].push(`{type: Output}`);
         }
-      } else if (
-        callExpr.includes('viewChild') ||
-        callExpr.includes('viewChildren')
-      ) {
+      } else if (api === 'viewChild' || api === 'viewChildren') {
         if (!props[memberName]) props[memberName] = [];
-        const queryType = callExpr.includes('Children')
-          ? 'ViewChildren'
-          : 'ViewChild';
+        const queryType = api === 'viewChildren' ? 'ViewChildren' : 'ViewChild';
         if (args.length > 0) {
           props[memberName].push(
             `{type: ${queryType}, args: [${args[0].getText(sf)}]}`,
@@ -188,14 +201,10 @@ export function buildPropDecorators(
         } else {
           props[memberName].push(`{type: ${queryType}}`);
         }
-      } else if (
-        callExpr.includes('contentChild') ||
-        callExpr.includes('contentChildren')
-      ) {
+      } else if (api === 'contentChild' || api === 'contentChildren') {
         if (!props[memberName]) props[memberName] = [];
-        const queryType = callExpr.includes('Children')
-          ? 'ContentChildren'
-          : 'ContentChild';
+        const queryType =
+          api === 'contentChildren' ? 'ContentChildren' : 'ContentChild';
         if (args.length > 0) {
           props[memberName].push(
             `{type: ${queryType}, args: [${args[0].getText(sf)}]}`,
