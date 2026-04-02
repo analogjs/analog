@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { scanFile } from './registry';
 import { compile as rawCompile } from './compile';
 import { compileCode as compile, buildRegistry } from './test-helpers';
+import { inlineResourceUrls, extractInlineStyles } from './resource-inliner';
 
 describe('Registry input/output extraction', () => {
   it('extracts signal inputs from input()', () => {
@@ -606,6 +607,97 @@ describe('Multiple components in one file', () => {
     expect(result).toContain('"app-badge"');
     // BadgeComponent uses IconComponent as dependency
     expect(result).toContain('dependencies: [IconComponent]');
+  });
+});
+
+describe('Duplicate i0 import prevention', () => {
+  it('does not add duplicate i0 import on double compile', () => {
+    const src = `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-test',
+        template: '<p>hello</p>'
+      })
+      export class TestComponent {}
+    `;
+
+    // First compile
+    const first = compile(src, 'test.ts');
+    expectCompiles(first);
+    expect((first.match(/import \* as i0/g) || []).length).toBe(1);
+
+    // Second compile (simulates client+SSR double pass)
+    const second = compile(first, 'test.ts');
+    expect((second.match(/import \* as i0/g) || []).length).toBe(1);
+  });
+});
+
+describe('OXC-based resource inlining', () => {
+  it('inlines templateUrl via AST rewriting', () => {
+    const result = inlineResourceUrls(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-ext',
+        templateUrl: './test.component.html'
+      })
+      export class ExtComponent {}
+    `,
+      __dirname + '/__fixtures__/test.component.ts',
+    );
+
+    expect(result).not.toContain('templateUrl');
+    expect(result).toContain('template:');
+  });
+
+  it('inlines styleUrls via AST rewriting', () => {
+    const result = inlineResourceUrls(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-ext',
+        template: '',
+        styleUrls: ['./test.component.css']
+      })
+      export class ExtComponent {}
+    `,
+      __dirname + '/__fixtures__/test.component.ts',
+    );
+
+    expect(result).not.toContain('styleUrls');
+    expect(result).toContain('styles:');
+  });
+
+  it('returns original code when no resources to inline', () => {
+    const src = `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-inline',
+        template: '<p>hi</p>'
+      })
+      export class InlineComponent {}
+    `;
+    const result = inlineResourceUrls(src, 'inline.ts');
+    expect(result).toBe(src);
+  });
+
+  it('extracts inline styles from template literals', () => {
+    const styles = extractInlineStyles(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-styled',
+        template: '',
+        styles: [\`h1 { color: red }\`, 'p { margin: 0 }']
+      })
+      export class StyledComponent {}
+    `,
+      'styled.ts',
+    );
+
+    expect(styles).toHaveLength(2);
+    expect(styles[0]).toBe('h1 { color: red }');
+    expect(styles[1]).toBe('p { margin: 0 }');
   });
 });
 
