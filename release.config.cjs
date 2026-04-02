@@ -46,7 +46,7 @@ module.exports = {
         npmPublish: false,
         pkgRoot: './packages/angular-compiler/',
       },
-    ],    
+    ],
     [
       '@semantic-release/npm',
       {
@@ -113,7 +113,7 @@ module.exports = {
     [
       'semantic-release-replace-plugin',
       {
-        replacements: [         
+        replacements: [
           {
             files: replacementFiles,
             from: '"@analogjs/vite-plugin-angular": ".*"',
@@ -148,7 +148,7 @@ module.exports = {
             files: replacementFiles,
             from: '"@analogjs/angular-compiler": ".*"',
             to: '"@analogjs/angular-compiler": "^${nextRelease.version}"',
-          },          
+          },
         ],
       },
     ],
