@@ -44,12 +44,8 @@ import { buildDeferDependencyMap } from './defer.js';
 
 /** Detect installed Angular major version for compatibility. Supports 19+. */
 const ANGULAR_MAJOR = (() => {
-  try {
-    const { VERSION } = require('@angular/compiler');
-    return parseInt(VERSION?.major, 10) || 21;
-  } catch {
-    return 21;
-  }
+  const major = Number.parseInt(o.VERSION?.major ?? '', 10);
+  return Number.isFinite(major) ? major : 21;
 })();
 
 /**
