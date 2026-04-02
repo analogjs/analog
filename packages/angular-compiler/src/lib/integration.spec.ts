@@ -853,6 +853,28 @@ describe('collectImportedPackages', () => {
   });
 });
 
+describe('Non-Angular files pass through unchanged', () => {
+  it('does not add Ivy definitions for files without Angular decorators', () => {
+    const result = compile(
+      `
+      export interface User {
+        name: string;
+        email: string;
+      }
+      export const DEFAULT_USER: User = { name: '', email: '' };
+    `,
+      'models.ts',
+    );
+
+    // Non-Angular files should not have component/directive definitions
+    expect(result).not.toContain('ɵcmp');
+    expect(result).not.toContain('ɵfac');
+    expect(result).not.toContain('ɵɵdefineComponent');
+    // Original content preserved
+    expect(result).toContain('DEFAULT_USER');
+  });
+});
+
 function expectCompiles(result: string) {
   expect(result).toBeTruthy();
   expect(result).not.toMatch(/^Error:/m);

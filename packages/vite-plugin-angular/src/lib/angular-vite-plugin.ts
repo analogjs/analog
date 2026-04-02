@@ -443,7 +443,12 @@ if (import.meta.hot) {
         const esbuild = pluginOptions.useAngularCompilationAPI
           ? undefined
           : pluginOptions.useAnalogCompiler
-            ? false
+            ? ({
+                // Keep esbuild enabled for type-stripping on non-component .ts
+                // files (Vite 7 has no OXC fallback). The analog compiler handles
+                // Angular-decorated files itself via the transform hook.
+                loader: 'ts',
+              } as any)
             : (config.esbuild ?? false);
         const oxc = pluginOptions.useAngularCompilationAPI
           ? undefined
