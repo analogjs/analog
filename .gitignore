@@ -5,6 +5,9 @@
 /tmp
 /out-tsc
 
+# conformance test fixtures
+.angular-conformance
+
 # dependencies
 node_modules
 
