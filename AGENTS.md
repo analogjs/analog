@@ -96,6 +96,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - Keep code concise with emphasis on readability, avoid clever solutions and abstractions.
 - Always scan existing codebase for examples and patterns for implementation.
 - Prefer using existing Angular APIs, with wrappers where needed.
+- Strongly prefer AST parsing instead of regex for complex file manipulation and traversal.
 - Always use modern Angular syntax including dependency injection with inject, control flow, signal APIs, and standalone components.
 - Cross compatibility with Nx is strongly encouraged. Prefer schematics and builders for Analog first-party solutions.
 - Avoid custom code that replicates Angular framework functionality.
