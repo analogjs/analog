@@ -466,4 +466,4 @@ bash packages/angular-compiler/scripts/setup-conformance.sh
 npx vitest run packages/angular-compiler/src/lib/conformance.spec.ts
 ```
 
-CI runs a matrix of Angular 17, 18, 19, 20, 21, and latest on every PR via the `conformance` job in `.github/workflows/ci.yml`.
+CI runs a matrix of Angular 17, 18, 19, 20, 21, and latest on every push to `feat/angular-compiler` via `.github/workflows/conformance.yml`.
