@@ -13,5 +13,6 @@ Angular Component in an MDX file
 <ParentComponent client:load />
 
 {/* The showInput prop here verifies that the hydration handles input values that change the DOM structure. */}
+{/* Using a custom focus directive allows us to verify the `input` node is preserved, because it would lose focus if the element instance changes. */}
 
-<HydrationTestComponent client:load showInput={true} />
+<HydrationTestComponent client:focus showInput={true} />

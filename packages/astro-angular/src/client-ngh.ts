@@ -67,6 +67,7 @@ export default (element: HTMLElement) => {
     }
 
     // Insert Angular client hydration marker
+    // See https://github.com/angular/angular/issues/67785
     document.body.prepend(document.createComment('nghm'));
 
     const hostElement = element.querySelector(mirror.selector);

@@ -16,8 +16,24 @@ export default defineConfig({
     },
   },
   integrations: [
-    angular({ strictStylePlacement: true }),
+    angular({
+      strictStylePlacement: true,
+      experimental: {
+        useAngularHydration: true,
+      },
+    }),
     react(),
     mdx({ syntaxHighlight: 'prism' }),
+    {
+      name: 'focus-hydration',
+      hooks: {
+        'astro:config:setup': ({ addClientDirective }) => {
+          addClientDirective({
+            name: 'focus',
+            entrypoint: './src/client-directives/focus.ts',
+          });
+        },
+      },
+    },
   ],
 });

@@ -2,17 +2,16 @@ import type {
   ComponentMirror,
   EnvironmentProviders,
   Provider,
-  ɵComponentType as ComponentType,
+  Type,
 } from '@angular/core';
 import {
-  ApplicationRef,
-  InjectionToken,
   reflectComponentType,
   provideZonelessChangeDetection,
   DOCUMENT,
   APP_ID,
   APP_BOOTSTRAP_LISTENER,
   inject,
+  ApplicationRef,
 } from '@angular/core';
 import {
   provideServerRendering,
@@ -27,56 +26,49 @@ import {
 } from '@angular/platform-browser';
 import type { AstroComponentMetadata } from 'astro';
 
-const ANALOG_ASTRO_STATIC_PROPS = new InjectionToken<{
-  props: Record<string, unknown>;
-  mirror: ComponentMirror<unknown>;
-}>('@analogjs/astro-angular: Static Props w/ Mirror Provider', {
-  factory() {
-    return { props: {}, mirror: {} as ComponentMirror<unknown> };
-  },
-});
-
 function check(
-  Component: ComponentType<unknown>,
+  Component: Type<unknown>,
   _props: Record<string, unknown>,
   _children: unknown,
 ) {
   return !!reflectComponentType(Component);
 }
 
-// Run beforeAppInitialized hook to set Input on the ComponentRef
-// before the platform renders to string
-const STATIC_PROPS_HOOK_PROVIDER: Provider = {
-  provide: APP_BOOTSTRAP_LISTENER,
-  useFactory: () => {
-    const appRef = inject(ApplicationRef);
-    const { props, mirror } = inject(ANALOG_ASTRO_STATIC_PROPS);
+function provideBootstrapListener(
+  mirror: ComponentMirror<unknown>,
+  props: Record<string, unknown>,
+): Provider {
+  return {
+    provide: APP_BOOTSTRAP_LISTENER,
+    useFactory: () => {
+      const appRef = inject(ApplicationRef);
 
-    return () => {
-      const compRef = appRef.components[0];
-      if (compRef && props && mirror) {
-        for (const [key, value] of Object.entries(props)) {
-          if (
-            // we double-check inputs on ComponentMirror
-            // because Astro might add additional props
-            // that aren't actually Input defined on the Component
-            mirror.inputs.some(
-              ({ templateName, propName }) =>
-                templateName === key || propName === key,
-            )
-          ) {
-            compRef.setInput(key, value);
+      return () => {
+        const compRef = appRef.components[0];
+        if (compRef && props && mirror) {
+          for (const [key, value] of Object.entries(props)) {
+            if (
+              // we double-check inputs on ComponentMirror
+              // because Astro might add additional props
+              // that aren't actually Input defined on the Component
+              mirror.inputs.some(
+                ({ templateName, propName }) =>
+                  templateName === key || propName === key,
+              )
+            ) {
+              compRef.setInput(key, value);
+            }
           }
+          compRef.changeDetectorRef.detectChanges();
         }
-        compRef.changeDetectorRef.detectChanges();
-      }
-    };
-  },
-  multi: true,
-};
+      };
+    },
+    multi: true,
+  };
+}
 
 async function renderToStaticMarkup(
-  Component: ComponentType<unknown> & {
+  Component: Type<unknown> & {
     renderProviders: (Provider | EnvironmentProviders)[];
   },
   props: Record<string, unknown>,
@@ -84,8 +76,14 @@ async function renderToStaticMarkup(
   metadata?: AstroComponentMetadata,
 ) {
   const mirror = reflectComponentType(Component);
+
+  if (!mirror) {
+    // This should be unreachable: the `check` function verifies that Component is an Angular component.
+    return;
+  }
+
   const appId =
-    mirror?.selector.split(',')[0] || Component.name.toString().toLowerCase();
+    mirror.selector.split(',')[0] || Component.name.toString().toLowerCase();
   const ngAppId =
     props?.['data-analog-id'] || 'ng-' + Math.random().toString().slice(2, 9);
 
@@ -98,11 +96,7 @@ async function renderToStaticMarkup(
       Component,
       {
         providers: [
-          {
-            provide: ANALOG_ASTRO_STATIC_PROPS,
-            useValue: { props, mirror },
-          },
-          STATIC_PROPS_HOOK_PROVIDER,
+          provideBootstrapListener(mirror, props),
           provideServerRendering(),
           { provide: ɵSERVER_CONTEXT, useValue: 'analog' },
           provideZonelessChangeDetection(),
