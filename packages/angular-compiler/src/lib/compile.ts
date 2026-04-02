@@ -451,6 +451,27 @@ export function compile(
 
         case 'Directive':
           targetType = FactoryTarget.Directive;
+          // Build proper input descriptors (same as Component path)
+          const dirInputs: Record<string, unknown> = {};
+          if (Array.isArray(meta.inputs)) {
+            meta.inputs.forEach((i: string) => (dirInputs[i] = i));
+          } else if (meta.inputs) {
+            Object.assign(dirInputs, meta.inputs);
+          }
+          Object.assign(dirInputs, fields.inputs);
+          for (const [key, val] of Object.entries(sigs.inputs)) {
+            const sigDesc = val as {
+              required?: boolean;
+              transform?: o.Expression | null;
+            };
+            dirInputs[key] = {
+              classPropertyName: key,
+              bindingPropertyName: key,
+              isSignal: true,
+              required: sigDesc.required || false,
+              transformFunction: sigDesc.transform || null,
+            };
+          }
           const dir = compileDirectiveFromMetadata(
             {
               ...meta,
@@ -458,7 +479,7 @@ export function compile(
               type: classRef,
               typeSourceSpan,
               host: hostMetadata,
-              inputs: { ...meta.inputs, ...fields.inputs, ...sigs.inputs },
+              inputs: dirInputs,
               outputs: { ...meta.outputs, ...fields.outputs, ...sigs.outputs },
               viewQueries: [...fields.viewQueries, ...sigs.viewQueries],
               queries: [...fields.contentQueries, ...sigs.contentQueries],
@@ -466,6 +487,7 @@ export function compile(
               exportAs: meta.exportAs,
               isStandalone: meta.standalone,
               lifecycle: { usesOnChanges: false },
+              controlCreate: null,
             },
             constantPool,
             bindingParser,

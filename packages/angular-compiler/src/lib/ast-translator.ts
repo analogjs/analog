@@ -23,6 +23,7 @@ const BINARY_OP_MAP: Record<o.BinaryOperator, ts.BinaryOperator> = {
   [o.BinaryOperator.NullishCoalesce]: ts.SyntaxKind.QuestionQuestionToken,
   [o.BinaryOperator.Exponentiation]: ts.SyntaxKind.AsteriskAsteriskToken,
   [o.BinaryOperator.In]: ts.SyntaxKind.InKeyword,
+  [o.BinaryOperator.InstanceOf]: ts.SyntaxKind.InstanceOfKeyword,
   [o.BinaryOperator.AdditionAssignment]: ts.SyntaxKind.PlusEqualsToken,
   [o.BinaryOperator.SubtractionAssignment]: ts.SyntaxKind.MinusEqualsToken,
   [o.BinaryOperator.MultiplicationAssignment]:

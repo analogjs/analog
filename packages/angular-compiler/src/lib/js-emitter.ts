@@ -32,6 +32,7 @@ const BINARY_OP_STR: Record<number, string> = {
   [o.BinaryOperator.NullishCoalesce]: '??',
   [o.BinaryOperator.Exponentiation]: '**',
   [o.BinaryOperator.In]: 'in',
+  [o.BinaryOperator.InstanceOf]: 'instanceof',
   [o.BinaryOperator.AdditionAssignment]: '+=',
   [o.BinaryOperator.SubtractionAssignment]: '-=',
   [o.BinaryOperator.MultiplicationAssignment]: '*=',
