@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { compileCode as compile, expectCompiles } from './test-helpers';
 import { compile as rawCompile } from './compile';
 import { scanFile } from './registry';
@@ -1000,6 +1000,7 @@ describe('@Component', () => {
     });
 
     it('handles missing templateUrl gracefully', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const result = compile(
         `
         import { Component } from '@angular/core';
@@ -1016,6 +1017,8 @@ describe('@Component', () => {
       expectCompiles(result);
       expect(result).toContain('ɵcmp');
       expect(result).toContain('decls: 0');
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      warnSpy.mockRestore();
     });
 
     it('returns templateUrl as resource dependency', () => {
