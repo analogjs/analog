@@ -1049,6 +1049,62 @@ declare class SharedModule {
   });
 });
 
+describe('TypeScript syntax in compiler output', () => {
+  it('preserves TypeScript syntax that downstream OXC stripping handles', () => {
+    // The compiler output still contains import type, generics, etc.
+    // These are stripped by vite.transformWithOxc() in the vite plugin,
+    // not by the compiler itself.
+    const result = rawCompile(
+      `
+      import { Component } from '@angular/core';
+      import type { OnInit } from '@angular/core';
+      @Component({
+        selector: 'app-typed',
+        template: '<p>hello</p>'
+      })
+      export class TypedComponent implements OnInit {
+        ngOnInit(): void {}
+      }
+    `,
+      'typed.ts',
+    );
+
+    expectCompiles(result.code);
+    // Compiler output retains TS syntax (the vite plugin strips it later)
+    expect(result.code).toContain('implements OnInit');
+    // But Ivy definitions are present
+    expect(result.code).toContain('ɵɵdefineComponent');
+  });
+});
+
+describe('Lazy dependency array emission', () => {
+  it('emits dependencies as arrow function for forward references', () => {
+    const childSrc = `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-child', template: '<p>child</p>' })
+      export class ChildComponent {}
+    `;
+
+    const parentSrc = `
+      import { Component } from '@angular/core';
+      import { ChildComponent } from './child';
+      @Component({
+        selector: 'app-parent',
+        imports: [ChildComponent],
+        template: '<app-child />'
+      })
+      export class ParentComponent {}
+    `;
+
+    const registry = buildRegistry({ 'child.ts': childSrc });
+    const result = compile(parentSrc, 'parent.ts', registry);
+
+    expectCompiles(result);
+    // Dependencies should be emitted as a lazy arrow function
+    expect(result).toMatch(/dependencies:\s*\(\)\s*=>/);
+  });
+});
+
 function expectCompiles(result: string) {
   expect(result).toBeTruthy();
   expect(result).not.toMatch(/^Error:/m);

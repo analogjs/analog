@@ -447,25 +447,21 @@ if (import.meta.hot) {
         // Do a preliminary resolution for esbuild plugin (before configResolved)
         const preliminaryTsConfigPath = resolveTsConfigPath();
 
+        // When useAnalogCompiler is true, configure the built-in OXC transform
+        // to strip TypeScript but NOT lower decorators. The analog compiler
+        // handles decorator processing in its transform hook. This avoids the
+        // ordering conflict where lowered decorators can't be found by the
+        // compiler, while still ensuring all .ts files get TypeScript stripped
+        // (including those excluded from the analog compiler's transform filter).
         const esbuild = pluginOptions.useAngularCompilationAPI
           ? undefined
           : pluginOptions.useAnalogCompiler
-            ? ({
-                // Keep esbuild enabled for type-stripping on non-component .ts
-                // files (Vite 7 has no OXC fallback). The analog compiler handles
-                // Angular-decorated files itself via the transform hook.
-                loader: 'ts',
-              } as any)
+            ? false
             : (config.esbuild ?? false);
         const oxc = pluginOptions.useAngularCompilationAPI
           ? undefined
           : pluginOptions.useAnalogCompiler
-            ? ({
-                // Override tsconfig's experimentalDecorators — the analog compiler
-                // handles decorator processing, so OXC must not lower them.
-                decorator: { legacy: false, emitDecoratorMetadata: false },
-                typescript: { useDefineForClassFields: true },
-              } as any)
+            ? ({} as any)
             : (config.oxc ?? false);
 
         const defineOptions = {
