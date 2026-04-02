@@ -238,6 +238,377 @@ describe('templateUrl inlining in metadata', () => {
   });
 });
 
+describe('Content projection', () => {
+  it('compiles single-slot ng-content', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-card',
+        template: '<div class="card"><ng-content /></div>'
+      })
+      export class CardComponent {}
+    `,
+      'card.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵprojectionDef');
+    expect(result).toContain('ɵɵprojection');
+  });
+
+  it('compiles multi-slot ng-content with selectors', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-layout',
+        template: \`
+          <header><ng-content select="[header]" /></header>
+          <main><ng-content /></main>
+          <footer><ng-content select="[footer]" /></footer>
+        \`
+      })
+      export class LayoutComponent {}
+    `,
+      'layout.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵprojectionDef');
+    // Multiple projection slots
+    expect(result).toContain('ɵɵprojection');
+  });
+});
+
+describe('Pipe usage in templates', () => {
+  it('compiles pipe with arguments', () => {
+    const pipeSrc = `
+      import { Pipe, PipeTransform } from '@angular/core';
+      @Pipe({ name: 'format' })
+      export class FormatPipe implements PipeTransform {
+        transform(value: number, style: string): string { return ''; }
+      }
+    `;
+
+    const componentSrc = `
+      import { Component } from '@angular/core';
+      import { FormatPipe } from './format.pipe';
+      @Component({
+        selector: 'app-price',
+        imports: [FormatPipe],
+        template: '<span>{{ price | format:"currency" }}</span>'
+      })
+      export class PriceComponent {
+        price = 9.99;
+      }
+    `;
+
+    const registry = buildRegistry({ 'format.pipe.ts': pipeSrc });
+    const result = compile(componentSrc, 'price.ts', registry);
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵpipe');
+    expect(result).toContain('ɵɵpipeBind');
+    expect(result).toContain('"format"');
+  });
+
+  it('compiles chained pipes', () => {
+    const pipeSrc = `
+      import { Pipe, PipeTransform } from '@angular/core';
+      @Pipe({ name: 'upper' })
+      export class UpperPipe implements PipeTransform {
+        transform(value: string): string { return value.toUpperCase(); }
+      }
+    `;
+    const pipe2Src = `
+      import { Pipe, PipeTransform } from '@angular/core';
+      @Pipe({ name: 'trim' })
+      export class TrimPipe implements PipeTransform {
+        transform(value: string): string { return value.trim(); }
+      }
+    `;
+
+    const componentSrc = `
+      import { Component } from '@angular/core';
+      import { UpperPipe } from './upper.pipe';
+      import { TrimPipe } from './trim.pipe';
+      @Component({
+        selector: 'app-text',
+        imports: [UpperPipe, TrimPipe],
+        template: '<span>{{ name | trim | upper }}</span>'
+      })
+      export class TextComponent {
+        name = '  hello  ';
+      }
+    `;
+
+    const registry = buildRegistry({
+      'upper.pipe.ts': pipeSrc,
+      'trim.pipe.ts': pipe2Src,
+    });
+    const result = compile(componentSrc, 'text.ts', registry);
+
+    expectCompiles(result);
+    // Two pipe instructions
+    expect(result).toMatch(/ɵɵpipe\(\d+, "trim"\)/);
+    expect(result).toMatch(/ɵɵpipe\(\d+, "upper"\)/);
+  });
+});
+
+describe('Template reference variables', () => {
+  it('compiles template ref with event binding', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-search',
+        template: \`
+          <input #searchBox />
+          <button (click)="search(searchBox.value)">Search</button>
+        \`
+      })
+      export class SearchComponent {
+        search(term: string) {}
+      }
+    `,
+      'search.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵreference');
+  });
+});
+
+describe('Two-way binding with model()', () => {
+  it('compiles [(value)] two-way binding', () => {
+    const childSrc = `
+      import { Component, model } from '@angular/core';
+      @Component({
+        selector: 'app-slider',
+        template: '<input type="range" />'
+      })
+      export class SliderComponent {
+        value = model(0);
+      }
+    `;
+
+    const parentSrc = `
+      import { Component, signal } from '@angular/core';
+      import { SliderComponent } from './slider';
+      @Component({
+        selector: 'app-parent',
+        imports: [SliderComponent],
+        template: '<app-slider [(value)]="volume" />'
+      })
+      export class ParentComponent {
+        volume = signal(50);
+      }
+    `;
+
+    const registry = buildRegistry({ 'slider.ts': childSrc });
+    const result = compile(parentSrc, 'parent.ts', registry);
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵtwoWayProperty');
+    expect(result).toContain('ɵɵtwoWayListener');
+  });
+});
+
+describe('Computed signals in templates', () => {
+  it('compiles computed() signal calls in template', () => {
+    const result = compile(
+      `
+      import { Component, signal, computed } from '@angular/core';
+      @Component({
+        selector: 'app-cart',
+        template: \`
+          <p>Count: {{ count() }}</p>
+          <p>Total: {{ total() }}</p>
+        \`
+      })
+      export class CartComponent {
+        count = signal(0);
+        price = signal(10);
+        total = computed(() => this.count() * this.price());
+      }
+    `,
+      'cart.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ctx.count()');
+    expect(result).toContain('ctx.total()');
+    expect(result).toContain('ɵɵtextInterpolate');
+  });
+});
+
+describe('Safe navigation in templates', () => {
+  it('compiles optional chaining in template expressions', () => {
+    const result = compile(
+      `
+      import { Component, signal } from '@angular/core';
+      @Component({
+        selector: 'app-profile',
+        template: '<p>{{ user()?.name }}</p>'
+      })
+      export class ProfileComponent {
+        user = signal<{name: string} | null>(null);
+      }
+    `,
+      'profile.ts',
+    );
+
+    expectCompiles(result);
+    // Angular compiles ?. to a null-safe access
+    expect(result).toContain('ctx.user()');
+  });
+});
+
+describe('@defer triggers', () => {
+  it('compiles @defer with on interaction trigger', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-page',
+        template: \`
+          <button #loadBtn>Load</button>
+          @defer (on interaction(loadBtn)) {
+            <p>Loaded content</p>
+          } @placeholder {
+            <p>Click to load</p>
+          }
+        \`
+      })
+      export class PageComponent {}
+    `,
+      'page.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵdefer');
+    expect(result).toContain('ɵɵdeferOnInteraction');
+  });
+
+  it('compiles @defer with on hover trigger', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-tooltip',
+        template: \`
+          <div>
+            @defer (on hover) {
+              <span>Tooltip content</span>
+            } @placeholder {
+              <span>Hover me</span>
+            }
+          </div>
+        \`
+      })
+      export class TooltipComponent {}
+    `,
+      'tooltip.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵdefer');
+    expect(result).toContain('ɵɵdeferOnHover');
+  });
+
+  it('compiles @defer with on timer trigger', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-delayed',
+        template: \`
+          @defer (on timer(2000ms)) {
+            <p>Delayed content</p>
+          } @loading {
+            <p>Loading...</p>
+          }
+        \`
+      })
+      export class DelayedComponent {}
+    `,
+      'delayed.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵdefer');
+    expect(result).toContain('ɵɵdeferOnTimer');
+  });
+});
+
+describe('@if with as alias context', () => {
+  it('passes expression value as context to embedded template', () => {
+    const result = compile(
+      `
+      import { Component, signal } from '@angular/core';
+      @Component({
+        selector: 'app-user',
+        template: \`
+          @if (user(); as u) {
+            <h1>{{ u.name }}</h1>
+            <p>{{ u.email }}</p>
+          }
+        \`
+      })
+      export class UserComponent {
+        user = signal<{name: string; email: string} | null>(null);
+      }
+    `,
+      'user.ts',
+    );
+
+    expectCompiles(result);
+    // The assignment must be parenthesized for correct precedence
+    expect(result).toMatch(/\(tmp_\d+_\d+ = ctx\.user\(\)\)/);
+    // The embedded template should use ctx (the alias value) for bindings
+    expect(result).toMatch(/const \w+ = ctx/);
+    expect(result).toContain('.name');
+    expect(result).toContain('.email');
+  });
+});
+
+describe('Multiple components in one file', () => {
+  it('compiles multiple components from a single file', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+
+      @Component({
+        selector: 'app-icon',
+        template: '<i class="icon">★</i>'
+      })
+      export class IconComponent {}
+
+      @Component({
+        selector: 'app-badge',
+        imports: [IconComponent],
+        template: '<app-icon /> <span><ng-content /></span>'
+      })
+      export class BadgeComponent {}
+    `,
+      'components.ts',
+    );
+
+    expectCompiles(result);
+    // Both components compiled with Ivy definitions
+    expect(result).toContain('type: IconComponent');
+    expect(result).toContain('type: BadgeComponent');
+    // Both have factories
+    expect((result.match(/ɵfac/g) || []).length).toBeGreaterThanOrEqual(2);
+    // Selectors for both
+    expect(result).toContain('"app-icon"');
+    expect(result).toContain('"app-badge"');
+    // BadgeComponent uses IconComponent as dependency
+    expect(result).toContain('dependencies: [IconComponent]');
+  });
+});
+
 function expectCompiles(result: string) {
   expect(result).toBeTruthy();
   expect(result).not.toMatch(/^Error:/m);
