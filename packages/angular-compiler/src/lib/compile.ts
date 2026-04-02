@@ -58,7 +58,7 @@ const ANGULAR_MAJOR = (() => {
 export interface CompileResult {
   code: string;
   /** Source map for the transformation */
-  map: any;
+  map: ReturnType<MagicString['generateMap']>;
   /** Absolute paths of external resources (templateUrl, styleUrl) read during compilation */
   resourceDependencies: string[];
 }
@@ -70,6 +70,17 @@ export interface CompileOptions {
   /** Pre-processed inline styles (index in styles array → compiled CSS). */
   resolvedInlineStyles?: Map<number, string>;
 }
+
+type CompileMetadata = ReturnType<typeof extractMetadata>;
+
+type CompileDeclaration = {
+  type: o.Expression;
+  selector: string;
+  kind: number;
+  name?: string;
+  inputs?: string[];
+  outputs?: string[];
+};
 
 export function compile(
   sourceCode: string,
@@ -208,7 +219,7 @@ export function compile(
             meta.selector = `ng-component-${className.toLowerCase()}`;
           }
 
-          const declarations: any[] = [];
+          const declarations: CompileDeclaration[] = [];
           for (const dep of Array.isArray(meta.imports) ? meta.imports : []) {
             const depClassName = dep.node.getText();
             const registryEntry = registry?.get(depClassName);
@@ -227,7 +238,7 @@ export function compile(
                   if (moduleSpecifier) {
                     syntheticImports.set(exportedName, moduleSpecifier);
                   }
-                  const decl: any = {
+                  const decl: CompileDeclaration = {
                     type: exportedRef,
                     selector: exportedEntry.selector,
                     kind,
@@ -235,11 +246,13 @@ export function compile(
                   };
                   if (exportedEntry.inputs) {
                     decl.inputs = Object.values(exportedEntry.inputs).map(
-                      (i: any) => i.bindingPropertyName,
+                      (i) => i.bindingPropertyName,
                     );
                   }
                   if (exportedEntry.outputs) {
-                    decl.outputs = Object.values(exportedEntry.outputs);
+                    decl.outputs = Object.values(
+                      exportedEntry.outputs,
+                    ) as string[];
                   }
                   declarations.push(decl);
                 }
@@ -250,7 +263,7 @@ export function compile(
             const selector =
               registryEntry?.selector ?? localSelectors.get(depClassName);
             const kind = registryEntry?.kind === 'pipe' ? 1 : 0;
-            const decl: any = {
+            const decl: CompileDeclaration = {
               type: dep,
               selector: selector || `_unresolved-${depClassName}`,
               kind,
@@ -261,11 +274,11 @@ export function compile(
             // of binding property names.
             if (registryEntry?.inputs) {
               decl.inputs = Object.values(registryEntry.inputs).map(
-                (i: any) => i.bindingPropertyName,
+                (i) => i.bindingPropertyName,
               );
             }
             if (registryEntry?.outputs) {
-              decl.outputs = Object.values(registryEntry.outputs);
+              decl.outputs = Object.values(registryEntry.outputs) as string[];
             }
             declarations.push(decl);
           }
@@ -279,7 +292,7 @@ export function compile(
             ...meta.outputs,
             ...fields.outputs,
             ...sigs.outputs,
-          });
+          }) as string[];
           declarations.push({
             type: classRef.value,
             selector: meta.selector,
@@ -339,7 +352,7 @@ export function compile(
             preserveWhitespaces: meta.preserveWhitespaces,
           });
 
-          const ivyInputs: Record<string, any> = {};
+          const ivyInputs: Record<string, unknown> = {};
           if (Array.isArray(meta.inputs)) {
             meta.inputs.forEach((i: string) => (ivyInputs[i] = i));
           } else if (meta.inputs) {
@@ -347,7 +360,10 @@ export function compile(
           }
           Object.assign(ivyInputs, fields.inputs);
           for (const [key, val] of Object.entries(sigs.inputs)) {
-            const sigDesc = val as any;
+            const sigDesc = val as {
+              required?: boolean;
+              transform?: o.Expression | null;
+            };
             ivyInputs[key] = {
               classPropertyName: key,
               bindingPropertyName: key,
@@ -365,7 +381,17 @@ export function compile(
             return;
           }
 
-          const componentMeta: any = {
+          const componentMeta: CompileMetadata & {
+            name: string;
+            type: o.R3Reference;
+            typeSourceSpan: ParseSourceSpan;
+            declarations: CompileDeclaration[];
+            template: {
+              nodes: o.Node[];
+              ngContentSelectors: string[];
+              preserveWhitespaces: boolean;
+            };
+          } = {
             ...meta,
             name: className,
             type: classRef,
