@@ -444,26 +444,26 @@ The compiler is validated against Angular's official compliance test suite. A co
 | v18 (latest patch) | 76.8%     | 143   |
 | v19 (latest patch) | 81.9%     | 137   |
 | v20 (latest patch) | 92.5%     | 141   |
-| v21 (latest patch) | 87.8%     | 148   |
-| latest             | 87.8%     | 155   |
+| v21 (latest patch) | 89.7%     | 160   |
+| latest             | 89.7%     | 160   |
 
 Remaining soft-failures are output formatting differences (`@defer` multi-file deps, named function patterns), not functional issues. All versions produce 0 hard test failures.
 
 #### Running Conformance Tests
 
 ```bash
-# Local (auto-detects ~/projects/angular/angular)
-npx vitest run angular-compiler/src/lib/conformance.spec.ts
-
 # Specific major version (resolves latest patch)
-bash scripts/setup-conformance.sh 19
-ANGULAR_SOURCE_DIR=.angular-conformance npx vitest run angular-compiler/src/lib/conformance.spec.ts
+bash packages/angular-compiler/scripts/setup-conformance.sh 19
+ANGULAR_SOURCE_DIR=.angular-conformance npx vitest run packages/angular-compiler/src/lib/conformance.spec.ts
 
 # Exact version
-bash scripts/setup-conformance.sh 21.0.0
+bash packages/angular-compiler/scripts/setup-conformance.sh 21.0.0
 
 # Latest release (auto-detected via GitHub API)
-bash scripts/setup-conformance.sh
+bash packages/angular-compiler/scripts/setup-conformance.sh
+
+# Local (auto-detects ~/projects/angular/angular if present)
+npx vitest run packages/angular-compiler/src/lib/conformance.spec.ts
 ```
 
-CI runs a matrix of Angular 17, 18, 19, 20, 21, and latest on every push/PR.
+CI runs a matrix of Angular 17, 18, 19, 20, 21, and latest on every PR via the `conformance` job in `.github/workflows/ci.yml`.
