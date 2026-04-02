@@ -91,7 +91,6 @@ export function compile(
     true,
   );
   const constantPool = new ConstantPool();
-  const fileResourceImports: ts.ImportDeclaration[] = [];
   const resourceDependencies: string[] = [];
   const parseFile = new ParseSourceFile(sourceCode, fileName);
   const parseLoc = new ParseLocation(parseFile, 0, 0, 0);
@@ -186,7 +185,6 @@ export function compile(
       switch (decoratorName) {
         case 'Component':
           targetType = FactoryTarget.Component;
-          processResources();
           if (!meta.selector) {
             meta.selector = `ng-component-${className.toLowerCase()}`;
           }
@@ -787,11 +785,6 @@ export function compile(
   };
 }
 
-/** Resources are read and inlined at compile time — no imports needed. */
-function processResources() {
-  return { imports: [] as ts.ImportDeclaration[] };
-}
-
 function injectAngularImport(sf: ts.SourceFile) {
   return ts.factory.updateSourceFile(sf, [
     ts.factory.createImportDeclaration(
@@ -805,13 +798,4 @@ function injectAngularImport(sf: ts.SourceFile) {
     ),
     ...sf.statements,
   ]);
-}
-function createStaticProperty(n: string, i: ts.Expression) {
-  return ts.factory.createPropertyDeclaration(
-    [ts.factory.createModifier(ts.SyntaxKind.StaticKeyword)],
-    n,
-    undefined,
-    undefined,
-    i,
-  );
 }
