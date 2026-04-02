@@ -70,6 +70,8 @@ import {
   compile as analogCompile,
   scanFile as analogScanFile,
   jitTransform as analogJitTransform,
+  inlineResourceUrls,
+  extractInlineStyles as extractInlineStylesOxc,
   type ComponentRegistry,
 } from '@analogjs/angular-compiler';
 
@@ -300,99 +302,16 @@ if (import.meta.hot) {
       return { code: result.code, map: result.map };
     }
 
-    const fs = require('fs');
-    const path = require('path');
-    const dir = path.dirname(id);
+    // Inline external templateUrl/styleUrl(s) into the source before compilation
+    // using OXC parser for precise AST-based rewriting.
+    code = inlineResourceUrls(code, id);
 
-    // Inline external templateUrl into the source before compilation.
-    // This ensures both ɵcmp and ɵsetClassMetadata use inline templates,
-    // preventing Angular's SSR runtime from trying to fetch relative URLs.
-    if (code.includes('templateUrl')) {
-      code = code.replace(
-        /templateUrl\s*:\s*['"`]([^'"`]+)['"`]/g,
-        (_match: string, url: string) => {
-          try {
-            const filePath = path.resolve(dir, url);
-            const content = fs.readFileSync(filePath, 'utf-8');
-            return `template: ${JSON.stringify(content)}`;
-          } catch {
-            return _match; // Keep original if file can't be read
-          }
-        },
-      );
-    }
-
-    // Inline external styleUrl/styleUrls into the source before compilation.
-    if (code.includes('styleUrl')) {
-      // styleUrl: './file.scss' → styles: ['compiled css']
-      code = code.replace(
-        /styleUrl\s*:\s*['"`]([^'"`]+)['"`]/g,
-        (_match: string, url: string) => {
-          try {
-            const filePath = path.resolve(dir, url);
-            const content = fs.readFileSync(filePath, 'utf-8');
-            return `styles: [${JSON.stringify(content)}]`;
-          } catch {
-            return _match;
-          }
-        },
-      );
-      // styleUrls: ['./a.scss', './b.css'] → styles: ['css a', 'css b']
-      code = code.replace(
-        /styleUrls\s*:\s*\[([^\]]+)\]/g,
-        (_match: string, inner: string) => {
-          const urls = [...inner.matchAll(/['"`]([^'"`]+)['"`]/g)].map(
-            (m) => m[1],
-          );
-          const contents = urls.map((url) => {
-            try {
-              const filePath = path.resolve(dir, url);
-              return fs.readFileSync(filePath, 'utf-8');
-            } catch {
-              return '';
-            }
-          });
-          return `styles: [${contents.map((c) => JSON.stringify(c)).join(', ')}]`;
-        },
-      );
-    }
-
-    // Pre-resolve styles that need preprocessing (SCSS/Sass/Less)
+    // Pre-resolve inline styles that need preprocessing (SCSS/Sass/Less)
     let resolvedStyles: Map<string, string> | undefined;
     let resolvedInlineStyles: Map<number, string> | undefined;
 
-    if (
-      code.includes('styles') &&
-      pluginOptions.inlineStylesExtension !== 'css'
-    ) {
-      const sf = ts.createSourceFile(id, code, ts.ScriptTarget.Latest, true);
-      const styleStrings: string[] = [];
-
-      function visitNode(node: ts.Node) {
-        if (
-          ts.isPropertyAssignment(node) &&
-          (node as ts.PropertyAssignment).name.getText(sf) === 'styles'
-        ) {
-          const val = (node as ts.PropertyAssignment).initializer;
-          if (ts.isArrayLiteralExpression(val)) {
-            for (const el of (val as ts.ArrayLiteralExpression).elements) {
-              if (
-                ts.isStringLiteral(el) ||
-                ts.isNoSubstitutionTemplateLiteral(el)
-              ) {
-                styleStrings.push((el as ts.StringLiteral).text);
-              }
-            }
-          } else if (
-            ts.isStringLiteral(val) ||
-            ts.isNoSubstitutionTemplateLiteral(val)
-          ) {
-            styleStrings.push((val as ts.StringLiteral).text);
-          }
-        }
-        ts.forEachChild(node, visitNode);
-      }
-      visitNode(sf);
+    if (pluginOptions.inlineStylesExtension !== 'css') {
+      const styleStrings = extractInlineStylesOxc(code, id);
 
       if (styleStrings.length > 0) {
         resolvedInlineStyles = new Map();

@@ -1,91 +1,28 @@
-import * as path from 'node:path';
 import * as fs from 'node:fs';
-import { type ResolvedConfig, preprocessCSS } from 'vite';
+import * as path from 'node:path';
 import { parseSync } from 'oxc-parser';
-
-const STYLE_EXTS = new Set(['.scss', '.sass', '.less', '.styl']);
+import MagicString from 'magic-string';
 
 /**
- * Extract styleUrl/styleUrls from source using OXC parser,
- * read and preprocess them via Vite.
- * Returns a Map of absolute path → compiled CSS for the compiler to use.
+ * Inline external templateUrl and styleUrl/styleUrls into the source code
+ * using OXC parser for precise AST-based rewriting.
+ *
+ * Replaces:
+ *   templateUrl: './file.html'  →  template: "...file contents..."
+ *   styleUrl: './file.css'      →  styles: ["...file contents..."]
+ *   styleUrls: ['./a.css']      →  styles: ["...contents..."]
+ *
+ * Returns the modified source code, or the original if no changes were needed.
  */
-export async function resolveStyleFiles(
-  code: string,
-  id: string,
-  resolvedConfig: ResolvedConfig,
-): Promise<Map<string, string> | undefined> {
-  if (!code.includes('styleUrl')) return undefined;
-
-  const styleUrls = extractStyleUrls(code, id);
-  if (styleUrls.length === 0) return undefined;
-
-  const result = new Map<string, string>();
-  const dir = path.dirname(id);
-
-  for (const url of styleUrls) {
-    if (!STYLE_EXTS.has(path.extname(url))) continue;
-    const filePath = path.resolve(dir, url);
-    try {
-      const source = fs.readFileSync(filePath, 'utf-8');
-      const processed = await preprocessCSS(source, filePath, resolvedConfig);
-      result.set(filePath, processed.code);
-    } catch (e: any) {
-      console.warn(
-        `[angular-compiler] Style preprocessing failed for ${filePath}: ${e.message}`,
-      );
-    }
+export function inlineResourceUrls(code: string, fileName: string): string {
+  if (!code.includes('templateUrl') && !code.includes('styleUrl')) {
+    return code;
   }
 
-  return result.size > 0 ? result : undefined;
-}
-
-/**
- * Preprocess inline styles that contain SCSS/Sass syntax.
- * Uses OXC parser to extract style strings from decorator arguments
- * and runs them through Vite's preprocessCSS.
- */
-export async function preprocessInlineStyles(
-  code: string,
-  id: string,
-  inlineStyleLanguage: string,
-  resolvedConfig: ResolvedConfig,
-): Promise<Map<number, string> | undefined> {
-  if (inlineStyleLanguage === 'css') return undefined;
-  if (!code.includes('styles')) return undefined;
-
-  const styleStrings = extractInlineStyles(code, id);
-  if (styleStrings.length === 0) return undefined;
-
-  const result = new Map<number, string>();
-  for (let i = 0; i < styleStrings.length; i++) {
-    try {
-      const fakePath = id.replace(
-        /\.ts$/,
-        `.inline-${i}.${inlineStyleLanguage}`,
-      );
-      const processed = await preprocessCSS(
-        styleStrings[i],
-        fakePath,
-        resolvedConfig,
-      );
-      result.set(i, processed.code);
-    } catch (e: any) {
-      console.warn(
-        `[angular-compiler] Inline style preprocessing failed in ${id}: ${e.message}`,
-      );
-    }
-  }
-
-  return result.size > 0 ? result : undefined;
-}
-
-/**
- * Extract styleUrl/styleUrls values from Angular decorator arguments using OXC parser.
- */
-function extractStyleUrls(code: string, fileName: string): string[] {
-  const urls: string[] = [];
   const { program } = parseSync(fileName, code);
+  const ms = new MagicString(code);
+  let changed = false;
+  const dir = path.dirname(fileName);
 
   for (const node of program.body) {
     const decl =
@@ -108,31 +45,84 @@ function extractStyleUrls(code: string, fileName: string): string[] {
         const key: string = prop.key?.name || prop.key?.value;
         const val = prop.value;
 
+        // templateUrl: './file.html' → template: "...contents..."
+        if (
+          key === 'templateUrl' &&
+          val?.type === 'Literal' &&
+          typeof val.value === 'string'
+        ) {
+          try {
+            const filePath = path.resolve(dir, val.value);
+            const content = fs.readFileSync(filePath, 'utf-8');
+            ms.overwrite(
+              prop.start,
+              prop.end,
+              `template: ${JSON.stringify(content)}`,
+            );
+            changed = true;
+          } catch {
+            // Keep original if file can't be read
+          }
+        }
+
+        // styleUrl: './file.css' → styles: ["...contents..."]
         if (
           key === 'styleUrl' &&
           val?.type === 'Literal' &&
           typeof val.value === 'string'
         ) {
-          urls.push(val.value);
+          try {
+            const filePath = path.resolve(dir, val.value);
+            const content = fs.readFileSync(filePath, 'utf-8');
+            ms.overwrite(
+              prop.start,
+              prop.end,
+              `styles: [${JSON.stringify(content)}]`,
+            );
+            changed = true;
+          } catch {
+            // Keep original if file can't be read
+          }
         }
+
+        // styleUrls: ['./a.css', './b.css'] → styles: ["...a...", "...b..."]
         if (key === 'styleUrls' && val?.type === 'ArrayExpression') {
+          const contents: string[] = [];
+          let allRead = true;
           for (const el of val.elements) {
             if (el?.type === 'Literal' && typeof el.value === 'string') {
-              urls.push(el.value);
+              try {
+                const filePath = path.resolve(dir, el.value);
+                contents.push(fs.readFileSync(filePath, 'utf-8'));
+              } catch {
+                allRead = false;
+                break;
+              }
             }
+          }
+          if (allRead && contents.length > 0) {
+            ms.overwrite(
+              prop.start,
+              prop.end,
+              `styles: [${contents.map((c) => JSON.stringify(c)).join(', ')}]`,
+            );
+            changed = true;
           }
         }
       }
     }
   }
 
-  return urls;
+  return changed ? ms.toString() : code;
 }
 
 /**
- * Extract inline style strings from Angular decorator arguments using OXC parser.
+ * Extract inline style strings from Angular @Component decorator using OXC parser.
+ * Returns an array of style string values for preprocessing.
  */
-function extractInlineStyles(code: string, fileName: string): string[] {
+export function extractInlineStyles(code: string, fileName: string): string[] {
+  if (!code.includes('styles')) return [];
+
   const styles: string[] = [];
   const { program } = parseSync(fileName, code);
 

@@ -5,3 +5,4 @@ export {
   type ComponentRegistry,
 } from './registry.js';
 export { jitTransform, type JitTransformResult } from './jit-transform.js';
+export { inlineResourceUrls, extractInlineStyles } from './resource-inliner.js';
