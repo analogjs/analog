@@ -601,8 +601,10 @@ export function compile(
   // Apply edits via MagicString
   const ms = new MagicString(sourceCode, { filename: fileName });
 
-  // 1. Prepend i0 import
-  ms.prepend('import * as i0 from "@angular/core";\n');
+  // 1. Prepend i0 import (skip if already present)
+  if (!sourceCode.includes('import * as i0 from')) {
+    ms.prepend('import * as i0 from "@angular/core";\n');
+  }
 
   // 2. For each compiled class: remove decorators + insert Ivy definitions
   for (const cr of classResults) {
