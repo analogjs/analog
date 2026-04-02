@@ -127,21 +127,21 @@ The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.)
 
 ## Source Files
 
-| File                  | Purpose                                                                                     |
-| --------------------- | ------------------------------------------------------------------------------------------- |
-| `compile.ts`          | Single-file AOT compiler: Ivy codegen via `@angular/compiler` APIs                          |
-| `registry.ts`         | OXC-based file scanner, extracts selectors, inputs, outputs                                 |
-| `metadata.ts`         | Decorator metadata extraction (`extractMetadata`, `detectSignals`, `detectFieldDecorators`) |
-| `js-emitter.ts`       | Angular output AST → JavaScript string emitter (~4x faster than `ts.Printer`)               |
-| `ast-translator.ts`   | Angular output AST → TypeScript AST translator (for complex expressions)                    |
-| `resource-inliner.ts` | OXC-based `templateUrl`/`styleUrl` inlining and inline style extraction                     |
-| `dts-reader.ts`       | OXC-based `.d.ts` scanner for pre-compiled Angular packages (selectors, inputs, outputs)    |
-| `jit-transform.ts`    | JIT mode: decorator metadata arrays + constructor DI + signal downleveling                  |
-| `jit-metadata.ts`     | JIT metadata helpers (constructor parameters, property decorators)                          |
-| `defer.ts`            | `@defer` dependency map builder                                                             |
-| `hmr.ts`              | HMR code generation using `ɵɵreplaceMetadata`                                               |
-| `styles.ts`           | Style preprocessing via Vite's `preprocessCSS` (OXC-based extraction)                       |
-| `utils.ts`            | Type-only import detection, class finder, `forwardRef` unwrapper                            |
+| File                  | Purpose                                                                                        |
+| --------------------- | ---------------------------------------------------------------------------------------------- |
+| `compile.ts`          | Single-file AOT compiler: Ivy codegen via `@angular/compiler` APIs                             |
+| `registry.ts`         | OXC-based file scanner, extracts selectors, inputs, outputs                                    |
+| `metadata.ts`         | Decorator metadata extraction (`extractMetadata`, `detectSignals`, `detectFieldDecorators`)    |
+| `js-emitter.ts`       | Angular output AST → JavaScript string emitter (~4x faster than `ts.Printer`)                  |
+| `ast-translator.ts`   | Angular output AST → TypeScript AST translator (for complex expressions)                       |
+| `resource-inliner.ts` | OXC-based `templateUrl`/`styleUrl` inlining and inline style extraction                        |
+| `dts-reader.ts`       | OXC-based `.d.ts` scanner for pre-compiled Angular packages (selectors, inputs, outputs)       |
+| `jit-transform.ts`    | JIT mode: decorator metadata arrays + constructor DI + signal downleveling + decorator removal |
+| `jit-metadata.ts`     | JIT metadata helpers (constructor parameters, property decorators)                             |
+| `defer.ts`            | `@defer` dependency map builder                                                                |
+| `hmr.ts`              | HMR code generation using `ɵɵreplaceMetadata`                                                  |
+| `styles.ts`           | Style preprocessing via Vite's `preprocessCSS` (OXC-based extraction)                          |
+| `utils.ts`            | Type-only import detection, class finder, `forwardRef` unwrapper                               |
 
 ## What's Supported
 
@@ -411,6 +411,7 @@ This compiler's architecture — single-file transforms using `@angular/compiler
 
 | File                            | Tests | Coverage                                                                                                                                                                                                                                                                                                                                |
 | ------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `jit-transform.spec.ts`         | 32    | Decorator conversion, member decorator removal (@Input, @Output, @ViewChild, @ContentChild), constructor parameter decorator removal (@Inject, @Optional), constructor DI, signal API downleveling, external resources, edge cases, ReflectionCapabilities integration                                                                  |
 | `integration.spec.ts`           | 28    | Registry input/output extraction, cross-component binding, constant pool ordering, assignment precedence, templateUrl inlining, content projection, pipe chaining, template refs, two-way binding, computed signals, safe navigation, @defer triggers, @if alias, multi-component files, duplicate i0 prevention, OXC resource inlining |
 | `dts-reader.spec.ts`            | 7     | Directive/component/pipe extraction from `.d.ts`, signal inputs, aliased inputs, multiple classes                                                                                                                                                                                                                                       |
 | `component.spec.ts`             | 48    | All @Component features, signals (including required variants), control flow, defer, pipes, content projection, external resources, resource dependencies, providers, source maps                                                                                                                                                       |

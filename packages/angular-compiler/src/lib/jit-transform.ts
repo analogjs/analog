@@ -202,6 +202,41 @@ export function jitTransform(
         `${className}.propDecorators = ${propDecorators};`,
       );
     }
+
+    // 5. Remove member and parameter decorators from source now that
+    //    they have been extracted into static metadata above.
+    for (const member of node.members) {
+      const memberDecs = ts.getDecorators(member as any);
+      if (memberDecs) {
+        for (const dec of memberDecs) {
+          const start = dec.getStart(sourceFile);
+          const end = dec.getEnd();
+          let trimEnd = end;
+          while (trimEnd < sourceCode.length && /\s/.test(sourceCode[trimEnd]))
+            trimEnd++;
+          ms.remove(start, trimEnd);
+        }
+      }
+      // Constructor parameter decorators
+      if (ts.isConstructorDeclaration(member)) {
+        for (const param of member.parameters) {
+          const paramDecs = ts.getDecorators(param);
+          if (paramDecs) {
+            for (const dec of paramDecs) {
+              const start = dec.getStart(sourceFile);
+              const end = dec.getEnd();
+              let trimEnd = end;
+              while (
+                trimEnd < sourceCode.length &&
+                /\s/.test(sourceCode[trimEnd])
+              )
+                trimEnd++;
+              ms.remove(start, trimEnd);
+            }
+          }
+        }
+      }
+    }
   }
 
   if (!hasAngularClass) {

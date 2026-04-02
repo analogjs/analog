@@ -66,6 +66,69 @@ describe('JIT Transform', () => {
       expect(result).toContain('@SomeDecorator');
       expect(result).not.toContain('X.decorators');
     });
+
+    it('removes @Input decorators from source', () => {
+      const result = transform(`
+        import { Component, Input } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X {
+          @Input()
+          name = '';
+        }
+      `);
+
+      expect(result).not.toMatch(/@Input/);
+      expect(result).toContain('X.propDecorators');
+      expect(result).toContain("name = ''");
+    });
+
+    it('removes @Output decorators from source', () => {
+      const result = transform(`
+        import { Component, Output, EventEmitter } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X {
+          @Output()
+          clicked = new EventEmitter<void>();
+        }
+      `);
+
+      expect(result).not.toMatch(/@Output/);
+      expect(result).toContain('X.propDecorators');
+      expect(result).toContain('new EventEmitter');
+    });
+
+    it('removes multiple member decorators from source', () => {
+      const result = transform(`
+        import { Component, Input, Output, EventEmitter } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X {
+          @Input() label = '';
+          @Input() size: 'small' | 'large' = 'small';
+          @Output() clicked = new EventEmitter();
+        }
+      `);
+
+      expect(result).not.toMatch(/@Input/);
+      expect(result).not.toMatch(/@Output/);
+      expect(result).toContain("label = ''");
+      expect(result).toContain('new EventEmitter');
+    });
+
+    it('removes @ViewChild and @ContentChild decorators from source', () => {
+      const result = transform(`
+        import { Component, ViewChild, ContentChild, ElementRef } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X {
+          @ViewChild('ref') myRef!: ElementRef;
+          @ContentChild('item') myItem!: ElementRef;
+        }
+      `);
+
+      expect(result).not.toMatch(/@ViewChild/);
+      expect(result).not.toMatch(/@ContentChild/);
+      expect(result).toContain('type: ViewChild');
+      expect(result).toContain('type: ContentChild');
+    });
   });
 
   describe('Constructor DI', () => {
@@ -81,7 +144,7 @@ describe('JIT Transform', () => {
       expect(result).toContain('type: MyService');
     });
 
-    it('emits ctorParameters with @Inject decorator', () => {
+    it('emits ctorParameters with @Inject decorator and removes it from source', () => {
       const result = transform(`
         import { Component, Inject } from '@angular/core';
         @Component({ selector: 'x', template: '' })
@@ -90,9 +153,10 @@ describe('JIT Transform', () => {
 
       expect(result).toContain('X.ctorParameters');
       expect(result).toContain('type: Inject');
+      expect(result).not.toMatch(/@Inject/);
     });
 
-    it('emits ctorParameters with @Optional', () => {
+    it('emits ctorParameters with @Optional and removes it from source', () => {
       const result = transform(`
         import { Component, Optional } from '@angular/core';
         class Svc {}
@@ -102,6 +166,7 @@ describe('JIT Transform', () => {
 
       expect(result).toContain('X.ctorParameters');
       expect(result).toContain('type: Optional');
+      expect(result).not.toMatch(/@Optional/);
     });
 
     it('does not emit ctorParameters for empty constructor', () => {
