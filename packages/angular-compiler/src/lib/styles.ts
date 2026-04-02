@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { type ResolvedConfig, preprocessCSS } from 'vite';
-import { parseSync } from 'oxc-parser';
+import { extractInlineStyles, extractStyleUrls } from './style-ast.js';
 
 const STYLE_EXTS = new Set(['.scss', '.sass', '.less', '.styl']);
 
@@ -78,109 +78,4 @@ export async function preprocessInlineStyles(
   }
 
   return result.size > 0 ? result : undefined;
-}
-
-/**
- * Extract styleUrl/styleUrls values from Angular decorator arguments using OXC parser.
- */
-function extractStyleUrls(code: string, fileName: string): string[] {
-  const urls: string[] = [];
-  const { program } = parseSync(fileName, code);
-
-  for (const node of program.body) {
-    const decl =
-      node.type === 'ExportNamedDeclaration' ||
-      node.type === 'ExportDefaultDeclaration'
-        ? (node as any).declaration
-        : node;
-    if (!decl || decl.type !== 'ClassDeclaration') continue;
-
-    for (const dec of decl.decorators || []) {
-      const expr = dec.expression;
-      if (!expr || expr.type !== 'CallExpression') continue;
-      if (expr.callee?.name !== 'Component') continue;
-
-      const arg = expr.arguments?.[0];
-      if (!arg || arg.type !== 'ObjectExpression') continue;
-
-      for (const prop of arg.properties) {
-        if (prop.type !== 'Property') continue;
-        const key: string = prop.key?.name || prop.key?.value;
-        const val = prop.value;
-
-        if (
-          key === 'styleUrl' &&
-          val?.type === 'Literal' &&
-          typeof val.value === 'string'
-        ) {
-          urls.push(val.value);
-        }
-        if (key === 'styleUrls' && val?.type === 'ArrayExpression') {
-          for (const el of val.elements) {
-            if (el?.type === 'Literal' && typeof el.value === 'string') {
-              urls.push(el.value);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return urls;
-}
-
-/**
- * Extract inline style strings from Angular decorator arguments using OXC parser.
- */
-function extractInlineStyles(code: string, fileName: string): string[] {
-  const styles: string[] = [];
-  const { program } = parseSync(fileName, code);
-
-  for (const node of program.body) {
-    const decl =
-      node.type === 'ExportNamedDeclaration' ||
-      node.type === 'ExportDefaultDeclaration'
-        ? (node as any).declaration
-        : node;
-    if (!decl || decl.type !== 'ClassDeclaration') continue;
-
-    for (const dec of decl.decorators || []) {
-      const expr = dec.expression;
-      if (!expr || expr.type !== 'CallExpression') continue;
-      if (expr.callee?.name !== 'Component') continue;
-
-      const arg = expr.arguments?.[0];
-      if (!arg || arg.type !== 'ObjectExpression') continue;
-
-      for (const prop of arg.properties) {
-        if (prop.type !== 'Property') continue;
-        const key: string = prop.key?.name || prop.key?.value;
-        const val = prop.value;
-
-        if (key === 'styles') {
-          if (val?.type === 'ArrayExpression') {
-            for (const el of val.elements) {
-              if (el?.type === 'Literal' && typeof el.value === 'string') {
-                styles.push(el.value);
-              }
-              if (el?.type === 'TemplateLiteral' && el.quasis?.length === 1) {
-                styles.push(
-                  el.quasis[0].value.cooked || el.quasis[0].value.raw,
-                );
-              }
-            }
-          } else if (val?.type === 'Literal' && typeof val.value === 'string') {
-            styles.push(val.value);
-          } else if (
-            val?.type === 'TemplateLiteral' &&
-            val.quasis?.length === 1
-          ) {
-            styles.push(val.quasis[0].value.cooked || val.quasis[0].value.raw);
-          }
-        }
-      }
-    }
-  }
-
-  return styles;
 }
