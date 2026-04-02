@@ -2,111 +2,79 @@ import {
   EnvironmentProviders,
   Provider,
   reflectComponentType,
+  ɵComponentType as ComponentType,
   provideZonelessChangeDetection,
-  ComponentMirror,
-  Type,
-  APP_ID,
-  createComponent,
-  Binding,
-  inputBinding,
-  outputBinding,
-  APP_BOOTSTRAP_LISTENER,
 } from '@angular/core';
-import {
-  createApplication,
-  provideClientHydration,
-} from '@angular/platform-browser';
-
-function createBindings(
-  element: HTMLElement,
-  mirror: ComponentMirror<unknown>,
-  props?: Record<string, unknown>,
-): Binding[] {
-  if (!props) {
-    return [];
-  }
-
-  const inputBindings = Object.entries(props)
-    .filter(([key]) =>
-      mirror.inputs.some(({ templateName }) => templateName === key),
-    )
-    .map(([key, value]) => inputBinding(key, () => value));
-
-  if (!mirror.outputs.length || !props['data-analog-id']) {
-    return inputBindings;
-  }
-
-  const outputBindings = mirror.outputs.map(({ templateName }) =>
-    outputBinding(templateName, (detail) => {
-      const event = new CustomEvent(templateName, {
-        bubbles: true,
-        cancelable: true,
-        composed: true,
-        detail,
-      });
-      element.dispatchEvent(event);
-    }),
-  );
-
-  return [...inputBindings, ...outputBindings];
-}
+import { ApplicationRef, createComponent } from '@angular/core';
+import { createApplication } from '@angular/platform-browser';
+import { Observable, Subject, takeUntil } from 'rxjs';
 
 export default (element: HTMLElement) => {
   return (
-    Component: Type<unknown> & {
+    Component: ComponentType<unknown> & {
       clientProviders?: (Provider | EnvironmentProviders)[];
     },
     props?: Record<string, unknown>,
     _childHTML?: unknown,
   ) => {
-    const mirror = reflectComponentType(Component);
-
-    if (!mirror) {
-      // Not an Angular component
-      return;
-    }
-
-    // Insert Angular client hydration marker
-    document.body.prepend(document.createComment('nghm'));
-
-    const hostElement = element.querySelector(mirror.selector);
-
-    if (!hostElement) {
-      throw new Error(
-        'No host element found for hydration! Selector: ' + mirror.selector,
-      );
-    }
-
-    const ngAppId = hostElement?.getAttribute('data-analog-id');
-
     createApplication({
       providers: [
         provideZonelessChangeDetection(),
-        provideClientHydration(),
-        ngAppId
-          ? {
-              provide: APP_ID,
-              useValue: ngAppId,
-            }
-          : [],
         ...(Component.clientProviders || []),
       ],
-    }).then((appRef) => {
+    }).then((appRef: ApplicationRef) => {
       const componentRef = createComponent(Component, {
         environmentInjector: appRef.injector,
-        hostElement,
-        bindings: createBindings(element, mirror, props),
+        hostElement: element,
       });
 
-      componentRef.onDestroy(() => {
-        appRef.detachView(componentRef.hostView);
-      });
+      const mirror = reflectComponentType(Component);
+      if (props && mirror) {
+        for (const [key, value] of Object.entries(props)) {
+          if (
+            mirror.inputs.some(
+              ({ templateName, propName }) =>
+                templateName === key || propName === key,
+            )
+          ) {
+            componentRef.setInput(key, value);
+          }
+        }
+      }
+
+      if (mirror?.outputs.length && props?.['data-analog-id']) {
+        const destroySubject = new Subject<void>();
+        element.setAttribute(
+          'data-analog-id',
+          props['data-analog-id'] as string,
+        );
+
+        mirror.outputs.forEach(({ templateName, propName }) => {
+          const outputName = templateName || propName;
+          const component = componentRef.instance as Record<
+            string,
+            Observable<unknown>
+          >;
+          component[outputName]
+            .pipe(takeUntil(destroySubject))
+            .subscribe((detail) => {
+              const event = new CustomEvent(outputName, {
+                bubbles: true,
+                cancelable: true,
+                composed: true,
+                detail,
+              });
+              element.dispatchEvent(event);
+            });
+        });
+
+        appRef.onDestroy(() => {
+          destroySubject.next();
+          destroySubject.complete();
+        });
+      }
 
       appRef.attachView(componentRef.hostView);
-
-      appRef.injector
-        .get(APP_BOOTSTRAP_LISTENER, [])
-        .forEach((cb) => cb(componentRef));
     });
   };
 };

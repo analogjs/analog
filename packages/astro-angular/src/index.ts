@@ -12,13 +12,26 @@ interface AngularOptions {
    * Enabling this option disables astro's streaming under SSR.
    */
   strictStylePlacement?: boolean;
+  /**
+   * Experimental options
+   */
+  experimental?: {
+    /**
+     * Use Angular's `provideClientHydration` to hydrate components.
+     */
+    useAngularHydration?: boolean;
+  };
 }
 
-function getRenderer(): AstroRenderer {
+function getRenderer(ngHydration: boolean | undefined): AstroRenderer {
   return {
     name: '@analogjs/astro-angular',
-    clientEntrypoint: '@analogjs/astro-angular/client.js',
-    serverEntrypoint: '@analogjs/astro-angular/server.js',
+    clientEntrypoint: ngHydration
+      ? fileURLToPath(import.meta.resolve('./client-ngh.js'))
+      : '@analogjs/astro-angular/client.js',
+    serverEntrypoint: ngHydration
+      ? fileURLToPath(import.meta.resolve('./server-ngh.js'))
+      : '@analogjs/astro-angular/server.js',
   };
 }
 
@@ -86,7 +99,7 @@ export default function (options?: AngularOptions): AstroIntegration {
     name: '@analogjs/astro-angular',
     hooks: {
       'astro:config:setup': ({ addRenderer, updateConfig, addMiddleware }) => {
-        addRenderer(getRenderer());
+        addRenderer(getRenderer(options?.experimental?.useAngularHydration));
         updateConfig({
           vite: getViteConfiguration(
             options?.vite,

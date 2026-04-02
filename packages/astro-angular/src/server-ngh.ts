@@ -10,9 +10,11 @@ import {
   reflectComponentType,
   provideZonelessChangeDetection,
   DOCUMENT,
+  APP_ID,
+  APP_BOOTSTRAP_LISTENER,
+  inject,
 } from '@angular/core';
 import {
-  BEFORE_APP_SERIALIZED,
   provideServerRendering,
   renderApplication,
   ɵSERVER_CONTEXT,
@@ -20,8 +22,10 @@ import {
 } from '@angular/platform-server';
 import {
   bootstrapApplication,
+  provideClientHydration,
   type BootstrapContext,
 } from '@angular/platform-browser';
+import type { AstroComponentMetadata } from 'astro';
 
 const ANALOG_ASTRO_STATIC_PROPS = new InjectionToken<{
   props: Record<string, unknown>;
@@ -43,17 +47,11 @@ function check(
 // Run beforeAppInitialized hook to set Input on the ComponentRef
 // before the platform renders to string
 const STATIC_PROPS_HOOK_PROVIDER: Provider = {
-  provide: BEFORE_APP_SERIALIZED,
-  useFactory: (
-    appRef: ApplicationRef,
-    {
-      props,
-      mirror,
-    }: {
-      props: Record<string, unknown>;
-      mirror: ComponentMirror<unknown>;
-    },
-  ) => {
+  provide: APP_BOOTSTRAP_LISTENER,
+  useFactory: () => {
+    const appRef = inject(ApplicationRef);
+    const { props, mirror } = inject(ANALOG_ASTRO_STATIC_PROPS);
+
     return () => {
       const compRef = appRef.components[0];
       if (compRef && props && mirror) {
@@ -74,7 +72,6 @@ const STATIC_PROPS_HOOK_PROVIDER: Provider = {
       }
     };
   },
-  deps: [ApplicationRef, ANALOG_ASTRO_STATIC_PROPS],
   multi: true,
 };
 
@@ -84,14 +81,17 @@ async function renderToStaticMarkup(
   },
   props: Record<string, unknown>,
   _children: unknown,
+  metadata?: AstroComponentMetadata,
 ) {
   const mirror = reflectComponentType(Component);
   const appId =
     mirror?.selector.split(',')[0] || Component.name.toString().toLowerCase();
+  const ngAppId =
+    props?.['data-analog-id'] || 'ng-' + Math.random().toString().slice(2, 9);
 
   const platformRef = platformServer();
   const document = platformRef.injector.get(DOCUMENT);
-  document.body.innerHTML = `<${appId}></${appId}>`;
+  document.body.innerHTML = `<${appId} data-analog-id="${ngAppId}"></${appId}>`;
 
   const bootstrap = (context?: BootstrapContext) =>
     bootstrapApplication(
@@ -106,6 +106,11 @@ async function renderToStaticMarkup(
           provideServerRendering(),
           { provide: ɵSERVER_CONTEXT, useValue: 'analog' },
           provideZonelessChangeDetection(),
+          metadata?.hydrate ? provideClientHydration() : [],
+          {
+            provide: APP_ID,
+            useValue: ngAppId,
+          },
           ...(Component.renderProviders || []),
         ],
       },
