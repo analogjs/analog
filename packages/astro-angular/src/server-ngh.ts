@@ -48,13 +48,7 @@ function provideBootstrapListener(
         if (compRef && props && mirror) {
           for (const [key, value] of Object.entries(props)) {
             if (
-              // we double-check inputs on ComponentMirror
-              // because Astro might add additional props
-              // that aren't actually Input defined on the Component
-              mirror.inputs.some(
-                ({ templateName, propName }) =>
-                  templateName === key || propName === key,
-              )
+              mirror.inputs.some(({ templateName }) => templateName === key)
             ) {
               compRef.setInput(key, value);
             }
