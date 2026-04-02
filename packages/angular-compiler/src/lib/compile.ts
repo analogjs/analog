@@ -96,6 +96,25 @@ export function compile(
   const parseLoc = new ParseLocation(parseFile, 0, 0, 0);
   const typeSourceSpan = new ParseSourceSpan(parseLoc, parseLoc);
   const typeOnlyImports = collectTypeOnlyImports(origSourceFile);
+  const importSpecifierByName = new Map<string, string>();
+  const importedNames = new Set<string>();
+
+  for (const stmt of origSourceFile.statements) {
+    if (
+      !ts.isImportDeclaration(stmt) ||
+      !stmt.importClause?.namedBindings ||
+      !ts.isNamedImports(stmt.importClause.namedBindings)
+    ) {
+      continue;
+    }
+
+    const moduleSpecifier = (stmt.moduleSpecifier as ts.StringLiteral).text;
+    for (const element of stmt.importClause.namedBindings.elements) {
+      const localName = element.name.text;
+      importedNames.add(localName);
+      importSpecifierByName.set(localName, moduleSpecifier);
+    }
+  }
 
   // Inject 'import * as i0 from "@angular/core"'
   const sourceFile = injectAngularImport(origSourceFile);
@@ -195,24 +214,7 @@ export function compile(
             const registryEntry = registry?.get(depClassName);
 
             if (registryEntry?.kind === 'ngmodule' && registryEntry.exports) {
-              // Find the import specifier for this NgModule so we can
-              // import its exported classes from the same package.
-              let moduleSpecifier: string | undefined;
-              for (const stmt of origSourceFile.statements) {
-                if (
-                  ts.isImportDeclaration(stmt) &&
-                  stmt.importClause?.namedBindings &&
-                  ts.isNamedImports(stmt.importClause.namedBindings)
-                ) {
-                  for (const el of stmt.importClause.namedBindings.elements) {
-                    if (el.name.text === depClassName) {
-                      moduleSpecifier = (
-                        stmt.moduleSpecifier as ts.StringLiteral
-                      ).text;
-                    }
-                  }
-                }
-              }
+              const moduleSpecifier = importSpecifierByName.get(depClassName);
 
               for (const exportedName of registryEntry.exports) {
                 const exportedEntry = registry?.get(exportedName);
@@ -694,15 +696,9 @@ export function compile(
 
   // 1b. Inject synthetic imports for NgModule-exported classes
   for (const [name, specifier] of syntheticImports) {
-    const alreadyImported = origSourceFile.statements.some(
-      (s) =>
-        ts.isImportDeclaration(s) &&
-        s.importClause?.namedBindings &&
-        ts.isNamedImports(s.importClause.namedBindings) &&
-        s.importClause.namedBindings.elements.some((e) => e.name.text === name),
-    );
-    if (!alreadyImported) {
+    if (!importedNames.has(name)) {
       ms.prepend(`import { ${name} } from "${specifier}";\n`);
+      importedNames.add(name);
     }
   }
 
