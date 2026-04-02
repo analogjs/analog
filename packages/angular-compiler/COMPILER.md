@@ -440,10 +440,10 @@ The compiler is validated against Angular's official compliance test suite. A co
 
 | Angular            | Pass Rate | Tests |
 | ------------------ | --------- | ----- |
-| v17 (latest patch) | 85.1%     | 142   |
-| v18 (latest patch) | 76.8%     | 143   |
-| v19 (latest patch) | 81.9%     | 137   |
-| v20 (latest patch) | 92.5%     | 141   |
+| v17 (latest patch) | 88.3%     | 120   |
+| v18 (latest patch) | 80.0%     | 143   |
+| v19 (latest patch) | 78.5%     | 151   |
+| v20 (latest patch) | 88.7%     | 155   |
 | v21 (latest patch) | 89.7%     | 160   |
 | latest             | 89.7%     | 160   |
 
