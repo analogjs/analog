@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        angular-major: [17, 18, 19, 20, 21, 'latest']
+        angular-major: [17, 18, 19, 20, 21, 'latest', 'next']
 
     name: Angular ${{ matrix.angular-major }}
 
@@ -34,12 +34,7 @@ jobs:
       - name: Build angular-compiler
         run: pnpm exec nx build angular-compiler
       - name: Download Angular ${{ matrix.angular-major }} compliance fixtures
-        run: |
-          if [ "${{ matrix.angular-major }}" = "latest" ]; then
-            bash packages/angular-compiler/scripts/setup-conformance.sh
-          else
-            bash packages/angular-compiler/scripts/setup-conformance.sh ${{ matrix.angular-major }}
-          fi
+        run: bash packages/angular-compiler/scripts/setup-conformance.sh ${{ matrix.angular-major }}
       - name: Run conformance tests
         env:
           ANGULAR_SOURCE_DIR: .angular-conformance
