@@ -318,7 +318,7 @@ export function compile(
               ngContentSelectors: parsedTemplate.ngContentSelectors,
               preserveWhitespaces: parsedTemplate.preserveWhitespaces,
             },
-            styles: meta.styles,
+            styles: [...(meta.styles || []), ...(parsedTemplate.styles || [])],
             inputs: ivyInputs,
             outputs: { ...meta.outputs, ...fields.outputs, ...sigs.outputs },
             viewQueries: [...fields.viewQueries, ...sigs.viewQueries],

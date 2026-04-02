@@ -875,6 +875,45 @@ describe('Non-Angular files pass through unchanged', () => {
   });
 });
 
+describe('Template-level styles', () => {
+  it('merges inline <style> from template with decorator styles', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-styled',
+        styles: ['h1 { color: blue }'],
+        template: '<style>p { margin: 0 }</style><h1>Hello</h1><p>World</p>'
+      })
+      export class StyledComponent {}
+    `,
+      'styled.ts',
+    );
+
+    expectCompiles(result);
+    // Both decorator styles and template <style> should be present
+    expect(result).toContain('h1 { color: blue }');
+    expect(result).toContain('p { margin: 0 }');
+  });
+
+  it('includes template <style> even without decorator styles', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-only-template-style',
+        template: '<style>.host { display: block }</style><div>content</div>'
+      })
+      export class OnlyTemplateStyleComponent {}
+    `,
+      'only-template-style.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('.host { display: block }');
+  });
+});
+
 function expectCompiles(result: string) {
   expect(result).toBeTruthy();
   expect(result).not.toMatch(/^Error:/m);
