@@ -1105,6 +1105,72 @@ describe('Lazy dependency array emission', () => {
   });
 });
 
+describe('Directive compilation', () => {
+  it('compiles a directive with host bindings', () => {
+    const result = compile(
+      `
+      import { Directive, HostBinding, HostListener } from '@angular/core';
+      @Directive({
+        selector: '[appHighlight]',
+        standalone: true
+      })
+      export class HighlightDirective {
+        @HostBinding('class.active') isActive = false;
+        @HostListener('click') onClick() { this.isActive = !this.isActive; }
+      }
+    `,
+      'highlight.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵdefineDirective');
+    expect(result).toContain('"appHighlight"');
+    expect(result).toContain('isActive');
+  });
+
+  it('compiles a directive with signal inputs', () => {
+    const result = compile(
+      `
+      import { Directive, input } from '@angular/core';
+      @Directive({
+        selector: '[appTooltip]',
+        standalone: true
+      })
+      export class TooltipDirective {
+        text = input.required<string>();
+        position = input<'top' | 'bottom'>('top');
+      }
+    `,
+      'tooltip.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵdefineDirective');
+    expect(result).toContain('"appTooltip"');
+    // Signal inputs should have the proper flags
+    expect(result).toMatch(/inputs:.*text.*\[1/);
+  });
+
+  it('compiles a directive with exportAs', () => {
+    const result = compile(
+      `
+      import { Directive } from '@angular/core';
+      @Directive({
+        selector: '[appDraggable]',
+        exportAs: 'draggable',
+        standalone: true
+      })
+      export class DraggableDirective {}
+    `,
+      'draggable.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵdefineDirective');
+    expect(result).toContain('"draggable"');
+  });
+});
+
 function expectCompiles(result: string) {
   expect(result).toBeTruthy();
   expect(result).not.toMatch(/^Error:/m);
