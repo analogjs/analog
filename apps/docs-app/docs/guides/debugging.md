@@ -1,0 +1,159 @@
+---
+sidebar_position: 4
+---
+
+# Debugging
+
+Analog includes structured debug logging powered by [obug](https://www.npmjs.com/package/obug). Debug output can be enabled through the `debug` option in your Vite config or via the `DEBUG` environment variable.
+
+## Enabling Debug Output
+
+### All scopes, both build and dev
+
+The simplest forms enable all scopes for both `build` and `dev` commands. Omitting `mode` always means both.
+
+```ts
+// vite.config.ts
+import analog from '@analogjs/platform';
+
+export default defineConfig({
+  plugins: [
+    analog({
+      debug: true,
+    }),
+  ],
+});
+```
+
+The object form without `mode` is equivalent:
+
+```ts
+analog({
+  debug: { scopes: true },
+});
+```
+
+### Specific scopes, both build and dev
+
+```ts
+analog({
+  debug: ['analog:platform:routes', 'analog:angular:compiler'],
+});
+
+// Object form equivalent — omitting mode means both
+analog({
+  debug: { scopes: ['analog:platform:routes', 'analog:angular:compiler'] },
+});
+```
+
+### Restrict to build or dev only
+
+Use the `mode` option to restrict debug output to a single Vite command:
+
+```ts
+// All scopes, only during development
+analog({
+  debug: { mode: 'dev' },
+});
+
+// All scopes, only during builds
+analog({
+  debug: { mode: 'build' },
+});
+
+// Specific scopes, only during development
+analog({
+  debug: {
+    scopes: ['analog:angular:hmr', 'analog:angular:styles'],
+    mode: 'dev',
+  },
+});
+
+// Specific scopes, only during builds
+analog({
+  debug: {
+    scopes: ['analog:platform:typed-router'],
+    mode: 'build',
+  },
+});
+```
+
+:::tip
+To enable debug output for **both** build and dev, simply omit `mode`. Any form without `mode` — `true`, a `string[]`, or `{ scopes }` — outputs in both commands.
+:::
+
+### Environment variable
+
+The `DEBUG` environment variable works independently of the config option and is always active regardless of `mode`:
+
+```bash
+# All Analog scopes
+DEBUG=analog:* pnpm dev
+
+# Specific scopes
+DEBUG=analog:platform:routes,analog:angular:compiler pnpm build
+
+# All platform scopes
+DEBUG=analog:platform:* pnpm dev
+```
+
+## Configuration Reference
+
+| Form                                    | Scopes | When               |
+| --------------------------------------- | ------ | ------------------ |
+| `true`                                  | All    | Both build and dev |
+| `['scope1', 'scope2']`                  | Listed | Both build and dev |
+| `{ scopes: true }`                      | All    | Both build and dev |
+| `{ scopes: ['scope1'] }`                | Listed | Both build and dev |
+| `{ mode: 'dev' }`                       | All    | Dev only           |
+| `{ mode: 'build' }`                     | All    | Build only         |
+| `{ scopes: ['scope1'], mode: 'dev' }`   | Listed | Dev only           |
+| `{ scopes: ['scope1'], mode: 'build' }` | Listed | Build only         |
+
+## Available Scopes
+
+### `@analogjs/platform`
+
+| Scope                          | Area                                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------- |
+| `analog:platform`              | Platform plugin initialization, experimental option resolution, dependency transform config |
+| `analog:platform:routes`       | Route discovery and resolution                                                              |
+| `analog:platform:content`      | Content pipeline                                                                            |
+| `analog:platform:typed-router` | Typed route generation, file discovery, collisions, watch-mode regeneration                 |
+| `analog:platform:tailwind`     | Tailwind CSS `@reference` injection in component styles                                     |
+
+### `@analogjs/vite-plugin-angular`
+
+| Scope                            | Area                                                                                     |
+| -------------------------------- | ---------------------------------------------------------------------------------------- |
+| `analog:angular:hmr`             | Hot Module Replacement lifecycle, component updates, middleware                          |
+| `analog:angular:styles`          | Stylesheet processing, externalization, encapsulation                                    |
+| `analog:angular:compiler`        | TypeScript compilation, compiler options                                                 |
+| `analog:angular:compilation-api` | Experimental Angular Compilation API path selection, version checks, incremental updates |
+| `analog:angular:tailwind`        | Tailwind CSS `@reference` injection via the `tailwindCss` plugin option                  |
+
+### `@analogjs/vite-plugin-nitro`
+
+| Scope                    | Area                                                    |
+| ------------------------ | ------------------------------------------------------- |
+| `analog:nitro`           | Nitro server lifecycle, experimental websocket upgrades |
+| `analog:nitro:ssr`       | Server-side rendering                                   |
+| `analog:nitro:prerender` | Prerendering                                            |
+
+## Using with `@analogjs/vite-plugin-angular` standalone
+
+The `debug` option is also available when using the Angular plugin directly:
+
+```ts
+import angular from '@analogjs/vite-plugin-angular';
+
+export default defineConfig({
+  plugins: [
+    angular({
+      debug: true, // enables analog:angular:* scopes
+    }),
+  ],
+});
+```
+
+When used through `analog()`, the `debug` value is forwarded to the Angular plugin automatically.
