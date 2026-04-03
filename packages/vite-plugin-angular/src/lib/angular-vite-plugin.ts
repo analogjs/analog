@@ -430,7 +430,7 @@ if (import.meta.hot) {
 
     return {
       name: '@analogjs/vite-plugin-angular',
-      enforce: 'pre',
+      ...(pluginOptions.useAnalogCompiler ? { enforce: 'pre' as const } : {}),
       async config(config, { command }) {
         watchMode = command === 'serve';
         isProd =
