@@ -1,17 +1,9 @@
-import type {
-  ComponentMirror,
-  EnvironmentProviders,
-  Provider,
-  Type,
-} from '@angular/core';
+import type { EnvironmentProviders, Provider, Type } from '@angular/core';
 import {
   reflectComponentType,
   provideZonelessChangeDetection,
   DOCUMENT,
   APP_ID,
-  APP_BOOTSTRAP_LISTENER,
-  inject,
-  ApplicationRef,
 } from '@angular/core';
 import {
   provideServerRendering,
@@ -22,10 +14,13 @@ import {
 import {
   bootstrapApplication,
   provideClientHydration,
+  withNoHttpTransferCache,
   type BootstrapContext,
 } from '@angular/platform-browser';
 import type { AstroComponentMetadata, SSRLoadedRendererValue } from 'astro';
 import { getContext, incrementId, RendererContext } from './context.ts';
+import { provideBootstrapListener } from './server-providers.ts';
+import { ID_PROP_NAME } from './id.ts';
 
 async function check(
   Component: Type<unknown>,
@@ -33,33 +28,6 @@ async function check(
   _children: unknown,
 ) {
   return !!reflectComponentType(Component);
-}
-
-function provideBootstrapListener(
-  mirror: ComponentMirror<unknown>,
-  props: Record<string, unknown>,
-): Provider {
-  return {
-    provide: APP_BOOTSTRAP_LISTENER,
-    useFactory: () => {
-      const appRef = inject(ApplicationRef);
-
-      return () => {
-        const compRef = appRef.components[0];
-        if (compRef && props && mirror) {
-          for (const [key, value] of Object.entries(props)) {
-            if (
-              mirror.inputs.some(({ templateName }) => templateName === key)
-            ) {
-              compRef.setInput(key, value);
-            }
-          }
-          compRef.changeDetectorRef.detectChanges();
-        }
-      };
-    },
-    multi: true,
-  };
 }
 
 async function renderToStaticMarkup(
@@ -83,12 +51,11 @@ async function renderToStaticMarkup(
 
   const appId =
     mirror.selector.split(',')[0] || Component.name.toString().toLowerCase();
-  const ngAppId =
-    props?.['data-analog-id'] || incrementId(getContext(this.result));
+  const ngAppId = props?.[ID_PROP_NAME] || incrementId(getContext(this.result));
 
   const platformRef = platformServer();
   const document = platformRef.injector.get(DOCUMENT);
-  document.body.innerHTML = `<${appId} data-analog-id="${ngAppId}"></${appId}>`;
+  document.body.innerHTML = `<${appId} ${ID_PROP_NAME}="${ngAppId}"></${appId}>`;
 
   const bootstrap = (context?: BootstrapContext) =>
     bootstrapApplication(
