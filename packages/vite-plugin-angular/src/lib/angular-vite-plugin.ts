@@ -51,6 +51,16 @@ import {
   SourceFileCache,
   angularFullVersion,
 } from './utils/devkit.js';
+import {
+  activateDeferredDebug,
+  applyDebugOption,
+  debugCompilationApi,
+  debugCompiler,
+  debugHmr,
+  debugStyles,
+  debugTailwind,
+  type DebugOption,
+} from './utils/debug.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
 
@@ -101,6 +111,18 @@ export interface PluginOptions {
   experimental?: {
     useAngularCompilationAPI?: boolean;
   };
+  /**
+   * Enable debug logging for specific scopes.
+   *
+   * - `true` → enables all `analog:angular:*` scopes
+   * - `string[]` → enables listed namespaces (e.g. `['analog:angular:compiler']`)
+   * - `{ scopes?, mode? }` → object form with optional `mode: 'build' | 'dev'`
+   *   to restrict output to a specific Vite command (omit for both)
+   *
+   * Also responds to the `DEBUG` env var (Node.js) or `localStorage.debug`
+   * (browser), using the `obug` convention.
+   */
+  debug?: DebugOption;
   /**
    * Optional preprocessor that transforms component CSS before it enters Vite's
    * preprocessCSS pipeline. Runs on every component stylesheet (both external
@@ -216,6 +238,7 @@ function buildStylePreprocessor(
   if (tw) {
     const rootStylesheet = tw.rootStylesheet;
     const prefixes = tw.prefixes;
+    debugTailwind('configured', { rootStylesheet, prefixes });
 
     tailwindPreprocessor = (code: string, filename: string): string => {
       // Skip if already has @reference or is a root Tailwind file
@@ -224,6 +247,7 @@ function buildStylePreprocessor(
         code.includes('@import "tailwindcss"') ||
         code.includes("@import 'tailwindcss'")
       ) {
+        debugTailwind('skip (already has @reference or is root)', { filename });
         return code;
       }
 
@@ -233,9 +257,11 @@ function buildStylePreprocessor(
         : code.includes('@apply');
 
       if (!needsReference) {
+        debugTailwind('skip (no Tailwind usage detected)', { filename });
         return code;
       }
 
+      debugTailwind('injected @reference', { filename });
       const refPath = relative(dirname(filename), rootStylesheet);
       return `@reference "${refPath}";\n${code}`;
     };
@@ -243,6 +269,7 @@ function buildStylePreprocessor(
 
   // Chain: tailwind preprocessor first, then user preprocessor
   if (tailwindPreprocessor && userPreprocessor) {
+    debugTailwind('chained with user stylePreprocessor');
     return (code: string, filename: string) => {
       const intermediate = tailwindPreprocessor!(code, filename);
       return userPreprocessor(intermediate, filename);
@@ -253,6 +280,8 @@ function buildStylePreprocessor(
 }
 
 export function angular(options?: PluginOptions): Plugin[] {
+  applyDebugOption(options?.debug);
+
   /**
    * Normalize plugin options so defaults
    * are used for values not provided.
@@ -354,6 +383,10 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     if (angularFullVersion < 190000 || isTest) {
       pluginOptions.liveReload = false;
+      debugHmr('liveReload disabled', {
+        angularVersion: angularFullVersion,
+        isTest,
+      });
     }
 
     // liveReload and fileReplacements guards were previously here and forced
@@ -367,15 +400,22 @@ export function angular(options?: PluginOptions): Plugin[] {
     if (pluginOptions.useAngularCompilationAPI) {
       if (angularFullVersion < 200100) {
         pluginOptions.useAngularCompilationAPI = false;
+        debugCompilationApi(
+          'disabled: Angular version %s < 20.1',
+          angularFullVersion,
+        );
         console.warn(
           '[@analogjs/vite-plugin-angular]: The Angular Compilation API is only available with Angular v20.1 and later',
         );
+      } else {
+        debugCompilationApi('enabled (Angular %s)', angularFullVersion);
       }
     }
 
     return {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
+        activateDeferredDebug(command);
         watchMode = command === 'serve';
         isProd =
           config.mode === 'production' ||
@@ -397,6 +437,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         const oxc = pluginOptions.useAngularCompilationAPI
           ? undefined
           : (config.oxc ?? false);
+        if (pluginOptions.useAngularCompilationAPI) {
+          debugCompilationApi(
+            'esbuild/oxc disabled, Angular handles transforms',
+          );
+        }
 
         const defineOptions = {
           ngJitMode: 'false',
@@ -463,6 +508,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         if (pluginOptions.useAngularCompilationAPI) {
           externalComponentStyles = new Map();
           inlineComponentStyles = new Map();
+          debugStyles('style maps initialized (Angular Compilation API)');
         }
 
         if (!jit) {
@@ -512,6 +558,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       async handleHotUpdate(ctx) {
         if (TS_EXT_REGEX.test(ctx.file)) {
           const [fileId] = ctx.file.split('?');
+          debugHmr('TS file changed', { file: ctx.file, fileId });
 
           pendingCompilation = performCompilation(resolvedConfig, [fileId]);
 
@@ -521,6 +568,11 @@ export function angular(options?: PluginOptions): Plugin[] {
             await pendingCompilation;
             pendingCompilation = null;
             result = fileEmitter(fileId);
+            debugHmr('TS file emitted', {
+              fileId,
+              hmrEligible: !!result?.hmrEligible,
+              hasClassName: !!classNames.get(fileId),
+            });
           }
 
           if (
@@ -532,6 +584,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               relative(process.cwd(), fileId),
             )}@${classNames.get(fileId)}`;
 
+            debugHmr('sending component update', { relativeFileId });
             sendHMRComponentUpdate(ctx.server, relativeFileId);
 
             return ctx.modules.map((mod) => {
@@ -545,6 +598,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         if (/\.(html|htm|css|less|sass|scss)$/.test(ctx.file)) {
+          debugHmr('resource file changed', { file: ctx.file });
           fileTransformMap.delete(ctx.file.split('?')[0]);
           /**
            * Check to see if this was a direct request
@@ -565,6 +619,10 @@ export function angular(options?: PluginOptions): Plugin[] {
                 const { encapsulation } = getComponentStyleSheetMeta(
                   isDirect.id,
                 );
+                debugStyles('HMR: component stylesheet changed', {
+                  file: isDirect.file,
+                  encapsulation,
+                });
 
                 // Track if the component uses ShadowDOM encapsulation
                 // Shadow DOM components currently require a full reload.
@@ -623,6 +681,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             await pendingCompilation;
             pendingCompilation = null;
 
+            debugHmr('resource importer component updates', {
+              file: ctx.file,
+              updateCount: updates.length,
+            });
             updates.forEach((updateId) => {
               const impRelativeFileId = `${normalizePath(
                 relative(process.cwd(), updateId),
@@ -644,6 +706,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         // clear HMR updates with a full reload
+        debugHmr('full reload — unrecognized file type', { file: ctx.file });
         classNames.clear();
         return ctx.modules;
       },
@@ -657,10 +720,13 @@ export function angular(options?: PluginOptions): Plugin[] {
 
         // Map angular external styleUrls to the source file
         if (isComponentStyleSheet(id)) {
-          const componentStyles = externalComponentStyles?.get(
-            getFilenameFromPath(id),
-          );
+          const filename = getFilenameFromPath(id);
+          const componentStyles = externalComponentStyles?.get(filename);
           if (componentStyles) {
+            debugStyles('resolveId: mapped external stylesheet', {
+              filename,
+              resolvedPath: componentStyles,
+            });
             return componentStyles + new URL(id, 'http://localhost').search;
           }
         }
@@ -670,10 +736,13 @@ export function angular(options?: PluginOptions): Plugin[] {
       async load(id) {
         // Map angular inline styles to the source text
         if (isComponentStyleSheet(id)) {
-          const componentStyles = inlineComponentStyles?.get(
-            getFilenameFromPath(id),
-          );
+          const filename = getFilenameFromPath(id);
+          const componentStyles = inlineComponentStyles?.get(filename);
           if (componentStyles) {
+            debugStyles('load: served inline component stylesheet', {
+              filename,
+              length: componentStyles.length,
+            });
             return componentStyles;
           }
         }
@@ -703,6 +772,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
 
             if (!isAngular) {
+              debugCompilationApi('transform skip (non-Angular file)', { id });
               return;
             }
           }
@@ -721,6 +791,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             const { encapsulation, componentId } =
               getComponentStyleSheetMeta(id);
             if (encapsulation === 'emulated' && componentId) {
+              debugStyles('applying emulated view encapsulation', {
+                stylesheet: id.split('?')[0],
+                componentId,
+              });
               const encapsulated = ngCompiler.encapsulateStyle(
                 code,
                 componentId,
@@ -762,6 +836,11 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
 
           const hasComponent = code.includes('@Component');
+          debugCompiler('transform', {
+            id,
+            codeLength: code.length,
+            hasComponent,
+          });
           const templateUrls = hasComponent
             ? templateUrlsResolver.resolve(code, id)
             : [];
@@ -974,6 +1053,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     // Notify Angular of modified files before re-initialization so it can
     // scope its incremental analysis.
     if (modifiedFiles?.size && angularCompilation.update) {
+      debugCompilationApi('incremental update', {
+        files: [...modifiedFiles],
+      });
       await angularCompilation.update(modifiedFiles);
     }
 
@@ -1027,12 +1109,26 @@ export function angular(options?: PluginOptions): Plugin[] {
               .digest('hex');
             const stylesheetId = id + '.' + pluginOptions.inlineStylesExtension;
             inlineComponentStyles!.set(stylesheetId, preprocessedData);
+
+            debugStyles('stylesheet deferred to Vite pipeline (liveReload)', {
+              stylesheetId,
+              resourceFile: resourceFile ?? '(inline)',
+            });
+
             return stylesheetId;
           }
 
           // Non-liveReload: the CSS is returned directly to the Angular
           // compiler and never re-enters Vite's pipeline, so we must run
           // preprocessCSS() eagerly here.
+          debugStyles(
+            'stylesheet processed inline via preprocessCSS (no liveReload)',
+            {
+              filename,
+              resourceFile: resourceFile ?? '(inline)',
+              dataLength: preprocessedData.length,
+            },
+          );
           let stylesheetResult;
 
           try {
@@ -1060,6 +1156,13 @@ export function angular(options?: PluginOptions): Plugin[] {
           tsCompilerOptions['supportTestBed'] = true;
         }
 
+        debugCompiler('tsCompilerOptions (compilation API)', {
+          liveReload: pluginOptions.liveReload,
+          watchMode,
+          externalRuntimeStyles: !!tsCompilerOptions['externalRuntimeStyles'],
+          hmr: !!tsCompilerOptions['_enableHmr'],
+        });
+
         if (tsCompilerOptions.compilationMode === 'partial') {
           // These options can't be false in partial mode
           tsCompilerOptions['supportTestBed'] = true;
@@ -1083,6 +1186,10 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     compilationResult.externalStylesheets?.forEach((value, key) => {
       externalComponentStyles?.set(`${value}.css`, key);
+      debugStyles('external stylesheet registered for resolveId mapping', {
+        filename: `${value}.css`,
+        resolvedPath: key,
+      });
     });
 
     const diagnostics = await angularCompilation.diagnoseFiles(
@@ -1099,6 +1206,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     const templateUpdates = mapTemplateUpdatesToFiles(
       compilationResult.templateUpdates,
     );
+    if (templateUpdates.size > 0) {
+      debugHmr('compilation API template updates', {
+        count: templateUpdates.size,
+        files: [...templateUpdates.keys()],
+      });
+    }
 
     for (const file of await angularCompilation.emitAffectedFiles()) {
       const normalizedFilename = normalizePath(file.filename);
@@ -1145,6 +1258,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     // Forward `ids` (modified files) so the Compilation API path can do
     // incremental re-analysis instead of a full recompile on every change.
     if (pluginOptions.useAngularCompilationAPI) {
+      debugCompilationApi('using compilation API path', {
+        modifiedFiles: ids?.length ?? 0,
+      });
       await performAngularCompilation(config, ids);
       return;
     }
@@ -1207,6 +1323,11 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['supportTestBed'] = true;
     }
 
+    debugCompiler('tsCompilerOptions (NgtscProgram path)', {
+      externalRuntimeStyles: !!tsCompilerOptions['externalRuntimeStyles'],
+      hmr: !!tsCompilerOptions['_enableHmr'],
+    });
+
     if (tsCompilerOptions['compilationMode'] === 'partial') {
       // These options can't be false in partial mode
       tsCompilerOptions['supportTestBed'] = true;
@@ -1264,12 +1385,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     }
 
     if (!jit) {
-      inlineComponentStyles = tsCompilerOptions['externalRuntimeStyles']
-        ? new Map()
-        : undefined;
-      externalComponentStyles = tsCompilerOptions['externalRuntimeStyles']
-        ? new Map()
-        : undefined;
+      const externalizeStyles = !!tsCompilerOptions['externalRuntimeStyles'];
+      inlineComponentStyles = externalizeStyles ? new Map() : undefined;
+      externalComponentStyles = externalizeStyles ? new Map() : undefined;
+      debugStyles('style maps initialized (NgtscProgram path)', {
+        externalizeStyles,
+      });
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
         isProd,
@@ -1610,8 +1731,10 @@ export function getFileMetadata(
         if (ts.isClassDeclaration(node) && (node as any).name != null) {
           hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node as any);
           if (hmrUpdateCode) {
-            classNames.set(file, (node as any).name.getText());
+            const className = (node as any).name.getText();
+            classNames.set(file, className);
             hmrEligible = true;
+            debugHmr('NgtscProgram emitHmrUpdateModule', { file, className });
           }
         }
       }

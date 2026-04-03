@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vite-plugin-nitro",
-  "version": "3.0.0-alpha.22",
+  "version": "3.0.0-alpha.23",
   "description": "A Vite plugin for adding a nitro API server",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -43,6 +43,7 @@
   "dependencies": {
     "defu": "catalog:",
     "nitro": "catalog:",
+    "obug": "catalog:",
     "ofetch": "catalog:",
     "oxc-parser": "catalog:",
     "radix3": "catalog:",
