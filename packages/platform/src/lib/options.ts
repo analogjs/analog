@@ -16,6 +16,7 @@ import type {
 } from '@analogjs/vite-plugin-nitro';
 
 import type { ContentPluginOptions } from './content-plugin.js';
+import type { DebugOption } from './utils/debug.js';
 
 declare module 'nitro/types' {
   interface NitroRouteConfig {
@@ -92,11 +93,13 @@ export interface Options {
    *
    * - `true` → enables all `analog:*` scopes (platform + angular + nitro)
    * - `string[]` → enables listed namespaces
+   * - `{ scopes?, mode? }` → object form with optional `mode: 'build' | 'dev'`
+   *   to restrict output to a specific Vite command (omit for both)
    *
    * Also responds to the `DEBUG` env var (Node.js) or `localStorage.debug`
    * (browser), using the `obug` convention.
    */
-  debug?: boolean | string[];
+  debug?: DebugOption;
 
   /**
    * Additional page paths to include

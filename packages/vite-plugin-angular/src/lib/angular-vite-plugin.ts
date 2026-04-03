@@ -52,12 +52,14 @@ import {
   angularFullVersion,
 } from './utils/devkit.js';
 import {
+  activateDeferredDebug,
   applyDebugOption,
   debugCompilationApi,
   debugCompiler,
   debugHmr,
   debugStyles,
   debugTailwind,
+  type DebugOption,
 } from './utils/debug.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
@@ -114,11 +116,13 @@ export interface PluginOptions {
    *
    * - `true` → enables all `analog:angular:*` scopes
    * - `string[]` → enables listed namespaces (e.g. `['analog:angular:compiler']`)
+   * - `{ scopes?, mode? }` → object form with optional `mode: 'build' | 'dev'`
+   *   to restrict output to a specific Vite command (omit for both)
    *
    * Also responds to the `DEBUG` env var (Node.js) or `localStorage.debug`
    * (browser), using the `obug` convention.
    */
-  debug?: boolean | string[];
+  debug?: DebugOption;
   /**
    * Optional preprocessor that transforms component CSS before it enters Vite's
    * preprocessCSS pipeline. Runs on every component stylesheet (both external
@@ -411,6 +415,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     return {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
+        activateDeferredDebug(command);
         watchMode = command === 'serve';
         isProd =
           config.mode === 'production' ||

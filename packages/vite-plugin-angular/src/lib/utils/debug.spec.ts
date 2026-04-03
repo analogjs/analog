@@ -6,11 +6,16 @@ vi.mock('obug', () => ({
 }));
 
 import { enable } from 'obug';
-import { applyDebugOption } from './debug.js';
+import {
+  activateDeferredDebug,
+  applyDebugOption,
+  _resetDeferredDebug,
+} from './debug.js';
 
 describe('applyDebugOption (angular)', () => {
   beforeEach(() => {
     vi.mocked(enable).mockClear();
+    _resetDeferredDebug();
   });
 
   it('enables all analog:angular:* scopes when debug is true', () => {
@@ -43,5 +48,72 @@ describe('applyDebugOption (angular)', () => {
   it('does not call enable when debug is false', () => {
     applyDebugOption(false as unknown as undefined);
     expect(enable).not.toHaveBeenCalled();
+  });
+
+  it('enables immediately when object has no mode', () => {
+    applyDebugOption({ scopes: true });
+    expect(enable).toHaveBeenCalledWith('analog:angular:*');
+  });
+
+  it('enables immediately with scopes array and no mode', () => {
+    applyDebugOption({ scopes: ['analog:angular:hmr'] });
+    expect(enable).toHaveBeenCalledWith('analog:angular:hmr');
+  });
+
+  it('defers when mode is specified', () => {
+    applyDebugOption({ mode: 'build' });
+    expect(enable).not.toHaveBeenCalled();
+  });
+
+  it('defers with scopes and mode', () => {
+    applyDebugOption({ scopes: ['analog:angular:hmr'], mode: 'dev' });
+    expect(enable).not.toHaveBeenCalled();
+  });
+});
+
+describe('activateDeferredDebug (angular)', () => {
+  beforeEach(() => {
+    vi.mocked(enable).mockClear();
+    _resetDeferredDebug();
+  });
+
+  it('activates when command matches mode (build)', () => {
+    applyDebugOption({ mode: 'build' });
+    activateDeferredDebug('build');
+    expect(enable).toHaveBeenCalledWith('analog:angular:*');
+  });
+
+  it('activates when command matches mode (serve → dev)', () => {
+    applyDebugOption({ mode: 'dev' });
+    activateDeferredDebug('serve');
+    expect(enable).toHaveBeenCalledWith('analog:angular:*');
+  });
+
+  it('does not activate when command does not match mode', () => {
+    applyDebugOption({ mode: 'build' });
+    activateDeferredDebug('serve');
+    expect(enable).not.toHaveBeenCalled();
+  });
+
+  it('is idempotent — second call is a no-op', () => {
+    applyDebugOption({ mode: 'build' });
+    activateDeferredDebug('build');
+    vi.mocked(enable).mockClear();
+    activateDeferredDebug('build');
+    expect(enable).not.toHaveBeenCalled();
+  });
+
+  it('is a no-op when nothing is deferred', () => {
+    activateDeferredDebug('build');
+    expect(enable).not.toHaveBeenCalled();
+  });
+
+  it('uses custom scopes with deferred mode', () => {
+    applyDebugOption({
+      scopes: ['analog:angular:compiler'],
+      mode: 'dev',
+    });
+    activateDeferredDebug('serve');
+    expect(enable).toHaveBeenCalledWith('analog:angular:compiler');
   });
 });

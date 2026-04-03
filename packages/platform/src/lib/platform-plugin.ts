@@ -3,7 +3,11 @@ import viteNitroPlugin from '@analogjs/vite-plugin-nitro';
 import angular from '@analogjs/vite-plugin-angular';
 
 import { Options } from './options.js';
-import { applyDebugOption, debugPlatform } from './utils/debug.js';
+import {
+  activateDeferredDebug,
+  applyDebugOption,
+  debugPlatform,
+} from './utils/debug.js';
 import { discoverLibraryRoutes } from './discover-library-routes.js';
 import { routerPlugin } from './router-plugin.js';
 import { ssrBuildPlugin } from './ssr/ssr-build-plugin.js';
@@ -86,6 +90,12 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   }
 
   return [
+    {
+      name: 'analogjs-debug-activate',
+      config(_, { command }) {
+        activateDeferredDebug(command);
+      },
+    },
     ...externalPlugins(viteNitroPlugin(platformOptions as any, nitroOptions)),
     ...(platformOptions.ssr
       ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
