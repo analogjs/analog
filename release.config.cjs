@@ -5,7 +5,7 @@
 const tag = process.env.RELEASE_TAG;
 
 const replacementFiles = [
-  'packages/angular-compiler/package.json',
+  'packages/vite-plugin-angular/package.json',
   'packages/astro-angular/package.json',
   'packages/create-analog/template-angular-v17/package.json',
   'packages/create-analog/template-angular-v18/package.json',
