@@ -1,4 +1,10 @@
-import { TestBed } from '@angular/core/testing';
+import '@angular/compiler';
+import { provideZonelessChangeDetection } from '@angular/core';
+import { getTestBed, TestBed } from '@angular/core/testing';
+import {
+  BrowserTestingModule,
+  platformBrowserTesting,
+} from '@angular/platform-browser/testing';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -12,10 +18,10 @@ import {
 import { of } from 'rxjs';
 import TanStackQueryPageComponent from './tanstack-query.page';
 
-const mockRoute = {
-  queryParamMap: of(convertToParamMap({ scope: 'test-scope' })),
-  snapshot: { queryParamMap: convertToParamMap({ scope: 'test-scope' }) },
-};
+getTestBed().initTestEnvironment(
+  BrowserTestingModule,
+  platformBrowserTesting(),
+);
 
 describe('TanStackQueryPageComponent', () => {
   let httpTesting: HttpTestingController;
@@ -24,10 +30,19 @@ describe('TanStackQueryPageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [TanStackQueryPageComponent],
       providers: [
+        provideZonelessChangeDetection(),
         provideHttpClient(),
         provideHttpClientTesting(),
         provideTanStackQuery(new QueryClient()),
-        { provide: ActivatedRoute, useValue: mockRoute },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParamMap: of(convertToParamMap({ scope: 'test-scope' })),
+            snapshot: {
+              queryParamMap: convertToParamMap({ scope: 'test-scope' }),
+            },
+          },
+        },
       ],
     }).compileComponents();
     httpTesting = TestBed.inject(HttpTestingController);
