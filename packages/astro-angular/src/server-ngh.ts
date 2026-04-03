@@ -24,9 +24,10 @@ import {
   provideClientHydration,
   type BootstrapContext,
 } from '@angular/platform-browser';
-import type { AstroComponentMetadata } from 'astro';
+import type { AstroComponentMetadata, SSRLoadedRendererValue } from 'astro';
+import { getContext, incrementId, RendererContext } from './context.ts';
 
-function check(
+async function check(
   Component: Type<unknown>,
   _props: Record<string, unknown>,
   _children: unknown,
@@ -62,6 +63,7 @@ function provideBootstrapListener(
 }
 
 async function renderToStaticMarkup(
+  this: RendererContext,
   Component: Type<unknown> & {
     renderProviders: (Provider | EnvironmentProviders)[];
   },
@@ -73,13 +75,16 @@ async function renderToStaticMarkup(
 
   if (!mirror) {
     // This should be unreachable: the `check` function verifies that Component is an Angular component.
-    return;
+    throw new Error(
+      (metadata?.displayName || '<unknown component>') +
+        ' is not an Angular component',
+    );
   }
 
   const appId =
     mirror.selector.split(',')[0] || Component.name.toString().toLowerCase();
   const ngAppId =
-    props?.['data-analog-id'] || 'ng-' + Math.random().toString().slice(2, 9);
+    props?.['data-analog-id'] || incrementId(getContext(this.result));
 
   const platformRef = platformServer();
   const document = platformRef.injector.get(DOCUMENT);
@@ -128,4 +133,4 @@ async function renderToStaticMarkup(
 export default {
   check,
   renderToStaticMarkup,
-};
+} satisfies SSRLoadedRendererValue;

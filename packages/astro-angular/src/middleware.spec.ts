@@ -1,5 +1,5 @@
 import type { APIContext } from 'astro';
-import { onRequest } from './middleware';
+import { onRequest } from './middleware.ts';
 
 describe('angularAstroMiddleware', () => {
   it('should move angular style tags to the head', async () => {
