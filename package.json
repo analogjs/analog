@@ -11,7 +11,7 @@
     "start": "nx serve",
     "build": "nx run-many --target build --all --parallel=1 --exclude=astro-app",
     "build:release": "nx run-many --target build --projects=tag:type:release",
-    "e2e": "nx run-many --target e2e --projects=analog-app-e2e,blog-app-e2e",
+    "e2e": "nx run-many --target e2e --projects=analog-app-e2e,blog-app-e2e --parallel=1",
     "test": "nx run-many --target test",
     "build:vite-ci": "npm run build",
     "test:vite-ci": "nx run-many --target test --exclude card --all --skip-nx-cache",
