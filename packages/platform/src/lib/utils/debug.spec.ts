@@ -44,7 +44,7 @@ describe('applyDebugOption (platform)', () => {
   });
 
   it('does not call enable when debug is false', () => {
-    applyDebugOption(false as unknown as undefined);
+    applyDebugOption(false);
     expect(enable).not.toHaveBeenCalled();
   });
 
