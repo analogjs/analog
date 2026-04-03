@@ -53,6 +53,7 @@ import {
 } from './utils/devkit.js';
 import {
   applyDebugOption,
+  debugCompilationApi,
   debugCompiler,
   debugHmr,
   debugStyles,
@@ -373,6 +374,10 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     if (angularFullVersion < 190000 || isTest) {
       pluginOptions.liveReload = false;
+      debugHmr('liveReload disabled', {
+        angularVersion: angularFullVersion,
+        isTest,
+      });
     }
 
     // liveReload and fileReplacements guards were previously here and forced
@@ -386,9 +391,15 @@ export function angular(options?: PluginOptions): Plugin[] {
     if (pluginOptions.useAngularCompilationAPI) {
       if (angularFullVersion < 200100) {
         pluginOptions.useAngularCompilationAPI = false;
+        debugCompilationApi(
+          'disabled: Angular version %s < 20.1',
+          angularFullVersion,
+        );
         console.warn(
           '[@analogjs/vite-plugin-angular]: The Angular Compilation API is only available with Angular v20.1 and later',
         );
+      } else {
+        debugCompilationApi('enabled (Angular %s)', angularFullVersion);
       }
     }
 
@@ -416,6 +427,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         const oxc = pluginOptions.useAngularCompilationAPI
           ? undefined
           : (config.oxc ?? false);
+        if (pluginOptions.useAngularCompilationAPI) {
+          debugCompilationApi(
+            'esbuild/oxc disabled, Angular handles transforms',
+          );
+        }
 
         const defineOptions = {
           ngJitMode: 'false',
@@ -532,6 +548,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       async handleHotUpdate(ctx) {
         if (TS_EXT_REGEX.test(ctx.file)) {
           const [fileId] = ctx.file.split('?');
+          debugHmr('TS file changed', { file: ctx.file, fileId });
 
           pendingCompilation = performCompilation(resolvedConfig, [fileId]);
 
@@ -541,6 +558,11 @@ export function angular(options?: PluginOptions): Plugin[] {
             await pendingCompilation;
             pendingCompilation = null;
             result = fileEmitter(fileId);
+            debugHmr('TS file emitted', {
+              fileId,
+              hmrEligible: !!result?.hmrEligible,
+              hasClassName: !!classNames.get(fileId),
+            });
           }
 
           if (
@@ -552,6 +574,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               relative(process.cwd(), fileId),
             )}@${classNames.get(fileId)}`;
 
+            debugHmr('sending component update', { relativeFileId });
             sendHMRComponentUpdate(ctx.server, relativeFileId);
 
             return ctx.modules.map((mod) => {
@@ -565,6 +588,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         if (/\.(html|htm|css|less|sass|scss)$/.test(ctx.file)) {
+          debugHmr('resource file changed', { file: ctx.file });
           fileTransformMap.delete(ctx.file.split('?')[0]);
           /**
            * Check to see if this was a direct request
@@ -647,6 +671,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             await pendingCompilation;
             pendingCompilation = null;
 
+            debugHmr('resource importer component updates', {
+              file: ctx.file,
+              updateCount: updates.length,
+            });
             updates.forEach((updateId) => {
               const impRelativeFileId = `${normalizePath(
                 relative(process.cwd(), updateId),
@@ -668,6 +696,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         // clear HMR updates with a full reload
+        debugHmr('full reload — unrecognized file type', { file: ctx.file });
         classNames.clear();
         return ctx.modules;
       },
@@ -733,6 +762,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
 
             if (!isAngular) {
+              debugCompilationApi('transform skip (non-Angular file)', { id });
               return;
             }
           }
@@ -1014,6 +1044,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     // Notify Angular of modified files before re-initialization so it can
     // scope its incremental analysis.
     if (modifiedFiles?.size && angularCompilation.update) {
+      debugCompilationApi('incremental update', {
+        files: [...modifiedFiles],
+      });
       await angularCompilation.update(modifiedFiles);
     }
 
@@ -1161,6 +1194,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     const templateUpdates = mapTemplateUpdatesToFiles(
       compilationResult.templateUpdates,
     );
+    if (templateUpdates.size > 0) {
+      debugHmr('compilation API template updates', {
+        count: templateUpdates.size,
+        files: [...templateUpdates.keys()],
+      });
+    }
 
     for (const file of await angularCompilation.emitAffectedFiles()) {
       const normalizedFilename = normalizePath(file.filename);
@@ -1207,6 +1246,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     // Forward `ids` (modified files) so the Compilation API path can do
     // incremental re-analysis instead of a full recompile on every change.
     if (pluginOptions.useAngularCompilationAPI) {
+      debugCompilationApi('using compilation API path', {
+        modifiedFiles: ids?.length ?? 0,
+      });
       await performAngularCompilation(config, ids);
       return;
     }
@@ -1677,8 +1719,10 @@ export function getFileMetadata(
         if (ts.isClassDeclaration(node) && (node as any).name != null) {
           hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node as any);
           if (hmrUpdateCode) {
-            classNames.set(file, (node as any).name.getText());
+            const className = (node as any).name.getText();
+            classNames.set(file, className);
             hmrEligible = true;
+            debugHmr('legacy emitHmrUpdateModule', { file, className });
           }
         }
       }

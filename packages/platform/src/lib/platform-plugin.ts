@@ -3,7 +3,7 @@ import viteNitroPlugin from '@analogjs/vite-plugin-nitro';
 import angular from '@analogjs/vite-plugin-angular';
 
 import { Options } from './options.js';
-import { applyDebugOption } from './utils/debug.js';
+import { applyDebugOption, debugPlatform } from './utils/debug.js';
 import { discoverLibraryRoutes } from './discover-library-routes.js';
 import { routerPlugin } from './router-plugin.js';
 import { ssrBuildPlugin } from './ssr/ssr-build-plugin.js';
@@ -57,6 +57,10 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   const useAngularCompilationAPI =
     platformOptions.experimental?.useAngularCompilationAPI ??
     viteOptions?.experimental?.useAngularCompilationAPI;
+  debugPlatform('experimental options resolved', {
+    useAngularCompilationAPI: !!useAngularCompilationAPI,
+    typedRouter: platformOptions.experimental?.typedRouter,
+  });
   let nitroOptions = platformOptions?.nitro;
 
   if (nitroOptions?.routeRules) {

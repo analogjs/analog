@@ -3,6 +3,9 @@ import { createDebug, enable } from 'obug';
 export const debugHmr = createDebug('analog:angular:hmr');
 export const debugStyles = createDebug('analog:angular:styles');
 export const debugCompiler = createDebug('analog:angular:compiler');
+export const debugCompilationApi = createDebug(
+  'analog:angular:compilation-api',
+);
 
 /**
  * Translates the user-facing `debug` plugin option into obug namespace
@@ -14,7 +17,7 @@ export const debugCompiler = createDebug('analog:angular:compiler');
 export function applyDebugOption(debug: boolean | string[] | undefined): void {
   if (debug === true) {
     enable('analog:angular:*');
-  } else if (Array.isArray(debug)) {
+  } else if (Array.isArray(debug) && debug.length) {
     enable(debug.join(','));
   }
 }

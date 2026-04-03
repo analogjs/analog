@@ -1280,6 +1280,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
           // handle upgrades if websockets are enabled
           if (nitroOptions?.experimental?.websocket) {
+            debugNitro('experimental websocket upgrade handler enabled');
             viteServer.httpServer?.on('upgrade', server.upgrade);
           }
 

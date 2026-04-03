@@ -3,6 +3,7 @@ import { createDebug, enable } from 'obug';
 export const debugPlatform = createDebug('analog:platform');
 export const debugRoutes = createDebug('analog:platform:routes');
 export const debugContent = createDebug('analog:platform:content');
+export const debugTypedRouter = createDebug('analog:platform:typed-router');
 
 /**
  * Translates the user-facing `debug` platform option into obug namespace

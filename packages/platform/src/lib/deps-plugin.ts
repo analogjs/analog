@@ -3,6 +3,7 @@ import type { Plugin } from 'vite';
 import { crawlFrameworkPkgs } from 'vitefu';
 
 import { Options } from './options.js';
+import { debugPlatform } from './utils/debug.js';
 import { getJsTransformConfigKey } from './utils/rolldown.js';
 
 export function depsPlugin(options?: Options): Plugin[] {
@@ -22,6 +23,11 @@ export function depsPlugin(options?: Options): Plugin[] {
           options?.vite === false || useAngularCompilationAPI
             ? {}
             : { exclude: ['**/*.ts', '**/*.js'] };
+        debugPlatform('deps transform config', {
+          useAngularCompilationAPI: !!useAngularCompilationAPI,
+          jsTransformKey: getJsTransformConfigKey(),
+          transformExcluded: 'exclude' in transformConfig,
+        });
 
         return {
           [getJsTransformConfigKey()]: transformConfig,
