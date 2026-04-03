@@ -1171,6 +1171,101 @@ describe('Directive compilation', () => {
   });
 });
 
+describe('Recursive NgModule export expansion', () => {
+  it('expands nested NgModule exports into declarations', () => {
+    // Simulates ReactiveFormsModule → SharedModule → DefaultValueAccessor
+    const valueAccessorSrc = `
+      import { Directive } from '@angular/core';
+      @Directive({ selector: 'input[type=text]' })
+      export class TextValueAccessor {}
+    `;
+    const sharedModuleSrc = `
+      import { NgModule } from '@angular/core';
+      @NgModule({ exports: [TextValueAccessor] })
+      export class SharedFormsModule {}
+    `;
+    const formsModuleSrc = `
+      import { NgModule } from '@angular/core';
+      @NgModule({ exports: [SharedFormsModule, FormControlDirective] })
+      export class MyFormsModule {}
+    `;
+    const controlSrc = `
+      import { Directive } from '@angular/core';
+      @Directive({ selector: '[formControl]' })
+      export class FormControlDirective {}
+    `;
+    const appSrc = `
+      import { Component } from '@angular/core';
+      import { MyFormsModule } from './forms.module';
+      @Component({
+        selector: 'app-form',
+        imports: [MyFormsModule],
+        template: '<input type="text" formControl />'
+      })
+      export class FormComponent {}
+    `;
+
+    const registry = buildRegistry({
+      'value-accessor.ts': valueAccessorSrc,
+      'shared.module.ts': sharedModuleSrc,
+      'forms.module.ts': formsModuleSrc,
+      'control.ts': controlSrc,
+    });
+    const result = compile(appSrc, 'form.ts', registry);
+
+    expectCompiles(result);
+    // Both the direct export and nested module export should be resolved
+    expect(result).toContain('FormControlDirective');
+    expect(result).toContain('TextValueAccessor');
+  });
+
+  it('handles circular NgModule exports without infinite loop', () => {
+    const modASrc = `
+      import { NgModule } from '@angular/core';
+      @NgModule({ exports: [ModuleB, CompA] })
+      export class ModuleA {}
+    `;
+    const modBSrc = `
+      import { NgModule } from '@angular/core';
+      @NgModule({ exports: [ModuleA, CompB] })
+      export class ModuleB {}
+    `;
+    const compASrc = `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'comp-a', template: '' })
+      export class CompA {}
+    `;
+    const compBSrc = `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'comp-b', template: '' })
+      export class CompB {}
+    `;
+    const appSrc = `
+      import { Component } from '@angular/core';
+      import { ModuleA } from './mod-a';
+      @Component({
+        selector: 'app-root',
+        imports: [ModuleA],
+        template: '<comp-a /><comp-b />'
+      })
+      export class AppComponent {}
+    `;
+
+    const registry = buildRegistry({
+      'mod-a.ts': modASrc,
+      'mod-b.ts': modBSrc,
+      'comp-a.ts': compASrc,
+      'comp-b.ts': compBSrc,
+    });
+
+    // Should not hang or throw
+    const result = compile(appSrc, 'app.ts', registry);
+    expectCompiles(result);
+    expect(result).toContain('CompA');
+    expect(result).toContain('CompB');
+  });
+});
+
 function expectCompiles(result: string) {
   expect(result).toBeTruthy();
   expect(result).not.toMatch(/^Error:/m);
