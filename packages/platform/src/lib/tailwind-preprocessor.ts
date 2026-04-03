@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import type { StylePreprocessor } from '@analogjs/vite-plugin-angular';
+import { debugTailwind } from './utils/debug.js';
 
 export type TailwindPreprocessorMode = 'auto' | 'disabled' | { prefix: string };
 
@@ -38,8 +39,11 @@ export function tailwindPreprocessor(
   const { tailwindRootCss, mode: modeOption = 'auto', shouldInject } = options;
   let rootPrefix: string | undefined;
 
+  debugTailwind('configured', { tailwindRootCss, mode: modeOption });
+
   return (code: string, filename: string): string => {
     if (code.includes('@reference')) {
+      debugTailwind('skip (already has @reference)', { filename });
       return code;
     }
 
@@ -47,6 +51,7 @@ export function tailwindPreprocessor(
       typeof modeOption === 'function' ? modeOption(filename) : modeOption;
 
     if (resolvedMode === 'disabled') {
+      debugTailwind('skip (mode disabled)', { filename });
       return code;
     }
 
@@ -63,12 +68,19 @@ export function tailwindPreprocessor(
       : hasTailwindUsage && !isRootFile;
 
     if (!shouldAddReference || !resolvedPrefix) {
+      debugTailwind('skip (no injection needed)', {
+        filename,
+        resolvedPrefix,
+        isRootFile,
+        hasTailwindUsage,
+      });
       return code;
     }
 
     const refPath = path
       .relative(path.dirname(filename), tailwindRootCss)
       .replace(/\\/g, '/');
+    debugTailwind('injected @reference', { filename, refPath });
 
     return `@reference "${refPath}";\n${code}`;
   };

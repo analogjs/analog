@@ -36,6 +36,7 @@
     }
   },
   "dependencies": {
+    "obug": "catalog:",
     "oxc-parser": "catalog:",
     "oxc-resolver": "catalog:",
     "rolldown": "catalog:",

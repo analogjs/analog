@@ -3,6 +3,11 @@ import viteNitroPlugin from '@analogjs/vite-plugin-nitro';
 import angular from '@analogjs/vite-plugin-angular';
 
 import { Options } from './options.js';
+import {
+  activateDeferredDebug,
+  applyDebugOption,
+  debugPlatform,
+} from './utils/debug.js';
 import { discoverLibraryRoutes } from './discover-library-routes.js';
 import { routerPlugin } from './router-plugin.js';
 import { ssrBuildPlugin } from './ssr/ssr-build-plugin.js';
@@ -19,6 +24,8 @@ function externalPlugins(plugins: unknown): Plugin[] {
 }
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
+  applyDebugOption(opts.debug);
+
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const viteOptions = opts?.vite === false ? undefined : opts?.vite;
   const { ...platformOptions } = {
@@ -54,6 +61,10 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   const useAngularCompilationAPI =
     platformOptions.experimental?.useAngularCompilationAPI ??
     viteOptions?.experimental?.useAngularCompilationAPI;
+  debugPlatform('experimental options resolved', {
+    useAngularCompilationAPI: !!useAngularCompilationAPI,
+    typedRouter: platformOptions.experimental?.typedRouter,
+  });
   let nitroOptions = platformOptions?.nitro;
 
   if (nitroOptions?.routeRules) {
@@ -79,6 +90,12 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   }
 
   return [
+    {
+      name: 'analogjs-debug-activate',
+      config(_, { command }) {
+        activateDeferredDebug(command);
+      },
+    },
     ...externalPlugins(viteNitroPlugin(platformOptions as any, nitroOptions)),
     ...(platformOptions.ssr
       ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
@@ -106,6 +123,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
             liveReload: platformOptions.liveReload,
             inlineStylesExtension: platformOptions.inlineStylesExtension,
             fileReplacements: platformOptions.fileReplacements,
+            debug: platformOptions.debug,
             ...(viteOptions ?? {}),
             experimental: {
               ...(viteOptions?.experimental ?? {}),

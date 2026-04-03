@@ -37,6 +37,7 @@
     "@analogjs/vite-plugin-angular": "^3.0.0-alpha.22",
     "@analogjs/vite-plugin-nitro": "^3.0.0-alpha.22",
     "rolldown": "catalog:",
+    "obug": "catalog:",
     "vitefu": "catalog:"
   },
   "peerDependencies": {
