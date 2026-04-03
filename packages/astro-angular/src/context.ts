@@ -5,8 +5,8 @@ export type RendererContext = {
 };
 
 type Context = {
-  id: string;
   c: number;
+  getId(): string;
 };
 
 const contexts = new WeakMap<SSRResult, Context>();
@@ -18,7 +18,7 @@ export function getContext(result: SSRResult): Context {
   }
   ctx = {
     c: 0,
-    get id() {
+    getId() {
       return 'analog-' + this.c.toString();
     },
   };
@@ -27,7 +27,7 @@ export function getContext(result: SSRResult): Context {
 }
 
 export function incrementId(ctx: Context): string {
-  let id = ctx.id;
+  const id = ctx.getId();
   ctx.c++;
   return id;
 }
