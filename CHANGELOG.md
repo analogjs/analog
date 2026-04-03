@@ -1,3 +1,13 @@
+# [2.5.0-beta.3](https://github.com/analogjs/analog/compare/v2.5.0-beta.2...v2.5.0-beta.3) (2026-04-03)
+
+### Bug Fixes
+
+- add angular-compiler to publish script ([5c86802](https://github.com/analogjs/analog/commit/5c86802ab4e3858414de47f84039181c846c7012))
+
+### Features
+
+- resolve ngmodule exports to correct sub-entry import paths ([07bc3d1](https://github.com/analogjs/analog/commit/07bc3d141104082664a55cf928918194f9ba8850))
+
 # [2.5.0-beta.2](https://github.com/analogjs/analog/compare/v2.5.0-beta.1...v2.5.0-beta.2) (2026-04-03)
 
 ### Bug Fixes
