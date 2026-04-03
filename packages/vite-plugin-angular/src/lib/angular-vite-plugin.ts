@@ -66,6 +66,16 @@ import {
 } from './plugins/file-replacements.plugin.js';
 import { routerPlugin } from './router-plugin.js';
 import { createHash } from 'node:crypto';
+import {
+  compile as analogCompile,
+  scanFile as analogScanFile,
+  scanPackageDts as analogScanPackageDts,
+  collectImportedPackages as analogCollectImportedPackages,
+  jitTransform as analogJitTransform,
+  inlineResourceUrls,
+  extractInlineStyles as extractInlineStylesOxc,
+  type ComponentRegistry,
+} from '@analogjs/angular-compiler';
 
 export enum DiagnosticModes {
   None = 0,
@@ -98,6 +108,7 @@ export interface PluginOptions {
   fileReplacements?: FileReplacement[];
   experimental?: {
     useAngularCompilationAPI?: boolean;
+    useAnalogCompiler?: boolean;
   };
 }
 
@@ -141,6 +152,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     fileReplacements: options?.fileReplacements ?? [],
     useAngularCompilationAPI:
       options?.experimental?.useAngularCompilationAPI ?? false,
+    useAnalogCompiler: options?.experimental?.useAnalogCompiler ?? false,
   };
 
   let resolvedConfig: ResolvedConfig;
@@ -211,6 +223,187 @@ export function angular(options?: PluginOptions): Plugin[] {
     | Awaited<ReturnType<typeof createAngularCompilationType>>
     | undefined;
 
+  // Analog compiler state (used when experimental.useAnalogCompiler is true)
+  const analogRegistry: ComponentRegistry = new Map();
+  const analogResourceToSource = new Map<string, string>();
+  /** Tracks which npm packages have already had their .d.ts files scanned. */
+  const scannedDtsPackages = new Set<string>();
+  let analogProjectRoot = '';
+
+  function initAnalogCompiler() {
+    if (jit) return; // JIT: no registry scan needed
+
+    // Scan all source files to build the registry
+    analogRegistry.clear();
+    scannedDtsPackages.clear();
+    const resolvedTsConfigPath = resolveTsConfigPath();
+    analogProjectRoot = dirname(resolvedTsConfigPath);
+    const config = compilerCli.readConfiguration(resolvedTsConfigPath);
+
+    for (const file of config.rootNames) {
+      try {
+        const code = require('fs').readFileSync(file, 'utf-8');
+        const entries = analogScanFile(code, file);
+        for (const entry of entries) {
+          analogRegistry.set(entry.className, entry);
+        }
+      } catch {
+        // Skip unreadable files
+      }
+    }
+  }
+
+  /**
+   * Lazily scan .d.ts files for external packages imported by the given source.
+   * Each package is scanned at most once and the results are cached in the registry.
+   */
+  function ensureDtsRegistryForSource(code: string, id: string) {
+    for (const pkg of analogCollectImportedPackages(code, id)) {
+      if (scannedDtsPackages.has(pkg)) continue;
+      scannedDtsPackages.add(pkg);
+
+      try {
+        const dtsEntries = analogScanPackageDts(pkg, analogProjectRoot);
+        for (const entry of dtsEntries) {
+          if (!analogRegistry.has(entry.className)) {
+            analogRegistry.set(entry.className, entry);
+          }
+        }
+      } catch {
+        // Package may not have .d.ts files or may not be Angular
+      }
+    }
+  }
+
+  function generateAnalogHmrCode(
+    components: Array<{ className: string }>,
+  ): string {
+    const applyFns = components
+      .map(
+        (c) => `
+export function ɵhmr_${c.className}(type, namespaces) {
+  type.ɵcmp = ${c.className}.ɵcmp;
+  type.ɵfac = ${c.className}.ɵfac;
+}`,
+      )
+      .join('\n');
+
+    const replaceBlocks = components
+      .map(
+        (c) => `
+      try {
+        i0.ɵɵreplaceMetadata(
+          ${c.className},
+          newModule.ɵhmr_${c.className},
+          { i0 },
+          [],
+          import.meta,
+          "${c.className}"
+        );
+        replaced = true;
+      } catch(e) {}`,
+      )
+      .join('\n');
+
+    return `\n${applyFns}
+if (import.meta.hot) {
+  import.meta.hot.accept((newModule) => {
+    if (!newModule) return;
+    let replaced = false;${replaceBlocks}
+    if (!replaced) {
+      import.meta.hot.invalidate('Component HMR failed, reloading');
+    }
+  });
+}`;
+  }
+
+  async function handleAnalogCompilerTransform(
+    code: string,
+    id: string,
+  ): Promise<{ code: string; map: any } | undefined> {
+    if (!/(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code)) {
+      return undefined;
+    }
+
+    // JIT mode
+    if (jit) {
+      const result = analogJitTransform(code, id);
+      return { code: result.code, map: result.map };
+    }
+
+    // Inline external templateUrl/styleUrl(s) into the source before compilation
+    // using OXC parser for precise AST-based rewriting.
+    code = inlineResourceUrls(code, id);
+
+    // Pre-resolve inline styles that need preprocessing (SCSS/Sass/Less)
+    let resolvedStyles: Map<string, string> | undefined;
+    let resolvedInlineStyles: Map<number, string> | undefined;
+
+    if (pluginOptions.inlineStylesExtension !== 'css') {
+      const styleStrings = extractInlineStylesOxc(code, id);
+
+      if (styleStrings.length > 0) {
+        resolvedInlineStyles = new Map();
+        for (let i = 0; i < styleStrings.length; i++) {
+          try {
+            const fakePath = id.replace(
+              /\.ts$/,
+              `.inline-${i}.${pluginOptions.inlineStylesExtension}`,
+            );
+            const processed = await preprocessCSS(
+              styleStrings[i],
+              fakePath,
+              resolvedConfig,
+            );
+            resolvedInlineStyles.set(i, processed.code);
+          } catch {
+            // Skip styles that can't be preprocessed
+          }
+        }
+        if (resolvedInlineStyles.size === 0) resolvedInlineStyles = undefined;
+      }
+    }
+
+    // Lazily scan .d.ts files for any external packages this file imports,
+    // so pre-compiled directives (e.g. RouterLinkActive) are in the registry
+    // before template compilation needs them.
+    ensureDtsRegistryForSource(code, id);
+
+    const result = analogCompile(code, id, {
+      registry: analogRegistry,
+      resolvedStyles,
+      resolvedInlineStyles,
+    });
+
+    // Track resource dependencies for HMR
+    for (const dep of result.resourceDependencies) {
+      analogResourceToSource.set(dep, id);
+    }
+
+    // Strip TypeScript-only syntax that the analog compiler preserves.
+    // Use OXC to reliably strip all TS syntax (type annotations, generics,
+    // interfaces, etc.) so the output is valid JavaScript for both client
+    // and SSR environments.
+    const stripped = await vite.transformWithOxc(result.code, id, {
+      lang: 'ts',
+      sourcemap: false,
+      decorator: { legacy: false, emitDecoratorMetadata: false },
+    });
+    let outputCode = stripped.code;
+
+    // Append HMR code in dev mode
+    if (watchMode && pluginOptions.liveReload) {
+      const components = [...analogRegistry.values()].filter(
+        (e: any) => e.fileName === id && e.kind === 'component',
+      );
+      if (components.length > 0) {
+        outputCode += generateAnalogHmrCode(components);
+      }
+    }
+
+    return { code: outputCode, map: result.map };
+  }
+
   function angularPlugin(): Plugin {
     let isProd = false;
 
@@ -237,6 +430,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     return {
       name: '@analogjs/vite-plugin-angular',
+      ...(pluginOptions.useAnalogCompiler ? { enforce: 'pre' as const } : {}),
       async config(config, { command }) {
         watchMode = command === 'serve';
         isProd =
@@ -253,12 +447,22 @@ export function angular(options?: PluginOptions): Plugin[] {
         // Do a preliminary resolution for esbuild plugin (before configResolved)
         const preliminaryTsConfigPath = resolveTsConfigPath();
 
+        // When useAnalogCompiler is true, configure the built-in OXC transform
+        // to strip TypeScript but NOT lower decorators. The analog compiler
+        // handles decorator processing in its transform hook. This avoids the
+        // ordering conflict where lowered decorators can't be found by the
+        // compiler, while still ensuring all .ts files get TypeScript stripped
+        // (including those excluded from the analog compiler's transform filter).
         const esbuild = pluginOptions.useAngularCompilationAPI
           ? undefined
-          : (config.esbuild ?? false);
+          : pluginOptions.useAnalogCompiler
+            ? false
+            : (config.esbuild ?? false);
         const oxc = pluginOptions.useAngularCompilationAPI
           ? undefined
-          : (config.oxc ?? false);
+          : pluginOptions.useAnalogCompiler
+            ? ({} as any)
+            : (config.oxc ?? false);
 
         const defineOptions = {
           ngJitMode: 'false',
@@ -340,6 +544,29 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configureServer(server) {
         viteServer = server;
+
+        if (pluginOptions.useAnalogCompiler) {
+          // Watch for new .ts files and scan them into the registry
+          server.watcher.on('add', (filePath) => {
+            if (
+              filePath.endsWith('.ts') &&
+              !filePath.endsWith('.spec.ts') &&
+              !filePath.endsWith('.d.ts')
+            ) {
+              try {
+                const code = require('fs').readFileSync(filePath, 'utf-8');
+                const entries = analogScanFile(code, filePath);
+                for (const entry of entries) {
+                  analogRegistry.set(entry.className, entry);
+                }
+              } catch {
+                // Skip unreadable files
+              }
+            }
+          });
+          return;
+        }
+
         // Add/unlink changes the TypeScript program shape, not just file
         // contents, so we need to invalidate both include discovery and the
         // cached tsconfig root names before recompiling.
@@ -357,6 +584,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         });
       },
       async buildStart() {
+        if (pluginOptions.useAnalogCompiler) {
+          initAnalogCompiler();
+          return;
+        }
+
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
           await performCompilation(resolvedConfig);
@@ -366,6 +598,41 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
       },
       async handleHotUpdate(ctx) {
+        // Analog compiler HMR path
+        if (pluginOptions.useAnalogCompiler) {
+          // Resource file changes → invalidate parent .ts module
+          if (analogResourceToSource.has(ctx.file)) {
+            const parentSource = analogResourceToSource.get(ctx.file)!;
+            const parentModule =
+              ctx.server.moduleGraph.getModuleById(parentSource);
+            if (parentModule) {
+              return [parentModule];
+            }
+          }
+
+          if (TS_EXT_REGEX.test(ctx.file)) {
+            const [fileId] = ctx.file.split('?');
+            const code = require('fs').readFileSync(fileId, 'utf-8');
+
+            // Remove old entries from this file
+            const oldEntries = [...analogRegistry.entries()]
+              .filter(([_, v]) => v.fileName === fileId)
+              .map(([k]) => k);
+            for (const key of oldEntries) {
+              analogRegistry.delete(key);
+            }
+
+            // Rescan the changed file
+            const newEntries = analogScanFile(code, fileId);
+            for (const entry of newEntries) {
+              analogRegistry.set(entry.className, entry);
+            }
+          }
+
+          // Let Vite handle the rest — the transform hook will recompile
+          return ctx.modules;
+        }
+
         if (TS_EXT_REGEX.test(ctx.file)) {
           let [fileId] = ctx.file.split('?');
 
@@ -552,6 +819,14 @@ export function angular(options?: PluginOptions): Plugin[] {
             !(options?.transformFilter(code, id) ?? true)
           ) {
             return;
+          }
+
+          // Analog compiler transform path
+          if (pluginOptions.useAnalogCompiler) {
+            if (id.includes('.ts?')) {
+              id = id.replace(/\?(.*)/, '');
+            }
+            return handleAnalogCompilerTransform(code, id);
           }
 
           if (pluginOptions.useAngularCompilationAPI) {

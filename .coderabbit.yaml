@@ -75,6 +75,10 @@ reviews:
       instructions: >-
         Review as the vite-plugin-angular package scope. Prioritize Angular and Vite integration behavior,
         build compatibility, backward compatibility, stability, and targeted coverage for regressions.
+    - path: 'packages/angular-compiler/**'
+      instructions: >-
+        Review as the angular-compiler package scope. Prioritize Angular Compiler. integration behavior,
+        build compatibility, backward compatibility, stability, and targeted coverage for regressions.
     - path: 'packages/vite-plugin-angular-tools/**'
       instructions: >-
         Treat changes here as part of the vite-plugin-angular scope and review them together with test fixtures

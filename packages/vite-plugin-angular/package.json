@@ -36,6 +36,7 @@
     }
   },
   "dependencies": {
+    "@analogjs/angular-compiler": "2.4.0",
     "tinyglobby": "^0.2.14",
     "ts-morph": "^21.0.0"
   },
@@ -48,7 +49,8 @@
       "@analogjs/storybook-angular",
       "@analogjs/vite-plugin-angular",
       "@analogjs/vite-plugin-nitro",
-      "@analogjs/vitest-angular"
+      "@analogjs/vitest-angular",
+      "@analogjs/angular-compiler"
     ],
     "migrations": "./migrations/migration.json"
   },

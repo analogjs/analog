@@ -5,6 +5,7 @@
 const tag = process.env.RELEASE_TAG;
 
 const replacementFiles = [
+  'packages/angular-compiler/package.json',
   'packages/astro-angular/package.json',
   'packages/create-analog/template-angular-v17/package.json',
   'packages/create-analog/template-angular-v18/package.json',
@@ -37,6 +38,13 @@ module.exports = {
       '@semantic-release/npm',
       {
         npmPublish: false,
+      },
+    ],
+    [
+      '@semantic-release/npm',
+      {
+        npmPublish: false,
+        pkgRoot: './packages/angular-compiler/',
       },
     ],
     [
@@ -136,6 +144,11 @@ module.exports = {
             from: '"@analogjs/router": ".*"',
             to: '"@analogjs/router": "^${nextRelease.version}"',
           },
+          {
+            files: replacementFiles,
+            from: '"@analogjs/angular-compiler": ".*"',
+            to: '"@analogjs/angular-compiler": "^${nextRelease.version}"',
+          },
         ],
       },
     ],
@@ -199,6 +212,7 @@ module.exports = {
         assets: [
           'CHANGELOG.md',
           'package.json',
+          'packages/angular-compiler/package.json',
           'packages/astro-angular/package.json',
           'packages/content/package.json',
           'packages/create-analog/package.json',

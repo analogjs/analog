@@ -1,8 +1,6 @@
 import { Component } from '@angular/core';
-import { MyPackage } from 'my-package';
 
 @Component({
-  imports: [MyPackage],
-  template: ` <lib-my-package /> `,
+  template: ` <p>Package page</p> `,
 })
 export default class PackagePageComponent {}
