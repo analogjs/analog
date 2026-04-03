@@ -6,6 +6,7 @@ export const debugCompiler = createDebug('analog:angular:compiler');
 export const debugCompilationApi = createDebug(
   'analog:angular:compilation-api',
 );
+export const debugTailwind = createDebug('analog:angular:tailwind');
 
 /**
  * Translates the user-facing `debug` plugin option into obug namespace

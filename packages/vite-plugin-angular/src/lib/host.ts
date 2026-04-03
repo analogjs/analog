@@ -71,20 +71,26 @@ export function augmentHostWithResources(
         .digest('hex');
       const stylesheetId = id + '.' + options.inlineStylesExtension;
       options.inlineComponentStyles.set(stylesheetId, preprocessedData);
-      debugStyles('legacy transformResource: externalized stylesheet', {
-        stylesheetId,
-        resourceFile: context.resourceFile ?? '(inline)',
-      });
+      debugStyles(
+        'NgtscProgram: stylesheet deferred to Vite pipeline (liveReload)',
+        {
+          stylesheetId,
+          resourceFile: context.resourceFile ?? '(inline)',
+        },
+      );
       return { content: stylesheetId };
     }
 
     // Non-liveReload: CSS is returned directly to the Angular compiler
     // and never re-enters Vite's pipeline, so transform eagerly.
-    debugStyles('legacy transformResource: eager preprocessCSS stylesheet', {
-      filename,
-      resourceFile: context.resourceFile ?? '(inline)',
-      dataLength: preprocessedData.length,
-    });
+    debugStyles(
+      'NgtscProgram: stylesheet processed inline via transform (no liveReload)',
+      {
+        filename,
+        resourceFile: context.resourceFile ?? '(inline)',
+        dataLength: preprocessedData.length,
+      },
+    );
     let stylesheetResult;
 
     try {
@@ -117,7 +123,7 @@ export function augmentHostWithResources(
     const filename = externalId + path.extname(resolvedPath);
 
     options.externalComponentStyles.set(filename, resolvedPath);
-    debugStyles('legacy resourceNameToFileName: mapped external stylesheet', {
+    debugStyles('NgtscProgram: external stylesheet ID mapped for resolveId', {
       resourceName,
       resolvedPath,
       filename,

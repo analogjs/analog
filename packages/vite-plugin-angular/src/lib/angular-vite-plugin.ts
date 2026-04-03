@@ -57,6 +57,7 @@ import {
   debugCompiler,
   debugHmr,
   debugStyles,
+  debugTailwind,
 } from './utils/debug.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
@@ -233,6 +234,7 @@ function buildStylePreprocessor(
   if (tw) {
     const rootStylesheet = tw.rootStylesheet;
     const prefixes = tw.prefixes;
+    debugTailwind('configured', { rootStylesheet, prefixes });
 
     tailwindPreprocessor = (code: string, filename: string): string => {
       // Skip if already has @reference or is a root Tailwind file
@@ -241,6 +243,7 @@ function buildStylePreprocessor(
         code.includes('@import "tailwindcss"') ||
         code.includes("@import 'tailwindcss'")
       ) {
+        debugTailwind('skip (already has @reference or is root)', { filename });
         return code;
       }
 
@@ -250,10 +253,11 @@ function buildStylePreprocessor(
         : code.includes('@apply');
 
       if (!needsReference) {
+        debugTailwind('skip (no Tailwind usage detected)', { filename });
         return code;
       }
 
-      debugStyles('injected @reference via preprocessor', { filename });
+      debugTailwind('injected @reference', { filename });
       const refPath = relative(dirname(filename), rootStylesheet);
       return `@reference "${refPath}";\n${code}`;
     };
@@ -261,6 +265,7 @@ function buildStylePreprocessor(
 
   // Chain: tailwind preprocessor first, then user preprocessor
   if (tailwindPreprocessor && userPreprocessor) {
+    debugTailwind('chained with user stylePreprocessor');
     return (code: string, filename: string) => {
       const intermediate = tailwindPreprocessor!(code, filename);
       return userPreprocessor(intermediate, filename);
@@ -498,7 +503,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         if (pluginOptions.useAngularCompilationAPI) {
           externalComponentStyles = new Map();
           inlineComponentStyles = new Map();
-          debugStyles('compilation API style maps initialized');
+          debugStyles('style maps initialized (Angular Compilation API)');
         }
 
         if (!jit) {
@@ -715,7 +720,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (componentStyles) {
             debugStyles('resolveId: mapped external stylesheet', {
               filename,
-              resolved: componentStyles,
+              resolvedPath: componentStyles,
             });
             return componentStyles + new URL(id, 'http://localhost').search;
           }
@@ -781,8 +786,8 @@ export function angular(options?: PluginOptions): Plugin[] {
             const { encapsulation, componentId } =
               getComponentStyleSheetMeta(id);
             if (encapsulation === 'emulated' && componentId) {
-              debugStyles('encapsulated emulated stylesheet', {
-                id,
+              debugStyles('applying emulated view encapsulation', {
+                stylesheet: id.split('?')[0],
                 componentId,
               });
               const encapsulated = ngCompiler.encapsulateStyle(
@@ -1101,7 +1106,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             const stylesheetId = id + '.' + pluginOptions.inlineStylesExtension;
             inlineComponentStyles!.set(stylesheetId, preprocessedData);
 
-            debugStyles('externalized stylesheet', {
+            debugStyles('stylesheet deferred to Vite pipeline (liveReload)', {
               stylesheetId,
               resourceFile: resourceFile ?? '(inline)',
             });
@@ -1112,11 +1117,14 @@ export function angular(options?: PluginOptions): Plugin[] {
           // Non-liveReload: the CSS is returned directly to the Angular
           // compiler and never re-enters Vite's pipeline, so we must run
           // preprocessCSS() eagerly here.
-          debugStyles('eager preprocessCSS stylesheet', {
-            filename,
-            resourceFile: resourceFile ?? '(inline)',
-            dataLength: preprocessedData.length,
-          });
+          debugStyles(
+            'stylesheet processed inline via preprocessCSS (no liveReload)',
+            {
+              filename,
+              resourceFile: resourceFile ?? '(inline)',
+              dataLength: preprocessedData.length,
+            },
+          );
           let stylesheetResult;
 
           try {
@@ -1174,7 +1182,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     compilationResult.externalStylesheets?.forEach((value, key) => {
       externalComponentStyles?.set(`${value}.css`, key);
-      debugStyles('compilation API: registered external stylesheet', {
+      debugStyles('external stylesheet registered for resolveId mapping', {
         filename: `${value}.css`,
         resolvedPath: key,
       });
@@ -1311,7 +1319,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['supportTestBed'] = true;
     }
 
-    debugCompiler('tsCompilerOptions (legacy path)', {
+    debugCompiler('tsCompilerOptions (NgtscProgram path)', {
       externalRuntimeStyles: !!tsCompilerOptions['externalRuntimeStyles'],
       hmr: !!tsCompilerOptions['_enableHmr'],
     });
@@ -1376,7 +1384,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       const externalizeStyles = !!tsCompilerOptions['externalRuntimeStyles'];
       inlineComponentStyles = externalizeStyles ? new Map() : undefined;
       externalComponentStyles = externalizeStyles ? new Map() : undefined;
-      debugStyles('legacy host style mode', {
+      debugStyles('style maps initialized (NgtscProgram path)', {
         externalizeStyles,
       });
       augmentHostWithResources(host, styleTransform, {
@@ -1722,7 +1730,7 @@ export function getFileMetadata(
             const className = (node as any).name.getText();
             classNames.set(file, className);
             hmrEligible = true;
-            debugHmr('legacy emitHmrUpdateModule', { file, className });
+            debugHmr('NgtscProgram emitHmrUpdateModule', { file, className });
           }
         }
       }
