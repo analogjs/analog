@@ -1,4 +1,10 @@
-import { TestBed } from '@angular/core/testing';
+import '@angular/compiler';
+import { provideZonelessChangeDetection } from '@angular/core';
+import { getTestBed, TestBed } from '@angular/core/testing';
+import {
+  BrowserTestingModule,
+  platformBrowserTesting,
+} from '@angular/platform-browser/testing';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -12,10 +18,10 @@ import {
 import { of } from 'rxjs';
 import TanStackQueryMultiPageComponent from './tanstack-query-multi.page';
 
-const mockRoute = {
-  queryParamMap: of(convertToParamMap({ scope: 'multi-test' })),
-  snapshot: { queryParamMap: convertToParamMap({ scope: 'multi-test' }) },
-};
+getTestBed().initTestEnvironment(
+  BrowserTestingModule,
+  platformBrowserTesting(),
+);
 
 describe('TanStackQueryMultiPageComponent', () => {
   let httpTesting: HttpTestingController;
@@ -24,10 +30,19 @@ describe('TanStackQueryMultiPageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [TanStackQueryMultiPageComponent],
       providers: [
+        provideZonelessChangeDetection(),
         provideHttpClient(),
         provideHttpClientTesting(),
         provideTanStackQuery(new QueryClient()),
-        { provide: ActivatedRoute, useValue: mockRoute },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParamMap: of(convertToParamMap({ scope: 'multi-test' })),
+            snapshot: {
+              queryParamMap: convertToParamMap({ scope: 'multi-test' }),
+            },
+          },
+        },
       ],
     }).compileComponents();
     httpTesting = TestBed.inject(HttpTestingController);

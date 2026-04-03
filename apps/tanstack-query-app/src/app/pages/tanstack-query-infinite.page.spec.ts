@@ -1,4 +1,10 @@
-import { TestBed } from '@angular/core/testing';
+import '@angular/compiler';
+import { provideZonelessChangeDetection } from '@angular/core';
+import { getTestBed, TestBed } from '@angular/core/testing';
+import {
+  BrowserTestingModule,
+  platformBrowserTesting,
+} from '@angular/platform-browser/testing';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -12,10 +18,10 @@ import {
 import { of } from 'rxjs';
 import TanStackQueryInfinitePageComponent from './tanstack-query-infinite.page';
 
-const mockRoute = {
-  queryParamMap: of(convertToParamMap({ scope: 'infinite-test' })),
-  snapshot: { queryParamMap: convertToParamMap({ scope: 'infinite-test' }) },
-};
+getTestBed().initTestEnvironment(
+  BrowserTestingModule,
+  platformBrowserTesting(),
+);
 
 describe('TanStackQueryInfinitePageComponent', () => {
   let httpTesting: HttpTestingController;
@@ -24,10 +30,19 @@ describe('TanStackQueryInfinitePageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [TanStackQueryInfinitePageComponent],
       providers: [
+        provideZonelessChangeDetection(),
         provideHttpClient(),
         provideHttpClientTesting(),
         provideTanStackQuery(new QueryClient()),
-        { provide: ActivatedRoute, useValue: mockRoute },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParamMap: of(convertToParamMap({ scope: 'infinite-test' })),
+            snapshot: {
+              queryParamMap: convertToParamMap({ scope: 'infinite-test' }),
+            },
+          },
+        },
       ],
     }).compileComponents();
     httpTesting = TestBed.inject(HttpTestingController);

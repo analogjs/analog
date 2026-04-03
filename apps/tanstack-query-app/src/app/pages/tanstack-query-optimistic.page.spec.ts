@@ -1,4 +1,10 @@
-import { TestBed } from '@angular/core/testing';
+import '@angular/compiler';
+import { provideZonelessChangeDetection } from '@angular/core';
+import { getTestBed, TestBed } from '@angular/core/testing';
+import {
+  BrowserTestingModule,
+  platformBrowserTesting,
+} from '@angular/platform-browser/testing';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -12,12 +18,10 @@ import {
 import { of } from 'rxjs';
 import TanStackQueryOptimisticPageComponent from './tanstack-query-optimistic.page';
 
-const mockRoute = {
-  queryParamMap: of(convertToParamMap({ scope: 'optimistic-test' })),
-  snapshot: {
-    queryParamMap: convertToParamMap({ scope: 'optimistic-test' }),
-  },
-};
+getTestBed().initTestEnvironment(
+  BrowserTestingModule,
+  platformBrowserTesting(),
+);
 
 describe('TanStackQueryOptimisticPageComponent', () => {
   let httpTesting: HttpTestingController;
@@ -26,10 +30,19 @@ describe('TanStackQueryOptimisticPageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [TanStackQueryOptimisticPageComponent],
       providers: [
+        provideZonelessChangeDetection(),
         provideHttpClient(),
         provideHttpClientTesting(),
         provideTanStackQuery(new QueryClient()),
-        { provide: ActivatedRoute, useValue: mockRoute },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParamMap: of(convertToParamMap({ scope: 'optimistic-test' })),
+            snapshot: {
+              queryParamMap: convertToParamMap({ scope: 'optimistic-test' }),
+            },
+          },
+        },
       ],
     }).compileComponents();
     httpTesting = TestBed.inject(HttpTestingController);
