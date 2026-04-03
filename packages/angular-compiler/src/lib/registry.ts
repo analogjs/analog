@@ -25,6 +25,8 @@ export interface RegistryEntry {
   inputs?: Record<string, RegistryInput>;
   /** Output bindings (from signal APIs and @Output decorators) */
   outputs?: Record<string, string>;
+  /** The package this declaration was scanned from (e.g. "@angular/cdk") */
+  sourcePackage?: string;
 }
 
 /** Maps class name → registry entry */

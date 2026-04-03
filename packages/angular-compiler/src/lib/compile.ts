@@ -258,8 +258,11 @@ export function compile(
                   // already imported, track it for synthetic import injection.
                   const exportedId = ts.factory.createIdentifier(exportedName);
                   const exportedRef = new o.WrappedNodeExpr(exportedId);
-                  if (moduleSpecifier) {
-                    syntheticImports.set(exportedName, moduleSpecifier);
+                  if (exportedEntry.sourcePackage || moduleSpecifier) {
+                    syntheticImports.set(
+                      exportedName,
+                      exportedEntry.sourcePackage || moduleSpecifier!,
+                    );
                   }
                   const decl: CompileDeclaration = {
                     type: exportedRef,

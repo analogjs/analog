@@ -55,6 +55,11 @@ export function scanPackageDts(
   }
   if (!pkgDir) return [];
 
+  // Build a map from className → correct import path using package.json exports.
+  // This handles packages with sub-entry points (e.g. @angular/material/tabs)
+  // where re-exported classes must be imported from their origin entry point.
+  const classToImportPath = buildClassToImportMap(packageName, pkgDir);
+
   // Check for a "types" directory first (Angular packages use this),
   // then fall back to the package root.
   const typesDir = path.join(pkgDir, 'types');
@@ -66,13 +71,115 @@ export function scanPackageDts(
   for (const file of dtsFiles) {
     try {
       const code = fs.readFileSync(file, 'utf-8');
-      entries.push(...scanDtsFile(code, file));
+      const fileEntries = scanDtsFile(code, file);
+      for (const entry of fileEntries) {
+        entry.sourcePackage =
+          classToImportPath.get(entry.className) ||
+          subEntryFromFilePath(packageName, pkgDir, file) ||
+          packageName;
+      }
+      entries.push(...fileEntries);
     } catch {
       // Skip unreadable files
     }
   }
 
   return entries;
+}
+
+/**
+ * Read package.json exports to build a map from class name to the correct
+ * sub-entry import path (e.g. "MatTabNav" → "@angular/material/tabs").
+ *
+ * For each sub-entry that has a "types" field, the corresponding .d.ts file
+ * is read to collect declared class names and re-exported names.
+ */
+function buildClassToImportMap(
+  packageName: string,
+  pkgDir: string,
+): Map<string, string> {
+  const map = new Map<string, string>();
+  try {
+    const pkgJson = JSON.parse(
+      fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf-8'),
+    );
+    if (!pkgJson.exports) return map;
+
+    for (const [key, value] of Object.entries(pkgJson.exports) as [
+      string,
+      any,
+    ][]) {
+      if (!key.startsWith('./') || key === '.') continue;
+      const typesFile =
+        typeof value === 'object' && value !== null && value.types;
+      if (!typesFile) continue;
+
+      const subEntry = key.slice(2); // './tabs' → 'tabs'
+      const importPath = packageName + '/' + subEntry;
+      const fullTypesPath = path.resolve(pkgDir, typesFile);
+      if (!fs.existsSync(fullTypesPath)) continue;
+
+      try {
+        const code = fs.readFileSync(fullTypesPath, 'utf-8');
+        // Collect declared class names (e.g. "declare class MatTabNav")
+        for (const match of code.matchAll(/declare\s+class\s+(\w+)/g)) {
+          map.set(match[1], importPath);
+        }
+        // Collect re-exported names (e.g. "export { Dir, BidiModule } from '...'")
+        for (const match of code.matchAll(/export\s*\{([^}]+)\}/g)) {
+          for (const name of match[1].split(',')) {
+            const parts = name.trim().split(/\s+as\s+/);
+            const exported = parts[parts.length - 1].trim();
+            if (exported && /^\w+$/.test(exported)) {
+              map.set(exported, importPath);
+            }
+          }
+        }
+      } catch {
+        // Skip unreadable entry files
+      }
+    }
+  } catch {
+    // No package.json or no exports — fall back to packageName
+  }
+  return map;
+}
+
+/**
+ * Derive a sub-entry import path from a .d.ts file's location relative to the
+ * package root. This handles older Angular packages that keep .d.ts files in
+ * subdirectories (e.g. `@angular/material/tabs/index.d.ts`) instead of a
+ * top-level `types/` folder.
+ *
+ * Returns `undefined` when no sub-entry can be determined (e.g. file is at the
+ * package root, inside `types/`, or in a non-entry directory).
+ */
+function subEntryFromFilePath(
+  packageName: string,
+  pkgDir: string,
+  filePath: string,
+): string | undefined {
+  const NON_ENTRY_DIRS = new Set([
+    'types',
+    'fesm2022',
+    'fesm2020',
+    'fesm2015',
+    'esm2022',
+    'esm2020',
+    'esm2015',
+    'bundles',
+    'schematics',
+    'node_modules',
+  ]);
+  const rel = path.relative(pkgDir, filePath);
+  const segments = rel.split(path.sep);
+  // File directly in pkgDir (no subdirectory) → no sub-entry
+  if (segments.length < 2) return undefined;
+  const firstDir = segments[0];
+  // Skip internal/build directories and chunk files
+  if (NON_ENTRY_DIRS.has(firstDir) || firstDir.startsWith('_'))
+    return undefined;
+  return packageName + '/' + firstDir;
 }
 
 /**

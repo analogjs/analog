@@ -1395,6 +1395,101 @@ describe('HMR code generation', () => {
   });
 });
 
+describe('sourcePackage in registry entries', () => {
+  it('uses sourcePackage for synthetic imports of NgModule exports', () => {
+    // Simulate a registry where ButtonComponent comes from @my-lib/ui/button
+    // but is exported through SharedModule from @my-lib/ui
+    const registry = buildRegistry({
+      'app.ts': '',
+    });
+    registry.set('ButtonComponent', {
+      selector: 'ui-button',
+      kind: 'component',
+      fileName: 'button.d.ts',
+      className: 'ButtonComponent',
+      sourcePackage: '@my-lib/ui/button',
+    });
+    registry.set('SharedModule', {
+      selector: 'SharedModule',
+      kind: 'ngmodule',
+      fileName: 'shared.d.ts',
+      className: 'SharedModule',
+      exports: ['ButtonComponent'],
+    });
+
+    const appSrc = `
+      import { Component } from '@angular/core';
+      import { SharedModule } from '@my-lib/ui';
+      @Component({
+        selector: 'app-root',
+        imports: [SharedModule],
+        template: '<ui-button>Click</ui-button>'
+      })
+      export class AppComponent {}
+    `;
+
+    const result = compile(appSrc, 'app.ts', registry);
+    expectCompiles(result);
+    // Should import from the sub-entry, not from the NgModule's specifier
+    expect(result).toContain('from "@my-lib/ui/button"');
+    expect(result).not.toMatch(
+      /import\s*\{[^}]*ButtonComponent[^}]*\}\s*from\s*["']@my-lib\/ui["']/,
+    );
+  });
+
+  it('falls back to moduleSpecifier when sourcePackage is absent', () => {
+    const registry = buildRegistry({
+      'app.ts': '',
+    });
+    registry.set('ButtonComponent', {
+      selector: 'ui-button',
+      kind: 'component',
+      fileName: 'button.d.ts',
+      className: 'ButtonComponent',
+      // No sourcePackage
+    });
+    registry.set('SharedModule', {
+      selector: 'SharedModule',
+      kind: 'ngmodule',
+      fileName: 'shared.d.ts',
+      className: 'SharedModule',
+      exports: ['ButtonComponent'],
+    });
+
+    const appSrc = `
+      import { Component } from '@angular/core';
+      import { SharedModule } from '@my-lib/ui';
+      @Component({
+        selector: 'app-root',
+        imports: [SharedModule],
+        template: '<ui-button>Click</ui-button>'
+      })
+      export class AppComponent {}
+    `;
+
+    const result = compile(appSrc, 'app.ts', registry);
+    expectCompiles(result);
+    // Falls back to the import specifier of the NgModule
+    expect(result).toContain('from "@my-lib/ui"');
+  });
+});
+
+describe('scanFile preserves sourcePackage as undefined', () => {
+  it('does not set sourcePackage on source-scanned entries', () => {
+    const entries = scanFile(
+      `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {}
+    `,
+      'test.ts',
+    );
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].sourcePackage).toBeUndefined();
+  });
+});
+
 function expectCompiles(result: string) {
   expect(result).toBeTruthy();
   expect(result).not.toMatch(/^Error:/m);
