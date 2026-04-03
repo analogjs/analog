@@ -1,5 +1,10 @@
 import { NgtscProgram } from '@angular/compiler-cli';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  writeFileSync,
+  promises as fsPromises,
+} from 'node:fs';
 import {
   basename,
   dirname,
@@ -74,6 +79,7 @@ import {
   jitTransform as analogJitTransform,
   inlineResourceUrls,
   extractInlineStyles as extractInlineStylesOxc,
+  generateHmrCode,
   type ComponentRegistry,
 } from '@analogjs/angular-compiler';
 
@@ -230,7 +236,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   const scannedDtsPackages = new Set<string>();
   let analogProjectRoot = '';
 
-  function initAnalogCompiler() {
+  async function initAnalogCompiler() {
     if (jit) return; // JIT: no registry scan needed
 
     // Scan all source files to build the registry
@@ -240,15 +246,20 @@ export function angular(options?: PluginOptions): Plugin[] {
     analogProjectRoot = dirname(resolvedTsConfigPath);
     const config = compilerCli.readConfiguration(resolvedTsConfigPath);
 
-    for (const file of config.rootNames) {
-      try {
-        const code = require('fs').readFileSync(file, 'utf-8');
-        const entries = analogScanFile(code, file);
-        for (const entry of entries) {
-          analogRegistry.set(entry.className, entry);
+    const results = await Promise.all(
+      config.rootNames.map(async (file) => {
+        try {
+          const code = await fsPromises.readFile(file, 'utf-8');
+          return analogScanFile(code, file);
+        } catch {
+          return []; // Skip unreadable files
         }
-      } catch {
-        // Skip unreadable files
+      }),
+    );
+
+    for (const entries of results) {
+      for (const entry of entries) {
+        analogRegistry.set(entry.className, entry);
       }
     }
   }
@@ -273,48 +284,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         // Package may not have .d.ts files or may not be Angular
       }
     }
-  }
-
-  function generateAnalogHmrCode(
-    components: Array<{ className: string }>,
-  ): string {
-    const applyFns = components
-      .map(
-        (c) => `
-export function ɵhmr_${c.className}(type, namespaces) {
-  type.ɵcmp = ${c.className}.ɵcmp;
-  type.ɵfac = ${c.className}.ɵfac;
-}`,
-      )
-      .join('\n');
-
-    const replaceBlocks = components
-      .map(
-        (c) => `
-      try {
-        i0.ɵɵreplaceMetadata(
-          ${c.className},
-          newModule.ɵhmr_${c.className},
-          { i0 },
-          [],
-          import.meta,
-          "${c.className}"
-        );
-        replaced = true;
-      } catch(e) {}`,
-      )
-      .join('\n');
-
-    return `\n${applyFns}
-if (import.meta.hot) {
-  import.meta.hot.accept((newModule) => {
-    if (!newModule) return;
-    let replaced = false;${replaceBlocks}
-    if (!replaced) {
-      import.meta.hot.invalidate('Component HMR failed, reloading');
-    }
-  });
-}`;
   }
 
   async function handleAnalogCompilerTransform(
@@ -393,11 +362,14 @@ if (import.meta.hot) {
 
     // Append HMR code in dev mode
     if (watchMode && pluginOptions.liveReload) {
-      const components = [...analogRegistry.values()].filter(
-        (e: any) => e.fileName === id && e.kind === 'component',
+      const fileDeclarations = [...analogRegistry.values()].filter(
+        (e) => e.fileName === id,
       );
-      if (components.length > 0) {
-        outputCode += generateAnalogHmrCode(components);
+      if (fileDeclarations.length > 0) {
+        // Local deps: other Angular classes in the same file that components
+        // may reference as template dependencies.
+        const localDepClassNames = fileDeclarations.map((e) => e.className);
+        outputCode += generateHmrCode(fileDeclarations, localDepClassNames);
       }
     }
 
@@ -585,7 +557,7 @@ if (import.meta.hot) {
       },
       async buildStart() {
         if (pluginOptions.useAnalogCompiler) {
-          initAnalogCompiler();
+          await initAnalogCompiler();
           return;
         }
 

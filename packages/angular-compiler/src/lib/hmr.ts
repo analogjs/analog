@@ -1,26 +1,43 @@
 import type { RegistryEntry } from './registry.js';
 
 /**
- * Generate HMR code using Angular's ɵɵreplaceMetadata.
+ * Generate HMR code using Angular's ɵɵreplaceMetadata for components,
+ * and simple field-swap + invalidation for directives/pipes.
  *
- * The applyMetadata callback re-defines ɵcmp and ɵfac on the old class
- * by copying from the newly compiled class in the hot-updated module.
- * ɵɵreplaceMetadata then merges the old/new definitions and recreates
- * matching LViews in the component tree.
+ * The applyMetadata callback dynamically copies all ɵ-prefixed static
+ * fields (ɵcmp, ɵfac, ɵdir, ɵpipe, etc.) from the newly compiled class
+ * to the old class reference that Angular's runtime is tracking.
  *
- * Falls back to page reload if ɵɵreplaceMetadata throws.
+ * For components, ɵɵreplaceMetadata then merges the old/new definitions
+ * and recreates matching LViews in the component tree.
+ *
+ * For directives and pipes, ɵɵreplaceMetadata does not support them, so
+ * we fall back to a full page reload via import.meta.hot.invalidate().
  */
-export function generateHmrCode(components: RegistryEntry[]): string {
-  // Export applyMetadata functions so the accept callback can access them
-  const applyFns = components
+export function generateHmrCode(
+  declarations: RegistryEntry[],
+  localDepClassNames: string[] = [],
+): string {
+  const components = declarations.filter((d) => d.kind === 'component');
+  const nonComponents = declarations.filter((d) => d.kind !== 'component');
+
+  // Export applyMetadata functions so the accept callback can access them.
+  // Dynamically copy all ɵ-prefixed static fields to handle ɵcmp, ɵfac,
+  // ɵdir, ɵpipe, ɵmod, ɵinj, ɵprov, and any future Ivy fields.
+  const applyFns = declarations
     .map(
       (c) => `
-export function ɵhmr_${c.className}(type, namespaces) {
-  type.ɵcmp = ${c.className}.ɵcmp;
-  type.ɵfac = ${c.className}.ɵfac;
+export function ɵhmr_${c.className}(type) {
+  for (const key of Object.getOwnPropertyNames(${c.className})) {
+    if (key.startsWith('ɵ')) type[key] = ${c.className}[key];
+  }
 }`,
     )
     .join('\n');
+
+  // Components: use ɵɵreplaceMetadata for full LView recreation
+  const localDepsArray =
+    localDepClassNames.length > 0 ? `[${localDepClassNames.join(', ')}]` : '[]';
 
   const replaceBlocks = components
     .map(
@@ -30,7 +47,7 @@ export function ɵhmr_${c.className}(type, namespaces) {
           ${c.className},
           newModule.ɵhmr_${c.className},
           { i0 },
-          [],
+          ${localDepsArray},
           import.meta,
           "${c.className}"
         );
@@ -41,16 +58,42 @@ export function ɵhmr_${c.className}(type, namespaces) {
     )
     .join('\n');
 
-  return `\n${applyFns}
-if (import.meta.hot) {
-  import.meta.hot.accept((newModule) => {
-    if (!newModule) return;
+  // Directives/pipes: swap static fields and invalidate
+  const swapBlocks = nonComponents
+    .map(
+      (c) => `
+      try {
+        newModule.ɵhmr_${c.className}(${c.className});
+        swapped = true;
+      } catch(e) {}`,
+    )
+    .join('\n');
+
+  let acceptBody = `
+    if (!newModule) return;`;
+
+  if (components.length > 0) {
+    acceptBody += `
     let replaced = false;${replaceBlocks}
     if (!replaced) {
-      // Fallback: if no component was successfully replaced (e.g. root component),
-      // trigger a full page reload
       import.meta.hot.invalidate('Component HMR failed, reloading');
-    }
+      return;
+    }`;
+  }
+
+  if (nonComponents.length > 0) {
+    acceptBody += `
+    let swapped = false;${swapBlocks}
+    if (swapped) {
+      // Directive/pipe definitions updated — full reload needed for Angular
+      // to pick up the new behavior since ɵɵreplaceMetadata only supports components.
+      import.meta.hot.invalidate('Directive/pipe changed, reloading');
+    }`;
+  }
+
+  return `\n${applyFns}
+if (import.meta.hot) {
+  import.meta.hot.accept((newModule) => {${acceptBody}
   });
 }`;
 }

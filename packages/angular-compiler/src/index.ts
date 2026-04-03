@@ -14,6 +14,7 @@ export {
   collectImportedPackages,
 } from './lib/dts-reader.js';
 export { jitTransform, type JitTransformResult } from './lib/jit-transform.js';
+export { generateHmrCode } from './lib/hmr.js';
 export {
   inlineResourceUrls,
   extractInlineStyles,
