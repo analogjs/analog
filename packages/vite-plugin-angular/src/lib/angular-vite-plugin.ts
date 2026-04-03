@@ -252,6 +252,7 @@ function buildStylePreprocessor(
         return code;
       }
 
+      debugStyles('injected @reference via preprocessor', { filename });
       const refPath = relative(dirname(filename), rootStylesheet);
       return `@reference "${refPath}";\n${code}`;
     };
@@ -481,6 +482,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         if (pluginOptions.useAngularCompilationAPI) {
           externalComponentStyles = new Map();
           inlineComponentStyles = new Map();
+          debugStyles('compilation API style maps initialized');
         }
 
         if (!jit) {
@@ -583,6 +585,10 @@ export function angular(options?: PluginOptions): Plugin[] {
                 const { encapsulation } = getComponentStyleSheetMeta(
                   isDirect.id,
                 );
+                debugStyles('HMR: component stylesheet changed', {
+                  file: isDirect.file,
+                  encapsulation,
+                });
 
                 // Track if the component uses ShadowDOM encapsulation
                 // Shadow DOM components currently require a full reload.
@@ -675,10 +681,13 @@ export function angular(options?: PluginOptions): Plugin[] {
 
         // Map angular external styleUrls to the source file
         if (isComponentStyleSheet(id)) {
-          const componentStyles = externalComponentStyles?.get(
-            getFilenameFromPath(id),
-          );
+          const filename = getFilenameFromPath(id);
+          const componentStyles = externalComponentStyles?.get(filename);
           if (componentStyles) {
+            debugStyles('resolveId: mapped external stylesheet', {
+              filename,
+              resolved: componentStyles,
+            });
             return componentStyles + new URL(id, 'http://localhost').search;
           }
         }
@@ -688,10 +697,13 @@ export function angular(options?: PluginOptions): Plugin[] {
       async load(id) {
         // Map angular inline styles to the source text
         if (isComponentStyleSheet(id)) {
-          const componentStyles = inlineComponentStyles?.get(
-            getFilenameFromPath(id),
-          );
+          const filename = getFilenameFromPath(id);
+          const componentStyles = inlineComponentStyles?.get(filename);
           if (componentStyles) {
+            debugStyles('load: served inline component stylesheet', {
+              filename,
+              length: componentStyles.length,
+            });
             return componentStyles;
           }
         }
@@ -739,6 +751,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             const { encapsulation, componentId } =
               getComponentStyleSheetMeta(id);
             if (encapsulation === 'emulated' && componentId) {
+              debugStyles('encapsulated emulated stylesheet', {
+                id,
+                componentId,
+              });
               const encapsulated = ngCompiler.encapsulateStyle(
                 code,
                 componentId,
@@ -1063,6 +1079,11 @@ export function angular(options?: PluginOptions): Plugin[] {
           // Non-liveReload: the CSS is returned directly to the Angular
           // compiler and never re-enters Vite's pipeline, so we must run
           // preprocessCSS() eagerly here.
+          debugStyles('eager preprocessCSS stylesheet', {
+            filename,
+            resourceFile: resourceFile ?? '(inline)',
+            dataLength: preprocessedData.length,
+          });
           let stylesheetResult;
 
           try {
@@ -1120,6 +1141,10 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     compilationResult.externalStylesheets?.forEach((value, key) => {
       externalComponentStyles?.set(`${value}.css`, key);
+      debugStyles('compilation API: registered external stylesheet', {
+        filename: `${value}.css`,
+        resolvedPath: key,
+      });
     });
 
     const diagnostics = await angularCompilation.diagnoseFiles(
@@ -1306,12 +1331,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     }
 
     if (!jit) {
-      inlineComponentStyles = tsCompilerOptions['externalRuntimeStyles']
-        ? new Map()
-        : undefined;
-      externalComponentStyles = tsCompilerOptions['externalRuntimeStyles']
-        ? new Map()
-        : undefined;
+      const externalizeStyles = !!tsCompilerOptions['externalRuntimeStyles'];
+      inlineComponentStyles = externalizeStyles ? new Map() : undefined;
+      externalComponentStyles = externalizeStyles ? new Map() : undefined;
+      debugStyles('legacy host style mode', {
+        externalizeStyles,
+      });
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
         isProd,

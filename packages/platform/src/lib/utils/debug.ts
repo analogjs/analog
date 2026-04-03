@@ -15,7 +15,7 @@ export const debugContent = createDebug('analog:platform:content');
 export function applyDebugOption(debug: boolean | string[] | undefined): void {
   if (debug === true) {
     enable('analog:*');
-  } else if (Array.isArray(debug)) {
+  } else if (Array.isArray(debug) && debug.length) {
     enable(debug.join(','));
   }
 }

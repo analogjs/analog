@@ -6,6 +6,7 @@ import * as ts from 'typescript';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import type { StylePreprocessor } from './style-preprocessor.js';
+import { debugStyles } from './utils/debug.js';
 import type { SourceFileCache } from './utils/source-file-cache.js';
 
 export function augmentHostWithResources(
@@ -70,11 +71,20 @@ export function augmentHostWithResources(
         .digest('hex');
       const stylesheetId = id + '.' + options.inlineStylesExtension;
       options.inlineComponentStyles.set(stylesheetId, preprocessedData);
+      debugStyles('legacy transformResource: externalized stylesheet', {
+        stylesheetId,
+        resourceFile: context.resourceFile ?? '(inline)',
+      });
       return { content: stylesheetId };
     }
 
     // Non-liveReload: CSS is returned directly to the Angular compiler
     // and never re-enters Vite's pipeline, so transform eagerly.
+    debugStyles('legacy transformResource: eager preprocessCSS stylesheet', {
+      filename,
+      resourceFile: context.resourceFile ?? '(inline)',
+      dataLength: preprocessedData.length,
+    });
     let stylesheetResult;
 
     try {
@@ -107,6 +117,11 @@ export function augmentHostWithResources(
     const filename = externalId + path.extname(resolvedPath);
 
     options.externalComponentStyles.set(filename, resolvedPath);
+    debugStyles('legacy resourceNameToFileName: mapped external stylesheet', {
+      resourceName,
+      resolvedPath,
+      filename,
+    });
 
     return filename;
   };
