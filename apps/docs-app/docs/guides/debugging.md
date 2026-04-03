@@ -78,6 +78,31 @@ analog({
 });
 ```
 
+### Different scopes per command
+
+Use an array of objects to enable different scopes for build and dev simultaneously:
+
+```ts
+analog({
+  debug: [
+    { scopes: ['analog:angular:hmr', 'analog:angular:styles'], mode: 'dev' },
+    { scopes: ['analog:platform:typed-router'], mode: 'build' },
+  ],
+});
+```
+
+You can mix immediate and deferred entries — entries without `mode` enable immediately for both commands:
+
+```ts
+analog({
+  debug: [
+    { scopes: ['analog:platform'] }, // both commands
+    { scopes: ['analog:angular:hmr'], mode: 'dev' }, // dev only
+    { scopes: ['analog:platform:typed-router'], mode: 'build' }, // build only
+  ],
+});
+```
+
 :::tip
 To enable debug output for **both** build and dev, simply omit `mode`. Any form without `mode` — `true`, a `string[]`, or `{ scopes }` — outputs in both commands.
 :::
@@ -99,16 +124,17 @@ DEBUG=analog:platform:* pnpm dev
 
 ## Configuration Reference
 
-| Form                                    | Scopes | When               |
-| --------------------------------------- | ------ | ------------------ |
-| `true`                                  | All    | Both build and dev |
-| `['scope1', 'scope2']`                  | Listed | Both build and dev |
-| `{ scopes: true }`                      | All    | Both build and dev |
-| `{ scopes: ['scope1'] }`                | Listed | Both build and dev |
-| `{ mode: 'dev' }`                       | All    | Dev only           |
-| `{ mode: 'build' }`                     | All    | Build only         |
-| `{ scopes: ['scope1'], mode: 'dev' }`   | Listed | Dev only           |
-| `{ scopes: ['scope1'], mode: 'build' }` | Listed | Build only         |
+| Form                                             | Scopes    | When                  |
+| ------------------------------------------------ | --------- | --------------------- |
+| `true`                                           | All       | Both build and dev    |
+| `['scope1', 'scope2']`                           | Listed    | Both build and dev    |
+| `{ scopes: true }`                               | All       | Both build and dev    |
+| `{ scopes: ['scope1'] }`                         | Listed    | Both build and dev    |
+| `{ mode: 'dev' }`                                | All       | Dev only              |
+| `{ mode: 'build' }`                              | All       | Build only            |
+| `{ scopes: ['scope1'], mode: 'dev' }`            | Listed    | Dev only              |
+| `{ scopes: ['scope1'], mode: 'build' }`          | Listed    | Build only            |
+| `[{ ..., mode: 'dev' }, { ..., mode: 'build' }]` | Per-entry | Split across commands |
 
 ## Available Scopes
 

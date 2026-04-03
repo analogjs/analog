@@ -116,4 +116,35 @@ describe('activateDeferredDebug (angular)', () => {
     activateDeferredDebug('serve');
     expect(enable).toHaveBeenCalledWith('analog:angular:compiler');
   });
+
+  it('activates different scopes per command from an array', () => {
+    applyDebugOption([
+      { scopes: ['analog:angular:hmr'], mode: 'dev' },
+      { scopes: ['analog:angular:compiler'], mode: 'build' },
+    ]);
+    activateDeferredDebug('build');
+    expect(enable).toHaveBeenCalledTimes(1);
+    expect(enable).toHaveBeenCalledWith('analog:angular:compiler');
+  });
+
+  it('activates the dev entry from an array when serving', () => {
+    applyDebugOption([
+      { scopes: ['analog:angular:hmr'], mode: 'dev' },
+      { scopes: ['analog:angular:compiler'], mode: 'build' },
+    ]);
+    activateDeferredDebug('serve');
+    expect(enable).toHaveBeenCalledTimes(1);
+    expect(enable).toHaveBeenCalledWith('analog:angular:hmr');
+  });
+
+  it('enables immediate entries and defers mode entries from an array', () => {
+    applyDebugOption([
+      { scopes: ['analog:angular:styles'] },
+      { scopes: ['analog:angular:hmr'], mode: 'dev' },
+    ]);
+    expect(enable).toHaveBeenCalledWith('analog:angular:styles');
+    vi.mocked(enable).mockClear();
+    activateDeferredDebug('serve');
+    expect(enable).toHaveBeenCalledWith('analog:angular:hmr');
+  });
 });

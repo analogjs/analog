@@ -111,4 +111,35 @@ describe('activateDeferredDebug (platform)', () => {
     activateDeferredDebug('serve');
     expect(enable).toHaveBeenCalledWith('analog:platform:routes');
   });
+
+  it('activates different scopes per command from an array', () => {
+    applyDebugOption([
+      { scopes: ['analog:angular:hmr'], mode: 'dev' },
+      { scopes: ['analog:platform:typed-router'], mode: 'build' },
+    ]);
+    activateDeferredDebug('build');
+    expect(enable).toHaveBeenCalledTimes(1);
+    expect(enable).toHaveBeenCalledWith('analog:platform:typed-router');
+  });
+
+  it('activates the dev entry from an array when serving', () => {
+    applyDebugOption([
+      { scopes: ['analog:angular:hmr'], mode: 'dev' },
+      { scopes: ['analog:platform:typed-router'], mode: 'build' },
+    ]);
+    activateDeferredDebug('serve');
+    expect(enable).toHaveBeenCalledTimes(1);
+    expect(enable).toHaveBeenCalledWith('analog:angular:hmr');
+  });
+
+  it('enables immediate entries and defers mode entries from an array', () => {
+    applyDebugOption([
+      { scopes: ['analog:platform'] },
+      { scopes: ['analog:angular:hmr'], mode: 'dev' },
+    ]);
+    expect(enable).toHaveBeenCalledWith('analog:platform');
+    vi.mocked(enable).mockClear();
+    activateDeferredDebug('serve');
+    expect(enable).toHaveBeenCalledWith('analog:angular:hmr');
+  });
 });
