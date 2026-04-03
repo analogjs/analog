@@ -1,3 +1,9 @@
+# [3.0.0-alpha.23](https://github.com/analogjs/analog/compare/v3.0.0-alpha.22...v3.0.0-alpha.23) (2026-04-03)
+
+### Features
+
+- **platform:** integrate obug structured debug logging ([#2223](https://github.com/analogjs/analog/issues/2223)) ([9089be2](https://github.com/analogjs/analog/commit/9089be20153465dec55e45afcab91b30115d588d))
+
 # [3.0.0-alpha.22](https://github.com/analogjs/analog/compare/v3.0.0-alpha.21...v3.0.0-alpha.22) (2026-04-01)
 
 ### Features
