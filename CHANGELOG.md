@@ -1,3 +1,9 @@
+# [2.5.0-beta.1](https://github.com/analogjs/analog/compare/v2.4.0...v2.5.0-beta.1) (2026-04-03)
+
+### Features
+
+- add @analogjs/angular-compiler package ([#2221](https://github.com/analogjs/analog/issues/2221)) ([d2dfbe0](https://github.com/analogjs/analog/commit/d2dfbe0b599d4739d62fffb3f7b3740e84eb31d6))
+
 # [2.4.0](https://github.com/analogjs/analog/compare/v2.3.1...v2.4.0) (2026-03-30)
 
 ### Bug Fixes
