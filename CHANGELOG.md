@@ -1,3 +1,13 @@
+# [2.5.0-beta.2](https://github.com/analogjs/analog/compare/v2.5.0-beta.1...v2.5.0-beta.2) (2026-04-03)
+
+### Bug Fixes
+
+- correct release config replacement file path ([c91ce2d](https://github.com/analogjs/analog/commit/c91ce2dc2fb5e49991acf16a6fd2fb147835b579))
+
+### Features
+
+- improve hmr with dynamic ivy field copying and directive/pipe support ([d568bf2](https://github.com/analogjs/analog/commit/d568bf26b8cf562cb6aebffddadb01b827c40ae8))
+
 # [2.5.0-beta.1](https://github.com/analogjs/analog/compare/v2.4.0...v2.5.0-beta.1) (2026-04-03)
 
 ### Features
