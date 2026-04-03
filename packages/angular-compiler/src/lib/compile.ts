@@ -227,9 +227,32 @@ export function compile(
             if (registryEntry?.kind === 'ngmodule' && registryEntry.exports) {
               const moduleSpecifier = importSpecifierByName.get(depClassName);
 
-              for (const exportedName of registryEntry.exports) {
+              // Recursively collect all non-module exports (handles nested NgModules
+              // like ReactiveFormsModule → ɵInternalFormsSharedModule → DefaultValueAccessor)
+              const allExports: string[] = [];
+              const expandModule = (
+                moduleName: string,
+                visited = new Set<string>(),
+              ) => {
+                if (visited.has(moduleName)) return;
+                visited.add(moduleName);
+                const mod = registry?.get(moduleName);
+                if (!mod?.exports) return;
+                for (const name of mod.exports) {
+                  const entry = registry?.get(name);
+                  if (!entry) continue;
+                  if (entry.kind === 'ngmodule') {
+                    expandModule(name, visited);
+                  } else {
+                    allExports.push(name);
+                  }
+                }
+              };
+              expandModule(depClassName);
+
+              for (const exportedName of allExports) {
                 const exportedEntry = registry?.get(exportedName);
-                if (exportedEntry && exportedEntry.kind !== 'ngmodule') {
+                if (exportedEntry) {
                   const kind = exportedEntry.kind === 'pipe' ? 1 : 0;
                   // Create a reference to the exported class. If it's not
                   // already imported, track it for synthetic import injection.
