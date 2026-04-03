@@ -835,13 +835,12 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
+          const hasComponent = code.includes('@Component');
           debugCompiler('transform', {
             id,
             codeLength: code.length,
-            hasComponent: code.includes('@Component'),
+            hasComponent,
           });
-
-          const hasComponent = code.includes('@Component');
           const templateUrls = hasComponent
             ? templateUrlsResolver.resolve(code, id)
             : [];
