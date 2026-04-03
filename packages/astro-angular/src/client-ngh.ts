@@ -25,7 +25,6 @@ export default (element: HTMLElement) => {
       hydrationFeatures?: HydrationFeature<HydrationFeatureKind>[];
     },
     props?: Record<string, unknown>,
-    _childHTML?: unknown,
   ) => {
     const mirror = reflectComponentType(Component);
 

@@ -23,11 +23,7 @@ import { getContext, incrementId, type RendererContext } from './context.ts';
 import { provideBootstrapListener } from './server-providers.ts';
 import { ID_PROP_NAME } from './id.ts';
 
-async function check(
-  Component: Type<unknown>,
-  _props: Record<string, unknown>,
-  _children: unknown,
-) {
+async function check(Component: Type<unknown>) {
   return !!reflectComponentType(Component);
 }
 
