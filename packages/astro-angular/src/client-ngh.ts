@@ -8,6 +8,7 @@ import {
   createComponent,
   ɵCLIENT_RENDER_MODE_FLAG,
   ɵSSR_CONTENT_INTEGRITY_MARKER,
+  APP_BOOTSTRAP_LISTENER,
 } from '@angular/core';
 import {
   createApplication,
@@ -22,7 +23,7 @@ export default (element: HTMLElement) => {
   return (
     Component: Type<unknown> & {
       clientProviders?: (Provider | EnvironmentProviders)[];
-      hydrationFeatures?: HydrationFeature<HydrationFeatureKind>[];
+      hydrationFeatures?: () => HydrationFeature<HydrationFeatureKind>[];
     },
     props?: Record<string, unknown>,
   ) => {
@@ -53,7 +54,7 @@ export default (element: HTMLElement) => {
     createApplication({
       providers: [
         provideZonelessChangeDetection(),
-        provideClientHydration(...(Component.hydrationFeatures || [])),
+        provideClientHydration(...(Component.hydrationFeatures?.() || [])),
         {
           provide: APP_ID,
           useValue: ngAppId || 'ng',
@@ -68,6 +69,12 @@ export default (element: HTMLElement) => {
       });
 
       appRef.attachView(componentRef.hostView);
+
+      appRef.components.push(componentRef);
+
+      appRef.injector
+        .get(APP_BOOTSTRAP_LISTENER, [])
+        .forEach((cb) => cb(componentRef));
     });
   };
 };

@@ -31,7 +31,7 @@ async function renderToStaticMarkup(
   this: RendererContext,
   Component: Type<unknown> & {
     renderProviders?: (Provider | EnvironmentProviders)[];
-    hydrationFeatures?: HydrationFeature<HydrationFeatureKind>[];
+    hydrationFeatures?: () => HydrationFeature<HydrationFeatureKind>[];
   },
   props: Record<string, unknown>,
   _children: unknown,
@@ -65,7 +65,7 @@ async function renderToStaticMarkup(
           { provide: ɵSERVER_CONTEXT, useValue: 'analog' },
           provideZonelessChangeDetection(),
           metadata?.hydrate
-            ? provideClientHydration(...(Component.hydrationFeatures || []))
+            ? provideClientHydration(...(Component.hydrationFeatures?.() || []))
             : [],
           {
             provide: APP_ID,

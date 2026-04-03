@@ -1,11 +1,10 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CardComponent } from './card.component';
-import { DeferredComponent } from './deferred.component';
 
 @Component({
   selector: 'astro-parent',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CardComponent, DeferredComponent],
+  imports: [CardComponent],
   styles: `
     p {
       margin: 8px 0;
@@ -19,12 +18,6 @@ import { DeferredComponent } from './deferred.component';
       body="Built with Angular. ❤️"
       (output)="handleClick($event)"
     />
-
-    @defer {
-      <astro-deferred />
-    } @placeholder {
-      <p>Loading deferred component...</p>
-    }
   `,
 })
 export class ParentComponent {
