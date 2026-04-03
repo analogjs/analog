@@ -1,17 +1,8 @@
-import '@angular/compiler';
+import './testing/init-test-env';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { getTestBed, TestBed } from '@angular/core/testing';
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
+import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { AppComponent } from './app.component';
-
-getTestBed().initTestEnvironment(
-  BrowserTestingModule,
-  platformBrowserTesting(),
-);
 
 describe('AppComponent', () => {
   beforeEach(async () => {
