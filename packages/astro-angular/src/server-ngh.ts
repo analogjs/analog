@@ -13,12 +13,13 @@ import {
 } from '@angular/platform-server';
 import {
   bootstrapApplication,
+  type HydrationFeature,
+  type HydrationFeatureKind,
   provideClientHydration,
-  withNoHttpTransferCache,
   type BootstrapContext,
 } from '@angular/platform-browser';
 import type { AstroComponentMetadata, SSRLoadedRendererValue } from 'astro';
-import { getContext, incrementId, RendererContext } from './context.ts';
+import { getContext, incrementId, type RendererContext } from './context.ts';
 import { provideBootstrapListener } from './server-providers.ts';
 import { ID_PROP_NAME } from './id.ts';
 
@@ -33,7 +34,8 @@ async function check(
 async function renderToStaticMarkup(
   this: RendererContext,
   Component: Type<unknown> & {
-    renderProviders: (Provider | EnvironmentProviders)[];
+    renderProviders?: (Provider | EnvironmentProviders)[];
+    hydrationFeatures?: HydrationFeature<HydrationFeatureKind>[];
   },
   props: Record<string, unknown>,
   _children: unknown,
@@ -66,7 +68,9 @@ async function renderToStaticMarkup(
           provideServerRendering(),
           { provide: ɵSERVER_CONTEXT, useValue: 'analog' },
           provideZonelessChangeDetection(),
-          metadata?.hydrate ? provideClientHydration() : [],
+          metadata?.hydrate
+            ? provideClientHydration(...(Component.hydrationFeatures || []))
+            : [],
           {
             provide: APP_ID,
             useValue: ngAppId,

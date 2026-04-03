@@ -1,6 +1,6 @@
 import {
-  EnvironmentProviders,
-  Provider,
+  type EnvironmentProviders,
+  type Provider,
   reflectComponentType,
   provideZonelessChangeDetection,
   Type,
@@ -11,6 +11,8 @@ import {
 } from '@angular/core';
 import {
   createApplication,
+  type HydrationFeature,
+  type HydrationFeatureKind,
   provideClientHydration,
 } from '@angular/platform-browser';
 import { createComponentBindings } from './create-component.ts';
@@ -20,6 +22,7 @@ export default (element: HTMLElement) => {
   return (
     Component: Type<unknown> & {
       clientProviders?: (Provider | EnvironmentProviders)[];
+      hydrationFeatures?: HydrationFeature<HydrationFeatureKind>[];
     },
     props?: Record<string, unknown>,
     _childHTML?: unknown,
@@ -51,7 +54,7 @@ export default (element: HTMLElement) => {
     createApplication({
       providers: [
         provideZonelessChangeDetection(),
-        provideClientHydration(),
+        provideClientHydration(...(Component.hydrationFeatures || [])),
         {
           provide: APP_ID,
           useValue: ngAppId || 'ng',
