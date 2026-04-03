@@ -1,6 +1,7 @@
 import { Plugin } from 'vite';
 import viteNitroPlugin from '@analogjs/vite-plugin-nitro';
 import angular from '@analogjs/vite-plugin-angular';
+import { mapValues, union } from 'lodash-es';
 
 import { Options } from './options.js';
 import { discoverLibraryRoutes } from './discover-library-routes.js';
@@ -31,24 +32,18 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
       process.env['NX_WORKSPACE_ROOT'] ??
       process.cwd();
     const discovered = discoverLibraryRoutes(workspaceRoot);
-    platformOptions.additionalPagesDirs = [
-      ...new Set([
-        ...(platformOptions.additionalPagesDirs ?? []),
-        ...discovered.additionalPagesDirs,
-      ]),
-    ];
-    platformOptions.additionalContentDirs = [
-      ...new Set([
-        ...(platformOptions.additionalContentDirs ?? []),
-        ...discovered.additionalContentDirs,
-      ]),
-    ];
-    platformOptions.additionalAPIDirs = [
-      ...new Set([
-        ...(platformOptions.additionalAPIDirs ?? []),
-        ...discovered.additionalAPIDirs,
-      ]),
-    ];
+    platformOptions.additionalPagesDirs = union(
+      platformOptions.additionalPagesDirs ?? [],
+      discovered.additionalPagesDirs,
+    );
+    platformOptions.additionalContentDirs = union(
+      platformOptions.additionalContentDirs ?? [],
+      discovered.additionalContentDirs,
+    );
+    platformOptions.additionalAPIDirs = union(
+      platformOptions.additionalAPIDirs ?? [],
+      discovered.additionalAPIDirs,
+    );
   }
 
   const useAngularCompilationAPI =
@@ -59,22 +54,13 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   if (nitroOptions?.routeRules) {
     nitroOptions = {
       ...nitroOptions,
-      routeRules: Object.keys(nitroOptions.routeRules).reduce(
-        (config, curr) => {
-          return {
-            ...config,
-            [curr]: {
-              ...config[curr],
-              headers: {
-                ...config[curr].headers,
-                'x-analog-no-ssr':
-                  config[curr]?.ssr === false ? 'true' : undefined,
-              } as any,
-            },
-          };
-        },
-        nitroOptions.routeRules,
-      ),
+      routeRules: mapValues(nitroOptions.routeRules, (rule) => ({
+        ...rule,
+        headers: {
+          ...rule.headers,
+          'x-analog-no-ssr': rule?.ssr === false ? 'true' : undefined,
+        } as any,
+      })),
     };
   }
 

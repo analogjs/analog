@@ -90,7 +90,8 @@
     "tslib": "catalog:"
   },
   "devDependencies": {
-    "@analogjs/vite-plugin-angular": "^3.0.0-alpha.22"
+    "@analogjs/vite-plugin-angular": "^3.0.0-alpha.22",
+    "lodash-es": "catalog:"
   },
   "ng-update": {
     "packageGroup": [

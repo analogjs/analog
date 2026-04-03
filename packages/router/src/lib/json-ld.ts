@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
+import { isPlainObject } from 'lodash-es';
 import { filter } from 'rxjs/operators';
 
 import type { Graph, Thing, WithContext } from 'schema-dts';
@@ -8,7 +9,7 @@ import type { Graph, Thing, WithContext } from 'schema-dts';
 export type JsonLdObject = Record<string, unknown>;
 
 export function isJsonLdObject(value: unknown): value is JsonLdObject {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return isPlainObject(value);
 }
 
 export function normalizeJsonLd(value: unknown): JsonLdObject[] {
