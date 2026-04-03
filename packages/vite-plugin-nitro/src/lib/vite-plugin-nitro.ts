@@ -32,6 +32,7 @@ import {
   apiMiddleware,
 } from './utils/renderers.js';
 import { getBundleOptionsKey, isRolldown } from './utils/rolldown.js';
+import { debugNitro, debugSsr } from './utils/debug.js';
 
 function createNitroMiddlewareHandler(handler: string): NitroEventHandler {
   return {
@@ -197,12 +198,12 @@ function resolveClientOutputPath(
   configuredOutDir: string | undefined,
 ) {
   if (cachedPath) {
-    debugLog('resolveClientOutputPath using cached path', () => ({
+    debugNitro('resolveClientOutputPath using cached path', {
       cachedPath,
       workspaceRoot,
       rootDir,
       configuredOutDir,
-    }));
+    });
     return cachedPath;
   }
 
@@ -210,12 +211,12 @@ function resolveClientOutputPath(
     const resolvedPath = normalizePath(
       resolve(workspaceRoot, rootDir, configuredOutDir),
     );
-    debugLog('resolveClientOutputPath using configured build.outDir', () => ({
+    debugNitro('resolveClientOutputPath using configured build.outDir', {
       workspaceRoot,
       rootDir,
       configuredOutDir,
       resolvedPath,
-    }));
+    });
     return resolvedPath;
   }
 
@@ -226,12 +227,12 @@ function resolveClientOutputPath(
   const resolvedPath = normalizePath(
     resolve(workspaceRoot, 'dist', rootDir, 'client'),
   );
-  debugLog('resolveClientOutputPath using default dist client path', () => ({
+  debugNitro('resolveClientOutputPath using default dist client path', {
     workspaceRoot,
     rootDir,
     configuredOutDir,
     resolvedPath,
-  }));
+  });
   return resolvedPath;
 }
 
@@ -268,27 +269,24 @@ function resolveBuiltClientOutputPath(
     const resolvedPath = normalizePath(
       resolve(workspaceRoot, rootDir, environmentOutDir),
     );
-    debugLog('resolveBuiltClientOutputPath using environment outDir', () => ({
+    debugNitro('resolveBuiltClientOutputPath using environment outDir', {
       cachedPath,
       workspaceRoot,
       rootDir,
       configuredOutDir,
       environmentOutDir,
       resolvedPath,
-    }));
+    });
     return resolvedPath;
   }
 
-  debugLog(
-    'resolveBuiltClientOutputPath falling back to shared resolver',
-    () => ({
-      cachedPath,
-      workspaceRoot,
-      rootDir,
-      configuredOutDir,
-      environmentOutDir,
-    }),
-  );
+  debugNitro('resolveBuiltClientOutputPath falling back to shared resolver', {
+    cachedPath,
+    workspaceRoot,
+    rootDir,
+    configuredOutDir,
+    environmentOutDir,
+  });
   return resolveClientOutputPath(
     cachedPath,
     workspaceRoot,
@@ -306,48 +304,6 @@ function getNitroPublicOutputDir(nitroConfig: NitroConfig): string {
   }
 
   return publicDir;
-}
-
-const DEBUG_NAMESPACE = 'analog:vite-plugin-nitro';
-
-function escapeRegExp(value: string) {
-  return value.replace(/[|\\{}()[\]^$+?.*]/g, '\\$&');
-}
-
-// Keep DEBUG matching local to this package so CI can opt into verbose traces
-// with familiar patterns like `analog:*` without adding a runtime dependency.
-function isDebugEnabled(namespace: string) {
-  const debugValue = process.env['DEBUG'];
-  if (!debugValue) {
-    return false;
-  }
-
-  return debugValue
-    .split(/[\s,]+/)
-    .filter(Boolean)
-    .some((pattern) => {
-      const matcher = new RegExp(
-        `^${escapeRegExp(pattern).replace(/\\\*/g, '.*')}$`,
-      );
-      return matcher.test(namespace);
-    });
-}
-
-function debugLog(
-  label: string,
-  details?: Record<string, unknown> | (() => Record<string, unknown>),
-) {
-  if (!isDebugEnabled(DEBUG_NAMESPACE)) {
-    return;
-  }
-
-  const resolvedDetails = typeof details === 'function' ? details() : details;
-  if (resolvedDetails && Object.keys(resolvedDetails).length > 0) {
-    console.log(`DEBUG: ${label}`, resolvedDetails);
-    return;
-  }
-
-  console.log(`DEBUG: ${label}`);
 }
 
 function readDirectoryEntries(path: string): string[] {
@@ -394,23 +350,23 @@ function captureClientIndexHtmlFromBundle(
   );
 
   if (!indexHtmlAsset?.source) {
-    debugLog(`client bundle did not expose index.html during ${hook}`, () => ({
+    debugNitro(`client bundle did not expose index.html during ${hook}`, {
       hook,
       bundleKeys: Object.keys(bundle).sort(),
       assetFileNames: Object.values(bundle)
         .filter((chunk) => chunk.type === 'asset')
         .map((chunk) => chunk.fileName)
         .filter(Boolean),
-    }));
+    });
     return undefined;
   }
 
   const indexHtml = assetSourceToString(indexHtmlAsset.source);
-  debugLog(`captured client bundle index.html asset during ${hook}`, () => ({
+  debugNitro(`captured client bundle index.html asset during ${hook}`, {
     hook,
     fileName: indexHtmlAsset.fileName,
     htmlLength: indexHtml.length,
-  }));
+  });
   return indexHtml;
 }
 
@@ -423,7 +379,7 @@ function registerIndexHtmlVirtual(
   inlineIndexHtml?: string,
 ) {
   const indexHtmlPath = resolve(clientOutputPath, 'index.html');
-  debugLog('registerIndexHtmlVirtual inspecting client output', () => ({
+  debugNitro('registerIndexHtmlVirtual inspecting client output', {
     platform: process.platform,
     cwd: process.cwd(),
     clientOutputPath,
@@ -431,9 +387,9 @@ function registerIndexHtmlVirtual(
     indexHtmlPath,
     indexHtmlExists: existsSync(indexHtmlPath),
     hasInlineIndexHtml: typeof inlineIndexHtml === 'string',
-  }));
+  });
   if (!existsSync(indexHtmlPath) && typeof inlineIndexHtml !== 'string') {
-    debugLog('registerIndexHtmlVirtual missing index.html', () => ({
+    debugNitro('registerIndexHtmlVirtual missing index.html', {
       platform: process.platform,
       cwd: process.cwd(),
       clientOutputPath,
@@ -442,7 +398,7 @@ function registerIndexHtmlVirtual(
       hasInlineIndexHtml: typeof inlineIndexHtml === 'string',
       nitroOutput: nitroConfig.output,
       nitroPublicAssets: nitroConfig.publicAssets,
-    }));
+    });
     throw new Error(
       `[analog] Client build output not found at ${indexHtmlPath}.\n` +
         `Ensure the client environment build completed successfully before the server build.`,
@@ -452,13 +408,13 @@ function registerIndexHtmlVirtual(
     typeof inlineIndexHtml === 'string'
       ? inlineIndexHtml
       : readFileSync(indexHtmlPath, 'utf8');
-  debugLog('registerIndexHtmlVirtual using HTML template source', () => ({
+  debugNitro('registerIndexHtmlVirtual using HTML template source', {
     source:
       typeof inlineIndexHtml === 'string'
         ? 'captured client bundle asset'
         : 'client output index.html file',
     indexHtmlPath,
-  }));
+  });
   nitroConfig.virtual = {
     ...nitroConfig.virtual,
     '#analog/index': `export default ${JSON.stringify(indexHtml)};`,
@@ -629,7 +585,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           rootDir,
           config.build?.outDir,
         );
-        debugLog('nitro config resolved client output path', () => ({
+        debugNitro('nitro config resolved client output path', {
           platform: process.platform,
           workspaceRoot,
           configRoot: config.root,
@@ -649,7 +605,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   }
                 ).build?.outDir
               : undefined,
-        }));
+        });
 
         nitroConfig = {
           rootDir: normalizePath(rootDir),
@@ -748,13 +704,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         if (!ssrBuild && !isTest) {
           // store the client output path for the SSR build config
           clientOutputPath = resolvedClientOutputPath;
-          debugLog(
+          debugNitro(
             'nitro config cached client output path for later SSR/Nitro build',
-            () => ({
+            {
               ssrBuild,
               isTest,
               clientOutputPath,
-            }),
+            },
           );
         }
 
@@ -1050,7 +1006,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             sharedPlugins: true,
             buildApp: async (builder) => {
               environmentBuild = true;
-              debugLog('builder.buildApp starting', () => ({
+              debugNitro('builder.buildApp starting', {
                 platform: process.platform,
                 workspaceRoot,
                 rootDir,
@@ -1062,7 +1018,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 ssrEnvironmentOutDir: getEnvironmentBuildOutDir(
                   builder.environments['ssr'],
                 ),
-              }));
+              });
 
               // Client must complete before SSR — the server build reads the
               // client's index.html via registerIndexHtmlVirtual(). Running
@@ -1084,7 +1040,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 postClientBuildOutputPath,
                 clientIndexHtml,
               );
-              debugLog('builder.buildApp completed client build', () => ({
+              debugNitro('builder.buildApp completed client build', {
                 postClientBuildOutputPath,
                 postClientBuildOutputInfo: getPathDebugInfo(
                   postClientBuildOutputPath,
@@ -1096,19 +1052,19 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 postClientBuildIndexHtmlExists: existsSync(
                   resolve(postClientBuildOutputPath, 'index.html'),
                 ),
-              }));
+              });
 
               if (options?.ssr || nitroConfig.prerender?.routes?.length) {
-                debugLog('builder.buildApp starting SSR build', () => ({
+                debugSsr('builder.buildApp starting SSR build', {
                   ssrEnabled: options?.ssr,
                   prerenderRoutes: nitroConfig.prerender?.routes,
-                }));
+                });
                 await builder.build(builder.environments['ssr']);
-                debugLog('builder.buildApp completed SSR build', () => ({
+                debugSsr('builder.buildApp completed SSR build', {
                   ssrOutputPath:
                     options?.ssrBuildDir ||
                     resolve(workspaceRoot, 'dist', rootDir, 'ssr'),
-                }));
+                });
               }
 
               applySsrEntryAlias(nitroConfig, options, workspaceRoot, rootDir);
@@ -1124,15 +1080,15 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               nitroConfig.publicAssets = [
                 { dir: normalizePath(resolvedClientOutputPath), maxAge: 0 },
               ];
-              debugLog(
+              debugNitro(
                 'builder.buildApp resolved final client output path before Nitro build',
-                () => ({
+                {
                   resolvedClientOutputPath,
                   resolvedClientOutputInfo: getPathDebugInfo(
                     resolvedClientOutputPath,
                   ),
                   nitroPublicAssets: nitroConfig.publicAssets,
-                }),
+                },
               );
 
               await buildServer(options, nitroConfig, routeSourceFiles);
@@ -1360,9 +1316,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             rootDir,
             config.build?.outDir,
           );
-          debugLog(
+          debugNitro(
             'closeBundle resolved client output path before legacy SSR build',
-            () => ({
+            {
               platform: process.platform,
               workspaceRoot,
               rootDir,
@@ -1372,23 +1328,23 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               resolvedClientOutputInfo: getPathDebugInfo(
                 resolvedClientOutputPath,
               ),
-            }),
+            },
           );
           const indexHtmlPath = resolve(resolvedClientOutputPath, 'index.html');
           if (
             !existsSync(indexHtmlPath) &&
             typeof clientIndexHtml !== 'string'
           ) {
-            debugLog(
+            debugNitro(
               'closeBundle rebuilding missing client output before SSR/Nitro',
-              () => ({
+              {
                 platform: process.platform,
                 workspaceRoot,
                 rootDir,
                 configuredBuildOutDir: config.build?.outDir,
                 resolvedClientOutputPath,
                 indexHtmlPath,
-              }),
+              },
             );
             legacyClientSubBuild = true;
             try {
@@ -1410,20 +1366,20 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           if (options?.ssr) {
             console.log('Building SSR application...');
             await buildSSRApp(config, options);
-            debugLog('closeBundle completed standalone SSR build', () => ({
+            debugSsr('closeBundle completed standalone SSR build', {
               ssrBuildDir:
                 options?.ssrBuildDir ||
                 resolve(workspaceRoot, 'dist', rootDir, 'ssr'),
               clientOutputPathInfo: clientOutputPath
                 ? getPathDebugInfo(clientOutputPath)
                 : null,
-            }));
+            });
           }
 
           applySsrEntryAlias(nitroConfig, options, workspaceRoot, rootDir);
-          debugLog(
+          debugNitro(
             'closeBundle resolved client output path before Nitro build',
-            () => ({
+            {
               platform: process.platform,
               workspaceRoot,
               rootDir,
@@ -1433,7 +1389,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               resolvedClientOutputInfo: getPathDebugInfo(
                 resolvedClientOutputPath,
               ),
-            }),
+            },
           );
           registerIndexHtmlVirtual(
             nitroConfig,

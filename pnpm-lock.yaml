@@ -45,6 +45,9 @@ catalogs:
     nitro:
       specifier: 3.0.260311-beta
       version: 3.0.260311-beta
+    obug:
+      specifier: ^2.1.1
+      version: 2.1.1
     ofetch:
       specifier: 2.0.0-alpha.3
       version: 2.0.0-alpha.3
@@ -1001,11 +1004,11 @@ importers:
   packages/platform:
     dependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: ^3.0.0-alpha.21
-        version: 3.0.0-alpha.21(@angular-devkit/build-angular@21.2.4(562e135550fb493df3034c3b70b31f89))(@angular/build@21.2.4(ce7d2ad427afc0ad407f7182efa58bb6))
+        specifier: ^3.0.0-alpha.22
+        version: 3.0.0-alpha.22(@angular-devkit/build-angular@21.2.4(562e135550fb493df3034c3b70b31f89))(@angular/build@21.2.4(ce7d2ad427afc0ad407f7182efa58bb6))
       '@analogjs/vite-plugin-nitro':
-        specifier: ^3.0.0-alpha.21
-        version: 3.0.0-alpha.21(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(sharp@0.34.5)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))
+        specifier: ^3.0.0-alpha.22
+        version: 3.0.0-alpha.22(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(sharp@0.34.5)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))
       '@nx/angular':
         specifier: catalog:peerCompat
         version: 22.6.2(a628988cf4934ddb1865ff37c54d348f)
@@ -1036,6 +1039,9 @@ importers:
       nitro:
         specifier: 'catalog:'
         version: 3.0.260311-beta(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))
+      obug:
+        specifier: 'catalog:'
+        version: 2.1.1
       rolldown:
         specifier: 'catalog:'
         version: 1.0.0-rc.12
@@ -1055,8 +1061,8 @@ importers:
   packages/router:
     dependencies:
       '@analogjs/content':
-        specifier: ^3.0.0-alpha.21
-        version: 3.0.0-alpha.21(e977d14c678c967b6a9368677a699f69)
+        specifier: ^3.0.0-alpha.22
+        version: 3.0.0-alpha.22(e977d14c678c967b6a9368677a699f69)
       '@angular/core':
         specifier: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
         version: 21.2.6(@angular/compiler@21.2.6)(rxjs@7.8.2)(zone.js@0.16.1)
@@ -1080,8 +1086,8 @@ importers:
         version: 2.8.1
     devDependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: ^3.0.0-alpha.21
-        version: 3.0.0-alpha.21(@angular-devkit/build-angular@21.2.4(562e135550fb493df3034c3b70b31f89))(@angular/build@21.2.4(ce7d2ad427afc0ad407f7182efa58bb6))
+        specifier: ^3.0.0-alpha.22
+        version: 3.0.0-alpha.22(@angular-devkit/build-angular@21.2.4(562e135550fb493df3034c3b70b31f89))(@angular/build@21.2.4(ce7d2ad427afc0ad407f7182efa58bb6))
 
   packages/storybook-angular:
     dependencies:
@@ -1109,6 +1115,9 @@ importers:
       '@angular/build':
         specifier: catalog:peerAngularBuilders
         version: 21.2.4(f1c48cde826f2133f9c7e32cd03964bb)
+      obug:
+        specifier: 'catalog:'
+        version: 2.1.1
       oxc-parser:
         specifier: 'catalog:'
         version: 0.121.0
@@ -1132,6 +1141,9 @@ importers:
       nitro:
         specifier: 'catalog:'
         version: 3.0.260311-beta(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))
+      obug:
+        specifier: 'catalog:'
+        version: 2.1.1
       ofetch:
         specifier: 'catalog:'
         version: 2.0.0-alpha.3
@@ -1284,8 +1296,8 @@ packages:
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
 
-  '@analogjs/content@3.0.0-alpha.21':
-    resolution: {integrity: sha512-5FFfaK53juUz8sBcOoaphWPXZbRU5Ko1uOXXlVzRFbdt31p2cDsXKG9RxAQcoDHOckZFfPplM4FaGzXMfnqskQ==}
+  '@analogjs/content@3.0.0-alpha.22':
+    resolution: {integrity: sha512-qZiakQ6JrnchE8CURsBc5x/t+b2m8U+uV4jELaLVmDRaJ2eWZOssD3i6yavQuvhw16N3J+Fj9LfFSE/Bc7bmlw==}
     peerDependencies:
       '@angular/common': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
       '@angular/core': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
@@ -1331,8 +1343,8 @@ packages:
       '@angular/build':
         optional: true
 
-  '@analogjs/vite-plugin-angular@3.0.0-alpha.21':
-    resolution: {integrity: sha512-rSy4lPyzIjwdKehVjF5j+RYYklUNOBRCOq3Ic3i77g3CsVC6/cKQGyyslzvXiXIzaEa4QD0dk+HNxEoilIv81w==}
+  '@analogjs/vite-plugin-angular@3.0.0-alpha.22':
+    resolution: {integrity: sha512-Qcd+d3Scc+KQ4el73M+V2cFqTT1YRCan/ZX6rChr9klzYQEaMnE33tlNyBW9s8iANCkwJP5NVQAz9dMZj/i2zg==}
     peerDependencies:
       '@angular-devkit/build-angular': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
       '@angular/build': ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
@@ -1342,8 +1354,8 @@ packages:
       '@angular/build':
         optional: true
 
-  '@analogjs/vite-plugin-nitro@3.0.0-alpha.21':
-    resolution: {integrity: sha512-LtRcmxSHeBVJGPutbDtPtXMFlILCPXd5cvLuuHb+phr+HY6VyCRFSr9Km7dt1zavkKMN+mM09BwN19REEPUFMg==}
+  '@analogjs/vite-plugin-nitro@3.0.0-alpha.22':
+    resolution: {integrity: sha512-xNI/xD4edOgJJMeQy66AeQlmuOTaI5GFNDjJ/MbNe22HB8qOZHf5iAcS/ZcBMq0RphCUzmPBXWLDf+/glqL9LQ==}
     peerDependencies:
       sharp: '>=0.32.0'
     peerDependenciesMeta:
@@ -16112,7 +16124,7 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.12
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@analogjs/content@3.0.0-alpha.21(e977d14c678c967b6a9368677a699f69)':
+  '@analogjs/content@3.0.0-alpha.22(e977d14c678c967b6a9368677a699f69)':
     dependencies:
       '@angular/common': 21.2.6(@angular/core@21.2.6(@angular/compiler@21.2.6)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2)
       '@angular/core': 21.2.6(@angular/compiler@21.2.6)(rxjs@7.8.2)(zone.js@0.16.1)
@@ -16142,7 +16154,7 @@ snapshots:
       '@angular-devkit/build-angular': 21.2.4(562e135550fb493df3034c3b70b31f89)
       '@angular/build': 21.2.4(ce7d2ad427afc0ad407f7182efa58bb6)
 
-  '@analogjs/vite-plugin-angular@3.0.0-alpha.21(@angular-devkit/build-angular@21.2.4(562e135550fb493df3034c3b70b31f89))(@angular/build@21.2.4(ce7d2ad427afc0ad407f7182efa58bb6))':
+  '@analogjs/vite-plugin-angular@3.0.0-alpha.22(@angular-devkit/build-angular@21.2.4(562e135550fb493df3034c3b70b31f89))(@angular/build@21.2.4(ce7d2ad427afc0ad407f7182efa58bb6))':
     dependencies:
       oxc-parser: 0.121.0
       oxc-resolver: 11.19.1
@@ -16152,7 +16164,7 @@ snapshots:
       '@angular-devkit/build-angular': 21.2.4(562e135550fb493df3034c3b70b31f89)
       '@angular/build': 21.2.4(ce7d2ad427afc0ad407f7182efa58bb6)
 
-  '@analogjs/vite-plugin-nitro@3.0.0-alpha.21(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(sharp@0.34.5)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))':
+  '@analogjs/vite-plugin-nitro@3.0.0-alpha.22(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(sharp@0.34.5)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))':
     dependencies:
       defu: 6.1.4
       nitro: 3.0.260311-beta(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))

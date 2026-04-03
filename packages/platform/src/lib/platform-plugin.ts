@@ -3,6 +3,7 @@ import viteNitroPlugin from '@analogjs/vite-plugin-nitro';
 import angular from '@analogjs/vite-plugin-angular';
 
 import { Options } from './options.js';
+import { applyDebugOption } from './utils/debug.js';
 import { discoverLibraryRoutes } from './discover-library-routes.js';
 import { routerPlugin } from './router-plugin.js';
 import { ssrBuildPlugin } from './ssr/ssr-build-plugin.js';
@@ -19,6 +20,8 @@ function externalPlugins(plugins: unknown): Plugin[] {
 }
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
+  applyDebugOption(opts.debug);
+
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const viteOptions = opts?.vite === false ? undefined : opts?.vite;
   const { ...platformOptions } = {
@@ -106,6 +109,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
             liveReload: platformOptions.liveReload,
             inlineStylesExtension: platformOptions.inlineStylesExtension,
             fileReplacements: platformOptions.fileReplacements,
+            debug: platformOptions.debug,
             ...(viteOptions ?? {}),
             experimental: {
               ...(viteOptions?.experimental ?? {}),

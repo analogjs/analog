@@ -87,6 +87,16 @@ export interface Options {
    * Enables Angular's HMR during development
    */
   liveReload?: boolean;
+  /**
+   * Enable debug logging for specific scopes.
+   *
+   * - `true` → enables all `analog:*` scopes (platform + angular + nitro)
+   * - `string[]` → enables listed namespaces
+   *
+   * Also responds to the `DEBUG` env var (Node.js) or `localStorage.debug`
+   * (browser), using the `obug` convention.
+   */
+  debug?: boolean | string[];
 
   /**
    * Additional page paths to include

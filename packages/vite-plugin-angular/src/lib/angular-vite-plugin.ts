@@ -51,6 +51,12 @@ import {
   SourceFileCache,
   angularFullVersion,
 } from './utils/devkit.js';
+import {
+  applyDebugOption,
+  debugCompiler,
+  debugHmr,
+  debugStyles,
+} from './utils/debug.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
 
@@ -101,6 +107,16 @@ export interface PluginOptions {
   experimental?: {
     useAngularCompilationAPI?: boolean;
   };
+  /**
+   * Enable debug logging for specific scopes.
+   *
+   * - `true` → enables all `analog:angular:*` scopes
+   * - `string[]` → enables listed namespaces (e.g. `['analog:angular:compiler']`)
+   *
+   * Also responds to the `DEBUG` env var (Node.js) or `localStorage.debug`
+   * (browser), using the `obug` convention.
+   */
+  debug?: boolean | string[];
   /**
    * Optional preprocessor that transforms component CSS before it enters Vite's
    * preprocessCSS pipeline. Runs on every component stylesheet (both external
@@ -253,6 +269,8 @@ function buildStylePreprocessor(
 }
 
 export function angular(options?: PluginOptions): Plugin[] {
+  applyDebugOption(options?.debug);
+
   /**
    * Normalize plugin options so defaults
    * are used for values not provided.
@@ -761,6 +779,12 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
+          debugCompiler('transform', {
+            id,
+            codeLength: code.length,
+            hasComponent: code.includes('@Component'),
+          });
+
           const hasComponent = code.includes('@Component');
           const templateUrls = hasComponent
             ? templateUrlsResolver.resolve(code, id)
@@ -1027,6 +1051,12 @@ export function angular(options?: PluginOptions): Plugin[] {
               .digest('hex');
             const stylesheetId = id + '.' + pluginOptions.inlineStylesExtension;
             inlineComponentStyles!.set(stylesheetId, preprocessedData);
+
+            debugStyles('externalized stylesheet', {
+              stylesheetId,
+              resourceFile: resourceFile ?? '(inline)',
+            });
+
             return stylesheetId;
           }
 
@@ -1059,6 +1089,13 @@ export function angular(options?: PluginOptions): Plugin[] {
           // Force extra instructions to be generated for HMR w/defer
           tsCompilerOptions['supportTestBed'] = true;
         }
+
+        debugCompiler('tsCompilerOptions (compilation API)', {
+          liveReload: pluginOptions.liveReload,
+          watchMode,
+          externalRuntimeStyles: !!tsCompilerOptions['externalRuntimeStyles'],
+          hmr: !!tsCompilerOptions['_enableHmr'],
+        });
 
         if (tsCompilerOptions.compilationMode === 'partial') {
           // These options can't be false in partial mode
@@ -1206,6 +1243,11 @@ export function angular(options?: PluginOptions): Plugin[] {
       // Force extra instructions to be generated for HMR w/defer
       tsCompilerOptions['supportTestBed'] = true;
     }
+
+    debugCompiler('tsCompilerOptions (legacy path)', {
+      externalRuntimeStyles: !!tsCompilerOptions['externalRuntimeStyles'],
+      hmr: !!tsCompilerOptions['_enableHmr'],
+    });
 
     if (tsCompilerOptions['compilationMode'] === 'partial') {
       // These options can't be false in partial mode
