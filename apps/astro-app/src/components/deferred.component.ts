@@ -1,14 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 
 @Component({
   selector: 'astro-deferred',
-  // host: {
-  //   '(click)': 'handleClick()'
-  // },
-  template: `<p (click)="handleClick()">Deferred works</p>`,
+  template: `<button style="display:block" (click)="handleClick()">
+    Count: {{ count() }}
+  </button>`,
 })
 export class DeferredComponent {
+  readonly count = signal(0);
+
   handleClick(): void {
-    console.log('clicked deferred component');
+    this.count.update((count) => count + 1);
   }
 }
