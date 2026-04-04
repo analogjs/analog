@@ -720,6 +720,9 @@ importers:
       '@analogjs/router':
         specifier: workspace:*
         version: link:../../packages/router
+      es-toolkit:
+        specifier: 'catalog:'
+        version: 1.45.1
     devDependencies:
       '@analogjs/platform':
         specifier: workspace:*
@@ -1128,6 +1131,9 @@ importers:
       '@angular/build':
         specifier: catalog:peerAngularBuilders
         version: 21.2.4(f1c48cde826f2133f9c7e32cd03964bb)
+      es-toolkit:
+        specifier: 'catalog:'
+        version: 1.45.1
       obug:
         specifier: 'catalog:'
         version: 2.1.1
