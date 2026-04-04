@@ -1,4 +1,5 @@
 import { nitro } from './lib/vite-plugin-nitro.js';
+export { debugInstances } from './lib/utils/debug.js';
 export type {
   Options,
   SitemapConfig,
