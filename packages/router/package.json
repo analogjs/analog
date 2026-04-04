@@ -87,11 +87,11 @@
   },
   "dependencies": {
     "@standard-schema/spec": "catalog:",
+    "es-toolkit": "catalog:",
     "tslib": "catalog:"
   },
   "devDependencies": {
-    "@analogjs/vite-plugin-angular": "workspace:*",
-    "lodash-es": "catalog:"
+    "@analogjs/vite-plugin-angular": "workspace:*"
   },
   "ng-update": {
     "packageGroup": [

@@ -7,7 +7,7 @@ import {
   stripIndents,
   Tree,
 } from '@nx/devkit';
-import { camelCase } from 'lodash-es';
+import { camelCase } from 'es-toolkit';
 import { join } from 'node:path';
 import { AnalogPageGeneratorSchema, NormalizedSchema } from './schema';
 

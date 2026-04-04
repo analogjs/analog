@@ -5,7 +5,7 @@
  * filenames into typed route manifests and generated declarations.
  */
 
-import { isPlainObject } from 'lodash-es';
+import { isPlainObject } from 'es-toolkit';
 
 export interface RouteParamInfo {
   name: string;
@@ -747,7 +747,7 @@ function toReadonlyTupleValue(values: readonly string[]): string {
 export type JsonLdObject = Record<string, unknown>;
 
 export function isJsonLdObject(value: unknown): value is JsonLdObject {
-  return isPlainObject(value);
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 export function normalizeJsonLd(value: unknown): JsonLdObject[] {

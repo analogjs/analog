@@ -3,6 +3,6 @@
   "version": "0.0.1",
   "main": "src/index.js",
   "devDependencies": {
-    "lodash-es": "catalog:"
+    "es-toolkit": "catalog:"
   }
 }
