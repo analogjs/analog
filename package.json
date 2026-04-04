@@ -100,7 +100,7 @@
     "zone.js": "^0.16.1"
   },
   "devDependencies": {
-    "@angular-devkit/architect": "0.2102.4",
+    "@angular-devkit/architect": "0.2102.6",
     "@angular-devkit/build-angular": "21.2.4",
     "@angular-devkit/core": "21.2.4",
     "@angular-devkit/schematics": "21.2.4",
@@ -126,8 +126,8 @@
     "@nx/vite": "22.6.2",
     "@nx/vitest": "22.6.2",
     "@nx/web": "22.6.2",
-    "@oxc-angular/vite": "^0.0.20",
-    "@oxc-project/runtime": "^0.122.0",
+    "@oxc-angular/vite": "^0.0.22",
+    "@oxc-project/runtime": "^0.123.0",
     "@playwright/test": "^1.58.2",
     "@schematics/angular": "21.2.4",
     "@semantic-release/changelog": "^6.0.3",
@@ -190,7 +190,7 @@
     "oxc-resolver": "catalog:",
     "oxc-transform": "catalog:",
     "oxlint": "^1.57.0",
-    "oxlint-tsgolint": "^0.18.1",
+    "oxlint-tsgolint": "^0.19.0",
     "playwright": "^1.58.2",
     "postcss": "^8.5.8",
     "prettier": "^3.8.1",

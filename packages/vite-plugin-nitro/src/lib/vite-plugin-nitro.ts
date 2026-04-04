@@ -894,6 +894,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             options?.ssr ||
             nitroConfig.prerender?.routes?.length
           ) {
+            nitroConfig.noExternals = appendNoExternals(
+              nitroConfig.noExternals,
+              'es-toolkit',
+            );
+
             if (process.platform === 'win32') {
               nitroConfig.noExternals = appendNoExternals(
                 nitroConfig.noExternals,

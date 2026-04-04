@@ -52,6 +52,9 @@
       "@analogjs/vite-plugin-nitro": [
         "./packages/vite-plugin-nitro/src/index.ts"
       ],
+      "@analogjs/vite-plugin-nitro/internal": [
+        "./packages/vite-plugin-nitro/src/lib/utils/debug.ts"
+      ],
       "libs/card": ["./libs/card/src/index.ts"],
       "my-package": ["./libs/my-package/src/index.ts"],
       "shared/feature": ["./libs/shared/feature/src/index.ts"],

@@ -25,7 +25,7 @@ function externalPlugins(plugins: unknown): Plugin[] {
 }
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
-  applyDebugOption(opts.debug);
+  applyDebugOption(opts.debug, opts.workspaceRoot);
 
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const viteOptions = opts?.vite === false ? undefined : opts?.vite;

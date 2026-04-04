@@ -34,6 +34,7 @@ export function depsPlugin(options?: Options): Plugin[] {
           ssr: {
             noExternal: [
               '@analogjs/**',
+              'es-toolkit',
               'firebase/**',
               'firebase-admin/**',
               'rxfire',

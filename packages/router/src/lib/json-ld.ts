@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { inject } from '@angular/core';
-import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
+import type { ActivatedRouteSnapshot } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { isPlainObject } from 'es-toolkit';
 import { filter } from 'rxjs/operators';
 
@@ -9,7 +10,7 @@ import type { Graph, Thing, WithContext } from 'schema-dts';
 export type JsonLdObject = Record<string, unknown>;
 
 export function isJsonLdObject(value: unknown): value is JsonLdObject {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return isPlainObject(value);
 }
 
 export function normalizeJsonLd(value: unknown): JsonLdObject[] {
@@ -47,7 +48,7 @@ export type JsonLd = JsonLdObject | JsonLdObject[];
 export type AnalogJsonLdDocument =
   | WithContext<Thing>
   | Graph
-  | Array<WithContext<Thing>>;
+  | WithContext<Thing>[];
 
 export const ROUTE_JSON_LD_KEY: unique symbol = Symbol(
   '@analogjs/router Route JSON-LD Key',
