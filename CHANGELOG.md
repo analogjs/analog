@@ -1,3 +1,9 @@
+# [3.0.0-alpha.24](https://github.com/analogjs/analog/compare/v3.0.0-alpha.23...v3.0.0-alpha.24) (2026-04-04)
+
+### Features
+
+- add logFile option to debug system ([#2228](https://github.com/analogjs/analog/issues/2228)) ([65d7de7](https://github.com/analogjs/analog/commit/65d7de709ca75b41d70fc3c0e601f2621a7b6351))
+
 # [3.0.0-alpha.23](https://github.com/analogjs/analog/compare/v3.0.0-alpha.22...v3.0.0-alpha.23) (2026-04-03)
 
 ### Features
