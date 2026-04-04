@@ -67,7 +67,7 @@ export interface Options {
    *
    * When `false`, the following top-level options are ignored because they
    * are only forwarded to the internal Angular plugin: `jit`,
-   * `disableTypeChecking`, `liveReload`, `inlineStylesExtension`,
+   * `disableTypeChecking`, `hmr`, `liveReload`, `inlineStylesExtension`,
    * `fileReplacements`, and `include`.
    *
    * Use this to configure the embedded Angular integration itself, not as the
@@ -85,7 +85,13 @@ export interface Options {
    */
   inlineStylesExtension?: string;
   /**
-   * Enables Angular's HMR during development
+   * Enables Angular's HMR during development/watch mode.
+   *
+   * Defaults to `true` for watch mode.
+   */
+  hmr?: boolean;
+  /**
+   * @deprecated Use `hmr` instead. Kept as a compatibility alias.
    */
   liveReload?: boolean;
   /**

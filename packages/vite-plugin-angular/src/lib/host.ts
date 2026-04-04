@@ -6,6 +6,11 @@ import * as ts from 'typescript';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import type { StylePreprocessor } from './style-preprocessor.js';
+import {
+  AnalogStylesheetRegistry,
+  preprocessStylesheet,
+  registerStylesheetContent,
+} from './stylesheet-registry.js';
 import { debugStyles } from './utils/debug.js';
 import type { SourceFileCache } from './utils/source-file-cache.js';
 
@@ -19,8 +24,7 @@ export function augmentHostWithResources(
   options: {
     inlineStylesExtension: string;
     isProd?: boolean;
-    inlineComponentStyles?: Map<string, string>;
-    externalComponentStyles?: Map<string, string>;
+    stylesheetRegistry?: AnalogStylesheetRegistry;
     sourceFileCache?: SourceFileCache;
     stylePreprocessor?: StylePreprocessor;
   },
@@ -55,42 +59,41 @@ export function augmentHostWithResources(
         '.ts',
         `.${options?.inlineStylesExtension}`,
       );
-    const preprocessedData = options.stylePreprocessor
-      ? (options.stylePreprocessor(data, filename) ?? data)
-      : data;
+    const preprocessedData = preprocessStylesheet(
+      data,
+      filename,
+      options.stylePreprocessor,
+    );
 
-    // liveReload path: store preprocessed CSS for Vite's serve-time pipeline.
+    // Externalized path: store preprocessed CSS for Vite's serve-time pipeline.
     // CSS must NOT be transformed here — the load hook returns it into
     // Vite's transform pipeline where PostCSS / Tailwind process it once.
-    if (options.inlineComponentStyles) {
-      const id = createHash('sha256')
-        .update(context.containingFile)
-        .update(context.className)
-        .update(String(context.order))
-        .update(preprocessedData)
-        .digest('hex');
-      const stylesheetId = id + '.' + options.inlineStylesExtension;
-      options.inlineComponentStyles.set(stylesheetId, preprocessedData);
-      debugStyles(
-        'NgtscProgram: stylesheet deferred to Vite pipeline (liveReload)',
+    if (options.stylesheetRegistry) {
+      const stylesheetId = registerStylesheetContent(
+        options.stylesheetRegistry,
         {
-          stylesheetId,
-          resourceFile: context.resourceFile ?? '(inline)',
+          code: preprocessedData,
+          containingFile: context.containingFile,
+          className: context.className,
+          order: context.order,
+          inlineStylesExtension: options.inlineStylesExtension,
+          resourceFile: context.resourceFile ?? undefined,
         },
       );
+      debugStyles('NgtscProgram: stylesheet deferred to Vite pipeline', {
+        stylesheetId,
+        resourceFile: context.resourceFile ?? '(inline)',
+      });
       return { content: stylesheetId };
     }
 
-    // Non-liveReload: CSS is returned directly to the Angular compiler
+    // Non-externalized: CSS is returned directly to the Angular compiler
     // and never re-enters Vite's pipeline, so transform eagerly.
-    debugStyles(
-      'NgtscProgram: stylesheet processed inline via transform (no liveReload)',
-      {
-        filename,
-        resourceFile: context.resourceFile ?? '(inline)',
-        dataLength: preprocessedData.length,
-      },
-    );
+    debugStyles('NgtscProgram: stylesheet processed inline via transform', {
+      filename,
+      resourceFile: context.resourceFile ?? '(inline)',
+      dataLength: preprocessedData.length,
+    });
     let stylesheetResult;
 
     try {
@@ -99,30 +102,41 @@ export function augmentHostWithResources(
         `${filename}?direct`,
       );
     } catch (e) {
-      console.error(`${e}`);
+      debugStyles('NgtscProgram: stylesheet transform error', {
+        filename,
+        resourceFile: context.resourceFile ?? '(inline)',
+        error: String(e),
+      });
     }
 
-    return { content: stylesheetResult?.code || '' };
+    if (!stylesheetResult?.code) {
+      return null;
+    }
+
+    return { content: stylesheetResult.code };
   };
 
   resourceHost.resourceNameToFileName = function (
     resourceName,
     containingFile,
+    fallbackResolve,
   ) {
-    const resolvedPath = path.join(path.dirname(containingFile), resourceName);
+    const resolvedPath = normalizePath(
+      fallbackResolve
+        ? fallbackResolve(path.dirname(containingFile), resourceName)
+        : path.join(path.dirname(containingFile), resourceName),
+    );
 
     // All resource names that have template file extensions are assumed to be templates
-    if (!options.externalComponentStyles || !hasStyleExtension(resolvedPath)) {
+    if (!options.stylesheetRegistry || !hasStyleExtension(resolvedPath)) {
       return resolvedPath;
     }
 
     // For external stylesheets, create a unique identifier and store the mapping
-    let externalId = options.externalComponentStyles.get(resolvedPath);
-    externalId ??= createHash('sha256').update(resolvedPath).digest('hex');
-
+    const externalId = createHash('sha256').update(resolvedPath).digest('hex');
     const filename = externalId + path.extname(resolvedPath);
 
-    options.externalComponentStyles.set(filename, resolvedPath);
+    options.stylesheetRegistry.registerExternalRequest(filename, resolvedPath);
     debugStyles('NgtscProgram: external stylesheet ID mapped for resolveId', {
       resourceName,
       resolvedPath,

@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+const angularPluginMock = vi.fn(() => ({ name: 'angular-mock' }));
+
 /**
  * The preset module uses top-level imports that are hard to mock in isolation.
  * Instead, we test `resolveExperimentalZoneless` indirectly through `viteFinal`
@@ -28,7 +30,7 @@ vi.mock('vite', () => ({
 }));
 
 vi.mock('@analogjs/vite-plugin-angular', () => ({
-  default: () => ({ name: 'angular-mock' }),
+  default: angularPluginMock,
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,6 +40,7 @@ let core: any;
 
 beforeEach(async () => {
   vi.resetModules();
+  angularPluginMock.mockClear();
   const mod = await import('./preset');
   viteFinal = mod.viteFinal;
   core = mod.core;
@@ -68,7 +71,7 @@ const registerDependencyMocks = (
     ...viteOverrides,
   }));
   vi.doMock('@analogjs/vite-plugin-angular', () => ({
-    default: () => ({ name: 'angular-mock' }),
+    default: angularPluginMock,
   }));
 };
 
@@ -127,6 +130,34 @@ describe('viteFinal', () => {
   const baseConfig = {
     plugins: [],
   };
+
+  describe('Angular plugin options', () => {
+    it('prefers hmr over liveReload and keeps liveReload as compatibility input', async () => {
+      const options = makeOptions({ hmr: true, liveReload: false });
+
+      await viteFinal(baseConfig, options);
+
+      expect(angularPluginMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hmr: true,
+          liveReload: false,
+        }),
+      );
+    });
+
+    it('falls back to liveReload when hmr is omitted', async () => {
+      const options = makeOptions({ liveReload: true });
+
+      await viteFinal(baseConfig, options);
+
+      expect(angularPluginMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hmr: true,
+          liveReload: true,
+        }),
+      );
+    });
+  });
 
   describe('experimentalZoneless resolution', () => {
     describe('tier 1: framework options', () => {
