@@ -19,6 +19,7 @@
       "@analogjs/astro-angular": ["./packages/astro-angular/src/index.ts"],
       "@analogjs/content": ["./packages/content/src/index.ts"],
       "@analogjs/content-plugin": ["./packages/content-plugin/src/index.ts"],
+      "@analogjs/cross-utils": ["./packages/cross-utils/src/index.ts"],
       "@analogjs/content/prism-highlighter": [
         "./packages/content/prism-highlighter/src/index.ts"
       ],
@@ -51,6 +52,9 @@
       ],
       "@analogjs/vite-plugin-nitro": [
         "./packages/vite-plugin-nitro/src/index.ts"
+      ],
+      "@analogjs/vite-plugin-nitro/internal": [
+        "./packages/vite-plugin-nitro/src/lib/utils/debug.ts"
       ],
       "libs/card": ["./libs/card/src/index.ts"],
       "my-package": ["./libs/my-package/src/index.ts"],

@@ -23,8 +23,6 @@ const replacementFiles = [
   'packages/create-analog/template-blog/package.json',
   'packages/create-analog/template-latest/package.json',
   'packages/create-analog/template-minimal/package.json',
-  'packages/platform/package.json',
-  'packages/router/package.json',
 ];
 
 export default {

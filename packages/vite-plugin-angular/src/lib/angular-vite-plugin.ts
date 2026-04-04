@@ -1,5 +1,5 @@
 import { NgtscProgram } from '@angular/compiler-cli';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import {
   basename,
   dirname,
@@ -280,7 +280,7 @@ function buildStylePreprocessor(
 }
 
 export function angular(options?: PluginOptions): Plugin[] {
-  applyDebugOption(options?.debug);
+  applyDebugOption(options?.debug, options?.workspaceRoot);
 
   /**
    * Normalize plugin options so defaults
@@ -1184,6 +1184,60 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
     );
 
+    // -------------------------------------------------------------------
+    // Register external stylesheets and bridge the hash mismatch
+    //
+    // Two independent hash maps coexist for component CSS:
+    //
+    //   inlineComponentStyles   — keyed by Analog's hash (computed in
+    //     transformStylesheet from containingFile + className + order +
+    //     preprocessedData). The preprocessedData includes `@reference`
+    //     injected by buildStylePreprocessor. This map holds the CSS
+    //     that Vite should serve (with Tailwind context).
+    //
+    //   externalComponentStyles — keyed by Angular's hash (computed by
+    //     the Angular compiler internally, returned in
+    //     compilationResult.externalStylesheets). Maps to the raw file
+    //     path. This is what Angular emits in the browser-side URLs.
+    //
+    // Problem: the browser requests CSS using Angular's hash, but the
+    // preprocessed CSS lives in inlineComponentStyles under Analog's
+    // hash. resolveId checks inlineComponentStyles first (line ~785),
+    // misses (wrong key), falls through to externalComponentStyles,
+    // and resolves to the RAW file — which has no @reference. Then
+    // @tailwindcss/vite fails with:
+    //
+    //   "Cannot apply utility class 'sa:grid' because the 'sa'
+    //    variant does not exist"
+    //
+    // Fix: after compilation, copy the preprocessed CSS into
+    // inlineComponentStyles under Angular's hash. resolveId then finds
+    // it on the first lookup, the load hook serves the @reference-
+    // injected version, and @tailwindcss/vite compiles it correctly.
+    //
+    // The lookup uses basename(key) and key.replace(/^\//, '') because
+    // transformStylesheet stores under both of those keys (line ~1332).
+    // -------------------------------------------------------------------
+    // -------------------------------------------------------------------
+    // Register external stylesheets and preprocess for Tailwind
+    //
+    // Angular's Compilation API with externalRuntimeStyles does NOT call
+    // transformStylesheet for external styleUrls — it only reports them
+    // in compilationResult.externalStylesheets. Only inline styles (from
+    // `styles: [...]`) go through transformStylesheet.
+    //
+    // This means external component CSS files never get the @reference
+    // directive injected by buildStylePreprocessor. The resolveId hook
+    // maps Angular's hash to the raw file path, the load hook reads the
+    // raw file from disk, and @tailwindcss/vite processes CSS without
+    // @reference — causing "sa: variant does not exist" errors.
+    //
+    // Fix: for each external stylesheet, read the file, run the style
+    // preprocessor (which injects @reference), and store the result in
+    // inlineComponentStyles under Angular's hash. The resolveId hook
+    // then finds it on the first lookup, the load hook serves the
+    // preprocessed version, and @tailwindcss/vite compiles correctly.
+    // -------------------------------------------------------------------
     compilationResult.externalStylesheets?.forEach((value, key) => {
       externalComponentStyles?.set(`${value}.css`, key);
       debugStyles('external stylesheet registered for resolveId mapping', {

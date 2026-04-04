@@ -9,6 +9,10 @@
       "types": "./dist/src/index.d.ts",
       "default": "./dist/src/index.js"
     },
+    "./internal": {
+      "types": "./dist/src/lib/utils/debug.d.ts",
+      "default": "./dist/src/lib/utils/debug.js"
+    },
     "./package.json": "./package.json"
   },
   "keywords": [

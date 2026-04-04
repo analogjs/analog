@@ -34,8 +34,8 @@
     "front-matter": "catalog:",
     "tinyglobby": "catalog:",
     "nitro": "catalog:",
-    "@analogjs/vite-plugin-angular": "^3.0.0-alpha.23",
-    "@analogjs/vite-plugin-nitro": "^3.0.0-alpha.23",
+    "@analogjs/vite-plugin-angular": "workspace:^",
+    "@analogjs/vite-plugin-nitro": "workspace:^",
     "rolldown": "catalog:",
     "obug": "catalog:",
     "vitefu": "catalog:"
