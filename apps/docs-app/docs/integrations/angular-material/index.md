@@ -164,7 +164,7 @@ export default defineConfig({
 @import 'tailwindcss';
 ```
 
-> **Note:** Analog's default Tailwind v4 setup uses `@tailwindcss/vite`. You do not need a `.postcssrc.json` file or a generated `tailwind.config.*` file for the standard Vite-based setup.
+> **Note:** Analog's current Tailwind v4 setup uses `@tailwindcss/vite` and also commonly includes a `postcss.config.mjs` with `@tailwindcss/postcss` so the build path and related integrations use the same Tailwind pipeline.
 >
 > The scaffolded Tailwind v4 flow also expects a plain CSS entry file such as `src/styles.css`. If your app currently uses Sass or Less for the global entry point, keep your existing setup or migrate that entry file to CSS before adopting the default Tailwind v4 flow.
 

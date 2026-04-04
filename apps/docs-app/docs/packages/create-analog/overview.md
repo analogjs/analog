@@ -47,7 +47,14 @@ pnpm create analog
 
 ### Tailwind v4
 
-`create-analog` scaffolds Tailwind v4 with the Vite plugin by default for the current Analog templates. Generated projects use `@tailwindcss/vite`, add `@import 'tailwindcss';` to `src/styles.css`, and do not create a `.postcssrc.json` file or a `tailwind.config.*` file for the standard setup.
+`create-analog` scaffolds Tailwind v4 with the Vite plugin by default for the current Analog templates. Generated projects use `@tailwindcss/vite`, add `@import 'tailwindcss';` to `src/styles.css`, and also generate a `postcss.config.mjs` with `@tailwindcss/postcss` so the build path and tool integrations use the same Tailwind setup.
+
+This is the recommended Analog v3 direction:
+
+- Keep one root stylesheet, usually `src/styles.css`, that contains `@import 'tailwindcss';`
+- Keep `@tailwindcss/vite` enabled in `vite.config.ts`
+- Let Analog handle component-level `@reference` injection through its Tailwind-aware stylesheet pipeline instead of adding `@reference` directives manually in every component stylesheet
+- Prefer the `hmr` option over `liveReload` when you need to configure Angular HMR explicitly
 
 If you do not want Tailwind in the generated app, pass `--skipTailwind true`. The default Tailwind v4 flow expects a plain CSS entry file for global styles.
 

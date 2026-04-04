@@ -34,7 +34,9 @@ const config: StorybookConfig = {
   // other config, addons, etc.
   framework: {
     name: '@analogjs/storybook-angular',
-    options: {},
+    options: {
+      hmr: true,
+    },
   },
 };
 
@@ -120,6 +122,8 @@ In your global stylesheet, import Tailwind with:
 ```
 
 Storybook does not automatically infer the Tailwind plugin from your app's `vite.config.ts`, so add it in `viteFinal` when your stories depend on Tailwind utilities.
+
+Angular HMR is controlled with `framework.options.hmr`. `liveReload` is still accepted as a compatibility alias, but `hmr` is the preferred option.
 
 ## Enabling Zoneless Change Detection
 
