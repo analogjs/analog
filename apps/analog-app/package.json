@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "dependencies": {
+    "@analogjs/content": "workspace:*",
     "@analogjs/router": "workspace:*",
     "es-toolkit": "catalog:"
   },

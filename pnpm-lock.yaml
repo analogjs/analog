@@ -717,6 +717,9 @@ importers:
 
   apps/analog-app:
     dependencies:
+      '@analogjs/content':
+        specifier: workspace:*
+        version: link:../../packages/content
       '@analogjs/router':
         specifier: workspace:*
         version: link:../../packages/router

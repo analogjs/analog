@@ -44,6 +44,12 @@ declare module '@analogjs/router' {
       query: Record<string, string | string[] | undefined>;
       queryOutput: Record<string, string | string[] | undefined>;
     };
+    '/legacy-action': {
+      params: Record<string, never>;
+      paramsOutput: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+      queryOutput: Record<string, string | string[] | undefined>;
+    };
     '/newsletter': {
       params: Record<string, never>;
       paramsOutput: Record<string, never>;
@@ -158,6 +164,7 @@ export interface AnalogFileRoutesById {
   "/cart": AnalogGeneratedRouteRecord<"/cart", "cart", "/cart", null, readonly []>;
   "/client/(client)": AnalogGeneratedRouteRecord<"/client/(client)", "client", "/client", null, readonly []>;
   "/contact": AnalogGeneratedRouteRecord<"/contact", "contact", "/contact", null, readonly []>;
+  "/legacy-action": AnalogGeneratedRouteRecord<"/legacy-action", "legacy-action", "/legacy-action", null, readonly []>;
   "/newsletter": AnalogGeneratedRouteRecord<"/newsletter", "newsletter", "/newsletter", null, readonly []>;
   "/package": AnalogGeneratedRouteRecord<"/package", "package", "/package", null, readonly []>;
   "/search": AnalogGeneratedRouteRecord<"/search", "search", "/search", null, readonly []>;
@@ -180,6 +187,7 @@ export interface AnalogFileRoutesByFullPath {
   "/cart": AnalogFileRoutesById["/cart"];
   "/client": AnalogFileRoutesById["/client/(client)"];
   "/contact": AnalogFileRoutesById["/contact"];
+  "/legacy-action": AnalogFileRoutesById["/legacy-action"];
   "/newsletter": AnalogFileRoutesById["/newsletter"];
   "/package": AnalogFileRoutesById["/package"];
   "/search": AnalogFileRoutesById["/search"];
@@ -312,6 +320,22 @@ export const analogRouteTree = {
       isCatchAll: false,
       isOptionalCatchAll: false,
     } satisfies AnalogFileRoutesById["/contact"],
+    "/legacy-action": {
+      id: "/legacy-action",
+      path: "legacy-action",
+      fullPath: "/legacy-action",
+      parentId: null,
+      children: [] as const,
+      sourceFile: "/src/app/pages/legacy-action.page.ts",
+      kind: "page",
+      hasParamsSchema: false,
+      hasQuerySchema: false,
+      hasJsonLd: false,
+      isIndex: false,
+      isGroup: false,
+      isCatchAll: false,
+      isOptionalCatchAll: false,
+    } satisfies AnalogFileRoutesById["/legacy-action"],
     "/newsletter": {
       id: "/newsletter",
       path: "newsletter",
@@ -528,6 +552,7 @@ export const analogRouteTree = {
     "/cart": "/cart",
     "/client": "/client/(client)",
     "/contact": "/contact",
+    "/legacy-action": "/legacy-action",
     "/newsletter": "/newsletter",
     "/package": "/package",
     "/search": "/search",
