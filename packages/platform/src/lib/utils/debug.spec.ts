@@ -14,7 +14,15 @@ vi.mock('@analogjs/vite-plugin-nitro/internal', () => ({
   debugInstances: [],
 }));
 
+vi.mock('./debug-log-file.js', () => ({
+  wrapInstancesForFileLog: vi.fn(),
+  wrapInstancesForScopedFileLog: vi.fn(),
+  DEBUG_LOG_DIR: 'tmp/debug',
+  DEBUG_LOG_FILENAME: 'debug.analog.log',
+}));
+
 import { enable } from 'obug';
+import { wrapInstancesForFileLog } from './debug-log-file.js';
 import {
   applyDebugOption,
   activateDeferredDebug,
@@ -24,6 +32,7 @@ import {
 describe('applyDebugOption (platform)', () => {
   beforeEach(() => {
     vi.mocked(enable).mockClear();
+    vi.mocked(wrapInstancesForFileLog).mockClear();
     _resetDeferredDebug();
   });
 
@@ -59,5 +68,59 @@ describe('activateDeferredDebug (platform)', () => {
     applyDebugOption({ mode: 'dev' });
     activateDeferredDebug('serve');
     expect(enable).toHaveBeenCalledWith('analog:*');
+  });
+});
+
+describe('applyDebugOption logFile (platform)', () => {
+  beforeEach(() => {
+    vi.mocked(enable).mockClear();
+    vi.mocked(wrapInstancesForFileLog).mockClear();
+    _resetDeferredDebug();
+  });
+
+  it('sets up file logging when logFile is true in object form', () => {
+    applyDebugOption({ logFile: true });
+    expect(wrapInstancesForFileLog).toHaveBeenCalled();
+    expect(enable).toHaveBeenCalledWith('analog:*');
+  });
+
+  it('sets up file logging with specific scopes', () => {
+    applyDebugOption({ scopes: ['analog:platform'], logFile: true });
+    expect(wrapInstancesForFileLog).toHaveBeenCalled();
+    expect(enable).toHaveBeenCalledWith('analog:platform');
+  });
+
+  it('does not set up file logging when logFile is absent', () => {
+    applyDebugOption({ scopes: true });
+    expect(wrapInstancesForFileLog).not.toHaveBeenCalled();
+  });
+
+  it('does not set up file logging for boolean true', () => {
+    applyDebugOption(true);
+    expect(wrapInstancesForFileLog).not.toHaveBeenCalled();
+  });
+
+  it('does not set up file logging for string array', () => {
+    applyDebugOption(['analog:platform']);
+    expect(wrapInstancesForFileLog).not.toHaveBeenCalled();
+  });
+
+  it('extracts logFile from array of DebugModeOptions', () => {
+    applyDebugOption([
+      { scopes: ['analog:platform'], logFile: true },
+      { scopes: ['analog:angular:hmr'], mode: 'dev' },
+    ]);
+    expect(wrapInstancesForFileLog).toHaveBeenCalled();
+  });
+
+  it('uses provided workspaceRoot for file path', () => {
+    applyDebugOption({ logFile: true }, '/custom/root');
+    const callArgs = vi.mocked(wrapInstancesForFileLog).mock.calls[0];
+    expect(callArgs[1]).toContain('/custom/root');
+  });
+
+  it('wraps both platform and nitro instances', () => {
+    applyDebugOption({ logFile: true });
+    expect(wrapInstancesForFileLog).toHaveBeenCalledTimes(2);
   });
 });

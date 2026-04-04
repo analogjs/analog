@@ -32,7 +32,7 @@ import {
   apiMiddleware,
 } from './utils/renderers.js';
 import { getBundleOptionsKey, isRolldown } from './utils/rolldown.js';
-import { debugNitro, debugSsr } from './utils/debug.js';
+import { debugNitro, debugSsr, debugPrerender } from './utils/debug.js';
 
 function createNitroMiddlewareHandler(handler: string): NitroEventHandler {
   return {

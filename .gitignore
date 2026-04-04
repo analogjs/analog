@@ -33,6 +33,7 @@ node_modules
 npm-debug.log
 yarn-error.log
 testem.log
+debug.analog.log
 /typings
 
 # System Files
