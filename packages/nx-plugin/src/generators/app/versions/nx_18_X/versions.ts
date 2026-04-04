@@ -14,7 +14,9 @@ export const V18_X_MARKED_MANGLE = '^1.1.10';
 export const V18_X_MERMAID = '^10.2.4';
 export const V18_X_PRISMJS = '^1.29.0';
 export const V18_X_TAILWINDCSS = '^4.2.2';
+export const V18_X_TAILWINDCSS_POSTCSS = '^4.2.2';
 export const V18_X_TAILWINDCSS_VITE = '^4.2.2';
+export const V18_X_POSTCSS = '^8.5.6';
 
 // devDependencies
 export const V18_X_ANALOG_JS_PLATFORM = '^3.0.0-alpha.24';

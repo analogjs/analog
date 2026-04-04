@@ -49,10 +49,36 @@ export function addTailwindRequiredPackages(tree: Tree): GeneratorCallback {
   return addDependenciesToPackageJson(
     tree,
     {
+      postcss: pkgVersions.postcss,
       tailwindcss: pkgVersions.tailwindcss,
+      '@tailwindcss/postcss': pkgVersions['@tailwindcss/postcss'],
       '@tailwindcss/vite': pkgVersions['@tailwindcss/vite'],
     },
     {},
+  );
+}
+
+export function writeTailwindPostcssConfig(
+  tree: Tree,
+  project: ProjectConfiguration,
+): void {
+  const postcssConfigPath = joinPathFragments(
+    project.root,
+    'postcss.config.mjs',
+  );
+
+  if (tree.exists(postcssConfigPath)) {
+    return;
+  }
+
+  tree.write(
+    postcssConfigPath,
+    `export default {
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
+};
+`,
   );
 }
 

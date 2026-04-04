@@ -46,13 +46,19 @@ const expectTailwindScaffold = () => {
   const viteConfig = readGeneratedViteConfig();
 
   expect(pkg.devDependencies['tailwindcss']).toBe('^4.2.2');
+  expect(pkg.devDependencies['postcss']).toBe('^8.5.6');
+  expect(pkg.devDependencies['@tailwindcss/postcss']).toBe('^4.2.2');
   expect(pkg.devDependencies['@tailwindcss/vite']).toBe('^4.2.2');
   expect(pkg.dependencies['tailwindcss']).toBeUndefined();
   expect(pkg.dependencies['@tailwindcss/vite']).toBeUndefined();
+  expect(pkg.dependencies['@tailwindcss/postcss']).toBeUndefined();
   expect(readGeneratedStyles()).toContain(`@import 'tailwindcss';`);
   expect(viteConfig).toContain(`import tailwindcss from '@tailwindcss/vite';`);
   expect(viteConfig).toMatch(
     /plugins:\s*\[[\s\S]*tailwindcss\(\),[\s\S]*analog\(/,
+  );
+  expect(readFileSync(join(genPath, 'postcss.config.mjs'), 'utf-8')).toContain(
+    `'@tailwindcss/postcss': {}`,
   );
 };
 
@@ -63,6 +69,9 @@ templateFiles.push('.git');
 templateFiles = templateFiles
   .map((filePath) => (filePath === '_gitignore' ? '.gitignore' : filePath))
   .sort((a, b) => a.localeCompare(b));
+const tailwindTemplateFiles = [...templateFiles, 'postcss.config.mjs'].sort(
+  (a, b) => a.localeCompare(b),
+);
 beforeAll(async () => {
   await remove(genPath);
   mkdirpSync(tmpDir);
@@ -115,7 +124,7 @@ test('successfully scaffolds a project based on angular starter template', () =>
 
   // Assertions
   expect(stdout).toContain(`Scaffolding project in ${genPath}`);
-  expect(templateFiles).toEqual(generatedFiles);
+  expect(tailwindTemplateFiles).toEqual(generatedFiles);
   expectTailwindScaffold();
 });
 
@@ -130,7 +139,7 @@ test('works with the -t alias', () => {
 
   // Assertions
   expect(stdout).toContain(`Scaffolding project in ${genPath}`);
-  expect(templateFiles).toEqual(generatedFiles);
+  expect(tailwindTemplateFiles).toEqual(generatedFiles);
   expectTailwindScaffold();
 });
 

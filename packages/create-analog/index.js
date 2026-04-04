@@ -120,6 +120,13 @@ const renameFiles = {
   _gitignore: '.gitignore',
 };
 
+const TAILWIND_POSTCSS_CONFIG = `export default {
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
+};
+`;
+
 async function init() {
   let targetDir = formatTargetDir(argv._[0]);
   let template = resolveTemplate(argv.template ?? argv.t);
@@ -267,6 +274,7 @@ async function init() {
 
   if (!skipTailwind) {
     addTailwindDirectives(write, filesDir);
+    write('postcss.config.mjs', TAILWIND_POSTCSS_CONFIG);
   }
 
   replacePlaceholders(root, 'vite.config.ts', {
@@ -471,7 +479,9 @@ function addTailwindDirectives(write, filesDir) {
  */
 function addTailwindDependencies(pkg) {
   pkg.devDependencies ??= {};
+  pkg.devDependencies.postcss = '^8.5.6';
   pkg.devDependencies.tailwindcss = '^4.2.2';
+  pkg.devDependencies['@tailwindcss/postcss'] = '^4.2.2';
   pkg.devDependencies['@tailwindcss/vite'] = '^4.2.2';
 }
 
