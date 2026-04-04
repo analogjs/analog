@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type * as ts from 'typescript';
 import { augmentHostWithResources } from './host.js';
+import { AnalogStylesheetRegistry } from './stylesheet-registry.js';
 
 describe('augmentHostWithResources', () => {
   it('preprocesses external stylesheets before Vite transforms them', async () => {
@@ -65,17 +66,17 @@ describe('augmentHostWithResources', () => {
     );
   });
 
-  it('preprocesses inline styles stored via inlineComponentStyles', async () => {
+  it('preprocesses inline styles stored in the stylesheet registry', async () => {
     const host = { readFile: vi.fn() } as unknown as ts.CompilerHost;
     const transform = vi.fn();
-    const inlineComponentStyles = new Map<string, string>();
+    const stylesheetRegistry = new AnalogStylesheetRegistry();
     const stylePreprocessor = vi.fn(
       (code: string, filename: string) => `/* ${filename} */\n${code}`,
     );
 
     augmentHostWithResources(host, transform as any, {
       inlineStylesExtension: 'css',
-      inlineComponentStyles,
+      stylesheetRegistry,
       stylePreprocessor,
     });
 
@@ -94,8 +95,25 @@ describe('augmentHostWithResources', () => {
       '/project/src/app/demo.component.css',
     );
     expect(transform).not.toHaveBeenCalled();
-    expect(inlineComponentStyles.get(result.content)).toBe(
+    expect(stylesheetRegistry.getServedContent(result.content)).toBe(
       '/* /project/src/app/demo.component.css */\n.demo { color: red; }',
     );
+  });
+
+  it('returns null when eager stylesheet transform fails', async () => {
+    const host = { readFile: vi.fn() } as unknown as ts.CompilerHost;
+    const transform = vi.fn().mockRejectedValue(new Error('boom'));
+
+    augmentHostWithResources(host, transform as any, {
+      inlineStylesExtension: 'css',
+    });
+
+    await expect(
+      (host as any).transformResource('.demo { color: red; }', {
+        type: 'style',
+        resourceFile: '/project/src/app/demo.component.css',
+        containingFile: '/project/src/app/demo.component.ts',
+      }),
+    ).resolves.toBeNull();
   });
 });

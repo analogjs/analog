@@ -106,6 +106,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
               ),
             ],
             additionalContentDirs: platformOptions.additionalContentDirs,
+            hmr: platformOptions.hmr,
             liveReload: platformOptions.liveReload,
             inlineStylesExtension: platformOptions.inlineStylesExtension,
             fileReplacements: platformOptions.fileReplacements,
