@@ -1014,10 +1014,10 @@ importers:
   packages/platform:
     dependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../vite-plugin-angular
       '@analogjs/vite-plugin-nitro':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../vite-plugin-nitro
       '@nx/angular':
         specifier: catalog:peerCompat
@@ -1074,7 +1074,7 @@ importers:
   packages/router:
     dependencies:
       '@analogjs/content':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../content
       '@angular/core':
         specifier: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
@@ -1102,7 +1102,7 @@ importers:
         version: 2.8.1
     devDependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../vite-plugin-angular
 
   packages/storybook-angular:

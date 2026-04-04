@@ -35,8 +35,8 @@
     "es-toolkit": "catalog:",
     "tinyglobby": "catalog:",
     "nitro": "catalog:",
-    "@analogjs/vite-plugin-angular": "workspace:^",
-    "@analogjs/vite-plugin-nitro": "workspace:^",
+    "@analogjs/vite-plugin-angular": "workspace:*",
+    "@analogjs/vite-plugin-nitro": "workspace:*",
     "rolldown": "catalog:",
     "obug": "catalog:",
     "vitefu": "catalog:"

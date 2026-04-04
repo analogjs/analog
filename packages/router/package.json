@@ -64,7 +64,7 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "peerDependencies": {
-    "@analogjs/content": "workspace:^",
+    "@analogjs/content": "workspace:*",
     "@angular/core": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0",
     "@angular/platform-server": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0",
     "@angular/router": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0",
@@ -91,7 +91,7 @@
     "tslib": "catalog:"
   },
   "devDependencies": {
-    "@analogjs/vite-plugin-angular": "workspace:^"
+    "@analogjs/vite-plugin-angular": "workspace:*"
   },
   "ng-update": {
     "packageGroup": [
