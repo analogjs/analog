@@ -50,6 +50,9 @@ export default defineConfig(async ({ mode }) => {
     plugins: [
       analog({
         apiPrefix: 'api',
+        content: {
+          highlighter: 'prism',
+        },
         include: ['/libs/my-package/src/**/*.ts'],
         discoverRoutes: true,
         fileReplacements,
