@@ -31,7 +31,16 @@ export function createRoutes<TFile>(
   resolveModule: RouteModuleResolver<TFile>,
   debug = false,
 ): Route[] {
-  const filenames = Object.keys(files);
+  const filenames = Object.keys(files).sort((a, b) => {
+    const aPriority = getCollisionPriority(a);
+    const bPriority = getCollisionPriority(b);
+
+    if (aPriority !== bPriority) {
+      return aPriority - bPriority;
+    }
+
+    return a.localeCompare(b);
+  });
 
   if (filenames.length === 0) {
     return [];
@@ -50,8 +59,9 @@ export function createRoutes<TFile>(
         console.warn(
           `[Analog] Route files "${existing.filename}" and "${filename}" ` +
             `resolve to the same route path "${rawPath}". ` +
-            `Only "${filename}" will be used.`,
+            `Only "${existing.filename}" will be used.`,
         );
+        return acc;
       }
     }
 
@@ -109,6 +119,20 @@ export function createRoutes<TFile>(
   sortRawRoutes(rawRoutes);
 
   return toRoutes(rawRoutes, files, resolveModule, debug);
+}
+
+function getCollisionPriority(filename: string): number {
+  if (
+    filename.includes('/src/app/pages/') ||
+    filename.includes('/src/app/routes/') ||
+    filename.includes('/app/pages/') ||
+    filename.includes('/app/routes/') ||
+    filename.includes('/src/content/')
+  ) {
+    return 0;
+  }
+
+  return 1;
 }
 
 /**

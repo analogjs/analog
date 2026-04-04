@@ -975,6 +975,42 @@ describe('routes', () => {
     });
   });
 
+  describe('duplicate route precedence', () => {
+    class AppRouteComponent {}
+    class SharedRouteComponent {}
+
+    it('prefers app-local page routes over additional/shared page routes', async () => {
+      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
+        /* noop */
+      });
+
+      const files: Files = {
+        '/libs/shared/feature/src/pages/blog/[slug].page.ts': () =>
+          Promise.resolve<RouteExport>({ default: SharedRouteComponent }),
+        '/src/app/pages/blog/[slug].page.ts': () =>
+          Promise.resolve<RouteExport>({ default: AppRouteComponent }),
+      };
+
+      const routes = createBaseRoutes(
+        files,
+        (_filename, fileLoader) => fileLoader as () => Promise<RouteExport>,
+      );
+      const route = routes.find((r) => r.path === 'blog/:slug');
+
+      expect(route).toBeDefined();
+      const loadedRoutes = (await route!.loadChildren?.()) as Route[];
+
+      expect(loadedRoutes[0].component).toBe(AppRouteComponent);
+      expect(spy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Only "/src/app/pages/blog/[slug].page.ts" will be used.',
+        ),
+      );
+
+      spy.mockRestore();
+    });
+  });
+
   describe('merged route resolver dispatch', () => {
     class PageComponent {}
 
