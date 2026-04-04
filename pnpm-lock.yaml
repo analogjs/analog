@@ -1014,11 +1014,11 @@ importers:
   packages/platform:
     dependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: ^3.0.0-alpha.23
-        version: 3.0.0-alpha.23(@angular-devkit/build-angular@21.2.4(562e135550fb493df3034c3b70b31f89))(@angular/build@21.2.4(ce7d2ad427afc0ad407f7182efa58bb6))
+        specifier: workspace:*
+        version: link:../vite-plugin-angular
       '@analogjs/vite-plugin-nitro':
-        specifier: ^3.0.0-alpha.23
-        version: 3.0.0-alpha.23(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(sharp@0.34.5)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))
+        specifier: workspace:*
+        version: link:../vite-plugin-nitro
       '@nx/angular':
         specifier: catalog:peerCompat
         version: 22.6.2(a628988cf4934ddb1865ff37c54d348f)
@@ -1074,8 +1074,8 @@ importers:
   packages/router:
     dependencies:
       '@analogjs/content':
-        specifier: ^3.0.0-alpha.23
-        version: 3.0.0-alpha.23(e977d14c678c967b6a9368677a699f69)
+        specifier: workspace:*
+        version: link:../content
       '@angular/core':
         specifier: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
         version: 21.2.6(@angular/compiler@21.2.6)(rxjs@7.8.2)(zone.js@0.16.1)
@@ -1312,42 +1312,6 @@ packages:
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
 
-  '@analogjs/content@3.0.0-alpha.23':
-    resolution: {integrity: sha512-AwvZKp5b3KCc+Zmphh94xuxfZSdg72P+RX6czCjgCfE3rAkeJWscqSBFrxUzibl2qKlrNQ8KaslkzVdK7cymjw==}
-    peerDependencies:
-      '@angular/common': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-      '@angular/core': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-      '@angular/platform-browser': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-      '@angular/router': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-      '@nx/devkit': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
-      '@standard-schema/spec': ^1.1.0
-      front-matter: ^4.0.2
-      marked: ^17.0.5
-      marked-gfm-heading-id: ^4.1.3
-      marked-highlight: ^2.2.3
-      marked-mangle: ^1.1.12
-      md4x: '>=0.0.20'
-      prismjs: ^1.30.0
-      rxjs: ^6.5.0 || ^7.5.0
-      satori: ^0.10.14
-      satori-html: ^0.3.2
-      sharp: ^0.34.5
-    peerDependenciesMeta:
-      '@nx/devkit':
-        optional: true
-      '@standard-schema/spec':
-        optional: true
-      md4x:
-        optional: true
-      prismjs:
-        optional: true
-      satori:
-        optional: true
-      satori-html:
-        optional: true
-      sharp:
-        optional: true
-
   '@analogjs/vite-plugin-angular@2.4.0':
     resolution: {integrity: sha512-aMDyyI7vOZ39vyMjCifqnkw4854GJtmfNtC4gxws6f6ET2JeXiNQApf6r+HB2M6dP3kAuPLqaQbNEhh0FrunYA==}
     peerDependencies:
@@ -1357,25 +1321,6 @@ packages:
       '@angular-devkit/build-angular':
         optional: true
       '@angular/build':
-        optional: true
-
-  '@analogjs/vite-plugin-angular@3.0.0-alpha.23':
-    resolution: {integrity: sha512-IWwDVEuL/NN1rIQ+kB1VCOxGFW+ANWSxku+9OcdXEqbqlCHDDWSn7sxTLANoX92bZmrmxhQnnTzahJ6TysRLyA==}
-    peerDependencies:
-      '@angular-devkit/build-angular': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-      '@angular/build': ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-    peerDependenciesMeta:
-      '@angular-devkit/build-angular':
-        optional: true
-      '@angular/build':
-        optional: true
-
-  '@analogjs/vite-plugin-nitro@3.0.0-alpha.23':
-    resolution: {integrity: sha512-QPGyO6sIXp/eZwDaQ6/rLiQ/5rmPbBDPD+4ertpdZCJMzFyFWbF9jkybBOva0GZ1NIsIqaGc8p6brX28/YSnNg==}
-    peerDependencies:
-      sharp: '>=0.32.0'
-    peerDependenciesMeta:
-      sharp:
         optional: true
 
   '@angular-devkit/architect@0.2102.4':
@@ -16146,28 +16091,6 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.12
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@analogjs/content@3.0.0-alpha.23(e977d14c678c967b6a9368677a699f69)':
-    dependencies:
-      '@angular/common': 21.2.6(@angular/core@21.2.6(@angular/compiler@21.2.6)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2)
-      '@angular/core': 21.2.6(@angular/compiler@21.2.6)(rxjs@7.8.2)(zone.js@0.16.1)
-      '@angular/platform-browser': 21.2.6(@angular/animations@21.2.6(@angular/core@21.2.6(@angular/compiler@21.2.6)(rxjs@7.8.2)(zone.js@0.16.1)))(@angular/common@21.2.6(@angular/core@21.2.6(@angular/compiler@21.2.6)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2))(@angular/core@21.2.6(@angular/compiler@21.2.6)(rxjs@7.8.2)(zone.js@0.16.1))
-      '@angular/router': 21.2.6(@angular/common@21.2.6(@angular/core@21.2.6(@angular/compiler@21.2.6)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2))(@angular/core@21.2.6(@angular/compiler@21.2.6)(rxjs@7.8.2)(zone.js@0.16.1))(@angular/platform-browser@21.2.6(@angular/animations@21.2.6(@angular/core@21.2.6(@angular/compiler@21.2.6)(rxjs@7.8.2)(zone.js@0.16.1)))(@angular/common@21.2.6(@angular/core@21.2.6(@angular/compiler@21.2.6)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2))(@angular/core@21.2.6(@angular/compiler@21.2.6)(rxjs@7.8.2)(zone.js@0.16.1)))(rxjs@7.8.2)
-      front-matter: 4.0.2
-      marked: 17.0.5
-      marked-gfm-heading-id: 4.1.3(marked@17.0.5)
-      marked-highlight: 2.2.3(marked@17.0.5)
-      marked-mangle: 1.1.12(marked@17.0.5)
-      rxjs: 7.8.2
-      tslib: 2.8.1
-    optionalDependencies:
-      '@nx/devkit': 22.6.2(nx@22.6.2(@swc-node/register@1.11.1(@swc/core@1.15.18(@swc/helpers@0.5.19))(@swc/types@0.1.26)(typescript@6.0.2))(@swc/core@1.15.18(@swc/helpers@0.5.19)))
-      '@standard-schema/spec': 1.1.0
-      md4x: 0.0.25
-      prismjs: 1.30.0
-      satori: 0.10.14
-      satori-html: 0.3.2
-      sharp: 0.34.5
-
   '@analogjs/vite-plugin-angular@2.4.0(@angular-devkit/build-angular@21.2.4(562e135550fb493df3034c3b70b31f89))(@angular/build@21.2.4(ce7d2ad427afc0ad407f7182efa58bb6))':
     dependencies:
       tinyglobby: 0.2.15
@@ -16175,66 +16098,6 @@ snapshots:
     optionalDependencies:
       '@angular-devkit/build-angular': 21.2.4(562e135550fb493df3034c3b70b31f89)
       '@angular/build': 21.2.4(ce7d2ad427afc0ad407f7182efa58bb6)
-
-  '@analogjs/vite-plugin-angular@3.0.0-alpha.23(@angular-devkit/build-angular@21.2.4(562e135550fb493df3034c3b70b31f89))(@angular/build@21.2.4(ce7d2ad427afc0ad407f7182efa58bb6))':
-    dependencies:
-      obug: 2.1.1
-      oxc-parser: 0.121.0
-      oxc-resolver: 11.19.1
-      rolldown: 1.0.0-rc.12
-      tinyglobby: 0.2.15
-    optionalDependencies:
-      '@angular-devkit/build-angular': 21.2.4(562e135550fb493df3034c3b70b31f89)
-      '@angular/build': 21.2.4(ce7d2ad427afc0ad407f7182efa58bb6)
-
-  '@analogjs/vite-plugin-nitro@3.0.0-alpha.23(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(sharp@0.34.5)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))':
-    dependencies:
-      defu: 6.1.4
-      nitro: 3.0.260311-beta(chokidar@5.0.0)(dotenv@17.3.1)(giget@2.0.0)(ioredis@5.10.0)(jiti@2.6.1)(lru-cache@11.2.7)(rollup@4.60.1)(vite@8.0.3(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))
-      obug: 2.1.1
-      ofetch: 2.0.0-alpha.3
-      oxc-parser: 0.121.0
-      radix3: 1.1.2
-      xmlbuilder2: 4.0.3
-    optionalDependencies:
-      sharp: 0.34.5
-    transitivePeerDependencies:
-      - '@azure/app-configuration'
-      - '@azure/cosmos'
-      - '@azure/data-tables'
-      - '@azure/identity'
-      - '@azure/keyvault-secrets'
-      - '@azure/storage-blob'
-      - '@capacitor/preferences'
-      - '@deno/kv'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@netlify/blobs'
-      - '@netlify/runtime'
-      - '@planetscale/database'
-      - '@upstash/redis'
-      - '@vercel/blob'
-      - '@vercel/functions'
-      - '@vercel/kv'
-      - aws4fetch
-      - better-sqlite3
-      - chokidar
-      - dotenv
-      - drizzle-orm
-      - giget
-      - idb-keyval
-      - ioredis
-      - jiti
-      - lru-cache
-      - miniflare
-      - mongodb
-      - mysql2
-      - rollup
-      - sqlite3
-      - uploadthing
-      - vite
-      - xml2js
-      - zephyr-agent
 
   '@angular-devkit/architect@0.2102.4(chokidar@5.0.0)':
     dependencies:
