@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
+import { isPlainObject } from 'es-toolkit';
 import { filter } from 'rxjs/operators';
 
 import type { Graph, Thing, WithContext } from 'schema-dts';

@@ -5,6 +5,8 @@
  * filenames into typed route manifests and generated declarations.
  */
 
+import { isPlainObject } from 'es-toolkit';
+
 export interface RouteParamInfo {
   name: string;
   type: 'dynamic' | 'catchAll' | 'optionalCatchAll';

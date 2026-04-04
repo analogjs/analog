@@ -3,7 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "dependencies": {
-    "@analogjs/router": "workspace:*"
+    "@analogjs/router": "workspace:*",
+    "es-toolkit": "catalog:"
   },
   "devDependencies": {
     "@analogjs/platform": "workspace:*",
