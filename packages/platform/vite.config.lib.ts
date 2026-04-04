@@ -37,11 +37,6 @@ function copyAssetsPlugin(): Plugin {
 
 const config: UserConfigExport = defineConfig({
   plugins: [oxcDtsPlugin(pkgDir), copyAssetsPlugin()],
-  resolve: {
-    alias: {
-      '@analogjs/cross-utils': resolve(pkgDir, '../cross-utils/src/index.ts'),
-    },
-  },
   build: {
     target: 'es2022',
     sourcemap: true,
@@ -54,10 +49,7 @@ const config: UserConfigExport = defineConfig({
     outDir: resolve(pkgDir, 'dist'),
     rolldownOptions: {
       external: (id: string) =>
-        id !== '@analogjs/cross-utils' &&
-        !id.startsWith('.') &&
-        !id.startsWith('\0') &&
-        !path.isAbsolute(id),
+        !id.startsWith('.') && !id.startsWith('\0') && !path.isAbsolute(id),
       output: {
         preserveModules: true,
         preserveModulesRoot: normalizePath(import.meta.dirname),

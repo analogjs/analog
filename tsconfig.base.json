@@ -19,7 +19,6 @@
       "@analogjs/astro-angular": ["./packages/astro-angular/src/index.ts"],
       "@analogjs/content": ["./packages/content/src/index.ts"],
       "@analogjs/content-plugin": ["./packages/content-plugin/src/index.ts"],
-      "@analogjs/cross-utils": ["./packages/cross-utils/src/index.ts"],
       "@analogjs/content/prism-highlighter": [
         "./packages/content/prism-highlighter/src/index.ts"
       ],

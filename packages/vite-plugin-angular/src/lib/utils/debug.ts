@@ -1,5 +1,5 @@
 import { createDebug } from 'obug';
-import { createDebugHarness } from '@analogjs/cross-utils';
+import { createDebugHarness } from './debug-harness.js';
 
 export const debugHmr = createDebug('analog:angular:hmr');
 export const debugStyles = createDebug('analog:angular:styles');

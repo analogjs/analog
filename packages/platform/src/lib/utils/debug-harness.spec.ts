@@ -1,3 +1,8 @@
+/**
+ * Duplicates of this file (keep in sync):
+ *   packages/platform/src/lib/utils/debug-harness.spec.ts
+ *   packages/vite-plugin-angular/src/lib/utils/debug-harness.spec.ts
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('obug', () => ({

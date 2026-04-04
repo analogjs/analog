@@ -1,3 +1,8 @@
+/**
+ * Duplicates of this file (keep in sync):
+ *   packages/platform/src/lib/utils/debug-harness.ts
+ *   packages/vite-plugin-angular/src/lib/utils/debug-harness.ts
+ */
 import { join } from 'node:path';
 import { enable } from 'obug';
 import type { Debugger } from 'obug';

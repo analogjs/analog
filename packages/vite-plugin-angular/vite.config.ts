@@ -7,14 +7,6 @@ import { defineConfig, normalizePath } from 'vite';
 export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
-    resolve: {
-      alias: {
-        '@analogjs/cross-utils': resolve(
-          __dirname,
-          '../cross-utils/src/index.ts',
-        ),
-      },
-    },
     build: {
       target: 'esnext',
       outDir: 'dist',

@@ -7,14 +7,6 @@ import { defineConfig, normalizePath } from 'vite';
 export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
-    resolve: {
-      alias: {
-        '@analogjs/cross-utils': resolve(
-          __dirname,
-          '../cross-utils/src/index.ts',
-        ),
-      },
-    },
     build: {
       target: 'esnext',
       outDir: 'dist',
@@ -35,11 +27,7 @@ export default defineConfig(({ mode }) => {
         // Uses path.isAbsolute() instead of startsWith('/') to handle both
         // Unix (/usr/...) and Windows (D:\...) absolute paths.
         external: (id: string) =>
-          id !== '@analogjs/cross-utils' &&
-          !id.startsWith('@analogjs/cross-utils/') &&
-          !id.startsWith('.') &&
-          !id.startsWith('\0') &&
-          !path.isAbsolute(id),
+          !id.startsWith('.') && !id.startsWith('\0') && !path.isAbsolute(id),
         output: {
           preserveModules: true,
           // Normalize to forward slashes so rolldown's Rust path-stripping

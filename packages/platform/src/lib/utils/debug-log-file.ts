@@ -1,3 +1,8 @@
+/**
+ * Duplicates of this file (keep in sync):
+ *   packages/platform/src/lib/utils/debug-log-file.ts
+ *   packages/vite-plugin-angular/src/lib/utils/debug-log-file.ts
+ */
 import { mkdirSync, writeFileSync, appendFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { format } from 'node:util';

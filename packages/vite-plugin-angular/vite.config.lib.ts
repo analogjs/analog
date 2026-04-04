@@ -39,11 +39,6 @@ export default defineConfig({
       { from: 'migrations/migration.json', to: 'migrations/migration.json' },
     ]),
   ],
-  resolve: {
-    alias: {
-      '@analogjs/cross-utils': resolve(pkgDir, '../cross-utils/src/index.ts'),
-    },
-  },
   build: {
     target: 'es2022',
     sourcemap: true,
@@ -62,10 +57,7 @@ export default defineConfig({
     },
     rolldownOptions: {
       external: (id: string) =>
-        id !== '@analogjs/cross-utils' &&
-        !id.startsWith('.') &&
-        !id.startsWith('\0') &&
-        !path.isAbsolute(id),
+        !id.startsWith('.') && !id.startsWith('\0') && !path.isAbsolute(id),
       output: {
         preserveModules: true,
         preserveModulesRoot: normalizePath(import.meta.dirname),

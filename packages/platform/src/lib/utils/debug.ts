@@ -1,6 +1,6 @@
 import { createDebug } from 'obug';
 import { debugInstances as nitroDebugInstances } from '@analogjs/vite-plugin-nitro/internal';
-import { createDebugHarness } from '@analogjs/cross-utils';
+import { createDebugHarness } from './debug-harness.js';
 
 export const debugPlatform = createDebug('analog:platform');
 export const debugRoutes = createDebug('analog:platform:routes');
