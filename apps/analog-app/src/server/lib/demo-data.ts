@@ -1,3 +1,4 @@
+import { debounce } from 'es-toolkit';
 import { existsSync, readFileSync, watch } from 'node:fs';
 import { resolve } from 'node:path';
 import { runInNewContext } from 'node:vm';
@@ -37,23 +38,13 @@ export function watchDemoSourceFile(
   sourcePath: string,
   onChange: () => void | Promise<void>,
 ) {
-  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const debouncedOnChange = debounce(() => void onChange(), 50);
 
   try {
-    const watcher = watch(sourcePath, { persistent: false }, () => {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
-
-      timeout = setTimeout(() => {
-        void onChange();
-      }, 50);
-    });
+    const watcher = watch(sourcePath, { persistent: false }, debouncedOnChange);
 
     return () => {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
+      debouncedOnChange.cancel();
       watcher.close();
     };
   } catch {

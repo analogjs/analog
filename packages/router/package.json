@@ -87,6 +87,7 @@
   },
   "dependencies": {
     "@standard-schema/spec": "catalog:",
+    "es-toolkit": "catalog:",
     "tslib": "catalog:"
   },
   "devDependencies": {

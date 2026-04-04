@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "front-matter": "catalog:",
+    "es-toolkit": "catalog:",
     "tinyglobby": "catalog:",
     "nitro": "catalog:",
     "@analogjs/vite-plugin-angular": "workspace:^",

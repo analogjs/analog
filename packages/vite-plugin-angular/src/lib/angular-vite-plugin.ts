@@ -1,5 +1,6 @@
 import { NgtscProgram } from '@angular/compiler-cli';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { union } from 'es-toolkit';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import {
   basename,
   dirname,
@@ -1406,7 +1407,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       ),
     );
     // Merge + dedupe root names
-    rootNames = [...new Set([...rootNames, ...includeCache, ...replacements])];
+    rootNames = union(rootNames, includeCache, replacements);
     const hostKey = JSON.stringify(tsCompilerOptions);
     let host: ts.CompilerHost;
 
