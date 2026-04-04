@@ -1,3 +1,6 @@
+import { readFile, readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+
 import type { EnvironmentProviders, Provider, Type } from '@angular/core';
 import {
   reflectComponentType,
@@ -22,6 +25,22 @@ import type { AstroComponentMetadata, SSRLoadedRendererValue } from 'astro';
 import { getContext, incrementId, type RendererContext } from './context.ts';
 import { provideBootstrapListener } from './server-providers.ts';
 import { ID_PROP_NAME } from './id.ts';
+
+const require = createRequire(import.meta.url);
+let jsActionContractScript: string | undefined = undefined;
+
+const HYDRATION_SCRIPT_ID = 'ng-event-dispatch-contract';
+
+function getHydrationScript(): string {
+  jsActionContractScript ??=
+    `<script type="text/javascript" id="${HYDRATION_SCRIPT_ID}">` +
+    readFileSync(
+      require.resolve('@angular/core/event-dispatch-contract.min.js'),
+      'utf-8',
+    ) +
+    '</script>';
+  return jsActionContractScript;
+}
 
 async function check(Component: Type<unknown>) {
   return !!reflectComponentType(Component);
@@ -53,7 +72,9 @@ async function renderToStaticMarkup(
 
   const platformRef = platformServer();
   const document = platformRef.injector.get(DOCUMENT);
-  document.body.innerHTML = `<${appId} ${ID_PROP_NAME}="${ngAppId}"></${appId}>`;
+
+  // Incremental hydration requires the event dispatch script to be present.
+  document.body.innerHTML = `${getHydrationScript()}<${appId} ${ID_PROP_NAME}="${ngAppId}"></${appId}>`;
 
   const bootstrap = (context?: BootstrapContext) =>
     bootstrapApplication(
@@ -81,6 +102,10 @@ async function renderToStaticMarkup(
     document,
   });
 
+  // Since astro renders components in parallel, we must reset the ngServerMode global to `true` after rendering the component.
+  // The `renderApplication` function resets this back to `undefined` before returning.
+  globalThis.ngServerMode = true;
+
   document.documentElement.innerHTML = html;
   let styleTags = '';
 
@@ -89,6 +114,9 @@ async function renderToStaticMarkup(
       styleTags += (node as HTMLElement).outerHTML;
     }
   });
+
+  // Remove the hydration script, so only one is present on the page.
+  document.getElementById(HYDRATION_SCRIPT_ID)?.remove();
 
   const correctedHtml = styleTags + document.body.innerHTML;
 
@@ -100,4 +128,5 @@ async function renderToStaticMarkup(
 export default {
   check,
   renderToStaticMarkup,
+  renderHydrationScript: () => getHydrationScript(),
 } satisfies SSRLoadedRendererValue;
