@@ -842,7 +842,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         return {
           [jsTransformConfigKey]: jsTransformConfigValue,
           optimizeDeps: {
-            include: ['tslib'],
+            include: ['rxjs/operators', 'rxjs', 'tslib'],
             exclude: ['@angular/platform-server'],
             ...(useRolldown ? { rolldownOptions } : { esbuildOptions }),
           },

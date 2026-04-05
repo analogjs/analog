@@ -34,6 +34,28 @@ describe('angularVitePlugin', () => {
       '@analogjs/vite-plugin-angular',
     );
   });
+
+  it('prebundles rxjs and tslib in optimizeDeps', async () => {
+    const plugin = angular().find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    ) as Plugin;
+    const configHook =
+      typeof plugin.config === 'function'
+        ? plugin.config
+        : (plugin.config as any)?.handler;
+
+    const config = await configHook?.call(
+      {} as any,
+      { resolve: {} },
+      { command: 'serve', mode: 'development' },
+    );
+
+    expect(config?.optimizeDeps?.include).toEqual([
+      'rxjs/operators',
+      'rxjs',
+      'tslib',
+    ]);
+  });
 });
 
 describe('hmr option', () => {
