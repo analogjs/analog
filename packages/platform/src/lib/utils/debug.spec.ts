@@ -116,6 +116,8 @@ describe('applyDebugOption logFile (platform)', () => {
   it('uses provided workspaceRoot for file path', () => {
     applyDebugOption({ logFile: true }, '/custom/root');
     const callArgs = vi.mocked(wrapInstancesForFileLog).mock.calls[0];
+    expect(Array.isArray(callArgs[0])).toBe(true);
+    expect(callArgs[0].length).toBeGreaterThan(0);
     expect(callArgs[1]).toContain('/custom/root');
   });
 

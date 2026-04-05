@@ -194,7 +194,7 @@ export function contentPlugin(
             server.ws.send('analog:debug-full-reload', {
               plugin: 'platform:content-plugin',
               reason: 'content-file-set-changed',
-              path,
+              path: normalizedPath,
             });
             server.ws.send({
               type: 'full-reload',
