@@ -3,10 +3,11 @@ import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
-import { CONTENT_FILE_LOADER, ContentRenderer } from '@analogjs/content';
+import { ContentRenderer } from '@analogjs/content';
 import { of } from 'rxjs';
 import { describe, expect, it } from 'vitest';
 
+import { CONTENT_FILES_TOKEN } from '../../src/lib/content-files-token';
 import { contentFileResource } from './content-file-resource';
 
 const TEST_RESOURCE_TOKEN = new InjectionToken<
@@ -313,9 +314,8 @@ function setup(args: {
         useClass: TestContentRenderer,
       },
       {
-        provide: CONTENT_FILE_LOADER,
-        useValue: async () =>
-          args.contentFiles as Record<string, () => Promise<string>>,
+        provide: CONTENT_FILES_TOKEN,
+        useValue: args.contentFiles as Record<string, () => Promise<string>>,
       },
       {
         provide: TEST_RESOURCE_TOKEN,

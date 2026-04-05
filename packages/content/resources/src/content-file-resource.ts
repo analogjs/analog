@@ -10,14 +10,13 @@ import {
   ContentFile,
   ContentRenderer,
   FrontmatterValidationError,
+  injectContentFilesMap,
   parseRawContentFile,
   parseRawContentFileAsync,
-  injectContentFileLoader,
 } from '@analogjs/content';
 import { ActivatedRoute } from '@angular/router';
 
 import { toSignal } from '@angular/core/rxjs-interop';
-import { from } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 export interface ContentFileResourceResult<
@@ -200,9 +199,8 @@ export function contentFileResource(
     ? (paramsOrOptions as { schema?: StandardSchemaV1 }).schema
     : undefined;
 
-  const loaderPromise = injectContentFileLoader();
   const contentRenderer = inject(ContentRenderer);
-  const contentFilesMap = toSignal(from(loaderPromise()));
+  const contentFilesMap = injectContentFilesMap();
   const input =
     params ||
     toSignal(
@@ -213,7 +211,7 @@ export function contentFileResource(
     );
 
   return resource({
-    params: computed(() => ({ input: input(), files: contentFilesMap() })),
+    params: computed(() => ({ input: input(), files: contentFilesMap })),
     loader: async ({ params: resourceParams }) => {
       const { input: param, files } = resourceParams;
 
