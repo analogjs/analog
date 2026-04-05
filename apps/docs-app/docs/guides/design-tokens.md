@@ -118,6 +118,17 @@ import outputs, {
 } from 'virtual:analog-design-tokens';
 ```
 
+Each output now includes both a stable virtual import id and stable emitted file metadata:
+
+- `importId`: the `virtual:analog-design-tokens/file/...` import for CSS outputs
+- `rootRelativePath`: the workspace-relative emitted path under `node_modules/.analog/design-tokens/...`
+- `order`: deterministic output order for consumers that need stable stylesheet sequencing
+
+That gives Angular apps and tooling two valid consumption models:
+
+- use virtual imports when you want Analog/Vite-managed module loading
+- use `rootRelativePath` when you need a stable physical file identity for build tooling or debugging
+
 ## Import framework-specific CSS
 
 Use `designTokenCss()` when a framework wants its own explicit token bridge stylesheet.
@@ -138,6 +149,34 @@ import { designTokenCss } from '@analogjs/platform';
 
 await import(designTokenCss('css/framework/mui.css'));
 ```
+
+## Angular-first usage
+
+The Angular-friendly default is:
+
+- inject app-wide token variables globally
+- import framework bridge CSS from your root stylesheet or app shell
+- read tokens inside component styles with `var(--your-token)` instead of importing token bundles into each component
+
+Example component stylesheet:
+
+```css
+:host {
+  border-radius: var(--brand-radius-md);
+  background: var(--brand-surface-0);
+  color: var(--brand-foreground);
+}
+```
+
+This matches Angular's style resource model better than importing the token bundle through every component `styleUrl`.
+
+### Why prefer global token delivery
+
+- Angular already tracks external stylesheets as resources with ordering and invalidation concerns
+- global token bundles avoid per-component duplication and awkward Shadow DOM edge cases
+- component styles should usually consume semantic variables, not redefine the source token contract
+
+If you do need explicit file-based integration for custom SSR or tooling, prefer using the manifest's `rootRelativePath` instead of guessing the cache location yourself.
 
 ## Why this belongs in Analog
 

@@ -107,8 +107,16 @@ export default defineDesignTokensConfig({
     const htmlTags = await plugin.transformIndexHtml?.call({} as never, '');
 
     expect(manifest).toContain('"platform":"css"');
+    expect(manifest).toContain('"order":0');
     expect(manifest).toContain('"framework":["tailwind","mui"]');
     expect(manifest).toContain('"relativePath":"css/tokens.css"');
+    expect(manifest).toContain(
+      '"rootRelativePath":"node_modules/.analog/design-tokens/',
+    );
+    expect(manifest).toContain(
+      `"importId":"${designTokenCss('css/tokens.css')}"`,
+    );
+    expect(manifest).toContain('"importId":null');
     expect(manifest).toContain('"tailwind":[');
     expect(manifest).toContain('getOutputsForFramework');
     expect(css).toContain('--color-brand-primary: #3366ff;');
@@ -164,5 +172,68 @@ export default {
     await plugin.buildStart?.call({} as never);
 
     expect(await plugin.transformIndexHtml?.call({} as never, '')).toEqual([]);
+  });
+
+  it('keeps emitted file metadata available for Angular-friendly file-based consumption', async () => {
+    const workspace = await createWorkspace();
+    const configFile = path.join(workspace, 'tokens.config.ts');
+
+    await writeFile(
+      configFile,
+      `
+export default {
+  tokens: {
+    color: {
+      brand: {
+        primary: { value: '#3366ff' },
+      },
+    },
+  },
+  platforms: {
+    css: {
+      transformGroup: 'css',
+      buildPath: 'css/',
+      files: [
+        {
+          destination: 'tokens.css',
+          format: 'css/variables',
+        },
+        {
+          destination: 'framework/primeng.css',
+          format: 'css/variables',
+          options: {
+            analog: {
+              framework: 'primeng',
+              inject: false,
+            },
+          },
+        },
+      ],
+    },
+  },
+};
+      `,
+    );
+
+    const [plugin] = designTokensPlugin({
+      configFile: 'tokens.config.ts',
+    });
+    plugin.configResolved?.({
+      root: workspace,
+    } as ResolvedConfig);
+    await plugin.buildStart?.call({} as never);
+
+    const manifestId = plugin.resolveId?.(DEFAULT_MANIFEST_MODULE_ID);
+    const manifest = await plugin.load?.call({} as never, manifestId as string);
+
+    expect(manifest).toContain(
+      '"rootRelativePath":"node_modules/.analog/design-tokens/',
+    );
+    expect(manifest).toContain(
+      `"importId":"${designTokenCss('css/tokens.css')}"`,
+    );
+    expect(manifest).toContain(
+      `"importId":"${designTokenCss('css/framework/primeng.css')}"`,
+    );
   });
 });

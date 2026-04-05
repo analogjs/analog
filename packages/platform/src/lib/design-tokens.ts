@@ -58,13 +58,16 @@ export interface DesignTokensOptions {
 
 export interface DesignTokenOutput {
   id: string;
+  order: number;
   platform: string;
   destination: string;
   absolutePath: string;
   relativePath: string;
+  rootRelativePath: string;
   inject: boolean;
   framework: string[];
   format: string;
+  importId: string | null;
 }
 
 interface DesignTokenBuildState {
@@ -287,7 +290,7 @@ export function designTokensPlugin(
     const sd = new StyleDictionary(adaptedConfig as never);
     await sd.buildAllPlatforms();
 
-    const outputs = collectOutputs(adaptedConfig, outDir);
+    const outputs = collectOutputs(adaptedConfig, outDir, root);
     const injectedCss = await readInjectedCss(outputs);
     const tokenGlobs = resolveTokenGlobs(
       loadedConfig,
@@ -401,8 +404,10 @@ function resolvePlatformOutDir(
 function collectOutputs(
   config: DesignTokensConfig,
   outDir: string,
+  root: string,
 ): DesignTokenOutput[] {
   const outputs: DesignTokenOutput[] = [];
+  let order = 0;
 
   for (const [platformName, platformConfig] of Object.entries(
     config.platforms,
@@ -416,19 +421,23 @@ function collectOutputs(
     for (const fileConfig of platformConfig.files ?? []) {
       const absolutePath = path.resolve(platformOutDir, fileConfig.destination);
       const relativePath = normalizePath(path.relative(outDir, absolutePath));
+      const rootRelativePath = normalizePath(path.relative(root, absolutePath));
       const analogOptions = fileConfig.options?.analog;
       const isCssFile = absolutePath.endsWith('.css');
       const framework = normalizeFrameworks(analogOptions?.framework);
 
       outputs.push({
         id: `${platformName}:${fileConfig.destination}`,
+        order: order++,
         platform: platformName,
         destination: fileConfig.destination,
         absolutePath,
         relativePath,
+        rootRelativePath,
         inject: isCssFile && analogOptions?.inject !== false,
         framework,
         format: fileConfig.format,
+        importId: isCssFile ? designTokenCss(relativePath) : null,
       });
     }
   }
