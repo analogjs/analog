@@ -14,6 +14,7 @@ import {
   getModulesForChangedFile,
   isModuleForChangedResource,
   isIgnoredHmrFile,
+  injectViteIgnoreForHmrMetadata,
   mapTemplateUpdatesToFiles,
   normalizeIncludeGlob,
   refreshStylesheetRegistryForFile,
@@ -22,10 +23,7 @@ import {
 } from './angular-vite-plugin';
 import { AnalogStylesheetRegistry } from './stylesheet-registry.js';
 
-const hmrPluginNames = [
-  '@analogjs/vite-plugin-angular:hmr-vite-ignore',
-  'analogjs-live-reload-plugin',
-];
+const hmrPluginNames = ['analogjs-live-reload-plugin'];
 const originalNodeEnv = process.env['NODE_ENV'];
 const originalVitestEnv = process.env['VITEST'];
 
@@ -537,6 +535,17 @@ describe('evictDeletedFileMetadata', () => {
     expect(
       fileTransformMap.has('/workspace/apps/demo/src/app/demo.component.ts'),
     ).toBe(false);
+  });
+});
+
+describe('injectViteIgnoreForHmrMetadata', () => {
+  it('adds @vite-ignore to Angular HMR metadata imports', () => {
+    const code =
+      'return import(i0.ɵɵgetReplaceMetadataURL(id, t, import.meta.url));';
+
+    expect(injectViteIgnoreForHmrMetadata(code)).toContain(
+      'import(/* @vite-ignore */ i0.ɵɵgetReplaceMetadataURL',
+    );
   });
 });
 
