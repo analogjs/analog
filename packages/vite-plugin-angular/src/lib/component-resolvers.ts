@@ -45,6 +45,21 @@ function getStringValue(node: any): string | undefined {
   return undefined;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isTrueLiteral(node: any): boolean {
+  if (!node) return false;
+
+  if (node.type === 'BooleanLiteral') {
+    return node.value === true;
+  }
+
+  if (node.type === 'Literal') {
+    return node.value === true;
+  }
+
+  return false;
+}
+
 /**
  * Parses TypeScript/JS source with OXC and collects `styleUrl`, `styleUrls`,
  * and `templateUrl` property values from Angular `@Component()` decorators
@@ -128,6 +143,7 @@ function collectComponentUrls(code: string): {
 
 export interface AngularComponentMetadata {
   className: string;
+  hasStandaloneTrue?: boolean;
   selector?: string;
   styleUrls: string[];
   templateUrls: string[];
@@ -183,6 +199,8 @@ export function getAngularComponentMetadata(
           const name = property.key.name;
           if (name === 'selector') {
             metadata.selector = getStringValue(property.value);
+          } else if (name === 'standalone' && isTrueLiteral(property.value)) {
+            metadata.hasStandaloneTrue = true;
           } else if (name === 'styleUrl') {
             const val = getStringValue(property.value);
             if (val !== undefined) {

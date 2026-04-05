@@ -459,6 +459,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     string,
     ActiveGraphComponentRecord[]
   >();
+  const standaloneTrueWarnings = new Set<string>();
   const selectorOwners = new Map<string, Set<string>>();
   const classNameOwners = new Map<string, Set<string>>();
   const transformedStyleOwnerMetadata = new Map<string, StyleOwnerRecord[]>();
@@ -1834,6 +1835,28 @@ export function angular(options?: PluginOptions): Plugin[] {
           // keep a lightweight active-graph index for duplicate selector/class
           // diagnostics without requiring a full compiler pass first.
           const components = getAngularComponentMetadata(code);
+          const staleStandaloneComponents = components.filter(
+            (component) => component.hasStandaloneTrue,
+          );
+
+          if (
+            watchMode &&
+            !isTest &&
+            angularFullVersion >= 190000 &&
+            staleStandaloneComponents.length > 0 &&
+            !standaloneTrueWarnings.has(cleanId)
+          ) {
+            standaloneTrueWarnings.add(cleanId);
+            this.warn(
+              [
+                '[Analog Angular] Redundant `standalone: true` metadata.',
+                `File: ${cleanId}`,
+                `Components: ${staleStandaloneComponents.map((component) => component.className).join(', ')}`,
+                'Angular 19+ treats declarations as standalone by default, so this property can be removed.',
+                'Run the Analog update migration or delete the property manually to keep generated examples and app code current.',
+              ].join('\n'),
+            );
+          }
 
           const inlineTemplateIssue = components.flatMap((component) =>
             component.inlineTemplates.flatMap((template) =>

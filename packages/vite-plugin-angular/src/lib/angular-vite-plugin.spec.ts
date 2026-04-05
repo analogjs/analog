@@ -1001,6 +1001,82 @@ describe('template class binding guard plugin', () => {
       expect.stringMatching(/Duplicate component class name detected/),
     );
   });
+
+  it('warns once for stale standalone true metadata during dev transforms', () => {
+    const previousNodeEnv = process.env['NODE_ENV'];
+    const previousVitestEnv = process.env['VITEST'];
+
+    process.env['NODE_ENV'] = 'development';
+    delete process.env['VITEST'];
+
+    try {
+      const plugins = angular();
+      const plugin = plugins.find(
+        (p) =>
+          p.name === '@analogjs/vite-plugin-angular:template-class-binding-guard',
+      ) as Plugin;
+      const mainPlugin = plugins.find(
+        (p) => p.name === '@analogjs/vite-plugin-angular',
+      ) as Plugin;
+
+      const configHook =
+        typeof mainPlugin.config === 'function'
+          ? mainPlugin.config
+          : (mainPlugin.config as any)?.handler;
+      const configResolved =
+        typeof mainPlugin.configResolved === 'function'
+          ? mainPlugin.configResolved
+          : (mainPlugin.configResolved as any)?.handler;
+      const transform =
+        typeof plugin.transform === 'function'
+          ? plugin.transform
+          : (plugin.transform as any)?.handler;
+      const warn = vi.fn();
+      const file = '/workspace/apps/demo/src/app/pages/home.page.ts';
+      const source = `
+        @Component({
+          standalone: true,
+          template: '<section>Page</section>'
+        })
+        export default class HomePage {}
+      `;
+
+      configHook?.call(
+        {} as any,
+        { root: '/workspace', build: {} } as any,
+        { command: 'serve', mode: 'development' } as any,
+      );
+      configResolved?.call(
+        {} as any,
+        {
+          command: 'serve',
+          root: '/workspace',
+          build: {},
+          server: { watch: {} },
+        } as any,
+      );
+
+      transform.call({ warn } as any, source, file);
+      transform.call({ warn } as any, source, file);
+
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringMatching(/Redundant `standalone: true` metadata/),
+      );
+    } finally {
+      if (typeof previousNodeEnv === 'undefined') {
+        delete process.env['NODE_ENV'];
+      } else {
+        process.env['NODE_ENV'] = previousNodeEnv;
+      }
+
+      if (typeof previousVitestEnv === 'undefined') {
+        delete process.env['VITEST'];
+      } else {
+        process.env['VITEST'] = previousVitestEnv;
+      }
+    }
+  });
 });
 
 // =============================================================================
