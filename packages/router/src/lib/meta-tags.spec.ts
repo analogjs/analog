@@ -1,4 +1,4 @@
-import { Component, ENVIRONMENT_INITIALIZER } from '@angular/core';
+import { Component, provideAppInitializer } from '@angular/core';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DOCUMENT } from '@angular/common';
 import {
@@ -19,6 +19,7 @@ import {
 describe('updateMetaTagsOnRouteChange', () => {
   function setup() {
     @Component({
+      selector: 'analogjs-meta-tags-test',
       standalone: true,
       imports: [RouterOutlet],
       template: '<router-outlet></router-outlet>',
@@ -120,11 +121,7 @@ describe('updateMetaTagsOnRouteChange', () => {
       providers: [
         provideRouter(routes),
         provideLocationMocks(),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateMetaTagsOnRouteChange(),
-        },
+        provideAppInitializer(() => updateMetaTagsOnRouteChange()),
       ],
     });
 

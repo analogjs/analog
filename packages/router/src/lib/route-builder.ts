@@ -31,7 +31,12 @@ export function createRoutes<TFile>(
   resolveModule: RouteModuleResolver<TFile>,
   debug = false,
 ): Route[] {
-  const filenames = Object.keys(files);
+  const filenames = Object.keys(files).sort((a, b) => {
+    const aPriority = getCollisionPriority(a);
+    const bPriority = getCollisionPriority(b);
+
+    return aPriority - bPriority;
+  });
 
   if (filenames.length === 0) {
     return [];
@@ -44,14 +49,23 @@ export function createRoutes<TFile>(
     const rawSegment = rawSegments[level];
     const ancestorRawSegments = rawSegments.slice(0, level);
 
-    if (import.meta.env.DEV) {
-      const existing = acc[level]?.[rawPath];
-      if (existing?.filename && existing.filename !== filename) {
+    const existing = acc[level]?.[rawPath];
+    if (existing?.filename && existing.filename !== filename) {
+      const existingPriority = getCollisionPriority(existing.filename);
+      const nextPriority = getCollisionPriority(filename);
+      const shouldKeepExisting = existingPriority < nextPriority;
+      const chosenFilename = shouldKeepExisting ? existing.filename : filename;
+
+      if (import.meta.env.DEV) {
         console.warn(
           `[Analog] Route files "${existing.filename}" and "${filename}" ` +
             `resolve to the same route path "${rawPath}". ` +
-            `Only "${filename}" will be used.`,
+            `Only "${chosenFilename}" will be used.`,
         );
+      }
+
+      if (shouldKeepExisting) {
+        return acc;
       }
     }
 
@@ -109,6 +123,20 @@ export function createRoutes<TFile>(
   sortRawRoutes(rawRoutes);
 
   return toRoutes(rawRoutes, files, resolveModule, debug);
+}
+
+function getCollisionPriority(filename: string): number {
+  if (
+    filename.includes('/src/app/pages/') ||
+    filename.includes('/src/app/routes/') ||
+    filename.includes('/app/pages/') ||
+    filename.includes('/app/routes/') ||
+    filename.includes('/src/content/')
+  ) {
+    return 0;
+  }
+
+  return 1;
 }
 
 /**

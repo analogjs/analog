@@ -1,11 +1,14 @@
 import {
-  ENVIRONMENT_INITIALIZER,
   EnvironmentProviders,
   inject,
   makeEnvironmentProviders,
+  provideAppInitializer,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { ɵHTTP_ROOT_INTERCEPTOR_FNS as HTTP_ROOT_INTERCEPTOR_FNS } from '@angular/common/http';
+import { Meta } from '@angular/platform-browser';
 import { provideRouter, RouterFeatures, ROUTES, Routes } from '@angular/router';
+import { Router } from '@angular/router';
 import { API_PREFIX } from '@analogjs/router/tokens';
 
 import { cookieInterceptor } from './cookie-interceptor';
@@ -102,7 +105,7 @@ export function provideFileRouterWithRoutes(
 
         for (const source of extraSources) {
           for (const [key, loader] of Object.entries(source.files)) {
-            allFiles[key] = loader;
+            allFiles[key] = loader as () => Promise<unknown>;
             resolverMap.set(key, source.resolveModule);
           }
         }
@@ -115,16 +118,14 @@ export function provideFileRouterWithRoutes(
         });
       },
     },
-    {
-      provide: ENVIRONMENT_INITIALIZER,
-      multi: true,
-      useValue: () => updateMetaTagsOnRouteChange(),
-    },
-    {
-      provide: ENVIRONMENT_INITIALIZER,
-      multi: true,
-      useValue: () => updateJsonLdOnRouteChange(),
-    },
+    provideAppInitializer(() => {
+      const router = inject(Router);
+      const meta = inject(Meta);
+      const document = inject(DOCUMENT, { optional: true });
+
+      updateMetaTagsOnRouteChange(router, meta);
+      updateJsonLdOnRouteChange(router, document);
+    }),
     {
       provide: HTTP_ROOT_INTERCEPTOR_FNS,
       multi: true,

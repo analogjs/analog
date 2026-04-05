@@ -11,6 +11,7 @@ const {
   contentPluginSpy,
   serverModePluginSpy,
   clearClientPageEndpointsPluginSpy,
+  discoverLibraryRoutesSpy,
 } = vi.hoisted(() => ({
   viteNitroPluginSpy: vi.fn(() => []),
   angularSpy: vi.fn(() => []),
@@ -22,10 +23,18 @@ const {
   contentPluginSpy: vi.fn(() => []),
   serverModePluginSpy: vi.fn(() => []),
   clearClientPageEndpointsPluginSpy: vi.fn(() => []),
+  discoverLibraryRoutesSpy: vi.fn(() => ({
+    additionalPagesDirs: [],
+    additionalContentDirs: [],
+    additionalAPIDirs: [],
+  })),
 }));
 
 vi.mock('@analogjs/vite-plugin-nitro', () => ({
   default: viteNitroPluginSpy,
+}));
+vi.mock('@analogjs/vite-plugin-nitro/internal', () => ({
+  debugInstances: [],
 }));
 vi.mock('@analogjs/vite-plugin-angular', () => ({ default: angularSpy }));
 vi.mock('./ssr/ssr-build-plugin.js', () => ({
@@ -51,6 +60,9 @@ vi.mock('../server-mode-plugin.js', () => ({
 }));
 vi.mock('./clear-client-page-endpoint.js', () => ({
   clearClientPageEndpointsPlugin: clearClientPageEndpointsPluginSpy,
+}));
+vi.mock('./discover-library-routes.js', () => ({
+  discoverLibraryRoutes: discoverLibraryRoutesSpy,
 }));
 
 import { platformPlugin } from './platform-plugin.js';
@@ -143,5 +155,59 @@ describe('platformPlugin', () => {
 
     expect(angularSpy).not.toHaveBeenCalled();
     expect(plugins.length).toBeGreaterThan(0);
+  });
+
+  it('merges discovered library routes when discoverRoutes is true', () => {
+    discoverLibraryRoutesSpy.mockReturnValue({
+      additionalPagesDirs: ['/libs/shared/feature'],
+      additionalContentDirs: ['/libs/shared/feature/src/content'],
+      additionalAPIDirs: ['/libs/shared/feature/src/api'],
+    });
+
+    platformPlugin({ discoverRoutes: true });
+
+    expect(discoverLibraryRoutesSpy).toHaveBeenCalled();
+    expect(routerPluginSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        additionalPagesDirs: ['/libs/shared/feature'],
+      }),
+    );
+    expect(viteNitroPluginSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        additionalAPIDirs: ['/libs/shared/feature/src/api'],
+      }),
+      undefined,
+    );
+    expect(contentPluginSpy).toHaveBeenCalledWith(
+      undefined,
+      expect.objectContaining({
+        additionalContentDirs: ['/libs/shared/feature/src/content'],
+      }),
+    );
+  });
+
+  it('deduplicates explicit and discovered dirs', () => {
+    discoverLibraryRoutesSpy.mockReturnValue({
+      additionalPagesDirs: ['/libs/shared/feature', '/libs/other'],
+      additionalContentDirs: [],
+      additionalAPIDirs: [],
+    });
+
+    platformPlugin({
+      discoverRoutes: true,
+      additionalPagesDirs: ['/libs/shared/feature'],
+    });
+
+    expect(routerPluginSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        additionalPagesDirs: ['/libs/shared/feature', '/libs/other'],
+      }),
+    );
+  });
+
+  it('does not call discoverLibraryRoutes when discoverRoutes is not set', () => {
+    platformPlugin();
+
+    expect(discoverLibraryRoutesSpy).not.toHaveBeenCalled();
   });
 });

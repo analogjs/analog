@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { ServerOnly, type RouteMeta } from '@analogjs/router';
+import { type RouteMeta } from '@analogjs/router';
 
 export const routeMeta: RouteMeta = {
   title: 'Client Component',
@@ -12,14 +12,15 @@ export const routeMeta: RouteMeta = {
 };
 
 @Component({
-  imports: [ServerOnly],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h2>Client Component</h2>
 
-    <ServerOnly component="hello" [props]="props()" (outputs)="log($event)" />
+    <p id="client-message">
+      This route renders entirely on the client and updates without SSR.
+    </p>
 
-    <ServerOnly component="hello" [props]="props2()" (outputs)="log($event)" />
+    <p>Current count: {{ count() }}</p>
 
     <p>
       <button (click)="update()">Update</button>
@@ -27,14 +28,9 @@ export const routeMeta: RouteMeta = {
   `,
 })
 export default class ClientComponent {
-  props = signal({ name: 'Brandon', count: 0 });
-  props2 = signal({ name: 'Brandon', count: 4 });
+  readonly count = signal(0);
 
   update() {
-    this.props.update((data) => ({ ...data, count: ++data.count }));
-  }
-
-  log($event: object) {
-    console.log({ outputs: $event });
+    this.count.update((value) => value + 1);
   }
 }

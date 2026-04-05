@@ -21,6 +21,7 @@ import {
   createRouteFileDiscovery,
   type RouteFileDiscovery,
 } from './route-file-discovery.js';
+import { debugTypedRouter } from './utils/debug.js';
 
 const DEFAULT_OUT_FILE = 'src/routeTree.gen.ts';
 
@@ -194,6 +195,10 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
   function generate(): void {
     const routeFiles = discovery.getRouteFiles();
     const contentFiles = discovery.getContentFiles();
+    debugTypedRouter('discovered files', {
+      routeFiles: routeFiles.length,
+      contentFiles: contentFiles.length,
+    });
     const allFiles = [...routeFiles, ...contentFiles];
     const manifest = generateRouteManifest(
       allFiles,
@@ -210,7 +215,7 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
       contentFiles.filter((filename) => canonicalFiles.has(filename)),
     );
     const routeTree = generateRouteTreeDeclaration(manifest, {
-      jsonLdPaths: jsonLdEntries.map((entry) => entry.routePath),
+      jsonLdFiles: jsonLdEntries.map((entry) => entry.sourceFile),
     });
     const output = combineGeneratedModules(
       declaration,
@@ -219,6 +224,29 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
         ? generateJsonLdManifestSource(jsonLdEntries, resolvedOptions.outFile)
         : '',
     );
+
+    const hardCollisions = manifest.collisions.filter((c) => c.samePriority);
+    if (manifest.collisions.length > 0) {
+      debugTypedRouter('route collisions', {
+        total: manifest.collisions.length,
+        hard: hardCollisions.length,
+        collisions: manifest.collisions.map((c) => ({
+          path: c.fullPath,
+          kept: c.keptFile,
+          dropped: c.droppedFile,
+        })),
+      });
+    }
+    if (hardCollisions.length > 0 && command === 'build') {
+      const details = hardCollisions
+        .map((c) => `  '${c.fullPath}': '${c.keptFile}' vs '${c.droppedFile}'`)
+        .join('\n');
+      throw new Error(
+        `[analog] Route collisions detected during build:\n${details}\n\n` +
+          `Each route path must be defined by exactly one source file. ` +
+          `Remove or rename the conflicting files to resolve the collision.`,
+      );
+    }
 
     if (manifest.routes.length > 0) {
       console.log(formatManifestSummary(manifest));
@@ -253,6 +281,13 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
     // with LF don't appear stale on Windows where readFileSync may return CRLF.
     const normalizeEndings = (s: string) => s.replace(/\r\n/g, '\n');
     if (normalizeEndings(existing) !== normalizeEndings(output)) {
+      debugTypedRouter('route file changed', {
+        outFile: resolvedOptions.outFile,
+        routes: manifest.routes.length,
+        verify: resolvedOptions.verify,
+        verifyOnBuild: resolvedOptions.verifyOnBuild,
+        command,
+      });
       if (resolvedOptions.verify) {
         throw new Error(
           `[analog] Stale route file detected: ${resolvedOptions.outFile}\n` +
@@ -303,6 +338,7 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
           return;
         }
 
+        debugTypedRouter('watch regenerate', { event, path });
         discovery.updateDiscoveredFile(path, event);
         generate();
       };

@@ -18,7 +18,14 @@ export default defineConfig({
           'error',
           { type: 'element', prefix: 'analogjs', style: 'kebab-case' },
         ],
+        '@angular-eslint/use-component-selector': 'error',
         '@angular-eslint/prefer-standalone': 'error',
+      },
+    },
+    {
+      files: ['src/**/pages/**/*.ts', 'src/**/*.page.ts'],
+      rules: {
+        '@angular-eslint/use-component-selector': 'off',
       },
     },
   ],

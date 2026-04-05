@@ -39,9 +39,11 @@ export default defineConfig(async ({ mode }) => {
     plugins: [
       analog({
         apiPrefix: 'api',
+        content: {
+          highlighter: 'prism',
+        },
         include: ['/libs/my-package/src/**/*.ts'],
-        additionalPagesDirs: ['/libs/shared/feature'],
-        additionalAPIDirs: ['/libs/shared/feature/src/api'],
+        discoverRoutes: true,
         fileReplacements,
         prerender: {
           routes: [
@@ -62,7 +64,7 @@ export default defineConfig(async ({ mode }) => {
         vite: {
           inlineStylesExtension: 'scss',
         },
-        liveReload: true,
+        hmr: true,
         experimental: {
           useAngularCompilationAPI: true,
           typedRouter: true,

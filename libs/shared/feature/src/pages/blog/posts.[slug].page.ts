@@ -1,4 +1,4 @@
-// /src/app/pages/blog/posts.[slug].page.ts
+// Example shared library page mounted at /blog/posts/[slug].
 import { injectContent, MarkdownComponent } from '@analogjs/content';
 import { AsyncPipe } from '@angular/common';
 import { Component } from '@angular/core';

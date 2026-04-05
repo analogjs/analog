@@ -33,6 +33,12 @@ declare module '@analogjs/router' {
       query: Record<string, string | string[] | undefined>;
       queryOutput: Record<string, string | string[] | undefined>;
     };
+    '/another-test': {
+      params: Record<string, never>;
+      paramsOutput: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+      queryOutput: Record<string, string | string[] | undefined>;
+    };
     '/archived': {
       params: Record<string, never>;
       paramsOutput: Record<string, never>;
@@ -63,6 +69,12 @@ declare module '@analogjs/router' {
       query: Record<string, string | string[] | undefined>;
       queryOutput: Record<string, string | string[] | undefined>;
     };
+    '/shared-test': {
+      params: Record<string, never>;
+      paramsOutput: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+      queryOutput: Record<string, string | string[] | undefined>;
+    };
     '/test': {
       params: Record<string, never>;
       paramsOutput: Record<string, never>;
@@ -76,6 +88,12 @@ declare module '@analogjs/router' {
       queryOutput: Record<string, string | string[] | undefined>;
     };
     '/blog/[slug]': {
+      params: { slug: string };
+      paramsOutput: { slug: string };
+      query: Record<string, string | string[] | undefined>;
+      queryOutput: Record<string, string | string[] | undefined>;
+    };
+    '/blog/posts/[slug]': {
       params: { slug: string };
       paramsOutput: { slug: string };
       query: Record<string, string | string[] | undefined>;
@@ -121,14 +139,17 @@ export interface AnalogFileRoutesById {
   "/2022-12-31-my-second-post": AnalogGeneratedRouteRecord<"/2022-12-31-my-second-post", "2022-12-31-my-second-post", "/2022-12-31-my-second-post", null, readonly []>;
   "/about": AnalogGeneratedRouteRecord<"/about", "about", "/about", null, readonly []>;
   "/about-me": AnalogGeneratedRouteRecord<"/about-me", "about-me", "/about-me", null, readonly []>;
+  "/another-test": AnalogGeneratedRouteRecord<"/another-test", "another-test", "/another-test", null, readonly []>;
   "/archived/index": AnalogGeneratedRouteRecord<"/archived/index", "archived", "/archived", null, readonly ["/archived/2022-01-08-post1-2024", "/archived/2022-01-10-post2-2024", "/archived/[slug]"]>;
   "/archived/2022-01-08-post1-2024": AnalogGeneratedRouteRecord<"/archived/2022-01-08-post1-2024", "2022-01-08-post1-2024", "/archived/2022-01-08-post1-2024", "/archived/index", readonly []>;
   "/archived/2022-01-10-post2-2024": AnalogGeneratedRouteRecord<"/archived/2022-01-10-post2-2024", "2022-01-10-post2-2024", "/archived/2022-01-10-post2-2024", "/archived/index", readonly []>;
-  "/blog/index": AnalogGeneratedRouteRecord<"/blog/index", "blog", "/blog", null, readonly ["/blog/[slug]"]>;
+  "/blog/index": AnalogGeneratedRouteRecord<"/blog/index", "blog", "/blog", null, readonly ["/blog/[slug]", "/blog/posts/[slug]"]>;
   "/contact": AnalogGeneratedRouteRecord<"/contact", "contact", "/contact", null, readonly []>;
+  "/shared-test": AnalogGeneratedRouteRecord<"/shared-test", "shared-test", "/shared-test", null, readonly []>;
   "/test": AnalogGeneratedRouteRecord<"/test", "test", "/test", null, readonly []>;
   "/archived/[slug]": AnalogGeneratedRouteRecord<"/archived/[slug]", "[slug]", "/archived/[slug]", "/archived/index", readonly []>;
   "/blog/[slug]": AnalogGeneratedRouteRecord<"/blog/[slug]", "[slug]", "/blog/[slug]", "/blog/index", readonly []>;
+  "/blog/posts/[slug]": AnalogGeneratedRouteRecord<"/blog/posts/[slug]", "posts/[slug]", "/blog/posts/[slug]", "/blog/index", readonly []>;
   "/[...page-not-found]": AnalogGeneratedRouteRecord<"/[...page-not-found]", "[...page-not-found]", "/[...page-not-found]", null, readonly []>;
 }
 
@@ -138,14 +159,17 @@ export interface AnalogFileRoutesByFullPath {
   "/2022-12-31-my-second-post": AnalogFileRoutesById["/2022-12-31-my-second-post"];
   "/about": AnalogFileRoutesById["/about"];
   "/about-me": AnalogFileRoutesById["/about-me"];
+  "/another-test": AnalogFileRoutesById["/another-test"];
   "/archived": AnalogFileRoutesById["/archived/index"];
   "/archived/2022-01-08-post1-2024": AnalogFileRoutesById["/archived/2022-01-08-post1-2024"];
   "/archived/2022-01-10-post2-2024": AnalogFileRoutesById["/archived/2022-01-10-post2-2024"];
   "/blog": AnalogFileRoutesById["/blog/index"];
   "/contact": AnalogFileRoutesById["/contact"];
+  "/shared-test": AnalogFileRoutesById["/shared-test"];
   "/test": AnalogFileRoutesById["/test"];
   "/archived/[slug]": AnalogFileRoutesById["/archived/[slug]"];
   "/blog/[slug]": AnalogFileRoutesById["/blog/[slug]"];
+  "/blog/posts/[slug]": AnalogFileRoutesById["/blog/posts/[slug]"];
   "/[...page-not-found]": AnalogFileRoutesById["/[...page-not-found]"];
 }
 
@@ -234,6 +258,22 @@ export const analogRouteTree = {
       isCatchAll: false,
       isOptionalCatchAll: false,
     } satisfies AnalogFileRoutesById["/about-me"],
+    "/another-test": {
+      id: "/another-test",
+      path: "another-test",
+      fullPath: "/another-test",
+      parentId: null,
+      children: [] as const,
+      sourceFile: "/libs/shared/feature/src/content/another-test.md",
+      kind: "content",
+      hasParamsSchema: false,
+      hasQuerySchema: false,
+      hasJsonLd: false,
+      isIndex: false,
+      isGroup: false,
+      isCatchAll: false,
+      isOptionalCatchAll: false,
+    } satisfies AnalogFileRoutesById["/another-test"],
     "/archived/index": {
       id: "/archived/index",
       path: "archived",
@@ -287,7 +327,7 @@ export const analogRouteTree = {
       path: "blog",
       fullPath: "/blog",
       parentId: null,
-      children: ["/blog/[slug]"] as const,
+      children: ["/blog/[slug]", "/blog/posts/[slug]"] as const,
       sourceFile: "/src/app/pages/blog/index.page.ts",
       kind: "page",
       hasParamsSchema: false,
@@ -314,14 +354,30 @@ export const analogRouteTree = {
       isCatchAll: false,
       isOptionalCatchAll: false,
     } satisfies AnalogFileRoutesById["/contact"],
+    "/shared-test": {
+      id: "/shared-test",
+      path: "shared-test",
+      fullPath: "/shared-test",
+      parentId: null,
+      children: [] as const,
+      sourceFile: "/libs/shared/feature/src/content/shared-test.md",
+      kind: "content",
+      hasParamsSchema: false,
+      hasQuerySchema: false,
+      hasJsonLd: false,
+      isIndex: false,
+      isGroup: false,
+      isCatchAll: false,
+      isOptionalCatchAll: false,
+    } satisfies AnalogFileRoutesById["/shared-test"],
     "/test": {
       id: "/test",
       path: "test",
       fullPath: "/test",
       parentId: null,
       children: [] as const,
-      sourceFile: "/libs/shared/feature/src/content/test.md",
-      kind: "content",
+      sourceFile: "/libs/shared/feature/src/pages/test.page.ts",
+      kind: "page",
       hasParamsSchema: false,
       hasQuerySchema: false,
       hasJsonLd: false,
@@ -362,6 +418,22 @@ export const analogRouteTree = {
       isCatchAll: false,
       isOptionalCatchAll: false,
     } satisfies AnalogFileRoutesById["/blog/[slug]"],
+    "/blog/posts/[slug]": {
+      id: "/blog/posts/[slug]",
+      path: "posts/[slug]",
+      fullPath: "/blog/posts/[slug]",
+      parentId: "/blog/index",
+      children: [] as const,
+      sourceFile: "/libs/shared/feature/src/pages/blog/posts.[slug].page.ts",
+      kind: "page",
+      hasParamsSchema: false,
+      hasQuerySchema: false,
+      hasJsonLd: false,
+      isIndex: false,
+      isGroup: false,
+      isCatchAll: false,
+      isOptionalCatchAll: false,
+    } satisfies AnalogFileRoutesById["/blog/posts/[slug]"],
     "/[...page-not-found]": {
       id: "/[...page-not-found]",
       path: "[...page-not-found]",
@@ -385,14 +457,17 @@ export const analogRouteTree = {
     "/2022-12-31-my-second-post": "/2022-12-31-my-second-post",
     "/about": "/about",
     "/about-me": "/about-me",
+    "/another-test": "/another-test",
     "/archived": "/archived/index",
     "/archived/2022-01-08-post1-2024": "/archived/2022-01-08-post1-2024",
     "/archived/2022-01-10-post2-2024": "/archived/2022-01-10-post2-2024",
     "/blog": "/blog/index",
     "/contact": "/contact",
+    "/shared-test": "/shared-test",
     "/test": "/test",
     "/archived/[slug]": "/archived/[slug]",
     "/blog/[slug]": "/blog/[slug]",
+    "/blog/posts/[slug]": "/blog/posts/[slug]",
     "/[...page-not-found]": "/[...page-not-found]",
   },
 } as const;

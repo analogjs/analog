@@ -68,7 +68,7 @@ async function setupLiveReloadPlugin(
   const { angular } = await import('./angular-vite-plugin');
   const plugin = angular({
     tsconfig: `${workspaceRoot}/tsconfig.base.json`,
-    liveReload: true,
+    hmr: true,
     inlineStylesExtension: 'css',
     stylePreprocessor,
     experimental: {
@@ -104,7 +104,7 @@ async function setupLiveReloadPlugin(
   };
 }
 
-describe('angular liveReload style preprocessing', () => {
+describe('angular hmr style preprocessing', () => {
   beforeEach(() => {
     process.env['NODE_ENV'] = 'development';
     delete process.env['VITEST'];
@@ -131,7 +131,7 @@ describe('angular liveReload style preprocessing', () => {
   // First run pays the cold-start cost of dynamically importing the full
   // plugin module graph after vi.resetModules(); CI can exceed the default 5s.
   it(
-    'preprocesses external and inline stylesheets before liveReload transforms them',
+    'preprocesses external and inline stylesheets before HMR serves them through Vite',
     { timeout: 15_000 },
     async () => {
       const stylePreprocessor = vi.fn(
@@ -182,7 +182,7 @@ describe('angular liveReload style preprocessing', () => {
     },
   );
 
-  it('prepends content via stylePreprocessor through the liveReload plugin path', async () => {
+  it('prepends content via stylePreprocessor through the HMR stylesheet path', async () => {
     const prepender = (code: string, _filename: string) =>
       `@reference "../styles/tailwind.css";\n${code}`;
 

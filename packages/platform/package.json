@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/platform",
-  "version": "3.0.0-alpha.20",
+  "version": "3.0.0-alpha.25",
   "description": "The fullstack meta-framework for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -32,11 +32,13 @@
   },
   "dependencies": {
     "front-matter": "catalog:",
+    "es-toolkit": "catalog:",
     "tinyglobby": "catalog:",
     "nitro": "catalog:",
     "@analogjs/vite-plugin-angular": "workspace:*",
     "@analogjs/vite-plugin-nitro": "workspace:*",
     "rolldown": "catalog:",
+    "obug": "catalog:",
     "vitefu": "catalog:"
   },
   "peerDependencies": {

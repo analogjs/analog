@@ -50,7 +50,7 @@ function wrapTestInZone(testBody: string | any[] | undefined) {
     return;
   }
 
-  const wrappedFunc = function (...args: any[]) {
+  const wrappedFunc = function (...args: unknown[]) {
     return testProxyZone.run(testBody, null, args);
   };
   try {
@@ -89,7 +89,7 @@ const bindDescribe = (
     return function (...args: any[]) {
       args[1] = wrapDescribeInZone(args[1]);
 
-      // @ts-expect-error: dynamic apply chain from vitest internals
+      // @ts-expect-error - dynamic vitest function binding
       return originalVitestFn.apply(self, eachArgs).apply(self, args);
     };
   };
@@ -114,7 +114,7 @@ const bindTest = (
     return function (...args: any[]) {
       args[1] = wrapTestInZone(args[1]);
 
-      // @ts-expect-error: dynamic apply chain from vitest internals
+      // @ts-expect-error - dynamic vitest function binding
       return originalVitestFn.apply(self, eachArgs).apply(self, args);
     };
   };

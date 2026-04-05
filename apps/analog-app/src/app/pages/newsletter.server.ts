@@ -1,10 +1,10 @@
 import {
-  type PageServerAction,
-  redirect,
-  json,
+  defineAction,
   fail,
+  json,
+  redirect,
 } from '@analogjs/router/server/actions';
-import { readFormData } from 'nitro/h3';
+import * as v from 'valibot';
 
 export type NewsletterSubmitResponse = {
   type: 'success';
@@ -17,17 +17,20 @@ export function load() {
   };
 }
 
-export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
-  const email = body.get('email') as string;
+const NewsletterSchema = v.object({
+  email: v.pipe(v.string(), v.nonEmpty('Email is required')),
+});
 
-  if (!email) {
-    return fail(422, { email: 'Email is required' });
-  }
+export const action = defineAction({
+  schema: NewsletterSchema,
+  handler: async ({ data }) => {
+    if (data.email.length < 10) {
+      return redirect('/');
+    }
 
-  if (email.length < 10) {
-    return redirect('/');
-  }
-
-  return json<NewsletterSubmitResponse>({ type: 'success', email });
-}
+    return json<NewsletterSubmitResponse>({
+      type: 'success',
+      email: data.email,
+    });
+  },
+});

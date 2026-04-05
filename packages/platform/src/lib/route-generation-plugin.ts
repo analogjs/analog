@@ -5,6 +5,7 @@ import {
   typedRoutes,
   type TypedRoutesPluginOptions,
 } from './typed-routes-plugin.js';
+import { debugTypedRouter } from './utils/debug.js';
 
 function resolveTypedRouterOptions(experimental: Options['experimental']): {
   enabled: boolean;
@@ -32,6 +33,7 @@ export function routeGenerationPlugin(options?: Options): Plugin {
   );
 
   if (!enabled) {
+    debugTypedRouter('disabled by experimental.typedRouter === false');
     return {
       name: 'analog-route-generation-disabled',
     };
@@ -43,6 +45,12 @@ export function routeGenerationPlugin(options?: Options): Plugin {
     additionalPagesDirs: options?.additionalPagesDirs,
     additionalContentDirs: options?.additionalContentDirs,
   };
+  debugTypedRouter('enabled', {
+    outFile: pluginOptions.outFile,
+    jsonLdManifest: pluginOptions.jsonLdManifest,
+    additionalPagesDirs: pluginOptions.additionalPagesDirs,
+    additionalContentDirs: pluginOptions.additionalContentDirs,
+  });
 
   return typedRoutes(pluginOptions);
 }

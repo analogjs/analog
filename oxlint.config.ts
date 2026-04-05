@@ -13,9 +13,6 @@ export default defineConfig({
     node: true,
     es2024: true,
   },
-  rules: {
-    'typescript/tsconfig-error': 'allow',
-  },
   ignorePatterns: [
     '**/dist',
     '**/out-tsc',

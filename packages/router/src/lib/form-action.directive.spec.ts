@@ -20,6 +20,7 @@ function deferred<T>() {
 }
 
 @Component({
+  selector: 'analogjs-post-form-action-host',
   standalone: true,
   imports: [FormAction],
   template: `
@@ -43,6 +44,7 @@ class PostHostComponent {
 }
 
 @Component({
+  selector: 'analogjs-get-form-action-host',
   standalone: true,
   imports: [FormAction],
   template: `

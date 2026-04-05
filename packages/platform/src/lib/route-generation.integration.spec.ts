@@ -147,7 +147,10 @@ describe('Route generation integration', () => {
     );
 
     const ts = generateRouteTreeDeclaration(manifest, {
-      jsonLdPaths: ['/', '/users/[id]'],
+      jsonLdFiles: [
+        '/src/app/pages/index.page.ts',
+        '/src/app/pages/users/[id].page.ts',
+      ],
     });
 
     expect(ts).toContain(

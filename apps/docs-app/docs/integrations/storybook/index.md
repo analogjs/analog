@@ -91,6 +91,8 @@ const config: StorybookConfig = {
 export default config;
 ```
 
+For current Analog projects, prefer `framework.options.hmr` if you need to configure Angular HMR. `liveReload` is still accepted as a compatibility alias, but `hmr` is the recommended option.
+
 Remove the existing `webpackFinal` config function if present.
 
 Next, update the Storybook targets in the `angular.json` or `project.json`
@@ -138,6 +140,36 @@ To register global styles, add them to the `@analogjs/storybook-angular` builder
       }
     }
 ```
+
+### Tailwind v4 in Storybook
+
+If your project uses Tailwind v4, keep Storybook aligned with the same opinionated Analog setup you use in the app:
+
+- one root stylesheet such as `src/styles.css`
+- `@import 'tailwindcss';` in that stylesheet
+- `framework.options.tailwindCss.rootStylesheet` pointing at that stylesheet
+- `framework.options.hmr` for Angular HMR behavior
+
+```ts
+import { resolve } from 'node:path';
+import type { StorybookConfig } from '@analogjs/storybook-angular';
+
+const config: StorybookConfig = {
+  framework: {
+    name: '@analogjs/storybook-angular',
+    options: {
+      hmr: true,
+      tailwindCss: {
+        rootStylesheet: resolve(__dirname, '../src/styles.css'),
+      },
+    },
+  },
+};
+
+export default config;
+```
+
+This keeps Storybook on the same stylesheet pipeline as the app instead of relying on ad hoc per-story or per-component Tailwind wiring.
 
 ## Enabling Zoneless Change Detection
 

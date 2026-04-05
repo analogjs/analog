@@ -94,6 +94,7 @@ jobs:
         project:
           - analog-app-e2e
           - blog-app-e2e
+          - tailwind-debug-app-e2e
           - tanstack-query-app-e2e
     steps:
       - uses: actions/checkout@v4

@@ -1,0 +1,57 @@
+{
+  "name": "tailwind-debug-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/tailwind-debug-app/src",
+  "prefix": "tdbg",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "dependsOn": ["platform:build", "router:build"],
+      "outputs": [
+        "{options.outputPath}",
+        "{workspaceRoot}/dist/apps/tailwind-debug-app/.nitro",
+        "{workspaceRoot}/dist/apps/tailwind-debug-app/ssr",
+        "{workspaceRoot}/dist/apps/tailwind-debug-app/analog"
+      ],
+      "options": {
+        "configFile": "apps/tailwind-debug-app/vite.config.ts",
+        "outputPath": "dist/apps/tailwind-debug-app/client"
+      },
+      "defaultConfiguration": "production",
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "sourcemap": false,
+          "mode": "production"
+        }
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "dependsOn": [],
+      "options": {
+        "command": "pnpm exec vite --config apps/tailwind-debug-app/vite.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "serve-nitro": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "cwd": "dist/apps/tailwind-debug-app/analog",
+        "command": "node --unhandled-rejections=throw ./server/index.mjs",
+        "env": { "PORT": "43040" }
+      }
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{projectRoot}/coverage"]
+    }
+  }
+}

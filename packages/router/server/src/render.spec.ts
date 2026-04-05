@@ -1,8 +1,8 @@
 /* eslint-disable @angular-eslint/component-selector */
 import {
-  ENVIRONMENT_INITIALIZER,
   type ApplicationConfig,
   Component,
+  provideAppInitializer,
 } from '@angular/core';
 import { Route, RouterOutlet, provideRouter } from '@angular/router';
 
@@ -47,11 +47,7 @@ describe('render', () => {
     const config: ApplicationConfig = {
       providers: [
         provideRouter(routes),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateJsonLdOnRouteChange(),
-        },
+        provideAppInitializer(() => updateJsonLdOnRouteChange()),
       ],
     };
 
@@ -107,11 +103,7 @@ describe('render', () => {
     const config: ApplicationConfig = {
       providers: [
         provideRouter(routes),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateJsonLdOnRouteChange(),
-        },
+        provideAppInitializer(() => updateJsonLdOnRouteChange()),
       ],
     };
 
@@ -174,11 +166,7 @@ describe('render', () => {
     const config: ApplicationConfig = {
       providers: [
         provideRouter(routes),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateJsonLdOnRouteChange(),
-        },
+        provideAppInitializer(() => updateJsonLdOnRouteChange()),
       ],
     };
 
@@ -228,11 +216,7 @@ describe('render', () => {
     const config: ApplicationConfig = {
       providers: [
         provideRouter(routes),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateJsonLdOnRouteChange(),
-        },
+        provideAppInitializer(() => updateJsonLdOnRouteChange()),
       ],
     };
 
@@ -290,11 +274,7 @@ describe('render', () => {
     const config: ApplicationConfig = {
       providers: [
         provideRouter(routes),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateJsonLdOnRouteChange(),
-        },
+        provideAppInitializer(() => updateJsonLdOnRouteChange()),
       ],
     };
 

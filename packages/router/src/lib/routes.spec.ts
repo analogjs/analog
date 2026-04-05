@@ -1,6 +1,6 @@
 import { Route, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
-import { expect, vi } from 'vitest';
+import { afterEach, beforeEach, expect, vi } from 'vitest';
 import { ROUTE_JSON_LD_KEY } from './json-ld';
 import { RouteExport, RouteMeta } from './models';
 import { createRoutes } from './routes';
@@ -972,6 +972,81 @@ describe('routes', () => {
       expect(routes[0].path).toBe('static');
       expect(routes[1].path).toBe(':dynamic');
       expect(routes[2].path).toBe('**');
+    });
+  });
+
+  describe('duplicate route precedence', () => {
+    class AppRouteComponent {}
+    class SharedRouteComponent {}
+    class SharedRouteComponentB {}
+    let warnSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+        /* noop */
+      });
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    it('prefers app-local page routes over additional/shared page routes', async () => {
+      const files: Files = {
+        '/libs/shared/feature/src/pages/blog/[slug].page.ts': () =>
+          Promise.resolve<RouteExport>({ default: SharedRouteComponent }),
+        '/src/app/pages/blog/[slug].page.ts': () =>
+          Promise.resolve<RouteExport>({ default: AppRouteComponent }),
+      };
+
+      const routes = createBaseRoutes(
+        files,
+        (_filename, fileLoader) => fileLoader as () => Promise<RouteExport>,
+      );
+      const blogRoute = routes.find((r) => r.path === 'blog');
+      const route = blogRoute?.children?.find(
+        (child) => child.path === ':slug',
+      );
+
+      expect(blogRoute).toBeDefined();
+      expect(route).toBeDefined();
+      const loadedRoutes = (await route!.loadChildren?.()) as Route[];
+
+      expect(loadedRoutes[0].component).toBe(AppRouteComponent);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Only "/src/app/pages/blog/[slug].page.ts" will be used.',
+        ),
+      );
+    });
+
+    it('keeps last-wins behavior for collisions within the same priority bucket', async () => {
+      const files: Files = {
+        '/libs/shared/feature-a/src/pages/blog/[slug].page.ts': () =>
+          Promise.resolve<RouteExport>({ default: SharedRouteComponent }),
+        '/libs/shared/feature-b/src/pages/blog/[slug].page.ts': () =>
+          Promise.resolve<RouteExport>({ default: SharedRouteComponentB }),
+      };
+
+      const routes = createBaseRoutes(
+        files,
+        (_filename, fileLoader) => fileLoader as () => Promise<RouteExport>,
+      );
+      const blogRoute = routes.find((r) => r.path === 'blog');
+      const route = blogRoute?.children?.find(
+        (child) => child.path === ':slug',
+      );
+
+      expect(blogRoute).toBeDefined();
+      expect(route).toBeDefined();
+      const loadedRoutes = (await route!.loadChildren?.()) as Route[];
+
+      expect(loadedRoutes[0].component).toBe(SharedRouteComponentB);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Only "/libs/shared/feature-b/src/pages/blog/[slug].page.ts" will be used.',
+        ),
+      );
     });
   });
 

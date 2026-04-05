@@ -1,42 +1,11 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createDebug } from 'obug';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const workspaceRoot = resolve(__dirname, '../..');
-const DEBUG_NAMESPACE = 'analog:nx-project-graph';
-
-function escapeRegExp(value: string) {
-  return value.replace(/[|\\{}()[\]^$+?.*]/g, '\\$&');
-}
-
-// Match DEBUG namespaces the same way the ad-hoc build diagnostics do so
-// `DEBUG=analog:*` turns on every temporary probe consistently in CI.
-function isDebugEnabled(namespace: string) {
-  const debugValue = process.env['DEBUG'];
-  if (!debugValue) {
-    return false;
-  }
-
-  return debugValue
-    .split(/[\s,]+/)
-    .filter(Boolean)
-    .some((pattern) => {
-      const matcher = new RegExp(
-        `^${escapeRegExp(pattern).replace(/\\\*/g, '.*')}$`,
-      );
-      return matcher.test(namespace);
-    });
-}
-
-function debug(label: string, details?: Record<string, unknown>) {
-  if (details && Object.keys(details).length > 0) {
-    console.log(`DEBUG: ${label}`, details);
-    return;
-  }
-
-  console.log(`DEBUG: ${label}`);
-}
+const debug = createDebug('analog:nx-project-graph');
 
 function listEntries(path: string) {
   if (!existsSync(path)) {
@@ -119,7 +88,7 @@ function collectManifestSummaries(
 
 // This script is intentionally quiet unless the debug namespace is enabled,
 // because it is wired into normal build targets as a preflight probe.
-if (!isDebugEnabled(DEBUG_NAMESPACE)) {
+if (!debug.enabled) {
   process.exit(0);
 }
 

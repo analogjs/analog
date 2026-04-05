@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { provideLocationMocks } from '@angular/common/testing';
-import { Component, ENVIRONMENT_INITIALIZER } from '@angular/core';
+import { Component, provideAppInitializer } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Route, Router, RouterOutlet, provideRouter } from '@angular/router';
 import { map, timer } from 'rxjs';
@@ -16,6 +16,7 @@ import {
 describe('updateJsonLdOnRouteChange', () => {
   function setup() {
     @Component({
+      selector: 'analogjs-json-ld-test-shell',
       standalone: true,
       imports: [RouterOutlet],
       template: '<router-outlet></router-outlet>',
@@ -58,11 +59,7 @@ describe('updateJsonLdOnRouteChange', () => {
       providers: [
         provideRouter(routes),
         provideLocationMocks(),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateJsonLdOnRouteChange(),
-        },
+        provideAppInitializer(() => updateJsonLdOnRouteChange()),
       ],
     });
 
@@ -134,13 +131,18 @@ describe('updateJsonLdOnRouteChange', () => {
     // Navigate to a child that has NO JSON-LD — but parent still has it,
     // so let's create a dedicated setup for a truly empty route.
     @Component({
+      selector: 'analogjs-json-ld-empty-shell',
       standalone: true,
       imports: [RouterOutlet],
       template: '<router-outlet></router-outlet>',
     })
     class ShellComponent {}
 
-    @Component({ standalone: true, template: '<p>No JSON-LD</p>' })
+    @Component({
+      selector: 'analogjs-json-ld-empty',
+      standalone: true,
+      template: '<p>No JSON-LD</p>',
+    })
     class EmptyComponent {}
 
     const jsonLd = {
@@ -164,11 +166,7 @@ describe('updateJsonLdOnRouteChange', () => {
           },
         ]),
         provideLocationMocks(),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateJsonLdOnRouteChange(),
-        },
+        provideAppInitializer(() => updateJsonLdOnRouteChange()),
       ],
     });
 
@@ -198,13 +196,18 @@ describe('updateJsonLdOnRouteChange', () => {
     };
 
     @Component({
+      selector: 'analogjs-json-ld-graph-shell',
       standalone: true,
       imports: [RouterOutlet],
       template: '<router-outlet></router-outlet>',
     })
     class ShellComponent {}
 
-    @Component({ standalone: true, template: '<p>Graph</p>' })
+    @Component({
+      selector: 'analogjs-json-ld-graph',
+      standalone: true,
+      template: '<p>Graph</p>',
+    })
     class GraphComponent {}
 
     TestBed.resetTestingModule();
@@ -218,11 +221,7 @@ describe('updateJsonLdOnRouteChange', () => {
           },
         ]),
         provideLocationMocks(),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateJsonLdOnRouteChange(),
-        },
+        provideAppInitializer(() => updateJsonLdOnRouteChange()),
       ],
     });
 
@@ -257,13 +256,18 @@ describe('updateJsonLdOnRouteChange', () => {
     ];
 
     @Component({
+      selector: 'analogjs-json-ld-multi-shell',
       standalone: true,
       imports: [RouterOutlet],
       template: '<router-outlet></router-outlet>',
     })
     class ShellComponent {}
 
-    @Component({ standalone: true, template: '<p>Multi</p>' })
+    @Component({
+      selector: 'analogjs-json-ld-multi',
+      standalone: true,
+      template: '<p>Multi</p>',
+    })
     class MultiComponent {}
 
     TestBed.resetTestingModule();
@@ -277,11 +281,7 @@ describe('updateJsonLdOnRouteChange', () => {
           },
         ]),
         provideLocationMocks(),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateJsonLdOnRouteChange(),
-        },
+        provideAppInitializer(() => updateJsonLdOnRouteChange()),
       ],
     });
 
@@ -310,6 +310,7 @@ describe('updateJsonLdOnRouteChange', () => {
     circular.self = circular;
 
     @Component({
+      selector: 'analogjs-json-ld-object-shell',
       standalone: true,
       imports: [RouterOutlet],
       template: '<router-outlet></router-outlet>',
@@ -329,11 +330,7 @@ describe('updateJsonLdOnRouteChange', () => {
           },
         ]),
         provideLocationMocks(),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateJsonLdOnRouteChange(),
-        },
+        provideAppInitializer(() => updateJsonLdOnRouteChange()),
       ],
     });
 

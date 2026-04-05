@@ -9,7 +9,7 @@
  * YAML and substituting every `catalog:` / `catalog:<name>` reference with
  * the resolved version.
  *
- * Also resolves `workspace:` protocol references (`workspace:*`, `workspace:^`,
+ * Also resolves `workspace:` protocol references (`workspace:*`, `workspace:*`,
  * `workspace:~`) by reading the target package's version from the workspace.
  * pnpm normally resolves these during `pnpm publish`, but the smoke test
  * pipeline uses `npm pack` which does not understand the workspace protocol.
@@ -202,9 +202,9 @@ function resolveDependencyMap(
     } else if (version.startsWith('workspace:')) {
       // Resolve workspace: protocol the same way pnpm does at publish time:
       //   workspace:*  → exact version  (e.g. "3.0.0-alpha.18")
-      //   workspace:^  → caret range    (e.g. "^3.0.0-alpha.18")
+      //   workspace:*  → caret range    (e.g. "^3.0.0-alpha.18")
       //   workspace:~  → tilde range    (e.g. "~3.0.0-alpha.18")
-      //   workspace:^1.0.0 → "^1.0.0"  (pass-through semver range)
+      //   workspace:*1.0.0 → "^1.0.0"  (pass-through semver range)
       const specifier = version.slice('workspace:'.length);
       const targetVersion = resolveWorkspacePackageVersion(name, workspaceRoot);
 
@@ -215,7 +215,7 @@ function resolveDependencyMap(
       } else if (specifier === '~' && targetVersion) {
         resolved[name] = `~${targetVersion}`;
       } else if (targetVersion) {
-        // workspace:^1.0.0 or workspace:>=1.0.0 — use the specifier as-is
+        // workspace:*1.0.0 or workspace:>=1.0.0 — use the specifier as-is
         resolved[name] = specifier;
       } else {
         resolved[name] = version;

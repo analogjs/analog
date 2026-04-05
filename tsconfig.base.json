@@ -52,12 +52,18 @@
       "@analogjs/vite-plugin-nitro": [
         "./packages/vite-plugin-nitro/src/index.ts"
       ],
+      "@analogjs/vite-plugin-nitro/internal": [
+        "./packages/vite-plugin-nitro/src/lib/utils/debug.ts"
+      ],
       "libs/card": ["./libs/card/src/index.ts"],
       "my-package": ["./libs/my-package/src/index.ts"],
       "shared/feature": ["./libs/shared/feature/src/index.ts"],
       "@analogjs/vitest-angular": ["./packages/vitest-angular/src/index.ts"],
       "@analogjs/vitest-angular/setup-snapshots": [
         "./packages/vitest-angular/setup-snapshots.ts"
+      ],
+      "@analogjs/vitest-angular/setup-serializers": [
+        "./packages/vitest-angular/setup-serializers.ts"
       ],
       "@analogjs/vitest-angular/setup-testbed": [
         "./packages/vitest-angular/setup-testbed.ts"

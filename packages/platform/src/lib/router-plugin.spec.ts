@@ -4,13 +4,26 @@ vi.mock('tinyglobby', () => ({
   globSync: vi.fn(() => []),
 }));
 
+vi.mock('node:fs', () => ({
+  readFileSync: vi.fn(() => '@Component({})'),
+}));
+
+vi.mock('./route-idiom-diagnostics.js', () => ({
+  analyzeAnalogRouteFile: vi.fn(() => []),
+  formatAnalogRouteIdiomDiagnostic: vi.fn(() => 'diagnostic'),
+}));
+
 import { globSync } from 'tinyglobby';
+import { readFileSync } from 'node:fs';
+import { analyzeAnalogRouteFile } from './route-idiom-diagnostics.js';
 import { routerPlugin } from './router-plugin.js';
 
 describe('routerPlugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(globSync).mockReturnValue([]);
+    vi.mocked(readFileSync).mockReturnValue('@Component({})' as any);
+    vi.mocked(analyzeAnalogRouteFile).mockReturnValue([]);
   });
 
   const configureServer = (options?: Parameters<typeof routerPlugin>[0]) => {
@@ -166,6 +179,64 @@ describe('routerPlugin', () => {
 
     expect(invalidateModule).toHaveBeenCalled();
     expect(send).toHaveBeenCalledWith({ type: 'full-reload' });
+  });
+
+  it('rescans all page diagnostics when a route file is added', () => {
+    vi.mocked(globSync).mockReturnValue([
+      '/src/app/pages/products.page.ts',
+      '/src/app/pages/products/[id].page.ts',
+    ]);
+
+    const { on } = configureServer();
+
+    vi.mocked(analyzeAnalogRouteFile).mockClear();
+
+    const addHandler = on.mock.calls.find(
+      ([eventName]) => eventName === 'add',
+    )?.[1];
+
+    expect(addHandler).toBeTypeOf('function');
+
+    addHandler('/src/app/pages/hot-added.page.ts');
+
+    expect(vi.mocked(analyzeAnalogRouteFile).mock.calls).toHaveLength(2);
+    expect(
+      vi
+        .mocked(analyzeAnalogRouteFile)
+        .mock.calls.map(([args]) => args.filename),
+    ).toEqual([
+      '/src/app/pages/products.page.ts',
+      '/src/app/pages/products/[id].page.ts',
+    ]);
+  });
+
+  it('rescans all remaining page diagnostics when a route file is removed', () => {
+    vi.mocked(globSync).mockReturnValue([
+      '/src/app/pages/products.page.ts',
+      '/src/app/pages/products/[id].page.ts',
+    ]);
+
+    const { on } = configureServer();
+
+    vi.mocked(analyzeAnalogRouteFile).mockClear();
+
+    const unlinkHandler = on.mock.calls.find(
+      ([eventName]) => eventName === 'unlink',
+    )?.[1];
+
+    expect(unlinkHandler).toBeTypeOf('function');
+
+    unlinkHandler('/src/app/pages/removed.page.ts');
+
+    expect(vi.mocked(analyzeAnalogRouteFile).mock.calls).toHaveLength(2);
+    expect(
+      vi
+        .mocked(analyzeAnalogRouteFile)
+        .mock.calls.map(([args]) => args.filename),
+    ).toEqual([
+      '/src/app/pages/products.page.ts',
+      '/src/app/pages/products/[id].page.ts',
+    ]);
   });
 
   describe('transform - key normalization', () => {
@@ -372,6 +443,50 @@ describe('routerPlugin', () => {
       expect(globSync).toHaveBeenCalledTimes(4);
     });
 
+    it('reuses cached page-route discovery for diagnostics on change', () => {
+      const plugins = routerPlugin({
+        workspaceRoot,
+      });
+      const invalidatePlugin = plugins.find(
+        (p) => p.name === 'analogjs-router-invalidate-routes',
+      )!;
+      const transformPlugin = plugins.find(
+        (p) => p.name === 'analog-glob-routes',
+      )!;
+      (transformPlugin as any).config?.({ root: 'apps/my-app' });
+
+      const on = vi.fn();
+      const server = {
+        moduleGraph: {
+          fileToModulesMap: new Map(),
+          getModulesByFile: vi.fn(() => undefined),
+          invalidateModule: vi.fn(),
+        },
+        watcher: { on, add: vi.fn() },
+        ws: { send: vi.fn() },
+      };
+
+      vi.mocked(globSync).mockReturnValue([
+        `${appRoot}/src/app/pages/first.page.ts`,
+      ]);
+
+      (invalidatePlugin.configureServer as (server: unknown) => void)(server);
+
+      expect(globSync).toHaveBeenCalledTimes(1);
+
+      const changeHandler = on.mock.calls.find(
+        ([eventName]) => eventName === 'change',
+      )?.[1];
+      changeHandler(`${appRoot}/src/app/pages/first.page.ts`);
+
+      expect(globSync).toHaveBeenCalledTimes(1);
+      expect(readFileSync).toHaveBeenCalledWith(
+        `${appRoot}/src/app/pages/first.page.ts`,
+        'utf-8',
+      );
+      expect(analyzeAnalogRouteFile).toHaveBeenCalled();
+    });
+
     // Regression: the Rolldown transform filter used 'ANALOG_ROUTE_FILES' as
     // a substring pre-filter, assuming it matched 'ANALOG_CONTENT_ROUTE_FILES'.
     // It does not — they diverge at position 7 ('ANALOG_C...' vs 'ANALOG_R...').
@@ -381,12 +496,20 @@ describe('routerPlugin', () => {
     // so ANALOG_CONTENT_ROUTE_FILES stayed empty — silently dropping all .md
     // page routes (/about, /contact, etc.) and causing NG04002 during prerender.
     it('transforms ANALOG_CONTENT_ROUTE_FILES in an isolated content module (no ANALOG_ROUTE_FILES present)', () => {
-      vi.mocked(globSync)
-        .mockReturnValueOnce([]) // page files — none
-        .mockReturnValueOnce([
-          `${appRoot}/src/app/pages/about.md`,
-          `${appRoot}/src/content/hello.md`,
-        ]); // content files
+      vi.mocked(globSync).mockImplementation((patterns) => {
+        const joinedPatterns = Array.isArray(patterns)
+          ? patterns.join(' ')
+          : String(patterns);
+
+        if (joinedPatterns.includes('**/*.md')) {
+          return [
+            `${appRoot}/src/app/pages/about.md`,
+            `${appRoot}/src/content/hello.md`,
+          ];
+        }
+
+        return [];
+      });
 
       const transform = getTransformPlugin('analog-glob-routes');
 
@@ -405,9 +528,17 @@ describe('routerPlugin', () => {
     });
 
     it('transforms ANALOG_ROUTE_FILES in an isolated page module (no ANALOG_CONTENT_ROUTE_FILES present)', () => {
-      vi.mocked(globSync)
-        .mockReturnValueOnce([`${appRoot}/src/app/pages/home.page.ts`])
-        .mockReturnValueOnce([]); // content files — none
+      vi.mocked(globSync).mockImplementation((patterns) => {
+        const joinedPatterns = Array.isArray(patterns)
+          ? patterns.join(' ')
+          : String(patterns);
+
+        if (joinedPatterns.includes('**/*.page.ts')) {
+          return [`${appRoot}/src/app/pages/home.page.ts`];
+        }
+
+        return [];
+      });
 
       const transform = getTransformPlugin('analog-glob-routes');
 

@@ -4,7 +4,7 @@ import { describe, beforeEach, it, expect } from 'vitest';
 
 describe('Angular Fixture Snapshot', () => {
   @Component({
-    selector: 'app-test',
+    selector: 'lib-test',
     template: `
       <div>
         <a href="https://analogjs.org/" target="_blank">

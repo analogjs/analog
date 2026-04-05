@@ -95,6 +95,7 @@ const packageConfigs: Record<string, PackageValidationConfig> = {
     requiredPaths: [
       'packages/astro-angular/dist/src/index.js',
       'packages/astro-angular/dist/src/client.js',
+      'packages/astro-angular/dist/src/middleware.js',
       'packages/astro-angular/dist/src/server.js',
       'packages/astro-angular/dist/src/utils.js',
     ],

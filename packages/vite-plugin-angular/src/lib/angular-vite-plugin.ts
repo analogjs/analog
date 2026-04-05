@@ -1,5 +1,13 @@
 import { NgtscProgram } from '@angular/compiler-cli';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { union } from 'es-toolkit';
+import { createHash } from 'node:crypto';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import {
   basename,
   dirname,
@@ -33,6 +41,7 @@ import {
   createRolldownCompilerPlugin,
 } from './compiler-plugin.js';
 import {
+  getAngularComponentMetadata,
   StyleUrlsResolver,
   TemplateUrlsResolver,
 } from './component-resolvers.js';
@@ -51,6 +60,20 @@ import {
   SourceFileCache,
   angularFullVersion,
 } from './utils/devkit.js';
+import {
+  activateDeferredDebug,
+  applyDebugOption,
+  debugCompilationApi,
+  debugCompiler,
+  debugCompilerV,
+  debugHmr,
+  debugHmrV,
+  debugStyles,
+  debugStylesV,
+  debugTailwind,
+  debugTailwindV,
+  type DebugOption,
+} from './utils/debug.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
 
@@ -67,7 +90,12 @@ import {
   replaceFiles,
 } from './plugins/file-replacements.plugin.js';
 import { routerPlugin } from './router-plugin.js';
-import { createHash } from 'node:crypto';
+import {
+  AnalogStylesheetRegistry,
+  preprocessStylesheet,
+  registerStylesheetContent,
+  rewriteRelativeCssImports,
+} from './stylesheet-registry.js';
 
 export enum DiagnosticModes {
   None = 0,
@@ -95,12 +123,34 @@ export interface PluginOptions {
    */
   include?: string[];
   additionalContentDirs?: string[];
+  /**
+   * Enables Angular's HMR during development/watch mode.
+   *
+   * Defaults to `true` for watch mode. Set to `false` to disable HMR while
+   * keeping other stylesheet externalization behavior available when needed.
+   */
+  hmr?: boolean;
+  /**
+   * @deprecated Use `hmr` instead. Kept as a compatibility alias.
+   */
   liveReload?: boolean;
   disableTypeChecking?: boolean;
   fileReplacements?: FileReplacement[];
   experimental?: {
     useAngularCompilationAPI?: boolean;
   };
+  /**
+   * Enable debug logging for specific scopes.
+   *
+   * - `true` → enables all `analog:angular:*` scopes
+   * - `string[]` → enables listed namespaces (e.g. `['analog:angular:tailwind']`)
+   * - `{ scopes?, mode? }` → object form with optional `mode: 'build' | 'dev'`
+   *   to restrict output to a specific Vite command (omit for both)
+   *
+   * Also responds to the `DEBUG` env var (Node.js) or `localStorage.debug`
+   * (browser), using the `obug` convention.
+   */
+  debug?: DebugOption;
   /**
    * Optional preprocessor that transforms component CSS before it enters Vite's
    * preprocessCSS pipeline. Runs on every component stylesheet (both external
@@ -179,6 +229,27 @@ export interface PluginOptions {
   };
 }
 
+export function normalizeIncludeGlob(
+  workspaceRoot: string,
+  glob: string,
+): string {
+  const normalizedWorkspaceRoot = normalizePath(resolve(workspaceRoot));
+  const normalizedGlob = normalizePath(glob);
+
+  if (
+    normalizedGlob === normalizedWorkspaceRoot ||
+    normalizedGlob.startsWith(`${normalizedWorkspaceRoot}/`)
+  ) {
+    return normalizedGlob;
+  }
+
+  if (normalizedGlob.startsWith('/')) {
+    return `${normalizedWorkspaceRoot}${normalizedGlob}`;
+  }
+
+  return normalizePath(resolve(normalizedWorkspaceRoot, normalizedGlob));
+}
+
 /**
  * TypeScript file extension regex
  * Match .(c or m)ts, .ts extensions with an optional ? for query params
@@ -186,6 +257,47 @@ export interface PluginOptions {
  */
 const TS_EXT_REGEX = /\.[cm]?(ts)[^x]?\??/;
 const classNames = new Map();
+
+export function evictDeletedFileMetadata(
+  file: string,
+  {
+    removeActiveGraphMetadata,
+    removeStyleOwnerMetadata,
+    classNamesMap,
+    fileTransformMap,
+  }: {
+    removeActiveGraphMetadata: (file: string) => void;
+    removeStyleOwnerMetadata: (file: string) => void;
+    classNamesMap: Map<string, string>;
+    fileTransformMap: Map<string, string>;
+  },
+): void {
+  const normalizedFile = normalizePath(file.split('?')[0]);
+  removeActiveGraphMetadata(normalizedFile);
+  removeStyleOwnerMetadata(normalizedFile);
+  classNamesMap.delete(normalizedFile);
+  fileTransformMap.delete(normalizedFile);
+}
+
+export function injectViteIgnoreForHmrMetadata(code: string): string {
+  let patched = code.replace(
+    /\bimport\(([a-zA-Z_$][\w$]*\.\u0275\u0275getReplaceMetadataURL)/g,
+    'import(/* @vite-ignore */ $1',
+  );
+
+  if (patched === code) {
+    patched = patched.replace(
+      /import\((\S+getReplaceMetadataURL)/g,
+      'import(/* @vite-ignore */ $1',
+    );
+  }
+
+  return patched;
+}
+
+export function isIgnoredHmrFile(file: string): boolean {
+  return file.endsWith('.tsbuildinfo');
+}
 
 interface DeclarationFile {
   declarationFileDir: string;
@@ -195,8 +307,16 @@ interface DeclarationFile {
 
 /**
  * Builds a resolved stylePreprocessor function from plugin options.
- * If `tailwindCss` is provided, creates an auto-reference injector.
- * If `stylePreprocessor` is also provided, chains them (tailwind first, then user).
+ *
+ * When `tailwindCss` is configured, creates an injector that prepends
+ * `@reference "<rootStylesheet>"` into component CSS that uses Tailwind
+ * utilities. Uses absolute paths because Angular's externalRuntimeStyles
+ * serves component CSS as virtual modules (hash-based IDs) with no
+ * meaningful directory — relative paths can't resolve from a hash.
+ *
+ * If both `tailwindCss` and `stylePreprocessor` are provided, they are
+ * chained: Tailwind reference injection runs first, then the user's
+ * custom preprocessor.
  */
 function buildStylePreprocessor(
   options?: PluginOptions,
@@ -208,7 +328,6 @@ function buildStylePreprocessor(
     return undefined;
   }
 
-  // Build the Tailwind @reference injector
   let tailwindPreprocessor:
     | ((code: string, filename: string) => string)
     | undefined;
@@ -216,33 +335,49 @@ function buildStylePreprocessor(
   if (tw) {
     const rootStylesheet = tw.rootStylesheet;
     const prefixes = tw.prefixes;
+    debugTailwind('configured', { rootStylesheet, prefixes });
+
+    if (!existsSync(rootStylesheet)) {
+      console.warn(
+        `[@analogjs/vite-plugin-angular] tailwindCss.rootStylesheet not found ` +
+          `at "${rootStylesheet}". @reference directives will point to a ` +
+          `non-existent file, which will cause Tailwind CSS errors. ` +
+          `Ensure the path is absolute and the file exists.`,
+      );
+    }
 
     tailwindPreprocessor = (code: string, filename: string): string => {
-      // Skip if already has @reference or is a root Tailwind file
+      // Skip files that already define the Tailwind config
       if (
         code.includes('@reference') ||
         code.includes('@import "tailwindcss"') ||
         code.includes("@import 'tailwindcss'")
       ) {
+        debugTailwindV('skip (already has @reference or is root)', {
+          filename,
+        });
         return code;
       }
 
-      // Check if the file uses Tailwind utilities
       const needsReference = prefixes
         ? prefixes.some((prefix) => code.includes(prefix))
         : code.includes('@apply');
 
       if (!needsReference) {
+        debugTailwindV('skip (no Tailwind usage detected)', { filename });
         return code;
       }
 
-      const refPath = relative(dirname(filename), rootStylesheet);
-      return `@reference "${refPath}";\n${code}`;
+      debugTailwind('injected @reference via preprocessor', { filename });
+
+      // Absolute path — required for virtual modules (see JSDoc above).
+      return `@reference "${rootStylesheet}";\n${code}`;
     };
   }
 
   // Chain: tailwind preprocessor first, then user preprocessor
   if (tailwindPreprocessor && userPreprocessor) {
+    debugTailwind('chained with user stylePreprocessor');
     return (code: string, filename: string) => {
       const intermediate = tailwindPreprocessor!(code, filename);
       return userPreprocessor(intermediate, filename);
@@ -253,6 +388,8 @@ function buildStylePreprocessor(
 }
 
 export function angular(options?: PluginOptions): Plugin[] {
+  applyDebugOption(options?.debug, options?.workspaceRoot);
+
   /**
    * Normalize plugin options so defaults
    * are used for values not provided.
@@ -273,11 +410,13 @@ export function angular(options?: PluginOptions): Plugin[] {
     jit: options?.jit,
     include: options?.include ?? [],
     additionalContentDirs: options?.additionalContentDirs ?? [],
-    liveReload: options?.liveReload ?? false,
+    hmr: options?.hmr ?? options?.liveReload ?? true,
     disableTypeChecking: options?.disableTypeChecking ?? true,
     fileReplacements: options?.fileReplacements ?? [],
     useAngularCompilationAPI:
       options?.experimental?.useAngularCompilationAPI ?? false,
+    hasTailwindCss: !!options?.tailwindCss,
+    tailwindCss: options?.tailwindCss,
     stylePreprocessor: buildStylePreprocessor(options),
   };
 
@@ -312,8 +451,269 @@ export function angular(options?: PluginOptions): Plugin[] {
   }
   let watchMode = false;
   let testWatchMode = isTestWatchMode();
-  let inlineComponentStyles: Map<string, string> | undefined;
-  let externalComponentStyles: Map<string, string> | undefined;
+  // Dev-time component identity index for the currently active Vite graph.
+  // We intentionally populate this during the pre-transform pass instead of a
+  // workspace-wide scan so diagnostics stay tied to the app the developer is
+  // actually serving, and so they track hot-updated files incrementally.
+  const activeGraphComponentMetadata = new Map<
+    string,
+    ActiveGraphComponentRecord[]
+  >();
+  const selectorOwners = new Map<string, Set<string>>();
+  const classNameOwners = new Map<string, Set<string>>();
+  const transformedStyleOwnerMetadata = new Map<string, StyleOwnerRecord[]>();
+  const styleSourceOwners = new Map<string, Set<string>>();
+
+  function shouldEnableHmr(): boolean {
+    const effectiveWatchMode = isTest ? testWatchMode : watchMode;
+    return !!(effectiveWatchMode && pluginOptions.hmr);
+  }
+
+  /**
+   * Determines whether Angular should externalize component styles.
+   *
+   * When true, Angular emits style references (hash-based IDs) instead of
+   * inlining CSS strings. Vite's resolveId → load → transform pipeline
+   * then serves these virtual modules, allowing @tailwindcss/vite to
+   * process @reference directives.
+   *
+   * Required for TWO independent use-cases:
+   *   1. HMR — Vite needs external modules for hot replacement
+   *   2. Tailwind CSS (hasTailwindCss) — styles must pass through Vite's
+   *      CSS pipeline so @tailwindcss/vite can resolve @apply directives
+   *
+   * In production builds (!watchMode), styles are NOT externalized — they
+   * are inlined after preprocessCSS runs eagerly in transformStylesheet.
+   */
+  function shouldExternalizeStyles(): boolean {
+    const effectiveWatchMode = isTest ? testWatchMode : watchMode;
+    if (!effectiveWatchMode) return false;
+    return !!(shouldEnableHmr() || pluginOptions.hasTailwindCss);
+  }
+
+  /**
+   * Validates the Tailwind CSS integration configuration and emits actionable
+   * warnings for common misconfigurations that cause silent failures.
+   *
+   * Called once during `configResolved` when `tailwindCss` is configured.
+   */
+  function validateTailwindConfig(
+    config: ResolvedConfig,
+    isWatchMode: boolean,
+  ): void {
+    const PREFIX = '[@analogjs/vite-plugin-angular]';
+    const tw = pluginOptions.tailwindCss;
+
+    if (!tw) return;
+
+    // rootStylesheet must be absolute — relative paths break when Angular
+    // externalizes styles as hash-based virtual modules.
+    if (!isAbsolute(tw.rootStylesheet)) {
+      console.warn(
+        `${PREFIX} tailwindCss.rootStylesheet must be an absolute path. ` +
+          `Got: "${tw.rootStylesheet}". Use path.resolve(__dirname, '...') ` +
+          `in your vite.config to convert it.`,
+      );
+    }
+
+    // Dev: @tailwindcss/vite must be registered, otherwise component CSS
+    // with @apply/@reference silently fails.
+    const resolvedPlugins = config.plugins;
+    const hasTailwindPlugin = resolvedPlugins.some(
+      (p) =>
+        p.name.startsWith('@tailwindcss/vite') ||
+        p.name.startsWith('tailwindcss'),
+    );
+
+    if (isWatchMode && !hasTailwindPlugin) {
+      throw new Error(
+        `${PREFIX} tailwindCss is configured but no @tailwindcss/vite ` +
+          `plugin was found. Component CSS with @apply directives will ` +
+          `not be processed.\n\n` +
+          `  Fix: npm install @tailwindcss/vite --save-dev\n` +
+          `  Then add tailwindcss() to your vite.config plugins array.\n`,
+      );
+    }
+
+    // Monorepo: rootStylesheet outside project root needs server.fs.allow
+    if (isWatchMode && tw.rootStylesheet) {
+      const projectRoot = config.root;
+      if (!tw.rootStylesheet.startsWith(projectRoot)) {
+        const fsAllow = config.server?.fs?.allow ?? [];
+        const isAllowed = fsAllow.some((allowed) =>
+          tw.rootStylesheet.startsWith(allowed),
+        );
+        if (!isAllowed) {
+          console.warn(
+            `${PREFIX} tailwindCss.rootStylesheet is outside the Vite ` +
+              `project root. The dev server may reject it with 403.\n\n` +
+              `  Root: ${projectRoot}\n` +
+              `  Stylesheet: ${tw.rootStylesheet}\n\n` +
+              `  Fix: server.fs.allow: ['${dirname(tw.rootStylesheet)}']\n`,
+          );
+        }
+      }
+    }
+
+    // Empty prefixes array means no component stylesheets get @reference
+    if (tw.prefixes !== undefined && tw.prefixes.length === 0) {
+      console.warn(
+        `${PREFIX} tailwindCss.prefixes is an empty array. No component ` +
+          `stylesheets will receive @reference injection. Either remove ` +
+          `the prefixes option (to use @apply detection) or specify your ` +
+          `prefixes: ['tw:']\n`,
+      );
+    }
+
+    // Duplicate analog() registrations cause orphaned style maps
+    const analogInstances = resolvedPlugins.filter(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+    if (analogInstances.length > 1) {
+      throw new Error(
+        `${PREFIX} analog() is registered ${analogInstances.length} times. ` +
+          `Each instance creates separate style maps, causing component ` +
+          `styles to be lost. Remove duplicate registrations.`,
+      );
+    }
+
+    // rootStylesheet content must contain @import "tailwindcss"
+    if (existsSync(tw.rootStylesheet)) {
+      try {
+        const rootContent = readFileSync(tw.rootStylesheet, 'utf-8');
+        if (
+          !rootContent.includes('@import "tailwindcss"') &&
+          !rootContent.includes("@import 'tailwindcss'")
+        ) {
+          console.warn(
+            `${PREFIX} tailwindCss.rootStylesheet does not contain ` +
+              `@import "tailwindcss". The @reference directive will ` +
+              `point to a file without Tailwind configuration.\n\n` +
+              `  File: ${tw.rootStylesheet}\n`,
+          );
+        }
+      } catch {
+        // Silently skip — existence check already warned in buildStylePreprocessor.
+      }
+    }
+  }
+
+  function isLikelyPageOnlyComponent(id: string): boolean {
+    return (
+      id.includes('/pages/') ||
+      /\.page\.[cm]?[jt]sx?$/i.test(id) ||
+      /\([^/]+\)\.page\.[cm]?[jt]sx?$/i.test(id)
+    );
+  }
+
+  function removeActiveGraphMetadata(file: string) {
+    const previous = activeGraphComponentMetadata.get(file);
+    if (!previous) {
+      return;
+    }
+
+    for (const record of previous) {
+      const location = `${record.file}#${record.className}`;
+      if (record.selector) {
+        const selectorSet = selectorOwners.get(record.selector);
+        selectorSet?.delete(location);
+        if (selectorSet?.size === 0) {
+          selectorOwners.delete(record.selector);
+        }
+      }
+
+      const classNameSet = classNameOwners.get(record.className);
+      classNameSet?.delete(location);
+      if (classNameSet?.size === 0) {
+        classNameOwners.delete(record.className);
+      }
+    }
+
+    activeGraphComponentMetadata.delete(file);
+  }
+
+  function registerActiveGraphMetadata(
+    file: string,
+    records: ActiveGraphComponentRecord[],
+  ) {
+    removeActiveGraphMetadata(file);
+
+    if (records.length === 0) {
+      return;
+    }
+
+    activeGraphComponentMetadata.set(file, records);
+
+    for (const record of records) {
+      const location = `${record.file}#${record.className}`;
+
+      if (record.selector) {
+        let selectorSet = selectorOwners.get(record.selector);
+        if (!selectorSet) {
+          selectorSet = new Set<string>();
+          selectorOwners.set(record.selector, selectorSet);
+        }
+        selectorSet.add(location);
+      }
+
+      let classNameSet = classNameOwners.get(record.className);
+      if (!classNameSet) {
+        classNameSet = new Set<string>();
+        classNameOwners.set(record.className, classNameSet);
+      }
+      classNameSet.add(location);
+    }
+  }
+
+  function removeStyleOwnerMetadata(file: string) {
+    const previous = transformedStyleOwnerMetadata.get(file);
+    if (!previous) {
+      return;
+    }
+
+    for (const record of previous) {
+      const owners = styleSourceOwners.get(record.sourcePath);
+      owners?.delete(record.ownerFile);
+      if (owners?.size === 0) {
+        styleSourceOwners.delete(record.sourcePath);
+      }
+    }
+
+    transformedStyleOwnerMetadata.delete(file);
+  }
+
+  function registerStyleOwnerMetadata(file: string, styleUrls: string[]) {
+    removeStyleOwnerMetadata(file);
+
+    const records = styleUrls
+      .map((urlSet) => {
+        const [, absoluteFileUrl] = urlSet.split('|');
+        return absoluteFileUrl
+          ? {
+              ownerFile: file,
+              sourcePath: normalizePath(absoluteFileUrl),
+            }
+          : undefined;
+      })
+      .filter((record): record is StyleOwnerRecord => !!record);
+
+    if (records.length === 0) {
+      return;
+    }
+
+    transformedStyleOwnerMetadata.set(file, records);
+
+    for (const record of records) {
+      let owners = styleSourceOwners.get(record.sourcePath);
+      if (!owners) {
+        owners = new Set<string>();
+        styleSourceOwners.set(record.sourcePath, owners);
+      }
+      owners.add(record.ownerFile);
+    }
+  }
+
+  let stylesheetRegistry: AnalogStylesheetRegistry | undefined;
   const sourceFileCache: SourceFileCacheType = new SourceFileCache();
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isVitestVscode = !!process.env['VITEST_VSCODE'];
@@ -352,14 +752,36 @@ export function angular(options?: PluginOptions): Plugin[] {
   function angularPlugin(): Plugin {
     let isProd = false;
 
-    if (angularFullVersion < 190000 || isTest) {
-      pluginOptions.liveReload = false;
+    if (angularFullVersion < 190000 && pluginOptions.hmr) {
+      // Angular < 19 does not support externalRuntimeStyles or _enableHmr.
+      debugHmr('hmr disabled: Angular version does not support HMR APIs', {
+        angularVersion: angularFullVersion,
+        isTest,
+      });
+      console.warn(
+        '[@analogjs/vite-plugin-angular]: HMR was disabled because Angular v19+ is required for externalRuntimeStyles/_enableHmr support. Detected Angular version: %s.',
+        angularFullVersion,
+      );
+      pluginOptions.hmr = false;
     }
 
-    // liveReload and fileReplacements guards were previously here and forced
+    if (isTest) {
+      // Test mode: disable HMR because
+      // Vitest's runner doesn't support Vite's WebSocket-based HMR.
+      // This does NOT block style externalization — shouldExternalizeStyles()
+      // independently checks hasTailwindCss, so Tailwind utilities in
+      // component styles still work in unit tests.
+      pluginOptions.hmr = false;
+      debugHmr('hmr disabled', {
+        angularVersion: angularFullVersion,
+        isTest,
+      });
+    }
+
+    // HMR and fileReplacements guards were previously here and forced
     // both options off when useAngularCompilationAPI was enabled. Those guards
     // have been removed because:
-    //  - liveReload: the persistent compilation instance (above) now gives
+    //  - HMR: the persistent compilation instance (above) now gives
     //    Angular the prior state it needs to emit `templateUpdates` for HMR
     //  - fileReplacements: Angular's AngularHostOptions already accepts a
     //    `fileReplacements` record — we now convert and pass it through in
@@ -367,15 +789,22 @@ export function angular(options?: PluginOptions): Plugin[] {
     if (pluginOptions.useAngularCompilationAPI) {
       if (angularFullVersion < 200100) {
         pluginOptions.useAngularCompilationAPI = false;
+        debugCompilationApi(
+          'disabled: Angular version %s < 20.1',
+          angularFullVersion,
+        );
         console.warn(
           '[@analogjs/vite-plugin-angular]: The Angular Compilation API is only available with Angular v20.1 and later',
         );
+      } else {
+        debugCompilationApi('enabled (Angular %s)', angularFullVersion);
       }
     }
 
     return {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
+        activateDeferredDebug(command);
         watchMode = command === 'serve';
         isProd =
           config.mode === 'production' ||
@@ -397,6 +826,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         const oxc = pluginOptions.useAngularCompilationAPI
           ? undefined
           : (config.oxc ?? false);
+        if (pluginOptions.useAngularCompilationAPI) {
+          debugCompilationApi(
+            'esbuild/oxc disabled, Angular handles transforms',
+          );
+        }
 
         const defineOptions = {
           ngJitMode: 'false',
@@ -445,7 +879,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         return {
           [jsTransformConfigKey]: jsTransformConfigValue,
           optimizeDeps: {
-            include: ['rxjs/operators', 'rxjs'],
+            include: ['rxjs/operators', 'rxjs', 'tslib'],
             exclude: ['@angular/platform-server'],
             ...(useRolldown ? { rolldownOptions } : { esbuildOptions }),
           },
@@ -460,9 +894,15 @@ export function angular(options?: PluginOptions): Plugin[] {
       configResolved(config) {
         resolvedConfig = config;
 
+        if (pluginOptions.hasTailwindCss) {
+          validateTailwindConfig(config, watchMode);
+        }
+
         if (pluginOptions.useAngularCompilationAPI) {
-          externalComponentStyles = new Map();
-          inlineComponentStyles = new Map();
+          stylesheetRegistry = new AnalogStylesheetRegistry();
+          debugStyles(
+            'stylesheet registry initialized (Angular Compilation API)',
+          );
         }
 
         if (!jit) {
@@ -493,7 +933,15 @@ export function angular(options?: PluginOptions): Plugin[] {
           () => performCompilation(resolvedConfig),
         );
         server.watcher.on('add', invalidateCompilationOnFsChange);
-        server.watcher.on('unlink', invalidateCompilationOnFsChange);
+        server.watcher.on('unlink', (file) => {
+          evictDeletedFileMetadata(file, {
+            removeActiveGraphMetadata,
+            removeStyleOwnerMetadata,
+            classNamesMap: classNames as Map<string, string>,
+            fileTransformMap,
+          });
+          return invalidateCompilationOnFsChange();
+        });
         server.watcher.on('change', (file) => {
           if (file.includes('tsconfig')) {
             invalidateTsconfigCaches();
@@ -510,21 +958,48 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
       },
       async handleHotUpdate(ctx) {
+        if (isIgnoredHmrFile(ctx.file)) {
+          debugHmr('ignored file change', { file: ctx.file });
+          return [];
+        }
+
         if (TS_EXT_REGEX.test(ctx.file)) {
           const [fileId] = ctx.file.split('?');
+          debugHmr('TS file changed', { file: ctx.file, fileId });
 
           pendingCompilation = performCompilation(resolvedConfig, [fileId]);
 
           let result;
 
-          if (pluginOptions.liveReload) {
+          if (shouldEnableHmr()) {
             await pendingCompilation;
             pendingCompilation = null;
             result = fileEmitter(fileId);
+            debugHmr('TS file emitted', {
+              fileId,
+              hmrEligible: !!result?.hmrEligible,
+              hasClassName: !!classNames.get(fileId),
+            });
+            debugHmrV('ts hmr evaluation', {
+              file: ctx.file,
+              fileId,
+              hasResult: !!result,
+              hmrEligible: !!result?.hmrEligible,
+              hasClassName: !!classNames.get(fileId),
+              className: classNames.get(fileId),
+              updateCode: result?.hmrUpdateCode
+                ? describeStylesheetContent(result.hmrUpdateCode)
+                : undefined,
+              errors: result?.errors?.length ?? 0,
+              warnings: result?.warnings?.length ?? 0,
+              hint: result?.hmrEligible
+                ? 'A TS-side component change, including inline template edits, produced an Angular HMR payload.'
+                : 'No Angular HMR payload was emitted for this TS change; the change may not affect component template state.',
+            });
           }
 
           if (
-            pluginOptions.liveReload &&
+            shouldEnableHmr() &&
             result?.hmrEligible &&
             classNames.get(fileId)
           ) {
@@ -532,6 +1007,13 @@ export function angular(options?: PluginOptions): Plugin[] {
               relative(process.cwd(), fileId),
             )}@${classNames.get(fileId)}`;
 
+            debugHmr('sending component update', { relativeFileId });
+            debugHmrV('ts hmr component update payload', {
+              file: ctx.file,
+              fileId,
+              relativeFileId,
+              className: classNames.get(fileId),
+            });
             sendHMRComponentUpdate(ctx.server, relativeFileId);
 
             return ctx.modules.map((mod) => {
@@ -545,77 +1027,416 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         if (/\.(html|htm|css|less|sass|scss)$/.test(ctx.file)) {
+          debugHmr('resource file changed', { file: ctx.file });
           fileTransformMap.delete(ctx.file.split('?')[0]);
+          if (/\.(css|less|sass|scss)$/.test(ctx.file)) {
+            refreshStylesheetRegistryForFile(
+              ctx.file,
+              stylesheetRegistry,
+              pluginOptions.stylePreprocessor,
+            );
+          }
+          if (
+            /\.(css|less|sass|scss)$/.test(ctx.file) &&
+            existsSync(ctx.file)
+          ) {
+            try {
+              const rawResource = readFileSync(ctx.file, 'utf-8');
+              debugHmrV('resource source snapshot', {
+                file: ctx.file,
+                mtimeMs: safeStatMtimeMs(ctx.file),
+                ...describeStylesheetContent(rawResource),
+              });
+            } catch (error) {
+              debugHmrV('resource source snapshot failed', {
+                file: ctx.file,
+                error: String(error),
+              });
+            }
+          }
+          // Angular component resources frequently enter HMR with incomplete
+          // watcher context. In practice `ctx.modules` may only contain the
+          // source file, only the `?direct` module, or nothing at all after a
+          // TS-driven component refresh. Resolve the full live module set from
+          // Vite's module graph and our stylesheet registry before deciding how
+          // to hot update the resource.
+          const fileModules = await getModulesForChangedFile(
+            ctx.server,
+            ctx.file,
+            ctx.modules,
+            stylesheetRegistry,
+          );
+          debugHmrV('resource modules resolved', {
+            file: ctx.file,
+            eventModuleCount: ctx.modules.length,
+            fileModuleCount: fileModules.length,
+            modules: fileModules.map((mod) => ({
+              id: mod.id,
+              file: mod.file,
+              type: mod.type,
+              url: mod.url,
+            })),
+          });
           /**
            * Check to see if this was a direct request
            * for an external resource (styles, html).
            */
-          const isDirect = ctx.modules.find(
-            (mod) => ctx.file === mod.file && mod.id?.includes('?direct'),
+          const isDirect = fileModules.find(
+            (mod) =>
+              !!mod.id &&
+              mod.id.includes('?direct') &&
+              isModuleForChangedResource(mod, ctx.file, stylesheetRegistry),
           );
-          const isInline = ctx.modules.find(
-            (mod) => ctx.file === mod.file && mod.id?.includes('?inline'),
+          const isInline = fileModules.find(
+            (mod) =>
+              !!mod.id &&
+              mod.id.includes('?inline') &&
+              isModuleForChangedResource(mod, ctx.file, stylesheetRegistry),
           );
+          debugHmrV('resource direct/inline detection', {
+            file: ctx.file,
+            hasDirect: !!isDirect,
+            directId: isDirect?.id,
+            hasInline: !!isInline,
+            inlineId: isInline?.id,
+          });
 
           if (isDirect || isInline) {
-            if (pluginOptions.liveReload && isDirect?.id && isDirect.file) {
+            if (shouldExternalizeStyles() && isDirect?.id && isDirect.file) {
               const isComponentStyle =
                 isDirect.type === 'css' && isComponentStyleSheet(isDirect.id);
+              debugHmrV('resource direct branch', {
+                file: ctx.file,
+                directId: isDirect.id,
+                directType: isDirect.type,
+                shouldExternalize: shouldExternalizeStyles(),
+                isComponentStyle,
+              });
               if (isComponentStyle) {
                 const { encapsulation } = getComponentStyleSheetMeta(
                   isDirect.id,
                 );
+                // Angular component styles are served through two live module
+                // shapes:
+                // 1. a `?direct&ngcomp=...` CSS module that Vite can patch with
+                //    a normal `css-update`
+                // 2. a `?ngcomp=...` JS wrapper module that embeds `__vite__css`
+                //    for Angular's runtime consumption
+                //
+                // If we only patch the direct CSS module, the browser can keep
+                // running a stale wrapper whose embedded CSS no longer matches
+                // the source file. We therefore invalidate any wrapper modules
+                // that map back to the same source stylesheet before sending
+                // the CSS update.
+                const wrapperModules =
+                  await findComponentStylesheetWrapperModules(
+                    ctx.server,
+                    ctx.file,
+                    isDirect,
+                    fileModules,
+                    stylesheetRegistry,
+                  );
+                const stylesheetDiagnosis = diagnoseComponentStylesheetPipeline(
+                  ctx.file,
+                  isDirect,
+                  stylesheetRegistry,
+                  wrapperModules,
+                  pluginOptions.stylePreprocessor,
+                );
+                debugStylesV('HMR: component stylesheet changed', {
+                  file: isDirect.file,
+                  encapsulation,
+                });
+                debugHmrV('component stylesheet wrapper modules', {
+                  file: ctx.file,
+                  wrapperCount: wrapperModules.length,
+                  wrapperIds: wrapperModules.map((mod) => mod.id),
+                  availableModuleIds: fileModules.map((mod) => mod.id),
+                });
+                debugHmrV(
+                  'component stylesheet pipeline diagnosis',
+                  stylesheetDiagnosis,
+                );
+
+                // The stylesheet registry may already hold the fresh served CSS
+                // while Vite still has a stale transform result cached for the
+                // direct `?direct&ngcomp=...` module id. Invalidate the direct
+                // module up front so subsequent wrapper generation and explicit
+                // fetches cannot keep serving the pre-edit CSS payload.
+                ctx.server.moduleGraph.invalidateModule(isDirect);
+                debugHmrV('component stylesheet direct module invalidated', {
+                  file: ctx.file,
+                  directModuleId: isDirect.id,
+                  directModuleUrl: isDirect.url,
+                  reason:
+                    'Ensure Vite drops stale direct CSS transform results before wrapper or fallback handling continues.',
+                });
 
                 // Track if the component uses ShadowDOM encapsulation
                 // Shadow DOM components currently require a full reload.
                 // Vite's CSS hot replacement does not support shadow root searching.
-                if (encapsulation !== 'shadow') {
-                  ctx.server.ws.send({
-                    type: 'update',
-                    updates: [
-                      {
-                        type: 'css-update',
-                        timestamp: Date.now(),
-                        path: isDirect.url,
-                        acceptedPath: isDirect.file,
-                      },
-                    ],
+                const trackedWrapperRequestIds =
+                  stylesheetDiagnosis.trackedRequestIds.filter((id) =>
+                    id.includes('?ngcomp='),
+                  );
+                const canUseCssUpdate =
+                  encapsulation !== 'shadow' &&
+                  (wrapperModules.length > 0 ||
+                    trackedWrapperRequestIds.length > 0);
+
+                if (canUseCssUpdate) {
+                  wrapperModules.forEach((mod) =>
+                    ctx.server.moduleGraph.invalidateModule(mod),
+                  );
+                  // A live wrapper ModuleNode is ideal because we can
+                  // invalidate it directly, but it is not strictly required.
+                  // When the browser has already loaded the wrapper URL and the
+                  // registry knows that wrapper request id, a normal CSS patch
+                  // against the direct stylesheet is still the most accurate
+                  // update path available. Falling back to full reload in that
+                  // state is needlessly pessimistic and causes the exact UX
+                  // regression we are trying to eliminate.
+                  debugHmrV('sending css-update for component stylesheet', {
+                    file: ctx.file,
+                    path: isDirect.url,
+                    acceptedPath: isDirect.file,
+                    wrapperCount: wrapperModules.length,
+                    trackedWrapperRequestIds,
+                    hint:
+                      wrapperModules.length > 0
+                        ? 'Live wrapper modules were found and invalidated before sending the CSS update.'
+                        : 'No live wrapper ModuleNode was available, but the wrapper request id is already tracked, so Analog is trusting the browser-visible wrapper identity and patching the direct stylesheet instead of forcing a reload.',
+                  });
+                  sendCssUpdate(ctx.server, {
+                    path: isDirect.url,
+                    acceptedPath: isDirect.file,
+                  });
+                  logComponentStylesheetHmrOutcome({
+                    file: ctx.file,
+                    encapsulation,
+                    diagnosis: stylesheetDiagnosis,
+                    outcome: 'css-update',
+                    directModuleId: isDirect.id,
+                    wrapperIds: wrapperModules.map((mod) => mod.id),
                   });
 
-                  return ctx.modules
-                    .filter((mod) => {
-                      // Component stylesheets will have 2 modules (*.component.scss and *.component.scss?direct&ngcomp=xyz&e=x)
-                      // We remove the module with the query params to prevent vite double logging the stylesheet name "hmr update *.component.scss, *.component.scss?direct&ngcomp=xyz&e=x"
-                      return mod.file !== ctx.file || mod.id !== isDirect.id;
-                    })
-                    .map((mod) => {
-                      if (mod.file === ctx.file) {
-                        return markModuleSelfAccepting(mod);
-                      }
-                      return mod;
-                    }) as ModuleNode[];
+                  return union(
+                    fileModules
+                      .filter((mod) => {
+                        // Component stylesheets will have 2 modules (*.component.scss and *.component.scss?direct&ngcomp=xyz&e=x)
+                        // We remove the module with the query params to prevent vite double logging the stylesheet name "hmr update *.component.scss, *.component.scss?direct&ngcomp=xyz&e=x"
+                        return mod.file !== ctx.file || mod.id !== isDirect.id;
+                      })
+                      .map((mod) => {
+                        if (mod.file === ctx.file) {
+                          return markModuleSelfAccepting(mod);
+                        }
+                        return mod;
+                      }) as ModuleNode[],
+                    wrapperModules.map((mod) => markModuleSelfAccepting(mod)),
+                  );
                 }
+
+                // A direct CSS patch without the browser-visible `?ngcomp=...`
+                // wrapper module is not trustworthy. Angular consumes the
+                // wrapper JS module, which embeds `__vite__css` for runtime
+                // style application. When that wrapper is missing from the live
+                // module graph, prefer correctness over a partial update and
+                // force a reload so the component re-evaluates with fresh CSS.
+                debugHmrV('component stylesheet hmr fallback: full reload', {
+                  file: ctx.file,
+                  encapsulation,
+                  reason:
+                    trackedWrapperRequestIds.length === 0
+                      ? 'missing-wrapper-module'
+                      : encapsulation === 'shadow'
+                        ? 'shadow-encapsulation'
+                        : 'tracked-wrapper-still-not-patchable',
+                  directId: isDirect.id,
+                  trackedRequestIds:
+                    stylesheetRegistry?.getRequestIdsForSource(ctx.file) ?? [],
+                });
+                const ownerModules = findStyleOwnerModules(
+                  ctx.server,
+                  ctx.file,
+                  styleSourceOwners,
+                );
+                debugHmrV('component stylesheet owner fallback lookup', {
+                  file: ctx.file,
+                  ownerCount: ownerModules.length,
+                  ownerIds: ownerModules.map((mod) => mod.id),
+                  ownerFiles: [
+                    ...(styleSourceOwners.get(normalizePath(ctx.file)) ?? []),
+                  ],
+                });
+
+                if (ownerModules.length > 0) {
+                  pendingCompilation = performCompilation(resolvedConfig, [
+                    ...ownerModules.map((mod) => mod.id).filter(Boolean),
+                  ]);
+                  await pendingCompilation;
+                  pendingCompilation = null;
+
+                  const updates = ownerModules
+                    .map((mod) => mod.id)
+                    .filter((id): id is string => !!id && !!classNames.get(id));
+                  const derivedUpdates = ownerModules
+                    .map((mod) => mod.id)
+                    .filter((id): id is string => !!id)
+                    .flatMap((ownerId) =>
+                      resolveComponentClassNamesForStyleOwner(
+                        ownerId,
+                        ctx.file,
+                      ).map((className) => ({
+                        ownerId,
+                        className,
+                        via: 'raw-component-metadata' as const,
+                      })),
+                    );
+                  debugHmrV('component stylesheet owner fallback compilation', {
+                    file: ctx.file,
+                    ownerIds: ownerModules.map((mod) => mod.id),
+                    updateIds: updates,
+                    classNames: updates.map((id) => ({
+                      id,
+                      className: classNames.get(id),
+                    })),
+                    derivedUpdates,
+                  });
+                  // Keep owner recompilation and metadata derivation as
+                  // diagnostics only. For externalized component styles, a
+                  // component-update message is not a safe substitute for a
+                  // missing `?ngcomp=...` wrapper module because Angular can
+                  // re-render the component without forcing the browser to
+                  // re-evaluate the live stylesheet wrapper. That exact shape
+                  // produced false-positive "successful HMR" logs while the UI
+                  // stayed visually stale. If the wrapper is absent, prefer a
+                  // hard reload after gathering the owner evidence needed to
+                  // explain why the fallback was necessary.
+                  if (derivedUpdates.length > 0) {
+                    debugHmrV(
+                      'component stylesheet owner fallback derived updates',
+                      {
+                        file: ctx.file,
+                        updates: derivedUpdates,
+                        hint: 'Angular did not repopulate classNames during CSS-only owner recompilation, so Analog derived component identities from raw component metadata.',
+                      },
+                    );
+                  }
+                }
+
+                logComponentStylesheetHmrOutcome({
+                  file: ctx.file,
+                  encapsulation,
+                  diagnosis: stylesheetDiagnosis,
+                  outcome: 'full-reload',
+                  directModuleId: isDirect.id,
+                  wrapperIds: wrapperModules.map((mod) => mod.id),
+                  ownerIds: ownerModules.map((mod) => mod.id),
+                });
+                sendFullReload(ctx.server, {
+                  file: ctx.file,
+                  encapsulation,
+                  reason:
+                    wrapperModules.length === 0
+                      ? 'missing-wrapper-module-and-no-owner-updates'
+                      : 'shadow-encapsulation',
+                  directId: isDirect.id,
+                  trackedRequestIds:
+                    stylesheetRegistry?.getRequestIdsForSource(ctx.file) ?? [],
+                });
+                return [];
               }
             }
-            return ctx.modules;
+            return fileModules;
+          }
+
+          if (
+            shouldEnableHmr() &&
+            /\.(html|htm)$/.test(ctx.file) &&
+            fileModules.length === 0
+          ) {
+            const ownerModules = findTemplateOwnerModules(ctx.server, ctx.file);
+            debugHmrV('template owner lookup', {
+              file: ctx.file,
+              ownerCount: ownerModules.length,
+              ownerIds: ownerModules.map((mod) => mod.id),
+              hint:
+                ownerModules.length > 0
+                  ? 'The external template has candidate TS owner modules that can be recompiled for HMR.'
+                  : 'No TS owner modules were visible for this external template change; HMR will fall through to the generic importer path.',
+            });
+            if (ownerModules.length > 0) {
+              const ownerIds = ownerModules
+                .map((mod) => mod.id)
+                .filter(Boolean) as string[];
+
+              ownerModules.forEach((mod) =>
+                ctx.server.moduleGraph.invalidateModule(mod),
+              );
+
+              pendingCompilation = performCompilation(resolvedConfig, ownerIds);
+              await pendingCompilation;
+              pendingCompilation = null;
+
+              const updates = ownerIds.filter((id) => classNames.get(id));
+              debugHmrV('template owner recompilation result', {
+                file: ctx.file,
+                ownerIds,
+                updates,
+                updateClassNames: updates.map((id) => ({
+                  id,
+                  className: classNames.get(id),
+                })),
+                hint:
+                  updates.length > 0
+                    ? 'External template recompilation produced Angular component update targets.'
+                    : 'External template recompilation completed, but no Angular component update targets were surfaced.',
+              });
+              if (updates.length > 0) {
+                debugHmr('template owner module invalidation', {
+                  file: ctx.file,
+                  ownerIds,
+                  updateCount: updates.length,
+                });
+                updates.forEach((updateId) => {
+                  const relativeFileId = `${normalizePath(
+                    relative(process.cwd(), updateId),
+                  )}@${classNames.get(updateId)}`;
+                  sendHMRComponentUpdate(ctx.server, relativeFileId);
+                });
+
+                return ownerModules.map((mod) => markModuleSelfAccepting(mod));
+              }
+            }
           }
 
           const mods: ModuleNode[] = [];
           const updates: string[] = [];
-          ctx.modules.forEach((mod) => {
+          fileModules.forEach((mod) => {
             mod.importers.forEach((imp) => {
               ctx.server.moduleGraph.invalidateModule(imp);
 
-              if (pluginOptions.liveReload && classNames.get(imp.id)) {
+              if (shouldExternalizeStyles() && classNames.get(imp.id)) {
                 updates.push(imp.id as string);
               } else {
                 mods.push(imp);
               }
             });
           });
+          debugHmrV('resource importer analysis', {
+            file: ctx.file,
+            fileModuleCount: fileModules.length,
+            importerCount: fileModules.reduce(
+              (count, mod) => count + mod.importers.size,
+              0,
+            ),
+            updates,
+            mods: mods.map((mod) => mod.id),
+          });
 
           pendingCompilation = performCompilation(resolvedConfig, [
-            ...mods.map((mod) => mod.id as string),
+            ...mods.map((mod) => mod.id).filter(Boolean),
             ...updates,
           ]);
 
@@ -623,6 +1444,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             await pendingCompilation;
             pendingCompilation = null;
 
+            debugHmr('resource importer component updates', {
+              file: ctx.file,
+              updateCount: updates.length,
+            });
             updates.forEach((updateId) => {
               const impRelativeFileId = `${normalizePath(
                 relative(process.cwd(), updateId),
@@ -631,7 +1456,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               sendHMRComponentUpdate(ctx.server, impRelativeFileId);
             });
 
-            return ctx.modules.map((mod) => {
+            return fileModules.map((mod) => {
               if (mod.id === ctx.file) {
                 return markModuleSelfAccepting(mod);
               }
@@ -644,6 +1469,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         // clear HMR updates with a full reload
+        debugHmr('full reload — unrecognized file type', { file: ctx.file });
         classNames.clear();
         return ctx.modules;
       },
@@ -655,14 +1481,36 @@ export function angular(options?: PluginOptions): Plugin[] {
           )}?${id.includes(':style') ? 'inline' : 'raw'}`;
         }
 
-        // Map angular external styleUrls to the source file
+        // Map angular component stylesheets. Prefer registry-served CSS
+        // (preprocessed, with @reference) over external raw file mappings
+        // file path). Without this priority, Angular may emit a basename ID
+        // that resolves to the raw file, bypassing preprocessing.
         if (isComponentStyleSheet(id)) {
-          const componentStyles = externalComponentStyles?.get(
-            getFilenameFromPath(id),
-          );
+          const filename = getFilenameFromPath(id);
+
+          if (stylesheetRegistry?.hasServed(filename)) {
+            debugStylesV('resolveId: kept preprocessed ID', { filename });
+            return id;
+          }
+
+          const componentStyles =
+            stylesheetRegistry?.resolveExternalSource(filename);
           if (componentStyles) {
+            debugStylesV('resolveId: mapped external stylesheet', {
+              filename,
+              resolvedPath: componentStyles,
+            });
             return componentStyles + new URL(id, 'http://localhost').search;
           }
+
+          debugStyles(
+            'resolveId: component stylesheet NOT FOUND in either map',
+            {
+              filename,
+              inlineMapSize: stylesheetRegistry?.servedCount ?? 0,
+              externalMapSize: stylesheetRegistry?.externalCount ?? 0,
+            },
+          );
         }
 
         return undefined;
@@ -670,10 +1518,39 @@ export function angular(options?: PluginOptions): Plugin[] {
       async load(id) {
         // Map angular inline styles to the source text
         if (isComponentStyleSheet(id)) {
-          const componentStyles = inlineComponentStyles?.get(
-            getFilenameFromPath(id),
-          );
+          const filename = getFilenameFromPath(id);
+          const componentStyles =
+            stylesheetRegistry?.getServedContent(filename);
           if (componentStyles) {
+            stylesheetRegistry?.registerActiveRequest(id);
+            // Register the concrete request id that was just served. During HMR
+            // the changed file event references the original source stylesheet
+            // path, but the live browser module graph references hashed
+            // stylesheet request ids such as `/abc123.css?ngcomp=...`. This is
+            // the bridge between those two worlds.
+            debugHmrV('stylesheet active request registered', {
+              requestId: id,
+              filename,
+              sourcePath:
+                stylesheetRegistry?.resolveExternalSource(filename) ??
+                stylesheetRegistry?.resolveExternalSource(
+                  filename.replace(/^\//, ''),
+                ),
+              trackedRequestIds:
+                stylesheetRegistry?.getRequestIdsForSource(
+                  stylesheetRegistry?.resolveExternalSource(filename) ??
+                    stylesheetRegistry?.resolveExternalSource(
+                      filename.replace(/^\//, ''),
+                    ) ??
+                    '',
+                ) ?? [],
+            });
+            debugStylesV('load: served inline component stylesheet', {
+              filename,
+              length: componentStyles.length,
+              requestId: id,
+              ...describeStylesheetContent(componentStyles),
+            });
             return componentStyles;
           }
         }
@@ -703,6 +1580,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
 
             if (!isAngular) {
+              debugCompilationApi('transform skip (non-Angular file)', { id });
               return;
             }
           }
@@ -715,12 +1593,19 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
 
           /**
-           * Encapsulate component stylesheets that use emulated encapsulation
+           * Encapsulate component stylesheets that use emulated encapsulation.
+           * Must run whenever styles are externalized (not just HMR), because
+           * Angular's externalRuntimeStyles skips its own encapsulation when
+           * styles are external — the build tool is expected to handle it.
            */
-          if (pluginOptions.liveReload && isComponentStyleSheet(id)) {
+          if (shouldExternalizeStyles() && isComponentStyleSheet(id)) {
             const { encapsulation, componentId } =
               getComponentStyleSheetMeta(id);
             if (encapsulation === 'emulated' && componentId) {
+              debugStylesV('applying emulated view encapsulation', {
+                stylesheet: id.split('?')[0],
+                componentId,
+              });
               const encapsulated = ngCompiler.encapsulateStyle(
                 code,
                 componentId,
@@ -761,7 +1646,36 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
+          // Detect whether the code contains an Angular @Component decorator.
+          //
+          // IMPORTANT — useAngularCompilationAPI behavior:
+          //   When `useAngularCompilationAPI: true`, the Angular Compilation API
+          //   compiles TypeScript BEFORE this Vite transform hook fires. By the
+          //   time `code` reaches here, @Component decorators have been compiled
+          //   away into ɵɵdefineComponent() calls, so `hasComponent` is always
+          //   false for actual component files.
+          //
+          //   This is expected and NOT a bug. The Angular Compilation API handles
+          //   template and style resolution through its own internal pipeline:
+          //     - Templates: resolved during compilation, not via templateUrls
+          //     - Styles: externalized and served via the resolveId/load hooks
+          //       (confirmed by `analog:angular:styles resolveId: mapped external
+          //       stylesheet` debug messages)
+          //
+          //   The only consequence of hasComponent=false is that external template
+          //   and style files are not registered via addWatchFile(), which means
+          //   HMR for external HTML/CSS edits may trigger a full reload instead of
+          //   a targeted hot replacement. The Angular Compilation API's own
+          //   invalidation mechanism handles recompilation regardless.
+          //
+          //   For the legacy (non-API) compilation path, hasComponent works as
+          //   expected because the transform hook sees raw TypeScript source.
           const hasComponent = code.includes('@Component');
+          debugCompilerV('transform', {
+            id,
+            codeLength: code.length,
+            hasComponent,
+          });
           const templateUrls = hasComponent
             ? templateUrlsResolver.resolve(code, id)
             : [];
@@ -824,6 +1738,27 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
           }
 
+          // Angular's HMR initializer emits dynamic import() calls that Vite's
+          // import-analysis plugin cannot statically analyze, producing SSR
+          // warnings.  The Angular compiler's IR includes a @vite-ignore comment
+          // but it can be lost during TypeScript emit.  Re-inject it here so the
+          // warning is suppressed regardless of the compilation path used.
+          if (data.includes('HmrLoad')) {
+            const hasMetaUrl = data.includes('getReplaceMetadataURL');
+            debugHmrV('vite-ignore injection', {
+              id,
+              dataLength: data.length,
+              hasMetaUrl,
+            });
+            if (hasMetaUrl) {
+              const patched = injectViteIgnoreForHmrMetadata(data);
+              if (patched !== data && !patched.includes('@vite-ignore')) {
+                debugHmrV('vite-ignore regex fallback', { id });
+              }
+              data = patched;
+            }
+          }
+
           return {
             code: data,
             map: null,
@@ -847,8 +1782,183 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   return [
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
+    {
+      name: '@analogjs/vite-plugin-angular:template-class-binding-guard',
+      enforce: 'pre',
+      transform(code: string, id: string) {
+        if (id.includes('node_modules')) {
+          return;
+        }
+
+        const cleanId = id.split('?')[0];
+
+        if (/\.(html|htm)$/i.test(cleanId)) {
+          const staticClassIssue =
+            findStaticClassAndBoundClassConflicts(code)[0];
+          if (staticClassIssue) {
+            throwTemplateClassBindingConflict(cleanId, staticClassIssue);
+          }
+
+          const mixedClassIssue = findBoundClassAndNgClassConflicts(code)[0];
+          if (mixedClassIssue) {
+            this.warn(
+              [
+                '[Analog Angular] Conflicting class composition.',
+                `File: ${cleanId}:${mixedClassIssue.line}:${mixedClassIssue.column}`,
+                'This element mixes `[class]` and `[ngClass]`.',
+                'Prefer a single class-binding strategy so class merging stays predictable.',
+                'Use one `[ngClass]` expression or explicit `[class.foo]` bindings.',
+                `Snippet: ${mixedClassIssue.snippet}`,
+              ].join('\n'),
+            );
+          }
+          return;
+        }
+
+        if (TS_EXT_REGEX.test(cleanId)) {
+          const rawStyleUrls = styleUrlsResolver.resolve(code, cleanId);
+          registerStyleOwnerMetadata(cleanId, rawStyleUrls);
+          debugHmrV('component stylesheet owner metadata registered', {
+            file: cleanId,
+            styleUrlCount: rawStyleUrls.length,
+            styleUrls: rawStyleUrls,
+            ownerSources: [
+              ...(transformedStyleOwnerMetadata
+                .get(cleanId)
+                ?.map((record) => record.sourcePath) ?? []),
+            ],
+          });
+
+          // Parse raw component decorators before Angular compilation strips
+          // them. This lets Analog fail fast on template/class-footguns and
+          // keep a lightweight active-graph index for duplicate selector/class
+          // diagnostics without requiring a full compiler pass first.
+          const components = getAngularComponentMetadata(code);
+
+          const inlineTemplateIssue = components.flatMap((component) =>
+            component.inlineTemplates.flatMap((template) =>
+              findStaticClassAndBoundClassConflicts(template),
+            ),
+          )[0];
+
+          if (inlineTemplateIssue) {
+            throwTemplateClassBindingConflict(cleanId, inlineTemplateIssue);
+          }
+
+          const mixedInlineClassIssue = components.flatMap((component) =>
+            component.inlineTemplates.flatMap((template) =>
+              findBoundClassAndNgClassConflicts(template),
+            ),
+          )[0];
+
+          if (mixedInlineClassIssue) {
+            this.warn(
+              [
+                '[Analog Angular] Conflicting class composition.',
+                `File: ${cleanId}:${mixedInlineClassIssue.line}:${mixedInlineClassIssue.column}`,
+                'This element mixes `[class]` and `[ngClass]`.',
+                'Prefer a single class-binding strategy so class merging stays predictable.',
+                'Use one `[ngClass]` expression or explicit `[class.foo]` bindings.',
+                `Snippet: ${mixedInlineClassIssue.snippet}`,
+              ].join('\n'),
+            );
+          }
+
+          const activeGraphRecords = components.map((component) => ({
+            file: cleanId,
+            className: component.className,
+            selector: component.selector,
+          }));
+
+          registerActiveGraphMetadata(cleanId, activeGraphRecords);
+
+          for (const component of components) {
+            if (!component.selector && !isLikelyPageOnlyComponent(cleanId)) {
+              throw new Error(
+                [
+                  '[Analog Angular] Selectorless component detected.',
+                  `File: ${cleanId}`,
+                  `Component: ${component.className}`,
+                  'This component has no `selector`, so Angular will render it as `ng-component`.',
+                  'That increases the chance of component ID collisions and makes diagnostics harder to interpret.',
+                  'Add an explicit selector for reusable components.',
+                  'Selectorless components are only supported for page and route-only files.',
+                ].join('\n'),
+              );
+            }
+
+            if (component.selector) {
+              const selectorEntries = selectorOwners.get(component.selector);
+              if (selectorEntries && selectorEntries.size > 1) {
+                throw new Error(
+                  [
+                    '[Analog Angular] Duplicate component selector detected.',
+                    `Selector: ${component.selector}`,
+                    'Multiple components in the active application graph use the same selector.',
+                    'Selectors must be unique within the active graph to avoid ambiguous rendering and confusing diagnostics.',
+                    `Locations:\n${formatActiveGraphLocations(selectorEntries)}`,
+                  ].join('\n'),
+                );
+              }
+            }
+
+            const classNameEntries = classNameOwners.get(component.className);
+            if (classNameEntries && classNameEntries.size > 1) {
+              this.warn(
+                [
+                  '[Analog Angular] Duplicate component class name detected.',
+                  `Class name: ${component.className}`,
+                  'Two or more Angular components in the active graph share the same exported class name.',
+                  'Rename one of them to keep HMR, stack traces, and compiler diagnostics unambiguous.',
+                  `Locations:\n${formatActiveGraphLocations(classNameEntries)}`,
+                ].join('\n'),
+              );
+            }
+          }
+        }
+      },
+    } satisfies Plugin,
+    // Tailwind CSS v4 @reference injection for direct-file-loaded CSS.
+    // Catches CSS files loaded from disk (not virtual modules) that need
+    // @reference before @tailwindcss/vite processes them.
+    pluginOptions.hasTailwindCss &&
+      ({
+        name: '@analogjs/vite-plugin-angular:tailwind-reference',
+        enforce: 'pre',
+        transform(code: string, id: string) {
+          const tw = pluginOptions.tailwindCss;
+          if (!tw || !id.includes('.css')) return;
+
+          const cleanId = id.split('?')[0];
+          if (cleanId === tw.rootStylesheet) return;
+
+          if (
+            code.includes('@reference') ||
+            code.includes('@import "tailwindcss"') ||
+            code.includes("@import 'tailwindcss'")
+          ) {
+            return;
+          }
+
+          // Skip entry stylesheets that @import the root config
+          const rootBasename = basename(tw.rootStylesheet);
+          if (code.includes(rootBasename)) return;
+
+          const prefixes = tw.prefixes;
+          const needsRef = prefixes
+            ? prefixes.some((p) => code.includes(p))
+            : code.includes('@apply');
+
+          if (needsRef) {
+            debugTailwind('injected @reference via pre-transform', {
+              id: id.split('/').slice(-2).join('/'),
+            });
+            return `@reference "${tw.rootStylesheet}";\n${code}`;
+          }
+        },
+      } satisfies Plugin),
     angularPlugin(),
-    pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
+    pluginOptions.hmr && liveReloadPlugin({ classNames, fileEmitter }),
     ...(isTest && !isStackBlitz ? angularVitestPlugins() : []),
     (jit &&
       jitPlugin({
@@ -864,12 +1974,10 @@ export function angular(options?: PluginOptions): Plugin[] {
   ].filter(Boolean) as Plugin[];
 
   function findIncludes() {
-    const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));
-
     // Map include patterns to absolute workspace paths
-    const globs = [
-      ...pluginOptions.include.map((glob) => `${workspaceRoot}${glob}`),
-    ];
+    const globs = pluginOptions.include.map((glob) =>
+      normalizeIncludeGlob(pluginOptions.workspaceRoot, glob),
+    );
 
     // Discover TypeScript files using tinyglobby
     return globSync(globs, {
@@ -974,6 +2082,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     // Notify Angular of modified files before re-initialization so it can
     // scope its incremental analysis.
     if (modifiedFiles?.size && angularCompilation.update) {
+      debugCompilationApi('incremental update', {
+        files: [...modifiedFiles],
+      });
       await angularCompilation.update(modifiedFiles);
     }
 
@@ -1004,35 +2115,54 @@ export function angular(options?: PluginOptions): Plugin[] {
               `.${pluginOptions.inlineStylesExtension}`,
             );
 
-          // Apply any user-defined stylesheet preprocessing before Vite transforms it.
-          const preprocessedData = pluginOptions.stylePreprocessor
-            ? (pluginOptions.stylePreprocessor(data, filename) ?? data)
-            : data;
+          const preprocessedData = preprocessStylesheet(
+            data,
+            filename,
+            pluginOptions.stylePreprocessor,
+          );
 
-          if (pluginOptions.liveReload && watchMode) {
-            // Store the preprocessed (but not yet CSS-transformed) data so that
-            // Vite's serve-time pipeline handles PostCSS / Tailwind processing
-            // exactly once when the load hook returns this CSS.  Running
-            // preprocessCSS() here would strip directives like @reference before
-            // the CSS re-enters the transform pipeline, causing plugins such as
-            // @tailwindcss/vite to fail on the second pass.
-            // Guard must match the externalRuntimeStyles condition (line ~927)
-            // because the Angular compiler only emits external style references
-            // when externalRuntimeStyles is enabled.
-            const id = createHash('sha256')
-              .update(containingFile)
-              .update(className as string)
-              .update(String(order))
-              .update(preprocessedData)
-              .digest('hex');
-            const stylesheetId = id + '.' + pluginOptions.inlineStylesExtension;
-            inlineComponentStyles!.set(stylesheetId, preprocessedData);
+          // Populate classNames during initial compilation so HMR for
+          // HTML template changes can find the parent TS module.
+          if (shouldEnableHmr() && className && containingFile) {
+            classNames.set(normalizePath(containingFile), className as string);
+          }
+
+          if (shouldExternalizeStyles()) {
+            // Store preprocessed CSS so Vite's serve-time pipeline handles
+            // PostCSS / Tailwind processing when the load hook returns it.
+            const stylesheetId = registerStylesheetContent(
+              stylesheetRegistry!,
+              {
+                code: preprocessedData,
+                containingFile,
+                className: className as string | undefined,
+                order,
+                inlineStylesExtension: pluginOptions.inlineStylesExtension,
+                resourceFile: resourceFile ?? undefined,
+              },
+            );
+
+            debugStyles('stylesheet deferred to Vite pipeline', {
+              stylesheetId,
+              resourceFile: resourceFile ?? '(inline)',
+            });
+            debugStylesV('stylesheet deferred content snapshot', {
+              stylesheetId,
+              filename,
+              resourceFile: resourceFile ?? '(inline)',
+              ...describeStylesheetContent(preprocessedData),
+            });
+
             return stylesheetId;
           }
 
-          // Non-liveReload: the CSS is returned directly to the Angular
-          // compiler and never re-enters Vite's pipeline, so we must run
-          // preprocessCSS() eagerly here.
+          // Non-externalized: CSS is returned directly to the Angular compiler
+          // and never re-enters Vite's pipeline, so run preprocessCSS() eagerly.
+          debugStyles('stylesheet processed inline via preprocessCSS', {
+            filename,
+            resourceFile: resourceFile ?? '(inline)',
+            dataLength: preprocessedData.length,
+          });
           let stylesheetResult;
 
           try {
@@ -1042,7 +2172,11 @@ export function angular(options?: PluginOptions): Plugin[] {
               resolvedConfig,
             );
           } catch (e) {
-            console.error(`${e}`);
+            debugStyles('preprocessCSS error', {
+              filename,
+              resourceFile: resourceFile ?? '(inline)',
+              error: String(e),
+            });
           }
 
           return stylesheetResult?.code || '';
@@ -1052,18 +2186,33 @@ export function angular(options?: PluginOptions): Plugin[] {
         },
       },
       (tsCompilerOptions) => {
-        if (pluginOptions.liveReload && watchMode) {
-          tsCompilerOptions['_enableHmr'] = true;
+        if (shouldExternalizeStyles()) {
           tsCompilerOptions['externalRuntimeStyles'] = true;
+        }
+
+        if (shouldEnableHmr()) {
+          tsCompilerOptions['_enableHmr'] = true;
           // Workaround for https://github.com/angular/angular/issues/59310
-          // Force extra instructions to be generated for HMR w/defer
           tsCompilerOptions['supportTestBed'] = true;
         }
+
+        debugCompiler('tsCompilerOptions (compilation API)', {
+          hmr: pluginOptions.hmr,
+          hasTailwindCss: pluginOptions.hasTailwindCss,
+          watchMode,
+          shouldExternalize: shouldExternalizeStyles(),
+          externalRuntimeStyles: !!tsCompilerOptions['externalRuntimeStyles'],
+          hmrEnabled: !!tsCompilerOptions['_enableHmr'],
+        });
 
         if (tsCompilerOptions.compilationMode === 'partial') {
           // These options can't be false in partial mode
           tsCompilerOptions['supportTestBed'] = true;
           tsCompilerOptions['supportJitMode'] = true;
+        }
+
+        if (angularFullVersion >= 200000) {
+          tsCompilerOptions['_enableSelectorless'] = true;
         }
 
         if (!isTest && config.build?.lib) {
@@ -1081,9 +2230,139 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
     );
 
-    compilationResult.externalStylesheets?.forEach((value, key) => {
-      externalComponentStyles?.set(`${value}.css`, key);
+    // -------------------------------------------------------------------
+    // Preprocess external stylesheets for Tailwind CSS @reference
+    //
+    // Angular's Compilation API with externalRuntimeStyles does NOT call
+    // transformStylesheet for external styleUrls (files referenced via
+    // `styleUrls: ['./foo.component.css']`). Angular's angular-host.js
+    // asserts this explicitly:
+    //
+    //   assert(!resourceFile || !hostOptions.externalStylesheets?.has(resourceFile),
+    //     'External runtime stylesheets should not be transformed')
+    //
+    // Only inline styles (`styles: [...]`) go through transformStylesheet,
+    // which is where buildStylePreprocessor injects `@reference` for
+    // Tailwind CSS. External component CSS files are instead reported in
+    // compilationResult.externalStylesheets as Map<absolutePath, sha256Hash>.
+    //
+    // Without intervention, the resolveId hook maps Angular's hash to the
+    // raw file path, the load hook reads the raw file from disk, and
+    // @tailwindcss/vite processes CSS without @reference — causing:
+    //
+    //   "Cannot apply utility class 'sa:grid' because the 'sa'
+    //    variant does not exist"
+    //
+    // Fix: for each external stylesheet, read the file from disk, run the
+    // style preprocessor (which injects @reference), and store the result
+    // in the stylesheet registry under Angular's hash. The resolveId hook
+    // then finds it on the first lookup, the load hook serves the
+    // @reference-injected version, and @tailwindcss/vite compiles correctly.
+    // -------------------------------------------------------------------
+    debugStyles('external stylesheets from compilation API', {
+      count: compilationResult.externalStylesheets?.size ?? 0,
+      hasPreprocessor: !!pluginOptions.stylePreprocessor,
+      hasInlineMap: !!stylesheetRegistry,
     });
+    const preprocessStats = { total: 0, injected: 0, skipped: 0, errors: 0 };
+    compilationResult.externalStylesheets?.forEach((value, key) => {
+      preprocessStats.total++;
+      const angularHash = `${value}.css`;
+      stylesheetRegistry?.registerExternalRequest(angularHash, key);
+
+      // Read the raw CSS file from disk, run the style preprocessor
+      // (which injects @reference for Tailwind), and store the result
+      // in the stylesheet registry under Angular's hash. This way
+      // resolveId finds the preprocessed version on the first lookup
+      // and the load hook serves CSS that @tailwindcss/vite can compile.
+      //
+      // After preprocessing, resolve relative @import paths to absolute
+      // paths. When @tailwindcss/vite processes the CSS, the virtual
+      // hash-based module ID has no meaningful directory, so relative
+      // imports like `@import './submenu/submenu.component.css'` would
+      // fail to resolve from `/`. Converting to absolute paths ensures
+      // Tailwind's enhanced-resolve can find the imported files.
+      if (
+        stylesheetRegistry &&
+        pluginOptions.stylePreprocessor &&
+        existsSync(key)
+      ) {
+        try {
+          const rawCss = readFileSync(key, 'utf-8');
+          let preprocessed = preprocessStylesheet(
+            rawCss,
+            key,
+            pluginOptions.stylePreprocessor,
+          );
+          debugStylesV('external stylesheet raw snapshot', {
+            angularHash,
+            resolvedPath: key,
+            mtimeMs: safeStatMtimeMs(key),
+            ...describeStylesheetContent(rawCss),
+          });
+          preprocessed = rewriteRelativeCssImports(preprocessed, key);
+          stylesheetRegistry.registerServedStylesheet(
+            {
+              publicId: angularHash,
+              sourcePath: key,
+              originalCode: rawCss,
+              normalizedCode: preprocessed,
+            },
+            [key, normalizePath(key), basename(key), key.replace(/^\//, '')],
+          );
+
+          if (preprocessed && preprocessed !== rawCss) {
+            preprocessStats.injected++;
+            debugStylesV(
+              'preprocessed external stylesheet for Tailwind @reference',
+              {
+                angularHash,
+                resolvedPath: key,
+                mtimeMs: safeStatMtimeMs(key),
+                raw: describeStylesheetContent(rawCss),
+                served: describeStylesheetContent(preprocessed),
+              },
+            );
+          } else {
+            preprocessStats.skipped++;
+            debugStylesV('external stylesheet unchanged after preprocessing', {
+              angularHash,
+              resolvedPath: key,
+              mtimeMs: safeStatMtimeMs(key),
+              raw: describeStylesheetContent(rawCss),
+              served: describeStylesheetContent(preprocessed),
+              hint: 'Registry mapping is still registered so Angular component stylesheet HMR can track and refresh this file even when preprocessing makes no textual changes.',
+            });
+          }
+        } catch (e) {
+          preprocessStats.errors++;
+          console.warn(
+            `[@analogjs/vite-plugin-angular] failed to preprocess external stylesheet: ${key}: ${e}`,
+          );
+          // Non-fatal: fall through to the external source mapping which
+          // serves the raw file. @tailwindcss/vite will still process
+          // it but without @reference (Tailwind prefix utilities won't
+          // resolve).
+        }
+      } else {
+        preprocessStats.skipped++;
+        debugStylesV('external stylesheet preprocessing skipped', {
+          filename: angularHash,
+          resolvedPath: key,
+          reason: !stylesheetRegistry
+            ? 'no stylesheetRegistry'
+            : !pluginOptions.stylePreprocessor
+              ? 'no stylePreprocessor'
+              : 'file not found on disk',
+        });
+      }
+
+      debugStylesV('external stylesheet registered for resolveId mapping', {
+        filename: angularHash,
+        resolvedPath: key,
+      });
+    });
+    debugStyles('external stylesheet preprocessing complete', preprocessStats);
 
     const diagnostics = await angularCompilation.diagnoseFiles(
       pluginOptions.disableTypeChecking
@@ -1099,6 +2378,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     const templateUpdates = mapTemplateUpdatesToFiles(
       compilationResult.templateUpdates,
     );
+    if (templateUpdates.size > 0) {
+      debugHmr('compilation API template updates', {
+        count: templateUpdates.size,
+        files: [...templateUpdates.keys()],
+      });
+    }
 
     for (const file of await angularCompilation.emitAffectedFiles()) {
       const normalizedFilename = normalizePath(file.filename);
@@ -1145,6 +2430,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     // Forward `ids` (modified files) so the Compilation API path can do
     // incremental re-analysis instead of a full recompile on every change.
     if (pluginOptions.useAngularCompilationAPI) {
+      debugCompilationApi('using compilation API path', {
+        modifiedFiles: ids?.length ?? 0,
+      });
       await performAngularCompilation(config, ids);
       return;
     }
@@ -1170,6 +2458,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       isProd ? 'prod' : 'dev',
       isTest ? 'test' : 'app',
       config.build?.lib ? 'lib' : 'nolib',
+      pluginOptions.hmr ? 'hmr' : 'nohmr',
+      pluginOptions.hasTailwindCss ? 'tw' : 'notw',
     ].join('|');
     let cached = tsconfigOptionsCache.get(tsconfigKey);
 
@@ -1199,18 +2489,31 @@ export function angular(options?: PluginOptions): Plugin[] {
     const tsCompilerOptions = { ...cached.options };
     let rootNames = [...cached.rootNames];
 
-    if (pluginOptions.liveReload && watchMode) {
-      tsCompilerOptions['_enableHmr'] = true;
+    if (shouldExternalizeStyles()) {
       tsCompilerOptions['externalRuntimeStyles'] = true;
+    }
+
+    if (shouldEnableHmr()) {
+      tsCompilerOptions['_enableHmr'] = true;
       // Workaround for https://github.com/angular/angular/issues/59310
-      // Force extra instructions to be generated for HMR w/defer
       tsCompilerOptions['supportTestBed'] = true;
     }
+
+    debugCompiler('tsCompilerOptions (NgtscProgram path)', {
+      hmr: pluginOptions.hmr,
+      shouldExternalize: shouldExternalizeStyles(),
+      externalRuntimeStyles: !!tsCompilerOptions['externalRuntimeStyles'],
+      hmrEnabled: !!tsCompilerOptions['_enableHmr'],
+    });
 
     if (tsCompilerOptions['compilationMode'] === 'partial') {
       // These options can't be false in partial mode
       tsCompilerOptions['supportTestBed'] = true;
       tsCompilerOptions['supportJitMode'] = true;
+    }
+
+    if (angularFullVersion >= 200000) {
+      tsCompilerOptions['_enableSelectorless'] = true;
     }
 
     if (!isTest && config.build?.lib) {
@@ -1231,7 +2534,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       ),
     );
     // Merge + dedupe root names
-    rootNames = [...new Set([...rootNames, ...includeCache, ...replacements])];
+    rootNames = union(rootNames, includeCache, replacements);
     const hostKey = JSON.stringify(tsCompilerOptions);
     let host: ts.CompilerHost;
 
@@ -1264,17 +2567,17 @@ export function angular(options?: PluginOptions): Plugin[] {
     }
 
     if (!jit) {
-      inlineComponentStyles = tsCompilerOptions['externalRuntimeStyles']
-        ? new Map()
+      const externalizeStyles = !!tsCompilerOptions['externalRuntimeStyles'];
+      stylesheetRegistry = externalizeStyles
+        ? new AnalogStylesheetRegistry()
         : undefined;
-      externalComponentStyles = tsCompilerOptions['externalRuntimeStyles']
-        ? new Map()
-        : undefined;
+      debugStyles('stylesheet registry initialized (NgtscProgram path)', {
+        externalizeStyles,
+      });
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
         isProd,
-        inlineComponentStyles,
-        externalComponentStyles,
+        stylesheetRegistry,
         sourceFileCache,
         stylePreprocessor: pluginOptions.stylePreprocessor,
       });
@@ -1349,7 +2652,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     const fileMetadata = getFileMetadata(
       builder,
       angularCompiler!,
-      pluginOptions.liveReload,
+      pluginOptions.hmr,
       pluginOptions.disableTypeChecking,
     );
 
@@ -1554,7 +2857,436 @@ export function mapTemplateUpdatesToFiles(
   return updatesByFile;
 }
 
+/**
+ * Returns every live Vite module that can legitimately represent a changed
+ * Angular resource file.
+ *
+ * For normal files, `getModulesByFile()` is enough. For Angular component
+ * stylesheets, it is not: the browser often holds virtual hashed requests
+ * (`/abc123.css?direct&ngcomp=...` and `/abc123.css?ngcomp=...`) that are no
+ * longer discoverable from the original source path alone. We therefore merge:
+ * - watcher event modules
+ * - module-graph modules by source file
+ * - registry-tracked live request ids resolved back through the module graph
+ */
+export async function getModulesForChangedFile(
+  server: ViteDevServer,
+  file: string,
+  eventModules: readonly ModuleNode[] = [],
+  stylesheetRegistry?: AnalogStylesheetRegistry,
+): Promise<ModuleNode[]> {
+  const normalizedFile = normalizePath(file.split('?')[0]);
+  const modules = new Map<string, ModuleNode>();
+
+  for (const mod of eventModules) {
+    if (mod.id) {
+      modules.set(mod.id, mod);
+    }
+  }
+
+  server.moduleGraph.getModulesByFile(normalizedFile)?.forEach((mod) => {
+    if (mod.id) {
+      modules.set(mod.id, mod);
+    }
+  });
+
+  const stylesheetRequestIds =
+    stylesheetRegistry?.getRequestIdsForSource(normalizedFile) ?? [];
+  const requestIdHits: Array<{
+    requestId: string;
+    candidate: string;
+    via: 'url' | 'id';
+    moduleId?: string;
+  }> = [];
+  for (const requestId of stylesheetRequestIds) {
+    const candidates = [
+      requestId,
+      requestId.startsWith('/') ? requestId : `/${requestId}`,
+    ];
+
+    for (const candidate of candidates) {
+      // `getModuleByUrl()` is the important lookup here. Angular's wrapper
+      // module is served by URL and can be absent from a straight `getModuleById`
+      // lookup during CSS HMR, even though it is the browser-visible module
+      // that must be refreshed. We keep `getModuleById()` as a compatibility
+      // fallback for the simpler direct CSS case.
+      const mod =
+        (await server.moduleGraph.getModuleByUrl(candidate)) ??
+        server.moduleGraph.getModuleById(candidate);
+      requestIdHits.push({
+        requestId,
+        candidate,
+        via: mod?.url === candidate ? 'url' : 'id',
+        moduleId: mod?.id,
+      });
+      if (mod?.id) {
+        modules.set(mod.id, mod);
+      }
+    }
+  }
+
+  debugHmrV('getModulesForChangedFile registry lookup', {
+    file: normalizedFile,
+    stylesheetRequestIds,
+    requestIdHits,
+    resolvedModuleIds: [...modules.keys()],
+  });
+
+  return [...modules.values()];
+}
+
+export function isModuleForChangedResource(
+  mod: ModuleNode,
+  changedFile: string,
+  stylesheetRegistry?: AnalogStylesheetRegistry,
+): boolean {
+  const normalizedChangedFile = normalizePath(changedFile.split('?')[0]);
+
+  if (normalizePath((mod.file ?? '').split('?')[0]) === normalizedChangedFile) {
+    return true;
+  }
+
+  if (!mod.id) {
+    return false;
+  }
+
+  // Virtual Angular stylesheet modules do not report the original source file
+  // as `mod.file`; they point at the served hashed stylesheet asset instead.
+  // Recover the source file through the stylesheet registry so HMR can still
+  // answer "does this live module belong to the resource that just changed?"
+  const requestPath = getFilenameFromPath(mod.id);
+  const sourcePath =
+    stylesheetRegistry?.resolveExternalSource(requestPath) ??
+    stylesheetRegistry?.resolveExternalSource(requestPath.replace(/^\//, ''));
+
+  return (
+    normalizePath((sourcePath ?? '').split('?')[0]) === normalizedChangedFile
+  );
+}
+
+function describeStylesheetContent(code: string): {
+  length: number;
+  digest: string;
+  preview: string;
+} {
+  return {
+    length: code.length,
+    digest: createHash('sha256').update(code).digest('hex').slice(0, 12),
+    preview: code.replace(/\s+/g, ' ').trim().slice(0, 160),
+  };
+}
+
+function safeStatMtimeMs(file: string): number | undefined {
+  try {
+    return statSync(file).mtimeMs;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Refreshes any already-served stylesheet records that map back to a changed
+ * source file.
+ *
+ * This is the critical bridge for externalized Angular component styles during
+ * HMR. Angular's resource watcher can notice that `/src/...component.css`
+ * changed before Angular recompilation has had a chance to repopulate the
+ * stylesheet registry. If we emit a CSS update against the existing virtual
+ * stylesheet id without first refreshing the registry content, the browser gets
+ * a hot update containing stale CSS. By rewriting the existing served records
+ * from disk up front, HMR always pushes the latest source content.
+ */
+export function refreshStylesheetRegistryForFile(
+  file: string,
+  stylesheetRegistry?: AnalogStylesheetRegistry,
+  stylePreprocessor?: StylePreprocessor,
+): void {
+  const normalizedFile = normalizePath(file.split('?')[0]);
+  if (!stylesheetRegistry || !existsSync(normalizedFile)) {
+    return;
+  }
+
+  const publicIds = stylesheetRegistry.getPublicIdsForSource(normalizedFile);
+  if (publicIds.length === 0) {
+    return;
+  }
+
+  const rawCss = readFileSync(normalizedFile, 'utf-8');
+  let servedCss = preprocessStylesheet(
+    rawCss,
+    normalizedFile,
+    stylePreprocessor,
+  );
+  servedCss = rewriteRelativeCssImports(servedCss, normalizedFile);
+
+  for (const publicId of publicIds) {
+    stylesheetRegistry.registerServedStylesheet(
+      {
+        publicId,
+        sourcePath: normalizedFile,
+        originalCode: rawCss,
+        normalizedCode: servedCss,
+      },
+      [
+        normalizedFile,
+        normalizePath(normalizedFile),
+        basename(normalizedFile),
+        normalizedFile.replace(/^\//, ''),
+      ],
+    );
+  }
+
+  debugStylesV('stylesheet registry refreshed from source file', {
+    file: normalizedFile,
+    publicIds,
+    source: describeStylesheetContent(rawCss),
+    served: describeStylesheetContent(servedCss),
+  });
+}
+
+function diagnoseComponentStylesheetPipeline(
+  changedFile: string,
+  directModule: ModuleNode,
+  stylesheetRegistry: AnalogStylesheetRegistry | undefined,
+  wrapperModules: ModuleNode[],
+  stylePreprocessor?: StylePreprocessor,
+): {
+  file: string;
+  sourcePath?: string;
+  source?: ReturnType<typeof describeStylesheetContent>;
+  registry?: ReturnType<typeof describeStylesheetContent>;
+  directModuleId?: string;
+  directModuleUrl?: string;
+  trackedRequestIds: string[];
+  wrapperCount: number;
+  anomalies: string[];
+  hints: string[];
+} {
+  const normalizedFile = normalizePath(changedFile.split('?')[0]);
+  const sourceExists = existsSync(normalizedFile);
+  const sourceCode = sourceExists
+    ? readFileSync(normalizedFile, 'utf-8')
+    : undefined;
+
+  const directRequestPath = directModule.id
+    ? getFilenameFromPath(directModule.id)
+    : undefined;
+  const sourcePath = directRequestPath
+    ? (stylesheetRegistry?.resolveExternalSource(directRequestPath) ??
+      stylesheetRegistry?.resolveExternalSource(
+        directRequestPath.replace(/^\//, ''),
+      ))
+    : normalizedFile;
+  const registryCode = directRequestPath
+    ? stylesheetRegistry?.getServedContent(directRequestPath)
+    : undefined;
+  const trackedRequestIds =
+    stylesheetRegistry?.getRequestIdsForSource(sourcePath ?? '') ?? [];
+
+  const anomalies: string[] = [];
+  const hints: string[] = [];
+
+  if (!sourceExists) {
+    anomalies.push('source_file_missing');
+    hints.push(
+      'The stylesheet watcher fired for a file that no longer exists on disk.',
+    );
+  }
+
+  if (!registryCode) {
+    anomalies.push('registry_content_missing');
+    hints.push(
+      'The stylesheet registry has no served content for the direct module request path.',
+    );
+  }
+
+  if (sourceCode && registryCode) {
+    // Compare against the same served representation that the registry stores,
+    // not the raw file on disk. Analog intentionally prepends `@reference`
+    // and rewrites relative imports before the stylesheet reaches Vite, so a
+    // raw-source hash comparison would flag a false positive on every healthy
+    // update.
+    let expectedRegistryCode = preprocessStylesheet(
+      sourceCode,
+      normalizedFile,
+      stylePreprocessor,
+    );
+    expectedRegistryCode = rewriteRelativeCssImports(
+      expectedRegistryCode,
+      normalizedFile,
+    );
+    const sourceDigest = describeStylesheetContent(expectedRegistryCode).digest;
+    const registryDigest = describeStylesheetContent(registryCode).digest;
+    if (sourceDigest !== registryDigest) {
+      anomalies.push('source_registry_mismatch');
+      hints.push(
+        'The source file changed, but the served stylesheet content in the registry is still stale.',
+      );
+    }
+  }
+
+  if (trackedRequestIds.length === 0) {
+    anomalies.push('no_tracked_requests');
+    hints.push(
+      'No live stylesheet requests are tracked for this source file, so HMR has no browser-facing target.',
+    );
+  }
+
+  if (
+    trackedRequestIds.some((id) => id.includes('?ngcomp=')) &&
+    wrapperModules.length === 0
+  ) {
+    anomalies.push('tracked_wrapper_missing_from_module_graph');
+    hints.push(
+      'A wrapper request id is known, but Vite did not expose a live wrapper module during this HMR pass.',
+    );
+  }
+
+  if (
+    trackedRequestIds.every((id) => !id.includes('?ngcomp=')) &&
+    wrapperModules.length === 0
+  ) {
+    anomalies.push('wrapper_not_yet_tracked');
+    hints.push(
+      'Only direct stylesheet requests were tracked during this HMR pass; the wrapper request may be appearing too late.',
+    );
+  }
+
+  return {
+    file: changedFile,
+    sourcePath,
+    source: sourceCode
+      ? describeStylesheetContent(
+          rewriteRelativeCssImports(
+            preprocessStylesheet(sourceCode, normalizedFile, stylePreprocessor),
+            normalizedFile,
+          ),
+        )
+      : undefined,
+    registry: registryCode
+      ? describeStylesheetContent(registryCode)
+      : undefined,
+    directModuleId: directModule.id,
+    directModuleUrl: directModule.url,
+    trackedRequestIds,
+    wrapperCount: wrapperModules.length,
+    anomalies,
+    hints,
+  };
+}
+
+export async function findComponentStylesheetWrapperModules(
+  server: ViteDevServer,
+  changedFile: string,
+  directModule: ModuleNode,
+  fileModules: ModuleNode[],
+  stylesheetRegistry?: AnalogStylesheetRegistry,
+): Promise<ModuleNode[]> {
+  const wrapperModules = new Map<string, ModuleNode>();
+
+  // Fast path: if the wrapper JS module is already present in the resolved
+  // fileModules set for this HMR cycle, use it directly.
+  for (const mod of fileModules) {
+    if (
+      mod.id &&
+      mod.type === 'js' &&
+      isComponentStyleSheet(mod.id) &&
+      isModuleForChangedResource(mod, changedFile, stylesheetRegistry)
+    ) {
+      wrapperModules.set(mod.id, mod);
+    }
+  }
+
+  const directRequestIds = new Set<string>();
+  if (directModule.id) {
+    directRequestIds.add(directModule.id);
+  }
+  if (directModule.url) {
+    directRequestIds.add(directModule.url);
+  }
+
+  const requestPath = directModule.id
+    ? getFilenameFromPath(directModule.id)
+    : undefined;
+  const sourcePath = requestPath
+    ? (stylesheetRegistry?.resolveExternalSource(requestPath) ??
+      stylesheetRegistry?.resolveExternalSource(requestPath.replace(/^\//, '')))
+    : undefined;
+
+  // HMR timing matters here. On a pure CSS edit, the browser often already has
+  // the `?ngcomp=...` wrapper module loaded, but the registry may only know
+  // about the `?direct&ngcomp=...` request at the moment the file watcher
+  // fires. Pull in any already-tracked wrapper ids for the same source file,
+  // then derive wrapper candidates from the known direct request ids.
+  for (const requestId of stylesheetRegistry?.getRequestIdsForSource(
+    sourcePath ?? '',
+  ) ?? []) {
+    if (requestId.includes('?ngcomp=')) {
+      directRequestIds.add(requestId);
+    }
+  }
+
+  const candidateWrapperIds = [...directRequestIds]
+    .filter((id) => id.includes('?direct&ngcomp='))
+    .map((id) => id.replace('?direct&ngcomp=', '?ngcomp='));
+
+  const lookupHits: Array<{
+    candidate: string;
+    via?: 'url' | 'id';
+    moduleId?: string;
+    moduleType?: string;
+  }> = [];
+
+  for (const candidate of candidateWrapperIds) {
+    // Wrapper modules are served by URL and can be absent from a straight
+    // module-id lookup during HMR. Prefer URL resolution first, then fall back
+    // to id lookup for compatibility with simpler module graph states.
+    const mod =
+      (await server.moduleGraph.getModuleByUrl(candidate)) ??
+      server.moduleGraph.getModuleById(candidate);
+    lookupHits.push({
+      candidate,
+      via: mod?.url === candidate ? 'url' : mod ? 'id' : undefined,
+      moduleId: mod?.id,
+      moduleType: mod?.type,
+    });
+    if (
+      mod?.id &&
+      mod.type === 'js' &&
+      isComponentStyleSheet(mod.id) &&
+      isModuleForChangedResource(mod, changedFile, stylesheetRegistry)
+    ) {
+      wrapperModules.set(mod.id, mod);
+    }
+  }
+
+  debugHmrV('component stylesheet wrapper lookup', {
+    file: changedFile,
+    sourcePath,
+    directModuleId: directModule.id,
+    directModuleUrl: directModule.url,
+    candidateWrapperIds,
+    lookupHits,
+  });
+
+  if (wrapperModules.size === 0) {
+    debugHmrV('component stylesheet wrapper lookup empty', {
+      file: changedFile,
+      sourcePath,
+      directModuleId: directModule.id,
+      directModuleUrl: directModule.url,
+      candidateWrapperIds,
+    });
+  }
+
+  return [...wrapperModules.values()];
+}
+
 function sendHMRComponentUpdate(server: ViteDevServer, id: string) {
+  debugHmrV('ws send: angular component update', {
+    id,
+    timestamp: Date.now(),
+  });
   server.ws.send('angular:component-update', {
     id: encodeURIComponent(id),
     timestamp: Date.now(),
@@ -1563,10 +3295,343 @@ function sendHMRComponentUpdate(server: ViteDevServer, id: string) {
   classNames.delete(id);
 }
 
+function sendCssUpdate(
+  server: ViteDevServer,
+  update: {
+    path: string;
+    acceptedPath: string;
+  },
+) {
+  const timestamp = Date.now();
+  debugHmrV('ws send: css-update', {
+    ...update,
+    timestamp,
+  });
+  server.ws.send({
+    type: 'update',
+    updates: [
+      {
+        type: 'css-update',
+        timestamp,
+        path: update.path,
+        acceptedPath: update.acceptedPath,
+      },
+    ],
+  });
+}
+
+function sendFullReload(
+  server: ViteDevServer,
+  details: Record<string, unknown>,
+) {
+  debugHmrV('ws send: full-reload', details);
+  server.ws.send('analog:debug-full-reload', details);
+  server.ws.send({ type: 'full-reload' });
+}
+
+function resolveComponentClassNamesForStyleOwner(
+  ownerFile: string,
+  sourcePath: string,
+): string[] {
+  if (!existsSync(ownerFile)) {
+    return [];
+  }
+
+  const ownerCode = readFileSync(ownerFile, 'utf-8');
+  const components = getAngularComponentMetadata(ownerCode);
+  const normalizedSourcePath = normalizePath(sourcePath);
+
+  return components
+    .filter((component) =>
+      component.styleUrls.some(
+        (styleUrl) =>
+          normalizePath(resolve(dirname(ownerFile), styleUrl)) ===
+          normalizedSourcePath,
+      ),
+    )
+    .map((component) => component.className);
+}
+
+interface TemplateClassBindingIssue {
+  line: number;
+  column: number;
+  snippet: string;
+}
+
+interface ActiveGraphComponentRecord {
+  file: string;
+  className: string;
+  selector?: string;
+}
+
+interface StyleOwnerRecord {
+  sourcePath: string;
+  ownerFile: string;
+}
+
+type ComponentStylesheetHmrOutcome =
+  | 'css-update'
+  | 'owner-component-update'
+  | 'full-reload';
+
+export function findStaticClassAndBoundClassConflicts(
+  template: string,
+): TemplateClassBindingIssue[] {
+  const issues: TemplateClassBindingIssue[] = [];
+
+  for (const { index, snippet } of findOpeningTagSnippets(template)) {
+    if (!snippet.includes('[class]')) {
+      continue;
+    }
+
+    const hasStaticClass = /\sclass\s*=\s*(['"])(?:(?!\1)[\s\S])*\1/.test(
+      snippet,
+    );
+    const hasBoundClass = /\s\[class\]\s*=\s*(['"])(?:(?!\1)[\s\S])*\1/.test(
+      snippet,
+    );
+
+    if (hasStaticClass && hasBoundClass) {
+      const prefix = template.slice(0, index);
+      const line = prefix.split('\n').length;
+      const lastNewline = prefix.lastIndexOf('\n');
+      const column = index - lastNewline;
+      issues.push({
+        line,
+        column,
+        snippet: snippet.replace(/\s+/g, ' ').trim(),
+      });
+    }
+  }
+
+  return issues;
+}
+
+function throwTemplateClassBindingConflict(
+  id: string,
+  issue: TemplateClassBindingIssue,
+): never {
+  throw new Error(
+    [
+      '[Analog Angular] Invalid template class binding.',
+      `File: ${id}:${issue.line}:${issue.column}`,
+      'The same element uses both a static `class="..."` attribute and a whole-element `[class]="..."` binding.',
+      'That pattern can replace or conflict with static Tailwind classes, which makes styles appear to stop applying.',
+      'Use `[ngClass]` or explicit `[class.foo]` bindings instead of `[class]` when the element also has static classes.',
+      `Snippet: ${issue.snippet}`,
+    ].join('\n'),
+  );
+}
+
+export function findBoundClassAndNgClassConflicts(
+  template: string,
+): TemplateClassBindingIssue[] {
+  const issues: TemplateClassBindingIssue[] = [];
+  const hasWholeElementClassBinding = /\[class\]\s*=/.test(template);
+
+  if (!hasWholeElementClassBinding || !template.includes('[ngClass]')) {
+    return issues;
+  }
+
+  for (const { index, snippet } of findOpeningTagSnippets(template)) {
+    if (!/\[class\]\s*=/.test(snippet) || !snippet.includes('[ngClass]')) {
+      continue;
+    }
+
+    const prefix = template.slice(0, index);
+    const line = prefix.split('\n').length;
+    const lastNewline = prefix.lastIndexOf('\n');
+    const column = index - lastNewline;
+    issues.push({
+      line,
+      column,
+      snippet: snippet.replace(/\s+/g, ' ').trim(),
+    });
+  }
+
+  return issues;
+}
+
+function findOpeningTagSnippets(
+  template: string,
+): Array<{ index: number; snippet: string }> {
+  const matches: Array<{ index: number; snippet: string }> = [];
+
+  for (let index = 0; index < template.length; index++) {
+    if (template[index] !== '<') {
+      continue;
+    }
+
+    const tagStart = template[index + 1];
+    if (!tagStart || !/[a-zA-Z]/.test(tagStart)) {
+      continue;
+    }
+
+    let quote: '"' | "'" | null = null;
+
+    for (let end = index + 1; end < template.length; end++) {
+      const char = template[end];
+
+      if (quote) {
+        if (char === quote) {
+          quote = null;
+        }
+        continue;
+      }
+
+      if (char === '"' || char === "'") {
+        quote = char;
+        continue;
+      }
+
+      if (char === '>') {
+        matches.push({
+          index,
+          snippet: template.slice(index, end + 1),
+        });
+        index = end;
+        break;
+      }
+    }
+  }
+
+  return matches;
+}
+
+function formatActiveGraphLocations(entries: Iterable<string>): string {
+  return [...entries]
+    .sort()
+    .map((entry) => `- ${entry}`)
+    .join('\n');
+}
+
+function logComponentStylesheetHmrOutcome(details: {
+  file: string;
+  encapsulation: string;
+  diagnosis: ReturnType<typeof diagnoseComponentStylesheetPipeline>;
+  outcome: ComponentStylesheetHmrOutcome;
+  directModuleId?: string;
+  wrapperIds?: string[];
+  ownerIds?: Array<string | undefined>;
+  updateIds?: string[];
+}) {
+  const pitfalls: string[] = [];
+  const rejectedPreferredPaths: string[] = [];
+  const hints: string[] = [];
+
+  if (details.encapsulation === 'shadow') {
+    pitfalls.push('shadow-encapsulation');
+    rejectedPreferredPaths.push('css-update');
+    rejectedPreferredPaths.push('owner-component-update');
+    hints.push(
+      'Shadow DOM styles cannot rely on Vite CSS patching because Angular applies them inside a shadow root.',
+    );
+  }
+
+  if (details.diagnosis.anomalies.includes('wrapper_not_yet_tracked')) {
+    pitfalls.push('wrapper-not-yet-tracked');
+    rejectedPreferredPaths.push('css-update');
+    hints.push(
+      'The direct stylesheet module exists, but the browser-visible Angular wrapper module was not available in the live graph during this HMR pass.',
+    );
+  }
+
+  if (
+    details.diagnosis.anomalies.includes(
+      'tracked_wrapper_missing_from_module_graph',
+    )
+  ) {
+    pitfalls.push('tracked-wrapper-missing-from-module-graph');
+    rejectedPreferredPaths.push('css-update');
+    hints.push(
+      'A wrapper request id is known, but Vite could not resolve a live wrapper module for targeted CSS HMR.',
+    );
+  }
+
+  if ((details.ownerIds?.filter(Boolean).length ?? 0) === 0) {
+    pitfalls.push('no-owner-modules');
+    if (details.outcome === 'full-reload') {
+      rejectedPreferredPaths.push('owner-component-update');
+      hints.push(
+        'No owning TS component modules were available in the module graph for owner-based fallback.',
+      );
+    }
+  } else if ((details.updateIds?.length ?? 0) === 0) {
+    pitfalls.push('owner-modules-without-class-identities');
+    if (details.outcome === 'full-reload') {
+      rejectedPreferredPaths.push('owner-component-update');
+      hints.push(
+        'Owner modules were found, but Angular did not expose component class identities after recompilation, so no targeted component update could be sent.',
+      );
+    }
+  }
+
+  debugHmrV('component stylesheet hmr outcome', {
+    file: details.file,
+    outcome: details.outcome,
+    encapsulation: details.encapsulation,
+    directModuleId: details.directModuleId,
+    wrapperIds: details.wrapperIds ?? [],
+    ownerIds: details.ownerIds ?? [],
+    updateIds: details.updateIds ?? [],
+    preferredPath:
+      details.encapsulation === 'shadow' ? 'full-reload' : 'css-update',
+    rejectedPreferredPaths: [...new Set(rejectedPreferredPaths)],
+    pitfalls: [...new Set(pitfalls)],
+    anomalies: details.diagnosis.anomalies,
+    hints: [...new Set([...details.diagnosis.hints, ...hints])],
+  });
+}
+
+export function findTemplateOwnerModules(
+  server: ViteDevServer,
+  resourceFile: string,
+): ModuleNode[] {
+  const normalizedResourceFile = normalizePath(resourceFile.split('?')[0]);
+  const candidateTsFiles = [
+    normalizedResourceFile.replace(/\.(html|htm)$/i, '.ts'),
+  ];
+
+  const modules = new Map<string, ModuleNode>();
+  for (const candidate of candidateTsFiles) {
+    const owners = server.moduleGraph.getModulesByFile(candidate);
+    owners?.forEach((mod) => {
+      if (mod.id) {
+        modules.set(mod.id, mod);
+      }
+    });
+  }
+
+  return [...modules.values()];
+}
+
+function findStyleOwnerModules(
+  server: ViteDevServer,
+  resourceFile: string,
+  styleSourceOwners: Map<string, Set<string>>,
+): ModuleNode[] {
+  const normalizedResourceFile = normalizePath(resourceFile.split('?')[0]);
+  const candidateOwnerFiles = [
+    ...(styleSourceOwners.get(normalizedResourceFile) ?? []),
+  ];
+  const modules = new Map<string, ModuleNode>();
+
+  for (const ownerFile of candidateOwnerFiles) {
+    const owners = server.moduleGraph.getModulesByFile(ownerFile);
+    owners?.forEach((mod) => {
+      if (mod.id) {
+        modules.set(mod.id, mod);
+      }
+    });
+  }
+
+  return [...modules.values()];
+}
+
 export function getFileMetadata(
   program: ts.BuilderProgram,
   angularCompiler?: NgtscProgram['compiler'],
-  liveReload?: boolean,
+  hmrEnabled?: boolean,
   disableTypeChecking?: boolean,
 ) {
   const ts = require('typescript');
@@ -1605,13 +3670,15 @@ export function getFileMetadata(
     let hmrUpdateCode: string | null | undefined = undefined;
 
     let hmrEligible = false;
-    if (liveReload) {
+    if (hmrEnabled) {
       for (const node of sourceFile.statements) {
         if (ts.isClassDeclaration(node) && (node as any).name != null) {
           hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node as any);
           if (hmrUpdateCode) {
-            classNames.set(file, (node as any).name.getText());
+            const className = (node as any).name.getText();
+            classNames.set(file, className);
             hmrEligible = true;
+            debugHmr('NgtscProgram emitHmrUpdateModule', { file, className });
           }
         }
       }
@@ -1686,7 +3753,16 @@ function getComponentStyleSheetMeta(id: string): {
  * @param id
  */
 function getFilenameFromPath(id: string): string {
-  return new URL(id, 'http://localhost').pathname.replace(/^\//, '');
+  try {
+    return new URL(id, 'http://localhost').pathname.replace(/^\//, '');
+  } catch {
+    // Defensive fallback: if the ID cannot be parsed as a URL (e.g., it
+    // contains characters that are invalid in URLs but valid in file paths
+    // on some platforms), strip the query string manually.
+    const queryIndex = id.indexOf('?');
+    const pathname = queryIndex >= 0 ? id.slice(0, queryIndex) : id;
+    return pathname.replace(/^\//, '');
+  }
 }
 
 /**

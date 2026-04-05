@@ -243,6 +243,7 @@ describe('generateRouteManifest', () => {
   it('should generate an empty manifest for no files', () => {
     const manifest = generateRouteManifest([]);
     expect(manifest.routes).toEqual([]);
+    expect(manifest.collisions).toEqual([]);
   });
 
   it('should generate manifest entries from filenames', () => {
@@ -288,20 +289,157 @@ describe('generateRouteManifest', () => {
     });
 
     const manifest = generateRouteManifest([
-      '/app/routes/index.ts',
-      '/app/routes/(home).ts',
+      '/src/app/pages/about.page.ts',
+      '/libs/shared/feature/src/pages/about.page.ts',
     ]);
 
     expect(spy).toHaveBeenCalledWith(
       expect.stringContaining('Route collision'),
     );
-    // Duplicate should be skipped — only one '/' entry
-    expect(manifest.routes.filter((r) => r.fullPath === '/').length).toBe(1);
-    expect(manifest.routes[0].filename).toMatch(
-      /^\/app\/routes\/(index|\(home\))\.ts$/,
+    expect(manifest.routes.filter((r) => r.fullPath === '/about').length).toBe(
+      1,
     );
+    expect(manifest.collisions).toHaveLength(1);
+    expect(manifest.collisions[0].fullPath).toBe('/about');
+    expect(manifest.collisions[0].samePriority).toBe(false);
 
     spy.mockRestore();
+  });
+
+  it('does not record a collision for two group routes at the same path', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
+
+    const manifest = generateRouteManifest([
+      '/src/app/pages/(auth).page.ts',
+      '/src/app/pages/(home).page.ts',
+    ]);
+
+    expect(manifest.collisions).toHaveLength(0);
+    expect(spy).not.toHaveBeenCalled();
+
+    spy.mockRestore();
+  });
+
+  it('does not record a collision for layout + index pair at the same path', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
+
+    const manifest = generateRouteManifest([
+      '/src/app/pages/docs.page.ts',
+      '/src/app/pages/docs/index.page.ts',
+    ]);
+
+    expect(manifest.collisions).toHaveLength(0);
+    expect(spy).not.toHaveBeenCalled();
+
+    spy.mockRestore();
+  });
+
+  it('does not record a collision when the same file appears twice', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
+
+    const manifest = generateRouteManifest([
+      '/src/app/pages/about.page.ts',
+      '/src/app/pages/about.page.ts',
+    ]);
+
+    expect(manifest.routes).toHaveLength(1);
+    expect(manifest.collisions).toHaveLength(0);
+    expect(spy).not.toHaveBeenCalled();
+
+    spy.mockRestore();
+  });
+
+  it('should preserve pathless layouts that share the same fullPath', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
+
+    const manifest = generateRouteManifest([
+      '/src/app/pages/index.page.ts',
+      '/src/app/pages/(auth).page.ts',
+      '/src/app/pages/(home).page.ts',
+    ]);
+
+    expect(spy).not.toHaveBeenCalledWith(
+      expect.stringContaining('Route collision'),
+    );
+    expect(manifest.routes.filter((r) => r.fullPath === '/').length).toBe(3);
+    expect(manifest.routes.find((r) => r.id === '/(auth)')?.isGroup).toBe(true);
+    expect(manifest.routes.find((r) => r.id === '/(home)')?.isGroup).toBe(true);
+
+    spy.mockRestore();
+  });
+
+  it('should pick a deterministic canonical route when only pathless layouts exist at a fullPath', () => {
+    // Provide filenames in reverse-alphabetical order to verify the
+    // tiebreaker selects by id, not by iteration/input order.
+    const manifest = generateRouteManifest([
+      '/src/app/pages/(home).page.ts',
+      '/src/app/pages/(auth).page.ts',
+    ]);
+
+    // Both resolve to fullPath '/' — all are group layouts, no index.page.ts
+    expect(manifest.routes).toHaveLength(2);
+    expect(manifest.routes.every((r) => r.isGroup)).toBe(true);
+
+    // The canonical selection (used for AnalogRouteTable / byFullPath) must
+    // pick exactly one. Tiebreaker picks alphabetically-first id: /(auth).
+    const tableOutput = generateRouteTableDeclaration(manifest);
+    const treeOutput = generateRouteTreeDeclaration(manifest);
+
+    // Exactly one entry for '/' in AnalogRouteTable
+    const tableMatches = tableOutput.match(/'\/':\s*\{/g) ?? [];
+    expect(tableMatches).toHaveLength(1);
+
+    // Exactly one entry for '/' in byFullPath — the /(auth) layout wins
+    expect(treeOutput).toContain('"/": "/(auth)"');
+    const byFullPathMatches = treeOutput.match(/"\/": "\/\([^"]+\)"/g) ?? [];
+    expect(byFullPathMatches).toHaveLength(1);
+  });
+
+  it('should preserve pathless layout with its nested children', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/index.page.ts',
+      '/src/app/pages/(auth).page.ts',
+      '/src/app/pages/(auth)/login.page.ts',
+    ]);
+
+    expect(manifest.routes).toHaveLength(3);
+
+    const authLayout = manifest.routes.find((r) => r.id === '/(auth)')!;
+    const loginRoute = manifest.routes.find((r) => r.id === '/(auth)/login')!;
+
+    expect(authLayout).toBeDefined();
+    expect(loginRoute).toBeDefined();
+    expect(loginRoute.parentId).toBe('/(auth)');
+    expect(authLayout.children).toEqual(['/(auth)/login']);
+  });
+
+  it('should wire nested group children to their group parent, not a fullPath ancestor', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/dashboard.page.ts',
+      '/src/app/pages/dashboard/(settings).page.ts',
+      '/src/app/pages/dashboard/(settings)/profile.page.ts',
+    ]);
+
+    const settings = manifest.routes.find(
+      (r) => r.id === '/dashboard/(settings)',
+    )!;
+    const profile = manifest.routes.find(
+      (r) => r.id === '/dashboard/(settings)/profile',
+    )!;
+
+    expect(settings).toBeDefined();
+    expect(profile).toBeDefined();
+    // profile's parent should be the (settings) group, not /dashboard
+    expect(profile.parentId).toBe('/dashboard/(settings)');
+    expect(settings.children).toContain('/dashboard/(settings)/profile');
   });
 
   it('prefers app-local routes over additional/shared route sources', () => {
@@ -391,7 +529,7 @@ describe('generateRouteManifest', () => {
     expect(settingsRoute.parentId).toBe('/users/[id]');
 
     expect(pricingRoute.id).toBe('/(marketing)/pricing');
-    expect(pricingRoute.isGroup).toBe(true);
+    expect(pricingRoute.isGroup).toBe(false);
     expect(pricingRoute.kind).toBe('page');
   });
 
@@ -750,7 +888,10 @@ describe('generateRouteTreeDeclaration', () => {
     );
 
     const output = generateRouteTreeDeclaration(manifest, {
-      jsonLdPaths: ['/', '/users/[id]'],
+      jsonLdFiles: [
+        '/src/app/pages/(home).page.ts',
+        '/src/app/pages/users/[id].page.ts',
+      ],
     });
 
     expect(output).toContain(
@@ -771,7 +912,7 @@ describe('generateRouteTreeDeclaration', () => {
     expect(output).toContain('hasQuerySchema: true');
   });
 
-  it('should mark routes with hasJsonLd based on jsonLdPaths', () => {
+  it('should mark routes with hasJsonLd based on jsonLdFiles', () => {
     const manifest = generateRouteManifest([
       '/src/app/pages/index.page.ts',
       '/src/app/pages/about.page.ts',
@@ -779,7 +920,7 @@ describe('generateRouteTreeDeclaration', () => {
     ]);
 
     const output = generateRouteTreeDeclaration(manifest, {
-      jsonLdPaths: ['/'],
+      jsonLdFiles: ['/src/app/pages/index.page.ts'],
     });
 
     // Home route should have hasJsonLd: true
@@ -789,7 +930,7 @@ describe('generateRouteTreeDeclaration', () => {
     expect(output).toMatch(/id: "\/users\/\[id\]"[\s\S]*?hasJsonLd: false/);
   });
 
-  it('should set all hasJsonLd to false when jsonLdPaths is empty', () => {
+  it('should set all hasJsonLd to false when jsonLdFiles is empty', () => {
     const manifest = generateRouteManifest([
       '/src/app/pages/index.page.ts',
       '/src/app/pages/about.page.ts',

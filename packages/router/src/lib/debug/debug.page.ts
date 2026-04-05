@@ -40,7 +40,11 @@ type CollectedRoute = {
               {{ collectedRoute.isLayout ? 'Layout' : 'Page' }}
             </div>
             <div class="table-cell source-col">
-              <span class="source-badge" [class]="collectedRoute.source">
+              <span
+                class="source-badge"
+                [class.page]="collectedRoute.source === 'page'"
+                [class.content]="collectedRoute.source === 'content'"
+              >
                 {{ collectedRoute.source }}
               </span>
             </div>

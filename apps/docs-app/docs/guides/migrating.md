@@ -181,7 +181,8 @@ export default defineConfig(({ mode }) => ({
 
 ## Enabling HMR
 
-Angular supports HMR/Live reload where in most cases components can be updated without a page reload. To enable it in Analog, use the `liveReload: true` option.
+Angular supports HMR where in most cases components can be updated without a full page reload. In Analog, prefer the `hmr` option. `liveReload` is still accepted as a compatibility alias, but `hmr` is the primary API.
+Analog requires Angular v19 or newer for `hmr` / `liveReload` to work. On Angular v16-v18, `hmr` and its `liveReload` alias are forcibly disabled at runtime with a console warning, so HMR is unavailable on those versions.
 
 ```ts
 /// <reference types="vitest" />
@@ -194,8 +195,35 @@ export default defineConfig(({ mode }) => ({
   // .. other configuration
   plugins: [
     analog({
-      liveReload: true,
+      hmr: true,
     }),
   ],
 }));
 ```
+
+If you are also using Tailwind v4 for component styles, keep that configuration on the Analog side as well:
+
+```ts
+/// <reference types="vitest" />
+
+import { resolve } from 'node:path';
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig(() => ({
+  plugins: [
+    analog({
+      hmr: true,
+      vite: {
+        tailwindCss: {
+          rootStylesheet: resolve(import.meta.dirname, 'src/styles.css'),
+        },
+      },
+    }),
+    tailwindcss(),
+  ],
+}));
+```
+
+This is the recommended setup for Analog v3: one root Tailwind stylesheet, `@tailwindcss/vite` in Vite, and Analog handling component stylesheet preprocessing.

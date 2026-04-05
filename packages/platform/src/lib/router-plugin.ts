@@ -1,8 +1,13 @@
 import { normalizePath, Plugin, UserConfig, ViteDevServer } from 'vite';
 import { globSync } from 'tinyglobby';
+import { readFileSync } from 'node:fs';
 import { isAbsolute, relative, resolve } from 'node:path';
 
 import { Options } from './options.js';
+import {
+  analyzeAnalogRouteFile,
+  formatAnalogRouteIdiomDiagnostic,
+} from './route-idiom-diagnostics.js';
 
 /**
  * Router plugin that handles route file discovery and hot module replacement.
@@ -75,8 +80,10 @@ export function routerPlugin(options?: Options): Plugin[] {
   // These lists are used repeatedly by transform hooks during serve. Keeping
   // them warm avoids a full glob on every route/content invalidation.
   let routeFilesCache: string[] | undefined;
+  let pageRouteFilesCache: string[] | undefined;
   let contentRouteFilesCache: string[] | undefined;
   let endpointFilesCache: string[] | undefined;
+  const routeDiagnosticCache = new Map<string, string>();
   const isRouteLikeFile = (path: string) => {
     // Watcher paths from chokidar are already absolute — `normalizePath`
     // (forward-slash only) is sufficient; `resolve()` would be a no-op.
@@ -123,10 +130,52 @@ export function routerPlugin(options?: Options): Plugin[] {
 
     return endpointFilesCache;
   };
+  const discoverPageRouteFiles = () => {
+    pageRouteFilesCache ??= discoverRouteFiles().filter((file) =>
+      file.endsWith('.page.ts'),
+    );
+
+    return pageRouteFilesCache;
+  };
   const invalidateDiscoveryCaches = () => {
     routeFilesCache = undefined;
+    pageRouteFilesCache = undefined;
     contentRouteFilesCache = undefined;
     endpointFilesCache = undefined;
+  };
+  const reportRouteDiagnostics = (path: string) => {
+    if (!path.endsWith('.page.ts')) {
+      return;
+    }
+
+    try {
+      const code = readFileSync(path, 'utf-8');
+      const routeFiles = discoverPageRouteFiles();
+      const diagnostics = analyzeAnalogRouteFile({
+        filename: path,
+        code,
+        routeFiles,
+      });
+
+      const rendered = diagnostics.map((diagnostic) =>
+        formatAnalogRouteIdiomDiagnostic(diagnostic, path, workspaceRoot),
+      );
+      const fingerprint = rendered.join('\n\n');
+
+      if (!fingerprint) {
+        routeDiagnosticCache.delete(path);
+        return;
+      }
+
+      if (routeDiagnosticCache.get(path) === fingerprint) {
+        return;
+      }
+
+      routeDiagnosticCache.set(path, fingerprint);
+      rendered.forEach((message) => console.warn(message));
+    } catch {
+      routeDiagnosticCache.delete(path);
+    }
   };
   const getModuleKey = (module: string) => {
     // Before config sets `root`, fall back to workspace-relative keys.
@@ -187,6 +236,19 @@ export function routerPlugin(options?: Options): Plugin[] {
             invalidateDiscoveryCaches();
           }
 
+          if (event === 'change') {
+            reportRouteDiagnostics(path);
+          } else if (event === 'unlink') {
+            routeDiagnosticCache.delete(path);
+            discoverPageRouteFiles().forEach((file) =>
+              reportRouteDiagnostics(file),
+            );
+          } else {
+            discoverPageRouteFiles().forEach((file) =>
+              reportRouteDiagnostics(file),
+            );
+          }
+
           invalidateFileModules(server, path);
 
           // For an in-place edit we only need module invalidation. Keeping the
@@ -207,6 +269,12 @@ export function routerPlugin(options?: Options): Plugin[] {
             });
           });
 
+          server.ws.send('analog:debug-full-reload', {
+            plugin: 'platform:router-plugin',
+            reason: 'route-graph-shape-changed',
+            event,
+            path,
+          });
           server.ws.send({
             type: 'full-reload',
           });
@@ -224,6 +292,10 @@ export function routerPlugin(options?: Options): Plugin[] {
         for (const dir of [...additionalPagesDirs, ...additionalContentDirs]) {
           server.watcher.add(dir);
         }
+
+        discoverPageRouteFiles().forEach((file) =>
+          reportRouteDiagnostics(file),
+        );
       },
     },
     {

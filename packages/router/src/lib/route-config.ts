@@ -63,14 +63,14 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
         const internalFetch = injectInternalServerFetch();
 
         if (internalFetch) {
-          return internalFetch(url.pathname);
+          return internalFetch(`${url.pathname}${url.search}`);
         }
 
         const globalFetch = (
           globalThis as unknown as { $fetch?: ServerInternalFetch }
         ).$fetch;
         if (!!import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL'] && globalFetch) {
-          return globalFetch(url.pathname);
+          return globalFetch(`${url.pathname}${url.search}`);
         }
 
         return firstValueFrom(http.get(`${url.href}`));

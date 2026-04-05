@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/content",
-  "version": "3.0.0-alpha.20",
+  "version": "3.0.0-alpha.25",
   "description": "Content Rendering for Analog",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -99,6 +99,11 @@
       "types": "./dist/types/resources/src/index.d.ts",
       "import": "./dist/fesm2022/analogjs-content-resources.mjs",
       "default": "./dist/fesm2022/analogjs-content-resources.mjs"
+    },
+    "./devtools": {
+      "types": "./dist/types/devtools/src/index.d.ts",
+      "import": "./dist/fesm2022/analogjs-content-devtools.mjs",
+      "default": "./dist/fesm2022/analogjs-content-devtools.mjs"
     },
     "./package.json": {
       "default": "./package.json"

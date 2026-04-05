@@ -199,7 +199,7 @@ describe('buildNitroConfig', () => {
     expect(nitro({})[1].name).toEqual('@analogjs/vite-plugin-nitro');
   });
 
-  it(`should not call the route middleware in test mode `, async () => {
+  it('should not call the route middleware in test mode', async () => {
     // Arrange
     const spy = vi.spyOn(mockViteDevServer.middlewares, 'use');
 
@@ -551,6 +551,63 @@ describe('buildNitroConfig', () => {
           '/blog': { lastmod: '2024-02-10' },
         },
         { apiPrefix: 'api' },
+      );
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('does not require an SSR entry for client-only apps with explicit empty prerender routes', async () => {
+    vi.stubEnv('VITEST', '');
+    vi.stubEnv('NODE_ENV', 'production');
+    const { buildServerImportSpy } = await mockBuildFunctions();
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-'));
+
+    try {
+      writeBuiltClientIndexHtml(
+        workspaceRoot,
+        '<html>client only explicit prerender opt-out</html>',
+      );
+
+      const plugin = nitro({
+        workspaceRoot,
+        ssr: false,
+        prerender: {
+          routes: [],
+        },
+      });
+      const result = await (plugin[1].config as any)(
+        {},
+        { command: 'build', mode: 'production' },
+      );
+
+      const builderBuild = vi.fn().mockResolvedValue(undefined);
+      await result.builder.buildApp({
+        build: builderBuild,
+        environments: {
+          client: {},
+          ssr: {},
+        },
+      });
+
+      expect(builderBuild).toHaveBeenCalledTimes(1);
+      expect(builderBuild).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          config: expect.objectContaining({
+            build: expect.objectContaining({
+              ssr: true,
+            }),
+          }),
+        }),
+      );
+
+      const nitroConfig = buildServerImportSpy.mock.calls[0][1];
+      expect(nitroConfig.alias?.['#analog/ssr']).toBeUndefined();
+      expect(nitroConfig.virtual?.['#ANALOG_CLIENT_RENDERER']).toContain(
+        "import template from '#analog/index';",
+      );
+      expect(nitroConfig.virtual?.['#analog/index']).toBe(
+        'export default "<html>client only explicit prerender opt-out</html>";',
       );
     } finally {
       rmSync(workspaceRoot, { recursive: true, force: true });

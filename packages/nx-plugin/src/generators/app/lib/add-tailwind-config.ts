@@ -9,6 +9,7 @@ import {
   detectTailwindInstalledVersion,
   normalizeOptions,
   updateApplicationStyles,
+  writeTailwindPostcssConfig,
 } from './add-tailwind-helpers';
 
 export async function addTailwindConfig(
@@ -50,6 +51,7 @@ export async function setupTailwindGenerator(
 
   if (project.projectType === 'application') {
     updateApplicationStyles(tree, options, project);
+    writeTailwindPostcssConfig(tree, project);
   }
 
   if (!options.skipFormat) {

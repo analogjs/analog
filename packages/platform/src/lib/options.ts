@@ -16,6 +16,7 @@ import type {
 } from '@analogjs/vite-plugin-nitro';
 
 import type { ContentPluginOptions } from './content-plugin.js';
+import type { DebugOption } from './utils/debug.js';
 
 declare module 'nitro/types' {
   interface NitroRouteConfig {
@@ -66,7 +67,7 @@ export interface Options {
    *
    * When `false`, the following top-level options are ignored because they
    * are only forwarded to the internal Angular plugin: `jit`,
-   * `disableTypeChecking`, `liveReload`, `inlineStylesExtension`,
+   * `disableTypeChecking`, `hmr`, `liveReload`, `inlineStylesExtension`,
    * `fileReplacements`, and `include`.
    *
    * Use this to configure the embedded Angular integration itself, not as the
@@ -84,9 +85,27 @@ export interface Options {
    */
   inlineStylesExtension?: string;
   /**
-   * Enables Angular's HMR during development
+   * Enables Angular's HMR during development/watch mode.
+   *
+   * Defaults to `true` for watch mode.
+   */
+  hmr?: boolean;
+  /**
+   * @deprecated Use `hmr` instead. Kept as a compatibility alias.
    */
   liveReload?: boolean;
+  /**
+   * Enable debug logging for specific scopes.
+   *
+   * - `true` → enables all `analog:*` scopes (platform + angular + nitro)
+   * - `string[]` → enables listed namespaces
+   * - `{ scopes?, mode? }` → object form with optional `mode: 'build' | 'dev'`
+   *   to restrict output to a specific Vite command (omit for both)
+   *
+   * Also responds to the `DEBUG` env var (Node.js) or `localStorage.debug`
+   * (browser), using the `obug` convention.
+   */
+  debug?: DebugOption;
 
   /**
    * Additional page paths to include
@@ -100,6 +119,17 @@ export interface Options {
    * Additional API paths to include
    */
   additionalAPIDirs?: string[];
+  /**
+   * Automatically discover route directories (pages, content, API) in
+   * workspace libraries by scanning tsconfig.base.json path aliases.
+   *
+   * Discovered directories are merged with any explicit
+   * `additionalPagesDirs`, `additionalContentDirs`, and
+   * `additionalAPIDirs` values.
+   *
+   * @default false
+   */
+  discoverRoutes?: boolean;
   /**
    * Additional files to include in compilation
    */

@@ -103,10 +103,13 @@ export const viteFinal = async (config: any, options: any): Promise<any> => {
           typeof framework.options?.jit !== 'undefined'
             ? framework.options?.jit
             : true,
-        liveReload:
-          typeof framework.options?.liveReload !== 'undefined'
-            ? framework.options?.liveReload
-            : false,
+        hmr:
+          typeof framework.options?.hmr !== 'undefined'
+            ? framework.options?.hmr
+            : typeof framework.options?.liveReload !== 'undefined'
+              ? framework.options?.liveReload
+              : false,
+        liveReload: framework.options?.liveReload,
         tsconfig:
           typeof framework.options?.tsconfig !== 'undefined'
             ? framework.options?.tsconfig

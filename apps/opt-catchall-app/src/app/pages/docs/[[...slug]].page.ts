@@ -6,7 +6,7 @@ import { JsonPipe } from '@angular/common';
 import { MarkdownComponent } from '@analogjs/content';
 import { map } from 'rxjs';
 @Component({
-  selector: 'app-docs-optional-catchall-page',
+  selector: 'app-docs-optional-catchall-slug-page',
   standalone: true,
 
   template: `

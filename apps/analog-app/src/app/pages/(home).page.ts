@@ -1,5 +1,5 @@
 import type { RouteMeta } from '@analogjs/router';
-import { injectLoad } from '@analogjs/router';
+import { injectLoad, routePath } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -158,13 +158,17 @@ export const routeMeta: RouteMeta = {
     <div class="product-grid">
       @for (product of products(); track product.id) {
         <article class="product-card">
+          @let productLink =
+            routePath('/products/[productId]', {
+              params: { productId: '' + product.id },
+            });
           <div class="product-card-header">
             <div>
               <p class="product-label">Product #{{ product.id }}</p>
               <h3>
                 <a
                   [title]="product.name + ' details'"
-                  [routerLink]="['/products', product.id]"
+                  [routerLink]="productLink.path"
                 >
                   {{ product.name }}
                 </a>
@@ -364,6 +368,7 @@ export const routeMeta: RouteMeta = {
   ],
 })
 export default class ProductListComponent {
+  readonly routePath = routePath;
   private readonly initialData = toSignal(injectLoad<typeof load>(), {
     requireSync: true,
   });
