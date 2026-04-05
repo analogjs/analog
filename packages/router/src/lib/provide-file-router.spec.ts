@@ -1,10 +1,13 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { DOCUMENT } from '@angular/common';
 import { provideLocationMocks } from '@angular/common/testing';
-import { ROUTES } from '@angular/router';
+import { ROUTES, Router } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
 import { RouteExport } from './models';
+import { ROUTE_JSON_LD_KEY } from './json-ld';
+import { ROUTE_META_TAGS_KEY } from './meta-tags';
 import {
   ANALOG_EXTRA_ROUTE_FILE_SOURCES,
   ExtraRouteFileSource,
@@ -202,5 +205,47 @@ describe('provideFileRouter integration', () => {
     );
 
     spy.mockRestore();
+  });
+
+  it('should register meta tag and JSON-LD listeners before first navigation', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideFileRouter(
+          withExtraRoutes([
+            {
+              path: '',
+              component: StubComponent,
+              data: {
+                [ROUTE_META_TAGS_KEY]: [
+                  { name: 'description', content: 'Provide File Router Home' },
+                ],
+                [ROUTE_JSON_LD_KEY]: {
+                  '@context': 'https://schema.org',
+                  '@type': 'WebPage',
+                  name: 'Provide File Router Home',
+                },
+              },
+            },
+          ]),
+        ),
+        provideLocationMocks(),
+      ],
+    });
+
+    const router = TestBed.inject(Router);
+    const document = TestBed.inject(DOCUMENT);
+
+    await router.navigateByUrl('/');
+
+    expect(
+      document
+        .querySelector('meta[name="description"]')
+        ?.getAttribute('content'),
+    ).toBe('Provide File Router Home');
+    expect(
+      document
+        .querySelector('script[data-analog-json-ld]')
+        ?.textContent?.includes('Provide File Router Home'),
+    ).toBe(true);
   });
 });

@@ -1,8 +1,8 @@
 import {
-  APP_BOOTSTRAP_LISTENER,
   EnvironmentProviders,
   inject,
   makeEnvironmentProviders,
+  provideAppInitializer,
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { ɵHTTP_ROOT_INTERCEPTOR_FNS as HTTP_ROOT_INTERCEPTOR_FNS } from '@angular/common/http';
@@ -118,26 +118,14 @@ export function provideFileRouterWithRoutes(
         });
       },
     },
-    {
-      provide: APP_BOOTSTRAP_LISTENER,
-      multi: true,
-      useFactory: () => {
-        if (import.meta.env.DEV) {
-          return () => undefined;
-        }
+    provideAppInitializer(() => {
+      const router = inject(Router);
+      const meta = inject(Meta);
+      const document = inject(DOCUMENT, { optional: true });
 
-        const router = inject(Router);
-        const meta = inject(Meta);
-        const document = inject(DOCUMENT, { optional: true });
-
-        return () => {
-          queueMicrotask(() => {
-            updateMetaTagsOnRouteChange(router, meta);
-            updateJsonLdOnRouteChange(router, document);
-          });
-        };
-      },
-    },
+      updateMetaTagsOnRouteChange(router, meta);
+      updateJsonLdOnRouteChange(router, document);
+    }),
     {
       provide: HTTP_ROOT_INTERCEPTOR_FNS,
       multi: true,
