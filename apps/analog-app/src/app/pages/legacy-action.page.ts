@@ -25,7 +25,7 @@ import {
       >
         <div>
           <label for="email"> Email </label>
-          <input type="email" name="email" />
+          <input id="email" type="email" name="email" />
         </div>
 
         <button class="button" type="submit">Submit</button>
