@@ -123,7 +123,7 @@ export function provideFileRouterWithRoutes(
       multi: true,
       useFactory: () => {
         if (import.meta.env.DEV) {
-          return () => {};
+          return () => undefined;
         }
 
         const router = inject(Router);
