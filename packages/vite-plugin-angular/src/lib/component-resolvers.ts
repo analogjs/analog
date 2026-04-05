@@ -57,10 +57,12 @@ function getStringValue(node: any): string | undefined {
 function collectComponentUrls(code: string): {
   styleUrls: string[];
   templateUrls: string[];
+  inlineTemplates: string[];
 } {
   const { program } = parseSync('cmp.ts', code);
   const styleUrls: string[] = [];
   const templateUrls: string[] = [];
+  const inlineTemplates: string[] = [];
 
   const visitor = new Visitor({
     // The Visitor callback receives raw ESTree nodes.  We use `any`
@@ -87,11 +89,110 @@ function collectComponentUrls(code: string): {
         const val = getStringValue(node.value);
         if (val !== undefined) templateUrls.push(val);
       }
+
+      if (name === 'template') {
+        const val = getStringValue(node.value);
+        if (val !== undefined) inlineTemplates.push(val);
+      }
     },
   });
   visitor.visit(program);
 
-  return { styleUrls, templateUrls };
+  return { styleUrls, templateUrls, inlineTemplates };
+}
+
+export interface AngularComponentMetadata {
+  className: string;
+  selector?: string;
+  styleUrls: string[];
+  templateUrls: string[];
+  inlineTemplates: string[];
+}
+
+/**
+ * Extract Angular component identities from raw source code before Angular's
+ * compilation pipeline strips decorators. This is used for dev-time
+ * diagnostics such as duplicate selectors, duplicate component class names,
+ * selectorless shared components, and inline-template validation.
+ */
+export function getAngularComponentMetadata(
+  code: string,
+): AngularComponentMetadata[] {
+  const { program } = parseSync('cmp.ts', code);
+  const components: AngularComponentMetadata[] = [];
+
+  const visitor = new Visitor({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ClassDeclaration(node: any) {
+      const decorators = node.decorators ?? [];
+      for (const decorator of decorators) {
+        const expression = decorator.expression;
+        if (
+          expression?.type !== 'CallExpression' ||
+          expression.callee?.type !== 'Identifier' ||
+          expression.callee.name !== 'Component'
+        ) {
+          continue;
+        }
+
+        const componentArg = expression.arguments?.[0];
+        if (componentArg?.type !== 'ObjectExpression') {
+          continue;
+        }
+
+        const metadata: AngularComponentMetadata = {
+          className: node.id?.name ?? '(anonymous)',
+          styleUrls: [],
+          templateUrls: [],
+          inlineTemplates: [],
+        };
+
+        for (const property of componentArg.properties ?? []) {
+          if (
+            property?.type !== 'Property' ||
+            property.key?.type !== 'Identifier'
+          ) {
+            continue;
+          }
+
+          const name = property.key.name;
+          if (name === 'selector') {
+            metadata.selector = getStringValue(property.value);
+          } else if (name === 'styleUrl') {
+            const val = getStringValue(property.value);
+            if (val !== undefined) {
+              metadata.styleUrls.push(val);
+            }
+          } else if (
+            name === 'styleUrls' &&
+            property.value?.type === 'ArrayExpression'
+          ) {
+            for (const el of property.value.elements ?? []) {
+              const val = getStringValue(el);
+              if (val !== undefined) {
+                metadata.styleUrls.push(val);
+              }
+            }
+          } else if (name === 'templateUrl') {
+            const val = getStringValue(property.value);
+            if (val !== undefined) {
+              metadata.templateUrls.push(val);
+            }
+          } else if (name === 'template') {
+            const val = getStringValue(property.value);
+            if (val !== undefined) {
+              metadata.inlineTemplates.push(val);
+            }
+          }
+        }
+
+        components.push(metadata);
+      }
+    },
+  });
+  visitor.visit(program);
+
+  return components;
 }
 
 /** Extract all `styleUrl` / `styleUrls` values from Angular component source. */
@@ -102,6 +203,11 @@ export function getStyleUrls(code: string): string[] {
 /** Extract all `templateUrl` values from Angular component source. */
 export function getTemplateUrls(code: string): string[] {
   return collectComponentUrls(code).templateUrls;
+}
+
+/** Extract inline `template` strings from Angular component source. */
+export function getInlineTemplates(code: string): string[] {
+  return collectComponentUrls(code).inlineTemplates;
 }
 
 // ---------------------------------------------------------------------------

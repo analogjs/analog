@@ -45,10 +45,16 @@ export function jitPlugin({
           );
           styles = compiled?.code;
         } catch (e) {
+          const errorMessage = e instanceof Error ? e.message : String(e);
           debugStyles('jit css compilation error', {
             styleIdHash,
-            error: String(e),
+            error: errorMessage,
           });
+          console.warn(
+            '[@analogjs/vite-plugin-angular]: Failed to preprocess inline JIT stylesheet %s. Returning an empty stylesheet instead. %s',
+            styleIdHash,
+            errorMessage,
+          );
         }
 
         return `export default \`${styles}\``;

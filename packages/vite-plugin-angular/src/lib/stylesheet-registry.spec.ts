@@ -54,8 +54,112 @@ describe('stylesheet-registry', () => {
     expect(
       registry.getServedContent('project/src/app/demo.component.css'),
     ).toBe('.demo { color: red; }');
-    expect(registry.getServedContent('demo.component.css')).toBe(
-      '.demo { color: red; }',
+    expect(registry.getServedContent('demo.component.css')).toBeUndefined();
+  });
+
+  it('tracks active request ids for a source stylesheet', () => {
+    const registry = new AnalogStylesheetRegistry();
+
+    registry.registerExternalRequest(
+      'abc123.css',
+      '/project/src/app/demo.component.css',
     );
+    registry.registerServedStylesheet({
+      publicId: 'abc123.css',
+      sourcePath: '/project/src/app/demo.component.css',
+      normalizedCode: '.demo { color: red; }',
+    });
+    registry.registerActiveRequest('abc123.css?ngcomp=ng-c1&e=0');
+
+    expect(
+      registry.getPublicIdsForSource('/project/src/app/demo.component.css'),
+    ).toEqual(['abc123.css']);
+    expect(
+      registry.getRequestIdsForSource('/project/src/app/demo.component.css'),
+    ).toEqual(['abc123.css?ngcomp=ng-c1&e=0']);
+  });
+
+  it('tracks active request ids when the served request path starts with a slash', () => {
+    const registry = new AnalogStylesheetRegistry();
+
+    registry.registerExternalRequest(
+      'abc123.css',
+      '/project/src/app/demo.component.css',
+    );
+    registry.registerServedStylesheet({
+      publicId: 'abc123.css',
+      sourcePath: '/project/src/app/demo.component.css',
+      normalizedCode: '.demo { color: red; }',
+    });
+    registry.registerActiveRequest('/abc123.css?ngcomp=ng-c1&e=0');
+
+    expect(
+      registry.getRequestIdsForSource('/project/src/app/demo.component.css'),
+    ).toEqual(['abc123.css?ngcomp=ng-c1&e=0']);
+  });
+
+  it('canonicalizes timestamped request ids for active wrapper modules', () => {
+    const registry = new AnalogStylesheetRegistry();
+
+    registry.registerExternalRequest(
+      'abc123.css',
+      '/project/src/app/demo.component.css',
+    );
+    registry.registerServedStylesheet({
+      publicId: 'abc123.css',
+      sourcePath: '/project/src/app/demo.component.css',
+      normalizedCode: '.demo { color: red; }',
+    });
+
+    registry.registerActiveRequest('/abc123.css?ngcomp=ng-c1&e=0&t=123');
+    registry.registerActiveRequest('abc123.css?ngcomp=ng-c1&e=0&t=456');
+
+    expect(
+      registry.getRequestIdsForSource('/project/src/app/demo.component.css'),
+    ).toEqual(['abc123.css?ngcomp=ng-c1&e=0']);
+  });
+
+  it('serves the same stylesheet content for timestamped direct and wrapper requests', () => {
+    const registry = new AnalogStylesheetRegistry();
+
+    registry.registerExternalRequest(
+      'abc123.css',
+      '/project/src/app/demo.component.css',
+    );
+    registry.registerServedStylesheet({
+      publicId: 'abc123.css',
+      sourcePath: '/project/src/app/demo.component.css',
+      normalizedCode: '.demo { color: red; }',
+    });
+
+    expect(
+      registry.getServedContent('/abc123.css?ngcomp=ng-c1&e=0&t=123'),
+    ).toBe('.demo { color: red; }');
+    expect(
+      registry.getServedContent('/abc123.css?direct&ngcomp=ng-c1&e=0&t=123'),
+    ).toBe('.demo { color: red; }');
+  });
+
+  it('preserves bare direct query flags and eagerly tracks the paired wrapper request', () => {
+    const registry = new AnalogStylesheetRegistry();
+
+    registry.registerExternalRequest(
+      'abc123.css',
+      '/project/src/app/demo.component.css',
+    );
+    registry.registerServedStylesheet({
+      publicId: 'abc123.css',
+      sourcePath: '/project/src/app/demo.component.css',
+      normalizedCode: '.demo { color: red; }',
+    });
+
+    registry.registerActiveRequest('/abc123.css?direct&ngcomp=ng-c1&e=0&t=123');
+
+    expect(
+      registry.getRequestIdsForSource('/project/src/app/demo.component.css'),
+    ).toEqual([
+      'abc123.css?direct&ngcomp=ng-c1&e=0',
+      'abc123.css?ngcomp=ng-c1&e=0',
+    ]);
   });
 });

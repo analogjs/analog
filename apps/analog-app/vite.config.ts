@@ -75,7 +75,7 @@ export default defineConfig(async ({ mode }) => {
         vite: {
           inlineStylesExtension: 'scss',
         },
-        liveReload: true,
+        hmr: true,
         experimental: {
           useAngularCompilationAPI: true,
           typedRouter: true,

@@ -216,7 +216,7 @@ export default defineConfig(() => ({
       hmr: true,
       vite: {
         tailwindCss: {
-          rootStylesheet: resolve(__dirname, 'src/styles.css'),
+          rootStylesheet: resolve(import.meta.dirname, 'src/styles.css'),
         },
       },
     }),

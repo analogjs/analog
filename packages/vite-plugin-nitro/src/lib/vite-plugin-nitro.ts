@@ -32,7 +32,7 @@ import {
   apiMiddleware,
 } from './utils/renderers.js';
 import { getBundleOptionsKey, isRolldown } from './utils/rolldown.js';
-import { debugNitro, debugSsr, debugPrerender } from './utils/debug.js';
+import { debugNitro, debugSsr } from './utils/debug.js';
 
 function createNitroMiddlewareHandler(handler: string): NitroEventHandler {
   return {
@@ -1209,6 +1209,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
               // Reload the page after the server rebuild completes so the next
               // request observes the updated API route implementation.
+              viteServer.ws.send('analog:debug-full-reload', {
+                plugin: 'vite-plugin-nitro',
+                reason: 'nitro-server-rebuilt',
+              });
               viteServer.ws.send({ type: 'full-reload' });
             })()
               .catch((error: unknown) => {
