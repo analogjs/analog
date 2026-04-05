@@ -37,6 +37,7 @@ export default defineConfig({
     copyAssetsPlugin([
       { from: 'README.md', to: 'README.md' },
       { from: 'migrations/migration.json', to: 'migrations/migration.json' },
+      { from: 'migrations/migrations.json', to: 'migrations/migrations.json' },
     ]),
   ],
   build: {
@@ -51,6 +52,10 @@ export default defineConfig({
         'migrations/migrate-setup-vitest/migrate-setup-vitest': resolve(
           pkgDir,
           'migrations/migrate-setup-vitest/migrate-setup-vitest.ts',
+        ),
+        'migrations/update-3-0-0/migrate-setup-vitest': resolve(
+          pkgDir,
+          'migrations/update-3-0-0/migrate-setup-vitest.ts',
         ),
       },
       formats: ['es' as const],
