@@ -20,7 +20,7 @@ describe('StyleProbeComponent', () => {
     );
   });
 
-  it('preserves local state across css-only assertions', () => {
+  it('increments and displays click count', () => {
     const fixture = TestBed.createComponent(StyleProbeComponent);
     fixture.componentInstance.increment();
     fixture.detectChanges();

@@ -82,7 +82,14 @@ export function writeStoredBreadcrumbs(
   breadcrumbs: readonly HmrBreadcrumb[],
   key = BREADCRUMB_KEY,
 ) {
-  storage.setItem(key, JSON.stringify(breadcrumbs));
+  try {
+    storage.setItem(key, JSON.stringify(breadcrumbs));
+  } catch (error) {
+    console.warn('[tailwind-debug-app] failed to persist breadcrumbs', {
+      error,
+      key,
+    });
+  }
 }
 
 function readBootCount(storage: Pick<Storage, 'getItem'>): number {
@@ -92,7 +99,14 @@ function readBootCount(storage: Pick<Storage, 'getItem'>): number {
 }
 
 function writeBootCount(storage: Pick<Storage, 'setItem'>, count: number) {
-  storage.setItem(BOOT_COUNT_KEY, String(count));
+  try {
+    storage.setItem(BOOT_COUNT_KEY, String(count));
+  } catch (error) {
+    console.warn('[tailwind-debug-app] failed to persist boot count', {
+      error,
+      key: BOOT_COUNT_KEY,
+    });
+  }
 }
 
 export function setupBrowserDiagnostics(
