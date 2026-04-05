@@ -953,7 +953,7 @@ Nitro is on v3, h2 is on v2
 - update lockfile ([3adfd16](https://github.com/analogjs/analog/commit/3adfd16250ae527f6fd4efece87446372ee30b7e))
 - update to support Nx 22.0.2 ([#1913](https://github.com/analogjs/analog/issues/1913)) ([d38fa61](https://github.com/analogjs/analog/commit/d38fa61747ce9028105fe379133ae41ac3bb1e8b))
 - **vite-plugin-angular:** expand optimization for Angular packages ([43395f0](https://github.com/analogjs/analog/commit/43395f06256c069c57b448e310030a43132e9879))
-- **vite-plugin-angular:** more legacy experimental template cleanup ([91e0262](https://github.com/analogjs/analog/commit/91e0262ad40aaf8c49ee76c28060b4efc6c19a57))
+- **vite-plugin-angular:** more agx cleanup ([91e0262](https://github.com/analogjs/analog/commit/91e0262ad40aaf8c49ee76c28060b4efc6c19a57))
 - **vite-plugin-angular:** remove support for Analog SFCs ([#1867](https://github.com/analogjs/analog/issues/1867)) ([52817cc](https://github.com/analogjs/analog/commit/52817ccf50412da2455ac40bd83c7aa29c2b52fe))
 - **vite-plugin-angular:** remove vfile dependency ([63e8dd8](https://github.com/analogjs/analog/commit/63e8dd8c429dd1f839e6dde85064d0265fbf5baf))
 - **vitest-angular:** add import attribute for json schema ([5c745ef](https://github.com/analogjs/analog/commit/5c745ef742d79a8461f4989badd82d90abcd69ee))
@@ -1135,7 +1135,7 @@ Vite 6.x is the base version.
 - remove Angular v16 from release config ([6afc4fa](https://github.com/analogjs/analog/commit/6afc4fa6fc7139620d18068667dc14f4d525572d))
 - **router:** adjust peer deps for Angular v20 ([f6612fe](https://github.com/analogjs/analog/commit/f6612fe721d4295ed9824fac44aeae7d6c44fe37))
 - update lockfile ([3adfd16](https://github.com/analogjs/analog/commit/3adfd16250ae527f6fd4efece87446372ee30b7e))
-- **vite-plugin-angular:** more legacy experimental template cleanup ([91e0262](https://github.com/analogjs/analog/commit/91e0262ad40aaf8c49ee76c28060b4efc6c19a57))
+- **vite-plugin-angular:** more agx cleanup ([91e0262](https://github.com/analogjs/analog/commit/91e0262ad40aaf8c49ee76c28060b4efc6c19a57))
 - **vite-plugin-angular:** remove support for Analog SFCs ([#1867](https://github.com/analogjs/analog/issues/1867)) ([52817cc](https://github.com/analogjs/analog/commit/52817ccf50412da2455ac40bd83c7aa29c2b52fe))
 - **vitest-angular:** add import attribute for json schema ([5c745ef](https://github.com/analogjs/analog/commit/5c745ef742d79a8461f4989badd82d90abcd69ee))
 
@@ -1167,7 +1167,7 @@ Vite 6.x is the base version.
 - remove Angular v16 from release config ([6afc4fa](https://github.com/analogjs/analog/commit/6afc4fa6fc7139620d18068667dc14f4d525572d))
 - **router:** adjust peer deps for Angular v20 ([f6612fe](https://github.com/analogjs/analog/commit/f6612fe721d4295ed9824fac44aeae7d6c44fe37))
 - update lockfile ([3adfd16](https://github.com/analogjs/analog/commit/3adfd16250ae527f6fd4efece87446372ee30b7e))
-- **vite-plugin-angular:** more legacy experimental template cleanup ([91e0262](https://github.com/analogjs/analog/commit/91e0262ad40aaf8c49ee76c28060b4efc6c19a57))
+- **vite-plugin-angular:** more agx cleanup ([91e0262](https://github.com/analogjs/analog/commit/91e0262ad40aaf8c49ee76c28060b4efc6c19a57))
 - **vite-plugin-angular:** remove support for Analog SFCs ([#1867](https://github.com/analogjs/analog/issues/1867)) ([52817cc](https://github.com/analogjs/analog/commit/52817ccf50412da2455ac40bd83c7aa29c2b52fe))
 - **vitest-angular:** add import attribute for json schema ([5c745ef](https://github.com/analogjs/analog/commit/5c745ef742d79a8461f4989badd82d90abcd69ee))
 
@@ -1233,7 +1233,7 @@ Vite 6.x is the base version.
 
 ### Bug Fixes
 
-- **vite-plugin-angular:** more legacy experimental template cleanup ([91e0262](https://github.com/analogjs/analog/commit/91e0262ad40aaf8c49ee76c28060b4efc6c19a57))
+- **vite-plugin-angular:** more agx cleanup ([91e0262](https://github.com/analogjs/analog/commit/91e0262ad40aaf8c49ee76c28060b4efc6c19a57))
 
 # [2.0.0-alpha.21](https://github.com/analogjs/analog/compare/v2.0.0-alpha.20...v2.0.0-alpha.21) (2025-09-04)
 
@@ -1590,9 +1590,9 @@ Vite 6.x is the base version.
 
 - **router:** properly parse json response in the FormAction ([#1605](https://github.com/analogjs/analog/issues/1605)) ([6a8fc20](https://github.com/analogjs/analog/commit/6a8fc20037d28720b9aa809ef1670f2f6b19ee6b))
 - **vite-plugin-angular:** add detection for Vitest CLI in watch mode ([#1602](https://github.com/analogjs/analog/issues/1602)) ([9cae439](https://github.com/analogjs/analog/commit/9cae43967c62dad40cba9500dc78071a5601b33b))
-- **vite-plugin-angular:** add exception for legacy experimental templates to resourceNameToFileName ([#1595](https://github.com/analogjs/analog/issues/1595)) ([718a0dc](https://github.com/analogjs/analog/commit/718a0dcd52ce50a51dec9458385a0fa070b8be07))
+- **vite-plugin-angular:** add exception for agx to resourceNameToFileName ([#1595](https://github.com/analogjs/analog/issues/1595)) ([718a0dc](https://github.com/analogjs/analog/commit/718a0dcd52ce50a51dec9458385a0fa070b8be07))
 - **vite-plugin-angular:** cache MarkedSetupService creation ([#1584](https://github.com/analogjs/analog/issues/1584)) ([9b8c90d](https://github.com/analogjs/analog/commit/9b8c90d1451844867ba3b7d79b0aaa11b5428527))
-- **vite-plugin-angular:** cache resource reads for legacy experimental template files ([#1587](https://github.com/analogjs/analog/issues/1587)) ([3eb5fa9](https://github.com/analogjs/analog/commit/3eb5fa95fb85a577dc7eca325b775599e413ee9e))
+- **vite-plugin-angular:** cache resource reads for agx files ([#1587](https://github.com/analogjs/analog/issues/1587)) ([3eb5fa9](https://github.com/analogjs/analog/commit/3eb5fa95fb85a577dc7eca325b775599e413ee9e))
 - **vite-plugin-angular:** check for style extension in resourceNameToFileName ([#1596](https://github.com/analogjs/analog/issues/1596)) ([4ff66a4](https://github.com/analogjs/analog/commit/4ff66a4ddcfe29534d1c680230f7ddfd6b5bb0f2))
 - **vite-plugin-angular:** remove check for Vitest command in watch mode ([#1606](https://github.com/analogjs/analog/issues/1606)) ([744ed1f](https://github.com/analogjs/analog/commit/744ed1fcf8f2f3228177698fc81fc64d1648110e))
 - **vite-plugin-angular:** support double quotes in analog import attributes ([#1590](https://github.com/analogjs/analog/issues/1590)) ([0b4e245](https://github.com/analogjs/analog/commit/0b4e245a37774c5bcc448029cfb3fd558636d96f))
@@ -2184,7 +2184,7 @@ Vite 6.x is the base version.
 - **router:** generate rawPath for ag page routes correctly ([7081bb6](https://github.com/analogjs/analog/commit/7081bb6850032e371cd7838f38bce4ad49e0c01f))
 - **vite-plugin-angular:** add better support for angular/cdk in vitest browser testing ([#1353](https://github.com/analogjs/analog/issues/1353)) ([157d9e2](https://github.com/analogjs/analog/commit/157d9e272ddce9673bbd3dafb26519c50a7d13f4))
 - **vite-plugin-angular:** add check for ag files in fileExists function ([2f5400d](https://github.com/analogjs/analog/commit/2f5400d2b18efb424034ed7afca010a95bb377d6))
-- **vite-plugin-angular:** allow supplying and exporting vfile data for legacy experimental template files ([#1344](https://github.com/analogjs/analog/issues/1344)) ([6d555aa](https://github.com/analogjs/analog/commit/6d555aa980f1b61e9514d80c6f1102609c687294))
+- **vite-plugin-angular:** allow supplying and exporting vfile data for agx files ([#1344](https://github.com/analogjs/analog/issues/1344)) ([6d555aa](https://github.com/analogjs/analog/commit/6d555aa980f1b61e9514d80c6f1102609c687294))
 - **vite-plugin-angular:** use defaultMarkdownTemplateTransform if none supplied ([#1356](https://github.com/analogjs/analog/issues/1356)) ([ff9a0ee](https://github.com/analogjs/analog/commit/ff9a0eee7f0caa3505bfe0d60b7bcd1f53ff66bd))
 - **vitest-angular:** setup separate import for configuring snapshots ([#1340](https://github.com/analogjs/analog/issues/1340)) ([fa50a4d](https://github.com/analogjs/analog/commit/fa50a4d78b00e7415b83ab5ece018b75ddaadc7e))
 
@@ -2204,7 +2204,7 @@ Vite 6.x is the base version.
 
 ### Bug Fixes
 
-- **vite-plugin-angular:** allow supplying and exporting vfile data for legacy experimental template files ([#1344](https://github.com/analogjs/analog/issues/1344)) ([6d555aa](https://github.com/analogjs/analog/commit/6d555aa980f1b61e9514d80c6f1102609c687294))
+- **vite-plugin-angular:** allow supplying and exporting vfile data for agx files ([#1344](https://github.com/analogjs/analog/issues/1344)) ([6d555aa](https://github.com/analogjs/analog/commit/6d555aa980f1b61e9514d80c6f1102609c687294))
 
 ## [1.8.1-beta.4](https://github.com/analogjs/analog/compare/v1.8.1-beta.3...v1.8.1-beta.4) (2024-09-18)
 
@@ -2616,7 +2616,7 @@ Vite 6.x is the base version.
 
 ### Bug Fixes
 
-- **content:** filter out string content when using legacy experimental template files ([#1200](https://github.com/analogjs/analog/issues/1200)) ([c6b94ea](https://github.com/analogjs/analog/commit/c6b94eaba5a5019ce665428b0f07bed29a752dbf))
+- **content:** filter out string content when using agx files ([#1200](https://github.com/analogjs/analog/issues/1200)) ([c6b94ea](https://github.com/analogjs/analog/commit/c6b94eaba5a5019ce665428b0f07bed29a752dbf))
 - **nx-plugin:** add vitest types in tsconfig.spec.json ([#1197](https://github.com/analogjs/analog/issues/1197)) ([acaf6dc](https://github.com/analogjs/analog/commit/acaf6dca35d84ff2777589ef2b6245054c5b4aba))
 - **router:** add error message when default export is missing from component ([#1194](https://github.com/analogjs/analog/issues/1194)) ([4d33677](https://github.com/analogjs/analog/commit/4d336777d3b81191181d2964cbd247c9d3a1ba8f))
 - **vite-plugin-angular:** prevent context loss for "each" describe bl… ([#1195](https://github.com/analogjs/analog/issues/1195)) ([595a6b3](https://github.com/analogjs/analog/commit/595a6b3120735be4ed55286b2a8849f059abd32a))
@@ -2632,7 +2632,7 @@ Vite 6.x is the base version.
 
 ### Bug Fixes
 
-- **content:** filter out string content when using legacy experimental template files ([#1200](https://github.com/analogjs/analog/issues/1200)) ([c6b94ea](https://github.com/analogjs/analog/commit/c6b94eaba5a5019ce665428b0f07bed29a752dbf))
+- **content:** filter out string content when using agx files ([#1200](https://github.com/analogjs/analog/issues/1200)) ([c6b94ea](https://github.com/analogjs/analog/commit/c6b94eaba5a5019ce665428b0f07bed29a752dbf))
 
 ## [1.6.1-beta.2](https://github.com/analogjs/analog/compare/v1.6.1-beta.1...v1.6.1-beta.2) (2024-07-02)
 
@@ -3082,7 +3082,7 @@ Vite 6.x is the base version.
 
 ### Features
 
-- **content:** add legacy experimental template support for injectContent ([#1012](https://github.com/analogjs/analog/issues/1012)) ([62f0f86](https://github.com/analogjs/analog/commit/62f0f86e5dde3878bb4b9826fe69bd7c6971ca14))
+- **content:** add agx support for injectContent ([#1012](https://github.com/analogjs/analog/issues/1012)) ([62f0f86](https://github.com/analogjs/analog/commit/62f0f86e5dde3878bb4b9826fe69bd7c6971ca14))
 
 ## [1.1.2](https://github.com/analogjs/analog/compare/v1.1.1...v1.1.2) (2024-04-04)
 
@@ -3257,7 +3257,7 @@ Vite 6.x is the base version.
 
 ### Bug Fixes
 
-- **vite-plugin-angular:** check for legacy experimental template declarations in fileExists ([#918](https://github.com/analogjs/analog/issues/918)) ([a1f0ae1](https://github.com/analogjs/analog/commit/a1f0ae1756dfd604b4619f84f2615ff68b93f6ad))
+- **vite-plugin-angular:** check for agx.d in fileExists ([#918](https://github.com/analogjs/analog/issues/918)) ([a1f0ae1](https://github.com/analogjs/analog/commit/a1f0ae1756dfd604b4619f84f2615ff68b93f6ad))
 
 ## [0.2.42](https://github.com/analogjs/analog/compare/0.2.41...0.2.42) (2024-03-05)
 
@@ -3365,7 +3365,7 @@ Vite 6.x is the base version.
 
 ### Features
 
-- add initial support for legacy experimental content files ([#879](https://github.com/analogjs/analog/issues/879)) ([ad9ef43](https://github.com/analogjs/analog/commit/ad9ef4398ae4199c60ec20af016171539091698f))
+- add initial support for agx content files ([#879](https://github.com/analogjs/analog/issues/879)) ([ad9ef43](https://github.com/analogjs/analog/commit/ad9ef4398ae4199c60ec20af016171539091698f))
 
 ## [0.2.31-beta.2](https://github.com/analogjs/analog/compare/0.2.31-beta.1...0.2.31-beta.2) (2024-02-01)
 
