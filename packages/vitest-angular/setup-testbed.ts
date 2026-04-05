@@ -38,26 +38,31 @@ export function setupTestBed({
   beforeEach(getCleanupHook(false));
   afterEach(getCleanupHook(true));
 
-  if (!(globalThis as any)[ANGULAR_TESTBED_SETUP]) {
-    (globalThis as any)[ANGULAR_TESTBED_SETUP] = true;
+  const testBed = getTestBed();
 
-    @NgModule({
-      providers: [
-        ...(zoneless ? [provideZonelessChangeDetection()] : []),
-        ...providers,
-      ],
-    })
-    class TestModule {}
-
-    getTestBed().initTestEnvironment(
-      [BrowserTestingModule, TestModule],
-      platformBrowserTesting(),
-      {
-        teardown: {
-          ...{ destroyAfterEach: !browserMode },
-          ...teardown,
-        },
-      },
-    );
+  if ((globalThis as any)[ANGULAR_TESTBED_SETUP]) {
+    testBed.resetTestingModule();
+    testBed.resetTestEnvironment();
   }
+
+  (globalThis as any)[ANGULAR_TESTBED_SETUP] = true;
+
+  @NgModule({
+    providers: [
+      ...(zoneless ? [provideZonelessChangeDetection()] : []),
+      ...providers,
+    ],
+  })
+  class TestModule {}
+
+  testBed.initTestEnvironment(
+    [BrowserTestingModule, TestModule],
+    platformBrowserTesting(),
+    {
+      teardown: {
+        ...{ destroyAfterEach: !browserMode },
+        ...teardown,
+      },
+    },
+  );
 }
