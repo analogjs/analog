@@ -84,6 +84,26 @@ describe('ng-snapshot serializer', () => {
     `);
   });
 
+  it('normalizes trailing whitespace in serialized text nodes', () => {
+    const fixture = createComponentFixture(
+      'app-copy',
+      '<p>For guides on how to customize this project, visit the <a href="https://analogjs.org">Analog documentation</a></p>',
+    );
+
+    expect(fixture).toMatchInlineSnapshot(`
+      <app-copy>
+        <p>
+          For guides on how to customize this project, visit the
+          <a
+            href="https://analogjs.org"
+          >
+            Analog documentation
+          </a>
+        </p>
+      </app-copy>
+    `);
+  });
+
   it('serializes an Angular component', () => {
     @Component({
       selector: 'app-chip',
