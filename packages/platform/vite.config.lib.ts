@@ -43,7 +43,13 @@ const config: UserConfigExport = defineConfig({
     minify: false,
     emptyOutDir: false,
     lib: {
-      entry: { 'src/index': resolve(pkgDir, 'src/index.ts') },
+      entry: {
+        'src/index': resolve(pkgDir, 'src/index.ts'),
+        'migrations/remove-standalone-true/remove-standalone-true': resolve(
+          pkgDir,
+          'migrations/remove-standalone-true/remove-standalone-true.ts',
+        ),
+      },
       formats: ['es' as const],
     },
     outDir: resolve(pkgDir, 'dist'),

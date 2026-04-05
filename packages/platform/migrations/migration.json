@@ -1,4 +1,10 @@
 {
   "$schema": "../../../node_modules/@angular-devkit/schematics/collection-schema.json",
-  "schematics": {}
+  "schematics": {
+    "remove-standalone-true": {
+      "version": "3.0.0-alpha.26",
+      "description": "Remove redundant standalone: true metadata from Angular declarations when using Angular 19+",
+      "factory": "./remove-standalone-true/remove-standalone-true"
+    }
+  }
 }
