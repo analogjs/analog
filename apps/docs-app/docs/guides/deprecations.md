@@ -14,15 +14,15 @@ The goal is to keep the public surface explicit:
 
 ## Current public deprecations
 
-| Package | Deprecated API | Prefer instead | Current posture |
-| ------- | -------------- | -------------- | --------------- |
-| `@analogjs/router` | `defineRouteMeta()` | typed `RouteMeta` object literals | Keep exported for compatibility, but prefer `RouteMeta` in docs and new code. |
-| `@analogjs/vite-plugin-nitro` | `useAPIMiddleware` | filesystem API routes in `src/server/routes/api` | Keep only as a compatibility option for older project layouts. |
-| `@analogjs/platform` | `useAPIMiddleware` | filesystem API routes in `src/server/routes/api` | Same deprecation posture as Nitro because the platform option is just a passthrough. |
-| `@analogjs/trpc` | `tRPCClient` | `TrpcClient` | Keep as a compatibility alias until the next major. |
-| `@analogjs/trpc` | `provideTRPCClient` | `provideTrpcClient` | Keep as a compatibility alias until the next major. |
-| `@analogjs/trpc` | `tRPCHeaders` | `TrpcHeaders` | Keep as a compatibility alias until the next major. |
-| `@analogjs/trpc` | `ClientDataTransformerOptions` in the optional transformer union | `CombinedDataTransformer` | Keep for compatibility while the current client options shape remains supported. |
+| Package                       | Deprecated API                                                   | Prefer instead                                   | Current posture                                                                      |
+| ----------------------------- | ---------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `@analogjs/router`            | `defineRouteMeta()`                                              | typed `RouteMeta` object literals                | Keep exported for compatibility, but prefer `RouteMeta` in docs and new code.        |
+| `@analogjs/vite-plugin-nitro` | `useAPIMiddleware`                                               | filesystem API routes in `src/server/routes/api` | Keep only as a compatibility option for older project layouts.                       |
+| `@analogjs/platform`          | `useAPIMiddleware`                                               | filesystem API routes in `src/server/routes/api` | Same deprecation posture as Nitro because the platform option is just a passthrough. |
+| `@analogjs/trpc`              | `tRPCClient`                                                     | `TrpcClient`                                     | Keep as a compatibility alias until the next major.                                  |
+| `@analogjs/trpc`              | `provideTRPCClient`                                              | `provideTrpcClient`                              | Keep as a compatibility alias until the next major.                                  |
+| `@analogjs/trpc`              | `tRPCHeaders`                                                    | `TrpcHeaders`                                    | Keep as a compatibility alias until the next major.                                  |
+| `@analogjs/trpc`              | `ClientDataTransformerOptions` in the optional transformer union | `CombinedDataTransformer`                        | Keep for compatibility while the current client options shape remains supported.     |
 
 ## Upgrade guidance
 
