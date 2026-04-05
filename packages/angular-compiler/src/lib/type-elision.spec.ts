@@ -1,0 +1,292 @@
+import { describe, it, expect } from 'vitest';
+import {
+  detectTypeOnlyImportNames,
+  elideTypeOnlyImports,
+} from './type-elision';
+import { compileCode as compile } from './test-helpers';
+
+describe('detectTypeOnlyImportNames', () => {
+  it('detects imports used only in type annotations', () => {
+    const code = `
+      import { Foo } from 'foo';
+      const x: Foo = {};
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).toContain('Foo');
+  });
+
+  it('does not flag imports used as values', () => {
+    const code = `
+      import { Foo } from 'foo';
+      const x = new Foo();
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('Foo');
+  });
+
+  it('handles mixed imports (some type-only, some value)', () => {
+    const code = `
+      import { MyType, MyClass } from 'lib';
+      const x: MyType = new MyClass();
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).toContain('MyType');
+    expect(result).not.toContain('MyClass');
+  });
+
+  it('detects imports used only in implements clauses', () => {
+    const code = `
+      import { OnInit } from '@angular/core';
+      class Foo implements OnInit {
+        ngOnInit() {}
+      }
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).toContain('OnInit');
+  });
+
+  it('detects imports used only in return types', () => {
+    const code = `
+      import { Observable } from 'rxjs';
+      function getData(): Observable<string> { return null; }
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).toContain('Observable');
+  });
+
+  it('detects imports used only in generic type arguments', () => {
+    const code = `
+      import { Signal } from '@angular/core';
+      import { User } from './models';
+      const users: Signal<User[]> = null;
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).toContain('Signal');
+    expect(result).toContain('User');
+  });
+
+  it('skips already type-only imports (import type)', () => {
+    const code = `
+      import type { Foo } from 'foo';
+      const x: Foo = {};
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    // Should not include Foo since it's already syntactically type-only
+    expect(result).not.toContain('Foo');
+  });
+
+  it('skips inline type specifiers (import { type X })', () => {
+    const code = `
+      import { type Foo } from 'foo';
+      const x: Foo = {};
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('Foo');
+  });
+
+  it('does not flag imports used in function calls', () => {
+    const code = `
+      import { inject } from '@angular/core';
+      import { UserService } from './user.service';
+      const svc = inject(UserService);
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('inject');
+    expect(result).not.toContain('UserService');
+  });
+
+  it('detects unused imports as type-only', () => {
+    const code = `
+      import { Unused } from 'lib';
+      const x = 1;
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).toContain('Unused');
+  });
+
+  it('detects default imports used only as types', () => {
+    const code = `
+      import Foo from 'foo';
+      const x: Foo = {};
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).toContain('Foo');
+  });
+
+  it('does not flag default imports used as values', () => {
+    const code = `
+      import Foo from 'foo';
+      const x = new Foo();
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('Foo');
+  });
+
+  it('handles constructor parameter type annotations', () => {
+    const code = `
+      import { Router } from '@angular/router';
+      import { UserService } from './user.service';
+      class Foo {
+        constructor(private router: Router) {
+          this.svc = new UserService();
+        }
+        private svc: UserService;
+      }
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).toContain('Router');
+    expect(result).not.toContain('UserService');
+  });
+});
+
+describe('elideTypeOnlyImports', () => {
+  it('removes entire import when all specifiers are type-only', () => {
+    const code = `import { MyType } from 'lib';\nconst x: MyType = {};\n`;
+    const result = elideTypeOnlyImports(code);
+    expect(result).not.toContain("from 'lib'");
+    expect(result).toContain('const x');
+  });
+
+  it('removes only type-only specifiers from mixed imports', () => {
+    const code = `import { MyType, MyClass } from 'lib';\nconst x: MyType = new MyClass();\n`;
+    const result = elideTypeOnlyImports(code);
+    expect(result).toContain('MyClass');
+    expect(result).toContain("from 'lib'");
+    expect(result).not.toMatch(/\bMyType\b.*from/);
+  });
+
+  it('preserves value imports untouched', () => {
+    const code = `import { inject } from '@angular/core';\nconst x = inject(Service);\n`;
+    const result = elideTypeOnlyImports(code);
+    expect(result).toContain("import { inject } from '@angular/core'");
+  });
+
+  it('returns original code when nothing to elide', () => {
+    const code = `import { A, B } from 'lib';\nconst x = A; const y = B;\n`;
+    const result = elideTypeOnlyImports(code);
+    expect(result).toBe(code);
+  });
+
+  it('removes default import used only as type', () => {
+    const code = `import Foo from 'foo';\nconst x: Foo = {};\n`;
+    const result = elideTypeOnlyImports(code);
+    expect(result).not.toContain("from 'foo'");
+    expect(result).toContain('const x');
+  });
+
+  it('preserves default import used as value', () => {
+    const code = `import Foo from 'foo';\nconst x = new Foo();\n`;
+    const result = elideTypeOnlyImports(code);
+    expect(result).toContain("import Foo from 'foo'");
+  });
+
+  it('elides default but keeps named specifiers', () => {
+    const code = `import Foo, { bar } from 'lib';\nconst x: Foo = bar();\n`;
+    const result = elideTypeOnlyImports(code);
+    expect(result).toContain("import { bar } from 'lib'");
+    expect(result).not.toMatch(/\bFoo\b.*from/);
+  });
+
+  it('elides named but keeps default specifier', () => {
+    const code = `import Foo, { MyType } from 'lib';\nconst x: MyType = new Foo();\n`;
+    const result = elideTypeOnlyImports(code);
+    expect(result).toContain("import Foo from 'lib'");
+    // MyType removed from import specifiers (still in type annotation, which OXC strips)
+    expect(result).not.toMatch(/import.*MyType.*from/);
+  });
+
+  it('elides both default and named when all type-only', () => {
+    const code = `import Foo, { Bar } from 'lib';\nconst x: Foo = {} as Bar;\n`;
+    const result = elideTypeOnlyImports(code);
+    expect(result).not.toContain("from 'lib'");
+  });
+
+  it('handles multiple declarations with partial elision', () => {
+    const code = [
+      `import { TypeA, valueA } from 'a';`,
+      `import { TypeB } from 'b';`,
+      `import { valueC } from 'c';`,
+      `const x: TypeA = valueA();`,
+      `const y: TypeB = {};`,
+      `const z = valueC();`,
+    ].join('\n');
+
+    const result = elideTypeOnlyImports(code);
+    // TypeA removed from 'a', valueA kept
+    expect(result).toContain('valueA');
+    expect(result).toContain("from 'a'");
+    // Entire 'b' import removed
+    expect(result).not.toContain("from 'b'");
+    // 'c' import fully preserved
+    expect(result).toContain("import { valueC } from 'c'");
+  });
+});
+
+describe('type elision in compiler output', () => {
+  it('elides type-only imports from compiled component output', () => {
+    const code = `
+      import { Component } from '@angular/core';
+      import { SomeType } from './models';
+
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {
+        value: SomeType = {} as any;
+      }
+    `;
+    const result = compile(code, 'test.ts');
+    // SomeType is only in type annotation — should be elided
+    expect(result).not.toContain("from './models'");
+    // Component decorator should be compiled away
+    expect(result).not.toContain('@Component');
+    expect(result).toContain('ɵcmp');
+  });
+
+  it('preserves value imports used in inject()', () => {
+    const code = `
+      import { Component, inject } from '@angular/core';
+      import { UserService } from './user.service';
+
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        private svc = inject(UserService);
+      }
+    `;
+    const result = compile(code, 'test.ts');
+    expect(result).toContain('UserService');
+    expect(result).toContain("from './user.service'");
+  });
+
+  it('elides interface-only imports (implements)', () => {
+    const code = `
+      import { Component, OnInit, OnDestroy } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent implements OnInit, OnDestroy {
+        ngOnInit() {}
+        ngOnDestroy() {}
+      }
+    `;
+    const result = compile(code, 'test.ts');
+    // OnInit/OnDestroy should be removed from the import specifiers
+    // (they still appear in the `implements` clause which OXC will strip)
+    expect(result).not.toMatch(/import\s*\{[^}]*OnInit[^}]*\}\s*from/);
+    expect(result).not.toMatch(/import\s*\{[^}]*OnDestroy[^}]*\}\s*from/);
+  });
+
+  it('elides type-only generic parameters', () => {
+    const code = `
+      import { Component, signal } from '@angular/core';
+      import { User } from './models';
+
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        users = signal<User[]>([]);
+      }
+    `;
+    const result = compile(code, 'test.ts');
+    // User is only in generic type arg — should be elided
+    expect(result).not.toContain("from './models'");
+    // signal should still be present as a value
+    expect(result).toContain('signal');
+  });
+});
