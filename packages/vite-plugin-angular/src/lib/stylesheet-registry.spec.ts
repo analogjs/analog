@@ -32,6 +32,17 @@ describe('stylesheet-registry', () => {
     );
   });
 
+  it('rewrites relative css imports in url(...) form to absolute paths', () => {
+    expect(
+      rewriteRelativeCssImports(
+        '@import url("./submenu/submenu.component.css");\n.demo { color: red; }',
+        '/project/src/app/header.component.css',
+      ),
+    ).toBe(
+      '@import url("/project/src/app/submenu/submenu.component.css");\n.demo { color: red; }',
+    );
+  });
+
   it('registers stylesheet content under the generated id and resource aliases', () => {
     const registry = new AnalogStylesheetRegistry();
 

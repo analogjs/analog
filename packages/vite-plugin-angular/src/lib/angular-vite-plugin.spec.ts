@@ -1236,11 +1236,12 @@ describe('tailwind-reference plugin', () => {
 //
 // When useAngularCompilationAPI is enabled, the Vite transform hook receives
 // already-compiled code (decorators stripped), so hasComponent is always false.
-// These tests document the expected behavior for both compilation paths.
+// This suite is behavior documentation for both compilation paths rather than
+// a regression harness for `hasComponent`.
 // =============================================================================
 
-describe('hasComponent detection', () => {
-  it('detects @Component in raw TypeScript source (legacy path)', () => {
+describe('hasComponent detection behavior docs', () => {
+  it('documents @Component detection in raw TypeScript source (legacy path)', () => {
     // Simulates what the legacy (non-API) compilation path sees
     const rawTs = `
       import { Component } from '@angular/core';
@@ -1250,10 +1251,10 @@ describe('hasComponent detection', () => {
     expect(rawTs.includes('@Component')).toBe(true);
   });
 
-  it('does NOT detect @Component in compiled output (useAngularCompilationAPI path)', () => {
-    // Simulates what the Vite transform hook sees after Angular compilation —
-    // @Component is compiled into ɵɵdefineComponent(), so the naive string
-    // check returns false. This is expected and documented behavior.
+  it('documents missing @Component detection in compiled output (useAngularCompilationAPI path)', () => {
+    // Simulates what the Vite transform hook sees after Angular compilation.
+    // `@Component` becomes `ɵɵdefineComponent()`, so the naive string check
+    // returns false. This is expected documented behavior for that path.
     const compiledJs = `
       import * as i0 from "@angular/core";
       export class DemoComponent {}
