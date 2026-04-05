@@ -16,11 +16,15 @@
  *   pnpm build && node tools/scripts/verify-route-freshness.mts
  */
 
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
-const diff = execSync('git diff --name-only -- "**/routeTree.gen.ts"', {
-  encoding: 'utf-8',
-}).trim();
+const diff = execFileSync(
+  'git',
+  ['diff', '--name-only', '--', '**/routeTree.gen.ts'],
+  {
+    encoding: 'utf-8',
+  },
+).trim();
 
 if (diff) {
   console.error('[Analog] Stale route files detected after generation:');

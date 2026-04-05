@@ -98,7 +98,7 @@ declare module '@analogjs/router' {
       query: Record<string, string | string[] | undefined>;
       queryOutput: Record<string, string | string[] | undefined>;
     };
-    '/blog/[slug]': {
+    '/blog/posts/[slug]': {
       params: { slug: string };
       paramsOutput: { slug: string };
       query: Record<string, string | string[] | undefined>;
@@ -173,7 +173,7 @@ export interface AnalogFileRoutesById {
   "/shipping/index": AnalogGeneratedRouteRecord<"/shipping/index", "shipping", "/shipping", null, readonly ["/shipping/[...slug]"]>;
   "/(auth)/sign-up": AnalogGeneratedRouteRecord<"/(auth)/sign-up", "sign-up", "/sign-up", "/(auth)", readonly []>;
   "/test": AnalogGeneratedRouteRecord<"/test", "test", "/test", null, readonly []>;
-  "/blog/[slug]": AnalogGeneratedRouteRecord<"/blog/[slug]", "blog/[slug]", "/blog/[slug]", null, readonly []>;
+  "/blog/posts/[slug]": AnalogGeneratedRouteRecord<"/blog/posts/[slug]", "blog/posts/[slug]", "/blog/posts/[slug]", null, readonly []>;
   "/greet/[name]": AnalogGeneratedRouteRecord<"/greet/[name]", "greet/[name]", "/greet/[name]", null, readonly []>;
   "/products/[productId]": AnalogGeneratedRouteRecord<"/products/[productId]", "products/[productId]", "/products/[productId]", null, readonly []>;
   "/[...slug]": AnalogGeneratedRouteRecord<"/[...slug]", "[...slug]", "/[...slug]", null, readonly []>;
@@ -196,7 +196,7 @@ export interface AnalogFileRoutesByFullPath {
   "/shipping": AnalogFileRoutesById["/shipping/index"];
   "/sign-up": AnalogFileRoutesById["/(auth)/sign-up"];
   "/test": AnalogFileRoutesById["/test"];
-  "/blog/[slug]": AnalogFileRoutesById["/blog/[slug]"];
+  "/blog/posts/[slug]": AnalogFileRoutesById["/blog/posts/[slug]"];
   "/greet/[name]": AnalogFileRoutesById["/greet/[name]"];
   "/products/[productId]": AnalogFileRoutesById["/products/[productId]"];
   "/[...slug]": AnalogFileRoutesById["/[...slug]"];
@@ -464,13 +464,13 @@ export const analogRouteTree = {
       isCatchAll: false,
       isOptionalCatchAll: false,
     } satisfies AnalogFileRoutesById["/test"],
-    "/blog/[slug]": {
-      id: "/blog/[slug]",
-      path: "blog/[slug]",
-      fullPath: "/blog/[slug]",
+    "/blog/posts/[slug]": {
+      id: "/blog/posts/[slug]",
+      path: "blog/posts/[slug]",
+      fullPath: "/blog/posts/[slug]",
       parentId: null,
       children: [] as const,
-      sourceFile: "/libs/shared/feature/src/pages/blog/[slug].page.ts",
+      sourceFile: "/libs/shared/feature/src/pages/blog/posts.[slug].page.ts",
       kind: "page",
       hasParamsSchema: false,
       hasQuerySchema: false,
@@ -479,7 +479,7 @@ export const analogRouteTree = {
       isGroup: false,
       isCatchAll: false,
       isOptionalCatchAll: false,
-    } satisfies AnalogFileRoutesById["/blog/[slug]"],
+    } satisfies AnalogFileRoutesById["/blog/posts/[slug]"],
     "/greet/[name]": {
       id: "/greet/[name]",
       path: "greet/[name]",
@@ -561,7 +561,7 @@ export const analogRouteTree = {
     "/shipping": "/shipping/index",
     "/sign-up": "/(auth)/sign-up",
     "/test": "/test",
-    "/blog/[slug]": "/blog/[slug]",
+    "/blog/posts/[slug]": "/blog/posts/[slug]",
     "/greet/[name]": "/greet/[name]",
     "/products/[productId]": "/products/[productId]",
     "/[...slug]": "/[...slug]",

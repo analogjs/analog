@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 @Component({
   selector: 'app-tailwind-style-probe',
   standalone: true,
-  styleUrl: './style-probe.component.css',
+  styleUrls: ['./style-probe.component.css'],
   template: `
     <section class="probe-card" data-testid="probe-card">
       <p class="probe-kicker">Component stylesheet</p>

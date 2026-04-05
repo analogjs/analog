@@ -1,13 +1,14 @@
 import {
   APP_BOOTSTRAP_LISTENER,
-  EnvironmentInjector,
   EnvironmentProviders,
   inject,
   makeEnvironmentProviders,
-  runInInjectionContext,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { ɵHTTP_ROOT_INTERCEPTOR_FNS as HTTP_ROOT_INTERCEPTOR_FNS } from '@angular/common/http';
+import { Meta } from '@angular/platform-browser';
 import { provideRouter, RouterFeatures, ROUTES, Routes } from '@angular/router';
+import { Router } from '@angular/router';
 import { API_PREFIX } from '@analogjs/router/tokens';
 
 import { cookieInterceptor } from './cookie-interceptor';
@@ -121,14 +122,18 @@ export function provideFileRouterWithRoutes(
       provide: APP_BOOTSTRAP_LISTENER,
       multi: true,
       useFactory: () => {
-        const injector = inject(EnvironmentInjector);
+        if (import.meta.env.DEV) {
+          return () => {};
+        }
+
+        const router = inject(Router);
+        const meta = inject(Meta);
+        const document = inject(DOCUMENT, { optional: true });
 
         return () => {
           queueMicrotask(() => {
-            runInInjectionContext(injector, () => {
-              updateMetaTagsOnRouteChange();
-              updateJsonLdOnRouteChange();
-            });
+            updateMetaTagsOnRouteChange(router, meta);
+            updateJsonLdOnRouteChange(router, document);
           });
         };
       },

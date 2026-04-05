@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "peerDependencies": {
-    "@angular/core": "^21.2.5"
+    "@angular/core": "catalog:peerCompat"
   },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "workspace:*"

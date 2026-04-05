@@ -2,7 +2,7 @@ import type { Container, Directory, Secret } from '@dagger.io/dagger';
 import { argument, dag, func, object } from '@dagger.io/dagger';
 
 const DEFAULT_E2E_PROJECTS =
-  'analog-app-e2e,blog-app-e2e,tanstack-query-app-e2e';
+  'analog-app-e2e,blog-app-e2e,tailwind-debug-app-e2e,tanstack-query-app-e2e';
 
 @object()
 export class AnalogCi {

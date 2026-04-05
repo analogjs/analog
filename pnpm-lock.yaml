@@ -943,7 +943,7 @@ importers:
   libs/my-package:
     dependencies:
       '@angular/core':
-        specifier: ^21.2.5
+        specifier: catalog:peerCompat
         version: 21.2.6(@angular/compiler@21.2.6)(rxjs@7.8.2)(zone.js@0.16.1)
       tslib:
         specifier: ^2.8.1

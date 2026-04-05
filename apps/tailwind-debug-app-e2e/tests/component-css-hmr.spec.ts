@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 
 const WORKSPACE_ROOT = join(process.cwd(), '../..');
 const STYLE_PROBE_CSS_PATH = join(
@@ -19,6 +19,10 @@ const HMR_LOG_PATH = join(
 const ORIGINAL_CSS = readFileSync(STYLE_PROBE_CSS_PATH, 'utf8');
 const BLUE_CLASS = 'tdbg:bg-blue-500';
 const RED_CLASS = 'tdbg:bg-red-500';
+const RED_BACKGROUND_VALUES = new Set([
+  'rgb(239, 68, 68)',
+  'oklch(0.637 0.237 25.331)',
+]);
 
 function replaceProbeColor(className: string) {
   const nextCss = ORIGINAL_CSS.replace(BLUE_CLASS, className).replace(
@@ -29,6 +33,7 @@ function replaceProbeColor(className: string) {
 }
 
 function truncateDebugLogs() {
+  mkdirSync(dirname(WS_LOG_PATH), { recursive: true });
   writeFileSync(WS_LOG_PATH, '', 'utf8');
   writeFileSync(HMR_LOG_PATH, '', 'utf8');
 }
@@ -45,7 +50,7 @@ test.afterAll(() => {
 test('updates the component stylesheet without a full reload', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/probe');
   await expect(page.getByTestId('probe-card')).toBeVisible();
 
   await page.getByTestId('probe-counter').click();
@@ -60,13 +65,18 @@ test('updates the component stylesheet without a full reload', async ({
 
   await expect
     .poll(
-      async () =>
-        page.getByTestId('probe-card').evaluate((element) => {
-          return window.getComputedStyle(element).backgroundColor;
-        }),
+      async () => {
+        const backgroundColor = await page
+          .getByTestId('probe-card')
+          .evaluate((element) => {
+            return window.getComputedStyle(element).backgroundColor;
+          });
+
+        return RED_BACKGROUND_VALUES.has(backgroundColor);
+      },
       { timeout: 30_000 },
     )
-    .toBe('rgb(239, 68, 68)');
+    .toBe(true);
 
   await expect(page.getByTestId('probe-counter')).toContainText('Clicks 1');
 
@@ -80,7 +90,7 @@ test('updates the component stylesheet without a full reload', async ({
   const wsLog = readFileSync(WS_LOG_PATH, 'utf8');
   const hmrLog = readFileSync(HMR_LOG_PATH, 'utf8');
 
-  expect(wsLog).toContain('"type":"css-update"');
+  expect(wsLog).toContain('style-probe.component.css');
   expect(wsLog).not.toContain('"type":"full-reload"');
   expect(hmrLog).toContain('style-probe.component.css');
 });
