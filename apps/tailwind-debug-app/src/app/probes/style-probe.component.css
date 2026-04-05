@@ -1,7 +1,7 @@
 @reference "../../styles.css";
 
 .probe-card {
-  @apply tdbg:bg-red-500 tdbg:text-white tdbg:rounded-[2rem] tdbg:border tdbg:border-white/20 tdbg:p-8 tdbg:shadow-2xl tdbg:shadow-blue-950/40;
+  @apply tdbg:bg-blue-500 tdbg:text-white tdbg:rounded-[2rem] tdbg:border tdbg:border-white/20 tdbg:p-8 tdbg:shadow-2xl tdbg:shadow-blue-950/40;
 }
 
 .probe-kicker {

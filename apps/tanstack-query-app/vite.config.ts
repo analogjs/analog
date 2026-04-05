@@ -17,9 +17,6 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       include: ['@angular/forms'],
-      // Prevent Vite 8 dep scanner from racing with analog() plugin server
-      // restarts, which causes "Request is outdated" errors from Rolldown.
-      noDiscovery: true,
     },
     plugins: [
       tailwindcss(),

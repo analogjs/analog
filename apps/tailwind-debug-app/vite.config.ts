@@ -50,80 +50,73 @@ function hmrWiretapPlugin(): Plugin {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
-  return {
-    root: __dirname,
-    publicDir: 'public',
-    cacheDir: '../../node_modules/.vite',
-    build: {
-      outDir: '../../dist/apps/tailwind-debug-app/client',
-      reportCompressedSize: true,
-      target: ['es2020'],
-    },
-    optimizeDeps: {
-      include: ['@angular/forms'],
-      noDiscovery: true,
-    },
-    customLogger: (() => {
-      const logger = createLogger();
-      const warn = logger.warn.bind(logger);
-      logger.warn = (msg, options) => {
-        if (
-          typeof msg === 'string' &&
-          msg.includes('ɵɵgetReplaceMetadataURL')
-        ) {
-          return;
-        }
-        warn(msg, options);
-      };
-      return logger;
-    })(),
-    plugins: [
-      analog({
-        apiPrefix: 'api',
-        hmr: true,
-        ssr: false,
-        experimental: {
-          useAngularCompilationAPI: true,
-        },
-        nitro: {
-          experimental: {
-            websocket: true,
+export default defineConfig(({ mode }) => ({
+  root: __dirname,
+  publicDir: 'public',
+  cacheDir: '../../node_modules/.vite',
+  build: {
+    outDir: '../../dist/apps/tailwind-debug-app/client',
+    reportCompressedSize: true,
+    target: ['es2020'],
+  },
+  customLogger: (() => {
+    const logger = createLogger();
+    const warn = logger.warn.bind(logger);
+    logger.warn = (msg, options) => {
+      if (typeof msg === 'string' && msg.includes('ɵɵgetReplaceMetadataURL')) {
+        return;
+      }
+      warn(msg, options);
+    };
+    return logger;
+  })(),
+  plugins: [
+    analog({
+      apiPrefix: 'api',
+      hmr: true,
+      ssr: false,
+      nitro: {
+        routeRules: {
+          '/probe': {
+            ssr: false,
           },
         },
-        tailwindCss: {
-          prefixes: ['tdbg:'],
-          rootStylesheet: 'apps/tailwind-debug-app/src/styles.css',
+        experimental: {
+          websocket: true,
         },
-      }),
-      tailwindcss(),
-      nxViteTsPaths(),
-      hmrWiretapPlugin(),
-    ],
-    test: {
-      reporters: ['default'],
-      coverage: {
-        reportsDirectory: '../../coverage/apps/tailwind-debug-app',
-        provider: 'v8',
       },
-      globals: true,
-      environment: 'jsdom',
-      setupFiles: ['src/test-setup.ts'],
-      include: ['**/*.spec.ts'],
-    },
-    define: {
-      'import.meta.vitest': mode !== 'production',
-    },
-    server: {
-      port: 43040,
-      fs: {
-        allow: ['.'],
+      tailwindCss: {
+        prefixes: ['tdbg:'],
+        rootStylesheet: 'apps/tailwind-debug-app/src/styles.css',
       },
-      hmr: {
-        clientPort: 4201,
-        path: 'vite-hmr',
-        port: 4201,
-      },
+    }),
+    tailwindcss(),
+    nxViteTsPaths(),
+    hmrWiretapPlugin(),
+  ],
+  test: {
+    reporters: ['default'],
+    coverage: {
+      reportsDirectory: '../../coverage/apps/tailwind-debug-app',
+      provider: 'v8',
     },
-  };
-});
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['src/test-setup.ts'],
+    include: ['**/*.spec.ts'],
+  },
+  define: {
+    'import.meta.vitest': mode !== 'production',
+  },
+  server: {
+    port: 43040,
+    fs: {
+      allow: ['.'],
+    },
+    hmr: {
+      clientPort: 4201,
+      path: 'vite-hmr',
+      port: 4201,
+    },
+  },
+}));

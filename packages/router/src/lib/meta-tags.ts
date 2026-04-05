@@ -1,8 +1,4 @@
-import {
-  EnvironmentInjector,
-  inject,
-  runInInjectionContext,
-} from '@angular/core';
+import { inject } from '@angular/core';
 import { Meta, MetaDefinition as NgMetaTag } from '@angular/platform-browser';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -52,25 +48,20 @@ type MetaTagSelector =
       | typeof ITEMPROP_KEY}="${string}"`;
 type MetaTagMap = Record<MetaTagSelector, MetaTag>;
 
-export function updateMetaTagsOnRouteChange(): void {
-  const router = inject(Router);
-  const injector = inject(EnvironmentInjector);
-
+export function updateMetaTagsOnRouteChange(
+  router: Router = inject(Router),
+  metaService: Meta = inject(Meta),
+): void {
   router.events
     .pipe(filter((event) => event instanceof NavigationEnd))
     .subscribe(() => {
       const metaTagMap = getMetaTagMap(router.routerState.snapshot.root);
-
-      runInInjectionContext(injector, () => {
-        const metaService = inject(Meta);
-
-        for (const metaTagSelector in metaTagMap) {
-          const metaTag = metaTagMap[
-            metaTagSelector as MetaTagSelector
-          ] as NgMetaTag;
-          metaService.updateTag(metaTag, metaTagSelector);
-        }
-      });
+      for (const metaTagSelector in metaTagMap) {
+        const metaTag = metaTagMap[
+          metaTagSelector as MetaTagSelector
+        ] as NgMetaTag;
+        metaService.updateTag(metaTag, metaTagSelector);
+      }
     });
 }
 
