@@ -678,6 +678,17 @@ describe('findStaticClassAndBoundClassConflicts', () => {
 
     expect(findStaticClassAndBoundClassConflicts(template)).toEqual([]);
   });
+
+  it('handles > inside quoted [class] expressions without truncating the tag', () => {
+    const template = `<section class="hero" [class]="isWide > isTall ? 'wide' : 'tall'"></section>`;
+
+    expect(findStaticClassAndBoundClassConflicts(template)).toEqual([
+      expect.objectContaining({
+        line: 1,
+        snippet: `<section class="hero" [class]="isWide > isTall ? 'wide' : 'tall'">`,
+      }),
+    ]);
+  });
 });
 
 describe('findBoundClassAndNgClassConflicts', () => {

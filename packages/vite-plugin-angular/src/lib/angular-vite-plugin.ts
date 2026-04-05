@@ -3396,10 +3396,8 @@ export function findStaticClassAndBoundClassConflicts(
   template: string,
 ): TemplateClassBindingIssue[] {
   const issues: TemplateClassBindingIssue[] = [];
-  const tagPattern = /<([a-zA-Z][\w:-]*)([\s\S]*?)>/g;
 
-  for (const match of template.matchAll(tagPattern)) {
-    const snippet = match[0];
+  for (const { index, snippet } of findOpeningTagSnippets(template)) {
     if (!snippet.includes('[class]')) {
       continue;
     }
@@ -3411,11 +3409,11 @@ export function findStaticClassAndBoundClassConflicts(
       snippet,
     );
 
-    if (hasStaticClass && hasBoundClass && match.index !== undefined) {
-      const prefix = template.slice(0, match.index);
+    if (hasStaticClass && hasBoundClass) {
+      const prefix = template.slice(0, index);
       const line = prefix.split('\n').length;
       const lastNewline = prefix.lastIndexOf('\n');
-      const column = match.index - lastNewline;
+      const column = index - lastNewline;
       issues.push({
         line,
         column,
@@ -3447,28 +3445,70 @@ export function findBoundClassAndNgClassConflicts(
   template: string,
 ): TemplateClassBindingIssue[] {
   const issues: TemplateClassBindingIssue[] = [];
-  const tagPattern = /<([a-zA-Z][\w:-]*)([\s\S]*?)>/g;
 
-  for (const match of template.matchAll(tagPattern)) {
-    const snippet = match[0];
+  for (const { index, snippet } of findOpeningTagSnippets(template)) {
     if (!snippet.includes('[class]') || !snippet.includes('[ngClass]')) {
       continue;
     }
 
-    if (match.index !== undefined) {
-      const prefix = template.slice(0, match.index);
-      const line = prefix.split('\n').length;
-      const lastNewline = prefix.lastIndexOf('\n');
-      const column = match.index - lastNewline;
-      issues.push({
-        line,
-        column,
-        snippet: snippet.replace(/\s+/g, ' ').trim(),
-      });
-    }
+    const prefix = template.slice(0, index);
+    const line = prefix.split('\n').length;
+    const lastNewline = prefix.lastIndexOf('\n');
+    const column = index - lastNewline;
+    issues.push({
+      line,
+      column,
+      snippet: snippet.replace(/\s+/g, ' ').trim(),
+    });
   }
 
   return issues;
+}
+
+function findOpeningTagSnippets(
+  template: string,
+): Array<{ index: number; snippet: string }> {
+  const matches: Array<{ index: number; snippet: string }> = [];
+
+  for (let index = 0; index < template.length; index++) {
+    if (template[index] !== '<') {
+      continue;
+    }
+
+    const tagStart = template[index + 1];
+    if (!tagStart || !/[a-zA-Z]/.test(tagStart)) {
+      continue;
+    }
+
+    let quote: '"' | "'" | null = null;
+
+    for (let end = index + 1; end < template.length; end++) {
+      const char = template[end];
+
+      if (quote) {
+        if (char === quote) {
+          quote = null;
+        }
+        continue;
+      }
+
+      if (char === '"' || char === "'") {
+        quote = char;
+        continue;
+      }
+
+      if (char === '>') {
+        matches.push({
+          index,
+          snippet: template.slice(index, end + 1),
+        });
+        index = end;
+        break;
+      }
+    }
+  }
+
+  return matches;
 }
 
 function formatActiveGraphLocations(entries: Iterable<string>): string {
