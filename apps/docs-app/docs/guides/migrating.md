@@ -116,6 +116,30 @@ If you use `@analogjs/astro-angular`, plan the upgrade around Angular 20 and its
 
 If your tests still import `@analogjs/vite-plugin-angular/setup-vitest`, migrate them to `@analogjs/vitest-angular/setup-zone`. Current update flows cover this automatically, but older manual setups should be checked explicitly.
 
+##### Storybook testing imports
+
+If your test setup imports `setProjectAnnotations` from `@analogjs/storybook-angular/testing`, migrate it to the current Storybook Angular testing entrypoint used by the package. The old dedicated `./testing` export was removed from the package surface during the v3 line.
+
+##### Custom base-href deployment flow
+
+If your app is deployed under a custom base URL, re-check that setup against the current deployment docs. The older pattern that relied on hand-editing `apiPrefix`, `injectAPIPrefix()`, and preview commands around the old flow is not the current recommended setup.
+
+In the v3 line, deployment docs emphasize:
+
+- setting `APP_BASE_HREF` from `import.meta.env.BASE_URL`
+- passing the build-time base href explicitly in the build command
+- setting `VITE_ANALOG_PUBLIC_BASE_URL` during CI builds for server-side data fetching
+- setting `NITRO_APP_BASE_URL` in the runtime container for the deployed prefix
+
+##### Template and toolchain baseline shifts
+
+Do not assume the latest scaffolded app uses the same Angular and Vite versions as your v2 codebase. The `beta -> alpha` diff shows the template line moving to newer combinations, including:
+
+- Angular 17 and 18 templates moving to Vite 6
+- current full-stack/blog templates moving to Angular 19 plus Vite 7
+- `@angular-devkit/build-angular` returning to the scaffolded devDependencies in the current templates
+- markdown-related packages such as `marked`, `marked-highlight`, `marked-gfm-heading-id`, `marked-mangle`, `front-matter`, and sometimes `prismjs` being explicit app dependencies in current content-enabled templates
+
 #### Branch-derived upgrade notes for automation
 
 The `upstream/beta -> upstream/alpha` branch diff is small enough to turn into practical migration rules:
@@ -125,9 +149,11 @@ The `upstream/beta -> upstream/alpha` branch diff is small enough to turn into p
 - If the app uses `provideContent(withMarkdownRenderer())`, markdown route files, or content rendering helpers, ensure `vite.config.ts` configures `analog({ content: { highlighter: 'shiki' } })` or another supported highlighter.
 - Replace internal content imports such as `@analogjs/content/lib` with the public `@analogjs/content` entrypoint.
 - If tests import `@analogjs/vite-plugin-angular/setup-vitest`, rewrite them to `@analogjs/vitest-angular/setup-zone`.
+- If tests import `@analogjs/storybook-angular/testing`, rewrite them to the current Storybook Angular testing entrypoint instead of relying on the removed dedicated Analog testing export.
 - If the project uses explicit HMR configuration, prefer `hmr` over `liveReload`. HMR support is intended for newer Angular lines; older Angular versions should not be migrated with an expectation of HMR parity.
 - Expect newer Vite baselines. The branch diff moves Angular 17/18 templates to Vite 6 and current Angular 19 templates to Vite 7.
 - If the project uses `@analogjs/astro-angular`, treat that as a separate migration track because the integration moved to zoneless change detection by default.
+- If the project has custom base-href deployment logic, re-check `VITE_ANALOG_PUBLIC_BASE_URL`, `NITRO_APP_BASE_URL`, and build-command `baseHref` handling against the current deployment docs rather than preserving the older manual `apiPrefix` flow unchanged.
 
 For LLM-driven migration, use this checklist in order:
 
@@ -136,8 +162,10 @@ For LLM-driven migration, use this checklist in order:
 3. Scan for `@analogjs/content/lib` imports and rewrite them to `@analogjs/content`.
 4. Scan for `provideContent(withMarkdownRenderer())`, markdown page routes, or content helper imports. If found, enforce `analog({ content: { highlighter: 'shiki' } })` in `vite.config.ts`.
 5. Scan for `@analogjs/vite-plugin-angular/setup-vitest` and rewrite it to `@analogjs/vitest-angular/setup-zone`.
-6. Scan for explicit `liveReload` config and convert it to `hmr` unless the project intentionally needs the compatibility alias.
-7. Reconcile the toolchain versions in `package.json` with the current Analog template line for that Angular major.
+6. Scan for `@analogjs/storybook-angular/testing` and migrate those imports off the removed dedicated testing export.
+7. Scan for explicit `liveReload` config and convert it to `hmr` unless the project intentionally needs the compatibility alias.
+8. Reconcile the toolchain versions in `package.json` with the current Analog template line for that Angular major.
+9. Re-check custom base-href deployment code and environment variables against the current deployment model.
 
 ## Using a Schematic/Generator
 
