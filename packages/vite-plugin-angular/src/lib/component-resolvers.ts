@@ -65,34 +65,59 @@ function collectComponentUrls(code: string): {
   const inlineTemplates: string[] = [];
 
   const visitor = new Visitor({
-    // The Visitor callback receives raw ESTree nodes.  We use `any`
-    // because OXC's AST includes non-standard node variants and the
-    // project tsconfig enforces `noPropertyAccessFromIndexSignature`.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Property(node: any) {
-      if (node.key?.type !== 'Identifier') return;
-      const name: string = node.key.name;
-
-      if (name === 'styleUrls' && node.value?.type === 'ArrayExpression') {
-        for (const el of node.value.elements) {
-          const val = getStringValue(el);
-          if (val !== undefined) styleUrls.push(val);
+    ClassDeclaration(node: any) {
+      const decorators = node.decorators ?? [];
+      for (const decorator of decorators) {
+        const expression = decorator.expression;
+        if (
+          expression?.type !== 'CallExpression' ||
+          expression.callee?.type !== 'Identifier' ||
+          expression.callee.name !== 'Component'
+        ) {
+          continue;
         }
-      }
 
-      if (name === 'styleUrl') {
-        const val = getStringValue(node.value);
-        if (val !== undefined) styleUrls.push(val);
-      }
+        const componentArg = expression.arguments?.[0];
+        if (componentArg?.type !== 'ObjectExpression') {
+          continue;
+        }
 
-      if (name === 'templateUrl') {
-        const val = getStringValue(node.value);
-        if (val !== undefined) templateUrls.push(val);
-      }
+        for (const property of componentArg.properties ?? []) {
+          if (
+            property?.type !== 'Property' ||
+            property.key?.type !== 'Identifier'
+          ) {
+            continue;
+          }
 
-      if (name === 'template') {
-        const val = getStringValue(node.value);
-        if (val !== undefined) inlineTemplates.push(val);
+          const name = property.key.name;
+
+          if (
+            name === 'styleUrls' &&
+            property.value?.type === 'ArrayExpression'
+          ) {
+            for (const el of property.value.elements) {
+              const val = getStringValue(el);
+              if (val !== undefined) styleUrls.push(val);
+            }
+          }
+
+          if (name === 'styleUrl') {
+            const val = getStringValue(property.value);
+            if (val !== undefined) styleUrls.push(val);
+          }
+
+          if (name === 'templateUrl') {
+            const val = getStringValue(property.value);
+            if (val !== undefined) templateUrls.push(val);
+          }
+
+          if (name === 'template') {
+            const val = getStringValue(property.value);
+            if (val !== undefined) inlineTemplates.push(val);
+          }
+        }
       }
     },
   });
