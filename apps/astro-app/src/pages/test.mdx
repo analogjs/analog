@@ -3,6 +3,7 @@ import { ParentComponent } from '../components/parent.component.ts';
 import { DeferTestComponent } from '../components/defer-test.component.ts';
 import { FocusHydrationTestComponent } from '../components/focus-hydration-test.component.ts';
 import { IncrementalHydrationTestComponent } from '../components/incremental-hydration-test.component.ts';
+import { SkipHydrationTestComponent } from '../components/skip-hydration-test.component.ts';
 import { TodosComponent } from '../components/todos.component.ts';
 
 Angular Component in an MDX file
@@ -31,6 +32,9 @@ Angular Component in an MDX file
   will be captured and the count will increment.
 </p>
 <IncrementalHydrationTestComponent client:load />
+
+<p>The component below uses `ngSkipHydration` to opt-out of DOM reuse.</p>
+<SkipHydrationTestComponent client:load />
 
 <ClientOnlyComponent client:only="@analogjs/astro-angular" />
 

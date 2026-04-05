@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
-import { DeferredComponent } from './deferred.component';
+import { CounterComponent } from './counter.component';
 import { withIncrementalHydration } from '@angular/platform-browser';
 
 @Component({
   selector: 'astro-incremental-hydration-test',
-  imports: [DeferredComponent],
+  imports: [CounterComponent],
   template: `
     @defer (hydrate on interaction) {
-      <astro-deferred />
+      <astro-counter />
     }
   `,
 })

@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
-import { DeferredComponent } from './deferred.component';
+import { CounterComponent } from './counter.component';
 
 @Component({
   selector: 'astro-defer-test',
-  imports: [DeferredComponent],
+  imports: [CounterComponent],
   template: `
     @defer (on timer(1s)) {
-      <astro-deferred />
+      <astro-counter />
     } @placeholder {
       <p>Loading deferred component...</p>
     }

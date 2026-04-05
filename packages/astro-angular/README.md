@@ -207,6 +207,10 @@ export default defineConfig({
 });
 ```
 
+#### Skip Hydration
+
+Use the `ngSkipHydration` attribute on any components which do not work properly with hydration enabled. Read more [here](https://angular.dev/guide/hydration#how-to-skip-hydration-for-particular-components).
+
 ## Defining A Component
 
 The Astro Angular integration **only** supports rendering standalone components:

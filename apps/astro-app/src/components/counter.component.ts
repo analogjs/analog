@@ -1,14 +1,14 @@
 import { afterNextRender, Component, signal } from '@angular/core';
 
 @Component({
-  selector: 'astro-deferred',
+  selector: 'astro-counter',
   template: `
     <button style="display:block" (click)="handleClick()">
       Count: {{ count() }} | hydrated: {{ hydrated() }}
     </button>
   `,
 })
-export class DeferredComponent {
+export class CounterComponent {
   readonly count = signal(0);
   readonly hydrated = signal(false);
 
