@@ -182,6 +182,7 @@ export default defineConfig(({ mode }) => ({
 ## Enabling HMR
 
 Angular supports HMR where in most cases components can be updated without a full page reload. In Analog, prefer the `hmr` option. `liveReload` is still accepted as a compatibility alias, but `hmr` is the primary API.
+Analog requires Angular v19 or newer for `hmr` / `liveReload` to work. On Angular v16-v18, `hmr` and its `liveReload` alias are forcibly disabled at runtime with a console warning, so HMR is unavailable on those versions.
 
 ```ts
 /// <reference types="vitest" />
