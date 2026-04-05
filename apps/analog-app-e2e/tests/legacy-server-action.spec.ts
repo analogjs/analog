@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('legacy PageServerAction - /legacy-action', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/legacy-action');
-    await page.locator('form[data-state]').waitFor({ timeout: 15_000 });
+    await page.locator('form').waitFor({ timeout: 15_000 });
   });
 
   test('submits successfully through the legacy action handler', async ({
