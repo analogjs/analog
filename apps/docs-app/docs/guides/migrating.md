@@ -192,3 +192,13 @@ export default defineConfig(({ mode }) => ({
   plugins: [analog(), nxCopyAssetsPlugin(['*.md'])],
 }));
 ```
+
+## Reviewing Deprecated APIs During Migration
+
+After the initial Analog migration is working, check the [Deprecations and Compatibility](./deprecations.md) guide before treating older helper APIs as part of the long-term app shape.
+
+The current audit covers:
+
+- route metadata helpers that are still exported for compatibility
+- deprecated API middleware options in Nitro and the platform wrapper
+- legacy tRPC client aliases that still ship for backwards compatibility

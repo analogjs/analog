@@ -33,9 +33,8 @@ export interface Options {
    * If disabled, a proxy request is used to route /api
    * requests to / in the production server build.
    *
-   * @deprecated
-   * Use the src/server/routes/api folder
-   * for API routes.
+   * @deprecated Use the src/server/routes/api folder for API routes.
+   * Kept as a compatibility option for older project layouts.
    */
   useAPIMiddleware?: boolean;
 }
