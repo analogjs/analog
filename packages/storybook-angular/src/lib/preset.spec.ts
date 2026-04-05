@@ -1,4 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const angularPluginMock = vi.fn(() => ({ name: 'angular-mock' }));
 
@@ -37,6 +40,7 @@ vi.mock('@analogjs/vite-plugin-angular', () => ({
 let viteFinal: any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let core: any;
+const tempDirs: string[] = [];
 
 beforeEach(async () => {
   vi.resetModules();
@@ -44,6 +48,12 @@ beforeEach(async () => {
   const mod = await import('./preset');
   viteFinal = mod.viteFinal;
   core = mod.core;
+});
+
+afterEach(() => {
+  while (tempDirs.length > 0) {
+    rmSync(tempDirs.pop()!, { recursive: true, force: true });
+  }
 });
 
 /**
@@ -366,6 +376,103 @@ describe('viteFinal', () => {
       expect(
         pluginConfig?.css?.preprocessorOptions?.scss?.loadPaths?.[0],
       ).toContain('/workspace/root');
+    });
+
+    it('imports workspace-relative global styles from the workspace root', async () => {
+      const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-storybook-'));
+      tempDirs.push(workspaceRoot);
+
+      mkdirSync(join(workspaceRoot, 'libs/shared/ui/styles'), {
+        recursive: true,
+      });
+      mkdirSync(join(workspaceRoot, 'libs/shared/ui/.storybook'), {
+        recursive: true,
+      });
+      writeFileSync(
+        join(workspaceRoot, 'libs/shared/ui/styles/shared-ui.scss'),
+        '$color: red;',
+      );
+      writeFileSync(
+        join(workspaceRoot, 'libs/shared/ui/.storybook/storybook.scss'),
+        '@use "shared-ui";',
+      );
+
+      const config = { plugins: [] };
+      const options = createMockOptions({
+        configDir: join(workspaceRoot, 'libs/shared/ui/.storybook'),
+        angularBuilderOptions: {
+          styles: [
+            'libs/shared/ui/styles/shared-ui.scss',
+            'libs/shared/ui/.storybook/storybook.scss',
+          ],
+        },
+        angularBuilderContext: {
+          workspaceRoot,
+        },
+      });
+
+      const result = await viteFinal(config, options);
+      const angularOptionsPlugin = result.plugins
+        .flat()
+        .find((p) => p?.name === 'analogjs-storybook-options-plugin');
+
+      angularOptionsPlugin?.config?.({
+        root: join(workspaceRoot, 'libs/shared/ui'),
+      });
+
+      const transformed = await angularOptionsPlugin?.transform?.(
+        'export default {};',
+        `${options.configDir}/preview.ts`,
+      );
+
+      expect(transformed?.code).toContain(
+        `import '${join(workspaceRoot, 'libs/shared/ui/styles/shared-ui.scss')}';`,
+      );
+      expect(transformed?.code).toContain(
+        `import '${join(workspaceRoot, 'libs/shared/ui/.storybook/storybook.scss')}';`,
+      );
+    });
+
+    it('keeps bare package CSS imports as bare imports', async () => {
+      const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-storybook-'));
+      tempDirs.push(workspaceRoot);
+
+      const config = { plugins: [] };
+      const options = createMockOptions({
+        configDir: join(workspaceRoot, '.storybook'),
+        angularBuilderOptions: {
+          styles: [
+            '@angular/material/prebuilt-themes/deeppurple-amber.css',
+            'katex/dist/katex.css',
+            'flag-icons/css/flag-icons.min.css',
+          ],
+        },
+        angularBuilderContext: {
+          workspaceRoot,
+        },
+      });
+
+      const result = await viteFinal(config, options);
+      const angularOptionsPlugin = result.plugins
+        .flat()
+        .find((p) => p?.name === 'analogjs-storybook-options-plugin');
+
+      angularOptionsPlugin?.config?.({
+        root: join(workspaceRoot, 'libs/shared/ui'),
+      });
+
+      const transformed = await angularOptionsPlugin?.transform?.(
+        'export default {};',
+        `${options.configDir}/preview.ts`,
+      );
+
+      expect(transformed?.code).toContain(
+        "import '@angular/material/prebuilt-themes/deeppurple-amber.css';",
+      );
+      expect(transformed?.code).toContain("import 'katex/dist/katex.css';");
+      expect(transformed?.code).toContain(
+        "import 'flag-icons/css/flag-icons.min.css';",
+      );
     });
   });
 

@@ -141,6 +141,35 @@ To register global styles, add them to the `@analogjs/storybook-angular` builder
     }
 ```
 
+The Storybook preset uses these options for different jobs:
+
+- `styles` entries are imported into Storybook's generated preview module, so use them for global stylesheets that every story should load
+- `stylePreprocessorOptions.loadPaths` are passed to Vite's SCSS preprocessor, so use them for Sass `@use` and `@import` resolution inside `.scss` files
+
+For Nx workspaces with shared SCSS libraries, keep the paths workspace-relative in `project.json`:
+
+```json
+{
+  "storybook": {
+    "executor": "@analogjs/storybook-angular:start-storybook",
+    "options": {
+      "configDir": "libs/shared/ui/.storybook",
+      "styles": [
+        "libs/shared/ui/styles/shared-ui.scss",
+        "libs/shared/ui/.storybook/storybook.scss"
+      ],
+      "stylePreprocessorOptions": {
+        "loadPaths": ["libs/shared/ui/styles"]
+      }
+    }
+  }
+}
+```
+
+Use the `styles` array for actual global stylesheet files. Use `loadPaths` only to help Sass resolve imports from those files; it does not load a stylesheet by itself.
+
+For third-party package styles, prefer bare package imports such as `katex/dist/katex.css` or `@angular/material/prebuilt-themes/deeppurple-amber.css` over `node_modules/...` paths when the package exports them.
+
 ### Tailwind v4 in Storybook
 
 If your project uses Tailwind v4, keep Storybook aligned with the same opinionated Analog setup you use in the app:
@@ -338,6 +367,12 @@ const config: StorybookConfig = {
 
 export default config;
 ```
+
+`nxViteTsPaths()` only resolves TypeScript path aliases. It does not replace Storybook's `styles` option or SCSS `loadPaths`, so shared Sass setups usually need all three pieces:
+
+- `styles` for global Storybook stylesheets
+- `stylePreprocessorOptions.loadPaths` for Sass import roots
+- `nxViteTsPaths()` for TS/Angular library aliases used by stories and components
 
 ## Using File Replacements
 
