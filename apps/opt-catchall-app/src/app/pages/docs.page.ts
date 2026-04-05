@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 
 @Component({
-  selector: 'app-docs-index-page',
+  selector: 'app-docs-layout-page',
   standalone: true,
   imports: [RouterOutlet, RouterLink],
   template: `

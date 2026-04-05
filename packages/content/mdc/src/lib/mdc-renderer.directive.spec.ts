@@ -15,6 +15,7 @@ class TestAlertComponent {
 }
 
 @Component({
+  selector: 'analog-test-host',
   standalone: true,
   imports: [MdcRendererDirective],
   template: '<div [mdcAst]="ast"></div>',

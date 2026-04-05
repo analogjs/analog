@@ -31,7 +31,14 @@ export default defineConfig({
             style: 'kebab-case',
           },
         ],
+        '@angular-eslint/use-component-selector': 'error',
         '@angular-eslint/prefer-standalone': 'error',
+      },
+    },
+    {
+      files: ['src/**/pages/**/*.ts', 'src/**/*.page.ts', 'src/**/*.page.tsx'],
+      rules: {
+        '@angular-eslint/use-component-selector': 'off',
       },
     },
     {
