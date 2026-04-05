@@ -2,5 +2,20 @@
   "name": "content-plugin",
   "version": "0.0.1",
   "main": "./src/index.js",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "tsdown": "catalog:"
+  },
+  "peerDependencies": {
+    "@nx/devkit": "catalog:peerCompat",
+    "vite": "catalog:peerCompat"
+  },
+  "peerDependenciesMeta": {
+    "@nx/devkit": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    }
+  }
 }

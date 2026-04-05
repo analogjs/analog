@@ -14,7 +14,7 @@ export class PrismHighlighter extends MarkedContentHighlighter {
     return `<pre class="${classes}"><code class="${classes}">${code}</code></pre>`;
   }
 
-  override getHighlightExtension() {
+  override getHighlightExtension(): import('marked').MarkedExtension {
     return markedHighlight({
       async: true,
       highlight: (code: string, lang: string) => {

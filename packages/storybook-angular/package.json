@@ -1,7 +1,8 @@
 {
   "name": "@analogjs/storybook-angular",
-  "version": "2.0.0-alpha.16",
+  "version": "3.0.0-alpha.25",
   "description": "Storybook Integration for Angular & Vite",
+  "type": "module",
   "keywords": [
     "storybook",
     "angular",
@@ -23,28 +24,30 @@
   "license": "MIT",
   "exports": {
     ".": {
-      "types": "./src/index.d.ts",
-      "import": "./src/index.js",
-      "require": "./src/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     },
-    "./preset": "./preset.mjs",
+    "./preset": "./dist/preset.js",
     "./package.json": "./package.json",
-    "./*": "./src/*"
+    "./testing": {
+      "types": "./dist/src/lib/testing.d.ts",
+      "default": "./dist/src/lib/testing.js"
+    }
   },
-  "main": "src/index.js",
+  "main": "dist/src/index.js",
   "dependencies": {
-    "@storybook/builder-vite": ">=8.6.0 || ^9.0.0 || next"
+    "@storybook/builder-vite": "catalog:peerStorybook10"
   },
   "peerDependencies": {
-    "@storybook/angular": ">=8.6.0 || ^9.0.0 || next",
-    "@analogjs/vite-plugin-angular": "*",
-    "storybook": ">=8.6.0 || ^9.0.0 || next",
-    "vite": "^5.0.0 || ^6.0.0 || ^7.0.0"
+    "@storybook/angular": "catalog:peerStorybook10",
+    "@analogjs/vite-plugin-angular": "catalog:peerVitestAngular",
+    "storybook": "catalog:peerStorybook10",
+    "vite": "catalog:peerCompat"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.18.0 || >=24.3.0"
   },
-  "builders": "src/lib/builders.json",
+  "builders": "./dist/src/lib/builders.json",
   "ng-add": {
     "save": "devDependencies"
   },
@@ -58,5 +61,9 @@
       "@analogjs/vite-plugin-nitro",
       "@analogjs/vitest-angular"
     ]
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

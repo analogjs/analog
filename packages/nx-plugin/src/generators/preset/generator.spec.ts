@@ -29,7 +29,7 @@ describe('preset generator', () => {
     });
 
     expect(tree.read('/my-app/project.json').toString()).toMatchSnapshot();
-  });
+  }, 30_000);
 
   it('should match vite.config.ts', async () => {
     const { tree } = await setup({ analogAppName: 'my-app' });
@@ -47,5 +47,21 @@ describe('preset generator', () => {
     const { tree } = await setup({ analogAppName: 'my-app' });
 
     expect(tree.read('/my-app/src/test-setup.ts').toString()).toMatchSnapshot();
+  });
+
+  it('should include package.json deps', async () => {
+    const { tree } = await setup({ analogAppName: 'my-app' });
+
+    const packageJson = JSON.parse(tree.read('/package.json').toString());
+
+    expect(packageJson['devDependencies']['@nx/vite']).toBeDefined();
+  });
+
+  it('should use vitest 3 for Nx < 22.3.0', async () => {
+    const { tree } = await setup({ analogAppName: 'my-app' });
+
+    const packageJson = JSON.parse(tree.read('/package.json').toString());
+
+    expect(packageJson['devDependencies']['vitest']).toBe('^3.0.0');
   });
 });

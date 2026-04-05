@@ -114,14 +114,14 @@ export default defineConfig(({ mode }) => ({
 import '@analogjs/vitest-angular/setup-zone';
 
 import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+  BrowserTestingModule,
+  platformBrowserTesting,
+} from '@angular/platform-browser/testing';
 import { getTestBed } from '@angular/core/testing';
 
 getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting(),
+  BrowserTestingModule,
+  platformBrowserTesting(),
 );
 ```
 
@@ -137,19 +137,19 @@ import {
   NgModule,
 } from '@angular/core';
 import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+  BrowserTestingModule,
+  platformBrowserTesting,
+} from '@angular/platform-browser/testing';
 import { getTestBed } from '@angular/core/testing';
 
 @NgModule({
-  providers: [provideExperimentalZonelessChangeDetection()],
+  providers: [provideZonelessChangeDetection()],
 })
 export class ZonelessTestModule {}
 
 getTestBed().initTestEnvironment(
-  [BrowserDynamicTestingModule, ZonelessTestModule],
-  platformBrowserDynamicTesting(),
+  [BrowserTestingModule, ZonelessTestModule],
+  platformBrowserTesting(),
 );
 ```
 
@@ -178,14 +178,14 @@ getTestBed().initTestEnvironment(
 
 > 你也可以添加一个新的目标并命名为 `vitest` 以与 `test` 目标一起运行。
 
-最后，将 `src/test-setup.ts` 添加到项目根目录的 `tsconfig.spec.json` 的 `files` 数组中，将 `target` 设置为 `es2016`，并更新 `types`。
+最后，将 `src/test-setup.ts` 添加到项目根目录的 `tsconfig.spec.json` 的 `files` 数组中，将 `target` 设置为 `es2022`，并更新 `types`。
 
 ```json
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
-    "target": "es2016",
+    "target": "es2022",
     "types": ["vitest/globals", "node"]
   },
   "files": ["src/test-setup.ts"],
@@ -269,14 +269,14 @@ import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-zone';
 
 import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
+  BrowserTestingModule,
+  platformBrowserTesting,
+} from '@angular/platform-browser/testing';
 import { getTestBed } from '@angular/core/testing';
 
 getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting(),
+  BrowserTestingModule,
+  platformBrowserTesting(),
 );
 ```
 

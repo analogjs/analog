@@ -24,7 +24,7 @@ export const postTitleResolver: ResolveFn<string> = (route) =>
 export const postMetaResolver: ResolveFn<MetaTag[]> = (route) => {
   const postAttributes = injectActivePostAttributes(route);
   const base =
-    import.meta.env['VITE_ANALOG_BASE_URL'] || 'http://localhost:3000';
+    import.meta.env['VITE_ANALOG_BASE_URL'] || 'http://localhost:43010';
   const title = encodeURIComponent(postAttributes.title);
   const slug = postAttributes.slug;
   const imageUrl = `${base}/api/v1/og-images/${slug}?title=${title}`;

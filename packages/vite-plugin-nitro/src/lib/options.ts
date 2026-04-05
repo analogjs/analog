@@ -1,4 +1,5 @@
-import { PrerenderRoute } from 'nitropack';
+import type { PrerenderRoute } from 'nitro/types';
+import type { UserConfig } from 'vite';
 
 export interface Options {
   ssr?: boolean;
@@ -37,6 +38,13 @@ export interface Options {
    * Kept as a compatibility option for older project layouts.
    */
   useAPIMiddleware?: boolean;
+  /**
+   * Vite-native build passthrough. Rolldown-only options such as
+   * `build.rolldownOptions.output.codeSplitting` are forwarded when present.
+   */
+  vite?: {
+    build?: UserConfig['build'];
+  };
 }
 
 export interface PrerenderOptions {
@@ -58,8 +66,44 @@ export interface PrerenderOptions {
   postRenderingHooks?: ((routes: PrerenderRoute) => Promise<void>)[];
 }
 
+export type SitemapPriority = number | `${number}`;
+
+export interface SitemapRouteDefinition {
+  route: string;
+  lastmod?: string;
+  changefreq?:
+    | 'always'
+    | 'hourly'
+    | 'daily'
+    | 'weekly'
+    | 'monthly'
+    | 'yearly'
+    | 'never';
+  priority?: SitemapPriority;
+}
+
+export interface SitemapEntry extends SitemapRouteDefinition {
+  loc: string;
+}
+
+export type SitemapRouteInput = string | SitemapRouteDefinition | undefined;
+export type SitemapRouteSource =
+  | SitemapRouteInput[]
+  | (() => Promise<SitemapRouteInput[]>);
+export type SitemapExcludeRule =
+  | string
+  | RegExp
+  | ((entry: SitemapEntry) => boolean | Promise<boolean>);
+export type SitemapTransform = (
+  entry: SitemapEntry,
+) => SitemapRouteDefinition | false | Promise<SitemapRouteDefinition | false>;
+
 export interface SitemapConfig {
   host: string;
+  include?: SitemapRouteSource;
+  exclude?: SitemapExcludeRule[];
+  defaults?: PrerenderSitemapConfig;
+  transform?: SitemapTransform;
 }
 
 export interface PrerenderContentDir {
@@ -71,7 +115,7 @@ export interface PrerenderContentDir {
   /**
    * Transform the matching content files path into a route.
    * The function is called for each matching content file within the specified contentDir.
-   * @param file information of the matching file (`path`, `name`, `extension`, `attributes`)
+   * @param file information of the matching file (`path`, `name`, `extension`, `attributes`, `content`)
    * @returns a string with the route should be returned (e. g. `/blog/<slug>`) or the value `false`, when the route should not be prerendered.
    */
   transform: (file: PrerenderContentFile) => string | false;
@@ -84,6 +128,14 @@ export interface PrerenderContentDir {
   sitemap?:
     | PrerenderSitemapConfig
     | ((file: PrerenderContentFile) => PrerenderSitemapConfig);
+
+  /**
+   * Output the source markdown content alongside the prerendered route.
+   * The source file will be accessible at the route path with a .md extension.
+   * @param file information of the matching file including its content
+   * @returns the markdown content string to output, or `false` to skip outputting for this file
+   */
+  outputSourceFile?: (file: PrerenderContentFile) => string | false;
 }
 
 /**
@@ -91,6 +143,7 @@ export interface PrerenderContentDir {
  * @param name the basename of the matching content file without the file extension
  * @param extension the file extension
  * @param attributes the frontmatter attributes extracted from the frontmatter section of the file
+ * @param content the raw file content including frontmatter
  * @returns a string with the route should be returned (e. g. `/blog/<slug>`) or the value `false`, when the route should not be prerendered.
  */
 export interface PrerenderContentFile {
@@ -98,6 +151,7 @@ export interface PrerenderContentFile {
   attributes: Record<string, any>;
   name: string;
   extension: string;
+  content: string;
 }
 
 export interface PrerenderSitemapConfig {
@@ -110,7 +164,7 @@ export interface PrerenderSitemapConfig {
     | 'monthly'
     | 'yearly'
     | 'never';
-  priority?: string;
+  priority?: SitemapPriority;
 }
 
 export interface PrerenderRouteConfig {
@@ -125,4 +179,10 @@ export interface PrerenderRouteConfig {
    * Prerender static data for the prerendered route
    */
   staticData?: boolean;
+  /**
+   * Path to the source markdown file to output alongside the prerendered route.
+   * The source file will be accessible at the route path with a .md extension.
+   * @example 'src/content/overview.md'
+   */
+  outputSourceFile?: string;
 }

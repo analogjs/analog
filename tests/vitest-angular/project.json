@@ -1,0 +1,16 @@
+{
+  "name": "tests-vitest-angular",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "tests/vitest-angular/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "targets": {
+    "test": {
+      "command": "vitest",
+      "dependsOn": ["vitest-angular:build"],
+      "options": {
+        "cwd": "{projectRoot}"
+      }
+    }
+  }
+}

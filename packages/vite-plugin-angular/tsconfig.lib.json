@@ -1,17 +1,21 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "es2020",
+    "module": "preserve",
     "outDir": "../../dist/out-tsc",
     "declaration": true,
+    "isolatedDeclarations": true,
     "types": [],
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "bundler"
   },
   "include": ["**/*.ts"],
   "exclude": [
-    "jest.config.ts",
     "**/*.spec.ts",
     "**/*.test.ts",
-    "src/test-setup.ts"
+    "src/test-setup.ts",
+    "vite.config.ts",
+    "vite.config.lib.ts",
+    "oxlint.config.ts"
   ]
 }

@@ -1,0 +1,25 @@
+export default {
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    'body-leading-blank': [2, 'always'],
+    'footer-leading-blank': [2, 'always'],
+    'header-max-length': [2, 'always', 150],
+    'scope-enum': [
+      2,
+      'always',
+      [
+        'vite-plugin-angular',
+        'vite-plugin-nitro',
+        'vitest-angular',
+        'create-analog',
+        'astro-angular',
+        'router',
+        'storybook-angular',
+        'platform',
+        'content',
+        'content-plugin',
+        'nx-plugin',
+      ],
+    ],
+  },
+};

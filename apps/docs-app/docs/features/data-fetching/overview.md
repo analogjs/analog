@@ -98,15 +98,15 @@ export const appConfig: ApplicationConfig = {
 
 ## Making Requests
 
-In your component/service, use `HttpClient` along with [/docs/features/api/overview](API routes) with providing a full URL.
+In your component/service, use `HttpClient` along with [API routes](/docs/features/api/overview) with providing a full URL.
 
 An example API route that fetches todos.
 
 ```ts
 // src/server/routes/api/v1/todos.ts -> /api/v1/todos
-import { eventHandler } from 'h3';
+import { defineHandler } from 'h3';
 
-export default eventHandler(async () => {
+export default defineHandler(async () => {
   const response = await fetch('https://jsonplaceholder.typicode.com/todos');
   const todos = await response.json();
 

@@ -1,11 +1,30 @@
 {
   "name": "@analogjs/vitest-angular",
-  "version": "2.0.0-alpha.16",
+  "version": "3.0.0-alpha.25",
   "description": "Vitest Builder for Angular",
-  "type": "commonjs",
+  "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
-    ".": "./src/index.js",
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./setup-zone": {
+      "types": "./dist/setup-zone.d.ts",
+      "default": "./dist/setup-zone.js"
+    },
+    "./setup-snapshots": {
+      "types": "./dist/setup-snapshots.d.ts",
+      "default": "./dist/setup-snapshots.js"
+    },
+    "./setup-serializers": {
+      "types": "./dist/setup-serializers.d.ts",
+      "default": "./dist/setup-serializers.js"
+    },
+    "./setup-testbed": {
+      "types": "./dist/setup-testbed.d.ts",
+      "default": "./dist/setup-testbed.js"
+    },
     "./package.json": "./package.json"
   },
   "keywords": [
@@ -27,14 +46,25 @@
     "type": "github",
     "url": "https://github.com/sponsors/brandonroberts"
   },
-  "builders": "./builders.json",
+  "builders": "./dist/builders.json",
+  "schematics": "./dist/src/lib/tools/collection.json",
   "ng-add": {
     "save": "devDependencies"
   },
+  "dependencies": {
+    "oxc-transform": "catalog:"
+  },
   "peerDependencies": {
-    "@analogjs/vite-plugin-angular": "*",
-    "@angular-devkit/architect": ">=0.1500.0 < 0.2100.0",
-    "vitest": "^1.3.1 || ^2.0.0 || ^3.0.0"
+    "@analogjs/vite-plugin-angular": "catalog:peerVitestAngular",
+    "@angular-devkit/architect": "catalog:peerVitestAngular",
+    "@angular-devkit/schematics": "catalog:peerVitestAngular",
+    "vitest": "catalog:peerVitestAngular",
+    "zone.js": "catalog:peerVitestAngular"
+  },
+  "peerDependenciesMeta": {
+    "zone.js": {
+      "optional": true
+    }
   },
   "ng-update": {
     "packageGroup": [
@@ -46,5 +76,9 @@
       "@analogjs/vite-plugin-nitro",
       "@analogjs/vitest-angular"
     ]
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

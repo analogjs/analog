@@ -1,0 +1,26 @@
+{
+  "name": "vitest-angular-tools",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/vitest-angular-tools/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["vitest-angular:build-self"],
+      "outputs": ["{workspaceRoot}/packages/vitest-angular/dist/src/lib/tools"],
+      "options": {
+        "command": "vite build -c packages/vitest-angular-tools/vite.config.lib.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["vitest-angular:build"]
+    }
+  }
+}

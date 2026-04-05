@@ -46,7 +46,6 @@ export const getAnalogDependencies = (
 ): ExtendedDependenciesRecord => {
   const escapedNxVersion = nxVersion.replace(/[~^]/, '');
 
-  // fail out for versions <15.2.0
   if (lt(escapedNxVersion, '17.0.0')) {
     throw new Error(
       stripIndents`Nx v17.0.0 or newer is required to install Analog`,

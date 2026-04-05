@@ -2,6 +2,9 @@
 
 Integration package for Storybook using Angular & Vite.
 
+> This is a community integration not maintained by the Storybook team. If you have issues,
+> file an issue in our [GitHub repo](https://github.com/analogjs/analog/issues).
+
 ## Setup
 
 If you don't have Storybook setup already, run the following command to initialize Storybook for your project:
@@ -22,33 +25,7 @@ npm install @analogjs/storybook-angular --save-dev
 
 ## Configuring Storybook
 
-Add the `zone.js` import to the top of the `.storybook/preview.ts` file.
-
-```ts
-import 'zone.js';
-import { applicationConfig, type Preview } from '@analogjs/storybook-angular';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
-
-const preview: Preview = {
-  decorators: [
-    applicationConfig({
-      providers: [provideNoopAnimations()],
-    }),
-  ],
-  parameters: {
-    controls: {
-      matchers: {
-        color: /(background|color)$/i,
-        date: /Date$/i,
-      },
-    },
-  },
-};
-
-export default preview;
-```
-
-Next, update the `.storybook/main.ts` file to use the `StorybookConfig`. Also update the `framework` to use the `@analogjs/storybook-angular` package.
+Update the `.storybook/main.ts` file to use the `StorybookConfig` type. Also update the `framework` to use the `@analogjs/storybook-angular` package.
 
 ```ts
 import { StorybookConfig } from '@analogjs/storybook-angular';
@@ -57,14 +34,18 @@ const config: StorybookConfig = {
   // other config, addons, etc.
   framework: {
     name: '@analogjs/storybook-angular',
-    options: {},
+    options: {
+      hmr: true,
+    },
   },
 };
+
+export default config;
 ```
 
 Remove the existing `webpackFinal` config function if present.
 
-Next, update the Storybook builders in the `angular.json` or `project.json`.
+Next, update the Storybook targets in the `angular.json` or `project.json`
 
 ```json
     "storybook": {
@@ -77,7 +58,141 @@ Next, update the Storybook builders in the `angular.json` or `project.json`.
 
 Remove any `webpack` specific options and remove the `browserTarget` option.
 
-Add the `/storybook-static` folder to your `.gitignore` file.
+Add the `/storybook-static` folder to the `.gitignore` file.
+
+## Setting up CSS
+
+To register global styles, add them to the `@analogjs/storybook-angular` builder options in the `angular.json` or `project.json`.
+
+```json
+    "storybook": {
+      "builder": "@analogjs/storybook-angular:start-storybook",
+      "options": {
+        // ... other options
+        "styles": [
+          "src/styles.css"
+        ],
+        "stylePreprocessorOptions": {
+          "loadPaths": ["libs/my-lib/styles"]
+        }
+      }
+    },
+    "build-storybook": {
+      "builder": "@analogjs/storybook-angular:build-storybook",
+      "options": {
+        // ... other options
+        "styles": [
+          "src/styles.css"
+        ],
+        "stylePreprocessorOptions": {
+          "loadPaths": ["libs/my-lib/styles"]
+        }
+      }
+    }
+```
+
+## Using Tailwind CSS
+
+For Vite-based Analog apps, Storybook should register Tailwind using the same `@tailwindcss/vite` plugin used by the app itself.
+
+Keep your global stylesheet in the Storybook `styles` array and add the Tailwind Vite plugin in `.storybook/main.ts` with `viteFinal`:
+
+```ts
+import tailwindcss from '@tailwindcss/vite';
+import { UserConfig, mergeConfig } from 'vite';
+
+import type { StorybookConfig } from '@analogjs/storybook-angular';
+
+const config: StorybookConfig = {
+  // ... other config, addons, etc.
+  async viteFinal(config: UserConfig) {
+    return mergeConfig(config, {
+      plugins: [tailwindcss()],
+    });
+  },
+};
+
+export default config;
+```
+
+In your global stylesheet, import Tailwind with:
+
+```css
+@import 'tailwindcss';
+```
+
+Storybook does not automatically infer the Tailwind plugin from your app's `vite.config.ts`, so add it in `viteFinal` when your stories depend on Tailwind utilities.
+
+Angular HMR is controlled with `framework.options.hmr`. `liveReload` is still accepted as a compatibility alias, but `hmr` is the preferred option.
+
+## Enabling Zoneless Change Detection
+
+To use zoneless change detection for the Storybook, add the `experimentalZoneless` flag to the `@analogjs/storybook-angular` builder options in the `angular.json`.
+
+```json
+    "storybook": {
+      "builder": "@analogjs/storybook-angular:start-storybook",
+      "options": {
+        // ... other options
+        "experimentalZoneless": true
+      }
+    },
+    "build-storybook": {
+      "builder": "@analogjs/storybook-angular:build-storybook",
+      "options": {
+        // ... other options
+        "experimentalZoneless": true
+      }
+    }
+```
+
+For `project.json`
+
+```json
+    "storybook": {
+      "executor": "@analogjs/storybook-angular:start-storybook",
+      "options": {
+        // ... other options
+        "configDir": "path/to/.storybook",
+        "experimentalZoneless": true,
+        "compodoc": false
+      }
+    },
+    "build-storybook": {
+      "executor": "@analogjs/storybook-angular:build-storybook",
+      "options": {
+        // ... other options
+        "configDir": "path/to/.storybook",
+        "experimentalZoneless": true,
+        "compodoc": false
+      }
+    }
+```
+
+> Zoneless change detection is the default for new projects starting Angular v21.
+
+## Setting up Static Assets
+
+Static assets are configured in the `.storybook/main.ts` file using the `staticDirs` array.
+
+The example below shows how to add the `public` directory from `src/public` relative to the `.storybook/main.ts` file.
+
+```ts
+import { StorybookConfig } from '@analogjs/storybook-angular';
+
+const config: StorybookConfig = {
+  // other config, addons, etc.
+  framework: {
+    name: '@analogjs/storybook-angular',
+    options: {},
+  },
+  staticDirs: ['../public'],
+};
+
+export default config;
+```
+
+See the [Storybook docs on images and assets](https://storybook.js.org/docs/configure/integration/images-and-assets) for more information.
 
 ## Running Storybook
 
@@ -93,27 +208,6 @@ Run the command for building the storybook.
 
 ```sh
 npm run build-storybook
-```
-
-## Using shared CSS paths
-
-To load shared CSS paths, configure them using `loadPaths` css option in the `viteFinal` function.
-
-```ts
-import path from 'node:path';
-import { UserConfig, mergeConfig } from 'vite';
-
-export async function viteFinal(config: UserConfig) {
-  return mergeConfig(config, {
-    css: {
-      preprocessorOptions: {
-        scss: {
-          loadPaths: `${path.resolve(__dirname, '../src/lib/styles')}`,
-        },
-      },
-    },
-  });
-}
 ```
 
 ## Using TypeScript Config Path Aliases
@@ -134,11 +228,18 @@ Next, add the plugin to the `plugins` array in the `.storybook/main.ts`.
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 import { UserConfig, mergeConfig } from 'vite';
 
-export async function viteFinal(config: UserConfig) {
-  return mergeConfig(config, {
-    plugins: [viteTsConfigPaths()],
-  });
-}
+import type { StorybookConfig } from '@analogjs/storybook-angular';
+
+const config: StorybookConfig = {
+  // ... other config, addons, etc.
+  async viteFinal(config: UserConfig) {
+    return mergeConfig(config, {
+      plugins: [viteTsConfigPaths()],
+    });
+  },
+};
+
+export default config;
 ```
 
 ### With Nx
@@ -149,11 +250,18 @@ For Nx workspaces, import and use the `nxViteTsPaths` plugin from the `@nx/vite`
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { UserConfig, mergeConfig } from 'vite';
 
-export async function viteFinal(config: UserConfig) {
-  return mergeConfig(config, {
-    plugins: [nxViteTsPaths()],
-  });
-}
+import type { StorybookConfig } from '@analogjs/storybook-angular';
+
+const config: StorybookConfig = {
+  // ... other config, addons, etc.
+  async viteFinal(config: UserConfig) {
+    return mergeConfig(config, {
+      plugins: [nxViteTsPaths()],
+    });
+  },
+};
+
+export default config;
 ```
 
 ## Using File Replacements
@@ -166,18 +274,25 @@ Import the plugin and set it up:
 import { replaceFiles } from '@nx/vite/plugins/rollup-replace-files.plugin';
 import { UserConfig, mergeConfig } from 'vite';
 
-export async function viteFinal(config: UserConfig) {
-  return mergeConfig(config, {
-    plugins: [
-      replaceFiles([
-        {
-          replace: './src/one.ts',
-          with: './src/two.ts',
-        },
-      ]),
-    ],
-  });
-}
+import type { StorybookConfig } from '@analogjs/storybook-angular';
+
+const config: StorybookConfig = {
+  // ... other config, addons, etc.
+  async viteFinal(config: UserConfig) {
+    return mergeConfig(config, {
+      plugins: [
+        replaceFiles([
+          {
+            replace: './src/one.ts',
+            with: './src/two.ts',
+          },
+        ]),
+      ],
+    });
+  },
+};
+
+export default config;
 ```
 
 Adding the replacement files to `files` array in the `tsconfig.app.json` may also be necessary.

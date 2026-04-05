@@ -3,15 +3,12 @@
   "compilerOptions": {
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "moduleResolution": "bundler",
     "outDir": "../../dist/out-tsc",
     "declaration": true,
+    "isolatedDeclarations": true,
     "types": ["node"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": [
-    "src/generators/app/files/**/*",
-    "src/**/*.spec.ts",
-    "src/**/*.test.ts",
-    "**/template/**"
-  ]
+  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts", "**/template/**"]
 }

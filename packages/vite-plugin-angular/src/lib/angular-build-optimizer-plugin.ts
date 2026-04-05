@@ -1,6 +1,6 @@
-import { Plugin } from 'vite';
-
+import type { Plugin, UserConfig } from 'vite';
 import { JavaScriptTransformer } from './utils/devkit.js';
+import { getJsTransformConfigKey } from './utils/rolldown.js';
 
 export function buildOptimizerPlugin({
   jit,
@@ -26,6 +26,7 @@ export function buildOptimizerPlugin({
       isProd =
         userConfig.mode === 'production' ||
         process.env['NODE_ENV'] === 'production';
+      const jsTransformConfigKey = getJsTransformConfigKey();
 
       return {
         define: isProd
@@ -36,7 +37,7 @@ export function buildOptimizerPlugin({
               ngServerMode: `${!!userConfig.build?.ssr}`,
             }
           : {},
-        esbuild: {
+        [jsTransformConfigKey]: {
           define: isProd
             ? {
                 ngDevMode: 'false',
@@ -46,10 +47,13 @@ export function buildOptimizerPlugin({
               }
             : undefined,
         },
-      };
+      } as UserConfig;
     },
-    async transform(code, id) {
-      if (/\.[cm]?js$/.test(id)) {
+    transform: {
+      filter: {
+        id: /\.[cm]?js$/,
+      },
+      async handler(code, id) {
         const angularPackage = /fesm20/.test(id);
 
         if (!angularPackage) {
@@ -75,9 +79,7 @@ export function buildOptimizerPlugin({
         return {
           code: Buffer.from(result).toString(),
         };
-      }
-
-      return;
+      },
     },
   };
 }

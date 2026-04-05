@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';__TAILWIND_IMPORT__
+__TAILWIND_IMPORT__import analog from '@analogjs/platform';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -12,12 +12,12 @@ export default defineConfig(({ mode }) => ({
     mainFields: ['module'],
   },
   plugins: [
-    analog({
+__TAILWIND_PLUGIN__    analog({
       ssr: false,
       static: true,
       prerender: {
         routes: [],
-      },__ANALOG_SFC_CONFIG__
-    }),__TAILWIND_PLUGIN__
+      },
+    }),
   ],
 }));

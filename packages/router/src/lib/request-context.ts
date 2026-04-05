@@ -1,14 +1,22 @@
 import { TransferState, inject, makeStateKey } from '@angular/core';
 import {
+  HttpEvent,
   HttpHandlerFn,
   HttpHeaders,
   HttpRequest,
   HttpResponse,
 } from '@angular/common/http';
 
-import { from, of } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 
-import { injectBaseURL, injectAPIPrefix } from '@analogjs/router/tokens';
+import type { HTTPMethod } from 'nitro/h3';
+
+import {
+  injectBaseURL,
+  injectAPIPrefix,
+  injectInternalServerFetch,
+  type ServerInternalFetch,
+} from '@analogjs/router/tokens';
 
 import { makeCacheKey } from './cache-key';
 
@@ -25,15 +33,19 @@ import { makeCacheKey } from './cache-key';
 export function requestContextInterceptor(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
-) {
+): Observable<HttpEvent<unknown>> {
   const apiPrefix = injectAPIPrefix();
   const baseUrl = injectBaseURL();
   const transferState = inject(TransferState);
+  const nitroGlobal = globalThis as typeof globalThis & {
+    $fetch?: ServerInternalFetch;
+  };
+  const internalFetch = injectInternalServerFetch();
+  const serverFetch = internalFetch ?? nitroGlobal.$fetch;
 
   // during prerendering with Nitro
   if (
-    typeof global !== 'undefined' &&
-    global.$fetch &&
+    serverFetch &&
     baseUrl &&
     (req.url.startsWith('/') ||
       req.url.startsWith(baseUrl) ||
@@ -47,26 +59,26 @@ export function requestContextInterceptor(
     const responseType =
       req.responseType === 'arraybuffer' ? 'arrayBuffer' : req.responseType;
 
-    return from(
-      global.$fetch
+    return from<Promise<HttpResponse<unknown>>>(
+      serverFetch
         .raw(fetchUrl, {
-          method: req.method as any,
+          method: req.method as HTTPMethod,
           body: req.body ? req.body : undefined,
           params: requestUrl.searchParams,
           responseType,
-          headers: req.headers.keys().reduce((hdrs, current) => {
-            return {
-              ...hdrs,
-              [current]: req.headers.get(current),
-            };
-          }, {}),
+          headers: req.headers
+            .keys()
+            .reduce((hdrs: Record<string, string>, current: string) => {
+              const value = req.headers.get(current);
+              return value != null ? { ...hdrs, [current]: value } : hdrs;
+            }, {}),
         })
         .then((res) => {
           const cacheResponse = {
             body: res._data,
             headers: new HttpHeaders(res.headers),
-            status: 200,
-            statusText: 'OK',
+            status: res.status ?? 200,
+            statusText: res.statusText ?? 'OK',
             url: fetchUrl,
           };
           const transferResponse = new HttpResponse(cacheResponse);

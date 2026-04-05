@@ -1,12 +1,11 @@
 /// <reference types="vitest" />
 
-import analog, { type PrerenderContentFile } from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import analog, { type PrerenderContentFile } from '@analogjs/platform';
 import { defineConfig } from 'vite';
-import fs from 'node:fs';
 
 // Only run in Netlify CI
-let base = process.env['URL'] || 'http://localhost:3000';
+let base = process.env['URL'] || 'http://localhost:43010';
 if (process.env['NETLIFY'] === 'true') {
   if (process.env['CONTEXT'] === 'deploy-preview') {
     base = `${process.env['DEPLOY_PRIME_URL']}/`;
@@ -25,19 +24,18 @@ export default defineConfig(() => {
     },
     build: {
       outDir: '../../dist/apps/blog-app/client',
+      emptyOutDir: true,
       reportCompressedSize: true,
       target: ['es2020'],
     },
     plugins: [
       analog({
         liveReload: true,
-        vite: {
-          experimental: {
-            supportAnalogFormat: true,
-          },
+        experimental: {
+          useAngularCompilationAPI: true,
+          typedRouter: true,
         },
-        additionalPagesDirs: ['/libs/shared/feature'],
-        additionalContentDirs: ['/libs/shared/feature/src/content'],
+        discoverRoutes: true,
         content: {
           highlighter: 'shiki',
           shikiOptions: {
@@ -63,7 +61,9 @@ export default defineConfig(() => {
               },
               '/blog/my-second-post',
               '/about-me',
-              '/about-you',
+              // '/about-you' removed — the source file uses .page.analog
+              // which is not matched by route discovery (*.page.ts only),
+              // so no route is registered and prerendering fails with NG04002.
               {
                 contentDir: '/src/content/archived',
                 transform: (file: PrerenderContentFile) => {
@@ -78,6 +78,7 @@ export default defineConfig(() => {
                     changefreq: 'never',
                   };
                 },
+                outputSourceFile: (file: PrerenderContentFile) => file.content,
               },
             ];
           },
@@ -87,6 +88,7 @@ export default defineConfig(() => {
         },
         nitro: {
           prerender: {
+            autoSubfolderIndex: false,
             failOnError: true,
           },
         },

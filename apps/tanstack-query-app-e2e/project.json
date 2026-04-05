@@ -1,0 +1,21 @@
+{
+  "name": "tanstack-query-app-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/tanstack-query-app-e2e/tests",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["tanstack-query-app:build"],
+      "options": {
+        "cwd": "apps/tanstack-query-app-e2e",
+        "command": "playwright test"
+      }
+    }
+  }
+}

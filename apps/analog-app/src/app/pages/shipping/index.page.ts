@@ -1,16 +1,16 @@
 import { AsyncPipe, CurrencyPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 
-import { CartService } from '../../cart.service';
+import { ShippingService } from './shipping-service';
 
 @Component({
-  selector: 'app-shipping',
+  selector: 'analogjs-shipping',
   imports: [CurrencyPipe, AsyncPipe],
   templateUrl: './shipping.html',
   styleUrls: ['./shipping.scss'],
 })
 export default class ShippingComponent {
-  private readonly cartService = inject(CartService);
+  private readonly shippingService = inject(ShippingService);
 
-  shippingCosts = this.cartService.getShippingPrices();
+  shippingCosts = this.shippingService.getShippingPrices();
 }

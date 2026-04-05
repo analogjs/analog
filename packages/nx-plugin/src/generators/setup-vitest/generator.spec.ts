@@ -133,7 +133,7 @@ describe('setup-vitest generator', () => {
 
     // Check all modifications made by updateTsConfig
     expect(tsconfig.compilerOptions.module).toBeUndefined();
-    expect(tsconfig.compilerOptions.target).toBe('es2016');
+    expect(tsconfig.compilerOptions.target).toBe('es2022');
     expect(tsconfig.compilerOptions.types).toEqual(['node', 'vitest/globals']);
     expect(tsconfig.files).toEqual(['src/test-setup.ts']);
   });
@@ -154,7 +154,7 @@ describe('setup-vitest generator', () => {
 
     const packageJson = JSON.parse(tree.read('package.json', 'utf-8'));
     expect(packageJson.devDependencies.vite).toBe(NX_X_LATEST_VITE); // '^6.0.0'
-    expect(packageJson.devDependencies.vitest).toBe(NX_X_LATEST_VITEST); // '^3.0.0'
+    expect(packageJson.devDependencies.vitest).toBe(V19_X_VITEST); // '^3.0.0'
   });
 
   it('should create test-setup.ts with correct content', async () => {

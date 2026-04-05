@@ -1,20 +1,18 @@
-import { CompilerHost } from '@angular/compiler-cli';
+import type { CompilerHost } from '@angular/compiler-cli';
 import { normalizePath } from 'vite';
 
-import { readFileSync, statSync } from 'node:fs';
 import * as ts from 'typescript';
-import { compileAnalogFile } from './authoring/analog.js';
-import {
-  FRONTMATTER_REGEX,
-  TEMPLATE_TAG_REGEX,
-} from './authoring/constants.js';
-import { MarkdownTemplateTransform } from './authoring/markdown-transform.js';
 
-import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-
-const require = createRequire(import.meta.url);
+import type { StylePreprocessor } from './style-preprocessor.js';
+import {
+  AnalogStylesheetRegistry,
+  preprocessStylesheet,
+  registerStylesheetContent,
+} from './stylesheet-registry.js';
+import { debugStyles } from './utils/debug.js';
+import type { SourceFileCache } from './utils/source-file-cache.js';
 
 export function augmentHostWithResources(
   host: ts.CompilerHost,
@@ -25,133 +23,28 @@ export function augmentHostWithResources(
   ) => ReturnType<any> | null,
   options: {
     inlineStylesExtension: string;
-    supportAnalogFormat?:
-      | boolean
-      | {
-          include: string[];
-        };
-
     isProd?: boolean;
-    markdownTemplateTransforms?: MarkdownTemplateTransform[];
-    inlineComponentStyles?: Map<string, string>;
-    externalComponentStyles?: Map<string, string>;
+    stylesheetRegistry?: AnalogStylesheetRegistry;
+    sourceFileCache?: SourceFileCache;
+    stylePreprocessor?: StylePreprocessor;
   },
-) {
-  const ts = require('typescript');
+): void {
   const resourceHost = host as CompilerHost;
-  const resourceCache = new Map<string, { content: string; mtime: number }>();
-
-  const baseGetSourceFile = (
-    resourceHost as ts.CompilerHost
-  ).getSourceFile.bind(resourceHost);
-
-  if (options.supportAnalogFormat) {
-    (resourceHost as ts.CompilerHost).getSourceFile = (
-      fileName,
-      languageVersionOrOptions,
-      onError,
-      ...parameters
-    ) => {
-      if (
-        fileName.endsWith('.analog.ts') ||
-        fileName.endsWith('.agx.ts') ||
-        fileName.endsWith('.ag.ts')
-      ) {
-        const contents = readFileSync(
-          fileName
-            .replace('.analog.ts', '.analog')
-            .replace('.agx.ts', '.agx')
-            .replace('.ag.ts', '.ag'),
-          'utf-8',
-        );
-        const source = compileAnalogFile(fileName, contents, options.isProd);
-
-        return ts.createSourceFile(
-          fileName,
-          source,
-          languageVersionOrOptions,
-          onError as any,
-          ...(parameters as any),
-        );
-      }
-
-      return baseGetSourceFile.call(
-        resourceHost,
-        fileName,
-        languageVersionOrOptions,
-        onError,
-        ...parameters,
-      );
-    };
-
-    const baseReadFile = (resourceHost as ts.CompilerHost).readFile;
-
-    (resourceHost as ts.CompilerHost).readFile = function (fileName: string) {
-      if (fileName.includes('virtual-analog:')) {
-        const filePath = fileName.split('virtual-analog:')[1];
-        const fileContent =
-          baseReadFile.call(resourceHost, filePath) ||
-          'No Analog Markdown Content Found';
-
-        // eslint-disable-next-line prefer-const
-        const templateContent =
-          TEMPLATE_TAG_REGEX.exec(fileContent)?.pop()?.trim() || '';
-
-        const frontmatterContent = FRONTMATTER_REGEX.exec(fileContent)
-          ?.pop()
-          ?.trim();
-
-        if (frontmatterContent) {
-          return frontmatterContent + '\n\n' + templateContent;
-        }
-
-        return templateContent;
-      }
-
-      return baseReadFile.call(resourceHost, fileName);
-    };
-
-    const fileExists = (resourceHost as ts.CompilerHost).fileExists;
-
-    (resourceHost as ts.CompilerHost).fileExists = function (fileName: string) {
-      if (
-        fileName.includes('virtual-analog:') &&
-        !fileName.endsWith('analog.d') &&
-        !fileName.endsWith('agx.d') &&
-        !fileName.endsWith('ag.d')
-      ) {
-        return true;
-      }
-
-      return fileExists.call(resourceHost, fileName);
-    };
-  }
 
   resourceHost.readResource = async function (fileName: string) {
     const filePath = normalizePath(fileName);
 
-    let content = (this as any).readFile(filePath);
+    const content = (this as any).readFile(filePath);
 
     if (content === undefined) {
       throw new Error('Unable to locate component resource: ' + fileName);
     }
 
-    if (fileName.includes('virtual-analog:')) {
-      const agxFilePath = fileName.split('virtual-analog:')[1];
-      const { mtimeMs } = statSync(agxFilePath);
-      const cached = resourceCache.get(agxFilePath);
-      if (cached && cached.mtime === mtimeMs) {
-        return cached.content;
-      }
-
-      for (const transform of options.markdownTemplateTransforms || []) {
-        content = String(await transform(content, fileName));
-      }
-
-      resourceCache.set(agxFilePath, { content, mtime: mtimeMs });
-    }
-
     return content;
+  };
+
+  resourceHost.getModifiedResourceFiles = function () {
+    return options?.sourceFileCache?.modifiedFiles;
   };
 
   resourceHost.transformResource = async function (data, context) {
@@ -160,66 +53,95 @@ export function augmentHostWithResources(
       return null;
     }
 
-    if (options.inlineComponentStyles) {
-      const id = createHash('sha256')
-        .update(context.containingFile)
-        .update(context.className)
-        .update(String(context.order))
-        .update(data)
-        .digest('hex');
-      const filename = id + '.' + options.inlineStylesExtension;
-      options.inlineComponentStyles.set(filename, data);
-      return { content: filename };
-    }
-
-    // Resource file only exists for external stylesheets
     const filename =
       context.resourceFile ??
-      `${context.containingFile.replace(/(\.analog|\.ag)?\.ts$/, (...args) => {
-        // NOTE: if the original file name contains `.analog`, we turn that into `-analog.css`
-        if (
-          args.includes('.analog') ||
-          args.includes('.ag') ||
-          args.includes('.agx')
-        ) {
-          return `-analog.${options?.inlineStylesExtension}`;
-        }
-        return `.${options?.inlineStylesExtension}`;
-      })}`;
+      context.containingFile.replace(
+        '.ts',
+        `.${options?.inlineStylesExtension}`,
+      );
+    const preprocessedData = preprocessStylesheet(
+      data,
+      filename,
+      options.stylePreprocessor,
+    );
 
+    // Externalized path: store preprocessed CSS for Vite's serve-time pipeline.
+    // CSS must NOT be transformed here — the load hook returns it into
+    // Vite's transform pipeline where PostCSS / Tailwind process it once.
+    if (options.stylesheetRegistry) {
+      const stylesheetId = registerStylesheetContent(
+        options.stylesheetRegistry,
+        {
+          code: preprocessedData,
+          containingFile: context.containingFile,
+          className: context.className,
+          order: context.order,
+          inlineStylesExtension: options.inlineStylesExtension,
+          resourceFile: context.resourceFile ?? undefined,
+        },
+      );
+      debugStyles('NgtscProgram: stylesheet deferred to Vite pipeline', {
+        stylesheetId,
+        resourceFile: context.resourceFile ?? '(inline)',
+      });
+      return { content: stylesheetId };
+    }
+
+    // Non-externalized: CSS is returned directly to the Angular compiler
+    // and never re-enters Vite's pipeline, so transform eagerly.
+    debugStyles('NgtscProgram: stylesheet processed inline via transform', {
+      filename,
+      resourceFile: context.resourceFile ?? '(inline)',
+      dataLength: preprocessedData.length,
+    });
     let stylesheetResult;
 
     try {
-      stylesheetResult = await transform(data, `${filename}?direct`);
+      stylesheetResult = await transform(
+        preprocessedData,
+        `${filename}?direct`,
+      );
     } catch (e) {
-      console.error(`${e}`);
+      debugStyles('NgtscProgram: stylesheet transform error', {
+        filename,
+        resourceFile: context.resourceFile ?? '(inline)',
+        error: String(e),
+      });
     }
 
-    return { content: stylesheetResult?.code || '' };
+    if (!stylesheetResult?.code) {
+      return null;
+    }
 
-    return null;
+    return { content: stylesheetResult.code };
   };
 
   resourceHost.resourceNameToFileName = function (
     resourceName,
     containingFile,
+    fallbackResolve,
   ) {
-    const resolvedPath = path.join(path.dirname(containingFile), resourceName);
+    const resolvedPath = normalizePath(
+      fallbackResolve
+        ? fallbackResolve(path.dirname(containingFile), resourceName)
+        : path.join(path.dirname(containingFile), resourceName),
+    );
 
     // All resource names that have template file extensions are assumed to be templates
-    if (!options.externalComponentStyles || !hasStyleExtension(resolvedPath)) {
+    if (!options.stylesheetRegistry || !hasStyleExtension(resolvedPath)) {
       return resolvedPath;
     }
 
     // For external stylesheets, create a unique identifier and store the mapping
-    let externalId = options.externalComponentStyles.get(resolvedPath);
-    if (externalId === undefined) {
-      externalId = createHash('sha256').update(resolvedPath).digest('hex');
-    }
-
+    const externalId = createHash('sha256').update(resolvedPath).digest('hex');
     const filename = externalId + path.extname(resolvedPath);
 
-    options.externalComponentStyles.set(filename, resolvedPath);
+    options.stylesheetRegistry.registerExternalRequest(filename, resolvedPath);
+    debugStyles('NgtscProgram: external stylesheet ID mapped for resolveId', {
+      resourceName,
+      resolvedPath,
+      filename,
+    });
 
     return filename;
   };
@@ -232,9 +154,7 @@ export function augmentProgramWithVersioning(program: ts.Program): void {
       baseGetSourceFiles(...parameters);
 
     for (const file of files) {
-      if (file.version === undefined) {
-        file.version = createHash('sha256').update(file.text).digest('hex');
-      }
+      file.version ??= createHash('sha256').update(file.text).digest('hex');
     }
 
     return files;
@@ -305,7 +225,7 @@ function hasStyleExtension(file: string): boolean {
     case '.css':
     case '.scss':
       return true;
+    default:
+      return false;
   }
-
-  return false;
 }

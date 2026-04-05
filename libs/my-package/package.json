@@ -3,10 +3,13 @@
   "type": "module",
   "private": true,
   "peerDependencies": {
-    "@angular/core": "^19.0.0"
+    "@angular/core": "catalog:peerCompat"
+  },
+  "devDependencies": {
+    "@analogjs/vite-plugin-angular": "workspace:*"
   },
   "dependencies": {
-    "tslib": "^2.0.0"
+    "tslib": "^2.8.1"
   },
   "exports": {
     "./package.json": {

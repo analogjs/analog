@@ -1,21 +1,40 @@
 import { VERSION } from '@angular/compiler-cli';
-import { Plugin } from 'vite';
+import type { Plugin } from 'vite';
 import { crawlFrameworkPkgs } from 'vitefu';
 
 import { Options } from './options.js';
+import { debugPlatform } from './utils/debug.js';
+import { getJsTransformConfigKey } from './utils/rolldown.js';
 
 export function depsPlugin(options?: Options): Plugin[] {
-  const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  const workspaceRoot =
+    options?.workspaceRoot ?? process.env['NX_WORKSPACE_ROOT'] ?? process.cwd();
+  const viteOptions = options?.vite === false ? undefined : options?.vite;
 
   return [
     {
       name: 'analogjs-deps-plugin',
       config() {
+        const useAngularCompilationAPI =
+          options?.experimental?.useAngularCompilationAPI ??
+          viteOptions?.experimental?.useAngularCompilationAPI;
+
+        const transformConfig =
+          options?.vite === false || useAngularCompilationAPI
+            ? {}
+            : { exclude: ['**/*.ts', '**/*.js'] };
+        debugPlatform('deps transform config', {
+          useAngularCompilationAPI: !!useAngularCompilationAPI,
+          jsTransformKey: getJsTransformConfigKey(),
+          transformExcluded: 'exclude' in transformConfig,
+        });
+
         return {
-          esbuild: { exclude: ['**/*.ts', '**/*.js'] },
+          [getJsTransformConfigKey()]: transformConfig,
           ssr: {
             noExternal: [
               '@analogjs/**',
+              'es-toolkit',
               'firebase/**',
               'firebase-admin/**',
               'rxfire',

@@ -98,15 +98,15 @@ export const appConfig: ApplicationConfig = {
 
 ## Realizando Solicitudes
 
-En tu componente/servicio, usa `HttpClient` junto con [/docs/features/api/overview](API routes) proporcionando una URL completa.
+En tu componente/servicio, usa `HttpClient` junto con [API routes](/docs/features/api/overview) proporcionando una URL completa.
 
 Un ejemplo de ruta API que obtiene todos los todos.
 
 ```ts
 // src/server/routes/api/v1/todos.ts -> /api/v1/todos
-import { eventHandler } from 'h3';
+import { defineHandler } from 'h3';
 
-export default eventHandler(async () => {
+export default defineHandler(async () => {
   const response = await fetch('https://jsonplaceholder.typicode.com/todos');
   const todos = await response.json();
 

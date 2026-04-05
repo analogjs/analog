@@ -1,4 +1,6 @@
+import { createHash } from 'node:crypto';
 import { Plugin, ResolvedConfig, preprocessCSS } from 'vite';
+import { debugStyles } from './utils/debug.js';
 
 export function jitPlugin({
   inlineStylesExtension,
@@ -22,6 +24,11 @@ export function jitPlugin({
     async load(id: string) {
       if (id.includes('virtual:angular:jit:style:inline;')) {
         const styleId = id.split('style:inline;')[1];
+        // styleId may exceed 255 bytes of base64-encoded content, limit to 16
+        const styleIdHash = createHash('sha256')
+          .update(styleId)
+          .digest('hex')
+          .slice(0, 16);
 
         const decodedStyles = Buffer.from(
           decodeURIComponent(styleId),
@@ -33,12 +40,21 @@ export function jitPlugin({
         try {
           const compiled = await preprocessCSS(
             decodedStyles,
-            `${styleId}.${inlineStylesExtension}?direct`,
+            `${styleIdHash}.${inlineStylesExtension}?direct`,
             config,
           );
           styles = compiled?.code;
         } catch (e) {
-          console.error(`${e}`);
+          const errorMessage = e instanceof Error ? e.message : String(e);
+          debugStyles('jit css compilation error', {
+            styleIdHash,
+            error: errorMessage,
+          });
+          console.warn(
+            '[@analogjs/vite-plugin-angular]: Failed to preprocess inline JIT stylesheet %s. Returning an empty stylesheet instead. %s',
+            styleIdHash,
+            errorMessage,
+          );
         }
 
         return `export default \`${styles}\``;

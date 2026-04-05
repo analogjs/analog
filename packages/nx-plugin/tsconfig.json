@@ -1,7 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "module": "commonjs"
+    "module": "commonjs",
+    "moduleResolution": "bundler",
+    "strictNullChecks": true
   },
   "files": [],
   "include": [],

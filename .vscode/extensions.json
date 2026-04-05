@@ -3,8 +3,8 @@
     "angular.ng-template",
     "nrwl.angular-console",
     "esbenp.prettier-vscode",
-    "firsttris.vscode-jest-runner",
     "dbaeumer.vscode-eslint",
+    "oxc.oxc-vscode",
     "ms-playwright.playwright"
   ]
 }

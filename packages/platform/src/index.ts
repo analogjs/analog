@@ -1,4 +1,23 @@
 import { platformPlugin } from './lib/platform-plugin.js';
 
-export { Options, PrerenderContentFile } from './lib/options';
+export type {
+  Options,
+  PrerenderSitemapConfig,
+  TypedRouterOptions,
+  PrerenderContentFile,
+  SitemapConfig,
+  SitemapEntry,
+  SitemapExcludeRule,
+  SitemapPriority,
+  SitemapRouteDefinition,
+  SitemapRouteInput,
+  SitemapRouteSource,
+  SitemapTransform,
+} from './lib/options.js';
+export { routeGenerationPlugin } from './lib/route-generation-plugin.js';
+export { tailwindPreprocessor } from './lib/tailwind-preprocessor.js';
+export type {
+  TailwindPreprocessorMode,
+  TailwindPreprocessorOptions,
+} from './lib/tailwind-preprocessor.js';
 export default platformPlugin;

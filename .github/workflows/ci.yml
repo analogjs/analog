@@ -7,109 +7,200 @@ env:
   NODE_OPTIONS: --max-old-space-size=16384
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
   NX_VERBOSE_LOGGING: ${{ vars.NX_VERBOSE_LOGGING }}
+  NX_ISOLATE_PLUGINS: 'false'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
-  prettier:
+  prettier-linux:
+    name: Linux / Prettier
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - name: Prettier
+        uses: dagger/dagger-for-github@v8.4.0
+        with:
+          version: '0.20.3'
+          verb: call
+          args: prettier --source=.
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+  lint-linux:
+    name: Linux / Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint
+        uses: dagger/dagger-for-github@v8.4.0
+        with:
+          version: '0.20.3'
+          verb: call
+          args: lint --source=.
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+  build-test-linux:
+    name: Linux / Build + Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build + Test
+        uses: dagger/dagger-for-github@v8.4.0
+        with:
+          version: '0.20.3'
+          verb: call
+          args: build-and-test --source=. --nx-cloud-token=env:NX_CLOUD_ACCESS_TOKEN
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+  release-smoke-linux:
+    if: false
+    name: Linux / Release Verify + Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0
-      - run: corepack enable
-      - run: pnpm --version
-      - uses: actions/setup-node@v3
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          pnpm --version
+      - name: Setup Node.js cache
+        uses: actions/setup-node@v4
         with:
+          node-version-file: .node-version
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Verify release artifacts
+        run: pnpm run release:verify
+      - name: Smoke release consumer flows
+        run: pnpm run release:smoke
+        env:
+          SMOKE_VERBOSE: 'true'
 
-      - name: Validate
-        run: pnpm run prettier:check
-
-  build:
+  e2e-linux:
+    name: Linux / E2E / ${{ matrix.project }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - analog-app-e2e
+          - blog-app-e2e
+          - tailwind-debug-app-e2e
+          - tanstack-query-app-e2e
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+
+      - name: E2E (${{ matrix.project }})
+        uses: dagger/dagger-for-github@v8.4.0
+        with:
+          version: '0.20.3'
+          verb: call
+          args: end-to-end --source=. --nx-cloud-token=env:NX_CLOUD_ACCESS_TOKEN --projects=${{ matrix.project }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+  build-native-macos:
+    name: Native / macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0
-      - run: corepack enable
-      - run: pnpm --version
-      - uses: actions/setup-node@v3
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          pnpm --version
+      - name: Setup Node.js cache
+        uses: actions/setup-node@v4
         with:
+          node-version-file: .node-version
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Build
         run: pnpm build
+      - name: Verify route freshness
+        run: node tools/scripts/verify-route-freshness.mts
 
-  build-windows:
+  build-native-windows:
+    name: Native / Windows
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-      - run: corepack enable
+      - name: Clear hosted tool-cache for corepack
+        run: Remove-Item -Recurse -Force (Get-Command corepack.cmd).Path
+        shell: pwsh
+      - name: Install Corepack
+        run: npm install --global --force corepack@latest
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          pnpm --version
+      - name: Setup Node.js cache
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Build
         run: pnpm build
+      - name: Verify route freshness
+        run: node tools/scripts/verify-route-freshness.mts
       - name: Verify
         run: more dist\apps\blog-app\analog\public\index.html
 
-  unit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0
-      - run: corepack enable
-      - run: pnpm --version
-      - uses: actions/setup-node@v3
-        with:
-          cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
-      - name: Install
-        run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Test
-        run: pnpm test
-
-  e2e:
+  ci-summary:
+    name: CI Summary
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     needs:
-      - build
+      - prettier-linux
+      - lint-linux
+      - build-test-linux
+      # - release-smoke-linux
+      - e2e-linux
+      - build-native-macos
+      - build-native-windows
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0
-      - run: corepack enable
-      - run: pnpm --version
-      - uses: actions/setup-node@v3
-        with:
-          cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
-      - name: Install
-        run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Install Playwright
-        run: npx playwright install --with-deps
-      - name: Install Cypress
-        run: npx cypress install
-      - name: End-to-end test
-        run: pnpm e2e
+      - name: Check required job results
+        env:
+          PRETTIER_RESULT: ${{ needs.prettier-linux.result }}
+          LINT_RESULT: ${{ needs.lint-linux.result }}
+          BUILD_TEST_RESULT: ${{ needs.build-test-linux.result }}
+          # RELEASE_SMOKE_RESULT: ${{ needs.release-smoke-linux.result }}
+          E2E_RESULT: ${{ needs.e2e-linux.result }}
+          BUILD_NATIVE_MACOS_RESULT: ${{ needs.build-native-macos.result }}
+          BUILD_NATIVE_WINDOWS_RESULT: ${{ needs.build-native-windows.result }}
+        run: |
+          echo "prettier-linux: $PRETTIER_RESULT"
+          echo "lint-linux: $LINT_RESULT"
+          echo "build-test-linux: $BUILD_TEST_RESULT"
+          # echo "release-smoke-linux: $RELEASE_SMOKE_RESULT"
+          echo "e2e-linux: $E2E_RESULT"
+          echo "build-native-macos: $BUILD_NATIVE_MACOS_RESULT"
+          echo "build-native-windows: $BUILD_NATIVE_WINDOWS_RESULT"
+
+          test "$PRETTIER_RESULT" = "success"
+          test "$LINT_RESULT" = "success"
+          test "$BUILD_TEST_RESULT" = "success"
+          # test "$RELEASE_SMOKE_RESULT" = "success"
+          test "$E2E_RESULT" = "success"
+          test "$BUILD_NATIVE_MACOS_RESULT" = "success"
+          test "$BUILD_NATIVE_WINDOWS_RESULT" = "success"

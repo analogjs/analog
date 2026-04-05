@@ -1,11 +1,18 @@
 {
   "name": "@analogjs/vite-plugin-nitro",
-  "version": "2.0.0-alpha.16",
+  "version": "3.0.0-alpha.25",
   "description": "A Vite plugin for adding a nitro API server",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
-    ".": "./src/index.js",
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./internal": {
+      "types": "./dist/src/lib/utils/debug.d.ts",
+      "default": "./dist/src/lib/utils/debug.js"
+    },
     "./package.json": "./package.json"
   },
   "keywords": [
@@ -29,12 +36,22 @@
     "type": "github",
     "url": "https://github.com/sponsors/brandonroberts"
   },
+  "peerDependencies": {
+    "sharp": ">=0.32.0"
+  },
+  "peerDependenciesMeta": {
+    "sharp": {
+      "optional": true
+    }
+  },
   "dependencies": {
-    "nitropack": "^2.11.0",
-    "xmlbuilder2": "^3.0.2",
-    "esbuild": "^0.25.0",
-    "radix3": "^1.1.1",
-    "defu": "^6.1.4"
+    "defu": "catalog:",
+    "nitro": "catalog:",
+    "obug": "catalog:",
+    "ofetch": "catalog:",
+    "oxc-parser": "catalog:",
+    "radix3": "catalog:",
+    "xmlbuilder2": "catalog:"
   },
   "ng-update": {
     "packageGroup": [
@@ -49,7 +66,11 @@
     "migrations": "./migrations/migration.json"
   },
   "imports": {
-    "#analog/ssr": "./src/index.js",
-    "#analog/index": "./src/index.js"
+    "#analog/ssr": "./dist/src/index.js",
+    "#analog/index": "./dist/src/index.js"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

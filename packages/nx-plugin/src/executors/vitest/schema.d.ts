@@ -1,1 +1,1 @@
-export { VitestExecutorOptions } from '@nx/vite/executors';
+export type { VitestExecutorOptions } from '@nx/vite/executors';

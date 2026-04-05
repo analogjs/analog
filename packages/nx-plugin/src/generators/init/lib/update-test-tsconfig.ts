@@ -14,10 +14,14 @@ interface TsConfig {
 export function updateTestTsConfig(
   tree: Tree,
   schema: SetupAnalogGeneratorSchema,
-) {
+): void {
   const projects = getProjects(tree);
 
   const projectConfig = projects.get(schema.project);
+
+  if (!projectConfig) {
+    throw new Error(`Project "${schema.project}" not found.`);
+  }
 
   const tsconfigPath = joinPathFragments(
     projectConfig.root,
@@ -31,7 +35,7 @@ export function updateTestTsConfig(
       (json) => {
         json.compilerOptions ??= {};
         json.compilerOptions.module = undefined;
-        json.compilerOptions.target ??= 'es2016';
+        json.compilerOptions.target ??= 'es2022';
         json.compilerOptions.types = ['vitest/globals', 'node'];
         json.files = ['src/test-setup.ts'];
 

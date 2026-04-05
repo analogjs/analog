@@ -1,0 +1,13 @@
+{
+  "name": "tailwind-debug-app",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@analogjs/router": "workspace:*"
+  },
+  "devDependencies": {
+    "@analogjs/platform": "workspace:*",
+    "@analogjs/vite-plugin-angular": "workspace:*",
+    "@analogjs/vitest-angular": "workspace:*"
+  }
+}

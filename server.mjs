@@ -46,12 +46,11 @@ async function createServer() {
       res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
     } catch (e) {
       res.end('Error');
-      // console.error(e);
     }
   });
 
-  app.listen(3000, () => {
-    console.log('http://localhost:3000');
+  app.listen(43000, () => {
+    console.log('http://localhost:43000');
   });
 }
 

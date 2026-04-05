@@ -24,6 +24,10 @@ function addFiles(
 
   const projectConfig = projects.get(options.project);
 
+  if (!projectConfig) {
+    throw new Error(`Project "${options.project}" not found.`);
+  }
+
   const templateOptions = {
     ...options,
     majorAngularVersion,
@@ -39,16 +43,27 @@ function addFiles(
   );
 }
 
-export async function setupVitestGenerator(
+async function setupVitestGenerator(
   tree: Tree,
   options: SetupVitestGeneratorSchema,
-) {
+): Promise<() => void> {
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
-  const majorAngularVersion = major(coerce(angularVersion));
+
+  if (!angularVersion) {
+    throw new Error('@angular/core is not installed.');
+  }
+
+  const coercedVersion = coerce(angularVersion);
+
+  if (!coercedVersion) {
+    throw new Error(`Unable to coerce Angular version: ${angularVersion}`);
+  }
+
+  const majorAngularVersion = major(coercedVersion);
 
   const nxVersion = getInstalledPackageVersion(tree, 'nx');
 
-  addAnalogDependencies(tree, angularVersion, nxVersion);
+  addAnalogDependencies(tree, angularVersion, nxVersion ?? '');
   updateTsConfig(tree, options);
   updateTestTarget(tree, options);
 

@@ -72,6 +72,74 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
+### Outputting Source Markdown Files
+
+To make prerendered pages more accessible to LLMs or other tools that prefer raw markdown, you can output the source markdown file alongside each prerendered route. The source file will be accessible at the route path with a `.md` extension (e.g., `/blog/my-post` would also be available at `/blog/my-post.md`).
+
+For individual routes, specify the path to the source file:
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      prerender: {
+        routes: async () => [
+          '/',
+          {
+            route: '/overview',
+            outputSourceFile: 'src/content/overview.md',
+          },
+        ],
+      },
+    }),
+  ],
+}));
+```
+
+For content directories, use a function that receives the file information and returns the content to output:
+
+```ts
+import { defineConfig } from 'vite';
+import analog, { type PrerenderContentFile } from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      prerender: {
+        routes: async () => [
+          '/',
+          {
+            contentDir: 'src/content/blog',
+            transform: (file: PrerenderContentFile) => {
+              const slug = file.attributes.slug || file.name;
+              return `/blog/${slug}`;
+            },
+            outputSourceFile: (file: PrerenderContentFile) => file.content,
+          },
+        ],
+      },
+    }),
+  ],
+}));
+```
+
+You can also conditionally skip outputting the source file by returning `false`:
+
+```ts
+outputSourceFile: (file: PrerenderContentFile) => {
+  // Don't output source for draft posts
+  if (file.attributes.draft) {
+    return false;
+  }
+  return file.content;
+},
+```
+
 ## Only Prerendering Static Pages
 
 To only prerender the static pages without building the server, use the `static: true` flag.
@@ -140,7 +208,7 @@ export default defineConfig(({ mode }) => ({
 
 ## Sitemap Generation
 
-Analog also supports automatic sitemap generation. Analog generates a sitemap in the `dist/analog/public` directory when running a build if a sitemap configuration is provided.
+Analog also supports automatic sitemap generation for prerendered pages. When a sitemap configuration is provided, Analog writes `sitemap.xml` into Nitro's public output directory, which defaults to `dist/analog/public`.
 
 ```ts
 import { defineConfig } from 'vite';
@@ -161,12 +229,14 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-To customize the sitemap definition, use the `sitemap` callback function to customize the `lastmod`, `changefreq`, and `priority` fields.
+Only canonical page routes are included by default. Internal helper endpoints such as Analog's static-data prerender routes are excluded automatically.
+
+Use `defaults`, `include`, `exclude`, and `transform` to customize the build-time sitemap output. Route-level `sitemap` callbacks still work for prerender route objects and content directory transforms.
 
 ```ts
 import { defineConfig } from 'vite';
 import analog from '@analogjs/platform';
-import fs from 'node:fs';
+import type { SitemapEntry, PrerenderContentFile } from '@analogjs/platform';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -175,6 +245,30 @@ export default defineConfig(({ mode }) => ({
       prerender: {
         sitemap: {
           host: 'https://analogjs.org',
+          defaults: {
+            changefreq: 'weekly',
+            priority: 0.7,
+          },
+          include: async () => [
+            '/changelog',
+            {
+              route: '/docs/hello world',
+              lastmod: '2024-01-01',
+            },
+          ],
+          exclude: ['/drafts/**', /^\/admin/],
+          transform: (entry: SitemapEntry) => {
+            if (entry.route.startsWith('/blog/')) {
+              return {
+                route: entry.route,
+                priority: 0.9,
+              };
+            }
+
+            return {
+              route: entry.route,
+            };
+          },
         },
         routes: async () => [
           '/',
@@ -204,8 +298,9 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-As long as prerender routes are provided, Analog generates a `sitemap.xml` file containing a
-mapping of the pages' `<loc>`, `<lastmod>`, `<changefreq>`, and `<priority>` properties.
+If you do not provide `lastmod`, Analog omits it instead of generating a build date. This keeps sitemap metadata truthful and avoids signaling misleading freshness to crawlers.
+
+As long as prerender routes are provided, Analog generates a `sitemap.xml` file containing a mapping of the pages' `<loc>`, optional `<lastmod>`, optional `<changefreq>`, and optional `<priority>` properties.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -236,7 +331,7 @@ The sample code below shows how to use `postRenderingHooks` in your code:
 ```ts
 import analog from '@analogjs/platform';
 import { defineConfig } from 'vite';
-import { PrerenderRoute } from 'nitropack';
+import type { PrerenderRoute } from 'nitro/types';
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
@@ -270,7 +365,7 @@ Below is a small example where we can append a script to include Google Analytic
 import analog from '@analogjs/platform';
 import { defineConfig } from 'vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import { PrerenderRoute } from 'nitropack';
+import type { PrerenderRoute } from 'nitro/types';
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {

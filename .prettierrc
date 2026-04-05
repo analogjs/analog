@@ -7,12 +7,6 @@
       "options": {
         "printWidth": 80
       }
-    },
-    {
-      "files": "*.analog",
-      "options": {
-        "parser": "angular"
-      }
     }
   ]
 }

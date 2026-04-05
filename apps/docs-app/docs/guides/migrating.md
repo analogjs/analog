@@ -5,7 +5,7 @@ import TabItem from '@theme/TabItem';
 
 An existing Angular Single Page Application can be configured to use Analog using a schematic/generator for Angular CLI or Nx workspaces.
 
-> Analog is compatible with Angular v15 and above.
+> Analog is compatible with Angular v16 and above.
 
 ## Using a Schematic/Generator
 
@@ -117,16 +117,13 @@ Read [here](https://vitejs.dev/guide/env-and-mode.html) for about more informati
 
 ### Using File Replacements
 
-You can also use the `replaceFiles()` plugin from Nx to replace files during your build.
-
-Import the plugin and set it up:
+You can also use the `fileReplacements` option to replace files.
 
 ```ts
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
 import analog from '@analogjs/platform';
-import { replaceFiles } from '@nx/vite/plugins/rollup-replace-files.plugin';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -137,14 +134,17 @@ export default defineConfig(({ mode }) => ({
     mainFields: ['module'],
   },
   plugins: [
-    analog(),
-    mode === 'production' &&
-      replaceFiles([
-        {
-          replace: './src/environments/environment.ts',
-          with: './src/environments/environment.prod.ts',
-        },
-      ]),
+    analog({
+      fileReplacements:
+        mode === 'production'
+          ? [
+              {
+                replace: 'src/environments/environment.ts',
+                with: 'src/environments/environment.prod.ts',
+              },
+            ]
+          : [],
+    }),
   ],
   test: {
     globals: true,
@@ -157,20 +157,6 @@ export default defineConfig(({ mode }) => ({
     'import.meta.vitest': mode !== 'production',
   },
 }));
-```
-
-Add the environment files to `files` array in the `tsconfig.app.json` may also be necessary.
-
-```json
-{
-  "extends": "./tsconfig.json",
-  // other config
-  "files": [
-    "src/main.ts",
-    "src/main.server.ts",
-    "src/environments/environment.prod.ts"
-  ]
-}
 ```
 
 ## Copying Assets
@@ -192,6 +178,55 @@ export default defineConfig(({ mode }) => ({
   plugins: [analog(), nxCopyAssetsPlugin(['*.md'])],
 }));
 ```
+
+## Enabling HMR
+
+Angular supports HMR where in most cases components can be updated without a full page reload. In Analog, prefer the `hmr` option. `liveReload` is still accepted as a compatibility alias, but `hmr` is the primary API.
+Analog requires Angular v19 or newer for `hmr` / `liveReload` to work. On Angular v16-v18, `hmr` and its `liveReload` alias are forcibly disabled at runtime with a console warning, so HMR is unavailable on those versions.
+
+```ts
+/// <reference types="vitest" />
+
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  // .. other configuration
+  plugins: [
+    analog({
+      hmr: true,
+    }),
+  ],
+}));
+```
+
+If you are also using Tailwind v4 for component styles, keep that configuration on the Analog side as well:
+
+```ts
+/// <reference types="vitest" />
+
+import { resolve } from 'node:path';
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig(() => ({
+  plugins: [
+    analog({
+      hmr: true,
+      vite: {
+        tailwindCss: {
+          rootStylesheet: resolve(import.meta.dirname, 'src/styles.css'),
+        },
+      },
+    }),
+    tailwindcss(),
+  ],
+}));
+```
+
+This is the recommended setup for Analog v3: one root Tailwind stylesheet, `@tailwindcss/vite` in Vite, and Analog handling component stylesheet preprocessing.
 
 ## Reviewing Deprecated APIs During Migration
 

@@ -3,31 +3,39 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "packages/router/src",
+  "implicitDependencies": ["vite-plugin-angular", "content"],
   "prefix": "analogjs",
   "tags": ["type:release"],
   "targets": {
-    "build": {
-      "executor": "@angular-devkit/build-angular:ng-packagr",
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/router"],
+    "assert-deps": {
+      "executor": "nx:run-commands",
       "options": {
-        "project": "packages/router/ng-package.json"
-      },
-      "configurations": {
-        "production": {
-          "tsConfig": "packages/router/tsconfig.lib.prod.json"
-        },
-        "development": {
-          "tsConfig": "packages/router/tsconfig.lib.json"
-        }
-      },
-      "defaultConfiguration": "production"
+        "command": "node tools/scripts/assert-project-dependency.mts router vite-plugin-angular"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        "assert-deps",
+        "vite-plugin-angular:build",
+        "content:build"
+      ],
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "commands": [
+          "node tools/scripts/build-lib.mts router",
+          "node tools/scripts/verify-package-artifacts.mts router"
+        ],
+        "parallel": false
+      }
     },
     "lint": {
       "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@nx/vite:test",
-      "dependsOn": ["^build"]
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["build", "^build"]
     },
     "version": {
       "executor": "@jscutlery/semver:version",

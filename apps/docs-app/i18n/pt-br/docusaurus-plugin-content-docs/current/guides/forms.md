@@ -38,7 +38,6 @@ type FormErrors =
 
 @Component({
   selector: 'app-newsletter-page',
-  standalone: true,
   imports: [FormAction],
   template: `
     <h3>Newsletter Signup</h3>
@@ -96,10 +95,9 @@ import {
   json,
   fail,
 } from '@analogjs/router/server/actions';
-import { readFormData } from 'h3';
 
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const email = body.get('email') as string;
 
   if (!email) {
@@ -139,7 +137,7 @@ Na ação do servidor, use o valor de `action`.
 
 ```ts
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const action = body.get('action') as string;
 
   if (action === 'register') {
@@ -164,7 +162,6 @@ import type { load } from './search.server';
 
 @Component({
   selector: 'app-search-page',
-  standalone: true,
   imports: [FormAction],
   template: `
     <h3>Search</h3>
@@ -194,15 +191,14 @@ O parâmetro de consulta pode ser acessado através da ação do formulário no 
 ```ts
 // src/app/pages/search.server.ts
 import type { PageServerLoad } from '@analogjs/router';
-import { getQuery } from 'h3';
 
 export async function load({ event }: PageServerLoad) {
-  const query = getQuery(event);
-  console.log('loaded search', query['search']);
+  const search = event.url.searchParams.get('search');
+  console.log('loaded search', search);
 
   return {
     loaded: true,
-    searchTerm: `${query['search']}`,
+    searchTerm: search ?? '',
   };
 }
 ```

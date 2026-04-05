@@ -26,23 +26,22 @@ Also, if not present, add the middleware files to `include` array in the `tsconf
 }
 ```
 
-Middleware is defined using the `defineEventHandler` function.
+Middleware is defined using the `defineHandler` function.
 
 ```ts
-import { defineEventHandler, sendRedirect, setHeaders } from 'h3';
+import { defineHandler, redirect } from 'h3';
 
-export default defineEventHandler((event) => {
-  if (event.node.req.originalUrl === '/checkout') {
-    console.log('event url', event.node.req.originalUrl);
-
-    setHeaders(event, {
-      'x-analog-checkout': 'true',
-    });
+export default defineHandler((event) => {
+  if (event.path === '/checkout') {
+    event.res.headers.set('x-analog-checkout', 'true');
+    return redirect('/cart', 302);
   }
+
+  return undefined;
 });
 ```
 
-- Middleware should only modify requests and should not return anything!
+- Middleware can mutate the request/response context or return a response to stop request handling early.
 - Middleware is run in order of the defined filenames. Prefix filenames with numbers to enforce a particular order.
 
 ## Filtering in Middleware
@@ -50,15 +49,16 @@ export default defineEventHandler((event) => {
 Middleware can only be applied to specific routes using filtering.
 
 ```ts
-export default defineEventHandler(async (event) => {
+import { defineHandler, getCookie, redirect } from 'h3';
+
+export default defineHandler(async (event) => {
   // Only execute for /admin routes
-  if (getRequestURL(event).pathname.startsWith('/admin')) {
-    const cookies = parseCookies(event);
-    const isLoggedIn = cookies['authToken'];
+  if (event.path.startsWith('/admin')) {
+    const isLoggedIn = getCookie(event, 'authToken');
 
     // check auth and redirect
     if (!isLoggedIn) {
-      sendRedirect(event, '/login', 401);
+      return redirect('/login', 302);
     }
   }
 });
@@ -69,10 +69,10 @@ export default defineEventHandler(async (event) => {
 Use the `process.env` global to access environment variables inside the middleware functions. Both server-only and publicly accessible environment variables defined in `.env` files can be read from the middleware.
 
 ```ts
-import { defineEventHandler, getRequestURL } from 'h3';
+import { defineHandler } from 'h3';
 
-export default defineEventHandler((event) => {
-  console.log('Path:', getRequestURL(event).pathname);
+export default defineHandler((event) => {
+  console.log('Path:', event.path);
   console.log(
     'Server Only Environment Variable:',
     process.env['SERVER_ONLY_VARIABLE'],

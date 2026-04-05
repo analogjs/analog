@@ -2,6 +2,11 @@
 
 Analog supports server-side handling of form submissions and validation.
 
+`FormAction` is a good fit when you want progressive-enhancement-style form
+submissions that post directly to a page action. If you need client-managed
+mutation state, cache invalidation, or optimistic updates, use TanStack Query
+mutations against an Analog server route instead.
+
 <div className="video-container">
   <div className="video-responsive-wrapper">
     <iframe
@@ -20,7 +25,7 @@ The directive emits after processing the form:
 
 - `onSuccess`: when the form is processing on the server and returns a success response.
 - `onError`: when the form returns an error response.
-- `onStateChange`: when the form is submitted.
+- `onStateChange`: when the form submission state changes.
 
 The example page below submits an email for a newsletter signup.
 
@@ -38,7 +43,6 @@ type FormErrors =
 
 @Component({
   selector: 'app-newsletter-page',
-  standalone: true,
   imports: [FormAction],
   template: `
     <h3>Newsletter Signup</h3>
@@ -82,11 +86,13 @@ export default class NewsletterComponent {
 
 The `FormAction` directive submits the form data to the server, which is processed by its handler.
 
+If your action uses Standard Schema validation with `defineAction()`, the `onError` event receives `StandardSchemaV1.Issue[]`. You can convert that into field errors with `issuesToFieldErrors()` from `@analogjs/router`. See the [Schema Validation](../features/data-fetching/validation) guide for an end-to-end example.
+
 ## Handling the Form Action
 
 To handle the form action, define the `.server.ts` alongside the `.page.ts` file that contains the async `action` function to process the form submission.
 
-In the server action, you can use access environment variables, read cookies, and perform other server-side only operations.
+In the server action, you can access environment variables, read cookies, and perform other server-side only operations.
 
 ```ts
 // src/app/pages/newsletter.server.ts
@@ -96,10 +102,9 @@ import {
   json,
   fail,
 } from '@analogjs/router/server/actions';
-import { readFormData } from 'h3';
 
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const email = body.get('email') as string;
 
   if (!email) {
@@ -139,7 +144,7 @@ In the server action, use the `action` value.
 
 ```ts
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const action = body.get('action') as string;
 
   if (action === 'register') {
@@ -164,7 +169,6 @@ import type { load } from './search.server';
 
 @Component({
   selector: 'app-search-page',
-  standalone: true,
   imports: [FormAction],
   template: `
     <h3>Search</h3>
@@ -189,20 +193,72 @@ export default class NewsletterComponent {
 }
 ```
 
-The query parameter can be accessed through the server form action.
+The query parameter can be accessed through the server load function.
 
 ```ts
 // src/app/pages/search.server.ts
 import type { PageServerLoad } from '@analogjs/router';
-import { getQuery } from 'h3';
 
 export async function load({ event }: PageServerLoad) {
-  const query = getQuery(event);
-  console.log('loaded search', query['search']);
+  const searchTerm = event.url.searchParams.get('search') ?? '';
+  console.log('loaded search', searchTerm);
 
   return {
     loaded: true,
-    searchTerm: `${query['search']}`,
+    searchTerm,
   };
+}
+```
+
+## TanStack Query Mutations
+
+When a form submission needs to invalidate cached queries or participate in a
+broader client-side server-state flow, use `injectMutation` with an Analog
+server route.
+
+```ts
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Component, inject, signal } from '@angular/core';
+import { lastValueFrom } from 'rxjs';
+import {
+  QueryClient,
+  injectMutation,
+} from '@tanstack/angular-query-experimental';
+
+@Component({
+  template: `
+    <button type="button" (click)="save()">Save</button>
+    @if (error()) {
+      <p>{{ error() }}</p>
+    }
+  `,
+})
+export default class MutationExampleComponent {
+  private readonly http = inject(HttpClient);
+  private readonly queryClient = inject(QueryClient);
+
+  readonly error = signal('');
+
+  readonly mutation = injectMutation(() => ({
+    mutationFn: () =>
+      lastValueFrom(
+        this.http.post('/api/v1/query-todos', {
+          scope: 'docs',
+          title: 'Write docs',
+        }),
+      ),
+    onSuccess: () =>
+      this.queryClient.invalidateQueries({
+        queryKey: ['analog-query-todos', 'docs'],
+      }),
+    onError: (err: HttpErrorResponse) => {
+      this.error.set(err.message);
+    },
+  }));
+
+  save() {
+    this.error.set('');
+    this.mutation.mutate();
+  }
 }
 ```

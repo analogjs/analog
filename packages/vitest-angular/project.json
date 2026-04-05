@@ -5,23 +5,21 @@
   "projectType": "library",
   "tags": ["type:release"],
   "targets": {
-    "build": {
-      "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+    "build-self": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "outputs": ["{projectRoot}/dist"],
       "options": {
-        "outputPath": "node_modules/@analogjs/vitest-angular",
-        "main": "packages/vitest-angular/src/index.ts",
-        "tsConfig": "packages/vitest-angular/tsconfig.lib.json",
-        "assets": [
-          "packages/vitest-angular/*.md",
-          "packages/vitest-angular/builders.json"
-        ],
-        "updateBuildableProjectDepsInPackageJson": false,
-        "additionalEntryPoints": [
-          "packages/vitest-angular/setup-zone.ts",
-          "packages/vitest-angular/setup-snapshots.ts"
-        ],
-        "generateExportsField": true
+        "command": "vite build --config packages/vitest-angular/vite.config.lib.ts"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["build-self", "vitest-angular-tools:build"],
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "command": "node tools/scripts/verify-package-artifacts.mts vitest-angular"
       }
     }
   }

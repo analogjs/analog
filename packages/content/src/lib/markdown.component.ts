@@ -1,22 +1,21 @@
-import { AsyncPipe, isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import {
   AfterViewChecked,
   Component,
-  Input,
+  InputSignal,
   NgZone,
-  OnChanges,
-  OnInit,
   PLATFORM_ID,
-  ViewChild,
-  ViewContainerRef,
+  Signal,
   ViewEncapsulation,
+  computed,
   inject,
+  input,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Data } from '@angular/router';
-import { Observable, from, of } from 'rxjs';
-import { catchError, map, mergeMap, filter } from 'rxjs/operators';
+import { from, Observable, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { AnchorNavigationDirective } from './anchor-navigation.directive';
 import { ContentRenderer } from './content-renderer';
@@ -25,19 +24,12 @@ import { MERMAID_IMPORT_TOKEN } from './provide-content';
 @Component({
   selector: 'analog-markdown',
   standalone: true,
-  imports: [AsyncPipe],
   hostDirectives: [AnchorNavigationDirective],
   preserveWhitespaces: true,
   encapsulation: ViewEncapsulation.None,
-  template: `<div
-    #container
-    [innerHTML]="content$ | async"
-    [class]="classes"
-  ></div>`,
+  template: ` <div [innerHTML]="htmlContent()" [class]="classes()"></div> `,
 })
-export default class AnalogMarkdownComponent
-  implements OnInit, OnChanges, AfterViewChecked
-{
+export default class AnalogMarkdownComponent implements AfterViewChecked {
   private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
   private zone = inject(NgZone);
@@ -47,15 +39,24 @@ export default class AnalogMarkdownComponent
   });
   private mermaid: typeof import('mermaid') | undefined;
 
-  public content$: Observable<SafeHtml> = this.getContentSource();
+  private contentSource: Signal<SafeHtml | string | undefined> = toSignal(
+    this.getContentSource(),
+  );
+  readonly htmlContent: Signal<SafeHtml | string | undefined> = computed(() => {
+    const inputContent = this.content();
 
-  @Input() content!: string | object | undefined | null;
-  @Input() classes = 'analog-markdown';
+    if (inputContent) {
+      return this.sanitizer.bypassSecurityTrustHtml(inputContent as string);
+    }
 
-  @ViewChild('container', { static: true, read: ViewContainerRef })
-  container!: ViewContainerRef;
+    return this.contentSource();
+  });
+  readonly content: InputSignal<string | object | null | undefined> = input<
+    string | object | null
+  >();
+  readonly classes: InputSignal<string> = input('analog-markdown');
 
-  contentRenderer = inject(ContentRenderer);
+  contentRenderer: ContentRenderer = inject(ContentRenderer);
 
   constructor() {
     if (isPlatformBrowser(this.platformId) && this.mermaidImport) {
@@ -64,39 +65,21 @@ export default class AnalogMarkdownComponent
     }
   }
 
-  ngOnInit(): void {
-    this.updateContent();
-  }
-
-  ngOnChanges(): void {
-    this.updateContent();
-  }
-
-  updateContent() {
-    if (this.content && typeof this.content !== 'string') {
-      this.container.clear();
-      const componentRef = this.container.createComponent(this.content as any);
-      componentRef.changeDetectorRef.detectChanges();
-    } else {
-      this.content$ = this.getContentSource();
-    }
-  }
-
-  getContentSource() {
+  getContentSource(): Observable<SafeHtml | string> {
     return this.route.data.pipe(
-      map<Data, string>((data) => this.content ?? data['_analogContent']),
-      filter((content) => typeof content === 'string'),
-      mergeMap((contentString) => this.renderContent(contentString)),
+      map<Data, string>((data) => data['_analogContent'] ?? ''),
+      switchMap((contentString) => this.renderContent(contentString)),
       map((content) => this.sanitizer.bypassSecurityTrustHtml(content)),
       catchError((e) => of(`There was an error ${e}`)),
     );
   }
 
   async renderContent(content: string): Promise<string> {
-    return this.contentRenderer.render(content);
+    const rendered = await this.contentRenderer.render(content);
+    return rendered.content;
   }
 
-  ngAfterViewChecked() {
+  ngAfterViewChecked(): void {
     this.contentRenderer.enhance();
     this.zone.runOutsideAngular(() => this.mermaid?.default.run());
   }

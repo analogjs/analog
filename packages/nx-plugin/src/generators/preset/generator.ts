@@ -1,11 +1,31 @@
-import { ensurePackage, NX_VERSION, Tree } from '@nx/devkit';
+import { ensurePackage, NX_VERSION, Tree, updateJson } from '@nx/devkit';
 import { PresetGeneratorSchema } from './schema';
 
-export default async function (tree: Tree, options: PresetGeneratorSchema) {
+export default async function (
+  tree: Tree,
+  options: PresetGeneratorSchema,
+): Promise<() => void> {
   ensurePackage('@nx/angular', NX_VERSION);
-  ensurePackage('@angular-devkit/build-angular', 'latest');
+  ensurePackage('@nx/vite', NX_VERSION);
+  ensurePackage('@angular-devkit/core', 'latest');
+  ensurePackage('rxjs', 'latest');
 
-  return await import('../app/generator').then(({ appGenerator }) =>
-    appGenerator(tree, options),
-  );
+  const generatorModule = await import('../app/generator');
+  const appGenerator =
+    'default' in generatorModule ? generatorModule.default : generatorModule;
+
+  const installTask = await appGenerator(tree, options);
+
+  if (tree.exists('/tsconfig.base.json')) {
+    updateJson<{
+      compilerOptions?: {
+        baseUrl?: string;
+      };
+    }>(tree, '/tsconfig.base.json', (json) => {
+      delete json.compilerOptions?.baseUrl;
+      return json;
+    });
+  }
+
+  return installTask;
 }

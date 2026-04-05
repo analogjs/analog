@@ -20,7 +20,13 @@ interface AngularMemoryPluginOptions {
 
 export async function createAngularMemoryPlugin(
   options: AngularMemoryPluginOptions,
-) {
+): Promise<{
+  name: string;
+  enforce: string;
+  config: (userConfig: any) => void;
+  resolveId: (source: string, importer: string) => Promise<string | undefined>;
+  load: (id: string) => { code: string; map: string | undefined } | undefined;
+}> {
   const { normalizePath } = await (Function(
     'return import("vite")',
   )() as Promise<typeof import('vite')>);

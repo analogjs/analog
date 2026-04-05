@@ -40,6 +40,8 @@ Das kann auch konfiguriert werden, indem eine `netlify.toml` in das Stammverzeic
 
 Analog unterstützt die Veröffentlichung auf [Vercel] (https://vercel.com/) ohne zusätzliche Konfiguration.
 
+Verwende in den Vercel-Projekteinstellungen Node.js `24.x` sowohl für den Build als auch für die Server-Laufzeit. Analog verwendet für Vercel-Funktionen standardmäßig `nodejs24.x`, sofern `nitro.vercel.functions.runtime` nicht überschrieben wird.
+
 ### Bereitstellung des Projekts
 
 <Tabs groupId="porject-type">
@@ -69,7 +71,7 @@ Damit es mit Nx funktioniert, muss die spezifische Anwendung definiert werden, d
 ```json [vercel.json]
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "nx build <app>"
+  "buildCommand": "pnpm exec nx build <app> --skip-nx-cache"
 }
 ```
 
@@ -78,15 +80,14 @@ Damit es mit Nx funktioniert, muss die spezifische Anwendung definiert werden, d
 ```json [package.json]
 {
   "scripts": {
-    "build": "nx build <app>"
+    "build": "nx build <app> --skip-nx-cache"
   }
 }
 ```
 
 #### Nx und Vercel
 
-When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache is reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can use the preset in the `vite.config.ts` file as a workaround.
-Wenn Nx verwendet wird und den Build-Cache auf der Vercel-Build-Plattform wiederverwendet wird, besteht die Möglichkeit, dass der Cache wiederverwendet wird, wenn er lokal gebaut wurde. Das kann dazu führen, dass die Ausgabe an der falschen Stelle platziert wird. Um dieses Problem zu lösen, kann die Voreinstellung in der Datei `vite.config.ts` als Workaround verwendet werden.
+Wenn Nx auf der Vercel-Build-Plattform verwendet wird, sollte die Node.js-Version des Projekts auf `24.x` gesetzt werden und im Build-Befehl vorzugsweise `--skip-nx-cache` verwendet werden. Die Wiederverwendung des Nx-Caches auf Vercel kann dazu führen, dass Ausgaben eines lokalen Builds an der falschen Stelle wiederhergestellt werden. Wenn Vercel die Voreinstellung weiterhin nicht korrekt erkennt, kann die Voreinstellung in der Datei `vite.config.ts` als Workaround verwendet werden.
 
   </TabItem>
 </Tabs>
@@ -309,7 +310,7 @@ Analog unterstützt die Bereitstellung auf [Render](https://render.com/) mit min
 
 1. [Erstelle einen neuen Webdienst](https://dashboard.render.com/select-repo?type=web) und wähle das Repository, das den Code enthält.
 2. Vergewisser dich, dass die Umgebung 'Node' ausgewählt ist.
-3. [Gebe die Node-Version an, die Render verwenden soll](https://render.com/docs/node-version) (v18.13.0 oder höher empfohlen) - Render verwendet standardmäßig Node 14, das eine Analog Webseite nicht korrekt erstellen kann
+3. [Gebe die Node-Version an, die Render verwenden soll](https://render.com/docs/node-version) (v22.0.0 oder höher empfohlen) - Render verwendet standardmäßig Node 14, das eine Analog Webseite nicht korrekt erstellen kann
 4. Abhängig von eingesetzten Paketmanager setze den Build-Befehl auf `yarn && yarn build`, `npm install && npm run build`, oder `pnpm i --shamefully-hoist && pnpm build`.
 5. Aktualisiere den Startbefehl auf `node dist/analog/server/index.mjs`
 6. Klicke auf 'Advanced' und füge eine Umgebungsvariable hinzu, in der `BUILD_PRESET` auf `render-com` gesetzt ist.
@@ -368,7 +369,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '24.x'
       - uses: k9n-dev/analog-publish-gh-pages@v1.0.0
         with:
           access-token: ${{ secrets.ACCESS_TOKEN }}
@@ -396,7 +397,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '24.x'
       - name: Set environment variable based on branch
         run: |
           if [[ $GITHUB_REF == refs/heads/main || $GITHUB_REF == refs/heads/master ]]; then

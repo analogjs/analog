@@ -12,6 +12,23 @@ const url = 'https://analogjs.org';
 
 const DOCUSAURUS_BASE_URL = process.env.DOCUSAURUS_BASE_URL ?? '/docs';
 
+/**
+ * @typedef {{ allMdx: string[] }} LlmsTxtContent
+ * @typedef {{ title?: string; description?: string }} DocRecord
+ * @typedef {{
+ *   path: string;
+ *   routes?: DocsRouteConfig[];
+ *   props?: {
+ *     version?: {
+ *       docs: Record<string, DocRecord>;
+ *     };
+ *   };
+ *   plugin?: {
+ *     name?: string;
+ *   };
+ * }} DocsRouteConfig
+ */
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   baseUrl: '/',
@@ -88,7 +105,7 @@ const config = {
                 // Convert file path to URL path by:
                 // 1. Removing numeric prefixes (like 100-, 01-, etc.)
                 // 2. Removing the .md extension
-                let urlPath = relativePath
+                const urlPath = relativePath
                   .replace(/^\d+-/, '')
                   .replace(/\/\d+-/g, '/')
                   .replace(/index\.md$/, '')
@@ -117,7 +134,7 @@ const config = {
           return { allMdx };
         },
         postBuild: async ({ content, routes, outDir }) => {
-          const { allMdx } = content;
+          const { allMdx } = /** @type {LlmsTxtContent} */ (content);
 
           // Write concatenated MDX content
           const concatenatedPath = path.join(outDir, 'llms-full.txt');
@@ -128,12 +145,16 @@ const config = {
 
           // we need to dig down several layers:
           // find PluginRouteConfig marked by plugin.name === "docusaurus-plugin-content-docs"
-          const docsPluginRouteConfig = routes.filter(
-            (route) => route.plugin.name === 'docusaurus-plugin-content-docs',
-          )[0];
+          const docsPluginRouteConfig =
+            /** @type {DocsRouteConfig | undefined} */ (
+              routes.filter(
+                (route) =>
+                  route.plugin.name === 'docusaurus-plugin-content-docs',
+              )[0]
+            );
 
           // docsPluginRouteConfig has a routes property has a record with the path "/" that contains all docs routes.
-          const allDocsRouteConfig = docsPluginRouteConfig.routes?.filter(
+          const allDocsRouteConfig = docsPluginRouteConfig?.routes?.filter(
             (route) => route.path === DOCUSAURUS_BASE_URL,
           )[0];
 
@@ -176,6 +197,10 @@ const config = {
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
+        gtag: {
+          trackingID: 'G-8S6ZF9V3Q6',
+          anonymizeIP: true,
+        },
       }),
     ],
   ],
@@ -211,6 +236,14 @@ const config = {
               {
                 label: 'Getting Started',
                 to: 'docs/getting-started',
+              },
+              {
+                label: 'llms.txt',
+                href: 'https://analogjs.org/llms.txt',
+              },
+              {
+                label: 'llms-full.txt',
+                href: 'https://analogjs.org/llms-full.txt',
               },
             ],
           },

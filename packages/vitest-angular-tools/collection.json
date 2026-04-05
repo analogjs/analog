@@ -1,0 +1,10 @@
+{
+  "$schema": "../../node_modules/@angular-devkit/schematics/collection-schema.json",
+  "schematics": {
+    "setup": {
+      "description": "Configure Vitest for an Angular project",
+      "factory": "./schematics/setup/index#setupSchematic",
+      "schema": "./schematics/setup/schema.json"
+    }
+  }
+}

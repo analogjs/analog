@@ -36,24 +36,24 @@
   },
   "schematics": {
     "application": {
-      "factory": "./src/generators/app/compat",
+      "factory": "./src/generators/app/compat#applicationSchematic",
       "schema": "./src/generators/app/schema.json",
       "description": "Generates an Analog application",
       "aliases": ["app"]
     },
     "page": {
-      "factory": "./src/generators/page/generator#analogPageGeneratorSchematic",
+      "factory": "./src/generators/page/compat#pageSchematic",
       "schema": "./src/generators/page/schema.json",
       "description": "Creates a new Analog page in the given or default project.",
       "aliases": ["p"]
     },
     "setup-vitest": {
-      "factory": "./src/generators/setup-vitest/compat",
+      "factory": "./src/generators/setup-vitest/compat#setupVitestSchematic",
       "schema": "./src/generators/setup-vitest/schema.json",
       "description": "Setup the Vitest configuration."
     },
     "init": {
-      "factory": "./src/generators/init/compat",
+      "factory": "./src/generators/init/compat#initSchematic",
       "schema": "./src/generators/init/schema.json",
       "description": "Migrate and configure an Angular SPA to use Analog.",
       "aliases": ["migrate"]

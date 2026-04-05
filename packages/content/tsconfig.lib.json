@@ -6,8 +6,20 @@
     "declarationMap": true,
     "inlineSources": true,
     "types": [],
-    "allowJs": true
+    "isolatedDeclarations": true,
+    "rootDir": ".",
+    "paths": {
+      "@analogjs/content": ["./src/index.ts"],
+      "@analogjs/content/*": ["./*"]
+    }
   },
-  "exclude": ["jest.config.ts", "**/*.test.ts", "**/*.spec.ts"],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/test-setup.ts",
+    "oxlint.config.ts",
+    "vite.config.lib.ts",
+    "vite.config.ts"
+  ],
   "include": ["**/*.ts"]
 }

@@ -6,7 +6,7 @@ export function addHomePage(
   tree: Tree,
   options: NormalizedOptions,
   majorAngularVersion: number,
-) {
+): void {
   const templateOptions = {
     ...options,
     template: '',
@@ -20,10 +20,7 @@ export function addHomePage(
     templateOptions,
   );
 
-  let pageDirectory = options.addTailwind ? 'tailwind' : 'css';
-  if (options.addTRPC) {
-    pageDirectory += '-trpc';
-  }
+  const pageDirectory = options.addTailwind ? 'tailwind' : 'css';
 
   generateFiles(
     tree,

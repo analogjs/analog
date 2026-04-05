@@ -1,6 +1,6 @@
-import { NitroConfig } from 'nitropack';
+import type { NitroConfig } from 'nitro/types';
 import { ConfigEnv, UserConfig, Plugin } from 'vite';
-import { Mock, vi } from 'vitest';
+import { vi } from 'vitest';
 import { resolve } from 'node:path';
 
 export const mockViteDevServer = {
@@ -13,7 +13,7 @@ export const mockViteDevServer = {
 export const mockNitroConfig: NitroConfig = {
   buildDir: resolve('./dist/.nitro'),
   preset: undefined,
-  compatibilityDate: '2024-11-19',
+  compatibilityDate: '2025-11-19',
   handlers: [],
   logLevel: 0,
   output: {
@@ -22,7 +22,7 @@ export const mockNitroConfig: NitroConfig = {
   },
   rootDir: '.',
   scanDirs: ['src/server'],
-  srcDir: 'src/server',
+  serverDir: 'src/server',
   prerender: {
     crawlLinks: undefined,
   },
@@ -36,7 +36,9 @@ export const mockNitroConfig: NitroConfig = {
     plugins: [
       {
         name: 'analogjs-vite-plugin-nitro-rollup-page-endpoint',
-        transform() {},
+        transform() {
+          return undefined;
+        },
       },
     ],
   },

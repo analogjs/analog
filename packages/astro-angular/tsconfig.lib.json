@@ -3,21 +3,23 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "declaration": true,
+    "isolatedDeclarations": true,
     "declarationMap": true,
     "inlineSources": true,
     "types": [],
     "paths": {
       "@analogjs/vite-plugin-angular": [
-        "./node_modules/@analogjs/vite-plugin-angular"
+        "../../packages/vite-plugin-angular/src/index.ts",
+        "../../packages/vite-plugin-angular/dist"
       ]
     }
   },
   "include": ["**/*.ts"],
   "exclude": [
-    "jest.config.ts",
     "**/*.spec.ts",
     "**/*.test.ts",
     "vite.config.ts",
-    "src/test-setup.ts"
+    "src/test-setup.ts",
+    "oxlint.config.ts"
   ]
 }

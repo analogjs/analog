@@ -11,10 +11,17 @@ interface TsConfig {
   };
 }
 
-export function updateTsConfig(tree: Tree, schema: SetupVitestGeneratorSchema) {
+export function updateTsConfig(
+  tree: Tree,
+  schema: SetupVitestGeneratorSchema,
+): void {
   const projects = getProjects(tree);
 
   const projectConfig = projects.get(schema.project);
+
+  if (!projectConfig) {
+    throw new Error(`Project "${schema.project}" not found.`);
+  }
 
   const tsconfigPath = joinPathFragments(
     projectConfig.root,
@@ -28,7 +35,7 @@ export function updateTsConfig(tree: Tree, schema: SetupVitestGeneratorSchema) {
       (json) => {
         json.compilerOptions ??= {};
         json.compilerOptions.module = undefined;
-        json.compilerOptions.target ??= 'es2016';
+        json.compilerOptions.target ??= 'es2022';
         json.files = ['src/test-setup.ts'];
         json.compilerOptions.types = (json.compilerOptions.types ?? ['node'])
           .filter((type) => type !== 'jest')
