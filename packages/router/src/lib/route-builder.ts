@@ -35,11 +35,7 @@ export function createRoutes<TFile>(
     const aPriority = getCollisionPriority(a);
     const bPriority = getCollisionPriority(b);
 
-    if (aPriority !== bPriority) {
-      return aPriority - bPriority;
-    }
-
-    return a.localeCompare(b);
+    return aPriority - bPriority;
   });
 
   if (filenames.length === 0) {
@@ -55,14 +51,22 @@ export function createRoutes<TFile>(
 
     const existing = acc[level]?.[rawPath];
     if (existing?.filename && existing.filename !== filename) {
+      const existingPriority = getCollisionPriority(existing.filename);
+      const nextPriority = getCollisionPriority(filename);
+      const shouldKeepExisting = existingPriority < nextPriority;
+      const chosenFilename = shouldKeepExisting ? existing.filename : filename;
+
       if (import.meta.env.DEV) {
         console.warn(
           `[Analog] Route files "${existing.filename}" and "${filename}" ` +
             `resolve to the same route path "${rawPath}". ` +
-            `Only "${existing.filename}" will be used.`,
+            `Only "${chosenFilename}" will be used.`,
         );
       }
-      return acc;
+
+      if (shouldKeepExisting) {
+        return acc;
+      }
     }
 
     return {
