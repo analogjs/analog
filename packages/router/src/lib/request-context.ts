@@ -29,7 +29,7 @@ function mergeFetchParams(
   for (const key of request.params.keys()) {
     const values = request.params.getAll(key);
 
-    if (values.length > 0) {
+    if (values?.length) {
       merged.set(key, values);
     }
   }
