@@ -1,5 +1,9 @@
 import { DOCUMENT } from '@angular/common';
-import { inject } from '@angular/core';
+import {
+  EnvironmentInjector,
+  inject,
+  runInInjectionContext,
+} from '@angular/core';
 import type { ActivatedRouteSnapshot } from '@angular/router';
 import { NavigationEnd, Router } from '@angular/router';
 import { isPlainObject } from 'es-toolkit';
@@ -57,15 +61,16 @@ const JSON_LD_SCRIPT_SELECTOR = 'script[data-analog-json-ld]';
 
 export function updateJsonLdOnRouteChange(): void {
   const router = inject(Router);
-  const document = inject(DOCUMENT);
+  const injector = inject(EnvironmentInjector);
 
   router.events
     .pipe(filter((event) => event instanceof NavigationEnd))
     .subscribe(() => {
-      applyJsonLdToDocument(
-        document,
-        getJsonLdEntries(router.routerState.snapshot.root),
-      );
+      const entries = getJsonLdEntries(router.routerState.snapshot.root);
+
+      runInInjectionContext(injector, () => {
+        applyJsonLdToDocument(inject(DOCUMENT), entries);
+      });
     });
 }
 

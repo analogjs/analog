@@ -1,8 +1,10 @@
 import {
-  ENVIRONMENT_INITIALIZER,
+  APP_BOOTSTRAP_LISTENER,
+  EnvironmentInjector,
   EnvironmentProviders,
   inject,
   makeEnvironmentProviders,
+  runInInjectionContext,
 } from '@angular/core';
 import { ɵHTTP_ROOT_INTERCEPTOR_FNS as HTTP_ROOT_INTERCEPTOR_FNS } from '@angular/common/http';
 import { provideRouter, RouterFeatures, ROUTES, Routes } from '@angular/router';
@@ -102,7 +104,7 @@ export function provideFileRouterWithRoutes(
 
         for (const source of extraSources) {
           for (const [key, loader] of Object.entries(source.files)) {
-            allFiles[key] = loader;
+            allFiles[key] = loader as () => Promise<unknown>;
             resolverMap.set(key, source.resolveModule);
           }
         }
@@ -116,14 +118,20 @@ export function provideFileRouterWithRoutes(
       },
     },
     {
-      provide: ENVIRONMENT_INITIALIZER,
+      provide: APP_BOOTSTRAP_LISTENER,
       multi: true,
-      useValue: () => updateMetaTagsOnRouteChange(),
-    },
-    {
-      provide: ENVIRONMENT_INITIALIZER,
-      multi: true,
-      useValue: () => updateJsonLdOnRouteChange(),
+      useFactory: () => {
+        const injector = inject(EnvironmentInjector);
+
+        return () => {
+          queueMicrotask(() => {
+            runInInjectionContext(injector, () => {
+              updateMetaTagsOnRouteChange();
+              updateJsonLdOnRouteChange();
+            });
+          });
+        };
+      },
     },
     {
       provide: HTTP_ROOT_INTERCEPTOR_FNS,
