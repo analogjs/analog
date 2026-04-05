@@ -80,6 +80,7 @@ export function routerPlugin(options?: Options): Plugin[] {
   // These lists are used repeatedly by transform hooks during serve. Keeping
   // them warm avoids a full glob on every route/content invalidation.
   let routeFilesCache: string[] | undefined;
+  let pageRouteFilesCache: string[] | undefined;
   let contentRouteFilesCache: string[] | undefined;
   let endpointFilesCache: string[] | undefined;
   const routeDiagnosticCache = new Map<string, string>();
@@ -129,8 +130,16 @@ export function routerPlugin(options?: Options): Plugin[] {
 
     return endpointFilesCache;
   };
+  const discoverPageRouteFiles = () => {
+    pageRouteFilesCache ??= discoverRouteFiles().filter((file) =>
+      file.endsWith('.page.ts'),
+    );
+
+    return pageRouteFilesCache;
+  };
   const invalidateDiscoveryCaches = () => {
     routeFilesCache = undefined;
+    pageRouteFilesCache = undefined;
     contentRouteFilesCache = undefined;
     endpointFilesCache = undefined;
   };
@@ -141,9 +150,7 @@ export function routerPlugin(options?: Options): Plugin[] {
 
     try {
       const code = readFileSync(path, 'utf-8');
-      const routeFiles = discoverRouteFiles().filter((file) =>
-        file.endsWith('.page.ts'),
-      );
+      const routeFiles = discoverPageRouteFiles();
       const diagnostics = analyzeAnalogRouteFile({
         filename: path,
         code,
@@ -279,9 +286,9 @@ export function routerPlugin(options?: Options): Plugin[] {
           server.watcher.add(dir);
         }
 
-        discoverRouteFiles()
-          .filter((file) => file.endsWith('.page.ts'))
-          .forEach((file) => reportRouteDiagnostics(file));
+        discoverPageRouteFiles().forEach((file) =>
+          reportRouteDiagnostics(file),
+        );
       },
     },
     {
