@@ -109,6 +109,8 @@ export default defineDesignTokensConfig({
     expect(manifest).toContain('"platform":"css"');
     expect(manifest).toContain('"framework":["tailwind","mui"]');
     expect(manifest).toContain('"relativePath":"css/tokens.css"');
+    expect(manifest).toContain('"tailwind":[');
+    expect(manifest).toContain('getOutputsForFramework');
     expect(css).toContain('--color-brand-primary: #3366ff;');
     expect(css).toContain('css/tokens.css');
     expect(css).not.toContain('css/tailwind.css');

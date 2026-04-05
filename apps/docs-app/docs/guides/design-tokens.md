@@ -109,6 +109,15 @@ export default defineDesignTokensConfig({
 
 Analog builds those outputs into an internal workspace cache, injects the CSS files marked with `analog.inject !== false`, and exposes every emitted CSS file as a virtual module.
 
+The generated virtual manifest also groups outputs by framework so shared libraries can discover bridge files without hard-coding every path themselves:
+
+```ts
+import outputs, {
+  getOutputsForFramework,
+  outputsByFramework,
+} from 'virtual:analog-design-tokens';
+```
+
 ## Import framework-specific CSS
 
 Use `designTokenCss()` when a framework wants its own explicit token bridge stylesheet.
@@ -129,6 +138,22 @@ import { designTokenCss } from '@analogjs/platform';
 
 await import(designTokenCss('css/framework/mui.css'));
 ```
+
+## Why this belongs in Analog
+
+This is not just a convenience wrapper around Vite.
+
+- Astro manages route-aware CSS as framework-owned virtual modules in [`packages/astro/src/vite-plugin-css/index.ts`](https://github.com/withastro/astro/blob/main/packages/astro/src/vite-plugin-css/index.ts). It walks the module graph and serves per-page CSS state from virtual ids.
+- Nuxt formalizes generated runtime artifacts and watch-aware templates in [`packages/nuxt/src/components/module.ts`](https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/components/module.ts) through template generation and framework hooks.
+- Angular already treats templates and stylesheets as compiler resources in [`packages/language-service/src/adapters.ts`](https://github.com/angular/angular/blob/main/packages/language-service/src/adapters.ts), including external resource tracking and modified-resource invalidation.
+
+Short version:
+
+- Astro proves style identity and CSS serving become framework concerns once correctness matters in dev and SSR.
+- Nuxt proves first-class framework capabilities often need generated virtual/runtime artifacts, not only bundler plugins.
+- Angular proves styles already sit on a compiler resource boundary that Analog owns.
+
+That is why Analog should own token output lifecycle, virtual module identity, watch invalidation, and Angular resource integration while leaving Tailwind semantics and framework-specific token schemas to Style Dictionary outputs.
 
 ## Tailwind guidance
 

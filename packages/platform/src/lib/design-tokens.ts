@@ -147,9 +147,19 @@ export function designTokensPlugin(
         }
 
         if (id === RESOLVED_MANIFEST_MODULE_ID) {
+          const outputsByFramework = Object.fromEntries(
+            collectOutputsByFramework(state.outputs),
+          );
+          const injected = state.outputs.filter((output) => output.inject);
+
           return [
             `export const outputs = ${JSON.stringify(state.outputs)};`,
+            `export const injectedOutputs = ${JSON.stringify(injected)};`,
+            `export const outputsByFramework = ${JSON.stringify(outputsByFramework)};`,
             `export const cssModuleId = ${JSON.stringify(cssModuleId)};`,
+            'export function getOutputsForFramework(framework) {',
+            '  return outputsByFramework[framework] ?? [];',
+            '}',
             'export default outputs;',
           ].join('\n');
         }
@@ -489,4 +499,20 @@ function normalizeFrameworks(
   }
 
   return Array.isArray(framework) ? framework : [framework];
+}
+
+function collectOutputsByFramework(
+  outputs: DesignTokenOutput[],
+): Map<string, DesignTokenOutput[]> {
+  const grouped = new Map<string, DesignTokenOutput[]>();
+
+  for (const output of outputs) {
+    for (const framework of output.framework) {
+      const current = grouped.get(framework) ?? [];
+      current.push(output);
+      grouped.set(framework, current);
+    }
+  }
+
+  return grouped;
 }
