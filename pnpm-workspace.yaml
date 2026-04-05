@@ -21,8 +21,24 @@ packages:
 catalog:
   '@astrojs/mdx': ^5.0.3
   '@astrojs/react': ^5.0.2
+  '@nx/angular': 22.7.0-beta.10
+  '@nx/devkit': 22.7.0-beta.10
+  '@nx/eslint': 22.7.0-beta.10
+  '@nx/eslint-plugin': 22.7.0-beta.10
+  '@nx/js': 22.7.0-beta.10
+  '@nx/playwright': 22.7.0-beta.10
+  '@nx/plugin': 22.7.0-beta.10
+  '@nx/storybook': 22.7.0-beta.10
+  '@nx/vite': 22.7.0-beta.10
+  '@nx/vitest': 22.7.0-beta.10
+  '@nx/web': 22.7.0-beta.10
+  '@swc-node/register': ~1.11.1
+  '@swc/core': ~1.15.5
+  '@swc/helpers': ~0.5.18
+  '@tailwindcss/postcss': ^4.2.2
   '@tailwindcss/vite': ^4.2.2
   '@standard-schema/spec': ^1.1.0
+  angular-eslint: ^21.2.0
   astro: 6.1.1
   defu: ^6.1.4
   front-matter: ^4.0.2
@@ -33,6 +49,7 @@ catalog:
   marked-mangle: ^1.1.12
   marked-shiki: ^1.2.1
   nitro: 3.0.260311-beta
+  nx: 22.7.0-beta.10
   obug: ^2.1.1
   ofetch: 2.0.0-alpha.3
   oxc-parser: ^0.123.0

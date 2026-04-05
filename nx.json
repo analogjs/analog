@@ -1,7 +1,11 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "workspaceLayout": { "libsDir": "packages" },
-  "cli": { "packageManager": "pnpm" },
+  "workspaceLayout": {
+    "libsDir": "packages"
+  },
+  "cli": {
+    "packageManager": "pnpm"
+  },
   "parallel": 8,
   "targetDefaults": {
     "build": {
@@ -15,17 +19,24 @@
     "e2e": {
       "cache": true
     },
-    "serve": { "dependsOn": ["^build"] },
+    "serve": {
+      "dependsOn": ["^build"]
+    },
     "@nx/eslint:lint": {
       "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
-      "options": { "quiet": true },
+      "options": {
+        "quiet": true
+      },
       "cache": true
     },
     "@angular-devkit/build-angular:application": {
       "cache": true,
       "inputs": ["production", "^production"]
     },
-    "@nx/vitest:test": { "cache": true, "inputs": ["default", "^production"] }
+    "@nx/vitest:test": {
+      "cache": true,
+      "inputs": ["default", "^production"]
+    }
   },
   "generators": {
     "@nx/angular:application": {
@@ -38,7 +49,9 @@
       "linter": "eslint",
       "unitTestRunner": "vitest-analog"
     },
-    "@nx/angular:component": { "style": "css" }
+    "@nx/angular:component": {
+      "style": "css"
+    }
   },
   "defaultProject": "analog-app",
   "namedInputs": {
@@ -61,7 +74,9 @@
   "plugins": [
     {
       "plugin": "@nx/eslint/plugin",
-      "options": { "targetName": "eslint:lint" }
+      "options": {
+        "targetName": "eslint:lint"
+      }
     }
   ],
   "analytics": false
