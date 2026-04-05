@@ -279,6 +279,22 @@ export function evictDeletedFileMetadata(
   fileTransformMap.delete(normalizedFile);
 }
 
+export function injectViteIgnoreForHmrMetadata(code: string): string {
+  let patched = code.replace(
+    /\bimport\(([a-zA-Z_$][\w$]*\.\u0275\u0275getReplaceMetadataURL)/g,
+    'import(/* @vite-ignore */ $1',
+  );
+
+  if (patched === code) {
+    patched = patched.replace(
+      /import\((\S+getReplaceMetadataURL)/g,
+      'import(/* @vite-ignore */ $1',
+    );
+  }
+
+  return patched;
+}
+
 export function isIgnoredHmrFile(file: string): boolean {
   return file.endsWith('.tsbuildinfo');
 }
@@ -1735,18 +1751,11 @@ export function angular(options?: PluginOptions): Plugin[] {
               hasMetaUrl,
             });
             if (hasMetaUrl) {
-              data = data.replace(
-                /\bimport\(([a-zA-Z_$][\w$]*\.\u0275\u0275getReplaceMetadataURL)/g,
-                'import(/* @vite-ignore */ $1',
-              );
-              if (!data.includes('@vite-ignore')) {
+              const patched = injectViteIgnoreForHmrMetadata(data);
+              if (patched !== data && !patched.includes('@vite-ignore')) {
                 debugHmrV('vite-ignore regex fallback', { id });
-                // Fallback: broader replace
-                data = data.replace(
-                  /import\((\S+getReplaceMetadataURL)/g,
-                  'import(/* @vite-ignore */ $1',
-                );
               }
+              data = patched;
             }
           }
 
@@ -1949,65 +1958,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         },
       } satisfies Plugin),
     angularPlugin(),
-    // -----------------------------------------------------------------------
-    // Angular HMR: suppress Vite "dynamic import cannot be analyzed" warnings
-    // -----------------------------------------------------------------------
-    //
-    // Angular 21's compiler emits HMR metadata replacement code per component:
-    //
-    //   import(i0.ɵɵgetReplaceMetadataURL(id, t, import.meta.url))
-    //     .then((m) => m.default && i0.ɵɵreplaceMetadata(Component, ...))
-    //
-    // Vite's vite:import-analysis plugin cannot statically analyze this computed
-    // import() expression and emits a warning for every @Component in the app.
-    //
-    // The Angular compiler's IR *does* include a /* @vite-ignore */ comment on
-    // the import(), but it is stripped during TypeScript's emit phase (TS does
-    // not preserve comments inside expressions by default).
-    //
-    // This post-transform plugin re-injects /* @vite-ignore */ on the final JS
-    // output. It runs with enforce:"post" so it sees the code AFTER the Angular
-    // compilation and TypeScript emit have completed.
-    //
-    // LIMITATION — SSR environment:
-    //   Vite processes client and SSR environments through separate plugin
-    //   containers. This plugin's transform fires for .ts files in the CLIENT
-    //   environment, silencing warnings there. However, the SSR environment's
-    //   vite:import-analysis still sees the un-patched code and logs the same
-    //   warnings. These SSR warnings are harmless — the import is runtime-only
-    //   HMR plumbing, not a code-split boundary — but they add noise to the dev
-    //   server console (~one per @Component).
-    //
-    //   Consuming apps can suppress the SSR warnings in their Vite customLogger:
-    //
-    //     logger.warn = (msg, options) => {
-    //       if (typeof msg === 'string' && msg.includes('getReplaceMetadataURL')) return;
-    //       originalWarn(msg, options);
-    //     };
-    //
-    pluginOptions.hmr &&
-      ({
-        name: '@analogjs/vite-plugin-angular:hmr-vite-ignore',
-        enforce: 'post' as const,
-        transform(code: string, id: string) {
-          if (
-            !id.includes('.ts') ||
-            id.includes('node_modules') ||
-            !code.includes('\u0275\u0275getReplaceMetadataURL')
-          ) {
-            return;
-          }
-
-          const patched = code.replace(
-            /\bimport\(([a-zA-Z_$][\w$]*\.\u0275\u0275getReplaceMetadataURL)/g,
-            'import(/* @vite-ignore */ $1',
-          );
-
-          if (patched !== code) {
-            return { code: patched, map: null };
-          }
-        },
-      } satisfies Plugin),
     pluginOptions.hmr && liveReloadPlugin({ classNames, fileEmitter }),
     ...(isTest && !isStackBlitz ? angularVitestPlugins() : []),
     (jit &&
