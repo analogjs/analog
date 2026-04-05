@@ -12,7 +12,9 @@ const {
   serverModePluginSpy,
   clearClientPageEndpointsPluginSpy,
   discoverLibraryRoutesSpy,
-  designTokensPluginSpy,
+  resolveStylePipelinePluginsSpy,
+  stylePipelineFactorySpy,
+  stylePipelinePluginSpy,
 } = vi.hoisted(() => ({
   viteNitroPluginSpy: vi.fn(() => []),
   angularSpy: vi.fn(() => []),
@@ -29,7 +31,9 @@ const {
     additionalContentDirs: [],
     additionalAPIDirs: [],
   })),
-  designTokensPluginSpy: vi.fn(() => []),
+  resolveStylePipelinePluginsSpy: vi.fn(() => []),
+  stylePipelineFactorySpy: vi.fn(),
+  stylePipelinePluginSpy: { name: 'community-style-pipeline' },
 }));
 
 vi.mock('@analogjs/vite-plugin-nitro', () => ({
@@ -66,8 +70,19 @@ vi.mock('./clear-client-page-endpoint.js', () => ({
 vi.mock('./discover-library-routes.js', () => ({
   discoverLibraryRoutes: discoverLibraryRoutesSpy,
 }));
-vi.mock('./design-tokens.js', () => ({
-  designTokensPlugin: designTokensPluginSpy,
+vi.mock('./style-pipeline.js', () => ({
+  resolveStylePipelinePlugins:
+    resolveStylePipelinePluginsSpy.mockImplementation((options) => {
+      if (!options) {
+        return [];
+      }
+      return [
+        ...(typeof options.plugins?.[0] === 'function'
+          ? [stylePipelineFactorySpy]
+          : []),
+        stylePipelinePluginSpy,
+      ];
+    }),
 }));
 
 import { platformPlugin } from './platform-plugin.js';
@@ -87,7 +102,7 @@ describe('platformPlugin', () => {
     contentPluginSpy.mockReturnValue([]);
     serverModePluginSpy.mockReturnValue([]);
     clearClientPageEndpointsPluginSpy.mockReturnValue([]);
-    designTokensPluginSpy.mockReturnValue([]);
+    resolveStylePipelinePluginsSpy.mockClear();
   });
 
   it('defaults ssr to true and passes that value to the composed plugins', () => {
@@ -217,21 +232,44 @@ describe('platformPlugin', () => {
     expect(discoverLibraryRoutesSpy).not.toHaveBeenCalled();
   });
 
-  it('wires the experimental design token plugin when configured', () => {
+  it('wires experimental style-pipeline plugins when configured', () => {
+    const options = {
+      plugins: [stylePipelineFactorySpy],
+    };
+
     platformPlugin({
       experimental: {
-        designTokens: {
-          configFile: 'style-dictionary.config.ts',
-        },
+        stylePipeline: options,
       },
       workspaceRoot: '/workspace',
     });
 
-    expect(designTokensPluginSpy).toHaveBeenCalledWith(
-      {
-        configFile: 'style-dictionary.config.ts',
-      },
+    expect(resolveStylePipelinePluginsSpy).toHaveBeenCalledWith(
+      options,
       '/workspace',
+    );
+    expect(stylePipelineFactorySpy).not.toHaveBeenCalled();
+  });
+
+  it('forwards angular style-pipeline plugins to the Angular vite plugin', () => {
+    const angularStylePipelinePlugin = {
+      name: 'community-angular-style-pipeline',
+    };
+
+    platformPlugin({
+      experimental: {
+        stylePipeline: {
+          angularPlugins: [angularStylePipelinePlugin],
+        },
+      },
+    });
+
+    expect(angularSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stylePipeline: {
+          plugins: [angularStylePipelinePlugin],
+        },
+      }),
     );
   });
 });

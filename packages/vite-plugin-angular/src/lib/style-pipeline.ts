@@ -1,0 +1,98 @@
+import type { AnalogStylesheetRegistry } from './stylesheet-registry.js';
+import type {
+  StylePreprocessor,
+  StylesheetTransformResult,
+  StylesheetTransformContext,
+} from './style-preprocessor.js';
+import { normalizeStylesheetTransformResult } from './style-preprocessor.js';
+
+export interface AngularStylePipelineContext {
+  workspaceRoot: string;
+}
+
+export interface AngularStylePipelinePlugin {
+  name: string;
+  /**
+   * Transform Angular component stylesheet content before it is externalized or
+   * inlined back into the Angular compiler pipeline.
+   */
+  preprocessStylesheet?: (
+    code: string,
+    context: StylesheetTransformContext,
+  ) => string | StylesheetTransformResult | undefined;
+  /**
+   * Observe the live Angular stylesheet registry used for externalized
+   * component styles and HMR bookkeeping.
+   */
+  configureStylesheetRegistry?: (
+    registry: AnalogStylesheetRegistry,
+    context: AngularStylePipelineContext,
+  ) => void;
+}
+
+export interface AngularStylePipelineOptions {
+  plugins: AngularStylePipelinePlugin[];
+}
+
+export function defineAngularStylePipeline<
+  const T extends AngularStylePipelineOptions,
+>(options: T): T {
+  return options;
+}
+
+export function defineAngularStylePipelinePlugins<
+  const T extends AngularStylePipelinePlugin[],
+>(plugins: T): T {
+  return plugins;
+}
+
+export function stylePipelinePreprocessorFromPlugins(
+  options: AngularStylePipelineOptions | undefined,
+): StylePreprocessor | undefined {
+  const preprocessors =
+    options?.plugins
+      .map((plugin) => plugin.preprocessStylesheet)
+      .filter((preprocessor) => !!preprocessor) ?? [];
+
+  if (!preprocessors.length) {
+    return undefined;
+  }
+
+  return (code, filename, context) => {
+    if (!context) {
+      return code;
+    }
+
+    let current = normalizeStylesheetTransformResult(undefined, code);
+    for (const preprocess of preprocessors) {
+      const next = normalizeStylesheetTransformResult(
+        preprocess(current.code, context),
+        current.code,
+      );
+      current = {
+        code: next.code,
+        dependencies: [
+          ...(current.dependencies ?? []),
+          ...(next.dependencies ?? []),
+        ],
+        diagnostics: [
+          ...(current.diagnostics ?? []),
+          ...(next.diagnostics ?? []),
+        ],
+        tags: [...(current.tags ?? []), ...(next.tags ?? [])],
+      };
+    }
+
+    return current;
+  };
+}
+
+export function configureStylePipelineRegistry(
+  options: AngularStylePipelineOptions | undefined,
+  registry: AnalogStylesheetRegistry,
+  context: AngularStylePipelineContext,
+): void {
+  for (const plugin of options?.plugins ?? []) {
+    plugin.configureStylesheetRegistry?.(registry, context);
+  }
+}

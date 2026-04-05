@@ -17,7 +17,7 @@ import type {
 
 import type { ContentPluginOptions } from './content-plugin.js';
 import type { DebugOption } from './utils/debug.js';
-import type { DesignTokensOptions } from './design-tokens.js';
+import type { StylePipelineOptions } from './style-pipeline.js';
 
 declare module 'nitro/types' {
   interface NitroRouteConfig {
@@ -194,13 +194,14 @@ export interface Options {
     typedRouter?: boolean | TypedRouterOptions;
 
     /**
-     * Experimental Style Dictionary v5 integration for design-token pipelines.
+     * Experimental slot for community-maintained style-pipeline integrations.
      *
-     * This keeps Analog responsible for watching, building, and serving token
-     * outputs while leaving token schemas and framework-specific bridges in the
-     * Style Dictionary config itself.
+     * This keeps Analog's core surface intentionally narrow: community
+     * packages can register Vite plugins through an Analog-first config shape
+     * without requiring Analog itself to own design-token engines, library
+     * target contracts, or framework-specific theming semantics.
      */
-    designTokens?: DesignTokensOptions | false;
+    stylePipeline?: StylePipelineOptions | false;
   };
 }
 

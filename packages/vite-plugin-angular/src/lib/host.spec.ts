@@ -29,6 +29,14 @@ describe('augmentHostWithResources', () => {
     expect(stylePreprocessor).toHaveBeenCalledWith(
       '.demo { color: red; }',
       '/project/src/app/demo.component.css',
+      {
+        filename: '/project/src/app/demo.component.css',
+        containingFile: '/project/src/app/demo.component.ts',
+        resourceFile: '/project/src/app/demo.component.css',
+        className: undefined,
+        order: undefined,
+        inline: false,
+      },
     );
     expect(transform).toHaveBeenCalledWith(
       '/* /project/src/app/demo.component.css */\n.demo { color: red; }',
@@ -59,6 +67,14 @@ describe('augmentHostWithResources', () => {
     expect(stylePreprocessor).toHaveBeenCalledWith(
       '.demo { display: grid; }',
       '/project/src/app/demo.component.css',
+      {
+        filename: '/project/src/app/demo.component.css',
+        containingFile: '/project/src/app/demo.component.ts',
+        resourceFile: undefined,
+        className: undefined,
+        order: undefined,
+        inline: true,
+      },
     );
     expect(transform).toHaveBeenCalledWith(
       '/* /project/src/app/demo.component.css */\n.demo { display: grid; }',
@@ -93,11 +109,73 @@ describe('augmentHostWithResources', () => {
     expect(stylePreprocessor).toHaveBeenCalledWith(
       '.demo { color: red; }',
       '/project/src/app/demo.component.css',
+      {
+        filename: '/project/src/app/demo.component.css',
+        containingFile: '/project/src/app/demo.component.ts',
+        resourceFile: undefined,
+        className: 'DemoComponent',
+        order: 0,
+        inline: true,
+      },
     );
     expect(transform).not.toHaveBeenCalled();
     expect(stylesheetRegistry.getServedContent(result.content)).toBe(
       '/* /project/src/app/demo.component.css */\n.demo { color: red; }',
     );
+  });
+
+  it('stores stylesheet dependencies and diagnostics from structured results', async () => {
+    const host = { readFile: vi.fn() } as unknown as ts.CompilerHost;
+    const transform = vi.fn();
+    const stylesheetRegistry = new AnalogStylesheetRegistry();
+    const stylePreprocessor = vi.fn(() => ({
+      code: '.demo { color: red; }',
+      dependencies: [{ id: 'virtual:brandos/tailwind.css', kind: 'bridge' }],
+      diagnostics: [
+        {
+          severity: 'warning',
+          code: 'selector-contract-drift',
+          message: 'Theme selector drift detected.',
+        },
+      ],
+      tags: ['tailwind'],
+    }));
+
+    augmentHostWithResources(host, transform as any, {
+      inlineStylesExtension: 'css',
+      stylesheetRegistry,
+      stylePreprocessor,
+    });
+
+    await (host as any).transformResource('.demo { color: red; }', {
+      type: 'style',
+      containingFile: '/project/src/app/demo.component.ts',
+      className: 'DemoComponent',
+      order: 0,
+      resourceFile: '/project/src/app/demo.component.css',
+    });
+
+    expect(
+      stylesheetRegistry.getDependenciesForSource(
+        '/project/src/app/demo.component.css',
+      ),
+    ).toEqual([{ id: 'virtual:brandos/tailwind.css', kind: 'bridge' }]);
+    expect(
+      stylesheetRegistry.getDiagnosticsForSource(
+        '/project/src/app/demo.component.css',
+      ),
+    ).toEqual([
+      {
+        severity: 'warning',
+        code: 'selector-contract-drift',
+        message: 'Theme selector drift detected.',
+      },
+    ]);
+    expect(
+      stylesheetRegistry.getTagsForSource(
+        '/project/src/app/demo.component.css',
+      ),
+    ).toEqual(['tailwind']);
   });
 
   it('returns null when eager stylesheet transform fails', async () => {

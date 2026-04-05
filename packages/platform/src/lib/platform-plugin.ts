@@ -18,7 +18,7 @@ import { depsPlugin } from './deps-plugin.js';
 import { injectHTMLPlugin } from './ssr/inject-html-plugin.js';
 import { serverModePlugin } from '../server-mode-plugin.js';
 import { routeGenerationPlugin } from './route-generation-plugin.js';
-import { designTokensPlugin } from './design-tokens.js';
+import { resolveStylePipelinePlugins } from './style-pipeline.js';
 
 // Bridge Plugin types from external @analogjs packages that resolve a different vite instance
 function externalPlugins(plugins: unknown): Plugin[] {
@@ -60,7 +60,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   debugPlatform('experimental options resolved', {
     useAngularCompilationAPI: !!useAngularCompilationAPI,
     typedRouter: platformOptions.experimental?.typedRouter,
-    designTokens: !!platformOptions.experimental?.designTokens,
+    stylePipeline: !!platformOptions.experimental?.stylePipeline,
   });
   let nitroOptions = platformOptions?.nitro;
 
@@ -89,12 +89,10 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
       ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
       : []),
     ...(!isTest ? depsPlugin(platformOptions) : []),
-    ...(platformOptions.experimental?.designTokens
-      ? designTokensPlugin(
-          platformOptions.experimental.designTokens,
-          platformOptions.workspaceRoot,
-        )
-      : []),
+    ...resolveStylePipelinePlugins(
+      platformOptions.experimental?.stylePipeline,
+      platformOptions.workspaceRoot,
+    ),
     ...routerPlugin(platformOptions),
     routeGenerationPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),
@@ -119,6 +117,13 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
             inlineStylesExtension: platformOptions.inlineStylesExtension,
             fileReplacements: platformOptions.fileReplacements,
             debug: platformOptions.debug,
+            stylePipeline: platformOptions.experimental?.stylePipeline
+              ?.angularPlugins?.length
+              ? {
+                  plugins:
+                    platformOptions.experimental.stylePipeline.angularPlugins,
+                }
+              : undefined,
             ...(viteOptions ?? {}),
             experimental: {
               ...(viteOptions?.experimental ?? {}),

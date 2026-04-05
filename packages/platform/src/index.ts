@@ -16,17 +16,19 @@ export type {
 } from './lib/options.js';
 export { routeGenerationPlugin } from './lib/route-generation-plugin.js';
 export { tailwindPreprocessor } from './lib/tailwind-preprocessor.js';
-export {
-  defineDesignTokensConfig,
-  designTokenCss,
-} from './lib/design-tokens.js';
 export type {
-  DesignTokenFile,
-  DesignTokenOutput,
-  DesignTokenPlatform,
-  DesignTokensConfig,
-  DesignTokensOptions,
-} from './lib/design-tokens.js';
+  StylePipelineManifest,
+  StylePipelineOutput,
+  StylePipelineContext,
+  StylePipelineOptions,
+  StylePipelinePluginEntry,
+  StylePipelinePluginFactory,
+} from './lib/style-pipeline.js';
+export {
+  defineStylePipeline,
+  defineStylePipelinePlugins,
+  resolveStylePipelinePlugins,
+} from './lib/style-pipeline.js';
 export type {
   TailwindPreprocessorMode,
   TailwindPreprocessorOptions,

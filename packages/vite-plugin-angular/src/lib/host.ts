@@ -8,7 +8,7 @@ import path from 'node:path';
 import type { StylePreprocessor } from './style-preprocessor.js';
 import {
   AnalogStylesheetRegistry,
-  preprocessStylesheet,
+  preprocessStylesheetResult,
   registerStylesheetContent,
 } from './stylesheet-registry.js';
 import { debugStyles } from './utils/debug.js';
@@ -59,10 +59,18 @@ export function augmentHostWithResources(
         '.ts',
         `.${options?.inlineStylesExtension}`,
       );
-    const preprocessedData = preprocessStylesheet(
+    const preprocessed = preprocessStylesheetResult(
       data,
       filename,
       options.stylePreprocessor,
+      {
+        filename,
+        containingFile: context.containingFile,
+        resourceFile: context.resourceFile ?? undefined,
+        className: context.className,
+        order: context.order,
+        inline: !context.resourceFile,
+      },
     );
 
     // Externalized path: store preprocessed CSS for Vite's serve-time pipeline.
@@ -72,7 +80,12 @@ export function augmentHostWithResources(
       const stylesheetId = registerStylesheetContent(
         options.stylesheetRegistry,
         {
-          code: preprocessedData,
+          code: preprocessed.code,
+          dependencies: preprocessed.dependencies?.map((dependency) =>
+            typeof dependency === 'string' ? { id: dependency } : dependency,
+          ),
+          diagnostics: preprocessed.diagnostics,
+          tags: preprocessed.tags,
           containingFile: context.containingFile,
           className: context.className,
           order: context.order,
@@ -83,6 +96,9 @@ export function augmentHostWithResources(
       debugStyles('NgtscProgram: stylesheet deferred to Vite pipeline', {
         stylesheetId,
         resourceFile: context.resourceFile ?? '(inline)',
+        dependencies: preprocessed.dependencies,
+        diagnostics: preprocessed.diagnostics,
+        tags: preprocessed.tags,
       });
       return { content: stylesheetId };
     }
@@ -92,13 +108,13 @@ export function augmentHostWithResources(
     debugStyles('NgtscProgram: stylesheet processed inline via transform', {
       filename,
       resourceFile: context.resourceFile ?? '(inline)',
-      dataLength: preprocessedData.length,
+      dataLength: preprocessed.code.length,
     });
     let stylesheetResult;
 
     try {
       stylesheetResult = await transform(
-        preprocessedData,
+        preprocessed.code,
         `${filename}?direct`,
       );
     } catch (e) {
