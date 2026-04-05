@@ -17,6 +17,7 @@ import type {
 
 import type { ContentPluginOptions } from './content-plugin.js';
 import type { DebugOption } from './utils/debug.js';
+import type { DesignTokensOptions } from './design-tokens.js';
 
 declare module 'nitro/types' {
   interface NitroRouteConfig {
@@ -191,6 +192,15 @@ export interface Options {
      * Inspired by TanStack Router's `routeTree.gen.ts` codegen.
      */
     typedRouter?: boolean | TypedRouterOptions;
+
+    /**
+     * Experimental Style Dictionary v5 integration for design-token pipelines.
+     *
+     * This keeps Analog responsible for watching, building, and serving token
+     * outputs while leaving token schemas and framework-specific bridges in the
+     * Style Dictionary config itself.
+     */
+    designTokens?: DesignTokensOptions | false;
   };
 }
 

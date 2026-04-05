@@ -18,6 +18,7 @@ import { depsPlugin } from './deps-plugin.js';
 import { injectHTMLPlugin } from './ssr/inject-html-plugin.js';
 import { serverModePlugin } from '../server-mode-plugin.js';
 import { routeGenerationPlugin } from './route-generation-plugin.js';
+import { designTokensPlugin } from './design-tokens.js';
 
 // Bridge Plugin types from external @analogjs packages that resolve a different vite instance
 function externalPlugins(plugins: unknown): Plugin[] {
@@ -59,6 +60,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   debugPlatform('experimental options resolved', {
     useAngularCompilationAPI: !!useAngularCompilationAPI,
     typedRouter: platformOptions.experimental?.typedRouter,
+    designTokens: !!platformOptions.experimental?.designTokens,
   });
   let nitroOptions = platformOptions?.nitro;
 
@@ -87,6 +89,12 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
       ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
       : []),
     ...(!isTest ? depsPlugin(platformOptions) : []),
+    ...(platformOptions.experimental?.designTokens
+      ? designTokensPlugin(
+          platformOptions.experimental.designTokens,
+          platformOptions.workspaceRoot,
+        )
+      : []),
     ...routerPlugin(platformOptions),
     routeGenerationPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),

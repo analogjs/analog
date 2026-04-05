@@ -34,11 +34,13 @@
     "front-matter": "catalog:",
     "es-toolkit": "catalog:",
     "tinyglobby": "catalog:",
+    "style-dictionary": "catalog:",
     "nitro": "catalog:",
     "@analogjs/vite-plugin-angular": "workspace:*",
     "@analogjs/vite-plugin-nitro": "workspace:*",
     "rolldown": "catalog:",
     "obug": "catalog:",
+    "jiti": "catalog:",
     "vitefu": "catalog:"
   },
   "peerDependencies": {

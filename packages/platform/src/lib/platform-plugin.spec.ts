@@ -12,6 +12,7 @@ const {
   serverModePluginSpy,
   clearClientPageEndpointsPluginSpy,
   discoverLibraryRoutesSpy,
+  designTokensPluginSpy,
 } = vi.hoisted(() => ({
   viteNitroPluginSpy: vi.fn(() => []),
   angularSpy: vi.fn(() => []),
@@ -28,6 +29,7 @@ const {
     additionalContentDirs: [],
     additionalAPIDirs: [],
   })),
+  designTokensPluginSpy: vi.fn(() => []),
 }));
 
 vi.mock('@analogjs/vite-plugin-nitro', () => ({
@@ -64,6 +66,9 @@ vi.mock('./clear-client-page-endpoint.js', () => ({
 vi.mock('./discover-library-routes.js', () => ({
   discoverLibraryRoutes: discoverLibraryRoutesSpy,
 }));
+vi.mock('./design-tokens.js', () => ({
+  designTokensPlugin: designTokensPluginSpy,
+}));
 
 import { platformPlugin } from './platform-plugin.js';
 
@@ -82,6 +87,7 @@ describe('platformPlugin', () => {
     contentPluginSpy.mockReturnValue([]);
     serverModePluginSpy.mockReturnValue([]);
     clearClientPageEndpointsPluginSpy.mockReturnValue([]);
+    designTokensPluginSpy.mockReturnValue([]);
   });
 
   it('defaults ssr to true and passes that value to the composed plugins', () => {
@@ -209,5 +215,23 @@ describe('platformPlugin', () => {
     platformPlugin();
 
     expect(discoverLibraryRoutesSpy).not.toHaveBeenCalled();
+  });
+
+  it('wires the experimental design token plugin when configured', () => {
+    platformPlugin({
+      experimental: {
+        designTokens: {
+          configFile: 'style-dictionary.config.ts',
+        },
+      },
+      workspaceRoot: '/workspace',
+    });
+
+    expect(designTokensPluginSpy).toHaveBeenCalledWith(
+      {
+        configFile: 'style-dictionary.config.ts',
+      },
+      '/workspace',
+    );
   });
 });

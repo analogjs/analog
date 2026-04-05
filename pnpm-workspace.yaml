@@ -168,6 +168,7 @@ catalog:
   shiki: ^1.29.2 || ^4.0.2
   sharp: ^0.34.5
   start-server-and-test: ^3.0.0
+  style-dictionary: ^5.4.0
   storybook: 10.3.3
   tslib: ^2.3.0
   tinyglobby: ^0.2.15

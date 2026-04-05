@@ -147,6 +147,7 @@ DEBUG=analog:platform:* pnpm dev
 | `analog:platform:content`      | Content pipeline                                                                            |
 | `analog:platform:typed-router` | Typed route generation, file discovery, collisions, watch-mode regeneration                 |
 | `analog:platform:tailwind`     | Tailwind CSS `@reference` injection in component styles                                     |
+| `analog:platform:tokens`       | Style Dictionary config loading, token builds, virtual output serving, watch-mode rebuilds  |
 
 ### `@analogjs/vite-plugin-angular`
 
@@ -157,6 +158,7 @@ DEBUG=analog:platform:* pnpm dev
 | `analog:angular:compiler`        | TypeScript compilation, compiler options                                                 |
 | `analog:angular:compilation-api` | Experimental Angular Compilation API path selection, version checks, incremental updates |
 | `analog:angular:tailwind`        | Tailwind CSS `@reference` injection via the `tailwindCss` plugin option                  |
+| `analog:angular:tokens`          | Reserved for Angular-side design token resource diagnostics                              |
 
 ### `@analogjs/vite-plugin-nitro`
 
