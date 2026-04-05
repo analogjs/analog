@@ -167,6 +167,16 @@ For LLM-driven migration, use this checklist in order:
 8. Reconcile the toolchain versions in `package.json` with the current Analog template line for that Angular major.
 9. Re-check custom base-href deployment code and environment variables against the current deployment model.
 
+#### Current v3 APIs that are useful during migration
+
+These are not the main `v2 -> v3` breaking changes from the `beta -> alpha` diff, but they are useful current APIs and diagnostics that an automated migration agent can take advantage of once the codebase is on the v3 line:
+
+- Prefer the structured `debug` option in `analog()` or the Angular plugin when diagnosing compiler, route, stylesheet, HMR, Nitro, or platform issues. See the debugging guide for supported scopes such as `analog:platform`, `analog:angular:hmr`, `analog:angular:styles`, and `analog:nitro`.
+- Treat router experimental helpers as opt-in, not mandatory migration rewrites. Current router exports include experimental helpers such as `withTypedRouter`, `withRouteContext`, and `withLoaderCaching`.
+- Treat debug-route helpers as optional development tooling. Current router exports include `withDebugRoutes` and `injectDebugRoutes`, but an upgrader should not add them unless the project explicitly wants route-debug pages.
+- Keep public imports on package entrypoints wherever possible. If an import path looks like a deep internal path instead of a documented package export, treat that as suspicious during migration.
+- Prefer current documented APIs over compatibility aliases. For example, prefer `hmr` over `liveReload`, and prefer current route metadata patterns over older legacy exports.
+
 ## Using a Schematic/Generator
 
 First, install the `@analogjs/platform` package:
