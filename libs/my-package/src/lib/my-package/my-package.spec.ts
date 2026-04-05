@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { MyPackage } from './my-package';
 import { page } from 'vitest/browser';
 
-describe(MyPackage.name, () => {
+describe('MyPackage', () => {
   it('works', async () => {
     TestBed.createComponent(MyPackage);
 

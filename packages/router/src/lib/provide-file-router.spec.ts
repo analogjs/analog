@@ -12,7 +12,11 @@ import {
 import { provideFileRouter, withExtraRoutes } from './provide-file-router';
 import { withContentRoutes } from '../../content/src/lib/with-content-routes';
 
-@Component({ standalone: true, template: '' })
+@Component({
+  selector: 'analogjs-stub-route-host',
+  standalone: true,
+  template: '',
+})
 class StubComponent {}
 
 function stubModule(): Promise<RouteExport> {

@@ -19,6 +19,7 @@ import {
 describe('updateMetaTagsOnRouteChange', () => {
   function setup() {
     @Component({
+      selector: 'analogjs-meta-tags-test',
       standalone: true,
       imports: [RouterOutlet],
       template: '<router-outlet></router-outlet>',

@@ -16,6 +16,7 @@ import {
 describe('updateJsonLdOnRouteChange', () => {
   function setup() {
     @Component({
+      selector: 'analogjs-json-ld-test-shell',
       standalone: true,
       imports: [RouterOutlet],
       template: '<router-outlet></router-outlet>',
@@ -134,13 +135,18 @@ describe('updateJsonLdOnRouteChange', () => {
     // Navigate to a child that has NO JSON-LD — but parent still has it,
     // so let's create a dedicated setup for a truly empty route.
     @Component({
+      selector: 'analogjs-json-ld-empty-shell',
       standalone: true,
       imports: [RouterOutlet],
       template: '<router-outlet></router-outlet>',
     })
     class ShellComponent {}
 
-    @Component({ standalone: true, template: '<p>No JSON-LD</p>' })
+    @Component({
+      selector: 'analogjs-json-ld-empty',
+      standalone: true,
+      template: '<p>No JSON-LD</p>',
+    })
     class EmptyComponent {}
 
     const jsonLd = {
@@ -198,13 +204,18 @@ describe('updateJsonLdOnRouteChange', () => {
     };
 
     @Component({
+      selector: 'analogjs-json-ld-graph-shell',
       standalone: true,
       imports: [RouterOutlet],
       template: '<router-outlet></router-outlet>',
     })
     class ShellComponent {}
 
-    @Component({ standalone: true, template: '<p>Graph</p>' })
+    @Component({
+      selector: 'analogjs-json-ld-graph',
+      standalone: true,
+      template: '<p>Graph</p>',
+    })
     class GraphComponent {}
 
     TestBed.resetTestingModule();
@@ -257,13 +268,18 @@ describe('updateJsonLdOnRouteChange', () => {
     ];
 
     @Component({
+      selector: 'analogjs-json-ld-multi-shell',
       standalone: true,
       imports: [RouterOutlet],
       template: '<router-outlet></router-outlet>',
     })
     class ShellComponent {}
 
-    @Component({ standalone: true, template: '<p>Multi</p>' })
+    @Component({
+      selector: 'analogjs-json-ld-multi',
+      standalone: true,
+      template: '<p>Multi</p>',
+    })
     class MultiComponent {}
 
     TestBed.resetTestingModule();
@@ -310,6 +326,7 @@ describe('updateJsonLdOnRouteChange', () => {
     circular.self = circular;
 
     @Component({
+      selector: 'analogjs-json-ld-object-shell',
       standalone: true,
       imports: [RouterOutlet],
       template: '<router-outlet></router-outlet>',
