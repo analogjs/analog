@@ -6,6 +6,7 @@ import type { Plugin } from 'vite';
 import {
   angular,
   createFsWatcherCacheInvalidator,
+  evictDeletedFileMetadata,
   findBoundClassAndNgClassConflicts,
   findStaticClassAndBoundClassConflicts,
   findTemplateOwnerModules,
@@ -500,6 +501,42 @@ describe('createFsWatcherCacheInvalidator', () => {
     expect(invalidateFsCaches).toHaveBeenCalledOnce();
     expect(invalidateTsconfigCaches).toHaveBeenCalledOnce();
     expect(performCompilation).toHaveBeenCalledOnce();
+  });
+});
+
+describe('evictDeletedFileMetadata', () => {
+  it('removes component and stylesheet ownership for deleted files', () => {
+    const removeActiveGraphMetadata = vi.fn();
+    const removeStyleOwnerMetadata = vi.fn();
+    const classNamesMap = new Map<string, string>([
+      ['/workspace/apps/demo/src/app/demo.component.ts', 'DemoComponent'],
+    ]);
+    const fileTransformMap = new Map<string, string>([
+      ['/workspace/apps/demo/src/app/demo.component.ts', '@Component({})'],
+    ]);
+
+    evictDeletedFileMetadata(
+      '/workspace/apps/demo/src/app/demo.component.ts?t=12345',
+      {
+        removeActiveGraphMetadata,
+        removeStyleOwnerMetadata,
+        classNamesMap,
+        fileTransformMap,
+      },
+    );
+
+    expect(removeActiveGraphMetadata).toHaveBeenCalledWith(
+      '/workspace/apps/demo/src/app/demo.component.ts',
+    );
+    expect(removeStyleOwnerMetadata).toHaveBeenCalledWith(
+      '/workspace/apps/demo/src/app/demo.component.ts',
+    );
+    expect(
+      classNamesMap.has('/workspace/apps/demo/src/app/demo.component.ts'),
+    ).toBe(false);
+    expect(
+      fileTransformMap.has('/workspace/apps/demo/src/app/demo.component.ts'),
+    ).toBe(false);
   });
 });
 

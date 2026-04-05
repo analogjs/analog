@@ -258,6 +258,27 @@ export function normalizeIncludeGlob(
 const TS_EXT_REGEX = /\.[cm]?(ts)[^x]?\??/;
 const classNames = new Map();
 
+export function evictDeletedFileMetadata(
+  file: string,
+  {
+    removeActiveGraphMetadata,
+    removeStyleOwnerMetadata,
+    classNamesMap,
+    fileTransformMap,
+  }: {
+    removeActiveGraphMetadata: (file: string) => void;
+    removeStyleOwnerMetadata: (file: string) => void;
+    classNamesMap: Map<string, string>;
+    fileTransformMap: Map<string, string>;
+  },
+): void {
+  const normalizedFile = normalizePath(file.split('?')[0]);
+  removeActiveGraphMetadata(normalizedFile);
+  removeStyleOwnerMetadata(normalizedFile);
+  classNamesMap.delete(normalizedFile);
+  fileTransformMap.delete(normalizedFile);
+}
+
 export function isIgnoredHmrFile(file: string): boolean {
   return file.endsWith('.tsbuildinfo');
 }
@@ -896,7 +917,15 @@ export function angular(options?: PluginOptions): Plugin[] {
           () => performCompilation(resolvedConfig),
         );
         server.watcher.on('add', invalidateCompilationOnFsChange);
-        server.watcher.on('unlink', invalidateCompilationOnFsChange);
+        server.watcher.on('unlink', (file) => {
+          evictDeletedFileMetadata(file, {
+            removeActiveGraphMetadata,
+            removeStyleOwnerMetadata,
+            classNamesMap: classNames as Map<string, string>,
+            fileTransformMap,
+          });
+          return invalidateCompilationOnFsChange();
+        });
         server.watcher.on('change', (file) => {
           if (file.includes('tsconfig')) {
             invalidateTsconfigCaches();
