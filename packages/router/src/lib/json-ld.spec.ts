@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { provideLocationMocks } from '@angular/common/testing';
-import { Component, ENVIRONMENT_INITIALIZER } from '@angular/core';
+import { Component, provideAppInitializer } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Route, Router, RouterOutlet, provideRouter } from '@angular/router';
 import { map, timer } from 'rxjs';
@@ -59,11 +59,7 @@ describe('updateJsonLdOnRouteChange', () => {
       providers: [
         provideRouter(routes),
         provideLocationMocks(),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateJsonLdOnRouteChange(),
-        },
+        provideAppInitializer(() => updateJsonLdOnRouteChange()),
       ],
     });
 
@@ -170,11 +166,7 @@ describe('updateJsonLdOnRouteChange', () => {
           },
         ]),
         provideLocationMocks(),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateJsonLdOnRouteChange(),
-        },
+        provideAppInitializer(() => updateJsonLdOnRouteChange()),
       ],
     });
 
@@ -229,11 +221,7 @@ describe('updateJsonLdOnRouteChange', () => {
           },
         ]),
         provideLocationMocks(),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateJsonLdOnRouteChange(),
-        },
+        provideAppInitializer(() => updateJsonLdOnRouteChange()),
       ],
     });
 
@@ -293,11 +281,7 @@ describe('updateJsonLdOnRouteChange', () => {
           },
         ]),
         provideLocationMocks(),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateJsonLdOnRouteChange(),
-        },
+        provideAppInitializer(() => updateJsonLdOnRouteChange()),
       ],
     });
 
@@ -346,11 +330,7 @@ describe('updateJsonLdOnRouteChange', () => {
           },
         ]),
         provideLocationMocks(),
-        {
-          provide: ENVIRONMENT_INITIALIZER,
-          multi: true,
-          useValue: () => updateJsonLdOnRouteChange(),
-        },
+        provideAppInitializer(() => updateJsonLdOnRouteChange()),
       ],
     });
 
