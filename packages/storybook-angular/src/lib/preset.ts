@@ -71,7 +71,10 @@ export const viteFinal = async (config: any, options: any): Promise<any> => {
   // Remove any loaded analogjs plugins from a vite.config.(m)ts file
   config.plugins = (config.plugins ?? [])
     .flat()
-    .filter((plugin: any) => !plugin.name.includes('analogjs'));
+    .filter(
+      (plugin: any) =>
+        typeof plugin?.name !== 'string' || !plugin.name.includes('analogjs'),
+    );
 
   // @ts-expect-error - untyped storybook presets API
   const framework = await options.presets.apply('framework');
