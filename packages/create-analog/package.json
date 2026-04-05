@@ -1,6 +1,6 @@
 {
   "name": "create-analog",
-  "version": "2.0.0-alpha.16",
+  "version": "3.0.0-alpha.25",
   "type": "module",
   "license": "MIT",
   "author": "Brandon Roberts",
@@ -13,6 +13,7 @@
     "template-angular-v17",
     "template-angular-v18",
     "template-angular-v19",
+    "template-angular-v20",
     "template-blog",
     "template-latest",
     "template-minimal",
@@ -20,7 +21,7 @@
   ],
   "main": "index.js",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "repository": {
     "type": "git",
@@ -35,8 +36,15 @@
   },
   "homepage": "https://github.com/analogjs/analog/tree/main#readme",
   "dependencies": {
-    "kolorist": "^1.6.0",
-    "minimist": "^1.2.7",
+    "kolorist": "^1.8.0",
+    "minimist": "^1.2.8",
     "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@analogjs/platform": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

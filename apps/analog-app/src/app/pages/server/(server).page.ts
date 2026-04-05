@@ -1,4 +1,4 @@
-import { RouteMeta } from '@analogjs/router';
+import type { RouteMeta } from '@analogjs/router';
 
 import { ServerOnly } from '@analogjs/router';
 

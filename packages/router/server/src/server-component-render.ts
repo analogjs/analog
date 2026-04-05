@@ -1,5 +1,8 @@
 import { ApplicationConfig, Type } from '@angular/core';
-import { bootstrapApplication } from '@angular/platform-browser';
+import {
+  bootstrapApplication,
+  type BootstrapContext,
+} from '@angular/platform-browser';
 import {
   reflectComponentType,
   ɵConsole as Console,
@@ -11,21 +14,26 @@ import {
   ɵSERVER_CONTEXT as SERVER_CONTEXT,
 } from '@angular/platform-server';
 import { ServerContext } from '@analogjs/router/tokens';
-import { createEvent, readBody, getHeader } from 'h3';
+import { json as readJsonStream } from 'node:stream/consumers';
 
 import { provideStaticProps } from './tokens';
 
 type ComponentLoader = () => Promise<Type<unknown>>;
 
-export function serverComponentRequest(serverContext: ServerContext) {
-  const serverComponentId = getHeader(
-    createEvent(serverContext.req, serverContext.res),
-    'X-Analog-Component',
-  );
+export function serverComponentRequest(
+  serverContext: ServerContext,
+): string | undefined {
+  // `ServerContext` is still backed by raw Node req/res, so read the header
+  // directly instead of reconstructing an H3Event just for lookup.
+  // In h3 v2 / Nitro v3, req may be undefined during fetch-based prerendering
+  // (where event.node is not populated), so guard with optional chaining.
+  const serverComponentId = serverContext.req?.headers?.[
+    'x-analog-component'
+  ] as string | undefined;
 
   if (
     !serverComponentId &&
-    serverContext.req.url &&
+    serverContext.req?.url &&
     serverContext.req.url.startsWith('/_analog/components')
   ) {
     const componentId = serverContext.req.url.split('/')?.[3];
@@ -44,7 +52,7 @@ export async function renderServerComponent(
   url: string,
   serverContext: ServerContext,
   config?: ApplicationConfig,
-) {
+): Promise<Response> {
   const componentReqId = serverComponentRequest(serverContext) as string;
   const { componentLoader, componentId } = getComponentLoader(componentReqId);
 
@@ -54,9 +62,8 @@ export async function renderServerComponent(
     });
   }
 
-  const component = ((await componentLoader()) as any)[
-    'default'
-  ] as Type<unknown>;
+  const component = ((await componentLoader()) as { default?: Type<unknown> })
+    .default;
 
   if (!component) {
     return new Response(`No default export for ${componentId}`, {
@@ -66,25 +73,31 @@ export async function renderServerComponent(
 
   const mirror = reflectComponentType(component);
   const selector = mirror?.selector.split(',')?.[0] || 'server-component';
-  const event = createEvent(serverContext.req, serverContext.res);
-  const body = (await readBody(event)) || {};
+  // Server component requests POST JSON props from the client bridge, so parse
+  // the Node request body directly instead of rebuilding an H3Event wrapper.
+  const body =
+    (await readJsonStream(serverContext.req).catch(() => ({}))) || {};
   const appId = `analog-server-${selector.toLowerCase()}-${new Date().getTime()}`;
 
-  const bootstrap = () =>
-    bootstrapApplication(component, {
-      providers: [
-        provideServerRendering(),
-        provideStaticProps(body),
-        { provide: SERVER_CONTEXT, useValue: 'analog-server-component' },
-        {
-          provide: APP_ID,
-          useFactory() {
-            return appId;
+  const bootstrap = (context?: BootstrapContext) =>
+    bootstrapApplication(
+      component,
+      {
+        providers: [
+          provideServerRendering(),
+          provideStaticProps(body),
+          { provide: SERVER_CONTEXT, useValue: 'analog-server-component' },
+          {
+            provide: APP_ID,
+            useFactory() {
+              return appId;
+            },
           },
-        },
-        ...(config?.providers || []),
-      ],
-    });
+          ...(config?.providers || []),
+        ],
+      },
+      context,
+    );
 
   const html = await renderApplication(bootstrap, {
     url,
@@ -94,8 +107,12 @@ export async function renderServerComponent(
         provide: Console,
         useFactory() {
           return {
-            warn: () => {},
-            log: () => {},
+            warn: () => {
+              /* noop */
+            },
+            log: () => {
+              /* noop */
+            },
           };
         },
       },
@@ -103,7 +120,7 @@ export async function renderServerComponent(
   });
 
   const outputs = retrieveTransferredState(html, appId);
-  const responseData: { html: string; outputs: Record<string, any> } = {
+  const responseData: { html: string; outputs: Record<string, unknown> } = {
     html,
     outputs,
   };
@@ -119,18 +136,12 @@ function getComponentLoader(componentReqId: string): {
   componentLoader: ComponentLoader | undefined;
   componentId: string;
 } {
-  let _componentId = `/src/server/components/${componentReqId.toLowerCase()}`;
+  const _componentId = `/src/server/components/${componentReqId.toLowerCase()}`;
   let componentLoader: ComponentLoader | undefined = undefined;
   let componentId = _componentId;
 
   if (components[`${_componentId}.ts`]) {
     componentId = `${_componentId}.ts`;
-    componentLoader = components[componentId] as ComponentLoader;
-  } else if (components[`${componentId}.analog`]) {
-    componentId = `${_componentId}.analog`;
-    componentLoader = components[componentId] as ComponentLoader;
-  } else if (components[`${componentId}.ag`]) {
-    componentId = `${_componentId}.ag`;
     componentLoader = components[componentId] as ComponentLoader;
   }
 
@@ -142,7 +153,7 @@ function retrieveTransferredState(
   appId: string,
 ): Record<string, unknown | undefined> {
   const regex = new RegExp(
-    `<script id="${appId}-state" type="application/json">(.*?)<\/script>`,
+    `<script id="${appId}-state" type="application/json">(.*?)</script>`,
   );
   const match = html.match(regex);
 

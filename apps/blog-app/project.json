@@ -8,6 +8,7 @@
   "targets": {
     "build": {
       "executor": "@nx/vite:build",
+      "dependsOn": ["platform:build", "router:build", "content:build"],
       "outputs": [
         "{options.outputPath}",
         "{workspaceRoot}/dist/apps/blog-app/.nitro",
@@ -31,10 +32,11 @@
     },
     "serve": {
       "executor": "@nx/vite:dev-server",
+      "dependsOn": ["platform:build", "router:build", "content:build"],
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "blog-app:build",
-        "port": 3000
+        "port": 43010
       },
       "configurations": {
         "development": {
@@ -50,8 +52,9 @@
       "executor": "@nx/web:file-server",
       "options": {
         "buildTarget": "blog-app:build",
+        "ext": "html",
         "parallel": true,
-        "port": 3000,
+        "port": 43010,
         "staticFilePath": "dist/apps/blog-app/analog/public"
       }
     }

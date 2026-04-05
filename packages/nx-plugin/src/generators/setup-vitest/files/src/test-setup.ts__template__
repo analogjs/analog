@@ -1,4 +1,11 @@
-<% if (majorAngularVersion > 19) { %>
+<% if (majorAngularVersion > 20) { %>
+import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-snapshots';
+import '@analogjs/vitest-angular/setup-serializers';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+setupTestBed();
+<% } else if (majorAngularVersion > 19) { %>
 import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-zone';
 

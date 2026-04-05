@@ -1,14 +1,30 @@
 {
   "name": "@analogjs/astro-angular",
-  "version": "2.0.0-alpha.16",
+  "version": "3.0.0-alpha.25",
   "description": "Use Angular components within Astro",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
-    ".": "./src/index.js",
-    "./utils": "./src/utils.js",
-    "./client.js": "./src/client.js",
-    "./server.js": "./src/server.js",
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./utils": {
+      "types": "./dist/src/utils.d.ts",
+      "default": "./dist/src/utils.js"
+    },
+    "./client.js": {
+      "types": "./dist/src/client.d.ts",
+      "default": "./dist/src/client.js"
+    },
+    "./server.js": {
+      "types": "./dist/src/server.d.ts",
+      "default": "./dist/src/server.js"
+    },
+    "./middleware": {
+      "types": "./dist/src/middleware.d.ts",
+      "default": "./dist/src/middleware.js"
+    },
     "./package.json": "./package.json"
   },
   "keywords": [
@@ -32,22 +48,22 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "dependencies": {
-    "@analogjs/vite-plugin-angular": "^2.0.0-alpha.16"
+    "@analogjs/vite-plugin-angular": "workspace:*",
+    "rehype": "^13.0.2"
   },
   "peerDependencies": {
-    "@angular-devkit/build-angular": ">=16.0.0",
-    "@angular/animations": ">=16.0.0",
-    "@angular/common": ">=16.0.0",
-    "@angular/compiler-cli": ">=16.0.0",
-    "@angular/compiler": ">=16.0.0",
-    "@angular/core": ">=16.0.0",
-    "@angular/language-service": ">=16.0.0",
-    "@angular/platform-browser": ">=16.0.0",
-    "@angular/platform-browser-dynamic": ">=16.0.0",
-    "@angular/platform-server": ">=16.0.0",
-    "rxjs": "^7.5.6",
-    "zone.js": ">=0.13.3",
-    "tslib": "^2.4.0"
+    "@angular/build": "catalog:peerAngular20Plus",
+    "@angular/animations": "catalog:peerAngular20Plus",
+    "@angular/common": "catalog:peerAngular20Plus",
+    "@angular/compiler-cli": "catalog:peerAngular20Plus",
+    "@angular/compiler": "catalog:peerAngular20Plus",
+    "@angular/core": "catalog:peerAngular20Plus",
+    "@angular/language-service": "catalog:peerAngular20Plus",
+    "@angular/platform-browser": "catalog:peerAngular20Plus",
+    "@angular/platform-server": "catalog:peerAngular20Plus",
+    "rxjs": "catalog:peerAngular20Plus",
+    "tslib": "catalog:peerAngular20Plus",
+    "vite": "catalog:peerCompat"
   },
   "ng-update": {
     "packageGroup": [
@@ -60,5 +76,9 @@
       "@analogjs/vitest-angular"
     ],
     "migrations": "./migrations/migration.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

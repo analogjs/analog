@@ -10,8 +10,14 @@ type BuilderName = CompatibleString<'@storybook/builder-vite'>;
 export type FrameworkOptions = {
   builder?: BuilderOptions;
   jit?: boolean;
+  hmr?: boolean;
+  /**
+   * @deprecated Use `hmr` instead. Kept as a compatibility alias.
+   */
   liveReload?: boolean;
   inlineStylesExtension?: string;
+  tsconfig?: string;
+  experimentalZoneless?: boolean;
 };
 
 type StorybookConfigFramework = {

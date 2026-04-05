@@ -1,9 +1,5 @@
 import { angular } from './lib/angular-vite-plugin.js';
-export { PluginOptions } from './lib/angular-vite-plugin.js';
-export { compileAnalogFile } from './lib/authoring/analog.js';
-export {
-  MarkdownTemplateTransform,
-  defaultMarkdownTemplateTransforms,
-} from './lib/authoring/markdown-transform.js';
+export type { PluginOptions } from './lib/angular-vite-plugin.js';
+export type { StylePreprocessor } from './lib/style-preprocessor.js';
 
 export default angular;

@@ -27,6 +27,36 @@ export default defineConfig(({ mode }) => ({
 
 Para más información sobre externals con SSR, consulta la [documentación de Vite](https://vitejs.dev/guide/ssr.html#ssr-externals).
 
+## Renderizado hibrido con rutas Solo-Cliente
+
+El SSR está activado por defecto. Para un enfoque híbrido, puedes especificar algunas rutas para que solo se rendericen en el lado del cliente, y no se rendericen en el lado del servidor. Esto se logra a través de la configuración del objeto `routeRules` especificando una opción `ssr`.
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  // ...otras opciones
+  plugins: [
+    analog({
+      prerender: {
+        routes: ['/', '/404.html'],
+      },
+      nitro: {
+        routeRules: {
+          // Todas las URLs de admin se renderizan en el cliente
+          '/admin/**': { ssr: false },
+
+          // Renderizar una página de error 404 como página de fallback
+          '/404.html': { ssr: false },
+        },
+      },
+    }),
+  ],
+}));
+```
+
 ## Deshabilitando SSR
 
 SSR está habilitado por defecto. Puedes optar por no usarlo y generar una compilación solo del cliente añadiendo la siguiente opción al plugin `analog()` en tu `vite.config.ts`:
@@ -37,8 +67,15 @@ import analog from '@analogjs/platform';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // ...otra configuración
-  plugins: [analog({ ssr: false })],
+  // ...otras opciones
+  plugins: [
+    analog({
+      ssr: false,
+      prerender: {
+        routes: [],
+      },
+    }),
+  ],
 }));
 ```
 
@@ -69,19 +106,13 @@ Puedes optar por no prerenderizar pasando un arreglo vacío de rutas y deshabili
 ```js
 import { defineConfig } from 'vite';
 import analog from '@analogjs/platform';
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // ...otra configuración
+  // ...other config
   plugins: [
     analog({
       ssr: true,
-      nitro: {
-        routeRules: {
-          '/': {
-            prerender: false,
-          },
-        },
-      },
       prerender: {
         routes: async () => {
           return [];

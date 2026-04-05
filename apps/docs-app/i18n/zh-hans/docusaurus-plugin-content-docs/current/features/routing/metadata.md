@@ -17,7 +17,6 @@ export const routeMeta: RouteMeta = {
 };
 
 @Component({
-  standalone: true,
   template: `
     <h2>Hello Analog</h2>
 
@@ -105,7 +104,6 @@ export const routeMeta: RouteMeta = {
 };
 
 @Component({
-  standalone: true,
   template: `
     <h2>Hello Analog</h2>
 
@@ -119,7 +117,7 @@ export default class RefreshComponent {}
 
 请访问官方[文档](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta)了解标准的 meta 标签
 
-## Open Graph meta 标签
+## Open Graph meta 标签 {#open-graph-meta-tags}
 
 以上的 `meta` 属性还可以用来定义用于 SEO 和社交 app 优化的 OpenGraph meta 标签。
 

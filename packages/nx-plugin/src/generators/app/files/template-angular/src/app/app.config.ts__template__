@@ -1,7 +1,7 @@
 import {
   ApplicationConfig,
-  provideZoneChangeDetection<% if (majorAngularVersion > 19) { %>,
-  provideBrowserGlobalErrorListeners<% } %>
+  <% if (majorAngularVersion < 21) { %>provideZonelessChangeDetection,<% } %>
+  <% if (majorAngularVersion > 19) { %>provideBrowserGlobalErrorListeners,<% } %>
 } from '@angular/core';
 import {
   provideHttpClient,
@@ -10,21 +10,15 @@ import {
 } from '@angular/common/http';
 import { provideClientHydration } from '@angular/platform-browser';
 import { provideFileRouter, requestContextInterceptor } from '@analogjs/router';
-<% if (addTRPC) { %>
-import { provideTrpcClient } from '../trpc-client';
-<% } %>
 
 export const appConfig: ApplicationConfig = {
   providers: [<% if (majorAngularVersion > 19) { %>provideBrowserGlobalErrorListeners(),<% } %>
-    provideZoneChangeDetection({ eventCoalescing: true }),
+    <% if (majorAngularVersion < 21) { %>provideZonelessChangeDetection(),<% } %>
     provideFileRouter(),
     provideClientHydration(),
     provideHttpClient(
       withFetch(),
       withInterceptors([requestContextInterceptor])
     ),
-<% if (addTRPC) { %>
-    provideTrpcClient(),
-<% } %>
   ],
 };

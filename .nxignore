@@ -1,0 +1,4 @@
+# Scaffolding templates contain package.json + vite.config.ts files that
+# cause @nx/vite's inference plugin to register them as real projects.
+packages/create-analog/template-*
+packages/create-analog/__tests__/test-app

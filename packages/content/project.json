@@ -3,45 +3,41 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "packages/content/src",
+  "implicitDependencies": ["vite-plugin-angular"],
   "prefix": "analogjs",
   "tags": ["type:release"],
   "targets": {
+    "assert-deps": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/scripts/assert-project-dependency.mts content vite-plugin-angular"
+      }
+    },
+    "build-self": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["assert-deps", "vite-plugin-angular:build"],
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "command": "node tools/scripts/build-lib.mts content"
+      }
+    },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content"],
+      "cache": false,
+      "dependsOn": ["build-self", "content-plugin:build"],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
-        "commands": [
-          "nx build-package content",
-          "nx build content-plugin",
-          "npx rimraf node_modules/@analogjs/content/.npmignore"
-        ],
-        "parallel": false
-      },
-      "dependsOn": ["^build"]
-    },
-    "build-package": {
-      "executor": "@angular-devkit/build-angular:ng-packagr",
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content"],
-      "options": {
-        "project": "packages/content/ng-package.json"
-      },
-      "configurations": {
-        "production": {
-          "tsConfig": "packages/content/tsconfig.lib.prod.json"
-        },
-        "development": {
-          "tsConfig": "packages/content/tsconfig.lib.json"
-        }
-      },
-      "defaultConfiguration": "production"
+        "command": "node tools/scripts/verify-package-artifacts.mts content"
+      }
     },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
     },
     "test": {
-      "dependsOn": ["^build"],
-      "executor": "@nx/vite:test"
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["build"]
     },
     "version": {
       "executor": "@jscutlery/semver:version",

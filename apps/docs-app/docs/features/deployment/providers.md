@@ -138,14 +138,34 @@ You can also check out [Github Integration](https://docs.zerops.io/references/gi
 
 ## Netlify
 
-Analog supports deploying on [Netlify](https://netlify.com/) with minimal configuration.
+Analog supports deploying on [Netlify](https://netlify.com/) with no additional configuration.
 
-### Deploying the Project
+### Deploying the project
 
 <Tabs groupId="porject-type">
   <TabItem label="Create analog" value="create-analog">
-In the build settings of your Netlify project, set the [publish directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `dist/analog/public` to deploy the static assets and the [functions directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `dist/analog` to deploy the server.
-  </TabItem>
+Configuration is easiest when using [Netlify CLI](https://developers.netlify.com/cli/).
+    
+1. Start by running this command:
+
+```bash
+npx netlify init
+```
+
+If this is a new Netlify project, you'll be prompted to initialize it; build settings will be automatically configured in a `netlify.toml` file.
+
+2. Deploy your app:
+
+```bash
+npx netlify deploy
+```
+
+#### Manual configuration
+
+Alternatively, you can configure your project's build settings in the Netlify app.
+
+Set the [publish directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `dist/analog/public` to deploy the static assets and the [functions directory](https://docs.netlify.com/configure-builds/overview/#definitions) to `netlify/functions` to deploy the server.
+</TabItem>
 
   <TabItem label="Nx" value="nx">
 In the build settings of your Netlify project on the web UI, do the following.
@@ -169,6 +189,8 @@ You can also configure this by putting a `netlify.toml` at the root of your repo
 ## Vercel
 
 Analog supports deploying on [Vercel](https://vercel.com/) with no additional configuration.
+
+Use Node.js `24.x` in your Vercel project settings for both the build and server runtime. Analog defaults Vercel functions to `nodejs24.x` unless you override `nitro.vercel.functions.runtime`.
 
 ### Deploying the Project
 
@@ -200,7 +222,7 @@ In order to make it work with Nx, we need to define the specific app we want to 
 ```json [vercel.json]
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "nx build <app>"
+  "buildCommand": "pnpm exec nx build <app> --skip-nx-cache"
 }
 ```
 
@@ -209,14 +231,14 @@ In order to make it work with Nx, we need to define the specific app we want to 
 ```json [package.json]
 {
   "scripts": {
-    "build": "nx build <app>"
+    "build": "nx build <app> --skip-nx-cache"
   }
 }
 ```
 
 #### Nx and Vercel
 
-When using Nx and reusing the build cache on the Vercel build platform, there is a possibility that the cache is reused if you have built it locally. This can lead to the output being placed in the wrong location. To resolve this issue, you can use the preset in the `vite.config.ts` file as a workaround.
+When using Nx on the Vercel build platform, set the project Node.js version to `24.x` and prefer `--skip-nx-cache` in the build command. Reusing the Nx cache on Vercel can cause output from a local build to be restored into the wrong location. If Vercel still does not detect the preset correctly, you can use the preset in the `vite.config.ts` file as a workaround.
 
   </TabItem>
 </Tabs>
@@ -485,7 +507,7 @@ Analog supports deploying on [Render](https://render.com/) with minimal configur
 
 2. Ensure the 'Node' environment is selected.
 
-3. [Specify your Node version for Render to use](https://render.com/docs/node-version) (v18.13.0 or higher recommended) - Render by default uses Node 14, which fails to correctly build an Analog site
+3. [Specify your Node version for Render to use](https://render.com/docs/node-version) (v22.0.0 or higher recommended) - Render by default uses Node 14, which fails to correctly build an Analog site
 
 4. Depending on your package manager, set the build command to `yarn && yarn build`, `npm install && npm run build`, or `pnpm i --shamefully-hoist && pnpm build`.
 
@@ -551,7 +573,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '24.x'
       - uses: k9n-dev/analog-publish-gh-pages@v1.0.0
         with:
           access-token: ${{ secrets.ACCESS_TOKEN }}
@@ -580,7 +602,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '24.x'
       - name: Set environment variable based on branch
         run: |
           if [[ $GITHUB_REF == refs/heads/main || $GITHUB_REF == refs/heads/master ]]; then

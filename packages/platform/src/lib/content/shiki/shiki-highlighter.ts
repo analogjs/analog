@@ -6,12 +6,12 @@ import {
   type CodeOptionsMultipleThemes,
   type CodeOptionsSingleTheme,
   type CodeToHastOptionsCommon,
-  getHighlighter,
+  createHighlighter,
 } from 'shiki';
 
 import { MarkedContentHighlighter } from '../marked/marked-content-highlighter.js';
 
-export type ShikiHighlighterOptions = Parameters<typeof getHighlighter>[0];
+export type ShikiHighlighterOptions = Parameters<typeof createHighlighter>[0];
 export type ShikiHighlightOptions = Partial<
   Omit<CodeToHastOptionsCommon<BundledLanguage>, 'lang'>
 > &
@@ -19,7 +19,10 @@ export type ShikiHighlightOptions = Partial<
   Partial<CodeOptionsSingleTheme<BundledTheme>> &
   Partial<CodeOptionsMultipleThemes<BundledTheme>>;
 
-export const defaultHighlighterOptions = {
+export const defaultHighlighterOptions: {
+  langs: string[];
+  themes: string[];
+} = {
   langs: [
     'json',
     'ts',
@@ -35,7 +38,7 @@ export const defaultHighlighterOptions = {
 };
 
 export class ShikiHighlighter extends MarkedContentHighlighter {
-  private readonly highlighter = getHighlighter(this.highlighterOptions);
+  private readonly highlighter: ReturnType<typeof createHighlighter>;
 
   constructor(
     private highlighterOptions: ShikiHighlighterOptions,
@@ -44,8 +47,9 @@ export class ShikiHighlighter extends MarkedContentHighlighter {
     private hasLoadMermaid = false,
   ) {
     super();
+    this.highlighter = createHighlighter(this.highlighterOptions);
   }
-  getHighlightExtension() {
+  getHighlightExtension(): import('marked').MarkedExtension {
     return markedShiki({
       container: this.container,
       highlight: async (code, lang, props) => {

@@ -1,13 +1,22 @@
 import { nitro } from './lib/vite-plugin-nitro.js';
-export {
+export { debugInstances } from './lib/utils/debug.js';
+export type {
   Options,
   SitemapConfig,
+  SitemapEntry,
+  SitemapExcludeRule,
+  SitemapPriority,
+  SitemapRouteDefinition,
+  SitemapRouteInput,
+  SitemapRouteSource,
+  SitemapTransform,
+  PrerenderSitemapConfig,
   PrerenderRouteConfig,
   PrerenderContentDir,
   PrerenderContentFile,
 } from './lib/options.js';
 
-declare module 'nitropack' {
+declare module 'nitro/types' {
   interface NitroRouteConfig {
     ssr?: boolean;
   }

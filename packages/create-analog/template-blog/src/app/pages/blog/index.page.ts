@@ -30,6 +30,6 @@ import PostAttributes from '../../post-attributes';
     }
   `,
 })
-export default class BlogComponent {
+export default class Blog {
   readonly posts = injectContentFiles<PostAttributes>();
 }

@@ -11,7 +11,7 @@ import { SetupAnalogGeneratorSchema } from '../schema';
 export function updateBuildTarget(
   tree: Tree,
   schema: SetupAnalogGeneratorSchema,
-) {
+): void {
   const angularJsonPath = '/angular.json';
 
   const commonConfig = {
@@ -37,6 +37,10 @@ export function updateBuildTarget(
     const projects = getProjects(tree);
 
     const projectConfig = projects.get(schema.project);
+
+    if (!projectConfig) {
+      throw new Error(`Project "${schema.project}" not found.`);
+    }
 
     updateJson(tree, angularJsonPath, (json) => {
       json.projects[schema.project].root = projectConfig.root;
@@ -64,6 +68,14 @@ export function updateBuildTarget(
     const projects = getProjects(tree);
 
     const projectConfig = projects.get(schema.project);
+
+    if (!projectConfig) {
+      throw new Error(`Project "${schema.project}" not found.`);
+    }
+
+    if (!projectConfig.targets) {
+      throw new Error(`Project "${schema.project}" has no targets.`);
+    }
 
     projectConfig.targets.build = {
       executor: '@analogjs/platform:vite',

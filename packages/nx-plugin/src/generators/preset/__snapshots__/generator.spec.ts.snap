@@ -13,7 +13,7 @@ exports[`preset generator > should match index.html 1`] = `
   </head>
   <body>
     <app-root></app-root>
-    <script type="module" src="/my-app/src/main.ts"></script>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
 "
@@ -50,6 +50,7 @@ exports[`preset generator > should match project.json 1`] = `
     },
     "serve": {
       "executor": "@analogjs/platform:vite-dev-server",
+      "continuous": true,
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "my-app:build",
@@ -65,26 +66,19 @@ exports[`preset generator > should match project.json 1`] = `
         }
       }
     },
-    "extract-i18n": {
-      "executor": "@angular/build:extract-i18n",
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
       "options": {
-        "buildTarget": "my-app:build"
+        "buildTarget": "my-app:build",
+        "staticFilePath": "dist/my-app/browser",
+        "spa": true
       }
     },
     "test": {
       "executor": "@analogjs/vitest-angular:test",
       "options": {
         "config": "vite.config.ts"
-      }
-    },
-    "serve-static": {
-      "continuous": true,
-      "executor": "@nx/web:file-server",
-      "options": {
-        "buildTarget": "my-app:build",
-        "port": 4200,
-        "staticFilePath": "dist/my-app/browser",
-        "spa": true
       }
     }
   }
@@ -94,18 +88,11 @@ exports[`preset generator > should match project.json 1`] = `
 
 exports[`preset generator > should match src/test-setup.ts 1`] = `
 "import '@angular/compiler';
-import '@analogjs/vitest-angular/setup-zone';
+import '@analogjs/vitest-angular/setup-snapshots';
+import '@analogjs/vitest-angular/setup-serializers';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
-
-getTestBed().initTestEnvironment(
-  BrowserTestingModule,
-  platformBrowserTesting(),
-);
+setupTestBed();
 "
 `;
 
@@ -116,7 +103,6 @@ import analog from '@analogjs/platform';
 import { defineConfig } from 'vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 
-// @ts-expect-error @tailwindcss/vite currently uses mts. TypeScript is complaining this, but it works as expected.
 import tailwindcss from '@tailwindcss/vite';
 
 // https://vitejs.dev/config/
@@ -141,9 +127,6 @@ export default defineConfig(({ mode }) => {
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
       reporters: ['default'],
-    },
-    define: {
-      'import.meta.vitest': mode !== 'production',
     },
   };
 });

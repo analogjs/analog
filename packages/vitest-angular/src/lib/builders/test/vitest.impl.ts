@@ -59,10 +59,12 @@ async function vitestBuilder(
     }
   };
 
+  // .once() prevents listener stacking across repeated Nx executor runs
+  // that share the same host process (avoids MaxListenersExceededWarning).
   if (options.watch) {
-    process.on('SIGINT', processExit);
-    process.on('SIGTERM', processExit);
-    process.on('exit', processExit);
+    process.once('SIGINT', processExit);
+    process.once('SIGTERM', processExit);
+    process.once('exit', processExit);
   }
 
   // vitest sets the exitCode = 1 when code coverage isn't met
@@ -77,10 +79,10 @@ export async function getExtraArgs(
   options: VitestSchema,
 ): Promise<Record<string, any>> {
   // support passing extra args to Vitest CLI
-  const schema = await import('./schema.json');
+  const schema = await import('./schema.json', { with: { type: 'json' } });
   const extraArgs: Record<string, any> = {};
   for (const key of Object.keys(options)) {
-    if (!(schema as any).properties[key]) {
+    if (!(schema as any).default.properties[key]) {
       extraArgs[key] = (options as any)[key];
     }
   }

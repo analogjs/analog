@@ -1,11 +1,14 @@
 {
   "name": "@analogjs/platform",
-  "version": "2.0.0-alpha.16",
+  "version": "3.0.0-alpha.25",
   "description": "The fullstack meta-framework for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
-    ".": "./src/index.js",
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
     "./package.json": "./package.json"
   },
   "keywords": [
@@ -28,29 +31,38 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "dependencies": {
-    "nitropack": "^2.10.0",
-    "@analogjs/vite-plugin-angular": "^2.0.0-alpha.16",
-    "@analogjs/vite-plugin-nitro": "^2.0.0-alpha.16",
-    "vitefu": "^0.2.5"
+    "front-matter": "catalog:",
+    "es-toolkit": "catalog:",
+    "tinyglobby": "catalog:",
+    "nitro": "catalog:",
+    "@analogjs/vite-plugin-angular": "workspace:*",
+    "@analogjs/vite-plugin-nitro": "workspace:*",
+    "rolldown": "catalog:",
+    "obug": "catalog:",
+    "vitefu": "catalog:"
   },
   "peerDependencies": {
-    "@nx/angular": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0",
-    "@nx/devkit": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0",
-    "@nx/vite": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0",
-    "marked": "^15.0.7",
-    "marked-gfm-heading-id": "^4.1.1",
-    "marked-highlight": "^2.2.1",
-    "marked-mangle": "^1.1.10",
-    "marked-shiki": "^1.1.0",
-    "shiki": "^1.6.1",
-    "vite": "^5.0.0 || ^6.0.0 || ^7.0.0"
-  },
-  "overrides": {
-    "@nx/vite": {
-      "vite": "$vite"
-    }
+    "@nx/angular": "catalog:peerCompat",
+    "@nx/devkit": "catalog:peerCompat",
+    "@nx/vite": "catalog:peerCompat",
+    "marked": "catalog:",
+    "marked-gfm-heading-id": "catalog:",
+    "marked-highlight": "catalog:",
+    "marked-mangle": "catalog:",
+    "marked-shiki": "catalog:",
+    "shiki": "catalog:",
+    "vite": "catalog:peerCompat"
   },
   "peerDependenciesMeta": {
+    "@nx/angular": {
+      "optional": true
+    },
+    "@nx/devkit": {
+      "optional": true
+    },
+    "@nx/vite": {
+      "optional": true
+    },
     "shiki": {
       "optional": true
     },
@@ -64,10 +76,10 @@
       "optional": true
     }
   },
-  "builders": "./src/lib/nx-plugin/executors.json",
-  "executors": "./src/lib/nx-plugin/executors.json",
-  "generators": "./src/lib/nx-plugin/generators.json",
-  "schematics": "./src/lib/nx-plugin/generators.json",
+  "builders": "./dist/src/lib/nx-plugin/builders.json",
+  "executors": "./dist/src/lib/nx-plugin/executors.json",
+  "generators": "./dist/src/lib/nx-plugin/generators.json",
+  "schematics": "./dist/src/lib/nx-plugin/generators.json",
   "ng-update": {
     "packageGroup": [
       "@analogjs/platform",
@@ -79,5 +91,9 @@
       "@analogjs/vitest-angular"
     ],
     "migrations": "./migrations/migration.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

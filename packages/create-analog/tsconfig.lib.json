@@ -1,12 +1,14 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "preserve",
     "outDir": "../../dist/out-tsc",
     "inlineSourceMap": true,
     "sourceMap": false,
     "declaration": true,
-    "types": []
+    "isolatedDeclarations": true,
+    "types": [],
+    "moduleResolution": "bundler"
   },
   "include": ["**/*.ts"],
   "exclude": [

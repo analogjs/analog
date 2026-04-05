@@ -1,4 +1,3 @@
-import 'zone.js/node';
 import type {
   ComponentMirror,
   EnvironmentProviders,
@@ -9,14 +8,20 @@ import {
   ApplicationRef,
   InjectionToken,
   reflectComponentType,
+  provideZonelessChangeDetection,
+  DOCUMENT,
 } from '@angular/core';
 import {
   BEFORE_APP_SERIALIZED,
   provideServerRendering,
   renderApplication,
   ɵSERVER_CONTEXT,
+  platformServer,
 } from '@angular/platform-server';
-import { bootstrapApplication } from '@angular/platform-browser';
+import {
+  bootstrapApplication,
+  type BootstrapContext,
+} from '@angular/platform-browser';
 
 const ANALOG_ASTRO_STATIC_PROPS = new InjectionToken<{
   props: Record<string, unknown>;
@@ -31,7 +36,7 @@ function check(
   Component: ComponentType<unknown>,
   _props: Record<string, unknown>,
   _children: unknown,
-) {
+): boolean {
   return !!reflectComponentType(Component);
 }
 
@@ -79,33 +84,59 @@ async function renderToStaticMarkup(
   },
   props: Record<string, unknown>,
   _children: unknown,
-) {
+): Promise<{ html: string }> {
   const mirror = reflectComponentType(Component);
   const appId =
     mirror?.selector.split(',')[0] || Component.name.toString().toLowerCase();
-  const document = `<${appId}></${appId}>`;
-  const bootstrap = () =>
-    bootstrapApplication(Component, {
-      providers: [
-        {
-          provide: ANALOG_ASTRO_STATIC_PROPS,
-          useValue: { props, mirror },
-        },
-        STATIC_PROPS_HOOK_PROVIDER,
-        provideServerRendering(),
-        { provide: ɵSERVER_CONTEXT, useValue: 'analog' },
-        ...(Component.renderProviders || []),
-      ],
-    });
+
+  const platformRef = platformServer();
+  const document = platformRef.injector.get(DOCUMENT);
+  document.body.innerHTML = `<${appId}></${appId}>`;
+
+  const bootstrap = (context?: BootstrapContext) =>
+    bootstrapApplication(
+      Component,
+      {
+        providers: [
+          {
+            provide: ANALOG_ASTRO_STATIC_PROPS,
+            useValue: { props, mirror },
+          },
+          STATIC_PROPS_HOOK_PROVIDER,
+          provideServerRendering(),
+          { provide: ɵSERVER_CONTEXT, useValue: 'analog' },
+          provideZonelessChangeDetection(),
+          ...(Component.renderProviders || []),
+        ],
+      },
+      context,
+    );
 
   const html = await renderApplication(bootstrap, {
     document,
   });
 
-  return { html };
+  document.documentElement.innerHTML = html;
+  let styleTags = '';
+
+  document.head.childNodes.forEach((node) => {
+    if (node.nodeName === 'STYLE') {
+      styleTags += (node as HTMLElement).outerHTML;
+    }
+  });
+
+  const correctedHtml = styleTags + document.body.innerHTML;
+
+  platformRef.destroy();
+
+  return { html: correctedHtml };
 }
 
-export default {
-  check,
-  renderToStaticMarkup,
+const renderer: {
+  check: typeof check;
+  renderToStaticMarkup: typeof renderToStaticMarkup;
+} = {
+  check: check,
+  renderToStaticMarkup: renderToStaticMarkup,
 };
+export default renderer;

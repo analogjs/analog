@@ -1,11 +1,13 @@
 import {
   addDependenciesToPackageJson,
-  Tree,
+  type Tree,
   formatFiles,
   installPackagesTask,
 } from '@nx/devkit';
 
-export default async function update(host: Tree) {
+export default async function update(
+  host: Tree,
+): Promise<(() => void) | undefined> {
   // NOTE: we only add the dependency if the project is an Angular project
   //  Nx projects can add the dependency from migrations.json
   let dependencyAdded = false;

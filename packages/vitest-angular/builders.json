@@ -1,12 +1,12 @@
 {
   "builders": {
     "test": {
-      "implementation": "./src/lib/builders/test/vitest.impl",
+      "implementation": "./src/lib/builders/test/vitest.impl.js",
       "schema": "./src/lib/builders/test/schema.json",
       "description": "Run tests with Vitest"
     },
     "build-test": {
-      "implementation": "./src/lib/builders/build/vitest.impl",
+      "implementation": "./src/lib/builders/build/vitest.impl.js",
       "schema": "./src/lib/builders/build/schema.json",
       "description": "Bundle and run tests with Vitest using the Application Builder"
     }

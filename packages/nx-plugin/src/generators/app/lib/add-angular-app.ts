@@ -1,7 +1,10 @@
 import { getWorkspaceLayout, Tree } from '@nx/devkit';
 import { NormalizedOptions } from '../generator';
 
-export async function addAngularApp(tree: Tree, options: NormalizedOptions) {
+export async function addAngularApp(
+  tree: Tree,
+  options: NormalizedOptions,
+): Promise<void> {
   const isNx = tree.exists('/nx.json');
   const appsDir = isNx ? getWorkspaceLayout(tree).appsDir : 'projects';
 
@@ -10,6 +13,7 @@ export async function addAngularApp(tree: Tree, options: NormalizedOptions) {
       name: options.analogAppName,
       directory: `${appsDir}/${options.analogAppName}`,
       linter: !isNx || process.env['NODE_ENV'] === 'test' ? 'none' : 'eslint',
+      e2eTestRunner: 'none',
       unitTestRunner: 'vitest',
       standalone: true,
       ssr: false,
@@ -25,5 +29,8 @@ export async function addAngularApp(tree: Tree, options: NormalizedOptions) {
       // @ts-ignore
       '@nx/angular/generators'
     )
-  ).applicationGenerator(tree, appOptions);
+  ).applicationGenerator(tree, {
+    ...appOptions,
+    directory: `${appsDir}/${options.analogAppName}`,
+  });
 }

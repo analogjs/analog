@@ -57,9 +57,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       analog({
-        vite: {
-          inlineStylesExtension: 'scss',
-        },
+        inlineStylesExtension: 'scss',
       }),
     ],
   };
@@ -136,6 +134,39 @@ providers: [
   provideNoopAnimations(),
 ],
 ```
+
+## Optional Step: Configuring Tailwind CSS
+
+If you use Tailwind CSS, add the Vite plugin to make it work correctly with Angular Material:
+
+1. **Install the Tailwind Vite plugin:**
+
+```shell
+npm install -D tailwindcss @tailwindcss/vite postcss @tailwindcss/postcss
+```
+
+2. **Add the plugin to your `vite.config.ts`:**
+
+```ts
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+  plugins: [
+    tailwindcss(),
+    // ...other plugins
+  ],
+});
+```
+
+3. **Add the Tailwind import to your styles entry point:**
+
+```css
+@import 'tailwindcss';
+```
+
+> **Note:** Analog's current Tailwind v4 setup uses `@tailwindcss/vite` and also commonly includes a `postcss.config.mjs` with `@tailwindcss/postcss` so the build path and related integrations use the same Tailwind pipeline.
+>
+> The scaffolded Tailwind v4 flow also expects a plain CSS entry file such as `src/styles.css`. If your app currently uses Sass or Less for the global entry point, keep your existing setup or migrate that entry file to CSS before adopting the default Tailwind v4 flow.
 
 With these steps, you have configured animations to be enabled on the client and disabled on the server in your Analog application.
 

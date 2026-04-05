@@ -6,36 +6,21 @@
   "tags": ["type:release"],
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
-
+      "executor": "nx:run-commands",
+      "cache": false,
+      "outputs": ["{projectRoot}/dist"],
       "options": {
-        "outputPath": "node_modules/@analogjs/vite-plugin-nitro",
-        "main": "packages/vite-plugin-nitro/src/index.ts",
-        "tsConfig": "packages/vite-plugin-nitro/tsconfig.lib.json",
-        "assets": [
-          {
-            "input": "packages/vite-plugin-nitro/",
-            "glob": "*.md",
-            "output": "/"
-          },
-          {
-            "input": "packages/vite-plugin-nitro/src/lib/runtime/",
-            "glob": "*.*",
-            "output": "/src/lib/runtime/"
-          },
-          {
-            "input": "packages/vite-plugin-nitro/migrations/",
-            "glob": "migration.json",
-            "output": "/migrations/"
-          }
+        "commands": [
+          "vite build -c packages/vite-plugin-nitro/vite.config.lib.ts",
+          "node tools/scripts/verify-package-artifacts.mts vite-plugin-nitro"
         ],
-        "updateBuildableProjectDepsInPackageJson": false
+        "parallel": false
       }
     },
     "publish": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node tools/scripts/publish.mjs vite-plugin-nitro {args.ver} {args.tag}"
+        "command": "node tools/scripts/publish.mts vite-plugin-nitro {args.ver} {args.tag}"
       },
       "dependsOn": ["build"]
     },
@@ -44,11 +29,11 @@
       "outputs": ["{options.outputFile}"]
     },
     "test": {
-      "executor": "@nx/vite:test",
+      "executor": "@nx/vitest:test",
       "outputs": ["{workspaceRoot}/coverage/packages/vite-plugin-nitro"],
       "options": {
         "passWithNoTests": true,
-        "reportsDirectory": "../../coverage/packages/vite-plugin-nitro"
+        "reportsDirectory": "{projectRoot}/../../coverage/packages/vite-plugin-nitro"
       }
     }
   }

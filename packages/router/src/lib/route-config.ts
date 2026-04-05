@@ -2,8 +2,18 @@ import { inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import type { Route } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import {
+  injectInternalServerFetch,
+  type ServerInternalFetch,
+} from '@analogjs/router/tokens';
 
-import { RedirectRouteMeta, RouteConfig, RouteMeta } from './models';
+import {
+  DefaultRouteMeta,
+  RedirectRouteMeta,
+  RouteConfig,
+  RouteMeta,
+} from './models';
+import { ROUTE_JSON_LD_KEY, isJsonLdObject } from './json-ld';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
 import { ANALOG_PAGE_ENDPOINTS, ANALOG_META_KEY } from './endpoints';
 import { injectRouteEndpointURL } from './inject-route-endpoint-url';
@@ -13,7 +23,8 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
     return routeMeta;
   }
 
-  let { meta, ...routeConfig } = routeMeta ?? {};
+  const defaultMeta: DefaultRouteMeta = (routeMeta ?? {}) as DefaultRouteMeta;
+  const { meta, jsonLd, ...routeConfig } = defaultMeta;
 
   if (Array.isArray(meta)) {
     routeConfig.data = { ...routeConfig.data, [ROUTE_META_TAGS_KEY]: meta };
@@ -24,8 +35,13 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
     };
   }
 
-  if (!routeConfig) {
-    routeConfig = {};
+  if (Array.isArray(jsonLd) || isJsonLdObject(jsonLd)) {
+    routeConfig.data = { ...routeConfig.data, [ROUTE_JSON_LD_KEY]: jsonLd };
+  } else if (typeof jsonLd === 'function') {
+    routeConfig.resolve = {
+      ...routeConfig.resolve,
+      [ROUTE_JSON_LD_KEY]: jsonLd,
+    };
   }
 
   routeConfig.runGuardsAndResolvers =
@@ -37,15 +53,24 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
         [ANALOG_META_KEY]: { endpoint: string; endpointKey: string };
       };
 
-      if (ANALOG_PAGE_ENDPOINTS[routeConfig[ANALOG_META_KEY].endpointKey]) {
+      // Content routes (from .md files in the pages directory) do not have
+      // ANALOG_META_KEY — it is only set on page routes (.page.ts) in
+      // route-builder.ts.  The optional chain avoids a runtime crash when
+      // the router resolves a content route during SSR / prerendering.
+      if (ANALOG_PAGE_ENDPOINTS[routeConfig[ANALOG_META_KEY]?.endpointKey]) {
         const http = inject(HttpClient);
         const url = injectRouteEndpointURL(route);
+        const internalFetch = injectInternalServerFetch();
 
-        if (
-          !!import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL'] &&
-          (globalThis as any).$fetch
-        ) {
-          return (globalThis as any).$fetch(url.pathname);
+        if (internalFetch) {
+          return internalFetch(`${url.pathname}${url.search}`);
+        }
+
+        const globalFetch = (
+          globalThis as unknown as { $fetch?: ServerInternalFetch }
+        ).$fetch;
+        if (!!import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL'] && globalFetch) {
+          return globalFetch(`${url.pathname}${url.search}`);
         }
 
         return firstValueFrom(http.get(`${url.href}`));

@@ -1,4 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import type { OnInit } from '@angular/core';
 import { NgFor } from '@angular/common';
 import { provideHttpClient, HttpClient } from '@angular/common/http';
 

@@ -18,29 +18,35 @@ jobs:
       contents: write # to be able to publish a GitHub release
       issues: write # to be able to comment on released issues
       pull-requests: write # to be able to comment on released pull requests
+      id-token: write # for provenance
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-      - run: npm install --global corepack@0.31.0
-      - run: corepack enable
-      - run: pnpm --version
-      - name: Install dependencies
-        uses: actions/setup-node@v3
+      - name: Install Corepack
+        run: npm install --global --force corepack@latest
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
+          node-version-file: .node-version
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
+      - run: pnpm --version
+      - run: npm --version
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Verify release artifacts
+        run: pnpm run release:verify
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
           RELEASE_TAG=$TAG npx semantic-release

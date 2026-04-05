@@ -54,7 +54,7 @@ export default defineConfig({
 Similar to [API routes](/docs/features/api/overview), WebSocket Handlers are defined in the `src/server/routes/api` folder.
 
 ```typescript
-// src/server/api/routes/ws/chat.ts
+// src/server/routes/api/ws/chat.ts
 import { defineWebSocketHandler } from 'h3';
 
 export default defineWebSocketHandler({
@@ -87,13 +87,13 @@ WebSocket routes are exposed with the same path as API routes. For example, `src
 
 ## Defining a Server-sent Event Handler
 
-Server-sent event handlers can be created using `createEventStream` function in the event handler.
+Server-sent event handlers can be created using the `createEventStream` function in a handler.
 
 ```typescript
 // src/server/routes/api/sse.ts
-import { defineEventHandler, createEventStream } from 'h3';
+import { createEventStream, defineHandler } from 'h3';
 
-export default defineEventHandler(async (event) => {
+export default defineHandler(async (event) => {
   const eventStream = createEventStream(event);
 
   const interval = setInterval(async () => {

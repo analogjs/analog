@@ -82,7 +82,7 @@ or alternatively run this command from the root folder:
 pnpm nx serve docs-app
 ```
 
-Once the development server is up and running, you can preview the docs and website by visiting [http://localhost:3000](http://localhost:3000).
+Once the development server is up and running, you can preview the docs and website by visiting [http://localhost:43020](http://localhost:43020).
 
 ### Build
 
@@ -122,6 +122,8 @@ pnpm nx serve-static docs-app
 - If you've added new functionality, **please** include tests which validate its behavior.
 - Make reference to possible [issues](https://github.com/analogjs/analog/issues) on PR comment.
 - PRs may include multiple commits. However, please keep content of all commits related. Raise separate PRs for disjoint changes.
+- Use the PR template to capture the affected scope, your test plan, and any maintainer-facing merge recommendation.
+- `Squash merge` is highly preferred. If you recommend a non-squash merge, add a brief note explaining why the commit boundaries matter and why the PR should bypass focused changes per package.
 
 ### Pull Request title guidelines
 
@@ -154,7 +156,7 @@ Must be one of the following:
 
 ### Scope
 
-The scope should be the name of the npm package affected (as perceived by the person reading the changelog generated from commit messages.
+The scope should be the name of the npm package affected (as perceived by the person reading the changelog generated from commit messages).
 
 The following is the list of currently supported scopes:
 
@@ -165,10 +167,12 @@ The following is the list of currently supported scopes:
 - **nx-plugin**
 - **platform**
 - **router**
-- **trpc**
+- **storybook-angular**
 - **vite-plugin-angular**
 - **vite-plugin-nitro**
 - **vitest-angular**
+
+For the current package-to-scope mapping, see the `Packages` table in `AGENTS.md`.
 
 ### Breaking Changes
 

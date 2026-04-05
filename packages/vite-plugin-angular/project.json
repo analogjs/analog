@@ -5,27 +5,25 @@
   "projectType": "library",
   "tags": ["type:release"],
   "targets": {
-    "build": {
-      "executor": "@nx/js:tsc",
-
+    "build-self": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "outputs": ["{projectRoot}/dist"],
       "options": {
-        "outputPath": "node_modules/@analogjs/vite-plugin-angular",
-        "main": "packages/vite-plugin-angular/src/index.ts",
-        "tsConfig": "packages/vite-plugin-angular/tsconfig.lib.json",
-        "assets": [
-          "packages/vite-plugin-angular/*.md",
-          "packages/vite-plugin-angular/migrations/migration.json"
-        ],
-        "updateBuildableProjectDepsInPackageJson": false,
-        "additionalEntryPoints": [
-          "packages/vite-plugin-angular/esbuild.ts",
-          "packages/vite-plugin-angular/setup-vitest.ts"
-        ],
-        "generateExportsField": false
+        "command": "vite build --config packages/vite-plugin-angular/vite.config.lib.ts"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["build-self", "vite-plugin-angular-tools:build"],
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "command": "node tools/scripts/verify-package-artifacts.mts vite-plugin-angular"
       }
     },
     "test": {
-      "executor": "@nx/vite:test"
+      "executor": "@nx/vitest:test"
     },
     "version": {
       "executor": "@jscutlery/semver:version",

@@ -1,0 +1,29 @@
+@reference "../../styles.css";
+
+.probe-card {
+  @apply tdbg:bg-blue-500 tdbg:text-white tdbg:rounded-[2rem] tdbg:border tdbg:border-white/20 tdbg:p-8 tdbg:shadow-2xl tdbg:shadow-blue-950/40;
+}
+
+.probe-kicker {
+  @apply tdbg:mb-3 tdbg:text-xs tdbg:font-bold tdbg:uppercase tdbg:tracking-[0.28em] tdbg:text-white/75;
+}
+
+.probe-title {
+  @apply tdbg:text-3xl tdbg:font-semibold tdbg:tracking-tight;
+}
+
+.probe-copy {
+  @apply tdbg:mt-4 tdbg:max-w-2xl tdbg:text-sm tdbg:leading-7 tdbg:text-white/85;
+}
+
+.probe-toolbar {
+  @apply tdbg:mt-6 tdbg:flex tdbg:flex-wrap tdbg:items-center tdbg:gap-3;
+}
+
+.probe-chip {
+  @apply tdbg:inline-flex tdbg:items-center tdbg:rounded-full tdbg:bg-white/15 tdbg:px-4 tdbg:py-2 tdbg:text-xs tdbg:font-medium tdbg:tracking-[0.12em] tdbg:uppercase;
+}
+
+.probe-button {
+  @apply tdbg:inline-flex tdbg:items-center tdbg:rounded-full tdbg:bg-slate-950 tdbg:px-4 tdbg:py-2 tdbg:text-sm tdbg:font-semibold tdbg:text-white tdbg:ring-1 tdbg:ring-white/20;
+}

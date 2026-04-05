@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "type": "module",
   "engines": {
-    "node": ">=18.19.1"
+    "node": "^22.18.0 || ^24.3.0"
   },
   "scripts": {
     "ng": "ng",
@@ -15,8 +15,8 @@
   },
   "private": true,
   "dependencies": {
-    "@analogjs/content": "^1.17.0-beta.6",
-    "@analogjs/router": "^1.17.0-beta.6",
+    "@analogjs/content": "^3.0.0-alpha.25",
+    "@analogjs/router": "^3.0.0-alpha.25",
     "@angular/animations": "^19.0.0",
     "@angular/common": "^19.0.0",
     "@angular/compiler": "^19.0.0",
@@ -27,7 +27,7 @@
     "@angular/platform-server": "^19.0.0",
     "@angular/router": "^19.0.0",
     "front-matter": "^4.0.2",
-    "marked": "^15.0.7",
+    "marked": "^17.0.5",
     "marked-gfm-heading-id": "^4.1.1",
     "marked-highlight": "^2.2.1",
     "marked-mangle": "^1.1.10",
@@ -37,17 +37,17 @@
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
-    "@analogjs/platform": "^1.17.0-beta.6",
-    "@analogjs/vite-plugin-angular": "^1.17.0-beta.6",
-    "@analogjs/vitest-angular": "^1.17.0-beta.6",
+    "@analogjs/platform": "^3.0.0-alpha.25",
+    "@analogjs/vite-plugin-angular": "^3.0.0-alpha.25",
+    "@analogjs/vitest-angular": "^3.0.0-alpha.25",
     "@angular-devkit/build-angular": "^19.0.0",
     "@angular/build": "^19.0.0",
     "@angular/cli": "^19.0.0",
     "@angular/compiler-cli": "^19.0.0",
     "jsdom": "^22.0.0",
-    "typescript": "~5.8.0",
+    "typescript": "6.0.2",
     "vite": "^6.0.0",
-    "vite-tsconfig-paths": "^4.2.0",
+    "vite-tsconfig-paths": "^7.0.0-alpha.1",
     "vitest": "^3.0.0"
   }
 }

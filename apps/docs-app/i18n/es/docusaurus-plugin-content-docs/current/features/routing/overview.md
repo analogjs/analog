@@ -14,11 +14,17 @@ Los componentes de ruta **deben** estar definidos como la exportación predeterm
 
 Hay 5 tipos principales de rutas:
 
-- [Rutas de Índice](#index-routes)
-- [Rutas Estáticas](#static-routes)
-- [Rutas Dinámicas](#dynamic-routes)
-- [Rutas de Layout](#layout-routes)
-- [Rutas Catch-all](#catch-all-routes)
+- [Enrutamiento](#routing)
+  - [Definiendo rutas](#defining-routes)
+  - [Rutas de índice](#index-routes)
+  - [Rutas estáticas](#static-routes)
+    - [Rutas agrupadas](#route-groups)
+  - [Rutas dinámicas](#dynamic-routes)
+    - [Usando Enlaces de Entrada de Componentes de Ruta](#using-route-component-input-bindings)
+  - [Rutas de Layout](#layout-routes)
+    - [Rutas de Layout sin Ruta](#pathless-layout-routes)
+  - [Rutas Catch-all](#catch-all-routes)
+  - [Poniendo todo junto](#putting-it-all-together)
 
 Estas rutas pueden combinarse de diferentes maneras para construir URLs para la navegación.
 
@@ -38,7 +44,6 @@ El ejemplo de ruta a continuación en `src/app/pages/(home).page.ts` define una 
 import { Component } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: ` <h2>Welcome</h2> `,
 })
 export default class HomePageComponent {}
@@ -60,7 +65,6 @@ El ejemplo de ruta a continuación en `src/app/pages/about.page.ts` define una r
 import { Component } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: `
     <h2>Hello Analog</h2>
 
@@ -103,7 +107,6 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 @Component({
-  standalone: true,
   imports: [AsyncPipe],
   template: `
     <h2>Product Details</h2>
@@ -149,7 +152,6 @@ Luego, usa el parámetro de ruta como una entrada.
 import { Component, Input } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: `
     <h2>Product Details</h2>
 
@@ -189,7 +191,6 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
-  standalone: true,
   imports: [RouterOutlet],
   template: `
     <h2>Products</h2>
@@ -206,7 +207,6 @@ El archivo anidado `src/app/pages/products/(products-list).page.ts` contiene la 
 import { Component } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: ` <h2>Products List</h2> `,
 })
 export default class ProductsListComponent {}
@@ -221,7 +221,6 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 @Component({
-  standalone: true,
   imports: [AsyncPipe, JsonPipe],
   template: `
     <h2>Product Details</h2>
@@ -263,9 +262,24 @@ El ejemplo de ruta a continuación en `src/app/pages/[...page-not-found].page.ts
 ```ts
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { injectResponse } from '@analogjs/router/tokens';
+import { RouteMeta } from '@analogjs/router';
+
+export const routeMeta: RouteMeta = {
+  title: 'Page Not Found',
+  canActivate: [
+    () => {
+      const response = injectResponse();
+      if (import.meta.env.SSR && response) {
+        response.statusCode = 404;
+        response.end();
+      }
+      return true;
+    },
+  ],
+};
 
 @Component({
-  standalone: true,
   imports: [RouterLink],
   template: `
     <h2>Page Not Found</h2>
@@ -304,7 +318,7 @@ src/
 
 El enrutador basado en el sistema de archivos generará las siguientes rutas:
 
-| Ruta               | Página                                                           |
+| Path               | Page                                                             |
 | ------------------ | ---------------------------------------------------------------- |
 | `/`                | `(home).page.ts`                                                 |
 | `/about`           | `(marketing)/about.md`                                           |
@@ -315,3 +329,42 @@ El enrutador basado en el sistema de archivos generará las siguientes rutas:
 | `/products/1`      | `products/[productId].page.ts` (layout: `products.page.ts`)      |
 | `/products/1/edit` | `products/[productId].edit.page.ts` (layout: `products.page.ts`) |
 | `/unknown-url`     | `[...not-found].md`                                              |
+
+## Proporcionando rutas adicionales
+
+Las rutas se pueden agregar manualmente en adición a las rutas descubiertas a través del sistema de archivos. Utiliza `withExtraRoutes` con un array de rutas para agregar al principio del array de rutas descubiertas. Todas las rutas se fusionan en un array único.
+
+```ts
+import { ApplicationConfig } from '@angular/core';
+import { Routes } from '@angular/router';
+import { provideFileRouter, withExtraRoutes } from '@analogjs/router';
+
+const customRoutes: Routes = [
+  {
+    path: 'custom',
+    loadComponent: () =>
+      import('./custom-component').then((m) => m.CustomComponent),
+  },
+];
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideFileRouter(withExtraRoutes(customRoutes))],
+};
+```
+
+## Visualizando y depurando rutas
+
+Durante el desarrollo, Analog registra automáticamente una ruta de depuración que muestra las páginas y layouts de tu aplicación. Navega a `/__analog/routes` en el navegador para ver la tabla de rutas. No se necesita configuración — la ruta de depuración está disponible en cualquier aplicación que use `provideFileRouter()` y se elimina automáticamente de las compilaciones de producción.
+
+Si necesitas registrar la ruta de depuración explícitamente (por ejemplo, en una configuración personalizada), puedes utilizar la función `withDebugRoutes()`:
+
+```ts
+import { ApplicationConfig } from '@angular/core';
+import { provideFileRouter, withDebugRoutes } from '@analogjs/router';
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideFileRouter(withDebugRoutes())],
+};
+```
+
+![Página de rutas de depuración](/img/debug-routes.png)

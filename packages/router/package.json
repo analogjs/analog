@@ -1,9 +1,49 @@
 {
   "name": "@analogjs/router",
-  "version": "2.0.0-alpha.16",
+  "version": "3.0.0-alpha.25",
   "description": "Filesystem-based routing for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
+  "exports": {
+    ".": {
+      "types": "./dist/types/src/index.d.ts",
+      "import": "./dist/fesm2022/analogjs-router.mjs",
+      "default": "./dist/fesm2022/analogjs-router.mjs"
+    },
+    "./content": {
+      "types": "./dist/types/content/src/index.d.ts",
+      "import": "./dist/fesm2022/analogjs-router-content.mjs",
+      "default": "./dist/fesm2022/analogjs-router-content.mjs"
+    },
+    "./tanstack-query": {
+      "types": "./dist/types/tanstack-query/src/index.d.ts",
+      "import": "./dist/fesm2022/analogjs-router-tanstack-query.mjs",
+      "default": "./dist/fesm2022/analogjs-router-tanstack-query.mjs"
+    },
+    "./tanstack-query/server": {
+      "types": "./dist/types/tanstack-query/server/src/index.d.ts",
+      "import": "./dist/fesm2022/analogjs-router-tanstack-query-server.mjs",
+      "default": "./dist/fesm2022/analogjs-router-tanstack-query-server.mjs"
+    },
+    "./server": {
+      "types": "./dist/types/server/src/index.d.ts",
+      "import": "./dist/fesm2022/analogjs-router-server.mjs",
+      "default": "./dist/fesm2022/analogjs-router-server.mjs"
+    },
+    "./server/actions": {
+      "types": "./dist/types/server/actions/src/index.d.ts",
+      "import": "./dist/fesm2022/analogjs-router-server-actions.mjs",
+      "default": "./dist/fesm2022/analogjs-router-server-actions.mjs"
+    },
+    "./tokens": {
+      "types": "./dist/types/tokens/src/index.d.ts",
+      "import": "./dist/fesm2022/analogjs-router-tokens.mjs",
+      "default": "./dist/fesm2022/analogjs-router-tokens.mjs"
+    },
+    "./package.json": {
+      "default": "./package.json"
+    }
+  },
   "keywords": [
     "angular",
     "router",
@@ -24,13 +64,35 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "peerDependencies": {
-    "@analogjs/content": "^2.0.0-alpha.16",
-    "@standard-schema/spec": "^1.1.0",
-    "@angular/core": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
-    "@angular/router": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
+    "@analogjs/content": "workspace:*",
+    "@standard-schema/spec": "catalog:",
+    "@angular/core": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0",
+    "@angular/platform-server": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0",
+    "@angular/router": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0",
+    "@tanstack/angular-query-experimental": ">=5.95.0",
+    "schema-dts": "catalog:"
+  },
+  "peerDependenciesMeta": {
+    "@analogjs/content": {
+      "optional": true
+    },
+    "@angular/platform-server": {
+      "optional": true
+    },
+    "@tanstack/angular-query-experimental": {
+      "optional": true
+    },
+    "schema-dts": {
+      "optional": true
+    }
   },
   "dependencies": {
-    "tslib": "^2.0.0"
+    "@standard-schema/spec": "catalog:",
+    "es-toolkit": "catalog:",
+    "tslib": "catalog:"
+  },
+  "devDependencies": {
+    "@analogjs/vite-plugin-angular": "workspace:*"
   },
   "ng-update": {
     "packageGroup": [
@@ -43,5 +105,9 @@
       "@analogjs/vitest-angular"
     ],
     "migrations": "./migrations/migration.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

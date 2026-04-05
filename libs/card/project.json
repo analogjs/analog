@@ -5,9 +5,11 @@
   "prefix": "lib",
   "projectType": "library",
   "tags": [],
+  "implicitDependencies": ["vite-plugin-angular"],
   "targets": {
     "tests": {
-      "executor": "@nx/vite:test"
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["vite-plugin-angular:build"]
     },
     "lint": {
       "executor": "@nx/eslint:lint",

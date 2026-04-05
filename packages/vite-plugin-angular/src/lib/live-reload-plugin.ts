@@ -1,8 +1,9 @@
 import { resolve } from 'node:path';
 import { ServerResponse } from 'node:http';
-import { Connect, Plugin, ViteDevServer } from 'vite';
+import { Connect, normalizePath, Plugin, ViteDevServer } from 'vite';
 
 import { EmitFileResult } from './models.js';
+import { debugHmr } from './utils/debug.js';
 
 const ANGULAR_COMPONENT_PREFIX = '/@ng/component';
 const FILE_PREFIX = 'file:';
@@ -16,6 +17,7 @@ export function liveReloadPlugin({
 }): Plugin {
   return {
     name: 'analogjs-live-reload-plugin',
+    apply: 'serve',
     configureServer(server: ViteDevServer) {
       const angularComponentMiddleware: Connect.HandleFunction = async (
         req: Connect.IncomingMessage,
@@ -43,13 +45,14 @@ export function liveReloadPlugin({
         }
 
         const [fileId] = decodeURIComponent(componentId).split('@');
-        const resolvedId = resolve(process.cwd(), fileId);
+        const resolvedId = normalizePath(resolve(process.cwd(), fileId));
         const invalidated =
           !!server.moduleGraph.getModuleById(resolvedId)
             ?.lastInvalidationTimestamp && classNames.get(resolvedId);
 
         // don't send an HMR update until the file has been invalidated
         if (!invalidated) {
+          debugHmr('middleware: skipped (not invalidated)', { resolvedId });
           res.setHeader('Content-Type', 'text/javascript');
           res.setHeader('Cache-Control', 'no-cache');
           res.end('');
@@ -57,6 +60,10 @@ export function liveReloadPlugin({
         }
 
         const result = fileEmitter(resolvedId);
+        debugHmr('middleware: served component update', {
+          resolvedId,
+          hasCode: !!result?.hmrUpdateCode,
+        });
         res.setHeader('Content-Type', 'text/javascript');
         res.setHeader('Cache-Control', 'no-cache');
         res.end(`${result?.hmrUpdateCode || ''}`);
@@ -85,7 +92,12 @@ export function liveReloadPlugin({
         }
 
         const result = fileEmitter(
-          resolve(process.cwd(), decodeURIComponent(componentId).split('@')[0]),
+          normalizePath(
+            resolve(
+              process.cwd(),
+              decodeURIComponent(componentId).split('@')[0],
+            ),
+          ),
         );
 
         return result?.hmrUpdateCode || '';

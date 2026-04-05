@@ -44,7 +44,6 @@ Analog 在 Angular 路由之上支持基于文件系统的路由。
 import { Component } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: ` <h2>Welcome</h2> `,
 })
 export default class HomePageComponent {}
@@ -66,7 +65,6 @@ export default class HomePageComponent {}
 import { Component } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: `
     <h2>Hello Analog</h2>
 
@@ -109,7 +107,6 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 @Component({
-  standalone: true,
   imports: [AsyncPipe],
   template: `
     <h2>Product Details</h2>
@@ -155,7 +152,6 @@ export const appConfig: ApplicationConfig = {
 import { Component, Input } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: `
     <h2>Product Details</h2>
 
@@ -195,7 +191,6 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
-  standalone: true,
   imports: [RouterOutlet],
   template: `
     <h2>Products</h2>
@@ -212,7 +207,6 @@ export default class ProductsComponent {}
 import { Component } from '@angular/core';
 
 @Component({
-  standalone: true,
   template: ` <h2>Products List</h2> `,
 })
 export default class ProductsListComponent {}
@@ -227,7 +221,6 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 @Component({
-  standalone: true,
   imports: [AsyncPipe, JsonPipe],
   template: `
     <h2>Product Details</h2>
@@ -287,7 +280,6 @@ export const routeMeta: RouteMeta = {
 };
 
 @Component({
-  standalone: true,
   imports: [RouterLink],
   template: `
     <h2>Page Not Found</h2>
@@ -337,3 +329,42 @@ src/
 | `/products/1`      | `products/[productId].page.ts` (layout: `products.page.ts`)      |
 | `/products/1/edit` | `products/[productId].edit.page.ts` (layout: `products.page.ts`) |
 | `/unknown-url`     | `[...not-found].md`                                              |
+
+## 提供额外路由
+
+除了通过文件系统发现的路由外，还可以手动添加路由。使用带有路由数组的 `withExtraRoutes`，将其预置到发现的路由数组中。所有路由将合并到一个数组中。
+
+```ts
+import { ApplicationConfig } from '@angular/core';
+import { Routes } from '@angular/router';
+import { provideFileRouter, withExtraRoutes } from '@analogjs/router';
+
+const customRoutes: Routes = [
+  {
+    path: 'custom',
+    loadComponent: () =>
+      import('./custom-component').then((m) => m.CustomComponent),
+  },
+];
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideFileRouter(withExtraRoutes(customRoutes))],
+};
+```
+
+## 可视化和调试路由
+
+在开发过程中，Analog 会自动注册一个调试路由，显示应用程序的页面和布局。在浏览器中导航到 `/__analog/routes` 即可查看路由表。无需任何配置——调试路由在使用 `provideFileRouter()` 的任何应用中自动可用，并会从生产构建中自动移除。
+
+如果需要显式注册调试路由（例如在自定义设置中），可以使用 `withDebugRoutes()` 函数：
+
+```ts
+import { ApplicationConfig } from '@angular/core';
+import { provideFileRouter, withDebugRoutes } from '@analogjs/router';
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideFileRouter(withDebugRoutes())],
+};
+```
+
+![debug routes page](/img/debug-routes.png)

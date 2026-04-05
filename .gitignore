@@ -2,6 +2,7 @@
 
 # compiled output
 /dist
+packages/*/dist
 /tmp
 /out-tsc
 
@@ -32,6 +33,7 @@ node_modules
 npm-debug.log
 yarn-error.log
 testem.log
+debug.analog.log
 /typings
 
 # System Files
@@ -47,10 +49,13 @@ stats.html
 .cache-loader/
 
 # Playwright
-
 **/test-results/
 **/playwright-report/
 **/playwright/.cache/
+
+# Vitest browser screenshots/attachments
+**/__screenshots__/
+**/.vitest-attachments/
 
 # Nitro
 .nitro
@@ -69,3 +74,11 @@ tmpanalogapp*
 vite.config.*.timestamp*
 .vite-inspect
 vitest.config.*.timestamp*
+
+.claude/worktrees
+.dagger/sdk
+.vercel/
+gradle.properties
+.cursor
+.claude
+gradle.properties

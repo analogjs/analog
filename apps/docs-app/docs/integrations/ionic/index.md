@@ -101,7 +101,7 @@ pnpm install ionicons
 
 ## Step 2: Configuring Ionic Framework in your application
 
-1. Update your `vite.config.ts` file to include Ionic packages in the **SSR** process, adding them to the `noExternal` array. ionicons is required only if you installed the ionicons package. If you use Vitest, inline the @ionic/angular package to allow Vitest to build that package properly for Vitest.
+1. Update your `vite.config.ts` file to include Ionic packages in the **SSR** process, adding them to the `noExternal` array. `ionicons` is required only if you installed the ionicons package. If you use Vitest, inline the `@ionic/angular` package to allow Vitest to build that package properly for Vitest.
 
 ```ts
 export default defineConfig(({ mode }) => {
@@ -155,7 +155,6 @@ import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
 
 @Component({
   selector: 'demo-root',
-  standalone: true,
   imports: [IonApp, IonRouterOutlet],
   template: `<ion-app><ion-router-outlet></ion-router-outlet></ion-app>`,
 })
@@ -170,9 +169,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       analog({
-        vite: {
-          inlineStylesExtension: 'scss',
-        },
+        inlineStylesExtension: 'scss',
       }),
     ],
   };
@@ -239,7 +236,6 @@ export default defineConfig(({ mode }) => {
 Ionic Framework [doesn't support Angular's new Client Hydration](https://github.com/ionic-team/ionic-framework/issues/28625#issuecomment-1843919548), as Angular [doesn't support SSR with web components](https://github.com/angular/angular/issues/52275), and when they are supported, work has to be done on the Stencil components to enable it. So right now there are three options to handle this:
 
 1. Remove `provideClientHydration()` from `app.config.ts` providers.
-
    - This removes the new client hydration mechanism from Angular and reverts to the previous one, which will cause a flicker when re-rendering the DOM from the client.
 
    ```ts
@@ -261,7 +257,6 @@ Ionic Framework [doesn't support Angular's new Client Hydration](https://github.
    ```
 
 2. Add `ngSkipHydration` attribute to the `ion-app` tag.
-
    - This will disable the client hydration mechanism for the `ion-app` element and children, but will continue to use client hydration on other elements. This will also cause a flicker in the page for the Ionic components. This is not that helpful for other elements/components as, with Ionic apps, all your Ionic components exist inside the `ion-app` tag.
 
      ```ts
@@ -270,7 +265,6 @@ Ionic Framework [doesn't support Angular's new Client Hydration](https://github.
 
      @Component({
        selector: 'demo-root',
-       standalone: true,
        imports: [IonApp, IonRouterOutlet],
        template: `
          <ion-app ngSkipHydration>
@@ -282,7 +276,6 @@ Ionic Framework [doesn't support Angular's new Client Hydration](https://github.
      ```
 
 3. Disable SSR completely
-
    - Disable SSR in the `vite.config.ts` file. This **will eliminate the flickering** but you will lose all the benefits of having SSR in your app.
 
      ```ts

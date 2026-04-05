@@ -1,0 +1,5 @@
+{
+  "name": "@analogjs/vite-plugin-angular-tools",
+  "version": "0.0.1",
+  "main": "src/index.js"
+}

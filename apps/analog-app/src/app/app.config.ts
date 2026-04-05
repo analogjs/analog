@@ -3,7 +3,8 @@ import {
   withFetch,
   withInterceptors,
 } from '@angular/common/http';
-import { ApplicationConfig } from '@angular/core';
+import { provideContent, withMarkdownRenderer } from '@analogjs/content';
+import type { ApplicationConfig } from '@angular/core';
 import {
   provideClientHydration,
   withEventReplay,
@@ -12,8 +13,12 @@ import {
   provideFileRouter,
   withExtraRoutes,
   withDebugRoutes,
+  withTypedRouter,
+  withRouteContext,
+  withLoaderCaching,
   requestContextInterceptor,
 } from '@analogjs/router';
+import { withContentRoutes } from '@analogjs/router/content';
 import { withNavigationErrorHandler } from '@angular/router';
 
 const fallbackRoutes = [
@@ -25,12 +30,24 @@ export const appConfig: ApplicationConfig = {
     provideFileRouter(
       withNavigationErrorHandler(console.error),
       withDebugRoutes(),
+      withContentRoutes(),
       withExtraRoutes(fallbackRoutes),
+      // Experimental: TanStack Router-inspired features
+      withTypedRouter({ strictRouteParams: true }),
+      withRouteContext({ appName: 'analog-app' }),
+      withLoaderCaching({
+        defaultStaleTime: 30_000,
+        defaultGcTime: 300_000,
+        defaultPendingMs: 200,
+      }),
     ),
     provideHttpClient(
       withFetch(),
       withInterceptors([requestContextInterceptor]),
     ),
+    provideContent(withMarkdownRenderer()),
+    // Hydration must be configured for both server and client bootstraps so
+    // SSR can serialize the metadata the browser uses to hydrate.
     provideClientHydration(withEventReplay()),
   ],
 };

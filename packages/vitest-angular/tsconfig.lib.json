@@ -3,12 +3,16 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "declaration": true,
+    "isolatedDeclarations": true,
     "types": ["node"]
   },
   "include": [
     "src/**/*.ts",
+    "snapshot-serializers.ts",
     "setup-zone.ts",
     "setup-snapshots.ts",
+    "setup-testbed.ts",
+    "setup-serializers.ts",
     "plugin.ts"
   ],
   "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"]

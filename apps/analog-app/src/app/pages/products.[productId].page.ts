@@ -1,49 +1,149 @@
-import { injectActivatedRoute } from '@analogjs/router';
+import { injectActivatedRoute, injectLoad } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { Component, inject, OnInit } from '@angular/core';
-import { catchError, of } from 'rxjs';
+import { Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { CartService } from '../cart.service';
-import { Product } from '../products';
+import { LiveProductsService } from '../live-products.service';
+import type { Product } from '../products';
+import type { load } from './products.[productId].server';
+
+export const routeJsonLd = (route: {
+  parent?: { paramMap: { get(name: string): string | null } };
+}) => {
+  const productId = route.parent?.paramMap.get('productId') ?? 'unknown';
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    identifier: `analog-product-${productId}`,
+    name: `Analog Product ${productId}`,
+    sku: productId,
+  };
+};
 
 @Component({
-  selector: 'app-product-details',
+  selector: 'analogjs-product-details',
   imports: [CurrencyPipe],
   template: `
-    <h2>Product Details</h2>
+    <section class="details-shell">
+      <p class="eyebrow">Catalog Details</p>
+      <h2>Product Details</h2>
 
-    @if (product) {
-      <div>
-        <h3>{{ product.name }}</h3>
-        <h4>{{ product.price | currency }}</h4>
-        <p>{{ product.description }}</p>
-        <button type="button" (click)="addToCart(product)">Buy</button>
-      </div>
-    }
+      @if (product(); as product) {
+        <article class="details-card">
+          <div class="details-header">
+            <div>
+              <p class="sku">SKU #{{ product.id }}</p>
+              <h3>{{ product.name }}</h3>
+            </div>
+            <p class="price">{{ product.price | currency }}</p>
+          </div>
+
+          <p class="description">
+            {{
+              product.description ||
+                'Fresh product copy arrives through the live product service.'
+            }}
+          </p>
+
+          <div class="details-actions">
+            <button type="button" (click)="addToCart(product)">Buy</button>
+          </div>
+        </article>
+      } @else {
+        <article class="details-card empty-state">
+          <h3>Loading product</h3>
+          <p>The live products service is fetching the latest catalog data.</p>
+        </article>
+      }
+    </section>
   `,
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+
+      .details-shell {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .eyebrow,
+      .sku {
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #2563eb;
+      }
+
+      .details-card {
+        display: grid;
+        gap: 1rem;
+        padding: 1.4rem;
+        border: 1px solid #d9e2ec;
+        border-radius: 24px;
+        background: linear-gradient(180deg, #fff, #f8fbff);
+        box-shadow: 0 20px 48px rgb(15 23 42 / 0.08);
+      }
+
+      .details-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h3 {
+        font-size: 1.75rem;
+      }
+
+      .price {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #0f172a;
+      }
+
+      .description {
+        max-width: 60ch;
+      }
+
+      @media (max-width: 720px) {
+        .details-header {
+          flex-direction: column;
+        }
+      }
+    `,
+  ],
 })
-export default class ProductDetailsComponent implements OnInit {
+export default class ProductDetailsComponent {
   private readonly route = injectActivatedRoute();
   private readonly cartService = inject(CartService);
-  private readonly http = inject(HttpClient);
+  private readonly liveProducts = inject(LiveProductsService);
+  private readonly initialData = toSignal(injectLoad<typeof load>(), {
+    requireSync: true,
+  });
+  private readonly productIdFromRoute = Number(
+    this.route.parent?.snapshot.paramMap.get('productId'),
+  );
 
-  product: Product | undefined;
+  readonly product = computed<Product | undefined>(() =>
+    this.liveProducts
+      .products()
+      .find((product) => product.id === this.productIdFromRoute),
+  );
 
-  ngOnInit() {
-    // First get the product id from the current route.
-    const routeParams = this.route.parent!.snapshot!.paramMap;
-    const productIdFromRoute = Number(routeParams.get('productId'));
-
-    this.http
-      .get<Product[]>('/api/v1/products')
-      .pipe(catchError(() => of([])))
-      .subscribe((products) => {
-        // Find the product that correspond with the id provided in route.
-        this.product = products.find(
-          (product) => product.id === productIdFromRoute,
-        );
-      });
+  constructor() {
+    // Seed the live products store with the SSR loader snapshot so the
+    // product is available immediately during hydration.
+    this.liveProducts.connect(this.initialData().products);
   }
 
   addToCart(product: Product) {

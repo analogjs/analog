@@ -9,14 +9,11 @@ import {
   ProjectConfiguration,
   joinPathFragments,
   stripIndents,
-  updateProjectConfiguration,
-  generateFiles,
 } from '@nx/devkit';
 import {
   GeneratorOptions,
   NormalizedGeneratorOptions,
 } from './add-tailwind-config';
-import { relative } from 'node:path';
 
 export function normalizeOptions(
   options: GeneratorOptions,
@@ -29,7 +26,7 @@ export function normalizeOptions(
 
 export function detectTailwindInstalledVersion(
   tree: Tree,
-): '2' | '3' | '4' | undefined {
+): '4' | '5' | undefined {
   const { dependencies, devDependencies } = readJson(tree, 'package.json');
   const tailwindVersion =
     dependencies?.tailwindcss ?? devDependencies?.tailwindcss;
@@ -39,15 +36,12 @@ export function detectTailwindInstalledVersion(
   }
 
   const version = checkAndCleanWithSemver('tailwindcss', tailwindVersion);
-  if (lt(version, '2.0.0')) {
+  if (lt(version, '4.0.0')) {
     throw new Error(
-      `The Tailwind CSS version "${tailwindVersion}" is not supported. Please upgrade to v2.0.0 or higher.`,
+      `The Tailwind CSS version "${tailwindVersion}" is not supported. Please upgrade to v4.0.0 or higher.`,
     );
   }
-  if (lt(version, '3.0.0')) {
-    return '2';
-  }
-  return lt(version, '4.0.0') ? '3' : '4';
+  return lt(version, '5.0.0') ? '4' : '5';
 }
 
 export function addTailwindRequiredPackages(tree: Tree): GeneratorCallback {
@@ -57,9 +51,34 @@ export function addTailwindRequiredPackages(tree: Tree): GeneratorCallback {
     {
       postcss: pkgVersions.postcss,
       tailwindcss: pkgVersions.tailwindcss,
+      '@tailwindcss/postcss': pkgVersions['@tailwindcss/postcss'],
       '@tailwindcss/vite': pkgVersions['@tailwindcss/vite'],
     },
     {},
+  );
+}
+
+export function writeTailwindPostcssConfig(
+  tree: Tree,
+  project: ProjectConfiguration,
+): void {
+  const postcssConfigPath = joinPathFragments(
+    project.root,
+    'postcss.config.mjs',
+  );
+
+  if (tree.exists(postcssConfigPath)) {
+    return;
+  }
+
+  tree.write(
+    postcssConfigPath,
+    `export default {
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
+};
+`,
   );
 }
 
@@ -68,8 +87,6 @@ export function updateApplicationStyles(
   options: NormalizedGeneratorOptions,
   project: ProjectConfiguration,
 ): void {
-  const tailwindInstalledVersion = detectTailwindInstalledVersion(tree);
-
   let stylesEntryPoint = options.stylesEntryPoint;
 
   if (stylesEntryPoint && !tree.exists(stylesEntryPoint)) {
@@ -89,36 +106,21 @@ export function updateApplicationStyles(
     }
   }
 
-  const stylesEntryPointContent = tree.read(stylesEntryPoint, 'utf-8');
-
-  if (tailwindInstalledVersion < '4') {
-    tree.write(
-      stylesEntryPoint,
-      stripIndents`@tailwind base;
-      @tailwind components;
-      @tailwind utilities;
-
-      ${stylesEntryPointContent}`,
-    );
-  } else {
-    if (!isStyleEntryPointCss(stylesEntryPoint)) {
-      throw new Error(
-        `Tailwind CSS v4 is not compatible with any css preprocessors like sass or less. Please use a css file as the styles entry point.`,
-      );
-    }
-
-    tree.write(
-      stylesEntryPoint,
-      stripIndents`@import "tailwindcss";
-
-
-      ${stylesEntryPointContent}`,
+  if (!stylesEntryPoint.endsWith('.css')) {
+    throw new Error(
+      `Tailwind CSS v4 is not compatible with any css preprocessors like sass or less. Please use a css file as the styles entry point.`,
     );
   }
-}
 
-function isStyleEntryPointCss(stylesEntryPoint) {
-  return stylesEntryPoint.endsWith('.css');
+  const stylesEntryPointContent = tree.read(stylesEntryPoint, 'utf-8');
+
+  tree.write(
+    stylesEntryPoint,
+    stripIndents`@import "tailwindcss";
+
+
+    ${stylesEntryPointContent}`,
+  );
 }
 
 function findStylesEntryPoint(
@@ -163,86 +165,4 @@ function findStylesEntryPoint(
   }
 
   return typeof style === 'string' ? style : style.input;
-}
-
-export function addTailwindConfigPathToProject(
-  tree: Tree,
-  options: NormalizedGeneratorOptions,
-  project: ProjectConfiguration,
-): void {
-  const buildTarget = project.targets?.[options.buildTarget];
-
-  if (!buildTarget) {
-    throw new Error(
-      stripIndents`The target "${options.buildTarget}" was not found for project "${options.project}".
-      If you are using a different build target, please provide it using the "--buildTarget" option.
-      If the project is not a buildable or publishable library, you don't need to setup TailwindCSS for it.`,
-    );
-  }
-
-  if (
-    buildTarget.options?.tailwindConfig &&
-    tree.exists(buildTarget.options.tailwindConfig)
-  ) {
-    throw new Error(
-      stripIndents`The "${buildTarget.options.tailwindConfig}" file is already configured for the project "${options.project}". Are you sure this is the right project to set up Tailwind?
-      If you are sure, you can remove the configuration and re-run the generator.`,
-    );
-  }
-
-  const tailwindInstalledVersion = detectTailwindInstalledVersion(tree);
-
-  if (tailwindInstalledVersion === '2') {
-    buildTarget.options = {
-      ...buildTarget.options,
-      tailwindConfig: joinPathFragments(project.root, 'tailwind.config.js'),
-    };
-  } else {
-    buildTarget.options = {
-      ...buildTarget.options,
-      tailwindConfig: joinPathFragments(project.root, 'tailwind.config.ts'),
-    };
-  }
-
-  updateProjectConfiguration(tree, options.project, project);
-}
-
-export function addTailwindConfigFile(
-  tree: Tree,
-  options: GeneratorOptions,
-  project: ProjectConfiguration,
-): void {
-  if (tree.exists(joinPathFragments(project.root, 'tailwind.config.js'))) {
-    throw new Error(
-      stripIndents`The "tailwind.config" file already exists in the project "${options.project}". Are you sure this is the right project to set up Tailwind?
-      If you are sure, you can remove the existing file and re-run the generator.`,
-    );
-  }
-
-  const tailwindInstalledVersion = detectTailwindInstalledVersion(tree);
-
-  if (tailwindInstalledVersion === '2') {
-    generateFiles(
-      tree,
-      joinPathFragments(__dirname, '..', 'files', 'tailwind/v2'),
-      project.root,
-      {
-        relativeSourceRoot: relative(project.root, project.sourceRoot),
-        template: '',
-      },
-    );
-    return;
-  }
-  if (tailwindInstalledVersion === '3') {
-    generateFiles(
-      tree,
-      joinPathFragments(__dirname, '..', 'files', 'tailwind/v3'),
-      project.root,
-      {
-        relativeSourceRoot: relative(project.root, project.sourceRoot),
-        template: '',
-      },
-    );
-    return;
-  }
 }

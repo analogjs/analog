@@ -3,12 +3,13 @@
 /dist
 /coverage
 .prettierignore
+.astro
 .docusaurus/
 pnpm-lock.yaml
 /.nx/cache
 .angular
-*.analog
 /.nx/workspace-data
 /packages/create-analog/template-*
 .vite-inspect
 .all-contributorsrc
+**/routeTree.gen.ts

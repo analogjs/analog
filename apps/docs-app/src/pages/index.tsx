@@ -106,17 +106,6 @@ function SponsorSection() {
         </p>
 
         <div className={styles.horizontalSponsors}>
-          <a
-            href="https://github.blog/2023-04-12-github-accelerator-our-first-cohort-and-whats-next/"
-            target="_blank"
-          >
-            <img
-              src="../img/logos/github-logo.svg"
-              alt="GitHub Accelerator"
-              style={{ marginRight: '30px', width: '80px', height: '100px' }}
-            />
-          </a>
-
           <a href="https://nx.dev" target="_blank">
             <img
               src="./img/logos/nx-logo.light.svg"
@@ -132,6 +121,14 @@ function SponsorSection() {
               style={{ marginRight: '30px', width: '250px', height: '100px' }}
             />
           </a>
+
+          <a href="https://coderabbit.link/analogjs" target="_blank">
+            <img
+              src="./img/logos/coderabbit.svg"
+              alt="CodeRabbit"
+              style={{ marginRight: '30px', width: '350px', height: '100px' }}
+            />
+          </a>
         </div>
 
         <br />
@@ -142,13 +139,13 @@ function SponsorSection() {
               'button button--secondary button--lg',
               styles.sponsorButton,
             )}
-            href="https://github.com/sponsors/brandonroberts"
+            href="/docs/sponsoring#partnerships"
           >
             <Translate
               id="homepage.sponsorSection.sponsorButton"
-              description="The label of the button to sponsor Analog"
+              description="The label of the button to partner with Analog"
             >
-              Sponsor Analog
+              Partner with Analog
             </Translate>
           </Link>
         </div>

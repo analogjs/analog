@@ -1,8 +1,11 @@
-import { Route } from '@angular/router';
+import { Route, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
-import { expect, vi } from 'vitest';
+import { afterEach, beforeEach, expect, vi } from 'vitest';
+import { ROUTE_JSON_LD_KEY } from './json-ld';
 import { RouteExport, RouteMeta } from './models';
-import { createRoutes, Files } from './routes';
+import { createRoutes } from './routes';
+import { createRoutes as createBaseRoutes } from './route-builder';
+import { Files } from './route-files';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
 
 describe('routes', () => {
@@ -55,6 +58,35 @@ describe('routes', () => {
       const innerRoute = routes.shift();
 
       expect(innerRoute.title).toBe('About');
+    });
+  });
+
+  describe('a root redirect route without default export', () => {
+    const files: Files = {
+      '/app/routes/index.ts': () =>
+        Promise.resolve({
+          routeMeta: {
+            redirectTo: '/blog',
+            pathMatch: 'full',
+          },
+        } as unknown as RouteExport),
+    };
+
+    const routes = createRoutes(files);
+    const route = routes[0];
+
+    it('should return a redirect-only child route config', async () => {
+      const routes = (await route.loadChildren?.()) as Route[];
+
+      expect(routes.length).toBe(1);
+
+      const innerRoute = routes.shift();
+
+      expect(innerRoute.path).toBe('');
+      expect(innerRoute.redirectTo).toBe('/blog');
+      expect(innerRoute.pathMatch).toBe('full');
+      expect(innerRoute.component).toBeUndefined();
+      expect(innerRoute.children).toBeUndefined();
     });
   });
 
@@ -501,6 +533,78 @@ describe('routes', () => {
     });
   });
 
+  describe('an optional catchall route (root)', () => {
+    const files: Files = {
+      '/app/routes/[[...slug]].ts': () =>
+        Promise.resolve({
+          default: RouteComponent,
+        }),
+    };
+
+    const routes = createRoutes(files);
+    const route = routes[0];
+
+    it('should have a root path', () => {
+      expect(route.path).toBe('');
+    });
+
+    it('should return base and matcher routes from loadChildren', async () => {
+      const innerRoutes = (await route.loadChildren()) as Route[];
+      expect(innerRoutes.length).toBe(2);
+
+      const base = innerRoutes[0];
+      expect(base.path).toBe('');
+      expect(base.component).toBe(RouteComponent);
+
+      const opt = innerRoutes[1] as unknown as { matcher: any; component: any };
+      expect(opt.matcher).toBeDefined();
+      expect(typeof opt.matcher).toBe('function');
+      expect(opt.component).toBe(RouteComponent);
+
+      // matcher returns null for empty remainder and consumes segments otherwise
+      expect(opt.matcher([])).toBeNull();
+      const match = opt.matcher([
+        new UrlSegment('a', {}),
+        new UrlSegment('b', {}),
+      ]);
+      expect(match).toBeTruthy();
+      expect(match.consumed.length).toBe(2);
+      expect(match.posParams.slug.path).toBe('a/b');
+    });
+  });
+
+  describe('an optional catchall route (nested)', () => {
+    const files: Files = {
+      '/src/app/pages/docs/[[...slug]].page.ts': () =>
+        Promise.resolve({
+          default: RouteComponent,
+        }),
+    };
+
+    const routes = createRoutes(files);
+    const parent = routes[0];
+
+    it('should have a parent path', () => {
+      expect(parent.path).toBe('docs');
+    });
+
+    it('should return base and matcher routes from nested loadChildren', async () => {
+      const page = parent.children![0];
+      const leaf = (await page.loadChildren!()) as Route[];
+
+      expect(leaf.length).toBe(2);
+
+      const base = leaf[0];
+      expect(base.path).toBe('');
+      expect(base.component).toBe(RouteComponent);
+
+      const opt = leaf[1] as unknown as { matcher: any; component: any };
+      expect(opt.matcher).toBeDefined();
+      expect(typeof opt.matcher).toBe('function');
+      expect(opt.component).toBe(RouteComponent);
+    });
+  });
+
   describe('a route with meta tags', () => {
     async function setup(routeMeta: RouteMeta) {
       const files: Files = {
@@ -561,6 +665,165 @@ describe('routes', () => {
       expect(routeMeta.resolve).not.toBe(resolvedRoute.resolve);
       // routeMeta.data should not be changed
       expect(resolvedRoute.data).toBe(routeMeta.data);
+    });
+  });
+
+  describe('a route with JSON-LD', () => {
+    async function setup(fileExport: RouteExport) {
+      const files: Files = {
+        '/app/routes/index.ts': () => Promise.resolve(fileExport),
+      };
+      const moduleRoute = createRoutes(files)[0];
+      const resolvedRoutes = (await moduleRoute.loadChildren?.()) as Route[];
+
+      return { resolvedRoute: resolvedRoutes[0] };
+    }
+
+    it('should add static JSON-LD to the route data dictionary', async () => {
+      const routeMeta: RouteMeta = {
+        data: { foo: 'bar' },
+        jsonLd: {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: 'Hello Analog',
+        },
+      };
+      const { resolvedRoute } = await setup({
+        default: RouteComponent,
+        routeMeta,
+      });
+
+      expect(resolvedRoute.data).toEqual({
+        ...routeMeta.data,
+        [ROUTE_JSON_LD_KEY]: routeMeta.jsonLd,
+      });
+      expect(routeMeta.data).not.toBe(resolvedRoute.data);
+      expect(resolvedRoute.resolve).toEqual({
+        load: expect.anything(),
+      });
+    });
+
+    it('should add JSON-LD resolvers to the route resolve dictionary', async () => {
+      const routeMeta: RouteMeta = {
+        resolve: { foo: () => of('bar') },
+        jsonLd: () =>
+          of({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: 'AnalogJS Pro',
+          }),
+      };
+      const { resolvedRoute } = await setup({
+        default: RouteComponent,
+        routeMeta,
+      });
+
+      expect(resolvedRoute.resolve).toEqual({
+        ...routeMeta.resolve,
+        [ROUTE_JSON_LD_KEY]: routeMeta.jsonLd,
+        load: expect.anything(),
+      });
+    });
+
+    it('should merge top-level routeJsonLd exports into routeMeta when needed', async () => {
+      const { resolvedRoute } = await setup({
+        default: RouteComponent,
+        routeJsonLd: {
+          '@context': 'https://schema.org',
+          '@type': 'Event',
+          name: 'AnalogConf',
+        },
+      });
+
+      expect(resolvedRoute.data).toEqual({
+        [ROUTE_JSON_LD_KEY]: {
+          '@context': 'https://schema.org',
+          '@type': 'Event',
+          name: 'AnalogConf',
+        },
+      });
+    });
+
+    it('should prefer routeMeta.jsonLd over top-level routeJsonLd when both are present', async () => {
+      const metaJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: 'From routeMeta',
+      };
+      const topLevelJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'Event',
+        name: 'From routeJsonLd',
+      };
+      const { resolvedRoute } = await setup({
+        default: RouteComponent,
+        routeMeta: { jsonLd: metaJsonLd },
+        routeJsonLd: topLevelJsonLd,
+      });
+
+      // routeMeta.jsonLd should win
+      expect(resolvedRoute.data).toEqual({
+        [ROUTE_JSON_LD_KEY]: metaJsonLd,
+      });
+    });
+
+    it('should add JSON-LD array with multiple entries to route data', async () => {
+      const jsonLdArray = [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: 'Site',
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Catalog',
+        },
+      ];
+      const { resolvedRoute } = await setup({
+        default: RouteComponent,
+        routeMeta: { jsonLd: jsonLdArray },
+      });
+
+      expect(resolvedRoute.data).toEqual({
+        [ROUTE_JSON_LD_KEY]: jsonLdArray,
+      });
+    });
+
+    it('should add Graph-based JSON-LD to route data', async () => {
+      const graph = {
+        '@context': 'https://schema.org',
+        '@graph': [
+          { '@type': 'WebSite', name: 'AnalogJS' },
+          { '@type': 'Organization', name: 'Analog Inc' },
+        ],
+      };
+      const { resolvedRoute } = await setup({
+        default: RouteComponent,
+        routeMeta: { jsonLd: graph },
+      });
+
+      expect(resolvedRoute.data).toEqual({
+        [ROUTE_JSON_LD_KEY]: graph,
+      });
+    });
+
+    it('should add routeJsonLd resolver function to route resolve dictionary', async () => {
+      const jsonLdResolver = () =>
+        of({
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: 'Widget',
+        });
+      const { resolvedRoute } = await setup({
+        default: RouteComponent,
+        routeJsonLd: jsonLdResolver,
+      });
+
+      expect(resolvedRoute.resolve).toEqual({
+        [ROUTE_JSON_LD_KEY]: jsonLdResolver,
+        load: expect.anything(),
+      });
     });
   });
 
@@ -648,6 +911,223 @@ describe('routes', () => {
 
       expect(spy).not.toHaveBeenCalledWith(
         `[Analog] Missing default export at ${fileName}`,
+      );
+    });
+  });
+
+  describe('merged page and content route ordering', () => {
+    class PageComponent {}
+    class ContentComponent {}
+
+    const pageModule = () =>
+      Promise.resolve<RouteExport>({ default: PageComponent });
+    const contentModule = () =>
+      Promise.resolve<RouteExport>({ default: ContentComponent });
+
+    it('should interleave static content routes before dynamic page routes at the same level', () => {
+      // Regression: before the merge fix, content routes were appended after
+      // page routes. With first-match-wins, /blog/:slug would shadow /blog/my-post.
+      const files: Files = {
+        '/src/app/pages/blog/[slug].page.ts': pageModule,
+        '/src/content/blog/my-post.md': contentModule,
+      };
+
+      const routes = createRoutes(files);
+      const blogRoute = routes.find((r) => r.path === 'blog');
+
+      expect(blogRoute).toBeDefined();
+      expect(blogRoute!.children!.length).toBe(2);
+      // Static 'my-post' must sort before dynamic ':slug'
+      expect(blogRoute!.children![0].path).toBe('my-post');
+      expect(blogRoute!.children![1].path).toBe(':slug');
+    });
+
+    it('should sort sibling routes from different sources by segment name', () => {
+      const files: Files = {
+        '/src/app/pages/docs/getting-started.page.ts': pageModule,
+        '/src/content/docs/changelog.md': contentModule,
+        '/src/app/pages/docs/api.page.ts': pageModule,
+      };
+
+      const routes = createRoutes(files);
+      const docsRoute = routes.find((r) => r.path === 'docs');
+
+      expect(docsRoute).toBeDefined();
+      expect(docsRoute!.children!.map((c) => c.path)).toEqual([
+        'api',
+        'changelog',
+        'getting-started',
+      ]);
+    });
+
+    it('should put content catchall routes at the end alongside page catchalls', () => {
+      const files: Files = {
+        '/src/app/pages/[dynamic].page.ts': pageModule,
+        '/src/app/pages/static.page.ts': pageModule,
+        '/src/content/[...not-found].md': contentModule,
+      };
+
+      const routes = createRoutes(files);
+
+      expect(routes[0].path).toBe('static');
+      expect(routes[1].path).toBe(':dynamic');
+      expect(routes[2].path).toBe('**');
+    });
+  });
+
+  describe('duplicate route precedence', () => {
+    class AppRouteComponent {}
+    class SharedRouteComponent {}
+    class SharedRouteComponentB {}
+    let warnSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+        /* noop */
+      });
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    it('prefers app-local page routes over additional/shared page routes', async () => {
+      const files: Files = {
+        '/libs/shared/feature/src/pages/blog/[slug].page.ts': () =>
+          Promise.resolve<RouteExport>({ default: SharedRouteComponent }),
+        '/src/app/pages/blog/[slug].page.ts': () =>
+          Promise.resolve<RouteExport>({ default: AppRouteComponent }),
+      };
+
+      const routes = createBaseRoutes(
+        files,
+        (_filename, fileLoader) => fileLoader as () => Promise<RouteExport>,
+      );
+      const blogRoute = routes.find((r) => r.path === 'blog');
+      const route = blogRoute?.children?.find(
+        (child) => child.path === ':slug',
+      );
+
+      expect(blogRoute).toBeDefined();
+      expect(route).toBeDefined();
+      const loadedRoutes = (await route!.loadChildren?.()) as Route[];
+
+      expect(loadedRoutes[0].component).toBe(AppRouteComponent);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Only "/src/app/pages/blog/[slug].page.ts" will be used.',
+        ),
+      );
+    });
+
+    it('keeps last-wins behavior for collisions within the same priority bucket', async () => {
+      const files: Files = {
+        '/libs/shared/feature-a/src/pages/blog/[slug].page.ts': () =>
+          Promise.resolve<RouteExport>({ default: SharedRouteComponent }),
+        '/libs/shared/feature-b/src/pages/blog/[slug].page.ts': () =>
+          Promise.resolve<RouteExport>({ default: SharedRouteComponentB }),
+      };
+
+      const routes = createBaseRoutes(
+        files,
+        (_filename, fileLoader) => fileLoader as () => Promise<RouteExport>,
+      );
+      const blogRoute = routes.find((r) => r.path === 'blog');
+      const route = blogRoute?.children?.find(
+        (child) => child.path === ':slug',
+      );
+
+      expect(blogRoute).toBeDefined();
+      expect(route).toBeDefined();
+      const loadedRoutes = (await route!.loadChildren?.()) as Route[];
+
+      expect(loadedRoutes[0].component).toBe(SharedRouteComponentB);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Only "/libs/shared/feature-b/src/pages/blog/[slug].page.ts" will be used.',
+        ),
+      );
+    });
+  });
+
+  describe('merged route resolver dispatch', () => {
+    class PageComponent {}
+
+    it('should dispatch to the correct resolver per filename', async () => {
+      const resolvedPage: RouteExport = { default: PageComponent };
+      const resolvedContent: RouteExport = {
+        default: PageComponent,
+        routeMeta: { data: { _analogContent: '<p>Hello</p>' } },
+      };
+
+      const files: Record<string, () => Promise<unknown>> = {
+        '/src/app/pages/blog/about.page.ts': () =>
+          Promise.resolve(resolvedPage),
+        '/src/content/blog/post.md': () => Promise.resolve('# Hello'),
+      };
+
+      const resolverMap = new Map<string, boolean>();
+      const routes = createBaseRoutes(files, (filename, fileLoader) => {
+        const isContent = filename.endsWith('.md');
+        resolverMap.set(filename, isContent);
+        if (isContent) {
+          // Simulate toMarkdownModule: return a factory that produces a RouteExport
+          return () => Promise.resolve(resolvedContent);
+        }
+        return fileLoader as () => Promise<RouteExport>;
+      });
+
+      // Trigger loadChildren to exercise the resolvers
+      const blogRoute = routes.find((r) => r.path === 'blog');
+      expect(blogRoute).toBeDefined();
+
+      for (const child of blogRoute!.children!) {
+        if (child.loadChildren) {
+          await child.loadChildren();
+        }
+      }
+
+      // Verify each file was dispatched to the correct resolver
+      expect(resolverMap.get('/src/app/pages/blog/about.page.ts')).toBe(false);
+      expect(resolverMap.get('/src/content/blog/post.md')).toBe(true);
+    });
+  });
+
+  describe('route path collision warning', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('should warn when two files resolve to the same route path', () => {
+      const spy = vi.spyOn(console, 'warn');
+
+      // Both files resolve to rawPath 'about' at level 0
+      const files: Files = {
+        '/src/app/pages/about.page.ts': () =>
+          Promise.resolve({ default: class {} }),
+        '/src/content/about.md': () => Promise.resolve({ default: class {} }),
+      };
+
+      createRoutes(files);
+
+      expect(spy).toHaveBeenCalledWith(
+        expect.stringContaining('resolve to the same route path'),
+      );
+    });
+
+    it('should not warn when files resolve to different route paths', () => {
+      const spy = vi.spyOn(console, 'warn');
+
+      const files: Files = {
+        '/src/app/pages/about.page.ts': () =>
+          Promise.resolve({ default: class {} }),
+        '/src/content/blog.md': () => Promise.resolve({ default: class {} }),
+      };
+
+      createRoutes(files);
+
+      expect(spy).not.toHaveBeenCalledWith(
+        expect.stringContaining('resolve to the same route path'),
       );
     });
   });

@@ -14,22 +14,17 @@ import { AnalogNxApplicationGeneratorOptions } from './schema';
 import { major, coerce } from 'semver';
 import { getInstalledPackageVersion } from '../../utils/version-utils';
 import { addHomePage } from './lib/add-home-page';
-import {
-  belowMinimumSupportedNxVersion,
-  belowMinimumSupportedNxtRPCVersion,
-} from './versions/minimum-supported-versions';
+import { belowMinimumSupportedNxVersion } from './versions/minimum-supported-versions';
 import { addAngularApp } from './lib/add-angular-app';
 import setupAnalogGenerator from '../init/generator';
 import { addFiles } from './lib/add-files';
 import { addTailwindConfig } from './lib/add-tailwind-config';
-import { addTrpc } from './lib/add-trpc';
 import { cleanupFiles } from './lib/cleanup-files';
 import { addAnalogProjectConfig } from './lib/add-analog-project-config';
 import { updateIndex } from './lib/update-index-html';
 
 export interface NormalizedOptions
-  extends AnalogNxApplicationGeneratorOptions,
-    ReturnType<typeof names> {
+  extends AnalogNxApplicationGeneratorOptions, ReturnType<typeof names> {
   projectName: string;
   projectRoot: string;
   projectDirectory: string;
@@ -56,7 +51,6 @@ function normalizeOptions(
   const offsetFromRoot = determineOffsetFromRoot(projectRoot);
   const nxPackageNamespace = '@nx';
   const addTailwind = options.addTailwind ?? true;
-  const addTRPC = options.addTRPC ?? false;
 
   return {
     ...options,
@@ -69,32 +63,20 @@ function normalizeOptions(
     appsDir,
     nxPackageNamespace,
     addTailwind,
-    addTRPC,
     isNx,
   };
 }
 
-export async function appGenerator(
+async function appGenerator(
   tree: Tree,
   options: AnalogNxApplicationGeneratorOptions,
-) {
+): Promise<() => void> {
   const nxVersion = getInstalledPackageVersion(tree, 'nx');
 
   if (nxVersion && belowMinimumSupportedNxVersion(nxVersion)) {
     throw new Error(
-      stripIndents`Nx v15.2.0 or newer is required to install Analog`,
+      stripIndents`Nx v17.0.0 or newer is required to install Analog`,
     );
-  }
-
-  if (
-    nxVersion &&
-    belowMinimumSupportedNxtRPCVersion(nxVersion) &&
-    options.addTRPC
-  ) {
-    console.warn(
-      'Nx v16.1.0 or newer is required to use tRPC with Analog. Skipping installation.',
-    );
-    options.addTRPC = false;
   }
 
   const normalizedOptions = normalizeOptions(tree, options);
@@ -127,7 +109,11 @@ export async function appGenerator(
   });
 
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
-  const majorAngularVersion = major(coerce(angularVersion));
+  const coercedAngularVersion = coerce(angularVersion ?? '');
+  if (!coercedAngularVersion) {
+    throw new Error('Could not determine installed Angular version.');
+  }
+  const majorAngularVersion = major(coercedAngularVersion);
   addFiles(tree, normalizedOptions, majorAngularVersion);
   addDependenciesToPackageJson(
     tree,
@@ -140,25 +126,20 @@ export async function appGenerator(
     {},
   );
 
-  updateJson<{ dependencies: object }>(tree, '/package.json', (json) => {
-    json.dependencies['@angular/platform-server'] = `~${angularVersion}`;
+  updateJson<{ dependencies: Record<string, string> }>(
+    tree,
+    '/package.json',
+    (json) => {
+      json.dependencies['@angular/platform-server'] = `~${angularVersion}`;
 
-    return json;
-  });
+      return json;
+    },
+  );
 
   updateIndex(tree, normalizedOptions.analogAppName);
 
   if (normalizedOptions.addTailwind) {
     await addTailwindConfig(tree, normalizedOptions.projectName);
-  }
-
-  if (normalizedOptions.addTRPC) {
-    await addTrpc(
-      tree,
-      normalizedOptions.projectRoot,
-      nxVersion,
-      normalizedOptions,
-    );
   }
 
   addHomePage(tree, normalizedOptions, majorAngularVersion);
