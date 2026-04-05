@@ -77,6 +77,12 @@ export default defineConfig(() => ({
 
 If you are using the markdown renderer in the app itself, keep `provideContent(withMarkdownRenderer())` and pair it with the matching highlighter setup for your project, such as `withShikiHighlighter()`.
 
+If you were relying on older internal imports, switch those to the public `@analogjs/content` entrypoint. For example, import `ContentRenderer` and `TableOfContentItem` from `@analogjs/content`, not `@analogjs/content/lib`.
+
+```ts
+import { ContentRenderer, type TableOfContentItem } from '@analogjs/content';
+```
+
 #### Astro Angular now targets Angular 20 zoneless change detection
 
 If you use `@analogjs/astro-angular`, plan the upgrade around Angular 20 and its zoneless baseline. Treat that package as a separate migration stream from a standard Analog app upgrade.
