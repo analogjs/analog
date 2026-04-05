@@ -102,6 +102,9 @@ export default defineConfig(({ mode }) => ({
     analog({
       apiPrefix: 'api',
       hmr: true,
+      prerender: {
+        routes: [],
+      },
       ssr: false,
       nitro: {
         routeRules: {
