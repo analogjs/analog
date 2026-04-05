@@ -1,3 +1,33 @@
+# [3.0.0-alpha.25](https://github.com/analogjs/analog/compare/v3.0.0-alpha.24...v3.0.0-alpha.25) (2026-04-05)
+
+### Bug Fixes
+
+- **content:** split devtools into a dedicated entrypoint ([8fcf903](https://github.com/analogjs/analog/commit/8fcf90344885549431a2f195d7f12434ce8aa2aa))
+- **create-analog:** scaffold Tailwind v4 PostCSS config ([2681c11](https://github.com/analogjs/analog/commit/2681c11b7e8c8aa17ffdafb31cfac957173ed703))
+- harden tailwind debug app HMR diagnostics ([aea14b1](https://github.com/analogjs/analog/commit/aea14b1aaf5a7ccb0e3e86a168af0a19fcfe9a81))
+- **platform:** cache page-route discovery for diagnostics ([d4e2d25](https://github.com/analogjs/analog/commit/d4e2d25c56fa01a118bf8f58f667f85450dd66c9))
+- **platform:** emit debug reload reasons for content changes ([484d8e9](https://github.com/analogjs/analog/commit/484d8e9a5f4d73f2bfcb7729c1874ab1f2cb2750))
+- **platform:** refresh route diagnostics on route graph changes ([2262f54](https://github.com/analogjs/analog/commit/2262f54b3802a258ea3034b014a85086779ee5de))
+- **platform:** restore analog-app action and content examples ([583f75d](https://github.com/analogjs/analog/commit/583f75d69863da1dd4c96425c05010bac793e875))
+- **router:** defer route metadata setup during bootstrap ([e5d81b0](https://github.com/analogjs/analog/commit/e5d81b09c3359c5c4cff1ca653ad4e5528003a19))
+- **router:** prefer app routes over shared duplicates ([8201d06](https://github.com/analogjs/analog/commit/8201d067e5c505090e84794489cdee182d6e51a9))
+- **router:** preserve app route precedence in production ([7c7e292](https://github.com/analogjs/analog/commit/7c7e29262bbba5606fea089887793657e4d16faf))
+- **router:** preserve last-wins behavior for equal-priority collisions ([52f8d61](https://github.com/analogjs/analog/commit/52f8d61f2f611443ef864ba44e9f0d74b0dc73d1))
+- **router:** register route metadata listeners during app init ([f246172](https://github.com/analogjs/analog/commit/f24617235459d4f2f9d629bc63db1dfa8b96ca5a))
+- **vite-plugin-angular:** centralize stylesheet handling for hmr ([73a004f](https://github.com/analogjs/analog/commit/73a004f1bf82bdd8b3b180b1fe43749931260f4c))
+- **vite-plugin-angular:** evict stale metadata on file deletion ([92da97e](https://github.com/analogjs/analog/commit/92da97ec8b67bcd13bbb22080baa6b07a8288b7f))
+- **vite-plugin-angular:** handle > inside quoted class bindings ([2010565](https://github.com/analogjs/analog/commit/2010565a27797fc26ebb5a6af8619c43e3e41d6f))
+- **vite-plugin-angular:** ignore [class.foo] in ngClass conflict guard ([5ef798d](https://github.com/analogjs/analog/commit/5ef798d7945f72bc8d5cdc9b4daaa871af6a26a1))
+- **vite-plugin-angular:** restore rxjs optimizeDeps prebundling ([c994d14](https://github.com/analogjs/analog/commit/c994d1427584df408e1dc431a7d23b780a54b02f))
+- **vite-plugin-angular:** restrict metadata extraction to component decorators ([aec4836](https://github.com/analogjs/analog/commit/aec4836c60a2aa6164a61d0059d6cb939a0d7334))
+- **vite-plugin-nitro:** avoid SSR entry lookup for ssr:false apps with empty prerender routes ([4200fd8](https://github.com/analogjs/analog/commit/4200fd8ca8c6bc5e8b135213d467c0bddb7b0c24))
+
+### Features
+
+- **platform:** add dev-time route idiom diagnostics ([befa033](https://github.com/analogjs/analog/commit/befa033c6e245f99e37e1d257abae506a443832e))
+- **vite-plugin-angular:** expand debug logging controls ([9fa4140](https://github.com/analogjs/analog/commit/9fa4140213783ec5386d1b71ab95a9b3b14e0dd8))
+- **vite-plugin-angular:** improve component stylesheet hmr ([15b0d8e](https://github.com/analogjs/analog/commit/15b0d8e13b02eda5f63490e78a5d5c779fbcc62e))
+
 # [3.0.0-alpha.24](https://github.com/analogjs/analog/compare/v3.0.0-alpha.23...v3.0.0-alpha.24) (2026-04-04)
 
 ### Features
