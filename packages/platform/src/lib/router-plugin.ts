@@ -236,10 +236,17 @@ export function routerPlugin(options?: Options): Plugin[] {
             invalidateDiscoveryCaches();
           }
 
-          if (event === 'unlink') {
-            routeDiagnosticCache.delete(path);
-          } else {
+          if (event === 'change') {
             reportRouteDiagnostics(path);
+          } else if (event === 'unlink') {
+            routeDiagnosticCache.delete(path);
+            discoverPageRouteFiles().forEach((file) =>
+              reportRouteDiagnostics(file),
+            );
+          } else {
+            discoverPageRouteFiles().forEach((file) =>
+              reportRouteDiagnostics(file),
+            );
           }
 
           invalidateFileModules(server, path);

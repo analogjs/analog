@@ -181,6 +181,64 @@ describe('routerPlugin', () => {
     expect(send).toHaveBeenCalledWith({ type: 'full-reload' });
   });
 
+  it('rescans all page diagnostics when a route file is added', () => {
+    vi.mocked(globSync).mockReturnValue([
+      '/src/app/pages/products.page.ts',
+      '/src/app/pages/products/[id].page.ts',
+    ]);
+
+    const { on } = configureServer();
+
+    vi.mocked(analyzeAnalogRouteFile).mockClear();
+
+    const addHandler = on.mock.calls.find(
+      ([eventName]) => eventName === 'add',
+    )?.[1];
+
+    expect(addHandler).toBeTypeOf('function');
+
+    addHandler('/src/app/pages/hot-added.page.ts');
+
+    expect(vi.mocked(analyzeAnalogRouteFile).mock.calls).toHaveLength(2);
+    expect(
+      vi
+        .mocked(analyzeAnalogRouteFile)
+        .mock.calls.map(([args]) => args.filename),
+    ).toEqual([
+      '/src/app/pages/products.page.ts',
+      '/src/app/pages/products/[id].page.ts',
+    ]);
+  });
+
+  it('rescans all remaining page diagnostics when a route file is removed', () => {
+    vi.mocked(globSync).mockReturnValue([
+      '/src/app/pages/products.page.ts',
+      '/src/app/pages/products/[id].page.ts',
+    ]);
+
+    const { on } = configureServer();
+
+    vi.mocked(analyzeAnalogRouteFile).mockClear();
+
+    const unlinkHandler = on.mock.calls.find(
+      ([eventName]) => eventName === 'unlink',
+    )?.[1];
+
+    expect(unlinkHandler).toBeTypeOf('function');
+
+    unlinkHandler('/src/app/pages/removed.page.ts');
+
+    expect(vi.mocked(analyzeAnalogRouteFile).mock.calls).toHaveLength(2);
+    expect(
+      vi
+        .mocked(analyzeAnalogRouteFile)
+        .mock.calls.map(([args]) => args.filename),
+    ).toEqual([
+      '/src/app/pages/products.page.ts',
+      '/src/app/pages/products/[id].page.ts',
+    ]);
+  });
+
   describe('transform - key normalization', () => {
     const workspaceRoot = '/home/user/workspace';
     const appRoot = `${workspaceRoot}/apps/my-app`;
