@@ -381,12 +381,20 @@ describe('routerPlugin', () => {
     // so ANALOG_CONTENT_ROUTE_FILES stayed empty — silently dropping all .md
     // page routes (/about, /contact, etc.) and causing NG04002 during prerender.
     it('transforms ANALOG_CONTENT_ROUTE_FILES in an isolated content module (no ANALOG_ROUTE_FILES present)', () => {
-      vi.mocked(globSync)
-        .mockReturnValueOnce([]) // page files — none
-        .mockReturnValueOnce([
-          `${appRoot}/src/app/pages/about.md`,
-          `${appRoot}/src/content/hello.md`,
-        ]); // content files
+      vi.mocked(globSync).mockImplementation((patterns) => {
+        const joinedPatterns = Array.isArray(patterns)
+          ? patterns.join(' ')
+          : String(patterns);
+
+        if (joinedPatterns.includes('**/*.md')) {
+          return [
+            `${appRoot}/src/app/pages/about.md`,
+            `${appRoot}/src/content/hello.md`,
+          ];
+        }
+
+        return [];
+      });
 
       const transform = getTransformPlugin('analog-glob-routes');
 
@@ -405,9 +413,17 @@ describe('routerPlugin', () => {
     });
 
     it('transforms ANALOG_ROUTE_FILES in an isolated page module (no ANALOG_CONTENT_ROUTE_FILES present)', () => {
-      vi.mocked(globSync)
-        .mockReturnValueOnce([`${appRoot}/src/app/pages/home.page.ts`])
-        .mockReturnValueOnce([]); // content files — none
+      vi.mocked(globSync).mockImplementation((patterns) => {
+        const joinedPatterns = Array.isArray(patterns)
+          ? patterns.join(' ')
+          : String(patterns);
+
+        if (joinedPatterns.includes('**/*.page.ts')) {
+          return [`${appRoot}/src/app/pages/home.page.ts`];
+        }
+
+        return [];
+      });
 
       const transform = getTransformPlugin('analog-glob-routes');
 
