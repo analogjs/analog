@@ -3445,9 +3445,14 @@ export function findBoundClassAndNgClassConflicts(
   template: string,
 ): TemplateClassBindingIssue[] {
   const issues: TemplateClassBindingIssue[] = [];
+  const hasWholeElementClassBinding = /\[class\]\s*=/.test(template);
+
+  if (!hasWholeElementClassBinding || !template.includes('[ngClass]')) {
+    return issues;
+  }
 
   for (const { index, snippet } of findOpeningTagSnippets(template)) {
-    if (!snippet.includes('[class]') || !snippet.includes('[ngClass]')) {
+    if (!/\[class\]\s*=/.test(snippet) || !snippet.includes('[ngClass]')) {
       continue;
     }
 
