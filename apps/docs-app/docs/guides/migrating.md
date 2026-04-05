@@ -116,6 +116,29 @@ If you use `@analogjs/astro-angular`, plan the upgrade around Angular 20 and its
 
 If your tests still import `@analogjs/vite-plugin-angular/setup-vitest`, migrate them to `@analogjs/vitest-angular/setup-zone`. Current update flows cover this automatically, but older manual setups should be checked explicitly.
 
+#### Branch-derived upgrade notes for automation
+
+The `upstream/beta -> upstream/alpha` branch diff is small enough to turn into practical migration rules:
+
+- Reject Angular versions lower than v17. Analog's generators, devkit checks, and compatibility docs now treat Angular v17 as the floor.
+- Remove any remaining `.agx` / Analog SFC usage and rewrite those files as normal Angular components.
+- If the app uses `provideContent(withMarkdownRenderer())`, markdown route files, or content rendering helpers, ensure `vite.config.ts` configures `analog({ content: { highlighter: 'shiki' } })` or another supported highlighter.
+- Replace internal content imports such as `@analogjs/content/lib` with the public `@analogjs/content` entrypoint.
+- If tests import `@analogjs/vite-plugin-angular/setup-vitest`, rewrite them to `@analogjs/vitest-angular/setup-zone`.
+- If the project uses explicit HMR configuration, prefer `hmr` over `liveReload`. HMR support is intended for newer Angular lines; older Angular versions should not be migrated with an expectation of HMR parity.
+- Expect newer Vite baselines. The branch diff moves Angular 17/18 templates to Vite 6 and current Angular 19 templates to Vite 7.
+- If the project uses `@analogjs/astro-angular`, treat that as a separate migration track because the integration moved to zoneless change detection by default.
+
+For LLM-driven migration, use this checklist in order:
+
+1. Detect the Angular major version from `package.json`. If it is `<17`, stop and upgrade Angular first.
+2. Scan for `.agx` files and replace them with standard Angular component files.
+3. Scan for `@analogjs/content/lib` imports and rewrite them to `@analogjs/content`.
+4. Scan for `provideContent(withMarkdownRenderer())`, markdown page routes, or content helper imports. If found, enforce `analog({ content: { highlighter: 'shiki' } })` in `vite.config.ts`.
+5. Scan for `@analogjs/vite-plugin-angular/setup-vitest` and rewrite it to `@analogjs/vitest-angular/setup-zone`.
+6. Scan for explicit `liveReload` config and convert it to `hmr` unless the project intentionally needs the compatibility alias.
+7. Reconcile the toolchain versions in `package.json` with the current Analog template line for that Angular major.
+
 ## Using a Schematic/Generator
 
 First, install the `@analogjs/platform` package:
