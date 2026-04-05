@@ -12,6 +12,8 @@ The goal is to keep the public surface explicit:
 - new docs and examples should prefer the non-deprecated API
 - removals should be grouped into a major release after the migration path is already documented
 
+Some compatibility surfaces below are already formally marked deprecated in source, while others are older aliases that still need to be normalized in docs before the next major.
+
 ## Current public deprecations
 
 | Package                       | Deprecated API                                                   | Prefer instead                                   | Current posture                                                                      |
@@ -25,6 +27,12 @@ The goal is to keep the public surface explicit:
 | `@analogjs/trpc`              | `ClientDataTransformerOptions` in the optional transformer union | `CombinedDataTransformer`                        | Keep for compatibility while the current client options shape remains supported.     |
 
 ## Upgrade guidance
+
+### HMR configuration
+
+The current `alpha` line still exposes `liveReload` in the platform, Vite plugin, and Storybook integration types.
+
+Treat it as a compatibility alias, not the long-term API shape. New docs and examples should normalize on `hmr` naming as the v3 direction, even where the current type surface still accepts `liveReload`.
 
 ### Route metadata
 
