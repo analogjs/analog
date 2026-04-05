@@ -53,16 +53,16 @@ export function createRoutes<TFile>(
     const rawSegment = rawSegments[level];
     const ancestorRawSegments = rawSegments.slice(0, level);
 
-    if (import.meta.env.DEV) {
-      const existing = acc[level]?.[rawPath];
-      if (existing?.filename && existing.filename !== filename) {
+    const existing = acc[level]?.[rawPath];
+    if (existing?.filename && existing.filename !== filename) {
+      if (import.meta.env.DEV) {
         console.warn(
           `[Analog] Route files "${existing.filename}" and "${filename}" ` +
             `resolve to the same route path "${rawPath}". ` +
             `Only "${existing.filename}" will be used.`,
         );
-        return acc;
       }
+      return acc;
     }
 
     return {
