@@ -414,6 +414,31 @@ describe('component-resolvers', () => {
       ]);
     });
 
+    it('ignores template properties outside @Component decorators', () => {
+      const code = `
+        const preview = {
+          template: '<div>Preview only</div>'
+        };
+
+        @Component({
+          selector: 'demo-card',
+          template: '<section>Inline</section>'
+        })
+        export class DemoCardComponent {}
+      `;
+
+      expect(getInlineTemplates(code)).toEqual(['<section>Inline</section>']);
+      expect(getAngularComponentMetadata(code)).toEqual([
+        {
+          className: 'DemoCardComponent',
+          selector: 'demo-card',
+          styleUrls: [],
+          templateUrls: [],
+          inlineTemplates: ['<section>Inline</section>'],
+        },
+      ]);
+    });
+
     it('extracts component metadata for selector, class name, and templates', () => {
       const code = `
         @Component({
