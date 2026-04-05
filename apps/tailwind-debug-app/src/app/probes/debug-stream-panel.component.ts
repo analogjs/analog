@@ -58,7 +58,7 @@ const ALL_SOURCES: TailwindDebugSource[] = [
             <button
               type="button"
               class="action-button"
-              (click)="stream.clear()"
+              (click)="clearEntries()"
             >
               Clear
             </button>
@@ -546,5 +546,10 @@ export class DebugStreamPanelComponent {
       ...sources,
       [source]: !sources[source],
     }));
+  }
+
+  clearEntries() {
+    this.stream.clear();
+    this.frozenEntries.set([]);
   }
 }

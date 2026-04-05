@@ -44,7 +44,7 @@ test.beforeEach(() => {
 });
 
 test.afterAll(() => {
-  replaceProbeColor(BLUE_CLASS);
+  writeFileSync(STYLE_PROBE_CSS_PATH, ORIGINAL_CSS, 'utf8');
 });
 
 test('updates the component stylesheet without a full reload', async ({

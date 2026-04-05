@@ -42,6 +42,7 @@
     },
     "serve-nitro": {
       "executor": "nx:run-commands",
+      "dependsOn": ["build"],
       "options": {
         "cwd": "dist/apps/tailwind-debug-app/analog",
         "command": "node --unhandled-rejections=throw ./server/index.mjs",

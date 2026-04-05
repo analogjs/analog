@@ -19,11 +19,28 @@ import {
 
 const STREAM_LIMIT = 200;
 
+function mergeUniqueEntries(
+  entries: readonly TailwindDebugEventEntry[],
+): TailwindDebugEventEntry[] {
+  const seen = new Set<string>();
+  const merged: TailwindDebugEventEntry[] = [];
+
+  for (const entry of entries) {
+    if (seen.has(entry.id)) {
+      continue;
+    }
+    seen.add(entry.id);
+    merged.push(entry);
+  }
+
+  return merged.slice(-STREAM_LIMIT);
+}
+
 function appendEntry(
   entries: readonly TailwindDebugEventEntry[],
   nextEntry: TailwindDebugEventEntry,
 ) {
-  return [...entries, nextEntry].slice(-STREAM_LIMIT);
+  return mergeUniqueEntries([...entries, nextEntry]);
 }
 
 @Injectable({ providedIn: 'root' })
@@ -148,7 +165,7 @@ export class TailwindDebugStreamService {
             (entry) => entry.clientId !== this.clientId,
           );
           this.entries.update((entries) =>
-            [...entries, ...serverEntries].slice(-STREAM_LIMIT),
+            mergeUniqueEntries([...entries, ...serverEntries]),
           );
         }
 
@@ -191,7 +208,7 @@ export class TailwindDebugStreamService {
     const seededEntries = [...previousEntries, ...sessionEntries].map(
       (breadcrumb) => toBrowserEntry(breadcrumb, this.clientId),
     );
-    this.entries.set(seededEntries.slice(-STREAM_LIMIT));
+    this.entries.set(mergeUniqueEntries(seededEntries));
   }
 
   private send(message: TailwindDebugSocketMessage) {
