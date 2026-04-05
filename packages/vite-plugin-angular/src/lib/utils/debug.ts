@@ -1,11 +1,6 @@
 import { createDebug } from 'obug';
 import { createDebugHarness } from './debug-harness.js';
 
-import {
-  DEBUG_LOG_FILENAME,
-  wrapInstancesForFileLog,
-} from './debug-log-file.js';
-
 // Normal — key decisions, once per startup or per component
 export const debugTailwind = createDebug('analog:angular:tailwind');
 export const debugHmr = createDebug('analog:angular:hmr');

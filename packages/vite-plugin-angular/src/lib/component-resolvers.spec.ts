@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 
-import { StyleUrlsResolver, TemplateUrlsResolver } from './component-resolvers';
+import {
+  getAngularComponentMetadata,
+  getInlineTemplates,
+  StyleUrlsResolver,
+  TemplateUrlsResolver,
+} from './component-resolvers';
 import { normalizePath } from 'vite';
 import { relative } from 'node:path';
 
@@ -377,6 +382,94 @@ describe('component-resolvers', () => {
 
         expect(resolvedTemplateUrls).toMatchNormalizedPaths([expectedUrl]);
       });
+    });
+  });
+
+  describe('component-resolvers inline template', () => {
+    it('extracts inline template strings from component decorators', () => {
+      const code = `
+        @Component({
+          template: \`<section class="hero">Hello</section>\`
+        })
+        export class MyComponent {}
+      `;
+
+      expect(getInlineTemplates(code)).toEqual([
+        '<section class="hero">Hello</section>',
+      ]);
+    });
+
+    it('extracts multiple inline templates across a file', () => {
+      const code = `
+        @Component({ template: '<div>A</div>' })
+        export class A {}
+
+        @Component({ template: \`<div>B</div>\` })
+        export class B {}
+      `;
+
+      expect(getInlineTemplates(code)).toEqual([
+        '<div>A</div>',
+        '<div>B</div>',
+      ]);
+    });
+
+    it('extracts component metadata for selector, class name, and templates', () => {
+      const code = `
+        @Component({
+          selector: 'demo-card',
+          templateUrl: './demo-card.component.html',
+          template: '<section>Inline</section>'
+        })
+        export class DemoCardComponent {}
+
+        @Component({
+          template: \`<div>Selectorless</div>\`
+        })
+        export class DemoDialogComponent {}
+      `;
+
+      expect(getAngularComponentMetadata(code)).toEqual([
+        {
+          className: 'DemoCardComponent',
+          selector: 'demo-card',
+          styleUrls: [],
+          templateUrls: ['./demo-card.component.html'],
+          inlineTemplates: ['<section>Inline</section>'],
+        },
+        {
+          className: 'DemoDialogComponent',
+          styleUrls: [],
+          templateUrls: [],
+          inlineTemplates: ['<div>Selectorless</div>'],
+        },
+      ]);
+    });
+
+    it('extracts component styleUrls alongside other metadata', () => {
+      const code = `
+        @Component({
+          selector: 'demo-card',
+          styleUrl: './demo-card.component.css',
+          styleUrls: ['./demo-card.theme.css', '../shared/demo-card.tokens.css'],
+          template: '<section>Inline</section>'
+        })
+        export class DemoCardComponent {}
+      `;
+
+      expect(getAngularComponentMetadata(code)).toEqual([
+        {
+          className: 'DemoCardComponent',
+          selector: 'demo-card',
+          styleUrls: [
+            './demo-card.component.css',
+            './demo-card.theme.css',
+            '../shared/demo-card.tokens.css',
+          ],
+          templateUrls: [],
+          inlineTemplates: ['<section>Inline</section>'],
+        },
+      ]);
     });
   });
 });

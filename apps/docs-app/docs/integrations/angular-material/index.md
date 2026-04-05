@@ -142,7 +142,7 @@ If you use Tailwind CSS, add the Vite plugin to make it work correctly with Angu
 1. **Install the Tailwind Vite plugin:**
 
 ```shell
-npm install @tailwindcss/vite
+npm install -D tailwindcss @tailwindcss/vite postcss @tailwindcss/postcss
 ```
 
 2. **Add the plugin to your `vite.config.ts`:**

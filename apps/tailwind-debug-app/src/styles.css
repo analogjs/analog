@@ -1,0 +1,17 @@
+@import 'tailwindcss' prefix(tdbg);
+
+html,
+body {
+  display: block;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans', 'Avenir Next', system-ui, sans-serif;
+  @apply tdbg:bg-slate-950 tdbg:text-slate-100;
+}
+
+* {
+  box-sizing: border-box;
+}

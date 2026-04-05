@@ -51,7 +51,7 @@ describe('nitro', () => {
     expect(nitro({})[1].name).toEqual('@analogjs/vite-plugin-nitro');
   });
 
-  it(`should not call the route middleware in test mode `, async () => {
+  it('should not call the route middleware in test mode', async () => {
     // Arrange
     const spy = vi.spyOn(mockViteDevServer.middlewares, 'use');
 
