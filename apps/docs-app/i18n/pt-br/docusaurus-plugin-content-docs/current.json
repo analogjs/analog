@@ -75,6 +75,10 @@
     "message": "Astro",
     "description": "The label for the doc item Astro in sidebar docsSidebar, linking to the doc packages/astro-angular/overview"
   },
+  "sidebar.docsSidebar.doc.AI": {
+    "message": "IA",
+    "description": "The label for the doc item AI in sidebar docsSidebar, linking to the doc integrations/ai/index"
+  },
   "sidebar.docsSidebar.doc.Angular Material": {
     "message": "Angular Material",
     "description": "The label for the doc item Angular Material in sidebar docsSidebar, linking to the doc integrations/angular-material/index"
