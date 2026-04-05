@@ -5,7 +5,85 @@ import TabItem from '@theme/TabItem';
 
 An existing Angular Single Page Application can be configured to use Analog using a schematic/generator for Angular CLI or Nx workspaces.
 
-> Analog is compatible with Angular v16 and above.
+> Analog v3 requires Angular v17 or newer. Angular v16 is no longer supported.
+
+## Updating an existing Analog app to v3
+
+For an existing Analog project, update the packages first and then work through the v3 breaking changes that apply to your app.
+
+### Update the workspace packages
+
+Use the standard Analog update flow for your workspace type:
+
+<Tabs groupId="app-upgrader">
+  <TabItem label="ng update" value="ng-update">
+
+```shell
+ng update @analogjs/platform@latest
+```
+
+  </TabItem>
+
+  <TabItem label="Nx migrate" value="nx-migrate">
+
+```shell
+nx migrate @analogjs/platform@latest
+```
+
+  </TabItem>
+</Tabs>
+
+### v3 migration checklist
+
+#### Angular version support
+
+Analog v3 no longer supports Angular v16. Upgrade the workspace to Angular v17 or newer before adopting the stable v3 line.
+
+#### Removed Analog SFC support
+
+Analog SFC support was removed and `.agx` files are no longer supported. Replace any remaining SFC usage with standard Angular components, markdown content files, or route/page files that use the current Analog conventions.
+
+#### Content rendering now requires an explicit highlighter
+
+If your app renders markdown content, configure the content highlighter through the `analog()` plugin in `vite.config.ts`. New blog templates already do this, but older full-stack apps often do not.
+
+Before:
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+export default defineConfig(() => ({
+  plugins: [analog()],
+}));
+```
+
+After:
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+export default defineConfig(() => ({
+  plugins: [
+    analog({
+      content: {
+        highlighter: 'shiki',
+      },
+    }),
+  ],
+}));
+```
+
+If you are using the markdown renderer in the app itself, keep `provideContent(withMarkdownRenderer())` and pair it with the matching highlighter setup for your project, such as `withShikiHighlighter()`.
+
+#### Astro Angular now targets Angular 20 zoneless change detection
+
+If you use `@analogjs/astro-angular`, plan the upgrade around Angular 20 and its zoneless baseline. Treat that package as a separate migration stream from a standard Analog app upgrade.
+
+#### Legacy Vitest setup path
+
+If your tests still import `@analogjs/vite-plugin-angular/setup-vitest`, migrate them to `@analogjs/vitest-angular/setup-zone`. Current update flows cover this automatically, but older manual setups should be checked explicitly.
 
 ## Using a Schematic/Generator
 
