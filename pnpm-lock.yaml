@@ -213,6 +213,9 @@ importers:
       '@schematics/angular':
         specifier: 20.1.4
         version: 20.1.4(chokidar@4.0.3)
+      '@standard-schema/spec':
+        specifier: ^1.1.0
+        version: 1.1.0
       '@semantic-release/changelog':
         specifier: ^6.0.3
         version: 6.0.3(semantic-release@22.0.12(typescript@5.8.3))
@@ -5303,6 +5306,9 @@ packages:
 
   '@speed-highlight/core@1.2.7':
     resolution: {integrity: sha512-0dxmVj4gxg3Jg879kvFS/msl4s9F3T9UXC1InxgOf7t5NvcPD97u/WTA5vL/IxWHMn7qSxBozqrnnE2wvl1m8g==}
+
+  '@standard-schema/spec@1.1.0':
+    resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
   '@storybook/addon-docs@9.0.18':
     resolution: {integrity: sha512-1mLhaRDx8s1JAF51o56OmwMnIsg4BOQJ8cn+4wbMjh14pDFALrovlFl/BpAXnV1VaZqHjCB4ZWuP+y5CwXEpeQ==}
@@ -24054,6 +24060,8 @@ snapshots:
       micromark-util-symbol: 1.0.1
 
   '@speed-highlight/core@1.2.7': {}
+
+  '@standard-schema/spec@1.1.0': {}
 
   '@storybook/addon-docs@9.0.18(@types/react@18.3.23)(storybook@9.0.9(@testing-library/dom@10.4.0)(prettier@3.5.1))':
     dependencies:
