@@ -7,11 +7,36 @@ An existing Angular Single Page Application can be configured to use Analog usin
 
 > Analog v3 requires Angular v17 or newer. Angular v16 is no longer supported.
 
-## Updating an existing Analog app to v3
+## Migrating between Analog major versions
 
-For an existing Analog project, update the packages first and then work through the v3 breaking changes that apply to your app.
+Use the path that matches your current app version:
 
-### Update the workspace packages
+- Analog v1 users should upgrade to v2 first, then move from v2 to v3.
+- Analog v2 users can move directly to the v3 checklist below.
+
+### Analog v1 to v2
+
+The main migration themes from v1 to v2 are:
+
+- move to the public `@analogjs/content` entrypoint instead of internal imports such as `@analogjs/content/lib`
+- verify any content-rendering and table-of-contents usage against the current public API surface
+- update your app with the standard Analog package upgrade flow before taking on the v3 breaking changes
+
+If you use content rendering helpers such as `ContentRenderer`, import them from `@analogjs/content`:
+
+```ts
+import { ContentRenderer, type TableOfContentItem } from '@analogjs/content';
+```
+
+Do not rely on internal paths such as `@analogjs/content/lib`.
+
+After the app is on the current v2 line and using public imports, continue with the v2 to v3 migration below.
+
+### Analog v2 to v3
+
+For an existing Analog v2 project, update the packages first and then work through the v3 breaking changes that apply to your app.
+
+#### Update the workspace packages
 
 Use the standard Analog update flow for your workspace type:
 
@@ -33,17 +58,17 @@ nx migrate @analogjs/platform@latest
   </TabItem>
 </Tabs>
 
-### v3 migration checklist
+#### v2 to v3 checklist
 
-#### Angular version support
+##### Angular version support
 
 Analog v3 no longer supports Angular v16. Upgrade the workspace to Angular v17 or newer before adopting the stable v3 line.
 
-#### Removed Analog SFC support
+##### Removed Analog SFC support
 
 Analog SFC support was removed and `.agx` files are no longer supported. Replace any remaining SFC usage with standard Angular components, markdown content files, or route/page files that use the current Analog conventions.
 
-#### Content rendering now requires an explicit highlighter
+##### Content rendering now requires an explicit highlighter
 
 If your app renders markdown content, configure the content highlighter through the `analog()` plugin in `vite.config.ts`. New blog templates already do this, but older full-stack apps often do not.
 
@@ -83,11 +108,11 @@ If you were relying on older internal imports, switch those to the public `@anal
 import { ContentRenderer, type TableOfContentItem } from '@analogjs/content';
 ```
 
-#### Astro Angular now targets Angular 20 zoneless change detection
+##### Astro Angular now targets Angular 20 zoneless change detection
 
 If you use `@analogjs/astro-angular`, plan the upgrade around Angular 20 and its zoneless baseline. Treat that package as a separate migration stream from a standard Analog app upgrade.
 
-#### Legacy Vitest setup path
+##### Legacy Vitest setup path
 
 If your tests still import `@analogjs/vite-plugin-angular/setup-vitest`, migrate them to `@analogjs/vitest-angular/setup-zone`. Current update flows cover this automatically, but older manual setups should be checked explicitly.
 
