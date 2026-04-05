@@ -2300,18 +2300,19 @@ export function angular(options?: PluginOptions): Plugin[] {
             mtimeMs: safeStatMtimeMs(key),
             ...describeStylesheetContent(rawCss),
           });
+          preprocessed = rewriteRelativeCssImports(preprocessed, key);
+          stylesheetRegistry.registerServedStylesheet(
+            {
+              publicId: angularHash,
+              sourcePath: key,
+              originalCode: rawCss,
+              normalizedCode: preprocessed,
+            },
+            [key, normalizePath(key), basename(key), key.replace(/^\//, '')],
+          );
+
           if (preprocessed && preprocessed !== rawCss) {
             preprocessStats.injected++;
-            preprocessed = rewriteRelativeCssImports(preprocessed, key);
-            stylesheetRegistry.registerServedStylesheet(
-              {
-                publicId: angularHash,
-                sourcePath: key,
-                originalCode: rawCss,
-                normalizedCode: preprocessed,
-              },
-              [key, normalizePath(key), basename(key), key.replace(/^\//, '')],
-            );
             debugStylesV(
               'preprocessed external stylesheet for Tailwind @reference',
               {
@@ -2329,6 +2330,8 @@ export function angular(options?: PluginOptions): Plugin[] {
               resolvedPath: key,
               mtimeMs: safeStatMtimeMs(key),
               raw: describeStylesheetContent(rawCss),
+              served: describeStylesheetContent(preprocessed),
+              hint: 'Registry mapping is still registered so Angular component stylesheet HMR can track and refresh this file even when preprocessing makes no textual changes.',
             });
           }
         } catch (e) {

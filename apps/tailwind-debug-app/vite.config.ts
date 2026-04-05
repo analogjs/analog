@@ -27,12 +27,40 @@ function hmrWiretapPlugin(): Plugin {
     configureServer(server) {
       const originalSend = server.ws.send.bind(server.ws);
       server.ws.send = ((payload: unknown, ...args: unknown[]) => {
-        writeDebugLog(WS_LOG_PATH, payload);
+        writeDebugLog(WS_LOG_PATH, {
+          payload,
+          source: 'server.ws.send',
+        });
         return (originalSend as (...inner: unknown[]) => unknown)(
           payload,
           ...args,
         );
       }) as typeof server.ws.send;
+
+      for (const [environmentName, environment] of Object.entries(
+        server.environments ?? {},
+      )) {
+        const originalHotSend = environment.hot.send.bind(environment.hot);
+        environment.hot.send = ((payload: unknown) => {
+          const stack =
+            typeof payload === 'object' &&
+            payload !== null &&
+            'type' in payload &&
+            (payload as { type?: unknown }).type === 'full-reload'
+              ? new Error(`[tailwind-debug-app] ${environmentName} full-reload`)
+                  .stack
+              : undefined;
+
+          writeDebugLog(WS_LOG_PATH, {
+            environmentName,
+            payload,
+            source: 'environment.hot.send',
+            stack,
+          });
+
+          return originalHotSend(payload as never);
+        }) as typeof environment.hot.send;
+      }
     },
     handleHotUpdate(ctx) {
       writeDebugLog(HMR_LOG_PATH, {

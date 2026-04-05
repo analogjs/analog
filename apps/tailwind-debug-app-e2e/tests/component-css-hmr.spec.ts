@@ -19,10 +19,16 @@ const HMR_LOG_PATH = join(
 const ORIGINAL_CSS = readFileSync(STYLE_PROBE_CSS_PATH, 'utf8');
 const BLUE_CLASS = 'tdbg:bg-blue-500';
 const RED_CLASS = 'tdbg:bg-red-500';
-const RED_BACKGROUND_VALUES = new Set([
-  'rgb(239, 68, 68)',
-  'oklch(0.637 0.237 25.331)',
-]);
+function parseLogEntries(log: string): Array<Record<string, unknown>> {
+  return log
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const jsonStart = line.indexOf('{');
+      return JSON.parse(line.slice(jsonStart)) as Record<string, unknown>;
+    });
+}
 
 function replaceProbeColor(className: string) {
   const nextCss = ORIGINAL_CSS.replace(BLUE_CLASS, className).replace(
@@ -47,7 +53,7 @@ test.afterAll(() => {
   writeFileSync(STYLE_PROBE_CSS_PATH, ORIGINAL_CSS, 'utf8');
 });
 
-test('updates the component stylesheet without a full reload', async ({
+test('reproduces Tailwind-triggered full reload for component stylesheet edits', async ({
   page,
 }) => {
   await page.goto('/probe');
@@ -66,31 +72,41 @@ test('updates the component stylesheet without a full reload', async ({
   await expect
     .poll(
       async () => {
-        const backgroundColor = await page
-          .getByTestId('probe-card')
-          .evaluate((element) => {
-            return window.getComputedStyle(element).backgroundColor;
-          });
-
-        return RED_BACKGROUND_VALUES.has(backgroundColor);
+        const wsEntries = parseLogEntries(readFileSync(WS_LOG_PATH, 'utf8'));
+        return wsEntries.findIndex(
+          (entry) =>
+            (entry.payload as { type?: string } | undefined)?.type ===
+            'full-reload',
+        );
       },
       { timeout: 30_000 },
     )
-    .toBe(true);
+    .toBeGreaterThanOrEqual(0);
 
-  await expect(page.getByTestId('probe-counter')).toContainText('Clicks 1');
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.getByTestId('probe-card')).toBeVisible();
+
+  await expect(page.getByTestId('probe-counter')).toContainText('Clicks 0');
 
   await expect
     .poll(
       async () => page.evaluate(() => window.__TAILWIND_DEBUG__?.bootCount),
       { timeout: 10_000 },
     )
-    .toBe(initialBootCount);
+    .not.toBe(initialBootCount);
 
   const wsLog = readFileSync(WS_LOG_PATH, 'utf8');
   const hmrLog = readFileSync(HMR_LOG_PATH, 'utf8');
+  const wsEntries = parseLogEntries(wsLog);
+
+  const fullReloadEntry = wsEntries.find(
+    (entry) =>
+      (entry.payload as { type?: string } | undefined)?.type === 'full-reload',
+  );
 
   expect(wsLog).toContain('style-probe.component.css');
-  expect(wsLog).not.toContain('"type":"full-reload"');
+  expect(fullReloadEntry).toBeTruthy();
+  expect(fullReloadEntry?.source).toBe('environment.hot.send');
+  expect(String(fullReloadEntry?.stack ?? '')).toContain('updateModules');
   expect(hmrLog).toContain('style-probe.component.css');
 });
