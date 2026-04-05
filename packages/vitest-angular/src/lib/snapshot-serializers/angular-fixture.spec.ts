@@ -107,4 +107,20 @@ describe('ng-snapshot serializer', () => {
       </app-chip>
     `);
   });
+
+  it('normalizes trailing spaces and repeated blank lines', () => {
+    const fixture = createComponentFixture('app-test', '<span>Title</span>');
+    const serializer = createAngularFixtureSnapshotSerializer();
+
+    const result = serializer.serialize?.(
+      fixture,
+      {} as any,
+      '',
+      0,
+      [],
+      () => `<app-test>  \n\n\n  <span>Title</span>   \n</app-test>\t`,
+    );
+
+    expect(result).toBe(`<app-test>\n\n  <span>Title</span>\n</app-test>`);
+  });
 });
