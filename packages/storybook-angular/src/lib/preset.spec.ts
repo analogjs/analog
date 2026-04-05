@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const angularPluginMock = vi.fn(() => ({ name: 'angular-mock' }));
+const debugStylesMock = vi.fn();
+const debugStylesVMock = vi.fn();
 
 /**
  * The preset module uses top-level imports that are hard to mock in isolation.
@@ -36,6 +38,11 @@ vi.mock('@analogjs/vite-plugin-angular', () => ({
   default: angularPluginMock,
 }));
 
+vi.mock('./debug', () => ({
+  debugStyles: debugStylesMock,
+  debugStylesV: debugStylesVMock,
+}));
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let viteFinal: any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,6 +52,8 @@ const tempDirs: string[] = [];
 beforeEach(async () => {
   vi.resetModules();
   angularPluginMock.mockClear();
+  debugStylesMock.mockClear();
+  debugStylesVMock.mockClear();
   const mod = await import('./preset');
   viteFinal = mod.viteFinal;
   core = mod.core;
@@ -376,6 +385,14 @@ describe('viteFinal', () => {
       expect(
         pluginConfig?.css?.preprocessorOptions?.scss?.loadPaths?.[0],
       ).toContain('/workspace/root');
+      expect(debugStylesMock).toHaveBeenCalledWith(
+        'resolved SCSS load paths',
+        expect.objectContaining({
+          workspaceRoot: '/workspace/root',
+          loadPaths: ['src/styles'],
+          resolvedLoadPaths: [expect.stringContaining('/workspace/root')],
+        }),
+      );
     });
 
     it('imports workspace-relative global styles from the workspace root', async () => {
@@ -431,6 +448,26 @@ describe('viteFinal', () => {
       expect(transformed?.code).toContain(
         `import '${join(workspaceRoot, 'libs/shared/ui/.storybook/storybook.scss')}';`,
       );
+      expect(debugStylesMock).toHaveBeenCalledWith(
+        'injecting Storybook global styles',
+        expect.objectContaining({
+          styles: [
+            'libs/shared/ui/styles/shared-ui.scss',
+            'libs/shared/ui/.storybook/storybook.scss',
+          ],
+        }),
+      );
+      expect(debugStylesVMock).toHaveBeenCalledWith(
+        'resolved Storybook style import',
+        expect.objectContaining({
+          input: 'libs/shared/ui/styles/shared-ui.scss',
+          source: 'workspace',
+          specifier: join(
+            workspaceRoot,
+            'libs/shared/ui/styles/shared-ui.scss',
+          ),
+        }),
+      );
     });
 
     it('keeps bare package CSS imports as bare imports', async () => {
@@ -472,6 +509,14 @@ describe('viteFinal', () => {
       expect(transformed?.code).toContain("import 'katex/dist/katex.css';");
       expect(transformed?.code).toContain(
         "import 'flag-icons/css/flag-icons.min.css';",
+      );
+      expect(debugStylesVMock).toHaveBeenCalledWith(
+        'resolved Storybook style import',
+        expect.objectContaining({
+          input: '@angular/material/prebuilt-themes/deeppurple-amber.css',
+          source: 'bare',
+          specifier: '@angular/material/prebuilt-themes/deeppurple-amber.css',
+        }),
       );
     });
   });

@@ -374,6 +374,18 @@ export default config;
 - `stylePreprocessorOptions.loadPaths` for Sass import roots
 - `nxViteTsPaths()` for TS/Angular library aliases used by stories and components
 
+If styles still do not load as expected, enable scoped preset logging before running Storybook or the Storybook build:
+
+```sh
+DEBUG=analog:storybook:styles,analog:storybook:styles:v npm run storybook
+```
+
+This logs the resolved workspace root, SCSS `loadPaths`, and how each `styles` entry was classified:
+
+- `project` when it resolves relative to the Storybook project root
+- `workspace` when it resolves from the workspace root
+- `bare` when it is left as a package import such as `katex/dist/katex.css`
+
 ## Using File Replacements
 
 You can also use the `replaceFiles()` plugin from Nx to replace files during your build.
