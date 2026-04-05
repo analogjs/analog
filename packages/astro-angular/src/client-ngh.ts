@@ -16,7 +16,10 @@ import {
   type HydrationFeatureKind,
   provideClientHydration,
 } from '@angular/platform-browser';
-import { createComponentBindings } from './create-component.ts';
+import {
+  createComponentBindings,
+  getComponentElementTag,
+} from './create-component.ts';
 import { ID_PROP_NAME } from './id.ts';
 
 export default (element: HTMLElement) => {
@@ -41,12 +44,14 @@ export default (element: HTMLElement) => {
     );
     document.body.setAttribute(ɵCLIENT_RENDER_MODE_FLAG, '');
 
-    const hostElement = element.querySelector(mirror.selector);
+    let hostElement = element.querySelector(mirror.selector);
+    let reuseDom = true;
 
     if (!hostElement) {
-      throw new Error(
-        'No host element found for hydration! Selector: ' + mirror.selector,
-      );
+      // This is a client-only component
+      hostElement = document.createElement(getComponentElementTag(mirror));
+      element.appendChild(hostElement);
+      reuseDom = false;
     }
 
     const ngAppId = hostElement?.getAttribute(ID_PROP_NAME);
@@ -54,7 +59,9 @@ export default (element: HTMLElement) => {
     createApplication({
       providers: [
         provideZonelessChangeDetection(),
-        provideClientHydration(...(Component.hydrationFeatures?.() || [])),
+        reuseDom
+          ? provideClientHydration(...(Component.hydrationFeatures?.() || []))
+          : [],
         {
           provide: APP_ID,
           useValue: ngAppId || 'ng',

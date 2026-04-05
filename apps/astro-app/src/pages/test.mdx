@@ -1,4 +1,4 @@
-import { CardComponent } from '../components/card.component.ts';
+import { ClientOnlyComponent } from '../components/client-only.component.ts';
 import { ParentComponent } from '../components/parent.component.ts';
 import { DeferTestComponent } from '../components/defer-test.component.ts';
 import { FocusHydrationTestComponent } from '../components/focus-hydration-test.component.ts';
@@ -31,6 +31,8 @@ Angular Component in an MDX file
   will be captured and the count will increment.
 </p>
 <IncrementalHydrationTestComponent client:load />
+
+<ClientOnlyComponent client:only="@analogjs/astro-angular" />
 
 <p>
   The component below makes an HTTP call on the server. This should be cached

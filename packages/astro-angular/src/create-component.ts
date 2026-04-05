@@ -6,6 +6,12 @@ import {
 } from '@angular/core';
 import { ID_PROP_NAME } from './id.ts';
 
+export function getComponentElementTag(
+  mirror: ComponentMirror<unknown>,
+): string {
+  return mirror.selector.split(',')[0] || 'ng-component';
+}
+
 export function createInputBindings(
   mirror: ComponentMirror<unknown>,
   props?: Record<string, unknown>,

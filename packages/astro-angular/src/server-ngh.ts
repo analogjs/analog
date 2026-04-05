@@ -25,6 +25,7 @@ import type { AstroComponentMetadata, SSRLoadedRendererValue } from 'astro';
 import { getContext, incrementId, type RendererContext } from './context.ts';
 import { provideBootstrapListener } from './server-providers.ts';
 import { ID_PROP_NAME } from './id.ts';
+import { getComponentElementTag } from './create-component.ts';
 
 const require = createRequire(import.meta.url);
 let jsActionContractScript: string | undefined = undefined;
@@ -66,15 +67,14 @@ async function renderToStaticMarkup(
     );
   }
 
-  const appId =
-    mirror.selector.split(',')[0] || Component.name.toString().toLowerCase();
+  const elementTag = getComponentElementTag(mirror);
   const ngAppId = props?.[ID_PROP_NAME] || incrementId(getContext(this.result));
 
   const platformRef = platformServer();
   const document = platformRef.injector.get(DOCUMENT);
 
   // Incremental hydration requires the event dispatch script to be present.
-  document.body.innerHTML = `${getHydrationScript()}<${appId} ${ID_PROP_NAME}="${ngAppId}"></${appId}>`;
+  document.body.innerHTML = `${getHydrationScript()}<${elementTag} ${ID_PROP_NAME}="${ngAppId}"></${elementTag}>`;
 
   const bootstrap = (context?: BootstrapContext) =>
     bootstrapApplication(
