@@ -43,7 +43,7 @@ export default defineConfig({
     target: 'es2022',
     sourcemap: true,
     minify: false,
-    emptyOutDir: false,
+    emptyOutDir: true,
     outDir,
     lib: {
       entry: {
