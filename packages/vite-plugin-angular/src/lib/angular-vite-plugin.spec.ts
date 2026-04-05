@@ -1013,7 +1013,8 @@ describe('template class binding guard plugin', () => {
       const plugins = angular();
       const plugin = plugins.find(
         (p) =>
-          p.name === '@analogjs/vite-plugin-angular:template-class-binding-guard',
+          p.name ===
+          '@analogjs/vite-plugin-angular:template-class-binding-guard',
       ) as Plugin;
       const mainPlugin = plugins.find(
         (p) => p.name === '@analogjs/vite-plugin-angular',
