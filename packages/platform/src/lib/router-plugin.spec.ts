@@ -4,13 +4,26 @@ vi.mock('tinyglobby', () => ({
   globSync: vi.fn(() => []),
 }));
 
+vi.mock('node:fs', () => ({
+  readFileSync: vi.fn(() => '@Component({})'),
+}));
+
+vi.mock('./route-idiom-diagnostics.js', () => ({
+  analyzeAnalogRouteFile: vi.fn(() => []),
+  formatAnalogRouteIdiomDiagnostic: vi.fn(() => 'diagnostic'),
+}));
+
 import { globSync } from 'tinyglobby';
+import { readFileSync } from 'node:fs';
+import { analyzeAnalogRouteFile } from './route-idiom-diagnostics.js';
 import { routerPlugin } from './router-plugin.js';
 
 describe('routerPlugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(globSync).mockReturnValue([]);
+    vi.mocked(readFileSync).mockReturnValue('@Component({})' as any);
+    vi.mocked(analyzeAnalogRouteFile).mockReturnValue([]);
   });
 
   const configureServer = (options?: Parameters<typeof routerPlugin>[0]) => {
@@ -370,6 +383,50 @@ describe('routerPlugin', () => {
         '/src/app/pages/second.page.ts',
       );
       expect(globSync).toHaveBeenCalledTimes(4);
+    });
+
+    it('reuses cached page-route discovery for diagnostics on change', () => {
+      const plugins = routerPlugin({
+        workspaceRoot,
+      });
+      const invalidatePlugin = plugins.find(
+        (p) => p.name === 'analogjs-router-invalidate-routes',
+      )!;
+      const transformPlugin = plugins.find(
+        (p) => p.name === 'analog-glob-routes',
+      )!;
+      (transformPlugin as any).config?.({ root: 'apps/my-app' });
+
+      const on = vi.fn();
+      const server = {
+        moduleGraph: {
+          fileToModulesMap: new Map(),
+          getModulesByFile: vi.fn(() => undefined),
+          invalidateModule: vi.fn(),
+        },
+        watcher: { on, add: vi.fn() },
+        ws: { send: vi.fn() },
+      };
+
+      vi.mocked(globSync).mockReturnValue([
+        `${appRoot}/src/app/pages/first.page.ts`,
+      ]);
+
+      (invalidatePlugin.configureServer as (server: unknown) => void)(server);
+
+      expect(globSync).toHaveBeenCalledTimes(1);
+
+      const changeHandler = on.mock.calls.find(
+        ([eventName]) => eventName === 'change',
+      )?.[1];
+      changeHandler(`${appRoot}/src/app/pages/first.page.ts`);
+
+      expect(globSync).toHaveBeenCalledTimes(1);
+      expect(readFileSync).toHaveBeenCalledWith(
+        `${appRoot}/src/app/pages/first.page.ts`,
+        'utf-8',
+      );
+      expect(analyzeAnalogRouteFile).toHaveBeenCalled();
     });
 
     // Regression: the Rolldown transform filter used 'ANALOG_ROUTE_FILES' as
