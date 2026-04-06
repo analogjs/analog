@@ -28,6 +28,7 @@ import {
   findAllClasses,
   ANGULAR_DECORATORS,
 } from './utils.js';
+import { elideTypeOnlyImportsMagicString } from './type-elision.js';
 
 import {
   emitAngularExpr,
@@ -840,6 +841,12 @@ export function compile(
   if (sideEffects.length > 0) {
     ms.append('\n\n' + sideEffects.join('\n'));
   }
+
+  // 4. Elide imports that are only used in type positions (type annotations,
+  //    implements, generics, etc.).  Without this pass, single-file transpilers
+  //    like OXC / esbuild cannot tell that `import { SomeType }` is type-only
+  //    and will leave the import in the output, causing runtime errors.
+  elideTypeOnlyImportsMagicString(ms);
 
   const map = ms.generateMap({
     source: fileName,
