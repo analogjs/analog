@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AnalogStylesheetRegistry } from './stylesheet-registry.js';
+import * as debug from './utils/debug.js';
 import {
   configureStylePipelineRegistry,
   defineAngularStylePipeline,
@@ -111,6 +112,28 @@ describe('angular style-pipeline hooks', () => {
       ],
       tags: ['tailwind', 'tokens'],
     });
+  });
+
+  it('logs when community preprocessors are skipped because Angular did not provide stylesheet context', () => {
+    const logSpy = vi.spyOn(debug, 'debugStylePipeline');
+    const preprocess = stylePipelinePreprocessorFromPlugins({
+      plugins: [
+        {
+          name: 'plugin-a',
+          preprocessStylesheet: (code) => `${code}\n/* a */`,
+        },
+      ],
+    });
+
+    expect(preprocess?.('.demo { color: red; }', '/project/demo.css')).toBe(
+      '.demo { color: red; }',
+    );
+    expect(logSpy).toHaveBeenCalledWith(
+      'skipping community stylesheet preprocessors because Angular did not provide a stylesheet context',
+      {
+        filename: '/project/demo.css',
+      },
+    );
   });
 
   it('passes the stylesheet registry to community plugins', () => {

@@ -5,6 +5,7 @@ import type {
   StylesheetTransformContext,
 } from './style-preprocessor.js';
 import { normalizeStylesheetTransformResult } from './style-preprocessor.js';
+import { debugStylePipeline } from './utils/debug.js';
 
 export interface AngularStylePipelineContext {
   workspaceRoot: string;
@@ -60,6 +61,12 @@ export function stylePipelinePreprocessorFromPlugins(
 
   return (code, filename, context) => {
     if (!context) {
+      debugStylePipeline(
+        'skipping community stylesheet preprocessors because Angular did not provide a stylesheet context',
+        {
+          filename,
+        },
+      );
       return code;
     }
 

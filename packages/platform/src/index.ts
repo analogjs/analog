@@ -17,8 +17,6 @@ export type {
 export { routeGenerationPlugin } from './lib/route-generation-plugin.js';
 export { tailwindPreprocessor } from './lib/tailwind-preprocessor.js';
 export type {
-  StylePipelineManifest,
-  StylePipelineOutput,
   StylePipelineContext,
   StylePipelineOptions,
   StylePipelinePluginEntry,

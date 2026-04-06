@@ -36,7 +36,7 @@ export function normalizeStylesheetTransformResult(
   value: string | StylesheetTransformResult | undefined,
   fallbackCode: string,
 ): StylesheetTransformResult {
-  if (!value) {
+  if (value == null) {
     return { code: fallbackCode };
   }
 
@@ -50,6 +50,14 @@ export function normalizeStylesheetTransformResult(
     diagnostics: value.diagnostics ?? [],
     tags: value.tags ?? [],
   };
+}
+
+export function normalizeStylesheetDependencies(
+  dependencies: Array<string | StylesheetDependency> | undefined,
+): StylesheetDependency[] {
+  return (dependencies ?? []).map((dependency) =>
+    typeof dependency === 'string' ? { id: dependency } : dependency,
+  );
 }
 
 export function composeStylePreprocessors(

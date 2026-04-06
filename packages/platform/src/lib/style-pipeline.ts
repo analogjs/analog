@@ -1,27 +1,8 @@
 import type { Plugin } from 'vite';
 import type { AngularStylePipelinePlugin } from '@analogjs/vite-plugin-angular';
-import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 export interface StylePipelineContext {
   workspaceRoot: string;
-}
-
-export interface StylePipelineOutput<TMetadata = unknown> {
-  id: string;
-  kind: 'css' | 'theme' | 'tokens' | 'manifest' | 'typescript';
-  scope: 'global' | 'component' | 'theme';
-  order: number;
-  absolutePath?: string;
-  rootRelativePath?: string;
-  importId?: string | null;
-  inject?: boolean;
-  tags?: string[];
-  metadata?: TMetadata;
-}
-
-export interface StylePipelineManifest<TMetadata = unknown> {
-  outputs: StylePipelineOutput<TMetadata>[];
-  metadataSchema?: StandardSchemaV1<TMetadata, TMetadata>;
 }
 
 export type StylePipelinePluginFactory = (

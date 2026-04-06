@@ -5,7 +5,10 @@ import * as ts from 'typescript';
 
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import type { StylePreprocessor } from './style-preprocessor.js';
+import {
+  normalizeStylesheetDependencies,
+  type StylePreprocessor,
+} from './style-preprocessor.js';
 import {
   AnalogStylesheetRegistry,
   preprocessStylesheetResult,
@@ -81,8 +84,8 @@ export function augmentHostWithResources(
         options.stylesheetRegistry,
         {
           code: preprocessed.code,
-          dependencies: preprocessed.dependencies?.map((dependency) =>
-            typeof dependency === 'string' ? { id: dependency } : dependency,
+          dependencies: normalizeStylesheetDependencies(
+            preprocessed.dependencies,
           ),
           diagnostics: preprocessed.diagnostics,
           tags: preprocessed.tags,

@@ -31,7 +31,6 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "dependencies": {
-    "@standard-schema/spec": "catalog:",
     "front-matter": "catalog:",
     "es-toolkit": "catalog:",
     "tinyglobby": "catalog:",

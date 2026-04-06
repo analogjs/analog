@@ -52,7 +52,10 @@ import {
   mergeTransformers,
 } from './host.js';
 import type { StylePreprocessor } from './style-preprocessor.js';
-import { composeStylePreprocessors } from './style-preprocessor.js';
+import {
+  composeStylePreprocessors,
+  normalizeStylesheetDependencies,
+} from './style-preprocessor.js';
 
 import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {
@@ -3027,14 +3030,6 @@ function describeStylesheetContent(code: string): {
     digest: createHash('sha256').update(code).digest('hex').slice(0, 12),
     preview: code.replace(/\s+/g, ' ').trim().slice(0, 160),
   };
-}
-
-function normalizeStylesheetDependencies(
-  dependencies: Array<string | StylesheetDependency> | undefined,
-): StylesheetDependency[] {
-  return (dependencies ?? []).map((dependency) =>
-    typeof dependency === 'string' ? { id: dependency } : dependency,
-  );
 }
 
 function safeStatMtimeMs(file: string): number | undefined {
