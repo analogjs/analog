@@ -7,8 +7,8 @@ import type {
   StylesheetDiagnostic,
   StylesheetTransformResult,
   StylesheetTransformContext,
-} from '@analogjs/style-pipeline/style-preprocessor';
-import { normalizeStylesheetTransformResult as normalizeTransformResult } from '@analogjs/style-pipeline/style-preprocessor';
+} from './style-preprocessor.js';
+import { normalizeStylesheetTransformResult as normalizeTransformResult } from './style-preprocessor.js';
 
 export interface AnalogStylesheetRecord {
   publicId: string;

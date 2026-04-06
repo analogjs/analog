@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import type { StylePreprocessor } from '@analogjs/style-pipeline/style-preprocessor';
+import type { StylePreprocessor } from './style-preprocessor.js';
 import { debugTailwind } from './utils/debug.js';
 
 export type TailwindPreprocessorMode = 'auto' | 'disabled' | { prefix: string };

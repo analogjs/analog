@@ -54,11 +54,11 @@ import {
 import {
   composeStylePreprocessors,
   normalizeStylesheetDependencies,
-} from '@analogjs/style-pipeline/style-preprocessor';
+} from './style-preprocessor.js';
 import type {
   StylePreprocessor,
   StylesheetDependency,
-} from '@analogjs/style-pipeline/style-preprocessor';
+} from './style-preprocessor.js';
 
 import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {

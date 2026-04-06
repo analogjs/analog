@@ -1,20 +1,44 @@
 import type { AnalogStylesheetRegistry } from './stylesheet-registry.js';
-export type {
-  AngularStylePipelineContext,
-  AngularStylePipelineOptions,
-  AngularStylePipelinePlugin,
-} from '@analogjs/style-pipeline';
 import type {
-  AngularStylePipelineContext,
-  AngularStylePipelineOptions,
-} from '@analogjs/style-pipeline';
-import type {
+  StylePipelineStylesheetRegistry,
   StylePreprocessor,
-  StylesheetTransformResult,
   StylesheetTransformContext,
-} from '@analogjs/style-pipeline/style-preprocessor';
-import { normalizeStylesheetTransformResult } from '@analogjs/style-pipeline/style-preprocessor';
+  StylesheetTransformResult,
+} from './style-preprocessor.js';
+import { normalizeStylesheetTransformResult } from './style-preprocessor.js';
 import { debugStylePipeline } from './utils/debug.js';
+
+export interface AngularStylePipelineContext {
+  workspaceRoot: string;
+}
+
+export interface AngularStylePipelinePlugin {
+  name: string;
+  preprocessStylesheet?: (
+    code: string,
+    context: StylesheetTransformContext,
+  ) => string | StylesheetTransformResult | undefined;
+  configureStylesheetRegistry?: (
+    registry: StylePipelineStylesheetRegistry,
+    context: AngularStylePipelineContext,
+  ) => void;
+}
+
+export interface AngularStylePipelineOptions {
+  plugins: AngularStylePipelinePlugin[];
+}
+
+export function defineAngularStylePipeline<
+  const T extends AngularStylePipelineOptions,
+>(options: T): T {
+  return options;
+}
+
+export function defineAngularStylePipelinePlugins<
+  const T extends AngularStylePipelinePlugin[],
+>(plugins: T): T {
+  return plugins;
+}
 
 export function stylePipelinePreprocessorFromPlugins(
   options: AngularStylePipelineOptions | undefined,

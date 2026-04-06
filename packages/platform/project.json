@@ -4,20 +4,12 @@
   "sourceRoot": "packages/platform/src",
   "projectType": "library",
   "tags": ["type:release"],
-  "implicitDependencies": [
-    "style-pipeline",
-    "vite-plugin-angular",
-    "vite-plugin-nitro"
-  ],
+  "implicitDependencies": ["vite-plugin-angular", "vite-plugin-nitro"],
   "targets": {
     "build-self": {
       "executor": "nx:run-commands",
       "cache": false,
-      "dependsOn": [
-        "style-pipeline:build",
-        "vite-plugin-angular:build",
-        "vite-plugin-nitro:build"
-      ],
+      "dependsOn": ["vite-plugin-angular:build", "vite-plugin-nitro:build"],
       "outputs": ["{projectRoot}/dist"],
       "options": {
         "commands": [

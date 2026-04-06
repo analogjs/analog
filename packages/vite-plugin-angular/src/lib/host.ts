@@ -8,7 +8,7 @@ import path from 'node:path';
 import {
   normalizeStylesheetDependencies,
   type StylePreprocessor,
-} from '@analogjs/style-pipeline/style-preprocessor';
+} from './style-preprocessor.js';
 import {
   AnalogStylesheetRegistry,
   preprocessStylesheetResult,

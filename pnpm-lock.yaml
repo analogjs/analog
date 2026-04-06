@@ -1454,9 +1454,6 @@ importers:
 
   packages/platform:
     dependencies:
-      '@analogjs/style-pipeline':
-        specifier: workspace:*
-        version: link:../style-pipeline
       '@analogjs/vite-plugin-angular':
         specifier: workspace:*
         version: link:../vite-plugin-angular
@@ -1567,17 +1564,8 @@ importers:
         specifier: catalog:peerCompat
         version: 8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3)
 
-  packages/style-pipeline:
-    dependencies:
-      vite:
-        specifier: catalog:peerCompat
-        version: 8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3)
-
   packages/vite-plugin-angular:
     dependencies:
-      '@analogjs/style-pipeline':
-        specifier: workspace:*
-        version: link:../style-pipeline
       '@angular-devkit/build-angular':
         specifier: catalog:peerAngularBuilders
         version: 21.2.4(b8427e3316f5f1e4538d50a5e8d618ff)

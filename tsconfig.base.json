@@ -50,10 +50,6 @@
       "@analogjs/router/server/actions": [
         "./packages/router/server/actions/src/index.ts"
       ],
-      "@analogjs/style-pipeline": ["./packages/style-pipeline/src/index.ts"],
-      "@analogjs/style-pipeline/style-preprocessor": [
-        "./packages/style-pipeline/src/style-preprocessor.ts"
-      ],
       "@analogjs/router/tokens": ["./packages/router/tokens/src/index.ts"],
       "@analogjs/top-bar": ["./libs/top-bar/src/index.ts"],
       "@analogjs/vite-plugin-angular": [

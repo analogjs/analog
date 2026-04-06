@@ -1,1 +1,1 @@
-export * from '@analogjs/style-pipeline';
+export * from './lib/style-pipeline.js';

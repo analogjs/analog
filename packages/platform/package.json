@@ -43,7 +43,6 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "dependencies": {
-    "@analogjs/style-pipeline": "workspace:*",
     "front-matter": "catalog:",
     "es-toolkit": "catalog:",
     "tinyglobby": "catalog:",

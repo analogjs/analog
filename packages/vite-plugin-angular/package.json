@@ -36,7 +36,6 @@
     }
   },
   "dependencies": {
-    "@analogjs/style-pipeline": "workspace:*",
     "es-toolkit": "catalog:",
     "obug": "catalog:",
     "oxc-parser": "catalog:",
