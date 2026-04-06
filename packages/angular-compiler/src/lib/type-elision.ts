@@ -1,3 +1,4 @@
+import MagicString from 'magic-string';
 import { parseSync } from 'oxc-parser';
 
 // ── Type-only import elision via OXC AST ────────────────────────────────
@@ -44,16 +45,19 @@ const TYPE_NODE_TYPES = new Set([
 ]);
 
 /**
- * Analyse compiled TypeScript source and return the set of imported names
- * that are only referenced in type positions (type annotations, implements
- * clauses, generics, etc.) and can safely be elided.
- *
- * Uses oxc-parser for fast, Rust-based AST analysis — no type-checker needed.
+ * Internal helper: parse code and return both the AST and the set of
+ * type-only imported names. Avoids double-parsing when both are needed.
  */
-export function detectTypeOnlyImportNames(code: string): Set<string> {
+function analyzeTypeOnlyImports(code: string): {
+  ast: any;
+  typeOnlyNames: Set<string>;
+} {
   const ast = parseSync('file.ts', code).program;
 
   // Step 1 – collect all value-imported names (skip `import type` / `{ type X }`)
+  // Namespace imports (`import * as ns`) are intentionally skipped — they are
+  // always value imports in TypeScript and cannot be type-only at the
+  // declaration level.
   const importedNames = new Set<string>();
   for (const node of (ast as any).body) {
     if (node.type !== 'ImportDeclaration') continue;
@@ -63,7 +67,7 @@ export function detectTypeOnlyImportNames(code: string): Set<string> {
       importedNames.add(spec.local.name);
     }
   }
-  if (importedNames.size === 0) return new Set();
+  if (importedNames.size === 0) return { ast, typeOnlyNames: new Set() };
 
   // Step 2 – walk AST and collect names referenced in value positions
   const valueReferenced = new Set<string>();
@@ -118,26 +122,31 @@ export function detectTypeOnlyImportNames(code: string): Set<string> {
   for (const name of importedNames) {
     if (!valueReferenced.has(name)) typeOnly.add(name);
   }
-  return typeOnly;
+  return { ast, typeOnlyNames: typeOnly };
 }
 
 /**
- * Elide import specifiers (or entire import declarations) for names that are
- * only used in type positions. Operates on the compiler's TypeScript output
- * (before OXC strips remaining TS syntax).
+ * Analyse compiled TypeScript source and return the set of imported names
+ * that are only referenced in type positions (type annotations, implements
+ * clauses, generics, etc.) and can safely be elided.
  *
- * Returns the modified source code, or the original if nothing was elided.
+ * Uses oxc-parser for fast, Rust-based AST analysis — no type-checker needed.
  */
-export function elideTypeOnlyImports(code: string): string {
-  const typeOnlyNames = detectTypeOnlyImportNames(code);
-  if (typeOnlyNames.size === 0) return code;
+export function detectTypeOnlyImportNames(code: string): Set<string> {
+  return analyzeTypeOnlyImports(code).typeOnlyNames;
+}
 
-  const ast = parseSync('file.ts', code).program;
-
-  // Collect replacements: each entry is a [start, end, replacement] tuple.
-  // For whole-declaration removal the replacement is empty; for partial
-  // removal the replacement is a rebuilt import statement.
-  const replacements: Array<[number, number, string]> = [];
+/**
+ * Apply import elision edits to a MagicString instance using positions from
+ * a parsed AST.  Shared logic for both the string-based and MagicString APIs.
+ */
+function applyElisionEdits(
+  ms: MagicString,
+  ast: any,
+  src: string,
+  typeOnlyNames: Set<string>,
+): boolean {
+  let edited = false;
 
   for (const node of (ast as any).body) {
     if (node.type !== 'ImportDeclaration') continue;
@@ -165,14 +174,19 @@ export function elideTypeOnlyImports(code: string): string {
 
     // Find the end of the declaration including trailing newline
     let declEnd = node.end;
-    while (declEnd < code.length && code[declEnd] === '\n') declEnd++;
+    while (
+      declEnd < src.length &&
+      (src[declEnd] === '\n' || src[declEnd] === '\r')
+    )
+      declEnd++;
 
     const keepDefault = defaultSpec && !elideDefault;
     const hasKeptNamed = keptNamed.length > 0;
 
     if (!keepDefault && !hasKeptNamed) {
       // Remove entire import declaration
-      replacements.push([node.start, declEnd, '']);
+      ms.remove(node.start, declEnd);
+      edited = true;
     } else {
       // Rebuild with only the kept specifiers
       const parts: string[] = [];
@@ -187,22 +201,48 @@ export function elideTypeOnlyImports(code: string): string {
         parts.push(`{ ${namedList.join(', ')} }`);
       }
       const source = node.source.value;
-      const quote = code[node.source.start]; // preserve original quote style
-      replacements.push([
+      const quote = src[node.source.start]; // preserve original quote style
+      ms.overwrite(
         node.start,
         node.end,
         `import ${parts.join(', ')} from ${quote}${source}${quote};`,
-      ]);
+      );
+      edited = true;
     }
   }
 
-  if (replacements.length === 0) return code;
+  return edited;
+}
 
-  // Apply in reverse order to preserve offsets
-  replacements.sort((a, b) => b[0] - a[0]);
-  let result = code;
-  for (const [start, end, replacement] of replacements) {
-    result = result.slice(0, start) + replacement + result.slice(end);
-  }
-  return result;
+/**
+ * Elide import specifiers (or entire import declarations) for names that are
+ * only used in type positions. Operates on the compiler's TypeScript output
+ * (before OXC strips remaining TS syntax).
+ *
+ * Returns the modified source code, or the original if nothing was elided.
+ */
+export function elideTypeOnlyImports(code: string): string {
+  const { ast, typeOnlyNames } = analyzeTypeOnlyImports(code);
+  if (typeOnlyNames.size === 0) return code;
+
+  const ms = new MagicString(code);
+  const edited = applyElisionEdits(ms, ast, code, typeOnlyNames);
+  return edited ? ms.toString() : code;
+}
+
+/**
+ * Elide type-only imports directly on a MagicString instance, so that
+ * subsequent `ms.generateMap()` calls produce an accurate sourcemap.
+ *
+ * Detects type-only names from `ms.toString()` (the fully-mutated code),
+ * but reads import positions from `ms.original` (the coordinate system
+ * MagicString expects).
+ */
+export function elideTypeOnlyImportsMagicString(ms: MagicString): void {
+  const typeOnlyNames = detectTypeOnlyImportNames(ms.toString());
+  if (typeOnlyNames.size === 0) return;
+
+  // Parse the original source to get positions in MagicString's coordinate system
+  const ast = parseSync('file.ts', ms.original).program;
+  applyElisionEdits(ms, ast, ms.original, typeOnlyNames);
 }

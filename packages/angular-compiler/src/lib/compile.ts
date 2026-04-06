@@ -28,7 +28,7 @@ import {
   findAllClasses,
   ANGULAR_DECORATORS,
 } from './utils.js';
-import { elideTypeOnlyImports } from './type-elision.js';
+import { elideTypeOnlyImportsMagicString } from './type-elision.js';
 
 import {
   emitAngularExpr,
@@ -846,7 +846,7 @@ export function compile(
   //    implements, generics, etc.).  Without this pass, single-file transpilers
   //    like OXC / esbuild cannot tell that `import { SomeType }` is type-only
   //    and will leave the import in the output, causing runtime errors.
-  const compiledCode = elideTypeOnlyImports(ms.toString());
+  elideTypeOnlyImportsMagicString(ms);
 
   const map = ms.generateMap({
     source: fileName,
@@ -856,7 +856,7 @@ export function compile(
   });
 
   return {
-    code: compiledCode,
+    code: ms.toString(),
     map,
     resourceDependencies,
   };

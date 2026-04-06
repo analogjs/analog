@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
+import MagicString from 'magic-string';
 import {
   detectTypeOnlyImportNames,
   elideTypeOnlyImports,
+  elideTypeOnlyImportsMagicString,
 } from './type-elision';
 import { compileCode as compile } from './test-helpers';
 
@@ -219,6 +221,52 @@ describe('elideTypeOnlyImports', () => {
     expect(result).not.toContain("from 'b'");
     // 'c' import fully preserved
     expect(result).toContain("import { valueC } from 'c'");
+  });
+
+  it('handles CRLF line endings when removing imports', () => {
+    const code =
+      `import { MyType } from 'lib';\r\nimport { value } from 'other';\r\nconst x: MyType = value();\r\n`;
+    const result = elideTypeOnlyImports(code);
+    expect(result).not.toContain("from 'lib'");
+    expect(result).toContain("import { value } from 'other'");
+    // No stray \r left behind from the removed import
+    expect(result).not.toMatch(/^\r/m);
+  });
+});
+
+describe('elideTypeOnlyImportsMagicString', () => {
+  it('applies elision edits to MagicString', () => {
+    const code = `import { MyType } from 'lib';\nconst x: MyType = {};\n`;
+    const ms = new MagicString(code);
+    elideTypeOnlyImportsMagicString(ms);
+    expect(ms.toString()).not.toContain("from 'lib'");
+    expect(ms.toString()).toContain('const x');
+  });
+
+  it('produces a valid sourcemap after elision', () => {
+    const code = `import { MyType } from 'lib';\nimport { value } from 'other';\nconst x: MyType = value();\n`;
+    const ms = new MagicString(code);
+    elideTypeOnlyImportsMagicString(ms);
+    const map = ms.generateMap({ source: 'test.ts', hires: true });
+    // Map should reference the original source
+    expect(map.sources).toContain('test.ts');
+    // Mappings should be non-empty (not an identity map)
+    expect(map.mappings.length).toBeGreaterThan(0);
+  });
+
+  it('detects type-only names from mutated code, positions from original', () => {
+    // Simulate compile.ts: MagicString has been mutated (appended code)
+    // but import positions match original
+    const original = `import { MyType, MyClass } from 'lib';\nconst x: MyType = new MyClass();\n`;
+    const ms = new MagicString(original);
+    // Simulate Ivy injection (appended code that references MyClass)
+    ms.append('\n// i0.ɵɵdirectiveInject(MyClass);');
+    elideTypeOnlyImportsMagicString(ms);
+    const result = ms.toString();
+    // MyClass is value-referenced (in appended code) — should be kept
+    expect(result).toContain('MyClass');
+    // MyType is type-only — should be removed from import
+    expect(result).not.toMatch(/import\s*\{[^}]*MyType[^}]*\}\s*from/);
   });
 });
 

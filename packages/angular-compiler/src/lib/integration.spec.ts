@@ -1490,6 +1490,55 @@ describe('scanFile preserves sourcePackage as undefined', () => {
   });
 });
 
+describe('Sourcemap accuracy after type-only import elision', () => {
+  it('produces sourcemap aligned with post-elision code', () => {
+    const result = rawCompile(
+      `
+      import { Component } from '@angular/core';
+      import { SomeType } from './models';
+
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {
+        value: SomeType = {} as any;
+      }
+    `,
+      'test.ts',
+    );
+
+    // SomeType should be elided from the output
+    expect(result.code).not.toContain("from './models'");
+
+    // Sourcemap should exist and reference the original source
+    expect(result.map).toBeTruthy();
+    expect(result.map.sources).toContain('test.ts');
+
+    // Mappings should be non-empty
+    expect(result.map.mappings.length).toBeGreaterThan(0);
+
+    // The sourcemap's sourcesContent should contain the original source
+    expect(result.map.sourcesContent).toBeTruthy();
+    expect(result.map.sourcesContent[0]).toContain("import { SomeType }");
+  });
+
+  it('preserves sourcemap accuracy when no imports are elided', () => {
+    const result = rawCompile(
+      `
+      import { Component, signal } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '{{ count() }}' })
+      export class TestComponent {
+        count = signal(0);
+      }
+    `,
+      'test.ts',
+    );
+
+    expect(result.code).toContain('signal');
+    expect(result.map).toBeTruthy();
+    expect(result.map.mappings.length).toBeGreaterThan(0);
+  });
+});
+
 function expectCompiles(result: string) {
   expect(result).toBeTruthy();
   expect(result).not.toMatch(/^Error:/m);
