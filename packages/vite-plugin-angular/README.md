@@ -89,3 +89,14 @@ Create a `tsconfig.app.json` in the root of the project.
   "include": ["src/**/*.ts"]
 }
 ```
+
+## Tailwind CSS v4
+
+The plugin supports Tailwind CSS v4 for Angular component styles, including `@apply` in `.component.css` files.
+
+See the [Tailwind CSS integration guide](/docs/integrations/tailwind) for the supported setup, including:
+
+- `tailwindCss.rootStylesheet`
+- `@tailwindcss/vite` in `vite.config.ts`
+- `postcss.config.mjs` with `@tailwindcss/postcss`
+- generated app defaults

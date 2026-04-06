@@ -6,14 +6,17 @@ The Vite Plugin supports CSS pre-processing using external `styleUrls` and inlin
 
 ## Recommended Tailwind v4 setup
 
-If your app uses Tailwind v4, the recommended Analog setup is opinionated:
+If your app uses Tailwind v4, keep the supported Analog setup:
 
 - keep a single root stylesheet such as `src/styles.css`
 - put `@import 'tailwindcss';` in that root stylesheet
 - keep `@tailwindcss/vite` enabled in `vite.config.ts`
+- keep `postcss.config.mjs` with `@tailwindcss/postcss`
 - configure Analog with `tailwindCss.rootStylesheet`
 
 This lets Analog preprocess component stylesheets and inject the correct `@reference` directive automatically for component CSS that uses Tailwind utilities.
+
+For the complete setup and Tailwind-specific guidance, see the [Tailwind CSS integration guide](/docs/integrations/tailwind).
 
 ```ts
 /// <reference types="vitest" />
@@ -40,6 +43,16 @@ And in `src/styles.css`:
 
 ```css
 @import 'tailwindcss';
+```
+
+And in `postcss.config.mjs`:
+
+```js
+export default {
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
+};
 ```
 
 Use an absolute path for `rootStylesheet`. Analog serves some component styles through virtual stylesheet ids during dev, so relative `@reference` paths are not reliable there.
