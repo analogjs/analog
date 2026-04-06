@@ -1,3 +1,8 @@
+---
+name: pr-description
+description: Generate a pull request description for the current branch.
+---
+
 Generate a pull request description for the current branch.
 
 1. Run `git fetch --all` then `git log --oneline $(git merge-base HEAD origin/beta)..HEAD` to see all commits on this branch.
