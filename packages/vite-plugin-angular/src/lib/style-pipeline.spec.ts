@@ -1,31 +1,24 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  defineAngularStylePipeline,
-  defineAngularStylePipelinePlugins,
-} from '../../../platform/src/lib/style-pipeline.js';
 import { AnalogStylesheetRegistry } from './stylesheet-registry.js';
 import * as debug from './utils/debug.js';
 import {
+  type AngularStylePipelineOptions,
+  type AngularStylePipelinePlugin,
   configureStylePipelineRegistry,
   stylePipelinePreprocessorFromPlugins,
 } from './style-pipeline.js';
 
 describe('angular style-pipeline hooks', () => {
   it('keeps angular style-pipeline options strongly typed during config authoring', () => {
-    expect(
-      defineAngularStylePipeline({
-        plugins: defineAngularStylePipelinePlugins([
-          {
-            name: 'plugin-a',
-          },
-        ]),
-      }),
-    ).toEqual({
-      plugins: [
-        {
-          name: 'plugin-a',
-        },
-      ],
+    const plugins: AngularStylePipelinePlugin[] = [
+      {
+        name: 'plugin-a',
+      },
+    ];
+    const options: AngularStylePipelineOptions = { plugins };
+
+    expect(options).toEqual({
+      plugins,
     });
   });
 
