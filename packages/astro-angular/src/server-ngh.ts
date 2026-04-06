@@ -70,6 +70,10 @@ async function renderToStaticMarkup(
   const elementTag = getComponentElementTag(mirror);
   const ngAppId = props?.[ID_PROP_NAME] || incrementId(getContext(this.result));
 
+  // When the platform ref is destroyed, it will reset ngServerMode back to `undefined` if it was not defined when it is
+  // created. See https://github.com/angular/angular/blob/2ce0e98f79a02ddc550d00580e8e232cfed3bfb2/packages/platform-server/src/server.ts#L138
+  globalThis.ngServerMode = true;
+
   const platformRef = platformServer();
   const document = platformRef.injector.get(DOCUMENT);
 
@@ -101,10 +105,6 @@ async function renderToStaticMarkup(
   const html = await renderApplication(bootstrap, {
     document,
   });
-
-  // Since astro renders components in parallel, we must reset the ngServerMode global to `true` after rendering the component.
-  // The `renderApplication` function resets this back to `undefined` before returning.
-  globalThis.ngServerMode = true;
 
   document.documentElement.innerHTML = html;
   let styleTags = '';
