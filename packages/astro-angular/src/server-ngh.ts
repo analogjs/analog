@@ -1,4 +1,4 @@
-import { readFile, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
 import type { EnvironmentProviders, Provider, Type } from '@angular/core';
