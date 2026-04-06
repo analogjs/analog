@@ -1,3 +1,9 @@
+# [2.5.0-beta.4](https://github.com/analogjs/analog/compare/v2.5.0-beta.3...v2.5.0-beta.4) (2026-04-06)
+
+### Bug Fixes
+
+- **angular-compiler:** add type-only import elision to angular compiler ([#2249](https://github.com/analogjs/analog/issues/2249)) ([f66f042](https://github.com/analogjs/analog/commit/f66f0424afd815b91abbf01528c66eeb3c846dc0))
+
 # [2.5.0-beta.3](https://github.com/analogjs/analog/compare/v2.5.0-beta.2...v2.5.0-beta.3) (2026-04-03)
 
 ### Bug Fixes
