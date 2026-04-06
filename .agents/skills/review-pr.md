@@ -27,6 +27,8 @@ Evaluate the diff against these categories. Only report findings that have real 
 | **Code duplication** | Duplicated logic that will drift — only flag if >50 lines or contains branching logic |
 | **API contracts** | Breaking changes not flagged, silent behavior changes, incorrect error handling at boundaries |
 | **Security** | Injection vectors, credential handling, unsafe deserialization |
+| **Test coverage alignment** | Do the tests actually exercise the code paths that changed, or are they testing something adjacent? |
+| **Build artifact impact** | Does the change affect what ships in the npm package? New files in `src/` that aren't tree-shakeable, accidental inclusion of test files, etc. |
 
 ## 3. Check contribution guidelines
 
