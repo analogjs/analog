@@ -76,6 +76,9 @@
     "@analogjs/content": {
       "optional": true
     },
+    "@standard-schema/spec": {
+      "optional": true
+    },
     "@angular/platform-server": {
       "optional": true
     },
