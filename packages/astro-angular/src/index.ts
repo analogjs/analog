@@ -27,15 +27,15 @@ function getRenderer(ngHydration: boolean | undefined): AstroRenderer {
   return {
     name: '@analogjs/astro-angular',
     clientEntrypoint: ngHydration
-      ? fileURLToPath(import.meta.resolve('./client-ngh.js'))
+      ? '@analogjs/astro-angular/client-ngh.js'
       : '@analogjs/astro-angular/client.js',
     serverEntrypoint: ngHydration
-      ? fileURLToPath(import.meta.resolve('./server-ngh.js'))
+      ? '@analogjs/astro-angular/server-ngh.js'
       : '@analogjs/astro-angular/server.js',
   };
 }
 
-function getViteConfiguration(vite?: PluginOptions): ViteUserConfig {
+function getViteConfiguration(options?: AngularOptions): ViteUserConfig {
   return {
     esbuild: {
       jsxDev: true,
@@ -44,16 +44,19 @@ function getViteConfiguration(vite?: PluginOptions): ViteUserConfig {
       include: [
         '@angular/platform-browser',
         '@angular/core',
-        '@analogjs/astro-angular/client.js',
+        options?.experimental?.useAngularHydration
+          ? '@analogjs/astro-angular/client-ngh.js'
+          : '@analogjs/astro-angular/client.js',
       ],
       exclude: [
         '@angular/platform-server',
         '@analogjs/astro-angular/server.js',
+        '@analogjs/astro-angular/server-ngh.js',
       ],
     },
 
     plugins: [
-      viteAngular(vite),
+      viteAngular(options?.vite),
       {
         name: '@analogjs/astro-angular-platform-server',
         transform(code: string, id: string) {
@@ -101,9 +104,7 @@ export default function (options?: AngularOptions): AstroIntegration {
       'astro:config:setup': ({ addRenderer, updateConfig, addMiddleware }) => {
         addRenderer(getRenderer(options?.experimental?.useAngularHydration));
         updateConfig({
-          vite: getViteConfiguration(
-            options?.vite,
-          ) as unknown as ViteUserConfig,
+          vite: getViteConfiguration(options),
         });
         if (options?.strictStylePlacement) {
           addMiddleware({
