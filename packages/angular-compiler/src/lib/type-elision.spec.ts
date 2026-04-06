@@ -224,8 +224,7 @@ describe('elideTypeOnlyImports', () => {
   });
 
   it('handles CRLF line endings when removing imports', () => {
-    const code =
-      `import { MyType } from 'lib';\r\nimport { value } from 'other';\r\nconst x: MyType = value();\r\n`;
+    const code = `import { MyType } from 'lib';\r\nimport { value } from 'other';\r\nconst x: MyType = value();\r\n`;
     const result = elideTypeOnlyImports(code);
     expect(result).not.toContain("from 'lib'");
     expect(result).toContain("import { value } from 'other'");

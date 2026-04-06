@@ -1517,7 +1517,7 @@ describe('Sourcemap accuracy after type-only import elision', () => {
 
     // The sourcemap's sourcesContent should contain the original source
     expect(result.map.sourcesContent).toBeTruthy();
-    expect(result.map.sourcesContent[0]).toContain("import { SomeType }");
+    expect(result.map.sourcesContent[0]).toContain('import { SomeType }');
   });
 
   it('preserves sourcemap accuracy when no imports are elided', () => {
