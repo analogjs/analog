@@ -24,10 +24,10 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [
+      analog(),
       <% if (addTailwind) { %>
       tailwindcss(),
       <% } %>
-      analog(),
       nxViteTsPaths(),
     ],
     test: {
