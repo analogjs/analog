@@ -17,31 +17,31 @@ The PR number is provided as an argument. If no argument is given, check for an 
 
 Evaluate the diff against these categories. Only report findings that have real functional impact:
 
-| Category | What to look for |
-|----------|-----------------|
-| **Logic bugs** | Off-by-one errors, incorrect conditions, unreachable code, silent failures |
-| **Type safety** | Unsafe casts, type discrimination holes, `any` leaks, incorrect generics |
-| **Regex** | ReDoS potential, incorrect escaping, wrong flags, missing anchors |
-| **Performance** | Eager evaluation in hot paths, unnecessary allocations per-request, O(n^2) where O(n) is possible |
-| **State & concurrency** | Module-scoped mutable state, race conditions, missing cleanup |
-| **Code duplication** | Duplicated logic that will drift — only flag if >50 lines or contains branching logic |
-| **API contracts** | Breaking changes not flagged, silent behavior changes, incorrect error handling at boundaries |
-| **Security** | Injection vectors, credential handling, unsafe deserialization |
-| **Test coverage alignment** | Do the tests actually exercise the code paths that changed, or are they testing something adjacent? |
-| **Build artifact impact** | Does the change affect what ships in the npm package? New files in `src/` that aren't tree-shakeable, accidental inclusion of test files, etc. |
+| Category                    | What to look for                                                                                                                               |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Logic bugs**              | Off-by-one errors, incorrect conditions, unreachable code, silent failures                                                                     |
+| **Type safety**             | Unsafe casts, type discrimination holes, `any` leaks, incorrect generics                                                                       |
+| **Regex**                   | ReDoS potential, incorrect escaping, wrong flags, missing anchors                                                                              |
+| **Performance**             | Eager evaluation in hot paths, unnecessary allocations per-request, O(n^2) where O(n) is possible                                              |
+| **State & concurrency**     | Module-scoped mutable state, race conditions, missing cleanup                                                                                  |
+| **Code duplication**        | Duplicated logic that will drift — only flag if >50 lines or contains branching logic                                                          |
+| **API contracts**           | Breaking changes not flagged, silent behavior changes, incorrect error handling at boundaries                                                  |
+| **Security**                | Injection vectors, credential handling, unsafe deserialization                                                                                 |
+| **Test coverage alignment** | Do the tests actually exercise the code paths that changed, or are they testing something adjacent?                                            |
+| **Build artifact impact**   | Does the change affect what ships in the npm package? New files in `src/` that aren't tree-shakeable, accidental inclusion of test files, etc. |
 
 ## 3. Check contribution guidelines
 
 Read `CONTRIBUTING.md` at the repo root and verify the PR complies. Only check mechanical items:
 
-| Guideline | How to verify |
-|-----------|--------------|
+| Guideline           | How to verify                                                                                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **PR title format** | Must be `type(scope): description`. Type must be one of: build, ci, docs, feat, fix, perf, refactor, style, test. Scope must be a supported package name from CONTRIBUTING.md. |
-| **Tests included** | New functionality must have tests. Check the PR body's test plan for unchecked items. |
-| **Squash merge** | Preferred unless the PR explains why commit boundaries matter. |
-| **Related commits** | All commits should be related. Flag disjoint changes that should be separate PRs. |
-| **Linked issues** | The PR should reference related issues. Flag if "Closes #" is empty. |
-| **PR template** | Should include affected scope, test plan, and merge strategy recommendation. |
+| **Tests included**  | New functionality must have tests. Check the PR body's test plan for unchecked items.                                                                                          |
+| **Squash merge**    | Preferred unless the PR explains why commit boundaries matter.                                                                                                                 |
+| **Related commits** | All commits should be related. Flag disjoint changes that should be separate PRs.                                                                                              |
+| **Linked issues**   | The PR should reference related issues. Flag if "Closes #" is empty.                                                                                                           |
+| **PR template**     | Should include affected scope, test plan, and merge strategy recommendation.                                                                                                   |
 
 ## 4. Output format
 
@@ -66,4 +66,3 @@ End with a verdict table:
 ```
 
 Keep verdicts to one phrase: "Clean", "Minor concern", "Should fix before merge", "Blocking".
-

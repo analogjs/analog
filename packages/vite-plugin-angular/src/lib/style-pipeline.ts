@@ -28,18 +28,6 @@ export interface AngularStylePipelineOptions {
   plugins: AngularStylePipelinePlugin[];
 }
 
-export function defineAngularStylePipeline<
-  const T extends AngularStylePipelineOptions,
->(options: T): T {
-  return options;
-}
-
-export function defineAngularStylePipelinePlugins<
-  const T extends AngularStylePipelinePlugin[],
->(plugins: T): T {
-  return plugins;
-}
-
 export function stylePipelinePreprocessorFromPlugins(
   options: AngularStylePipelineOptions | undefined,
 ): StylePreprocessor | undefined {
