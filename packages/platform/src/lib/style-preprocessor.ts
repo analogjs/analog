@@ -26,14 +26,6 @@ export interface StylesheetTransformResult {
   tags?: string[];
 }
 
-export interface StylePipelineStylesheetRegistry {
-  getPublicIdsForSource(sourcePath: string): string[];
-  getRequestIdsForSource(sourcePath: string): string[];
-  getDependenciesForSource(sourcePath: string): StylesheetDependency[];
-  getDiagnosticsForSource(sourcePath: string): StylesheetDiagnostic[];
-  getTagsForSource(sourcePath: string): string[];
-}
-
 export type StylePreprocessor = (
   code: string,
   filename: string,

@@ -9,6 +9,18 @@
       "types": "./dist/src/index.d.ts",
       "default": "./dist/src/index.js"
     },
+    "./style-pipeline": {
+      "types": "./dist/src/style-pipeline.d.ts",
+      "import": "./dist/src/style-pipeline.js",
+      "require": "./dist/src/style-pipeline.js",
+      "default": "./dist/src/style-pipeline.js"
+    },
+    "./style-preprocessor": {
+      "types": "./dist/src/style-preprocessor.d.ts",
+      "import": "./dist/src/style-preprocessor.js",
+      "require": "./dist/src/style-preprocessor.js",
+      "default": "./dist/src/style-preprocessor.js"
+    },
     "./package.json": "./package.json"
   },
   "keywords": [

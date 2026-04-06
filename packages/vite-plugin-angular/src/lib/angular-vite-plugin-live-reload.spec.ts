@@ -153,6 +153,7 @@ describe('angular hmr style preprocessing', () => {
       expect(stylePreprocessor).toHaveBeenCalledWith(
         '.demo { color: red; }',
         '/project/src/app/demo.component.css',
+        undefined,
       );
       expect(await plugin.load(`${externalId}?ngcomp=ng-c123&e=0`)).toBe(
         '/* /project/src/app/demo.component.css */\n.demo { color: red; }',
@@ -171,6 +172,7 @@ describe('angular hmr style preprocessing', () => {
       expect(stylePreprocessor).toHaveBeenCalledWith(
         '.demo { display: grid; }',
         '/project/src/app/demo.component.css',
+        undefined,
       );
       expect(await plugin.load(`${inlineId}?ngcomp=ng-c123&e=0`)).toBe(
         '/* /project/src/app/demo.component.css */\n.demo { display: grid; }',
