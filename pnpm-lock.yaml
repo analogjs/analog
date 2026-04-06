@@ -1454,6 +1454,9 @@ importers:
 
   packages/platform:
     dependencies:
+      '@analogjs/style-pipeline':
+        specifier: workspace:*
+        version: link:../style-pipeline
       '@analogjs/vite-plugin-angular':
         specifier: workspace:*
         version: link:../vite-plugin-angular
@@ -1469,9 +1472,6 @@ importers:
       '@nx/vite':
         specifier: catalog:peerCompat
         version: 22.6.2(@babel/traverse@7.29.0)(@swc-node/register@1.11.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@swc/core@1.15.24(@swc/helpers@0.5.21))(@swc/types@0.1.26)(typescript@6.0.2))(@swc/core@1.15.24(@swc/helpers@0.5.21))(nx@22.7.0-beta.10(@swc-node/register@1.11.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@swc/core@1.15.24(@swc/helpers@0.5.21))(@swc/types@0.1.26)(typescript@6.0.2))(@swc/core@1.15.24(@swc/helpers@0.5.21)))(typescript@6.0.2)(vite@8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3))(vitest@4.1.2)
-      '@standard-schema/spec':
-        specifier: 'catalog:'
-        version: 1.1.0
       es-toolkit:
         specifier: 'catalog:'
         version: 1.45.1
@@ -1567,8 +1567,17 @@ importers:
         specifier: catalog:peerCompat
         version: 8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3)
 
+  packages/style-pipeline:
+    dependencies:
+      vite:
+        specifier: catalog:peerCompat
+        version: 8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3)
+
   packages/vite-plugin-angular:
     dependencies:
+      '@analogjs/style-pipeline':
+        specifier: workspace:*
+        version: link:../style-pipeline
       '@angular-devkit/build-angular':
         specifier: catalog:peerAngularBuilders
         version: 21.2.4(b8427e3316f5f1e4538d50a5e8d618ff)

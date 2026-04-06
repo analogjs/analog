@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
+import {
+  defineAngularStylePipeline,
+  defineAngularStylePipelinePlugins,
+} from '@analogjs/style-pipeline';
 import { AnalogStylesheetRegistry } from './stylesheet-registry.js';
 import * as debug from './utils/debug.js';
 import {
   configureStylePipelineRegistry,
-  defineAngularStylePipeline,
-  defineAngularStylePipelinePlugins,
   stylePipelinePreprocessorFromPlugins,
 } from './style-pipeline.js';
 

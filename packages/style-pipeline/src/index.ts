@@ -7,11 +7,11 @@ export type {
   StylePipelinePluginEntry,
   StylePipelinePluginFactory,
   StylePipelineStylesheetRegistry,
-} from '@analogjs/style-pipeline';
+} from './lib/style-pipeline.js';
 export {
   defineAngularStylePipeline,
   defineAngularStylePipelinePlugins,
   defineStylePipeline,
   defineStylePipelinePlugins,
   resolveStylePipelinePlugins,
-} from '@analogjs/style-pipeline';
+} from './lib/style-pipeline.js';

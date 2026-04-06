@@ -32,6 +32,12 @@
       ],
       "@analogjs/nx": ["./packages/nx-plugin/src/index.ts"],
       "@analogjs/platform": ["./packages/platform/src/index.ts"],
+      "@analogjs/platform/style-pipeline": [
+        "./packages/platform/src/style-pipeline.ts"
+      ],
+      "@analogjs/platform/style-preprocessor": [
+        "./packages/platform/src/style-preprocessor.ts"
+      ],
       "@analogjs/router": ["./packages/router/src/index.ts"],
       "@analogjs/router/content": ["./packages/router/content/src/index.ts"],
       "@analogjs/router/tanstack-query": [
@@ -43,6 +49,10 @@
       "@analogjs/router/server": ["./packages/router/server/src/index.ts"],
       "@analogjs/router/server/actions": [
         "./packages/router/server/actions/src/index.ts"
+      ],
+      "@analogjs/style-pipeline": ["./packages/style-pipeline/src/index.ts"],
+      "@analogjs/style-pipeline/style-preprocessor": [
+        "./packages/style-pipeline/src/style-preprocessor.ts"
       ],
       "@analogjs/router/tokens": ["./packages/router/tokens/src/index.ts"],
       "@analogjs/top-bar": ["./libs/top-bar/src/index.ts"],

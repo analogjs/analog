@@ -121,6 +121,13 @@ const packageConfigs: Record<string, PackageValidationConfig> = {
       'packages/platform/dist/src/lib/nx-plugin/src/generators/preset/generator.js',
     ],
   },
+  'style-pipeline': {
+    packageJsonPath: 'packages/style-pipeline/dist/package.json',
+    requiredPaths: [
+      'packages/style-pipeline/dist/src/index.js',
+      'packages/style-pipeline/dist/src/style-preprocessor.js',
+    ],
+  },
   router: {
     packageJsonPath: 'packages/router/dist/package.json',
     requiredPaths: [

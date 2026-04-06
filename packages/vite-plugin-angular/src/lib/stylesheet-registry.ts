@@ -7,8 +7,8 @@ import type {
   StylesheetDiagnostic,
   StylesheetTransformResult,
   StylesheetTransformContext,
-} from './style-preprocessor.js';
-import { normalizeStylesheetTransformResult as normalizeTransformResult } from './style-preprocessor.js';
+} from '@analogjs/style-pipeline/style-preprocessor';
+import { normalizeStylesheetTransformResult as normalizeTransformResult } from '@analogjs/style-pipeline/style-preprocessor';
 
 export interface AnalogStylesheetRecord {
   publicId: string;
@@ -184,8 +184,9 @@ export class AnalogStylesheetRegistry {
     const diagnostics = new Map<string, StylesheetDiagnostic>();
     const tags = new Set<string>();
 
-    for (const record of this.servedById.values()) {
-      if (record.sourcePath !== sourcePath) {
+    for (const publicId of this.sourceToPublicIds.get(sourcePath) ?? []) {
+      const record = this.servedById.get(publicId);
+      if (!record) {
         continue;
       }
 

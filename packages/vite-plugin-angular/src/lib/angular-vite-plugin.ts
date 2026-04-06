@@ -51,11 +51,14 @@ import {
   augmentProgramWithVersioning,
   mergeTransformers,
 } from './host.js';
-import type { StylePreprocessor } from './style-preprocessor.js';
 import {
   composeStylePreprocessors,
   normalizeStylesheetDependencies,
-} from './style-preprocessor.js';
+} from '@analogjs/style-pipeline/style-preprocessor';
+import type {
+  StylePreprocessor,
+  StylesheetDependency,
+} from '@analogjs/style-pipeline/style-preprocessor';
 
 import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {
@@ -106,7 +109,6 @@ import {
   configureStylePipelineRegistry,
   stylePipelinePreprocessorFromPlugins,
 } from './style-pipeline.js';
-import type { StylesheetDependency } from './style-preprocessor.js';
 
 export enum DiagnosticModes {
   None = 0,

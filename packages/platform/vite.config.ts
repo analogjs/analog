@@ -7,6 +7,18 @@ import { defineConfig, normalizePath } from 'vite';
 export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
+    resolve: {
+      alias: {
+        '@analogjs/style-pipeline': resolve(
+          __dirname,
+          '../style-pipeline/src/index.ts',
+        ),
+        '@analogjs/style-pipeline/style-preprocessor': resolve(
+          __dirname,
+          '../style-pipeline/src/style-preprocessor.ts',
+        ),
+      },
+    },
     build: {
       target: 'esnext',
       outDir: 'dist',
@@ -44,6 +56,16 @@ export default defineConfig(({ mode }) => {
       environment: 'node',
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts', '**/*.test.ts'],
+      alias: {
+        '@analogjs/style-pipeline': resolve(
+          __dirname,
+          '../style-pipeline/src/index.ts',
+        ),
+        '@analogjs/style-pipeline/style-preprocessor': resolve(
+          __dirname,
+          '../style-pipeline/src/style-preprocessor.ts',
+        ),
+      },
     },
     define: {
       'import.meta.vitest': mode !== 'production',
