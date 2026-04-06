@@ -32,6 +32,12 @@
       ],
       "@analogjs/nx": ["./packages/nx-plugin/src/index.ts"],
       "@analogjs/platform": ["./packages/platform/src/index.ts"],
+      "@analogjs/platform/style-pipeline": [
+        "./packages/platform/src/style-pipeline.ts"
+      ],
+      "@analogjs/platform/style-preprocessor": [
+        "./packages/platform/src/style-preprocessor.ts"
+      ],
       "@analogjs/router": ["./packages/router/src/index.ts"],
       "@analogjs/router/content": ["./packages/router/content/src/index.ts"],
       "@analogjs/router/tanstack-query": [
