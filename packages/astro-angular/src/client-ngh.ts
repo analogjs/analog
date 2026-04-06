@@ -68,20 +68,24 @@ export default (element: HTMLElement) => {
         },
         ...(Component.clientProviders || []),
       ],
-    }).then((appRef) => {
-      const componentRef = createComponent(Component, {
-        environmentInjector: appRef.injector,
-        hostElement,
-        bindings: createComponentBindings(mirror, props, hostElement),
+    })
+      .then((appRef) => {
+        const componentRef = createComponent(Component, {
+          environmentInjector: appRef.injector,
+          hostElement,
+          bindings: createComponentBindings(mirror, props, hostElement),
+        });
+
+        appRef.attachView(componentRef.hostView);
+
+        appRef.components.push(componentRef);
+
+        appRef.injector
+          .get(APP_BOOTSTRAP_LISTENER, [])
+          .forEach((cb) => cb(componentRef));
+      })
+      .catch((error) => {
+        console.error('Failed to hydrate Angular component:', error);
       });
-
-      appRef.attachView(componentRef.hostView);
-
-      appRef.components.push(componentRef);
-
-      appRef.injector
-        .get(APP_BOOTSTRAP_LISTENER, [])
-        .forEach((cb) => cb(componentRef));
-    });
   };
 };
