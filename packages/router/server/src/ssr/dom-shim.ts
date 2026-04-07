@@ -260,6 +260,14 @@ export class ShimElement extends ShimNode {
     this.ownerDocument = ownerDocument;
   }
 
+  // --- children (element-only child nodes) ---
+
+  get children(): ShimElement[] {
+    return this.childNodes.filter(
+      (n): n is ShimElement => n instanceof ShimElement,
+    );
+  }
+
   // --- Attribute accessors ---
 
   getAttribute(name: string): string | null {
@@ -468,6 +476,25 @@ export class ShimDocument extends ShimNode {
   head: ShimElement;
   body: ShimElement;
   defaultView: any = null;
+  location: {
+    href: string;
+    origin: string;
+    protocol: string;
+    hostname: string;
+    port: string;
+    pathname: string;
+    search: string;
+    hash: string;
+  } = {
+    href: 'http://localhost/',
+    origin: 'http://localhost',
+    protocol: 'http:',
+    hostname: 'localhost',
+    port: '',
+    pathname: '/',
+    search: '',
+    hash: '',
+  };
 
   constructor() {
     super(DOCUMENT_NODE);
