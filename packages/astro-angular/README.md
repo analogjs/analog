@@ -352,7 +352,7 @@ To add Angular hydration features, add a static property to the component class 
 The example below adds the [event replay](https://angular.dev/guide/hydration#how-event-replay-works) feature to the component.
 
 ```ts
-import { Component, Input } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { withEventReplay } from '@angular/platform-browser';
 
 @Component({
