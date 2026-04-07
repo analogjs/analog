@@ -139,6 +139,108 @@ describe('detectTypeOnlyImportNames', () => {
     expect(result).toContain('Router');
     expect(result).not.toContain('UserService');
   });
+
+  it('detects imports used only in export type declarations', () => {
+    const code = `
+      import { Foo } from 'foo';
+      export type { Foo };
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).toContain('Foo');
+  });
+
+  it('detects imports used only in inline type export specifiers', () => {
+    const code = `
+      import { Foo } from 'foo';
+      export { type Foo };
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).toContain('Foo');
+  });
+
+  it('does not flag imports used in value re-exports', () => {
+    const code = `
+      import { Foo } from 'foo';
+      export { Foo };
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('Foo');
+  });
+
+  it('handles mixed type and value export specifiers', () => {
+    const code = `
+      import { Foo, Bar } from 'lib';
+      export { type Foo, Bar };
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).toContain('Foo');
+    expect(result).not.toContain('Bar');
+  });
+
+  it('does not elide type-exported import that is also used as value', () => {
+    const code = `
+      import { Foo } from 'foo';
+      export type { Foo };
+      const x = new Foo();
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('Foo');
+  });
+
+  it('preserves imports used in export declarations', () => {
+    const code = `
+      import { Foo } from 'foo';
+      export const x = new Foo();
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('Foo');
+  });
+
+  it('detects typeof in type position as type-only', () => {
+    const code = `
+      import { Foo } from 'foo';
+      function bar(x: typeof Foo) {}
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).toContain('Foo');
+  });
+
+  it('preserves imports used as enum value and type', () => {
+    const code = `
+      import { Status } from './enums';
+      const x: Status = Status.Active;
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('Status');
+  });
+
+  it('preserves imports used in class extends (value position)', () => {
+    const code = `
+      import { Base } from './base';
+      class Child extends Base {}
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('Base');
+  });
+
+  it('preserves imports used in instanceof checks', () => {
+    const code = `
+      import { Foo } from 'foo';
+      const y = x instanceof Foo;
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('Foo');
+  });
+
+  it('handles class extends (value) + implements (type) correctly', () => {
+    const code = `
+      import { Base, Iface } from 'lib';
+      class Child extends Base implements Iface {}
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('Base');
+    expect(result).toContain('Iface');
+  });
 });
 
 describe('elideTypeOnlyImports', () => {
@@ -230,6 +332,27 @@ describe('elideTypeOnlyImports', () => {
     expect(result).toContain("import { value } from 'other'");
     // No stray \r left behind from the removed import
     expect(result).not.toMatch(/^\r/m);
+  });
+
+  it('elides import used only in export type re-export', () => {
+    const code = `import { Foo } from 'foo';\nexport type { Foo };\n`;
+    const result = elideTypeOnlyImports(code);
+    expect(result).not.toContain("from 'foo'");
+  });
+
+  it('elides import used only in inline type export specifier', () => {
+    const code = `import { Foo, Bar } from 'lib';\nexport { type Foo, Bar };\n`;
+    const result = elideTypeOnlyImports(code);
+    // Foo elided from import, Bar kept
+    expect(result).toContain('Bar');
+    expect(result).toContain("from 'lib'");
+    expect(result).not.toMatch(/import\s*\{[^}]*Foo[^}]*\}\s*from/);
+  });
+
+  it('preserves import used in value re-export', () => {
+    const code = `import { Foo } from 'foo';\nexport { Foo };\n`;
+    const result = elideTypeOnlyImports(code);
+    expect(result).toContain("import { Foo } from 'foo'");
   });
 });
 
