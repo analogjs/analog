@@ -6,6 +6,7 @@ import { inlineResourceUrls, extractInlineStyles } from './resource-inliner';
 import { scanDtsFile, collectImportedPackages } from './dts-reader';
 import { generateHmrCode } from './hmr';
 import { detectTypeOnlyImportNames } from './type-elision';
+import { jitTransform } from './jit-transform';
 
 describe('Registry input/output extraction', () => {
   it('extracts signal inputs from input()', () => {
@@ -1816,6 +1817,151 @@ describe('type-elision preserves TSAsExpression value references', () => {
       const x: MyInterface = { name: 'test' };
     `);
     expect(typeOnly.has('MyInterface')).toBe(true);
+  });
+});
+
+describe('constant pool helpers survive type-only import elision', () => {
+  it('emits @for template functions when last import is type-only', () => {
+    const result = compile(
+      `
+      import { Component, input } from '@angular/core';
+      import { UnifiedPost } from '../data/posts';
+
+      @Component({
+        selector: 'app-posts',
+        template: \`
+          @for (post of posts(); track post.slug) {
+            <p>{{ post.title }}</p>
+          }
+        \`
+      })
+      export class PostsComponent {
+        posts = input<UnifiedPost[]>([]);
+      }
+    `,
+      'posts.component.ts',
+    );
+
+    expectCompiles(result);
+    // Template helper must be defined, not just referenced
+    expect(result).toMatch(/function PostsComponent_For_\d+_Template/);
+    expect(result).toContain('ɵɵrepeaterCreate');
+    // Type-only import should be elided
+    expect(result).not.toContain('import { UnifiedPost }');
+  });
+
+  it('emits @for track function when last import is type-only', () => {
+    const result = compile(
+      `
+      import { Component, input } from '@angular/core';
+      import { Item } from './models';
+
+      @Component({
+        selector: 'app-list',
+        template: \`
+          @for (item of items(); track item.id) {
+            <span>{{ item.name }}</span>
+          }
+        \`
+      })
+      export class ListComponent {
+        items = input<Item[]>([]);
+      }
+    `,
+      'list.component.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toMatch(/_forTrack\d/);
+    expect(result).not.toContain('import { Item }');
+  });
+
+  it('emits helpers when multiple trailing imports are type-only', () => {
+    const result = compile(
+      `
+      import { Component, input } from '@angular/core';
+      import { TypeA } from './types-a';
+      import { TypeB } from './types-b';
+
+      @Component({
+        selector: 'app-multi',
+        template: \`
+          @for (item of items(); track item) {
+            <p>{{ item }}</p>
+          }
+        \`
+      })
+      export class MultiComponent {
+        items = input<TypeA[]>([]);
+        other: TypeB | undefined;
+      }
+    `,
+      'multi.component.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toMatch(/function MultiComponent_For_\d+_Template/);
+    expect(result).not.toContain('import { TypeA }');
+    expect(result).not.toContain('import { TypeB }');
+  });
+});
+
+describe('JIT transform preserves @Injectable', () => {
+  it('keeps @Injectable decorator for providedIn registration', () => {
+    const result = jitTransform(
+      `
+      import { Injectable } from '@angular/core';
+
+      @Injectable({ providedIn: 'root' })
+      export class MyService {
+        getValue() { return 42; }
+      }
+    `,
+      'my.service.ts',
+    ).code;
+
+    expect(result).toContain('@Injectable');
+    expect(result).toContain("providedIn: 'root'");
+    // Should NOT emit static decorators array for Injectable
+    expect(result).not.toContain('MyService.decorators');
+  });
+
+  it('still strips @Component and emits JIT compile call', () => {
+    const result = jitTransform(
+      `
+      import { Component } from '@angular/core';
+
+      @Component({
+        selector: 'app-test',
+        template: '<p>hello</p>'
+      })
+      export class TestComponent {}
+    `,
+      'test.component.ts',
+    ).code;
+
+    expect(result).not.toMatch(/@Component/);
+    expect(result).toContain('TestComponent.decorators');
+    expect(result).toContain('_jitCompileComponent');
+  });
+
+  it('handles class with both @Injectable and no other Angular decorators', () => {
+    const result = jitTransform(
+      `
+      import { Injectable, inject } from '@angular/core';
+      import { HttpClient } from '@angular/common/http';
+
+      @Injectable({ providedIn: 'root' })
+      export class DataService {
+        private http = inject(HttpClient);
+      }
+    `,
+      'data.service.ts',
+    ).code;
+
+    // @Injectable stays, class is otherwise untouched
+    expect(result).toContain('@Injectable');
+    expect(result).not.toContain('DataService.decorators');
   });
 });
 
