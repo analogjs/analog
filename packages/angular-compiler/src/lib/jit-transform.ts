@@ -55,9 +55,12 @@ export function jitTransform(
 
     const angularDecs = decorators.filter((dec) => {
       if (!ts.isCallExpression(dec.expression)) return false;
-      return ANGULAR_DECORATORS.has(
-        dec.expression.expression.getText(sourceFile),
-      );
+      const name = dec.expression.expression.getText(sourceFile);
+      // Keep @Injectable on the class — Angular's decorator function
+      // self-registers ɵprov (providedIn) at class definition time and
+      // there is no ɵcompileInjectable JIT entry point to call instead.
+      if (name === 'Injectable') return false;
+      return ANGULAR_DECORATORS.has(name);
     });
     if (angularDecs.length === 0) continue;
 
