@@ -1,6 +1,7 @@
 import * as ts from 'typescript';
 import * as o from '@angular/compiler';
 import { unwrapForwardRef } from './utils.js';
+import { SIGNAL_APIS } from './constants.js';
 
 function getCallApi(
   call: ts.CallExpression,
@@ -251,6 +252,7 @@ export function detectSignals(node: ts.ClassDeclaration) {
       if (!signalCall) return;
 
       const { api, required } = signalCall;
+      if (!SIGNAL_APIS.has(api)) return;
 
       // 1. SIGNAL INPUTS (Standard & Required)
       if (api === 'input') {

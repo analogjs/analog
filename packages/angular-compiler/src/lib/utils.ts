@@ -64,10 +64,4 @@ export function unwrapForwardRef(node: ts.Expression): ts.Expression {
   return node;
 }
 
-export const ANGULAR_DECORATORS = new Set([
-  'Component',
-  'Directive',
-  'Pipe',
-  'Injectable',
-  'NgModule',
-]);
+export { ANGULAR_DECORATORS } from './constants.js';

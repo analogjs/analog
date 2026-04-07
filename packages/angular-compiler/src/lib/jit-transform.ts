@@ -2,19 +2,12 @@ import { parseSync } from 'oxc-parser';
 import MagicString from 'magic-string';
 import { detectTypeOnlyImportNames } from './type-elision.js';
 import { buildCtorParameters, buildPropDecorators } from './jit-metadata.js';
+import { ANGULAR_DECORATORS } from './constants.js';
 
 export interface JitTransformResult {
   code: string;
   map: any;
 }
-
-const ANGULAR_DECORATORS = new Set([
-  'Component',
-  'Directive',
-  'Pipe',
-  'Injectable',
-  'NgModule',
-]);
 
 /**
  * Recursively find all ClassDeclaration nodes in an OXC AST.

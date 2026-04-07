@@ -1,4 +1,5 @@
 import { parseSync } from 'oxc-parser';
+import { COMPILABLE_DECORATORS } from './constants.js';
 
 export interface RegistryInput {
   classPropertyName: string;
@@ -32,13 +33,7 @@ export interface RegistryEntry {
 /** Maps class name → registry entry */
 export type ComponentRegistry = Map<string, RegistryEntry>;
 
-const ANGULAR_DECORATORS = new Set([
-  'Component',
-  'Directive',
-  'Pipe',
-  'NgModule',
-]);
-const DECORATOR_RE = /@(Component|Directive|Pipe|NgModule)/;
+const DECORATOR_RE = new RegExp(`@(${[...COMPILABLE_DECORATORS].join('|')})`);
 
 /**
  * Lightweight scan of a TypeScript file to extract Angular decorator metadata
@@ -73,7 +68,7 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
       if (!expr || expr.type !== 'CallExpression') continue;
 
       const decoratorName: string = expr.callee?.name;
-      if (!ANGULAR_DECORATORS.has(decoratorName)) continue;
+      if (!COMPILABLE_DECORATORS.has(decoratorName)) continue;
 
       const arg = expr.arguments?.[0];
       if (!arg || arg.type !== 'ObjectExpression') continue;

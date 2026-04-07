@@ -6,6 +6,7 @@
  *
  * Uses source-position slicing instead of AST getText() for speed.
  */
+import { FIELD_DECORATORS } from './constants.js';
 
 function getCallApi(call: any): { api: string; required: boolean } | null {
   const callee = call.callee;
@@ -109,17 +110,6 @@ export function buildCtorParameters(
 
   return result.join(', ');
 }
-
-const FIELD_DECORATORS = new Set([
-  'Input',
-  'Output',
-  'ViewChild',
-  'ViewChildren',
-  'ContentChild',
-  'ContentChildren',
-  'HostBinding',
-  'HostListener',
-]);
 
 /**
  * Build propDecorators for field decorators + signal API downleveling.

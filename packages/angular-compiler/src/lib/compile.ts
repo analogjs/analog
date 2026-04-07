@@ -23,11 +23,8 @@ import {
   compileClassMetadata,
 } from '@angular/compiler';
 import { ComponentRegistry } from './registry.js';
-import {
-  collectTypeOnlyImports,
-  findAllClasses,
-  ANGULAR_DECORATORS,
-} from './utils.js';
+import { collectTypeOnlyImports, findAllClasses } from './utils.js';
+import { ANGULAR_DECORATORS, FIELD_DECORATORS } from './constants.js';
 import {
   detectTypeOnlyImportNames,
   elideTypeOnlyImportsMagicString,
@@ -746,23 +743,13 @@ export function compile(
     // @ViewChild, @ContentChild, etc.) so they are removed from the source.
     // The metadata has already been extracted by detectFieldDecorators().
     const memberDecorators: ts.Decorator[] = [];
-    const MEMBER_DECORATOR_NAMES = new Set([
-      'Input',
-      'Output',
-      'HostBinding',
-      'HostListener',
-      'ViewChild',
-      'ViewChildren',
-      'ContentChild',
-      'ContentChildren',
-    ]);
     for (const member of node.members) {
       const mDecorators = ts.getDecorators(member as any);
       if (!mDecorators) continue;
       for (const dec of mDecorators) {
         if (!ts.isCallExpression(dec.expression)) continue;
         const decName = dec.expression.expression.getText(origSourceFile);
-        if (MEMBER_DECORATOR_NAMES.has(decName)) {
+        if (FIELD_DECORATORS.has(decName)) {
           memberDecorators.push(dec);
         }
       }
