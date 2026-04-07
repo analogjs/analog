@@ -78,7 +78,7 @@ describe('JIT resolveId', () => {
     expect(result).not.toContain('??inline');
   });
 
-  it('should resolve template files with ?raw suffix (single ?)', () => {
+  it('should resolve template files with ?analog-raw suffix', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
       (p) => p.name === '@analogjs/vite-plugin-angular',
@@ -94,8 +94,46 @@ describe('JIT resolveId', () => {
     );
 
     expect(result).toBeDefined();
-    expect(result).toContain('?raw');
-    expect(result).not.toContain('??raw');
+    expect(result).toContain('?analog-raw');
+    expect(result).not.toContain('??analog-raw');
+  });
+
+  it('should intercept .html?raw imports and remap to ?analog-raw', () => {
+    const plugins = angular({ jit: true });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+
+    const resolveId = (mainPlugin as any).resolveId;
+
+    // Relative path with importer
+    const result = resolveId(
+      './my-component.html?raw',
+      '/project/src/app/my-component.ts',
+    );
+    expect(result).toContain('/project/src/app/my-component.html?analog-raw');
+
+    // Absolute path
+    const result2 = resolveId(
+      '/project/src/app/my-component.html?raw',
+      '/project/src/app/other.ts',
+    );
+    expect(result2).toBe('/project/src/app/my-component.html?analog-raw');
+  });
+
+  it('should intercept .html?raw imports even without jit mode', () => {
+    const plugins = angular();
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+
+    const resolveId = (mainPlugin as any).resolveId;
+
+    const result = resolveId(
+      './my-component.html?raw',
+      '/project/src/app/my-component.ts',
+    );
+    expect(result).toContain('?analog-raw');
   });
 });
 
