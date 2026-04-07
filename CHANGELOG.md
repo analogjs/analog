@@ -1,3 +1,11 @@
+# [2.5.0-beta.10](https://github.com/analogjs/analog/compare/v2.5.0-beta.9...v2.5.0-beta.10) (2026-04-07)
+
+### Bug Fixes
+
+- **angular-compiler:** preserve @Injectable in JIT mode for providedIn registration ([1a9745c](https://github.com/analogjs/analog/commit/1a9745c41745d5c9c3c538b905b9a3861dd5e421))
+- **vite-plugin-angular,angular-compiler:** support Vite 6-8 and fix type-elision helper loss ([0aa26e0](https://github.com/analogjs/analog/commit/0aa26e06b99cc52b6e2b09c69602d44c62a0fdee))
+- **vite-plugin-angular:** fix vitest sourcemap plugin for Vite 7 ([74d52e7](https://github.com/analogjs/analog/commit/74d52e7f72d01e972df1c182f5c11c6c70e033a4))
+
 # [2.5.0-beta.9](https://github.com/analogjs/analog/compare/v2.5.0-beta.8...v2.5.0-beta.9) (2026-04-07)
 
 ### Bug Fixes
