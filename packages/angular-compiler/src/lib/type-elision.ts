@@ -98,6 +98,23 @@ function analyzeTypeOnlyImports(code: string): {
       inTypePosition = true;
     }
 
+    // Type-only exports: `export type { Foo }` or `export { type Foo }`
+    // Identifiers inside type-only export specifiers are not value references.
+    if (
+      !inTypePosition &&
+      node.type === 'ExportNamedDeclaration' &&
+      !node.source
+    ) {
+      // Walk the declaration (if any) in value context
+      if (node.declaration) walk(node.declaration, false);
+      // Walk each specifier, skipping type-only ones
+      for (const spec of node.specifiers ?? []) {
+        if (node.exportKind === 'type' || spec.exportKind === 'type') continue;
+        walk(spec, false);
+      }
+      return;
+    }
+
     if (
       !inTypePosition &&
       node.type === 'Identifier' &&
