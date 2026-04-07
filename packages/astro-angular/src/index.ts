@@ -13,14 +13,9 @@ interface AngularOptions {
    */
   strictStylePlacement?: boolean;
   /**
-   * Experimental options
+   * Use Angular's `provideClientHydration` to hydrate components.
    */
-  experimental?: {
-    /**
-     * Use Angular's `provideClientHydration` to hydrate components.
-     */
-    useAngularHydration?: boolean;
-  };
+  useAngularHydration?: boolean;
 }
 
 function getRenderer(ngHydration: boolean | undefined): AstroRenderer {
@@ -44,7 +39,7 @@ function getViteConfiguration(options?: AngularOptions): ViteUserConfig {
       include: [
         '@angular/platform-browser',
         '@angular/core',
-        options?.experimental?.useAngularHydration
+        options?.useAngularHydration
           ? '@analogjs/astro-angular/client-ngh.js'
           : '@analogjs/astro-angular/client.js',
       ],
@@ -102,7 +97,7 @@ export default function (options?: AngularOptions): AstroIntegration {
     name: '@analogjs/astro-angular',
     hooks: {
       'astro:config:setup': ({ addRenderer, updateConfig, addMiddleware }) => {
-        addRenderer(getRenderer(options?.experimental?.useAngularHydration));
+        addRenderer(getRenderer(options?.useAngularHydration));
         updateConfig({
           vite: getViteConfiguration(options),
         });
