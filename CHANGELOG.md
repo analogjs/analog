@@ -1,3 +1,9 @@
+# [2.5.0-beta.6](https://github.com/analogjs/analog/compare/v2.5.0-beta.5...v2.5.0-beta.6) (2026-04-07)
+
+### Features
+
+- **astro-angular:** add support for client hydration with Angular components ([#2212](https://github.com/analogjs/analog/issues/2212)) ([d36de5b](https://github.com/analogjs/analog/commit/d36de5baa8fa70341c0d67731d5ba32fe70ea743))
+
 # [2.5.0-beta.5](https://github.com/analogjs/analog/compare/v2.5.0-beta.4...v2.5.0-beta.5) (2026-04-07)
 
 ### Bug Fixes
