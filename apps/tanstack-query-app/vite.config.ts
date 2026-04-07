@@ -4,6 +4,7 @@ import analog from '@analogjs/platform';
 import tailwindcss from '@tailwindcss/vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
+import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -17,6 +18,9 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       include: ['@angular/forms'],
+      // Keep workspace Angular libraries on the source-transform path so Analog
+      // can compile external templates/styles instead of Vite prebundling them.
+      exclude: getWorkspaceDependencyExcludes('apps/tanstack-query-app'),
     },
     plugins: [
       tailwindcss(),

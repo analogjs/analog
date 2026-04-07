@@ -3,6 +3,7 @@
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import analog from '../../packages/platform/src/index.js';
 import { defineConfig } from 'vite';
+import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 
 export default defineConfig(() => {
   return {
@@ -10,6 +11,9 @@ export default defineConfig(() => {
     publicDir: 'src/assets',
     optimizeDeps: {
       include: ['@angular/common'],
+      // Keep workspace Angular libraries on the source-transform path so Analog
+      // can compile external templates/styles instead of Vite prebundling them.
+      exclude: getWorkspaceDependencyExcludes('apps/opt-catchall-app'),
     },
     build: {
       outDir: '../../dist/apps/opt-catchall-app/client',
