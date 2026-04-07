@@ -249,7 +249,7 @@ describe('angularAstroMiddleware', () => {
     expect(transformed).toBe(response);
   });
 
-  it('should update the content-type header', async () => {
+  it('should update the content-length header', async () => {
     const response = new Response(
       `      
       <html>
