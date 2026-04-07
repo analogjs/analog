@@ -195,6 +195,52 @@ describe('detectTypeOnlyImportNames', () => {
     const result = detectTypeOnlyImportNames(code);
     expect(result).not.toContain('Foo');
   });
+
+  it('detects typeof in type position as type-only', () => {
+    const code = `
+      import { Foo } from 'foo';
+      function bar(x: typeof Foo) {}
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).toContain('Foo');
+  });
+
+  it('preserves imports used as enum value and type', () => {
+    const code = `
+      import { Status } from './enums';
+      const x: Status = Status.Active;
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('Status');
+  });
+
+  it('preserves imports used in class extends (value position)', () => {
+    const code = `
+      import { Base } from './base';
+      class Child extends Base {}
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('Base');
+  });
+
+  it('preserves imports used in instanceof checks', () => {
+    const code = `
+      import { Foo } from 'foo';
+      const y = x instanceof Foo;
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('Foo');
+  });
+
+  it('handles class extends (value) + implements (type) correctly', () => {
+    const code = `
+      import { Base, Iface } from 'lib';
+      class Child extends Base implements Iface {}
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('Base');
+    expect(result).toContain('Iface');
+  });
 });
 
 describe('elideTypeOnlyImports', () => {
