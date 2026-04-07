@@ -353,11 +353,16 @@ export function angular(options?: PluginOptions): Plugin[] {
     // Use OXC to reliably strip all TS syntax (type annotations, generics,
     // interfaces, etc.) so the output is valid JavaScript for both client
     // and SSR environments.
-    const stripped = await vite.transformWithOxc(result.code, id, {
-      lang: 'ts',
-      sourcemap: false,
-      decorator: { legacy: false, emitDecoratorMetadata: false },
-    });
+    const stripped = vite.transformWithOxc
+      ? await vite.transformWithOxc(result.code, id, {
+          lang: 'ts',
+          sourcemap: false,
+          decorator: { legacy: false, emitDecoratorMetadata: false },
+        })
+      : await vite.transformWithEsbuild(result.code, id, {
+          loader: 'ts',
+          sourcemap: false,
+        });
     let outputCode = stripped.code;
 
     // Append HMR code in dev mode

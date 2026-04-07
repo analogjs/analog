@@ -28,7 +28,10 @@ import {
   findAllClasses,
   ANGULAR_DECORATORS,
 } from './utils.js';
-import { elideTypeOnlyImportsMagicString } from './type-elision.js';
+import {
+  detectTypeOnlyImportNames,
+  elideTypeOnlyImportsMagicString,
+} from './type-elision.js';
 
 import {
   emitAngularExpr,
@@ -863,12 +866,35 @@ export function compile(
   if (helpers.length > 0) {
     // Insert helpers after the last import / top-level non-class statement,
     // well before any class that references them.
+    // Detect which imported names are type-only so we skip imports that will
+    // be fully removed by elideTypeOnlyImportsMagicString (step 4).
+    // Inserting at a position inside a soon-to-be-removed range would cause
+    // MagicString to discard the helpers along with the import.
+    const willElide = detectTypeOnlyImportNames(ms.toString());
+
     let insertPos = 0;
     for (const stmt of origSourceFile.statements) {
-      if (
-        ts.isImportDeclaration(stmt) ||
-        (ts.isVariableStatement(stmt) &&
-          !stmt.getText(origSourceFile).includes('class'))
+      if (ts.isImportDeclaration(stmt)) {
+        // Skip imports that will be entirely removed by type elision
+        if (willElide.size > 0 && stmt.importClause) {
+          const clause = stmt.importClause;
+          const namedBindings =
+            clause.namedBindings && ts.isNamedImports(clause.namedBindings)
+              ? clause.namedBindings.elements
+              : undefined;
+          const defaultName = clause.name;
+          const allElided =
+            (!defaultName || willElide.has(defaultName.text)) &&
+            (!namedBindings ||
+              namedBindings.every(
+                (el) => el.isTypeOnly || willElide.has(el.name.text),
+              ));
+          if (allElided) continue;
+        }
+        insertPos = stmt.getEnd();
+      } else if (
+        ts.isVariableStatement(stmt) &&
+        !stmt.getText(origSourceFile).includes('class')
       ) {
         insertPos = stmt.getEnd();
       } else if (!ts.isExportAssignment(stmt)) {
