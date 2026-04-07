@@ -1,3 +1,9 @@
+# [2.5.0-beta.5](https://github.com/analogjs/analog/compare/v2.5.0-beta.4...v2.5.0-beta.5) (2026-04-07)
+
+### Bug Fixes
+
+- **angular-compiler:** hostDirectives, emitExpr safety, TDZ hoisting, misc compilation fixes ([#2255](https://github.com/analogjs/analog/issues/2255)) ([796e3e0](https://github.com/analogjs/analog/commit/796e3e09b0e7e5055fed2f1c765cd60a35c6d5b2))
+
 # [2.5.0-beta.4](https://github.com/analogjs/analog/compare/v2.5.0-beta.3...v2.5.0-beta.4) (2026-04-06)
 
 ### Bug Fixes
