@@ -1,3 +1,9 @@
+# [2.5.0-beta.12](https://github.com/analogjs/analog/compare/v2.5.0-beta.11...v2.5.0-beta.12) (2026-04-07)
+
+### Bug Fixes
+
+- **angular-compiler:** auto-import decorator classes for signal api downleveling in jit ([d8a6265](https://github.com/analogjs/analog/commit/d8a62650878e537eac70bdf1285962cf09d6e044))
+
 # [2.5.0-beta.11](https://github.com/analogjs/analog/compare/v2.5.0-beta.10...v2.5.0-beta.11) (2026-04-07)
 
 ### Performance Improvements
