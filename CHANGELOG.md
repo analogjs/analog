@@ -1,3 +1,9 @@
+# [2.5.0-beta.8](https://github.com/analogjs/analog/compare/v2.5.0-beta.7...v2.5.0-beta.8) (2026-04-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** bypass server.fs restrictions on ?raw template imports ([#2259](https://github.com/analogjs/analog/issues/2259)) ([87512a2](https://github.com/analogjs/analog/commit/87512a254698ce78439d0c79eb86a7784dea0c17))
+
 # [2.5.0-beta.7](https://github.com/analogjs/analog/compare/v2.5.0-beta.6...v2.5.0-beta.7) (2026-04-07)
 
 ### Bug Fixes
