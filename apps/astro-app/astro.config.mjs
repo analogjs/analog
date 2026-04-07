@@ -18,9 +18,7 @@ export default defineConfig({
   integrations: [
     angular({
       strictStylePlacement: true,
-      experimental: {
-        useAngularHydration: true,
-      },
+      useAngularHydration: true,
     }),
     react(),
     mdx({ syntaxHighlight: 'prism' }),
