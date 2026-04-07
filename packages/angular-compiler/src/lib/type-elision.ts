@@ -83,7 +83,18 @@ function analyzeTypeOnlyImports(code: string): {
     if (valueReferenced.size === importedNames.size) return;
 
     // If this node's type itself marks a type construct, everything below is type-only
+    // Exception: TSAsExpression/TSSatisfiesExpression have a value `expression`
+    // child that is NOT in a type position — only the type annotation is.
     if (!inTypePosition && TYPE_NODE_TYPES.has(node.type)) {
+      if (
+        node.type === 'TSAsExpression' ||
+        node.type === 'TSSatisfiesExpression'
+      ) {
+        // Walk the expression child in value context, type annotation in type context
+        walk(node.expression, false);
+        walk(node.typeAnnotation, true);
+        return;
+      }
       inTypePosition = true;
     }
 

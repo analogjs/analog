@@ -105,9 +105,7 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
   }
   visitInvokeFunctionExpr(ast: o.InvokeFunctionExpr) {
     const fn = ast.fn.visitExpression(this, null);
-    const args = ast.args
-      .map((a: any) => a.visitExpression(this, null))
-      .join(', ');
+    const args = ast.args.map((a: any) => this.emitExpr(a)).join(', ');
     // Wrap arrow/function expressions in parens for valid IIFE syntax
     if (
       ast.fn instanceof o.ArrowFunctionExpr ||
@@ -215,7 +213,7 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
       '.' +
       ast.name +
       '(' +
-      ast.args.map((a: any) => a.visitExpression(this, null)).join(', ') +
+      ast.args.map((a: any) => this.emitExpr(a)).join(', ') +
       ')'
     );
   }
@@ -230,7 +228,7 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
       'new (' +
       ast.classExpr.visitExpression(this, null) +
       ')(' +
-      ast.args.map((a: any) => a.visitExpression(this, null)).join(', ') +
+      ast.args.map((a: any) => this.emitExpr(a)).join(', ') +
       ')'
     );
   }
