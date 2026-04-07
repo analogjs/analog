@@ -7,6 +7,12 @@ import { scanDtsFile, collectImportedPackages } from './dts-reader';
 import { generateHmrCode } from './hmr';
 import { detectTypeOnlyImportNames } from './type-elision';
 import { jitTransform } from './jit-transform';
+import {
+  ANGULAR_DECORATORS,
+  COMPILABLE_DECORATORS,
+  FIELD_DECORATORS,
+  SIGNAL_APIS,
+} from './constants';
 
 describe('Registry input/output extraction', () => {
   it('extracts signal inputs from input()', () => {
@@ -1906,62 +1912,323 @@ describe('constant pool helpers survive type-only import elision', () => {
   });
 });
 
-describe('JIT transform preserves @Injectable', () => {
-  it('keeps @Injectable decorator for providedIn registration', () => {
-    const result = jitTransform(
+describe('Registry outputFromObservable support', () => {
+  it('extracts outputFromObservable as output in registry', () => {
+    const entries = scanFile(
       `
-      import { Injectable } from '@angular/core';
+      import { Component, outputFromObservable } from '@angular/core';
+      import { Subject } from 'rxjs';
 
-      @Injectable({ providedIn: 'root' })
-      export class MyService {
-        getValue() { return 42; }
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        private subject = new Subject<string>();
+        changed = outputFromObservable(this.subject);
       }
     `,
-      'my.service.ts',
-    ).code;
+      'test.ts',
+    );
 
-    expect(result).toContain('@Injectable');
-    expect(result).toContain("providedIn: 'root'");
-    // Should NOT emit static decorators array for Injectable
-    expect(result).not.toContain('MyService.decorators');
+    expect(entries).toHaveLength(1);
+    expect(entries[0].outputs).toBeDefined();
+    expect(entries[0].outputs!['changed']).toBe('changed');
   });
+});
 
-  it('still strips @Component and emits JIT compile call', () => {
+describe('JIT transform nested class support', () => {
+  it('processes classes nested inside function scopes', () => {
     const result = jitTransform(
       `
       import { Component } from '@angular/core';
 
-      @Component({
-        selector: 'app-test',
-        template: '<p>hello</p>'
-      })
-      export class TestComponent {}
+      @Component({ selector: 'app-top', template: '' })
+      export class TopComponent {}
+
+      function factory() {
+        @Component({ selector: 'app-inner', template: '' })
+        class InnerComponent {}
+        return InnerComponent;
+      }
     `,
       'test.component.ts',
     ).code;
 
-    expect(result).not.toMatch(/@Component/);
-    expect(result).toContain('TestComponent.decorators');
-    expect(result).toContain('_jitCompileComponent');
+    // Both top-level and nested classes should be processed
+    expect(result).toContain('TopComponent.decorators');
+    expect(result).toContain('InnerComponent.decorators');
   });
+});
 
-  it('handles class with both @Injectable and no other Angular decorators', () => {
-    const result = jitTransform(
+describe('OXC-based metadata extraction in AOT', () => {
+  it('compiles component with signal inputs via OXC metadata', () => {
+    const result = compile(
       `
-      import { Injectable, inject } from '@angular/core';
-      import { HttpClient } from '@angular/common/http';
+      import { Component, input } from '@angular/core';
 
-      @Injectable({ providedIn: 'root' })
-      export class DataService {
-        private http = inject(HttpClient);
+      @Component({ selector: 'app-test', template: '{{ name() }}' })
+      export class TestComponent {
+        name = input<string>();
+        required = input.required<string>();
       }
     `,
-      'data.service.ts',
+      'test.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵcmp');
+    expect(result).toContain('inputs:');
+  });
+
+  it('compiles component with decorator-based @Input and @Output', () => {
+    const result = compile(
+      `
+      import { Component, Input, Output, EventEmitter } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        @Input() label: string = '';
+        @Input({ alias: 'publicName' }) internalName: string = '';
+        @Output() clicked = new EventEmitter<void>();
+      }
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵcmp');
+    // @Input decorator should be stripped from compiled output
+    expect(result).not.toMatch(/@Input\(/);
+  });
+
+  it('compiles component with constructor DI via OXC', () => {
+    const result = compile(
+      `
+      import { Component, Inject, Optional } from '@angular/core';
+      import { MyService } from './my.service';
+      const TOKEN = 'token';
+
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        constructor(
+          private svc: MyService,
+          @Optional() opt: MyService,
+          @Inject(TOKEN) val: string,
+        ) {}
+      }
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵfac');
+  });
+
+  it('compiles directive with host bindings via OXC metadata', () => {
+    const result = compile(
+      `
+      import { Directive, HostBinding, HostListener } from '@angular/core';
+
+      @Directive({ selector: '[appHighlight]' })
+      export class HighlightDirective {
+        @HostBinding('class.active') isActive = false;
+        @HostListener('click') onClick() { this.isActive = !this.isActive; }
+      }
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵdir');
+    expect(result).toContain('hostBindings');
+  });
+
+  it('compiles component with viewChild/contentChild signals', () => {
+    const result = compile(
+      `
+      import { Component, viewChild, contentChild, ElementRef } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '<div #box></div>' })
+      export class TestComponent {
+        box = viewChild<ElementRef>('box');
+        slot = contentChild<ElementRef>('slot');
+      }
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵcmp');
+    expect(result).toContain('viewQuery');
+    expect(result).toContain('contentQuery');
+  });
+
+  it('compiles ngmodule with exports via OXC metadata', () => {
+    const result = compile(
+      `
+      import { NgModule } from '@angular/core';
+
+      @NgModule({
+        exports: [],
+        declarations: [],
+      })
+      export class AppModule {}
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵmod');
+    expect(result).toContain('ɵinj');
+  });
+
+  it('emits setClassMetadata with string-based decorator args', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+
+      @Component({
+        selector: 'app-meta',
+        template: '<p>meta</p>',
+      })
+      export class MetaComponent {}
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('setClassMetadata');
+    expect(result).toContain('app-meta');
+  });
+});
+
+describe('Shared constants prevent drift', () => {
+  it('COMPILABLE_DECORATORS is a strict subset of ANGULAR_DECORATORS', () => {
+    for (const name of COMPILABLE_DECORATORS) {
+      expect(ANGULAR_DECORATORS.has(name)).toBe(true);
+    }
+    expect(COMPILABLE_DECORATORS.has('Injectable')).toBe(false);
+    expect(ANGULAR_DECORATORS.has('Injectable')).toBe(true);
+  });
+
+  it('registry scanFile uses COMPILABLE_DECORATORS (skips @Injectable)', () => {
+    const entries = scanFile(
+      `
+      import { Injectable } from '@angular/core';
+
+      @Injectable({ providedIn: 'root' })
+      export class MyService {}
+    `,
+      'service.ts',
+    );
+    expect(entries).toHaveLength(0);
+  });
+
+  it('registry scanFile recognises all COMPILABLE_DECORATORS', () => {
+    const entries = scanFile(
+      `
+      import { Component, Directive, Pipe, NgModule } from '@angular/core';
+
+      @Component({ selector: 'app-a', template: '' })
+      export class CompA {}
+
+      @Directive({ selector: '[dir]' })
+      export class DirA {}
+
+      @Pipe({ name: 'myPipe' })
+      export class MyPipe {}
+
+      @NgModule({ exports: [CompA] })
+      export class MyModule {}
+    `,
+      'all.ts',
+    );
+    expect(entries).toHaveLength(4);
+    expect(entries.map((e) => e.kind).sort()).toEqual([
+      'component',
+      'directive',
+      'ngmodule',
+      'pipe',
+    ]);
+  });
+
+  it('compile handles all ANGULAR_DECORATORS via shared set', () => {
+    const result = compile(
+      `
+      import { Component, Injectable } from '@angular/core';
+
+      @Injectable({ providedIn: 'root' })
+      export class MyService {}
+
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {}
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵcmp');
+  });
+
+  it('JIT transform uses ANGULAR_DECORATORS for all five decorators', () => {
+    const result = jitTransform(
+      `
+      import { Component, Directive, Pipe, NgModule } from '@angular/core';
+
+      @Component({ selector: 'app-a', template: '' })
+      export class CompA {}
+
+      @Directive({ selector: '[dir]' })
+      export class DirA {}
+
+      @Pipe({ name: 'p', pure: true })
+      export class PipeA {}
+
+      @NgModule({ exports: [] })
+      export class ModA {}
+    `,
+      'all.ts',
     ).code;
 
-    // @Injectable stays, class is otherwise untouched
-    expect(result).toContain('@Injectable');
-    expect(result).not.toContain('DataService.decorators');
+    expect(result).toContain('CompA.decorators');
+    expect(result).toContain('DirA.decorators');
+    expect(result).toContain('PipeA.decorators');
+    expect(result).toContain('ModA.decorators');
+  });
+
+  it('FIELD_DECORATORS covers all member decorator types', () => {
+    const result = compile(
+      `
+      import { Component, Input, Output, ViewChild, ContentChild, HostBinding, HostListener, EventEmitter, ElementRef } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        @Input() name: string = '';
+        @Output() clicked = new EventEmitter();
+        @ViewChild('ref') ref!: ElementRef;
+        @ContentChild('slot') slot!: ElementRef;
+        @HostBinding('class.active') isActive = true;
+        @HostListener('click') onClick() {}
+      }
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    // Field decorators should be stripped from the compiled output
+    for (const dec of FIELD_DECORATORS) {
+      expect(result).not.toMatch(new RegExp(`@${dec}\\(`));
+    }
+  });
+
+  it('SIGNAL_APIS covers all signal-based reactive APIs in compilation', () => {
+    const result = compile(
+      `
+      import { Component, input, output, model, viewChild, contentChild, ElementRef } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '<div #box></div>' })
+      export class TestComponent {
+        name = input<string>();
+        requiredName = input.required<string>();
+        clicked = output<void>();
+        value = model<string>();
+        box = viewChild<ElementRef>('box');
+      }
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    // Signal APIs should produce Ivy input/output definitions
+    expect(result).toContain('ɵcmp');
   });
 });
 

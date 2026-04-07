@@ -64,10 +64,38 @@ export function unwrapForwardRef(node: ts.Expression): ts.Expression {
   return node;
 }
 
-export const ANGULAR_DECORATORS = new Set([
-  'Component',
-  'Directive',
-  'Pipe',
-  'Injectable',
-  'NgModule',
-]);
+/** Unwrap forwardRef(() => X) to X for OXC AST nodes. Returns the original node if not a forwardRef call. */
+export function unwrapForwardRefOxc(node: any): any {
+  if (
+    node?.type === 'CallExpression' &&
+    node.callee?.type === 'Identifier' &&
+    node.callee.name === 'forwardRef'
+  ) {
+    const arg = node.arguments?.[0];
+    if (arg?.type === 'ArrowFunctionExpression') {
+      if (
+        arg.body?.type === 'FunctionBody' ||
+        arg.body?.type === 'BlockStatement'
+      ) {
+        const stmts = arg.body.statements || arg.body.body || [];
+        const stmt = stmts[0];
+        if (stmt?.type === 'ReturnStatement' && stmt.argument)
+          return stmt.argument;
+      } else {
+        // Expression body: forwardRef(() => X)
+        return arg.body;
+      }
+    }
+    if (arg?.type === 'FunctionExpression') {
+      const stmts = arg.body?.statements || arg.body?.body || [];
+      if (stmts.length === 1) {
+        const stmt = stmts[0];
+        if (stmt?.type === 'ReturnStatement' && stmt.argument)
+          return stmt.argument;
+      }
+    }
+  }
+  return node;
+}
+
+export { ANGULAR_DECORATORS } from './constants.js';
