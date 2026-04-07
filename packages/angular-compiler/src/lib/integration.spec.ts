@@ -5,6 +5,7 @@ import { compileCode as compile, buildRegistry } from './test-helpers';
 import { inlineResourceUrls, extractInlineStyles } from './resource-inliner';
 import { scanDtsFile, collectImportedPackages } from './dts-reader';
 import { generateHmrCode } from './hmr';
+import { detectTypeOnlyImportNames } from './type-elision';
 
 describe('Registry input/output extraction', () => {
   it('extracts signal inputs from input()', () => {
@@ -1536,6 +1537,285 @@ describe('Sourcemap accuracy after type-only import elision', () => {
     expect(result.code).toContain('signal');
     expect(result.map).toBeTruthy();
     expect(result.map.mappings.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Ivy definitions as static class members with TDZ hoisting', () => {
+  it('emits ɵcmp and ɵfac as static members inside the class', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {}
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toMatch(/static\s+ɵfac\s*=/);
+    expect(result).toMatch(/static\s+ɵcmp\s*=/);
+  });
+
+  it('hoists non-exported post-class const before the class to avoid TDZ', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {}
+
+      const helperFn = () => 'hello';
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // The const should be hoisted before the class
+    const helperIdx = result.indexOf('const helperFn');
+    const classIdx = result.indexOf('class TestComponent');
+    expect(helperIdx).toBeGreaterThan(-1);
+    expect(helperIdx).toBeLessThan(classIdx);
+  });
+
+  it('does not hoist exported declarations', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {}
+
+      export const SOME_TOKEN = 'value';
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // Exported const should stay after the class
+    const classIdx = result.indexOf('class TestComponent');
+    const tokenIdx = result.indexOf('SOME_TOKEN');
+    expect(tokenIdx).toBeGreaterThan(classIdx);
+  });
+});
+
+describe('hostDirectives metadata extraction', () => {
+  it('compiles component with bare hostDirectives identifier', () => {
+    const result = compile(
+      `
+      import { Component, Directive } from '@angular/core';
+
+      @Directive({ selector: '[tooltip]' })
+      export class TooltipDirective {}
+
+      @Component({
+        selector: 'app-host',
+        template: '<p>host</p>',
+        hostDirectives: [TooltipDirective],
+      })
+      export class HostComponent {}
+    `,
+      'host.ts',
+    );
+
+    expectCompiles(result);
+    // Should emit hostDirectives in the component def
+    expect(result).toContain('hostDirectives');
+  });
+
+  it('compiles component with hostDirectives object form and inputs/outputs', () => {
+    const result = compile(
+      `
+      import { Component, Directive, input, output } from '@angular/core';
+
+      @Directive({ selector: '[color]' })
+      export class ColorDirective {
+        color = input<string>();
+        colorChange = output<string>();
+      }
+
+      @Component({
+        selector: 'app-host',
+        template: '<p>host</p>',
+        hostDirectives: [{
+          directive: ColorDirective,
+          inputs: ['color'],
+          outputs: ['colorChange'],
+        }],
+      })
+      export class HostComponent {}
+    `,
+      'host.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('hostDirectives');
+  });
+
+  it('compiles component with aliased hostDirectives inputs/outputs', () => {
+    const result = compile(
+      `
+      import { Component, Directive, input, output } from '@angular/core';
+
+      @Directive({ selector: '[color]' })
+      export class ColorDirective {
+        color = input<string>();
+        colorChange = output<string>();
+      }
+
+      @Component({
+        selector: 'app-host',
+        template: '<p>host</p>',
+        hostDirectives: [{
+          directive: ColorDirective,
+          inputs: ['color: appColor'],
+          outputs: ['colorChange: appColorChange'],
+        }],
+      })
+      export class HostComponent {}
+    `,
+      'host.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('hostDirectives');
+    // Aliased names should appear in the compiled output
+    expect(result).toContain('appColor');
+    expect(result).toContain('appColorChange');
+  });
+
+  it('compiles component with forwardRef in hostDirectives', () => {
+    const result = compile(
+      `
+      import { Component, Directive, forwardRef } from '@angular/core';
+
+      @Component({
+        selector: 'app-host',
+        template: '<p>host</p>',
+        hostDirectives: [forwardRef(() => LateDirective)],
+      })
+      export class HostComponent {}
+
+      @Directive({ selector: '[late]' })
+      export class LateDirective {}
+    `,
+      'host.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('hostDirectives');
+  });
+});
+
+describe('emitExpr routing for function/method args', () => {
+  it('emits method call args through emitExpr for correct output', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+
+      @Component({
+        selector: 'app-test',
+        template: '{{ items.join(", ") }}',
+      })
+      export class TestComponent {
+        items = ['a', 'b'];
+      }
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+  });
+
+  it('emits nested function call args correctly', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+
+      @Component({
+        selector: 'app-test',
+        template: '{{ format(value, "default") }}',
+      })
+      export class TestComponent {
+        value = 'test';
+        format(v: string, fallback: string) { return v || fallback; }
+      }
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // The template should compile with proper function call syntax
+    expect(result).toContain('ctx.format');
+  });
+
+  it('handles undefined args gracefully via emitExpr null guard', () => {
+    // emitExpr returns 'null' for falsy args instead of crashing
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+
+      @Component({
+        selector: 'app-test',
+        template: '{{ getValue(undefined) }}',
+      })
+      export class TestComponent {
+        getValue(x: any) { return x ?? 'fallback'; }
+      }
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ctx.getValue');
+  });
+});
+
+describe('hasDirectiveDependencies with unresolved imports', () => {
+  it('includes dependencies function when component has imports', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      import { RouterOutlet } from '@angular/router';
+      @Component({
+        selector: 'app-test',
+        template: '<router-outlet />',
+        imports: [RouterOutlet],
+      })
+      export class TestComponent {}
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // The component should have a dependencies function that includes RouterOutlet
+    expect(result).toContain('dependencies');
+    expect(result).toContain('RouterOutlet');
+  });
+});
+
+describe('type-elision preserves TSAsExpression value references', () => {
+  it('does not elide imports used inside as-casts', () => {
+    const typeOnly = detectTypeOnlyImportNames(`
+      import data from './data.json';
+      type MyType = { name: string };
+      const items = (data as MyType[]).map(x => x.name);
+    `);
+    expect(typeOnly.has('data')).toBe(false);
+  });
+
+  it('does not elide imports used inside satisfies expressions', () => {
+    const typeOnly = detectTypeOnlyImportNames(`
+      import { config } from './config';
+      type Config = { port: number };
+      const c = config satisfies Config;
+    `);
+    expect(typeOnly.has('config')).toBe(false);
+  });
+
+  it('still elides truly type-only imports', () => {
+    const typeOnly = detectTypeOnlyImportNames(`
+      import { MyInterface } from './types';
+      const x: MyInterface = { name: 'test' };
+    `);
+    expect(typeOnly.has('MyInterface')).toBe(true);
   });
 });
 

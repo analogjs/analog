@@ -46,7 +46,7 @@ import { buildDeferDependencyMap } from './defer.js';
 /** Detect installed Angular major version for compatibility. Supports 19+. */
 const ANGULAR_MAJOR = (() => {
   const major = Number.parseInt(o.VERSION?.major ?? '', 10);
-  return Number.isFinite(major) ? major : 21;
+  return Number.isFinite(major) && major > 0 ? major : 22;
 })();
 
 /**
@@ -82,6 +82,15 @@ type CompileDeclaration = {
   inputs?: string[];
   outputs?: string[];
 };
+
+function hasExportModifier(node: ts.Node): boolean {
+  return (
+    ts.canHaveModifiers(node) &&
+    ts
+      .getModifiers(node)
+      ?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) === true
+  );
+}
 
 export function compile(
   sourceCode: string,
@@ -465,7 +474,9 @@ export function compile(
           };
 
           if (ANGULAR_MAJOR >= 20) {
-            componentMeta.hasDirectiveDependencies = declarations.length > 0;
+            componentMeta.hasDirectiveDependencies =
+              declarations.length > 0 ||
+              (Array.isArray(meta.imports) && meta.imports.length > 0);
           }
 
           const cmp = compileComponentFromMetadata(
@@ -774,6 +785,35 @@ export function compile(
     if (!importedNames.has(name)) {
       ms.prepend(`import { ${name} } from "${specifier}";\n`);
       importedNames.add(name);
+    }
+  }
+
+  // 2a. Hoist non-exported variable/function declarations that appear after
+  // a class to just before the first class. This avoids TDZ errors when
+  // static ɵcmp references file-level constants declared after the class.
+  if (classResults.length > 0) {
+    const firstClassStart = classResults[0].classEnd - 1; // approx
+    // Find the position right before the first class
+    let firstClassPos = Infinity;
+    for (const stmt of origSourceFile.statements) {
+      if (ts.isClassDeclaration(stmt)) {
+        firstClassPos = stmt.getStart(origSourceFile);
+        break;
+      }
+    }
+    for (const stmt of origSourceFile.statements) {
+      const stmtStart = stmt.getStart(origSourceFile);
+      // Only hoist statements that come after the first class
+      if (stmtStart <= firstClassPos) continue;
+      // Hoist variable statements and function declarations (not exported)
+      const isHoistable =
+        (ts.isVariableStatement(stmt) && !hasExportModifier(stmt)) ||
+        (ts.isFunctionDeclaration(stmt) && !hasExportModifier(stmt));
+      if (isHoistable) {
+        const text = stmt.getText(origSourceFile);
+        ms.remove(stmtStart, stmt.getEnd());
+        ms.appendLeft(firstClassPos, text + '\n');
+      }
     }
   }
 

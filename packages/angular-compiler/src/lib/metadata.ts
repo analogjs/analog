@@ -141,6 +141,88 @@ export function extractMetadata(dec: ts.Decorator | undefined): any {
             (e) => new o.WrappedNodeExpr(unwrapForwardRef(e as ts.Expression)),
           );
         break;
+      case 'hostDirectives':
+        if (ts.isArrayLiteralExpression(valNode)) {
+          meta.hostDirectives = valNode.elements
+            .map((el) => {
+              // Bare identifier: hostDirectives: [MatTooltip]
+              if (ts.isIdentifier(el) || ts.isCallExpression(el)) {
+                const unwrapped = unwrapForwardRef(el as ts.Expression);
+                const ref = {
+                  value: new o.WrappedNodeExpr(unwrapped),
+                  type: new o.WrappedNodeExpr(unwrapped),
+                };
+                return {
+                  directive: ref,
+                  isForwardReference: ts.isCallExpression(el),
+                  inputs: null,
+                  outputs: null,
+                };
+              }
+              // Object form: { directive: MatTooltip, inputs: [...], outputs: [...] }
+              if (ts.isObjectLiteralExpression(el)) {
+                let directiveNode: ts.Expression | null = null;
+                let isForwardRef = false;
+                let inputs: Record<string, string> | null = null;
+                let outputs: Record<string, string> | null = null;
+                el.properties.forEach((prop) => {
+                  if (!ts.isPropertyAssignment(prop)) return;
+                  const propName = prop.name.getText().replace(/['"`]/g, '');
+                  if (propName === 'directive') {
+                    directiveNode = unwrapForwardRef(
+                      prop.initializer as ts.Expression,
+                    );
+                    isForwardRef =
+                      ts.isCallExpression(prop.initializer) &&
+                      prop.initializer.expression
+                        .getText()
+                        .includes('forwardRef');
+                  } else if (
+                    propName === 'inputs' &&
+                    ts.isArrayLiteralExpression(prop.initializer)
+                  ) {
+                    inputs = {};
+                    prop.initializer.elements.forEach((e) => {
+                      if (ts.isStringLiteral(e)) {
+                        const [source, alias = source] = e.text
+                          .split(':')
+                          .map((part) => part.trim());
+                        if (source) inputs![source] = alias;
+                      }
+                    });
+                  } else if (
+                    propName === 'outputs' &&
+                    ts.isArrayLiteralExpression(prop.initializer)
+                  ) {
+                    outputs = {};
+                    prop.initializer.elements.forEach((e) => {
+                      if (ts.isStringLiteral(e)) {
+                        const [source, alias = source] = e.text
+                          .split(':')
+                          .map((part) => part.trim());
+                        if (source) outputs![source] = alias;
+                      }
+                    });
+                  }
+                });
+                if (directiveNode) {
+                  const ref = {
+                    value: new o.WrappedNodeExpr(directiveNode),
+                    type: new o.WrappedNodeExpr(directiveNode),
+                  };
+                  return {
+                    directive: ref,
+                    isForwardReference: isForwardRef,
+                    inputs,
+                    outputs,
+                  };
+                }
+              }
+              return null;
+            })
+            .filter(Boolean);
+        }
+        break;
       default:
         meta[key] = valText.replace(/['"`]/g, '');
     }
