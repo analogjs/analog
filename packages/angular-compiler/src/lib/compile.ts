@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as o from '@angular/compiler';
 import MagicString from 'magic-string';
+import { parseSync } from 'oxc-parser';
 import {
   ConstantPool,
   compileComponentFromMetadata,
@@ -23,7 +24,7 @@ import {
   compileClassMetadata,
 } from '@angular/compiler';
 import { ComponentRegistry } from './registry.js';
-import { collectTypeOnlyImports, findAllClasses } from './utils.js';
+import { findAllClasses } from './utils.js';
 import { ANGULAR_DECORATORS, FIELD_DECORATORS } from './constants.js';
 import {
   detectTypeOnlyImportNames,
@@ -34,6 +35,7 @@ import {
   emitAngularExpr,
   emitAngularStmt,
   setEmitterSourceFile,
+  setEmitterSourceCode,
 } from './js-emitter.js';
 import {
   extractMetadata,
@@ -111,12 +113,30 @@ export function compile(
     ts.ScriptTarget.Latest,
     true,
   );
+  // OXC parse for metadata extraction (faster than TS for decorator/signal analysis)
+  const { program: oxcProgram } = parseSync(fileName, sourceCode);
+  const oxcClassMap = new Map<string, any>();
+  for (const stmt of oxcProgram.body) {
+    const decl =
+      stmt.type === 'ExportNamedDeclaration' ||
+      stmt.type === 'ExportDefaultDeclaration'
+        ? (stmt as any).declaration
+        : stmt;
+    if (
+      decl &&
+      (decl.type === 'ClassDeclaration' || decl.type === 'ClassExpression') &&
+      decl.id?.name
+    ) {
+      oxcClassMap.set(decl.id.name, decl);
+    }
+  }
+
   const constantPool = new ConstantPool();
   const resourceDependencies: string[] = [];
   const parseFile = new ParseSourceFile(sourceCode, fileName);
   const parseLoc = new ParseLocation(parseFile, 0, 0, 0);
   const typeSourceSpan = new ParseSourceSpan(parseLoc, parseLoc);
-  const typeOnlyImports = collectTypeOnlyImports(origSourceFile);
+  const typeOnlyImports = detectTypeOnlyImportNames(sourceCode);
   const importSpecifierByName = new Map<string, string>();
   const importedNames = new Set<string>();
 
@@ -144,21 +164,20 @@ export function compile(
   // Skip the expensive extractMetadata scan when a registry covers all classes.
   const localSelectors = new Map<string, string>();
   if (!registry) {
-    sourceFile.statements.forEach((stmt) => {
-      if (ts.isClassDeclaration(stmt) && stmt.name) {
-        const meta = extractMetadata(ts.getDecorators(stmt)?.[0]);
+    for (const [clsName, oxcNode] of oxcClassMap) {
+      const decs: any[] = oxcNode.decorators || [];
+      if (decs.length > 0) {
+        const meta = extractMetadata(decs[0], sourceCode);
         if (meta?.selector) {
-          localSelectors.set(
-            stmt.name.text,
-            meta.selector.split(',')[0].trim(),
-          );
+          localSelectors.set(clsName, meta.selector.split(',')[0].trim());
         }
       }
-    });
+    }
   }
 
   const bindingParser = makeBindingParser();
   setEmitterSourceFile(origSourceFile);
+  setEmitterSourceCode(sourceCode);
 
   // --- Direct walk: compile each Angular-decorated class and collect string outputs ---
   // This replaces the previous ts.transform + printer.printNode approach.
@@ -198,11 +217,13 @@ export function compile(
       { template?: string; styles?: string[] }
     >();
 
-    const classIdentifier = ts.factory.createIdentifier(className);
     const classRef: o.R3Reference = {
-      value: new o.WrappedNodeExpr(classIdentifier),
-      type: new o.WrappedNodeExpr(classIdentifier),
+      value: new o.WrappedNodeExpr(className),
+      type: new o.WrappedNodeExpr(className),
     };
+
+    // Look up the corresponding OXC class node for metadata extraction
+    const oxcNode = oxcClassMap.get(className);
 
     let classCompileError: Error | null = null;
 
@@ -210,9 +231,27 @@ export function compile(
       const decoratorName = (
         dec.expression as ts.CallExpression
       ).expression.getText(origSourceFile);
-      const meta = extractMetadata(dec);
-      const sigs = detectSignals(node);
-      const fields = detectFieldDecorators(node);
+      // Find the matching OXC decorator by name
+      const oxcDec = oxcNode?.decorators?.find((d: any) => {
+        const expr = d.expression;
+        return (
+          expr?.type === 'CallExpression' && expr.callee?.name === decoratorName
+        );
+      });
+      const meta = extractMetadata(oxcDec, sourceCode);
+      const sigs = oxcNode
+        ? detectSignals(oxcNode, sourceCode)
+        : { inputs: {}, outputs: {}, viewQueries: [], contentQueries: [] };
+      const fields = oxcNode
+        ? detectFieldDecorators(oxcNode, sourceCode)
+        : {
+            inputs: {},
+            outputs: {},
+            viewQueries: [],
+            contentQueries: [],
+            hostProperties: {},
+            hostListeners: {},
+          };
       const hostBindings = parseHostBindings(meta.hostRaw || {});
 
       const hostMetadata: o.R3HostMetadata = {
@@ -231,7 +270,13 @@ export function compile(
 
           const declarations: CompileDeclaration[] = [];
           for (const dep of Array.isArray(meta.imports) ? meta.imports : []) {
-            const depClassName = dep.node.getText();
+            const depNode = dep.node;
+            const depClassName: string =
+              typeof depNode === 'string'
+                ? depNode
+                : (depNode?.name ?? depNode?.type === 'Identifier')
+                  ? depNode.name
+                  : sourceCode.slice(depNode?.start ?? 0, depNode?.end ?? 0);
             const registryEntry = registry?.get(depClassName);
 
             if (registryEntry?.kind === 'ngmodule' && registryEntry.exports) {
@@ -266,8 +311,7 @@ export function compile(
                   const kind = exportedEntry.kind === 'pipe' ? 1 : 0;
                   // Create a reference to the exported class. If it's not
                   // already imported, track it for synthetic import injection.
-                  const exportedId = ts.factory.createIdentifier(exportedName);
-                  const exportedRef = new o.WrappedNodeExpr(exportedId);
+                  const exportedRef = new o.WrappedNodeExpr(exportedName);
                   if (exportedEntry.sourcePackage || moduleSpecifier) {
                     syntheticImports.set(
                       exportedName,
@@ -623,7 +667,9 @@ export function compile(
     }
 
     // Generate factory
-    const deps = extractConstructorDeps(node, typeOnlyImports);
+    const deps = oxcNode
+      ? extractConstructorDeps(oxcNode, sourceCode, typeOnlyImports)
+      : [];
     if (deps === null) {
       const baseVar = `ɵ${className}_BaseFactory`;
       ivyCode.unshift(
@@ -648,79 +694,66 @@ export function compile(
     angularDecorators.forEach((dec) => {
       const call = dec.expression as ts.CallExpression;
       const decName = call.expression.getText(origSourceFile);
-      let decArgsNode = call.arguments[0];
+      const decArgsNode = call.arguments[0];
 
-      // Inline external templateUrl/styleUrl(s) into the metadata so Angular's
-      // runtime doesn't try to fetch relative URLs (which fails during SSR).
+      // Build the decorator args for setClassMetadata, inlining resources if needed.
       const resources = resolvedResources.get(dec);
-      if (
-        decArgsNode &&
-        ts.isObjectLiteralExpression(decArgsNode) &&
-        resources
-      ) {
-        let needsTransform = false;
-        const newProperties: ts.ObjectLiteralElementLike[] = [];
+      let metadataArgsExpr: string | null = null;
+      if (decArgsNode) {
+        if (resources && ts.isObjectLiteralExpression(decArgsNode)) {
+          // Inline external templateUrl/styleUrl(s) into the metadata so Angular's
+          // runtime doesn't try to fetch relative URLs (which fails during SSR).
+          const rewrittenProps: string[] = [];
+          let needsTransform = false;
+          for (const prop of (decArgsNode as ts.ObjectLiteralExpression)
+            .properties) {
+            if (!ts.isPropertyAssignment(prop)) {
+              rewrittenProps.push(prop.getText(origSourceFile));
+              continue;
+            }
+            const propName = prop.name?.getText(origSourceFile);
 
-        for (const prop of (decArgsNode as ts.ObjectLiteralExpression)
-          .properties) {
-          if (!ts.isPropertyAssignment(prop)) {
-            newProperties.push(prop);
-            continue;
+            if (propName === 'templateUrl' && resources.template) {
+              rewrittenProps.push(
+                `template: ${JSON.stringify(resources.template)}`,
+              );
+              needsTransform = true;
+            } else if (
+              (propName === 'styleUrl' || propName === 'styleUrls') &&
+              resources.styles?.length
+            ) {
+              rewrittenProps.push(
+                `styles: [${resources.styles.map((s) => JSON.stringify(s)).join(', ')}]`,
+              );
+              needsTransform = true;
+            } else {
+              rewrittenProps.push(prop.getText(origSourceFile));
+            }
           }
-          const propName = prop.name?.getText(origSourceFile);
-
-          if (propName === 'templateUrl' && resources.template) {
-            newProperties.push(
-              ts.factory.createPropertyAssignment(
-                'template',
-                ts.factory.createStringLiteral(resources.template),
-              ),
-            );
-            needsTransform = true;
-          } else if (
-            (propName === 'styleUrl' || propName === 'styleUrls') &&
-            resources.styles?.length
-          ) {
-            newProperties.push(
-              ts.factory.createPropertyAssignment(
-                'styles',
-                ts.factory.createArrayLiteralExpression(
-                  resources.styles.map((s) =>
-                    ts.factory.createStringLiteral(s),
-                  ),
-                ),
-              ),
-            );
-            needsTransform = true;
-          } else {
-            newProperties.push(prop);
-          }
-        }
-
-        if (needsTransform) {
-          decArgsNode = ts.factory.createObjectLiteralExpression(
-            newProperties,
-            true,
-          );
+          metadataArgsExpr = needsTransform
+            ? `{${rewrittenProps.join(', ')}}`
+            : decArgsNode.getText(origSourceFile);
+        } else {
+          metadataArgsExpr = decArgsNode.getText(origSourceFile);
         }
       }
 
       try {
         const classMetadataExpr = compileClassMetadata({
-          type: new o.WrappedNodeExpr(ts.factory.createIdentifier(className)),
+          type: new o.WrappedNodeExpr(className),
           decorators: new o.LiteralArrayExpr([
             new o.LiteralMapExpr([
               new o.LiteralMapPropertyAssignment(
                 'type',
-                new o.WrappedNodeExpr(ts.factory.createIdentifier(decName)),
+                new o.WrappedNodeExpr(decName),
                 false,
               ),
-              ...(decArgsNode
+              ...(metadataArgsExpr
                 ? [
                     new o.LiteralMapPropertyAssignment(
                       'args',
                       new o.LiteralArrayExpr([
-                        new o.WrappedNodeExpr(decArgsNode),
+                        new o.WrappedNodeExpr(metadataArgsExpr),
                       ]),
                       false,
                     ),

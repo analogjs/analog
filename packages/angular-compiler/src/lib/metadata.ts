@@ -1,35 +1,57 @@
-import * as ts from 'typescript';
 import * as o from '@angular/compiler';
-import { unwrapForwardRef } from './utils.js';
+import { unwrapForwardRefOxc } from './utils.js';
 import { SIGNAL_APIS } from './constants.js';
 
-function getCallApi(
-  call: ts.CallExpression,
-): { api: string; required: boolean } | null {
-  const expr = call.expression;
-  if (ts.isIdentifier(expr)) {
-    return { api: expr.text, required: false };
+function getCallApi(call: any): { api: string; required: boolean } | null {
+  const callee = call.callee;
+  if (!callee) return null;
+
+  if (callee.type === 'Identifier') {
+    return { api: callee.name, required: false };
   }
 
   if (
-    ts.isPropertyAccessExpression(expr) &&
-    ts.isIdentifier(expr.expression) &&
-    expr.name.text === 'required'
+    (callee.type === 'StaticMemberExpression' ||
+      callee.type === 'MemberExpression') &&
+    callee.object?.type === 'Identifier' &&
+    callee.property?.name === 'required'
   ) {
-    return { api: expr.expression.text, required: true };
+    return { api: callee.object.name, required: true };
   }
 
   return null;
 }
 
+/** Extract the string value from an OXC string literal or template literal node. */
+function stringValue(node: any): string | null {
+  if (node?.type === 'StringLiteral') return node.value;
+  if (node?.type === 'Literal' && typeof node.value === 'string')
+    return node.value;
+  if (node?.type === 'TemplateLiteral' && !node.expressions?.length)
+    return node.quasis?.[0]?.value?.cooked ?? null;
+  return null;
+}
+
+/** Check if an OXC node is a string-like literal. */
+function isStringLike(node: any): boolean {
+  return stringValue(node) !== null;
+}
+
+/** Get the property key name from an OXC object property. */
+function propKeyName(prop: any): string | null {
+  if (!prop.key) return null;
+  return prop.key.name ?? prop.key.value ?? null;
+}
+
 /**
- * Extract decorator metadata from an Angular decorator AST node.
+ * Extract decorator metadata from an OXC decorator AST node.
  * Parses @Component, @Directive, @Pipe, @Injectable, @NgModule arguments.
  */
-export function extractMetadata(dec: ts.Decorator | undefined): any {
+export function extractMetadata(dec: any | undefined, sourceCode: string): any {
   if (!dec) return null;
-  const call = dec.expression as ts.CallExpression;
-  const obj = call.arguments[0] as ts.ObjectLiteralExpression;
+  const call = dec.expression;
+  if (!call || call.type !== 'CallExpression') return null;
+  const arg = call.arguments?.[0];
   const meta: any = {
     hostRaw: {},
     inputs: {},
@@ -48,20 +70,29 @@ export function extractMetadata(dec: ts.Decorator | undefined): any {
     templateUrl: null,
     styleUrls: [],
   };
-  if (!obj) return meta;
-  obj.properties.forEach((p) => {
-    if (!ts.isPropertyAssignment(p)) return;
-    const key = p.name.getText().replace(/['"`]/g, ''),
-      valNode = p.initializer,
-      valText = valNode.getText();
+  if (!arg || arg.type !== 'ObjectExpression') return meta;
+
+  for (const p of arg.properties || []) {
+    if (p.type !== 'ObjectProperty' && p.type !== 'Property') continue;
+    const key = propKeyName(p);
+    if (!key) continue;
+    const valNode = p.value;
+    const valText = sourceCode.slice(valNode.start, valNode.end);
+
     switch (key) {
       case 'host':
-        if (ts.isObjectLiteralExpression(valNode))
-          valNode.properties.forEach((hp) => {
-            if (ts.isPropertyAssignment(hp))
-              meta.hostRaw[hp.name.getText().replace(/['"`]/g, '')] =
-                hp.initializer.getText().replace(/['"`]/g, '');
-          });
+        if (valNode.type === 'ObjectExpression') {
+          for (const hp of valNode.properties || []) {
+            if (hp.type !== 'ObjectProperty' && hp.type !== 'Property')
+              continue;
+            const hKey = propKeyName(hp);
+            if (!hKey) continue;
+            const hVal = sourceCode
+              .slice(hp.value.start, hp.value.end)
+              .replace(/['"`]/g, '');
+            meta.hostRaw[hKey.replace(/['"`]/g, '')] = hVal;
+          }
+        }
         break;
       case 'changeDetection':
         meta.changeDetection = valText.includes('OnPush') ? 0 : 1;
@@ -85,48 +116,38 @@ export function extractMetadata(dec: ts.Decorator | undefined): any {
       case 'name':
       case 'exportAs':
       case 'templateUrl':
-      case 'providedIn':
-        // Extract the actual string content, preserving internal quotes
-        if (
-          ts.isStringLiteral(valNode) ||
-          ts.isNoSubstitutionTemplateLiteral(valNode)
-        ) {
-          meta[key] = valNode.text;
-        } else {
-          meta[key] = valText.replace(/['"`]/g, '');
-        }
+      case 'providedIn': {
+        const sv = stringValue(valNode);
+        meta[key] = sv !== null ? sv : valText.replace(/['"`]/g, '');
         if (key === 'exportAs') meta.exportAs = [meta.exportAs];
         break;
-      case 'styleUrl':
-        // Angular supports singular styleUrl as shorthand
-        if (
-          ts.isStringLiteral(valNode) ||
-          ts.isNoSubstitutionTemplateLiteral(valNode)
-        ) {
-          meta.styleUrls = [valNode.text];
-        } else {
-          meta.styleUrls = [valText.replace(/['"`]/g, '')];
+      }
+      case 'styleUrl': {
+        const sv = stringValue(valNode);
+        meta.styleUrls = [sv !== null ? sv : valText.replace(/['"`]/g, '')];
+        break;
+      }
+      case 'styleUrls':
+        if (valNode.type === 'ArrayExpression') {
+          meta.styleUrls = (valNode.elements || []).map((e: any) => {
+            const sv = stringValue(e);
+            return sv !== null
+              ? sv
+              : sourceCode.slice(e.start, e.end).replace(/['"`]/g, '');
+          });
         }
         break;
-      case 'styleUrls':
-        if (ts.isArrayLiteralExpression(valNode))
-          meta.styleUrls = valNode.elements.map((e) =>
-            ts.isStringLiteral(e) ? e.text : e.getText().replace(/['"`]/g, ''),
-          );
-        break;
       case 'styles':
-        if (ts.isArrayLiteralExpression(valNode)) {
-          meta.styles = valNode.elements.map((e) =>
-            ts.isStringLiteral(e) || ts.isNoSubstitutionTemplateLiteral(e)
-              ? e.text
-              : e.getText().replace(/['"`]/g, ''),
-          );
-        } else if (
-          ts.isStringLiteral(valNode) ||
-          ts.isNoSubstitutionTemplateLiteral(valNode)
-        ) {
-          // Angular supports singular styles as a string
-          meta.styles = [valNode.text];
+        if (valNode.type === 'ArrayExpression') {
+          meta.styles = (valNode.elements || []).map((e: any) => {
+            const sv = stringValue(e);
+            return sv !== null
+              ? sv
+              : sourceCode.slice(e.start, e.end).replace(/['"`]/g, '');
+          });
+        } else {
+          const sv = stringValue(valNode);
+          if (sv !== null) meta.styles = [sv];
         }
         break;
       case 'imports':
@@ -137,75 +158,80 @@ export function extractMetadata(dec: ts.Decorator | undefined): any {
       case 'declarations':
       case 'exports':
       case 'bootstrap':
-        if (ts.isArrayLiteralExpression(valNode))
-          meta[key] = valNode.elements.map(
-            (e) => new o.WrappedNodeExpr(unwrapForwardRef(e as ts.Expression)),
+        if (valNode.type === 'ArrayExpression') {
+          meta[key] = (valNode.elements || []).map(
+            (e: any) => new o.WrappedNodeExpr(unwrapForwardRefOxc(e)),
           );
+        }
         break;
       case 'hostDirectives':
-        if (ts.isArrayLiteralExpression(valNode)) {
-          meta.hostDirectives = valNode.elements
-            .map((el) => {
+        if (valNode.type === 'ArrayExpression') {
+          meta.hostDirectives = (valNode.elements || [])
+            .map((el: any) => {
               // Bare identifier: hostDirectives: [MatTooltip]
-              if (ts.isIdentifier(el) || ts.isCallExpression(el)) {
-                const unwrapped = unwrapForwardRef(el as ts.Expression);
+              if (el.type === 'Identifier' || el.type === 'CallExpression') {
+                const unwrapped = unwrapForwardRefOxc(el);
                 const ref = {
                   value: new o.WrappedNodeExpr(unwrapped),
                   type: new o.WrappedNodeExpr(unwrapped),
                 };
                 return {
                   directive: ref,
-                  isForwardReference: ts.isCallExpression(el),
+                  isForwardReference: el.type === 'CallExpression',
                   inputs: null,
                   outputs: null,
                 };
               }
               // Object form: { directive: MatTooltip, inputs: [...], outputs: [...] }
-              if (ts.isObjectLiteralExpression(el)) {
-                let directiveNode: ts.Expression | null = null;
+              if (el.type === 'ObjectExpression') {
+                let directiveNode: any = null;
                 let isForwardRef = false;
                 let inputs: Record<string, string> | null = null;
                 let outputs: Record<string, string> | null = null;
-                el.properties.forEach((prop) => {
-                  if (!ts.isPropertyAssignment(prop)) return;
-                  const propName = prop.name.getText().replace(/['"`]/g, '');
-                  if (propName === 'directive') {
-                    directiveNode = unwrapForwardRef(
-                      prop.initializer as ts.Expression,
-                    );
+                for (const prop of el.properties || []) {
+                  if (
+                    prop.type !== 'ObjectProperty' &&
+                    prop.type !== 'Property'
+                  )
+                    continue;
+                  const pName = propKeyName(prop);
+                  if (pName === 'directive') {
+                    directiveNode = unwrapForwardRefOxc(prop.value);
                     isForwardRef =
-                      ts.isCallExpression(prop.initializer) &&
-                      prop.initializer.expression
-                        .getText()
+                      prop.value?.type === 'CallExpression' &&
+                      sourceCode
+                        .slice(prop.value.start, prop.value.end)
                         .includes('forwardRef');
                   } else if (
-                    propName === 'inputs' &&
-                    ts.isArrayLiteralExpression(prop.initializer)
+                    pName === 'inputs' &&
+                    prop.value?.type === 'ArrayExpression'
                   ) {
                     inputs = {};
-                    prop.initializer.elements.forEach((e) => {
-                      if (ts.isStringLiteral(e)) {
-                        const [source, alias = source] = e.text
+                    for (const e of prop.value.elements || []) {
+                      const sv = stringValue(e);
+                      if (sv !== null) {
+                        const [source, alias = source] = sv
                           .split(':')
-                          .map((part) => part.trim());
-                        if (source) inputs![source] = alias;
+                          .map((part: string) => part.trim());
+                        if (source) inputs[source] = alias;
                       }
-                    });
+                    }
                   } else if (
-                    propName === 'outputs' &&
-                    ts.isArrayLiteralExpression(prop.initializer)
+                    pName === 'outputs' &&
+                    prop.value?.type === 'ArrayExpression'
                   ) {
                     outputs = {};
-                    prop.initializer.elements.forEach((e) => {
-                      if (ts.isStringLiteral(e)) {
-                        const [source, alias = source] = e.text
+                    for (const e of prop.value.elements || []) {
+                      const sv = stringValue(e);
+                      if (sv !== null) {
+                        const [source, alias = source] = sv
                           .split(':')
-                          .map((part) => part.trim());
-                        if (source) outputs![source] = alias;
+                          .map((part: string) => part.trim());
+                        if (source) outputs[source] = alias;
                       }
-                    });
+                    }
                   }
-                });
+                }
                 if (directiveNode) {
                   const ref = {
                     value: new o.WrappedNodeExpr(directiveNode),
@@ -227,7 +253,7 @@ export function extractMetadata(dec: ts.Decorator | undefined): any {
       default:
         meta[key] = valText.replace(/['"`]/g, '');
     }
-  });
+  }
   return meta;
 }
 
@@ -235,111 +261,112 @@ export function extractMetadata(dec: ts.Decorator | undefined): any {
  * Detect signal-based APIs on class members: input(), model(), output(),
  * viewChild(), contentChild(), viewChildren(), contentChildren().
  */
-export function detectSignals(node: ts.ClassDeclaration) {
+export function detectSignals(classNode: any, sourceCode: string) {
   const inputs: any = {},
     outputs: any = {},
     viewQueries: any[] = [],
     contentQueries: any[] = [];
 
-  node.members.forEach((m) => {
+  const members: any[] = classNode.body?.body || [];
+
+  for (const m of members) {
     if (
-      ts.isPropertyDeclaration(m) &&
-      m.initializer &&
-      ts.isCallExpression(m.initializer)
-    ) {
-      const name = m.name.getText();
-      const signalCall = getCallApi(m.initializer);
-      if (!signalCall) return;
+      m.type !== 'PropertyDefinition' ||
+      !m.key?.name ||
+      !m.value ||
+      m.value.type !== 'CallExpression'
+    )
+      continue;
 
-      const { api, required } = signalCall;
-      if (!SIGNAL_APIS.has(api)) return;
+    const name: string = m.key.name;
+    const signalCall = getCallApi(m.value);
+    if (!signalCall) continue;
 
-      // 1. SIGNAL INPUTS (Standard & Required)
-      if (api === 'input') {
-        // Extract transform from options: input(val, { transform }) or input.required({ transform })
-        let transform: any = null;
-        const optionsArg = required
-          ? m.initializer.arguments[0]
-          : m.initializer.arguments[1];
-        if (optionsArg && ts.isObjectLiteralExpression(optionsArg)) {
-          for (const prop of optionsArg.properties) {
-            if (
-              ts.isPropertyAssignment(prop) &&
-              prop.name.getText() === 'transform'
-            ) {
-              transform = new o.WrappedNodeExpr(prop.initializer);
-            }
+    const { api, required } = signalCall;
+    if (!SIGNAL_APIS.has(api)) continue;
+
+    const args: any[] = m.value.arguments || [];
+
+    // 1. SIGNAL INPUTS (Standard & Required)
+    if (api === 'input') {
+      let transform: any = null;
+      const optionsArg = required ? args[0] : args[1];
+      if (optionsArg?.type === 'ObjectExpression') {
+        for (const prop of optionsArg.properties || []) {
+          if (
+            (prop.type === 'ObjectProperty' || prop.type === 'Property') &&
+            propKeyName(prop) === 'transform'
+          ) {
+            transform = new o.WrappedNodeExpr(prop.value);
           }
         }
-        inputs[name] = {
-          classPropertyName: name,
-          bindingPropertyName: name,
-          isSignal: true,
-          required,
-          transform,
-        };
       }
-
-      // 2. MODEL SIGNALS (Writable Inputs)
-      else if (api === 'model') {
-        // Models are signals (flag 3) and generate an automatic output
-        inputs[name] = {
-          classPropertyName: name,
-          bindingPropertyName: name,
-          isSignal: true,
-        };
-        outputs[name + 'Change'] = name + 'Change';
-      }
-
-      // 3. SIGNAL QUERIES (viewChild, contentChild)
-      else if (
-        api === 'viewChild' ||
-        api === 'viewChildren' ||
-        api === 'contentChild' ||
-        api === 'contentChildren'
-      ) {
-        const isSignalQuery = true;
-        const isViewQuery = api === 'viewChild' || api === 'viewChildren';
-        const isChildrenQuery =
-          api === 'viewChildren' || api === 'contentChildren';
-
-        const query = {
-          propertyName: name,
-          predicate: ts.isStringLiteral(m.initializer.arguments[0])
-            ? [m.initializer.arguments[0].text]
-            : new o.WrappedNodeExpr(m.initializer.arguments[0]),
-          first: !isChildrenQuery,
-          descendants: true,
-          read: null,
-          static: false,
-          emitFlags: 0,
-          isSignal: isSignalQuery, // Critical for v21 query reactivity
-        };
-
-        if (isViewQuery) viewQueries.push(query);
-        else contentQueries.push(query);
-      }
-
-      // 4. STANDARD OUTPUTS (output() and outputFromObservable())
-      else if (api === 'output' || api === 'outputFromObservable') {
-        // Extract alias from options: output({alias: 'publicName'})
-        let alias = name;
-        const optArg = m.initializer.arguments[0];
-        if (optArg && ts.isObjectLiteralExpression(optArg)) {
-          for (const prop of optArg.properties) {
-            if (
-              ts.isPropertyAssignment(prop) &&
-              prop.name.getText() === 'alias' &&
-              ts.isStringLiteral(prop.initializer)
-            ) {
-              alias = prop.initializer.text;
-            }
-          }
-        }
-        outputs[name] = alias;
-      }
+      inputs[name] = {
+        classPropertyName: name,
+        bindingPropertyName: name,
+        isSignal: true,
+        required,
+        transform,
+      };
     }
-  });
+
+    // 2. MODEL SIGNALS (Writable Inputs)
+    else if (api === 'model') {
+      inputs[name] = {
+        classPropertyName: name,
+        bindingPropertyName: name,
+        isSignal: true,
+      };
+      outputs[name + 'Change'] = name + 'Change';
+    }
+
+    // 3. SIGNAL QUERIES (viewChild, contentChild)
+    else if (
+      api === 'viewChild' ||
+      api === 'viewChildren' ||
+      api === 'contentChild' ||
+      api === 'contentChildren'
+    ) {
+      const isViewQuery = api === 'viewChild' || api === 'viewChildren';
+      const isChildrenQuery =
+        api === 'viewChildren' || api === 'contentChildren';
+
+      const firstArg = args[0];
+      const sv = stringValue(firstArg);
+
+      const query = {
+        propertyName: name,
+        predicate: sv !== null ? [sv] : new o.WrappedNodeExpr(firstArg),
+        first: !isChildrenQuery,
+        descendants: true,
+        read: null,
+        static: false,
+        emitFlags: 0,
+        isSignal: true,
+      };
+
+      if (isViewQuery) viewQueries.push(query);
+      else contentQueries.push(query);
+    }
+
+    // 4. STANDARD OUTPUTS (output() and outputFromObservable())
+    else if (api === 'output' || api === 'outputFromObservable') {
+      let alias = name;
+      const optArg = args[0];
+      if (optArg?.type === 'ObjectExpression') {
+        for (const prop of optArg.properties || []) {
+          if (
+            (prop.type === 'ObjectProperty' || prop.type === 'Property') &&
+            propKeyName(prop) === 'alias'
+          ) {
+            const sv = stringValue(prop.value);
+            if (sv !== null) alias = sv;
+          }
+        }
+      }
+      outputs[name] = alias;
+    }
+  }
 
   return { inputs, outputs, viewQueries, contentQueries };
 }
@@ -348,7 +375,7 @@ export function detectSignals(node: ts.ClassDeclaration) {
  * Detect decorator-based field metadata: @Input, @Output, @ViewChild,
  * @ContentChild, @ViewChildren, @ContentChildren, @HostBinding, @HostListener.
  */
-export function detectFieldDecorators(node: ts.ClassDeclaration) {
+export function detectFieldDecorators(classNode: any, sourceCode: string) {
   const inputs: any = {};
   const outputs: any = {};
   const viewQueries: any[] = [];
@@ -356,16 +383,20 @@ export function detectFieldDecorators(node: ts.ClassDeclaration) {
   const hostProperties: Record<string, string> = {};
   const hostListeners: Record<string, string> = {};
 
-  for (const member of node.members) {
-    const decorators = ts.getDecorators(member as any);
-    if (!decorators) continue;
+  const members: any[] = classNode.body?.body || [];
 
-    const memberName = member.name?.getText() || '';
+  for (const member of members) {
+    const decorators: any[] = member.decorators || [];
+    if (decorators.length === 0) continue;
+
+    const memberName: string = member.key?.name || '';
 
     for (const dec of decorators) {
-      if (!ts.isCallExpression(dec.expression)) continue;
-      const decName = dec.expression.expression.getText();
-      const args = dec.expression.arguments;
+      const expr = dec.expression;
+      if (!expr || expr.type !== 'CallExpression') continue;
+      const decName: string | undefined = expr.callee?.name;
+      if (!decName) continue;
+      const args: any[] = expr.arguments || [];
 
       switch (decName) {
         case 'Input': {
@@ -375,18 +406,24 @@ export function detectFieldDecorators(node: ts.ClassDeclaration) {
 
           if (args.length > 0) {
             const arg = args[0];
-            if (ts.isStringLiteral(arg)) {
-              bindingName = arg.text;
-            } else if (ts.isObjectLiteralExpression(arg)) {
-              for (const prop of arg.properties) {
-                if (!ts.isPropertyAssignment(prop)) continue;
-                const key = prop.name.getText();
-                if (key === 'alias' && ts.isStringLiteral(prop.initializer))
-                  bindingName = prop.initializer.text;
-                if (key === 'required')
-                  required = prop.initializer.getText() === 'true';
-                if (key === 'transform')
-                  transformFunction = new o.WrappedNodeExpr(prop.initializer);
+            const sv = stringValue(arg);
+            if (sv !== null) {
+              bindingName = sv;
+            } else if (arg.type === 'ObjectExpression') {
+              for (const prop of arg.properties || []) {
+                if (prop.type !== 'ObjectProperty' && prop.type !== 'Property')
+                  continue;
+                const k = propKeyName(prop);
+                if (k === 'alias') {
+                  const asv = stringValue(prop.value);
+                  if (asv !== null) bindingName = asv;
+                }
+                if (k === 'required')
+                  required =
+                    sourceCode.slice(prop.value.start, prop.value.end) ===
+                    'true';
+                if (k === 'transform')
+                  transformFunction = new o.WrappedNodeExpr(prop.value);
               }
             }
           }
@@ -402,10 +439,8 @@ export function detectFieldDecorators(node: ts.ClassDeclaration) {
         }
 
         case 'Output': {
-          const alias =
-            args.length > 0 && ts.isStringLiteral(args[0])
-              ? args[0].text
-              : memberName;
+          const sv = args.length > 0 ? stringValue(args[0]) : null;
+          const alias = sv !== null ? sv : memberName;
           outputs[memberName] = alias;
           break;
         }
@@ -420,30 +455,30 @@ export function detectFieldDecorators(node: ts.ClassDeclaration) {
           let predicate: any = memberName;
           if (args.length > 0) {
             const pred = args[0];
-            if (ts.isStringLiteral(pred)) {
-              predicate = [pred.text];
+            const sv = stringValue(pred);
+            if (sv !== null) {
+              predicate = [sv];
             } else {
-              predicate = new o.WrappedNodeExpr(
-                unwrapForwardRef(pred as ts.Expression),
-              );
+              predicate = new o.WrappedNodeExpr(unwrapForwardRefOxc(pred));
             }
           }
 
           let read: any = null;
           let isStatic = false;
-          let descendants = isView || isFirst; // ContentChildren defaults to false
+          let descendants = isView || isFirst;
 
-          if (args.length > 1 && ts.isObjectLiteralExpression(args[1])) {
-            for (const prop of (args[1] as ts.ObjectLiteralExpression)
-              .properties) {
-              if (!ts.isPropertyAssignment(prop)) continue;
-              const key = prop.name.getText();
-              if (key === 'read')
-                read = new o.WrappedNodeExpr(prop.initializer);
-              if (key === 'static')
-                isStatic = prop.initializer.getText() === 'true';
-              if (key === 'descendants')
-                descendants = prop.initializer.getText() === 'true';
+          if (args.length > 1 && args[1]?.type === 'ObjectExpression') {
+            for (const prop of args[1].properties || []) {
+              if (prop.type !== 'ObjectProperty' && prop.type !== 'Property')
+                continue;
+              const k = propKeyName(prop);
+              if (k === 'read') read = new o.WrappedNodeExpr(prop.value);
+              if (k === 'static')
+                isStatic =
+                  sourceCode.slice(prop.value.start, prop.value.end) === 'true';
+              if (k === 'descendants')
+                descendants =
+                  sourceCode.slice(prop.value.start, prop.value.end) === 'true';
             }
           }
 
@@ -464,22 +499,21 @@ export function detectFieldDecorators(node: ts.ClassDeclaration) {
         }
 
         case 'HostBinding': {
-          const target =
-            args.length > 0 && ts.isStringLiteral(args[0])
-              ? args[0].text
-              : memberName;
+          const sv = args.length > 0 ? stringValue(args[0]) : null;
+          const target = sv !== null ? sv : memberName;
           hostProperties[target] = memberName;
           break;
         }
 
         case 'HostListener': {
-          if (args.length > 0 && ts.isStringLiteral(args[0])) {
-            const event = args[0].text;
+          const sv = args.length > 0 ? stringValue(args[0]) : null;
+          if (sv !== null) {
+            const event = sv;
             let handler = `${memberName}()`;
-            if (args.length > 1 && ts.isArrayLiteralExpression(args[1])) {
-              const handlerArgs = args[1].elements
-                .filter(ts.isStringLiteral)
-                .map((e) => e.text)
+            if (args.length > 1 && args[1]?.type === 'ArrayExpression') {
+              const handlerArgs = (args[1].elements || [])
+                .map((e: any) => stringValue(e))
+                .filter((v: string | null): v is string => v !== null)
                 .join(', ');
               handler = `${memberName}(${handlerArgs})`;
             }
@@ -507,26 +541,31 @@ export function detectFieldDecorators(node: ts.ClassDeclaration) {
  * - R3DependencyMetadata[] for normal constructors
  * - null if class extends another without own constructor (use inherited factory)
  * - 'invalid' if any parameter has a type-only import token
+ *
+ * Accepts an OXC ClassDeclaration node and the original source string.
  */
 export function extractConstructorDeps(
-  node: ts.ClassDeclaration,
+  classNode: any,
+  sourceCode: string,
   typeOnlyImports: Set<string>,
 ): any[] | 'invalid' | null {
-  const hasSuper = node.heritageClauses?.some(
-    (h) => h.token === ts.SyntaxKind.ExtendsKeyword,
+  const heritage: any[] = classNode.superClass ? [classNode.superClass] : [];
+  const hasSuper = heritage.length > 0;
+
+  const members: any[] = classNode.body?.body || [];
+  const ctor = members.find(
+    (m: any) => m.type === 'MethodDefinition' && m.kind === 'constructor',
   );
-  const ctor = node.members.find(ts.isConstructorDeclaration) as
-    | ts.ConstructorDeclaration
-    | undefined;
 
   if (!ctor) {
-    return hasSuper ? null : []; // Inherited factory or zero-arg
+    return hasSuper ? null : [];
   }
 
+  const params: any[] = ctor.value?.params?.items || ctor.value?.params || [];
   const deps: any[] = [];
   let invalid = false;
 
-  for (const param of ctor.parameters) {
+  for (const param of params) {
     let token: string | null = null;
     let attributeNameType: any = null;
     let host = false,
@@ -534,56 +573,77 @@ export function extractConstructorDeps(
       self = false,
       skipSelf = false;
 
+    // Handle TSParameterProperty (e.g., constructor(private foo: Bar))
+    const actualParam =
+      param.type === 'TSParameterProperty' ? param.parameter : param;
+    const typeAnn =
+      actualParam?.typeAnnotation?.typeAnnotation ??
+      param?.typeAnnotation?.typeAnnotation;
+
     // Extract type annotation as token
-    if (param.type && ts.isTypeReferenceNode(param.type)) {
-      token = param.type.typeName.getText();
-    } else if (param.type && ts.isUnionTypeNode(param.type)) {
-      // Handle `Service | null` — find first TypeReference
-      for (const t of param.type.types) {
-        if (ts.isTypeReferenceNode(t)) {
-          token = t.typeName.getText();
-          break;
+    if (typeAnn) {
+      if (typeAnn.type === 'TSTypeReference' && typeAnn.typeName) {
+        token =
+          typeAnn.typeName.name ??
+          sourceCode.slice(typeAnn.typeName.start, typeAnn.typeName.end);
+      } else if (typeAnn.type === 'TSUnionType') {
+        for (const t of typeAnn.types || []) {
+          if (t.type === 'TSTypeReference' && t.typeName) {
+            token =
+              t.typeName.name ??
+              sourceCode.slice(t.typeName.start, t.typeName.end);
+            break;
+          }
         }
       }
     }
 
-    // Process parameter decorators
-    const paramDecorators = ts.getDecorators(param);
-    if (paramDecorators) {
-      for (const dec of paramDecorators) {
-        if (!ts.isCallExpression(dec.expression)) continue;
-        const decName = dec.expression.expression.getText();
-        const args = dec.expression.arguments;
+    // Process parameter decorators (may live on TSParameterProperty or inner param)
+    const paramDecs: any[] = [
+      ...(param.decorators || []),
+      ...(param.type === 'TSParameterProperty' && actualParam?.decorators
+        ? actualParam.decorators
+        : []),
+    ];
+    for (const dec of paramDecs) {
+      const expr = dec.expression;
+      if (!expr || expr.type !== 'CallExpression') continue;
+      const decName: string | undefined = expr.callee?.name;
+      if (!decName) continue;
+      const args: any[] = expr.arguments || [];
 
-        switch (decName) {
-          case 'Inject':
-            if (args.length > 0) {
-              if (ts.isStringLiteral(args[0])) {
-                token = args[0].text;
-              } else {
-                token = args[0].getText();
-              }
+      switch (decName) {
+        case 'Inject':
+          if (args.length > 0) {
+            const sv = stringValue(args[0]);
+            if (sv !== null) {
+              token = sv;
+            } else {
+              token = sourceCode.slice(args[0].start, args[0].end);
             }
-            break;
-          case 'Optional':
-            optional = true;
-            break;
-          case 'Self':
-            self = true;
-            break;
-          case 'SkipSelf':
-            skipSelf = true;
-            break;
-          case 'Host':
-            host = true;
-            break;
-          case 'Attribute':
-            if (args.length > 0 && ts.isStringLiteral(args[0])) {
-              attributeNameType = new o.LiteralExpr(args[0].text);
-              token = ''; // Attribute injection has no class token
+          }
+          break;
+        case 'Optional':
+          optional = true;
+          break;
+        case 'Self':
+          self = true;
+          break;
+        case 'SkipSelf':
+          skipSelf = true;
+          break;
+        case 'Host':
+          host = true;
+          break;
+        case 'Attribute':
+          if (args.length > 0) {
+            const sv = stringValue(args[0]);
+            if (sv !== null) {
+              attributeNameType = new o.LiteralExpr(sv);
+              token = '';
             }
-            break;
-        }
+          }
+          break;
       }
     }
 
@@ -598,9 +658,7 @@ export function extractConstructorDeps(
     }
 
     deps.push({
-      token: token
-        ? new o.WrappedNodeExpr(ts.factory.createIdentifier(token))
-        : new o.LiteralExpr(null),
+      token: token ? new o.WrappedNodeExpr(token) : new o.LiteralExpr(null),
       attributeNameType,
       host,
       optional,

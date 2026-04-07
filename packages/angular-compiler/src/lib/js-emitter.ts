@@ -51,6 +51,8 @@ const BINARY_OP_STR: Record<number, string> = {
 class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
   /** Set by compile() so WrappedNodeExpr fallback can print with correct source context. */
   static _currentSourceFile: ts.SourceFile | undefined;
+  /** Set by compile() so OXC-based WrappedNodeExpr can slice original source. */
+  static _currentSourceCode: string | undefined;
 
   private emitExpr(e: any): string {
     if (!e) return 'null';
@@ -65,6 +67,26 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
   }
   visitWrappedNodeExpr(ast: o.WrappedNodeExpr<any>) {
     const node = ast.node;
+
+    // Raw source text: already resolved to a string at wrap time
+    if (typeof node === 'string') return node;
+
+    // OXC AST nodes: identified by string `type` property + numeric start/end
+    if (typeof node.type === 'string' && typeof node.start === 'number') {
+      const src = JSEmitter._currentSourceCode;
+      if (node.type === 'Identifier') return node.name;
+      if (node.type === 'StringLiteral') return JSON.stringify(node.value);
+      if (node.type === 'NumericLiteral') return String(node.value);
+      if (node.type === 'BooleanLiteral') return node.value ? 'true' : 'false';
+      if (node.type === 'NullLiteral') return 'null';
+      if (node.type === 'TemplateLiteral' && !node.expressions?.length)
+        return '`' + node.quasis[0].value.raw + '`';
+      // Fallback: slice original source for complex OXC nodes
+      if (src) return src.slice(node.start, node.end);
+      return 'null';
+    }
+
+    // TypeScript AST nodes: identified by numeric `kind` property
     if (node.kind === ts.SyntaxKind.Identifier)
       return (node as ts.Identifier).escapedText as string;
     if (node.kind === ts.SyntaxKind.StringLiteral)
@@ -76,7 +98,7 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     if (node.kind === ts.SyntaxKind.NullKeyword) return 'null';
     if (node.kind === ts.SyntaxKind.NoSubstitutionTemplateLiteral)
       return '`' + (node as ts.NoSubstitutionTemplateLiteral).text + '`';
-    // Fallback for complex wrapped nodes (e.g. decorator arguments, array literals).
+    // Fallback for complex wrapped TS nodes (e.g. decorator arguments, array literals).
     // Use currentSourceFile when available for correct position-based printing.
     return sharedPrinter.printNode(
       ts.EmitHint.Unspecified,
@@ -351,4 +373,9 @@ export function emitAngularStmt(stmt: o.Statement): string {
 /** Set the current source file for WrappedNodeExpr fallback printing. */
 export function setEmitterSourceFile(sf: ts.SourceFile | undefined): void {
   JSEmitter._currentSourceFile = sf;
+}
+
+/** Set the current source code for OXC-based WrappedNodeExpr slice fallback. */
+export function setEmitterSourceCode(code: string | undefined): void {
+  JSEmitter._currentSourceCode = code;
 }

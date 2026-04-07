@@ -1912,6 +1912,141 @@ describe('constant pool helpers survive type-only import elision', () => {
   });
 });
 
+describe('OXC-based metadata extraction in AOT', () => {
+  it('compiles component with signal inputs via OXC metadata', () => {
+    const result = compile(
+      `
+      import { Component, input } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '{{ name() }}' })
+      export class TestComponent {
+        name = input<string>();
+        required = input.required<string>();
+      }
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵcmp');
+    expect(result).toContain('inputs:');
+  });
+
+  it('compiles component with decorator-based @Input and @Output', () => {
+    const result = compile(
+      `
+      import { Component, Input, Output, EventEmitter } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        @Input() label: string = '';
+        @Input({ alias: 'publicName' }) internalName: string = '';
+        @Output() clicked = new EventEmitter<void>();
+      }
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵcmp');
+    // @Input decorator should be stripped from compiled output
+    expect(result).not.toMatch(/@Input\(/);
+  });
+
+  it('compiles component with constructor DI via OXC', () => {
+    const result = compile(
+      `
+      import { Component, Inject, Optional } from '@angular/core';
+      import { MyService } from './my.service';
+      const TOKEN = 'token';
+
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        constructor(
+          private svc: MyService,
+          @Optional() opt: MyService,
+          @Inject(TOKEN) val: string,
+        ) {}
+      }
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵfac');
+  });
+
+  it('compiles directive with host bindings via OXC metadata', () => {
+    const result = compile(
+      `
+      import { Directive, HostBinding, HostListener } from '@angular/core';
+
+      @Directive({ selector: '[appHighlight]' })
+      export class HighlightDirective {
+        @HostBinding('class.active') isActive = false;
+        @HostListener('click') onClick() { this.isActive = !this.isActive; }
+      }
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵdir');
+    expect(result).toContain('hostBindings');
+  });
+
+  it('compiles component with viewChild/contentChild signals', () => {
+    const result = compile(
+      `
+      import { Component, viewChild, contentChild, ElementRef } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '<div #box></div>' })
+      export class TestComponent {
+        box = viewChild<ElementRef>('box');
+        slot = contentChild<ElementRef>('slot');
+      }
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵcmp');
+    expect(result).toContain('viewQuery');
+    expect(result).toContain('contentQuery');
+  });
+
+  it('compiles ngmodule with exports via OXC metadata', () => {
+    const result = compile(
+      `
+      import { NgModule } from '@angular/core';
+
+      @NgModule({
+        exports: [],
+        declarations: [],
+      })
+      export class AppModule {}
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵmod');
+    expect(result).toContain('ɵinj');
+  });
+
+  it('emits setClassMetadata with string-based decorator args', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+
+      @Component({
+        selector: 'app-meta',
+        template: '<p>meta</p>',
+      })
+      export class MetaComponent {}
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('setClassMetadata');
+    expect(result).toContain('app-meta');
+  });
+});
+
 describe('Shared constants prevent drift', () => {
   it('COMPILABLE_DECORATORS is a strict subset of ANGULAR_DECORATORS', () => {
     for (const name of COMPILABLE_DECORATORS) {
