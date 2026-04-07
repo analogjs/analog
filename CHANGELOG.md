@@ -1,3 +1,9 @@
+# [2.5.0-beta.11](https://github.com/analogjs/analog/compare/v2.5.0-beta.10...v2.5.0-beta.11) (2026-04-07)
+
+### Performance Improvements
+
+- **angular-compiler:** optimize using oxc, add tests, consolidate strings ([#2260](https://github.com/analogjs/analog/issues/2260)) ([64a4696](https://github.com/analogjs/analog/commit/64a469627926e2125cf45b95925fecb4919e13a7))
+
 # [2.5.0-beta.10](https://github.com/analogjs/analog/compare/v2.5.0-beta.9...v2.5.0-beta.10) (2026-04-07)
 
 ### Bug Fixes
