@@ -136,6 +136,42 @@ describe('JIT transform propDecorators via OXC', () => {
     expect(result).toContain('isSignal: true');
   });
 
+  it('preserves transform option in input() lowering', () => {
+    const result = jitTransform(
+      `
+      import { Component, input, booleanAttribute } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        disabled = input(false, { transform: booleanAttribute });
+      }
+    `,
+      'test.component.ts',
+    ).code;
+
+    expect(result).toContain('TestComponent.propDecorators');
+    expect(result).toContain('transform: booleanAttribute');
+    expect(result).toContain('isSignal: true');
+  });
+
+  it('preserves transform option in input.required() lowering', () => {
+    const result = jitTransform(
+      `
+      import { Component, input, numberAttribute } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        count = input.required({ transform: numberAttribute });
+      }
+    `,
+      'test.component.ts',
+    ).code;
+
+    expect(result).toContain('TestComponent.propDecorators');
+    expect(result).toContain('transform: numberAttribute');
+    expect(result).toContain('required: true');
+  });
+
   it('emits propDecorators for input.required()', () => {
     const result = jitTransform(
       `

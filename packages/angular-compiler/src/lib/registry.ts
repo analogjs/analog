@@ -170,7 +170,10 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
                 required: calleeName === 'model.required',
               };
               outputs[name + 'Change'] = name + 'Change';
-            } else if (calleeName === 'output') {
+            } else if (
+              calleeName === 'output' ||
+              calleeName === 'outputFromObservable'
+            ) {
               outputs[name] = name;
             }
           }

@@ -1912,6 +1912,52 @@ describe('constant pool helpers survive type-only import elision', () => {
   });
 });
 
+describe('Registry outputFromObservable support', () => {
+  it('extracts outputFromObservable as output in registry', () => {
+    const entries = scanFile(
+      `
+      import { Component, outputFromObservable } from '@angular/core';
+      import { Subject } from 'rxjs';
+
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        private subject = new Subject<string>();
+        changed = outputFromObservable(this.subject);
+      }
+    `,
+      'test.ts',
+    );
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].outputs).toBeDefined();
+    expect(entries[0].outputs!['changed']).toBe('changed');
+  });
+});
+
+describe('JIT transform nested class support', () => {
+  it('processes classes nested inside function scopes', () => {
+    const result = jitTransform(
+      `
+      import { Component } from '@angular/core';
+
+      @Component({ selector: 'app-top', template: '' })
+      export class TopComponent {}
+
+      function factory() {
+        @Component({ selector: 'app-inner', template: '' })
+        class InnerComponent {}
+        return InnerComponent;
+      }
+    `,
+      'test.component.ts',
+    ).code;
+
+    // Both top-level and nested classes should be processed
+    expect(result).toContain('TopComponent.decorators');
+    expect(result).toContain('InnerComponent.decorators');
+  });
+});
+
 describe('OXC-based metadata extraction in AOT', () => {
   it('compiles component with signal inputs via OXC metadata', () => {
     const result = compile(

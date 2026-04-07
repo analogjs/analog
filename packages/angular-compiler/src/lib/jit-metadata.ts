@@ -160,34 +160,22 @@ export function buildPropDecorators(
 
       if (api === 'input') {
         if (!props[memberName]) props[memberName] = [];
-        // Extract alias from options
-        let alias: string | null = null;
+        // Preserve all original options from the input() call and overlay isSignal/required
         const optArg = required ? args[0] : args[1];
+        const optParts: string[] = [];
         if (optArg?.type === 'ObjectExpression') {
           for (const p of optArg.properties || []) {
-            if (
-              p.type === 'ObjectProperty' || p.type === 'Property'
-                ? (p.key?.name || p.key?.value) === 'alias' &&
-                  p.value?.type === 'StringLiteral'
-                : false
-            ) {
-              alias = p.value.value;
-            }
-            // Also check Literal (OXC uses both forms)
-            if (
-              (p.type === 'ObjectProperty' || p.type === 'Property') &&
-              (p.key?.name || p.key?.value) === 'alias' &&
-              p.value?.type === 'Literal' &&
-              typeof p.value.value === 'string'
-            ) {
-              alias = p.value.value;
-            }
+            if (p.type !== 'ObjectProperty' && p.type !== 'Property') continue;
+            const pKey = p.key?.name || p.key?.value;
+            // Skip isSignal/required — we override them below
+            if (pKey === 'isSignal' || pKey === 'required') continue;
+            optParts.push(sourceCode.slice(p.start, p.end));
           }
         }
-        const inputArgs = alias
-          ? `{alias: '${alias}', isSignal: true, required: ${required}}`
-          : `{isSignal: true, required: ${required}}`;
-        props[memberName].push(`{type: Input, args: [${inputArgs}]}`);
+        optParts.push(`isSignal: true`, `required: ${required}`);
+        props[memberName].push(
+          `{type: Input, args: [{${optParts.join(', ')}}]}`,
+        );
       } else if (api === 'model') {
         if (!props[memberName]) props[memberName] = [];
         props[memberName].push(`{type: Input, args: [{isSignal: true}]}`);
