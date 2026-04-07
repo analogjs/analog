@@ -1,15 +1,49 @@
-import * as ts from 'typescript';
+import { parseSync } from 'oxc-parser';
 import MagicString from 'magic-string';
-import {
-  collectTypeOnlyImports,
-  findAllClasses,
-  ANGULAR_DECORATORS,
-} from './utils.js';
+import { detectTypeOnlyImportNames } from './type-elision.js';
 import { buildCtorParameters, buildPropDecorators } from './jit-metadata.js';
 
 export interface JitTransformResult {
   code: string;
   map: any;
+}
+
+const ANGULAR_DECORATORS = new Set([
+  'Component',
+  'Directive',
+  'Pipe',
+  'Injectable',
+  'NgModule',
+]);
+
+/**
+ * Recursively find all ClassDeclaration nodes in an OXC AST.
+ * Handles top-level, exported, and nested classes (e.g. inside function scopes).
+ */
+function findAllClasses(node: any): any[] {
+  const result: any[] = [];
+  if (!node || typeof node !== 'object') return result;
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      result.push(...findAllClasses(item));
+    }
+    return result;
+  }
+  if (node.type === 'ClassDeclaration' || node.type === 'ClassExpression') {
+    result.push(node);
+  }
+  for (const key of Object.keys(node)) {
+    if (
+      key === 'type' ||
+      key === 'start' ||
+      key === 'end' ||
+      key === 'range' ||
+      key === 'loc'
+    )
+      continue;
+    result.push(...findAllClasses(node[key]));
+  }
+  return result;
 }
 
 /**
@@ -27,22 +61,20 @@ export interface JitTransformResult {
  *
  * No template compilation — Angular's JIT compiler handles that at runtime.
  * Requires `import '@angular/compiler'` in main.ts for the browser JIT.
+ *
+ * Uses OXC's native Rust parser instead of TypeScript's parser for ~1.5x
+ * faster parsing and source-position slicing instead of getText() calls.
  */
 export function jitTransform(
   sourceCode: string,
   fileName: string,
 ): JitTransformResult {
-  const sourceFile = ts.createSourceFile(
-    fileName,
-    sourceCode,
-    ts.ScriptTarget.Latest,
-    true,
-  );
+  const { program } = parseSync(fileName, sourceCode);
   const ms = new MagicString(sourceCode, { filename: fileName });
-  const typeOnlyImports = collectTypeOnlyImports(sourceFile);
+  const typeOnlyImports = detectTypeOnlyImportNames(sourceCode);
   let hasAngularClass = false;
 
-  const allClasses = findAllClasses(sourceFile);
+  const allClasses = findAllClasses(program.body);
 
   const postClassStatements: string[] = [];
   let importCounter = 0;
@@ -50,29 +82,28 @@ export function jitTransform(
   let needsJitImport = false;
 
   for (const node of allClasses) {
-    const decorators = ts.getDecorators(node);
-    if (!decorators) continue;
+    const decorators: any[] = node.decorators || [];
 
-    const angularDecs = decorators.filter((dec) => {
-      if (!ts.isCallExpression(dec.expression)) return false;
-      const name = dec.expression.expression.getText(sourceFile);
+    const angularDecs = decorators.filter((dec: any) => {
+      const expr = dec.expression;
+      if (!expr || expr.type !== 'CallExpression') return false;
+      const name: string | undefined = expr.callee?.name;
       // Keep @Injectable on the class — Angular's decorator function
       // self-registers ɵprov (providedIn) at class definition time and
       // there is no ɵcompileInjectable JIT entry point to call instead.
       if (name === 'Injectable') return false;
-      return ANGULAR_DECORATORS.has(name);
+      return name !== undefined && ANGULAR_DECORATORS.has(name);
     });
     if (angularDecs.length === 0) continue;
 
-    const className = node.name?.text;
+    const className: string | undefined = node.id?.name;
     if (!className) continue;
     hasAngularClass = true;
 
     // 1. Remove Angular decorators from source
     for (const dec of angularDecs) {
-      const start = dec.getStart(sourceFile);
-      const end = dec.getEnd();
-      let trimEnd = end;
+      const start: number = dec.start;
+      let trimEnd: number = dec.end;
       while (trimEnd < sourceCode.length && /\s/.test(sourceCode[trimEnd]))
         trimEnd++;
       ms.remove(start, trimEnd);
@@ -80,83 +111,82 @@ export function jitTransform(
 
     // 2. Emit Class.decorators = [{ type: DecName, args: [...] }]
     //    For @Component: convert templateUrl/styleUrl/styleUrls to ESM imports
-    const decoratorMeta: { name: string; argsText: string; entry: string }[] =
-      [];
-    const decoratorEntries = angularDecs.map((dec) => {
-      const call = dec.expression as ts.CallExpression;
-      const decName = call.expression.getText(sourceFile);
-      const args = call.arguments;
+    const decoratorMeta: { name: string; argsText: string }[] = [];
+    const decoratorEntries = angularDecs.map((dec: any) => {
+      const call = dec.expression;
+      const decName: string = call.callee.name;
+      const args: any[] = call.arguments || [];
 
       if (
         args.length > 0 &&
         decName === 'Component' &&
-        ts.isObjectLiteralExpression(args[0])
+        args[0].type === 'ObjectExpression'
       ) {
         // Rewrite component metadata: convert external resources to imports
-        const obj = args[0] as ts.ObjectLiteralExpression;
+        const obj = args[0];
         const rewrittenProps: string[] = [];
 
         for (const prop of obj.properties) {
-          if (!ts.isPropertyAssignment(prop)) {
-            rewrittenProps.push(prop.getText(sourceFile));
+          if (prop.type !== 'ObjectProperty' && prop.type !== 'Property') {
+            rewrittenProps.push(sourceCode.slice(prop.start, prop.end));
             continue;
           }
-          const key = prop.name.getText(sourceFile);
-          const val = prop.initializer;
+          const key: string = prop.key?.name || prop.key?.value;
+          const val = prop.value;
 
           if (
             key === 'templateUrl' &&
-            (ts.isStringLiteral(val) || ts.isNoSubstitutionTemplateLiteral(val))
+            (val?.type === 'StringLiteral' ||
+              (val?.type === 'Literal' && typeof val.value === 'string'))
           ) {
             // templateUrl: './foo.html' → template: _tpl0 (with import)
             const varName = `_jit_tpl_${importCounter++}`;
-            resourceImports.push(`import ${varName} from '${val.text}?raw';`);
+            resourceImports.push(`import ${varName} from '${val.value}?raw';`);
             rewrittenProps.push(`template: ${varName}`);
           } else if (
             key === 'styleUrl' &&
-            (ts.isStringLiteral(val) || ts.isNoSubstitutionTemplateLiteral(val))
+            (val?.type === 'StringLiteral' ||
+              (val?.type === 'Literal' && typeof val.value === 'string'))
           ) {
             // styleUrl: './foo.scss' → styles: [_style0]
             const varName = `_jit_style_${importCounter++}`;
             resourceImports.push(
-              `import ${varName} from '${val.text}?inline';`,
+              `import ${varName} from '${val.value}?inline';`,
             );
             rewrittenProps.push(`styles: [${varName}]`);
-          } else if (key === 'styleUrls' && ts.isArrayLiteralExpression(val)) {
+          } else if (key === 'styleUrls' && val?.type === 'ArrayExpression') {
             // styleUrls: ['./a.scss', './b.css'] → styles: [_style0, _style1]
             const vars: string[] = [];
             for (const el of val.elements) {
               if (
-                ts.isStringLiteral(el) ||
-                ts.isNoSubstitutionTemplateLiteral(el)
+                el?.type === 'StringLiteral' ||
+                (el?.type === 'Literal' && typeof el.value === 'string')
               ) {
                 const varName = `_jit_style_${importCounter++}`;
                 resourceImports.push(
-                  `import ${varName} from '${el.text}?inline';`,
+                  `import ${varName} from '${el.value}?inline';`,
                 );
                 vars.push(varName);
               }
             }
             rewrittenProps.push(`styles: [${vars.join(', ')}]`);
           } else {
-            rewrittenProps.push(prop.getText(sourceFile));
+            rewrittenProps.push(sourceCode.slice(prop.start, prop.end));
           }
         }
         const rewrittenArgsText = `{${rewrittenProps.join(', ')}}`;
-        decoratorMeta.push({
-          name: decName,
-          argsText: rewrittenArgsText,
-          entry: '',
-        });
+        decoratorMeta.push({ name: decName, argsText: rewrittenArgsText });
         return `{ type: ${decName}, args: [${rewrittenArgsText}] }`;
       }
 
       if (args.length > 0) {
-        const argsText = args.map((a) => a.getText(sourceFile)).join(', ');
-        decoratorMeta.push({ name: decName, argsText, entry: '' });
+        const argsText = args
+          .map((a: any) => sourceCode.slice(a.start, a.end))
+          .join(', ');
+        decoratorMeta.push({ name: decName, argsText });
         return `{ type: ${decName}, args: [${argsText}] }`;
       }
-      decoratorMeta.push({ name: decName, argsText: '{}', entry: '' });
+      decoratorMeta.push({ name: decName, argsText: '{}' });
       return `{ type: ${decName} }`;
     });
     postClassStatements.push(
@@ -191,7 +221,7 @@ export function jitTransform(
     }
 
     // 3. Emit Class.ctorParameters for constructor DI
-    const ctorParams = buildCtorParameters(node, sourceFile, typeOnlyImports);
+    const ctorParams = buildCtorParameters(node, sourceCode, typeOnlyImports);
     if (ctorParams) {
       postClassStatements.push(
         `${className}.ctorParameters = () => [${ctorParams}];`,
@@ -199,7 +229,7 @@ export function jitTransform(
     }
 
     // 4. Emit Class.propDecorators for field decorators + signal APIs
-    const propDecorators = buildPropDecorators(node, sourceFile);
+    const propDecorators = buildPropDecorators(node, sourceCode);
     if (propDecorators) {
       postClassStatements.push(
         `${className}.propDecorators = ${propDecorators};`,
@@ -208,34 +238,38 @@ export function jitTransform(
 
     // 5. Remove member and parameter decorators from source now that
     //    they have been extracted into static metadata above.
-    for (const member of node.members) {
-      const memberDecs = ts.getDecorators(member as any);
-      if (memberDecs) {
-        for (const dec of memberDecs) {
-          const start = dec.getStart(sourceFile);
-          const end = dec.getEnd();
-          let trimEnd = end;
-          while (trimEnd < sourceCode.length && /\s/.test(sourceCode[trimEnd]))
-            trimEnd++;
-          ms.remove(start, trimEnd);
-        }
+    const members: any[] = node.body?.body || [];
+    for (const member of members) {
+      const memberDecs: any[] = member.decorators || [];
+      for (const dec of memberDecs) {
+        const start: number = dec.start;
+        let trimEnd: number = dec.end;
+        while (trimEnd < sourceCode.length && /\s/.test(sourceCode[trimEnd]))
+          trimEnd++;
+        ms.remove(start, trimEnd);
       }
       // Constructor parameter decorators
-      if (ts.isConstructorDeclaration(member)) {
-        for (const param of member.parameters) {
-          const paramDecs = ts.getDecorators(param);
-          if (paramDecs) {
-            for (const dec of paramDecs) {
-              const start = dec.getStart(sourceFile);
-              const end = dec.getEnd();
-              let trimEnd = end;
-              while (
-                trimEnd < sourceCode.length &&
-                /\s/.test(sourceCode[trimEnd])
-              )
-                trimEnd++;
-              ms.remove(start, trimEnd);
-            }
+      if (member.type === 'MethodDefinition' && member.kind === 'constructor') {
+        const params: any[] =
+          member.value?.params?.items || member.value?.params || [];
+        for (const param of params) {
+          // Decorators may live on the TSParameterProperty wrapper or the inner param
+          const allParamDecs: any[] = [
+            ...(param.decorators || []),
+            ...(param.type === 'TSParameterProperty' &&
+            param.parameter?.decorators
+              ? param.parameter.decorators
+              : []),
+          ];
+          for (const dec of allParamDecs) {
+            const start: number = dec.start;
+            let trimEnd: number = dec.end;
+            while (
+              trimEnd < sourceCode.length &&
+              /\s/.test(sourceCode[trimEnd])
+            )
+              trimEnd++;
+            ms.remove(start, trimEnd);
           }
         }
       }
