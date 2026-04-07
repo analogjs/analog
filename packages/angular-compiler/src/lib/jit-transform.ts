@@ -2,7 +2,7 @@ import { parseSync } from 'oxc-parser';
 import MagicString from 'magic-string';
 import { detectTypeOnlyImportNames } from './type-elision.js';
 import { buildCtorParameters, buildPropDecorators } from './jit-metadata.js';
-import { ANGULAR_DECORATORS } from './constants.js';
+import { ANGULAR_DECORATORS, FIELD_DECORATORS } from './constants.js';
 
 export interface JitTransformResult {
   code: string;
@@ -276,6 +276,34 @@ export function jitTransform(
   // Prepend ESM imports for external templates/styles
   if (resourceImports.length > 0) {
     ms.prepend(resourceImports.join('\n') + '\n');
+  }
+
+  // Prepend imports for decorator classes referenced by signal API downleveling
+  // (e.g. input() → {type: Input}, model() → {type: Input} + {type: Output})
+  const existingImports = new Set<string>();
+  for (const stmt of program.body) {
+    if (
+      (stmt as any).type === 'ImportDeclaration' &&
+      (stmt as any).source?.value === '@angular/core'
+    ) {
+      for (const spec of (stmt as any).specifiers || []) {
+        if (spec.type === 'ImportSpecifier') {
+          existingImports.add(spec.local?.name || spec.imported?.name);
+        }
+      }
+    }
+  }
+  const allPostCode = postClassStatements.join('\n');
+  const missingDecorators: string[] = [];
+  for (const dec of FIELD_DECORATORS) {
+    if (allPostCode.includes(`type: ${dec}`) && !existingImports.has(dec)) {
+      missingDecorators.push(dec);
+    }
+  }
+  if (missingDecorators.length > 0) {
+    ms.prepend(
+      `import { ${missingDecorators.join(', ')} } from '@angular/core';\n`,
+    );
   }
 
   // Prepend JIT compiler imports
