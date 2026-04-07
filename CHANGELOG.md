@@ -1,3 +1,9 @@
+# [2.5.0-beta.7](https://github.com/analogjs/analog/compare/v2.5.0-beta.6...v2.5.0-beta.7) (2026-04-07)
+
+### Bug Fixes
+
+- **angular-compiler:** improve handling of type elision for imports/exports ([#2257](https://github.com/analogjs/analog/issues/2257)) ([1605a7b](https://github.com/analogjs/analog/commit/1605a7b6eb0870f9bb09e79c07debf2ac63984c4))
+
 # [2.5.0-beta.6](https://github.com/analogjs/analog/compare/v2.5.0-beta.5...v2.5.0-beta.6) (2026-04-07)
 
 ### Features
