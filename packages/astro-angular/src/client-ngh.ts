@@ -6,8 +6,6 @@ import {
   Type,
   APP_ID,
   createComponent,
-  ɵCLIENT_RENDER_MODE_FLAG,
-  ɵSSR_CONTENT_INTEGRITY_MARKER,
   APP_BOOTSTRAP_LISTENER,
 } from '@angular/core';
 import {
@@ -21,6 +19,7 @@ import {
   getComponentElementTag,
 } from './create-component.ts';
 import { ID_PROP_NAME } from './id.ts';
+import { ensureSsrIntegrityMarker } from './ssr-integrity.ts';
 
 export default (element: HTMLElement) => {
   return (
@@ -37,12 +36,7 @@ export default (element: HTMLElement) => {
       return;
     }
 
-    // Insert Angular client hydration marker
-    // See https://github.com/angular/angular/issues/67785
-    document.body.prepend(
-      document.createComment(ɵSSR_CONTENT_INTEGRITY_MARKER),
-    );
-    document.body.setAttribute(ɵCLIENT_RENDER_MODE_FLAG, '');
+    ensureSsrIntegrityMarker();
 
     let hostElement = element.querySelector(mirror.selector);
     let reuseDom = true;
