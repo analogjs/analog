@@ -7,13 +7,15 @@
   "implicitDependencies": ["astro-angular"],
   "targets": {
     "serve": {
-      "command": "astro dev --root apps/astro-app"
+      "command": "astro dev --root apps/astro-app",
+      "continuous": true
     },
     "build": {
       "command": "astro build --root apps/astro-app"
     },
     "preview": {
-      "command": "astro preview --root apps/astro-app"
+      "command": "astro preview --root apps/astro-app",
+      "continuous": true
     }
   }
 }
