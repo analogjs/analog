@@ -98,7 +98,7 @@ export function angularVitestSourcemapPlugin(): Plugin {
         return;
       }
 
-      if (vite.rolldownVersion) {
+      if (vite.transformWithOxc) {
         const result = await vite.transformWithOxc(code, id, {
           lang: 'js',
         });
@@ -106,7 +106,7 @@ export function angularVitestSourcemapPlugin(): Plugin {
         return result as unknown as vite.TransformResult;
       } else {
         const result = await vite.transformWithEsbuild(code, id, {
-          loader: 'js',
+          loader: 'ts',
         });
 
         return result;
