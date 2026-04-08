@@ -1,3 +1,9 @@
+# [2.5.0-beta.13](https://github.com/analogjs/analog/compare/v2.5.0-beta.12...v2.5.0-beta.13) (2026-04-08)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** bypass Vite 7.3.2+ server.fs restrictions for style ?inline imports ([#2262](https://github.com/analogjs/analog/issues/2262)) ([7e43cc4](https://github.com/analogjs/analog/commit/7e43cc4281b0a78ebee93bbdd58b64381b5cab2a))
+
 # [2.5.0-beta.12](https://github.com/analogjs/analog/compare/v2.5.0-beta.11...v2.5.0-beta.12) (2026-04-07)
 
 ### Bug Fixes
