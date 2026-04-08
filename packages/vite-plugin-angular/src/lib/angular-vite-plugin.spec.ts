@@ -58,7 +58,7 @@ describe('isTestWatchMode', () => {
 });
 
 describe('JIT resolveId', () => {
-  it('should resolve style files with ?inline&analog=1 suffix', () => {
+  it('should resolve style files with ?analog-inline suffix', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
       (p) => p.name === '@analogjs/vite-plugin-angular',
@@ -74,8 +74,8 @@ describe('JIT resolveId', () => {
     );
 
     expect(result).toBeDefined();
-    expect(result).toContain('?inline&analog=1');
-    expect(result).not.toContain('??inline');
+    expect(result).toContain('?analog-inline');
+    expect(result).not.toContain('?inline');
   });
 
   it('should resolve template files with ?analog-raw suffix', () => {
@@ -136,7 +136,7 @@ describe('JIT resolveId', () => {
     expect(result).toContain('?analog-raw');
   });
 
-  it('should intercept style ?inline imports and remap to ?inline&analog=1', () => {
+  it('should intercept style ?inline imports and remap to ?analog-inline', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
       (p) => p.name === '@analogjs/vite-plugin-angular',
@@ -149,14 +149,14 @@ describe('JIT resolveId', () => {
       './my-component.scss?inline',
       '/project/src/app/my-component.ts',
     );
-    expect(result).toBe('/project/src/app/my-component.scss?inline&analog=1');
+    expect(result).toBe('/project/src/app/my-component.scss?analog-inline');
 
     // Absolute .css?inline
     const result2 = resolveId(
       '/project/src/app/my-component.css?inline',
       '/project/src/app/other.ts',
     );
-    expect(result2).toBe('/project/src/app/my-component.css?inline&analog=1');
+    expect(result2).toBe('/project/src/app/my-component.css?analog-inline');
   });
 
   it('should intercept style ?inline imports even without jit mode', () => {
@@ -171,7 +171,23 @@ describe('JIT resolveId', () => {
       './my-component.scss?inline',
       '/project/src/app/my-component.ts',
     );
-    expect(result).toContain('?inline&analog=1');
+    expect(result).toContain('?analog-inline');
+  });
+
+  it('should not match Vite inline security regex /[?&]inline\\b/', () => {
+    const plugins = angular();
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+
+    const resolveId = (mainPlugin as any).resolveId;
+    const inlineRE = /[?&]inline\b/;
+
+    const result = resolveId(
+      './my-component.scss?inline',
+      '/project/src/app/my-component.ts',
+    );
+    expect(inlineRE.test(result)).toBe(false);
   });
 });
 
