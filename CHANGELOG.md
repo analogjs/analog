@@ -1,3 +1,9 @@
+# [2.5.0-beta.14](https://github.com/analogjs/analog/compare/v2.5.0-beta.13...v2.5.0-beta.14) (2026-04-08)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** bypass Vite 8.0.5+ Denied ID for style ?inline imports ([#2264](https://github.com/analogjs/analog/issues/2264)) ([812c011](https://github.com/analogjs/analog/commit/812c011277ad72382def7ff77581b0fa61eec695))
+
 # [2.5.0-beta.13](https://github.com/analogjs/analog/compare/v2.5.0-beta.12...v2.5.0-beta.13) (2026-04-08)
 
 ### Bug Fixes
