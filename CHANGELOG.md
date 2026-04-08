@@ -1,3 +1,9 @@
+# [2.5.0-beta.15](https://github.com/analogjs/analog/compare/v2.5.0-beta.14...v2.5.0-beta.15) (2026-04-08)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** handle .ts files not in Angular program ([#2265](https://github.com/analogjs/analog/issues/2265)) ([fda852d](https://github.com/analogjs/analog/commit/fda852d389b1506d8969ff05c4c610b6673b7888))
+
 # [2.5.0-beta.14](https://github.com/analogjs/analog/compare/v2.5.0-beta.13...v2.5.0-beta.14) (2026-04-08)
 
 ### Bug Fixes
