@@ -513,7 +513,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           const path = id.split(';')[1];
           return `${normalizePath(
             resolve(dirname(importer as string), path),
-          )}?${id.includes(':style') ? 'inline&analog=1' : 'analog-raw'}`;
+          )}?${id.includes(':style') ? 'analog-inline' : 'analog-raw'}`;
         }
 
         // Intercept .html?raw imports to bypass Vite 7.3.2+ server.fs restrictions
@@ -531,8 +531,10 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
         }
 
-        // Intercept style ?inline imports to bypass Vite 7.3.2+ server.fs
-        // restrictions, same as the ?raw template fix above
+        // Intercept style ?inline imports to bypass Vite 8.0.5+ server.fs
+        // restrictions. Vite's security check matches /[?&]inline\b/ so we
+        // use ?analog-inline which avoids the regex while we handle CSS
+        // preprocessing and inline export ourselves in the load hook.
         if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
           const filePath = id.split('?')[0];
           const resolved = isAbsolute(filePath)
@@ -541,7 +543,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               ? normalizePath(resolve(dirname(importer), filePath))
               : undefined;
           if (resolved) {
-            return resolved + '?inline&analog=1';
+            return resolved + '?analog-inline';
           }
         }
 
@@ -566,11 +568,14 @@ export function angular(options?: PluginOptions): Plugin[] {
           return `export default ${JSON.stringify(content)}`;
         }
 
-        // Handle Angular style inline imports directly to bypass Vite
-        // server.fs restrictions on ?inline query parameters (Vite 7.3.2+)
-        if (id.includes('?inline&analog=1')) {
+        // Handle Angular style imports directly, bypassing Vite 8.0.5+
+        // server.fs security check which blocks IDs matching /[?&]inline\b/.
+        // Compile via preprocessCSS and return as inline string export.
+        if (id.includes('?analog-inline')) {
           const filePath = id.split('?')[0];
-          return await fsPromises.readFile(filePath, 'utf-8');
+          const code = await fsPromises.readFile(filePath, 'utf-8');
+          const result = await preprocessCSS(code, filePath, resolvedConfig);
+          return `export default ${JSON.stringify(result.code)}`;
         }
 
         // Map angular inline styles to the source text
