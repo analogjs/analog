@@ -430,6 +430,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         // ordering conflict where lowered decorators can't be found by the
         // compiler, while still ensuring all .ts files get TypeScript stripped
         // (including those excluded from the analog compiler's transform filter).
+        //
+        // The NgtscProgram path disables both esbuild and OXC to avoid
+        // sourcemap composition issues with Angular-compiled files.
+        // Non-Angular .ts files are returned as-is (undefined) so that
+        // the host framework or Vite's pipeline can handle them.
         const esbuild = pluginOptions.useAngularCompilationAPI
           ? undefined
           : pluginOptions.useAnalogCompiler
@@ -943,19 +948,34 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           const typescriptResult = fileEmitter(id);
 
+          // File not in the Angular program — skip and let other plugins
+          // or Vite's built-in transform handle it. Warn if it looks like
+          // an Angular file that should have been compiled.
+          if (!typescriptResult) {
+            const isAngular =
+              !id.includes('@ng/component') &&
+              /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
+            if (isAngular) {
+              this.warn(
+                `[@analogjs/vite-plugin-angular]: "${id}" contains Angular decorators but is not in the TypeScript program. ` +
+                  `Ensure it is included in your tsconfig.`,
+              );
+            }
+            return;
+          }
+
           if (
-            typescriptResult?.warnings &&
-            typescriptResult?.warnings.length > 0
+            typescriptResult.warnings &&
+            typescriptResult.warnings.length > 0
           ) {
             this.warn(`${typescriptResult.warnings.join('\n')}`);
           }
 
-          if (typescriptResult?.errors && typescriptResult?.errors.length > 0) {
+          if (typescriptResult.errors && typescriptResult.errors.length > 0) {
             this.error(`${typescriptResult.errors.join('\n')}`);
           }
 
-          // return fileEmitter
-          let data = typescriptResult?.content ?? '';
+          let data = typescriptResult.content ?? '';
 
           if (jit && data.includes('angular:jit:')) {
             data = data.replace(
