@@ -752,7 +752,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           const path = id.split(';')[1];
           return `${normalizePath(
             resolve(dirname(importer as string), path),
-          )}?${id.includes(':style') ? 'inline' : 'analog-raw'}`;
+          )}?${id.includes(':style') ? 'inline&analog=1' : 'analog-raw'}`;
         }
 
         // Intercept .html?raw imports to bypass Vite 7.3.2+ server.fs restrictions
@@ -767,6 +767,20 @@ export function angular(options?: PluginOptions): Plugin[] {
               : undefined;
           if (resolved) {
             return resolved + '?analog-raw';
+          }
+        }
+
+        // Intercept style ?inline imports to bypass Vite 7.3.2+ server.fs
+        // restrictions, same as the ?raw template fix above
+        if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
+          const filePath = id.split('?')[0];
+          const resolved = isAbsolute(filePath)
+            ? normalizePath(filePath)
+            : importer
+              ? normalizePath(resolve(dirname(importer), filePath))
+              : undefined;
+          if (resolved) {
+            return resolved + '?inline&analog=1';
           }
         }
 
@@ -789,6 +803,13 @@ export function angular(options?: PluginOptions): Plugin[] {
           const filePath = id.slice(0, -'?analog-raw'.length);
           const content = await fsPromises.readFile(filePath, 'utf-8');
           return `export default ${JSON.stringify(content)}`;
+        }
+
+        // Handle Angular style inline imports directly to bypass Vite
+        // server.fs restrictions on ?inline query parameters (Vite 7.3.2+)
+        if (id.includes('?inline&analog=1')) {
+          const filePath = id.split('?')[0];
+          return await fsPromises.readFile(filePath, 'utf-8');
         }
 
         // Map angular inline styles to the source text
