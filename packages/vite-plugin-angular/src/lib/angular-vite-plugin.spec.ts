@@ -58,7 +58,7 @@ describe('isTestWatchMode', () => {
 });
 
 describe('JIT resolveId', () => {
-  it('should resolve style files with ?inline suffix (single ?)', () => {
+  it('should resolve style files with ?inline&analog=1 suffix', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
       (p) => p.name === '@analogjs/vite-plugin-angular',
@@ -74,7 +74,7 @@ describe('JIT resolveId', () => {
     );
 
     expect(result).toBeDefined();
-    expect(result).toContain('?inline');
+    expect(result).toContain('?inline&analog=1');
     expect(result).not.toContain('??inline');
   });
 
@@ -134,6 +134,44 @@ describe('JIT resolveId', () => {
       '/project/src/app/my-component.ts',
     );
     expect(result).toContain('?analog-raw');
+  });
+
+  it('should intercept style ?inline imports and remap to ?inline&analog=1', () => {
+    const plugins = angular({ jit: true });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+
+    const resolveId = (mainPlugin as any).resolveId;
+
+    // Relative .scss?inline
+    const result = resolveId(
+      './my-component.scss?inline',
+      '/project/src/app/my-component.ts',
+    );
+    expect(result).toBe('/project/src/app/my-component.scss?inline&analog=1');
+
+    // Absolute .css?inline
+    const result2 = resolveId(
+      '/project/src/app/my-component.css?inline',
+      '/project/src/app/other.ts',
+    );
+    expect(result2).toBe('/project/src/app/my-component.css?inline&analog=1');
+  });
+
+  it('should intercept style ?inline imports even without jit mode', () => {
+    const plugins = angular();
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+
+    const resolveId = (mainPlugin as any).resolveId;
+
+    const result = resolveId(
+      './my-component.scss?inline',
+      '/project/src/app/my-component.ts',
+    );
+    expect(result).toContain('?inline&analog=1');
   });
 });
 
