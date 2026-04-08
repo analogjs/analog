@@ -132,6 +132,23 @@ describe('viteFinal', () => {
   };
 
   describe('Angular plugin options', () => {
+    it('keeps plugins without a name when filtering analogjs plugins', async () => {
+      const options = makeOptions();
+      const config = {
+        plugins: [
+          { name: 'vite:react' },
+          {},
+          undefined,
+          { name: 'analogjs-x' },
+        ],
+      };
+
+      const result = await viteFinal(config, options);
+
+      expect(config.plugins).toEqual([{ name: 'vite:react' }, {}, undefined]);
+      expect(result.plugins).toBeDefined();
+    });
+
     it('prefers hmr over liveReload and keeps liveReload as compatibility input', async () => {
       const options = makeOptions({ hmr: true, liveReload: false });
 

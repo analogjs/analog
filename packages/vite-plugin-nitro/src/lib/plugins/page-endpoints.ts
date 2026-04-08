@@ -9,7 +9,11 @@ export function pageEndpointsPlugin() {
       _code: string,
       id: string,
     ): Promise<{ code: string; map: null } | undefined> {
-      if (normalizePath(id).includes('/pages/') && id.endsWith('.server.ts')) {
+      if (
+        normalizePath(id).includes('/pages/') &&
+        id.endsWith('.server.ts') &&
+        !_code.includes('defineHandler')
+      ) {
         const result = parseSync(id, _code, {
           sourceType: 'module',
           lang: 'ts',
