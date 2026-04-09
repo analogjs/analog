@@ -72,6 +72,13 @@ function analyzeTypeOnlyImports(code: string): {
   // Step 2 – walk AST and collect names referenced in value positions
   const valueReferenced = new Set<string>();
 
+  // Pre-pass: constructor parameter types of decorated classes are DI tokens
+  // and must be preserved as runtime values, even though they appear in
+  // type-annotation positions. Without this, `constructor(svc: MyService)`
+  // would erase the `MyService` import and `extractConstructorDeps` would
+  // emit `ɵɵinvalidFactory()`.
+  collectConstructorDiTokens(ast, importedNames, valueReferenced);
+
   function walk(node: any, inTypePosition: boolean): void {
     if (!node || typeof node !== 'object') return;
     if (Array.isArray(node)) {
@@ -151,6 +158,95 @@ function analyzeTypeOnlyImports(code: string): {
     if (!valueReferenced.has(name)) typeOnly.add(name);
   }
   return { ast, typeOnlyNames: typeOnly };
+}
+
+/**
+ * Walk the program looking for decorated classes with constructors and add
+ * the type names from constructor parameter annotations to `valueReferenced`.
+ *
+ * Constructor parameter types are TypeScript type positions, but for decorated
+ * classes they double as runtime DI tokens — Angular's compiler reads them
+ * via `compileFactoryFunction` to wire `ɵɵdirectiveInject(...)` calls. The
+ * import of the type therefore must NOT be elided as type-only.
+ */
+function collectConstructorDiTokens(
+  ast: any,
+  importedNames: Set<string>,
+  valueReferenced: Set<string>,
+): void {
+  for (const stmt of (ast as any).body || []) {
+    const classNode =
+      stmt.type === 'ExportNamedDeclaration' ||
+      stmt.type === 'ExportDefaultDeclaration'
+        ? (stmt as any).declaration
+        : stmt;
+    if (
+      !classNode ||
+      (classNode.type !== 'ClassDeclaration' &&
+        classNode.type !== 'ClassExpression')
+    ) {
+      continue;
+    }
+    if (!classNode.decorators?.length) continue;
+
+    const ctor = (classNode.body?.body || []).find(
+      (m: any) => m.type === 'MethodDefinition' && m.kind === 'constructor',
+    );
+    if (!ctor) continue;
+
+    const params: any[] = ctor.value?.params?.items || ctor.value?.params || [];
+    for (const param of params) {
+      const actualParam =
+        param.type === 'TSParameterProperty' ? param.parameter : param;
+      const typeAnn =
+        actualParam?.typeAnnotation?.typeAnnotation ??
+        param?.typeAnnotation?.typeAnnotation;
+      if (!typeAnn) continue;
+      collectTypeReferenceNames(typeAnn, importedNames, valueReferenced);
+    }
+  }
+}
+
+/**
+ * Recursively extract identifier names from a TS type expression and mark
+ * any that match an imported name as value-referenced.
+ */
+function collectTypeReferenceNames(
+  typeNode: any,
+  importedNames: Set<string>,
+  valueReferenced: Set<string>,
+): void {
+  if (!typeNode || typeof typeNode !== 'object') return;
+  if (typeNode.type === 'TSTypeReference' && typeNode.typeName) {
+    const name = typeNode.typeName.name;
+    if (name && importedNames.has(name)) {
+      valueReferenced.add(name);
+    }
+    // Walk type arguments too (e.g. Foo<Bar>)
+    if (typeNode.typeArguments) {
+      collectTypeReferenceNames(
+        typeNode.typeArguments,
+        importedNames,
+        valueReferenced,
+      );
+    }
+  } else if (
+    typeNode.type === 'TSUnionType' ||
+    typeNode.type === 'TSIntersectionType'
+  ) {
+    for (const t of typeNode.types || []) {
+      collectTypeReferenceNames(t, importedNames, valueReferenced);
+    }
+  } else if (Array.isArray(typeNode)) {
+    for (const t of typeNode) {
+      collectTypeReferenceNames(t, importedNames, valueReferenced);
+    }
+  } else if (typeNode.params) {
+    // TSTypeParameterInstantiation
+    for (const t of typeNode.params) {
+      collectTypeReferenceNames(t, importedNames, valueReferenced);
+    }
+  }
 }
 
 /**

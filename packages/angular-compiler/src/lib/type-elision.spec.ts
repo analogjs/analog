@@ -241,6 +241,47 @@ describe('detectTypeOnlyImportNames', () => {
     expect(result).not.toContain('Base');
     expect(result).toContain('Iface');
   });
+
+  it('preserves constructor parameter types of decorated classes as DI tokens', () => {
+    // Constructor parameter types are TS type positions, but for decorated
+    // classes they double as runtime DI tokens. Without preservation the
+    // import would be elided and ɵfac would emit ɵɵinvalidFactory().
+    const code = `
+      import { Component } from '@angular/core';
+      import { MyService } from './my-service';
+      @Component({ selector: 'app-foo', template: '' })
+      export class FooComponent {
+        constructor(private svc: MyService) {}
+      }
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('MyService');
+  });
+
+  it('preserves DI token types when constructor uses TSParameterProperty', () => {
+    const code = `
+      import { Directive } from '@angular/core';
+      import { Service } from './service';
+      @Directive({ selector: '[d]' })
+      export class D {
+        constructor(public svc: Service) {}
+      }
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    expect(result).not.toContain('Service');
+  });
+
+  it('still elides type-only imports for non-decorated classes', () => {
+    const code = `
+      import { Helper } from './helper';
+      class Plain {
+        constructor(h: Helper) {}
+      }
+    `;
+    const result = detectTypeOnlyImportNames(code);
+    // Plain (non-decorated) class — no DI, type-only is correct
+    expect(result).toContain('Helper');
+  });
 });
 
 describe('elideTypeOnlyImports', () => {
