@@ -1,10 +1,5 @@
 import { NgtscProgram } from '@angular/compiler-cli';
-import {
-  existsSync,
-  mkdirSync,
-  writeFileSync,
-  promises as fsPromises,
-} from 'node:fs';
+import { mkdirSync, writeFileSync, promises as fsPromises } from 'node:fs';
 import {
   basename,
   dirname,
@@ -33,10 +28,6 @@ import {
 } from 'vite';
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
 import { jitPlugin } from './angular-jit-plugin.js';
-import {
-  createCompilerPlugin,
-  createRolldownCompilerPlugin,
-} from './compiler-plugin.js';
 import {
   StyleUrlsResolver,
   TemplateUrlsResolver,
@@ -71,17 +62,14 @@ import {
 } from './plugins/file-replacements.plugin.js';
 import { routerPlugin } from './router-plugin.js';
 import { createHash } from 'node:crypto';
+import { analogCompilerPlugin } from './analog-compiler-plugin.js';
 import {
-  compile as analogCompile,
-  scanFile as analogScanFile,
-  scanPackageDts as analogScanPackageDts,
-  collectImportedPackages as analogCollectImportedPackages,
-  jitTransform as analogJitTransform,
-  inlineResourceUrls,
-  extractInlineStyles as extractInlineStylesOxc,
-  generateHmrCode,
-  type ComponentRegistry,
-} from '@analogjs/angular-compiler';
+  TS_EXT_REGEX,
+  createTsConfigGetter,
+  getTsConfigPath,
+  createDepOptimizerConfig,
+  type TsConfigResolutionContext,
+} from './utils/plugin-config.js';
 
 export enum DiagnosticModes {
   None = 0,
@@ -118,12 +106,6 @@ export interface PluginOptions {
   };
 }
 
-/**
- * TypeScript file extension regex
- * Match .(c or m)ts, .ts extensions with an optional ? for query params
- * Ignore .tsx extensions
- */
-const TS_EXT_REGEX = /\.[cm]?(ts)[^x]?\??/;
 const classNames = new Map();
 
 interface DeclarationFile {
@@ -162,12 +144,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   };
 
   let resolvedConfig: ResolvedConfig;
-  // Store config context needed for getTsConfigPath resolution
-  let tsConfigResolutionContext: {
-    root: string;
-    isProd: boolean;
-    isLib: boolean;
-  } | null = null;
+  let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
 
   const ts = require('typescript');
   let builder: ts.BuilderProgram | ts.EmitAndSemanticDiagnosticsBuilderProgram;
@@ -229,158 +206,6 @@ export function angular(options?: PluginOptions): Plugin[] {
     | Awaited<ReturnType<typeof createAngularCompilationType>>
     | undefined;
 
-  // Analog compiler state (used when experimental.useAnalogCompiler is true)
-  const analogRegistry: ComponentRegistry = new Map();
-  const analogResourceToSource = new Map<string, string>();
-  /** Tracks which npm packages have already had their .d.ts files scanned. */
-  const scannedDtsPackages = new Set<string>();
-  let analogProjectRoot = '';
-
-  async function initAnalogCompiler() {
-    if (jit) return; // JIT: no registry scan needed
-
-    // Scan all source files to build the registry
-    analogRegistry.clear();
-    scannedDtsPackages.clear();
-    const resolvedTsConfigPath = resolveTsConfigPath();
-    analogProjectRoot = dirname(resolvedTsConfigPath);
-    const config = compilerCli.readConfiguration(resolvedTsConfigPath);
-
-    const results = await Promise.all(
-      config.rootNames.map(async (file) => {
-        try {
-          const code = await fsPromises.readFile(file, 'utf-8');
-          return analogScanFile(code, file);
-        } catch {
-          return []; // Skip unreadable files
-        }
-      }),
-    );
-
-    for (const entries of results) {
-      for (const entry of entries) {
-        analogRegistry.set(entry.className, entry);
-      }
-    }
-  }
-
-  /**
-   * Lazily scan .d.ts files for external packages imported by the given source.
-   * Each package is scanned at most once and the results are cached in the registry.
-   */
-  function ensureDtsRegistryForSource(code: string, id: string) {
-    for (const pkg of analogCollectImportedPackages(code, id)) {
-      if (scannedDtsPackages.has(pkg)) continue;
-      scannedDtsPackages.add(pkg);
-
-      try {
-        const dtsEntries = analogScanPackageDts(pkg, analogProjectRoot);
-        for (const entry of dtsEntries) {
-          if (!analogRegistry.has(entry.className)) {
-            analogRegistry.set(entry.className, entry);
-          }
-        }
-      } catch {
-        // Package may not have .d.ts files or may not be Angular
-      }
-    }
-  }
-
-  async function handleAnalogCompilerTransform(
-    code: string,
-    id: string,
-  ): Promise<{ code: string; map: any } | undefined> {
-    if (!/(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code)) {
-      return undefined;
-    }
-
-    // JIT mode
-    if (jit) {
-      const result = analogJitTransform(code, id);
-      return { code: result.code, map: result.map };
-    }
-
-    // Inline external templateUrl/styleUrl(s) into the source before compilation
-    // using OXC parser for precise AST-based rewriting.
-    code = inlineResourceUrls(code, id);
-
-    // Pre-resolve inline styles that need preprocessing (SCSS/Sass/Less)
-    let resolvedStyles: Map<string, string> | undefined;
-    let resolvedInlineStyles: Map<number, string> | undefined;
-
-    if (pluginOptions.inlineStylesExtension !== 'css') {
-      const styleStrings = extractInlineStylesOxc(code, id);
-
-      if (styleStrings.length > 0) {
-        resolvedInlineStyles = new Map();
-        for (let i = 0; i < styleStrings.length; i++) {
-          try {
-            const fakePath = id.replace(
-              /\.ts$/,
-              `.inline-${i}.${pluginOptions.inlineStylesExtension}`,
-            );
-            const processed = await preprocessCSS(
-              styleStrings[i],
-              fakePath,
-              resolvedConfig,
-            );
-            resolvedInlineStyles.set(i, processed.code);
-          } catch {
-            // Skip styles that can't be preprocessed
-          }
-        }
-        if (resolvedInlineStyles.size === 0) resolvedInlineStyles = undefined;
-      }
-    }
-
-    // Lazily scan .d.ts files for any external packages this file imports,
-    // so pre-compiled directives (e.g. RouterLinkActive) are in the registry
-    // before template compilation needs them.
-    ensureDtsRegistryForSource(code, id);
-
-    const result = analogCompile(code, id, {
-      registry: analogRegistry,
-      resolvedStyles,
-      resolvedInlineStyles,
-    });
-
-    // Track resource dependencies for HMR
-    for (const dep of result.resourceDependencies) {
-      analogResourceToSource.set(dep, id);
-    }
-
-    // Strip TypeScript-only syntax that the analog compiler preserves.
-    // Use OXC to reliably strip all TS syntax (type annotations, generics,
-    // interfaces, etc.) so the output is valid JavaScript for both client
-    // and SSR environments.
-    const stripped = vite.transformWithOxc
-      ? await vite.transformWithOxc(result.code, id, {
-          lang: 'ts',
-          sourcemap: false,
-          decorator: { legacy: false, emitDecoratorMetadata: false },
-        })
-      : await vite.transformWithEsbuild(result.code, id, {
-          loader: 'ts',
-          sourcemap: false,
-        });
-    let outputCode = stripped.code;
-
-    // Append HMR code in dev mode
-    if (watchMode && pluginOptions.liveReload) {
-      const fileDeclarations = [...analogRegistry.values()].filter(
-        (e) => e.fileName === id,
-      );
-      if (fileDeclarations.length > 0) {
-        // Local deps: other Angular classes in the same file that components
-        // may reference as template dependencies.
-        const localDepClassNames = fileDeclarations.map((e) => e.className);
-        outputCode += generateHmrCode(fileDeclarations, localDepClassNames);
-      }
-    }
-
-    return { code: outputCode, map: result.map };
-  }
-
   function angularPlugin(): Plugin {
     let isProd = false;
 
@@ -407,7 +232,6 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     return {
       name: '@analogjs/vite-plugin-angular',
-      ...(pluginOptions.useAnalogCompiler ? { enforce: 'pre' as const } : {}),
       async config(config, { command }) {
         watchMode = command === 'serve';
         isProd =
@@ -424,76 +248,28 @@ export function angular(options?: PluginOptions): Plugin[] {
         // Do a preliminary resolution for esbuild plugin (before configResolved)
         const preliminaryTsConfigPath = resolveTsConfigPath();
 
-        // When useAnalogCompiler is true, configure the built-in OXC transform
-        // to strip TypeScript but NOT lower decorators. The analog compiler
-        // handles decorator processing in its transform hook. This avoids the
-        // ordering conflict where lowered decorators can't be found by the
-        // compiler, while still ensuring all .ts files get TypeScript stripped
-        // (including those excluded from the analog compiler's transform filter).
-        //
-        // The NgtscProgram path disables both esbuild and OXC to avoid
-        // sourcemap composition issues with Angular-compiled files.
-        // Non-Angular .ts files are returned as-is (undefined) so that
-        // the host framework or Vite's pipeline can handle them.
         const esbuild = pluginOptions.useAngularCompilationAPI
           ? undefined
-          : pluginOptions.useAnalogCompiler
-            ? false
-            : (config.esbuild ?? false);
+          : (config.esbuild ?? false);
         const oxc = pluginOptions.useAngularCompilationAPI
           ? undefined
-          : pluginOptions.useAnalogCompiler
-            ? ({} as any)
-            : (config.oxc ?? false);
+          : (config.oxc ?? false);
 
-        const defineOptions = {
-          ngJitMode: 'false',
-          ngI18nClosureMode: 'false',
-          ...(watchMode ? {} : { ngDevMode: 'false' }),
-        };
-
-        const rolldownOptions: vite.DepOptimizationOptions['rolldownOptions'] =
-          {
-            plugins: [
-              createRolldownCompilerPlugin({
-                tsconfig: preliminaryTsConfigPath,
-                sourcemap: !isProd,
-                advancedOptimizations: isProd,
-                jit,
-                incremental: watchMode,
-              }),
-            ],
-          };
-
-        const esbuildOptions: vite.DepOptimizationOptions['esbuildOptions'] = {
-          plugins: [
-            createCompilerPlugin(
-              {
-                tsconfig: preliminaryTsConfigPath,
-                sourcemap: !isProd,
-                advancedOptimizations: isProd,
-                jit,
-                incremental: watchMode,
-              },
-              isTest,
-              !isAstroIntegration,
-            ),
-          ],
-          define: defineOptions,
-        };
+        const depOptimizer = createDepOptimizerConfig({
+          tsconfig: preliminaryTsConfigPath,
+          isProd,
+          jit,
+          watchMode,
+          isTest,
+          isAstroIntegration,
+        });
 
         return {
           ...(vite.rolldownVersion ? { oxc } : { esbuild }),
-          optimizeDeps: {
-            include: ['rxjs/operators', 'rxjs'],
-            exclude: ['@angular/platform-server'],
-            ...(vite.rolldownVersion
-              ? { rolldownOptions }
-              : { esbuildOptions }),
-          },
+          ...depOptimizer,
           resolve: {
             conditions: [
-              'style',
+              ...depOptimizer.resolve.conditions,
               ...(config.resolve?.conditions || defaultClientConditions),
             ],
           },
@@ -527,28 +303,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       configureServer(server) {
         viteServer = server;
 
-        if (pluginOptions.useAnalogCompiler) {
-          // Watch for new .ts files and scan them into the registry
-          server.watcher.on('add', (filePath) => {
-            if (
-              filePath.endsWith('.ts') &&
-              !filePath.endsWith('.spec.ts') &&
-              !filePath.endsWith('.d.ts')
-            ) {
-              try {
-                const code = require('fs').readFileSync(filePath, 'utf-8');
-                const entries = analogScanFile(code, filePath);
-                for (const entry of entries) {
-                  analogRegistry.set(entry.className, entry);
-                }
-              } catch {
-                // Skip unreadable files
-              }
-            }
-          });
-          return;
-        }
-
         // Add/unlink changes the TypeScript program shape, not just file
         // contents, so we need to invalidate both include discovery and the
         // cached tsconfig root names before recompiling.
@@ -566,11 +320,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         });
       },
       async buildStart() {
-        if (pluginOptions.useAnalogCompiler) {
-          await initAnalogCompiler();
-          return;
-        }
-
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
           await performCompilation(resolvedConfig);
@@ -580,41 +329,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
       },
       async handleHotUpdate(ctx) {
-        // Analog compiler HMR path
-        if (pluginOptions.useAnalogCompiler) {
-          // Resource file changes → invalidate parent .ts module
-          if (analogResourceToSource.has(ctx.file)) {
-            const parentSource = analogResourceToSource.get(ctx.file)!;
-            const parentModule =
-              ctx.server.moduleGraph.getModuleById(parentSource);
-            if (parentModule) {
-              return [parentModule];
-            }
-          }
-
-          if (TS_EXT_REGEX.test(ctx.file)) {
-            const [fileId] = ctx.file.split('?');
-            const code = require('fs').readFileSync(fileId, 'utf-8');
-
-            // Remove old entries from this file
-            const oldEntries = [...analogRegistry.entries()]
-              .filter(([_, v]) => v.fileName === fileId)
-              .map(([k]) => k);
-            for (const key of oldEntries) {
-              analogRegistry.delete(key);
-            }
-
-            // Rescan the changed file
-            const newEntries = analogScanFile(code, fileId);
-            for (const entry of newEntries) {
-              analogRegistry.set(entry.className, entry);
-            }
-          }
-
-          // Let Vite handle the rest — the transform hook will recompile
-          return ctx.modules;
-        }
-
         if (TS_EXT_REGEX.test(ctx.file)) {
           let [fileId] = ctx.file.split('?');
 
@@ -852,14 +566,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             return;
           }
 
-          // Analog compiler transform path
-          if (pluginOptions.useAnalogCompiler) {
-            if (id.includes('.ts?')) {
-              id = id.replace(/\?(.*)/, '');
-            }
-            return handleAnalogCompilerTransform(code, id);
-          }
-
           if (pluginOptions.useAngularCompilationAPI) {
             const isAngular =
               /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
@@ -1022,10 +728,26 @@ export function angular(options?: PluginOptions): Plugin[] {
     };
   }
 
+  const compilationPlugin = pluginOptions.useAnalogCompiler
+    ? analogCompilerPlugin({
+        tsconfigGetter: pluginOptions.tsconfigGetter,
+        workspaceRoot: pluginOptions.workspaceRoot,
+        inlineStylesExtension: pluginOptions.inlineStylesExtension,
+        jit,
+        liveReload: pluginOptions.liveReload,
+        supportedBrowsers: pluginOptions.supportedBrowsers,
+        transformFilter: options?.transformFilter,
+        isTest,
+        isAstroIntegration,
+      })
+    : angularPlugin();
+
   return [
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
-    angularPlugin(),
-    pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
+    compilationPlugin,
+    !pluginOptions.useAnalogCompiler &&
+      pluginOptions.liveReload &&
+      liveReloadPlugin({ classNames, fileEmitter }),
     ...(isTest && !isStackBlitz ? angularVitestPlugins() : []),
     (jit &&
       jitPlugin({
@@ -1053,58 +775,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       dot: true,
       absolute: true,
     });
-  }
-
-  function createTsConfigGetter(tsconfigOrGetter?: string | (() => string)) {
-    if (typeof tsconfigOrGetter === 'function') {
-      return tsconfigOrGetter;
-    }
-
-    return () => tsconfigOrGetter || '';
-  }
-
-  function getTsConfigPath(
-    root: string,
-    tsconfig: string,
-    isProd: boolean,
-    isTest: boolean,
-    isLib: boolean,
-  ) {
-    if (tsconfig && isAbsolute(tsconfig)) {
-      if (!existsSync(tsconfig)) {
-        console.error(
-          `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${tsconfig}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
-        );
-      }
-
-      return tsconfig;
-    }
-
-    let tsconfigFilePath = './tsconfig.app.json';
-
-    if (isLib) {
-      tsconfigFilePath = isProd
-        ? './tsconfig.lib.prod.json'
-        : './tsconfig.lib.json';
-    }
-
-    if (isTest) {
-      tsconfigFilePath = './tsconfig.spec.json';
-    }
-
-    if (tsconfig) {
-      tsconfigFilePath = tsconfig;
-    }
-
-    const resolvedPath = resolve(root, tsconfigFilePath);
-
-    if (!existsSync(resolvedPath)) {
-      console.error(
-        `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${resolvedPath}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
-      );
-    }
-
-    return resolvedPath;
   }
 
   function resolveTsConfigPath() {
