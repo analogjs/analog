@@ -2862,6 +2862,50 @@ describe('Signal query read/descendants options', () => {
   });
 });
 
+describe('Pure annotations on Ivy fields', () => {
+  it('annotates ɵcmp, ɵfac, and setClassMetadata with /*@__PURE__*/', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {}
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    expect(result).toMatch(
+      /static ɵfac = \/\*@__PURE__\*\/\s*\(__ngFactoryType__\)/,
+    );
+    expect(result).toMatch(/static ɵcmp = \/\*@__PURE__\*\/\s*i0\.ɵɵdefine/);
+    expect(result).toMatch(
+      /\/\*@__PURE__\*\/\s*\(\(\) => \{[^}]*ɵsetClassMetadata/,
+    );
+  });
+
+  it('annotates ɵdir and ɵpipe and ɵprov and ɵmod and ɵinj', () => {
+    const result = compile(
+      `
+      import { Directive, Pipe, Injectable, NgModule } from '@angular/core';
+      @Directive({ selector: '[d]' })
+      export class D {}
+      @Pipe({ name: 'p' })
+      export class P { transform(v: any) { return v; } }
+      @Injectable({ providedIn: 'root' })
+      export class S {}
+      @NgModule({})
+      export class M {}
+    `,
+      'multi.ts',
+    );
+    expectCompiles(result);
+    expect(result).toMatch(/static ɵdir = \/\*@__PURE__\*\//);
+    expect(result).toMatch(/static ɵpipe = \/\*@__PURE__\*\//);
+    expect(result).toMatch(/static ɵprov = \/\*@__PURE__\*\//);
+    expect(result).toMatch(/static ɵmod = \/\*@__PURE__\*\//);
+    expect(result).toMatch(/static ɵinj = \/\*@__PURE__\*\//);
+  });
+});
+
 describe('Signal input transform marker in registry', () => {
   it('flags hasTransform when input() declares a transform', () => {
     const entries = scanFile(
