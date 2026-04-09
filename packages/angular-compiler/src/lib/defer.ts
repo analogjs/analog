@@ -49,13 +49,25 @@ export interface ImportInfo {
   path: string;
   /** Whether the class was imported as a default import (`import X from`). */
   isDefault: boolean;
+  /**
+   * Original exported name on the source module's namespace. For
+   * `import { HeavyWidget as Widget } from './heavy'`, the local
+   * binding is `Widget` but the namespace exposes `HeavyWidget` —
+   * `await import('./heavy')` returns `{ HeavyWidget }`, not
+   * `{ Widget }`. Defer dependency emit must use the exported name,
+   * not the local alias, or the lookup resolves to `undefined` at
+   * runtime.
+   */
+  exportName: string;
 }
 
 /**
- * Build import info map: className → { path, isDefault } from source file
- * imports. Tracks default vs named imports so the defer dependency
- * generator can emit `import('./p').then(m => m.default)` for default
- * imports and `import('./p').then(m => m.X)` for named imports.
+ * Build import info map: localName → { path, isDefault, exportName }
+ * from source file imports. Tracks default vs named imports plus the
+ * original exported name so the defer dependency generator can emit
+ * `import('./p').then(m => m.default)` for default imports and
+ * `import('./p').then(m => m.OriginalExportName)` for aliased named
+ * imports.
  */
 export function buildImportMap(sf: ts.SourceFile): Map<string, ImportInfo> {
   const result = new Map<string, ImportInfo>();
@@ -64,11 +76,28 @@ export function buildImportMap(sf: ts.SourceFile): Map<string, ImportInfo> {
     const path = (stmt.moduleSpecifier as ts.StringLiteral).text;
     const clause = stmt.importClause;
     if (clause.name) {
-      result.set(clause.name.text, { path, isDefault: true });
+      result.set(clause.name.text, {
+        path,
+        isDefault: true,
+        exportName: 'default',
+      });
     }
     if (clause.namedBindings && ts.isNamedImports(clause.namedBindings)) {
       for (const el of clause.namedBindings.elements) {
-        result.set(el.name.text, { path, isDefault: false });
+        // `import { Foo as Bar }` → propertyName is `Foo`, name is `Bar`.
+        // `import { Foo }`        → propertyName is undefined.
+        const exportName = el.propertyName?.text ?? el.name.text;
+        const info: ImportInfo = { path, isDefault: false, exportName };
+        // Key the map by BOTH the local binding and the original export
+        // name. The defer-dep lookup uses the className from the
+        // registry — which is always the original class name from the
+        // source file (`HeavyWidget`), not the consumer's local alias
+        // (`Widget`). Without the export-name key, aliased imports
+        // would silently produce no defer dependency at all.
+        result.set(el.name.text, info);
+        if (exportName !== el.name.text) {
+          result.set(exportName, info);
+        }
       }
     }
   }
@@ -156,7 +185,11 @@ export function buildDeferDependencyMap(
       const className = selectorToClass.get(el);
       if (!className || !deferredImports.has(className)) continue;
       const info = importMap.get(className)!;
-      const symbolName = info.isDefault ? 'default' : className;
+      // Use the original exported name (tracked by buildImportMap) so
+      // aliased imports like `import { HeavyWidget as Widget }` resolve
+      // to `m.HeavyWidget` instead of `m.Widget` (which would be
+      // `undefined` on the module namespace).
+      const symbolName = info.exportName;
       const key = `${info.path}#${symbolName}`;
       if (seenInBlock.has(key)) continue;
       seenInBlock.add(key);
