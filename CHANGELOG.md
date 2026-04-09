@@ -1,3 +1,9 @@
+## [2.4.4](https://github.com/analogjs/analog/compare/v2.4.3...v2.4.4) (2026-04-09)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** handle ?inline style imports in load hook for Vitest ([#2271](https://github.com/analogjs/analog/issues/2271)) ([32d5b2d](https://github.com/analogjs/analog/commit/32d5b2ddeea0b7f7e93c32b40f53b184bd12923e))
+
 ## [2.4.3](https://github.com/analogjs/analog/compare/v2.4.2...v2.4.3) (2026-04-08)
 
 ### Bug Fixes
