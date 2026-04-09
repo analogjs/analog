@@ -498,6 +498,36 @@ export function detectSignals(classNode: any, sourceCode: string) {
       const firstArg = args[0];
       const sv = stringValue(firstArg);
 
+      // Parse the optional second-arg options object for `read` and
+      // (content queries only) `descendants`. Without this, queries like
+      // `viewChild('ref', { read: ElementRef })` and
+      // `contentChildren(Foo, { descendants: false })` silently lose
+      // their options at runtime.
+      let read: any = null;
+      // Default: content queries match descendants only when explicitly
+      // requested (Angular's `getContentQueriesTargetingFirst` defaults
+      // to `false`); view queries always inspect descendants.
+      let descendants = isViewQuery ? true : false;
+      const optArg = args[1];
+      if (optArg?.type === 'ObjectExpression') {
+        for (const prop of optArg.properties || []) {
+          if (prop.type !== 'ObjectProperty' && prop.type !== 'Property')
+            continue;
+          const k = propKeyName(prop);
+          if (k === 'read') {
+            read = new o.WrappedNodeExpr(unwrapForwardRefOxc(prop.value));
+          } else if (k === 'descendants') {
+            const t = prop.value?.type;
+            if (
+              t === 'BooleanLiteral' ||
+              (t === 'Literal' && typeof prop.value.value === 'boolean')
+            ) {
+              descendants = prop.value.value;
+            }
+          }
+        }
+      }
+
       const query = {
         propertyName: name,
         // Class predicates must be wrapped in an `R3QueryReference`
@@ -511,8 +541,8 @@ export function detectSignals(classNode: any, sourceCode: string) {
             ? [sv]
             : { forwardRef: 0, expression: new o.WrappedNodeExpr(firstArg) },
         first: !isChildrenQuery,
-        descendants: true,
-        read: null,
+        descendants,
+        read,
         static: false,
         emitFlags: 0,
         isSignal: true,
