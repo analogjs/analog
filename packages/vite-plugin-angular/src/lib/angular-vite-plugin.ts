@@ -727,12 +727,29 @@ export function angular(options?: PluginOptions): Plugin[] {
               'virtual:angular:jit:style:inline;',
             );
 
+            // Emit ?analog-raw and ?analog-inline directly (instead of
+            // ?raw / ?inline) so the import ids in the compiled JS never
+            // match Vite 8.0.5+'s [?&](raw|inline)\b security regex during
+            // loadAndTransform.
+            //
+            // Why this matters: Vite's Denied ID check fires for any id
+            // matching that regex whose path is outside server.fs.allow,
+            // and it runs *before* pluginContainer.load. Vitest's worker
+            // fetchModule path also bypasses pluginContainer.resolveId
+            // (it calls moduleGraph.ensureEntryFromUrl first, which makes
+            // the resolveId chain a no-op for the module-runner). So
+            // neither the resolveId-based ?inline -> ?analog-inline rewrite
+            // nor the load-hook fallback (added in 2.4.4) gets a chance to
+            // run for cross-library imports — the security check has
+            // already thrown by then. Emitting the safe query directly in
+            // the transform output is the only place we can guarantee Vite
+            // never sees the dangerous form. (#2263)
             templateUrls.forEach((templateUrlSet) => {
               const [templateFile, resolvedTemplateUrl] =
                 templateUrlSet.split('|');
               data = data.replace(
                 `angular:jit:template:file;${templateFile}`,
-                `${resolvedTemplateUrl}?raw`,
+                `${resolvedTemplateUrl}?analog-raw`,
               );
             });
 
@@ -740,7 +757,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               const [styleFile, resolvedStyleUrl] = styleUrlSet.split('|');
               data = data.replace(
                 `angular:jit:style:file;${styleFile}`,
-                `${resolvedStyleUrl}?inline`,
+                `${resolvedStyleUrl}?analog-inline`,
               );
             });
           }
