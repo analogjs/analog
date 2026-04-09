@@ -2305,6 +2305,174 @@ describe('JIT transform auto-imports decorator classes for signal API downleveli
   });
 });
 
+describe('Module-level string const interpolation in metadata', () => {
+  // Components in the wild often hoist long Tailwind class chains (or any
+  // shared string constants) into module-level `const`s and reference them
+  // from the inline template via JS template-literal interpolation:
+  //
+  //   const tw = `text-zinc-700 hover:text-zinc-900`;
+  //   @Component({ template: `<a class="${tw}">x</a>` })
+  //
+  // The Analog compiler must resolve those `${...}` expressions at metadata
+  // extraction time so Angular's template parser sees the fully-expanded
+  // class attribute. Otherwise the template ends up empty (silent failure)
+  // or contains the literal `${tw}` token (parse error).
+
+  it('resolves a single-level ${var} reference in template:', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      const twBtn = \`px-4 py-2 rounded bg-blue-500 text-white\`;
+      @Component({
+        selector: 'app-btn',
+        template: \`<button class="\${twBtn}">click</button>\`,
+      })
+      export class BtnComponent {}
+    `,
+      'btn.ts',
+    );
+
+    expectCompiles(result);
+    // Angular splits the resolved class attribute into per-token entries in
+    // the static consts array — every class from `twBtn` must appear there.
+    expect(result).toMatch(
+      /consts:\s*\[\[1,\s*"px-4",\s*"py-2",\s*"rounded",\s*"bg-blue-500",\s*"text-white"\]\]/,
+    );
+  });
+
+  it('resolves chained ${var} references where one const references another', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      const twBase = \`px-4 py-2 rounded\`;
+      const twPrimary = \`\${twBase} bg-blue-500 text-white\`;
+      @Component({
+        selector: 'app-btn',
+        template: \`<button class="\${twPrimary}">click</button>\`,
+      })
+      export class BtnComponent {}
+    `,
+      'btn.ts',
+    );
+
+    expectCompiles(result);
+    // Both the inner (`twBase`) and outer (`twPrimary`) layers must resolve
+    // — proves the iterative fixpoint in collectStringConstants works.
+    expect(result).toMatch(
+      /consts:\s*\[\[1,\s*"px-4",\s*"py-2",\s*"rounded",\s*"bg-blue-500",\s*"text-white"\]\]/,
+    );
+    // Inside the actual ɵcmp definition (excluding the setClassMetadata
+    // reflection blob, which preserves the original decorator source
+    // verbatim), no literal `${...}` token may survive.
+    const cmpStart = result.indexOf('ɵcmp');
+    const setMetaStart = result.indexOf('ɵsetClassMetadata');
+    const compiledDef = result.slice(cmpStart, setMetaStart);
+    expect(compiledDef).not.toContain('${twBase}');
+    expect(compiledDef).not.toContain('${twPrimary}');
+  });
+
+  it('resolves ${var} in selector, not just template', () => {
+    // The fix threads stringConsts through every string-typed metadata
+    // field, so the same trick must work for `selector:` as well.
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      const PREFIX = \`app\`;
+      @Component({
+        selector: \`\${PREFIX}-widget\`,
+        template: '<span>x</span>',
+      })
+      export class WidgetComponent {}
+    `,
+      'widget.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('"app-widget"');
+  });
+
+  it('resolves ${var} inside an inline styles array entry', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      const accent = \`#ff0066\`;
+      @Component({
+        selector: 'app-styled',
+        template: '<span>x</span>',
+        styles: [\`:host { color: \${accent}; }\`],
+      })
+      export class StyledComponent {}
+    `,
+      'styled.ts',
+    );
+
+    expectCompiles(result);
+    // The resolved color value must appear in the emitted styles array.
+    expect(result).toContain('#ff0066');
+  });
+
+  it('falls back without crashing when ${var} references an imported (unresolvable) value', () => {
+    // Imports cannot be statically resolved at parse time, so stringValue
+    // returns null and the existing valText fallback path takes over. The
+    // compiler must not crash, and must still emit a component definition.
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      import { external } from './other';
+      @Component({
+        selector: 'app-fallback',
+        template: \`<div class="\${external}">x</div>\`,
+      })
+      export class FallbackComponent {}
+    `,
+      'fallback.ts',
+    );
+
+    expect(result).toContain('ɵcmp');
+    expect(result).toContain('app-fallback');
+  });
+
+  it('does not resolve let/var declarations (only const)', () => {
+    // Conservative: only `const` declarations are eligible. A `let` could in
+    // principle be reassigned, so we refuse to inline it even if it never is.
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      let twDynamic = \`px-4 py-2\`;
+      @Component({
+        selector: 'app-dyn',
+        template: \`<button class="\${twDynamic}">x</button>\`,
+      })
+      export class DynComponent {}
+    `,
+      'dyn.ts',
+    );
+
+    // Should still produce a component definition via the fallback path,
+    // but the resolved class tokens must NOT appear in the consts array.
+    expect(result).toContain('ɵcmp');
+    expect(result).not.toMatch(/consts:\s*\[\[1,\s*"px-4",\s*"py-2"\]\]/);
+  });
+
+  it('resolves ${var} declared with `export const`', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      export const twShared = \`text-lg font-bold\`;
+      @Component({
+        selector: 'app-exp',
+        template: \`<h1 class="\${twShared}">title</h1>\`,
+      })
+      export class ExpComponent {}
+    `,
+      'exp.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toMatch(/consts:\s*\[\[1,\s*"text-lg",\s*"font-bold"\]\]/);
+  });
+});
+
 function expectCompiles(result: string) {
   expect(result).toBeTruthy();
   expect(result).not.toMatch(/^Error:/m);
