@@ -2860,6 +2860,22 @@ describe('Signal query read/descendants options', () => {
     expectCompiles(result);
     expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*1/);
   });
+
+  it('defaults contentChild() descendants to true (matches Angular API)', () => {
+    const result = compile(
+      `
+      import { Component, contentChild } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        item = contentChild('item');
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    // ɵɵcontentQuerySignal flag arg = 1 means descendants: true.
+    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*1/);
+  });
 });
 
 describe('Pure annotations on Ivy fields', () => {

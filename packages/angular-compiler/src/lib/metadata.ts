@@ -524,10 +524,15 @@ export function detectSignals(classNode: any, sourceCode: string) {
       // `contentChildren(Foo, { descendants: false })` silently lose
       // their options at runtime.
       let read: any = null;
-      // Default: content queries match descendants only when explicitly
-      // requested (Angular's `getContentQueriesTargetingFirst` defaults
-      // to `false`); view queries always inspect descendants.
-      let descendants = isViewQuery ? true : false;
+      // Defaults match Angular's signal-query API and the decorator
+      // path (`isView || isFirst` in detectFieldDecorators):
+      //   viewChild        → true   (view queries always traverse)
+      //   viewChildren     → true
+      //   contentChild     → true   (single-result content queries
+      //                              traverse by default)
+      //   contentChildren  → false  (multi-result content queries are
+      //                              shallow unless explicitly opted in)
+      let descendants = isViewQuery || !isChildrenQuery;
       const optArg = args[1];
       if (optArg?.type === 'ObjectExpression') {
         for (const prop of optArg.properties || []) {
