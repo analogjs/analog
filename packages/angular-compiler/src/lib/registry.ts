@@ -6,7 +6,13 @@ export interface RegistryInput {
   bindingPropertyName: string;
   isSignal: boolean;
   required: boolean;
-  transform?: any;
+  /**
+   * `true` when the input declares a `transform` function. The actual
+   * transform expression isn't usable cross-file, but downstream tools
+   * (template type checking, codegen widening) need to know whether
+   * one exists so they can broaden the accepted binding type.
+   */
+  hasTransform?: boolean;
 }
 
 export interface RegistryEntry {
@@ -230,6 +236,19 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
               }
               return null;
             };
+            // Detect a `transform: ...` entry in the input options object
+            // so cross-file consumers know the binding type is widened.
+            const hasTransformAtArg = (argIndex: number): boolean => {
+              const optionsArg = init.arguments?.[argIndex];
+              if (optionsArg?.type !== 'ObjectExpression') return false;
+              for (const prop of optionsArg.properties || []) {
+                if (prop.type !== 'ObjectProperty' && prop.type !== 'Property')
+                  continue;
+                const k = prop.key?.name ?? prop.key?.value;
+                if (k === 'transform') return true;
+              }
+              return false;
+            };
             const inputAliasIndex =
               calleeName === 'input.required' || calleeName === 'model.required'
                 ? 0
@@ -237,11 +256,13 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
 
             if (calleeName === 'input' || calleeName === 'input.required') {
               const alias = aliasFromArg(inputAliasIndex);
+              const hasTransform = hasTransformAtArg(inputAliasIndex);
               inputs[name] = {
                 classPropertyName: name,
                 bindingPropertyName: alias ?? name,
                 isSignal: true,
                 required: calleeName === 'input.required',
+                ...(hasTransform ? { hasTransform: true } : {}),
               };
             } else if (
               calleeName === 'model' ||

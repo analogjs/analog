@@ -2862,6 +2862,50 @@ describe('Signal query read/descendants options', () => {
   });
 });
 
+describe('Signal input transform marker in registry', () => {
+  it('flags hasTransform when input() declares a transform', () => {
+    const entries = scanFile(
+      `
+      import { Component, input, booleanAttribute } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        flag = input(false, { transform: booleanAttribute });
+      }
+    `,
+      'c.ts',
+    );
+    expect(entries[0].inputs!['flag'].hasTransform).toBe(true);
+  });
+
+  it('omits hasTransform when no transform option', () => {
+    const entries = scanFile(
+      `
+      import { Component, input } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        flag = input<boolean>();
+      }
+    `,
+      'c.ts',
+    );
+    expect(entries[0].inputs!['flag'].hasTransform).toBeUndefined();
+  });
+
+  it('flags hasTransform on input.required()', () => {
+    const entries = scanFile(
+      `
+      import { Component, input, booleanAttribute } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        flag = input.required({ transform: booleanAttribute });
+      }
+    `,
+      'c.ts',
+    );
+    expect(entries[0].inputs!['flag'].hasTransform).toBe(true);
+  });
+});
+
 describe('@defer dependency import shape', () => {
   it('emits import().then(m => m.X) for named imports', () => {
     const childSrc = `
