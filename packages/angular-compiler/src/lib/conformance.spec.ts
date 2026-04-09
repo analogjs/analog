@@ -168,9 +168,8 @@ const CATEGORIES = [
   'output_function', // v17+ output function
 ];
 
-// Skip test cases known to be unsupported (partial compilation, etc.)
+// Skip test cases known to be unsupported
 const SKIP_PATTERNS = [
-  /partial/i,
   /local compilation/i,
   /jit/i,
   /forward.?ref.*provider/i, // Complex forwardRef in providers

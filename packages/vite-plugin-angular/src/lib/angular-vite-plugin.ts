@@ -103,6 +103,12 @@ export interface PluginOptions {
   experimental?: {
     useAngularCompilationAPI?: boolean;
     useAnalogCompiler?: boolean;
+    /**
+     * Compilation output mode for the Analog compiler.
+     * - `'full'` (default): Emit final Ivy definitions for application builds.
+     * - `'partial'`: Emit partial declarations for library publishing.
+     */
+    analogCompilationMode?: 'full' | 'partial';
   };
 }
 
@@ -141,6 +147,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     useAngularCompilationAPI:
       options?.experimental?.useAngularCompilationAPI ?? false,
     useAnalogCompiler: options?.experimental?.useAnalogCompiler ?? false,
+    analogCompilationMode:
+      options?.experimental?.analogCompilationMode ?? 'full',
   };
 
   let resolvedConfig: ResolvedConfig;
@@ -739,6 +747,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         transformFilter: options?.transformFilter,
         isTest,
         isAstroIntegration,
+        analogCompilationMode: pluginOptions.analogCompilationMode,
       })
     : angularPlugin();
 

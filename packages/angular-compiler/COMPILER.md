@@ -58,6 +58,13 @@ const result = compile(sourceCode, fileName, { registry });
 // result.map — V3 source map
 // result.resourceDependencies — external template/style paths read
 
+// Compile in partial (library) mode
+const libResult = compile(sourceCode, fileName, {
+  registry,
+  compilationMode: 'partial',
+});
+// Emits ɵɵngDeclareComponent/ɵɵngDeclareDirective/etc. for library publishing
+
 // Scan a source file for Angular metadata (uses OXC Rust parser)
 const entries = scanFile(code, fileName);
 // entries: [{ selector, kind, className, fileName, inputs, outputs, ... }]
@@ -129,23 +136,23 @@ The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.)
 
 ## Source Files
 
-| File                  | Purpose                                                                                                                                                    |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `compile.ts`          | Single-file AOT compiler: OXC-based metadata extraction + Ivy codegen via `@angular/compiler` APIs                                                         |
-| `registry.ts`         | OXC-based file scanner, extracts selectors, inputs, outputs, sourcePackage tracking                                                                        |
-| `metadata.ts`         | OXC-based decorator metadata extraction (`extractMetadata`, `detectSignals`, `detectFieldDecorators`, `extractConstructorDeps`)                            |
-| `js-emitter.ts`       | Angular output AST → JavaScript string emitter (~4x faster than `ts.Printer`), handles both OXC and TS WrappedNodeExpr                                     |
-| `ast-translator.ts`   | Angular output AST → TypeScript AST translator (for complex expressions)                                                                                   |
-| `resource-inliner.ts` | OXC-based `templateUrl`/`styleUrl` inlining and inline style extraction                                                                                    |
-| `dts-reader.ts`       | OXC-based `.d.ts` scanner for pre-compiled Angular packages (selectors, inputs, outputs, sub-entry resolution)                                             |
-| `jit-transform.ts`    | JIT mode (OXC-based): decorator metadata arrays + constructor DI + signal downleveling + decorator removal (preserves `@Injectable` for self-registration) |
-| `jit-metadata.ts`     | JIT metadata helpers (OXC AST edition): constructor parameters, property decorators via source-position slicing                                            |
-| `defer.ts`            | `@defer` dependency map builder                                                                                                                            |
-| `hmr.ts`              | HMR code generation: `ɵɵreplaceMetadata` for components, field-swap + invalidate for directives/pipes                                                      |
-| `styles.ts`           | Style preprocessing via Vite's `preprocessCSS` (OXC-based extraction)                                                                                      |
-| `type-elision.ts`     | OXC-based type-only import detection and elision (usage analysis, no type-checker needed)                                                                  |
-| `constants.ts`        | Shared Angular name sets (`ANGULAR_DECORATORS`, `COMPILABLE_DECORATORS`, `FIELD_DECORATORS`, `SIGNAL_APIS`) — single source of truth to prevent drift      |
-| `utils.ts`            | Type-only import detection (syntactic), class finder, `forwardRef` unwrapper (TS + OXC versions)                                                           |
+| File                  | Purpose                                                                                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `compile.ts`          | Single-file compiler: OXC-based metadata extraction + Ivy codegen via `@angular/compiler` APIs. Supports full (`ɵɵdefineComponent`) and partial (`ɵɵngDeclareComponent`) modes |
+| `registry.ts`         | OXC-based file scanner, extracts selectors, inputs, outputs, sourcePackage tracking                                                                                            |
+| `metadata.ts`         | OXC-based decorator metadata extraction (`extractMetadata`, `detectSignals`, `detectFieldDecorators`, `extractConstructorDeps`)                                                |
+| `js-emitter.ts`       | Angular output AST → JavaScript string emitter (~4x faster than `ts.Printer`), handles OXC/TS WrappedNodeExpr, bare module refs (`ngImport: i0`), `$localize`                  |
+| `ast-translator.ts`   | Angular output AST → TypeScript AST translator, handles bare module refs and `$localize` for partial/i18n output                                                               |
+| `resource-inliner.ts` | OXC-based `templateUrl`/`styleUrl` inlining and inline style extraction                                                                                                        |
+| `dts-reader.ts`       | OXC-based `.d.ts` scanner for pre-compiled Angular packages (selectors, inputs, outputs, sub-entry resolution)                                                                 |
+| `jit-transform.ts`    | JIT mode (OXC-based): decorator metadata arrays + constructor DI + signal downleveling + decorator removal (preserves `@Injectable` for self-registration)                     |
+| `jit-metadata.ts`     | JIT metadata helpers (OXC AST edition): constructor parameters, property decorators via source-position slicing                                                                |
+| `defer.ts`            | `@defer` dependency map builder                                                                                                                                                |
+| `hmr.ts`              | HMR code generation: `ɵɵreplaceMetadata` for components, field-swap + invalidate for directives/pipes                                                                          |
+| `styles.ts`           | Style preprocessing via Vite's `preprocessCSS` (OXC-based extraction)                                                                                                          |
+| `type-elision.ts`     | OXC-based type-only import detection and elision (usage analysis, no type-checker needed)                                                                                      |
+| `constants.ts`        | Shared Angular name sets (`ANGULAR_DECORATORS`, `COMPILABLE_DECORATORS`, `FIELD_DECORATORS`, `SIGNAL_APIS`) — single source of truth to prevent drift                          |
+| `utils.ts`            | Type-only import detection (syntactic), class finder, `forwardRef` unwrapper (TS + OXC versions)                                                                               |
 
 ## What's Supported
 
@@ -267,7 +274,7 @@ The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.)
 | ---------------------------- | -------------------------------------------------------------------- |
 | Template type checking       | Requires full `ts.Program`; use Angular Language Service in IDE      |
 | i18n message extraction      | Compilation emits `$localize`; extraction to XLIFF/XMB not yet wired |
-| Partial / linker compilation | Handled by separate plugin                                           |
+| Partial / linker compilation | Supported via `compilationMode: 'partial'`                           |
 | Template source maps         | Angular compiler doesn't propagate sourceSpan to output AST          |
 | Signal debug names           | Not implemented                                                      |
 | `setClassDebugInfo`          | Not implemented                                                      |
@@ -331,7 +338,7 @@ Both produce identical Ivy output because both call the same `@angular/compiler`
 | Template type checking          | Full (`strictTemplates`)                 | Not supported                                                   |
 | Incremental compilation         | `ts.Program` reuse                       | Per-file (Vite handles caching)                                 |
 | Diagnostic messages             | Hundreds of template/binding errors      | Unresolved selector warnings only                               |
-| Partial compilation (libraries) | `ɵɵngDeclareComponent`                   | Not in scope                                                    |
+| Partial compilation (libraries) | `ɵɵngDeclareComponent`                   | `ɵɵngDeclareComponent` (via `compilationMode: 'partial'`)       |
 | Declaration files (`.d.ts`)     | Yes                                      | Not in scope                                                    |
 
 #### Performance
@@ -349,15 +356,15 @@ ngtsc gives **compile-time safety** — wrong template bindings, missing inputs,
 
 ### vs Angular Local Compilation
 
-|                             | Local Compilation                | This compiler                   |
-| --------------------------- | -------------------------------- | ------------------------------- |
-| Output format               | `ɵɵngDeclareComponent` (partial) | `ɵɵdefineComponent` (final)     |
-| Linker required             | Yes                              | No                              |
-| Template compiled at        | Link time                        | Compile time                    |
-| Selector matching           | Deferred to linker               | Done via global analysis plugin |
-| Cross-version compatibility | Yes (stable declaration format)  | No (tied to Angular version)    |
-| Use case                    | Library publishing (npm)         | Application dev server          |
-| Requires `ts.Program`       | No                               | No                              |
+|                             | Local Compilation                | This compiler (full)            | This compiler (partial)          |
+| --------------------------- | -------------------------------- | ------------------------------- | -------------------------------- |
+| Output format               | `ɵɵngDeclareComponent` (partial) | `ɵɵdefineComponent` (final)     | `ɵɵngDeclareComponent` (partial) |
+| Linker required             | Yes                              | No                              | Yes                              |
+| Template compiled at        | Link time                        | Compile time                    | Link time                        |
+| Selector matching           | Deferred to linker               | Done via global analysis plugin | Deferred to linker               |
+| Cross-version compatibility | Yes (stable declaration format)  | No (tied to Angular version)    | Yes (stable declaration format)  |
+| Use case                    | Library publishing (npm)         | Application dev server          | Library publishing (npm)         |
+| Requires `ts.Program`       | No                               | No                              | No                               |
 
 ### vs esbuild/SWC (type stripping)
 
@@ -449,6 +456,7 @@ This compiler's architecture — single-file transforms using `@angular/compiler
 | `pipe.spec.ts`                  | 2     | Pure and impure                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `compile.spec.ts`               | 2     | Original smoke tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `type-elision.spec.ts`          | 45    | Type-only import detection (annotations, implements, generics, mixed, unused, default imports, export type declarations, inline type export specifiers, value re-exports, mixed type/value export specifiers, export declarations, typeof in type positions, enum dual usage, class extends, instanceof, extends+implements), elision (whole-declaration removal, partial specifier removal, default import handling, mixed default+named, CRLF line endings, export type re-export removal, inline type export partial elision, value re-export preservation, compiler output integration), MagicString integration (direct edits, sourcemap generation, mutated-code detection)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `partial.spec.ts`               | 9     | Partial compilation mode: `ɵɵngDeclareComponent`, `ɵɵngDeclareDirective`, `ɵɵngDeclarePipe`, `ɵɵngDeclareNgModule`, `ɵɵngDeclareInjectable`, `ɵɵngDeclareFactory`, `ɵɵngDeclareClassMetadata`, full mode still emits `ɵɵdefineComponent`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `conformance.spec.ts`           | 167   | Angular compliance test suite (v17-v21, 87%+ Ivy instruction match)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 ### Conformance Testing

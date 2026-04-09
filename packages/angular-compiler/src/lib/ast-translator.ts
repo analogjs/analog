@@ -466,7 +466,7 @@ export class AstTranslator implements o.ExpressionVisitor, o.StatementVisitor {
 
   visitExternalExpr(ast: o.ExternalExpr, context: any) {
     const moduleName = ast.value.moduleName;
-    const name = ast.value.name!;
+    const name = ast.value.name;
     if (moduleName && moduleName !== '@angular/core') {
       throw new Error(
         `Unsupported external module reference: ${moduleName}.${name}`,
@@ -474,7 +474,11 @@ export class AstTranslator implements o.ExpressionVisitor, o.StatementVisitor {
     }
     // ngDevMode is a global variable, not an @angular/core export
     if (name === 'ngDevMode') {
-      return ts.factory.createIdentifier(name);
+      return ts.factory.createIdentifier(name!);
+    }
+    // When name is null/undefined, this is a bare module reference (e.g. ngImport: i0)
+    if (!name) {
+      return ts.factory.createIdentifier('i0');
     }
     return ts.factory.createPropertyAccessExpression(
       ts.factory.createIdentifier('i0'),
