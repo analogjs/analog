@@ -4,6 +4,7 @@ import {
   ContentRenderer,
   parseRawContentFile,
   injectContentFileLoader,
+  CONTENT_LOCALE,
 } from '@analogjs/content';
 import { ActivatedRoute } from '@angular/router';
 
@@ -24,6 +25,7 @@ async function getContentFile<
   contentFiles: Record<string, () => Promise<string>>,
   slug: string,
   fallback: string,
+  locale?: string | null,
 ): Promise<ContentFile<Attributes | Record<string, never>>> {
   // Normalize file keys so both "/src/content/..." and "/<project>/src/content/..." resolve.
   // This mirrors normalization used elsewhere in the content pipeline.
@@ -56,8 +58,15 @@ async function getContentFile<
     `${base}/index.agx`,
   ];
 
+  // Try locale-prefixed paths first, then fall back to unprefixed, then bare slug via stem
+  const localeCandidates = locale
+    ? candidates.map((c) =>
+        c.replace('/src/content/', `/src/content/${locale}/`),
+      )
+    : [];
+  const allCandidates = [...localeCandidates, ...candidates];
   const matchKey =
-    candidates.find((k) => k in normalizedFiles) ?? stemToKey[slug];
+    allCandidates.find((k) => k in normalizedFiles) ?? stemToKey[slug];
   const contentFile = matchKey ? normalizedFiles[matchKey] : undefined;
 
   if (!contentFile) {
@@ -107,6 +116,7 @@ export function contentFileResource<
 >(params?: ContentFileParams, fallback = 'No Content Found') {
   const loaderPromise = injectContentFileLoader();
   const contentRenderer = inject(ContentRenderer);
+  const locale = inject(CONTENT_LOCALE, { optional: true });
   const contentFilesMap = toSignal(from(loaderPromise()));
   const input =
     params ||
@@ -128,6 +138,7 @@ export function contentFileResource<
             files!,
             param,
             fallback,
+            locale,
           );
           if (typeof file.content === 'string') {
             const rendered = (await contentRenderer.render(file.content)) as {
@@ -156,6 +167,7 @@ export function contentFileResource<
           files!,
           param.customFilename,
           fallback,
+          locale,
         );
         if (typeof file.content === 'string') {
           const rendered = (await contentRenderer.render(file.content)) as {

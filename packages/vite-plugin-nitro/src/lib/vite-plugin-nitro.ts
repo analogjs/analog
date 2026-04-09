@@ -27,6 +27,10 @@ import {
   clientRenderer,
   apiMiddleware,
 } from './utils/renderers.js';
+import {
+  expandRoutesWithLocales,
+  createI18nPostRenderingHook,
+} from './utils/i18n-prerender.js';
 
 const isWindows = platform() === 'win32';
 const filePrefix = isWindows ? 'file:///' : '';
@@ -67,6 +71,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           entryServer: options?.entryServer,
           index: options?.index,
           routeRules: nitroOptions?.routeRules,
+          i18n: options?.i18n,
         })
       : false) as Plugin,
     {
@@ -314,6 +319,24 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               },
               [],
             );
+
+            // Expand routes with locale prefixes when i18n is configured
+            if (options?.i18n && nitroConfig.prerender?.routes) {
+              nitroConfig.prerender.routes = expandRoutesWithLocales(
+                nitroConfig.prerender.routes.filter(Boolean) as string[],
+                options.i18n,
+              );
+            }
+          }
+
+          // Register i18n post-rendering hook for lang attribute injection
+          if (options?.i18n) {
+            options.prerender = options.prerender ?? {};
+            options.prerender.postRenderingHooks =
+              options.prerender.postRenderingHooks ?? [];
+            options.prerender.postRenderingHooks.push(
+              createI18nPostRenderingHook(options.i18n),
+            );
           }
 
           if (ssrBuild) {
@@ -430,6 +453,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   nitroConfig.prerender.routes,
                   publicDir,
                   routeSitemaps,
+                  options.i18n,
                 );
               }
 
@@ -515,6 +539,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               nitroConfig.prerender.routes,
               clientOutputPath,
               routeSitemaps,
+              options.i18n,
             );
           }
 
@@ -550,6 +575,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         return {
           define: {
             ANALOG_API_PREFIX: `"${baseURL.substring(1)}${apiPrefix.substring(1)}"`,
+            ...(options?.i18n
+              ? {
+                  ANALOG_I18N_DEFAULT_LOCALE: JSON.stringify(
+                    options.i18n.defaultLocale,
+                  ),
+                  ANALOG_I18N_LOCALES: JSON.stringify(options.i18n.locales),
+                }
+              : {}),
           },
         };
       },

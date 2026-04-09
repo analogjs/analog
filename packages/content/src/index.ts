@@ -31,3 +31,10 @@ export {
   withContentFileLoader,
   CONTENT_FILE_LOADER,
 } from './lib/content-file-loader';
+export {
+  CONTENT_LOCALE,
+  injectContentLocale,
+  withLocale,
+  filterByLocale,
+  withLocaleCandidates,
+} from './lib/content-locale';

@@ -80,6 +80,12 @@ export interface CompileOptions {
    * work correctly with the standard Angular tsconfig.
    */
   useDefineForClassFields?: boolean;
+  /** Enable legacy i18n message ID format (default: true). */
+  enableI18nLegacyMessageIdFormat?: boolean;
+  /** Normalize line endings in ICU expressions (default: true). */
+  i18nNormalizeLineEndingsInICUs?: boolean;
+  /** Use external IDs in `$localize` calls (for Closure Compiler compatibility). */
+  i18nUseExternalIds?: boolean;
 }
 
 type CompileMetadata = ReturnType<typeof extractMetadata>;
@@ -439,6 +445,10 @@ export function compile(
 
           const parsedTemplate = parseTemplate(templateContent, fileName, {
             preserveWhitespaces: meta.preserveWhitespaces,
+            enableI18nLegacyMessageIdFormat:
+              opts.enableI18nLegacyMessageIdFormat ?? true,
+            i18nNormalizeLineEndingsInICUs:
+              opts.i18nNormalizeLineEndingsInICUs ?? true,
           });
 
           const ivyInputs: Record<string, unknown> = {};
@@ -522,6 +532,7 @@ export function compile(
               ).blocks,
             },
             declarationListEmitMode: 1,
+            i18nUseExternalIds: opts.i18nUseExternalIds ?? false,
             relativeContextFilePath: fileName,
             controlCreate: null,
           };

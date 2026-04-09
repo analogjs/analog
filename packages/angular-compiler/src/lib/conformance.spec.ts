@@ -168,9 +168,8 @@ const CATEGORIES = [
   'output_function', // v17+ output function
 ];
 
-// Skip test cases known to be unsupported (i18n, partial compilation, etc.)
+// Skip test cases known to be unsupported (partial compilation, etc.)
 const SKIP_PATTERNS = [
-  /i18n/i,
   /partial/i,
   /local compilation/i,
   /jit/i,

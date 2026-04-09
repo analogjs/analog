@@ -121,6 +121,18 @@ const sidebars = {
           ],
         },
         {
+          type: 'category',
+          label: 'Internationalization (i18n)',
+          items: [
+            {
+              type: 'doc',
+              id: 'features/i18n/overview',
+              label: 'Overview',
+              key: 'i18n-overview',
+            },
+          ],
+        },
+        {
           type: 'doc',
           id: 'guides/forms',
           label: 'Form Actions',
