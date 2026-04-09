@@ -40,6 +40,7 @@ export interface AnalogCompilerPluginOptions {
   transformFilter?: (code: string, id: string) => boolean;
   isTest: boolean;
   isAstroIntegration: boolean;
+  analogCompilationMode?: 'full' | 'partial';
 }
 
 export function analogCompilerPlugin(
@@ -156,6 +157,7 @@ export function analogCompilerPlugin(
       resolvedStyles,
       resolvedInlineStyles,
       useDefineForClassFields,
+      compilationMode: pluginOptions.analogCompilationMode,
     });
 
     // Track resource dependencies for HMR

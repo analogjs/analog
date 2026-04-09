@@ -123,8 +123,10 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     );
   }
   visitExternalExpr(ast: o.ExternalExpr) {
-    const name = ast.value.name!;
+    const name = ast.value.name;
     if (name === 'ngDevMode') return name;
+    // When name is null/undefined, this is a bare module reference (e.g. ngImport: i0)
+    if (!name) return 'i0';
     return 'i0.' + name;
   }
   visitLiteralExpr(ast: o.LiteralExpr) {

@@ -22,6 +22,14 @@ import {
   ParseLocation,
   ParseSourceSpan,
   compileClassMetadata,
+  compileDeclareComponentFromMetadata,
+  compileDeclareDirectiveFromMetadata,
+  compileDeclarePipeFromMetadata,
+  compileDeclareNgModuleFromMetadata,
+  compileDeclareInjectorFromMetadata,
+  compileDeclareInjectableFromMetadata,
+  compileDeclareFactoryFunction,
+  compileDeclareClassMetadata,
 } from '@angular/compiler';
 import { ComponentRegistry } from './registry.js';
 import { findAllClasses } from './utils.js';
@@ -86,17 +94,27 @@ export interface CompileOptions {
   i18nNormalizeLineEndingsInICUs?: boolean;
   /** Use external IDs in `$localize` calls (for Closure Compiler compatibility). */
   i18nUseExternalIds?: boolean;
+  /**
+   * Compilation output mode.
+   * - `'full'` (default): Emit final Ivy definitions (`ɵɵdefineComponent`) for application builds.
+   * - `'partial'`: Emit partial declarations (`ɵɵngDeclareComponent`) for library publishing.
+   *   Partial output is version-stable and linked at application build time.
+   */
+  compilationMode?: 'full' | 'partial';
 }
 
 type CompileMetadata = ReturnType<typeof extractMetadata>;
 
 type CompileDeclaration = {
   type: o.Expression;
-  selector: string;
+  selector: string | null;
+  className?: string;
   kind: number;
   name?: string;
   inputs?: string[];
   outputs?: string[];
+  exportAs?: string[];
+  isComponent?: boolean;
 };
 
 function hasExportModifier(node: ts.Node): boolean {
@@ -122,6 +140,7 @@ export function compile(
   const resolvedStyles = opts.resolvedStyles;
   const resolvedInlineStyles = opts.resolvedInlineStyles;
   const useDefineForClassFields = opts.useDefineForClassFields ?? false;
+  const isPartial = opts.compilationMode === 'partial';
   const origSourceFile = ts.createSourceFile(
     fileName,
     sourceCode,
@@ -190,7 +209,7 @@ export function compile(
     }
   }
 
-  const bindingParser = makeBindingParser();
+  const bindingParser = isPartial ? undefined : makeBindingParser();
   setEmitterSourceFile(origSourceFile);
   setEmitterSourceCode(sourceCode);
 
@@ -380,21 +399,24 @@ export function compile(
 
           // Add self-reference so recursive components (e.g. tree views)
           // can use their own selector in their template.
-          const selfInputs = Object.entries(sigs.inputs).map(
-            ([, v]: [string, any]) => v.bindingPropertyName,
-          );
-          const selfOutputs = Object.values({
-            ...meta.outputs,
-            ...fields.outputs,
-            ...sigs.outputs,
-          }) as string[];
-          declarations.push({
-            type: classRef.value,
-            selector: meta.selector,
-            kind: 0,
-            ...(selfInputs.length > 0 ? { inputs: selfInputs } : {}),
-            ...(selfOutputs.length > 0 ? { outputs: selfOutputs } : {}),
-          });
+          // Skip in partial mode — the linker handles self-resolution.
+          if (!isPartial) {
+            const selfInputs = Object.entries(sigs.inputs).map(
+              ([, v]: [string, any]) => v.bindingPropertyName,
+            );
+            const selfOutputs = Object.values({
+              ...meta.outputs,
+              ...fields.outputs,
+              ...sigs.outputs,
+            }) as string[];
+            declarations.push({
+              type: classRef.value,
+              selector: meta.selector,
+              kind: 0,
+              ...(selfInputs.length > 0 ? { inputs: selfInputs } : {}),
+              ...(selfOutputs.length > 0 ? { outputs: selfOutputs } : {}),
+            });
+          }
 
           let templateContent = meta.template || '';
           if (!templateContent && meta.templateUrl) {
@@ -507,8 +529,8 @@ export function compile(
             viewQueries: [...fields.viewQueries, ...sigs.viewQueries],
             queries: [...fields.contentQueries, ...sigs.contentQueries],
             host: hostMetadata,
-            changeDetection: meta.changeDetection,
-            encapsulation: meta.encapsulation,
+            changeDetection: meta.changeDetection ?? (isPartial ? null : 1),
+            encapsulation: meta.encapsulation ?? 0,
             exportAs: meta.exportAs,
             providers: meta.providers?.length
               ? new o.LiteralArrayExpr(meta.providers)
@@ -543,12 +565,35 @@ export function compile(
               (Array.isArray(meta.imports) && meta.imports.length > 0);
           }
 
-          const cmp = compileComponentFromMetadata(
-            componentMeta,
-            constantPool,
-            bindingParser,
-          );
-          ivyCode.push(`static ɵcmp = ${emitAngularExpr(cmp.expression)}`);
+          if (isPartial) {
+            // Partial compilation accesses .inputs, .outputs, .exportAs on
+            // each declaration — ensure they are arrays (not undefined).
+            componentMeta.declarations = declarations.map((d) => ({
+              ...d,
+              inputs: d.inputs ?? null,
+              outputs: d.outputs ?? null,
+              exportAs: d.exportAs ?? null,
+              isComponent: d.isComponent ?? false,
+            }));
+            const cmp = compileDeclareComponentFromMetadata(
+              componentMeta,
+              parsedTemplate,
+              {
+                content: templateContent,
+                sourceUrl: fileName,
+                isInline: !meta.templateUrl,
+                inlineTemplateLiteralExpression: null,
+              },
+            );
+            ivyCode.push(`static ɵcmp = ${emitAngularExpr(cmp.expression)}`);
+          } else {
+            const cmp = compileComponentFromMetadata(
+              componentMeta,
+              constantPool,
+              bindingParser!,
+            );
+            ivyCode.push(`static ɵcmp = ${emitAngularExpr(cmp.expression)}`);
+          }
           break;
 
         case 'Directive':
@@ -574,57 +619,72 @@ export function compile(
               transformFunction: sigDesc.transform || null,
             };
           }
-          const dir = compileDirectiveFromMetadata(
-            {
-              ...meta,
-              name: className,
-              type: classRef,
-              typeSourceSpan,
-              host: hostMetadata,
-              inputs: dirInputs,
-              outputs: { ...meta.outputs, ...fields.outputs, ...sigs.outputs },
-              viewQueries: [...fields.viewQueries, ...sigs.viewQueries],
-              queries: [...fields.contentQueries, ...sigs.contentQueries],
-              providers: meta.providers,
-              exportAs: meta.exportAs,
-              isStandalone: meta.standalone,
-              lifecycle: { usesOnChanges: false },
-              controlCreate: null,
-            },
-            constantPool,
-            bindingParser,
-          );
-          ivyCode.push(`static ɵdir = ${emitAngularExpr(dir.expression)}`);
+          const directiveMeta = {
+            ...meta,
+            name: className,
+            type: classRef,
+            typeSourceSpan,
+            host: hostMetadata,
+            inputs: dirInputs,
+            outputs: { ...meta.outputs, ...fields.outputs, ...sigs.outputs },
+            viewQueries: [...fields.viewQueries, ...sigs.viewQueries],
+            queries: [...fields.contentQueries, ...sigs.contentQueries],
+            providers: meta.providers,
+            exportAs: meta.exportAs,
+            isStandalone: meta.standalone,
+            lifecycle: { usesOnChanges: false },
+            controlCreate: null,
+          };
+          if (isPartial) {
+            const dir = compileDeclareDirectiveFromMetadata(directiveMeta);
+            ivyCode.push(`static ɵdir = ${emitAngularExpr(dir.expression)}`);
+          } else {
+            const dir = compileDirectiveFromMetadata(
+              directiveMeta,
+              constantPool,
+              bindingParser!,
+            );
+            ivyCode.push(`static ɵdir = ${emitAngularExpr(dir.expression)}`);
+          }
           break;
 
         case 'Pipe':
           targetType = FactoryTarget.Pipe;
-          const pipe = compilePipeFromMetadata({
+          const pipeMeta = {
             ...meta,
             name: className,
             pipeName: meta.name,
             type: classRef,
             isStandalone: meta.standalone,
             pure: meta.pure ?? true,
-          });
-          ivyCode.push(`static ɵpipe = ${emitAngularExpr(pipe.expression)}`);
+          };
+          if (isPartial) {
+            const pipe = compileDeclarePipeFromMetadata(pipeMeta);
+            ivyCode.push(`static ɵpipe = ${emitAngularExpr(pipe.expression)}`);
+          } else {
+            const pipe = compilePipeFromMetadata(pipeMeta);
+            ivyCode.push(`static ɵpipe = ${emitAngularExpr(pipe.expression)}`);
+          }
           break;
 
         case 'Injectable':
           targetType = FactoryTarget.Injectable;
-          const inj = o.compileInjectable(
-            {
-              name: className,
-              type: classRef,
-              typeArgumentCount: 0,
-              providedIn: {
-                expression: new o.LiteralExpr(meta.providedIn || 'root'),
-                forwardRef: 0,
-              },
+          const injectableMeta = {
+            name: className,
+            type: classRef,
+            typeArgumentCount: 0,
+            providedIn: {
+              expression: new o.LiteralExpr(meta.providedIn || 'root'),
+              forwardRef: 0,
             },
-            true,
-          );
-          ivyCode.push(`static ɵprov = ${emitAngularExpr(inj.expression)}`);
+          };
+          if (isPartial) {
+            const inj = compileDeclareInjectableFromMetadata(injectableMeta);
+            ivyCode.push(`static ɵprov = ${emitAngularExpr(inj.expression)}`);
+          } else {
+            const inj = o.compileInjectable(injectableMeta, true);
+            ivyCode.push(`static ɵprov = ${emitAngularExpr(inj.expression)}`);
+          }
           break;
 
         case 'NgModule':
@@ -642,8 +702,8 @@ export function compile(
             ? meta.bootstrap
             : [];
 
-          const ngMod = compileNgModule({
-            kind: R3NgModuleMetadataKind.Global,
+          const ngModuleMeta = {
+            kind: R3NgModuleMetadataKind.Global as const,
             type: classRef,
             bootstrap: ngModuleBootstrap.map((e: o.WrappedNodeExpr<any>) => ({
               value: e,
@@ -666,18 +726,30 @@ export function compile(
             containsForwardDecls: false,
             schemas: [],
             id: null,
-          });
-          ivyCode.push(`static ɵmod = ${emitAngularExpr(ngMod.expression)}`);
-
-          const injector = compileInjector({
+          };
+          const injectorMeta = {
             name: className,
             type: classRef,
             providers: meta.providers
               ? new o.LiteralArrayExpr(meta.providers)
               : null,
             imports: ngModuleImports.map((e: o.WrappedNodeExpr<any>) => e),
-          });
-          ivyCode.push(`static ɵinj = ${emitAngularExpr(injector.expression)}`);
+          };
+          if (isPartial) {
+            const ngMod = compileDeclareNgModuleFromMetadata(ngModuleMeta);
+            ivyCode.push(`static ɵmod = ${emitAngularExpr(ngMod.expression)}`);
+            const injector = compileDeclareInjectorFromMetadata(injectorMeta);
+            ivyCode.push(
+              `static ɵinj = ${emitAngularExpr(injector.expression)}`,
+            );
+          } else {
+            const ngMod = compileNgModule(ngModuleMeta);
+            ivyCode.push(`static ɵmod = ${emitAngularExpr(ngMod.expression)}`);
+            const injector = compileInjector(injectorMeta);
+            ivyCode.push(
+              `static ɵinj = ${emitAngularExpr(injector.expression)}`,
+            );
+          }
           break;
       }
     });
@@ -700,14 +772,20 @@ export function compile(
         `static ɵfac = function ${className}_Factory(__ngFactoryType__) { i0.ɵɵinvalidFactory(); }`,
       );
     } else {
-      const fac = compileFactoryFunction({
+      const factoryMeta = {
         name: className,
         type: classRef,
         typeArgumentCount: 0,
         deps,
         target: targetType,
-      });
-      ivyCode.unshift(`static ɵfac = ${emitAngularExpr(fac.expression)}`);
+      };
+      if (isPartial) {
+        const fac = compileDeclareFactoryFunction(factoryMeta);
+        ivyCode.unshift(`static ɵfac = ${emitAngularExpr(fac.expression)}`);
+      } else {
+        const fac = compileFactoryFunction(factoryMeta);
+        ivyCode.unshift(`static ɵfac = ${emitAngularExpr(fac.expression)}`);
+      }
     }
 
     // Emit setClassMetadata for runtime decorator reflection (devMode only)
@@ -759,8 +837,8 @@ export function compile(
       }
 
       try {
-        const classMetadataExpr = compileClassMetadata({
-          type: new o.WrappedNodeExpr(className),
+        const classMetaInput = {
+          type: new o.WrappedNodeExpr(ts.factory.createIdentifier(className)),
           decorators: new o.LiteralArrayExpr([
             new o.LiteralMapExpr([
               new o.LiteralMapPropertyAssignment(
@@ -783,7 +861,10 @@ export function compile(
           ]),
           ctorParameters: null,
           propDecorators: null,
-        });
+        };
+        const classMetadataExpr = isPartial
+          ? compileDeclareClassMetadata(classMetaInput)
+          : compileClassMetadata(classMetaInput);
         constantPool.statements.push(
           new o.ExpressionStatement(classMetadataExpr),
         );

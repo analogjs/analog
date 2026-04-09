@@ -23,6 +23,18 @@ export function compileCode(
   return rawCompile(sourceCode, fileName, registry).code;
 }
 
+/** Compile in partial mode and return just the code string. */
+export function compilePartialCode(
+  sourceCode: string,
+  fileName: string,
+  registry?: ComponentRegistry,
+): string {
+  return rawCompile(sourceCode, fileName, {
+    registry,
+    compilationMode: 'partial',
+  }).code;
+}
+
 export function expectCompiles(result: string) {
   expect(result).toBeTruthy();
   expect(result).not.toMatch(/^Error:/m);
