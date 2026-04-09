@@ -2862,6 +2862,27 @@ describe('Signal query read/descendants options', () => {
   });
 });
 
+describe('@Inject(forwardRef(...)) unwrapping', () => {
+  it('unwraps forwardRef in @Inject argument', () => {
+    const result = compile(
+      `
+      import { Component, Inject, forwardRef, InjectionToken } from '@angular/core';
+      const TOKEN = new InjectionToken<string>('t');
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        constructor(@Inject(forwardRef(() => TOKEN)) value: string) {}
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    // Factory should reference TOKEN directly, not the forwardRef call
+    expect(result).toContain('TOKEN');
+    // Must NOT emit the unwrapped forwardRef call inside the factory
+    expect(result).not.toMatch(/ɵɵdirectiveInject\(forwardRef\(/);
+  });
+});
+
 function expectCompiles(result: string) {
   expect(result).toBeTruthy();
   expect(result).not.toMatch(/^Error:/m);
