@@ -1,3 +1,9 @@
+# [2.5.0-beta.19](https://github.com/analogjs/analog/compare/v2.5.0-beta.18...v2.5.0-beta.19) (2026-04-09)
+
+### Features
+
+- **angular-compiler:** add partial compilation mode for library support ([#2269](https://github.com/analogjs/analog/issues/2269)) ([bfe0c62](https://github.com/analogjs/analog/commit/bfe0c62d86fd6286942d06eff41f06e7db314357))
+
 # [2.5.0-beta.18](https://github.com/analogjs/analog/compare/v2.5.0-beta.17...v2.5.0-beta.18) (2026-04-09)
 
 ### Bug Fixes
