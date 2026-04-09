@@ -158,13 +158,13 @@ The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.)
 
 ### Decorators
 
-| Decorator     | Static Fields                              | Notes                                           |
-| ------------- | ------------------------------------------ | ----------------------------------------------- |
-| `@Component`  | `ɵcmp`, `ɵfac`, `setClassMetadata`         | Full template compilation with Ivy instructions |
-| `@Directive`  | `ɵdir`, `ɵfac`, `setClassMetadata`         | Host bindings, listeners, inputs/outputs        |
-| `@Pipe`       | `ɵpipe`, `ɵfac`, `setClassMetadata`        | Pure and impure                                 |
-| `@Injectable` | `ɵprov`, `ɵfac`, `setClassMetadata`        | `providedIn` variants                           |
-| `@NgModule`   | `ɵmod`, `ɵinj`, `ɵfac`, `setClassMetadata` | Declarations, exports, providers, bootstrap     |
+| Decorator     | Static Fields                              | Notes                                                             |
+| ------------- | ------------------------------------------ | ----------------------------------------------------------------- |
+| `@Component`  | `ɵcmp`, `ɵfac`, `setClassMetadata`         | Full template compilation with Ivy instructions                   |
+| `@Directive`  | `ɵdir`, `ɵfac`, `setClassMetadata`         | Host bindings, listeners, inputs/outputs                          |
+| `@Pipe`       | `ɵpipe`, `ɵfac`, `setClassMetadata`        | Pure and impure                                                   |
+| `@Injectable` | `ɵprov`, `ɵfac`, `setClassMetadata`        | `providedIn`, `useFactory`, `useClass`, `useExisting`, `useValue` |
+| `@NgModule`   | `ɵmod`, `ɵinj`, `ɵfac`, `setClassMetadata` | Declarations, exports, providers, bootstrap                       |
 
 ### Field Decorators
 
@@ -183,12 +183,16 @@ The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.)
 | ------------------------------------- | ------------------------------------------------------------------------------------ |
 | Constructor parameter injection       | Yes (type annotations as tokens)                                                     |
 | `@Inject(TOKEN)`                      | Yes                                                                                  |
+| `@Inject(forwardRef(() => TOKEN))`    | Yes (forwardRef is unwrapped before token emission)                                  |
 | `@Optional()`                         | Yes                                                                                  |
 | `@Self()` / `@SkipSelf()` / `@Host()` | Yes                                                                                  |
 | `@Attribute('name')`                  | Yes                                                                                  |
+| Nullable union (`T \| null`)          | Yes (resolves to T)                                                                  |
+| Ambiguous union (`A \| B`)            | Rejected → `ɵɵinvalidFactory` (matches ngtsc's "no suitable injection token")        |
+| Intersection types (`A & B`)          | Rejected → `ɵɵinvalidFactory`                                                        |
 | Type-only imports (`import type`)     | Detected → `ɵɵinvalidFactory` for DI; auto-elided from output via OXC usage analysis |
 | Class inheritance without constructor | `ɵɵgetInheritedFactory`                                                              |
-| `forwardRef(() => X)` unwrapping      | Yes (in imports, providers, queries)                                                 |
+| `forwardRef(() => X)` unwrapping      | Yes (in imports, providers, queries, `@Inject`)                                      |
 
 ### @Component API Coverage
 
@@ -220,38 +224,38 @@ String-typed metadata fields (`template`, `selector`, `templateUrl`, `styles`, `
 | -------------------------------------------- | ----------------------------------------------------------------------- |
 | `signal()`                                   | Yes (preserved as-is)                                                   |
 | `computed()`                                 | Yes (preserved as-is)                                                   |
-| `input()` / `input.required()`               | Yes (signal input descriptors with required flag, transform extraction) |
-| `model()` / `model.required()`               | Yes (generates input + `Change` output)                                 |
-| `output()`                                   | Yes                                                                     |
-| `viewChild()` / `viewChild.required()`       | Yes (signal queries)                                                    |
-| `viewChildren()`                             | Yes (signal queries)                                                    |
-| `contentChild()` / `contentChild.required()` | Yes (signal queries)                                                    |
-| `contentChildren()`                          | Yes (signal queries)                                                    |
+| `input()` / `input.required()`               | Yes (signal input descriptors, `alias`, `transform`, `required` flag)   |
+| `model()` / `model.required()`               | Yes (generates input + `${alias ?? name}Change` output)                 |
+| `output()` / `outputFromObservable()`        | Yes (with `alias` option, extracted in registry for cross-file binding) |
+| `viewChild()` / `viewChild.required()`       | Yes (with `read` option; class predicates wrapped as R3QueryReference)  |
+| `viewChildren()`                             | Yes (with `read` option)                                                |
+| `contentChild()` / `contentChild.required()` | Yes (with `read` and `descendants` options)                             |
+| `contentChildren()`                          | Yes (with `read` and `descendants` options, defaults to `false`)        |
 | `inject()`                                   | Yes (preserved as-is)                                                   |
 
 ### Template Features
 
-| Feature                                                                                                 | Supported |
-| ------------------------------------------------------------------------------------------------------- | --------- |
-| `@if` / `@else if` / `@else`                                                                            | Yes       |
-| `@for` with `track`, `@empty`                                                                           | Yes       |
-| `@for` implicit variables (`$index`, `$first`, `$last`, `$even`, `$odd`, `$count`)                      | Yes       |
-| `@switch` / `@case` / `@default`                                                                        | Yes       |
-| `@defer` with all triggers (`on viewport`, `on idle`, `on timer`, `on hover`, `on interaction`, `when`) | Yes       |
-| `@defer` sub-blocks (`@loading`, `@placeholder`, `@error`) with `minimum`                               | Yes       |
-| `@defer` lazy dependency loading via `import()`                                                         | Yes       |
-| Nested `@defer` inside control flow                                                                     | Yes       |
-| `@let` declarations                                                                                     | Yes       |
-| `{{ interpolation }}`                                                                                   | Yes       |
-| `[property]` binding                                                                                    | Yes       |
-| `(event)` binding                                                                                       | Yes       |
-| `[(two-way)]` binding                                                                                   | Yes       |
-| `[class.name]` / `[style.prop]`                                                                         | Yes       |
-| `<ng-content>` (multi-slot projection)                                                                  | Yes       |
-| Pipes in templates (with args, chained)                                                                 | Yes       |
-| `i18n` attribute (static text, interpolations, meaning/description, custom ID)                          | Yes       |
-| `i18n-*` attribute bindings (e.g. `i18n-title`)                                                         | Yes       |
-| ICU expressions (`{count, plural, =0 {none} =1 {one} other {many}}`)                                    | Yes       |
+| Feature                                                                                                 | Supported                                      |
+| ------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `@if` / `@else if` / `@else`                                                                            | Yes                                            |
+| `@for` with `track`, `@empty`                                                                           | Yes                                            |
+| `@for` implicit variables (`$index`, `$first`, `$last`, `$even`, `$odd`, `$count`)                      | Yes                                            |
+| `@switch` / `@case` / `@default`                                                                        | Yes                                            |
+| `@defer` with all triggers (`on viewport`, `on idle`, `on timer`, `on hover`, `on interaction`, `when`) | Yes                                            |
+| `@defer` sub-blocks (`@loading`, `@placeholder`, `@error`) with `minimum`                               | Yes                                            |
+| `@defer` lazy dependency loading via `import().then(m => m.X)`                                          | Yes (named + default imports, per-block dedup) |
+| Nested `@defer` inside control flow                                                                     | Yes                                            |
+| `@let` declarations                                                                                     | Yes                                            |
+| `{{ interpolation }}`                                                                                   | Yes                                            |
+| `[property]` binding                                                                                    | Yes                                            |
+| `(event)` binding                                                                                       | Yes                                            |
+| `[(two-way)]` binding                                                                                   | Yes                                            |
+| `[class.name]` / `[style.prop]`                                                                         | Yes                                            |
+| `<ng-content>` (multi-slot projection)                                                                  | Yes                                            |
+| Pipes in templates (with args, chained)                                                                 | Yes                                            |
+| `i18n` attribute (static text, interpolations, meaning/description, custom ID)                          | Yes                                            |
+| `i18n-*` attribute bindings (e.g. `i18n-title`)                                                         | Yes                                            |
+| ICU expressions (`{count, plural, =0 {none} =1 {one} other {many}}`)                                    | Yes                                            |
 
 ### Cross-file Resolution
 
