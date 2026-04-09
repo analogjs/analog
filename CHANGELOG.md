@@ -1,3 +1,9 @@
+# [2.5.0-beta.20](https://github.com/analogjs/analog/compare/v2.5.0-beta.19...v2.5.0-beta.20) (2026-04-09)
+
+### Bug Fixes
+
+- **angular-compiler:** preserve constructor di token imports from elision ([#2270](https://github.com/analogjs/analog/issues/2270)) ([9de43fa](https://github.com/analogjs/analog/commit/9de43fa35ee1926170d936d848098c62fafd7c74))
+
 # [2.5.0-beta.19](https://github.com/analogjs/analog/compare/v2.5.0-beta.18...v2.5.0-beta.19) (2026-04-09)
 
 ### Features
