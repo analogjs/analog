@@ -571,7 +571,18 @@ export function angular(options?: PluginOptions): Plugin[] {
         // Handle Angular style imports directly, bypassing Vite 8.0.5+
         // server.fs security check which blocks IDs matching /[?&]inline\b/.
         // Compile via preprocessCSS and return as inline string export.
-        if (id.includes('?analog-inline')) {
+        //
+        // We accept both ?analog-inline (rewritten by resolveId for the
+        // browser dev-server path) and ?inline (the original query) because
+        // Vitest's fetchModule path calls moduleGraph.ensureEntryFromUrl
+        // before transformRequest, which means pluginContainer.resolveId is
+        // never invoked for module-runner imports — so the resolveId-based
+        // rewrite never runs in the test path. Handling ?inline here covers
+        // both paths.
+        if (
+          id.includes('?analog-inline') ||
+          /\.(css|scss|sass|less)\?inline$/.test(id)
+        ) {
           const filePath = id.split('?')[0];
           const code = await fsPromises.readFile(filePath, 'utf-8');
           const result = await preprocessCSS(code, filePath, resolvedConfig);
