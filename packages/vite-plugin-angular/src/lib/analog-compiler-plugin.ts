@@ -54,6 +54,7 @@ export function analogCompilerPlugin(
   const analogResourceToSource = new Map<string, string>();
   const scannedDtsPackages = new Set<string>();
   let analogProjectRoot = '';
+  let useDefineForClassFields = true;
 
   async function initAnalogCompiler() {
     if (pluginOptions.jit) return; // JIT: no registry scan needed
@@ -64,6 +65,7 @@ export function analogCompilerPlugin(
     const resolvedTsConfigPath = resolveTsConfigPath();
     analogProjectRoot = dirname(resolvedTsConfigPath);
     const config = compilerCli.readConfiguration(resolvedTsConfigPath);
+    useDefineForClassFields = config.options?.useDefineForClassFields ?? true;
 
     const results = await Promise.all(
       config.rootNames.map(async (file) => {
@@ -153,6 +155,7 @@ export function analogCompilerPlugin(
       registry: analogRegistry,
       resolvedStyles,
       resolvedInlineStyles,
+      useDefineForClassFields,
     });
 
     // Track resource dependencies for HMR

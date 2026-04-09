@@ -244,7 +244,7 @@ describe.skipIf(!angularAvailable)('Angular Compliance Tests', () => {
               const result = compile(
                 inputCode,
                 path.join(categoryDir, inputFile),
-                { registry },
+                { registry, useDefineForClassFields: true },
               );
               compiled = result.code;
             } catch (e: any) {
