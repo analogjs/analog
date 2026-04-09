@@ -831,7 +831,13 @@ export function extractConstructorDeps(
             if (sv !== null) {
               token = sv;
             } else {
-              token = sourceCode.slice(args[0].start, args[0].end);
+              // Unwrap `@Inject(forwardRef(() => TOKEN))` so the
+              // emitted token references TOKEN directly. Without this
+              // the raw `forwardRef(() => TOKEN)` source slice would
+              // appear in the factory output, producing broken code
+              // that calls forwardRef at definition time.
+              const unwrapped = unwrapForwardRefOxc(args[0]);
+              token = sourceCode.slice(unwrapped.start, unwrapped.end);
             }
           }
           break;
