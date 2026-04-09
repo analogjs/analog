@@ -1,3 +1,9 @@
+# [2.5.0-beta.22](https://github.com/analogjs/analog/compare/v2.5.0-beta.21...v2.5.0-beta.22) (2026-04-09)
+
+### Bug Fixes
+
+- **angular-compiler:** emit bracket access for non-identifier field keys ([956c703](https://github.com/analogjs/analog/commit/956c703af97b1628b93f93fdd688910178a4dd5d))
+
 # [2.5.0-beta.21](https://github.com/analogjs/analog/compare/v2.5.0-beta.20...v2.5.0-beta.21) (2026-04-09)
 
 ### Bug Fixes
