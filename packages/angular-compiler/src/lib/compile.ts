@@ -37,6 +37,7 @@ import {
   setEmitterSourceFile,
   setEmitterSourceCode,
 } from './js-emitter.js';
+import { lowerClassFields } from './class-field-lowering.js';
 import {
   extractMetadata,
   detectSignals,
@@ -72,6 +73,13 @@ export interface CompileOptions {
   resolvedStyles?: Map<string, string>;
   /** Pre-processed inline styles (index in styles array → compiled CSS). */
   resolvedInlineStyles?: Map<number, string>;
+  /**
+   * When `false` (default), instance class field initializers are lowered to
+   * constructor assignments (matching TypeScript's `useDefineForClassFields: false`
+   * behavior). This is required for Angular's `inject()` and constructor DI to
+   * work correctly with the standard Angular tsconfig.
+   */
+  useDefineForClassFields?: boolean;
 }
 
 type CompileMetadata = ReturnType<typeof extractMetadata>;
@@ -107,6 +115,7 @@ export function compile(
   const registry = opts.registry;
   const resolvedStyles = opts.resolvedStyles;
   const resolvedInlineStyles = opts.resolvedInlineStyles;
+  const useDefineForClassFields = opts.useDefineForClassFields ?? false;
   const origSourceFile = ts.createSourceFile(
     fileName,
     sourceCode,
@@ -928,7 +937,17 @@ export function compile(
     ms.append('\n\n' + sideEffects.join('\n'));
   }
 
-  // 4. Elide imports that are only used in type positions (type annotations,
+  // 4. Lower class field initializers to constructor assignments when
+  //    useDefineForClassFields is false (standard Angular tsconfig).
+  //    Uses the original OXC AST positions which are still valid for MagicString
+  //    since MagicString tracks edits relative to the original source.
+  //    Ivy static definitions (ɵcmp, ɵfac) are not in the original AST so they
+  //    are unaffected, and shouldLowerField skips static fields regardless.
+  if (!useDefineForClassFields) {
+    lowerClassFields(ms, sourceCode, oxcProgram);
+  }
+
+  // 5. Elide imports that are only used in type positions (type annotations,
   //    implements, generics, etc.).  Without this pass, single-file transpilers
   //    like OXC / esbuild cannot tell that `import { SomeType }` is type-only
   //    and will leave the import in the output, causing runtime errors.
