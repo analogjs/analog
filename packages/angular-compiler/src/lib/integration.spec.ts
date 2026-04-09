@@ -2989,6 +2989,34 @@ describe('@defer dependency import shape', () => {
     expect(result).toMatch(/import\(['"]\.\/lazy['"]\).*then.*m\.LazyCmp/);
   });
 
+  it('uses original export name for aliased imports, not the local binding', () => {
+    const childSrc = `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-heavy', template: 'heavy' })
+      export class HeavyWidget {}
+    `;
+    const parentSrc = `
+      import { Component } from '@angular/core';
+      import { HeavyWidget as Widget } from './heavy';
+      @Component({
+        selector: 'app-parent',
+        imports: [Widget],
+        template: '@defer { <app-heavy/> }',
+      })
+      export class Parent {}
+    `;
+    const registry = buildRegistry({ 'heavy.ts': childSrc });
+    const result = compile(parentSrc, 'parent.ts', registry);
+    expectCompiles(result);
+    // Must reference the original export name `HeavyWidget`, NOT the
+    // local alias `Widget`. The module namespace exposes the original
+    // name regardless of how the consumer aliased it locally.
+    expect(result).toMatch(
+      /import\(['"]\.\/heavy['"]\)\.then\(\([^)]*\)\s*=>\s*\w+\.HeavyWidget\)/,
+    );
+    expect(result).not.toMatch(/m\.Widget(?!\w)/);
+  });
+
   it('emits import().then(m => m.default) for default imports', () => {
     const childSrc = `
       import { Component } from '@angular/core';
