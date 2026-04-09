@@ -120,17 +120,26 @@ function lowerClassFieldsForClass(
       );
       ms.remove(eqStart, field.node.value.end);
     } else {
-      // Remove the field declaration. Include up to the next newline to avoid
-      // leaving blank lines, but don't eat beyond one line boundary to protect
-      // MagicString appendLeft positions (e.g. Ivy static definitions at classEnd).
+      // Remove the field declaration. Include the trailing newline to avoid
+      // leaving blank lines, BUT only if the character after the newline isn't
+      // the closing `}` of the class. Otherwise the removal range ends at the
+      // same position where Ivy static definitions are appendLeft-inserted,
+      // and MagicString consumes those insertions as part of the removed range.
       let end = field.node.end;
-      if (end < sourceCode.length && sourceCode[end] === '\n') end++;
-      else if (
-        end + 1 < sourceCode.length &&
-        sourceCode[end] === '\r' &&
-        sourceCode[end + 1] === '\n'
-      )
-        end += 2;
+      const nextChar = sourceCode[end];
+      const charAfterNewline =
+        nextChar === '\n'
+          ? sourceCode[end + 1]
+          : nextChar === '\r' && sourceCode[end + 1] === '\n'
+            ? sourceCode[end + 2]
+            : null;
+      // Only consume newline(s) when the next non-whitespace char is not `}`
+      const safeToConsumeNewline =
+        charAfterNewline !== null && charAfterNewline !== '}';
+      if (safeToConsumeNewline) {
+        if (nextChar === '\n') end++;
+        else if (nextChar === '\r' && sourceCode[end + 1] === '\n') end += 2;
+      }
       ms.remove(field.node.start, end);
     }
   }
