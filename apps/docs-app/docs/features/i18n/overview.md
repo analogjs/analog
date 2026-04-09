@@ -42,7 +42,7 @@ Each file maps message IDs to translated strings:
 ```
 
 :::tip
-Use Angular's `extract-i18n` tooling or the `ng extract-i18n` command to generate message IDs from your templates automatically.
+Message IDs are generated automatically by Angular's `$localize` runtime based on the template content, meaning, and description.
 :::
 
 ### 4. Provide i18n Configuration
@@ -202,7 +202,7 @@ loadTranslationsRuntime(translations);
 
 ## Extracting Messages
 
-Analog can extract i18n message IDs from your compiled build output, similar to Angular CLI's `ng extract-i18n`. Enable extraction in the platform plugin options:
+Analog can extract i18n message IDs from your compiled build output. Enable extraction in the platform plugin options:
 
 ```ts
 import { defineConfig } from 'vite';
