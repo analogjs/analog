@@ -2862,6 +2862,52 @@ describe('Signal query read/descendants options', () => {
   });
 });
 
+describe('Output alias in registry', () => {
+  it('extracts alias from output() options in registry', () => {
+    const entries = scanFile(
+      `
+      import { Component, output } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        click = output<void>({ alias: 'publicClick' });
+      }
+    `,
+      'c.ts',
+    );
+    expect(entries[0].outputs!['click']).toBe('publicClick');
+  });
+
+  it('extracts alias from outputFromObservable() options in registry', () => {
+    const entries = scanFile(
+      `
+      import { Component } from '@angular/core';
+      import { outputFromObservable } from '@angular/core/rxjs-interop';
+      import { Subject } from 'rxjs';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        change = outputFromObservable(new Subject<number>(), { alias: 'changed' });
+      }
+    `,
+      'c.ts',
+    );
+    expect(entries[0].outputs!['change']).toBe('changed');
+  });
+
+  it('falls back to property name when no alias', () => {
+    const entries = scanFile(
+      `
+      import { Component, output } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        click = output<void>();
+      }
+    `,
+      'c.ts',
+    );
+    expect(entries[0].outputs!['click']).toBe('click');
+  });
+});
+
 describe('@Inject(forwardRef(...)) unwrapping', () => {
   it('unwraps forwardRef in @Inject argument', () => {
     const result = compile(

@@ -206,16 +206,14 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
                 (callee.property?.name || '');
             }
 
-            // Extract `alias` from the options object so the public
-            // binding name reflects user overrides like
-            // `input(null, { alias: 'aria-label' })`. Without this,
-            // host-directive mappings that reference the public name
-            // (e.g. `inputs: ['aria-label']`) fail to resolve.
-            const aliasFromOptions = (): string | null => {
-              const required =
-                calleeName === 'input.required' ||
-                calleeName === 'model.required';
-              const optionsArg = init.arguments?.[required ? 0 : 1];
+            // Extract `alias` from an options object at the given
+            // argument index. Used for input/model (options at index 1,
+            // or 0 for the `.required` variants) and for output (options
+            // at index 0). Without this, host-directive mappings that
+            // reference the public name (e.g. `inputs: ['aria-label']`,
+            // `outputs: ['publicEvent']`) fail to resolve.
+            const aliasFromArg = (argIndex: number): string | null => {
+              const optionsArg = init.arguments?.[argIndex];
               if (optionsArg?.type !== 'ObjectExpression') return null;
               for (const prop of optionsArg.properties || []) {
                 if (prop.type !== 'ObjectProperty' && prop.type !== 'Property')
@@ -232,9 +230,13 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
               }
               return null;
             };
+            const inputAliasIndex =
+              calleeName === 'input.required' || calleeName === 'model.required'
+                ? 0
+                : 1;
 
             if (calleeName === 'input' || calleeName === 'input.required') {
-              const alias = aliasFromOptions();
+              const alias = aliasFromArg(inputAliasIndex);
               inputs[name] = {
                 classPropertyName: name,
                 bindingPropertyName: alias ?? name,
@@ -245,7 +247,7 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
               calleeName === 'model' ||
               calleeName === 'model.required'
             ) {
-              const alias = aliasFromOptions();
+              const alias = aliasFromArg(inputAliasIndex);
               inputs[name] = {
                 classPropertyName: name,
                 bindingPropertyName: alias ?? name,
@@ -260,7 +262,12 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
               calleeName === 'output' ||
               calleeName === 'outputFromObservable'
             ) {
-              outputs[name] = name;
+              // output() options at arg[0]; outputFromObservable(source,
+              // opts?) options at arg[1].
+              const alias = aliasFromArg(
+                calleeName === 'outputFromObservable' ? 1 : 0,
+              );
+              outputs[name] = alias ?? name;
             }
           }
 
