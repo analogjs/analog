@@ -241,4 +241,48 @@ export default class TestComponent {
     expect(result).toContain('ɵcmp');
     expect(result).toContain("this.name = 'hello'");
   });
+
+  it('lowers string-literal field key with bracket access', () => {
+    // Without bracket access, `this.'some-key' = …` is invalid JS and OXC
+    // throws "Cannot assign to this expression" during pre-transform.
+    const result = compileWithLowering(`
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '<div></div>' })
+      export class TestComponent {
+        'some-key' = 'value';
+      }
+    `);
+
+    expectCompiles(result);
+    expect(result).toContain(`this["some-key"] = 'value'`);
+    expect(result).not.toContain(`this.'some-key'`);
+  });
+
+  it('lowers numeric field key with bracket access', () => {
+    const result = compileWithLowering(`
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '<div></div>' })
+      export class TestComponent {
+        123 = 'value';
+      }
+    `);
+
+    expectCompiles(result);
+    expect(result).toContain(`this[123] = 'value'`);
+  });
+
+  it('lowers computed field key with bracket access', () => {
+    const result = compileWithLowering(`
+      import { Component } from '@angular/core';
+      const KEY = 'foo';
+      @Component({ selector: 'app-test', template: '<div></div>' })
+      export class TestComponent {
+        [KEY] = 'value';
+      }
+    `);
+
+    expectCompiles(result);
+    expect(result).toContain(`this[KEY] = 'value'`);
+    expect(result).not.toContain(`this.[KEY]`);
+  });
 });

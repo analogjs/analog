@@ -48,8 +48,8 @@ export function lowerClassFields(
 interface FieldToLower {
   /** The full property definition node */
   node: any;
-  /** The field name including # prefix for private fields */
-  name: string;
+  /** The member access expression to append after `this`, e.g. `.name`, `.#priv`, `[expr]`, `['some-key']`, `[123]` */
+  accessor: string;
   /** The initializer source text */
   initializer: string;
   /** Whether this is a private field (#field) */
@@ -68,12 +68,12 @@ function lowerClassFieldsForClass(
   for (const member of members) {
     if (!shouldLowerField(member)) continue;
 
-    const name = getFieldName(member, sourceCode);
+    const accessor = getFieldAccessor(member, sourceCode);
     const initializer = sourceCode.slice(member.value.start, member.value.end);
 
     fieldsToLower.push({
       node: member,
-      name,
+      accessor,
       initializer,
       isPrivate:
         member.type === 'PropertyDefinition' &&
@@ -85,7 +85,7 @@ function lowerClassFieldsForClass(
 
   // Build assignment statements
   const assignments = fieldsToLower.map(
-    (f) => `    this.${f.name} = ${f.initializer};`,
+    (f) => `    this${f.accessor} = ${f.initializer};`,
   );
 
   // Find existing constructor
@@ -157,16 +157,48 @@ function shouldLowerField(member: any): boolean {
   return true;
 }
 
-function getFieldName(member: any, sourceCode: string): string {
+/**
+ * Build the member-access expression to append after `this` for a class field
+ * being lowered. Returns the accessor with its leading punctuation:
+ *
+ * - `.name`         — non-computed identifier key
+ * - `.#priv`        — private identifier key
+ * - `[expr]`        — computed key (square brackets in source)
+ * - `['some-key']`  — string literal key
+ * - `[123]`         — numeric literal key
+ *
+ * Without this, fields with non-identifier keys produced invalid syntax like
+ * `this.'some-key' = …` which OXC parses as "Cannot assign to this expression".
+ */
+function getFieldAccessor(member: any, sourceCode: string): string {
   const key = member.key;
   if (key.type === 'PrivateIdentifier') {
-    return '#' + key.name;
+    return '.#' + key.name;
+  }
+  // Computed key: `[expr] = value` → `this[expr] = value`
+  // OXC marks the parent PropertyDefinition with `computed: true`.
+  if (member.computed) {
+    return '[' + sourceCode.slice(key.start, key.end) + ']';
   }
   if (key.type === 'Identifier') {
-    return key.name;
+    return '.' + key.name;
   }
-  // Computed property — use the source text
-  return sourceCode.slice(key.start, key.end);
+  // String literal key: `'some-key' = value` → `this['some-key'] = value`
+  if (
+    key.type === 'StringLiteral' ||
+    (key.type === 'Literal' && typeof key.value === 'string')
+  ) {
+    return '[' + JSON.stringify(key.value) + ']';
+  }
+  // Numeric literal key: `123 = value` → `this[123] = value`
+  if (
+    key.type === 'NumericLiteral' ||
+    (key.type === 'Literal' && typeof key.value === 'number')
+  ) {
+    return '[' + key.value + ']';
+  }
+  // Fallback: bracket-access with the original source text
+  return '[' + sourceCode.slice(key.start, key.end) + ']';
 }
 
 function findEqualsSign(sourceCode: string, from: number, to: number): number {
