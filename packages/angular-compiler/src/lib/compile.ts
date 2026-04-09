@@ -331,6 +331,37 @@ export function compile(
           }
 
           const declarations: CompileDeclaration[] = [];
+
+          // Expand `imports` entries that are not directives themselves
+          // (e.g. NgModules and tuple barrels like `HlmSelectImports =
+          // [HlmSelect, HlmSelectContent, ...] as const`) into the
+          // underlying directive class names. Returns the original entry
+          // when it doesn't match either expansion case.
+          const collectExpandedImports = (
+            depClassName: string,
+            visited: Set<string>,
+          ): string[] => {
+            if (visited.has(depClassName)) return [];
+            visited.add(depClassName);
+            const entry = registry?.get(depClassName);
+            if (!entry) return [depClassName];
+            if (entry.kind === 'ngmodule' && entry.exports) {
+              const out: string[] = [];
+              for (const name of entry.exports) {
+                out.push(...collectExpandedImports(name, visited));
+              }
+              return out;
+            }
+            if (entry.kind === 'tuple' && entry.members) {
+              const out: string[] = [];
+              for (const name of entry.members) {
+                out.push(...collectExpandedImports(name, visited));
+              }
+              return out;
+            }
+            return [depClassName];
+          };
+
           for (const dep of Array.isArray(meta.imports) ? meta.imports : []) {
             const depNode = dep.node;
             const depClassName: string =
@@ -340,6 +371,48 @@ export function compile(
                   ? depNode.name
                   : sourceCode.slice(depNode?.start ?? 0, depNode?.end ?? 0);
             const registryEntry = registry?.get(depClassName);
+
+            // Tuple barrel: `imports: [HlmSelectImports]` where the
+            // const is `[HlmSelect, HlmSelectContent, ...] as const`.
+            // Expand into the underlying directive declarations and
+            // track synthetic imports for any classes not already
+            // referenced in this file.
+            if (registryEntry?.kind === 'tuple' && registryEntry.members) {
+              const expanded = collectExpandedImports(depClassName, new Set());
+              const tupleSpecifier = importSpecifierByName.get(depClassName);
+              for (const memberName of expanded) {
+                const memberEntry = registry?.get(memberName);
+                if (!memberEntry || memberEntry.kind === 'tuple') continue;
+                const memberRef = new o.WrappedNodeExpr(memberName);
+                if (memberEntry.sourcePackage || tupleSpecifier) {
+                  if (!importedNames.has(memberName)) {
+                    syntheticImports.set(
+                      memberName,
+                      memberEntry.sourcePackage || tupleSpecifier!,
+                    );
+                  }
+                }
+                const kind = memberEntry.kind === 'pipe' ? 1 : 0;
+                const memberDecl: CompileDeclaration = {
+                  type: memberRef,
+                  selector: memberEntry.selector,
+                  kind,
+                  ...(kind === 1 ? { name: memberEntry.pipeName } : {}),
+                };
+                if (memberEntry.inputs) {
+                  memberDecl.inputs = Object.values(memberEntry.inputs).map(
+                    (i) => i.bindingPropertyName,
+                  );
+                }
+                if (memberEntry.outputs) {
+                  memberDecl.outputs = Object.values(
+                    memberEntry.outputs,
+                  ) as string[];
+                }
+                declarations.push(memberDecl);
+              }
+              continue;
+            }
 
             if (registryEntry?.kind === 'ngmodule' && registryEntry.exports) {
               const moduleSpecifier = importSpecifierByName.get(depClassName);

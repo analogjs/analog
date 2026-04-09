@@ -3,7 +3,11 @@ import { scanFile } from './registry';
 import { compile as rawCompile } from './compile';
 import { compileCode as compile, buildRegistry } from './test-helpers';
 import { inlineResourceUrls, extractInlineStyles } from './resource-inliner';
-import { scanDtsFile, collectImportedPackages } from './dts-reader';
+import {
+  scanDtsFile,
+  collectImportedPackages,
+  collectRelativeReExports,
+} from './dts-reader';
 import { generateHmrCode } from './hmr';
 import { detectTypeOnlyImportNames } from './type-elision';
 import { jitTransform } from './jit-transform';
@@ -2587,6 +2591,71 @@ describe('Signal query R3QueryReference wrapping', () => {
   });
 });
 
+describe('Tuple barrel registry and imports expansion', () => {
+  it('scans `export const X = [A, B] as const` as a tuple entry', () => {
+    const entries = scanFile(
+      `
+      import { HlmSelect } from './hlm-select';
+      import { HlmSelectContent } from './hlm-select-content';
+      export const HlmSelectImports = [HlmSelect, HlmSelectContent] as const;
+    `,
+      'barrel.ts',
+    );
+    const tuple = entries.find((e) => e.kind === 'tuple');
+    expect(tuple).toBeDefined();
+    expect(tuple!.className).toBe('HlmSelectImports');
+    expect(tuple!.members).toEqual(['HlmSelect', 'HlmSelectContent']);
+  });
+
+  it('scans `const X = [A, B]` (non-exported) as a tuple entry', () => {
+    const entries = scanFile(
+      `
+      import { Foo } from './foo';
+      const Tup = [Foo];
+    `,
+      't.ts',
+    );
+    const tuple = entries.find((e) => e.kind === 'tuple');
+    expect(tuple).toBeDefined();
+    expect(tuple!.members).toEqual(['Foo']);
+  });
+
+  it('expands tuple barrel in component imports into underlying directives', () => {
+    const registry = buildRegistry({
+      'child.ts': `
+        import { Component } from '@angular/core';
+        @Component({ selector: 'child-a', template: '' })
+        export class ChildA {}
+        @Component({ selector: 'child-b', template: '' })
+        export class ChildB {}
+      `,
+      'barrel.ts': `
+        import { ChildA } from './child';
+        import { ChildB } from './child';
+        export const ChildImports = [ChildA, ChildB] as const;
+      `,
+    });
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      import { ChildImports } from './barrel';
+      @Component({
+        selector: 'app-root',
+        imports: [ChildImports],
+        template: '<child-a></child-a><child-b></child-b>',
+      })
+      export class App {}
+    `,
+      'app.ts',
+      registry,
+    );
+    expectCompiles(result);
+    // Both children should appear as dependencies
+    expect(result).toContain('ChildA');
+    expect(result).toContain('ChildB');
+  });
+});
+
 describe('usesInheritance for extends clause', () => {
   it('emits InheritDefinitionFeature for `class Foo extends Bar`', () => {
     const result = compile(
@@ -2706,6 +2775,25 @@ describe('Host raw embedded quote preservation', () => {
     // The literal "yes" string in the binding expression must survive
     // (was previously stripped by an over-aggressive quote replacement).
     expect(result).toContain('yes');
+  });
+});
+
+describe('collectRelativeReExports', () => {
+  it('returns relative `export *` and `export { } from` specifiers', () => {
+    const code = `
+      export * from './a';
+      export * as Ns from './b';
+      export { Foo } from './c';
+      export { Bar } from 'pkg';
+      export const local = 1;
+    `;
+    const result = collectRelativeReExports(code, 'index.ts');
+    expect(result).toEqual(['./a', './b', './c']);
+  });
+
+  it('skips bare-specifier re-exports', () => {
+    const code = `export * from '@angular/core';`;
+    expect(collectRelativeReExports(code, 'i.ts')).toEqual([]);
   });
 });
 

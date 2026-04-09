@@ -16,6 +16,7 @@ import {
   scanFile,
   scanPackageDts,
   collectImportedPackages,
+  collectRelativeReExports,
   jitTransform,
   inlineResourceUrls,
   extractInlineStyles,
@@ -68,8 +69,30 @@ export function analogCompilerPlugin(
     const config = compilerCli.readConfiguration(resolvedTsConfigPath);
     useDefineForClassFields = config.options?.useDefineForClassFields ?? true;
 
+    // Collect candidate files: tsconfig rootNames PLUS the entry points
+    // named in `compilerOptions.paths`. App tsconfigs typically only
+    // include the app's own sources, so workspace library entry barrels
+    // (e.g. `HlmSelectImports = [HlmSelect, HlmSelectContent, ...] as
+    // const`) live outside `rootNames` and would otherwise miss the
+    // initial scan. The compiler then can't see that `HlmSelectImports`
+    // is a tuple barrel and emits the bare identifier into the parent
+    // component's `dependencies()` list, where Angular's runtime
+    // silently drops it because arrays don't have a directive def.
+    const candidates = new Set<string>(config.rootNames);
+    const tsPaths = config.options?.paths;
+    const baseUrl = (config.options?.baseUrl ?? analogProjectRoot) as string;
+    if (tsPaths) {
+      for (const targets of Object.values(tsPaths)) {
+        for (const target of targets as string[]) {
+          // Skip wildcard patterns — entry barrels are normally exact
+          // file paths like "libs/helm/select/src/index.ts".
+          if (target.includes('*')) continue;
+          candidates.add(resolve(baseUrl, target));
+        }
+      }
+    }
     const results = await Promise.all(
-      config.rootNames.map(async (file) => {
+      Array.from(candidates).map(async (file) => {
         try {
           const code = await fsPromises.readFile(file, 'utf-8');
           return scanFile(code, file);
@@ -83,6 +106,61 @@ export function analogCompilerPlugin(
       for (const entry of entries) {
         analogRegistry.set(entry.className, entry);
       }
+    }
+
+    // Library barrels typically `export * from './lib/...'` rather than
+    // declaring directives directly, so the entry file alone gives us
+    // the tuple consts but not the directive classes they reference.
+    // Walk the relative `export *` / `export { … } from './x'` chain
+    // from each barrel so the underlying classes also land in the
+    // registry.
+    const visitedBarrels = new Set<string>();
+    const scanBarrelExports = async (file: string): Promise<void> => {
+      if (visitedBarrels.has(file)) return;
+      visitedBarrels.add(file);
+      let code: string;
+      try {
+        code = await fsPromises.readFile(file, 'utf-8');
+      } catch {
+        return;
+      }
+      const entries = scanFile(code, file);
+      for (const entry of entries) {
+        if (!analogRegistry.has(entry.className)) {
+          analogRegistry.set(entry.className, entry);
+        }
+      }
+      // Collect every relative re-export specifier via OXC AST so
+      // recursive scans can't trip over each other (a shared `/g` regex
+      // would have its `lastIndex` reset by each recursive call and
+      // silently skip half of an outer barrel's re-exports, which
+      // previously left directives like `HlmRadioGroup` unregistered).
+      const dir = dirname(file);
+      for (const rel of collectRelativeReExports(code, file)) {
+        const reExportCandidates = [
+          resolve(dir, rel + '.ts'),
+          resolve(dir, rel, 'index.ts'),
+        ];
+        for (const candidate of reExportCandidates) {
+          try {
+            await fsPromises.access(candidate);
+            await scanBarrelExports(candidate);
+            break;
+          } catch {
+            // try next candidate
+          }
+        }
+      }
+    };
+    if (tsPaths) {
+      const barrelCandidates: string[] = [];
+      for (const targets of Object.values(tsPaths)) {
+        for (const target of targets as string[]) {
+          if (target.includes('*')) continue;
+          barrelCandidates.push(resolve(baseUrl, target));
+        }
+      }
+      await Promise.all(barrelCandidates.map(scanBarrelExports));
     }
   }
 
@@ -109,6 +187,8 @@ export function analogCompilerPlugin(
     id: string,
   ): Promise<{ code: string; map: any } | undefined> {
     if (!/(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code)) {
+      // Non-Angular file — leave it alone so a downstream plugin (or
+      // Vite's built-in TS handler) can process it.
       return undefined;
     }
 
