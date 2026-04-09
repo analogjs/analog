@@ -48,6 +48,7 @@ import {
 import { lowerClassFields } from './class-field-lowering.js';
 import {
   extractMetadata,
+  collectStringConstants,
   detectSignals,
   detectFieldDecorators,
   extractConstructorDeps,
@@ -165,6 +166,10 @@ export function compile(
     }
   }
 
+  // Collect module-level string constants so decorator metadata can resolve
+  // template-literal interpolations like `template: \`<div class="${tw}">x</div>\``.
+  const stringConsts = collectStringConstants(oxcProgram);
+
   const constantPool = new ConstantPool();
   const resourceDependencies: string[] = [];
   const parseFile = new ParseSourceFile(sourceCode, fileName);
@@ -211,7 +216,7 @@ export function compile(
     for (const [clsName, oxcNode] of oxcClassMap) {
       const decs: any[] = oxcNode.decorators || [];
       if (decs.length > 0) {
-        const meta = extractMetadata(decs[0], sourceCode);
+        const meta = extractMetadata(decs[0], sourceCode, stringConsts);
         if (meta?.selector) {
           localSelectors.set(clsName, meta.selector.split(',')[0].trim());
         }
@@ -282,7 +287,7 @@ export function compile(
           expr?.type === 'CallExpression' && expr.callee?.name === decoratorName
         );
       });
-      const meta = extractMetadata(oxcDec, sourceCode);
+      const meta = extractMetadata(oxcDec, sourceCode, stringConsts);
       const sigs = oxcNode
         ? detectSignals(oxcNode, sourceCode)
         : { inputs: {}, outputs: {}, viewQueries: [], contentQueries: [] };

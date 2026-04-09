@@ -67,6 +67,69 @@ describe('@Component', () => {
     expect(result).toContain('ɵɵtextInterpolate');
   });
 
+  it('resolves ${...} interpolation against module-level string consts in template', () => {
+    // Components in the wild often hoist long Tailwind class chains into
+    // module-level `const`s and reference them from the inline template via
+    // JS template-literal interpolation. The Analog compiler must resolve
+    // those references at parse time so Angular sees the fully-expanded
+    // class attribute.
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      const twBtn = \`px-4 py-2 rounded\`;
+      const twPrimary = \`\${twBtn} bg-blue-500 text-white\`;
+      @Component({
+        selector: 'app-btn',
+        template: \`<button class="\${twPrimary}">click</button>\`,
+      })
+      export class BtnComponent {}
+    `,
+      'btn.ts',
+    );
+
+    expectCompiles(result);
+    // Angular's template parser splits the resolved class attribute into
+    // individual class tokens stored in the static `consts` array. Each
+    // class from both `twBtn` and `twPrimary` must appear, proving that
+    // single-level AND chained `${...}` interpolation were resolved at
+    // metadata-extraction time.
+    expect(result).toMatch(
+      /consts:\s*\[\[1,\s*"px-4",\s*"py-2",\s*"rounded",\s*"bg-blue-500",\s*"text-white"\]\]/,
+    );
+    // The literal `${...}` token may still appear in the setClassMetadata
+    // reflection blob (which preserves the original decorator source
+    // verbatim), but it must NOT appear inside the compiled template
+    // function or static consts array.
+    const ɵcmpStart = result.indexOf('ɵcmp');
+    const setMetaStart = result.indexOf('ɵsetClassMetadata');
+    const compiledDef = result.slice(ɵcmpStart, setMetaStart);
+    expect(compiledDef).not.toContain('${twPrimary}');
+    expect(compiledDef).not.toContain('${twBtn}');
+  });
+
+  it('falls back gracefully when ${...} references an unresolvable identifier', () => {
+    // If an interpolation can't be resolved (e.g. it references an imported
+    // value or a non-string), stringValue returns null and the existing
+    // valText fallback kicks in. The compiler should not crash.
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      import { external } from './other';
+      @Component({
+        selector: 'app-fallback',
+        template: \`<div class="\${external}">x</div>\`,
+      })
+      export class FallbackComponent {}
+    `,
+      'fallback.ts',
+    );
+
+    // Should still produce a component definition even though the template
+    // string is whatever the fallback path produced.
+    expect(result).toContain('ɵcmp');
+    expect(result).toContain('app-fallback');
+  });
+
   it('compiles component with empty template', () => {
     const result = compile(
       `

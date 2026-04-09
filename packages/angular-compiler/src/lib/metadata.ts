@@ -22,19 +22,97 @@ function getCallApi(call: any): { api: string; required: boolean } | null {
   return null;
 }
 
-/** Extract the string value from an OXC string literal or template literal node. */
-function stringValue(node: any): string | null {
+/**
+ * Extract the string value from an OXC string literal or template literal node.
+ *
+ * If `consts` is provided, interpolated template literals (e.g.
+ * `\`hello ${NAME}\``) are resolved when every `${...}` expression is a bare
+ * `Identifier` whose name is present in the map. This lets metadata fields
+ * such as `template:` reference module-level string constants via JS
+ * template-literal interpolation:
+ *
+ *   const tw = `text-zinc-700 hover:text-zinc-900`;
+ *   @Component({ template: `<a class="${tw}">x</a>` })
+ *
+ * Returns `null` if the node is not statically resolvable.
+ */
+function stringValue(node: any, consts?: Map<string, string>): string | null {
   if (node?.type === 'StringLiteral') return node.value;
   if (node?.type === 'Literal' && typeof node.value === 'string')
     return node.value;
-  if (node?.type === 'TemplateLiteral' && !node.expressions?.length)
-    return node.quasis?.[0]?.value?.cooked ?? null;
+  if (node?.type === 'TemplateLiteral') {
+    const quasis = node.quasis ?? [];
+    const expressions = node.expressions ?? [];
+    if (expressions.length === 0) {
+      return quasis[0]?.value?.cooked ?? null;
+    }
+    if (!consts) return null;
+    let result = '';
+    for (let i = 0; i < quasis.length; i++) {
+      const cooked = quasis[i]?.value?.cooked;
+      if (cooked == null) return null;
+      result += cooked;
+      if (i < expressions.length) {
+        const expr = expressions[i];
+        if (expr?.type !== 'Identifier') return null;
+        const resolved = consts.get(expr.name);
+        if (resolved == null) return null;
+        result += resolved;
+      }
+    }
+    return result;
+  }
   return null;
 }
 
 /** Check if an OXC node is a string-like literal. */
-function isStringLike(node: any): boolean {
-  return stringValue(node) !== null;
+function isStringLike(node: any, consts?: Map<string, string>): boolean {
+  return stringValue(node, consts) !== null;
+}
+
+/**
+ * Walk the top-level statements of an OXC program and collect a map of
+ * statically-resolvable string-valued `const NAME = ...` declarations.
+ *
+ * Used so decorator metadata fields like `template:` can reference
+ * module-level Tailwind class chains (or any other string constants) via
+ * JS template-literal interpolation. Resolution is iterative: a const may
+ * reference earlier-resolved consts via `${other}` interpolation.
+ *
+ * Only `const` declarations are considered. Non-string initializers,
+ * function calls, member access, and any expression that cannot be reduced
+ * to a string at parse time are ignored.
+ */
+export function collectStringConstants(oxcProgram: any): Map<string, string> {
+  const rawDecls = new Map<string, any>();
+  for (const stmt of oxcProgram?.body || []) {
+    const decl =
+      stmt.type === 'ExportNamedDeclaration' ? stmt.declaration : stmt;
+    if (!decl || decl.type !== 'VariableDeclaration' || decl.kind !== 'const')
+      continue;
+    for (const d of decl.declarations || []) {
+      if (d.id?.type === 'Identifier' && d.init) {
+        rawDecls.set(d.id.name, d.init);
+      }
+    }
+  }
+
+  const resolved = new Map<string, string>();
+  // Iterative fixpoint: each pass resolves consts whose dependencies are
+  // already known. Bounded by the number of declarations to prevent cycles.
+  for (let pass = 0; pass < rawDecls.size + 1; pass++) {
+    let progress = false;
+    for (const [name, init] of rawDecls) {
+      if (resolved.has(name)) continue;
+      const value = stringValue(init, resolved);
+      if (value !== null) {
+        resolved.set(name, value);
+        progress = true;
+      }
+    }
+    if (!progress) break;
+  }
+  return resolved;
 }
 
 /** Get the property key name from an OXC object property. */
@@ -46,8 +124,18 @@ function propKeyName(prop: any): string | null {
 /**
  * Extract decorator metadata from an OXC decorator AST node.
  * Parses @Component, @Directive, @Pipe, @Injectable, @NgModule arguments.
+ *
+ * `stringConsts`, when provided, lets string-typed metadata fields
+ * (`template`, `selector`, `templateUrl`, `styles`, `styleUrl`, `styleUrls`,
+ * `name`, `exportAs`, `providedIn`) resolve module-level string constants
+ * referenced via template-literal interpolation, e.g.
+ * `template: \`<div class="${tw}">x</div>\``.
  */
-export function extractMetadata(dec: any | undefined, sourceCode: string): any {
+export function extractMetadata(
+  dec: any | undefined,
+  sourceCode: string,
+  stringConsts?: Map<string, string>,
+): any {
   if (!dec) return null;
   const call = dec.expression;
   if (!call || call.type !== 'CallExpression') return null;
@@ -117,20 +205,20 @@ export function extractMetadata(dec: any | undefined, sourceCode: string): any {
       case 'exportAs':
       case 'templateUrl':
       case 'providedIn': {
-        const sv = stringValue(valNode);
+        const sv = stringValue(valNode, stringConsts);
         meta[key] = sv !== null ? sv : valText.replace(/['"`]/g, '');
         if (key === 'exportAs') meta.exportAs = [meta.exportAs];
         break;
       }
       case 'styleUrl': {
-        const sv = stringValue(valNode);
+        const sv = stringValue(valNode, stringConsts);
         meta.styleUrls = [sv !== null ? sv : valText.replace(/['"`]/g, '')];
         break;
       }
       case 'styleUrls':
         if (valNode.type === 'ArrayExpression') {
           meta.styleUrls = (valNode.elements || []).map((e: any) => {
-            const sv = stringValue(e);
+            const sv = stringValue(e, stringConsts);
             return sv !== null
               ? sv
               : sourceCode.slice(e.start, e.end).replace(/['"`]/g, '');
@@ -140,13 +228,13 @@ export function extractMetadata(dec: any | undefined, sourceCode: string): any {
       case 'styles':
         if (valNode.type === 'ArrayExpression') {
           meta.styles = (valNode.elements || []).map((e: any) => {
-            const sv = stringValue(e);
+            const sv = stringValue(e, stringConsts);
             return sv !== null
               ? sv
               : sourceCode.slice(e.start, e.end).replace(/['"`]/g, '');
           });
         } else {
-          const sv = stringValue(valNode);
+          const sv = stringValue(valNode, stringConsts);
           if (sv !== null) meta.styles = [sv];
         }
         break;
