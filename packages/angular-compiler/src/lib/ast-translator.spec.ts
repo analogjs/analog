@@ -283,16 +283,19 @@ describe('AstTranslator', () => {
       expect(printExpr(expr)).toBe('myVar');
     });
 
-    it('translates i18n LocalizedString throws', () => {
-      // LocalizedString is not exported in a way we can easily construct,
-      // but we verify the error message exists in the translator
-      expect(() => {
-        const fakeAst = {
-          visitExpression: (v: any, c: any) =>
-            (v as any).visitLocalizedString(fakeAst, c),
-        };
-        (fakeAst as any).visitExpression(translator, null);
-      }).toThrow('i18n is not supported');
+    it('translates i18n LocalizedString to $localize call', () => {
+      // LiteralPiece/PlaceholderPiece aren't publicly exported, so use duck-typed objects
+      const literalPiece = (text: string) => ({ text, sourceSpan: null });
+      const placeholderPiece = (text: string) => ({ text, sourceSpan: null });
+
+      const localizedStr = new o.LocalizedString(
+        { description: 'greeting', meaning: '', customId: '', legacyIds: [] },
+        [literalPiece('Hello '), literalPiece('!')] as any,
+        [placeholderPiece('PH_1')] as any,
+        [new o.LiteralExpr('world')],
+      );
+      const result = printExpr(localizedStr);
+      expect(result).toContain('$localize');
     });
   });
 

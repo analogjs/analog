@@ -44,6 +44,22 @@ const BINARY_OP_STR: Record<number, string> = {
   [o.BinaryOperator.NullishCoalesceAssignment]: '??=',
 };
 
+/** Polyfill for `__makeTemplateObject` used in downleveled `$localize` calls. */
+const MAKE_TEMPLATE_OBJECT_POLYFILL =
+  '(this&&this.__makeTemplateObject||function(e,t){return Object.defineProperty?Object.defineProperty(e,"raw",{value:t}):e.raw=t,e})';
+
+const SINGLE_QUOTE_ESCAPE_RE = /[\\\'\n\r]/g;
+
+/** Escape a string for use as a single-quoted string literal. */
+function escapeForLocalize(input: string): string {
+  const body = input.replace(SINGLE_QUOTE_ESCAPE_RE, (match) => {
+    if (match === '\n') return '\\n';
+    if (match === '\r') return '\\r';
+    return `\\${match}`;
+  });
+  return `'${body}'`;
+}
+
 /**
  * Emits Angular output AST directly to JavaScript strings, bypassing
  * ts.factory node creation and ts.Printer serialization (~4x faster).
@@ -303,8 +319,27 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
       .join('');
     return ast.tag.visitExpression(this, null) + '`' + head + spans + '`';
   }
-  visitLocalizedString() {
-    throw new Error('i18n not supported');
+  visitLocalizedString(ast: o.LocalizedString) {
+    // Emit the downleveled form:
+    //   $localize(makeTemplateObject(cooked, raw), expr1, expr2, ...)
+    const parts: { cooked: string; raw: string }[] = [ast.serializeI18nHead()];
+    for (let i = 1; i < ast.messageParts.length; i++) {
+      parts.push(ast.serializeI18nTemplatePart(i));
+    }
+    const cooked = parts.map((p) => escapeForLocalize(p.cooked)).join(', ');
+    const raw = parts.map((p) => escapeForLocalize(p.raw)).join(', ');
+    const exprs = ast.expressions.map((e) => this.emitExpr(e));
+    return (
+      '$localize(' +
+      MAKE_TEMPLATE_OBJECT_POLYFILL +
+      '([' +
+      cooked +
+      '], [' +
+      raw +
+      '])' +
+      (exprs.length > 0 ? ', ' + exprs.join(', ') : '') +
+      ')'
+    );
   }
   visitRegularExpressionLiteral(ast: any) {
     return '/' + (ast.body ?? ast.pattern) + '/' + ast.flags;

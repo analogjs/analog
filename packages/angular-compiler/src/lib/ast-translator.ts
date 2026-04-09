@@ -346,7 +346,100 @@ export class AstTranslator implements o.ExpressionVisitor, o.StatementVisitor {
   }
 
   visitLocalizedString(ast: o.LocalizedString, context: any) {
-    throw new Error('i18n is not supported');
+    // Emit: $localize(__makeTemplateObject(cooked, raw), expr1, expr2, ...)
+    const parts: { cooked: string; raw: string }[] = [ast.serializeI18nHead()];
+    for (let i = 1; i < ast.messageParts.length; i++) {
+      parts.push(ast.serializeI18nTemplatePart(i));
+    }
+
+    const cookedArr = ts.factory.createArrayLiteralExpression(
+      parts.map((p) => ts.factory.createStringLiteral(p.cooked)),
+    );
+    const rawArr = ts.factory.createArrayLiteralExpression(
+      parts.map((p) => ts.factory.createStringLiteral(p.raw)),
+    );
+
+    // __makeTemplateObject(cooked, raw) — or inline polyfill via IIFE
+    const makeTemplateObject = ts.factory.createCallExpression(
+      ts.factory.createParenthesizedExpression(
+        ts.factory.createBinaryExpression(
+          ts.factory.createBinaryExpression(
+            ts.factory.createThis(),
+            ts.SyntaxKind.AmpersandAmpersandToken,
+            ts.factory.createPropertyAccessExpression(
+              ts.factory.createThis(),
+              '__makeTemplateObject',
+            ),
+          ),
+          ts.SyntaxKind.BarBarToken,
+          ts.factory.createArrowFunction(
+            undefined,
+            undefined,
+            [
+              ts.factory.createParameterDeclaration(undefined, undefined, 'e'),
+              ts.factory.createParameterDeclaration(undefined, undefined, 't'),
+            ],
+            undefined,
+            ts.factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+            ts.factory.createBlock(
+              [
+                ts.factory.createExpressionStatement(
+                  ts.factory.createConditionalExpression(
+                    ts.factory.createPropertyAccessExpression(
+                      ts.factory.createIdentifier('Object'),
+                      'defineProperty',
+                    ),
+                    ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+                    ts.factory.createCallExpression(
+                      ts.factory.createPropertyAccessExpression(
+                        ts.factory.createIdentifier('Object'),
+                        'defineProperty',
+                      ),
+                      undefined,
+                      [
+                        ts.factory.createIdentifier('e'),
+                        ts.factory.createStringLiteral('raw'),
+                        ts.factory.createObjectLiteralExpression([
+                          ts.factory.createPropertyAssignment(
+                            'value',
+                            ts.factory.createIdentifier('t'),
+                          ),
+                        ]),
+                      ],
+                    ),
+                    ts.factory.createToken(ts.SyntaxKind.ColonToken),
+                    ts.factory.createBinaryExpression(
+                      ts.factory.createPropertyAccessExpression(
+                        ts.factory.createIdentifier('e'),
+                        'raw',
+                      ),
+                      ts.SyntaxKind.EqualsToken,
+                      ts.factory.createIdentifier('t'),
+                    ),
+                  ),
+                ),
+                ts.factory.createReturnStatement(
+                  ts.factory.createIdentifier('e'),
+                ),
+              ],
+              true,
+            ),
+          ),
+        ),
+      ),
+      undefined,
+      [cookedArr, rawArr],
+    );
+
+    // $localize(templateObj, expr1, expr2, ...)
+    return ts.factory.createCallExpression(
+      ts.factory.createIdentifier('$localize'),
+      undefined,
+      [
+        makeTemplateObject,
+        ...ast.expressions.map((e) => e.visitExpression(this, context)),
+      ],
+    );
   }
 
   visitRegularExpressionLiteral(
