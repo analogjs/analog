@@ -1,3 +1,9 @@
+# [2.5.0-beta.21](https://github.com/analogjs/analog/compare/v2.5.0-beta.20...v2.5.0-beta.21) (2026-04-09)
+
+### Bug Fixes
+
+- **angular-compiler:** emit invalidfactory for explicit import type di tokens ([2f2204f](https://github.com/analogjs/analog/commit/2f2204f2883677636a7d4678594d6bf2b6c4f871))
+
 # [2.5.0-beta.20](https://github.com/analogjs/analog/compare/v2.5.0-beta.19...v2.5.0-beta.20) (2026-04-09)
 
 ### Bug Fixes
