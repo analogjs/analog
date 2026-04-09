@@ -49,8 +49,8 @@ describe('registerI18nWatcher', () => {
   });
 
   it('should trigger full-reload when a translation file changes', () => {
-    const listeners: Record<string, Function> = {};
-    const on = vi.fn((event: string, fn: Function) => {
+    const listeners: Record<string, (...args: string[]) => void> = {};
+    const on = vi.fn((event: string, fn: (...args: string[]) => void) => {
       listeners[event] = fn;
     });
     const send = vi.fn();
@@ -66,8 +66,8 @@ describe('registerI18nWatcher', () => {
   });
 
   it('should not trigger reload for non-translation files', () => {
-    const listeners: Record<string, Function> = {};
-    const on = vi.fn((event: string, fn: Function) => {
+    const listeners: Record<string, (...args: string[]) => void> = {};
+    const on = vi.fn((event: string, fn: (...args: string[]) => void) => {
       listeners[event] = fn;
     });
     const send = vi.fn();
