@@ -1,3 +1,9 @@
+# [2.5.0-beta.16](https://github.com/analogjs/analog/compare/v2.5.0-beta.15...v2.5.0-beta.16) (2026-04-09)
+
+### Features
+
+- **angular-compiler:** support useDefineForClassFields: false ([#2267](https://github.com/analogjs/analog/issues/2267)) ([f0a5908](https://github.com/analogjs/analog/commit/f0a59081593fdfec28656c719f27117f3f0bd325))
+
 # [2.5.0-beta.15](https://github.com/analogjs/analog/compare/v2.5.0-beta.14...v2.5.0-beta.15) (2026-04-08)
 
 ### Bug Fixes
