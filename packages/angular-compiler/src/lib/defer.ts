@@ -43,17 +43,32 @@ export function collectElementNames(nodes: any[]): Set<string> {
   return result;
 }
 
-/** Build import path map: className → modulePath from source file imports. */
-export function buildImportMap(sf: ts.SourceFile): Map<string, string> {
-  const result = new Map<string, string>();
+/** Information about how a class is imported. */
+export interface ImportInfo {
+  /** Module path from the import statement. */
+  path: string;
+  /** Whether the class was imported as a default import (`import X from`). */
+  isDefault: boolean;
+}
+
+/**
+ * Build import info map: className → { path, isDefault } from source file
+ * imports. Tracks default vs named imports so the defer dependency
+ * generator can emit `import('./p').then(m => m.default)` for default
+ * imports and `import('./p').then(m => m.X)` for named imports.
+ */
+export function buildImportMap(sf: ts.SourceFile): Map<string, ImportInfo> {
+  const result = new Map<string, ImportInfo>();
   for (const stmt of sf.statements) {
     if (!ts.isImportDeclaration(stmt) || !stmt.importClause) continue;
-    const modulePath = (stmt.moduleSpecifier as ts.StringLiteral).text;
+    const path = (stmt.moduleSpecifier as ts.StringLiteral).text;
     const clause = stmt.importClause;
-    if (clause.name) result.set(clause.name.text, modulePath);
+    if (clause.name) {
+      result.set(clause.name.text, { path, isDefault: true });
+    }
     if (clause.namedBindings && ts.isNamedImports(clause.namedBindings)) {
       for (const el of clause.namedBindings.elements) {
-        result.set(el.name.text, modulePath);
+        result.set(el.name.text, { path, isDefault: false });
       }
     }
   }
@@ -133,23 +148,41 @@ export function buildDeferDependencyMap(
   for (const block of deferBlocks) {
     const blockElements = collectElementNames(block.children || []);
     const blockDeps: any[] = [];
+    // Within a single block, dedupe by `${path}#${symbolName}` so two
+    // refs to the same component don't generate two import expressions.
+    const seenInBlock = new Set<string>();
 
     for (const el of blockElements) {
       const className = selectorToClass.get(el);
-      if (className && deferredImports.has(className)) {
-        const modulePath = importMap.get(className)!;
-        // () => import('./path').then(m => m.ClassName)
-        blockDeps.push(
-          new o.ArrowFunctionExpr(
-            [],
-            new o.DynamicImportExpr(new o.LiteralExpr(modulePath)),
-          ),
-        );
-      }
+      if (!className || !deferredImports.has(className)) continue;
+      const info = importMap.get(className)!;
+      const symbolName = info.isDefault ? 'default' : className;
+      const key = `${info.path}#${symbolName}`;
+      if (seenInBlock.has(key)) continue;
+      seenInBlock.add(key);
+      // import('./path').then(m => m.ClassName) — or `m.default` for
+      // default imports. Without the `.then(...)` resolver Angular's
+      // runtime gets a module namespace and can't find the class.
+      // `FnParam` and the `variable()` helper aren't on the top-level
+      // namespace; they live in the `outputAst` sub-namespace.
+      const ast: any = (o as any).outputAst;
+      const mVar = ast.variable('m');
+      const innerFn = ast.arrowFn(
+        [new ast.FnParam('m', ast.DYNAMIC_TYPE)],
+        new o.ReadPropExpr(mVar, symbolName),
+      );
+      const importExpr = new o.InvokeFunctionExpr(
+        new o.ReadPropExpr(
+          new o.DynamicImportExpr(new o.LiteralExpr(info.path)),
+          'then',
+        ),
+        [innerFn],
+      );
+      blockDeps.push(new o.ArrowFunctionExpr([], importExpr));
     }
 
     if (blockDeps.length > 0) {
-      // () => [import('./a').then(...), import('./b').then(...)]
+      // () => [import('./a').then(m => m.A), import('./b').then(m => m.default)]
       blocks.set(
         block,
         new o.ArrowFunctionExpr([], new o.LiteralArrayExpr(blockDeps)),

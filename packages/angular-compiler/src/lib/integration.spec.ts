@@ -2862,6 +2862,52 @@ describe('Signal query read/descendants options', () => {
   });
 });
 
+describe('@defer dependency import shape', () => {
+  it('emits import().then(m => m.X) for named imports', () => {
+    const childSrc = `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-lazy', template: 'lazy' })
+      export class LazyCmp {}
+    `;
+    const parentSrc = `
+      import { Component } from '@angular/core';
+      import { LazyCmp } from './lazy';
+      @Component({
+        selector: 'app-parent',
+        imports: [LazyCmp],
+        template: '@defer { <app-lazy/> }',
+      })
+      export class Parent {}
+    `;
+    const registry = buildRegistry({ 'lazy.ts': childSrc });
+    const result = compile(parentSrc, 'parent.ts', registry);
+    expectCompiles(result);
+    expect(result).toMatch(/import\(['"]\.\/lazy['"]\).*then.*m\.LazyCmp/);
+  });
+
+  it('emits import().then(m => m.default) for default imports', () => {
+    const childSrc = `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-lazy', template: 'lazy' })
+      export default class LazyCmp {}
+    `;
+    const parentSrc = `
+      import { Component } from '@angular/core';
+      import LazyCmp from './lazy';
+      @Component({
+        selector: 'app-parent',
+        imports: [LazyCmp],
+        template: '@defer { <app-lazy/> }',
+      })
+      export class Parent {}
+    `;
+    const registry = buildRegistry({ 'lazy.ts': childSrc });
+    const result = compile(parentSrc, 'parent.ts', registry);
+    expectCompiles(result);
+    expect(result).toMatch(/import\(['"]\.\/lazy['"]\).*then.*m\.default/);
+  });
+});
+
 describe('Union/intersection type DI parameter rejection', () => {
   it('emits invalidFactory for ambiguous union types', () => {
     const result = compile(
