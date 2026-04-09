@@ -184,10 +184,20 @@ export function compile(
     }
 
     const moduleSpecifier = (stmt.moduleSpecifier as ts.StringLiteral).text;
+    // Explicit `import type { X }` — declaration-level type-only import
+    const isDeclarationTypeOnly = stmt.importClause.isTypeOnly;
     for (const element of stmt.importClause.namedBindings.elements) {
       const localName = element.name.text;
       importedNames.add(localName);
       importSpecifierByName.set(localName, moduleSpecifier);
+      // Explicit `import { type X }` — specifier-level type-only import.
+      // Both forms erase the symbol at runtime, so they cannot be used as
+      // DI tokens. Add them to typeOnlyImports so extractConstructorDeps
+      // surfaces ɵɵinvalidFactory() instead of emitting a broken
+      // ɵɵdirectiveInject(X) referring to a non-existent value.
+      if (isDeclarationTypeOnly || element.isTypeOnly) {
+        typeOnlyImports.add(localName);
+      }
     }
   }
 

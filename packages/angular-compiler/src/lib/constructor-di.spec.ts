@@ -124,4 +124,44 @@ describe('Constructor DI', () => {
     expect(result).toContain('ServiceA');
     expect(result).toContain('ServiceB');
   });
+
+  it('emits invalidFactory for `import type` token (cannot be used as DI)', () => {
+    // `import type { X }` is erased at runtime, so X cannot serve as a DI
+    // token. The compiler must surface ɵɵinvalidFactory() at this site
+    // rather than emitting a broken ɵɵdirectiveInject(X) that would throw
+    // ReferenceError in the browser.
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      import type { MyService } from './my-service';
+      @Component({ selector: 'x', template: '' })
+      export class X { constructor(private svc: MyService) {} }
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵinvalidFactory');
+    expect(result).not.toMatch(/ɵɵdirectiveInject\(MyService\)/);
+  });
+
+  it('emits invalidFactory for specifier-level `import { type X }` token', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      import { type Helper, util } from './helpers';
+      @Component({ selector: 'x', template: '' })
+      export class X {
+        v = util();
+        constructor(private h: Helper) {}
+      }
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵinvalidFactory');
+    // util is a runtime value, should still be preserved
+    expect(result).toContain('util');
+  });
 });
