@@ -727,12 +727,28 @@ export function angular(options?: PluginOptions): Plugin[] {
               'virtual:angular:jit:style:inline;',
             );
 
+            // Emit ?analog-raw and ?analog-inline directly here (instead of
+            // ?raw / ?inline) so the import ids never match Vite 8.0.5+'s
+            // [?&](raw|inline)\b security regex during loadAndTransform.
+            //
+            // Why this matters: the security check fires for any id matching
+            // /[?&](raw|inline)\b/ whose path is outside server.fs.allow,
+            // and it runs *before* pluginContainer.load. Vitest's worker
+            // fetchModule path also bypasses pluginContainer.resolveId (it
+            // calls moduleGraph.ensureEntryFromUrl first, which makes the
+            // resolveId chain a no-op for the module-runner). That means a
+            // resolveId-based ?inline -> ?analog-inline rewrite never runs
+            // for Vitest, AND the load-hook fallback we use for the dev
+            // server is never reached for cross-library imports because the
+            // security check has already thrown. Emitting the bypassing
+            // query directly in the transform output is the only place we
+            // can guarantee Vite never sees the dangerous form. (#2263)
             templateUrls.forEach((templateUrlSet) => {
               const [templateFile, resolvedTemplateUrl] =
                 templateUrlSet.split('|');
               data = data.replace(
                 `angular:jit:template:file;${templateFile}`,
-                `${resolvedTemplateUrl}?raw`,
+                `${resolvedTemplateUrl}?analog-raw`,
               );
             });
 
@@ -740,7 +756,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               const [styleFile, resolvedStyleUrl] = styleUrlSet.split('|');
               data = data.replace(
                 `angular:jit:style:file;${styleFile}`,
-                `${resolvedStyleUrl}?inline`,
+                `${resolvedStyleUrl}?analog-inline`,
               );
             });
           }
