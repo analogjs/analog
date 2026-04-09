@@ -1,3 +1,9 @@
+# [2.5.0-beta.17](https://github.com/analogjs/analog/compare/v2.5.0-beta.16...v2.5.0-beta.17) (2026-04-09)
+
+### Features
+
+- runtime i18n support with $localize ([#2268](https://github.com/analogjs/analog/issues/2268)) ([7dbc7df](https://github.com/analogjs/analog/commit/7dbc7dfa65140b63c7e0958a3c5da49963ea9b05))
+
 # [2.5.0-beta.16](https://github.com/analogjs/analog/compare/v2.5.0-beta.15...v2.5.0-beta.16) (2026-04-09)
 
 ### Features
