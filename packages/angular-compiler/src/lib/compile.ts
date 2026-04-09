@@ -1213,7 +1213,17 @@ export function compile(
         break;
       }
     }
-    ms.appendLeft(insertPos, '\n' + helpers.join('\n') + '\n');
+    // Use `appendRight` (binds to the character to the *right* of insertPos)
+    // rather than `appendLeft` so that helpers survive a downstream
+    // `ms.overwrite()` of the preceding import. The type-only specifier
+    // elision pass rewrites mixed `import { SomeType, someValue }`
+    // declarations via `ms.overwrite(node.start, node.end, ...)`. With
+    // `appendLeft`, the helpers are bound to the `;` of the rewritten
+    // import — which lives inside the overwrite range — and MagicString
+    // wipes them. `appendRight` binds to the character after `;` (typically
+    // the `\n` separating the imports from the class) which is outside the
+    // overwrite range, so the helpers survive.
+    ms.appendRight(insertPos, '\n' + helpers.join('\n') + '\n');
   }
   if (sideEffects.length > 0) {
     ms.append('\n\n' + sideEffects.join('\n'));
