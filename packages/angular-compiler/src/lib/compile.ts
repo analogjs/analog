@@ -238,6 +238,14 @@ export function compile(
     classEnd: number; // Position of closing } in original source
   }
   const classResults: ClassCompileResult[] = [];
+  // Per-class hoisted helper statements returned via R3CompiledExpression.statements
+  // (e.g. nested template helper functions for `@if`/`@for`/`@switch` blocks).
+  // Older Angular majors (≤19) return these on `cmp.statements` rather than
+  // pushing them into the shared ConstantPool, so we collect them here and
+  // emit them alongside the constant-pool helpers in step 3. Without this,
+  // any component with control-flow blocks references undefined symbols like
+  // `MyComponent_Conditional_0_Template`.
+  const hoistedHelpers: string[] = [];
   // Track synthetic imports needed for NgModule export expansion.
   // Maps exported class name → import specifier.
   const syntheticImports = new Map<string, string>();
@@ -324,7 +332,7 @@ export function compile(
       };
 
       switch (decoratorName) {
-        case 'Component':
+        case 'Component': {
           targetType = FactoryTarget.Component;
           if (!meta.selector) {
             meta.selector = `ng-component-${className.toLowerCase()}`;
@@ -694,6 +702,9 @@ export function compile(
             ivyCode.push(
               `static ɵcmp = /*@__PURE__*/ ${emitAngularExpr(cmp.expression)}`,
             );
+            for (const stmt of cmp.statements ?? []) {
+              hoistedHelpers.push(emitAngularStmt(stmt));
+            }
           } else {
             const cmp = compileComponentFromMetadata(
               componentMeta,
@@ -703,10 +714,20 @@ export function compile(
             ivyCode.push(
               `static ɵcmp = /*@__PURE__*/ ${emitAngularExpr(cmp.expression)}`,
             );
+            // Hoist nested template helper functions returned via
+            // R3CompiledExpression.statements. On Angular ≤19 these contain
+            // `*_Conditional_*_Template`, `*_For_*_Template`, etc. functions
+            // that the component definition references; on Angular ≥20 they
+            // are typically pushed into the shared constantPool instead and
+            // this loop is a no-op.
+            for (const stmt of cmp.statements ?? []) {
+              hoistedHelpers.push(emitAngularStmt(stmt));
+            }
           }
           break;
+        }
 
-        case 'Directive':
+        case 'Directive': {
           targetType = FactoryTarget.Directive;
           // Build proper input descriptors (same as Component path)
           const dirInputs: Record<string, unknown> = {};
@@ -782,8 +803,9 @@ export function compile(
             );
           }
           break;
+        }
 
-        case 'Pipe':
+        case 'Pipe': {
           targetType = FactoryTarget.Pipe;
           const pipeMeta = {
             ...meta,
@@ -805,8 +827,9 @@ export function compile(
             );
           }
           break;
+        }
 
-        case 'Injectable':
+        case 'Injectable': {
           targetType = FactoryTarget.Injectable;
           const injectableMeta: any = {
             name: className,
@@ -837,8 +860,9 @@ export function compile(
             );
           }
           break;
+        }
 
-        case 'NgModule':
+        case 'NgModule': {
           targetType = FactoryTarget.NgModule;
           const ngModuleImports = Array.isArray(meta.imports)
             ? meta.imports
@@ -906,6 +930,7 @@ export function compile(
             );
           }
           break;
+        }
       }
     });
 
@@ -1131,6 +1156,9 @@ export function compile(
   // side-effect statements (setClassMetadata IIFEs) that go after.
   const helpers: string[] = [];
   const sideEffects: string[] = [];
+  // Per-class hoisted helpers (nested template functions) come first so they
+  // are available when subsequent constant-pool helpers reference them.
+  helpers.push(...hoistedHelpers);
   for (const s of constantPool.statements) {
     const code = emitAngularStmt(s);
     if (
