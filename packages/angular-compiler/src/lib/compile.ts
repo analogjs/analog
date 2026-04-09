@@ -271,6 +271,19 @@ export function compile(
       type: new o.WrappedNodeExpr(className),
     };
 
+    // Detect `class Foo extends Bar` so the directive/component def
+    // gets `usesInheritance: true`. Angular's compiler turns that into
+    // `features: [InheritDefinitionFeature]`, which is what causes the
+    // runtime to merge inputs/outputs/queries/host bindings from the
+    // base class. Without it, derived directives like
+    // `BrnPopover extends BrnDialog` lose every input declared on the
+    // base, and any host directive that references those inputs by
+    // public name fails at runtime with NG0311.
+    const extendsClause = node.heritageClauses?.find(
+      (h) => h.token === ts.SyntaxKind.ExtendsKeyword,
+    );
+    const usesInheritance = !!extendsClause && extendsClause.types.length > 0;
+
     // Look up the corresponding OXC class node for metadata extraction
     const oxcNode = oxcClassMap.get(className);
 
@@ -497,12 +510,16 @@ export function compile(
           Object.assign(ivyInputs, fields.inputs);
           for (const [key, val] of Object.entries(sigs.inputs)) {
             const sigDesc = val as {
+              bindingPropertyName?: string;
               required?: boolean;
               transform?: o.Expression | null;
             };
             ivyInputs[key] = {
               classPropertyName: key,
-              bindingPropertyName: key,
+              // Honor the binding name (alias) extracted by detectSignals
+              // so `input(null, { alias: 'aria-label' })` registers with
+              // the public name `aria-label`, not the class property name.
+              bindingPropertyName: sigDesc.bindingPropertyName ?? key,
               isSignal: true,
               required: sigDesc.required || false,
               transformFunction: sigDesc.transform || null,
@@ -559,6 +576,7 @@ export function compile(
             isStandalone: meta.standalone,
             imports: meta.imports,
             lifecycle: { usesOnChanges: false },
+            usesInheritance,
             defer: {
               mode: 0,
               blocks: buildDeferDependencyMap(
@@ -623,12 +641,14 @@ export function compile(
           Object.assign(dirInputs, fields.inputs);
           for (const [key, val] of Object.entries(sigs.inputs)) {
             const sigDesc = val as {
+              bindingPropertyName?: string;
               required?: boolean;
               transform?: o.Expression | null;
             };
             dirInputs[key] = {
               classPropertyName: key,
-              bindingPropertyName: key,
+              // Honor the binding name (alias) extracted by detectSignals.
+              bindingPropertyName: sigDesc.bindingPropertyName ?? key,
               isSignal: true,
               required: sigDesc.required || false,
               transformFunction: sigDesc.transform || null,
@@ -636,6 +656,13 @@ export function compile(
           }
           const directiveMeta = {
             ...meta,
+            // Abstract base directives are declared as `@Directive()` with
+            // no metadata. Angular's R3DirectiveMetadata accepts
+            // `selector: string | null`, but the downstream selector parser
+            // calls `.replace()` on the value and crashes on `undefined`.
+            // Coerce missing selectors to `null` so abstract base classes
+            // compile correctly.
+            selector: meta.selector ?? null,
             name: className,
             type: classRef,
             typeSourceSpan,
@@ -644,10 +671,22 @@ export function compile(
             outputs: { ...meta.outputs, ...fields.outputs, ...sigs.outputs },
             viewQueries: [...fields.viewQueries, ...sigs.viewQueries],
             queries: [...fields.contentQueries, ...sigs.contentQueries],
-            providers: meta.providers,
+            // Angular's compiler treats `providers` as an Expression and
+            // emits `ɵɵProvidersFeature(<expr>)` whenever it is truthy.
+            // Passing the bare JS array of WrappedNodeExpr from
+            // extractMetadata causes the emitter to lower it to `null`,
+            // which then crashes Angular at runtime in `resolveProvider`
+            // because it tries to read `.provide` on `null`. Wrap into a
+            // LiteralArrayExpr (matching the Component branch) so it
+            // emits a real array literal — and pass `null` when there are
+            // no providers so Angular skips the feature entirely.
+            providers: meta.providers?.length
+              ? new o.LiteralArrayExpr(meta.providers)
+              : null,
             exportAs: meta.exportAs,
             isStandalone: meta.standalone,
             lifecycle: { usesOnChanges: false },
+            usesInheritance,
             controlCreate: null,
           };
           if (isPartial) {

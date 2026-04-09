@@ -90,7 +90,10 @@ describe('Registry input/output extraction', () => {
       isSignal: true,
       required: false,
     });
-    expect(entries[0].outputs!['valueChange']).toBe('valueChange');
+    // Registry's outputs map mirrors Angular's `{ classProp: bindingName }`
+    // convention. For a `model()` the class property is `value` and the
+    // binding event is `valueChange`.
+    expect(entries[0].outputs!['value']).toBe('valueChange');
   });
 
   it('extracts @Input decorator-based inputs', () => {
@@ -2470,6 +2473,239 @@ describe('Module-level string const interpolation in metadata', () => {
 
     expectCompiles(result);
     expect(result).toMatch(/consts:\s*\[\[1,\s*"text-lg",\s*"font-bold"\]\]/);
+  });
+});
+
+describe('Signal input/model alias support', () => {
+  it('extracts alias from input() options in registry', () => {
+    const entries = scanFile(
+      `
+      import { Component, input } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        ariaLabel = input<string | null>(null, { alias: 'aria-label' });
+      }
+    `,
+      'c.ts',
+    );
+    expect(entries[0].inputs!['ariaLabel']).toEqual({
+      classPropertyName: 'ariaLabel',
+      bindingPropertyName: 'aria-label',
+      isSignal: true,
+      required: false,
+    });
+  });
+
+  it('extracts alias from input.required() options in registry', () => {
+    const entries = scanFile(
+      `
+      import { Component, input } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        value = input.required<string>({ alias: 'public-value' });
+      }
+    `,
+      'c.ts',
+    );
+    expect(entries[0].inputs!['value']).toEqual({
+      classPropertyName: 'value',
+      bindingPropertyName: 'public-value',
+      isSignal: true,
+      required: true,
+    });
+  });
+
+  it('extracts alias from model() options and produces aliased Change output', () => {
+    const entries = scanFile(
+      `
+      import { Component, model } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        value = model<number>(0, { alias: 'val' });
+      }
+    `,
+      'c.ts',
+    );
+    expect(entries[0].inputs!['value'].bindingPropertyName).toBe('val');
+    // Outputs map: { classProp: bindingName }
+    expect(entries[0].outputs!['value']).toBe('valChange');
+  });
+
+  it('emits aliased binding name in compiled component output', () => {
+    const result = compile(
+      `
+      import { Component, input } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        ariaLabel = input<string | null>(null, { alias: 'aria-label' });
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    // Aliased input descriptor: [flags, publicName, classPropertyName]
+    // Look for the aliased public name in the inputs map
+    expect(result).toContain('"aria-label"');
+  });
+});
+
+describe('Signal query R3QueryReference wrapping', () => {
+  it('wraps class predicate in viewChild as R3QueryReference', () => {
+    const result = compile(
+      `
+      import { Component, viewChild, ElementRef } from '@angular/core';
+      @Component({ selector: 'app-c', template: '<div #el></div>' })
+      export class C {
+        el = viewChild(ElementRef);
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    // ɵɵviewQuery should reference ElementRef directly (not as null)
+    expect(result).toContain('ɵɵviewQuery');
+    expect(result).toContain('ElementRef');
+    // Must NOT emit `null` as the query target
+    expect(result).not.toMatch(/ɵɵviewQuery\(null/);
+  });
+
+  it('wraps class predicate in @ViewChild decorator as R3QueryReference', () => {
+    const result = compile(
+      `
+      import { Component, ViewChild, ElementRef } from '@angular/core';
+      @Component({ selector: 'app-c', template: '<div #el></div>' })
+      export class C {
+        @ViewChild(ElementRef) el!: ElementRef;
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵɵviewQuery');
+    expect(result).toContain('ElementRef');
+    expect(result).not.toMatch(/ɵɵviewQuery\(null/);
+  });
+});
+
+describe('usesInheritance for extends clause', () => {
+  it('emits InheritDefinitionFeature for `class Foo extends Bar`', () => {
+    const result = compile(
+      `
+      import { Directive } from '@angular/core';
+      @Directive({ selector: '[parent]' })
+      export class Parent {}
+      @Directive({ selector: '[child]' })
+      export class Child extends Parent {}
+    `,
+      'd.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('InheritDefinitionFeature');
+  });
+
+  it('does not emit InheritDefinitionFeature for non-extending class', () => {
+    const result = compile(
+      `
+      import { Directive } from '@angular/core';
+      @Directive({ selector: '[d]' })
+      export class D {}
+    `,
+      'd.ts',
+    );
+    expectCompiles(result);
+    expect(result).not.toContain('InheritDefinitionFeature');
+  });
+});
+
+describe('Abstract directive with no selector compiles', () => {
+  it('compiles `@Directive()` (no selector) without crashing', () => {
+    const result = compile(
+      `
+      import { Directive } from '@angular/core';
+      @Directive()
+      export abstract class BaseDir {}
+    `,
+      'b.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵdir');
+  });
+});
+
+describe('Directive providers wrapped as LiteralArrayExpr', () => {
+  it('compiles directive providers without crashing at runtime', () => {
+    const result = compile(
+      `
+      import { Directive, InjectionToken } from '@angular/core';
+      const TOKEN = new InjectionToken<string>('t');
+      @Directive({
+        selector: '[d]',
+        providers: [{ provide: TOKEN, useValue: 'x' }],
+      })
+      export class D {}
+    `,
+      'd.ts',
+    );
+    expectCompiles(result);
+    // Providers should be emitted as a feature
+    expect(result).toContain('ProvidersFeature');
+  });
+
+  it('omits providers feature when directive has no providers', () => {
+    const result = compile(
+      `
+      import { Directive } from '@angular/core';
+      @Directive({ selector: '[d]' })
+      export class D {}
+    `,
+      'd.ts',
+    );
+    expectCompiles(result);
+    expect(result).not.toContain('ProvidersFeature');
+  });
+});
+
+describe('Template literal substitution preserves attribute quotes', () => {
+  it('preserves surrounding HTML when ${var} is unresolvable', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      import { cls } from './styles';
+      @Component({
+        selector: 'app-c',
+        template: \`<a class="\${cls} foo">x</a>\`,
+      })
+      export class C {}
+    `,
+      'c.ts',
+    );
+    // Should not throw "Opening tag a not terminated"
+    expectCompiles(result);
+    // The 'foo' literal class portion should be present (the unresolved
+    // ${cls} substitutes empty string but quotes survive)
+    expect(result).toContain('foo');
+  });
+});
+
+describe('Host raw embedded quote preservation', () => {
+  it('preserves embedded quotes in host bindings', () => {
+    const result = compile(
+      `
+      import { Directive } from '@angular/core';
+      @Directive({
+        selector: '[d]',
+        host: { '[attr.title]': 'showTitle ? "yes" : null' },
+      })
+      export class D {
+        showTitle = true;
+      }
+    `,
+      'd.ts',
+    );
+    expectCompiles(result);
+    // The literal "yes" string in the binding expression must survive
+    // (was previously stripped by an over-aggressive quote replacement).
+    expect(result).toContain('yes');
   });
 });
 

@@ -200,7 +200,9 @@ describe('@Component', () => {
 
       expectCompiles(result);
       expect(result).toContain('value: [');
-      expect(result).toContain('valueChange: "valueChange"');
+      // Outputs map is `{ classPropertyName: bindingName }` — for a
+      // model the class property is `value` and binding is `valueChange`.
+      expect(result).toContain('value: "valueChange"');
     });
 
     it('detects output()', () => {
@@ -241,9 +243,10 @@ describe('@Component', () => {
       // Both produce signal input descriptors
       expect(result).toContain('a: [');
       expect(result).toContain('b: [');
-      // Both generate Change outputs
-      expect(result).toContain('aChange: "aChange"');
-      expect(result).toContain('bChange: "bChange"');
+      // Both generate Change outputs in the `{ classProp: bindingName }`
+      // format Angular's runtime expects.
+      expect(result).toContain('a: "aChange"');
+      expect(result).toContain('b: "bChange"');
     });
 
     it('detects viewChild.required() and contentChild.required()', () => {
@@ -357,7 +360,7 @@ describe('@Component', () => {
       expect(result).toContain('name: [');
       expect(result).toContain('count: [');
       expect(result).toContain('clicked: "clicked"');
-      expect(result).toContain('countChange: "countChange"');
+      expect(result).toContain('count: "countChange"');
       expect(result).toContain('ɵɵviewQuery');
     });
   });

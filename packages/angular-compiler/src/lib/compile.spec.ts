@@ -15,7 +15,11 @@ describe('NgLite Compiler', () => {
     );
     // Signal model inputs use array descriptor format: [flags, publicName, className, transform]
     expect(result).toContain('count: [');
-    expect(result).toContain('countChange: "countChange"');
+    // Outputs map is `{ classPropertyName: bindingName }`. For a model
+    // signal the class property is `count` and the binding name is
+    // `countChange` (Angular inverts this map at runtime to look up
+    // `instance.count`, which is the subscribable model signal).
+    expect(result).toContain('count: "countChange"');
   });
 
   it('compiles pipes and injectables', () => {
