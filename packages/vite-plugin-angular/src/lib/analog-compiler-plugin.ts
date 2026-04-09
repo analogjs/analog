@@ -58,6 +58,68 @@ export function analogCompilerPlugin(
   let analogProjectRoot = '';
   let useDefineForClassFields = true;
 
+  /**
+   * Scan a file into the registry, then recursively walk its relative
+   * `export *` / `export { … } from './x'` chain so any underlying
+   * directive classes also land in the registry. Used both at
+   * `buildStart` (for tsconfig path entries) and at dev time (file
+   * `add` and `handleHotUpdate`) so newly added barrels stay in sync
+   * without requiring a server restart.
+   *
+   * The `visited` set prevents infinite recursion within a single
+   * top-level call. Each fresh scan should pass an empty set (so HMR
+   * re-scans aren't blocked by buildStart's earlier visits).
+   */
+  async function scanBarrelExports(
+    file: string,
+    visited: Set<string> = new Set(),
+    overwrite = false,
+  ): Promise<void> {
+    if (visited.has(file)) return;
+    visited.add(file);
+    let code: string;
+    try {
+      code = await fsPromises.readFile(file, 'utf-8');
+    } catch {
+      return;
+    }
+    const entries = scanFile(code, file);
+    for (const entry of entries) {
+      // At buildStart we want stable registry entries (don't overwrite
+      // an earlier scan with a barrel re-scan); HMR explicitly asks
+      // for overwrite so updated metadata replaces stale entries.
+      if (overwrite || !analogRegistry.has(entry.className)) {
+        analogRegistry.set(entry.className, entry);
+      }
+    }
+    // Collect every relative re-export specifier via OXC AST so
+    // recursive scans can't trip over each other (a shared `/g` regex
+    // would have its `lastIndex` reset by each recursive call and
+    // silently skip half of an outer barrel's re-exports, which
+    // previously left directives like `HlmRadioGroup` unregistered).
+    const dir = dirname(file);
+    for (const rel of collectRelativeReExports(code, file)) {
+      // NodeNext-style libraries write `export * from './foo.js'`
+      // even though the source is `./foo.ts`. Strip the ESM
+      // extension before probing or the candidates would be
+      // `foo.js.ts` / `foo.js/index.ts`, which never exist.
+      const normalizedRel = rel.replace(/\.(?:js|mjs)$/u, '');
+      const reExportCandidates = [
+        resolve(dir, normalizedRel + '.ts'),
+        resolve(dir, normalizedRel, 'index.ts'),
+      ];
+      for (const candidate of reExportCandidates) {
+        try {
+          await fsPromises.access(candidate);
+          await scanBarrelExports(candidate, visited, overwrite);
+          break;
+        } catch {
+          // try next candidate
+        }
+      }
+    }
+  }
+
   async function initAnalogCompiler() {
     if (pluginOptions.jit) return; // JIT: no registry scan needed
 
@@ -111,47 +173,11 @@ export function analogCompilerPlugin(
     // Library barrels typically `export * from './lib/...'` rather than
     // declaring directives directly, so the entry file alone gives us
     // the tuple consts but not the directive classes they reference.
-    // Walk the relative `export *` / `export { … } from './x'` chain
-    // from each barrel so the underlying classes also land in the
-    // registry.
-    const visitedBarrels = new Set<string>();
-    const scanBarrelExports = async (file: string): Promise<void> => {
-      if (visitedBarrels.has(file)) return;
-      visitedBarrels.add(file);
-      let code: string;
-      try {
-        code = await fsPromises.readFile(file, 'utf-8');
-      } catch {
-        return;
-      }
-      const entries = scanFile(code, file);
-      for (const entry of entries) {
-        if (!analogRegistry.has(entry.className)) {
-          analogRegistry.set(entry.className, entry);
-        }
-      }
-      // Collect every relative re-export specifier via OXC AST so
-      // recursive scans can't trip over each other (a shared `/g` regex
-      // would have its `lastIndex` reset by each recursive call and
-      // silently skip half of an outer barrel's re-exports, which
-      // previously left directives like `HlmRadioGroup` unregistered).
-      const dir = dirname(file);
-      for (const rel of collectRelativeReExports(code, file)) {
-        const reExportCandidates = [
-          resolve(dir, rel + '.ts'),
-          resolve(dir, rel, 'index.ts'),
-        ];
-        for (const candidate of reExportCandidates) {
-          try {
-            await fsPromises.access(candidate);
-            await scanBarrelExports(candidate);
-            break;
-          } catch {
-            // try next candidate
-          }
-        }
-      }
-    };
+    // Walk the relative `export *` chain so the underlying classes also
+    // land in the registry. Use a SHARED visited set across all
+    // barrels so recursive walks don't double-scan a file that's
+    // re-exported from multiple entry points.
+    const buildStartVisited = new Set<string>();
     if (tsPaths) {
       const barrelCandidates: string[] = [];
       for (const targets of Object.values(tsPaths)) {
@@ -160,7 +186,9 @@ export function analogCompilerPlugin(
           barrelCandidates.push(resolve(baseUrl, target));
         }
       }
-      await Promise.all(barrelCandidates.map(scanBarrelExports));
+      await Promise.all(
+        barrelCandidates.map((c) => scanBarrelExports(c, buildStartVisited)),
+      );
     }
   }
 
@@ -324,22 +352,17 @@ export function analogCompilerPlugin(
       resolvedConfig = config;
     },
     configureServer(server) {
-      // Watch for new .ts files and scan them into the registry
+      // Watch for new .ts files and scan them into the registry. Use
+      // the barrel-aware scanner so a newly added re-export entry
+      // (`export * from './x'`) also expands its underlying directive
+      // classes — otherwise the registry stays stale until restart.
       server.watcher.on('add', async (filePath) => {
         if (
           filePath.endsWith('.ts') &&
           !filePath.endsWith('.spec.ts') &&
           !filePath.endsWith('.d.ts')
         ) {
-          try {
-            const code = await fsPromises.readFile(filePath, 'utf-8');
-            const entries = scanFile(code, filePath);
-            for (const entry of entries) {
-              analogRegistry.set(entry.className, entry);
-            }
-          } catch {
-            // Skip unreadable files
-          }
+          await scanBarrelExports(filePath, new Set(), true);
         }
       });
     },
@@ -358,7 +381,6 @@ export function analogCompilerPlugin(
 
       if (TS_EXT_REGEX.test(ctx.file)) {
         const [fileId] = ctx.file.split('?');
-        const code = await fsPromises.readFile(fileId, 'utf-8');
 
         // Remove old entries from this file
         const oldEntries = [...analogRegistry.entries()]
@@ -368,11 +390,11 @@ export function analogCompilerPlugin(
           analogRegistry.delete(key);
         }
 
-        // Rescan the changed file
-        const newEntries = scanFile(code, fileId);
-        for (const entry of newEntries) {
-          analogRegistry.set(entry.className, entry);
-        }
+        // Rescan the changed file via the barrel-aware scanner so an
+        // edited barrel re-export picks up newly-referenced files.
+        // Pass overwrite=true so updated metadata replaces stale
+        // entries from the previous scan.
+        await scanBarrelExports(fileId, new Set(), true);
       }
 
       // Let Vite handle the rest — the transform hook will recompile
