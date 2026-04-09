@@ -208,9 +208,15 @@ function collectExportedClassesFromDts(
     if (stmt.type === 'ExportAllDeclaration') {
       const rel: string | undefined = stmt.source?.value;
       if (!rel || !rel.startsWith('.')) continue;
+      // TypeScript preserves the original specifier text in emitted
+      // `.d.ts` files, so NodeNext-style packages keep their `.js`
+      // (or `.mjs`) extensions in re-exports — but the actual
+      // declaration is at `foo.d.ts` / `foo/index.d.ts`. Strip the
+      // ESM extension before probing.
+      const normalizedRel = rel.replace(/\.(?:js|mjs)$/u, '');
       const candidates = [
-        path.resolve(dir, rel + '.d.ts'),
-        path.resolve(dir, rel, 'index.d.ts'),
+        path.resolve(dir, normalizedRel + '.d.ts'),
+        path.resolve(dir, normalizedRel, 'index.d.ts'),
       ];
       for (const candidate of candidates) {
         if (fs.existsSync(candidate)) {
