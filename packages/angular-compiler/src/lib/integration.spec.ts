@@ -2480,6 +2480,89 @@ describe('Module-level string const interpolation in metadata', () => {
   });
 });
 
+describe('Hoisted nested-template helpers survive type-only import elision', () => {
+  // Repro of a real bug: a component with @if/@for/@switch blocks emits
+  // helper functions like `MyComponent_Conditional_0_Template` that are
+  // referenced from `static ɵcmp = ...`. They are hoisted via
+  // `ms.appendLeft(insertPos, ...)` where `insertPos === stmt.getEnd()` of
+  // the last import. When the previous-step type-elision pass rewrites a
+  // mixed `import { SomeType, someValue }` declaration via
+  // `ms.overwrite(node.start, node.end, ...)`, the `;` of that import sits
+  // inside the overwrite range. With `appendLeft`, the helpers were bound
+  // to the `;` and got wiped — leaving the component referencing undefined
+  // symbols. Fix: use `appendRight` so helpers bind to the character to the
+  // RIGHT of insertPos, which is outside the overwrite range.
+
+  it('emits @if conditional helpers when the file has a mixed type/value import', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      import { SomeType, someValue } from './other';
+      @Component({
+        selector: 'app-cond',
+        template: \`
+          @if (!flag) {
+            <span>off</span>
+          }
+          <div>
+            @if (flag) {
+              <span>on</span>
+            }
+          </div>
+        \`,
+      })
+      export class CondComponent {
+        flag: SomeType = someValue();
+      }
+    `,
+      'cond.ts',
+    );
+
+    expectCompiles(result);
+    // Both nested template helper functions must be present in the output.
+    // Without the appendRight fix they get wiped by the type-elision
+    // overwrite of the `import { SomeType, someValue }` declaration.
+    expect(result).toMatch(/function\s+CondComponent_Conditional_0_Template/);
+    expect(result).toMatch(/function\s+CondComponent_Conditional_2_Template/);
+    // The helpers must be hoisted ABOVE the class declaration so the
+    // static ɵcmp initializer can reference them.
+    const cond0Pos = result.indexOf(
+      'function CondComponent_Conditional_0_Template',
+    );
+    const classPos = result.indexOf('export class CondComponent');
+    expect(cond0Pos).toBeGreaterThan(-1);
+    expect(classPos).toBeGreaterThan(-1);
+    expect(cond0Pos).toBeLessThan(classPos);
+  });
+
+  it('still emits @if helpers when the file has only value imports (regression guard)', () => {
+    // The non-elision path must keep working too. Same component shape as
+    // above but with no type-only specifiers, so the elision pass is a no-op.
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-simple-cond',
+        template: \`
+          @if (flag) {
+            <span>on</span>
+          }
+        \`,
+      })
+      export class SimpleCondComponent {
+        flag = true;
+      }
+    `,
+      'simple-cond.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toMatch(
+      /function\s+SimpleCondComponent_Conditional_0_Template/,
+    );
+  });
+});
+
 describe('Signal input/model alias support', () => {
   it('extracts alias from input() options in registry', () => {
     const entries = scanFile(
