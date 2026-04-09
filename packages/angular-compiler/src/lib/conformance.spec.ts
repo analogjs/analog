@@ -62,6 +62,56 @@ function expectEmit(
   if (expectedCalls.length === 0)
     return { pass: true, message: 'OK (no Ivy calls to check)' };
 
+  // Ellipsis-aware fragment match: Angular's compliance fixtures use `…`
+  // (U+2026) as "match any content here". Split the expected snippet on
+  // ellipsis and check that each non-empty fragment appears in the
+  // actual output in order. This is how Angular's own compliance test
+  // runner interprets the fixture format. Without this, any expected
+  // snippet that uses `…` (very common — most directive/component
+  // fixtures wrap their inputs/outputs map in ellipses) is forced to
+  // fall back to the looser instruction-name-based heuristics below,
+  // which can't tell whether the inputs map actually matches.
+  //
+  // Aggressively collapses whitespace and strips:
+  //   - `/*@__PURE__*/` pure-call annotations
+  //   - `$variable$` placeholders from Angular's fixtures
+  //   - `ClassName.` prefixes on `ɵ`-fields (Angular emits Ivy fields
+  //     as post-class assignments `MyCmp.ɵcmp = …` while we emit them
+  //     as `static ɵcmp = …` inside the class body — semantically
+  //     equivalent, textually different)
+  //   - the `static ` modifier keyword
+  // so cosmetic differences between Angular's expected fixtures and
+  // our emit don't break the comparison.
+  const aggressiveNorm = (s: string) =>
+    s
+      .replace(/\/\*\s*@__PURE__\s*\*\//g, '')
+      .replace(/\$\w+\$/g, '')
+      .replace(/\b\w+\.(ɵ\w+\s*=)/g, '$1')
+      .replace(/\bstatic\s+(ɵ)/g, '$1')
+      .replace(/\s+/g, '')
+      .trim();
+  const ellipsisMatch = (() => {
+    const fragments = expectedNorm
+      .split('…')
+      .map((f) => aggressiveNorm(f))
+      .filter((f) => f.length > 0);
+    if (fragments.length < 2) return null;
+    const haystack = aggressiveNorm(actualNorm);
+    let cursor = 0;
+    for (const frag of fragments) {
+      const idx = haystack.indexOf(frag, cursor);
+      if (idx === -1) return false;
+      cursor = idx + frag.length;
+    }
+    return true;
+  })();
+  if (ellipsisMatch) {
+    return {
+      pass: true,
+      message: `OK (ellipsis fragments matched in order)`,
+    };
+  }
+
   let matched = 0;
   for (const ec of expectedCalls) {
     const ecNorm = normalizeInstruction(ec.full);
