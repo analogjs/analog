@@ -220,4 +220,25 @@ describe('class field lowering (useDefineForClassFields: false)', () => {
     expect(result).toContain('ɵfac');
     expect(result).toContain('ɵcmp');
   });
+
+  it('preserves Ivy static definitions when closing brace is unindented', () => {
+    // Regression test: when the trailing field's newline is immediately
+    // followed by `}` (no indentation), the lowering's removal range used to
+    // end exactly where Ivy code was appendLeft-inserted, causing MagicString
+    // to swallow the Ivy fields. Caught by analog-app-e2e against /shipping.
+    const code = `import { Component } from '@angular/core';
+@Component({ selector: 'app-test', template: '<div></div>' })
+export default class TestComponent {
+  name = 'hello';
+}
+`;
+    const result = compile(code, 'test.ts', {
+      useDefineForClassFields: false,
+    }).code;
+
+    expectCompiles(result);
+    expect(result).toContain('ɵfac');
+    expect(result).toContain('ɵcmp');
+    expect(result).toContain("this.name = 'hello'");
+  });
 });
