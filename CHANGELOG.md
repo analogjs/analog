@@ -1,3 +1,9 @@
+# [2.5.0-beta.18](https://github.com/analogjs/analog/compare/v2.5.0-beta.17...v2.5.0-beta.18) (2026-04-09)
+
+### Bug Fixes
+
+- **angular-compiler:** preserve ivy fields when lowering trailing class field ([79cd5c1](https://github.com/analogjs/analog/commit/79cd5c1a1a97c5964ffba2a53a8fd0769d12b381))
+
 # [2.5.0-beta.17](https://github.com/analogjs/analog/compare/v2.5.0-beta.16...v2.5.0-beta.17) (2026-04-09)
 
 ### Features
