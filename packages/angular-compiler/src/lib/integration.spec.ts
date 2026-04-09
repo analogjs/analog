@@ -2797,6 +2797,71 @@ describe('collectRelativeReExports', () => {
   });
 });
 
+describe('Signal query read/descendants options', () => {
+  it('parses `read` option on viewChild', () => {
+    const result = compile(
+      `
+      import { Component, viewChild, ElementRef } from '@angular/core';
+      @Component({ selector: 'app-c', template: '<div #ref></div>' })
+      export class C {
+        el = viewChild<ElementRef>('ref', { read: ElementRef });
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵɵviewQuery');
+    expect(result).toContain('ElementRef');
+  });
+
+  it('parses `descendants: false` on contentChildren', () => {
+    const result = compile(
+      `
+      import { Component, contentChildren } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        items = contentChildren('item', { descendants: false });
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    // ɵɵcontentQuery's third arg is the descendants flag (1 = true,
+    // 0 = false). With descendants: false we expect a `, 0,` flag.
+    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*0/);
+  });
+
+  it('defaults contentChildren descendants to false when no options', () => {
+    const result = compile(
+      `
+      import { Component, contentChildren } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        items = contentChildren('item');
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*0/);
+  });
+
+  it('parses contentChildren with descendants: true', () => {
+    const result = compile(
+      `
+      import { Component, contentChildren } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        items = contentChildren('item', { descendants: true });
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*1/);
+  });
+});
+
 function expectCompiles(result: string) {
   expect(result).toBeTruthy();
   expect(result).not.toMatch(/^Error:/m);
