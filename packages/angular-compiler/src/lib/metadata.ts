@@ -297,6 +297,26 @@ export function extractMetadata(
           );
         }
         break;
+      // @Injectable provider configuration. Pass these through to
+      // compileInjectable so the emitted `ɵprov` reflects the user's
+      // intent. `useClass`/`useExisting`/`useValue` are
+      // `MaybeForwardRefExpression` (`{ expression, forwardRef }`);
+      // `useFactory` is a bare `Expression`.
+      case 'useClass':
+      case 'useExisting':
+      case 'useValue': {
+        const unwrapped = unwrapForwardRefOxc(valNode);
+        const isForwardRef =
+          valNode.type === 'CallExpression' && unwrapped !== valNode;
+        meta[key] = {
+          expression: new o.WrappedNodeExpr(unwrapped),
+          forwardRef: isForwardRef ? 2 : 0,
+        };
+        break;
+      }
+      case 'useFactory':
+        meta[key] = new o.WrappedNodeExpr(valNode);
+        break;
       case 'hostDirectives':
         if (valNode.type === 'ArrayExpression') {
           meta.hostDirectives = (valNode.elements || [])

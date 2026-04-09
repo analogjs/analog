@@ -2862,6 +2862,67 @@ describe('Signal query read/descendants options', () => {
   });
 });
 
+describe('@Injectable provider configuration', () => {
+  it('emits useFactory in ɵprov', () => {
+    const result = compile(
+      `
+      import { Injectable } from '@angular/core';
+      @Injectable({ providedIn: 'root', useFactory: () => new Svc() })
+      export class Svc {}
+    `,
+      's.ts',
+    );
+    expectCompiles(result);
+    // ɵprov should include the factory expression
+    expect(result).toContain('ɵprov');
+    expect(result).toMatch(/useFactory|factory:\s*\(\)/);
+  });
+
+  it('emits useValue in ɵprov', () => {
+    const result = compile(
+      `
+      import { Injectable } from '@angular/core';
+      @Injectable({ providedIn: 'root', useValue: 42 })
+      export class Svc {}
+    `,
+      's.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵprov');
+    expect(result).toContain('42');
+  });
+
+  it('emits useClass in ɵprov', () => {
+    const result = compile(
+      `
+      import { Injectable } from '@angular/core';
+      export class Other {}
+      @Injectable({ providedIn: 'root', useClass: Other })
+      export class Svc {}
+    `,
+      's.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵprov');
+    expect(result).toContain('Other');
+  });
+
+  it('emits useExisting in ɵprov', () => {
+    const result = compile(
+      `
+      import { Injectable, InjectionToken } from '@angular/core';
+      const TOKEN = new InjectionToken<string>('t');
+      @Injectable({ providedIn: 'root', useExisting: TOKEN })
+      export class Svc {}
+    `,
+      's.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵprov');
+    expect(result).toContain('TOKEN');
+  });
+});
+
 describe('Output alias in registry', () => {
   it('extracts alias from output() options in registry', () => {
     const entries = scanFile(

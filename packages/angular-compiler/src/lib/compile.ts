@@ -796,7 +796,7 @@ export function compile(
 
         case 'Injectable':
           targetType = FactoryTarget.Injectable;
-          const injectableMeta = {
+          const injectableMeta: any = {
             name: className,
             type: classRef,
             typeArgumentCount: 0,
@@ -805,6 +805,14 @@ export function compile(
               forwardRef: 0,
             },
           };
+          // Forward provider configuration so `ɵprov` honors useFactory/
+          // useClass/useExisting/useValue. Without this, an
+          // `@Injectable({ useFactory: () => ... })` quietly falls back
+          // to constructor instantiation.
+          if (meta.useClass) injectableMeta.useClass = meta.useClass;
+          if (meta.useFactory) injectableMeta.useFactory = meta.useFactory;
+          if (meta.useExisting) injectableMeta.useExisting = meta.useExisting;
+          if (meta.useValue) injectableMeta.useValue = meta.useValue;
           if (isPartial) {
             const inj = compileDeclareInjectableFromMetadata(injectableMeta);
             ivyCode.push(`static ɵprov = ${emitAngularExpr(inj.expression)}`);
