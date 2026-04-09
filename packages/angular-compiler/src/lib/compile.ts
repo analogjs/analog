@@ -691,14 +691,18 @@ export function compile(
                 inlineTemplateLiteralExpression: null,
               },
             );
-            ivyCode.push(`static ɵcmp = ${emitAngularExpr(cmp.expression)}`);
+            ivyCode.push(
+              `static ɵcmp = /*@__PURE__*/ ${emitAngularExpr(cmp.expression)}`,
+            );
           } else {
             const cmp = compileComponentFromMetadata(
               componentMeta,
               constantPool,
               bindingParser!,
             );
-            ivyCode.push(`static ɵcmp = ${emitAngularExpr(cmp.expression)}`);
+            ivyCode.push(
+              `static ɵcmp = /*@__PURE__*/ ${emitAngularExpr(cmp.expression)}`,
+            );
           }
           break;
 
@@ -764,14 +768,18 @@ export function compile(
           };
           if (isPartial) {
             const dir = compileDeclareDirectiveFromMetadata(directiveMeta);
-            ivyCode.push(`static ɵdir = ${emitAngularExpr(dir.expression)}`);
+            ivyCode.push(
+              `static ɵdir = /*@__PURE__*/ ${emitAngularExpr(dir.expression)}`,
+            );
           } else {
             const dir = compileDirectiveFromMetadata(
               directiveMeta,
               constantPool,
               bindingParser!,
             );
-            ivyCode.push(`static ɵdir = ${emitAngularExpr(dir.expression)}`);
+            ivyCode.push(
+              `static ɵdir = /*@__PURE__*/ ${emitAngularExpr(dir.expression)}`,
+            );
           }
           break;
 
@@ -787,10 +795,14 @@ export function compile(
           };
           if (isPartial) {
             const pipe = compileDeclarePipeFromMetadata(pipeMeta);
-            ivyCode.push(`static ɵpipe = ${emitAngularExpr(pipe.expression)}`);
+            ivyCode.push(
+              `static ɵpipe = /*@__PURE__*/ ${emitAngularExpr(pipe.expression)}`,
+            );
           } else {
             const pipe = compilePipeFromMetadata(pipeMeta);
-            ivyCode.push(`static ɵpipe = ${emitAngularExpr(pipe.expression)}`);
+            ivyCode.push(
+              `static ɵpipe = /*@__PURE__*/ ${emitAngularExpr(pipe.expression)}`,
+            );
           }
           break;
 
@@ -815,10 +827,14 @@ export function compile(
           if (meta.useValue) injectableMeta.useValue = meta.useValue;
           if (isPartial) {
             const inj = compileDeclareInjectableFromMetadata(injectableMeta);
-            ivyCode.push(`static ɵprov = ${emitAngularExpr(inj.expression)}`);
+            ivyCode.push(
+              `static ɵprov = /*@__PURE__*/ ${emitAngularExpr(inj.expression)}`,
+            );
           } else {
             const inj = o.compileInjectable(injectableMeta, true);
-            ivyCode.push(`static ɵprov = ${emitAngularExpr(inj.expression)}`);
+            ivyCode.push(
+              `static ɵprov = /*@__PURE__*/ ${emitAngularExpr(inj.expression)}`,
+            );
           }
           break;
 
@@ -872,17 +888,21 @@ export function compile(
           };
           if (isPartial) {
             const ngMod = compileDeclareNgModuleFromMetadata(ngModuleMeta);
-            ivyCode.push(`static ɵmod = ${emitAngularExpr(ngMod.expression)}`);
+            ivyCode.push(
+              `static ɵmod = /*@__PURE__*/ ${emitAngularExpr(ngMod.expression)}`,
+            );
             const injector = compileDeclareInjectorFromMetadata(injectorMeta);
             ivyCode.push(
-              `static ɵinj = ${emitAngularExpr(injector.expression)}`,
+              `static ɵinj = /*@__PURE__*/ ${emitAngularExpr(injector.expression)}`,
             );
           } else {
             const ngMod = compileNgModule(ngModuleMeta);
-            ivyCode.push(`static ɵmod = ${emitAngularExpr(ngMod.expression)}`);
+            ivyCode.push(
+              `static ɵmod = /*@__PURE__*/ ${emitAngularExpr(ngMod.expression)}`,
+            );
             const injector = compileInjector(injectorMeta);
             ivyCode.push(
-              `static ɵinj = ${emitAngularExpr(injector.expression)}`,
+              `static ɵinj = /*@__PURE__*/ ${emitAngularExpr(injector.expression)}`,
             );
           }
           break;
@@ -916,10 +936,14 @@ export function compile(
       };
       if (isPartial) {
         const fac = compileDeclareFactoryFunction(factoryMeta);
-        ivyCode.unshift(`static ɵfac = ${emitAngularExpr(fac.expression)}`);
+        ivyCode.unshift(
+          `static ɵfac = /*@__PURE__*/ ${emitAngularExpr(fac.expression)}`,
+        );
       } else {
         const fac = compileFactoryFunction(factoryMeta);
-        ivyCode.unshift(`static ɵfac = ${emitAngularExpr(fac.expression)}`);
+        ivyCode.unshift(
+          `static ɵfac = /*@__PURE__*/ ${emitAngularExpr(fac.expression)}`,
+        );
       }
     }
 
@@ -1113,7 +1137,10 @@ export function compile(
       s instanceof o.ExpressionStatement &&
       s.expr instanceof o.InvokeFunctionExpr
     ) {
-      sideEffects.push(code);
+      // setClassMetadata is wrapped in `(() => { ... })()` — annotate
+      // the IIFE call so bundlers can drop it when ngDevMode is folded
+      // to false at production build time.
+      sideEffects.push(`/*@__PURE__*/ ${code}`);
     } else {
       helpers.push(code);
     }
