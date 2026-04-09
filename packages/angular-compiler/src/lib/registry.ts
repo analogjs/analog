@@ -152,10 +152,38 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
                 (callee.property?.name || '');
             }
 
+            // Extract `alias` from the options object so the public
+            // binding name reflects user overrides like
+            // `input(null, { alias: 'aria-label' })`. Without this,
+            // host-directive mappings that reference the public name
+            // (e.g. `inputs: ['aria-label']`) fail to resolve.
+            const aliasFromOptions = (): string | null => {
+              const required =
+                calleeName === 'input.required' ||
+                calleeName === 'model.required';
+              const optionsArg = init.arguments?.[required ? 0 : 1];
+              if (optionsArg?.type !== 'ObjectExpression') return null;
+              for (const prop of optionsArg.properties || []) {
+                if (prop.type !== 'ObjectProperty' && prop.type !== 'Property')
+                  continue;
+                const k = prop.key?.name ?? prop.key?.value;
+                if (k !== 'alias') continue;
+                const v = prop.value;
+                if (
+                  v?.type === 'StringLiteral' ||
+                  (v?.type === 'Literal' && typeof v.value === 'string')
+                ) {
+                  return v.value;
+                }
+              }
+              return null;
+            };
+
             if (calleeName === 'input' || calleeName === 'input.required') {
+              const alias = aliasFromOptions();
               inputs[name] = {
                 classPropertyName: name,
-                bindingPropertyName: name,
+                bindingPropertyName: alias ?? name,
                 isSignal: true,
                 required: calleeName === 'input.required',
               };
@@ -163,13 +191,17 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
               calleeName === 'model' ||
               calleeName === 'model.required'
             ) {
+              const alias = aliasFromOptions();
               inputs[name] = {
                 classPropertyName: name,
-                bindingPropertyName: name,
+                bindingPropertyName: alias ?? name,
                 isSignal: true,
                 required: calleeName === 'model.required',
               };
-              outputs[name + 'Change'] = name + 'Change';
+              // outputs map is `{ classPropertyName: bindingName }` —
+              // for a model, the class property is `name` and the
+              // binding name is `${aliasOrName}Change`.
+              outputs[name] = (alias ?? name) + 'Change';
             } else if (
               calleeName === 'output' ||
               calleeName === 'outputFromObservable'

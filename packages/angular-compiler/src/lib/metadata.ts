@@ -175,10 +175,18 @@ export function extractMetadata(
               continue;
             const hKey = propKeyName(hp);
             if (!hKey) continue;
-            const hVal = sourceCode
-              .slice(hp.value.start, hp.value.end)
-              .replace(/['"`]/g, '');
-            meta.hostRaw[hKey.replace(/['"`]/g, '')] = hVal;
+            // Prefer the parsed string value so embedded quotes (e.g. the
+            // empty `""` in `'expr ? "" : null'`) survive. Falling back to
+            // the source slice for non-string values keeps prior behavior
+            // for unusual host bindings (e.g. references to constants).
+            const sv = stringValue(hp.value, stringConsts);
+            const hVal =
+              sv !== null
+                ? sv
+                : sourceCode
+                    .slice(hp.value.start, hp.value.end)
+                    .replace(/^['"`]|['"`]$/g, '');
+            meta.hostRaw[hKey.replace(/^['"`]|['"`]$/g, '')] = hVal;
           }
         }
         break;
@@ -206,7 +214,44 @@ export function extractMetadata(
       case 'templateUrl':
       case 'providedIn': {
         const sv = stringValue(valNode, stringConsts);
-        meta[key] = sv !== null ? sv : valText.replace(/['"`]/g, '');
+        if (sv !== null) {
+          meta[key] = sv;
+        } else if (valNode.type === 'TemplateLiteral') {
+          // Template literal with `${...}` interpolations that couldn't
+          // all be resolved at parse time (e.g. they reference imports
+          // or non-string values). The previous fallback stripped every
+          // quote character from the source, which silently corrupted
+          // templates such as `<a class="${cls} foo">…</a>` into
+          // `<a class=${cls} foo>…</a>` — making Angular's HTML parser
+          // fail with confusing errors like `Opening tag "a" not
+          // terminated`. Instead, walk the quasis and substitute each
+          // unresolved interpolation with the empty string so the
+          // surrounding HTML (including quoted attributes) is preserved.
+          const quasis = valNode.quasis ?? [];
+          const expressions = valNode.expressions ?? [];
+          let result = '';
+          for (let i = 0; i < quasis.length; i++) {
+            result += quasis[i]?.value?.cooked ?? '';
+            if (i < expressions.length) {
+              const expr = expressions[i];
+              if (expr?.type === 'Identifier') {
+                const resolved = stringConsts?.get(expr.name);
+                if (resolved != null) {
+                  result += resolved;
+                  continue;
+                }
+              }
+              // Unresolvable — substitute empty string. This keeps the
+              // surrounding HTML well-formed even if the resulting class
+              // list is incomplete.
+            }
+          }
+          meta[key] = result;
+        } else {
+          // Non-string, non-template-literal expression. Strip only the
+          // outermost JS string delimiters, not every embedded quote.
+          meta[key] = valText.replace(/^['"`]|['"`]$/g, '');
+        }
         if (key === 'exportAs') meta.exportAs = [meta.exportAs];
         break;
       }
@@ -378,20 +423,29 @@ export function detectSignals(classNode: any, sourceCode: string) {
     // 1. SIGNAL INPUTS (Standard & Required)
     if (api === 'input') {
       let transform: any = null;
+      let alias: string | null = null;
       const optionsArg = required ? args[0] : args[1];
       if (optionsArg?.type === 'ObjectExpression') {
         for (const prop of optionsArg.properties || []) {
-          if (
-            (prop.type === 'ObjectProperty' || prop.type === 'Property') &&
-            propKeyName(prop) === 'transform'
-          ) {
+          if (prop.type !== 'ObjectProperty' && prop.type !== 'Property')
+            continue;
+          const k = propKeyName(prop);
+          if (k === 'transform') {
             transform = new o.WrappedNodeExpr(prop.value);
+          } else if (k === 'alias') {
+            const sv = stringValue(prop.value);
+            if (sv !== null) alias = sv;
           }
         }
       }
       inputs[name] = {
         classPropertyName: name,
-        bindingPropertyName: name,
+        // The binding (public) name is the alias if provided, otherwise
+        // the class property name. Without honoring `alias`, host
+        // directives that map by public name (e.g.
+        // `inputs: ['aria-label']` against `ariaLabel = input(null, {
+        // alias: 'aria-label' })`) fail at runtime with NG0311.
+        bindingPropertyName: alias ?? name,
         isSignal: true,
         required,
         transform,
@@ -400,12 +454,34 @@ export function detectSignals(classNode: any, sourceCode: string) {
 
     // 2. MODEL SIGNALS (Writable Inputs)
     else if (api === 'model') {
+      // model() supports the same options object as input(); honor `alias`
+      // for the same reason (host-directive mappings use the public name).
+      let alias: string | null = null;
+      const optionsArg = required ? args[0] : args[1];
+      if (optionsArg?.type === 'ObjectExpression') {
+        for (const prop of optionsArg.properties || []) {
+          if (prop.type !== 'ObjectProperty' && prop.type !== 'Property')
+            continue;
+          if (propKeyName(prop) === 'alias') {
+            const sv = stringValue(prop.value);
+            if (sv !== null) alias = sv;
+          }
+        }
+      }
       inputs[name] = {
         classPropertyName: name,
-        bindingPropertyName: name,
+        bindingPropertyName: alias ?? name,
         isSignal: true,
       };
-      outputs[name + 'Change'] = name + 'Change';
+      // The compiled `outputs` field is `{ classPropertyName: bindingName }`.
+      // Angular inverts this at runtime via
+      // `parseAndConvertOutputsForDefinition`, producing the lookup map
+      // `{ bindingName: classPropertyName }` used by `listenToOutput`.
+      // For a `model()` signal, the class property is `name` and the
+      // binding event is `${aliasOrName}Change`, and the model signal
+      // itself is the subscribable, so `instance[name]` is what
+      // `listenToOutput` needs to resolve.
+      outputs[name] = (alias ?? name) + 'Change';
     }
 
     // 3. SIGNAL QUERIES (viewChild, contentChild)
@@ -424,7 +500,16 @@ export function detectSignals(classNode: any, sourceCode: string) {
 
       const query = {
         propertyName: name,
-        predicate: sv !== null ? [sv] : new o.WrappedNodeExpr(firstArg),
+        // Class predicates must be wrapped in an `R3QueryReference`
+        // (`{ forwardRef, expression }`); Angular's `getQueryPredicate`
+        // dispatches on `predicate.forwardRef` and reads
+        // `predicate.expression`, so a bare `WrappedNodeExpr` is silently
+        // dropped to `undefined` and emitted as `null`, leaving the query
+        // with no target. `0 = ForwardRefHandling.None`.
+        predicate:
+          sv !== null
+            ? [sv]
+            : { forwardRef: 0, expression: new o.WrappedNodeExpr(firstArg) },
         first: !isChildrenQuery,
         descendants: true,
         read: null,
@@ -540,14 +625,23 @@ export function detectFieldDecorators(classNode: any, sourceCode: string) {
           const isView = decName.startsWith('View');
           const isFirst = decName === 'ViewChild' || decName === 'ContentChild';
 
-          let predicate: any = memberName;
+          // Default predicate when no argument is given is the member
+          // name. Class predicates (the non-string case) must be wrapped
+          // in an `R3QueryReference` (`{ forwardRef, expression }`) so
+          // Angular's `getQueryPredicate` can dispatch on `forwardRef`
+          // and read `.expression`. A bare `WrappedNodeExpr` is silently
+          // dropped to undefined and emitted as `null`.
+          let predicate: any = [memberName];
           if (args.length > 0) {
             const pred = args[0];
             const sv = stringValue(pred);
             if (sv !== null) {
               predicate = [sv];
             } else {
-              predicate = new o.WrappedNodeExpr(unwrapForwardRefOxc(pred));
+              predicate = {
+                forwardRef: 0,
+                expression: new o.WrappedNodeExpr(unwrapForwardRefOxc(pred)),
+              };
             }
           }
 
