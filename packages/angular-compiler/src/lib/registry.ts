@@ -13,11 +13,20 @@ export interface RegistryEntry {
   /** CSS selector for components/directives, pipe name for pipes, class name for NgModules */
   selector: string;
   /** What kind of Angular declaration this is */
-  kind: 'component' | 'directive' | 'pipe' | 'ngmodule';
+  kind: 'component' | 'directive' | 'pipe' | 'ngmodule' | 'tuple';
   /** The pipe name (only for pipes) */
   pipeName?: string;
   /** Exported class names (only for NgModules) */
   exports?: string[];
+  /**
+   * Member class names (only for `tuple` kind) — produced by top-level
+   * `export const X = [A, B, C] as const` style barrels common in
+   * helm/spartan-style libraries. The compiler expands these into the
+   * underlying directives when they appear in another component's
+   * `imports` array, mirroring how Angular's official compiler resolves
+   * static `imports` references at compile time.
+   */
+  members?: string[];
   /** The source file this declaration was found in */
   fileName: string;
   /** The class name */
@@ -42,12 +51,57 @@ const DECORATOR_RE = new RegExp(`@(${[...COMPILABLE_DECORATORS].join('|')})`);
 export function scanFile(code: string, fileName: string): RegistryEntry[] {
   const entries: RegistryEntry[] = [];
 
-  // Fast regex pre-filter before parsing
-  if (!DECORATOR_RE.test(code)) {
+  // Fast regex pre-filter — skip files with neither Angular decorators
+  // nor a top-level `const X = [...]` that might be a directive tuple
+  // barrel re-export.
+  if (!DECORATOR_RE.test(code) && !/\bconst\s+\w+\s*=\s*\[/.test(code)) {
     return entries;
   }
 
   const { program } = parseSync(fileName, code);
+
+  // First pass: collect tuple barrels — top-level `const X = [A, B, C]`
+  // (with or without `export`/`as const`) where every element is a bare
+  // class identifier. These are how spartan-style libraries expose a
+  // group of directives behind a single import (e.g. `HlmSelectImports`).
+  // Without registering them, the analog compiler treats the bare
+  // identifier as an unknown directive and Angular's runtime never
+  // matches the underlying classes.
+  for (const node of program.body) {
+    const varDecl =
+      node.type === 'ExportNamedDeclaration' &&
+      (node as any).declaration?.type === 'VariableDeclaration'
+        ? (node as any).declaration
+        : node.type === 'VariableDeclaration'
+          ? node
+          : null;
+    if (!varDecl || varDecl.kind !== 'const') continue;
+    for (const declarator of varDecl.declarations || []) {
+      if (declarator.id?.type !== 'Identifier') continue;
+      // Unwrap `arr as const` → ArrayExpression
+      let init = declarator.init;
+      if (init?.type === 'TSAsExpression') init = init.expression;
+      if (init?.type !== 'ArrayExpression') continue;
+      const members: string[] = [];
+      let allClassRefs = true;
+      for (const el of init.elements || []) {
+        if (el?.type !== 'Identifier') {
+          allClassRefs = false;
+          break;
+        }
+        members.push(el.name);
+      }
+      if (!allClassRefs || members.length === 0) continue;
+      const tupleName: string = declarator.id.name;
+      entries.push({
+        selector: tupleName,
+        kind: 'tuple',
+        members,
+        fileName,
+        className: tupleName,
+      });
+    }
+  }
 
   for (const node of program.body) {
     // Handle `class Foo {}`, `export class Foo {}`, and `export default class Foo {}`

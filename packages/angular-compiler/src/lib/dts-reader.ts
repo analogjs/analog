@@ -109,40 +109,118 @@ function buildClassToImportMap(
       string,
       any,
     ][]) {
-      if (!key.startsWith('./') || key === '.') continue;
-      const typesFile =
+      if (key !== '.' && !key.startsWith('./')) continue;
+      // Resolve types from the export entry. Some packages declare
+      // `types` only at the package root (top-level package.json `types`
+      // field) rather than per-export, so fall back to that for `.`.
+      let typesFile: string | undefined =
         typeof value === 'object' && value !== null && value.types;
+      if (!typesFile && key === '.' && typeof pkgJson.types === 'string') {
+        typesFile = pkgJson.types;
+      }
       if (!typesFile) continue;
 
-      const subEntry = key.slice(2); // './tabs' → 'tabs'
-      const importPath = packageName + '/' + subEntry;
+      // Root entry (`.`) maps classes to the bare package name; sub-entries
+      // (`./tabs`) map to `${packageName}/tabs`. Mapping root-exported
+      // classes prevents `subEntryFromFilePath` from deriving an invalid
+      // subpath like `ngx-scrollbar/lib` for files that physically live in
+      // a `lib/` subdirectory but are only re-exported from the root entry.
+      const importPath =
+        key === '.' ? packageName : packageName + '/' + key.slice(2);
       const fullTypesPath = path.resolve(pkgDir, typesFile);
       if (!fs.existsSync(fullTypesPath)) continue;
 
-      try {
-        const code = fs.readFileSync(fullTypesPath, 'utf-8');
-        // Collect declared class names (e.g. "declare class MatTabNav")
-        for (const match of code.matchAll(/declare\s+class\s+(\w+)/g)) {
-          map.set(match[1], importPath);
-        }
-        // Collect re-exported names (e.g. "export { Dir, BidiModule } from '...'")
-        for (const match of code.matchAll(/export\s*\{([^}]+)\}/g)) {
-          for (const name of match[1].split(',')) {
-            const parts = name.trim().split(/\s+as\s+/);
-            const exported = parts[parts.length - 1].trim();
-            if (exported && /^\w+$/.test(exported)) {
-              map.set(exported, importPath);
-            }
-          }
-        }
-      } catch {
-        // Skip unreadable entry files
-      }
+      collectExportedClassesFromDts(fullTypesPath, importPath, map);
     }
   } catch {
     // No package.json or no exports — fall back to packageName
   }
   return map;
+}
+
+/**
+ * Read a `.d.ts` entry file and add every class it exports to `map`,
+ * following `export * from './rel'` chains so re-exported classes from
+ * physically nested files (e.g. `lib/foo.d.ts`) are still mapped to the
+ * exporting entry's import path.
+ *
+ * Without this, packages whose root `index.d.ts` is just a barrel of
+ * `export * from './lib/...'` would never get their classes mapped, and the
+ * `subEntryFromFilePath` fallback would derive an invalid `${pkg}/lib`
+ * import for files living under `lib/`.
+ */
+function collectExportedClassesFromDts(
+  filePath: string,
+  importPath: string,
+  map: Map<string, string>,
+  visited: Set<string> = new Set(),
+): void {
+  if (visited.has(filePath)) return;
+  visited.add(filePath);
+  let code: string;
+  try {
+    code = fs.readFileSync(filePath, 'utf-8');
+  } catch {
+    return;
+  }
+
+  let program: any;
+  try {
+    program = parseSync(filePath, code).program;
+  } catch {
+    return;
+  }
+
+  const dir = path.dirname(filePath);
+  for (const stmt of program.body || []) {
+    // `declare class Foo` (top-level)
+    if (stmt.type === 'ClassDeclaration' && stmt.id?.name) {
+      map.set(stmt.id.name, importPath);
+      continue;
+    }
+
+    // `export declare class Foo` / `export class Foo` /
+    // `export { A, B as C } from '...'` / `export { A, B }`
+    if (stmt.type === 'ExportNamedDeclaration') {
+      if (
+        stmt.declaration?.type === 'ClassDeclaration' &&
+        stmt.declaration.id?.name
+      ) {
+        map.set(stmt.declaration.id.name, importPath);
+      }
+      for (const spec of stmt.specifiers || []) {
+        // ExportSpecifier: { local, exported }
+        const exportedNode = spec.exported;
+        const exportedName =
+          exportedNode?.type === 'Identifier'
+            ? exportedNode.name
+            : exportedNode?.type === 'Literal'
+              ? exportedNode.value
+              : undefined;
+        if (typeof exportedName === 'string') {
+          map.set(exportedName, importPath);
+        }
+      }
+      continue;
+    }
+
+    // `export * from './rel'` and `export * as Ns from './rel'`
+    if (stmt.type === 'ExportAllDeclaration') {
+      const rel: string | undefined = stmt.source?.value;
+      if (!rel || !rel.startsWith('.')) continue;
+      const candidates = [
+        path.resolve(dir, rel + '.d.ts'),
+        path.resolve(dir, rel, 'index.d.ts'),
+      ];
+      for (const candidate of candidates) {
+        if (fs.existsSync(candidate)) {
+          collectExportedClassesFromDts(candidate, importPath, map, visited);
+          break;
+        }
+      }
+      continue;
+    }
+  }
 }
 
 /**
@@ -206,6 +284,42 @@ export function collectImportedPackages(
   }
 
   return packages;
+}
+
+/**
+ * Parse a source file with OXC and return the relative-path specifiers it
+ * re-exports via `export * from './x'`, `export * as Ns from './x'`, or
+ * `export { … } from './x'`. Bare-specifier re-exports are skipped.
+ *
+ * Used by the analog Vite plugin to walk library entry barrels at startup
+ * (e.g. `helm/select/src/index.ts` → `./lib/hlm-select`) so the underlying
+ * directive classes land in the registry before any consumer is compiled.
+ */
+export function collectRelativeReExports(
+  code: string,
+  fileName: string,
+): string[] {
+  let program: any;
+  try {
+    program = parseSync(fileName, code).program;
+  } catch {
+    return [];
+  }
+  const result: string[] = [];
+  for (const stmt of program.body || []) {
+    if (
+      stmt.type !== 'ExportAllDeclaration' &&
+      stmt.type !== 'ExportNamedDeclaration'
+    ) {
+      continue;
+    }
+    // ExportNamedDeclaration without `source` is `export { x }` (no
+    // re-export), which we don't care about here.
+    const specifier: string | undefined = stmt.source?.value;
+    if (!specifier || !specifier.startsWith('.')) continue;
+    result.push(specifier);
+  }
+  return result;
 }
 
 // ---------------------------------------------------------------------------
