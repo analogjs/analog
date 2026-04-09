@@ -819,14 +819,44 @@ export function extractConstructorDeps(
           typeAnn.typeName.name ??
           sourceCode.slice(typeAnn.typeName.start, typeAnn.typeName.end);
       } else if (typeAnn.type === 'TSUnionType') {
-        for (const t of typeAnn.types || []) {
-          if (t.type === 'TSTypeReference' && t.typeName) {
-            token =
-              t.typeName.name ??
-              sourceCode.slice(t.typeName.start, t.typeName.end);
-            break;
+        // Filter out null/undefined/void arms — `T | null` and
+        // `T | undefined` are common patterns that should resolve to T.
+        // Anything else (multiple TypeReference arms, primitives, etc.)
+        // is ambiguous and ngtsc rejects it. Mark as invalid so the
+        // factory falls through to ɵɵinvalidFactory rather than
+        // silently picking the first arm.
+        const nonNullTypes = (typeAnn.types || []).filter((t: any) => {
+          if (!t) return false;
+          if (t.type === 'TSNullKeyword') return false;
+          if (t.type === 'TSUndefinedKeyword') return false;
+          if (t.type === 'TSVoidKeyword') return false;
+          if (
+            t.type === 'TSLiteralType' &&
+            (t.literal?.type === 'NullLiteral' ||
+              (t.literal?.type === 'Literal' && t.literal.value === null))
+          ) {
+            return false;
           }
+          return true;
+        });
+        if (
+          nonNullTypes.length === 1 &&
+          nonNullTypes[0].type === 'TSTypeReference' &&
+          nonNullTypes[0].typeName
+        ) {
+          const t = nonNullTypes[0];
+          token =
+            t.typeName.name ??
+            sourceCode.slice(t.typeName.start, t.typeName.end);
+        } else {
+          // Ambiguous union — no suitable injection token.
+          invalid = true;
+          continue;
         }
+      } else if (typeAnn.type === 'TSIntersectionType') {
+        // Intersection types (`A & B`) have no single injection token.
+        invalid = true;
+        continue;
       }
     }
 

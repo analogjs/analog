@@ -2862,6 +2862,60 @@ describe('Signal query read/descendants options', () => {
   });
 });
 
+describe('Union/intersection type DI parameter rejection', () => {
+  it('emits invalidFactory for ambiguous union types', () => {
+    const result = compile(
+      `
+      import { Injectable } from '@angular/core';
+      export class A {}
+      export class B {}
+      @Injectable({ providedIn: 'root' })
+      export class Svc {
+        constructor(p: A | B) {}
+      }
+    `,
+      's.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵɵinvalidFactory');
+  });
+
+  it('resolves T | null to T', () => {
+    const result = compile(
+      `
+      import { Injectable } from '@angular/core';
+      export class A {}
+      @Injectable({ providedIn: 'root' })
+      export class Svc {
+        constructor(p: A | null) {}
+      }
+    `,
+      's.ts',
+    );
+    expectCompiles(result);
+    // Factory should reference A as the token, not invalidFactory
+    expect(result).not.toContain('ɵɵinvalidFactory');
+    expect(result).toContain('A');
+  });
+
+  it('emits invalidFactory for intersection types', () => {
+    const result = compile(
+      `
+      import { Injectable } from '@angular/core';
+      export class A {}
+      export class B {}
+      @Injectable({ providedIn: 'root' })
+      export class Svc {
+        constructor(p: A & B) {}
+      }
+    `,
+      's.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵɵinvalidFactory');
+  });
+});
+
 describe('@Injectable provider configuration', () => {
   it('emits useFactory in ɵprov', () => {
     const result = compile(
