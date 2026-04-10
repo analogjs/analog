@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { scanDtsFile } from './dts-reader';
+import {
+  scanDtsFile,
+  collectImportedPackages,
+  collectRelativeReExports,
+} from './dts-reader';
 
 describe('scanDtsFile', () => {
   it('should extract directive inputs and outputs from ɵdir', () => {
@@ -128,5 +132,118 @@ declare class DirectiveB {
     expect(entries).toHaveLength(2);
     expect(entries[0].className).toBe('DirectiveA');
     expect(entries[1].className).toBe('DirectiveB');
+  });
+});
+
+describe('.d.ts metadata extraction', () => {
+  it('extracts directive with inputs/outputs from .d.ts', () => {
+    const entries = scanDtsFile(
+      `
+import * as i0 from "@angular/core";
+declare class MyDir {
+    static ɵdir: i0.ɵɵDirectiveDeclaration<MyDir, "[myDir]", never, { "color": { "alias": "color"; "required": false; }; }, { "colorChange": "colorChange"; }, never, never, true, never>;
+}
+`,
+      'my-dir.d.ts',
+    );
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].selector).toBe('[myDir]');
+    expect(entries[0].kind).toBe('directive');
+    expect(entries[0].inputs!['color'].bindingPropertyName).toBe('color');
+    expect(entries[0].outputs!['colorChange']).toBe('colorChange');
+  });
+
+  it('extracts pipe name from .d.ts', () => {
+    const entries = scanDtsFile(
+      `
+import * as i0 from "@angular/core";
+declare class CurrencyPipe {
+    static ɵpipe: i0.ɵɵPipeDeclaration<CurrencyPipe, "currency", true>;
+}
+`,
+      'currency.d.ts',
+    );
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].kind).toBe('pipe');
+    expect(entries[0].pipeName).toBe('currency');
+  });
+});
+
+describe('.d.ts NgModule scanning', () => {
+  it('extracts NgModule exports from .d.ts', () => {
+    const entries = scanDtsFile(
+      `
+import * as i0 from "@angular/core";
+import * as i1 from "./button";
+declare class SharedModule {
+    static ɵmod: i0.ɵɵNgModuleDeclaration<SharedModule, [typeof i1.ButtonComponent], never, [typeof i1.ButtonComponent]>;
+}
+`,
+      'shared.d.ts',
+    );
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].kind).toBe('ngmodule');
+    expect(entries[0].className).toBe('SharedModule');
+    expect(entries[0].exports).toContain('ButtonComponent');
+  });
+});
+
+describe('collectImportedPackages', () => {
+  it('extracts bare-specifier package names, skips relative', () => {
+    const packages = collectImportedPackages(
+      `
+      import { Component } from '@angular/core';
+      import { RouterOutlet } from '@angular/router';
+      import { Observable } from 'rxjs';
+      import { MyService } from './my-service';
+    `,
+      'test.ts',
+    );
+
+    expect(packages.has('@angular/core')).toBe(true);
+    expect(packages.has('@angular/router')).toBe(true);
+    expect(packages.has('rxjs')).toBe(true);
+    // Relative imports should be skipped
+    expect(packages.has('./my-service')).toBe(false);
+    expect(packages.size).toBe(3);
+  });
+
+  it('handles scoped packages correctly', () => {
+    const packages = collectImportedPackages(
+      `
+      import { input } from '@angular/core';
+      import { injectLoad } from '@analogjs/router';
+      import { map } from 'rxjs/operators';
+    `,
+      'test.ts',
+    );
+
+    expect(packages.has('@angular/core')).toBe(true);
+    expect(packages.has('@analogjs/router')).toBe(true);
+    expect(packages.has('rxjs')).toBe(true);
+    // Should not include the subpath
+    expect(packages.has('rxjs/operators')).toBe(false);
+  });
+});
+
+describe('collectRelativeReExports', () => {
+  it('returns relative `export *` and `export { } from` specifiers', () => {
+    const code = `
+      export * from './a';
+      export * as Ns from './b';
+      export { Foo } from './c';
+      export { Bar } from 'pkg';
+      export const local = 1;
+    `;
+    const result = collectRelativeReExports(code, 'index.ts');
+    expect(result).toEqual(['./a', './b', './c']);
+  });
+
+  it('skips bare-specifier re-exports', () => {
+    const code = `export * from '@angular/core';`;
+    expect(collectRelativeReExports(code, 'i.ts')).toEqual([]);
   });
 });

@@ -1,7 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
-import { compileCode as compile, expectCompiles } from './test-helpers';
+import {
+  compileCode as compile,
+  expectCompiles,
+  buildRegistry,
+} from './test-helpers';
 import { compile as rawCompile } from './compile';
 import { scanFile } from './registry';
+import { inlineResourceUrls, extractInlineStyles } from './resource-inliner';
 
 describe('@Component', () => {
   it('compiles a component with template and styles', () => {
@@ -642,6 +647,37 @@ describe('@Component', () => {
       // Verify the selectors include the named slots
       expect(result).toContain('card-header');
       expect(result).toContain('card-footer');
+    });
+
+    it('keeps hoisted ngContentSelectors const when insertPos is 0', () => {
+      // Regression: inside the helpers-insertion step, `detectTypeOnlyImportNames`
+      // is called before the setClassMetadata IIFE has been appended, so when
+      // the only import is `Component` used solely in the @Component decorator
+      // it gets flagged as elidable. That made `insertPos` stay at 0. Helpers
+      // were then inserted via `ms.appendRight(0, …)`, anchored to position 0
+      // — inside the `ms.remove(0, declEnd)` range the later elision pass
+      // uses to strip the import — so MagicString wiped the helpers along
+      // with the import, producing `ngContentSelectors: _c0` with no
+      // corresponding declaration at runtime.
+      const result = compile(
+        `import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-bottom-nav',
+  host: { class: 'mt-12 flex' },
+  template: '<ng-content />',
+})
+export class BottomNav {}
+`,
+        'bottom-nav.ts',
+      );
+
+      expectCompiles(result);
+      const ref = result.match(/ngContentSelectors:\s*(_c\d+)/);
+      expect(ref).not.toBeNull();
+      expect(result).toMatch(
+        new RegExp(`(?:const|var|let)\\s+${ref![1]}\\s*=`),
+      );
     });
   });
 
@@ -1285,5 +1321,1308 @@ describe('@Component', () => {
       // Dependencies array references BadgeComponent
       expect(result).toContain('dependencies');
     });
+  });
+});
+
+describe('Cross-component input binding', () => {
+  it('resolves signal input bindings via registry', () => {
+    const childSrc = `
+      import { Component, input } from '@angular/core';
+      @Component({ selector: 'app-child', template: '{{ name() }}' })
+      export class ChildComponent {
+        name = input.required<string>();
+      }
+    `;
+
+    const parentSrc = `
+      import { Component } from '@angular/core';
+      import { ChildComponent } from './child';
+      @Component({
+        selector: 'app-parent',
+        imports: [ChildComponent],
+        template: '<app-child [name]="title" />'
+      })
+      export class ParentComponent {
+        title = 'Hello';
+      }
+    `;
+
+    const registry = buildRegistry({ 'child.ts': childSrc });
+    const result = compile(parentSrc, 'parent.ts', registry);
+
+    expectCompiles(result);
+    // The [name] binding should be compiled as a property instruction
+    expect(result).toContain('ɵɵproperty("name"');
+  });
+});
+
+describe('Constant pool ordering', () => {
+  it('emits helper declarations before the class', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-list',
+        template: \`
+          @for (item of items; track item.id) {
+            <div>{{ item.name }}</div>
+          }
+        \`
+      })
+      export class ListComponent {
+        items = [{id: 1, name: 'a'}];
+      }
+    `,
+      'list.ts',
+    );
+
+    expectCompiles(result);
+    // Track function should be defined before the class
+    const trackIdx = result.indexOf('_forTrack0');
+    const classIdx = result.indexOf('class ListComponent');
+    expect(trackIdx).toBeLessThan(classIdx);
+  });
+
+  it('emits helpers before export default class', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-page',
+        template: \`
+          @for (item of items; track item) {
+            <span>{{ item }}</span>
+          }
+        \`
+      })
+      export default class PageComponent {
+        items = ['a', 'b'];
+      }
+    `,
+      'page.ts',
+    );
+
+    expectCompiles(result);
+    // No 'export default const' syntax error
+    expect(result).not.toContain('export default const');
+    expect(result).not.toContain('export default function');
+  });
+});
+
+describe('Assignment precedence in ternary', () => {
+  it('parenthesizes assignment in @if with as alias', () => {
+    const result = compile(
+      `
+      import { Component, signal } from '@angular/core';
+      @Component({
+        selector: 'app-detail',
+        template: \`
+          @if (data(); as item) {
+            <p>{{ item.name }}</p>
+          }
+        \`
+      })
+      export class DetailComponent {
+        data = signal<{name: string} | undefined>(undefined);
+      }
+    `,
+      'detail.ts',
+    );
+
+    expectCompiles(result);
+    // The assignment should be parenthesized: (tmp = ctx.data()) ? ...
+    // NOT: tmp = ctx.data() ? ...
+    expect(result).toMatch(/\(tmp_\d+_\d+ = ctx\.data\(\)\)/);
+  });
+});
+
+describe('Operator precedence in template expressions', () => {
+  it('preserves grouping for ?? mixed with + in attribute binding', () => {
+    const result = compile(
+      `
+      import { Component, signal } from '@angular/core';
+      @Component({
+        selector: 'app-node',
+        template: '<div [attr.y]="(value() ?? 0) + 15"></div>'
+      })
+      export class NodeComponent {
+        value = signal<number | null>(null);
+      }
+    `,
+      'node.ts',
+    );
+
+    expectCompiles(result);
+    // The ?? subexpression must be parenthesized to prevent:
+    // ctx.value() ?? 0 + 15  →  ctx.value() ?? (0 + 15)
+    expect(result).toContain('(ctx.value() ?? 0) + 15');
+  });
+});
+
+describe('templateUrl inlining in metadata', () => {
+  it('replaces templateUrl with template in setClassMetadata', () => {
+    const result = rawCompile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-ext',
+        templateUrl: './test.component.html'
+      })
+      export class ExtComponent {}
+    `,
+      __dirname + '/__fixtures__/test.component.ts',
+    );
+
+    // The metadata should have template, not templateUrl
+    const metaSection = result.code.substring(
+      result.code.indexOf('ɵsetClassMetadata'),
+    );
+    expect(metaSection).not.toContain('templateUrl');
+    expect(metaSection).toContain('template:');
+  });
+});
+
+describe('Content projection', () => {
+  it('compiles single-slot ng-content', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-card',
+        template: '<div class="card"><ng-content /></div>'
+      })
+      export class CardComponent {}
+    `,
+      'card.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵprojectionDef');
+    expect(result).toContain('ɵɵprojection');
+  });
+
+  it('compiles multi-slot ng-content with selectors', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-layout',
+        template: \`
+          <header><ng-content select="[header]" /></header>
+          <main><ng-content /></main>
+          <footer><ng-content select="[footer]" /></footer>
+        \`
+      })
+      export class LayoutComponent {}
+    `,
+      'layout.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵprojectionDef');
+    // Multiple projection slots
+    expect(result).toContain('ɵɵprojection');
+  });
+});
+
+describe('Pipe usage in templates', () => {
+  it('compiles pipe with arguments', () => {
+    const pipeSrc = `
+      import { Pipe, PipeTransform } from '@angular/core';
+      @Pipe({ name: 'format' })
+      export class FormatPipe implements PipeTransform {
+        transform(value: number, style: string): string { return ''; }
+      }
+    `;
+
+    const componentSrc = `
+      import { Component } from '@angular/core';
+      import { FormatPipe } from './format.pipe';
+      @Component({
+        selector: 'app-price',
+        imports: [FormatPipe],
+        template: '<span>{{ price | format:"currency" }}</span>'
+      })
+      export class PriceComponent {
+        price = 9.99;
+      }
+    `;
+
+    const registry = buildRegistry({ 'format.pipe.ts': pipeSrc });
+    const result = compile(componentSrc, 'price.ts', registry);
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵpipe');
+    expect(result).toContain('ɵɵpipeBind');
+    expect(result).toContain('"format"');
+  });
+
+  it('compiles chained pipes', () => {
+    const pipeSrc = `
+      import { Pipe, PipeTransform } from '@angular/core';
+      @Pipe({ name: 'upper' })
+      export class UpperPipe implements PipeTransform {
+        transform(value: string): string { return value.toUpperCase(); }
+      }
+    `;
+    const pipe2Src = `
+      import { Pipe, PipeTransform } from '@angular/core';
+      @Pipe({ name: 'trim' })
+      export class TrimPipe implements PipeTransform {
+        transform(value: string): string { return value.trim(); }
+      }
+    `;
+
+    const componentSrc = `
+      import { Component } from '@angular/core';
+      import { UpperPipe } from './upper.pipe';
+      import { TrimPipe } from './trim.pipe';
+      @Component({
+        selector: 'app-text',
+        imports: [UpperPipe, TrimPipe],
+        template: '<span>{{ name | trim | upper }}</span>'
+      })
+      export class TextComponent {
+        name = '  hello  ';
+      }
+    `;
+
+    const registry = buildRegistry({
+      'upper.pipe.ts': pipeSrc,
+      'trim.pipe.ts': pipe2Src,
+    });
+    const result = compile(componentSrc, 'text.ts', registry);
+
+    expectCompiles(result);
+    // Two pipe instructions
+    expect(result).toMatch(/ɵɵpipe\(\d+, "trim"\)/);
+    expect(result).toMatch(/ɵɵpipe\(\d+, "upper"\)/);
+  });
+});
+
+describe('Template reference variables', () => {
+  it('compiles template ref with event binding', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-search',
+        template: \`
+          <input #searchBox />
+          <button (click)="search(searchBox.value)">Search</button>
+        \`
+      })
+      export class SearchComponent {
+        search(term: string) {}
+      }
+    `,
+      'search.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵreference');
+  });
+});
+
+describe('Two-way binding with model()', () => {
+  it('compiles [(value)] two-way binding', () => {
+    const childSrc = `
+      import { Component, model } from '@angular/core';
+      @Component({
+        selector: 'app-slider',
+        template: '<input type="range" />'
+      })
+      export class SliderComponent {
+        value = model(0);
+      }
+    `;
+
+    const parentSrc = `
+      import { Component, signal } from '@angular/core';
+      import { SliderComponent } from './slider';
+      @Component({
+        selector: 'app-parent',
+        imports: [SliderComponent],
+        template: '<app-slider [(value)]="volume" />'
+      })
+      export class ParentComponent {
+        volume = signal(50);
+      }
+    `;
+
+    const registry = buildRegistry({ 'slider.ts': childSrc });
+    const result = compile(parentSrc, 'parent.ts', registry);
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵtwoWayProperty');
+    expect(result).toContain('ɵɵtwoWayListener');
+  });
+});
+
+describe('Computed signals in templates', () => {
+  it('compiles computed() signal calls in template', () => {
+    const result = compile(
+      `
+      import { Component, signal, computed } from '@angular/core';
+      @Component({
+        selector: 'app-cart',
+        template: \`
+          <p>Count: {{ count() }}</p>
+          <p>Total: {{ total() }}</p>
+        \`
+      })
+      export class CartComponent {
+        count = signal(0);
+        price = signal(10);
+        total = computed(() => this.count() * this.price());
+      }
+    `,
+      'cart.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ctx.count()');
+    expect(result).toContain('ctx.total()');
+    expect(result).toContain('ɵɵtextInterpolate');
+  });
+});
+
+describe('Safe navigation in templates', () => {
+  it('compiles optional chaining in template expressions', () => {
+    const result = compile(
+      `
+      import { Component, signal } from '@angular/core';
+      @Component({
+        selector: 'app-profile',
+        template: '<p>{{ user()?.name }}</p>'
+      })
+      export class ProfileComponent {
+        user = signal<{name: string} | null>(null);
+      }
+    `,
+      'profile.ts',
+    );
+
+    expectCompiles(result);
+    // Angular compiles ?. to a null-safe access
+    expect(result).toContain('ctx.user()');
+  });
+});
+
+describe('@defer triggers', () => {
+  it('compiles @defer with on interaction trigger', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-page',
+        template: \`
+          <button #loadBtn>Load</button>
+          @defer (on interaction(loadBtn)) {
+            <p>Loaded content</p>
+          } @placeholder {
+            <p>Click to load</p>
+          }
+        \`
+      })
+      export class PageComponent {}
+    `,
+      'page.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵdefer');
+    expect(result).toContain('ɵɵdeferOnInteraction');
+  });
+
+  it('compiles @defer with on hover trigger', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-tooltip',
+        template: \`
+          <div>
+            @defer (on hover) {
+              <span>Tooltip content</span>
+            } @placeholder {
+              <span>Hover me</span>
+            }
+          </div>
+        \`
+      })
+      export class TooltipComponent {}
+    `,
+      'tooltip.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵdefer');
+    expect(result).toContain('ɵɵdeferOnHover');
+  });
+
+  it('compiles @defer with on timer trigger', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-delayed',
+        template: \`
+          @defer (on timer(2000ms)) {
+            <p>Delayed content</p>
+          } @loading {
+            <p>Loading...</p>
+          }
+        \`
+      })
+      export class DelayedComponent {}
+    `,
+      'delayed.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵɵdefer');
+    expect(result).toContain('ɵɵdeferOnTimer');
+  });
+});
+
+describe('@if with as alias context', () => {
+  it('passes expression value as context to embedded template', () => {
+    const result = compile(
+      `
+      import { Component, signal } from '@angular/core';
+      @Component({
+        selector: 'app-user',
+        template: \`
+          @if (user(); as u) {
+            <h1>{{ u.name }}</h1>
+            <p>{{ u.email }}</p>
+          }
+        \`
+      })
+      export class UserComponent {
+        user = signal<{name: string; email: string} | null>(null);
+      }
+    `,
+      'user.ts',
+    );
+
+    expectCompiles(result);
+    // The assignment must be parenthesized for correct precedence
+    expect(result).toMatch(/\(tmp_\d+_\d+ = ctx\.user\(\)\)/);
+    // The embedded template should use ctx (the alias value) for bindings
+    expect(result).toMatch(/const \w+ = ctx/);
+    expect(result).toContain('.name');
+    expect(result).toContain('.email');
+  });
+});
+
+describe('Multiple components in one file', () => {
+  it('compiles multiple components from a single file', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+
+      @Component({
+        selector: 'app-icon',
+        template: '<i class="icon">★</i>'
+      })
+      export class IconComponent {}
+
+      @Component({
+        selector: 'app-badge',
+        imports: [IconComponent],
+        template: '<app-icon /> <span><ng-content /></span>'
+      })
+      export class BadgeComponent {}
+    `,
+      'components.ts',
+    );
+
+    expectCompiles(result);
+    // Both components compiled with Ivy definitions
+    expect(result).toContain('type: IconComponent');
+    expect(result).toContain('type: BadgeComponent');
+    // Both have factories
+    expect((result.match(/ɵfac/g) || []).length).toBeGreaterThanOrEqual(2);
+    // Selectors for both
+    expect(result).toContain('"app-icon"');
+    expect(result).toContain('"app-badge"');
+    // BadgeComponent uses IconComponent as dependency
+    expect(result).toMatch(/dependencies:.*IconComponent/);
+  });
+});
+
+describe('Duplicate i0 import prevention', () => {
+  it('does not add duplicate i0 import on double compile', () => {
+    const src = `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-test',
+        template: '<p>hello</p>'
+      })
+      export class TestComponent {}
+    `;
+
+    // First compile
+    const first = compile(src, 'test.ts');
+    expectCompiles(first);
+    expect((first.match(/import \* as i0/g) || []).length).toBe(1);
+
+    // Second compile (simulates client+SSR double pass)
+    const second = compile(first, 'test.ts');
+    expect((second.match(/import \* as i0/g) || []).length).toBe(1);
+  });
+});
+
+describe('OXC-based resource inlining', () => {
+  it('inlines templateUrl via AST rewriting', () => {
+    const result = inlineResourceUrls(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-ext',
+        templateUrl: './test.component.html'
+      })
+      export class ExtComponent {}
+    `,
+      __dirname + '/__fixtures__/test.component.ts',
+    );
+
+    expect(result).not.toContain('templateUrl');
+    expect(result).toContain('template:');
+  });
+
+  it('inlines styleUrls via AST rewriting', () => {
+    const result = inlineResourceUrls(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-ext',
+        template: '',
+        styleUrls: ['./test.component.css']
+      })
+      export class ExtComponent {}
+    `,
+      __dirname + '/__fixtures__/test.component.ts',
+    );
+
+    expect(result).not.toContain('styleUrls');
+    expect(result).toContain('styles:');
+  });
+
+  it('returns original code when no resources to inline', () => {
+    const src = `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-inline',
+        template: '<p>hi</p>'
+      })
+      export class InlineComponent {}
+    `;
+    const result = inlineResourceUrls(src, 'inline.ts');
+    expect(result).toBe(src);
+  });
+
+  it('extracts inline styles from template literals', () => {
+    const styles = extractInlineStyles(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-styled',
+        template: '',
+        styles: [\`h1 { color: red }\`, 'p { margin: 0 }']
+      })
+      export class StyledComponent {}
+    `,
+      'styled.ts',
+    );
+
+    expect(styles).toHaveLength(2);
+    expect(styles[0]).toBe('h1 { color: red }');
+    expect(styles[1]).toBe('p { margin: 0 }');
+  });
+});
+
+describe('Arrow function object literal wrapping', () => {
+  it('wraps object literal return in parens for arrow functions', () => {
+    // Angular emits arrow functions returning object literals in metadata
+    // like: () => ({key: val}). Without parens, () => {key: val} is parsed
+    // as a block with a labeled statement.
+    const result = compile(
+      `
+      import { Component, signal } from '@angular/core';
+      @Component({
+        selector: 'app-test',
+        template: \`
+          @defer (on viewport) {
+            <p>deferred</p>
+          } @placeholder {
+            <p>placeholder</p>
+          }
+        \`
+      })
+      export class TestComponent {}
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // Any arrow returning an object literal should be wrapped: => ({...})
+    // Not: => {...} which would be a block
+    expect(result).not.toMatch(/=> \{[a-zA-Z]+:/);
+  });
+});
+
+describe('Decorator and class field preservation', () => {
+  it('preserves signal field initializers (not moved to constructor)', () => {
+    const result = compile(
+      `
+      import { Component, input, output, model } from '@angular/core';
+      @Component({
+        selector: 'app-child',
+        template: '<p>{{ name() }}</p>'
+      })
+      export class ChildComponent {
+        readonly name = input.required<string>();
+        notify = output();
+        value = model(0);
+      }
+    `,
+      'child.ts',
+    );
+
+    expectCompiles(result);
+    // Signal APIs must stay as class field initializers, not be moved
+    // to the constructor (which would strip .required and generics)
+    expect(result).toContain('input.required');
+    expect(result).toContain('output()');
+    expect(result).toContain('model(');
+    // Ivy inputs should recognize the signal input
+    expect(result).toMatch(/inputs:\s*\{.*name.*\[1/);
+  });
+
+  it('strips @Component decorator from output', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-test',
+        template: '<p>hello</p>'
+      })
+      export class TestComponent {}
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).not.toContain('@Component');
+    expect(result).toContain('ɵɵdefineComponent');
+  });
+});
+
+describe('Non-Angular files pass through unchanged', () => {
+  it('does not add Ivy definitions for files without Angular decorators', () => {
+    const result = compile(
+      `
+      export interface User {
+        name: string;
+        email: string;
+      }
+      export const DEFAULT_USER: User = { name: '', email: '' };
+    `,
+      'models.ts',
+    );
+
+    // Non-Angular files should not have component/directive definitions
+    expect(result).not.toContain('ɵcmp');
+    expect(result).not.toContain('ɵfac');
+    expect(result).not.toContain('ɵɵdefineComponent');
+    // Original content preserved
+    expect(result).toContain('DEFAULT_USER');
+  });
+});
+
+describe('Template-level styles', () => {
+  it('merges inline <style> from template with decorator styles', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-styled',
+        styles: ['h1 { color: blue }'],
+        template: '<style>p { margin: 0 }</style><h1>Hello</h1><p>World</p>'
+      })
+      export class StyledComponent {}
+    `,
+      'styled.ts',
+    );
+
+    expectCompiles(result);
+    // Both decorator styles and template <style> should be present
+    expect(result).toContain('h1 { color: blue }');
+    expect(result).toContain('p { margin: 0 }');
+  });
+
+  it('includes template <style> even without decorator styles', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-only-template-style',
+        template: '<style>.host { display: block }</style><div>content</div>'
+      })
+      export class OnlyTemplateStyleComponent {}
+    `,
+      'only-template-style.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('.host { display: block }');
+  });
+});
+
+describe('Member decorator removal', () => {
+  it('removes @Input and @Output decorators from compiled output', () => {
+    const result = compile(
+      `
+      import { Component, Input, Output, EventEmitter } from '@angular/core';
+      @Component({
+        selector: 'app-field',
+        template: '<p>{{ label }}</p>'
+      })
+      export class FieldComponent {
+        @Input() label = '';
+        @Output() clicked = new EventEmitter<void>();
+      }
+    `,
+      'field.ts',
+    );
+
+    expectCompiles(result);
+    // Member decorators should be stripped
+    expect(result).not.toMatch(/@Input/);
+    expect(result).not.toMatch(/@Output/);
+    // But the fields themselves remain
+    expect(result).toContain("label = ''");
+    expect(result).toContain('new EventEmitter');
+  });
+
+  it('removes @HostBinding and @HostListener decorators', () => {
+    const result = compile(
+      `
+      import { Component, HostBinding, HostListener } from '@angular/core';
+      @Component({
+        selector: 'app-host',
+        template: '<p>host</p>'
+      })
+      export class HostComponent {
+        @HostBinding('class.active') isActive = false;
+        @HostListener('click') onClick() {}
+      }
+    `,
+      'host.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).not.toMatch(/@HostBinding/);
+    expect(result).not.toMatch(/@HostListener/);
+    expect(result).toContain('isActive');
+    expect(result).toContain('onClick');
+  });
+});
+
+describe('Self-referencing component', () => {
+  it('compiles a recursive component that uses its own selector', () => {
+    const result = compile(
+      `
+      import { Component, input } from '@angular/core';
+      @Component({
+        selector: 'app-tree',
+        imports: [],
+        template: \`
+          <span>{{ node().label }}</span>
+          @for (child of node().children; track child.label) {
+            <app-tree [node]="child" />
+          }
+        \`
+      })
+      export class TreeComponent {
+        node = input.required<{label: string; children: any[]}>();
+      }
+    `,
+      'tree.ts',
+    );
+
+    expectCompiles(result);
+    // Should contain its own selector in the template compilation
+    expect(result).toContain('"app-tree"');
+    // Should have the [node] property binding
+    expect(result).toContain('ɵɵproperty("node"');
+  });
+});
+
+describe('TypeScript syntax in compiler output', () => {
+  it('preserves TypeScript syntax that downstream OXC stripping handles', () => {
+    // The compiler output still contains import type, generics, etc.
+    // These are stripped by vite.transformWithOxc() in the vite plugin,
+    // not by the compiler itself.
+    const result = rawCompile(
+      `
+      import { Component } from '@angular/core';
+      import type { OnInit } from '@angular/core';
+      @Component({
+        selector: 'app-typed',
+        template: '<p>hello</p>'
+      })
+      export class TypedComponent implements OnInit {
+        ngOnInit(): void {}
+      }
+    `,
+      'typed.ts',
+    );
+
+    expectCompiles(result.code);
+    // Compiler output retains TS syntax (the vite plugin strips it later)
+    expect(result.code).toContain('implements OnInit');
+    // But Ivy definitions are present
+    expect(result.code).toContain('ɵɵdefineComponent');
+  });
+});
+
+describe('Lazy dependency array emission', () => {
+  it('emits dependencies as arrow function for forward references', () => {
+    const childSrc = `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-child', template: '<p>child</p>' })
+      export class ChildComponent {}
+    `;
+
+    const parentSrc = `
+      import { Component } from '@angular/core';
+      import { ChildComponent } from './child';
+      @Component({
+        selector: 'app-parent',
+        imports: [ChildComponent],
+        template: '<app-child />'
+      })
+      export class ParentComponent {}
+    `;
+
+    const registry = buildRegistry({ 'child.ts': childSrc });
+    const result = compile(parentSrc, 'parent.ts', registry);
+
+    expectCompiles(result);
+    // Dependencies should be emitted as a lazy arrow function
+    expect(result).toMatch(/dependencies:\s*\(\)\s*=>/);
+  });
+});
+
+describe('Ivy definitions as static class members with TDZ hoisting', () => {
+  it('emits ɵcmp and ɵfac as static members inside the class', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {}
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toMatch(/static\s+ɵfac\s*=/);
+    expect(result).toMatch(/static\s+ɵcmp\s*=/);
+  });
+
+  it('hoists non-exported post-class const before the class to avoid TDZ', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {}
+
+      const helperFn = () => 'hello';
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // The const should be hoisted before the class
+    const helperIdx = result.indexOf('const helperFn');
+    const classIdx = result.indexOf('class TestComponent');
+    expect(helperIdx).toBeGreaterThan(-1);
+    expect(helperIdx).toBeLessThan(classIdx);
+  });
+
+  it('does not hoist exported declarations', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {}
+
+      export const SOME_TOKEN = 'value';
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // Exported const should stay after the class
+    const classIdx = result.indexOf('class TestComponent');
+    const tokenIdx = result.indexOf('SOME_TOKEN');
+    expect(tokenIdx).toBeGreaterThan(classIdx);
+  });
+});
+
+describe('hostDirectives metadata extraction', () => {
+  it('compiles component with bare hostDirectives identifier', () => {
+    const result = compile(
+      `
+      import { Component, Directive } from '@angular/core';
+
+      @Directive({ selector: '[tooltip]' })
+      export class TooltipDirective {}
+
+      @Component({
+        selector: 'app-host',
+        template: '<p>host</p>',
+        hostDirectives: [TooltipDirective],
+      })
+      export class HostComponent {}
+    `,
+      'host.ts',
+    );
+
+    expectCompiles(result);
+    // Should emit hostDirectives in the component def
+    expect(result).toContain('hostDirectives');
+  });
+
+  it('compiles component with hostDirectives object form and inputs/outputs', () => {
+    const result = compile(
+      `
+      import { Component, Directive, input, output } from '@angular/core';
+
+      @Directive({ selector: '[color]' })
+      export class ColorDirective {
+        color = input<string>();
+        colorChange = output<string>();
+      }
+
+      @Component({
+        selector: 'app-host',
+        template: '<p>host</p>',
+        hostDirectives: [{
+          directive: ColorDirective,
+          inputs: ['color'],
+          outputs: ['colorChange'],
+        }],
+      })
+      export class HostComponent {}
+    `,
+      'host.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('hostDirectives');
+  });
+
+  it('compiles component with aliased hostDirectives inputs/outputs', () => {
+    const result = compile(
+      `
+      import { Component, Directive, input, output } from '@angular/core';
+
+      @Directive({ selector: '[color]' })
+      export class ColorDirective {
+        color = input<string>();
+        colorChange = output<string>();
+      }
+
+      @Component({
+        selector: 'app-host',
+        template: '<p>host</p>',
+        hostDirectives: [{
+          directive: ColorDirective,
+          inputs: ['color: appColor'],
+          outputs: ['colorChange: appColorChange'],
+        }],
+      })
+      export class HostComponent {}
+    `,
+      'host.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('hostDirectives');
+    // Aliased names should appear in the compiled output
+    expect(result).toContain('appColor');
+    expect(result).toContain('appColorChange');
+  });
+
+  it('compiles component with forwardRef in hostDirectives', () => {
+    const result = compile(
+      `
+      import { Component, Directive, forwardRef } from '@angular/core';
+
+      @Component({
+        selector: 'app-host',
+        template: '<p>host</p>',
+        hostDirectives: [forwardRef(() => LateDirective)],
+      })
+      export class HostComponent {}
+
+      @Directive({ selector: '[late]' })
+      export class LateDirective {}
+    `,
+      'host.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('hostDirectives');
+  });
+});
+
+describe('Signal query R3QueryReference wrapping', () => {
+  it('wraps class predicate in viewChild as R3QueryReference', () => {
+    const result = compile(
+      `
+      import { Component, viewChild, ElementRef } from '@angular/core';
+      @Component({ selector: 'app-c', template: '<div #el></div>' })
+      export class C {
+        el = viewChild(ElementRef);
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    // ɵɵviewQuery should reference ElementRef directly (not as null)
+    expect(result).toContain('ɵɵviewQuery');
+    expect(result).toContain('ElementRef');
+    // Must NOT emit `null` as the query target
+    expect(result).not.toMatch(/ɵɵviewQuery\(null/);
+  });
+
+  it('wraps class predicate in @ViewChild decorator as R3QueryReference', () => {
+    const result = compile(
+      `
+      import { Component, ViewChild, ElementRef } from '@angular/core';
+      @Component({ selector: 'app-c', template: '<div #el></div>' })
+      export class C {
+        @ViewChild(ElementRef) el!: ElementRef;
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵɵviewQuery');
+    expect(result).toContain('ElementRef');
+    expect(result).not.toMatch(/ɵɵviewQuery\(null/);
+  });
+});
+
+describe('usesInheritance for extends clause', () => {
+  it('emits InheritDefinitionFeature for `class Foo extends Bar`', () => {
+    const result = compile(
+      `
+      import { Directive } from '@angular/core';
+      @Directive({ selector: '[parent]' })
+      export class Parent {}
+      @Directive({ selector: '[child]' })
+      export class Child extends Parent {}
+    `,
+      'd.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('InheritDefinitionFeature');
+  });
+
+  it('does not emit InheritDefinitionFeature for non-extending class', () => {
+    const result = compile(
+      `
+      import { Directive } from '@angular/core';
+      @Directive({ selector: '[d]' })
+      export class D {}
+    `,
+      'd.ts',
+    );
+    expectCompiles(result);
+    expect(result).not.toContain('InheritDefinitionFeature');
+  });
+});
+
+describe('Host raw embedded quote preservation', () => {
+  it('preserves embedded quotes in host bindings', () => {
+    const result = compile(
+      `
+      import { Directive } from '@angular/core';
+      @Directive({
+        selector: '[d]',
+        host: { '[attr.title]': 'showTitle ? "yes" : null' },
+      })
+      export class D {
+        showTitle = true;
+      }
+    `,
+      'd.ts',
+    );
+    expectCompiles(result);
+    // The literal "yes" string in the binding expression must survive
+    // (was previously stripped by an over-aggressive quote replacement).
+    expect(result).toContain('yes');
+  });
+});
+
+describe('Signal query read/descendants options', () => {
+  it('parses `read` option on viewChild', () => {
+    const result = compile(
+      `
+      import { Component, viewChild, ElementRef } from '@angular/core';
+      @Component({ selector: 'app-c', template: '<div #ref></div>' })
+      export class C {
+        el = viewChild<ElementRef>('ref', { read: ElementRef });
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵɵviewQuery');
+    expect(result).toContain('ElementRef');
+  });
+
+  it('parses `descendants: false` on contentChildren', () => {
+    const result = compile(
+      `
+      import { Component, contentChildren } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        items = contentChildren('item', { descendants: false });
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    // ɵɵcontentQuery's third arg is the descendants flag (1 = true,
+    // 0 = false). With descendants: false we expect a `, 0,` flag.
+    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*0/);
+  });
+
+  it('defaults contentChildren descendants to false when no options', () => {
+    const result = compile(
+      `
+      import { Component, contentChildren } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        items = contentChildren('item');
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*0/);
+  });
+
+  it('parses contentChildren with descendants: true', () => {
+    const result = compile(
+      `
+      import { Component, contentChildren } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        items = contentChildren('item', { descendants: true });
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*1/);
+  });
+
+  it('defaults contentChild() descendants to true (matches Angular API)', () => {
+    const result = compile(
+      `
+      import { Component, contentChild } from '@angular/core';
+      @Component({ selector: 'app-c', template: '' })
+      export class C {
+        item = contentChild('item');
+      }
+    `,
+      'c.ts',
+    );
+    expectCompiles(result);
+    // ɵɵcontentQuerySignal flag arg = 1 means descendants: true.
+    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*1/);
+  });
+});
+
+describe('@defer dependency import shape', () => {
+  it('emits import().then(m => m.X) for named imports', () => {
+    const childSrc = `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-lazy', template: 'lazy' })
+      export class LazyCmp {}
+    `;
+    const parentSrc = `
+      import { Component } from '@angular/core';
+      import { LazyCmp } from './lazy';
+      @Component({
+        selector: 'app-parent',
+        imports: [LazyCmp],
+        template: '@defer { <app-lazy/> }',
+      })
+      export class Parent {}
+    `;
+    const registry = buildRegistry({ 'lazy.ts': childSrc });
+    const result = compile(parentSrc, 'parent.ts', registry);
+    expectCompiles(result);
+    expect(result).toMatch(/import\(['"]\.\/lazy['"]\).*then.*m\.LazyCmp/);
+  });
+
+  it('uses original export name for aliased imports, not the local binding', () => {
+    const childSrc = `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-heavy', template: 'heavy' })
+      export class HeavyWidget {}
+    `;
+    const parentSrc = `
+      import { Component } from '@angular/core';
+      import { HeavyWidget as Widget } from './heavy';
+      @Component({
+        selector: 'app-parent',
+        imports: [Widget],
+        template: '@defer { <app-heavy/> }',
+      })
+      export class Parent {}
+    `;
+    const registry = buildRegistry({ 'heavy.ts': childSrc });
+    const result = compile(parentSrc, 'parent.ts', registry);
+    expectCompiles(result);
+    // Must reference the original export name `HeavyWidget`, NOT the
+    // local alias `Widget`. The module namespace exposes the original
+    // name regardless of how the consumer aliased it locally.
+    expect(result).toMatch(
+      /import\(['"]\.\/heavy['"]\)\.then\(\([^)]*\)\s*=>\s*\w+\.HeavyWidget\)/,
+    );
+    expect(result).not.toMatch(/m\.Widget(?!\w)/);
+  });
+
+  it('emits import().then(m => m.default) for default imports', () => {
+    const childSrc = `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-lazy', template: 'lazy' })
+      export default class LazyCmp {}
+    `;
+    const parentSrc = `
+      import { Component } from '@angular/core';
+      import LazyCmp from './lazy';
+      @Component({
+        selector: 'app-parent',
+        imports: [LazyCmp],
+        template: '@defer { <app-lazy/> }',
+      })
+      export class Parent {}
+    `;
+    const registry = buildRegistry({ 'lazy.ts': childSrc });
+    const result = compile(parentSrc, 'parent.ts', registry);
+    expectCompiles(result);
+    expect(result).toMatch(/import\(['"]\.\/lazy['"]\).*then.*m\.default/);
   });
 });

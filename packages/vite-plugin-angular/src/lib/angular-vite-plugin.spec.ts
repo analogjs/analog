@@ -1,4 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('vite', async () => {
+  const actual = await vi.importActual<typeof import('vite')>('vite');
+  return {
+    ...actual,
+    preprocessCSS: vi.fn(async (code: string) => ({ code, deps: new Set() })),
+  };
+});
+
 import {
   angular,
   createFsWatcherCacheInvalidator,
@@ -188,6 +197,61 @@ describe('JIT resolveId', () => {
       '/project/src/app/my-component.ts',
     );
     expect(inlineRE.test(result)).toBe(false);
+  });
+});
+
+describe('load ?inline style imports', () => {
+  // Vitest's fetchModule path calls moduleGraph.ensureEntryFromUrl before
+  // transformRequest, which makes pluginContainer.resolveId a no-op for the
+  // module-runner. The resolveId rewrite to ?analog-inline therefore never
+  // runs in tests, and the load hook must accept the original ?inline query
+  // directly. (See issue #2263.)
+  const realFs = require('node:fs');
+  const tmpDir = require('node:os').tmpdir();
+  const path = require('node:path');
+
+  function getLoadHook() {
+    const plugins = angular();
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+    return (mainPlugin as any).load.bind({});
+  }
+
+  it('handles ?inline style imports without going through resolveId', async () => {
+    const cssPath = path.join(tmpDir, `analog-inline-${Date.now()}.css`);
+    realFs.writeFileSync(cssPath, '.foo { color: red; }', 'utf-8');
+
+    try {
+      const load = getLoadHook();
+      const result = await load(`${cssPath}?inline`);
+      expect(result).toBeDefined();
+      expect(result).toContain('export default');
+      expect(result).toContain('color: red');
+    } finally {
+      realFs.unlinkSync(cssPath);
+    }
+  });
+
+  it('still handles the rewritten ?analog-inline query', async () => {
+    const cssPath = path.join(tmpDir, `analog-rewrite-${Date.now()}.css`);
+    realFs.writeFileSync(cssPath, '.bar { color: blue; }', 'utf-8');
+
+    try {
+      const load = getLoadHook();
+      const result = await load(`${cssPath}?analog-inline`);
+      expect(result).toBeDefined();
+      expect(result).toContain('export default');
+      expect(result).toContain('color: blue');
+    } finally {
+      realFs.unlinkSync(cssPath);
+    }
+  });
+
+  it('ignores non-style ?inline imports', async () => {
+    const load = getLoadHook();
+    const result = await load('/project/src/data.json?inline');
+    expect(result).toBeUndefined();
   });
 });
 

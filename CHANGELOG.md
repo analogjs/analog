@@ -1,3 +1,29 @@
+# [2.5.0-beta.27](https://github.com/analogjs/analog/compare/v2.5.0-beta.26...v2.5.0-beta.27) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** dedupe declarations across imports and module exports ([919009a](https://github.com/analogjs/analog/commit/919009a744c62c1abffdcd7dc9f063d80900c05d))
+- **angular-compiler:** hoist helpers via appendLeft when insertPos is 0 ([8a15184](https://github.com/analogjs/analog/commit/8a15184d423b0818c3c6d9f7429095554eecbd05))
+
+# [2.5.0-beta.26](https://github.com/analogjs/analog/compare/v2.5.0-beta.25...v2.5.0-beta.26) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** hoisted helpers survive type-only import elision ([99e1ba4](https://github.com/analogjs/analog/commit/99e1ba48d8b08f8eb8de53fdae5801ea7e909d7a))
+
+# [2.5.0-beta.25](https://github.com/analogjs/analog/compare/v2.5.0-beta.24...v2.5.0-beta.25) (2026-04-10)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** emit ?analog-{inline,raw} from JIT transform output ([#2272](https://github.com/analogjs/analog/issues/2272)) ([48f3ff9](https://github.com/analogjs/analog/commit/48f3ff9c7db10028fd08e95a5153043bf591d5f9))
+- **vite-plugin-angular:** handle ?inline style imports in load hook for Vitest ([#2271](https://github.com/analogjs/analog/issues/2271)) ([32d5b2d](https://github.com/analogjs/analog/commit/32d5b2ddeea0b7f7e93c32b40f53b184bd12923e))
+
+# [2.5.0-beta.24](https://github.com/analogjs/analog/compare/v2.5.0-beta.23...v2.5.0-beta.24) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** skip arrow fn types when finding assignment = … ([#2274](https://github.com/analogjs/analog/issues/2274)) ([992e180](https://github.com/analogjs/analog/commit/992e1803937db2fac381940982cc2f1141ddf3ff))
+
 # [2.5.0-beta.23](https://github.com/analogjs/analog/compare/v2.5.0-beta.22...v2.5.0-beta.23) (2026-04-10)
 
 ### Bug Fixes
