@@ -1,3 +1,9 @@
+# [2.5.0-beta.33](https://github.com/analogjs/analog/compare/v2.5.0-beta.32...v2.5.0-beta.33) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** provide flat defer fields on Angular v17 ([70a4d9b](https://github.com/analogjs/analog/commit/70a4d9b20dd10db0261d22e81d46640de323c8da))
+
 # [2.5.0-beta.32](https://github.com/analogjs/analog/compare/v2.5.0-beta.31...v2.5.0-beta.32) (2026-04-10)
 
 ### Bug Fixes
