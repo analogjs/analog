@@ -1,3 +1,11 @@
+# [2.5.0-beta.32](https://github.com/analogjs/analog/compare/v2.5.0-beta.31...v2.5.0-beta.32) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** defensive BinaryOperator map for Angular v19/v20 ([1a91f93](https://github.com/analogjs/analog/commit/1a91f932cc353efff9caf907bd48ceecc4480635))
+- **angular-compiler:** set componentMeta.interpolation for partial mode on v19/v20 ([a09ff88](https://github.com/analogjs/analog/commit/a09ff889e2b93a6a6c1c0839884e1f91f537497b))
+- **angular-compiler:** wrap Write\*Expr emissions in parens for nesting precedence ([48f80e4](https://github.com/analogjs/analog/commit/48f80e422bfe58b30810f5a850af4accf171cd94))
+
 # [2.5.0-beta.31](https://github.com/analogjs/analog/compare/v2.5.0-beta.30...v2.5.0-beta.31) (2026-04-10)
 
 ### Bug Fixes
