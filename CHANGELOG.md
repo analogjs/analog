@@ -1,3 +1,9 @@
+# [2.5.0-beta.29](https://github.com/analogjs/analog/compare/v2.5.0-beta.28...v2.5.0-beta.29) (2026-04-10)
+
+### Features
+
+- **angular-compiler:** structured debug logging via obug ([b155f53](https://github.com/analogjs/analog/commit/b155f53b9fd207c09fccca019d3939e891c344a8))
+
 # [2.5.0-beta.28](https://github.com/analogjs/analog/compare/v2.5.0-beta.27...v2.5.0-beta.28) (2026-04-10)
 
 ### Bug Fixes
