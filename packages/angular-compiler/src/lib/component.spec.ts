@@ -643,6 +643,37 @@ describe('@Component', () => {
       expect(result).toContain('card-header');
       expect(result).toContain('card-footer');
     });
+
+    it('keeps hoisted ngContentSelectors const when insertPos is 0', () => {
+      // Regression: inside the helpers-insertion step, `detectTypeOnlyImportNames`
+      // is called before the setClassMetadata IIFE has been appended, so when
+      // the only import is `Component` used solely in the @Component decorator
+      // it gets flagged as elidable. That made `insertPos` stay at 0. Helpers
+      // were then inserted via `ms.appendRight(0, …)`, anchored to position 0
+      // — inside the `ms.remove(0, declEnd)` range the later elision pass
+      // uses to strip the import — so MagicString wiped the helpers along
+      // with the import, producing `ngContentSelectors: _c0` with no
+      // corresponding declaration at runtime.
+      const result = compile(
+        `import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-bottom-nav',
+  host: { class: 'mt-12 flex' },
+  template: '<ng-content />',
+})
+export class BottomNav {}
+`,
+        'bottom-nav.ts',
+      );
+
+      expectCompiles(result);
+      const ref = result.match(/ngContentSelectors:\s*(_c\d+)/);
+      expect(ref).not.toBeNull();
+      expect(result).toMatch(
+        new RegExp(`(?:const|var|let)\\s+${ref![1]}\\s*=`),
+      );
+    });
   });
 
   describe('Pipes in Templates', () => {

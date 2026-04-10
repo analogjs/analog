@@ -1213,17 +1213,30 @@ export function compile(
         break;
       }
     }
-    // Use `appendRight` (binds to the character to the *right* of insertPos)
-    // rather than `appendLeft` so that helpers survive a downstream
-    // `ms.overwrite()` of the preceding import. The type-only specifier
-    // elision pass rewrites mixed `import { SomeType, someValue }`
-    // declarations via `ms.overwrite(node.start, node.end, ...)`. With
-    // `appendLeft`, the helpers are bound to the `;` of the rewritten
-    // import — which lives inside the overwrite range — and MagicString
-    // wipes them. `appendRight` binds to the character after `;` (typically
-    // the `\n` separating the imports from the class) which is outside the
-    // overwrite range, so the helpers survive.
-    ms.appendRight(insertPos, '\n' + helpers.join('\n') + '\n');
+    // Helpers must survive downstream `ms.overwrite()` / `ms.remove()` of
+    // imports performed by the type-only specifier elision pass (step 5).
+    //
+    // Case `insertPos > 0`: a surviving import ends at `insertPos`. Use
+    // `appendRight(insertPos, …)` so helpers bind to the `\n` after the
+    // import's `;` — outside any overwrite range `[node.start, node.end)`
+    // of a preceding import. `appendLeft(insertPos, …)` would bind to the
+    // `;` itself, which IS inside the overwrite range and would be wiped.
+    //
+    // Case `insertPos === 0`: no import survives — every import is going
+    // to be elided, and `elideTypeOnlyImportsMagicString` will
+    // `ms.remove(0, declEnd)` the first one. `appendRight(0, …)` anchors
+    // to the character at position 0 (the first import's first char),
+    // which is inside `[0, declEnd)` and gets wiped. Use `appendLeft(0, …)`
+    // instead — it anchors to the LEFT of position 0, outside any range
+    // starting at 0, so the helpers survive. Ordering is still correct
+    // because the i0 import prepended in step 1 lives in MagicString's
+    // `intro` (from `ms.prepend`), which always emits before any
+    // `appendLeft` content at position 0.
+    if (insertPos === 0) {
+      ms.appendLeft(0, helpers.join('\n') + '\n');
+    } else {
+      ms.appendRight(insertPos, '\n' + helpers.join('\n') + '\n');
+    }
   }
   if (sideEffects.length > 0) {
     ms.append('\n\n' + sideEffects.join('\n'));
