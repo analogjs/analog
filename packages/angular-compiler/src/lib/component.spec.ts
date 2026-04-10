@@ -1973,6 +1973,10 @@ describe('Duplicate i0 import prevention', () => {
 });
 
 describe('OXC-based resource inlining', () => {
+  function countOccurrences(haystack: string, needle: string): number {
+    return haystack.split(needle).length - 1;
+  }
+
   it('inlines templateUrl via AST rewriting', () => {
     const result = inlineResourceUrls(
       `
@@ -2019,6 +2023,109 @@ describe('OXC-based resource inlining', () => {
     `;
     const result = inlineResourceUrls(src, 'inline.ts');
     expect(result).toBe(src);
+  });
+
+  it('merges styleUrl into existing inline styles array (no duplicate key)', () => {
+    const result = inlineResourceUrls(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-ext',
+        template: '',
+        styles: [\`:host { display: block; }\`],
+        styleUrl: './test.component.css'
+      })
+      export class ExtComponent {}
+    `,
+      __dirname + '/__fixtures__/test.component.ts',
+    );
+
+    expect(result).not.toContain('styleUrl');
+    // Only one `styles:` key should exist in the decorator literal.
+    expect(countOccurrences(result, 'styles:')).toBe(1);
+    // Original inline style is preserved.
+    expect(result).toContain(':host { display: block; }');
+    // Inlined CSS from the file is present.
+    expect(result).toContain('.wrapper');
+  });
+
+  it('merges styleUrls into existing inline styles array (no duplicate key)', () => {
+    const result = inlineResourceUrls(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-ext',
+        template: '',
+        styles: [\`:host { display: block; }\`],
+        styleUrls: ['./test.component.css']
+      })
+      export class ExtComponent {}
+    `,
+      __dirname + '/__fixtures__/test.component.ts',
+    );
+
+    expect(result).not.toContain('styleUrls');
+    expect(countOccurrences(result, 'styles:')).toBe(1);
+    expect(result).toContain(':host { display: block; }');
+    expect(result).toContain('.wrapper');
+  });
+
+  it('merges styleUrl into an existing styles array with a trailing comma without producing a sparse element', () => {
+    const result = inlineResourceUrls(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-ext',
+        template: '',
+        styles: [
+          \`:host { display: block; }\`,
+        ],
+        styleUrl: './test.component.css'
+      })
+      export class ExtComponent {}
+    `,
+      __dirname + '/__fixtures__/test.component.ts',
+    );
+
+    expect(result).not.toContain('styleUrl');
+    expect(countOccurrences(result, 'styles:')).toBe(1);
+    expect(result).toContain(':host { display: block; }');
+    expect(result).toContain('.wrapper');
+
+    // The merged array must not contain a sparse hole caused by the
+    // original trailing comma — downstream metadata extraction iterates
+    // array elements and crashes on null entries.
+    expect(() => rawCompile(result, 'ext.ts')).not.toThrow();
+  });
+
+  it('merges styleUrl into an empty styles array without producing a sparse element', () => {
+    const result = inlineResourceUrls(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-ext',
+        template: '',
+        styles: [],
+        styleUrl: './test.component.css'
+      })
+      export class ExtComponent {}
+    `,
+      __dirname + '/__fixtures__/test.component.ts',
+    );
+
+    expect(result).not.toContain('styleUrl');
+    expect(countOccurrences(result, 'styles:')).toBe(1);
+    // Must not leave a leading comma inside the array, i.e. `styles: [, "..."]`.
+    const stylesIdx = result.indexOf('styles:');
+    const bracketIdx = result.indexOf('[', stylesIdx);
+    let firstNonWs = bracketIdx + 1;
+    while (firstNonWs < result.length) {
+      const ch = result[firstNonWs];
+      if (ch !== ' ' && ch !== '\t' && ch !== '\n' && ch !== '\r') break;
+      firstNonWs++;
+    }
+    expect(result[firstNonWs]).not.toBe(',');
+    expect(result).toContain('.wrapper');
   });
 
   it('extracts inline styles from template literals', () => {
