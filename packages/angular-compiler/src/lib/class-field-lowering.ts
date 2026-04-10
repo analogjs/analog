@@ -113,9 +113,14 @@ function lowerClassFieldsForClass(
   for (const field of fieldsToLower) {
     if (field.isPrivate) {
       // Keep declaration without initializer: `#field;`
+      // Start scanning after the type annotation (if present) to avoid
+      // matching `=` inside `=>` of arrow function type annotations.
+      const scanFrom = field.node.typeAnnotation
+        ? field.node.typeAnnotation.end
+        : field.node.key.end;
       const eqStart = findEqualsSign(
         sourceCode,
-        field.node.key.end,
+        scanFrom,
         field.node.value.start,
       );
       ms.remove(eqStart, field.node.value.end);

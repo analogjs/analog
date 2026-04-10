@@ -285,4 +285,62 @@ export default class TestComponent {
     expect(result).toContain(`this[KEY] = 'value'`);
     expect(result).not.toContain(`this.[KEY]`);
   });
+
+  it('does not mangle private field with arrow function type and initializer', () => {
+    const result = compileWithLowering(`
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        #registeredClearUserData: (() => void) | null = null;
+      }
+    `);
+
+    expectCompiles(result);
+    // Initializer should be in constructor
+    expect(result).toContain('this.#registeredClearUserData = null');
+    // Type annotation should be fully preserved (not mangled to "(() ;")
+    expect(result).not.toContain('(() ;');
+  });
+
+  it('does not mangle private field with fn type annotation and fn initializer', () => {
+    const result = compileWithLowering(`
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        #onChange: (value: string) => void = () => {};
+      }
+    `);
+
+    expectCompiles(result);
+    expect(result).toContain('this.#onChange = () => {}');
+    expect(result).not.toContain('(value: string) ;');
+  });
+
+  it('does not mangle private field with generic arrow type and initializer', () => {
+    const result = compileWithLowering(`
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        #openChangeFns: Array<(open: boolean) => void> = [];
+      }
+    `);
+
+    expectCompiles(result);
+    expect(result).toContain('this.#openChangeFns = []');
+    expect(result).not.toContain('(open: boolean) ;');
+  });
+
+  it('preserves private field with simple type and initializer', () => {
+    const result = compileWithLowering(`
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        #name: string = 'hello';
+      }
+    `);
+
+    expectCompiles(result);
+    expect(result).toContain("this.#name = 'hello'");
+    expect(result).toMatch(/#name/);
+  });
 });
