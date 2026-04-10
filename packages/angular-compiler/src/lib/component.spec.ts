@@ -2126,6 +2126,45 @@ describe('Decorator and class field preservation', () => {
     expect(result).not.toContain('@Component');
     expect(result).toContain('ɵɵdefineComponent');
   });
+
+  // Regression: a real-world report on Angular v19 said that
+  //   @ViewChild('nextButton', { read: ElementRef })
+  //   nextButton?: ElementRef<HTMLElement>;
+  // produced `[PARSE_ERROR] Cannot assign to this expression` from OXC
+  // when stripping TypeScript syntax from the compiled output. Switching
+  // the same field to the signal `viewChild()` API made it work, which
+  // narrowed the bug to the decorator-based `@ViewChild` code path.
+  // The compatibility matrix runs this test on every supported Angular
+  // major; if the bug repros on any slot, the matrix will catch it.
+  it('compiles @ViewChild decorator with read option and optional field', () => {
+    const result = compile(
+      `
+      import { Component, ViewChild, ElementRef } from '@angular/core';
+      @Component({
+        selector: 'app-bottom-next-button',
+        template: '<button #nextButton>Next</button>',
+      })
+      export class BottomNextButton {
+        @ViewChild('nextButton', { read: ElementRef })
+        nextButton?: ElementRef<HTMLElement>;
+      }
+    `,
+      'bottom-next-button.component.ts',
+    );
+
+    expectCompiles(result);
+    // Query setup must reference ElementRef as the read target.
+    expect(result).toContain('ɵɵviewQuery');
+    expect(result).toContain('ElementRef');
+    // The temp variable assignment for the query refresh must remain a
+    // valid l-value (`(_t = i0.ɵɵloadQuery())` — paren-wrapped, NOT
+    // `i0.ɵɵloadQuery() = something`). Catches the precedence bug class
+    // that surfaced on v19.
+    expect(result).toMatch(/\(\w+\s*=\s*i0\.ɵɵloadQuery\(\)\)/);
+    // The result of the query must be assigned to the field via
+    // `(ctx.nextButton = _t.first)` — also paren-wrapped.
+    expect(result).toMatch(/\(ctx\.nextButton\s*=\s*\w+\.first\)/);
+  });
 });
 
 describe('Non-Angular files pass through unchanged', () => {
