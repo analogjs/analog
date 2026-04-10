@@ -55,12 +55,7 @@ import {
 } from './metadata.js';
 import { buildDeferDependencyMap } from './defer.js';
 import { debugCompile, debugEmit } from './debug.js';
-
-/** Detect installed Angular major version for compatibility. Supports 19+. */
-const ANGULAR_MAJOR = (() => {
-  const major = Number.parseInt(o.VERSION?.major ?? '', 10);
-  return Number.isFinite(major) && major > 0 ? major : 22;
-})();
+import { ANGULAR_MAJOR } from './angular-version.js';
 
 /**
  * COMPLETE EXHAUSTIVE ANGULAR LITE COMPILER
