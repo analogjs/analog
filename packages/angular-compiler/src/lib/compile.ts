@@ -54,6 +54,7 @@ import {
   extractConstructorDeps,
 } from './metadata.js';
 import { buildDeferDependencyMap } from './defer.js';
+import { debugCompile, debugEmit } from './debug.js';
 
 /** Detect installed Angular major version for compatibility. Supports 19+. */
 const ANGULAR_MAJOR = (() => {
@@ -142,6 +143,13 @@ export function compile(
   const resolvedInlineStyles = opts.resolvedInlineStyles;
   const useDefineForClassFields = opts.useDefineForClassFields ?? false;
   const isPartial = opts.compilationMode === 'partial';
+  const startTimeMs = debugCompile.enabled ? performance.now() : 0;
+  debugCompile(
+    'compile %s (mode=%s, registry=%d entries)',
+    fileName,
+    isPartial ? 'partial' : 'full',
+    registry?.size ?? 0,
+  );
   const origSourceFile = ts.createSourceFile(
     fileName,
     sourceCode,
@@ -1072,8 +1080,16 @@ export function compile(
         constantPool.statements.push(
           new o.ExpressionStatement(classMetadataExpr),
         );
-      } catch {
-        // Skip if compileClassMetadata fails
+      } catch (e) {
+        // Skip if compileClassMetadata fails — surfaced via DEBUG=analog-compiler
+        if (debugCompile.enabled) {
+          debugCompile(
+            'compileClassMetadata failed for %s in %s: %s',
+            className,
+            fileName,
+            (e as Error)?.message,
+          );
+        }
       }
     });
 
@@ -1285,6 +1301,15 @@ export function compile(
     hires: 'boundary',
   });
 
+  if (debugCompile.enabled) {
+    debugCompile(
+      'compile %s done (%dms, %d classes, %d resource deps)',
+      fileName,
+      Math.round(performance.now() - startTimeMs),
+      classResults.length,
+      resourceDependencies.length,
+    );
+  }
   return {
     code: ms.toString(),
     map,

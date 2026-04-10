@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "magic-string": "^0.30.0",
+    "obug": "^2.1.1",
     "oxc-parser": "^0.121.0"
   },
   "exports": {

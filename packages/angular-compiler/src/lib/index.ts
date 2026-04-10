@@ -11,3 +11,9 @@ export {
 } from './dts-reader.js';
 export { jitTransform, type JitTransformResult } from './jit-transform.js';
 export { inlineResourceUrls, extractInlineStyles } from './resource-inliner.js';
+export {
+  debugCompile,
+  debugRegistry,
+  debugResolve,
+  debugEmit,
+} from './debug.js';

@@ -20,3 +20,9 @@ export {
   inlineResourceUrls,
   extractInlineStyles,
 } from './lib/resource-inliner.js';
+export {
+  debugCompile,
+  debugRegistry,
+  debugResolve,
+  debugEmit,
+} from './lib/debug.js';

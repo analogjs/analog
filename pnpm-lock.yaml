@@ -102,6 +102,9 @@ importers:
       mermaid:
         specifier: ^10.9.5
         version: 10.9.5
+      obug:
+        specifier: ^2.1.1
+        version: 2.1.1
       oxc-parser:
         specifier: ^0.121.0
         version: 0.121.0

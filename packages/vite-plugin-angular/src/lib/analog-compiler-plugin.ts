@@ -21,6 +21,8 @@ import {
   inlineResourceUrls,
   extractInlineStyles,
   generateHmrCode,
+  debugCompile,
+  debugRegistry,
   type ComponentRegistry,
 } from '@analogjs/angular-compiler';
 
@@ -80,7 +82,14 @@ export function analogCompilerPlugin(
     let code: string;
     try {
       code = await fsPromises.readFile(file, 'utf-8');
-    } catch {
+    } catch (e) {
+      if (debugRegistry.enabled) {
+        debugRegistry(
+          'scanBarrelExports: failed to read %s: %s',
+          file,
+          (e as Error)?.message,
+        );
+      }
       return;
     }
     const entries = scanFile(code, file);
@@ -108,14 +117,24 @@ export function analogCompilerPlugin(
         resolve(dir, normalizedRel + '.ts'),
         resolve(dir, normalizedRel, 'index.ts'),
       ];
+      let resolved = false;
       for (const candidate of reExportCandidates) {
         try {
           await fsPromises.access(candidate);
           await scanBarrelExports(candidate, visited, overwrite);
+          resolved = true;
           break;
         } catch {
           // try next candidate
         }
+      }
+      if (!resolved && debugRegistry.enabled) {
+        debugRegistry(
+          'scanBarrelExports: %s re-export %s did not resolve to %o',
+          file,
+          rel,
+          reExportCandidates,
+        );
       }
     }
   }
@@ -158,7 +177,14 @@ export function analogCompilerPlugin(
         try {
           const code = await fsPromises.readFile(file, 'utf-8');
           return scanFile(code, file);
-        } catch {
+        } catch (e) {
+          if (debugRegistry.enabled) {
+            debugRegistry(
+              'initAnalogCompiler: skipping unreadable %s: %s',
+              file,
+              (e as Error)?.message,
+            );
+          }
           return []; // Skip unreadable files
         }
       }),
@@ -190,6 +216,11 @@ export function analogCompilerPlugin(
         barrelCandidates.map((c) => scanBarrelExports(c, buildStartVisited)),
       );
     }
+    debugRegistry(
+      'initAnalogCompiler done: %d entries from %d candidate files',
+      analogRegistry.size,
+      candidates.size,
+    );
   }
 
   function ensureDtsRegistryForSource(code: string, id: string) {
@@ -250,7 +281,15 @@ export function analogCompilerPlugin(
               resolvedConfig,
             );
             resolvedInlineStyles.set(i, processed.code);
-          } catch {
+          } catch (e) {
+            if (debugCompile.enabled) {
+              debugCompile(
+                'inline style #%d preprocessing failed in %s: %s',
+                i,
+                id,
+                (e as Error)?.message,
+              );
+            }
             // Skip styles that can't be preprocessed
           }
         }
