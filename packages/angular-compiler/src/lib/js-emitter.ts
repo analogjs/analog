@@ -344,25 +344,48 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     }
     return params + ' => ' + bodyExpr;
   }
+  // `Write*Expr` visitors must wrap the assignment in parentheses so that
+  // it composes correctly when nested inside higher-precedence parents
+  // (e.g. as the test of a `ConditionalExpr`). Without the wrapping,
+  //   tmp = ctx.data() ? 0 : -1
+  // parses as `tmp = (ctx.data() ? 0 : -1)` because assignment binds
+  // looser than the ternary, which silently assigns the wrong value to
+  // `tmp`. Angular's own `AbstractEmitterVisitor.visitWriteVarExpr`
+  // applies the same context-sensitive wrapping (it skips the parens
+  // when the assignment is a top-level statement to avoid `(x = 1);`
+  // noise; we always wrap for simplicity — the redundant parens at
+  // statement level are harmless).
+  //
+  // This matters specifically on Angular v19/v20, where assignment is
+  // represented in the IR via `WriteVarExpr` / `AssignTemporaryExpr →
+  // WriteVarExpr`. On v21+ the same construct is represented via
+  // `BinaryOperatorExpr(Assign, ...)`, which `visitBinaryOperatorExpr`
+  // already wraps via `isAssignmentOperator`. Without these wrappers,
+  // `@if (data(); as item)` and similar conditional alias forms emit
+  // runtime-broken code on v19/v20.
   visitWriteVarExpr(ast: any) {
-    return ast.name + ' = ' + ast.value.visitExpression(this, null);
+    return '(' + ast.name + ' = ' + ast.value.visitExpression(this, null) + ')';
   }
   visitWritePropExpr(ast: any) {
     return (
+      '(' +
       ast.receiver.visitExpression(this, null) +
       '.' +
       ast.name +
       ' = ' +
-      ast.value.visitExpression(this, null)
+      ast.value.visitExpression(this, null) +
+      ')'
     );
   }
   visitWriteKeyExpr(ast: any) {
     return (
+      '(' +
       ast.receiver.visitExpression(this, null) +
       '[' +
       ast.index.visitExpression(this, null) +
       '] = ' +
-      ast.value.visitExpression(this, null)
+      ast.value.visitExpression(this, null) +
+      ')'
     );
   }
   visitInvokeMethodExpr(ast: any) {
