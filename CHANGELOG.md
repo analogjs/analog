@@ -1,3 +1,9 @@
+# [2.5.0-beta.31](https://github.com/analogjs/analog/compare/v2.5.0-beta.30...v2.5.0-beta.31) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** defensive isAssignment check for Angular 20.0.0 ([8583dd1](https://github.com/analogjs/analog/commit/8583dd1ee3d5a61850975d45b677f423fb772895))
+
 # [2.5.0-beta.30](https://github.com/analogjs/analog/compare/v2.5.0-beta.29...v2.5.0-beta.30) (2026-04-10)
 
 ### Bug Fixes
