@@ -1,3 +1,9 @@
+# [2.5.0-beta.28](https://github.com/analogjs/analog/compare/v2.5.0-beta.27...v2.5.0-beta.28) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** preserve operator precedence in emitted binary expressions ([#2275](https://github.com/analogjs/analog/issues/2275)) ([e2dfb5a](https://github.com/analogjs/analog/commit/e2dfb5a9211b7f7718eb10e953379271f6ca5597))
+
 # [2.5.0-beta.27](https://github.com/analogjs/analog/compare/v2.5.0-beta.26...v2.5.0-beta.27) (2026-04-10)
 
 ### Bug Fixes
