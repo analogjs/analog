@@ -1,3 +1,9 @@
+# [2.5.0-beta.24](https://github.com/analogjs/analog/compare/v2.5.0-beta.23...v2.5.0-beta.24) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** skip arrow fn types when finding assignment = … ([#2274](https://github.com/analogjs/analog/issues/2274)) ([992e180](https://github.com/analogjs/analog/commit/992e1803937db2fac381940982cc2f1141ddf3ff))
+
 # [2.5.0-beta.23](https://github.com/analogjs/analog/compare/v2.5.0-beta.22...v2.5.0-beta.23) (2026-04-10)
 
 ### Bug Fixes
