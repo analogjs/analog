@@ -1901,8 +1901,14 @@ describe('@if with as alias context', () => {
     // Variable name differs by Angular version: v18+ emits `tmp_X_Y`,
     // v17 emits `<ComponentName>_contFlowTmp`. Accept any identifier.
     expect(result).toMatch(/\(\w+ = ctx\.user\(\)\)/);
-    // The embedded template should use ctx (the alias value) for bindings
-    expect(result).toMatch(/const \w+ = ctx/);
+    // The embedded template should use ctx (the alias value) for bindings.
+    // v18+ destructures the alias into a separate `const u_X = ctx` and
+    // references it from the bindings; v17 uses `ctx` directly without
+    // the re-binding step. Both shapes resolve `u.name` / `u.email`
+    // correctly at runtime.
+    if (ANGULAR_MAJOR >= 18) {
+      expect(result).toMatch(/const \w+ = ctx/);
+    }
     expect(result).toContain('.name');
     expect(result).toContain('.email');
   });
