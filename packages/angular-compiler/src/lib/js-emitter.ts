@@ -278,7 +278,17 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
 
     // Wrap assignments in parens so they work correctly as ternary conditions:
     // (tmp = val) ? a : b  vs  tmp = val ? a : b
-    if (ast.isAssignment()) {
+    //
+    // `BinaryOperatorExpr.isAssignment()` was added in a later 20.x patch
+    // (it doesn't exist on Angular 20.0.0). On versions where the method
+    // is missing, fall back to reading `operator` directly. We only emit
+    // `BinaryOperator.Assign` in our compile output (no compound
+    // assignments like += or ??=), so the simplified check is sufficient.
+    const isAssignment =
+      typeof (ast as any).isAssignment === 'function'
+        ? (ast as any).isAssignment()
+        : ast.operator === o.BinaryOperator.Assign;
+    if (isAssignment) {
       return '(' + expr + ')';
     }
     return expr;
