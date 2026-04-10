@@ -164,5 +164,19 @@ describe('JSEmitter – operator precedence', () => {
       const expr = bin(o.BinaryOperator.Assign, v('x'), lit(1));
       expect(emitAngularExpr(expr)).toBe('(x = 1)');
     });
+
+    it('wraps addition-assignment in parens', () => {
+      const expr = bin(o.BinaryOperator.AdditionAssignment, v('x'), lit(1));
+      expect(emitAngularExpr(expr)).toBe('(x += 1)');
+    });
+
+    it('wraps nullish-coalesce-assignment in parens', () => {
+      const expr = bin(
+        o.BinaryOperator.NullishCoalesceAssignment,
+        v('x'),
+        lit(1),
+      );
+      expect(emitAngularExpr(expr)).toBe('(x ??= 1)');
+    });
   });
 });
