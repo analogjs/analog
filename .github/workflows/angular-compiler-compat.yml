@@ -35,9 +35,17 @@ name: Angular Compiler Compatibility Tests
 
 on:
   workflow_dispatch:
-  pull_request: {}
+  pull_request:
+    paths:
+      - 'packages/angular-compiler/**'
+      - 'package.json'
+      - '.github/workflows/angular-compiler-compat.yml'
   push:
     branches: [beta]
+    paths:
+      - 'packages/angular-compiler/**'
+      - 'package.json'
+      - '.github/workflows/angular-compiler-compat.yml'
 
 env:
   NODE_OPTIONS: --max-old-space-size=16384
