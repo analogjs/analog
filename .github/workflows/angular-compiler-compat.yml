@@ -35,24 +35,17 @@ name: Angular Compiler Compatibility Tests
 
 on:
   workflow_dispatch:
-  # Automatic triggers are intentionally disabled until the matrix has
-  # been validated end-to-end via manual workflow_dispatch runs. Once
-  # the auto-issue path and the install-with-overrides flow are proven
-  # green on each numeric matrix slot, uncomment the blocks below to
-  # re-enable PR and beta-push triggers (filtered to compiler-relevant
-  # paths to avoid running on unrelated PRs).
-  #
-  # pull_request:
-  #   paths:
-  #     - 'packages/angular-compiler/**'
-  #     - 'package.json'
-  #     - '.github/workflows/angular-compiler-compat.yml'
-  # push:
-  #   branches: [beta]
-  #   paths:
-  #     - 'packages/angular-compiler/**'
-  #     - 'package.json'
-  #     - '.github/workflows/angular-compiler-compat.yml'
+  pull_request:
+    paths:
+      - 'packages/angular-compiler/**'
+      - 'package.json'
+      - '.github/workflows/angular-compiler-compat.yml'
+  push:
+    branches: [beta]
+    paths:
+      - 'packages/angular-compiler/**'
+      - 'package.json'
+      - '.github/workflows/angular-compiler-compat.yml'
 
 env:
   NODE_OPTIONS: --max-old-space-size=16384
@@ -134,12 +127,7 @@ jobs:
         # PRs already surface failures via the check status — auto-opening
         # issues for PRs would create spam. Only fire on direct beta pushes
         # so the issue tracker reflects the state of `main`-ish branches.
-        #
-        # DISABLED for now: validating the matrix end-to-end via manual
-        # workflow_dispatch runs first. The bash body, GH_TOKEN env, and
-        # dedup logic stay intact so re-enabling is a one-line edit —
-        # remove `false &&` from the `if:` condition below.
-        if: false && failure() && github.event_name == 'push'
+        if: failure() && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
