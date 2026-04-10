@@ -1,3 +1,10 @@
+# [2.5.0-beta.25](https://github.com/analogjs/analog/compare/v2.5.0-beta.24...v2.5.0-beta.25) (2026-04-10)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** emit ?analog-{inline,raw} from JIT transform output ([#2272](https://github.com/analogjs/analog/issues/2272)) ([48f3ff9](https://github.com/analogjs/analog/commit/48f3ff9c7db10028fd08e95a5153043bf591d5f9))
+- **vite-plugin-angular:** handle ?inline style imports in load hook for Vitest ([#2271](https://github.com/analogjs/analog/issues/2271)) ([32d5b2d](https://github.com/analogjs/analog/commit/32d5b2ddeea0b7f7e93c32b40f53b184bd12923e))
+
 # [2.5.0-beta.24](https://github.com/analogjs/analog/compare/v2.5.0-beta.23...v2.5.0-beta.24) (2026-04-10)
 
 ### Bug Fixes
