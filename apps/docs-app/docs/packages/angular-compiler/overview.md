@@ -101,10 +101,37 @@ The Analog Compiler currently passes ~91% of Angular's official conformance suit
 
 For the current list of known issues, see [open issues on GitHub](https://github.com/analogjs/analog/issues).
 
+## Debugging
+
+The Analog Compiler emits structured debug output via the [`obug`](https://github.com/sxzz/obug) library, activated by the standard `DEBUG` environment variable:
+
+```bash
+# Top-level compile events (per-file start, end, timing, fatal errors)
+DEBUG=analog-compiler npm run build
+
+# Everything (compile + registry + resolve + emit)
+DEBUG='analog-compiler*' npm run build
+
+# Just the registry-scanning trace
+DEBUG=analog-compiler:registry npm run build
+```
+
+Available namespaces:
+
+| Namespace                  | What it traces                                                                                                                                                     |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `analog-compiler`          | Per-file compile start/end with timing, class counts, and resource-dependency counts. Also surfaces fatal errors that would otherwise be silently caught.          |
+| `analog-compiler:registry` | Source-file and `.d.ts` scanning, barrel re-export resolution, candidate-file failures. Use this when a directive or pipe is not being recognized as a dependency. |
+| `analog-compiler:resolve`  | Cross-file dependency resolution decisions: how `imports: [...]` entries are resolved to underlying directives, NgModule export expansion, tuple barrel expansion. |
+| `analog-compiler:emit`     | Code emission and helper hoisting decisions, type-only import elision.                                                                                             |
+
+When `DEBUG` matches an `analog-compiler` namespace, the compiler also surfaces previously-swallowed errors — failed barrel-export lookups, unparseable workspace files, inline-style preprocessing failures, and `compileClassMetadata` failures. These are silent in normal operation to avoid noise, but turning them on is the fastest way to find out why your component is not being recognized as a directive.
+
 ## Reporting bugs
 
 Bug reports are welcome at [github.com/analogjs/analog/issues](https://github.com/analogjs/analog/issues). To make a bug actionable, please include:
 
 - The smallest input file that reproduces the issue
-- The Analog Compiler's output (the contents of the failing file after compilation, available via `vite-plugin-inspect` or by adding a debug step)
+- The Analog Compiler's output (available via `vite-plugin-inspect` or by saving the post-transform code from a debug step)
+- The Analog Compiler debug log: `DEBUG='analog-compiler*' npm run build > debug.log 2>&1`
 - The diff against `ngc`'s output for the same input, when you can produce one
