@@ -1482,6 +1482,49 @@ describe('templateUrl inlining in metadata', () => {
   });
 });
 
+describe('setClassMetadata construction shape', () => {
+  // Regression guard: Angular's `LiteralMapPropertyAssignment` class export
+  // was removed in some 20.3.x patches and restored later. Using
+  // `new o.LiteralMapPropertyAssignment(...)` throws "is not a constructor"
+  // when the export is missing, and the surrounding try/catch in compile.ts
+  // silently disables setClassMetadata emission for every class in the
+  // project — visible only under DEBUG=analog-compiler*.
+  //
+  // The fix is to construct entries as plain `{ key, value, quoted }`
+  // object literals — both Angular's own emitter and Analog's `JSEmitter`
+  // consume entries via duck typing, so no class instance is required.
+  // ESM bindings are read-only, so we can't simulate the missing export
+  // at runtime. Instead, guard against re-introducing `new o.LiteralMap
+  // PropertyAssignment(...)` at the source level.
+  it('compile.ts does not call `new o.LiteralMapPropertyAssignment`', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const src = readFileSync(join(__dirname, 'compile.ts'), 'utf-8');
+    expect(src).not.toMatch(/new\s+o\.LiteralMapPropertyAssignment\b/);
+  });
+
+  it('emits setClassMetadata for a basic component', () => {
+    // Positive proof that the plain-object construction path produces a
+    // setClassMetadata IIFE with the decorator name and selector intact.
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-meta',
+        template: '<p>hi</p>',
+      })
+      export class MetaComponent {}
+    `,
+      'meta.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('ɵsetClassMetadata');
+    expect(result).toContain('MetaComponent');
+    expect(result).toContain('Component');
+    expect(result).toContain('app-meta');
+  });
+});
+
 describe('Content projection', () => {
   it('compiles single-slot ng-content', () => {
     const result = compile(

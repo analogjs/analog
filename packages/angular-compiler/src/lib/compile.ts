@@ -1049,27 +1049,39 @@ export function compile(
       }
 
       try {
+        // `LiteralMapPropertyAssignment` was a class with a constructor in
+        // Angular up through ~v19, removed-then-restored in later v20/v21
+        // patches. The only stable shape across versions is the plain
+        // `{ key, value, quoted }` object literal — Angular's own emitter
+        // and Analog's `JSEmitter` both consume entries via duck typing
+        // (`.key` / `.value` / `.quoted`), and `compileClassMetadata` does
+        // not `instanceof`-check entries. The js-emitter has a matching
+        // comment at the consumption site. Using `new o.LiteralMapProperty
+        // Assignment(...)` would throw "is not a constructor" on Angular
+        // versions where the class export is missing (e.g. 20.3.x), and
+        // the surrounding try/catch would silently disable class metadata
+        // emission for every class in the project.
         const classMetaInput = {
           type: new o.WrappedNodeExpr(ts.factory.createIdentifier(className)),
           decorators: new o.LiteralArrayExpr([
             new o.LiteralMapExpr([
-              new o.LiteralMapPropertyAssignment(
-                'type',
-                new o.WrappedNodeExpr(decName),
-                false,
-              ),
+              {
+                key: 'type',
+                value: new o.WrappedNodeExpr(decName),
+                quoted: false,
+              },
               ...(metadataArgsExpr
                 ? [
-                    new o.LiteralMapPropertyAssignment(
-                      'args',
-                      new o.LiteralArrayExpr([
+                    {
+                      key: 'args',
+                      value: new o.LiteralArrayExpr([
                         new o.WrappedNodeExpr(metadataArgsExpr),
                       ]),
-                      false,
-                    ),
+                      quoted: false,
+                    },
                   ]
                 : []),
-            ]),
+            ] as unknown as o.LiteralMapPropertyAssignment[]),
           ]),
           ctorParameters: null,
           propDecorators: null,
