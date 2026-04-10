@@ -711,6 +711,22 @@ export function compile(
             controlCreate: null,
           };
 
+          if (ANGULAR_MAJOR < 18) {
+            // Angular v17 reads `meta.deferBlocks`, `meta.deferrableTypes`,
+            // and `meta.deferBlockDepsEmitMode` as flat top-level fields on
+            // the component metadata; v18 nested them under `meta.defer`.
+            // `compileComponentFromMetadata` on v17 reads `.size` on the two
+            // Maps unconditionally (compiler.mjs ~30770), so the fields must
+            // exist as Maps even for components that don't use @defer.
+            // Empty Maps are sufficient for the no-@defer case — components
+            // that actually use @defer on v17 are not supported (the v17
+            // @defer ABI is significantly different from v18+ and is not
+            // worth back-porting per the minimum-effort policy).
+            componentMeta.deferBlocks = new Map();
+            componentMeta.deferrableTypes = new Map();
+            componentMeta.deferBlockDepsEmitMode = 0;
+          }
+
           if (ANGULAR_MAJOR >= 20) {
             componentMeta.hasDirectiveDependencies =
               declarations.length > 0 ||
