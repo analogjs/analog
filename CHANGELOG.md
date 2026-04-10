@@ -1,3 +1,9 @@
+# [2.5.0-beta.34](https://github.com/analogjs/analog/compare/v2.5.0-beta.33...v2.5.0-beta.34) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** merge styleUrl into existing inline styles array ([56b109f](https://github.com/analogjs/analog/commit/56b109f2c0c8c7e79f5116758b501519a610380d))
+
 # [2.5.0-beta.33](https://github.com/analogjs/analog/compare/v2.5.0-beta.32...v2.5.0-beta.33) (2026-04-10)
 
 ### Bug Fixes
