@@ -15,28 +15,48 @@ name: Angular Compiler Compatibility Tests
 #     angular-compiler unit/integration suite. Failures here mean the
 #     compiler crashes against a peer dep version it claims to support.
 #
-# When to extend:
+# Matrix policy:
+#   - Each numeric slot pins the FLOOR of a supported major (e.g. 19.0.0).
+#     Pinning the floor gives a reproducible, deterministic CI signal —
+#     "the lowest supported version of major N still works." Bumping the
+#     floor when peerDependencies changes is a deliberate choice that
+#     should be paired with a CHANGELOG note.
+#   - The `next` slot installs `@angular/compiler@next` (Angular's prerelease
+#     dist-tag) and is allowed to fail — it gives early warning when the
+#     next major drops a breaking change without blocking the workflow.
 #   - When packages/angular-compiler/package.json bumps the peerDependencies
-#     floor, drop the lowest matrix slot.
-#   - When a new Angular major ships, add a new slot.
-#   - The matrix uses caret-pinned versions ("^19.0.0") so each slot
-#     resolves to the latest patch of that major at install time, keeping
-#     the matrix evergreen without manual patch bumps.
+#     floor, drop the lowest matrix slot. When a new Angular major ships,
+#     add a new floor slot.
+#
+# Regression-issue policy:
+#   - On `push` to beta, a failure auto-opens (or comments on an existing)
+#     GitHub issue using the bug-report template's section structure. PR
+#     failures show in the PR check and don't open issues, to avoid spam.
 
 on:
   workflow_dispatch:
   pull_request: {}
+  push:
+    branches: [beta]
 
 env:
   NODE_OPTIONS: --max-old-space-size=16384
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   compat:
     runs-on: ubuntu-latest
+    # The `next` slot is allowed to fail — it tracks Angular's prerelease
+    # dist-tag, which may legitimately break the compiler before we ship a
+    # fix. All numeric (floor) slots are required-passing.
+    continue-on-error: ${{ matrix.angular-version == 'next' }}
     strategy:
       fail-fast: false
       matrix:
-        angular-version: ['^19.0.0', '^20.0.0', '^21.0.0']
+        angular-version: ['19.0.0', '20.0.0', '21.0.0', 'next']
 
     name: Angular ${{ matrix.angular-version }}
 
@@ -75,12 +95,16 @@ jobs:
         run: |
           INSTALLED=$(node -p "require('@angular/compiler/package.json').version")
           echo "Installed @angular/compiler: $INSTALLED"
-          # Sanity check: the major must match the matrix slot.
-          MATRIX_MAJOR=$(echo '${{ matrix.angular-version }}' | sed -E 's/[^0-9]*([0-9]+).*/\1/')
-          INSTALLED_MAJOR=$(echo "$INSTALLED" | cut -d. -f1)
-          if [ "$INSTALLED_MAJOR" != "$MATRIX_MAJOR" ]; then
-            echo "::error::Expected @angular/compiler major $MATRIX_MAJOR, got $INSTALLED"
-            exit 1
+          # Sanity check: for numeric matrix slots, the major must match.
+          # The `next` (and any future dist-tag) slot is skipped — we just
+          # echo the resolved version for the run log.
+          if [[ '${{ matrix.angular-version }}' =~ ^[0-9] ]]; then
+            MATRIX_MAJOR=$(echo '${{ matrix.angular-version }}' | sed -E 's/[^0-9]*([0-9]+).*/\1/')
+            INSTALLED_MAJOR=$(echo "$INSTALLED" | cut -d. -f1)
+            if [ "$INSTALLED_MAJOR" != "$MATRIX_MAJOR" ]; then
+              echo "::error::Expected @angular/compiler major $MATRIX_MAJOR, got $INSTALLED"
+              exit 1
+            fi
           fi
 
       - name: Run angular-compiler test suite
@@ -90,3 +114,78 @@ jobs:
         env:
           DEBUG: 'analog-compiler*'
         run: pnpm exec vitest run packages/angular-compiler/src/lib/
+
+      - name: Open or update regression issue (push to beta only)
+        # PRs already surface failures via the check status — auto-opening
+        # issues for PRs would create spam. Only fire on direct beta pushes
+        # so the issue tracker reflects the state of `main`-ish branches.
+        if: failure() && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          MATRIX_VERSION='${{ matrix.angular-version }}'
+          TITLE="CI: angular-compiler compatibility regression against @angular/compiler@${MATRIX_VERSION}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
+
+          # Body mirrors .github/ISSUE_TEMPLATE/01-bug-report.yml section structure
+          # so a maintainer reading the issue gets the same shape they'd get
+          # from a manually-filed report.
+          BODY=$(cat <<EOF
+          > 🤖 Auto-opened by \`.github/workflows/angular-compiler-compat.yml\`. Once the regression is fixed, please close this issue with a reference to the fixing commit.
+
+          ## Please provide the environment you discovered this bug in.
+
+          - **Branch**: \`${{ github.ref_name }}\`
+          - **Commit**: [${{ github.sha }}]($COMMIT_URL)
+          - **Failing workflow run**: $RUN_URL
+          - **Matrix slot**: \`@angular/compiler@${MATRIX_VERSION}\`
+          - **Workspace pin**: see \`package.json\` for the version that the workspace currently builds against
+          - **Reproduction**: \`pnpm install\` with \`pnpm.overrides\` setting \`@angular/compiler\` and \`@angular/compiler-cli\` to \`${MATRIX_VERSION}\`, then \`DEBUG=analog-compiler* pnpm exec vitest run packages/angular-compiler/src/lib/\`
+
+          ## Which area/package is the issue in?
+
+          \`angular-compiler\`
+
+          ## Description
+
+          The \`packages/angular-compiler/src/lib/\` test suite failed when run against \`@angular/compiler@${MATRIX_VERSION}\` after passing against the workspace-pinned version. This indicates an API-surface regression — a class export, method signature, or behavior in this Angular version differs from what the workspace pin provides, and the compiler depends on the difference.
+
+          The compatibility matrix exists precisely to catch this class of failure ahead of user reports — see \`packages/angular-compiler/COMPILER.md\` § Compatibility Testing for the design rationale.
+
+          ## Please provide the exception or error you saw
+
+          See the [failing workflow run]($RUN_URL) for full output. The \`Run angular-compiler test suite\` step has \`DEBUG=analog-compiler*\` enabled, so silently-caught compiler errors should appear in the log alongside any thrown exceptions.
+
+          ## Other information
+
+          - **First seen**: this commit (auto-detected). If the same matrix slot fails on subsequent commits, this issue will be updated rather than duplicated.
+          - **Triage hint**: \`grep -n "is not a constructor\\|is not a function\\|Cannot read prop" <run-log>\` is usually the fastest way to spot API-surface drift in the DEBUG output.
+          EOF
+          )
+
+          # Dedup: stable title per matrix slot. Look for an OPEN issue with
+          # the exact title; if present, comment on it instead of opening a
+          # new one. Closed issues do not block — if a previously-fixed
+          # regression returns, we open a fresh issue.
+          EXISTING=$(gh issue list \
+            --repo "${{ github.repository }}" \
+            --search "in:title \"$TITLE\"" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')
+
+          if [ -n "$EXISTING" ]; then
+            echo "Existing open issue #$EXISTING — adding a comment with the new failing run."
+            gh issue comment "$EXISTING" \
+              --repo "${{ github.repository }}" \
+              --body "New failure detected on commit [${{ github.sha }}]($COMMIT_URL) — [run]($RUN_URL)."
+          else
+            echo "No existing open issue — creating a new one."
+            gh issue create \
+              --repo "${{ github.repository }}" \
+              --title "$TITLE" \
+              --label "bug,angular-compiler" \
+              --body "$BODY"
+          fi
