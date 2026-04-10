@@ -1,3 +1,27 @@
+# [2.5.0-beta.23](https://github.com/analogjs/analog/compare/v2.5.0-beta.22...v2.5.0-beta.23) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** correct signal aliases, query refs, inheritance ([d57bc61](https://github.com/analogjs/analog/commit/d57bc61f1736ad66e1b5fabf479e058f63f58484))
+- **angular-compiler:** default contentChild() descendants to true ([4849312](https://github.com/analogjs/analog/commit/4849312e327aa9363a6f024269981d2de93f284a))
+- **angular-compiler:** emit /_@**PURE**_/ on Ivy field assignments ([c0d4f69](https://github.com/analogjs/analog/commit/c0d4f696110becded1b90c77dd0d5b84f46ac2de))
+- **angular-compiler:** emit defer deps as import().then(m => m.X) ([56d9fd5](https://github.com/analogjs/analog/commit/56d9fd580c25a77cde285876babffc6564a12543))
+- **angular-compiler:** extract output() alias in registry ([e7b1d0d](https://github.com/analogjs/analog/commit/e7b1d0d71fe2332b0eedf1f97bd76e3d34655308))
+- **angular-compiler:** forward @Injectable provider config to compileInjectable ([ed9c264](https://github.com/analogjs/analog/commit/ed9c2641e36bc503b1611551b2d265f236b0a959))
+- **angular-compiler:** parse signal query read/descendants options ([175356c](https://github.com/analogjs/analog/commit/175356c0f45a90bd6a159c0c6ce43b04ef54b3fe))
+- **angular-compiler:** reject ambiguous union/intersection DI tokens ([c379707](https://github.com/analogjs/analog/commit/c3797079ec4b6b92451d9a642524ac5f92cc07a9))
+- **angular-compiler:** strip ESM .js extension when probing dts re-exports ([d1f65ef](https://github.com/analogjs/analog/commit/d1f65efb69f2972279425c47ee63b73edeb980ae))
+- **angular-compiler:** track hasTransform on signal inputs in registry ([fd8acd4](https://github.com/analogjs/analog/commit/fd8acd49ebf2f80ee7b6e861fca5ad4578cfa78b))
+- **angular-compiler:** unwrap forwardRef inside @Inject decorator ([dcb221a](https://github.com/analogjs/analog/commit/dcb221a5cef963ee97feee80f8ac77ecd52393da))
+- **angular-compiler:** use original export name for aliased defer imports ([6ab34dd](https://github.com/analogjs/analog/commit/6ab34dd0be10784b26e2117e4dd54fb21ed10f50))
+- **angular-compiler:** wrap switch cases in blocks for biome lint ([8fc75d9](https://github.com/analogjs/analog/commit/8fc75d9f6a55e0592aae4a72c831c4f6f951bfea))
+- **vite-plugin-angular:** keep barrel registry in sync at dev time ([f5f7ef1](https://github.com/analogjs/analog/commit/f5f7ef1e013b8352d1875764a74337f18ced271f))
+
+### Features
+
+- **angular-compiler:** expand tuple barrel imports for spartan-style libs ([bf4595f](https://github.com/analogjs/analog/commit/bf4595f19f03bedcbb0ba8fa80376b68285a90f5))
+- **angular-compiler:** resolve ${var} interpolation in metadata strings ([79ade33](https://github.com/analogjs/analog/commit/79ade33e96e8f07316b7231c97837d2384fdb96d))
+
 # [2.5.0-beta.22](https://github.com/analogjs/analog/compare/v2.5.0-beta.21...v2.5.0-beta.22) (2026-04-09)
 
 ### Bug Fixes
