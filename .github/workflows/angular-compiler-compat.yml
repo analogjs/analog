@@ -35,18 +35,13 @@ name: Angular Compiler Compatibility Tests
 
 on:
   workflow_dispatch:
-  # TEMPORARY: trigger on every push to this validation branch so the
-  # matrix runs automatically while we iterate on v17/v18 compat. REVERT
-  # this push-branches entry before merging the branch into beta.
-  push:
-    branches:
-      - beta
-      - fix/angular-compiler-v17-v18-compat
+  pull_request:
     paths:
       - 'packages/angular-compiler/**'
       - 'package.json'
       - '.github/workflows/angular-compiler-compat.yml'
-  pull_request:
+  push:
+    branches: [beta]
     paths:
       - 'packages/angular-compiler/**'
       - 'package.json'
