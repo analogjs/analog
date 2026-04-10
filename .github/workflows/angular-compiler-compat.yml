@@ -35,17 +35,24 @@ name: Angular Compiler Compatibility Tests
 
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'packages/angular-compiler/**'
-      - 'package.json'
-      - '.github/workflows/angular-compiler-compat.yml'
-  push:
-    branches: [beta]
-    paths:
-      - 'packages/angular-compiler/**'
-      - 'package.json'
-      - '.github/workflows/angular-compiler-compat.yml'
+  # Automatic triggers are intentionally disabled until the matrix has
+  # been validated end-to-end via manual workflow_dispatch runs. Once
+  # the auto-issue path and the install-with-overrides flow are proven
+  # green on each numeric matrix slot, uncomment the blocks below to
+  # re-enable PR and beta-push triggers (filtered to compiler-relevant
+  # paths to avoid running on unrelated PRs).
+  #
+  # pull_request:
+  #   paths:
+  #     - 'packages/angular-compiler/**'
+  #     - 'package.json'
+  #     - '.github/workflows/angular-compiler-compat.yml'
+  # push:
+  #   branches: [beta]
+  #   paths:
+  #     - 'packages/angular-compiler/**'
+  #     - 'package.json'
+  #     - '.github/workflows/angular-compiler-compat.yml'
 
 env:
   NODE_OPTIONS: --max-old-space-size=16384
