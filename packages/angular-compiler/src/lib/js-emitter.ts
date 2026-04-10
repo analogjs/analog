@@ -44,6 +44,85 @@ const BINARY_OP_STR: Record<number, string> = {
   [o.BinaryOperator.NullishCoalesceAssignment]: '??=',
 };
 
+/**
+ * JavaScript operator precedence (higher = tighter binding).
+ * Values match MDN's table, skipping levels not used by Angular (bitwise XOR, shifts).
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_precedence
+ */
+const BINARY_PRECEDENCE: Record<number, number> = {
+  [o.BinaryOperator.Assign]: 2,
+  [o.BinaryOperator.AdditionAssignment]: 2,
+  [o.BinaryOperator.SubtractionAssignment]: 2,
+  [o.BinaryOperator.MultiplicationAssignment]: 2,
+  [o.BinaryOperator.DivisionAssignment]: 2,
+  [o.BinaryOperator.RemainderAssignment]: 2,
+  [o.BinaryOperator.ExponentiationAssignment]: 2,
+  [o.BinaryOperator.AndAssignment]: 2,
+  [o.BinaryOperator.OrAssignment]: 2,
+  [o.BinaryOperator.NullishCoalesceAssignment]: 2,
+  [o.BinaryOperator.Or]: 4,
+  [o.BinaryOperator.NullishCoalesce]: 4,
+  [o.BinaryOperator.And]: 5,
+  [o.BinaryOperator.BitwiseOr]: 6,
+  [o.BinaryOperator.BitwiseAnd]: 8,
+  [o.BinaryOperator.Equals]: 9,
+  [o.BinaryOperator.NotEquals]: 9,
+  [o.BinaryOperator.Identical]: 9,
+  [o.BinaryOperator.NotIdentical]: 9,
+  [o.BinaryOperator.Lower]: 10,
+  [o.BinaryOperator.LowerEquals]: 10,
+  [o.BinaryOperator.Bigger]: 10,
+  [o.BinaryOperator.BiggerEquals]: 10,
+  [o.BinaryOperator.In]: 10,
+  [o.BinaryOperator.InstanceOf]: 10,
+  [o.BinaryOperator.Plus]: 12,
+  [o.BinaryOperator.Minus]: 12,
+  [o.BinaryOperator.Multiply]: 13,
+  [o.BinaryOperator.Divide]: 13,
+  [o.BinaryOperator.Modulo]: 13,
+  [o.BinaryOperator.Exponentiation]: 14,
+};
+
+/**
+ * Determine whether a child expression needs parentheses when it appears
+ * as an operand of `parentOp`.
+ */
+function childNeedsParens(
+  parentOp: o.BinaryOperator,
+  child: o.Expression,
+  isRhs: boolean,
+): boolean {
+  if (!(child instanceof o.BinaryOperatorExpr)) return false;
+
+  const childOp = child.operator;
+  const parentPrec = BINARY_PRECEDENCE[parentOp];
+  const childPrec = BINARY_PRECEDENCE[childOp];
+  if (parentPrec === undefined || childPrec === undefined) return false;
+
+  // ?? cannot appear with || or && without explicit grouping (JS spec)
+  if (
+    (parentOp === o.BinaryOperator.NullishCoalesce &&
+      (childOp === o.BinaryOperator.And || childOp === o.BinaryOperator.Or)) ||
+    (childOp === o.BinaryOperator.NullishCoalesce &&
+      (parentOp === o.BinaryOperator.And || parentOp === o.BinaryOperator.Or))
+  ) {
+    return true;
+  }
+
+  // Child has strictly lower precedence
+  if (childPrec < parentPrec) return true;
+
+  // Same precedence — depends on associativity and position
+  if (childPrec === parentPrec) {
+    // ** is right-associative: LHS same-prec needs parens, RHS does not
+    if (parentOp === o.BinaryOperator.Exponentiation) return !isRhs;
+    // All other ops are left-associative: RHS same-prec needs parens
+    return isRhs;
+  }
+
+  return false;
+}
+
 /** Polyfill for `__makeTemplateObject` used in downleveled `$localize` calls. */
 const MAKE_TEMPLATE_OBJECT_POLYFILL =
   '(this&&this.__makeTemplateObject||function(e,t){return Object.defineProperty?Object.defineProperty(e,"raw",{value:t}):e.raw=t,e})';
@@ -184,15 +263,22 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
   }
   visitBinaryOperatorExpr(ast: o.BinaryOperatorExpr) {
     const op = BINARY_OP_STR[ast.operator] || '=';
-    const expr =
-      ast.lhs.visitExpression(this, null) +
-      ' ' +
-      op +
-      ' ' +
-      ast.rhs.visitExpression(this, null);
+
+    const lhsRaw = ast.lhs.visitExpression(this, null);
+    const rhsRaw = ast.rhs.visitExpression(this, null);
+
+    const lhs = childNeedsParens(ast.operator, ast.lhs, false)
+      ? '(' + lhsRaw + ')'
+      : lhsRaw;
+    const rhs = childNeedsParens(ast.operator, ast.rhs, true)
+      ? '(' + rhsRaw + ')'
+      : rhsRaw;
+
+    const expr = lhs + ' ' + op + ' ' + rhs;
+
     // Wrap assignments in parens so they work correctly as ternary conditions:
     // (tmp = val) ? a : b  vs  tmp = val ? a : b
-    if (ast.operator === o.BinaryOperator.Assign) {
+    if (ast.isAssignment()) {
       return '(' + expr + ')';
     }
     return expr;

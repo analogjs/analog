@@ -233,6 +233,29 @@ describe('Assignment precedence in ternary', () => {
   });
 });
 
+describe('Operator precedence in template expressions', () => {
+  it('preserves grouping for ?? mixed with + in attribute binding', () => {
+    const result = compile(
+      `
+      import { Component, signal } from '@angular/core';
+      @Component({
+        selector: 'app-node',
+        template: '<div [attr.y]="(value() ?? 0) + 15"></div>'
+      })
+      export class NodeComponent {
+        value = signal<number | null>(null);
+      }
+    `,
+      'node.ts',
+    );
+
+    expectCompiles(result);
+    // The ?? subexpression must be parenthesized to prevent:
+    // ctx.value() ?? 0 + 15  →  ctx.value() ?? (0 + 15)
+    expect(result).toContain('(ctx.value() ?? 0) + 15');
+  });
+});
+
 describe('templateUrl inlining in metadata', () => {
   it('replaces templateUrl with template in setClassMetadata', () => {
     const result = rawCompile(
