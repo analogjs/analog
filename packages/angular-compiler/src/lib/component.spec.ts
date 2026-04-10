@@ -20,6 +20,15 @@ import { ANGULAR_MAJOR } from './angular-version';
 const SUPPORTS_DEFER_DYNAMIC_IMPORTS = ANGULAR_MAJOR >= 20;
 const SUPPORTS_DIRECT_NULLISH_COALESCE_EMISSION = ANGULAR_MAJOR >= 20;
 
+// Angular v17 represents `@defer` block metadata as flat top-level
+// `meta.deferBlocks` / `meta.deferrableTypes` Maps that the compiler
+// reads ahead of template compilation. v18+ moved these to a nested
+// `meta.defer` object and the runtime ABI changed significantly. We
+// only emit the v18+ shape; components that use `@defer` at runtime
+// are not supported on v17. Tests that compile a component containing
+// `@defer` need to be skipped on v17.
+const SUPPORTS_DEFER_RUNTIME = ANGULAR_MAJOR >= 18;
+
 describe('@Component', () => {
   it('compiles a component with template and styles', () => {
     const result = compile(
@@ -45,8 +54,11 @@ describe('@Component', () => {
     expect(result).not.toContain('@Component');
     // Angular core namespace injected
     expect(result).toContain('import * as i0 from "@angular/core"');
-    // Factory function is correct
-    expect(result).toContain('new (__ngFactoryType__ || HelloComponent)()');
+    // Factory function is correct. Angular v17 emits the parameter as `t`;
+    // v18+ uses the descriptive name `__ngFactoryType__`.
+    expect(result).toMatch(
+      /new \((?:__ngFactoryType__|t) \|\| HelloComponent\)\(\)/,
+    );
     // setClassMetadata emitted with global ngDevMode (not i0.ngDevMode)
     expect(result).toContain('ɵsetClassMetadata');
     expect(result).toMatch(/typeof ngDevMode === "undefined" \|\| ngDevMode/);
@@ -514,7 +526,7 @@ describe('@Component', () => {
     });
   });
 
-  describe('@defer', () => {
+  describe.skipIf(!SUPPORTS_DEFER_RUNTIME)('@defer', () => {
     it('compiles @defer with loading/placeholder/error', () => {
       const result = compile(
         `
@@ -1458,7 +1470,9 @@ describe('Assignment precedence in ternary', () => {
     expectCompiles(result);
     // The assignment should be parenthesized: (tmp = ctx.data()) ? ...
     // NOT: tmp = ctx.data() ? ...
-    expect(result).toMatch(/\(tmp_\d+_\d+ = ctx\.data\(\)\)/);
+    // Variable name differs by Angular version: v18+ emits `tmp_X_Y`,
+    // v17 emits `<ComponentName>_contFlowTmp`. Accept any identifier.
+    expect(result).toMatch(/\(\w+ = ctx\.data\(\)\)/);
   });
 });
 
@@ -1784,7 +1798,7 @@ describe('Safe navigation in templates', () => {
   });
 });
 
-describe('@defer triggers', () => {
+describe.skipIf(!SUPPORTS_DEFER_RUNTIME)('@defer triggers', () => {
   it('compiles @defer with on interaction trigger', () => {
     const result = compile(
       `
@@ -1884,7 +1898,9 @@ describe('@if with as alias context', () => {
 
     expectCompiles(result);
     // The assignment must be parenthesized for correct precedence
-    expect(result).toMatch(/\(tmp_\d+_\d+ = ctx\.user\(\)\)/);
+    // Variable name differs by Angular version: v18+ emits `tmp_X_Y`,
+    // v17 emits `<ComponentName>_contFlowTmp`. Accept any identifier.
+    expect(result).toMatch(/\(\w+ = ctx\.user\(\)\)/);
     // The embedded template should use ctx (the alias value) for bindings
     expect(result).toMatch(/const \w+ = ctx/);
     expect(result).toContain('.name');
@@ -2019,13 +2035,18 @@ describe('OXC-based resource inlining', () => {
   });
 });
 
-describe('Arrow function object literal wrapping', () => {
-  it('wraps object literal return in parens for arrow functions', () => {
-    // Angular emits arrow functions returning object literals in metadata
-    // like: () => ({key: val}). Without parens, () => {key: val} is parsed
-    // as a block with a labeled statement.
-    const result = compile(
-      `
+describe.skipIf(!SUPPORTS_DEFER_RUNTIME)(
+  'Arrow function object literal wrapping',
+  () => {
+    // Test fixture uses `@defer (on viewport) { ... }` which can't be compiled
+    // on Angular v17 (the v17 @defer ABI requires populated `meta.deferBlocks`
+    // / `meta.deferrableTypes` Maps that we don't currently provide).
+    it('wraps object literal return in parens for arrow functions', () => {
+      // Angular emits arrow functions returning object literals in metadata
+      // like: () => ({key: val}). Without parens, () => {key: val} is parsed
+      // as a block with a labeled statement.
+      const result = compile(
+        `
       import { Component, signal } from '@angular/core';
       @Component({
         selector: 'app-test',
@@ -2039,15 +2060,16 @@ describe('Arrow function object literal wrapping', () => {
       })
       export class TestComponent {}
     `,
-      'test.ts',
-    );
+        'test.ts',
+      );
 
-    expectCompiles(result);
-    // Any arrow returning an object literal should be wrapped: => ({...})
-    // Not: => {...} which would be a block
-    expect(result).not.toMatch(/=> \{[a-zA-Z]+:/);
-  });
-});
+      expectCompiles(result);
+      // Any arrow returning an object literal should be wrapped: => ({...})
+      // Not: => {...} which would be a block
+      expect(result).not.toMatch(/=> \{[a-zA-Z]+:/);
+    });
+  },
+);
 
 describe('Decorator and class field preservation', () => {
   it('preserves signal field initializers (not moved to constructor)', () => {
@@ -2074,7 +2096,11 @@ describe('Decorator and class field preservation', () => {
     expect(result).toContain('output()');
     expect(result).toContain('model(');
     // Ivy inputs should recognize the signal input
-    expect(result).toMatch(/inputs:\s*\{.*name.*\[1/);
+    // Signal-input flag is emitted as the literal `1` on Angular v18+ and
+    // as the symbolic `i0.ɵɵInputFlags.SignalBased` on v17.
+    expect(result).toMatch(
+      /inputs:\s*\{.*name.*\[(?:1|i0\.ɵɵInputFlags\.SignalBased)/,
+    );
   });
 
   it('strips @Component decorator from output', () => {
