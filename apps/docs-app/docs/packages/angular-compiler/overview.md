@@ -17,6 +17,21 @@ Library publishing via `analogCompilationMode: 'partial'` is newer than full mod
 
 :::
 
+## Compatibility
+
+| Angular version | Status                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------------------------- |
+| **17.3.12**     | Supported (LTS patch). Components that use `@defer` at runtime are **not** supported on v17 — see note below. |
+| **18.2.14**     | Supported (LTS patch).                                                                                        |
+| **19.0.0+**     | Supported.                                                                                                    |
+| **20.0.0+**     | Supported.                                                                                                    |
+| **21.0.0+**     | Supported.                                                                                                    |
+| **22 (`next`)** | Tracked, allowed-to-fail. Used as early warning when the next major lands a breaking change.                  |
+
+The compatibility matrix in [`.github/workflows/angular-compiler-compat.yml`](https://github.com/analogjs/analog/blob/beta/.github/workflows/angular-compiler-compat.yml) installs each version above via `pnpm.overrides` and runs the full `@analogjs/angular-compiler` test suite against it on every relevant pull request. Failures auto-open or comment on a tracking issue when they happen on `beta`.
+
+**Angular 17 `@defer` caveat:** Angular 17's `@defer` runtime ABI requires populated `meta.deferBlocks` and `meta.deferrableTypes` Maps that the Analog Compiler currently sets to empty (sufficient for components that don't use `@defer`). Components that use `@defer` blocks at runtime should upgrade to Angular 18+ — the v18+ ABI is compatible.
+
 ## Enabling it (apps)
 
 Enable the compiler in `vite.config.ts` by setting `useAnalogCompiler: true` inside the `analog()` plugin's `vite.experimental` block:
