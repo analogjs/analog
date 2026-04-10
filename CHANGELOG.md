@@ -1,3 +1,10 @@
+# [2.5.0-beta.27](https://github.com/analogjs/analog/compare/v2.5.0-beta.26...v2.5.0-beta.27) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** dedupe declarations across imports and module exports ([919009a](https://github.com/analogjs/analog/commit/919009a744c62c1abffdcd7dc9f063d80900c05d))
+- **angular-compiler:** hoist helpers via appendLeft when insertPos is 0 ([8a15184](https://github.com/analogjs/analog/commit/8a15184d423b0818c3c6d9f7429095554eecbd05))
+
 # [2.5.0-beta.26](https://github.com/analogjs/analog/compare/v2.5.0-beta.25...v2.5.0-beta.26) (2026-04-10)
 
 ### Bug Fixes
