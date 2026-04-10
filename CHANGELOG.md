@@ -1,3 +1,9 @@
+## [2.4.5](https://github.com/analogjs/analog/compare/v2.4.4...v2.4.5) (2026-04-10)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** emit ?analog-{inline,raw} from JIT transform output ([#2272](https://github.com/analogjs/analog/issues/2272)) ([48f3ff9](https://github.com/analogjs/analog/commit/48f3ff9c7db10028fd08e95a5153043bf591d5f9))
+
 ## [2.4.4](https://github.com/analogjs/analog/compare/v2.4.3...v2.4.4) (2026-04-09)
 
 ### Bug Fixes
