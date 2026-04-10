@@ -517,7 +517,10 @@ CI runs a matrix of Angular 17, 18, 19, 20, 21, latest, and next on every push t
 
 Conformance testing answers _"does our output match Angular's reference fixtures?"_ but uses the workspace-pinned `@angular/compiler` to do the compilation — so it cannot catch API-surface drift between Angular versions (e.g. a class export disappearing in a patch release). The compatibility matrix in `.github/workflows/angular-compiler-compat.yml` complements it by:
 
-1. Overriding `@angular/compiler` and `@angular/compiler-cli` to each supported major (`^19.0.0`, `^20.0.0`, `^21.0.0`) via `pnpm.overrides`.
+1. Overriding `@angular/compiler` and `@angular/compiler-cli` to each supported major (`19.0.0`, `20.0.0`, `21.0.0`, plus `next`) via `pnpm.overrides`.
 2. Running the regular `packages/angular-compiler/src/lib/` test suite against the swapped version with `DEBUG=analog-compiler*` enabled, so silently-caught errors (e.g. constructor regressions) appear in CI logs.
+3. On a `push` to `beta`, auto-opening (or commenting on an existing) GitHub issue using the bug-report template's section structure when a numeric matrix slot fails. PR failures show in the PR check and don't open issues to avoid spam.
 
-When `packages/angular-compiler/package.json` bumps the `peerDependencies` floor, drop the lowest matrix slot. When a new Angular major ships, add a new slot. The matrix uses caret-pinned versions so each slot resolves to the latest patch of that major automatically.
+The numeric matrix slots are pinned to the **floor** of each supported major (e.g. `19.0.0`) for reproducibility — _"the lowest supported version of major N still works"_ is a deterministic CI signal. Bumping the floor when `peerDependencies` changes is a deliberate decision and should be paired with a CHANGELOG note. The `next` slot tracks Angular's prerelease dist-tag and is allowed to fail (early warning when the next major lands a breaking change, without blocking the workflow).
+
+The workflow runs on `pull_request`, `push` to `beta`, and `workflow_dispatch`. When `packages/angular-compiler/package.json` bumps the `peerDependencies` floor, drop the lowest matrix slot. When a new Angular major ships, add a new floor slot.
