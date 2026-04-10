@@ -786,7 +786,18 @@ export class BottomNav {}
   });
 
   describe('Component Options', () => {
-    it('handles OnPush change detection', () => {
+    // Angular v22+ inverts the changeDetection default: OnPush is now the
+    // default strategy, so a component declaring `OnPush` matches the
+    // default and the field is OMITTED from `ɵɵdefineComponent` output
+    // (compiler.mjs line ~25363: emit only when `meta.changeDetection !==
+    // ChangeDetectionStrategy.OnPush`). The literal `'changeDetection: 0'`
+    // string therefore does not appear on v22+, even though the compiled
+    // component is semantically correct.
+    //
+    // Skip on v22+ for now. When v22 becomes a numeric matrix slot we can
+    // add an inverted test that asserts `'changeDetection: 1'` is emitted
+    // for components declaring `Default`/`Eager` (the new non-default).
+    it.skipIf(ANGULAR_MAJOR > 21)('handles OnPush change detection', () => {
       const result = compile(
         `
         import { Component, ChangeDetectionStrategy } from '@angular/core';
