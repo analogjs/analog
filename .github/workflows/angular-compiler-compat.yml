@@ -134,7 +134,12 @@ jobs:
         # PRs already surface failures via the check status — auto-opening
         # issues for PRs would create spam. Only fire on direct beta pushes
         # so the issue tracker reflects the state of `main`-ish branches.
-        if: failure() && github.event_name == 'push'
+        #
+        # DISABLED for now: validating the matrix end-to-end via manual
+        # workflow_dispatch runs first. The bash body, GH_TOKEN env, and
+        # dedup logic stay intact so re-enabling is a one-line edit —
+        # remove `false &&` from the `if:` condition below.
+        if: false && failure() && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
