@@ -512,3 +512,12 @@ npx vitest run packages/angular-compiler/src/lib/conformance.spec.ts
 ```
 
 CI runs a matrix of Angular 17, 18, 19, 20, 21, latest, and next on every push to `feat/angular-compiler` via `.github/workflows/conformance.yml`.
+
+### Compatibility Testing
+
+Conformance testing answers _"does our output match Angular's reference fixtures?"_ but uses the workspace-pinned `@angular/compiler` to do the compilation — so it cannot catch API-surface drift between Angular versions (e.g. a class export disappearing in a patch release). The compatibility matrix in `.github/workflows/angular-compiler-compat.yml` complements it by:
+
+1. Overriding `@angular/compiler` and `@angular/compiler-cli` to each supported major (`^19.0.0`, `^20.0.0`, `^21.0.0`) via `pnpm.overrides`.
+2. Running the regular `packages/angular-compiler/src/lib/` test suite against the swapped version with `DEBUG=analog-compiler*` enabled, so silently-caught errors (e.g. constructor regressions) appear in CI logs.
+
+When `packages/angular-compiler/package.json` bumps the `peerDependencies` floor, drop the lowest matrix slot. When a new Angular major ships, add a new slot. The matrix uses caret-pinned versions so each slot resolves to the latest patch of that major automatically.

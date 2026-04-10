@@ -1,0 +1,92 @@
+name: Angular Compiler Compatibility Tests
+
+# Verifies that @analogjs/angular-compiler runs against every Angular major
+# version it claims to support (peerDependencies in
+# packages/angular-compiler/package.json declare ">=19.0.0").
+#
+# Why this exists separately from conformance.yml:
+#   - conformance.yml downloads Angular's reference test fixtures at a
+#     specific version, but compiles them using whatever @angular/compiler
+#     is installed in the workspace (currently 21.x). It tests "does our
+#     output match the reference fixtures?" — not "does our compiler run
+#     against this Angular version's API surface?".
+#   - This workflow swaps @angular/compiler (and @angular/compiler-cli)
+#     to the matrix version via pnpm.overrides, then runs the regular
+#     angular-compiler unit/integration suite. Failures here mean the
+#     compiler crashes against a peer dep version it claims to support.
+#
+# When to extend:
+#   - When packages/angular-compiler/package.json bumps the peerDependencies
+#     floor, drop the lowest matrix slot.
+#   - When a new Angular major ships, add a new slot.
+#   - The matrix uses caret-pinned versions ("^19.0.0") so each slot
+#     resolves to the latest patch of that major at install time, keeping
+#     the matrix evergreen without manual patch bumps.
+
+on:
+  workflow_dispatch:
+  pull_request: {}
+
+env:
+  NODE_OPTIONS: --max-old-space-size=16384
+
+jobs:
+  compat:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        angular-version: ['^19.0.0', '^20.0.0', '^21.0.0']
+
+    name: Angular ${{ matrix.angular-version }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .node-version
+      - run: npm install --global corepack@0.31.0
+      - run: corepack enable
+      - run: pnpm --version
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+
+      - name: Pin @angular/compiler and @angular/compiler-cli via pnpm.overrides
+        run: |
+          node -e "
+          const fs = require('fs');
+          const p = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+          p.pnpm = p.pnpm || {};
+          p.pnpm.overrides = p.pnpm.overrides || {};
+          p.pnpm.overrides['@angular/compiler'] = '${{ matrix.angular-version }}';
+          p.pnpm.overrides['@angular/compiler-cli'] = '${{ matrix.angular-version }}';
+          fs.writeFileSync('package.json', JSON.stringify(p, null, 2));
+          console.log('Overrides set:', p.pnpm.overrides);
+          "
+
+      - name: Install with overridden Angular
+        # --no-frozen-lockfile because we just modified package.json above.
+        # --prefer-offline still hits the cache for everything else.
+        run: pnpm install --no-frozen-lockfile --prefer-offline
+
+      - name: Verify installed @angular/compiler version
+        run: |
+          INSTALLED=$(node -p "require('@angular/compiler/package.json').version")
+          echo "Installed @angular/compiler: $INSTALLED"
+          # Sanity check: the major must match the matrix slot.
+          MATRIX_MAJOR=$(echo '${{ matrix.angular-version }}' | sed -E 's/[^0-9]*([0-9]+).*/\1/')
+          INSTALLED_MAJOR=$(echo "$INSTALLED" | cut -d. -f1)
+          if [ "$INSTALLED_MAJOR" != "$MATRIX_MAJOR" ]; then
+            echo "::error::Expected @angular/compiler major $MATRIX_MAJOR, got $INSTALLED"
+            exit 1
+          fi
+
+      - name: Run angular-compiler test suite
+        # Surfaces compiler-vs-Angular API mismatches via DEBUG output so
+        # silently-caught errors (like the LiteralMapPropertyAssignment
+        # constructor regression on 20.3.x) appear in CI logs.
+        env:
+          DEBUG: 'analog-compiler*'
+        run: pnpm exec vitest run packages/angular-compiler/src/lib/
