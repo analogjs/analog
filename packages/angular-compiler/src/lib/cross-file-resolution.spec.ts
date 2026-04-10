@@ -175,3 +175,26 @@ describe('Global Analysis (cross-file resolution)', () => {
     });
   });
 });
+
+describe('hasDirectiveDependencies with unresolved imports', () => {
+  it('includes dependencies function when component has imports', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      import { RouterOutlet } from '@angular/router';
+      @Component({
+        selector: 'app-test',
+        template: '<router-outlet />',
+        imports: [RouterOutlet],
+      })
+      export class TestComponent {}
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // The component should have a dependencies function that includes RouterOutlet
+    expect(result).toContain('dependencies');
+    expect(result).toContain('RouterOutlet');
+  });
+});

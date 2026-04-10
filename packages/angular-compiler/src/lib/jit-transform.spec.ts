@@ -441,3 +441,100 @@ describe('JIT Transform', () => {
     });
   });
 });
+
+describe('JIT transform nested class support', () => {
+  it('processes classes nested inside function scopes', () => {
+    const result = jitTransform(
+      `
+      import { Component } from '@angular/core';
+
+      @Component({ selector: 'app-top', template: '' })
+      export class TopComponent {}
+
+      function factory() {
+        @Component({ selector: 'app-inner', template: '' })
+        class InnerComponent {}
+        return InnerComponent;
+      }
+    `,
+      'test.component.ts',
+    ).code;
+
+    // Both top-level and nested classes should be processed
+    expect(result).toContain('TopComponent.decorators');
+    expect(result).toContain('InnerComponent.decorators');
+  });
+});
+
+describe('JIT transform auto-imports decorator classes for signal API downleveling', () => {
+  it('adds Input import when input() is downleveled but Input is not imported', () => {
+    const result = jitTransform(
+      `
+      import { Component, input } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        name = input<string>();
+      }
+    `,
+      'test.component.ts',
+    ).code;
+
+    expect(result).toContain(`import { Input } from '@angular/core'`);
+    expect(result).toContain('type: Input');
+  });
+
+  it('adds Input and Output imports when model() is downleveled', () => {
+    const result = jitTransform(
+      `
+      import { Component, model } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        value = model<string>();
+      }
+    `,
+      'test.component.ts',
+    ).code;
+
+    expect(result).toContain('Input');
+    expect(result).toContain('Output');
+  });
+
+  it('does not duplicate import when Input is already imported', () => {
+    const result = jitTransform(
+      `
+      import { Component, Input, input } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        name = input<string>();
+        @Input() other: string = '';
+      }
+    `,
+      'test.component.ts',
+    ).code;
+
+    // Should NOT have a second import line for Input
+    const importMatches = result.match(
+      /import\s*\{[^}]*Input[^}]*\}\s*from\s*'@angular\/core'/g,
+    );
+    expect(importMatches!.length).toBe(1);
+  });
+
+  it('adds Output import when output() is used without Output import', () => {
+    const result = jitTransform(
+      `
+      import { Component, output } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '' })
+      export class TestComponent {
+        clicked = output<void>();
+      }
+    `,
+      'test.component.ts',
+    ).code;
+
+    expect(result).toContain(`import { Output } from '@angular/core'`);
+  });
+});

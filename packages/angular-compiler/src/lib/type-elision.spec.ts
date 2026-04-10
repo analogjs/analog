@@ -5,7 +5,8 @@ import {
   elideTypeOnlyImports,
   elideTypeOnlyImportsMagicString,
 } from './type-elision';
-import { compileCode as compile } from './test-helpers';
+import { compileCode as compile, expectCompiles } from './test-helpers';
+import { compile as rawCompile } from './compile';
 
 describe('detectTypeOnlyImportNames', () => {
   it('detects imports used only in type annotations', () => {
@@ -499,5 +500,251 @@ describe('type elision in compiler output', () => {
     expect(result).not.toContain("from './models'");
     // signal should still be present as a value
     expect(result).toContain('signal');
+  });
+});
+
+describe('Sourcemap accuracy after type-only import elision', () => {
+  it('produces sourcemap aligned with post-elision code', () => {
+    const result = rawCompile(
+      `
+      import { Component } from '@angular/core';
+      import { SomeType } from './models';
+
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {
+        value: SomeType = {} as any;
+      }
+    `,
+      'test.ts',
+    );
+
+    // SomeType should be elided from the output
+    expect(result.code).not.toContain("from './models'");
+
+    // Sourcemap should exist and reference the original source
+    expect(result.map).toBeTruthy();
+    expect(result.map.sources).toContain('test.ts');
+
+    // Mappings should be non-empty
+    expect(result.map.mappings.length).toBeGreaterThan(0);
+
+    // The sourcemap's sourcesContent should contain the original source
+    expect(result.map.sourcesContent).toBeTruthy();
+    expect(result.map.sourcesContent[0]).toContain('import { SomeType }');
+  });
+
+  it('preserves sourcemap accuracy when no imports are elided', () => {
+    const result = rawCompile(
+      `
+      import { Component, signal } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '{{ count() }}' })
+      export class TestComponent {
+        count = signal(0);
+      }
+    `,
+      'test.ts',
+    );
+
+    expect(result.code).toContain('signal');
+    expect(result.map).toBeTruthy();
+    expect(result.map.mappings.length).toBeGreaterThan(0);
+  });
+});
+
+describe('type-elision preserves TSAsExpression value references', () => {
+  it('does not elide imports used inside as-casts', () => {
+    const typeOnly = detectTypeOnlyImportNames(`
+      import data from './data.json';
+      type MyType = { name: string };
+      const items = (data as MyType[]).map(x => x.name);
+    `);
+    expect(typeOnly.has('data')).toBe(false);
+  });
+
+  it('does not elide imports used inside satisfies expressions', () => {
+    const typeOnly = detectTypeOnlyImportNames(`
+      import { config } from './config';
+      type Config = { port: number };
+      const c = config satisfies Config;
+    `);
+    expect(typeOnly.has('config')).toBe(false);
+  });
+
+  it('still elides truly type-only imports', () => {
+    const typeOnly = detectTypeOnlyImportNames(`
+      import { MyInterface } from './types';
+      const x: MyInterface = { name: 'test' };
+    `);
+    expect(typeOnly.has('MyInterface')).toBe(true);
+  });
+});
+
+describe('constant pool helpers survive type-only import elision', () => {
+  it('emits @for template functions when last import is type-only', () => {
+    const result = compile(
+      `
+      import { Component, input } from '@angular/core';
+      import { UnifiedPost } from '../data/posts';
+
+      @Component({
+        selector: 'app-posts',
+        template: \`
+          @for (post of posts(); track post.slug) {
+            <p>{{ post.title }}</p>
+          }
+        \`
+      })
+      export class PostsComponent {
+        posts = input<UnifiedPost[]>([]);
+      }
+    `,
+      'posts.component.ts',
+    );
+
+    expectCompiles(result);
+    // Template helper must be defined, not just referenced
+    expect(result).toMatch(/function PostsComponent_For_\d+_Template/);
+    expect(result).toContain('ɵɵrepeaterCreate');
+    // Type-only import should be elided
+    expect(result).not.toContain('import { UnifiedPost }');
+  });
+
+  it('emits @for track function when last import is type-only', () => {
+    const result = compile(
+      `
+      import { Component, input } from '@angular/core';
+      import { Item } from './models';
+
+      @Component({
+        selector: 'app-list',
+        template: \`
+          @for (item of items(); track item.id) {
+            <span>{{ item.name }}</span>
+          }
+        \`
+      })
+      export class ListComponent {
+        items = input<Item[]>([]);
+      }
+    `,
+      'list.component.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toMatch(/_forTrack\d/);
+    expect(result).not.toContain('import { Item }');
+  });
+
+  it('emits helpers when multiple trailing imports are type-only', () => {
+    const result = compile(
+      `
+      import { Component, input } from '@angular/core';
+      import { TypeA } from './types-a';
+      import { TypeB } from './types-b';
+
+      @Component({
+        selector: 'app-multi',
+        template: \`
+          @for (item of items(); track item) {
+            <p>{{ item }}</p>
+          }
+        \`
+      })
+      export class MultiComponent {
+        items = input<TypeA[]>([]);
+        other: TypeB | undefined;
+      }
+    `,
+      'multi.component.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toMatch(/function MultiComponent_For_\d+_Template/);
+    expect(result).not.toContain('import { TypeA }');
+    expect(result).not.toContain('import { TypeB }');
+  });
+});
+
+describe('Hoisted nested-template helpers survive type-only import elision', () => {
+  // Repro of a real bug: a component with @if/@for/@switch blocks emits
+  // helper functions like `MyComponent_Conditional_0_Template` that are
+  // referenced from `static ɵcmp = ...`. They are hoisted via
+  // `ms.appendLeft(insertPos, ...)` where `insertPos === stmt.getEnd()` of
+  // the last import. When the previous-step type-elision pass rewrites a
+  // mixed `import { SomeType, someValue }` declaration via
+  // `ms.overwrite(node.start, node.end, ...)`, the `;` of that import sits
+  // inside the overwrite range. With `appendLeft`, the helpers were bound
+  // to the `;` and got wiped — leaving the component referencing undefined
+  // symbols. Fix: use `appendRight` so helpers bind to the character to the
+  // RIGHT of insertPos, which is outside the overwrite range.
+
+  it('emits @if conditional helpers when the file has a mixed type/value import', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      import { SomeType, someValue } from './other';
+      @Component({
+        selector: 'app-cond',
+        template: \`
+          @if (!flag) {
+            <span>off</span>
+          }
+          <div>
+            @if (flag) {
+              <span>on</span>
+            }
+          </div>
+        \`,
+      })
+      export class CondComponent {
+        flag: SomeType = someValue();
+      }
+    `,
+      'cond.ts',
+    );
+
+    expectCompiles(result);
+    // Both nested template helper functions must be present in the output.
+    // Without the appendRight fix they get wiped by the type-elision
+    // overwrite of the `import { SomeType, someValue }` declaration.
+    expect(result).toMatch(/function\s+CondComponent_Conditional_0_Template/);
+    expect(result).toMatch(/function\s+CondComponent_Conditional_2_Template/);
+    // The helpers must be hoisted ABOVE the class declaration so the
+    // static ɵcmp initializer can reference them.
+    const cond0Pos = result.indexOf(
+      'function CondComponent_Conditional_0_Template',
+    );
+    const classPos = result.indexOf('export class CondComponent');
+    expect(cond0Pos).toBeGreaterThan(-1);
+    expect(classPos).toBeGreaterThan(-1);
+    expect(cond0Pos).toBeLessThan(classPos);
+  });
+
+  it('still emits @if helpers when the file has only value imports (regression guard)', () => {
+    // The non-elision path must keep working too. Same component shape as
+    // above but with no type-only specifiers, so the elision pass is a no-op.
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-simple-cond',
+        template: \`
+          @if (flag) {
+            <span>on</span>
+          }
+        \`,
+      })
+      export class SimpleCondComponent {
+        flag = true;
+      }
+    `,
+      'simple-cond.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toMatch(
+      /function\s+SimpleCondComponent_Conditional_0_Template/,
+    );
   });
 });
