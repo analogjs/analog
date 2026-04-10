@@ -41,11 +41,7 @@ on:
       - 'package.json'
       - '.github/workflows/angular-compiler-compat.yml'
   push:
-    # TEMP: re-add this branch so the matrix re-fires on each push while
-    # we investigate a v19 @ViewChild bug. Drop before merging.
-    branches:
-      - beta
-      - fix/angular-compiler-v17-v18-compat
+    branches: [beta]
     paths:
       - 'packages/angular-compiler/**'
       - 'package.json'
