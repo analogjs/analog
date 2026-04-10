@@ -680,6 +680,21 @@ export function compile(
             isStandalone: meta.standalone,
             imports: meta.imports,
             lifecycle: { usesOnChanges: false },
+            // Angular v19/v20's `createComponentDefinitionMap` reads
+            // `meta.interpolation.start` and `meta.interpolation.end`
+            // unconditionally (the `!== DEFAULT_INTERPOLATION_CONFIG` check
+            // is reference-equality, so a missing field enters the block
+            // and crashes with `Cannot read properties of undefined`). v21
+            // dropped the field from `createComponentDefinitionMap`
+            // entirely. Use the v19/v20 singleton when the Angular package
+            // exports it (matches the reference-equality check, skipping
+            // the partial-mode emission block) and fall back to a plain
+            // shape on v21+ where the field is ignored anyway.
+            interpolation: (
+              o as {
+                DEFAULT_INTERPOLATION_CONFIG?: { start: string; end: string };
+              }
+            ).DEFAULT_INTERPOLATION_CONFIG ?? { start: '{{', end: '}}' },
             usesInheritance,
             defer: {
               mode: 0,
