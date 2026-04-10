@@ -339,6 +339,16 @@ export function compile(
           }
 
           const declarations: CompileDeclaration[] = [];
+          // Dedupe by class name across direct imports, tuple-barrel
+          // expansion, and NgModule export expansion so the final
+          // `dependencies: () => [...]` list never contains the same
+          // class twice. Otherwise Angular's runtime throws NG0300
+          // ("Multiple components match …") when a file lists both
+          // `NgIcon` and a barrel like `HlmIconImports = [HlmIcon, NgIcon]`
+          // that re-exports it, or when two NgModules re-export the same
+          // directive (e.g. FormsModule + ReactiveFormsModule →
+          // DefaultValueAccessor).
+          const seenDeclarationNames = new Set<string>();
 
           // Expand `imports` entries that are not directives themselves
           // (e.g. NgModules and tuple barrels like `HlmSelectImports =
@@ -417,7 +427,10 @@ export function compile(
                     memberEntry.outputs,
                   ) as string[];
                 }
-                declarations.push(memberDecl);
+                if (!seenDeclarationNames.has(memberName)) {
+                  seenDeclarationNames.add(memberName);
+                  declarations.push(memberDecl);
+                }
               }
               continue;
             }
@@ -477,7 +490,10 @@ export function compile(
                       exportedEntry.outputs,
                     ) as string[];
                   }
-                  declarations.push(decl);
+                  if (!seenDeclarationNames.has(exportedName)) {
+                    seenDeclarationNames.add(exportedName);
+                    declarations.push(decl);
+                  }
                 }
               }
               continue;
@@ -503,13 +519,16 @@ export function compile(
             if (registryEntry?.outputs) {
               decl.outputs = Object.values(registryEntry.outputs) as string[];
             }
-            declarations.push(decl);
+            if (!seenDeclarationNames.has(depClassName)) {
+              seenDeclarationNames.add(depClassName);
+              declarations.push(decl);
+            }
           }
 
           // Add self-reference so recursive components (e.g. tree views)
           // can use their own selector in their template.
           // Skip in partial mode — the linker handles self-resolution.
-          if (!isPartial) {
+          if (!isPartial && !seenDeclarationNames.has(className)) {
             const selfInputs = Object.entries(sigs.inputs).map(
               ([, v]: [string, any]) => v.bindingPropertyName,
             );
@@ -518,6 +537,7 @@ export function compile(
               ...fields.outputs,
               ...sigs.outputs,
             }) as string[];
+            seenDeclarationNames.add(className);
             declarations.push({
               type: classRef.value,
               selector: meta.selector,

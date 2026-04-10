@@ -3305,6 +3305,129 @@ describe('@Inject(forwardRef(...)) unwrapping', () => {
   });
 });
 
+describe('Dependency list deduplication', () => {
+  // Extract the contents of `dependencies: () => [ … ]` from compiled
+  // output so individual class references can be counted.
+  function depsArrayFor(result: string): string {
+    const m = result.match(/dependencies:\s*\(\)\s*=>\s*\[([\s\S]*?)\]/);
+    expect(
+      m,
+      'compiled output should contain a dependencies array',
+    ).not.toBeNull();
+    return m![1];
+  }
+  function countRefs(deps: string, name: string): number {
+    return (deps.match(new RegExp(`\\b${name}\\b`, 'g')) ?? []).length;
+  }
+
+  it('dedupes a class imported both directly and via a tuple barrel', () => {
+    const registry = buildRegistry({
+      'icon.ts': `
+        import { Component } from '@angular/core';
+        @Component({ selector: 'ng-icon', template: '' })
+        export class NgIcon {}
+      `,
+      'hlm-icon.ts': `
+        import { Component } from '@angular/core';
+        @Component({ selector: 'hlm-icon', template: '' })
+        export class HlmIcon {}
+      `,
+      'barrel.ts': `
+        import { HlmIcon } from './hlm-icon';
+        import { NgIcon } from './icon';
+        export const HlmIconImports = [HlmIcon, NgIcon] as const;
+      `,
+    });
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      import { NgIcon } from './icon';
+      import { HlmIconImports } from './barrel';
+      @Component({
+        selector: 'app-root',
+        imports: [NgIcon, HlmIconImports],
+        template: '<hlm-icon><ng-icon /></hlm-icon>',
+      })
+      export class App {}
+    `,
+      'app.ts',
+      registry,
+    );
+    expectCompiles(result);
+    const deps = depsArrayFor(result);
+    expect(countRefs(deps, 'NgIcon')).toBe(1);
+    expect(countRefs(deps, 'HlmIcon')).toBe(1);
+  });
+
+  it('dedupes a directive re-exported by two NgModules', () => {
+    const registry = buildRegistry({
+      'value-accessor.ts': `
+        import { Directive } from '@angular/core';
+        @Directive({ selector: 'input[ngModel]' })
+        export class DefaultValueAccessor {}
+      `,
+      'forms.module.ts': `
+        import { NgModule } from '@angular/core';
+        import { DefaultValueAccessor } from './value-accessor';
+        @NgModule({ exports: [DefaultValueAccessor] })
+        export class FormsModule {}
+      `,
+      'reactive-forms.module.ts': `
+        import { NgModule } from '@angular/core';
+        import { DefaultValueAccessor } from './value-accessor';
+        @NgModule({ exports: [DefaultValueAccessor] })
+        export class ReactiveFormsModule {}
+      `,
+    });
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      import { FormsModule } from './forms.module';
+      import { ReactiveFormsModule } from './reactive-forms.module';
+      @Component({
+        selector: 'app-form',
+        imports: [FormsModule, ReactiveFormsModule],
+        template: '<input ngModel />',
+      })
+      export class FormApp {}
+    `,
+      'form-app.ts',
+      registry,
+    );
+    expectCompiles(result);
+    const deps = depsArrayFor(result);
+    expect(countRefs(deps, 'DefaultValueAccessor')).toBe(1);
+  });
+
+  it('does not duplicate the self reference when a tuple barrel includes the component itself', () => {
+    const registry = buildRegistry({
+      'self.ts': `
+        import { Component } from '@angular/core';
+        @Component({ selector: 'self-cmp', template: '<self-cmp />' })
+        export class SelfCmp {}
+        export const SelfBarrel = [SelfCmp] as const;
+      `,
+    });
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      import { SelfBarrel } from './self';
+      @Component({
+        selector: 'self-cmp',
+        imports: [SelfBarrel],
+        template: '<self-cmp />',
+      })
+      export class SelfCmp {}
+    `,
+      'self.ts',
+      registry,
+    );
+    expectCompiles(result);
+    const deps = depsArrayFor(result);
+    expect(countRefs(deps, 'SelfCmp')).toBe(1);
+  });
+});
+
 function expectCompiles(result: string) {
   expect(result).toBeTruthy();
   expect(result).not.toMatch(/^Error:/m);
