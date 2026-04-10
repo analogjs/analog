@@ -26,8 +26,8 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "peerDependencies": {
-    "@angular/compiler": ">=19.0.0",
-    "@angular/compiler-cli": ">=19.0.0"
+    "@angular/compiler": ">=17.0.0",
+    "@angular/compiler-cli": ">=17.0.0"
   },
   "dependencies": {
     "magic-string": "^0.30.0",
