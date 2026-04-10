@@ -1,3 +1,9 @@
+# [2.5.0-beta.26](https://github.com/analogjs/analog/compare/v2.5.0-beta.25...v2.5.0-beta.26) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** hoisted helpers survive type-only import elision ([99e1ba4](https://github.com/analogjs/analog/commit/99e1ba48d8b08f8eb8de53fdae5801ea7e909d7a))
+
 # [2.5.0-beta.25](https://github.com/analogjs/analog/compare/v2.5.0-beta.24...v2.5.0-beta.25) (2026-04-10)
 
 ### Bug Fixes
