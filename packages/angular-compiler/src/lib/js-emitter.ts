@@ -10,78 +10,93 @@ const emptySourceFile = ts.createSourceFile(
   false,
 );
 
-const BINARY_OP_STR: Record<number, string> = {
-  [o.BinaryOperator.Equals]: '==',
-  [o.BinaryOperator.NotEquals]: '!=',
-  [o.BinaryOperator.Assign]: '=',
-  [o.BinaryOperator.Identical]: '===',
-  [o.BinaryOperator.NotIdentical]: '!==',
-  [o.BinaryOperator.Minus]: '-',
-  [o.BinaryOperator.Plus]: '+',
-  [o.BinaryOperator.Divide]: '/',
-  [o.BinaryOperator.Multiply]: '*',
-  [o.BinaryOperator.Modulo]: '%',
-  [o.BinaryOperator.And]: '&&',
-  [o.BinaryOperator.Or]: '||',
-  [o.BinaryOperator.BitwiseOr]: '|',
-  [o.BinaryOperator.BitwiseAnd]: '&',
-  [o.BinaryOperator.Lower]: '<',
-  [o.BinaryOperator.LowerEquals]: '<=',
-  [o.BinaryOperator.Bigger]: '>',
-  [o.BinaryOperator.BiggerEquals]: '>=',
-  [o.BinaryOperator.NullishCoalesce]: '??',
-  [o.BinaryOperator.Exponentiation]: '**',
-  [o.BinaryOperator.In]: 'in',
-  [o.BinaryOperator.InstanceOf]: 'instanceof',
-  [o.BinaryOperator.AdditionAssignment]: '+=',
-  [o.BinaryOperator.SubtractionAssignment]: '-=',
-  [o.BinaryOperator.MultiplicationAssignment]: '*=',
-  [o.BinaryOperator.DivisionAssignment]: '/=',
-  [o.BinaryOperator.RemainderAssignment]: '%=',
-  [o.BinaryOperator.ExponentiationAssignment]: '**=',
-  [o.BinaryOperator.AndAssignment]: '&&=',
-  [o.BinaryOperator.OrAssignment]: '||=',
-  [o.BinaryOperator.NullishCoalesceAssignment]: '??=',
-};
+// Operator metadata table — name, JS string, and precedence (higher = tighter
+// binding). Used to build version-aware lookup maps below.
+//
+// Why a runtime build instead of static `[o.BinaryOperator.Equals]: '=='`
+// literals: Angular's `BinaryOperator` enum gains members between major
+// versions (Assign and the 9 compound assignments were added in v21,
+// Exponentiation/In in v20, InstanceOf in v21). On older Angular versions
+// the missing members evaluate to `undefined` at module load time, and
+// every `[undefined]: '...'` entry collides on the single string key
+// `"undefined"` — last write wins. Pre-Phase-1, that gave the v19 install
+// `BINARY_OP_STR["undefined"] === '??='`, so any expression with an
+// unknown operator emitted `??=` instead of failing loudly. Building the
+// table by iterating known names and skipping `undefined` values
+// eliminates the collision: members that don't exist on the installed
+// Angular are simply absent from the map.
+//
+// Precedence values match MDN's table, skipping levels not used by Angular
+// (bitwise XOR, shifts).
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_precedence
+const OP_DEFINITIONS: ReadonlyArray<
+  readonly [name: string, str: string, precedence: number]
+> = [
+  ['Assign', '=', 2],
+  ['AdditionAssignment', '+=', 2],
+  ['SubtractionAssignment', '-=', 2],
+  ['MultiplicationAssignment', '*=', 2],
+  ['DivisionAssignment', '/=', 2],
+  ['RemainderAssignment', '%=', 2],
+  ['ExponentiationAssignment', '**=', 2],
+  ['AndAssignment', '&&=', 2],
+  ['OrAssignment', '||=', 2],
+  ['NullishCoalesceAssignment', '??=', 2],
+  ['NullishCoalesce', '??', 4],
+  ['Or', '||', 4],
+  ['And', '&&', 5],
+  ['BitwiseOr', '|', 6],
+  ['BitwiseAnd', '&', 8],
+  ['Equals', '==', 9],
+  ['NotEquals', '!=', 9],
+  ['Identical', '===', 9],
+  ['NotIdentical', '!==', 9],
+  ['Lower', '<', 10],
+  ['LowerEquals', '<=', 10],
+  ['Bigger', '>', 10],
+  ['BiggerEquals', '>=', 10],
+  ['In', 'in', 10],
+  ['InstanceOf', 'instanceof', 10],
+  ['Plus', '+', 12],
+  ['Minus', '-', 12],
+  ['Multiply', '*', 13],
+  ['Divide', '/', 13],
+  ['Modulo', '%', 13],
+  ['Exponentiation', '**', 14],
+];
 
-/**
- * JavaScript operator precedence (higher = tighter binding).
- * Values match MDN's table, skipping levels not used by Angular (bitwise XOR, shifts).
- * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_precedence
- */
-const BINARY_PRECEDENCE: Record<number, number> = {
-  [o.BinaryOperator.Assign]: 2,
-  [o.BinaryOperator.AdditionAssignment]: 2,
-  [o.BinaryOperator.SubtractionAssignment]: 2,
-  [o.BinaryOperator.MultiplicationAssignment]: 2,
-  [o.BinaryOperator.DivisionAssignment]: 2,
-  [o.BinaryOperator.RemainderAssignment]: 2,
-  [o.BinaryOperator.ExponentiationAssignment]: 2,
-  [o.BinaryOperator.AndAssignment]: 2,
-  [o.BinaryOperator.OrAssignment]: 2,
-  [o.BinaryOperator.NullishCoalesceAssignment]: 2,
-  [o.BinaryOperator.Or]: 4,
-  [o.BinaryOperator.NullishCoalesce]: 4,
-  [o.BinaryOperator.And]: 5,
-  [o.BinaryOperator.BitwiseOr]: 6,
-  [o.BinaryOperator.BitwiseAnd]: 8,
-  [o.BinaryOperator.Equals]: 9,
-  [o.BinaryOperator.NotEquals]: 9,
-  [o.BinaryOperator.Identical]: 9,
-  [o.BinaryOperator.NotIdentical]: 9,
-  [o.BinaryOperator.Lower]: 10,
-  [o.BinaryOperator.LowerEquals]: 10,
-  [o.BinaryOperator.Bigger]: 10,
-  [o.BinaryOperator.BiggerEquals]: 10,
-  [o.BinaryOperator.In]: 10,
-  [o.BinaryOperator.InstanceOf]: 10,
-  [o.BinaryOperator.Plus]: 12,
-  [o.BinaryOperator.Minus]: 12,
-  [o.BinaryOperator.Multiply]: 13,
-  [o.BinaryOperator.Divide]: 13,
-  [o.BinaryOperator.Modulo]: 13,
-  [o.BinaryOperator.Exponentiation]: 14,
-};
+/** Operator integer values that represent assignment forms (`=`, `+=`, etc.). */
+const ASSIGNMENT_OP_NAMES: ReadonlySet<string> = new Set([
+  'Assign',
+  'AdditionAssignment',
+  'SubtractionAssignment',
+  'MultiplicationAssignment',
+  'DivisionAssignment',
+  'RemainderAssignment',
+  'ExponentiationAssignment',
+  'AndAssignment',
+  'OrAssignment',
+  'NullishCoalesceAssignment',
+]);
+
+const BINARY_OP_STR = new Map<number, string>();
+const BINARY_PRECEDENCE = new Map<number, number>();
+const ASSIGNMENT_OP_VALUES = new Set<number>();
+
+for (const [name, str, precedence] of OP_DEFINITIONS) {
+  const value = (o.BinaryOperator as Record<string, unknown>)[name];
+  if (typeof value !== 'number') continue;
+  BINARY_OP_STR.set(value, str);
+  BINARY_PRECEDENCE.set(value, precedence);
+  if (ASSIGNMENT_OP_NAMES.has(name)) {
+    ASSIGNMENT_OP_VALUES.add(value);
+  }
+}
+
+/** Returns true when `op` represents any kind of assignment (`=`, `+=`, etc.). */
+function isAssignmentOperator(op: o.BinaryOperator): boolean {
+  return ASSIGNMENT_OP_VALUES.has(op);
+}
 
 /**
  * Determine whether a child expression needs parentheses when it appears
@@ -95,8 +110,8 @@ function childNeedsParens(
   if (!(child instanceof o.BinaryOperatorExpr)) return false;
 
   const childOp = child.operator;
-  const parentPrec = BINARY_PRECEDENCE[parentOp];
-  const childPrec = BINARY_PRECEDENCE[childOp];
+  const parentPrec = BINARY_PRECEDENCE.get(parentOp);
+  const childPrec = BINARY_PRECEDENCE.get(childOp);
   if (parentPrec === undefined || childPrec === undefined) return false;
 
   // ?? cannot appear with || or && without explicit grouping (JS spec)
@@ -262,7 +277,18 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     );
   }
   visitBinaryOperatorExpr(ast: o.BinaryOperatorExpr) {
-    const op = BINARY_OP_STR[ast.operator] || '=';
+    // `BINARY_OP_STR.get(...)` returns `undefined` when the operator value
+    // doesn't exist in the installed Angular's `BinaryOperator` enum (the
+    // enum is missing 13 members on v19, 11 on v20). Falling back to `'='`
+    // would silently produce wrong code; instead, we throw so the error
+    // surfaces in the DEBUG output and the calling test fails loudly.
+    const op = BINARY_OP_STR.get(ast.operator);
+    if (op === undefined) {
+      throw new Error(
+        `[angular-compiler] Unsupported BinaryOperator value ${ast.operator} ` +
+          `on @angular/compiler ${o.VERSION?.full ?? '(unknown version)'}`,
+      );
+    }
 
     const lhsRaw = ast.lhs.visitExpression(this, null);
     const rhsRaw = ast.rhs.visitExpression(this, null);
@@ -277,18 +303,14 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     const expr = lhs + ' ' + op + ' ' + rhs;
 
     // Wrap assignments in parens so they work correctly as ternary conditions:
-    // (tmp = val) ? a : b  vs  tmp = val ? a : b
+    //   (tmp = val) ? a : b   vs   tmp = val ? a : b
     //
-    // `BinaryOperatorExpr.isAssignment()` was added in a later 20.x patch
-    // (it doesn't exist on Angular 20.0.0). On versions where the method
-    // is missing, fall back to reading `operator` directly. We only emit
-    // `BinaryOperator.Assign` in our compile output (no compound
-    // assignments like += or ??=), so the simplified check is sufficient.
-    const isAssignment =
-      typeof (ast as any).isAssignment === 'function'
-        ? (ast as any).isAssignment()
-        : ast.operator === o.BinaryOperator.Assign;
-    if (isAssignment) {
+    // `isAssignmentOperator` is built at module load time from the operator
+    // names that actually exist on the installed Angular's enum. This
+    // works whether `Assign` is present (v21+) or absent (v19/v20) — on
+    // older versions the assignment branch is simply unreachable because
+    // Angular's compiler never constructs an Assign-operator expression.
+    if (isAssignmentOperator(ast.operator)) {
       return '(' + expr + ')';
     }
     return expr;

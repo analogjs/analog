@@ -2,6 +2,20 @@ import { describe, it, expect } from 'vitest';
 import * as o from '@angular/compiler';
 import { emitAngularExpr } from './js-emitter';
 
+// Version-aware test gates. Angular's `BinaryOperator` enum is missing
+// 11–13 members on v19/v20 (Assign, all 9 compound assignments, Exponen-
+// tiation/In on v19, InstanceOf on v19/v20). Tests that explicitly
+// construct expressions with those operators are nonsensical on versions
+// where the enum members don't exist — `o.BinaryOperator.Assign` would
+// evaluate to `undefined` and the test would assert against an
+// expression with `operator: undefined`. Skip such tests on versions
+// where the operator is missing rather than leaving them broken.
+const HAS_EXPONENTIATION =
+  typeof (o.BinaryOperator as Record<string, unknown>)['Exponentiation'] ===
+  'number';
+const HAS_ASSIGN_OPS =
+  typeof (o.BinaryOperator as Record<string, unknown>)['Assign'] === 'number';
+
 function bin(op: o.BinaryOperator, lhs: o.Expression, rhs: o.Expression) {
   return new o.BinaryOperatorExpr(op, lhs, rhs);
 }
@@ -124,25 +138,30 @@ describe('JSEmitter – operator precedence', () => {
     });
   });
 
-  describe('right-associative exponentiation', () => {
-    it('parenthesizes LHS of **: (a ** b) ** c', () => {
-      const expr = bin(
-        o.BinaryOperator.Exponentiation,
-        bin(o.BinaryOperator.Exponentiation, v('a'), v('b')),
-        v('c'),
-      );
-      expect(emitAngularExpr(expr)).toBe('(a ** b) ** c');
-    });
+  // `Exponentiation` was added to `BinaryOperator` in Angular 20 — these
+  // tests are nonsensical on v19 where the enum member doesn't exist.
+  describe.skipIf(!HAS_EXPONENTIATION)(
+    'right-associative exponentiation',
+    () => {
+      it('parenthesizes LHS of **: (a ** b) ** c', () => {
+        const expr = bin(
+          o.BinaryOperator.Exponentiation,
+          bin(o.BinaryOperator.Exponentiation, v('a'), v('b')),
+          v('c'),
+        );
+        expect(emitAngularExpr(expr)).toBe('(a ** b) ** c');
+      });
 
-    it('does not parenthesize RHS of **: a ** b ** c', () => {
-      const expr = bin(
-        o.BinaryOperator.Exponentiation,
-        v('a'),
-        bin(o.BinaryOperator.Exponentiation, v('b'), v('c')),
-      );
-      expect(emitAngularExpr(expr)).toBe('a ** b ** c');
-    });
-  });
+      it('does not parenthesize RHS of **: a ** b ** c', () => {
+        const expr = bin(
+          o.BinaryOperator.Exponentiation,
+          v('a'),
+          bin(o.BinaryOperator.Exponentiation, v('b'), v('c')),
+        );
+        expect(emitAngularExpr(expr)).toBe('a ** b ** c');
+      });
+    },
+  );
 
   describe('original bug scenario', () => {
     it('preserves parens: (a ?? 0) + (b || c) + 15', () => {
@@ -159,7 +178,9 @@ describe('JSEmitter – operator precedence', () => {
     });
   });
 
-  describe('assignments remain wrapped', () => {
+  // `Assign` and the 9 compound assignment operators were added to
+  // `BinaryOperator` in Angular 21 — these tests cannot run on v19/v20.
+  describe.skipIf(!HAS_ASSIGN_OPS)('assignments remain wrapped', () => {
     it('wraps simple assignment in parens', () => {
       const expr = bin(o.BinaryOperator.Assign, v('x'), lit(1));
       expect(emitAngularExpr(expr)).toBe('(x = 1)');
