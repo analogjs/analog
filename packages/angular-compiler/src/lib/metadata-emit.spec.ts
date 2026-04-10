@@ -401,8 +401,10 @@ describe('Pure annotations on Ivy fields', () => {
       'c.ts',
     );
     expectCompiles(result);
+    // Factory parameter name differs by Angular version: v17 emits `t`,
+    // v18+ uses the descriptive `__ngFactoryType__`. Both are valid.
     expect(result).toMatch(
-      /static ɵfac = \/\*@__PURE__\*\/\s*\(__ngFactoryType__\)/,
+      /static ɵfac = \/\*@__PURE__\*\/\s*\((?:__ngFactoryType__|t)\)/,
     );
     expect(result).toMatch(/static ɵcmp = \/\*@__PURE__\*\/\s*i0\.ɵɵdefine/);
     expect(result).toMatch(

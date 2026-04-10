@@ -104,8 +104,11 @@ describe('Directive compilation', () => {
     expectCompiles(result);
     expect(result).toContain('ɵɵdefineDirective');
     expect(result).toContain('"appTooltip"');
-    // Signal inputs should have the proper flags
-    expect(result).toMatch(/inputs:.*text.*\[1/);
+    // Signal inputs should have the proper flags. Angular v17 emits the
+    // symbolic `i0.ɵɵInputFlags.SignalBased`; v18+ emits the literal `1`.
+    expect(result).toMatch(
+      /inputs:.*text.*\[(?:1|i0\.ɵɵInputFlags\.SignalBased)/,
+    );
   });
 
   it('compiles a directive with exportAs', () => {
