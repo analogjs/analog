@@ -1,3 +1,9 @@
+# [2.5.0-beta.30](https://github.com/analogjs/analog/compare/v2.5.0-beta.29...v2.5.0-beta.30) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** construct setClassMetadata entries as plain objects ([546f427](https://github.com/analogjs/analog/commit/546f427e5495232987d497d5ebfe08cad20f6d51))
+
 # [2.5.0-beta.29](https://github.com/analogjs/analog/compare/v2.5.0-beta.28...v2.5.0-beta.29) (2026-04-10)
 
 ### Features
