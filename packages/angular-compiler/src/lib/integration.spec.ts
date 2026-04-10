@@ -1889,6 +1889,37 @@ describe('constant pool helpers survive type-only import elision', () => {
     expect(result).not.toContain('import { Item }');
   });
 
+  // Regression: when ALL specifiers in the only import are falsely detected as
+  // type-only (because setClassMetadata hasn't been appended to MagicString yet),
+  // insertPos stays at 0 and helpers get wiped by the subsequent import overwrite.
+  // The source string must start at position 0 with `import` (no leading whitespace)
+  // to reproduce — real .ts files on disk always satisfy this condition.
+  it('emits constant pool helpers when unused imports are present', () => {
+    const result = compile(
+      // No leading whitespace — import starts at position 0, matching real files
+      `import { Component, signal, computed } from '@angular/core';
+
+@Component({
+  selector: 'app-counter',
+  template: \`<ng-content></ng-content>\`,
+})
+export class Counter {
+}
+`,
+      'counter.ts',
+    );
+
+    expectCompiles(result);
+    // The ngContentSelectors constant (e.g. _c0) must be defined, not just referenced
+    const selectorMatch = result.match(/ngContentSelectors:\s*(\w+)/);
+    expect(selectorMatch).toBeTruthy();
+    const constName = selectorMatch![1];
+    expect(result).toMatch(new RegExp(`const ${constName}\\s*=`));
+    // Unused imports should still be elided
+    expect(result).not.toContain('signal');
+    expect(result).not.toContain('computed');
+  });
+
   it('emits helpers when multiple trailing imports are type-only', () => {
     const result = compile(
       `

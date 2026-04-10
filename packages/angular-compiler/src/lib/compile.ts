@@ -1181,7 +1181,17 @@ export function compile(
     // be fully removed by elideTypeOnlyImportsMagicString (step 4).
     // Inserting at a position inside a soon-to-be-removed range would cause
     // MagicString to discard the helpers along with the import.
-    const willElide = detectTypeOnlyImportNames(ms.toString());
+    // Include pending sideEffects (setClassMetadata IIFEs) in the detection
+    // string — they reference decorator names like `Component` in value
+    // position but haven't been appended to `ms` yet. Without this,
+    // decorator names are falsely flagged as type-only, causing the import
+    // to be skipped, insertPos to stay at 0, and helpers to be placed at
+    // position 0 where they get wiped by the subsequent import overwrite.
+    const codeForDetection =
+      sideEffects.length > 0
+        ? ms.toString() + '\n' + sideEffects.join('\n')
+        : ms.toString();
+    const willElide = detectTypeOnlyImportNames(codeForDetection);
 
     let insertPos = 0;
     for (const stmt of origSourceFile.statements) {
