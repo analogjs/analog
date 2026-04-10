@@ -35,13 +35,18 @@ name: Angular Compiler Compatibility Tests
 
 on:
   workflow_dispatch:
-  pull_request:
+  # TEMPORARY: trigger on every push to this validation branch so the
+  # matrix runs automatically while we iterate on v17/v18 compat. REVERT
+  # this push-branches entry before merging the branch into beta.
+  push:
+    branches:
+      - beta
+      - fix/angular-compiler-v17-v18-compat
     paths:
       - 'packages/angular-compiler/**'
       - 'package.json'
       - '.github/workflows/angular-compiler-compat.yml'
-  push:
-    branches: [beta]
+  pull_request:
     paths:
       - 'packages/angular-compiler/**'
       - 'package.json'
@@ -64,7 +69,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        angular-version: ['19.0.0', '20.0.0', '21.0.0', 'next']
+        # Numeric slots cover the supported peerDependencies range. v17/v18
+        # use the latest LTS patches that real users are most likely on
+        # (the floor versions, e.g. 17.0.0/18.0.0, predate the
+        # signal-input array shape and aren't worth supporting). v19/v20
+        # use the floor of the major as a deterministic CI signal.
+        angular-version:
+          [
+            '17.3.12',
+            '18.2.14',
+            '19.0.0',
+            '20.0.0',
+            '21.0.0',
+            'next',
+          ]
 
     name: Angular ${{ matrix.angular-version }}
 
