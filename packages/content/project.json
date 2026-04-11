@@ -10,7 +10,7 @@
     "assert-deps": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node tools/scripts/assert-project-dependency.mts content vite-plugin-angular"
+        "command": "node tools/scripts/assert-project-dependency.mts content build-self vite-plugin-angular:build"
       }
     },
     "build-self": {

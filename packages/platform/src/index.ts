@@ -24,6 +24,7 @@ export type {
   StylePipelineOptions,
   StylePipelinePluginEntry,
   StylePipelinePluginFactory,
+  StylePipelineStylesheetRegistry,
 } from './lib/style-pipeline.js';
 export {
   defineAngularStylePipeline,
