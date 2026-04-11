@@ -16,6 +16,10 @@
     "test": {
       "cache": true
     },
+    "typecheck": {
+      "cache": true,
+      "inputs": ["default", "^production"]
+    },
     "e2e": {
       "cache": true
     },
@@ -75,7 +79,10 @@
     {
       "plugin": "@nx/js/typescript",
       "options": {
-        "typecheck": false,
+        "compiler": "tsgo",
+        "typecheck": {
+          "targetName": "typecheck"
+        },
         "build": false
       }
     },

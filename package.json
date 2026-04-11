@@ -35,6 +35,7 @@
     "release:smoke": "node tools/scripts/smoke-release-consumers.mts",
     "release:verify": "node tools/scripts/release-artifacts.mts verify",
     "start": "nx serve",
+    "typecheck": "nx run-many --target typecheck --all",
     "test:vite-ci": "nx run-many --target test --exclude card --all --skip-nx-cache",
     "test": "nx run-many --target test"
   },
@@ -156,6 +157,7 @@
     "@typescript-eslint/parser": "catalog:",
     "@typescript-eslint/type-utils": "catalog:",
     "@typescript-eslint/utils": "catalog:",
+    "@typescript/native-preview": "7.0.0-dev.20260411.1",
     "@vitest/browser-playwright": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "@vitest/ui": "catalog:",
