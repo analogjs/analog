@@ -75,11 +75,6 @@ const config = {
     },
   },
   favicon: 'img/favicon.ico',
-  future: {
-    experimental_faster: {
-      rspackBundler: true,
-    },
-  },
   onBrokenLinks: 'throw',
   markdown: {
     hooks: {
