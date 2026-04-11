@@ -1,43 +1,50 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('node:fs', () => ({
-  existsSync: vi.fn(),
-  readFileSync: vi.fn(),
+vi.mock('tinyglobby', () => ({
+  globSync: vi.fn(() => []),
 }));
 
-import { existsSync, readFileSync } from 'node:fs';
+import { globSync } from 'tinyglobby';
 import { discoverLibraryRoutes } from './discover-library-routes.js';
 
-const mockExistsSync = vi.mocked(existsSync);
-const mockReadFileSync = vi.mocked(readFileSync);
-
-function mockTsconfig(paths: Record<string, string[]>) {
-  mockReadFileSync.mockReturnValue(
-    JSON.stringify({ compilerOptions: { paths } }),
-  );
-  // tsconfig.base.json exists
-  mockExistsSync.mockImplementation((p) => {
-    if (String(p).endsWith('tsconfig.base.json')) return true;
-    return false;
-  });
-}
+const mockGlobSync = vi.mocked(globSync);
 
 describe('discoverLibraryRoutes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('discovers pages, content, and api dirs from tsconfig paths', () => {
-    mockReadFileSync.mockReturnValue(
-      JSON.stringify({
-        compilerOptions: {
-          paths: {
-            '@analogjs/shared-feature': ['./libs/shared/feature/src/index.ts'],
-          },
-        },
+  it('discovers pages, content, and api dirs from workspace libraries', () => {
+    mockGlobSync.mockReturnValue([
+      'libs/shared/feature/src/pages',
+      'libs/shared/feature/src/content',
+      'libs/shared/feature/src/api',
+    ]);
+
+    const result = discoverLibraryRoutes('/workspace');
+
+    expect(mockGlobSync).toHaveBeenCalledWith(
+      ['libs/**/src/pages', 'libs/**/src/content', 'libs/**/src/api'],
+      expect.objectContaining({
+        cwd: '/workspace',
+        dot: true,
+        onlyDirectories: true,
       }),
     );
-    mockExistsSync.mockReturnValue(true);
+    expect(result).toEqual({
+      additionalPagesDirs: ['/libs/shared/feature'],
+      additionalContentDirs: ['/libs/shared/feature/src/content'],
+      additionalAPIDirs: ['/libs/shared/feature/src/api'],
+    });
+  });
+
+  it('deduplicates multiple discovered dirs from the same library', () => {
+    mockGlobSync.mockReturnValue([
+      'libs/shared/feature/src/content',
+      'libs/shared/feature/src/pages',
+      'libs/shared/feature/src/api',
+      'libs/shared/feature/src/pages',
+    ]);
 
     const result = discoverLibraryRoutes('/workspace');
 
@@ -48,49 +55,26 @@ describe('discoverLibraryRoutes', () => {
     expect(result.additionalAPIDirs).toEqual(['/libs/shared/feature/src/api']);
   });
 
-  it('uses target paths so @analogjs/* libs still participate in discovery', () => {
-    mockTsconfig({
-      '@analogjs/router': ['./packages/router/src/index.ts'],
-      '@analogjs/content': ['./packages/content/src/index.ts'],
-      '@analogjs/shared-feature': ['./libs/shared/feature/src/index.ts'],
-    });
-    // Only the shared/feature pages dir exists
-    mockExistsSync.mockImplementation((p) => {
-      const s = String(p);
-      if (s.endsWith('tsconfig.base.json')) return true;
-      if (s.includes('shared/feature') && s.endsWith('src/pages')) return true;
-      return false;
-    });
+  it('sorts discovered libraries deterministically', () => {
+    mockGlobSync.mockReturnValue([
+      'libs/z-last/src/pages',
+      'libs/a-first/src/content',
+      'libs/m-middle/src/api',
+      'libs/a-first/src/pages',
+    ]);
 
     const result = discoverLibraryRoutes('/workspace');
 
-    expect(result.additionalPagesDirs).toEqual(['/libs/shared/feature']);
-    expect(result.additionalContentDirs).toEqual([]);
-    expect(result.additionalAPIDirs).toEqual([]);
+    expect(result.additionalPagesDirs).toEqual([
+      '/libs/a-first',
+      '/libs/z-last',
+    ]);
+    expect(result.additionalContentDirs).toEqual(['/libs/a-first/src/content']);
+    expect(result.additionalAPIDirs).toEqual(['/libs/m-middle/src/api']);
   });
 
-  it('skips libs without route directories', () => {
-    mockTsconfig({
-      '@analogjs/card': ['./libs/card/src/index.ts'],
-    });
-    // card has no pages/content/api dirs
-    mockExistsSync.mockImplementation((p) => {
-      if (String(p).endsWith('tsconfig.base.json')) return true;
-      return false;
-    });
-
-    const result = discoverLibraryRoutes('/workspace');
-
-    expect(result.additionalPagesDirs).toEqual([]);
-    expect(result.additionalContentDirs).toEqual([]);
-    expect(result.additionalAPIDirs).toEqual([]);
-  });
-
-  it('returns empty arrays when tsconfig is missing', () => {
-    mockReadFileSync.mockImplementation(() => {
-      throw new Error('ENOENT');
-    });
-    mockExistsSync.mockReturnValue(false);
+  it('returns empty arrays when no workspace libraries match', () => {
+    mockGlobSync.mockReturnValue([]);
 
     const result = discoverLibraryRoutes('/workspace');
 
@@ -101,107 +85,17 @@ describe('discoverLibraryRoutes', () => {
     });
   });
 
-  it('returns empty arrays for malformed JSON', () => {
-    mockExistsSync.mockReturnValue(true);
-    mockReadFileSync.mockReturnValue('not valid json {{{');
+  it('normalizes workspace-relative and absolute-looking glob results', () => {
+    mockGlobSync.mockReturnValue([
+      '/workspace/libs/shared/feature/src/pages/',
+      '/workspace/libs/shared/feature/src/content/',
+    ]);
 
-    const result = discoverLibraryRoutes('/workspace');
-
-    expect(result).toEqual({
-      additionalPagesDirs: [],
-      additionalContentDirs: [],
-      additionalAPIDirs: [],
-    });
-  });
-
-  it('handles nested lib paths', () => {
-    mockTsconfig({
-      '@analogjs/shared-feature': ['./libs/shared/feature/src/index.ts'],
-    });
-    mockExistsSync.mockImplementation((p) => {
-      const s = String(p);
-      if (s.endsWith('tsconfig.base.json')) return true;
-      if (s.endsWith('shared/feature/src/pages')) return true;
-      return false;
-    });
-
-    const result = discoverLibraryRoutes('/workspace');
+    const result = discoverLibraryRoutes('/workspace/');
 
     expect(result.additionalPagesDirs).toEqual(['/libs/shared/feature']);
-  });
-
-  it('deduplicates subpath entries for the same lib', () => {
-    mockTsconfig({
-      'my-lib': ['./libs/my-lib/src/index.ts'],
-      'my-lib/testing': ['./libs/my-lib/src/testing/index.ts'],
-    });
-    mockExistsSync.mockImplementation((p) => {
-      const s = String(p);
-      if (s.endsWith('tsconfig.base.json')) return true;
-      if (s.endsWith('my-lib/src/pages')) return true;
-      return false;
-    });
-
-    const result = discoverLibraryRoutes('/workspace');
-
-    expect(result.additionalPagesDirs).toEqual(['/libs/my-lib']);
-  });
-
-  it('only detects existing subdirectories', () => {
-    mockTsconfig({
-      '@analogjs/shared-feature': ['./libs/shared/feature/src/index.ts'],
-    });
-    mockExistsSync.mockImplementation((p) => {
-      const s = String(p);
-      if (s.endsWith('tsconfig.base.json')) return true;
-      // only content exists, no pages or api
-      if (s.endsWith('shared/feature/src/content')) return true;
-      return false;
-    });
-
-    const result = discoverLibraryRoutes('/workspace');
-
-    expect(result.additionalPagesDirs).toEqual([]);
     expect(result.additionalContentDirs).toEqual([
       '/libs/shared/feature/src/content',
     ]);
-    expect(result.additionalAPIDirs).toEqual([]);
-  });
-
-  it('falls back to tsconfig.json when tsconfig.base.json is missing', () => {
-    mockExistsSync.mockImplementation((p) => {
-      const s = String(p);
-      // tsconfig.base.json does NOT exist
-      if (s.endsWith('tsconfig.base.json')) return false;
-      if (s.endsWith('my-lib/src/pages')) return true;
-      return false;
-    });
-    mockReadFileSync.mockImplementation((p) => {
-      if (String(p).endsWith('tsconfig.base.json')) {
-        throw new Error('ENOENT');
-      }
-      return JSON.stringify({
-        compilerOptions: {
-          paths: { 'my-lib': ['./libs/my-lib/src/index.ts'] },
-        },
-      });
-    });
-
-    const result = discoverLibraryRoutes('/workspace');
-
-    expect(result.additionalPagesDirs).toEqual(['/libs/my-lib']);
-  });
-
-  it('skips paths that do not resolve into libs/', () => {
-    mockTsconfig({
-      'my-app': ['./apps/my-app/src/index.ts'],
-      'some-tool': ['./tools/some-tool/src/index.ts'],
-    });
-
-    const result = discoverLibraryRoutes('/workspace');
-
-    expect(result.additionalPagesDirs).toEqual([]);
-    expect(result.additionalContentDirs).toEqual([]);
-    expect(result.additionalAPIDirs).toEqual([]);
   });
 });

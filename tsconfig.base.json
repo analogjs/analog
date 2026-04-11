@@ -16,13 +16,7 @@
     "lib": ["es2021", "dom"],
     "skipLibCheck": true,
     "ignoreDeprecations": "6.0",
-    "skipDefaultLibCheck": true,
-    "paths": {
-      "@analogjs/card": ["./libs/card/src/index.ts"],
-      "@analogjs/my-package": ["./libs/my-package/src/index.ts"],
-      "@analogjs/shared-feature": ["./libs/shared/feature/src/index.ts"],
-      "@analogjs/top-bar": ["./libs/top-bar/src/index.ts"]
-    }
+    "skipDefaultLibCheck": true
   },
   "exclude": ["node_modules", "tmp"],
   "angularCompilerOptions": {

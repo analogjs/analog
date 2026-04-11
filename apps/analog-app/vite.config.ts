@@ -1,7 +1,6 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig, PluginOption } from 'vite';
 
 // Only run in Netlify CI
@@ -94,7 +93,6 @@ export default defineConfig(async ({ mode }) => {
           },
         },
       }),
-      nxViteTsPaths(),
       {
         ...((
           await import('rollup-plugin-visualizer')
