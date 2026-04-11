@@ -1296,6 +1296,9 @@ importers:
       '@analogjs/vite-plugin-angular':
         specifier: workspace:*
         version: link:../../packages/vite-plugin-angular
+      '@analogjs/vitest-angular':
+        specifier: workspace:*
+        version: link:../../packages/vitest-angular
 
   libs/my-package:
     dependencies:
@@ -1309,6 +1312,9 @@ importers:
       '@analogjs/vite-plugin-angular':
         specifier: workspace:*
         version: link:../../packages/vite-plugin-angular
+      '@analogjs/vitest-angular':
+        specifier: workspace:*
+        version: link:../../packages/vitest-angular
 
   libs/shared/feature: {}
 
@@ -1317,6 +1323,9 @@ importers:
       '@analogjs/vite-plugin-angular':
         specifier: workspace:*
         version: link:../../packages/vite-plugin-angular
+      '@analogjs/vitest-angular':
+        specifier: workspace:*
+        version: link:../../packages/vitest-angular
 
   packages/astro-angular:
     dependencies:
