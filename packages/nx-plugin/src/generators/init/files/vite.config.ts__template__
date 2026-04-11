@@ -2,9 +2,7 @@
 
 import { defineConfig } from 'vite';
 import analog from '@analogjs/platform';
-<% if (isNx) { %>
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-<% } else { %>
+<% if (!isNx) { %>
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 <% } %>
 
@@ -26,9 +24,7 @@ export default defineConfig(({ mode }) => {
           routes: []
         }
       }),
-<% if (isNx) { %>
-      nxViteTsPaths(),
-<% } else { %>
+<% if (!isNx) { %>
       viteTsConfigPaths(),
 <% } %>
     ],

@@ -11,9 +11,6 @@
     "useDefineForClassFields": false,
     "moduleResolution": "bundler",
     "rootDir": ".",
-    "paths": {
-      "@analogjs/content": ["../content/dist/types/src"]
-    },
     "composite": false
   },
   "exclude": [
