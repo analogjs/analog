@@ -16,6 +16,9 @@
   "include": [],
   "references": [
     {
+      "path": "../../packages/vitest-angular"
+    },
+    {
       "path": "../../packages/vite-plugin-angular"
     },
     {

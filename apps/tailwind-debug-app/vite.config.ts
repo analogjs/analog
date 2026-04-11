@@ -1,7 +1,6 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import tailwindcss from '@tailwindcss/vite';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -122,7 +121,6 @@ export default defineConfig(({ mode }) => ({
       },
     }),
     tailwindcss(),
-    nxViteTsPaths(),
     hmrWiretapPlugin(),
   ],
   test: {

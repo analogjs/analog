@@ -3,6 +3,9 @@
   "files": [],
   "references": [
     {
+      "path": "./.dagger"
+    },
+    {
       "path": "./packages/vite-plugin-angular-tools"
     },
     {

@@ -1,6 +1,5 @@
 /// <reference types="vitest" />
 
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import analog from '../../packages/platform/src/index.js';
 import { defineConfig } from 'vite';
 
@@ -27,7 +26,6 @@ export default defineConfig(() => {
           highlighter: 'shiki',
         },
       }),
-      nxViteTsPaths(),
     ],
   };
 });
