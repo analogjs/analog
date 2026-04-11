@@ -1,6 +1,6 @@
 import { Plugin } from 'vite';
 import { nitro as viteNitroPlugin } from '@analogjs/vite-plugin-nitro';
-import angular from '@analogjs/vite-plugin-angular';
+import { angular } from '@analogjs/vite-plugin-angular';
 import { mapValues, union } from 'es-toolkit';
 
 import { Options } from './options.js';
