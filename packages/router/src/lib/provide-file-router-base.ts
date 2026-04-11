@@ -9,7 +9,7 @@ import { ɵHTTP_ROOT_INTERCEPTOR_FNS as HTTP_ROOT_INTERCEPTOR_FNS } from '@angul
 import { Meta } from '@angular/platform-browser';
 import { provideRouter, RouterFeatures, ROUTES, Routes } from '@angular/router';
 import { Router } from '@angular/router';
-import { API_PREFIX } from '@analogjs/router/tokens';
+import { API_PREFIX } from '../../tokens/src/index.js';
 
 import { cookieInterceptor } from './cookie-interceptor';
 import { updateJsonLdOnRouteChange } from './json-ld';

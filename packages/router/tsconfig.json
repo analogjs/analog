@@ -4,9 +4,6 @@
   "include": [],
   "references": [
     {
-      "path": "../vitest-angular"
-    },
-    {
       "path": "../vite-plugin-angular"
     },
     {

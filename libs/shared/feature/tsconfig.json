@@ -16,12 +16,6 @@
   "include": [],
   "references": [
     {
-      "path": "../../../packages/vitest-angular"
-    },
-    {
-      "path": "../../../packages/content"
-    },
-    {
       "path": "./tsconfig.lib.json"
     },
     {
