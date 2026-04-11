@@ -285,7 +285,9 @@ function runCommand(
               ? `signal ${signal}`
               : `exit code ${code ?? 'unknown'}`;
           finish(() =>
-            rejectPromise(new Error(`Command failed: ${command}\n${exitDetail}`)),
+            rejectPromise(
+              new Error(`Command failed: ${command}\n${exitDetail}`),
+            ),
           );
         });
       }),

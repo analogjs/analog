@@ -57,6 +57,13 @@
         "port": 43010,
         "staticFilePath": "dist/apps/blog-app/analog/public"
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/blog-app",
+        "command": "pnpm exec tsgo -p tsconfig.app.json --noEmit"
+      }
     }
   }
 }

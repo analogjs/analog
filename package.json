@@ -35,9 +35,10 @@
     "release:smoke": "node tools/scripts/smoke-release-consumers.mts",
     "release:verify": "node tools/scripts/release-artifacts.mts verify",
     "start": "nx serve",
-    "typecheck": "nx run-many --target typecheck --all",
+    "typecheck": "nx run-many --target typecheck --projects=analog-app,analog-app-e2e,astro-app,astro-app-e2e-playwright,blog-app-e2e,docs-app,tailwind-debug-app,tanstack-query-app,tanstack-query-app-e2e,content-plugin,nx-plugin,router,vite-plugin-angular-tools,vitest-angular-tools",
     "test:vite-ci": "nx run-many --target test --exclude card --all --skip-nx-cache",
-    "test": "nx run-many --target test"
+    "test": "nx run-many --target test",
+    "typecheck:all": "nx run-many --target typecheck --all"
   },
   "engines": {
     "node": "^24.3.0",

@@ -19,6 +19,13 @@
     "test": {
       "executor": "@nx/vitest:test",
       "dependsOn": ["vite-plugin-angular:build", "vitest-angular:build"]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/storybook-angular",
+        "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
+      }
     }
   }
 }
