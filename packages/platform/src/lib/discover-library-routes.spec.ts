@@ -32,7 +32,7 @@ describe('discoverLibraryRoutes', () => {
       JSON.stringify({
         compilerOptions: {
           paths: {
-            'shared/feature': ['./libs/shared/feature/src/index.ts'],
+            '@analogjs/shared-feature': ['./libs/shared/feature/src/index.ts'],
           },
         },
       }),
@@ -48,11 +48,11 @@ describe('discoverLibraryRoutes', () => {
     expect(result.additionalAPIDirs).toEqual(['/libs/shared/feature/src/api']);
   });
 
-  it('skips @analogjs/* framework packages', () => {
+  it('uses target paths so @analogjs/* libs still participate in discovery', () => {
     mockTsconfig({
       '@analogjs/router': ['./packages/router/src/index.ts'],
       '@analogjs/content': ['./packages/content/src/index.ts'],
-      'shared/feature': ['./libs/shared/feature/src/index.ts'],
+      '@analogjs/shared-feature': ['./libs/shared/feature/src/index.ts'],
     });
     // Only the shared/feature pages dir exists
     mockExistsSync.mockImplementation((p) => {
@@ -71,7 +71,7 @@ describe('discoverLibraryRoutes', () => {
 
   it('skips libs without route directories', () => {
     mockTsconfig({
-      'libs/card': ['./libs/card/src/index.ts'],
+      '@analogjs/card': ['./libs/card/src/index.ts'],
     });
     // card has no pages/content/api dirs
     mockExistsSync.mockImplementation((p) => {
@@ -116,7 +116,7 @@ describe('discoverLibraryRoutes', () => {
 
   it('handles nested lib paths', () => {
     mockTsconfig({
-      'shared/feature': ['./libs/shared/feature/src/index.ts'],
+      '@analogjs/shared-feature': ['./libs/shared/feature/src/index.ts'],
     });
     mockExistsSync.mockImplementation((p) => {
       const s = String(p);
@@ -149,7 +149,7 @@ describe('discoverLibraryRoutes', () => {
 
   it('only detects existing subdirectories', () => {
     mockTsconfig({
-      'shared/feature': ['./libs/shared/feature/src/index.ts'],
+      '@analogjs/shared-feature': ['./libs/shared/feature/src/index.ts'],
     });
     mockExistsSync.mockImplementation((p) => {
       const s = String(p);

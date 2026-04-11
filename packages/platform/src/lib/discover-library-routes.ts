@@ -50,11 +50,7 @@ export function discoverLibraryRoutes(
   };
   const seen = new Set<string>();
 
-  for (const [alias, targets] of Object.entries(paths)) {
-    if (alias.startsWith('@analogjs/')) {
-      continue;
-    }
-
+  for (const targets of Object.values(paths)) {
     const target = targets?.[0];
     if (!target) {
       continue;

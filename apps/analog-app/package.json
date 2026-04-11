@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "dependencies": {
     "@analogjs/content": "workspace:*",
+    "@analogjs/my-package": "workspace:*",
     "@analogjs/router": "workspace:*",
+    "@analogjs/top-bar": "workspace:*",
     "es-toolkit": "catalog:"
   },
   "devDependencies": {

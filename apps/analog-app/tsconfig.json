@@ -4,6 +4,30 @@
   "include": [],
   "references": [
     {
+      "path": "../../packages/vitest-angular"
+    },
+    {
+      "path": "../../libs/top-bar"
+    },
+    {
+      "path": "../../packages/router"
+    },
+    {
+      "path": "../../libs/my-package"
+    },
+    {
+      "path": "../../packages/content"
+    },
+    {
+      "path": "../../packages/vite-plugin-angular"
+    },
+    {
+      "path": "../../packages/platform"
+    },
+    {
+      "path": "../../packages/storybook-angular"
+    },
+    {
       "path": "./tsconfig.app.json"
     },
     {

@@ -8,6 +8,15 @@
   "include": [],
   "references": [
     {
+      "path": "../../packages/platform"
+    },
+    {
+      "path": "../../packages/router"
+    },
+    {
+      "path": "../../packages/content"
+    },
+    {
       "path": "./tsconfig.app.json"
     },
     {

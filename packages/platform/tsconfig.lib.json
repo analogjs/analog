@@ -20,7 +20,8 @@
         "../../packages/vite-plugin-nitro/src/lib/utils/debug.ts"
       ]
     },
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "composite": false
   },
   "include": ["**/*.ts"],
   "exclude": [

@@ -73,11 +73,26 @@
   "defaultBase": "beta",
   "plugins": [
     {
+      "plugin": "@nx/js/typescript",
+      "options": {
+        "typecheck": false,
+        "build": false
+      }
+    },
+    {
       "plugin": "@nx/eslint/plugin",
       "options": {
         "targetName": "eslint:lint"
       }
     }
   ],
+  "sync": {
+    "globalGenerators": ["@nx/js:typescript-sync"],
+    "generatorOptions": {
+      "@nx/js:typescript-sync": {
+        "runtimeTsConfigFileNames": []
+      }
+    }
+  },
   "analytics": false
 }

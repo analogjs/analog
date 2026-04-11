@@ -1140,9 +1140,15 @@ importers:
       '@analogjs/content':
         specifier: workspace:*
         version: link:../../packages/content
+      '@analogjs/my-package':
+        specifier: workspace:*
+        version: link:../../libs/my-package
       '@analogjs/router':
         specifier: workspace:*
         version: link:../../packages/router
+      '@analogjs/top-bar':
+        specifier: workspace:*
+        version: link:../../libs/top-bar
       es-toolkit:
         specifier: 'catalog:'
         version: 1.45.1

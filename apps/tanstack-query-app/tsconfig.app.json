@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "composite": false
   },
   "files": ["src/main.ts", "src/main.server.ts", "src/vite-env.d.ts"],
   "include": [

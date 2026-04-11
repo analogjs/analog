@@ -9,6 +9,9 @@
   "include": [],
   "references": [
     {
+      "path": "../vite-plugin-angular"
+    },
+    {
       "path": "./tsconfig.lib.json"
     },
     {

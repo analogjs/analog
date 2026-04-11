@@ -11,7 +11,8 @@
     "paths": {
       "@analogjs/content": ["./src/index.ts"],
       "@analogjs/content/*": ["./*"]
-    }
+    },
+    "composite": false
   },
   "exclude": [
     "**/*.spec.ts",
