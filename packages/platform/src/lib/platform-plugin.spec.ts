@@ -37,6 +37,7 @@ const {
 }));
 
 vi.mock('@analogjs/vite-plugin-nitro', () => ({
+  nitro: viteNitroPluginSpy,
   default: viteNitroPluginSpy,
 }));
 vi.mock('@analogjs/vite-plugin-nitro/internal', () => ({

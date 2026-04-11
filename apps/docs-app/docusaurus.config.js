@@ -68,8 +68,17 @@ const config = {
     },
   },
   favicon: 'img/favicon.ico',
+  future: {
+    experimental_faster: {
+      rspackBundler: true,
+    },
+  },
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'throw',
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'throw',
+    },
+  },
   organizationName,
   plugins: [
     // Adapted from https://github.com/prisma/docs/blob/22208d52e4168028dbbe8b020b10682e6b526e50/docusaurus.config.ts

@@ -7,10 +7,14 @@
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js",
+      "require": "./dist/src/index.js",
       "default": "./dist/src/index.js"
     },
     "./internal": {
       "types": "./dist/src/lib/utils/debug.d.ts",
+      "import": "./dist/src/lib/utils/debug.js",
+      "require": "./dist/src/lib/utils/debug.js",
       "default": "./dist/src/lib/utils/debug.js"
     },
     "./package.json": "./package.json"
