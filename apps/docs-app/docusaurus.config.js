@@ -32,6 +32,13 @@ const DOCUSAURUS_BASE_URL = process.env.DOCUSAURUS_BASE_URL ?? '/docs';
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   baseUrl: '/',
+  future: {
+    // Webpackbar currently trips webpack's ProgressPlugin schema validation
+    // in this workspace. Use Docusaurus' Rspack path instead.
+    experimental_faster: {
+      rspackBundler: true,
+    },
+  },
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
   // to replace "en" with "zh-Hans".

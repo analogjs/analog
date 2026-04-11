@@ -8,7 +8,12 @@
   "targets": {
     "build": {
       "executor": "@nx/vite:build",
-      "dependsOn": ["platform:build", "router:build"],
+      "dependsOn": [
+        "platform:build",
+        "router:build",
+        "my-package:build",
+        "top-bar:build"
+      ],
       "outputs": [
         "{options.outputPath}",
         "{workspaceRoot}/dist/apps/analog-app/.nitro",

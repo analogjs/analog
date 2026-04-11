@@ -12,6 +12,7 @@
   "devDependencies": {
     "@analogjs/platform": "workspace:*",
     "@analogjs/storybook-angular": "workspace:*",
-    "@analogjs/vite-plugin-angular": "workspace:*"
+    "@analogjs/vite-plugin-angular": "workspace:*",
+    "@analogjs/vitest-angular": "workspace:*"
   }
 }

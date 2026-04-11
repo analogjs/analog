@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 
-import analog from '../../packages/platform/src/index.js';
+import analog from '@analogjs/platform';
 import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
