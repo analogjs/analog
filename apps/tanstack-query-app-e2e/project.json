@@ -16,6 +16,13 @@
         "cwd": "apps/tanstack-query-app-e2e",
         "command": "playwright test"
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/tanstack-query-app-e2e",
+        "command": "pnpm exec tsgo -p tsconfig.json --noEmit"
+      }
     }
   }
 }

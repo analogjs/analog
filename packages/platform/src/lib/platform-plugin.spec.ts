@@ -12,6 +12,9 @@ const {
   serverModePluginSpy,
   clearClientPageEndpointsPluginSpy,
   discoverLibraryRoutesSpy,
+  resolveStylePipelinePluginsSpy,
+  stylePipelineFactorySpy,
+  stylePipelinePluginSpy,
 } = vi.hoisted(() => ({
   viteNitroPluginSpy: vi.fn(() => []),
   angularSpy: vi.fn(() => []),
@@ -28,15 +31,22 @@ const {
     additionalContentDirs: [],
     additionalAPIDirs: [],
   })),
+  resolveStylePipelinePluginsSpy: vi.fn(() => []),
+  stylePipelineFactorySpy: vi.fn(),
+  stylePipelinePluginSpy: { name: 'community-style-pipeline' },
 }));
 
 vi.mock('@analogjs/vite-plugin-nitro', () => ({
+  nitro: viteNitroPluginSpy,
   default: viteNitroPluginSpy,
 }));
 vi.mock('@analogjs/vite-plugin-nitro/internal', () => ({
   debugInstances: [],
 }));
-vi.mock('@analogjs/vite-plugin-angular', () => ({ default: angularSpy }));
+vi.mock('@analogjs/vite-plugin-angular', () => ({
+  angular: angularSpy,
+  default: angularSpy,
+}));
 vi.mock('./ssr/ssr-build-plugin.js', () => ({
   ssrBuildPlugin: ssrBuildPluginSpy,
 }));
@@ -64,6 +74,20 @@ vi.mock('./clear-client-page-endpoint.js', () => ({
 vi.mock('./discover-library-routes.js', () => ({
   discoverLibraryRoutes: discoverLibraryRoutesSpy,
 }));
+vi.mock('./style-pipeline.js', () => ({
+  resolveStylePipelinePlugins:
+    resolveStylePipelinePluginsSpy.mockImplementation((options) => {
+      if (!options) {
+        return [];
+      }
+      return [
+        ...(typeof options.plugins?.[0] === 'function'
+          ? [stylePipelineFactorySpy]
+          : []),
+        stylePipelinePluginSpy,
+      ];
+    }),
+}));
 
 import { platformPlugin } from './platform-plugin.js';
 
@@ -82,6 +106,7 @@ describe('platformPlugin', () => {
     contentPluginSpy.mockReturnValue([]);
     serverModePluginSpy.mockReturnValue([]);
     clearClientPageEndpointsPluginSpy.mockReturnValue([]);
+    resolveStylePipelinePluginsSpy.mockClear();
   });
 
   it('defaults ssr to true and passes that value to the composed plugins', () => {
@@ -209,5 +234,46 @@ describe('platformPlugin', () => {
     platformPlugin();
 
     expect(discoverLibraryRoutesSpy).not.toHaveBeenCalled();
+  });
+
+  it('wires experimental style-pipeline plugins when configured', () => {
+    const options = {
+      plugins: [stylePipelineFactorySpy],
+    };
+
+    platformPlugin({
+      experimental: {
+        stylePipeline: options,
+      },
+      workspaceRoot: '/workspace',
+    });
+
+    expect(resolveStylePipelinePluginsSpy).toHaveBeenCalledWith(
+      options,
+      '/workspace',
+    );
+    expect(stylePipelineFactorySpy).not.toHaveBeenCalled();
+  });
+
+  it('forwards angular style-pipeline plugins to the Angular vite plugin', () => {
+    const angularStylePipelinePlugin = {
+      name: 'community-angular-style-pipeline',
+    };
+
+    platformPlugin({
+      experimental: {
+        stylePipeline: {
+          angularPlugins: [angularStylePipelinePlugin],
+        },
+      },
+    });
+
+    expect(angularSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stylePipeline: {
+          plugins: [angularStylePipelinePlugin],
+        },
+      }),
+    );
   });
 });

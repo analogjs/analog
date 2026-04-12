@@ -1,4 +1,4 @@
-import { ServerRequest } from '@analogjs/router/tokens';
+import type { ServerRequest } from '../../tokens/src/index.js';
 import { getBaseUrl, getRequestProtocol } from './provide-server-context';
 
 function createRequest({

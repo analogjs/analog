@@ -4,6 +4,14 @@
   "type": "module",
   "version": "0.0.0",
   "devDependencies": {
-    "@analogjs/vite-plugin-angular": "workspace:*"
+    "@analogjs/vite-plugin-angular": "workspace:*",
+    "@analogjs/vitest-angular": "workspace:*"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
   }
 }

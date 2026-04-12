@@ -5,5 +5,9 @@
   "dependencies": {
     "@analogjs/content": "workspace:*",
     "@analogjs/router": "workspace:*"
+  },
+  "devDependencies": {
+    "@analogjs/platform": "workspace:*",
+    "@analogjs/vite-plugin-angular": "workspace:*"
   }
 }

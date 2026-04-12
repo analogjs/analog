@@ -11,14 +11,7 @@
     "useDefineForClassFields": false,
     "moduleResolution": "bundler",
     "rootDir": ".",
-    "paths": {
-      "@analogjs/content": ["../content/dist/types/src"],
-      "@analogjs/router": ["./src/index.ts"],
-      "@analogjs/router/*": ["./*"],
-      "@analogjs/router/tokens": ["./tokens/src/index.ts"],
-      "@analogjs/router/server": ["./server/src/index.ts"],
-      "@analogjs/router/server/actions": ["./server/actions/src/index.ts"]
-    }
+    "composite": false
   },
   "exclude": [
     "**/*.spec.ts",
