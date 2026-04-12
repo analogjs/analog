@@ -1,4 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('vite', async () => {
+  const actual = await vi.importActual<typeof import('vite')>('vite');
+  return {
+    ...actual,
+    preprocessCSS: vi.fn(async (code: string) => ({ code, deps: new Set() })),
+  };
+});
+
 import {
   angular,
   createFsWatcherCacheInvalidator,
@@ -58,7 +67,7 @@ describe('isTestWatchMode', () => {
 });
 
 describe('JIT resolveId', () => {
-  it('should resolve style files with ?inline suffix (single ?)', () => {
+  it('should resolve style files with ?analog-inline suffix', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
       (p) => p.name === '@analogjs/vite-plugin-angular',
@@ -74,11 +83,11 @@ describe('JIT resolveId', () => {
     );
 
     expect(result).toBeDefined();
-    expect(result).toContain('?inline');
-    expect(result).not.toContain('??inline');
+    expect(result).toContain('?analog-inline');
+    expect(result).not.toContain('?inline');
   });
 
-  it('should resolve template files with ?raw suffix (single ?)', () => {
+  it('should resolve template files with ?analog-raw suffix', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
       (p) => p.name === '@analogjs/vite-plugin-angular',
@@ -94,8 +103,155 @@ describe('JIT resolveId', () => {
     );
 
     expect(result).toBeDefined();
-    expect(result).toContain('?raw');
-    expect(result).not.toContain('??raw');
+    expect(result).toContain('?analog-raw');
+    expect(result).not.toContain('??analog-raw');
+  });
+
+  it('should intercept .html?raw imports and remap to ?analog-raw', () => {
+    const plugins = angular({ jit: true });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+
+    const resolveId = (mainPlugin as any).resolveId;
+
+    // Relative path with importer
+    const result = resolveId(
+      './my-component.html?raw',
+      '/project/src/app/my-component.ts',
+    );
+    expect(result).toContain('/project/src/app/my-component.html?analog-raw');
+
+    // Absolute path
+    const result2 = resolveId(
+      '/project/src/app/my-component.html?raw',
+      '/project/src/app/other.ts',
+    );
+    expect(result2).toBe('/project/src/app/my-component.html?analog-raw');
+  });
+
+  it('should intercept .html?raw imports even without jit mode', () => {
+    const plugins = angular();
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+
+    const resolveId = (mainPlugin as any).resolveId;
+
+    const result = resolveId(
+      './my-component.html?raw',
+      '/project/src/app/my-component.ts',
+    );
+    expect(result).toContain('?analog-raw');
+  });
+
+  it('should intercept style ?inline imports and remap to ?analog-inline', () => {
+    const plugins = angular({ jit: true });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+
+    const resolveId = (mainPlugin as any).resolveId;
+
+    // Relative .scss?inline
+    const result = resolveId(
+      './my-component.scss?inline',
+      '/project/src/app/my-component.ts',
+    );
+    expect(result).toBe('/project/src/app/my-component.scss?analog-inline');
+
+    // Absolute .css?inline
+    const result2 = resolveId(
+      '/project/src/app/my-component.css?inline',
+      '/project/src/app/other.ts',
+    );
+    expect(result2).toBe('/project/src/app/my-component.css?analog-inline');
+  });
+
+  it('should intercept style ?inline imports even without jit mode', () => {
+    const plugins = angular();
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+
+    const resolveId = (mainPlugin as any).resolveId;
+
+    const result = resolveId(
+      './my-component.scss?inline',
+      '/project/src/app/my-component.ts',
+    );
+    expect(result).toContain('?analog-inline');
+  });
+
+  it('should not match Vite inline security regex /[?&]inline\\b/', () => {
+    const plugins = angular();
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+
+    const resolveId = (mainPlugin as any).resolveId;
+    const inlineRE = /[?&]inline\b/;
+
+    const result = resolveId(
+      './my-component.scss?inline',
+      '/project/src/app/my-component.ts',
+    );
+    expect(inlineRE.test(result)).toBe(false);
+  });
+});
+
+describe('load ?inline style imports', () => {
+  // Vitest's fetchModule path calls moduleGraph.ensureEntryFromUrl before
+  // transformRequest, which makes pluginContainer.resolveId a no-op for the
+  // module-runner. The resolveId rewrite to ?analog-inline therefore never
+  // runs in tests, and the load hook must accept the original ?inline query
+  // directly. (See issue #2263.)
+  const realFs = require('node:fs');
+  const tmpDir = require('node:os').tmpdir();
+  const path = require('node:path');
+
+  function getLoadHook() {
+    const plugins = angular();
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+    return (mainPlugin as any).load.bind({});
+  }
+
+  it('handles ?inline style imports without going through resolveId', async () => {
+    const cssPath = path.join(tmpDir, `analog-inline-${Date.now()}.css`);
+    realFs.writeFileSync(cssPath, '.foo { color: red; }', 'utf-8');
+
+    try {
+      const load = getLoadHook();
+      const result = await load(`${cssPath}?inline`);
+      expect(result).toBeDefined();
+      expect(result).toContain('export default');
+      expect(result).toContain('color: red');
+    } finally {
+      realFs.unlinkSync(cssPath);
+    }
+  });
+
+  it('still handles the rewritten ?analog-inline query', async () => {
+    const cssPath = path.join(tmpDir, `analog-rewrite-${Date.now()}.css`);
+    realFs.writeFileSync(cssPath, '.bar { color: blue; }', 'utf-8');
+
+    try {
+      const load = getLoadHook();
+      const result = await load(`${cssPath}?analog-inline`);
+      expect(result).toBeDefined();
+      expect(result).toContain('export default');
+      expect(result).toContain('color: blue');
+    } finally {
+      realFs.unlinkSync(cssPath);
+    }
+  });
+
+  it('ignores non-style ?inline imports', async () => {
+    const load = getLoadHook();
+    const result = await load('/project/src/data.json?inline');
+    expect(result).toBeUndefined();
   });
 });
 

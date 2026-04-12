@@ -3,6 +3,7 @@ import { inject } from '@angular/core';
 import { ContentFile } from './content-file';
 import { CONTENT_FILES_LIST_TOKEN } from './content-files-list-token';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
+import { CONTENT_LOCALE, filterByLocale } from './content-locale';
 import { RenderTaskService } from './render-task.service';
 
 export function injectContentFiles<Attributes extends Record<string, any>>(
@@ -13,15 +14,20 @@ export function injectContentFiles<Attributes extends Record<string, any>>(
   const allContentFiles = inject(
     CONTENT_FILES_LIST_TOKEN,
   ) as ContentFile<Attributes>[];
+  const locale = inject(CONTENT_LOCALE, { optional: true });
   renderTaskService.clearRenderTask(task);
 
-  if (filterFn) {
-    const filteredContentFiles = allContentFiles.filter(filterFn);
+  let results = allContentFiles;
 
-    return filteredContentFiles;
+  if (locale) {
+    results = filterByLocale(results, locale);
   }
 
-  return allContentFiles;
+  if (filterFn) {
+    results = results.filter(filterFn);
+  }
+
+  return results;
 }
 
 export type InjectContentFilesFilterFunction<T extends Record<string, any>> = (

@@ -11,12 +11,20 @@ import { CardComponent } from './card.component';
     }
   `,
   template: `
-    <p>Verifies that nesting components works properly</p>
+    <p>
+      This component verifies that nesting components works properly for style
+      encapsulation.
+    </p>
     <astro-card
       href="https://angular.dev/"
       title="Angular"
       body="Built with Angular. ❤️"
+      (output)="handleClick($event)"
     />
   `,
 })
-export class ParentComponent {}
+export class ParentComponent {
+  handleClick(value: string): void {
+    console.log(value);
+  }
+}

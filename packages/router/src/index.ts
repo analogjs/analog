@@ -18,3 +18,10 @@ export { FormAction } from './lib/form-action.directive';
 export { injectDebugRoutes } from './lib/debug/routes';
 export { withDebugRoutes } from './lib/debug';
 export { ServerOnly } from './lib/server.component';
+export {
+  provideI18n,
+  I18nConfig,
+  I18N_CONFIG,
+  loadTranslationsRuntime,
+  injectSwitchLocale,
+} from './lib/i18n/provide-i18n';

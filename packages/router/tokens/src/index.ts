@@ -1,4 +1,8 @@
-import { InjectionToken, inject } from '@angular/core';
+import {
+  InjectionToken,
+  assertInInjectionContext,
+  inject,
+} from '@angular/core';
 import type {
   IncomingMessage,
   ServerResponse as NodeServerResponse,
@@ -20,6 +24,8 @@ export const API_PREFIX = new InjectionToken<string>(
   '@analogjs/router API Prefix',
 );
 
+export const LOCALE = new InjectionToken<string>('@analogjs/router Locale');
+
 export function injectRequest() {
   return inject(REQUEST, { optional: true });
 }
@@ -34,4 +40,9 @@ export function injectBaseURL() {
 
 export function injectAPIPrefix() {
   return inject(API_PREFIX);
+}
+
+export function injectLocale() {
+  assertInInjectionContext(injectLocale);
+  return inject(LOCALE, { optional: true });
 }

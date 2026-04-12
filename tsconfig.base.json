@@ -51,6 +51,10 @@
       ],
       "@analogjs/top-bar": ["libs/top-bar/src/index.ts"],
       "@analogjs/trpc": ["packages/trpc/src/index.ts"],
+      "@analogjs/angular-compiler": [
+        "./node_modules/@analogjs/angular-compiler",
+        "packages/angular-compiler/src/index.ts"
+      ],
       "@analogjs/vite-plugin-angular": [
         "./node_modules/@analogjs/vite-plugin-angular",
         "packages/vite-plugin-angular/src/index.ts"

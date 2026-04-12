@@ -1,5 +1,5 @@
 import { NgtscProgram } from '@angular/compiler-cli';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, promises as fsPromises } from 'node:fs';
 import {
   basename,
   dirname,
@@ -28,10 +28,6 @@ import {
 } from 'vite';
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
 import { jitPlugin } from './angular-jit-plugin.js';
-import {
-  createCompilerPlugin,
-  createRolldownCompilerPlugin,
-} from './compiler-plugin.js';
 import {
   StyleUrlsResolver,
   TemplateUrlsResolver,
@@ -66,6 +62,14 @@ import {
 } from './plugins/file-replacements.plugin.js';
 import { routerPlugin } from './router-plugin.js';
 import { createHash } from 'node:crypto';
+import { analogCompilerPlugin } from './analog-compiler-plugin.js';
+import {
+  TS_EXT_REGEX,
+  createTsConfigGetter,
+  getTsConfigPath,
+  createDepOptimizerConfig,
+  type TsConfigResolutionContext,
+} from './utils/plugin-config.js';
 
 export enum DiagnosticModes {
   None = 0,
@@ -98,15 +102,16 @@ export interface PluginOptions {
   fileReplacements?: FileReplacement[];
   experimental?: {
     useAngularCompilationAPI?: boolean;
+    useAnalogCompiler?: boolean;
+    /**
+     * Compilation output mode for the Analog compiler.
+     * - `'full'` (default): Emit final Ivy definitions for application builds.
+     * - `'partial'`: Emit partial declarations for library publishing.
+     */
+    analogCompilationMode?: 'full' | 'partial';
   };
 }
 
-/**
- * TypeScript file extension regex
- * Match .(c or m)ts, .ts extensions with an optional ? for query params
- * Ignore .tsx extensions
- */
-const TS_EXT_REGEX = /\.[cm]?(ts)[^x]?\??/;
 const classNames = new Map();
 
 interface DeclarationFile {
@@ -141,15 +146,13 @@ export function angular(options?: PluginOptions): Plugin[] {
     fileReplacements: options?.fileReplacements ?? [],
     useAngularCompilationAPI:
       options?.experimental?.useAngularCompilationAPI ?? false,
+    useAnalogCompiler: options?.experimental?.useAnalogCompiler ?? false,
+    analogCompilationMode:
+      options?.experimental?.analogCompilationMode ?? 'full',
   };
 
   let resolvedConfig: ResolvedConfig;
-  // Store config context needed for getTsConfigPath resolution
-  let tsConfigResolutionContext: {
-    root: string;
-    isProd: boolean;
-    isLib: boolean;
-  } | null = null;
+  let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
 
   const ts = require('typescript');
   let builder: ts.BuilderProgram | ts.EmitAndSemanticDiagnosticsBuilderProgram;
@@ -260,54 +263,21 @@ export function angular(options?: PluginOptions): Plugin[] {
           ? undefined
           : (config.oxc ?? false);
 
-        const defineOptions = {
-          ngJitMode: 'false',
-          ngI18nClosureMode: 'false',
-          ...(watchMode ? {} : { ngDevMode: 'false' }),
-        };
-
-        const rolldownOptions: vite.DepOptimizationOptions['rolldownOptions'] =
-          {
-            plugins: [
-              createRolldownCompilerPlugin({
-                tsconfig: preliminaryTsConfigPath,
-                sourcemap: !isProd,
-                advancedOptimizations: isProd,
-                jit,
-                incremental: watchMode,
-              }),
-            ],
-          };
-
-        const esbuildOptions: vite.DepOptimizationOptions['esbuildOptions'] = {
-          plugins: [
-            createCompilerPlugin(
-              {
-                tsconfig: preliminaryTsConfigPath,
-                sourcemap: !isProd,
-                advancedOptimizations: isProd,
-                jit,
-                incremental: watchMode,
-              },
-              isTest,
-              !isAstroIntegration,
-            ),
-          ],
-          define: defineOptions,
-        };
+        const depOptimizer = createDepOptimizerConfig({
+          tsconfig: preliminaryTsConfigPath,
+          isProd,
+          jit,
+          watchMode,
+          isTest,
+          isAstroIntegration,
+        });
 
         return {
           ...(vite.rolldownVersion ? { oxc } : { esbuild }),
-          optimizeDeps: {
-            include: ['rxjs/operators', 'rxjs'],
-            exclude: ['@angular/platform-server'],
-            ...(vite.rolldownVersion
-              ? { rolldownOptions }
-              : { esbuildOptions }),
-          },
+          ...depOptimizer,
           resolve: {
             conditions: [
-              'style',
+              ...depOptimizer.resolve.conditions,
               ...(config.resolve?.conditions || defaultClientConditions),
             ],
           },
@@ -340,6 +310,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configureServer(server) {
         viteServer = server;
+
         // Add/unlink changes the TypeScript program shape, not just file
         // contents, so we need to invalidate both include discovery and the
         // cached tsconfig root names before recompiling.
@@ -508,7 +479,38 @@ export function angular(options?: PluginOptions): Plugin[] {
           const path = id.split(';')[1];
           return `${normalizePath(
             resolve(dirname(importer as string), path),
-          )}?${id.includes(':style') ? 'inline' : 'raw'}`;
+          )}?${id.includes(':style') ? 'analog-inline' : 'analog-raw'}`;
+        }
+
+        // Intercept .html?raw imports to bypass Vite 7.3.2+ server.fs restrictions
+        // These are generated by JIT template transforms and would otherwise be
+        // blocked by Vite's stricter ?raw query parameter security checks
+        if (id.includes('.html?raw')) {
+          const filePath = id.split('?')[0];
+          const resolved = isAbsolute(filePath)
+            ? normalizePath(filePath)
+            : importer
+              ? normalizePath(resolve(dirname(importer), filePath))
+              : undefined;
+          if (resolved) {
+            return resolved + '?analog-raw';
+          }
+        }
+
+        // Intercept style ?inline imports to bypass Vite 8.0.5+ server.fs
+        // restrictions. Vite's security check matches /[?&]inline\b/ so we
+        // use ?analog-inline which avoids the regex while we handle CSS
+        // preprocessing and inline export ourselves in the load hook.
+        if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
+          const filePath = id.split('?')[0];
+          const resolved = isAbsolute(filePath)
+            ? normalizePath(filePath)
+            : importer
+              ? normalizePath(resolve(dirname(importer), filePath))
+              : undefined;
+          if (resolved) {
+            return resolved + '?analog-inline';
+          }
         }
 
         // Map angular external styleUrls to the source file
@@ -524,6 +526,35 @@ export function angular(options?: PluginOptions): Plugin[] {
         return undefined;
       },
       async load(id) {
+        // Handle Angular template raw imports directly to bypass Vite server.fs
+        // restrictions on ?raw query parameters (Vite 7.3.2+)
+        if (id.endsWith('?analog-raw')) {
+          const filePath = id.slice(0, -'?analog-raw'.length);
+          const content = await fsPromises.readFile(filePath, 'utf-8');
+          return `export default ${JSON.stringify(content)}`;
+        }
+
+        // Handle Angular style imports directly, bypassing Vite 8.0.5+
+        // server.fs security check which blocks IDs matching /[?&]inline\b/.
+        // Compile via preprocessCSS and return as inline string export.
+        //
+        // We accept both ?analog-inline (rewritten by resolveId for the
+        // browser dev-server path) and ?inline (the original query) because
+        // Vitest's fetchModule path calls moduleGraph.ensureEntryFromUrl
+        // before transformRequest, which means pluginContainer.resolveId is
+        // never invoked for module-runner imports — so the resolveId-based
+        // rewrite never runs in the test path. Handling ?inline here covers
+        // both paths.
+        if (
+          id.includes('?analog-inline') ||
+          /\.(css|scss|sass|less)\?inline$/.test(id)
+        ) {
+          const filePath = id.split('?')[0];
+          const code = await fsPromises.readFile(filePath, 'utf-8');
+          const result = await preprocessCSS(code, filePath, resolvedConfig);
+          return `export default ${JSON.stringify(result.code)}`;
+        }
+
         // Map angular inline styles to the source text
         if (isComponentStyleSheet(id)) {
           const componentStyles = inlineComponentStyles?.get(
@@ -642,19 +673,34 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           const typescriptResult = fileEmitter(id);
 
+          // File not in the Angular program — skip and let other plugins
+          // or Vite's built-in transform handle it. Warn if it looks like
+          // an Angular file that should have been compiled.
+          if (!typescriptResult) {
+            const isAngular =
+              !id.includes('@ng/component') &&
+              /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
+            if (isAngular) {
+              this.warn(
+                `[@analogjs/vite-plugin-angular]: "${id}" contains Angular decorators but is not in the TypeScript program. ` +
+                  `Ensure it is included in your tsconfig.`,
+              );
+            }
+            return;
+          }
+
           if (
-            typescriptResult?.warnings &&
-            typescriptResult?.warnings.length > 0
+            typescriptResult.warnings &&
+            typescriptResult.warnings.length > 0
           ) {
             this.warn(`${typescriptResult.warnings.join('\n')}`);
           }
 
-          if (typescriptResult?.errors && typescriptResult?.errors.length > 0) {
+          if (typescriptResult.errors && typescriptResult.errors.length > 0) {
             this.error(`${typescriptResult.errors.join('\n')}`);
           }
 
-          // return fileEmitter
-          let data = typescriptResult?.content ?? '';
+          let data = typescriptResult.content ?? '';
 
           if (jit && data.includes('angular:jit:')) {
             data = data.replace(
@@ -662,12 +708,29 @@ export function angular(options?: PluginOptions): Plugin[] {
               'virtual:angular:jit:style:inline;',
             );
 
+            // Emit ?analog-raw and ?analog-inline directly (instead of
+            // ?raw / ?inline) so the import ids in the compiled JS never
+            // match Vite 8.0.5+'s [?&](raw|inline)\b security regex during
+            // loadAndTransform.
+            //
+            // Why this matters: Vite's Denied ID check fires for any id
+            // matching that regex whose path is outside server.fs.allow,
+            // and it runs *before* pluginContainer.load. Vitest's worker
+            // fetchModule path also bypasses pluginContainer.resolveId
+            // (it calls moduleGraph.ensureEntryFromUrl first, which makes
+            // the resolveId chain a no-op for the module-runner). So
+            // neither the resolveId-based ?inline -> ?analog-inline rewrite
+            // nor the load-hook fallback (added in 2.4.4) gets a chance to
+            // run for cross-library imports — the security check has
+            // already thrown by then. Emitting the safe query directly in
+            // the transform output is the only place we can guarantee Vite
+            // never sees the dangerous form. (#2263)
             templateUrls.forEach((templateUrlSet) => {
               const [templateFile, resolvedTemplateUrl] =
                 templateUrlSet.split('|');
               data = data.replace(
                 `angular:jit:template:file;${templateFile}`,
-                `${resolvedTemplateUrl}?raw`,
+                `${resolvedTemplateUrl}?analog-raw`,
               );
             });
 
@@ -675,7 +738,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               const [styleFile, resolvedStyleUrl] = styleUrlSet.split('|');
               data = data.replace(
                 `angular:jit:style:file;${styleFile}`,
-                `${resolvedStyleUrl}?inline`,
+                `${resolvedStyleUrl}?analog-inline`,
               );
             });
           }
@@ -701,10 +764,27 @@ export function angular(options?: PluginOptions): Plugin[] {
     };
   }
 
+  const compilationPlugin = pluginOptions.useAnalogCompiler
+    ? analogCompilerPlugin({
+        tsconfigGetter: pluginOptions.tsconfigGetter,
+        workspaceRoot: pluginOptions.workspaceRoot,
+        inlineStylesExtension: pluginOptions.inlineStylesExtension,
+        jit,
+        liveReload: pluginOptions.liveReload,
+        supportedBrowsers: pluginOptions.supportedBrowsers,
+        transformFilter: options?.transformFilter,
+        isTest,
+        isAstroIntegration,
+        analogCompilationMode: pluginOptions.analogCompilationMode,
+      })
+    : angularPlugin();
+
   return [
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
-    angularPlugin(),
-    pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
+    compilationPlugin,
+    !pluginOptions.useAnalogCompiler &&
+      pluginOptions.liveReload &&
+      liveReloadPlugin({ classNames, fileEmitter }),
     ...(isTest && !isStackBlitz ? angularVitestPlugins() : []),
     (jit &&
       jitPlugin({
@@ -732,58 +812,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       dot: true,
       absolute: true,
     });
-  }
-
-  function createTsConfigGetter(tsconfigOrGetter?: string | (() => string)) {
-    if (typeof tsconfigOrGetter === 'function') {
-      return tsconfigOrGetter;
-    }
-
-    return () => tsconfigOrGetter || '';
-  }
-
-  function getTsConfigPath(
-    root: string,
-    tsconfig: string,
-    isProd: boolean,
-    isTest: boolean,
-    isLib: boolean,
-  ) {
-    if (tsconfig && isAbsolute(tsconfig)) {
-      if (!existsSync(tsconfig)) {
-        console.error(
-          `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${tsconfig}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
-        );
-      }
-
-      return tsconfig;
-    }
-
-    let tsconfigFilePath = './tsconfig.app.json';
-
-    if (isLib) {
-      tsconfigFilePath = isProd
-        ? './tsconfig.lib.prod.json'
-        : './tsconfig.lib.json';
-    }
-
-    if (isTest) {
-      tsconfigFilePath = './tsconfig.spec.json';
-    }
-
-    if (tsconfig) {
-      tsconfigFilePath = tsconfig;
-    }
-
-    const resolvedPath = resolve(root, tsconfigFilePath);
-
-    if (!existsSync(resolvedPath)) {
-      console.error(
-        `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${resolvedPath}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
-      );
-    }
-
-    return resolvedPath;
   }
 
   function resolveTsConfigPath() {

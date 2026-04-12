@@ -172,6 +172,7 @@ The following is the list of currently supported scopes:
 - **vite-plugin-angular**
 - **vite-plugin-nitro**
 - **vitest-angular**
+- **angular-compiler**
 
 ### Breaking Changes
 

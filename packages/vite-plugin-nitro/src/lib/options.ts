@@ -1,5 +1,18 @@
 import { PrerenderRoute } from 'nitropack';
 
+export interface I18nPrerenderOptions {
+  /**
+   * The default/source locale for the application.
+   */
+  defaultLocale: string;
+
+  /**
+   * List of supported locale identifiers.
+   * Each route will be prerendered once per locale with a locale prefix.
+   */
+  locales: string[];
+}
+
 export interface Options {
   ssr?: boolean;
   ssrBuildDir?: string;
@@ -38,6 +51,13 @@ export interface Options {
    * for API routes.
    */
   useAPIMiddleware?: boolean;
+
+  /**
+   * i18n configuration for locale-aware prerendering.
+   * When set, routes are expanded with locale prefixes and
+   * prerendered HTML receives the appropriate `lang` attribute.
+   */
+  i18n?: I18nPrerenderOptions;
 }
 
 export interface PrerenderOptions {

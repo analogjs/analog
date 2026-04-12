@@ -12,15 +12,20 @@ export function depsPlugin(options?: Options): Plugin[] {
     {
       name: 'analogjs-deps-plugin',
       config() {
-        const esbuild =
+        const useCompilationAPI =
           options?.vite === false ||
-          options?.vite?.experimental?.useAngularCompilationAPI
+          options?.vite?.experimental?.useAngularCompilationAPI;
+        const useAnalogCompiler =
+          options?.vite !== false &&
+          options?.vite?.experimental?.useAnalogCompiler;
+
+        const esbuild =
+          useCompilationAPI || useAnalogCompiler
             ? {}
             : { exclude: ['**/*.ts', '**/*.js'] };
 
         const oxc =
-          options?.vite === false ||
-          options?.vite?.experimental?.useAngularCompilationAPI
+          useCompilationAPI || useAnalogCompiler
             ? {}
             : { exclude: ['**/*.ts', '**/*.js'] };
 
