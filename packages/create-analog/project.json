@@ -25,6 +25,13 @@
         "preset": "conventional",
         "tagPrefix": "create-analog@"
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/create-analog",
+        "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
+      }
     }
   }
 }

@@ -19,33 +19,33 @@ packages:
   - 'tests/*'
 
 catalog:
-  '@angular/animations': 21.2.6
+  '@angular/animations': 21.2.8
   '@angular/cdk': 21.2.4
-  '@angular/common': 21.2.6
-  '@angular/compiler': 21.2.6
-  '@angular/core': 21.2.6
-  '@angular/forms': 21.2.6
+  '@angular/common': 21.2.8
+  '@angular/compiler': 21.2.8
+  '@angular/core': 21.2.8
+  '@angular/forms': 21.2.8
   '@angular/material': 21.2.4
-  '@angular/platform-browser': 21.2.6
-  '@angular/platform-browser-dynamic': 21.2.6
-  '@angular/platform-server': 21.2.6
-  '@angular/router': 21.2.6
+  '@angular/platform-browser': 21.2.8
+  '@angular/platform-browser-dynamic': 21.2.8
+  '@angular/platform-server': 21.2.8
+  '@angular/router': 21.2.8
   '@angular/ssr': 21.2.4
   '@astrojs/mdx': ^5.0.3
   '@astrojs/markdown-component': ^1.0.5
   '@astrojs/react': ^5.0.2
   '@mdx-js/react': 3.1.1
-  '@nx/angular': 22.7.0-beta.10
-  '@nx/devkit': 22.7.0-beta.10
-  '@nx/eslint': 22.7.0-beta.10
-  '@nx/eslint-plugin': 22.7.0-beta.10
-  '@nx/js': 22.7.0-beta.10
-  '@nx/playwright': 22.7.0-beta.10
-  '@nx/plugin': 22.7.0-beta.10
-  '@nx/storybook': 22.7.0-beta.10
-  '@nx/vite': 22.7.0-beta.10
-  '@nx/vitest': 22.7.0-beta.10
-  '@nx/web': 22.7.0-beta.10
+  '@nx/angular': 22.7.0-beta.12
+  '@nx/devkit': 22.7.0-beta.12
+  '@nx/eslint': 22.7.0-beta.12
+  '@nx/eslint-plugin': 22.7.0-beta.12
+  '@nx/js': 22.7.0-beta.12
+  '@nx/playwright': 22.7.0-beta.12
+  '@nx/plugin': 22.7.0-beta.12
+  '@nx/storybook': 22.7.0-beta.12
+  '@nx/vite': 22.7.0-beta.12
+  '@nx/vitest': 22.7.0-beta.12
+  '@nx/web': 22.7.0-beta.12
   '@oxc-angular/vite': ^0.0.22
   '@oxc-project/runtime': ^0.123.0
   '@playwright/test': ^1.58.2
@@ -75,8 +75,8 @@ catalog:
   '@angular-eslint/template-parser': 21.3.1
   '@angular/build': 21.2.4
   '@angular/cli': 21.2.4
-  '@angular/compiler-cli': 21.2.6
-  '@angular/language-service': 21.2.6
+  '@angular/compiler-cli': 21.2.8
+  '@angular/language-service': 21.2.8
   '@commitlint/cli': ^20.5.0
   '@commitlint/config-conventional': ^20.5.0
   '@compodoc/compodoc': ^1.2.1
@@ -135,7 +135,7 @@ catalog:
   minimist: ^1.2.8
   ng-packagr: 21.2.1
   nitro: 3.0.260311-beta
-  nx: 22.7.0-beta.10
+  nx: 22.7.0-beta.12
   obug: ^2.1.1
   ofetch: 2.0.0-alpha.3
   oxc-parser: ^0.123.0

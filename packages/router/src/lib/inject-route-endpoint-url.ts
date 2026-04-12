@@ -1,5 +1,5 @@
 import type { ActivatedRouteSnapshot, Route } from '@angular/router';
-import { injectBaseURL, injectAPIPrefix } from '@analogjs/router/tokens';
+import { injectBaseURL, injectAPIPrefix } from '../../tokens/src/index.js';
 
 import { ANALOG_META_KEY } from './endpoints';
 

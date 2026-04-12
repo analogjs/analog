@@ -19,7 +19,8 @@
     "module": "es2020",
     "lib": ["es2020", "dom"],
     "skipLibCheck": true,
-    "rootDir": "./src/components"
+    "rootDir": "./src",
+    "composite": false
   },
   "angularCompilerOptions": {
     "disableTypeScriptVersionCheck": true,
