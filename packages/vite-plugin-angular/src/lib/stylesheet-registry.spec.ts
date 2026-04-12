@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   AnalogStylesheetRegistry,
   preprocessStylesheet,
+  preprocessStylesheetResult,
   registerStylesheetContent,
   rewriteRelativeCssImports,
 } from './stylesheet-registry.js';
@@ -17,6 +18,10 @@ describe('stylesheet-registry', () => {
         '.demo { color: red; }',
         '/project/src/app/demo.component.css',
         stylePreprocessor,
+        {
+          filename: '/project/src/app/demo.component.css',
+          inline: false,
+        },
       ),
     ).toBe('/* /project/src/app/demo.component.css */\n.demo { color: red; }');
   });
@@ -66,6 +71,51 @@ describe('stylesheet-registry', () => {
       registry.getServedContent('project/src/app/demo.component.css'),
     ).toBe('.demo { color: red; }');
     expect(registry.getServedContent('demo.component.css')).toBeUndefined();
+  });
+
+  it('keeps structured transform metadata on the source stylesheet', () => {
+    const registry = new AnalogStylesheetRegistry();
+
+    const stylesheetId = registerStylesheetContent(registry, {
+      code: '.demo { color: red; }',
+      dependencies: [
+        { id: 'virtual:brandos/tailwind.css', kind: 'bridge' },
+        { id: '/tokens/brand.json', kind: 'token' },
+      ],
+      diagnostics: [
+        {
+          severity: 'warning',
+          code: 'selector-contract-drift',
+          message: 'PrimeNG dark selector does not match the shared contract.',
+        },
+      ],
+      tags: ['tailwind', 'primeng'],
+      containingFile: '/project/src/app/demo.component.ts',
+      className: 'DemoComponent',
+      order: 0,
+      inlineStylesExtension: 'css',
+      resourceFile: '/project/src/app/demo.component.css',
+    });
+
+    expect(stylesheetId).toMatch(/^[a-f0-9]+\.css$/);
+    expect(
+      registry.getDependenciesForSource('/project/src/app/demo.component.css'),
+    ).toEqual([
+      { id: 'virtual:brandos/tailwind.css', kind: 'bridge' },
+      { id: '/tokens/brand.json', kind: 'token' },
+    ]);
+    expect(
+      registry.getDiagnosticsForSource('/project/src/app/demo.component.css'),
+    ).toEqual([
+      {
+        severity: 'warning',
+        code: 'selector-contract-drift',
+        message: 'PrimeNG dark selector does not match the shared contract.',
+      },
+    ]);
+    expect(
+      registry.getTagsForSource('/project/src/app/demo.component.css'),
+    ).toEqual(['tailwind', 'primeng']);
   });
 
   it('tracks active request ids for a source stylesheet', () => {
@@ -172,5 +222,41 @@ describe('stylesheet-registry', () => {
       'abc123.css?direct&ngcomp=ng-c1&e=0',
       'abc123.css?ngcomp=ng-c1&e=0',
     ]);
+  });
+
+  it('returns structured transform results from preprocessors', () => {
+    const result = preprocessStylesheetResult(
+      '.demo { color: red; }',
+      '/project/src/app/demo.component.css',
+      () => ({
+        code: '.demo { color: blue; }',
+        dependencies: ['virtual:brandos/tailwind.css'],
+        diagnostics: [
+          {
+            severity: 'warning',
+            code: 'tailwind-reference',
+            message: 'Injected @reference for shared Tailwind bridge.',
+          },
+        ],
+        tags: ['tailwind'],
+      }),
+      {
+        filename: '/project/src/app/demo.component.css',
+        inline: false,
+      },
+    );
+
+    expect(result).toEqual({
+      code: '.demo { color: blue; }',
+      dependencies: ['virtual:brandos/tailwind.css'],
+      diagnostics: [
+        {
+          severity: 'warning',
+          code: 'tailwind-reference',
+          message: 'Injected @reference for shared Tailwind bridge.',
+        },
+      ],
+      tags: ['tailwind'],
+    });
   });
 });

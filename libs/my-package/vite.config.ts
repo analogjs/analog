@@ -1,7 +1,6 @@
 /// <reference types='vitest' />
 import angular from '@analogjs/vite-plugin-angular';
 import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
 import { playwright } from '@vitest/browser-playwright';
 
@@ -17,7 +16,6 @@ export default defineConfig(({ command }) => {
     cacheDir: '../../node_modules/.vite/libs/my-package',
     plugins: [
       angular({ jit: false, tsconfig }),
-      nxViteTsPaths(),
       nxCopyAssetsPlugin(['*.md', 'package.json']),
     ],
     resolve: {

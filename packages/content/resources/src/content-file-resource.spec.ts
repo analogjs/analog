@@ -3,12 +3,12 @@ import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
-import { ContentRenderer } from '@analogjs/content';
 import { of } from 'rxjs';
 import { describe, expect, it } from 'vitest';
 
 import { CONTENT_FILES_TOKEN } from '../../src/lib/content-files-token';
 import { contentFileResource } from './content-file-resource';
+import { ContentRenderer } from '../../src/lib/content-renderer';
 
 const TEST_RESOURCE_TOKEN = new InjectionToken<
   ReturnType<typeof contentFileResource>

@@ -21,6 +21,13 @@
     "test": {
       "executor": "@nx/vitest:test",
       "dependsOn": ["vitest-angular:build"]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/vitest-angular-tools",
+        "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
+      }
     }
   }
 }

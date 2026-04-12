@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { API_PREFIX } from '@analogjs/router/tokens';
+import { API_PREFIX } from '../../tokens/src/index.js';
 
 import { ANALOG_META_KEY } from './endpoints';
 import { FormAction } from './form-action.directive';

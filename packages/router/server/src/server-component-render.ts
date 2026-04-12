@@ -13,7 +13,7 @@ import {
   renderApplication,
   ɵSERVER_CONTEXT as SERVER_CONTEXT,
 } from '@angular/platform-server';
-import { ServerContext } from '@analogjs/router/tokens';
+import type { ServerContext } from '../../tokens/src/index.js';
 import { json as readJsonStream } from 'node:stream/consumers';
 
 import { provideStaticProps } from './tokens';

@@ -1,7 +1,10 @@
-import { ContentRenderer, NoopContentRenderer } from '@analogjs/content';
 import { Provider } from '@angular/core';
 import { PrismHighlighter } from './lib/prism-highlighter';
 
+import {
+  ContentRenderer,
+  NoopContentRenderer,
+} from '../../src/lib/content-renderer';
 import 'prismjs';
 import 'prismjs/plugins/toolbar/prism-toolbar';
 import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
