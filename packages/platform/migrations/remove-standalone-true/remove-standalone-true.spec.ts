@@ -49,6 +49,37 @@ describe('remove-standalone-true migration', () => {
     expect(tree.readContent('/src/app/home.page.ts')).toContain('imports: []');
   });
 
+  it('removes quoted standalone metadata keys during the migration pass', () => {
+    tree.create(
+      '/package.json',
+      JSON.stringify({
+        dependencies: {
+          '@angular/core': '^20.0.0',
+        },
+      }),
+    );
+    tree.create(
+      '/src/app/home.page.ts',
+      `
+        import { Component } from '@angular/core';
+
+        @Component({
+          "standalone": true,
+          imports: [],
+          template: '<p>home</p>',
+        })
+        export default class HomePage {}
+      `,
+    );
+
+    removeStandaloneTrue()(tree, context);
+
+    expect(tree.readContent('/src/app/home.page.ts')).not.toContain(
+      '"standalone": true',
+    );
+    expect(tree.readContent('/src/app/home.page.ts')).toContain('imports: []');
+  });
+
   it('skips updates for Angular 18 workspaces', () => {
     tree.create(
       '/package.json',

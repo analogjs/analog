@@ -41,10 +41,6 @@ export default function removeStandaloneTrue(): Rule {
       }
 
       const text = content.toString('utf-8');
-      if (!text.includes('standalone: true')) {
-        return;
-      }
-
       const updated = removeStandaloneTrueFromSource(text, filePath);
 
       if (updated !== text) {
