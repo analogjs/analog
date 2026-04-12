@@ -43,7 +43,11 @@ const config: UserConfigExport = defineConfig({
     minify: false,
     emptyOutDir: false,
     lib: {
-      entry: { 'src/index': resolve(pkgDir, 'src/index.ts') },
+      entry: {
+        'src/index': resolve(pkgDir, 'src/index.ts'),
+        'src/style-pipeline': resolve(pkgDir, 'src/style-pipeline.ts'),
+        'src/style-preprocessor': resolve(pkgDir, 'src/style-preprocessor.ts'),
+      },
       formats: ['es' as const],
     },
     outDir: resolve(pkgDir, 'dist'),

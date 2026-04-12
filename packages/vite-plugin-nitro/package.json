@@ -1,16 +1,18 @@
 {
   "name": "@analogjs/vite-plugin-nitro",
-  "version": "3.0.0-alpha.25",
+  "version": "3.0.0-alpha.26",
   "description": "A Vite plugin for adding a nitro API server",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js",
       "default": "./dist/src/index.js"
     },
     "./internal": {
       "types": "./dist/src/lib/utils/debug.d.ts",
+      "import": "./dist/src/lib/utils/debug.js",
       "default": "./dist/src/lib/utils/debug.js"
     },
     "./package.json": "./package.json"

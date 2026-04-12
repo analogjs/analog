@@ -1,6 +1,8 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "allowJs": true,
+    "composite": true,
     "esModuleInterop": true,
     "jsx": "preserve",
     "target": "ES2022",

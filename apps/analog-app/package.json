@@ -4,12 +4,15 @@
   "version": "0.0.0",
   "dependencies": {
     "@analogjs/content": "workspace:*",
+    "@analogjs/my-package": "workspace:*",
     "@analogjs/router": "workspace:*",
+    "@analogjs/top-bar": "workspace:*",
     "es-toolkit": "catalog:"
   },
   "devDependencies": {
     "@analogjs/platform": "workspace:*",
     "@analogjs/storybook-angular": "workspace:*",
-    "@analogjs/vite-plugin-angular": "workspace:*"
+    "@analogjs/vite-plugin-angular": "workspace:*",
+    "@analogjs/vitest-angular": "workspace:*"
   }
 }
