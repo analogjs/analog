@@ -4,7 +4,8 @@
     "outDir": "../../dist/out-tsc",
     "declaration": true,
     "isolatedDeclarations": true,
-    "types": ["node"]
+    "types": ["node"],
+    "composite": false
   },
   "include": [
     "src/**/*.ts",

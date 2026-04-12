@@ -9,7 +9,7 @@ import {
   ServerInternalFetch,
   ServerRequest,
   ServerResponse,
-} from '@analogjs/router/tokens';
+} from '../../tokens/src/index.js';
 
 function getHeaderValue(
   value: string | string[] | undefined,
