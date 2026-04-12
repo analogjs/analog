@@ -1,6 +1,5 @@
 /// <reference types="vitest" />
 
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import analog, { type PrerenderContentFile } from '@analogjs/platform';
 import { defineConfig } from 'vite';
 
@@ -93,7 +92,6 @@ export default defineConfig(() => {
           },
         },
       }),
-      nxViteTsPaths(),
     ],
   };
 });
