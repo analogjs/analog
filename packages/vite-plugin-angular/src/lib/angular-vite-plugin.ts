@@ -51,7 +51,14 @@ import {
   augmentProgramWithVersioning,
   mergeTransformers,
 } from './host.js';
-import type { StylePreprocessor } from './style-preprocessor.js';
+import {
+  composeStylePreprocessors,
+  normalizeStylesheetDependencies,
+} from './style-preprocessor.js';
+import type {
+  StylePreprocessor,
+  StylesheetDependency,
+} from './style-preprocessor.js';
 
 import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {
@@ -93,9 +100,15 @@ import { routerPlugin } from './router-plugin.js';
 import {
   AnalogStylesheetRegistry,
   preprocessStylesheet,
+  preprocessStylesheetResult,
   registerStylesheetContent,
   rewriteRelativeCssImports,
 } from './stylesheet-registry.js';
+import {
+  type AngularStylePipelineOptions,
+  configureStylePipelineRegistry,
+  stylePipelinePreprocessorFromPlugins,
+} from './style-pipeline.js';
 
 export enum DiagnosticModes {
   None = 0,
@@ -161,6 +174,14 @@ export interface PluginOptions {
    * @returns Transformed CSS string, or the original code if no transformation is needed
    */
   stylePreprocessor?: StylePreprocessor;
+  /**
+   * Experimental Angular stylesheet-resource hooks for community-maintained
+   * style-pipeline plugins.
+   *
+   * These hooks run inside the Angular resource pipeline, which is the seam a
+   * standalone Vite plugin cannot own on its own.
+   */
+  stylePipeline?: AngularStylePipelineOptions;
   /**
    * First-class Tailwind CSS v4 integration for Angular component styles.
    *
@@ -320,11 +341,14 @@ interface DeclarationFile {
  */
 function buildStylePreprocessor(
   options?: PluginOptions,
-): ((code: string, filename: string) => string) | undefined {
+): StylePreprocessor | undefined {
   const userPreprocessor = options?.stylePreprocessor;
+  const stylePipelinePreprocessor = stylePipelinePreprocessorFromPlugins(
+    options?.stylePipeline,
+  );
   const tw = options?.tailwindCss;
 
-  if (!tw && !userPreprocessor) {
+  if (!tw && !userPreprocessor && !stylePipelinePreprocessor) {
     return undefined;
   }
 
@@ -375,16 +399,15 @@ function buildStylePreprocessor(
     };
   }
 
-  // Chain: tailwind preprocessor first, then user preprocessor
-  if (tailwindPreprocessor && userPreprocessor) {
-    debugTailwind('chained with user stylePreprocessor');
-    return (code: string, filename: string) => {
-      const intermediate = tailwindPreprocessor!(code, filename);
-      return userPreprocessor(intermediate, filename);
-    };
+  if (tailwindPreprocessor && (stylePipelinePreprocessor || userPreprocessor)) {
+    debugTailwind('chained with style pipeline or user stylePreprocessor');
   }
 
-  return tailwindPreprocessor ?? userPreprocessor;
+  return composeStylePreprocessors([
+    tailwindPreprocessor,
+    stylePipelinePreprocessor,
+    userPreprocessor,
+  ]);
 }
 
 export function angular(options?: PluginOptions): Plugin[] {
@@ -901,6 +924,13 @@ export function angular(options?: PluginOptions): Plugin[] {
 
         if (pluginOptions.useAngularCompilationAPI) {
           stylesheetRegistry = new AnalogStylesheetRegistry();
+          configureStylePipelineRegistry(
+            pluginOptions.stylePipeline,
+            stylesheetRegistry,
+            {
+              workspaceRoot: pluginOptions.workspaceRoot,
+            },
+          );
           debugStyles(
             'stylesheet registry initialized (Angular Compilation API)',
           );
@@ -2138,7 +2168,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               `.${pluginOptions.inlineStylesExtension}`,
             );
 
-          const preprocessedData = preprocessStylesheet(
+          const preprocessed = preprocessStylesheetResult(
             data,
             filename,
             pluginOptions.stylePreprocessor,
@@ -2156,7 +2186,12 @@ export function angular(options?: PluginOptions): Plugin[] {
             const stylesheetId = registerStylesheetContent(
               stylesheetRegistry!,
               {
-                code: preprocessedData,
+                code: preprocessed.code,
+                dependencies: normalizeStylesheetDependencies(
+                  preprocessed.dependencies,
+                ),
+                diagnostics: preprocessed.diagnostics,
+                tags: preprocessed.tags,
                 containingFile,
                 className: className as string | undefined,
                 order,
@@ -2173,7 +2208,10 @@ export function angular(options?: PluginOptions): Plugin[] {
               stylesheetId,
               filename,
               resourceFile: resourceFile ?? '(inline)',
-              ...describeStylesheetContent(preprocessedData),
+              dependencies: preprocessed.dependencies,
+              diagnostics: preprocessed.diagnostics,
+              tags: preprocessed.tags,
+              ...describeStylesheetContent(preprocessed.code),
             });
 
             return stylesheetId;
@@ -2184,13 +2222,13 @@ export function angular(options?: PluginOptions): Plugin[] {
           debugStyles('stylesheet processed inline via preprocessCSS', {
             filename,
             resourceFile: resourceFile ?? '(inline)',
-            dataLength: preprocessedData.length,
+            dataLength: preprocessed.code.length,
           });
           let stylesheetResult;
 
           try {
             stylesheetResult = await preprocessCSS(
-              preprocessedData,
+              preprocessed.code,
               `${filename}?direct`,
               resolvedConfig,
             );
@@ -2312,7 +2350,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       ) {
         try {
           const rawCss = readFileSync(key, 'utf-8');
-          let preprocessed = preprocessStylesheet(
+          const preprocessed = preprocessStylesheetResult(
             rawCss,
             key,
             pluginOptions.stylePreprocessor,
@@ -2323,18 +2361,23 @@ export function angular(options?: PluginOptions): Plugin[] {
             mtimeMs: safeStatMtimeMs(key),
             ...describeStylesheetContent(rawCss),
           });
-          preprocessed = rewriteRelativeCssImports(preprocessed, key);
+          const servedCss = rewriteRelativeCssImports(preprocessed.code, key);
           stylesheetRegistry.registerServedStylesheet(
             {
               publicId: angularHash,
               sourcePath: key,
               originalCode: rawCss,
-              normalizedCode: preprocessed,
+              normalizedCode: servedCss,
+              dependencies: normalizeStylesheetDependencies(
+                preprocessed.dependencies,
+              ),
+              diagnostics: preprocessed.diagnostics,
+              tags: preprocessed.tags,
             },
             [key, normalizePath(key), basename(key), key.replace(/^\//, '')],
           );
 
-          if (preprocessed && preprocessed !== rawCss) {
+          if (servedCss && servedCss !== rawCss) {
             preprocessStats.injected++;
             debugStylesV(
               'preprocessed external stylesheet for Tailwind @reference',
@@ -2343,7 +2386,10 @@ export function angular(options?: PluginOptions): Plugin[] {
                 resolvedPath: key,
                 mtimeMs: safeStatMtimeMs(key),
                 raw: describeStylesheetContent(rawCss),
-                served: describeStylesheetContent(preprocessed),
+                served: describeStylesheetContent(servedCss),
+                dependencies: preprocessed.dependencies,
+                diagnostics: preprocessed.diagnostics,
+                tags: preprocessed.tags,
               },
             );
           } else {
@@ -2353,7 +2399,10 @@ export function angular(options?: PluginOptions): Plugin[] {
               resolvedPath: key,
               mtimeMs: safeStatMtimeMs(key),
               raw: describeStylesheetContent(rawCss),
-              served: describeStylesheetContent(preprocessed),
+              served: describeStylesheetContent(servedCss),
+              dependencies: preprocessed.dependencies,
+              diagnostics: preprocessed.diagnostics,
+              tags: preprocessed.tags,
               hint: 'Registry mapping is still registered so Angular component stylesheet HMR can track and refresh this file even when preprocessing makes no textual changes.',
             });
           }
@@ -2594,6 +2643,15 @@ export function angular(options?: PluginOptions): Plugin[] {
       stylesheetRegistry = externalizeStyles
         ? new AnalogStylesheetRegistry()
         : undefined;
+      if (stylesheetRegistry) {
+        configureStylePipelineRegistry(
+          pluginOptions.stylePipeline,
+          stylesheetRegistry,
+          {
+            workspaceRoot: pluginOptions.workspaceRoot,
+          },
+        );
+      }
       debugStyles('stylesheet registry initialized (NgtscProgram path)', {
         externalizeStyles,
       });
@@ -3035,12 +3093,15 @@ export function refreshStylesheetRegistryForFile(
   }
 
   const rawCss = readFileSync(normalizedFile, 'utf-8');
-  let servedCss = preprocessStylesheet(
+  const preprocessed = preprocessStylesheetResult(
     rawCss,
     normalizedFile,
     stylePreprocessor,
   );
-  servedCss = rewriteRelativeCssImports(servedCss, normalizedFile);
+  const servedCss = rewriteRelativeCssImports(
+    preprocessed.code,
+    normalizedFile,
+  );
 
   for (const publicId of publicIds) {
     stylesheetRegistry.registerServedStylesheet(
@@ -3049,6 +3110,11 @@ export function refreshStylesheetRegistryForFile(
         sourcePath: normalizedFile,
         originalCode: rawCss,
         normalizedCode: servedCss,
+        dependencies: normalizeStylesheetDependencies(
+          preprocessed.dependencies,
+        ),
+        diagnostics: preprocessed.diagnostics,
+        tags: preprocessed.tags,
       },
       [
         normalizedFile,
@@ -3062,6 +3128,9 @@ export function refreshStylesheetRegistryForFile(
   debugStylesV('stylesheet registry refreshed from source file', {
     file: normalizedFile,
     publicIds,
+    dependencies: preprocessed.dependencies,
+    diagnostics: preprocessed.diagnostics,
+    tags: preprocessed.tags,
     source: describeStylesheetContent(rawCss),
     served: describeStylesheetContent(servedCss),
   });
@@ -3078,6 +3147,9 @@ function diagnoseComponentStylesheetPipeline(
   sourcePath?: string;
   source?: ReturnType<typeof describeStylesheetContent>;
   registry?: ReturnType<typeof describeStylesheetContent>;
+  dependencies: StylesheetDependency[];
+  diagnostics: ReturnType<AnalogStylesheetRegistry['getDiagnosticsForSource']>;
+  tags: string[];
   directModuleId?: string;
   directModuleUrl?: string;
   trackedRequestIds: string[];
@@ -3105,6 +3177,11 @@ function diagnoseComponentStylesheetPipeline(
     : undefined;
   const trackedRequestIds =
     stylesheetRegistry?.getRequestIdsForSource(sourcePath ?? '') ?? [];
+  const dependencies =
+    stylesheetRegistry?.getDependenciesForSource(sourcePath ?? '') ?? [];
+  const diagnostics =
+    stylesheetRegistry?.getDiagnosticsForSource(sourcePath ?? '') ?? [];
+  const tags = stylesheetRegistry?.getTagsForSource(sourcePath ?? '') ?? [];
 
   const anomalies: string[] = [];
   const hints: string[] = [];
@@ -3189,6 +3266,9 @@ function diagnoseComponentStylesheetPipeline(
     registry: registryCode
       ? describeStylesheetContent(registryCode)
       : undefined,
+    dependencies,
+    diagnostics,
+    tags,
     directModuleId: directModule.id,
     directModuleUrl: directModule.url,
     trackedRequestIds,

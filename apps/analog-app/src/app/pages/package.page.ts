@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { MyPackage } from 'my-package';
+import { MyPackage } from '@analogjs/my-package';
 
 @Component({
   imports: [MyPackage],

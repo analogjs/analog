@@ -140,13 +140,14 @@ DEBUG=analog:platform:* pnpm dev
 
 ### `@analogjs/platform`
 
-| Scope                          | Area                                                                                        |
-| ------------------------------ | ------------------------------------------------------------------------------------------- |
-| `analog:platform`              | Platform plugin initialization, experimental option resolution, dependency transform config |
-| `analog:platform:routes`       | Route discovery and resolution                                                              |
-| `analog:platform:content`      | Content pipeline                                                                            |
-| `analog:platform:typed-router` | Typed route generation, file discovery, collisions, watch-mode regeneration                 |
-| `analog:platform:tailwind`     | Tailwind CSS `@reference` injection in component styles                                     |
+| Scope                            | Area                                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| `analog:platform`                | Platform plugin initialization, experimental option resolution, dependency transform config |
+| `analog:platform:routes`         | Route discovery and resolution                                                              |
+| `analog:platform:content`        | Content pipeline                                                                            |
+| `analog:platform:typed-router`   | Typed route generation, file discovery, collisions, watch-mode regeneration                 |
+| `analog:platform:tailwind`       | Tailwind CSS `@reference` injection in component styles                                     |
+| `analog:platform:style-pipeline` | Community style-pipeline plugin registration and platform-level integration                 |
 
 ### `@analogjs/vite-plugin-angular`
 
@@ -157,6 +158,7 @@ DEBUG=analog:platform:* pnpm dev
 | `analog:angular:compiler`        | TypeScript compilation, compiler options                                                 |
 | `analog:angular:compilation-api` | Experimental Angular Compilation API path selection, version checks, incremental updates |
 | `analog:angular:tailwind`        | Tailwind CSS `@reference` injection via the `tailwindCss` plugin option                  |
+| `analog:angular:style-pipeline`  | Reserved for Angular-side style-pipeline resource diagnostics                            |
 
 ### `@analogjs/vite-plugin-nitro`
 

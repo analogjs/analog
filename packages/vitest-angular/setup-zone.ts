@@ -3,7 +3,7 @@ import 'zone.js/plugins/sync-test';
 import 'zone.js/plugins/proxy';
 import 'zone.js/testing';
 
-import './setup-snapshots.js';
+import { createAngularFixtureSnapshotSerializer } from './snapshot-serializers.js';
 /**
  * Patch Vitest's describe/test/beforeEach/afterEach functions so test code
  * always runs in a testZone (ProxyZone).
@@ -32,6 +32,13 @@ if (ProxyZoneSpec === undefined) {
 
 const env = globalThis as any;
 const ambientZone = Zone.current;
+
+const originalExpect = env['expect'];
+if (originalExpect) {
+  originalExpect.addSnapshotSerializer(
+    createAngularFixtureSnapshotSerializer(),
+  );
+}
 
 // Create a synchronous-only zone in which to run `describe` blocks in order to
 // raise an error if any asynchronous operations are attempted

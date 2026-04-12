@@ -49,6 +49,8 @@ const config: UserConfigExport = defineConfig({
           pkgDir,
           'migrations/remove-standalone-true/remove-standalone-true.ts',
         ),
+        'src/style-pipeline': resolve(pkgDir, 'src/style-pipeline.ts'),
+        'src/style-preprocessor': resolve(pkgDir, 'src/style-preprocessor.ts'),
       },
       formats: ['es' as const],
     },

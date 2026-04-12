@@ -54,7 +54,9 @@
       "options": {
         "cwd": "dist/apps/tanstack-query-app/analog",
         "command": "node --unhandled-rejections=throw ./server/index.mjs",
-        "env": { "PORT": "43020" }
+        "env": {
+          "PORT": "43020"
+        }
       },
       "dependsOn": ["build"]
     },
@@ -65,6 +67,13 @@
       "executor": "@nx/vitest:test",
       "dependsOn": ["platform:build", "router:build"],
       "outputs": ["{projectRoot}/coverage"]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/tanstack-query-app",
+        "command": "pnpm exec tsgo -p tsconfig.app.json --noEmit"
+      }
     }
   }
 }
