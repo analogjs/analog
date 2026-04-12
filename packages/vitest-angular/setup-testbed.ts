@@ -14,7 +14,9 @@ import {
 } from '@angular/platform-browser/testing';
 import { afterEach, beforeEach } from 'vitest';
 
-const ANGULAR_TESTBED_SETUP = Symbol.for('testbed-setup');
+const ANGULAR_TESTBED_SETUP = Symbol.for(
+  '@analogjs/vitest-angular/testbed-setup',
+);
 
 function getDebugScopes(): string[] {
   const envDebug =
@@ -95,7 +97,6 @@ export function setupTestBed({
 
   if ((globalThis as any)[ANGULAR_TESTBED_SETUP]) {
     debugTestBed('resetting Angular test environment before reconfigure');
-    testBed.resetTestingModule();
     testBed.resetTestEnvironment();
   } else {
     debugTestBed('initializing Angular test environment');
