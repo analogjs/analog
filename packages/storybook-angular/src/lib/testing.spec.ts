@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const originalSetProjectAnnotationsMock = vi.fn((annotations) => annotations);
 const renderMock = vi.fn();
 const renderToCanvasMock = vi.fn();
-const applyDecoratorsMock = vi.fn();
 
 vi.mock('@storybook/angular/client', () => ({
   setProjectAnnotations: originalSetProjectAnnotationsMock,
@@ -12,7 +11,6 @@ vi.mock('@storybook/angular/client', () => ({
 vi.mock('@storybook/angular/client/config', () => ({
   render: renderMock,
   renderToCanvas: renderToCanvasMock,
-  applyDecorators: applyDecoratorsMock,
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,19 +24,21 @@ beforeEach(async () => {
 });
 
 describe('setProjectAnnotations', () => {
-  it('forwards applyDecorators from storybook angular config annotations', () => {
+  it('keeps portable story annotations limited to render hooks', () => {
     const projectAnnotations = { decorators: [] };
 
     const result = setProjectAnnotations(projectAnnotations);
+    const renderAnnotations =
+      originalSetProjectAnnotationsMock.mock.calls[0][0][0];
 
     expect(originalSetProjectAnnotationsMock).toHaveBeenCalledWith([
       expect.objectContaining({
         render: renderMock,
         renderToCanvas: expect.any(Function),
-        applyDecorators: applyDecoratorsMock,
       }),
       projectAnnotations,
     ]);
+    expect(renderAnnotations).not.toHaveProperty('applyDecorators');
     expect(result).toHaveLength(2);
   });
 });

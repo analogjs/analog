@@ -21,7 +21,6 @@ export async function renderToCanvas(
 const renderAnnotations = {
   render,
   renderToCanvas,
-  applyDecorators: configAnnotations.applyDecorators,
 };
 
 export function setProjectAnnotations(
