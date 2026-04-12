@@ -4,6 +4,13 @@ import type { Plugin, TransformResult, UserConfig } from 'vite';
 import * as vite from 'vite';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
 
+const vitestAngularSetupEntries = [
+  '@analogjs/vitest-angular/setup-testbed',
+  '@analogjs/vitest-angular/setup-zone',
+  '@analogjs/vitest-angular/setup-snapshots',
+  '@analogjs/vitest-angular/setup-serializers',
+];
+
 /**
  * Sets up test config for Vitest and downlevels Angular FESM bundles and
  * `@angular/cdk` from modern async/await to ES2016 so that Zone.js can
@@ -29,7 +36,7 @@ export function angularVitestPlugin(): Plugin {
         },
         ssr: {
           noExternal: [
-            '@analogjs/vitest-angular/setup-testbed',
+            ...vitestAngularSetupEntries,
             /fesm2022(.*?)testing/,
             /fesm2015/,
           ],

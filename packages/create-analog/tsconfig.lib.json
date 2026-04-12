@@ -8,7 +8,8 @@
     "declaration": true,
     "isolatedDeclarations": true,
     "types": [],
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "composite": false
   },
   "include": ["**/*.ts"],
   "exclude": [

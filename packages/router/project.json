@@ -43,6 +43,13 @@
         "preset": "conventional",
         "tagPrefix": "router@"
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/router",
+        "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
+      }
     }
   }
 }
