@@ -1,13 +1,23 @@
 import { createHash } from 'node:crypto';
 import { dirname, normalize, resolve } from 'node:path';
 import { normalizePath } from 'vite';
-import type { StylePreprocessor } from './style-preprocessor.js';
+import type {
+  StylePreprocessor,
+  StylesheetDependency,
+  StylesheetDiagnostic,
+  StylesheetTransformResult,
+  StylesheetTransformContext,
+} from './style-preprocessor.js';
+import { normalizeStylesheetTransformResult as normalizeTransformResult } from './style-preprocessor.js';
 
 export interface AnalogStylesheetRecord {
   publicId: string;
   sourcePath?: string;
   originalCode?: string;
   normalizedCode: string;
+  dependencies?: StylesheetDependency[];
+  diagnostics?: StylesheetDiagnostic[];
+  tags?: string[];
 }
 
 export class AnalogStylesheetRegistry {
@@ -28,6 +38,9 @@ export class AnalogStylesheetRegistry {
    * file paths once externalized.
    */
   private sourceToRequestIds = new Map<string, Set<string>>();
+  private sourceToDependencies = new Map<string, StylesheetDependency[]>();
+  private sourceToDiagnostics = new Map<string, StylesheetDiagnostic[]>();
+  private sourceToTags = new Map<string, string[]>();
 
   /**
    * Canonicalizes browser-facing stylesheet request ids so Vite timestamp
@@ -95,6 +108,18 @@ export class AnalogStylesheetRegistry {
     return [...(this.sourceToRequestIds.get(sourcePath) ?? [])];
   }
 
+  getDependenciesForSource(sourcePath: string): StylesheetDependency[] {
+    return [...(this.sourceToDependencies.get(sourcePath) ?? [])];
+  }
+
+  getDiagnosticsForSource(sourcePath: string): StylesheetDiagnostic[] {
+    return [...(this.sourceToDiagnostics.get(sourcePath) ?? [])];
+  }
+
+  getTagsForSource(sourcePath: string): string[] {
+    return [...(this.sourceToTags.get(sourcePath) ?? [])];
+  }
+
   registerExternalRequest(requestId: string, sourcePath: string): void {
     this.externalRequestToSource.set(
       this.normalizeRequestId(requestId),
@@ -150,7 +175,39 @@ export class AnalogStylesheetRegistry {
         this.sourceToPublicIds.get(record.sourcePath) ?? new Set();
       publicIds.add(publicId);
       this.sourceToPublicIds.set(record.sourcePath, publicIds);
+      this.recomputeSourceMetadata(record.sourcePath);
     }
+  }
+
+  private recomputeSourceMetadata(sourcePath: string): void {
+    const dependencies = new Map<string, StylesheetDependency>();
+    const diagnostics = new Map<string, StylesheetDiagnostic>();
+    const tags = new Set<string>();
+
+    for (const publicId of this.sourceToPublicIds.get(sourcePath) ?? []) {
+      const record = this.servedById.get(publicId);
+      if (!record) {
+        continue;
+      }
+
+      for (const dependency of record.dependencies ?? []) {
+        const key = `${dependency.kind ?? 'unknown'}:${dependency.id}:${dependency.owner ?? ''}`;
+        dependencies.set(key, dependency);
+      }
+
+      for (const diagnostic of record.diagnostics ?? []) {
+        const key = `${diagnostic.severity}:${diagnostic.code}:${diagnostic.message}`;
+        diagnostics.set(key, diagnostic);
+      }
+
+      for (const tag of record.tags ?? []) {
+        tags.add(tag);
+      }
+    }
+
+    this.sourceToDependencies.set(sourcePath, [...dependencies.values()]);
+    this.sourceToDiagnostics.set(sourcePath, [...diagnostics.values()]);
+    this.sourceToTags.set(sourcePath, [...tags]);
   }
 
   private resolveServedRecord(
@@ -169,8 +226,22 @@ export function preprocessStylesheet(
   code: string,
   filename: string,
   stylePreprocessor?: StylePreprocessor,
+  context?: StylesheetTransformContext,
 ): string {
-  return stylePreprocessor ? (stylePreprocessor(code, filename) ?? code) : code;
+  return preprocessStylesheetResult(code, filename, stylePreprocessor, context)
+    .code;
+}
+
+export function preprocessStylesheetResult(
+  code: string,
+  filename: string,
+  stylePreprocessor?: StylePreprocessor,
+  context?: StylesheetTransformContext,
+): StylesheetTransformResult {
+  return normalizeTransformResult(
+    stylePreprocessor?.(code, filename, context),
+    code,
+  );
 }
 
 export function rewriteRelativeCssImports(
@@ -197,6 +268,9 @@ export function registerStylesheetContent(
   registry: AnalogStylesheetRegistry,
   {
     code,
+    dependencies,
+    diagnostics,
+    tags,
     containingFile,
     className,
     order,
@@ -204,6 +278,9 @@ export function registerStylesheetContent(
     resourceFile,
   }: {
     code: string;
+    dependencies?: StylesheetDependency[];
+    diagnostics?: StylesheetDiagnostic[];
+    tags?: string[];
     containingFile: string;
     className?: string;
     order?: number;
@@ -238,6 +315,9 @@ export function registerStylesheetContent(
       publicId: stylesheetId,
       sourcePath: resourceFile,
       normalizedCode: code,
+      dependencies,
+      diagnostics,
+      tags,
     },
     aliases,
   );

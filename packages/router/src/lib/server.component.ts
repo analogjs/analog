@@ -20,9 +20,9 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { injectBaseURL } from '@analogjs/router/tokens';
 import { catchError, map, of, throwError } from 'rxjs';
 
+import { injectBaseURL } from '../../tokens/src/index.js';
 import { makeCacheKey } from './cache-key';
 
 type ServerProps = Record<string, any>;

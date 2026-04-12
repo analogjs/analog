@@ -33,6 +33,24 @@ describe('angularVitestPlugin', () => {
     );
     expect(config.test?.pool).toBe('threads');
   });
+
+  it('should noExternal all vitest-angular setup entrypoints', async () => {
+    const config = await resolveConfig(
+      defineConfig({
+        plugins: [angularVitestPlugin()],
+      }),
+      'serve',
+    );
+
+    expect(config.ssr?.noExternal).toEqual(
+      expect.arrayContaining([
+        '@analogjs/vitest-angular/setup-testbed',
+        '@analogjs/vitest-angular/setup-zone',
+        '@analogjs/vitest-angular/setup-snapshots',
+        '@analogjs/vitest-angular/setup-serializers',
+      ]),
+    );
+  });
 });
 
 describe('angularVitestSourcemapPlugin', () => {
