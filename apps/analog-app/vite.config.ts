@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import { resolve } from 'node:path';
 import { defineConfig, PluginOption } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 
@@ -14,7 +14,8 @@ if (process.env['NETLIFY'] === 'true') {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(async ({ mode }) => {
+export default defineConfig(async ({ mode, command }) => {
+  const useBuiltWorkspaceLibs = command === 'build';
   const fileReplacements =
     mode === 'production'
       ? [
@@ -57,7 +58,9 @@ export default defineConfig(async ({ mode }) => {
         content: {
           highlighter: 'prism',
         },
-        include: ['/libs/my-package/src/**/*.ts'],
+        include: useBuiltWorkspaceLibs
+          ? []
+          : ['/libs/my-package/src/**/*.ts', '/libs/top-bar/src/**/*.ts'],
         discoverRoutes: true,
         fileReplacements,
         prerender: {
@@ -98,13 +101,26 @@ export default defineConfig(async ({ mode }) => {
           },
         },
       }),
-      nxViteTsPaths(),
       {
         ...((
           await import('rollup-plugin-visualizer')
         ).visualizer() as PluginOption),
       },
     ],
+    resolve: useBuiltWorkspaceLibs
+      ? {
+          alias: {
+            '@analogjs/my-package': resolve(
+              __dirname,
+              '../../dist/libs/my-package/fesm2022/my-package.js',
+            ),
+            '@analogjs/top-bar': resolve(
+              __dirname,
+              '../../dist/libs/top-bar/fesm2022/top-bar.js',
+            ),
+          },
+        }
+      : undefined,
     test: {
       reporters: ['default'],
       coverage: {

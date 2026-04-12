@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import {
   injectInternalServerFetch,
   type ServerInternalFetch,
-} from '@analogjs/router/tokens';
+} from '../../tokens/src/index.js';
 
 import {
   DefaultRouteMeta,

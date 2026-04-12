@@ -122,7 +122,7 @@ export interface Options {
   additionalAPIDirs?: string[];
   /**
    * Automatically discover route directories (pages, content, API) in
-   * workspace libraries by scanning tsconfig.base.json path aliases.
+   * workspace libraries by scanning `libs/**` directories directly.
    *
    * Discovered directories are merged with any explicit
    * `additionalPagesDirs`, `additionalContentDirs`, and

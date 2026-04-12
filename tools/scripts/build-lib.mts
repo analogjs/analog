@@ -19,7 +19,7 @@
  * Example: node tools/scripts/build-lib.mts router
  */
 
-import { execFileSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import {
   cpSync,
   existsSync,
@@ -53,6 +53,11 @@ interface BuildContext {
   tsconfig: string;
   typesOutDir: string;
   prefix: string;
+}
+
+interface CommandOptions {
+  env?: NodeJS.ProcessEnv;
+  label?: string;
 }
 
 const BuildLibArgsSchema = Schema.Struct({
@@ -226,21 +231,68 @@ function runCommand(
   context: BuildContext,
   file: string,
   args: ReadonlyArray<string>,
-  env?: NodeJS.ProcessEnv,
+  options?: CommandOptions,
 ): Effect.Effect<void, Error> {
-  return Effect.try({
-    try: () => {
-      execFileSync(file, [...args], {
-        cwd: context.root,
-        env,
-        shell: process.platform === 'win32',
-        stdio: 'inherit',
-      });
-    },
+  return Effect.tryPromise({
+    try: () =>
+      new Promise<void>((resolvePromise, rejectPromise) => {
+        const command = `${file} ${args.join(' ')}`;
+        const label = options?.label ?? command;
+        const child = spawn(file, [...args], {
+          cwd: context.root,
+          env: options?.env,
+          shell: process.platform === 'win32',
+          stdio: 'inherit',
+        });
+
+        const startedAt = Date.now();
+        const heartbeatMs = process.env['CI'] ? 30_000 : 0;
+        const heartbeat =
+          heartbeatMs > 0
+            ? setInterval(() => {
+                const elapsedSeconds = Math.floor(
+                  (Date.now() - startedAt) / 1000,
+                );
+                console.log(
+                  `      [@analogjs/${context.packageName}] still running ${label} (${elapsedSeconds}s elapsed)`,
+                );
+              }, heartbeatMs)
+            : undefined;
+
+        const finish = (callback: () => void) => {
+          if (heartbeat) {
+            clearInterval(heartbeat);
+          }
+          callback();
+        };
+
+        child.on('error', (cause) => {
+          finish(() =>
+            rejectPromise(
+              new Error(`Command failed: ${command}\n${formatError(cause)}`),
+            ),
+          );
+        });
+
+        child.on('exit', (code, signal) => {
+          if (code === 0) {
+            finish(resolvePromise);
+            return;
+          }
+
+          const exitDetail =
+            signal !== null
+              ? `signal ${signal}`
+              : `exit code ${code ?? 'unknown'}`;
+          finish(() =>
+            rejectPromise(
+              new Error(`Command failed: ${command}\n${exitDetail}`),
+            ),
+          );
+        });
+      }),
     catch: (cause) =>
-      new Error(
-        `Command failed: ${file} ${args.join(' ')}\n${formatError(cause)}`,
-      ),
+      cause instanceof Error ? cause : new Error(formatError(cause)),
   });
 }
 
@@ -258,8 +310,11 @@ function buildBundles(context: BuildContext): Effect.Effect<void, Error> {
       'runner',
     ],
     {
-      ...process.env,
-      ANALOG_BUILD_LIB_TSCONFIG: context.tsconfig,
+      env: {
+        ...process.env,
+        ANALOG_BUILD_LIB_TSCONFIG: context.tsconfig,
+      },
+      label: 'Vite FESM bundle build',
     },
   );
 }
@@ -287,14 +342,12 @@ function generateDeclarations(
   context: BuildContext,
 ): Effect.Effect<void, Error> {
   return Effect.gen(function* () {
-    yield* runCommand(context, 'pnpm', [
-      'exec',
-      'ngc',
-      '-p',
-      context.tsconfig,
-      '--outDir',
-      context.typesOutDir,
-    ]);
+    yield* runCommand(
+      context,
+      'pnpm',
+      ['exec', 'ngc', '-p', context.tsconfig, '--outDir', context.typesOutDir],
+      { label: 'Angular declaration generation (ngc)' },
+    );
     yield* pruneNonDeclarationFiles(context.typesOutDir);
     yield* cleanupDuplicatePackages(context);
   });

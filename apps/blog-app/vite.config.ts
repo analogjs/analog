@@ -1,6 +1,5 @@
 /// <reference types="vitest" />
 
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import analog, { type PrerenderContentFile } from '@analogjs/platform';
 import { defineConfig } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
@@ -97,7 +96,6 @@ export default defineConfig(() => {
           },
         },
       }),
-      nxViteTsPaths(),
     ],
   };
 });
