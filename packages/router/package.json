@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/router",
-  "version": "3.0.0-alpha.25",
+  "version": "3.0.0-alpha.26",
   "description": "Filesystem-based routing for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -95,7 +95,8 @@
     "tslib": "catalog:"
   },
   "devDependencies": {
-    "@analogjs/vite-plugin-angular": "workspace:*"
+    "@analogjs/vite-plugin-angular": "workspace:*",
+    "@analogjs/vitest-angular": "workspace:*"
   },
   "ng-update": {
     "packageGroup": [

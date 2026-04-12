@@ -20,6 +20,13 @@
     },
     "test": {
       "executor": "@nx/vitest:test"
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/nx-plugin",
+        "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
+      }
     }
   }
 }

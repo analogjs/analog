@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 
-import path, { resolve } from 'node:path';
+import path from 'node:path';
 import { defineConfig, normalizePath } from 'vite';
 
 // https://vitejs.dev/config/

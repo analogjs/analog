@@ -16,7 +16,7 @@ import {
   injectAPIPrefix,
   injectInternalServerFetch,
   type ServerInternalFetch,
-} from '@analogjs/router/tokens';
+} from '../../tokens/src/index.js';
 
 import { makeCacheKey } from './cache-key';
 

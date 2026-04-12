@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 import type { StorybookConfig } from '@analogjs/storybook-angular';
+import { mergeConfig } from 'vite';
 
 const config: StorybookConfig = {
   stories: ['../src/**/*.@(mdx|stories.@(js|jsx|ts|tsx))'],
@@ -11,6 +12,14 @@ const config: StorybookConfig = {
   framework: {
     name: getAbsolutePath('@analogjs/storybook-angular'),
     options: {},
+  },
+  async viteFinal(config) {
+    return mergeConfig(config, {
+      build: {
+        // Lightning CSS currently chokes on the generated Storybook preview CSS.
+        cssMinify: 'esbuild',
+      },
+    });
   },
 };
 

@@ -1,6 +1,7 @@
-import { MarkedContentHighlighter } from '@analogjs/content';
 import { Injectable } from '@angular/core';
 import { markedHighlight } from 'marked-highlight';
+
+import { MarkedContentHighlighter } from '../../../src/lib/marked-content-highlighter';
 
 declare const Prism: typeof import('prismjs');
 
