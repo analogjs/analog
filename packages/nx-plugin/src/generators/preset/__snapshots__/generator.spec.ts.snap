@@ -119,8 +119,8 @@ export default defineConfig(({ mode }) => {
         allow: ['.'],
       },
     },
-    plugins: [analog(), tailwindcss()],
-    test: {xw
+    plugins: [tailwindcss(), analog()],
+    test: {
       globals: true,
       environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],
