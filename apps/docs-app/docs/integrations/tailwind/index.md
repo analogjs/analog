@@ -128,6 +128,8 @@ This keeps the config aligned with the generated apps and the current documentat
 
 Prefer `hmr` over `liveReload` when you need to configure Angular HMR explicitly. `liveReload` remains a compatibility alias.
 
+Angular HMR requires Angular v19 or newer. On Angular v16-v18, `hmr` and `liveReload` are intentionally disabled at runtime and emit a console warning, so HMR is unavailable on those versions. For the broader migration guidance, see [Enabling HMR](../../guides/migrating#enabling-hmr).
+
 Tailwind support does not require you to enable HMR manually. The stylesheet pipeline is handled independently from whether Angular can produce a hot component update for a given edit.
 
 ## Prefixes
