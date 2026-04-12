@@ -127,9 +127,12 @@ describe('setup schematic', () => {
     );
     expect(viteConfig).toContain('plugins: [angular(), viteTsConfigPaths()]');
     expect(viteConfig).not.toContain('nxViteTsPaths');
+    expect(viteConfig).not.toContain(
+      '@nx/vite/plugins/nx-tsconfig-paths.plugin',
+    );
   });
 
-  it('should create vite.config.mts with nxViteTsPaths for Nx workspace', async () => {
+  it('should create vite.config.mts without path plugins for Nx workspace', async () => {
     // Create nx.json to simulate Nx workspace
     tree.create('/nx.json', JSON.stringify({ version: 2 }));
 
@@ -144,11 +147,12 @@ describe('setup schematic', () => {
     expect(viteConfig).toContain(
       "import angular from '@analogjs/vite-plugin-angular'",
     );
-    expect(viteConfig).toContain(
-      "import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin'",
-    );
-    expect(viteConfig).toContain('plugins: [angular(), nxViteTsPaths()]');
+    expect(viteConfig).toContain('plugins: [angular()]');
+    expect(viteConfig).not.toContain('nxViteTsPaths');
     expect(viteConfig).not.toContain('viteTsConfigPaths');
+    expect(viteConfig).not.toContain(
+      '@nx/vite/plugins/nx-tsconfig-paths.plugin',
+    );
   });
 
   it('should create test-setup.ts with BrowserTestingModule for Angular 20', async () => {

@@ -9,6 +9,7 @@ export const debugCompiler = createDebug('analog:angular:compiler');
 export const debugCompilationApi = createDebug(
   'analog:angular:compilation-api',
 );
+export const debugStylePipeline = createDebug('analog:angular:style-pipeline');
 
 // Verbose — per-file detail, enable with :v suffix or parent:*
 export const debugTailwindV = createDebug('analog:angular:tailwind:v');
@@ -22,6 +23,7 @@ const angularDebugInstances = [
   debugStyles,
   debugCompiler,
   debugCompilationApi,
+  debugStylePipeline,
   debugTailwindV,
   debugHmrV,
   debugStylesV,
@@ -37,6 +39,7 @@ export type DebugScope =
   | 'analog:angular:compiler'
   | 'analog:angular:compiler:v'
   | 'analog:angular:compilation-api'
+  | 'analog:angular:style-pipeline'
   | 'analog:angular:tailwind'
   | 'analog:angular:tailwind:v'
   | (string & {});

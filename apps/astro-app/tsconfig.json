@@ -1,9 +1,15 @@
 {
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
+    "composite": true,
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "module": "preserve",
     "moduleResolution": "bundler"
-  }
+  },
+  "references": [
+    {
+      "path": "../../packages/astro-angular"
+    }
+  ]
 }

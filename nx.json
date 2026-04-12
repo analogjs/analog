@@ -16,6 +16,10 @@
     "test": {
       "cache": true
     },
+    "typecheck": {
+      "cache": true,
+      "inputs": ["default", "^production"]
+    },
     "e2e": {
       "cache": true
     },
@@ -73,11 +77,29 @@
   "defaultBase": "beta",
   "plugins": [
     {
+      "plugin": "@nx/js/typescript",
+      "options": {
+        "compiler": "tsgo",
+        "typecheck": {
+          "targetName": "typecheck"
+        },
+        "build": false
+      }
+    },
+    {
       "plugin": "@nx/eslint/plugin",
       "options": {
         "targetName": "eslint:lint"
       }
     }
   ],
+  "sync": {
+    "globalGenerators": ["@nx/js:typescript-sync"],
+    "generatorOptions": {
+      "@nx/js:typescript-sync": {
+        "runtimeTsConfigFileNames": []
+      }
+    }
+  },
   "analytics": false
 }

@@ -9,7 +9,8 @@
     "declaration": true,
     "isolatedDeclarations": true,
     "types": ["node"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "composite": false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts", "vite.config.ts"]

@@ -19,6 +19,13 @@
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/astro-app-e2e-playwright",
+        "command": "pnpm exec tsgo -p tsconfig.json --noEmit"
+      }
     }
   }
 }

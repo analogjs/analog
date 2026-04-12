@@ -1,0 +1,96 @@
+{
+  "extends": "./tsconfig.base.json",
+  "files": [],
+  "references": [
+    {
+      "path": "./.dagger"
+    },
+    {
+      "path": "./packages/vite-plugin-angular-tools"
+    },
+    {
+      "path": "./apps/astro-app-e2e-playwright"
+    },
+    {
+      "path": "./packages/vitest-angular-tools"
+    },
+    {
+      "path": "./packages/vite-plugin-angular"
+    },
+    {
+      "path": "./apps/tanstack-query-app-e2e"
+    },
+    {
+      "path": "./packages/storybook-angular"
+    },
+    {
+      "path": "./packages/vite-plugin-nitro"
+    },
+    {
+      "path": "./packages/content-plugin"
+    },
+    {
+      "path": "./apps/tailwind-debug-app"
+    },
+    {
+      "path": "./apps/tanstack-query-app"
+    },
+    {
+      "path": "./packages/vitest-angular"
+    },
+    {
+      "path": "./packages/astro-angular"
+    },
+    {
+      "path": "./packages/create-analog"
+    },
+    {
+      "path": "./apps/opt-catchall-app"
+    },
+    {
+      "path": "./tests/vitest-angular"
+    },
+    {
+      "path": "./apps/analog-app-e2e"
+    },
+    {
+      "path": "./libs/shared/feature"
+    },
+    {
+      "path": "./packages/nx-plugin"
+    },
+    {
+      "path": "./apps/blog-app-e2e"
+    },
+    {
+      "path": "./packages/platform"
+    },
+    {
+      "path": "./packages/content"
+    },
+    {
+      "path": "./apps/analog-app"
+    },
+    {
+      "path": "./libs/my-package"
+    },
+    {
+      "path": "./packages/router"
+    },
+    {
+      "path": "./apps/astro-app"
+    },
+    {
+      "path": "./apps/blog-app"
+    },
+    {
+      "path": "./apps/docs-app"
+    },
+    {
+      "path": "./libs/top-bar"
+    },
+    {
+      "path": "./libs/card"
+    }
+  ]
+}
