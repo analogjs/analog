@@ -47,6 +47,13 @@
         "cwd": "apps/docs-app",
         "command": "docusaurus write-translations --locale={args.locale}"
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/docs-app",
+        "command": "pnpm exec tsgo -p tsconfig.json --noEmit"
+      }
     }
   }
 }

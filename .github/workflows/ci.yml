@@ -8,6 +8,7 @@ env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
   NX_VERBOSE_LOGGING: ${{ vars.NX_VERBOSE_LOGGING }}
   NX_ISOLATE_PLUGINS: 'false'
+  ANALOG_CI_HEARTBEAT_MS: '30000'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
@@ -127,11 +128,11 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
       - name: Install
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: node tools/scripts/with-heartbeat.mts --label "pnpm install" -- pnpm install --frozen-lockfile --prefer-offline
       - name: Build
-        run: pnpm build
+        run: node tools/scripts/with-heartbeat.mts --label "pnpm build" -- pnpm build
       - name: Verify route freshness
-        run: node tools/scripts/verify-route-freshness.mts
+        run: node tools/scripts/with-heartbeat.mts --label "verify route freshness" -- node tools/scripts/verify-route-freshness.mts
 
   build-native-windows:
     name: Native / Windows
@@ -158,11 +159,11 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
       - name: Install
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: node tools/scripts/with-heartbeat.mts --label "pnpm install" -- pnpm install --frozen-lockfile --prefer-offline
       - name: Build
-        run: pnpm build
+        run: node tools/scripts/with-heartbeat.mts --label "pnpm build" -- pnpm build
       - name: Verify route freshness
-        run: node tools/scripts/verify-route-freshness.mts
+        run: node tools/scripts/with-heartbeat.mts --label "verify route freshness" -- node tools/scripts/verify-route-freshness.mts
       - name: Verify
         run: more dist\apps\blog-app\analog\public\index.html
 

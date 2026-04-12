@@ -56,6 +56,13 @@
         "port": 43041,
         "staticFilePath": "dist/apps/opt-catchall-app/analog/public"
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/opt-catchall-app",
+        "command": "pnpm exec tsgo -p tsconfig.app.json --noEmit"
+      }
     }
   }
 }

@@ -37,12 +37,16 @@ const {
 }));
 
 vi.mock('@analogjs/vite-plugin-nitro', () => ({
+  nitro: viteNitroPluginSpy,
   default: viteNitroPluginSpy,
 }));
 vi.mock('@analogjs/vite-plugin-nitro/internal', () => ({
   debugInstances: [],
 }));
-vi.mock('@analogjs/vite-plugin-angular', () => ({ default: angularSpy }));
+vi.mock('@analogjs/vite-plugin-angular', () => ({
+  angular: angularSpy,
+  default: angularSpy,
+}));
 vi.mock('./ssr/ssr-build-plugin.js', () => ({
   ssrBuildPlugin: ssrBuildPluginSpy,
 }));

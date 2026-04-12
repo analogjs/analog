@@ -46,12 +46,21 @@
       "options": {
         "cwd": "dist/apps/tailwind-debug-app/analog",
         "command": "node --unhandled-rejections=throw ./server/index.mjs",
-        "env": { "PORT": "43040" }
+        "env": {
+          "PORT": "43040"
+        }
       }
     },
     "test": {
       "executor": "@nx/vitest:test",
       "outputs": ["{projectRoot}/coverage"]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/tailwind-debug-app",
+        "command": "pnpm exec tsgo -p tsconfig.app.json --noEmit"
+      }
     }
   }
 }

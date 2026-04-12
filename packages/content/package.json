@@ -113,7 +113,8 @@
     "tslib": "catalog:"
   },
   "devDependencies": {
-    "@analogjs/vite-plugin-angular": "workspace:*"
+    "@analogjs/vite-plugin-angular": "workspace:*",
+    "@analogjs/vitest-angular": "workspace:*"
   },
   "ng-update": {
     "packageGroup": [

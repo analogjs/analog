@@ -101,7 +101,6 @@ exports[`preset generator > should match vite.config.ts 1`] = `
 
 import analog from '@analogjs/platform';
 import { defineConfig } from 'vite';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 
 import tailwindcss from '@tailwindcss/vite';
 
@@ -120,8 +119,8 @@ export default defineConfig(({ mode }) => {
         allow: ['.'],
       },
     },
-    plugins: [analog(), tailwindcss(), nxViteTsPaths()],
-    test: {
+    plugins: [analog(), tailwindcss()],
+    test: {xw
       globals: true,
       environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],
