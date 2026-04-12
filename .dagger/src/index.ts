@@ -6,6 +6,21 @@ const DEFAULT_E2E_PROJECTS =
 
 @object()
 export class AnalogCi {
+  private withHeartbeatExec(
+    ctr: Container,
+    label: string,
+    command: string[],
+  ): Container {
+    return ctr.withExec([
+      'node',
+      'tools/scripts/with-heartbeat.mts',
+      '--label',
+      label,
+      '--',
+      ...command,
+    ]);
+  }
+
   private withNxCloudToken(ctr: Container, nxCloudToken?: Secret): Container {
     if (!nxCloudToken) {
       return ctr;
@@ -15,7 +30,7 @@ export class AnalogCi {
   }
 
   private withPlaywrightChromium(ctr: Container): Container {
-    return ctr.withExec([
+    return this.withHeartbeatExec(ctr, 'Playwright Chromium install', [
       'pnpm',
       'exec',
       'playwright',
@@ -26,22 +41,27 @@ export class AnalogCi {
   }
 
   private withBuildAndVerify(ctr: Container): Container {
-    return ctr
-      .withExec([
-        'pnpm',
-        'exec',
-        'nx',
-        'run-many',
-        '--target',
-        'build',
-        '--all',
-      ])
-      .withExec(['node', 'tools/scripts/verify-route-freshness.mts'])
-      .withExec(['pnpm', 'exec', 'nx', 'build-storybook', 'analog-app']);
+    return this.withHeartbeatExec(
+      this.withHeartbeatExec(
+        this.withHeartbeatExec(ctr, 'Nx build run-many', [
+          'pnpm',
+          'exec',
+          'nx',
+          'run-many',
+          '--target',
+          'build',
+          '--all',
+        ]),
+        'Route freshness verification',
+        ['node', 'tools/scripts/verify-route-freshness.mts'],
+      ),
+      'Storybook build',
+      ['pnpm', 'exec', 'nx', 'build-storybook', 'analog-app'],
+    );
   }
 
   private withTestTargets(ctr: Container): Container {
-    return ctr.withExec([
+    return this.withHeartbeatExec(ctr, 'Nx test run-many', [
       'pnpm',
       'exec',
       'nx',
@@ -58,7 +78,7 @@ export class AnalogCi {
     ctr: Container,
     projects = DEFAULT_E2E_PROJECTS,
   ): Container {
-    return ctr.withExec([
+    return this.withHeartbeatExec(ctr, `Nx e2e run-many (${projects})`, [
       'pnpm',
       'exec',
       'nx',
@@ -150,7 +170,16 @@ export class AnalogCi {
       .withDirectory('/app', source)
       .withWorkdir('/app')
       .withMountedCache('/app/.nx/cache', nxCache)
-      .withExec(['pnpm', 'install', '--frozen-lockfile']);
+      .withExec([
+        'node',
+        'tools/scripts/with-heartbeat.mts',
+        '--label',
+        'pnpm install',
+        '--',
+        'pnpm',
+        'install',
+        '--frozen-lockfile',
+      ]);
   }
 
   /** Check formatting via the workspace prettier:check script. */

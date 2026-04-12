@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { normalizePath } from 'vite';
+import { globSync } from 'tinyglobby';
 
 export interface DiscoveredLibraryRoutes {
   additionalPagesDirs: string[];
@@ -13,9 +13,18 @@ const empty: DiscoveredLibraryRoutes = Object.freeze({
   additionalAPIDirs: Object.freeze([] as string[]),
 });
 
+const discoverableLibRouteDirs = [
+  'libs/**/src/pages',
+  'libs/**/src/content',
+  'libs/**/src/api',
+] as const;
+
+function toWorkspacePath(path: string) {
+  return normalizePath(path).replace(/\/$/, '');
+}
+
 /**
- * Reads `tsconfig.base.json` (or `tsconfig.json`) path aliases from the
- * workspace root and checks each library for conventional route directories
+ * Scans workspace libraries directly for conventional route directories
  * (`src/pages`, `src/content`, `src/api`).
  *
  * Returns workspace-relative paths (e.g. `/libs/shared/feature`) suitable
@@ -24,71 +33,76 @@ const empty: DiscoveredLibraryRoutes = Object.freeze({
 export function discoverLibraryRoutes(
   workspaceRoot: string,
 ): DiscoveredLibraryRoutes {
-  let raw: string;
-  try {
-    const basePath = join(workspaceRoot, 'tsconfig.base.json');
-    const fallbackPath = join(workspaceRoot, 'tsconfig.json');
-    raw = existsSync(basePath)
-      ? readFileSync(basePath, 'utf-8')
-      : readFileSync(fallbackPath, 'utf-8');
-  } catch {
-    return empty;
-  }
-
-  let paths: Record<string, string[]>;
-  try {
-    const tsconfig = JSON.parse(raw);
-    paths = tsconfig?.compilerOptions?.paths ?? {};
-  } catch {
-    return empty;
-  }
-
   const result: DiscoveredLibraryRoutes = {
     additionalPagesDirs: [],
     additionalContentDirs: [],
     additionalAPIDirs: [],
   };
-  const seen = new Set<string>();
+  const normalizedWorkspaceRoot = toWorkspacePath(workspaceRoot);
+  const discovered = new Map<
+    string,
+    {
+      pages: boolean;
+      content: boolean;
+      api: boolean;
+    }
+  >();
 
-  for (const [alias, targets] of Object.entries(paths)) {
-    if (alias.startsWith('@analogjs/')) {
+  for (const dir of globSync(discoverableLibRouteDirs, {
+    cwd: normalizedWorkspaceRoot,
+    dot: true,
+    onlyDirectories: true,
+  })) {
+    const normalizedDir = toWorkspacePath(dir);
+    const workspaceRelativeDir = normalizedDir.startsWith(
+      `${normalizedWorkspaceRoot}/`,
+    )
+      ? normalizedDir.slice(normalizedWorkspaceRoot.length + 1)
+      : normalizedDir;
+
+    if (!workspaceRelativeDir.startsWith('libs/')) {
       continue;
     }
 
-    const target = targets?.[0];
-    if (!target) {
-      continue;
-    }
-
-    const normalized = target.startsWith('./') ? target.slice(2) : target;
-
-    if (!normalized.startsWith('libs/')) {
-      continue;
-    }
-
-    const srcIndex = normalized.indexOf('/src/');
+    const srcIndex = workspaceRelativeDir.indexOf('/src/');
     if (srcIndex === -1) {
       continue;
     }
 
-    const libRoot = normalized.slice(0, srcIndex);
+    const libRoot = workspaceRelativeDir.slice(0, srcIndex);
+    const entry = discovered.get(libRoot) ?? {
+      pages: false,
+      content: false,
+      api: false,
+    };
 
-    if (seen.has(libRoot)) {
-      continue;
+    if (workspaceRelativeDir.endsWith('/src/pages')) {
+      entry.pages = true;
     }
-    seen.add(libRoot);
 
-    const absoluteLibRoot = join(workspaceRoot, libRoot);
+    if (workspaceRelativeDir.endsWith('/src/content')) {
+      entry.content = true;
+    }
 
-    if (existsSync(join(absoluteLibRoot, 'src/pages'))) {
+    if (workspaceRelativeDir.endsWith('/src/api')) {
+      entry.api = true;
+    }
+
+    discovered.set(libRoot, entry);
+  }
+
+  for (const libRoot of [...discovered.keys()].sort()) {
+    const entry = discovered.get(libRoot)!;
+
+    if (entry.pages) {
       result.additionalPagesDirs.push(`/${libRoot}`);
     }
 
-    if (existsSync(join(absoluteLibRoot, 'src/content'))) {
+    if (entry.content) {
       result.additionalContentDirs.push(`/${libRoot}/src/content`);
     }
 
-    if (existsSync(join(absoluteLibRoot, 'src/api'))) {
+    if (entry.api) {
       result.additionalAPIDirs.push(`/${libRoot}/src/api`);
     }
   }
