@@ -4,7 +4,8 @@
     "outDir": "../../dist/out-tsc",
     "types": [],
     "target": "ES2022",
-    "useDefineForClassFields": false
+    "useDefineForClassFields": false,
+    "composite": false
   },
   "files": [
     "src/main.ts",

@@ -5,7 +5,7 @@ import { ContentRenderer } from '../../../src/lib/content-renderer';
 import { provideContent } from '../../../src/lib/provide-content';
 import { CONTENT_FILE_LOADER } from '../../../src/lib/content-file-loader';
 import { CONTENT_LIST_LOADER } from '../../../src/lib/content-list-loader';
-import { MDC_COMPONENTS, withMdcComponents } from '@analogjs/content/mdc';
+import { MDC_COMPONENTS, withMdcComponents } from '../../../mdc/src/index';
 import {
   Md4xContentRendererService,
   MD4X_RENDERER_OPTIONS,

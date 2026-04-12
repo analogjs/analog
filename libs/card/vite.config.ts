@@ -2,13 +2,12 @@
 
 import { defineConfig } from 'vite';
 import angular from '@analogjs/vite-plugin-angular';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
-    plugins: [angular(), nxViteTsPaths()],
+    plugins: [angular()],
     optimizeDeps: {
       include: ['@angular/cdk/testing/testbed'],
       exclude: ['@angular/cdk/testing'],
