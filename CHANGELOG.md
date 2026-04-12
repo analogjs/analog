@@ -1,3 +1,9 @@
+# [3.0.0-alpha.26](https://github.com/analogjs/analog/compare/v3.0.0-alpha.25...v3.0.0-alpha.26) (2026-04-06)
+
+### Features
+
+- **platform:** add generic style-pipeline hooks for community plugins ([#2245](https://github.com/analogjs/analog/issues/2245)) ([df8971a](https://github.com/analogjs/analog/commit/df8971a50be6f00715a01d3ee66ceea07e3c71f0))
+
 # [3.0.0-alpha.25](https://github.com/analogjs/analog/compare/v3.0.0-alpha.24...v3.0.0-alpha.25) (2026-04-05)
 
 ### Bug Fixes

@@ -2,7 +2,6 @@
 
 import analog from '@analogjs/platform';
 import { defineConfig, Plugin } from 'vite';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 <% if (addTailwind) { %>
 import tailwindcss from '@tailwindcss/vite';
 <% } %>
@@ -28,7 +27,6 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       <% } %>
       analog(),
-      nxViteTsPaths(),
     ],
     test: {
       globals: true,

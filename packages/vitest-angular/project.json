@@ -21,6 +21,13 @@
       "options": {
         "command": "node tools/scripts/verify-package-artifacts.mts vitest-angular"
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/vitest-angular",
+        "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
+      }
     }
   }
 }

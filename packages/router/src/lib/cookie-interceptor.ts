@@ -7,7 +7,7 @@ import {
 } from '@angular/common/http';
 import { PLATFORM_ID, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { injectRequest, ServerRequest } from '@analogjs/router/tokens';
+import { injectRequest, type ServerRequest } from '../../tokens/src/index.js';
 
 export function cookieInterceptor(
   req: HttpRequest<unknown>,
