@@ -35,6 +35,13 @@
         "passWithNoTests": true,
         "reportsDirectory": "{projectRoot}/../../coverage/packages/vite-plugin-nitro"
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/vite-plugin-nitro",
+        "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
+      }
     }
   }
 }

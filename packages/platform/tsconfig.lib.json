@@ -9,18 +9,8 @@
     "types": [],
     "isolatedDeclarations": true,
     "allowSyntheticDefaultImports": true,
-    "paths": {
-      "@analogjs/vite-plugin-angular": [
-        "../../packages/vite-plugin-angular/src/index.ts"
-      ],
-      "@analogjs/vite-plugin-nitro": [
-        "../../packages/vite-plugin-nitro/src/index.ts"
-      ],
-      "@analogjs/vite-plugin-nitro/internal": [
-        "../../packages/vite-plugin-nitro/src/lib/utils/debug.ts"
-      ]
-    },
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "composite": false
   },
   "include": ["**/*.ts"],
   "exclude": [

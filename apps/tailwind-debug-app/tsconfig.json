@@ -5,6 +5,18 @@
   "exclude": [],
   "references": [
     {
+      "path": "../../packages/router"
+    },
+    {
+      "path": "../../packages/vitest-angular"
+    },
+    {
+      "path": "../../packages/vite-plugin-angular"
+    },
+    {
+      "path": "../../packages/platform"
+    },
+    {
       "path": "./tsconfig.app.json"
     },
     {

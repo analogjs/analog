@@ -7,12 +7,7 @@
     "declarationMap": true,
     "inlineSources": true,
     "types": [],
-    "paths": {
-      "@analogjs/vite-plugin-angular": [
-        "../../packages/vite-plugin-angular/src/index.ts",
-        "../../packages/vite-plugin-angular/dist"
-      ]
-    }
+    "composite": false
   },
   "include": ["**/*.ts"],
   "exclude": [

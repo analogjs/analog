@@ -4,6 +4,7 @@ export { createAnalogNitroPlugins } from './lib/analog-vite-plugin.js';
 export { analogNitroModule } from './lib/analog-nitro-module.js';
 export { buildNitroConfig } from './lib/nitro-config-factory.js';
 export { debugInstances } from './lib/utils/debug.js';
+export { nitro } from './lib/vite-plugin-nitro.js';
 export type {
   Options,
   SitemapConfig,

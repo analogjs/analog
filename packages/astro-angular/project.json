@@ -37,6 +37,13 @@
         "preset": "conventional",
         "tagPrefix": "astro-angular@"
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/astro-angular",
+        "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
+      }
     }
   }
 }

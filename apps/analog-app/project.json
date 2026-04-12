@@ -8,7 +8,12 @@
   "targets": {
     "build": {
       "executor": "@nx/vite:build",
-      "dependsOn": ["platform:build", "router:build"],
+      "dependsOn": [
+        "platform:build",
+        "router:build",
+        "my-package:build",
+        "top-bar:build"
+      ],
       "outputs": [
         "{options.outputPath}",
         "{workspaceRoot}/dist/apps/analog-app/.nitro",
@@ -54,7 +59,9 @@
       "options": {
         "cwd": "dist/apps/analog-app/analog",
         "command": "node --unhandled-rejections=throw ./server/index.mjs",
-        "env": { "PORT": "43000" }
+        "env": {
+          "PORT": "43000"
+        }
       },
       "dependsOn": ["build"]
     },
@@ -97,6 +104,13 @@
         "stylePreprocessorOptions": {
           "loadPaths": []
         }
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/analog-app",
+        "command": "pnpm exec tsgo -p tsconfig.app.json --noEmit"
       }
     }
   }
