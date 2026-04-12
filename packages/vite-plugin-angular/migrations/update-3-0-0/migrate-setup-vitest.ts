@@ -8,7 +8,16 @@ import {
 
 const OLD_IMPORT = '@analogjs/vite-plugin-angular/setup-vitest';
 const NEW_IMPORT = '@analogjs/vitest-angular/setup-zone';
-const SUPPORTED_EXTENSIONS = new Set(['.js', '.mjs', '.mts', '.ts']);
+const SUPPORTED_EXTENSIONS = new Set([
+  '.cjs',
+  '.cts',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.mts',
+  '.ts',
+  '.tsx',
+]);
 
 function getAnalogVersion(tree: Tree): string {
   if (!tree.exists('package.json')) {
