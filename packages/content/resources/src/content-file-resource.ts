@@ -12,12 +12,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import type { ContentFile } from '../../src/lib/content-file';
 import { ContentRenderer } from '../../src/lib/content-renderer';
+import { injectContentFilesMap } from '../../src/lib/inject-content-files';
 import {
   FrontmatterValidationError,
   parseRawContentFile,
   parseRawContentFileAsync,
 } from '../../src/lib/parse-raw-content-file';
-import { injectContentFileLoader } from '../../src/lib/content-file-loader';
 
 export interface ContentFileResourceResult<
   Attributes extends Record<string, any> = Record<string, any>,
