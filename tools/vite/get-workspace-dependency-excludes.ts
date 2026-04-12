@@ -6,8 +6,8 @@ interface WorkspacePackageJson {
   devDependencies?: Record<string, string>;
 }
 
-export function getWorkspaceDependencyExcludes(appDir: string): string[] {
-  const packageJsonPath = path.resolve(process.cwd(), appDir, 'package.json');
+export function getWorkspaceDependencyExcludes(appRootDir: string): string[] {
+  const packageJsonPath = path.resolve(appRootDir, 'package.json');
   const packageJson = JSON.parse(
     readFileSync(packageJsonPath, 'utf8'),
   ) as WorkspacePackageJson;

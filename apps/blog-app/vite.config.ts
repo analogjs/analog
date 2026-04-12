@@ -23,7 +23,7 @@ export default defineConfig(() => {
       include: ['@angular/common'],
       // Keep workspace Angular libraries on the source-transform path so Analog
       // can compile external templates/styles instead of Vite prebundling them.
-      exclude: getWorkspaceDependencyExcludes('apps/blog-app'),
+      exclude: getWorkspaceDependencyExcludes(__dirname),
     },
     build: {
       outDir: '../../dist/apps/blog-app/client',

@@ -50,7 +50,7 @@ export default defineConfig(async ({ mode, command }) => {
       include: ['@angular/forms'],
       // Keep workspace Angular libraries on the source-transform path so Analog
       // can compile external templates/styles instead of Vite prebundling them.
-      exclude: getWorkspaceDependencyExcludes('apps/analog-app'),
+      exclude: getWorkspaceDependencyExcludes(__dirname),
     },
     plugins: [
       analog({

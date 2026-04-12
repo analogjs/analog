@@ -85,7 +85,7 @@ export default defineConfig(({ mode }) => ({
   optimizeDeps: {
     // Keep workspace Angular libraries on the source-transform path so Analog
     // can compile external templates/styles instead of Vite prebundling them.
-    exclude: getWorkspaceDependencyExcludes('apps/tailwind-debug-app'),
+    exclude: getWorkspaceDependencyExcludes(__dirname),
   },
   build: {
     outDir: '../../dist/apps/tailwind-debug-app/client',
