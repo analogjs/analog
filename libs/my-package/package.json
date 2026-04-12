@@ -6,7 +6,8 @@
     "@angular/core": "catalog:peerCompat"
   },
   "devDependencies": {
-    "@analogjs/vite-plugin-angular": "workspace:*"
+    "@analogjs/vite-plugin-angular": "workspace:*",
+    "@analogjs/vitest-angular": "workspace:*"
   },
   "dependencies": {
     "tslib": "^2.8.1"
@@ -16,10 +17,9 @@
       "default": "./package.json"
     },
     ".": {
-      "types": "./index.d.ts",
-      "import": "./fesm2022/my-package.js",
-      "require": "./fesm2022/my-package.js",
-      "default": "./fesm2022/my-package.js"
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
     }
   }
 }

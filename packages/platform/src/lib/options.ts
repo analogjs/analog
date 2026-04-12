@@ -17,6 +17,7 @@ import type {
 
 import type { ContentPluginOptions } from './content-plugin.js';
 import type { DebugOption } from './utils/debug.js';
+import type { StylePipelineOptions } from './style-pipeline.js';
 
 declare module 'nitro/types' {
   interface NitroRouteConfig {
@@ -121,7 +122,7 @@ export interface Options {
   additionalAPIDirs?: string[];
   /**
    * Automatically discover route directories (pages, content, API) in
-   * workspace libraries by scanning tsconfig.base.json path aliases.
+   * workspace libraries by scanning `libs/**` directories directly.
    *
    * Discovered directories are merged with any explicit
    * `additionalPagesDirs`, `additionalContentDirs`, and
@@ -191,6 +192,16 @@ export interface Options {
      * Inspired by TanStack Router's `routeTree.gen.ts` codegen.
      */
     typedRouter?: boolean | TypedRouterOptions;
+
+    /**
+     * Experimental slot for community-maintained style-pipeline integrations.
+     *
+     * This keeps Analog's core surface intentionally narrow: community
+     * packages can register Vite plugins through an Analog-first config shape
+     * without requiring Analog itself to own design-token engines, library
+     * target contracts, or framework-specific theming semantics.
+     */
+    stylePipeline?: StylePipelineOptions | false;
   };
 }
 
