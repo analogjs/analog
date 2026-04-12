@@ -27,7 +27,6 @@ export default defineConfig(({ mode }) => {
       <% if (addTailwind) { %>
       tailwindcss(),
       <% } %>
-      analog(),
     ],
     test: {
       globals: true,
