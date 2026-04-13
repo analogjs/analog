@@ -28,7 +28,7 @@
     "@angular/platform-server": "^18.0.0",
     "@angular/router": "^18.0.0",
     "front-matter": "^4.0.2",
-    "marked": "^17.0.5",
+    "marked": "^18.0.0",
     "marked-gfm-heading-id": "^4.1.1",
     "marked-highlight": "^2.2.1",
     "marked-mangle": "^1.1.10",

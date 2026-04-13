@@ -108,7 +108,7 @@ const HIGHLIGHTERS = {
     highlighter: 'withShikiHighlighter',
     entryPoint: 'shiki-highlighter',
     dependencies: {
-      marked: '^15.0.7',
+      marked: '^18.0.0',
       'marked-shiki': '^1.1.0',
       shiki: '^1.6.1',
     },

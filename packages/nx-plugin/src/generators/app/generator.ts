@@ -119,7 +119,7 @@ async function appGenerator(
     tree,
     {
       'front-matter': '^4.0.2',
-      marked: '^15.0.7',
+      marked: '^18.0.0',
       mermaid: '^10.2.4',
       prismjs: '^1.29.0',
     },
