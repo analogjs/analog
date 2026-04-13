@@ -1,3 +1,9 @@
+# [3.0.0-alpha.32](https://github.com/analogjs/analog/compare/v3.0.0-alpha.31...v3.0.0-alpha.32) (2026-04-13)
+
+### Bug Fixes
+
+- **angular-compiler:** add package.json to release config ([e219ba2](https://github.com/analogjs/analog/commit/e219ba2ed9a20acb427acda2c8a5ac7c6edc04bd))
+
 # [3.0.0-alpha.31](https://github.com/analogjs/analog/compare/v3.0.0-alpha.30...v3.0.0-alpha.31) (2026-04-13)
 
 ### Bug Fixes
