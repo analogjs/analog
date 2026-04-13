@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import * as vite from 'vite';
 import type { Plugin, UserConfig } from 'vite';
 import angular from '@analogjs/vite-plugin-angular';
-import { debugStyles, debugStylesV } from './debug';
+import { debugStyles } from './debug';
 
 export const previewAnnotations = async (
   entries: string[] = [],
@@ -257,7 +257,7 @@ function angularOptionsPlugin(
                   workspaceRoot,
                 );
 
-                debugStylesV('resolved Storybook style import', {
+                debugStyles('resolved Storybook style import', {
                   input: extraImport,
                   source: resolved.source,
                   specifier: resolved.specifier,

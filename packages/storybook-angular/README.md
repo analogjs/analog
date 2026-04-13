@@ -273,9 +273,9 @@ export default config;
 
 ### With Nx
 
-For current Analog Nx workspaces, package-native workspace resolution already handles normal workspace library imports in Storybook. You usually do not need to add `nxViteTsPaths()` just to resolve workspace packages.
+In Nx workspaces, normal workspace library imports already resolve in Storybook. You usually do not need to add `nxViteTsPaths()` just to resolve workspace packages.
 
-If your workspace still depends on custom `compilerOptions.paths` aliases outside that package-native resolution, add the `nxViteTsPaths` plugin from `@nx/vite` in `.storybook/main.ts`:
+If your workspace still depends on custom `compilerOptions.paths` aliases beyond those normal workspace package imports, add the `nxViteTsPaths` plugin from `@nx/vite` in `.storybook/main.ts`:
 
 ```ts
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
@@ -299,12 +299,12 @@ export default config;
 
 - `styles` for global Storybook stylesheets
 - `stylePreprocessorOptions.loadPaths` for Sass import roots
-- `nxViteTsPaths()` only if you still rely on custom TS/Angular aliases that are not covered by package-native workspace resolution
+- `nxViteTsPaths()` only if you still rely on custom TS/Angular aliases instead of normal workspace package imports
 
 If styles still do not load as expected, enable scoped preset logging before running Storybook or the Storybook build:
 
 ```sh
-DEBUG=analog:storybook:styles,analog:storybook:styles:v npm run storybook
+DEBUG=analog-storybook:styles npm run storybook
 ```
 
 This logs the resolved workspace root, SCSS `loadPaths`, and how each `styles` entry was classified:

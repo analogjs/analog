@@ -5,7 +5,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const angularPluginMock = vi.fn(() => ({ name: 'angular-mock' }));
 const debugStylesMock = vi.fn();
-const debugStylesVMock = vi.fn();
 
 /**
  * The preset module uses top-level imports that are hard to mock in isolation.
@@ -40,7 +39,6 @@ vi.mock('@analogjs/vite-plugin-angular', () => ({
 
 vi.mock('./debug', () => ({
   debugStyles: debugStylesMock,
-  debugStylesV: debugStylesVMock,
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -53,7 +51,6 @@ beforeEach(async () => {
   vi.resetModules();
   angularPluginMock.mockClear();
   debugStylesMock.mockClear();
-  debugStylesVMock.mockClear();
   const mod = await import('./preset');
   viteFinal = mod.viteFinal;
   core = mod.core;
@@ -457,7 +454,7 @@ describe('viteFinal', () => {
           ],
         }),
       );
-      expect(debugStylesVMock).toHaveBeenCalledWith(
+      expect(debugStylesMock).toHaveBeenCalledWith(
         'resolved Storybook style import',
         expect.objectContaining({
           input: 'libs/shared/ui/styles/shared-ui.scss',
@@ -510,7 +507,7 @@ describe('viteFinal', () => {
       expect(transformed?.code).toContain(
         "import 'flag-icons/css/flag-icons.min.css';",
       );
-      expect(debugStylesVMock).toHaveBeenCalledWith(
+      expect(debugStylesMock).toHaveBeenCalledWith(
         'resolved Storybook style import',
         expect.objectContaining({
           input: '@angular/material/prebuilt-themes/deeppurple-amber.css',
