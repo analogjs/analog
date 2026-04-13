@@ -116,7 +116,7 @@ export function detectLocale(req: ServerRequest): string | undefined {
     return localeFromUrl;
   }
 
-  return parseAcceptLanguage(req.headers['accept-language']);
+  return parseAcceptLanguage(getRequestHeader(req, 'accept-language'));
 }
 
 /**
