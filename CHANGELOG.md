@@ -1,3 +1,16 @@
+# [3.0.0-alpha.30](https://github.com/analogjs/analog/compare/v3.0.0-alpha.29...v3.0.0-alpha.30) (2026-04-13)
+
+### Bug Fixes
+
+- **storybook-angular:** forward applyDecorators in testing ([#2236](https://github.com/analogjs/analog/issues/2236)) ([4d3c6c1](https://github.com/analogjs/analog/commit/4d3c6c166c24af8d342864b9f8a5da1349a17c4c))
+- **vitest-angular:** clean generated snapshot ids ([#2238](https://github.com/analogjs/analog/issues/2238)) ([775ff97](https://github.com/analogjs/analog/commit/775ff974995f68a57b6d36003dbdd83addb0675d))
+- **vitest-angular:** normalize snapshot whitespace ([#2237](https://github.com/analogjs/analog/issues/2237)) ([8853dc0](https://github.com/analogjs/analog/commit/8853dc00eae161178db8a0c9aba21496cb42a272))
+
+### Features
+
+- **docs:** add AI integrations guide ([#2234](https://github.com/analogjs/analog/issues/2234)) ([29d228b](https://github.com/analogjs/analog/commit/29d228b9a7d552f4e9fc10c03c1d0fbe1fe30910))
+- **platform:** add shiki skipLangs option for analog v3 ([#2239](https://github.com/analogjs/analog/issues/2239)) ([ec6bc0f](https://github.com/analogjs/analog/commit/ec6bc0f60033fe8748e3b5281d70d7289711c907))
+
 # [3.0.0-alpha.29](https://github.com/analogjs/analog/compare/v3.0.0-alpha.28...v3.0.0-alpha.29) (2026-04-13)
 
 ### Features
