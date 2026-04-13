@@ -192,11 +192,11 @@ export default defineConfig({
         shikiOptions: {
           highlight: {
             // alternate theme
-            theme: 'ayu-dark'
-          }
+            theme: 'ayu-dark',
+          },
           highlighter: {
-             // add more languages
-            additionalLangs: ['mermaid'],
+            // add more languages for Shiki itself
+            additionalLangs: ['diff'],
           },
         },
       },
@@ -204,6 +204,31 @@ export default defineConfig({
   ],
 });
 ```
+
+For Mermaid-heavy content, keep the existing `loadMermaid` runtime path and skip Mermaid grammar loading in Shiki to avoid unnecessary server-side highlighting work in constrained CI environments:
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+export default defineConfig({
+  plugins: [
+    analog({
+      content: {
+        highlighter: 'shiki',
+        shikiOptions: {
+          highlighter: {
+            additionalLangs: ['mermaid'],
+            skipLangs: ['mermaid'],
+          },
+        },
+      },
+    }),
+  ],
+});
+```
+
+With `skipLangs: ['mermaid']`, Analog keeps Mermaid blocks on the existing `<pre class="mermaid">` path for `loadMermaid`, while Shiki skips loading and tokenizing the Mermaid grammar.
 
 By default, `shikiOptions` has the following options.
 
