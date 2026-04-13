@@ -31,7 +31,7 @@ function getRenderer(ngHydration: boolean | undefined): AstroRenderer {
   };
 }
 
-function getViteConfiguration(pluginOptions?: PluginOptions) {
+function getViteConfiguration(pluginOptions?: AngularOptions) {
   const isRolldown = !!vite.rolldownVersion;
   return {
     [isRolldown ? 'oxc' : 'esbuild']: {
@@ -41,7 +41,7 @@ function getViteConfiguration(pluginOptions?: PluginOptions) {
       include: [
         '@angular/platform-browser',
         '@angular/core',
-        options?.useAngularHydration
+        pluginOptions?.useAngularHydration
           ? '@analogjs/astro-angular/client-ngh.js'
           : '@analogjs/astro-angular/client.js',
       ],
@@ -53,7 +53,7 @@ function getViteConfiguration(pluginOptions?: PluginOptions) {
     },
 
     plugins: [
-      viteAngular(pluginOptions),
+      viteAngular(pluginOptions?.vite),
       {
         name: '@analogjs/astro-angular-platform-server',
         transform(code: string, id: string) {
