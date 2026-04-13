@@ -1,3 +1,9 @@
+# [2.5.0-beta.35](https://github.com/analogjs/analog/compare/v2.5.0-beta.34...v2.5.0-beta.35) (2026-04-13)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use virtual modules for external JIT styles ([#2283](https://github.com/analogjs/analog/issues/2283)) ([add0337](https://github.com/analogjs/analog/commit/add033798aa82e806dbe94cb66dab8bee53ba792))
+
 # [2.5.0-beta.34](https://github.com/analogjs/analog/compare/v2.5.0-beta.33...v2.5.0-beta.34) (2026-04-10)
 
 ### Bug Fixes
