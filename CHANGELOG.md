@@ -1,3 +1,9 @@
+# [3.0.0-alpha.28](https://github.com/analogjs/analog/compare/v3.0.0-alpha.27...v3.0.0-alpha.28) (2026-04-13)
+
+### Bug Fixes
+
+- **router:** forward prerender params and declare standard-schema peer dependency ([#2247](https://github.com/analogjs/analog/issues/2247)) ([5f8e912](https://github.com/analogjs/analog/commit/5f8e9125540f02211b4aec8b27e75c5eec607e87))
+
 # [3.0.0-alpha.27](https://github.com/analogjs/analog/compare/v3.0.0-alpha.26...v3.0.0-alpha.27) (2026-04-13)
 
 ### Bug Fixes
