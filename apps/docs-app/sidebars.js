@@ -244,6 +244,11 @@ const sidebars = {
         },
         {
           type: 'doc',
+          id: 'integrations/ai/index',
+          label: 'AI',
+        },
+        {
+          type: 'doc',
           id: 'integrations/angular-material/index',
           label: 'Angular Material',
         },
