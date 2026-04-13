@@ -1,8 +1,18 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import * as realFs from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import type { Plugin } from 'vite';
+import path, { join } from 'node:path';
+import { normalizePath, preprocessCSS, type Plugin } from 'vite';
+
+vi.mock('vite', async () => {
+  const actual = await vi.importActual<typeof import('vite')>('vite');
+  return {
+    ...actual,
+    preprocessCSS: vi.fn(async (code: string) => ({ code, deps: new Set() })),
+  };
+});
+
 import {
   angular,
   createFsWatcherCacheInvalidator,
@@ -663,6 +673,12 @@ describe('load ?inline style imports', () => {
     const mainPlugin = plugins.find(
       (p) => p.name === '@analogjs/vite-plugin-angular',
     );
+    const fakeConfig = {
+      environments: {},
+      root: tmpDir,
+      server: { watch: null },
+    } as any;
+    (mainPlugin as any).configResolved?.(fakeConfig);
     return (mainPlugin as any).load.bind({});
   }
 
@@ -675,6 +691,14 @@ describe('load ?inline style imports', () => {
       const mainPlugin = plugins.find(
         (p) => p.name === '@analogjs/vite-plugin-angular',
       );
+
+      // Trigger configResolved so resolvedConfig is set
+      const fakeConfig = {
+        environments: {},
+        root: tmpDir,
+        server: { watch: null },
+      } as any;
+      (mainPlugin as any).configResolved?.(fakeConfig);
 
       const resolveId = (mainPlugin as any).resolveId;
       const addWatchFile = vi.fn();
