@@ -1,5 +1,5 @@
 import { promises as fsPromises } from 'node:fs';
-import { dirname, isAbsolute, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import * as vite from 'vite';
 
 import * as compilerCli from '@angular/compiler-cli';
@@ -32,6 +32,18 @@ import {
   createDepOptimizerConfig,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
+import {
+  VIRTUAL_RAW_PREFIX,
+  VIRTUAL_STYLE_PREFIX,
+  toVirtualRawId,
+  toVirtualStyleId,
+} from './utils/virtual-ids.js';
+import {
+  loadVirtualRawModule,
+  loadVirtualStyleModule,
+  rewriteHtmlRawImport,
+  rewriteInlineStyleImport,
+} from './utils/virtual-resources.js';
 
 export interface AnalogCompilerPluginOptions {
   tsconfigGetter: () => string;
@@ -440,51 +452,44 @@ export function analogCompilerPlugin(
       return ctx.modules;
     },
     resolveId(id, importer) {
+      if (
+        id.startsWith(VIRTUAL_STYLE_PREFIX) ||
+        id.startsWith(VIRTUAL_RAW_PREFIX)
+      ) {
+        return `\0${id}`;
+      }
+
       if (pluginOptions.jit && id.startsWith('angular:jit:')) {
-        const path = id.split(';')[1];
-        return `${normalizePath(
-          resolve(dirname(importer as string), path),
-        )}?${id.includes(':style') ? 'analog-inline' : 'analog-raw'}`;
+        const filePath = normalizePath(
+          resolve(dirname(importer as string), id.split(';')[1]),
+        );
+        return id.includes(':style')
+          ? toVirtualStyleId(filePath)
+          : toVirtualRawId(filePath);
       }
 
-      // Intercept .html?raw imports to bypass Vite 7.3.2+ server.fs restrictions
-      if (id.includes('.html?raw')) {
-        const filePath = id.split('?')[0];
-        const resolved = isAbsolute(filePath)
-          ? normalizePath(filePath)
-          : importer
-            ? normalizePath(resolve(dirname(importer), filePath))
-            : undefined;
-        if (resolved) {
-          return resolved + '?analog-raw';
-        }
-      }
+      const rawRewrite = rewriteHtmlRawImport(id, importer);
+      if (rawRewrite) return rawRewrite;
 
-      // Intercept style ?inline imports to bypass Vite 8.0.5+ server.fs restrictions
-      if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
-        const filePath = id.split('?')[0];
-        const resolved = isAbsolute(filePath)
-          ? normalizePath(filePath)
-          : importer
-            ? normalizePath(resolve(dirname(importer), filePath))
-            : undefined;
-        if (resolved) {
-          return resolved + '?analog-inline';
-        }
-      }
+      const inlineRewrite = rewriteInlineStyleImport(id, importer);
+      if (inlineRewrite) return inlineRewrite;
 
       return undefined;
     },
     async load(id) {
-      // Handle Angular template raw imports
-      if (id.endsWith('?analog-raw')) {
-        const filePath = id.slice(0, -'?analog-raw'.length);
-        const content = await fsPromises.readFile(filePath, 'utf-8');
-        return `export default ${JSON.stringify(content)}`;
-      }
+      const styleModule = await loadVirtualStyleModule(
+        this,
+        id,
+        resolvedConfig,
+      );
+      if (styleModule !== undefined) return styleModule;
 
-      // Handle Angular style imports
-      if (id.includes('?analog-inline')) {
+      const rawModule = await loadVirtualRawModule(this, id);
+      if (rawModule !== undefined) return rawModule;
+
+      // Vitest bypass: module-runner skips resolveId, so the bare `?inline`
+      // query reaches load unchanged.
+      if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
         const filePath = id.split('?')[0];
         const code = await fsPromises.readFile(filePath, 'utf-8');
         const result = await preprocessCSS(code, filePath, resolvedConfig);
