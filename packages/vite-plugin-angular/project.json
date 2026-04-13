@@ -8,6 +8,7 @@
     "build-self": {
       "executor": "nx:run-commands",
       "cache": false,
+      "dependsOn": ["angular-compiler:build"],
       "outputs": ["{projectRoot}/dist"],
       "options": {
         "command": "vite build --config packages/vite-plugin-angular/vite.config.lib.ts"
