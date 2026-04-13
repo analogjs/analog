@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import type { Plugin } from 'vite';
 import {
   angular,
+  buildStylePreprocessor,
   createFsWatcherCacheInvalidator,
   evictDeletedFileMetadata,
   findBoundClassAndNgClassConflicts,
@@ -1148,6 +1149,17 @@ describe('tailwind-reference plugin', () => {
       expect(result).toBeUndefined();
     });
 
+    it('throws a clear error when @reference only appears in comment text', () => {
+      const css =
+        '/* keep this comment away from @reference injection */\n.demo { @apply sa:flex; }';
+
+      expect(() =>
+        callTransform(plugin, css, '/project/src/app/demo.component.css'),
+      ).toThrowError(
+        /contains the text "@reference" but does not contain a real @reference directive/,
+      );
+    });
+
     it('skips CSS that imports tailwindcss directly (double quotes)', () => {
       const css =
         '@import "tailwindcss" prefix(sa);\n.demo { @apply sa:flex; }';
@@ -1227,6 +1239,23 @@ describe('tailwind-reference plugin', () => {
         '/project/src/app/demo.component.css',
       );
       expect(result).toBe(`@reference "${ROOT_CSS}";\n${css}`);
+    });
+  });
+
+  describe('buildStylePreprocessor', () => {
+    it('throws a clear error when @reference only appears in comment text', () => {
+      const preprocessor = buildStylePreprocessor({
+        tailwindCss: { rootStylesheet: ROOT_CSS, prefixes: ['sa:'] },
+      });
+
+      expect(() =>
+        preprocessor?.(
+          '/* keep this comment away from @reference injection */\n.demo { @apply sa:flex; }',
+          '/project/src/app/demo.component.css',
+        ),
+      ).toThrowError(
+        /contains the text "@reference" but does not contain a real @reference directive/,
+      );
     });
   });
 });

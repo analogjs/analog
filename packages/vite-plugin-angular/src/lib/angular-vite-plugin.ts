@@ -278,6 +278,52 @@ export function normalizeIncludeGlob(
  */
 const TS_EXT_REGEX = /\.[cm]?(ts)[^x]?\??/;
 const classNames = new Map();
+const ANGULAR_TAILWIND_PREFIX = '[@analogjs/vite-plugin-angular]';
+const CSS_BLOCK_COMMENT_REGEX = /\/\*[\s\S]*?\*\//g;
+const CSS_REFERENCE_DIRECTIVE_REGEX = /(^|[;}\n\r])\s*@reference\b/m;
+const CSS_TAILWIND_IMPORT_REGEX =
+  /(^|[;}\n\r])\s*@import\s+["']tailwindcss["']/m;
+
+interface CssTailwindDirectiveState {
+  commentlessCode: string;
+  hasReferenceDirective: boolean;
+  hasReferenceText: boolean;
+  hasTailwindImportDirective: boolean;
+}
+
+function stripCssBlockComments(code: string): string {
+  return code.replace(CSS_BLOCK_COMMENT_REGEX, (comment) =>
+    comment.replace(/[^\n\r]/g, ' '),
+  );
+}
+
+function inspectCssTailwindDirectives(code: string): CssTailwindDirectiveState {
+  const commentlessCode = stripCssBlockComments(code);
+
+  return {
+    commentlessCode,
+    hasReferenceDirective: CSS_REFERENCE_DIRECTIVE_REGEX.test(commentlessCode),
+    hasReferenceText: code.includes('@reference'),
+    hasTailwindImportDirective: CSS_TAILWIND_IMPORT_REGEX.test(commentlessCode),
+  };
+}
+
+function throwTailwindReferenceTextError(
+  filename: string,
+  rootStylesheet: string,
+): never {
+  throw new Error(
+    `${ANGULAR_TAILWIND_PREFIX} Tailwind @reference auto-injection was ` +
+      `blocked for "${filename}" because the stylesheet contains the ` +
+      `text "@reference" but does not contain a real @reference ` +
+      `directive.\n\n` +
+      `This is usually caused by a CSS comment such as ` +
+      `"/* ... @reference ... */".\n\n` +
+      `Fix one of:\n` +
+      `  - Reword the comment so it does not contain "@reference"\n` +
+      `  - Add a real @reference "${rootStylesheet}"; directive\n`,
+  );
+}
 
 export function evictDeletedFileMetadata(
   file: string,
@@ -339,7 +385,7 @@ interface DeclarationFile {
  * chained: Tailwind reference injection runs first, then the user's
  * custom preprocessor.
  */
-function buildStylePreprocessor(
+export function buildStylePreprocessor(
   options?: PluginOptions,
 ): StylePreprocessor | undefined {
   const userPreprocessor = options?.stylePreprocessor;
@@ -371,11 +417,12 @@ function buildStylePreprocessor(
     }
 
     tailwindPreprocessor = (code: string, filename: string): string => {
+      const directiveState = inspectCssTailwindDirectives(code);
+
       // Skip files that already define the Tailwind config
       if (
-        code.includes('@reference') ||
-        code.includes('@import "tailwindcss"') ||
-        code.includes("@import 'tailwindcss'")
+        directiveState.hasReferenceDirective ||
+        directiveState.hasTailwindImportDirective
       ) {
         debugTailwindV('skip (already has @reference or is root)', {
           filename,
@@ -384,12 +431,18 @@ function buildStylePreprocessor(
       }
 
       const needsReference = prefixes
-        ? prefixes.some((prefix) => code.includes(prefix))
-        : code.includes('@apply');
+        ? prefixes.some((prefix) =>
+            directiveState.commentlessCode.includes(prefix),
+          )
+        : directiveState.commentlessCode.includes('@apply');
 
       if (!needsReference) {
         debugTailwindV('skip (no Tailwind usage detected)', { filename });
         return code;
+      }
+
+      if (directiveState.hasReferenceText) {
+        throwTailwindReferenceTextError(filename, rootStylesheet);
       }
 
       debugTailwind('injected @reference via preprocessor', { filename });
@@ -1968,22 +2021,27 @@ export function angular(options?: PluginOptions): Plugin[] {
           const cleanId = id.split('?')[0];
           if (cleanId === tw.rootStylesheet) return;
 
+          const directiveState = inspectCssTailwindDirectives(code);
+
           if (
-            code.includes('@reference') ||
-            code.includes('@import "tailwindcss"') ||
-            code.includes("@import 'tailwindcss'")
+            directiveState.hasReferenceDirective ||
+            directiveState.hasTailwindImportDirective
           ) {
             return;
           }
 
           // Skip entry stylesheets that @import the root config
           const rootBasename = basename(tw.rootStylesheet);
-          if (code.includes(rootBasename)) return;
+          if (directiveState.commentlessCode.includes(rootBasename)) return;
 
           const prefixes = tw.prefixes;
           const needsRef = prefixes
-            ? prefixes.some((p) => code.includes(p))
-            : code.includes('@apply');
+            ? prefixes.some((p) => directiveState.commentlessCode.includes(p))
+            : directiveState.commentlessCode.includes('@apply');
+
+          if (needsRef && directiveState.hasReferenceText) {
+            throwTailwindReferenceTextError(id, tw.rootStylesheet);
+          }
 
           if (needsRef) {
             debugTailwind('injected @reference via pre-transform', {

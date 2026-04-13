@@ -43,6 +43,24 @@ describe('tailwindPreprocessor', () => {
     expect(preprocess(code, '/project/src/app/demo.component.css')).toBe(code);
   });
 
+  it('throws a clear error when @reference only appears in comment text', () => {
+    vi.mocked(readFileSync).mockReturnValue(
+      '@import "tailwindcss" prefix(sa);',
+    );
+    const preprocess = tailwindPreprocessor({
+      tailwindRootCss: '/project/src/styles/tailwind.css',
+    });
+
+    expect(() =>
+      preprocess(
+        '/* keep this comment away from @reference injection */\n.demo { @apply sa:text-red-500; }',
+        '/project/src/app/demo.component.css',
+      ),
+    ).toThrowError(
+      /contains the text "@reference" but does not contain a real @reference directive/,
+    );
+  });
+
   it('skips injection when no Tailwind prefix is configured', () => {
     vi.mocked(readFileSync).mockReturnValue('@import "tailwindcss";');
     const preprocess = tailwindPreprocessor({

@@ -5,6 +5,52 @@ import type { StylePreprocessor } from './style-preprocessor.js';
 import { debugTailwind } from './utils/debug.js';
 
 export type TailwindPreprocessorMode = 'auto' | 'disabled' | { prefix: string };
+const PLATFORM_TAILWIND_PREFIX = '[@analogjs/platform]';
+const CSS_BLOCK_COMMENT_REGEX = /\/\*[\s\S]*?\*\//g;
+const CSS_REFERENCE_DIRECTIVE_REGEX = /(^|[;}\n\r])\s*@reference\b/m;
+const CSS_TAILWIND_IMPORT_REGEX =
+  /(^|[;}\n\r])\s*@import\s+["']tailwindcss["']/m;
+
+interface CssTailwindDirectiveState {
+  commentlessCode: string;
+  hasReferenceDirective: boolean;
+  hasReferenceText: boolean;
+  hasTailwindImportDirective: boolean;
+}
+
+function stripCssBlockComments(code: string): string {
+  return code.replace(CSS_BLOCK_COMMENT_REGEX, (comment) =>
+    comment.replace(/[^\n\r]/g, ' '),
+  );
+}
+
+function inspectCssTailwindDirectives(code: string): CssTailwindDirectiveState {
+  const commentlessCode = stripCssBlockComments(code);
+
+  return {
+    commentlessCode,
+    hasReferenceDirective: CSS_REFERENCE_DIRECTIVE_REGEX.test(commentlessCode),
+    hasReferenceText: code.includes('@reference'),
+    hasTailwindImportDirective: CSS_TAILWIND_IMPORT_REGEX.test(commentlessCode),
+  };
+}
+
+function throwTailwindReferenceTextError(
+  filename: string,
+  tailwindRootCss: string,
+): never {
+  throw new Error(
+    `${PLATFORM_TAILWIND_PREFIX} Tailwind @reference auto-injection was ` +
+      `blocked for "${filename}" because the stylesheet contains the ` +
+      `text "@reference" but does not contain a real @reference ` +
+      `directive.\n\n` +
+      `This is usually caused by a CSS comment such as ` +
+      `"/* ... @reference ... */".\n\n` +
+      `Fix one of:\n` +
+      `  - Reword the comment so it does not contain "@reference"\n` +
+      `  - Add a real @reference "${tailwindRootCss}"; directive\n`,
+  );
+}
 
 export interface TailwindPreprocessorOptions {
   /** Absolute path to the Tailwind root CSS file that imports `tailwindcss`. */
@@ -42,7 +88,9 @@ export function tailwindPreprocessor(
   debugTailwind('configured', { tailwindRootCss, mode: modeOption });
 
   return (code: string, filename: string): string => {
-    if (code.includes('@reference')) {
+    const directiveState = inspectCssTailwindDirectives(code);
+
+    if (directiveState.hasReferenceDirective) {
       debugTailwind('skip (already has @reference)', { filename });
       return code;
     }
@@ -59,9 +107,9 @@ export function tailwindPreprocessor(
       typeof resolvedMode === 'object' ? resolvedMode.prefix : getRootPrefix();
     const isRootFile =
       path.resolve(filename) === path.resolve(tailwindRootCss) ||
-      /@import\s+["']tailwindcss["']/.test(code);
+      directiveState.hasTailwindImportDirective;
     const hasTailwindUsage = resolvedPrefix
-      ? code.includes(`${resolvedPrefix}:`)
+      ? directiveState.commentlessCode.includes(`${resolvedPrefix}:`)
       : false;
     const shouldAddReference = shouldInject
       ? shouldInject(code, filename, resolvedPrefix)
@@ -75,6 +123,10 @@ export function tailwindPreprocessor(
         hasTailwindUsage,
       });
       return code;
+    }
+
+    if (directiveState.hasReferenceText) {
+      throwTailwindReferenceTextError(filename, tailwindRootCss);
     }
 
     const refPath = path
