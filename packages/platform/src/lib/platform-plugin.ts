@@ -25,7 +25,7 @@ function externalPlugins(plugins: unknown): Plugin[] {
   return plugins as Plugin[];
 }
 
-export async function platformPlugin(opts: Options = {}): Promise<Plugin[]> {
+export function platformPlugin(opts: Options = {}): Plugin[] {
   applyDebugOption(opts.debug, opts.workspaceRoot);
 
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
@@ -99,7 +99,7 @@ export async function platformPlugin(opts: Options = {}): Promise<Plugin[]> {
     ...(opts?.vite === false
       ? []
       : externalPlugins(
-          await angular({
+          angular({
             jit: platformOptions.jit,
             workspaceRoot: platformOptions.workspaceRoot,
             // Let the Angular plugin keep its own dev-friendly default unless the

@@ -60,6 +60,7 @@ import type {
   StylesheetDependency,
 } from './style-preprocessor.js';
 
+import { analogCompilerPlugin } from './analog-compiler-plugin.js';
 import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {
   createAngularCompilation,
@@ -427,7 +428,7 @@ function buildStylePreprocessor(
   ]);
 }
 
-export async function angular(options?: PluginOptions): Promise<Plugin[]> {
+export function angular(options?: PluginOptions): Plugin[] {
   applyDebugOption(options?.debug, options?.workspaceRoot);
 
   /**
@@ -1885,25 +1886,20 @@ export async function angular(options?: PluginOptions): Promise<Plugin[]> {
     };
   }
 
-  let compilationPlugin: Plugin;
-  if (pluginOptions.useAnalogCompiler) {
-    const { analogCompilerPlugin } =
-      await import('./analog-compiler-plugin.js');
-    compilationPlugin = analogCompilerPlugin({
-      tsconfigGetter: pluginOptions.tsconfigGetter,
-      workspaceRoot: pluginOptions.workspaceRoot,
-      inlineStylesExtension: pluginOptions.inlineStylesExtension,
-      jit,
-      liveReload: pluginOptions.liveReload,
-      supportedBrowsers: pluginOptions.supportedBrowsers,
-      transformFilter: options?.transformFilter,
-      isTest,
-      isAstroIntegration,
-      analogCompilationMode: pluginOptions.analogCompilationMode,
-    });
-  } else {
-    compilationPlugin = angularPlugin();
-  }
+  const compilationPlugin = pluginOptions.useAnalogCompiler
+    ? analogCompilerPlugin({
+        tsconfigGetter: pluginOptions.tsconfigGetter,
+        workspaceRoot: pluginOptions.workspaceRoot,
+        inlineStylesExtension: pluginOptions.inlineStylesExtension,
+        jit,
+        liveReload: pluginOptions.liveReload,
+        supportedBrowsers: pluginOptions.supportedBrowsers,
+        transformFilter: options?.transformFilter,
+        isTest,
+        isAstroIntegration,
+        analogCompilationMode: pluginOptions.analogCompilationMode,
+      })
+    : angularPlugin();
 
   return [
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
