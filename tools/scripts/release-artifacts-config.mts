@@ -6,6 +6,11 @@ export interface ReleaseArtifact {
 
 export const releaseArtifacts: ReleaseArtifact[] = [
   {
+    projectName: 'angular-compiler',
+    packageName: '@analogjs/angular-compiler',
+    publishDir: 'packages/angular-compiler/dist',
+  },  
+  {
     projectName: 'astro-angular',
     packageName: '@analogjs/astro-angular',
     publishDir: 'packages/astro-angular/dist',
