@@ -6,12 +6,12 @@ import {
   type CodeOptionsMultipleThemes,
   type CodeOptionsSingleTheme,
   type CodeToHastOptionsCommon,
-  getHighlighter,
+  createHighlighter,
 } from 'shiki';
 
 import { MarkedContentHighlighter } from '../marked/marked-content-highlighter.js';
 
-export type ShikiHighlighterOptions = Parameters<typeof getHighlighter>[0];
+export type ShikiHighlighterOptions = Parameters<typeof createHighlighter>[0];
 export type ShikiHighlightOptions = Partial<
   Omit<CodeToHastOptionsCommon<BundledLanguage>, 'lang'>
 > &
@@ -44,7 +44,7 @@ function escapeHtml(code: string): string {
 }
 
 export class ShikiHighlighter extends MarkedContentHighlighter {
-  private readonly highlighter = getHighlighter(this.highlighterOptions);
+  private readonly highlighter = createHighlighter(this.highlighterOptions);
 
   constructor(
     private highlighterOptions: ShikiHighlighterOptions,

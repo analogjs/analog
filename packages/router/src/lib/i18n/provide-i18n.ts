@@ -6,7 +6,7 @@ import {
   inject,
   makeEnvironmentProviders,
 } from '@angular/core';
-import { LOCALE } from '@analogjs/router/tokens';
+import { LOCALE, injectLocale } from '@analogjs/router/tokens';
 
 declare const ANALOG_I18N_DEFAULT_LOCALE: string;
 declare const ANALOG_I18N_LOCALES: string[];
@@ -114,8 +114,8 @@ export function provideI18n(config: I18nConfig): EnvironmentProviders {
       multi: true,
       useFactory: () => {
         // Re-read LOCALE in case the server context overrode it
-        const locale = inject(LOCALE);
-        return () => initI18n(resolved, locale);
+        const locale = injectLocale();
+        return () => initI18n(resolved, locale ?? undefined);
       },
     },
   ]);

@@ -4,7 +4,7 @@ import {
   ContentRenderer,
   parseRawContentFile,
   injectContentFileLoader,
-  CONTENT_LOCALE,
+  injectContentLocale,
 } from '@analogjs/content';
 import { ActivatedRoute } from '@angular/router';
 
@@ -116,7 +116,7 @@ export function contentFileResource<
 >(params?: ContentFileParams, fallback = 'No Content Found') {
   const loaderPromise = injectContentFileLoader();
   const contentRenderer = inject(ContentRenderer);
-  const locale = inject(CONTENT_LOCALE, { optional: true });
+  const locale = injectContentLocale();
   const contentFilesMap = toSignal(from(loaderPromise()));
   const input =
     params ||

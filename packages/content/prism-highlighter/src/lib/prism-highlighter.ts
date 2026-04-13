@@ -4,6 +4,10 @@ import { markedHighlight } from 'marked-highlight';
 
 declare const Prism: typeof import('prismjs');
 
+type HighlightExtension = ReturnType<
+  MarkedContentHighlighter['getHighlightExtension']
+>;
+
 @Injectable()
 export class PrismHighlighter extends MarkedContentHighlighter {
   override augmentCodeBlock(code: string, lang: string): string {
@@ -14,7 +18,7 @@ export class PrismHighlighter extends MarkedContentHighlighter {
     return `<pre class="${classes}"><code class="${classes}">${code}</code></pre>`;
   }
 
-  override getHighlightExtension() {
+  override getHighlightExtension(): HighlightExtension {
     return markedHighlight({
       async: true,
       highlight: (code: string, lang: string) => {
@@ -51,6 +55,6 @@ export class PrismHighlighter extends MarkedContentHighlighter {
           lang,
         );
       },
-    });
+    }) as HighlightExtension;
   }
 }
