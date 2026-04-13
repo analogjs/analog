@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/angular-compiler",
-  "version": "2.5.0-beta.39",
+  "version": "2.5.0-beta.40",
   "description": "Lightweight compiler for Angular",
   "type": "module",
   "license": "MIT",

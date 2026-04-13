@@ -1,3 +1,10 @@
+# [2.5.0-beta.40](https://github.com/analogjs/analog/compare/v2.5.0-beta.39...v2.5.0-beta.40) (2026-04-13)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** route template/style imports through virtual module ids ([#2287](https://github.com/analogjs/analog/issues/2287)) ([6ae244c](https://github.com/analogjs/analog/commit/6ae244c421b54a2834f58bc3ee8a51958f8d3347))
+- **vite-plugin-angular:** use virtual modules for external JIT styles ([#2283](https://github.com/analogjs/analog/issues/2283)) ([358faf7](https://github.com/analogjs/analog/commit/358faf70499680f29f60e05bcaa61055f0f52557))
+
 # [2.5.0-beta.39](https://github.com/analogjs/analog/compare/v2.5.0-beta.38...v2.5.0-beta.39) (2026-04-13)
 
 ### Bug Fixes
