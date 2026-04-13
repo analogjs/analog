@@ -2,7 +2,11 @@
 sidebar_position: 4
 ---
 
-# AI
+# Build with AI
+
+Analog provides integrations to use AI-assisted development practics.
+
+## LLMs Index files
 
 Analog's docs site publishes two AI-friendly index files at the site root:
 
@@ -11,9 +15,9 @@ Analog's docs site publishes two AI-friendly index files at the site root:
 
 These files make it easier to feed the docs into AI-assisted workflows without crawling the full site manually.
 
-## What's the difference?
+### What's the difference?
 
-### `llms.txt`
+#### `llms.txt`
 
 `llms.txt` is a compact index of the docs. It contains the page titles, URLs, and short descriptions so an assistant or retrieval pipeline can discover the relevant docs pages quickly.
 
@@ -23,7 +27,7 @@ Use it when you want:
 - a page index for custom RAG pipelines
 - a quick way to point an AI tool at the Analog docs corpus
 
-### `llms-full.txt`
+#### `llms-full.txt`
 
 `llms-full.txt` is the expanded version. It concatenates the full Markdown content for the docs pages into a single text file.
 

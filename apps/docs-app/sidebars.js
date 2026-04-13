@@ -244,11 +244,6 @@ const sidebars = {
         },
         {
           type: 'doc',
-          id: 'integrations/ai/index',
-          label: 'AI',
-        },
-        {
-          type: 'doc',
           id: 'integrations/angular-material/index',
           label: 'Angular Material',
         },
@@ -261,6 +256,18 @@ const sidebars = {
           type: 'doc',
           id: 'integrations/storybook/index',
           label: 'Storybook',
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'AI',
+      items: [
+        {
+          type: 'doc',
+          id: 'integrations/ai/index',
+          label: 'Overview',
+          key: 'ai-overview',
         },
       ],
     },
