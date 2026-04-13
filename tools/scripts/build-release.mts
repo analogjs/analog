@@ -23,7 +23,7 @@ const steps: Step[] = [
       '--config',
       'packages/angular-compiler/vite.config.lib.ts',
     ],
-  },  
+  },
   {
     label: 'vite-plugin-angular:build-self',
     command: 'pnpm',
