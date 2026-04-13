@@ -69,7 +69,7 @@ export default defineConfig({
           });
         },
       },
-    },    
+    },
     // MDX currently provides a renderer entrypoint as a file URL here.
     normalizeRendererEntrypoints(mdx({ syntaxHighlight: 'prism' })),
   ],
