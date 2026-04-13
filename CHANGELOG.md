@@ -1,3 +1,15 @@
+# [2.5.0-beta.37](https://github.com/analogjs/analog/compare/v2.5.0-beta.36...v2.5.0-beta.37) (2026-04-13)
+
+### Bug Fixes
+
+- **storybook-angular:** forward applyDecorators in testing ([#2236](https://github.com/analogjs/analog/issues/2236)) ([31d996c](https://github.com/analogjs/analog/commit/31d996c035f7a6b9e533a39f735176663fcc07d3))
+- **vitest-angular:** clean generated snapshot ids ([#2238](https://github.com/analogjs/analog/issues/2238)) ([ac933ba](https://github.com/analogjs/analog/commit/ac933ba18321c5536a59ccd067fefdd769e59c9c))
+- **vitest-angular:** normalize snapshot whitespace ([#2237](https://github.com/analogjs/analog/issues/2237)) ([d1ba31f](https://github.com/analogjs/analog/commit/d1ba31f90b7515ba49e7cbe27857b5bb983d8ceb))
+
+### Features
+
+- **docs:** add AI integrations guide ([#2234](https://github.com/analogjs/analog/issues/2234)) ([545f8fc](https://github.com/analogjs/analog/commit/545f8fc5c714e97ee784ed9f6db0052eb2ee086b))
+
 # [2.5.0-beta.36](https://github.com/analogjs/analog/compare/v2.5.0-beta.35...v2.5.0-beta.36) (2026-04-13)
 
 ### Features
