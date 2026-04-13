@@ -5,6 +5,8 @@ import TabItem from '@theme/TabItem';
 
 You can use the `ng update` command for an Angular CLI workspace, or the `nx migrate` command for updating within an Nx workspace.
 
+After updating, review the current [Deprecations and Compatibility](/docs/guides/deprecations) guide so compatibility aliases do not become your new baseline API usage.
+
 <Tabs groupId="app-upgrader">
   <TabItem label="ng update" value="ng-update">
 

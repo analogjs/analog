@@ -18,7 +18,7 @@ type RestrictedRoute = Omit<NgRoute, RouteOmitted> & {
 };
 
 /**
- * @deprecated Use `RouteMeta` type instead.
+ * @deprecated Use the `RouteMeta` type directly instead. Kept as a compatibility helper.
  * For more info see: https://github.com/analogjs/analog/issues/223
  *
  * Defines additional route config metadata. This
@@ -29,15 +29,14 @@ type RestrictedRoute = Omit<NgRoute, RouteOmitted> & {
  *
  * ```
  * import { Component } from '@angular/core';
- * import { defineRouteMeta } from '@analogjs/router';
+ * import type { RouteMeta } from '@analogjs/router';
  *
- *  export const routeMeta = defineRouteMeta({
+ * export const routeMeta: RouteMeta = {
  *    title: 'Welcome'
- *  });
+ * };
  *
  * @Component({
  *   template: `Home`,
- *   standalone: true,
  * })
  * export default class HomeComponent {}
  * ```

@@ -227,3 +227,13 @@ export default defineConfig(() => ({
 ```
 
 This is the recommended setup for Analog v3: one root Tailwind stylesheet, `@tailwindcss/vite` in Vite, and Analog handling component stylesheet preprocessing.
+
+## Reviewing Deprecated APIs During Migration
+
+After the initial Analog migration is working, check the [Deprecations and Compatibility](./deprecations.md) guide before treating older helper APIs as part of the long-term app shape.
+
+The current audit covers:
+
+- route metadata helpers that are still exported for compatibility
+- deprecated API middleware options in Nitro and the platform wrapper
+- legacy tRPC client aliases that still ship for backwards compatibility
