@@ -142,7 +142,7 @@ function childNeedsParens(
 const MAKE_TEMPLATE_OBJECT_POLYFILL =
   '(this&&this.__makeTemplateObject||function(e,t){return Object.defineProperty?Object.defineProperty(e,"raw",{value:t}):e.raw=t,e})';
 
-const SINGLE_QUOTE_ESCAPE_RE = /[\\\'\n\r]/g;
+const SINGLE_QUOTE_ESCAPE_RE = /[\\'\n\r]/g;
 
 /** Escape a string for use as a single-quoted string literal. */
 function escapeForLocalize(input: string): string {

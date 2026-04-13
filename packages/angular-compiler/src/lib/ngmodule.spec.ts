@@ -231,10 +231,7 @@ describe('Dependency list deduplication', () => {
   // output so individual class references can be counted.
   function depsArrayFor(result: string): string {
     const m = result.match(/dependencies:\s*\(\)\s*=>\s*\[([\s\S]*?)\]/);
-    expect(
-      m,
-      'compiled output should contain a dependencies array',
-    ).not.toBeNull();
+    expect(m).not.toBeNull();
     return m![1];
   }
   function countRefs(deps: string, name: string): number {

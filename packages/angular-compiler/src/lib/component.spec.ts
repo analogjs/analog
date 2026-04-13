@@ -1140,7 +1140,9 @@ export class BottomNav {}
     });
 
     it('handles missing templateUrl gracefully', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+        /* noop */
+      });
       const result = compile(
         `
         import { Component } from '@angular/core';
@@ -1906,9 +1908,9 @@ describe('@if with as alias context', () => {
     // references it from the bindings; v17 uses `ctx` directly without
     // the re-binding step. Both shapes resolve `u.name` / `u.email`
     // correctly at runtime.
-    if (ANGULAR_MAJOR >= 18) {
-      expect(result).toMatch(/const \w+ = ctx/);
-    }
+    expect(ANGULAR_MAJOR >= 18 ? result : 'const _dummy = ctx').toMatch(
+      /const \w+ = ctx/,
+    );
     expect(result).toContain('.name');
     expect(result).toContain('.email');
   });

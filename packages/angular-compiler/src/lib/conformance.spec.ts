@@ -25,7 +25,7 @@ function expectEmit(
   const normalizeWs = (s: string) => s.replace(/\s+/g, ' ').trim();
 
   // Normalize both sides
-  let normalizedExpected = expected.replace(/\$r3\$/g, 'i0');
+  const normalizedExpected = expected.replace(/\$r3\$/g, 'i0');
   const actualNorm = normalizeWs(actual);
   const expectedNorm = normalizeWs(normalizedExpected);
 
@@ -248,15 +248,17 @@ describe.skipIf(!angularAvailable)('Angular Compliance Tests', () => {
     const testCases = loadTestCases(categoryDir);
     if (testCases.length === 0) continue;
 
-    describe(category, () => {
+    describe(`${category}`, () => {
       for (const tc of testCases) {
         if (shouldSkip(tc)) {
-          it.skip(tc.description, () => {});
+          it.skip(`${tc.description}`, () => {
+            /* noop */
+          });
           results.skip++;
           continue;
         }
 
-        it(tc.description, () => {
+        it(`${tc.description}`, () => {
           // Build a registry from all .ts files in the test directory
           // so cross-file references (e.g. @defer deps) can be resolved
           const registry: ComponentRegistry = new Map();
@@ -299,7 +301,6 @@ describe.skipIf(!angularAvailable)('Angular Compliance Tests', () => {
               // Some test cases use features we don't support — record as error
               results.error++;
               // Don't fail the test, just record the error
-              expect(true).toBe(true);
               return;
             }
 

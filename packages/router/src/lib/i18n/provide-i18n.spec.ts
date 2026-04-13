@@ -48,7 +48,9 @@ describe('loadTranslationsRuntime', () => {
 
   it('should warn if $localize is not available', () => {
     (globalThis as any).$localize = undefined;
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
 
     loadTranslationsRuntime({ 'msg-hello': 'Bonjour' });
 
@@ -164,7 +166,7 @@ describe('detectClientLocale', () => {
   it('should return defaultLocale when window is undefined (server)', () => {
     // In Node test environment, window is typically undefined
     const originalWindow = globalThis.window;
-    // @ts-ignore
+    // @ts-expect-error - partial window mock
     delete globalThis.window;
 
     expect(detectClientLocale(baseConfig)).toBe('en');
@@ -174,7 +176,7 @@ describe('detectClientLocale', () => {
 
   it('should detect locale from URL path prefix', () => {
     const originalWindow = globalThis.window;
-    // @ts-ignore
+    // @ts-expect-error - partial window mock
     globalThis.window = { location: { pathname: '/fr/about' } };
 
     expect(detectClientLocale(baseConfig)).toBe('fr');
@@ -184,7 +186,7 @@ describe('detectClientLocale', () => {
 
   it('should return defaultLocale when URL has no locale prefix', () => {
     const originalWindow = globalThis.window;
-    // @ts-ignore
+    // @ts-expect-error - partial window mock
     globalThis.window = { location: { pathname: '/about' } };
 
     expect(detectClientLocale(baseConfig)).toBe('en');
@@ -194,7 +196,7 @@ describe('detectClientLocale', () => {
 
   it('should only match configured locales', () => {
     const originalWindow = globalThis.window;
-    // @ts-ignore
+    // @ts-expect-error - partial window mock
     globalThis.window = { location: { pathname: '/es/about' } };
 
     // 'es' is not in the locales list
@@ -205,7 +207,7 @@ describe('detectClientLocale', () => {
 
   it('should detect locale at root path', () => {
     const originalWindow = globalThis.window;
-    // @ts-ignore
+    // @ts-expect-error - partial window mock
     globalThis.window = { location: { pathname: '/de' } };
 
     expect(detectClientLocale(baseConfig)).toBe('de');
