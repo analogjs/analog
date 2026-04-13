@@ -32,7 +32,7 @@ exports[`Angular Fixture Snapshot > create angular component componentRef fixtur
   <p
     class="read-the-docs"
   >
-     For guides on how to customize this project, visit the 
+     For guides on how to customize this project, visit the
     <a
       href="https://analogjs.org"
       target="_blank"
@@ -75,7 +75,7 @@ exports[`Angular Fixture Snapshot > create angular fixture snapshot 1`] = `
   <p
     class="read-the-docs"
   >
-     For guides on how to customize this project, visit the 
+     For guides on how to customize this project, visit the
     <a
       href="https://analogjs.org"
       target="_blank"
