@@ -34,6 +34,59 @@ import {
 import { getBundleOptionsKey, isRolldown } from './utils/rolldown.js';
 import { debugNitro, debugSsr } from './utils/debug.js';
 
+type ObjectHook<T> = { handler: T; [key: string]: unknown };
+
+function isObjectHook(value: unknown): value is ObjectHook<unknown> {
+  return !!value && typeof value === 'object' && 'handler' in value;
+}
+
+function cloneObjectHook<T>(hook: T): T {
+  if (!isObjectHook(hook)) {
+    return hook;
+  }
+
+  return {
+    ...hook,
+    handler: hook.handler,
+  } as T;
+}
+
+function cloneUserPlugin<T>(plugin: T): T {
+  if (!plugin || typeof plugin !== 'object') return plugin;
+  const pluginRecord = plugin as Record<string, unknown>;
+  const clone = Object.assign(
+    Object.create(Object.getPrototypeOf(plugin)),
+    pluginRecord,
+  ) as Record<string, unknown>;
+
+  for (const key of Object.keys(pluginRecord)) {
+    clone[key] = cloneObjectHook(pluginRecord[key]);
+  }
+
+  return clone as T;
+}
+
+function cloneUserConfig(userConfig: UserConfig): UserConfig {
+  const { resolve, build, server, plugins } = userConfig;
+  const test = (userConfig as UserConfig & { test?: Record<string, unknown> })
+    .test;
+  return {
+    ...userConfig,
+    plugins: plugins?.map(cloneUserPlugin),
+    build: build && { ...build },
+    server: server && { ...server },
+    test: test && { ...test },
+    resolve: resolve && {
+      ...resolve,
+      alias: Array.isArray(resolve.alias)
+        ? [...resolve.alias]
+        : resolve.alias && typeof resolve.alias === 'object'
+          ? { ...resolve.alias }
+          : resolve.alias,
+    },
+  } as UserConfig;
+}
+
 function createNitroMiddlewareHandler(handler: string): NitroEventHandler {
   return {
     route: '/**',
@@ -544,7 +597,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         isServe = command === 'serve';
         isBuild = command === 'build';
         ssrBuild = userConfig.build?.ssr === true;
-        config = userConfig;
+        config = cloneUserConfig(userConfig);
         isTest = isTest ? isTest : mode === 'test';
         rollupExternalEntries.length = 0;
         clientIndexHtml = undefined;

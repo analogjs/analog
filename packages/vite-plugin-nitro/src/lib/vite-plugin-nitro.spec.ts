@@ -51,6 +51,76 @@ describe('nitro', () => {
     expect(nitro({})[1].name).toEqual('@analogjs/vite-plugin-nitro');
   });
 
+  it('should snapshot the incoming Vite config before later mutations', async () => {
+    vi.stubEnv('VITEST', '');
+    vi.stubEnv('NODE_ENV', 'production');
+
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-config-'));
+    const originalBuildOutDir = 'custom-client';
+    const pluginPrototype = { marker: 'user-plugin-prototype' };
+    const originalHook = { handler: vi.fn(), order: 'pre' };
+    const userPlugin = Object.assign(Object.create(pluginPrototype), {
+      name: 'user-plugin',
+      configResolved: originalHook,
+    }) as vite.Plugin;
+    const userConfig: vite.UserConfig = {
+      root: workspaceRoot,
+      build: { outDir: originalBuildOutDir },
+      plugins: [userPlugin],
+    };
+    const ssrBuildDir = resolve(workspaceRoot, 'dist', 'ssr');
+
+    const { buildServerImportSpy } = await mockBuildFunctions();
+    vi.mocked(buildClientApp).mockImplementation(async () => {
+      writeBuiltClientIndexHtml(
+        workspaceRoot,
+        '<html>snapshot</html>',
+        resolve(workspaceRoot, originalBuildOutDir),
+      );
+    });
+
+    try {
+      mkdirSync(ssrBuildDir, { recursive: true });
+      writeFileSync(
+        resolve(ssrBuildDir, 'main.server.js'),
+        'export default async function renderer() {}',
+      );
+
+      const plugin = nitro({ workspaceRoot });
+
+      await (plugin[1].config as any)(userConfig, {
+        command: 'build',
+        mode: 'production',
+      });
+
+      const mutatedHook = { handler: vi.fn(), order: 'post' };
+      userConfig.build!.outDir = 'mutated-client';
+      (userConfig.plugins![0] as Record<string, unknown>)['configResolved'] =
+        mutatedHook;
+
+      await (plugin[1].closeBundle as any)();
+
+      expect(buildClientApp).toHaveBeenCalledOnce();
+      expect(buildServerImportSpy).toHaveBeenCalledOnce();
+
+      const capturedConfig = vi.mocked(buildClientApp).mock.calls[0]?.[0] as
+        | vite.UserConfig
+        | undefined;
+      const capturedPlugin = capturedConfig?.plugins?.[0] as
+        | Record<string, unknown>
+        | undefined;
+
+      expect(capturedConfig?.build?.outDir).toBe(originalBuildOutDir);
+      expect(capturedPlugin).toBeDefined();
+      expect(Object.getPrototypeOf(capturedPlugin!)).toBe(pluginPrototype);
+      expect(capturedPlugin?.['configResolved']).toEqual(originalHook);
+      expect(capturedPlugin?.['configResolved']).not.toBe(originalHook);
+      expect(capturedPlugin?.['configResolved']).not.toBe(mutatedHook);
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
   it('should not call the route middleware in test mode', async () => {
     // Arrange
     const spy = vi.spyOn(mockViteDevServer.middlewares, 'use');
