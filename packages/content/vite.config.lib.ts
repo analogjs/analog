@@ -56,7 +56,7 @@ export default defineConfig({
       external: [
         /^@angular\/.*/,
         /^@nx\/.*/,
-        /^@analogjs\/content/,
+        /^@analogjs\//,
         /^prismjs/,
         /^marked/,
         /^satori/,

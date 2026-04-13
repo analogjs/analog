@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import {
   existsSync,
   mkdirSync,
+  promises as fsPromises,
   readFileSync,
   statSync,
   writeFileSync,
