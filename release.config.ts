@@ -4,6 +4,7 @@ const tag = process.env['RELEASE_TAG'];
 
 const versionFiles = [
   'package.json',
+  'packages/angular-compiler/package.json',
   'packages/astro-angular/package.json',
   'packages/content/package.json',
   'packages/create-analog/package.json',
@@ -157,6 +158,7 @@ export default {
           'CHANGELOG.md',
           'package.json',
           'pnpm-lock.yaml',
+          'packages/angular-compiler/package.json',
           'packages/astro-angular/package.json',
           'packages/content/package.json',
           'packages/create-analog/package.json',
