@@ -2714,6 +2714,28 @@ describe('Ivy definitions as static class members with TDZ hoisting', () => {
     expect(fullUrlIdx).toBeGreaterThan(classIdx);
   });
 
+  it('hoists a const whose initializer lazily references a later class via arrow function', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {}
+
+      const TOKEN = () => LaterClass;
+      class LaterClass {}
+      `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    const tokenIdx = result.indexOf('const TOKEN');
+    const classIdx = result.indexOf('class TestComponent');
+    // TOKEN only lazily references LaterClass, so it should be hoisted before the class
+    expect(tokenIdx).toBeGreaterThan(-1);
+    expect(tokenIdx).toBeLessThan(classIdx);
+  });
+
   it('does not hoist a const that references the first class in the file', () => {
     const result = compile(
       `

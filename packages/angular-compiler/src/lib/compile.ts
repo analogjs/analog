@@ -123,12 +123,20 @@ function hasExportModifier(node: ts.Node): boolean {
   );
 }
 
-/** Collect all identifier names referenced in a node's subtree. */
+/**
+ * Collect identifier names referenced in eagerly-evaluated code only.
+ * Skips function/arrow/class bodies so that lazy references
+ * (e.g. `const TOKEN = () => LaterClass`) are not treated as dependencies.
+ */
 function collectIdentifiers(node: ts.Node): Set<string> {
   const ids = new Set<string>();
   function walk(n: ts.Node) {
     if (ts.isIdentifier(n)) {
       ids.add(n.text);
+    }
+    // Stop recursing into lazily-evaluated scopes
+    if (ts.isFunctionLike(n) || ts.isClassLike(n)) {
+      return;
     }
     ts.forEachChild(n, walk);
   }
