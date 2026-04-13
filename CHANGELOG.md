@@ -1,3 +1,9 @@
+# [2.5.0-beta.36](https://github.com/analogjs/analog/compare/v2.5.0-beta.35...v2.5.0-beta.36) (2026-04-13)
+
+### Features
+
+- **platform:** add shiki skipLangs option for analog v2 ([#2282](https://github.com/analogjs/analog/issues/2282)) ([d6e932c](https://github.com/analogjs/analog/commit/d6e932c0d4031d45bc259b89c7b4bc797e5099aa))
+
 # [2.5.0-beta.35](https://github.com/analogjs/analog/compare/v2.5.0-beta.34...v2.5.0-beta.35) (2026-04-13)
 
 ### Bug Fixes
