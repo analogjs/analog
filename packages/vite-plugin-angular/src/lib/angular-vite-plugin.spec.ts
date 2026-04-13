@@ -1,4 +1,6 @@
+import * as path from 'node:path';
 import { describe, it, expect, vi } from 'vitest';
+import { normalizePath, preprocessCSS } from 'vite';
 
 vi.mock('vite', async () => {
   const actual = await vi.importActual<typeof import('vite')>('vite');
@@ -67,7 +69,7 @@ describe('isTestWatchMode', () => {
 });
 
 describe('JIT resolveId', () => {
-  it('should resolve style files with ?analog-inline suffix', () => {
+  it('should resolve style files to virtual style ids', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
       (p) => p.name === '@analogjs/vite-plugin-angular',
@@ -82,8 +84,10 @@ describe('JIT resolveId', () => {
       '/project/src/app/my-component.ts',
     );
 
-    expect(result).toBeDefined();
-    expect(result).toContain('?analog-inline');
+    expect(result).toContain(
+      'virtual:@analogjs/vite-plugin-angular:inline-style:',
+    );
+    expect(result).not.toContain('?analog-inline');
     expect(result).not.toContain('?inline');
   });
 
@@ -105,6 +109,20 @@ describe('JIT resolveId', () => {
     expect(result).toBeDefined();
     expect(result).toContain('?analog-raw');
     expect(result).not.toContain('??analog-raw');
+  });
+
+  it('should resolve bare virtual style ids to rollup virtual modules', () => {
+    const plugins = angular({ jit: true });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+    expect(mainPlugin).toBeDefined();
+
+    const resolveId = (mainPlugin as any).resolveId;
+    const virtualId =
+      'virtual:@analogjs/vite-plugin-angular:inline-style:test-style-id';
+
+    expect(resolveId(virtualId)).toBe(`\0${virtualId}`);
   });
 
   it('should intercept .html?raw imports and remap to ?analog-raw', () => {
@@ -152,20 +170,24 @@ describe('JIT resolveId', () => {
     );
 
     const resolveId = (mainPlugin as any).resolveId;
+    const importer = '/project/src/app/my-component.ts';
+    const expectedScssPath = `${normalizePath(
+      path.resolve(path.dirname(importer), './my-component.scss'),
+    )}?analog-inline`;
+    const expectedCssPath = `${normalizePath(
+      '/project/src/app/my-component.css',
+    )}?analog-inline`;
 
     // Relative .scss?inline
-    const result = resolveId(
-      './my-component.scss?inline',
-      '/project/src/app/my-component.ts',
-    );
-    expect(result).toBe('/project/src/app/my-component.scss?analog-inline');
+    const result = resolveId('./my-component.scss?inline', importer);
+    expect(result).toBe(expectedScssPath);
 
     // Absolute .css?inline
     const result2 = resolveId(
       '/project/src/app/my-component.css?inline',
       '/project/src/app/other.ts',
     );
-    expect(result2).toBe('/project/src/app/my-component.css?analog-inline');
+    expect(result2).toBe(expectedCssPath);
   });
 
   it('should intercept style ?inline imports even without jit mode', () => {
@@ -198,17 +220,33 @@ describe('JIT resolveId', () => {
     );
     expect(inlineRE.test(result)).toBe(false);
   });
+
+  it('should emit virtual style ids that do not look like stylesheet resources', () => {
+    const cssLangRE =
+      /\.(css|less|sass|scss|styl|stylus|pcss|postcss|sss)($|\?)/;
+    const plugins = angular({ jit: true });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+
+    const resolveId = (mainPlugin as any).resolveId;
+    const virtualId = resolveId(
+      'angular:jit:style:file;./my-component.scss',
+      '/project/src/app/my-component.ts',
+    );
+
+    expect(cssLangRE.test(virtualId)).toBe(false);
+  });
 });
 
 describe('load ?inline style imports', () => {
   // Vitest's fetchModule path calls moduleGraph.ensureEntryFromUrl before
   // transformRequest, which makes pluginContainer.resolveId a no-op for the
-  // module-runner. The resolveId rewrite to ?analog-inline therefore never
-  // runs in tests, and the load hook must accept the original ?inline query
-  // directly. (See issue #2263.)
+  // module-runner. Direct ?inline imports therefore bypass the resolveId
+  // rewrites in tests, and the load hook must still accept the original
+  // query directly. (See issue #2263.)
   const realFs = require('node:fs');
   const tmpDir = require('node:os').tmpdir();
-  const path = require('node:path');
 
   function getLoadHook() {
     const plugins = angular();
@@ -217,6 +255,37 @@ describe('load ?inline style imports', () => {
     );
     return (mainPlugin as any).load.bind({});
   }
+
+  it('handles virtual style imports and watches the backing file', async () => {
+    const cssPath = path.join(tmpDir, `analog-virtual-${Date.now()}.scss`);
+    realFs.writeFileSync(cssPath, '.foo { color: red; }', 'utf-8');
+
+    try {
+      const plugins = angular({ jit: true });
+      const mainPlugin = plugins.find(
+        (p) => p.name === '@analogjs/vite-plugin-angular',
+      );
+
+      const resolveId = (mainPlugin as any).resolveId;
+      const addWatchFile = vi.fn();
+      const load = (mainPlugin as any).load.bind({ addWatchFile });
+      const virtualId = resolveId(
+        `angular:jit:style:file;./${path.basename(cssPath)}`,
+        path.join(tmpDir, 'host.component.ts'),
+      );
+      const result = await load(virtualId);
+
+      expect(result).toBeDefined();
+      expect(result).toContain('export default');
+      expect(result).toContain('color: red');
+      expect(addWatchFile).toHaveBeenCalledWith(normalizePath(cssPath));
+
+      const calls = vi.mocked(preprocessCSS).mock.calls;
+      expect(calls[calls.length - 1][1]).toBe(normalizePath(cssPath));
+    } finally {
+      realFs.unlinkSync(cssPath);
+    }
+  });
 
   it('handles ?inline style imports without going through resolveId', async () => {
     const cssPath = path.join(tmpDir, `analog-inline-${Date.now()}.css`);
