@@ -5,28 +5,32 @@
   "projectType": "library",
   "tags": ["type:release"],
   "targets": {
-    "build-package": {
-      "executor": "@nx/js:tsc",
+    "build-self": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "outputs": ["{projectRoot}/dist"],
       "options": {
-        "outputPath": "node_modules/@analogjs/angular-compiler",
-        "main": "packages/angular-compiler/src/index.ts",
-        "tsConfig": "packages/angular-compiler/tsconfig.lib.json",
-        "assets": ["packages/angular-compiler/*.md"],
-        "updateBuildableProjectDepsInPackageJson": false,
-        "generateExportsField": false
+        "command": "vite build --config packages/angular-compiler/vite.config.lib.ts"
       }
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/angular-compiler"],
+      "cache": false,
+      "dependsOn": ["build-self"],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
-        "commands": ["nx build-package angular-compiler"],
-        "parallel": false
-      },
-      "dependsOn": ["^build"]
+        "command": "node tools/scripts/verify-package-artifacts.mts angular-compiler"
+      }
     },
     "test": {
       "executor": "@nx/vitest:test"
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/angular-compiler",
+        "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
+      }
     }
   }
 }
