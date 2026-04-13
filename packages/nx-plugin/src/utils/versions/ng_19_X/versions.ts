@@ -1,7 +1,7 @@
 // V19_X
 export const V19_X_ANALOG_JS_ROUTER = '^3.0.0-alpha.29';
 export const V19_X_ANALOG_JS_CONTENT = '^3.0.0-alpha.29';
-export const V19_X_MARKED = '^15.0.7';
+export const V19_X_MARKED = '^18.0.0';
 export const V19_X_MARKED_GFM_HEADING_ID = '^4.1.1';
 export const V19_X_MARKED_HIGHLIGHT = '^2.2.1';
 export const V19_X_MARKED_MANGLE = '^1.1.10';
