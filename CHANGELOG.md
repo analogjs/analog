@@ -1,3 +1,9 @@
+# [3.0.0-alpha.29](https://github.com/analogjs/analog/compare/v3.0.0-alpha.28...v3.0.0-alpha.29) (2026-04-13)
+
+### Features
+
+- add bundle size analysis and comparison workflows with associated scripts and fixtures ([#2230](https://github.com/analogjs/analog/issues/2230)) ([7a8cab1](https://github.com/analogjs/analog/commit/7a8cab1ef46d4498006386cad6ef6c9633775ddc))
+
 # [3.0.0-alpha.28](https://github.com/analogjs/analog/compare/v3.0.0-alpha.27...v3.0.0-alpha.28) (2026-04-13)
 
 ### Bug Fixes
