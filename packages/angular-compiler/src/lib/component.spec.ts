@@ -2507,6 +2507,31 @@ describe('Ivy definitions as static class members with TDZ hoisting', () => {
     expect(helperIdx).toBeLessThan(classIdx);
   });
 
+  it('hoists a non-exported const used by a later component providers array', () => {
+    const result = compile(
+      `
+      import { Component, InjectionToken } from '@angular/core';
+      @Component({
+        selector: 'app-test',
+        template: '<p>hi</p>',
+        providers: [{ provide: TOKEN, useValue: 42 }],
+      })
+      export class TestComponent {}
+
+      const TOKEN = new InjectionToken<number>('token');
+      `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // TOKEN is referenced in the compiled ɵcmp providers — it must be
+    // defined before the class so the static initializer can read it.
+    const tokenIdx = result.indexOf('const TOKEN');
+    const classIdx = result.indexOf('class TestComponent');
+    expect(tokenIdx).toBeGreaterThan(-1);
+    expect(tokenIdx).toBeLessThan(classIdx);
+  });
+
   it('does not hoist exported declarations', () => {
     const result = compile(
       `
@@ -2524,6 +2549,217 @@ describe('Ivy definitions as static class members with TDZ hoisting', () => {
     const classIdx = result.indexOf('class TestComponent');
     const tokenIdx = result.indexOf('SOME_TOKEN');
     expect(tokenIdx).toBeGreaterThan(classIdx);
+  });
+
+  it('does not hoist a const that instantiates a class defined after the first class', () => {
+    const result = compile(
+      `
+      import { Injectable } from '@angular/core';
+      @Injectable({ providedIn: 'root' })
+      export class AppService {}
+
+      class Converter<A, B> {
+        private map = new Map<A, B>();
+        add(a: A, b: B) { this.map.set(a, b); return this; }
+      }
+
+      const typeConverter = new Converter<string, number>().add('x', 1);
+      `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // Converter class must appear before the const that instantiates it
+    const converterClassIdx = result.indexOf('class Converter');
+    const converterConstIdx = result.indexOf('const typeConverter');
+    expect(converterClassIdx).toBeGreaterThan(-1);
+    expect(converterConstIdx).toBeGreaterThan(-1);
+    expect(converterClassIdx).toBeLessThan(converterConstIdx);
+  });
+
+  it('still hoists a simple const with no class dependencies', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {}
+
+      const utilFn = () => 'hello';
+      `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    const utilIdx = result.indexOf('const utilFn');
+    const classIdx = result.indexOf('class TestComponent');
+    expect(utilIdx).toBeGreaterThan(-1);
+    expect(utilIdx).toBeLessThan(classIdx);
+  });
+
+  it('does not hoist a const that transitively depends on a non-hoistable class', () => {
+    const result = compile(
+      `
+      import { Injectable } from '@angular/core';
+      @Injectable({ providedIn: 'root' })
+      export class AppService {}
+
+      class Settings { defaultLimit = 50; }
+      const cfg = new Settings();
+      const cfgLimit = cfg.defaultLimit;
+      `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // cfg references Settings (a class after the first class), so it must not be hoisted.
+    // cfgLimit references cfg, so it must not be hoisted either.
+    const settingsIdx = result.indexOf('class Settings');
+    const cfgIdx = result.indexOf('const cfg');
+    const cfgLimitIdx = result.indexOf('const cfgLimit');
+    expect(settingsIdx).toBeGreaterThan(-1);
+    expect(cfgIdx).toBeGreaterThan(-1);
+    expect(cfgLimitIdx).toBeGreaterThan(-1);
+    expect(settingsIdx).toBeLessThan(cfgIdx);
+    expect(cfgIdx).toBeLessThan(cfgLimitIdx);
+  });
+
+  it('does not hoist a const that references an exported const after the first class', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {}
+
+      export const BASE_PATH = '/api';
+      const fullPath = BASE_PATH + '/data';
+      `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    const classIdx = result.indexOf('class TestComponent');
+    const fullPathIdx = result.indexOf('const fullPath');
+    // BASE_PATH is exported so not hoisted; fullPath references it, so also not hoisted
+    expect(fullPathIdx).toBeGreaterThan(classIdx);
+  });
+
+  it('does not hoist a const that references an enum defined after the first class', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {}
+
+      enum Priority { Low, Medium, High }
+      const defaultPriority = Priority.Medium;
+      `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    const enumIdx = result.indexOf('enum Priority');
+    const constIdx = result.indexOf('const defaultPriority');
+    const classIdx = result.indexOf('class TestComponent');
+    expect(enumIdx).toBeGreaterThan(-1);
+    expect(constIdx).toBeGreaterThan(-1);
+    // enum stays in place, and const must stay after it
+    expect(enumIdx).toBeGreaterThan(classIdx);
+    expect(enumIdx).toBeLessThan(constIdx);
+  });
+
+  it('does not hoist a const that transitively depends via destructured binding', () => {
+    const result = compile(
+      `
+      import { Injectable } from '@angular/core';
+      @Injectable({ providedIn: 'root' })
+      export class AppService {}
+
+      class Dimensions { width = 100; height = 200; }
+      const { width, height } = new Dimensions();
+      const area = width * height;
+      `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // width/height come from a destructured binding that references Dimensions,
+    // so area (which references width/height) must not be hoisted either.
+    const classIdx = result.indexOf('class Dimensions');
+    const destructIdx = result.indexOf('const { width, height }');
+    const areaIdx = result.indexOf('const area');
+    expect(classIdx).toBeGreaterThan(-1);
+    expect(destructIdx).toBeGreaterThan(-1);
+    expect(areaIdx).toBeGreaterThan(-1);
+    expect(classIdx).toBeLessThan(destructIdx);
+    expect(destructIdx).toBeLessThan(areaIdx);
+  });
+
+  it('does not hoist a const that references an exported destructured binding', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {}
+
+      export const { baseUrl, timeout } = { baseUrl: '/api', timeout: 3000 };
+      const fullUrl = baseUrl + '/data';
+      `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    const classIdx = result.indexOf('class TestComponent');
+    const fullUrlIdx = result.indexOf('const fullUrl');
+    // baseUrl is from an exported destructured binding, so fullUrl must not be hoisted
+    expect(fullUrlIdx).toBeGreaterThan(classIdx);
+  });
+
+  it('hoists a const whose initializer lazily references a later class via arrow function', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {}
+
+      const TOKEN = () => LaterClass;
+      class LaterClass {}
+      `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    const tokenIdx = result.indexOf('const TOKEN');
+    const classIdx = result.indexOf('class TestComponent');
+    // TOKEN only lazily references LaterClass, so it should be hoisted before the class
+    expect(tokenIdx).toBeGreaterThan(-1);
+    expect(tokenIdx).toBeLessThan(classIdx);
+  });
+
+  it('does not hoist a const that references the first class in the file', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+
+      class Formatter {
+        static capitalize(s: string) { return s.toUpperCase(); }
+      }
+
+      @Component({ selector: 'app-test', template: '<p>hi</p>' })
+      export class TestComponent {}
+
+      const label = Formatter.capitalize('hello');
+      `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // Formatter is the first class; label references it and must stay after it
+    const formatterIdx = result.indexOf('class Formatter');
+    const labelIdx = result.indexOf('const label');
+    expect(formatterIdx).toBeGreaterThan(-1);
+    expect(labelIdx).toBeGreaterThan(-1);
+    expect(formatterIdx).toBeLessThan(labelIdx);
   });
 });
 

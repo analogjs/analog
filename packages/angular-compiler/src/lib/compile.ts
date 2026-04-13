@@ -123,6 +123,61 @@ function hasExportModifier(node: ts.Node): boolean {
   );
 }
 
+/**
+ * Collect identifier names referenced in eagerly-evaluated code only.
+ * Skips function/arrow/class bodies so that lazy references
+ * (e.g. `const TOKEN = () => LaterClass`) are not treated as dependencies.
+ */
+function collectIdentifiers(node: ts.Node): Set<string> {
+  const ids = new Set<string>();
+  function walk(n: ts.Node) {
+    if (ts.isIdentifier(n)) {
+      ids.add(n.text);
+    }
+    // Stop recursing into lazily-evaluated scopes
+    if (ts.isFunctionLike(n) || ts.isClassLike(n)) {
+      return;
+    }
+    ts.forEachChild(n, walk);
+  }
+  ts.forEachChild(node, walk);
+  return ids;
+}
+
+/** Extract the names defined by a top-level statement. */
+function getDefinedNames(stmt: ts.Statement): string[] {
+  if (ts.isVariableStatement(stmt)) {
+    const names: string[] = [];
+    for (const decl of stmt.declarationList.declarations) {
+      collectBindingNames(decl.name, names);
+    }
+    return names;
+  }
+  if (ts.isFunctionDeclaration(stmt) && stmt.name) {
+    return [stmt.name.text];
+  }
+  if (ts.isClassDeclaration(stmt) && stmt.name) {
+    return [stmt.name.text];
+  }
+  return [];
+}
+
+/** Recursively collect all bound identifiers from a binding name/pattern. */
+function collectBindingNames(name: ts.BindingName, out: string[]): void {
+  if (ts.isIdentifier(name)) {
+    out.push(name.text);
+  } else if (
+    ts.isObjectBindingPattern(name) ||
+    ts.isArrayBindingPattern(name)
+  ) {
+    for (const el of name.elements) {
+      if (!ts.isOmittedExpression(el)) {
+        collectBindingNames(el.name, out);
+      }
+    }
+  }
+}
+
 export function compile(
   sourceCode: string,
   fileName: string,
@@ -1173,25 +1228,84 @@ export function compile(
   // 2a. Hoist non-exported variable/function declarations that appear after
   // a class to just before the first class. This avoids TDZ errors when
   // static ɵcmp references file-level constants declared after the class.
+  //
+  // We must NOT hoist a statement whose initializer references a name
+  // (class, exported const/let) that is defined between firstClassPos and
+  // the statement itself — doing so would move the reference before the
+  // definition and cause a TDZ error at runtime.
   if (classResults.length > 0) {
-    const firstClassStart = classResults[0].classEnd - 1; // approx
-    // Find the position right before the first class
+    // Find the position right before the first class (any class, not just Angular-decorated)
     let firstClassPos = Infinity;
+    const nonHoistableNames = new Set<string>();
     for (const stmt of origSourceFile.statements) {
       if (ts.isClassDeclaration(stmt)) {
         firstClassPos = stmt.getStart(origSourceFile);
+        // The first class itself is non-hoistable — statements hoisted
+        // before it must not reference it.
+        if (stmt.name) {
+          nonHoistableNames.add(stmt.name.text);
+        }
         break;
       }
     }
+
+    // Pass 1: collect names defined by statements that will NOT be hoisted
+    // (classes, exported vars/functions) and therefore remain after firstClassPos.
     for (const stmt of origSourceFile.statements) {
       const stmtStart = stmt.getStart(origSourceFile);
-      // Only hoist statements that come after the first class
       if (stmtStart <= firstClassPos) continue;
-      // Hoist variable statements and function declarations (not exported)
-      const isHoistable =
+
+      if (ts.isClassDeclaration(stmt) && stmt.name) {
+        nonHoistableNames.add(stmt.name.text);
+      }
+      if (ts.isEnumDeclaration(stmt)) {
+        nonHoistableNames.add(stmt.name.text);
+      }
+      if (ts.isVariableStatement(stmt) && hasExportModifier(stmt)) {
+        for (const decl of stmt.declarationList.declarations) {
+          const names: string[] = [];
+          collectBindingNames(decl.name, names);
+          for (const n of names) {
+            nonHoistableNames.add(n);
+          }
+        }
+      }
+      if (
+        ts.isFunctionDeclaration(stmt) &&
+        hasExportModifier(stmt) &&
+        stmt.name
+      ) {
+        nonHoistableNames.add(stmt.name.text);
+      }
+    }
+
+    // Pass 2: for each hoist candidate, check if it references any
+    // non-hoistable name. If it does, skip it and add its own names to the
+    // non-hoistable set (transitivity).
+    for (const stmt of origSourceFile.statements) {
+      const stmtStart = stmt.getStart(origSourceFile);
+      if (stmtStart <= firstClassPos) continue;
+
+      const isCandidate =
         (ts.isVariableStatement(stmt) && !hasExportModifier(stmt)) ||
         (ts.isFunctionDeclaration(stmt) && !hasExportModifier(stmt));
-      if (isHoistable) {
+      if (!isCandidate) continue;
+
+      const referencedIds = collectIdentifiers(stmt);
+      let referencesNonHoistable = false;
+      for (const id of referencedIds) {
+        if (nonHoistableNames.has(id)) {
+          referencesNonHoistable = true;
+          break;
+        }
+      }
+
+      if (referencesNonHoistable) {
+        // Don't hoist — mark this statement's names as non-hoistable too
+        for (const name of getDefinedNames(stmt)) {
+          nonHoistableNames.add(name);
+        }
+      } else {
         const text = stmt.getText(origSourceFile);
         ms.remove(stmtStart, stmt.getEnd());
         ms.appendLeft(firstClassPos, text + '\n');
