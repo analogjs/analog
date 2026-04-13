@@ -1,7 +1,7 @@
 import { ApplicationConfig, Type } from '@angular/core';
 import {
   bootstrapApplication,
-  type BootstrapContext,
+  BootstrapContext,
 } from '@angular/platform-browser';
 import {
   reflectComponentType,
@@ -79,7 +79,7 @@ export async function renderServerComponent(
     (await readJsonStream(serverContext.req).catch(() => ({}))) || {};
   const appId = `analog-server-${selector.toLowerCase()}-${new Date().getTime()}`;
 
-  const bootstrap = (context?: BootstrapContext) =>
+  const bootstrap = (context: BootstrapContext) =>
     bootstrapApplication(
       component,
       {
@@ -99,7 +99,7 @@ export async function renderServerComponent(
       context,
     );
 
-  const html = await renderApplication(bootstrap, {
+  const html = await renderApplication(bootstrap as any, {
     url,
     document: `<${selector}></${selector}>`,
     platformProviders: [

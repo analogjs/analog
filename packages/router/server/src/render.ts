@@ -48,7 +48,7 @@ export function render(
       return await renderServerComponent(url, serverContext);
     }
 
-    const html = await renderApplication(bootstrap, {
+    const html = await renderApplication(bootstrap as any, {
       document,
       url,
       platformProviders: [

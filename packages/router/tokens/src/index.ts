@@ -58,7 +58,7 @@ export const LOCALE: InjectionToken<string> = new InjectionToken<string>(
   '@analogjs/router Locale',
 );
 
-export function injectLocale() {
+export function injectLocale(): string | null {
   assertInInjectionContext(injectLocale);
   return inject(LOCALE, { optional: true });
 }

@@ -49,9 +49,8 @@ export type ResolvedI18nConfig = Required<I18nConfig>;
  * Injection token for the resolved i18n configuration.
  * Provided by `provideI18n()`.
  */
-export const I18N_CONFIG = new InjectionToken<ResolvedI18nConfig>(
-  '@analogjs/router I18n Config',
-);
+export const I18N_CONFIG: InjectionToken<ResolvedI18nConfig> =
+  new InjectionToken<ResolvedI18nConfig>('@analogjs/router I18n Config');
 
 /**
  * Resolves the full i18n config by merging explicit values with
