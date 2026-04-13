@@ -129,11 +129,11 @@ In the v3 line, deployment docs emphasize:
 - setting `VITE_ANALOG_PUBLIC_BASE_URL` during CI builds for server-side data fetching
 - setting `NITRO_APP_BASE_URL` in the runtime container for the deployed prefix
 
-### Removed first-party packages and experimental compiler paths
+### Removed first-party packages and current compiler gaps
 
 If your app depends on `@analogjs/trpc`, plan that migration separately. The first-party package is removed in v3, so you need to replace it with standard Analog server and API routes or maintain a custom tRPC integration outside the removed package.
 
-If you enabled the experimental Analog Compiler in v2 with `experimental.useAnalogCompiler`, `analogCompilationMode`, or a direct `@analogjs/angular-compiler` dependency, remove that setup before upgrading. V3 no longer publishes the standalone Analog Compiler package. Use the standard `@analogjs/vite-plugin-angular` path, and treat `experimental.useAngularCompilationAPI` as a separate opt-in evaluation rather than a drop-in replacement.
+If you enabled the experimental Analog Compiler in v2 with `experimental.useAnalogCompiler`, `analogCompilationMode`, or a direct `@analogjs/angular-compiler` dependency, treat that path as not yet ported to the current v3 alpha line. Do not represent it as a stable v3 migration target yet. Use the standard `@analogjs/vite-plugin-angular` path for the v3 alpha migration itself, and treat `experimental.useAngularCompilationAPI` as a separate opt-in evaluation rather than a drop-in replacement.
 
 ### Template and toolchain baseline shifts
 
@@ -157,5 +157,5 @@ Keep automated migration tooling focused on the breaking changes above:
 - flag `analog({ i18n: ... })`, `provideI18n()`, `injectSwitchLocale()`, `loadTranslationsRuntime()`, or content locale helpers as removed v3 APIs
 - rewrite only the legacy `@analogjs/vite-plugin-angular/setup-vitest` setup import
 - flag `@analogjs/trpc` as a removed package that needs a manual migration plan
-- flag `experimental.useAnalogCompiler`, `analogCompilationMode`, and `@analogjs/angular-compiler` as removed experimental compiler paths
+- flag `experimental.useAnalogCompiler`, `analogCompilationMode`, and `@analogjs/angular-compiler` as unsupported on the current v3 alpha line rather than removed outright
 - treat optional helpers such as `withTypedRouter`, `withRouteContext`, `withLoaderCaching`, `withDebugRoutes`, and compatibility aliases such as `liveReload` as opt-in rather than mandatory rewrites
