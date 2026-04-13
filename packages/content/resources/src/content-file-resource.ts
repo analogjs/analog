@@ -11,6 +11,10 @@ import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import type { ContentFile } from '../../src/lib/content-file';
+import {
+  CONTENT_FILE_LOADER,
+  injectContentFileLoader,
+} from '../../src/lib/content-file-loader';
 import { ContentRenderer } from '../../src/lib/content-renderer';
 import { injectContentFilesMap } from '../../src/lib/inject-content-files';
 import {
@@ -200,7 +204,9 @@ export function contentFileResource(
     : undefined;
 
   const contentRenderer = inject(ContentRenderer);
-  const contentFilesMap = injectContentFilesMap();
+  const contentFilesMap = inject(CONTENT_FILE_LOADER, { optional: true })
+    ? injectContentFileLoader()()
+    : Promise.resolve(injectContentFilesMap());
   const input =
     params ||
     toSignal(
@@ -211,9 +217,10 @@ export function contentFileResource(
     );
 
   return resource({
-    params: computed(() => ({ input: input(), files: contentFilesMap })),
+    params: computed(() => input()),
     loader: async ({ params: resourceParams }) => {
-      const { input: param, files } = resourceParams;
+      const param = resourceParams;
+      const files = await contentFilesMap;
 
       if (typeof param === 'string') {
         if (param) {

@@ -1,4 +1,10 @@
-import { Injectable, InjectionToken, Signal, signal } from '@angular/core';
+import {
+  Injectable,
+  InjectionToken,
+  Signal,
+  signal,
+  type Provider,
+} from '@angular/core';
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -7,6 +13,10 @@ import { of } from 'rxjs';
 import { describe, expect, it } from 'vitest';
 
 import { CONTENT_FILES_TOKEN } from '../../src/lib/content-files-token';
+import {
+  CONTENT_FILE_LOADER,
+  withContentFileLoader,
+} from '../../src/lib/content-file-loader';
 import { contentFileResource } from './content-file-resource';
 import { ContentRenderer } from '../../src/lib/content-renderer';
 
@@ -218,6 +228,61 @@ title: Hello World
     });
   });
 
+  it('uses the injected content file loader when provided', async () => {
+    const contentFiles = {
+      '/src/content/async/loader.md': () =>
+        Promise.resolve(`---
+slug: 'async/loader'
+---
+# Loaded Async`),
+    };
+
+    setup({
+      routeParams: { slug: 'async/loader' },
+      contentFiles: {},
+      contentFileLoader: async () => contentFiles,
+      provideContentFilesToken: false,
+    });
+
+    const result = TestBed.inject(TEST_RESOURCE_TOKEN);
+    await settleResource(result);
+
+    expect(result.value()).toEqual({
+      filename: '/src/content/async/loader',
+      slug: 'async/loader',
+      attributes: { slug: 'async/loader' },
+      content: '# Loaded Async',
+      toc: [{ id: 'loaded-async', level: 1, text: 'Loaded Async' }],
+    });
+  });
+
+  it('supports the default content file loader provider', async () => {
+    const contentFiles = {
+      '/src/content/default-loader.md': () =>
+        Promise.resolve(`---
+slug: 'default-loader'
+---
+# Default Loader`),
+    };
+
+    setup({
+      routeParams: { slug: 'default-loader' },
+      contentFiles,
+      providers: [withContentFileLoader()],
+    });
+
+    const result = TestBed.inject(TEST_RESOURCE_TOKEN);
+    await settleResource(result);
+
+    expect(result.value()).toEqual({
+      filename: '/src/content/default-loader',
+      slug: 'default-loader',
+      attributes: { slug: 'default-loader' },
+      content: '# Default Loader',
+      toc: [{ id: 'default-loader', level: 1, text: 'Default Loader' }],
+    });
+  });
+
   it('validates module metadata when a schema is provided', async () => {
     const contentFiles = {
       '/src/content/guides/intro.md': () =>
@@ -298,33 +363,56 @@ function setup(args: {
     string,
     () => Promise<string | { default: any; metadata: any }>
   >;
+  contentFileLoader?: () => Promise<
+    Record<string, () => Promise<string | { default: any; metadata: any }>>
+  >;
   params?: Signal<string | { customFilename: string }>;
+  provideContentFilesToken?: boolean;
+  providers?: Provider[];
   schema?: StandardSchemaV1;
 }) {
+  const providers = [
+    {
+      provide: ActivatedRoute,
+      useValue: {
+        paramMap: of(convertToParamMap(args.routeParams)),
+      },
+    },
+    {
+      provide: ContentRenderer,
+      useClass: TestContentRenderer,
+    },
+    ...(args.provideContentFilesToken === false
+      ? []
+      : [
+          {
+            provide: CONTENT_FILES_TOKEN,
+            useValue: args.contentFiles as Record<
+              string,
+              () => Promise<string>
+            >,
+          },
+        ]),
+    ...(args.contentFileLoader
+      ? [
+          {
+            provide: CONTENT_FILE_LOADER,
+            useValue: args.contentFileLoader,
+          },
+        ]
+      : []),
+    ...(args.providers ?? []),
+    {
+      provide: TEST_RESOURCE_TOKEN,
+      useFactory: () =>
+        args.schema
+          ? contentFileResource({ params: args.params, schema: args.schema })
+          : contentFileResource(args.params),
+    },
+  ];
+
   TestBed.configureTestingModule({
-    providers: [
-      {
-        provide: ActivatedRoute,
-        useValue: {
-          paramMap: of(convertToParamMap(args.routeParams)),
-        },
-      },
-      {
-        provide: ContentRenderer,
-        useClass: TestContentRenderer,
-      },
-      {
-        provide: CONTENT_FILES_TOKEN,
-        useValue: args.contentFiles as Record<string, () => Promise<string>>,
-      },
-      {
-        provide: TEST_RESOURCE_TOKEN,
-        useFactory: () =>
-          args.schema
-            ? contentFileResource({ params: args.params, schema: args.schema })
-            : contentFileResource(args.params),
-      },
-    ],
+    providers,
   });
 }
 
