@@ -5,7 +5,10 @@ import TabItem from '@theme/TabItem';
 
 You can use the `ng update` command for an Angular CLI workspace, or the `nx migrate` command for updating within an Nx workspace.
 
-For the stable v3 migration checklist and breaking changes, see the [migration guide](/docs/guides/migrating#analog-v2-to-v3).
+If you are upgrading an existing Analog app between major versions, use the dedicated guides:
+
+- [Migrating from Analog v1 to v2](/docs/guides/migrating-v1-to-v2)
+- [Migrating from Analog v2 to v3](/docs/guides/migrating-v2-to-v3)
 
 <Tabs groupId="app-upgrader">
   <TabItem label="ng update" value="ng-update">

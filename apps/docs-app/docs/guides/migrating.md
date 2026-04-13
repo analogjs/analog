@@ -7,175 +7,14 @@ An existing Angular Single Page Application can be configured to use Analog usin
 
 > Analog v3 requires Angular v17 or newer. Angular v16 is no longer supported.
 
-## Migrating between Analog major versions
+## Existing Analog apps
 
-Use the path that matches your current app version:
+If you are upgrading an existing Analog app between major versions, use the dedicated guides:
 
-- Analog v1 users should upgrade to v2 first, then move from v2 to v3.
-- Analog v2 users can move directly to the v3 checklist below.
+- [Migrating from Analog v1 to v2](/docs/guides/migrating-v1-to-v2)
+- [Migrating from Analog v2 to v3](/docs/guides/migrating-v2-to-v3)
 
-### Analog v1 to v2
-
-The main migration themes from v1 to v2 are:
-
-- move to the public `@analogjs/content` entrypoint instead of internal imports such as `@analogjs/content/lib`
-- verify any content-rendering and table-of-contents usage against the current public API surface
-- update your app with the standard Analog package upgrade flow before taking on the v3 breaking changes
-
-If you use content rendering helpers such as `ContentRenderer`, import them from `@analogjs/content`:
-
-```ts
-import { ContentRenderer, type TableOfContentItem } from '@analogjs/content';
-```
-
-Do not rely on internal paths such as `@analogjs/content/lib`.
-
-After the app is on the current v2 line and using public imports, continue with the v2 to v3 migration below.
-
-### Analog v2 to v3
-
-For an existing Analog v2 project, update the packages first and then work through the v3 breaking changes that apply to your app.
-
-#### Update the workspace packages
-
-Use the standard Analog update flow for your workspace type:
-
-<Tabs groupId="app-upgrader">
-  <TabItem label="ng update" value="ng-update">
-
-```shell
-ng update @analogjs/platform@latest
-```
-
-  </TabItem>
-
-  <TabItem label="Nx migrate" value="nx-migrate">
-
-```shell
-nx migrate @analogjs/platform@latest
-```
-
-  </TabItem>
-</Tabs>
-
-#### v2 to v3 checklist
-
-##### Angular version support
-
-Analog v3 no longer supports Angular v16. Upgrade the workspace to Angular v17 or newer before adopting the stable v3 line.
-
-##### Removed Analog SFC support
-
-Analog SFC support was removed and `.agx` files are no longer supported. Replace any remaining SFC usage with standard Angular components, markdown content files, or route/page files that use the current Analog conventions.
-
-##### Content rendering now requires an explicit highlighter
-
-If your app renders markdown content, configure the content highlighter through the `analog()` plugin in `vite.config.ts`. New blog templates already do this, but older full-stack apps often do not.
-
-Before:
-
-```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
-export default defineConfig(() => ({
-  plugins: [analog()],
-}));
-```
-
-After:
-
-```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
-export default defineConfig(() => ({
-  plugins: [
-    analog({
-      content: {
-        highlighter: 'shiki',
-      },
-    }),
-  ],
-}));
-```
-
-If you are using the markdown renderer in the app itself, keep `provideContent(withMarkdownRenderer())` and pair it with the matching highlighter setup for your project, such as `withShikiHighlighter()`.
-
-If you were relying on older internal imports, switch those to the public `@analogjs/content` entrypoint. For example, import `ContentRenderer` and `TableOfContentItem` from `@analogjs/content`, not `@analogjs/content/lib`.
-
-```ts
-import { ContentRenderer, type TableOfContentItem } from '@analogjs/content';
-```
-
-##### Astro Angular now targets Angular 20 zoneless change detection
-
-If you use `@analogjs/astro-angular`, plan the upgrade around Angular 20 and its zoneless baseline. Treat that package as a separate migration stream from a standard Analog app upgrade.
-
-##### Legacy Vitest setup path
-
-If your tests still import `@analogjs/vite-plugin-angular/setup-vitest`, migrate them to `@analogjs/vitest-angular/setup-zone`. Current update flows cover this automatically, but older manual setups should be checked explicitly.
-
-##### Storybook testing imports
-
-If your test setup imports `setProjectAnnotations` from `@analogjs/storybook-angular/testing`, migrate it to the current Storybook Angular testing entrypoint used by the package. The old dedicated `./testing` export was removed from the package surface during the v3 line.
-
-##### Custom base-href deployment flow
-
-If your app is deployed under a custom base URL, re-check that setup against the current deployment docs. The older pattern that relied on hand-editing `apiPrefix`, `injectAPIPrefix()`, and preview commands around the old flow is not the current recommended setup.
-
-In the v3 line, deployment docs emphasize:
-
-- setting `APP_BASE_HREF` from `import.meta.env.BASE_URL`
-- passing the build-time base href explicitly in the build command
-- setting `VITE_ANALOG_PUBLIC_BASE_URL` during CI builds for server-side data fetching
-- setting `NITRO_APP_BASE_URL` in the runtime container for the deployed prefix
-
-##### Template and toolchain baseline shifts
-
-Do not assume the latest scaffolded app uses the same Angular and Vite versions as your v2 codebase. The `beta -> alpha` diff shows the template line moving to newer combinations, including:
-
-- Angular 17 and 18 templates moving to Vite 6
-- current full-stack/blog templates moving to Angular 19 plus Vite 7
-- `@angular-devkit/build-angular` returning to the scaffolded devDependencies in the current templates
-- markdown-related packages such as `marked`, `marked-highlight`, `marked-gfm-heading-id`, `marked-mangle`, `front-matter`, and sometimes `prismjs` being explicit app dependencies in current content-enabled templates
-
-#### Branch-derived upgrade notes for automation
-
-The `upstream/beta -> upstream/alpha` branch diff is small enough to turn into practical migration rules:
-
-- Reject Angular versions lower than v17. Analog's generators, devkit checks, and compatibility docs now treat Angular v17 as the floor.
-- Remove any remaining `.agx` / Analog SFC usage and rewrite those files as normal Angular components.
-- If the app uses `provideContent(withMarkdownRenderer())`, markdown route files, or content rendering helpers, ensure `vite.config.ts` configures `analog({ content: { highlighter: 'shiki' } })` or another supported highlighter.
-- Replace internal content imports such as `@analogjs/content/lib` with the public `@analogjs/content` entrypoint.
-- If tests import `@analogjs/vite-plugin-angular/setup-vitest`, rewrite them to `@analogjs/vitest-angular/setup-zone`.
-- If tests import `@analogjs/storybook-angular/testing`, rewrite them to the current Storybook Angular testing entrypoint instead of relying on the removed dedicated Analog testing export.
-- If the project uses explicit HMR configuration, prefer `hmr` over `liveReload`. HMR support is intended for newer Angular lines; older Angular versions should not be migrated with an expectation of HMR parity.
-- Expect newer Vite baselines. The branch diff moves Angular 17/18 templates to Vite 6 and current Angular 19 templates to Vite 7.
-- If the project uses `@analogjs/astro-angular`, treat that as a separate migration track because the integration moved to zoneless change detection by default.
-- If the project has custom base-href deployment logic, re-check `VITE_ANALOG_PUBLIC_BASE_URL`, `NITRO_APP_BASE_URL`, and build-command `baseHref` handling against the current deployment docs rather than preserving the older manual `apiPrefix` flow unchanged.
-
-For LLM-driven migration, use this checklist in order:
-
-1. Detect the Angular major version from `package.json`. If it is `<17`, stop and upgrade Angular first.
-2. Scan for `.agx` files and replace them with standard Angular component files.
-3. Scan for `@analogjs/content/lib` imports and rewrite them to `@analogjs/content`.
-4. Scan for `provideContent(withMarkdownRenderer())`, markdown page routes, or content helper imports. If found, enforce `analog({ content: { highlighter: 'shiki' } })` in `vite.config.ts`.
-5. Scan for `@analogjs/vite-plugin-angular/setup-vitest` and rewrite it to `@analogjs/vitest-angular/setup-zone`.
-6. Scan for `@analogjs/storybook-angular/testing` and migrate those imports off the removed dedicated testing export.
-7. Scan for explicit `liveReload` config and convert it to `hmr` unless the project intentionally needs the compatibility alias.
-8. Reconcile the toolchain versions in `package.json` with the current Analog template line for that Angular major.
-9. Re-check custom base-href deployment code and environment variables against the current deployment model.
-
-#### Current v3 APIs that are useful during migration
-
-These are not the main `v2 -> v3` breaking changes from the `beta -> alpha` diff, but they are useful current APIs and diagnostics that an automated migration agent can take advantage of once the codebase is on the v3 line:
-
-- Prefer the structured `debug` option in `analog()` or the Angular plugin when diagnosing compiler, route, stylesheet, HMR, Nitro, or platform issues. See the debugging guide for supported scopes such as `analog:platform`, `analog:angular:hmr`, `analog:angular:styles`, and `analog:nitro`.
-- Treat router experimental helpers as opt-in, not mandatory migration rewrites. Current router exports include experimental helpers such as `withTypedRouter`, `withRouteContext`, and `withLoaderCaching`.
-- Treat debug-route helpers as optional development tooling. Current router exports include `withDebugRoutes` and `injectDebugRoutes`, but an upgrader should not add them unless the project explicitly wants route-debug pages.
-- Keep public imports on package entrypoints wherever possible. If an import path looks like a deep internal path instead of a documented package export, treat that as suspicious during migration.
-- Prefer current documented APIs over compatibility aliases. For example, prefer `hmr` over `liveReload`, and prefer current route metadata patterns over older legacy exports.
+If you are migrating a standard Angular app into Analog for the first time, continue with the guide below.
 
 ## Using a Schematic/Generator
 
@@ -352,7 +191,7 @@ export default defineConfig(({ mode }) => ({
 ## Enabling HMR
 
 Angular supports HMR where in most cases components can be updated without a full page reload. In Analog, prefer the `hmr` option. `liveReload` is still accepted as a compatibility alias, but `hmr` is the primary API.
-Analog requires Angular v19 or newer for `hmr` / `liveReload` to work. On Angular v16-v18, `hmr` and its `liveReload` alias are forcibly disabled at runtime with a console warning, so HMR is unavailable on those versions.
+Analog requires Angular v19 or newer for `hmr` / `liveReload` to work. On Angular v17-v18, `hmr` and its `liveReload` alias are forcibly disabled at runtime with a console warning, so HMR is unavailable on those versions.
 
 ```ts
 /// <reference types="vitest" />
