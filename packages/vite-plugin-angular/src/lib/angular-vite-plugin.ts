@@ -120,6 +120,31 @@ interface DeclarationFile {
   data: string;
 }
 
+const VIRTUAL_STYLE_PREFIX =
+  'virtual:@analogjs/vite-plugin-angular:inline-style:';
+
+function toVirtualStyleId(absPath: string): string {
+  return `${VIRTUAL_STYLE_PREFIX}${Buffer.from(absPath, 'utf-8').toString(
+    'base64url',
+  )}`;
+}
+
+function isVirtualStyleId(id: string): boolean {
+  return id.replace(/^\0/, '').startsWith(VIRTUAL_STYLE_PREFIX);
+}
+
+function fromVirtualStyleId(id: string): string {
+  const normalizedId = id.replace(/^\0/, '');
+  if (!normalizedId.startsWith(VIRTUAL_STYLE_PREFIX)) {
+    throw new Error(`Invalid virtual style id: ${id}`);
+  }
+
+  return Buffer.from(
+    normalizedId.slice(VIRTUAL_STYLE_PREFIX.length),
+    'base64url',
+  ).toString('utf-8');
+}
+
 export function angular(options?: PluginOptions): Plugin[] {
   /**
    * Normalize plugin options so defaults
@@ -373,6 +398,21 @@ export function angular(options?: PluginOptions): Plugin[] {
 
         if (/\.(html|htm|css|less|sass|scss)$/.test(ctx.file)) {
           fileTransformMap.delete(ctx.file.split('?')[0]);
+
+          // Virtual style modules (used for JIT external styleUrls) are not
+          // found by moduleGraph.getModulesByFile because their module id is
+          // a virtual prefix, not the real file path. Look up the virtual
+          // module manually and include it so HMR propagation works.
+          const virtualStyleId = `\0${toVirtualStyleId(
+            normalizePath(ctx.file),
+          )}`;
+          const virtualMod =
+            ctx.server.moduleGraph.getModuleById(virtualStyleId);
+          if (virtualMod && !ctx.modules.includes(virtualMod)) {
+            ctx.server.moduleGraph.invalidateModule(virtualMod);
+            ctx.modules.push(virtualMod);
+          }
+
           /**
            * Check to see if this was a direct request
            * for an external resource (styles, html).
@@ -475,11 +515,17 @@ export function angular(options?: PluginOptions): Plugin[] {
         return ctx.modules;
       },
       resolveId(id, importer) {
+        if (id.startsWith(VIRTUAL_STYLE_PREFIX)) {
+          return `\0${id}`;
+        }
+
         if (jit && id.startsWith('angular:jit:')) {
-          const path = id.split(';')[1];
-          return `${normalizePath(
-            resolve(dirname(importer as string), path),
-          )}?${id.includes(':style') ? 'analog-inline' : 'analog-raw'}`;
+          const filePath = normalizePath(
+            resolve(dirname(importer as string), id.split(';')[1]),
+          );
+          return id.includes(':style')
+            ? toVirtualStyleId(filePath)
+            : `${filePath}?analog-raw`;
         }
 
         // Intercept .html?raw imports to bypass Vite 7.3.2+ server.fs restrictions
@@ -526,6 +572,14 @@ export function angular(options?: PluginOptions): Plugin[] {
         return undefined;
       },
       async load(id) {
+        if (isVirtualStyleId(id)) {
+          const filePath = fromVirtualStyleId(id);
+          this.addWatchFile(filePath);
+          const code = await fsPromises.readFile(filePath, 'utf-8');
+          const result = await preprocessCSS(code, filePath, resolvedConfig);
+          return `export default ${JSON.stringify(result.code)}`;
+        }
+
         // Handle Angular template raw imports directly to bypass Vite server.fs
         // restrictions on ?raw query parameters (Vite 7.3.2+)
         if (id.endsWith('?analog-raw')) {
@@ -708,10 +762,11 @@ export function angular(options?: PluginOptions): Plugin[] {
               'virtual:angular:jit:style:inline;',
             );
 
-            // Emit ?analog-raw and ?analog-inline directly (instead of
-            // ?raw / ?inline) so the import ids in the compiled JS never
-            // match Vite 8.0.5+'s [?&](raw|inline)\b security regex during
-            // loadAndTransform.
+            // Emit safe resource ids directly in the transformed JS so Vite
+            // never sees the dangerous ?raw / ?inline form during
+            // loadAndTransform. Templates still use ?analog-raw, while
+            // external styles now use virtual module ids with no stylesheet
+            // extension to avoid vite:css re-processing.
             //
             // Why this matters: Vite's Denied ID check fires for any id
             // matching that regex whose path is outside server.fs.allow,
@@ -719,12 +774,12 @@ export function angular(options?: PluginOptions): Plugin[] {
             // fetchModule path also bypasses pluginContainer.resolveId
             // (it calls moduleGraph.ensureEntryFromUrl first, which makes
             // the resolveId chain a no-op for the module-runner). So
-            // neither the resolveId-based ?inline -> ?analog-inline rewrite
-            // nor the load-hook fallback (added in 2.4.4) gets a chance to
-            // run for cross-library imports — the security check has
-            // already thrown by then. Emitting the safe query directly in
-            // the transform output is the only place we can guarantee Vite
-            // never sees the dangerous form. (#2263)
+            // neither the resolveId-based rewrites nor the load-hook
+            // fallback (added in 2.4.4) get a chance to run for
+            // cross-library imports — the security check has already thrown
+            // by then. Emitting the safe ids directly in transform is the
+            // only place we can guarantee Vite never sees the dangerous
+            // form. (#2263)
             templateUrls.forEach((templateUrlSet) => {
               const [templateFile, resolvedTemplateUrl] =
                 templateUrlSet.split('|');
@@ -738,7 +793,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               const [styleFile, resolvedStyleUrl] = styleUrlSet.split('|');
               data = data.replace(
                 `angular:jit:style:file;${styleFile}`,
-                `${resolvedStyleUrl}?analog-inline`,
+                toVirtualStyleId(resolvedStyleUrl),
               );
             });
           }
