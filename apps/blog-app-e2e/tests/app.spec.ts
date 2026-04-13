@@ -1,8 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-// TODO: re-enable once router redirect-only index routes are fixed
-// https://github.com/analogjs/analog/issues/2172
-test.fixme('should redirect to /blog', async ({ page }) => {
+test('should redirect to /blog', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveURL(/\/blog$/);
 });

@@ -1,3 +1,21 @@
+# [3.0.0-alpha.29](https://github.com/analogjs/analog/compare/v3.0.0-alpha.28...v3.0.0-alpha.29) (2026-04-13)
+
+### Features
+
+- add bundle size analysis and comparison workflows with associated scripts and fixtures ([#2230](https://github.com/analogjs/analog/issues/2230)) ([7a8cab1](https://github.com/analogjs/analog/commit/7a8cab1ef46d4498006386cad6ef6c9633775ddc))
+
+# [3.0.0-alpha.28](https://github.com/analogjs/analog/compare/v3.0.0-alpha.27...v3.0.0-alpha.28) (2026-04-13)
+
+### Bug Fixes
+
+- **router:** forward prerender params and declare standard-schema peer dependency ([#2247](https://github.com/analogjs/analog/issues/2247)) ([5f8e912](https://github.com/analogjs/analog/commit/5f8e9125540f02211b4aec8b27e75c5eec607e87))
+
+# [3.0.0-alpha.27](https://github.com/analogjs/analog/compare/v3.0.0-alpha.26...v3.0.0-alpha.27) (2026-04-13)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** migrate legacy setup-vitest users ([#2235](https://github.com/analogjs/analog/issues/2235)) ([73d3a1e](https://github.com/analogjs/analog/commit/73d3a1e9e72e8e6aa8bf54ee7f2a2fa7d77c915a))
+
 # [3.0.0-alpha.26](https://github.com/analogjs/analog/compare/v3.0.0-alpha.25...v3.0.0-alpha.26) (2026-04-06)
 
 ### Features

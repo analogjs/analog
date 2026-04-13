@@ -10,7 +10,7 @@
     "assert-deps": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node tools/scripts/assert-project-dependency.mts router vite-plugin-angular"
+        "command": "node tools/scripts/assert-project-dependency.mts router build vite-plugin-angular:build content:build"
       }
     },
     "build": {
