@@ -45,7 +45,7 @@ export default [
         {
           enforceBuildableLibDependency: true,
           allowCircularSelfDependency: true,
-          allow: [],
+          allow: ['../../tools/vite/get-workspace-dependency-excludes.js'],
           depConstraints: [
             {
               sourceTag: '*',

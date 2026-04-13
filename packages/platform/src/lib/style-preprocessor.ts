@@ -46,7 +46,7 @@ export function normalizeStylesheetTransformResult(
 
   return {
     code: value.code ?? fallbackCode,
-    dependencies: value.dependencies ?? [],
+    dependencies: normalizeStylesheetDependencies(value.dependencies),
     diagnostics: value.diagnostics ?? [],
     tags: value.tags ?? [],
   };
