@@ -67,7 +67,7 @@ describe('isTestWatchMode', () => {
 });
 
 describe('JIT resolveId', () => {
-  it('should resolve style files with ?analog-inline suffix', () => {
+  it('should resolve style files as virtual analog-inline module', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
       (p) => p.name === '@analogjs/vite-plugin-angular',
@@ -83,8 +83,10 @@ describe('JIT resolveId', () => {
     );
 
     expect(result).toBeDefined();
-    expect(result).toContain('?analog-inline');
+    expect(result).toContain('\0analog-inline:');
     expect(result).not.toContain('?inline');
+    // Extension is moved into the prefix, not at the end
+    expect(result).not.toMatch(/\.scss$/);
   });
 
   it('should resolve template files with ?analog-raw suffix', () => {
@@ -145,7 +147,7 @@ describe('JIT resolveId', () => {
     expect(result).toContain('?analog-raw');
   });
 
-  it('should intercept style ?inline imports and remap to ?analog-inline', () => {
+  it('should intercept style ?inline imports and remap to virtual analog-inline', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
       (p) => p.name === '@analogjs/vite-plugin-angular',
@@ -158,14 +160,14 @@ describe('JIT resolveId', () => {
       './my-component.scss?inline',
       '/project/src/app/my-component.ts',
     );
-    expect(result).toBe('/project/src/app/my-component.scss?analog-inline');
+    expect(result).toBe('\0analog-inline:scss:/project/src/app/my-component');
 
     // Absolute .css?inline
     const result2 = resolveId(
       '/project/src/app/my-component.css?inline',
       '/project/src/app/other.ts',
     );
-    expect(result2).toBe('/project/src/app/my-component.css?analog-inline');
+    expect(result2).toBe('\0analog-inline:css:/project/src/app/my-component');
   });
 
   it('should intercept style ?inline imports even without jit mode', () => {
@@ -180,10 +182,10 @@ describe('JIT resolveId', () => {
       './my-component.scss?inline',
       '/project/src/app/my-component.ts',
     );
-    expect(result).toContain('?analog-inline');
+    expect(result).toContain('\0analog-inline:');
   });
 
-  it('should not match Vite inline security regex /[?&]inline\\b/', () => {
+  it('should not match Vite inline security regex or cssLangRE', () => {
     const plugins = angular();
     const mainPlugin = plugins.find(
       (p) => p.name === '@analogjs/vite-plugin-angular',
@@ -191,12 +193,15 @@ describe('JIT resolveId', () => {
 
     const resolveId = (mainPlugin as any).resolveId;
     const inlineRE = /[?&]inline\b/;
+    const cssLangRE =
+      /\.(css|less|sass|scss|styl|stylus|pcss|postcss|sss)(?:$|\?)/;
 
     const result = resolveId(
       './my-component.scss?inline',
       '/project/src/app/my-component.ts',
     );
     expect(inlineRE.test(result)).toBe(false);
+    expect(cssLangRE.test(result)).toBe(false);
   });
 });
 
@@ -233,13 +238,17 @@ describe('load ?inline style imports', () => {
     }
   });
 
-  it('still handles the rewritten ?analog-inline query', async () => {
+  it('handles the virtual \\0analog-inline module id', async () => {
     const cssPath = path.join(tmpDir, `analog-rewrite-${Date.now()}.css`);
     realFs.writeFileSync(cssPath, '.bar { color: blue; }', 'utf-8');
 
     try {
       const load = getLoadHook();
-      const result = await load(`${cssPath}?analog-inline`);
+      // Build the virtual id: \0analog-inline:css:/path/to/file (no extension)
+      const ext = path.extname(cssPath).slice(1);
+      const base = cssPath.slice(0, -(ext.length + 1));
+      const virtualId = `\0analog-inline:${ext}:${base}`;
+      const result = await load(virtualId);
       expect(result).toBeDefined();
       expect(result).toContain('export default');
       expect(result).toContain('color: blue');

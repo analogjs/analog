@@ -56,6 +56,11 @@ import {
   angularFullVersion,
 } from './utils/devkit.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
+import {
+  toAnalogInlineRequest,
+  resolveAnalogInlineId,
+  fromAnalogInlineId,
+} from './utils/analog-inline-id.js';
 
 const require = createRequire(import.meta.url);
 
@@ -509,11 +514,22 @@ export function angular(options?: PluginOptions): Plugin[] {
         return ctx.modules;
       },
       resolveId(id, importer) {
+        // Resolve analog-inline: request specifiers (emitted by the
+        // transform hook) to \0-prefixed virtual module IDs.
+        const analogResolved = resolveAnalogInlineId(id);
+        if (analogResolved) {
+          return analogResolved;
+        }
+
         if (jit && id.startsWith('angular:jit:')) {
           const path = id.split(';')[1];
-          return `${normalizePath(
+          const resolved = normalizePath(
             resolve(dirname(importer as string), path),
-          )}?${id.includes(':style') ? 'analog-inline' : 'analog-raw'}`;
+          );
+          if (id.includes(':style')) {
+            return resolveAnalogInlineId(toAnalogInlineRequest(resolved));
+          }
+          return resolved + '?analog-raw';
         }
 
         // Intercept .html?raw imports to bypass Vite 7.3.2+ server.fs restrictions
@@ -532,9 +548,8 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         // Intercept style ?inline imports to bypass Vite 8.0.5+ server.fs
-        // restrictions. Vite's security check matches /[?&]inline\b/ so we
-        // use ?analog-inline which avoids the regex while we handle CSS
-        // preprocessing and inline export ourselves in the load hook.
+        // restrictions. Route through a virtual module so Vite's vite:css
+        // plugin does not re-process the already-compiled JS export.
         if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
           const filePath = id.split('?')[0];
           const resolved = isAbsolute(filePath)
@@ -543,7 +558,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               ? normalizePath(resolve(dirname(importer), filePath))
               : undefined;
           if (resolved) {
-            return resolved + '?analog-inline';
+            return resolveAnalogInlineId(toAnalogInlineRequest(resolved));
           }
         }
 
@@ -572,20 +587,18 @@ export function angular(options?: PluginOptions): Plugin[] {
         // server.fs security check which blocks IDs matching /[?&]inline\b/.
         // Compile via preprocessCSS and return as inline string export.
         //
-        // We accept both ?analog-inline (rewritten by resolveId for the
-        // browser dev-server path) and ?inline (the original query) because
-        // Vitest's fetchModule path calls moduleGraph.ensureEntryFromUrl
-        // before transformRequest, which means pluginContainer.resolveId is
-        // never invoked for module-runner imports — so the resolveId-based
-        // rewrite never runs in the test path. Handling ?inline here covers
-        // both paths.
-        if (
-          id.includes('?analog-inline') ||
-          /\.(css|scss|sass|less)\?inline$/.test(id)
-        ) {
-          const filePath = id.split('?')[0];
-          const code = await fsPromises.readFile(filePath, 'utf-8');
-          const result = await preprocessCSS(code, filePath, resolvedConfig);
+        // Virtual \0analog-inline IDs are produced by resolveId for the
+        // browser dev-server path. We also accept ?inline (the original
+        // query) because Vitest's fetchModule path calls
+        // moduleGraph.ensureEntryFromUrl before transformRequest, which
+        // means pluginContainer.resolveId is never invoked for
+        // module-runner imports — so the resolveId-based rewrite never
+        // runs in the test path. Handling ?inline here covers both paths.
+        const filePath = fromAnalogInlineId(id);
+        if (filePath || /\.(css|scss|sass|less)\?inline$/.test(id)) {
+          const cssPath = filePath || id.split('?')[0];
+          const code = await fsPromises.readFile(cssPath, 'utf-8');
+          const result = await preprocessCSS(code, cssPath, resolvedConfig);
           return `export default ${JSON.stringify(result.code)}`;
         }
 
@@ -757,7 +770,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               const [styleFile, resolvedStyleUrl] = styleUrlSet.split('|');
               data = data.replace(
                 `angular:jit:style:file;${styleFile}`,
-                `${resolvedStyleUrl}?analog-inline`,
+                toAnalogInlineRequest(resolvedStyleUrl),
               );
             });
           }
