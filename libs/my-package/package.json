@@ -10,7 +10,7 @@
     "@analogjs/vitest-angular": "workspace:*"
   },
   "dependencies": {
-    "tslib": "^2.8.1"
+    "tslib": "catalog:"
   },
   "exports": {
     "./package.json": {
