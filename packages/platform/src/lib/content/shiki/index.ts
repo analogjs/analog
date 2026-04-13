@@ -18,6 +18,12 @@ export function getShikiHighlighter({
     return highlighterInstance;
   }
 
+  const additionalLangs = highlighter.additionalLangs ?? [];
+  const skipLangs = highlighter.skipLangs ?? [];
+  const hasMermaidSupport =
+    highlighter.langs?.includes('mermaid') ||
+    additionalLangs.includes('mermaid');
+
   if (!highlighter.themes) {
     if (highlight.theme) {
       highlighter.themes = [highlight.theme];
@@ -29,19 +35,28 @@ export function getShikiHighlighter({
   }
 
   if (!highlighter.langs) {
-    highlighter.langs = defaultHighlighterOptions.langs;
+    highlighter.langs = [...defaultHighlighterOptions.langs];
   }
 
-  if (highlighter.additionalLangs) {
-    highlighter.langs.push(...highlighter.additionalLangs);
-    delete highlighter.additionalLangs;
+  if (additionalLangs.length > 0) {
+    highlighter.langs.push(...additionalLangs);
   }
+
+  if (skipLangs.length > 0) {
+    highlighter.langs = highlighter.langs.filter(
+      (lang) => !skipLangs.includes(lang),
+    );
+  }
+
+  delete highlighter.additionalLangs;
+  delete highlighter.skipLangs;
 
   highlighterInstance = new ShikiHighlighter(
     highlighter as ShikiHighlighterOptions,
     highlight,
     container,
-    !!highlighter.langs.includes('mermaid'),
+    hasMermaidSupport,
+    skipLangs,
   );
 
   return highlighterInstance;
