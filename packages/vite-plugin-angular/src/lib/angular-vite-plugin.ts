@@ -1525,10 +1525,45 @@ export function angular(options?: PluginOptions): Plugin[] {
           return `\0${id}`;
         }
 
+        if (jit && id.startsWith('angular:jit:')) {
+          const path = id.split(';')[1];
+          const resolved = normalizePath(
+            resolve(dirname(importer as string), path),
+          );
+          if (id.includes(':style')) {
+            return toVirtualStyleId(resolved);
+          }
+          return toVirtualRawId(resolved);
+        }
+
+        // Intercept .html?raw imports to bypass Vite server.fs restrictions
+        if (id.includes('.html?raw')) {
+          const filePath = id.split('?')[0];
+          const resolved = isAbsolute(filePath)
+            ? normalizePath(filePath)
+            : importer
+              ? normalizePath(resolve(dirname(importer), filePath))
+              : undefined;
+          if (resolved) {
+            return toVirtualRawId(resolved);
+          }
+        }
+
+        // Intercept style ?inline imports to bypass Vite server.fs restrictions
+        if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
+          const filePath = id.split('?')[0];
+          const resolved = isAbsolute(filePath)
+            ? normalizePath(filePath)
+            : importer
+              ? normalizePath(resolve(dirname(importer), filePath))
+              : undefined;
+          if (resolved) {
+            return toVirtualStyleId(resolved);
+          }
+        }
+
         // Map angular component stylesheets. Prefer registry-served CSS
-        // (preprocessed, with @reference) over external raw file mappings
-        // file path). Without this priority, Angular may emit a basename ID
-        // that resolves to the raw file, bypassing preprocessing.
+        // (preprocessed, with @reference) over external raw file mappings.
         if (isComponentStyleSheet(id)) {
           const filename = getFilenameFromPath(id);
 

@@ -462,6 +462,8 @@ describe('JIT resolveId', () => {
     );
     expect(result).not.toContain('?analog-inline');
     expect(result).not.toContain('?inline');
+    // Extension is moved into the prefix, not at the end
+    expect(result).not.toMatch(/\.scss$/);
   });
 
   it('should resolve template files to virtual raw ids', () => {
@@ -611,7 +613,7 @@ describe('JIT resolveId', () => {
     );
   });
 
-  it('should not match Vite inline security regex /[?&]inline\\b/', () => {
+  it('should not match Vite inline security regex or cssLangRE', () => {
     const plugins = angular();
     const mainPlugin = plugins.find(
       (p) => p.name === '@analogjs/vite-plugin-angular',
@@ -619,12 +621,15 @@ describe('JIT resolveId', () => {
 
     const resolveId = (mainPlugin as any).resolveId;
     const inlineRE = /[?&]inline\b/;
+    const cssLangRE =
+      /\.(css|less|sass|scss|styl|stylus|pcss|postcss|sss)(?:$|\?)/;
 
     const result = resolveId(
       './my-component.scss?inline',
       '/project/src/app/my-component.ts',
     );
     expect(inlineRE.test(result)).toBe(false);
+    expect(cssLangRE.test(result)).toBe(false);
   });
 
   it('should emit virtual style ids that do not look like stylesheet resources', () => {

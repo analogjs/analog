@@ -35,6 +35,9 @@
       "optional": true
     }
   },
+  "optionalDependencies": {
+    "@analogjs/angular-compiler": "workspace:*"
+  },
   "dependencies": {
     "es-toolkit": "catalog:",
     "obug": "catalog:",
