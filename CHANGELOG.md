@@ -1,3 +1,9 @@
+## [2.4.7](https://github.com/analogjs/analog/compare/v2.4.6...v2.4.7) (2026-04-13)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** route template/style imports through virtual module ids ([#2287](https://github.com/analogjs/analog/issues/2287)) ([6ae244c](https://github.com/analogjs/analog/commit/6ae244c421b54a2834f58bc3ee8a51958f8d3347))
+
 ## [2.4.6](https://github.com/analogjs/analog/compare/v2.4.5...v2.4.6) (2026-04-13)
 
 ### Bug Fixes
