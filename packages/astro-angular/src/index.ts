@@ -13,17 +13,25 @@ interface AngularOptions {
    * Enabling this option disables astro's streaming under SSR.
    */
   strictStylePlacement?: boolean;
+  /**
+   * Use Angular's `provideClientHydration` to hydrate components.
+   */
+  useAngularHydration?: boolean;
 }
 
-function getRenderer(): AstroRenderer {
+function getRenderer(ngHydration: boolean | undefined): AstroRenderer {
   return {
     name: '@analogjs/astro-angular',
-    clientEntrypoint: '@analogjs/astro-angular/client.js',
-    serverEntrypoint: '@analogjs/astro-angular/server.js',
+    clientEntrypoint: ngHydration
+      ? '@analogjs/astro-angular/client-ngh.js'
+      : '@analogjs/astro-angular/client.js',
+    serverEntrypoint: ngHydration
+      ? '@analogjs/astro-angular/server-ngh.js'
+      : '@analogjs/astro-angular/server.js',
   };
 }
 
-function getViteConfiguration(pluginOptions?: PluginOptions) {
+function getViteConfiguration(pluginOptions?: AngularOptions) {
   const isRolldown = !!vite.rolldownVersion;
   return {
     [isRolldown ? 'oxc' : 'esbuild']: {
@@ -33,16 +41,19 @@ function getViteConfiguration(pluginOptions?: PluginOptions) {
       include: [
         '@angular/platform-browser',
         '@angular/core',
-        '@analogjs/astro-angular/client.js',
+        pluginOptions?.useAngularHydration
+          ? '@analogjs/astro-angular/client-ngh.js'
+          : '@analogjs/astro-angular/client.js',
       ],
       exclude: [
         '@angular/platform-server',
         '@analogjs/astro-angular/server.js',
+        '@analogjs/astro-angular/server-ngh.js',
       ],
     },
 
     plugins: [
-      viteAngular(pluginOptions),
+      viteAngular(pluginOptions?.vite),
       {
         name: '@analogjs/astro-angular-platform-server',
         transform(code: string, id: string) {
@@ -88,11 +99,9 @@ export default function (options?: AngularOptions): AstroIntegration {
     name: '@analogjs/astro-angular',
     hooks: {
       'astro:config:setup': ({ addRenderer, updateConfig, addMiddleware }) => {
-        addRenderer(getRenderer());
+        addRenderer(getRenderer(options?.useAngularHydration));
         updateConfig({
-          vite: getViteConfiguration(
-            options?.vite,
-          ) as unknown as ViteUserConfig,
+          vite: getViteConfiguration(options),
         });
         if (options?.strictStylePlacement) {
           addMiddleware({

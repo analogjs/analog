@@ -1,6 +1,19 @@
 import type { PrerenderRoute } from 'nitro/types';
 import type { UserConfig } from 'vite';
 
+export interface I18nPrerenderOptions {
+  /**
+   * The default/source locale for the application.
+   */
+  defaultLocale: string;
+
+  /**
+   * List of supported locale identifiers.
+   * Each route will be prerendered once per locale with a locale prefix.
+   */
+  locales: string[];
+}
+
 export interface Options {
   ssr?: boolean;
   ssrBuildDir?: string;

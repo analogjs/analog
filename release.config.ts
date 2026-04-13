@@ -88,6 +88,11 @@ export default {
             from: '"@analogjs/router": ".*"',
             to: '"@analogjs/router": "^${nextRelease.version}"',
           },
+          {
+            files: replacementFiles,
+            from: '"@analogjs/angular-compiler": ".*"',
+            to: '"@analogjs/angular-compiler": "^${nextRelease.version}"',
+          },
         ],
       },
     ],

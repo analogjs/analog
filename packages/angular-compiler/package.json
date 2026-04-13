@@ -1,0 +1,49 @@
+{
+  "name": "@analogjs/angular-compiler",
+  "version": "2.5.0-beta.40",
+  "description": "Lightweight compiler for Angular",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "angular",
+    "compiler",
+    "vite",
+    "ivy",
+    "signals",
+    "analogjs"
+  ],
+  "author": "Brandon Roberts <robertsbt@gmail.com>",
+  "bugs": {
+    "url": "https://github.com/analogjs/analog/issues"
+  },
+  "homepage": "https://github.com/analogjs/analog#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/analogjs/analog.git"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/brandonroberts"
+  },
+  "peerDependencies": {
+    "@angular/compiler": ">=17.0.0",
+    "@angular/compiler-cli": ">=17.0.0"
+  },
+  "dependencies": {
+    "magic-string": "catalog:",
+    "obug": "catalog:",
+    "oxc-parser": "catalog:"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

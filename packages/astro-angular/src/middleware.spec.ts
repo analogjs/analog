@@ -1,5 +1,5 @@
 import type { APIContext } from 'astro';
-import { onRequest } from './middleware';
+import { onRequest } from './middleware.ts';
 
 describe('angularAstroMiddleware', () => {
   it('should move angular style tags to the head', async () => {
@@ -247,5 +247,55 @@ describe('angularAstroMiddleware', () => {
 
     // Should get an identical instance untouched
     expect(transformed).toBe(response);
+  });
+
+  it('should update the content-length header', async () => {
+    const response = new Response(
+      `      
+      <html>
+        <head>
+        </head>
+        <body>
+          <astro-island>
+            <style ng-app-id="ng">.card{color:red}</style>
+            🔥
+          </astro-island>
+        </body>
+      </html>
+    `,
+      {
+        headers: {
+          'Content-Type': 'text/html',
+        },
+      },
+    );
+
+    const transformed = await onRequest(
+      null! as APIContext,
+      vi.fn().mockResolvedValue(response),
+    );
+
+    expect(transformed).toBeInstanceOf(Response);
+
+    const body = await (transformed as Response).text();
+
+    expect(body).toMatchInlineSnapshot(`
+      "<html><head>
+              <style ng-app-id="ng">.card{color:red}</style></head>
+              <body>
+                <astro-island>
+                  
+                  🔥
+                </astro-island>
+              
+            
+          </body></html>"
+    `);
+
+    // Since the text contains emoji, it should _not_ use the number of characters in the string, but rather the number of bytes.
+    expect((transformed as Response).headers.get('content-length')).not.toBe(
+      body.length.toFixed(0),
+    );
+    expect((transformed as Response).headers.get('content-length')).toBe('205');
   });
 });
