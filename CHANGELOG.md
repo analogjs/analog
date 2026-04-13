@@ -1,3 +1,9 @@
+# [3.0.0-alpha.27](https://github.com/analogjs/analog/compare/v3.0.0-alpha.26...v3.0.0-alpha.27) (2026-04-13)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** migrate legacy setup-vitest users ([#2235](https://github.com/analogjs/analog/issues/2235)) ([73d3a1e](https://github.com/analogjs/analog/commit/73d3a1e9e72e8e6aa8bf54ee7f2a2fa7d77c915a))
+
 # [3.0.0-alpha.26](https://github.com/analogjs/analog/compare/v3.0.0-alpha.25...v3.0.0-alpha.26) (2026-04-06)
 
 ### Features
