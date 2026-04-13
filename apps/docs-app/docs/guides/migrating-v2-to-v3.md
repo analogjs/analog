@@ -77,9 +77,38 @@ If you were relying on older internal imports, switch those to the public `@anal
 import { ContentRenderer, type TableOfContentItem } from '@analogjs/content';
 ```
 
+### Content routes now require `withContentRoutes()`
+
+If your v2 app uses markdown page routes such as `.md` files in `src/app/pages`, update the router setup to opt into content routes explicitly.
+
+Before:
+
+```ts
+import { provideFileRouter } from '@analogjs/router';
+
+provideFileRouter();
+```
+
+After:
+
+```ts
+import { provideFileRouter } from '@analogjs/router';
+import { withContentRoutes } from '@analogjs/router/content';
+
+provideFileRouter(withContentRoutes());
+```
+
+If you moved any content-route helpers into app code, import them from `@analogjs/router/content` instead of relying on the older `@analogjs/router` layout.
+
 ### Astro Angular now targets Angular 20 zoneless change detection
 
 If you use `@analogjs/astro-angular`, plan the upgrade around Angular 20 and its zoneless baseline. Treat that package as a separate migration stream from a standard Analog app upgrade.
+
+### Runtime i18n helpers were removed
+
+The beta runtime i18n helpers are not available in v3. If your app uses `analog({ i18n: ... })`, `provideI18n()`, `injectSwitchLocale()`, `loadTranslationsRuntime()`, or content locale helpers such as `withLocale()`, remove that Analog-specific runtime i18n setup before upgrading.
+
+Plan to keep locale routing and translation loading in your own app code, or migrate to Angular's standard i18n and `$localize` approach instead. There is no direct first-party Analog replacement for the removed runtime i18n layer in v3.
 
 ### Legacy Vitest setup path
 
@@ -100,14 +129,22 @@ In the v3 line, deployment docs emphasize:
 - setting `VITE_ANALOG_PUBLIC_BASE_URL` during CI builds for server-side data fetching
 - setting `NITRO_APP_BASE_URL` in the runtime container for the deployed prefix
 
+### Removed first-party packages and experimental compiler paths
+
+If your app depends on `@analogjs/trpc`, plan that migration separately. The first-party package is removed in v3, so you need to replace it with standard Analog server and API routes or maintain a custom tRPC integration outside the removed package.
+
+If you enabled the experimental Analog Compiler in v2 with `experimental.useAnalogCompiler`, `analogCompilationMode`, or a direct `@analogjs/angular-compiler` dependency, remove that setup before upgrading. V3 no longer publishes the standalone Analog Compiler package. Use the standard `@analogjs/vite-plugin-angular` path, and treat `experimental.useAngularCompilationAPI` as a separate opt-in evaluation rather than a drop-in replacement.
+
 ### Template and toolchain baseline shifts
 
-Do not assume the latest scaffolded app uses the same Angular and Vite versions as your v2 codebase. The `beta -> alpha` diff shows the template line moving to newer combinations, including:
+Do not assume your v2 workspace can keep the same Node and tooling floor. The `beta -> alpha` template diff shows these practical shifts:
 
-- Angular 17 and 18 templates moving to Vite 6
-- current full-stack/blog templates moving to Angular 19 plus Vite 7
-- `@angular-devkit/build-angular` returning to the scaffolded devDependencies in the current templates
-- markdown-related packages such as `marked`, `marked-highlight`, `marked-gfm-heading-id`, `marked-mangle`, `front-matter`, and sometimes `prismjs` being explicit app dependencies in current content-enabled templates
+- current templates now require Node `^22.18.0 || ^24.3.0`
+- current templates pin TypeScript `6.0.2`
+- current templates use `vite-tsconfig-paths` `^7.0.0-alpha.1`
+- content-enabled templates now pin `marked` `^17.0.5`
+
+Match the current template line for your Angular major instead of assuming one repo-wide Vite target.
 
 ## Notes for automated migration
 
@@ -116,5 +153,9 @@ Keep automated migration tooling focused on the breaking changes above:
 - require Angular v17 or newer before applying v3 changes
 - replace deep or internal imports with public package entrypoints
 - add explicit `analog({ content: { highlighter: 'shiki' } })` config when the app renders markdown content
+- add `withContentRoutes()` from `@analogjs/router/content` when the app uses markdown page routes
+- flag `analog({ i18n: ... })`, `provideI18n()`, `injectSwitchLocale()`, `loadTranslationsRuntime()`, or content locale helpers as removed v3 APIs
 - rewrite only the legacy `@analogjs/vite-plugin-angular/setup-vitest` setup import
+- flag `@analogjs/trpc` as a removed package that needs a manual migration plan
+- flag `experimental.useAnalogCompiler`, `analogCompilationMode`, and `@analogjs/angular-compiler` as removed experimental compiler paths
 - treat optional helpers such as `withTypedRouter`, `withRouteContext`, `withLoaderCaching`, `withDebugRoutes`, and compatibility aliases such as `liveReload` as opt-in rather than mandatory rewrites
