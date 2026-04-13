@@ -20,6 +20,41 @@ import {
 
 import { makeCacheKey } from './cache-key';
 
+function mergeFetchParams(
+  requestUrl: URL,
+  request: HttpRequest<unknown>,
+): Record<string, string | string[]> | undefined {
+  const merged = new Map<string, string[]>();
+
+  for (const key of requestUrl.searchParams.keys()) {
+    const values = requestUrl.searchParams.getAll(key);
+
+    if (values.length > 0) {
+      merged.set(key, values);
+    }
+  }
+
+  for (const key of request.params.keys()) {
+    const values = request.params.getAll(key);
+
+    if (values?.length) {
+      merged.set(key, values);
+    }
+  }
+
+  if (merged.size === 0) {
+    return undefined;
+  }
+
+  return [...merged.entries()].reduce<Record<string, string | string[]>>(
+    (params, [key, values]) => {
+      params[key] = values.length === 1 ? values[0] : values;
+      return params;
+    },
+    {},
+  );
+}
+
 /**
  * Interceptor that is server-aware when making HttpClient requests.
  * Server-side requests use the full URL
@@ -55,6 +90,7 @@ export function requestContextInterceptor(
     const cacheKey = makeCacheKey(req, new URL(requestUrl).pathname);
     const storeKey = makeStateKey<unknown>(`analog_${cacheKey}`);
     const fetchUrl = requestUrl.pathname;
+    const fetchParams = mergeFetchParams(requestUrl, req);
 
     const responseType =
       req.responseType === 'arraybuffer' ? 'arrayBuffer' : req.responseType;
@@ -64,7 +100,7 @@ export function requestContextInterceptor(
         .raw(fetchUrl, {
           method: req.method as HTTPMethod,
           body: req.body ? req.body : undefined,
-          params: requestUrl.searchParams,
+          params: fetchParams,
           responseType,
           headers: req.headers
             .keys()

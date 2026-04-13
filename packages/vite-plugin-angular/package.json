@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vite-plugin-angular",
-  "version": "3.0.0-alpha.26",
+  "version": "3.0.0-alpha.29",
   "description": "Vite Plugin for Angular",
   "type": "module",
   "keywords": [
@@ -44,6 +44,18 @@
     "tinyglobby": "catalog:"
   },
   "builders": "./dist/src/lib/tools/builders.json",
+  "nx-migrations": {
+    "packageGroup": [
+      "@analogjs/platform",
+      "@analogjs/content",
+      "@analogjs/router",
+      "@analogjs/storybook-angular",
+      "@analogjs/vite-plugin-angular",
+      "@analogjs/vite-plugin-nitro",
+      "@analogjs/vitest-angular"
+    ],
+    "migrations": "./migrations/migrations.json"
+  },
   "ng-update": {
     "packageGroup": [
       "@analogjs/platform",
@@ -58,6 +70,7 @@
   },
   "exports": {
     "./package.json": "./package.json",
+    "./migrations.json": "./migrations/migrations.json",
     ".": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js",

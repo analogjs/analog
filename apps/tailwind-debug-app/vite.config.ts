@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createLogger, defineConfig, type Plugin } from 'vite';
+import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 
 const DEBUG_DIR = path.resolve(__dirname, '../../tmp/debug');
 const HMR_LOG_PATH = path.join(DEBUG_DIR, 'tailwind-debug-app.vite-hmr.log');
@@ -81,6 +82,11 @@ export default defineConfig(({ mode }) => ({
   root: __dirname,
   publicDir: 'public',
   cacheDir: '../../node_modules/.vite',
+  optimizeDeps: {
+    // Keep workspace Angular libraries on the source-transform path so Analog
+    // can compile external templates/styles instead of Vite prebundling them.
+    exclude: getWorkspaceDependencyExcludes(__dirname),
+  },
   build: {
     outDir: '../../dist/apps/tailwind-debug-app/client',
     reportCompressedSize: true,
