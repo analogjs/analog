@@ -2149,6 +2149,14 @@ export function angular(options?: PluginOptions): Plugin[] {
             data,
             filename,
             pluginOptions.stylePreprocessor,
+            {
+              filename,
+              containingFile,
+              resourceFile,
+              className,
+              order,
+              inline: !resourceFile,
+            },
           );
 
           // Populate classNames during initial compilation so HMR for

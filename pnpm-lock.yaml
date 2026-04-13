@@ -939,6 +939,9 @@ importers:
       effect:
         specifier: 'catalog:'
         version: 4.0.0-beta.36
+      es-toolkit:
+        specifier: 'catalog:'
+        version: 1.45.1
       eslint:
         specifier: 'catalog:'
         version: 10.2.0(jiti@2.6.1)

@@ -92,7 +92,9 @@ describe('angular style-pipeline hooks', () => {
     ).toEqual({
       code: '.demo { color: red; }\n/* a */\n/* /project/demo.css */',
       dependencies: [
-        'virtual:brandos/tailwind.css',
+        {
+          id: 'virtual:brandos/tailwind.css',
+        },
         {
           id: '/tokens/brand.json',
           kind: 'token',

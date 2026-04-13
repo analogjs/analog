@@ -18,4 +18,21 @@ describe('style-preprocessor entry point', () => {
       normalizeStylesheetTransformResult,
     );
   });
+
+  it('normalizes shorthand dependency strings into structured entries', () => {
+    expect(
+      normalizeStylesheetTransformResult(
+        {
+          code: '.demo { color: red; }',
+          dependencies: ['virtual:brandos/tailwind.css'],
+        },
+        '.demo { color: blue; }',
+      ),
+    ).toEqual({
+      code: '.demo { color: red; }',
+      dependencies: [{ id: 'virtual:brandos/tailwind.css' }],
+      diagnostics: [],
+      tags: [],
+    });
+  });
 });
