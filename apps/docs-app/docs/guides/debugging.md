@@ -137,6 +137,16 @@ packages:
   - 'apps/*'
   - 'libs/**'
 
+catalog:
+  '@analogjs/astro-angular': file:/Volumes/Development/analog/packages/astro-angular/dist
+  '@analogjs/content': file:/Volumes/Development/analog/packages/content/dist
+  '@analogjs/platform': file:/Volumes/Development/analog/packages/platform/dist
+  '@analogjs/router': file:/Volumes/Development/analog/packages/router/dist
+  '@analogjs/storybook-angular': file:/Volumes/Development/analog/packages/storybook-angular/dist
+  '@analogjs/vite-plugin-angular': file:/Volumes/Development/analog/packages/vite-plugin-angular/dist
+  '@analogjs/vite-plugin-nitro': file:/Volumes/Development/analog/packages/vite-plugin-nitro/dist
+  '@analogjs/vitest-angular': file:/Volumes/Development/analog/packages/vitest-angular/dist
+
 overrides:
   '@analogjs/astro-angular': file:/Volumes/Development/analog/packages/astro-angular/dist
   '@analogjs/content': file:/Volumes/Development/analog/packages/content/dist
@@ -153,7 +163,7 @@ Root `package.json`
 ```json
 {
   "dependencies": {
-    "@analogjs/platform": "file:/Volumes/Development/analog/packages/platform/dist"
+    "@analogjs/platform": "catalog:"
   },
   "overrides": {
     "@analogjs/astro-angular": "file:/Volumes/Development/analog/packages/astro-angular/dist",
@@ -173,52 +183,10 @@ Keep the overrides in both places. If you only pin one Analog package, pnpm will
 :::
 
 :::note
-pnpm currently does not allow `file:` entries in `catalog`, so local checkout wiring needs direct `file:` overrides instead of `catalog:` indirection.
+Keep your normal dependency entries on `catalog:` in `package.json`. pnpm picks those up from `pnpm-workspace.yaml`. The explicit `file:` specs are still duplicated in `overrides` so transitive Analog packages stay pinned to the same local checkout.
 :::
 
 The examples above include the full set of published Analog workspace packages that are typically consumed from an app workspace. If you're also testing the `create-analog` CLI itself, point it at `dist/packages/create-analog` separately.
-
-### GitHub branch example
-
-If you want the same pattern from a GitHub branch instead of a local path, pnpm supports Git subdirectory specs via `#branch&path:...`.
-
-`pnpm-workspace.yaml`
-
-```yaml
-catalog:
-  '@analogjs/astro-angular': github:benpsnyder/analog#feat/support-snyder-internal&path:packages/astro-angular/dist
-  '@analogjs/content': github:benpsnyder/analog#feat/support-snyder-internal&path:packages/content/dist
-  '@analogjs/platform': github:benpsnyder/analog#feat/support-snyder-internal&path:packages/platform/dist
-  '@analogjs/router': github:benpsnyder/analog#feat/support-snyder-internal&path:packages/router/dist
-  '@analogjs/storybook-angular': github:benpsnyder/analog#feat/support-snyder-internal&path:packages/storybook-angular/dist
-  '@analogjs/vite-plugin-angular': github:benpsnyder/analog#feat/support-snyder-internal&path:packages/vite-plugin-angular/dist
-  '@analogjs/vite-plugin-nitro': github:benpsnyder/analog#feat/support-snyder-internal&path:packages/vite-plugin-nitro/dist
-  '@analogjs/vitest-angular': github:benpsnyder/analog#feat/support-snyder-internal&path:packages/vitest-angular/dist
-```
-
-Root `package.json`
-
-```json
-{
-  "dependencies": {
-    "@analogjs/platform": "catalog:"
-  },
-  "overrides": {
-    "@analogjs/astro-angular": "$@analogjs/astro-angular",
-    "@analogjs/content": "$@analogjs/content",
-    "@analogjs/platform": "$@analogjs/platform",
-    "@analogjs/router": "$@analogjs/router",
-    "@analogjs/storybook-angular": "$@analogjs/storybook-angular",
-    "@analogjs/vite-plugin-angular": "$@analogjs/vite-plugin-angular",
-    "@analogjs/vite-plugin-nitro": "$@analogjs/vite-plugin-nitro",
-    "@analogjs/vitest-angular": "$@analogjs/vitest-angular"
-  }
-}
-```
-
-:::caution
-For Analog, the GitHub form only works when the branch exposes release-ready `dist/package.json` files at those paths. Pointing pnpm at `path:packages/platform` or any other raw source package path will fail because those manifests still contain unresolved `catalog:` and `workspace:*` specifiers.
-:::
 
 ## Configuration Reference
 
