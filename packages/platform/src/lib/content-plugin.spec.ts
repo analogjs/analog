@@ -111,6 +111,20 @@ describe('content plugin', () => {
       );
     });
 
+    it('transforms exported content list placeholders from built workspace packages', () => {
+      vi.mocked(globSync).mockReturnValueOnce([
+        `${appRoot}/src/content/post.md`,
+      ]);
+
+      const { transform } = getDiscoveryPlugins();
+      const result = transform.handler(
+        'export const ANALOG_CONTENT_FILE_LIST = {};',
+      );
+
+      expect(extractKeys(result.code)).toEqual(['/src/content/post.md']);
+      expect(result.code).not.toContain('ANALOG_CONTENT_FILE_LIST = {};');
+    });
+
     it('normalizes workspace content keys outside app root', () => {
       vi.mocked(globSync).mockReturnValueOnce([
         'libs/shared/feature/src/content/post.md',

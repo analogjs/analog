@@ -138,9 +138,9 @@ export function contentPlugin(
             });
 
             let result = code.replace(
-              'const ANALOG_CONTENT_FILE_LIST = {};',
+              'ANALOG_CONTENT_FILE_LIST = {};',
               `
-              let ANALOG_CONTENT_FILE_LIST = {${contentFilesList.map(
+              ANALOG_CONTENT_FILE_LIST = {${contentFilesList.map(
                 (module, index) =>
                   `"${getContentModuleKey(module)}": analog_module_${index}`,
               )}};
