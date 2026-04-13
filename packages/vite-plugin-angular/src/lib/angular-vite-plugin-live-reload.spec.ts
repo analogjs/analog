@@ -1,3 +1,12 @@
+import {
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const preprocessCSSMock = vi.fn();
@@ -14,6 +23,7 @@ let cachedViteActual: typeof import('vite');
 let cachedDevkitActual: typeof import('./utils/devkit.js');
 
 async function setupLiveReloadPlugin(options: {
+  include?: string[];
   stylePreprocessor?: (
     code: string,
     filename: string,
@@ -25,12 +35,22 @@ async function setupLiveReloadPlugin(options: {
       preprocessStylesheet?: (code: string, context: unknown) => string;
     }>;
   };
+  tsconfig?: string;
+  workspaceRoot?: string;
 }) {
   vi.resetModules();
   preprocessCSSMock.mockReset();
   createAngularCompilationMock.mockReset();
   process.env['NODE_ENV'] = 'development';
   delete process.env['VITEST'];
+
+  const resolvedWorkspaceRoot = options.workspaceRoot ?? workspaceRoot;
+  const resolvedTsconfig =
+    options.tsconfig ?? `${resolvedWorkspaceRoot}/tsconfig.base.json`;
+  const resolvedCacheDir = join(
+    resolvedWorkspaceRoot,
+    'node_modules/.vite/live-reload-spec',
+  );
 
   cachedViteActual ??= await vi.importActual<typeof import('vite')>('vite');
   cachedDevkitActual ??=
@@ -77,11 +97,13 @@ async function setupLiveReloadPlugin(options: {
 
   const { angular } = await import('./angular-vite-plugin');
   const plugin = angular({
-    tsconfig: `${workspaceRoot}/tsconfig.base.json`,
+    include: options.include,
+    tsconfig: resolvedTsconfig,
     hmr: true,
     inlineStylesExtension: 'css',
     stylePreprocessor: options.stylePreprocessor,
     stylePipeline: options.stylePipeline,
+    workspaceRoot: resolvedWorkspaceRoot,
     experimental: {
       useAngularCompilationAPI: true,
     },
@@ -89,13 +111,14 @@ async function setupLiveReloadPlugin(options: {
 
   await plugin.config(
     {
-      root: workspaceRoot,
+      root: resolvedWorkspaceRoot,
       mode: 'development',
     },
     { command: 'serve', mode: 'development' },
   );
   await plugin.configResolved({
-    root: workspaceRoot,
+    cacheDir: resolvedCacheDir,
+    root: resolvedWorkspaceRoot,
     mode: 'development',
     build: {},
     server: {},
@@ -110,6 +133,7 @@ async function setupLiveReloadPlugin(options: {
   expect(transformStylesheet).toBeTypeOf('function');
 
   return {
+    initialize,
     plugin,
     transformStylesheet: transformStylesheet!,
   };
@@ -298,6 +322,83 @@ describe('angular hmr style preprocessing', () => {
       expect(await plugin.load(`${updatedId}?ngcomp=ng-c123&e=0`)).toBe(
         '/* /project/src/app/demo.component.css DemoComponent 1 */\n.demo { color: blue; }',
       );
+    },
+  );
+
+  it(
+    'wraps the compilation API tsconfig when include adds extra source roots',
+    { timeout: 15_000 },
+    async () => {
+      const tempWorkspaceRoot = mkdtempSync(
+        join(tmpdir(), 'analog-compilation-api-include-'),
+      );
+      const normalize = (value: string) => value.replaceAll('\\', '/');
+
+      try {
+        mkdirSync(join(tempWorkspaceRoot, 'src/app'), { recursive: true });
+        mkdirSync(join(tempWorkspaceRoot, 'libs/shared/feature/src'), {
+          recursive: true,
+        });
+
+        writeFileSync(
+          join(tempWorkspaceRoot, 'src/app/app.component.ts'),
+          'export const app = true;\n',
+        );
+        writeFileSync(
+          join(
+            tempWorkspaceRoot,
+            'libs/shared/feature/src/feature.component.ts',
+          ),
+          'export const feature = true;\n',
+        );
+        writeFileSync(
+          join(tempWorkspaceRoot, 'tsconfig.base.json'),
+          JSON.stringify(
+            {
+              compilerOptions: {
+                module: 'esnext',
+                moduleResolution: 'bundler',
+                target: 'es2022',
+              },
+              files: ['./src/app/app.component.ts'],
+            },
+            null,
+            2,
+          ),
+        );
+
+        const { initialize } = await setupLiveReloadPlugin({
+          include: ['libs/shared/feature/src/**/*.ts'],
+          tsconfig: join(tempWorkspaceRoot, 'tsconfig.base.json'),
+          workspaceRoot: tempWorkspaceRoot,
+        });
+
+        const [generatedTsconfigPath] = initialize.mock.calls[0] as [string];
+        expect(normalize(generatedTsconfigPath)).not.toBe(
+          normalize(join(tempWorkspaceRoot, 'tsconfig.base.json')),
+        );
+
+        const generatedConfig = JSON.parse(
+          readFileSync(generatedTsconfigPath, 'utf-8'),
+        ) as { extends: string; files: string[] };
+
+        expect(generatedConfig.extends).toBe(
+          normalize(join(tempWorkspaceRoot, 'tsconfig.base.json')),
+        );
+        expect(generatedConfig.files).toEqual(
+          expect.arrayContaining([
+            normalize(join(tempWorkspaceRoot, 'src/app/app.component.ts')),
+            normalize(
+              join(
+                tempWorkspaceRoot,
+                'libs/shared/feature/src/feature.component.ts',
+              ),
+            ),
+          ]),
+        );
+      } finally {
+        rmSync(tempWorkspaceRoot, { force: true, recursive: true });
+      }
     },
   );
 });

@@ -1729,20 +1729,26 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
 
           const typescriptResult = fileEmitter(id);
+          if (!typescriptResult) {
+            debugCompilerV('transform skip (file not emitted by Angular)', {
+              id,
+            });
+            return;
+          }
 
           if (
-            typescriptResult?.warnings &&
-            typescriptResult?.warnings.length > 0
+            typescriptResult.warnings &&
+            typescriptResult.warnings.length > 0
           ) {
             this.warn(`${typescriptResult.warnings.join('\n')}`);
           }
 
-          if (typescriptResult?.errors && typescriptResult?.errors.length > 0) {
+          if (typescriptResult.errors && typescriptResult.errors.length > 0) {
             this.error(`${typescriptResult.errors.join('\n')}`);
           }
 
           // return fileEmitter
-          let data = typescriptResult?.content ?? '';
+          let data = typescriptResult.content;
 
           if (jit && data.includes('angular:jit:')) {
             data = data.replace(
@@ -2016,6 +2022,121 @@ export function angular(options?: PluginOptions): Plugin[] {
     });
   }
 
+  function ensureIncludeCache(): string[] {
+    if (pluginOptions.include.length > 0 && includeCache.length === 0) {
+      includeCache = findIncludes();
+    }
+
+    return includeCache;
+  }
+
+  function getTsconfigCacheKey(
+    resolvedTsConfigPath: string,
+    config: ResolvedConfig,
+  ): string {
+    const isProd = config.mode === 'production';
+
+    return [
+      resolvedTsConfigPath,
+      isProd ? 'prod' : 'dev',
+      isTest ? 'test' : 'app',
+      config.build?.lib ? 'lib' : 'nolib',
+      pluginOptions.hmr ? 'hmr' : 'nohmr',
+      pluginOptions.hasTailwindCss ? 'tw' : 'notw',
+    ].join('|');
+  }
+
+  function getCachedTsconfigOptions(
+    resolvedTsConfigPath: string,
+    config: ResolvedConfig,
+  ): { options: ts.CompilerOptions; rootNames: string[] } {
+    const isProd = config.mode === 'production';
+    const tsconfigKey = getTsconfigCacheKey(resolvedTsConfigPath, config);
+    let cached = tsconfigOptionsCache.get(tsconfigKey);
+
+    if (!cached) {
+      const read = compilerCli.readConfiguration(resolvedTsConfigPath, {
+        suppressOutputPathCheck: true,
+        outDir: undefined,
+        sourceMap: false,
+        inlineSourceMap: !isProd,
+        inlineSources: !isProd,
+        declaration: false,
+        declarationMap: false,
+        allowEmptyCodegenFiles: false,
+        annotationsAs: 'decorators',
+        enableResourceInlining: false,
+        noEmitOnError: false,
+        mapRoot: undefined,
+        sourceRoot: undefined,
+        supportTestBed: false,
+        supportJitMode: false,
+      });
+      cached = { options: read.options, rootNames: read.rootNames };
+      tsconfigOptionsCache.set(tsconfigKey, cached);
+    }
+
+    return cached;
+  }
+
+  function resolveCompilationApiTsConfigPath(
+    resolvedTsConfigPath: string,
+    config: ResolvedConfig,
+  ): string {
+    const includedFiles = ensureIncludeCache();
+    if (includedFiles.length === 0) {
+      return resolvedTsConfigPath;
+    }
+
+    const cached = getCachedTsconfigOptions(resolvedTsConfigPath, config);
+    const mergedRootNames = union(cached.rootNames, includedFiles).map((file) =>
+      normalizePath(file),
+    );
+
+    if (mergedRootNames.length === cached.rootNames.length) {
+      return resolvedTsConfigPath;
+    }
+
+    const resolvedCacheDir = isAbsolute(config.cacheDir)
+      ? config.cacheDir
+      : resolve(config.root, config.cacheDir);
+    const wrapperDir = join(
+      resolvedCacheDir,
+      'analog-angular',
+      'compilation-api',
+    );
+    const wrapperPayload = {
+      extends: normalizePath(resolvedTsConfigPath),
+      files: [...mergedRootNames].sort(),
+    };
+    const wrapperHash = createHash('sha1')
+      .update(JSON.stringify(wrapperPayload))
+      .digest('hex')
+      .slice(0, 12);
+    const wrapperPath = join(
+      wrapperDir,
+      `tsconfig.includes.${wrapperHash}.json`,
+    );
+
+    mkdirSync(wrapperDir, { recursive: true });
+    if (!existsSync(wrapperPath)) {
+      writeFileSync(
+        wrapperPath,
+        `${JSON.stringify(wrapperPayload, null, 2)}\n`,
+        'utf-8',
+      );
+    }
+
+    debugCompilationApi('generated include wrapper tsconfig', {
+      originalTsconfig: resolvedTsConfigPath,
+      wrapperTsconfig: wrapperPath,
+      includeCount: includedFiles.length,
+      rootNameCount: mergedRootNames.length,
+    });
+
+    return wrapperPath;
+  }
+
   function createTsConfigGetter(tsconfigOrGetter?: string | (() => string)) {
     if (typeof tsconfigOrGetter === 'function') {
       return tsconfigOrGetter;
@@ -2119,8 +2240,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     }
 
     const resolvedTsConfigPath = resolveTsConfigPath();
-    const compilationResult = await angularCompilation.initialize(
+    const compilationApiTsConfigPath = resolveCompilationApiTsConfigPath(
       resolvedTsConfigPath,
+      config,
+    );
+    const compilationResult = await angularCompilation.initialize(
+      compilationApiTsConfigPath,
       {
         // Convert Analog's browser-style `{ replace, with }` entries into the
         // `Record<string, string>` shape that Angular's AngularHostOptions
@@ -2504,43 +2629,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       }
     }
 
-    // Cached include discovery (invalidated only on FS events)
-    if (pluginOptions.include.length > 0 && includeCache.length === 0) {
-      includeCache = findIncludes();
-    }
-
     const resolvedTsConfigPath = resolveTsConfigPath();
-    const tsconfigKey = [
-      resolvedTsConfigPath,
-      isProd ? 'prod' : 'dev',
-      isTest ? 'test' : 'app',
-      config.build?.lib ? 'lib' : 'nolib',
-      pluginOptions.hmr ? 'hmr' : 'nohmr',
-      pluginOptions.hasTailwindCss ? 'tw' : 'notw',
-    ].join('|');
-    let cached = tsconfigOptionsCache.get(tsconfigKey);
-
-    if (!cached) {
-      const read = compilerCli.readConfiguration(resolvedTsConfigPath, {
-        suppressOutputPathCheck: true,
-        outDir: undefined,
-        sourceMap: false,
-        inlineSourceMap: !isProd,
-        inlineSources: !isProd,
-        declaration: false,
-        declarationMap: false,
-        allowEmptyCodegenFiles: false,
-        annotationsAs: 'decorators',
-        enableResourceInlining: false,
-        noEmitOnError: false,
-        mapRoot: undefined,
-        sourceRoot: undefined,
-        supportTestBed: false,
-        supportJitMode: false,
-      });
-      cached = { options: read.options, rootNames: read.rootNames };
-      tsconfigOptionsCache.set(tsconfigKey, cached);
-    }
+    const cached = getCachedTsconfigOptions(resolvedTsConfigPath, config);
 
     // Clone options before mutation (preserve cache purity)
     const tsCompilerOptions = { ...cached.options };
@@ -2591,7 +2681,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       ),
     );
     // Merge + dedupe root names
-    rootNames = union(rootNames, includeCache, replacements);
+    rootNames = union(rootNames, ensureIncludeCache(), replacements);
     const hostKey = JSON.stringify(tsCompilerOptions);
     let host: ts.CompilerHost;
 

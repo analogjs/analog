@@ -122,6 +122,92 @@ DEBUG=analog:platform:routes,analog:angular:compiler pnpm build
 DEBUG=analog:platform:* pnpm dev
 ```
 
+## Debugging a local Analog checkout from another pnpm workspace
+
+If you want to debug Analog while serving a different app on your machine, point that consumer workspace at the built Analog package outputs under `/Volumes/Development/analog/packages/*/dist`.
+
+Use the built `dist` directories, not the raw package roots. Build the packages first so each `dist` folder contains its generated `package.json`. The source package manifests still contain `catalog:` and `workspace:*` references that are only rewritten during Analog's release-style build pipeline.
+
+### Local checkout example
+
+`pnpm-workspace.yaml`
+
+```yaml
+packages:
+  - 'apps/*'
+  - 'libs/**'
+
+overrides:
+  '@analogjs/platform': file:/Volumes/Development/analog/packages/platform/dist
+  '@analogjs/router': file:/Volumes/Development/analog/packages/router/dist
+  '@analogjs/vite-plugin-angular': file:/Volumes/Development/analog/packages/vite-plugin-angular/dist
+  '@analogjs/vite-plugin-nitro': file:/Volumes/Development/analog/packages/vite-plugin-nitro/dist
+  '@analogjs/vitest-angular': file:/Volumes/Development/analog/packages/vitest-angular/dist
+```
+
+Root `package.json`
+
+```json
+{
+  "dependencies": {
+    "@analogjs/platform": "file:/Volumes/Development/analog/packages/platform/dist"
+  },
+  "overrides": {
+    "@analogjs/platform": "file:/Volumes/Development/analog/packages/platform/dist",
+    "@analogjs/router": "file:/Volumes/Development/analog/packages/router/dist",
+    "@analogjs/vite-plugin-angular": "file:/Volumes/Development/analog/packages/vite-plugin-angular/dist",
+    "@analogjs/vite-plugin-nitro": "file:/Volumes/Development/analog/packages/vite-plugin-nitro/dist",
+    "@analogjs/vitest-angular": "file:/Volumes/Development/analog/packages/vitest-angular/dist"
+  }
+}
+```
+
+:::important
+Keep the overrides in both places. If you only pin `@analogjs/platform`, pnpm will still resolve transitive packages like `@analogjs/vite-plugin-angular` and `@analogjs/vite-plugin-nitro` from npm instead of your local checkout.
+:::
+
+:::note
+pnpm currently does not allow `file:` entries in `catalog`, so local checkout wiring needs direct `file:` overrides instead of `catalog:` indirection.
+:::
+
+If your app also uses other published Analog packages such as `@analogjs/content` or `@analogjs/storybook-angular`, pin those the same way.
+
+### GitHub branch example
+
+If you want the same pattern from a GitHub branch instead of a local path, pnpm supports Git subdirectory specs via `#branch&path:...`.
+
+`pnpm-workspace.yaml`
+
+```yaml
+catalog:
+  '@analogjs/platform': github:benpsnyder/analog#feat/support-snyder-internal&path:packages/platform/dist
+  '@analogjs/router': github:benpsnyder/analog#feat/support-snyder-internal&path:packages/router/dist
+  '@analogjs/vite-plugin-angular': github:benpsnyder/analog#feat/support-snyder-internal&path:packages/vite-plugin-angular/dist
+  '@analogjs/vite-plugin-nitro': github:benpsnyder/analog#feat/support-snyder-internal&path:packages/vite-plugin-nitro/dist
+  '@analogjs/vitest-angular': github:benpsnyder/analog#feat/support-snyder-internal&path:packages/vitest-angular/dist
+```
+
+Root `package.json`
+
+```json
+{
+  "dependencies": {
+    "@analogjs/platform": "catalog:"
+  },
+  "overrides": {
+    "@analogjs/platform": "$@analogjs/platform",
+    "@analogjs/router": "$@analogjs/router",
+    "@analogjs/vite-plugin-angular": "$@analogjs/vite-plugin-angular",
+    "@analogjs/vite-plugin-nitro": "$@analogjs/vite-plugin-nitro",
+    "@analogjs/vitest-angular": "$@analogjs/vitest-angular"
+  }
+}
+```
+
+:::caution
+For Analog, the GitHub form only works when the branch exposes release-ready `dist/package.json` files at those paths. Pointing pnpm at `path:packages/platform` or any other raw source package path will fail because those manifests still contain unresolved `catalog:` and `workspace:*` specifiers.
+:::
+
 ## Configuration Reference
 
 | Form                                             | Scopes    | When                  |
