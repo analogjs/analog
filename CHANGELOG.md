@@ -1,3 +1,9 @@
+# [2.5.0-beta.38](https://github.com/analogjs/analog/compare/v2.5.0-beta.37...v2.5.0-beta.38) (2026-04-13)
+
+### Bug Fixes
+
+- **angular-compiler:** make hoisting dependency-aware to prevent TDZ ([#2286](https://github.com/analogjs/analog/issues/2286)) ([f33f6b5](https://github.com/analogjs/analog/commit/f33f6b514cd204df79e7661058fc79312e561324))
+
 # [2.5.0-beta.37](https://github.com/analogjs/analog/compare/v2.5.0-beta.36...v2.5.0-beta.37) (2026-04-13)
 
 ### Bug Fixes
