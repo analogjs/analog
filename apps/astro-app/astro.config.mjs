@@ -59,6 +59,17 @@ export default defineConfig({
       useAngularHydration: true,
     }),
     react(),
+    {
+      name: 'focus-hydration',
+      hooks: {
+        'astro:config:setup': ({ addClientDirective }) => {
+          addClientDirective({
+            name: 'focus',
+            entrypoint: './src/client-directives/focus.ts',
+          });
+        },
+      },
+    },    
     // MDX currently provides a renderer entrypoint as a file URL here.
     normalizeRendererEntrypoints(mdx({ syntaxHighlight: 'prism' })),
   ],

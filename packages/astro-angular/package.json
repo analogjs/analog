@@ -13,9 +13,17 @@
       "types": "./dist/src/utils.d.ts",
       "default": "./dist/src/utils.js"
     },
+    "./client-ngh.js": {
+      "types": "./dist/src/client-ngh.d.ts",
+      "default": "./dist/src/client-ngh.js"
+    },
     "./client.js": {
       "types": "./dist/src/client.d.ts",
       "default": "./dist/src/client.js"
+    },
+    "./server-ngh.js": {
+      "types": "./dist/src/server-ngh.d.ts",
+      "default": "./dist/src/server-ngh.js"
     },
     "./server.js": {
       "types": "./dist/src/server.d.ts",
