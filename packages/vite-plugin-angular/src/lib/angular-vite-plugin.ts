@@ -81,7 +81,23 @@ import {
   debugTailwindV,
   type DebugOption,
 } from './utils/debug.js';
+import {
+  createTsConfigGetter,
+  getTsConfigPath,
+  TS_EXT_REGEX,
+  type TsConfigResolutionContext,
+} from './utils/plugin-config.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
+import {
+  toVirtualRawId,
+  toVirtualStyleId,
+  VIRTUAL_RAW_PREFIX,
+  VIRTUAL_STYLE_PREFIX,
+} from './utils/virtual-ids.js';
+import {
+  loadVirtualRawModule,
+  loadVirtualStyleModule,
+} from './utils/virtual-resources.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
 
 const require = createRequire(import.meta.url);
@@ -151,6 +167,13 @@ export interface PluginOptions {
   fileReplacements?: FileReplacement[];
   experimental?: {
     useAngularCompilationAPI?: boolean;
+    useAnalogCompiler?: boolean;
+    /**
+     * Compilation output mode for the Analog compiler.
+     * - `'full'` (default): Emit final Ivy definitions for application builds.
+     * - `'partial'`: Emit partial declarations for library publishing.
+     */
+    analogCompilationMode?: 'full' | 'partial';
   };
   /**
    * Enable debug logging for specific scopes.
@@ -271,12 +294,6 @@ export function normalizeIncludeGlob(
   return normalizePath(resolve(normalizedWorkspaceRoot, normalizedGlob));
 }
 
-/**
- * TypeScript file extension regex
- * Match .(c or m)ts, .ts extensions with an optional ? for query params
- * Ignore .tsx extensions
- */
-const TS_EXT_REGEX = /\.[cm]?(ts)[^x]?\??/;
 const classNames = new Map();
 
 export function evictDeletedFileMetadata(
@@ -410,7 +427,7 @@ function buildStylePreprocessor(
   ]);
 }
 
-export function angular(options?: PluginOptions): Plugin[] {
+export async function angular(options?: PluginOptions): Promise<Plugin[]> {
   applyDebugOption(options?.debug, options?.workspaceRoot);
 
   /**
@@ -444,12 +461,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   };
 
   let resolvedConfig: ResolvedConfig;
-  // Store config context needed for getTsConfigPath resolution
-  let tsConfigResolutionContext: {
-    root: string;
-    isProd: boolean;
-    isLib: boolean;
-  } | null = null;
+  let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
 
   const ts = require('typescript');
   let builder: ts.BuilderProgram | ts.EmitAndSemanticDiagnosticsBuilderProgram;
@@ -954,6 +966,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configureServer(server) {
         viteServer = server;
+
         // Add/unlink changes the TypeScript program shape, not just file
         // contents, so we need to invalidate both include discovery and the
         // cached tsconfig root names before recompiling.
@@ -1504,11 +1517,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         return ctx.modules;
       },
       resolveId(id, importer) {
-        if (jit && id.startsWith('angular:jit:')) {
-          const path = id.split(';')[1];
-          return `${normalizePath(
-            resolve(dirname(importer as string), path),
-          )}?${id.includes(':style') ? 'inline' : 'raw'}`;
+        if (
+          id.startsWith(VIRTUAL_STYLE_PREFIX) ||
+          id.startsWith(VIRTUAL_RAW_PREFIX)
+        ) {
+          return `\0${id}`;
         }
 
         // Map angular component stylesheets. Prefer registry-served CSS
@@ -1546,6 +1559,34 @@ export function angular(options?: PluginOptions): Plugin[] {
         return undefined;
       },
       async load(id) {
+        // Both virtual raw (templates) and virtual style (external styles)
+        // ids come in from two paths: the transform-time substitution below
+        // (dev + production) and the resolveId rewrite for user `.html?raw`
+        // / `.scss?inline` imports. The virtual ids carry no file extension,
+        // so Vite's built-in asset/CSS plugins never pick them up and we
+        // never see the Denied ID check that blocks `?raw`/`?inline`.
+        // (#2263, #2283)
+        const styleModule = await loadVirtualStyleModule(
+          this,
+          id,
+          resolvedConfig,
+        );
+        if (styleModule !== undefined) return styleModule;
+
+        const rawModule = await loadVirtualRawModule(this, id);
+        if (rawModule !== undefined) return rawModule;
+
+        // Vitest fallback: the module-runner calls ensureEntryFromUrl before
+        // transformRequest, which skips pluginContainer.resolveId entirely,
+        // so a user `import foo from './a.scss?inline'` reaches load as the
+        // bare query form. Handle it here so tests still resolve.
+        if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
+          const filePath = id.split('?')[0];
+          const code = await fsPromises.readFile(filePath, 'utf-8');
+          const result = await preprocessCSS(code, filePath, resolvedConfig);
+          return `export default ${JSON.stringify(result.code)}`;
+        }
+
         // Map angular inline styles to the source text
         if (isComponentStyleSheet(id)) {
           const filename = getFilenameFromPath(id);
@@ -1730,19 +1771,34 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           const typescriptResult = fileEmitter(id);
 
+          // File not in the Angular program — skip and let other plugins
+          // or Vite's built-in transform handle it. Warn if it looks like
+          // an Angular file that should have been compiled.
+          if (!typescriptResult) {
+            const isAngular =
+              !id.includes('@ng/component') &&
+              /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
+            if (isAngular) {
+              this.warn(
+                `[@analogjs/vite-plugin-angular]: "${id}" contains Angular decorators but is not in the TypeScript program. ` +
+                  `Ensure it is included in your tsconfig.`,
+              );
+            }
+            return;
+          }
+
           if (
-            typescriptResult?.warnings &&
-            typescriptResult?.warnings.length > 0
+            typescriptResult.warnings &&
+            typescriptResult.warnings.length > 0
           ) {
             this.warn(`${typescriptResult.warnings.join('\n')}`);
           }
 
-          if (typescriptResult?.errors && typescriptResult?.errors.length > 0) {
+          if (typescriptResult.errors && typescriptResult.errors.length > 0) {
             this.error(`${typescriptResult.errors.join('\n')}`);
           }
 
-          // return fileEmitter
-          let data = typescriptResult?.content ?? '';
+          let data = typescriptResult.content ?? '';
 
           if (jit && data.includes('angular:jit:')) {
             data = data.replace(
@@ -1750,12 +1806,31 @@ export function angular(options?: PluginOptions): Plugin[] {
               'virtual:angular:jit:style:inline;',
             );
 
+            // Emit safe resource ids directly in the transformed JS so Vite
+            // never sees the dangerous ?raw / ?inline form during
+            // loadAndTransform. Both templates and external styles use
+            // virtual module ids with no file extension so neither the
+            // vite:css plugin nor the vite:asset plugin picks them up
+            // based on the extension.
+            //
+            // Why this matters: Vite's Denied ID check fires for any id
+            // matching that regex whose path is outside server.fs.allow,
+            // and it runs *before* pluginContainer.load. Vitest's worker
+            // fetchModule path also bypasses pluginContainer.resolveId
+            // (it calls moduleGraph.ensureEntryFromUrl first, which makes
+            // the resolveId chain a no-op for the module-runner). So
+            // neither the resolveId-based rewrites nor the load-hook
+            // fallback (added in 2.4.4) get a chance to run for
+            // cross-library imports — the security check has already thrown
+            // by then. Emitting the safe ids directly in transform is the
+            // only place we can guarantee Vite never sees the dangerous
+            // form. (#2263)
             templateUrls.forEach((templateUrlSet) => {
               const [templateFile, resolvedTemplateUrl] =
                 templateUrlSet.split('|');
               data = data.replace(
                 `angular:jit:template:file;${templateFile}`,
-                `${resolvedTemplateUrl}?raw`,
+                toVirtualRawId(resolvedTemplateUrl),
               );
             });
 
@@ -1763,7 +1838,7 @@ export function angular(options?: PluginOptions): Plugin[] {
               const [styleFile, resolvedStyleUrl] = styleUrlSet.split('|');
               data = data.replace(
                 `angular:jit:style:file;${styleFile}`,
-                `${resolvedStyleUrl}?inline`,
+                toVirtualStyleId(resolvedStyleUrl),
               );
             });
           }
@@ -1808,6 +1883,26 @@ export function angular(options?: PluginOptions): Plugin[] {
         angularCompilation = undefined;
       },
     };
+  }
+
+  let compilationPlugin: Plugin;
+  if (pluginOptions.useAnalogCompiler) {
+    const { analogCompilerPlugin } =
+      await import('./analog-compiler-plugin.js');
+    compilationPlugin = analogCompilerPlugin({
+      tsconfigGetter: pluginOptions.tsconfigGetter,
+      workspaceRoot: pluginOptions.workspaceRoot,
+      inlineStylesExtension: pluginOptions.inlineStylesExtension,
+      jit,
+      liveReload: pluginOptions.liveReload,
+      supportedBrowsers: pluginOptions.supportedBrowsers,
+      transformFilter: options?.transformFilter,
+      isTest,
+      isAstroIntegration,
+      analogCompilationMode: pluginOptions.analogCompilationMode,
+    });
+  } else {
+    compilationPlugin = angularPlugin();
   }
 
   return [
@@ -2014,58 +2109,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       dot: true,
       absolute: true,
     });
-  }
-
-  function createTsConfigGetter(tsconfigOrGetter?: string | (() => string)) {
-    if (typeof tsconfigOrGetter === 'function') {
-      return tsconfigOrGetter;
-    }
-
-    return () => tsconfigOrGetter || '';
-  }
-
-  function getTsConfigPath(
-    root: string,
-    tsconfig: string,
-    isProd: boolean,
-    isTest: boolean,
-    isLib: boolean,
-  ) {
-    if (tsconfig && isAbsolute(tsconfig)) {
-      if (!existsSync(tsconfig)) {
-        console.error(
-          `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${tsconfig}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
-        );
-      }
-
-      return tsconfig;
-    }
-
-    let tsconfigFilePath = './tsconfig.app.json';
-
-    if (isLib) {
-      tsconfigFilePath = isProd
-        ? './tsconfig.lib.prod.json'
-        : './tsconfig.lib.json';
-    }
-
-    if (isTest) {
-      tsconfigFilePath = './tsconfig.spec.json';
-    }
-
-    if (tsconfig) {
-      tsconfigFilePath = tsconfig;
-    }
-
-    const resolvedPath = resolve(root, tsconfigFilePath);
-
-    if (!existsSync(resolvedPath)) {
-      console.error(
-        `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${resolvedPath}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
-      );
-    }
-
-    return resolvedPath;
   }
 
   function resolveTsConfigPath() {

@@ -7,6 +7,7 @@ import { map, switchMap, tap } from 'rxjs/operators';
 
 import { ContentFile } from './content-file';
 import { ContentRenderer } from './content-renderer';
+import { CONTENT_LOCALE, withLocaleCandidates } from './content-locale';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
 import { parseRawContentFile } from './parse-raw-content-file';
 import { waitFor } from './utils/zone-wait-for';
@@ -21,6 +22,7 @@ function getContentFile<
   fallback: string,
   renderTaskService: RenderTaskService,
   contentRenderer: ContentRenderer,
+  locale?: string | null,
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   // Normalize file keys so both "/src/content/..." and "/<project>/src/content/..." resolve.
   const normalizedFiles: Record<string, () => Promise<string>> = {};
@@ -34,7 +36,8 @@ function getContentFile<
   const base = `/src/content/${prefix}${slug}`.replace(/\/{2,}/g, '/');
   const candidates = [`${base}.md`, `${base}/index.md`];
 
-  const matchKey = candidates.find((k) => k in normalizedFiles);
+  const allCandidates = withLocaleCandidates(candidates, locale);
+  const matchKey = allCandidates.find((k) => k in normalizedFiles);
   const contentFile = matchKey ? normalizedFiles[matchKey] : undefined;
   const resolvedBase = (matchKey || `${base}.md`).replace(/\.md$/, '');
 
@@ -116,6 +119,7 @@ export function injectContent<
   const contentFiles = inject(CONTENT_FILES_TOKEN);
   const contentRenderer = inject(ContentRenderer);
   const renderTaskService = inject(RenderTaskService);
+  const locale = inject(CONTENT_LOCALE, { optional: true });
   const task = renderTaskService.addRenderTask();
 
   if (typeof param === 'string' || 'param' in param) {
@@ -133,6 +137,7 @@ export function injectContent<
             fallback,
             renderTaskService,
             contentRenderer,
+            locale,
           );
         }
         return of({
@@ -153,6 +158,7 @@ export function injectContent<
       fallback,
       renderTaskService,
       contentRenderer,
+      locale,
     ).pipe(tap(() => renderTaskService.clearRenderTask(task)));
   }
 }

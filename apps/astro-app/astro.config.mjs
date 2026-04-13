@@ -54,7 +54,10 @@ export default defineConfig({
     },
   },
   integrations: [
-    angular({ strictStylePlacement: true }),
+    angular({
+      strictStylePlacement: true,
+      useAngularHydration: true,
+    }),
     react(),
     // MDX currently provides a renderer entrypoint as a file URL here.
     normalizeRendererEntrypoints(mdx({ syntaxHighlight: 'prism' })),

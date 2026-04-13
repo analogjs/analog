@@ -190,6 +190,7 @@
     "kolorist": "catalog:",
     "less": "catalog:",
     "lint-staged": "catalog:",
+    "magic-string": "catalog:",
     "marked-mangle": "catalog:",
     "marked-shiki": "catalog:",
     "md4x": "catalog:",

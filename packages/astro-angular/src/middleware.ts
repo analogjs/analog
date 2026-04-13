@@ -75,5 +75,11 @@ export const onRequest: MiddlewareHandler = async (_ctx, next) => {
 
   const newBody = processor.stringify(tree);
 
-  return new Response(newBody, response);
+  const newResponse = new Response(newBody, response);
+  newResponse.headers.set(
+    'content-length',
+    Buffer.byteLength(newBody).toFixed(0),
+  );
+
+  return newResponse;
 };

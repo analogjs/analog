@@ -11,15 +11,18 @@ interface Todo {
 
 @Component({
   selector: 'app-todos',
-  standalone: true,
-  imports: [NgFor],
   template: `
     <h2>Todos</h2>
 
     <ul>
-      <li *ngFor="let todo of todos">
-        {{ todo.title }}
-      </li>
+      @for (todo of todos(); track todo.id) {
+        <li>
+          {{ todo.title }}
+          @if (todo.completed) {
+            ✅
+          }
+        </li>
+      }
     </ul>
   `,
 })
@@ -27,11 +30,11 @@ export class TodosComponent implements OnInit {
   static clientProviders = [provideHttpClient()];
   static renderProviders = [TodosComponent.clientProviders];
   http = inject(HttpClient);
-  todos: Todo[] = [];
+  todos = signal<Todo[]>([]);
 
   ngOnInit() {
     this.http
       .get<Todo[]>('https://jsonplaceholder.typicode.com/todos')
-      .subscribe((todos) => (this.todos = todos));
+      .subscribe((todos) => this.todos.set(todos));
   }
 }
