@@ -52,6 +52,14 @@ describe('no-ng-attributes snapshot serializer', () => {
     expect(div).toMatchInlineSnapshot(`<section />`);
   });
 
+  it('cleans generated id values with alpha suffixes', () => {
+    const div = document.createElement('section');
+
+    div.setAttribute('id', 'cdk-drop-list-a20');
+
+    expect(div).toMatchInlineSnapshot(`<section />`);
+  });
+
   it('preserves non-Angular id values', () => {
     const div = document.createElement('section');
 
@@ -140,6 +148,26 @@ describe('no-ng-attributes snapshot serializer', () => {
     expect(div).toMatchInlineSnapshot(`
       <section
         aria-controls="custom-controls"
+      />
+    `);
+  });
+
+  it('cleans valid Angular-generated aria-describedby values', () => {
+    const div = document.createElement('section');
+
+    div.setAttribute('aria-describedby', 'ngb-popover-112');
+
+    expect(div).toMatchInlineSnapshot(`<section />`);
+  });
+
+  it('preserves non-Angular aria-describedby values', () => {
+    const div = document.createElement('section');
+
+    div.setAttribute('aria-describedby', 'custom-description');
+
+    expect(div).toMatchInlineSnapshot(`
+      <section
+        aria-describedby="custom-description"
       />
     `);
   });
