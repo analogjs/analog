@@ -18,6 +18,8 @@ interface CssTailwindDirectiveState {
   hasTailwindImportDirective: boolean;
 }
 
+// Comment text should not count as a real Tailwind directive. Strip it before
+// matching so prose like "/* add @reference here */" cannot disable injection.
 function stripCssBlockComments(code: string): string {
   return code.replace(CSS_BLOCK_COMMENT_REGEX, (comment) =>
     comment.replace(/[^\n\r]/g, ' '),

@@ -310,6 +310,8 @@ interface CssTailwindDirectiveState {
   hasTailwindImportDirective: boolean;
 }
 
+// Match real CSS directives, not comment text, so the Angular plugin and the
+// shared style preprocessor make the same Tailwind decisions.
 function stripCssBlockComments(code: string): string {
   return code.replace(CSS_BLOCK_COMMENT_REGEX, (comment) =>
     comment.replace(/[^\n\r]/g, ' '),
@@ -2289,6 +2291,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     resolvedTsConfigPath: string,
     config: ResolvedConfig,
   ): string {
+    // Angular's Compilation API accepts one tsconfig path. When Analog adds
+    // extra roots via `include`, emit a tiny wrapper config instead of asking
+    // users to manually duplicate those roots in their checked-in tsconfig.
     const includedFiles = ensureIncludeCache();
     if (includedFiles.length === 0) {
       return resolvedTsConfigPath;

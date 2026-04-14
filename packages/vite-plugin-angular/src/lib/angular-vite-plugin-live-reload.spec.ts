@@ -373,6 +373,8 @@ describe('angular hmr style preprocessing', () => {
           workspaceRoot: tempWorkspaceRoot,
         });
 
+        // The wrapper tsconfig is the value of this feature: Angular sees the
+        // extra include roots without us mutating the user's checked-in config.
         const [generatedTsconfigPath] = initialize.mock.calls[0] as [string];
         expect(normalize(generatedTsconfigPath)).not.toBe(
           normalize(join(tempWorkspaceRoot, 'tsconfig.base.json')),

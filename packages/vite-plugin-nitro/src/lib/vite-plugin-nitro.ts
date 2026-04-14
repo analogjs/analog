@@ -34,6 +34,9 @@ import {
 import { getBundleOptionsKey, isRolldown } from './utils/rolldown.js';
 import { debugNitro, debugSsr } from './utils/debug.js';
 
+// Nitro reuses the captured Vite config across client and SSR passes. Snapshot
+// the caller's objects up front so later user mutations do not leak into the
+// build orchestration for either environment.
 type ObjectHook<T> = { handler: T; [key: string]: unknown };
 
 function isObjectHook(value: unknown): value is ObjectHook<unknown> {
@@ -54,6 +57,8 @@ function cloneObjectHook<T>(hook: T): T {
 function cloneUserPlugin<T>(plugin: T): T {
   if (!plugin || typeof plugin !== 'object') return plugin;
   const pluginRecord = plugin as Record<string, unknown>;
+  // Preserve the original prototype because some plugins hang metadata or
+  // behavior off the instance instead of plain object fields.
   const clone = Object.assign(
     Object.create(Object.getPrototypeOf(plugin)),
     pluginRecord,

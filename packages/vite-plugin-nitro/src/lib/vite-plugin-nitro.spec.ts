@@ -94,6 +94,8 @@ describe('nitro', () => {
       });
 
       const mutatedHook = { handler: vi.fn(), order: 'post' };
+      // Mutate the original object after config capture. Nitro should keep
+      // building from its snapshot, not from this live user-owned reference.
       userConfig.build!.outDir = 'mutated-client';
       (userConfig.plugins![0] as Record<string, unknown>)['configResolved'] =
         mutatedHook;
