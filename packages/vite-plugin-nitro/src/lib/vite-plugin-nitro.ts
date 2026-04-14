@@ -1061,6 +1061,27 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             },
           },
           builder: {
+            /**
+             * Reuse the already resolved Analog/Vite plugin graph across the
+             * client and SSR environments.
+             *
+             * This keeps both builds behaviorally aligned: route generation,
+             * content discovery, Angular transforms, Tailwind integration, and
+             * other Analog-specific config stay consistent between the browser
+             * bundle and the server bundle.
+             *
+             * The tradeoff is that the SSR environment can observe repeated
+             * plugin entries when Vite materializes the environment-specific
+             * build. Most notably, `@analogjs/vite-plugin-angular` can appear
+             * twice in the SSR resolved plugin list even though the app only
+             * configured `analog(...)` once.
+             *
+             * That duplicated name during SSR is an artifact of the shared
+             * plugin graph, not evidence of a broken client build. The
+             * duplicate-registration check in `vite-plugin-angular` therefore
+             * throws only for non-SSR builds, where duplicate Angular plugin
+             * instances would actually split the component style registries.
+             */
             sharedPlugins: true,
             buildApp: async (builder) => {
               environmentBuild = true;
@@ -1117,6 +1138,19 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   ssrEnabled: options?.ssr,
                   prerenderRoutes: nitroConfig.prerender?.routes,
                 });
+
+                /**
+                 * This launches the SSR environment as a second build from the
+                 * shared plugin graph above. When debugging an apparent
+                 * duplicate `@analogjs/vite-plugin-angular` registration, this
+                 * is the handoff to inspect: the SSR builder replays the shared
+                 * plugins for the server pass and may therefore expose multiple
+                 * Angular-plugin entries in the SSR resolved config.
+                 *
+                 * That is expected for this orchestration path and should not
+                 * be treated the same as a duplicated client build, where two
+                 * Angular plugin instances would maintain separate style maps.
+                 */
                 await builder.build(builder.environments['ssr']);
                 debugSsr('builder.buildApp completed SSR build', {
                   ssrOutputPath:

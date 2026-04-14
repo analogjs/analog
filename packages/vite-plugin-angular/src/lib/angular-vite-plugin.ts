@@ -641,11 +641,35 @@ export function angular(options?: PluginOptions): Plugin[] {
       );
     }
 
-    // Duplicate analog() registrations cause orphaned style maps
+    /**
+     * Duplicate analog() registrations are a real bug for the non-SSR/client
+     * build because each plugin instance creates its own component-style state.
+     *
+     * That state includes the style maps/registries used to:
+     * - track transformed component styles
+     * - map owner components back to stylesheet requests
+     * - coordinate Tailwind/@reference processing and style reload behavior
+     *
+     * If two plugin instances are active for the same client build, one
+     * instance can record stylesheet metadata while the other services the
+     * request. The result is "missing" component CSS even though compilation
+     * appeared to succeed.
+     *
+     * SSR is different. Analog's Nitro/SSR build path reuses the already
+     * resolved plugin graph and then runs an additional `build.ssr === true`
+     * pass for the server bundle. In that flow Vite can expose multiple
+     * `@analogjs/vite-plugin-angular` entries in `config.plugins`, but that is
+     * not the same failure mode as a duplicated client build. The server build
+     * does not rely on the client-side style maps that this guard is protecting.
+     *
+     * Because of that, we only throw for duplicate registrations on non-SSR
+     * builds. Throwing during SSR would be a false positive that breaks valid
+     * Analog SSR/Nitro builds.
+     */
     const analogInstances = resolvedPlugins.filter(
       (p) => p.name === '@analogjs/vite-plugin-angular',
     );
-    if (analogInstances.length > 1) {
+    if (analogInstances.length > 1 && !config.build?.ssr) {
       throw new Error(
         `${PREFIX} analog() is registered ${analogInstances.length} times. ` +
           `Each instance creates separate style maps, causing component ` +
