@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/storybook-angular",
-  "version": "3.0.0-alpha.32",
+  "version": "3.0.0-alpha.34",
   "description": "Storybook Integration for Angular & Vite",
   "type": "module",
   "keywords": [
@@ -36,7 +36,8 @@
   },
   "main": "dist/src/index.js",
   "dependencies": {
-    "@storybook/builder-vite": "catalog:peerStorybook10"
+    "@storybook/builder-vite": "catalog:peerStorybook10",
+    "obug": "catalog:"
   },
   "peerDependencies": {
     "@storybook/angular": "catalog:peerStorybook10",

@@ -124,6 +124,72 @@ DEBUG=analog:platform:routes,analog:angular:compiler npm run build
 DEBUG=analog:platform:* npm run dev
 ```
 
+## Debugging a local Analog checkout from another pnpm workspace
+
+If you want to debug Analog while serving a different app on your machine, point that consumer workspace at the built Analog package outputs under `/Volumes/Development/analog/packages/*/dist`.
+
+Use the built `dist` directories, not the raw package roots. Build the packages first so each `dist` folder contains its generated `package.json`. The source package manifests still contain `catalog:` and `workspace:*` references that are only rewritten during Analog's release-style build pipeline.
+
+### Local checkout example
+
+`pnpm-workspace.yaml`
+
+```yaml
+packages:
+  - 'apps/*'
+  - 'libs/**'
+
+catalog:
+  '@analogjs/astro-angular': file:/Volumes/Development/analog/packages/astro-angular/dist
+  '@analogjs/content': file:/Volumes/Development/analog/packages/content/dist
+  '@analogjs/platform': file:/Volumes/Development/analog/packages/platform/dist
+  '@analogjs/router': file:/Volumes/Development/analog/packages/router/dist
+  '@analogjs/storybook-angular': file:/Volumes/Development/analog/packages/storybook-angular/dist
+  '@analogjs/vite-plugin-angular': file:/Volumes/Development/analog/packages/vite-plugin-angular/dist
+  '@analogjs/vite-plugin-nitro': file:/Volumes/Development/analog/packages/vite-plugin-nitro/dist
+  '@analogjs/vitest-angular': file:/Volumes/Development/analog/packages/vitest-angular/dist
+
+overrides:
+  '@analogjs/astro-angular': file:/Volumes/Development/analog/packages/astro-angular/dist
+  '@analogjs/content': file:/Volumes/Development/analog/packages/content/dist
+  '@analogjs/platform': file:/Volumes/Development/analog/packages/platform/dist
+  '@analogjs/router': file:/Volumes/Development/analog/packages/router/dist
+  '@analogjs/storybook-angular': file:/Volumes/Development/analog/packages/storybook-angular/dist
+  '@analogjs/vite-plugin-angular': file:/Volumes/Development/analog/packages/vite-plugin-angular/dist
+  '@analogjs/vite-plugin-nitro': file:/Volumes/Development/analog/packages/vite-plugin-nitro/dist
+  '@analogjs/vitest-angular': file:/Volumes/Development/analog/packages/vitest-angular/dist
+```
+
+Root `package.json`
+
+```json
+{
+  "dependencies": {
+    "@analogjs/platform": "catalog:"
+  },
+  "overrides": {
+    "@analogjs/astro-angular": "file:/Volumes/Development/analog/packages/astro-angular/dist",
+    "@analogjs/content": "file:/Volumes/Development/analog/packages/content/dist",
+    "@analogjs/platform": "file:/Volumes/Development/analog/packages/platform/dist",
+    "@analogjs/router": "file:/Volumes/Development/analog/packages/router/dist",
+    "@analogjs/storybook-angular": "file:/Volumes/Development/analog/packages/storybook-angular/dist",
+    "@analogjs/vite-plugin-angular": "file:/Volumes/Development/analog/packages/vite-plugin-angular/dist",
+    "@analogjs/vite-plugin-nitro": "file:/Volumes/Development/analog/packages/vite-plugin-nitro/dist",
+    "@analogjs/vitest-angular": "file:/Volumes/Development/analog/packages/vitest-angular/dist"
+  }
+}
+```
+
+:::important
+Keep the overrides in both places. If you only pin one Analog package, pnpm will still resolve the rest of the packages in this list from npm instead of your local checkout.
+:::
+
+:::note
+Keep your normal dependency entries on `catalog:` in `package.json`. pnpm picks those up from `pnpm-workspace.yaml`. The explicit `file:` specs are still duplicated in `overrides` so transitive Analog packages stay pinned to the same local checkout.
+:::
+
+The examples above include the full set of published Analog workspace packages that are typically consumed from an app workspace. If you're also testing the `create-analog` CLI itself, point it at `dist/packages/create-analog` separately.
+
 ## Configuration Reference
 
 | Form                                             | Scopes    | When                  |
@@ -169,6 +235,10 @@ DEBUG=analog:platform:* npm run dev
 | `analog:nitro`           | Nitro server lifecycle, experimental websocket upgrades |
 | `analog:nitro:ssr`       | Server-side rendering                                   |
 | `analog:nitro:prerender` | Prerendering                                            |
+
+:::note
+When debugging SSR builds that reuse shared plugins, seeing repeated `@analogjs/vite-plugin-angular` entries in the resolved SSR plugin list can be expected. That SSR duplication is not the same as registering `analog()` twice in the client build.
+:::
 
 ## Using with `@analogjs/vite-plugin-angular` standalone
 

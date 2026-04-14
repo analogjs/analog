@@ -10,6 +10,9 @@ vi.mock('nitro/builder', () => ({
   createNitro: vi.fn(),
 }));
 
+vi.mock('./build-server');
+vi.mock('./build-sitemap');
+
 vi.mock('./build-ssr', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./build-ssr')>();
   return {
@@ -39,9 +42,6 @@ function writeBuiltClientIndexHtml(
 }
 
 describe('nitro', () => {
-  vi.mock('./build-server');
-  vi.mock('./build-sitemap');
-
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
@@ -49,6 +49,111 @@ describe('nitro', () => {
 
   it('should work', () => {
     expect(nitro({})[1].name).toEqual('@analogjs/vite-plugin-nitro');
+  });
+
+  it('should snapshot the incoming Vite config before later mutations', async () => {
+    vi.stubEnv('VITEST', '');
+    vi.stubEnv('NODE_ENV', 'production');
+
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-nitro-config-'));
+    const originalBuildOutDir = 'custom-client';
+    const originalAlias = { '@app/root': '/virtual/original-entry.ts' };
+    const originalClientEnvironmentOutDir = 'env-client-output';
+    const pluginPrototype = { marker: 'user-plugin-prototype' };
+    const originalHook = { handler: vi.fn(), order: 'pre' };
+    const userPlugin = Object.assign(Object.create(pluginPrototype), {
+      name: 'user-plugin',
+      configResolved: originalHook,
+    }) as vite.Plugin;
+    const userConfig: vite.UserConfig = {
+      root: workspaceRoot,
+      build: { outDir: originalBuildOutDir },
+      environments: {
+        client: {
+          build: {
+            outDir: originalClientEnvironmentOutDir,
+          },
+        },
+      } as vite.UserConfig['environments'],
+      plugins: [userPlugin],
+      resolve: {
+        alias: originalAlias,
+      },
+    };
+    const ssrBuildDir = resolve(workspaceRoot, 'dist', 'ssr');
+
+    const { buildServerImportSpy } = await mockBuildFunctions();
+    vi.mocked(buildClientApp).mockImplementation(async () => {
+      writeBuiltClientIndexHtml(
+        workspaceRoot,
+        '<html>snapshot</html>',
+        resolve(workspaceRoot, originalBuildOutDir),
+      );
+    });
+
+    try {
+      mkdirSync(ssrBuildDir, { recursive: true });
+      writeFileSync(
+        resolve(ssrBuildDir, 'main.server.js'),
+        'export default async function renderer() {}',
+      );
+
+      const plugin = nitro({ workspaceRoot });
+
+      await (plugin[1].config as any)(userConfig, {
+        command: 'build',
+        mode: 'production',
+      });
+
+      const mutatedHook = { handler: vi.fn(), order: 'post' };
+      // Simulate later config hooks mutating the user-owned object after
+      // Nitro's `config()` hook. The assertions below prove Nitro keeps
+      // building from the captured snapshot instead of drifting with those
+      // later edits.
+      userConfig.build!.outDir = 'mutated-client';
+      userConfig.resolve!.alias = {
+        '@app/root': '/virtual/mutated-entry.ts',
+      };
+      (
+        userConfig.environments!['client'] as { build?: { outDir?: string } }
+      ).build = {
+        outDir: 'mutated-env-client-output',
+      };
+      (userConfig.plugins![0] as Record<string, unknown>)['configResolved'] =
+        mutatedHook;
+      userConfig.plugins!.push({
+        name: 'mutated-plugin',
+      } as vite.Plugin);
+
+      await (plugin[1].closeBundle as any)();
+
+      expect(buildClientApp).toHaveBeenCalledOnce();
+      expect(buildServerImportSpy).toHaveBeenCalledOnce();
+
+      const capturedConfig = vi.mocked(buildClientApp).mock.calls[0]?.[0] as
+        | vite.UserConfig
+        | undefined;
+      const capturedPlugin = capturedConfig?.plugins?.[0] as
+        | Record<string, unknown>
+        | undefined;
+      const capturedClientEnvironment = capturedConfig?.environments?.[
+        'client'
+      ] as { build?: { outDir?: string } } | undefined;
+
+      expect(capturedConfig?.build?.outDir).toBe(originalBuildOutDir);
+      expect(capturedConfig?.resolve?.alias).toEqual(originalAlias);
+      expect(capturedClientEnvironment?.build?.outDir).toBe(
+        originalClientEnvironmentOutDir,
+      );
+      expect(capturedConfig?.plugins).toHaveLength(1);
+      expect(capturedPlugin).toBeDefined();
+      expect(Object.getPrototypeOf(capturedPlugin!)).toBe(pluginPrototype);
+      expect(capturedPlugin?.['configResolved']).toEqual(originalHook);
+      expect(capturedPlugin?.['configResolved']).not.toBe(originalHook);
+      expect(capturedPlugin?.['configResolved']).not.toBe(mutatedHook);
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
   });
 
   it('should not call the route middleware in test mode', async () => {
@@ -718,8 +823,7 @@ describe('nitro', () => {
   describe.skip('preset output', () => {
     it('should use the analog output paths when preset is not vercel', async () => {
       // Arrange
-      vi.mock('process');
-      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
       const plugin = nitro({}, {});
@@ -741,8 +845,7 @@ describe('nitro', () => {
 
     it('should use the workspace root option when it is set', async () => {
       // Arrange
-      vi.mock('process');
-      process.cwd = vi.fn().mockReturnValue('/some-other-root-directory');
+      vi.spyOn(process, 'cwd').mockReturnValue('/some-other-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
       const plugin = nitro({ workspaceRoot: '/custom-root-directory' }, {});
@@ -765,8 +868,7 @@ describe('nitro', () => {
 
     it('should use the .vercel output paths when preset is vercel', async () => {
       // Arrange
-      vi.mock('process');
-      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
       const plugin = nitro({}, { preset: 'vercel' });
@@ -795,8 +897,7 @@ describe('nitro', () => {
 
     it('should use the .vercel output paths without runtime config when preset is vercel', async () => {
       // Arrange
-      vi.mock('process');
-      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
       const plugin = nitro({}, { preset: 'vercel' });
@@ -820,8 +921,7 @@ describe('nitro', () => {
     it('should use the .vercel output paths when preset is VERCEL environment variable is set', async () => {
       // Arrange
       vi.stubEnv('VERCEL', '1');
-      vi.mock('process');
-      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
       const plugin = nitro({}, {});

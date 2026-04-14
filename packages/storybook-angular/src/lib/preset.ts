@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import * as vite from 'vite';
 import type { Plugin, UserConfig } from 'vite';
 import angular from '@analogjs/vite-plugin-angular';
+import { debugStyles } from './debug';
 
 export const previewAnnotations = async (
   entries: string[] = [],
@@ -141,6 +142,39 @@ function angularOptionsPlugin(
   }: { normalizePath: (path: string) => string; experimentalZoneless: boolean },
 ): Plugin {
   let resolvedConfig: UserConfig | undefined;
+
+  const resolveStyleImport = (
+    extraImport: string,
+    projectRoot: string,
+    workspaceRoot: string,
+  ) => {
+    const resolvedProjectImport = resolve(projectRoot, extraImport);
+    const resolvedWorkspaceImport = resolve(workspaceRoot, extraImport);
+
+    if (
+      extraImport.startsWith('.') ||
+      extraImport.startsWith('src') ||
+      existsSync(resolvedProjectImport)
+    ) {
+      return {
+        specifier: resolvedProjectImport,
+        source: 'project',
+      } as const;
+    }
+
+    if (existsSync(resolvedWorkspaceImport)) {
+      return {
+        specifier: resolvedWorkspaceImport,
+        source: 'workspace',
+      } as const;
+    }
+
+    return {
+      specifier: extraImport,
+      source: 'bare',
+    } as const;
+  };
+
   return {
     name: 'analogjs-storybook-options-plugin',
     config(userConfig: UserConfig) {
@@ -155,14 +189,24 @@ function angularOptionsPlugin(
           options.angularBuilderContext?.workspaceRoot ??
           userConfig?.root ??
           process.cwd();
+        const resolvedLoadPaths = loadPaths.map(
+          (loadPath) => `${resolve(workspaceRoot, loadPath)}`,
+        );
+
+        debugStyles('resolved SCSS load paths', {
+          configDir: options.configDir,
+          workspaceRoot,
+          projectRoot: userConfig?.root ?? process.cwd(),
+          loadPaths,
+          resolvedLoadPaths,
+        });
+
         return {
           css: {
             preprocessorOptions: {
               scss: {
                 ...sassOptions,
-                loadPaths: loadPaths.map(
-                  (loadPath) => `${resolve(workspaceRoot, loadPath)}`,
-                ),
+                loadPaths: resolvedLoadPaths,
               },
             },
           },
@@ -183,6 +227,13 @@ function angularOptionsPlugin(
           options?.angularBuilderContext?.workspaceRoot ?? process.cwd();
 
         if (Array.isArray(styles)) {
+          debugStyles('injecting Storybook global styles', {
+            configDir: options.configDir,
+            workspaceRoot,
+            projectRoot: resolvedConfig?.root ?? process.cwd(),
+            styles,
+          });
+
           styles.forEach((style) => {
             imports.push(style);
           });
@@ -200,27 +251,19 @@ function angularOptionsPlugin(
           code: `
             ${imports
               .map((extraImport) => {
-                const resolvedProjectImport = resolve(projectRoot, extraImport);
-                const resolvedWorkspaceImport = resolve(
-                  workspaceRoot,
+                const resolved = resolveStyleImport(
                   extraImport,
+                  projectRoot,
+                  workspaceRoot,
                 );
 
-                if (
-                  extraImport.startsWith('.') ||
-                  extraImport.startsWith('src') ||
-                  existsSync(resolvedProjectImport)
-                ) {
-                  // relative to root
-                  return `import '${resolvedProjectImport}';`;
-                }
+                debugStyles('resolved Storybook style import', {
+                  input: extraImport,
+                  source: resolved.source,
+                  specifier: resolved.specifier,
+                });
 
-                if (existsSync(resolvedWorkspaceImport)) {
-                  return `import '${resolvedWorkspaceImport}';`;
-                }
-
-                // absolute import
-                return `import '${extraImport}';`;
+                return `import '${resolved.specifier}';`;
               })
               .join('\n')}
             ${code}

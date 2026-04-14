@@ -1,19 +1,33 @@
+import {
+  existsSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const preprocessCSSMock = vi.fn();
 const createAngularCompilationMock = vi.fn();
-const workspaceRoot = '/workspace/analog';
 const originalNodeEnv = process.env['NODE_ENV'];
 const originalVitestEnv = process.env['VITEST'];
+const temporaryWorkspaceRoots = new Set<string>();
 
-// Cache the real module exports once so vi.doMock factories can be
-// synchronous.  Async factories inside vi.doMock can race with
-// vi.resetModules in CI, causing the real createAngularCompilation to
-// leak through and spawn piscina workers that fail on the missing tsconfig.
+// Cache the real module exports once so vi.doMock factories stay synchronous
+// after vi.resetModules().
+//
+// Value: this keeps the spec focused on the HMR stylesheet path.
+// Guards against: async mock-factory races in CI that leak the real
+// createAngularCompilation implementation, spawn worker threads, and fail on
+// placeholder fixture tsconfig paths.
 let cachedViteActual: typeof import('vite');
 let cachedDevkitActual: typeof import('./utils/devkit.js');
 
 async function setupLiveReloadPlugin(options: {
+  include?: string[];
   stylePreprocessor?: (
     code: string,
     filename: string,
@@ -25,12 +39,46 @@ async function setupLiveReloadPlugin(options: {
       preprocessStylesheet?: (code: string, context: unknown) => string;
     }>;
   };
+  tsconfig?: string;
+  workspaceRoot?: string;
 }) {
   vi.resetModules();
   preprocessCSSMock.mockReset();
   createAngularCompilationMock.mockReset();
   process.env['NODE_ENV'] = 'development';
   delete process.env['VITEST'];
+
+  const resolvedWorkspaceRoot =
+    options.workspaceRoot ??
+    mkdtempSync(join(tmpdir(), 'analog-live-reload-workspace-'));
+  if (!options.workspaceRoot) {
+    temporaryWorkspaceRoots.add(resolvedWorkspaceRoot);
+  }
+  const resolvedTsconfig =
+    options.tsconfig ?? `${resolvedWorkspaceRoot}/tsconfig.base.json`;
+  const resolvedCacheDir = join(
+    resolvedWorkspaceRoot,
+    'node_modules/.vite/live-reload-spec',
+  );
+  mkdirSync(resolvedWorkspaceRoot, { recursive: true });
+  if (!options.tsconfig && !existsSync(resolvedTsconfig)) {
+    // Use a real temporary tsconfig so the test exercises style HMR behavior
+    // without unrelated "tsconfig not found" warnings from the plugin setup.
+    writeFileSync(
+      resolvedTsconfig,
+      JSON.stringify(
+        {
+          compilerOptions: {
+            module: 'esnext',
+            moduleResolution: 'bundler',
+            target: 'es2022',
+          },
+        },
+        null,
+        2,
+      ),
+    );
+  }
 
   cachedViteActual ??= await vi.importActual<typeof import('vite')>('vite');
   cachedDevkitActual ??=
@@ -79,9 +127,12 @@ async function setupLiveReloadPlugin(options: {
   const plugin = angular({
     tsconfig: `${workspaceRoot}/tsconfig.base.json`,
     liveReload: true,
+    include: options.include,
+    tsconfig: resolvedTsconfig,
     inlineStylesExtension: 'css',
     stylePreprocessor: options.stylePreprocessor,
     stylePipeline: options.stylePipeline,
+    workspaceRoot: resolvedWorkspaceRoot,
     experimental: {
       useAngularCompilationAPI: true,
     },
@@ -89,13 +140,14 @@ async function setupLiveReloadPlugin(options: {
 
   await plugin.config(
     {
-      root: workspaceRoot,
+      root: resolvedWorkspaceRoot,
       mode: 'development',
     },
     { command: 'serve', mode: 'development' },
   );
   await plugin.configResolved({
-    root: workspaceRoot,
+    cacheDir: resolvedCacheDir,
+    root: resolvedWorkspaceRoot,
     mode: 'development',
     build: {},
     server: {},
@@ -110,6 +162,7 @@ async function setupLiveReloadPlugin(options: {
   expect(transformStylesheet).toBeTypeOf('function');
 
   return {
+    initialize,
     plugin,
     transformStylesheet: transformStylesheet!,
   };
@@ -125,6 +178,10 @@ describe('angular hmr style preprocessing', () => {
     vi.doUnmock('vite');
     vi.doUnmock('./utils/devkit.js');
     vi.doUnmock('node:fs');
+    for (const workspaceRoot of temporaryWorkspaceRoots) {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+    temporaryWorkspaceRoots.clear();
 
     if (originalNodeEnv === undefined) {
       delete process.env['NODE_ENV'];
@@ -298,6 +355,105 @@ describe('angular hmr style preprocessing', () => {
       expect(await plugin.load(`${updatedId}?ngcomp=ng-c123&e=0`)).toBe(
         '/* /project/src/app/demo.component.css DemoComponent 1 */\n.demo { color: blue; }',
       );
+    },
+  );
+
+  it(
+    'wraps the compilation API tsconfig when include adds extra source roots',
+    { timeout: 15_000 },
+    async () => {
+      const tempWorkspaceRoot = mkdtempSync(
+        join(tmpdir(), 'analog-compilation-api-include-'),
+      );
+      const normalize = (value: string) => value.replaceAll('\\', '/');
+
+      try {
+        mkdirSync(join(tempWorkspaceRoot, 'src/app'), { recursive: true });
+        mkdirSync(join(tempWorkspaceRoot, 'libs/shared/feature/src'), {
+          recursive: true,
+        });
+
+        writeFileSync(
+          join(tempWorkspaceRoot, 'src/app/app.component.ts'),
+          'export const app = true;\n',
+        );
+        writeFileSync(
+          join(
+            tempWorkspaceRoot,
+            'libs/shared/feature/src/feature.component.ts',
+          ),
+          'export const feature = true;\n',
+        );
+        writeFileSync(
+          join(tempWorkspaceRoot, 'tsconfig.base.json'),
+          JSON.stringify(
+            {
+              compilerOptions: {
+                module: 'esnext',
+                moduleResolution: 'bundler',
+                target: 'es2022',
+              },
+              files: ['./src/app/app.component.ts'],
+              references: [{ path: './libs/shared/feature/tsconfig.lib.json' }],
+            },
+            null,
+            2,
+          ),
+        );
+        writeFileSync(
+          join(tempWorkspaceRoot, 'libs/shared/feature/tsconfig.lib.json'),
+          JSON.stringify(
+            {
+              compilerOptions: {
+                composite: true,
+              },
+            },
+            null,
+            2,
+          ),
+        );
+
+        const { initialize } = await setupLiveReloadPlugin({
+          include: ['libs/shared/feature/src/**/*.ts'],
+          tsconfig: join(tempWorkspaceRoot, 'tsconfig.base.json'),
+          workspaceRoot: tempWorkspaceRoot,
+        });
+
+        // The wrapper tsconfig is the value of this feature: Angular sees the
+        // extra include roots without us mutating the user's checked-in config.
+        const [generatedTsconfigPath] = initialize.mock.calls[0] as [string];
+        expect(normalize(generatedTsconfigPath)).not.toBe(
+          normalize(join(tempWorkspaceRoot, 'tsconfig.base.json')),
+        );
+
+        const generatedConfig = JSON.parse(
+          readFileSync(generatedTsconfigPath, 'utf-8'),
+        ) as {
+          extends: string;
+          files: string[];
+          references?: Array<{ path: string }>;
+        };
+
+        expect(generatedConfig.extends).toBe(
+          normalize(join(tempWorkspaceRoot, 'tsconfig.base.json')),
+        );
+        expect(generatedConfig.files).toEqual(
+          expect.arrayContaining([
+            normalize(join(tempWorkspaceRoot, 'src/app/app.component.ts')),
+            normalize(
+              join(
+                tempWorkspaceRoot,
+                'libs/shared/feature/src/feature.component.ts',
+              ),
+            ),
+          ]),
+        );
+        expect(generatedConfig.references).toEqual([
+          { path: './libs/shared/feature/tsconfig.lib.json' },
+        ]);
+      } finally {
+        rmSync(tempWorkspaceRoot, { force: true, recursive: true });
+      }
     },
   );
 });
