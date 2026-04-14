@@ -13,9 +13,19 @@ const originalVitestEnv = process.env['VITEST'];
 let cachedViteActual: typeof import('vite');
 let cachedDevkitActual: typeof import('./utils/devkit.js');
 
-async function setupLiveReloadPlugin(
-  stylePreprocessor: (code: string, filename: string) => string,
-) {
+async function setupLiveReloadPlugin(options: {
+  stylePreprocessor?: (
+    code: string,
+    filename: string,
+    context?: unknown,
+  ) => string;
+  stylePipeline?: {
+    plugins: Array<{
+      name: string;
+      preprocessStylesheet?: (code: string, context: unknown) => string;
+    }>;
+  };
+}) {
   vi.resetModules();
   preprocessCSSMock.mockReset();
   createAngularCompilationMock.mockReset();
@@ -70,7 +80,8 @@ async function setupLiveReloadPlugin(
     tsconfig: `${workspaceRoot}/tsconfig.base.json`,
     hmr: true,
     inlineStylesExtension: 'css',
-    stylePreprocessor,
+    stylePreprocessor: options.stylePreprocessor,
+    stylePipeline: options.stylePipeline,
     experimental: {
       useAngularCompilationAPI: true,
     },
@@ -138,8 +149,9 @@ describe('angular hmr style preprocessing', () => {
         (code: string, filename: string) => `/* ${filename} */\n${code}`,
       );
 
-      const { plugin, transformStylesheet } =
-        await setupLiveReloadPlugin(stylePreprocessor);
+      const { plugin, transformStylesheet } = await setupLiveReloadPlugin({
+        stylePreprocessor,
+      });
 
       // External stylesheet (resourceFile provided)
       const externalId = await transformStylesheet(
@@ -153,7 +165,14 @@ describe('angular hmr style preprocessing', () => {
       expect(stylePreprocessor).toHaveBeenCalledWith(
         '.demo { color: red; }',
         '/project/src/app/demo.component.css',
-        undefined,
+        {
+          filename: '/project/src/app/demo.component.css',
+          containingFile: '/project/src/app/demo.component.ts',
+          resourceFile: '/project/src/app/demo.component.css',
+          className: 'DemoComponent',
+          order: 0,
+          inline: false,
+        },
       );
       expect(await plugin.load(`${externalId}?ngcomp=ng-c123&e=0`)).toBe(
         '/* /project/src/app/demo.component.css */\n.demo { color: red; }',
@@ -172,7 +191,14 @@ describe('angular hmr style preprocessing', () => {
       expect(stylePreprocessor).toHaveBeenCalledWith(
         '.demo { display: grid; }',
         '/project/src/app/demo.component.css',
-        undefined,
+        {
+          filename: '/project/src/app/demo.component.css',
+          containingFile: '/project/src/app/demo.component.ts',
+          resourceFile: undefined,
+          className: 'DemoComponent',
+          order: 1,
+          inline: true,
+        },
       );
       expect(await plugin.load(`${inlineId}?ngcomp=ng-c123&e=0`)).toBe(
         '/* /project/src/app/demo.component.css */\n.demo { display: grid; }',
@@ -188,8 +214,9 @@ describe('angular hmr style preprocessing', () => {
     const prepender = (code: string, _filename: string) =>
       `@reference "../styles/tailwind.css";\n${code}`;
 
-    const { plugin, transformStylesheet } =
-      await setupLiveReloadPlugin(prepender);
+    const { plugin, transformStylesheet } = await setupLiveReloadPlugin({
+      stylePreprocessor: prepender,
+    });
     const stylesheetId = await transformStylesheet(
       '.demo { @apply sa:text-red-500; }',
       '/project/src/app/demo.component.ts',
@@ -203,4 +230,74 @@ describe('angular hmr style preprocessing', () => {
       '@reference "../styles/tailwind.css";\n.demo { @apply sa:text-red-500; }',
     );
   });
+
+  it(
+    'runs style-pipeline preprocessors for inline styles in the compilation API path',
+    { timeout: 15_000 },
+    async () => {
+      const preprocessStylesheet = vi.fn(
+        (code: string, context: any) =>
+          `/* ${context.filename} ${context.className} ${context.order} */\n${code}`,
+      );
+
+      const { plugin, transformStylesheet } = await setupLiveReloadPlugin({
+        stylePipeline: {
+          plugins: [
+            {
+              name: 'pipeline-a',
+              preprocessStylesheet,
+            },
+          ],
+        },
+      });
+
+      const initialId = await transformStylesheet(
+        '.demo { color: red; }',
+        '/project/src/app/demo.component.ts',
+        undefined,
+        1,
+        'DemoComponent',
+      );
+
+      expect(preprocessStylesheet).toHaveBeenCalledWith(
+        '.demo { color: red; }',
+        {
+          filename: '/project/src/app/demo.component.css',
+          containingFile: '/project/src/app/demo.component.ts',
+          resourceFile: undefined,
+          className: 'DemoComponent',
+          order: 1,
+          inline: true,
+        },
+      );
+      expect(await plugin.load(`${initialId}?ngcomp=ng-c123&e=0`)).toBe(
+        '/* /project/src/app/demo.component.css DemoComponent 1 */\n.demo { color: red; }',
+      );
+
+      preprocessStylesheet.mockClear();
+
+      const updatedId = await transformStylesheet(
+        '.demo { color: blue; }',
+        '/project/src/app/demo.component.ts',
+        undefined,
+        1,
+        'DemoComponent',
+      );
+
+      expect(preprocessStylesheet).toHaveBeenCalledWith(
+        '.demo { color: blue; }',
+        {
+          filename: '/project/src/app/demo.component.css',
+          containingFile: '/project/src/app/demo.component.ts',
+          resourceFile: undefined,
+          className: 'DemoComponent',
+          order: 1,
+          inline: true,
+        },
+      );
+      expect(await plugin.load(`${updatedId}?ngcomp=ng-c123&e=0`)).toBe(
+        '/* /project/src/app/demo.component.css DemoComponent 1 */\n.demo { color: blue; }',
+      );
+    },
+  );
 });

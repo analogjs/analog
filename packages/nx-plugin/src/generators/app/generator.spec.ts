@@ -38,7 +38,7 @@ describe('nx-plugin generator', () => {
     expect(dependencies['@analogjs/router']).toBeDefined();
     expect(dependencies['@angular/platform-server']).toBeDefined();
     expect(dependencies['front-matter']).toBe('^4.0.2');
-    expect(dependencies['marked']).toBe('^15.0.7');
+    expect(dependencies['marked']).toBe('^18.0.0');
     expect(dependencies['marked-gfm-heading-id']).toBe('^4.1.1');
     expect(dependencies['marked-highlight']).toBe('^2.2.1');
     expect(dependencies['marked-mangle']).toBe('^1.1.10');

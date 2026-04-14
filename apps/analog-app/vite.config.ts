@@ -3,6 +3,7 @@
 import analog from '@analogjs/platform';
 import { resolve } from 'node:path';
 import { defineConfig, PluginOption } from 'vite';
+import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 
 // Only run in Netlify CI
 let base = process.env['URL'] || 'http://localhost:43000';
@@ -47,6 +48,9 @@ export default defineConfig(async ({ mode, command }) => {
     },
     optimizeDeps: {
       include: ['@angular/forms'],
+      // Keep workspace Angular libraries on the source-transform path so Analog
+      // can compile external templates/styles instead of Vite prebundling them.
+      exclude: getWorkspaceDependencyExcludes(__dirname),
     },
     plugins: [
       analog({

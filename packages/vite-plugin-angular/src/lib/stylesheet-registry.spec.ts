@@ -248,7 +248,7 @@ describe('stylesheet-registry', () => {
 
     expect(result).toEqual({
       code: '.demo { color: blue; }',
-      dependencies: ['virtual:brandos/tailwind.css'],
+      dependencies: [{ id: 'virtual:brandos/tailwind.css' }],
       diagnostics: [
         {
           severity: 'warning',

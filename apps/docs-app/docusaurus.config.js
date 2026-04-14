@@ -35,7 +35,7 @@ const config = {
   future: {
     // Webpackbar currently trips webpack's ProgressPlugin schema validation
     // in this workspace. Use Docusaurus' Rspack path instead.
-    experimental_faster: {
+    faster: {
       rspackBundler: true,
     },
   },

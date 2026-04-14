@@ -5,11 +5,10 @@ import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-interface ReleaseArtifact {
-  projectName: string;
-  packageName: string;
-  publishDir: string;
-}
+import {
+  releaseArtifacts,
+  type ReleaseArtifact,
+} from './release-artifacts-config.mts';
 
 interface PackedArtifact extends ReleaseArtifact {
   filename: string;
@@ -17,54 +16,6 @@ interface PackedArtifact extends ReleaseArtifact {
 }
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-
-const releaseArtifacts: ReleaseArtifact[] = [
-  {
-    projectName: 'astro-angular',
-    packageName: '@analogjs/astro-angular',
-    publishDir: 'packages/astro-angular/dist',
-  },
-  {
-    projectName: 'content',
-    packageName: '@analogjs/content',
-    publishDir: 'packages/content/dist',
-  },
-  {
-    projectName: 'platform',
-    packageName: '@analogjs/platform',
-    publishDir: 'packages/platform/dist',
-  },
-  {
-    projectName: 'router',
-    packageName: '@analogjs/router',
-    publishDir: 'packages/router/dist',
-  },
-  {
-    projectName: 'storybook-angular',
-    packageName: '@analogjs/storybook-angular',
-    publishDir: 'packages/storybook-angular/dist',
-  },
-  {
-    projectName: 'vite-plugin-angular',
-    packageName: '@analogjs/vite-plugin-angular',
-    publishDir: 'packages/vite-plugin-angular/dist',
-  },
-  {
-    projectName: 'vite-plugin-nitro',
-    packageName: '@analogjs/vite-plugin-nitro',
-    publishDir: 'packages/vite-plugin-nitro/dist',
-  },
-  {
-    projectName: 'vitest-angular',
-    packageName: '@analogjs/vitest-angular',
-    publishDir: 'packages/vitest-angular/dist',
-  },
-  {
-    projectName: 'create-analog',
-    packageName: 'create-analog',
-    publishDir: 'dist/packages/create-analog',
-  },
-];
 
 function getOption(name: string): string | undefined {
   const flag = `--${name}`;

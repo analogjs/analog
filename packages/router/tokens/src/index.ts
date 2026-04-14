@@ -1,4 +1,8 @@
-import { InjectionToken, inject } from '@angular/core';
+import {
+  InjectionToken,
+  assertInInjectionContext,
+  inject,
+} from '@angular/core';
 import type { $Fetch } from 'nitro/types';
 import type {
   IncomingMessage,
@@ -48,4 +52,13 @@ export function injectInternalServerFetch(): ServerInternalFetch | null {
 
 export function injectAPIPrefix(): string {
   return inject(API_PREFIX);
+}
+
+export const LOCALE: InjectionToken<string> = new InjectionToken<string>(
+  '@analogjs/router Locale',
+);
+
+export function injectLocale(): string | null {
+  assertInInjectionContext(injectLocale);
+  return inject(LOCALE, { optional: true });
 }
