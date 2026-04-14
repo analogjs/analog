@@ -36,7 +36,8 @@
   },
   "main": "dist/src/index.js",
   "dependencies": {
-    "@storybook/builder-vite": "catalog:peerStorybook10"
+    "@storybook/builder-vite": "catalog:peerStorybook10",
+    "obug": "catalog:"
   },
   "peerDependencies": {
     "@storybook/angular": "catalog:peerStorybook10",
