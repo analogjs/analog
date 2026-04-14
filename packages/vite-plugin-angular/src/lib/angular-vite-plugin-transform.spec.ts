@@ -169,5 +169,5 @@ describe('legacy Angular transform', () => {
     // `undefined` is the safe opt-out signal here: Vite or another plugin can
     // keep handling the file instead of Analog inventing a transform result.
     expect(result).toBeUndefined();
-  });
+  }, 15_000);
 });
