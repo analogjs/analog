@@ -93,7 +93,7 @@ export default config;
 
 For current Analog projects, use `framework.options.liveReload` to control Analog's Angular live-reload behavior.
 
-This is separate from Vite's `server.hmr` option, which configures the HMR websocket transport. You can use `server.hmr` together with `framework.options.liveReload` when Storybook needs custom host, port, or path settings. `framework.options.hmr` is still accepted as a compatibility alias.
+This is separate from Vite's `server.hmr` option, which configures the HMR websocket transport. You can use `server.hmr` together with `framework.options.liveReload` when Storybook needs custom host, port, or path settings.
 
 Remove the existing `webpackFinal` config function if present.
 

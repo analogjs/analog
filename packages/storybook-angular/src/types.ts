@@ -17,10 +17,6 @@ export type FrameworkOptions = {
    * HMR client transport.
    */
   liveReload?: boolean;
-  /**
-   * Compatibility alias for `liveReload`.
-   */
-  hmr?: boolean;
   inlineStylesExtension?: string;
   tsconfig?: string;
   experimentalZoneless?: boolean;

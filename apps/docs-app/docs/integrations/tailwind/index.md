@@ -124,9 +124,9 @@ Without `prefixes`, Analog falls back to its default Tailwind usage detection fo
 
 Use `liveReload` when you need to configure Analog's Angular live-reload behavior explicitly.
 
-Vite's `server.hmr` option is separate. It controls the HMR websocket transport, so you can use `server.hmr` together with `liveReload` when your dev server needs custom host, port, or path settings. `hmr` is still accepted as a compatibility alias for `liveReload`.
+Vite's `server.hmr` option is separate. It controls the HMR websocket transport, so you can use `server.hmr` together with `liveReload` when your dev server needs custom host, port, or path settings.
 
-Angular HMR requires Angular v19 or newer. On Angular v17-v18, `liveReload` and its `hmr` alias are intentionally disabled at runtime and emit a console warning, so HMR is unavailable on those versions. For broader migration guidance, see the [migration guide](/docs/guides/migrating).
+Angular HMR requires Angular v19 or newer. On Angular v17-v18, `liveReload` is intentionally disabled at runtime and emits a console warning, so HMR is unavailable on those versions. For broader migration guidance, see the [migration guide](/docs/guides/migrating).
 
 Tailwind support does not require you to enable HMR manually. The stylesheet pipeline is handled independently from whether Angular can produce a hot component update for a given edit.
 

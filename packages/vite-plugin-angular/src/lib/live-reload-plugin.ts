@@ -19,6 +19,11 @@ export function liveReloadPlugin({
     name: 'analogjs-live-reload-plugin',
     apply: 'serve',
     configureServer(server: ViteDevServer) {
+      if (server.config.server.hmr === false) {
+        debugHmr('middleware disabled: vite server.hmr is false');
+        return;
+      }
+
       const angularComponentMiddleware: Connect.HandleFunction = async (
         req: Connect.IncomingMessage,
         res: ServerResponse<Connect.IncomingMessage>,

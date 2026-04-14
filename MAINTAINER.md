@@ -1,5 +1,9 @@
 # Contributing (Maintainer)
 
+## Debugging
+
+Repo-local debugging guidance for Analog package development lives in [docs/debugging.md](docs/debugging.md).
+
 ## Adding and updating an package
 
 Adding or updating a package requires some extra step if its part of `dependencies` or `devDependencies`.

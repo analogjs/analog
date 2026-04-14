@@ -165,10 +165,6 @@ export interface PluginOptions {
    * available when needed.
    */
   liveReload?: boolean;
-  /**
-   * Compatibility alias for `liveReload`.
-   */
-  hmr?: boolean;
   disableTypeChecking?: boolean;
   fileReplacements?: FileReplacement[];
   experimental?: {
@@ -435,7 +431,7 @@ function buildStylePreprocessor(
 
 export function angular(options?: PluginOptions): Plugin[] {
   applyDebugOption(options?.debug, options?.workspaceRoot);
-  const liveReload = options?.liveReload ?? options?.hmr ?? true;
+  const liveReload = options?.liveReload ?? true;
 
   /**
    * Normalize plugin options so defaults
@@ -458,7 +454,6 @@ export function angular(options?: PluginOptions): Plugin[] {
     include: options?.include ?? [],
     additionalContentDirs: options?.additionalContentDirs ?? [],
     liveReload,
-    hmr: liveReload,
     disableTypeChecking: options?.disableTypeChecking ?? true,
     fileReplacements: options?.fileReplacements ?? [],
     useAngularCompilationAPI:
@@ -507,9 +502,17 @@ export function angular(options?: PluginOptions): Plugin[] {
   const transformedStyleOwnerMetadata = new Map<string, StyleOwnerRecord[]>();
   const styleSourceOwners = new Map<string, Set<string>>();
 
-  function shouldEnableHmr(): boolean {
+  function hasViteHmrTransport(): boolean {
+    return resolvedConfig ? resolvedConfig.server.hmr !== false : true;
+  }
+
+  function shouldEnableLiveReload(): boolean {
     const effectiveWatchMode = isTest ? testWatchMode : watchMode;
-    return !!(effectiveWatchMode && pluginOptions.hmr);
+    return !!(
+      effectiveWatchMode &&
+      pluginOptions.liveReload &&
+      hasViteHmrTransport()
+    );
   }
 
   /**
@@ -531,7 +534,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   function shouldExternalizeStyles(): boolean {
     const effectiveWatchMode = isTest ? testWatchMode : watchMode;
     if (!effectiveWatchMode) return false;
-    return !!(shouldEnableHmr() || pluginOptions.hasTailwindCss);
+    return !!(shouldEnableLiveReload() || pluginOptions.hasTailwindCss);
   }
 
   /**
@@ -795,7 +798,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   function angularPlugin(): Plugin {
     let isProd = false;
 
-    if (angularFullVersion < 190000 && pluginOptions.hmr) {
+    if (angularFullVersion < 190000 && pluginOptions.liveReload) {
       // Angular < 19 does not support externalRuntimeStyles or _enableHmr.
       debugHmr('hmr disabled: Angular version does not support HMR APIs', {
         angularVersion: angularFullVersion,
@@ -805,7 +808,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         '[@analogjs/vite-plugin-angular]: HMR was disabled because Angular v19+ is required for externalRuntimeStyles/_enableHmr support. Detected Angular version: %s.',
         angularFullVersion,
       );
-      pluginOptions.hmr = false;
+      pluginOptions.liveReload = false;
     }
 
     if (isTest) {
@@ -814,7 +817,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       // This does NOT block style externalization — shouldExternalizeStyles()
       // independently checks hasTailwindCss, so Tailwind utilities in
       // component styles still work in unit tests.
-      pluginOptions.hmr = false;
+      pluginOptions.liveReload = false;
       debugHmr('hmr disabled', {
         angularVersion: angularFullVersion,
         isTest,
@@ -1022,7 +1025,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           let result;
 
-          if (shouldEnableHmr()) {
+          if (shouldEnableLiveReload()) {
             await pendingCompilation;
             pendingCompilation = null;
             result = fileEmitter(fileId);
@@ -1050,7 +1053,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
 
           if (
-            shouldEnableHmr() &&
+            shouldEnableLiveReload() &&
             result?.hmrEligible &&
             classNames.get(fileId)
           ) {
@@ -1403,7 +1406,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
 
           if (
-            shouldEnableHmr() &&
+            shouldEnableLiveReload() &&
             /\.(html|htm)$/.test(ctx.file) &&
             fileModules.length === 0
           ) {
@@ -2121,7 +2124,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         },
       } satisfies Plugin),
     angularPlugin(),
-    pluginOptions.hmr && liveReloadPlugin({ classNames, fileEmitter }),
+    pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
     ...(isTest && !isStackBlitz ? angularVitestPlugins() : []),
     (jit &&
       jitPlugin({
@@ -2242,7 +2245,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           // Populate classNames during initial compilation so HMR for
           // HTML template changes can find the parent TS module.
-          if (shouldEnableHmr() && className && containingFile) {
+          if (shouldEnableLiveReload() && className && containingFile) {
             classNames.set(normalizePath(containingFile), className as string);
           }
 
@@ -2317,14 +2320,15 @@ export function angular(options?: PluginOptions): Plugin[] {
           tsCompilerOptions['externalRuntimeStyles'] = true;
         }
 
-        if (shouldEnableHmr()) {
+        if (shouldEnableLiveReload()) {
           tsCompilerOptions['_enableHmr'] = true;
           // Workaround for https://github.com/angular/angular/issues/59310
           tsCompilerOptions['supportTestBed'] = true;
         }
 
         debugCompiler('tsCompilerOptions (compilation API)', {
-          hmr: pluginOptions.hmr,
+          liveReload: pluginOptions.liveReload,
+          viteHmr: hasViteHmrTransport(),
           hasTailwindCss: pluginOptions.hasTailwindCss,
           watchMode,
           shouldExternalize: shouldExternalizeStyles(),
@@ -2596,7 +2600,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       isProd ? 'prod' : 'dev',
       isTest ? 'test' : 'app',
       config.build?.lib ? 'lib' : 'nolib',
-      pluginOptions.hmr ? 'hmr' : 'nohmr',
+      pluginOptions.liveReload ? 'livereload' : 'nolivereload',
       pluginOptions.hasTailwindCss ? 'tw' : 'notw',
     ].join('|');
     let cached = tsconfigOptionsCache.get(tsconfigKey);
@@ -2631,14 +2635,15 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['externalRuntimeStyles'] = true;
     }
 
-    if (shouldEnableHmr()) {
+    if (shouldEnableLiveReload()) {
       tsCompilerOptions['_enableHmr'] = true;
       // Workaround for https://github.com/angular/angular/issues/59310
       tsCompilerOptions['supportTestBed'] = true;
     }
 
     debugCompiler('tsCompilerOptions (NgtscProgram path)', {
-      hmr: pluginOptions.hmr,
+      liveReload: pluginOptions.liveReload,
+      viteHmr: hasViteHmrTransport(),
       shouldExternalize: shouldExternalizeStyles(),
       externalRuntimeStyles: !!tsCompilerOptions['externalRuntimeStyles'],
       hmrEnabled: !!tsCompilerOptions['_enableHmr'],
@@ -2799,7 +2804,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     const fileMetadata = getFileMetadata(
       builder,
       angularCompiler!,
-      pluginOptions.hmr,
+      pluginOptions.liveReload,
       pluginOptions.disableTypeChecking,
     );
 

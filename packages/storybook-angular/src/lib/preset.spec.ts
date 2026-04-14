@@ -132,30 +132,24 @@ describe('viteFinal', () => {
   };
 
   describe('Angular plugin options', () => {
-    it('prefers liveReload over hmr and keeps hmr as compatibility input', async () => {
-      const options = makeOptions({ liveReload: false, hmr: true });
+    it('forwards liveReload without a duplicate hmr flag', async () => {
+      const options = makeOptions({ liveReload: false });
 
       await viteFinal(baseConfig, options);
 
-      expect(angularPluginMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          liveReload: false,
-          hmr: false,
-        }),
-      );
+      const [angularOptions] = angularPluginMock.mock.calls[0];
+      expect(angularOptions.liveReload).toBe(false);
+      expect(angularOptions).not.toHaveProperty('hmr');
     });
 
-    it('falls back to hmr when liveReload is omitted', async () => {
-      const options = makeOptions({ hmr: true });
+    it('defaults liveReload to false when omitted', async () => {
+      const options = makeOptions();
 
       await viteFinal(baseConfig, options);
 
-      expect(angularPluginMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          liveReload: true,
-          hmr: true,
-        }),
-      );
+      const [angularOptions] = angularPluginMock.mock.calls[0];
+      expect(angularOptions.liveReload).toBe(false);
+      expect(angularOptions).not.toHaveProperty('hmr');
     });
   });
 

@@ -99,20 +99,6 @@ describe('liveReload option', () => {
 
     expect(names).toEqual(expect.arrayContaining(hmrPluginNames));
   });
-
-  it('accepts hmr as a compatibility alias for liveReload', () => {
-    const plugins = angular({ hmr: true });
-    const names = plugins.map((plugin) => plugin.name);
-
-    expect(names).toEqual(expect.arrayContaining(hmrPluginNames));
-  });
-
-  it('prefers liveReload over hmr when both are provided', () => {
-    const plugins = angular({ liveReload: false, hmr: true });
-    const names = plugins.map((plugin) => plugin.name);
-
-    expect(names).toEqual(expect.not.arrayContaining(hmrPluginNames));
-  });
 });
 
 describe('isTestWatchMode', () => {
