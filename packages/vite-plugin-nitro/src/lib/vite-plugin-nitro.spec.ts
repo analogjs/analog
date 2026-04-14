@@ -106,8 +106,10 @@ describe('nitro', () => {
       });
 
       const mutatedHook = { handler: vi.fn(), order: 'post' };
-      // Mutate the original object after config capture. Nitro should keep
-      // building from its snapshot, not from this live user-owned reference.
+      // Simulate later config hooks mutating the user-owned object after
+      // Nitro's `config()` hook. The assertions below prove Nitro keeps
+      // building from the captured snapshot instead of drifting with those
+      // later edits.
       userConfig.build!.outDir = 'mutated-client';
       userConfig.resolve!.alias = {
         '@app/root': '/virtual/mutated-entry.ts',

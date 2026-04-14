@@ -64,6 +64,9 @@ async function setupLegacyTransformPlugin() {
     mergeTransformers: vi.fn(() => ({})),
   }));
 
+  // Keep this spec scoped to the "Angular emitted nothing" guard. Pulling in
+  // the real Analog compiler plugin would exercise the emitter stack instead
+  // of the opt-out behavior this regression test is protecting.
   vi.doMock('./analog-compiler-plugin.js', () => ({
     analogCompilerPlugin: vi.fn(() => ({
       name: 'mock-analog-compiler-plugin',

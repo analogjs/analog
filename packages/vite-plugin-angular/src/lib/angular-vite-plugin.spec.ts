@@ -57,6 +57,8 @@ describe('angularVitePlugin', () => {
   it('prebundles rxjs and tslib in optimizeDeps', async () => {
     const tempRoot = mkdtempSync(join(tmpdir(), 'analog-optimize-deps-'));
     const tsconfigPath = join(tempRoot, 'tsconfig.spec.json');
+    // Use a real tsconfig path so this test stays about optimizeDeps output,
+    // not about the plugin warning on a deliberately missing config file.
     writeFileSync(tsconfigPath, '{\n  "compilerOptions": {}\n}\n', 'utf-8');
 
     try {
@@ -1392,6 +1394,8 @@ describe('tailwind-reference plugin', () => {
   beforeAll(() => {
     rootCssDir = mkdtempSync(join(tmpdir(), 'analog-tailwind-root-'));
     ROOT_CSS = join(rootCssDir, 'tailwind.css');
+    // Use an actual Tailwind root file so the assertions stay focused on
+    // @reference injection behavior instead of missing-file warnings.
     writeFileSync(ROOT_CSS, '@import "tailwindcss" prefix(sa);\n', 'utf-8');
   });
 

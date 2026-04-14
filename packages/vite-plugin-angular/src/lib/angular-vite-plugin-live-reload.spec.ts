@@ -16,10 +16,13 @@ const originalNodeEnv = process.env['NODE_ENV'];
 const originalVitestEnv = process.env['VITEST'];
 const temporaryWorkspaceRoots = new Set<string>();
 
-// Cache the real module exports once so vi.doMock factories can be
-// synchronous.  Async factories inside vi.doMock can race with
-// vi.resetModules in CI, causing the real createAngularCompilation to
-// leak through and spawn piscina workers that fail on the missing tsconfig.
+// Cache the real module exports once so vi.doMock factories stay synchronous
+// after vi.resetModules().
+//
+// Value: this keeps the spec focused on the HMR stylesheet path.
+// Guards against: async mock-factory races in CI that leak the real
+// createAngularCompilation implementation, spawn worker threads, and fail on
+// placeholder fixture tsconfig paths.
 let cachedViteActual: typeof import('vite');
 let cachedDevkitActual: typeof import('./utils/devkit.js');
 
@@ -59,6 +62,8 @@ async function setupLiveReloadPlugin(options: {
   );
   mkdirSync(resolvedWorkspaceRoot, { recursive: true });
   if (!options.tsconfig && !existsSync(resolvedTsconfig)) {
+    // Use a real temporary tsconfig so the test exercises style HMR behavior
+    // without unrelated "tsconfig not found" warnings from the plugin setup.
     writeFileSync(
       resolvedTsconfig,
       JSON.stringify(

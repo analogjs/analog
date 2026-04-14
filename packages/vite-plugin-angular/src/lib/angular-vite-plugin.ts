@@ -1240,18 +1240,20 @@ export function angular(options?: PluginOptions): Plugin[] {
                 const { encapsulation } = getComponentStyleSheetMeta(
                   isDirect.id,
                 );
-                // Angular component styles are served through two live module
+                // Angular exposes one component stylesheet through two module
                 // shapes:
                 // 1. a `?direct&ngcomp=...` CSS module that Vite can patch with
                 //    a normal `css-update`
                 // 2. a `?ngcomp=...` JS wrapper module that embeds `__vite__css`
                 //    for Angular's runtime consumption
                 //
-                // If we only patch the direct CSS module, the browser can keep
-                // running a stale wrapper whose embedded CSS no longer matches
-                // the source file. We therefore invalidate any wrapper modules
-                // that map back to the same source stylesheet before sending
-                // the CSS update.
+                // Value: invalidate the browser-visible wrapper before patching
+                // the direct CSS module so Angular re-evaluates the same live
+                // wrapper it is actually using.
+                //
+                // Guards against: a successful-looking CSS HMR event that
+                // leaves the UI stale because the wrapper still holds the
+                // pre-edit CSS string.
                 const wrapperModules =
                   await findComponentStylesheetWrapperModules(
                     ctx.server,
@@ -1282,11 +1284,11 @@ export function angular(options?: PluginOptions): Plugin[] {
                   stylesheetDiagnosis,
                 );
 
-                // The stylesheet registry may already hold the fresh served CSS
-                // while Vite still has a stale transform result cached for the
-                // direct `?direct&ngcomp=...` module id. Invalidate the direct
-                // module up front so subsequent wrapper generation and explicit
-                // fetches cannot keep serving the pre-edit CSS payload.
+                // Drop Vite's cached direct-module transform before wrapper
+                // lookup and patching continue.
+                //
+                // Value: later fetches and wrapper regeneration see the just
+                // edited stylesheet instead of the last served transform result.
                 ctx.server.moduleGraph.invalidateModule(isDirect);
                 debugHmrV('component stylesheet direct module invalidated', {
                   file: ctx.file,
@@ -1296,9 +1298,10 @@ export function angular(options?: PluginOptions): Plugin[] {
                     'Ensure Vite drops stale direct CSS transform results before wrapper or fallback handling continues.',
                 });
 
-                // Track if the component uses ShadowDOM encapsulation
-                // Shadow DOM components currently require a full reload.
-                // Vite's CSS hot replacement does not support shadow root searching.
+                // CSS-only HMR is safe only when the browser-visible wrapper is
+                // known and the component is not using Shadow DOM. Vite's CSS
+                // patching does not search shadow roots, so Shadow DOM still
+                // falls back to reload for correctness.
                 const trackedWrapperRequestIds =
                   stylesheetDiagnosis.trackedRequestIds.filter((id) =>
                     id.includes('?ngcomp='),
@@ -1314,12 +1317,11 @@ export function angular(options?: PluginOptions): Plugin[] {
                   );
                   // A live wrapper ModuleNode is ideal because we can
                   // invalidate it directly, but it is not strictly required.
-                  // When the browser has already loaded the wrapper URL and the
-                  // registry knows that wrapper request id, a normal CSS patch
-                  // against the direct stylesheet is still the most accurate
-                  // update path available. Falling back to full reload in that
-                  // state is needlessly pessimistic and causes the exact UX
-                  // regression we are trying to eliminate.
+                  //
+                  // Value: keep CSS-only HMR working when the browser has
+                  // already loaded the wrapper URL and the registry can still
+                  // prove that wrapper identity, even if this HMR pass did not
+                  // surface a live ModuleNode for it.
                   debugHmrV('sending css-update for component stylesheet', {
                     file: ctx.file,
                     path: isDirect.url,
@@ -1361,12 +1363,12 @@ export function angular(options?: PluginOptions): Plugin[] {
                   );
                 }
 
-                // A direct CSS patch without the browser-visible `?ngcomp=...`
-                // wrapper module is not trustworthy. Angular consumes the
-                // wrapper JS module, which embeds `__vite__css` for runtime
-                // style application. When that wrapper is missing from the live
-                // module graph, prefer correctness over a partial update and
-                // force a reload so the component re-evaluates with fresh CSS.
+                // If the browser-visible `?ngcomp=...` wrapper cannot be
+                // trusted, prefer correctness over a partial patch and reload.
+                //
+                // Guards against: logging a "successful" CSS update while
+                // Angular keeps running stale wrapper JS that still embeds the
+                // old stylesheet contents.
                 debugHmrV('component stylesheet hmr fallback: full reload', {
                   file: ctx.file,
                   encapsulation,
@@ -1428,15 +1430,15 @@ export function angular(options?: PluginOptions): Plugin[] {
                     derivedUpdates,
                   });
                   // Keep owner recompilation and metadata derivation as
-                  // diagnostics only. For externalized component styles, a
-                  // component-update message is not a safe substitute for a
-                  // missing `?ngcomp=...` wrapper module because Angular can
+                  // diagnostics only.
+                  //
+                  // Value: the fallback log can still point at the affected
+                  // components.
+                  //
+                  // Guards against: treating a component-update as a safe
+                  // substitute for a missing wrapper module. Angular can
                   // re-render the component without forcing the browser to
-                  // re-evaluate the live stylesheet wrapper. That exact shape
-                  // produced false-positive "successful HMR" logs while the UI
-                  // stayed visually stale. If the wrapper is absent, prefer a
-                  // hard reload after gathering the owner evidence needed to
-                  // explain why the fallback was necessary.
+                  // refresh the wrapper CSS, which leaves the UI visually stale.
                   if (derivedUpdates.length > 0) {
                     debugHmrV(
                       'component stylesheet owner fallback derived updates',
@@ -1833,30 +1835,22 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
-          // Detect whether the code contains an Angular @Component decorator.
+          // Detect whether the source still contains a raw Angular
+          // `@Component` decorator.
           //
-          // IMPORTANT — useAngularCompilationAPI behavior:
-          //   When `useAngularCompilationAPI: true`, the Angular Compilation API
-          //   compiles TypeScript BEFORE this Vite transform hook fires. By the
-          //   time `code` reaches here, @Component decorators have been compiled
-          //   away into ɵɵdefineComponent() calls, so `hasComponent` is always
-          //   false for actual component files.
+          // With `useAngularCompilationAPI`, Angular compiles TypeScript before
+          // this Vite hook runs, so real component files reach this point with
+          // `ɵɵdefineComponent()` output instead of `@Component(...)`. In that
+          // mode, `hasComponent === false` is expected.
           //
-          //   This is expected and NOT a bug. The Angular Compilation API handles
-          //   template and style resolution through its own internal pipeline:
-          //     - Templates: resolved during compilation, not via templateUrls
-          //     - Styles: externalized and served via the resolveId/load hooks
-          //       (confirmed by `analog:angular:styles resolveId: mapped external
-          //       stylesheet` debug messages)
+          // Value: this comment explains why the transform hook intentionally
+          // stops using decorator detection as a signal for Compilation API
+          // builds.
           //
-          //   The only consequence of hasComponent=false is that external template
-          //   and style files are not registered via addWatchFile(), which means
-          //   HMR for external HTML/CSS edits may trigger a full reload instead of
-          //   a targeted hot replacement. The Angular Compilation API's own
-          //   invalidation mechanism handles recompilation regardless.
-          //
-          //   For the legacy (non-API) compilation path, hasComponent works as
-          //   expected because the transform hook sees raw TypeScript source.
+          // Effect: external template/style files are no longer registered via
+          // `addWatchFile()` on this path, so those edits may fall back to full
+          // reload more often. Angular's own invalidation still handles
+          // recompilation correctly.
           const hasComponent = code.includes('@Component');
           debugCompilerV('transform', {
             id,
@@ -2292,8 +2286,11 @@ export function angular(options?: PluginOptions): Plugin[] {
     config: ResolvedConfig,
   ): string {
     // Angular's Compilation API accepts one tsconfig path. When Analog adds
-    // extra roots via `include`, emit a tiny wrapper config instead of asking
-    // users to manually duplicate those roots in their checked-in tsconfig.
+    // extra roots via `include`, emit a tiny wrapper config that extends the
+    // user's tsconfig and enumerates the merged root set.
+    //
+    // Value: include-based workspace expansion works with the Compilation API
+    // without asking users to edit or duplicate their checked-in tsconfig.
     const includedFiles = ensureIncludeCache();
     if (includedFiles.length === 0) {
       return resolvedTsConfigPath;
