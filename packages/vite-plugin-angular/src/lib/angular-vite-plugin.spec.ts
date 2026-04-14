@@ -87,7 +87,7 @@ describe('angularVitePlugin', () => {
   });
 });
 
-describe('hmr option', () => {
+describe('liveReload option', () => {
   beforeEach(() => {
     process.env['NODE_ENV'] = 'development';
     delete process.env['VITEST'];
@@ -107,8 +107,8 @@ describe('hmr option', () => {
     }
   });
 
-  it('disables HMR helper plugins when hmr is false', () => {
-    const plugins = angular({ hmr: false });
+  it('disables HMR helper plugins when liveReload is false', () => {
+    const plugins = angular({ liveReload: false });
     const names = plugins.map((plugin) => plugin.name);
 
     expect(names).toEqual(expect.not.arrayContaining(hmrPluginNames));
@@ -118,20 +118,6 @@ describe('hmr option', () => {
     const names = angular().map((plugin) => plugin.name);
 
     expect(names).toEqual(expect.arrayContaining(hmrPluginNames));
-  });
-
-  it('accepts liveReload as a compatibility alias for HMR', () => {
-    const plugins = angular({ liveReload: true });
-    const names = plugins.map((plugin) => plugin.name);
-
-    expect(names).toEqual(expect.arrayContaining(hmrPluginNames));
-  });
-
-  it('prefers hmr over liveReload when both are provided', () => {
-    const plugins = angular({ hmr: false, liveReload: true });
-    const names = plugins.map((plugin) => plugin.name);
-
-    expect(names).toEqual(expect.not.arrayContaining(hmrPluginNames));
   });
 });
 

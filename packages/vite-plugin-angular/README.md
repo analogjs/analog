@@ -89,3 +89,9 @@ Create a `tsconfig.app.json` in the root of the project.
   "include": ["src/**/*.ts"]
 }
 ```
+
+## Tailwind CSS v4
+
+For Angular component styles that use Tailwind utilities like `@apply`, configure `tailwindCss.rootStylesheet` and follow the Tailwind guide for Analog:
+
+- https://analogjs.org/docs/integrations/tailwind

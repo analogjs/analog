@@ -10,9 +10,11 @@ type BuilderName = CompatibleString<'@storybook/builder-vite'>;
 export type FrameworkOptions = {
   builder?: BuilderOptions;
   jit?: boolean;
-  hmr?: boolean;
   /**
-   * @deprecated Use `hmr` instead. Kept as a compatibility alias.
+   * Enables Analog's Angular live-reload/HMR pipeline for Storybook.
+   *
+   * This is separate from Vite's `server.hmr` option, which configures the
+   * HMR client transport.
    */
   liveReload?: boolean;
   inlineStylesExtension?: string;

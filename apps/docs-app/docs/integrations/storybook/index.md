@@ -91,7 +91,9 @@ const config: StorybookConfig = {
 export default config;
 ```
 
-For current Analog projects, prefer `framework.options.hmr` if you need to configure Angular HMR. `liveReload` is still accepted as a compatibility alias, but `hmr` is the recommended option.
+For current Analog projects, use `framework.options.liveReload` to control Analog's Angular live-reload behavior.
+
+This is separate from Vite's `server.hmr` option, which configures the HMR websocket transport. You can use `server.hmr` together with `framework.options.liveReload` when Storybook needs custom host, port, or path settings.
 
 Remove the existing `webpackFinal` config function if present.
 
@@ -177,7 +179,7 @@ If your project uses Tailwind v4, keep Storybook aligned with the same opinionat
 - one root stylesheet such as `src/styles.css`
 - `@import 'tailwindcss';` in that stylesheet
 - `framework.options.tailwindCss.rootStylesheet` pointing at that stylesheet
-- `framework.options.hmr` for Angular HMR behavior
+- `framework.options.liveReload` for Angular reload behavior
 
 ```ts
 import { resolve } from 'node:path';
@@ -187,7 +189,7 @@ const config: StorybookConfig = {
   framework: {
     name: '@analogjs/storybook-angular',
     options: {
-      hmr: true,
+      liveReload: true,
       tailwindCss: {
         rootStylesheet: resolve(__dirname, '../src/styles.css'),
       },

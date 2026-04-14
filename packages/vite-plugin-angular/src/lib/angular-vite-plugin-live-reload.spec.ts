@@ -125,9 +125,10 @@ async function setupLiveReloadPlugin(options: {
 
   const { angular } = await import('./angular-vite-plugin');
   const plugin = angular({
+    tsconfig: `${resolvedWorkspaceRoot}/tsconfig.base.json`,
+    liveReload: true,
     include: options.include,
     tsconfig: resolvedTsconfig,
-    hmr: true,
     inlineStylesExtension: 'css',
     stylePreprocessor: options.stylePreprocessor,
     stylePipeline: options.stylePipeline,

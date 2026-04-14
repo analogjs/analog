@@ -76,10 +76,16 @@ export const viteFinal = async (config: any, options: any): Promise<any> => {
 
   // @ts-expect-error - untyped storybook presets API
   const framework = await options.presets.apply('framework');
+  const { hmr: _removedHmrOption, ...frameworkOptions } =
+    framework.options ?? {};
   const experimentalZoneless = await resolveExperimentalZoneless(
-    framework.options,
+    frameworkOptions,
     options?.angularBuilderOptions,
   );
+  const liveReload =
+    typeof frameworkOptions.liveReload !== 'undefined'
+      ? frameworkOptions.liveReload
+      : false;
   return vite.mergeConfig(config, {
     // Add dependencies to pre-optimization
     optimizeDeps: {
@@ -101,23 +107,17 @@ export const viteFinal = async (config: any, options: any): Promise<any> => {
     plugins: [
       angular({
         jit:
-          typeof framework.options?.jit !== 'undefined'
-            ? framework.options?.jit
+          typeof frameworkOptions.jit !== 'undefined'
+            ? frameworkOptions.jit
             : true,
-        hmr:
-          typeof framework.options?.hmr !== 'undefined'
-            ? framework.options?.hmr
-            : typeof framework.options?.liveReload !== 'undefined'
-              ? framework.options?.liveReload
-              : false,
-        liveReload: framework.options?.liveReload,
+        liveReload,
         tsconfig:
-          typeof framework.options?.tsconfig !== 'undefined'
-            ? framework.options?.tsconfig
+          typeof frameworkOptions.tsconfig !== 'undefined'
+            ? frameworkOptions.tsconfig
             : (options?.tsConfig ?? './.storybook/tsconfig.json'),
         inlineStylesExtension:
-          typeof framework.options?.inlineStylesExtension !== 'undefined'
-            ? framework.options?.inlineStylesExtension
+          typeof frameworkOptions.inlineStylesExtension !== 'undefined'
+            ? frameworkOptions.inlineStylesExtension
             : 'css',
       }),
       angularOptionsPlugin(options, {

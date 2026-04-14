@@ -98,7 +98,7 @@ export interface Options {
    *
    * When `false`, the following top-level options are ignored because they
    * are only forwarded to the internal Angular plugin: `jit`,
-   * `disableTypeChecking`, `hmr`, `liveReload`, `inlineStylesExtension`,
+   * `disableTypeChecking`, `liveReload`, `inlineStylesExtension`,
    * `fileReplacements`, and `include`.
    *
    * Use this to configure the embedded Angular integration itself, not as the
@@ -116,13 +116,12 @@ export interface Options {
    */
   inlineStylesExtension?: string;
   /**
-   * Enables Angular's HMR during development/watch mode.
+   * Enables Analog's Angular live-reload/HMR pipeline during development/watch mode.
+   *
+   * This is separate from Vite's `server.hmr` option, which configures the
+   * HMR client transport.
    *
    * Defaults to `true` for watch mode.
-   */
-  hmr?: boolean;
-  /**
-   * @deprecated Use `hmr` instead. Kept as a compatibility alias.
    */
   liveReload?: boolean;
   /**

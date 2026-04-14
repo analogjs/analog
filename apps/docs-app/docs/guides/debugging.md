@@ -4,7 +4,9 @@ sidebar_position: 4
 
 # Debugging
 
-Analog includes structured debug logging powered by [obug](https://www.npmjs.com/package/obug). Debug output can be enabled through the `debug` option in your Vite config or via the `DEBUG` environment variable.
+Analog includes structured debug logging powered by [obug](https://www.npmjs.com/package/obug). You can enable debug output through the `debug` option in your Vite config or via the `DEBUG` environment variable.
+
+The examples below use `npm`, but the same `DEBUG` values work with any package manager.
 
 ## Enabling Debug Output
 
@@ -91,20 +93,20 @@ analog({
 });
 ```
 
-You can mix immediate and deferred entries — entries without `mode` enable immediately for both commands:
+You can mix immediate and deferred entries. Entries without `mode` enable immediately for both commands:
 
 ```ts
 analog({
   debug: [
-    { scopes: ['analog:platform'] }, // both commands
-    { scopes: ['analog:angular:hmr'], mode: 'dev' }, // dev only
-    { scopes: ['analog:platform:typed-router'], mode: 'build' }, // build only
+    { scopes: ['analog:platform'] },
+    { scopes: ['analog:angular:hmr'], mode: 'dev' },
+    { scopes: ['analog:platform:typed-router'], mode: 'build' },
   ],
 });
 ```
 
 :::tip
-To enable debug output for **both** build and dev, simply omit `mode`. Any form without `mode` — `true`, a `string[]`, or `{ scopes }` — outputs in both commands.
+To enable debug output for both build and dev, omit `mode`. Any form without `mode` outputs in both commands.
 :::
 
 ### Environment variable
@@ -113,13 +115,13 @@ The `DEBUG` environment variable works independently of the config option and is
 
 ```bash
 # All Analog scopes
-DEBUG=analog:* pnpm dev
+DEBUG=analog:* npm run dev
 
 # Specific scopes
-DEBUG=analog:platform:routes,analog:angular:compiler pnpm build
+DEBUG=analog:platform:routes,analog:angular:compiler npm run build
 
 # All platform scopes
-DEBUG=analog:platform:* pnpm dev
+DEBUG=analog:platform:* npm run dev
 ```
 
 ## Debugging a local Analog checkout from another pnpm workspace
@@ -248,7 +250,7 @@ import angular from '@analogjs/vite-plugin-angular';
 export default defineConfig({
   plugins: [
     angular({
-      debug: true, // enables analog:angular:* scopes
+      debug: true,
     }),
   ],
 });

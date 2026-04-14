@@ -12,8 +12,8 @@ export default defineConfig(({ mode }) => ({
     mainFields: ['module'],
   },
   plugins: [
-__TAILWIND_PLUGIN__    analog(),
-  ],
+    analog(),
+__TAILWIND_PLUGIN__  ],
   test: {
     globals: true,
     environment: 'jsdom',
