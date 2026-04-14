@@ -1,4 +1,13 @@
-import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  it,
+  expect,
+  vi,
+} from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import * as realFs from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -15,6 +24,7 @@ vi.mock('vite', async () => {
 
 import {
   angular,
+  buildStylePreprocessor,
   createFsWatcherCacheInvalidator,
   evictDeletedFileMetadata,
   findBoundClassAndNgClassConflicts,
@@ -45,25 +55,35 @@ describe('angularVitePlugin', () => {
   });
 
   it('prebundles rxjs and tslib in optimizeDeps', async () => {
-    const plugin = angular().find(
-      (p) => p.name === '@analogjs/vite-plugin-angular',
-    ) as Plugin;
-    const configHook =
-      typeof plugin.config === 'function'
-        ? plugin.config
-        : (plugin.config as any)?.handler;
+    const tempRoot = mkdtempSync(join(tmpdir(), 'analog-optimize-deps-'));
+    const tsconfigPath = join(tempRoot, 'tsconfig.spec.json');
+    // Use a real tsconfig path so this test stays about optimizeDeps output,
+    // not about the plugin warning on a deliberately missing config file.
+    writeFileSync(tsconfigPath, '{\n  "compilerOptions": {}\n}\n', 'utf-8');
 
-    const config = await configHook?.call(
-      {} as any,
-      { resolve: {} },
-      { command: 'serve', mode: 'development' },
-    );
+    try {
+      const plugin = angular({ tsconfig: tsconfigPath }).find(
+        (p) => p.name === '@analogjs/vite-plugin-angular',
+      ) as Plugin;
+      const configHook =
+        typeof plugin.config === 'function'
+          ? plugin.config
+          : (plugin.config as any)?.handler;
 
-    expect(config?.optimizeDeps?.include).toEqual([
-      'rxjs/operators',
-      'rxjs',
-      'tslib',
-    ]);
+      const config = await configHook?.call(
+        {} as any,
+        { resolve: {} },
+        { command: 'serve', mode: 'development' },
+      );
+
+      expect(config?.optimizeDeps?.include).toEqual([
+        'rxjs/operators',
+        'rxjs',
+        'tslib',
+      ]);
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
   });
 });
 
@@ -1368,7 +1388,20 @@ describe('template class binding guard plugin', () => {
 // =============================================================================
 
 describe('tailwind-reference plugin', () => {
-  const ROOT_CSS = '/project/src/styles/tailwind.css';
+  let rootCssDir = '';
+  let ROOT_CSS = '';
+
+  beforeAll(() => {
+    rootCssDir = mkdtempSync(join(tmpdir(), 'analog-tailwind-root-'));
+    ROOT_CSS = join(rootCssDir, 'tailwind.css');
+    // Use an actual Tailwind root file so the assertions stay focused on
+    // @reference injection behavior instead of missing-file warnings.
+    writeFileSync(ROOT_CSS, '@import "tailwindcss" prefix(sa);\n', 'utf-8');
+  });
+
+  afterAll(() => {
+    rmSync(rootCssDir, { recursive: true, force: true });
+  });
 
   /**
    * Helper: extract the tailwind-reference sub-plugin from the array
@@ -1493,6 +1526,29 @@ describe('tailwind-reference plugin', () => {
       expect(result).toBeUndefined();
     });
 
+    it('throws a clear error when @reference only appears in comment text', () => {
+      const css =
+        '/* keep this comment away from @reference injection */\n.demo { @apply sa:flex; }';
+
+      expect(() =>
+        callTransform(plugin, css, '/project/src/app/demo.component.css'),
+      ).toThrowError(
+        /contains the text "@reference" but does not contain a real @reference directive/,
+      );
+    });
+
+    it('does not treat quoted comment markers as a collision', () => {
+      const css =
+        '.demo::before { content: "/* @reference */"; }\n.demo { @apply sa:flex; }';
+      const result = callTransform(
+        plugin,
+        css,
+        '/project/src/app/demo.component.css',
+      );
+
+      expect(result).toBe(`@reference "${ROOT_CSS}";\n${css}`);
+    });
+
     it('skips CSS that imports tailwindcss directly (double quotes)', () => {
       const css =
         '@import "tailwindcss" prefix(sa);\n.demo { @apply sa:flex; }';
@@ -1572,6 +1628,35 @@ describe('tailwind-reference plugin', () => {
         '/project/src/app/demo.component.css',
       );
       expect(result).toBe(`@reference "${ROOT_CSS}";\n${css}`);
+    });
+  });
+
+  describe('buildStylePreprocessor', () => {
+    it('throws a clear error when @reference only appears in comment text', () => {
+      const preprocessor = buildStylePreprocessor({
+        tailwindCss: { rootStylesheet: ROOT_CSS, prefixes: ['sa:'] },
+      });
+
+      expect(() =>
+        preprocessor?.(
+          '/* keep this comment away from @reference injection */\n.demo { @apply sa:flex; }',
+          '/project/src/app/demo.component.css',
+        ),
+      ).toThrowError(
+        /contains the text "@reference" but does not contain a real @reference directive/,
+      );
+    });
+
+    it('does not treat quoted comment markers as a collision', () => {
+      const preprocessor = buildStylePreprocessor({
+        tailwindCss: { rootStylesheet: ROOT_CSS, prefixes: ['sa:'] },
+      });
+      const css =
+        '.demo::before { content: "/* @reference */"; }\n.demo { @apply sa:flex; }';
+
+      expect(
+        preprocessor?.(css, '/project/src/app/demo.component.css')?.code,
+      ).toBe(`@reference "${ROOT_CSS}";\n${css}`);
     });
   });
 });

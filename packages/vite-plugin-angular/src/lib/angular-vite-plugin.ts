@@ -91,6 +91,11 @@ import {
 } from './utils/plugin-config.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
 import {
+  inspectCssTailwindDirectives,
+  isTailwindReferenceError,
+  throwTailwindReferenceTextError,
+} from './utils/tailwind-reference.js';
+import {
   toVirtualRawId,
   toVirtualStyleId,
   VIRTUAL_RAW_PREFIX,
@@ -297,7 +302,6 @@ export function normalizeIncludeGlob(
 }
 
 const classNames = new Map();
-
 export function evictDeletedFileMetadata(
   file: string,
   {
@@ -358,7 +362,7 @@ interface DeclarationFile {
  * chained: Tailwind reference injection runs first, then the user's
  * custom preprocessor.
  */
-function buildStylePreprocessor(
+export function buildStylePreprocessor(
   options?: PluginOptions,
 ): StylePreprocessor | undefined {
   const userPreprocessor = options?.stylePreprocessor;
@@ -390,11 +394,12 @@ function buildStylePreprocessor(
     }
 
     tailwindPreprocessor = (code: string, filename: string): string => {
+      const directiveState = inspectCssTailwindDirectives(code);
+
       // Skip files that already define the Tailwind config
       if (
-        code.includes('@reference') ||
-        code.includes('@import "tailwindcss"') ||
-        code.includes("@import 'tailwindcss'")
+        directiveState.hasReferenceDirective ||
+        directiveState.hasTailwindImportDirective
       ) {
         debugTailwindV('skip (already has @reference or is root)', {
           filename,
@@ -403,12 +408,18 @@ function buildStylePreprocessor(
       }
 
       const needsReference = prefixes
-        ? prefixes.some((prefix) => code.includes(prefix))
-        : code.includes('@apply');
+        ? prefixes.some((prefix) =>
+            directiveState.commentlessCode.includes(prefix),
+          )
+        : directiveState.commentlessCode.includes('@apply');
 
       if (!needsReference) {
         debugTailwindV('skip (no Tailwind usage detected)', { filename });
         return code;
+      }
+
+      if (directiveState.hasReferenceText) {
+        throwTailwindReferenceTextError(filename, rootStylesheet);
       }
 
       debugTailwind('injected @reference via preprocessor', { filename });
@@ -602,11 +613,35 @@ export function angular(options?: PluginOptions): Plugin[] {
       );
     }
 
-    // Duplicate analog() registrations cause orphaned style maps
+    /**
+     * Duplicate analog() registrations are a real bug for the non-SSR/client
+     * build because each plugin instance creates its own component-style state.
+     *
+     * That state includes the style maps/registries used to:
+     * - track transformed component styles
+     * - map owner components back to stylesheet requests
+     * - coordinate Tailwind/@reference processing and style reload behavior
+     *
+     * If two plugin instances are active for the same client build, one
+     * instance can record stylesheet metadata while the other services the
+     * request. The result is "missing" component CSS even though compilation
+     * appeared to succeed.
+     *
+     * SSR is different. Analog's Nitro/SSR build path reuses the already
+     * resolved plugin graph and then runs an additional `build.ssr === true`
+     * pass for the server bundle. In that flow Vite can expose multiple
+     * `@analogjs/vite-plugin-angular` entries in `config.plugins`, but that is
+     * not the same failure mode as a duplicated client build. The server build
+     * does not rely on the client-side style maps that this guard is protecting.
+     *
+     * Because of that, we only throw for duplicate registrations on non-SSR
+     * builds. Throwing during SSR would be a false positive that breaks valid
+     * Analog SSR/Nitro builds.
+     */
     const analogInstances = resolvedPlugins.filter(
       (p) => p.name === '@analogjs/vite-plugin-angular',
     );
-    if (analogInstances.length > 1) {
+    if (analogInstances.length > 1 && !config.build?.ssr) {
       throw new Error(
         `${PREFIX} analog() is registered ${analogInstances.length} times. ` +
           `Each instance creates separate style maps, causing component ` +
@@ -1161,18 +1196,20 @@ export function angular(options?: PluginOptions): Plugin[] {
                 const { encapsulation } = getComponentStyleSheetMeta(
                   isDirect.id,
                 );
-                // Angular component styles are served through two live module
+                // Angular exposes one component stylesheet through two module
                 // shapes:
                 // 1. a `?direct&ngcomp=...` CSS module that Vite can patch with
                 //    a normal `css-update`
                 // 2. a `?ngcomp=...` JS wrapper module that embeds `__vite__css`
                 //    for Angular's runtime consumption
                 //
-                // If we only patch the direct CSS module, the browser can keep
-                // running a stale wrapper whose embedded CSS no longer matches
-                // the source file. We therefore invalidate any wrapper modules
-                // that map back to the same source stylesheet before sending
-                // the CSS update.
+                // Value: invalidate the browser-visible wrapper before patching
+                // the direct CSS module so Angular re-evaluates the same live
+                // wrapper it is actually using.
+                //
+                // Guards against: a successful-looking CSS HMR event that
+                // leaves the UI stale because the wrapper still holds the
+                // pre-edit CSS string.
                 const wrapperModules =
                   await findComponentStylesheetWrapperModules(
                     ctx.server,
@@ -1203,11 +1240,11 @@ export function angular(options?: PluginOptions): Plugin[] {
                   stylesheetDiagnosis,
                 );
 
-                // The stylesheet registry may already hold the fresh served CSS
-                // while Vite still has a stale transform result cached for the
-                // direct `?direct&ngcomp=...` module id. Invalidate the direct
-                // module up front so subsequent wrapper generation and explicit
-                // fetches cannot keep serving the pre-edit CSS payload.
+                // Drop Vite's cached direct-module transform before wrapper
+                // lookup and patching continue.
+                //
+                // Value: later fetches and wrapper regeneration see the just
+                // edited stylesheet instead of the last served transform result.
                 ctx.server.moduleGraph.invalidateModule(isDirect);
                 debugHmrV('component stylesheet direct module invalidated', {
                   file: ctx.file,
@@ -1217,9 +1254,10 @@ export function angular(options?: PluginOptions): Plugin[] {
                     'Ensure Vite drops stale direct CSS transform results before wrapper or fallback handling continues.',
                 });
 
-                // Track if the component uses ShadowDOM encapsulation
-                // Shadow DOM components currently require a full reload.
-                // Vite's CSS hot replacement does not support shadow root searching.
+                // CSS-only HMR is safe only when the browser-visible wrapper is
+                // known and the component is not using Shadow DOM. Vite's CSS
+                // patching does not search shadow roots, so Shadow DOM still
+                // falls back to reload for correctness.
                 const trackedWrapperRequestIds =
                   stylesheetDiagnosis.trackedRequestIds.filter((id) =>
                     id.includes('?ngcomp='),
@@ -1235,12 +1273,11 @@ export function angular(options?: PluginOptions): Plugin[] {
                   );
                   // A live wrapper ModuleNode is ideal because we can
                   // invalidate it directly, but it is not strictly required.
-                  // When the browser has already loaded the wrapper URL and the
-                  // registry knows that wrapper request id, a normal CSS patch
-                  // against the direct stylesheet is still the most accurate
-                  // update path available. Falling back to full reload in that
-                  // state is needlessly pessimistic and causes the exact UX
-                  // regression we are trying to eliminate.
+                  //
+                  // Value: keep CSS-only HMR working when the browser has
+                  // already loaded the wrapper URL and the registry can still
+                  // prove that wrapper identity, even if this HMR pass did not
+                  // surface a live ModuleNode for it.
                   debugHmrV('sending css-update for component stylesheet', {
                     file: ctx.file,
                     path: isDirect.url,
@@ -1282,12 +1319,12 @@ export function angular(options?: PluginOptions): Plugin[] {
                   );
                 }
 
-                // A direct CSS patch without the browser-visible `?ngcomp=...`
-                // wrapper module is not trustworthy. Angular consumes the
-                // wrapper JS module, which embeds `__vite__css` for runtime
-                // style application. When that wrapper is missing from the live
-                // module graph, prefer correctness over a partial update and
-                // force a reload so the component re-evaluates with fresh CSS.
+                // If the browser-visible `?ngcomp=...` wrapper cannot be
+                // trusted, prefer correctness over a partial patch and reload.
+                //
+                // Guards against: logging a "successful" CSS update while
+                // Angular keeps running stale wrapper JS that still embeds the
+                // old stylesheet contents.
                 debugHmrV('component stylesheet hmr fallback: full reload', {
                   file: ctx.file,
                   encapsulation,
@@ -1349,15 +1386,15 @@ export function angular(options?: PluginOptions): Plugin[] {
                     derivedUpdates,
                   });
                   // Keep owner recompilation and metadata derivation as
-                  // diagnostics only. For externalized component styles, a
-                  // component-update message is not a safe substitute for a
-                  // missing `?ngcomp=...` wrapper module because Angular can
+                  // diagnostics only.
+                  //
+                  // Value: the fallback log can still point at the affected
+                  // components.
+                  //
+                  // Guards against: treating a component-update as a safe
+                  // substitute for a missing wrapper module. Angular can
                   // re-render the component without forcing the browser to
-                  // re-evaluate the live stylesheet wrapper. That exact shape
-                  // produced false-positive "successful HMR" logs while the UI
-                  // stayed visually stale. If the wrapper is absent, prefer a
-                  // hard reload after gathering the owner evidence needed to
-                  // explain why the fallback was necessary.
+                  // refresh the wrapper CSS, which leaves the UI visually stale.
                   if (derivedUpdates.length > 0) {
                     debugHmrV(
                       'component stylesheet owner fallback derived updates',
@@ -1754,30 +1791,22 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
-          // Detect whether the code contains an Angular @Component decorator.
+          // Detect whether the source still contains a raw Angular
+          // `@Component` decorator.
           //
-          // IMPORTANT — useAngularCompilationAPI behavior:
-          //   When `useAngularCompilationAPI: true`, the Angular Compilation API
-          //   compiles TypeScript BEFORE this Vite transform hook fires. By the
-          //   time `code` reaches here, @Component decorators have been compiled
-          //   away into ɵɵdefineComponent() calls, so `hasComponent` is always
-          //   false for actual component files.
+          // With `useAngularCompilationAPI`, Angular compiles TypeScript before
+          // this Vite hook runs, so real component files reach this point with
+          // `ɵɵdefineComponent()` output instead of `@Component(...)`. In that
+          // mode, `hasComponent === false` is expected.
           //
-          //   This is expected and NOT a bug. The Angular Compilation API handles
-          //   template and style resolution through its own internal pipeline:
-          //     - Templates: resolved during compilation, not via templateUrls
-          //     - Styles: externalized and served via the resolveId/load hooks
-          //       (confirmed by `analog:angular:styles resolveId: mapped external
-          //       stylesheet` debug messages)
+          // Value: this comment explains why the transform hook intentionally
+          // stops using decorator detection as a signal for Compilation API
+          // builds.
           //
-          //   The only consequence of hasComponent=false is that external template
-          //   and style files are not registered via addWatchFile(), which means
-          //   HMR for external HTML/CSS edits may trigger a full reload instead of
-          //   a targeted hot replacement. The Angular Compilation API's own
-          //   invalidation mechanism handles recompilation regardless.
-          //
-          //   For the legacy (non-API) compilation path, hasComponent works as
-          //   expected because the transform hook sees raw TypeScript source.
+          // Effect: external template/style files are no longer registered via
+          // `addWatchFile()` on this path, so those edits may fall back to full
+          // reload more often. Angular's own invalidation still handles
+          // recompilation correctly.
           const hasComponent = code.includes('@Component');
           debugCompilerV('transform', {
             id,
@@ -1807,11 +1836,14 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
 
           const typescriptResult = fileEmitter(id);
-
-          // File not in the Angular program — skip and let other plugins
-          // or Vite's built-in transform handle it. Warn if it looks like
-          // an Angular file that should have been compiled.
           if (!typescriptResult) {
+            debugCompilerV('transform skip (file not emitted by Angular)', {
+              id,
+            });
+
+            // File not in the Angular program — skip and let other plugins
+            // or Vite's built-in transform handle it. Warn if it looks like
+            // an Angular file that should have been compiled.
             const isAngular =
               !id.includes('@ng/component') &&
               /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
@@ -2089,22 +2121,27 @@ export function angular(options?: PluginOptions): Plugin[] {
           const cleanId = id.split('?')[0];
           if (cleanId === tw.rootStylesheet) return;
 
+          const directiveState = inspectCssTailwindDirectives(code);
+
           if (
-            code.includes('@reference') ||
-            code.includes('@import "tailwindcss"') ||
-            code.includes("@import 'tailwindcss'")
+            directiveState.hasReferenceDirective ||
+            directiveState.hasTailwindImportDirective
           ) {
             return;
           }
 
           // Skip entry stylesheets that @import the root config
           const rootBasename = basename(tw.rootStylesheet);
-          if (code.includes(rootBasename)) return;
+          if (directiveState.commentlessCode.includes(rootBasename)) return;
 
           const prefixes = tw.prefixes;
           const needsRef = prefixes
-            ? prefixes.some((p) => code.includes(p))
-            : code.includes('@apply');
+            ? prefixes.some((p) => directiveState.commentlessCode.includes(p))
+            : directiveState.commentlessCode.includes('@apply');
+
+          if (needsRef && directiveState.hasReferenceText) {
+            throwTailwindReferenceTextError(id, tw.rootStylesheet);
+          }
 
           if (needsRef) {
             debugTailwind('injected @reference via pre-transform', {
@@ -2141,6 +2178,134 @@ export function angular(options?: PluginOptions): Plugin[] {
       dot: true,
       absolute: true,
     });
+  }
+
+  function ensureIncludeCache(): string[] {
+    if (pluginOptions.include.length > 0 && includeCache.length === 0) {
+      includeCache = findIncludes();
+    }
+
+    return includeCache;
+  }
+
+  function getTsconfigCacheKey(
+    resolvedTsConfigPath: string,
+    config: ResolvedConfig,
+  ): string {
+    const isProd = config.mode === 'production';
+
+    return [
+      resolvedTsConfigPath,
+      isProd ? 'prod' : 'dev',
+      isTest ? 'test' : 'app',
+      config.build?.lib ? 'lib' : 'nolib',
+      pluginOptions.hmr ? 'hmr' : 'nohmr',
+      pluginOptions.hasTailwindCss ? 'tw' : 'notw',
+    ].join('|');
+  }
+
+  function getCachedTsconfigOptions(
+    resolvedTsConfigPath: string,
+    config: ResolvedConfig,
+  ): { options: ts.CompilerOptions; rootNames: string[] } {
+    const isProd = config.mode === 'production';
+    const tsconfigKey = getTsconfigCacheKey(resolvedTsConfigPath, config);
+    let cached = tsconfigOptionsCache.get(tsconfigKey);
+
+    if (!cached) {
+      const read = compilerCli.readConfiguration(resolvedTsConfigPath, {
+        suppressOutputPathCheck: true,
+        outDir: undefined,
+        sourceMap: false,
+        inlineSourceMap: !isProd,
+        inlineSources: !isProd,
+        declaration: false,
+        declarationMap: false,
+        allowEmptyCodegenFiles: false,
+        annotationsAs: 'decorators',
+        enableResourceInlining: false,
+        noEmitOnError: false,
+        mapRoot: undefined,
+        sourceRoot: undefined,
+        supportTestBed: false,
+        supportJitMode: false,
+      });
+      cached = { options: read.options, rootNames: read.rootNames };
+      tsconfigOptionsCache.set(tsconfigKey, cached);
+    }
+
+    return cached;
+  }
+
+  function resolveCompilationApiTsConfigPath(
+    resolvedTsConfigPath: string,
+    config: ResolvedConfig,
+  ): string {
+    // Angular's Compilation API accepts one tsconfig path. When Analog adds
+    // extra roots via `include`, emit a tiny wrapper config that extends the
+    // user's tsconfig and enumerates the merged root set.
+    //
+    // Value: include-based workspace expansion works with the Compilation API
+    // without asking users to edit or duplicate their checked-in tsconfig.
+    const includedFiles = ensureIncludeCache();
+    if (includedFiles.length === 0) {
+      return resolvedTsConfigPath;
+    }
+
+    const cached = getCachedTsconfigOptions(resolvedTsConfigPath, config);
+    const mergedRootNames = union(cached.rootNames, includedFiles).map((file) =>
+      normalizePath(file),
+    );
+
+    if (mergedRootNames.length === cached.rootNames.length) {
+      return resolvedTsConfigPath;
+    }
+
+    const resolvedCacheDir = isAbsolute(config.cacheDir)
+      ? config.cacheDir
+      : resolve(config.root, config.cacheDir);
+    const wrapperDir = join(
+      resolvedCacheDir,
+      'analog-angular',
+      'compilation-api',
+    );
+    // TypeScript does not inherit top-level `references` through `extends`, so
+    // carry them forward explicitly when Analog emits a wrapper tsconfig.
+    const rawTsconfig = (ts.readConfigFile(
+      resolvedTsConfigPath,
+      ts.sys.readFile,
+    ).config ?? {}) as { references?: unknown[] };
+    const wrapperPayload = {
+      extends: normalizePath(resolvedTsConfigPath),
+      files: [...mergedRootNames].sort(),
+      ...(rawTsconfig.references ? { references: rawTsconfig.references } : {}),
+    };
+    const wrapperHash = createHash('sha1')
+      .update(JSON.stringify(wrapperPayload))
+      .digest('hex')
+      .slice(0, 12);
+    const wrapperPath = join(
+      wrapperDir,
+      `tsconfig.includes.${wrapperHash}.json`,
+    );
+
+    mkdirSync(wrapperDir, { recursive: true });
+    if (!existsSync(wrapperPath)) {
+      writeFileSync(
+        wrapperPath,
+        `${JSON.stringify(wrapperPayload, null, 2)}\n`,
+        'utf-8',
+      );
+    }
+
+    debugCompilationApi('generated include wrapper tsconfig', {
+      originalTsconfig: resolvedTsConfigPath,
+      wrapperTsconfig: wrapperPath,
+      includeCount: includedFiles.length,
+      rootNameCount: mergedRootNames.length,
+    });
+
+    return wrapperPath;
   }
 
   function resolveTsConfigPath() {
@@ -2194,8 +2359,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     }
 
     const resolvedTsConfigPath = resolveTsConfigPath();
-    const compilationResult = await angularCompilation.initialize(
+    const compilationApiTsConfigPath = resolveCompilationApiTsConfigPath(
       resolvedTsConfigPath,
+      config,
+    );
+    const compilationResult = await angularCompilation.initialize(
+      compilationApiTsConfigPath,
       {
         // Convert Analog's browser-style `{ replace, with }` entries into the
         // `Record<string, string>` shape that Angular's AngularHostOptions
@@ -2293,6 +2462,9 @@ export function angular(options?: PluginOptions): Plugin[] {
               resolvedConfig,
             );
           } catch (e) {
+            if (isTailwindReferenceError(e)) {
+              throw e;
+            }
             debugStyles('preprocessCSS error', {
               filename,
               resourceFile: resourceFile ?? '(inline)',
@@ -2579,43 +2751,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       }
     }
 
-    // Cached include discovery (invalidated only on FS events)
-    if (pluginOptions.include.length > 0 && includeCache.length === 0) {
-      includeCache = findIncludes();
-    }
-
     const resolvedTsConfigPath = resolveTsConfigPath();
-    const tsconfigKey = [
-      resolvedTsConfigPath,
-      isProd ? 'prod' : 'dev',
-      isTest ? 'test' : 'app',
-      config.build?.lib ? 'lib' : 'nolib',
-      pluginOptions.hmr ? 'hmr' : 'nohmr',
-      pluginOptions.hasTailwindCss ? 'tw' : 'notw',
-    ].join('|');
-    let cached = tsconfigOptionsCache.get(tsconfigKey);
-
-    if (!cached) {
-      const read = compilerCli.readConfiguration(resolvedTsConfigPath, {
-        suppressOutputPathCheck: true,
-        outDir: undefined,
-        sourceMap: false,
-        inlineSourceMap: !isProd,
-        inlineSources: !isProd,
-        declaration: false,
-        declarationMap: false,
-        allowEmptyCodegenFiles: false,
-        annotationsAs: 'decorators',
-        enableResourceInlining: false,
-        noEmitOnError: false,
-        mapRoot: undefined,
-        sourceRoot: undefined,
-        supportTestBed: false,
-        supportJitMode: false,
-      });
-      cached = { options: read.options, rootNames: read.rootNames };
-      tsconfigOptionsCache.set(tsconfigKey, cached);
-    }
+    const cached = getCachedTsconfigOptions(resolvedTsConfigPath, config);
 
     // Clone options before mutation (preserve cache purity)
     const tsCompilerOptions = { ...cached.options };
@@ -2666,7 +2803,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       ),
     );
     // Merge + dedupe root names
-    rootNames = union(rootNames, includeCache, replacements);
+    rootNames = union(rootNames, ensureIncludeCache(), replacements);
     const hostKey = JSON.stringify(tsCompilerOptions);
     let host: ts.CompilerHost;
 

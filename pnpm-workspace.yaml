@@ -19,17 +19,19 @@ packages:
   - 'tests/*'
 
 catalog:
-  '@angular/animations': 21.2.7
+  # Keep the Angular runtime/compiler patch set aligned so compiler-cli,
+  # language-service, and the framework runtime all resolve the same release.
+  '@angular/animations': 21.2.8
   '@angular/cdk': 21.2.6
-  '@angular/common': 21.2.7
-  '@angular/compiler': 21.2.7
-  '@angular/core': 21.2.7
-  '@angular/forms': 21.2.7
+  '@angular/common': 21.2.8
+  '@angular/compiler': 21.2.8
+  '@angular/core': 21.2.8
+  '@angular/forms': 21.2.8
   '@angular/material': 21.2.6
-  '@angular/platform-browser': 21.2.7
-  '@angular/platform-browser-dynamic': 21.2.7
-  '@angular/platform-server': 21.2.7
-  '@angular/router': 21.2.7
+  '@angular/platform-browser': 21.2.8
+  '@angular/platform-browser-dynamic': 21.2.8
+  '@angular/platform-server': 21.2.8
+  '@angular/router': 21.2.8
   '@angular/ssr': 21.2.7
   '@astrojs/mdx': ^5.0.3
   '@astrojs/markdown-component': ^1.0.5
@@ -75,8 +77,8 @@ catalog:
   '@angular-eslint/template-parser': 21.3.1
   '@angular/build': 21.2.7
   '@angular/cli': 21.2.7
-  '@angular/compiler-cli': 21.2.7
-  '@angular/language-service': 21.2.7
+  '@angular/compiler-cli': 21.2.8
+  '@angular/language-service': 21.2.8
   '@commitlint/cli': ^20.5.0
   '@commitlint/config-conventional': ^20.5.0
   '@compodoc/compodoc': ^1.2.1

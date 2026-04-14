@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { Plugin, ResolvedConfig, preprocessCSS } from 'vite';
 import { debugStyles } from './utils/debug.js';
+import { isTailwindReferenceError } from './utils/tailwind-reference.js';
 
 export function jitPlugin({
   inlineStylesExtension,
@@ -45,6 +46,9 @@ export function jitPlugin({
           );
           styles = compiled?.code;
         } catch (e) {
+          if (isTailwindReferenceError(e)) {
+            throw e;
+          }
           const errorMessage = e instanceof Error ? e.message : String(e);
           debugStyles('jit css compilation error', {
             styleIdHash,

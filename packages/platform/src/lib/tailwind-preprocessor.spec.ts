@@ -43,6 +43,55 @@ describe('tailwindPreprocessor', () => {
     expect(preprocess(code, '/project/src/app/demo.component.css')).toBe(code);
   });
 
+  it('throws a clear error when @reference only appears in comment text', () => {
+    vi.mocked(readFileSync).mockReturnValue(
+      '@import "tailwindcss" prefix(sa);',
+    );
+    const preprocess = tailwindPreprocessor({
+      tailwindRootCss: '/project/src/styles/tailwind.css',
+    });
+
+    expect(() =>
+      preprocess(
+        '/* keep this comment away from @reference injection */\n.demo { @apply sa:text-red-500; }',
+        '/project/src/app/demo.component.css',
+      ),
+    ).toThrowError(
+      /Add a real @reference "\.\.\/styles\/tailwind\.css"; directive/,
+    );
+  });
+
+  it('does not treat quoted comment markers as real CSS comments', () => {
+    vi.mocked(readFileSync).mockReturnValue(
+      '@import "tailwindcss" prefix(sa);',
+    );
+    const preprocess = tailwindPreprocessor({
+      tailwindRootCss: '/project/src/styles/tailwind.css',
+    });
+    const code =
+      '.demo::before { content: "/* @reference */"; }\n.demo { @apply sa:text-red-500; }';
+
+    expect(preprocess(code, '/project/src/app/demo.component.css')).toBe(
+      `@reference "../styles/tailwind.css";\n${code}`,
+    );
+  });
+
+  it('prefixes same-directory reference hints with ./', () => {
+    vi.mocked(readFileSync).mockReturnValue(
+      '@import "tailwindcss" prefix(sa);',
+    );
+    const preprocess = tailwindPreprocessor({
+      tailwindRootCss: '/project/src/styles/tailwind.css',
+    });
+
+    expect(() =>
+      preprocess(
+        '/* keep this comment away from @reference injection */\n.demo { @apply sa:text-red-500; }',
+        '/project/src/styles/demo.component.css',
+      ),
+    ).toThrowError(/Add a real @reference "\.\/tailwind\.css"; directive/);
+  });
+
   it('skips injection when no Tailwind prefix is configured', () => {
     vi.mocked(readFileSync).mockReturnValue('@import "tailwindcss";');
     const preprocess = tailwindPreprocessor({
