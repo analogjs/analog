@@ -1,3 +1,9 @@
+# [3.0.0-alpha.34](https://github.com/analogjs/analog/compare/v3.0.0-alpha.33...v3.0.0-alpha.34) (2026-04-14)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** harden Tailwind [@reference](https://github.com/reference) handling and SSR coordination ([#2289](https://github.com/analogjs/analog/issues/2289)) ([4060566](https://github.com/analogjs/analog/commit/4060566895e82741196a1e56b614c184bd3776d7))
+
 # [3.0.0-alpha.33](https://github.com/analogjs/analog/compare/v3.0.0-alpha.32...v3.0.0-alpha.33) (2026-04-14)
 
 ### Features
