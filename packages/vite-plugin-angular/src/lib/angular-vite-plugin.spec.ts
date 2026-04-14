@@ -1654,9 +1654,9 @@ describe('tailwind-reference plugin', () => {
       const css =
         '.demo::before { content: "/* @reference */"; }\n.demo { @apply sa:flex; }';
 
-      expect(preprocessor?.(css, '/project/src/app/demo.component.css')).toBe(
-        `@reference "${ROOT_CSS}";\n${css}`,
-      );
+      expect(
+        preprocessor?.(css, '/project/src/app/demo.component.css')?.code,
+      ).toBe(`@reference "${ROOT_CSS}";\n${css}`);
     });
   });
 });

@@ -17,9 +17,9 @@ interface CssTailwindDirectiveState {
   hasTailwindImportDirective: boolean;
 }
 
-// Mask real block comments and string bodies before directive detection. This
-// keeps prose like `/* add @reference here */` from disabling injection while
-// also preventing quoted CSS content from masquerading as a directive.
+// Mask real block comments while preserving quoted CSS content. This keeps
+// prose like `/* add @reference here */` from disabling injection without
+// mistaking `/* ... */` sequences inside strings for real comments.
 function stripCssBlockComments(code: string): string {
   let result = '';
   let quote: '"' | "'" | '`' | null = null;
@@ -30,20 +30,15 @@ function stripCssBlockComments(code: string): string {
 
     if (quote) {
       if (character === '\\' && nextCharacter) {
-        result += ' ';
-        result +=
-          nextCharacter === '\n' || nextCharacter === '\r'
-            ? nextCharacter
-            : ' ';
+        result += character;
+        result += nextCharacter;
         index++;
         continue;
       }
       if (character === quote) {
         quote = null;
-        result += character;
-        continue;
       }
-      result += character === '\n' || character === '\r' ? character : ' ';
+      result += character;
       continue;
     }
 
@@ -82,15 +77,59 @@ function stripCssBlockComments(code: string): string {
   return result;
 }
 
+function hasReferenceTextInComments(code: string): boolean {
+  let quote: '"' | "'" | '`' | null = null;
+
+  for (let index = 0; index < code.length; index++) {
+    const character = code[index];
+    const nextCharacter = code[index + 1];
+
+    if (quote) {
+      if (character === '\\' && nextCharacter) {
+        index++;
+        continue;
+      }
+      if (character === quote) {
+        quote = null;
+      }
+      continue;
+    }
+
+    if (character === '"' || character === "'" || character === '`') {
+      quote = character;
+      continue;
+    }
+
+    if (character === '/' && nextCharacter === '*') {
+      const commentStart = index + 2;
+      index += 2;
+
+      while (index < code.length) {
+        const commentCharacter = code[index];
+        const commentNextCharacter = code[index + 1];
+
+        if (commentCharacter === '*' && commentNextCharacter === '/') {
+          break;
+        }
+        index++;
+      }
+
+      if (code.slice(commentStart, index).includes('@reference')) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 function inspectCssTailwindDirectives(code: string): CssTailwindDirectiveState {
   const commentlessCode = stripCssBlockComments(code);
-  const hasReferenceText = code.includes('@reference');
 
   return {
     commentlessCode,
     hasReferenceDirective: CSS_REFERENCE_DIRECTIVE_REGEX.test(commentlessCode),
-    hasReferenceText:
-      hasReferenceText && !commentlessCode.includes('@reference'),
+    hasReferenceText: hasReferenceTextInComments(code),
     hasTailwindImportDirective: CSS_TAILWIND_IMPORT_REGEX.test(commentlessCode),
   };
 }
