@@ -6,7 +6,6 @@ import { debugTailwind } from './utils/debug.js';
 
 export type TailwindPreprocessorMode = 'auto' | 'disabled' | { prefix: string };
 const PLATFORM_TAILWIND_PREFIX = '[@analogjs/platform]';
-const CSS_BLOCK_COMMENT_REGEX = /\/\*[\s\S]*?\*\//g;
 const CSS_REFERENCE_DIRECTIVE_REGEX = /(^|[;}\n\r])\s*@reference\b/m;
 const CSS_TAILWIND_IMPORT_REGEX =
   /(^|[;}\n\r])\s*@import\s+["']tailwindcss["']/m;
@@ -18,28 +17,98 @@ interface CssTailwindDirectiveState {
   hasTailwindImportDirective: boolean;
 }
 
-// Comment text should not count as a real Tailwind directive. Strip it before
-// matching so prose like "/* add @reference here */" cannot disable injection.
+// Mask real block comments and string bodies before directive detection. This
+// keeps prose like `/* add @reference here */` from disabling injection while
+// also preventing quoted CSS content from masquerading as a directive.
 function stripCssBlockComments(code: string): string {
-  return code.replace(CSS_BLOCK_COMMENT_REGEX, (comment) =>
-    comment.replace(/[^\n\r]/g, ' '),
-  );
+  let result = '';
+  let quote: '"' | "'" | '`' | null = null;
+
+  for (let index = 0; index < code.length; index++) {
+    const character = code[index];
+    const nextCharacter = code[index + 1];
+
+    if (quote) {
+      if (character === '\\' && nextCharacter) {
+        result += ' ';
+        result +=
+          nextCharacter === '\n' || nextCharacter === '\r'
+            ? nextCharacter
+            : ' ';
+        index++;
+        continue;
+      }
+      if (character === quote) {
+        quote = null;
+        result += character;
+        continue;
+      }
+      result += character === '\n' || character === '\r' ? character : ' ';
+      continue;
+    }
+
+    if (character === '"' || character === "'" || character === '`') {
+      quote = character;
+      result += character;
+      continue;
+    }
+
+    if (character === '/' && nextCharacter === '*') {
+      result += '  ';
+      index += 2;
+
+      while (index < code.length) {
+        const commentCharacter = code[index];
+        const commentNextCharacter = code[index + 1];
+
+        if (commentCharacter === '*' && commentNextCharacter === '/') {
+          result += '  ';
+          index++;
+          break;
+        }
+
+        result +=
+          commentCharacter === '\n' || commentCharacter === '\r'
+            ? commentCharacter
+            : ' ';
+        index++;
+      }
+      continue;
+    }
+
+    result += character;
+  }
+
+  return result;
 }
 
 function inspectCssTailwindDirectives(code: string): CssTailwindDirectiveState {
   const commentlessCode = stripCssBlockComments(code);
+  const hasReferenceText = code.includes('@reference');
 
   return {
     commentlessCode,
     hasReferenceDirective: CSS_REFERENCE_DIRECTIVE_REGEX.test(commentlessCode),
-    hasReferenceText: code.includes('@reference'),
+    hasReferenceText:
+      hasReferenceText && !commentlessCode.includes('@reference'),
     hasTailwindImportDirective: CSS_TAILWIND_IMPORT_REGEX.test(commentlessCode),
   };
 }
 
-function throwTailwindReferenceTextError(
+function toReferenceSpecifier(
   filename: string,
   tailwindRootCss: string,
+): string {
+  const fromDir = path.posix.dirname(filename.replace(/\\/g, '/'));
+  const toFile = tailwindRootCss.replace(/\\/g, '/');
+  const relativePath = path.posix.relative(fromDir, toFile);
+
+  return relativePath.startsWith('.') ? relativePath : `./${relativePath}`;
+}
+
+function throwTailwindReferenceTextError(
+  filename: string,
+  referenceSpecifier: string,
 ): never {
   throw new Error(
     `${PLATFORM_TAILWIND_PREFIX} Tailwind @reference auto-injection was ` +
@@ -50,7 +119,7 @@ function throwTailwindReferenceTextError(
       `"/* ... @reference ... */".\n\n` +
       `Fix one of:\n` +
       `  - Reword the comment so it does not contain "@reference"\n` +
-      `  - Add a real @reference "${tailwindRootCss}"; directive\n`,
+      `  - Add a real @reference "${referenceSpecifier}"; directive\n`,
   );
 }
 
@@ -127,13 +196,11 @@ export function tailwindPreprocessor(
       return code;
     }
 
+    const refPath = toReferenceSpecifier(filename, tailwindRootCss);
     if (directiveState.hasReferenceText) {
-      throwTailwindReferenceTextError(filename, tailwindRootCss);
+      throwTailwindReferenceTextError(filename, refPath);
     }
 
-    const refPath = path
-      .relative(path.dirname(filename), tailwindRootCss)
-      .replace(/\\/g, '/');
     debugTailwind('injected @reference', { filename, refPath });
 
     return `@reference "${refPath}";\n${code}`;

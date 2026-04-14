@@ -1537,6 +1537,18 @@ describe('tailwind-reference plugin', () => {
       );
     });
 
+    it('does not treat quoted comment markers as a collision', () => {
+      const css =
+        '.demo::before { content: "/* @reference */"; }\n.demo { @apply sa:flex; }';
+      const result = callTransform(
+        plugin,
+        css,
+        '/project/src/app/demo.component.css',
+      );
+
+      expect(result).toBe(`@reference "${ROOT_CSS}";\n${css}`);
+    });
+
     it('skips CSS that imports tailwindcss directly (double quotes)', () => {
       const css =
         '@import "tailwindcss" prefix(sa);\n.demo { @apply sa:flex; }';
@@ -1632,6 +1644,18 @@ describe('tailwind-reference plugin', () => {
         ),
       ).toThrowError(
         /contains the text "@reference" but does not contain a real @reference directive/,
+      );
+    });
+
+    it('does not treat quoted comment markers as a collision', () => {
+      const preprocessor = buildStylePreprocessor({
+        tailwindCss: { rootStylesheet: ROOT_CSS, prefixes: ['sa:'] },
+      });
+      const css =
+        '.demo::before { content: "/* @reference */"; }\n.demo { @apply sa:flex; }';
+
+      expect(preprocessor?.(css, '/project/src/app/demo.component.css')).toBe(
+        `@reference "${ROOT_CSS}";\n${css}`,
       );
     });
   });

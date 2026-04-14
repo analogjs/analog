@@ -393,6 +393,19 @@ describe('angular hmr style preprocessing', () => {
                 target: 'es2022',
               },
               files: ['./src/app/app.component.ts'],
+              references: [{ path: './libs/shared/feature/tsconfig.lib.json' }],
+            },
+            null,
+            2,
+          ),
+        );
+        writeFileSync(
+          join(tempWorkspaceRoot, 'libs/shared/feature/tsconfig.lib.json'),
+          JSON.stringify(
+            {
+              compilerOptions: {
+                composite: true,
+              },
             },
             null,
             2,
@@ -414,7 +427,11 @@ describe('angular hmr style preprocessing', () => {
 
         const generatedConfig = JSON.parse(
           readFileSync(generatedTsconfigPath, 'utf-8'),
-        ) as { extends: string; files: string[] };
+        ) as {
+          extends: string;
+          files: string[];
+          references?: Array<{ path: string }>;
+        };
 
         expect(generatedConfig.extends).toBe(
           normalize(join(tempWorkspaceRoot, 'tsconfig.base.json')),
@@ -430,6 +447,9 @@ describe('angular hmr style preprocessing', () => {
             ),
           ]),
         );
+        expect(generatedConfig.references).toEqual([
+          { path: './libs/shared/feature/tsconfig.lib.json' },
+        ]);
       } finally {
         rmSync(tempWorkspaceRoot, { force: true, recursive: true });
       }

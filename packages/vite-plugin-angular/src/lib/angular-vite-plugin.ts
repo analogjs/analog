@@ -298,7 +298,6 @@ export function normalizeIncludeGlob(
 
 const classNames = new Map();
 const ANGULAR_TAILWIND_PREFIX = '[@analogjs/vite-plugin-angular]';
-const CSS_BLOCK_COMMENT_REGEX = /\/\*[\s\S]*?\*\//g;
 const CSS_REFERENCE_DIRECTIVE_REGEX = /(^|[;}\n\r])\s*@reference\b/m;
 const CSS_TAILWIND_IMPORT_REGEX =
   /(^|[;}\n\r])\s*@import\s+["']tailwindcss["']/m;
@@ -310,21 +309,80 @@ interface CssTailwindDirectiveState {
   hasTailwindImportDirective: boolean;
 }
 
-// Match real CSS directives, not comment text, so the Angular plugin and the
-// shared style preprocessor make the same Tailwind decisions.
+// Match real CSS directives, not prose inside block comments or quoted CSS
+// content. This keeps Tailwind collision detection aligned with the platform
+// preprocessor instead of letting strings masquerade as directives.
 function stripCssBlockComments(code: string): string {
-  return code.replace(CSS_BLOCK_COMMENT_REGEX, (comment) =>
-    comment.replace(/[^\n\r]/g, ' '),
-  );
+  let result = '';
+  let quote: '"' | "'" | '`' | null = null;
+
+  for (let index = 0; index < code.length; index++) {
+    const character = code[index];
+    const nextCharacter = code[index + 1];
+
+    if (quote) {
+      if (character === '\\' && nextCharacter) {
+        result += ' ';
+        result +=
+          nextCharacter === '\n' || nextCharacter === '\r'
+            ? nextCharacter
+            : ' ';
+        index++;
+        continue;
+      }
+      if (character === quote) {
+        quote = null;
+        result += character;
+        continue;
+      }
+      result += character === '\n' || character === '\r' ? character : ' ';
+      continue;
+    }
+
+    if (character === '"' || character === "'" || character === '`') {
+      quote = character;
+      result += character;
+      continue;
+    }
+
+    if (character === '/' && nextCharacter === '*') {
+      result += '  ';
+      index += 2;
+
+      while (index < code.length) {
+        const commentCharacter = code[index];
+        const commentNextCharacter = code[index + 1];
+
+        if (commentCharacter === '*' && commentNextCharacter === '/') {
+          result += '  ';
+          index++;
+          break;
+        }
+
+        result +=
+          commentCharacter === '\n' || commentCharacter === '\r'
+            ? commentCharacter
+            : ' ';
+        index++;
+      }
+      continue;
+    }
+
+    result += character;
+  }
+
+  return result;
 }
 
 function inspectCssTailwindDirectives(code: string): CssTailwindDirectiveState {
   const commentlessCode = stripCssBlockComments(code);
+  const hasReferenceText = code.includes('@reference');
 
   return {
     commentlessCode,
     hasReferenceDirective: CSS_REFERENCE_DIRECTIVE_REGEX.test(commentlessCode),
-    hasReferenceText: code.includes('@reference'),
+    hasReferenceText:
+      hasReferenceText && !commentlessCode.includes('@reference'),
     hasTailwindImportDirective: CSS_TAILWIND_IMPORT_REGEX.test(commentlessCode),
   };
 }
@@ -2313,9 +2371,16 @@ export function angular(options?: PluginOptions): Plugin[] {
       'analog-angular',
       'compilation-api',
     );
+    // TypeScript does not inherit top-level `references` through `extends`, so
+    // carry them forward explicitly when Analog emits a wrapper tsconfig.
+    const rawTsconfig = (ts.readConfigFile(
+      resolvedTsConfigPath,
+      ts.sys.readFile,
+    ).config ?? {}) as { references?: unknown[] };
     const wrapperPayload = {
       extends: normalizePath(resolvedTsConfigPath),
       files: [...mergedRootNames].sort(),
+      ...(rawTsconfig.references ? { references: rawTsconfig.references } : {}),
     };
     const wrapperHash = createHash('sha1')
       .update(JSON.stringify(wrapperPayload))
