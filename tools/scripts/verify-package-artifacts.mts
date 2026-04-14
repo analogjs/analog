@@ -90,13 +90,19 @@ type Manifest = Record<string, any>;
 type ManifestEntries = Record<string, any>;
 
 const packageConfigs: Record<string, PackageValidationConfig> = {
+  'angular-compiler': {
+    packageJsonPath: 'packages/angular-compiler/dist/package.json',
+    requiredPaths: ['packages/angular-compiler/dist/src/index.js'],
+  },
   'astro-angular': {
     packageJsonPath: 'packages/astro-angular/dist/package.json',
     requiredPaths: [
       'packages/astro-angular/dist/src/index.js',
       'packages/astro-angular/dist/src/client.js',
+      'packages/astro-angular/dist/src/client-ngh.js',
       'packages/astro-angular/dist/src/middleware.js',
       'packages/astro-angular/dist/src/server.js',
+      'packages/astro-angular/dist/src/server-ngh.js',
       'packages/astro-angular/dist/src/utils.js',
     ],
   },

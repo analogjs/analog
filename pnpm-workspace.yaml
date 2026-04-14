@@ -19,18 +19,18 @@ packages:
   - 'tests/*'
 
 catalog:
-  '@angular/animations': 21.2.8
-  '@angular/cdk': 21.2.4
-  '@angular/common': 21.2.8
-  '@angular/compiler': 21.2.8
-  '@angular/core': 21.2.8
-  '@angular/forms': 21.2.8
-  '@angular/material': 21.2.4
-  '@angular/platform-browser': 21.2.8
-  '@angular/platform-browser-dynamic': 21.2.8
-  '@angular/platform-server': 21.2.8
-  '@angular/router': 21.2.8
-  '@angular/ssr': 21.2.4
+  '@angular/animations': 21.2.7
+  '@angular/cdk': 21.2.6
+  '@angular/common': 21.2.7
+  '@angular/compiler': 21.2.7
+  '@angular/core': 21.2.7
+  '@angular/forms': 21.2.7
+  '@angular/material': 21.2.6
+  '@angular/platform-browser': 21.2.7
+  '@angular/platform-browser-dynamic': 21.2.7
+  '@angular/platform-server': 21.2.7
+  '@angular/router': 21.2.7
+  '@angular/ssr': 21.2.7
   '@astrojs/mdx': ^5.0.3
   '@astrojs/markdown-component': ^1.0.5
   '@astrojs/react': ^5.0.2
@@ -46,8 +46,8 @@ catalog:
   '@nx/vite': 22.7.0-beta.12
   '@nx/vitest': 22.7.0-beta.12
   '@nx/web': 22.7.0-beta.12
-  '@oxc-angular/vite': ^0.0.22
-  '@oxc-project/runtime': ^0.123.0
+  '@oxc-angular/vite': ^0.0.23
+  '@oxc-project/runtime': ^0.124.0
   '@playwright/test': ^1.58.2
   '@swc-node/register': ~1.11.1
   '@swc/core': ~1.15.5
@@ -63,43 +63,43 @@ catalog:
   '@types/react': ^19.2.14
   '@types/react-dom': ^19.2.3
   '@types/semver': ^7.7.1
-  '@vitest/browser-playwright': 4.1.2
-  '@vitest/coverage-v8': 4.1.2
-  '@vitest/ui': 4.1.2
-  '@angular-devkit/architect': 0.2102.6
-  '@angular-devkit/build-angular': 21.2.4
-  '@angular-devkit/core': 21.2.4
-  '@angular-devkit/schematics': 21.2.4
+  '@vitest/browser-playwright': 4.1.4
+  '@vitest/coverage-v8': 4.1.4
+  '@vitest/ui': 4.1.4
+  '@angular-devkit/architect': 0.2102.7
+  '@angular-devkit/build-angular': 21.2.7
+  '@angular-devkit/core': 21.2.7
+  '@angular-devkit/schematics': 21.2.7
   '@angular-eslint/eslint-plugin': 21.3.1
   '@angular-eslint/eslint-plugin-template': 21.3.1
   '@angular-eslint/template-parser': 21.3.1
-  '@angular/build': 21.2.4
-  '@angular/cli': 21.2.4
-  '@angular/compiler-cli': 21.2.8
-  '@angular/language-service': 21.2.8
+  '@angular/build': 21.2.7
+  '@angular/cli': 21.2.7
+  '@angular/compiler-cli': 21.2.7
+  '@angular/language-service': 21.2.7
   '@commitlint/cli': ^20.5.0
   '@commitlint/config-conventional': ^20.5.0
   '@compodoc/compodoc': ^1.2.1
   '@eslint/eslintrc': ^3.3.5
   '@eslint/js': ^10.0.1
   '@netlify/functions': ^5.1.5
-  '@schematics/angular': 21.2.4
+  '@schematics/angular': 21.2.7
   '@semantic-release/changelog': ^6.0.3
   '@semantic-release/exec': ^7.1.0
   '@semantic-release/git': ^10.0.1
   '@storybook/addon-docs': ^10.3.3
   '@storybook/addon-links': ^10.3.3
   '@storybook/addon-vitest': ^10.3.3
-  '@storybook/angular': 10.3.3
-  '@typescript-eslint/eslint-plugin': 8.58.0
-  '@typescript-eslint/parser': 8.58.0
-  '@typescript-eslint/type-utils': 8.58.0
+  '@storybook/angular': 10.3.5
+  '@typescript-eslint/eslint-plugin': 8.58.1
+  '@typescript-eslint/parser': 8.58.1
+  '@typescript-eslint/type-utils': 8.58.1
   '@typescript-eslint/utils': ^8.57.2
   ajv: ^8.18.0
   ajv-formats: ^3.0.1
   all-contributors-cli: ^6.26.1
   angular-eslint: ^21.2.0
-  astro: 6.1.1
+  astro: 6.1.5
   conventional-changelog: ^7.2.0
   cpy-cli: ^7.0.0
   defu: ^6.1.4
@@ -109,7 +109,7 @@ catalog:
   eslint-config-prettier: 10.1.8
   eslint-plugin-oxlint: ^1.57.0
   eslint-plugin-playwright: ^2.10.1
-  eslint-plugin-storybook: 10.3.3
+  eslint-plugin-storybook: 10.3.5
   front-matter: ^4.0.2
   es-toolkit: ^1.45.1
   execa: ^9.6.1
@@ -119,13 +119,14 @@ catalog:
   fs-extra: ^11.3.4
   happy-dom: ^20.8.9
   jiti: 2.6.1
-  jsdom: 29.0.1
+  jsdom: 29.0.2
   jsonc-eslint-parser: ^3.1.0
   jsonc-parser: 3.3.1
   kolorist: ^1.8.0
   less: 4.6.4
   lint-staged: ^16.4.0
-  marked: ^17.0.5
+  magic-string: ^0.30.21
+  marked: ^18.0.0
   marked-gfm-heading-id: ^4.1.3
   marked-highlight: ^2.2.3
   marked-mangle: ^1.1.12
@@ -133,16 +134,16 @@ catalog:
   md4x: ^0.0.25
   mermaid: ^11.13.0
   minimist: ^1.2.8
-  ng-packagr: 21.2.1
+  ng-packagr: 21.2.2
   nitro: 3.0.260311-beta
   nx: 22.7.0-beta.12
   obug: ^2.1.1
   ofetch: 2.0.0-alpha.3
-  oxc-parser: ^0.123.0
-  oxc-transform: ^0.123.0
+  oxc-parser: ^0.124.0
+  oxc-transform: ^0.124.0
   oxc-resolver: ^11.19.1
   oxlint: ^1.57.0
-  oxlint-tsgolint: ^0.19.0
+  oxlint-tsgolint: ^0.20.0
   playwright: ^1.58.2
   postcss: ^8.5.8
   prettier: ^3.8.1
@@ -168,12 +169,12 @@ catalog:
   shiki: ^1.29.2 || ^4.0.2
   sharp: ^0.34.5
   start-server-and-test: ^3.0.0
-  storybook: 10.3.3
+  storybook: 10.3.5
   tslib: ^2.3.0
   tinyglobby: ^0.2.15
   tailwindcss: ^4.2.2
   ts-dedent: ^2.2.0
-  ts-morph: ^27.0.2
+  ts-morph: ^28.0.0
   tsdown: ^0.21.5
   typescript: 6.0.2
   typescript-eslint: ^8.57.2
@@ -184,13 +185,35 @@ catalog:
   vite-plugin-inspect: 12.0.0-beta.1
   vite-tsconfig-paths: ^7.0.0-alpha.1
   vitefu: ^1.1.2
-  vitest: 4.1.2
+  vitest: 4.1.4
   xhr2: ^0.2.1
   xmlbuilder2: ^4.0.3
   zod: ^4.3.6
   zone.js: ^0.16.1
 
+overrides:
+  '@angular/animations': 21.2.8
+  '@angular/common': 21.2.8
+  '@angular/compiler': 21.2.8
+  '@angular/core': 21.2.8
+  '@angular/forms': 21.2.8
+  '@angular/platform-browser': 21.2.8
+  '@angular/platform-browser-dynamic': 21.2.8
+  '@angular/platform-server': 21.2.8
+  '@angular/router': 21.2.8
+  '@angular/compiler-cli': 21.2.8
+  '@angular/language-service': 21.2.8
+
 catalogs:
+  docsApp:
+    '@docusaurus/core': 3.10.0
+    '@docusaurus/faster': 3.10.0
+    '@docusaurus/module-type-aliases': 3.10.0
+    '@docusaurus/preset-classic': 3.10.0
+    '@docusaurus/tsconfig': 3.10.0
+    '@docusaurus/types': 3.10.0
+    clsx: ^2.1.1
+    prism-react-renderer: ^2.4.1
   peerCompat:
     '@angular/common': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
     '@angular/core': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
@@ -219,7 +242,7 @@ catalogs:
     tslib: ^2.4.0
   peerStorybook10:
     '@storybook/angular': ^10.0.0
-    '@storybook/builder-vite': ^10.3.3
+    '@storybook/builder-vite': ^10.3.5
     storybook: ^10.0.0
   peerVitestAngular:
     '@analogjs/vite-plugin-angular': '*'

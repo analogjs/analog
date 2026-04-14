@@ -27,7 +27,7 @@ describe('update-markdown-version migration', () => {
 
     const pkg = JSON.parse(tree.read('package.json', 'utf-8'));
     expect(pkg.dependencies).toMatchObject({
-      marked: '^15.0.7',
+      marked: '^18.0.0',
       'marked-mangle': '^1.1.10',
       'marked-highlight': '^2.2.1',
       'marked-gfm-heading-id': '^4.1.1',
@@ -56,7 +56,7 @@ describe('update-markdown-version migration', () => {
 
     const pkg = JSON.parse(tree.read('package.json', 'utf-8'));
     expect(pkg.dependencies).toMatchObject({
-      marked: '^15.0.7',
+      marked: '^18.0.0',
       'marked-mangle': '^1.1.10',
       'marked-highlight': '^2.2.1',
       'marked-gfm-heading-id': '^4.1.1',

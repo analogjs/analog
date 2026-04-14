@@ -15,6 +15,7 @@ export type {
   PrerenderRouteConfig,
   PrerenderContentDir,
   PrerenderContentFile,
+  I18nPrerenderOptions,
 } from './lib/options.js';
 
 declare module 'nitro/types' {

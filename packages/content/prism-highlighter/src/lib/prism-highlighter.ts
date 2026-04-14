@@ -5,6 +5,10 @@ import { MarkedContentHighlighter } from '../../../src/lib/marked-content-highli
 
 declare const Prism: typeof import('prismjs');
 
+type HighlightExtension = ReturnType<
+  MarkedContentHighlighter['getHighlightExtension']
+>;
+
 @Injectable()
 export class PrismHighlighter extends MarkedContentHighlighter {
   override augmentCodeBlock(code: string, lang: string): string {
@@ -52,6 +56,6 @@ export class PrismHighlighter extends MarkedContentHighlighter {
           lang,
         );
       },
-    });
+    }) as HighlightExtension;
   }
 }

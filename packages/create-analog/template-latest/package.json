@@ -16,8 +16,8 @@
   },
   "private": true,
   "dependencies": {
-    "@analogjs/content": "^3.0.0-alpha.26",
-    "@analogjs/router": "^3.0.0-alpha.26",
+    "@analogjs/content": "^3.0.0-alpha.32",
+    "@analogjs/router": "^3.0.0-alpha.32",
     "@angular/animations": "^21.0.0",
     "@angular/common": "^21.0.0",
     "@angular/compiler": "^21.0.0",
@@ -27,7 +27,7 @@
     "@angular/platform-server": "^21.0.0",
     "@angular/router": "^21.0.0",
     "front-matter": "^4.0.2",
-    "marked": "^17.0.5",
+    "marked": "^18.0.0",
     "marked-gfm-heading-id": "^4.1.1",
     "marked-highlight": "^2.2.1",
     "marked-mangle": "^1.1.10",
@@ -36,9 +36,9 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@analogjs/platform": "^3.0.0-alpha.26",
-    "@analogjs/vite-plugin-angular": "^3.0.0-alpha.26",
-    "@analogjs/vitest-angular": "^3.0.0-alpha.26",
+    "@analogjs/platform": "^3.0.0-alpha.32",
+    "@analogjs/vite-plugin-angular": "^3.0.0-alpha.32",
+    "@analogjs/vitest-angular": "^3.0.0-alpha.32",
     "@angular/build": "^21.0.0",
     "@angular/cli": "^21.0.0",
     "@angular/compiler-cli": "^21.0.0",

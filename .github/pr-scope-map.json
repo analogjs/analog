@@ -1,6 +1,14 @@
 {
   "areas": [
     {
+      "scope": "angular-compiler",
+      "label": "scope:angular-compiler",
+      "kind": "package",
+      "color": "0e8a16",
+      "description": "Changes in @analogjs/angular-compiler",
+      "prefixes": ["packages/angular-compiler/"]
+    },
+    {
       "scope": "astro-angular",
       "label": "scope:astro-angular",
       "kind": "package",

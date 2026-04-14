@@ -1,4 +1,3 @@
-import '../testing/init-test-env';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
