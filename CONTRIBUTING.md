@@ -171,6 +171,7 @@ The following is the list of currently supported scopes:
 - **vite-plugin-angular**
 - **vite-plugin-nitro**
 - **vitest-angular**
+- **angular-compiler**
 
 For the current package-to-scope mapping, see the `Packages` table in `AGENTS.md`.
 

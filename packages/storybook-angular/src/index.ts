@@ -12,8 +12,8 @@ export {
   type StoryObj,
   applicationConfig,
   argsToTemplate,
-  componentWrapperDecorator,
   moduleMetadata,
   setProjectAnnotations,
 } from '@storybook/angular';
+export { componentWrapperDecorator } from './lib/component-wrapper-decorator';
 export { type FrameworkOptions, type StorybookConfig } from './types';

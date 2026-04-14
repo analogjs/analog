@@ -15,6 +15,7 @@ import {
   CONTENT_FILE_LOADER,
   injectContentFileLoader,
 } from '../../src/lib/content-file-loader';
+import { injectContentLocale } from '../../src/lib/content-locale';
 import { ContentRenderer } from '../../src/lib/content-renderer';
 import { injectContentFilesMap } from '../../src/lib/inject-content-files';
 import {
@@ -57,6 +58,7 @@ async function getContentFile<
   contentFiles: Record<string, () => Promise<string>>,
   slug: string,
   fallback: string,
+  locale?: string | null,
   schema?: StandardSchemaV1,
 ): Promise<ContentFile<Attributes | Record<string, never>>> {
   // Normalize file keys so both "/src/content/..." and "/<project>/src/content/..." resolve.
@@ -85,8 +87,15 @@ async function getContentFile<
   const base = `/src/content/${slug}`.replace(/\/{2,}/g, '/');
   const candidates = [`${base}.md`, `${base}/index.md`];
 
+  // Try locale-prefixed paths first, then fall back to unprefixed, then bare slug via stem
+  const localeCandidates = locale
+    ? candidates.map((c) =>
+        c.replace('/src/content/', `/src/content/${locale}/`),
+      )
+    : [];
+  const allCandidates = [...localeCandidates, ...candidates];
   const matchKey =
-    candidates.find((k) => k in normalizedFiles) ?? stemToKey[slug];
+    allCandidates.find((k) => k in normalizedFiles) ?? stemToKey[slug];
   const contentFile = matchKey ? normalizedFiles[matchKey] : undefined;
 
   if (!contentFile) {
@@ -204,6 +213,7 @@ export function contentFileResource(
     : undefined;
 
   const contentRenderer = inject(ContentRenderer);
+  const locale = injectContentLocale();
   const contentFilesMap = inject(CONTENT_FILE_LOADER, { optional: true })
     ? injectContentFileLoader()()
     : Promise.resolve(injectContentFilesMap());
@@ -224,7 +234,13 @@ export function contentFileResource(
 
       if (typeof param === 'string') {
         if (param) {
-          const file = await getContentFile(files!, param, fallback, schema);
+          const file = await getContentFile(
+            files!,
+            param,
+            fallback,
+            locale,
+            schema,
+          );
           if (typeof file.content === 'string') {
             const rendered = (await contentRenderer.render(file.content)) as {
               toc?: Array<{ id: string; level: number; text: string }>;
@@ -252,6 +268,7 @@ export function contentFileResource(
           files!,
           param.customFilename,
           fallback,
+          locale,
           schema,
         );
         if (typeof file.content === 'string') {

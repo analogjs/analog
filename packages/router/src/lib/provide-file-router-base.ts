@@ -1,10 +1,10 @@
 import {
+  DOCUMENT,
   EnvironmentProviders,
   inject,
   makeEnvironmentProviders,
   provideAppInitializer,
 } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
 import { ɵHTTP_ROOT_INTERCEPTOR_FNS as HTTP_ROOT_INTERCEPTOR_FNS } from '@angular/common/http';
 import { Meta } from '@angular/platform-browser';
 import { provideRouter, RouterFeatures, ROUTES, Routes } from '@angular/router';

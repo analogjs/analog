@@ -1,0 +1,15 @@
+:host {
+  display: block;
+  background: #fff;
+}
+.wrapper {
+  padding: 1rem;
+}
+h1 {
+  color: #333;
+  font-size: 2rem;
+}
+a {
+  color: blue;
+  text-decoration: underline;
+}

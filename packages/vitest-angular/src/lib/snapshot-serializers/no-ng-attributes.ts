@@ -11,11 +11,12 @@ export const attributesToRemovePatterns = [
 
 export const attributesToClean: Record<string, RegExp[]> = {
   class: [/^(?:mat|cdk|ng).*-\w*\d+-\d+$/, /^ng-star-inserted$/],
-  id: [/^(?:mat|cdk|ng).*-\d+$/],
+  id: [/^(?:mat|cdk|ng).*-\w*\d+$/],
   for: [/^(?:mat|cdk|ng).*-\d+$/],
   'aria-owns': [/^(?:mat|cdk|ng).*-\d+$/],
   'aria-labelledby': [/^(?:mat|cdk|ng).*-\d+$/],
   'aria-controls': [/^(?:mat|cdk|ng).*-\d+$/],
+  'aria-describedby': [/^(?:mat|cdk|ng).*-\d+$/],
 };
 
 const hasAttributesToRemove = (attribute: Attr): boolean =>

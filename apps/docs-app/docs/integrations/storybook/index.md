@@ -43,7 +43,7 @@ Install the Storybook Integration for Angular and Vite. Depending on your prefer
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/storybook-angular --save-dev
+npm install @analogjs/storybook-angular @analogjs/vite-plugin-angular --save-dev
 ```
 
   </TabItem>
@@ -51,7 +51,7 @@ npm install @analogjs/storybook-angular --save-dev
   <TabItem label="yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/storybook-angular --dev
+yarn add @analogjs/storybook-angular @analogjs/vite-plugin-angular --dev
 ```
 
   </TabItem>
@@ -59,7 +59,7 @@ yarn add @analogjs/storybook-angular --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install @analogjs/storybook-angular -w --save-dev
+pnpm install @analogjs/storybook-angular @analogjs/vite-plugin-angular -w --save-dev
 ```
 
   </TabItem>
@@ -67,7 +67,7 @@ pnpm install @analogjs/storybook-angular -w --save-dev
   <TabItem value="bun">
 
 ```shell
-bun install @analogjs/storybook-angular --save-dev
+bun install @analogjs/storybook-angular @analogjs/vite-plugin-angular --save-dev
 ```
 
   </TabItem>  

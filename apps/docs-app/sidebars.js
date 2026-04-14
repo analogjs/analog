@@ -203,6 +203,16 @@ const sidebars = {
           type: 'doc',
         },
         {
+          id: 'guides/migrating-v1-to-v2',
+          label: 'Migrating from Analog v1 to v2',
+          type: 'doc',
+        },
+        {
+          id: 'guides/migrating-v2-to-v3',
+          label: 'Migrating from Analog v2 to v3',
+          type: 'doc',
+        },
+        {
           id: 'guides/libraries',
           label: 'Building an Angular library',
           type: 'doc',
@@ -246,6 +256,11 @@ const sidebars = {
         {
           id: 'packages/vite-plugin-nitro/overview',
           label: 'Nitro',
+          type: 'doc',
+        },
+        {
+          id: 'integrations/ai/index',
+          label: 'AI',
           type: 'doc',
         },
         {
