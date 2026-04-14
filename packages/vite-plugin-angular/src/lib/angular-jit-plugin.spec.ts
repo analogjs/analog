@@ -35,7 +35,9 @@ describe('jitPlugin', () => {
   });
 
   it('soft-fails ordinary preprocessCSS errors', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const warn = vi
+      .spyOn(console, 'warn')
+      .mockImplementation((message?: unknown) => message);
     vi.mocked(preprocessCSS).mockRejectedValue(new Error('boom'));
 
     const plugin = jitPlugin({ inlineStylesExtension: 'css' });
