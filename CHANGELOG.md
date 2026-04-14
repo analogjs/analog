@@ -1,3 +1,9 @@
+# [3.0.0-alpha.33](https://github.com/analogjs/analog/compare/v3.0.0-alpha.32...v3.0.0-alpha.33) (2026-04-14)
+
+### Features
+
+- **storybook-angular:** add scoped style diagnostics for Nx SCSS setup ([#2243](https://github.com/analogjs/analog/issues/2243)) ([8173b64](https://github.com/analogjs/analog/commit/8173b64c8aa44400fe0620f5fc1d3c5f1f17238c))
+
 # [3.0.0-alpha.32](https://github.com/analogjs/analog/compare/v3.0.0-alpha.31...v3.0.0-alpha.32) (2026-04-13)
 
 ### Bug Fixes
