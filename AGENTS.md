@@ -24,6 +24,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
 - **Install dependencies:** `pnpm i`
 - **Build all projects:** `pnpm build` (uses Nx)
+- **Build** `nx build <project>`
 - **Serve main app:** `pnpm dev` or `pnpm start` (runs `nx serve`)
 - **Test all projects:** `pnpm test` (runs Vitest via Nx)
 - **Format workspace:** `nx format`
@@ -118,6 +119,7 @@ Projects with caching explicitly disabled (`"cache": false` on their build targe
 - Always scan existing codebase for examples and patterns for implementation.
 - When writing code, analyze all touched code paths up front, including Analog experimental Vite options, their disabled branches, and compatibility fallbacks. Do not treat experimental features as exempt from behavioral review, regression analysis, or targeted tests.
 - Prefer using existing Angular APIs, with wrappers where needed.
+- Strongly prefer AST parsing instead of regex for complex file manipulation and traversal.
 - Always use modern Angular syntax including dependency injection with inject, control flow, signal APIs, and standalone components.
 - Cross compatibility with Nx is strongly encouraged. Prefer schematics and builders for Analog first-party solutions.
 - Avoid custom code that replicates Angular framework functionality.

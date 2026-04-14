@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/vite-plugin-angular",
-  "version": "3.0.0-alpha.29",
+  "version": "3.0.0-alpha.32",
   "description": "Vite Plugin for Angular",
   "type": "module",
   "keywords": [
@@ -36,6 +36,7 @@
     }
   },
   "dependencies": {
+    "@analogjs/angular-compiler": "workspace:*",
     "es-toolkit": "catalog:",
     "obug": "catalog:",
     "oxc-parser": "catalog:",
@@ -64,7 +65,8 @@
       "@analogjs/storybook-angular",
       "@analogjs/vite-plugin-angular",
       "@analogjs/vite-plugin-nitro",
-      "@analogjs/vitest-angular"
+      "@analogjs/vitest-angular",
+      "@analogjs/angular-compiler"
     ],
     "migrations": "./migrations/migration.json"
   },

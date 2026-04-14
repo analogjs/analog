@@ -1,5 +1,4 @@
-import { DOCUMENT } from '@angular/common';
-import { inject } from '@angular/core';
+import { DOCUMENT, inject } from '@angular/core';
 import type { ActivatedRouteSnapshot } from '@angular/router';
 import { NavigationEnd, Router } from '@angular/router';
 import { isPlainObject } from 'es-toolkit';

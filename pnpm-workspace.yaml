@@ -125,6 +125,7 @@ catalog:
   kolorist: ^1.8.0
   less: 4.6.4
   lint-staged: ^16.4.0
+  magic-string: ^0.30.21
   marked: ^18.0.0
   marked-gfm-heading-id: ^4.1.3
   marked-highlight: ^2.2.3
@@ -189,6 +190,19 @@ catalog:
   xmlbuilder2: ^4.0.3
   zod: ^4.3.6
   zone.js: ^0.16.1
+
+overrides:
+  '@angular/animations': 21.2.8
+  '@angular/common': 21.2.8
+  '@angular/compiler': 21.2.8
+  '@angular/core': 21.2.8
+  '@angular/forms': 21.2.8
+  '@angular/platform-browser': 21.2.8
+  '@angular/platform-browser-dynamic': 21.2.8
+  '@angular/platform-server': 21.2.8
+  '@angular/router': 21.2.8
+  '@angular/compiler-cli': 21.2.8
+  '@angular/language-service': 21.2.8
 
 catalogs:
   docsApp:

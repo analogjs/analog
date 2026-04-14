@@ -17,6 +17,7 @@ import type { NitroRouteRules } from 'nitro/types';
 import { registerDevServerMiddleware } from '../utils/register-dev-middleware.js';
 import { writeWebResponseToNode } from '../utils/node-web-bridge.js';
 import { Options } from '../options.js';
+import { detectLocaleFromRoute, setHtmlLang } from '../utils/i18n-prerender.js';
 
 type ServerOptions = Options & { routeRules?: Record<string, any> | undefined };
 
@@ -52,6 +53,10 @@ export function devServerPlugin(options: ServerOptions): Plugin {
       return async () => {
         remove_html_middlewares(viteServer.middlewares);
         registerDevServerMiddleware(root, sourceRoot, viteServer);
+
+        if (options.i18n) {
+          registerI18nWatcher(viteServer);
+        }
 
         viteServer.middlewares.use(async (req, res) => {
           let template = readFileSync(
@@ -92,8 +97,19 @@ export function devServerPlugin(options: ServerOptions): Plugin {
               await writeWebResponseToNode(res, result);
               return;
             }
+
+            // Inject lang attribute when i18n is configured
+            let html = typeof result === 'string' ? result : template;
+            if (options.i18n) {
+              const locale = detectLocaleFromRoute(
+                req.originalUrl as string,
+                options.i18n,
+              );
+              html = setHtmlLang(html, locale);
+            }
+
             res.setHeader('Content-Type', 'text/html');
-            res.end(result);
+            res.end(html);
           } catch (e) {
             viteServer.ssrFixStacktrace(e as Error);
             res.statusCode = 500;

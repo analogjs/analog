@@ -1,6 +1,6 @@
 {
   "name": "analogjs-platform",
-  "version": "3.0.0-alpha.29",
+  "version": "3.0.0-alpha.32",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -190,6 +190,7 @@
     "kolorist": "catalog:",
     "less": "catalog:",
     "lint-staged": "catalog:",
+    "magic-string": "catalog:",
     "marked-mangle": "catalog:",
     "marked-shiki": "catalog:",
     "md4x": "catalog:",
