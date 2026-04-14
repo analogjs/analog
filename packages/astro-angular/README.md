@@ -191,6 +191,26 @@ export default defineConfig({
 });
 ```
 
+### Angular Client Hydration (Experimental)
+
+By default, `@analogjs/astro-angular` performs hydration by bootstrapping the component on the client, replacing the DOM that was rendered on the server.
+
+To opt-in to Angular's client hydration, enable the `experimental.useAngularHydration` option in the integration config. This will switch the hydration strategy to use [provideClientHydration](https://angular.dev/api/platform-browser/provideClientHydration).
+
+```js
+import { defineConfig } from 'astro/config';
+
+import angular from '@analogjs/astro-angular';
+
+export default defineConfig({
+  integrations: [angular({ useAngularHydration: true })],
+});
+```
+
+#### Skip Hydration
+
+Use the `ngSkipHydration` attribute on any components which do not work properly with hydration enabled. Read more [here](https://angular.dev/guide/hydration#how-to-skip-hydration-for-particular-components).
+
 ## Defining A Component
 
 The Astro Angular integration **only** supports rendering standalone components:
@@ -319,6 +339,43 @@ export class TodosComponent implements OnInit {
     this.http
       .get<Todo[]>('https://jsonplaceholder.typicode.com/todos')
       .subscribe((todos) => this.todos.set(todos));
+  }
+}
+```
+
+### Client Hydration Features (Experimental)
+
+First, make sure the experimental Angular client hydration option is enabled in the integration config. Read more [here](#angular-client-hydration-experimental).
+
+To add Angular hydration features, add a static property to the component class named `hydrationFeatures`. This should be a function that returns an array of hydration features to enable.
+
+The example below adds the [event replay](https://angular.dev/guide/hydration#how-event-replay-works) feature to the component.
+
+```ts
+import { Component, input, signal } from '@angular/core';
+import { withEventReplay } from '@angular/platform-browser';
+
+@Component({
+  selector: 'app-hello',
+  template: `
+    <p>Hello from Angular!!</p>
+
+    @if (show()) {
+      <p>{{ helpText() }}</p>
+    }
+
+    <button (click)="toggle()">Toggle</button>
+  `,
+})
+export class HelloComponent {
+  static hydrationFeatures = () => [withEventReplay()];
+
+  helpText = input('help');
+
+  show = signal(false);
+
+  toggle() {
+    this.show.update((show) => !show);
   }
 }
 ```

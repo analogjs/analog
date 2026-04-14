@@ -99,6 +99,10 @@
     "message": "Astro",
     "description": "The label for the doc item Astro in sidebar docsSidebar, linking to the doc packages/astro-angular/overview"
   },
+  "sidebar.docsSidebar.doc.AI": {
+    "message": "AI",
+    "description": "The label for the doc item AI in sidebar docsSidebar, linking to the doc integrations/ai/index"
+  },
   "sidebar.docsSidebar.doc.Vite": {
     "message": "Vite",
     "description": "The label for the doc item Vite in sidebar docsSidebar, linking to the doc packages/vite-plugin-angular/overview"

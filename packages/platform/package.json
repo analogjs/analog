@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/platform",
-  "version": "3.0.0-alpha.29",
+  "version": "3.0.0-alpha.32",
   "description": "The fullstack meta-framework for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -98,7 +98,8 @@
       "@analogjs/storybook-angular",
       "@analogjs/vite-plugin-angular",
       "@analogjs/vite-plugin-nitro",
-      "@analogjs/vitest-angular"
+      "@analogjs/vitest-angular",
+      "@analogjs/angular-compiler"
     ],
     "migrations": "./migrations/migration.json"
   },

@@ -1,0 +1,23 @@
+$primary: #333;
+$padding: 1rem;
+
+:host {
+  display: block;
+  background: #fff;
+}
+
+.wrapper {
+  padding: $padding;
+
+  h1 {
+    color: $primary;
+    font-size: 2rem;
+  }
+
+  a {
+    color: blue;
+    &:hover {
+      color: darkblue;
+    }
+  }
+}

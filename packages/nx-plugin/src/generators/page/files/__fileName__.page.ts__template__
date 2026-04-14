@@ -8,7 +8,6 @@ export const routeMeta: RouteMeta = {
 };
 <% } %>
 @Component({
-  standalone: true,
   imports: [],
   template: `
      <p><%= propertyName %> page works!!</p>

@@ -22,9 +22,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Prettier
-        uses: dagger/dagger-for-github@v8.4.0
+        uses: dagger/dagger-for-github@v8.4.1
         with:
-          version: '0.20.3'
+          version: '0.20.5'
           verb: call
           args: prettier --source=.
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
@@ -36,9 +36,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Lint
-        uses: dagger/dagger-for-github@v8.4.0
+        uses: dagger/dagger-for-github@v8.4.1
         with:
-          version: '0.20.3'
+          version: '0.20.5'
           verb: call
           args: lint --source=.
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
@@ -50,9 +50,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build + Test
-        uses: dagger/dagger-for-github@v8.4.0
+        uses: dagger/dagger-for-github@v8.4.1
         with:
-          version: '0.20.3'
+          version: '0.20.5'
           verb: call
           args: build-and-test --source=. --nx-cloud-token=env:NX_CLOUD_ACCESS_TOKEN
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
@@ -101,9 +101,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: E2E (${{ matrix.project }})
-        uses: dagger/dagger-for-github@v8.4.0
+        uses: dagger/dagger-for-github@v8.4.1
         with:
-          version: '0.20.3'
+          version: '0.20.5'
           verb: call
           args: end-to-end --source=. --nx-cloud-token=env:NX_CLOUD_ACCESS_TOKEN --projects=${{ matrix.project }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}

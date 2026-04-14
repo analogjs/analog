@@ -7,7 +7,7 @@ import Translate from '@docusaurus/Translate';
 const StackblitzLogo: React.ComponentType<React.ComponentProps<'svg'>> =
   require('@site/static/img/logos/stackblitz-logo.svg').default;
 
-export default function StackblitzButton(): JSX.Element {
+export default function StackblitzButton(): React.JSX.Element {
   return (
     <Link
       className={clsx(
